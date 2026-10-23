@@ -26,6 +26,7 @@ import {
   TREATMENT_TYPES,
 } from '@/constants/bodyZones';
 import { INITIAL_DATA } from '@/components/BodyMap';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // CALCUL DU STATUT FIT FOR DUTY
@@ -112,7 +113,7 @@ export const createInjury = async (data: {
     injury_id: injuryId,
     eva_score: data.eva_score,
     date: today,
-    notes: 'Évaluation initiale',
+    notes: traduire('Évaluation initiale'),
   });
 
   return injuryId;
@@ -180,7 +181,7 @@ export const markInjuryAsHealed = async (injuryId: number): Promise<void> => {
     injury_id: injuryId,
     eva_score: 0,
     date: today,
-    notes: 'Blessure guérie',
+    notes: traduire('Blessure guérie'),
   });
 };
 
@@ -217,30 +218,30 @@ export const getRICEProtocol = () => {
   return [
     {
       letter: 'R',
-      title: 'Repos',
-      description: 'Arrêter l\'activité immédiatement',
+      title: traduire('Repos'),
+      description: traduire('Arrêter l\'activité immédiatement'),
       duration: '48-72h minimum',
       icon: '',
     },
     {
       letter: 'I',
       title: 'Ice (Glace)',
-      description: 'Appliquer de la glace',
-      duration: '15-20 min toutes les 2-3h',
+      description: traduire('Appliquer de la glace'),
+      duration: traduire('15-20 min toutes les 2-3h'),
       icon: '',
     },
     {
       letter: 'C',
       title: 'Compression',
-      description: 'Bander la zone affectée',
-      duration: 'Pendant 48-72h',
+      description: traduire('Bander la zone affectée'),
+      duration: traduire('Pendant 48-72h'),
       icon: '',
     },
     {
       letter: 'E',
-      title: 'Élévation',
-      description: 'Surélever la zone blessée',
-      duration: 'Le plus souvent possible',
+      title: traduire('Élévation'),
+      description: traduire('Surélever la zone blessée'),
+      duration: traduire('Le plus souvent possible'),
       icon: '',
     },
   ];
@@ -501,26 +502,26 @@ export const getInjuryRecommendation = (
   // Douleur sévère
   if (evaScore >= 7) {
     if (daysSinceInjury >= 2) {
-      return `Douleur intense (${daysSinceInjury} jours) - Consultez un professionnel de santé`;
+      return traduire("Douleur intense ({0} jours) - Consultez un professionnel de santé", daysSinceInjury);
     }
-    return 'Douleur intense enregistrée';
+    return traduire('Douleur intense enregistrée');
   }
 
   // Douleur modérée
   if (evaScore >= 4) {
     if (daysSinceInjury >= 7) {
-      return `Douleur persistante (${daysSinceInjury} jours)`;
+      return traduire("Douleur persistante ({0} jours)", daysSinceInjury);
     }
-    return 'Douleur modérée en cours';
+    return traduire('Douleur modérée en cours');
   }
 
   // Douleur légère
   if (evaScore > 0) {
-    return 'Douleur légère en amélioration';
+    return traduire('Douleur légère en amélioration');
   }
 
   // Pas de douleur
-  return 'Aucune douleur - Blessure guérie';
+  return traduire('Aucune douleur - Blessure guérie');
 };
 
 export default {

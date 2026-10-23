@@ -13,6 +13,7 @@ import { BigButton, Card, CIcon, DetailScreen, EmptyState, Enter, Field, FormShe
 import { isoOf } from '@/lib/v2/progres/format';
 import { ProgressBar } from '@/components/yoroi/v2/espace/ProgressBar';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 interface DrillTechnique {
   id: string;
@@ -37,8 +38,8 @@ const DEFAULTS: Omit<DrillTechnique, 'id'>[] = [
   { name: 'Double leg', totalReps: 0, weekReps: 0, weekGoal: 100, targetTotal: 1000 },
   { name: 'Triangle', totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
   { name: 'Guillotine', totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
-  { name: 'Clé de bras', totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
-  { name: 'Passage de garde', totalReps: 0, weekReps: 0, weekGoal: 80, targetTotal: 1000 },
+  { name: traduire('Clé de bras'), totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
+  { name: traduire('Passage de garde'), totalReps: 0, weekReps: 0, weekGoal: 80, targetTotal: 1000 },
   { name: 'Renversement', totalReps: 0, weekReps: 0, weekGoal: 80, targetTotal: 1000 },
 ];
 
@@ -101,26 +102,26 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <StepPlates n={step.n} />
             <Ink size={12} weight="bold" color={P.ink2} style={{ flex: 1 }}>
-              {step.n < STEPS ? `Palier ${step.n} sur ${STEPS}, encore ${step.toNext.toLocaleString('fr-FR')} répétitions` : `Palier ${STEPS} atteint`}
+              {step.n < STEPS ? traduire("Palier {0} sur {1}, encore {2} répétitions", step.n, STEPS, step.toNext.toLocaleString(LOCALE)) : `Palier ${STEPS} atteint`}
             </Ink>
           </View>
         </View>
         {tot >= 1 ? <Hanko size={40} /> : null}
-        <IconBtn icon="edit" size={40} label={`Modifier ${t.name}`} onPress={onEdit} />
+        <IconBtn icon="edit" size={40} label={traduire("Modifier {0}", t.name)} onPress={onEdit} />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
         <Ink size={38} weight="black" tight color={done ? '#4F6B28' : P.ink}>
-          {t.weekReps.toLocaleString('fr-FR')}
+          {t.weekReps.toLocaleString(LOCALE)}
         </Ink>
         <Ink size={14} weight="bold" color={P.ink2} style={{ marginBottom: 6 }}>
-          {`sur ${t.weekGoal} cette semaine`}
+          {traduire("sur {0} cette semaine", t.weekGoal)}
         </Ink>
       </View>
-      <ProgressBar progress={wk} accessibilityLabel="Ta semaine" />
+      <ProgressBar progress={wk} accessibilityLabel={traduire("Ta semaine")} />
       <View style={{ gap: 6 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Ink size={12} weight="bold" color={P.ink2}>
-            {`${t.totalReps.toLocaleString('fr-FR')} sur ${t.targetTotal.toLocaleString('fr-FR')} au total`}
+            {traduire("{0} sur {1} au total", t.totalReps.toLocaleString(LOCALE), t.targetTotal.toLocaleString(LOCALE))}
           </Ink>
           <Ink size={12} weight="extraBold" color={V}>
             {`${Math.round(tot * 100)}%`}
@@ -129,13 +130,13 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
         <InkBar value={tot} color={V} height={7} />
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Press onPress={() => onAdd(-1)} accessibilityRole="button" accessibilityLabel={`Retirer une répétition de ${t.name}`}>
+        <Press onPress={() => onAdd(-1)} accessibilityRole="button" accessibilityLabel={traduire("Retirer une répétition de {0}", t.name)}>
           <View style={{ width: 48, height: 52, borderRadius: 16, backgroundColor: '#E6E4DD', alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="minus" size={18} color={P.ink} width={2.8} />
           </View>
         </Press>
         {[1, 5, 10, 20].map((n, i) => (
-          <Press key={n} onPress={() => onAdd(n)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`Ajouter ${n} répétitions de ${t.name}`}>
+          <Press key={n} onPress={() => onAdd(n)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} répétitions de {1}", n, t.name)}>
             <View style={{ height: 52, borderRadius: 16, backgroundColor: i === 3 ? P.accent : P.ink, alignItems: 'center', justifyContent: 'center' }}>
               <Ink size={17} weight="black" color={P.white}>
                 {`+${n}`}
@@ -146,8 +147,7 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
       </View>
       {done ? (
         <Ink size={13} weight="extraBold" color="#4F6B28">
-          Objectif de la semaine atteint
-        </Ink>
+          {traduire("Objectif de la semaine atteint")}</Ink>
       ) : null}
     </Card>
   );
@@ -208,10 +208,10 @@ export default function DrillTrackerScreen() {
     setSheet(null);
   };
   const remove = (t: DrillTechnique) => {
-    appAlert(`Supprimer ${t.name} ?`, 'La technique et tous ses compteurs seront effacés.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire("Supprimer {0} ?", t.name), traduire('La technique et tous ses compteurs seront effacés.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           await save(list.filter((x) => x.id !== t.id));
@@ -226,22 +226,22 @@ export default function DrillTrackerScreen() {
   const reached = list.filter((t) => t.weekReps >= t.weekGoal).length;
 
   return (
-    <PremiumGate source="drills" featureTitle="Compteur de drills" perks={['Tes répétitions comptées par technique', 'Un objectif par semaine pour chaque drill', 'Ton total vers les 1 000 répétitions']}>
-      <DetailScreen title="Drills" subtitle="Mille répétitions forgent une technique" right={<IconBtn icon="plus" label="Ajouter une technique" tone="red" onPress={openAdd} />}>
+    <PremiumGate source="drills" featureTitle={traduire("Compteur de drills")} perks={[traduire('Tes répétitions comptées par technique'), traduire('Un objectif par semaine pour chaque drill'), traduire('Ton total vers les 1 000 répétitions')]}>
+      <DetailScreen title="Drills" subtitle={traduire("Mille répétitions forgent une technique")} right={<IconBtn icon="plus" label={traduire("Ajouter une technique")} tone="red" onPress={openAdd} />}>
         {!loading && list.length > 0 ? (
           <Enter i={0}>
             <Glass style={{ gap: 14 }}>
               <View style={{ flexDirection: 'row' }}>
-                <Stat value={week.toLocaleString('fr-FR')} label="cette semaine" color={P.accent} />
-                <Stat value={`${reached} sur ${list.length}`} label="objectifs atteints" color={V} />
-                <Stat value={all.toLocaleString('fr-FR')} label="au total" />
+                <Stat value={week.toLocaleString(LOCALE)} label={traduire("cette semaine")} color={P.accent} />
+                <Stat value={traduire("{0} sur {1}", reached, list.length)} label={traduire("objectifs atteints")} color={V} />
+                <Stat value={all.toLocaleString(LOCALE)} label={traduire("au total")} />
               </View>
-              <ProgressBar progress={list.length > 0 ? reached / list.length : 0} accessibilityLabel="Objectifs atteints" />
+              <ProgressBar progress={list.length > 0 ? reached / list.length : 0} accessibilityLabel={traduire("Objectifs atteints")} />
             </Glass>
           </Enter>
         ) : null}
 
-        {!loading && list.length === 0 ? <EmptyState title="Aucune technique" text="Ajoute les techniques que tu répètes. Chaque série compte, et chaque palier franchi marque ta progression." action="Ajouter une technique" onAction={openAdd} /> : null}
+        {!loading && list.length === 0 ? <EmptyState title={traduire("Aucune technique")} text={traduire("Ajoute les techniques que tu répètes. Chaque série compte, et chaque palier franchi marque ta progression.")} action={traduire("Ajouter une technique")} onAction={openAdd} /> : null}
 
         {list.map((t, i) => (
           <Enter key={t.id} i={Math.min(i + 1, 8)}>
@@ -249,22 +249,20 @@ export default function DrillTrackerScreen() {
           </Enter>
         ))}
 
-        <FormSheet visible={sheet !== null} onClose={() => setSheet(null)} title={editing ? `Modifier ${editing.name}` : 'Nouvelle technique'}>
-          <Field value={name} onChangeText={setName} autoFocus={!editing} placeholder="Nom de la technique" />
+        <FormSheet visible={sheet !== null} onClose={() => setSheet(null)} title={editing ? traduire("Modifier {0}", editing.name) : traduire('Nouvelle technique')}>
+          <Field value={name} onChangeText={setName} autoFocus={!editing} placeholder={traduire("Nom de la technique")} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={14} weight="bold" color={P.ink2}>
-              Objectif par semaine
-            </Ink>
+              {traduire("Objectif par semaine")}</Ink>
             <Stepper value={goal} onChange={setGoal} step={10} min={10} max={2000} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={14} weight="bold" color={P.ink2}>
-              Objectif total
-            </Ink>
-            <Stepper value={target} onChange={setTarget} step={250} min={250} max={20000} format={(v) => v.toLocaleString('fr-FR')} />
+              {traduire("Objectif total")}</Ink>
+            <Stepper value={target} onChange={setTarget} step={250} min={250} max={20000} format={(v) => v.toLocaleString(LOCALE)} />
           </View>
-          <BigButton label={editing ? 'Enregistrer' : 'Ajouter'} onPress={submit} disabled={!name.trim()} />
-          {editing ? <BigButton label="Supprimer la technique" tone="light" icon="trash" onPress={() => remove(editing)} /> : null}
+          <BigButton label={editing ? traduire('Enregistrer') : traduire('Ajouter')} onPress={submit} disabled={!name.trim()} />
+          {editing ? <BigButton label={traduire("Supprimer la technique")} tone="light" icon="trash" onPress={() => remove(editing)} /> : null}
         </FormSheet>
       </DetailScreen>
     </PremiumGate>

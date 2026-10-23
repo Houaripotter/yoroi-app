@@ -14,6 +14,7 @@ import { UNIVERS_CHOIX } from '@/lib/v2/dojo/univers';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import { ChoiceCard, MainButton, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Decor et personnage de chaque carte */
 export function illustrationUnivers(choix: ChoixUnivers, genre: 'h' | 'f'): { scene: ImageSourcePropType; perso: ImageSourcePropType | null } {
@@ -45,7 +46,7 @@ export function Univers({ nav, genre, value, onPick, onNext }: { nav: Nav; genre
   const { height } = useWindowDimensions();
   const cardH = Math.max(112, Math.min(150, Math.round((height - 400) / 3)));
   return (
-    <Shell {...nav} title="Ton **univers**" sub="Le décor et le personnage qui t’accompagnent. Tu pourras changer dans Réglages, Personnaliser." gap={14} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Ton **univers**")} sub={traduire("Le décor et le personnage qui t’accompagnent. Tu pourras changer dans Réglages, Personnaliser.")} gap={14} footer={<MainButton label="Continuer" onPress={onNext} />}>
       {UNIVERS_CHOIX.map((u) => (
         <Carte key={u.id} choix={u.id} nom={u.nom} phrase={u.phrase} genre={genre} selected={value === u.id} onPress={() => onPick(u.id)} height={cardH} />
       ))}

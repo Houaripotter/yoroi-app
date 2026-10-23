@@ -8,6 +8,7 @@ import { addMeasurementRecord, addWeight, deleteWeight, getAllWeights, getMeasur
 import type { Measurement, Weight } from '@/lib/database';
 import { addBodyComposition, deleteBodyComposition, getAllBodyCompositions, updateBodyComposition } from '@/lib/bodyComposition';
 import type { BodyComposition } from '@/lib/bodyComposition';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export const SOURCES: Record<string, { label: string; color: string }> = {
   SourceProxy: { label: 'Apple Santé', color: '#2C4A84' },
@@ -19,7 +20,7 @@ export const SOURCES: Record<string, { label: string; color: string }> = {
   garmin: { label: 'Garmin', color: '#3D5D9E' },
   csv: { label: 'Import CSV', color: '#A8832F' },
   body_composition: { label: 'Balance', color: '#A8832F' },
-  manual: { label: 'À la main', color: '#4F6B28' },
+  manual: { label: traduire('À la main'), color: '#4F6B28' },
 };
 
 export function sourceOf(s?: string | null): { key: string; label: string; color: string } {
@@ -51,21 +52,21 @@ export const METRICS: MetricDef[] = [
   { key: 'muscle', label: 'Muscle', chip: 'Muscle', unit: 'kg', group: 'composition', digits: 1, weightField: 'muscle_percent', bcField: 'muscleMass' },
   { key: 'water_percent', label: 'Eau', chip: 'Eau', unit: '%', group: 'composition', digits: 1, weightField: 'water_percent', bcField: 'waterPercent' },
   { key: 'bone_mass', label: 'Os', chip: 'Os', unit: 'kg', group: 'composition', digits: 1, weightField: 'bone_mass', bcField: 'boneMass' },
-  { key: 'visceral_fat', label: 'Graisse viscérale', chip: 'Viscérale', unit: 'niveau', group: 'composition', digits: 1, weightField: 'visceral_fat', bcField: 'visceralFat' },
-  { key: 'metabolic_age', label: 'Âge métabolique', chip: 'Âge du corps', unit: 'ans', group: 'composition', digits: 0, weightField: 'metabolic_age', bcField: 'metabolicAge' },
-  { key: 'bmr', label: 'Métabolisme de base', chip: 'Métabolisme', unit: 'kcal', group: 'composition', digits: 0, weightField: 'bmr', bcField: 'bmr' },
+  { key: 'visceral_fat', label: 'Graisse viscérale', chip: traduire('Viscérale'), unit: 'niveau', group: 'composition', digits: 1, weightField: 'visceral_fat', bcField: 'visceralFat' },
+  { key: 'metabolic_age', label: traduire('Âge métabolique'), chip: traduire('Âge du corps'), unit: 'ans', group: 'composition', digits: 0, weightField: 'metabolic_age', bcField: 'metabolicAge' },
+  { key: 'bmr', label: traduire('Métabolisme de base'), chip: traduire('Métabolisme'), unit: 'kcal', group: 'composition', digits: 0, weightField: 'bmr', bcField: 'bmr' },
   { key: 'waist', label: 'Tour de taille', chip: 'Taille', unit: 'cm', group: 'measurements', digits: 1, mField: 'waist' },
-  { key: 'navel', label: 'Tour au nombril', chip: 'Nombril', unit: 'cm', group: 'measurements', digits: 1, mField: 'navel' },
-  { key: 'hips', label: 'Tour de hanches', chip: 'Hanches', unit: 'cm', group: 'measurements', digits: 1, mField: 'hips' },
-  { key: 'chest', label: 'Tour de poitrine', chip: 'Poitrine', unit: 'cm', group: 'measurements', digits: 1, mField: 'chest' },
+  { key: 'navel', label: traduire('Tour au nombril'), chip: 'Nombril', unit: 'cm', group: 'measurements', digits: 1, mField: 'navel' },
+  { key: 'hips', label: traduire('Tour de hanches'), chip: 'Hanches', unit: 'cm', group: 'measurements', digits: 1, mField: 'hips' },
+  { key: 'chest', label: traduire('Tour de poitrine'), chip: 'Poitrine', unit: 'cm', group: 'measurements', digits: 1, mField: 'chest' },
   { key: 'shoulders', label: 'Épaules', chip: 'Épaules', unit: 'cm', group: 'measurements', digits: 1, mField: 'shoulders' },
-  { key: 'left_arm', label: 'Bras gauche', chip: 'Bras gauche', unit: 'cm', group: 'measurements', digits: 1, mField: 'left_arm' },
-  { key: 'right_arm', label: 'Bras droit', chip: 'Bras droit', unit: 'cm', group: 'measurements', digits: 1, mField: 'right_arm' },
-  { key: 'left_thigh', label: 'Cuisse gauche', chip: 'Cuisse gauche', unit: 'cm', group: 'measurements', digits: 1, mField: 'left_thigh' },
-  { key: 'right_thigh', label: 'Cuisse droite', chip: 'Cuisse droite', unit: 'cm', group: 'measurements', digits: 1, mField: 'right_thigh' },
-  { key: 'left_calf', label: 'Mollet gauche', chip: 'Mollet gauche', unit: 'cm', group: 'measurements', digits: 1, mField: 'left_calf' },
-  { key: 'right_calf', label: 'Mollet droit', chip: 'Mollet droit', unit: 'cm', group: 'measurements', digits: 1, mField: 'right_calf' },
-  { key: 'neck', label: 'Tour de cou', chip: 'Cou', unit: 'cm', group: 'measurements', digits: 1, mField: 'neck' },
+  { key: 'left_arm', label: traduire('Bras gauche'), chip: traduire('Bras gauche'), unit: 'cm', group: 'measurements', digits: 1, mField: 'left_arm' },
+  { key: 'right_arm', label: traduire('Bras droit'), chip: traduire('Bras droit'), unit: 'cm', group: 'measurements', digits: 1, mField: 'right_arm' },
+  { key: 'left_thigh', label: traduire('Cuisse gauche'), chip: traduire('Cuisse gauche'), unit: 'cm', group: 'measurements', digits: 1, mField: 'left_thigh' },
+  { key: 'right_thigh', label: traduire('Cuisse droite'), chip: traduire('Cuisse droite'), unit: 'cm', group: 'measurements', digits: 1, mField: 'right_thigh' },
+  { key: 'left_calf', label: traduire('Mollet gauche'), chip: traduire('Mollet gauche'), unit: 'cm', group: 'measurements', digits: 1, mField: 'left_calf' },
+  { key: 'right_calf', label: traduire('Mollet droit'), chip: traduire('Mollet droit'), unit: 'cm', group: 'measurements', digits: 1, mField: 'right_calf' },
+  { key: 'neck', label: traduire('Tour de cou'), chip: 'Cou', unit: 'cm', group: 'measurements', digits: 1, mField: 'neck' },
 ];
 
 export const METRIC_ALIASES: Record<string, string> = { muscle_percent: 'muscle', fat: 'fat_percent', water: 'water_percent' };
@@ -216,5 +217,5 @@ export function frDay(iso: string): string {
 
 export function fmtValue(v: number, digits: number): string {
   const r = Math.round(v * 10 ** digits) / 10 ** digits;
-  return String(r).replace('.', ',');
+  return String(r).replace('.', DECIMAL);
 }

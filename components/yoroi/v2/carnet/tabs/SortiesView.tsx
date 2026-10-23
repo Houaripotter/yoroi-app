@@ -11,6 +11,7 @@ import { kmOf, useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, BigStats, Columns, RecordTile, BlockTitle } from '../ui';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { SessionLine, TabEmpty, TabLoading } from './common';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const ENDURANCE = new Set(sportsInPack('endurance'));
 
@@ -52,7 +53,7 @@ export function SortiesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
 
   if (loading) return <TabLoading />;
   if (trainings.length === 0) {
-    return hideEmpty ? null : <TabEmpty title="Aucune sortie pour l’instant" text="Course, trail, vélo, natation : ajoute tes sorties pour voir tes kilomètres, ton allure et tes records." action="Ajouter une sortie" href="/seance/deja-faite?sport=running" />;
+    return hideEmpty ? null : <TabEmpty title={traduire("Aucune sortie pour l’instant")} text={traduire("Course, trail, vélo, natation : ajoute tes sorties pour voir tes kilomètres, ton allure et tes records.")} action={traduire("Ajouter une sortie")} href="/seance/deja-faite?sport=running" />;
   }
 
   return (
@@ -60,24 +61,24 @@ export function SortiesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
       <Sheet2>
         <BigStats
           items={[
-            { value: String(st.km).replace('.', ','), unit: 'km', label: 'au total', color: P.indigo },
+            { value: String(st.km).replace('.', DECIMAL), unit: 'km', label: traduire('au total'), color: P.indigo },
             { value: String(trainings.length), label: 'sorties' },
-            { value: humanMinutes(st.min), label: 'de course' },
+            { value: humanMinutes(st.min), label: traduire('de course') },
             { value: pace(st.avg), unit: '/km', label: 'allure moyenne', color: P.accent },
           ]}
         />
       </Sheet2>
       <Sheet2>
-        <Ink size={18} weight="black" tight>Kilomètres, 6 mois</Ink>
+        <Ink size={18} weight="black" tight>{traduire("Kilomètres, 6 mois")}</Ink>
         <Columns items={st.months} color={P.indigo} />
       </Sheet2>
       {st.longest > 0 || isFinite(st.fastest) ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          {st.longest > 0 ? <RecordTile label="Plus longue" value={`${String(st.longest).replace('.', ',')} km`} sub={shortDate(st.longestDate)} tone="indigo" /> : null}
+          {st.longest > 0 ? <RecordTile label={traduire("Plus longue")} value={`${String(st.longest).replace('.', DECIMAL)} km`} sub={shortDate(st.longestDate)} tone="indigo" /> : null}
           {isFinite(st.fastest) ? <RecordTile label="Meilleure allure" value={`${pace(st.fastest)} /km`} sub={shortDate(st.fastestDate)} tone="red" /> : null}
         </View>
       ) : null}
-      <BlockTitle title="Dernières sorties" />
+      <BlockTitle title={traduire("Dernières sorties")} />
       {recent.map((t) => {
         const k = kmOf(t);
         const m = t.duration_minutes || 0;

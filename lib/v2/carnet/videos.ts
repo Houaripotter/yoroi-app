@@ -9,6 +9,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { addVideo, deleteVideo, getVideos } from '@/lib/videoLibraryService';
 import type { ExerciseVideo } from '@/lib/videoLibraryService';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 const VIDEOS_KEY = 'yoroi_exercise_videos_v1';
 export const VIDEOS_CHANGED_EVENT = 'YOROI_VIDEOS_CHANGED';
@@ -37,7 +38,7 @@ export function placeOf(v: CarnetVideo): string {
   if (v.benchmarkName) return v.benchmarkName;
   if (v.muscleGroup) return v.muscleGroup;
   if (v.sportLabel) return v.sportLabel;
-  return 'Sans rangement';
+  return traduire('Sans rangement');
 }
 
 export function durationLabel(sec?: number): string | null {

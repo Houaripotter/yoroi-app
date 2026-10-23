@@ -11,6 +11,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { apresAutorisation, apresRefus, apresRelance, majDemandeSante, nePlusDemander, ouvrirReglagesSante } from './demande';
 import { messageConnexion } from './connexion';
 import type { IssueConnexion } from './connexion';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Seances notees a la main (celles qui ne viennent pas de Sante) */
 export async function seancesManuelles(): Promise<number> {
@@ -60,9 +61,9 @@ export function montrerIssueSante(issue: IssueConnexion): void {
   }
   const fn = (healthConnect as unknown as { openHealthConnectSettings?: () => Promise<void> }).openHealthConnectSettings;
   appAlert(m.titre, m.texte, [
-    { text: 'Plus tard', style: 'cancel' },
+    { text: traduire('Plus tard'), style: 'cancel' },
     {
-      text: Platform.OS === 'android' ? 'Ouvrir Health Connect' : 'Ouvrir Santé',
+      text: Platform.OS === 'android' ? 'Ouvrir Health Connect' : traduire('Ouvrir Santé'),
       onPress: () => {
         void ouvrirReglagesSante(Platform.OS === 'android' && typeof fn === 'function' ? () => fn.call(healthConnect) : undefined);
       },

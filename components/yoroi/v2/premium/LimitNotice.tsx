@@ -12,6 +12,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { limitNotice, type FreeLimitKey } from '@/lib/v2/premium/limits';
 import { ouvrirPaywall, type SourcePremium } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Source du paywall pour chaque limite : la mesure sait quelle limite fait passer a Premium */
 const SOURCE_DE_LIMITE: Record<FreeLimitKey, SourcePremium> = {
@@ -43,10 +44,10 @@ export function LimitNotice({ limit, count, style }: { limit: FreeLimitKey; coun
           ouvrirPaywall(SOURCE_DE_LIMITE[limit], count);
         }}
         accessibilityRole="button"
-        accessibilityLabel="Voir YOROI Premium"
+        accessibilityLabel={traduire("Voir YOROI Premium")}
         style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: 16, borderRadius: 14, borderWidth: 1, borderColor: c.accent, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: pressed ? c.accentTint : c.surface })}
       >
-        <Ink size={14} weight="extraBold" color={c.accent}>Voir YOROI Premium</Ink>
+        <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Voir YOROI Premium")}</Ink>
         <Icon name="chevron" size={14} color={c.accent} stroke={2.6} />
       </Pressable>
     </View>

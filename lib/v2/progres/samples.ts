@@ -8,6 +8,7 @@ import type { DayWeight } from '@/lib/v2/weightStats';
 import { shiftDays, todayIso } from './format';
 import { yearGrid } from './year';
 import type { DayCell } from './year';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Petit bruit regulier et reproductible, pour que l'exemple ne bouge pas a chaque affichage */
 function wobble(i: number): number {
@@ -42,7 +43,7 @@ export function sampleLift(today = todayIso()): { name: string; points: SamplePo
     top = Math.max(top, v);
     return { date: shiftDays(today, -(vals.length - 1 - i) * 9), value: v, record };
   });
-  return { name: 'Développé couché', points };
+  return { name: traduire('Développé couché'), points };
 }
 
 /** Composition d'exemple : trois courbes separees, chacune son echelle */
@@ -55,12 +56,12 @@ export function sampleComposition(today = todayIso()): { fat: SamplePoint[]; mus
 
 /** Mensurations d'exemple pour la silhouette */
 export const SAMPLE_SILHOUETTE: { key: 'shoulders' | 'chest' | 'arm' | 'waist' | 'hips' | 'thigh'; label: string; value: string; note: string; delta: number }[] = [
-  { key: 'shoulders', label: 'Épaules', value: '118 cm', note: '1,5 cm de plus', delta: 1.5 },
-  { key: 'chest', label: 'Poitrine', value: '102 cm', note: '1 cm de plus', delta: 1 },
-  { key: 'arm', label: 'Bras', value: '36 cm', note: '8 mm de plus', delta: 0.8 },
-  { key: 'waist', label: 'Taille', value: '84 cm', note: '2 cm de moins', delta: -2 },
+  { key: 'shoulders', label: 'Épaules', value: '118 cm', note: traduire('1,5 cm de plus'), delta: 1.5 },
+  { key: 'chest', label: 'Poitrine', value: '102 cm', note: traduire('1 cm de plus'), delta: 1 },
+  { key: 'arm', label: 'Bras', value: '36 cm', note: traduire('8 mm de plus'), delta: 0.8 },
+  { key: 'waist', label: 'Taille', value: '84 cm', note: traduire('2 cm de moins'), delta: -2 },
   { key: 'hips', label: 'Hanches', value: '98 cm', note: 'stable', delta: 0 },
-  { key: 'thigh', label: 'Cuisse', value: '58 cm', note: '1 cm de plus', delta: 1 },
+  { key: 'thigh', label: 'Cuisse', value: '58 cm', note: traduire('1 cm de plus'), delta: 1 },
 ];
 
 /** Carte de l'annee d'exemple : trois a quatre seances par semaine, une pause au milieu */

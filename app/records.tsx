@@ -34,12 +34,13 @@ import { BackButton, BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, Section
 import { blancA } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { libelleUnite, versUnitePoids } from '@/lib/v2/unitePoids';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const RECORDS_CACHE_KEY = '@yoroi_records_cache_v1';
 const RECORDS_CACHE_TTL = 10 * 60 * 1000;
 
 type Group = 'force' | 'endurance' | 'combat' | 'regularite';
-const GROUP_LABEL: Record<Group, string> = { force: 'Muscu', endurance: 'Cardio', combat: 'Combat', regularite: 'Régularité' };
+const GROUP_LABEL: Record<Group, string> = { force: 'Muscu', endurance: 'Cardio', combat: traduire('Combat'), regularite: traduire('Régularité') };
 const ORDER: Group[] = ['force', 'endurance', 'combat', 'regularite'];
 
 function groupOf(l: RecordLine): Group {
@@ -59,12 +60,12 @@ function groupOfSport(sport: string): Group {
 }
 
 function fmt1(v: number): string {
-  return (Math.round(v * 10) / 10).toString().replace('.', ',');
+  return (Math.round(v * 10) / 10).toString().replace('.', DECIMAL);
 }
 
 function weekLabel(monday: string): string {
   const d = new Date(monday + 'T12:00:00');
-  return `semaine du ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return traduire("semaine du {0} {1}", d.getDate(), MONTHS[d.getMonth()]);
 }
 
 type CompCombat = { resultat?: string; methode?: string; technique?: string };
@@ -205,10 +206,10 @@ export default function RecordsScreen() {
     const diff = current.kind === 'allure' ? first.value - current.best : current.best - first.value;
     if (Math.abs(diff) < 0.05) return null;
     const m = MONTHS[new Date(first.date.slice(0, 10) + 'T12:00:00').getMonth()];
-    if (current.kind === 'force') return `${fmt1(Math.abs(cv(diff)))} ${uL} de ${diff > 0 ? 'plus' : 'moins'} depuis ${m}`;
-    if (current.kind === 'allure') return `${Math.round(Math.abs(diff))} secondes au km ${diff > 0 ? 'gagnées' : 'perdues'} depuis ${m}`;
-    if (current.kind === 'distance') return `${fmt1(Math.abs(diff))} km de ${diff > 0 ? 'plus' : 'moins'} depuis ${m}`;
-    return `${fmt1(Math.abs(diff))} de ${diff > 0 ? 'plus' : 'moins'} depuis ${m}`;
+    if (current.kind === 'force') return traduire("{0} {1} de {2} depuis {3}", fmt1(Math.abs(cv(diff))), uL, diff > 0 ? 'plus' : 'moins', m);
+    if (current.kind === 'allure') return traduire("{0} secondes au km {1} depuis {2}", Math.round(Math.abs(diff)), diff > 0 ? 'gagnées' : 'perdues', m);
+    if (current.kind === 'distance') return traduire("{0} km de {1} depuis {2}", fmt1(Math.abs(diff)), diff > 0 ? 'plus' : 'moins', m);
+    return traduire("{0} de {1} depuis {2}", fmt1(Math.abs(diff)), diff > 0 ? 'plus' : 'moins', m);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, unite]);
 
@@ -218,12 +219,12 @@ export default function RecordsScreen() {
   const g = general;
   const otherRows: { label: string; value: string; date?: string; share?: { type: RecordType; value: number } }[] = [];
   if (g) {
-    if (g.lowestWeight) otherRows.push({ label: 'Poids le plus bas', value: `${fmt1(g.lowestWeight.value)} kg`, date: g.lowestWeight.date, share: { type: 'lowestWeight', value: g.lowestWeight.value } });
-    if (g.startingWeight) otherRows.push({ label: 'Poids de départ', value: `${fmt1(g.startingWeight.value)} kg`, date: g.startingWeight.date });
-    if (g.lowestWaist) otherRows.push({ label: 'Tour de taille le plus bas', value: `${g.lowestWaist.value} cm`, date: g.lowestWaist.date, share: { type: 'lowestWaist', value: g.lowestWaist.value } });
-    if (g.longestStreak && g.longestStreak.value > 1) otherRows.push({ label: 'Plus longue série de jours', value: `${g.longestStreak.value} jours`, date: g.longestStreak.date, share: { type: 'longestStreak', value: g.longestStreak.value } });
-    if (g.bestMonthRegularity) otherRows.push({ label: 'Ton mois le plus régulier', value: `${g.bestMonthRegularity.value} %`, date: g.bestMonthRegularity.label, share: { type: 'bestMonthRegularity', value: g.bestMonthRegularity.value } });
-    if (g.totalMeasurements > 0) otherRows.push({ label: 'Pesées au total', value: String(g.totalMeasurements) });
+    if (g.lowestWeight) otherRows.push({ label: traduire('Poids le plus bas'), value: `${fmt1(g.lowestWeight.value)} kg`, date: g.lowestWeight.date, share: { type: 'lowestWeight', value: g.lowestWeight.value } });
+    if (g.startingWeight) otherRows.push({ label: traduire('Poids de départ'), value: `${fmt1(g.startingWeight.value)} kg`, date: g.startingWeight.date });
+    if (g.lowestWaist) otherRows.push({ label: traduire('Tour de taille le plus bas'), value: `${g.lowestWaist.value} cm`, date: g.lowestWaist.date, share: { type: 'lowestWaist', value: g.lowestWaist.value } });
+    if (g.longestStreak && g.longestStreak.value > 1) otherRows.push({ label: traduire('Plus longue série de jours'), value: `${g.longestStreak.value} jours`, date: g.longestStreak.date, share: { type: 'longestStreak', value: g.longestStreak.value } });
+    if (g.bestMonthRegularity) otherRows.push({ label: traduire('Ton mois le plus régulier'), value: `${g.bestMonthRegularity.value} %`, date: g.bestMonthRegularity.label, share: { type: 'bestMonthRegularity', value: g.bestMonthRegularity.value } });
+    if (g.totalMeasurements > 0) otherRows.push({ label: traduire('Pesées au total'), value: String(g.totalMeasurements) });
   }
   const dateText = (d?: string) => (!d ? '' : /^\d{4}-\d{2}-\d{2}/.test(d) ? longDate(d.slice(0, 10)) : d);
   const openTraining = (id?: number) => {
@@ -263,7 +264,7 @@ export default function RecordsScreen() {
         )}
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="extraBold" numberOfLines={2}>{shortName.charAt(0).toUpperCase() + shortName.slice(1)}</Ink>
-          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{`${relativeDay(l.date, today)}${l.stamps > 0 ? `, battu ${l.stamps} fois` : ''}`}</Ink>
+          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{`${relativeDay(l.date, today)}${l.stamps > 0 ? traduire(", battu {0} fois", l.stamps) : ''}`}</Ink>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 1, maxWidth: '44%' }}>
           <Ink size={17} weight="black" tight numberOfLines={1}>{v.main}</Ink>
@@ -297,7 +298,7 @@ export default function RecordsScreen() {
       >
         <EnTete
           titre="Records"
-          sousTitre={records.totalStamps > 0 ? `${records.totalStamps} record${records.totalStamps > 1 ? 's' : ''} battu${records.totalStamps > 1 ? 's' : ''} depuis le début` : 'tes meilleures marques, sport par sport'}
+          sousTitre={records.totalStamps > 0 ? traduirePluriel(records.totalStamps, records.totalStamps > 1, "{0} record battu depuis le début", "{0} records battus depuis le début", records.totalStamps) : traduire('tes meilleures marques, sport par sport')}
           repli="/(tabs)/seances"
           style={{ marginHorizontal: -22, marginTop: -8 }}
         />
@@ -306,7 +307,7 @@ export default function RecordsScreen() {
           <Glass style={{ gap: 8, borderColor: c.accentTint }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Hanko size={30} filled />
-              <Ink size={16} weight="black" tight>Nouveaux records</Ink>
+              <Ink size={16} weight="black" tight>{traduire("Nouveaux records")}</Ink>
             </View>
             {newRecords.map((nr, i) => (
               <Ink key={i} size={14} color={c.textSecondary}>{nr.message.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim()}</Ink>
@@ -316,9 +317,9 @@ export default function RecordsScreen() {
 
         {loaded && trainings.length === 0 ? (
           <EmptyState
-            title="Pas encore de record"
-            text="Enregistre tes séances avec tes charges, tes distances ou tes rounds. Dès que tu bats une marque, elle s’affiche ici."
-            action="Commencer une séance"
+            title={traduire("Pas encore de record")}
+            text={traduire("Enregistre tes séances avec tes charges, tes distances ou tes rounds. Dès que tu bats une marque, elle s’affiche ici.")}
+            action={traduire("Commencer une séance")}
             onAction={() => router.push('/seance' as any)}
           />
         ) : null}
@@ -346,12 +347,12 @@ export default function RecordsScreen() {
                     value={current.maxLoad ? `${fmt1(cv(current.maxLoad.weight))}` : '0'}
                     unit={current.maxLoad ? `${uL} × ${current.maxLoad.reps}` : uL}
                   />
-                  <Tile label="Max estimé sur 1 répétition" value={String(Math.round(cv(current.best)))} unit={uL} />
+                  <Tile label={traduire("Max estimé sur 1 répétition")} value={String(Math.round(cv(current.best)))} unit={uL} />
                 </View>
               ) : (
                 <Ink size={48} weight="black" tight style={{ lineHeight: 54 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                   {current.kind === 'allure' ? formatRecordValue(current).main : current.kind === 'reps' ? String(Math.round(current.best)) : fmt1(current.best)}
-                  <Ink size={18} weight="bold" color={c.textSecondary}>{current.kind === 'allure' ? ' min par km' : current.kind === 'reps' ? ' répétitions' : ' km'}</Ink>
+                  <Ink size={18} weight="bold" color={c.textSecondary}>{current.kind === 'allure' ? traduire(' min par km') : current.kind === 'reps' ? traduire(' répétitions') : ' km'}</Ink>
                 </Ink>
               )}
               {progress ? <Ink size={14} weight="bold" color={c.indigo}>{progress}</Ink> : null}
@@ -359,7 +360,7 @@ export default function RecordsScreen() {
             {chartPoints.length >= 2 ? (
               <View style={{ gap: 6 }}>
                 <Ink size={12} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 4 }}>
-                  {current.kind === 'force' ? 'Ton max estimé, une séance par point' : current.kind === 'reps' ? 'Tes répétitions, une séance par point' : 'Évolution de ton record'}
+                  {current.kind === 'force' ? traduire('Ton max estimé, une séance par point') : current.kind === 'reps' ? traduire('Tes répétitions, une séance par point') : traduire('Évolution de ton record')}
                 </Ink>
                 <BrushChart
                   points={chartPoints}
@@ -371,21 +372,21 @@ export default function RecordsScreen() {
               </View>
             ) : (
               <Glass>
-                <Ink size={14} color={c.textSecondary}>Encore une séance avec cet exercice et ta courbe de progression apparaît ici.</Ink>
+                <Ink size={14} color={c.textSecondary}>{traduire("Encore une séance avec cet exercice et ta courbe de progression apparaît ici.")}</Ink>
               </Glass>
             )}
-            <Glass onPress={current.trainingId != null ? () => openTraining(current.trainingId) : undefined} label="Voir la séance du record" style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <Glass onPress={current.trainingId != null ? () => openTraining(current.trainingId) : undefined} label={traduire("Voir la séance du record")} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <Hanko size={28} rotate={-6} color={lastStamp ? c.record : '#B9B6AE'} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={15} weight="extraBold">{lastStamp ? `Dernier record, ${longDate(lastStamp.date)}` : `Ta meilleure marque, ${longDate(current.date)}`}</Ink>
+                <Ink size={15} weight="extraBold">{lastStamp ? `Dernier record, ${longDate(lastStamp.date)}` : traduire("Ta meilleure marque, {0}", longDate(current.date))}</Ink>
                 <Ink size={13} color={c.textSecondary}>
-                  {current.kind === 'force' && current.bestSet ? `${fmt1(cv(current.bestSet.weight))} ${uL} pour ${current.bestSet.reps} répétition${current.bestSet.reps > 1 ? 's' : ''}` : formatRecordValue(current).main}
+                  {current.kind === 'force' && current.bestSet ? traduirePluriel(current.bestSet.reps, current.bestSet.reps > 1, "{0} {1} pour {2} répétition", "{0} {1} pour {2} répétitions", fmt1(cv(current.bestSet.weight)), uL, current.bestSet.reps) : formatRecordValue(current).main}
                 </Ink>
               </View>
               {current.trainingId != null ? <Icon name="chevron" size={18} color={c.textMuted} /> : null}
             </Glass>
 
-            <SectionTitle title={g0 === 'force' ? 'Tous tes exercices' : 'Tous tes records'} sub={g0 === 'force' ? 'charge max et max estimé' : undefined} />
+            <SectionTitle title={g0 === 'force' ? traduire('Tous tes exercices') : traduire('Tous tes records')} sub={g0 === 'force' ? traduire('charge max et max estimé') : undefined} />
             {g0 === 'force' ? (
               <View style={card}>
                 {lines.map((l, i) => (
@@ -394,7 +395,7 @@ export default function RecordsScreen() {
                     onPress={() => { tap(); setSelected(l.key); scrollRef.current?.scrollTo({ y: 0, animated: true }); }}
                     onLongPress={() => openTraining(l.trainingId)}
                     accessibilityRole="button"
-                    accessibilityHint="Appui long pour ouvrir la séance"
+                    accessibilityHint={traduire("Appui long pour ouvrir la séance")}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}
                   >
                     <Hanko size={24} color={l.date >= freshLimit && l.stamps > 0 ? c.record : '#B9B6AE'} rotate={-7} />
@@ -403,8 +404,8 @@ export default function RecordsScreen() {
                       <Ink size={12} color={c.textSecondary}>{relativeDay(l.date, today)}</Ink>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 1 }}>
-                      <Ink size={16} weight="black" tight>{l.kind === 'reps' ? `${Math.round(l.best)} rép.` : l.maxLoad ? `${fmt1(cv(l.maxLoad.weight))} ${uL} × ${l.maxLoad.reps}` : `${Math.round(cv(l.best))} ${uL}`}</Ink>
-                      <Ink size={11} color={c.textMuted}>{l.kind === 'reps' ? 'au poids du corps' : `max estimé ${Math.round(cv(l.best))} ${uL}`}</Ink>
+                      <Ink size={16} weight="black" tight>{l.kind === 'reps' ? traduire("{0} rép.", Math.round(l.best)) : l.maxLoad ? `${fmt1(cv(l.maxLoad.weight))} ${uL} × ${l.maxLoad.reps}` : `${Math.round(cv(l.best))} ${uL}`}</Ink>
+                      <Ink size={11} color={c.textMuted}>{l.kind === 'reps' ? traduire('au poids du corps') : traduire("max estimé {0} {1}", Math.round(cv(l.best)), uL)}</Ink>
                     </View>
                   </Pressable>
                 ))}
@@ -428,14 +429,14 @@ export default function RecordsScreen() {
         {g0 === 'combat' ? (
           <>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              <Tile label="Victoires en sparring" value={String(combat.wins)} sub={combat.roundsTotal ? `sur ${combat.roundsTotal} rounds notés` : 'note tes rounds pour les compter'} />
-              <Tile label="Soumissions placées" value={String(combat.submissionsTotal)} sub={combat.submissions[0] ? `Surtout : ${combat.submissions[0].technique.trim().charAt(0).toUpperCase()}${combat.submissions[0].technique.trim().slice(1)}` : undefined} />
-              {combat.compTotal > 0 ? <Tile label="Victoires en compétition" value={String(combat.compWins)} sub={`sur ${combat.compTotal} combat${combat.compTotal > 1 ? 's' : ''}`} /> : null}
+              <Tile label="Victoires en sparring" value={String(combat.wins)} sub={combat.roundsTotal ? traduire("sur {0} rounds notés", combat.roundsTotal) : traduire('note tes rounds pour les compter')} />
+              <Tile label={traduire("Soumissions placées")} value={String(combat.submissionsTotal)} sub={combat.submissions[0] ? `Surtout : ${combat.submissions[0].technique.trim().charAt(0).toUpperCase()}${combat.submissions[0].technique.trim().slice(1)}` : undefined} />
+              {combat.compTotal > 0 ? <Tile label={traduire("Victoires en compétition")} value={String(combat.compWins)} sub={traduirePluriel(combat.compTotal, combat.compTotal > 1, "sur {0} combat", "sur {0} combats", combat.compTotal)} /> : null}
             </View>
 
             {combat.submissions.length > 0 ? (
               <>
-                <SectionTitle title="Soumissions par technique" />
+                <SectionTitle title={traduire("Soumissions par technique")} />
                 <View style={[card, { paddingVertical: 8 }]}>
                   {combat.submissions.slice(0, 8).map((s) => (
                     <View key={s.technique} style={{ paddingVertical: 8, gap: 6 }}>
@@ -454,7 +455,7 @@ export default function RecordsScreen() {
 
             {combatDuree.length > 0 ? (
               <>
-                <SectionTitle title="Tes séances les plus longues" />
+                <SectionTitle title={traduire("Tes séances les plus longues")} />
                 <View style={card}>
                   {combatDuree.map((l, i) => <LineRow key={l.key} l={l} i={i} />)}
                 </View>
@@ -463,7 +464,7 @@ export default function RecordsScreen() {
 
             {combatRounds.length > 0 ? (
               <>
-                <SectionTitle title="Le plus de rounds" sub="un repère de volume, pas un record" />
+                <SectionTitle title={traduire("Le plus de rounds")} sub={traduire("un repère de volume, pas un record")} />
                 <View style={card}>
                   {combatRounds.map((l, i) => <LineRow key={l.key} l={l} i={i} />)}
                 </View>
@@ -472,9 +473,9 @@ export default function RecordsScreen() {
 
             {combat.roundsTotal === 0 && combat.compTotal === 0 ? (
               <Glass style={{ gap: 10 }}>
-                <Ink size={15} weight="extraBold">Note tes rounds de sparring</Ink>
-                <Ink size={13} color={c.textSecondary}>Résultat et soumission de chaque round : tes victoires et tes techniques favorites s’affichent ici.</Ink>
-                <BigButton label="Commencer une séance" onPress={() => router.push('/seance' as any)} />
+                <Ink size={15} weight="extraBold">{traduire("Note tes rounds de sparring")}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("Résultat et soumission de chaque round : tes victoires et tes techniques favorites s’affichent ici.")}</Ink>
+                <BigButton label={traduire("Commencer une séance")} onPress={() => router.push('/seance' as any)} />
               </Glass>
             ) : null}
           </>
@@ -484,14 +485,14 @@ export default function RecordsScreen() {
         {g0 === 'regularite' ? (
           <>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {reg.bestWeek ? <Tile label="Ta meilleure semaine" value={String(reg.bestWeek.count)} unit={`séance${reg.bestWeek.count > 1 ? 's' : ''}`} sub={weekLabel(reg.bestWeek.monday)} /> : null}
-              {reg.longestWeekStreak > 0 ? <Tile label="Semaines d’affilée" value={String(reg.longestWeekStreak)} unit="sem." sub={reg.currentWeekStreak > 1 ? `en cours : ${reg.currentWeekStreak} semaines` : 'ton record'} /> : null}
-              <Tile label="Séances au total" value={String(reg.totalSessions)} />
-              <Tile label="Temps d’entraînement" value={formatHours(reg.totalMinutes).value} unit={formatHours(reg.totalMinutes).unit || undefined} />
+              {reg.bestWeek ? <Tile label={traduire("Ta meilleure semaine")} value={String(reg.bestWeek.count)} unit={traduirePluriel(reg.bestWeek.count, reg.bestWeek.count > 1, "séance", "séances")} sub={weekLabel(reg.bestWeek.monday)} /> : null}
+              {reg.longestWeekStreak > 0 ? <Tile label={traduire("Semaines d’affilée")} value={String(reg.longestWeekStreak)} unit="sem." sub={reg.currentWeekStreak > 1 ? traduire("en cours : {0} semaines", reg.currentWeekStreak) : traduire('ton record')} /> : null}
+              <Tile label={traduire("Séances au total")} value={String(reg.totalSessions)} />
+              <Tile label={traduire("Temps d’entraînement")} value={formatHours(reg.totalMinutes).value} unit={formatHours(reg.totalMinutes).unit || undefined} />
             </View>
             {lines.filter((l) => l.kind === 'duree').length > 0 ? (
               <>
-                <SectionTitle title="Tes séances les plus longues" />
+                <SectionTitle title={traduire("Tes séances les plus longues")} />
                 <View style={card}>
                   {lines.filter((l) => l.kind === 'duree').map((l, i) => <LineRow key={l.key} l={l} i={i} />)}
                 </View>
@@ -502,7 +503,7 @@ export default function RecordsScreen() {
 
         {otherRows.length > 0 ? (
           <>
-            <SectionTitle title="Poids et mesures" sub="tes repères hors séance" />
+            <SectionTitle title={traduire("Poids et mesures")} sub={traduire("tes repères hors séance")} />
             <View style={card}>
               {otherRows.map((r, i) => (
                 <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}>
@@ -512,7 +513,7 @@ export default function RecordsScreen() {
                   </View>
                   <Ink size={16} weight="black">{r.value}</Ink>
                   {r.share ? (
-                    <Pressable onPress={() => { tap(); share(r.share!.type, r.share!.value); }} accessibilityRole="button" accessibilityLabel={`Partager : ${r.label}`} hitSlop={6} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                    <Pressable onPress={() => { tap(); share(r.share!.type, r.share!.value); }} accessibilityRole="button" accessibilityLabel={traduire("Partager : {0}", r.label)} hitSlop={6} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="share" size={18} color={c.textSecondary} />
                     </Pressable>
                   ) : null}
@@ -523,8 +524,7 @@ export default function RecordsScreen() {
         ) : null}
         {g0 === 'force' && trainings.length > 0 ? (
           <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', paddingHorizontal: 20 }}>
-            Le max estimé vient de tes séries (formule d’Epley). Ta première séance sur un exercice sert de point de départ.
-          </Ink>
+            {traduire("Le max estimé vient de tes séries (formule d’Epley). Ta première séance sur un exercice sert de point de départ.")}</Ink>
         ) : null}
       </ScrollView>
     </View>

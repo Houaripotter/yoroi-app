@@ -25,19 +25,20 @@ import { isoDay } from '@/lib/v2/seance/format';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const RESULTS: { value: CombatResultat; label: string }[] = [
-  { value: 'victoire', label: 'Victoire' },
-  { value: 'defaite', label: 'Défaite' },
+  { value: 'victoire', label: traduire('Victoire') },
+  { value: 'defaite', label: traduire('Défaite') },
   { value: 'nul', label: 'Nul' },
 ];
 
 const METHODS: { value: CombatMethode; label: string }[] = [
   { value: 'soumission', label: 'Soumission' },
   { value: 'ko', label: 'KO' },
-  { value: 'tko', label: 'Arrêt de l’arbitre' },
+  { value: 'tko', label: traduire('Arrêt de l’arbitre') },
   { value: 'points', label: 'Points' },
-  { value: 'decision', label: 'Décision' },
+  { value: 'decision', label: traduire('Décision') },
   { value: 'dq', label: 'Disqualification' },
 ];
 
@@ -95,7 +96,7 @@ export default function SeanceMatch() {
   const save = async () => {
     if (savingRef.current || saving) return;
     if (!opponent.trim()) {
-      appAlert('Ton adversaire ?', 'Écris au moins son nom pour garder ce combat dans ton palmarès.');
+      appAlert(traduire('Ton adversaire ?'), traduire('Écris au moins son nom pour garder ce combat dans ton palmarès.'));
       return;
     }
     savingRef.current = true;
@@ -120,7 +121,7 @@ export default function SeanceMatch() {
       router.back();
     } catch (err) {
       logger.error('Enregistrement du combat impossible', err);
-      appAlert('Oups', 'Le combat n’a pas pu être enregistré. Réessaie.');
+      appAlert('Oups', traduire('Le combat n’a pas pu être enregistré. Réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -133,7 +134,7 @@ export default function SeanceMatch() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 110, gap: 16 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
-        <EnTete titre="Un combat" sousTitre="Pour ton palmarès" onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={traduire("Un combat")} sousTitre={traduire("Pour ton palmarès")} onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         <View style={{ padding: 16, borderRadius: 26, backgroundColor: result === 'victoire' ? c.successTint : result === 'defaite' ? c.accentTint : c.fillSoft, gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -163,22 +164,22 @@ export default function SeanceMatch() {
               );
             })}
           </View>
-          <TextInput value={technique} onChangeText={setTechnique} placeholder={method === 'soumission' ? 'Quelle soumission\u00a0? Triangle, clé de bras...' : 'La technique décisive'} placeholderTextColor={c.textMuted} accessibilityLabel="Technique" style={input} />
+          <TextInput value={technique} onChangeText={setTechnique} placeholder={method === 'soumission' ? traduire('Quelle soumission\u00a0? Triangle, clé de bras...') : traduire('La technique décisive')} placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Technique")} style={input} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
               <Ink size={12} weight="bold" color={c.textMuted}>Round</Ink>
-              <Stepper value={round} step={1} min={1} max={12} unit="numéro du round" layout="stack" size={26} button={44} format={(v) => String(v)} onChange={setRound} />
+              <Stepper value={round} step={1} min={1} max={12} unit={traduire("numéro du round")} layout="stack" size={26} button={44} format={(v) => String(v)} onChange={setRound} />
             </View>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>Temps dans le round</Ink>
-              <Stepper value={timeSec} step={5} max={1800} unit="secondes dans le round" layout="stack" size={26} button={44} format={(v) => fmtTime(v)} onChange={setTimeSec} />
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Temps dans le round")}</Ink>
+              <Stepper value={timeSec} step={5} max={1800} unit={traduire("secondes dans le round")} layout="stack" size={26} button={44} format={(v) => fmtTime(v)} onChange={setTimeSec} />
             </View>
           </View>
         </Section>
 
         <Section title="Adversaire">
-          <TextInput value={opponent} onChangeText={setOpponent} placeholder="Son nom" placeholderTextColor={c.textMuted} accessibilityLabel="Nom de l'adversaire" style={input} />
-          <TextInput value={club} onChangeText={setClub} placeholder="Son club (facultatif)" placeholderTextColor={c.textMuted} accessibilityLabel="Club de l'adversaire" style={input} />
+          <TextInput value={opponent} onChangeText={setOpponent} placeholder="Son nom" placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Nom de l'adversaire")} style={input} />
+          <TextInput value={club} onChangeText={setClub} placeholder="Son club (facultatif)" placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Club de l'adversaire")} style={input} />
         </Section>
 
         <Section title="Quand">
@@ -186,7 +187,7 @@ export default function SeanceMatch() {
           {competitions.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               <Pressable onPress={() => setCompetitionId(null)} accessibilityRole="button" accessibilityState={{ selected: competitionId === null }} style={chip(competitionId === null)}>
-                <Ink size={14} weight="extraBold" color={competitionId === null ? c.background : c.ink}>Combat libre</Ink>
+                <Ink size={14} weight="extraBold" color={competitionId === null ? c.background : c.ink}>{traduire("Combat libre")}</Ink>
               </Pressable>
               {competitions.map((comp) => {
                 const on = comp.id === competitionId;
@@ -200,26 +201,26 @@ export default function SeanceMatch() {
           ) : null}
         </Section>
 
-        <Section title="Ton poids">
+        <Section title={traduire("Ton poids")}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>À la pesée</Ink>
-              <Stepper value={weighIn} step={0.1} max={250} decimals unit="kilos à la pesée" layout="stack" size={26} button={44} format={(v) => String(v).replace('.', ',')} onChange={setWeighIn} />
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire("À la pesée")}</Ink>
+              <Stepper value={weighIn} step={0.1} max={250} decimals unit={traduire("kilos à la pesée")} layout="stack" size={26} button={44} format={(v) => String(v).replace('.', DECIMAL)} onChange={setWeighIn} />
             </View>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>Le jour J</Ink>
-              <Stepper value={dayWeight} step={0.1} max={250} decimals unit="kilos le jour du combat" layout="stack" size={26} button={44} format={(v) => String(v).replace('.', ',')} onChange={setDayWeight} />
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Le jour J")}</Ink>
+              <Stepper value={dayWeight} step={0.1} max={250} decimals unit={traduire("kilos le jour du combat")} layout="stack" size={26} button={44} format={(v) => String(v).replace('.', DECIMAL)} onChange={setDayWeight} />
             </View>
           </View>
-          <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Pré-rempli avec ta dernière pesée. Touche un chiffre pour le taper.</Ink>
+          <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Pré-rempli avec ta dernière pesée. Touche un chiffre pour le taper.")}</Ink>
         </Section>
 
-        <TextInput value={notes} onChangeText={setNotes} placeholder="Ce que tu retiens de ce combat" placeholderTextColor={c.textMuted} multiline accessibilityLabel="Notes" style={[fontStyle('medium'), { minHeight: 90, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]} />
+        <TextInput value={notes} onChangeText={setNotes} placeholder={traduire("Ce que tu retiens de ce combat")} placeholderTextColor={c.textMuted} multiline accessibilityLabel="Notes" style={[fontStyle('medium'), { minHeight: 90, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]} />
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 18 }}>
         <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1, shadowColor: c.accent, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : 'Enregistrer ce combat'}</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : traduire('Enregistrer ce combat')}</Ink>
         </Pressable>
       </View>
     </View>

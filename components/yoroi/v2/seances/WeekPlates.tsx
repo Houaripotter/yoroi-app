@@ -12,6 +12,7 @@ import { mondayOf } from '@/lib/v2/trainingWeek';
 import Svg, { Path } from 'react-native-svg';
 import type { PlateState } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type DayPlate = { iso: string; state: PlateState; count: number; isToday: boolean };
 
@@ -81,7 +82,7 @@ export function WeekPlates({ plates, size = 1 }: { plates: DayPlate[]; size?: nu
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
       {plates.map((p, i) => (
-        <View key={p.iso} style={{ alignItems: 'center', gap: 6 }} accessibilityLabel={`${PLAN_DAYS_SHORT[i]} ${p.state === 'done' ? 'fait' : p.state === 'planned' ? 'prévu' : p.state === 'missed' ? 'manqué' : p.state === 'rest' ? 'repos' : 'libre'}`}>
+        <View key={p.iso} style={{ alignItems: 'center', gap: 6 }} accessibilityLabel={`${PLAN_DAYS_SHORT[i]} ${p.state === 'done' ? 'fait' : p.state === 'planned' ? traduire('prévu') : p.state === 'missed' ? traduire('manqué') : p.state === 'rest' ? 'repos' : 'libre'}`}>
           <DayDot state={p.state} count={p.count} size={32 * size} />
           <Ink size={12} weight={p.isToday ? 'black' : 'bold'} color={p.isToday ? c.accent : c.textMuted}>{PLAN_DAYS_SHORT[i]}</Ink>
         </View>

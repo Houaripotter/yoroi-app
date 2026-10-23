@@ -15,6 +15,7 @@ import { logger } from '@/lib/security/logger';
 import { noterPartage } from '@/lib/v2/partage/mesure';
 import type { SourcePartage } from '@/lib/v2/partage/mesure';
 import type { FormatId, Moment, TypeExploit } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 const PX: Record<FormatId, { w: number; h: number }> = {
   story: { w: 1080, h: 1920 },
@@ -55,12 +56,12 @@ export async function enregistrerCarte(ref: RefObject<View | null>, format: Form
     const perm = await requestPermissionsAsync(true);
     const st = perm.status as string;
     if (st !== 'granted' && st !== 'limited') {
-      dire(onErreur, 'Pellicule bloquée', 'Autorise YOROI à ajouter des photos dans les réglages de ton téléphone, puis réessaie.');
+      dire(onErreur, traduire('Pellicule bloquée'), traduire('Autorise YOROI à ajouter des photos dans les réglages de ton téléphone, puis réessaie.'));
       return false;
     }
     const uri = await capturerHD(ref, format);
     if (!uri) {
-      dire(onErreur, 'Un instant', 'La carte n’est pas encore prête, réessaie dans une seconde.');
+      dire(onErreur, traduire('Un instant'), traduire('La carte n’est pas encore prête, réessaie dans une seconde.'));
       return false;
     }
     await saveToLibraryAsync(uri);
@@ -68,7 +69,7 @@ export async function enregistrerCarte(ref: RefObject<View | null>, format: Form
     return true;
   } catch (e) {
     logger.error('[cartes] enregistrement', e);
-    dire(onErreur, 'Oups', 'Impossible d’enregistrer la carte dans ta pellicule.');
+    dire(onErreur, 'Oups', traduire('Impossible d’enregistrer la carte dans ta pellicule.'));
     return false;
   }
 }
@@ -80,17 +81,17 @@ export async function partagerCarte(ref: RefObject<View | null>, format: FormatI
   try {
     const uri = await capturerHD(ref, format);
     if (!uri) {
-      dire(onErreur, 'Un instant', 'La carte n’est pas encore prête, réessaie dans une seconde.');
+      dire(onErreur, traduire('Un instant'), traduire('La carte n’est pas encore prête, réessaie dans une seconde.'));
       return false;
     }
     if (!(await isAvailableAsync())) {
       return enregistrerCarte(ref, format, onErreur);
     }
-    await shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Partager ma carte YOROI', UTI: 'public.png' });
+    await shareAsync(uri, { mimeType: 'image/png', dialogTitle: traduire('Partager ma carte YOROI'), UTI: 'public.png' });
     return true;
   } catch (e) {
     logger.error('[cartes] partage', e);
-    dire(onErreur, 'Oups', 'Impossible de partager la carte.');
+    dire(onErreur, 'Oups', traduire('Impossible de partager la carte.'));
     return false;
   }
 }

@@ -1,9 +1,10 @@
 /**
  * Dates des competitions et objectifs : lecture en heure locale, ecarts en jours, libelles francais.
  */
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+import { traduire } from '@/lib/i18n/tr';
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 const DAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 
 /** "AAAA-MM-JJ" lu en heure locale (new Date() le lirait en UTC) */
@@ -70,10 +71,10 @@ export function sentenceCase(s: string): string {
 /** "dans 12 jours", "demain", "aujourd'hui", "il y a 3 jours" */
 export function relativeDays(n: number): string {
   if (n === 0) return "aujourd'hui";
-  if (n === 1) return 'demain';
+  if (n === 1) return traduire('demain');
   if (n === -1) return 'hier';
-  if (n > 1) return `dans ${n} jours`;
-  return `il y a ${-n} jours`;
+  if (n > 1) return traduire("dans {0} jours", n);
+  return traduire("il y a {0} jours", -n);
 }
 
 export function plural(n: number, one: string, many?: string): string {

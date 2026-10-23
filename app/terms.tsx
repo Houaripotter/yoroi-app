@@ -14,8 +14,9 @@ import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import { safeOpenURL } from '@/lib/security/validators';
 import { FREE_LIMITS } from '@/lib/v2/premium/limits';
 import APP_CONFIG from '@/lib/appConfig';
+import { traduire } from '@/lib/i18n/tr';
 
-const LAST_UPDATE = '10 octobre 2026';
+const LAST_UPDATE = traduire('10 octobre 2026');
 const CONTACT = 'yoroiapp@hotmail.com';
 
 /**
@@ -26,7 +27,7 @@ const CONTACT = 'yoroiapp@hotmail.com';
 const EDITEUR: { nom: string; statut?: string; adresse?: string } | null = {
   nom: 'KABUTO',
   statut: 'SASU au capital de 1 000 euros, SIREN 109 094 649, RCS Marseille.',
-  adresse: 'Siège social : 55 rue Grignan, 13006 Marseille, France.',
+  adresse: traduire('Siège social : 55 rue Grignan, 13006 Marseille, France.'),
 };
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
@@ -37,91 +38,91 @@ type Section = { title: string; icon: IconName; content: string[]; link?: { labe
 function sections(): Section[] {
   const editeur = EDITEUR
     ? [`YOROI est édité par ${EDITEUR.nom}.`, EDITEUR.statut, EDITEUR.adresse, `Contact : ${CONTACT}`].filter((l): l is string => Boolean(l))
-    : [`YOROI est édité par son créateur. Pour toute question : ${CONTACT}`];
+    : [traduire("YOROI est édité par son créateur. Pour toute question : {0}", CONTACT)];
   return [
     {
-      title: 'Éditeur',
+      title: traduire('Éditeur'),
       icon: 'user',
       content: editeur,
     },
     {
-      title: 'Ce que fait YOROI',
+      title: traduire('Ce que fait YOROI'),
       icon: 'dumbbell',
       content: [
-        'YOROI t’aide à suivre ton poids, tes mesures et tes séances de sport, avec un monde samouraï pour te motiver.',
-        'En utilisant l’app, tu acceptes ces conditions. Si tu n’es pas d’accord, n’utilise pas l’app.',
+        traduire('YOROI t’aide à suivre ton poids, tes mesures et tes séances de sport, avec un monde samouraï pour te motiver.'),
+        traduire('En utilisant l’app, tu acceptes ces conditions. Si tu n’es pas d’accord, n’utilise pas l’app.'),
       ],
     },
     {
-      title: 'Pas un avis médical',
+      title: traduire('Pas un avis médical'),
       icon: 'heart',
       content: [
-        'YOROI n’est pas un dispositif médical et ne remplace pas un médecin, un diététicien ou un coach.',
-        'Les courbes, prédictions, plans de coupe et calculs de calories sont des estimations. Avant un régime, une coupe de poids ou un effort intense, demande l’avis d’un professionnel de santé.',
-        'Tu restes seul responsable de ta pratique sportive et de ton alimentation.',
+        traduire('YOROI n’est pas un dispositif médical et ne remplace pas un médecin, un diététicien ou un coach.'),
+        traduire('Les courbes, prédictions, plans de coupe et calculs de calories sont des estimations. Avant un régime, une coupe de poids ou un effort intense, demande l’avis d’un professionnel de santé.'),
+        traduire('Tu restes seul responsable de ta pratique sportive et de ton alimentation.'),
       ],
     },
     {
-      title: 'Tes données',
+      title: traduire('Tes données'),
       icon: 'save',
       content: [
-        'Tes données restent sur ton téléphone. YOROI n’a pas de serveur qui les reçoit.',
-        'Si tu supprimes l’app sans sauvegarde, tes données sont perdues. Pense à exporter une sauvegarde depuis les réglages.',
-        'Le détail est dans la politique de confidentialité.',
+        traduire('Tes données restent sur ton téléphone. YOROI n’a pas de serveur qui les reçoit.'),
+        traduire('Si tu supprimes l’app sans sauvegarde, tes données sont perdues. Pense à exporter une sauvegarde depuis les réglages.'),
+        traduire('Le détail est dans la politique de confidentialité.'),
       ],
     },
     {
-      title: 'Version gratuite et Premium',
+      title: traduire('Version gratuite et Premium'),
       icon: 'crown',
       content: [
-        'Les pesées, les séances et les mesures restent gratuites, sans limite.',
-        `La version gratuite a quelques limites, toujours annoncées à l’endroit concerné : tes courbes sur ${Math.round(FREE_LIMITS.chartDays / 30)} mois au plus, un nombre limité de compétitions à venir et de photos de progression. Rien de ce que tu as déjà enregistré n’est caché ni supprimé.`,
-        'YOROI Premium est un abonnement facultatif qui ajoute des fonctions. Le prix, la durée et un éventuel essai gratuit sont affichés dans l’app avant l’achat, tels que le store les fournit.',
-        `Le paiement passe par ton compte ${STORE}. YOROI n’a jamais accès à tes données bancaires.`,
+        traduire('Les pesées, les séances et les mesures restent gratuites, sans limite.'),
+        traduire("La version gratuite a quelques limites, toujours annoncées à l’endroit concerné : tes courbes sur {0} mois au plus, un nombre limité de compétitions à venir et de photos de progression. Rien de ce que tu as déjà enregistré n’est caché ni supprimé.", Math.round(FREE_LIMITS.chartDays / 30)),
+        traduire('YOROI Premium est un abonnement facultatif qui ajoute des fonctions. Le prix, la durée et un éventuel essai gratuit sont affichés dans l’app avant l’achat, tels que le store les fournit.'),
+        traduire("Le paiement passe par ton compte {0}. YOROI n’a jamais accès à tes données bancaires.", STORE),
       ],
     },
     {
-      title: 'Renouvellement et résiliation',
+      title: traduire('Renouvellement et résiliation'),
       icon: 'calendar',
       content: [
-        'L’abonnement se renouvelle automatiquement à la fin de chaque période, sauf si tu le résilies au moins 24 heures avant.',
-        'Si un essai gratuit est proposé, rien n’est débité pendant l’essai. Le premier paiement a lieu à la fin de l’essai, sauf si tu annules avant.',
-        `Tu résilies à tout moment dans les réglages de ton compte ${STORE}, rubrique abonnements. Supprimer l’app ne résilie pas l’abonnement.`,
-        'Les remboursements sont gérés par le store, selon ses propres règles.',
-        'Tu peux récupérer ton abonnement sur un nouveau téléphone avec le bouton Restaurer mes achats.',
+        traduire('L’abonnement se renouvelle automatiquement à la fin de chaque période, sauf si tu le résilies au moins 24 heures avant.'),
+        traduire('Si un essai gratuit est proposé, rien n’est débité pendant l’essai. Le premier paiement a lieu à la fin de l’essai, sauf si tu annules avant.'),
+        traduire("Tu résilies à tout moment dans les réglages de ton compte {0}, rubrique abonnements. Supprimer l’app ne résilie pas l’abonnement.", STORE),
+        traduire('Les remboursements sont gérés par le store, selon ses propres règles.'),
+        traduire('Tu peux récupérer ton abonnement sur un nouveau téléphone avec le bouton Restaurer mes achats.'),
       ],
     },
     {
       title: 'Bon usage',
       icon: 'shield',
       content: [
-        'L’app est pour ton usage personnel. Tu ne dois pas la copier, la revendre ni chercher à contourner l’abonnement.',
-        'Les illustrations, textes et le design de YOROI restent la propriété de leur éditeur.',
+        traduire('L’app est pour ton usage personnel. Tu ne dois pas la copier, la revendre ni chercher à contourner l’abonnement.'),
+        traduire('Les illustrations, textes et le design de YOROI restent la propriété de leur éditeur.'),
       ],
     },
     {
-      title: 'Responsabilité',
+      title: traduire('Responsabilité'),
       icon: 'info',
       content: [
-        'YOROI est fourni tel quel. On fait de notre mieux pour qu’il marche bien, mais des erreurs ou des interruptions restent possibles.',
-        'Les données venant d’Apple Santé, de Google Health Connect ou d’une balance connectée dépendent de ces services.',
+        traduire('YOROI est fourni tel quel. On fait de notre mieux pour qu’il marche bien, mais des erreurs ou des interruptions restent possibles.'),
+        traduire('Les données venant d’Apple Santé, de Google Health Connect ou d’une balance connectée dépendent de ces services.'),
       ],
     },
     {
       title: 'Modifications',
       icon: 'doc',
       content: [
-        'Ces conditions peuvent évoluer avec l’app. La date de mise à jour est indiquée en haut de cette page.',
-        'Ces conditions sont régies par le droit français.',
+        traduire('Ces conditions peuvent évoluer avec l’app. La date de mise à jour est indiquée en haut de cette page.'),
+        traduire('Ces conditions sont régies par le droit français.'),
       ],
     },
     ...(Platform.OS === 'ios'
       ? [
           {
-            title: 'Contrat de licence Apple',
+            title: traduire('Contrat de licence Apple'),
             icon: 'doc' as IconName,
-            content: ['Sur iPhone et iPad, le contrat de licence standard d’Apple pour les apps (EULA) s’applique aussi. Tu le trouves sur le site d’Apple, avec le lien ci-dessous.'],
-            link: { label: 'Lire le contrat de licence Apple (EULA)', url: APPLE_EULA_URL },
+            content: [traduire('Sur iPhone et iPad, le contrat de licence standard d’Apple pour les apps (EULA) s’applique aussi. Tu le trouves sur le site d’Apple, avec le lien ci-dessous.')],
+            link: { label: traduire('Lire le contrat de licence Apple (EULA)'), url: APPLE_EULA_URL },
           },
         ]
       : []),
@@ -137,10 +138,10 @@ export default function TermsScreen() {
       <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
         <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
         <Ink size={26} weight="black" tight color={c.onDark}>Conditions d’utilisation (EULA)</Ink>
-        <Ink size={13} color={c.onDarkSecondary}>{`Dernière mise à jour : ${LAST_UPDATE}`}</Ink>
+        <Ink size={13} color={c.onDarkSecondary}>{traduire("Dernière mise à jour : {0}", LAST_UPDATE)}</Ink>
         <View style={{ alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.goldLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
           <Icon name="check" size={14} color={c.ink} stroke={3} />
-          <Ink size={13} weight="extraBold">Simples et sans piège</Ink>
+          <Ink size={13} weight="extraBold">{traduire("Simples et sans piège")}</Ink>
         </View>
       </View>
 
@@ -164,12 +165,12 @@ export default function TermsScreen() {
       <Card style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Icon name="mail" size={20} color={c.indigo} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={13} color={c.textMuted}>Pour toute question</Ink>
+          <Ink size={13} color={c.textMuted}>{traduire("Pour toute question")}</Ink>
           <Ink size={15} weight="extraBold" color={c.indigo} onPress={() => safeOpenURL(`mailto:${CONTACT}`)} accessibilityRole="link">{CONTACT}</Ink>
         </View>
       </Card>
       {/* 18 octobre 2026 : la version en ligne, sur yoroiapp.com */}
-      <Ink size={14} weight="extraBold" color={c.indigo} style={{ textAlign: 'center', textDecorationLine: 'underline' }} onPress={() => void safeOpenURL(APP_CONFIG.site.conditions)} accessibilityRole="link">Lire les conditions sur yoroiapp.com</Ink>
+      <Ink size={14} weight="extraBold" color={c.indigo} style={{ textAlign: 'center', textDecorationLine: 'underline' }} onPress={() => void safeOpenURL(APP_CONFIG.site.conditions)} accessibilityRole="link">{traduire("Lire les conditions sur yoroiapp.com")}</Ink>
     </EspaceScreen>
   );
 }

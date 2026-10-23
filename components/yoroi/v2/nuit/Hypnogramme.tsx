@@ -11,6 +11,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import type { PhaseNuit, SegmentNuit } from '@/lib/v2/sante/nuit';
 import { MARGE_DROITE, NOM_LIGNE, ORDRE_LIGNES, couleursPhases, domaineHeures, heure } from './outils';
+import { traduire } from '@/lib/i18n/tr';
 
 const LIGNE = 50;
 const BLOC_Y = 21;
@@ -18,11 +19,11 @@ const BLOC_H = 23;
 const AXE = 22;
 
 const NOM_LONG: Record<PhaseNuit, string> = {
-  eveil: 'éveil',
-  paradoxal: 'sommeil paradoxal',
-  leger: 'sommeil léger',
-  profond: 'sommeil profond',
-  endormi: 'sommeil sans phase précisée',
+  eveil: traduire('éveil'),
+  paradoxal: traduire('sommeil paradoxal'),
+  leger: traduire('sommeil léger'),
+  profond: traduire('sommeil profond'),
+  endormi: traduire('sommeil sans phase précisée'),
 };
 
 export function Hypnogramme({ segments, debut, fin }: { segments: SegmentNuit[]; debut: number; fin: number }) {
@@ -64,7 +65,7 @@ export function Hypnogramme({ segments, debut, fin }: { segments: SegmentNuit[];
 
   const toucher = (e: GestureResponderEvent) => setX(e.nativeEvent.locationX);
 
-  const resume = `Phases de la nuit, de ${heure(debut)} à ${heure(fin)}. Touche le graphique pour lire l'heure et la phase.`;
+  const resume = traduire("Phases de la nuit, de {0} à {1}. Touche le graphique pour lire l'heure et la phase.", heure(debut), heure(fin));
 
   return (
     <View style={{ gap: 10 }}>
@@ -74,14 +75,13 @@ export function Hypnogramme({ segments, debut, fin }: { segments: SegmentNuit[];
             {choisi.seg ? `${heure(choisi.t)}, ${NOM_LONG[choisi.seg.phase]}` : heure(choisi.t)}
             {choisi.seg ? (
               <Ink size={13} weight="bold" color={P.muted}>
-                {`  de ${heure(choisi.seg.debut)} à ${heure(choisi.seg.fin)}`}
+                {traduire("  de {0} à {1}", heure(choisi.seg.debut), heure(choisi.seg.fin))}
               </Ink>
             ) : null}
           </Ink>
         ) : (
           <Ink size={13} weight="bold" color={P.muted} numberOfLines={1}>
-            Touche le graphique pour lire la phase
-          </Ink>
+            {traduire("Touche le graphique pour lire la phase")}</Ink>
         )}
       </View>
       <View

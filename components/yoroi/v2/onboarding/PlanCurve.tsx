@@ -9,10 +9,11 @@ import Svg, { Circle, Defs, LinearGradient as SvgGradient, Line, Path, Stop } fr
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { EndDot, Reveal, SeriesLine } from '@/components/yoroi/v2/charts/core';
 import { kg, useColors } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
 let planSeq = 0;
 
-export function PlanCurve({ start, target, width, height = 150, startLabel = 'Aujourd’hui', endLabel }: {
+export function PlanCurve({ start, target, width, height = 150, startLabel = traduire('Aujourd’hui'), endLabel }: {
   start: number;
   target: number | null;
   width: number;
@@ -39,7 +40,7 @@ export function PlanCurve({ start, target, width, height = 150, startLabel = 'Au
   const area = `${d} L${x1} ${bottom + 10} L${x0} ${bottom + 10} Z`;
   const weeks = 4;
   return (
-    <View style={{ width, height }} accessible accessibilityLabel={flat ? `Garder ${kg(start)} kilos` : `De ${kg(start)} kilos aujourd’hui à ${kg(target as number)} kilos${endLabel ? ` vers le ${endLabel}` : ''}`}>
+    <View style={{ width, height }} accessible accessibilityLabel={flat ? `Garder ${kg(start)} kilos` : traduire("De {0} kilos aujourd’hui à {1} kilos{2}", kg(start), kg(target as number), endLabel ? ` vers le ${endLabel}` : '')}>
       <Svg width={width} height={height}>
         <Defs>
           {/* le trait s'eclaircit vers l'arrivee : c'est une estimation, pas une promesse */}

@@ -17,6 +17,7 @@ import logger from './security/logger';
 import { vitrineActive } from './v2/visite/vitrine';
 import { exportDataToJSON } from './exportService';
 import { logSyncEvent } from './syncHistoryService';
+import { traduire } from '@/lib/i18n/tr';
 
 // ─── Clés AsyncStorage ─────────────────────────────────────────────────────
 const LAST_AUTO_BACKUP_KEY = '@yoroi_last_auto_backup'; // ISO date du dernier auto-backup
@@ -191,7 +192,7 @@ export async function runAutoBackupIfDue(): Promise<boolean> {
         return true;
       }
       logger.warn('[AutoBackup] Export a échoué');
-      logSyncEvent({ type: 'auto_backup', success: false, error: 'Export échoué' }).catch(() => {});
+      logSyncEvent({ type: 'auto_backup', success: false, error: traduire('Export échoué') }).catch(() => {});
       return false;
     } catch (e) {
       logger.error('[AutoBackup] Erreur:', e);

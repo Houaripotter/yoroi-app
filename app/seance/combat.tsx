@@ -42,12 +42,13 @@ import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { intensite, niveauRpe, type NiveauIntensite } from '@/lib/v2/intensite';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const RPE = [
   { value: 3, label: 'Facile' },
-  { value: 5, label: 'Correct' },
+  { value: 5, label: traduire('Correct') },
   { value: 7, label: 'Dur' },
-  { value: 9, label: 'À bloc' },
+  { value: 9, label: traduire('À bloc') },
 ];
 
 // Vague 32 : intensite des rounds sur l'echelle commune (lib/v2/intensite.ts)
@@ -108,7 +109,7 @@ export default function SeanceCombat() {
         if (params.editId) {
           const t = await loadTrainingForEdit(params.editId);
           if (!t) {
-            appAlert('Séance introuvable', 'Elle a peut-être été supprimée.');
+            appAlert(traduire('Séance introuvable'), traduire('Elle a peut-être été supprimée.'));
             router.back();
             return;
           }
@@ -185,10 +186,10 @@ export default function SeanceCombat() {
         }
         if (existing) {
           appAlert(
-            'Une séance est en cours',
-            `${draftTitle(existing)}, commencée ${draftAgo(existing)}. Tu la reprends ?`,
+            traduire('Une séance est en cours'),
+            traduire("{0}, commencée {1}. Tu la reprends ?", draftTitle(existing), draftAgo(existing)),
             [
-              { text: 'Nouvelle séance', style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
+              { text: traduire('Nouvelle séance'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
               {
                 text: 'Reprendre',
                 onPress: () => {
@@ -334,13 +335,13 @@ export default function SeanceCombat() {
 
   const abandon = () => {
     if (draft?.form) {
-      appAlert(draft.editId ? 'Quitter sans enregistrer ?' : 'Annuler cette saisie ?', 'Tes changements ne seront pas gardés.', [
+      appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
         { text: 'Rester', style: 'cancel' },
         { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
       ]);
       return;
     }
-    appAlert('Abandonner la séance ?', 'Rien ne sera enregistré.', [
+    appAlert(traduire('Abandonner la séance ?'), traduire('Rien ne sera enregistré.'), [
       { text: 'Continuer', style: 'cancel' },
       {
         text: 'Abandonner',
@@ -426,7 +427,7 @@ export default function SeanceCombat() {
     } catch (err) {
       finished.current = false;
       logger.error('Enregistrement de la seance de combat impossible', err);
-      appAlert('Oups', 'La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.');
+      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -451,34 +452,34 @@ export default function SeanceCombat() {
   const sportName = getSportName(draft.sport);
 
   const topLine =
-    t.phase === 'round' ? `Round ${t.index} sur ${Math.max(draft.totalRounds, t.index)}`
-      : t.phase === 'rest' ? 'Repos'
-        : t.phase === 'done' ? (lastNumber > 0 ? 'Rounds terminés' : 'Chrono arrêté')
-          : 'Prêt ?';
+    t.phase === 'round' ? traduire("Round {0} sur {1}", t.index, Math.max(draft.totalRounds, t.index))
+      : t.phase === 'rest' ? traduire('Repos')
+        : t.phase === 'done' ? (lastNumber > 0 ? traduire('Rounds terminés') : traduire('Chrono arrêté'))
+          : traduire('Prêt ?');
   const bigTime = t.phase === 'idle' ? fmtClock(draft.roundSec) : t.phase === 'done' ? `${lastNumber}` : fmtClock(left);
   const subLine =
-    t.phase === 'round' ? (t.index >= draft.totalRounds ? 'dernier round' : draft.restSec > 0 ? `puis ${fmtClock(draft.restSec)} de repos` : 'puis on enchaîne')
+    t.phase === 'round' ? (t.index >= draft.totalRounds ? 'dernier round' : draft.restSec > 0 ? traduire("puis {0} de repos", fmtClock(draft.restSec)) : traduire('puis on enchaîne'))
       : t.phase === 'rest' ? `prochain : round ${t.index + 1}`
-        : t.phase === 'done' ? (lastNumber > 1 ? 'rounds au compteur' : 'round au compteur')
-          : `${draft.totalRounds} rounds, ${fmtClock(draft.restSec)} de repos`;
+        : t.phase === 'done' ? (lastNumber > 1 ? traduire('rounds au compteur') : traduire('round au compteur'))
+          : traduire("{0} rounds, {1} de repos", draft.totalRounds, fmtClock(draft.restSec));
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Screen options={{ gestureEnabled: false }} />
 
       <View style={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Pressable onPress={draft.form ? abandon : () => router.back()} accessibilityRole="button" accessibilityLabel={draft.form ? 'Fermer sans enregistrer' : 'Réduire, la séance reste en cours'} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+        <Pressable onPress={draft.form ? abandon : () => router.back()} accessibilityRole="button" accessibilityLabel={draft.form ? traduire('Fermer sans enregistrer') : traduire('Réduire, la séance reste en cours')} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
           <Icon name={draft.form ? 'close' : 'down'} size={draft.form ? 18 : 20} strokeWidth={2.6} />
         </Pressable>
-        <Pressable onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={`${sportName}, changer de sport`} style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}>
+        <Pressable onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("{0}, changer de sport", sportName)} style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>{draft.label || sportName}, {draft.form && draft.details ? (draft.editId ? 'modifier' : dayLabel(draft.details.date).toLocaleLowerCase('fr-FR')) : fmtClock(elapsedSec)}</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>{draft.label || sportName}, {draft.form && draft.details ? (draft.editId ? 'modifier' : dayLabel(draft.details.date).toLocaleLowerCase(LOCALE)) : fmtClock(elapsedSec)}</Ink>
             <Icon name="down" size={14} color={c.textSecondary} />
           </View>
           <Ink size={22} weight="black" tight>{libelleTypeSeance(draft, aliasTypeSeance)}</Ink>
         </Pressable>
         <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onAccent}>{draft.form ? 'Enregistrer' : 'Terminer'}</Ink>
+          <Ink size={15} weight="extraBold" color={c.onAccent}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
         </Pressable>
       </View>
 
@@ -496,11 +497,11 @@ export default function SeanceCombat() {
         </ScrollView>
 
         {draft.form && draft.details ? (
-          <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" accessibilityLabel="Changer le jour et la durée" style={{ marginHorizontal: 22, marginTop: 4, padding: 16, borderRadius: 22, backgroundColor: c.indigoTint, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Changer le jour et la durée")} style={{ marginHorizontal: 22, marginTop: 4, padding: 16, borderRadius: 22, backgroundColor: c.indigoTint, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Icon name="calendar" size={24} color={c.indigo} />
             <View style={{ flex: 1 }}>
               <Ink size={18} weight="black" tight>{dayLabel(draft.details.date)}, {timeOf(draft.details.startMin)}</Ink>
-              <Ink size={13} color={c.textSecondary}>{fmtMinutes(draft.details.duration)} de séance. Touche pour changer.</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("{0} de séance. Touche pour changer.", fmtMinutes(draft.details.duration))}</Ink>
             </View>
             <Icon name="chevron" size={18} color={c.textMuted} />
           </Pressable>
@@ -535,28 +536,28 @@ export default function SeanceCombat() {
 
         {/* Commandes */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 18, marginTop: 18 }}>
-          <Pressable onPress={() => shift(-10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel="Reculer de 10 secondes" style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
+          <Pressable onPress={() => shift(-10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel={traduire("Reculer de 10 secondes")} style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
             <Ink size={15} weight="extraBold">− 10</Ink>
           </Pressable>
-          <Pressable onPress={togglePause} accessibilityRole="button" accessibilityLabel={t.phase === 'idle' ? 'Lancer les rounds' : t.phase === 'done' ? 'Encore un round' : t.paused !== null ? 'Reprendre' : 'Pause'} style={({ pressed }) => ({ width: 84, height: 84, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: t.phase === 'idle' || t.phase === 'done' ? (pressed ? c.accentPressed : c.accent) : pressed ? c.textSecondary : c.ink })}>
+          <Pressable onPress={togglePause} accessibilityRole="button" accessibilityLabel={t.phase === 'idle' ? traduire('Lancer les rounds') : t.phase === 'done' ? traduire('Encore un round') : t.paused !== null ? 'Reprendre' : 'Pause'} style={({ pressed }) => ({ width: 84, height: 84, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: t.phase === 'idle' || t.phase === 'done' ? (pressed ? c.accentPressed : c.accent) : pressed ? c.textSecondary : c.ink })}>
             <Icon name={running ? 'pause' : 'play'} size={32} color={t.phase === 'idle' || t.phase === 'done' ? c.onAccent : c.background} />
           </Pressable>
-          <Pressable onPress={() => shift(10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel="Avancer de 10 secondes" style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
+          <Pressable onPress={() => shift(10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel={traduire("Avancer de 10 secondes")} style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
             <Ink size={15} weight="extraBold">+ 10</Ink>
           </Pressable>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 6, minHeight: 44 }}>
           {t.phase === 'rest' ? (
             <Pressable onPress={skipRest} accessibilityRole="button" style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center' }}>
-              <Ink size={14} weight="bold" color={c.indigo}>Passer le repos</Ink>
+              <Ink size={14} weight="bold" color={c.indigo}>{traduire("Passer le repos")}</Ink>
             </Pressable>
           ) : null}
           {t.phase === 'round' || t.phase === 'rest' ? (
             <Pressable onPress={stopTimer} accessibilityRole="button" style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center' }}>
-              <Ink size={14} weight="bold" color={c.textMuted}>Arrêter le chrono</Ink>
+              <Ink size={14} weight="bold" color={c.textMuted}>{traduire("Arrêter le chrono")}</Ink>
             </Pressable>
           ) : (
-            <Ink size={13} color={c.textMuted} style={{ alignSelf: 'center' }}>{t.phase === 'idle' ? 'Tu peux aussi noter tes rounds sans chrono, plus bas.' : 'Le bouton rouge relance un round.'}</Ink>
+            <Ink size={13} color={c.textMuted} style={{ alignSelf: 'center' }}>{t.phase === 'idle' ? traduire('Tu peux aussi noter tes rounds sans chrono, plus bas.') : traduire('Le bouton rouge relance un round.')}</Ink>
           )}
         </View>
 
@@ -566,13 +567,13 @@ export default function SeanceCombat() {
           {/* Reglages du chrono, hors rounds */}
           {t.phase === 'idle' || t.phase === 'done' ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Setting label={draft.form ? 'Durée d’un round' : 'Round'}>
-                <Stepper value={draft.roundSec} step={30} min={30} max={1200} unit="secondes de round" layout="stack" size={24} button={44} format={fmtClock} onChange={(v) => update((d) => ({ ...d, roundSec: v }))} />
+              <Setting label={draft.form ? traduire('Durée d’un round') : 'Round'}>
+                <Stepper value={draft.roundSec} step={30} min={30} max={1200} unit={traduire("secondes de round")} layout="stack" size={24} button={44} format={fmtClock} onChange={(v) => update((d) => ({ ...d, roundSec: v }))} />
               </Setting>
               {!draft.form ? (
                 <>
-                  <Setting label="Repos">
-                    <Stepper value={draft.restSec} step={15} min={0} max={600} unit="secondes de repos" layout="stack" size={24} button={44} format={fmtClock} onChange={(v) => update((d) => ({ ...d, restSec: v }))} />
+                  <Setting label={traduire("Repos")}>
+                    <Stepper value={draft.restSec} step={15} min={0} max={600} unit={traduire("secondes de repos")} layout="stack" size={24} button={44} format={fmtClock} onChange={(v) => update((d) => ({ ...d, restSec: v }))} />
                   </Setting>
                   <Setting label="Rounds">
                     <Stepper value={draft.totalRounds} step={1} min={1} max={30} unit="rounds" layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, totalRounds: v }))} />
@@ -585,12 +586,12 @@ export default function SeanceCombat() {
           {/* Intensite du round en un appui */}
           {target ? (
             <View style={{ gap: 8 }}>
-              <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Le round {target.number} était</Ink>
+              <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Le round {0} était", target.number)}</Ink>
               <ChoiceRow options={ROUND_INTENSITIES} value={target.intensity ?? null} columns={3} onChange={(v) => { selectionAsync().catch(() => {}); updateRound(target.number, { intensity: v ?? undefined }); }} />
               <Pressable onPress={() => setDetailFor(target.number)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border })}>
                 <Icon name="pencil" size={20} color={c.textSecondary} />
                 <Ink size={15} color={target.partner || target.result || target.method ? c.ink : c.textMuted} style={{ flex: 1 }} numberOfLines={1}>
-                  {roundSummary(target) || (grappling ? 'Partenaire, résultat, soumission' : 'Partenaire, résultat, note')}
+                  {roundSummary(target) || (grappling ? traduire('Partenaire, résultat, soumission') : traduire('Partenaire, résultat, note'))}
                 </Ink>
               </Pressable>
             </View>
@@ -599,19 +600,19 @@ export default function SeanceCombat() {
           {/* Liste des rounds */}
           <View style={{ gap: 6, marginTop: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 }}>
-              <Ink size={18} weight="black" tight style={{ flex: 1 }}>Tes rounds</Ink>
-              <Pressable onPress={() => { update((d) => ({ ...d, rounds: ensureRound(d.rounds, lastNumber + 1) })); impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); }} accessibilityRole="button" accessibilityLabel="Ajouter un round sans chrono" style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.fillSubtle }}>
+              <Ink size={18} weight="black" tight style={{ flex: 1 }}>{traduire("Tes rounds")}</Ink>
+              <Pressable onPress={() => { update((d) => ({ ...d, rounds: ensureRound(d.rounds, lastNumber + 1) })); impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter un round sans chrono")} style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.fillSubtle }}>
                 <Icon name="plus" size={16} strokeWidth={2.8} />
-                <Ink size={13} weight="extraBold">Un round</Ink>
+                <Ink size={13} weight="extraBold">{traduire("Un round")}</Ink>
               </Pressable>
             </View>
             {draft.rounds.length === 0 ? (
-              <Ink size={14} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{draft.form ? 'Ajoute tes rounds avec le bouton Un round. Ils sont facultatifs.' : 'Lance le chrono ou ajoute tes rounds à la main.'}</Ink>
+              <Ink size={14} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{draft.form ? traduire('Ajoute tes rounds avec le bouton Un round. Ils sont facultatifs.') : traduire('Lance le chrono ou ajoute tes rounds à la main.')}</Ink>
             ) : (
               draft.rounds.map((r) => (
                 <Pressable key={r.number} onPress={() => setDetailFor(r.number)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pressed ? c.fillSubtle : blancA(0.55) })}>
                   <Ink size={15} weight="black" style={{ width: 70 }}>Round {r.number}</Ink>
-                  <Ink size={13} color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{roundSummary(r) || 'touche pour détailler'}</Ink>
+                  <Ink size={13} color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{roundSummary(r) || traduire('touche pour détailler')}</Ink>
                   {r.intensity ? (
                     <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: intensite(ROUND_NIVEAU[r.intensity]).tint }}>
                       <Ink size={11} weight="extraBold" color={intensite(ROUND_NIVEAU[r.intensity]).text}>{ROUND_INTENSITIES.find((x) => x.value === r.intensity)?.label}</Ink>
@@ -624,7 +625,7 @@ export default function SeanceCombat() {
 
           {/* Theme technique */}
           <View style={{ gap: 8, marginTop: 10 }}>
-            <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4 }}>Thème travaillé</Ink>
+            <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4 }}>{traduire("Thème travaillé")}</Ink>
             {selectedThemes.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {selectedThemes.map((th) => (
@@ -641,15 +642,15 @@ export default function SeanceCombat() {
                   <TextInput
                     value={customTheme}
                     onChangeText={setCustomTheme}
-                    placeholder="Passage de garde, triangle, jab..."
+                    placeholder={traduire("Passage de garde, triangle, jab...")}
                     placeholderTextColor={c.textMuted}
                     returnKeyType="done"
                     onSubmitEditing={() => { if (customTheme.trim()) { toggleTheme(customTheme.trim()); setCustomTheme(''); } }}
-                    accessibilityLabel="Thème travaillé"
+                    accessibilityLabel={traduire("Thème travaillé")}
                     style={[fontStyle('bold'), { flex: 1, fontSize: 15, color: c.ink, paddingVertical: 0 }]}
                   />
                   {customTheme.trim() ? (
-                    <Pressable onPress={() => { toggleTheme(customTheme.trim()); setCustomTheme(''); }} accessibilityLabel="Ajouter ce thème" hitSlop={4} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                    <Pressable onPress={() => { toggleTheme(customTheme.trim()); setCustomTheme(''); }} accessibilityLabel={traduire("Ajouter ce thème")} hitSlop={4} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="plus" size={18} color={c.onAccent} strokeWidth={2.8} />
                     </Pressable>
                   ) : null}
@@ -682,7 +683,7 @@ export default function SeanceCombat() {
             ) : (
               <Pressable onPress={() => setThemeOpen(true)} accessibilityRole="button" accessibilityState={{ expanded: false }} style={({ pressed }) => ({ minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border })}>
                 <Icon name="plus" size={16} strokeWidth={2.8} color={c.textSecondary} />
-                <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{selectedThemes.length ? 'Un autre thème' : 'Ajouter un thème travaillé'}</Ink>
+                <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{selectedThemes.length ? traduire('Un autre thème') : traduire('Ajouter un thème travaillé')}</Ink>
               </Pressable>
             )}
           </View>
@@ -690,10 +691,10 @@ export default function SeanceCombat() {
           <TextInput
             value={draft.notes}
             onChangeText={(v) => update((d) => ({ ...d, notes: v }))}
-            placeholder="Une note sur ta séance"
+            placeholder={traduire("Une note sur ta séance")}
             placeholderTextColor={c.textMuted}
             multiline
-            accessibilityLabel="Note sur la séance"
+            accessibilityLabel={traduire("Note sur la séance")}
             style={[fontStyle('medium'), { marginTop: 8, minHeight: 80, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
           />
         </View>
@@ -707,7 +708,7 @@ export default function SeanceCombat() {
             <TextInput
               value={detail.partner ?? ''}
               onChangeText={(v) => updateRound(detail.number, { partner: v })}
-              placeholder="Avec qui ?"
+              placeholder={traduire("Avec qui ?")}
               placeholderTextColor={c.textMuted}
               accessibilityLabel="Partenaire"
               style={[fontStyle('bold'), { height: 50, fontSize: 16, color: c.ink, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
@@ -722,14 +723,14 @@ export default function SeanceCombat() {
               </ScrollView>
             ) : null}
 
-            <Ink size={14} weight="bold" color={c.textSecondary}>Résultat</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Résultat")}</Ink>
             <ChoiceRow options={RESULTS} value={detail.result ?? null} columns={3} onChange={(v) => updateRound(detail.number, { result: v ?? undefined })} />
 
             <Ink size={14} weight="bold" color={c.textSecondary}>{grappling ? 'Soumission' : 'Finition'}</Ink>
             <TextInput
               value={detail.method ?? ''}
               onChangeText={(v) => updateRound(detail.number, { method: v })}
-              placeholder={grappling ? 'Triangle, clé de bras...' : 'KO, aux points...'}
+              placeholder={grappling ? traduire('Triangle, clé de bras...') : traduire('KO, aux points...')}
               placeholderTextColor={c.textMuted}
               accessibilityLabel={grappling ? 'Soumission' : 'Finition'}
               style={[fontStyle('bold'), { height: 50, fontSize: 16, color: c.ink, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
@@ -746,10 +747,10 @@ export default function SeanceCombat() {
             <TextInput
               value={detail.notes ?? ''}
               onChangeText={(v) => updateRound(detail.number, { notes: v })}
-              placeholder="Ce qui a marché, ce qui coince"
+              placeholder={traduire("Ce qui a marché, ce qui coince")}
               placeholderTextColor={c.textMuted}
               multiline
-              accessibilityLabel="Note du round"
+              accessibilityLabel={traduire("Note du round")}
               style={[fontStyle('medium'), { minHeight: 70, fontSize: 15, color: c.ink, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
             />
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -765,7 +766,7 @@ export default function SeanceCombat() {
                 <Ink size={15} weight="bold" color={c.danger}>Retirer</Ink>
               </Pressable>
               <Pressable onPress={() => setDetailFor(null)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.textSecondary : c.ink })}>
-                <Ink size={16} weight="extraBold" color={c.background}>Valider</Ink>
+                <Ink size={16} weight="extraBold" color={c.background}>{traduire("Valider")}</Ink>
               </Pressable>
             </View>
           </View>
@@ -787,29 +788,29 @@ export default function SeanceCombat() {
       </Sheet>
 
       {/* Fin de seance */}
-      <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? 'Enregistrer les changements ?' : draft.form ? 'Enregistrer la séance ?' : 'Terminer la séance ?'} scroll>
+      <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? traduire('Enregistrer les changements ?') : draft.form ? traduire('Enregistrer la séance ?') : traduire('Terminer la séance ?')} scroll>
         <SportRibbon sport={draft.sport} sub={draft.label && draft.label !== getSportName(draft.sport) ? draft.label : undefined} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <MiniStat label="durée" value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
+          <MiniStat label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
           <MiniStat label={draft.rounds.length > 1 ? 'rounds' : 'round'} value={String(draft.rounds.length)} />
           <MiniStat label="type" value={libelleTypeSeance(draft, aliasTypeSeance)} />
         </View>
-        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Comment c’était ?</Ink>
+        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Comment c’était ?")}</Ink>
         <ChoiceRow options={RPE} value={draft.rpe ?? null} onChange={(v) => update((d) => ({ ...d, rpe: v }))} columns={4} niveau={niveauRpe} />
         {draft.rpe == null && suggestedRpe(draft.rounds) ? (
-          <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{`Tes rounds font penser à « ${RPE.find((o) => o.value === suggestedRpe(draft.rounds))?.label ?? ''} ». Rien n’est noté tant que tu ne choisis pas.`}</Ink>
+          <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Tes rounds font penser à « {0} ». Rien n’est noté tant que tu ne choisis pas.", RPE.find((o) => o.value === suggestedRpe(draft.rounds))?.label ?? '')}</Ink>
         ) : null}
         {bilanOpen || draft.hrAvg || draft.hrMax || draft.gamePlan || draft.worked || draft.didnt ? (
           <View style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Setting label="Cardio moyen">
-              <Stepper value={draft.hrAvg ?? 0} step={1} max={230} unit="battements par minute en moyenne" layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, hrAvg: v }))} />
+              <Stepper value={draft.hrAvg ?? 0} step={1} max={230} unit={traduire("battements par minute en moyenne")} layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, hrAvg: v }))} />
             </Setting>
             <Setting label="Cardio max">
-              <Stepper value={draft.hrMax ?? 0} step={1} max={240} unit="battements par minute au maximum" layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, hrMax: v }))} />
+              <Stepper value={draft.hrMax ?? 0} step={1} max={240} unit={traduire("battements par minute au maximum")} layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, hrMax: v }))} />
             </Setting>
           </View>
-            <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Ton bilan</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Ton bilan")}</Ink>
             {([
               { key: 'gamePlan', label: 'Plan de jeu', ph: 'Ce que tu voulais tenter' },
               { key: 'worked', label: 'Ce qui a marché', ph: 'Ta garde, ton timing, une finition' },
@@ -819,7 +820,7 @@ export default function SeanceCombat() {
                 key={f.key}
                 value={draft[f.key] ?? ''}
                 onChangeText={(v) => update((d) => ({ ...d, [f.key]: v }))}
-                placeholder={`${f.label} : ${f.ph.toLocaleLowerCase('fr-FR')}`}
+                placeholder={`${f.label} : ${f.ph.toLocaleLowerCase(LOCALE)}`}
                 placeholderTextColor={c.textMuted}
                 multiline
                 accessibilityLabel={f.label}
@@ -829,15 +830,15 @@ export default function SeanceCombat() {
           </View>
         ) : (
           <Pressable onPress={() => setBilanOpen(true)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}>
-            <Ink size={14} weight="bold" color={c.indigo}>Plus de détails : cardio et ton bilan</Ink>
+            <Ink size={14} weight="bold" color={c.indigo}>{traduire("Plus de détails : cardio et ton bilan")}</Ink>
           </Pressable>
         )}
         {draft.details ? <SessionDetailsForm value={draft.details} onChange={(patch) => update((d) => (d.details ? { ...d, details: { ...d.details, ...patch } } : d))} sport={draft.sport} showWhen={!!draft.form} /> : null}
         <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? 'Enregistrer les changements' : 'Enregistrer la séance'}</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
         </Pressable>
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? 'Quitter sans enregistrer' : 'Abandonner la séance'}</Ink>
+          <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>
         </Pressable>
       </Sheet>
     </View>

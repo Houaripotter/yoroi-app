@@ -25,6 +25,7 @@ import { InkLineChart } from '../progres/InkLineChart';
 import type { ChartPoint } from '../progres/InkLineChart';
 import { CHART_COLORS } from '../charts/core';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 // ============================================
 // DONNEES
@@ -49,18 +50,18 @@ type Sport = 'mma' | 'jjb' | 'boxe';
 
 const DAY = 86400000;
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const dateLong = (s: string) => new Date(s).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+const dateLong = (s: string) => new Date(s).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
 
 const RISK_TONE: Record<CutRisk, Tone> = { safe: 'moss', moderate: 'gold', risky: 'red', dangerous: 'red' };
 
 const CUT_TIPS: { icon: 'drop' | 'moon' | 'dumbbell' | 'leaf'; text: string }[] = [
-  { icon: 'drop', text: 'Bois régulièrement dans la journée. L’hydratation reste la base, même pendant une coupe.' },
-  { icon: 'moon', text: 'Dors au moins 7 à 8 h. Le sommeil protège ta récupération et ton humeur.' },
-  { icon: 'dumbbell', text: 'Garde tes entraînements, baisse un peu l’intensité si la fatigue monte.' },
-  { icon: 'leaf', text: 'Garde des protéines à chaque repas pour protéger ton muscle.' },
+  { icon: 'drop', text: traduire('Bois régulièrement dans la journée. L’hydratation reste la base, même pendant une coupe.') },
+  { icon: 'moon', text: traduire('Dors au moins 7 à 8 h. Le sommeil protège ta récupération et ton humeur.') },
+  { icon: 'dumbbell', text: traduire('Garde tes entraînements, baisse un peu l’intensité si la fatigue monte.') },
+  { icon: 'leaf', text: traduire('Garde des protéines à chaque repas pour protéger ton muscle.') },
 ];
 
-const DANGER_SIGNS = 'Arrête tout et demande de l’aide en cas de vertiges, crampes, maux de tête forts, confusion, palpitations ou urines très foncées.';
+const DANGER_SIGNS = traduire('Arrête tout et demande de l’aide en cas de vertiges, crampes, maux de tête forts, confusion, palpitations ou urines très foncées.');
 
 // ============================================
 // ECRAN
@@ -144,13 +145,13 @@ export function WeightCutHub({ initialTab = 'coupe', extrasRoute }: { initialTab
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <DetailScreen title="Coupe de poids" subtitle="Jusqu’à la pesée, en sécurité">
-        <Notice tone="danger" title="Encadré, toujours" text="Consulte un professionnel de santé avant toute coupe de poids importante. Ne fais jamais de coupe d’eau seul." icon="shield" />
+      <DetailScreen title={traduire("Coupe de poids")} subtitle={traduire("Jusqu’à la pesée, en sécurité")}>
+        <Notice tone="danger" title={traduire("Encadré, toujours")} text={traduire("Consulte un professionnel de santé avant toute coupe de poids importante. Ne fais jamais de coupe d’eau seul.")} icon="shield" />
         <Segments
           items={[
-            { key: 'coupe', label: 'Ma coupe' },
+            { key: 'coupe', label: traduire('Ma coupe') },
             { key: 'simu', label: 'Simulateur' },
-            { key: 'jourj', label: 'Jour J' },
+            { key: 'jourj', label: traduire('Jour J') },
           ]}
           value={tab}
           onChange={(k) => {
@@ -161,8 +162,7 @@ export function WeightCutHub({ initialTab = 'coupe', extrasRoute }: { initialTab
         {!loaded ? (
           <Card style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}>
             <Ink size={14} weight="bold" color={P.ink2}>
-              Chargement de ta coupe
-            </Ink>
+              {traduire("Chargement de ta coupe")}</Ink>
           </Card>
         ) : tab === 'coupe' ? (
           cut && cut.isActive && !editing ? (
@@ -179,7 +179,7 @@ export function WeightCutHub({ initialTab = 'coupe', extrasRoute }: { initialTab
               }}
             />
           ) : (
-            <EmptyState title="Pèse-toi d’abord" text="Ta coupe part de ta dernière pesée. Enregistre ton poids, puis reviens fixer ton objectif." action="Me peser" onAction={() => router.push('/pesee' as any)} />
+            <EmptyState title={traduire("Pèse-toi d’abord")} text={traduire("Ta coupe part de ta dernière pesée. Enregistre ton poids, puis reviens fixer ton objectif.")} action="Me peser" onAction={() => router.push('/pesee' as any)} />
           )
         ) : tab === 'simu' ? (
           <Simulator defaultCurrent={current} defaultTarget={cut?.targetWeight ?? 0} defaultDays={cut ? daysLeft : 0} />
@@ -222,10 +222,10 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
   }, [weights]);
 
   const stop = () => {
-    appAlert('Arrêter la coupe ?', 'Les données de ta coupe en cours seront effacées. Tes pesées restent enregistrées.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Arrêter la coupe ?'), traduire('Les données de ta coupe en cours seront effacées. Tes pesées restent enregistrées.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Arrêter',
+        text: traduire('Arrêter'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -248,17 +248,15 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ gap: 2 }}>
               <Ink size={14} weight="extraBold" color={P.ink2}>
-                Pesée officielle
-              </Ink>
-              <BigNumber value={daysLeft === 0 ? 'Jour J' : `J-${daysLeft}`} size={56} color={daysLeft <= 7 ? P.accent : P.ink} />
+                {traduire("Pesée officielle")}</Ink>
+              <BigNumber value={daysLeft === 0 ? traduire('Jour J') : `J-${daysLeft}`} size={56} color={daysLeft <= 7 ? P.accent : P.ink} />
               <Ink size={13} weight="bold" color={P.ink2}>
                 {dateLong(cut.targetDate)}
               </Ink>
             </View>
             <View style={{ alignItems: 'flex-end', gap: 2 }}>
               <Ink size={12} weight="bold" color={P.ink2}>
-                Objectif
-              </Ink>
+                {traduire("Objectif")}</Ink>
               <Ink size={26} weight="black" tight>
                 {`${fmt(cut.targetWeight)} kg`}
               </Ink>
@@ -271,9 +269,9 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
 
       <Enter i={1}>
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <MiniStat label="Aujourd’hui" value={fmt(cw)} unit="kg" />
+          <MiniStat label={traduire("Aujourd’hui")} value={fmt(cw)} unit="kg" />
           <MiniStat label="Reste" value={reached ? 'Atteint' : fmt(remaining)} unit={reached ? undefined : 'kg'} color={reached ? P.mossText : P.ink} />
-          <MiniStat label="Rythme" value={reached ? '0' : fmt(daily, 2)} unit="kg par jour" color={risk === 'danger' ? P.danger : risk === 'moderate' ? P.goldDark : P.ink} />
+          <MiniStat label="Rythme" value={reached ? '0' : fmt(daily, 2)} unit={traduire("kg par jour")} color={risk === 'danger' ? P.danger : risk === 'moderate' ? P.goldDark : P.ink} />
         </View>
       </Enter>
 
@@ -281,8 +279,7 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
         <Card style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Ink size={13} weight="bold" color={P.ink2}>
-              Parcours depuis le départ
-            </Ink>
+              {traduire("Parcours depuis le départ")}</Ink>
             <Ink size={13} weight="black">
               {`${Math.round(progress * 100)} %`}
             </Ink>
@@ -291,7 +288,7 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
             <View style={{ width: `${progress * 100}%`, height: '100%', backgroundColor: P.ink, borderRadius: 5 }} />
           </View>
           <Ink size={12} weight="medium" color={P.ink2}>
-            {`Départ à ${fmt(cut.startWeight)} kg le ${new Date(cut.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`}
+            {traduire("Départ à {0} kg le {1}", fmt(cut.startWeight), new Date(cut.startDate).toLocaleDateString(LOCALE, { day: 'numeric', month: 'long' }))}
           </Ink>
         </Card>
       </Enter>
@@ -310,7 +307,7 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
             <Notice
               tone={risk === 'danger' ? 'red' : 'gold'}
               title={risk === 'danger' ? 'Rythme dangereux' : 'Rythme soutenu'}
-              text={`Il faudrait perdre ${fmt(daily, 2)} kg par jour. ${risk === 'danger' ? 'Consulte un médecin et revois ton objectif.' : 'Surveille ton hydratation et ta fatigue.'}`}
+              text={traduire("Il faudrait perdre {0} kg par jour. {1}", fmt(daily, 2), risk === 'danger' ? 'Consulte un médecin et revois ton objectif.' : 'Surveille ton hydratation et ta fatigue.')}
             />
           ) : null}
         </View>
@@ -318,7 +315,7 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
 
       {weekly.length > 1 ? (
         <Enter i={4}>
-          <H2 sub="Ta dernière pesée de chaque semaine">Semaine après semaine</H2>
+          <H2 sub={traduire("Ta dernière pesée de chaque semaine")}>{traduire("Semaine après semaine")}</H2>
           <Card style={{ marginTop: 10 }}>
             <WeeklyBars weeks={weekly} target={cut.targetWeight} />
           </Card>
@@ -326,7 +323,7 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
       ) : null}
 
       <Enter i={5}>
-        <H2>Pendant ta coupe</H2>
+        <H2>{traduire("Pendant ta coupe")}</H2>
         <Card style={{ marginTop: 10, gap: 12 }}>
           {CUT_TIPS.map((t) => (
             <View key={t.icon} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
@@ -341,8 +338,8 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
 
       <Enter i={6}>
         <View style={{ gap: 10 }}>
-          <BigButton label="Modifier l’objectif" tone="ink" icon="settings" onPress={onEdit} />
-          <BigButton label="Arrêter la coupe" tone="light" icon="close" onPress={stop} />
+          <BigButton label={traduire("Modifier l’objectif")} tone="ink" icon="settings" onPress={onEdit} />
+          <BigButton label={traduire("Arrêter la coupe")} tone="light" icon="close" onPress={stop} />
         </View>
       </Enter>
     </>
@@ -358,7 +355,7 @@ function WeeklyBars({ weeks, target }: { weeks: Weight[]; target: number }) {
     <View style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <Ink size={13} weight="bold" color={P.ink2}>
-          {scrub ? `Semaine du ${new Date(scrub.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : 'Dernière pesée'}
+          {scrub ? traduire("Semaine du {0}", new Date(scrub.date + 'T12:00:00').toLocaleDateString(LOCALE, { day: 'numeric', month: 'long' })) : traduire('Dernière pesée')}
         </Ink>
         <Ink size={20} weight="black" tight>
           {shown ? `${fmt(shown.value)} kg` : ''}
@@ -370,9 +367,9 @@ function WeeklyBars({ weeks, target }: { weeks: Weight[]; target: number }) {
         height={180}
         digits={1}
         minSpan={1}
-        target={{ value: target, label: `objectif ${fmt(target)} kg` }}
+        target={{ value: target, label: traduire("objectif {0} kg", fmt(target)) }}
         onScrub={(p) => setScrub(p)}
-        label={`Poids semaine après semaine, objectif ${fmt(target)} kilos`}
+        label={traduire("Poids semaine après semaine, objectif {0} kilos", fmt(target))}
       />
     </View>
   );
@@ -436,15 +433,15 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
   const save = async () => {
     if (saving) return;
     if (!(t > 0)) {
-      appAlert('Objectif à vérifier', 'Entre un poids cible valide.');
+      appAlert(traduire('Objectif à vérifier'), traduire('Entre un poids cible valide.'));
       return;
     }
     if (t >= current) {
-      appAlert('Objectif à vérifier', 'Ton poids cible doit être inférieur à ton poids actuel.');
+      appAlert(traduire('Objectif à vérifier'), traduire('Ton poids cible doit être inférieur à ton poids actuel.'));
       return;
     }
     if (!date) {
-      appAlert('Date de pesée', 'Choisis la date de ta pesée officielle.');
+      appAlert(traduire('Date de pesée'), traduire('Choisis la date de ta pesée officielle.'));
       return;
     }
     const doSave = async () => {
@@ -466,15 +463,15 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
         onSaved(data);
       } catch (err) {
         logger.error('Sauvegarde de la coupe impossible', err);
-        appAlert('Sauvegarde impossible', 'Un souci est survenu. Réessaie.');
+        appAlert(traduire('Sauvegarde impossible'), traduire('Un souci est survenu. Réessaie.'));
       } finally {
         setSaving(false);
       }
     };
     if (z?.zone === 'danger' || risk === 'danger') {
-      appAlert('Objectif dangereux', 'Cet objectif dépasse les limites de sécurité. Le mieux est d’en parler à un médecin du sport ou de viser la catégorie au-dessus.', [
+      appAlert(traduire('Objectif dangereux'), traduire('Cet objectif dépasse les limites de sécurité. Le mieux est d’en parler à un médecin du sport ou de viser la catégorie au-dessus.'), [
         { text: 'Revoir', style: 'cancel' },
-        { text: 'Garder quand même', style: 'destructive', onPress: doSave },
+        { text: traduire('Garder quand même'), style: 'destructive', onPress: doSave },
       ]);
       return;
     }
@@ -486,12 +483,11 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
       <Enter i={0}>
         <Card style={{ gap: 4 }}>
           <Ink size={14} weight="extraBold" color={P.ink2}>
-            {initial ? 'Modifier ta coupe' : 'Prépare ta pesée de compétition'}
+            {initial ? traduire('Modifier ta coupe') : traduire('Prépare ta pesée de compétition')}
           </Ink>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
             <Ink size={13} weight="bold" color={P.ink2}>
-              Ton poids actuel
-            </Ink>
+              {traduire("Ton poids actuel")}</Ink>
             <Ink size={26} weight="black" tight>
               {`${fmt(current)} kg`}
             </Ink>
@@ -500,10 +496,10 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
       </Enter>
 
       <Enter i={1}>
-        <H2 sub="Tape ton poids ou choisis une catégorie">Ton objectif</H2>
+        <H2 sub={traduire("Tape ton poids ou choisis une catégorie")}>{traduire("Ton objectif")}</H2>
         <View style={{ gap: 10, marginTop: 10 }}>
           <View style={{ flexDirection: 'row' }}>
-            <NumField label="Poids cible" value={target} onChange={(v) => { setTarget(v); setCategory(undefined); }} unit="kg" placeholder="70,0" />
+            <NumField label={traduire("Poids cible")} value={target} onChange={(v) => { setTarget(v); setCategory(undefined); }} unit="kg" placeholder="70,0" />
           </View>
           <Segments
             items={[
@@ -529,7 +525,7 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
               ) : (
                 <View key={c.name} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: '#ECEAE4' }}>
                   <Ink size={13} weight="bold" color={P.ink2}>
-                    {`${c.name} sans limite`}
+                    {traduire("{0} sans limite", c.name)}
                   </Ink>
                 </View>
               ),
@@ -539,22 +535,22 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
       </Enter>
 
       <Enter i={2}>
-        <H2 sub={date ? `${dateLong(date.toISOString())}, dans ${days} jour${days > 1 ? 's' : ''}` : 'Quand a lieu ta pesée officielle ?'}>Date de la pesée</H2>
+        <H2 sub={date ? traduirePluriel(days, days > 1, "{0}, dans {1} jour", "{0}, dans {1} jours", dateLong(date.toISOString()), days) : traduire('Quand a lieu ta pesée officielle ?')}>{traduire("Date de la pesée")}</H2>
         <View style={{ gap: 10, marginTop: 10 }}>
           <HRow>
             {competition?.date ? (
               <Chip
-                label={`${competition.nom} ${new Date(competition.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`}
+                label={`${competition.nom} ${new Date(competition.date).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' })}`}
                 active={!!date && isoDay(date) === isoDay(new Date(competition.date))}
                 accent={P.accent}
                 onPress={() => { setDate(new Date(competition.date)); setManual(''); }}
               />
             ) : null}
             {[2, 4, 6, 8, 12].map((wk) => (
-              <Chip key={wk} label={`Dans ${wk} sem.`} active={false} onPress={() => setWeeks(wk)} />
+              <Chip key={wk} label={traduire("Dans {0} sem.", wk)} active={false} onPress={() => setWeeks(wk)} />
             ))}
           </HRow>
-          <TextField value={manual} onChange={applyManual} placeholder="Ou tape la date : 15/02" />
+          <TextField value={manual} onChange={applyManual} placeholder={traduire("Ou tape la date : 15/02")} />
         </View>
       </Enter>
 
@@ -565,7 +561,7 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
               {ZONE_TEXT[z.zone].title}
             </Ink>
             <Ink size={13} weight="bold" color={ZONE_TEXT[z.zone].color}>
-              {`${fmt(toLose)} kg à perdre en ${days} jours, soit ${fmt(daily, 2)} kg par jour. ${ZONE_TEXT[z.zone].text}`}
+              {traduire("{0} kg à perdre en {1} jours, soit {2} kg par jour. {3}", fmt(toLose), days, fmt(daily, 2), ZONE_TEXT[z.zone].text)}
             </Ink>
           </View>
         </Enter>
@@ -573,8 +569,8 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
 
       <Enter i={4}>
         <View style={{ gap: 10 }}>
-          <BigButton label={saving ? 'Enregistrement' : initial ? 'Enregistrer' : 'Lancer ma coupe'} onPress={save} disabled={saving} icon="flag" />
-          {onCancel ? <BigButton label="Annuler" tone="light" onPress={onCancel} /> : null}
+          <BigButton label={saving ? 'Enregistrement' : initial ? traduire('Enregistrer') : traduire('Lancer ma coupe')} onPress={save} disabled={saving} icon="flag" />
+          {onCancel ? <BigButton label={traduire("Annuler")} tone="light" onPress={onCancel} /> : null}
         </View>
       </Enter>
     </>
@@ -596,24 +592,23 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
   return (
     <>
       <Enter i={0}>
-        <H2 sub="Pré-rempli avec ta dernière pesée et ta coupe">Tes paramètres</H2>
+        <H2 sub={traduire("Pré-rempli avec ta dernière pesée et ta coupe")}>{traduire("Tes paramètres")}</H2>
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-          <NumField label="Poids actuel" value={cur} onChange={setCur} unit="kg" placeholder="80" />
-          <NumField label="Poids cible" value={tgt} onChange={setTgt} unit="kg" placeholder="77" />
+          <NumField label={traduire("Poids actuel")} value={cur} onChange={setCur} unit="kg" placeholder="80" />
+          <NumField label={traduire("Poids cible")} value={tgt} onChange={setTgt} unit="kg" placeholder="77" />
         </View>
         <View style={{ marginTop: 10, flexDirection: 'row' }}>
-          <NumField label="Jours avant la pesée" value={days} onChange={setDays} unit="jours" placeholder="7" integer maxLength={3} />
+          <NumField label={traduire("Jours avant la pesée")} value={days} onChange={setDays} unit="jours" placeholder="7" integer maxLength={3} />
         </View>
       </Enter>
 
-      {!plan && cur && tgt && days ? <Notice tone="gold" text="Vérifie tes paramètres : le poids cible doit être inférieur au poids actuel." /> : null}
+      {!plan && cur && tgt && days ? <Notice tone="gold" text={traduire("Vérifie tes paramètres : le poids cible doit être inférieur au poids actuel.")} /> : null}
 
       {!plan && !(cur && tgt && days) ? (
         <Card style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <IconDot name="calc" tone="indigo" />
           <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>
-            Entre ton poids, ta cible et le nombre de jours : le plan et le niveau de risque s’affichent tout de suite.
-          </Ink>
+            {traduire("Entre ton poids, ta cible et le nombre de jours : le plan et le niveau de risque s’affichent tout de suite.")}</Ink>
         </Card>
       ) : null}
 
@@ -627,26 +622,26 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                   {RISK_LABEL[plan.riskLevel]}
                 </Ink>
               </View>
-              <BigNumber value={fmt(plan.totalToCut)} unit={`kg à perdre, ${fmt(plan.percentToCut)} % de ton poids`} size={44} color={rt.fg} />
+              <BigNumber value={fmt(plan.totalToCut)} unit={traduire("kg à perdre, {0} % de ton poids", fmt(plan.percentToCut))} size={44} color={rt.fg} />
             </Card>
           </Enter>
 
           <Enter i={2}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <MiniStat label="Par jour" value={fmt(plan.dailyCut, 2)} unit="kg" />
-              <MiniStat label="Part d’eau" value={fmt(plan.waterCutPossible)} unit="kg au plus" />
-              <MiniStat label="Délai" value={String(plan.daysAvailable)} unit="jours" />
+              <MiniStat label={traduire("Par jour")} value={fmt(plan.dailyCut, 2)} unit="kg" />
+              <MiniStat label={traduire("Part d’eau")} value={fmt(plan.waterCutPossible)} unit={traduire("kg au plus")} />
+              <MiniStat label={traduire("Délai")} value={String(plan.daysAvailable)} unit="jours" />
             </View>
           </Enter>
 
           {plan.riskLevel === 'dangerous' ? (
             <Enter i={3}>
-              <Notice tone="danger" title="Attention" text="Cette coupe dépasse les limites de sécurité recommandées. Risques : déshydratation sévère, troubles cardiaques, baisse de performance. Consulte absolument un médecin du sport." />
+              <Notice tone="danger" title={traduire("Attention")} text={traduire("Cette coupe dépasse les limites de sécurité recommandées. Risques : déshydratation sévère, troubles cardiaques, baisse de performance. Consulte absolument un médecin du sport.")} />
             </Enter>
           ) : null}
 
           <Enter i={4}>
-            <H2>Le plan, phase par phase</H2>
+            <H2>{traduire("Le plan, phase par phase")}</H2>
             <Card style={{ marginTop: 10, gap: 0 }}>
               {plan.phases.map((ph, i) => (
                 <View key={ph.name} style={{ flexDirection: 'row', gap: 12 }}>
@@ -664,7 +659,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                         {ph.name}
                       </Ink>
                       <Ink size={12} weight="bold" color={P.ink2}>
-                        {`${ph.days} jour${ph.days > 1 ? 's' : ''}`}
+                        {traduirePluriel(ph.days, ph.days > 1, "{0} jour", "{0} jours", ph.days)}
                       </Ink>
                     </View>
                     <Ink size={13} weight="bold" color={P.ink2}>
@@ -688,17 +683,16 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                     Protocole hydrique classique
                   </Ink>
                   <Ink size={12} weight="bold" color={P.ink2}>
-                    Eau et sel, jour par jour avant la pesée
-                  </Ink>
+                    {traduire("Eau et sel, jour par jour avant la pesée")}</Ink>
                 </View>
               </View>
-              <Notice tone="danger" text={`À suivre uniquement encadré par un médecin ou un préparateur. ${DANGER_SIGNS}`} />
+              <Notice tone="danger" text={traduire("À suivre uniquement encadré par un médecin ou un préparateur. {0}", DANGER_SIGNS)} />
               {showProtocol ? (
                 <View>
                   {plan.hydrationProtocol.map((d, i) => (
                     <View key={d.daysOut} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: i === plan.hydrationProtocol.length - 1 ? 0 : 1, borderBottomColor: P.line2 }}>
                       <Ink size={15} weight="black" style={{ width: 46 }} color={d.daysOut <= 1 ? P.accent : P.ink}>
-                        {d.daysOut === 0 ? 'Jour J' : `J-${d.daysOut}`}
+                        {d.daysOut === 0 ? traduire('Jour J') : `J-${d.daysOut}`}
                       </Ink>
                       <View style={{ width: 54 }}>
                         <Ink size={15} weight="black" color={d.waterLiters < 2 ? P.danger : P.ink}>
@@ -717,7 +711,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                   ))}
                 </View>
               ) : null}
-              <BigButton label={showProtocol ? 'Masquer le protocole' : 'Voir le protocole'} tone="light" onPress={() => setShowProtocol((v) => !v)} />
+              <BigButton label={showProtocol ? traduire('Masquer le protocole') : traduire('Voir le protocole')} tone="light" onPress={() => setShowProtocol((v) => !v)} />
             </Card>
           </Enter>
         </>
@@ -752,7 +746,7 @@ function DayJ() {
       const Notifications = await import('expo-notifications');
       const perm = await Notifications.requestPermissionsAsync();
       if (!perm.granted) {
-        appAlert('Notifications bloquées', 'Autorise les notifications de YOROI dans les réglages de ton téléphone pour recevoir les rappels.');
+        appAlert(traduire('Notifications bloquées'), traduire('Autorise les notifications de YOROI dans les réglages de ton téléphone pour recevoir les rappels.'));
         return;
       }
       // On annule seulement nos anciens rappels, jamais ceux du reste de l'app
@@ -761,7 +755,7 @@ function DayJ() {
       for (const step of plan.steps) {
         const id = await Notifications.scheduleNotificationAsync({
           // Aucune quantité sur l'écran verrouillé : le détail reste dans l'app
-          content: { title: 'Réhydratation du jour J', body: 'C\'est le moment de boire.', sound: true },
+          content: { title: traduire('Réhydratation du jour J'), body: traduire('C\'est le moment de boire.'), sound: true },
           trigger: { type: 'timeInterval', seconds: Math.max(1, step.minuteOffset * 60), repeats: false } as any,
         });
         ids.push(id);
@@ -769,10 +763,10 @@ function DayJ() {
       await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify(ids));
       setNotifIds(ids);
       tap('success');
-      appAlert('Rappels activés', `${plan.slots} rappels programmés, un toutes les 20 minutes.`);
+      appAlert(traduire('Rappels activés'), traduire("{0} rappels programmés, un toutes les 20 minutes.", plan.slots));
     } catch (err) {
       logger.error('Programmation des rappels impossible', err);
-      appAlert('Rappels non programmés', 'Un souci est survenu. Réessaie.');
+      appAlert(traduire('Rappels non programmés'), traduire('Un souci est survenu. Réessaie.'));
     }
   };
 
@@ -793,10 +787,10 @@ function DayJ() {
   return (
     <>
       <Enter i={0}>
-        <H2 sub="Après la pesée, un plan pour boire au bon rythme">Réhydratation</H2>
+        <H2 sub={traduire("Après la pesée, un plan pour boire au bon rythme")}>{traduire("Réhydratation")}</H2>
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-          <NumField label="Poids perdu" value={delta} onChange={setDelta} unit="kg" placeholder="2,5" />
-          <NumField label="Temps avant combat" value={hours} onChange={setHours} unit="h" placeholder="2" />
+          <NumField label={traduire("Poids perdu")} value={delta} onChange={setDelta} unit="kg" placeholder="2,5" />
+          <NumField label={traduire("Temps avant combat")} value={hours} onChange={setHours} unit="h" placeholder="2" />
         </View>
       </Enter>
 
@@ -804,27 +798,25 @@ function DayJ() {
         <Card style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <IconDot name="drop" tone="indigo" />
           <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>
-            Renseigne le poids perdu et le temps dont tu disposes pour générer ton plan.
-          </Ink>
+            {traduire("Renseigne le poids perdu et le temps dont tu disposes pour générer ton plan.")}</Ink>
         </Card>
       ) : (
         <>
           <Enter i={1}>
             <Glass style={{ gap: 12 }}>
               <Ink size={14} weight="extraBold" color={P.ink2}>
-                À boire au total
-              </Ink>
+                {traduire("À boire au total")}</Ink>
               <BigNumber value={fmt(plan.totalMl / 1000)} unit="litres" size={64} color={P.ink} />
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <MiniStat label="Par rappel" value={String(plan.mlPerSlot)} unit="ml" />
-                <MiniStat label="Rappels" value={String(plan.slots)} unit="toutes les 20 min" />
-                <MiniStat label="Par heure" value={String(perHour)} unit="ml" />
+                <MiniStat label={traduire("Par rappel")} value={String(plan.mlPerSlot)} unit="ml" />
+                <MiniStat label="Rappels" value={String(plan.slots)} unit={traduire("toutes les 20 min")} />
+                <MiniStat label={traduire("Par heure")} value={String(perHour)} unit="ml" />
               </View>
             </Glass>
           </Enter>
 
           <Enter i={2}>
-            <H2 sub="1,5 L par kg perdu, réparti sur ton temps">Ton déroulé</H2>
+            <H2 sub={traduire("1,5 L par kg perdu, réparti sur ton temps")}>{traduire("Ton déroulé")}</H2>
             <Card style={{ marginTop: 10, gap: 10 }}>
               {plan.steps.slice(0, 8).map((s, i) => (
                 <View key={s.minuteOffset} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -841,14 +833,14 @@ function DayJ() {
               ))}
               {plan.steps.length > 8 ? (
                 <Ink size={12} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-                  {`Et ${plan.steps.length - 8} rappels de plus`}
+                  {traduire("Et {0} rappels de plus", plan.steps.length - 8)}
                 </Ink>
               ) : null}
             </Card>
           </Enter>
 
           <Enter i={3}>
-            <Notice tone="gold" title="Bois par petites gorgées" text="Préfère une boisson avec des électrolytes. Si ça fait beaucoup à chaque prise, étale sur plus de temps." icon="drop" />
+            <Notice tone="gold" title={traduire("Bois par petites gorgées")} text={traduire("Préfère une boisson avec des électrolytes. Si ça fait beaucoup à chaque prise, étale sur plus de temps.")} icon="drop" />
           </Enter>
           <Enter i={4}>
             <Notice tone="danger" text={DANGER_SIGNS} />
@@ -856,9 +848,9 @@ function DayJ() {
 
           <Enter i={5}>
             {notifIds.length > 0 ? (
-              <BigButton label="Annuler les rappels" tone="light" icon="close" onPress={cancel} />
+              <BigButton label={traduire("Annuler les rappels")} tone="light" icon="close" onPress={cancel} />
             ) : (
-              <BigButton label="Activer les rappels toutes les 20 min" icon="bell" onPress={schedule} />
+              <BigButton label={traduire("Activer les rappels toutes les 20 min")} icon="bell" onPress={schedule} />
             )}
           </Enter>
         </>
@@ -874,8 +866,8 @@ function DayJ() {
 function KVCard() {
   return (
     <Card style={{ paddingVertical: 6 }}>
-      <KV label="Repère utilisé" value="1,5 L par kg perdu" />
-      <KV label="Rythme des rappels" value="toutes les 20 min" last />
+      <KV label={traduire("Repère utilisé")} value={traduire("1,5 L par kg perdu")} />
+      <KV label={traduire("Rythme des rappels")} value={traduire("toutes les 20 min")} last />
     </Card>
   );
 }

@@ -62,6 +62,7 @@ import { FeuilleConseil } from './FeuilleConseil';
 import { Icon, P, Press } from './kit';
 import { carteNeutre, teinte, domaineDuLien } from './domaines';
 import type { Domaine } from './domaines';
+import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 type IconName = React.ComponentProps<typeof Icon>['name'];
 
@@ -71,10 +72,10 @@ export const RAYON_TUILE = 22;
 const HAUTEUR_DEMI = 138;
 
 const JOURS_LETTRE = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 // mensurations : toujours 1 decimale, comme Progres (vague 32)
-const cm = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const cm = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 /* ============ La grille ============ */
 
@@ -164,7 +165,7 @@ function Explication({ children, couleur, lignes = 2 }: { children: React.ReactN
 }
 
 /** Etat vide : un « Ajouter » franc dans la couleur du domaine, puis ce qu'on ajoute */
-function Ajouter({ domaine, aide, libelle = 'Ajouter' }: { domaine: Domaine; aide: string; libelle?: string }) {
+function Ajouter({ domaine, aide, libelle = traduire('Ajouter') }: { domaine: Domaine; aide: string; libelle?: string }) {
   const t = teinte(domaine);
   return (
     <View style={{ flex: 1, justifyContent: 'flex-end', gap: 6 }}>
@@ -227,12 +228,11 @@ export function TuileProchaine({ next, trainings, plan: planFixe }: { next: Next
 
   if (!next || !next.sportId) {
     return (
-      <Cadre domaine="seances" onPress={ouvrir} a11y="Ta prochaine séance : rien de prévu. Ouvre ton planning pour ajouter tes créneaux" style={{ minHeight: HAUTEUR_DEMI }}>
-        <Entete domaine="seances" icone="calendar" titre="Ta prochaine séance" />
+      <Cadre domaine="seances" onPress={ouvrir} a11y={traduire("Ta prochaine séance : rien de prévu. Ouvre ton planning pour ajouter tes créneaux")} style={{ minHeight: HAUTEUR_DEMI }}>
+        <Entete domaine="seances" icone="calendar" titre={traduire("Ta prochaine séance")} />
         <Ink size={22} weight="black" tight numberOfLines={1}>
-          Rien de prévu
-        </Ink>
-        <Ajouter domaine="seances" aide="Ajoute tes créneaux de la semaine, ta prochaine séance s’affichera ici." libelle="Planifier" />
+          {traduire("Rien de prévu")}</Ink>
+        <Ajouter domaine="seances" aide={traduire("Ajoute tes créneaux de la semaine, ta prochaine séance s’affichera ici.")} libelle="Planifier" />
       </Cadre>
     );
   }
@@ -242,11 +242,11 @@ export function TuileProchaine({ next, trainings, plan: planFixe }: { next: Next
   const quand = `${next.when}${next.time ? ` ${next.time}` : ''}`;
   const ou = next.club ?? (next.title !== next.sport ? next.sport : '');
   const doux = paletteDouce(sombre);
-  const a11y = `Ta prochaine séance : ${quand}, ${next.title}${ou ? `, ${ou}` : ''}.${ensuite.length ? ` Ensuite : ${ensuite.map((s) => `${s.quand}, ${s.titre}`).join(' ; ')}.` : ''} Ouvrir ton planning`;
+  const a11y = traduire("Ta prochaine séance : {0}, {1}{2}.{3} Ouvrir ton planning", quand, next.title, ou ? `, ${ou}` : '', ensuite.length ? ` Ensuite : ${ensuite.map((s) => `${s.quand}, ${s.titre}`).join(' ; ')}.` : '');
 
   return (
     <Cadre domaine="seances" plein onPress={ouvrir} a11y={a11y} style={{ padding: 16, gap: 6 }}>
-      <Entete domaine="seances" icone="calendar" titre="Ta prochaine séance" plein />
+      <Entete domaine="seances" icone="calendar" titre={traduire("Ta prochaine séance")} plein />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flex: 1, gap: 0 }}>
           <Ink size={30} weight="black" tight color={t.surPlein} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
@@ -297,18 +297,18 @@ export function TuileSemaine({ trainings, goal }: { trainings: Training[]; goal:
   // 17 octobre soir : les 7 jours de la semaine, la pastille du sport fait sur chaque jour de seance
   const jours = useMemo(() => joursDeLaSemaine(trainings, jour), [trainings, jour]);
   const reached = goal > 0 && n >= goal;
-  const ligne = goal <= 0 ? 'Choisis ton objectif' : n > goal ? `objectif de ${goal} dépassé` : reached ? 'objectif tenu' : n === 0 ? 'ta première t’attend' : `encore ${goal - n} pour l’objectif`;
+  const ligne = goal <= 0 ? traduire('Choisis ton objectif') : n > goal ? traduire("objectif de {0} dépassé", goal) : reached ? traduire('objectif tenu') : n === 0 ? traduire('ta première t’attend') : traduire("encore {0} pour l’objectif", goal - n);
   return (
     <Cadre
       domaine="seances"
       demi
       onPress={() => router.push((goal <= 0 ? '/settings?objectif=1' : '/seances') as any)}
-      a11y={goal <= 0 ? `Ta semaine : ${n} séance${n > 1 ? 's' : ''} depuis lundi. Choisir un objectif` : `Ta semaine : ${n} séance${n > 1 ? 's' : ''} sur ${goal}, ${ligne}. Voir tes séances`}
+      a11y={goal <= 0 ? traduirePluriel(n, n > 1, "Ta semaine : {0} séance depuis lundi. Choisir un objectif", "Ta semaine : {0} séances depuis lundi. Choisir un objectif", n) : traduirePluriel(n, n > 1, "Ta semaine : {0} séance sur {1}, {2}. Voir tes séances", "Ta semaine : {0} séances sur {1}, {2}. Voir tes séances", n, goal, ligne)}
     >
-      <Entete domaine="seances" icone="check" titre="Ta semaine" />
+      <Entete domaine="seances" icone="check" titre={traduire("Ta semaine")} />
       <Bas>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-          <ChiffreAnime valeur={n} format={(x) => String(Math.round(x))} cle="semaine" couleur={reached ? P.mossText : P.ink} unite={goal > 0 ? ` / ${goal}` : n > 1 ? ' séances' : ' séance'} />
+          <ChiffreAnime valeur={n} format={(x) => String(Math.round(x))} cle="semaine" couleur={reached ? P.mossText : P.ink} unite={goal > 0 ? ` / ${goal}` : n > 1 ? traduire(' séances') : traduire(' séance')} />
           {n > goal && goal > 0 ? (
             <View style={{ paddingHorizontal: 6, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: P.mossText, justifyContent: 'center' }}>
               <Ink size={11.5} weight="black" color={P.mossText}>{`+${n - goal}`}</Ink>
@@ -352,9 +352,9 @@ export function TuileDerniere({ last }: { last: Training }) {
       domaine="seances"
       demi
       onPress={() => router.push((last.id ? { pathname: '/workout-detail', params: { id: String(last.id) } } : '/seances') as any)}
-      a11y={`Ta dernière séance : ${sport}, ${quand}${min > 0 ? `, ${formatDuration(min)}` : ''}. Voir le détail`}
+      a11y={traduire("Ta dernière séance : {0}, {1}{2}. Voir le détail", sport, quand, min > 0 ? `, ${formatDuration(min)}` : '')}
     >
-      <Entete domaine="seances" icone="clock" titre="Dernière séance" />
+      <Entete domaine="seances" icone="clock" titre={traduire("Dernière séance")} />
       <Bas>
         {/* 17 octobre soir : le logo du club ou le pictogramme du sport en grand, comme une illustration */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -375,9 +375,9 @@ export function TuileRecup({ forme }: { forme: FormeResult | null }) {
   const router = useRouter();
   if (!(forme && forme.score !== null && forme.level)) {
     return (
-      <Cadre domaine="forme" demi onPress={() => router.push('/sleep-input' as any)} a11y="Récupération : ajoute ta nuit pour la calculer">
-        <Entete domaine="forme" icone="bolt" titre="Récupération" />
-        <Ajouter domaine="forme" aide="Note ta nuit pour la voir" />
+      <Cadre domaine="forme" demi onPress={() => router.push('/sleep-input' as any)} a11y={traduire("Récupération : ajoute ta nuit pour la calculer")}>
+        <Entete domaine="forme" icone="bolt" titre={traduire("Récupération")} />
+        <Ajouter domaine="forme" aide={traduire("Note ta nuit pour la voir")} />
       </Cadre>
     );
   }
@@ -386,10 +386,10 @@ export function TuileRecup({ forme }: { forme: FormeResult | null }) {
     const manqueNuit = forme.missing.includes('sommeil');
     const message = messageScoreIncomplet(manqueNuit);
     return (
-      <Cadre domaine="forme" demi onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={`Récupération : ${message}. ${manqueNuit ? 'Note ta nuit' : 'Voir le détail'}`}>
-        <Entete domaine="forme" icone="bolt" titre="Récupération" />
+      <Cadre domaine="forme" demi onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={traduire("Récupération : {0}. {1}", message, manqueNuit ? 'Note ta nuit' : 'Voir le détail')}>
+        <Entete domaine="forme" icone="bolt" titre={traduire("Récupération")} />
         {manqueNuit ? (
-          <Ajouter domaine="forme" aide={message} libelle="Ma nuit" />
+          <Ajouter domaine="forme" aide={message} libelle={traduire("Ma nuit")} />
         ) : (
           <Bas>
             <Explication lignes={3}>{message}</Explication>
@@ -401,8 +401,8 @@ export function TuileRecup({ forme }: { forme: FormeResult | null }) {
   // la couleur du niveau est relue au rendu : elle suit le mode clair ou sombre en cours
   const couleur = levelFor(forme.score).color;
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/readiness-detail' as any)} a11y={`Ta récupération : ${forme.score} sur 100, ${forme.level.label}. Voir le détail`}>
-      <Entete domaine="forme" icone="bolt" titre="Récupération" />
+    <Cadre domaine="forme" demi onPress={() => router.push('/readiness-detail' as any)} a11y={traduire("Ta récupération : {0} sur 100, {1}. Voir le détail", forme.score, forme.level.label)}>
+      <Entete domaine="forme" icone="bolt" titre={traduire("Récupération")} />
       {/* 17 octobre soir : une jauge en arc, le score qui compte au centre */}
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
         <ArcJauge part={forme.score / 100} couleur={couleur} piste={P.line} taille={70} epaisseur={7} cle="recup">
@@ -413,8 +413,7 @@ export function TuileRecup({ forme }: { forme: FormeResult | null }) {
             {forme.level.label}
           </Ink>
           <Ink size={11.5} weight="bold" color={P.ink2}>
-            sur 100
-          </Ink>
+            {traduire("sur 100")}</Ink>
         </View>
       </View>
     </Cadre>
@@ -428,23 +427,23 @@ export function TuileSommeil({ sleep, sleepGoal }: { sleep: SleepEntry[]; sleepG
   const nuits = useMemo(() => septNuits(sleep, localISO()), [sleep]);
   if (!night) {
     return (
-      <Cadre domaine="forme" demi onPress={() => router.push('/sleep-input' as any)} a11y="Sommeil : ajoute ta dernière nuit">
-        <Entete domaine="forme" icone="moon" titre="Sommeil" />
-        <Ajouter domaine="forme" aide="Ta dernière nuit" />
+      <Cadre domaine="forme" demi onPress={() => router.push('/sleep-input' as any)} a11y={traduire("Sommeil : ajoute ta dernière nuit")}>
+        <Entete domaine="forme" icone="moon" titre={traduire("Sommeil")} />
+        <Ajouter domaine="forme" aide={traduire("Ta dernière nuit")} />
       </Cadre>
     );
   }
   const ok = night.duration >= sleepGoal;
   const notees = nuits.filter((x) => x !== null).length;
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/sleep' as any)} a11y={`Ton sommeil, ${relativeDay(night.date)} : ${formatMinutes(night.duration)}. Voir le détail`}>
-      <Entete domaine="forme" icone="moon" titre="Sommeil" />
+    <Cadre domaine="forme" demi onPress={() => router.push('/sleep' as any)} a11y={traduire("Ton sommeil, {0} : {1}. Voir le détail", relativeDay(night.date), formatMinutes(night.duration))}>
+      <Entete domaine="forme" icone="moon" titre={traduire("Sommeil")} />
       <Bas>
         <ChiffreAnime valeur={night.duration} format={(x) => formatMinutes(Math.round(x))} cle="sommeil" taille={24} />
         {/* 17 octobre soir : tes 7 dernieres nuits et la ligne de ton objectif ; une seule nuit notee : la phrase seule */}
         {notees >= 2 ? <Barres7 valeurs={nuits} objectif={sleepGoal} couleur={t.plein} douce={t.bord} hauteur={30} cle="sommeil" /> : null}
         <Explication couleur={ok ? P.mossText : P.ink2} lignes={1}>
-          {ok ? 'objectif atteint' : `il manque ${formatMinutes(sleepGoal - night.duration)}`}
+          {ok ? traduire('objectif atteint') : traduire("il manque {0}", formatMinutes(sleepGoal - night.duration))}
         </Explication>
       </Bas>
     </Cadre>
@@ -458,14 +457,14 @@ export function TuileEau({ water, waterGoal }: { water: number; waterGoal: numbe
   const g = waterGoal > 0 ? Math.max(0, Math.min(1, water / waterGoal)) : 0;
   return (
     <TourAnchor id="accueil.eau" style={{ flex: 1 }}>
-      <Cadre domaine="eau" demi onPress={() => setOuverte(true)} a11y={`Ton eau du jour : ${formatLiters(water)} litre sur ${formatLiters(waterGoal)}. Touche pour ajouter ou retirer de l’eau`}>
-        <Entete domaine="eau" icone="drop" titre="Eau du jour" />
+      <Cadre domaine="eau" demi onPress={() => setOuverte(true)} a11y={traduire("Ton eau du jour : {0} litre sur {1}. Touche pour ajouter ou retirer de l’eau", formatLiters(water), formatLiters(waterGoal))}>
+        <Entete domaine="eau" icone="drop" titre={traduire("Eau du jour")} />
         {/* 17 octobre soir : un verre qui se remplit jusqu'a ta part du jour */}
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
             <ChiffreAnime valeur={water} format={(x) => formatLiters(x)} cle="eau" taille={22} unite={` / ${formatLiters(waterGoal)} L`} />
             <Explication couleur={ok ? P.mossText : P.ink2} lignes={1}>
-              {ok ? 'objectif atteint' : water > 0 ? `encore ${formatLiters(Math.max(0, waterGoal - water))} L` : 'ajoute un verre'}
+              {ok ? traduire('objectif atteint') : water > 0 ? traduire("encore {0} L", formatLiters(Math.max(0, waterGoal - water))) : traduire('ajoute un verre')}
             </Explication>
           </View>
           <Verre part={g} couleur={t.plein} largeur={28} hauteur={42} cle="eau" />
@@ -487,22 +486,22 @@ export function TuileMensurations({ tailleFixe }: { tailleFixe?: { value: number
   const valeurs = useMemo(() => taille.map((x) => x.value), [taille]);
   if (!last) {
     return (
-      <Cadre domaine="mensurations" demi onPress={() => router.push('/add-measurement' as any)} a11y="Mensurations : ajoute ton tour de taille">
+      <Cadre domaine="mensurations" demi onPress={() => router.push('/add-measurement' as any)} a11y={traduire("Mensurations : ajoute ton tour de taille")}>
         <Entete domaine="mensurations" icone="body" titre="Mensurations" />
-        <Ajouter domaine="mensurations" aide="Ton tour de taille" />
+        <Ajouter domaine="mensurations" aide={traduire("Ton tour de taille")} />
       </Cadre>
     );
   }
   const d = taille.length > 1 ? taille[taille.length - 1].value - taille[0].value : null;
   return (
-    <Cadre domaine="mensurations" demi onPress={() => router.push({ pathname: '/measurements-detail', params: { field: 'waist' } } as any)} a11y={`Tour de taille : ${cm(last.value)} centimètres. Voir tes mensurations`}>
+    <Cadre domaine="mensurations" demi onPress={() => router.push({ pathname: '/measurements-detail', params: { field: 'waist' } } as any)} a11y={traduire("Tour de taille : {0} centimètres. Voir tes mensurations", cm(last.value))}>
       <Entete domaine="mensurations" icone="body" titre="Tour de taille" />
       <Bas>
         <ChiffreAnime valeur={last.value} format={(x) => cm(x)} cle="taille" taille={24} unite=" cm" />
         {/* 17 octobre soir : ta tendance, seulement avec deux mesures au moins */}
         {valeurs.length >= 2 ? <Courbe valeurs={valeurs} couleur={t.plein} largeur={124} hauteur={28} cle="taille" /> : null}
         <Explication couleur={d !== null && d < -0.05 ? P.mossText : P.ink2} lignes={1}>
-          {d === null ? 'ta première mesure' : Math.abs(d) < 0.05 ? 'stable' : `${d < 0 ? '−' : '+'}${cm(Math.abs(d))} cm au total`}
+          {d === null ? traduire('ta première mesure') : Math.abs(d) < 0.05 ? 'stable' : traduire("{0}{1} cm au total", d < 0 ? '−' : '+', cm(Math.abs(d)))}
         </Explication>
       </Bas>
     </Cadre>
@@ -514,7 +513,7 @@ export function TuileMensurations({ tailleFixe }: { tailleFixe?: { value: number
 /** L'ordre le plus utile : le ventre d'abord, puis le haut et le bas du corps */
 const ORDRE_MENSURATIONS: ViewKey[] = ['waist', 'navel', 'hips', 'chest', 'arm', 'thigh', 'shoulders', 'calf', 'neck'];
 /** Libelles de la carte (Houari : « Tour de nombril ») */
-const NOM_MENSURATION: Partial<Record<ViewKey, string>> = { navel: 'Tour de nombril' };
+const NOM_MENSURATION: Partial<Record<ViewKey, string>> = { navel: traduire('Tour de nombril') };
 
 /**
  * Houari : « ajouter le tour de nombril, et pouvoir faire défiler dans ce rectangle pour voir les autres
@@ -543,8 +542,8 @@ export function TuileMensurationsDefile() {
   const total = mesures.length + 1;
   const pages = Math.max(1, Math.ceil(total / 2));
   return (
-    <Cadre domaine="mensurations" a11y={`Tes mensurations, ${mesures.length} mesure${mesures.length > 1 ? 's' : ''}`} style={{ gap: 10 }}>
-      <Pressable onPress={() => router.push('/measurements-detail' as any)} accessibilityRole="button" accessibilityLabel="Tes mensurations. Voir le détail" hitSlop={6}>
+    <Cadre domaine="mensurations" a11y={traduirePluriel(mesures.length, mesures.length > 1, "Tes mensurations, {0} mesure", "Tes mensurations, {0} mesures", mesures.length)} style={{ gap: 10 }}>
+      <Pressable onPress={() => router.push('/measurements-detail' as any)} accessibilityRole="button" accessibilityLabel={traduire("Tes mensurations. Voir le détail")} hitSlop={6}>
         <Entete domaine="mensurations" icone="body" titre="Tes mensurations" droite={<Icon name="chevron" size={14} color={t.texte} width={2.6} />} />
       </Pressable>
       <ScrollView
@@ -568,7 +567,7 @@ export function TuileMensurationsDefile() {
               key={m.cle}
               onPress={() => router.push({ pathname: '/measurements-detail', params: { field: m.cle } } as any)}
               accessibilityRole="button"
-              accessibilityLabel={`${m.nom} : ${cm(last.value)} centimètres${d !== null ? `, ${d < 0 ? 'moins' : 'plus'} ${cm(Math.abs(d))} au total` : ''}. Voir le détail`}
+              accessibilityLabel={traduire("{0} : {1} centimètres{2}. Voir le détail", m.nom, cm(last.value), d !== null ? `, ${d < 0 ? 'moins' : 'plus'} ${cm(Math.abs(d))} au total` : '')}
               style={({ pressed }) => ({ width: L, minHeight: 124, borderRadius: 16, borderWidth: 1, borderColor: P.line2, backgroundColor: pressed ? P.paper : P.white, padding: 10, gap: 3 })}
             >
               <Ink size={11.5} weight="extraBold" color={t.texte} numberOfLines={1}>
@@ -577,7 +576,7 @@ export function TuileMensurationsDefile() {
               <ChiffreAnime valeur={last.value} format={(x) => cm(x)} cle={`mens:${m.cle}`} taille={22} unite=" cm" />
               {m.serie.length >= 2 ? <Courbe valeurs={m.serie.map((x) => x.value)} couleur={t.plein} largeur={L - 20} hauteur={26} cle={`mens:${m.cle}`} /> : <View style={{ height: 26 }} />}
               <Ink size={11} weight="bold" color={bien ? P.mossText : P.ink2} numberOfLines={1}>
-                {d === null ? 'ta première mesure' : Math.abs(d) < 0.05 ? 'stable' : `${d < 0 ? '−' : '+'}${cm(Math.abs(d))} cm au total`}
+                {d === null ? traduire('ta première mesure') : Math.abs(d) < 0.05 ? 'stable' : traduire("{0}{1} cm au total", d < 0 ? '−' : '+', cm(Math.abs(d)))}
               </Ink>
             </Pressable>
           );
@@ -585,15 +584,14 @@ export function TuileMensurationsDefile() {
         <Pressable
           onPress={() => router.push('/add-measurement' as any)}
           accessibilityRole="button"
-          accessibilityLabel="Ajouter une mesure"
+          accessibilityLabel={traduire("Ajouter une mesure")}
           style={({ pressed }) => ({ width: L, minHeight: 124, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.texte, backgroundColor: pressed ? P.paper : 'transparent', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10 })}
         >
           <View style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: t.texte, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="plus" size={18} color={t.texte} width={3} />
           </View>
           <Ink size={12.5} weight="extraBold" color={t.texte} style={{ textAlign: 'center' }}>
-            Ajouter une mesure
-          </Ink>
+            {traduire("Ajouter une mesure")}</Ink>
         </Pressable>
       </ScrollView>
       {pages > 1 ? (
@@ -655,21 +653,21 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
 
   const lieu = [c.place, c.category].filter(Boolean).join(', ');
   // libelle de source : seulement pour tes saisies (jamais en mode demo, jamais avant d'avoir lu le mode)
-  const origine = demo === false ? 'Ajoutée par toi' : null;
+  const origine = demo === false ? traduire('Ajoutée par toi') : null;
   const retirer = () => {
     if (!c.id) {
       router.push('/competitions' as any);
       return;
     }
-    appAlert('Retirer cette compétition ?', `${c.name}, le ${longDate(c.date)}. Elle disparaît de ton accueil et de tes compétitions.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Retirer cette compétition ?'), traduire("{0}, le {1}. Elle disparaît de ton accueil et de tes compétitions.", c.name, longDate(c.date)), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Retirer',
         style: 'destructive',
         onPress: () => {
           deleteCompetition(c.id as number)
             .then(() => DeviceEventEmitter.emit(DATA_CHANGED_EVENT))
-            .catch(() => appAlert('Impossible de retirer la compétition', 'Réessaie depuis l’écran Compétitions.'));
+            .catch(() => appAlert(traduire('Impossible de retirer la compétition'), traduire('Réessaie depuis l’écran Compétitions.')));
         },
       },
     ]);
@@ -681,14 +679,13 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
         onPress={() => router.push((c.id ? { pathname: '/competition-detail', params: { id: String(c.id) } } : '/competitions') as any)}
         haptic="light"
         accessibilityRole="button"
-        accessibilityLabel={`Ta compétition : ${c.name}, le ${longDate(c.date)}, ${c.days === 0 ? 'c’est aujourd’hui' : `dans ${c.days} jour${c.days > 1 ? 's' : ''}`}.${origine ? ` ${origine}.` : ''} Voir le détail`}
+        accessibilityLabel={traduire("Ta compétition : {0}, le {1}, {2}.{3} Voir le détail", c.name, longDate(c.date), c.days === 0 ? 'c’est aujourd’hui' : `dans ${c.days} jour${c.days > 1 ? 's' : ''}`, origine ? ` ${origine}.` : '')}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, paddingBottom: 10 }}>
           <View style={{ width: 76, height: 76, borderRadius: 18, backgroundColor: t.plein, alignItems: 'center', justifyContent: 'center' }}>
             {c.days === 0 ? (
               <Ink size={17} weight="black" color={t.surPlein}>
-                Jour J
-              </Ink>
+                {traduire("Jour J")}</Ink>
             ) : (
               <>
                 <Ink size={30} weight="black" tight color={t.surPlein} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -704,7 +701,7 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Icon name="flag" size={15} color={t.texte} width={2.5} />
               <Ink size={13} weight="extraBold" color={t.texte} numberOfLines={1} style={{ flex: 1 }}>
-                {`Compétition, le ${longDate(c.date)}`}
+                {traduire("Compétition, le {0}", longDate(c.date))}
               </Ink>
             </View>
             <Ink size={17} weight="black" tight numberOfLines={2}>
@@ -724,7 +721,7 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
       ) : null}
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, paddingHorizontal: 14, paddingBottom: 12, paddingTop: 8 }}>
         <PetitBouton libelle="Retirer" icone="close" onPress={retirer} a11y={`Retirer ${c.name}`} />
-        <PetitBouton libelle="Ajouter" icone="plus" plein onPress={ajouter} a11y="Ajouter une autre compétition" />
+        <PetitBouton libelle={traduire("Ajouter")} icone="plus" plein onPress={ajouter} a11y={traduire("Ajouter une autre compétition")} />
       </View>
     </View>
   );
@@ -785,7 +782,7 @@ export function LigneConseil({ trainings, lastWeighIso, goal, freins, semaineVis
       <Pressable
         onPress={() => setOuvert(true)}
         accessibilityRole="button"
-        accessibilityLabel={`${citation} Touche pour lire le conseil du jour : ${c.title}`}
+        accessibilityLabel={traduire("{0} Touche pour lire le conseil du jour : {1}", citation, c.title)}
         hitSlop={{ top: 4, bottom: 8 }}
         style={{ height: HAUTEUR_LIGNE_CONSEIL, marginTop: MARGE_HAUT_CONSEIL, marginBottom: MARGE_BAS_CONSEIL, justifyContent: 'center', paddingHorizontal: 2 }}
       >
@@ -834,18 +831,18 @@ export function TuileMois({ trainings, plannedDays, competitionDate }: { trainin
   const mois = `${MOIS[mo].charAt(0).toUpperCase()}${MOIS[mo].slice(1)}`;
   const resume = duMois.length
     ? [`${duMois.length} séance${duMois.length > 1 ? 's' : ''}`, nJours !== duMois.length ? `${nJours} jours` : '', minutes ? formatDuration(minutes) : ''].filter(Boolean).join(', ')
-    : 'pas encore de séance';
+    : traduire('pas encore de séance');
   const estPrevu = (iso: string) => iso >= today && !(parJour.get(iso) ?? []).length && plannedDays.includes((new Date(iso + 'T12:00:00').getDay() + 6) % 7);
   const unPrevu = cases.some((iso) => !!iso && estPrevu(iso));
   const compet = !!competitionDate && cases.includes(competitionDate);
 
   return (
     <TourAnchor id="accueil.mois">
-      <Cadre domaine="seances" onPress={() => router.push('/planning?tab=mois' as any)} a11y={`Ton mois, ${mois} : ${resume}. Ouvrir le calendrier`} style={{ gap: 8, paddingHorizontal: 14 }}>
+      <Cadre domaine="seances" onPress={() => router.push('/planning?tab=mois' as any)} a11y={traduire("Ton mois, {0} : {1}. Ouvrir le calendrier", mois, resume)} style={{ gap: 8, paddingHorizontal: 14 }}>
         <Entete
           domaine="seances"
           icone="calendar"
-          titre="Ton mois"
+          titre={traduire("Ton mois")}
           droite={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
               <Ink size={13} weight="extraBold" color={t.texte}>
@@ -928,16 +925,14 @@ function Legende({ prevu, compet }: { prevu: boolean; compet: boolean }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.texte }} />
           <Ink size={12} weight="bold" color={P.ink2}>
-            prévu dans ton planning
-          </Ink>
+            {traduire("prévu dans ton planning")}</Ink>
         </View>
       ) : null}
       {compet ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: tc.plein, backgroundColor: tc.fond }} />
           <Ink size={12} weight="bold" color={P.ink2}>
-            ta compétition
-          </Ink>
+            {traduire("ta compétition")}</Ink>
         </View>
       ) : null}
     </View>
@@ -946,7 +941,7 @@ function Legende({ prevu, compet }: { prevu: boolean; compet: boolean }) {
 
 /* ============ Blocs en plus (17 octobre : affiches par defaut, etat vide utile sans donnee, jamais de chiffre invente) ============ */
 
-const nb = (n: number) => Math.round(n).toLocaleString('fr-FR').replace(/ | /g, ' ');
+const nb = (n: number) => Math.round(n).toLocaleString(LOCALE).replace(/ | /g, ' ');
 
 /**
  * Activite du jour (16 octobre, affichee par defaut) : tes pas en grand, tes calories actives et tes minutes
@@ -963,8 +958,8 @@ export function TuileActivite({ a }: { a: NonNullable<ReturnType<typeof activite
   ].filter(Boolean) as { grand: string; unite: string; petit: string }[];
   const [tete, ...petits] = valeurs;
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push((a.pas !== null ? '/sante/pas' : '/sante') as any)} a11y={`Ton activité du jour : ${valeurs.map((v) => v.petit).join(', ')}. Voir le détail`}>
-      <Entete domaine="forme" icone="sun" titre="Activité" />
+    <Cadre domaine="forme" demi onPress={() => router.push((a.pas !== null ? '/sante/pas' : '/sante') as any)} a11y={traduire("Ton activité du jour : {0}. Voir le détail", valeurs.map((v) => v.petit).join(', '))}>
+      <Entete domaine="forme" icone="sun" titre={traduire("Activité")} />
       <Bas>
         <GrandChiffre valeur={tete.grand} unite={tete.unite} />
         {petits.map((x) => (
@@ -984,11 +979,11 @@ export function TuileActivite({ a }: { a: NonNullable<ReturnType<typeof activite
 export function TuilePas({ pas }: { pas: { pas: number; kcal: number | null } }) {
   const router = useRouter();
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/sante/pas' as any)} a11y={`Tes pas du jour : ${nb(pas.pas)}${pas.kcal !== null ? `, ${nb(pas.kcal)} kilocalories actives` : ''}. Voir le détail`}>
-      <Entete domaine="forme" icone="sun" titre="Pas du jour" />
+    <Cadre domaine="forme" demi onPress={() => router.push('/sante/pas' as any)} a11y={traduire("Tes pas du jour : {0}{1}. Voir le détail", nb(pas.pas), pas.kcal !== null ? `, ${nb(pas.kcal)} kilocalories actives` : '')}>
+      <Entete domaine="forme" icone="sun" titre={traduire("Pas du jour")} />
       <Bas>
         <GrandChiffre valeur={nb(pas.pas)} />
-        <Explication>{pas.kcal !== null ? `${nb(pas.kcal)} kcal actives` : 'aujourd’hui'}</Explication>
+        <Explication>{pas.kcal !== null ? `${nb(pas.kcal)} kcal actives` : traduire('aujourd’hui')}</Explication>
       </Bas>
     </Cadre>
   );
@@ -999,11 +994,11 @@ export function TuileCoeur({ coeur }: { coeur: { bpm: number; date: string; moye
   const router = useRouter();
   const quand = relativeDay(coeur.date);
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/sante/fc-repos' as any)} a11y={`Ton cœur au repos : ${coeur.bpm} battements par minute, ${quand}${coeur.moyenne !== null ? `, moyenne sur 30 jours ${coeur.moyenne}` : ''}. Voir le détail`}>
-      <Entete domaine="forme" icone="heart" titre="Cœur au repos" />
+    <Cadre domaine="forme" demi onPress={() => router.push('/sante/fc-repos' as any)} a11y={traduire("Ton cœur au repos : {0} battements par minute, {1}{2}. Voir le détail", coeur.bpm, quand, coeur.moyenne !== null ? `, moyenne sur 30 jours ${coeur.moyenne}` : '')}>
+      <Entete domaine="forme" icone="heart" titre={traduire("Cœur au repos")} />
       <Bas>
         <GrandChiffre valeur={String(coeur.bpm)} unite=" bpm" />
-        <Explication>{coeur.moyenne !== null ? `moyenne 30 jours : ${coeur.moyenne}` : quand}</Explication>
+        <Explication>{coeur.moyenne !== null ? traduire("moyenne 30 jours : {0}", coeur.moyenne) : quand}</Explication>
       </Bas>
     </Cadre>
   );
@@ -1014,7 +1009,7 @@ export function TuileRecord({ record }: { record: { titre: string; valeur: strin
   const router = useRouter();
   const quand = relativeDay(record.date);
   return (
-    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={`Ton dernier record : ${record.titre}, ${record.valeur}${record.ecart ? `, ${record.ecart} sur le précédent` : ''}, ${quand}. Voir tes records`}>
+    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduire("Ton dernier record : {0}, {1}{2}, {3}. Voir tes records", record.titre, record.valeur, record.ecart ? `, ${record.ecart} sur le précédent` : '', quand)}>
       <Entete domaine="seances" icone="star" titre="Dernier record" />
       <Bas>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -1039,12 +1034,12 @@ export function TuileSerie({ semaines, goal, recentes }: { semaines: number; goa
   const router = useRouter();
   const t = teinte('seances');
   return (
-    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={`${semaines} semaine${semaines > 1 ? 's' : ''} d’affilée à ton objectif de ${goal} séances. Voir ta régularité`}>
-      <Entete domaine="seances" icone="trophy" titre="Régularité" />
+    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduirePluriel(semaines, semaines > 1, "{0} semaine d’affilée à ton objectif de {1} séances. Voir ta régularité", "{0} semaines d’affilée à ton objectif de {1} séances. Voir ta régularité", semaines, goal)}>
+      <Entete domaine="seances" icone="trophy" titre={traduire("Régularité")} />
       <Bas>
         <ChiffreAnime valeur={semaines} format={(x) => String(Math.round(x))} cle="serie" unite={semaines > 1 ? ' semaines' : ' semaine'} taille={24} />
         {recentes && recentes.length ? <RangeeSemaines semaines={recentes} couleur={P.moss} /> : null}
-        <Explication couleur={t.texte} lignes={1}>{`d’affilée à ${goal} séance${goal > 1 ? 's' : ''}`}</Explication>
+        <Explication couleur={t.texte} lignes={1}>{traduirePluriel(goal, goal > 1, "d’affilée à {0} séance", "d’affilée à {0} séances", goal)}</Explication>
       </Bas>
     </Cadre>
   );
@@ -1074,14 +1069,13 @@ export function TuilePesee({ prevue }: { prevue: NonNullable<ReturnType<typeof p
   const t = teinte('poids');
   const quand = `${prevue.quand}${prevue.heure ? `, ${prevue.heure}` : ''}`;
   return (
-    <Cadre domaine="poids" onPress={() => router.push('/notifications' as any)} a11y={`Ta prochaine pesée : ${quand}. Régler tes jours de pesée`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+    <Cadre domaine="poids" onPress={() => router.push('/notifications' as any)} a11y={traduire("Ta prochaine pesée : {0}. Régler tes jours de pesée", quand)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: t.texte, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="scale" size={20} color={t.texte} width={2.4} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Ink size={13} weight="extraBold" color={t.texte} numberOfLines={1}>
-          Ta prochaine pesée
-        </Ink>
+          {traduire("Ta prochaine pesée")}</Ink>
         <Ink size={18} weight="black" tight numberOfLines={1}>
           {quand}
         </Ink>
@@ -1108,7 +1102,7 @@ export function usePhotosAccueil(actif: boolean): { paire: { avant: Photo; apres
   return useMemo(() => ({ paire: actif && photos ? avantApres(photos) : null, nb: photos?.length ?? 0, charge: photos !== null }), [actif, photos]);
 }
 
-const kg = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const kg = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 export function TuileAvantApres({ paire }: { paire: { avant: Photo; apres: Photo } }) {
   const router = useRouter();
@@ -1128,11 +1122,11 @@ export function TuileAvantApres({ paire }: { paire: { avant: Photo; apres: Photo
     </View>
   );
   return (
-    <Cadre domaine="poids" onPress={() => router.push('/transformation' as any)} a11y={`Avant, après : ta première photo du ${longDate(paire.avant.date)} et ta dernière du ${longDate(paire.apres.date)}. Ouvrir le comparateur`} style={{ gap: 8 }}>
-      <Entete domaine="poids" icone="body" titre="Avant, après" />
+    <Cadre domaine="poids" onPress={() => router.push('/transformation' as any)} a11y={traduire("Avant, après : ta première photo du {0} et ta dernière du {1}. Ouvrir le comparateur", longDate(paire.avant.date), longDate(paire.apres.date))} style={{ gap: 8 }}>
+      <Entete domaine="poids" icone="body" titre={traduire("Avant, après")} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        {vignette(paire.avant, 'Avant')}
-        {vignette(paire.apres, 'Après')}
+        {vignette(paire.avant, traduire('Avant'))}
+        {vignette(paire.apres, traduire('Après'))}
       </View>
     </Cadre>
   );
@@ -1147,17 +1141,16 @@ export function TuileAvantApres({ paire }: { paire: { avant: Photo; apres: Photo
 export function TuileActiviteVide({ relie }: { relie: boolean }) {
   const router = useRouter();
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/sante' as any)} a11y={relie ? 'Activité : Santé n’a pas encore noté de pas aujourd’hui. Ouvrir Santé' : 'Activité : connecte Santé pour voir tes pas. Connecter'}>
-      <Entete domaine="forme" icone="sun" titre="Activité" />
+    <Cadre domaine="forme" demi onPress={() => router.push('/sante' as any)} a11y={relie ? traduire('Activité : Santé n’a pas encore noté de pas aujourd’hui. Ouvrir Santé') : traduire('Activité : connecte Santé pour voir tes pas. Connecter')}>
+      <Entete domaine="forme" icone="sun" titre={traduire("Activité")} />
       {relie ? (
         <Bas>
           <Ink size={17} weight="black" tight numberOfLines={2}>
-            Pas encore de pas aujourd’hui
-          </Ink>
-          <Explication>Ta montre ou ton téléphone les ajoutera ici</Explication>
+            {traduire("Pas encore de pas aujourd’hui")}</Ink>
+          <Explication>{traduire("Ta montre ou ton téléphone les ajoutera ici")}</Explication>
         </Bas>
       ) : (
-        <Ajouter domaine="forme" aide="Connecte Santé pour voir tes pas" libelle="Connecter" />
+        <Ajouter domaine="forme" aide={traduire("Connecte Santé pour voir tes pas")} libelle="Connecter" />
       )}
     </Cadre>
   );
@@ -1166,17 +1159,16 @@ export function TuileActiviteVide({ relie }: { relie: boolean }) {
 export function TuileCoeurVide({ relie }: { relie: boolean }) {
   const router = useRouter();
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/sante' as any)} a11y={relie ? 'Cœur au repos : pas de mesure ces 7 derniers jours. Ouvrir Santé' : 'Cœur au repos : connecte Santé pour le voir. Connecter'}>
-      <Entete domaine="forme" icone="heart" titre="Cœur au repos" />
+    <Cadre domaine="forme" demi onPress={() => router.push('/sante' as any)} a11y={relie ? traduire('Cœur au repos : pas de mesure ces 7 derniers jours. Ouvrir Santé') : traduire('Cœur au repos : connecte Santé pour le voir. Connecter')}>
+      <Entete domaine="forme" icone="heart" titre={traduire("Cœur au repos")} />
       {relie ? (
         <Bas>
           <Ink size={17} weight="black" tight numberOfLines={2}>
-            Pas de mesure cette semaine
-          </Ink>
-          <Explication>Porte ta montre la nuit pour le mesurer</Explication>
+            {traduire("Pas de mesure cette semaine")}</Ink>
+          <Explication>{traduire("Porte ta montre la nuit pour le mesurer")}</Explication>
         </Bas>
       ) : (
-        <Ajouter domaine="forme" aide="Connecte Santé pour le voir" libelle="Connecter" />
+        <Ajouter domaine="forme" aide={traduire("Connecte Santé pour le voir")} libelle="Connecter" />
       )}
     </Cadre>
   );
@@ -1185,13 +1177,12 @@ export function TuileCoeurVide({ relie }: { relie: boolean }) {
 export function TuileRecordVide() {
   const router = useRouter();
   return (
-    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y="Dernier record : aucun ces 30 derniers jours. Voir tes records">
+    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduire("Dernier record : aucun ces 30 derniers jours. Voir tes records")}>
       <Entete domaine="seances" icone="star" titre="Dernier record" />
       <Bas>
         <Ink size={17} weight="black" tight numberOfLines={2}>
-          Pas de record ce mois-ci
-        </Ink>
-        <Explication>Ton prochain record s’affichera ici</Explication>
+          {traduire("Pas de record ce mois-ci")}</Ink>
+        <Explication>{traduire("Ton prochain record s’affichera ici")}</Explication>
       </Bas>
     </Cadre>
   );
@@ -1200,14 +1191,13 @@ export function TuileRecordVide() {
 export function TuileSerieVide({ goal }: { goal: number }) {
   const router = useRouter();
   const t = teinte('seances');
-  const aide = goal > 0 ? `Tiens ${goal} séance${goal > 1 ? 's' : ''} cette semaine pour lancer ta série` : 'Choisis ton objectif de la semaine pour lancer ta série';
+  const aide = goal > 0 ? traduirePluriel(goal, goal > 1, "Tiens {0} séance cette semaine pour lancer ta série", "Tiens {0} séances cette semaine pour lancer ta série", goal) : traduire('Choisis ton objectif de la semaine pour lancer ta série');
   return (
-    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={`Régularité : ${aide}`}>
-      <Entete domaine="seances" icone="trophy" titre="Régularité" />
+    <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduire("Régularité : {0}", aide)}>
+      <Entete domaine="seances" icone="trophy" titre={traduire("Régularité")} />
       <Bas>
         <Ink size={17} weight="black" tight numberOfLines={2}>
-          Pas encore de série
-        </Ink>
+          {traduire("Pas encore de série")}</Ink>
         <Explication couleur={t.texte} lignes={3}>{aide}</Explication>
       </Bas>
     </Cadre>
@@ -1218,17 +1208,15 @@ export function TuilePeseeVide() {
   const router = useRouter();
   const t = teinte('poids');
   return (
-    <Cadre domaine="poids" onPress={() => router.push('/notifications' as any)} a11y="Ta prochaine pesée : choisis tes jours de pesée" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+    <Cadre domaine="poids" onPress={() => router.push('/notifications' as any)} a11y={traduire("Ta prochaine pesée : choisis tes jours de pesée")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: t.texte, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="scale" size={20} color={t.texte} width={2.4} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Ink size={13} weight="extraBold" color={t.texte} numberOfLines={1}>
-          Ta prochaine pesée
-        </Ink>
+          {traduire("Ta prochaine pesée")}</Ink>
         <Ink size={16} weight="black" tight numberOfLines={2}>
-          Choisis tes jours de pesée
-        </Ink>
+          {traduire("Choisis tes jours de pesée")}</Ink>
       </View>
       <Icon name="chevron" size={15} color={t.texte} width={2.6} />
     </Cadre>
@@ -1238,11 +1226,11 @@ export function TuilePeseeVide() {
 /** Avant, apres avec moins de deux photos : on invite a la premiere (ou a la deuxieme) */
 export function TuileAvantApresVide({ nb: n }: { nb: number }) {
   const router = useRouter();
-  const aide = n === 0 ? 'Ajoute ta première photo' : 'Ajoute une autre photo, un autre jour, pour comparer';
+  const aide = n === 0 ? traduire('Ajoute ta première photo') : traduire('Ajoute une autre photo, un autre jour, pour comparer');
   return (
-    <Cadre domaine="poids" onPress={() => router.push('/photos' as any)} a11y={`Avant, après : ${aide}`} style={{ gap: 8 }}>
-      <Entete domaine="poids" icone="body" titre="Avant, après" />
-      <Ajouter domaine="poids" aide={aide} libelle={n === 0 ? 'Ajouter une photo' : 'Ajouter'} />
+    <Cadre domaine="poids" onPress={() => router.push('/photos' as any)} a11y={traduire("Avant, après : {0}", aide)} style={{ gap: 8 }}>
+      <Entete domaine="poids" icone="body" titre={traduire("Avant, après")} />
+      <Ajouter domaine="poids" aide={aide} libelle={n === 0 ? traduire('Ajouter une photo') : traduire('Ajouter')} />
     </Cadre>
   );
 }

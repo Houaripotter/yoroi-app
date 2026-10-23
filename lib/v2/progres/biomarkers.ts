@@ -25,6 +25,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { loadComposition } from './composition';
 import type { CompoKey, CompoPoint } from './composition';
 import { daysDiff, dayShort, num, thousands } from './format';
+import { traduire } from '@/lib/i18n/tr';
 
 export type BioKey = CompoKey | 'bmi' | 'lean';
 
@@ -255,15 +256,15 @@ export function bioSeries(points: CompoPoint[], key: BioKey, ctx: BodyContext): 
 type RowSpec = { key: BioKey; label: string; unit: string; digits: number; good: 'up' | 'down' | 'none'; deltaUnit: [string, string] };
 
 export const BIO_ORDER: RowSpec[] = [
-  { key: 'bmi', label: 'IMC', unit: '', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
+  { key: 'bmi', label: traduire('IMC'), unit: '', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
   { key: 'fat', label: 'Masse grasse', unit: '%', digits: 1, good: 'down', deltaUnit: ['point', 'points'] },
-  { key: 'muscleKg', label: 'Masse musculaire', unit: 'kg', digits: 1, good: 'up', deltaUnit: ['kg', 'kg'] },
+  { key: 'muscleKg', label: traduire('Masse musculaire'), unit: 'kg', digits: 1, good: 'up', deltaUnit: ['kg', 'kg'] },
   { key: 'lean', label: 'Masse maigre', unit: '%', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
   { key: 'water', label: 'Eau', unit: '%', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
   { key: 'bone', label: 'Masse osseuse', unit: 'kg', digits: 1, good: 'none', deltaUnit: ['kg', 'kg'] },
   { key: 'visceral', label: 'Graisse viscérale', unit: '', digits: 1, good: 'down', deltaUnit: ['niveau', 'niveaux'] },
-  { key: 'bmr', label: 'Métabolisme de base', unit: 'kcal', digits: 0, good: 'none', deltaUnit: ['kcal', 'kcal'] },
-  { key: 'metabolicAge', label: 'Âge métabolique', unit: 'ans', digits: 0, good: 'down', deltaUnit: ['an', 'ans'] },
+  { key: 'bmr', label: traduire('Métabolisme de base'), unit: 'kcal', digits: 0, good: 'none', deltaUnit: ['kcal', 'kcal'] },
+  { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', digits: 0, good: 'down', deltaUnit: ['an', 'ans'] },
 ];
 
 export function bioLabel(key: BioKey): string {
@@ -279,7 +280,7 @@ function deltaWords(d: number, spec: RowSpec): string {
   const abs = Math.abs(d);
   if (abs < eps) return 'stable';
   const u = abs >= 2 ? spec.deltaUnit[1] : spec.deltaUnit[0];
-  return `${spec.unit === 'kcal' ? thousands(abs) : num(abs, spec.digits === 0 ? 0 : 1)} ${u} de ${d < 0 ? 'moins' : 'plus'}`;
+  return traduire("{0} {1} de {2}", spec.unit === 'kcal' ? thousands(abs) : num(abs, spec.digits === 0 ? 0 : 1), u, d < 0 ? 'moins' : 'plus');
 }
 
 function rangeOf(key: BioKey, ctx: BodyContext, date: string): BioRange | undefined {
@@ -334,22 +335,22 @@ export function buildBiomarkers(points: CompoPoint[], index: number, ctx: BodyCo
       if (kg) sub = `soit ${num(kg, 1)} kg`;
     } else if (spec.key === 'muscleKg') {
       const pct = musclePctOf(p);
-      if (pct) sub = `soit ${num(pct, 1)} % du poids`;
+      if (pct) sub = traduire("soit {0} % du poids", num(pct, 1));
     } else if (spec.key === 'lean') {
       const fk = fatKgOf(p);
-      if (fk && p.weight) sub = `soit ${num(p.weight - fk, 1)} kg sans la graisse`;
+      if (fk && p.weight) sub = traduire("soit {0} kg sans la graisse", num(p.weight - fk, 1));
     } else if (spec.key === 'bone') {
       const pct = bonePctOf(p);
-      if (pct) sub = `soit ${num(pct, 1)} % du poids`;
+      if (pct) sub = traduire("soit {0} % du poids", num(pct, 1));
     } else if (spec.key === 'bmi') {
-      sub = `pour ${num((ctx.heightCm ?? 0) / 100, 2)} m`;
+      sub = traduire("pour {0} m", num((ctx.heightCm ?? 0) / 100, 2));
     } else if (spec.key === 'visceral') {
-      sub = 'niveau sur une échelle de 1 à 59';
+      sub = traduire('niveau sur une échelle de 1 à 59');
     } else if (spec.key === 'metabolicAge') {
       const a = ageAt(ctx, p.date);
-      if (a) sub = `ton âge réel : ${a} ans`;
+      if (a) sub = traduire("ton âge réel : {0} ans", a);
     } else if (spec.key === 'bmr') {
-      sub = 'dépense au repos sur 24 h';
+      sub = traduire('dépense au repos sur 24 h');
     }
     rows.push({
       key: spec.key,
@@ -407,7 +408,7 @@ export function keyMasses(points: CompoPoint[], index: number, ctx: BodyContext)
     }
     out.push({ key, label, kg, pct, diff: prev === undefined ? undefined : Math.round((kg - prev) * 10) / 10, good, spark: spark.slice(-10), status });
   };
-  build('muscleKg', 'Masse musculaire', muscleKgOf, musclePctOf(p), 'up');
+  build('muscleKg', traduire('Masse musculaire'), muscleKgOf, musclePctOf(p), 'up');
   const fr = p.fat ? fatRange(ctx, p.date) : undefined;
   build('fatKg', 'Masse grasse', fatKgOf, p.fat, 'down', fr && p.fat ? statusIn(fr, p.fat) : undefined);
   return out;
@@ -467,35 +468,35 @@ export function trendOf(points: CompoPoint[], index: number): Trend | null {
   const curMus = muscleKgOf(cur);
   if (curFat !== undefined || curMus !== undefined) {
     const ri = refIndex(points, index, (q) => (curFat === undefined || fatKgOf(q) !== undefined) && (curMus === undefined || muscleKgOf(q) !== undefined));
-    if (ri === null) return { title: 'Première mesure', text: 'La tendance apparaîtra dès ta prochaine pesée avec composition.' };
+    if (ri === null) return { title: traduire('Première mesure'), text: traduire('La tendance apparaîtra dès ta prochaine pesée avec composition.') };
     const ref = points[ri];
     const df = curFat !== undefined ? curFat - (fatKgOf(ref) as number) : 0;
     const dm = curMus !== undefined ? curMus - (muscleKgOf(ref) as number) : 0;
     const f = Math.abs(df) >= TREND_KG ? (df < 0 ? -1 : 1) : 0;
     const m = Math.abs(dm) >= TREND_KG ? (dm < 0 ? -1 : 1) : 0;
     let title = 'Stable';
-    if (f < 0 && m > 0) title = 'Perte de graisse, prise de muscle';
-    else if (f < 0 && m < 0) title = 'Perte de graisse et de muscle';
-    else if (f < 0) title = 'Perte de graisse';
-    else if (f > 0 && m > 0) title = 'Prise de muscle et de graisse';
-    else if (m > 0) title = 'Prise de muscle';
-    else if (f > 0) title = 'Prise de graisse';
-    else if (m < 0) title = 'Perte de muscle';
+    if (f < 0 && m > 0) title = traduire('Perte de graisse, prise de muscle');
+    else if (f < 0 && m < 0) title = traduire('Perte de graisse et de muscle');
+    else if (f < 0) title = traduire('Perte de graisse');
+    else if (f > 0 && m > 0) title = traduire('Prise de muscle et de graisse');
+    else if (m > 0) title = traduire('Prise de muscle');
+    else if (f > 0) title = traduire('Prise de graisse');
+    else if (m < 0) title = traduire('Perte de muscle');
     const bits: string[] = [];
-    if (curFat !== undefined) bits.push(Math.abs(df) < 0.05 ? 'graisse stable' : `${kgWords(Math.abs(df))} de graisse en ${df < 0 ? 'moins' : 'plus'}`);
-    if (curMus !== undefined) bits.push(Math.abs(dm) < 0.05 ? 'muscle stable' : `${kgWords(Math.abs(dm))} de muscle en ${dm < 0 ? 'moins' : 'plus'}`);
-    const since = `depuis le ${dayShort(ref.date, ref.date.slice(0, 4) !== cur.date.slice(0, 4))}`;
+    if (curFat !== undefined) bits.push(Math.abs(df) < 0.05 ? 'graisse stable' : traduire("{0} de graisse en {1}", kgWords(Math.abs(df)), df < 0 ? 'moins' : 'plus'));
+    if (curMus !== undefined) bits.push(Math.abs(dm) < 0.05 ? 'muscle stable' : traduire("{0} de muscle en {1}", kgWords(Math.abs(dm)), dm < 0 ? 'moins' : 'plus'));
+    const since = traduire("depuis le {0}", dayShort(ref.date, ref.date.slice(0, 4) !== cur.date.slice(0, 4)));
     const text = title === 'Stable' ? `Moins de ${num(TREND_KG, 1)} kg d’écart ${since} : ${bits.join(', ')}.`.replace(/\.\.$/, '.') : `${bits.join(', ')} ${since}`.replace(/\.*$/, '') + '.';
     return { title, text: text.charAt(0).toUpperCase() + text.slice(1) };
   }
   if (cur.fat !== undefined) {
     const ri = refIndex(points, index, (q) => q.fat !== undefined);
-    if (ri === null) return { title: 'Première mesure', text: 'La tendance apparaîtra dès ta prochaine pesée avec composition.' };
+    if (ri === null) return { title: traduire('Première mesure'), text: traduire('La tendance apparaîtra dès ta prochaine pesée avec composition.') };
     const ref = points[ri];
     const d = cur.fat - (ref.fat as number);
-    const since = `depuis le ${dayShort(ref.date)}`;
+    const since = traduire("depuis le {0}", dayShort(ref.date));
     if (Math.abs(d) < TREND_PT) return { title: 'Stable', text: `Masse grasse stable ${since}`.replace(/\.*$/, '') + '.' };
-    return { title: d < 0 ? 'Perte de graisse' : 'Prise de graisse', text: `${num(Math.abs(d), 1)} point de masse grasse en ${d < 0 ? 'moins' : 'plus'} ${since}`.replace(/\.*$/, '') + '.' };
+    return { title: d < 0 ? traduire('Perte de graisse') : traduire('Prise de graisse'), text: `${num(Math.abs(d), 1)} point de masse grasse en ${d < 0 ? 'moins' : 'plus'} ${since}`.replace(/\.*$/, '') + '.' };
   }
   return null;
 }
@@ -571,11 +572,11 @@ export function bmiSeries(weights: { date: string; weight: number }[], ctx: Body
 /** Explications des deux mesures calculees par YOROI */
 export const BIO_EXPLAIN: Record<'bmi' | 'lean', { text: string; tip?: string }> = {
   bmi: {
-    text: 'Ton poids divisé par ta taille au carré. L’OMS parle de corpulence normale entre 18,5 et 25, de surpoids à partir de 25 et d’obésité à partir de 30.',
-    tip: 'L’IMC ne distingue pas le muscle de la graisse : chez un sportif musclé, il peut être élevé sans excès de graisse. Regarde-le avec ta masse grasse.',
+    text: traduire('Ton poids divisé par ta taille au carré. L’OMS parle de corpulence normale entre 18,5 et 25, de surpoids à partir de 25 et d’obésité à partir de 30.'),
+    tip: traduire('L’IMC ne distingue pas le muscle de la graisse : chez un sportif musclé, il peut être élevé sans excès de graisse. Regarde-le avec ta masse grasse.'),
   },
   lean: {
-    text: 'Tout ce qui n’est pas de la graisse : muscles, os, organes, eau. YOROI la calcule à partir de ta masse grasse.',
-    tip: 'Si elle monte pendant que ton poids reste stable, tu remplaces de la graisse par du muscle.',
+    text: traduire('Tout ce qui n’est pas de la graisse : muscles, os, organes, eau. YOROI la calcule à partir de ta masse grasse.'),
+    tip: traduire('Si elle monte pendant que ton poids reste stable, tu remplaces de la graisse par du muscle.'),
   },
 };

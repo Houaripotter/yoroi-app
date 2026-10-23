@@ -27,17 +27,18 @@ import { ENCRES_THEME as ENCRES } from './couleurs';
 import type { Encre } from './couleurs';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const CHRONO = require('@/assets/avatars/app/ornements/chrono.webp');
 
 type MomentDef = { id: Exclude<PeseeMoment, 'inconnu'>; label: string; tampon: TamponId | null; encre: Encre };
 
 const LIST: MomentDef[] = [
-  { id: 'reveil', label: 'Au réveil', tampon: 'frein_progres', encre: ENCRES.or },
-  { id: 'douche', label: 'Après la douche', tampon: 'vague', encre: ENCRES.sarcelle },
-  { id: 'midi', label: 'Le midi', tampon: 'objectif_maintien', encre: ENCRES.vermillon },
-  { id: 'soir', label: 'Le soir', tampon: 'lapin_lune', encre: ENCRES.prune },
-  { id: 'heure', label: 'Heure précise', tampon: null, encre: ENCRES.indigo },
+  { id: 'reveil', label: traduire('Au réveil'), tampon: 'frein_progres', encre: ENCRES.or },
+  { id: 'douche', label: traduire('Après la douche'), tampon: 'vague', encre: ENCRES.sarcelle },
+  { id: 'midi', label: traduire('Le midi'), tampon: 'objectif_maintien', encre: ENCRES.vermillon },
+  { id: 'soir', label: traduire('Le soir'), tampon: 'lapin_lune', encre: ENCRES.prune },
+  { id: 'heure', label: traduire('Heure précise'), tampon: null, encre: ENCRES.indigo },
 ];
 
 const NB = ' ';
@@ -125,11 +126,11 @@ function RoueHeure({ value, onChange }: { value: string; onChange: (hhmm: string
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
         {/* bande du milieu, derriere les chiffres */}
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: ITEM, height: ITEM, borderRadius: 14, backgroundColor: ENCRES.indigo.fond }} />
-        <Colonne values={HEURES} index={Math.max(0, Math.min(23, h))} onIndex={(i) => ecrire(i, mi * 5)} label="Heure de la pesée" format={(v) => String(v)} />
+        <Colonne values={HEURES} index={Math.max(0, Math.min(23, h))} onIndex={(i) => ecrire(i, mi * 5)} label={traduire("Heure de la pesée")} format={(v) => String(v)} />
         <Ink size={26} weight="black" color={c.textSecondary}>h</Ink>
-        <Colonne values={MINUTES} index={mi} onIndex={(i) => ecrire(h, i * 5)} label="Minutes de la pesée" format={(v) => String(v).padStart(2, '0')} />
+        <Colonne values={MINUTES} index={mi} onIndex={(i) => ecrire(h, i * 5)} label={traduire("Minutes de la pesée")} format={(v) => String(v).padStart(2, '0')} />
       </View>
-      <Ink size={13} weight="bold" color={c.textSecondary}>{`Ta pesée à ${dire(value)}`}</Ink>
+      <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Ta pesée à {0}", dire(value))}</Ink>
     </Animated.View>
   );
 }
@@ -209,11 +210,11 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
   const reste = freq != null && n < freq ? freq - n : 0;
   const ready = !!value && value !== 'inconnu' && n > 0;
   return (
-    <Shell {...nav} title="Ton **rendez-vous** avec la balance" gap={14} footer={<MainButton label="Continuer" onPress={onNext} disabled={!ready} />}>
+    <Shell {...nav} title={traduire("Ton **rendez-vous** avec la balance")} gap={14} footer={<MainButton label="Continuer" onPress={onNext} disabled={!ready} />}>
       <Animated.View entering={FadeIn.duration(260)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, backgroundColor: ENCRES.sarcelle.fond, paddingVertical: 12, paddingHorizontal: 14 }}>
         <Tampon name="objectif_perdre" size={64} rotate={-8} ink={ENCRES.sarcelle.ink} animate accessibilityLabel={null} />
         <Riche
-          text="Te peser **aux mêmes moments**, c’est ce qui rend ta courbe fiable d’une semaine à l’autre."
+          text={traduire("Te peser **aux mêmes moments**, c’est ce qui rend ta courbe fiable d’une semaine à l’autre.")}
           size={15}
           weight="bold"
           color={c.ink}
@@ -223,27 +224,27 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
         />
       </Animated.View>
 
-      <Bloc n={1} titre="Combien de fois par semaine ?" delay={60}>
+      <Bloc n={1} titre={traduire("Combien de fois par semaine ?")} delay={60}>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {[1, 2, 3, 4, 5, 6, 7].map((k) => (
-            <Rond key={k} label={String(k)} on={freq === k} onPress={() => choisirFrequence(k)} a11y={k === 7 ? 'Tous les jours' : `${k} fois par semaine`} />
+            <Rond key={k} label={String(k)} on={freq === k} onPress={() => choisirFrequence(k)} a11y={k === 7 ? traduire('Tous les jours') : traduire("{0} fois par semaine", k)} />
           ))}
         </View>
       </Bloc>
 
-      <Bloc n={2} titre="Quels jours ?" delay={120}>
+      <Bloc n={2} titre={traduire("Quels jours ?")} delay={120}>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {JOURS_LETTRES.map((l, j) => (
-            <Rond key={JOURS_NOMS[j]} label={l} sous={JOURS_NOMS[j].slice(0, 3)} on={jours.includes(j)} onPress={() => toucher(j)} a11y={`Pesée : ${JOURS_NOMS[j]}`} role="checkbox" />
+            <Rond key={JOURS_NOMS[j]} label={l} sous={JOURS_NOMS[j].slice(0, 3)} on={jours.includes(j)} onPress={() => toucher(j)} a11y={traduire("Pesée : {0}", JOURS_NOMS[j])} role="checkbox" />
           ))}
         </View>
         <Riche
           text={
             n
-              ? `${n === 7 ? '**Tous les jours**' : `**${n} fois** : ${joursTexte(jours)}`}${reste ? `. Encore ${reste} jour${reste > 1 ? 's' : ''} à choisir.` : ''}`
+              ? `${n === 7 ? traduire('**Tous les jours**') : traduire("**{0} fois** : {1}", n, joursTexte(jours))}${reste ? traduirePluriel(reste, reste > 1, ". Encore {0} jour à choisir.", ". Encore {0} jours à choisir.", reste) : ''}`
               : freq
-                ? `Touche ${freq === 1 ? 'ton jour' : `tes ${freq} jours`}.`
-                : 'Choisis un nombre ou touche tes jours.'
+                ? `Touche ${freq === 1 ? traduire('ton jour') : traduire("tes {0} jours", freq)}.`
+                : traduire('Choisis un nombre ou touche tes jours.')
           }
           size={14}
           weight="bold"
@@ -251,7 +252,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
         />
       </Bloc>
 
-      <Bloc n={3} titre="À quel moment ?" delay={180}>
+      <Bloc n={3} titre={traduire("À quel moment ?")} delay={180}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {LIST.map((m) => {
             const on = value === m.id;
@@ -287,7 +288,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
           })}
         </View>
         {value === 'heure' ? <RoueHeure value={h} onChange={onHeure} /> : null}
-        {value === 'reveil' ? <Riche text="**À jeun, au réveil** : le plus fiable d’un jour à l’autre." size={13} weight="bold" ink={ENCRES.or.ink} /> : null}
+        {value === 'reveil' ? <Riche text={traduire("**À jeun, au réveil** : le plus fiable d’un jour à l’autre.")} size={13} weight="bold" ink={ENCRES.or.ink} /> : null}
       </Bloc>
 
       <Animated.View entering={FadeInDown.delay(240).duration(300)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 20, backgroundColor: c.accentTint, padding: 14 }}>
@@ -295,7 +296,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
           <Icon name="bell" size={16} color={c.accent} />
         </View>
         <Riche
-          text={`**Un seul rappel doux**, environ 2${NB}h après, seulement ces jours-là et si ta pesée manque. Tu peux tout changer dans Réglages, Rappels.`}
+          text={traduire("**Un seul rappel doux**, environ 2{0}h après, seulement ces jours-là et si ta pesée manque. Tu peux tout changer dans Réglages, Rappels.", NB)}
           size={13}
           lineHeight={19}
           color={c.ink}

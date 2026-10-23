@@ -27,10 +27,11 @@ import { localISO } from '@/lib/v2/accueil/hydration';
 import { jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
 import type { Prevision, Unite } from '@/lib/v2/pesee/predictions';
 import { FENETRE_JOURS, MIN_JOURS, MIN_PESEES, phrasePrevision, phraseTorii, poidsTexte, prevoir, texteManque } from '@/lib/v2/pesee/predictions';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function WeightPredictionsScreen() {
   return (
-    <PremiumGate source="prevision_poids" featureTitle="Prédictions de poids" perks={['Où tu en seras dans 1 semaine, 1 mois, 3 mois', 'La date où tu passes ton cap, à ton rythme', 'Ton rythme réel comparé à ta ligne']}>
+    <PremiumGate source="prevision_poids" featureTitle={traduire("Prédictions de poids")} perks={[traduire('Où tu en seras dans 1 semaine, 1 mois, 3 mois'), traduire('La date où tu passes ton cap, à ton rythme'), traduire('Ton rythme réel comparé à ta ligne')]}>
       <Predictions />
     </PremiumGate>
   );
@@ -60,13 +61,13 @@ export function Predictions() {
     const t = texteManque(r);
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
-        <DetailHeader title="Prédictions" sub="Où tu en seras, à partir de tes pesées." />
-        <EmptyInvite style={{ margin: GUTTER, marginTop: 18 }} title={t.titre} text={t.texte} cta="Nouvelle pesée" onPress={() => router.push('/pesee' as any)} />
+        <DetailHeader title={traduire("Prédictions")} sub={traduire("Où tu en seras, à partir de tes pesées.")} />
+        <EmptyInvite style={{ margin: GUTTER, marginTop: 18 }} title={t.titre} text={t.texte} cta={traduire("Nouvelle pesée")} onPress={() => router.push('/pesee' as any)} />
         <View style={{ marginHorizontal: GUTTER, gap: 12 }}>
-          <Jauge label="Pesées" val={Math.min(r.pesees, MIN_PESEES)} max={MIN_PESEES} txt={`${Math.min(r.pesees, MIN_PESEES)} sur ${MIN_PESEES}`} />
-          <Jauge label="Jours couverts" val={Math.min(r.jours, MIN_JOURS)} max={MIN_JOURS} txt={`${Math.min(r.jours, MIN_JOURS)} sur ${MIN_JOURS}`} />
+          <Jauge label={traduire("Pesées")} val={Math.min(r.pesees, MIN_PESEES)} max={MIN_PESEES} txt={traduire("{0} sur {1}", Math.min(r.pesees, MIN_PESEES), MIN_PESEES)} />
+          <Jauge label={traduire("Jours couverts")} val={Math.min(r.jours, MIN_JOURS)} max={MIN_JOURS} txt={traduire("{0} sur {1}", Math.min(r.jours, MIN_JOURS), MIN_JOURS)} />
           <Ink size={12.5} color={P.muted} style={{ marginTop: 2 }}>
-            {`Pèse-toi le matin, à jeun. On regarde tes ${FENETRE_JOURS / 7} dernières semaines.`}
+            {traduire("Pèse-toi le matin, à jeun. On regarde tes {0} dernières semaines.", FENETRE_JOURS / 7)}
           </Ink>
         </View>
       </View>
@@ -77,7 +78,7 @@ export function Predictions() {
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <DetailHeader title="Prédictions" sub="Où tu en seras, à partir de tes pesées." />
+        <DetailHeader title={traduire("Prédictions")} sub={traduire("Où tu en seras, à partir de tes pesées.")} />
 
         {/* la phrase simple, puis ton arrivee comparee au torii */}
         <View style={{ paddingHorizontal: GUTTER, marginTop: 14, gap: 8 }}>
@@ -91,16 +92,16 @@ export function Predictions() {
           <CourbePrevision passe={passe} prev={r} unite={u} />
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 6, paddingHorizontal: GUTTER, marginTop: 6 }}>
-          <LegendMark kind="line" color={POIDS.c2} label="ton poids lissé" />
-          <LegendMark kind="dash" color={POIDS.c3} label="à ton rythme, avec sa fourchette" />
-          {r.torii ? <LegendMark kind="dash" color={POIDS.cap} label="ta ligne, jusqu’au torii" /> : null}
+          <LegendMark kind="line" color={POIDS.c2} label={traduire("ton poids lissé")} />
+          <LegendMark kind="dash" color={POIDS.c3} label={traduire("à ton rythme, avec sa fourchette")} />
+          {r.torii ? <LegendMark kind="dash" color={POIDS.cap} label={traduire("ta ligne, jusqu’au torii")} /> : null}
         </View>
 
         {/* les dates : deux scenarios cote a cote */}
         <Tableau r={r} u={u} />
 
         <Ink size={12} color={P.muted} style={{ paddingHorizontal: GUTTER, marginTop: 14, lineHeight: 17 }}>
-          {`Estimation à partir de tes ${r.ajustement.n} pesées des ${Math.max(2, Math.round(r.ajustement.jours / 7))} dernières semaines, pas une promesse. La fourchette s’élargit avec le temps : plus on regarde loin, moins c’est sûr.`}
+          {traduire("Estimation à partir de tes {0} pesées des {1} dernières semaines, pas une promesse. La fourchette s’élargit avec le temps : plus on regarde loin, moins c’est sûr.", r.ajustement.n, Math.max(2, Math.round(r.ajustement.jours / 7)))}
         </Ink>
 
         <View style={{ marginHorizontal: GUTTER, marginTop: 22, padding: 16, borderRadius: 22, backgroundColor: P.washi, borderWidth: 1, borderColor: P.washiBord, gap: 6 }}>
@@ -108,10 +109,10 @@ export function Predictions() {
             Comment on calcule
           </Ink>
           <Ink size={13.5} color={P.ink2} style={{ lineHeight: 19 }}>
-            {'À ton rythme actuel : la pente de tes pesées des 4 dernières semaines, mesurée pour qu’une pesée bizarre (sel, eau, balance) ne la tire pas. Vers ton cap, la perte ralentit dans le dernier tiers, comme dans la réalité, puis on suppose que tu tiens ton cap.'}
+            {traduire('À ton rythme actuel : la pente de tes pesées des 4 dernières semaines, mesurée pour qu’une pesée bizarre (sel, eau, balance) ne la tire pas. Vers ton cap, la perte ralentit dans le dernier tiers, comme dans la réalité, puis on suppose que tu tiens ton cap.')}
           </Ink>
           <Ink size={13.5} color={P.ink2} style={{ lineHeight: 19 }}>
-            {r.torii ? 'En suivant ta ligne : ta ligne verte de la courbe du poids, qui arrive à ton cap le jour du torii.' : 'En suivant ta ligne : fixe ton cap pour voir ta ligne verte et ton torii.'}
+            {r.torii ? traduire('En suivant ta ligne : ta ligne verte de la courbe du poids, qui arrive à ton cap le jour du torii.') : traduire('En suivant ta ligne : fixe ton cap pour voir ta ligne verte et ton torii.')}
           </Ink>
         </View>
       </ScrollView>
@@ -122,7 +123,7 @@ export function Predictions() {
 /** « Ton rythme : 0,4 kg en moins par semaine » et ton arrivee comparee au torii */
 function RythmeLigne({ r, u }: { r: Prevision; u: Unite }) {
   const v = r.ajustement.kgSemaine;
-  const rythme = r.sens === 'stable' ? 'Ton rythme : stable' : `Ton rythme : ${poidsTexte(Math.abs(v), u)} ${v < 0 ? 'en moins' : 'en plus'} par semaine`;
+  const rythme = r.sens === 'stable' ? traduire('Ton rythme : stable') : traduire("Ton rythme : {0} {1} par semaine", poidsTexte(Math.abs(v), u), v < 0 ? 'en moins' : 'en plus');
   const t = phraseTorii(r);
   return (
     <View style={{ gap: 6 }}>
@@ -131,7 +132,7 @@ function RythmeLigne({ r, u }: { r: Prevision; u: Unite }) {
       </Ink>
       {r.arrivee && r.arrivee.tot && r.arrivee.tard ? (
         <Ink size={13.5} color={P.ink2}>
-          {`Ton cap à ton rythme : vers le ${jourCourt(r.arrivee.date)}, entre le ${jourCourt(r.arrivee.tot)} et le ${jourCourt(r.arrivee.tard)}`}
+          {traduire("Ton cap à ton rythme : vers le {0}, entre le {1} et le {2}", jourCourt(r.arrivee.date), jourCourt(r.arrivee.tot), jourCourt(r.arrivee.tard))}
         </Ink>
       ) : null}
       {t ? (
@@ -155,14 +156,12 @@ function Tableau({ r, u }: { r: Prevision; u: Unite }) {
         <View style={{ flex: 1 }} />
         <View style={cell}>
           <Ink size={11.5} weight="extraBold" color={POIDS.softText} style={{ textAlign: 'right' }}>
-            À ton rythme actuel
-          </Ink>
+            {traduire("À ton rythme actuel")}</Ink>
         </View>
         {avecLigne ? (
           <View style={cell}>
             <Ink size={11.5} weight="extraBold" color={POIDS.capText} style={{ textAlign: 'right' }}>
-              En suivant ta ligne
-            </Ink>
+              {traduire("En suivant ta ligne")}</Ink>
           </View>
         ) : null}
       </View>
@@ -172,18 +171,18 @@ function Tableau({ r, u }: { r: Prevision; u: Unite }) {
           <View
             key={d.id}
             accessible
-            accessibilityLabel={`${torii ? 'Au torii' : d.label}, le ${jourCourt(d.date)} : à ton rythme ${poidsTexte(d.valeur, u)}, entre ${poidsTexte(d.bas, u)} et ${poidsTexte(d.haut, u)}${d.ligne != null ? `. En suivant ta ligne : ${poidsTexte(d.ligne, u)}` : ''}`}
+            accessibilityLabel={traduire("{0}, le {1} : à ton rythme {2}, entre {3} et {4}{5}", torii ? 'Au torii' : d.label, jourCourt(d.date), poidsTexte(d.valeur, u), poidsTexte(d.bas, u), poidsTexte(d.haut, u), d.ligne != null ? `. En suivant ta ligne : ${poidsTexte(d.ligne, u)}` : '')}
             style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: P.line2, backgroundColor: torii ? P.goldSoft : 'transparent' }}
           >
             <View style={{ flex: 1, gap: 1, paddingRight: 6 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 {torii ? <ToriiImage width={15} /> : null}
                 <Ink size={13.5} weight="extraBold" color={torii ? POIDS.or : P.ink} numberOfLines={2} style={{ flexShrink: 1 }}>
-                  {torii ? 'Au torii' : d.label}
+                  {torii ? traduire('Au torii') : d.label}
                 </Ink>
               </View>
               <Ink size={11.5} color={P.muted}>
-                {`le ${jourCourt(d.date)}`}
+                {traduire("le {0}", jourCourt(d.date))}
               </Ink>
             </View>
             <View style={cell}>
@@ -191,7 +190,7 @@ function Tableau({ r, u }: { r: Prevision; u: Unite }) {
                 {poidsTexte(d.valeur, u)}
               </Ink>
               <Ink size={11} color={P.muted} style={{ fontVariant: ['tabular-nums'] }} numberOfLines={1}>
-                {`${poidsTexte(d.bas, u, false)} à ${poidsTexte(d.haut, u, false)}`}
+                {traduire("{0} à {1}", poidsTexte(d.bas, u, false), poidsTexte(d.haut, u, false))}
               </Ink>
             </View>
             {avecLigne ? (

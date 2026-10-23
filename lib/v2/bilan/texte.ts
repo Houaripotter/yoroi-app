@@ -10,6 +10,7 @@
  */
 import type { CoteExploit, Exploit, Grand } from '@/lib/v2/cartes/types';
 import { phraseBilanRepas } from '@/lib/v2/nutrition/mange';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export const MOINS = '−';
 
@@ -26,9 +27,9 @@ export const BRUIT_CM = 0.5;
 // OUTILS DE TEXTE
 // ============================================
 
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MOIS_COURT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const JOURS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 const dateDe = (iso: string) => {
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
@@ -133,10 +134,10 @@ function finirTopo(topo: PhraseRiche[], phareEnTete: boolean): { riche: PhraseRi
 export function nb(v: number, dec = 1): string {
   const r = Math.round(Math.abs(v) * 10 ** dec) / 10 ** dec;
   const t = dec > 0 && Math.abs(r - Math.round(r)) > 1e-9 ? r.toFixed(dec) : String(Math.round(r));
-  return t.replace('.', ',');
+  return t.replace('.', DECIMAL);
 }
 /** un poids : toujours au dixieme, « 82,0 » */
-export const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+export const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 /** « 600 g » sous le kilo, « 1,2 kg » au-dessus, toujours au dixieme de kilo */
 export function kgOuG(v: number): string {
   const a = Math.round(Math.abs(v) * 10) / 10;
@@ -156,7 +157,7 @@ const pluriel = (n: number, un: string, plusieurs: string) => (n > 1 ? plusieurs
 /** « a, b et c » */
 export function liste(v: string[]): string {
   if (v.length <= 1) return v.join('');
-  return `${v.slice(0, -1).join(', ')} et ${v[v.length - 1]}`;
+  return traduire("{0} et {1}", v.slice(0, -1).join(', '), v[v.length - 1]);
 }
 function minutesTexte(m: number): string {
   const r = Math.round(Math.abs(m));
@@ -178,15 +179,15 @@ export type ModeObjectif = 'perte' | 'prise' | 'maintien' | 'recompo';
 export type OrigineCorps = 'pesee' | 'composition' | 'mensurations' | 'photo' | 'montre' | 'detail';
 
 export const MESURES: { key: MesureCle; label: string; bon: 'up' | 'down' | 'none' }[] = [
-  { key: 'waist', label: 'tour de taille', bon: 'down' },
-  { key: 'navel', label: 'tour au nombril', bon: 'down' },
-  { key: 'hips', label: 'tour de hanches', bon: 'none' },
-  { key: 'chest', label: 'tour de poitrine', bon: 'up' },
-  { key: 'shoulders', label: 'tour d’épaules', bon: 'up' },
-  { key: 'arm', label: 'tour de bras', bon: 'up' },
-  { key: 'thigh', label: 'tour de cuisse', bon: 'none' },
-  { key: 'calf', label: 'tour de mollet', bon: 'none' },
-  { key: 'neck', label: 'tour de cou', bon: 'none' },
+  { key: 'waist', label: traduire('tour de taille'), bon: 'down' },
+  { key: 'navel', label: traduire('tour au nombril'), bon: 'down' },
+  { key: 'hips', label: traduire('tour de hanches'), bon: 'none' },
+  { key: 'chest', label: traduire('tour de poitrine'), bon: 'up' },
+  { key: 'shoulders', label: traduire('tour d’épaules'), bon: 'up' },
+  { key: 'arm', label: traduire('tour de bras'), bon: 'up' },
+  { key: 'thigh', label: traduire('tour de cuisse'), bon: 'none' },
+  { key: 'calf', label: traduire('tour de mollet'), bon: 'none' },
+  { key: 'neck', label: traduire('tour de cou'), bon: 'none' },
 ];
 
 export type EntreeCorps = {
@@ -274,8 +275,8 @@ function bonPoids(ecart: number, mode: ModeObjectif | null | undefined): boolean
 }
 
 function phraseEcartPoids(ecart: number, depuis: string, quoi: string): string {
-  if (Math.abs(ecart) < 0.05) return `Le même poids que ${quoi} du ${dateCourte(depuis)}`;
-  return `${maj(kgOuG(ecart))} de ${ecart < 0 ? 'moins' : 'plus'} que ${quoi} du ${dateCourte(depuis)}`;
+  if (Math.abs(ecart) < 0.05) return traduire("Le même poids que {0} du {1}", quoi, dateCourte(depuis));
+  return traduire("{0} de {1} que {2} du {3}", maj(kgOuG(ecart)), ecart < 0 ? 'moins' : 'plus', quoi, dateCourte(depuis));
 }
 
 export function bilanCorps(e: EntreeCorps): BilanCorps {
@@ -293,7 +294,7 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
   const prec = cible ? dernierAvant(pesees, cible.date, false) : null;
   if (cible && prec) {
     const ec = cible.value - prec.value;
-    comparaisons.push({ id: 'precedente', label: 'Depuis ta dernière pesée', depuis: prec.date, ecart: ec, texte: phraseEcartPoids(ec, prec.date, 'ta pesée'), bruit: Math.abs(ec) < seuil, bon: bonPoids(ec, mode) });
+    comparaisons.push({ id: 'precedente', label: traduire('Depuis ta dernière pesée'), depuis: prec.date, ecart: ec, texte: phraseEcartPoids(ec, prec.date, traduire('ta pesée')), bruit: Math.abs(ec) < seuil, bon: bonPoids(ec, mode) });
   }
   const vus = new Set(prec ? [prec.date] : []);
   for (const [id, n, label] of [['semaine', 7, 'Sur 7 jours'], ['mois', 30, 'Sur 30 jours']] as const) {
@@ -302,12 +303,12 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
     if (!p || vus.has(p.date)) continue;
     vus.add(p.date);
     const ec = cible.value - p.value;
-    comparaisons.push({ id, label, depuis: p.date, ecart: ec, texte: phraseEcartPoids(ec, p.date, 'ta pesée'), bruit: Math.abs(ec) < seuil, bon: bonPoids(ec, mode) });
+    comparaisons.push({ id, label, depuis: p.date, ecart: ec, texte: phraseEcartPoids(ec, p.date, traduire('ta pesée')), bruit: Math.abs(ec) < seuil, bon: bonPoids(ec, mode) });
   }
   const dep = e.objectif?.depart ?? null;
   if (cible && dep && dep.date < cible.date && dep.poids > 0) {
     const ec = cible.value - dep.poids;
-    comparaisons.push({ id: 'objectif', label: 'Depuis le début de ton objectif', depuis: dep.date, ecart: ec, texte: phraseEcartPoids(ec, dep.date, 'ton départ'), bruit: false, bon: bonPoids(ec, mode) });
+    comparaisons.push({ id: 'objectif', label: traduire('Depuis le début de ton objectif'), depuis: dep.date, ecart: ec, texte: phraseEcartPoids(ec, dep.date, traduire('ton départ')), bruit: false, bon: bonPoids(ec, mode) });
   }
 
   // ---- tendance lissee ----
@@ -322,12 +323,12 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
       parSemaine === null
         ? ''
         : Math.abs(parSemaine) < 0.1
-          ? ', et elle est stable ces dernières semaines'
-          : `, et elle ${parSemaine < 0 ? 'descend' : 'monte'} d’environ ${kgOuG(parSemaine)} par semaine`;
+          ? traduire(', et elle est stable ces dernières semaines')
+          : traduire(", et elle {0} d’environ {1} par semaine", parSemaine < 0 ? 'descend' : 'monte', kgOuG(parSemaine));
     tendance = {
       valeur: t.trend as number,
       parSemaine,
-      texte: `Ta tendance lissée est à ${kg1(t.trend as number)} kg${sens}. C’est une moyenne qui gomme les hauts et les bas d’un jour à l’autre : c’est elle qui dit vraiment où tu vas.`,
+      texte: traduire("Ta tendance lissée est à {0} kg{1}. C’est une moyenne qui gomme les hauts et les bas d’un jour à l’autre : c’est elle qui dit vraiment où tu vas.", kg1(t.trend as number), sens),
     };
   }
 
@@ -335,36 +336,36 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
   let verdict: BilanCorps['verdict'] = null;
   const cp = comparaisons.find((x) => x.id === 'precedente');
   if (cible && !prec) {
-    verdict = { titre: 'Ta première pesée', texte: 'Elle devient ton point de départ.', bon: null };
-    topo.push(riche('poids', 'Tu pèses ', seg('poids', `${kg1(cible.value)} kg`), '. C’est ta première pesée : elle devient ton point de départ, et dès la prochaine tu verras ce qui bouge.'));
+    verdict = { titre: traduire('Ta première pesée'), texte: traduire('Elle devient ton point de départ.'), bon: null };
+    topo.push(riche('poids', traduire('Tu pèses '), seg('poids', `${kg1(cible.value)} kg`), traduire('. C’est ta première pesée : elle devient ton point de départ, et dès la prochaine tu verras ce qui bouge.')));
   } else if (cible && cp) {
     const ilYa = joursEntre(cp.depuis, cible.date);
-    const quand = ilYa <= 1 ? 'hier' : `le ${dateCourte(cp.depuis)}`;
+    const quand = ilYa <= 1 ? 'hier' : traduire("le {0}", dateCourte(cp.depuis));
     if (Math.abs(cp.ecart) < 0.05) {
-      verdict = { titre: 'Le même poids', texte: quand === 'hier' ? 'qu’hier' : `que ${quand}`, bon: null };
-      topo.push(riche('poids', 'Tu pèses ', seg('poids', `${kg1(cible.value)} kg`), `, exactement comme ${quand}.`));
+      verdict = { titre: traduire('Le même poids'), texte: quand === 'hier' ? traduire('qu’hier') : traduire("que {0}", quand), bon: null };
+      topo.push(riche('poids', traduire('Tu pèses '), seg('poids', `${kg1(cible.value)} kg`), `, exactement comme ${quand}.`));
     } else if (cp.bruit) {
-      verdict = { titre: `${maj(kgOuG(cp.ecart))} de ${cp.ecart < 0 ? 'moins' : 'plus'}`, texte: 'Dans la marge normale d’un jour à l’autre', bon: null };
-      topo.push(riche('poids', 'Tu pèses ', seg('poids', `${kg1(cible.value)} kg`), ', ', seg('fort', `${kgOuG(cp.ecart)} de ${cp.ecart < 0 ? 'moins' : 'plus'}`), ` ${quand === 'hier' ? 'qu’hier' : `que ${quand}`}. C’est dans la marge normale d’un jour à l’autre : l’eau, le sel et le dernier repas font bouger la balance de quelques centaines de grammes.`));
+      verdict = { titre: traduire("{0} de {1}", maj(kgOuG(cp.ecart)), cp.ecart < 0 ? 'moins' : 'plus'), texte: traduire('Dans la marge normale d’un jour à l’autre'), bon: null };
+      topo.push(riche('poids', traduire('Tu pèses '), seg('poids', `${kg1(cible.value)} kg`), ', ', seg('fort', traduire("{0} de {1}", kgOuG(cp.ecart), cp.ecart < 0 ? 'moins' : 'plus')), traduire(" {0}. C’est dans la marge normale d’un jour à l’autre : l’eau, le sel et le dernier repas font bouger la balance de quelques centaines de grammes.", quand === 'hier' ? 'qu’hier' : `que ${quand}`)));
     } else {
       const perdu = cp.ecart < 0;
-      verdict = { titre: `${perdu ? 'Tu as perdu' : 'Tu as pris'} ${kgOuG(cp.ecart)}`, texte: `depuis ta pesée du ${dateCourte(cp.depuis)}`, bon: cp.bon };
+      verdict = { titre: `${perdu ? traduire('Tu as perdu') : traduire('Tu as pris')} ${kgOuG(cp.ecart)}`, texte: traduire("depuis ta pesée du {0}", dateCourte(cp.depuis)), bon: cp.bon };
       const suite =
         cp.bon === false
-          ? ' Une pesée seule ne fait pas une tendance : regarde plutôt ta courbe lissée sur plusieurs jours.'
+          ? traduire(' Une pesée seule ne fait pas une tendance : regarde plutôt ta courbe lissée sur plusieurs jours.')
           : ilYa >= 1 && ilYa <= 3 && Math.abs(cp.ecart) >= 1
-            ? ' Un tel écart en si peu de temps vient surtout de l’eau, ta tendance dira la suite.'
+            ? traduire(' Un tel écart en si peu de temps vient surtout de l’eau, ta tendance dira la suite.')
             : '';
-      topo.push(riche('poids', 'Tu pèses ', seg('poids', `${kg1(cible.value)} kg`), ' : tu as ', seg(cp.bon === true ? 'objectif' : 'poids', `${perdu ? 'perdu' : 'pris'} ${kgOuG(cp.ecart)}`), ` depuis ta pesée du ${dateCourte(cp.depuis)}.`, suite));
+      topo.push(riche('poids', traduire('Tu pèses '), seg('poids', `${kg1(cible.value)} kg`), traduire(' : tu as '), seg(cp.bon === true ? 'objectif' : 'poids', `${perdu ? 'perdu' : traduire('pris')} ${kgOuG(cp.ecart)}`), traduire(" depuis ta pesée du {0}.", dateCourte(cp.depuis)), suite));
     }
   }
   const sem = comparaisons.find((x) => x.id === 'semaine');
   const mois = comparaisons.find((x) => x.id === 'mois');
   const loin = mois ?? sem;
   if (loin && cible) {
-    const sur = loin.id === 'mois' ? 'un mois' : 'une semaine';
-    if (loin.bruit) topo.push(riche('tendance', `Sur ${sur}, ton poids bouge peu (`, seg('poids', kgOuG(loin.ecart)), ') : il est stable.'));
-    else topo.push(riche('tendance', `Sur ${sur}, tu as `, seg(loin.bon === true ? 'objectif' : 'poids', `${loin.ecart < 0 ? 'perdu' : 'pris'} ${kgOuG(loin.ecart)}`), loin.bon === true ? seg('objectif', ', dans le sens de ton objectif') : '', '.'));
+    const sur = loin.id === 'mois' ? traduire('un mois') : traduire('une semaine');
+    if (loin.bruit) topo.push(riche('tendance', traduire("Sur {0}, ton poids bouge peu (", sur), seg('poids', kgOuG(loin.ecart)), traduire(') : il est stable.')));
+    else topo.push(riche('tendance', traduire("Sur {0}, tu as ", sur), seg(loin.bon === true ? 'objectif' : 'poids', `${loin.ecart < 0 ? 'perdu' : traduire('pris')} ${kgOuG(loin.ecart)}`), loin.bon === true ? seg('objectif', traduire(', dans le sens de ton objectif')) : '', '.'));
   }
   if (tendance) topo.push(enCouleur(tendance.texte, 'poids', 'tendance'));
 
@@ -389,36 +390,36 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
     const mk = muscleKgDe(cc, poidsC);
     const mkP = pc ? muscleKgDe(pc, poidsP) : undefined;
     add('fatKg', 'Graisse', fk, fkP, 'kg', 1, BRUIT_COMPO_KG, (d) => (mode === 'prise' ? null : d < 0));
-    add('fat', '% de graisse', cc.fat, pc?.fat, '%', 1, BRUIT_GRAISSE_PT, (d) => (mode === 'prise' ? null : d < 0));
+    add('fat', traduire('% de graisse'), cc.fat, pc?.fat, '%', 1, BRUIT_GRAISSE_PT, (d) => (mode === 'prise' ? null : d < 0));
     add('muscleKg', 'Muscle', mk, mkP, 'kg', 1, BRUIT_COMPO_KG, (d) => d > 0);
     add('water', 'Eau', cc.water, pc?.water, '%', 1, BRUIT_EAU_PT, () => null);
     add('bone', 'Os', cc.bone, pc?.bone, 'kg', 1, 0.15, () => null);
-    add('visceral', 'Viscérale', cc.visceral, pc?.visceral, '', 0, 1, (d) => d < 0);
+    add('visceral', traduire('Viscérale'), cc.visceral, pc?.visceral, '', 0, 1, (d) => d < 0);
 
     let phrase: string | null = null;
     const dF = fk !== undefined && fkP !== undefined ? fk - fkP : null;
     const dM = mk !== undefined && mkP !== undefined ? mk - mkP : null;
     const dW = cc.water && pc?.water ? cc.water - pc.water : null;
     if (!pc) {
-      phrase = `C’est ta première composition${fk !== undefined ? ` : ${kgOuG(fk)} de graisse${cc.fat ? ` (${nb(cc.fat)} %)` : ''}` : ''}${mk !== undefined ? `${fk !== undefined ? ' et' : ' :'} ${kgOuG(mk)} de muscle` : ''}. La prochaine dira ce qui a bougé.`;
+      phrase = traduire("C’est ta première composition{0}{1}. La prochaine dira ce qui a bougé.", fk !== undefined ? ` : ${kgOuG(fk)} de graisse${cc.fat ? ` (${nb(cc.fat)} %)` : ''}` : '', mk !== undefined ? `${fk !== undefined ? ' et' : ' :'} ${kgOuG(mk)} de muscle` : '');
     } else {
       const depuis = dateCourte(pc.date);
       const fBouge = dF !== null && Math.abs(dF) >= BRUIT_COMPO_KG;
       const mBouge = dM !== null && Math.abs(dM) >= BRUIT_COMPO_KG;
       if (fBouge || mBouge) {
         const morceaux: string[] = [];
-        if (dF !== null && Math.abs(dF) >= 0.05) morceaux.push(`${dF < 0 ? 'perdu' : 'pris'} ${kgOuG(dF)} de graisse`);
-        if (dM !== null && Math.abs(dM) >= 0.05) morceaux.push(`${dM > 0 ? 'gagné' : 'perdu'} ${kgOuG(dM)} de muscle`);
-        phrase = `Selon ta balance, tu as ${liste(morceaux)} depuis le ${depuis}.`;
+        if (dF !== null && Math.abs(dF) >= 0.05) morceaux.push(traduire("{0} {1} de graisse", dF < 0 ? 'perdu' : 'pris', kgOuG(dF)));
+        if (dM !== null && Math.abs(dM) >= 0.05) morceaux.push(traduire("{0} {1} de muscle", dM > 0 ? 'gagné' : 'perdu', kgOuG(dM)));
+        phrase = traduire("Selon ta balance, tu as {0} depuis le {1}.", liste(morceaux), depuis);
         const poidsStable = poidsC && poidsP ? Math.abs(poidsC - poidsP) < BRUIT_POIDS_KG : false;
-        if (dF !== null && dM !== null && dF < 0 && dM > 0) phrase += poidsStable ? ' Ton poids bouge peu mais ton corps change : moins de graisse, plus de muscle, c’est une recomposition.' : ' Moins de graisse et plus de muscle : c’est exactement le bon mélange.';
-        else if (dF !== null && dF < 0 && (dM === null || dM >= -0.05)) phrase += ' Ce que tu perds, c’est surtout de la graisse.';
-        else if (dM !== null && dM < 0 && (dF === null || dF < 0)) phrase += ' Une partie de ce qui part est lue comme du muscle : sur une balance à impédance, l’eau joue beaucoup, regarde la tendance sur plusieurs mesures.';
-        else if (dF !== null && dF > 0) phrase += ' Une mesure seule ne fait pas une tendance : l’hydratation et l’heure de la pesée font varier la lecture.';
+        if (dF !== null && dM !== null && dF < 0 && dM > 0) phrase += poidsStable ? traduire(' Ton poids bouge peu mais ton corps change : moins de graisse, plus de muscle, c’est une recomposition.') : traduire(' Moins de graisse et plus de muscle : c’est exactement le bon mélange.');
+        else if (dF !== null && dF < 0 && (dM === null || dM >= -0.05)) phrase += traduire(' Ce que tu perds, c’est surtout de la graisse.');
+        else if (dM !== null && dM < 0 && (dF === null || dF < 0)) phrase += traduire(' Une partie de ce qui part est lue comme du muscle : sur une balance à impédance, l’eau joue beaucoup, regarde la tendance sur plusieurs mesures.');
+        else if (dF !== null && dF > 0) phrase += traduire(' Une mesure seule ne fait pas une tendance : l’hydratation et l’heure de la pesée font varier la lecture.');
       } else if (dF !== null || dM !== null) {
-        phrase = `Ta composition est stable depuis le ${depuis} : les écarts restent dans la précision de ta balance.`;
+        phrase = traduire("Ta composition est stable depuis le {0} : les écarts restent dans la précision de ta balance.", depuis);
       }
-      if (dW !== null && Math.abs(dW) >= BRUIT_EAU_PT) phrase = `${phrase ? `${phrase} ` : ''}Ton eau a bougé de ${nb(dW)} point${Math.abs(dW) >= 2 ? 's' : ''} : ça suffit à décaler un peu la graisse et le muscle lus par la balance.`;
+      if (dW !== null && Math.abs(dW) >= BRUIT_EAU_PT) phrase = traduirePluriel(Math.abs(dW), Math.abs(dW) >= 2, "{0}Ton eau a bougé de {1} point : ça suffit à décaler un peu la graisse et le muscle lus par la balance.", "{0}Ton eau a bougé de {1} points : ça suffit à décaler un peu la graisse et le muscle lus par la balance.", phrase ? `${phrase} ` : '', nb(dW));
     }
     if (lignes.length) compo = { lignes, depuis: pc?.date ?? null, phrase: phrase ? propre(phrase) : null };
     if (phrase) topo.push(enCouleur(phrase, 'poids', 'composition'));
@@ -442,13 +443,13 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
     let phrase: string | null = null;
     const bougent = lignes.filter((l) => l.ecart !== null && !l.bruit).sort((a, b) => Math.abs(b.ecart as number) - Math.abs(a.ecart as number));
     const avecPrec = lignes.filter((l) => l.ecart !== null);
-    if (!avecPrec.length) phrase = `Tes premières mensurations sont notées${lignes.length ? ` (${liste(lignes.slice(0, 3).map((l) => `${l.label} ${nb(l.valeur)} cm`))})` : ''}. La prochaine fois, tu verras les écarts.`;
-    else if (!bougent.length) phrase = 'Tes mensurations n’ont pas bougé au-delà d’un demi-centimètre : c’est la précision d’un mètre ruban.';
+    if (!avecPrec.length) phrase = traduire("Tes premières mensurations sont notées{0}. La prochaine fois, tu verras les écarts.", lignes.length ? ` (${liste(lignes.slice(0, 3).map((l) => `${l.label} ${nb(l.valeur)} cm`))})` : '');
+    else if (!bougent.length) phrase = traduire('Tes mensurations n’ont pas bougé au-delà d’un demi-centimètre : c’est la précision d’un mètre ruban.');
     else {
-      const top = bougent.slice(0, 2).map((l) => `ton ${l.label} a ${(l.ecart as number) < 0 ? 'perdu' : 'pris'} ${nb(l.ecart as number)} cm`);
-      phrase = `${maj(liste(top))} depuis le ${dateCourte(bougent[0].depuis as string)}.`;
+      const top = bougent.slice(0, 2).map((l) => traduire("ton {0} a {1} {2} cm", l.label, (l.ecart as number) < 0 ? 'perdu' : 'pris', nb(l.ecart as number)));
+      phrase = traduire("{0} depuis le {1}.", maj(liste(top)), dateCourte(bougent[0].depuis as string));
       const taille = bougent.find((l) => l.key === 'waist' || l.key === 'navel');
-      if (taille && (taille.ecart as number) < 0 && mode !== 'prise') phrase += ' Le tour de taille est souvent le plus parlant : il bouge même quand la balance hésite.';
+      if (taille && (taille.ecart as number) < 0 && mode !== 'prise') phrase += traduire(' Le tour de taille est souvent le plus parlant : il bouge même quand la balance hésite.');
     }
     mesures = { lignes, depuis: avecPrec.length ? (avecPrec[0].depuis as string) : null, phrase: propre(phrase) };
     if (e.origine === 'mensurations') topo.unshift(enCouleur(phrase, 'mesure', 'mesure'));
@@ -466,9 +467,9 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
     const reste = Math.max(0, Math.abs(cible.value - cap));
     const ec = cible.value - dep.poids;
     let texte: string;
-    if (atteint) texte = `Ton objectif de ${nb(cap)} kg est atteint. Parti de ${kg1(dep.poids)} kg le ${dateCourte(dep.date)}, tu y es.`;
-    else if (bonPoids(ec, mode) && Math.abs(ec) >= 0.1) texte = `Depuis le début de ton objectif, le ${dateCourte(dep.date)}, tu as ${ec < 0 ? 'perdu' : 'pris'} ${kgOuG(ec)} : ${Math.round(pct * 100)} % du chemin. Il reste ${kgOuG(reste)} jusqu’à ${nb(cap)} kg.`;
-    else texte = `Ton objectif : ${nb(cap)} kg, il reste ${kgOuG(reste)}. Chaque pesée rend ta tendance plus juste.`;
+    if (atteint) texte = traduire("Ton objectif de {0} kg est atteint. Parti de {1} kg le {2}, tu y es.", nb(cap), kg1(dep.poids), dateCourte(dep.date));
+    else if (bonPoids(ec, mode) && Math.abs(ec) >= 0.1) texte = traduire("Depuis le début de ton objectif, le {0}, tu as {1} {2} : {3} % du chemin. Il reste {4} jusqu’à {5} kg.", dateCourte(dep.date), ec < 0 ? 'perdu' : 'pris', kgOuG(ec), Math.round(pct * 100), kgOuG(reste), nb(cap));
+    else texte = traduire("Ton objectif : {0} kg, il reste {1}. Chaque pesée rend ta tendance plus juste.", nb(cap), kgOuG(reste));
     objectif = { pct: atteint ? 1 : pct, reste: atteint ? 0 : reste, atteint, texte: propre(texte), depart: dep.poids, cap };
     topo.push(atteint ? riche('objectif', seg('objectif', texte)) : enCouleur(texte, 'poids', 'objectif'));
   }
@@ -482,10 +483,10 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
   if (repas) topo.push(riche('repas', repas));
 
   // une seule pesee de reference ou une variation faible : un repere simple pour la suite
-  if (cible && cp && cp.bruit && !tendance) topo.push(riche('conseil', 'Pèse-toi dans les mêmes conditions, le matin au réveil, pour des écarts plus parlants.'));
+  if (cible && cp && cp.bruit && !tendance) topo.push(riche('conseil', traduire('Pèse-toi dans les mêmes conditions, le matin au réveil, pour des écarts plus parlants.')));
   const fin = finirTopo(topo, true);
 
-  const titre = e.origine === 'mensurations' ? 'Tes mensurations' : e.origine === 'composition' || e.origine === 'photo' ? 'Ta composition' : 'Ta pesée';
+  const titre = e.origine === 'mensurations' ? 'Tes mensurations' : e.origine === 'composition' || e.origine === 'photo' ? traduire('Ta composition') : traduire('Ta pesée');
   return {
     titre,
     sousTitre: maj(dateLongue(jour)),
@@ -526,27 +527,27 @@ function carteCorps(a: {
   depart: { date: string; poids: number } | null;
   poids: number | null;
 }): Exploit | null {
-  const base = { type: 'bilan_corps' as const, date: a.jour, surtitre: 'Mon bilan', priorite: 45 };
+  const base = { type: 'bilan_corps' as const, date: a.jour, surtitre: traduire('Mon bilan'), priorite: 45 };
   const f = a.compo?.lignes.find((l) => l.id === 'fatKg');
   const m = a.compo?.lignes.find((l) => l.id === 'muscleKg');
   const fp = a.compo?.lignes.find((l) => l.id === 'fat');
   const depuis = a.compo?.depuis;
   if (depuis && f && f.ecart !== null && Math.abs(f.ecart) >= 0.1) {
-    const mPart = m && m.ecart !== null && Math.abs(m.ecart) >= 0.1 ? `, ${m.ecart > 0 ? '+' : MOINS}${kgOuG(m.ecart)} de muscle` : '';
+    const mPart = m && m.ecart !== null && Math.abs(m.ecart) >= 0.1 ? traduire(", {0}{1} de muscle", m.ecart > 0 ? '+' : MOINS, kgOuG(m.ecart)) : '';
     const cotes: CoteExploit[] = [];
-    if (m && m.ecart !== null) cotes.push({ label: 'de muscle', value: signe(m.ecart), unit: 'kg' });
-    if (fp && fp.ecart !== null) cotes.push({ label: 'de masse grasse', value: signe(fp.ecart), unit: 'pt' });
+    if (m && m.ecart !== null) cotes.push({ label: traduire('de muscle'), value: signe(m.ecart), unit: 'kg' });
+    if (fp && fp.ecart !== null) cotes.push({ label: traduire('de masse grasse'), value: signe(fp.ecart), unit: 'pt' });
     const pe = a.comparaisons.find((c) => c.depuis === depuis) ?? null;
-    if (pe) cotes.push({ label: 'sur la balance', value: signe(pe.ecart), unit: 'kg' });
+    if (pe) cotes.push({ label: traduire('sur la balance'), value: signe(pe.ecart), unit: 'kg' });
     return {
       ...base,
       hero: kgGrand(f.ecart),
-      accroche: `de graisse${mPart}`,
-      detail: `Depuis le ${dateCourte(depuis)}`,
+      accroche: traduire("de graisse{0}", mPart),
+      detail: traduire("Depuis le {0}", dateCourte(depuis)),
       cotes: cotes.slice(0, 3),
       masque: {
-        ecart: { hero: kgGrand(f.ecart), accroche: `de graisse${mPart}` },
-        pourcentage: fp && fp.ecart !== null ? { hero: { value: signe(fp.ecart), unit: 'pt' }, accroche: 'de masse grasse' } : { hero: kgGrand(f.ecart), accroche: `de graisse${mPart}` },
+        ecart: { hero: kgGrand(f.ecart), accroche: traduire("de graisse{0}", mPart) },
+        pourcentage: fp && fp.ecart !== null ? { hero: { value: signe(fp.ecart), unit: 'pt' }, accroche: traduire('de masse grasse') } : { hero: kgGrand(f.ecart), accroche: traduire("de graisse{0}", mPart) },
       },
     };
   }
@@ -554,19 +555,19 @@ function carteCorps(a: {
   if (mb && mb.depuis) {
     const autres = (a.mesures?.lignes ?? []).filter((l) => l !== mb && l.ecart !== null && !l.bruit).slice(0, 2);
     const cotes: CoteExploit[] = autres.map((l) => ({ label: l.label, value: signe(l.ecart as number), unit: 'cm' }));
-    return { ...base, hero: { value: signe(mb.ecart as number), unit: 'cm' }, accroche: `de ${mb.label}`, detail: `Depuis le ${dateCourte(mb.depuis)}`, cotes, masque: { ecart: { hero: { value: signe(mb.ecart as number), unit: 'cm' } }, pourcentage: { hero: { value: signe(mb.ecart as number), unit: 'cm' } } } };
+    return { ...base, hero: { value: signe(mb.ecart as number), unit: 'cm' }, accroche: traduire("de {0}", mb.label), detail: traduire("Depuis le {0}", dateCourte(mb.depuis)), cotes, masque: { ecart: { hero: { value: signe(mb.ecart as number), unit: 'cm' } }, pourcentage: { hero: { value: signe(mb.ecart as number), unit: 'cm' } } } };
   }
   const ref = a.comparaisons.find((c) => c.id === 'objectif' && Math.abs(c.ecart) >= 0.1) ?? a.comparaisons.find((c) => c.id === 'mois' && !c.bruit) ?? a.comparaisons.find((c) => c.id === 'semaine' && !c.bruit);
   if (ref && a.poids) {
     const basePoids = a.poids - ref.ecart;
-    const mot = ref.ecart < 0 ? 'perdus' : 'pris';
-    const cotes: CoteExploit[] = [{ label: 'aujourd’hui', value: nb(a.poids), unit: 'kg', poids: true }, { label: a.nbPesees > 1 ? 'pesées' : 'pesée', value: String(a.nbPesees) }];
+    const mot = ref.ecart < 0 ? 'perdus' : traduire('pris');
+    const cotes: CoteExploit[] = [{ label: traduire('aujourd’hui'), value: nb(a.poids), unit: 'kg', poids: true }, { label: a.nbPesees > 1 ? traduire('pesées') : traduire('pesée'), value: String(a.nbPesees) }];
     return {
       ...base,
       hero: kgGrand(ref.ecart),
-      accroche: `${mot} depuis le ${dateCourte(ref.depuis)}`,
+      accroche: traduire("{0} depuis le {1}", mot, dateCourte(ref.depuis)),
       cotes,
-      masque: { ecart: { hero: kgGrand(ref.ecart), accroche: `${mot} depuis le ${dateCourte(ref.depuis)}` }, pourcentage: { hero: pctGrand(ref.ecart, basePoids), accroche: `${mot} depuis le ${dateCourte(ref.depuis)}` } },
+      masque: { ecart: { hero: kgGrand(ref.ecart), accroche: traduire("{0} depuis le {1}", mot, dateCourte(ref.depuis)) }, pourcentage: { hero: pctGrand(ref.ecart, basePoids), accroche: traduire("{0} depuis le {1}", mot, dateCourte(ref.depuis)) } },
     };
   }
   return null;
@@ -632,29 +633,29 @@ export type BilanSeance = {
   carte: Exploit | null;
 };
 
-export const ZONES = ['récupération', 'endurance de base', 'tempo', 'seuil', 'effort maximal'];
+export const ZONES = ['récupération', traduire('endurance de base'), 'tempo', 'seuil', 'effort maximal'];
 
 export function motIntensite(rpe: number): string {
-  if (rpe <= 3) return 'légère';
-  if (rpe <= 6) return 'modérée';
+  if (rpe <= 3) return traduire('légère');
+  if (rpe <= 6) return traduire('modérée');
   if (rpe <= 8) return 'difficile';
-  return 'très dure';
+  return traduire('très dure');
 }
 
 export function bilanSeance(e: EntreeSeance): BilanSeance {
   const s = e.seance;
   const k = e.compteurs;
-  const sport = s.nomSport || 'Séance';
+  const sport = s.nomSport || traduire('Séance');
   const sportMin = sport.toLowerCase();
   const topo: PhraseRiche[] = [];
   const annee = s.date.slice(0, 4);
 
   const chiffres: BilanSeance['chiffres'] = [];
-  if (s.dureeMin > 0) chiffres.push({ label: 'durée', value: minutesTexte(s.dureeMin) });
+  if (s.dureeMin > 0) chiffres.push({ label: traduire('durée'), value: minutesTexte(s.dureeMin) });
   if (s.distanceKm && s.distanceKm > 0) chiffres.push({ label: 'distance', value: nb(s.distanceKm, 2), unit: 'km' });
   if (s.rounds && s.rounds > 0) chiffres.push({ label: pluriel(s.rounds, 'round', 'rounds'), value: String(s.rounds) });
-  if (s.series && s.series > 0) chiffres.push({ label: 'séries', value: String(s.series) });
-  if (s.tonnage && s.tonnage >= 1) chiffres.push({ label: 'soulevés', value: s.tonnage >= 1000 ? nb(s.tonnage / 1000, 1) : String(Math.round(s.tonnage)), unit: s.tonnage >= 1000 ? 't' : 'kg' });
+  if (s.series && s.series > 0) chiffres.push({ label: traduire('séries'), value: String(s.series) });
+  if (s.tonnage && s.tonnage >= 1) chiffres.push({ label: traduire('soulevés'), value: s.tonnage >= 1000 ? nb(s.tonnage / 1000, 1) : String(Math.round(s.tonnage)), unit: s.tonnage >= 1000 ? 't' : 'kg' });
   if (s.calories && s.calories > 0) chiffres.push({ label: 'calories', value: String(Math.round(s.calories)), unit: 'kcal' });
 
   const intensite = s.intensite && s.intensite >= 1 && s.intensite <= 10 ? { valeur: Math.round(s.intensite), mot: motIntensite(s.intensite) } : null;
@@ -669,34 +670,34 @@ export function bilanSeance(e: EntreeSeance): BilanSeance {
     const top = zones ? [...zones].sort((a, b) => b.part - a.part)[0] : null;
     const morceaux: string[] = [];
     if (s.fcMoy && s.fcMoy > 0) morceaux.push(`${Math.round(s.fcMoy)} bpm en moyenne`);
-    if (s.fcMax && s.fcMax > 0) morceaux.push(`${Math.round(s.fcMax)} au plus haut`);
-    if (morceaux.length) texte = `Ton cœur : ${liste(morceaux)}.`;
-    if (top && top.part >= 0.2) texte = `${texte ? `${texte} ` : ''}Tu as passé ${Math.round(top.part * 100)} % du temps en zone ${top.zone}, ${top.nom}.`;
+    if (s.fcMax && s.fcMax > 0) morceaux.push(traduire("{0} au plus haut", Math.round(s.fcMax)));
+    if (morceaux.length) texte = traduire("Ton cœur : {0}.", liste(morceaux));
+    if (top && top.part >= 0.2) texte = traduire("{0}Tu as passé {1} % du temps en zone {2}, {3}.", texte ? `${texte} ` : '', Math.round(top.part * 100), top.zone, top.nom);
     coeur = { fcMoy: s.fcMoy && s.fcMoy > 0 ? Math.round(s.fcMoy) : null, fcMax: s.fcMax && s.fcMax > 0 ? Math.round(s.fcMax) : null, zones, texte };
   }
 
   // ---- compteurs ----
   const compteurs: BilanSeance['compteurs'] = [
-    { label: 'cette semaine', value: ordinal(k.semaine) },
-    { label: 'ce mois', value: ordinal(k.mois) },
+    { label: traduire('cette semaine'), value: ordinal(k.semaine) },
+    { label: traduire('ce mois'), value: ordinal(k.mois) },
     { label: `en ${annee}`, value: ordinal(k.annee) },
   ];
-  if (e.recues && e.recues > 1) topo.push(riche('compteur', seg('fort', `${e.recues} séances`), ' sont arrivées d’un coup : voici le bilan de la dernière.'));
-  if (k.total === 1) topo.push({ ...riche(null, 'C’est ta ', seg('seance', 'toute première séance'), ' enregistrée : bienvenue, le compteur est lancé.'), phare: true });
+  if (e.recues && e.recues > 1) topo.push(riche('compteur', seg('fort', traduire("{0} séances", e.recues)), traduire(' sont arrivées d’un coup : voici le bilan de la dernière.')));
+  if (k.total === 1) topo.push({ ...riche(null, traduire('C’est ta '), seg('seance', traduire('toute première séance')), traduire(' enregistrée : bienvenue, le compteur est lancé.')), phare: true });
   else
     topo.push({
       ...riche(
         null,
-        'Tu en es à ta ',
-        seg('seance', `${ordinal(k.semaine)} séance`),
-        ' de la semaine, ta ',
+        traduire('Tu en es à ta '),
+        seg('seance', traduire("{0} séance", ordinal(k.semaine))),
+        traduire(' de la semaine, ta '),
         seg('seance', ordinal(k.mois)),
-        ' du mois et ta ',
+        traduire(' du mois et ta '),
         seg('seance', ordinal(k.annee)),
-        ` de ${annee}.`,
-        k.jour >= 2 && ' Et la ',
+        traduire(" de {0}.", annee),
+        k.jour >= 2 && traduire(' Et la '),
         k.jour >= 2 && seg('seance', ordinal(k.jour)),
-        k.jour >= 2 && ' aujourd’hui.',
+        k.jour >= 2 && traduire(' aujourd’hui.'),
       ),
       phare: true,
     });
@@ -707,9 +708,9 @@ export function bilanSeance(e: EntreeSeance): BilanSeance {
     const rp =
       k.semaine >= w
         ? k.semaine > w
-          ? riche('objectif', seg('objectif', 'Objectif de la semaine dépassé'), ' : ', seg('objectif', `${k.semaine} séances`), ` pour ${w} prévues.`)
-          : riche('objectif', seg('objectif', 'Objectif de la semaine atteint'), ' : ', seg('objectif', `${w} sur ${w}`), '.')
-        : riche('compteur', 'Encore ', seg('seance', `${w - k.semaine} ${pluriel(w - k.semaine, 'séance', 'séances')}`), ' pour ton objectif de la semaine (', seg('fort', `${k.semaine} sur ${w}`), ').');
+          ? riche('objectif', seg('objectif', traduire('Objectif de la semaine dépassé')), ' : ', seg('objectif', traduire("{0} séances", k.semaine)), traduire(" pour {0} prévues.", w))
+          : riche('objectif', seg('objectif', traduire('Objectif de la semaine atteint')), ' : ', seg('objectif', traduire("{0} sur {1}", w, w)), '.')
+        : riche('compteur', traduire('Encore '), seg('seance', `${w - k.semaine} ${pluriel(w - k.semaine, traduire('séance'), traduire('séances'))}`), traduire(' pour ton objectif de la semaine ('), seg('fort', traduire("{0} sur {1}", k.semaine, w)), ').');
     objectifSemaine = { fait: k.semaine, total: w, texte: texteDe(rp) };
     topo.push(rp);
   }
@@ -718,12 +719,12 @@ export function bilanSeance(e: EntreeSeance): BilanSeance {
     const a = e.annee;
     const rp =
       a.fait >= a.total
-        ? riche('annee', seg('objectif', `Ton objectif de ${annee} est tenu`), ' : ', seg('objectif', `${a.fait} séances`), ` pour ${a.total} visées.`)
+        ? riche('annee', seg('objectif', traduire("Ton objectif de {0} est tenu", annee)), ' : ', seg('objectif', traduire("{0} séances", a.fait)), traduire(" pour {0} visées.", a.total))
         : a.ecart > 0
-          ? riche('annee', `Sur ton objectif de ${annee}, tu as `, seg('objectif', `${a.ecart} ${pluriel(a.ecart, 'séance', 'séances')} d’avance`), ' sur ton rythme (', seg('fort', `${a.fait} sur ${a.total}`), ').')
+          ? riche('annee', traduire("Sur ton objectif de {0}, tu as ", annee), seg('objectif', `${a.ecart} ${pluriel(a.ecart, traduire('séance'), traduire('séances'))} d’avance`), traduire(' sur ton rythme ('), seg('fort', traduire("{0} sur {1}", a.fait, a.total)), ').')
           : a.ecart < 0
-            ? riche('annee', `Sur ton objectif de ${annee}, `, seg('fort', `${a.fait} séances sur ${a.total}`), ` : ${-a.ecart} de retard sur ton rythme, rien qui ne se rattrape.`)
-            : riche('annee', `Sur ton objectif de ${annee}, tu es `, seg('objectif', 'pile dans ton rythme'), ' : ', seg('fort', `${a.fait} sur ${a.total}`), '.');
+            ? riche('annee', traduire("Sur ton objectif de {0}, ", annee), seg('fort', traduire("{0} séances sur {1}", a.fait, a.total)), traduire(" : {0} de retard sur ton rythme, rien qui ne se rattrape.", -a.ecart))
+            : riche('annee', traduire("Sur ton objectif de {0}, tu es ", annee), seg('objectif', traduire('pile dans ton rythme')), ' : ', seg('fort', traduire("{0} sur {1}", a.fait, a.total)), '.');
     anneeBloc = { fait: a.fait, total: a.total, texte: texteDe(rp) };
     topo.push(rp);
   }
@@ -734,54 +735,54 @@ export function bilanSeance(e: EntreeSeance): BilanSeance {
   if (p) {
     const lignes: string[] = [];
     const dd = s.dureeMin - p.dureeMin;
-    if (s.dureeMin > 0 && p.dureeMin > 0) lignes.push(Math.abs(dd) < 3 ? 'Même durée, à quelques minutes près' : `${minutesTexte(dd)} de ${dd > 0 ? 'plus' : 'moins'}`);
+    if (s.dureeMin > 0 && p.dureeMin > 0) lignes.push(Math.abs(dd) < 3 ? traduire('Même durée, à quelques minutes près') : traduire("{0} de {1}", minutesTexte(dd), dd > 0 ? 'plus' : 'moins'));
     if (s.distanceKm && p.distanceKm && s.distanceKm > 0 && p.distanceKm > 0) {
       const d = s.distanceKm - p.distanceKm;
-      if (Math.abs(d) >= 0.1) lignes.push(`${nb(Math.abs(d), 1)} km de ${d > 0 ? 'plus' : 'moins'}`);
+      if (Math.abs(d) >= 0.1) lignes.push(traduire("{0} km de {1}", nb(Math.abs(d), 1), d > 0 ? 'plus' : 'moins'));
     }
     if (s.rounds && p.rounds) {
       const d = s.rounds - p.rounds;
-      if (d !== 0) lignes.push(`${Math.abs(d)} ${pluriel(Math.abs(d), 'round', 'rounds')} de ${d > 0 ? 'plus' : 'moins'}`);
+      if (d !== 0) lignes.push(traduire("{0} {1} de {2}", Math.abs(d), pluriel(Math.abs(d), 'round', 'rounds'), d > 0 ? 'plus' : 'moins'));
     }
     if (s.tonnage && p.tonnage && s.tonnage > 0 && p.tonnage > 0) {
       const d = s.tonnage - p.tonnage;
-      if (Math.abs(d) >= 10) lignes.push(`${Math.abs(d) >= 1000 ? `${nb(Math.abs(d) / 1000, 1)} t` : `${Math.round(Math.abs(d))} kg`} soulevés de ${d > 0 ? 'plus' : 'moins'}`);
+      if (Math.abs(d) >= 10) lignes.push(traduire("{0} soulevés de {1}", Math.abs(d) >= 1000 ? `${nb(Math.abs(d) / 1000, 1)} t` : `${Math.round(Math.abs(d))} kg`, d > 0 ? 'plus' : 'moins'));
     }
     if (s.intensite && p.intensite) {
       const d = Math.round(s.intensite) - Math.round(p.intensite);
-      lignes.push(d === 0 ? 'Le même ressenti' : `Ressenti ${d > 0 ? 'plus dur' : 'plus léger'} (${Math.round(s.intensite)} sur 10 contre ${Math.round(p.intensite)})`);
+      lignes.push(d === 0 ? traduire('Le même ressenti') : traduire("Ressenti {0} ({1} sur 10 contre {2})", d > 0 ? 'plus dur' : 'plus léger', Math.round(s.intensite), Math.round(p.intensite)));
     }
     if (s.fcMoy && p.fcMoy && s.fcMoy > 0 && p.fcMoy > 0) {
       const d = Math.round(s.fcMoy - p.fcMoy);
-      if (Math.abs(d) >= 3) lignes.push(`Cœur moyen ${Math.abs(d)} bpm plus ${d > 0 ? 'haut' : 'bas'}`);
+      if (Math.abs(d) >= 3) lignes.push(traduire("Cœur moyen {0} bpm plus {1}", Math.abs(d), d > 0 ? 'haut' : 'bas'));
     }
     comparaison = { depuis: p.date, lignes };
     if (lignes.length) {
       const detail = enCouleur(`${lignes.map((l) => l.charAt(0).toLowerCase() + l.slice(1)).join(', ')}.`, 'seance');
-      topo.push(riche('comparaison', `Par rapport à ta séance de ${sportMin} du ${dateCourte(p.date)} : `, ...detail.segments));
+      topo.push(riche('comparaison', traduire("Par rapport à ta séance de {0} du {1} : ", sportMin, dateCourte(p.date)), ...detail.segments));
     }
   } else if (k.total > 1) {
-    topo.push(riche('comparaison', `Ta première séance de ${sportMin} enregistrée : la prochaine aura un point de comparaison.`));
+    topo.push(riche('comparaison', traduire("Ta première séance de {0} enregistrée : la prochaine aura un point de comparaison.", sportMin)));
   }
 
-  if (intensite) topo.push(riche('ressenti', 'Tu l’as ressentie ', seg('fort', `${intensite.mot}, ${intensite.valeur} sur 10`), '.'));
+  if (intensite) topo.push(riche('ressenti', traduire('Tu l’as ressentie '), seg('fort', traduire("{0}, {1} sur 10", intensite.mot, intensite.valeur)), '.'));
   if (coeur?.texte) topo.push(enCouleur(coeur.texte, 'seance', 'coeur'));
 
   const records = e.records ?? [];
-  if (records.length) topo.push(records.length > 1 ? riche('record', `Et ${records.length} records tombent : `, seg('record', liste(records)), '.') : riche('record', 'Et un record tombe : ', seg('record', records[0]), '.'));
+  if (records.length) topo.push(records.length > 1 ? riche('record', traduire("Et {0} records tombent : ", records.length), seg('record', liste(records)), '.') : riche('record', traduire('Et un record tombe : '), seg('record', records[0]), '.'));
   const tech = e.techniques?.liste ?? [];
-  const techniquesTitre = tech.length ? (e.techniques?.appris ? 'Appris aujourd’hui' : 'Travaillé aujourd’hui') : null;
-  if (tech.length) topo.push(riche('technique', `${e.techniques?.appris ? 'Tu as appris' : 'Tu as travaillé'} ${tech.length > 1 ? `${tech.length} techniques` : 'une technique'} : `, seg('seance', liste(tech.slice(0, 5))), '.'));
+  const techniquesTitre = tech.length ? (e.techniques?.appris ? traduire('Appris aujourd’hui') : traduire('Travaillé aujourd’hui')) : null;
+  if (tech.length) topo.push(riche('technique', `${e.techniques?.appris ? traduire('Tu as appris') : traduire('Tu as travaillé')} ${tech.length > 1 ? `${tech.length} techniques` : traduire('une technique')} : `, seg('seance', liste(tech.slice(0, 5))), '.'));
 
   // ---- regularite ----
   let regularite: string | null = null;
   const r = e.regularite;
   if (r) {
     const m: Morceau[] = [];
-    if (r.serie >= 2) m.push(seg('objectif', `${r.serie} semaines d’affilée`), ' avec ton objectif tenu.');
-    else if (r.sur >= 2 && r.semainesActives >= r.sur) m.push('Au moins une séance chaque semaine depuis ', seg('seance', `${r.sur} semaines`), '.');
-    else if (r.sur >= 2) m.push(seg('seance', `${r.semainesActives} semaines actives`), ` sur les ${r.sur} dernières.`);
-    if (r.joursDepuis !== null && r.joursDepuis >= 10) m.push(m.length ? ' ' : '', 'Ta séance précédente date de ', seg('fort', `${r.joursDepuis} jours`), ' : bon retour.');
+    if (r.serie >= 2) m.push(seg('objectif', traduire("{0} semaines d’affilée", r.serie)), traduire(' avec ton objectif tenu.'));
+    else if (r.sur >= 2 && r.semainesActives >= r.sur) m.push(traduire('Au moins une séance chaque semaine depuis '), seg('seance', traduire("{0} semaines", r.sur)), '.');
+    else if (r.sur >= 2) m.push(seg('seance', traduire("{0} semaines actives", r.semainesActives)), traduire(" sur les {0} dernières.", r.sur));
+    if (r.joursDepuis !== null && r.joursDepuis >= 10) m.push(m.length ? ' ' : '', traduire('Ta séance précédente date de '), seg('fort', traduire("{0} jours", r.joursDepuis)), traduire(' : bon retour.'));
     if (m.length) {
       const rp = riche('regularite', ...m);
       regularite = texteDe(rp);
@@ -815,17 +816,17 @@ function carteSeance(e: EntreeSeance): Exploit {
   const k = e.compteurs;
   const s = e.seance;
   const annee = s.date.slice(0, 4);
-  const cotes: CoteExploit[] = [{ label: 'de la semaine', value: ordinal(k.semaine) }, { label: `de ${annee}`, value: ordinal(k.annee) }];
-  if (s.dureeMin > 0) cotes.push({ label: 'aujourd’hui', value: minutesTexte(s.dureeMin) });
+  const cotes: CoteExploit[] = [{ label: traduire('de la semaine'), value: ordinal(k.semaine) }, { label: traduire("de {0}", annee), value: ordinal(k.annee) }];
+  if (s.dureeMin > 0) cotes.push({ label: traduire('aujourd’hui'), value: minutesTexte(s.dureeMin) });
   const a = e.annee;
   return {
     type: 'bilan_seance',
     date: s.date.slice(0, 10),
-    surtitre: s.nomSport || 'Mon bilan',
+    surtitre: s.nomSport || traduire('Mon bilan'),
     hero: { value: String(k.mois), unit: k.mois === 1 ? 're' : 'e' },
-    accroche: 'séance du mois',
+    accroche: traduire('séance du mois'),
     cotes,
-    barre: a && a.total > 0 ? { fait: a.fait, total: a.total, legende: a.fait >= a.total ? `Objectif ${annee} tenu` : `${a.fait} sur ${a.total} séances visées en ${annee}` } : undefined,
+    barre: a && a.total > 0 ? { fait: a.fait, total: a.total, legende: a.fait >= a.total ? traduire("Objectif {0} tenu", annee) : traduire("{0} sur {1} séances visées en {2}", a.fait, a.total, annee) } : undefined,
     priorite: 45,
   };
 }

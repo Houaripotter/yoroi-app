@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { P } from '@/components/yoroi/livePalette';
 import { getSportIcon } from '@/lib/sports';
+import { traduire } from '@/lib/i18n/tr';
 
 export type PastilleEtat = 'fait' | 'vide' | 'partiel';
 
@@ -122,7 +123,7 @@ export function Kozane({ nombre, rempli, taille = 30, ton = 'clair', lumiere, st
   return (
     <View
       accessible
-      accessibilityLabel={accessibilityLabel ?? `${full} sur ${nombre}`}
+      accessibilityLabel={accessibilityLabel ?? traduire("{0} sur {1}", full, nombre)}
       style={[{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap }, style]}
     >
       {Array.from({ length: Math.max(0, nombre) }).map((_, i) => {

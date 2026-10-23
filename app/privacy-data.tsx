@@ -30,6 +30,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { MesureConfidentialite } from '@/components/yoroi/v2/reglages/MesureConfidentialite';
 import { messageEffacement } from '@/lib/effacementPlan';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** Nombre d'éléments gardés dans la base de l'app (SQLite) pour une catégorie. */
 async function countInDatabase(id: string): Promise<number> {
@@ -74,19 +75,19 @@ const RETENTION_OPTIONS = [
 ];
 
 const DATA_CATEGORIES: { id: string; key: string; icon: IconName; secure: boolean; label: string }[] = [
-  { id: 'weights', key: '@yoroi_measurements', icon: 'scale', secure: true, label: 'Poids et mensurations' },
-  { id: 'workouts', key: '@yoroi_workouts', icon: 'dumbbell', secure: false, label: 'Séances d’entraînement' },
-  { id: 'sleep', key: '@yoroi_sleep_entries', icon: 'moon', secure: true, label: 'Sommeil' },
-  { id: 'hydration', key: '@yoroi_hydration_log', icon: 'drop', secure: false, label: 'Hydratation' },
-  { id: 'photos', key: '@yoroi_photos', icon: 'camera', secure: true, label: 'Photos de transformation' },
-  { id: 'injuries', key: '@yoroi_injuries', icon: 'heart', secure: true, label: 'Blessures' },
+  { id: 'weights', key: '@yoroi_measurements', icon: 'scale', secure: true, label: traduire('Poids et mensurations') },
+  { id: 'workouts', key: '@yoroi_workouts', icon: 'dumbbell', secure: false, label: traduire('Séances d’entraînement') },
+  { id: 'sleep', key: '@yoroi_sleep_entries', icon: 'moon', secure: true, label: traduire('Sommeil') },
+  { id: 'hydration', key: '@yoroi_hydration_log', icon: 'drop', secure: false, label: traduire('Hydratation') },
+  { id: 'photos', key: '@yoroi_photos', icon: 'camera', secure: true, label: traduire('Photos de transformation') },
+  { id: 'injuries', key: '@yoroi_injuries', icon: 'heart', secure: true, label: traduire('Blessures') },
   { id: 'mood', key: '@yoroi_mood_log', icon: 'spark', secure: true, label: 'Humeur' },
-  { id: 'badges', key: '@yoroi_user_badges', icon: 'trophy', secure: false, label: 'Badges et récompenses' },
-  { id: 'fasting', key: '@yoroi_fasting_history', icon: 'timer', secure: true, label: 'Jeûne' },
+  { id: 'badges', key: '@yoroi_user_badges', icon: 'trophy', secure: false, label: traduire('Badges et récompenses') },
+  { id: 'fasting', key: '@yoroi_fasting_history', icon: 'timer', secure: true, label: traduire('Jeûne') },
 ];
 
 function entries(n: number): string {
-  return `${n} entrée${n > 1 ? 's' : ''}`;
+  return traduirePluriel(n, n > 1, "{0} entrée", "{0} entrées", n);
 }
 
 export default function PrivacyDataScreen() {
@@ -133,10 +134,10 @@ export default function PrivacyDataScreen() {
 
   const deleteCategory = (cat: (typeof DATA_CATEGORIES)[number]) => {
     if (saving) return;
-    appAlert('Supprimer', `Supprimer toutes les données « ${cat.label} » ? C’est définitif.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer'), traduire("Supprimer toutes les données « {0} » ? C’est définitif.", cat.label), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           setSaving(true);
@@ -159,10 +160,10 @@ export default function PrivacyDataScreen() {
 
   const deleteAll = () => {
     if (saving) return;
-    appAlert('Supprimer toutes les données', messageEffacement(Platform.OS), [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer toutes les données'), messageEffacement(Platform.OS), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           setSaving(true);
@@ -172,15 +173,15 @@ export default function PrivacyDataScreen() {
             setCounts({});
             if (ok) {
               notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-              appAlert('Tout est effacé', 'L’app repart de zéro.', [
+              appAlert(traduire('Tout est effacé'), traduire('L’app repart de zéro.'), [
                 { text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding' as any) },
               ]);
             } else {
-              appAlert('Effacement incomplet', 'Presque tout est effacé, mais une partie a résisté. Relance « Tout supprimer » pour finir.');
+              appAlert('Effacement incomplet', traduire('Presque tout est effacé, mais une partie a résisté. Relance « Tout supprimer » pour finir.'));
             }
           } catch (e) {
             logger.error('Erreur suppression totale:', e);
-            appAlert('Oups', 'L’effacement n’a pas abouti. Réessaie.');
+            appAlert('Oups', traduire('L’effacement n’a pas abouti. Réessaie.'));
           } finally {
             setSaving(false);
           }
@@ -192,24 +193,23 @@ export default function PrivacyDataScreen() {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
-    <EspaceScreen title="Tes données" subtitle="Elles t’appartiennent.">
+    <EspaceScreen title={traduire("Tes données")} subtitle={traduire("Elles t’appartiennent.")}>
       <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
         <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
         <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: c.goldLight, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="lock" size={24} color={c.ink} stroke={2.4} />
         </View>
-        <Ink size={24} weight="black" tight color={c.onDark}>Tes données t’appartiennent</Ink>
-        <Ink size={14} color={c.onDarkSecondary}>Tes données de santé sont stockées sur ton téléphone. YOROI n’a aucun serveur qui les reçoit.</Ink>
+        <Ink size={24} weight="black" tight color={c.onDark}>{traduire("Tes données t’appartiennent")}</Ink>
+        <Ink size={14} color={c.onDarkSecondary}>{traduire("Tes données de santé sont stockées sur ton téléphone. YOROI n’a aucun serveur qui les reçoit.")}</Ink>
       </View>
 
       <Card style={{ padding: 16, gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Icon name="globe" size={20} color={c.indigo} />
-          <Ink size={15} weight="extraBold" style={{ flex: 1 }}>Ce qui peut sortir du téléphone</Ink>
+          <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{traduire("Ce qui peut sortir du téléphone")}</Ink>
         </View>
         <Ink size={13} color={c.textSecondary}>
-          Seulement ce que tu choisis : Apple Santé ou Health Connect si tu l’autorises, ta sauvegarde si tu choisis un dossier cloud, tes exports et tes partages. Quand tu touches « Ma position » sur une séance, ton téléphone demande le nom du lieu à son service de cartes, et la position est gardée avec la séance. Le détail est dans la politique de confidentialité.
-        </Ink>
+          {traduire("Seulement ce que tu choisis : Apple Santé ou Health Connect si tu l’autorises, ta sauvegarde si tu choisis un dossier cloud, tes exports et tes partages. Quand tu touches « Ma position » sur une séance, ton téléphone demande le nom du lieu à son service de cartes, et la position est gardée avec la séance. Le détail est dans la politique de confidentialité.")}</Ink>
       </Card>
 
       <MesureConfidentialite />
@@ -220,12 +220,12 @@ export default function PrivacyDataScreen() {
           l'etaient. Le reglage n'etait donc pas honnete. Le code reste, a reprendre avec une vraie regle. */}
       {AFFICHER_CONSERVATION ? (
         <>
-          <SectionTitle title="Conservation" sub="Combien de temps garder tes données" />
+          <SectionTitle title="Conservation" sub={traduire("Combien de temps garder tes données")} />
           <Segmented options={RETENTION_OPTIONS} value={retention} onChange={changeRetention} />
         </>
       ) : null}
 
-      <SectionTitle title="Ce qui est gardé" sub={entries(total)} />
+      <SectionTitle title={traduire("Ce qui est gardé")} sub={entries(total)} />
       <Card>
         {DATA_CATEGORIES.map((cat, i) => {
           const n = counts[cat.id] ?? 0;
@@ -242,7 +242,7 @@ export default function PrivacyDataScreen() {
                 onPress={() => deleteCategory(cat)}
                 disabled={n === 0 || saving}
                 accessibilityRole="button"
-                accessibilityLabel={`Supprimer ${cat.label}`}
+                accessibilityLabel={traduire("Supprimer {0}", cat.label)}
                 style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.dangerTint, alignItems: 'center', justifyContent: 'center', opacity: n === 0 || saving ? 0.3 : 1 }}
               >
                 <Icon name="trash" size={18} color={c.danger} />
@@ -252,8 +252,8 @@ export default function PrivacyDataScreen() {
         })}
       </Card>
 
-      <Button tone="ink" icon="download" label="Exporter mes données" onPress={() => router.push('/export-data' as any)} />
-      <Button tone="danger" icon="trash" label="Tout supprimer" onPress={deleteAll} disabled={saving} />
+      <Button tone="ink" icon="download" label={traduire("Exporter mes données")} onPress={() => router.push('/export-data' as any)} />
+      <Button tone="danger" icon="trash" label={traduire("Tout supprimer")} onPress={deleteAll} disabled={saving} />
     </EspaceScreen>
   );
 }

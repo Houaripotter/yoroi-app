@@ -27,6 +27,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Row = { date: string; weight?: Weight; measurement?: Measurement; composition?: BodyComposition };
 
@@ -71,7 +72,7 @@ function val(r: Row, key: string): number | undefined {
 
 function shortDay(iso: string): string {
   const d = new Date(iso + 'T12:00:00');
-  const M = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  const M = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
   return `${d.getDate()} ${M[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
 }
 
@@ -118,10 +119,10 @@ export default function TableauCorps() {
 
   const removeRow = (r: Row) => {
     impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-    appAlert('Supprimer ce jour ?', `Tout ce qui est noté le ${frDay(r.date)} sera supprimé : pesée, composition et mensurations.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer ce jour ?'), traduire("Tout ce qui est noté le {0} sera supprimé : pesée, composition et mensurations.", frDay(r.date)), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -133,7 +134,7 @@ export default function TableauCorps() {
             changed();
           } catch (err) {
             logger.error('Suppression impossible', err);
-            appAlert('Oups', 'La suppression n’a pas pu se faire.');
+            appAlert('Oups', traduire('La suppression n’a pas pu se faire.'));
           }
         },
       },
@@ -152,7 +153,7 @@ export default function TableauCorps() {
       changed();
     } catch (err) {
       logger.error('Ajout impossible', err);
-      appAlert('Oups', 'La ligne n’a pas pu être ajoutée.');
+      appAlert('Oups', traduire('La ligne n’a pas pu être ajoutée.'));
     }
   };
 
@@ -164,7 +165,7 @@ export default function TableauCorps() {
       if (ok) notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {
       logger.error('Export impossible', err);
-      appAlert('Oups', 'L’export n’a pas pu se faire.');
+      appAlert('Oups', traduire('L’export n’a pas pu se faire.'));
     } finally {
       setExporting(false);
     }
@@ -179,27 +180,27 @@ export default function TableauCorps() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 110 }} showsVerticalScrollIndicator={false}>
         <CorpsHeader
-          title="Tableau du corps"
-          sub="Une ligne par jour, tout au même endroit"
-          right={<RoundBtn icon="plus" label="Ajouter une ligne" tone="accent" onPress={() => setAdding(true)} />}
+          title={traduire("Tableau du corps")}
+          sub={traduire("Une ligne par jour, tout au même endroit")}
+          right={<RoundBtn icon="plus" label={traduire("Ajouter une ligne")} tone="accent" onPress={() => setAdding(true)} />}
         />
 
         <View style={{ paddingHorizontal: 22, paddingTop: 16, gap: 14 }}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable onPress={() => router.push('/import-csv' as any)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.8), borderWidth: 1, borderColor: c.border })}>
-              <Ink size={14} weight="extraBold">Importer un CSV</Ink>
+              <Ink size={14} weight="extraBold">{traduire("Importer un CSV")}</Ink>
             </Pressable>
             <Pressable onPress={exportCsv} disabled={exporting} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.8), borderWidth: 1, borderColor: c.border, opacity: exporting ? 0.6 : 1 })}>
               {exporting ? <ActivityIndicator size="small" color={c.ink} /> : null}
-              <Ink size={14} weight="extraBold">Exporter en CSV</Ink>
+              <Ink size={14} weight="extraBold">{traduire("Exporter en CSV")}</Ink>
             </Pressable>
           </View>
 
           {rows && rows.length > 0 ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Tile value={String(rows.length)} label="jours notés" />
-              {lastW ? <Tile value={`${fmtValue(lastW, 1)} kg`} label="dernier poids" /> : null}
-              {lastW && firstW && weightPts.length > 1 ? <Tile value={`${lastW - firstW > 0 ? '+' : lastW - firstW < 0 ? '−' : ''}${fmtValue(Math.abs(lastW - firstW), 1)} kg`} label="depuis le début" /> : null}
+              <Tile value={String(rows.length)} label={traduire("jours notés")} />
+              {lastW ? <Tile value={`${fmtValue(lastW, 1)} kg`} label={traduire("dernier poids")} /> : null}
+              {lastW && firstW && weightPts.length > 1 ? <Tile value={`${lastW - firstW > 0 ? '+' : lastW - firstW < 0 ? '−' : ''}${fmtValue(Math.abs(lastW - firstW), 1)} kg`} label={traduire("depuis le début")} /> : null}
             </View>
           ) : null}
 
@@ -219,10 +220,10 @@ export default function TableauCorps() {
           ) : rows.length === 0 ? (
             <View style={{ padding: 22, borderRadius: 26, backgroundColor: blancA(0.8), borderWidth: 1, borderColor: P.white, gap: 8 }}>
               <Glyph kind="sakura" size={44} color={c.indigo} />
-              <Ink size={22} weight="black" tight>Ton tableau est vide</Ink>
-              <Ink size={14} color={c.textSecondary}>Ajoute une ligne à la main, ou importe ton historique depuis un fichier CSV.</Ink>
+              <Ink size={22} weight="black" tight>{traduire("Ton tableau est vide")}</Ink>
+              <Ink size={14} color={c.textSecondary}>{traduire("Ajoute une ligne à la main, ou importe ton historique depuis un fichier CSV.")}</Ink>
               <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                <Ink size={15} weight="extraBold" color={c.onAccent}>Ajouter une ligne</Ink>
+                <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Ajouter une ligne")}</Ink>
               </Pressable>
             </View>
           ) : tab === 'table' ? (
@@ -230,10 +231,10 @@ export default function TableauCorps() {
               {/* colonne du jour, fixe */}
               <View style={{ width: DATE_W, borderRightWidth: 1, borderColor: c.divider }}>
                 <View style={{ height: HEAD_H, justifyContent: 'center', backgroundColor: c.fillSoft, paddingLeft: 14 }}>
-                  <Ink size={12} weight="extraBold" color={c.textSecondary}>Jour</Ink>
+                  <Ink size={12} weight="extraBold" color={c.textSecondary}>{traduire("Jour")}</Ink>
                 </View>
                 {rows.map((r, i) => (
-                  <Pressable key={r.date} onPress={() => removeRow(r)} accessibilityRole="button" accessibilityLabel={`${frDay(r.date)}, toucher pour supprimer ce jour`} style={({ pressed }) => ({ height: ROW_H, justifyContent: 'center', paddingLeft: 14, backgroundColor: pressed ? c.dangerTint : i % 2 ? 'rgba(242,241,236,0.5)' : 'transparent' })}>
+                  <Pressable key={r.date} onPress={() => removeRow(r)} accessibilityRole="button" accessibilityLabel={traduire("{0}, toucher pour supprimer ce jour", frDay(r.date))} style={({ pressed }) => ({ height: ROW_H, justifyContent: 'center', paddingLeft: 14, backgroundColor: pressed ? c.dangerTint : i % 2 ? 'rgba(242,241,236,0.5)' : 'transparent' })}>
                     <Ink size={13} weight="bold" numberOfLines={1}>{shortDay(r.date)}</Ink>
                   </Pressable>
                 ))}
@@ -250,10 +251,10 @@ export default function TableauCorps() {
                     ))}
                   </View>
                   {rows.map((r, i) => (
-                    <Pressable key={r.date} onPress={() => removeRow(r)} accessibilityRole="button" accessibilityLabel={`${frDay(r.date)}, toucher pour supprimer ce jour`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', height: ROW_H, backgroundColor: pressed ? c.dangerTint : i % 2 ? 'rgba(242,241,236,0.5)' : 'transparent' })}>
+                    <Pressable key={r.date} onPress={() => removeRow(r)} accessibilityRole="button" accessibilityLabel={traduire("{0}, toucher pour supprimer ce jour", frDay(r.date))} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', height: ROW_H, backgroundColor: pressed ? c.dangerTint : i % 2 ? 'rgba(242,241,236,0.5)' : 'transparent' })}>
                       {COMPO_COLS.every((col) => val(r, col.key) === undefined) ? (
                         <View style={{ width: COMPO_W, paddingLeft: 14, paddingRight: 12, justifyContent: 'center' }}>
-                          <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>Mensurations du jour, fais glisser →</Ink>
+                          <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("Mensurations du jour, fais glisser →")}</Ink>
                         </View>
                       ) : null}
                       {(COMPO_COLS.every((col) => val(r, col.key) === undefined) ? COLUMNS.slice(COMPO_COLS.length) : COLUMNS).map((col) => {
@@ -274,21 +275,21 @@ export default function TableauCorps() {
               {weightPts.length > 1 ? (
                 <View style={{ padding: 16, borderRadius: 24, backgroundColor: blancA(0.85), borderWidth: 1, borderColor: P.white, gap: 8 }}>
                   <Ink size={16} weight="black">Poids</Ink>
-                  <InkLineChart points={weightPts} color="#3D5D9E" height={190} digits={1} label="Courbe du poids" />
+                  <InkLineChart points={weightPts} color="#3D5D9E" height={190} digits={1} label={traduire("Courbe du poids")} />
                 </View>
               ) : null}
               {fatPts.length > 1 ? (
                 <View style={{ padding: 16, borderRadius: 24, backgroundColor: blancA(0.85), borderWidth: 1, borderColor: P.white, gap: 8 }}>
                   <Ink size={16} weight="black">Masse grasse, en %</Ink>
-                  <InkLineChart points={fatPts} color="#A8832F" height={170} digits={1} label="Courbe de la masse grasse" />
+                  <InkLineChart points={fatPts} color="#A8832F" height={170} digits={1} label={traduire("Courbe de la masse grasse")} />
                 </View>
               ) : null}
               {weightPts.length < 2 && fatPts.length < 2 ? (
-                <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Il faut au moins deux jours notés pour tracer une courbe.</Ink>
+                <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Il faut au moins deux jours notés pour tracer une courbe.")}</Ink>
               ) : null}
             </View>
           )}
-          {tab === 'table' && rows && rows.length > 0 ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Fais glisser les colonnes sur le côté, le jour reste en place. Touche un jour pour le supprimer.</Ink> : null}
+          {tab === 'table' && rows && rows.length > 0 ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Fais glisser les colonnes sur le côté, le jour reste en place. Touche un jour pour le supprimer.")}</Ink> : null}
         </View>
       </ScrollView>
 
@@ -313,24 +314,24 @@ function AddRowSheet({ visible, onClose, onSave }: { visible: boolean; onClose: 
 
   const submit = () => {
     const day = parseDay(date);
-    if (!day) return setError('Écris le jour comme ceci : 12/03/2026.');
+    if (!day) return setError(traduire('Écris le jour comme ceci : 12/03/2026.'));
     const f: Record<string, number | undefined> = {};
     for (const col of COLUMNS) {
       const n = parseFloat((vals[col.key] ?? '').replace(',', '.'));
       f[col.key] = Number.isFinite(n) && n > 0 ? n : undefined;
     }
-    if (Object.values(f).every((v) => v === undefined)) return setError('Remplis au moins une valeur.');
-    if (f.weight === undefined && [f.fat, f.muscle, f.water].some((v) => v !== undefined)) return setError('La graisse, le muscle et l’eau se notent avec le poids du jour.');
+    if (Object.values(f).every((v) => v === undefined)) return setError(traduire('Remplis au moins une valeur.'));
+    if (f.weight === undefined && [f.fat, f.muscle, f.water].some((v) => v !== undefined)) return setError(traduire('La graisse, le muscle et l’eau se notent avec le poids du jour.'));
     onSave(day, f);
   };
 
   const field = [fontStyle('bold'), { height: 48, fontSize: 16, color: c.ink, paddingHorizontal: 12, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }];
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Nouvelle ligne" scroll>
+    <Sheet visible={visible} onClose={onClose} title={traduire("Nouvelle ligne")} scroll>
       <View style={{ gap: 6 }}>
-        <Ink size={13} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Jour</Ink>
-        <TextInput value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" placeholder="12/03/2026" placeholderTextColor={c.textMuted} accessibilityLabel="Jour" style={field} />
+        <Ink size={13} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Jour")}</Ink>
+        <TextInput value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" placeholder="12/03/2026" placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Jour")} style={field} />
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {COLUMNS.map((col) => (
@@ -342,7 +343,7 @@ function AddRowSheet({ visible, onClose, onSave }: { visible: boolean; onClose: 
       </View>
       {error ? <Ink size={13} weight="bold" color={c.danger} style={{ paddingHorizontal: 4 }}>{error}</Ink> : null}
       <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-        <Ink size={16} weight="extraBold" color={c.onAccent}>Ajouter</Ink>
+        <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Ajouter")}</Ink>
       </Pressable>
     </Sheet>
   );

@@ -27,6 +27,7 @@ import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { logger } from '@/lib/security/logger';
 import Svg, { Path } from 'react-native-svg';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 
 /** Champs de saisie derriere chaque zone de la silhouette */
@@ -159,9 +160,9 @@ export default function MeasurementsScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <DetailHeader
           title="Tes mensurations"
-          sub="Pré-remplies avec ta dernière mesure. Touche une zone, ajuste, enregistre."
+          sub={traduire("Pré-remplies avec ta dernière mesure. Touche une zone, ajuste, enregistre.")}
           right={
-            <IconButton label="Voir l’évolution" onPress={() => router.push('/measurements-detail' as any)}>
+            <IconButton label={traduire("Voir l’évolution")} onPress={() => router.push('/measurements-detail' as any)}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path d="M3 17l6-6 4 3 8-8M15 6h6v6" stroke={c.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
@@ -171,7 +172,7 @@ export default function MeasurementsScreen() {
 
         {screenshotDetected ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 8, padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
-            <Ink size={13} weight="bold">Capture d’écran repérée. Tes mesures sont personnelles, garde-les pour toi.</Ink>
+            <Ink size={13} weight="bold">{traduire("Capture d’écran repérée. Tes mesures sont personnelles, garde-les pour toi.")}</Ink>
           </View>
         ) : null}
 
@@ -197,7 +198,7 @@ export default function MeasurementsScreen() {
         <View style={{ marginHorizontal: GUTTER, marginTop: 18, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, padding: 16, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
             <Ink size={19} weight="black" tight>{zoneMeta.long}</Ink>
-            <Ink size={12} color={c.textSecondary} style={{ flexShrink: 1, textAlign: 'right' }}>{zone === 'waist' ? 'au plus fin, après une expiration' : zone === 'navel' ? 'à hauteur du nombril' : zone === 'arm' ? 'bras contracté, au plus large' : 'ruban à plat, sans serrer'}</Ink>
+            <Ink size={12} color={c.textSecondary} style={{ flexShrink: 1, textAlign: 'right' }}>{zone === 'waist' ? traduire('au plus fin, après une expiration') : zone === 'navel' ? traduire('à hauteur du nombril') : zone === 'arm' ? traduire('bras contracté, au plus large') : traduire('ruban à plat, sans serrer')}</Ink>
           </View>
           {zoneKeys.map((k) => {
             const v = valueOf(k);
@@ -207,7 +208,7 @@ export default function MeasurementsScreen() {
               <View key={k} style={{ gap: 8 }}>
                 {zoneKeys.length > 1 ? <Ink size={14} weight="bold" color={c.textSecondary}>{labelOf(k)}</Ink> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Pressable onPress={() => step(k, -0.5)} accessibilityRole="button" accessibilityLabel={`${labelOf(k)}, moins un demi-centimètre`} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
+                  <Pressable onPress={() => step(k, -0.5)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins un demi-centimètre", labelOf(k))} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
                     <MinusPlus kind="minus" color={c.ink} />
                   </Pressable>
                   <Pressable
@@ -216,7 +217,7 @@ export default function MeasurementsScreen() {
                       setDraft(num(v, 1));
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={`${labelOf(k)}, ${num(v, 1)} centimètres, toucher pour saisir`}
+                    accessibilityLabel={traduire("{0}, {1} centimètres, toucher pour saisir", labelOf(k), num(v, 1))}
                     style={{ flex: 1, alignItems: 'center' }}
                   >
                     {isTyping ? (
@@ -230,7 +231,7 @@ export default function MeasurementsScreen() {
                         keyboardType="decimal-pad"
                         returnKeyType="done"
                         maxLength={6}
-                        accessibilityLabel={`${labelOf(k)} en centimètres`}
+                        accessibilityLabel={traduire("{0} en centimètres", labelOf(k))}
                         style={[fontStyle('black'), { fontSize: 40, height: 54, color: c.ink, textAlign: 'center', minWidth: 140, padding: 0, includeFontPadding: false }]}
                       />
                     ) : (
@@ -239,10 +240,10 @@ export default function MeasurementsScreen() {
                       </Ink>
                     )}
                     <Ink size={12} weight="bold" color={c.textSecondary}>
-                      {touched[k] ? (prev ? `${cmDelta(v - prev)} que la dernière fois` : 'centimètres, nouvelle mesure') : prev ? 'centimètres, la dernière fois' : 'centimètres, à mesurer'}
+                      {touched[k] ? (prev ? traduire("{0} que la dernière fois", cmDelta(v - prev)) : traduire('centimètres, nouvelle mesure')) : prev ? traduire('centimètres, la dernière fois') : traduire('centimètres, à mesurer')}
                     </Ink>
                   </Pressable>
-                  <Pressable onPress={() => step(k, 0.5)} accessibilityRole="button" accessibilityLabel={`${labelOf(k)}, plus un demi-centimètre`} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
+                  <Pressable onPress={() => step(k, 0.5)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus un demi-centimètre", labelOf(k))} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
                     <MinusPlus kind="plus" color={c.ink} />
                   </Pressable>
                 </View>
@@ -255,7 +256,7 @@ export default function MeasurementsScreen() {
                     accessibilityRole="button"
                     style={{ alignSelf: 'center', minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1.5, borderColor: '#D5D2CA', justifyContent: 'center' }}
                   >
-                    <Ink size={14} weight="bold" color={c.textSecondary}>Pareil que la dernière fois</Ink>
+                    <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Pareil que la dernière fois")}</Ink>
                   </Pressable>
                 ) : null}
               </View>
@@ -290,11 +291,11 @@ export default function MeasurementsScreen() {
       <View style={{ position: 'absolute', left: GUTTER, right: GUTTER, bottom: insets.bottom + 18 }}>
         {hint ? (
           <View style={{ alignSelf: 'center', marginBottom: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, backgroundColor: c.ink }}>
-            <Ink size={13} weight="bold" color={c.background}>Ajuste au moins une zone avec + ou −, ou touche « Pareil ».</Ink>
+            <Ink size={13} weight="bold" color={c.background}>{traduire("Ajuste au moins une zone avec + ou −, ou touche « Pareil ».")}</Ink>
           </View>
         ) : null}
         <StampButton
-          label={saving ? 'Enregistrement en cours' : touchedCount === 0 ? 'Enregistrer' : `Enregistrer ${touchedCount} mesure${touchedCount > 1 ? 's' : ''}`}
+          label={saving ? 'Enregistrement en cours' : touchedCount === 0 ? traduire('Enregistrer') : traduirePluriel(touchedCount, touchedCount > 1, "Enregistrer {0} mesure", "Enregistrer {0} mesures", touchedCount)}
           onPress={() => {
             if (touchedCount === 0) {
               selectionAsync().catch(() => {});

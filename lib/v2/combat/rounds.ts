@@ -3,6 +3,7 @@
  * resultats, ceintures, comptages et dates.
  */
 import type { CombatRound, Training } from '@/lib/database';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Result = 'win' | 'loss' | 'draw';
 export type Letter = 'V' | 'D' | 'N';
@@ -13,7 +14,7 @@ export const RESULT_COLOR: Record<Result, string> = {
   loss: '#B0282E',
   draw: '#A8832F',
 };
-export const RESULT_LABEL: Record<Result, string> = { win: 'Victoire', loss: 'Défaite', draw: 'Nul' };
+export const RESULT_LABEL: Record<Result, string> = { win: traduire('Victoire'), loss: traduire('Défaite'), draw: 'Nul' };
 export const RESULT_LETTER: Record<Result, Letter> = { win: 'V', loss: 'D', draw: 'N' };
 
 /**
@@ -90,15 +91,15 @@ export function countFreq(items: string[]): { label: string; count: number }[] {
 }
 
 export const BELTS: { key: string; label: string; color: string; edge: string }[] = [
-  { key: 'blanche', label: 'Blanche', color: '#FFFFFF', edge: '#D5D2CA' },
+  { key: 'blanche', label: traduire('Blanche'), color: '#FFFFFF', edge: '#D5D2CA' },
   { key: 'grise', label: 'Grise', color: '#8B8D96', edge: '#6F717A' },
   { key: 'jaune', label: 'Jaune', color: '#E3C47B', edge: '#C59D45' },
   { key: 'orange', label: 'Orange', color: '#D08A3C', edge: '#A96B26' },
   { key: 'verte', label: 'Verte', color: '#6E8C3A', edge: '#4F6B28' },
-  { key: 'bleue', label: 'Bleue', color: '#2C4A84', edge: '#1D3463' },
-  { key: 'violette', label: 'Violette', color: '#5E3C7E', edge: '#45295E' },
-  { key: 'marron', label: 'Marron', color: '#6B4426', edge: '#4E301A' },
-  { key: 'noire', label: 'Noire', color: '#1D2029', edge: '#000000' },
+  { key: 'bleue', label: traduire('Bleue'), color: '#2C4A84', edge: '#1D3463' },
+  { key: 'violette', label: traduire('Violette'), color: '#5E3C7E', edge: '#45295E' },
+  { key: 'marron', label: traduire('Marron'), color: '#6B4426', edge: '#4E301A' },
+  { key: 'noire', label: traduire('Noire'), color: '#1D2029', edge: '#000000' },
   { key: 'rouge', label: 'Rouge', color: '#B0282E', edge: '#8C1E23' },
 ];
 
@@ -108,8 +109,8 @@ export function beltOf(belt?: string | null): { key: string; label: string; colo
   return BELTS.find((b) => b.key === k || k.startsWith(b.key.slice(0, 4))) ?? null;
 }
 
-const MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const MONTHS_LONG = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const MONTHS_LONG = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 export function parseDate(iso: string): Date {
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
@@ -148,9 +149,9 @@ export function agoText(iso?: string): string {
   if (n == null) return '';
   if (n === 0) return "aujourd'hui";
   if (n === 1) return 'hier';
-  if (n < 30) return `il y a ${n} jours`;
+  if (n < 30) return traduire("il y a {0} jours", n);
   const m = Math.round(n / 30);
-  return m <= 1 ? 'il y a un mois' : `il y a ${m} mois`;
+  return m <= 1 ? traduire('il y a un mois') : traduire("il y a {0} mois", m);
 }
 
 export function plural(n: number, one: string, many?: string): string {

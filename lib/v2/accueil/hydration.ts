@@ -9,6 +9,7 @@ import { logger } from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
 import { ecrireDeltaEauSante, type EauVersSante } from '@/lib/v2/sante/eauSante';
 import { devNow } from '@/lib/v2/creator/devClock';
+import { DECIMAL } from '@/lib/i18n/tr';
 
 const HYDRATION_KEY = '@yoroi_hydration_today';
 const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
@@ -210,5 +211,5 @@ export async function saveHydrationGoal(goal: number): Promise<boolean> {
 
 export function formatLiters(l: number): string {
   const v = Math.round(l * 100) / 100;
-  return String(v).replace('.', ',');
+  return String(v).replace('.', DECIMAL);
 }

@@ -43,12 +43,13 @@ import { useI18n } from '@/lib/I18nContext';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
 import { intensite, niveauRpe } from '@/lib/v2/intensite';
+import { traduire } from '@/lib/i18n/tr';
 
 const INTENSITIES = [
   { value: 3, label: 'Facile' },
-  { value: 5, label: 'Correct' },
+  { value: 5, label: traduire('Correct') },
   { value: 7, label: 'Dur' },
-  { value: 9, label: 'À bloc' },
+  { value: 9, label: traduire('À bloc') },
 ];
 
 function makeSets(planned: SetValue[], withPrev: boolean): LiveSet[] {
@@ -130,7 +131,7 @@ export default function SeanceMuscu() {
         if (params.editId) {
           const t = await loadTrainingForEdit(params.editId);
           if (!t) {
-            appAlert('Séance introuvable', 'Elle a peut-être été supprimée.');
+            appAlert(traduire('Séance introuvable'), traduire('Elle a peut-être été supprimée.'));
             router.back();
             return;
           }
@@ -140,7 +141,7 @@ export default function SeanceMuscu() {
             form: true,
             editId: params.editId,
             sport: t.sport || 'musculation',
-            label: 'Modifier ta séance',
+            label: traduire('Modifier ta séance'),
             startedAt: Date.now(),
             exercises,
             currentId: exercises[0]?.id ?? null,
@@ -201,11 +202,11 @@ export default function SeanceMuscu() {
         }
         if (existing) {
           appAlert(
-            'Une séance est en cours',
-            `${draftTitle(existing)}, commencée ${draftAgo(existing)}. Tu la reprends ?`,
+            traduire('Une séance est en cours'),
+            traduire("{0}, commencée {1}. Tu la reprends ?", draftTitle(existing), draftAgo(existing)),
             [
               {
-                text: 'Nouvelle séance',
+                text: traduire('Nouvelle séance'),
                 style: 'destructive',
                 onPress: async () => {
                   await clearDraft();
@@ -339,9 +340,9 @@ export default function SeanceMuscu() {
   };
 
   const askSetAction = (ex: LiveExercise, index: number) => {
-    appAlert(`Série ${index + 1}`, undefined, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer la série', style: 'destructive', onPress: () => updateExercise(ex.id, (e) => ({ ...e, sets: e.sets.filter((_, i) => i !== index) })) },
+    appAlert(traduire("Série {0}", index + 1), undefined, [
+      { text: traduire('Annuler'), style: 'cancel' },
+      { text: traduire('Supprimer la série'), style: 'destructive', onPress: () => updateExercise(ex.id, (e) => ({ ...e, sets: e.sets.filter((_, i) => i !== index) })) },
     ]);
   };
 
@@ -356,10 +357,10 @@ export default function SeanceMuscu() {
     });
 
   const removeExercise = (id: string) => {
-    appAlert('Supprimer cet exercice ?', 'Ses séries seront retirées de la séance.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cet exercice ?'), traduire('Ses séries seront retirées de la séance.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: () => {
           setMenuFor(null);
@@ -411,14 +412,14 @@ export default function SeanceMuscu() {
 
   const abandon = () => {
     if (draft?.form) {
-      appAlert(draft.editId ? 'Quitter sans enregistrer ?' : 'Annuler cette saisie ?', 'Tes changements ne seront pas gardés.', [
+      appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
         { text: 'Rester', style: 'cancel' },
         { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
       ]);
       return;
     }
-    appAlert('Abandonner la séance ?', 'Rien ne sera enregistré.', [
-      { text: 'Continuer la séance', style: 'cancel' },
+    appAlert(traduire('Abandonner la séance ?'), traduire('Rien ne sera enregistré.'), [
+      { text: traduire('Continuer la séance'), style: 'cancel' },
       {
         text: 'Abandonner',
         style: 'destructive',
@@ -487,7 +488,7 @@ export default function SeanceMuscu() {
     } catch (err) {
       finished.current = false;
       logger.error('Enregistrement de la seance impossible', err);
-      appAlert('Oups', 'La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.');
+      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -514,17 +515,17 @@ export default function SeanceMuscu() {
       {/* En-tete : retour (la seance reste en cours), titre, chrono, Terminer */}
       <View style={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {draft.form ? (
-          <Pressable onPress={abandon} accessibilityRole="button" accessibilityLabel="Fermer sans enregistrer" style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+          <Pressable onPress={abandon} accessibilityRole="button" accessibilityLabel={traduire("Fermer sans enregistrer")} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
             <Icon name="close" size={18} strokeWidth={2.6} />
           </Pressable>
         ) : (
-          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Réduire, la séance reste en cours" style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={traduire("Réduire, la séance reste en cours")} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
             <Icon name="down" size={20} strokeWidth={2.6} />
           </Pressable>
         )}
         {draft.form && draft.details ? (
-          <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" accessibilityLabel="Changer le jour et la durée" style={{ flex: 1 }}>
-            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1}>{draft.editId ? 'Modifier ta séance' : title}</Ink>
+          <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Changer le jour et la durée")} style={{ flex: 1 }}>
+            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1}>{draft.editId ? traduire('Modifier ta séance') : title}</Ink>
             <Ink size={22} weight="black" tight numberOfLines={1}>{dayLabel(draft.details.date)}, {fmtMinutes(draft.details.duration)}</Ink>
           </Pressable>
         ) : (
@@ -534,18 +535,18 @@ export default function SeanceMuscu() {
           </View>
         )}
         <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onAccent}>{draft.form ? 'Enregistrer' : 'Terminer'}</Ink>
+          <Ink size={15} weight="extraBold" color={c.onAccent}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
         </Pressable>
       </View>
 
       {/* Avancement : une barre par exercice */}
       {draft.exercises.length > 0 ? (
-        <View style={{ flexDirection: 'row', gap: 5, paddingHorizontal: 22, marginTop: 10 }} accessibilityLabel={`Exercice ${draft.exercises.indexOf(current!) + 1} sur ${draft.exercises.length}`}>
+        <View style={{ flexDirection: 'row', gap: 5, paddingHorizontal: 22, marginTop: 10 }} accessibilityLabel={traduire("Exercice {0} sur {1}", draft.exercises.indexOf(current!) + 1, draft.exercises.length)}>
           {draft.exercises.map((e) => {
             const isCur = e.id === current?.id;
             const all = e.sets.length > 0 && e.sets.every((s) => s.done);
             return (
-              <Pressable key={e.id} onPress={() => update((d) => ({ ...d, currentId: e.id }))} accessibilityLabel={`Aller à ${e.name}`} style={{ flex: 1, paddingVertical: 8 }}>
+              <Pressable key={e.id} onPress={() => update((d) => ({ ...d, currentId: e.id }))} accessibilityLabel={traduire("Aller à {0}", e.name)} style={{ flex: 1, paddingVertical: 8 }}>
                 <View style={{ height: 5, borderRadius: 3, backgroundColor: isCur ? c.accent : all ? c.ink : '#D5D2CA' }} />
               </Pressable>
             );
@@ -569,14 +570,14 @@ export default function SeanceMuscu() {
                 <Ink size={14} color={c.textSecondary}>
                   {lastBest && hCurrent ? (
                     <>
-                      La dernière fois, {relativeDay(hCurrent.lastDate)} : <Ink size={14} weight="extraBold">{lastBest.weight > 0 ? `${fmtNum(saisieDepuisKg(lastBest.weight, unite))} ${lb ? 'livres' : 'kilos'} pour ${lastBest.reps}` : `${lastBest.reps} répétitions`}</Ink>
+                      La dernière fois, {relativeDay(hCurrent.lastDate)} : <Ink size={14} weight="extraBold">{lastBest.weight > 0 ? traduire("{0} {1} pour {2}", fmtNum(saisieDepuisKg(lastBest.weight, unite)), lb ? 'livres' : 'kilos', lastBest.reps) : traduire("{0} répétitions", lastBest.reps)}</Ink>
                     </>
                   ) : (
-                    'Première fois sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.'
+                    traduire('Première fois sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.')
                   )}
                 </Ink>
               </View>
-              <Pressable onPress={() => setMenuFor(current.id)} accessibilityRole="button" accessibilityLabel="Options de l'exercice" style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+              <Pressable onPress={() => setMenuFor(current.id)} accessibilityRole="button" accessibilityLabel={traduire("Options de l'exercice")} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
                 <Icon name="more" size={20} />
               </Pressable>
             </View>
@@ -588,9 +589,9 @@ export default function SeanceMuscu() {
             ) : null}
 
             <View style={{ flexDirection: 'row', paddingHorizontal: 8, marginTop: 6 }}>
-              <Ink size={12} weight="bold" color={c.textMuted} style={{ width: 44 }}>Série</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted} style={{ width: 44 }}>{traduire("Série")}</Ink>
               <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{lb ? 'Livres' : 'Kilos'}</Ink>
-              <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>Répétitions</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: 'center' }}>{traduire("Répétitions")}</Ink>
               <View style={{ width: 48 }} />
             </View>
 
@@ -599,8 +600,8 @@ export default function SeanceMuscu() {
                 return (
                   <View key={s.id} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: c.ink, padding: 12, gap: 10, shadowColor: c.shadow, shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
-                      <Ink size={16} weight="black" style={{ flex: 1 }}>Série {i + 1}</Ink>
-                      {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>la dernière fois {setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0 }, unite)}</Ink> : null}
+                      <Ink size={16} weight="black" style={{ flex: 1 }}>{traduire("Série {0}", i + 1)}</Ink>
+                      {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("la dernière fois {0}", setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0 }, unite))}</Ink> : null}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
@@ -608,18 +609,18 @@ export default function SeanceMuscu() {
                       </View>
                       <View style={{ width: 1, backgroundColor: c.border, marginVertical: 6 }} />
                       <View style={{ flex: 1 }}>
-                        <Stepper layout="stack" value={s.reps} step={1} max={200} unit="répétitions" size={38} button={50} hint={i > 0 && s.prevReps === undefined ? `comme la série ${i}` : 'répétitions'} onChange={(v) => setValue(current.id, s.id, { reps: v })} />
+                        <Stepper layout="stack" value={s.reps} step={1} max={200} unit={traduire("répétitions")} size={38} button={50} hint={i > 0 && s.prevReps === undefined ? traduire("comme la série {0}", i) : traduire('répétitions')} onChange={(v) => setValue(current.id, s.id, { reps: v })} />
                       </View>
                     </View>
                     <Pressable
                       onPress={() => validate(current, i)}
                       disabled={s.reps <= 0}
                       accessibilityRole="button"
-                      accessibilityLabel={`Valider la série ${i + 1}`}
+                      accessibilityLabel={traduire("Valider la série {0}", i + 1)}
                       style={({ pressed }) => ({ minHeight: 58, borderRadius: 18, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: s.reps <= 0 ? c.border : pressed ? c.accentPressed : c.accent, shadowColor: c.accent, shadowOpacity: s.reps <= 0 ? 0 : 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: s.reps <= 0 ? 0 : 3 })}
                     >
                       <Icon name="check" size={24} color={c.onAccent} strokeWidth={3} />
-                      <Ink size={17} weight="extraBold" color={c.onAccent}>Valider la série</Ink>
+                      <Ink size={17} weight="extraBold" color={c.onAccent}>{traduire("Valider la série")}</Ink>
                     </Pressable>
                   </View>
                 );
@@ -633,7 +634,7 @@ export default function SeanceMuscu() {
                   }}
                   onLongPress={() => askSetAction(current, i)}
                   accessibilityRole="button"
-                  accessibilityLabel={s.done ? `Série ${i + 1} validée, ${setLabel(s, unite)}. Toucher pour la modifier` : `Série ${i + 1} prévue, ${setLabel(s, unite)}`}
+                  accessibilityLabel={s.done ? traduire("Série {0} validée, {1}. Toucher pour la modifier", i + 1, setLabel(s, unite)) : traduire("Série {0} prévue, {1}", i + 1, setLabel(s, unite))}
                   style={{ flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingHorizontal: 8, borderRadius: 16, backgroundColor: pending ? 'transparent' : blancA(0.55), borderWidth: pending ? 1.5 : 0, borderStyle: 'dashed', borderColor: c.border }}
                 >
                   <Ink size={16} weight="extraBold" color={c.textSecondary} style={{ width: 44, textAlign: 'center' }}>{i + 1}</Ink>
@@ -655,20 +656,20 @@ export default function SeanceMuscu() {
             })}
 
             <Pressable onPress={() => addSet(current)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 46, borderRadius: 14, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#B9B6AE', alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : 'transparent' })}>
-              <Ink size={14} weight="bold" color={c.textSecondary}>Ajouter une série</Ink>
+              <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Ajouter une série")}</Ink>
             </Pressable>
 
             {currentDone ? (
               <View style={{ marginTop: 6, padding: 16, borderRadius: 22, backgroundColor: c.successTint, gap: 10 }}>
-                <Ink size={17} weight="black" color={c.successText}>Exercice bouclé.</Ink>
+                <Ink size={17} weight="black" color={c.successText}>{traduire("Exercice bouclé.")}</Ink>
                 {nextEx ? (
                   <Pressable onPress={() => update((d) => ({ ...d, currentId: nextEx.id }))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}>
-                    <Ink size={15} weight="extraBold" color={c.background} numberOfLines={1}>Suivant : {nextEx.name}</Ink>
+                    <Ink size={15} weight="extraBold" color={c.background} numberOfLines={1}>{traduire("Suivant : {0}", nextEx.name)}</Ink>
                     <Icon name="chevron" size={18} color={c.background} />
                   </Pressable>
                 ) : (
                   <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, alignItems: 'center', justifyContent: 'center' })}>
-                    <Ink size={15} weight="extraBold" color={c.background}>Ajouter un exercice</Ink>
+                    <Ink size={15} weight="extraBold" color={c.background}>{traduire("Ajouter un exercice")}</Ink>
                   </Pressable>
                 )}
               </View>
@@ -677,7 +678,7 @@ export default function SeanceMuscu() {
             {/* La suite de la seance */}
             {draft.exercises.length > 1 ? (
               <View style={{ marginTop: 14, gap: 4 }}>
-                <Ink size={13} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 4 }}>Ta séance</Ink>
+                <Ink size={13} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Ta séance")}</Ink>
                 {draft.exercises.map((e, i) => {
                   if (e.id === current.id) return null;
                   const doneCount = e.sets.filter((s) => s.done).length;
@@ -686,7 +687,7 @@ export default function SeanceMuscu() {
                     <Pressable key={e.id} onPress={() => update((d) => ({ ...d, currentId: e.id }))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, gap: 10, opacity: pressed ? 0.6 : 1 })}>
                       <Ink size={13} weight="extraBold" color={c.textMuted} style={{ width: 18 }}>{i + 1}</Ink>
                       <Ink size={15} weight="bold" color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={1}>{e.name}</Ink>
-                      <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? 'fait' : doneCount > 0 ? `${doneCount} sur ${e.sets.length}` : `${e.sets.length} séries`}</Ink>
+                      <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? 'fait' : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
                     </Pressable>
                   );
                 })}
@@ -696,7 +697,7 @@ export default function SeanceMuscu() {
             {/* un seul bouton Ajouter un exercice a la fois : celui de la carte Exercice boucle quand il n'y a pas de suite */}
             {currentDone && !nextEx ? null : <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 8, minHeight: 54, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border })}>
               <Icon name="plus" size={20} />
-              <Ink size={15} weight="bold" style={{ flex: 1 }}>Ajouter un exercice</Ink>
+              <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Ajouter un exercice")}</Ink>
             </Pressable>}
           </>
         )}
@@ -705,22 +706,22 @@ export default function SeanceMuscu() {
         <View style={{ marginTop: 10, padding: 14, borderRadius: 20, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border, gap: 12 }}>
           {!draft.form ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Icon name="clock" size={20} color={c.textSecondary} />
-            <Ink size={15} weight="bold" style={{ flex: 1 }}>Repos entre les séries</Ink>
-            <Pressable onPress={() => changeRest(-15)} accessibilityLabel="Moins 15 secondes de repos" style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Repos entre les séries")}</Ink>
+            <Pressable onPress={() => changeRest(-15)} accessibilityLabel={traduire("Moins 15 secondes de repos")} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="minus" size={16} strokeWidth={2.8} />
             </Pressable>
             <Ink size={17} weight="black" style={{ minWidth: 48, textAlign: 'center', fontVariant: ['tabular-nums'] }}>{fmtClock(draft.restSec)}</Ink>
-            <Pressable onPress={() => changeRest(15)} accessibilityLabel="Plus 15 secondes de repos" style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={() => changeRest(15)} accessibilityLabel={traduire("Plus 15 secondes de repos")} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="plus" size={16} strokeWidth={2.8} />
             </Pressable>
           </View> : null}
           <TextInput
             value={draft.notes}
             onChangeText={(t) => update((d) => ({ ...d, notes: t }))}
-            placeholder="Une note sur ta séance"
+            placeholder={traduire("Une note sur ta séance")}
             placeholderTextColor={c.textMuted}
             multiline
-            accessibilityLabel="Note sur la séance"
+            accessibilityLabel={traduire("Note sur la séance")}
             style={[fontStyle('medium'), { minHeight: 44, fontSize: 15, color: c.ink, paddingVertical: 8 }]}
           />
         </View>
@@ -750,36 +751,36 @@ export default function SeanceMuscu() {
       <Sheet visible={!!menuEx} onClose={() => setMenuFor(null)} title={menuEx?.name}>
         {menuEx ? (
           <View style={{ gap: 8 }}>
-            <MenuRow icon="up" label="Monter dans la séance" onPress={() => moveExercise(menuEx.id, -1)} disabled={draft.exercises[0]?.id === menuEx.id} />
-            <MenuRow icon="down" label="Descendre dans la séance" onPress={() => moveExercise(menuEx.id, 1)} disabled={draft.exercises[draft.exercises.length - 1]?.id === menuEx.id} />
-            <MenuRow icon="pencil" label={menuEx.notes ? 'Modifier la note' : 'Ajouter une note'} onPress={() => { setMenuFor(null); setNoteFor(menuEx.id); }} />
-            <MenuRow icon="trash" label="Supprimer l’exercice" danger onPress={() => removeExercise(menuEx.id)} />
+            <MenuRow icon="up" label={traduire("Monter dans la séance")} onPress={() => moveExercise(menuEx.id, -1)} disabled={draft.exercises[0]?.id === menuEx.id} />
+            <MenuRow icon="down" label={traduire("Descendre dans la séance")} onPress={() => moveExercise(menuEx.id, 1)} disabled={draft.exercises[draft.exercises.length - 1]?.id === menuEx.id} />
+            <MenuRow icon="pencil" label={menuEx.notes ? traduire('Modifier la note') : traduire('Ajouter une note')} onPress={() => { setMenuFor(null); setNoteFor(menuEx.id); }} />
+            <MenuRow icon="trash" label={traduire("Supprimer l’exercice")} danger onPress={() => removeExercise(menuEx.id)} />
           </View>
         ) : null}
       </Sheet>
 
       {/* Note d'un exercice */}
-      <Sheet visible={!!noteEx} onClose={() => setNoteFor(null)} title="Note de l’exercice">
+      <Sheet visible={!!noteEx} onClose={() => setNoteFor(null)} title={traduire("Note de l’exercice")}>
         {noteEx ? (
           <View style={{ gap: 12 }}>
             <TextInput
               value={noteEx.notes ?? ''}
               onChangeText={(t) => updateExercise(noteEx.id, (e) => ({ ...e, notes: t }))}
-              placeholder="Réglage du banc, sensation, consigne du coach"
+              placeholder={traduire("Réglage du banc, sensation, consigne du coach")}
               placeholderTextColor={c.textMuted}
               multiline
               autoFocus
               style={[fontStyle('medium'), { minHeight: 90, fontSize: 16, color: c.ink, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
             />
             <Pressable onPress={() => setNoteFor(null)} style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, alignItems: 'center', justifyContent: 'center' })}>
-              <Ink size={16} weight="extraBold" color={c.background}>Valider</Ink>
+              <Ink size={16} weight="extraBold" color={c.background}>{traduire("Valider")}</Ink>
             </Pressable>
           </View>
         ) : null}
       </Sheet>
 
       {/* Fin de seance */}
-      <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? 'Enregistrer les changements ?' : draft.form ? 'Enregistrer la séance ?' : 'Terminer la séance ?'} scroll>
+      <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? traduire('Enregistrer les changements ?') : draft.form ? traduire('Enregistrer la séance ?') : traduire('Terminer la séance ?')} scroll>
         <SportRibbon sport={draft.sport} femme={femme} sub={draft.label && draft.label !== getSportName(draft.sport) ? draft.label : undefined} />
         {/* series pas encore validees : en haut, avec de quoi agir (16 octobre 2026) */}
         {summary.pending > 0 ? (
@@ -787,43 +788,43 @@ export default function SeanceMuscu() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Icon name="check" size={20} color={intensite(3).text} strokeWidth={2.8} />
               <Ink size={15} weight="extraBold" color={intensite(3).text} style={{ flex: 1 }}>
-                {summary.pending === 1 ? 'Une série pas encore validée' : `${summary.pending} séries pas encore validées`}
+                {summary.pending === 1 ? traduire('Une série pas encore validée') : traduire("{0} séries pas encore validées", summary.pending)}
               </Ink>
             </View>
             <Ink size={13} color={c.textSecondary}>
-              {summary.pending === 1 ? 'Elle ne comptera pas tant que tu ne la valides pas.' : 'Elles ne comptent pas tant que tu ne les valides pas.'}
-              {summary.pendingValid < summary.pending ? ' Celles à 0 répétition restent de côté.' : ''}
+              {summary.pending === 1 ? traduire('Elle ne comptera pas tant que tu ne la valides pas.') : traduire('Elles ne comptent pas tant que tu ne les valides pas.')}
+              {summary.pendingValid < summary.pending ? traduire(' Celles à 0 répétition restent de côté.') : ''}
             </Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {summary.pendingValid > 0 ? (
-                <Pressable onPress={validateAll} accessibilityRole="button" accessibilityLabel={summary.pendingValid === 1 ? 'Valider la série restante' : `Valider les ${summary.pendingValid} séries restantes`} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                  <Ink size={14} weight="extraBold" color={c.onAccent}>Tout valider</Ink>
+                <Pressable onPress={validateAll} accessibilityRole="button" accessibilityLabel={summary.pendingValid === 1 ? traduire('Valider la série restante') : traduire("Valider les {0} séries restantes", summary.pendingValid)} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
+                  <Ink size={14} weight="extraBold" color={c.onAccent}>{traduire("Tout valider")}</Ink>
                 </Pressable>
               ) : null}
-              <Pressable onPress={showPending} accessibilityRole="button" accessibilityLabel="Voir les séries à valider" style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.border })}>
-                <Ink size={14} weight="extraBold">Voir</Ink>
+              <Pressable onPress={showPending} accessibilityRole="button" accessibilityLabel={traduire("Voir les séries à valider")} style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.border })}>
+                <Ink size={14} weight="extraBold">{traduire("Voir")}</Ink>
               </Pressable>
             </View>
           </View>
         ) : null}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Stat label="durée" value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
-          <Stat label="séries" value={String(summary.sets)} />
+          <Stat label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
+          <Stat label={traduire("séries")} value={String(summary.sets)} />
           {/* pas de « 0 kg soulevés » : le tonnage n'apparait que s'il y en a un (poids du corps exclu) */}
           {summary.tonnage > 0 ? <Stat label={accordSouleve(summary.tonnage, unite)} value={formatTonnage(summary.tonnage, unite)} /> : null}
         </View>
         {summary.records > 0 ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: c.accentTint }}>
             <Hanko size={34} />
-            <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{summary.records === 1 ? 'Un record battu aujourd’hui' : `${summary.records} records battus aujourd’hui`}</Ink>
+            <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{summary.records === 1 ? traduire('Un record battu aujourd’hui') : traduire("{0} records battus aujourd’hui", summary.records)}</Ink>
           </View>
         ) : null}
-        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Comment c’était ?</Ink>
+        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Comment c’était ?")}</Ink>
         <ChoiceRow options={INTENSITIES} value={draft.intensity ?? null} onChange={(v) => update((d) => ({ ...d, intensity: v }))} columns={4} niveau={niveauRpe} />
         {/* muscles devines depuis les exercices : replies, on les ouvre pour corriger */}
         <Pressable onPress={() => setMusclesOpen((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: musclesOpen }} style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, borderRadius: 16, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
           <View style={{ flex: 1 }}>
-            <Ink size={14} weight="bold" color={c.textSecondary}>Muscles travaillés</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Muscles travaillés")}</Ink>
             {!musclesOpen && shownMuscles.length > 0 ? <Ink size={13} weight="bold" numberOfLines={2}>{MUSCLES.filter((m) => shownMuscles.includes(m.id)).map((m) => m.name).join(', ')}</Ink> : null}
           </View>
           <Icon name={musclesOpen ? 'up' : 'down'} size={16} color={c.textMuted} />
@@ -842,13 +843,13 @@ export default function SeanceMuscu() {
         ) : null}
         {draft.details ? <SessionDetailsForm value={draft.details} onChange={setDetails} sport={draft.sport} showWhen={!!draft.form} /> : null}
         {summary.sets === 0 && !draft.form ? (
-          <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Valide au moins une série pour enregistrer ta séance.</Ink>
+          <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Valide au moins une série pour enregistrer ta séance.")}</Ink>
         ) : null}
         <Pressable onPress={save} disabled={saving || (summary.sets === 0 && !draft.form)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: summary.sets === 0 && !draft.form ? c.border : pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? 'Enregistrer les changements' : 'Enregistrer la séance'}</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
         </Pressable>
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? 'Quitter sans enregistrer' : 'Abandonner la séance'}</Ink>
+          <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>
         </Pressable>
       </Sheet>
     </View>
@@ -886,19 +887,19 @@ function EmptyStart({ image, recent, onPick, onLibrary }: { image: ReturnType<ty
       <View style={{ height: 230, borderRadius: 28, backgroundColor: c.indigoTint, overflow: 'hidden', padding: 20 }}>
         {image ? <Image source={image} style={{ position: 'absolute', right: -20, bottom: -40, width: 200, height: 266 }} resizeMode="contain" /> : null}
         <View style={{ maxWidth: '62%', gap: 6 }}>
-          <Ink size={26} weight="black" tight>Premier exercice ?</Ink>
-          <Ink size={14} color={c.textSecondary}>Choisis-le, tes séries arrivent pré-remplies avec ta dernière fois.</Ink>
+          <Ink size={26} weight="black" tight>{traduire("Premier exercice ?")}</Ink>
+          <Ink size={14} color={c.textSecondary}>{traduire("Choisis-le, tes séries arrivent pré-remplies avec ta dernière fois.")}</Ink>
         </View>
         <Pressable onPress={onLibrary} accessibilityRole="button" style={({ pressed }) => ({ position: 'absolute', left: 20, bottom: 20, minHeight: 48, paddingHorizontal: 18, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onAccent}>Choisir un exercice</Ink>
+          <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Choisir un exercice")}</Ink>
         </Pressable>
       </View>
       {recent.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Tes exercices récents</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Tes exercices récents")}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {recent.map((h) => (
-              <Pressable key={h.name} onPress={() => onPick(h)} accessibilityRole="button" accessibilityLabel={`Ajouter ${h.name}`} style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.border })}>
+              <Pressable key={h.name} onPress={() => onPick(h)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0}", h.name)} style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.border })}>
                 <Ink size={14} weight="bold">{h.name}</Ink>
                 <Ink size={11} color={c.textMuted}>{niceGroup(h.muscle)}</Ink>
               </Pressable>

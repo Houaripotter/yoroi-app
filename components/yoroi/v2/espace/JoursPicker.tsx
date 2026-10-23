@@ -8,20 +8,21 @@ import { Pressable, View } from 'react-native';
 import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { traduire } from '@/lib/i18n/tr';
 
 export const JOURS_LETTRES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 export const JOURS_COURTS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
-export const JOURS_NOMS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+export const JOURS_NOMS = [traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi'), traduire('dimanche')];
 
 /** « lundi, mercredi et vendredi », « tous les jours », « du lundi au vendredi » */
 export function joursTexte(jours: number[]): string {
   const l = Array.from(new Set(jours)).filter((j) => j >= 0 && j <= 6).sort((a, b) => a - b);
   if (l.length === 0) return '';
-  if (l.length === 7) return 'tous les jours';
-  if (l.length === 5 && l.every((j, i) => j === i)) return 'du lundi au vendredi';
+  if (l.length === 7) return traduire('tous les jours');
+  if (l.length === 5 && l.every((j, i) => j === i)) return traduire('du lundi au vendredi');
   if (l.length === 2 && l[0] === 5 && l[1] === 6) return 'le week-end';
   const noms = l.map((j) => JOURS_NOMS[j]);
-  return noms.length === 1 ? noms[0] : `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`;
+  return noms.length === 1 ? noms[0] : traduire("{0} et {1}", noms.slice(0, -1).join(', '), noms[noms.length - 1]);
 }
 
 /** Jours bien repartis dans la semaine pour un nombre donne (preremplissage, toujours modifiable) */
@@ -35,7 +36,7 @@ export function basculerJour(jours: number[], j: number): number[] {
   return jours.includes(j) ? jours.filter((x) => x !== j) : [...jours, j].sort((a, b) => a - b);
 }
 
-export function JoursPicker({ value, onToggle, label = 'Jour' }: { value: number[]; onToggle: (j: number) => void; label?: string }) {
+export function JoursPicker({ value, onToggle, label = traduire('Jour') }: { value: number[]; onToggle: (j: number) => void; label?: string }) {
   const c = useYoroiTheme().theme.colors;
   return (
     <View style={{ flexDirection: 'row', gap: 6 }}>

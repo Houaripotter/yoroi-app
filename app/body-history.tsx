@@ -22,6 +22,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 export default function CorpsParMesure() {
   const { theme } = useYoroiTheme();
@@ -80,16 +81,16 @@ export default function CorpsParMesure() {
       changed();
     } catch (err) {
       logger.error('Enregistrement de la mesure impossible', err);
-      appAlert('Oups', 'La valeur n’a pas pu être enregistrée. Réessaie.');
+      appAlert('Oups', traduire('La valeur n’a pas pu être enregistrée. Réessaie.'));
     }
   };
 
   const remove = (e: Entry) => {
     setEdit(null);
-    appAlert('Supprimer cette valeur ?', `${fmtValue(e.value, metric.digits)} ${metric.unit}, ${longDay(e.date)}${metric.key === 'weight' && e.table === 'weight' ? '. La pesée entière part avec.' : ''}`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cette valeur ?'), `${fmtValue(e.value, metric.digits)} ${metric.unit}, ${longDay(e.date)}${metric.key === 'weight' && e.table === 'weight' ? traduire('. La pesée entière part avec.') : ''}`, [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -107,11 +108,11 @@ export default function CorpsParMesure() {
     try {
       const n = await countWeightDuplicates();
       if (n === 0) {
-        appAlert('Aucun doublon', 'Ton historique est déjà propre.');
+        appAlert(traduire('Aucun doublon'), traduire('Ton historique est déjà propre.'));
         return;
       }
-      appAlert('Nettoyer les doublons ?', `${n} doublon${n > 1 ? 's' : ''} trouvé${n > 1 ? 's' : ''}. Les mesures du même jour et de la même source sont fusionnées, en gardant les valeurs les plus complètes.`, [
-        { text: 'Annuler', style: 'cancel' },
+      appAlert(traduire('Nettoyer les doublons ?'), traduirePluriel(n, n > 1, "{0} doublon trouvé. Les mesures du même jour et de la même source sont fusionnées, en gardant les valeurs les plus complètes.", "{0} doublons trouvés. Les mesures du même jour et de la même source sont fusionnées, en gardant les valeurs les plus complètes.", n), [
+        { text: traduire('Annuler'), style: 'cancel' },
         {
           text: 'Nettoyer',
           style: 'destructive',
@@ -120,10 +121,10 @@ export default function CorpsParMesure() {
             try {
               const { removed } = await deduplicateWeights();
               changed();
-              appAlert('Nettoyage fait', `${removed} doublon${removed > 1 ? 's' : ''} supprimé${removed > 1 ? 's' : ''}.`);
+              appAlert('Nettoyage fait', traduirePluriel(removed, removed > 1, "{0} doublon supprimé.", "{0} doublons supprimés.", removed));
             } catch (err) {
               logger.error('Nettoyage impossible', err);
-              appAlert('Oups', 'Le nettoyage n’a pas pu se faire.');
+              appAlert('Oups', traduire('Le nettoyage n’a pas pu se faire.'));
             } finally {
               setCleaning(false);
             }
@@ -141,9 +142,9 @@ export default function CorpsParMesure() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 110 }} showsVerticalScrollIndicator={false}>
         <CorpsHeader
-          title="Ton corps"
-          sub="Chaque mesure, depuis le début"
-          right={<RoundBtn icon="plus" label={`Ajouter : ${metric.label}`} tone="accent" onPress={() => setEdit('new')} />}
+          title={traduire("Ton corps")}
+          sub={traduire("Chaque mesure, depuis le début")}
+          right={<RoundBtn icon="plus" label={traduire("Ajouter : {0}", metric.label)} tone="accent" onPress={() => setEdit('new')} />}
         />
 
         <View style={{ paddingTop: 16, gap: 14 }}>
@@ -155,7 +156,7 @@ export default function CorpsParMesure() {
                   const on = m.key === metric.key;
                   const n = counts[m.key] ?? 0;
                   return (
-                    <Pressable key={m.key} onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setMetricKey(m.key); }} accessibilityRole="button" accessibilityLabel={`${m.chip}, ${n} mesure${n > 1 ? 's' : ''}`} accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border, opacity: n === 0 && !on ? 0.6 : 1 }}>
+                    <Pressable key={m.key} onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setMetricKey(m.key); }} accessibilityRole="button" accessibilityLabel={traduirePluriel(n, n > 1, "{0}, {1} mesure", "{0}, {1} mesures", m.chip, n)} accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border, opacity: n === 0 && !on ? 0.6 : 1 }}>
                       <Ink size={14} weight="extraBold" color={on ? P.paper : c.ink}>{m.chip}</Ink>
                     </Pressable>
                   );
@@ -169,10 +170,10 @@ export default function CorpsParMesure() {
               <ChargementBloc style={{ marginTop: 10 }} />
             ) : !stats ? (
               <View style={{ padding: 22, borderRadius: 26, backgroundColor: blancA(0.8), borderWidth: 1, borderColor: P.white, gap: 8 }}>
-                <Ink size={22} weight="black" tight>{metric.label} : rien pour l’instant</Ink>
-                <Ink size={14} color={c.textSecondary}>{metric.group === 'measurements' ? 'Un mètre ruban, une minute, et tu suis ce qui change vraiment.' : 'Une balance à impédance ou une saisie à la main, et la courbe démarre.'}</Ink>
+                <Ink size={22} weight="black" tight>{traduire("{0} : rien pour l’instant", metric.label)}</Ink>
+                <Ink size={14} color={c.textSecondary}>{metric.group === 'measurements' ? traduire('Un mètre ruban, une minute, et tu suis ce qui change vraiment.') : traduire('Une balance à impédance ou une saisie à la main, et la courbe démarre.')}</Ink>
                 <Pressable onPress={() => setEdit('new')} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                  <Ink size={15} weight="extraBold" color={c.onAccent}>Ajouter une valeur</Ink>
+                  <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Ajouter une valeur")}</Ink>
                 </Pressable>
               </View>
             ) : (
@@ -183,21 +184,21 @@ export default function CorpsParMesure() {
                     <Ink size={18} weight="bold" color={c.textSecondary} style={{ paddingBottom: 10 }}>{metric.unit}</Ink>
                     <View style={{ flex: 1 }} />
                     {entries.length > 1 && Math.abs(stats.change) > 0 ? (
-                      <Ink size={15} weight="extraBold" color={c.indigo} style={{ paddingBottom: 12 }}>{stats.change > 0 ? '+' : '−'}{fmtValue(Math.abs(stats.change), metric.digits)} depuis le début</Ink>
+                      <Ink size={15} weight="extraBold" color={c.indigo} style={{ paddingBottom: 12 }}>{traduire("{0}{1} depuis le début", stats.change > 0 ? '+' : '−', fmtValue(Math.abs(stats.change), metric.digits))}</Ink>
                     ) : null}
                   </View>
                   <Ink size={13} color={c.textMuted}>{metric.label}, {longDay(stats.last.date)}</Ink>
                   {points.length > 1 ? <InkLineChart points={points} color={c.indigo} height={190} digits={metric.digits} label={`Courbe : ${metric.label}`} /> : null}
                   <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <Mini label="plus bas" value={`${fmtValue(stats.min, metric.digits)} ${metric.unit}`} />
-                    <Mini label="plus haut" value={`${fmtValue(stats.max, metric.digits)} ${metric.unit}`} />
+                    <Mini label={traduire("plus bas")} value={`${fmtValue(stats.min, metric.digits)} ${metric.unit}`} />
+                    <Mini label={traduire("plus haut")} value={`${fmtValue(stats.max, metric.digits)} ${metric.unit}`} />
                     <Mini label="mesures" value={String(entries.length)} />
                   </View>
                 </View>
 
                 <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
                   {visible.map((e, i) => (
-                    <Pressable key={e.id} onPress={() => setEdit(e)} onLongPress={() => remove(e)} accessibilityRole="button" accessibilityLabel={`${fmtValue(e.value, metric.digits)} ${metric.unit}, ${longDay(e.date)}. Toucher pour modifier`} style={({ pressed }) => ({ minHeight: 60, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSoft : 'transparent', borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider })}>
+                    <Pressable key={e.id} onPress={() => setEdit(e)} onLongPress={() => remove(e)} accessibilityRole="button" accessibilityLabel={traduire("{0} {1}, {2}. Toucher pour modifier", fmtValue(e.value, metric.digits), metric.unit, longDay(e.date))} style={({ pressed }) => ({ minHeight: 60, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSoft : 'transparent', borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider })}>
                       <View style={{ flex: 1, gap: 3 }}>
                         <Ink size={15} weight="bold">{longDay(e.date)}</Ink>
                         <SourceTag source={e.source} />
@@ -207,14 +208,14 @@ export default function CorpsParMesure() {
                     </Pressable>
                   ))}
                 </View>
-                <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Touche une valeur pour la modifier, garde le doigt dessus pour la supprimer.</Ink>
+                <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Touche une valeur pour la modifier, garde le doigt dessus pour la supprimer.")}</Ink>
               </>
             )}
 
             {metric.group === 'composition' && data && data.weights.length > 1 ? (
               <Pressable onPress={cleanup} disabled={cleaning} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border })}>
                 {cleaning ? <ActivityIndicator size="small" color={c.ink} /> : null}
-                <Ink size={14} weight="bold" style={{ flex: 1 }}>Nettoyer les doublons</Ink>
+                <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire("Nettoyer les doublons")}</Ink>
               </Pressable>
             ) : null}
           </View>
@@ -224,7 +225,7 @@ export default function CorpsParMesure() {
       <ValueSheet
         visible={edit !== null}
         onClose={() => setEdit(null)}
-        title={edit && edit !== 'new' ? `Modifier : ${metric.label.toLocaleLowerCase('fr-FR')}` : metric.label}
+        title={edit && edit !== 'new' ? traduire("Modifier : {0}", metric.label.toLocaleLowerCase(LOCALE)) : metric.label}
         unit={metric.unit}
         initialValue={edit && edit !== 'new' ? edit.value : null}
         initialDate={edit && edit !== 'new' ? edit.date : undefined}

@@ -14,6 +14,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { ToriiImage } from '@/components/yoroi/v2/charts/ToriiImage';
+import { traduire } from '@/lib/i18n/tr';
 
 /** vague 50 (Houari : « la date dans une couleur différente du libellé, bien visible ») : indigo fonce, fixe sur le pied creme (AA 9,4) */
 export const DATE_ARRIVEE = '#22407E';
@@ -89,7 +90,7 @@ export function CarteTonPlan({ name, scene, personnage, lignes, arrivee, compact
         <View style={{ flex: 1, paddingLeft: 12, paddingRight: 12, paddingVertical: compact ? 9 : 11, gap: compact ? 4 : 5, justifyContent: 'center' }}>
           <Ink size={compact ? 15 : 16} weight="black" numberOfLines={1} style={{ marginBottom: 1 }}>
             {name ? `${name}, ` : ''}
-            <Ink size={compact ? 15 : 16} weight="black" color={c.indigo}>{name ? 'ton plan' : 'Ton plan'}</Ink>
+            <Ink size={compact ? 15 : 16} weight="black" color={c.indigo}>{name ? traduire('ton plan') : traduire('Ton plan')}</Ink>
           </Ink>
           {lignes.map((l) => (
             <View key={l.icon + l.cle} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: rowH }}>
@@ -126,10 +127,10 @@ export function CarteTonPlan({ name, scene, personnage, lignes, arrivee, compact
  */
 export function PiedArrivee({ arrivee, compact = false, style }: { arrivee: string; compact?: boolean; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: compact ? 8 : 11, backgroundColor: PIED_FOND }, style]} accessible accessibilityLabel={`Arrivée prévue ${arrivee}`}>
+    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: compact ? 8 : 11, backgroundColor: PIED_FOND }, style]} accessible accessibilityLabel={traduire("Arrivée prévue {0}", arrivee)}>
       <ToriiImage width={compact ? 36 : 42} />
       <View style={{ flexShrink: 1, alignItems: 'flex-start' }}>
-        <Ink size={11} weight="black" color={PIED_DOUX} style={{ letterSpacing: 1.1 }} numberOfLines={1}>ARRIVÉE PRÉVUE</Ink>
+        <Ink size={11} weight="black" color={PIED_DOUX} style={{ letterSpacing: 1.1 }} numberOfLines={1}>{traduire("ARRIVÉE PRÉVUE")}</Ink>
         <Ink size={compact ? 18 : 20} weight="black" color={DATE_ARRIVEE} tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{arrivee.replace(/^./, (x) => x.toUpperCase())}</Ink>
       </View>
     </View>

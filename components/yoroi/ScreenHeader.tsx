@@ -4,6 +4,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { useYoroiTheme } from './YoroiThemeProvider';
 import { YText } from './YText';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ScreenHeaderProps = {
   title: string;
@@ -14,7 +15,7 @@ export type ScreenHeaderProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export function ScreenHeader({ title, onBack, backLabel = 'Retour', right, style }: ScreenHeaderProps) {
+export function ScreenHeader({ title, onBack, backLabel = traduire('Retour'), right, style }: ScreenHeaderProps) {
   const { theme } = useYoroiTheme();
   const { colors, sizes } = theme;
 

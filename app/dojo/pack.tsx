@@ -39,6 +39,7 @@ import type { Gender, Level, PackDef } from '@/lib/v2/dojo/personnages';
 import { RANKS } from '@/lib/v2/armure';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 export default function Pack() {
   const { theme } = useYoroiTheme();
@@ -68,17 +69,17 @@ export default function Pack() {
   const equipped = memePersonnage(espace.personnage, key);
 
   const progressFor = (l: Level): { value: number; label: string } => {
-    if (l === 1) return { value: has ? 1 : 0, label: has ? 'à toi' : 'avec Premium' };
+    if (l === 1) return { value: has ? 1 : 0, label: has ? traduire('à toi') : traduire('avec Premium') };
     if (pack.kind === 'legende') {
       const target = l === 2 ? 2 : 3;
       const reached = rankIndex >= target;
       // condition remplie mais pack pas encore a toi : le dire clairement, sans « atteint » a cote d'un cadenas
-      const label = reached ? (has ? 'débloqué par ton rang' : 'débloqué par ton rang, disponible avec le pack') : `encore ${Math.max(0, RANKS[target].minXp - (snap?.state.xp ?? 0)).toLocaleString('fr-FR')} XP`;
+      const label = reached ? (has ? traduire('débloqué par ton rang') : traduire('débloqué par ton rang, disponible avec le pack')) : traduire("encore {0} XP", Math.max(0, RANKS[target].minXp - (snap?.state.xp ?? 0)).toLocaleString(LOCALE));
       return { value: reached ? 1 : (snap?.state.xp ?? 0) / RANKS[target].minXp, label };
     }
     const target = l === 2 ? 25 : 100;
     const reached = sessions >= target;
-    const label = reached ? (has ? 'débloqué par tes séances' : 'débloqué par tes séances, disponible avec le pack') : `${Math.min(sessions, target)} / ${target} séances`;
+    const label = reached ? (has ? traduire('débloqué par tes séances') : traduire('débloqué par tes séances, disponible avec le pack')) : traduire("{0} / {1} séances", Math.min(sessions, target), target);
     return { value: Math.min(1, sessions / target), label };
   };
 
@@ -93,7 +94,7 @@ export default function Pack() {
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
         <BackHeader
           title={monde || vie ? packDisplayName(pack, gender) : pack.name}
-          subtitle={pack.kind === 'sport' ? 'Pack sport' : monde ? 'Monde samouraï' : vie ? `Pack ${pack.name}, vie réelle` : 'Légende'}
+          subtitle={pack.kind === 'sport' ? 'Pack sport' : monde ? traduire('Monde samouraï') : vie ? traduire("Pack {0}, vie réelle", pack.name) : traduire('Légende')}
           right={
             pack.kind === 'sport' || monde || vie ? (
               <View style={{ flexDirection: 'row', backgroundColor: c.fillSubtle, borderRadius: 14, padding: 3 }}>
@@ -128,7 +129,7 @@ export default function Pack() {
             {!has ? (
               <View style={{ position: 'absolute', right: 12, top: 12, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: blancA(0.9) }}>
                 <LockIcon size={14} color={DOJO.gold} />
-                <Ink size={12} weight="extraBold" color={c.goldDeep}>Premium</Ink>
+                <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Premium")}</Ink>
               </View>
             ) : null}
           </View>
@@ -141,14 +142,14 @@ export default function Pack() {
               <View key={l} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
                 <View style={{ width: '100%', height: 190, alignItems: 'center', justifyContent: 'flex-end' }}>
                   {unlocked || l === 1 ? (
-                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: unlocked ? 1 : 0.9 }} resizeMode="contain" accessibilityLabel={`${pack.name}, niveau ${l}`} />
+                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: unlocked ? 1 : 0.9 }} resizeMode="contain" accessibilityLabel={traduire("{0}, niveau {1}", pack.name, l)} />
                   ) : (
-                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: 0.28, tintColor: '#6B6E78' }} resizeMode="contain" accessibilityLabel={`${pack.name}, niveau ${l}, pas encore gagné`} />
+                    <Image source={pack.images[gender][l - 1]} style={{ width: '100%', height: 190, opacity: 0.28, tintColor: '#6B6E78' }} resizeMode="contain" accessibilityLabel={traduire("{0}, niveau {1}, pas encore gagné", pack.name, l)} />
                   )}
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   {unlocked ? <CheckIcon size={14} /> : l > 1 ? <LockIcon size={14} /> : null}
-                  <Ink size={14} weight="extraBold" color="#1D2029">Niveau {l}</Ink>
+                  <Ink size={14} weight="extraBold" color="#1D2029">{traduire("Niveau {0}", l)}</Ink>
                 </View>
                 <Ink size={11} color="#4A4E5A" style={{ textAlign: 'center' }} numberOfLines={3}>{levelCondition(pack, l)}</Ink>
                 {l > 1 ? (
@@ -166,10 +167,10 @@ export default function Pack() {
         <View style={{ backgroundColor: P.white, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 10 }}>
           {[
             ...(monde
-              ? ['Homme et femme inclus', (pack.unlockRank ?? 0) <= 0 ? 'Offert dès le départ' : `Débloqué au rang ${unlockRankName(pack)}`, 'Ouvert tout de suite avec Premium']
+              ? [traduire('Homme et femme inclus'), (pack.unlockRank ?? 0) <= 0 ? traduire('Offert dès le départ') : traduire("Débloqué au rang {0}", unlockRankName(pack)), traduire('Ouvert tout de suite avec Premium')]
               : vie
-                ? ['Homme et femme inclus', 'Ouvert avec Premium', 'Sa scène assortie dans Personnages et scènes, quand elle existe']
-                : [pack.kind === 'sport' ? 'Homme et femme inclus' : 'Évolue avec ton rang, quel que soit ton sport', 'Ouvert avec Premium', 'Les niveaux 2 et 3 se gagnent en t’entraînant']),
+                ? [traduire('Homme et femme inclus'), traduire('Ouvert avec Premium'), traduire('Sa scène assortie dans Personnages et scènes, quand elle existe')]
+                : [pack.kind === 'sport' ? traduire('Homme et femme inclus') : traduire('Évolue avec ton rang, quel que soit ton sport'), traduire('Ouvert avec Premium'), traduire('Les niveaux 2 et 3 se gagnent en t’entraînant')]),
           ].map((t) => (
             <View key={t} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <CheckIcon size={18} />
@@ -181,8 +182,8 @@ export default function Pack() {
         {!has && !monde ? (
           <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
             {PACKS_STORE_READY
-              ? 'Le prix s’affiche depuis la boutique de ton téléphone.'
-              : 'Ce pack s’ouvre avec Premium, comme les autres personnages Premium.'}
+              ? traduire('Le prix s’affiche depuis la boutique de ton téléphone.')
+              : traduire('Ce pack s’ouvre avec Premium, comme les autres personnages Premium.')}
           </Ink>
         ) : null}
       </ScrollView>
@@ -195,7 +196,7 @@ export default function Pack() {
             accessibilityRole="button"
             style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: equipped ? c.fillSubtle : pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={equipped ? c.textSecondary : c.onAccent}>{equipped ? 'Équipé' : 'Équiper ce personnage'}</Ink>
+            <Ink size={16} weight="extraBold" color={equipped ? c.textSecondary : c.onAccent}>{equipped ? traduire('Équipé') : traduire('Équiper ce personnage')}</Ink>
           </Pressable>
         ) : (
           <Pressable
@@ -204,11 +205,11 @@ export default function Pack() {
               ouvrirPaywall('personnages');
             }}
             accessibilityRole="button"
-            accessibilityLabel={monde ? `Débloquer avec Premium, ou atteins le rang ${unlockRankName(pack)}` : 'Débloquer avec Premium'}
+            accessibilityLabel={monde ? traduire("Débloquer avec Premium, ou atteins le rang {0}", unlockRankName(pack)) : traduire('Débloquer avec Premium')}
             style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 })}
           >
             <LockIcon size={18} color={c.onAccent} />
-            <Ink size={16} weight="extraBold" color={c.onAccent}>Débloquer avec Premium</Ink>
+            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Débloquer avec Premium")}</Ink>
           </Pressable>
         )}
       </View>
@@ -233,19 +234,19 @@ function MondeHero({ pack, gender, unlocked, rankIndex, xp }: { pack: PackDef; g
         {!unlocked ? (
           <View style={{ position: 'absolute', right: 12, top: 12, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: blancA(0.9) }}>
             <LockIcon size={14} color={DOJO.gold} />
-            <Ink size={12} weight="extraBold" color={c.goldDeep}>{`Rang ${unlockRankName(pack)}`}</Ink>
+            <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Rang {0}", unlockRankName(pack))}</Ink>
           </View>
         ) : null}
       </View>
       <View style={{ backgroundColor: P.white, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {unlocked ? <CheckIcon size={18} /> : <LockIcon size={18} />}
-          <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{unlocked ? 'À toi, prêt à équiper' : `Débloqué ${mondeCondition(pack)}`}</Ink>
+          <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{unlocked ? traduire('À toi, prêt à équiper') : traduire("Débloqué {0}", mondeCondition(pack))}</Ink>
         </View>
         {!unlocked && !reached ? (
           <View style={{ gap: 4 }}>
             <Bar progress={progress} color={c.accent} height={6} track="rgba(29,32,41,0.08)" />
-            <Ink size={12} color={c.textMuted}>{`Encore ${left.toLocaleString('fr-FR')} XP avant le rang ${unlockRankName(pack)}`}</Ink>
+            <Ink size={12} color={c.textMuted}>{traduire("Encore {0} XP avant le rang {1}", left.toLocaleString(LOCALE), unlockRankName(pack))}</Ink>
           </View>
         ) : null}
       </View>

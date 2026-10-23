@@ -22,6 +22,7 @@ import type { StyleCitation } from '@/lib/v2/accueil/styleCitation';
 import { CitationGrande } from './Citation';
 import { teinte, domaineDuLien } from './domaines';
 import { Icon, P, Press } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
 type Motif = 'tomoe' | 'semaine' | 'lune' | 'mato' | 'montagne' | 'balance';
 
@@ -92,7 +93,7 @@ export function BlasonConseil({ picto, couleur, fond, taille = 56 }: { picto: Co
 /** L'action principale du conseil : la seance ouvre directement le +, la pesee sa saisie, le reste son ecran */
 export function actionConseil(c: Conseil): { libelle: string; href: string; icone: 'plus' | 'scale' | 'chevron' } | null {
   if (!c.href) return null;
-  if (c.href === '/seance') return { libelle: 'Lancer une séance', href: '/ajouter', icone: 'plus' };
+  if (c.href === '/seance') return { libelle: traduire('Lancer une séance'), href: '/ajouter', icone: 'plus' };
   if (c.href === '/pesee') return { libelle: 'Me peser', href: '/pesee', icone: 'scale' };
   return { libelle: c.action ?? 'Ouvrir', href: c.href, icone: 'chevron' };
 }
@@ -147,7 +148,7 @@ export function FeuilleConseil({ conseil: c, citation, style, onFermer, onMasque
   return (
     <View style={{ flex: 1, justifyContent: 'flex-end' }}>
       <Reanimated.View style={[{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(16,19,27,0.45)' }, styleVoile]}>
-        <Pressable onPress={fermer} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel="Fermer le conseil du jour" />
+        <Pressable onPress={fermer} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Fermer le conseil du jour")} />
       </Reanimated.View>
 
       <Reanimated.View
@@ -155,7 +156,7 @@ export function FeuilleConseil({ conseil: c, citation, style, onFermer, onMasque
         accessibilityViewIsModal
         style={[{ backgroundColor: P.paper, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 10, paddingHorizontal: 20, paddingBottom: insets.bottom + 14 }, styleFeuille]}
       >
-        <Pressable onPress={fermer} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={10} style={{ alignSelf: 'center', paddingVertical: 4, paddingHorizontal: 24 }}>
+        <Pressable onPress={fermer} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={10} style={{ alignSelf: 'center', paddingVertical: 4, paddingHorizontal: 24 }}>
           <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: P.line }} />
         </Pressable>
 
@@ -170,8 +171,7 @@ export function FeuilleConseil({ conseil: c, citation, style, onFermer, onMasque
             <BlasonConseil picto={c.picto} couleur={t.texte} fond={t.fond} />
             <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
               <Ink size={13} weight="extraBold" color={t.texte}>
-                Le conseil du jour
-              </Ink>
+                {traduire("Le conseil du jour")}</Ink>
               <Ink size={22} weight="black" tight numberOfLines={2} accessibilityRole="header">
                 {c.title}
               </Ink>
@@ -208,10 +208,9 @@ export function FeuilleConseil({ conseil: c, citation, style, onFermer, onMasque
           ) : null}
         </View>
 
-        <Pressable onPress={onMasquer} accessibilityRole="button" accessibilityLabel="Masquer la citation et le conseil pour aujourd’hui" hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 16, marginTop: 4 }}>
+        <Pressable onPress={onMasquer} accessibilityRole="button" accessibilityLabel={traduire("Masquer la citation et le conseil pour aujourd’hui")} hitSlop={8} style={{ alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 16, marginTop: 4 }}>
           <Ink size={14} weight="bold" color={P.ink2} style={{ textDecorationLine: 'underline' }}>
-            Masquer aujourd’hui
-          </Ink>
+            {traduire("Masquer aujourd’hui")}</Ink>
         </Pressable>
       </Reanimated.View>
     </View>

@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { P } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
   progress: number; // 0 a 1
@@ -24,7 +25,7 @@ export function FastRing({ progress, totalHours, markers, color, center, size = 
   const v = Math.max(0, Math.min(1, progress));
   const ticks = totalHours ? markers.filter((m) => m.hour > 0 && m.hour < totalHours) : [];
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }} accessible accessibilityLabel={`Progression du jeûne : ${Math.round(v * 100)} pour cent`}>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }} accessible accessibilityLabel={traduire("Progression du jeûne : {0} pour cent", Math.round(v * 100))}>
       <Svg width={size} height={size} style={{ position: 'absolute' }}>
         <Circle cx={cx} cy={cx} r={r} stroke={P.line} strokeWidth={stroke} fill="none" />
         <G transform={`rotate(-90 ${cx} ${cx})`}>
@@ -69,7 +70,7 @@ export function FastPhases({ elapsedHours, markers, color }: { elapsedHours: num
                   {m.label}
                 </Ink>
                 <Ink size={12} weight="bold" color={P.ink2}>
-                  {m.hour === 0 ? 'dès le début' : `vers ${m.hour} h`}
+                  {m.hour === 0 ? traduire('dès le début') : `vers ${m.hour} h`}
                 </Ink>
               </View>
               {on ? (

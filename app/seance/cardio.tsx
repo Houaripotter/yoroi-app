@@ -34,12 +34,13 @@ import { hasDistance, sportImage, sportTint } from '@/lib/v2/seance/sportVisuals
 import { useNow } from '@/lib/v2/seance/useNow';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const RPE = [
   { value: 3, label: 'Facile' },
-  { value: 5, label: 'Correct' },
+  { value: 5, label: traduire('Correct') },
   { value: 7, label: 'Dur' },
-  { value: 9, label: 'À bloc' },
+  { value: 9, label: traduire('À bloc') },
 ];
 
 /** Texte pose sur la teinte claire de la scene en mode sombre : encre #1D2029 (12,8 a 13,2:1), gris fonce #464B58 (6,8 a 7,1:1), AA sur les six teintes de sportTint */
@@ -78,7 +79,7 @@ export default function SeanceCardio() {
         if (params.editId) {
           const t = await loadTrainingForEdit(params.editId);
           if (!t) {
-            appAlert('Séance introuvable', 'Elle a peut-être été supprimée.');
+            appAlert(traduire('Séance introuvable'), traduire('Elle a peut-être été supprimée.'));
             router.back();
             return;
           }
@@ -144,10 +145,10 @@ export default function SeanceCardio() {
         }
         if (existing) {
           appAlert(
-            'Une séance est en cours',
-            `${draftTitle(existing)}, commencée ${draftAgo(existing)}. Tu la reprends ?`,
+            traduire('Une séance est en cours'),
+            traduire("{0}, commencée {1}. Tu la reprends ?", draftTitle(existing), draftAgo(existing)),
             [
-              { text: 'Nouvelle séance', style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
+              { text: traduire('Nouvelle séance'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
               {
                 text: 'Reprendre',
                 onPress: () => {
@@ -203,13 +204,13 @@ export default function SeanceCardio() {
 
   const abandon = () => {
     if (draft.form) {
-      appAlert(draft.editId ? 'Quitter sans enregistrer ?' : 'Annuler cette saisie ?', 'Tes changements ne seront pas gardés.', [
+      appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
         { text: 'Rester', style: 'cancel' },
         { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
       ]);
       return;
     }
-    appAlert('Abandonner la séance ?', 'Rien ne sera enregistré.', [
+    appAlert(traduire('Abandonner la séance ?'), traduire('Rien ne sera enregistré.'), [
       { text: 'Continuer', style: 'cancel' },
       {
         text: 'Abandonner',
@@ -274,7 +275,7 @@ export default function SeanceCardio() {
     } catch (err) {
       finished.current = false;
       logger.error('Enregistrement de la seance impossible', err);
-      appAlert('Oups', 'La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.');
+      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -284,15 +285,15 @@ export default function SeanceCardio() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Screen options={{ gestureEnabled: false }} />
       <View style={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Pressable onPress={draft.form ? abandon : () => router.back()} accessibilityRole="button" accessibilityLabel={draft.form ? 'Fermer sans enregistrer' : 'Réduire, la séance reste en cours'} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
+        <Pressable onPress={draft.form ? abandon : () => router.back()} accessibilityRole="button" accessibilityLabel={draft.form ? traduire('Fermer sans enregistrer') : traduire('Réduire, la séance reste en cours')} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: c.fillSubtle }}>
           <Icon name={draft.form ? 'close' : 'down'} size={draft.form ? 18 : 20} strokeWidth={2.6} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          {draft.form && draft.details ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{draft.editId ? 'Modifier ta séance' : dayLabel(draft.details.date)}</Ink> : null}
+          {draft.form && draft.details ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={1}>{draft.editId ? traduire('Modifier ta séance') : dayLabel(draft.details.date)}</Ink> : null}
           <Ink size={22} weight="black" tight numberOfLines={1}>{draft.label || sportName}</Ink>
         </View>
         <Pressable onPress={() => setFinishOpen(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-          <Ink size={15} weight="extraBold" color={c.onDark}>{draft.form ? 'Enregistrer' : 'Terminer'}</Ink>
+          <Ink size={15} weight="extraBold" color={c.onDark}>{draft.form ? traduire('Enregistrer') : traduire('Terminer')}</Ink>
         </Pressable>
       </View>
 
@@ -302,7 +303,7 @@ export default function SeanceCardio() {
           {image ? <Image source={image} style={{ position: 'absolute', right: -16, bottom: -44, width: 190, height: 253 }} resizeMode="contain" /> : null}
           <View style={{ gap: 2 }}>
             {/* 17 octobre : la scene garde sa teinte claire en sombre, le texte reste a l'encre (contraste AA) */}
-            <Ink size={14} weight="bold" color={theme.isDark ? SCENE_TEXTE_2 : c.textSecondary}>{draft.form ? 'Durée de ta séance' : draft.manualMinutes === null ? 'Séance en cours' : 'Durée réglée à la main'}</Ink>
+            <Ink size={14} weight="bold" color={theme.isDark ? SCENE_TEXTE_2 : c.textSecondary}>{draft.form ? traduire('Durée de ta séance') : draft.manualMinutes === null ? traduire('Séance en cours') : traduire('Durée réglée à la main')}</Ink>
             <Ink size={58} weight="black" color={theme.isDark ? SCENE_ENCRE : undefined} style={{ fontVariant: ['tabular-nums'] }}>{draft.manualMinutes === null ? fmtClock(elapsedSec) : fmtMinutes(draft.manualMinutes)}</Ink>
           </View>
           {!draft.form ? <Pressable
@@ -310,7 +311,7 @@ export default function SeanceCardio() {
             accessibilityRole="button"
             style={{ alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: blancA(0.85) }}
           >
-            <Ink size={14} weight="extraBold">{draft.manualMinutes === null ? 'Régler la durée' : 'Revenir au chrono'}</Ink>
+            <Ink size={14} weight="extraBold">{draft.manualMinutes === null ? traduire('Régler la durée') : traduire('Revenir au chrono')}</Ink>
           </Pressable> : null}
         </View>
 
@@ -318,17 +319,17 @@ export default function SeanceCardio() {
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1.25, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 8, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, gap: 4 }}>
               <Ink size={13} weight="bold" color={c.textSecondary}>Distance</Ink>
-              <Stepper value={distance} step={0.5} max={500} decimals unit="kilomètres" layout="stack" size={34} button={44} onChange={(v) => update((d) => ({ ...d, distance: String(v) }))} />
+              <Stepper value={distance} step={0.5} max={500} decimals unit={traduire("kilomètres")} layout="stack" size={34} button={44} onChange={(v) => update((d) => ({ ...d, distance: String(v) }))} />
             </View>
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 8, borderRadius: 22, backgroundColor: c.fillSoft, gap: 4 }}>
               <Ink size={13} weight="bold" color={c.textSecondary}>Allure</Ink>
               {paceSec > 0 ? (
                 <>
                   <Ink size={34} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(paceSec)}</Ink>
-                  <Ink size={12} color={c.textMuted}>min par km</Ink>
+                  <Ink size={12} color={c.textMuted}>{traduire("min par km")}</Ink>
                 </>
               ) : (
-                <Ink size={14} weight="bold" color={c.textMuted} style={{ textAlign: 'center', paddingVertical: 10 }}>{'Calculée avec\nta distance'}</Ink>
+                <Ink size={14} weight="bold" color={c.textMuted} style={{ textAlign: 'center', paddingVertical: 10 }}>{traduire('Calculée avec\nta distance')}</Ink>
               )}
             </View>
           </View>
@@ -340,22 +341,22 @@ export default function SeanceCardio() {
             onChangeText={(v) => update((d) => ({ ...d, customName: v }))}
             placeholder="Quel sport ? Escalade, padel..."
             placeholderTextColor={c.textMuted}
-            accessibilityLabel="Nom du sport"
+            accessibilityLabel={traduire("Nom du sport")}
             style={[fontStyle('bold'), { height: 52, fontSize: 16, color: c.ink, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
           />
         ) : null}
 
         {draft.manualMinutes !== null ? (
-          <Field icon="clock" label="Durée en minutes">
-            <Stepper value={draft.manualMinutes} step={5} min={1} max={600} unit="minutes" size={24} button={40} onChange={(v) => update((d) => ({ ...d, manualMinutes: v, details: d.details ? { ...d.details, duration: v } : d.details }))} />
+          <Field icon="clock" label={traduire("Durée en minutes")}>
+            <Stepper value={draft.manualMinutes} step={5} min={1} max={600} unit={traduire("minutes")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, manualMinutes: v, details: d.details ? { ...d.details, duration: v } : d.details }))} />
           </Field>
         ) : null}
 
         {withScore ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 20, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>Ton score</Ink>
-              <Stepper value={draft.scoreFor ?? 0} step={1} max={999} unit="points pour toi" layout="stack" size={30} button={44} onChange={(v) => update((d) => ({ ...d, scoreFor: v }))} />
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Ton score")}</Ink>
+              <Stepper value={draft.scoreFor ?? 0} step={1} max={999} unit={traduire("points pour toi")} layout="stack" size={30} button={44} onChange={(v) => update((d) => ({ ...d, scoreFor: v }))} />
             </View>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 20, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
               <Ink size={12} weight="bold" color={c.textMuted}>En face</Ink>
@@ -365,77 +366,77 @@ export default function SeanceCardio() {
         ) : null}
 
         {withDistance && !runFirst ? (
-          <Field icon="route" label="Distance en km" extra={pace ? (speedMode ? `moyenne ${pace}` : `allure ${pace}`) : undefined}>
-            <Stepper value={distance} step={0.5} max={500} decimals unit="kilomètres" size={24} button={40} onChange={(v) => update((d) => ({ ...d, distance: String(v) }))} />
+          <Field icon="route" label={traduire("Distance en km")} extra={pace ? (speedMode ? `moyenne ${pace}` : `allure ${pace}`) : undefined}>
+            <Stepper value={distance} step={0.5} max={500} decimals unit={traduire("kilomètres")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, distance: String(v) }))} />
           </Field>
         ) : null}
 
-        <Field icon="flame" label="Calories">
+        <Field icon="flame" label={traduire("Calories")}>
           <Stepper value={calories} step={10} max={5000} unit="calories" size={24} button={40} format={(v) => (v > 0 ? String(Math.round(v)) : '0')} onChange={(v) => update((d) => ({ ...d, calories: String(v) }))} />
         </Field>
 
         {more || hr > 0 ? (
           <>
             <Field icon="heart" label="Cardio moyen">
-              <Stepper value={hr > 0 ? hr : 0} step={1} max={230} unit="battements par minute" size={24} button={40} onChange={(v) => update((d) => ({ ...d, heartRate: String(v) }))} />
+              <Stepper value={hr > 0 ? hr : 0} step={1} max={230} unit={traduire("battements par minute")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, heartRate: String(v) }))} />
             </Field>
             <Field icon="heart" label="Cardio max">
-              <Stepper value={draft.maxHeartRate ?? 0} step={1} max={240} unit="battements par minute au maximum" size={24} button={40} onChange={(v) => update((d) => ({ ...d, maxHeartRate: v }))} />
+              <Stepper value={draft.maxHeartRate ?? 0} step={1} max={240} unit={traduire("battements par minute au maximum")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, maxHeartRate: v }))} />
             </Field>
             {machine ? (
               <>
-                <Field icon="bolt" label="Vitesse en km/h">
-                  <Stepper value={draft.speed ?? 0} step={0.5} max={80} decimals unit="kilomètres heure" size={24} button={40} onChange={(v) => update((d) => ({ ...d, speed: v }))} />
+                <Field icon="bolt" label={traduire("Vitesse en km/h")}>
+                  <Stepper value={draft.speed ?? 0} step={0.5} max={80} decimals unit={traduire("kilomètres heure")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, speed: v }))} />
                 </Field>
                 <Field icon="up" label="Pente en %">
-                  <Stepper value={draft.pente ?? 0} step={0.5} max={40} decimals unit="pour cent de pente" size={24} button={40} onChange={(v) => update((d) => ({ ...d, pente: v }))} />
+                  <Stepper value={draft.pente ?? 0} step={0.5} max={40} decimals unit={traduire("pour cent de pente")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, pente: v }))} />
                 </Field>
-                <Field icon="swap" label="Résistance">
-                  <Stepper value={draft.resistance ?? 0} step={1} max={40} unit="niveau de résistance" size={24} button={40} onChange={(v) => update((d) => ({ ...d, resistance: v }))} />
+                <Field icon="swap" label={traduire("Résistance")}>
+                  <Stepper value={draft.resistance ?? 0} step={1} max={40} unit={traduire("niveau de résistance")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, resistance: v }))} />
                 </Field>
                 <Field icon="flame" label="Puissance en watts">
                   <Stepper value={draft.watts ?? 0} step={5} max={2000} unit="watts" size={24} button={40} onChange={(v) => update((d) => ({ ...d, watts: v }))} />
                 </Field>
-                <Field icon="route" label="Cadence par minute">
-                  <Stepper value={draft.cadence ?? 0} step={1} max={250} unit="tours par minute" size={24} button={40} onChange={(v) => update((d) => ({ ...d, cadence: v }))} />
+                <Field icon="route" label={traduire("Cadence par minute")}>
+                  <Stepper value={draft.cadence ?? 0} step={1} max={250} unit={traduire("tours par minute")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, cadence: v }))} />
                 </Field>
               </>
             ) : null}
           </>
         ) : (
           <Pressable onPress={() => setMore(true)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}>
-            <Ink size={14} weight="bold" color={c.indigo}>{machine ? 'Plus de mesures : cardio, vitesse, pente, watts' : 'Plus de mesures : cardio moyen et max'}</Ink>
+            <Ink size={14} weight="bold" color={c.indigo}>{machine ? traduire('Plus de mesures : cardio, vitesse, pente, watts') : traduire('Plus de mesures : cardio moyen et max')}</Ink>
           </Pressable>
         )}
 
-        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: 4 }}>Comment c’était ?</Ink>
+        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: 4 }}>{traduire("Comment c’était ?")}</Ink>
         <ChoiceRow options={RPE} value={draft.intensity} columns={4} niveau={niveauRpe} onChange={(v) => { selectionAsync().catch(() => {}); update((d) => ({ ...d, intensity: v })); }} />
 
         <TextInput
           value={draft.notes}
           onChangeText={(v) => update((d) => ({ ...d, notes: v }))}
-          placeholder="Une note sur ta séance"
+          placeholder={traduire("Une note sur ta séance")}
           placeholderTextColor={c.textMuted}
           multiline
-          accessibilityLabel="Note sur la séance"
+          accessibilityLabel={traduire("Note sur la séance")}
           style={[fontStyle('medium'), { minHeight: 80, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
         />
-        <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Tout est facultatif sauf la durée. Touche un chiffre pour le taper.</Ink>
+        <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Tout est facultatif sauf la durée. Touche un chiffre pour le taper.")}</Ink>
       </ScrollView>
 
-      <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? 'Enregistrer les changements ?' : draft.form ? 'Enregistrer la séance ?' : 'Terminer la séance ?'} scroll>
+      <Sheet visible={finishOpen} onClose={() => setFinishOpen(false)} title={draft.editId ? traduire('Enregistrer les changements ?') : draft.form ? traduire('Enregistrer la séance ?') : traduire('Terminer la séance ?')} scroll>
         <SportRibbon sport={draft.sport} femme={femme} title={draft.customName?.trim() || undefined} sub={draft.label && draft.label !== getSportName(draft.sport) ? draft.label : undefined} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <MiniStat label="durée" value={fmtMinutes(minutes)} />
+          <MiniStat label={traduire("durée")} value={fmtMinutes(minutes)} />
           {distance > 0 ? <MiniStat label="km" value={fmtNum(distance)} /> : null}
           {calories > 0 ? <MiniStat label="calories" value={String(Math.round(calories))} /> : null}
         </View>
         {draft.details ? <SessionDetailsForm value={draft.details} onChange={setDetails} sport={draft.sport} showWhen={!!draft.form} hideDuration /> : null}
         <Pressable onPress={save} disabled={saving} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? 'Enregistrer les changements' : 'Enregistrer la séance'}</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : draft.editId ? traduire('Enregistrer les changements') : traduire('Enregistrer la séance')}</Ink>
         </Pressable>
         <Pressable onPress={abandon} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? 'Quitter sans enregistrer' : 'Abandonner la séance'}</Ink>
+          <Ink size={14} weight="bold" color={c.textMuted}>{draft.form ? traduire('Quitter sans enregistrer') : traduire('Abandonner la séance')}</Ink>
         </Pressable>
       </Sheet>
     </View>

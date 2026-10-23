@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SceneId } from '@/lib/v2/espace';
+import { traduire } from '@/lib/i18n/tr';
 
 export type StyleCourbe = 1 | 2 | 3 | 4;
 /** Fond de la courbe de poids (vague 34) */
@@ -22,16 +23,16 @@ export type CouleurCourbe = 'degrade' | 'indigo' | 'encre';
 export type PrefsCourbes = { style: StyleCourbe; cap: boolean; fond: FondCourbe; couleur: CouleurCourbe };
 
 export const COULEURS_COURBE: { id: CouleurCourbe; nom: string; phrase: string }[] = [
-  { id: 'degrade', nom: 'Dégradé', phrase: 'Du bleu au violet, par défaut' },
-  { id: 'indigo', nom: 'Indigo', phrase: 'Un bleu indigo franc' },
-  { id: 'encre', nom: 'Encre', phrase: 'Noir sur le papier, blanc cassé la nuit' },
+  { id: 'degrade', nom: traduire('Dégradé'), phrase: traduire('Du bleu au violet, par défaut') },
+  { id: 'indigo', nom: 'Indigo', phrase: traduire('Un bleu indigo franc') },
+  { id: 'encre', nom: 'Encre', phrase: traduire('Noir sur le papier, blanc cassé la nuit') },
 ];
 
 export const STYLES_COURBE: { id: StyleCourbe; nom: string; phrase: string }[] = [
-  { id: 1, nom: 'Le grand chiffre suit ton doigt', phrase: 'Le chiffre en haut devient la pesée touchée' },
-  { id: 2, nom: 'Une bulle au-dessus du doigt', phrase: 'Le passé reste en couleur, la suite s’efface' },
-  { id: 3, nom: 'Une barre par pesée', phrase: 'Une barre par semaine sur 6 mois et 1 an' },
-  { id: 4, nom: 'Ton chemin vers le cap', phrase: 'La courbe continue en pointillés jusqu’au torii' },
+  { id: 1, nom: traduire('Le grand chiffre suit ton doigt'), phrase: traduire('Le chiffre en haut devient la pesée touchée') },
+  { id: 2, nom: traduire('Une bulle au-dessus du doigt'), phrase: traduire('Le passé reste en couleur, la suite s’efface') },
+  { id: 3, nom: traduire('Une barre par pesée'), phrase: traduire('Une barre par semaine sur 6 mois et 1 an') },
+  { id: 4, nom: traduire('Ton chemin vers le cap'), phrase: traduire('La courbe continue en pointillés jusqu’au torii') },
 ];
 
 // vague 41 (Houari : « on ne voit pas bien avec la photo derrière ») : sans fond par defaut, la scene reste au choix

@@ -24,6 +24,7 @@ import {
 import type { Gender } from './personnages';
 import { pieceDuRang } from './pieces';
 import { SCENES_CLASSIQUE } from '@/lib/v2/espace/classique';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Vague 45 : univers de l'espace, 'japon' par defaut (anciens utilisateurs compris) */
 export function universDe(espace: Pick<Espace, 'univers'> | null | undefined): Univers {
@@ -56,12 +57,12 @@ export function texteUnivers(texte: string, u: Univers): string {
 export const NOMS_SCEAUX_CLASSIQUE: Record<string, { japon: string; classique: string }> = {
   fuji: { japon: 'Mont Fuji', classique: 'Sommet' },
   cerisier: { japon: 'Cerisier', classique: 'Arbre en fleur' },
-  kimono: { japon: 'Kimono', classique: 'Tenue de combat' },
-  katanas: { japon: 'Katanas', classique: 'Lames croisées' },
-  kabuto: { japon: 'Kabuto', classique: 'Casque de boxe' },
-  oni: { japon: 'Masque d’oni', classique: 'Trophée' },
-  torii: { japon: 'Torii', classique: 'Clé' },
-  lanterne_papier: { japon: 'Lanterne de papier', classique: 'Carnet' },
+  kimono: { japon: 'Kimono', classique: traduire('Tenue de combat') },
+  katanas: { japon: 'Katanas', classique: traduire('Lames croisées') },
+  kabuto: { japon: 'Kabuto', classique: traduire('Casque de boxe') },
+  oni: { japon: 'Masque d’oni', classique: traduire('Trophée') },
+  torii: { japon: 'Torii', classique: traduire('Clé') },
+  lanterne_papier: { japon: traduire('Lanterne de papier'), classique: 'Carnet' },
 };
 
 /** Nom d'un sceau dans l'univers choisi */
@@ -85,15 +86,15 @@ export type BadgeVitrine = { texte: string; ton: 'premium' | 'offert' | 'rang' }
 export function badgeScene(t: (typeof THEMES)[number], u: Univers): BadgeVitrine {
   const cond = themeCondition(t);
   if (cond === null) return { texte: 'Offert', ton: 'offert' };
-  if (t.annual) return { texte: 'Premium', ton: 'premium' };
-  if (t.unlockRank !== undefined) return { texte: `Rang ${rangNom(t.unlockRank, u)}`, ton: 'rang' };
-  return { texte: 'Premium', ton: 'premium' };
+  if (t.annual) return { texte: traduire('Premium'), ton: 'premium' };
+  if (t.unlockRank !== undefined) return { texte: traduire("Rang {0}", rangNom(t.unlockRank, u)), ton: 'rang' };
+  return { texte: traduire('Premium'), ton: 'premium' };
 }
 
 /** Vague 45 : badge d'un personnage du monde samourai (offert ou gagne au rang, comme mondeCondition) */
 export function badgeMonde(unlockRank: number | undefined, u: Univers): BadgeVitrine {
   const r = unlockRank ?? 0;
-  return r <= 0 ? { texte: 'Offert', ton: 'offert' } : { texte: `Rang ${rangNom(r, u)}`, ton: 'rang' };
+  return r <= 0 ? { texte: 'Offert', ton: 'offert' } : { texte: traduire("Rang {0}", rangNom(r, u)), ton: 'rang' };
 }
 
 export type Vignette = {
@@ -124,7 +125,7 @@ export function vignettesBoutique(u: Univers, personnageKey: string | null | und
   // vague 47 : en Classique, les scenes Classique (salle, parc, ville, mer), pas les scenes du Japon
   const scenes =
     u === 'classique'
-      ? SCENES_CLASSIQUE.filter((x) => x.id.endsWith('_jour')).map((x) => ({ key: `scene_${x.id}`, nom: x.nom, image: x.image, genre: 'scene' as const, badge: x.offerte ? ({ texte: 'Offert', ton: 'offert' } as BadgeVitrine) : ({ texte: 'Premium', ton: 'premium' } as BadgeVitrine) }))
+      ? SCENES_CLASSIQUE.filter((x) => x.id.endsWith('_jour')).map((x) => ({ key: `scene_${x.id}`, nom: x.nom, image: x.image, genre: 'scene' as const, badge: x.offerte ? ({ texte: 'Offert', ton: 'offert' } as BadgeVitrine) : ({ texte: traduire('Premium'), ton: 'premium' } as BadgeVitrine) }))
       : SCENES_VITRINE.map(scene).filter((v): v is Vignette => !!v);
 
   if (!aUnPersonnage(personnageKey)) return scenes.slice(0, 5);
@@ -133,7 +134,7 @@ export function vignettesBoutique(u: Univers, personnageKey: string | null | und
     const prochain = Math.max(0, Math.min(4, rankIndex + 1));
     const figure: Vignette = {
       key: 'classique',
-      nom: gender === 'f' ? 'La Sportive' : 'Le Sportif',
+      nom: gender === 'f' ? traduire('La Sportive') : traduire('Le Sportif'),
       image: CLASSIQUE_IMAGES[gender][prochain] ?? classiqueImage(gender, prochain),
       genre: 'figure',
       fond: '#E3E9F3',

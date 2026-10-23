@@ -5,6 +5,7 @@
 
 import { XMLParser } from 'fast-xml-parser';
 import { Training } from '@/lib/database';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -282,7 +283,7 @@ function parseTCX(xmlContent: string): ParseResult {
       const timeStr = startDate.toTimeString().slice(0, 5);
 
       // Activity name from Notes or sport type
-      const name = activity.Notes || `${sportType || 'Séance'} - ${dateStr}`;
+      const name = activity.Notes || `${sportType || traduire('Séance')} - ${dateStr}`;
 
       activities.push({
         id: `tcx_${i}_${Date.now()}`,

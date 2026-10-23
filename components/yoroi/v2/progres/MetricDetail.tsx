@@ -21,6 +21,7 @@ import type { PeriodOption } from '../charts/PeriodSwitch';
 import { BadgeRecord, RECORD_RED, TropheeRecord } from '../charts/core';
 import { capitalize, dayLong, dayShort, daysDiff, num, todayIso } from '@/lib/v2/progres/format';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type DetailPoint = ChartPoint & { caption?: string };
 
@@ -106,12 +107,12 @@ export function deltaPhrase(spec: MetricSpec, d: number): string {
   const eps = spec.eps ?? (spec.digits === 0 ? 0.5 : 0.05);
   const abs = Math.abs(d);
   if (abs < eps) return 'stable';
-  const way = d < 0 ? 'moins' : 'plus';
-  if (spec.unit === 'cm' && abs < 1) return `${Math.round(abs * 10)} mm de ${way}`;
+  const way = d < 0 ? traduire('moins') : 'plus';
+  if (spec.unit === 'cm' && abs < 1) return traduire("{0} mm de {1}", Math.round(abs * 10), way);
   const one = spec.deltaOne ?? spec.unit;
   const many = spec.deltaMany ?? spec.unit;
   const u = abs >= 2 ? many : one;
-  return `${num(abs, spec.digits === 0 ? 0 : 1, !spec.keepZero)}${u ? ` ${u}` : ''} de ${way}`;
+  return traduire("{0}{1} de {2}", num(abs, spec.digits === 0 ? 0 : 1, !spec.keepZero), u ? ` ${u}` : '', way);
 }
 
 export function MetricDetail(props: Props) {
@@ -177,8 +178,8 @@ export function MetricDetail(props: Props) {
   const head = scrub ?? last ?? allLast;
   const evoWords = diff === null ? null : deltaPhrase(spec, diff);
   // Vague 31 : en kg la tuile dit « 4,6 kg » comme ses voisines (pas « 4,6 kilos »), libelle avec majuscule comme les autres tuiles
-  const evoValue = diff === null ? 'Bientôt' : evoWords === 'stable' ? 'Stable' : spec.unit === 'kg' ? fmtValue(spec, Math.abs(diff)) : evoWords!.replace(/ de (moins|plus)$/, '');
-  const evoLabel = diff === null ? 'dès la deuxième mesure' : evoWords === 'stable' ? capitalize(periodPhrase(period)) : `En ${diff < 0 ? 'moins' : 'plus'} ${periodPhrase(period)}`;
+  const evoValue = diff === null ? traduire('Bientôt') : evoWords === 'stable' ? 'Stable' : spec.unit === 'kg' ? fmtValue(spec, Math.abs(diff)) : evoWords!.replace(/ de (moins|plus)$/, '');
+  const evoLabel = diff === null ? traduire('dès la deuxième mesure') : evoWords === 'stable' ? capitalize(periodPhrase(period)) : `En ${diff < 0 ? traduire('moins') : 'plus'} ${periodPhrase(period)}`;
 
   const history = [...shown].reverse();
   const histShown = more ? history : history.slice(0, 12);
@@ -200,7 +201,7 @@ export function MetricDetail(props: Props) {
       minSpan={spec.minSpan ?? (spec.unit === 'kcal' ? 40 : spec.digits === 0 ? 2 : 1)}
       target={target}
       onScrub={(p) => setScrub(p as DetailPoint | null)}
-      label={`${spec.label}, ${evoWords ?? 'une seule mesure'}`}
+      label={`${spec.label}, ${evoWords ?? traduire('une seule mesure')}`}
     />
   );
 
@@ -238,11 +239,11 @@ export function MetricDetail(props: Props) {
                 : scrub.caption ?? ' '
               : diff === null
                 ? shown.length === 1
-                  ? 'Une seule mesure sur la période'
-                  : 'Aucune mesure sur la période'
+                  ? traduire('Une seule mesure sur la période')
+                  : traduire('Aucune mesure sur la période')
                 : evoWords === 'stable'
-                  ? `stable depuis le ${dayShort(first.date)}${note}`
-                  : `${evoWords} depuis le ${dayShort(first.date)}${note}`}
+                  ? traduire("stable depuis le {0}{1}", dayShort(first.date), note)
+                  : traduire("{0} depuis le {1}{2}", evoWords, dayShort(first.date), note)}
           </Ink>
           </View>
           )}
@@ -253,7 +254,7 @@ export function MetricDetail(props: Props) {
         ) : (
           <View style={{ marginHorizontal: GUTTER, marginTop: 14, padding: 18, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
             <Ink size={14} color={c.textSecondary}>
-              {allLast ? `Aucune mesure ${periodPhrase(period)}. La dernière date du ${dayShort(allLast.date, allLast.date.slice(0, 4) !== thisYear)} : élargis la période pour la revoir.` : `Aucune mesure ${periodPhrase(period)}.`}
+              {allLast ? traduire("Aucune mesure {0}. La dernière date du {1} : élargis la période pour la revoir.", periodPhrase(period), dayShort(allLast.date, allLast.date.slice(0, 4) !== thisYear)) : traduire("Aucune mesure {0}.", periodPhrase(period))}
             </Ink>
           </View>
         )}
@@ -262,7 +263,7 @@ export function MetricDetail(props: Props) {
           {legend ?? (
             <>
               <LegendMark kind="line" color={color} label={spec.label.toLowerCase()} />
-              {shown.some((p) => p.record) ? <LegendMark kind="seal" color={RECORD_RED} label={bestLabel ?? (spec.good === 'down' ? 'ton plus bas' : 'ton meilleur')} /> : null}
+              {shown.some((p) => p.record) ? <LegendMark kind="seal" color={RECORD_RED} label={bestLabel ?? (spec.good === 'down' ? traduire('ton plus bas') : traduire('ton meilleur'))} /> : null}
             </>
           )}
         </View>
@@ -277,8 +278,7 @@ export function MetricDetail(props: Props) {
           style={{ marginHorizontal: GUTTER, marginTop: 16 }}
         />
         <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 8 }}>
-          Glisse ton doigt sur la courbe pour revoir chaque valeur.
-        </Ink>
+          {traduire("Glisse ton doigt sur la courbe pour revoir chaque valeur.")}</Ink>
 
         {afterChart}
 
@@ -288,8 +288,8 @@ export function MetricDetail(props: Props) {
             items={[
               { value: fmtValue(spec, avg), label: `Moyenne ${periodPhrase(period)}` },
               { value: evoValue, label: evoLabel, tone: goodWay ? c.successText : undefined },
-              { value: fmtValue(spec, Math.min(...vals)), label: 'Le plus bas' },
-              { value: fmtValue(spec, Math.max(...vals)), label: 'Le plus haut' },
+              { value: fmtValue(spec, Math.min(...vals)), label: traduire('Le plus bas') },
+              { value: fmtValue(spec, Math.max(...vals)), label: traduire('Le plus haut') },
             ]}
           />
         ) : null}
@@ -300,7 +300,7 @@ export function MetricDetail(props: Props) {
 
         {history.length > 0 ? (
           <View style={{ paddingHorizontal: GUTTER, marginTop: 28 }}>
-            <SectionHead title="Historique" aside={`${history.length} ${history.length > 1 ? historyNoun[1] : historyNoun[0]} ${periodPhrase(period)}`} />
+            <SectionHead title={traduire("Historique")} aside={`${history.length} ${history.length > 1 ? historyNoun[1] : historyNoun[0]} ${periodPhrase(period)}`} />
             <View style={{ marginTop: 10, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
               {histShown.map((p, i) => {
                 const prev = history[i + 1];
@@ -314,7 +314,7 @@ export function MetricDetail(props: Props) {
                         onHistoryPress(p);
                       },
                       accessibilityRole: 'button' as const,
-                      accessibilityLabel: `${dayShort(p.date, p.date.slice(0, 4) !== thisYear)}, ${fmtValue(spec, p.value)}, modifier ou supprimer`,
+                      accessibilityLabel: traduire("{0}, {1}, modifier ou supprimer", dayShort(p.date, p.date.slice(0, 4) !== thisYear), fmtValue(spec, p.value)),
                       style: ({ pressed }: { pressed: boolean }) => [rowStyle, pressed ? { backgroundColor: c.fillSoft } : null],
                     }
                   : { style: rowStyle };
@@ -333,7 +333,7 @@ export function MetricDetail(props: Props) {
                     <View style={{ alignItems: 'flex-end', gap: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         {p.record ? (
-                          <View accessible accessibilityLabel="Record">
+                          <View accessible accessibilityLabel={traduire("Record")}>
                             <TropheeRecord size={18} />
                           </View>
                         ) : null}
@@ -366,7 +366,7 @@ export function MetricDetail(props: Props) {
                 style={({ pressed }) => ({ marginTop: 10, minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : 'transparent', borderWidth: 1, borderColor: c.border })}
               >
                 <Ink size={14} weight="extraBold">
-                  {`Voir les ${history.length - histShown.length} autres`}
+                  {traduire("Voir les {0} autres", history.length - histShown.length)}
                 </Ink>
               </Pressable>
             ) : null}

@@ -16,6 +16,7 @@ import { Ruler } from './Ruler';
 import { PAS_KG, Pas } from './Pas';
 import { MainButton, Shell, kg, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 const MIN = 30;
 const MAX = 250;
@@ -36,14 +37,14 @@ function FillingPlates({ from, to }: { from: number; to: number }) {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [from, to]);
-  return <Kozane nombre={3} rempli={Math.max(v, 0.08)} taille={54} lumiere={Math.min(2, Math.floor(to))} accessibilityLabel="Ta première pastille commence à se remplir" />;
+  return <Kozane nombre={3} rempli={Math.max(v, 0.08)} taille={54} lumiere={Math.min(2, Math.floor(to))} accessibilityLabel={traduire("Ta première pastille commence à se remplir")} />;
 }
 
 /** Vague 45 : les phrases suivent l'univers choisi (l'armure au Japon, la tenue en Classique, ta progression sans personnage) */
 const TEXTES_RECOMPENSE: Record<ChoixUnivers, { haut: string; bas: string }> = {
-  japon: { haut: 'Ton armure se forme avec toi, tu la retrouves dans le Dojo.', bas: 'Ta première plaque d’armure commence à se remplir. Chaque pesée et chaque séance la complètent.' },
-  classique: { haut: 'Ta tenue se construit avec toi, tu la retrouves dans le Dojo.', bas: 'Ta première pastille commence à se remplir. Chaque pesée et chaque séance la complètent.' },
-  aucun: { haut: 'Ta progression commence, tu la suis dans le Dojo.', bas: 'Ta première pastille commence à se remplir. Chaque pesée et chaque séance la complètent.' },
+  japon: { haut: traduire('Ton armure se forme avec toi, tu la retrouves dans le Dojo.'), bas: traduire('Ta première plaque d’armure commence à se remplir. Chaque pesée et chaque séance la complètent.') },
+  classique: { haut: traduire('Ta tenue se construit avec toi, tu la retrouves dans le Dojo.'), bas: traduire('Ta première pastille commence à se remplir. Chaque pesée et chaque séance la complètent.') },
+  aucun: { haut: traduire('Ta progression commence, tu la suis dans le Dojo.'), bas: traduire('Ta première pastille commence à se remplir. Chaque pesée et chaque séance la complètent.') },
 };
 
 export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; univers?: ChoixUnivers }) {
@@ -53,7 +54,7 @@ export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; uni
     <Animated.View entering={FadeInDown.duration(380)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 18, gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={{ flex: 1 }}>
-          <Ink size={18} weight="black">Ton suivi commence</Ink>
+          <Ink size={18} weight="black">{traduire("Ton suivi commence")}</Ink>
           <Ink size={13} color={c.textSecondary}>{t.haut}</Ink>
         </View>
       </View>
@@ -123,14 +124,14 @@ export function Poids({
 
   if (reward) {
     return (
-      <Shell {...nav} title="**Première pesée**, c’est noté" sub={`**${kg(value)} kg**, le point de départ de ta courbe.`} footer={<MainButton label="Continuer" onPress={onNext} />}>
+      <Shell {...nav} title={traduire("**Première pesée**, c’est noté")} sub={traduire("**{0} kg**, le point de départ de ta courbe.", kg(value))} footer={<MainButton label="Continuer" onPress={onNext} />}>
         <RewardPanel reward={reward} univers={univers} />
       </Shell>
     );
   }
 
   return (
-    <Shell {...nav} title="Ton **point de départ**" sub="Ton poids aujourd’hui. Fais glisser la règle, touche les boutons ou le chiffre." footer={<MainButton label="Valider mon poids" onPress={onValidate} loading={saving} />}>
+    <Shell {...nav} title={traduire("Ton **point de départ**")} sub={traduire("Ton poids aujourd’hui. Fais glisser la règle, touche les boutons ou le chiffre.")} footer={<MainButton label={traduire("Valider mon poids")} onPress={onValidate} loading={saving} />}>
       <View style={{ alignItems: 'center', gap: 2 }} accessibilityLiveRegion="polite">
         <TextInput
           ref={inputRef}
@@ -143,7 +144,7 @@ export function Poids({
           returnKeyType="done"
           selectTextOnFocus
           maxLength={5}
-          accessibilityLabel="Ton poids en kilos, touche pour le taper"
+          accessibilityLabel={traduire("Ton poids en kilos, touche pour le taper")}
           style={[fontStyle('black'), { fontSize: 88, color: c.ink, textAlign: 'center', minWidth: 200, paddingVertical: 0, letterSpacing: -3, fontVariant: ['tabular-nums'] }]}
         />
         <Ink size={17} weight="bold" color={c.textSecondary}>kilos</Ink>
@@ -155,18 +156,18 @@ export function Poids({
         ) : null}
       </View>
 
-      <Ruler value={value} onChange={(v) => onChange(v, true)} hardMin={MIN} hardMax={MAX} label="Règle de poids, fais glisser pour régler" />
+      <Ruler value={value} onChange={(v) => onChange(v, true)} hardMin={MIN} hardMax={MAX} label={traduire("Règle de poids, fais glisser pour régler")} />
 
       {/* vague 30 : au kilo et au dixieme, appui long pour aller vite */}
       <Pas value={value} onChange={(v) => onChange(v, true)} pas={PAS_KG} clamp={clamp} />
 
       {healthAvailable && origin !== 'health' ? (
         <View style={{ borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 10 }}>
-          <Pressable onPress={reading ? undefined : onUseHealth} accessibilityRole="button" accessibilityLabel="Reprendre ma dernière pesée" style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12 })}>
+          <Pressable onPress={reading ? undefined : onUseHealth} accessibilityRole="button" accessibilityLabel={traduire("Reprendre ma dernière pesée")} style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12 })}>
             {reading ? <ActivityIndicator color={c.indigo} /> : <Icon name="heart" size={18} color={c.indigo} />}
-            <Ink size={15} weight="extraBold" color={c.indigo}>{reading ? 'Lecture en cours' : 'Reprendre ma dernière pesée'}</Ink>
+            <Ink size={15} weight="extraBold" color={c.indigo}>{reading ? 'Lecture en cours' : traduire('Reprendre ma dernière pesée')}</Ink>
           </Pressable>
-          <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{`YOROI te demandera l’accès à ${healthName} pour lire ta dernière pesée. Ensuite, tes pesées et tes séances arrivent toutes seules. Rien ne quitte ton téléphone.`}</Ink>
+          <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{traduire("YOROI te demandera l’accès à {0} pour lire ta dernière pesée. Ensuite, tes pesées et tes séances arrivent toutes seules. Rien ne quitte ton téléphone.", healthName)}</Ink>
         </View>
       ) : null}
       {notice ? (

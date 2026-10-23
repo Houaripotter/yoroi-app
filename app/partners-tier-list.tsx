@@ -12,12 +12,13 @@ import type { LiveStats, Partner, Tier } from '@/lib/v2/combat/partners';
 import { plural } from '@/lib/v2/combat/rounds';
 import { Card, DetailScreen, EmptyState, Enter, P, Press, Seal } from '@/components/yoroi/v2/combat/ui';
 import { PremiumGate } from '@/components/premium/PremiumGate';
+import { traduire } from '@/lib/i18n/tr';
 
 const ORDER: Tier[] = ['S', 'A', 'B', 'C', 'D'];
 
 export default function PartnersTierListScreen() {
   return (
-    <PremiumGate source="partenaires" featureTitle="Rangs des partenaires" perks={['Tes partenaires classés de S à D', 'Tes bêtes noires repérées d’un coup d’œil', 'Le rang mis à jour à chaque round noté']}>
+    <PremiumGate source="partenaires" featureTitle={traduire("Rangs des partenaires")} perks={[traduire('Tes partenaires classés de S à D'), traduire('Tes bêtes noires repérées d’un coup d’œil'), traduire('Le rang mis à jour à chaque round noté')]}>
       <PartnersTierList />
     </PremiumGate>
   );
@@ -40,9 +41,9 @@ function PartnersTierList() {
   const open = (p: Partner) => router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
 
   return (
-    <DetailScreen title="Rangs" subtitle="Tes partenaires classés selon ta domination">
+    <DetailScreen title="Rangs" subtitle={traduire("Tes partenaires classés selon ta domination")}>
       {loaded && partners.length === 0 ? (
-        <EmptyState title="Aucun partenaire" text="Ajoute tes partenaires et note tes rounds : ils seront rangés de S, tes bêtes noires, à C, ceux que tu domines." action="Ajouter un partenaire" onAction={() => router.push('/sparring-partners' as any)} />
+        <EmptyState title={traduire("Aucun partenaire")} text={traduire("Ajoute tes partenaires et note tes rounds : ils seront rangés de S, tes bêtes noires, à C, ceux que tu domines.")} action={traduire("Ajouter un partenaire")} onAction={() => router.push('/sparring-partners' as any)} />
       ) : null}
       {ORDER.map((t, i) => {
         const list = byTier[t];
@@ -62,7 +63,7 @@ function PartnersTierList() {
               <View style={{ flex: 1, padding: 14, gap: 12 }}>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                   {list.map(({ p, s }) => (
-                    <Press key={p.id} onPress={() => open(p)} accessibilityRole="button" accessibilityLabel={`${p.name}, ${s.winRateVD ?? 0} % de victoires`}>
+                    <Press key={p.id} onPress={() => open(p)} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1} % de victoires", p.name, s.winRateVD ?? 0)}>
                       <View style={{ alignItems: 'center', width: 78, gap: 4 }}>
                         <Seal name={p.name} photoUri={p.photoUri} belt={p.belt} size={54} tone={m.color} />
                         <Ink size={12} weight="extraBold" numberOfLines={2} style={{ textAlign: 'center', lineHeight: 15 }}>

@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTrainings } from './database';
 import { differenceInDays, parseISO } from 'date-fns';
 import { logger } from './security/logger';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const NOTIF_ID_KEY = '@yoroi_weekly_recap_id';
 const ENABLED_KEY = '@yoroi_weekly_recap_enabled';
@@ -27,19 +28,19 @@ const buildRecapContent = async (): Promise<{ title: string; body: string } | nu
 
     if (sessions.length === 0) {
       return {
-        title: 'Semaine sans séance',
-        body: 'Une semaine calme. La suivante commence : fixe-toi un petit objectif.',
+        title: traduire('Semaine sans séance'),
+        body: traduire('Une semaine calme. La suivante commence : fixe-toi un petit objectif.'),
       };
     }
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;
     const durStr = h > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${m}min`;
     const msg = sessions.length >= 5
-      ? `${sessions.length} séances, ${durStr}. Quelle semaine.`
+      ? traduire("{0} séances, {1}. Quelle semaine.", sessions.length, durStr)
       : sessions.length >= 3
-        ? `${sessions.length} séances, ${durStr}. Belle régularité.`
-        : `${sessions.length} séance${sessions.length > 1 ? 's' : ''}, ${durStr}. On continue la semaine prochaine ?`;
-    return { title: 'Récap de ta semaine', body: msg };
+        ? traduire("{0} séances, {1}. Belle régularité.", sessions.length, durStr)
+        : traduirePluriel(sessions.length, sessions.length > 1, "{0} séance, {1}. On continue la semaine prochaine ?", "{0} séances, {1}. On continue la semaine prochaine ?", sessions.length, durStr);
+    return { title: traduire('Récap de ta semaine'), body: msg };
   } catch (e) {
     logger.warn('[WeeklyRecap] Erreur build content:', e);
     return null;
@@ -69,8 +70,8 @@ export const scheduleWeeklyRecap = async (): Promise<void> => {
     // expo-notifications attend `weekday` 1-7 (dimanche = 1)
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Récap de ta semaine',
-        body: 'Ton bilan des sept derniers jours t’attend dans YOROI.',
+        title: traduire('Récap de ta semaine'),
+        body: traduire('Ton bilan des sept derniers jours t’attend dans YOROI.'),
         sound: 'default',
         data: { type: 'weekly_recap', tab: 'stats' },
       },

@@ -14,6 +14,7 @@ import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export { P, Press, tap };
 export { Card, Glass, BigButton, Pill, shadow, Enter, Kozane } from '@/components/yoroi/v2/accueil/kit';
@@ -117,7 +118,7 @@ export function ScreenHead({ title, subtitle, right, onBack }: { title: string; 
   return (
     <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
-        <IconBtn name="back" label="Retour" onPress={back} />
+        <IconBtn name="back" label={traduire("Retour")} onPress={back} />
         <View style={{ flexDirection: 'row', gap: 8 }}>{right}</View>
       </View>
       <View style={{ paddingHorizontal: 6, gap: 4 }}>
@@ -435,7 +436,7 @@ export function PlateRow({ mastered, inProgress, total, max = 14 }: { mastered: 
 /** Tampon rouge de maitrise, incline, avec une couronne de laurier dessinee (kanji accepte et ignore) */
 export function Stamp({ size = 54, label }: { kanji?: string; size?: number; label?: string }) {
   return (
-    <View accessibilityLabel={label ?? 'Maîtrisé'} style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 3, borderColor: P.record, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-12deg' }], backgroundColor: 'rgba(176,40,46,0.06)' }}>
+    <View accessibilityLabel={label ?? traduire('Maîtrisé')} style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 3, borderColor: P.record, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-12deg' }], backgroundColor: 'rgba(176,40,46,0.06)' }}>
       <View style={{ position: 'absolute', width: size - 10, height: size - 10, borderRadius: (size - 10) / 2, borderWidth: 1, borderColor: P.record, opacity: 0.6 }} />
       <Glyph kind={size >= 40 ? 'laurier' : 'etoile'} size={Math.round(size * 0.6)} color={P.record} />
     </View>

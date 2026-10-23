@@ -13,6 +13,7 @@ import { addDays, parseLocalDate } from './dates';
 import { getAllExtras } from './extras';
 import type { CompetitionExtra } from './extras';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 const PREFIX = 'yoroi-competition-';
 const CHANNEL = 'competitions';
@@ -33,21 +34,21 @@ export function plannedReminders(comp: Competition, extra: CompetitionExtra): Pl
   // sur l'écran verrouillé. Le détail reste dans la fiche compétition.
   const cat = Boolean(comp.categorie_poids);
   const list: Planned[] = [
-    { kind: 'j30', at: at(addDays(day, -30), 9), title: `Dans 30 jours : ${comp.nom}`, body: cat ? 'Un mois pour te préparer. Vérifie ton inscription et ta catégorie.' : 'Un mois pour te préparer. Pense à vérifier ton inscription.' },
-    { kind: 'j7', at: at(addDays(day, -7), 9), title: `Dans 7 jours : ${comp.nom}`, body: cat ? 'Dernière semaine. Garde un œil sur ta pesée.' : 'Dernière semaine. Prépare ton sac et ton trajet.' },
-    { kind: 'veille', at: at(addDays(day, -1), 19), title: `Demain : ${comp.nom}`, body: comp.lieu ? `Rendez-vous à ${comp.lieu}. Prépare ton sac et couche-toi tôt.` : 'Prépare ton sac et couche-toi tôt.' },
+    { kind: 'j30', at: at(addDays(day, -30), 9), title: traduire("Dans 30 jours : {0}", comp.nom), body: cat ? traduire('Un mois pour te préparer. Vérifie ton inscription et ta catégorie.') : traduire('Un mois pour te préparer. Pense à vérifier ton inscription.') },
+    { kind: 'j7', at: at(addDays(day, -7), 9), title: traduire("Dans 7 jours : {0}", comp.nom), body: cat ? traduire('Dernière semaine. Garde un œil sur ta pesée.') : traduire('Dernière semaine. Prépare ton sac et ton trajet.') },
+    { kind: 'veille', at: at(addDays(day, -1), 19), title: traduire("Demain : {0}", comp.nom), body: comp.lieu ? traduire("Rendez-vous à {0}. Prépare ton sac et couche-toi tôt.", comp.lieu) : traduire('Prépare ton sac et couche-toi tôt.') },
   ];
   if (extra.pesee) {
     const weighDay = extra.pesee === 'veille' ? addDays(day, -1) : day;
-    list.push({ kind: 'pesee', at: at(weighDay, extra.pesee === 'veille' ? 8 : 7), title: `Jour de pesée : ${comp.nom}`, body: 'Pèse-toi ce matin pour savoir où tu en es.' });
+    list.push({ kind: 'pesee', at: at(weighDay, extra.pesee === 'veille' ? 8 : 7), title: traduire("Jour de pesée : {0}", comp.nom), body: traduire('Pèse-toi ce matin pour savoir où tu en es.') });
   }
-  list.push({ kind: 'resultat', at: at(addDays(day, 1), 10), title: `Comment s’est passée ta compétition ?`, body: `Note ton résultat de ${comp.nom} : il rejoint ton palmarès.` });
+  list.push({ kind: 'resultat', at: at(addDays(day, 1), 10), title: traduire(`Comment s’est passée ta compétition ?`), body: traduire("Note ton résultat de {0} : il rejoint ton palmarès.", comp.nom) });
   return list.sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 
 async function ensureChannel() {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync(CHANNEL, { name: 'Compétitions', importance: Notifications.AndroidImportance.HIGH }).catch(() => {});
+  await Notifications.setNotificationChannelAsync(CHANNEL, { name: traduire('Compétitions'), importance: Notifications.AndroidImportance.HIGH }).catch(() => {});
 }
 
 async function cancelFor(id?: number) {

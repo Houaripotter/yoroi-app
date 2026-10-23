@@ -8,6 +8,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { SanteIcon } from './SanteIcon';
 import type { SanteIconName } from './SanteIcon';
 import { GlassBox, S } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
 function Node({ icon, title, sub, color, tint }: { icon: SanteIconName; title: string; sub: string; color: string; tint: string }) {
   return (
@@ -40,16 +41,16 @@ export function DataBridge() {
   return (
     <GlassBox style={{ gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-        <Node icon="watch" title="Tes appareils" sub={android ? 'Fitbit, Garmin, Samsung, Withings' : 'Apple Watch, Garmin, Withings, Fitbit'} color={S.accent} tint={S.accentSoft} />
+        <Node icon="watch" title={traduire("Tes appareils")} sub={android ? 'Fitbit, Garmin, Samsung, Withings' : 'Apple Watch, Garmin, Withings, Fitbit'} color={S.accent} tint={S.accentSoft} />
         <Arrow />
-        <Node icon="heart" title={android ? 'Health Connect' : 'Apple Santé'} sub={android ? 'Le coffre santé de Google' : "Le coffre santé de l'iPhone"} color={S.indigo} tint={S.indigoSoft} />
+        <Node icon="heart" title={android ? 'Health Connect' : 'Apple Santé'} sub={android ? traduire('Le coffre santé de Google') : traduire("Le coffre santé de l'iPhone")} color={S.indigo} tint={S.indigoSoft} />
         <Arrow />
-        <Node icon="shield" title="YOROI" sub="Lit, range et dessine tes courbes" color={S.ink} tint="#E8E5DE" />
+        <Node icon="shield" title="YOROI" sub={traduire("Lit, range et dessine tes courbes")} color={S.ink} tint="#E8E5DE" />
       </View>
       <Ink size={13} weight="medium" color={S.ink2}>
         {android
-          ? "YOROI ne se branche pas directement sur ta montre : chaque marque envoie ses mesures à Health Connect, et YOROI les lit là. Fitbit, Garmin, Samsung et Withings passent tous par ce chemin."
-          : "YOROI ne se branche pas directement sur ta montre : chaque marque envoie ses mesures à Apple Santé, et YOROI les lit là. Apple Watch, Garmin, Withings et Fitbit passent tous par ce chemin."}
+          ? traduire("YOROI ne se branche pas directement sur ta montre : chaque marque envoie ses mesures à Health Connect, et YOROI les lit là. Fitbit, Garmin, Samsung et Withings passent tous par ce chemin.")
+          : traduire("YOROI ne se branche pas directement sur ta montre : chaque marque envoie ses mesures à Apple Santé, et YOROI les lit là. Apple Watch, Garmin, Withings et Fitbit passent tous par ce chemin.")}
       </Ink>
     </GlassBox>
   );

@@ -15,6 +15,7 @@ import { backupAgeDays, backupWhen, useEspaceStatus } from '@/components/yoroi/v
 import { useCustomPopup } from '@/components/CustomPopup';
 import { exportDataToJSON } from '@/lib/exportService';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function DonneesEtSauvegardes() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function DonneesEtSauvegardes() {
       reload();
     } catch (e) {
       logger.error('[Reglages] sauvegarde', e);
-      showPopup('Oups', 'La sauvegarde n’a pas abouti. Réessaie.');
+      showPopup('Oups', traduire('La sauvegarde n’a pas abouti. Réessaie.'));
     } finally {
       setBusy(false);
     }
@@ -43,16 +44,16 @@ export default function DonneesEtSauvegardes() {
   const go = (href: string) => router.push(href as any);
   const age = backupAgeDays(status.lastBackup);
   const backupLate = status.lastBackup !== undefined && (age === null || age >= 14);
-  const backupSub = status.lastBackup === undefined ? 'Une copie de tes données' : status.lastBackup ? `Dans ton cloud : ${backupWhen(status.lastBackup)}` : 'Aucune copie dans ton cloud';
+  const backupSub = status.lastBackup === undefined ? traduire('Une copie de tes données') : status.lastBackup ? traduire("Dans ton cloud : {0}", backupWhen(status.lastBackup)) : traduire('Aucune copie dans ton cloud');
   const nbPhotos = status.counts?.photos;
 
   return (
-    <EspaceScreen title="Données et sauvegardes" subtitle="Pas de compte : tout reste sur ton téléphone" gap={14}>
+    <EspaceScreen title={traduire("Données et sauvegardes")} subtitle={traduire("Pas de compte : tout reste sur ton téléphone")} gap={14}>
       <Card>
-        <ValueRow first tint={TUILE.mousse} icon="save" label="Sauvegarde" sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label="Sauvegarder" onPress={backupNow} busy={busy} />} />
+        <ValueRow first tint={TUILE.mousse} icon="save" label={traduire("Sauvegarde")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label="Sauvegarder" onPress={backupNow} busy={busy} />} />
         {/* les copies faites seules avant chaque mise a jour, a voir, partager et remettre */}
-        <ValueRow tint={TUILE.ardoise} icon="archive" label="Copies de sécurité automatiques" sub="Faites avant chaque mise à jour" onPress={() => go('/settings/copies-securite')} />
-        <ValueRow tint={TUILE.indigo} icon="shield" label="Mes données" value="Exporter, effacer" onPress={() => go('/settings/donnees')} />
+        <ValueRow tint={TUILE.ardoise} icon="archive" label={traduire("Copies de sécurité automatiques")} sub={traduire("Faites avant chaque mise à jour")} onPress={() => go('/settings/copies-securite')} />
+        <ValueRow tint={TUILE.indigo} icon="shield" label={traduire("Mes données")} value={traduire("Exporter, effacer")} onPress={() => go('/settings/donnees')} />
         <ValueRow tint={TUILE.or} icon="camera" label="Coffre photos" value={nbPhotos ? `${nbPhotos} photo${nbPhotos > 1 ? 's' : ''}` : undefined} onPress={() => go('/photos')} />
       </Card>
       <PopupComponent />

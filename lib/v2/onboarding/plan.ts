@@ -3,7 +3,8 @@
  * Vague 28 : la date d'arrivee est une fourchette honnete calculee par lib/v2/pesee/estimation.ts
  * (le meme calcul a l'accueil, dans Progres et dans Previsions).
  */
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+import { traduire } from '@/lib/i18n/tr';
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 export function isoOf(d: Date): string {
   const p = (n: number) => String(n).padStart(2, '0');

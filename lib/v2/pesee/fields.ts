@@ -4,6 +4,7 @@
  * fat_percent, muscle_percent, water_percent, bone_mass, visceral_fat, metabolic_age, bmr.
  * La masse musculaire se saisit en kilos (comme sur l'app de la balance) et se range en pourcentage du poids.
  */
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export type CompoField = 'fat' | 'muscleKg' | 'water' | 'bone' | 'visceral' | 'bmr' | 'metabolicAge';
 
 export type FieldSpec = {
@@ -21,12 +22,12 @@ export type FieldSpec = {
 
 export const COMPO_FIELDS: FieldSpec[] = [
   { key: 'fat', label: 'Masse grasse', unit: '%', step: 0.1, min: 2, max: 70, fromHealth: true },
-  { key: 'muscleKg', label: 'Masse musculaire', unit: 'kg', step: 0.1, min: 5, max: 150 },
+  { key: 'muscleKg', label: traduire('Masse musculaire'), unit: 'kg', step: 0.1, min: 5, max: 150 },
   { key: 'water', label: 'Eau', unit: '%', step: 0.1, min: 20, max: 80 },
   { key: 'bone', label: 'Masse osseuse', unit: 'kg', step: 0.1, min: 0.5, max: 10 },
-  { key: 'visceral', label: 'Graisse viscérale', unit: 'niveau', step: 1, min: 1, max: 59, int: true, hint: 'de 1 à 59, sain jusqu’à 12' },
-  { key: 'bmr', label: 'Métabolisme de base', unit: 'kcal', step: 10, min: 600, max: 5000, int: true, hint: 'calories brûlées au repos' },
-  { key: 'metabolicAge', label: 'Âge métabolique', unit: 'ans', step: 1, min: 10, max: 100, int: true },
+  { key: 'visceral', label: 'Graisse viscérale', unit: 'niveau', step: 1, min: 1, max: 59, int: true, hint: traduire('de 1 à 59, sain jusqu’à 12') },
+  { key: 'bmr', label: traduire('Métabolisme de base'), unit: 'kcal', step: 10, min: 600, max: 5000, int: true, hint: traduire('calories brûlées au repos') },
+  { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', step: 1, min: 10, max: 100, int: true },
 ];
 
 export const FIELD: Record<CompoField, FieldSpec> = Object.fromEntries(COMPO_FIELDS.map((f) => [f.key, f])) as Record<CompoField, FieldSpec>;
@@ -65,7 +66,7 @@ export function valuesOfRow(w: {
 /** Texte francais d'une valeur : virgule decimale */
 export function fmtValue(v: number, int?: boolean): string {
   if (int) return String(Math.round(v));
-  return (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+  return (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 }
 
 export function parseValue(s: string | undefined, f: FieldSpec): number | undefined {

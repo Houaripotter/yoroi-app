@@ -30,8 +30,9 @@ import { FORGE_SCENE } from './illus';
 import { GUTTER, MainButton, ProgressBar, RoundIcon, useColors } from './ui';
 import type { Nav } from './types';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
+import { traduire } from '@/lib/i18n/tr';
 
-const LINES = ['Ta courbe de poids', 'Ta semaine d’entraînement', 'Ton Dojo', 'Ton accueil'];
+const LINES = [traduire('Ta courbe de poids'), traduire('Ta semaine d’entraînement'), traduire('Ton Dojo'), traduire('Ton accueil')];
 /** duree d'une scene ; la derniere reste a l'ecran jusqu'a la fin */
 const SCENE_MS = 900;
 const MIN_MS = 3800;
@@ -69,9 +70,9 @@ function Couche({ index, last, t, scene, heroW, heroH, bottom }: { index: number
 
 /** Titre de l'ecran selon l'univers : le debut, puis le mot en or */
 const TITRES: Record<ChoixUnivers, [string, string]> = {
-  japon: ['On forge ', 'ton armure'],
-  classique: ['On prépare ', 'ta tenue'],
-  aucun: ['On prépare ', 'ton plan'],
+  japon: ['On forge ', traduire('ton armure')],
+  classique: [traduire('On prépare '), 'ta tenue'],
+  aucun: [traduire('On prépare '), traduire('ton plan')],
 };
 
 export function Forge({ nav, genre, univers = 'japon', run, onDone, onSound }: { nav: Nav; genre: 'h' | 'f'; univers?: ChoixUnivers; run: () => Promise<void>; onDone: () => void; onSound: () => void }) {
@@ -160,7 +161,7 @@ export function Forge({ nav, genre, univers = 'japon', run, onDone, onSound }: {
   return (
     <View style={{ flex: 1, backgroundColor: '#17110D', overflow: 'hidden' }}>
       <StatusBar barStyle="light-content" />
-      <View style={StyleSheet.absoluteFill} accessible accessibilityLabel={univers === 'japon' ? 'Des scènes d’époque défilent, un personnage différent dans chacune' : univers === 'classique' ? 'Des scènes de salle, de parc et de ville défilent avec ton personnage' : 'Des scènes de salle, de parc et de ville défilent'}>
+      <View style={StyleSheet.absoluteFill} accessible accessibilityLabel={univers === 'japon' ? traduire('Des scènes d’époque défilent, un personnage différent dans chacune') : univers === 'classique' ? traduire('Des scènes de salle, de parc et de ville défilent avec ton personnage') : traduire('Des scènes de salle, de parc et de ville défilent')}>
         {scenes.map((s, i) => (
           <Couche key={i} index={i} last={i === scenes.length - 1} t={t} scene={s} heroW={heroW} heroH={heroH} bottom={bottom} />
         ))}
@@ -178,7 +179,7 @@ export function Forge({ nav, genre, univers = 'japon', run, onDone, onSound }: {
         <ApercuDansBarre />
         {apercu ? null : nav.progress != null ? <ProgressBar value={nav.progress} /> : <View style={{ flex: 1 }} />}
         <View style={{ width: 44 }} />
-        {nav.onClose ? <RoundIcon name="close" label="Fermer l’aperçu" onPress={nav.onClose} /> : null}
+        {nav.onClose ? <RoundIcon name="close" label={traduire("Fermer l’aperçu")} onPress={nav.onClose} /> : null}
       </View>
 
       <View style={{ paddingHorizontal: GUTTER, paddingTop: 8, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -209,8 +210,8 @@ export function Forge({ nav, genre, univers = 'japon', run, onDone, onSound }: {
         })}
         {error ? (
           <View style={{ gap: 10, marginTop: 4 }}>
-            <Ink size={14} weight="bold" color="#FFB4A8">{`L’enregistrement n’a pas abouti. ${error}`}</Ink>
-            <MainButton label="Réessayer" onPress={() => setAttempt((a) => a + 1)} />
+            <Ink size={14} weight="bold" color="#FFB4A8">{traduire("L’enregistrement n’a pas abouti. {0}", error)}</Ink>
+            <MainButton label={traduire("Réessayer")} onPress={() => setAttempt((a) => a + 1)} />
           </View>
         ) : null}
       </View>

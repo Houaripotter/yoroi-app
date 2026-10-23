@@ -11,6 +11,7 @@ import logger from './logger';
  * Ouvre une URL de manière sécurisée via Linking
  */
 import { Linking } from 'react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // CONSTANTES DE VALIDATION
@@ -94,7 +95,7 @@ export function validateNumber(
   if (isNaN(num)) {
     return {
       valid: false,
-      error: `${fieldName} doit être un nombre valide`,
+      error: traduire("{0} doit être un nombre valide", fieldName),
     };
   }
 
@@ -102,7 +103,7 @@ export function validateNumber(
   if (num < min || num > max) {
     return {
       valid: false,
-      error: `${fieldName} doit être entre ${min} et ${max}`,
+      error: traduire("{0} doit être entre {1} et {2}", fieldName, min, max),
     };
   }
 
@@ -123,7 +124,7 @@ export function validateString(
   if (typeof value !== 'string') {
     return {
       valid: false,
-      error: `${fieldName} doit être une chaîne de caractères`,
+      error: traduire("{0} doit être une chaîne de caractères", fieldName),
     };
   }
 
@@ -133,14 +134,14 @@ export function validateString(
   if (trimmed.length === 0) {
     return {
       valid: false,
-      error: `${fieldName} ne peut pas être vide`,
+      error: traduire("{0} ne peut pas être vide", fieldName),
     };
   }
 
   if (trimmed.length > maxLength) {
     return {
       valid: false,
-      error: `${fieldName} ne peut pas dépasser ${maxLength} caractères`,
+      error: traduire("{0} ne peut pas dépasser {1} caractères", fieldName, maxLength),
     };
   }
 
@@ -148,7 +149,7 @@ export function validateString(
   if (containsDangerousCharacters(trimmed)) {
     return {
       valid: false,
-      error: `${fieldName} contient des caractères invalides`,
+      error: traduire("{0} contient des caractères invalides", fieldName),
     };
   }
 
@@ -196,7 +197,7 @@ export function validateDate(date: string | Date): ValidationResult {
   if (isNaN(dateObj.getTime())) {
     return {
       valid: false,
-      error: 'Format de date invalide',
+      error: traduire('Format de date invalide'),
     };
   }
 
@@ -205,7 +206,7 @@ export function validateDate(date: string | Date): ValidationResult {
   if (dateObj > now) {
     return {
       valid: false,
-      error: 'La date ne peut pas être dans le futur',
+      error: traduire('La date ne peut pas être dans le futur'),
     };
   }
 
@@ -215,7 +216,7 @@ export function validateDate(date: string | Date): ValidationResult {
   if (dateObj < tenYearsAgo) {
     return {
       valid: false,
-      error: 'La date ne peut pas être plus ancienne que 10 ans',
+      error: traduire('La date ne peut pas être plus ancienne que 10 ans'),
     };
   }
 
@@ -273,7 +274,7 @@ export function validateMuscleMass(muscleMass: any): ValidationResult {
     muscleMass,
     VALIDATION_LIMITS.MUSCLE_MASS_MIN,
     VALIDATION_LIMITS.MUSCLE_MASS_MAX,
-    'Masse musculaire'
+    traduire('Masse musculaire')
   );
 }
 
@@ -309,7 +310,7 @@ export function validateMetabolicAge(metabolicAge: any): ValidationResult {
     metabolicAge,
     VALIDATION_LIMITS.METABOLIC_AGE_MIN,
     VALIDATION_LIMITS.METABOLIC_AGE_MAX,
-    'Âge métabolique'
+    traduire('Âge métabolique')
   );
 }
 
@@ -321,7 +322,7 @@ export function validateHydrationEntry(amount: any): ValidationResult {
     amount,
     VALIDATION_LIMITS.HYDRATION_ENTRY_MIN,
     VALIDATION_LIMITS.HYDRATION_ENTRY_MAX,
-    'Quantité d\'eau'
+    traduire('Quantité d\'eau')
   );
 }
 
@@ -333,7 +334,7 @@ export function validateTrainingDuration(duration: any): ValidationResult {
     duration,
     VALIDATION_LIMITS.TRAINING_DURATION_MIN,
     VALIDATION_LIMITS.TRAINING_DURATION_MAX,
-    'Durée d\'entraînement'
+    traduire('Durée d\'entraînement')
   );
 }
 
@@ -371,7 +372,7 @@ export function validateMeasurement(data: Partial<MeasurementData>): ValidationR
     const weightResult = validateWeight(data.weight);
     if (!weightResult.valid) errors.push(weightResult.error!);
   } else {
-    errors.push('Le poids est obligatoire');
+    errors.push(traduire('Le poids est obligatoire'));
   }
 
   // Date obligatoire
@@ -379,7 +380,7 @@ export function validateMeasurement(data: Partial<MeasurementData>): ValidationR
     const dateResult = validateDate(data.date);
     if (!dateResult.valid) errors.push(dateResult.error!);
   } else {
-    errors.push('La date est obligatoire');
+    errors.push(traduire('La date est obligatoire'));
   }
 
   // Validations optionnelles
@@ -438,7 +439,7 @@ export function validateUsername(username: any): ValidationResult {
   if (name.length < 2) {
     return {
       valid: false,
-      error: 'Le nom doit contenir au moins 2 caractères',
+      error: traduire('Le nom doit contenir au moins 2 caractères'),
     };
   }
 
@@ -446,7 +447,7 @@ export function validateUsername(username: any): ValidationResult {
   if (!/^[\p{L}\p{N}\s''\u2018\u2019\-.]+$/u.test(name)) {
     return {
       valid: false,
-      error: 'Le nom contient des caractères invalides',
+      error: traduire('Le nom contient des caractères invalides'),
     };
   }
 
@@ -458,7 +459,7 @@ export function validateUsername(username: any): ValidationResult {
  */
 export function validateURL(url: any): ValidationResult {
   if (typeof url !== 'string') {
-    return { valid: false, error: 'L\'URL doit être une chaîne de caractères' };
+    return { valid: false, error: traduire('L\'URL doit être une chaîne de caractères') };
   }
 
   try {
@@ -466,12 +467,12 @@ export function validateURL(url: any): ValidationResult {
 
     // Autoriser uniquement http et https
     if (!['http:', 'https:'].includes(urlObj.protocol)) {
-      return { valid: false, error: 'L\'URL doit commencer par http:// ou https://' };
+      return { valid: false, error: traduire('L\'URL doit commencer par http:// ou https://') };
     }
 
     return { valid: true, sanitized: url };
   } catch (error) {
-    return { valid: false, error: 'Format d\'URL invalide' };
+    return { valid: false, error: traduire('Format d\'URL invalide') };
   }
 }
 
@@ -503,7 +504,7 @@ const ALLOWED_URL_SCHEMES = [
  */
 export function validateLinkingURL(url: any): ValidationResult {
   if (typeof url !== 'string' || url.trim().length === 0) {
-    return { valid: false, error: 'L\'URL est invalide' };
+    return { valid: false, error: traduire('L\'URL est invalide') };
   }
 
   const trimmedUrl = url.trim();
@@ -511,13 +512,13 @@ export function validateLinkingURL(url: any): ValidationResult {
   // Vérifier les patterns dangereux
   if (/javascript:/i.test(trimmedUrl) || /data:/i.test(trimmedUrl)) {
     logger.warn('🚨 URL potentiellement dangereuse bloquée:', trimmedUrl);
-    return { valid: false, error: 'URL dangereuse détectée' };
+    return { valid: false, error: traduire('URL dangereuse détectée') };
   }
 
   // Extraire le schéma
   const schemeMatch = trimmedUrl.match(/^([a-zA-Z][a-zA-Z0-9+.-]*:)/);
   if (!schemeMatch) {
-    return { valid: false, error: 'Schéma d\'URL manquant' };
+    return { valid: false, error: traduire('Schéma d\'URL manquant') };
   }
 
   const scheme = schemeMatch[1].toLowerCase();
@@ -525,7 +526,7 @@ export function validateLinkingURL(url: any): ValidationResult {
   // Vérifier si le schéma est autorisé
   if (!ALLOWED_URL_SCHEMES.includes(scheme)) {
     logger.warn('🚨 Schéma d\'URL non autorisé:', scheme);
-    return { valid: false, error: `Schéma d\'URL non autorisé: ${scheme}` };
+    return { valid: false, error: traduire("Schéma d'URL non autorisé: {0}", scheme) };
   }
 
   return { valid: true, sanitized: trimmedUrl };

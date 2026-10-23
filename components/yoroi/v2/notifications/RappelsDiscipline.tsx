@@ -18,16 +18,17 @@ import { FREQUENCE_LABEL } from '@/lib/v2/notifications/discipline';
 import type { ChoixRappels, FrequencePesee } from '@/lib/v2/notifications/discipline';
 import { ouvrirReglagesSysteme, permissionPourRappels } from '@/lib/v2/notifications/rappels';
 import type { EcranPermission } from '@/lib/v2/notifications/permission';
+import { traduire } from '@/lib/i18n/tr';
 
 const NB = ' ';
 const JOURS = [
-  { j: 0, court: 'L', nom: 'lundi' },
-  { j: 1, court: 'M', nom: 'mardi' },
-  { j: 2, court: 'M', nom: 'mercredi' },
-  { j: 3, court: 'J', nom: 'jeudi' },
-  { j: 4, court: 'V', nom: 'vendredi' },
-  { j: 5, court: 'S', nom: 'samedi' },
-  { j: 6, court: 'D', nom: 'dimanche' },
+  { j: 0, court: 'L', nom: traduire('lundi') },
+  { j: 1, court: 'M', nom: traduire('mardi') },
+  { j: 2, court: 'M', nom: traduire('mercredi') },
+  { j: 3, court: 'J', nom: traduire('jeudi') },
+  { j: 4, court: 'V', nom: traduire('vendredi') },
+  { j: 5, court: 'S', nom: traduire('samedi') },
+  { j: 6, court: 'D', nom: traduire('dimanche') },
 ];
 
 const hap = () => selectionAsync().catch(() => {});
@@ -73,7 +74,7 @@ function Jours({ value, auto, autoTexte, onChange }: { value: number[]; auto: bo
   const set = new Set(auto && autoTexte ? [] : value);
   return (
     <View style={{ gap: 8 }}>
-      <Ink size={13} weight="bold" color={c.textSecondary}>{auto && autoTexte ? autoTexte : 'Les jours de tes séances'}</Ink>
+      <Ink size={13} weight="bold" color={c.textSecondary}>{auto && autoTexte ? autoTexte : traduire('Les jours de tes séances')}</Ink>
       <View style={{ flexDirection: 'row', gap: 5 }}>
         {JOURS.map((d) => {
           const on = set.has(d.j);
@@ -149,19 +150,19 @@ export function RappelsDiscipline({
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <Icon name="lock" size={20} color={c.goldDeep} />
             <Ink size={13.5} weight="bold" style={{ flex: 1, lineHeight: 19 }}>
-              {`Les notifications de YOROI sont coupées sur ton téléphone. Pour recevoir tes rappels, autorise-les dans Réglages${NB}: tu pourras revenir ici ensuite.`}
+              {traduire("Les notifications de YOROI sont coupées sur ton téléphone. Pour recevoir tes rappels, autorise-les dans Réglages{0}: tu pourras revenir ici ensuite.", NB)}
             </Ink>
           </View>
           <Pressable onPress={ouvrirReglagesSysteme} accessibilityRole="link" style={({ pressed }) => ({ minHeight: 44, borderRadius: 14, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}>
-            <Ink size={14.5} weight="extraBold" color={c.onAccent}>Ouvrir les Réglages</Ink>
+            <Ink size={14.5} weight="extraBold" color={c.onAccent}>{traduire("Ouvrir les Réglages")}</Ink>
           </Pressable>
         </Animated.View>
       ) : null}
 
       <Ligne
         icon="dumbbell"
-        titre="Rappel de séance"
-        sous={v.seance.actif ? `${sayTime(v.seance.heure)}, jamais un jour où ta séance est déjà notée` : 'Les jours que tu choisis, à ton heure'}
+        titre={traduire("Rappel de séance")}
+        sous={v.seance.actif ? traduire("{0}, jamais un jour où ta séance est déjà notée", sayTime(v.seance.heure)) : traduire('Les jours que tu choisis, à ton heure')}
         on={v.seance.actif}
         onToggle={(on) => void basculer(on, { ...v, seance: { ...v.seance, actif: on } })}
       >
@@ -171,23 +172,23 @@ export function RappelsDiscipline({
           autoTexte={joursAutoTexte}
           onChange={(jours) => onChange({ ...v, seance: { ...v.seance, jours, joursAuto: false } })}
         />
-        <TimeField label="Heure du rappel" value={v.seance.heure} onChange={(heure) => onChange({ ...v, seance: { ...v.seance, heure } })} />
+        <TimeField label={traduire("Heure du rappel")} value={v.seance.heure} onChange={(heure) => onChange({ ...v, seance: { ...v.seance, heure } })} />
       </Ligne>
 
       <Ligne
         icon="scale"
-        titre="Rappel de pesée"
-        sous={v.pesee.actif ? `${FREQUENCE_LABEL[v.pesee.frequence]}, seulement si ta pesée manque` : 'Le matin, seulement si ta pesée n’est pas notée'}
+        titre={traduire("Rappel de pesée")}
+        sous={v.pesee.actif ? traduire("{0}, seulement si ta pesée manque", FREQUENCE_LABEL[v.pesee.frequence]) : traduire('Le matin, seulement si ta pesée n’est pas notée')}
         on={v.pesee.actif}
         onToggle={(on) => void basculer(on, { ...v, pesee: { ...v.pesee, actif: on } })}
       >
         <ChoiceChips<FrequencePesee>
-          label="Combien de matins par semaine"
+          label={traduire("Combien de matins par semaine")}
           value={v.pesee.frequence}
           options={[
-            { value: 'chaque_jour', label: 'Tous' },
+            { value: 'chaque_jour', label: traduire('Tous') },
             { value: 'trois', label: '3 matins' },
-            { value: 'une', label: '1 matin' },
+            { value: 'une', label: traduire('1 matin') },
           ]}
           onChange={(frequence) => onChange({ ...v, pesee: { ...v.pesee, frequence } })}
         />
@@ -195,16 +196,16 @@ export function RappelsDiscipline({
 
       <Ligne
         icon="drop"
-        titre="Boire de l’eau"
-        sous={`Quelques rappels de 9${NB}h à 19${NB}h`}
+        titre={traduire("Boire de l’eau")}
+        sous={traduire("Quelques rappels de 9{0}h à 19{1}h", NB, NB)}
         on={v.eau.actif}
         onToggle={(on) => void basculer(on, { ...v, eau: { actif: on } })}
       />
 
       <Ligne
         icon="calendar"
-        titre="Bilan du dimanche"
-        sous={`Ta semaine en un coup d’œil, le dimanche à 19${NB}h`}
+        titre={traduire("Bilan du dimanche")}
+        sous={traduire("Ta semaine en un coup d’œil, le dimanche à 19{0}h", NB)}
         on={v.bilan.actif}
         onToggle={(on) => void basculer(on, { ...v, bilan: { actif: on } })}
       />

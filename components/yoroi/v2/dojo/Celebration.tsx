@@ -26,6 +26,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import type { ArmureRank, SealView } from '@/lib/v2/armure';
 import { familyOf } from '@/lib/v2/dojo/seals';
 import { FondEpoque } from '@/components/yoroi/v2/fonds/FondEpoque';
+import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
   visible: boolean;
@@ -70,7 +71,7 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
   const cons = construction(xp, u);
   const etapeFaite = plate ? Math.max(1, Math.min(3, plate.earned)) : 0;
   const nomEtape = plate ? cons.piece.etapes[etapeFaite - 1] : '';
-  const sealTitle = recap ? 'Tes sceaux déjà mérités' : seals.length > 1 ? 'Nouveaux sceaux' : 'Nouveau sceau';
+  const sealTitle = recap ? traduire('Tes sceaux déjà mérités') : seals.length > 1 ? traduire('Nouveaux sceaux') : traduire('Nouveau sceau');
 
   return (
     <Modal visible={visible} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
@@ -92,40 +93,40 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
                     source={image}
                     style={{ width: 290, height: 380, shadowColor: DOJO.gold, shadowOpacity: 0.6, shadowRadius: 30 }}
                     resizeMode="contain"
-                    accessibilityLabel={`Ton personnage au rang ${nomRang}`}
+                    accessibilityLabel={traduire("Ton personnage au rang {0}", nomRang)}
                   />
                 </Animated.View>
               ) : (
                 <View style={{ height: 40 }} />
               )}
-              <Ink size={16} weight="bold" color="#B9BBC4">{isDan ? 'Nouveau dan' : 'Nouveau rang'}</Ink>
+              <Ink size={16} weight="bold" color="#B9BBC4">{isDan ? traduire('Nouveau dan') : traduire('Nouveau rang')}</Ink>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
-                <Ink size={38} weight="black" tight color="#F2F1EC" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'center' }}>{isDan ? nomRang : `Tu passes ${nomRang}`}</Ink>
+                <Ink size={38} weight="black" tight color="#F2F1EC" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'center' }}>{isDan ? nomRang : traduire("Tu passes {0}", nomRang)}</Ink>
               </View>
               {isDan ? (
                 <Ink size={22} weight="black" color={DOJO.goldLight}>{danLabel(rankUp!.dan ?? 1)}</Ink>
               ) : avecPersonnage ? (
-                <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{`Nouvelle tenue : ${rangTenue(rankUp!.index, u)}`}</Ink>
+                <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{traduire("Nouvelle tenue : {0}", rangTenue(rankUp!.index, u))}</Ink>
               ) : pieceRang ? (
-                <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{`Nouvelle pièce : ${pieceRang.nom}`}</Ink>
+                <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{traduire("Nouvelle pièce : {0}", pieceRang.nom)}</Ink>
               ) : null}
               {pieceRang ? (
-                <ArmureEnConstruction piece={pieceRang} progres={1} taille={84} ton="sombre" eclat={visible} style={{ marginTop: 10 }} accessibilityLabel={`${pieceRang.nom}, pièce complète`} />
+                <ArmureEnConstruction piece={pieceRang} progres={1} taille={84} ton="sombre" eclat={visible} style={{ marginTop: 10 }} accessibilityLabel={traduire("{0}, pièce complète", pieceRang.nom)} />
               ) : null}
             </>
           ) : showPlate ? (
             <>
               {avecPersonnage ? (
                 <Animated.View style={{ transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }], opacity: rise }}>
-                  <Image source={image} style={{ width: 230, height: 300 }} resizeMode="contain" accessibilityLabel="Ton personnage" />
+                  <Image source={image} style={{ width: 230, height: 300 }} resizeMode="contain" accessibilityLabel={traduire("Ton personnage")} />
                 </Animated.View>
               ) : (
                 <View style={{ height: 40 }} />
               )}
               <Ink size={16} weight="bold" color="#B9BBC4">{libelleConstruction(u)}</Ink>
               <Ink size={30} weight="black" tight color="#F2F1EC" style={{ textAlign: 'center' }}>{`${nomEtape.charAt(0).toUpperCase()}${nomEtape.slice(1)}`}</Ink>
-              <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{`${cons.titre}, ${etapeFaite} sur 3.`}</Ink>
-              <ArmureEnConstruction piece={cons.piece} progres={etapeFaite / 3} taille={110} ton="sombre" eclat={visible} style={{ marginTop: 12 }} accessibilityLabel={`${cons.titre}, ${etapeFaite} étapes sur 3`} />
+              <Ink size={16} color="#D9D6CC" style={{ textAlign: 'center' }}>{traduire("{0}, {1} sur 3.", cons.titre, etapeFaite)}</Ink>
+              <ArmureEnConstruction piece={cons.piece} progres={etapeFaite / 3} taille={110} ton="sombre" eclat={visible} style={{ marginTop: 12 }} accessibilityLabel={traduire("{0}, {1} étapes sur 3", cons.titre, etapeFaite)} />
               <EtapesPiece faites={etapeFaite} ton="sombre" />
             </>
           ) : (
@@ -136,7 +137,7 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
             <View style={{ alignSelf: 'stretch', marginTop: showRank || showPlate ? 22 : 0, borderRadius: 22, paddingVertical: 16, paddingHorizontal: 10, backgroundColor: 'rgba(20,22,30,0.72)', gap: 14 }}>
               <View style={{ paddingHorizontal: 6, gap: 6 }}>
                 <Ink size={20} weight="black" color="#F2F1EC">{sealTitle}</Ink>
-                {recap ? <Ink size={14} color="#B9BBC4">{`Calculés à partir de tout ton historique. Chacun t’a rapporté ${XP_VALUES.sceau} XP.`}</Ink> : null}
+                {recap ? <Ink size={14} color="#B9BBC4">{traduire("Calculés à partir de tout ton historique. Chacun t’a rapporté {0} XP.", XP_VALUES.sceau)}</Ink> : null}
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 }}>
                 {seals.map((s) => (

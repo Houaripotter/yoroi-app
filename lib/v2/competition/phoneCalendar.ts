@@ -12,15 +12,16 @@ import { formatKg } from '@/lib/v2/weightStats';
 import { addDays, parseLocalDate } from './dates';
 import type { CompetitionExtra } from './extras';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CalendarResult = 'saved' | 'opened' | 'shared' | 'canceled' | 'failed';
 
 function notesOf(comp: Competition, extra: CompetitionExtra): string {
   const lines: string[] = [];
-  if (comp.categorie_poids) lines.push(`Catégorie : ${comp.categorie_poids}${comp.poids_max && comp.poids_max < 900 ? `, ${formatKg(comp.poids_max)} kg maximum` : ''}`);
-  if (extra.pesee) lines.push(extra.pesee === 'veille' ? 'Pesée la veille' : 'Pesée le jour même');
+  if (comp.categorie_poids) lines.push(traduire("Catégorie : {0}{1}", comp.categorie_poids, comp.poids_max && comp.poids_max < 900 ? `, ${formatKg(comp.poids_max)} kg maximum` : ''));
+  if (extra.pesee) lines.push(extra.pesee === 'veille' ? traduire('Pesée la veille') : traduire('Pesée le jour même'));
   if (extra.url) lines.push(extra.url);
-  lines.push('Ajouté depuis YOROI');
+  lines.push(traduire('Ajouté depuis YOROI'));
   return lines.join('\n');
 }
 
@@ -64,7 +65,7 @@ async function shareIcs(comp: Competition, extra: CompetitionExtra): Promise<Cal
   const safe = comp.nom.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'competition';
   const uri = `${dir}${safe}.ics`;
   await FileSystem.writeAsStringAsync(uri, buildIcs(comp, extra), { encoding: FileSystem.EncodingType.UTF8 });
-  await Sharing.shareAsync(uri, { mimeType: 'text/calendar', UTI: 'com.apple.ical.ics', dialogTitle: 'Ajouter à ton calendrier' });
+  await Sharing.shareAsync(uri, { mimeType: 'text/calendar', UTI: 'com.apple.ical.ics', dialogTitle: traduire('Ajouter à ton calendrier') });
   return 'shared';
 }
 

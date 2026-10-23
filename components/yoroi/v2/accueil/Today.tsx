@@ -10,6 +10,7 @@ import { durationOf, formatDuration } from '@/lib/v2/trainingWeek';
 import type { NextSession } from '@/lib/v2/accueil/home';
 import { relativeDay } from '@/lib/v2/accueil/home';
 import { formatMinutes } from '@/lib/v2/accueil/forme';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ActivityToday = { connected: boolean; steps: number | null; move: number | null; exercise: number | null; moveGoal: number; exerciseGoal: number };
 
@@ -21,7 +22,7 @@ export function nextTarget(next: NextSession | null, trainings: Training[], favo
   if (next && next.sportId) {
     const params: Record<string, string> = next.slotId ? { slotId: String(next.slotId) } : { sport: next.sportId };
     return {
-      over: `${next.when}${next.time ? ` à ${next.time}` : ''}${next.duration ? `, ${formatMinutes(next.duration)}` : ''}`,
+      over: `${next.when}${next.time ? traduire(" à {0}", next.time) : ''}${next.duration ? `, ${formatMinutes(next.duration)}` : ''}`,
       title: next.title,
       sub: next.club ? `${next.sport}, ${next.club}` : next.title !== next.sport ? next.sport : undefined,
       sportId: next.sportId,
@@ -35,7 +36,7 @@ export function nextTarget(next: NextSession | null, trainings: Training[], favo
     const n = (last.exercises ?? []).length;
     const dur = durationOf(last);
     return {
-      over: `Dernière séance ${relativeDay(last.date)}`,
+      over: traduire("Dernière séance {0}", relativeDay(last.date)),
       title: getSportName(main),
       sub: [n > 0 ? `${n} exercice${n > 1 ? 's' : ''}` : null, dur > 0 ? `environ ${formatDuration(dur)}` : null].filter(Boolean).join(', ') || undefined,
       sportId: main,
@@ -43,5 +44,5 @@ export function nextTarget(next: NextSession | null, trainings: Training[], favo
     };
   }
   const sport = favori || 'musculation';
-  return { over: 'Ta première séance', title: getSportName(sport), sportId: sport, params: { sport } };
+  return { over: traduire('Ta première séance'), title: getSportName(sport), sportId: sport, params: { sport } };
 }

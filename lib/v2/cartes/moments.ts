@@ -10,6 +10,7 @@
  */
 import { nombre } from './chiffres';
 import type { Moment, RaisonPesee } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 export type JournalCartes = {
   /** propositions automatiques coupees dans les reglages */
@@ -97,7 +98,7 @@ export function raisonPesee(e: EntreePesee): RaisonPesee | null {
   // objectif atteint, et pas deja atteint a la pesee d'avant
   if (e.objectif && e.objectif > 0) {
     const atteint = (w: number) => (sens === 'perte' ? w <= e.objectif! + 0.05 : w >= e.objectif! - 0.05);
-    if (atteint(e.poids) && !atteint(prec)) return { type: 'objectif', texte: 'Objectif atteint' };
+    if (atteint(e.poids) && !atteint(prec)) return { type: 'objectif', texte: traduire('Objectif atteint') };
   }
   if (!bon(d)) return null;
 
@@ -105,7 +106,7 @@ export function raisonPesee(e: EntreePesee): RaisonPesee | null {
   const pal = sens === 'perte' ? Math.floor(prec / 5) * 5 : Math.ceil(prec / 5) * 5;
   const franchi = sens === 'perte' ? prec >= pal + 0.05 && e.poids < pal : prec <= pal - 0.05 && e.poids >= pal;
   if (franchi && pal > 0) {
-    return { type: 'palier', texte: sens === 'perte' ? `Sous les ${pal} kg` : `${pal} kg passés` };
+    return { type: 'palier', texte: sens === 'perte' ? traduire("Sous les {0} kg", pal) : traduire("{0} kg passés", pal) };
   }
   // palier de chemin : 5, 10, 15 kilos depuis le depart
   if (e.depart && e.depart > 0) {
@@ -114,17 +115,17 @@ export function raisonPesee(e: EntreePesee): RaisonPesee | null {
     const etape = Math.floor(apres / 5) * 5;
     const dansLeBonSens = sens === 'perte' ? e.poids < e.depart : e.poids > e.depart;
     if (dansLeBonSens && etape >= 5 && avant < etape) {
-      return { type: 'palier', texte: `${etape} kg ${sens === 'perte' ? 'perdus' : 'pris'}` };
+      return { type: 'palier', texte: `${etape} kg ${sens === 'perte' ? 'perdus' : traduire('pris')}` };
     }
   }
   // nouveau plus bas (ou plus haut) sur au moins 3 pesees d'avant
   if (h.length >= 3) {
     const ext = sens === 'perte' ? Math.min(...h) : Math.max(...h);
     if (sens === 'perte' ? e.poids <= ext - 0.1 : e.poids >= ext + 0.1) {
-      return sens === 'perte' ? { type: 'plus_bas', texte: 'Ton plus bas' } : { type: 'plus_haut', texte: 'Ton plus haut' };
+      return sens === 'perte' ? { type: 'plus_bas', texte: traduire('Ton plus bas') } : { type: 'plus_haut', texte: traduire('Ton plus haut') };
     }
   }
-  return { type: 'progres', texte: `${nombre(Math.abs(d), 1)} kg ${sens === 'perte' ? 'de moins' : 'de plus'}` };
+  return { type: 'progres', texte: `${nombre(Math.abs(d), 1)} kg ${sens === 'perte' ? traduire('de moins') : traduire('de plus')}` };
 }
 
 /**

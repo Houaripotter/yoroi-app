@@ -17,6 +17,7 @@ import { loadChecklist, phaseOf, saveChecklist } from '@/lib/v2/competition/chec
 import type { PrepStep } from '@/lib/v2/competition/checklist';
 import { campStart, loadCamp } from '@/lib/v2/competition/camp';
 import { formatKg } from '@/lib/v2/weightStats';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function CompetitionCountdownScreen() {
   const router = useRouter();
@@ -59,12 +60,12 @@ export default function CompetitionCountdownScreen() {
     if (rel.length && rel.every((s) => s.checked)) tap('success');
   };
 
-  if (!loaded) return <DetailScreen title="Compte à rebours">{null}</DetailScreen>;
+  if (!loaded) return <DetailScreen title={traduire("Compte à rebours")}>{null}</DetailScreen>;
 
   if (!comp) {
     return (
-      <DetailScreen title="Compte à rebours">
-        <EmptyState title="Aucune compétition à venir" text="Ajoute ta prochaine compétition : tu verras ici chaque jour qui te sépare du combat, et ce qu'il te reste à préparer." action="Ajouter une compétition" onAction={() => router.push('/add-competition' as any)} />
+      <DetailScreen title={traduire("Compte à rebours")}>
+        <EmptyState title={traduire("Aucune compétition à venir")} text={traduire("Ajoute ta prochaine compétition : tu verras ici chaque jour qui te sépare du combat, et ce qu'il te reste à préparer.")} action={traduire("Ajouter une compétition")} onAction={() => router.push('/add-competition' as any)} />
       </DetailScreen>
     );
   }
@@ -72,7 +73,7 @@ export default function CompetitionCountdownScreen() {
   const phase = phaseOf(daysLeft);
 
   return (
-    <DetailScreen title="Compte à rebours" subtitle={comp.nom}>
+    <DetailScreen title={traduire("Compte à rebours")} subtitle={comp.nom}>
       <Enter i={0}>
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <View style={{ backgroundColor: daysLeft < 0 ? P.paper : P.ink, padding: 20, gap: 6 }}>
@@ -93,17 +94,15 @@ export default function CompetitionCountdownScreen() {
               <Ink size={88} weight="black" tight color={P.white} style={{ lineHeight: 92 }}>
                 {String(hoursLeft)}
                 <Ink size={20} weight="extraBold" color="rgba(255,255,255,0.7)">
-                  {' heures'}
+                  {traduire(' heures')}
                 </Ink>
               </Ink>
             ) : daysLeft === 0 ? (
               <Ink size={46} weight="black" tight color={P.white}>
-                C'est aujourd'hui
-              </Ink>
+                {traduire("C'est aujourd'hui")}</Ink>
             ) : (
               <Ink size={40} weight="black" tight color={P.ink2}>
-                Terminée
-              </Ink>
+                {traduire("Terminée")}</Ink>
             )}
             <Ink size={14} weight="bold" color={daysLeft < 0 ? P.ink2 : 'rgba(255,255,255,0.78)'}>
               {[capitalize(longDate(parseLocalDate(comp.date))), comp.lieu].filter(Boolean).join(', ')}
@@ -112,7 +111,7 @@ export default function CompetitionCountdownScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
                 <Icon name="scale" size={16} color={daysLeft < 0 ? P.ink2 : P.goldLight} />
                 <Ink size={13} weight="extraBold" color={daysLeft < 0 ? P.ink2 : P.white}>
-                  {`Catégorie ${comp.categorie_poids}, ${formatKg(comp.poids_max)} kg max`}
+                  {traduire("Catégorie {0}, {1} kg max", comp.categorie_poids, formatKg(comp.poids_max))}
                 </Ink>
               </View>
             ) : null}
@@ -127,13 +126,13 @@ export default function CompetitionCountdownScreen() {
 
       {daysLeft >= 0 ? (
         <Enter i={1} style={{ gap: 10 }}>
-          <SectionTitle>Check-list de préparation</SectionTitle>
+          <SectionTitle>{traduire("Check-list de préparation")}</SectionTitle>
           {relevant.length > 0 ? (
             <Glass style={{ gap: 4, padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 4, paddingBottom: 8 }}>
                 <View style={{ flex: 1, gap: 8 }}>
                   <Ink size={14} weight="extraBold">
-                    {`${done} sur ${relevant.length} faites`}
+                    {traduire("{0} sur {1} faites", done, relevant.length)}
                   </Ink>
                   <InkBar value={relevant.length ? done / relevant.length : 0} color={allDone ? P.accent : P.ink} />
                 </View>
@@ -157,18 +156,17 @@ export default function CompetitionCountdownScreen() {
               ))}
             </Glass>
           ) : (
-            <EmptyState title="Rien à cocher pour l'instant" text="La check-list se déploie au fil des jours. Les premières étapes arrivent deux semaines avant." />
+            <EmptyState title={traduire("Rien à cocher pour l'instant")} text={traduire("La check-list se déploie au fil des jours. Les premières étapes arrivent deux semaines avant.")} />
           )}
           {upcomingSteps.length > 0 ? (
             <Card style={{ gap: 10 }}>
               <Ink size={14} weight="extraBold">
-                Ce qui arrive ensuite
-              </Ink>
+                {traduire("Ce qui arrive ensuite")}</Ink>
               {upcomingSteps.slice(0, 4).map((s) => (
                 <View key={s.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{ minWidth: 64, paddingHorizontal: 8, height: 28, borderRadius: 10, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
                     <Ink size={12} weight="extraBold" color={P.ink2}>
-                      {`J moins ${s.fromDays}`}
+                      {traduire("J moins {0}", s.fromDays)}
                     </Ink>
                   </View>
                   <Ink size={14} weight="bold" style={{ flex: 1 }}>
@@ -178,10 +176,10 @@ export default function CompetitionCountdownScreen() {
               ))}
             </Card>
           ) : null}
-          {daysLeft <= 3 ? <Note>Phase critique. Priorité au sommeil et à l'hydratation, et pas de séance trop intense.</Note> : null}
+          {daysLeft <= 3 ? <Note>{traduire("Phase critique. Priorité au sommeil et à l'hydratation, et pas de séance trop intense.")}</Note> : null}
         </Enter>
       ) : (
-        <EmptyState title="Cette compétition est passée" text="Note tes combats pour garder ton palmarès à jour." action="Voir la compétition" onAction={() => router.push(`/competition-detail?id=${comp.id}` as any)} />
+        <EmptyState title={traduire("Cette compétition est passée")} text={traduire("Note tes combats pour garder ton palmarès à jour.")} action={traduire("Voir la compétition")} onAction={() => router.push(`/competition-detail?id=${comp.id}` as any)} />
       )}
     </DetailScreen>
   );

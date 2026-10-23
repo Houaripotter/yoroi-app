@@ -9,12 +9,13 @@ import { SparringView } from './tabs/SparringView';
 import { CompetitionsView } from './tabs/CompetitionsView';
 import { PositionsView } from './tabs/PositionsView';
 import { SoumissionsView } from './tabs/SoumissionsView';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CombatPart = 'sparring' | 'competitions' | 'positions' | 'soumissions';
 
 const PARTS: { key: CombatPart; label: string }[] = [
   { key: 'sparring', label: 'Sparring' },
-  { key: 'competitions', label: 'Compétitions' },
+  { key: 'competitions', label: traduire('Compétitions') },
   { key: 'positions', label: 'Positions' },
   { key: 'soumissions', label: 'Soumissions' },
 ];

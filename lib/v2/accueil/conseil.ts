@@ -6,6 +6,7 @@
 import type { Training } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { trainingsThisWeek } from '@/lib/v2/trainingWeek';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** Petite icone dessinee (plus aucun kanji) */
 export type ConseilPicto = 'steps' | 'bolt' | 'calendar' | 'mountain' | 'play' | 'repeat' | 'moon' | 'check' | 'scale' | 'target' | 'flame' | 'refresh';
@@ -32,10 +33,10 @@ function dayIndex(iso: string): number {
 }
 
 const SAGESSE: Conseil[] = [
-  { picto: 'steps', title: 'Un pas de plus', text: 'Aujourd’hui n’a pas besoin d’être parfait. Il a juste besoin d’être fait.', tone: 'gold' },
-  { picto: 'bolt', title: 'Aiguise ta lame', text: 'Les grandes victoires naissent de petites habitudes, répétées chaque jour.', tone: 'gold' },
-  { picto: 'calendar', title: 'La discipline reste', text: 'La motivation va et vient. La régularité, elle, construit ta progression.', tone: 'gold' },
-  { picto: 'mountain', title: 'Patience', text: 'Le progrès se voit sur des semaines, pas sur une séance. Continue.', tone: 'gold' },
+  { picto: 'steps', title: traduire('Un pas de plus'), text: traduire('Aujourd’hui n’a pas besoin d’être parfait. Il a juste besoin d’être fait.'), tone: 'gold' },
+  { picto: 'bolt', title: traduire('Aiguise ta lame'), text: traduire('Les grandes victoires naissent de petites habitudes, répétées chaque jour.'), tone: 'gold' },
+  { picto: 'calendar', title: traduire('La discipline reste'), text: traduire('La motivation va et vient. La régularité, elle, construit ta progression.'), tone: 'gold' },
+  { picto: 'mountain', title: 'Patience', text: traduire('Le progrès se voit sur des semaines, pas sur une séance. Continue.'), tone: 'gold' },
 ];
 
 /**
@@ -44,24 +45,24 @@ const SAGESSE: Conseil[] = [
  */
 const PAR_FREIN: Record<string, Conseil[]> = {
   regularite: [
-    { picto: 'calendar', title: 'Petit mais régulier', text: 'Deux séances tenues valent mieux que cinq prévues. Regarde ta semaine et vise juste.', action: 'Ma semaine', href: '/seances', tone: 'gold' },
-    { picto: 'repeat', title: 'Le même créneau', text: 'Garde le même moment pour t’entraîner. L’habitude fait le travail à ta place.', tone: 'gold' },
+    { picto: 'calendar', title: traduire('Petit mais régulier'), text: traduire('Deux séances tenues valent mieux que cinq prévues. Regarde ta semaine et vise juste.'), action: traduire('Ma semaine'), href: '/seances', tone: 'gold' },
+    { picto: 'repeat', title: traduire('Le même créneau'), text: traduire('Garde le même moment pour t’entraîner. L’habitude fait le travail à ta place.'), tone: 'gold' },
   ],
   progres: [
-    { picto: 'scale', title: 'Ta courbe parle', text: 'Une pesée seule ne dit pas grand-chose. Ta tendance sur plusieurs semaines, si.', action: 'Voir ma courbe', href: '/poids-detail', tone: 'indigo' },
-    { picto: 'target', title: 'Note tes charges', text: 'Une charge notée aujourd’hui, c’est un record à battre la prochaine fois.', action: 'Mes records', href: '/records', tone: 'indigo' },
+    { picto: 'scale', title: traduire('Ta courbe parle'), text: traduire('Une pesée seule ne dit pas grand-chose. Ta tendance sur plusieurs semaines, si.'), action: traduire('Voir ma courbe'), href: '/poids-detail', tone: 'indigo' },
+    { picto: 'target', title: traduire('Note tes charges'), text: traduire('Une charge notée aujourd’hui, c’est un record à battre la prochaine fois.'), action: traduire('Mes records'), href: '/records', tone: 'indigo' },
   ],
   motivation: [
-    { picto: 'flame', title: 'Regarde le chemin', text: 'Les jours sans envie, relis ce que tu as déjà fait. Chaque séance notée compte.', action: 'Mes séances', href: '/seances', tone: 'red' },
-    { picto: 'steps', title: 'Juste commencer', text: 'Dis-toi dix minutes. Une fois lancé, le reste suit souvent.', tone: 'gold' },
+    { picto: 'flame', title: traduire('Regarde le chemin'), text: traduire('Les jours sans envie, relis ce que tu as déjà fait. Chaque séance notée compte.'), action: traduire('Mes séances'), href: '/seances', tone: 'red' },
+    { picto: 'steps', title: traduire('Juste commencer'), text: traduire('Dis-toi dix minutes. Une fois lancé, le reste suit souvent.'), tone: 'gold' },
   ],
   blessures: [
-    { picto: 'moon', title: 'Écoute ton corps', text: 'Une douleur qui revient mérite du repos. Ta récupération du jour t’aide à choisir.', action: 'Voir ta récupération', href: '/readiness-detail', tone: 'indigo' },
-    { picto: 'refresh', title: 'Monte doucement', text: 'Augmente la charge petit à petit, pas tout d’un coup. Ton corps suit mieux.', tone: 'gold' },
+    { picto: 'moon', title: traduire('Écoute ton corps'), text: traduire('Une douleur qui revient mérite du repos. Ta récupération du jour t’aide à choisir.'), action: traduire('Voir ta récupération'), href: '/readiness-detail', tone: 'indigo' },
+    { picto: 'refresh', title: 'Monte doucement', text: traduire('Augmente la charge petit à petit, pas tout d’un coup. Ton corps suit mieux.'), tone: 'gold' },
   ],
   programme: [
-    { picto: 'play', title: 'Une idée de séance', text: 'Pas besoin d’un plan parfait. Choisis un sport et note ce que tu as fait.', action: 'M’entraîner', href: '/seance', tone: 'red' },
-    { picto: 'bolt', title: 'Repars de la dernière', text: 'Reprends tes exercices de la dernière séance et ajoute un peu. C’est un plan.', action: 'Mes séances', href: '/seances', tone: 'red' },
+    { picto: 'play', title: traduire('Une idée de séance'), text: traduire('Pas besoin d’un plan parfait. Choisis un sport et note ce que tu as fait.'), action: traduire('M’entraîner'), href: '/seance', tone: 'red' },
+    { picto: 'bolt', title: traduire('Repars de la dernière'), text: traduire('Reprends tes exercices de la dernière séance et ajoute un peu. C’est un plan.'), action: traduire('Mes séances'), href: '/seances', tone: 'red' },
   ],
 };
 
@@ -86,7 +87,7 @@ export function conseilDuJour({ trainings, lastWeighIso, goal, now = new Date(),
     // un jour sur deux, le conseil lie a ce qui t'a freine (onboarding)
     const parFrein = today % 2 === 1 ? conseilFrein(freins, Math.floor(today / 2)) : null;
     if (parFrein) return parFrein;
-    return { picto: 'play', title: 'Ta première séance', text: `Même 15${NB}minutes aujourd’hui suffisent. Ta progression commence aujourd’hui.`, action: 'Commencer', href: '/seance', tone: 'red' };
+    return { picto: 'play', title: traduire('Ta première séance'), text: traduire("Même 15{0}minutes aujourd’hui suffisent. Ta progression commence aujourd’hui.", NB), action: traduire('Commencer'), href: '/seance', tone: 'red' };
   }
 
   const days = Array.from(new Set(trainings.map((t) => t.date.slice(0, 10)))).sort();
@@ -94,35 +95,35 @@ export function conseilDuJour({ trainings, lastWeighIso, goal, now = new Date(),
   const sinceLast = today - dayIndex(lastDay);
 
   if (sinceLast >= 10) {
-    return { picto: 'repeat', title: `${sinceLast}${NB}jours sans séance`, text: 'Une séance courte aujourd’hui suffit pour relancer la machine.', action: 'Reprendre', href: '/seance', tone: 'red' };
+    return { picto: 'repeat', title: traduire("{0}{1}jours sans séance", sinceLast, NB), text: traduire('Une séance courte aujourd’hui suffit pour relancer la machine.'), action: 'Reprendre', href: '/seance', tone: 'red' };
   }
 
   const last7 = days.filter((d) => today - dayIndex(d) < 7 && today - dayIndex(d) >= 0).length;
   if (last7 >= 6) {
-    return { picto: 'moon', title: 'Un jour de repos', text: `${last7}${NB}jours d’entraînement sur les 7 derniers. Ton corps progresse pendant la récupération.`, action: 'Voir ta récupération', href: '/readiness-detail', tone: 'indigo' };
+    return { picto: 'moon', title: traduire('Un jour de repos'), text: traduire("{0}{1}jours d’entraînement sur les 7 derniers. Ton corps progresse pendant la récupération.", last7, NB), action: traduire('Voir ta récupération'), href: '/readiness-detail', tone: 'indigo' };
   }
 
   // semaine calendaire, du lundi a aujourd'hui : regle unique de lib/v2/trainingWeek
   const weekSessions = trainingsThisWeek(trainings, todayIso).length;
   if (!semaineVisible && goal > 0 && weekSessions >= goal) {
-    return { picto: 'check', title: 'Semaine réussie', text: `${weekSessions}${NB}séances sur ${goal} cette semaine. Tout ce qui vient en plus est du bonus.`, tone: 'moss' };
+    return { picto: 'check', title: traduire('Semaine réussie'), text: traduire("{0}{1}séances sur {2} cette semaine. Tout ce qui vient en plus est du bonus.", weekSessions, NB, goal), tone: 'moss' };
   }
 
   if (lastWeighIso) {
     const sinceWeigh = today - dayIndex(lastWeighIso);
     if (sinceWeigh >= 7) {
-      return { picto: 'scale', title: 'Ta pesée de la semaine', text: `Ta dernière pesée date de ${sinceWeigh}${NB}jours. Dix secondes pour garder ta courbe juste.`, action: 'Me peser', href: '/pesee', tone: 'indigo' };
+      return { picto: 'scale', title: traduire('Ta pesée de la semaine'), text: traduire("Ta dernière pesée date de {0}{1}jours. Dix secondes pour garder ta courbe juste.", sinceWeigh, NB), action: 'Me peser', href: '/pesee', tone: 'indigo' };
     }
   }
 
   const dow = (now.getDay() + 6) % 7; // 0 = lundi
   const left = goal - weekSessions;
   if (!semaineVisible && goal > 0 && left > 0 && left >= 7 - dow - 1 && weekSessions > 0) {
-    return { picto: 'target', title: `Encore ${left}${NB}séance${left > 1 ? 's' : ''}`, text: `Tu en es à ${weekSessions} sur ${goal} cette semaine. Il reste ${7 - dow}${NB}jour${7 - dow > 1 ? 's' : ''}.`, action: 'M’entraîner', href: '/seance', tone: 'red' };
+    return { picto: 'target', title: traduirePluriel(left, left > 1, "Encore {0}{1}séance", "Encore {0}{1}séances", left, NB), text: traduirePluriel(7 - dow, 7 - dow > 1, "Tu en es à {0} sur {1} cette semaine. Il reste {2}{3}jour.", "Tu en es à {0} sur {1} cette semaine. Il reste {2}{3}jours.", weekSessions, goal, 7 - dow, NB), action: traduire('M’entraîner'), href: '/seance', tone: 'red' };
   }
 
   if (sinceLast === 1) {
-    return { picto: 'flame', title: 'Garde le rythme', text: 'Une séance hier. Une autre aujourd’hui et la régularité devient une habitude.', action: 'M’entraîner', href: '/seance', tone: 'red' };
+    return { picto: 'flame', title: traduire('Garde le rythme'), text: traduire('Une séance hier. Une autre aujourd’hui et la régularité devient une habitude.'), action: traduire('M’entraîner'), href: '/seance', tone: 'red' };
   }
 
   const last14 = trainings.filter((t) => {
@@ -138,7 +139,7 @@ export function conseilDuJour({ trainings, lastWeighIso, goal, now = new Date(),
     const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
     if (top && top[1] / last14.length > 0.7) {
       const pct = Math.round((top[1] / last14.length) * 100);
-      return { picto: 'refresh', title: 'Varie les armes', text: `${pct}${NB}% de tes séances récentes en ${getSportName(top[0])}. Une autre discipline aujourd’hui réveille d’autres muscles.`, action: 'Choisir', href: '/seance', tone: 'gold' };
+      return { picto: 'refresh', title: traduire('Varie les armes'), text: traduire("{0}{1}% de tes séances récentes en {2}. Une autre discipline aujourd’hui réveille d’autres muscles.", pct, NB, getSportName(top[0])), action: traduire('Choisir'), href: '/seance', tone: 'gold' };
     }
   }
 

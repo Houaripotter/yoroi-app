@@ -5,6 +5,7 @@ import { logger } from '@/lib/security/logger';
 import { YOROI_THEME_NAMES, yoroiThemes } from './tokens';
 import type { YoroiMode, YoroiTheme, YoroiThemeName } from './tokens';
 import { appliquerPalette } from './livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export const YOROI_THEME_STORAGE_KEY = 'yoroi_design_theme_v1';
 /** Vague 35 : clair, sombre ou auto (suit l'iPhone) */
@@ -39,7 +40,7 @@ function isMode(value: string | null): value is YoroiMode {
 
 /** Libelle court du mode, pour le toast et les reglages */
 export function libelleMode(mode: YoroiMode): string {
-  return mode === 'sombre' ? 'Mode sombre' : mode === 'auto' ? 'Mode auto, comme ton téléphone' : 'Mode clair';
+  return mode === 'sombre' ? 'Mode sombre' : mode === 'auto' ? traduire('Mode auto, comme ton téléphone') : 'Mode clair';
 }
 
 type ProviderProps = {

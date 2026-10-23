@@ -14,6 +14,7 @@ import type { MuscleId } from '@/lib/v2/seances/muscles';
 import { MUSCLE_LEVEL_COLORS, MuscleFigures } from './MuscleMap';
 import { Chip, tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Props = {
   sport: string;
@@ -50,23 +51,23 @@ export function MuscleWorked({ sport, customMuscles, trainingId, onMusclesUpdate
     <View style={{ borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, padding: 16, gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={17} weight="black" tight>Muscles travaillés</Ink>
-          <Ink size={12} color={c.textSecondary}>{selected.size ? `${selected.size} muscle${selected.size > 1 ? 's' : ''} sollicité${selected.size > 1 ? 's' : ''}` : 'aucun muscle choisi'}</Ink>
+          <Ink size={17} weight="black" tight>{traduire("Muscles travaillés")}</Ink>
+          <Ink size={12} color={c.textSecondary}>{selected.size ? traduirePluriel(selected.size, selected.size > 1, "{0} muscle sollicité", "{0} muscles sollicités", selected.size) : traduire('aucun muscle choisi')}</Ink>
         </View>
         <Pressable
           onPress={() => { tap(); setEditing((v) => !v); }}
           accessibilityRole="button"
-          accessibilityLabel={editing ? 'Terminer le réglage des muscles' : 'Ajuster les muscles travaillés'}
+          accessibilityLabel={editing ? traduire('Terminer le réglage des muscles') : traduire('Ajuster les muscles travaillés')}
           style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: editing ? c.ink : P.white, borderWidth: editing ? 0 : 1, borderColor: c.border }}
         >
-          <Ink size={13} weight="extraBold" color={editing ? P.paper : c.ink}>{editing ? 'Terminé' : 'Ajuster'}</Ink>
+          <Ink size={13} weight="extraBold" color={editing ? P.paper : c.ink}>{editing ? traduire('Terminé') : 'Ajuster'}</Ink>
         </Pressable>
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <MuscleFigures levels={levels} height={150} />
         <View style={{ flex: 1, gap: 8 }}>
-          {groups.length === 0 ? <Ink size={13} color={c.textMuted}>Touche Ajuster pour choisir les muscles de ta séance.</Ink> : null}
+          {groups.length === 0 ? <Ink size={13} color={c.textMuted}>{traduire("Touche Ajuster pour choisir les muscles de ta séance.")}</Ink> : null}
           {groups.map(({ g, names }) => (
             <View key={g} style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ width: 12, height: 12, borderRadius: 4, marginTop: 3, backgroundColor: MUSCLE_LEVEL_COLORS[levels[g] ?? 0] }} />

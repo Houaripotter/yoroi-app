@@ -45,6 +45,7 @@ import { isSafetyFile, restoreSafetyFile, safetyReportText } from '@/lib/v2/sauv
 import { ARMURE_STORAGE_KEYS, requestArmureCatchup, restoreArmureFromStorage } from '@/lib/v2/armure';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { illustrer } from '@/components/yoroi/v2/messages/illustrer';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 /**
  * Restauration : remet la date d'enregistrement d'origine sur la ligne insérée (même principe
@@ -180,8 +181,8 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
         logger.warn(`[Backup] Espace disque insuffisant : ${Math.round(freeDiskBytes / 1024 / 1024)} MB libre`);
         if (!silent) {
           appAlert(
-            'Plus assez de place',
-            `Il te reste ${Math.round(freeDiskBytes / 1024 / 1024)} Mo sur ce téléphone. Une sauvegarde ${includePhotos ? 'complète' : 'légère'} a besoin d’au moins ${Math.round(minRequired / 1024 / 1024)} Mo.\n\nLibère de l'espace (supprime des apps ou photos) puis réessaie.`
+            traduire('Plus assez de place'),
+            traduire("Il te reste {0} Mo sur ce téléphone. Une sauvegarde {1} a besoin d’au moins {2} Mo.\n\nLibère de l'espace (supprime des apps ou photos) puis réessaie.", Math.round(freeDiskBytes / 1024 / 1024), includePhotos ? 'complète' : 'légère', Math.round(minRequired / 1024 / 1024))
           );
         }
         return false;
@@ -707,14 +708,14 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       if (canShare) {
         await shareAsync(fileUri, {
           mimeType: 'application/json',
-          dialogTitle: 'Sauvegarder dans ton Cloud',
+          dialogTitle: traduire('Sauvegarder dans ton Cloud'),
           UTI: 'public.json',
         });
         // Copie proposee hors du telephone (Fichiers, iCloud Drive, Google Drive...). Le systeme ne dit pas
         // ou elle a ete rangee : c'est la date de la derniere copie PROPOSEE, affichee dans les Reglages.
         await AsyncStorage.setItem('@yoroi_last_manual_export', new Date().toISOString()).catch(() => undefined);
       } else {
-        appAlert('Export terminé', 'Tes données sont exportées.');
+        appAlert(traduire('Export terminé'), traduire('Tes données sont exportées.'));
       }
     }
 
@@ -722,7 +723,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
   } catch (error) {
     logger.error('Erreur export JSON:', error);
     if (!silent) {
-      appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
+      appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
     }
     return false;
   }
@@ -736,12 +737,12 @@ export const exportDataToCSV = async (): Promise<boolean> => {
     const weights = await getWeights();
 
     if (weights.length === 0) {
-      appAlert('Rien à exporter', 'Tu n’as pas encore de données à exporter.');
+      appAlert(traduire('Rien à exporter'), traduire('Tu n’as pas encore de données à exporter.'));
       return false;
     }
 
     // Créer le CSV avec toutes les colonnes
-    let csv = 'Date,Poids (kg),Graisse (%),Muscle (%),Eau (%),Masse osseuse (kg),Graisse viscérale,Âge métabolique,BMR\n';
+    let csv = traduire('Date,Poids (kg),Graisse (%),Muscle (%),Eau (%),Masse osseuse (kg),Graisse viscérale,Âge métabolique,BMR\n');
 
     weights.forEach(w => {
       csv += `${w.date},${w.weight},`;
@@ -762,17 +763,17 @@ export const exportDataToCSV = async (): Promise<boolean> => {
     if (canShare) {
       await shareAsync(fileUri, {
         mimeType: 'text/csv',
-        dialogTitle: 'Exporter vers Excel/Numbers',
+        dialogTitle: traduire('Exporter vers Excel/Numbers'),
         UTI: 'public.comma-separated-values-text',
       });
     } else {
-      appAlert('Export terminé', 'Tes données sont exportées.');
+      appAlert(traduire('Export terminé'), traduire('Tes données sont exportées.'));
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur export CSV:', error);
-    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
+    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
     return false;
   }
 };
@@ -805,7 +806,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
     try {
       importedData = JSON.parse(fileContent);
     } catch (parseError) {
-      appAlert('Fichier illisible', 'Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.');
+      appAlert('Fichier illisible', traduire('Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.'));
       return false;
     }
 
@@ -813,8 +814,8 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
     if (isEncryptedBackup(importedData)) {
       // Saisie du mot de passe : fenetre maison YOROI
       const password = await requestPassword({
-        title: 'Sauvegarde protégée',
-        message: 'Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.',
+        title: traduire('Sauvegarde protégée'),
+        message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.'),
         confirmLabel: 'Ouvrir',
       });
       if (!password) return false;
@@ -824,16 +825,16 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
         logger.info('[Import] Backup déchiffré avec succès');
       } catch (e) {
         // Messages d'erreur différenciés selon la cause réelle
-        let title = 'Erreur';
-        let msg = "Impossible de déchiffrer la sauvegarde.";
+        let title = traduire('Erreur');
+        let msg = traduire("Impossible de déchiffrer la sauvegarde.");
         if (e instanceof DecryptionError) {
           switch (e.code) {
             case 'WRONG_PASSWORD':
-              title = 'Mot de passe incorrect';
+              title = traduire('Mot de passe incorrect');
               msg = "Vérifie ton mot de passe. Si le fichier a été modifié pendant le transfert, il peut aussi être corrompu.";
               break;
             case 'TAMPERED':
-              title = 'Fichier altéré';
+              title = traduire('Fichier altéré');
               msg = "Le fichier a été modifié après chiffrement. La restauration est refusée pour protéger tes données.";
               break;
             case 'JSON_INVALID':
@@ -853,13 +854,13 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
 
     // Copie de securite automatique partagee depuis les Reglages : remise par fusion, comme une sauvegarde
     if (isSafetyFile(importedData)) {
-      const when = typeof importedData.journal?.at === 'string' ? new Date(importedData.journal.at).toLocaleDateString('fr-FR') : null;
+      const when = typeof importedData.journal?.at === 'string' ? new Date(importedData.journal.at).toLocaleDateString(LOCALE) : null;
       const goOn = await new Promise<boolean>((resolve) => {
         appAlert(
-          'Remettre cette copie ?',
-          `C’est une copie de sécurité automatique${when ? ` du ${when}` : ''}. Ce qui manque sur ce téléphone est ajouté. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.`,
+          traduire('Remettre cette copie ?'),
+          traduire("C’est une copie de sécurité automatique{0}. Ce qui manque sur ce téléphone est ajouté. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.", when ? ` du ${when}` : ''),
           [
-            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+            { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
             { text: 'Remettre', onPress: () => resolve(true) },
           ]
         );
@@ -867,7 +868,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       if (!goOn) return false;
       const rep = await restoreSafetyFile(importedData);
       if (!rep) {
-        appAlert('Oups', 'La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.');
+        appAlert('Oups', traduire('La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.'));
         return false;
       }
       const illustration = await illustrer('copieFaite');
@@ -896,11 +897,11 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
         if (recomputed !== integrity.checksum) {
           const confirmed = await new Promise<boolean>((resolve) => {
             appAlert(
-              'Fichier peut-être abîmé',
-              'Ce fichier a peut-être été modifié ou coupé pendant un transfert.\n\nTu veux quand même essayer de le restaurer ? Certaines données pourraient manquer.',
+              traduire('Fichier peut-être abîmé'),
+              traduire('Ce fichier a peut-être été modifié ou coupé pendant un transfert.\n\nTu veux quand même essayer de le restaurer ? Certaines données pourraient manquer.'),
               [
-                { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-                { text: 'Tenter quand même', style: 'destructive', onPress: () => resolve(true) },
+                { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
+                { text: traduire('Tenter quand même'), style: 'destructive', onPress: () => resolve(true) },
               ]
             );
           });
@@ -920,7 +921,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       logger.info(`[Import] Backup migré vers v${importedData.version}`);
     } catch (migrationError) {
       logger.error('[Import] Erreur lors de la migration du backup:', migrationError);
-      appAlert('Fichier illisible', 'Ce fichier de sauvegarde ne peut pas être lu.');
+      appAlert('Fichier illisible', traduire('Ce fichier de sauvegarde ne peut pas être lu.'));
       return false;
     }
 
@@ -928,11 +929,11 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
     if (isNewerBackupVersion(importedData.version, CURRENT_BACKUP_VERSION)) {
       const goOn = await new Promise<boolean>((resolve) => {
         appAlert(
-          'Sauvegarde plus récente',
-          'Cette sauvegarde vient d’une version plus récente de YOROI. Ce que cette version connaît sera ajouté, le reste sera ignoré. Mets l’app à jour pour tout récupérer.',
+          traduire('Sauvegarde plus récente'),
+          traduire('Cette sauvegarde vient d’une version plus récente de YOROI. Ce que cette version connaît sera ajouté, le reste sera ignoré. Mets l’app à jour pour tout récupérer.'),
           [
-            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Importer quand même', onPress: () => resolve(true) },
+            { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
+            { text: traduire('Importer quand même'), onPress: () => resolve(true) },
           ]
         );
       });
@@ -960,11 +961,11 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       ].filter(Boolean).join('\n');
 
       appAlert(
-        'Importer cette sauvegarde ?',
-        `Elle contient :\n${summary}\n\nTout est ajouté à ce qui est déjà sur ce téléphone. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.`,
+        traduire('Importer cette sauvegarde ?'),
+        traduire("Elle contient :\n{0}\n\nTout est ajouté à ce qui est déjà sur ce téléphone. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.", summary),
         [
-          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-          { text: 'Importer', onPress: () => resolve(true) },
+          { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
+          { text: traduire('Importer'), onPress: () => resolve(true) },
         ]
       );
     });
@@ -985,7 +986,7 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
     const done = await importDataFromBackupObject(importedData, { alreadyChecked: true });
     const rep = getLastImportReport();
     if (!done || !rep) {
-      appAlert('Oups', 'L’import n’a pas abouti. Rien n’a été effacé sur ce téléphone. Réessaie.');
+      appAlert('Oups', traduire('L’import n’a pas abouti. Rien n’a été effacé sur ce téléphone. Réessaie.'));
       return false;
     }
     const lines = [
@@ -995,12 +996,12 @@ export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean
       rep.images > 0 ? `${rep.images} image(s) remise(s).` : null,
       rep.failed > 0 ? `${rep.failed} élément(s) n’ont pas pu être lus.` : null,
     ].filter(Boolean).join('\n');
-    appAlert('Import terminé', lines);
+    appAlert(traduire('Import terminé'), lines);
 
     return true;
   } catch (error) {
     logger.error('Erreur import JSON:', error);
-    appAlert('Oups', 'L’import n’a pas abouti. Réessaie.');
+    appAlert('Oups', traduire('L’import n’a pas abouti. Réessaie.'));
     return false;
   }
 };
@@ -1022,16 +1023,16 @@ export const shareImage = async (viewRef: any, fileName: string = 'yoroi_card'):
     if (canShare) {
       await shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Partager ma progression Yoroi',
+        dialogTitle: traduire('Partager ma progression Yoroi'),
       });
       return true;
     } else {
-      appAlert('Partage indisponible', 'Le partage n’est pas disponible sur ce téléphone.');
+      appAlert('Partage indisponible', traduire('Le partage n’est pas disponible sur ce téléphone.'));
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage image:', error);
-    appAlert('Oups', 'L’image n’a pas pu être partagée.');
+    appAlert('Oups', traduire('L’image n’a pas pu être partagée.'));
     return false;
   }
 };
@@ -1045,29 +1046,29 @@ export const generateShareText = async (): Promise<string> => {
     const userSettings = await getUserSettings();
 
     if (measurements.length === 0) {
-      return 'Je commence mon parcours de champion avec Yoroi ! #Yoroi #Fitness';
+      return traduire('Je commence mon parcours de champion avec Yoroi ! #Yoroi #Fitness');
     }
 
     const latest = measurements[0];
     const oldest = measurements[measurements.length - 1];
     const weightDiff = oldest.weight - latest.weight;
 
-    let text = `Mon parcours Yoroi\n\n`;
+    let text = traduire(`Mon parcours Yoroi\n\n`);
 
     if (weightDiff > 0) {
       text += `${weightDiff.toFixed(1)}kg perdus !\n`;
     } else if (weightDiff < 0) {
-      text += `${Math.abs(weightDiff).toFixed(1)}kg gagnés !\n`;
+      text += traduire("{0}kg gagnés !\n", Math.abs(weightDiff).toFixed(1));
     }
 
-    text += `${measurements.length} mesures enregistrées\n`;
-    text += `Poids actuel: ${latest.weight}kg\n\n`;
+    text += traduire("{0} mesures enregistrées\n", measurements.length);
+    text += traduire("Poids actuel: {0}kg\n\n", latest.weight);
     text += `#Yoroi #Fitness #Transformation`;
 
     return text;
   } catch (error) {
     logger.error('Erreur génération texte partage:', error);
-    return 'Mon parcours Yoroi #Yoroi #Fitness';
+    return traduire('Mon parcours Yoroi #Yoroi #Fitness');
   }
 };
 
@@ -1085,17 +1086,17 @@ export const shareProgress = async (): Promise<boolean> => {
         const { Share } = require('react-native');
         await Share.share({
           message: text,
-          title: 'Ma progression Yoroi',
+          title: traduire('Ma progression Yoroi'),
         });
       }
       return true;
     } else {
-      appAlert('Ma progression', text);
+      appAlert(traduire('Ma progression'), text);
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage progression:', error);
-    appAlert('Oups', 'Ta progression n’a pas pu être partagée.');
+    appAlert('Oups', traduire('Ta progression n’a pas pu être partagée.'));
     return false;
   }
 };
@@ -1119,16 +1120,16 @@ export const shareStoryCard = async (viewRef: any, platform: 'instagram' | 'snap
     if (canShare) {
       await shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Partager sur les réseaux sociaux',
+        dialogTitle: traduire('Partager sur les réseaux sociaux'),
       });
       return true;
     } else {
-      appAlert('Partage indisponible', 'Le partage n’est pas disponible sur ce téléphone.');
+      appAlert('Partage indisponible', traduire('Le partage n’est pas disponible sur ce téléphone.'));
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage story:', error);
-    appAlert('Oups', 'La story n’a pas pu être partagée.');
+    appAlert('Oups', traduire('La story n’a pas pu être partagée.'));
     return false;
   }
 };
@@ -1144,7 +1145,7 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
     // Demander la permission
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
-      appAlert('Accès à la galerie', 'Autorise l’accès à ta galerie pour enregistrer l’image.');
+      appAlert(traduire('Accès à la galerie'), traduire('Autorise l’accès à ta galerie pour enregistrer l’image.'));
       return false;
     }
 
@@ -1157,11 +1158,11 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
 
     // Sauvegarder dans la galerie
     await MediaLibrary.saveToLibraryAsync(uri);
-    appAlert('Image enregistrée', 'Elle est dans ta galerie.');
+    appAlert(traduire('Image enregistrée'), traduire('Elle est dans ta galerie.'));
     return true;
   } catch (error) {
     logger.error('Erreur sauvegarde galerie:', error);
-    appAlert('Oups', 'L’image n’a pas pu être enregistrée.');
+    appAlert('Oups', traduire('L’image n’a pas pu être enregistrée.'));
     return false;
   }
 };
@@ -1243,7 +1244,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
           const recomputed = await digestStringAsync(CryptoDigestAlgorithm.SHA256, JSON.stringify(dataWithoutIntegrity));
           if (recomputed !== integrity.checksum) {
             logger.warn('[importDataFromBackupObject] Checksum invalide, restauration refusée');
-            appAlert('Fichier abîmé', 'Ce fichier a été modifié. La restauration est bloquée pour protéger tes données.');
+            appAlert(traduire('Fichier abîmé'), traduire('Ce fichier a été modifié. La restauration est bloquée pour protéger tes données.'));
             return false;
           }
         } catch (e) {
@@ -1372,7 +1373,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
           await keepCreatedAt('weights', newId, raw?.created_at);
           seenWeights.add(weightKey(raw));
           ok();
-        } catch (error) { fail('pesée', error); }
+        } catch (error) { fail(traduire('pesée'), error); }
       }
     }
 
@@ -1439,7 +1440,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
             if (raw.id != null) maps.trainings.set(Number(raw.id), newId);
             ok();
           }
-        } catch (error) { fail('séance', error); }
+        } catch (error) { fail(traduire('séance'), error); }
       }
     }
 
@@ -1491,7 +1492,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
             if (m.value != null) { await secureStorage.setItem('@yoroi_measurements', JSON.parse(m.value)); ok(m.added); }
           }
         }
-      } catch (error) { fail('mesures rapides', error); }
+      } catch (error) { fail(traduire('mesures rapides'), error); }
     }
 
     // === BADGES ===
@@ -1515,7 +1516,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
           }
           if (Object.keys(add).length) { await saveUserSettings(add); ok(); }
         }
-      } catch (error) { fail('réglages', error); }
+      } catch (error) { fail(traduire('réglages'), error); }
     }
     if (Array.isArray(importedData.homeLayout)) {
       try { await mergeKey('@yoroi_home_layout', JSON.stringify(importedData.homeLayout), report, fresh); } catch { /* ignore */ }
@@ -1615,9 +1616,9 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
             byKey.set(compKey(comp), newId);
             if (id != null && newId) maps.competitions.set(Number(id), newId);
             ok();
-          } catch (error) { fail('compétition', error); }
+          } catch (error) { fail(traduire('compétition'), error); }
         }
-      } catch (error) { fail('compétitions', error); }
+      } catch (error) { fail(traduire('compétitions'), error); }
     }
 
     // === PLANNING DE LA SEMAINE (sans doublon) ===
@@ -1648,7 +1649,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
         for (const goal of importedData.trainingGoals) {
           if (goal?.sport_id && goal.weekly_target && !existing.has(goal.sport_id)) { await setGoal(goal.sport_id, goal.weekly_target); ok(); }
         }
-      } catch (error) { fail('objectifs par sport', error); }
+      } catch (error) { fail(traduire('objectifs par sport'), error); }
     }
 
     // === APPARENCE : téléphone neuf → celle de la sauvegarde ; sinon seulement si absente ===
@@ -1774,7 +1775,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
         try {
           const newUri = await base64ToImage(m.routineImageBase64, `routine_${Date.now()}.jpg`);
           if (newUri) { await saveUserSettings({ routine_image_uri: newUri } as any); report.images++; ok(); }
-        } catch (e) { fail('image de routine', e); }
+        } catch (e) { fail(traduire('image de routine'), e); }
       }
       if (m.customClubLogosBase64 && typeof m.customClubLogosBase64 === 'object') {
         try {
@@ -1787,7 +1788,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
             if (newUri) { current[name] = newUri; added++; report.images++; }
           }
           if (added) { await saveUserSettings({ custom_club_logos: current } as any); ok(); }
-        } catch (e) { fail('logos de clubs', e); }
+        } catch (e) { fail(traduire('logos de clubs'), e); }
       }
     }
 
@@ -1810,7 +1811,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
         // les cles du Dojo sont reprises plus bas, sans fusion (journal d'XP et date de depart)
         const r = await restoreAllStorage(importedData.allStorage, new Set([...HANDLED_STORAGE_KEYS, ...ARMURE_STORAGE_KEYS]), fresh);
         report.imported += r.added; report.kept += r.kept;
-      } catch (e) { fail('réglages et données de l’app', e); }
+      } catch (e) { fail(traduire('réglages et données de l’app'), e); }
     }
 
     // 19 octobre 2026 : sauvegarde d'avant la 3.0 (formats 1.0 a 5.5) : ses pesees de l'ancien ecran et ses compositions,
@@ -1818,7 +1819,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
     if (avant30) {
       try {
         await reprendrePeseesDuCoffre(await openDatabase(), { entrees: entreesDeSauvegarde(importedData) });
-      } catch (e) { fail('pesées de l’ancien écran', e); }
+      } catch (e) { fail(traduire('pesées de l’ancien écran'), e); }
     }
 
     // Dojo (vague 46) : le journal de la sauvegarde est repris tel quel, rien n'est recredite.
@@ -1856,23 +1857,23 @@ export const importAllData = async (
     try {
       data = JSON.parse(content);
     } catch {
-      appAlert('Fichier illisible', 'Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.');
+      appAlert('Fichier illisible', traduire('Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.'));
       return false;
     }
 
     // Validation basique
     if (!data.version || !data.exportDate) {
-      appAlert('Fichier non reconnu', 'Choisis un fichier exporté depuis YOROI.');
+      appAlert(traduire('Fichier non reconnu'), traduire('Choisis un fichier exporté depuis YOROI.'));
       return false;
     }
 
     await importData(data);
     const illustration = await illustrer('copieFaite');
-    appAlert('Tout est revenu', 'Tes séances, tes pesées et ton carnet sont de retour sur ce téléphone.', undefined, illustration ? { illustration } : undefined);
+    appAlert(traduire('Tout est revenu'), traduire('Tes séances, tes pesées et ton carnet sont de retour sur ce téléphone.'), undefined, illustration ? { illustration } : undefined);
     return true;
   } catch (error) {
     logger.error('Erreur import:', error);
-    appAlert('Oups', 'L’import n’a pas abouti. Vérifie le fichier et réessaie.');
+    appAlert('Oups', traduire('L’import n’a pas abouti. Vérifie le fichier et réessaie.'));
     return false;
   }
 };
@@ -1908,7 +1909,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
     const clubs = await getClubs();
 
     if (trainings.length === 0) {
-      appAlert('Aucune séance', 'Tu n’as pas encore de séance à exporter.');
+      appAlert(traduire('Aucune séance'), traduire('Tu n’as pas encore de séance à exporter.'));
       return false;
     }
 
@@ -1923,18 +1924,18 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
       'Date',
       'Club',
       'Sport',
-      'Heure de début',
-      'Durée (min)',
-      'Types de séance',
-      'Muscles travaillés',
-      'Thème technique',
+      traduire('Heure de début'),
+      traduire('Durée (min)'),
+      traduire('Types de séance'),
+      traduire('Muscles travaillés'),
+      traduire('Thème technique'),
       'Notes'
     ].join(',');
 
     // Convertir les trainings en lignes CSV
     const rows = trainings.map((training: any) => {
       const club = training.club_id ? clubsMap.get(training.club_id) : null;
-      const clubName = club?.name || 'Activité libre';
+      const clubName = club?.name || traduire('Activité libre');
 
       // Parser les JSON
       let sessionTypes = '';
@@ -1993,19 +1994,19 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
       // Partager le fichier
       await shareAsync(fileUri, {
         mimeType: 'text/csv',
-        dialogTitle: 'Exporter les séances Yoroi',
+        dialogTitle: traduire('Exporter les séances Yoroi'),
         UTI: 'public.comma-separated-values-text',
       });
 
       logger.info('Export séances CSV terminé avec succès');
       appAlert(
-        'Export réussi',
-        `${trainings.length} séance${trainings.length > 1 ? 's' : ''} exportée${trainings.length > 1 ? 's' : ''}.`
+        traduire('Export réussi'),
+        traduirePluriel(trainings.length, trainings.length > 1, "{0} séance exportée.", "{0} séances exportées.", trainings.length)
       );
     } else {
       appAlert(
-        'Export terminé',
-        `Le fichier ${fileName} est prêt.`
+        traduire('Export terminé'),
+        traduire("Le fichier {0} est prêt.", fileName)
       );
     }
 
@@ -2014,7 +2015,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
     logger.error('Erreur export séances CSV:', error);
     appAlert(
       'Oups',
-      'L’export des séances n’a pas abouti. Réessaie.'
+      traduire('L’export des séances n’a pas abouti. Réessaie.')
     );
     return false;
   }
@@ -2034,7 +2035,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
     const clubs = await getClubs();
 
     if (trainings.length === 0) {
-      appAlert('Aucune séance', 'Tu n’as pas encore de séance à exporter.');
+      appAlert(traduire('Aucune séance'), traduire('Tu n’as pas encore de séance à exporter.'));
       return false;
     }
 
@@ -2048,17 +2049,17 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
       'Date',
       'Club',
       'Sport',
-      'Heure de début',
-      'Durée (min)',
-      'Types de séance',
-      'Muscles travaillés',
-      'Thème technique',
+      traduire('Heure de début'),
+      traduire('Durée (min)'),
+      traduire('Types de séance'),
+      traduire('Muscles travaillés'),
+      traduire('Thème technique'),
       'Notes'
     ].join(';');
 
     const rows = trainings.map((training: any) => {
       const club = training.club_id ? clubsMap.get(training.club_id) : null;
-      const clubName = club?.name || 'Activité libre';
+      const clubName = club?.name || traduire('Activité libre');
 
       let sessionTypes = '';
       try {
@@ -2106,19 +2107,19 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
     if (isSharingAvailable) {
       await shareAsync(fileUri, {
         mimeType: 'text/csv',
-        dialogTitle: 'Exporter les séances Yoroi (Excel)',
+        dialogTitle: traduire('Exporter les séances Yoroi (Excel)'),
         UTI: 'public.comma-separated-values-text',
       });
 
       logger.info('Export Excel CSV terminé avec succès');
       appAlert(
-        'Export réussi',
-        `${trainings.length} séance${trainings.length > 1 ? 's' : ''} exportée${trainings.length > 1 ? 's' : ''} pour Excel.`
+        traduire('Export réussi'),
+        traduirePluriel(trainings.length, trainings.length > 1, "{0} séance exportée pour Excel.", "{0} séances exportées pour Excel.", trainings.length)
       );
     } else {
       appAlert(
-        'Export terminé',
-        `Le fichier ${fileName} est prêt.`
+        traduire('Export terminé'),
+        traduire("Le fichier {0} est prêt.", fileName)
       );
     }
 
@@ -2127,7 +2128,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
     logger.error('Erreur export Excel CSV:', error);
     appAlert(
       'Oups',
-      'L’export pour Excel n’a pas abouti. Réessaie.'
+      traduire('L’export pour Excel n’a pas abouti. Réessaie.')
     );
     return false;
   }
@@ -2159,7 +2160,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     weightsCSV += '# Modifie ce fichier puis réimporte-le dans Yoroi\n';
     weightsCSV += '# Format date: AAAA-MM-JJ\n';
     weightsCSV += '#\n';
-    weightsCSV += 'date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr\n';
+    weightsCSV += traduire('date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr\n');
 
     (weights || []).forEach((w: any) => {
       weightsCSV += `${w.date};${w.weight};`;
@@ -2173,7 +2174,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     trainingsCSV += '# Format date: AAAA-MM-JJ | Heure: HH:MM | Durée en minutes\n';
     trainingsCSV += '# Sports disponibles: musculation, jjb, mma, boxe, running, natation, velo, fitness, yoga, autre\n';
     trainingsCSV += '#\n';
-    trainingsCSV += 'date;sport;club;heure_debut;duree_min;type_seance;muscles;theme_technique;notes\n';
+    trainingsCSV += traduire('date;sport;club;heure_debut;duree_min;type_seance;muscles;theme_technique;notes\n');
 
     const clubsMap = new Map((clubs || []).map((c: any) => [c.id, c.name]));
 
@@ -2188,7 +2189,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     let measurementsCSV = '# YOROI - MENSURATIONS (éditable)\n';
     measurementsCSV += '# Toutes les valeurs en cm\n';
     measurementsCSV += '#\n';
-    measurementsCSV += 'date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou\n';
+    measurementsCSV += traduire('date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou\n');
 
     (measurements || []).forEach((m: any) => {
       measurementsCSV += `${m.date};${m.chest || ''};${m.waist || ''};${m.hips || ''};`;
@@ -2211,12 +2212,12 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     // On crée un fichier JSON avec tous les CSV dedans pour simplifier
     const editableData = {
       _documentation: {
-        fr: "Ce fichier contient tes données Yoroi au format éditable.",
+        fr: traduire("Ce fichier contient tes données Yoroi au format éditable."),
         instructions: [
-          "1. Ouvre ce fichier dans un éditeur de texte (VS Code, Notepad++, etc.)",
-          "2. Modifie les données dans chaque section CSV",
-          "3. Les lignes commençant par # sont des commentaires (ignorés)",
-          "4. Sauvegarde le fichier et réimporte-le dans Yoroi",
+          traduire("1. Ouvre ce fichier dans un éditeur de texte (VS Code, Notepad++, etc.)"),
+          traduire("2. Modifie les données dans chaque section CSV"),
+          traduire("3. Les lignes commençant par # sont des commentaires (ignorés)"),
+          traduire("4. Sauvegarde le fichier et réimporte-le dans Yoroi"),
         ],
         format_date: "AAAA-MM-JJ (ex: 2024-01-15)",
         format_heure: "HH:MM (ex: 18:30)",
@@ -2254,20 +2255,20 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     if (canShare) {
       await shareAsync(fileUri, {
         mimeType: 'application/json',
-        dialogTitle: 'Exporter données éditables Yoroi',
+        dialogTitle: traduire('Exporter données éditables Yoroi'),
         UTI: 'public.json',
       });
 
       appAlert(
-        'Export réussi',
-        `Fichier éditable créé avec :\n• ${weights?.length || 0} pesées\n• ${trainings?.length || 0} séances\n• ${measurements?.length || 0} mensurations\n• ${clubs?.length || 0} clubs\n\nOuvre ce fichier sur ton ordinateur pour modifier tes données.`
+        traduire('Export réussi'),
+        traduire("Fichier éditable créé avec :\n• {0} pesées\n• {1} séances\n• {2} mensurations\n• {3} clubs\n\nOuvre ce fichier sur ton ordinateur pour modifier tes données.", weights?.length || 0, trainings?.length || 0, measurements?.length || 0, clubs?.length || 0)
       );
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur export éditable:', error);
-    appAlert('Oups', 'Le fichier modifiable n’a pas pu être créé.');
+    appAlert('Oups', traduire('Le fichier modifiable n’a pas pu être créé.'));
     return false;
   }
 };
@@ -2336,7 +2337,7 @@ export const importEditableCSV = async (): Promise<boolean> => {
 
     // Vérifier que c'est un fichier éditable Yoroi
     if (!data.metadata?.appName || data.metadata.appName !== 'Yoroi') {
-      appAlert('Fichier non reconnu', 'Ce fichier n’est pas un export modifiable de YOROI.');
+      appAlert(traduire('Fichier non reconnu'), traduire('Ce fichier n’est pas un export modifiable de YOROI.'));
       return false;
     }
 
@@ -2362,7 +2363,7 @@ export const importEditableCSV = async (): Promise<boolean> => {
             });
             importedCount++;
           } catch (e) {
-            errors.push(`Pesée ${row[0]}: erreur`);
+            errors.push(traduire("Pesée {0}: erreur", row[0]));
           }
         }
       }
@@ -2386,7 +2387,7 @@ export const importEditableCSV = async (): Promise<boolean> => {
             });
             importedCount++;
           } catch (e) {
-            errors.push(`Séance ${row[0]}: erreur`);
+            errors.push(traduire("Séance {0}: erreur", row[0]));
           }
         }
       }
@@ -2414,7 +2415,7 @@ export const importEditableCSV = async (): Promise<boolean> => {
             });
             importedCount++;
           } catch (e) {
-            errors.push(`Mensuration ${row[0]}: erreur`);
+            errors.push(traduire("Mensuration {0}: erreur", row[0]));
           }
         }
       }
@@ -2434,23 +2435,23 @@ export const importEditableCSV = async (): Promise<boolean> => {
             });
             importedCount++;
           } catch (e) {
-            errors.push(`Club ${row[0]}: erreur`);
+            errors.push(traduire("Club {0}: erreur", row[0]));
           }
         }
       }
     }
 
-    const errorMsg = errors.length > 0 ? `\n\n${errors.length} erreur(s) ignorée(s)` : '';
+    const errorMsg = errors.length > 0 ? traduire("\n\n{0} erreur(s) ignorée(s)", errors.length) : '';
 
     appAlert(
-      'Import réussi',
-      `${importedCount} éléments importés.${errorMsg}`
+      traduire('Import réussi'),
+      traduire("{0} éléments importés.{1}", importedCount, errorMsg)
     );
 
     return true;
   } catch (error) {
     logger.error('Erreur import éditable:', error);
-    appAlert('Oups', 'Ce fichier n’a pas pu être importé.');
+    appAlert('Oups', traduire('Ce fichier n’a pas pu être importé.'));
     return false;
   }
 };
@@ -2462,12 +2463,12 @@ export const exportEmptyTemplate = async (): Promise<boolean> => {
   try {
     const template = {
       _documentation: {
-        fr: "TEMPLATE VIDE - Remplis ce fichier avec tes données et importe-le dans Yoroi",
+        fr: traduire("TEMPLATE VIDE - Remplis ce fichier avec tes données et importe-le dans Yoroi"),
         instructions: [
-          "1. Ouvre ce fichier dans un éditeur de texte",
-          "2. Ajoute tes données dans chaque section CSV",
-          "3. Respecte le format (une ligne = une entrée)",
-          "4. Sauvegarde et importe dans Yoroi > Plus > Importer CSV",
+          traduire("1. Ouvre ce fichier dans un éditeur de texte"),
+          traduire("2. Ajoute tes données dans chaque section CSV"),
+          traduire("3. Respecte le format (une ligne = une entrée)"),
+          traduire("4. Sauvegarde et importe dans Yoroi > Plus > Importer CSV"),
         ],
         exemples: {
           date: "2024-01-15",
@@ -2532,15 +2533,15 @@ nom;sport;couleur;adresse
       });
 
       appAlert(
-        'Modèle créé',
-        'Ouvre ce fichier sur ton ordinateur, remplis-le, puis importe-le dans YOROI.'
+        traduire('Modèle créé'),
+        traduire('Ouvre ce fichier sur ton ordinateur, remplis-le, puis importe-le dans YOROI.')
       );
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur création template:', error);
-    appAlert('Oups', 'Le modèle n’a pas pu être créé.');
+    appAlert('Oups', traduire('Le modèle n’a pas pu être créé.'));
     return false;
   }
 };

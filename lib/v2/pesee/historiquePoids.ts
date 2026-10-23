@@ -6,9 +6,10 @@
  */
 import type { Weight } from '@/lib/database';
 import { formatKg } from '@/lib/v2/weightStats';
+import { traduire } from '@/lib/i18n/tr';
 
 export const WEIGHT_SOURCES: Record<string, string> = {
-  manual: 'saisie à la main',
+  manual: traduire('saisie à la main'),
   withings: 'balance Withings',
   garmin: 'Garmin',
   apple_health: 'Apple Santé',
@@ -19,7 +20,7 @@ export const WEIGHT_SOURCES: Record<string, string> = {
   yoroi_montre: 'Apple Watch',
 };
 
-export const sourceLabel = (s?: string | null): string => WEIGHT_SOURCES[s ?? 'manual'] ?? 'importée';
+export const sourceLabel = (s?: string | null): string => WEIGHT_SOURCES[s ?? 'manual'] ?? traduire('importée');
 
 /** Les pesees d'un jour, la plus recente d'abord (celle que montrent la courbe et l'accueil) */
 export function weighInsOfDay(raw: Weight[], day: string): Weight[] {
@@ -34,7 +35,7 @@ export function historyCaption(p: { id?: number; date: string; trend: number }, 
   const shown = day.find((w) => w.id === p.id) ?? day[0];
   const parts = [shown ? sourceLabel(shown.source) : '', `tendance ${formatKg(p.trend)} kg`].filter(Boolean);
   const others = day.filter((w) => w !== shown);
-  if (others.length === 1) parts.push(`autre pesée ce jour-là : ${formatKg(Number(others[0].weight))} kg (${sourceLabel(others[0].source)})`);
-  else if (others.length > 1) parts.push(`${others.length} autres pesées ce jour-là : ${others.map((w) => `${formatKg(Number(w.weight))} kg`).join(', ')}`);
+  if (others.length === 1) parts.push(traduire("autre pesée ce jour-là : {0} kg ({1})", formatKg(Number(others[0].weight)), sourceLabel(others[0].source)));
+  else if (others.length > 1) parts.push(traduire("{0} autres pesées ce jour-là : {1}", others.length, others.map((w) => `${formatKg(Number(w.weight))} kg`).join(', ')));
   return parts.join(', ');
 }

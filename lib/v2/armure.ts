@@ -55,6 +55,7 @@ import { LUNE, SEALS, SEALS_TOTAL, familyOf, sealById, sealDone } from '@/lib/v2
 import type { SealContext, SealFamily } from '@/lib/v2/dojo/seals';
 import { BELTS, beltFor } from '@/lib/v2/dojo/belts';
 import type { Belt } from '@/lib/v2/dojo/belts';
+import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 // ============================================================
 // Contrat
@@ -156,11 +157,11 @@ export type ArmureState = {
 export const ARMURE_CHANGED_EVENT = 'YOROI_ARMURE_CHANGED';
 
 export const RANKS: Omit<ArmureRank, 'nextMinXp'>[] = [
-  { id: 'ashigaru', name: 'Ashigaru', index: 0, minXp: 0, kanji: '足軽', piece: 'Tenue d’entraînement et bandeau' },
-  { id: 'bushi', name: 'Bushi', index: 1, minXp: 300, kanji: '武士', piece: 'Kimono indigo et plastron' },
-  { id: 'samourai', name: 'Samouraï', index: 2, minXp: 2000, kanji: '侍', piece: 'Armure complète' },
-  { id: 'ronin', name: 'Rōnin', index: 3, minXp: 7000, kanji: '浪人', piece: 'Cape et chapeau de paille' },
-  { id: 'shogun', name: 'Shōgun', index: 4, minXp: 18000, kanji: '将軍', piece: 'Armure d’apparat noir et or' },
+  { id: 'ashigaru', name: 'Ashigaru', index: 0, minXp: 0, kanji: '足軽', piece: traduire('Tenue d’entraînement et bandeau') },
+  { id: 'bushi', name: 'Bushi', index: 1, minXp: 300, kanji: '武士', piece: traduire('Kimono indigo et plastron') },
+  { id: 'samourai', name: traduire('Samouraï'), index: 2, minXp: 2000, kanji: '侍', piece: traduire('Armure complète') },
+  { id: 'ronin', name: 'Rōnin', index: 3, minXp: 7000, kanji: '浪人', piece: traduire('Cape et chapeau de paille') },
+  { id: 'shogun', name: 'Shōgun', index: 4, minXp: 18000, kanji: '将軍', piece: traduire('Armure d’apparat noir et or') },
 ];
 
 /** Apres Shogun, un dan tous les 4 000 XP. */
@@ -315,37 +316,37 @@ const REPRISE_BADGE_XP = 10;
 const REPRISE_BADGES_MAX = 300;
 
 export const XP_RULES: { source: XpSource; label: string; xp: number; limit: string }[] = [
-  { source: 'seance', label: 'Séance enregistrée', xp: XP_VALUES.seance, limit: '2 par jour' },
-  { source: 'pesee', label: 'Pesée', xp: XP_VALUES.pesee, limit: '1 par jour' },
-  { source: 'mensurations', label: 'Mensurations', xp: XP_VALUES.mensurations, limit: '1 par semaine' },
-  { source: 'photo', label: 'Photo de progression', xp: XP_VALUES.photo, limit: '1 par semaine' },
-  { source: 'record', label: 'Record personnel', xp: XP_VALUES.record, limit: '3 par jour, avec un poids et des répétitions' },
-  { source: 'semaine', label: 'Semaine réussie', xp: XP_VALUES.semaine, limit: '1 par semaine' },
-  { source: 'sceau', label: 'Sceau débloqué', xp: XP_VALUES.sceau, limit: 'une fois par sceau' },
-  { source: 'lune', label: 'Lune du mois', xp: XP_VALUES.lune, limit: '3 semaines réussies dans le mois' },
-  { source: 'coffre', label: 'Coffre du jour', xp: COFFRE.base, limit: `1 par jour, jusqu’à ${COFFRE.base + COFFRE.bonusMax} avec ta série, +${COFFRE.grand} au grand coffre tous les 7 jours` },
+  { source: 'seance', label: traduire('Séance enregistrée'), xp: XP_VALUES.seance, limit: traduire('2 par jour') },
+  { source: 'pesee', label: traduire('Pesée'), xp: XP_VALUES.pesee, limit: traduire('1 par jour') },
+  { source: 'mensurations', label: 'Mensurations', xp: XP_VALUES.mensurations, limit: traduire('1 par semaine') },
+  { source: 'photo', label: traduire('Photo de progression'), xp: XP_VALUES.photo, limit: traduire('1 par semaine') },
+  { source: 'record', label: 'Record personnel', xp: XP_VALUES.record, limit: traduire('3 par jour, avec un poids et des répétitions') },
+  { source: 'semaine', label: traduire('Semaine réussie'), xp: XP_VALUES.semaine, limit: traduire('1 par semaine') },
+  { source: 'sceau', label: traduire('Sceau débloqué'), xp: XP_VALUES.sceau, limit: traduire('une fois par sceau') },
+  { source: 'lune', label: traduire('Lune du mois'), xp: XP_VALUES.lune, limit: traduire('3 semaines réussies dans le mois') },
+  { source: 'coffre', label: traduire('Coffre du jour'), xp: COFFRE.base, limit: traduire("1 par jour, jusqu’à {0} avec ta série, +{1} au grand coffre tous les 7 jours", COFFRE.base + COFFRE.bonusMax, COFFRE.grand) },
 ];
 
 /** Regles avec l'XP de semaine calculee pour ton objectif. */
 export function xpRulesFor(goal: number): { source: XpSource; label: string; xp: number; limit: string }[] {
   return XP_RULES.map((r) =>
-    r.source === 'semaine' ? { ...r, xp: weekXp(goal), limit: `1 par semaine, 20 XP plus 10 par séance visée` } : r,
+    r.source === 'semaine' ? { ...r, xp: weekXp(goal), limit: traduire(`1 par semaine, 20 XP plus 10 par séance visée`) } : r,
   );
 }
 
 export const SOURCE_LABELS: Record<XpSource, string> = {
-  seance: 'Séances',
-  pesee: 'Pesées',
+  seance: traduire('Séances'),
+  pesee: traduire('Pesées'),
   mensurations: 'Mensurations',
   photo: 'Photos',
   record: 'Records',
-  semaine: 'Semaines réussies',
+  semaine: traduire('Semaines réussies'),
   sceau: 'Sceaux',
-  migration: 'Reprise de ton ancien rang',
-  lune: 'Lunes du mois',
-  geste: 'Gestes du jour',
-  reprise: 'Reprise de tes quêtes, défis et badges',
-  coffre: 'Coffres du jour',
+  migration: traduire('Reprise de ton ancien rang'),
+  lune: traduire('Lunes du mois'),
+  geste: traduire('Gestes du jour'),
+  reprise: traduire('Reprise de tes quêtes, défis et badges'),
+  coffre: traduire('Coffres du jour'),
 };
 
 const SEANCES_PAR_JOUR = 2;
@@ -581,7 +582,7 @@ function roundsOf(t: Training): number {
 
 type RecordHit = { trainingId: number; date: string; createdAt?: string; exercise: string; label: string; plateau: boolean };
 
-const fmtNum = (n: number) => String(Math.round(n * 10) / 10).replace('.', ',');
+const fmtNum = (n: number) => String(Math.round(n * 10) / 10).replace('.', DECIMAL);
 
 /**
  * Records du Dojo (vague 32) : MEME source que Seances, Records et Carnet (lib/v2/seances/records.ts,
@@ -611,7 +612,7 @@ function computeRecordStamps(sorted: Training[]): { hits: RecordHit[]; stamps: {
           date: p.date,
           createdAt: byId.get(p.trainingId)?.created_at,
           exercise: l.name,
-          label: `${l.name}, ${fmtNum(p.value)} kilos estimés`,
+          label: traduire("{0}, {1} kilos estimés", l.name, fmtNum(p.value)),
           plateau: !!lastImprove && lastImprove <= addDays(p.date, -90) && since >= 2,
         });
       }
@@ -949,7 +950,7 @@ async function runSync(): Promise<ArmureSnapshot> {
     const d = dayOf(w.date);
     if (!d || d > today) continue;
     weighDays.add(d);
-    if (eligible(d, w.created_at, ectx, isImported(w))) add(`pesee:${d}`, d, 'pesee', XP_VALUES.pesee, 'Pesée');
+    if (eligible(d, w.created_at, ectx, isImported(w))) add(`pesee:${d}`, d, 'pesee', XP_VALUES.pesee, traduire('Pesée'));
   }
 
   // 3. Mensurations : 10 XP, 1 par semaine
@@ -963,7 +964,7 @@ async function runSync(): Promise<ArmureSnapshot> {
   for (const ph of photosC) {
     const d = dayOf(ph?.date);
     if (!d || d > today) continue;
-    if (eligible(d, ph.created_at, ectx)) add(`photo:${mondayOf(d)}`, d, 'photo', XP_VALUES.photo, 'Photo de progression');
+    if (eligible(d, ph.created_at, ectx)) add(`photo:${mondayOf(d)}`, d, 'photo', XP_VALUES.photo, traduire('Photo de progression'));
   }
 
   // 5. Records : 15 XP, 3 par jour, poids et repetitions obligatoires
@@ -1001,7 +1002,7 @@ async function runSync(): Promise<ArmureSnapshot> {
   for (const w of wk.weeks) {
     if (w.status !== 'tenue') continue;
     if (!catchup && addDays(w.monday, 6) < recentLimit) continue;
-    add(`semaine:${w.monday}`, w.monday, 'semaine', weekXp(w.goal), `Semaine réussie, ${w.count} séances`);
+    add(traduire("semaine:{0}", w.monday), w.monday, 'semaine', weekXp(w.goal), traduire("Semaine réussie, {0} séances", w.count));
   }
 
   // 6 bis. Lune du mois : au moins 3 semaines réussies dont le lundi tombe dans le mois, repetable
@@ -1015,7 +1016,7 @@ async function runSync(): Promise<ArmureSnapshot> {
   heldByMonth.forEach((n, mo) => {
     if (n < LUNE.weeks) return;
     if (!catchup && !recentMonths.has(mo)) return;
-    add(`lune:${mo}`, mo === today.slice(0, 7) ? today : `${mo}-28`, 'lune', XP_VALUES.lune, `Lune du mois, ${n} semaines réussies`);
+    add(`lune:${mo}`, mo === today.slice(0, 7) ? today : `${mo}-28`, 'lune', XP_VALUES.lune, traduire("Lune du mois, {0} semaines réussies", n));
   });
 
   // 6 ter. Vague 47 : serie de jours et coffre du jour (remplace le geste du jour credite tout seul)
@@ -1051,7 +1052,7 @@ async function runSync(): Promise<ArmureSnapshot> {
   const chance = coupDeChance(today, meta.migratedAt ?? stamp);
   const coffreCalc = coffreXp(serieJours, chance);
   if (meta.coffreDemande === today && gesteFait) {
-    add(coffreCle, today, 'coffre', coffreCalc.xp, `${coffreCalc.grand ? 'Grand coffre' : 'Coffre du jour'}, ${serieJours} jour${serieJours > 1 ? 's' : ''} d’affilée${coffreCalc.chance ? ', coup de chance' : ''}`);
+    add(coffreCle, today, 'coffre', coffreCalc.xp, traduirePluriel(serieJours, serieJours > 1, "{0}, {1} jour d’affilée{2}", "{0}, {1} jours d’affilée{2}", coffreCalc.grand ? 'Grand coffre' : 'Coffre du jour', serieJours, coffreCalc.chance ? ', coup de chance' : ''));
   }
   meta.coffreDemande = null;
   const coffreRow = ledger.find((r) => r.k === coffreCle) ?? added.find((r) => r.k === coffreCle);
@@ -1158,10 +1159,10 @@ async function runSync(): Promise<ArmureSnapshot> {
   // 9. Reprise de l'ancienne app : quetes et defis, badges sans sceau equivalent, ancien rang
   let oldIdx = 0;
   if (catchup && legacy) {
-    if (quetesXp > 0) add('reprise:quetes', limitDay, 'reprise', Math.min(REPRISE_QUETES_MAX, quetesXp), 'Reprise de tes quêtes et défis');
+    if (quetesXp > 0) add('reprise:quetes', limitDay, 'reprise', Math.min(REPRISE_QUETES_MAX, quetesXp), traduire('Reprise de tes quêtes et défis'));
     const badgesSansSceau = badgeIds.filter((id) => !(BADGE_TO_SEAL[id] && meta.seals[BADGE_TO_SEAL[id]]));
     if (badgesSansSceau.length) {
-      add('reprise:badges', limitDay, 'reprise', Math.min(REPRISE_BADGES_MAX, badgesSansSceau.length * REPRISE_BADGE_XP), `Reprise de tes ${badgesSansSceau.length} anciens badges`);
+      add('reprise:badges', limitDay, 'reprise', Math.min(REPRISE_BADGES_MAX, badgesSansSceau.length * REPRISE_BADGE_XP), traduire("Reprise de tes {0} anciens badges", badgesSansSceau.length));
     }
     // ancien total recalcule sur tout l'historique (formule de l'ancienne app)
     // seulement les donnees YOROI : l'historique Sante ne fabrique pas un ancien rang
@@ -1183,7 +1184,7 @@ async function runSync(): Promise<ArmureSnapshot> {
       let n = 1;
       while (keys.has(n === 1 ? 'migration:rang' : `migration:rang${n}`) && n < 50) n += 1;
       const name = rankTitle({ name: RANKS[floorIdx].name, dan: floorDan });
-      add(n === 1 ? 'migration:rang' : `migration:rang${n}`, limitDay, 'migration', target - total, `Ton rang ${name} est gardé`);
+      add(n === 1 ? 'migration:rang' : traduire("migration:rang{0}", n), limitDay, 'migration', target - total, traduire("Ton rang {0} est gardé", name));
       rankKept = name;
     }
   }
@@ -1343,18 +1344,18 @@ function buildNextGoals(a: {
 }): NextGoal[] {
   const out: NextGoal[] = [];
   if (a.trainings === 0) {
-    out.push({ kind: 'debut', title: 'Enregistre ta première séance', detail: `+ ${XP_VALUES.seance} XP vers ta première pièce d’armure`, href: '/ajouter' });
+    out.push({ kind: 'debut', title: traduire('Enregistre ta première séance'), detail: traduire("+ {0} XP vers ta première pièce d’armure", XP_VALUES.seance), href: '/ajouter' });
   }
   const left = a.weeklyGoal - a.thisWeekSessions;
   if (!a.paused && left > 0 && a.trainings > 0) {
-    out.push({ kind: 'semaine', title: `Encore ${left > 1 ? `${left} séances` : '1 séance'} pour tenir ta semaine`, detail: `+ ${weekXp(a.weeklyGoal)} XP et ta série continue`, href: '/ajouter' });
+    out.push({ kind: 'semaine', title: traduire("Encore {0} pour tenir ta semaine", left > 1 ? `${left} séances` : '1 séance'), detail: traduire("+ {0} XP et ta série continue", weekXp(a.weeklyGoal)), href: '/ajouter' });
   }
   const belt = a.belts.filter((b) => b.next && b.count > 0).sort((x, y) => x.remaining - y.remaining)[0];
   if (belt && belt.next) {
     out.push({
       kind: 'ceinture',
-      title: `Encore ${belt.remaining > 1 ? `${belt.remaining} séances` : '1 séance'} pour le niveau ${belt.next.name} en ${belt.sportName}`,
-      detail: `${belt.count} séance${belt.count > 1 ? 's' : ''} de ${belt.sportName} pour l’instant`,
+      title: traduire("Encore {0} pour le niveau {1} en {2}", belt.remaining > 1 ? `${belt.remaining} séances` : '1 séance', belt.next.name, belt.sportName),
+      detail: traduirePluriel(belt.count, belt.count > 1, "{0} séance de {1} pour l’instant", "{0} séances de {1} pour l’instant", belt.count, belt.sportName),
       href: '/dojo/ceintures',
     });
   }
@@ -1362,18 +1363,18 @@ function buildNextGoals(a: {
     .filter((s) => !s.earned && s.current > 0 && s.target > 1)
     .sort((x, y) => y.current / y.target - x.current / x.target)[0];
   if (seal) {
-    out.push({ kind: 'sceau', title: `Sceau ${seal.name} : ${seal.current} sur ${seal.target}`, detail: seal.condition, href: '/dojo/sceaux' });
+    out.push({ kind: 'sceau', title: traduire("Sceau {0} : {1} sur {2}", seal.name, seal.current, seal.target), detail: seal.condition, href: '/dojo/sceaux' });
   }
   const step = nextStepFor(a.xp);
   const plates = platesFor(a.xp);
   const nextPlateXp = Math.ceil(step.fromXp + ((plates.earned + 1) * (step.minXp - step.fromXp)) / PLATES_PER_RANK);
   if (plates.earned < PLATES_PER_RANK - 1) {
-    out.push({ kind: 'rang', title: `Encore ${(nextPlateXp - a.xp).toLocaleString('fr-FR')} XP pour la prochaine étape de ton armure`, detail: `Étape ${plates.earned + 1} sur ${PLATES_PER_RANK} de ta pièce vers ${step.name}`, href: '/dojo/rangs' });
+    out.push({ kind: 'rang', title: traduire("Encore {0} XP pour la prochaine étape de ton armure", (nextPlateXp - a.xp).toLocaleString(LOCALE)), detail: traduire("Étape {0} sur {1} de ta pièce vers {2}", plates.earned + 1, PLATES_PER_RANK, step.name), href: '/dojo/rangs' });
   } else if (a.rank.nextMinXp) {
     const next = RANKS[a.rank.index + 1];
-    out.push({ kind: 'rang', title: `Encore ${(a.rank.nextMinXp - a.xp).toLocaleString('fr-FR')} XP pour devenir ${next.name}`, detail: `Pièce suivante : ${next.piece ?? ''}`, href: '/dojo/rangs' });
+    out.push({ kind: 'rang', title: traduire("Encore {0} XP pour devenir {1}", (a.rank.nextMinXp - a.xp).toLocaleString(LOCALE), next.name), detail: traduire("Pièce suivante : {0}", next.piece ?? ''), href: '/dojo/rangs' });
   } else {
-    out.push({ kind: 'rang', title: `Encore ${(step.minXp - a.xp).toLocaleString('fr-FR')} XP pour ${step.name}`, detail: 'Un dan tous les 4 000 XP', href: '/dojo/rangs' });
+    out.push({ kind: 'rang', title: traduire("Encore {0} XP pour {1}", (step.minXp - a.xp).toLocaleString(LOCALE), step.name), detail: traduire('Un dan tous les 4 000 XP'), href: '/dojo/rangs' });
   }
   return out;
 }
@@ -1461,7 +1462,7 @@ export async function setWeekPause(kind: PauseKind | null): Promise<ArmureState>
   return snap.state;
 }
 
-export const PAUSE_LABELS: Record<PauseKind, string> = { repos: 'Repos', blessure: 'Blessé', malade: 'Malade' };
+export const PAUSE_LABELS: Record<PauseKind, string> = { repos: traduire('Repos'), blessure: traduire('Blessé'), malade: 'Malade' };
 
 /** Recompense d'une seance (fin de seance) : XP de la seance et de ses records, semaine réussie. */
 export async function getSessionReward(trainingId: number): Promise<{ xp: number; records: string[]; weekHeld: boolean; weekXp: number; state: ArmureState }> {
@@ -1588,7 +1589,7 @@ export async function restoreArmureBackup(raw: unknown): Promise<boolean> {
     if (bRank > 0 && total < target) {
       let n = 1;
       while (keys.has(`migration:restaure${n}`) && n < 50) n += 1;
-      merged.push({ k: `migration:restaure${n}`, d: todayIso(), s: 'migration', a: target - total, t: nowStamp(), l: `Ton rang ${rankTitle({ name: RANKS[bRank].name, dan: bRank === RANKS.length - 1 ? b.danSeen ?? 0 : 0 })} est gardé` });
+      merged.push({ k: `migration:restaure${n}`, d: todayIso(), s: 'migration', a: target - total, t: nowStamp(), l: traduire("Ton rang {0} est gardé", rankTitle({ name: RANKS[bRank].name, dan: bRank === RANKS.length - 1 ? b.danSeen ?? 0 : 0 })) });
     }
     if (merged.length !== ledger.length) await writeLedger(merged);
     if (b.departDay && (!meta.departDay || b.departDay < meta.departDay)) meta.departDay = b.departDay;

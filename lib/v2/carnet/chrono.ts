@@ -15,11 +15,11 @@ export type Phase = 'effort' | 'repos' | 'prepa' | 'fini' | 'pret' | 'final';
  */
 export const PHASE_COLORS: Record<Phase, { main: string; soft: string; deep: string; label: string }> = {
   effort: { main: '#2C4A84', soft: '#E4E9F3', deep: '#1F3766', label: 'Effort' },
-  repos: { main: '#6E8C3A', soft: '#E8EEDC', deep: '#4F6B28', label: 'Repos' },
-  prepa: { main: '#C59D45', soft: '#F5ECD6', deep: '#8A6A22', label: 'Préparation' },
-  final: { main: '#B0282E', soft: '#F6E3E1', deep: '#8C1E23', label: '10 dernières secondes' },
-  fini: { main: '#454A58', soft: '#ECEAE4', deep: '#1D2029', label: 'Terminé' },
-  pret: { main: '#454A58', soft: '#ECEAE4', deep: '#1D2029', label: 'Prêt' },
+  repos: { main: '#6E8C3A', soft: '#E8EEDC', deep: '#4F6B28', label: traduire('Repos') },
+  prepa: { main: '#C59D45', soft: '#F5ECD6', deep: '#8A6A22', label: traduire('Préparation') },
+  final: { main: '#B0282E', soft: '#F6E3E1', deep: '#8C1E23', label: traduire('10 dernières secondes') },
+  fini: { main: '#454A58', soft: '#ECEAE4', deep: '#1D2029', label: traduire('Terminé') },
+  pret: { main: '#454A58', soft: '#ECEAE4', deep: '#1D2029', label: traduire('Prêt') },
 };
 
 /**
@@ -27,21 +27,21 @@ export const PHASE_COLORS: Record<Phase, { main: string; soft: string; deep: str
  * sub : une phrase qui dit comment ca marche, short : le nom court (Live Activity, notes).
  */
 export const MODES: { id: TimerMode; label: string; short: string; tag?: string; sub: string }[] = [
-  { id: 'musculation', label: 'Repos entre les séries', short: 'Repos muscu', tag: 'Muscu', sub: 'Tu finis ta série, tu touches : le repos se lance et tes séries sont comptées.' },
-  { id: 'combat', label: 'Rounds de combat', short: 'Rounds', tag: 'Boxe, MMA, JJB', sub: 'Des rounds et des repos, avec le gong et les claquettes à 10 s de la fin.' },
-  { id: 'tabata', label: 'Tabata', short: 'Tabata', tag: '20 s, 10 s', sub: '20 s à fond, 10 s de repos, 8 fois de suite. Court et très intense.' },
-  { id: 'emom', label: 'Chaque minute', short: 'Chaque minute', sub: 'Au début de chaque minute, tu fais ton exercice. Le reste de la minute, tu souffles.' },
-  { id: 'amrap', label: 'Un maximum de tours', short: 'Maximum de tours', sub: 'Autant de tours de ton circuit que possible dans le temps donné.' },
-  { id: 'fortime', label: 'Contre la montre', short: 'Contre la montre', sub: 'Tu finis ton programme le plus vite possible. Le chrono monte.' },
+  { id: 'musculation', label: traduire('Repos entre les séries'), short: traduire('Repos muscu'), tag: 'Muscu', sub: traduire('Tu finis ta série, tu touches : le repos se lance et tes séries sont comptées.') },
+  { id: 'combat', label: traduire('Rounds de combat'), short: 'Rounds', tag: 'Boxe, MMA, JJB', sub: traduire('Des rounds et des repos, avec le gong et les claquettes à 10 s de la fin.') },
+  { id: 'tabata', label: 'Tabata', short: 'Tabata', tag: '20 s, 10 s', sub: traduire('20 s à fond, 10 s de repos, 8 fois de suite. Court et très intense.') },
+  { id: 'emom', label: traduire('Chaque minute'), short: traduire('Chaque minute'), sub: traduire('Au début de chaque minute, tu fais ton exercice. Le reste de la minute, tu souffles.') },
+  { id: 'amrap', label: traduire('Un maximum de tours'), short: traduire('Maximum de tours'), sub: traduire('Autant de tours de ton circuit que possible dans le temps donné.') },
+  { id: 'fortime', label: traduire('Contre la montre'), short: traduire('Contre la montre'), sub: traduire('Tu finis ton programme le plus vite possible. Le chrono monte.') },
 ];
 
 export const MUSCU_PRESETS = [
   { seconds: 30, label: '30 s', sub: 'Endurance' },
-  { seconds: 60, label: '1 min', sub: 'Volume' },
-  { seconds: 90, label: '1 min 30', sub: 'Volume' },
+  { seconds: 60, label: '1 min', sub: traduire('Volume') },
+  { seconds: 90, label: '1 min 30', sub: traduire('Volume') },
   { seconds: 120, label: '2 min', sub: 'Force' },
   { seconds: 180, label: '3 min', sub: 'Lourd' },
-  { seconds: 300, label: '5 min', sub: 'Très lourd' },
+  { seconds: 300, label: '5 min', sub: traduire('Très lourd') },
 ];
 
 export const COMBAT_PRESETS: Record<CombatPreset, { name: string; roundTime: number; restTime: number; rounds: number; sub: string; sport: string }> = {
@@ -49,12 +49,12 @@ export const COMBAT_PRESETS: Record<CombatPreset, { name: string; roundTime: num
   jjb: { name: 'JJB', roundTime: 300, restTime: 60, rounds: 4, sub: 'Open mat', sport: 'jjb' },
   mma: { name: 'MMA', roundTime: 300, restTime: 60, rounds: 3, sub: 'Format pro', sport: 'mma' },
   boxe: { name: 'Boxe', roundTime: 180, restTime: 60, rounds: 10, sub: 'Format pro', sport: 'boxe' },
-  sac: { name: 'Sac de frappe', roundTime: 180, restTime: 60, rounds: 6, sub: 'Rounds au sac', sport: 'boxe' },
-  muaythai: { name: 'Muay thaï', roundTime: 180, restTime: 120, rounds: 5, sub: 'Format thaï', sport: 'muay_thai' },
+  sac: { name: traduire('Sac de frappe'), roundTime: 180, restTime: 60, rounds: 6, sub: traduire('Rounds au sac'), sport: 'boxe' },
+  muaythai: { name: traduire('Muay thaï'), roundTime: 180, restTime: 120, rounds: 5, sub: traduire('Format thaï'), sport: 'muay_thai' },
   kickboxing: { name: 'Kickboxing', roundTime: 180, restTime: 60, rounds: 3, sub: 'Style K-1', sport: 'kickboxing' },
   lutte: { name: 'Lutte', roundTime: 180, restTime: 30, rounds: 3, sub: 'Wrestling', sport: 'lutte' },
-  grappling: { name: 'Grappling', roundTime: 360, restTime: 60, rounds: 3, sub: 'Sans kimono', sport: 'grappling' },
-  custom: { name: 'Perso', roundTime: 180, restTime: 60, rounds: 5, sub: 'À ta main', sport: 'jjb' },
+  grappling: { name: 'Grappling', roundTime: 360, restTime: 60, rounds: 3, sub: traduire('Sans kimono'), sport: 'grappling' },
+  custom: { name: 'Perso', roundTime: 180, restTime: 60, rounds: 5, sub: traduire('À ta main'), sport: 'jjb' },
 };
 
 export const COMBAT_PRESET_ORDER: CombatPreset[] = ['jjb', 'mma', 'boxe', 'sac', 'muaythai', 'kickboxing', 'lutte', 'grappling', 'custom'];
@@ -85,16 +85,16 @@ export const SAVE_SPORTS_COMBAT = [
   { id: 'grappling', label: 'Grappling' },
   { id: 'mma', label: 'MMA' },
   { id: 'boxe', label: 'Boxe' },
-  { id: 'muay_thai', label: 'Muay thaï' },
+  { id: 'muay_thai', label: traduire('Muay thaï') },
   { id: 'judo', label: 'Judo' },
   { id: 'lutte', label: 'Lutte' },
 ];
 
 export const RPE_CHOICES = [
   { value: 3, label: 'Facile' },
-  { value: 5, label: 'Correct' },
+  { value: 5, label: traduire('Correct') },
   { value: 7, label: 'Dur' },
-  { value: 9, label: 'À bloc' },
+  { value: 9, label: traduire('À bloc') },
 ];
 
 // ─── Sequences de phases pour le moteur de temps ─────────────────────────
@@ -102,6 +102,7 @@ export const RPE_CHOICES = [
 import type { ChronoPhase } from './useChronoEngine';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { humanSeconds } from './format';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const PREPA_SECONDS = 10;
 export const CLAP_KEY = '@yoroi_timer_clap10';
@@ -125,17 +126,17 @@ export async function saveClapEnabled(on: boolean): Promise<void> {
 }
 
 const prepa = (seconds: number, cue: ChronoPhase['cue'] = 'beep'): ChronoPhase[] =>
-  seconds > 0 ? [{ kind: 'prepa', duration: seconds, title: 'Préparation', short: 'Préparation', cue }] : [];
+  seconds > 0 ? [{ kind: 'prepa', duration: seconds, title: traduire('Préparation'), short: traduire('Préparation'), cue }] : [];
 
 export function musculationPhases(rest: number, series: number): ChronoPhase[] {
-  return [{ kind: 'repos', duration: rest, title: `Repos après la série ${series}`, short: `Série ${series + 1}`, cue: 'beep' }];
+  return [{ kind: 'repos', duration: rest, title: traduire("Repos après la série {0}", series), short: traduire("Série {0}", series + 1), cue: 'beep' }];
 }
 
 export function roundPhases(o: { rounds: number; round: number; rest: number; prepa: number; clap: boolean; hold?: boolean }): ChronoPhase[] {
   const list: ChronoPhase[] = prepa(o.prepa, 'beep');
   for (let r = 1; r <= o.rounds; r++) {
-    list.push({ kind: 'effort', duration: o.round, title: `Round ${r} sur ${o.rounds}`, short: `Round ${r}`, cue: 'gong', clap: o.clap, hold: o.hold, step: r, steps: o.rounds });
-    if (r < o.rounds && o.rest > 0) list.push({ kind: 'repos', duration: o.rest, title: 'Repos', short: `Repos ${humanSeconds(o.rest)}`, cue: 'gong', step: r, steps: o.rounds });
+    list.push({ kind: 'effort', duration: o.round, title: traduire("Round {0} sur {1}", r, o.rounds), short: `Round ${r}`, cue: 'gong', clap: o.clap, hold: o.hold, step: r, steps: o.rounds });
+    if (r < o.rounds && o.rest > 0) list.push({ kind: 'repos', duration: o.rest, title: traduire('Repos'), short: traduire("Repos {0}", humanSeconds(o.rest)), cue: 'gong', step: r, steps: o.rounds });
   }
   return list;
 }
@@ -145,11 +146,11 @@ export function tabataPhases(o: { rounds: number; work: number; rest: number; se
   for (let s = 1; s <= o.sets; s++) {
     for (let r = 1; r <= o.rounds; r++) {
       const setTxt = o.sets > 1 ? `, set ${s}` : '';
-      list.push({ kind: 'effort', duration: o.work, title: `Effort ${r} sur ${o.rounds}${setTxt}`, short: `Effort ${o.work} s`, cue: 'go', step: r, steps: o.rounds });
+      list.push({ kind: 'effort', duration: o.work, title: traduire("Effort {0} sur {1}{2}", r, o.rounds, setTxt), short: `Effort ${o.work} s`, cue: 'go', step: r, steps: o.rounds });
       const last = r === o.rounds;
-      if (!last) list.push({ kind: 'repos', duration: o.rest, title: `Repos ${r} sur ${o.rounds}${setTxt}`, short: `Repos ${o.rest} s`, cue: 'beep', step: r, steps: o.rounds });
+      if (!last) list.push({ kind: 'repos', duration: o.rest, title: traduire("Repos {0} sur {1}{2}", r, o.rounds, setTxt), short: traduire("Repos {0} s", o.rest), cue: 'beep', step: r, steps: o.rounds });
     }
-    if (s < o.sets && o.setRest > 0) list.push({ kind: 'repos', duration: o.setRest, title: `Repos avant le set ${s + 1}`, short: `Repos ${humanSeconds(o.setRest)}`, cue: 'beep', step: o.rounds, steps: o.rounds });
+    if (s < o.sets && o.setRest > 0) list.push({ kind: 'repos', duration: o.setRest, title: traduire("Repos avant le set {0}", s + 1), short: traduire("Repos {0}", humanSeconds(o.setRest)), cue: 'beep', step: o.rounds, steps: o.rounds });
   }
   return list;
 }
@@ -158,17 +159,17 @@ export function emomPhases(o: { minutes: number; exercises: string[]; prepa: num
   const list: ChronoPhase[] = prepa(o.prepa);
   for (let m = 1; m <= o.minutes; m++) {
     const ex = o.exercises.length > 0 ? o.exercises[(m - 1) % o.exercises.length] : undefined;
-    list.push({ kind: 'effort', duration: 60, title: `Minute ${m} sur ${o.minutes}`, short: ex ? `Minute ${m}, ${ex}` : `Minute ${m}`, sub: ex, cue: 'go', step: m, steps: o.minutes });
+    list.push({ kind: 'effort', duration: 60, title: traduire("Minute {0} sur {1}", m, o.minutes), short: ex ? traduire("Minute {0}, {1}", m, ex) : traduire("Minute {0}", m), sub: ex, cue: 'go', step: m, steps: o.minutes });
   }
   return list;
 }
 
 export function amrapPhases(o: { duration: number; prepa: number }): ChronoPhase[] {
-  return [...prepa(o.prepa), { kind: 'effort', duration: o.duration, title: 'Enchaîne les tours', short: 'Maximum de tours', cue: 'go' }];
+  return [...prepa(o.prepa), { kind: 'effort', duration: o.duration, title: traduire('Enchaîne les tours'), short: traduire('Maximum de tours'), cue: 'go' }];
 }
 
 export function forTimePhases(o: { cap: number; prepa: number }): ChronoPhase[] {
-  return [...prepa(o.prepa), { kind: 'effort', duration: o.cap, title: 'Le plus vite possible', short: 'Contre la montre', cue: 'go', countUp: true }];
+  return [...prepa(o.prepa), { kind: 'effort', duration: o.cap, title: traduire('Le plus vite possible'), short: traduire('Contre la montre'), cue: 'go', countUp: true }];
 }
 
 /**
@@ -187,6 +188,6 @@ export function roundsFaits(phases: ChronoPhase[], ms: Map<number, number>): num
 
 /** "5 rounds de 5 min, 1 min de repos" */
 export function roundsSummary(rounds: number, round: number, rest: number): string {
-  const r = `${rounds} round${rounds > 1 ? 's' : ''} de ${humanSeconds(round)}`;
-  return rest > 0 && rounds > 1 ? `${r}, ${humanSeconds(rest)} de repos` : r;
+  const r = traduirePluriel(rounds, rounds > 1, "{0} round de {1}", "{0} rounds de {1}", rounds, humanSeconds(round));
+  return rest > 0 && rounds > 1 ? traduire("{0}, {1} de repos", r, humanSeconds(rest)) : r;
 }

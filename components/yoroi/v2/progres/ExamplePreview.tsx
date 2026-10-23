@@ -14,6 +14,7 @@ import { Ink } from '../Ink';
 import { PlusHint } from '../PlusHint';
 import { GUTTER, PrimaryButton } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Etiquette « exemple » bien visible, posee au-dessus de l'apercu (jamais sur la courbe) */
 export function ExampleTag({ text = 'Exemple' }: { text?: string }) {
@@ -75,7 +76,7 @@ export function ExamplePreview({ children, title, text, cta, onPress, plusHint, 
   const c = theme.colors;
   return (
     <View style={style}>
-      <View accessible accessibilityLabel={`${tag ?? 'Exemple'} : aperçu de ce que tu verras, ce ne sont pas tes données`} style={{ paddingHorizontal: bleed || flush ? 0 : GUTTER }}>
+      <View accessible accessibilityLabel={traduire("{0} : aperçu de ce que tu verras, ce ne sont pas tes données", tag ?? 'Exemple')} style={{ paddingHorizontal: bleed || flush ? 0 : GUTTER }}>
         <View pointerEvents="none" style={{ flexDirection: 'row', paddingHorizontal: bleed ? GUTTER : 0, marginBottom: 10 }}>
           <ExampleTag text={tag} />
         </View>

@@ -22,6 +22,7 @@ import { signaturePartage } from '@/constants/partage';
 import { noterPartage } from './mesure';
 import type { SourcePartage } from './mesure';
 import { texteSigne } from './texte';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CardPhoto = { uri: string; landscape: boolean };
 
@@ -41,7 +42,7 @@ export async function pickCardPhoto(source: 'gallery' | 'camera', opts?: { squar
     if (source === 'camera') {
       const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        appAlert('Appareil photo bloqué', 'Autorise l’appareil photo dans les réglages de ton téléphone.');
+        appAlert(traduire('Appareil photo bloqué'), traduire('Autorise l’appareil photo dans les réglages de ton téléphone.'));
         return null;
       }
       const res = await launchCameraAsync({ allowsEditing: true, quality: 0.9, aspect: opts?.square ? [1, 1] : undefined });
@@ -52,7 +53,7 @@ export async function pickCardPhoto(source: 'gallery' | 'camera', opts?: { squar
     }
     const { status } = await requestMediaLibraryPermissionsAsync();
     if ((status as string) !== 'granted' && (status as string) !== 'limited') {
-      appAlert('Photos bloquées', 'Autorise l’accès à tes photos dans les réglages de ton téléphone.');
+      appAlert(traduire('Photos bloquées'), traduire('Autorise l’accès à tes photos dans les réglages de ton téléphone.'));
       return null;
     }
     const res = await launchImageLibraryAsync({ allowsEditing: !!opts?.square, aspect: opts?.square ? [1, 1] : undefined, quality: 0.9, selectionLimit: 1 });
@@ -62,7 +63,7 @@ export async function pickCardPhoto(source: 'gallery' | 'camera', opts?: { squar
     return { uri: await resizeForCard(a.uri), landscape: (a.width || 0) > (a.height || 0) };
   } catch (e) {
     logger.error('[partage] photo', e);
-    appAlert('Oups', 'Impossible de récupérer la photo.');
+    appAlert('Oups', traduire('Impossible de récupérer la photo.'));
     return null;
   }
 }
@@ -78,13 +79,13 @@ async function capture(ref: RefObject<View | null>): Promise<string | null> {
  * de React Native (qui accepte un texte avec l'image), la signature texte accompagne l'image.
  * source : appelle noterPartage au toucher, puis a la confirmation d'envoi quand le systeme la donne.
  */
-export async function shareCard(ref: RefObject<View | null>, dialogTitle = 'Partager ma carte YOROI', fallbackMessage?: string, source?: SourcePartage): Promise<boolean> {
+export async function shareCard(ref: RefObject<View | null>, dialogTitle = traduire('Partager ma carte YOROI'), fallbackMessage?: string, source?: SourcePartage): Promise<boolean> {
   impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
   if (source) noterPartage(source);
   try {
     const uri = await capture(ref);
     if (!uri) {
-      appAlert('Oups', 'La carte n’est pas encore prête.');
+      appAlert('Oups', traduire('La carte n’est pas encore prête.'));
       return false;
     }
     if (await isAvailableAsync()) {
@@ -96,7 +97,7 @@ export async function shareCard(ref: RefObject<View | null>, dialogTitle = 'Part
     if (status === 'granted') {
       await saveToLibraryAsync(uri);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      appAlert('Image enregistrée', 'Le partage n’est pas disponible ici, ta carte est dans ta galerie.');
+      appAlert(traduire('Image enregistrée'), traduire('Le partage n’est pas disponible ici, ta carte est dans ta galerie.'));
       return true;
     }
     const res = await Share.share({ message: fallbackMessage ? texteSigne(fallbackMessage) : signaturePartage(), url: uri });
@@ -104,7 +105,7 @@ export async function shareCard(ref: RefObject<View | null>, dialogTitle = 'Part
     return true;
   } catch (e) {
     logger.error('[partage] share', e);
-    appAlert('Oups', 'Impossible de partager la carte.');
+    appAlert('Oups', traduire('Impossible de partager la carte.'));
     return false;
   }
 }
@@ -115,18 +116,18 @@ export async function saveCard(ref: RefObject<View | null>): Promise<boolean> {
   try {
     const { status } = await requestPermissionsAsync();
     if ((status as string) !== 'granted' && (status as string) !== 'limited') {
-      appAlert('Galerie bloquée', 'Autorise l’accès à ta galerie pour enregistrer l’image.');
+      appAlert(traduire('Galerie bloquée'), traduire('Autorise l’accès à ta galerie pour enregistrer l’image.'));
       return false;
     }
     const uri = await capture(ref);
     if (!uri) return false;
     await saveToLibraryAsync(uri);
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-    appAlert('Enregistrée', 'Ta carte est dans ta galerie.');
+    appAlert(traduire('Enregistrée'), traduire('Ta carte est dans ta galerie.'));
     return true;
   } catch (e) {
     logger.error('[partage] save', e);
-    appAlert('Oups', 'Impossible d’enregistrer la carte.');
+    appAlert('Oups', traduire('Impossible d’enregistrer la carte.'));
     return false;
   }
 }

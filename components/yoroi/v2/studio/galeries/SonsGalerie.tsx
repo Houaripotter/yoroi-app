@@ -13,25 +13,26 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { Bloc, Bouton, GalerieScreen, Pastille, PastilleRow, Rubrique } from './kit';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 type Son = { id: string; nom: string; fichier: string; ou: string; src: number };
 
 const SONS: Son[] = [
-  { id: 'clap', nom: 'Claquettes', fichier: 'clap10.mp3', ou: 'Les 10 dernières secondes d’un round (chrono, combat)', src: require('@/assets/sounds/clap10.mp3') },
-  { id: 'bell', nom: 'Cloche de fin de round', fichier: 'bell_end.mp3', ou: 'Fin d’un round (chrono, combat)', src: require('@/assets/sounds/bell_end.mp3') },
-  { id: 'gong', nom: 'Gong', fichier: 'gong.mp3', ou: 'Chronos, séance de combat, premier lancement', src: require('@/assets/sounds/gong.mp3') },
-  { id: 'beep', nom: 'Bip', fichier: 'beep.mp3', ou: 'Décompte des chronos et fin du repos muscu', src: require('@/assets/sounds/beep.mp3') },
-  { id: 'levelup', nom: 'Montée de niveau', fichier: 'level-up.mp3', ou: 'Premier lancement et passage à Premium', src: require('@/assets/sounds/level-up.mp3') },
-  { id: 'fanfare', nom: 'Fanfare', fichier: 'fanfare-badge.mp3', ou: 'Fin d’une séance enregistrée', src: require('@/assets/sounds/fanfare-badge.mp3') },
-  { id: 'victory', nom: 'Victoire', fichier: 'victory.mp3', ou: 'Fin d’un chrono', src: require('@/assets/sounds/victory.mp3') },
+  { id: 'clap', nom: 'Claquettes', fichier: 'clap10.mp3', ou: traduire('Les 10 dernières secondes d’un round (chrono, combat)'), src: require('@/assets/sounds/clap10.mp3') },
+  { id: 'bell', nom: traduire('Cloche de fin de round'), fichier: 'bell_end.mp3', ou: traduire('Fin d’un round (chrono, combat)'), src: require('@/assets/sounds/bell_end.mp3') },
+  { id: 'gong', nom: 'Gong', fichier: 'gong.mp3', ou: traduire('Chronos, séance de combat, premier lancement'), src: require('@/assets/sounds/gong.mp3') },
+  { id: 'beep', nom: 'Bip', fichier: 'beep.mp3', ou: traduire('Décompte des chronos et fin du repos muscu'), src: require('@/assets/sounds/beep.mp3') },
+  { id: 'levelup', nom: traduire('Montée de niveau'), fichier: 'level-up.mp3', ou: traduire('Premier lancement et passage à Premium'), src: require('@/assets/sounds/level-up.mp3') },
+  { id: 'fanfare', nom: 'Fanfare', fichier: 'fanfare-badge.mp3', ou: traduire('Fin d’une séance enregistrée'), src: require('@/assets/sounds/fanfare-badge.mp3') },
+  { id: 'victory', nom: traduire('Victoire'), fichier: 'victory.mp3', ou: traduire('Fin d’un chrono'), src: require('@/assets/sounds/victory.mp3') },
   { id: 'wizz', nom: 'Wizz', fichier: 'wizz.mp3', ou: 'Chrono', src: require('@/assets/sounds/wizz.mp3') },
-  { id: 'ring', nom: 'Sonnerie courte', fichier: 'ring.mp3', ou: 'Record, jeûne et récompenses', src: require('@/assets/sounds/ring.mp3') },
-  { id: 'recovery', nom: 'Récupération', fichier: 'recovery.mp3', ou: 'Chargé, mais joué nulle part pour l’instant', src: require('@/assets/sounds/recovery.mp3') },
+  { id: 'ring', nom: 'Sonnerie courte', fichier: 'ring.mp3', ou: traduire('Record, jeûne et récompenses'), src: require('@/assets/sounds/ring.mp3') },
+  { id: 'recovery', nom: traduire('Récupération'), fichier: 'recovery.mp3', ou: traduire('Chargé, mais joué nulle part pour l’instant'), src: require('@/assets/sounds/recovery.mp3') },
 ];
 
 function secondes(s: number | null | undefined): string {
   if (s === null || s === undefined || !Number.isFinite(s) || s <= 0) return '...';
-  if (s < 10) return `${s.toFixed(1).replace('.', ',')} s`;
+  if (s < 10) return `${s.toFixed(1).replace('.', DECIMAL)} s`;
   if (s < 60) return `${Math.round(s)} s`;
   const m = Math.floor(s / 60);
   const r = Math.round(s % 60);
@@ -77,7 +78,7 @@ function LigneSon({ son, first, stopAll }: { son: Son; first: boolean; stopAll: 
             else rejouer(player);
           }}
           accessibilityRole="button"
-          accessibilityLabel={st.playing ? `Arrêter ${son.nom}` : `Écouter ${son.nom}`}
+          accessibilityLabel={st.playing ? traduire("Arrêter {0}", son.nom) : traduire("Écouter {0}", son.nom)}
           style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, backgroundColor: st.playing ? c.accent : pressed ? c.fillSubtle : c.accentTint, alignItems: 'center', justifyContent: 'center' })}
         >
           {st.playing ? (
@@ -151,11 +152,11 @@ function SequenceFinDeRound({ stopAll }: { stopAll: number }) {
 
   return (
     <Bloc>
-      <Ink size={16} weight="black">Séquence de fin de round</Ink>
-      <Ink size={13} color={c.textSecondary}>Les claquettes, puis la cloche. Écoute si l’enchaînement sonne juste.</Ink>
+      <Ink size={16} weight="black">{traduire("Séquence de fin de round")}</Ink>
+      <Ink size={13} color={c.textSecondary}>{traduire("Les claquettes, puis la cloche. Écoute si l’enchaînement sonne juste.")}</Ink>
       <PastilleRow>
         {DELAIS.map((d) => (
-          <Pastille key={d} label={`Cloche ${d} s après`} on={delai === d} onPress={() => setDelai(d)} />
+          <Pastille key={d} label={traduire("Cloche {0} s après", d)} on={delai === d} onPress={() => setDelai(d)} />
         ))}
       </PastilleRow>
       <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -170,9 +171,9 @@ function SequenceFinDeRound({ stopAll }: { stopAll: number }) {
         })}
       </View>
       <Ink size={13} weight="bold" color={c.textSecondary} style={{ textAlign: 'center', minHeight: 18 }}>
-        {etape === 'claquettes' ? `Cloche dans ${reste} s` : etape === 'cloche' ? 'La cloche sonne' : ' '}
+        {etape === 'claquettes' ? traduire("Cloche dans {0} s", reste) : etape === 'cloche' ? traduire('La cloche sonne') : ' '}
       </Ink>
-      <Bouton label={etape === 'repos' ? 'Lancer la séquence' : 'Relancer'} icon="timer" onPress={lancer} />
+      <Bouton label={etape === 'repos' ? traduire('Lancer la séquence') : 'Relancer'} icon="timer" onPress={lancer} />
     </Bloc>
   );
 }
@@ -187,9 +188,9 @@ export function SonsGalerie() {
   }, []);
 
   return (
-    <GalerieScreen title="Sons" sub={`${SONS.length} sons de l’app. Le téléphone joue même en mode silencieux ici.`}>
+    <GalerieScreen title="Sons" sub={traduire("{0} sons de l’app. Le téléphone joue même en mode silencieux ici.", SONS.length)}>
       <SequenceFinDeRound stopAll={stopAll} />
-      <Rubrique title="Chaque son" sub="Touche pour écouter, touche encore pour arrêter." />
+      <Rubrique title={traduire("Chaque son")} sub={traduire("Touche pour écouter, touche encore pour arrêter.")} />
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
         {SONS.map((s, i) => (
           <LigneSon key={s.id} son={s} first={i === 0} stopAll={stopAll} />
@@ -198,11 +199,11 @@ export function SonsGalerie() {
       <Pressable
         onPress={() => setStopAll((n) => n + 1)}
         accessibilityRole="button"
-        accessibilityLabel="Tout arrêter"
+        accessibilityLabel={traduire("Tout arrêter")}
         style={({ pressed }) => ({ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 16, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}
       >
         <Icon name="close" size={16} color={c.textSecondary} />
-        <Ink size={14} weight="extraBold" color={c.textSecondary}>Tout arrêter</Ink>
+        <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduire("Tout arrêter")}</Ink>
       </Pressable>
     </GalerieScreen>
   );

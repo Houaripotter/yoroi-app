@@ -17,6 +17,7 @@ import { objectifVise } from '@/lib/v2/espace';
 import { Sheet } from './reglages/parts';
 import { JoursPicker, joursTexte } from './JoursPicker';
 import { ajusterAFrequence, joursTries, synchroniserOrdre, toucherJour } from '@/lib/v2/joursFrequence';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export function ObjectifSheet({ visible, onClose, espace, onSave }: {
   visible: boolean;
@@ -31,10 +32,10 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
   const ordre = useRef<number[]>(joursTries(jours));
   ordre.current = synchroniserOrdre(ordre.current, jours);
   return (
-    <Sheet visible={visible} onClose={onClose} title="Objectif de la semaine" subtitle="Le nombre de séances que tu vises, et tes jours si tu veux. C’est toi qui choisis.">
+    <Sheet visible={visible} onClose={onClose} title={traduire("Objectif de la semaine")} subtitle={traduire("Le nombre de séances que tu vises, et tes jours si tu veux. C’est toi qui choisis.")}>
       <View style={{ gap: 16 }}>
         <View style={{ gap: 8 }}>
-          <Ink size={14} weight="extraBold" color={c.textSecondary}>Combien de séances ?</Ink>
+          <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduire("Combien de séances ?")}</Ink>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {[1, 2, 3, 4, 5, 6, 7].map((n) => {
               const on = obj === n;
@@ -50,7 +51,7 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
                   }}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
-                  accessibilityLabel={`${n} séance${n > 1 ? 's' : ''} par semaine`}
+                  accessibilityLabel={traduirePluriel(n, n > 1, "{0} séance par semaine", "{0} séances par semaine", n)}
                   style={{ flex: 1 }}
                 >
                   <View style={{ height: 52, borderRadius: 14, backgroundColor: on ? c.accent : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
@@ -62,7 +63,7 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
           </View>
         </View>
         <View style={{ gap: 8 }}>
-          <Ink size={14} weight="extraBold" color={c.textSecondary}>Tes jours, si tu veux</Ink>
+          <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduire("Tes jours, si tu veux")}</Ink>
           <JoursPicker
             value={jours}
             onToggle={(j) => {
@@ -74,11 +75,11 @@ export function ObjectifSheet({ visible, onClose, espace, onSave }: {
             label="Entraînement"
           />
           <Ink size={13} color={c.textMuted} style={{ lineHeight: 18 }}>
-            {jours.length ? `Prévu : ${joursTexte(jours)}. Ton planning, s’il a des créneaux, passe avant.` : 'Aucun jour imposé. Touche tes jours pour les voir marqués sur Ta semaine.'}
+            {jours.length ? traduire("Prévu : {0}. Ton planning, s’il a des créneaux, passe avant.", joursTexte(jours)) : traduire('Aucun jour imposé. Touche tes jours pour les voir marqués sur Ta semaine.')}
           </Ink>
         </View>
         <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, backgroundColor: pressed ? c.ink : c.accent, alignItems: 'center', justifyContent: 'center' })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>C’est bon</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("C’est bon")}</Ink>
         </Pressable>
       </View>
     </Sheet>

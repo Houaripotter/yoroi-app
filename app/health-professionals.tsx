@@ -13,15 +13,16 @@ import { Badge, BottomSheet, H2, IconDot, LinkCard, NIcon, P, Segments } from '@
 import { safeOpenURL } from '@/lib/security/validators';
 import { COACHES, NUTRITIONISTS, OSTEOPATHS, SPORT_DOCTORS } from '@/data/partners';
 import type { Coach, Nutritionist, Osteopath, SportDoctor } from '@/data/partners';
+import { traduire } from '@/lib/i18n/tr';
 
 type Pro = Coach | Nutritionist | Osteopath | SportDoctor;
 type TabKey = 'kines' | 'nutritionists' | 'osteos' | 'sport-doctors';
 
 const TABS: { key: TabKey; label: string; empty: string }[] = [
-  { key: 'kines', label: 'Kinés', empty: 'Aucun kiné pour le moment' },
-  { key: 'nutritionists', label: 'Nutrition', empty: 'Aucun nutritionniste pour le moment' },
-  { key: 'osteos', label: 'Ostéos', empty: 'Aucun ostéopathe pour le moment' },
-  { key: 'sport-doctors', label: 'Médecins', empty: 'Aucun médecin du sport pour le moment' },
+  { key: 'kines', label: traduire('Kinés'), empty: traduire('Aucun kiné pour le moment') },
+  { key: 'nutritionists', label: 'Nutrition', empty: traduire('Aucun nutritionniste pour le moment') },
+  { key: 'osteos', label: traduire('Ostéos'), empty: traduire('Aucun ostéopathe pour le moment') },
+  { key: 'sport-doctors', label: traduire('Médecins'), empty: traduire('Aucun médecin du sport pour le moment') },
 ];
 
 export default function HealthProfessionalsScreen() {
@@ -45,7 +46,7 @@ export default function HealthProfessionalsScreen() {
 
   return (
     <>
-      <DetailScreen title="Pros de santé" subtitle="Des pros que je connais et recommande">
+      <DetailScreen title={traduire("Pros de santé")} subtitle={traduire("Des pros que je connais et recommande")}>
         <Segments items={TABS.map((t) => ({ key: t.key, label: t.label }))} value={tab} onChange={setTab} />
 
         {list.length > 0 ? (
@@ -62,22 +63,20 @@ export default function HealthProfessionalsScreen() {
                 {current.empty}
               </Ink>
               <Ink size={14} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>
-                Les partenariats arrivent bientôt.
-              </Ink>
+                {traduire("Les partenariats arrivent bientôt.")}</Ink>
             </Card>
           </Enter>
         )}
 
         <Enter i={list.length + 1}>
-          <H2>Tu es un pro de santé ?</H2>
+          <H2>{traduire("Tu es un pro de santé ?")}</H2>
           <View style={{ marginTop: 10 }}>
-            <LinkCard icon="people" tone="red" title="Rejoindre la sélection" sub="Contacte-moi sur Instagram, je serai ravi de te mettre en avant." onPress={() => safeOpenURL('https://www.instagram.com/yoroiapp')} right={<NIcon name="link" size={18} color={P.muted} />} />
+            <LinkCard icon="people" tone="red" title={traduire("Rejoindre la sélection")} sub={traduire("Contacte-moi sur Instagram, je serai ravi de te mettre en avant.")} onPress={() => safeOpenURL('https://www.instagram.com/yoroiapp')} right={<NIcon name="link" size={18} color={P.muted} />} />
           </View>
         </Enter>
 
         <Ink size={12} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-          Sélection personnelle et subjective. Ces pros ne sont pas liés par contrat à YOROI.
-        </Ink>
+          {traduire("Sélection personnelle et subjective. Ces pros ne sont pas liés par contrat à YOROI.")}</Ink>
       </DetailScreen>
 
       <BottomSheet visible={!!selected} onClose={() => setSelected(null)} title={selected?.name ?? ''} subtitle={selected?.title}>
@@ -88,12 +87,11 @@ export default function HealthProfessionalsScreen() {
                 <Image source={selected.imageUrl} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
               </View>
             ) : null}
-            {selected.featured ? <Badge label="Recommandé" tone="red" /> : null}
+            {selected.featured ? <Badge label={traduire("Recommandé")} tone="red" /> : null}
             {selected.bio ? (
               <View style={{ gap: 6 }}>
                 <Ink size={13} weight="extraBold" color={P.ink2}>
-                  À propos
-                </Ink>
+                  {traduire("À propos")}</Ink>
                 <Ink size={15} weight="medium" style={{ lineHeight: 22 }}>
                   {selected.bio}
                 </Ink>
@@ -102,8 +100,7 @@ export default function HealthProfessionalsScreen() {
             {selected.specialties?.length ? (
               <View style={{ gap: 8 }}>
                 <Ink size={13} weight="extraBold" color={P.ink2}>
-                  Spécialités
-                </Ink>
+                  {traduire("Spécialités")}</Ink>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {selected.specialties.map((s) => (
                     <View key={s} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
@@ -115,9 +112,9 @@ export default function HealthProfessionalsScreen() {
                 </View>
               </View>
             ) : null}
-            {selected.location ? <LinkCard icon="pin" tone="indigo" title={selected.location} sub="Ouvrir l’itinéraire" onPress={() => openMaps(selected.location)} /> : null}
-            {selected.instagram ? <LinkCard icon="link" tone="red" title={selected.instagram} sub="Voir sur Instagram" onPress={() => safeOpenURL(`https://instagram.com/${selected.instagram!.replace('@', '')}`)} /> : null}
-            {selected.website ? <BigButton label="Voir le site" icon="share" onPress={() => safeOpenURL(selected.website!)} /> : null}
+            {selected.location ? <LinkCard icon="pin" tone="indigo" title={selected.location} sub={traduire("Ouvrir l’itinéraire")} onPress={() => openMaps(selected.location)} /> : null}
+            {selected.instagram ? <LinkCard icon="link" tone="red" title={selected.instagram} sub={traduire("Voir sur Instagram")} onPress={() => safeOpenURL(`https://instagram.com/${selected.instagram!.replace('@', '')}`)} /> : null}
+            {selected.website ? <BigButton label={traduire("Voir le site")} icon="share" onPress={() => safeOpenURL(selected.website!)} /> : null}
           </>
         ) : null}
       </BottomSheet>
@@ -137,7 +134,7 @@ function ProCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
             <Ink size={16} weight="black" style={{ flexShrink: 1 }}>
               {pro.name}
             </Ink>
-            {pro.featured ? <Badge label="Recommandé" tone="red" /> : null}
+            {pro.featured ? <Badge label={traduire("Recommandé")} tone="red" /> : null}
           </View>
           <Ink size={13} weight="bold" color={P.ink2} numberOfLines={3}>
             {pro.title.replace(/\s&\s/g, ' et ')}

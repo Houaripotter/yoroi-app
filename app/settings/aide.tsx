@@ -14,6 +14,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import APP_CONFIG from '@/lib/appConfig';
 import { partagerTexte } from '@/lib/v2/partage/texte';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function Aide() {
   const router = useRouter();
@@ -23,27 +24,27 @@ export default function Aide() {
     const s = encodeURIComponent(subject);
     const b = encodeURIComponent(`\n\n\nYOROI ${APP_VERSION}, ${Platform.OS === 'ios' ? 'iPhone' : 'Android'}`);
     safeOpenURL(`mailto:${APP_CONFIG.supportEmail}?subject=${s}&body=${b}`).then((ok) => {
-      if (!ok) showPopup('Pas d’app mail', `Écris-nous directement à ${APP_CONFIG.supportEmail}`);
+      if (!ok) showPopup(traduire('Pas d’app mail'), traduire("Écris-nous directement à {0}", APP_CONFIG.supportEmail));
     });
   };
 
   // Le lien vient de constants/partage (store de la plateforme, ou le site quand il existera)
   const shareApp = () => {
-    partagerTexte({ source: 'app', message: 'J’utilise YOROI pour suivre mon poids, mes séances et ma progression, 100 % hors ligne.' });
+    partagerTexte({ source: 'app', message: traduire('J’utilise YOROI pour suivre mon poids, mes séances et ma progression, 100 % hors ligne.') });
   };
 
   return (
-    <EspaceScreen title="Aide et questions" subtitle="Comprendre YOROI et nous écrire">
+    <EspaceScreen title={traduire("Aide et questions")} subtitle={traduire("Comprendre YOROI et nous écrire")}>
       <Card>
-        <ValueRow first icon="image" label="Revoir la présentation" sub="Personnage, Santé, scène, puis la visite" onPress={() => router.push('/nouveautes?revoir=1' as any)} />
-        <ValueRow icon="spark" label="Revoir la visite guidée" sub="Je te montre l’app, écran par écran" onPress={() => lancerVisite(router)} />
-        <ValueRow icon="doc" label="Savoir" sub="Règles des sports et sources scientifiques" onPress={() => router.push('/savoir' as any)} />
+        <ValueRow first icon="image" label={traduire("Revoir la présentation")} sub={traduire("Personnage, Santé, scène, puis la visite")} onPress={() => router.push('/nouveautes?revoir=1' as any)} />
+        <ValueRow icon="spark" label={traduire("Revoir la visite guidée")} sub={traduire("Je te montre l’app, écran par écran")} onPress={() => lancerVisite(router)} />
+        <ValueRow icon="doc" label="Savoir" sub={traduire("Règles des sports et sources scientifiques")} onPress={() => router.push('/savoir' as any)} />
         {/* 18 octobre 2026 (Houari : « les sources des calculs doivent être visibles ») : un acces direct */}
-        <ValueRow icon="doc" label="Sources scientifiques" sub="Les études derrière les calculs de YOROI" onPress={() => router.push('/scientific-sources' as any)} />
-        <ValueRow icon="mail" label="Boîte à idées" sub="Une idée, un bug ? Écris-nous" onPress={() => mail('Idée pour YOROI')} />
+        <ValueRow icon="doc" label="Sources scientifiques" sub={traduire("Les études derrière les calculs de YOROI")} onPress={() => router.push('/scientific-sources' as any)} />
+        <ValueRow icon="mail" label={traduire("Boîte à idées")} sub={traduire("Une idée, un bug ? Écris-nous")} onPress={() => mail(traduire('Idée pour YOROI'))} />
         {/* 18 octobre 2026 : la page Aide et contact du site (questions frequentes, abonnement, donnees) */}
-        <ValueRow icon="globe" label="Aide en ligne" sub="Achats, abonnement, données : les réponses" onPress={() => void safeOpenURL(APP_CONFIG.site.support)} />
-        <ValueRow icon="share" label="Partager YOROI" sub="Avec un partenaire d’entraînement" onPress={shareApp} />
+        <ValueRow icon="globe" label="Aide en ligne" sub={traduire("Achats, abonnement, données : les réponses")} onPress={() => void safeOpenURL(APP_CONFIG.site.support)} />
+        <ValueRow icon="share" label={traduire("Partager YOROI")} sub={traduire("Avec un partenaire d’entraînement")} onPress={shareApp} />
       </Card>
       <PopupComponent />
     </EspaceScreen>

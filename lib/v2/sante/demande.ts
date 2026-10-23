@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking, Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
 import { validateLinkingURL } from '@/lib/security/validators';
+import { traduire } from '@/lib/i18n/tr';
 
 export const DEMANDE_SANTE_KEY = '@yoroi_sante_demande_v1';
 const JOUR = 86400000;
@@ -174,16 +175,16 @@ export const nomSante = (platform: string = Platform.OS) => (platform === 'andro
 /** Les etapes pour rouvrir l'acces quand la fenetre du systeme ne revient plus */
 export function etapesReglages(platform: string = Platform.OS): string[] {
   if (platform === 'android') {
-    return ['Ouvre Health Connect (le bouton ci-dessous).', 'Touche Autorisations des applis, puis YOROI.', 'Active ce que tu veux partager, puis reviens ici.'];
+    return [traduire('Ouvre Health Connect (le bouton ci-dessous).'), traduire('Touche Autorisations des applis, puis YOROI.'), traduire('Active ce que tu veux partager, puis reviens ici.')];
   }
   return [
-    'Ouvre l’app Santé (le bouton ci-dessous).',
-    'Touche ta photo en haut à droite, puis Apps, puis YOROI.',
-    'Active les données à partager, puis reviens ici.',
+    traduire('Ouvre l’app Santé (le bouton ci-dessous).'),
+    traduire('Touche ta photo en haut à droite, puis Apps, puis YOROI.'),
+    traduire('Active les données à partager, puis reviens ici.'),
   ];
 }
 
-export const cheminReglagesIos = 'Ou dans Réglages : Santé, Accès aux données et appareils, YOROI.';
+export const cheminReglagesIos = traduire('Ou dans Réglages : Santé, Accès aux données et appareils, YOROI.');
 
 /**
  * Ouvre l'endroit ou l'on regle l'acces.

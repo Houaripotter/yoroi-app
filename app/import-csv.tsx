@@ -27,11 +27,12 @@ import { Row } from '@/components/yoroi/v2/espace/ui';
 import { DoneBlock, NumberedSteps, ParsedRow, SummaryHero, TypeBadge } from '@/components/yoroi/v2/partage/importKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Step = 'select' | 'preview' | 'done' | 'advanced-select' | 'advanced-preview' | 'advanced-done';
 
 const ADV_LABELS: Record<CSVRowType, string> = {
-  POIDS: 'pesées', ENTRAÎNEMENT: 'séances', MENSURATION: 'mensurations', SOMMEIL: 'nuits de sommeil', HYDRATATION: 'hydratation', HUMEUR: 'humeur',
+  POIDS: traduire('pesées'), ENTRAÎNEMENT: traduire('séances'), MENSURATION: 'mensurations', SOMMEIL: traduire('nuits de sommeil'), HYDRATATION: 'hydratation', HUMEUR: 'humeur',
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -55,7 +56,7 @@ export default function ImportCSVScreen() {
   const handleDownloadTemplate = async () => {
     impactAsync(ImpactFeedbackStyle.Medium);
     const success = await shareTemplate();
-    if (!success) errorPopup('Partage impossible', 'Le modèle n’a pas pu être partagé. Réessaie.');
+    if (!success) errorPopup(traduire('Partage impossible'), traduire('Le modèle n’a pas pu être partagé. Réessaie.'));
   };
 
   const readCsv = async (): Promise<string | null> => {
@@ -67,7 +68,7 @@ export default function ImportCSVScreen() {
     const file = result.assets[0];
     const ext = (file.name || 'unknown.csv').toLowerCase().split('.').pop();
     if (ext !== 'csv' && ext !== 'txt') {
-      errorPopup('Format non reconnu', 'Choisis un fichier .csv');
+      errorPopup(traduire('Format non reconnu'), traduire('Choisis un fichier .csv'));
       return null;
     }
     setIsParsing(true);
@@ -80,7 +81,7 @@ export default function ImportCSVScreen() {
       if (content == null) return;
       const parsed = parseUnifiedCSV(content);
       if (parsed.rows.length === 0) {
-        errorPopup('Fichier vide', 'Aucune donnée trouvée. Vérifie le format du fichier.');
+        errorPopup('Fichier vide', traduire('Aucune donnée trouvée. Vérifie le format du fichier.'));
         return;
       }
       setParseResult(parsed);
@@ -88,7 +89,7 @@ export default function ImportCSVScreen() {
       await impactAsync(ImpactFeedbackStyle.Medium);
     } catch (error: any) {
       logger.error('CSV file read error:', error);
-      errorPopup('Lecture impossible', 'Le fichier n’a pas pu être lu. Vérifie que c’est bien un tableur au format CSV.');
+      errorPopup(traduire('Lecture impossible'), traduire('Le fichier n’a pas pu être lu. Vérifie que c’est bien un tableur au format CSV.'));
     } finally {
       setIsParsing(false);
     }
@@ -109,7 +110,7 @@ export default function ImportCSVScreen() {
       await notificationAsync(NotificationFeedbackType.Success);
     } catch (error: any) {
       logger.error('CSV import error:', error);
-      errorPopup('Import interrompu', 'L’import n’a pas pu aller au bout. Réessaie.');
+      errorPopup('Import interrompu', traduire('L’import n’a pas pu aller au bout. Réessaie.'));
     } finally {
       setIsImporting(false);
     }
@@ -119,7 +120,7 @@ export default function ImportCSVScreen() {
   const handleAdvDownloadTemplate = async () => {
     impactAsync(ImpactFeedbackStyle.Medium);
     const success = await shareCSVTemplate();
-    if (!success) errorPopup('Partage impossible', 'Le modèle n’a pas pu être partagé. Réessaie.');
+    if (!success) errorPopup(traduire('Partage impossible'), traduire('Le modèle n’a pas pu être partagé. Réessaie.'));
   };
 
   const pickAdvancedFile = async () => {
@@ -128,7 +129,7 @@ export default function ImportCSVScreen() {
       if (content == null) return;
       const parsed = parseCSVContent(content);
       if (parsed.rows.length === 0) {
-        errorPopup('Fichier vide', 'Aucune donnée trouvée.');
+        errorPopup('Fichier vide', traduire('Aucune donnée trouvée.'));
         return;
       }
       setAdvParseResult(parsed);
@@ -136,7 +137,7 @@ export default function ImportCSVScreen() {
       await impactAsync(ImpactFeedbackStyle.Medium);
     } catch (error: any) {
       logger.error('CSV file read error:', error);
-      errorPopup('Lecture impossible', 'Le fichier n’a pas pu être lu. Vérifie que c’est bien un tableur au format CSV.');
+      errorPopup(traduire('Lecture impossible'), traduire('Le fichier n’a pas pu être lu. Vérifie que c’est bien un tableur au format CSV.'));
     } finally {
       setIsParsing(false);
     }
@@ -156,7 +157,7 @@ export default function ImportCSVScreen() {
       await notificationAsync(NotificationFeedbackType.Success);
     } catch (error: any) {
       logger.error('CSV import error:', error);
-      errorPopup('Import interrompu', 'L’import n’a pas pu aller au bout. Réessaie.');
+      errorPopup('Import interrompu', traduire('L’import n’a pas pu aller au bout. Réessaie.'));
     } finally {
       setIsImporting(false);
     }
@@ -182,12 +183,12 @@ export default function ImportCSVScreen() {
     }
   };
 
-  const title = step === 'select' ? 'Importer un tableur'
-    : step === 'preview' || step === 'advanced-preview' ? 'Vérification'
-    : step === 'advanced-select' ? 'Import avancé'
-    : 'Import terminé';
-  const subtitle = step === 'select' ? 'Pesées, composition et mensurations'
-    : step === 'advanced-select' ? 'Séances, sommeil, hydratation, humeur'
+  const title = step === 'select' ? traduire('Importer un tableur')
+    : step === 'preview' || step === 'advanced-preview' ? traduire('Vérification')
+    : step === 'advanced-select' ? traduire('Import avancé')
+    : traduire('Import terminé');
+  const subtitle = step === 'select' ? traduire('Pesées, composition et mensurations')
+    : step === 'advanced-select' ? traduire('Séances, sommeil, hydratation, humeur')
     : undefined;
 
   const errorsCount = importErrors.length || advImportErrors.length;
@@ -198,8 +199,8 @@ export default function ImportCSVScreen() {
         <>
           <Enter i={0}>
             <Glass style={{ gap: 12, backgroundColor: blancA(0.92) }}>
-              <Ink size={18} weight="black" tight>Un seul fichier pour tout ton historique</Ink>
-              <Ink size={14} color={P.ink2}>Remplis-le sur ton ordinateur, puis importe-le ici.</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Un seul fichier pour tout ton historique")}</Ink>
+              <Ink size={14} color={P.ink2}>{traduire("Remplis-le sur ton ordinateur, puis importe-le ici.")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <TypeBadge icon="scale" label="Poids" tint={P.indigo} soft={P.indigoSoft} />
                 <TypeBadge icon="pulse" label="Composition" tint={P.mossText} soft={P.mossSoft} />
@@ -209,35 +210,35 @@ export default function ImportCSVScreen() {
           </Enter>
           <Enter i={1}>
             <NumberedSteps steps={[
-              { title: 'Télécharge le modèle', text: 'Il s’ouvre dans Excel, Google Sheets ou Numbers, avec des exemples.' },
-              { title: 'Remplis tes données', text: 'Une ligne par date. Laisse vide ce que tu n’as pas.' },
-              { title: 'Importe-le', text: 'Range-le dans tes fichiers en ligne, puis choisis-le ci-dessous.' },
+              { title: traduire('Télécharge le modèle'), text: traduire('Il s’ouvre dans Excel, Google Sheets ou Numbers, avec des exemples.') },
+              { title: traduire('Remplis tes données'), text: traduire('Une ligne par date. Laisse vide ce que tu n’as pas.') },
+              { title: 'Importe-le', text: traduire('Range-le dans tes fichiers en ligne, puis choisis-le ci-dessous.') },
             ]} />
           </Enter>
           <Enter i={2} style={{ gap: 10 }}>
-            <BigButton label="Télécharger le modèle" tone="light" icon="list" onPress={handleDownloadTemplate} />
-            <BigButton label={isParsing ? 'Analyse du fichier' : 'Choisir mon fichier'} icon="plus" onPress={pickFile} disabled={isParsing} />
+            <BigButton label={traduire("Télécharger le modèle")} tone="light" icon="list" onPress={handleDownloadTemplate} />
+            <BigButton label={isParsing ? traduire('Analyse du fichier') : traduire('Choisir mon fichier')} icon="plus" onPress={pickFile} disabled={isParsing} />
           </Enter>
           <Card style={{ padding: 0 }}>
-            <Row first icon="table" label="Import avancé" sub="Séances, sommeil, hydratation, humeur" onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setStep('advanced-select'); }} />
+            <Row first icon="table" label={traduire("Import avancé")} sub={traduire("Séances, sommeil, hydratation, humeur")} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setStep('advanced-select'); }} />
           </Card>
           <Card style={{ gap: 6, backgroundColor: P.goldSoft, borderColor: P.goldSoft }}>
             <Ink size={14} weight="extraBold" color={P.goldDark}>Astuce</Ink>
             <Ink size={13} color={P.ink2}>
               {Platform.OS === 'ios'
-                ? 'Range le fichier dans iCloud Drive sur ton Mac, il apparaît dans Fichiers sur ton iPhone. AirDrop et mail marchent aussi.'
-                : 'Range le fichier dans Google Drive sur ton ordinateur, puis ouvre-le depuis Fichiers. WhatsApp et mail marchent aussi.'}
+                ? traduire('Range le fichier dans iCloud Drive sur ton Mac, il apparaît dans Fichiers sur ton iPhone. AirDrop et mail marchent aussi.')
+                : traduire('Range le fichier dans Google Drive sur ton ordinateur, puis ouvre-le depuis Fichiers. WhatsApp et mail marchent aussi.')}
             </Ink>
-            <Ink size={12} color={P.ink2}>Les fichiers des anciennes versions sont acceptés. Séparateurs virgule ou point-virgule, dates JJ/MM/AAAA ou AAAA-MM-JJ.</Ink>
+            <Ink size={12} color={P.ink2}>{traduire("Les fichiers des anciennes versions sont acceptés. Séparateurs virgule ou point-virgule, dates JJ/MM/AAAA ou AAAA-MM-JJ.")}</Ink>
           </Card>
         </>
       ) : null}
 
       {step === 'preview' && parseResult ? (
         <>
-          <SummaryHero big={parseResult.validCount} label={plural(parseResult.validCount, 'ligne prête', 'lignes prêtes')} sub={parseResult.invalidCount > 0 ? plural(parseResult.invalidCount, 'ligne à corriger', 'lignes à corriger') : 'Tout est bon'} />
+          <SummaryHero big={parseResult.validCount} label={plural(parseResult.validCount, traduire('ligne prête'), traduire('lignes prêtes'))} sub={parseResult.invalidCount > 0 ? plural(parseResult.invalidCount, traduire('ligne à corriger'), traduire('lignes à corriger')) : traduire('Tout est bon')} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {parseResult.summary.weights > 0 ? <TypeBadge icon="scale" label={plural(parseResult.summary.weights, 'pesée', 'pesées')} tint={P.indigo} soft={P.indigoSoft} /> : null}
+            {parseResult.summary.weights > 0 ? <TypeBadge icon="scale" label={plural(parseResult.summary.weights, traduire('pesée'), traduire('pesées'))} tint={P.indigo} soft={P.indigoSoft} /> : null}
             {parseResult.summary.compositions > 0 ? <TypeBadge icon="pulse" label={plural(parseResult.summary.compositions, 'composition', 'compositions')} tint={P.mossText} soft={P.mossSoft} /> : null}
             {parseResult.summary.measurements > 0 ? <TypeBadge icon="ruler" label={plural(parseResult.summary.measurements, 'mensuration', 'mensurations')} tint={P.goldDark} soft={P.goldSoft} /> : null}
           </View>
@@ -245,34 +246,34 @@ export default function ImportCSVScreen() {
             {parseResult.rows.slice(0, 20).map((row, idx) => (
               <ParsedRow key={idx} ok={row.valid} title={row.preview || `Ligne ${row.lineNumber}`} error={row.error} />
             ))}
-            {parseResult.rows.length > 20 ? <Ink size={13} weight="bold" color={P.ink2} style={{ paddingVertical: 10 }}>{`Et ${parseResult.rows.length - 20} de plus`}</Ink> : null}
+            {parseResult.rows.length > 20 ? <Ink size={13} weight="bold" color={P.ink2} style={{ paddingVertical: 10 }}>{traduire("Et {0} de plus", parseResult.rows.length - 20)}</Ink> : null}
           </Card>
           {isImporting ? <ActivityIndicator color={P.accent} /> : null}
-          <BigButton label={`Importer ${plural(parseResult.validCount, 'ligne', 'lignes')}`} icon="check" onPress={handleImport} disabled={parseResult.validCount === 0 || isImporting} />
-          <BigButton label="Changer de fichier" tone="light" onPress={() => { setParseResult(null); setStep('select'); }} />
+          <BigButton label={traduire("Importer {0}", plural(parseResult.validCount, 'ligne', 'lignes'))} icon="check" onPress={handleImport} disabled={parseResult.validCount === 0 || isImporting} />
+          <BigButton label={traduire("Changer de fichier")} tone="light" onPress={() => { setParseResult(null); setStep('select'); }} />
         </>
       ) : null}
 
       {step === 'advanced-select' ? (
         <>
           <Glass style={{ gap: 10, backgroundColor: blancA(0.92) }}>
-            <Ink size={18} weight="black" tight>Plusieurs types dans un fichier</Ink>
-            <Ink size={14} color={P.ink2}>Une colonne « TYPE » indique ce que contient chaque ligne.</Ink>
+            <Ink size={18} weight="black" tight>{traduire("Plusieurs types dans un fichier")}</Ink>
+            <Ink size={14} color={P.ink2}>{traduire("Une colonne « TYPE » indique ce que contient chaque ligne.")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <TypeBadge icon="dumbbell" label="Séances" tint={P.accent} soft={P.accentSoft} />
-              <TypeBadge icon="bed" label="Sommeil" tint={P.indigo} soft={P.indigoSoft} />
-              <TypeBadge icon="drop" label="Hydratation" tint={P.water} soft={P.indigoSoft} />
+              <TypeBadge icon="dumbbell" label={traduire("Séances")} tint={P.accent} soft={P.accentSoft} />
+              <TypeBadge icon="bed" label={traduire("Sommeil")} tint={P.indigo} soft={P.indigoSoft} />
+              <TypeBadge icon="drop" label={traduire("Hydratation")} tint={P.water} soft={P.indigoSoft} />
               <TypeBadge icon="heart" label="Humeur" tint={P.goldDark} soft={P.goldSoft} />
             </View>
           </Glass>
-          <BigButton label="Télécharger le modèle avancé" tone="light" icon="list" onPress={handleAdvDownloadTemplate} />
-          <BigButton label={isParsing ? 'Analyse du fichier' : 'Choisir mon fichier'} icon="plus" onPress={pickAdvancedFile} disabled={isParsing} />
+          <BigButton label={traduire("Télécharger le modèle avancé")} tone="light" icon="list" onPress={handleAdvDownloadTemplate} />
+          <BigButton label={isParsing ? traduire('Analyse du fichier') : traduire('Choisir mon fichier')} icon="plus" onPress={pickAdvancedFile} disabled={isParsing} />
         </>
       ) : null}
 
       {step === 'advanced-preview' && advParseResult ? (
         <>
-          <SummaryHero big={advParseResult.validCount} label={plural(advParseResult.validCount, 'entrée prête', 'entrées prêtes')} sub={advParseResult.invalidCount > 0 ? plural(advParseResult.invalidCount, 'entrée à corriger', 'entrées à corriger') : 'Tout est bon'} />
+          <SummaryHero big={advParseResult.validCount} label={plural(advParseResult.validCount, traduire('entrée prête'), traduire('entrées prêtes'))} sub={advParseResult.invalidCount > 0 ? plural(advParseResult.invalidCount, traduire('entrée à corriger'), traduire('entrées à corriger')) : traduire('Tout est bon')} />
           <Card style={{ paddingVertical: 6 }}>
             {CSV_ROW_TYPES.map((type) => {
               const typeRows = advParseResult.byType[type];
@@ -284,32 +285,32 @@ export default function ImportCSVScreen() {
           </Card>
           {advParseResult.invalidCount > 0 ? (
             <Card style={{ paddingVertical: 6 }}>
-              <Ink size={15} weight="black" color={P.danger} style={{ paddingVertical: 8 }}>À corriger</Ink>
+              <Ink size={15} weight="black" color={P.danger} style={{ paddingVertical: 8 }}>{traduire("À corriger")}</Ink>
               {advParseResult.rows.filter((r) => !r.valid).slice(0, 10).map((row, idx) => (
                 <ParsedRow key={idx} ok={false} title={`Ligne ${row.lineNumber}, ${ADV_LABELS[row.type as CSVRowType] ?? 'type inconnu'}`} error={row.error} />
               ))}
             </Card>
           ) : null}
           {isImporting ? <ActivityIndicator color={P.accent} /> : null}
-          <BigButton label={`Importer ${plural(advParseResult.validCount, 'entrée', 'entrées')}`} icon="check" onPress={handleAdvancedImport} disabled={advParseResult.validCount === 0 || isImporting} />
-          <BigButton label="Changer de fichier" tone="light" onPress={() => { setAdvParseResult(null); setStep('advanced-select'); }} />
+          <BigButton label={traduire("Importer {0}", plural(advParseResult.validCount, 'entrée', 'entrées'))} icon="check" onPress={handleAdvancedImport} disabled={advParseResult.validCount === 0 || isImporting} />
+          <BigButton label={traduire("Changer de fichier")} tone="light" onPress={() => { setAdvParseResult(null); setStep('advanced-select'); }} />
         </>
       ) : null}
 
       {step === 'done' || step === 'advanced-done' ? (
         <>
-          <DoneBlock title="Import terminé" sub={`${plural(importedCount, 'ligne importée', 'lignes importées')}, ton suivi est à jour.`}>
+          <DoneBlock title={traduire("Import terminé")} sub={traduire("{0}, ton suivi est à jour.", plural(importedCount, 'ligne importée', 'lignes importées'))}>
             {step === 'done' ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-                {importDetails.weights > 0 ? <TypeBadge icon="scale" label={plural(importDetails.weights, 'pesée', 'pesées')} tint={P.indigo} soft={P.indigoSoft} /> : null}
+                {importDetails.weights > 0 ? <TypeBadge icon="scale" label={plural(importDetails.weights, traduire('pesée'), traduire('pesées'))} tint={P.indigo} soft={P.indigoSoft} /> : null}
                 {importDetails.measurements > 0 ? <TypeBadge icon="ruler" label={plural(importDetails.measurements, 'mensuration', 'mensurations')} tint={P.goldDark} soft={P.goldSoft} /> : null}
                 {importDetails.compositions > 0 ? <TypeBadge icon="pulse" label={plural(importDetails.compositions, 'composition', 'compositions')} tint={P.mossText} soft={P.mossSoft} /> : null}
               </View>
             ) : null}
-            {errorsCount > 0 ? <Ink size={13} weight="bold" color={P.danger}>{plural(errorsCount, 'erreur pendant l’import', 'erreurs pendant l’import')}</Ink> : null}
+            {errorsCount > 0 ? <Ink size={13} weight="bold" color={P.danger}>{plural(errorsCount, traduire('erreur pendant l’import'), traduire('erreurs pendant l’import'))}</Ink> : null}
           </DoneBlock>
-          <BigButton label="Terminé" onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
-          <BigButton label="Importer un autre fichier" tone="light" onPress={resetAll} />
+          <BigButton label={traduire("Terminé")} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
+          <BigButton label={traduire("Importer un autre fichier")} tone="light" onPress={resetAll} />
         </>
       ) : null}
     </DetailScreen>

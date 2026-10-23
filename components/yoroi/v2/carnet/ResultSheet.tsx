@@ -16,6 +16,7 @@ import type { CarnetIllus } from './images';
 import { Illus } from './nav';
 import { P, BigButton, tap } from './ui';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ResultInfo = { name: string; performance: string; isPR: boolean; recordText?: string; gain?: string | null; illus?: CarnetIllus; first?: boolean };
 
@@ -39,7 +40,7 @@ function LandingSeal() {
       <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: 112, height: 112, borderRadius: 30, borderWidth: 4, borderColor: P.record }, ringStyle]} />
       <Animated.View style={seal}>
         <View style={{ backgroundColor: blancA(0.92), borderRadius: 26, padding: 6 }}>
-          <RecordSeal size={88} color={P.record} border={5} glyph="laurier" rotate={0} accessibilityLabel="Tampon de record" />
+          <RecordSeal size={88} color={P.record} border={5} glyph="laurier" rotate={0} accessibilityLabel={traduire("Tampon de record")} />
         </View>
       </Animated.View>
     </View>
@@ -51,7 +52,7 @@ export function ResultSheet({ result, onShare, onClose }: { result: ResultInfo |
   const perf = result ? splitPerf(result.performance) : null;
   return (
     <Modal visible={!!result} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.5)', justifyContent: 'flex-end' }} accessibilityLabel="Fermer">
+      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.5)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
         {result && perf ? (
           <Animated.View entering={ENTREE}>
             <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 18, gap: 14 }}>
@@ -70,7 +71,7 @@ export function ResultSheet({ result, onShare, onClose }: { result: ResultInfo |
 
               <View style={{ alignItems: 'center', gap: 4 }}>
                 <Ink size={15} weight="black" color={result.isPR ? P.record : P.ink2}>
-                  {result.isPR ? (result.first ? 'Premier record posé' : 'Nouveau record') : 'Perf notée'}
+                  {result.isPR ? (result.first ? traduire('Premier record posé') : traduire('Nouveau record')) : traduire('Perf notée')}
                 </Ink>
                 <Ink size={42} weight="black" tight style={{ textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {perf.main}
@@ -81,18 +82,18 @@ export function ResultSheet({ result, onShare, onClose }: { result: ResultInfo |
                 </Ink>
                 {result.isPR && result.gain ? (
                   <View style={{ marginTop: 6, paddingHorizontal: 12, minHeight: 30, borderRadius: 15, justifyContent: 'center', backgroundColor: P.mossSoft }}>
-                    <Ink size={13} weight="extraBold" color={P.mossText}>{`${result.gain} sur ton ancien record`}</Ink>
+                    <Ink size={13} weight="extraBold" color={P.mossText}>{traduire("{0} sur ton ancien record", result.gain)}</Ink>
                   </View>
                 ) : null}
                 {result.isPR && result.recordText && !result.gain ? <Ink size={13} weight="medium" color={P.ink2}>{`Ancien record : ${result.recordText}`}</Ink> : null}
-                {result.isPR && result.first ? <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>C’est ta référence. Chaque fois que tu la bats, un tampon rouge se pose.</Ink> : null}
+                {result.isPR && result.first ? <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("C’est ta référence. Chaque fois que tu la bats, un tampon rouge se pose.")}</Ink> : null}
                 {!result.isPR && result.recordText ? (
-                  <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{`Ton record reste ${result.recordText}. La prochaine fois peut-être.`}</Ink>
+                  <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Ton record reste {0}. La prochaine fois peut-être.", result.recordText)}</Ink>
                 ) : null}
               </View>
 
-              <BigButton label="Partager" icon="share" onPress={onShare} />
-              <BigButton label="Fermer" tone="light" onPress={onClose} />
+              <BigButton label={traduire("Partager")} icon="share" onPress={onShare} />
+              <BigButton label={traduire("Fermer")} tone="light" onPress={onClose} />
             </Pressable>
           </Animated.View>
         ) : null}

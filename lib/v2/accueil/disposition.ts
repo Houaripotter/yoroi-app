@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { traduire } from '@/lib/i18n/tr';
 
 export type BlocAccueil = 'semaine' | 'activite' | 'forme' | 'mange' | 'rendezvous' | 'conseil' | 'mois' | 'progres' | 'pesee' | 'photos';
 
@@ -26,19 +27,19 @@ export type BlocAccueil = 'semaine' | 'activite' | 'forme' | 'mange' | 'rendezvo
 const ANCIEN_COEUR = 'sante';
 
 export const BLOCS_ACCUEIL: { id: BlocAccueil; titre: string; aide: string }[] = [
-  { id: 'semaine', titre: 'Ta semaine', aide: 'ta prochaine séance, ton objectif, ta dernière séance' },
+  { id: 'semaine', titre: traduire('Ta semaine'), aide: traduire('ta prochaine séance, ton objectif, ta dernière séance') },
   // 17 octobre : un seul rectangle Sante, a la place d'Activite et de Coeur au repos
-  { id: 'activite', titre: 'Ta santé aujourd’hui', aide: 'pas, calories, distance, cœur, oxygène, respiration, sommeil, depuis Santé' },
-  { id: 'forme', titre: 'Ta forme du jour', aide: 'récupération, sommeil, eau, mensurations' },
+  { id: 'activite', titre: traduire('Ta santé aujourd’hui'), aide: traduire('pas, calories, distance, cœur, oxygène, respiration, sommeil, depuis Santé') },
+  { id: 'forme', titre: traduire('Ta forme du jour'), aide: traduire('récupération, sommeil, eau, mensurations') },
   // 16 octobre (agent MANGÉ) : une ligne discrète, seulement si ton app de repas écrit dans Santé ; sinon rien
-  { id: 'mange', titre: 'Mangé aujourd’hui', aide: 'calories et protéines de ton app de repas, seulement si elle écrit dans Santé' },
-  { id: 'rendezvous', titre: 'Ta compétition', aide: 'seulement quand tu as ajouté une compétition à venir' },
-  { id: 'conseil', titre: 'Ta citation du jour', aide: 'une phrase sous tes outils ; touche-la pour le conseil du jour' },
-  { id: 'mois', titre: 'Ton mois', aide: 'ton calendrier, le logo de ton club sur chaque séance' },
+  { id: 'mange', titre: traduire('Mangé aujourd’hui'), aide: traduire('calories et protéines de ton app de repas, seulement si elle écrit dans Santé') },
+  { id: 'rendezvous', titre: traduire('Ta compétition'), aide: traduire('seulement quand tu as ajouté une compétition à venir') },
+  { id: 'conseil', titre: traduire('Ta citation du jour'), aide: traduire('une phrase sous tes outils ; touche-la pour le conseil du jour') },
+  { id: 'mois', titre: traduire('Ton mois'), aide: traduire('ton calendrier, le logo de ton club sur chaque séance') },
   // 16 octobre : blocs en plus ; 17 octobre : affiches par defaut, avec un etat vide utile tant que l'app n'a pas la donnee
-  { id: 'progres', titre: 'Records et régularité', aide: 'ton dernier record, tes semaines d’affilée à l’objectif' },
-  { id: 'pesee', titre: 'Ta prochaine pesée', aide: 'le prochain de tes jours de pesée' },
-  { id: 'photos', titre: 'Avant, après', aide: 'ta première et ta dernière photo' },
+  { id: 'progres', titre: traduire('Records et régularité'), aide: traduire('ton dernier record, tes semaines d’affilée à l’objectif') },
+  { id: 'pesee', titre: traduire('Ta prochaine pesée'), aide: traduire('le prochain de tes jours de pesée') },
+  { id: 'photos', titre: traduire('Avant, après'), aide: traduire('ta première et ta dernière photo') },
 ];
 
 /** Blocs en plus (16 octobre). 17 octobre : affiches par defaut comme les autres, decochables dans Tes blocs */

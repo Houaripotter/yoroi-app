@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import type { YoroiColors } from '@/components/yoroi/tokens';
 import { murPremiumEvent } from '@/lib/v2/premium/events';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SourcePremium =
   | 'prevision_poids'
@@ -65,33 +66,33 @@ const pluriel = (n: number, un: string, plusieurs: string) => `${n} ${n > 1 ? pl
 const compte = (n?: number | null): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
 
 export const SOURCES: Record<SourcePremium, InfoSource> = {
-  prevision_poids: { libelle: 'Prévisions de poids', phrase: () => 'Tes prévisions de poids sur 3 mois sont prêtes.', accent: 'indigo', icone: 'target', courbe: true },
-  periode_longue: { libelle: 'Tes courbes longues', phrase: (n) => (compte(n) ? `Tes ${pluriel(n, 'pesée', 'pesées')} sur 6 mois, 1 an et tout ton historique.` : 'Tes courbes sur 6 mois, 1 an et tout ton historique.'), accent: 'indigo', icone: 'calendar', courbe: true },
-  sante_annee: { libelle: 'Ta santé sur l’année', phrase: () => 'Ton année de santé, mois par mois, est déjà tracée.', accent: 'indigo', icone: 'pulse' },
-  photos_limite: { libelle: 'Photos de progression', phrase: (n) => (compte(n) ? `Déjà ${pluriel(n, 'photo', 'photos')} dans ton coffre. Continue sans limite.` : 'Ajoute autant de photos de progression que tu veux.'), accent: 'or', icone: 'image' },
-  competitions_limite: { libelle: 'Compétitions à venir', phrase: (n) => (compte(n) ? `${pluriel(n, 'compétition', 'compétitions')} à venir. Ajoute toutes les suivantes.` : 'Ajoute toutes tes compétitions à venir, sans limite.'), accent: 'rouge', icone: 'trophy' },
-  videos: { libelle: 'Tes vidéos', phrase: () => 'Tes vidéos de technique, rangées dans ton carnet.', accent: 'indigo', icone: 'camera' },
-  progression_mouvements: { libelle: 'Progression des mouvements', phrase: () => 'Ta progression sur les gros mouvements, séance après séance.', accent: 'mousse', icone: 'dumbbell' },
-  signes_vitaux: { libelle: 'Signes vitaux de la nuit', phrase: () => 'Ta fréquence cardiaque, ta respiration et ton oxygène pendant la nuit.', accent: 'rouge', icone: 'heart' },
-  bilan_pdf: { libelle: 'Bilan en PDF', phrase: () => 'Ton bilan complet en PDF, prêt à envoyer à ton coach.', accent: 'indigo', icone: 'doc' },
-  partenaire_pdf: { libelle: 'Fiche partenaire en PDF', phrase: () => 'La fiche complète de ce partenaire, en PDF.', accent: 'indigo', icone: 'doc' },
-  objectifs_dates: { libelle: 'Objectifs datés', phrase: () => 'Un compte à rebours jusqu’à chacun de tes buts.', accent: 'mousse', icone: 'target' },
-  scenes: { libelle: 'Toutes les scènes', phrase: () => 'Toutes les scènes du monde samouraï, sans attendre.', accent: 'or', icone: 'image' },
-  personnages: { libelle: 'Tous les personnages', phrase: () => 'Tous les personnages du monde samouraï, sans attendre.', accent: 'or', icone: 'user' },
-  logos: { libelle: 'Tous les logos', phrase: () => 'Choisis l’icône de ton app parmi tous les logos.', accent: 'or', icone: 'spark' },
-  seche: { libelle: 'Coupe de poids', phrase: () => 'Ta coupe planifiée jour par jour jusqu’à la pesée.', accent: 'rouge', icone: 'scale' },
-  plan_nutrition: { libelle: 'Plan nutritionnel', phrase: () => 'Tes calories et tes macros du jour, calculées pour toi.', accent: 'mousse', icone: 'flame' },
-  bilan_annuel: { libelle: 'Bilan de l’année', phrase: (n) => (compte(n) ? `Ton année en ${pluriel(n, 'séance', 'séances')}, résumée en quelques écrans.` : 'Ton année résumée en quelques écrans.'), accent: 'or', icone: 'star' },
-  analyse_combat: { libelle: 'Analyse de combat', phrase: (n) => (compte(n) ? `Tes ${pluriel(n, 'round', 'rounds')} analysés : victoires, partenaires, soumissions.` : 'Tes rounds analysés : victoires, partenaires, soumissions.'), accent: 'rouge', icone: 'swords' },
-  temps_tatami: { libelle: 'Temps sur le tatami', phrase: () => 'Ton temps total sur le tatami, vers les 1 000 heures.', accent: 'indigo', icone: 'timer' },
-  rounds: { libelle: 'Analyse des rounds', phrase: (n) => (compte(n) ? `Tes ${pluriel(n, 'débrief', 'débriefs')} de rounds réunis et lus pour toi.` : 'Tous tes débriefs de rounds réunis et lus pour toi.'), accent: 'rouge', icone: 'swords' },
-  radar: { libelle: 'Radar performance', phrase: () => 'Force, cardio, souplesse, mental et technique sur un seul radar.', accent: 'indigo', icone: 'target' },
-  competiteur: { libelle: 'Espace compétiteur', phrase: () => 'Ta prochaine compétition, ton palmarès et tes outils réunis.', accent: 'rouge', icone: 'trophy' },
-  camp_competition: { libelle: 'Camp de compétition', phrase: () => 'Ton camp calé sur ta compétition, semaine par semaine.', accent: 'rouge', icone: 'calendar' },
-  matrice_adversaires: { libelle: 'Matrice des confrontations', phrase: () => 'Tes confrontations sur une seule grille, face à chaque style.', accent: 'indigo', icone: 'grid' },
-  partenaires: { libelle: 'Classement des partenaires', phrase: (n) => (compte(n) ? `Tes ${pluriel(n, 'partenaire', 'partenaires')} classés, round après round.` : 'Tes partenaires classés, round après round.'), accent: 'indigo', icone: 'user' },
-  plan_de_match: { libelle: 'Plan de jeu', phrase: () => 'Ton plan tiré de tes débriefs : ce qui marche, ce qui bloque.', accent: 'mousse', icone: 'quote' },
-  drills: { libelle: 'Compteur de drills', phrase: () => 'Tes répétitions comptées par technique, vers les 1 000.', accent: 'mousse', icone: 'dumbbell' },
+  prevision_poids: { libelle: traduire('Prévisions de poids'), phrase: () => traduire('Tes prévisions de poids sur 3 mois sont prêtes.'), accent: 'indigo', icone: 'target', courbe: true },
+  periode_longue: { libelle: traduire('Tes courbes longues'), phrase: (n) => (compte(n) ? traduire("Tes {0} sur 6 mois, 1 an et tout ton historique.", pluriel(n, 'pesée', 'pesées')) : traduire('Tes courbes sur 6 mois, 1 an et tout ton historique.')), accent: 'indigo', icone: 'calendar', courbe: true },
+  sante_annee: { libelle: traduire('Ta santé sur l’année'), phrase: () => traduire('Ton année de santé, mois par mois, est déjà tracée.'), accent: 'indigo', icone: 'pulse' },
+  photos_limite: { libelle: traduire('Photos de progression'), phrase: (n) => (compte(n) ? traduire("Déjà {0} dans ton coffre. Continue sans limite.", pluriel(n, 'photo', 'photos')) : traduire('Ajoute autant de photos de progression que tu veux.')), accent: 'or', icone: 'image' },
+  competitions_limite: { libelle: traduire('Compétitions à venir'), phrase: (n) => (compte(n) ? traduire("{0} à venir. Ajoute toutes les suivantes.", pluriel(n, 'compétition', 'compétitions')) : traduire('Ajoute toutes tes compétitions à venir, sans limite.')), accent: 'rouge', icone: 'trophy' },
+  videos: { libelle: traduire('Tes vidéos'), phrase: () => traduire('Tes vidéos de technique, rangées dans ton carnet.'), accent: 'indigo', icone: 'camera' },
+  progression_mouvements: { libelle: traduire('Progression des mouvements'), phrase: () => traduire('Ta progression sur les gros mouvements, séance après séance.'), accent: 'mousse', icone: 'dumbbell' },
+  signes_vitaux: { libelle: traduire('Signes vitaux de la nuit'), phrase: () => traduire('Ta fréquence cardiaque, ta respiration et ton oxygène pendant la nuit.'), accent: 'rouge', icone: 'heart' },
+  bilan_pdf: { libelle: 'Bilan en PDF', phrase: () => traduire('Ton bilan complet en PDF, prêt à envoyer à ton coach.'), accent: 'indigo', icone: 'doc' },
+  partenaire_pdf: { libelle: 'Fiche partenaire en PDF', phrase: () => traduire('La fiche complète de ce partenaire, en PDF.'), accent: 'indigo', icone: 'doc' },
+  objectifs_dates: { libelle: traduire('Objectifs datés'), phrase: () => traduire('Un compte à rebours jusqu’à chacun de tes buts.'), accent: 'mousse', icone: 'target' },
+  scenes: { libelle: traduire('Toutes les scènes'), phrase: () => traduire('Toutes les scènes du monde samouraï, sans attendre.'), accent: 'or', icone: 'image' },
+  personnages: { libelle: traduire('Tous les personnages'), phrase: () => traduire('Tous les personnages du monde samouraï, sans attendre.'), accent: 'or', icone: 'user' },
+  logos: { libelle: traduire('Tous les logos'), phrase: () => traduire('Choisis l’icône de ton app parmi tous les logos.'), accent: 'or', icone: 'spark' },
+  seche: { libelle: traduire('Coupe de poids'), phrase: () => traduire('Ta coupe planifiée jour par jour jusqu’à la pesée.'), accent: 'rouge', icone: 'scale' },
+  plan_nutrition: { libelle: 'Plan nutritionnel', phrase: () => traduire('Tes calories et tes macros du jour, calculées pour toi.'), accent: 'mousse', icone: 'flame' },
+  bilan_annuel: { libelle: traduire('Bilan de l’année'), phrase: (n) => (compte(n) ? traduire("Ton année en {0}, résumée en quelques écrans.", pluriel(n, 'séance', 'séances')) : traduire('Ton année résumée en quelques écrans.')), accent: 'or', icone: 'star' },
+  analyse_combat: { libelle: traduire('Analyse de combat'), phrase: (n) => (compte(n) ? traduire("Tes {0} analysés : victoires, partenaires, soumissions.", pluriel(n, 'round', 'rounds')) : traduire('Tes rounds analysés : victoires, partenaires, soumissions.')), accent: 'rouge', icone: 'swords' },
+  temps_tatami: { libelle: traduire('Temps sur le tatami'), phrase: () => traduire('Ton temps total sur le tatami, vers les 1 000 heures.'), accent: 'indigo', icone: 'timer' },
+  rounds: { libelle: traduire('Analyse des rounds'), phrase: (n) => (compte(n) ? traduire("Tes {0} de rounds réunis et lus pour toi.", pluriel(n, 'débrief', 'débriefs')) : traduire('Tous tes débriefs de rounds réunis et lus pour toi.')), accent: 'rouge', icone: 'swords' },
+  radar: { libelle: 'Radar performance', phrase: () => traduire('Force, cardio, souplesse, mental et technique sur un seul radar.'), accent: 'indigo', icone: 'target' },
+  competiteur: { libelle: traduire('Espace compétiteur'), phrase: () => traduire('Ta prochaine compétition, ton palmarès et tes outils réunis.'), accent: 'rouge', icone: 'trophy' },
+  camp_competition: { libelle: traduire('Camp de compétition'), phrase: () => traduire('Ton camp calé sur ta compétition, semaine par semaine.'), accent: 'rouge', icone: 'calendar' },
+  matrice_adversaires: { libelle: traduire('Matrice des confrontations'), phrase: () => traduire('Tes confrontations sur une seule grille, face à chaque style.'), accent: 'indigo', icone: 'grid' },
+  partenaires: { libelle: traduire('Classement des partenaires'), phrase: (n) => (compte(n) ? traduire("Tes {0} classés, round après round.", pluriel(n, 'partenaire', 'partenaires')) : traduire('Tes partenaires classés, round après round.')), accent: 'indigo', icone: 'user' },
+  plan_de_match: { libelle: traduire('Plan de jeu'), phrase: () => traduire('Ton plan tiré de tes débriefs : ce qui marche, ce qui bloque.'), accent: 'mousse', icone: 'quote' },
+  drills: { libelle: traduire('Compteur de drills'), phrase: () => traduire('Tes répétitions comptées par technique, vers les 1 000.'), accent: 'mousse', icone: 'dumbbell' },
 };
 
 const HORS_MUR: SourceHorsMur[] = ['onboarding', 'reglages', 'fin_premium', 'notification', 'dojo', 'periode'];

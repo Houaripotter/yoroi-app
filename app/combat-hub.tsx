@@ -19,6 +19,7 @@ import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
 import { useAthlete } from '@/lib/v2/competition/athlete';
 import { syncCompetitionReminders } from '@/lib/v2/competition/reminders';
 import { formatKg } from '@/lib/v2/weightStats';
+import { traduire } from '@/lib/i18n/tr';
 
 const DAY = 86400000;
 
@@ -42,44 +43,44 @@ export default function CombatHub() {
     const next = competitions
       .filter((c) => c.date && c.date.slice(0, 10) >= today && c.statut === 'a_venir')
       .sort((a, b) => a.date.localeCompare(b.date))[0];
-    if (!next) return 'ajoute ta prochaine compétition';
+    if (!next) return traduire('ajoute ta prochaine compétition');
     const days = Math.round((new Date(next.date.slice(0, 10) + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / DAY);
-    const when = days === 0 ? 'aujourd’hui' : days === 1 ? 'demain' : `dans ${days} jours`;
+    const when = days === 0 ? traduire('aujourd’hui') : days === 1 ? traduire('demain') : traduire("dans {0} jours", days);
     const gap = next.poids_max && next.poids_max < 900 && lastWeight ? lastWeight.weight - next.poids_max : null;
-    const weight = gap === null ? '' : gap > 0 ? `, ${formatKg(gap)} kg à perdre` : ', tu es dans ta catégorie';
+    const weight = gap === null ? '' : gap > 0 ? traduire(", {0} kg à perdre", formatKg(gap)) : traduire(', tu es dans ta catégorie');
     // nom long : on garde le nom et la date entiers, sans l'ecart de poids, pour ne rien couper
     return next.nom.length > 26 ? `${next.nom}, ${when}` : `${next.nom}, ${when}${weight}`;
   }, [competitions, lastWeight]);
 
   const prepare: Access[] = [
-    { title: 'Compétitions', sub: nextLine, href: '/competitions', tint: '#EEE1DF', icon: 'calendar', ornement: 'kabuto' },
-    { title: 'Espace compétiteur', sub: 'profil, coupe, hydratation', href: '/competitor-space', tint: '#E4EADB', icon: 'target', ornement: 'cible' },
-    { title: 'Suivi de match', sub: 'score en direct au tournoi', href: '/match-tracker', tint: '#E6E4DD', icon: 'timer', ornement: 'combat' },
+    { title: traduire('Compétitions'), sub: nextLine, href: '/competitions', tint: '#EEE1DF', icon: 'calendar', ornement: 'kabuto' },
+    { title: traduire('Espace compétiteur'), sub: traduire('profil, coupe, hydratation'), href: '/competitor-space', tint: '#E4EADB', icon: 'target', ornement: 'cible' },
+    { title: traduire('Suivi de match'), sub: traduire('score en direct au tournoi'), href: '/match-tracker', tint: '#E6E4DD', icon: 'timer', ornement: 'combat' },
   ];
   const fights: Access[] = [
-    { title: 'Palmarès', sub: 'médailles et victoires', href: '/palmares', tint: '#F3EBDA', icon: 'trophy', ornement: 'fuji' },
-    { title: 'Partenaires', sub: 'ton sparring, tes duels', href: '/sparring-partners', tint: '#E4EADB', icon: 'users', art: artByKey('jjb', gender, 1) },
+    { title: traduire('Palmarès'), sub: traduire('médailles et victoires'), href: '/palmares', tint: '#F3EBDA', icon: 'trophy', ornement: 'fuji' },
+    { title: 'Partenaires', sub: traduire('ton sparring, tes duels'), href: '/sparring-partners', tint: '#E4EADB', icon: 'users', art: artByKey('jjb', gender, 1) },
   ];
   const analyses: Access[] = [
-    { title: 'Analyse de combat', sub: 'rounds, plan de jeu, tatami', href: '/combat-analytics', tint: '#E3E6EE', icon: 'chart', ornement: 'katanas' },
-    { title: 'Carte JJB', sub: 'tes positions, tes finitions', href: '/bjj-positions', tint: '#E9E4D8', icon: 'map', art: artByKey('jjb', gender, 3) },
-    { title: 'Drills', sub: 'répétitions techniques', href: '/drill-tracker', tint: '#EEE1DF', icon: 'repeat', art: artByKey('boxe', gender, 1) },
+    { title: traduire('Analyse de combat'), sub: traduire('rounds, plan de jeu, tatami'), href: '/combat-analytics', tint: '#E3E6EE', icon: 'chart', ornement: 'katanas' },
+    { title: 'Carte JJB', sub: traduire('tes positions, tes finitions'), href: '/bjj-positions', tint: '#E9E4D8', icon: 'map', art: artByKey('jjb', gender, 3) },
+    { title: 'Drills', sub: traduire('répétitions techniques'), href: '/drill-tracker', tint: '#EEE1DF', icon: 'repeat', art: artByKey('boxe', gender, 1) },
   ];
 
   return (
-    <DetailScreen title="Combat et compétition" subtitle="Prépare, combats, analyse">
+    <DetailScreen title={traduire("Combat et compétition")} subtitle={traduire("Prépare, combats, analyse")}>
       {/* (vague 39) les ajouts qui etaient dans le bouton + : ici, a leur vraie place */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <AddAction label="Noter un combat" icon="trophy" onPress={() => router.push('/seance/match' as any)} />
-        <AddAction label="Ajouter une compétition" icon="calendar" onPress={() => router.push('/add-competition' as any)} />
+        <AddAction label={traduire("Noter un combat")} icon="trophy" onPress={() => router.push('/seance/match' as any)} />
+        <AddAction label={traduire("Ajouter une compétition")} icon="calendar" onPress={() => router.push('/add-competition' as any)} />
       </View>
       <HeroAccess a={prepare[0]} />
       <AccessGrid items={prepare.slice(1)} />
       <View style={{ height: 6 }} />
-      <SectionTitle>Tes combats</SectionTitle>
+      <SectionTitle>{traduire("Tes combats")}</SectionTitle>
       <AccessGrid items={fights} />
       <View style={{ height: 6 }} />
-      <SectionTitle>Tes analyses</SectionTitle>
+      <SectionTitle>{traduire("Tes analyses")}</SectionTitle>
       <HeroAccess a={analyses[0]} />
       <AccessGrid items={analyses.slice(1)} />
     </DetailScreen>

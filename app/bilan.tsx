@@ -24,15 +24,16 @@ import { proposerNotificationsApresReussite } from '@/lib/v2/notifications/permi
 import { logger } from '@/lib/security/logger';
 import { programmerAvis } from '@/lib/v2/bilan/avis';
 import { AvisFeuille } from '@/components/yoroi/v2/bilan/AvisFeuille';
+import { traduire } from '@/lib/i18n/tr';
 
 const ORIGINES: OrigineCorps[] = ['pesee', 'composition', 'mensurations', 'photo', 'montre', 'detail'];
 const EN_TETE: Record<OrigineCorps, string> = {
-  pesee: 'Pesée enregistrée',
-  composition: 'Composition enregistrée',
-  mensurations: 'Mensurations enregistrées',
-  photo: 'Balance lue et enregistrée',
-  montre: 'Reçu de ta montre',
-  detail: 'Ton bilan',
+  pesee: traduire('Pesée enregistrée'),
+  composition: traduire('Composition enregistrée'),
+  mensurations: traduire('Mensurations enregistrées'),
+  photo: traduire('Balance lue et enregistrée'),
+  montre: traduire('Reçu de ta montre'),
+  detail: traduire('Ton bilan'),
 };
 
 export default function BilanPage() {
@@ -118,10 +119,10 @@ export default function BilanPage() {
         />
       ) : fini ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 10 }}>
-          <Ink size={22} weight="black" style={{ textAlign: 'center' }}>Rien à résumer pour l’instant</Ink>
-          <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center' }}>Cette mesure ou cette séance n’existe plus.</Ink>
+          <Ink size={22} weight="black" style={{ textAlign: 'center' }}>{traduire("Rien à résumer pour l’instant")}</Ink>
+          <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Cette mesure ou cette séance n’existe plus.")}</Ink>
           <View style={{ alignSelf: 'stretch', marginTop: 10 }}>
-            <StampButton label="Retour" onPress={terminer} />
+            <StampButton label={traduire("Retour")} onPress={terminer} />
           </View>
         </View>
       ) : null}

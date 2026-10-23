@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface Zone {
   id: string;
@@ -114,7 +115,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible,
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-        <Pressable style={styles.overlayTouchable} onPress={handleClose} accessibilityRole="button" accessibilityLabel="Fermer" />
+        <Pressable style={styles.overlayTouchable} onPress={handleClose} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} />
 
         <Animated.View
           style={[
@@ -130,13 +131,12 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible,
                 Quelle zone ?
               </Ink>
               <Ink size={14} weight="medium" color={c.textSecondary}>
-                Plusieurs zones se touchent ici. Choisis la bonne.
-              </Ink>
+                {traduire("Plusieurs zones se touchent ici. Choisis la bonne.")}</Ink>
             </View>
             <Pressable
               onPress={handleClose}
               accessibilityRole="button"
-              accessibilityLabel="Fermer"
+              accessibilityLabel={traduire("Fermer")}
               hitSlop={6}
               style={[styles.closeButton, { backgroundColor: c.surface, borderColor: c.divider }]}
             >
@@ -173,8 +173,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible,
 
           <Pressable onPress={handleClose} accessibilityRole="button" style={[styles.cancelButton, { borderColor: c.border, backgroundColor: c.surface }]}>
             <Ink size={16} weight="bold" color={c.textSecondary}>
-              Annuler
-            </Ink>
+              {traduire("Annuler")}</Ink>
           </Pressable>
         </Animated.View>
       </Animated.View>

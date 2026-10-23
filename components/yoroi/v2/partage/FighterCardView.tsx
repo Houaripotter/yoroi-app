@@ -10,6 +10,7 @@ import { rangNom } from '@/lib/v2/dojo/univers';
 import type { CardIdentity } from '@/lib/v2/partage/identity';
 import { CardFoot, CardFrame, CardTop, Ground, Mini, Panel, PlateRow, RankTag, Stamp, figureFor, paletteOf } from './cardKit';
 import type { CardVariant } from './cardKit';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type FighterData = {
   name: string;
@@ -36,7 +37,7 @@ export const FighterCardView = forwardRef<View, { data: FighterData; id: CardIde
     return (
       <CardFrame ref={ref} variant={variant} width={width} height={height} photo={photo}>
         <View style={{ flex: 1, paddingTop: pad, paddingBottom: pad * 0.8, paddingLeft: pad + 4, paddingRight: pad, gap: 8 }}>
-          <CardTop p={p} label="Carte de combattant" />
+          <CardTop p={p} label={traduire("Carte de combattant")} />
           <View style={{ flex: 1, minHeight: 0, overflow: 'hidden', justifyContent: 'flex-end' }}>
             {!isPhoto ? (
               <View pointerEvents="none" style={{ position: 'absolute', right: -pad * 0.4, top: 0, bottom: 0, width: figW, alignItems: 'center', justifyContent: 'flex-end' }}>
@@ -51,7 +52,7 @@ export const FighterCardView = forwardRef<View, { data: FighterData; id: CardIde
                 {data.weightLost > 0 ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                     <Stamp p={p} size={22} />
-                    <Ink size={12} weight="extraBold" color={p.ink} numberOfLines={1}>{`${String(data.weightLost).replace('.', ',')} kg en moins`}</Ink>
+                    <Ink size={12} weight="extraBold" color={p.ink} numberOfLines={1}>{traduire("{0} kg en moins", String(data.weightLost).replace('.', DECIMAL))}</Ink>
                   </View>
                 ) : null}
               </View>
@@ -62,29 +63,29 @@ export const FighterCardView = forwardRef<View, { data: FighterData; id: CardIde
           <View style={{ gap: 4 }}>
             <PlateRow p={p} progress={id.rankProgress} count={10} w={Math.min(24, Math.floor((width - 70) / 10) - 2)} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <Ink size={11} weight="bold" color={p.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>{next ? `En route vers ${rangNom(next.index)}` : 'Rang suprême atteint'}</Ink>
-              <Ink size={11} weight="bold" color={p.muted} numberOfLines={1}>{`Depuis ${data.joinDate}`}</Ink>
+              <Ink size={11} weight="bold" color={p.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>{next ? `En route vers ${rangNom(next.index)}` : traduire('Rang suprême atteint')}</Ink>
+              <Ink size={11} weight="bold" color={p.muted} numberOfLines={1}>{traduire("Depuis {0}", data.joinDate)}</Ink>
             </View>
           </View>
 
           <Panel p={p} style={{ gap: 8, paddingVertical: 10 }}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Mini p={p} onPanel value={data.weight > 0 ? `${String(data.weight).replace('.', ',')} kg` : 'À peser'} label="Poids" />
-              <Mini p={p} onPanel value={data.height > 0 ? `${data.height} cm` : 'À saisir'} label="Taille" />
-              <Mini p={p} onPanel value={`${id.weekStreak}`} label="Semaines réussies" accent={p.accent} />
+              <Mini p={p} onPanel value={data.weight > 0 ? `${String(data.weight).replace('.', DECIMAL)} kg` : traduire('À peser')} label="Poids" />
+              <Mini p={p} onPanel value={data.height > 0 ? `${data.height} cm` : traduire('À saisir')} label="Taille" />
+              <Mini p={p} onPanel value={`${id.weekStreak}`} label={traduire("Semaines réussies")} accent={p.accent} />
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Mini p={p} onPanel value={`${data.totalTrainings}`} label="Séances" />
-              <Mini p={p} onPanel value={`${hours} h`} label="D’entraînement" />
+              <Mini p={p} onPanel value={`${data.totalTrainings}`} label={traduire("Séances")} />
+              <Mini p={p} onPanel value={`${hours} h`} label={traduire("D’entraînement")} />
               <Mini p={p} onPanel value={`${id.sealsCount}`} label="Sceaux" accent={p.gold === '#A8832F' ? '#A8832F' : undefined} />
             </View>
             {data.goals && data.goals.target > 0 ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ink size={10} weight="bold" color={p.panelInk2} numberOfLines={1}>Objectifs de la semaine</Ink>
+                <Ink size={10} weight="bold" color={p.panelInk2} numberOfLines={1}>{traduire("Objectifs de la semaine")}</Ink>
                 <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: 'rgba(139,141,150,0.25)', overflow: 'hidden' }}>
                   <View style={{ width: `${Math.min(100, data.goals.percent)}%`, height: 6, backgroundColor: p.accent }} />
                 </View>
-                <Ink size={10} weight="black" color={p.panelInk} numberOfLines={1}>{`${data.goals.done} sur ${data.goals.target}`}</Ink>
+                <Ink size={10} weight="black" color={p.panelInk} numberOfLines={1}>{traduire("{0} sur {1}", data.goals.done, data.goals.target)}</Ink>
               </View>
             ) : null}
           </Panel>

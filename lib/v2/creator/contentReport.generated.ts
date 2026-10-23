@@ -2,10 +2,11 @@
  * Fichier ecrit par scripts/studio-content.mjs, ne pas modifier a la main.
  * Compteurs du contenu et controles de coherence, pour la rubrique Contenu du Studio.
  */
+import { traduire } from '@/lib/i18n/tr';
 export type ContentCount = { id: string; label: string; value: number };
 export type ContentCheck = { id: string; label: string; ok: boolean; detail: string; count: number };
 
-export const CONTENT_REPORT_AT = "11/10/2026 à 1 h 21";
+export const CONTENT_REPORT_AT = traduire("11/10/2026 à 1 h 21");
 
 export const CONTENT_COUNTS: ContentCount[] = [
   {
@@ -15,22 +16,22 @@ export const CONTENT_COUNTS: ContentCount[] = [
   },
   {
     "id": "sports_illustres",
-    "label": "Sports illustrés",
+    "label": traduire("Sports illustrés"),
     "value": 49
   },
   {
     "id": "exercices",
-    "label": "Exercices de la bibliothèque",
+    "label": traduire("Exercices de la bibliothèque"),
     "value": 1040
   },
   {
     "id": "exercices_saisie",
-    "label": "Exercices de saisie rapide",
+    "label": traduire("Exercices de saisie rapide"),
     "value": 56
   },
   {
     "id": "techniques",
-    "label": "Techniques du carnet",
+    "label": traduire("Techniques du carnet"),
     "value": 47
   },
   {
@@ -45,12 +46,12 @@ export const CONTENT_COUNTS: ContentCount[] = [
   },
   {
     "id": "packs",
-    "label": "Packs de personnages",
+    "label": traduire("Packs de personnages"),
     "value": 5
   },
   {
     "id": "scenes",
-    "label": "Scènes",
+    "label": traduire("Scènes"),
     "value": 30
   },
   {
@@ -65,7 +66,7 @@ export const CONTENT_COUNTS: ContentCount[] = [
   },
   {
     "id": "carnet",
-    "label": "Illustrations du carnet",
+    "label": traduire("Illustrations du carnet"),
     "value": 16
   },
   {
@@ -78,79 +79,79 @@ export const CONTENT_COUNTS: ContentCount[] = [
 export const CONTENT_CHECKS: ContentCheck[] = [
   {
     "id": "sports_doublons",
-    "label": "Sports en double dans la liste",
+    "label": traduire("Sports en double dans la liste"),
     "ok": true,
-    "detail": "202 sports, aucun en double",
+    "detail": traduire("202 sports, aucun en double"),
     "count": 0
   },
   {
     "id": "sports_images",
-    "label": "Sports illustrés complets (homme et femme, 3 niveaux)",
+    "label": traduire("Sports illustrés complets (homme et femme, 3 niveaux)"),
     "ok": true,
     "detail": "49 sports, 6 images chacun",
     "count": 0
   },
   {
     "id": "sports_orphelins",
-    "label": "Dossiers d’illustration sans sport dans la liste",
+    "label": traduire("Dossiers d’illustration sans sport dans la liste"),
     "ok": true,
-    "detail": "Chaque dossier correspond à un sport",
+    "detail": traduire("Chaque dossier correspond à un sport"),
     "count": 0
   },
   {
     "id": "exercices_doublons",
-    "label": "Exercices en double dans la bibliothèque",
+    "label": traduire("Exercices en double dans la bibliothèque"),
     "ok": true,
-    "detail": "1040 exercices, aucun en double",
+    "detail": traduire("1040 exercices, aucun en double"),
     "count": 0
   },
   {
     "id": "modeles_doublons",
-    "label": "Identifiants d’exercice en double (saisie rapide)",
+    "label": traduire("Identifiants d’exercice en double (saisie rapide)"),
     "ok": true,
-    "detail": "56 exercices de saisie, identifiants uniques",
+    "detail": traduire("56 exercices de saisie, identifiants uniques"),
     "count": 0
   },
   {
     "id": "techniques_doublons",
     "label": "Techniques en double",
     "ok": true,
-    "detail": "47 techniques, aucune en double",
+    "detail": traduire("47 techniques, aucune en double"),
     "count": 0
   },
   {
     "id": "citations_doublons",
     "label": "Citations en double",
     "ok": true,
-    "detail": "100 citations, aucune en double",
+    "detail": traduire("100 citations, aucune en double"),
     "count": 0
   },
   {
     "id": "guerrier",
-    "label": "Guerrier et guerrière, un par rang",
+    "label": traduire("Guerrier et guerrière, un par rang"),
     "ok": true,
-    "detail": "10 illustrations, les 5 rangs en homme et en femme",
+    "detail": traduire("10 illustrations, les 5 rangs en homme et en femme"),
     "count": 0
   },
   {
     "id": "monde",
-    "label": "Personnages du monde en homme et en femme",
+    "label": traduire("Personnages du monde en homme et en femme"),
     "ok": true,
-    "detail": "6 personnages, les deux genres",
+    "detail": traduire("6 personnages, les deux genres"),
     "count": 0
   },
   {
     "id": "requires",
-    "label": "Fichiers appelés par le code et absents du projet",
+    "label": traduire("Fichiers appelés par le code et absents du projet"),
     "ok": true,
-    "detail": "1443 appels, tous les fichiers existent",
+    "detail": traduire("1443 appels, tous les fichiers existent"),
     "count": 0
   },
   {
     "id": "sons",
-    "label": "Sons du chrono présents",
+    "label": traduire("Sons du chrono présents"),
     "ok": true,
-    "detail": "Cloche, claquettes, gong et bip présents",
+    "detail": traduire("Cloche, claquettes, gong et bip présents"),
     "count": 0
   }
 ];

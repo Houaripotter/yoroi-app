@@ -9,6 +9,7 @@ import { Redirect } from 'expo-router';
 import Svg, { Path, Circle, Rect, Polygon, G } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export const FRAME_SHAPE_CHANGED_EVENT = 'FRAME_SHAPE_CHANGED';
 export const FRAME_ACCESSORY_CHANGED_EVENT = 'FRAME_ACCESSORY_CHANGED';
@@ -134,7 +135,7 @@ const FRAME_OPTIONS: FrameOption[] = [
 ];
 
 const ACCESSORY_OPTIONS: AccessoryOption[] = [
-  { id: 'none', name: 'Aucun' },
+  { id: 'none', name: traduire('Aucun') },
   { id: 'flower', name: 'Fleur' },
   { id: 'bow', name: 'Noeud' },
   { id: 'crown', name: 'Couronne' },
@@ -1913,7 +1914,7 @@ export function generateClipPath(shape: FrameShape, s: number, pad: number = 4):
 // BORDER COLOR PALETTE
 // ============================================
 export const BORDER_COLORS = [
-  { id: 'none', label: 'Aucun', color: null as string | null },
+  { id: 'none', label: traduire('Aucun'), color: null as string | null },
   { id: 'theme', label: 'Theme', color: null as string | null },
   { id: 'white', label: 'Blanc', color: '#FFFFFF' },
   { id: 'black', label: 'Noir', color: '#1A1A1A' },

@@ -14,6 +14,7 @@ import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { SPORTS, getSportName } from '@/lib/sports';
 import { pickSportArt } from '@/lib/v2/seance/sportArt';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Sports mis en avant avec leur illustration, dans l'ordre. Un sport n'apparait que s'il a
  *  sa propre illustration (pas celle d'un autre sport) : la grille grandit avec les images. */
@@ -25,17 +26,17 @@ const FEATURED = [
 const FEATURED_NAMES: Record<string, string> = { running: 'Course', crossfit: 'Cross training', jjb: 'JJB', boxe: 'Boxe', danse: 'Danse', ski: 'Ski' };
 
 const CAT: Record<string, string> = {
-  combat_striking: 'Combat, pieds et poings',
-  combat_grappling: 'Combat, lutte et sol',
-  fitness: 'Musculation et fitness',
+  combat_striking: traduire('Combat, pieds et poings'),
+  combat_grappling: traduire('Combat, lutte et sol'),
+  fitness: traduire('Musculation et fitness'),
   cardio: 'Cardio',
   collectif: 'Sports collectifs',
   raquettes: 'Raquettes',
   danse: 'Danse',
   glisse: 'Glisse',
-  nature: 'Extérieur',
+  nature: traduire('Extérieur'),
   aquatique: 'Sports aquatiques',
-  precision: 'Précision et adresse',
+  precision: traduire('Précision et adresse'),
   autre: 'Autres',
 };
 
@@ -98,17 +99,17 @@ export default function TesSports() {
   }, [q, featured]);
 
   return (
-    <EspaceScreen title="Tes sports" subtitle="Le premier est ton sport principal.">
+    <EspaceScreen title={traduire("Tes sports")} subtitle={traduire("Le premier est ton sport principal.")}>
       {favs.length ? (
         <Card style={{ padding: 14, gap: 10 }}>
-          <Ink size={14} weight="extraBold">{`Tes favoris (${favs.length})`}</Ink>
+          <Ink size={14} weight="extraBold">{traduire("Tes favoris ({0})", favs.length)}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {favs.map((id, i) => (
               <Pressable
                 key={id}
                 onPress={() => (i === 0 ? toggle(id) : toFront(id))}
                 accessibilityRole="button"
-                accessibilityLabel={i === 0 ? `${getSportName(id)}, sport principal, appuie pour retirer` : `${getSportName(id)}, appuie pour le mettre en premier`}
+                accessibilityLabel={i === 0 ? traduire("{0}, sport principal, appuie pour retirer", getSportName(id)) : traduire("{0}, appuie pour le mettre en premier", getSportName(id))}
                 style={{ minHeight: 40, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: i === 0 ? c.ink : c.fillSoft }}
               >
                 {i === 0 ? <Icon name="star" size={13} color={c.goldLight} stroke={2.4} /> : null}
@@ -116,12 +117,12 @@ export default function TesSports() {
               </Pressable>
             ))}
           </View>
-          <Ink size={12} color={c.textMuted}>Appuie sur un sport pour le mettre en premier.</Ink>
+          <Ink size={12} color={c.textMuted}>{traduire("Appuie sur un sport pour le mettre en premier.")}</Ink>
         </Card>
       ) : (
         <Card style={{ padding: 16, gap: 4 }}>
-          <Ink size={16} weight="extraBold">Qu’est-ce que tu pratiques ?</Ink>
-          <Ink size={14} color={c.textSecondary}>Choisis un ou plusieurs sports. Ils passeront en premier quand tu ajoutes une séance.</Ink>
+          <Ink size={16} weight="extraBold">{traduire("Qu’est-ce que tu pratiques ?")}</Ink>
+          <Ink size={14} color={c.textSecondary}>{traduire("Choisis un ou plusieurs sports. Ils passeront en premier quand tu ajoutes une séance.")}</Ink>
         </Card>
       )}
 
@@ -147,21 +148,21 @@ export default function TesSports() {
         })}
       </View>
 
-      <SectionTitle title="Tous les sports" />
+      <SectionTitle title={traduire("Tous les sports")} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, height: 50, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14 }}>
         <Icon name="search" size={18} color={c.textMuted} />
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="Chercher un sport"
+          placeholder={traduire("Chercher un sport")}
           placeholderTextColor={c.textMuted}
           autoCorrect={false}
-          accessibilityLabel="Chercher un sport"
+          accessibilityLabel={traduire("Chercher un sport")}
           style={{ flex: 1, fontSize: 16, color: c.ink, height: 48 }}
         />
       </View>
       {groups.length === 0 ? (
-        <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Aucun sport ne correspond. Essaie un autre mot.</Ink>
+        <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Aucun sport ne correspond. Essaie un autre mot.")}</Ink>
       ) : (
         groups.map(([cat, list]) => (
           <View key={cat} style={{ gap: 8 }}>

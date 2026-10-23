@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, AppState, TouchableOpacity } from 'react-native';
 import { Fingerprint, Lock } from 'lucide-react-native';
 import { authenticateIfNeeded, isBiometricLockEnabled } from '@/lib/biometricLockService';
+import { traduire } from '@/lib/i18n/tr';
 
 export const BiometricLockOverlay: React.FC = () => {
   const [locked, setLocked] = useState(false);
@@ -48,8 +49,8 @@ export const BiometricLockOverlay: React.FC = () => {
       <View style={styles.iconCircle}>
         <Lock size={56} color="#D4AF37" strokeWidth={2} />
       </View>
-      <Text style={styles.title}>Yoroi est verrouille</Text>
-      <Text style={styles.sub}>Authentifie-toi avec FaceID ou TouchID</Text>
+      <Text style={styles.title}>{traduire("Yoroi est verrouille")}</Text>
+      <Text style={styles.sub}>{traduire("Authentifie-toi avec FaceID ou TouchID")}</Text>
       <TouchableOpacity style={styles.btn} onPress={retry} activeOpacity={0.85}>
         <Fingerprint size={22} color="#1a1a2e" />
         <Text style={styles.btnText}>Deverrouiller</Text>

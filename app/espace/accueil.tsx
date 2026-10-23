@@ -11,6 +11,7 @@ import { DispositionEditor } from '@/components/yoroi/v2/accueil/Personnaliser';
 import { ValueRow } from '@/components/yoroi/v2/espace/reglages/parts';
 import { Groupe, TUILE } from '@/components/yoroi/v2/reglages/kit';
 import { getCitationNotifSettings } from '@/lib/citations';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function TonAccueil() {
   const router = useRouter();
@@ -18,16 +19,16 @@ export default function TonAccueil() {
   useFocusEffect(
     useCallback(() => {
       getCitationNotifSettings()
-        .then((cs) => setCitStyle(cs?.enabled ? 'Rappel actif' : 'Sans rappel'))
+        .then((cs) => setCitStyle(cs?.enabled ? 'Rappel actif' : traduire('Sans rappel')))
         .catch(() => setCitStyle(undefined));
     }, []),
   );
   return (
-    <EspaceScreen title="Ton accueil" subtitle="Les raccourcis et Ton poids restent en haut. Coche ce que tu veux voir dessous, range-le avec les flèches.">
+    <EspaceScreen title={traduire("Ton accueil")} subtitle={traduire("Les raccourcis et Ton poids restent en haut. Coche ce que tu veux voir dessous, range-le avec les flèches.")}>
       <DispositionEditor />
       <Groupe title="Citations" />
       <Card>
-        <ValueRow first tint={TUILE.or} icon="quote" label="Citation du jour" sub="Ton style et le rappel motivant" value={citStyle} onPress={() => router.push('/citations' as any)} />
+        <ValueRow first tint={TUILE.or} icon="quote" label={traduire("Citation du jour")} sub={traduire("Ton style et le rappel motivant")} value={citStyle} onPress={() => router.push('/citations' as any)} />
       </Card>
     </EspaceScreen>
   );

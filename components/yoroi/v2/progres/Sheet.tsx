@@ -8,6 +8,7 @@ import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
 import { tapLight } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SheetAction = { label: string; onPress: () => void; tone?: 'accent' | 'ink' | 'ghost' | 'danger' };
 
@@ -27,7 +28,7 @@ export function Sheet({ visible, onClose, title, text, children, actions }: Prop
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.42)' }} onPress={onClose} accessibilityLabel="Fermer" />
+        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.42)' }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
         <View style={{ margin: 10, marginBottom: insets.bottom + 10, borderRadius: 28, backgroundColor: c.background, padding: 20, gap: 12, borderWidth: 1, borderColor: P.carte }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 4 }} />
           <Ink size={22} weight="black" tight accessibilityRole="header">

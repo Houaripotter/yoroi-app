@@ -3,10 +3,11 @@
  */
 
 /** 75 -> "75", 72.5 -> "72,5" */
+import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 export function fmtNum(n: number, digits = 2): string {
   if (!Number.isFinite(n)) return '0';
   const r = Math.round(n * 10 ** digits) / 10 ** digits;
-  return String(r).replace('.', ',');
+  return String(r).replace('.', DECIMAL);
 }
 
 /** secondes -> "1:24" ou "1:02:03" */
@@ -42,8 +43,8 @@ export function hhmm(d: Date): string {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
-const DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
+const MONTHS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 /** "2026-10-07" -> "mardi", "hier", "aujourd'hui", "le 3 sept." */
 export function relativeDay(iso: string): string {
@@ -54,7 +55,7 @@ export function relativeDay(iso: string): string {
   if (diff === 0) return "aujourd'hui";
   if (diff === 1) return 'hier';
   if (diff > 1 && diff < 7) return DAYS[d.getDay()];
-  return `le ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return traduire("le {0} {1}", d.getDate(), MONTHS[d.getMonth()]);
 }
 
 export function longDay(iso: string): string {
@@ -65,8 +66,8 @@ export function longDay(iso: string): string {
 /** "PECTORAUX" -> "Pectoraux" */
 export function niceGroup(g?: string): string {
   if (!g) return '';
-  const low = g.toLocaleLowerCase('fr-FR');
-  return low.charAt(0).toLocaleUpperCase('fr-FR') + low.slice(1);
+  const low = g.toLocaleLowerCase(LOCALE);
+  return low.charAt(0).toLocaleUpperCase(LOCALE) + low.slice(1);
 }
 
 /** Lecture tolerante d'un nombre saisi ("72,5") */

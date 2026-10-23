@@ -15,18 +15,19 @@ import { categoryTone } from '@/lib/v2/carnet/journal';
 import type { CarnetIllus } from './images';
 import { Illus } from './nav';
 import { niceName } from '@/lib/v2/carnet/records';
+import { traduire } from '@/lib/i18n/tr';
 
 type Step = 'sport' | 'muscle' | 'exercise' | 'custom';
 
 const SPORTS: { name: string; label: string; hasMuscles: boolean; groups: string[]; illus: CarnetIllus; tint: string }[] = [
   { name: 'Musculation', label: 'Musculation', hasMuscles: true, groups: ['Pectoraux', 'Dos', 'Epaules', 'Bras', 'Jambes', 'Abdos', 'Machines'], illus: 'musculation', tint: '#E4E9F3' },
-  { name: 'Running', label: 'Course à pied', hasMuscles: false, groups: ['Running'], illus: 'course', tint: '#E3E6EE' },
+  { name: 'Running', label: traduire('Course à pied'), hasMuscles: false, groups: ['Running'], illus: 'course', tint: '#E3E6EE' },
   { name: 'Hyrox', label: 'Hyrox', hasMuscles: false, groups: ['Hyrox'], illus: 'force', tint: '#EFE7D6' },
   { name: 'CrossFit', label: 'CrossFit', hasMuscles: false, groups: ['CrossFit'], illus: 'force', tint: '#E4EADB' },
-  { name: 'Cardio', label: 'Cardio sur machines', hasMuscles: false, groups: ['Cardio'], illus: 'endurance', tint: '#E3EEEA' },
-  { name: 'Combat', label: 'Combat et MMA', hasMuscles: false, groups: ['Combat'], illus: 'combat', tint: '#EEE1DF' },
+  { name: 'Cardio', label: traduire('Cardio sur machines'), hasMuscles: false, groups: ['Cardio'], illus: 'endurance', tint: '#E3EEEA' },
+  { name: traduire('Combat'), label: traduire('Combat et MMA'), hasMuscles: false, groups: [traduire('Combat')], illus: 'combat', tint: '#EEE1DF' },
   { name: 'Strongman', label: 'Strongman', hasMuscles: false, groups: ['Strongman'], illus: 'force', tint: '#EFE7D6' },
-  { name: 'Olympique', label: 'Haltérophilie', hasMuscles: false, groups: ['Olympique'], illus: 'musculation', tint: '#E4E9F3' },
+  { name: 'Olympique', label: traduire('Haltérophilie'), hasMuscles: false, groups: ['Olympique'], illus: 'musculation', tint: '#E4E9F3' },
   { name: 'Street Workout', label: 'Street workout', hasMuscles: false, groups: ['Street Workout'], illus: 'musculation', tint: '#E4EADB' },
 ];
 
@@ -38,16 +39,16 @@ const MUSCLES: { label: string; group: string }[] = [
   { label: 'Jambes', group: 'Jambes' },
   { label: 'Abdos', group: 'Abdos' },
   { label: 'Machines', group: 'Machines' },
-  { label: 'Haltérophilie', group: 'Olympique' },
+  { label: traduire('Haltérophilie'), group: 'Olympique' },
 ];
 
 const UNITS: { key: BenchmarkUnit; label: string }[] = [
   { key: 'kg', label: 'Kilos' },
   { key: 'lbs', label: 'Livres' },
   { key: 'time', label: 'Temps' },
-  { key: 'reps', label: 'Répétitions' },
-  { key: 'km', label: 'Kilomètres' },
-  { key: 'meters', label: 'Mètres' },
+  { key: 'reps', label: traduire('Répétitions') },
+  { key: 'km', label: traduire('Kilomètres') },
+  { key: 'meters', label: traduire('Mètres') },
 ];
 
 type Props = {
@@ -95,13 +96,13 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
     else setStep('sport');
   };
 
-  const title = step === 'sport' ? 'Nouveau record' : step === 'muscle' ? 'Groupe musculaire' : step === 'custom' ? 'Suivi sur mesure' : (MUSCLES.find((m) => m.group === group)?.label ?? group ?? 'Exercices');
+  const title = step === 'sport' ? traduire('Nouveau record') : step === 'muscle' ? 'Groupe musculaire' : step === 'custom' ? traduire('Suivi sur mesure') : (MUSCLES.find((m) => m.group === group)?.label ?? group ?? traduire('Exercices'));
 
   return (
     <Sheet visible={visible} onClose={onClose} scroll>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {step !== 'sport' ? (
-          <Press onPress={back} accessibilityRole="button" accessibilityLabel="Étape précédente">
+          <Press onPress={back} accessibilityRole="button" accessibilityLabel={traduire("Étape précédente")}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#ECEAE4', alignItems: 'center', justifyContent: 'center' }}>
               <CIcon name="back" size={20} />
             </View>
@@ -112,7 +113,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
 
       {step === 'sport' ? (
         <>
-          <Field value={query} onChangeText={setQuery} placeholder="Cherche un exercice : squat, rameur..." autoCorrect={false} accessibilityLabel="Chercher un exercice" />
+          <Field value={query} onChangeText={setQuery} placeholder={traduire("Cherche un exercice : squat, rameur...")} autoCorrect={false} accessibilityLabel={traduire("Chercher un exercice")} />
           {searchResults.map((t) => (
             <ChoiceLine key={t.id} title={niceName(t.name)} sub={BENCHMARK_CATEGORIES[t.category]?.label} icon="plus" onPress={() => onPickTemplate(t.name, t.category, t.unit, t.muscleGroup)} />
           ))}
@@ -133,22 +134,22 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
                           }
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel={n > 0 ? `${s.label}, ${n} exercices` : s.label}
+                        accessibilityLabel={n > 0 ? traduire("{0}, {1} exercices", s.label, n) : s.label}
                       >
                         <View style={{ height: 138, borderRadius: 22, backgroundColor: s.tint, padding: 12, justifyContent: 'flex-end', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)' }}>
                           <Illus name={s.illus} size={78} style={{ position: 'absolute', right: 6, top: 6 }} />
                           <Ink size={15} weight="black" tight numberOfLines={2}>{s.label}</Ink>
-                          {n > 0 ? <Ink size={12} weight="bold" color={P.ink2}>{`${n} exercices`}</Ink> : null}
+                          {n > 0 ? <Ink size={12} weight="bold" color={P.ink2}>{traduire("{0} exercices", n)}</Ink> : null}
                         </View>
                       </Press>
                     </View>
                   );
                 })}
               </View>
-              <ChoiceLine title="Créer un suivi sur mesure" sub="Ton nom, ta catégorie, ton unité" icon="edit" onPress={() => setStep('custom')} />
+              <ChoiceLine title={traduire("Créer un suivi sur mesure")} sub={traduire("Ton nom, ta catégorie, ton unité")} icon="edit" onPress={() => setStep('custom')} />
             </>
           ) : searchResults.length === 0 ? (
-            <ChoiceLine title={`Créer « ${query.trim()} »`} sub="Suivi sur mesure" icon="plus" onPress={() => { setName(query.trim()); setStep('custom'); }} />
+            <ChoiceLine title={traduire("Créer « {0} »", query.trim())} sub={traduire("Suivi sur mesure")} icon="plus" onPress={() => { setName(query.trim()); setStep('custom'); }} />
           ) : null}
         </>
       ) : null}
@@ -160,7 +161,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
               <Press onPress={() => { setGroup(m.group); setStep('exercise'); }} accessibilityRole="button" accessibilityLabel={m.label}>
                 <View style={{ minHeight: 64, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 14, justifyContent: 'center' }}>
                   <Ink size={15} weight="extraBold">{m.label}</Ink>
-                  <Ink size={12} weight="bold" color={P.muted}>{`${WATCH_EXERCISE_TEMPLATES.filter((t) => t.muscleGroup?.toLowerCase() === m.group.toLowerCase()).length} exercices`}</Ink>
+                  <Ink size={12} weight="bold" color={P.muted}>{traduire("{0} exercices", WATCH_EXERCISE_TEMPLATES.filter((t) => t.muscleGroup?.toLowerCase() === m.group.toLowerCase()).length)}</Ink>
                 </View>
               </Press>
             </View>
@@ -170,17 +171,17 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
 
       {step === 'exercise' ? (
         <View style={{ gap: 8, opacity: busy ? 0.5 : 1 }}>
-          {list.length === 0 ? <Ink size={14} weight="medium" color={P.ink2}>Pas d’exercice ici pour l’instant. Crée ton suivi sur mesure.</Ink> : null}
+          {list.length === 0 ? <Ink size={14} weight="medium" color={P.ink2}>{traduire("Pas d’exercice ici pour l’instant. Crée ton suivi sur mesure.")}</Ink> : null}
           {list.map((t) => (
             <ChoiceLine key={t.id} title={niceName(t.name)} icon="plus" onPress={busy ? undefined : () => onPickTemplate(t.name, t.category, t.unit, group || undefined)} />
           ))}
-          <ChoiceLine title="Créer un suivi sur mesure" icon="edit" onPress={() => setStep('custom')} />
+          <ChoiceLine title={traduire("Créer un suivi sur mesure")} icon="edit" onPress={() => setStep('custom')} />
         </View>
       ) : null}
 
       {step === 'custom' ? (
         <View style={{ gap: 14 }}>
-          <Label>Catégorie</Label>
+          <Label>{traduire("Catégorie")}</Label>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {(Object.keys(BENCHMARK_CATEGORIES) as BenchmarkCategory[]).map((k) => {
               const on = cat === k;
@@ -210,16 +211,16 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
           {cat === 'force' ? (
             <MiniChips items={['Squat', 'Développé Couché', 'Soulevé de Terre'].map((n) => ({ key: n, label: n.charAt(0) + n.slice(1).toLowerCase() }))} value={name} onChange={(k) => { setName(k); setUnit('kg'); }} />
           ) : null}
-          <Field label="Nom du suivi" value={name} onChangeText={setName} placeholder="Squat, 10 km, gainage..." maxLength={50} />
+          <Field label={traduire("Nom du suivi")} value={name} onChangeText={setName} placeholder="Squat, 10 km, gainage..." maxLength={50} />
           {cat !== 'running' && cat !== 'trail' && cat !== 'force' ? (
             <>
-              <Label>Unité</Label>
+              <Label>{traduire("Unité")}</Label>
               <MiniChips items={UNITS} value={unit} onChange={(k) => setUnit(k)} />
             </>
           ) : (
-            <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>{cat === 'force' ? 'Tu noteras la charge et les répétitions.' : 'Tu noteras ton temps, en heures, minutes et secondes.'}</Ink>
+            <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>{cat === 'force' ? traduire('Tu noteras la charge et les répétitions.') : traduire('Tu noteras ton temps, en heures, minutes et secondes.')}</Ink>
           )}
-          <BigButton label={busy ? 'Création...' : 'Créer le suivi'} icon="check" disabled={busy || !name.trim()} onPress={() => onCreateCustom(name.trim(), cat, unit)} />
+          <BigButton label={busy ? traduire('Création...') : traduire('Créer le suivi')} icon="check" disabled={busy || !name.trim()} onPress={() => onCreateCustom(name.trim(), cat, unit)} />
         </View>
       ) : null}
     </Sheet>

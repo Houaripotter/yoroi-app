@@ -5,6 +5,7 @@
  * les phases claires ont toujours leur nom ecrit a cote (lignes du graphique et liste).
  */
 import type { PhaseNuit } from '@/lib/v2/sante/nuit';
+import { traduire } from '@/lib/i18n/tr';
 
 export const PHASES_CLAIR: Record<PhaseNuit, string> = {
   eveil: '#C9963A',
@@ -28,9 +29,9 @@ export function couleursPhases(sombre: boolean): Record<PhaseNuit, string> {
 
 /** Nom court des lignes du graphique */
 export const NOM_LIGNE: Record<PhaseNuit, string> = {
-  eveil: 'Éveil',
+  eveil: traduire('Éveil'),
   paradoxal: 'Paradoxal',
-  leger: 'Léger',
+  leger: traduire('Léger'),
   profond: 'Profond',
   endormi: 'Endormi',
 };

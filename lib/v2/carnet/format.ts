@@ -2,6 +2,7 @@
  * Mise en forme du carnet technique et des chronos (refonte v2) : temps, allures, dates courtes.
  */
 
+import { traduire, traduirePluriel, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 export function pad2(n: number): string {
   return String(Math.max(0, Math.floor(n))).padStart(2, '0');
 }
@@ -54,7 +55,7 @@ export function dayDate(iso: string): Date {
 export function shortDate(iso?: string | null): string {
   if (!iso) return '';
   try {
-    return dayDate(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).replace('.', '');
+    return dayDate(iso).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' }).replace('.', '');
   } catch {
     return '';
   }
@@ -63,7 +64,7 @@ export function shortDate(iso?: string | null): string {
 export function longDate(iso?: string | null): string {
   if (!iso) return '';
   try {
-    return dayDate(iso).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    return dayDate(iso).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
   } catch {
     return '';
   }
@@ -82,13 +83,13 @@ export function relative(iso?: string | null): string {
   if (d === null) return '';
   if (d === 0) return "aujourd'hui";
   if (d === 1) return 'hier';
-  if (d < 7) return `il y a ${d} jours`;
+  if (d < 7) return traduire("il y a {0} jours", d);
   if (d < 30) {
     const w = Math.floor(d / 7);
-    return `il y a ${w} semaine${w > 1 ? 's' : ''}`;
+    return traduirePluriel(w, w > 1, "il y a {0} semaine", "il y a {0} semaines", w);
   }
   const mo = Math.floor(d / 30);
-  return `il y a ${mo} mois`;
+  return traduire("il y a {0} mois", mo);
 }
 
 export function plural(n: number, one: string, many: string): string {
@@ -97,13 +98,13 @@ export function plural(n: number, one: string, many: string): string {
 
 /** 1250 -> 1,3 k */
 export function compact(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace('.', ',')} k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace('.', DECIMAL)} k`;
   return String(Math.round(n));
 }
 
 export function monthLabel(key: string): string {
   try {
-    return new Date(`${key}-01T12:00:00`).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
+    return new Date(`${key}-01T12:00:00`).toLocaleDateString(LOCALE, { month: 'short' }).replace('.', '');
   } catch {
     return key;
   }

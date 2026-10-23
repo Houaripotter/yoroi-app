@@ -26,6 +26,7 @@ import { choisirUnivers, choixUniversDe, genreDuPersonnage, type ChoixUnivers } 
 import { RondInitiales } from '@/components/yoroi/v2/espace/RondInitiales';
 import { SILHOUETTES, calculerSilhouetteAuto, silhouetteActive, silhouetteNom, type SilhouetteId, type SilhouetteMode } from '@/lib/v2/silhouette';
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function TonPersonnage() {
   const router = useRouter();
@@ -60,8 +61,8 @@ export default function TonPersonnage() {
   // vague 45 : la silhouette vaut pour le Guerrier et pour le Sportif (memes regles)
   const estClassique = espace.personnage === 'classique_h' || espace.personnage === 'classique_f';
   const estGuerrier = espace.personnage === 'guerrier_h' || espace.personnage === 'guerrier_f' || estClassique;
-  const silValue = silMode === 'classique' ? 'Non' : silMode === 'auto' ? (silActive ? `Auto, ${silhouetteNom(silActive)}` : 'Auto') : silhouetteNom(silMode as SilhouetteId);
-  const silSub = !estGuerrier ? 'Pour le Guerrier et le Sportif' : silMode === 'auto' && !silActive ? 'Ajoute ta taille et une pesée' : undefined;
+  const silValue = silMode === 'classique' ? traduire('Non') : silMode === 'auto' ? (silActive ? `Auto, ${silhouetteNom(silActive)}` : 'Auto') : silhouetteNom(silMode as SilhouetteId);
+  const silSub = !estGuerrier ? traduire('Pour le Guerrier et le Sportif') : silMode === 'auto' && !silActive ? traduire('Ajoute ta taille et une pesée') : undefined;
   const miniGuerrier = (sil: SilhouetteId | null) => (
     <Image source={estClassique ? classiqueImage(genre, rankIndex, sil) : guerrierImage(genre, rankIndex, sil)} style={{ width: 66, height: 88 }} resizeMode="contain" accessibilityIgnoresInvertColors />
   );
@@ -86,12 +87,12 @@ export default function TonPersonnage() {
     );
 
   return (
-    <EspaceScreen title="Ton personnage" subtitle="Ton univers, ton personnage et ton rond de profil" gap={14}>
+    <EspaceScreen title={traduire("Ton personnage")} subtitle={traduire("Ton univers, ton personnage et ton rond de profil")} gap={14}>
       {/* apercu : le haut de ton accueil */}
       <View style={{ height: 170, borderRadius: 24, overflow: 'hidden', backgroundColor: c.fillSoft, borderWidth: 1, borderColor: c.border }}>
         <Image source={scene.image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
         {!sansPerso ? (
-          <Image source={perso} style={{ position: 'absolute', right: 6, bottom: 0, width: 120, height: 160 }} resizeMode="contain" accessibilityLabel={`Ton personnage, ${personnageNom(espace.personnage)}`} />
+          <Image source={perso} style={{ position: 'absolute', right: 6, bottom: 0, width: 120, height: 160 }} resizeMode="contain" accessibilityLabel={traduire("Ton personnage, {0}", personnageNom(espace.personnage))} />
         ) : null}
         <View style={{ position: 'absolute', left: 16, bottom: 16 }}>
           <RondCadre size={72} contour={contour} fond="scene" fill="#F2F1EC">
@@ -102,25 +103,25 @@ export default function TonPersonnage() {
 
       {/* vague 45 : l'univers en premier, il decide du personnage et des scenes */}
       <Card>
-        <ValueRow first tint={TUILE.or} icon="globe" label="Ton univers" value={universNom} onPress={() => setPicker('univers')} />
+        <ValueRow first tint={TUILE.or} icon="globe" label={traduire("Ton univers")} value={universNom} onPress={() => setPicker('univers')} />
       </Card>
       <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>
-        {`${UNIVERS_CHOIX.find((u) => u.id === choixUnivers)?.phrase ?? ''}. Ton XP et ton rang restent les mêmes.`}
+        {traduire("{0}. Ton XP et ton rang restent les mêmes.", UNIVERS_CHOIX.find((u) => u.id === choixUnivers)?.phrase ?? '')}
       </Ink>
 
       <Card>
         <ValueRow first tint={TUILE.indigo} icon="user" label="Personnage" value={personnageNom(espace.personnage)} thumb={sansPerso ? undefined : perso} thumbFull onPress={() => go('/avatar-selection')} />
         {/* vague 45 : la silhouette existe seulement pour le Guerrier et le Sportif, la ligne disparait sinon */}
-        {!sansPerso && estGuerrier ? <ValueRow tint={TUILE.bleu} icon="shield" label="Silhouette selon ton corps" value={silValue} sub={silSub} onPress={() => setPicker('silhouette')} /> : null}
+        {!sansPerso && estGuerrier ? <ValueRow tint={TUILE.bleu} icon="shield" label={traduire("Silhouette selon ton corps")} value={silValue} sub={silSub} onPress={() => setPicker('silhouette')} /> : null}
         {sansPerso ? (
           // sans personnage, le rond montre ta photo des qu'elle existe, sinon tes initiales
-          <ValueRow tint={TUILE.mousse} icon="camera" label="Rond de profil" value={hasPhoto ? 'Ta photo' : 'Tes initiales'} sub={hasPhoto ? undefined : 'Ajoute ta photo'} onPress={() => go('/settings/photo')} />
+          <ValueRow tint={TUILE.mousse} icon="camera" label={traduire("Rond de profil")} value={hasPhoto ? traduire('Ta photo') : traduire('Tes initiales')} sub={hasPhoto ? undefined : traduire('Ajoute ta photo')} onPress={() => go('/settings/photo')} />
         ) : (
-          <ValueRow tint={TUILE.mousse} icon="camera" label="Rond de profil" value={identite === 'photo' ? 'Ta photo' : 'Personnage'} onPress={() => setPicker('rond')} />
+          <ValueRow tint={TUILE.mousse} icon="camera" label={traduire("Rond de profil")} value={identite === 'photo' ? traduire('Ta photo') : 'Personnage'} onPress={() => setPicker('rond')} />
         )}
       </Card>
 
-      <Groupe title="Contour du rond" sub="À l’accueil, dans Réglages et sur ton profil" />
+      <Groupe title={traduire("Contour du rond")} sub={traduire("À l’accueil, dans Réglages et sur ton profil")} />
       <Card>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingVertical: 14, rowGap: 8 }}>
           {CONTOURS.map((o) => {
@@ -150,14 +151,14 @@ export default function TonPersonnage() {
         </View>
       </Card>
       <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
-        {`${CONTOURS.find((x) => x.id === contour)?.sub ?? ''}. Un simple choix de style, sans lien avec ton rang.`}
+        {traduire("{0}. Un simple choix de style, sans lien avec ton rang.", CONTOURS.find((x) => x.id === contour)?.sub ?? '')}
       </Ink>
 
       <ChoiceSheet
         visible={picker === 'univers'}
         onClose={() => setPicker(null)}
-        title="Ton univers"
-        subtitle="Ton XP et ton rang restent les mêmes"
+        title={traduire("Ton univers")}
+        subtitle={traduire("Ton XP et ton rang restent les mêmes")}
         options={UNIVERS_CHOIX.map((u) => ({ key: u.id as ChoixUnivers, label: u.nom, sub: u.phrase, preview: miniUnivers(u.id) }))}
         value={choixUnivers}
         onChange={(v) => {
@@ -167,11 +168,11 @@ export default function TonPersonnage() {
       <ChoiceSheet
         visible={picker === 'silhouette'}
         onClose={() => setPicker(null)}
-        title="Silhouette selon ton corps"
-        subtitle={estClassique ? 'Même tenue, même personnage : seule la silhouette change' : 'Même armure, même personnage : seule la silhouette change'}
+        title={traduire("Silhouette selon ton corps")}
+        subtitle={estClassique ? traduire('Même tenue, même personnage : seule la silhouette change') : traduire('Même armure, même personnage : seule la silhouette change')}
         options={[
-          { key: 'classique' as SilhouetteMode, label: 'Dessin classique', sub: 'Le personnage d’origine', preview: miniGuerrier(null) },
-          { key: 'auto' as SilhouetteMode, label: 'Automatique', sub: 'Il suit tes pesées et évolue avec toi', preview: miniGuerrier(silMode === 'auto' ? silActive : null) },
+          { key: 'classique' as SilhouetteMode, label: 'Dessin classique', sub: traduire('Le personnage d’origine'), preview: miniGuerrier(null) },
+          { key: 'auto' as SilhouetteMode, label: 'Automatique', sub: traduire('Il suit tes pesées et évolue avec toi'), preview: miniGuerrier(silMode === 'auto' ? silActive : null) },
           // equilibree est le dessin classique : pas deux choix pour la meme image
           ...SILHOUETTES.filter((sil) => sil.id !== 'equilibree').map((sil) => ({ key: sil.id as SilhouetteMode, label: sil.nom, sub: sil.phrase, preview: miniGuerrier(sil.id) })),
         ]}
@@ -189,11 +190,11 @@ export default function TonPersonnage() {
       <ChoiceSheet
         visible={picker === 'rond'}
         onClose={() => setPicker(null)}
-        title="Rond de profil"
-        subtitle="Ce qui s’affiche en haut de l’accueil"
+        title={traduire("Rond de profil")}
+        subtitle={traduire("Ce qui s’affiche en haut de l’accueil")}
         options={[
-          { key: 'personnage', label: 'Ton personnage' },
-          { key: 'photo', label: 'Ta photo', sub: hasPhoto ? undefined : 'Ajoute-la d’abord dans ton profil' },
+          { key: 'personnage', label: traduire('Ton personnage') },
+          { key: 'photo', label: traduire('Ta photo'), sub: hasPhoto ? undefined : traduire('Ajoute-la d’abord dans ton profil') },
         ]}
         value={identite}
         onChange={(v) => {

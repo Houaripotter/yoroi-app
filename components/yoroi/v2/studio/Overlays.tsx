@@ -18,6 +18,7 @@ import { DAN_STEP, RANKS, rankFor, todayIso } from '@/lib/v2/armure';
 import type { SealView, WelcomeSummary } from '@/lib/v2/armure';
 import { LUNE, SEALS } from '@/lib/v2/dojo/seals';
 import type { StudioOverlay } from './parts';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Chiffres fictifs, pour voir l'ecran rempli */
 export const FAKE_WELCOME: WelcomeSummary = {
@@ -28,10 +29,10 @@ export const FAKE_WELCOME: WelcomeSummary = {
   quetesXp: 400,
   badges: 6,
   badgesXp: 300,
-  rankTitle: 'Samouraï',
+  rankTitle: traduire('Samouraï'),
   rankIndex: 2,
   seals: 7,
-  mainSport: { name: 'Jiu-jitsu brésilien', level: 'Ceinture bleue', count: 74 },
+  mainSport: { name: 'Jiu-jitsu brésilien', level: traduire('Ceinture bleue'), count: 74 },
   xp: 3400,
 };
 
@@ -81,13 +82,13 @@ function ChargementPlein({ visible, onClose }: { visible: boolean; onClose: () =
   return (
     <Modal visible={visible} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: c.background }}>
-        <Pressable style={{ flex: 1 }} onPress={() => setRun((n) => n + 1)} accessibilityRole="button" accessibilityLabel="Rejouer l’écran de chargement">
+        <Pressable style={{ flex: 1 }} onPress={() => setRun((n) => n + 1)} accessibilityRole="button" accessibilityLabel={traduire("Rejouer l’écran de chargement")}>
           <EcranChargement key={run} />
         </Pressable>
         <View style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <RoundButton icon="close" label="Fermer" onPress={onClose} />
+          <RoundButton icon="close" label={traduire("Fermer")} onPress={onClose} />
           <View style={{ backgroundColor: c.ink, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
-            <Ink size={12} weight="extraBold" color={c.background}>Touche l’écran pour rejouer</Ink>
+            <Ink size={12} weight="extraBold" color={c.background}>{traduire("Touche l’écran pour rejouer")}</Ink>
           </View>
         </View>
       </View>

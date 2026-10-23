@@ -12,15 +12,16 @@ import { shortDate } from '@/lib/v2/carnet/format';
 import { useBenchmarks } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, CIcon, Hanko } from '../ui';
 import { TabEmpty, TabLoading } from './common';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const LIFTS = [
   { key: 'squat', label: 'Squat', kw: ['squat', 'back squat', 'front squat'] },
-  { key: 'bench', label: 'Développé couché', kw: ['développé couché', 'developpé couché', 'bench press', 'dc', 'bench'] },
-  { key: 'deadlift', label: 'Soulevé de terre', kw: ['soulevé de terre', 'souleve de terre', 'deadlift', 'sdt'] },
-  { key: 'ohp', label: 'Développé militaire', kw: ['développé militaire', 'developpé militaire', 'ohp', 'overhead press', 'dm'] },
+  { key: 'bench', label: traduire('Développé couché'), kw: [traduire('développé couché'), traduire('developpé couché'), 'bench press', 'dc', 'bench'] },
+  { key: 'deadlift', label: traduire('Soulevé de terre'), kw: [traduire('soulevé de terre'), traduire('souleve de terre'), 'deadlift', 'sdt'] },
+  { key: 'ohp', label: 'Développé militaire', kw: [traduire('développé militaire'), traduire('developpé militaire'), 'ohp', 'overhead press', 'dm'] },
   { key: 'row', label: 'Rowing barre', kw: ['rowing', 'barbell row', 'pendlay'] },
-  { key: 'dips', label: 'Dips lestés', kw: ['dips'] },
-  { key: 'pullup', label: 'Tractions lestées', kw: ['traction', 'tractions', 'pull-up', 'pullup', 'weighted pullup'] },
+  { key: 'dips', label: traduire('Dips lestés'), kw: ['dips'] },
+  { key: 'pullup', label: traduire('Tractions lestées'), kw: ['traction', 'tractions', 'pull-up', 'pullup', 'weighted pullup'] },
 ];
 
 export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number; hideEmpty?: boolean }) {
@@ -50,7 +51,7 @@ export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number;
 
   if (loading) return <TabLoading />;
   if (lifts.length === 0) {
-    return hideEmpty ? null : <TabEmpty title="Aucune progression pour l’instant" text="Note tes perfs en squat, développé couché, soulevé de terre et autres gros mouvements dans l’onglet Records." />;
+    return hideEmpty ? null : <TabEmpty title={traduire("Aucune progression pour l’instant")} text={traduire("Note tes perfs en squat, développé couché, soulevé de terre et autres gros mouvements dans l’onglet Records.")} />;
   }
 
   const squat = lifts.find((l) => l.key === 'squat')?.best?.value ?? 0;
@@ -65,9 +66,9 @@ export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number;
           <View pointerEvents="none" style={{ position: 'absolute', right: -6, top: -24 }}>
             <Glyph kind="sakura" size={140} color="rgba(255,255,255,0.05)" />
           </View>
-          <Ink size={13} weight="bold" color={P.goldLight}>Total des trois mouvements</Ink>
-          <Ink size={44} weight="black" tight color={P.white}>{`${String(total).replace('.', ',')} kg`}</Ink>
-          <Ink size={13} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>{`Squat ${squat}, développé couché ${bench}, soulevé de terre ${dl}`}</Ink>
+          <Ink size={13} weight="bold" color={P.goldLight}>{traduire("Total des trois mouvements")}</Ink>
+          <Ink size={44} weight="black" tight color={P.white}>{`${String(total).replace('.', DECIMAL)} kg`}</Ink>
+          <Ink size={13} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>{traduire("Squat {0}, développé couché {1}, soulevé de terre {2}", squat, bench, dl)}</Ink>
         </View>
       ) : null}
       {lifts.map((l) => (
@@ -75,29 +76,29 @@ export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number;
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Ink size={17} weight="black" tight>{l.label}</Ink>
-              <Ink size={12} weight="bold" color={P.muted}>{`${l.entries.length} perf${l.entries.length > 1 ? 's' : ''}${l.best ? `, record le ${shortDate(l.best.date)}` : ''}`}</Ink>
+              <Ink size={12} weight="bold" color={P.muted}>{`${l.entries.length} perf${l.entries.length > 1 ? 's' : ''}${l.best ? traduire(", record le {0}", shortDate(l.best.date)) : ''}`}</Ink>
             </View>
             {l.trend ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, height: 30, borderRadius: 15, backgroundColor: l.trend === 'up' ? P.mossSoft : l.trend === 'down' ? P.dangerSoft : P.goldSoft }}>
                 {l.trend !== 'stable' ? <CIcon name={l.trend} size={14} color={l.trend === 'up' ? P.mossText : P.danger} width={2.6} /> : null}
-                <Ink size={12} weight="extraBold" color={l.trend === 'up' ? P.mossText : l.trend === 'down' ? P.danger : P.goldDark}>{l.trend === 'up' ? 'En progrès' : l.trend === 'down' ? 'En baisse' : 'Stable'}</Ink>
+                <Ink size={12} weight="extraBold" color={l.trend === 'up' ? P.mossText : l.trend === 'down' ? P.danger : P.goldDark}>{l.trend === 'up' ? traduire('En progrès') : l.trend === 'down' ? 'En baisse' : 'Stable'}</Ink>
               </View>
             ) : null}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
             <View>
-              <Ink size={12} weight="bold" color={P.ink2}>Record</Ink>
+              <Ink size={12} weight="bold" color={P.ink2}>{traduire("Record")}</Ink>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ink size={30} weight="black" tight color={P.accent}>{`${String(l.best!.value).replace('.', ',')} kg`}</Ink>
+                <Ink size={30} weight="black" tight color={P.accent}>{`${String(l.best!.value).replace('.', DECIMAL)} kg`}</Ink>
                 <Hanko size={26} />
               </View>
-              {l.best!.reps && l.best!.reps > 1 ? <Ink size={12} weight="bold" color={P.muted}>{`x ${l.best!.reps} répétitions`}</Ink> : null}
+              {l.best!.reps && l.best!.reps > 1 ? <Ink size={12} weight="bold" color={P.muted}>{traduire("x {0} répétitions", l.best!.reps)}</Ink> : null}
             </View>
             {l.first && l.entries.length > 1 ? (
               <View>
-                <Ink size={12} weight="bold" color={P.ink2}>Depuis le début</Ink>
-                <Ink size={22} weight="black" tight color={l.gain >= 0 ? P.mossText : P.danger}>{`${l.gain >= 0 ? '+' : ''}${String(l.gain).replace('.', ',')} kg`}</Ink>
-                <Ink size={12} weight="bold" color={P.muted}>{`${l.gainPct >= 0 ? '+' : ''}${String(l.gainPct).replace('.', ',')} %, départ ${String(l.first.value).replace('.', ',')} kg`}</Ink>
+                <Ink size={12} weight="bold" color={P.ink2}>{traduire("Depuis le début")}</Ink>
+                <Ink size={22} weight="black" tight color={l.gain >= 0 ? P.mossText : P.danger}>{`${l.gain >= 0 ? '+' : ''}${String(l.gain).replace('.', DECIMAL)} kg`}</Ink>
+                <Ink size={12} weight="bold" color={P.muted}>{traduire("{0}{1} %, départ {2} kg", l.gainPct >= 0 ? '+' : '', String(l.gainPct).replace('.', DECIMAL), String(l.first.value).replace('.', DECIMAL))}</Ink>
               </View>
             ) : null}
           </View>
@@ -108,8 +109,8 @@ export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number;
               domaine="seances"
               height={174}
               digits={1}
-              format={(v) => `${String(Math.round(v * 10) / 10).replace('.', ',')} kg`}
-              label={`Ta progression en ${l.label}`}
+              format={(v) => `${String(Math.round(v * 10) / 10).replace('.', DECIMAL)} kg`}
+              label={traduire("Ta progression en {0}", l.label)}
             />
           ) : null}
         </Sheet2>

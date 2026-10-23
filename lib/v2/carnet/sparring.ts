@@ -5,6 +5,7 @@
 import type { CombatRound, Training } from '@/lib/database';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
 import { parseRounds } from './useCarnetData';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export interface PartnerSession {
   date: string;
@@ -223,26 +224,26 @@ export function methodsCombinedOf(trainings: Training[]) {
 export function coachInsightsOf(partners: PartnerStats[], topTaken: [string, number][], totals: { wins: number; losses: number; winRate: number | null }): CoachInsight[] {
   const out: CoachInsight[] = [];
   if (partners.length === 0) return out;
-  if (topTaken.length > 0 && topTaken[0][1] >= 2) out.push({ text: `On te place ${topTaken[0][0]} ${topTaken[0][1]} fois. Priorité : travaille ta défense.`, tone: 'danger', kanji: '' });
+  if (topTaken.length > 0 && topTaken[0][1] >= 2) out.push({ text: traduire("On te place {0} {1} fois. Priorité : travaille ta défense.", topTaken[0][0], topTaken[0][1]), tone: 'danger', kanji: '' });
   const ratings = partners.filter((p) => p.avgRating != null).map((p) => p.avgRating!);
   if (ratings.length >= 2) {
     const avg = Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10;
-    out.push({ text: `Niveau moyen de tes partenaires : ${String(avg).replace('.', ',')} sur 10.`, tone: avg <= 4 ? 'good' : avg <= 7 ? 'warn' : 'info', kanji: '' });
+    out.push({ text: traduire("Niveau moyen de tes partenaires : {0} sur 10.", String(avg).replace('.', DECIMAL)), tone: avg <= 4 ? 'good' : avg <= 7 ? 'warn' : 'info', kanji: '' });
   }
   const tough = partners.filter((p) => p.losses >= 2 && p.wins === 0);
-  if (tough.length > 0) out.push({ text: `${tough[0].losses} défaites sans victoire contre ${tough[0].name}. Change de stratégie.`, tone: 'warn', kanji: '' });
+  if (tough.length > 0) out.push({ text: traduire("{0} défaites sans victoire contre {1}. Change de stratégie.", tough[0].losses, tough[0].name), tone: 'warn', kanji: '' });
   const dormant = partners.find((p) => p.lastSession && Math.floor((Date.now() - new Date(p.lastSession).getTime()) / 86400000) >= 21);
   if (dormant) {
     const d = Math.floor((Date.now() - new Date(dormant.lastSession!).getTime()) / 86400000);
-    out.push({ text: `${d} jours sans croiser ${dormant.name}. Retente pour mesurer tes progrès.`, tone: 'info', kanji: '' });
+    out.push({ text: traduire("{0} jours sans croiser {1}. Retente pour mesurer tes progrès.", d, dormant.name), tone: 'info', kanji: '' });
   }
   if (totals.winRate != null && totals.wins + totals.losses >= 3) {
-    if (totals.winRate >= 70) out.push({ text: `${totals.winRate} % de victoires : tu domines. Cherche plus fort que toi.`, tone: 'good', kanji: '' });
-    else if (totals.winRate <= 30) out.push({ text: `${totals.winRate} % de victoires : phase d’apprentissage. Un seul objectif par séance.`, tone: 'danger', kanji: '' });
+    if (totals.winRate >= 70) out.push({ text: traduire("{0} % de victoires : tu domines. Cherche plus fort que toi.", totals.winRate), tone: 'good', kanji: '' });
+    else if (totals.winRate <= 30) out.push({ text: traduire("{0} % de victoires : phase d’apprentissage. Un seul objectif par séance.", totals.winRate), tone: 'danger', kanji: '' });
   }
   const easy = partners.some((p) => p.wins > 0 && (p.avgRating ?? 5) <= 3);
   const hard = partners.some((p) => p.wins > 0 && (p.avgRating ?? 5) >= 6);
-  if (easy && !hard && partners.length >= 3) out.push({ text: 'Tu bats les débutants, pas encore les intermédiaires. Prochain défi : un round face à du 6 sur 10.', tone: 'info', kanji: '' });
+  if (easy && !hard && partners.length >= 3) out.push({ text: traduire('Tu bats les débutants, pas encore les intermédiaires. Prochain défi : un round face à du 6 sur 10.'), tone: 'info', kanji: '' });
   return out.slice(0, 4);
 }
 
@@ -285,7 +286,7 @@ export function byIntensityOf(trainings: Training[]) {
 }
 
 export function byWeekdayOf(trainings: Training[]) {
-  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const days = [traduire('Dim'), traduire('Lun'), traduire('Mar'), traduire('Mer'), traduire('Jeu'), traduire('Ven'), traduire('Sam')];
   const by = days.map((label) => ({ label, wins: 0, total: 0, sessions: 0 }));
   for (const tr of trainings) {
     const rounds = parseRounds(tr.combat_rounds);

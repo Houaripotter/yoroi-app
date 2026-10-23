@@ -9,7 +9,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle, Line as SvgLine } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { format, parseISO, startOfMonth } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { TrendingUp } from 'lucide-react-native';
 
 interface TimelinePoint {

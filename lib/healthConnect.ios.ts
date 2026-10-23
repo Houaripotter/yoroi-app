@@ -42,6 +42,7 @@ import type { ObjectTypeIdentifier } from '@kingstinct/react-native-healthkit';
 // 14 octobre 2026 (SANTÉ CONNEXION) : source unique des types demandés
 import { IOS_ECRITURE_IPHONE, IOS_LECTURE_AVANCE, IOS_LECTURE_ESSENTIEL, ids } from './v2/sante/typesSante';
 import type { StatutDemande } from './v2/sante/connexion';
+import { traduire } from '@/lib/i18n/tr';
 
 // CRITIQUE: Ne pas importer directement depuis kingstinct au top-level pour éviter NitroModules error dans Expo Go
 let WorkoutActivityType: any = {};
@@ -752,7 +753,7 @@ const getWorkoutLabel = (activityType: string): string => {
     running: 'Course', randonnee: 'Randonnee', marche: 'Marche', trail: 'Trail',
     // Musculation & fitness
     musculation: 'Musculation', crossfit: 'CrossFit', hiit: 'HIIT', hyrox: 'HYROX',
-    barre_au_sol: 'Barre au sol', stretching: 'Stretching', step_aerobic: 'Step',
+    barre_au_sol: traduire('Barre au sol'), stretching: 'Stretching', step_aerobic: 'Step',
     // Combat
     mma: 'MMA', jjb: 'JJB', boxe: 'Boxe', kickboxing: 'Kickboxing', lutte: 'Lutte',
     tai_chi: 'Tai Chi',
@@ -765,7 +766,7 @@ const getWorkoutLabel = (activityType: string): string => {
     // Basketball
     basketball: 'Basketball',
     // Raquettes
-    tennis: 'Tennis', tennis_de_table: 'Tennis de table',
+    tennis: 'Tennis', tennis_de_table: traduire('Tennis de table'),
     badminton: 'Badminton', squash: 'Squash',
     racquetball: 'Racquetball', pickleball: 'Pickleball',
     // Cardio
@@ -789,15 +790,15 @@ const getWorkoutLabel = (activityType: string): string => {
     // Individuel
     golf: 'Golf', escalade: 'Escalade', equitation: 'Equitation',
     escrime: 'Escrime', gymnastique: 'Gymnastique',
-    athletisme: 'Athletisme', tir_a_larc: 'Tir a l\'arc',
+    athletisme: 'Athletisme', tir_a_larc: traduire('Tir a l\'arc'),
     bowling: 'Bowling', disc_golf: 'Disc Golf',
     // Divers
-    récupération: 'Récupération', triathlon: 'Triathlon',
+    récupération: traduire('Récupération'), triathlon: 'Triathlon',
     transition: 'Transition',
-    jeu: 'Jeu', chasse: 'Chasse', peche: 'Peche',
-    autre: 'Séance',
+    jeu: traduire('Jeu'), chasse: 'Chasse', peche: 'Peche',
+    autre: traduire('Séance'),
   };
-  return labels[mapped] || 'Séance';
+  return labels[mapped] || traduire('Séance');
 };
 
 // Date locale AAAA-MM-JJ (toISOString donne la date UTC : décalage d'un jour la nuit ou hors d'Europe)
@@ -1002,7 +1003,7 @@ class HealthConnectService {
   }
 
   getProviderName(): string {
-    return 'App Santé';
+    return traduire('App Santé');
   }
 
   /**
@@ -2822,7 +2823,7 @@ class HealthConnectService {
       const statusMap: Record<number, string> = { 0: 'notDetermined', 1: 'sharingDenied', 2: 'sharingAuthorized' };
       diag.authStatus = statusMap[status as number] ?? String(status);
     } catch (e: any) {
-      diag.authStatus = `erreur: ${e?.message}`;
+      diag.authStatus = traduire("erreur: {0}", e?.message);
     }
 
     // === TEST DIRECT DE L'API queryWorkoutSamples ===
@@ -3133,9 +3134,9 @@ class HealthConnectService {
         const aqi = Number(rawAqi);
         if (!isNaN(aqi) && aqi > 0) {
           details.airQualityIndex = aqi;
-          if (aqi <= 50) details.airQualityCategory = 'Bon';
+          if (aqi <= 50) details.airQualityCategory = traduire('Bon');
           else if (aqi <= 100) details.airQualityCategory = 'Modere';
-          else if (aqi <= 150) details.airQualityCategory = 'Mauvais pour groupes sensibles';
+          else if (aqi <= 150) details.airQualityCategory = traduire('Mauvais pour groupes sensibles');
           else if (aqi <= 200) details.airQualityCategory = 'Mauvais';
           else if (aqi <= 300) details.airQualityCategory = 'Tres mauvais';
           else details.airQualityCategory = 'Dangereux';
@@ -3596,9 +3597,9 @@ class HealthConnectService {
             const aqiValue = aqiData?.hourly?.us_aqi?.[hour];
             if (aqiValue != null && aqiValue >= 0) {
               details.airQualityIndex = aqiValue;
-              if (aqiValue <= 50) details.airQualityCategory = 'Bon';
+              if (aqiValue <= 50) details.airQualityCategory = traduire('Bon');
               else if (aqiValue <= 100) details.airQualityCategory = 'Modere';
-              else if (aqiValue <= 150) details.airQualityCategory = 'Mauvais pour groupes sensibles';
+              else if (aqiValue <= 150) details.airQualityCategory = traduire('Mauvais pour groupes sensibles');
               else if (aqiValue <= 200) details.airQualityCategory = 'Mauvais';
               else if (aqiValue <= 300) details.airQualityCategory = 'Tres mauvais';
               else details.airQualityCategory = 'Dangereux';
@@ -4960,16 +4961,16 @@ class HealthConnectService {
 
   /** Types d'événements (catégories) : une liste datée plutôt qu'une courbe */
   private static readonly EXT_EVENTS: Record<string, { id: string; title: (value: number) => string }> = {
-    'fc-haute': { id: 'HKCategoryTypeIdentifierHighHeartRateEvent', title: () => 'Fréquence élevée au repos' },
-    'fc-basse': { id: 'HKCategoryTypeIdentifierLowHeartRateEvent', title: () => 'Fréquence basse' },
-    'rythme-irregulier': { id: 'HKCategoryTypeIdentifierIrregularHeartRhythmEvent', title: () => 'Rythme irrégulier détecté' },
-    'cardio-faible': { id: 'HKCategoryTypeIdentifierLowCardioFitnessEvent', title: () => 'Cardio faible pour ton âge' },
-    apnees: { id: 'HKCategoryTypeIdentifierSleepApneaEvent', title: () => 'Respiration souvent perturbée la nuit' },
+    'fc-haute': { id: 'HKCategoryTypeIdentifierHighHeartRateEvent', title: () => traduire('Fréquence élevée au repos') },
+    'fc-basse': { id: 'HKCategoryTypeIdentifierLowHeartRateEvent', title: () => traduire('Fréquence basse') },
+    'rythme-irregulier': { id: 'HKCategoryTypeIdentifierIrregularHeartRhythmEvent', title: () => traduire('Rythme irrégulier détecté') },
+    'cardio-faible': { id: 'HKCategoryTypeIdentifierLowCardioFitnessEvent', title: () => traduire('Cardio faible pour ton âge') },
+    apnees: { id: 'HKCategoryTypeIdentifierSleepApneaEvent', title: () => traduire('Respiration souvent perturbée la nuit') },
     'alerte-stabilite': {
       id: 'HKCategoryTypeIdentifierAppleWalkingSteadinessEvent',
-      title: (v) => (v === 2 ? 'Stabilité très basse' : v === 3 ? 'Stabilité toujours basse' : v === 4 ? 'Stabilité toujours très basse' : 'Stabilité basse'),
+      title: (v) => (v === 2 ? traduire('Stabilité très basse') : v === 3 ? traduire('Stabilité toujours basse') : v === 4 ? traduire('Stabilité toujours très basse') : traduire('Stabilité basse')),
     },
-    'alerte-son-casque': { id: 'HKCategoryTypeIdentifierHeadphoneAudioExposureEvent', title: () => 'Dose de son au casque dépassée sur 7 jours' },
+    'alerte-son-casque': { id: 'HKCategoryTypeIdentifierHeadphoneAudioExposureEvent', title: () => traduire('Dose de son au casque dépassée sur 7 jours') },
     'alerte-son-ambiant': { id: 'HKCategoryTypeIdentifierEnvironmentalAudioExposureEvent', title: () => 'Bruit ambiant trop fort' },
   };
 
@@ -5323,7 +5324,7 @@ class HealthConnectService {
           .filter((r) => r?.startDate && Number(r?.quantity) > 0)
           .map((r) => {
             const n = Math.round(Number(r.quantity));
-            return { date: iso(r.startDate), title: n > 1 ? `${n} chutes détectées` : 'Chute détectée', value: n };
+            return { date: iso(r.startDate), title: n > 1 ? traduire("{0} chutes détectées", n) : traduire('Chute détectée'), value: n };
           })
           .filter((e) => !!e.date);
       }
@@ -5332,12 +5333,12 @@ class HealthConnectService {
         const rows: any[] = await this.withTimeout(Promise.resolve(HK.queryElectrocardiogramSamples({ ...options, includeVoltages: false })), 15000);
         const LABEL: Record<string, string> = {
           sinusRhythm: 'Rythme sinusal',
-          atrialFibrillation: 'Signes de fibrillation auriculaire',
-          inconclusiveLowHeartRate: 'Non concluant, fréquence basse',
-          inconclusiveHighHeartRate: 'Non concluant, fréquence élevée',
-          inconclusivePoorReading: 'Non concluant, enregistrement de mauvaise qualité',
-          inconclusiveOther: 'Non concluant',
-          notSet: 'Résultat non renseigné',
+          atrialFibrillation: traduire('Signes de fibrillation auriculaire'),
+          inconclusiveLowHeartRate: traduire('Non concluant, fréquence basse'),
+          inconclusiveHighHeartRate: traduire('Non concluant, fréquence élevée'),
+          inconclusivePoorReading: traduire('Non concluant, enregistrement de mauvaise qualité'),
+          inconclusiveOther: traduire('Non concluant'),
+          notSet: traduire('Résultat non renseigné'),
         };
         return (rows ?? [])
           .filter((r) => r?.startDate)
@@ -5345,28 +5346,28 @@ class HealthConnectService {
             const bpm = Number(r?.averageHeartRateBpm);
             const bits: string[] = [];
             if (Number.isFinite(bpm) && bpm > 0) bits.push(`${Math.round(bpm)} bpm en moyenne`);
-            if (r?.symptomsStatus === 'present') bits.push('symptômes notés');
-            return { date: iso(r.startDate), title: LABEL[String(r?.classification)] ?? 'Électrocardiogramme', detail: bits.join(', ') || undefined, value: 1 };
+            if (r?.symptomsStatus === 'present') bits.push(traduire('symptômes notés'));
+            return { date: iso(r.startDate), title: LABEL[String(r?.classification)] ?? traduire('Électrocardiogramme'), detail: bits.join(', ') || undefined, value: 1 };
           })
           .filter((e) => !!e.date);
       }
 
       if (key === 'humeur' && typeof HK.queryStateOfMindSamples === 'function') {
         const rows: any[] = await this.withTimeout(Promise.resolve(HK.queryStateOfMindSamples(options)), 15000);
-        const VALENCE = ['', 'Très désagréable', 'Désagréable', 'Un peu désagréable', 'Neutre', 'Un peu agréable', 'Agréable', 'Très agréable'];
+        const VALENCE = ['', traduire('Très désagréable'), traduire('Désagréable'), traduire('Un peu désagréable'), 'Neutre', traduire('Un peu agréable'), traduire('Agréable'), traduire('Très agréable')];
         const LABELS: Record<number, string> = {
-          1: 'émerveillé', 2: 'amusé', 3: 'en colère', 4: 'anxieux', 5: 'honteux', 6: 'courageux', 7: 'calme', 8: 'content',
-          9: 'déçu', 10: 'découragé', 11: 'dégoûté', 12: 'gêné', 13: 'enthousiaste', 14: 'frustré', 15: 'reconnaissant',
-          16: 'coupable', 17: 'heureux', 18: 'désespéré', 19: 'irrité', 20: 'jaloux', 21: 'joyeux', 22: 'seul', 23: 'passionné',
-          24: 'serein', 25: 'fier', 26: 'soulagé', 27: 'triste', 28: 'effrayé', 29: 'stressé', 30: 'surpris', 31: 'inquiet',
-          32: 'agacé', 33: 'confiant', 34: 'épuisé', 35: 'plein d’espoir', 36: 'indifférent', 37: 'débordé', 38: 'satisfait',
+          1: traduire('émerveillé'), 2: traduire('amusé'), 3: traduire('en colère'), 4: 'anxieux', 5: 'honteux', 6: 'courageux', 7: 'calme', 8: 'content',
+          9: traduire('déçu'), 10: traduire('découragé'), 11: traduire('dégoûté'), 12: traduire('gêné'), 13: 'enthousiaste', 14: traduire('frustré'), 15: 'reconnaissant',
+          16: 'coupable', 17: 'heureux', 18: traduire('désespéré'), 19: traduire('irrité'), 20: 'jaloux', 21: 'joyeux', 22: 'seul', 23: traduire('passionné'),
+          24: 'serein', 25: 'fier', 26: traduire('soulagé'), 27: 'triste', 28: traduire('effrayé'), 29: traduire('stressé'), 30: 'surpris', 31: 'inquiet',
+          32: traduire('agacé'), 33: 'confiant', 34: traduire('épuisé'), 35: 'plein d’espoir', 36: traduire('indifférent'), 37: traduire('débordé'), 38: 'satisfait',
         };
         return (rows ?? [])
           .filter((r) => r?.startDate && Number(r?.valenceClassification) >= 1)
           .map((r) => {
             const v = Math.max(1, Math.min(7, Math.round(Number(r.valenceClassification))));
             const words = (Array.isArray(r?.labels) ? r.labels : []).map((l: number) => LABELS[Number(l)]).filter(Boolean).slice(0, 3);
-            const kind = Number(r?.kind) === 2 ? 'Humeur de la journée' : 'Émotion du moment';
+            const kind = Number(r?.kind) === 2 ? traduire('Humeur de la journée') : traduire('Émotion du moment');
             return { date: iso(r.startDate), title: VALENCE[v], detail: [kind, ...words].join(', '), value: v };
           })
           .filter((e) => !!e.date);
@@ -5988,7 +5989,7 @@ class HealthConnectService {
       } catch (e) { logger.warn('[importFullHistory] Erreur poids:', e); }
 
       // ══════ 2. SOMMEIL, toutes les nuits depuis l'an 2000 ══════
-      progress('Sommeil');
+      progress(traduire('Sommeil'));
       try {
         const sleepHistory = await this.getSleepHistory(); // illimité
         for (const night of sleepHistory) {
@@ -6015,7 +6016,7 @@ class HealthConnectService {
       } catch (e) { logger.warn('[importFullHistory] Erreur sommeil:', e); }
 
       // ══════ 3. PAS, tous les jours depuis l'an 2000 ══════
-      progress('Pas');
+      progress(traduire('Pas'));
       try {
         const stepsHistory = await this.getStepsHistory(); // illimité
         const stepsRecords: HealthDataRecord[] = stepsHistory.map(s => ({
@@ -6026,7 +6027,7 @@ class HealthConnectService {
       } catch (e) { logger.warn('[importFullHistory] Erreur pas:', e); }
 
       // ══════ 4. CALORIES, tous les jours depuis l'an 2000 ══════
-      progress('Calories');
+      progress(traduire('Calories'));
       try {
         const calHistory = await this.getCaloriesHistory(); // illimité
         const calRecords: HealthDataRecord[] = [];
@@ -6039,7 +6040,7 @@ class HealthConnectService {
       } catch (e) { logger.warn('[importFullHistory] Erreur calories:', e); }
 
       // ══════ 5. FRÉQUENCE CARDIAQUE, tous les jours depuis l'an 2000 ══════
-      progress('Fréquence cardiaque');
+      progress(traduire('Fréquence cardiaque'));
       try {
         const hrHistory = await this.getHeartRateHistory(); // illimité
         const hrRecords: HealthDataRecord[] = hrHistory.map(h => ({
@@ -6061,7 +6062,7 @@ class HealthConnectService {
       } catch (e) { logger.warn('[importFullHistory] Erreur distance:', e); }
 
       // ══════ 7. SÉANCES, toutes depuis l'an 2000 ══════
-      progress('Séances');
+      progress(traduire('Séances'));
       let workoutsReturned = false;
       try {
         // Appel direct avec timeout long (5 min) pour les grandes bibliothèques
@@ -6384,12 +6385,12 @@ class HealthConnectService {
       await Notif.setNotificationCategoryAsync('workout_complete', [
         {
           identifier: 'share',
-          buttonTitle: 'Partager',
+          buttonTitle: traduire('Partager'),
           options: { opensAppToForeground: true },
         },
         {
           identifier: 'view',
-          buttonTitle: 'Voir',
+          buttonTitle: traduire('Voir'),
           options: { opensAppToForeground: true },
         },
       ]);
@@ -6429,31 +6430,31 @@ class HealthConnectService {
         'Course': 'Belle course',
         'Trail': 'Beau trail',
         'Marche': 'Belle marche',
-        'Musculation': 'Belle séance de muscu',
-        'HYROX': 'Séance HYROX terminée',
+        'Musculation': traduire('Belle séance de muscu'),
+        'HYROX': traduire('Séance HYROX terminée'),
         'JJB': 'Beau roulage',
-        'Boxe': 'Belle séance de boxe',
-        'Velo': 'Belle sortie à vélo',
+        'Boxe': traduire('Belle séance de boxe'),
+        'Velo': traduire('Belle sortie à vélo'),
         'Natation': 'Belle nage',
-        'Yoga': 'Belle séance de yoga',
-        'Football': 'Beau match de foot',
-        'Basketball': 'Beau match de basket',
-        'Tennis': 'Belle partie de tennis',
-        'Cardio': 'Belle séance de cardio',
-        'Danse': 'Belle séance de danse',
-        'CrossFit': 'WOD terminé',
-        'Pilates': 'Belle séance de Pilates',
+        'Yoga': traduire('Belle séance de yoga'),
+        'Football': traduire('Beau match de foot'),
+        'Basketball': traduire('Beau match de basket'),
+        'Tennis': traduire('Belle partie de tennis'),
+        'Cardio': traduire('Belle séance de cardio'),
+        'Danse': traduire('Belle séance de danse'),
+        'CrossFit': traduire('WOD terminé'),
+        'Pilates': traduire('Belle séance de Pilates'),
         'Escalade': 'Belle grimpe',
         'Ski': 'Belle descente',
-        'Ski de fond': 'Belle session de fond',
-        'Rugby': 'Beau match de rugby',
-        'Handball': 'Beau match de hand',
-        'Golf': 'Belle partie de golf',
-        'Surf': 'Belle session de surf',
+        'Ski de fond': traduire('Belle session de fond'),
+        'Rugby': traduire('Beau match de rugby'),
+        'Handball': traduire('Beau match de hand'),
+        'Golf': traduire('Belle partie de golf'),
+        'Surf': traduire('Belle session de surf'),
         'Aviron': 'Belle sortie d’aviron',
       };
 
-      const title = titres[sportLabel] || `Belle séance de ${sportLabel.toLowerCase()}`;
+      const title = titres[sportLabel] || traduire("Belle séance de {0}", sportLabel.toLowerCase());
 
       // Envoi, regroupement, mémoire et réglages : lib/v2/notifications/seanceTerminee.ts (le corps y est construit,
       // sans valeur de santé, et les données portent l'id de la séance pour ouvrir sa carte)
@@ -6812,12 +6813,12 @@ class HealthConnectService {
       errors.push('Module HealthKit: ' + healthKitDiagnostic.moduleError);
     }
     if (isMockMode) {
-      errors.push('HealthKit est en mode MOCK (module natif non disponible) - les données seront vides');
-      recommendations.push('Installez l\'app via EAS Build (pas Expo Go) pour activer le module natif HealthKit');
+      errors.push(traduire('HealthKit est en mode MOCK (module natif non disponible) - les données seront vides'));
+      recommendations.push(traduire('Installez l\'app via EAS Build (pas Expo Go) pour activer le module natif HealthKit'));
     }
     if (healthKitDiagnostic.isExpoGo) {
-      errors.push('Expo Go detecte - les modules natifs (HealthKit, NitroModules) ne fonctionnent pas dans Expo Go');
-      recommendations.push('Utilisez un Development Build (npx expo run:ios ou EAS Build) pour tester HealthKit');
+      errors.push(traduire('Expo Go detecte - les modules natifs (HealthKit, NitroModules) ne fonctionnent pas dans Expo Go'));
+      recommendations.push(traduire('Utilisez un Development Build (npx expo run:ios ou EAS Build) pour tester HealthKit'));
     }
 
     // 1. Verifier si HealthKit est disponible
@@ -6826,9 +6827,9 @@ class HealthConnectService {
 
     if (!healthKitAvailable) {
       if (!errors.some(e => e.includes('Module HealthKit'))) {
-        errors.push('HealthKit non disponible sur cet appareil');
+        errors.push(traduire('HealthKit non disponible sur cet appareil'));
       }
-      recommendations.push('Verifiez que vous etes sur un appareil iOS physique (pas simulateur)');
+      recommendations.push(traduire('Verifiez que vous etes sur un appareil iOS physique (pas simulateur)'));
     }
 
     // 2. Vérifier la connexion
@@ -6836,8 +6837,8 @@ class HealthConnectService {
     logger.info('[Diagnostic] Connecté:', isConnected);
 
     if (!isConnected) {
-      errors.push('Non connecté à Apple Health');
-      recommendations.push('Allez dans Réglages > Confidentialité > Santé > Yoroi et activez toutes les permissions');
+      errors.push(traduire('Non connecté à Apple Health'));
+      recommendations.push(traduire('Allez dans Réglages > Confidentialité > Santé > Yoroi et activez toutes les permissions'));
     }
 
     // 3. Tester les requêtes
@@ -6853,12 +6854,12 @@ class HealthConnectService {
       logger.info('[Diagnostic] Sommeil trouvé:', sleepCount, 'jours');
 
       if (sleepCount === 0) {
-        errors.push('Aucune donnée de sommeil trouvée sur 30 jours');
-        recommendations.push('Portez votre Apple Watch la nuit pour enregistrer le sommeil');
-        recommendations.push('Vérifiez que le Suivi du sommeil est activé sur votre Apple Watch');
+        errors.push(traduire('Aucune donnée de sommeil trouvée sur 30 jours'));
+        recommendations.push(traduire('Portez votre Apple Watch la nuit pour enregistrer le sommeil'));
+        recommendations.push(traduire('Vérifiez que le Suivi du sommeil est activé sur votre Apple Watch'));
       }
     } catch (e) {
-      errors.push('Erreur lecture sommeil: ' + (e as Error).message);
+      errors.push(traduire('Erreur lecture sommeil: ') + (e as Error).message);
     }
 
     try {
@@ -6868,11 +6869,11 @@ class HealthConnectService {
       logger.info('[Diagnostic] Poids trouvé:', weightCount, 'mesures');
 
       if (weightCount === 0) {
-        errors.push('Aucune donnée de poids trouvée sur 90 jours');
-        recommendations.push('Ajoutez votre poids manuellement dans Apple Santé ou utilisez une balance connectée');
+        errors.push(traduire('Aucune donnée de poids trouvée sur 90 jours'));
+        recommendations.push(traduire('Ajoutez votre poids manuellement dans Apple Santé ou utilisez une balance connectée'));
       }
     } catch (e) {
-      errors.push('Erreur lecture poids: ' + (e as Error).message);
+      errors.push(traduire('Erreur lecture poids: ') + (e as Error).message);
     }
 
     try {
@@ -6881,7 +6882,7 @@ class HealthConnectService {
       stepsCount = steps?.count || 0;
       logger.info('[Diagnostic] Pas aujourd\'hui:', stepsCount);
     } catch (e) {
-      errors.push('Erreur lecture pas: ' + (e as Error).message);
+      errors.push(traduire('Erreur lecture pas: ') + (e as Error).message);
     }
 
     try {
@@ -6891,10 +6892,10 @@ class HealthConnectService {
       logger.info('[Diagnostic] FC moyenne:', heartRateCount);
 
       if (heartRateCount === 0) {
-        recommendations.push('Portez votre Apple Watch pour enregistrer la fréquence cardiaque');
+        recommendations.push(traduire('Portez votre Apple Watch pour enregistrer la fréquence cardiaque'));
       }
     } catch (e) {
-      errors.push('Erreur lecture FC: ' + (e as Error).message);
+      errors.push(traduire('Erreur lecture FC: ') + (e as Error).message);
     }
 
     // Résumé
@@ -6926,9 +6927,9 @@ export const healthConnect = new HealthConnectService();
 export const getProviderIcon = (): string => '';
 
 export const getConnectionInstructions = (): string[] => [
-  "1. YOROI va demander l'accès à l'app Santé",
-  "2. Autorise l'accès au poids, aux pas, au sommeil et à l'hydratation",
-  "3. Tes données seront synchronisées automatiquement",
+  traduire("1. YOROI va demander l'accès à l'app Santé"),
+  traduire("2. Autorise l'accès au poids, aux pas, au sommeil et à l'hydratation"),
+  traduire("3. Tes données seront synchronisées automatiquement"),
 ];
 
 export default healthConnect;

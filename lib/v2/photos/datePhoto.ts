@@ -6,6 +6,7 @@
  * Fichier pur : teste par jest (__tests__/unit/photosCadrage.test.ts).
  */
 import { isoDay, pickPhotoTime } from '@/lib/v2/balance/photos';
+import { traduire } from '@/lib/i18n/tr';
 
 export type PhotoDay = {
   /** jour local AAAA-MM-JJ */
@@ -23,8 +24,8 @@ export type PhotoDay = {
  */
 export function photoDay(p: { exif?: unknown; fileName?: unknown; creationTime?: number | null }, now: number = Date.now()): PhotoDay {
   const t = pickPhotoTime({ exif: p.exif, fileName: p.fileName, creationTime: p.creationTime ?? undefined }, now);
-  if (t.at !== undefined && t.source !== 'modif') return { date: isoDay(t.at), found: true, label: 'Date de la photo' };
-  return { date: isoDay(now), found: false, label: 'Aucune date dans la photo : aujourd’hui' };
+  if (t.at !== undefined && t.source !== 'modif') return { date: isoDay(t.at), found: true, label: traduire('Date de la photo') };
+  return { date: isoDay(now), found: false, label: traduire('Aucune date dans la photo : aujourd’hui') };
 }
 
 /** une photo prise maintenant avec l'appareil de l'app */

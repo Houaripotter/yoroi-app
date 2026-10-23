@@ -32,6 +32,7 @@ import { ExamplePreview } from '@/components/yoroi/v2/progres/ExamplePreview';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { P } from '@/components/yoroi/livePalette';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 const SOURCE_NAMES: Record<string, string> = {
   apple_health: 'Apple Santé',
@@ -56,7 +57,7 @@ const SOURCE_NAMES: Record<string, string> = {
   huawei: 'Huawei',
   wahoo: 'Wahoo',
   strava: 'Strava',
-  manual: 'Saisie dans YOROI',
+  manual: traduire('Saisie dans YOROI'),
 };
 
 const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
@@ -95,7 +96,7 @@ function fmt(m: MetricDef, v: number | null | undefined): string {
 }
 
 function withUnit(m: MetricDef, v: number | null | undefined): string {
-  if (v === null || v === undefined) return 'Pas de donnée';
+  if (v === null || v === undefined) return traduire('Pas de donnée');
   const u = unitFor(m);
   return u ? `${fmt(m, v)} ${u}` : fmt(m, v);
 }
@@ -165,8 +166,8 @@ export default function MetriqueScreen() {
 
   if (!m || !key) {
     return (
-      <DetailScreen title="Mesure introuvable">
-        <EmptyState title="Cette mesure n'existe pas" text="Reviens à ton tableau de bord santé." action="Ta santé" onAction={() => router.replace('/sante' as any)} />
+      <DetailScreen title={traduire("Mesure introuvable")}>
+        <EmptyState title={traduire("Cette mesure n'existe pas")} text={traduire("Reviens à ton tableau de bord santé.")} action={traduire("Ta santé")} onAction={() => router.replace('/sante' as any)} />
       </DetailScreen>
     );
   }
@@ -206,7 +207,7 @@ export default function MetriqueScreen() {
     if ((period === 'semaine' || period === 'mois') && (isSum || key === 'sommeil') && filled[sel]) {
       const p = filled[sel];
       readTitle = dayLong(p.date);
-      readValue = p.value > 0 ? withUnit(m, p.value) : 'Pas de mesure';
+      readValue = p.value > 0 ? withUnit(m, p.value) : traduire('Pas de mesure');
       if (key === 'sommeil' && p.phases) readValue += `, profond ${hoursMinutes(p.phases.deep)}`;
     } else if (key === 'tension' && linePts[sel]) {
       const p = linePts[sel];
@@ -214,11 +215,11 @@ export default function MetriqueScreen() {
       readValue = `${Math.round(p.value)}/${Math.round(p.v2 ?? 0)} mmHg`;
     } else if (linePts[sel]) {
       const p = linePts[sel];
-      readTitle = period === 'an' ? `Semaine du ${dayShort(p.date)}` : dayLong(p.date);
+      readTitle = period === 'an' ? traduire("Semaine du {0}", dayShort(p.date)) : dayLong(p.date);
       readValue = withUnit(m, p.value);
     }
   } else if (stats.avg !== null) {
-    readTitle = period === 'jour' ? "Aujourd'hui" : isSum ? 'Moyenne par jour' : 'Moyenne';
+    readTitle = period === 'jour' ? traduire("Aujourd'hui") : isSum ? traduire('Moyenne par jour') : traduire('Moyenne');
     readValue = key === 'tension' ? `${Math.round(stats.avg)}/${Math.round(mean(pts.map((p) => p.v2 ?? 0).filter((v) => v > 0)) ?? 0)} mmHg` : withUnit(m, stats.avg);
   }
 
@@ -230,9 +231,9 @@ export default function MetriqueScreen() {
   })();
   const periodEvents = (eventsCache[days] ?? []).filter((e) => eventDay(e.date) >= periodFrom);
   const eventCount = isEvent ? periodEvents.reduce((s2, e) => s2 + (key === 'chutes' ? e.value ?? 1 : 1), 0) : 0;
-  const PERIOD_WORD: Record<Period, string> = { jour: "aujourd'hui", semaine: 'sur 7 jours', mois: 'sur 30 jours', an: 'sur un an' };
+  const PERIOD_WORD: Record<Period, string> = { jour: "aujourd'hui", semaine: traduire('sur 7 jours'), mois: traduire('sur 30 jours'), an: traduire('sur un an') };
   if (isEvent && sel === null) {
-    readTitle = `Total ${PERIOD_WORD[period]}`;
+    readTitle = traduire("Total {0}", PERIOD_WORD[period]);
     readValue = countLabel(eventCount, m.unit);
   }
 
@@ -257,7 +258,7 @@ export default function MetriqueScreen() {
           events={periodEvents}
           color={color}
           tint={fam.tint}
-          emptyText={notHere ? `Cette mesure n'arrive pas sur ce téléphone.` : `Rien ${PERIOD_WORD[period]}. ${source?.mode === 'live' ? 'Tout ce que ta montre enregistre apparaîtra ici, avec la date et l’heure.' : 'Connecte ta montre pour voir ici chaque événement daté.'}`}
+          emptyText={notHere ? traduire(`Cette mesure n'arrive pas sur ce téléphone.`) : `Rien ${PERIOD_WORD[period]}. ${source?.mode === 'live' ? traduire('Tout ce que ta montre enregistre apparaîtra ici, avec la date et l’heure.') : traduire('Connecte ta montre pour voir ici chaque événement daté.')}`}
         />
       );
     }
@@ -267,7 +268,7 @@ export default function MetriqueScreen() {
         return (
           <View onLayout={onChartLayout} style={{ gap: 8 }}>
             {chartW > 0 ? <HrChart samples={hr} width={chartW} height={200} avg={a ?? undefined} /> : <View style={{ height: 200 }} />}
-            <Legend items={[{ color: S.heart, label: 'Battements du jour', kind: 'line' }, { color: S.ink, label: 'Moyenne', kind: 'line' }]} />
+            <Legend items={[{ color: S.heart, label: traduire('Battements du jour'), kind: 'line' }, { color: S.ink, label: traduire('Moyenne'), kind: 'line' }]} />
           </View>
         );
       }
@@ -276,9 +277,9 @@ export default function MetriqueScreen() {
       return (
         <View style={{ gap: 14, paddingVertical: 6 }}>
           {[
-            { label: todayPt ? "Aujourd'hui" : head ? `Dernière mesure, ${whenLabel(head.date)}` : "Aujourd'hui", v: tv, c: color, tension: `${headlineText(m, todayPt ?? head)} mmHg` },
+            { label: todayPt ? traduire("Aujourd'hui") : head ? traduire("Dernière mesure, {0}", whenLabel(head.date)) : traduire("Aujourd'hui"), v: tv, c: color, tension: `${headlineText(m, todayPt ?? head)} mmHg` },
             // audit 18 octobre : la tension de la moyenne est la moyenne des 7 jours, plus la derniere mesure
-            { label: 'Moyenne des 7 jours précédents', v: avg7 ?? 0, c: '#C9C6BE', tension: avg7 !== null && avg7Dia !== null ? `${Math.round(avg7)}/${Math.round(avg7Dia)} mmHg` : withUnit(m, avg7) },
+            { label: traduire('Moyenne des 7 jours précédents'), v: avg7 ?? 0, c: '#C9C6BE', tension: avg7 !== null && avg7Dia !== null ? `${Math.round(avg7)}/${Math.round(avg7Dia)} mmHg` : withUnit(m, avg7) },
           ].map((row) => (
             <View key={row.label} style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -286,7 +287,7 @@ export default function MetriqueScreen() {
                   {row.label}
                 </Ink>
                 <Ink size={13} weight="extraBold">
-                  {row.v > 0 ? (key === 'tension' ? row.tension : withUnit(m, row.v)) : 'Pas de donnée'}
+                  {row.v > 0 ? (key === 'tension' ? row.tension : withUnit(m, row.v)) : traduire('Pas de donnée')}
                 </Ink>
               </View>
               <View style={{ height: 14, borderRadius: 7, backgroundColor: S.line2, overflow: 'hidden' }}>
@@ -296,8 +297,7 @@ export default function MetriqueScreen() {
           ))}
           {key === 'frequence-cardiaque' && source?.mode === 'live' && Platform.OS === 'ios' && hr.length === 0 && !todayPt ? (
             <Ink size={12} weight="bold" color={S.muted}>
-              Pas encore de battement enregistré aujourd'hui.
-            </Ink>
+              {traduire("Pas encore de battement enregistré aujourd'hui.")}</Ink>
           ) : null}
         </View>
       );
@@ -309,9 +309,9 @@ export default function MetriqueScreen() {
         <ExamplePreview
           flush
           dim={0.4}
-          title={appData ? 'Rien sur cette période' : 'Aucune mesure sur cette période'}
-          text={appData ? 'Pèse-toi le matin, à jeun : chaque pesée s’ajoute ici.' : 'Voici ce que tu verras quand ta montre ou ta balance enverra cette mesure.'}
-          cta={appData ? 'Me peser' : 'Relier ma montre'}
+          title={appData ? traduire('Rien sur cette période') : traduire('Aucune mesure sur cette période')}
+          text={appData ? traduire('Pèse-toi le matin, à jeun : chaque pesée s’ajoute ici.') : traduire('Voici ce que tu verras quand ta montre ou ta balance enverra cette mesure.')}
+          cta={appData ? 'Me peser' : traduire('Relier ma montre')}
           onPress={() => router.push((appData ? '/pesee' : '/sante/montre') as any)}
         >
           {isSum && period !== 'an' ? (
@@ -325,7 +325,7 @@ export default function MetriqueScreen() {
     if (key === 'sommeil' && period !== 'an') {
       return (
         <View style={{ gap: 10 }}>
-          <SleepBars points={filled} labels={barLabels} onSelect={setSel} label={`Sommeil, ${period}`} />
+          <SleepBars points={filled} labels={barLabels} onSelect={setSel} label={traduire("Sommeil, {0}", period)} />
           {hasPhases ? (
             <Legend
               items={[
@@ -342,7 +342,7 @@ export default function MetriqueScreen() {
     if (key === 'tension') {
       return (
         <View style={{ gap: 10 }}>
-          <DualLine points={linePts} onSelect={setSel} label="Tension artérielle" />
+          <DualLine points={linePts} onSelect={setSel} label={traduire("Tension artérielle")} />
           <Legend items={[{ color: TENSION_COLORS[0], label: 'Chiffre haut', kind: 'line' }, { color: TENSION_COLORS[1], label: 'Chiffre bas', kind: 'line' }]} />
         </View>
       );
@@ -382,22 +382,22 @@ export default function MetriqueScreen() {
   const statItems: { label: string; value: string; unit: string }[] = [];
   if (stats.avg !== null && !isEvent) {
     const u = unitFor(m) ?? '';
-    const val = (v: number | null | undefined) => (v === null || v === undefined ? 'Pas de donnée' : fmt(m, v));
+    const val = (v: number | null | undefined) => (v === null || v === undefined ? traduire('Pas de donnée') : fmt(m, v));
     if (key === 'tension') {
       // tension : les deux chiffres de la vraie mesure (haut/bas)
       const measured = pts.filter((p) => p.value > 0);
-      const pair = (p: { value: number; v2?: number } | undefined) => (p ? `${Math.round(p.value)}/${Math.round(p.v2 ?? 0)}` : 'Pas de donnée');
+      const pair = (p: { value: number; v2?: number } | undefined) => (p ? `${Math.round(p.value)}/${Math.round(p.v2 ?? 0)}` : traduire('Pas de donnée'));
       const lowAvg = mean(measured.map((p) => p.v2 ?? 0).filter((v) => v > 0));
       const minP = measured.reduce<(typeof measured)[number] | undefined>((a, p) => (!a || p.value < a.value ? p : a), undefined);
       const maxP = measured.reduce<(typeof measured)[number] | undefined>((a, p) => (!a || p.value > a.value ? p : a), undefined);
-      statItems.push({ label: 'Moyenne', value: `${Math.round(stats.avg)}/${Math.round(lowAvg ?? 0)}`, unit: 'mmHg' });
-      statItems.push({ label: 'La plus basse', value: pair(minP), unit: 'mmHg' });
-      statItems.push({ label: 'La plus haute', value: pair(maxP), unit: 'mmHg' });
+      statItems.push({ label: traduire('Moyenne'), value: `${Math.round(stats.avg)}/${Math.round(lowAvg ?? 0)}`, unit: 'mmHg' });
+      statItems.push({ label: traduire('La plus basse'), value: pair(minP), unit: 'mmHg' });
+      statItems.push({ label: traduire('La plus haute'), value: pair(maxP), unit: 'mmHg' });
     } else {
-      statItems.push({ label: isSum ? 'Moyenne / jour' : 'Moyenne', value: val(stats.avg), unit: stats.avg !== null ? u : '' });
+      statItems.push({ label: isSum ? traduire('Moyenne / jour') : traduire('Moyenne'), value: val(stats.avg), unit: stats.avg !== null ? u : '' });
       statItems.push({ label: 'Minimum', value: val(stats.min), unit: stats.min !== null ? u : '' });
       statItems.push({ label: 'Maximum', value: val(stats.max), unit: stats.max !== null ? u : '' });
-      if (isSum && key !== 'sommeil' && stats.total !== null && period !== 'jour') statItems.push({ label: 'Total', value: val(stats.total), unit: u });
+      if (isSum && key !== 'sommeil' && stats.total !== null && period !== 'jour') statItems.push({ label: traduire('Total'), value: val(stats.total), unit: u });
     }
   }
   // quatre tuiles : deux rangees de deux, pour que les grands nombres tiennent
@@ -430,12 +430,11 @@ export default function MetriqueScreen() {
           <View style={{ flex: 1 }}>
             {isEvent ? (
               <Ink size={34} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                {head ? capitalize(whenLabel(head.date)) : 'Rien pour l’instant'}
+                {head ? capitalize(whenLabel(head.date)) : traduire('Rien pour l’instant')}
               </Ink>
             ) : !head ? (
               <Ink size={22} weight="black" tight numberOfLines={2}>
-                Pas encore de mesure
-              </Ink>
+                {traduire("Pas encore de mesure")}</Ink>
             ) : (
             <Ink size={42} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {headlineText(m, head)}
@@ -447,17 +446,17 @@ export default function MetriqueScreen() {
             </Ink>
             )}
             <Ink size={13} weight="bold" color={S.ink2}>
-              {isEvent ? (head ? `Dernière fois, ${countLabel(head.value, m.unit)}` : 'Rien d’enregistré ces dernières semaines') : head ? (m.kind === 'sum' ? `Total ${whenLabel(head.date)}` : `Mesuré ${whenLabel(head.date)}`) : notHere ? (notOnAndroid ? 'Non transmis par Health Connect' : 'Non transmis par Apple Santé') : 'En attente de ta montre ou de ta balance'}
+              {isEvent ? (head ? traduire("Dernière fois, {0}", countLabel(head.value, m.unit)) : traduire('Rien d’enregistré ces dernières semaines')) : head ? (m.kind === 'sum' ? traduire("Total {0}", whenLabel(head.date)) : traduire("Mesuré {0}", whenLabel(head.date))) : notHere ? (notOnAndroid ? traduire('Non transmis par Health Connect') : traduire('Non transmis par Apple Santé')) : traduire('En attente de ta montre ou de ta balance')}
             </Ink>
           </View>
         </View>
 
         <PeriodSegments
           items={[
-            { key: 'jour' as Period, label: 'Jour' },
-            { key: 'semaine' as Period, label: 'Semaine' },
-            { key: 'mois' as Period, label: 'Mois' },
-            { key: 'an' as Period, label: 'An', locked: !isPremium && !appData },
+            { key: 'jour' as Period, label: traduire('Jour') },
+            { key: 'semaine' as Period, label: traduire('Semaine') },
+            { key: 'mois' as Period, label: traduire('Mois') },
+            { key: 'an' as Period, label: traduire('An'), locked: !isPremium && !appData },
           ]}
           value={period}
           onChange={choosePeriod}
@@ -477,22 +476,20 @@ export default function MetriqueScreen() {
 
         {period === 'an' && pts.length > 0 && !isEvent ? (
           <Ink size={12} weight="bold" color={S.muted}>
-            {isSum ? 'Chaque point : la moyenne par jour de la semaine.' : 'Chaque point : la moyenne de la semaine.'}
+            {isSum ? traduire('Chaque point : la moyenne par jour de la semaine.') : traduire('Chaque point : la moyenne de la semaine.')}
           </Ink>
         ) : null}
         {(period === 'semaine' || period === 'mois') && isSum && !isEvent && key !== 'sommeil' && stats.avg ? (
           <Ink size={12} weight="bold" color={S.muted}>
-            Pointillés : ta moyenne sur la période. Glisse le doigt sur le graphique pour lire chaque jour.
-          </Ink>
+            {traduire("Pointillés : ta moyenne sur la période. Glisse le doigt sur le graphique pour lire chaque jour.")}</Ink>
         ) : null}
       </GlassBox>
 
       {m.list && !isEvent ? (
         <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, paddingHorizontal: 16, paddingVertical: 8, gap: 4 }}>
           <Ink size={16} weight="black" tight style={{ paddingTop: 8 }}>
-            Tes saisies
-          </Ink>
-          <EventList def={m} events={periodEvents} color={color} tint={fam.tint} emptyText={`Rien ${PERIOD_WORD[period]}. Note ton humeur dans l'app Santé ou sur ta montre.`} />
+            {traduire("Tes saisies")}</Ink>
+          <EventList def={m} events={periodEvents} color={color} tint={fam.tint} emptyText={traduire("Rien {0}. Note ton humeur dans l'app Santé ou sur ta montre.", PERIOD_WORD[period])} />
         </View>
       ) : null}
 
@@ -519,8 +516,7 @@ export default function MetriqueScreen() {
       {sleepShares ? (
         <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, padding: 16, gap: 12 }}>
           <Ink size={16} weight="black" tight>
-            Tes phases, nuit moyenne
-          </Ink>
+            {traduire("Tes phases, nuit moyenne")}</Ink>
           <View style={{ flexDirection: 'row', height: 16, borderRadius: 8, overflow: 'hidden', gap: 2 }}>
             {sleepShares.map((s) => (s.v > 0 ? <View key={s.k} style={{ flex: s.v, backgroundColor: s.color }} /> : null))}
           </View>
@@ -540,38 +536,37 @@ export default function MetriqueScreen() {
         </View>
       ) : null}
 
-      <InfoBlock icon="info" title="Ce que ça mesure" color={color} tint={fam.tint}>
+      <InfoBlock icon="info" title={traduire("Ce que ça mesure")} color={color} tint={fam.tint}>
         {m.what}
       </InfoBlock>
 
       {m.norm ? (
-        <InfoBlock icon="check" title="Repère" color={S.mossText} tint={S.mossSoft} footnote={`Source : ${m.norm.source}. Repère général, il ne remplace pas l'avis d'un médecin.`}>
+        <InfoBlock icon="check" title={traduire("Repère")} color={S.mossText} tint={S.mossSoft} footnote={traduire("Source : {0}. Repère général, il ne remplace pas l'avis d'un médecin.", m.norm.source)}>
           {m.norm.text}
         </InfoBlock>
       ) : m.howToRead ? (
-        <InfoBlock icon="spark" title="Comment la lire" color={S.gold} tint={S.goldSoft}>
+        <InfoBlock icon="spark" title={traduire("Comment la lire")} color={S.gold} tint={S.goldSoft}>
           {m.howToRead}
         </InfoBlock>
       ) : null}
       {m.norm && m.howToRead ? (
-        <InfoBlock icon="spark" title="Comment la lire" color={S.gold} tint={S.goldSoft}>
+        <InfoBlock icon="spark" title={traduire("Comment la lire")} color={S.gold} tint={S.goldSoft}>
           {m.howToRead}
         </InfoBlock>
       ) : null}
 
-      <InfoBlock icon="watch" title="D'où viennent ces données" color={S.indigo} tint={S.indigoSoft}>
+      <InfoBlock icon="watch" title={traduire("D'où viennent ces données")} color={S.indigo} tint={S.indigoSoft}>
         <Ink size={14} weight="medium" color={S.ink2}>
           {notOnAndroid
-            ? "Sur Android, Health Connect n'a pas cette mesure. Elle est lue sur iPhone depuis Apple Santé."
+            ? traduire("Sur Android, Health Connect n'a pas cette mesure. Elle est lue sur iPhone depuis Apple Santé.")
             : notOnIos
-              ? "Sur iPhone, Apple Santé n'a pas cette mesure. Elle est lue sur Android depuis Health Connect."
-              : `YOROI la lit dans ${Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé'}. Ton appareil doit y partager ses données.`}
+              ? traduire("Sur iPhone, Apple Santé n'a pas cette mesure. Elle est lue sur Android depuis Health Connect.")
+              : traduire("YOROI la lit dans {0}. Ton appareil doit y partager ses données.", Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé')}
         </Ink>
         {senders.length > 0 && !notHere ? (
           <View style={{ gap: 8, marginTop: 4 }}>
             <Ink size={12} weight="extraBold" color={S.ink2}>
-              Montres qui l'envoient, selon les marques
-            </Ink>
+              {traduire("Montres qui l'envoient, selon les marques")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {senders.map((w) => (
                 <Press key={w.key} onPress={() => router.push(`/sante/montre?marque=${w.key}` as any)} accessibilityRole="button" accessibilityLabel={`${w.name}, guide`}>
@@ -595,7 +590,7 @@ export default function MetriqueScreen() {
             {sourceNames.map((n) => (
               <View key={n} style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, backgroundColor: S.indigoSoft, justifyContent: 'center' }}>
                 <Ink size={12} weight="extraBold" color={S.indigo}>
-                  {`Reçu de ${n}`}
+                  {traduire("Reçu de {0}", n)}
                 </Ink>
               </View>
             ))}
@@ -613,12 +608,11 @@ export default function MetriqueScreen() {
           </View>
         </Press>
       ) : null}
-      <Press onPress={() => router.push('/sante/montre' as any)} accessibilityRole="button" accessibilityLabel="Configurer ma montre">
+      <Press onPress={() => router.push('/sante/montre' as any)} accessibilityRole="button" accessibilityLabel={traduire("Configurer ma montre")}>
         <View style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <SanteIcon name="link" size={15} color={S.accent} />
           <Ink size={13} weight="extraBold" color={S.accent}>
-            Configurer ma montre
-          </Ink>
+            {traduire("Configurer ma montre")}</Ink>
         </View>
       </Press>
     </DetailScreen>

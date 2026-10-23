@@ -47,6 +47,7 @@ import { RappelsDiscipline } from '@/components/yoroi/v2/notifications/RappelsDi
 import { choixDepuisServices } from '@/lib/v2/notifications/discipline';
 import type { ChoixRappels } from '@/lib/v2/notifications/discipline';
 import { appliquerChoixRappels } from '@/lib/v2/notifications/rappels';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const NB = ' ';
 
@@ -80,7 +81,7 @@ export default function TesNotifications() {
   const [hab, setHab] = useState<HabitudePesee>({ moment: null, actif: false });
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [unread, setUnread] = useState(0);
-  const [quote, setQuote] = useState<string>('La discipline, c’est choisir entre ce que tu veux maintenant et ce que tu veux le plus.');
+  const [quote, setQuote] = useState<string>(traduire('La discipline, c’est choisir entre ce que tu veux maintenant et ce que tu veux le plus.'));
 
   useEffect(() => {
     (async () => {
@@ -124,7 +125,7 @@ export default function TesNotifications() {
   const askPermission = useCallback(async (): Promise<boolean> => {
     const ok = await requestNotificationPermissions();
     setAllowed(ok);
-    if (!ok) showPopup('Autorisation nécessaire', 'Active les notifications de YOROI dans les réglages de ton téléphone.');
+    if (!ok) showPopup(traduire('Autorisation nécessaire'), traduire('Active les notifications de YOROI dans les réglages de ton téléphone.'));
     return ok;
   }, [showPopup]);
 
@@ -255,9 +256,9 @@ export default function TesNotifications() {
           case 'smart': await notificationService.sendSmartReminderTest(); break;
         }
         DeviceEventEmitter.emit('YOROI_NOTIF_READ');
-        showPopup('C’est parti', 'Tu vas la recevoir dans quelques secondes.');
+        showPopup(traduire('C’est parti'), traduire('Tu vas la recevoir dans quelques secondes.'));
       } catch {
-        showPopup('Oups', 'La notification de test n’a pas pu partir.');
+        showPopup('Oups', traduire('La notification de test n’a pas pu partir.'));
       }
     },
     [showPopup],
@@ -270,20 +271,20 @@ export default function TesNotifications() {
     const add = (on: boolean | undefined, label: string, icon: IconName, days: number[], time: string) => {
       if (on) list.push({ label, icon, at: nextFire(days, time) });
     };
-    add(settings.weighing.enabled, 'Pesée', 'scale', eff(settings.weighing.days, WEEKDAYS), settings.weighing.time);
+    add(settings.weighing.enabled, traduire('Pesée'), 'scale', eff(settings.weighing.days, WEEKDAYS), settings.weighing.time);
     add(settings.training.enabled, 'Entraînement', 'dumbbell', eff(settings.training.days, WEEKDAYS), settings.training.time);
-    add(settings.streak.enabled, 'Ta série', 'flame', EVERY_DAY, settings.streak.time);
-    add(settings.briefing?.enabled, 'Briefing du matin', 'sun', eff(settings.briefing?.days, EVERY_DAY), settings.briefing?.time ?? '07:30');
-    add(recap, 'Bilan de la semaine', 'calendar', [0], '19:00');
-    add(settings.sleep.enabled, 'Heure du coucher', 'bed', eff(settings.sleep.days, EVERY_DAY), settings.sleep.bedtimeReminder);
+    add(settings.streak.enabled, traduire('Ta série'), 'flame', EVERY_DAY, settings.streak.time);
+    add(settings.briefing?.enabled, traduire('Briefing du matin'), 'sun', eff(settings.briefing?.days, EVERY_DAY), settings.briefing?.time ?? '07:30');
+    add(recap, traduire('Bilan de la semaine'), 'calendar', [0], '19:00');
+    add(settings.sleep.enabled, traduire('Heure du coucher'), 'bed', eff(settings.sleep.days, EVERY_DAY), settings.sleep.bedtimeReminder);
     if (settings.hydration.enabled) {
       hydrationHours(settings.hydration.startTime, settings.hydration.endTime, settings.hydration.interval).forEach((h) =>
-        add(true, 'Boire de l’eau', 'drop', EVERY_DAY, pad(h)),
+        add(true, traduire('Boire de l’eau'), 'drop', EVERY_DAY, pad(h)),
       );
     }
-    add(tips.enabled, 'Conseil du soir', 'moon', eff(tips.days, EVERY_DAY), tips.time);
-    add(cit.enabled, 'Citation du matin', 'quote', EVERY_DAY, cit.time || '08:00');
-    add(settings.socialCards?.enabled, 'Carte de la semaine', 'share', [5], settings.socialCards?.weeklyTime ?? '19:00');
+    add(tips.enabled, traduire('Conseil du soir'), 'moon', eff(tips.days, EVERY_DAY), tips.time);
+    add(cit.enabled, traduire('Citation du matin'), 'quote', EVERY_DAY, cit.time || '08:00');
+    add(settings.socialCards?.enabled, traduire('Carte de la semaine'), 'share', [5], settings.socialCards?.weeklyTime ?? '19:00');
     const dated = list.filter((x) => x.at).sort((a, b) => a.at!.getTime() - b.at!.getTime());
     return dated[0] ?? null;
   }, [settings, cit, tips, recap]);
@@ -321,7 +322,7 @@ export default function TesNotifications() {
   return (
     <EspaceScreen
       title="Notifications"
-      subtitle="Choisis ce que YOROI te rappelle, et quand."
+      subtitle={traduire("Choisis ce que YOROI te rappelle, et quand.")}
     >
       {/* Autorisation */}
       {allowed === false ? (
@@ -329,8 +330,8 @@ export default function TesNotifications() {
           <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
             <Icon name="lock" size={22} color={c.goldDeep} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={16} weight="extraBold">Les notifications sont bloquées</Ink>
-              <Ink size={13} color={c.textSecondary}>{`Tant qu’elles le sont, aucun rappel ne peut arriver${NB}: autorise-les une fois.`}</Ink>
+              <Ink size={16} weight="extraBold">{traduire("Les notifications sont bloquées")}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Tant qu’elles le sont, aucun rappel ne peut arriver{0}: autorise-les une fois.", NB)}</Ink>
             </View>
           </View>
           <Pressable
@@ -342,7 +343,7 @@ export default function TesNotifications() {
             accessibilityRole="button"
             style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={15} weight="extraBold" color={c.onAccent}>Autoriser les notifications</Ink>
+            <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Autoriser les notifications")}</Ink>
           </Pressable>
         </Animated.View>
       ) : null}
@@ -353,7 +354,7 @@ export default function TesNotifications() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
           <Ink size={48} weight="black" tight color={active ? c.accent : c.ink}>{String(active)}</Ink>
           <Ink size={15} weight="bold" color={c.textSecondary} style={{ flex: 1, marginBottom: 8 }}>
-            {active === 0 ? 'rappel allumé pour l’instant' : `rappel${active > 1 ? 's' : ''} allumé${active > 1 ? 's' : ''}`}
+            {active === 0 ? traduire('rappel allumé pour l’instant') : traduirePluriel(active, active > 1, "rappel allumé", "rappels allumés")}
           </Ink>
         </View>
         {upcoming && upcoming.at ? (
@@ -367,7 +368,7 @@ export default function TesNotifications() {
             </View>
           </View>
         ) : (
-          <Ink size={14} color={c.textSecondary}>Allume un rappel ci-dessous : tu vois tout de suite quand il arrivera et à quoi il ressemble.</Ink>
+          <Ink size={14} color={c.textSecondary}>{traduire("Allume un rappel ci-dessous : tu vois tout de suite quand il arrivera et à quoi il ressemble.")}</Ink>
         )}
         <Pressable
           onPress={() => router.push('/notification-center' as any)}
@@ -375,7 +376,7 @@ export default function TesNotifications() {
           style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.6 : 1 })}
         >
           <Ink size={14} weight="extraBold" color={c.accent} style={{ flex: 1 }}>
-            {unread > 0 ? `Voir les notifications reçues, ${unread} non lue${unread > 1 ? 's' : ''}` : 'Voir les notifications reçues'}
+            {unread > 0 ? traduirePluriel(unread, unread > 1, "Voir les notifications reçues, {0} non lue", "Voir les notifications reçues, {0} non lues", unread) : traduire('Voir les notifications reçues')}
           </Ink>
           <Icon name="chevron" size={16} color={c.accent} />
         </Pressable>
@@ -383,38 +384,38 @@ export default function TesNotifications() {
 
       {discipline ? (
         <>
-          <SectionTitle title="Ta discipline" sub="La régularité fait le résultat" />
+          <SectionTitle title={traduire("Ta discipline")} sub={traduire("La régularité fait le résultat")} />
           <RappelsDiscipline value={discipline} onChange={(n) => void changerDiscipline(n)} ecran="reglages" />
         </>
       ) : null}
 
-      <SectionTitle title="Ton suivi" sub="Poids, séances et régularité" />
+      <SectionTitle title={traduire("Ton suivi")} sub={traduire("Poids, séances et régularité")} />
       <NotifCard
         index={idx++}
         icon="scale"
-        title="Rappel de pesée"
-        pitch="Le matin, pour un suivi fiable"
+        title={traduire("Rappel de pesée")}
+        pitch={traduire("Le matin, pour un suivi fiable")}
         summary={`${sayTime(settings.weighing.time)}, ${sayDays(weighDays)}`}
         on={settings.weighing.enabled}
         onToggle={(v) => patch('weighing', { enabled: v })}
-        preview={{ title: `Pesée du jour`, body: `Monte sur la balance pour suivre ta progression${NB}!`, when: sayTime(settings.weighing.time) }}
+        preview={{ title: traduire(`Pesée du jour`), body: traduire("Monte sur la balance pour suivre ta progression{0}!", NB), when: sayTime(settings.weighing.time) }}
       >
-        <TimeField label="Heure de la pesée" value={settings.weighing.time} onChange={(v) => patch('weighing', { time: v })} />
+        <TimeField label={traduire("Heure de la pesée")} value={settings.weighing.time} onChange={(v) => patch('weighing', { time: v })} />
         <DaysPicker value={weighDays} onChange={(d) => patch('weighing', { days: d })} />
-        <Ink size={12} color={c.textMuted}>Au réveil, à jeun et après être passé aux toilettes : c’est là que ton poids est le plus comparable d’un jour à l’autre.</Ink>
+        <Ink size={12} color={c.textMuted}>{traduire("Au réveil, à jeun et après être passé aux toilettes : c’est là que ton poids est le plus comparable d’un jour à l’autre.")}</Ink>
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="bell"
-        title="Pesée oubliée"
-        pitch="Un seul rappel doux, si ta pesée habituelle manque"
-        summary={habOn ? `Vers ${sayTime(heureRappel(hab))} si rien n’est noté, ${habJours.length ? sayDays(habJours) : 'les jours où tu te pèses d’habitude'}` : 'Seulement les jours où tu te pèses d’habitude'}
+        title={traduire("Pesée oubliée")}
+        pitch={traduire("Un seul rappel doux, si ta pesée habituelle manque")}
+        summary={habOn ? traduire("Vers {0} si rien n’est noté, {1}", sayTime(heureRappel(hab)), habJours.length ? sayDays(habJours) : 'les jours où tu te pèses d’habitude') : traduire('Seulement les jours où tu te pèses d’habitude')}
         on={habOn}
         onToggle={toggleHab}
-        preview={{ title: 'YOROI', body: 'Ta pesée du jour t’attend, 10 secondes suffisent.', when: habOn ? sayTime(heureRappel(hab)) : '' }}
+        preview={{ title: 'YOROI', body: traduire('Ta pesée du jour t’attend, 10 secondes suffisent.'), when: habOn ? sayTime(heureRappel(hab)) : '' }}
       >
-        <Ink size={13} weight="bold" color={c.textSecondary}>Quand te pèses-tu, d’habitude ?</Ink>
+        <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Quand te pèses-tu, d’habitude ?")}</Ink>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {(['reveil', 'douche', 'midi', 'soir', 'heure'] as const).map((m) => {
             const sel = hab.moment === m;
@@ -425,57 +426,57 @@ export default function TesNotifications() {
             );
           })}
         </View>
-        {hab.moment === 'heure' ? <TimeField label="Ton heure de pesée" value={hab.heure ?? '07:00'} onChange={(v) => void pickHabHeure(v)} /> : null}
+        {hab.moment === 'heure' ? <TimeField label={traduire("Ton heure de pesée")} value={hab.heure ?? '07:00'} onChange={(v) => void pickHabHeure(v)} /> : null}
         <DaysPicker value={habJours} onChange={(d) => void pickHabJours(d)} />
-        <Ink size={12} color={c.textMuted}>{habJours.length ? `Un seul rappel, environ 2${NB}h après, seulement ces jours-là et seulement si ta pesée manque.` : 'Sans jours choisis : seulement les jours où tu t’es pesé la semaine d’avant.'}</Ink>
+        <Ink size={12} color={c.textMuted}>{habJours.length ? traduire("Un seul rappel, environ 2{0}h après, seulement ces jours-là et seulement si ta pesée manque.", NB) : traduire('Sans jours choisis : seulement les jours où tu t’es pesé la semaine d’avant.')}</Ink>
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="dumbbell"
-        title="Rappel d’entraînement"
-        pitch="Les jours où tu t’entraînes"
+        title={traduire("Rappel d’entraînement")}
+        pitch={traduire("Les jours où tu t’entraînes")}
         summary={`${sayTime(settings.training.time)}, ${sayDays(trainDays)}`}
         on={settings.training.enabled}
         onToggle={(v) => patch('training', { enabled: v })}
-        preview={{ title: `C’est l’heure${NB}!`, body: `Ton entraînement t’attend. Donne tout${NB}!`, when: sayTime(settings.training.time) }}
-        test={{ label: 'M’envoyer un essai', run: () => sendTest('training') }}
+        preview={{ title: traduire("C’est l’heure{0}!", NB), body: traduire("Ton entraînement t’attend. Donne tout{0}!", NB), when: sayTime(settings.training.time) }}
+        test={{ label: traduire('M’envoyer un essai'), run: () => sendTest('training') }}
       >
-        <TimeField label="Heure du rappel" value={settings.training.time} onChange={(v) => patch('training', { time: v })} />
+        <TimeField label={traduire("Heure du rappel")} value={settings.training.time} onChange={(v) => patch('training', { time: v })} />
         <DaysPicker value={trainDays} onChange={(d) => patch('training', { days: d })} />
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="calendar"
-        title="Bilan de la semaine"
-        pitch="Tes séances et tes minutes, chaque dimanche"
-        summary={`Le dimanche à 19${NB}h`}
+        title={traduire("Bilan de la semaine")}
+        pitch={traduire("Tes séances et tes minutes, chaque dimanche")}
+        summary={traduire("Le dimanche à 19{0}h", NB)}
         on={recap}
         onToggle={toggleRecap}
-        preview={{ title: 'Récap de ta semaine', body: 'Découvre ton bilan sportif des 7 derniers jours dans YOROI', when: `dim. 19${NB}h` }}
+        preview={{ title: traduire('Récap de ta semaine'), body: traduire('Découvre ton bilan sportif des 7 derniers jours dans YOROI'), when: `dim. 19${NB}h` }}
       />
 
       <NotifCard
         index={idx++}
         icon="flame"
-        title="Protège ta série"
-        pitch="Un rappel le soir si rien n’est noté"
-        summary={`${sayTime(settings.streak.time)}, seulement sans séance`}
+        title={traduire("Protège ta série")}
+        pitch={traduire("Un rappel le soir si rien n’est noté")}
+        summary={traduire("{0}, seulement sans séance", sayTime(settings.streak.time))}
         on={settings.streak.enabled}
         onToggle={(v) => patch('streak', { enabled: v })}
-        preview={{ title: `Ne casse pas ta série${NB}!`, body: `Même une séance légère compte. Go${NB}!`, when: sayTime(settings.streak.time) }}
-        test={{ label: 'M’envoyer un essai', run: () => sendTest('streak') }}
+        preview={{ title: traduire("Ne casse pas ta série{0}!", NB), body: traduire("Même une séance légère compte. Go{0}!", NB), when: sayTime(settings.streak.time) }}
+        test={{ label: traduire('M’envoyer un essai'), run: () => sendTest('streak') }}
       >
-        <TimeField label="Heure du rappel" value={settings.streak.time} onChange={(v) => patch('streak', { time: v })} />
+        <TimeField label={traduire("Heure du rappel")} value={settings.streak.time} onChange={(v) => patch('streak', { time: v })} />
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="shield"
-        title="Série en danger"
-        pitch="Après 3 jours d’affilée, si tu n’as rien fait"
-        summary={`Le soir vers 20${NB}h, après 3 jours d’affilée`}
+        title={traduire("Série en danger")}
+        pitch={traduire("Après 3 jours d’affilée, si tu n’as rien fait")}
+        summary={traduire("Le soir vers 20{0}h, après 3 jours d’affilée", NB)}
         on={risk}
         onToggle={toggleRisk}
       />
@@ -483,133 +484,133 @@ export default function TesNotifications() {
       <NotifCard
         index={idx++}
         icon="sun"
-        title="Briefing du matin"
-        pitch="Ta série, ton poids et ton planning du jour"
+        title={traduire("Briefing du matin")}
+        pitch={traduire("Ta série, ton poids et ton planning du jour")}
         summary={`${sayTime(briefing.time)}, ${sayDays(briefDays)}`}
         on={briefing.enabled}
         onToggle={(v) => patch('briefing', { enabled: v })}
-        preview={{ title: `Bonjour${NB}!`, body: 'Ta série, ton dernier poids et ce qui est prévu aujourd’hui.', when: sayTime(briefing.time) }}
-        test={{ label: 'M’envoyer le briefing', run: () => sendTest('briefing') }}
+        preview={{ title: `Bonjour${NB}!`, body: traduire('Ta série, ton dernier poids et ce qui est prévu aujourd’hui.'), when: sayTime(briefing.time) }}
+        test={{ label: traduire('M’envoyer le briefing'), run: () => sendTest('briefing') }}
       >
-        <TimeField label="Heure du briefing" value={briefing.time} onChange={(v) => patch('briefing', { time: v })} />
+        <TimeField label={traduire("Heure du briefing")} value={briefing.time} onChange={(v) => patch('briefing', { time: v })} />
         <DaysPicker value={briefDays} onChange={(d) => patch('briefing', { days: d })} />
       </NotifCard>
 
-      <SectionTitle title="Ta récupération" sub="Sommeil, eau et conseils" />
+      <SectionTitle title={traduire("Ta récupération")} sub={traduire("Sommeil, eau et conseils")} />
       <NotifCard
         index={idx++}
         icon="bed"
-        title="Heure du coucher"
-        pitch="Pour lâcher les écrans à temps"
+        title={traduire("Heure du coucher")}
+        pitch={traduire("Pour lâcher les écrans à temps")}
         summary={`${sayTime(settings.sleep.bedtimeReminder)}, ${sayDays(sleepDays)}`}
         on={settings.sleep.enabled}
         onToggle={(v) => patch('sleep', { enabled: v })}
-        preview={{ title: 'Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t’attend.', when: sayTime(settings.sleep.bedtimeReminder) }}
+        preview={{ title: traduire('Heure du coucher'), body: traduire('Éteins les écrans, ton objectif sommeil t’attend.'), when: sayTime(settings.sleep.bedtimeReminder) }}
       >
-        <TimeField label="Heure du rappel" value={settings.sleep.bedtimeReminder} onChange={(v) => patch('sleep', { bedtimeReminder: v })} />
+        <TimeField label={traduire("Heure du rappel")} value={settings.sleep.bedtimeReminder} onChange={(v) => patch('sleep', { bedtimeReminder: v })} />
         <DaysPicker value={sleepDays} onChange={(d) => patch('sleep', { days: d })} />
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="drop"
-        title="Boire de l’eau"
-        pitch="Quelques rappels répartis dans la journée"
-        summary={hydHours.length > 1 ? `${hydHours.length} fois par jour, de ${sayTime(hyd.startTime)} à ${sayTime(pad(hydHours[hydHours.length - 1]))}` : `Une fois par jour à ${sayTime(hyd.startTime)}`}
+        title={traduire("Boire de l’eau")}
+        pitch={traduire("Quelques rappels répartis dans la journée")}
+        summary={hydHours.length > 1 ? traduire("{0} fois par jour, de {1} à {2}", hydHours.length, sayTime(hyd.startTime), sayTime(pad(hydHours[hydHours.length - 1]))) : traduire("Une fois par jour à {0}", sayTime(hyd.startTime))}
         on={hyd.enabled}
         onToggle={(v) => {
           // premiere activation : des horaires utiles plutot qu'un seul rappel a 8 h
           if (v && hyd.startTime === hyd.endTime && hyd.interval >= 24) patch('hydration', { enabled: true, startTime: '09:00', endTime: '19:00', interval: 3 });
           else patch('hydration', { enabled: v });
         }}
-        preview={{ title: 'Pause eau', body: `Ton corps a besoin d’eau. Bois un verre${NB}!`, when: sayTime(hyd.startTime) }}
-        test={{ label: 'M’envoyer un essai', run: () => sendTest('hydration') }}
+        preview={{ title: traduire('Pause eau'), body: traduire("Ton corps a besoin d’eau. Bois un verre{0}!", NB), when: sayTime(hyd.startTime) }}
+        test={{ label: traduire('M’envoyer un essai'), run: () => sendTest('hydration') }}
       >
         <TimeField label="Premier rappel" value={hyd.startTime} onChange={(v) => patch('hydration', { startTime: v.slice(0, 3) + '00', endTime: v > hyd.endTime ? v.slice(0, 3) + '00' : hyd.endTime })} />
-        <TimeField label="Dernier rappel au plus tard" value={hyd.endTime} onChange={(v) => patch('hydration', { endTime: v.slice(0, 3) + '00', startTime: v < hyd.startTime ? v.slice(0, 3) + '00' : hyd.startTime })} />
+        <TimeField label={traduire("Dernier rappel au plus tard")} value={hyd.endTime} onChange={(v) => patch('hydration', { endTime: v.slice(0, 3) + '00', startTime: v < hyd.startTime ? v.slice(0, 3) + '00' : hyd.startTime })} />
         <ChoiceChips
-          label="Un rappel toutes les"
+          label={traduire("Un rappel toutes les")}
           value={hyd.interval >= 24 ? 24 : hyd.interval}
           options={[
             { value: 2, label: `2${NB}h` },
             { value: 3, label: `3${NB}h` },
             { value: 4, label: `4${NB}h` },
-            { value: 24, label: 'Une fois' },
+            { value: 24, label: traduire('Une fois') },
           ]}
           onChange={(v) => patch('hydration', { interval: v })}
         />
         <Ink size={12} color={c.textMuted}>
-          {hydHours.length ? `Tu les recevras à ${hydHours.map((h) => `${h}${NB}h`).join(', ')}.` : 'Aucun horaire valide.'}
+          {hydHours.length ? traduire("Tu les recevras à {0}.", hydHours.map((h) => `${h}${NB}h`).join(', ')) : traduire('Aucun horaire valide.')}
         </Ink>
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="moon"
-        title="Conseil du soir"
-        pitch="Un conseil santé ou nutrition, court"
+        title={traduire("Conseil du soir")}
+        pitch={traduire("Un conseil santé ou nutrition, court")}
         summary={`${sayTime(tips.time)}, ${sayDays(tipDays)}`}
         on={tips.enabled}
         onToggle={(v) => setTip({ enabled: v })}
-        preview={{ title: 'Fluctuations', body: 'Ton poids varie d’un jour à l’autre avec l’eau et le sel : regarde la tendance, pas la pesée du jour.', when: sayTime(tips.time) }}
+        preview={{ title: 'Fluctuations', body: traduire('Ton poids varie d’un jour à l’autre avec l’eau et le sel : regarde la tendance, pas la pesée du jour.'), when: sayTime(tips.time) }}
       >
-        <TimeField label="Heure du conseil" value={tips.time} onChange={(v) => setTip({ time: v })} />
+        <TimeField label={traduire("Heure du conseil")} value={tips.time} onChange={(v) => setTip({ time: v })} />
         <DaysPicker value={tipDays} onChange={(d) => setTip({ days: d })} />
       </NotifCard>
 
-      <SectionTitle title="Motivation" sub="Pour garder l’envie" />
+      <SectionTitle title="Motivation" sub={traduire("Pour garder l’envie")} />
       <NotifCard
         index={idx++}
         icon="quote"
-        title="Citation du matin"
-        pitch="Une phrase de guerrier pour démarrer"
-        summary={`Tous les jours à ${sayTime(cit.time || '08:00')}`}
+        title={traduire("Citation du matin")}
+        pitch={traduire("Une phrase de guerrier pour démarrer")}
+        summary={traduire("Tous les jours à {0}", sayTime(cit.time || '08:00'))}
         on={cit.enabled}
         onToggle={(v) => setCitation({ enabled: v })}
-        preview={{ title: 'Citation du jour', body: quote, when: sayTime(cit.time || '08:00') }}
+        preview={{ title: traduire('Citation du jour'), body: quote, when: sayTime(cit.time || '08:00') }}
       >
-        <TimeField label="Heure de la citation" value={cit.time || '08:00'} onChange={(v) => setCitation({ time: v })} />
+        <TimeField label={traduire("Heure de la citation")} value={cit.time || '08:00'} onChange={(v) => setCitation({ time: v })} />
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="brain"
         title="Rappels malins"
-        pitch="Selon tes habitudes des 60 derniers jours"
-        summary={`Analyse chaque soir à ${sayTime(smart.checkTime)}`}
+        pitch={traduire("Selon tes habitudes des 60 derniers jours")}
+        summary={traduire("Analyse chaque soir à {0}", sayTime(smart.checkTime))}
         on={smart.enabled}
         onToggle={(v) => patch('smartReminders', { enabled: v, ...(v && !smart.missedTrainingAlert && !smart.restDaySuggestion && !smart.frequencyAlert ? { missedTrainingAlert: true, restDaySuggestion: true, frequencyAlert: true } : {}) })}
-        test={{ label: 'Voir mon analyse', run: () => sendTest('smart') }}
+        test={{ label: traduire('Voir mon analyse'), run: () => sendTest('smart') }}
       >
-        <TimeField label="Heure de l’analyse" value={smart.checkTime} onChange={(v) => patch('smartReminders', { checkTime: v })} />
+        <TimeField label={traduire("Heure de l’analyse")} value={smart.checkTime} onChange={(v) => patch('smartReminders', { checkTime: v })} />
         <View>
-          <MiniToggle label="Jour habituel manqué" sub="Tu t’entraînes d’habitude ce jour-là" value={smart.missedTrainingAlert} onChange={(v) => patch('smartReminders', { missedTrainingAlert: v })} />
-          <MiniToggle label="Conseil de repos" sub="Après plusieurs jours d’affilée" value={smart.restDaySuggestion} onChange={(v) => patch('smartReminders', { restDaySuggestion: v })} />
-          <MiniToggle label="Rythme en baisse" sub="Moins de séances que d’habitude" value={smart.frequencyAlert} onChange={(v) => patch('smartReminders', { frequencyAlert: v })} />
+          <MiniToggle label={traduire("Jour habituel manqué")} sub={traduire("Tu t’entraînes d’habitude ce jour-là")} value={smart.missedTrainingAlert} onChange={(v) => patch('smartReminders', { missedTrainingAlert: v })} />
+          <MiniToggle label={traduire("Conseil de repos")} sub={traduire("Après plusieurs jours d’affilée")} value={smart.restDaySuggestion} onChange={(v) => patch('smartReminders', { restDaySuggestion: v })} />
+          <MiniToggle label="Rythme en baisse" sub={traduire("Moins de séances que d’habitude")} value={smart.frequencyAlert} onChange={(v) => patch('smartReminders', { frequencyAlert: v })} />
         </View>
       </NotifCard>
 
       <NotifCard
         index={idx++}
         icon="share"
-        title="Carte à partager"
-        pitch="Ta carte de la semaine, celle du mois le 1er"
-        summary={`Le vendredi à ${sayTime(social.weeklyTime)}, et le 1er du mois`}
+        title={traduire("Carte à partager")}
+        pitch={traduire("Ta carte de la semaine, celle du mois le 1er")}
+        summary={traduire("Le vendredi à {0}, et le 1er du mois", sayTime(social.weeklyTime))}
         on={social.enabled}
         onToggle={(v) => patch('socialCards', { enabled: v })}
-        preview={{ title: `Ta semaine en image${NB}!`, body: 'Ta carte hebdo est prête. Partage tes progrès.', when: `ven. ${sayTime(social.weeklyTime)}` }}
-        test={{ label: 'M’envoyer un essai', run: () => sendTest('social_weekly') }}
+        preview={{ title: traduire("Ta semaine en image{0}!", NB), body: traduire('Ta carte hebdo est prête. Partage tes progrès.'), when: `ven. ${sayTime(social.weeklyTime)}` }}
+        test={{ label: traduire('M’envoyer un essai'), run: () => sendTest('social_weekly') }}
       >
-        <TimeField label="Heure du vendredi" value={social.weeklyTime} onChange={(v) => patch('socialCards', { weeklyTime: v })} />
+        <TimeField label={traduire("Heure du vendredi")} value={social.weeklyTime} onChange={(v) => patch('socialCards', { weeklyTime: v })} />
       </NotifCard>
 
-      <SectionTitle title="Pendant la séance" sub="Arrivent même téléphone verrouillé" />
+      <SectionTitle title={traduire("Pendant la séance")} sub={traduire("Arrivent même téléphone verrouillé")} />
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, paddingVertical: 4 }}>
-        <MiniToggle label="Repos terminé" sub="Pour reprendre ta série à l’heure" value={timer.restFinished} onChange={(v) => setTimerOpt('restFinished', v)} />
+        <MiniToggle label={traduire("Repos terminé")} sub={traduire("Pour reprendre ta série à l’heure")} value={timer.restFinished} onChange={(v) => setTimerOpt('restFinished', v)} />
         <View style={{ height: 1, backgroundColor: c.divider }} />
-        <MiniToggle label="Round terminé" sub="Rounds de combat, Tabata, chaque minute, maximum de tours" value={timer.roundFinished} onChange={(v) => setTimerOpt('roundFinished', v)} />
+        <MiniToggle label={traduire("Round terminé")} sub={traduire("Rounds de combat, Tabata, chaque minute, maximum de tours")} value={timer.roundFinished} onChange={(v) => setTimerOpt('roundFinished', v)} />
         <View style={{ height: 1, backgroundColor: c.divider }} />
-        <MiniToggle label="Séance terminée" sub="À la toute fin du minuteur" value={timer.workoutFinished} onChange={(v) => setTimerOpt('workoutFinished', v)} />
+        <MiniToggle label={traduire("Séance terminée")} sub={traduire("À la toute fin du minuteur")} value={timer.workoutFinished} onChange={(v) => setTimerOpt('workoutFinished', v)} />
       </View>
 
     </EspaceScreen>

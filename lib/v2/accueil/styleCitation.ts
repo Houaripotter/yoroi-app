@@ -11,12 +11,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { traduire } from '@/lib/i18n/tr';
 
 export type StyleCitation = 'sceau' | 'takeda' | 'pinceau';
 
 export const STYLES_CITATION: { id: StyleCitation; nom: string }[] = [
-  { id: 'pinceau', nom: 'Trait de pinceau' },
-  { id: 'takeda', nom: 'Losanges de Takeda' },
+  { id: 'pinceau', nom: traduire('Trait de pinceau') },
+  { id: 'takeda', nom: traduire('Losanges de Takeda') },
   { id: 'sceau', nom: 'Sceau indigo' },
 ];
 

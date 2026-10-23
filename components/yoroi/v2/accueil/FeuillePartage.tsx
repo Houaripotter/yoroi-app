@@ -18,6 +18,7 @@ import { lienEditeur, nomCourt } from '@/components/yoroi/v2/cartes/FeuilleCarte
 import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
 import { chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
 import type { CarteData } from '@/lib/v2/cartes/types';
+import { traduire } from '@/lib/i18n/tr';
 
 const VIGNETTE = 118;
 
@@ -49,7 +50,7 @@ export function FeuillePartage({ visible, onClose, cartes, nouvelles, demo = fal
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={sel ? () => setSel(null) : fermer} statusBarTranslucent>
-      <Pressable onPress={fermer} accessibilityLabel="Fermer" style={{ flex: 1, backgroundColor: 'rgba(15,16,20,0.45)' }} />
+      <Pressable onPress={fermer} accessibilityLabel={traduire("Fermer")} style={{ flex: 1, backgroundColor: 'rgba(15,16,20,0.45)' }} />
       <View style={{ backgroundColor: c.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, paddingBottom: insets.bottom + 14, gap: 12 }}>
         <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.fillSubtle }} />
         {sel ? (
@@ -57,8 +58,8 @@ export function FeuillePartage({ visible, onClose, cartes, nouvelles, demo = fal
         ) : (
           <Animated.View entering={FadeIn.duration(160)} style={{ gap: 12 }}>
             <View style={{ paddingHorizontal: 20, gap: 2 }}>
-              <Ink size={22} weight="black" tight accessibilityRole="header">Partager une carte</Ink>
-              <Ink size={14} color={c.textSecondary}>Tes cartes du moment, prêtes à poster.</Ink>
+              <Ink size={22} weight="black" tight accessibilityRole="header">{traduire("Partager une carte")}</Ink>
+              <Ink size={14} color={c.textSecondary}>{traduire("Tes cartes du moment, prêtes à poster.")}</Ink>
             </View>
             {cartes === null ? (
               <View style={{ height: VIGNETTE * 1.78 + 30, alignItems: 'center', justifyContent: 'center' }}>
@@ -66,7 +67,7 @@ export function FeuillePartage({ visible, onClose, cartes, nouvelles, demo = fal
               </View>
             ) : cartes.length === 0 ? (
               <View style={{ marginHorizontal: 20, padding: 16, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
-                <Ink size={14} color={c.textSecondary}>Enregistre une séance ou une pesée : ta première carte arrive ici.</Ink>
+                <Ink size={14} color={c.textSecondary}>{traduire("Enregistre une séance ou une pesée : ta première carte arrive ici.")}</Ink>
               </View>
             ) : (
               <Vignettes cartes={cartes} nouvelles={nouvelles} onPress={setSel} />
@@ -74,13 +75,13 @@ export function FeuillePartage({ visible, onClose, cartes, nouvelles, demo = fal
             <Pressable
               onPress={() => aller(demo ? '/mes-cartes?demo=1' : '/mes-cartes')}
               accessibilityRole="button"
-              accessibilityLabel="Mes cartes, toutes tes cartes"
+              accessibilityLabel={traduire("Mes cartes, toutes tes cartes")}
               style={({ pressed }) => ({ marginHorizontal: 20, minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderRadius: 18, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
             >
               <Icon name="grid" size={19} color={c.accent} />
               <View style={{ flex: 1 }}>
-                <Ink size={15} weight="extraBold">Mes cartes</Ink>
-                <Ink size={12} color={c.textSecondary} numberOfLines={1}>Toutes tes cartes, tes réglages de partage</Ink>
+                <Ink size={15} weight="extraBold">{traduire("Mes cartes")}</Ink>
+                <Ink size={12} color={c.textSecondary} numberOfLines={1}>{traduire("Toutes tes cartes, tes réglages de partage")}</Ink>
               </View>
               <Icon name="chevron" size={16} color={c.textMuted} />
             </Pressable>
@@ -101,12 +102,12 @@ function Vignettes({ cartes, nouvelles, onPress }: { cartes: CarteData[]; nouvel
       {cartes.map((d) => {
         const neuve = nouvelles.includes(d.cle);
         return (
-          <Pressable key={d.cle} onPress={() => onPress(d)} accessibilityRole="button" accessibilityLabel={`Carte ${nomCourt(d)}${neuve ? ', nouvelle' : ''}. Voir en grand`} style={({ pressed }) => ({ width: VIGNETTE, gap: 6, opacity: pressed ? 0.85 : 1 })}>
+          <Pressable key={d.cle} onPress={() => onPress(d)} accessibilityRole="button" accessibilityLabel={traduire("Carte {0}{1}. Voir en grand", nomCourt(d), neuve ? ', nouvelle' : '')} style={({ pressed }) => ({ width: VIGNETTE, gap: 6, opacity: pressed ? 0.85 : 1 })}>
             <View>
               <CarteApercu largeur={VIGNETTE} data={d} options={{ ...k.options, format: 'story', chiffres: d.moment === 'exploit' ? [] : chiffresParDefaut(d, k.options.masque) }} visuels={k.visuelsPour(d)} />
               {neuve ? (
                 <View style={{ position: 'absolute', top: -6, right: -4, height: 20, paddingHorizontal: 7, borderRadius: 10, justifyContent: 'center', backgroundColor: c.goldLight, borderWidth: 1.5, borderColor: c.background }}>
-                  <Ink size={10.5} weight="extraBold" color="#1D2029" maxFontSizeMultiplier={1.2}>Nouveau</Ink>
+                  <Ink size={10.5} weight="extraBold" color="#1D2029" maxFontSizeMultiplier={1.2}>{traduire("Nouveau")}</Ink>
                 </View>
               ) : null}
             </View>
@@ -138,7 +139,7 @@ function Apercu({ data, retour, personnaliser }: { data: CarteData; retour: () =
   return (
     <Animated.View entering={FadeIn.duration(160)} style={{ paddingHorizontal: 20, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel="Revenir à tes cartes" hitSlop={8} style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}>
+        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel={traduire("Revenir à tes cartes")} hitSlop={8} style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}>
           <Icon name="back" size={18} color={c.ink} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -156,26 +157,26 @@ function Apercu({ data, retour, personnaliser }: { data: CarteData; retour: () =
           onPress={() => { setErreur(null); void k.enregistrer(onErreur); }}
           disabled={!!k.busy}
           accessibilityRole="button"
-          accessibilityLabel="Enregistrer dans la pellicule"
+          accessibilityLabel={traduire("Enregistrer dans la pellicule")}
           style={({ pressed }) => ({ flex: 1, height: 54, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
         >
           <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
-          <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? 'Un instant' : k.saved ? 'Enregistrée' : 'Enregistrer'}</Ink>
+          <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
         </Pressable>
         <Pressable
           onPress={() => { setErreur(null); void k.partager(onErreur); }}
           disabled={!!k.busy}
           accessibilityRole="button"
-          accessibilityLabel="Partager la carte"
+          accessibilityLabel={traduire("Partager la carte")}
           style={({ pressed }) => ({ flex: 1.2, height: 54, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
         >
           <Icon name="share" size={19} color={c.onAccent} />
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? 'Un instant' : 'Partager'}</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
         </Pressable>
       </View>
       {erreur ? <Ink size={13} weight="bold" color={c.danger}>{erreur}</Ink> : null}
       <Pressable onPress={personnaliser} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-        <Ink size={15} weight="extraBold" color={c.accent}>Personnaliser cette carte</Ink>
+        <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Personnaliser cette carte")}</Ink>
       </Pressable>
     </Animated.View>
   );

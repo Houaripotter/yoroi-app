@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensio
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { SparklineChart } from './charts/SparklineChart';
 import { Droplets, Dumbbell, Bone, Flame, Calendar, TrendingUp, TrendingDown, Target, Maximize2, Eye } from 'lucide-react-native';
 import { StatsDetailModal } from './StatsDetailModal';

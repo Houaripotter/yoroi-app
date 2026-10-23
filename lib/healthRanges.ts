@@ -4,6 +4,7 @@
 // ============================================
 
 import { MetricRange } from '@/components/stats/charts/MetricRangeIndicator';
+import { traduire } from '@/lib/i18n/tr';
 export { MetricRange } from '@/components/stats/charts/MetricRangeIndicator';
 
 // Translation key type for i18n
@@ -51,7 +52,7 @@ export const BODY_FAT_RANGES_MALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10966886/',
   translationKey: 'bodyFat',
   genderSpecific: true,
-  explanation: `Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
+  explanation: traduire(`Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
 
 CLASSIFICATION (Gallagher et al. 2000, n=1626 sujets):
 - 3-13% : Athlete - Niveau competition
@@ -68,7 +69,7 @@ PRECISION DES MESURES:
 - DEXA: +/-1-2% (reference clinique)
 
 CONSEIL:
-Suis la TENDANCE sur 4-8 semaines plutot que les variations quotidiennes.`,
+Suis la TENDANCE sur 4-8 semaines plutot que les variations quotidiennes.`),
   zones: [
     { label: 'athlete', start: 3, end: 13, color: '#22C55E', status: 'optimal' },
     { label: 'fit', start: 14, end: 17, color: '#EAB308', status: 'good' },
@@ -85,7 +86,7 @@ export const BODY_FAT_RANGES_FEMALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10966886/',
   translationKey: 'bodyFat',
   genderSpecific: true,
-  explanation: `Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
+  explanation: traduire(`Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
 
 CLASSIFICATION (Gallagher et al. 2000):
 - 10-20% : Athlete - Niveau competition
@@ -101,7 +102,7 @@ PREUVES SCIENTIFIQUES:
 - >32% = risque diabete/cardiovasculaire augmente
 
 CONSEIL:
-Une perte de 0.5-1% par mois est un rythme sain et durable.`,
+Une perte de 0.5-1% par mois est un rythme sain et durable.`),
   zones: [
     { label: 'athlete', start: 10, end: 20, color: '#22C55E', status: 'optimal' },
     { label: 'fit', start: 21, end: 24, color: '#EAB308', status: 'good' },
@@ -118,7 +119,7 @@ export const MUSCLE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10846039/',
   translationKey: 'muscleMass',
   genderSpecific: true,
-  explanation: `La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
+  explanation: traduire(`La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
 
 CLASSIFICATION (Janssen et al. 2000, etude IRM sur 468 sujets):
 - <38% : Faible - Sarcopenie probable
@@ -136,7 +137,7 @@ Perte de 3-8% de muscle par decennie apres 30 ans.
 La musculation est le traitement n°1 valide scientifiquement.
 
 RECOMMANDATIONS (ACSM):
-2-3 séances de musculation/semaine, tous les groupes musculaires.`,
+2-3 séances de musculation/semaine, tous les groupes musculaires.`),
   zones: [
     { label: 'low', start: 30, end: 38, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 39, end: 44, color: '#F97316', status: 'moderate' },
@@ -153,7 +154,7 @@ export const MUSCLE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10846039/',
   translationKey: 'muscleMass',
   genderSpecific: true,
-  explanation: `La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
+  explanation: traduire(`La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
 
 CLASSIFICATION (Janssen et al. 2000):
 - <31% : Faible - Sarcopenie probable
@@ -170,7 +171,7 @@ PREUVES SCIENTIFIQUES:
 - Ameliore sensibilite insuline et metabolisme
 
 RECOMMANDATIONS (ACSM):
-2-3 séances de musculation/semaine. Les charges lourdes sont sures et efficaces.`,
+2-3 séances de musculation/semaine. Les charges lourdes sont sures et efficaces.`),
   zones: [
     { label: 'low', start: 25, end: 33, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 34, end: 39, color: '#F97316', status: 'moderate' },
@@ -186,7 +187,7 @@ export const WATER_PERCENTAGE_RANGES: MetricRangeWithTranslation = {
   source: 'Watson PE et al. Am J Clin Nutr 1980 - PMID: 6986753',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/6986753/',
   translationKey: 'waterPercentage',
-  explanation: `L'eau corporelle totale (TBW) represente environ 60% du poids chez l'homme adulte et 50-55% chez la femme.
+  explanation: traduire(`L'eau corporelle totale (TBW) represente environ 60% du poids chez l'homme adulte et 50-55% chez la femme.
 
 CLASSIFICATION (Watson et al. 1980):
 - <50% : Deshydratation probable
@@ -209,7 +210,7 @@ BESOINS QUOTIDIENS (IOM 2004):
 - Femmes: environ 2.7L/jour (toutes sources)
 
 CONSEIL:
-Surveille la couleur de l'urine: jaune pale = bien hydrate.`,
+Surveille la couleur de l'urine: jaune pale = bien hydrate.`),
   zones: [
     { label: 'danger', start: 40, end: 49, color: '#EF4444', status: 'danger' },
     { label: 'low', start: 50, end: 54, color: '#F97316', status: 'moderate' },
@@ -225,7 +226,7 @@ export const VISCERAL_FAT_RANGES: MetricRangeWithTranslation = {
   source: 'Despres JP et al. Obesity Reviews 2008 - PMID: 18331423',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/18331423/',
   translationKey: 'visceralFat',
-  explanation: `La graisse viscerale est la graisse profonde qui entoure les organes (foie, intestins, coeur).
+  explanation: traduire(`La graisse viscerale est la graisse profonde qui entoure les organes (foie, intestins, coeur).
 
 CLASSIFICATION SCIENTIFIQUE:
 - Score 1-9 : Optimal - Risque cardiometabolique minimal
@@ -244,7 +245,7 @@ CE QUI FONCTIONNE (meta-analyses):
 - Reduction du stress (cortisol = stockage visceral)
 
 MESURE:
-L'IRM reste la reference. L'impedancemetrie donne une estimation correlee mais pas exacte.`,
+L'IRM reste la reference. L'impedancemetrie donne une estimation correlee mais pas exacte.`),
   zones: [
     { label: 'optimal', start: 1, end: 9, color: '#22C55E', status: 'optimal' },
     { label: 'elevated', start: 10, end: 14, color: '#F97316', status: 'moderate' },
@@ -263,7 +264,7 @@ export const HRV_RANGES: MetricRangeWithTranslation = {
   source: 'Task Force ESC/NASPE, Circulation 1996 - PMID: 8598068',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/8598068/',
   translationKey: 'hrv',
-  explanation: `La VFC (HRV) mesure les variations entre chaque battement cardiaque en millisecondes.
+  explanation: traduire(`La VFC (HRV) mesure les variations entre chaque battement cardiaque en millisecondes.
 
 CLASSIFICATION (RMSSD, valeurs moyennes):
 - 70+ ms : Excellent - Récupération optimale
@@ -291,7 +292,7 @@ AMELIORATION:
 - Sommeil 7-9h
 
 MESURE:
-Matin au reveil, memes conditions, pendant 1-5 min.`,
+Matin au reveil, memes conditions, pendant 1-5 min.`),
   zones: [
     { label: 'poor', start: 10, end: 29, color: '#EF4444', status: 'attention' },
     { label: 'normal', start: 30, end: 49, color: '#F97316', status: 'moderate' },
@@ -307,7 +308,7 @@ export const RESTING_HEART_RATE_RANGES: MetricRangeWithTranslation = {
   source: 'Fox K et al. Eur Heart J 2007 - PMID: 17303589',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/17303589/',
   translationKey: 'restingHeartRate',
-  explanation: `La fréquence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
+  explanation: traduire(`La fréquence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
 
 CLASSIFICATION (Fox et al. 2007, meta-analyse 46 etudes):
 - 40-60 bpm : Athlete - Coeur tres efficace
@@ -327,7 +328,7 @@ FACTEURS AIGUS:
 Stress, cafeine, deshydratation, fievre, manque de sommeil
 
 MESURE:
-Matin au reveil, avant de te lever, pendant 1 minute.`,
+Matin au reveil, avant de te lever, pendant 1 minute.`),
   zones: [
     { label: 'athlete', start: 40, end: 60, color: '#22C55E', status: 'optimal' },
     { label: 'excellent', start: 61, end: 70, color: '#EAB308', status: 'good' },
@@ -343,7 +344,7 @@ export const SLEEP_DURATION_RANGES: MetricRangeWithTranslation = {
   source: 'Cappuccio FP et al. Sleep 2010 - PMID: 20469800',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/20469800/',
   translationKey: 'sleepDuration',
-  explanation: `La durée de sommeil optimale pour la santé.
+  explanation: traduire(`La durée de sommeil optimale pour la santé.
 
 CLASSIFICATION (Cappuccio et al. 2010, meta-analyse 16 etudes):
 - <6h : Insuffisant - +48% risque mortalite
@@ -365,7 +366,7 @@ HYGIENE DU SOMMEIL:
 - Horaires reguliers
 - Pas d'ecrans 1h avant
 - Chambre 18-20 degres C
-- Eviter cafeine apres 14h`,
+- Eviter cafeine apres 14h`),
   zones: [
     { label: 'danger', start: 4, end: 6, color: '#EF4444', status: 'danger' },
     { label: 'low', start: 6.1, end: 6.9, color: '#F97316', status: 'moderate' },
@@ -381,7 +382,7 @@ export const RECOVERY_SCORE_RANGES: MetricRangeWithTranslation = {
   source: 'Plews DJ et al. Int J Sports Physiol Perform 2013 - PMID: 23628627',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/23628627/',
   translationKey: 'recoveryScore',
-  explanation: `Le score de récupération estime ta capacite a performer et t'entrainer.
+  explanation: traduire(`Le score de récupération estime ta capacite a performer et t'entrainer.
 
 CLASSIFICATION:
 - 0-33% : Rouge - Repos recommande
@@ -400,7 +401,7 @@ INTERPRETATION:
 - Score bas chronique = risque de surentrainement
 
 CONSEIL:
-Adapte l'intensite de ton entraînement a ton score de récupération.`,
+Adapte l'intensite de ton entraînement a ton score de récupération.`),
   zones: [
     { label: 'danger', start: 0, end: 33, color: '#EF4444', status: 'danger' },
     { label: 'moderate', start: 34, end: 66, color: '#EAB308', status: 'moderate' },
@@ -419,7 +420,7 @@ export const BMI_RANGES: MetricRangeWithTranslation = {
   source: 'Prospective Studies Collaboration, Lancet 2009 - PMID: 19299006',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/19299006/',
   translationKey: 'bmi',
-  explanation: `L'Indice de Masse Corporelle (IMC) = Poids (kg) / Taille au carre (m2)
+  explanation: traduire(`L'Indice de Masse Corporelle (IMC) = Poids (kg) / Taille au carre (m2)
 
 CLASSIFICATION (Prospective Studies Collaboration 2009):
 Meta-analyse de 57 etudes, 894 576 sujets:
@@ -437,7 +438,7 @@ LIMITES RECONNUES:
 - Moins fiable: athletes, personnes agees, ethnies asiatiques
 
 CONSEIL:
-Complete avec tour de taille (WHtR) et pourcentage de masse grasse pour une evaluation complete.`,
+Complete avec tour de taille (WHtR) et pourcentage de masse grasse pour une evaluation complete.`),
   zones: [
     { label: 'underweight', start: 15, end: 18.49, color: '#F97316', status: 'attention' },
     { label: 'normal', start: 18.5, end: 24.99, color: '#22C55E', status: 'optimal' },
@@ -458,7 +459,7 @@ export const WAIST_CIRCUMFERENCE_RANGES_MALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/22106927/',
   translationKey: 'waistCircumference',
   genderSpecific: true,
-  explanation: `Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.
+  explanation: traduire(`Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.
 
 ATTENTION: Les seuils absolus (90cm, 102cm) sont des reperes GENERAUX.
 
@@ -479,7 +480,7 @@ Le WHtR predit MIEUX le risque cardiometabolique que l'IMC ou le tour de taille 
 "Keep your waist to less than half your height"
 
 MESURE:
-Au niveau du nombril, debout, apres expiration normale.`,
+Au niveau du nombril, debout, apres expiration normale.`),
   zones: [
     { label: 'optimal', start: 60, end: 89, color: '#22C55E', status: 'optimal' },
     { label: 'attention', start: 90, end: 101, color: '#EAB308', status: 'moderate' },
@@ -495,7 +496,7 @@ export const WAIST_CIRCUMFERENCE_RANGES_FEMALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/22106927/',
   translationKey: 'waistCircumference',
   genderSpecific: true,
-  explanation: `Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.
+  explanation: traduire(`Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.
 
 ATTENTION: Les seuils absolus (80cm, 88cm) sont des reperes GENERAUX.
 
@@ -515,7 +516,7 @@ PREUVES (Ashwell et al. 2012):
 Le WHtR est un meilleur predicteur du risque cardiometabolique que l'IMC ou le tour de taille seul.
 
 MESURE:
-Au niveau du nombril, debout, apres expiration normale.`,
+Au niveau du nombril, debout, apres expiration normale.`),
   zones: [
     { label: 'optimal', start: 55, end: 79, color: '#22C55E', status: 'optimal' },
     { label: 'attention', start: 80, end: 87, color: '#EAB308', status: 'moderate' },
@@ -535,7 +536,7 @@ export const BONE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/12049882/',
   translationKey: 'boneMass',
   genderSpecific: true,
-  explanation: `La masse osseuse represente le poids mineral de ton squelette.
+  explanation: traduire(`La masse osseuse represente le poids mineral de ton squelette.
 
 CLASSIFICATION (proportionnelle au poids corporel):
 - <2.8 kg : Faible - Risque osteoporotique
@@ -558,7 +559,7 @@ INTERVENTIONS VALIDEES:
 - Sports d'impact: course, sauts
 
 LIMITES:
-L'impedancemetrie estime la masse, pas la densite. DEXA = reference.`,
+L'impedancemetrie estime la masse, pas la densite. DEXA = reference.`),
   zones: [
     { label: 'low', start: 2.0, end: 2.8, color: '#EF4444', status: 'danger' },
     { label: 'normal', start: 2.9, end: 3.2, color: '#EAB308', status: 'moderate' },
@@ -574,7 +575,7 @@ export const BONE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/12049882/',
   translationKey: 'boneMass',
   genderSpecific: true,
-  explanation: `La masse osseuse represente le poids mineral de ton squelette.
+  explanation: traduire(`La masse osseuse represente le poids mineral de ton squelette.
 
 CLASSIFICATION (proportionnelle au poids corporel):
 - <2.2 kg : Faible - Risque osteoporotique
@@ -597,7 +598,7 @@ PREVENTION:
 - Eviter regimes hypocaloriques prolonges
 
 CONSEIL:
-Construis ta "banque osseuse" avant 30 ans. Apres, l'objectif est de MAINTENIR.`,
+Construis ta "banque osseuse" avant 30 ans. Apres, l'objectif est de MAINTENIR.`),
   zones: [
     { label: 'low', start: 1.5, end: 2.2, color: '#EF4444', status: 'danger' },
     { label: 'normal', start: 2.3, end: 2.5, color: '#EAB308', status: 'moderate' },
@@ -636,27 +637,7 @@ export const getBMRRange = (weight: number, height: number, age: number, gender:
       active: Math.round(idealBMR * 1.55),
       veryActive: Math.round(idealBMR * 1.725),
     },
-    explanation: `Le metabolisme de base (BMR) = énergie brulee au repos complet pendant 24h.
-
-TON BMR ESTIME: environ ${Math.round(idealBMR)} kcal/jour
-(Base sur: ${weight}kg, ${height}cm, ${age} ans)
-
-EQUATION MIFFLIN-ST JEOR (Mifflin et al. 1990):
-Validee sur 498 sujets, precision +/-10% vs calorimetrie indirecte.
-
-DEPENSE TOTALE (facteurs d'activité valides):
-- Sedentaire (1.2): environ ${Math.round(idealBMR * 1.2)} kcal
-- Peu actif (1.375): environ ${Math.round(idealBMR * 1.375)} kcal
-- Actif (1.55): environ ${Math.round(idealBMR * 1.55)} kcal
-- Tres actif (1.725): environ ${Math.round(idealBMR * 1.725)} kcal
-
-FACTEURS D'INFLUENCE:
-- Masse musculaire: +13 kcal/kg muscle/jour
-- Age: -2% par decennie apres 20 ans
-- Genetique: +/-5-10% de variation
-
-CONSEIL:
-Augmente ton BMR via la masse musculaire!`,
+    explanation: traduire("Le metabolisme de base (BMR) = énergie brulee au repos complet pendant 24h.\n\nTON BMR ESTIME: environ {0} kcal/jour\n(Base sur: {1}kg, {2}cm, {3} ans)\n\nEQUATION MIFFLIN-ST JEOR (Mifflin et al. 1990):\nValidee sur 498 sujets, precision +/-10% vs calorimetrie indirecte.\n\nDEPENSE TOTALE (facteurs d'activité valides):\n- Sedentaire (1.2): environ {4} kcal\n- Peu actif (1.375): environ {5} kcal\n- Actif (1.55): environ {6} kcal\n- Tres actif (1.725): environ {7} kcal\n\nFACTEURS D'INFLUENCE:\n- Masse musculaire: +13 kcal/kg muscle/jour\n- Age: -2% par decennie apres 20 ans\n- Genetique: +/-5-10% de variation\n\nCONSEIL:\nAugmente ton BMR via la masse musculaire!", Math.round(idealBMR), weight, height, age, Math.round(idealBMR * 1.2), Math.round(idealBMR * 1.375), Math.round(idealBMR * 1.55), Math.round(idealBMR * 1.725)),
     zones: [
       { label: 'low', start: min, end: Math.floor(idealBMR * 0.85), color: '#F97316', status: 'moderate' },
       { label: 'normal', start: Math.floor(idealBMR * 0.85) + 1, end: Math.floor(idealBMR * 1.15), color: '#22C55E', status: 'optimal' },
@@ -676,7 +657,7 @@ export const INTENSITY_RANGES: MetricRangeWithTranslation = {
   source: 'Banister EW, Med Sci Sports Exerc 1991 - PMID: 2017016',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2017016/',
   translationKey: 'intensity',
-  explanation: `L'intensite d'entraînement mesure l'effort relatif par rapport a ta capacite maximale.
+  explanation: traduire(`L'intensite d'entraînement mesure l'effort relatif par rapport a ta capacite maximale.
 
 CLASSIFICATION (Banister TRIMP model):
 - 0-50% : Leger - Récupération active
@@ -689,7 +670,7 @@ PREUVES SCIENTIFIQUES:
 - Surentrainement = trop de volume en zone 3 (no man's land)
 
 CONSEIL:
-La majorite de tes entraînements devraient etre en zone facile (conversation possible).`,
+La majorite de tes entraînements devraient etre en zone facile (conversation possible).`),
   zones: [
     { label: 'low', start: 0, end: 50, color: '#EAB308', status: 'good' },
     { label: 'moderate', start: 51, end: 70, color: '#22C55E', status: 'optimal' },

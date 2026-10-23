@@ -18,13 +18,14 @@ import type { ChargeReelle } from '@/lib/v2/chargeReelle';
 import { dayShort, parseLocalDate } from '@/lib/v2/competition/dates';
 import logger from '@/lib/security/logger';
 import { intensite, type NiveauIntensite } from '@/lib/v2/intensite';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const LEVELS = [
-  { name: 'Récupération', range: '0 à 500 points', max: 500, n: 1 as NiveauIntensite, get color() { return intensite(1).text; }, description: "Charge d'entraînement faible.", advice: "Augmente progressivement l'intensité de tes séances." },
-  { name: 'Équilibré', range: '500 à 1 000 points', max: 1000, n: 2 as NiveauIntensite, get color() { return intensite(2).text; }, description: 'Ton entraînement est bien équilibré.', advice: 'Garde ce rythme pour progresser durablement.' },
-  { name: 'Optimal', range: '1 000 à 1 500 points', max: 1500, n: 3 as NiveauIntensite, get color() { return intensite(3).text; }, description: "Charge d'entraînement optimale.", advice: 'Tu es dans la zone de progression idéale.' },
-  { name: 'Intense', range: '1 500 à 2 000 points', max: 2000, n: 4 as NiveauIntensite, get color() { return intensite(4).text; }, description: "Charge d'entraînement élevée.", advice: 'Assure-toi de bien récupérer entre les séances.' },
-  { name: 'Très intense', range: 'plus de 2 000 points', max: Infinity, n: 5 as NiveauIntensite, get color() { return intensite(5).text; }, description: "Charge d'entraînement très élevée.", advice: 'Risque de surentraînement. Prévois des jours de repos.' },
+  { name: traduire('Récupération'), range: traduire('0 à 500 points'), max: 500, n: 1 as NiveauIntensite, get color() { return intensite(1).text; }, description: traduire("Charge d'entraînement faible."), advice: traduire("Augmente progressivement l'intensité de tes séances.") },
+  { name: traduire('Équilibré'), range: traduire('500 à 1 000 points'), max: 1000, n: 2 as NiveauIntensite, get color() { return intensite(2).text; }, description: traduire('Ton entraînement est bien équilibré.'), advice: traduire('Garde ce rythme pour progresser durablement.') },
+  { name: traduire('Optimal'), range: traduire('1 000 à 1 500 points'), max: 1500, n: 3 as NiveauIntensite, get color() { return intensite(3).text; }, description: traduire("Charge d'entraînement optimale."), advice: traduire('Tu es dans la zone de progression idéale.') },
+  { name: traduire('Intense'), range: traduire('1 500 à 2 000 points'), max: 2000, n: 4 as NiveauIntensite, get color() { return intensite(4).text; }, description: traduire("Charge d'entraînement élevée."), advice: traduire('Assure-toi de bien récupérer entre les séances.') },
+  { name: traduire('Très intense'), range: traduire('plus de 2 000 points'), max: Infinity, n: 5 as NiveauIntensite, get color() { return intensite(5).text; }, description: traduire("Charge d'entraînement très élevée."), advice: traduire('Risque de surentraînement. Prévois des jours de repos.') },
 ];
 
 /** Nombre entier a la francaise : 4 100 */
@@ -60,24 +61,24 @@ function verdictOf(load: number, habit: number): Verdict {
     // Sans historique, on ne parle jamais de surentrainement.
     const i = Math.min(idx, 3);
     const l = LEVELS[i];
-    return { idx: i, n: l.n, name: l.name, color: l.color, description: l.description, advice: i === 3 ? 'Encore peu d’historique : assure-toi de bien récupérer entre les séances.' : l.advice };
+    return { idx: i, n: l.n, name: l.name, color: l.color, description: l.description, advice: i === 3 ? traduire('Encore peu d’historique : assure-toi de bien récupérer entre les séances.') : l.advice };
   }
   const ratio = load / habit;
   const pct = Math.round((ratio - 1) * 100);
   if (ratio >= 1.5) {
     if (idx >= 3) {
       const l = LEVELS[4];
-      return { idx: 4, n: l.n, name: l.name, color: l.color, description: `Bien au-dessus de ton habitude\u00A0: ${pct}\u00A0% de plus que tes quatre semaines précédentes.`, advice: 'Risque de surentraînement. Prévois des jours de repos.' };
+      return { idx: 4, n: l.n, name: l.name, color: l.color, description: traduire("Bien au-dessus de ton habitude : {0} % de plus que tes quatre semaines précédentes.", pct), advice: traduire('Risque de surentraînement. Prévois des jours de repos.') };
     }
-    return { idx, n: 4, name: 'Forte hausse', get color() { return intensite(4).text; }, description: `Bien au-dessus de ton habitude\u00A0: ${pct}\u00A0% de plus que tes quatre semaines précédentes.`, advice: 'Monte en charge progressivement et garde un jour de repos.' };
+    return { idx, n: 4, name: 'Forte hausse', get color() { return intensite(4).text; }, description: traduire("Bien au-dessus de ton habitude : {0} % de plus que tes quatre semaines précédentes.", pct), advice: traduire('Monte en charge progressivement et garde un jour de repos.') };
   }
   if (ratio >= 1.25) {
-    return { idx: Math.min(idx, 3), n: 3, name: 'Au-dessus de ton habitude', get color() { return intensite(3).text; }, description: `Un peu plus chargé que d’habitude\u00A0: ${pct}\u00A0% de plus.`, advice: 'Soigne ton sommeil et ta récupération cette semaine.' };
+    return { idx: Math.min(idx, 3), n: 3, name: 'Au-dessus de ton habitude', get color() { return intensite(3).text; }, description: traduire("Un peu plus chargé que d’habitude : {0} % de plus.", pct), advice: traduire('Soigne ton sommeil et ta récupération cette semaine.') };
   }
   if (ratio >= 0.8) {
-    return { idx: Math.min(idx, 3), n: 2, name: 'Dans ton habitude', get color() { return intensite(2).text; }, description: 'Ta charge ressemble à tes quatre semaines précédentes.', advice: 'Ton corps connaît ce rythme. Garde-le pour progresser durablement.' };
+    return { idx: Math.min(idx, 3), n: 2, name: 'Dans ton habitude', get color() { return intensite(2).text; }, description: traduire('Ta charge ressemble à tes quatre semaines précédentes.'), advice: traduire('Ton corps connaît ce rythme. Garde-le pour progresser durablement.') };
   }
-  return { idx: Math.min(idx, 2), n: 1, name: 'Plus légère', get color() { return intensite(1).text; }, description: 'Semaine plus calme que tes quatre semaines précédentes.', advice: 'Parfait pour récupérer. Reprends le rythme quand tu te sens prêt.' };
+  return { idx: Math.min(idx, 2), n: 1, name: 'Plus légère', get color() { return intensite(1).text; }, description: traduire('Semaine plus calme que tes quatre semaines précédentes.'), advice: traduire('Parfait pour récupérer. Reprends le rythme quand tu te sens prêt.') };
 }
 
 const levelIndex = (load: number) => (load < 500 ? 0 : load < 1000 ? 1 : load < 1500 ? 2 : load < 2000 ? 3 : 4);
@@ -121,10 +122,10 @@ export default function ChargeScreen() {
   const level = verdictOf(load, habit);
   const idx = level.idx;
   const gaugeMax = habit > 0 ? Math.max(habit * 2, 500) : 2000;
-  const trend = stats?.trend === 'increasing' ? 'En hausse sur une semaine' : stats?.trend === 'decreasing' ? 'En baisse sur une semaine' : 'Stable sur une semaine';
+  const trend = stats?.trend === 'increasing' ? traduire('En hausse sur une semaine') : stats?.trend === 'decreasing' ? traduire('En baisse sur une semaine') : traduire('Stable sur une semaine');
 
   return (
-    <DetailScreen title="Charge d'entraînement" subtitle="Sur les sept derniers jours">
+    <DetailScreen title={traduire("Charge d'entraînement")} subtitle={traduire("Sur les sept derniers jours")}>
       <Enter i={0}>
         <Glass style={{ alignItems: 'center', gap: 6 }}>
           <View style={{ alignItems: 'center' }}>
@@ -152,7 +153,7 @@ export default function ChargeScreen() {
           </Ink>
           {habit > 0 ? (
             <Ink size={12} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>
-              {`Ton habitude\u00A0: ${fmtPoints(habit)} points par semaine`}
+              {traduire("Ton habitude : {0} points par semaine", fmtPoints(habit))}
             </Ink>
           ) : null}
         </Glass>
@@ -161,9 +162,9 @@ export default function ChargeScreen() {
       <Enter i={1}>
         <Card style={{ gap: 14 }}>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Fig value={String(sessions)} label={sessions > 1 ? 'Séances' : 'Séance'} />
-            <Fig value={fmtPoints(sessions ? load / sessions : 0)} label="Points par séance" />
-            <Fig value={stats && stats.averageRPE ? String(stats.averageRPE).replace('.', ',') : 'Non noté'} unit={stats && stats.averageRPE ? 'sur 10' : undefined} label="Effort moyen" />
+            <Fig value={String(sessions)} label={sessions > 1 ? traduire('Séances') : traduire('Séance')} />
+            <Fig value={fmtPoints(sessions ? load / sessions : 0)} label={traduire("Points par séance")} />
+            <Fig value={stats && stats.averageRPE ? String(stats.averageRPE).replace('.', DECIMAL) : traduire('Non noté')} unit={stats && stats.averageRPE ? traduire('sur 10') : undefined} label="Effort moyen" />
           </View>
           <Ink size={12} weight="bold" color={P.muted}>
             {trend}
@@ -175,22 +176,21 @@ export default function ChargeScreen() {
         <Enter i={2}>
           <Card style={{ gap: 8 }}>
             <Ink size={17} weight="black" tight>
-              Jour par jour
-            </Ink>
-            <InkBarChart bars={stats.dailyLoads.map((d) => ({ label: dayShort(parseLocalDate(d.date)).replace('.', ''), value: d.load }))} highlight={stats.dailyLoads.length - 1} format={(v) => `${fmtPoints(v)}\u00A0pts`} label="Charge par jour" />
+              {traduire("Jour par jour")}</Ink>
+            <InkBarChart bars={stats.dailyLoads.map((d) => ({ label: dayShort(parseLocalDate(d.date)).replace('.', ''), value: d.load }))} highlight={stats.dailyLoads.length - 1} format={(v) => `${fmtPoints(v)}\u00A0pts`} label={traduire("Charge par jour")} />
           </Card>
         </Enter>
       ) : null}
 
-      {sessions === 0 ? <Note>Aucune séance sur les sept derniers jours. Enregistre une séance avec ton effort ressenti : la charge se calcule toute seule.</Note> : null}
+      {sessions === 0 ? <Note>{traduire("Aucune séance sur les sept derniers jours. Enregistre une séance avec ton effort ressenti : la charge se calcule toute seule.")}</Note> : null}
       {stats && stats.estimatedCount > 0 ? (
-        <Note>{`${stats.estimatedCount === 1 ? '1 séance n’a' : `${stats.estimatedCount} séances n’ont`} pas d’effort noté : compté à ${DEFAULT_RPE} sur 10. Note ton effort à la fin de la séance pour un calcul juste.`}</Note>
+        <Note>{traduire("{0} pas d’effort noté : compté à {1} sur 10. Note ton effort à la fin de la séance pour un calcul juste.", stats.estimatedCount === 1 ? '1 séance n’a' : `${stats.estimatedCount} séances n’ont`, DEFAULT_RPE)}</Note>
       ) : null}
       {stats && stats.noDurationCount > 0 ? (
-        <Note>{`${stats.noDurationCount === 1 ? '1 séance n’a' : `${stats.noDurationCount} séances n’ont`} pas de durée : ${stats.noDurationCount === 1 ? 'elle compte' : 'elles comptent'} sans points.`}</Note>
+        <Note>{traduire("{0} pas de durée : {1} sans points.", stats.noDurationCount === 1 ? '1 séance n’a' : `${stats.noDurationCount} séances n’ont`, stats.noDurationCount === 1 ? 'elle compte' : 'elles comptent')}</Note>
       ) : null}
 
-      <SectionTitle>Comprendre les niveaux</SectionTitle>
+      <SectionTitle>{traduire("Comprendre les niveaux")}</SectionTitle>
       <Card style={{ padding: 8 }}>
         {LEVELS.map((l, i) => {
           const on = i === idx;
@@ -205,8 +205,7 @@ export default function ChargeScreen() {
                   {on ? (
                     <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 8, backgroundColor: P.ink, justifyContent: 'center' }}>
                       <Ink size={11} weight="extraBold" color={P.white}>
-                        Toi cette semaine
-                      </Ink>
+                        {traduire("Toi cette semaine")}</Ink>
                     </View>
                   ) : null}
                 </View>
@@ -222,7 +221,7 @@ export default function ChargeScreen() {
         })}
       </Card>
 
-      <Note>Calculée à partir de tes séances des sept derniers jours : la durée en minutes multipliée par l'effort ressenti sur 10.</Note>
+      <Note>{traduire("Calculée à partir de tes séances des sept derniers jours : la durée en minutes multipliée par l'effort ressenti sur 10.")}</Note>
     </DetailScreen>
   );
 }

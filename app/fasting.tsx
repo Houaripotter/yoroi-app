@@ -36,6 +36,7 @@ import {
 import type { CustomFastingSettings, FastingMode, FastingState, FastingStats, RamadanSettings } from '@/lib/fasting';
 import { ProgressBar } from '@/components/yoroi/v2/espace/ProgressBar';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const ICONS: Record<string, NIconName> = {
   Clock: 'clock',
@@ -54,29 +55,29 @@ const DAYS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
 /** Noms et textes affiches, en francais soigne (la bibliotheque garde ses identifiants) */
 const MODE_TEXT: Record<string, { name: string; description: string }> = {
-  '12_12': { name: 'Intermittent 12:12', description: 'Pour débuter. 12 h de jeûne, 12 h pour manger.' },
-  '14_10': { name: 'Intermittent 14:10', description: 'Progression douce. 14 h de jeûne, 10 h pour manger.' },
-  '16_8': { name: 'Intermittent 16:8', description: 'Le plus courant. 16 h de jeûne, 8 h pour manger.' },
-  '18_6': { name: 'Intermittent 18:6', description: 'Plus exigeant. 18 h de jeûne, 6 h pour manger.' },
-  '20_4': { name: 'Intermittent 20:4', description: 'Très exigeant. 20 h de jeûne, 4 h pour manger.' },
-  omad: { name: 'Un repas par jour', description: 'Un seul repas dans la journée. Réservé aux habitués.' },
-  ramadan: { name: 'Ramadan', description: 'Jeûne de l’aube au coucher du soleil.' },
-  yom_kippur: { name: 'Yom Kippour', description: 'Le Grand Pardon. Jeûne de 25 h.' },
-  careme: { name: 'Carême', description: '40 jours avant Pâques. Abstinence ou jeûne partiel.' },
-  eat_stop_eat: { name: 'Jeûne de 24 h', description: '24 h sans manger, une à deux fois par semaine.' },
-  prolonged_36: { name: 'Jeûne de 36 h', description: '36 h de jeûne. Pour les habitués.' },
-  prolonged_48: { name: 'Jeûne de 48 h', description: '48 h de jeûne. Uniquement pour les expérimentés.' },
-  prolonged_72: { name: 'Jeûne de 72 h', description: '72 h de jeûne. Suivi médical recommandé.' },
-  custom: { name: 'Personnalisé', description: 'Tes propres horaires.' },
+  '12_12': { name: 'Intermittent 12:12', description: traduire('Pour débuter. 12 h de jeûne, 12 h pour manger.') },
+  '14_10': { name: 'Intermittent 14:10', description: traduire('Progression douce. 14 h de jeûne, 10 h pour manger.') },
+  '16_8': { name: 'Intermittent 16:8', description: traduire('Le plus courant. 16 h de jeûne, 8 h pour manger.') },
+  '18_6': { name: 'Intermittent 18:6', description: traduire('Plus exigeant. 18 h de jeûne, 6 h pour manger.') },
+  '20_4': { name: 'Intermittent 20:4', description: traduire('Très exigeant. 20 h de jeûne, 4 h pour manger.') },
+  omad: { name: 'Un repas par jour', description: traduire('Un seul repas dans la journée. Réservé aux habitués.') },
+  ramadan: { name: 'Ramadan', description: traduire('Jeûne de l’aube au coucher du soleil.') },
+  yom_kippur: { name: 'Yom Kippour', description: traduire('Le Grand Pardon. Jeûne de 25 h.') },
+  careme: { name: 'Carême', description: traduire('40 jours avant Pâques. Abstinence ou jeûne partiel.') },
+  eat_stop_eat: { name: 'Jeûne de 24 h', description: traduire('24 h sans manger, une à deux fois par semaine.') },
+  prolonged_36: { name: 'Jeûne de 36 h', description: traduire('36 h de jeûne. Pour les habitués.') },
+  prolonged_48: { name: 'Jeûne de 48 h', description: traduire('48 h de jeûne. Uniquement pour les expérimentés.') },
+  prolonged_72: { name: 'Jeûne de 72 h', description: traduire('72 h de jeûne. Suivi médical recommandé.') },
+  custom: { name: traduire('Personnalisé'), description: traduire('Tes propres horaires.') },
 };
-const modeName = (m?: FastingMode) => (m ? MODE_TEXT[m.id]?.name ?? m.name : 'Jeûne');
+const modeName = (m?: FastingMode) => (m ? MODE_TEXT[m.id]?.name ?? m.name : traduire('Jeûne'));
 const modeDesc = (m: FastingMode) => MODE_TEXT[m.id]?.description ?? m.description;
-const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const DAY_NAMES = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 const HEALTH_WARNING =
-  'Consulte un médecin avant de jeûner si tu as un problème de santé, un traitement, un diabète, si tu es enceinte ou si tu allaites. Arrête si tu as des vertiges, des malaises ou des palpitations.';
+  traduire('Consulte un médecin avant de jeûner si tu as un problème de santé, un traitement, un diabète, si tu es enceinte ou si tu allaites. Arrête si tu as des vertiges, des malaises ou des palpitations.');
 const PROLONGED_WARNING =
-  'Un jeûne prolongé peut être dangereux. Parles-en à un médecin avant de commencer et reste bien hydraté. Arrête immédiatement en cas de malaise.';
+  traduire('Un jeûne prolongé peut être dangereux. Parles-en à un médecin avant de commencer et reste bien hydraté. Arrête immédiatement en cas de malaise.');
 
 export default function FastingScreen() {
   const [state, setState] = useState<FastingState | null>(null);
@@ -149,7 +150,7 @@ export default function FastingScreen() {
       await completeFasting();
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       await load();
-      appAlert('Jeûne tenu', 'Bravo, tu as tenu ton jeûne jusqu’au bout. Romps-le en douceur et bois de l’eau.');
+      appAlert(traduire('Jeûne tenu'), traduire('Bravo, tu as tenu ton jeûne jusqu’au bout. Romps-le en douceur et bois de l’eau.'));
     } catch (err) {
       logger.error('Fin du jeûne impossible', err);
     } finally {
@@ -168,13 +169,13 @@ export default function FastingScreen() {
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       await load();
     } else {
-      appAlert('Le jeûne n’a pas démarré', 'Un souci est survenu. Réessaie.');
+      appAlert(traduire('Le jeûne n’a pas démarré'), traduire('Un souci est survenu. Réessaie.'));
     }
   };
 
   const askStart = (mode: FastingMode) => {
-    appAlert('Avant de commencer', mode.warning ? PROLONGED_WARNING : HEALTH_WARNING, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Avant de commencer'), mode.warning ? PROLONGED_WARNING : HEALTH_WARNING, [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'J’ai compris',
         onPress: () => {
@@ -187,10 +188,10 @@ export default function FastingScreen() {
   };
 
   const askStop = () => {
-    appAlert('Arrêter le jeûne ?', 'Tu peux t’arrêter à tout moment. Ce jeûne ne sera pas compté comme terminé.', [
+    appAlert(traduire('Arrêter le jeûne ?'), traduire('Tu peux t’arrêter à tout moment. Ce jeûne ne sera pas compté comme terminé.'), [
       { text: 'Continuer', style: 'cancel' },
       {
-        text: 'Arrêter',
+        text: traduire('Arrêter'),
         style: 'destructive',
         onPress: async () => {
           await stopFasting(false);
@@ -206,11 +207,11 @@ export default function FastingScreen() {
     if (saving) return;
     const hours = parseInt(customDuration, 10);
     if (!hhmmValid(customStart)) {
-      appAlert('Heure à vérifier', 'Écris l’heure de début sous la forme 20:00.');
+      appAlert(traduire('Heure à vérifier'), traduire('Écris l’heure de début sous la forme 20:00.'));
       return;
     }
     if (isNaN(hours) || hours < 1 || hours > 72) {
-      appAlert('Durée à vérifier', 'Choisis une durée entre 1 et 72 heures.');
+      appAlert(traduire('Durée à vérifier'), traduire('Choisis une durée entre 1 et 72 heures.'));
       return;
     }
     setSaving(true);
@@ -231,7 +232,7 @@ export default function FastingScreen() {
   const saveRamadan = async () => {
     if (saving) return;
     if (!hhmmValid(fajr) || !hhmmValid(maghrib)) {
-      appAlert('Heures à vérifier', 'Écris les heures sous la forme 05:30.');
+      appAlert(traduire('Heures à vérifier'), traduire('Écris les heures sous la forme 05:30.'));
       return;
     }
     setSaving(true);
@@ -260,12 +261,11 @@ export default function FastingScreen() {
   return (
     <>
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <DetailScreen title="Jeûne" subtitle={state?.isActive ? (isFasting ? 'Tu es en plein jeûne' : 'Ta fenêtre pour manger est ouverte') : 'Choisis ton rythme et lance le chrono'}>
+        <DetailScreen title={traduire("Jeûne")} subtitle={state?.isActive ? (isFasting ? traduire('Tu es en plein jeûne') : traduire('Ta fenêtre pour manger est ouverte')) : traduire('Choisis ton rythme et lance le chrono')}>
           {loading ? (
             <Card style={{ height: 320, alignItems: 'center', justifyContent: 'center' }}>
               <Ink size={14} weight="bold" color={P.ink2}>
-                Préparation de ton jeûne
-              </Ink>
+                {traduire("Préparation de ton jeûne")}</Ink>
             </Card>
           ) : null}
 
@@ -287,12 +287,12 @@ export default function FastingScreen() {
                     color={ringColor}
                     center={
                       <>
-                        <Badge label={isFasting ? 'Jeûne' : 'Fenêtre repas'} tone={isFasting ? 'red' : 'moss'} />
-                        <Ink size={40} weight="black" tight style={{ marginTop: 8, lineHeight: 44 }} accessibilityLabel={`Temps restant ${formatCountdown(remaining)}`}>
+                        <Badge label={isFasting ? traduire('Jeûne') : traduire('Fenêtre repas')} tone={isFasting ? 'red' : 'moss'} />
+                        <Ink size={40} weight="black" tight style={{ marginTop: 8, lineHeight: 44 }} accessibilityLabel={traduire("Temps restant {0}", formatCountdown(remaining))}>
                           {formatCountdown(remaining)}
                         </Ink>
                         <Ink size={13} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-                          {isFasting ? (activeMode?.fastingHours ? `restant sur ${activeMode.fastingHours} h` : 'restant') : 'restant pour manger'}
+                          {isFasting ? (activeMode?.fastingHours ? traduire("restant sur {0} h", activeMode.fastingHours) : traduire('restant')) : traduire('restant pour manger')}
                         </Ink>
                         <Ink size={13} weight="extraBold" color={ringColor} style={{ marginTop: 4 }}>
                           {`${Math.round(progress * 100)} %`}
@@ -303,8 +303,7 @@ export default function FastingScreen() {
                   <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch' }}>
                     <View style={{ flex: 1, padding: 12, borderRadius: 18, backgroundColor: P.paper, gap: 2 }}>
                       <Ink size={12} weight="bold" color={P.ink2}>
-                        Début
-                      </Ink>
+                        {traduire("Début")}</Ink>
                       <Ink size={18} weight="black" tight>
                         {state.startTime ? formatTime(state.startTime) : ''}
                       </Ink>
@@ -314,8 +313,7 @@ export default function FastingScreen() {
                     </View>
                     <View style={{ flex: 1, padding: 12, borderRadius: 18, backgroundColor: P.paper, gap: 2 }}>
                       <Ink size={12} weight="bold" color={P.ink2}>
-                        Fin prévue
-                      </Ink>
+                        {traduire("Fin prévue")}</Ink>
                       <Ink size={18} weight="black" tight>
                         {state.targetEndTime ? formatTime(state.targetEndTime) : ''}
                       </Ink>
@@ -328,7 +326,7 @@ export default function FastingScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, backgroundColor: P.goldSoft }}>
                       <NIcon name="flame" size={16} color={P.goldDark} />
                       <Ink size={13} weight="extraBold" color={P.goldDark}>
-                        {`Série de ${stats.currentStreak} jour${stats.currentStreak > 1 ? 's' : ''}`}
+                        {traduirePluriel(stats.currentStreak, stats.currentStreak > 1, "Série de {0} jour", "Série de {0} jours", stats.currentStreak)}
                       </Ink>
                     </View>
                   ) : null}
@@ -337,7 +335,7 @@ export default function FastingScreen() {
 
               {isFasting ? (
                 <Enter i={1}>
-                  <H2 sub="Repères approximatifs, chacun réagit différemment">Où tu en es</H2>
+                  <H2 sub={traduire("Repères approximatifs, chacun réagit différemment")}>{traduire("Où tu en es")}</H2>
                   <Card style={{ marginTop: 10, paddingBottom: 6 }}>
                     <FastPhases elapsedHours={elapsedHours} markers={FAST_MARKERS} color={ringColor} />
                   </Card>
@@ -345,11 +343,11 @@ export default function FastingScreen() {
               ) : null}
 
               <Enter i={2}>
-                <Notice tone="gold" title="Écoute ton corps" text="Bois de l’eau régulièrement. Vertiges, malaise ou palpitations : arrête le jeûne et mange." icon="drop" />
+                <Notice tone="gold" title={traduire("Écoute ton corps")} text={traduire("Bois de l’eau régulièrement. Vertiges, malaise ou palpitations : arrête le jeûne et mange.")} icon="drop" />
               </Enter>
 
               <Enter i={3}>
-                <BigButton label="Arrêter le jeûne" tone="light" icon="close" onPress={askStop} />
+                <BigButton label={traduire("Arrêter le jeûne")} tone="light" icon="close" onPress={askStop} />
               </Enter>
             </>
           ) : null}
@@ -358,11 +356,11 @@ export default function FastingScreen() {
           {!loading && !state?.isActive ? (
             <>
               <Enter i={0}>
-                <Notice tone="danger" title="Ta santé d’abord" text={HEALTH_WARNING} icon="shield" />
+                <Notice tone="danger" title={traduire("Ta santé d’abord")} text={HEALTH_WARNING} icon="shield" />
               </Enter>
 
               <Enter i={1}>
-                <H2 sub="Heures de jeûne et heures pour manger">Jeûne intermittent</H2>
+                <H2 sub={traduire("Heures de jeûne et heures pour manger")}>{traduire("Jeûne intermittent")}</H2>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
                   {intermittent.map((m) => (
                     <View key={m.id} style={{ width: '48.4%' }}>
@@ -373,7 +371,7 @@ export default function FastingScreen() {
               </Enter>
 
               <Enter i={2}>
-                <H2>Jeûne religieux</H2>
+                <H2>{traduire("Jeûne religieux")}</H2>
                 <View style={{ gap: 8, marginTop: 10 }}>
                   {religious.map((m) => (
                     <LinkCard key={m.id} icon={ICONS[m.icon] ?? 'moon'} tone="indigo" title={modeName(m)} sub={modeDesc(m)} onPress={() => askStart(m)} />
@@ -382,7 +380,7 @@ export default function FastingScreen() {
               </Enter>
 
               <Enter i={3}>
-                <H2 sub="Réservé aux pratiquants expérimentés">Jeûne avancé</H2>
+                <H2 sub={traduire("Réservé aux pratiquants expérimentés")}>{traduire("Jeûne avancé")}</H2>
                 <View style={{ gap: 8, marginTop: 10 }}>
                   {advanced.map((m) => (
                     <LinkCard
@@ -392,7 +390,7 @@ export default function FastingScreen() {
                       title={modeName(m)}
                       sub={modeDesc(m)}
                       onPress={() => askStart(m)}
-                      right={m.warning ? <Badge label="Avis médical" tone="danger" /> : undefined}
+                      right={m.warning ? <Badge label={traduire("Avis médical")} tone="danger" /> : undefined}
                     />
                   ))}
                 </View>
@@ -402,8 +400,8 @@ export default function FastingScreen() {
                 <LinkCard
                   icon="edit"
                   tone="gold"
-                  title="Jeûne personnalisé"
-                  sub="Tes heures, ta durée, tes jours"
+                  title={traduire("Jeûne personnalisé")}
+                  sub={traduire("Tes heures, ta durée, tes jours")}
                   onPress={() => {
                     if (customMode) askStart(customMode);
                     else setCustomOpen(true);
@@ -416,31 +414,29 @@ export default function FastingScreen() {
           {/* STATISTIQUES */}
           {!loading && stats && stats.totalCompleted > 0 ? (
             <Enter i={5}>
-              <H2>Ta régularité</H2>
+              <H2>{traduire("Ta régularité")}</H2>
               <Card style={{ marginTop: 10, gap: 16 }}>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <StatBox value={String(stats.totalCompleted)} label="Jeûnes tenus" color={P.accent} />
-                  <StatBox value={`${stats.totalHoursFasted}`} unit="h" label="Au total" />
-                  <StatBox value={`${stats.longestStreak}`} unit="j" label="Série record" color={P.goldDark} />
+                  <StatBox value={String(stats.totalCompleted)} label={traduire("Jeûnes tenus")} color={P.accent} />
+                  <StatBox value={`${stats.totalHoursFasted}`} unit="h" label={traduire("Au total")} />
+                  <StatBox value={`${stats.longestStreak}`} unit="j" label={traduire("Série record")} color={P.goldDark} />
                 </View>
                 {stats.longestStreak > 0 && stats.currentStreak >= stats.longestStreak ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <Hanko size={36} />
                     <Ink size={13} weight="extraBold" color={P.accent} style={{ flex: 1 }}>
-                      Tu égales ta meilleure série
-                    </Ink>
+                      {traduire("Tu égales ta meilleure série")}</Ink>
                   </View>
                 ) : null}
                 <View style={{ gap: 8 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Ink size={13} weight="bold" color={P.ink2}>
-                      Ce mois-ci
-                    </Ink>
+                      {traduire("Ce mois-ci")}</Ink>
                     <Ink size={13} weight="black">
-                      {`${stats.thisMonthCompleted} sur ${stats.thisMonthTarget}`}
+                      {traduire("{0} sur {1}", stats.thisMonthCompleted, stats.thisMonthTarget)}
                     </Ink>
                   </View>
-                  <ProgressBar progress={monthPct} accessibilityLabel="Ton mois de jeûne" />
+                  <ProgressBar progress={monthPct} accessibilityLabel={traduire("Ton mois de jeûne")} />
                 </View>
               </Card>
             </Enter>
@@ -451,8 +447,7 @@ export default function FastingScreen() {
               <Card style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                 <IconDot name="clock" tone="gold" />
                 <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>
-                  Aucun jeûne terminé pour l’instant. Commence doux, le 12:12 est parfait pour débuter.
-                </Ink>
+                  {traduire("Aucun jeûne terminé pour l’instant. Commence doux, le 12:12 est parfait pour débuter.")}</Ink>
               </Card>
             </Enter>
           ) : null}
@@ -463,13 +458,12 @@ export default function FastingScreen() {
       <BottomSheet
         visible={customOpen}
         onClose={() => setCustomOpen(false)}
-        title="Jeûne personnalisé"
-        subtitle="Règle tes heures en deux appuis"
-        footer={<BigButton label={saving ? 'Démarrage' : 'Lancer le jeûne'} onPress={saveCustom} disabled={saving} icon="play" />}
+        title={traduire("Jeûne personnalisé")}
+        subtitle={traduire("Règle tes heures en deux appuis")}
+        footer={<BigButton label={saving ? traduire('Démarrage') : traduire('Lancer le jeûne')} onPress={saveCustom} disabled={saving} icon="play" />}
       >
         <Ink size={13} weight="bold" color={P.ink2}>
-          Heure de début
-        </Ink>
+          {traduire("Heure de début")}</Ink>
         <HRow>
           {['18:00', '19:00', '20:00', '21:00', '22:00'].map((h) => (
             <Chip key={h} label={h} active={customStart === h} onPress={() => setCustomStart(h)} />
@@ -477,8 +471,7 @@ export default function FastingScreen() {
         </HRow>
         <TextField value={customStart} onChange={setCustomStart} placeholder="20:00" />
         <Ink size={13} weight="bold" color={P.ink2}>
-          Durée du jeûne
-        </Ink>
+          {traduire("Durée du jeûne")}</Ink>
         <HRow>
           {['12', '14', '16', '18', '20', '24'].map((h) => (
             <Chip key={h} label={`${h} h`} active={customDuration === h} onPress={() => setCustomDuration(h)} />
@@ -486,8 +479,7 @@ export default function FastingScreen() {
         </HRow>
         <TextField value={customDuration} onChange={(v) => setCustomDuration(v.replace(/[^0-9]/g, ''))} placeholder="16" />
         <Ink size={13} weight="bold" color={P.ink2}>
-          Jours actifs
-        </Ink>
+          {traduire("Jours actifs")}</Ink>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           {DAYS.map((d, i) => {
             const on = customDays.includes(i);
@@ -503,7 +495,7 @@ export default function FastingScreen() {
           })}
         </View>
         <Ink size={12} weight="medium" color={P.ink2}>
-          {customDays.length ? `Actif le ${customDays.slice().sort().map((i) => DAY_NAMES[i]).join(', ')}` : 'Aucun jour choisi'}
+          {customDays.length ? traduire("Actif le {0}", customDays.slice().sort().map((i) => DAY_NAMES[i]).join(', ')) : traduire('Aucun jour choisi')}
         </Ink>
       </BottomSheet>
 
@@ -512,8 +504,8 @@ export default function FastingScreen() {
         visible={ramadanOpen}
         onClose={() => setRamadanOpen(false)}
         title="Ramadan"
-        subtitle="Entre les heures de prière de ta ville"
-        footer={<BigButton label={saving ? 'Démarrage' : 'Commencer le jeûne'} onPress={saveRamadan} disabled={saving} icon="moon" />}
+        subtitle={traduire("Entre les heures de prière de ta ville")}
+        footer={<BigButton label={saving ? traduire('Démarrage') : traduire('Commencer le jeûne')} onPress={saveRamadan} disabled={saving} icon="moon" />}
       >
         <TextField label="Ville" value={city} onChange={setCity} placeholder="Paris" />
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -527,17 +519,17 @@ export default function FastingScreen() {
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: P.goldSoft, borderColor: P.goldSoft }}>
           <NIcon name="clock" size={20} color={P.goldDark} />
           <Ink size={15} weight="extraBold" color={P.goldDark}>
-            {`Jeûne de ${durationBetween(fajr, maghrib)}`}
+            {traduire("Jeûne de {0}", durationBetween(fajr, maghrib))}
           </Ink>
         </Card>
-        <Notice tone="indigo" text="Vérifie les heures exactes auprès de ta mosquée ou d’un calendrier local." />
+        <Notice tone="indigo" text={traduire("Vérifie les heures exactes auprès de ta mosquée ou d’un calendrier local.")} />
       </BottomSheet>
     </>
   );
 }
 
 function ModeTile({ mode, onPress }: { mode: FastingMode; onPress: () => void }) {
-  const big = mode.id === 'omad' ? '1 repas' : `${mode.fastingHours}:${mode.eatingHours}`;
+  const big = mode.id === 'omad' ? traduire('1 repas') : `${mode.fastingHours}:${mode.eatingHours}`;
   const pct = mode.fastingHours ? Math.min(1, mode.fastingHours / 24) : 1;
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${modeName(mode)}. ${modeDesc(mode)}`}>

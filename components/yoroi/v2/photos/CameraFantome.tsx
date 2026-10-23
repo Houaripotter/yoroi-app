@@ -14,6 +14,7 @@ import type { Photo } from '@/lib/storage';
 import { dateCourte, dernierePose, POSES } from '@/lib/v2/photos/outils';
 import type { Pose } from '@/lib/v2/photos/outils';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 const NOIR = '#0E0F13';
 const BLANC = '#FFFFFF';
@@ -125,7 +126,7 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
     <Modal visible={visible} animationType="slide" onRequestClose={close} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: NOIR, paddingTop: insets.top + 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, minHeight: 48 }}>
-          <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Fermer la caméra" hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
+          <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Fermer la caméra")} hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
             <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M6 6l12 12M18 6L6 18" stroke={BLANC} strokeWidth={2.6} strokeLinecap="round" /></Svg>
           </Pressable>
           <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -133,7 +134,7 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
               <Chip key={p.value} label={p.label} on={pose === p.value} onPress={() => setPose(pose === p.value ? null : p.value)} />
             ))}
           </View>
-          <Pressable onPress={() => { selectionAsync().catch(() => {}); setFacing((f) => (f === 'back' ? 'front' : 'back')); }} accessibilityRole="button" accessibilityLabel="Changer de caméra" hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
+          <Pressable onPress={() => { selectionAsync().catch(() => {}); setFacing((f) => (f === 'back' ? 'front' : 'back')); }} accessibilityRole="button" accessibilityLabel={traduire("Changer de caméra")} hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
             <Svg width={22} height={22} viewBox="0 0 24 24" fill="none"><Path d="M4 9h3l2-3h6l2 3h3v10H4zM9 13.5a3 3 0 0 1 5.3-1.9M15 13.5a3 3 0 0 1-5.3 1.9M14.5 10.5v1.5H13M9.5 16.5V15H11" stroke={BLANC} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /></Svg>
           </Pressable>
         </View>
@@ -143,11 +144,11 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
             <CameraView ref={cam} style={{ flex: 1 }} facing={facing} mirror={facing === 'front'} animateShutter />
           ) : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 }}>
-              <Ink size={16} weight="extraBold" color={BLANC} style={{ textAlign: 'center' }}>YOROI a besoin de ta caméra</Ink>
-              <Ink size={14} color="rgba(255,255,255,0.75)" style={{ textAlign: 'center' }}>La photo reste sur ton téléphone. Si tu as refusé, autorise la caméra dans les réglages de ton téléphone.</Ink>
+              <Ink size={16} weight="extraBold" color={BLANC} style={{ textAlign: 'center' }}>{traduire("YOROI a besoin de ta caméra")}</Ink>
+              <Ink size={14} color="rgba(255,255,255,0.75)" style={{ textAlign: 'center' }}>{traduire("La photo reste sur ton téléphone. Si tu as refusé, autorise la caméra dans les réglages de ton téléphone.")}</Ink>
               {/* 18 octobre 2026 : refus definitif, iOS ne redemande plus, le bouton ouvre les reglages du telephone */}
               <Pressable onPress={() => (perm && !perm.canAskAgain ? Linking.openSettings().catch(() => {}) : requestPerm().catch(() => {}))} accessibilityRole="button" style={{ minHeight: 48, paddingHorizontal: 20, borderRadius: 16, backgroundColor: BLANC, justifyContent: 'center' }}>
-                <Ink size={15} weight="extraBold" color={NOIR}>{perm && !perm.canAskAgain ? 'Ouvrir les réglages' : 'Autoriser la caméra'}</Ink>
+                <Ink size={15} weight="extraBold" color={NOIR}>{perm && !perm.canAskAgain ? traduire('Ouvrir les réglages') : traduire('Autoriser la caméra')}</Ink>
               </Pressable>
             </View>
           )}
@@ -166,10 +167,10 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
         <View style={{ paddingHorizontal: 16, marginTop: 12, gap: 6 }}>
           <Ink size={13} color="rgba(255,255,255,0.75)" numberOfLines={2}>
             {ghost
-              ? `Cale-toi sur ta photo du ${dateCourte(ghost.date.slice(0, 10))} en transparence : même place, même distance.`
+              ? traduire("Cale-toi sur ta photo du {0} en transparence : même place, même distance.", dateCourte(ghost.date.slice(0, 10)))
               : pose
-                ? 'Première photo de cette pose : elle servira de repère aux suivantes.'
-                : 'Choisis une pose en haut pour retrouver le même cadrage la prochaine fois.'}
+                ? traduire('Première photo de cette pose : elle servira de repère aux suivantes.')
+                : traduire('Choisis une pose en haut pour retrouver le même cadrage la prochaine fois.')}
           </Ink>
         </View>
 
@@ -185,20 +186,20 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
               else setGhostOn(false);
             }}
             accessibilityRole="button"
-            accessibilityLabel="Transparence de la photo repère"
+            accessibilityLabel={traduire("Transparence de la photo repère")}
             style={{ width: 84, minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)', opacity: ghost ? 1 : 0.4 }}
           >
-            <Ink size={12} weight="bold" color="rgba(255,255,255,0.75)">Repère</Ink>
-            <Ink size={14} weight="extraBold" color={BLANC}>{!ghost || !ghostOn ? 'Caché' : ghostLevel < 0.5 ? 'Léger' : 'Fort'}</Ink>
+            <Ink size={12} weight="bold" color="rgba(255,255,255,0.75)">{traduire("Repère")}</Ink>
+            <Ink size={14} weight="extraBold" color={BLANC}>{!ghost || !ghostOn ? traduire('Caché') : ghostLevel < 0.5 ? traduire('Léger') : 'Fort'}</Ink>
           </Pressable>
 
-          <Pressable onPress={press} disabled={!perm?.granted || busy} accessibilityRole="button" accessibilityLabel={count !== null ? 'Annuler le minuteur' : 'Prendre la photo'} style={({ pressed }) => ({ width: 78, height: 78, borderRadius: 39, borderWidth: 5, borderColor: BLANC, alignItems: 'center', justifyContent: 'center', opacity: pressed || busy ? 0.7 : 1 })}>
+          <Pressable onPress={press} disabled={!perm?.granted || busy} accessibilityRole="button" accessibilityLabel={count !== null ? traduire('Annuler le minuteur') : traduire('Prendre la photo')} style={({ pressed }) => ({ width: 78, height: 78, borderRadius: 39, borderWidth: 5, borderColor: BLANC, alignItems: 'center', justifyContent: 'center', opacity: pressed || busy ? 0.7 : 1 })}>
             <View style={{ width: count !== null ? 28 : 60, height: count !== null ? 28 : 60, borderRadius: count !== null ? 6 : 30, backgroundColor: BLANC }} />
           </Pressable>
 
           <Pressable onPress={() => { selectionAsync().catch(() => {}); setTimer((t) => (t === 0 ? 5 : t === 5 ? 10 : 0)); }} accessibilityRole="button" accessibilityLabel="Minuteur" style={{ width: 84, minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: timer ? BLANC : 'rgba(255,255,255,0.14)' }}>
             <Ink size={12} weight="bold" color={timer ? NOIR : 'rgba(255,255,255,0.75)'}>Minuteur</Ink>
-            <Ink size={14} weight="extraBold" color={timer ? NOIR : BLANC}>{timer ? `${timer} s` : 'Non'}</Ink>
+            <Ink size={14} weight="extraBold" color={timer ? NOIR : BLANC}>{timer ? `${timer} s` : traduire('Non')}</Ink>
           </Pressable>
         </View>
       </View>

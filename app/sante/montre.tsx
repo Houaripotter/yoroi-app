@@ -25,6 +25,7 @@ import { healthConnect } from '@/lib/healthConnect';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { P } from '@/components/yoroi/livePalette';
 import { logger } from '@/lib/security/logger';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const ANDROID = Platform.OS === 'android';
 
@@ -64,7 +65,7 @@ function BrandList({ onOpen }: { onOpen: (k: string) => void }) {
       {WATCHES.map((w) => {
         const p = pathFor(w, ANDROID);
         const count = p.keys.length;
-        const sub = !p.ok ? (ANDROID ? 'Pas de partage avec Health Connect' : 'Pas de partage avec Apple Santé') : p.list === 'unknown' ? `Partage possible, liste non publiée` : `${count} mesure${count > 1 ? 's' : ''} pour YOROI`;
+        const sub = !p.ok ? (ANDROID ? traduire('Pas de partage avec Health Connect') : traduire('Pas de partage avec Apple Santé')) : p.list === 'unknown' ? traduire(`Partage possible, liste non publiée`) : traduirePluriel(count, count > 1, "{0} mesure pour YOROI", "{0} mesures pour YOROI", count);
         return (
           <Press key={w.key} onPress={() => onOpen(w.key)} accessibilityRole="button" accessibilityLabel={`${w.name}, ${sub}`}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 68, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, paddingHorizontal: 14, paddingVertical: 10, opacity: p.ok ? 1 : 0.7 }}>
@@ -145,7 +146,7 @@ function BrandSheet({ w }: { w: Watch }) {
         />
         {!mine ? (
           <Ink size={12} weight="bold" color={S.muted}>
-            {`Tu regardes la version ${plat === 'android' ? 'Android' : 'iPhone'}, pas celle de ton téléphone.`}
+            {traduire("Tu regardes la version {0}, pas celle de ton téléphone.", plat === 'android' ? 'Android' : 'iPhone')}
           </Ink>
         ) : null}
       </GlassBox>
@@ -153,10 +154,10 @@ function BrandSheet({ w }: { w: Watch }) {
       {!p.ok ? (
         <View style={{ borderRadius: 24, backgroundColor: S.dangerSoft, padding: 16, gap: 6 }}>
           <Ink size={17} weight="black" color={S.danger}>
-            {`Pas de partage avec ${provider}`}
+            {traduire("Pas de partage avec {0}", provider)}
           </Ink>
           <Ink size={14} weight="medium" color={S.ink2}>
-            {p.note ?? 'Cette marque ne partage pas ses données sur cette plateforme.'}
+            {p.note ?? traduire('Cette marque ne partage pas ses données sur cette plateforme.')}
           </Ink>
         </View>
       ) : (
@@ -167,8 +168,7 @@ function BrandSheet({ w }: { w: Watch }) {
                 <SanteIcon name="check" size={18} color={S.mossText} width={2.6} />
               </View>
               <Ink size={18} weight="black" tight style={{ flex: 1 }}>
-                Ce que ta montre envoie à YOROI
-              </Ink>
+                {traduire("Ce que ta montre envoie à YOROI")}</Ink>
             </View>
             {p.keys.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -178,7 +178,7 @@ function BrandSheet({ w }: { w: Watch }) {
               </View>
             ) : (
               <Ink size={14} weight="medium" color={S.ink2}>
-                {`${w.name.split(',')[0]} ne publie pas la liste de ce qu’elle écrit dans ${provider}. YOROI affiche tout ce qui arrive : regarde ton tableau de bord après la synchro.`}
+                {traduire("{0} ne publie pas la liste de ce qu’elle écrit dans {1}. YOROI affiche tout ce qui arrive : regarde ton tableau de bord après la synchro.", w.name.split(',')[0], provider)}
               </Ink>
             )}
             {p.extra && p.extra.length > 0 ? (
@@ -190,8 +190,7 @@ function BrandSheet({ w }: { w: Watch }) {
             ) : null}
             {p.list === 'partial' ? (
               <Ink size={12} weight="bold" color={S.muted}>
-                Liste incomplète publiée par la marque : d’autres mesures peuvent arriver.
-              </Ink>
+                {traduire("Liste incomplète publiée par la marque : d’autres mesures peuvent arriver.")}</Ink>
             ) : null}
           </View>
 
@@ -202,13 +201,12 @@ function BrandSheet({ w }: { w: Watch }) {
                   <SanteIcon name="lock" size={17} color={S.accent} />
                 </View>
                 <Ink size={18} weight="black" tight style={{ flex: 1 }}>
-                  Ce qu’elle garde pour elle
-                </Ink>
+                  {traduire("Ce qu’elle garde pour elle")}</Ink>
               </View>
               {p.missing && p.missing.length > 0 ? (
                 <View style={{ gap: 8 }}>
                   <Ink size={13} weight="bold" color={S.ink2}>
-                    {`Mesuré par ta montre mais pas envoyé à ${provider} :`}
+                    {traduire("Mesuré par ta montre mais pas envoyé à {0} :", provider)}
                   </Ink>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {p.missing.map((k) => (
@@ -220,16 +218,14 @@ function BrandSheet({ w }: { w: Watch }) {
               {w.keeps.length > 0 ? (
                 <View style={{ gap: 8 }}>
                   <Ink size={13} weight="bold" color={S.ink2}>
-                    Scores maison, visibles seulement dans son app :
-                  </Ink>
+                    {traduire("Scores maison, visibles seulement dans son app :")}</Ink>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                     {w.keeps.map((k) => (
                       <TextChip key={k} text={k} tone="red" />
                     ))}
                   </View>
                   <Ink size={12} weight="bold" color={S.muted}>
-                    YOROI calcule son propre score de préparation avec les mesures brutes qu’il reçoit.
-                  </Ink>
+                    {traduire("YOROI calcule son propre score de préparation avec les mesures brutes qu’il reçoit.")}</Ink>
                 </View>
               ) : null}
             </View>
@@ -239,13 +235,13 @@ function BrandSheet({ w }: { w: Watch }) {
 
           <View style={{ borderRadius: 26, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, padding: 16, gap: 14 }}>
             <Ink size={18} weight="black" tight>
-              {`Activer le partage vers ${provider}`}
+              {traduire("Activer le partage vers {0}", provider)}
             </Ink>
             <Steps steps={p.steps} color={S.accent} />
             {mine ? (
               <View style={{ gap: 10 }}>
                 <SmallButton label={`Ouvrir ${provider}`} tone="light" icon="external" onPress={openSettings} />
-                <SmallButton label={syncing ? 'Synchronisation' : 'C’est fait, synchroniser'} tone="red" icon="sync" busy={syncing} onPress={done} />
+                <SmallButton label={syncing ? 'Synchronisation' : traduire('C’est fait, synchroniser')} tone="red" icon="sync" busy={syncing} onPress={done} />
               </View>
             ) : null}
           </View>
@@ -253,7 +249,7 @@ function BrandSheet({ w }: { w: Watch }) {
       )}
 
       <Ink size={11} weight="bold" color={S.muted} style={{ paddingHorizontal: 6 }}>
-        {`Source : ${w.from}. Vérifié le 9 octobre 2026. Les marques changent parfois ce qu’elles partagent.`}
+        {traduire("Source : {0}. Vérifié le 9 octobre 2026. Les marques changent parfois ce qu’elles partagent.", w.from)}
       </Ink>
     </>
   );
@@ -300,23 +296,21 @@ function ReadsCard() {
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={20} weight="black" tight>
-              Ce que YOROI lit
-            </Ink>
+              {traduire("Ce que YOROI lit")}</Ink>
             <Ink size={13} weight="medium" color={S.ink2}>
-              {`${mine.length} mesures dans ${provider}, dont ${events} alertes et événements datés, plus tes séances${ANDROID ? '' : ' et leurs tracés GPS'}.`}
+              {traduire("{0} mesures dans {1}, dont {2} alertes et événements datés, plus tes séances{3}.", mine.length, provider, events, ANDROID ? '' : ' et leurs tracés GPS')}
             </Ink>
           </View>
         </View>
         <Ink size={13} weight="medium" color={S.ink2}>
-          Une mesure n’apparaît dans Ta santé que si un appareil l’envoie. Touche une famille pour voir le détail.
-        </Ink>
+          {traduire("Une mesure n’apparaît dans Ta santé que si un appareil l’envoie. Touche une famille pour voir le détail.")}</Ink>
         {/* 14 octobre 2026 (SANTÉ CONNEXION) : le compte exact de la fenêtre du système */}
         <Ink size={13} weight="medium" color={S.ink2}>
-          {`À la connexion, ${provider} demande ${texteResume(ANDROID ? 'android' : 'ios')}. Les ${nombreAvance(ANDROID ? 'android' : 'ios')} mesures avancées (marche, alertes du cœur, sons, autres sports, nutriments) ne sont demandées que si tu touches le bouton.`}
+          {traduire("À la connexion, {0} demande {1}. Les {2} mesures avancées (marche, alertes du cœur, sons, autres sports, nutriments) ne sont demandées que si tu touches le bouton.", provider, texteResume(ANDROID ? 'android' : 'ios'), nombreAvance(ANDROID ? 'android' : 'ios'))}
         </Ink>
         {!isRunningInExpoGo ? (
           <SmallButton
-            label={done ? 'C’est à jour' : asking ? 'Autorisation' : 'Autoriser les mesures avancées'}
+            label={done ? traduire('C’est à jour') : asking ? 'Autorisation' : traduire('Autoriser les mesures avancées')}
             tone={done ? 'light' : 'red'}
             icon={done ? 'check' : 'shield'}
             busy={asking}
@@ -326,8 +320,8 @@ function ReadsCard() {
         ) : null}
         <Ink size={12} weight="bold" color={S.muted}>
           {ANDROID
-            ? 'Sur la fenêtre de Health Connect, touche Tout autoriser. Tu peux changer d’avis à tout moment dans Health Connect.'
-            : 'Sur la fenêtre d’Apple, touche Tout activer. Apple ne montre que les mesures jamais proposées. Tu peux changer d’avis dans Réglages, Santé, Accès aux données.'}
+            ? traduire('Sur la fenêtre de Health Connect, touche Tout autoriser. Tu peux changer d’avis à tout moment dans Health Connect.')
+            : traduire('Sur la fenêtre d’Apple, touche Tout activer. Apple ne montre que les mesures jamais proposées. Tu peux changer d’avis dans Réglages, Santé, Accès aux données.')}
         </Ink>
       </GlassBox>
 
@@ -337,7 +331,7 @@ function ReadsCard() {
           <Accordion
             key={f}
             title={fam.label}
-            sub={list.slice(0, 3).map((m) => m.label).join(', ') + (list.length > 3 ? ' et plus' : '')}
+            sub={list.slice(0, 3).map((m) => m.label).join(', ') + (list.length > 3 ? traduire(' et plus') : '')}
             badge={String(list.length)}
             color={fam.color}
             mark={
@@ -355,7 +349,7 @@ function ReadsCard() {
         );
       })}
 
-      <Notice text="YOROI ne lit pas ta santé reproductive ni ton activité sexuelle : ça ne sert pas à ton entraînement." />
+      <Notice text={traduire("YOROI ne lit pas ta santé reproductive ni ton activité sexuelle : ça ne sert pas à ton entraînement.")} />
     </View>
   );
 }
@@ -366,30 +360,27 @@ export default function MontreScreen() {
   const w = marque ? WATCH[String(marque)] : null;
   if (w) {
     return (
-      <DetailScreen title={w.name.split(',')[0]} subtitle="Ta montre et YOROI">
+      <DetailScreen title={w.name.split(',')[0]} subtitle={traduire("Ta montre et YOROI")}>
         <BrandSheet w={w} />
       </DetailScreen>
     );
   }
   return (
-    <DetailScreen title="Ta montre et YOROI" subtitle={ANDROID ? 'Via Health Connect' : 'Via Apple Santé'}>
+    <DetailScreen title={traduire("Ta montre et YOROI")} subtitle={ANDROID ? 'Via Health Connect' : traduire('Via Apple Santé')}>
       <GlassBox style={{ gap: 8 }}>
         <Ink size={18} weight="black" tight>
-          Comment ça marche
-        </Ink>
+          {traduire("Comment ça marche")}</Ink>
         <Ink size={14} weight="medium" color={S.ink2}>
           {ANDROID
-            ? 'Ta montre écrit ses mesures dans Health Connect, le coffre santé d’Android. YOROI les lit là, sans serveur : tout reste sur ton téléphone.'
-            : 'Ta montre écrit ses mesures dans Apple Santé, le coffre santé de l’iPhone. YOROI les lit là, sans serveur : tout reste sur ton téléphone.'}
+            ? traduire('Ta montre écrit ses mesures dans Health Connect, le coffre santé d’Android. YOROI les lit là, sans serveur : tout reste sur ton téléphone.')
+            : traduire('Ta montre écrit ses mesures dans Apple Santé, le coffre santé de l’iPhone. YOROI les lit là, sans serveur : tout reste sur ton téléphone.')}
         </Ink>
         <Ink size={14} weight="medium" color={S.ink2}>
-          Choisis ta marque pour voir ce qu’elle envoie et comment l’activer.
-        </Ink>
+          {traduire("Choisis ta marque pour voir ce qu’elle envoie et comment l’activer.")}</Ink>
       </GlassBox>
       <BrandList onOpen={(k) => router.push(`/sante/montre?marque=${k}` as any)} />
       <Ink size={11} weight="bold" color={S.muted} style={{ paddingHorizontal: 6 }}>
-        Pages d’aide officielles des marques, vérifiées le 9 octobre 2026.
-      </Ink>
+        {traduire("Pages d’aide officielles des marques, vérifiées le 9 octobre 2026.")}</Ink>
       <ReadsCard />
     </DetailScreen>
   );

@@ -48,6 +48,7 @@ import * as Notifications from 'expo-notifications';
 import { cibleDeNotification, cleReponse, deposerCible } from '@/lib/v2/notifications/toucher';
 import { OuvertureNotifications } from '@/lib/v2/notifications/OuvertureNotifications';
 import { lancerImportDiscret } from '@/lib/v2/sante/importDiscret';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // SECURITY: Notification Data Validation
@@ -173,7 +174,7 @@ function RootLayoutContent() {
     const badgeSub = DeviceEventEmitter.addListener('YOROI_BADGE_UNLOCKED', (payload: { name?: string; description?: string; xpReward?: number }) => {
       setCelebration({
         type: 'badge_unlocked',
-        title: 'BADGE DÉBLOQUÉ',
+        title: traduire('BADGE DÉBLOQUÉ'),
         subtitle: payload?.name ? `${payload.name}${payload.description ? `, ${payload.description}` : ''}` : undefined,
         xpGained: payload?.xpReward,
       });
@@ -181,7 +182,7 @@ function RootLayoutContent() {
     const challengeSub = DeviceEventEmitter.addListener('YOROI_CHALLENGE_COMPLETE', (payload: { name?: string; xpReward?: number }) => {
       setCelebration({
         type: 'challenge_complete',
-        title: 'DÉFI RELEVÉ',
+        title: traduire('DÉFI RELEVÉ'),
         subtitle: payload?.name,
         xpGained: payload?.xpReward,
       });
@@ -189,7 +190,7 @@ function RootLayoutContent() {
     const milestoneSub = DeviceEventEmitter.addListener('YOROI_MILESTONE', (payload: { name?: string; subtitle?: string; xpReward?: number }) => {
       setCelebration({
         type: 'milestone',
-        title: payload?.name || 'ÉTAPE FRANCHIE',
+        title: payload?.name || traduire('ÉTAPE FRANCHIE'),
         subtitle: payload?.subtitle,
         xpGained: payload?.xpReward,
       });

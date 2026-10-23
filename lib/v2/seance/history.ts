@@ -5,6 +5,7 @@
 import type { Training } from '@/lib/database';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type SetValue = { weight: number; reps: number };
 
@@ -108,9 +109,9 @@ export const MUSCLE_ORDER = ['PECTORAUX', 'DOS', 'ÉPAULES', 'JAMBES', 'FESSIERS
 /** Resume court d'une serie : "72,5 kg × 8" */
 export function setLabel(s: SetValue, unite: 'kg' | 'lb' = 'kg'): string {
   // 18 octobre 2026 : en livres, la charge (stockee en kilos) est montree en livres
-  const w = String(Math.round(versUnitePoids(s.weight, unite) * 100) / 100).replace('.', ',');
+  const w = String(Math.round(versUnitePoids(s.weight, unite) * 100) / 100).replace('.', DECIMAL);
   if (s.weight > 0) return `${w} ${unite} × ${s.reps}`;
-  return `${s.reps} répétitions`;
+  return traduire("{0} répétitions", s.reps);
 }
 
 /** Meilleure serie (charge la plus lourde, puis le plus de repetitions) */

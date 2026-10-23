@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import type { PartnerMission } from './partnerModel';
+import { traduire } from '@/lib/i18n/tr';
 
 const PARTNERS_KEY = '@yoroi_sparring_partners';
 
@@ -34,19 +35,19 @@ export function generateMonthlyMission(partner: {
   let targetValue: number;
 
   if (winrate < 0.3) {
-    text = `Battre ${partner.name} au moins 1 fois ce mois.`;
+    text = traduire("Battre {0} au moins 1 fois ce mois.", partner.name);
     targetType = 'wins';
     targetValue = 1;
   } else if (winrate < 0.5) {
-    text = `Gagner 2 rounds contre ${partner.name} ce mois.`;
+    text = traduire("Gagner 2 rounds contre {0} ce mois.", partner.name);
     targetType = 'wins';
     targetValue = 2;
   } else if (partner.matchCount < 5) {
-    text = `Rouler 5 fois avec ${partner.name} ce mois.`;
+    text = traduire("Rouler 5 fois avec {0} ce mois.", partner.name);
     targetType = 'rounds';
     targetValue = 5;
   } else {
-    text = `Tenir 10 rounds sans tapper contre ${partner.name}.`;
+    text = traduire("Tenir 10 rounds sans tapper contre {0}.", partner.name);
     targetType = 'no_tap';
     targetValue = 10;
   }

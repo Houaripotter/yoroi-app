@@ -8,6 +8,7 @@ import { METRIC } from '@/lib/v2/sante/metrics';
 import type { MetricKey } from '@/lib/v2/sante/metrics';
 import { WATCHES } from '@/lib/v2/sante/watches';
 import type { Watch } from '@/lib/v2/sante/watches';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface BrandConfig {
   key: string;
@@ -24,15 +25,15 @@ export interface BrandConfig {
 function intro(w: Watch, android: boolean): string {
   const p = android ? w.android : w.ios;
   const provider = android ? 'Health Connect' : 'Apple Santé';
-  if (!p.ok) return p.note ?? `${w.name} ne partage pas avec ${provider}.`;
-  const base = `${w.name.split(',')[0]} écrit ses mesures dans ${provider} depuis l’app ${p.app}, et YOROI les lit là.`;
+  if (!p.ok) return p.note ?? traduire("{0} ne partage pas avec {1}.", w.name, provider);
+  const base = traduire("{0} écrit ses mesures dans {1} depuis l’app {2}, et YOROI les lit là.", w.name.split(',')[0], provider, p.app);
   return p.note ? `${base} ${p.note}` : base;
 }
 
 function types(w: Watch): string[] {
   const keys = new Set<MetricKey>([...w.ios.keys, ...w.android.keys]);
   const labels = Array.from(keys).map((k) => METRIC[k]?.label).filter(Boolean) as string[];
-  return labels.length ? labels.slice(0, 8) : ['Selon la marque'];
+  return labels.length ? labels.slice(0, 8) : [traduire('Selon la marque')];
 }
 
 function toConfig(w: Watch): BrandConfig {
@@ -55,10 +56,10 @@ const SCALES: BrandConfig = {
   color: '#6E5A8C',
   emoji: 'B',
   types: ['Poids', 'Masse grasse', 'Masse maigre'],
-  introIOS: 'Ta balance écrit dans Apple Santé depuis son app (Renpho, Eufy, Omron, Xiaomi), et YOROI les lit là.',
-  introAndroid: 'Ta balance écrit dans Health Connect depuis son app (Renpho, Eufy, Omron), et YOROI les lit là.',
-  stepsIOS: ['Ouvre l’app de ta balance.', 'Cherche Santé ou Apple Santé dans ses réglages.', 'Active le partage du poids et de la composition corporelle.', 'Monte sur ta balance, puis tire vers le bas dans YOROI.'],
-  stepsAndroid: ['Ouvre l’app de ta balance.', 'Cherche Health Connect dans ses réglages.', 'Autorise le poids et la composition corporelle.', 'Monte sur ta balance, puis tire vers le bas dans YOROI.'],
+  introIOS: traduire('Ta balance écrit dans Apple Santé depuis son app (Renpho, Eufy, Omron, Xiaomi), et YOROI les lit là.'),
+  introAndroid: traduire('Ta balance écrit dans Health Connect depuis son app (Renpho, Eufy, Omron), et YOROI les lit là.'),
+  stepsIOS: [traduire('Ouvre l’app de ta balance.'), traduire('Cherche Santé ou Apple Santé dans ses réglages.'), traduire('Active le partage du poids et de la composition corporelle.'), traduire('Monte sur ta balance, puis tire vers le bas dans YOROI.')],
+  stepsAndroid: [traduire('Ouvre l’app de ta balance.'), traduire('Cherche Health Connect dans ses réglages.'), traduire('Autorise le poids et la composition corporelle.'), traduire('Monte sur ta balance, puis tire vers le bas dans YOROI.')],
 };
 
 const OTHERS: BrandConfig = {
@@ -66,11 +67,11 @@ const OTHERS: BrandConfig = {
   name: 'Suunto et autres marques',
   color: '#454A58',
   emoji: '+',
-  types: ['Selon la marque'],
-  introIOS: 'Toute montre, bague ou balance qui partage vers Apple Santé est compatible avec YOROI.',
-  introAndroid: 'Toute montre, bague ou balance qui partage vers Health Connect est compatible avec YOROI.',
-  stepsIOS: ['Ouvre l’app officielle de ton appareil.', 'Cherche Apple Santé dans ses réglages.', 'Active le partage des données.', 'Relie YOROI à Apple Santé.'],
-  stepsAndroid: ['Ouvre l’app officielle de ton appareil.', 'Cherche Health Connect dans ses réglages.', 'Active le partage des données.', 'Relie YOROI à Health Connect.'],
+  types: [traduire('Selon la marque')],
+  introIOS: traduire('Toute montre, bague ou balance qui partage vers Apple Santé est compatible avec YOROI.'),
+  introAndroid: traduire('Toute montre, bague ou balance qui partage vers Health Connect est compatible avec YOROI.'),
+  stepsIOS: [traduire('Ouvre l’app officielle de ton appareil.'), traduire('Cherche Apple Santé dans ses réglages.'), traduire('Active le partage des données.'), traduire('Relie YOROI à Apple Santé.')],
+  stepsAndroid: [traduire('Ouvre l’app officielle de ton appareil.'), traduire('Cherche Health Connect dans ses réglages.'), traduire('Active le partage des données.'), traduire('Relie YOROI à Health Connect.')],
 };
 
 const byKey = (k: string) => toConfig(WATCHES.find((w) => w.key === k)!);
@@ -110,24 +111,24 @@ export const SOURCE_DISPLAY: Record<string, { name: string; color: string; emoji
 };
 
 export const DATA_TYPE_LABELS: Record<string, string> = {
-  steps: 'Pas',
-  calories_active: 'Calories',
-  calories_basal: 'Calories repos',
-  heart_rate: 'Cœur',
-  heart_rate_resting: 'Cœur au repos',
-  hrv: 'Variabilité',
-  sleep: 'Sommeil',
+  steps: traduire('Pas'),
+  calories_active: traduire('Calories'),
+  calories_basal: traduire('Calories repos'),
+  heart_rate: traduire('Cœur'),
+  heart_rate_resting: traduire('Cœur au repos'),
+  hrv: traduire('Variabilité'),
+  sleep: traduire('Sommeil'),
   distance: 'Distance',
   vo2max: 'VO2 max',
-  spo2: 'Oxygène',
+  spo2: traduire('Oxygène'),
   body_fat: 'Masse grasse',
   lean_mass: 'Masse maigre',
   weight: 'Poids',
   respiratory_rate: 'Respiration',
-  body_temp: 'Température',
+  body_temp: traduire('Température'),
   blood_pressure_systolic: 'Tension',
-  blood_glucose: 'Glycémie',
-  floors_climbed: 'Étages',
+  blood_glucose: traduire('Glycémie'),
+  floors_climbed: traduire('Étages'),
   mindful_minutes: 'Pleine conscience',
 };
 

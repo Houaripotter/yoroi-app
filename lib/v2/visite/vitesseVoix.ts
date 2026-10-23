@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AudioPlayer } from 'expo-audio';
+import { DECIMAL } from '@/lib/i18n/tr';
 
 /** Commence par @yoroi_visite_ : gardee pour de vrai, meme pendant l'exemple */
 export const CLE_VITESSE_VOIX = '@yoroi_visite_vitesse_voix';
@@ -30,7 +31,7 @@ export function vitesseSuivante(v: Vitesse): Vitesse {
 
 /** « 1x », « 1,5x », « 2x » */
 export function libelleVitesse(v: Vitesse): string {
-  return `${String(v).replace('.', ',')}x`;
+  return `${String(v).replace('.', DECIMAL)}x`;
 }
 
 export function vitesseCourante(): Vitesse {

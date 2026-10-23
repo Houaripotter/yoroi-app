@@ -15,6 +15,7 @@ import { usePlanPoids } from '@/lib/v2/pesee/usePlanPoids';
 import { CourbePoids, POIDS } from '../charts/CourbePoids';
 import { SceneCourbe, sceneDuFond } from '../charts/FondCourbe';
 import { useEspace } from '@/lib/v2/espace/useEspace';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Couleur du poids dans toute l'app (vague 32 : le violet du degrade) */
 export const WEIGHT_COLOR = POIDS.c2;
@@ -76,7 +77,7 @@ export function WeightTrendChart({ points, goal = null, height = 300, onScrub, o
         onScrub(s && !s.point.week ? byDate.get(s.point.date) ?? null : null);
       }}
       onPress={onPress}
-      label="Courbe de ton poids"
+      label={traduire("Courbe de ton poids")}
       surScene={!!scene}
     />
   );

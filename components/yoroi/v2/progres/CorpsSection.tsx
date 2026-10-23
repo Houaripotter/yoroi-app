@@ -30,6 +30,7 @@ import { CompositionCard, KeyMassCards } from './Biomarkers';
 import type { CompoKey } from '@/lib/v2/progres/composition';
 import { VIEW_FIELDS, viewSeries } from '@/lib/v2/progres/measures';
 import { dayLong, dayShort, num, sinceText, todayIso } from '@/lib/v2/progres/format';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const SERIES_COLORS = [...SERIES_ORDER];
 
@@ -59,14 +60,14 @@ const ROWS: { key: CompoKey; label: string; color: string; unitWord: string }[] 
 export function deltaWords(diff: number, unitOne: string, unitMany: string, eps = 0.05): string {
   if (Math.abs(diff) < eps) return 'stable';
   const abs = Math.abs(diff);
-  return `${num(abs, 1)} ${abs >= 2 ? unitMany : unitOne} de ${diff < 0 ? 'moins' : 'plus'}`;
+  return traduire("{0} {1} de {2}", num(abs, 1), abs >= 2 ? unitMany : unitOne, diff < 0 ? 'moins' : 'plus');
 }
 
 export function cmDelta(diff: number): string {
   const abs = Math.abs(diff);
   if (abs < 0.25) return 'stable';
-  if (abs < 1) return `${Math.round(abs * 10)} mm de ${diff < 0 ? 'moins' : 'plus'}`;
-  return `${num(abs, 1)} cm de ${diff < 0 ? 'moins' : 'plus'}`;
+  if (abs < 1) return traduire("{0} mm de {1}", Math.round(abs * 10), diff < 0 ? 'moins' : 'plus');
+  return traduire("{0} cm de {1}", num(abs, 1), diff < 0 ? 'moins' : 'plus');
 }
 
 /**
@@ -112,8 +113,7 @@ export function MiniMetricRow({
       {open ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
           <Ink size={13} weight="extraBold" color={c.accent}>
-            Détail
-          </Ink>
+            {traduire("Détail")}</Ink>
           <Chevron color={c.accent} size={12} />
         </View>
       ) : null}
@@ -122,7 +122,7 @@ export function MiniMetricRow({
   return (
     <View style={{ paddingVertical: 14, borderTopWidth: first ? 0 : 1.5, borderColor: c.border, gap: 6 }}>
       {open ? (
-        <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${label}, ${valueText(last.value)}, voir le détail`} hitSlop={6} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+        <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1}, voir le détail", label, valueText(last.value))} hitSlop={6} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
           {head}
         </Pressable>
       ) : (
@@ -133,7 +133,7 @@ export function MiniMetricRow({
           {valueText(shown.value)}
         </Ink>
         <Ink size={14} weight="bold" color={scrub ? c.ink : c.textSecondary} style={{ flexShrink: 1 }}>
-          {scrub ? dayShort(scrub.date) : points.length < 2 ? 'une seule mesure' : deltaText(diff)}
+          {scrub ? dayShort(scrub.date) : points.length < 2 ? traduire('une seule mesure') : deltaText(diff)}
         </Ink>
       </View>
       {points.length >= 2 ? (
@@ -141,8 +141,7 @@ export function MiniMetricRow({
       ) : (
         <Pressable onPress={open} disabled={!open} style={{ height: 44, justifyContent: 'center' }}>
           <Ink size={13} color={c.textSecondary}>
-            La courbe se dessine dès la deuxième mesure.
-          </Ink>
+            {traduire("La courbe se dessine dès la deuxième mesure.")}</Ink>
         </Pressable>
       )}
     </View>
@@ -229,7 +228,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       {/* Derniere mesure : tendance, barre de composition, biomarqueurs */}
       {showCorps && lastPoint ? (
         <View style={{ paddingHorizontal: GUTTER }}>
-          <SectionHead title="Ta composition" aside="Chaque mesure" onPress={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
+          <SectionHead title={traduire("Ta composition")} aside={traduire("Chaque mesure")} onPress={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
           <CompositionCard point={lastPoint} trend={trend} style={{ marginTop: 10 }} onPress={() => router.push({ pathname: '/composition-detail', params: { mode: 'mesure' } } as any)} />
           <KeyMassCards masses={masses} style={{ marginTop: 10 }} onPress={(k) => router.push({ pathname: '/composition-detail', params: { metric: k === 'fatKg' ? 'fat' : 'muscleKg' } } as any)} />
         </View>
@@ -242,9 +241,9 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
           <ExamplePreview
             flush
             style={{ marginTop: 12 }}
-            title="Ta composition, courbe par courbe"
-            text="Masse grasse, muscle, eau : si ta balance les donne, note-les avec ta pesée. Chaque courbe a sa propre échelle pour bien voir ce qui bouge."
-            plusHint="Touche + pour ta composition"
+            title={traduire("Ta composition, courbe par courbe")}
+            text={traduire("Masse grasse, muscle, eau : si ta balance les donne, note-les avec ta pesée. Chaque courbe a sa propre échelle pour bien voir ce qui bouge.")}
+            plusHint={traduire("Touche + pour ta composition")}
           >
             {ROWS.map((r, i) => (
               <CompoRow key={r.key} first={i === 0} label={r.label} color={r.color} points={sample[r.key as 'fat' | 'muscle' | 'water']} unitWord={r.unitWord} />
@@ -254,9 +253,9 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       ) : hasCompo ? (
         <View>
           <View style={{ paddingHorizontal: GUTTER, gap: 6 }}>
-            <SectionHead title="Tes courbes" aside="Le détail" onPress={() => router.push('/composition-detail' as any)} />
+            <SectionHead title={traduire("Tes courbes")} aside={traduire("Le détail")} onPress={() => router.push('/composition-detail' as any)} />
             <Ink size={14} color={c.textSecondary} style={{ marginTop: -4 }}>
-              {`Mesurées par ta balance, ${periodPhrase(period)}. Touche une carte pour son détail.`}
+              {traduire("Mesurées par ta balance, {0}. Touche une carte pour son détail.", periodPhrase(period))}
             </Ink>
             <PeriodSwitch value={period} onChange={setPeriod} options={SHORT_PERIODS} style={{ marginTop: 6 }} />
           </View>
@@ -267,14 +266,14 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       {/* Mensurations */}
       {showCorps ? (
       <View style={{ paddingHorizontal: GUTTER }}>
-        <SectionHead title="Mensurations" aside={silhouette.items.length ? 'L’évolution' : undefined} onPress={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
+        <SectionHead title="Mensurations" aside={silhouette.items.length ? traduire('L’évolution') : undefined} onPress={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
         {!measures.loading && silhouette.items.length === 0 ? (
           <ExamplePreview
             flush
             style={{ marginTop: 12 }}
-            title="Prends tes mesures une fois par mois"
-            text="Tour de taille, bras, cuisses : le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle."
-            plusHint="Touche + pour tes mensurations"
+            title={traduire("Prends tes mesures une fois par mois")}
+            text={traduire("Tour de taille, bras, cuisses : le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle.")}
+            plusHint={traduire("Touche + pour tes mensurations")}
           >
             <Silhouette items={SAMPLE_SILHOUETTE} height={280} />
           </ExamplePreview>
@@ -309,35 +308,34 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
                 setVeiled((v) => !v);
               }}
               accessibilityRole="button"
-              accessibilityLabel={veiled ? 'Afficher les photos' : 'Flouter les photos'}
+              accessibilityLabel={veiled ? traduire('Afficher les photos') : traduire('Flouter les photos')}
               style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
             >
               <EyeIcon color={c.textSecondary} off={!veiled} />
             </Pressable>
           ) : null}
           {recent.length ? (
-            <Pressable onPress={() => router.push('/photos' as any)} accessibilityRole="button" accessibilityLabel="Toutes tes photos" hitSlop={8} style={{ minHeight: 44, justifyContent: 'center', paddingLeft: 6 }}>
+            <Pressable onPress={() => router.push('/photos' as any)} accessibilityRole="button" accessibilityLabel={traduire("Toutes tes photos")} hitSlop={8} style={{ minHeight: 44, justifyContent: 'center', paddingLeft: 6 }}>
               <Ink size={13} weight="bold" color={c.accent}>
-                Toutes
-              </Ink>
+                {traduire("Toutes")}</Ink>
             </Pressable>
           ) : null}
         </View>
         {!photos.loading && recent.length === 0 ? (
           <EmptyInvite
             style={{ marginHorizontal: GUTTER, marginTop: 12 }}
-            title="Une photo par mois, même cadrage"
-            text="Tes photos restent sur ton téléphone. Dans quelques semaines, tu verras ta transformation côte à côte."
-            plusHint="Touche + pour ta première photo"
+            title={traduire("Une photo par mois, même cadrage")}
+            text={traduire("Tes photos restent sur ton téléphone. Dans quelques semaines, tu verras ta transformation côte à côte.")}
+            plusHint={traduire("Touche + pour ta première photo")}
           />
         ) : (
           <>
             <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 2 }}>
-              {veiled ? 'Floutées ici, touche l’œil pour les voir' : `${sortedPhotos.length} photo${sortedPhotos.length > 1 ? 's' : ''} dans ton coffre`}
+              {veiled ? traduire('Floutées ici, touche l’œil pour les voir') : traduirePluriel(sortedPhotos.length, sortedPhotos.length > 1, "{0} photo dans ton coffre", "{0} photos dans ton coffre", sortedPhotos.length)}
             </Ink>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER, gap: 10, paddingTop: 14 }}>
               {recent.map((p) => (
-                <Pressable key={p.id} onPress={() => router.push('/photos' as any)} accessibilityRole="button" accessibilityLabel={`Photo du ${dayLong(p.date.slice(0, 10))}`} style={{ width: 96, gap: 6 }}>
+                <Pressable key={p.id} onPress={() => router.push('/photos' as any)} accessibilityRole="button" accessibilityLabel={traduire("Photo du {0}", dayLong(p.date.slice(0, 10)))} style={{ width: 96, gap: 6 }}>
                   <Image source={{ uri: p.file_uri }} blurRadius={veiled ? 22 : 0} style={{ width: 96, height: 128, borderRadius: 18, backgroundColor: c.fillSubtle }} resizeMode="cover" />
                   <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>
                     {dayShort(p.date.slice(0, 10))}
@@ -353,7 +351,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
                   router.push('/transformation' as any);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Voir ta transformation, avant et après"
+                accessibilityLabel={traduire("Voir ta transformation, avant et après")}
                 style={({ pressed }) => ({ marginHorizontal: GUTTER, marginTop: 16, borderRadius: 24, overflow: 'hidden', backgroundColor: c.ink, opacity: pressed ? 0.92 : 1 })}
               >
                 <View style={{ flexDirection: 'row', height: 150 }}>
@@ -364,10 +362,9 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
                 <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Ink size={17} weight="extraBold" color={c.onAccent}>
-                      Ta transformation
-                    </Ink>
+                      {traduire("Ta transformation")}</Ink>
                     <Ink size={13} color={c.onDarkSecondary}>
-                      {`${dayShort(firstPhoto.date.slice(0, 10), true)} et ${dayShort(lastPhoto.date.slice(0, 10), true)}, côte à côte`}
+                      {traduire("{0} et {1}, côte à côte", dayShort(firstPhoto.date.slice(0, 10), true), dayShort(lastPhoto.date.slice(0, 10), true))}
                     </Ink>
                   </View>
                   <View style={{ height: 40, paddingHorizontal: 14, borderRadius: 14, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
@@ -386,7 +383,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       {/* Historique corporel : chaque mesure, une par une */}
       {showCorps ? (
         <View style={{ paddingHorizontal: GUTTER - 4 }}>
-          <FeatureList title="Ton historique" items={[{ label: 'Ton corps, mesure par mesure', sub: 'poids, graisse, muscle, eau, mensurations', href: '/body-history' }]} />
+          <FeatureList title={traduire("Ton historique")} items={[{ label: traduire('Ton corps, mesure par mesure'), sub: traduire('poids, graisse, muscle, eau, mensurations'), href: '/body-history' }]} />
         </View>
       ) : null}
     </View>

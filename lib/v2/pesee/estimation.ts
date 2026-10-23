@@ -22,6 +22,7 @@
  */
 
 /** Perte : 0,5 a 1 % du poids par semaine (Helms et al. 2014) */
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export const PERTE_MIN = 0.005;
 export const PERTE_MAX = 0.01;
 /** Prise : 0,25 a 0,5 % du poids par semaine (Iraki et al. 2019) */
@@ -186,12 +187,12 @@ export function semainesAuRythme(current: number, target: number, kgParSemaine: 
 
 // ===== Textes =====
 
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MOIS_COURT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 const dateDe = (iso: string) => new Date(`${iso}T12:00:00`);
 const jourDe = (d: Date) => (d.getDate() === 1 ? '1er' : String(d.getDate()));
-const partDe = (d: Date) => (d.getDate() <= 10 ? 'début' : d.getDate() <= 20 ? 'mi' : 'fin');
+const partDe = (d: Date) => (d.getDate() <= 10 ? traduire('début') : d.getDate() <= 20 ? 'mi' : 'fin');
 const partMois = (d: Date, mois: string[]) => {
   const p = partDe(d);
   return p === 'mi' ? `mi-${mois[d.getMonth()]}` : `${p} ${mois[d.getMonth()]}`;
@@ -210,14 +211,14 @@ export function fourchetteTexte(earliest: string, latest: string, today: string 
   const finAn = anB !== anT ? ` ${anB}` : '';
   const debutAn = anA !== anB && anA !== anT ? ` ${anA}` : '';
   const ecart = Math.round((b.getTime() - a.getTime()) / 86400000);
-  if (ecart < 4) return `vers le ${jourDe(b)} ${MOIS[b.getMonth()]}${finAn}`;
+  if (ecart < 4) return traduire("vers le {0} {1}{2}", jourDe(b), MOIS[b.getMonth()], finAn);
   if (ecart > 42) {
     const pa = partMois(a, MOIS);
     const pb = partMois(b, MOIS);
-    return pa === pb && !debutAn ? `vers ${pb}${finAn}` : `entre ${pa}${debutAn} et ${pb}${finAn}`;
+    return pa === pb && !debutAn ? `vers ${pb}${finAn}` : traduire("entre {0}{1} et {2}{3}", pa, debutAn, pb, finAn);
   }
-  if (a.getMonth() === b.getMonth() && anA === anB) return `entre le ${jourDe(a)} et le ${jourDe(b)} ${MOIS[b.getMonth()]}${finAn}`;
-  return `entre le ${jourDe(a)} ${MOIS[a.getMonth()]}${debutAn} et le ${jourDe(b)} ${MOIS[b.getMonth()]}${finAn}`;
+  if (a.getMonth() === b.getMonth() && anA === anB) return traduire("entre le {0} et le {1} {2}{3}", jourDe(a), jourDe(b), MOIS[b.getMonth()], finAn);
+  return traduire("entre le {0} {1}{2} et le {3} {4}{5}", jourDe(a), MOIS[a.getMonth()], debutAn, jourDe(b), MOIS[b.getMonth()], finAn);
 }
 
 /** Version courte pour le bas d'une courbe : « 15 au 30 déc. », « mi-janv. à fin mars » */
@@ -226,9 +227,9 @@ export function fourchetteCourte(earliest: string, latest: string): string {
   const b = dateDe(latest);
   const ecart = Math.round((b.getTime() - a.getTime()) / 86400000);
   if (ecart < 4) return `${jourDe(b)} ${MOIS_COURT[b.getMonth()]}`;
-  if (ecart > 42) return `${partMois(a, MOIS_COURT)} à ${partMois(b, MOIS_COURT)}`;
-  if (a.getMonth() === b.getMonth()) return `${jourDe(a)} au ${jourDe(b)} ${MOIS_COURT[b.getMonth()]}`;
-  return `${jourDe(a)} ${MOIS_COURT[a.getMonth()]} au ${jourDe(b)} ${MOIS_COURT[b.getMonth()]}`;
+  if (ecart > 42) return traduire("{0} à {1}", partMois(a, MOIS_COURT), partMois(b, MOIS_COURT));
+  if (a.getMonth() === b.getMonth()) return traduire("{0} au {1} {2}", jourDe(a), jourDe(b), MOIS_COURT[b.getMonth()]);
+  return traduire("{0} {1} au {2} {3}", jourDe(a), MOIS_COURT[a.getMonth()], jourDe(b), MOIS_COURT[b.getMonth()]);
 }
 
 /**
@@ -241,63 +242,63 @@ export function fourchetteDates(earliest: string, latest: string, today: string 
   const t = dateDe(today);
   const an = (d: Date) => (d.getTime() - t.getTime() > 330 * 86400000 ? ` ${d.getFullYear()}` : '');
   const ecart = Math.round((b.getTime() - a.getTime()) / 86400000);
-  if (ecart < 4) return `le ${jourDe(b)} ${MOIS_COURT[b.getMonth()]}${an(b)}`;
-  if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return `du ${jourDe(a)} au ${jourDe(b)} ${MOIS_COURT[b.getMonth()]}${an(b)}`;
-  return `du ${jourDe(a)} ${MOIS_COURT[a.getMonth()]}${an(a)} au ${jourDe(b)} ${MOIS_COURT[b.getMonth()]}${an(b)}`;
+  if (ecart < 4) return traduire("le {0} {1}{2}", jourDe(b), MOIS_COURT[b.getMonth()], an(b));
+  if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return traduire("du {0} au {1} {2}{3}", jourDe(a), jourDe(b), MOIS_COURT[b.getMonth()], an(b));
+  return traduire("du {0} {1}{2} au {3} {4}{5}", jourDe(a), MOIS_COURT[a.getMonth()], an(a), jourDe(b), MOIS_COURT[b.getMonth()], an(b));
 }
 
-const pctTexte = (p: number) => String(Math.round(p * 10000) / 100).replace('.', ',');
+const pctTexte = (p: number) => String(Math.round(p * 10000) / 100).replace('.', DECIMAL);
 
 /** « 0,5 à 1 % de ton poids par semaine » */
 export function rythmeTexte(f: Pick<Fourchette, 'pctMin' | 'pctMax'>): string {
-  return `${pctTexte(f.pctMin)} à ${pctTexte(f.pctMax)} % de ton poids par semaine`;
+  return traduire("{0} à {1} % de ton poids par semaine", pctTexte(f.pctMin), pctTexte(f.pctMax));
 }
 
 /** Pourquoi ce rythme, en une phrase */
 export function pourquoiTexte(f: Pick<Fourchette, 'losing' | 'pctMin' | 'pctMax' | 'recompo'>): string {
-  if (f.losing && f.recompo) return `Calculé à ${rythmeTexte(f)}, une baisse lente qui laisse au muscle le temps de se construire.`;
+  if (f.losing && f.recompo) return traduire("Calculé à {0}, une baisse lente qui laisse au muscle le temps de se construire.", rythmeTexte(f));
   return f.losing
-    ? `Calculé à ${rythmeTexte(f)}, le rythme conseillé aux sportifs pour garder leur muscle, en ralentissant près du but.`
-    : `Calculé à ${rythmeTexte(f)}, une prise lente qui limite le gras, de plus en plus lente avec le temps.`;
+    ? traduire("Calculé à {0}, le rythme conseillé aux sportifs pour garder leur muscle, en ralentissant près du but.", rythmeTexte(f))
+    : traduire("Calculé à {0}, une prise lente qui limite le gras, de plus en plus lente avec le temps.", rythmeTexte(f));
 }
 
 /** Le role des seances, en une phrase simple et honnete */
 export function seancesTexte(sessions: number | null): string {
-  if (!sessions) return 'Tes séances aident, mais c’est surtout ton alimentation qui fait la différence.';
-  const s = `${sessions} ${sessions > 1 ? 'séances' : 'séance'}`;
+  if (!sessions) return traduire('Tes séances aident, mais c’est surtout ton alimentation qui fait la différence.');
+  const s = `${sessions} ${sessions > 1 ? traduire('séances') : traduire('séance')}`;
   return sessions >= 3
-    ? `Avec ${s} par semaine, tu mets le rythme de ton côté, mais c’est surtout ton alimentation qui fait la différence.`
-    : `Avec ${s} par semaine, la fourchette est un peu plus prudente. Tes séances aident, mais c’est surtout ton alimentation qui fait la différence.`;
+    ? traduire("Avec {0} par semaine, tu mets le rythme de ton côté, mais c’est surtout ton alimentation qui fait la différence.", s)
+    : traduire("Avec {0} par semaine, la fourchette est un peu plus prudente. Tes séances aident, mais c’est surtout ton alimentation qui fait la différence.", s);
 }
 
-export const PAS_UNE_PROMESSE = 'Une estimation, pas une promesse.';
+export const PAS_UNE_PROMESSE = traduire('Une estimation, pas une promesse.');
 
-const kgTexte = (v: number) => String(Math.round(v * 10) / 10).replace('.', ',');
+const kgTexte = (v: number) => String(Math.round(v * 10) / 10).replace('.', DECIMAL);
 
 /** Titre et texte quand aucune date n'est annoncee (sans jugement, sans conseil medical) */
 export function sansDateTexte(e: Estimation, target: number, today: string = isoDe(new Date())): { titre: string; texte: string; cap: number | null } | null {
   if (e.kind === 'imc_bas') {
     return {
-      titre: e.cap != null ? `Visons d’abord ${kgTexte(e.cap)} kg` : 'Pas de date pour ce cap',
+      titre: e.cap != null ? `Visons d’abord ${kgTexte(e.cap)} kg` : traduire('Pas de date pour ce cap'),
       texte: e.cap != null && e.capRange
-        ? `À ${kgTexte(target)} kg, ton IMC passerait sous 18,5, sous les repères de santé habituels. On préfère ne pas te donner de date. Un premier cap à ${kgTexte(e.cap)} kg serait atteignable ${fourchetteTexte(e.capRange.earliest, e.capRange.latest, today)}.`
-        : `À ${kgTexte(target)} kg, ton IMC passerait sous 18,5, sous les repères de santé habituels. On préfère ne pas te donner de date pour descendre plus bas.`,
+        ? traduire("À {0} kg, ton IMC passerait sous 18,5, sous les repères de santé habituels. On préfère ne pas te donner de date. Un premier cap à {1} kg serait atteignable {2}.", kgTexte(target), kgTexte(e.cap), fourchetteTexte(e.capRange.earliest, e.capRange.latest, today))
+        : traduire("À {0} kg, ton IMC passerait sous 18,5, sous les repères de santé habituels. On préfère ne pas te donner de date pour descendre plus bas.", kgTexte(target)),
       cap: e.cap,
     };
   }
   if (e.kind === 'imc_haut') {
     return {
-      titre: e.cap != null ? `Visons d’abord ${kgTexte(e.cap)} kg` : 'Pas de date pour ce cap',
+      titre: e.cap != null ? `Visons d’abord ${kgTexte(e.cap)} kg` : traduire('Pas de date pour ce cap'),
       texte: e.cap != null && e.capRange
-        ? `Prendre autant de muscle se construit sur des années, et une date serait de la fiction. Un premier cap à ${kgTexte(e.cap)} kg serait atteignable ${fourchetteTexte(e.capRange.earliest, e.capRange.latest, today)}.`
-        : 'Prendre autant de muscle se construit sur des années, et une date serait de la fiction.',
+        ? traduire("Prendre autant de muscle se construit sur des années, et une date serait de la fiction. Un premier cap à {0} kg serait atteignable {1}.", kgTexte(e.cap), fourchetteTexte(e.capRange.earliest, e.capRange.latest, today))
+        : traduire('Prendre autant de muscle se construit sur des années, et une date serait de la fiction.'),
       cap: e.cap,
     };
   }
   if (e.kind === 'trop_loin') {
     return {
       titre: `Visons d’abord ${kgTexte(e.cap)} kg`,
-      texte: `Ton cap demande plus d’un an à un rythme qui garde ton muscle. Une étape à la fois : ${kgTexte(e.cap)} kg serait atteignable ${e.capRange ? fourchetteTexte(e.capRange.earliest, e.capRange.latest, today) : 'dans quelques mois'}.`,
+      texte: traduire("Ton cap demande plus d’un an à un rythme qui garde ton muscle. Une étape à la fois : {0} kg serait atteignable {1}.", kgTexte(e.cap), e.capRange ? fourchetteTexte(e.capRange.earliest, e.capRange.latest, today) : 'dans quelques mois'),
       cap: e.cap,
     };
   }

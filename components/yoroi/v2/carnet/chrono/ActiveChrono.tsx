@@ -16,6 +16,7 @@ import type { Phase } from '@/lib/v2/carnet/chrono';
 import type { ChronoEngine, ChronoPhase } from '@/lib/v2/carnet/useChronoEngine';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** Seuil des dernieres secondes en rouge : 10 s pour un vrai round, 3 s pour un effort court */
 export function finalThreshold(p: ChronoPhase): number {
@@ -45,13 +46,13 @@ export function bigTime(seconds: number, countUp?: boolean): string {
 
 function kindLabel(engine: ChronoEngine, key: Phase): string {
   const p = engine.phase;
-  if (engine.status === 'finished') return 'Terminé';
-  if (engine.status === 'holding') return 'Round terminé';
+  if (engine.status === 'finished') return traduire('Terminé');
+  if (engine.status === 'holding') return traduire('Round terminé');
   if (!p) return '';
-  if (key === 'final') return `${engine.remaining} dernière${engine.remaining > 1 ? 's' : ''} seconde${engine.remaining > 1 ? 's' : ''}`;
-  if (key === 'prepa' && p.kind === 'repos') return 'Prépare-toi, ça repart';
-  if (p.kind === 'prepa') return 'Préparation';
-  if (p.kind === 'repos') return 'Repos';
+  if (key === 'final') return traduirePluriel(engine.remaining, engine.remaining > 1, "{0} dernière seconde", "{0} dernières secondes", engine.remaining);
+  if (key === 'prepa' && p.kind === 'repos') return traduire('Prépare-toi, ça repart');
+  if (p.kind === 'prepa') return traduire('Préparation');
+  if (p.kind === 'repos') return traduire('Repos');
   return engine.status === 'paused' ? 'En pause' : 'Effort';
 }
 
@@ -91,19 +92,19 @@ export function ActiveChrono({ engine, name, focusMode, onToggleFocus, onStop, c
   const running = engine.status === 'running';
   const ringSize = Math.min(width - 32, height * (focusMode ? 0.56 : height < 720 ? 0.36 : 0.42), 420);
   const time = engine.status === 'finished' && !p?.countUp ? '0:00' : bigTime(engine.display, p?.countUp);
-  const under = p && !p.countUp && engine.display < 60 && engine.status !== 'finished' ? 'secondes' : p?.countUp ? `sur ${bigTime(p.duration, true)}` : undefined;
+  const under = p && !p.countUp && engine.display < 60 && engine.status !== 'finished' ? traduire('secondes') : p?.countUp ? traduire("sur {0}", bigTime(p.duration, true)) : undefined;
   const beat = running && !!p && !p.countUp && engine.remaining > 0 && engine.remaining <= 3;
 
-  const next = nextOverride !== undefined ? nextOverride : engine.next ? engine.next.short : engine.status === 'finished' ? null : 'Fin du chrono';
+  const next = nextOverride !== undefined ? nextOverride : engine.next ? engine.next.short : engine.status === 'finished' ? null : traduire('Fin du chrono');
 
   const askStop = () => {
     if (!confirmStop || engine.status === 'finished') {
       onStop();
       return;
     }
-    appAlert('Arrêter le chrono ?', 'Le chrono repart de zéro.', [
+    appAlert(traduire('Arrêter le chrono ?'), traduire('Le chrono repart de zéro.'), [
       { text: 'Continuer', style: 'cancel' },
-      { text: 'Arrêter', style: 'destructive', onPress: onStop },
+      { text: traduire('Arrêter'), style: 'destructive', onPress: onStop },
     ]);
   };
 
@@ -112,7 +113,7 @@ export function ActiveChrono({ engine, name, focusMode, onToggleFocus, onStop, c
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
         <View style={{ width: 44 }} />
         <Ink size={15} weight="extraBold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1, textAlign: 'center' }}>{name}</Ink>
-        {onToggleFocus ? <IconBtn name="eye" label={focusMode ? 'Quitter le mode épuré' : 'Mode épuré : juste le temps'} onPress={onToggleFocus} tone={focusMode ? 'ink' : 'glass'} /> : <View style={{ width: 44 }} />}
+        {onToggleFocus ? <IconBtn name="eye" label={focusMode ? traduire('Quitter le mode épuré') : traduire('Mode épuré : juste le temps')} onPress={onToggleFocus} tone={focusMode ? 'ink' : 'glass'} /> : <View style={{ width: 44 }} />}
       </View>
 
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'space-evenly', paddingVertical: 8 }}>
@@ -126,8 +127,8 @@ export function ActiveChrono({ engine, name, focusMode, onToggleFocus, onStop, c
 
         {adjust && (running || engine.status === 'paused') ? (
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <AdjustBtn icon="minus" text={adjust.step ?? '15 s'} label={`Moins ${adjust.step ?? '15 s'} de repos`} onPress={adjust.onMinus} />
-            <AdjustBtn icon="plus" text={adjust.step ?? '15 s'} label={`Plus ${adjust.step ?? '15 s'} de repos`} onPress={adjust.onPlus} />
+            <AdjustBtn icon="minus" text={adjust.step ?? '15 s'} label={traduire("Moins {0} de repos", adjust.step ?? '15 s')} onPress={adjust.onMinus} />
+            <AdjustBtn icon="plus" text={adjust.step ?? '15 s'} label={traduire("Plus {0} de repos", adjust.step ?? '15 s')} onPress={adjust.onPlus} />
           </View>
         ) : null}
 

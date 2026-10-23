@@ -23,6 +23,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { getSportName } from '@/lib/sports';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type ClubOption = { id: string; name: string; type: string; logoUri?: string | null };
 const DEFAULT_CLUBS: ClubOption[] = [
@@ -99,12 +100,12 @@ export default function SportScreen() {
     if (!editing) return;
     const club = options.find((o) => o.id === clubId);
     if (!club) {
-      appAlert('Choisis un club', 'Sélectionne le club ou l’activité de ce créneau.');
+      appAlert(traduire('Choisis un club'), traduire('Sélectionne le club ou l’activité de ce créneau.'));
       return;
     }
     const cur = (routine[editing] || []).filter((b) => b.activity !== 'REPOS');
     if (cur.length >= 3) {
-      appAlert('Trois créneaux au plus', 'Tu ne peux pas ajouter plus de trois entraînements par jour.');
+      appAlert(traduire('Trois créneaux au plus'), traduire('Tu ne peux pas ajouter plus de trois entraînements par jour.'));
       return;
     }
     tap('medium');
@@ -131,16 +132,16 @@ export default function SportScreen() {
   const validateToday = async () => {
     const first = todayBlocks[0];
     if (!todayActive || !first) {
-      appAlert('Aucune activité', "Rien n'est prévu aujourd'hui dans ta semaine type.");
+      appAlert(traduire('Aucune activité'), traduire("Rien n'est prévu aujourd'hui dans ta semaine type."));
       return;
     }
     const club = options.find((o) => o.name === first.activity);
     const sport = sportOf(first);
     const type: WorkoutType | null = club && ['gracie_barra', 'basic_fit', 'running'].includes(club.type) ? (club.type as WorkoutType) : sport === 'jjb' ? 'gracie_barra' : sport === 'musculation' ? 'basic_fit' : sport === 'running' ? 'running' : null;
     if (!type) {
-      appAlert('Activité non reconnue', 'Note plutôt ta séance complète, elle comptera dans ton suivi.', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Noter la séance', onPress: () => router.push('/seance' as any) },
+      appAlert(traduire('Activité non reconnue'), traduire('Note plutôt ta séance complète, elle comptera dans ton suivi.'), [
+        { text: traduire('Annuler'), style: 'cancel' },
+        { text: traduire('Noter la séance'), onPress: () => router.push('/seance' as any) },
       ]);
       return;
     }
@@ -148,19 +149,19 @@ export default function SportScreen() {
       const day = isoLocal(new Date());
       const all = await getAllWorkouts();
       if (all.some((w) => w.date === day)) {
-        appAlert('Déjà validé', "Tu as déjà validé une séance aujourd'hui.");
+        appAlert(traduire('Déjà validé'), traduire("Tu as déjà validé une séance aujourd'hui."));
         return;
       }
       await addWorkout({ date: day, type } as any);
       tap('success');
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
-      appAlert('Validé', `Séance ${first.activity} validée pour aujourd'hui. Pour garder le détail, note aussi la séance complète.`, [
-        { text: 'Plus tard', style: 'cancel' },
-        { text: 'Noter la séance', onPress: () => router.push('/seance' as any) },
+      appAlert(traduire('Validé'), traduire("Séance {0} validée pour aujourd'hui. Pour garder le détail, note aussi la séance complète.", first.activity), [
+        { text: traduire('Plus tard'), style: 'cancel' },
+        { text: traduire('Noter la séance'), onPress: () => router.push('/seance' as any) },
       ]);
     } catch (error) {
       logger.error('Erreur validation:', error);
-      appAlert('Validation impossible', 'Réessaie dans un instant.');
+      appAlert(traduire('Validation impossible'), traduire('Réessaie dans un instant.'));
     }
   };
 
@@ -173,13 +174,13 @@ export default function SportScreen() {
       setConvertedAt(at);
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       tap('success');
-      appAlert('Planning mis à jour', r.created ? `${r.created} créneau${r.created > 1 ? 'x' : ''} ajouté${r.created > 1 ? 's' : ''} au planning${r.skipped ? `, ${r.skipped} déjà présent${r.skipped > 1 ? 's' : ''}` : ''}.` : 'Tous tes créneaux étaient déjà dans le planning.', [
-        { text: 'Rester ici', style: 'cancel' },
-        { text: 'Ouvrir le planning', onPress: () => router.push('/planning' as any) },
+      appAlert(traduire('Planning mis à jour'), r.created ? traduirePluriel(r.created, r.created > 1, "{0} créneau ajouté au planning{1}.", "{0} créneaux ajoutéx au planning{1}.", r.created, r.skipped ? `, ${r.skipped} déjà présent${r.skipped > 1 ? 's' : ''}` : '') : traduire('Tous tes créneaux étaient déjà dans le planning.'), [
+        { text: traduire('Rester ici'), style: 'cancel' },
+        { text: traduire('Ouvrir le planning'), onPress: () => router.push('/planning' as any) },
       ]);
     } catch (error) {
       logger.error('Conversion routine impossible', error);
-      appAlert('Conversion impossible', 'Réessaie dans un instant.');
+      appAlert(traduire('Conversion impossible'), traduire('Réessaie dans un instant.'));
     } finally {
       setConverting(false);
     }
@@ -190,7 +191,7 @@ export default function SportScreen() {
   const editCount = editBlocks.filter((b) => b.activity !== 'REPOS').length;
 
   return (
-    <DetailScreen title="Ta semaine type" subtitle="Ta routine de la semaine">
+    <DetailScreen title={traduire("Ta semaine type")} subtitle={traduire("Ta routine de la semaine")}>
       {loaded && hasRoutine ? (
         <Enter i={0}>
           <Glass style={{ gap: 12 }}>
@@ -200,20 +201,20 @@ export default function SportScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Ink size={16} weight="black" tight>
-                  {convertedAt ? 'Copiée dans ton planning' : 'Passe-la dans ton planning'}
+                  {convertedAt ? traduire('Copiée dans ton planning') : traduire('Passe-la dans ton planning')}
                 </Ink>
                 <Ink size={13} weight="medium" color={P.ink2}>
-                  {convertedAt ? `Le ${mediumDate(new Date(convertedAt))}. Tes créneaux vivent maintenant dans le planning.` : 'Le planning remplace cette page : rappels, séances prévues, semaine tenue.'}
+                  {convertedAt ? traduire("Le {0}. Tes créneaux vivent maintenant dans le planning.", mediumDate(new Date(convertedAt))) : traduire('Le planning remplace cette page : rappels, séances prévues, semaine tenue.')}
                 </Ink>
               </View>
             </View>
-            {convertedAt ? <BigButton label="Ouvrir le planning" icon="calendar" onPress={() => router.push('/planning' as any)} /> : <BigButton label={converting ? 'Conversion' : 'Convertir en créneaux'} icon="refresh" onPress={convert} disabled={converting} />}
+            {convertedAt ? <BigButton label={traduire("Ouvrir le planning")} icon="calendar" onPress={() => router.push('/planning' as any)} /> : <BigButton label={converting ? 'Conversion' : traduire('Convertir en créneaux')} icon="refresh" onPress={convert} disabled={converting} />}
           </Glass>
         </Enter>
       ) : null}
 
       {loaded && !hasRoutine ? (
-        <EmptyState title="Pas de semaine type" text="Tes créneaux réguliers se gèrent maintenant dans le planning. Tu peux aussi en poser un ici, jour par jour." action="Ouvrir le planning" onAction={() => router.push('/planning' as any)} />
+        <EmptyState title={traduire("Pas de semaine type")} text={traduire("Tes créneaux réguliers se gèrent maintenant dans le planning. Tu peux aussi en poser un ici, jour par jour.")} action={traduire("Ouvrir le planning")} onAction={() => router.push('/planning' as any)} />
       ) : null}
 
       <Enter i={1}>
@@ -223,7 +224,7 @@ export default function SportScreen() {
               const b = routine[k] || [];
               const rest = isRestDay(b);
               return (
-                <Press key={k} onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={`${DAY_LABELS[i]}, ${rest ? 'repos' : b.length ? `${b.length} entraînement` : 'rien de prévu'}. Modifier`}>
+                <Press key={k} onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1}. Modifier", DAY_LABELS[i], rest ? 'repos' : b.length ? `${b.length} entraînement` : 'rien de prévu')}>
                   <View style={{ alignItems: 'center', gap: 4, minWidth: 40, minHeight: 44 }}>
                     <View style={{ width: 30, height: 38, borderRadius: 9, backgroundColor: b.length > 0 && !rest ? P.ink : 'transparent', borderWidth: b.length > 0 && !rest ? 0 : 1.5, borderStyle: 'dashed', borderColor: P.dashed }} />
                     <Ink size={12} weight={i === tIdx ? 'black' : 'bold'} color={i === tIdx ? P.accent : P.ink2}>
@@ -242,18 +243,18 @@ export default function SportScreen() {
 
       {todayActive ? (
         <Enter i={2}>
-          <BigButton label="Valider la séance du jour" icon="check" onPress={validateToday} />
+          <BigButton label={traduire("Valider la séance du jour")} icon="check" onPress={validateToday} />
         </Enter>
       ) : null}
 
-      <SectionTitle>Jour par jour</SectionTitle>
+      <SectionTitle>{traduire("Jour par jour")}</SectionTitle>
       {DAY_KEYS.map((k, i) => {
         const blocks = routine[k] || [];
         const rest = isRestDay(blocks);
         const first = blocks.find((b) => b.activity !== 'REPOS');
         return (
           <Enter key={k} i={3 + i}>
-            <Press onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={`Modifier ${DAY_LABELS[i]}`}>
+            <Press onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={traduire("Modifier {0}", DAY_LABELS[i])}>
               <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderColor: i === tIdx ? P.accent : P.line2, borderWidth: i === tIdx ? 1.5 : 1, overflow: 'hidden' }}>
                 <View style={{ width: 92 }}>
                   <Ink size={15} weight="black" tight color={i === tIdx ? P.accent : P.ink} numberOfLines={1}>
@@ -261,15 +262,13 @@ export default function SportScreen() {
                   </Ink>
                   {i === tIdx ? (
                     <Ink size={11} weight="bold" color={P.accent}>
-                      Aujourd’hui
-                    </Ink>
+                      {traduire("Aujourd’hui")}</Ink>
                   ) : null}
                 </View>
                 <View style={{ flex: 1, gap: 4 }}>
                   {rest ? (
                     <Ink size={14} weight="bold" color={P.indigo}>
-                      Repos
-                    </Ink>
+                      {traduire("Repos")}</Ink>
                   ) : blocks.length ? (
                     blocks.map((b, bi) => (
                       <View key={bi} style={{ flexDirection: 'row', gap: 8, alignItems: 'baseline' }}>
@@ -285,8 +284,7 @@ export default function SportScreen() {
                     ))
                   ) : (
                     <Ink size={13} weight="bold" color={P.muted}>
-                      Rien de prévu
-                    </Ink>
+                      {traduire("Rien de prévu")}</Ink>
                   )}
                 </View>
                 {first ? <Image source={sportArt(sportOf(first), gender, 1)} style={{ width: 44, height: 58, marginVertical: -12 }} resizeMode="contain" /> : <Icon name="plus" size={18} color={P.muted} />}
@@ -302,9 +300,9 @@ export default function SportScreen() {
             {editBlocks.map((b, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingLeft: 14 }}>
                 <Ink size={14} weight="extraBold" style={{ flex: 1 }}>
-                  {b.activity === 'REPOS' ? 'Jour de repos' : [b.time, b.activity, b.workoutType].filter(Boolean).join(', ')}
+                  {b.activity === 'REPOS' ? traduire('Jour de repos') : [b.time, b.activity, b.workoutType].filter(Boolean).join(', ')}
                 </Ink>
-                <Press onPress={() => editing && removeBlock(editing, i)} accessibilityRole="button" accessibilityLabel="Retirer ce créneau">
+                <Press onPress={() => editing && removeBlock(editing, i)} accessibilityRole="button" accessibilityLabel={traduire("Retirer ce créneau")}>
                   <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
                     <Icon name="close" size={18} color={P.danger} />
                   </View>
@@ -315,28 +313,27 @@ export default function SportScreen() {
         ) : null}
         {editCount >= 3 ? (
           <Ink size={13} weight="bold" color={P.muted}>
-            Trois entraînements par jour au maximum.
-          </Ink>
+            {traduire("Trois entraînements par jour au maximum.")}</Ink>
         ) : (
           <View style={{ gap: 14 }}>
-            <Label>Heure</Label>
+            <Label>{traduire("Heure")}</Label>
             <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
               <Stepper value={String(hour).padStart(2, '0')} suffix="heure" label="heure" onMinus={() => setHour((hour + 23) % 24)} onPlus={() => setHour((hour + 1) % 24)} />
-              <Stepper value={String(minute).padStart(2, '0')} suffix="minutes" label="minutes" onMinus={() => setMinute((minute + 45) % 60)} onPlus={() => setMinute((minute + 15) % 60)} />
+              <Stepper value={String(minute).padStart(2, '0')} suffix={traduire("minutes")} label={traduire("minutes")} onMinus={() => setMinute((minute + 45) % 60)} onPlus={() => setMinute((minute + 15) % 60)} />
             </View>
-            <Label>Club ou activité</Label>
+            <Label>{traduire("Club ou activité")}</Label>
             <ChipScroll>
               {options.map((o) => (
                 <Chip key={o.id} label={o.name} active={clubId === o.id} accent={P.accent} onPress={() => setClubId(clubId === o.id ? null : o.id)} />
               ))}
             </ChipScroll>
-            {clubId ? <Field value={workoutType} onChangeText={setWorkoutType} placeholder="Ex : Pecs et bras, Jambes, Full body" maxLength={30} /> : null}
+            {clubId ? <Field value={workoutType} onChangeText={setWorkoutType} placeholder={traduire("Ex : Pecs et bras, Jambes, Full body")} maxLength={30} /> : null}
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
-                <BigButton label="Jour de repos" tone="light" onPress={() => editing && setRest(editing)} />
+                <BigButton label={traduire("Jour de repos")} tone="light" onPress={() => editing && setRest(editing)} />
               </View>
               <View style={{ flex: 1 }}>
-                <BigButton label="Ajouter" icon="plus" onPress={addBlock} disabled={!clubId} />
+                <BigButton label={traduire("Ajouter")} icon="plus" onPress={addBlock} disabled={!clubId} />
               </View>
             </View>
           </View>

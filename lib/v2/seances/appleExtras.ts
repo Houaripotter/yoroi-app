@@ -8,6 +8,7 @@
  *  - mesures de course (contact au sol, foulee, oscillation verticale) tronquees comme Forme.
  */
 import type { Interval, LowerBounds } from './workoutMath';
+import { traduire } from '@/lib/i18n/tr';
 
 const ms = (iso: string | number | Date) => new Date(iso).getTime();
 
@@ -49,9 +50,9 @@ export function roundedLowers(lb: LowerBounds): LowerBounds {
 /** Libelle d'une zone, sans tiret : « moins de 120 bpm », « 120 a 135 bpm », « 170 bpm et plus ». */
 export function zoneRangeLabel(i: number, lb: LowerBounds): string {
   const r = roundedLowers(lb);
-  if (i === 0) return `moins de ${r[0]} bpm`;
-  if (i === 4) return `${r[3]} bpm et plus`;
-  return `${r[i - 1]} à ${r[i] - 1} bpm`;
+  if (i === 0) return traduire("moins de {0} bpm", r[0]);
+  if (i === 4) return traduire("{0} bpm et plus", r[3]);
+  return traduire("{0} à {1} bpm", r[i - 1], r[i] - 1);
 }
 
 /** Temps par zone comme Forme : minutes et secondes, secondes tronquees (00:48 donne 0:48). */

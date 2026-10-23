@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 import { fontFamilies } from '@/components/yoroi/fonts';
 import { P } from '@/components/yoroi/v2/accueil/kit';
+import { traduire } from '@/lib/i18n/tr';
 
 export type RadarAxis = { key: string; label: string; value: number; color: string };
 
@@ -53,7 +54,7 @@ export function RadarInk({ axes, size = 320 }: { axes: RadarAxis[]; size?: numbe
   const data = shape(values.map((v) => Math.max(v, 3)));
 
   return (
-    <View style={{ alignItems: 'center' }} accessible accessibilityLabel={axes.map((a) => `${a.label} ${Math.round(a.value)} pour cent`).join(', ')}>
+    <View style={{ alignItems: 'center' }} accessible accessibilityLabel={axes.map((a) => traduire("{0} {1} pour cent", a.label, Math.round(a.value))).join(', ')}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {[0.25, 0.5, 0.75, 1].map((lv) => (
           <Path key={lv} d={shape(axes.map(() => R * lv))} stroke={lv === 1 ? '#D9D5CC' : P.line2} strokeWidth={lv === 1 ? 2.5 : 1.5} fill="none" strokeLinejoin="round" />

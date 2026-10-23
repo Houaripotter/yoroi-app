@@ -25,6 +25,7 @@ import type { CarteData } from '@/lib/v2/cartes/types';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { FeuillePartage } from './FeuillePartage';
 import { P, Press } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
 const RECORDS: ImageSourcePropType = require('@/assets/avatars/app/carnet/records.webp');
 const CARTE_A: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_nuit.webp');
@@ -35,12 +36,12 @@ type Outil = { key: string; title: string; a11y: string; href: string | { pathna
 /** Tes outils, dans l'ordre demande par Houari, avec Partager en deuxieme */
 export function outilsAccueil(): Outil[] {
   return [
-    { key: 'chrono', title: 'Chrono', a11y: 'Chrono : repos, rounds, Tabata', href: '/timer', img: ORNEMENTS.chrono, tint: P.tuileOr },
-    { key: 'partager', title: 'Partager', a11y: 'Partager une carte : ta séance, ton record, ta semaine', href: null, img: null, tint: P.tuileIndigo },
-    { key: 'objectifs', title: 'Objectifs', a11y: 'Objectifs à cocher, par sport', href: '/training-goals', img: ORNEMENTS.cible, tint: P.tuileMousse },
-    { key: 'carnet', title: 'Carnet', a11y: 'Carnet : techniques, records et vidéos', href: '/training-journal', img: ORNEMENTS.carnet, tint: P.tuileIndigo },
-    { key: 'records', title: 'Records', a11y: 'Tes records', href: '/records', img: RECORDS, tint: P.tuileRouge },
-    { key: 'combat', title: 'Combat et compétition', a11y: 'Combat et compétition : compétitions, analyse', href: '/combat-hub', img: ORNEMENTS.combat, tint: P.tuileMousse },
+    { key: 'chrono', title: 'Chrono', a11y: traduire('Chrono : repos, rounds, Tabata'), href: '/timer', img: ORNEMENTS.chrono, tint: P.tuileOr },
+    { key: 'partager', title: traduire('Partager'), a11y: traduire('Partager une carte : ta séance, ton record, ta semaine'), href: null, img: null, tint: P.tuileIndigo },
+    { key: 'objectifs', title: traduire('Objectifs'), a11y: traduire('Objectifs à cocher, par sport'), href: '/training-goals', img: ORNEMENTS.cible, tint: P.tuileMousse },
+    { key: 'carnet', title: 'Carnet', a11y: traduire('Carnet : techniques, records et vidéos'), href: '/training-journal', img: ORNEMENTS.carnet, tint: P.tuileIndigo },
+    { key: 'records', title: 'Records', a11y: traduire('Tes records'), href: '/records', img: RECORDS, tint: P.tuileRouge },
+    { key: 'combat', title: traduire('Combat et compétition'), a11y: traduire('Combat et compétition : compétitions, analyse'), href: '/combat-hub', img: ORNEMENTS.combat, tint: P.tuileMousse },
   ];
 }
 
@@ -126,14 +127,14 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
         showsHorizontalScrollIndicator={false}
         style={{ marginHorizontal: -22 }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 2, gap: 2 }}
-        accessibilityLabel="Tes outils"
+        accessibilityLabel={traduire("Tes outils")}
       >
         {outils.map((o) => (
           <Press
             key={o.key}
             onPress={() => (o.href ? router.push(o.href as any) : ouvrirPartage())}
             accessibilityRole="button"
-            accessibilityLabel={o.key === 'partager' && pastille ? `${o.a11y}. Une nouvelle carte t’attend` : o.a11y}
+            accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.a11y}
           >
             <View style={{ width: 80, alignItems: 'center', gap: 6 }}>
               <View

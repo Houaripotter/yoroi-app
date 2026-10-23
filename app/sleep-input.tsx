@@ -16,6 +16,7 @@ import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { QUALITY_LABELS, Stars, Stepper, clock, dayLabel, hm, shiftTime } from '@/components/yoroi/v2/accueil/sleepKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { doitEcrireNuitSante, nuitDejaEcriteSante, retenirNuitEcriteSante } from '@/lib/v2/sante/sommeilSante';
+import { traduire } from '@/lib/i18n/tr';
 
 function toMin(t: string): number {
   const [h, m] = t.split(':').map((x) => parseInt(x, 10) || 0);
@@ -77,7 +78,7 @@ export default function NoterMaNuit() {
   const save = async () => {
     if (saving) return;
     if (!valid) {
-      appAlert('Horaires à vérifier', 'Une nuit doit durer entre 1 h et 16 h.');
+      appAlert(traduire('Horaires à vérifier'), traduire('Une nuit doit durer entre 1 h et 16 h.'));
       return;
     }
     setSaving(true);
@@ -104,7 +105,7 @@ export default function NoterMaNuit() {
       router.back();
     } catch (err) {
       logger.error('Enregistrement de la nuit impossible', err);
-      appAlert('Oups', 'Ta nuit n’a pas pu être enregistrée. Vérifie les horaires et réessaie.');
+      appAlert('Oups', traduire('Ta nuit n’a pas pu être enregistrée. Vérifie les horaires et réessaie.'));
     } finally {
       setSaving(false);
     }
@@ -112,24 +113,23 @@ export default function NoterMaNuit() {
 
   return (
     <DetailScreen
-      title="Ta nuit"
+      title={traduire("Ta nuit")}
       subtitle={dayLabel(date, true)}
-      footer={<BigButton label={saving ? 'Enregistrement' : 'Enregistrer ma nuit'} icon="check" onPress={save} disabled={saving || !valid} />}
+      footer={<BigButton label={saving ? 'Enregistrement' : traduire('Enregistrer ma nuit')} icon="check" onPress={save} disabled={saving || !valid} />}
     >
       <Enter i={0}>
-        <DateChips value={date} onChange={setDate} todayLabel="Cette nuit" yesterdayLabel="La veille" activeColor={P.indigo} />
+        <DateChips value={date} onChange={setDate} todayLabel={traduire("Cette nuit")} yesterdayLabel={traduire("La veille")} activeColor={P.indigo} />
       </Enter>
 
       <Enter i={1}>
         <View style={{ borderRadius: 26, backgroundColor: P.indigo, padding: 22, alignItems: 'center', gap: 4 }}>
           <Ink size={13} weight="bold" color="#C9D3EA">
-            Tu as dormi
-          </Ink>
+            {traduire("Tu as dormi")}</Ink>
           <Ink size={64} weight="black" tight color={P.white}>
             {hm(duration)}
           </Ink>
           <Ink size={14} weight="bold" color={valid ? (duration >= goal ? P.goldLight : '#E4E9F3') : '#F3C9C5'}>
-            {!valid ? 'Horaires à vérifier' : duration >= goal ? 'Objectif atteint' : `${hm(goal - duration)} sous ton objectif`}
+            {!valid ? traduire('Horaires à vérifier') : duration >= goal ? traduire('Objectif atteint') : traduire("{0} sous ton objectif", hm(goal - duration))}
           </Ink>
         </View>
       </Enter>
@@ -140,20 +140,18 @@ export default function NoterMaNuit() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Icon name="moon" size={18} color={P.indigo} />
               <Ink size={15} weight="extraBold">
-                Couché à
-              </Ink>
+                {traduire("Couché à")}</Ink>
             </View>
-            <Stepper value={clock(bed)} label="Heure du coucher" onMinus={() => setBed(shiftTime(bed, -15))} onPlus={() => setBed(shiftTime(bed, 15))} />
+            <Stepper value={clock(bed)} label={traduire("Heure du coucher")} onMinus={() => setBed(shiftTime(bed, -15))} onPlus={() => setBed(shiftTime(bed, 15))} />
           </View>
           <View style={{ height: 1, backgroundColor: P.line2 }} />
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Icon name="sun" size={18} color={P.gold} />
               <Ink size={15} weight="extraBold">
-                Réveillé à
-              </Ink>
+                {traduire("Réveillé à")}</Ink>
             </View>
-            <Stepper value={clock(wake)} label="Heure du réveil" onMinus={() => setWake(shiftTime(wake, -15))} onPlus={() => setWake(shiftTime(wake, 15))} />
+            <Stepper value={clock(wake)} label={traduire("Heure du réveil")} onMinus={() => setWake(shiftTime(wake, -15))} onPlus={() => setWake(shiftTime(wake, 15))} />
           </View>
         </Card>
       </Enter>
@@ -161,8 +159,7 @@ export default function NoterMaNuit() {
       <Enter i={3}>
         <Card style={{ alignItems: 'center', gap: 6 }}>
           <Ink size={15} weight="extraBold">
-            Comment as-tu dormi ?
-          </Ink>
+            {traduire("Comment as-tu dormi ?")}</Ink>
           <Stars value={quality} size={30} onChange={setQuality} />
           <Ink size={14} weight="bold" color={quality >= 4 ? P.mossText : quality === 3 ? P.ink2 : P.goldDark}>
             {QUALITY_LABELS[quality]}

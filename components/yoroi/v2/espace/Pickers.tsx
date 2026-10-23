@@ -12,6 +12,7 @@ import { THEMES, isThemeUnlocked } from '@/lib/v2/dojo/personnages';
 import { RANK_NAMES, SCENES, guerrierImage } from './assets';
 import { Check, LockBadge } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Rang qui debloque une scene Premium sans abonnement (le Chateau au rang Samourai, le Temple au rang Ronin) */
 export function sceneUnlockRankName(id: SceneId): string | null {
@@ -44,13 +45,13 @@ export function ScenePicker({ value, preview, isPremium, isAnnual = false, rankI
         const chosen = value === s.id;
         const locked = isSceneLocked(s.id, rankIndex, isPremium, isAnnual);
         const rankName = sceneUnlockRankName(s.id);
-        const lockLabel = s.annuel ? 'Offerte avec l’abonnement annuel' : rankName ? 'À gagner dans le Dojo' : 'Avec Premium';
+        const lockLabel = s.annuel ? traduire('Offerte avec l’abonnement annuel') : rankName ? traduire('À gagner dans le Dojo') : traduire('Avec Premium');
         return (
           <Pressable
             key={s.id}
             onPress={() => { selectionAsync().catch(() => {}); onPick(s.id, locked); }}
             accessibilityRole="button"
-            accessibilityLabel={`Scène ${s.nom}${s.annuel ? ', offerte avec l’abonnement annuel' : locked ? (rankName ? ', se débloque en progressant dans le Dojo, ou avec Premium' : ', avec Premium') : ''}`}
+            accessibilityLabel={traduire("Scène {0}{1}", s.nom, s.annuel ? ', offerte avec l’abonnement annuel' : locked ? (rankName ? ', se débloque en progressant dans le Dojo, ou avec Premium' : ', avec Premium') : '')}
             accessibilityState={{ selected: chosen }}
             style={{ width: 138, gap: 8 }}
           >
@@ -100,7 +101,7 @@ export function GuerrierPicker({ value, rankIndex, onPick, height = 250 }: {
   return (
     <View style={{ flexDirection: 'row', gap: 12 }}>
       {card('guerrier_h', 'Guerrier')}
-      {card('guerrier_f', 'Guerrière')}
+      {card('guerrier_f', traduire('Guerrière'))}
     </View>
   );
 }

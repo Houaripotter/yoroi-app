@@ -14,6 +14,7 @@
  *    comptant qu'une source par moment). Les autres apps sont notées, pas additionnées.
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export type TypeRepas = 'kcal' | 'proteines' | 'glucides' | 'lipides';
 export const TYPES_REPAS: TypeRepas[] = ['kcal', 'proteines', 'glucides', 'lipides'];
 
@@ -232,13 +233,13 @@ export function milliers(n: number): string {
 export function ligneMange(j: Pick<JourRepas, 'kcal' | 'proteines'>): string {
   const parts: string[] = [];
   if (j.kcal && j.kcal > 0) parts.push(`${milliers(j.kcal)} kcal`);
-  if (j.proteines && j.proteines > 0) parts.push(`${Math.round(j.proteines)} g de protéines`);
+  if (j.proteines && j.proteines > 0) parts.push(traduire("{0} g de protéines", Math.round(j.proteines)));
   return parts.join(', ');
 }
 
 /** « depuis Apple Santé (MyFitnessPal) » */
 export function mentionSource(r: Pick<ResumeRepas, 'fournisseur' | 'app'>): string {
-  return r.app ? `depuis ${r.fournisseur} (${r.app})` : `depuis ${r.fournisseur}`;
+  return r.app ? traduire("depuis {0} ({1})", r.fournisseur, r.app) : traduire("depuis {0}", r.fournisseur);
 }
 
 /** Phrase facultative du bilan de pesée : la moyenne des 7 derniers jours, factuelle, sans conseil */
@@ -246,13 +247,13 @@ export function phraseBilanRepas(m: ResumeRepas['moyenne'] | null | undefined, a
   if (!m || m.jours < 1) return null;
   const quoi = ligneMange({ kcal: m.kcal, proteines: m.proteines });
   if (!quoi) return null;
-  const jours = m.jours === 1 ? '1 jour noté' : `${m.jours} jours notés`;
-  return `Côté repas, ${app ? `d’après ${app}, ` : ''}tu as mangé en moyenne ${quoi} par jour sur les 7 derniers jours (${jours}).`;
+  const jours = m.jours === 1 ? traduire('1 jour noté') : traduire("{0} jours notés", m.jours);
+  return traduire("Côté repas, {0}tu as mangé en moyenne {1} par jour sur les 7 derniers jours ({2}).", app ? `d’après ${app}, ` : '', quoi, jours);
 }
 
 /** Comment l'activer, selon la plateforme */
 export function aideActivation(fournisseur: string): string {
   return fournisseur === 'Health Connect'
-    ? 'Ces chiffres viennent de ton app de repas (MyFitnessPal, Cronometer, Lifesum, MacroFactor...) qui les écrit dans Health Connect. YOROI les lit seulement. Pour les voir ici, active le partage avec Health Connect dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Health Connect.'
-    : 'Ces chiffres viennent de ton app de repas (MyFitnessPal, Cronometer, Lifesum, MacroFactor...) qui les écrit dans Apple Santé. YOROI les lit seulement. Pour les voir ici, active le partage avec Apple Santé dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Santé.';
+    ? traduire('Ces chiffres viennent de ton app de repas (MyFitnessPal, Cronometer, Lifesum, MacroFactor...) qui les écrit dans Health Connect. YOROI les lit seulement. Pour les voir ici, active le partage avec Health Connect dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Health Connect.')
+    : traduire('Ces chiffres viennent de ton app de repas (MyFitnessPal, Cronometer, Lifesum, MacroFactor...) qui les écrit dans Apple Santé. YOROI les lit seulement. Pour les voir ici, active le partage avec Apple Santé dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Santé.');
 }

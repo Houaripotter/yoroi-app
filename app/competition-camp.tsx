@@ -18,6 +18,7 @@ import { campStart, generateCamp, LOAD_LABELS, loadCamp, saveCamp, todayIso, tra
 import type { SavedCamp } from '@/lib/v2/competition/camp';
 import { addDays, daysUntil, mediumDate, parseLocalDate, startOfToday } from '@/lib/v2/competition/dates';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const clampWeeks = (n: number) => Math.max(2, Math.min(24, n));
 
@@ -74,10 +75,10 @@ export default function CompetitionCampScreen() {
     tap('success');
   };
   const reset = () => {
-    appAlert('Arrêter ce camp', 'Le suivi des jours faits sera effacé. Tu pourras en lancer un nouveau.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Arrêter ce camp'), traduire('Le suivi des jours faits sera effacé. Tu pourras en lancer un nouveau.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Arrêter',
+        text: traduire('Arrêter'),
         style: 'destructive',
         onPress: async () => {
           await saveCamp(null);
@@ -88,26 +89,25 @@ export default function CompetitionCampScreen() {
   };
 
   return (
-    <PremiumGate source="camp_competition" featureTitle="Camp de compétition" perks={['Ton camp calé sur ta compétition', 'Les phases de préparation semaine par semaine', 'Des conseils concrets pour chaque phase']}>
-      <DetailScreen title="Camp de compétition" subtitle={comp ? `${comp.nom}, ${mediumDate(parseLocalDate(comp.date))}` : 'Ta préparation en trois phases'}>
+    <PremiumGate source="camp_competition" featureTitle={traduire("Camp de compétition")} perks={[traduire('Ton camp calé sur ta compétition'), traduire('Les phases de préparation semaine par semaine'), traduire('Des conseils concrets pour chaque phase')]}>
+      <DetailScreen title={traduire("Camp de compétition")} subtitle={comp ? `${comp.nom}, ${mediumDate(parseLocalDate(comp.date))}` : traduire('Ta préparation en trois phases')}>
         <Enter i={0}>
           <Card style={{ gap: 16 }}>
             {saved ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <View style={{ flex: 1 }}>
                   <Ink size={12} weight="bold" color={P.muted}>
-                    Ton camp est lancé
-                  </Ink>
+                    {traduire("Ton camp est lancé")}</Ink>
                   <Ink size={34} weight="black" tight>
-                    {elapsed >= totalDays ? 'Camp terminé' : `Jour ${elapsed + 1}`}
+                    {elapsed >= totalDays ? traduire('Camp terminé') : traduire("Jour {0}", elapsed + 1)}
                     {elapsed < totalDays ? (
                       <Ink size={15} weight="bold" color={P.muted}>
-                        {` sur ${totalDays}`}
+                        {traduire(" sur {0}", totalDays)}
                       </Ink>
                     ) : null}
                   </Ink>
                   <Ink size={13} weight="bold" color={P.ink2}>
-                    {`Du ${mediumDate(start, false)} au ${mediumDate(end, false)}`}
+                    {traduire("Du {0} au {1}", mediumDate(start, false), mediumDate(end, false))}
                   </Ink>
                 </View>
                 <Hanko size={52} />
@@ -116,10 +116,9 @@ export default function CompetitionCampScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="extraBold">
-                  Semaines
-                </Ink>
+                  {traduire("Semaines")}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>
-                  {saved ? 'Fixé au lancement' : comp ? 'Calé sur ta compétition' : 'Avant la compétition'}
+                  {saved ? traduire('Fixé au lancement') : comp ? traduire('Calé sur ta compétition') : traduire('Avant la compétition')}
                 </Ink>
               </View>
               <Stepper value={String(weeks)} label="semaines" onMinus={() => changeWeeks(weeks - 1)} onPlus={() => changeWeeks(weeks + 1)} />
@@ -128,13 +127,11 @@ export default function CompetitionCampScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="extraBold">
-                  Séances par semaine
-                </Ink>
+                  {traduire("Séances par semaine")}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>
-                  Ton rythme actuel
-                </Ink>
+                  {traduire("Ton rythme actuel")}</Ink>
               </View>
-              <Stepper value={String(sessions)} label="séances par semaine" onMinus={() => changeSessions(sessions - 1)} onPlus={() => changeSessions(sessions + 1)} />
+              <Stepper value={String(sessions)} label={traduire("séances par semaine")} onMinus={() => changeSessions(sessions - 1)} onPlus={() => changeSessions(sessions + 1)} />
             </View>
           </Card>
         </Enter>
@@ -181,7 +178,7 @@ export default function CompetitionCampScreen() {
           </Enter>
         ))}
 
-        <SectionTitle>Semaine par semaine</SectionTitle>
+        <SectionTitle>{traduire("Semaine par semaine")}</SectionTitle>
         <Glass style={{ padding: 14, gap: 4 }}>
           {camp.weeks.map((w, wi) => {
             const pattern = trainingDaysOf(w.sessions);
@@ -204,7 +201,7 @@ export default function CompetitionCampScreen() {
                     })}
                   </View>
                   <Ink size={11} weight="bold" color={P.ink2}>
-                    {`${w.sessions} séances, ${LOAD_LABELS[w.loadLevel].toLowerCase()}`}
+                    {traduire("{0} séances, {1}", w.sessions, LOAD_LABELS[w.loadLevel].toLowerCase())}
                   </Ink>
                 </View>
               </View>
@@ -212,9 +209,9 @@ export default function CompetitionCampScreen() {
           })}
         </Glass>
 
-        {saved ? <BigButton label="Arrêter ce camp" tone="light" onPress={reset} /> : <BigButton label="Lancer mon camp" icon="play" onPress={launch} />}
+        {saved ? <BigButton label={traduire("Arrêter ce camp")} tone="light" onPress={reset} /> : <BigButton label={traduire("Lancer mon camp")} icon="play" onPress={launch} />}
 
-        <Note>Ce plan suit une périodisation classique. Adapte-le à tes sensations et aux conseils de ton coach, et regarde ta récupération du jour pour ajuster la charge.</Note>
+        <Note>{traduire("Ce plan suit une périodisation classique. Adapte-le à tes sensations et aux conseils de ton coach, et regarde ta récupération du jour pour ajuster la charge.")}</Note>
       </DetailScreen>
     </PremiumGate>
   );

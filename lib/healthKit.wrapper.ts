@@ -5,6 +5,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // Détection Expo Go robuste : supporte SDK 50-55+ et anciennes versions
 // - executionEnvironment === 'storeClient' = Expo Go (SDK 46-54)
@@ -34,7 +35,7 @@ if (!isExpoGo && Platform.OS === 'ios') {
       logger.info('[HealthKit] Module chargé avec succès');
     }
   } catch (error: any) {
-    loadError = error?.message ?? 'Erreur inconnue';
+    loadError = error?.message ?? traduire('Erreur inconnue');
     logger.warn('[HealthKit] Module non disponible:', loadError);
   }
 }

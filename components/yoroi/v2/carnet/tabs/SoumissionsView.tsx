@@ -9,6 +9,7 @@ import { parseRounds, useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { lastMonths, monthLabel } from '@/lib/v2/carnet/format';
 import { P, Sheet2, BigStats, Columns, RankRow, Hanko } from '../ui';
 import { TabEmpty, TabLoading } from './common';
+import { traduire } from '@/lib/i18n/tr';
 
 export function SoumissionsView({ refreshKey }: { refreshKey: number }) {
   const { trainings, loading } = useTrainings((t) => t.sport === 'jjb' || t.sport === 'grappling' || t.sport === 'mma', refreshKey);
@@ -51,27 +52,27 @@ export function SoumissionsView({ refreshKey }: { refreshKey: number }) {
 
   if (loading) return <TabLoading />;
   if (trainings.length === 0 || (st.given === 0 && st.taken === 0)) {
-    return <TabEmpty title="Pas encore de soumission notée" text="Note les soumissions données et subies dans tes rounds de sparring pour voir ton arsenal et tes failles." action="Démarrer un sparring" href="/seance/combat?sport=jjb&type=sparring" />;
+    return <TabEmpty title={traduire("Pas encore de soumission notée")} text={traduire("Note les soumissions données et subies dans tes rounds de sparring pour voir ton arsenal et tes failles.")} action={traduire("Démarrer un sparring")} href="/seance/combat?sport=jjb&type=sparring" />;
   }
 
-  const hint = st.finish === null ? null : st.finish >= 60 ? 'Excellent, tu finis tes victoires.' : st.finish >= 30 ? 'Bon équilibre entre points et soumissions.' : 'Tu gagnes surtout aux points : travaille la finition.';
+  const hint = st.finish === null ? null : st.finish >= 60 ? traduire('Excellent, tu finis tes victoires.') : st.finish >= 30 ? traduire('Bon équilibre entre points et soumissions.') : traduire('Tu gagnes surtout aux points : travaille la finition.');
 
   return (
     <View style={{ gap: 14 }}>
       <Sheet2>
         <BigStats
           items={[
-            { value: String(st.given), label: 'données', color: P.mossText },
+            { value: String(st.given), label: traduire('données'), color: P.mossText },
             { value: String(st.taken), label: 'subies', color: P.danger },
             { value: String(st.rounds), label: 'rounds' },
-            { value: st.finish !== null ? `${st.finish} %` : '--', label: 'taux de finition', color: P.indigo },
+            { value: st.finish !== null ? `${st.finish} %` : '--', label: traduire('taux de finition'), color: P.indigo },
           ]}
         />
         {hint ? <Ink size={14} weight="medium" color={P.ink2}>{hint}</Ink> : null}
       </Sheet2>
       {st.months.some((m) => m.value > 0) ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Soumissions données, 12 mois</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Soumissions données, 12 mois")}</Ink>
           <Columns items={st.months} color={P.moss} />
         </Sheet2>
       ) : null}
@@ -79,20 +80,20 @@ export function SoumissionsView({ refreshKey }: { refreshKey: number }) {
         <Sheet2>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Hanko size={30} tampon="record_combat" />
-            <Ink size={18} weight="black" tight>Ton arsenal</Ink>
+            <Ink size={18} weight="black" tight>{traduire("Ton arsenal")}</Ink>
           </View>
           {st.topGiven.map(([n, c], i) => (
-            <RankRow key={n} rank={i + 1} title={n} value={`${c} fois`} ratio={c / st.topGiven[0][1]} color={P.mossText} />
+            <RankRow key={n} rank={i + 1} title={n} value={traduire("{0} fois", c)} ratio={c / st.topGiven[0][1]} color={P.mossText} />
           ))}
         </Sheet2>
       ) : null}
       {st.topTaken.length > 0 ? (
         <Sheet2 tint={P.dangerSoft}>
-          <Ink size={18} weight="black" tight color={P.danger}>À défendre</Ink>
+          <Ink size={18} weight="black" tight color={P.danger}>{traduire("À défendre")}</Ink>
           {st.topTaken.map(([n, c], i) => (
-            <RankRow key={n} rank={i + 1} title={n} value={`${c} fois`} ratio={c / st.topTaken[0][1]} color={P.danger} />
+            <RankRow key={n} rank={i + 1} title={n} value={traduire("{0} fois", c)} ratio={c / st.topTaken[0][1]} color={P.danger} />
           ))}
-          <Ink size={13} weight="medium" color={P.ink2}>Les finitions qu’on te place le plus souvent. Travaille la défense sur la première.</Ink>
+          <Ink size={13} weight="medium" color={P.ink2}>{traduire("Les finitions qu’on te place le plus souvent. Travaille la défense sur la première.")}</Ink>
         </Sheet2>
       ) : null}
     </View>

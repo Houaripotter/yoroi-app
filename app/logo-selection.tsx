@@ -15,6 +15,7 @@ import { getSelectedLogo, saveSelectedLogo, nativeIconNameFor, LOGO_OPTIONS, Log
 import { logger } from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 // Module natif : absent dans Expo Go, d'ou le chargement protege
 let setAlternateAppIcon: ((name: string | null) => Promise<string | null>) | null = null;
@@ -53,9 +54,9 @@ export default function LogoSelectionScreen() {
   const choose = (id: LogoVariant, locked: boolean) => {
     if (locked) {
       tap('medium');
-      appAlert('Logo Premium', 'Cette couleur fait partie de Premium. Passe à Premium pour la débloquer.', [
-        { text: 'Plus tard', style: 'cancel' },
-        { text: 'Voir Premium', onPress: () => ouvrirPaywall('logos') },
+      appAlert(traduire('Logo Premium'), traduire('Cette couleur fait partie de Premium. Passe à Premium pour la débloquer.'), [
+        { text: traduire('Plus tard'), style: 'cancel' },
+        { text: traduire('Voir Premium'), onPress: () => ouvrirPaywall('logos') },
       ]);
       return;
     }
@@ -83,13 +84,13 @@ export default function LogoSelectionScreen() {
       tap('success');
       setCurrent(selected);
       appAlert(
-        'Logo changé',
-        applied ? 'Ton nouveau logo est sur l’écran d’accueil de ton téléphone.' : 'Ton choix est enregistré. Il s’appliquera à l’icône du téléphone dans la version installée depuis l’App Store.',
-        [{ text: 'Super', onPress: () => router.back() }],
+        traduire('Logo changé'),
+        applied ? traduire('Ton nouveau logo est sur l’écran d’accueil de ton téléphone.') : traduire('Ton choix est enregistré. Il s’appliquera à l’icône du téléphone dans la version installée depuis l’App Store.'),
+        [{ text: traduire('Super'), onPress: () => router.back() }],
       );
     } catch (e) {
       logger.error('Erreur changement de logo:', e);
-      appAlert('Oups', 'Le logo n’a pas pu être changé. Réessaie dans un instant.');
+      appAlert('Oups', traduire('Le logo n’a pas pu être changé. Réessaie dans un instant.'));
     } finally {
       setSaving(false);
     }
@@ -99,9 +100,9 @@ export default function LogoSelectionScreen() {
 
   return (
     <DetailScreen
-      title="Logo de l’app"
-      subtitle="Choisis la couleur de fond de ton icône."
-      footer={selected !== current ? <BigButton label={saving ? 'Un instant' : 'Appliquer ce logo'} icon="check" onPress={apply} disabled={saving} /> : undefined}
+      title={traduire("Logo de l’app")}
+      subtitle={traduire("Choisis la couleur de fond de ton icône.")}
+      footer={selected !== current ? <BigButton label={saving ? traduire('Un instant') : traduire('Appliquer ce logo')} icon="check" onPress={apply} disabled={saving} /> : undefined}
     >
       <Enter i={0}>
         <Card style={{ alignItems: 'center', paddingVertical: 26, gap: 14 }}>
@@ -113,7 +114,7 @@ export default function LogoSelectionScreen() {
               {sel.name}
             </Ink>
             <Ink size={14} weight="medium" color={P.ink2}>
-              {selected === current ? 'Logo actuel' : 'Aperçu de ton choix'}
+              {selected === current ? traduire('Logo actuel') : traduire('Aperçu de ton choix')}
             </Ink>
           </View>
         </Card>
@@ -125,13 +126,13 @@ export default function LogoSelectionScreen() {
           {LOGO_OPTIONS.map((o) => {
             const locked = o.isPremium && !isPremium;
             const on = o.id === selected;
-            const tag = locked ? 'Premium' : o.id === current ? 'Actuel' : null;
+            const tag = locked ? traduire('Premium') : o.id === current ? traduire('Actuel') : null;
             return (
               <Press
                 key={o.id}
                 onPress={() => choose(o.id, locked)}
                 accessibilityRole="button"
-                accessibilityLabel={`Fond ${o.name}${locked ? ', Premium' : ''}${o.id === current ? ', logo actuel' : ''}`}
+                accessibilityLabel={`Fond ${o.name}${locked ? traduire(', Premium') : ''}${o.id === current ? traduire(', logo actuel') : ''}`}
                 accessibilityState={{ selected: on }}
                 style={{ width: tileW }}
               >
@@ -168,8 +169,7 @@ export default function LogoSelectionScreen() {
       {!supportsAlternateIcons ? (
         <Enter i={2}>
           <Ink size={13} weight="medium" color={P.muted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
-            Le changement d’icône se fait dans la version installée depuis l’App Store. Ton choix est gardé.
-          </Ink>
+            {traduire("Le changement d’icône se fait dans la version installée depuis l’App Store. Ton choix est gardé.")}</Ink>
         </Enter>
       ) : null}
     </DetailScreen>

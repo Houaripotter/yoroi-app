@@ -13,6 +13,7 @@ import { BigButton, Card, Enter, P, SectionTitle, Stat, tap } from '@/components
 import { DetailScreen, EmptyState } from '@/components/yoroi/v2/ornements/screens';
 import { NightRow, dayLabel, hm, monthLabel } from '@/components/yoroi/v2/accueil/sleepKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export default function HistoriqueSommeil() {
   const router = useRouter();
@@ -37,10 +38,10 @@ export default function HistoriqueSommeil() {
 
   const remove = (entry: SleepEntry) => {
     tap('medium');
-    appAlert('Supprimer cette nuit ?', `${dayLabel(entry.date, true)}, ${hm(entry.duration)}`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cette nuit ?'), `${dayLabel(entry.date, true)}, ${hm(entry.duration)}`, [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -70,23 +71,22 @@ export default function HistoriqueSommeil() {
   const avgQ = rated.length > 0 ? rated.reduce((s, e) => s + e.quality, 0) / rated.length : 0;
 
   return (
-    <DetailScreen title="Tes nuits" subtitle={total > 0 ? `${total} nuit${total > 1 ? 's' : ''} notée${total > 1 ? 's' : ''}` : undefined} footer={<BigButton label="Noter ma nuit" icon="moon" tone="ink" onPress={() => router.push('/sleep-input' as any)} />}>
+    <DetailScreen title={traduire("Tes nuits")} subtitle={total > 0 ? traduirePluriel(total, total > 1, "{0} nuit notée", "{0} nuits notées", total) : undefined} footer={<BigButton label={traduire("Noter ma nuit")} icon="moon" tone="ink" onPress={() => router.push('/sleep-input' as any)} />}>
       {total === 0 ? (
         <Enter i={0}>
-          <EmptyState title="Aucune nuit pour l’instant" text="Note ta première nuit, ton historique se construira ici." />
+          <EmptyState title={traduire("Aucune nuit pour l’instant")} text={traduire("Note ta première nuit, ton historique se construira ici.")} />
         </Enter>
       ) : (
         <>
           <Enter i={0}>
             <Card style={{ flexDirection: 'row', gap: 10 }}>
               <Stat value={hm(avg)} label="en moyenne" color={P.indigo} />
-              <Stat value={avgQ > 0 ? avgQ.toFixed(1).replace('.', ',') : 'pas noté'} unit={avgQ > 0 ? 'sur 5' : undefined} label="qualité moyenne" />
-              <Stat value={String(entries.filter((e) => e.duration >= goal).length)} label="nuits à l’objectif" color={P.mossText} />
+              <Stat value={avgQ > 0 ? avgQ.toFixed(1).replace('.', DECIMAL) : traduire('pas noté')} unit={avgQ > 0 ? traduire('sur 5') : undefined} label={traduire("qualité moyenne")} />
+              <Stat value={String(entries.filter((e) => e.duration >= goal).length)} label={traduire("nuits à l’objectif")} color={P.mossText} />
             </Card>
           </Enter>
           <Ink size={13} weight="medium" color={P.muted} style={{ paddingHorizontal: 4 }}>
-            Appuie longuement sur une nuit pour la supprimer.
-          </Ink>
+            {traduire("Appuie longuement sur une nuit pour la supprimer.")}</Ink>
           {groups.map((g, gi) => (
             <Enter key={g.month} i={gi + 1} style={{ gap: 8 }}>
               <SectionTitle>{g.month}</SectionTitle>

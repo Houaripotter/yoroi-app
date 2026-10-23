@@ -17,6 +17,7 @@ import { frDay, parseDay, sourceOf } from '@/lib/v2/seance/corps';
 import { isoDay } from '@/lib/v2/seance/format';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export function CorpsHeader({ title, sub, right }: { title: string; sub?: string; right?: React.ReactNode; kanji?: string }) {
   const router = useRouter();
@@ -64,7 +65,7 @@ export function ValueSheet({
 
   useEffect(() => {
     if (!visible) return;
-    setValue(initialValue ? String(initialValue).replace('.', ',') : '');
+    setValue(initialValue ? String(initialValue).replace('.', DECIMAL) : '');
     setDate(frDay(initialDate ?? isoDay(new Date())));
     setError('');
   }, [visible, initialValue, initialDate]);
@@ -72,8 +73,8 @@ export function ValueSheet({
   const submit = () => {
     const n = parseFloat(value.replace(',', '.'));
     const d = parseDay(date);
-    if (!Number.isFinite(n) || n <= 0) return setError('Écris une valeur, par exemple 72,5.');
-    if (!d) return setError('Écris le jour comme ceci : 12/03/2026.');
+    if (!Number.isFinite(n) || n <= 0) return setError(traduire('Écris une valeur, par exemple 72,5.'));
+    if (!d) return setError(traduire('Écris le jour comme ceci : 12/03/2026.'));
     onSave(n, d);
   };
 
@@ -93,24 +94,24 @@ export function ValueSheet({
         <Ink size={20} weight="bold" color={c.textSecondary} style={{ paddingBottom: 8 }}>{unit}</Ink>
       </View>
       <View style={{ gap: 6 }}>
-        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Jour</Ink>
+        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Jour")}</Ink>
         <TextInput
           value={date}
           onChangeText={setDate}
           placeholder="12/03/2026"
           placeholderTextColor={c.textMuted}
           keyboardType="numbers-and-punctuation"
-          accessibilityLabel="Jour de la mesure"
+          accessibilityLabel={traduire("Jour de la mesure")}
           style={[fontStyle('bold'), { height: 50, fontSize: 16, color: c.ink, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
         />
       </View>
       {error ? <Ink size={13} weight="bold" color={c.danger} style={{ paddingHorizontal: 4 }}>{error}</Ink> : null}
       <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-        <Ink size={16} weight="extraBold" color={c.onAccent}>Enregistrer</Ink>
+        <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Enregistrer")}</Ink>
       </Pressable>
       {onDelete ? (
         <Pressable onPress={onDelete} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={14} weight="bold" color={c.danger}>Supprimer</Ink>
+          <Ink size={14} weight="bold" color={c.danger}>{traduire("Supprimer")}</Ink>
         </Pressable>
       ) : null}
     </Sheet>
@@ -123,8 +124,8 @@ export function PremiumTeaser({ hidden, what }: { hidden: number; what: string }
   if (hidden <= 0) return null;
   return (
     <Pressable onPress={() => ouvrirPaywall('periode_longue', hidden)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, padding: 16, borderRadius: 22, backgroundColor: c.goldTint, borderWidth: 1, borderColor: 'rgba(197,157,69,0.4)', gap: 4, opacity: pressed ? 0.85 : 1 })}>
-      <Ink size={15} weight="extraBold" color={c.goldDeep}>Encore {hidden} {what} avec Premium</Ink>
-      <Ink size={13} color={c.textSecondary}>Tout ton historique, sans limite. Touche pour voir.</Ink>
+      <Ink size={15} weight="extraBold" color={c.goldDeep}>{traduire("Encore {0} {1} avec Premium", hidden, what)}</Ink>
+      <Ink size={13} color={c.textSecondary}>{traduire("Tout ton historique, sans limite. Touche pour voir.")}</Ink>
     </Pressable>
   );
 }

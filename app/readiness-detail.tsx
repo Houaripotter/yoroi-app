@@ -21,6 +21,7 @@ import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { BodyZones } from '@/components/yoroi/v2/accueil/BodyZones';
 import { intensite } from '@/lib/v2/intensite';
 import { RECUP_METHOD, messageScoreIncomplet, scoreRecupFiable } from '@/lib/v2/recuperation';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const FACTOR_ICON: Record<FactorKey, 'moon' | 'bolt' | 'drop' | 'body' | 'heart'> = {
   sommeil: 'moon',
@@ -32,10 +33,10 @@ const FACTOR_ICON: Record<FactorKey, 'moon' | 'bolt' | 'drop' | 'body' | 'heart'
 };
 
 const MISSING: Partial<Record<FactorKey, { label: string; text: string; href?: string }>> = {
-  sommeil: { label: 'Sommeil', text: 'Note ta nuit', href: '/sleep-input' },
-  charge: { label: 'Charge d’entraînement', text: 'Ajoute une séance', href: '/ajouter' },
-  hydratation: { label: 'Hydratation', text: 'Note ton eau', href: '/hydration' },
-  corps: { label: 'État du corps', text: 'Indique une gêne plus bas' },
+  sommeil: { label: traduire('Sommeil'), text: traduire('Note ta nuit'), href: '/sleep-input' },
+  charge: { label: traduire('Charge d’entraînement'), text: traduire('Ajoute une séance'), href: '/ajouter' },
+  hydratation: { label: traduire('Hydratation'), text: traduire('Note ton eau'), href: '/hydration' },
+  corps: { label: traduire('État du corps'), text: traduire('Indique une gêne plus bas') },
 };
 
 function colorFor(score: number) {
@@ -77,7 +78,7 @@ export default function TaForme() {
   const missingNight = !!forme?.missing.includes('sommeil');
 
   return (
-    <DetailScreen title="Ta récupération" subtitle={reliable && level ? level.label : 'Ton score du jour, sur 100'}>
+    <DetailScreen title={traduire("Ta récupération")} subtitle={reliable && level ? level.label : traduire('Ton score du jour, sur 100')}>
       {/* Score */}
       <Enter i={0}>
         {score !== null && level && !reliable ? (
@@ -94,17 +95,17 @@ export default function TaForme() {
                   {messageScoreIncomplet(missingNight)}
                 </Ink>
                 <Ink size={13} weight="medium" color={P.ink2}>
-                  {`Pour l’instant, seul ${forme?.factors[0]?.label.toLowerCase() ?? 'un élément'} est mesuré. Le détail est juste en dessous.`}
+                  {traduire("Pour l’instant, seul {0} est mesuré. Le détail est juste en dessous.", forme?.factors[0]?.label.toLowerCase() ?? 'un élément')}
                 </Ink>
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: P.paper }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: level.color }} />
               <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>
-                {`Indication de ce seul élément\u00A0: ${level.label.toLowerCase()}. ${level.advice}`}
+                {traduire("Indication de ce seul élément : {0}. {1}", level.label.toLowerCase(), level.advice)}
               </Ink>
             </View>
-            {missingNight ? <BigButton label="Noter ma nuit" icon="moon" onPress={() => router.push('/sleep-input' as any)} /> : null}
+            {missingNight ? <BigButton label={traduire("Noter ma nuit")} icon="moon" onPress={() => router.push('/sleep-input' as any)} /> : null}
           </Card>
         ) : score !== null && level ? (
           <Card style={{ alignItems: 'center', gap: 12, paddingVertical: 24 }}>
@@ -115,8 +116,7 @@ export default function TaForme() {
                   {String(score)}
                 </Ink>
                 <Ink size={13} weight="bold" color={P.muted} style={{ marginTop: -4 }}>
-                  sur 100
-                </Ink>
+                  {traduire("sur 100")}</Ink>
               </View>
             </View>
             <Ink size={22} weight="black" tight>
@@ -126,24 +126,23 @@ export default function TaForme() {
               {level.advice}
             </Ink>
             <Ink size={12} weight="bold" color={P.muted}>
-              {`Calculé sur ${forme?.factors.length ?? 0} élément${(forme?.factors.length ?? 0) > 1 ? 's' : ''} mesuré${(forme?.factors.length ?? 0) > 1 ? 's' : ''}`}
+              {traduirePluriel((forme?.factors.length ?? 0), (forme?.factors.length ?? 0) > 1, "Calculé sur {0} élément mesuré", "Calculé sur {0} éléments mesurés", forme?.factors.length ?? 0)}
             </Ink>
           </Card>
         ) : (
           <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 26 }}>
             <Ornement name="koi" size={88} />
             <Ink size={20} weight="black" tight style={{ textAlign: 'center' }}>
-              {loaded ? 'Pas encore assez de données' : 'On écoute ton corps'}
+              {loaded ? traduire('Pas encore assez de données') : traduire('On écoute ton corps')}
             </Ink>
             <Ink size={14} weight="medium" color={P.ink2} style={{ textAlign: 'center', paddingHorizontal: 8 }}>
-              Note ta nuit ou ta prochaine séance. On ne te donne un score que s’il repose sur du vrai.
-            </Ink>
+              {traduire("Note ta nuit ou ta prochaine séance. On ne te donne un score que s’il repose sur du vrai.")}</Ink>
             <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 6 }}>
               <View style={{ flex: 1 }}>
-                <BigButton label="Ma nuit" icon="moon" tone="light" compact onPress={() => router.push('/sleep-input' as any)} />
+                <BigButton label={traduire("Ma nuit")} icon="moon" tone="light" compact onPress={() => router.push('/sleep-input' as any)} />
               </View>
               <View style={{ flex: 1 }}>
-                <BigButton label="Une séance" icon="plus" compact onPress={() => router.push('/ajouter' as any)} />
+                <BigButton label={traduire("Une séance")} icon="plus" compact onPress={() => router.push('/ajouter' as any)} />
               </View>
             </View>
           </Card>
@@ -153,7 +152,7 @@ export default function TaForme() {
       {/* Facteurs */}
       {forme && (forme.factors.length > 0 || forme.missing.length > 0) ? (
         <Enter i={1} style={{ gap: 10 }}>
-          <SectionTitle>Ce qui compte aujourd’hui</SectionTitle>
+          <SectionTitle>{traduire("Ce qui compte aujourd’hui")}</SectionTitle>
           <Card style={{ gap: 16 }}>
             {forme.factors.map((f) => (
               <View key={f.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -206,24 +205,24 @@ export default function TaForme() {
 
       {/* Energie de la semaine */}
       <Enter i={2} style={{ gap: 10 }}>
-        <SectionTitle>Ton énergie</SectionTitle>
+        <SectionTitle>{traduire("Ton énergie")}</SectionTitle>
         <Card style={{ gap: 16 }}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Stat value={String(forme?.sessions7 ?? 0)} label="séances en 7 jours" />
-            <Stat value={forme && forme.minutes7 > 0 ? formatMinutes(forme.minutes7) : '0'} label="d’entraînement" />
+            <Stat value={String(forme?.sessions7 ?? 0)} label={traduire("séances en 7 jours")} />
+            <Stat value={forme && forme.minutes7 > 0 ? formatMinutes(forme.minutes7) : '0'} label={traduire("d’entraînement")} />
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Stat value={forme?.sleepAvg7 ? formatMinutes(forme.sleepAvg7) : 'pas noté'} label="de sommeil par nuit, 7 nuits" color={P.indigo} />
+            <Stat value={forme?.sleepAvg7 ? formatMinutes(forme.sleepAvg7) : traduire('pas noté')} label={traduire("de sommeil par nuit, 7 nuits")} color={P.indigo} />
             <Stat
-              value={forme?.daysSinceLast === null || forme?.daysSinceLast === undefined ? 'aucune' : forme.daysSinceLast === 0 ? 'aujourd’hui' : forme.daysSinceLast === 1 ? 'hier' : `${forme.daysSinceLast} jours`}
-              label="dernière séance"
+              value={forme?.daysSinceLast === null || forme?.daysSinceLast === undefined ? 'aucune' : forme.daysSinceLast === 0 ? traduire('aujourd’hui') : forme.daysSinceLast === 1 ? 'hier' : traduire("{0} jours", forme.daysSinceLast)}
+              label={traduire("dernière séance")}
             />
           </View>
           {sleep && sleep.sleepDebtHours > 0 ? (
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: P.indigoSoft, borderRadius: 16, padding: 12 }}>
               <Icon name="moon" size={18} color={P.indigo} />
               <Ink size={13} weight="bold" color={P.indigo} style={{ flex: 1 }}>
-                {`Il te manque ${String(sleep.sleepDebtHours).replace('.', ',')} h de sommeil sur 7 jours. Couche-toi un peu plus tôt ce soir.`}
+                {traduire("Il te manque {0} h de sommeil sur 7 jours. Couche-toi un peu plus tôt ce soir.", String(sleep.sleepDebtHours).replace('.', DECIMAL))}
               </Ink>
             </View>
           ) : null}
@@ -249,10 +248,9 @@ export default function TaForme() {
 
       {/* Etat du corps */}
       <Enter i={3} style={{ gap: 10 }}>
-        <SectionTitle>Ton corps</SectionTitle>
+        <SectionTitle>{traduire("Ton corps")}</SectionTitle>
         <Ink size={14} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-          Touche une zone pour signaler une gêne ou une blessure. Ta récupération en tient compte.
-        </Ink>
+          {traduire("Touche une zone pour signaler une gêne ou une blessure. Ta récupération en tient compte.")}</Ink>
         <BodyZones body={forme?.body ?? {}} onChange={() => load()} />
       </Enter>
 

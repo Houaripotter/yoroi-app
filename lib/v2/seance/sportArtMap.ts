@@ -8,6 +8,7 @@
  * Regle : jamais l'illustration d'un autre sport si elle ne lui ressemble pas vraiment.
  */
 import { getSportCategory } from '@/lib/sports';
+import { traduire } from '@/lib/i18n/tr';
 
 export const SPORT_ART_MAP: Record<string, string[]> = {
   // combat, pieds et poings
@@ -242,7 +243,7 @@ export const CATEGORY_ICON: Record<string, string> = {
   glisse: 'neige',
   nature: 'nature',
   aquatique: 'nage',
-  precision: 'cible',
+  precision: traduire('cible'),
   autre: 'medaille',
 };
 

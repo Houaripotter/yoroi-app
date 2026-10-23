@@ -6,6 +6,7 @@
 // ============================================
 
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 const { MultipeerBridge: Native } = NativeModules;
 
@@ -81,11 +82,11 @@ export const MultipeerBridge = {
 
   /** Retourne le nom de cet appareil (pour l'affichage) */
   getDeviceName: async (): Promise<string> => {
-    if (!Native) return 'Mon appareil';
+    if (!Native) return traduire('Mon appareil');
     try {
       return await Native.getDeviceName();
     } catch {
-      return 'Mon appareil';
+      return traduire('Mon appareil');
     }
   },
 

@@ -11,6 +11,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
+import { traduire } from '@/lib/i18n/tr';
 
 export function StudioGate({ children }: { children: React.ReactNode }) {
   const { ready, isCreator, recheck } = useCreatorMode();
@@ -51,9 +52,9 @@ export function StudioLock() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
-        <RoundButton icon="back" label="Retour" onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))} />
+        <RoundButton icon="back" label={traduire("Retour")} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))} />
       </View>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }} accessible accessibilityLabel="Verrouillé">
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }} accessible accessibilityLabel={traduire("Verrouillé")}>
         <View style={{ width: 96, height: 96, borderRadius: 32, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="lock" size={42} color={c.textMuted} />
         </View>

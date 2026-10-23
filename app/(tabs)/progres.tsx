@@ -49,6 +49,7 @@ import { localISO } from '@/lib/v2/accueil/hydration';
 import { dayMonth, projection } from '@/lib/v2/accueil/projection';
 import { usePlanPoids } from '@/lib/v2/pesee/usePlanPoids';
 import { ligneArriveeCap } from '@/lib/v2/pesee/arrivee';
+import { traduire } from '@/lib/i18n/tr';
 
 /** 80 kg plutot que 80,0 kg, une decimale sinon (comme la carte Poids de l'accueil) */
 const kgShort = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : formatKg(v));
@@ -59,11 +60,11 @@ type Section = (typeof SECTIONS)[number];
 
 /** Titre, phrase et illustration de chaque onglet */
 const INTRO: Record<Section, { title: string; sub: string; illus: Illus }> = {
-  Corps: { title: 'Ton corps', sub: 'Ton poids, ta composition et tes mensurations, mesure après mesure.', illus: { ornement: 'bonsai' } },
-  Force: { title: 'Ta force', sub: 'Ton maximum estimé, tes séries par muscle et ton tonnage.', illus: { tampon: 'objectif_muscle' } },
-  Cardio: { title: 'Ton endurance', sub: 'Tes séances et leur durée semaine après semaine, ton effort et ton année.', illus: { tampon: 'vague' } },
-  Santé: { title: 'Ta santé', sub: 'Ta montre, ton sommeil, ton cœur, ta nutrition et tes soins.', illus: { ornement: 'koi' } },
-  Photos: { title: 'Tes photos', sub: 'Ta transformation en images. Elles restent sur ton téléphone.', illus: { ornement: 'fuji' } },
+  Corps: { title: traduire('Ton corps'), sub: traduire('Ton poids, ta composition et tes mensurations, mesure après mesure.'), illus: { ornement: 'bonsai' } },
+  Force: { title: traduire('Ta force'), sub: traduire('Ton maximum estimé, tes séries par muscle et ton tonnage.'), illus: { tampon: 'objectif_muscle' } },
+  Cardio: { title: traduire('Ton endurance'), sub: traduire('Tes séances et leur durée semaine après semaine, ton effort et ton année.'), illus: { tampon: 'vague' } },
+  Santé: { title: traduire('Ta santé'), sub: traduire('Ta montre, ton sommeil, ton cœur, ta nutrition et tes soins.'), illus: { ornement: 'koi' } },
+  Photos: { title: traduire('Tes photos'), sub: traduire('Ta transformation en images. Elles restent sur ton téléphone.'), illus: { ornement: 'fuji' } },
 };
 
 function BrushUnderline({ color }: { color: string }) {
@@ -123,7 +124,7 @@ export default function Progres() {
         contentContainerStyle={{ paddingBottom: insets.bottom + INK_TAB_BAR_SPACE }}
         showsVerticalScrollIndicator={false}
       >
-        <BandeauScene scrollY={defil} scene="progres" top={insets.top} title="Progrès" sub="Comment tu évolues, en un coup d’œil" />
+        <BandeauScene scrollY={defil} scene="progres" top={insets.top} title={traduire("Progrès")} sub={traduire("Comment tu évolues, en un coup d’œil")} />
 
         {/* Vue d'ensemble : une tuile par facette, chacune ouvre son onglet */}
         {hasData ? (
@@ -140,7 +141,7 @@ export default function Progres() {
         {/* Tes records, venus de Seances */}
         {trainings.length ? (
           <View style={{ marginHorizontal: 22, gap: 10 }}>
-            <EnteteSection title="Tes records" sub="Tes meilleures marques du moment" illus={{ tampon: 'record' }} action="Tout voir" onAction={() => router.push('/records' as any)} style={{ marginTop: 18 }} />
+            <EnteteSection title={traduire("Tes records")} sub={traduire("Tes meilleures marques du moment")} illus={{ tampon: 'record' }} action={traduire("Tout voir")} onAction={() => router.push('/records' as any)} style={{ marginTop: 18 }} />
             <RecordsCard trainings={trainings} femme={femme} />
           </View>
         ) : null}
@@ -207,20 +208,20 @@ function WeightExample() {
     <ExamplePreview
       bleed
       dim={0.4}
-      title="Ta courbe se dessine dès la troisième pesée"
-      text="Pèse-toi le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance."
-      plusHint="Touche + pour ta première pesée"
+      title={traduire("Ta courbe se dessine dès la troisième pesée")}
+      text={traduire("Pèse-toi le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance.")}
+      plusHint={traduire("Touche + pour ta première pesée")}
       style={{ marginTop: 18 }}
     >
       <WeightTrendChart points={sample} goal={SAMPLE_GOAL} height={230} plan={false} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 22, marginTop: 8, flexWrap: 'wrap' }}>
-        <LegendMark kind="line" color={POIDS.c2} label="ton poids" />
-        <LegendMark kind="dash" color={POIDS.cap} label="ton cap" />
+        <LegendMark kind="line" color={POIDS.c2} label={traduire("ton poids")} />
+        <LegendMark kind="dash" color={POIDS.cap} label={traduire("ton cap")} />
       </View>
       <View style={{ flexDirection: 'row', marginHorizontal: 22, marginTop: 14, paddingVertical: 12, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
-        <Stat value={formatKg(last.value)} label="dernière pesée" />
-        <Stat value={formatKg(last.trend)} label="tendance lissée" border />
-        <Stat value={rateText(rate)} label="en moins par semaine" border />
+        <Stat value={formatKg(last.value)} label={traduire("dernière pesée")} />
+        <Stat value={formatKg(last.trend)} label={traduire("tendance lissée")} border />
+        <Stat value={rateText(rate)} label={traduire("en moins par semaine")} border />
       </View>
     </ExamplePreview>
   );
@@ -288,7 +289,7 @@ function WeightSection() {
     <View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 12, minHeight: 44 }}>
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>
-          {head ? 'Ce jour-là' : 'Ta courbe de poids'}
+          {head ? traduire('Ce jour-là') : traduire('Ta courbe de poids')}
         </Ink>
         <DetailCue onPress={openDetail} />
       </View>
@@ -297,23 +298,23 @@ function WeightSection() {
           <>
             <Ink size={15} weight="bold" color={c.textSecondary}>{formatLongDate(head.date)}</Ink>
             <Ink size={56} weight="black" tight>{formatKg(head.value)} <Ink size={22} weight="black" color={c.textSecondary}>kilos</Ink></Ink>
-            <Ink size={14} weight="bold" color={c.textSecondary}>{`tendance ${formatKg(head.trend)} kilos ce jour-là`}</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("tendance {0} kilos ce jour-là", formatKg(head.trend))}</Ink>
           </>
         ) : (
           emphasize ? (
             <>
               <Ink size={56} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{`${formatKg(Math.abs(change))} kilo${Math.abs(change) >= 2 ? 's' : ''}`}</Ink>
               <Ink size={17} weight="bold" color={c.textSecondary}>
-                {`de ${change < 0 ? 'moins' : 'plus'} ${periodPhrase(period)}, en tendance`}
+                {traduire("de {0} {1}, en tendance", change < 0 ? 'moins' : 'plus', periodPhrase(period))}
               </Ink>
             </>
           ) : (
             <>
-              <Ink size={34} weight="black" tight numberOfLines={2}>{`Ton poids ${periodPhrase(period)}`}</Ink>
+              <Ink size={34} weight="black" tight numberOfLines={2}>{traduire("Ton poids {0}", periodPhrase(period))}</Ink>
               <Ink size={17} weight="bold" color={c.textSecondary}>
                 {Math.abs(change) < 0.05
                   ? `${formatKg(last.trend)} kg en tendance, stable`
-                  : `${formatKg(last.trend)} kg en tendance, ${formatKg(Math.abs(change))} kg de ${change < 0 ? 'moins' : 'plus'}`}
+                  : traduire("{0} kg en tendance, {1} kg de {2}", formatKg(last.trend), formatKg(Math.abs(change)), change < 0 ? 'moins' : 'plus')}
               </Ink>
             </>
           )
@@ -327,29 +328,29 @@ function WeightSection() {
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 22, marginTop: 10, flexWrap: 'wrap' }}>
-        <LegendMark kind="line" color={POIDS.c2} label="ton poids" />
-        {goal ? <LegendMark kind="dash" color={POIDS.cap} label="ton rythme prévu, jusqu’à ton cap" /> : null}
+        <LegendMark kind="line" color={POIDS.c2} label={traduire("ton poids")} />
+        {goal ? <LegendMark kind="dash" color={POIDS.cap} label={traduire("ton rythme prévu, jusqu’à ton cap")} /> : null}
       </View>
 
-      <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: 22, marginTop: 8 }}>Touche la courbe pour son détail, glisse ton doigt pour revoir chaque pesée.</Ink>
+      <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: 22, marginTop: 8 }}>{traduire("Touche la courbe pour son détail, glisse ton doigt pour revoir chaque pesée.")}</Ink>
 
       <View style={{ flexDirection: 'row', marginHorizontal: 22, marginTop: 22, paddingVertical: 14, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
-        <Stat value={formatKg(last.value)} label="dernière pesée" />
-        <Stat value={formatKg(last.trend)} label="tendance lissée" border />
-        <Stat value={rateText(rate)} label={rate === null ? 'ton rythme, dès 4 pesées' : rate <= 0 ? 'en moins par semaine' : 'en plus par semaine'} border />
+        <Stat value={formatKg(last.value)} label={traduire("dernière pesée")} />
+        <Stat value={formatKg(last.trend)} label={traduire("tendance lissée")} border />
+        <Stat value={rateText(rate)} label={rate === null ? traduire('ton rythme, dès 4 pesées') : rate <= 0 ? traduire('en moins par semaine') : traduire('en plus par semaine')} border />
       </View>
 
 
       <Pressable
         onPress={() => router.push('/profile' as any)}
         accessibilityRole="button"
-        accessibilityLabel={goal ? `Objectif ${formatKg(goal)} kilos, modifier` : 'Fixer ton objectif de poids'}
+        accessibilityLabel={goal ? traduire("Objectif {0} kilos, modifier", formatKg(goal)) : traduire('Fixer ton objectif de poids')}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 14, minHeight: 52, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
       >
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={13} weight="bold" color={c.textSecondary}>{goal ? `Objectif ${formatKg(goal)} kg` : 'Ton objectif'}</Ink>
+          <Ink size={13} weight="bold" color={c.textSecondary}>{goal ? traduire("Objectif {0} kg", formatKg(goal)) : traduire('Ton objectif')}</Ink>
           <Ink size={15} weight="extraBold">
-            {toGoal === null ? 'À fixer dans ton profil' : Math.abs(toGoal) < 0.05 || (aim === 'lose' && toGoal < 0) || (aim === 'gain' && toGoal > 0) ? 'Atteint, à ta dernière pesée' : `Encore ${formatKg(Math.abs(toGoal))} kg, à ta dernière pesée`}
+            {toGoal === null ? traduire('À fixer dans ton profil') : Math.abs(toGoal) < 0.05 || (aim === 'lose' && toGoal < 0) || (aim === 'gain' && toGoal > 0) ? traduire('Atteint, à ta dernière pesée') : traduire("Encore {0} kg, à ta dernière pesée", formatKg(Math.abs(toGoal)))}
           </Ink>
         </View>
         <Svg width={14} height={14} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.6} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
@@ -359,7 +360,7 @@ function WeightSection() {
         <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 22, marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(197,157,69,0.14)', borderWidth: 1, borderColor: 'rgba(197,157,69,0.35)' }}>
           <View style={{ width: 4, borderRadius: 2, backgroundColor: c.gold }} />
           <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>
-            {`Ton poids bouge de plus d’un kilo par semaine. C’est rapide : vise plutôt un rythme lent et régulier, et parles-en à un professionnel de santé si ça dure.`}
+            {traduire(`Ton poids bouge de plus d’un kilo par semaine. C’est rapide : vise plutôt un rythme lent et régulier, et parles-en à un professionnel de santé si ça dure.`)}
           </Ink>
         </View>
       ) : null}
@@ -367,7 +368,7 @@ function WeightSection() {
       <PredictionCard series={series} goal={goal} />
 
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 22, marginTop: 20 }}>
-        <GhostButton label="Toutes tes pesées" onPress={() => router.push('/pesees' as any)} style={{ flex: 1 }} />
+        <GhostButton label={traduire("Toutes tes pesées")} onPress={() => router.push('/pesees' as any)} style={{ flex: 1 }} />
       </View>
     </View>
   );
@@ -390,8 +391,8 @@ function PredictionCard({ series, goal }: { series: DayWeight[]; goal: number | 
   const arrivee = goal != null ? ligneArriveeCap(plan, goal, today) : null;
   // sans cap : ta tendance dans un mois (lib/v2/accueil/projection.ts)
   const proj = goal == null ? projection(series, null, today) : null;
-  const line = arrivee ?? (proj === null ? 'Pas encore de date fiable' : `${kgShort(proj.value)} kg ${proj.kind === 'goal' ? `vers le ${dayMonth(proj.date, today)}` : 'dans un mois'}`);
-  const titre = arrivee ? 'Ton arrivée prévue' : 'À ce rythme';
+  const line = arrivee ?? (proj === null ? traduire('Pas encore de date fiable') : `${kgShort(proj.value)} kg ${proj.kind === 'goal' ? traduire("vers le {0}", dayMonth(proj.date, today)) : traduire('dans un mois')}`);
+  const titre = arrivee ? traduire('Ton arrivée prévue') : traduire('À ce rythme');
   return (
     <Pressable
       onPress={() => {
@@ -399,13 +400,13 @@ function PredictionCard({ series, goal }: { series: DayWeight[]; goal: number | 
         router.push('/weight-predictions' as any);
       }}
       accessibilityRole="button"
-      accessibilityLabel={`Prévisions, ${titre.toLowerCase()}, ${line}${isPremium ? '' : ', page complète avec Premium'}`}
+      accessibilityLabel={traduire("Prévisions, {0}, {1}{2}", titre.toLowerCase(), line, isPremium ? '' : ', page complète avec Premium')}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 10, minHeight: 52, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
     >
       <View style={{ flex: 1, gap: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
           <Ink size={13} weight="bold" color={c.textSecondary}>{titre}</Ink>
-          <Ink size={12} weight="extraBold" color={c.accent}>{isPremium ? 'Prévisions' : 'Prévisions, Premium'}</Ink>
+          <Ink size={12} weight="extraBold" color={c.accent}>{isPremium ? traduire('Prévisions') : traduire('Prévisions, Premium')}</Ink>
         </View>
         <Ink size={15} weight="extraBold" numberOfLines={2}>{line}</Ink>
       </View>
@@ -415,7 +416,7 @@ function PredictionCard({ series, goal }: { series: DayWeight[]; goal: number | 
 }
 
 function rateText(rate: number | null): string {
-  if (rate === null) return 'Bientôt';
+  if (rate === null) return traduire('Bientôt');
   const grams = Math.round(Math.abs(rate) * 1000 / 10) * 10;
   return grams >= 1000 ? `${formatKg(grams / 1000)} kg` : `${grams} g`;
 }

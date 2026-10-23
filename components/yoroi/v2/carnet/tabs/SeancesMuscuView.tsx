@@ -9,13 +9,14 @@ import { humanMinutes } from '@/lib/v2/carnet/format';
 import { useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, BigStats, RankRow, BlockTitle } from '../ui';
 import { SessionLine, TabEmpty, TabLoading } from './common';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const SPLITS: Record<string, { label: string; kw: string[] }> = {
-  push: { label: 'Push', kw: ['push', 'pecs', 'épaules', 'triceps', 'dc', 'dm', 'développé couché', 'développé militaire'] },
-  pull: { label: 'Pull', kw: ['pull', 'dos', 'biceps', 'rowing', 'traction', 'tirage', 'sdt', 'soulevé'] },
+  push: { label: 'Push', kw: ['push', 'pecs', traduire('épaules'), 'triceps', 'dc', 'dm', traduire('développé couché'), traduire('développé militaire')] },
+  pull: { label: 'Pull', kw: ['pull', 'dos', 'biceps', 'rowing', 'traction', 'tirage', 'sdt', traduire('soulevé')] },
   legs: { label: 'Jambes', kw: ['legs', 'jambes', 'quadri', 'ischio', 'squat', 'fente', 'mollet'] },
-  upper: { label: 'Haut du corps', kw: ['upper', 'haut du corps'] },
-  lower: { label: 'Bas du corps', kw: ['lower', 'bas du corps'] },
+  upper: { label: traduire('Haut du corps'), kw: ['upper', traduire('haut du corps')] },
+  lower: { label: traduire('Bas du corps'), kw: ['lower', traduire('bas du corps')] },
   full: { label: 'Corps entier', kw: ['full', 'full body', 'circuit'] },
   abs: { label: 'Abdos', kw: ['abdos', 'core', 'gainage', 'abs'] },
 };
@@ -46,7 +47,7 @@ export function SeancesMuscuView({ refreshKey, hideEmpty }: { refreshKey: number
       const y = d.getFullYear();
       weeks.add(`${y}-${Math.ceil((d.getTime() - new Date(y, 0, 1).getTime()) / (7 * 86400000))}`);
     }
-    const perWeek = weeks.size > 0 ? (n / weeks.size).toFixed(1).replace('.', ',') : '0';
+    const perWeek = weeks.size > 0 ? (n / weeks.size).toFixed(1).replace('.', DECIMAL) : '0';
     return { n, min, avg: n > 0 ? Math.round(min / n) : 0, dist, perWeek };
   }, [trainings]);
 
@@ -54,7 +55,7 @@ export function SeancesMuscuView({ refreshKey, hideEmpty }: { refreshKey: number
 
   if (loading) return <TabLoading />;
   if (trainings.length === 0) {
-    return hideEmpty ? null : <TabEmpty title="Aucune séance de musculation" text="Lance ta première séance : tes séries, tes charges et ton split apparaîtront ici." action="Commencer une séance" href="/seance/muscu" />;
+    return hideEmpty ? null : <TabEmpty title={traduire("Aucune séance de musculation")} text={traduire("Lance ta première séance : tes séries, tes charges et ton split apparaîtront ici.")} action={traduire("Commencer une séance")} href="/seance/muscu" />;
   }
 
   return (
@@ -62,22 +63,22 @@ export function SeancesMuscuView({ refreshKey, hideEmpty }: { refreshKey: number
       <Sheet2>
         <BigStats
           items={[
-            { value: String(st.n), label: 'séances', color: P.accent },
-            { value: humanMinutes(st.min), label: 'au total' },
-            { value: `${st.avg}`, unit: 'min', label: 'par séance' },
+            { value: String(st.n), label: traduire('séances'), color: P.accent },
+            { value: humanMinutes(st.min), label: traduire('au total') },
+            { value: `${st.avg}`, unit: 'min', label: traduire('par séance') },
             { value: st.perWeek, label: 'par semaine', color: P.indigo },
           ]}
         />
       </Sheet2>
       {st.dist.length > 0 ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Ton split</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Ton split")}</Ink>
           {st.dist.map((d, i) => (
-            <RankRow key={d.key} title={d.label} value={`${d.count} séance${d.count > 1 ? 's' : ''}`} ratio={d.count / st.dist[0].count} color={TONES[i % TONES.length]} />
+            <RankRow key={d.key} title={d.label} value={traduirePluriel(d.count, d.count > 1, "{0} séance", "{0} séances", d.count)} ratio={d.count / st.dist[0].count} color={TONES[i % TONES.length]} />
           ))}
         </Sheet2>
       ) : null}
-      <BlockTitle title="Dernières séances" />
+      <BlockTitle title={traduire("Dernières séances")} />
       {recent.map((t) => {
         const sp = detectSplit(t.technical_theme || '');
         const chips: string[] = [];

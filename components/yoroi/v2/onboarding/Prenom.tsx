@@ -7,6 +7,7 @@ import { validators } from '@/lib/security/validators';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { MainButton, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 export function Prenom({ nav, name, onChange, onNext }: { nav: Nav; name: string; onChange: (v: string) => void; onNext: () => void }) {
   const c = useColors();
@@ -18,7 +19,7 @@ export function Prenom({ nav, name, onChange, onNext }: { nav: Nav; name: string
   }, []);
   const shown = name.trim();
   return (
-    <Shell {...nav} title="D’abord, **ton prénom**" footer={<MainButton label="Continuer" onPress={onNext} disabled={!valid} />}>
+    <Shell {...nav} title={traduire("D’abord, **ton prénom**")} footer={<MainButton label="Continuer" onPress={onNext} disabled={!valid} />}>
       <View style={{ minHeight: 120, justifyContent: 'center', alignItems: 'center', paddingVertical: 8 }} accessibilityLiveRegion="polite">
         {shown ? (
           <Animated.View key={shown.length > 0 ? 'on' : 'off'} entering={ZoomIn.springify().damping(14)}>
@@ -26,7 +27,7 @@ export function Prenom({ nav, name, onChange, onNext }: { nav: Nav; name: string
           </Animated.View>
         ) : (
           <Animated.View entering={FadeIn.duration(300)}>
-            <Ink size={52} weight="black" tight style={{ color: c.fillSubtle, textAlign: 'center' }}>Prénom</Ink>
+            <Ink size={52} weight="black" tight style={{ color: c.fillSubtle, textAlign: 'center' }}>{traduire("Prénom")}</Ink>
           </Animated.View>
         )}
       </View>
@@ -35,7 +36,7 @@ export function Prenom({ nav, name, onChange, onNext }: { nav: Nav; name: string
           ref={ref}
           value={name}
           onChangeText={onChange}
-          placeholder="Ton prénom"
+          placeholder={traduire("Ton prénom")}
           placeholderTextColor={c.textMuted}
           maxLength={50}
           autoCapitalize="words"
@@ -44,11 +45,11 @@ export function Prenom({ nav, name, onChange, onNext }: { nav: Nav; name: string
           autoComplete="given-name"
           returnKeyType="done"
           onSubmitEditing={() => (valid ? onNext() : undefined)}
-          accessibilityLabel="Prénom"
+          accessibilityLabel={traduire("Prénom")}
           style={[fontStyle('extraBold'), { fontSize: 22, color: c.ink, paddingVertical: 12 }]}
         />
       </View>
-      <Ink size={13} color={c.textSecondary}>Il reste sur ton téléphone.</Ink>
+      <Ink size={13} color={c.textSecondary}>{traduire("Il reste sur ton téléphone.")}</Ink>
     </Shell>
   );
 }

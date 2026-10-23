@@ -20,6 +20,7 @@ import { MARGE_STABLE, jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { POIDS } from './CourbePoids';
 import { ToriiImage } from './ToriiImage';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type ModeSentier = 'perte' | 'prise' | 'maintien';
 
@@ -30,7 +31,7 @@ const BARRE_H = 6;
 const HAUT = 30;
 
 /** 80,7 : toujours une decimale, comme le grand chiffre */
-const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 type Morceau = { t: string; k?: 'kg' | 'ok' };
 
@@ -51,8 +52,8 @@ export function phraseSentier({ depart, cap, actuel, mode, torii, atteint }: Omi
   if (mode === 'maintien') {
     const ecart = actuel - cap;
     const marge = cap * MARGE_STABLE;
-    if (Math.abs(ecart) <= marge) return { pct: null, parts: [{ t: 'Dans ta zone de forme', k: 'ok' }, { t: ', à ' }, { t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: ` de ton poids de forme de ${kg1(cap)} kg.` }] };
-    return { pct: null, parts: [{ t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: ` ${ecart > 0 ? 'au-dessus' : 'en dessous'} de ton poids de forme de ${kg1(cap)} kg, ta zone va de ${kg1(cap - marge)} à ${kg1(cap + marge)} kg.` }] };
+    if (Math.abs(ecart) <= marge) return { pct: null, parts: [{ t: traduire('Dans ta zone de forme'), k: 'ok' }, { t: traduire(', à ') }, { t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: traduire(" de ton poids de forme de {0} kg.", kg1(cap)) }] };
+    return { pct: null, parts: [{ t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: traduire(" {0} de ton poids de forme de {1} kg, ta zone va de {2} à {3} kg.", ecart > 0 ? 'au-dessus' : 'en dessous', kg1(cap), kg1(cap - marge), kg1(cap + marge)) }] };
   }
   const perte = mode === 'perte';
   const span = Math.abs(depart - cap);
@@ -60,16 +61,16 @@ export function phraseSentier({ depart, cap, actuel, mode, torii, atteint }: Omi
   const reste = Math.max(0, perte ? actuel - cap : cap - actuel);
   const pct = atteint ? 1 : span < 0.05 ? 0 : Math.max(0, Math.min(1, fait / span));
   if (atteint) {
-    const parts: Morceau[] = [{ t: torii ? `Cap atteint le ${jourCourt(torii)}` : 'Cap atteint', k: 'ok' }];
-    if (Math.abs(fait) >= 0.05) parts.push({ t: ', ' }, { t: `${kg1(Math.abs(fait))} kg`, k: 'kg' }, { t: perte ? ' perdus' : ' pris' });
+    const parts: Morceau[] = [{ t: torii ? traduire("Cap atteint le {0}", jourCourt(torii)) : 'Cap atteint', k: 'ok' }];
+    if (Math.abs(fait) >= 0.05) parts.push({ t: ', ' }, { t: `${kg1(Math.abs(fait))} kg`, k: 'kg' }, { t: perte ? ' perdus' : traduire(' pris') });
     parts.push({ t: '.' });
     return { pct, parts };
   }
   const parts: Morceau[] = [];
-  if (Math.abs(fait) < 0.05) parts.push({ t: 'Ton chemin commence' });
-  else if (fait > 0) parts.push({ t: `${kg1(fait)} kg`, k: 'kg' }, { t: perte ? ' perdus' : ' pris' });
-  else parts.push({ t: `${kg1(-fait)} kg`, k: 'kg' }, { t: `${perte ? ' pris' : ' perdus'} depuis ton départ` });
-  parts.push({ t: ', plus que ' }, { t: `${kg1(reste)} kg`, k: 'kg' }, { t: ' avant ton cap.' });
+  if (Math.abs(fait) < 0.05) parts.push({ t: traduire('Ton chemin commence') });
+  else if (fait > 0) parts.push({ t: `${kg1(fait)} kg`, k: 'kg' }, { t: perte ? ' perdus' : traduire(' pris') });
+  else parts.push({ t: `${kg1(-fait)} kg`, k: 'kg' }, { t: traduire("{0} depuis ton départ", perte ? ' pris' : ' perdus') });
+  parts.push({ t: traduire(', plus que ') }, { t: `${kg1(reste)} kg`, k: 'kg' }, { t: traduire(' avant ton cap.') });
   return { pct, parts };
 }
 
@@ -117,18 +118,18 @@ export function SentierTorii(props: Props) {
 
   if (mode === 'maintien' || pct == null) {
     return (
-      <View accessible accessibilityLabel={`Ton poids de forme. ${texte}`}>
+      <View accessible accessibilityLabel={traduire("Ton poids de forme. {0}", texte)}>
         {phrase}
       </View>
     );
   }
 
-  const pctTxt = `${Math.round(pct * 100)} % du chemin`;
+  const pctTxt = traduire("{0} % du chemin", Math.round(pct * 100));
   // ton personnage : debout sur la barre a ta part du chemin, jamais coupe au bord
   const persoH = Math.min(HAUT - 4, Math.round((PERSO_W * 800) / 600));
   const cx = Math.min(Math.max(w * pct, PERSO_W * 0.35), Math.max(PERSO_W * 0.35, w - PERSO_W * 0.35));
   // « 90 % du chemin » : au-dessus de la barre, du cote libre de ton personnage (jamais sur lui)
-  const etiquette = atteint ? 'tout le chemin' : pctTxt;
+  const etiquette = atteint ? traduire('tout le chemin') : pctTxt;
   const tw = etiquette.length * 6 + 6;
   const libreG = cx - PERSO_W / 2 > tw;
   const libreD = w - (cx + PERSO_W / 2) > tw;
@@ -138,7 +139,7 @@ export function SentierTorii(props: Props) {
     <View
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={`Ton chemin vers ton cap. Départ ${kg1(depart)} kilos, cap ${kg1(cap)} kilos${torii && !atteint ? `, arrivée prévue le ${jourCourt(torii)}` : ''}. ${pctTxt}. ${texte}`}
+      accessibilityLabel={traduire("Ton chemin vers ton cap. Départ {0} kilos, cap {1} kilos{2}. {3}. {4}", kg1(depart), kg1(cap), torii && !atteint ? `, arrivée prévue le ${jourCourt(torii)}` : '', pctTxt, texte)}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(pct * 100) }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>

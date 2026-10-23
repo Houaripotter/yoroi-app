@@ -6,6 +6,7 @@
  * de la plateforme de la personne qui partage.
  */
 import { Platform } from 'react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Site de YOROI, en ligne depuis le 18 octobre 2026. */
 export const SITE_URL = 'https://yoroiapp.com';
@@ -21,7 +22,7 @@ export function lienApp(): string {
 
 /** Signature ajoutee a la fin de tout texte partage */
 export function signaturePartage(): string {
-  return `Suivi avec YOROI : ${lienApp()}`;
+  return traduire("Suivi avec YOROI : {0}", lienApp());
 }
 
 /** Signature courte pour une image (ecrite sur la carte) : l'adresse sans https */

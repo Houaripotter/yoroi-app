@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEDUPE_BACKUP_KEY, DEDUPE_MIGRATION_KEY } from '@/lib/v2/seances/dedupeMigration';
 import { formatDateTime } from './deviceInfo';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type MigrationRow = { id: string; label: string; state: string; done: boolean; detail?: string };
 
@@ -41,13 +42,13 @@ export async function readMigrations(): Promise<MigrationRow[]> {
   const dedupeDone = got[DEDUPE_MIGRATION_KEY] === 'done';
   rows.push({
     id: 'dedupe',
-    label: 'Nettoyage des doublons (yoroi_dedupe_v1)',
+    label: traduire('Nettoyage des doublons (yoroi_dedupe_v1)'),
     done: dedupeDone,
-    state: dedupeDone ? 'Fait' : 'Pas encore lancé',
+    state: dedupeDone ? 'Fait' : traduire('Pas encore lancé'),
     detail: dedupe.exists
-      ? `${dedupe.rows} séance${dedupe.rows > 1 ? 's' : ''} mise${dedupe.rows > 1 ? 's' : ''} de côté${dedupe.at ? ` le ${dedupe.at}` : ''}${dedupe.restoredAt ? `, remises le ${dedupe.restoredAt}` : ''}`
+      ? traduirePluriel(dedupe.rows, dedupe.rows > 1, "{0} séance mise de côté{1}{2}", "{0} séances mises de côté{1}{2}", dedupe.rows, dedupe.at ? ` le ${dedupe.at}` : '', dedupe.restoredAt ? `, remises le ${dedupe.restoredAt}` : '')
       : dedupeDone
-        ? 'Aucun doublon trouvé, rien de mis de côté'
+        ? traduire('Aucun doublon trouvé, rien de mis de côté')
         : undefined,
   });
 
@@ -55,9 +56,9 @@ export async function readMigrations(): Promise<MigrationRow[]> {
   const v = Number(meta?.v ?? 0);
   rows.push({
     id: 'armure',
-    label: 'Reprise des rangs (armure v3)',
+    label: traduire('Reprise des rangs (armure v3)'),
     done: v >= 3,
-    state: meta ? (v >= 3 ? 'Faite, version 3' : `Version ${v}, la reprise v3 se fera au prochain calcul`) : 'Pas encore lancée',
+    state: meta ? (v >= 3 ? 'Faite, version 3' : traduire("Version {0}, la reprise v3 se fera au prochain calcul", v)) : traduire('Pas encore lancée'),
     detail: meta
       ? [
           meta.migratedAt ? `première reprise le ${when(meta.migratedAt)}` : null,
@@ -73,12 +74,12 @@ export async function readMigrations(): Promise<MigrationRow[]> {
   const flag = (id: string, label: string, key: string, doneValue?: string) => {
     const val = got[key];
     const done = doneValue ? val === doneValue : val !== null && val !== undefined && val !== 'false';
-    rows.push({ id, label, done, state: done ? 'Fait' : 'Pas encore', detail: val && val !== 'true' && val !== 'done' ? `valeur ${String(val).slice(0, 40)}` : undefined });
+    rows.push({ id, label, done, state: done ? 'Fait' : traduire('Pas encore'), detail: val && val !== 'true' && val !== 'done' ? `valeur ${String(val).slice(0, 40)}` : undefined });
   };
-  flag('avatar', 'Anciens avatars vers le personnage', '@yoroi_avatar_migration_v2_done');
-  flag('sommeil', 'Sommeil déplacé dans le stockage local', '@yoroi_sleep_migrated_to_async');
-  flag('import', 'Import de l’historique santé', '@yoroi_full_history_imported');
+  flag('avatar', traduire('Anciens avatars vers le personnage'), '@yoroi_avatar_migration_v2_done');
+  flag('sommeil', traduire('Sommeil déplacé dans le stockage local'), '@yoroi_sleep_migrated_to_async');
+  flag('import', traduire('Import de l’historique santé'), '@yoroi_full_history_imported');
   const ver = got['@yoroi_import_version'];
-  if (ver) rows.push({ id: 'import_version', label: 'Version de l’import santé', done: true, state: String(ver) });
+  if (ver) rows.push({ id: 'import_version', label: traduire('Version de l’import santé'), done: true, state: String(ver) });
   return rows;
 }

@@ -6,9 +6,10 @@ import type { Competition, Training, WeeklyPlan } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { localISO } from './hydration';
 import { devNow } from '@/lib/v2/creator/devClock';
+import { traduire } from '@/lib/i18n/tr';
 
-const WEEKDAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const WEEKDAYS = [traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi'), traduire('Dimanche')];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 export type NextSession = { title: string; sport: string; when: string; time?: string; duration?: number; club?: string; isToday: boolean; sportId?: string; slotId?: number };
 
@@ -45,9 +46,9 @@ export async function getNextSession(trainedToday: boolean): Promise<NextSession
       .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
     if (items.length > 0) {
       const p = items[0];
-      const when = off === 0 ? (p.time && p.time < '17:00' ? 'Aujourd’hui' : 'Ce soir') : off === 1 ? 'Demain' : WEEKDAYS[day];
+      const when = off === 0 ? (p.time && p.time < '17:00' ? traduire('Aujourd’hui') : traduire('Ce soir')) : off === 1 ? traduire('Demain') : WEEKDAYS[day];
       const title = p.label?.trim() || p.session_type?.trim() || getSportName(p.sport);
-      return { title, sport: getSportName(p.sport), when: off === 0 && !p.time ? 'Aujourd’hui' : when, time: formatHour(p.time), duration: p.duration_minutes, club: p.club_name, isToday: off === 0, sportId: p.sport, slotId: p.id };
+      return { title, sport: getSportName(p.sport), when: off === 0 && !p.time ? traduire('Aujourd’hui') : when, time: formatHour(p.time), duration: p.duration_minutes, club: p.club_name, isToday: off === 0, sportId: p.sport, slotId: p.id };
     }
   }
   return null;
@@ -110,8 +111,8 @@ export function longDate(iso: string): string {
 
 export function relativeDay(iso: string): string {
   const d = Math.round((new Date(localISO() + 'T12:00:00').getTime() - new Date(iso.slice(0, 10) + 'T12:00:00').getTime()) / 86400000);
-  if (d <= 0) return 'aujourd’hui';
+  if (d <= 0) return traduire('aujourd’hui');
   if (d === 1) return 'hier';
-  if (d < 7) return `il y a ${d} jours`;
-  return `le ${longDate(iso)}`;
+  if (d < 7) return traduire("il y a {0} jours", d);
+  return traduire("le {0}", longDate(iso));
 }

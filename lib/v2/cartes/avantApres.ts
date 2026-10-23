@@ -8,6 +8,7 @@ import type { Photo } from '@/lib/storage';
 import { daysDiff, num } from '@/lib/v2/progres/format';
 import { dateComplete, dureeTexte } from '@/lib/v2/photos/outils';
 import type { CarteData, Masque, PhotoCarte } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Ecart maximal, en jours, entre une photo et la pesee qui donne son poids */
 export const TOLERANCE_POIDS = 3;
@@ -55,8 +56,8 @@ export function carteAvantApres(liste: PhotoCarte[], avantId?: string | null, ap
   const jours = Math.abs(daysDiff(a.date, b.date));
   return {
     moment: 'avant_apres',
-    titre: 'Avant, après',
-    sousTitre: jours > 0 ? `En ${dureeTexte(jours)}` : 'Le même jour',
+    titre: traduire('Avant, après'),
+    sousTitre: jours > 0 ? `En ${dureeTexte(jours)}` : traduire('Le même jour'),
     avantApres: { avant: a, apres: b, jours },
     cle: `avant_apres:${a.id}:${b.id}`,
   };

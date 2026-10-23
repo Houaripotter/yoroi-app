@@ -3,6 +3,7 @@
  */
 import { isoOf, num, thousands, shiftDays, todayIso, dayShort, daysDiff } from '@/lib/v2/progres/format';
 import type { Kind, MetricDef } from './metrics';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type Phases = { deep: number; rem: number; core: number; awake: number };
 export type DayPoint = { date: string; value: number; v2?: number; phases?: Phases; source?: string };
@@ -130,15 +131,15 @@ export function whenLabel(date: string | null | undefined): string {
   const d = daysDiff(date.slice(0, 10), todayIso());
   if (d <= 0) return "aujourd'hui";
   if (d === 1) return 'hier';
-  if (d < 7) return `il y a ${d} jours`;
-  return `le ${dayShort(date.slice(0, 10), daysDiff(date.slice(0, 10), todayIso()) > 300)}`;
+  if (d < 7) return traduire("il y a {0} jours", d);
+  return traduire("le {0}", dayShort(date.slice(0, 10), daysDiff(date.slice(0, 10), todayIso()) > 300));
 }
 
 export function trendText(t: number | null): string | null {
   if (t === null || !Number.isFinite(t)) return null;
   const r = Math.round(t);
-  if (r === 0) return 'stable sur 7 jours';
-  return `${r > 0 ? '+' : ''}${r} % sur 7 jours`;
+  if (r === 0) return traduire('stable sur 7 jours');
+  return traduire("{0}{1} % sur 7 jours", r > 0 ? '+' : '', r);
 }
 
 export function todayKey(): string {
@@ -146,13 +147,13 @@ export function todayKey(): string {
 }
 
 export function relativeSync(iso: string | null | undefined): string {
-  if (!iso) return 'jamais synchronisé';
+  if (!iso) return traduire('jamais synchronisé');
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (!Number.isFinite(diff)) return 'jamais synchronisé';
-  if (diff < 1) return "synchronisé à l'instant";
-  if (diff < 60) return `synchronisé il y a ${diff} min`;
+  if (!Number.isFinite(diff)) return traduire('jamais synchronisé');
+  if (diff < 1) return traduire("synchronisé à l'instant");
+  if (diff < 60) return traduire("synchronisé il y a {0} min", diff);
   const h = Math.floor(diff / 60);
-  if (h < 24) return `synchronisé il y a ${h} h`;
+  if (h < 24) return traduire("synchronisé il y a {0} h", h);
   const d = Math.floor(h / 24);
-  return `synchronisé il y a ${d} jour${d > 1 ? 's' : ''}`;
+  return traduirePluriel(d, d > 1, "synchronisé il y a {0} jour", "synchronisé il y a {0} jours", d);
 }

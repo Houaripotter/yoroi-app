@@ -42,10 +42,11 @@ import { useEspace } from '@/lib/v2/espace/useEspace';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 function num(s: string): number | undefined {
   const n = parseFloat(s.replace(',', '.'));
@@ -54,13 +55,13 @@ function num(s: string): number | undefined {
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return '';
-  return String(Math.round(n * 10) / 10).replace('.', ',');
+  return String(Math.round(n * 10) / 10).replace('.', DECIMAL);
 }
 
 /** Poids affiche : toujours une decimale, virgule francaise (80,9 kg, 76,0 kg), comme l'accueil */
 function fmtKg1(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return '';
-  return n.toFixed(1).replace('.', ',');
+  return n.toFixed(1).replace('.', DECIMAL);
 }
 
 /** JJ/MM/AAAA ou AAAA-MM-JJ vers AAAA-MM-JJ, null si invalide */
@@ -204,22 +205,22 @@ export default function TonProfil() {
     Keyboard.dismiss();
     if (saving) return;
     if (!name.trim()) {
-      showPopup('Ton prénom', 'Indique ton prénom pour enregistrer ton profil.');
+      showPopup(traduire('Ton prénom'), traduire('Indique ton prénom pour enregistrer ton profil.'));
       return;
     }
     if (birth.trim() && !birthIso) {
-      showPopup('Date de naissance', 'Écris-la comme ceci : 15/06/1995.');
+      showPopup(traduire('Date de naissance'), traduire('Écris-la comme ceci : 15/06/1995.'));
       return;
     }
     const h = height ? parseInt(height, 10) : undefined;
     if (h !== undefined && (h < 100 || h > 250)) {
-      showPopup('Taille', 'Indique ta taille en centimètres, entre 100 et 250.');
+      showPopup('Taille', traduire('Indique ta taille en centimètres, entre 100 et 250.'));
       return;
     }
     const sw = num(startW);
     const tw = num(targetW);
     if ((sw !== undefined && (sw < 20 || sw > 350)) || (tw !== undefined && (tw < 20 || tw > 350))) {
-      showPopup('Poids', 'Indique un poids en kilos, entre 20 et 350.');
+      showPopup('Poids', traduire('Indique un poids en kilos, entre 20 et 350.'));
       return;
     }
     setSaving(true);
@@ -251,7 +252,7 @@ export default function TonProfil() {
       await load();
     } catch (err) {
       logger.error('[Profil] enregistrement', err);
-      showPopup('Oups', 'Ton profil n’a pas pu être enregistré.');
+      showPopup('Oups', traduire('Ton profil n’a pas pu être enregistré.'));
     } finally {
       setSaving(false);
     }
@@ -302,9 +303,9 @@ export default function TonProfil() {
     try {
       const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Caméra', 'Autorise la caméra dans les réglages du téléphone pour prendre une photo.', [
-          { text: 'Ouvrir les réglages', style: 'primary', onPress: () => Linking.openSettings() },
-          { text: 'Annuler', style: 'cancel' },
+        showPopup(traduire('Caméra'), traduire('Autorise la caméra dans les réglages du téléphone pour prendre une photo.'), [
+          { text: traduire('Ouvrir les réglages'), style: 'primary', onPress: () => Linking.openSettings() },
+          { text: traduire('Annuler'), style: 'cancel' },
         ]);
         return;
       }
@@ -312,7 +313,7 @@ export default function TonProfil() {
       if (!r.canceled && r.assets?.[0]) await savePhoto(r.assets[0].uri);
     } catch (err) {
       logger.error('[Profil] caméra', err);
-      showPopup('Caméra indisponible', 'Choisis plutôt une photo dans ta galerie.', [{ text: 'Galerie', style: 'primary', onPress: () => setTimeout(pickPhoto, 500) }]);
+      showPopup(traduire('Caméra indisponible'), traduire('Choisis plutôt une photo dans ta galerie.'), [{ text: 'Galerie', style: 'primary', onPress: () => setTimeout(pickPhoto, 500) }]);
     } finally {
       setPicking(false);
     }
@@ -324,9 +325,9 @@ export default function TonProfil() {
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted' && (status as string) !== 'limited') {
-        showPopup('Photos', 'Autorise l’accès aux photos dans les réglages du téléphone.', [
-          { text: 'Ouvrir les réglages', style: 'primary', onPress: () => Linking.openSettings() },
-          { text: 'Annuler', style: 'cancel' },
+        showPopup('Photos', traduire('Autorise l’accès aux photos dans les réglages du téléphone.'), [
+          { text: traduire('Ouvrir les réglages'), style: 'primary', onPress: () => Linking.openSettings() },
+          { text: traduire('Annuler'), style: 'cancel' },
         ]);
         return;
       }
@@ -334,18 +335,18 @@ export default function TonProfil() {
       if (!r.canceled && r.assets?.[0]) await savePhoto(r.assets[0].uri);
     } catch (err) {
       logger.error('[Profil] galerie', err);
-      showPopup('Oups', 'La photo n’a pas pu être chargée.');
+      showPopup('Oups', traduire('La photo n’a pas pu être chargée.'));
     } finally {
       setPicking(false);
     }
   };
 
   const changePhoto = () => {
-    showPopup('Ta photo', 'Comment veux-tu l’ajouter ?', [
-      { text: 'Prendre une photo', style: 'primary', onPress: () => setTimeout(takePhoto, 500) },
-      { text: 'Choisir dans la galerie', style: 'default', onPress: () => setTimeout(pickPhoto, 500) },
+    showPopup(traduire('Ta photo'), traduire('Comment veux-tu l’ajouter ?'), [
+      { text: traduire('Prendre une photo'), style: 'primary', onPress: () => setTimeout(takePhoto, 500) },
+      { text: traduire('Choisir dans la galerie'), style: 'default', onPress: () => setTimeout(pickPhoto, 500) },
       ...(photo
-        ? [{ text: 'Retirer la photo', style: 'destructive' as const, onPress: async () => {
+        ? [{ text: traduire('Retirer la photo'), style: 'destructive' as const, onPress: async () => {
             setPhoto(null);
             if (profile) {
               await saveProfile({ ...profile, profile_photo: null });
@@ -355,13 +356,13 @@ export default function TonProfil() {
             }
           } }]
         : []),
-      { text: 'Annuler', style: 'cancel' },
+      { text: traduire('Annuler'), style: 'cancel' },
     ]);
   };
 
   const since = profile?.start_date ? (() => {
     const d = new Date(profile.start_date + 'T12:00:00');
-    return Number.isNaN(d.getTime()) ? null : `Membre depuis ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    return Number.isNaN(d.getTime()) ? null : traduire("Membre depuis {0} {1}", MONTHS[d.getMonth()], d.getFullYear());
   })() : null;
 
   // IMC : source unique (lib/v2/progres/biomarkers), derniere pesee et taille, une decimale
@@ -369,7 +370,7 @@ export default function TonProfil() {
 
   return (
     <ProfilEcran
-      footer={dirty ? <Button tone="accent" label="Enregistrer" loading={saving} onPress={handleSave} /> : undefined}
+      footer={dirty ? <Button tone="accent" label={traduire("Enregistrer")} loading={saving} onPress={handleSave} /> : undefined}
       hero={(top) => (
         <ProfilHero
           top={top}
@@ -387,15 +388,15 @@ export default function TonProfil() {
       <CheminPoids start={s} current={current} target={t} progress={progress} fmt={fmtKg1} />
 
       <Ornement id="sakura" />
-      <SectionTitle title="Toi" />
+      <SectionTitle title={traduire("Toi")} />
       <Card>
-        <Field first inputMin={124} icon="cake" label="Date de naissance" hint={age ? `${age} ans` : 'facultatif'} value={birth} onChangeText={(v) => setBirth(maskDate(v))} placeholder="15/06/1995" keyboardType="number-pad" maxLength={10} />
+        <Field first inputMin={124} icon="cake" label={traduire("Date de naissance")} hint={age ? traduire("{0} ans", age) : 'facultatif'} value={birth} onChangeText={(v) => setBirth(maskDate(v))} placeholder="15/06/1995" keyboardType="number-pad" maxLength={10} />
         <Field icon="ruler" label="Taille" unit="cm" value={height} onChangeText={(v) => setHeight(v.replace(/\D/g, ''))} placeholder="175" keyboardType="number-pad" maxLength={3} />
-        {bmi ? <Row icon="info" label="Indice de masse corporelle" value={bmi.toFixed(1).replace('.', ',')} /> : null}
+        {bmi ? <Row icon="info" label={traduire("Indice de masse corporelle")} value={bmi.toFixed(1).replace('.', DECIMAL)} /> : null}
       </Card>
 
       <Ornement id="eventail" />
-      <SectionTitle title="Ton objectif" />
+      <SectionTitle title={traduire("Ton objectif")} />
       <Card style={{ padding: 14, gap: 4 }}>
         <Segmented
           options={[{ key: 'lose', label: 'Perdre' }, { key: 'maintain', label: 'Maintenir' }, { key: 'gain', label: 'Prendre' }]}
@@ -408,19 +409,19 @@ export default function TonProfil() {
         <Row
           first
           icon="calendar"
-          label="Début de mon objectif"
-          sub="Ta ligne et ton torii partent de ce jour"
-          value={debut ? jourCourt(debut) : 'à choisir'}
+          label={traduire("Début de mon objectif")}
+          sub={traduire("Ta ligne et ton torii partent de ce jour")}
+          value={debut ? jourCourt(debut) : traduire('à choisir')}
           onPress={() => setChoixDebut(true)}
         />
-        <Field icon="scale" label="Poids de départ" unit="kg" value={startW} onChangeText={setStartW} placeholder={current ? fmt(current) : '85'} keyboardType="decimal-pad" maxLength={5} />
-        <Field icon="target" label="Poids visé" unit="kg" value={targetW} onChangeText={setTargetW} placeholder="75" keyboardType="decimal-pad" maxLength={5} />
+        <Field icon="scale" label={traduire("Poids de départ")} unit="kg" value={startW} onChangeText={setStartW} placeholder={current ? fmt(current) : '85'} keyboardType="decimal-pad" maxLength={5} />
+        <Field icon="target" label={traduire("Poids visé")} unit="kg" value={targetW} onChangeText={setTargetW} placeholder="75" keyboardType="decimal-pad" maxLength={5} />
       </Card>
 
       <DatePickerSheet
         visible={choixDebut}
         value={debut || debutPropose(profile, [...pesees].sort((a, b) => (a.date < b.date ? -1 : 1)), isoLocalDay(new Date()))}
-        title="Début de mon objectif"
+        title={traduire("Début de mon objectif")}
         onClose={() => setChoixDebut(false)}
         onPick={(iso) => {
           avantChangementDebut().catch(() => {});
@@ -432,32 +433,32 @@ export default function TonProfil() {
       <Ornement id="katanas" />
       {showCombat ? (
         <>
-          <SectionTitle title="Sur le tapis" sub={combatSport ? getSportName(combatSport) : 'Sport de combat'} />
+          <SectionTitle title={traduire("Sur le tapis")} sub={combatSport ? getSportName(combatSport) : traduire('Sport de combat')} />
           <TapisCard sport={combatSport} femme={genre === 'f'} belt={belt} onBelt={setBelt} />
           <Card>
-            <Field first icon="home" label="Ton club" value={club} onChangeText={setClub} placeholder="Nom du club" maxLength={40} wide />
+            <Field first icon="home" label={traduire("Ton club")} value={club} onChangeText={setClub} placeholder={traduire("Nom du club")} maxLength={40} wide />
           </Card>
         </>
       ) : (
         <Card>
-          <Row first icon="swords" label="Tu fais un sport de combat ?" sub="Ajoute-le à tes sports pour noter ta ceinture et ton club" onPress={() => router.push('/espace/sports' as any)} />
+          <Row first icon="swords" label={traduire("Tu fais un sport de combat ?")} sub={traduire("Ajoute-le à tes sports pour noter ta ceinture et ton club")} onPress={() => router.push('/espace/sports' as any)} />
         </Card>
       )}
 
       <Ornement id="lanterne" />
-      <SectionTitle title="Tes préférences" />
+      <SectionTitle title={traduire("Tes préférences")} />
       <Card>
-        <Row first icon="scale" label="Unité des charges" value={weightUnit === 'kg' ? 'kg' : 'livres'} onPress={() => setPref('poids')} />
+        <Row first icon="scale" label={traduire("Unité des charges")} value={weightUnit === 'kg' ? 'kg' : 'livres'} onPress={() => setPref('poids')} />
         <Row icon="ruler" label="Mensurations" value={measurementUnit === 'cm' ? 'cm' : 'pouces'} onPress={() => setPref('mesures')} />
         <Row icon="globe" label="Langue" value={langLabel} onPress={() => setPref('langue')} />
-        <Row icon="heart" label="Zones cardiaques" sub="Tes seuils de fréquence cardiaque" onPress={() => router.push('/heart-zones-settings' as any)} />
+        <Row icon="heart" label="Zones cardiaques" sub={traduire("Tes seuils de fréquence cardiaque")} onPress={() => router.push('/heart-zones-settings' as any)} />
       </Card>
 
       <ChoiceSheet
         visible={pref === 'poids'}
         onClose={() => setPref(null)}
-        title="Unité des charges"
-        options={[{ key: 'kg', label: 'Kilos', sub: 'Exemple : 100 kg au squat' }, { key: 'lbs', label: 'Livres', sub: 'Exemple : 220 lb au squat. Ton poids de corps reste en kilos' }]}
+        title={traduire("Unité des charges")}
+        options={[{ key: 'kg', label: 'Kilos', sub: traduire('Exemple : 100 kg au squat') }, { key: 'lbs', label: 'Livres', sub: traduire('Exemple : 220 lb au squat. Ton poids de corps reste en kilos') }]}
         value={weightUnit}
         onChange={(v) => setWeightUnit(v as 'kg' | 'lbs')}
       />
@@ -465,7 +466,7 @@ export default function TonProfil() {
         visible={pref === 'mesures'}
         onClose={() => setPref(null)}
         title="Mensurations"
-        options={[{ key: 'cm', label: 'Centimètres', sub: 'Exemple : 84 cm' }, { key: 'in', label: 'Pouces', sub: 'Exemple : 33 in' }]}
+        options={[{ key: 'cm', label: traduire('Centimètres'), sub: 'Exemple : 84 cm' }, { key: 'in', label: 'Pouces', sub: 'Exemple : 33 in' }]}
         value={measurementUnit}
         onChange={(v) => setMeasurementUnit(v as 'cm' | 'in')}
       />

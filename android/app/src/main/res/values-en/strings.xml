@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Your key stats at a glance</string>
+  <string name="widget_hydration_desc">Track your daily water intake</string>
+  <string name="widget_streak_desc">Your streak of consecutive workouts</string>
+</resources>

@@ -11,13 +11,14 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card, Icon, Row } from '@/components/yoroi/v2/espace/ui';
 import { CONTENT_CHECKS, CONTENT_COUNTS, CONTENT_REPORT_AT } from '@/lib/v2/creator/contentReport.generated';
 import { Note, StudioSection, SubTitle } from './parts';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 export const GALERIES: { route: string; label: string; sub: string; icon: 'image' | 'bell' | 'frame' | 'share' | 'grid' }[] = [
-  { route: '/studio/images', label: 'Galerie d’images', sub: 'Chaque illustration, par famille, en grand', icon: 'image' },
-  { route: '/studio/sons', label: 'Sons', sub: 'Chaque son, et la fin de round', icon: 'bell' },
-  { route: '/studio/fenetres', label: 'Fenêtres', sub: 'Alertes, choix, saisies, feuilles', icon: 'frame' },
-  { route: '/studio/partage', label: 'Cartes de partage', sub: 'Toutes, au nom de Heny', icon: 'share' },
-  { route: '/studio/etats', label: 'États', sub: 'Vides, chargements, erreur simulée', icon: 'grid' },
+  { route: '/studio/images', label: 'Galerie d’images', sub: traduire('Chaque illustration, par famille, en grand'), icon: 'image' },
+  { route: '/studio/sons', label: 'Sons', sub: traduire('Chaque son, et la fin de round'), icon: 'bell' },
+  { route: '/studio/fenetres', label: traduire('Fenêtres'), sub: 'Alertes, choix, saisies, feuilles', icon: 'frame' },
+  { route: '/studio/partage', label: traduire('Cartes de partage'), sub: traduire('Toutes, au nom de Heny'), icon: 'share' },
+  { route: '/studio/etats', label: traduire('États'), sub: traduire('Vides, chargements, erreur simulée'), icon: 'grid' },
 ];
 
 export function Contenu() {
@@ -30,20 +31,20 @@ export function Contenu() {
     <StudioSection
       id="contenu"
       icon="table"
-      title="Contenu et revue"
-      sub={bad ? `Compteurs, ${bad} contrôle${bad > 1 ? 's' : ''} à revoir, galeries` : 'Compteurs, contrôles, galeries'}
-      keywords="contenu compteurs sports exercices techniques citations personnages scenes ornements carnet sons controles coherence galerie images sons fenetres partage etats"
+      title={traduire("Contenu et revue")}
+      sub={bad ? traduirePluriel(bad, bad > 1, "Compteurs, {0} contrôle à revoir, galeries", "Compteurs, {0} contrôles à revoir, galeries", bad) : traduire('Compteurs, contrôles, galeries')}
+      keywords={traduire("contenu compteurs sports exercices techniques citations personnages scenes ornements carnet sons controles coherence galerie images sons fenetres partage etats")}
     >
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
         {CONTENT_COUNTS.map((k) => (
           <View key={k.id} style={{ width: '31.5%', minHeight: 84, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 10, gap: 2, justifyContent: 'space-between' }}>
-            <Ink size={24} weight="black" tight>{k.value.toLocaleString('fr-FR')}</Ink>
+            <Ink size={24} weight="black" tight>{k.value.toLocaleString(LOCALE)}</Ink>
             <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2}>{k.label}</Ink>
           </View>
         ))}
       </View>
 
-      <SubTitle>Contrôles de cohérence</SubTitle>
+      <SubTitle>{traduire("Contrôles de cohérence")}</SubTitle>
       <Card>
         {CONTENT_CHECKS.map((x, i) => (
           <View key={x.id} style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.divider }}>
@@ -57,9 +58,9 @@ export function Contenu() {
           </View>
         ))}
       </Card>
-      <Note>{`Relevé du ${CONTENT_REPORT_AT}. Pour le refaire après un ajout : node scripts/studio-content.mjs, depuis le dossier de l’app.`}</Note>
+      <Note>{traduire("Relevé du {0}. Pour le refaire après un ajout : node scripts/studio-content.mjs, depuis le dossier de l’app.", CONTENT_REPORT_AT)}</Note>
 
-      <SubTitle>Galeries de revue</SubTitle>
+      <SubTitle>{traduire("Galeries de revue")}</SubTitle>
       <Card>
         {GALERIES.map((g, i) => (
           <Row key={g.route} first={i === 0} icon={g.icon} label={g.label} sub={g.sub} onPress={() => router.push(g.route as never)} />

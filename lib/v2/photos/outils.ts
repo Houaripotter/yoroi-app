@@ -4,12 +4,13 @@
  */
 import type { Photo } from '@/lib/storage';
 import { dateOf, daysDiff, num } from '@/lib/v2/progres/format';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type Pose = 'face' | 'profil' | 'dos';
 
 export const POSES: { value: Pose; label: string }[] = [
   { value: 'face', label: 'Face' },
-  { value: 'profil', label: 'Profil' },
+  { value: 'profil', label: traduire('Profil') },
   { value: 'dos', label: 'Dos' },
 ];
 
@@ -25,8 +26,8 @@ export function poseOf(p: Photo): Pose | null {
   return hits.length === 1 ? hits[0] : null;
 }
 
-const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const MOIS_LONG = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MOIS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const MOIS_LONG = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 /** « 3 mars », avec l'annee seulement si ce n'est pas l'annee en cours */
 export function dateCourte(iso: string): string {
@@ -48,15 +49,15 @@ export function kg(v: number): string {
 /** « 12 jours », « 5 semaines », « 7 mois », « 1 an et 2 mois » ; 0 donne « le même jour » */
 export function dureeTexte(days: number): string {
   const d = Math.abs(days);
-  if (d === 0) return 'le même jour';
-  if (d === 1) return '1 jour';
-  if (d < 21) return `${d} jours`;
-  if (d < 63) return `${Math.round(d / 7)} semaines`;
+  if (d === 0) return traduire('le même jour');
+  if (d === 1) return traduire('1 jour');
+  if (d < 21) return traduire("{0} jours", d);
+  if (d < 63) return traduire("{0} semaines", Math.round(d / 7));
   const mois = Math.round(d / 30.44);
-  if (mois < 12) return `${mois} mois`;
+  if (mois < 12) return traduire("{0} mois", mois);
   const ans = Math.floor(mois / 12);
   const reste = mois % 12;
-  return `${ans} an${ans > 1 ? 's' : ''}${reste ? ` et ${reste} mois` : ''}`;
+  return traduirePluriel(ans, ans > 1, "{0} an{1}", "{0} ans{1}", ans, reste ? ` et ${reste} mois` : '');
 }
 
 /** Ecart de poids signe, signe moins typographique : « −6,3 kg », « +1,2 kg », « 0,0 kg » */
@@ -66,8 +67,8 @@ export function ecartTexte(diff: number): string {
 }
 
 export function ecartLibelle(diff: number): string {
-  if (Math.abs(diff) < 0.05) return 'même poids sur les deux';
-  return diff < 0 ? 'de poids en moins' : 'de poids en plus';
+  if (Math.abs(diff) < 0.05) return traduire('même poids sur les deux');
+  return diff < 0 ? traduire('de poids en moins') : traduire('de poids en plus');
 }
 
 export function trierAnciennesDabord(photos: Photo[]): Photo[] {

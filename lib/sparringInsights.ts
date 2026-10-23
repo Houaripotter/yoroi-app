@@ -10,6 +10,7 @@
 
 import { differenceInDays, parseISO } from 'date-fns';
 import type { Insight } from './statsInsights';
+import { traduire } from '@/lib/i18n/tr';
 
 interface PartnerStat {
   name: string;
@@ -41,7 +42,7 @@ const bestFinisherInsight = (methods: MethodStat[]): Insight | null => {
   if (top.given < 3) return null;
   return {
     id: 'spar-best-finisher',
-    text: `${top.method} ta meilleure arme (${top.given} fois)`,
+    text: traduire("{0} ta meilleure arme ({1} fois)", top.method, top.given),
     tone: 'celebration',
     icon: 'fire',
   };
@@ -54,7 +55,7 @@ const weakestDefenseInsight = (methods: MethodStat[]): Insight | null => {
   if (weak.taken < 3) return null;
   return {
     id: 'spar-weak-defense',
-    text: `Tu reçois souvent ${weak.method} (${weak.taken}×), travaille la défense`,
+    text: traduire("Tu reçois souvent {0} ({1}×), travaille la défense", weak.method, weak.taken),
     tone: 'warning',
     icon: 'alert-circle',
   };
@@ -67,7 +68,7 @@ const bestPartnerInsight = (partners: PartnerStat[]): Insight | null => {
   if (top.totalRounds < 5) return null;
   return {
     id: 'spar-best-partner',
-    text: `${top.name} ton partenaire fétiche (${top.totalRounds} rounds)`,
+    text: traduire("{0} ton partenaire fétiche ({1} rounds)", top.name, top.totalRounds),
     tone: 'positive',
     icon: 'trending-up',
   };
@@ -83,7 +84,7 @@ const winRateInsight = (partners: PartnerStat[]): Insight | null => {
   if (rate >= 65) {
     return {
       id: 'spar-dominant',
-      text: `Tu gagnes ${rate} % de tes rounds, tu domines le tatami`,
+      text: traduire("Tu gagnes {0} % de tes rounds, tu domines le tatami", rate),
       tone: 'celebration',
       icon: 'fire',
     };
@@ -91,14 +92,14 @@ const winRateInsight = (partners: PartnerStat[]): Insight | null => {
   if (rate >= 50) {
     return {
       id: 'spar-solid',
-      text: `Win rate ${rate}%, niveau solide`,
+      text: traduire("Win rate {0}%, niveau solide", rate),
       tone: 'positive',
       icon: 'trending-up',
     };
   }
   return {
     id: 'spar-growing',
-    text: `Win rate ${rate}%, chaque loss est une leçon`,
+    text: traduire("Win rate {0}%, chaque loss est une leçon", rate),
     tone: 'neutral',
     icon: 'trending-up',
   };
@@ -122,7 +123,7 @@ const streakInsight = (trainings: SparringTraining[]): Insight | null => {
   if (last14 >= 6) {
     return {
       id: 'spar-high-vol',
-      text: `${last14} séances en 14 jours, intensité max`,
+      text: traduire("{0} séances en 14 jours, intensité max", last14),
       tone: 'celebration',
       icon: 'fire',
     };
@@ -130,7 +131,7 @@ const streakInsight = (trainings: SparringTraining[]): Insight | null => {
   if (last14 === 0) {
     return {
       id: 'spar-pause',
-      text: `Aucun sparring récent, reprends doucement`,
+      text: traduire(`Aucun sparring récent, reprends doucement`),
       tone: 'warning',
       icon: 'alert-circle',
     };
@@ -162,7 +163,7 @@ const monthDeltaInsight = (trainings: SparringTraining[]): Insight | null => {
   if (prev30 === 0) {
     return {
       id: 'spar-starting',
-      text: `${last30} rounds ce mois, bon démarrage`,
+      text: traduire("{0} rounds ce mois, bon démarrage", last30),
       tone: 'positive',
       icon: 'trending-up',
     };
@@ -172,14 +173,14 @@ const monthDeltaInsight = (trainings: SparringTraining[]): Insight | null => {
   if (delta > 0) {
     return {
       id: 'spar-up',
-      text: `+${delta} % de rounds par rapport au mois dernier`,
+      text: traduire("+{0} % de rounds par rapport au mois dernier", delta),
       tone: 'celebration',
       icon: 'trending-up',
     };
   }
   return {
     id: 'spar-down',
-    text: `${delta}% de rounds vs mois précédent`,
+    text: traduire("{0}% de rounds vs mois précédent", delta),
     tone: 'neutral',
     icon: 'trending-down',
   };

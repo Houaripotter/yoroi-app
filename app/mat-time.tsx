@@ -15,12 +15,13 @@ import { useCombatData } from '@/lib/v2/combat/useCombatData';
 import { monthLong, parseDate, plural } from '@/lib/v2/combat/rounds';
 import { BigButton, BrushRing, Card, DetailScreen, EmptyState, Enter, FormSheet, Glass, Hanko, P, Press, RankRow, Section, Stat, Stepper, V } from '@/components/yoroi/v2/combat/ui';
 import { BrushColumns } from '@/components/yoroi/v2/combat/charts';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const GOAL_KEY = '@yoroi_mat_time_goal';
 const TARGET_H = 1000;
 const MAT_NAMES = ['jjb', 'jiu-jitsu', 'mma', 'judo', 'lutte', 'grappling', 'no-gi', 'wrestling', 'submission', 'sambo'];
 const MAT_IDS = new Set(SPORTS.filter((s) => s.category === 'combat_grappling' || s.id === 'mma').map((s) => s.id));
-const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const DAYS = [traduire('Lun'), traduire('Mar'), traduire('Mer'), traduire('Jeu'), traduire('Ven'), traduire('Sam'), traduire('Dim')];
 
 function isMat(t: Training & { activity_type?: string }): boolean {
   const sp = (t.sport ?? '').toLowerCase();
@@ -101,10 +102,10 @@ export default function MatTimeScreen() {
   const matsFilled = Math.floor(s.total / 600); // un tatami = 10 heures
 
   return (
-    <PremiumGate source="temps_tatami" featureTitle="Temps sur le tatami" perks={['Ton temps total sur le tatami', 'Ton objectif d’heures par semaine', 'Le chemin vers les 1 000 heures']}>
-      <DetailScreen title="Tatami" subtitle="Tes heures sur le tapis">
+    <PremiumGate source="temps_tatami" featureTitle={traduire("Temps sur le tatami")} perks={[traduire('Ton temps total sur le tatami'), traduire('Ton objectif d’heures par semaine'), traduire('Le chemin vers les 1 000 heures')]}>
+      <DetailScreen title="Tatami" subtitle={traduire("Tes heures sur le tapis")}>
         {loaded && s.sessions === 0 ? (
-          <EmptyState title="Pas encore d'heures sur le tapis" text="Enregistre tes séances de JJB, MMA, judo, lutte ou grappling : chaque minute s'ajoute ici." action="Nouvelle séance de combat" onAction={() => router.push('/seance/combat' as any)} />
+          <EmptyState title={traduire("Pas encore d'heures sur le tapis")} text={traduire("Enregistre tes séances de JJB, MMA, judo, lutte ou grappling : chaque minute s'ajoute ici.")} action={traduire("Nouvelle séance de combat")} onAction={() => router.push('/seance/combat' as any)} />
         ) : null}
 
         {s.sessions > 0 ? (
@@ -112,13 +113,12 @@ export default function MatTimeScreen() {
             <Enter i={0}>
               <Glass style={{ gap: 6 }}>
                 <Ink size={13} weight="extraBold" color={P.ink2}>
-                  Au total sur le tatami
-                </Ink>
+                  {traduire("Au total sur le tatami")}</Ink>
                 <Ink size={56} weight="black" tight color={P.goldDark}>
                   {hm(s.total)}
                 </Ink>
                 <Ink size={14} weight="bold" color={P.ink2}>
-                  {plural(s.sessions, 'séance')}
+                  {plural(s.sessions, traduire('séance'))}
                 </Ink>
               </Glass>
             </Enter>
@@ -127,13 +127,11 @@ export default function MatTimeScreen() {
               <Card style={{ alignItems: 'center', gap: 12 }}>
                 <View style={{ alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Ink size={18} weight="black" tight>
-                    Objectif de la semaine
-                  </Ink>
-                  <Press onPress={() => { setDraftGoal(goal); setGoalOpen(true); }} accessibilityRole="button" accessibilityLabel="Modifier l'objectif de la semaine">
+                    {traduire("Objectif de la semaine")}</Ink>
+                  <Press onPress={() => { setDraftGoal(goal); setGoalOpen(true); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier l'objectif de la semaine")}>
                     <View style={{ minHeight: 44, justifyContent: 'center' }}>
                       <Ink size={14} weight="extraBold" color={P.accent}>
-                        Modifier
-                      </Ink>
+                        {traduire("Modifier")}</Ink>
                     </View>
                   </Press>
                 </View>
@@ -144,7 +142,7 @@ export default function MatTimeScreen() {
                       {hm(s.week)}
                     </Ink>
                     <Ink size={13} weight="bold" color={P.ink2}>
-                      {`sur ${hm(goal)}`}
+                      {traduire("sur {0}", hm(goal))}
                     </Ink>
                   </View>
                   {weekPct >= 1 ? (
@@ -155,33 +153,31 @@ export default function MatTimeScreen() {
                 </View>
                 {weekPct >= 1 ? (
                   <Ink size={14} weight="extraBold" color="#4F6B28">
-                    Objectif atteint cette semaine
-                  </Ink>
+                    {traduire("Objectif atteint cette semaine")}</Ink>
                 ) : null}
                 <View style={{ alignSelf: 'stretch' }}>
                   <BrushColumns data={s.days.map((d, i) => ({ label: d.label, value: d.value, color: i === s.today ? P.accent : P.gold }))} highlightLast={false} format={(v) => `${v}`} height={140} />
                   <Ink size={12} color={P.muted}>
-                    Minutes par jour cette semaine
-                  </Ink>
+                    {traduire("Minutes par jour cette semaine")}</Ink>
                 </View>
               </Card>
             </Enter>
 
             <Card style={{ flexDirection: 'row' }}>
               <Stat value={hm(s.month)} label={`en ${monthLong(new Date().getMonth())}`} />
-              <Stat value={hm(s.avg)} label="par séance" />
-              <Stat value={hm(s.longest)} label="la plus longue" color={P.accent} />
+              <Stat value={hm(s.avg)} label={traduire("par séance")} />
+              <Stat value={hm(s.longest)} label={traduire("la plus longue")} color={P.accent} />
             </Card>
 
             {s.byDisc.length > 0 ? (
               <>
-                <Section title="Par discipline" />
+                <Section title={traduire("Par discipline")} />
                 <Card style={{ gap: 14 }}>
                   {s.byDisc.map((d, i) => (
                     <View key={d.name} style={{ gap: 2 }}>
                       <RankRow index={i} label={d.name} value={Math.round(d.minutes / 6) / 10} max={Math.round(s.byDisc[0].minutes / 6) / 10} color={i === 0 ? P.goldDark : V} suffix=" h" />
                       <Ink size={11} weight="bold" color={P.muted} style={{ paddingLeft: 36 }}>
-                        {plural(d.sessions, 'séance')}
+                        {plural(d.sessions, traduire('séance'))}
                       </Ink>
                     </View>
                   ))}
@@ -189,7 +185,7 @@ export default function MatTimeScreen() {
               </>
             ) : null}
 
-            <Section title="Le chemin des 1 000 heures" sub="Chaque tatami représente 10 heures" />
+            <Section title={traduire("Le chemin des 1 000 heures")} sub={traduire("Chaque tatami représente 10 heures")} />
             <Card style={{ gap: 14 }}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3 }}>
                 {Array.from({ length: 100 }).map((_, i) => (
@@ -198,18 +194,17 @@ export default function MatTimeScreen() {
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Ink size={13} weight="bold" color={P.ink2}>
-                  {`${hm(s.total)} sur 1 000 h`}
+                  {traduire("{0} sur 1 000 h", hm(s.total))}
                 </Ink>
                 <Ink size={13} weight="extraBold" color={P.goldDark}>
-                  {`${(pct1000 * 100).toFixed(1).replace('.', ',')} %`}
+                  {`${(pct1000 * 100).toFixed(1).replace('.', DECIMAL)} %`}
                 </Ink>
               </View>
               {pct1000 < 1 ? (
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <View style={{ flex: 1, padding: 12, borderRadius: 16, backgroundColor: P.goldSoft }}>
                     <Ink size={12} weight="bold" color={P.ink2}>
-                      Il reste
-                    </Ink>
+                      {traduire("Il reste")}</Ink>
                     <Ink size={20} weight="black" color={P.goldDark}>
                       {hm(remaining)}
                     </Ink>
@@ -217,10 +212,9 @@ export default function MatTimeScreen() {
                   {proj && monthsLeft != null ? (
                     <View style={{ flex: 1, padding: 12, borderRadius: 16, backgroundColor: P.goldSoft }}>
                       <Ink size={12} weight="bold" color={P.ink2}>
-                        À ce rythme
-                      </Ink>
+                        {traduire("À ce rythme")}</Ink>
                       <Ink size={16} weight="black" color={P.goldDark}>
-                        {monthsLeft > 0 ? `dans ${plural(monthsLeft, 'mois', 'mois')}` : 'ce mois-ci'}
+                        {monthsLeft > 0 ? traduire("dans {0}", plural(monthsLeft, 'mois', 'mois')) : traduire('ce mois-ci')}
                       </Ink>
                       <Ink size={12} weight="bold" color={P.ink2}>
                         {`${monthLong(proj.getMonth())} ${proj.getFullYear()}`}
@@ -232,26 +226,24 @@ export default function MatTimeScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <Hanko size={48} />
                   <Ink size={16} weight="black" color="#4F6B28">
-                    Les 1 000 heures sont atteintes
-                  </Ink>
+                    {traduire("Les 1 000 heures sont atteintes")}</Ink>
                 </View>
               )}
             </Card>
 
             <Card style={{ backgroundColor: P.goldSoft, borderColor: '#EADBB4' }}>
               <Ink size={14} weight="bold" color={P.goldDark}>
-                Choisis un objectif que tu peux tenir chaque semaine, même pendant les semaines chargées. La régularité compte plus qu'une grosse semaine isolée.
-              </Ink>
+                {traduire("Choisis un objectif que tu peux tenir chaque semaine, même pendant les semaines chargées. La régularité compte plus qu'une grosse semaine isolée.")}</Ink>
             </Card>
           </>
         ) : null}
 
-        <FormSheet visible={goalOpen} onClose={() => setGoalOpen(false)} title="Objectif de la semaine" sub="Le temps que tu veux passer sur le tatami chaque semaine">
+        <FormSheet visible={goalOpen} onClose={() => setGoalOpen(false)} title={traduire("Objectif de la semaine")} sub={traduire("Le temps que tu veux passer sur le tatami chaque semaine")}>
           <View style={{ alignItems: 'center', paddingVertical: 8 }}>
             <Stepper value={draftGoal} onChange={setDraftGoal} step={30} min={30} max={2400} format={hm} />
           </View>
           <BigButton
-            label="Enregistrer"
+            label={traduire("Enregistrer")}
             onPress={() => {
               setGoal(draftGoal);
               AsyncStorage.setItem(GOAL_KEY, String(draftGoal)).catch(() => {});

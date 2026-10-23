@@ -10,6 +10,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { P } from '@/components/yoroi/livePalette';
 import type { TrancheFC } from '@/lib/v2/sante/nuit';
 import { MARGE_DROITE, domaineHeures, heure } from './outils';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const H = 112;
 const AXE = 22;
@@ -35,7 +36,7 @@ export function BarresMinMax({ tranches, debut, fin, couleur, unite, decimales =
   const lo = graduations[0];
   const hi = graduations[graduations.length - 1];
   const sy = (v: number) => 6 + (1 - (v - lo) / (hi - lo)) * (H - 12);
-  const fmt = (v: number) => v.toFixed(decimales).replace('.', ',');
+  const fmt = (v: number) => v.toFixed(decimales).replace('.', DECIMAL);
 
   const choisi = x === null ? null : tranches.reduce<TrancheFC | null>((best, t) => {
     const c = sx(Math.max(t.debut, debut) + (Math.min(t.fin, fin) - Math.max(t.debut, debut)) / 2);
@@ -49,7 +50,7 @@ export function BarresMinMax({ tranches, debut, fin, couleur, unite, decimales =
       <View style={{ minHeight: 18, justifyContent: 'center' }}>
         {choisi ? (
           <Ink size={13} weight="extraBold" numberOfLines={1}>
-            {`De ${heure(Math.max(choisi.debut, debut))} à ${heure(Math.min(choisi.fin, fin))} : ${choisi.min === choisi.max ? fmt(choisi.min) : `${fmt(choisi.min)} à ${fmt(choisi.max)}`} ${unite}`}
+            {traduire("De {0} à {1} : {2} {3}", heure(Math.max(choisi.debut, debut)), heure(Math.min(choisi.fin, fin)), choisi.min === choisi.max ? fmt(choisi.min) : `${fmt(choisi.min)} à ${fmt(choisi.max)}`, unite)}
           </Ink>
         ) : null}
       </View>
@@ -58,7 +59,7 @@ export function BarresMinMax({ tranches, debut, fin, couleur, unite, decimales =
         style={{ height: H + AXE }}
         accessible
         accessibilityRole="image"
-        accessibilityLabel={`Par heure, du minimum au maximum, en ${unite}. Touche le graphique pour lire une heure.`}
+        accessibilityLabel={traduire("Par heure, du minimum au maximum, en {0}. Touche le graphique pour lire une heure.", unite)}
         onStartShouldSetResponder={() => true}
         onMoveShouldSetResponder={() => true}
         onResponderTerminationRequest={() => false}

@@ -7,6 +7,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { illustrer } from '@/components/yoroi/v2/messages/illustrer';
 import { logger } from '@/lib/security/logger';
 import { buildShareableSafetyFile, getLastSafetySnapshot } from './avantMiseAJour';
+import { traduire } from '@/lib/i18n/tr';
 
 let shown = false;
 
@@ -18,22 +19,22 @@ export async function annoncerEchecMiseAJour(err: unknown): Promise<void> {
   const copie = snap && snap.db === 'ok';
   const illustration = await illustrer('abri');
   appAlert(
-    'Tes données sont à l’abri',
+    traduire('Tes données sont à l’abri'),
     copie
-      ? 'YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé, et une copie de sécurité a été faite sur ce téléphone juste avant. Ferme YOROI et rouvre-le. Si ce message revient, garde cette copie dans ton cloud et écris-nous (Réglages, Aide et questions).'
-      : 'YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé. Ferme YOROI et rouvre-le. Si ce message revient, écris-nous avant de supprimer l’app (Réglages, Aide et questions).',
+      ? traduire('YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé, et une copie de sécurité a été faite sur ce téléphone juste avant. Ferme YOROI et rouvre-le. Si ce message revient, garde cette copie dans ton cloud et écris-nous (Réglages, Aide et questions).')
+      : traduire('YOROI n’a pas réussi à préparer tes données pour cette version. Rien n’a été effacé. Ferme YOROI et rouvre-le. Si ce message revient, écris-nous avant de supprimer l’app (Réglages, Aide et questions).'),
     copie
       ? [
           { text: 'OK', style: 'cancel' },
           {
-            text: 'Garder la copie',
+            text: traduire('Garder la copie'),
             onPress: () => {
               void (async () => {
                 const file = await buildShareableSafetyFile(snap);
                 if (!file) return;
                 const Sharing = await import('expo-sharing');
                 if (await Sharing.isAvailableAsync()) {
-                  await Sharing.shareAsync(file, { mimeType: 'application/json', dialogTitle: 'Garder la copie dans ton cloud', UTI: 'public.json' });
+                  await Sharing.shareAsync(file, { mimeType: 'application/json', dialogTitle: traduire('Garder la copie dans ton cloud'), UTI: 'public.json' });
                 }
               })().catch((e) => logger.warn('[Securite] partage de la copie impossible', e));
             },

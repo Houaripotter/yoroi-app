@@ -25,12 +25,13 @@ import { AudioNotes, FaceoffShare, MediaGallery } from './MediaAudio';
 import { Briefing } from './Briefing';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 type Tab = 'fiche' | 'bilan' | 'profil' | 'carnet';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'fiche', label: 'Fiche' },
   { key: 'bilan', label: 'Bilan' },
-  { key: 'profil', label: 'Profil' },
+  { key: 'profil', label: traduire('Profil') },
   { key: 'carnet', label: 'Carnet' },
 ];
 const SPORTS = ['JJB', 'No-gi', 'MMA', 'Grappling', 'Lutte', 'Judo', 'Boxe', 'Kick-boxing', 'Muay-thaï'];
@@ -118,7 +119,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
       if (source === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          appAlert('Caméra non autorisée', "Autorise la caméra pour Yoroi dans les réglages de ton téléphone.");
+          appAlert(traduire('Caméra non autorisée'), traduire("Autorise la caméra pour Yoroi dans les réglages de ton téléphone."));
           return;
         }
         res = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, allowsEditing: true, aspect: [1, 1] });
@@ -135,11 +136,11 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
     }
   };
   const choosePhoto = () => {
-    appAlert(`Photo de ${p.name}`, 'Choisis une source', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Caméra', onPress: () => pickPhoto('camera') },
+    appAlert(traduire("Photo de {0}", p.name), traduire('Choisis une source'), [
+      { text: traduire('Annuler'), style: 'cancel' },
+      { text: traduire('Caméra'), onPress: () => pickPhoto('camera') },
       { text: 'Galerie', onPress: () => pickPhoto('library') },
-      ...(p.photoUri ? [{ text: 'Retirer la photo', style: 'destructive' as const, onPress: () => update({ photoUri: undefined }, true) }] : []),
+      ...(p.photoUri ? [{ text: traduire('Retirer la photo'), style: 'destructive' as const, onPress: () => update({ photoUri: undefined }, true) }] : []),
     ]);
   };
 
@@ -150,10 +151,10 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
   };
 
   const confirmDelete = () => {
-    appAlert(`Supprimer ${p.name} ?`, 'Sa fiche, ses notes et ses médias seront effacés. Tes séances restent intactes.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire("Supprimer {0} ?", p.name), traduire('Sa fiche, ses notes et ses médias seront effacés. Tes séances restent intactes.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: () => {
           if (timer.current) clearTimeout(timer.current);
@@ -176,22 +177,21 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
     <View style={{ flex: 1, backgroundColor: P.paper }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: -6, minHeight: 44 }}>
-          <IconBtn icon="back" label="Retour à la liste" onPress={back} />
+          <IconBtn icon="back" label={traduire("Retour à la liste")} onPress={back} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <IconBtn icon="target" label="Plan de jeu contre lui" onPress={openPlan} />
-            <IconBtn icon="share" label="Partager la carte duel" onPress={shareDuel} />
-            <IconBtn icon="trash" label={`Supprimer ${p.name}`} onPress={confirmDelete} />
+            <IconBtn icon="target" label={traduire("Plan de jeu contre lui")} onPress={openPlan} />
+            <IconBtn icon="share" label={traduire("Partager la carte duel")} onPress={shareDuel} />
+            <IconBtn icon="trash" label={traduire("Supprimer {0}", p.name)} onPress={confirmDelete} />
           </View>
         </View>
 
         <WarriorCard p={p} ins={ins} onPhoto={choosePhoto} />
 
-        <Press onPress={() => setBriefing(true)} haptic="medium" accessibilityRole="button" accessibilityLabel="Ouvrir le briefing avant le combat">
+        <Press onPress={() => setBriefing(true)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Ouvrir le briefing avant le combat")}>
           <View style={{ height: 60, borderRadius: 20, backgroundColor: P.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: P.accent, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
             <CIcon name="flag" size={20} color={P.white} />
             <Ink size={17} weight="extraBold" color={P.white}>
-              Briefing avant le combat
-            </Ink>
+              {traduire("Briefing avant le combat")}</Ink>
           </View>
         </Press>
 
@@ -218,7 +218,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
               p={p}
               onSet={(text) => update({ activeGoal: { text, createdAt: new Date().toISOString() } }, true)}
               onAchieved={() => {
-                const done: TacticalNote = { id: makeId(), date: new Date().toISOString(), content: `Objectif atteint : ${p.activeGoal?.text ?? ''}` };
+                const done: TacticalNote = { id: makeId(), date: new Date().toISOString(), content: traduire("Objectif atteint : {0}", p.activeGoal?.text ?? '') };
                 update({ activeGoal: undefined, notes: [done, ...p.notes] }, true);
                 tap('success');
               }}
@@ -242,8 +242,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
             {!loaded ? (
               <Card>
                 <Ink size={14} color={P.ink2}>
-                  Lecture de tes rounds
-                </Ink>
+                  {traduire("Lecture de tes rounds")}</Ink>
               </Card>
             ) : null}
             <Timeline ins={ins} name={p.name} />
@@ -254,7 +253,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
             <ZoneMap ins={ins} />
             <RatingCard ins={ins} />
             <Patterns ins={ins} />
-            <Section title="Historique des séances" sub={entries.length > 0 ? `${entries.length} séances avec lui` : undefined} />
+            <Section title={traduire("Historique des séances")} sub={entries.length > 0 ? traduire("{0} séances avec lui", entries.length) : undefined} />
             <SessionHistory entries={entries} name={p.name} onNew={newSession} />
           </>
         ) : null}
@@ -263,16 +262,14 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
           <>
             <Card style={{ gap: 12 }}>
               <Ink size={18} weight="black" tight>
-                Identité
-              </Ink>
+                {traduire("Identité")}</Ink>
               <Ink size={13} weight="bold" color={P.ink2}>
-                Ceinture
-              </Ink>
+                {traduire("Ceinture")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {BELTS.map((b) => {
                   const on = (p.belt ?? '').toLowerCase() === b.key;
                   return (
-                    <Press key={b.key} onPress={() => update({ belt: on ? undefined : b.key })} accessibilityRole="button" accessibilityLabel={`Ceinture ${b.label}`} accessibilityState={{ selected: on }}>
+                    <Press key={b.key} onPress={() => update({ belt: on ? undefined : b.key })} accessibilityRole="button" accessibilityLabel={traduire("Ceinture {0}", b.label)} accessibilityState={{ selected: on }}>
                       <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                         <View style={{ width: 22, height: 9, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.edge }} />
                         <Ink size={14} weight="bold" color={on ? P.white : P.ink2}>
@@ -291,15 +288,14 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                   <Chip key={s} label={sportLabel(s)} on={(p.sport ?? '').toLowerCase() === s.toLowerCase()} onPress={() => update({ sport: (p.sport ?? '').toLowerCase() === s.toLowerCase() ? undefined : s })} />
                 ))}
               </View>
-              <Field label="Catégorie de poids" defaultValue={p.weight ?? ''} onEndEditing={(e) => update({ weight: e.nativeEvent.text.trim() || undefined })} placeholder="Moins de 77 kg, lourds" />
+              <Field label={traduire("Catégorie de poids")} defaultValue={p.weight ?? ''} onEndEditing={(e) => update({ weight: e.nativeEvent.text.trim() || undefined })} placeholder={traduire("Moins de 77 kg, lourds")} />
             </Card>
             <Card style={{ gap: 10 }}>
               <Ink size={18} weight="black" tight>
                 Ses points forts
               </Ink>
               <Ink size={13} color={P.ink2}>
-                Ce dont tu dois te méfier
-              </Ink>
+                {traduire("Ce dont tu dois te méfier")}</Ink>
               <TagEditor items={p.strengths} color={D} onChange={(next) => update({ strengths: next })} />
             </Card>
             <Card style={{ gap: 10 }}>
@@ -307,14 +303,12 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                 Ses points faibles
               </Ink>
               <Ink size={13} color={P.ink2}>
-                Tes ouvertures
-              </Ink>
+                {traduire("Tes ouvertures")}</Ink>
               <TagEditor items={p.weaknesses} color={N} onChange={(next) => update({ weaknesses: next })} />
             </Card>
             <Card style={{ gap: 10 }}>
               <Ink size={18} weight="black" tight>
-                Ce qui marche contre lui
-              </Ink>
+                {traduire("Ce qui marche contre lui")}</Ink>
               <TagEditor items={p.whatWorks} color={V} onChange={(next) => update({ whatWorks: next })} />
             </Card>
             <Section title="Carte combattant" />
@@ -329,12 +323,11 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                 <Ink size={18} weight="black" tight>
                   Notes tactiques
                 </Ink>
-                <IconBtn icon="plus" label="Ajouter une note" tone="ink" onPress={() => { setNoteDraft(''); setNoteOpen(true); }} />
+                <IconBtn icon="plus" label={traduire("Ajouter une note")} tone="ink" onPress={() => { setNoteDraft(''); setNoteOpen(true); }} />
               </View>
               {p.notes.length === 0 ? (
                 <Ink size={14} color={P.muted}>
-                  Aucune note pour l'instant. Écris ce que tu as vu pendant que c'est frais.
-                </Ink>
+                  {traduire("Aucune note pour l'instant. Écris ce que tu as vu pendant que c'est frais.")}</Ink>
               ) : (
                 p.notes.map((n) => (
                   <View key={n.id} style={{ padding: 12, borderRadius: 16, backgroundColor: P.paper, gap: 4 }}>
@@ -345,11 +338,11 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                       <IconBtn
                         icon="trash"
                         size={36}
-                        label="Supprimer la note"
+                        label={traduire("Supprimer la note")}
                         onPress={() =>
-                          appAlert('Supprimer cette note ?', undefined, [
-                            { text: 'Annuler', style: 'cancel' },
-                            { text: 'Supprimer', style: 'destructive', onPress: () => update({ notes: p.notes.filter((x) => x.id !== n.id) }, true) },
+                          appAlert(traduire('Supprimer cette note ?'), undefined, [
+                            { text: traduire('Annuler'), style: 'cancel' },
+                            { text: traduire('Supprimer'), style: 'destructive', onPress: () => update({ notes: p.notes.filter((x) => x.id !== n.id) }, true) },
                           ])
                         }
                       />
@@ -373,7 +366,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                 await exportPartnerPDF(p.id, { wins: ins.wins, losses: ins.losses, draws: ins.draws, total: ins.total });
               }}
               accessibilityRole="button"
-              accessibilityLabel="Exporter la fiche en PDF"
+              accessibilityLabel={traduire("Exporter la fiche en PDF")}
             >
               <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.indigoSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -381,11 +374,9 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                 </View>
                 <View style={{ flex: 1 }}>
                   <Ink size={16} weight="black">
-                    Exporter la fiche en PDF
-                  </Ink>
+                    {traduire("Exporter la fiche en PDF")}</Ink>
                   <Ink size={13} color={P.ink2}>
-                    Envoie tout à ton coach en un geste
-                  </Ink>
+                    {traduire("Envoie tout à ton coach en un geste")}</Ink>
                 </View>
                 <CIcon name="chevron" size={16} color={P.muted} />
               </Card>
@@ -402,10 +393,10 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
         </Press>
       </View>
 
-      <FormSheet visible={noteOpen} onClose={() => setNoteOpen(false)} title={`Note sur ${p.name}`} sub="Tape ou dicte avec le micro du clavier, pendant que c'est frais.">
-        <Field value={noteDraft} onChangeText={setNoteDraft} multiline autoFocus placeholder={`Qu'est-ce qui s'est passé contre ${p.name} aujourd'hui ?`} />
+      <FormSheet visible={noteOpen} onClose={() => setNoteOpen(false)} title={traduire("Note sur {0}", p.name)} sub={traduire("Tape ou dicte avec le micro du clavier, pendant que c'est frais.")}>
+        <Field value={noteDraft} onChangeText={setNoteDraft} multiline autoFocus placeholder={traduire("Qu'est-ce qui s'est passé contre {0} aujourd'hui ?", p.name)} />
         <BigButton
-          label="Enregistrer la note"
+          label={traduire("Enregistrer la note")}
           onPress={() => {
             if (!noteDraft.trim()) return;
             addNote(noteDraft.trim());

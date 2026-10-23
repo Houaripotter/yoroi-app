@@ -12,6 +12,7 @@ import { Sheet } from '../progres/Sheet';
 import type { Photo } from '@/lib/storage';
 import { dateComplete, kg, poseOf, POSES } from '@/lib/v2/photos/outils';
 import type { Pose } from '@/lib/v2/photos/outils';
+import { traduire } from '@/lib/i18n/tr';
 
 const NOIR = '#0E0F13';
 const BLANC = '#FFFFFF';
@@ -71,13 +72,13 @@ export function VisionneusePhotos({ photos, startId, onClose, onDelete, onPose }
         ) : null}
 
         <View style={{ position: 'absolute', top: insets.top + 10, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}>
+          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}>
             <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M6 6l12 12M18 6L6 18" stroke={BLANC} strokeWidth={2.6} strokeLinecap="round" /></Svg>
           </Pressable>
           <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.16)' }}>
-            <Ink size={13} weight="extraBold" color={BLANC}>{`${index + 1} sur ${photos.length}`}</Ink>
+            <Ink size={13} weight="extraBold" color={BLANC}>{traduire("{0} sur {1}", index + 1, photos.length)}</Ink>
           </View>
-          <Pressable onPress={() => cur && setConfirm(cur)} accessibilityRole="button" accessibilityLabel="Supprimer la photo" hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}>
+          <Pressable onPress={() => cur && setConfirm(cur)} accessibilityRole="button" accessibilityLabel={traduire("Supprimer la photo")} hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}>
             <Svg width={19} height={19} viewBox="0 0 24 24" fill="none"><Path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" stroke={BLANC} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
           </Pressable>
         </View>
@@ -106,10 +107,10 @@ export function VisionneusePhotos({ photos, startId, onClose, onDelete, onPose }
           <Sheet
             visible
             onClose={() => setConfirm(null)}
-            title="Supprimer cette photo ?"
-            text={`La photo du ${dateComplete(confirm.date.slice(0, 10))} sera effacée de ton coffre. Ce n’est pas réversible.`}
+            title={traduire("Supprimer cette photo ?")}
+            text={traduire("La photo du {0} sera effacée de ton coffre. Ce n’est pas réversible.", dateComplete(confirm.date.slice(0, 10)))}
             actions={[
-              { label: 'Supprimer', tone: 'danger', onPress: () => { const p = confirm; setConfirm(null); if (index >= photos.length - 1) setIndex(Math.max(0, photos.length - 2)); onDelete(p); } },
+              { label: traduire('Supprimer'), tone: 'danger', onPress: () => { const p = confirm; setConfirm(null); if (index >= photos.length - 1) setIndex(Math.max(0, photos.length - 2)); onDelete(p); } },
               { label: 'Garder', onPress: () => setConfirm(null) },
             ]}
           />

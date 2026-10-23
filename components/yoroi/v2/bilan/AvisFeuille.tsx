@@ -17,6 +17,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { ouvrirFicheStore } from '@/lib/appConfig';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
 const TAILLE_LOGO = 108;
@@ -102,14 +103,14 @@ export function AvisFeuille({ visible, onNoter, onPlusTard }: { visible: boolean
 
   if (!visible) return null;
   const store = nomDuStore();
-  const bouton = Platform.OS === 'android' ? 'Noter sur Google Play' : 'Noter sur l’App Store';
+  const bouton = Platform.OS === 'android' ? traduire('Noter sur Google Play') : traduire('Noter sur l’App Store');
   const or = theme.isDark ? c.goldLight : c.gold;
   const bordOr = theme.isDark ? c.gold : c.goldDeep;
 
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onPlusTard}>
       <Animated.View style={{ flex: 1, backgroundColor: 'rgba(15,17,24,0.5)', opacity: anim }}>
-        <Pressable style={{ flex: 1 }} onPress={onPlusTard} accessibilityRole="button" accessibilityLabel="Fermer" />
+        <Pressable style={{ flex: 1 }} onPress={onPlusTard} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} />
         <Animated.View
           accessibilityViewIsModal
           style={{
@@ -151,13 +152,12 @@ export function AvisFeuille({ visible, onNoter, onPlusTard }: { visible: boolean
           </View>
 
           <Ink size={28} weight="black" tight style={{ textAlign: 'center', marginTop: 16 }} accessibilityRole="header">
-            Tu aimes YOROI ?
-          </Ink>
+            {traduire("Tu aimes YOROI ?")}</Ink>
           <Ink size={16} color={c.textSecondary} style={{ textAlign: 'center', lineHeight: 24, marginTop: 8, maxWidth: 330 }}>
-            <Ink size={16} weight="extraBold" color={c.accent} style={{ lineHeight: 24 }}>{`Ta note sur ${store}`}</Ink>
-            {' aide d’autres sportifs à trouver l’app. '}
-            <Ink size={16} weight="extraBold" color={c.successText} style={{ lineHeight: 24 }}>Dix secondes</Ink>
-            {' suffisent. Merci à toi.'}
+            <Ink size={16} weight="extraBold" color={c.accent} style={{ lineHeight: 24 }}>{traduire("Ta note sur {0}", store)}</Ink>
+            {traduire(' aide d’autres sportifs à trouver l’app. ')}
+            <Ink size={16} weight="extraBold" color={c.successText} style={{ lineHeight: 24 }}>{traduire("Dix secondes")}</Ink>
+            {traduire(' suffisent. Merci à toi.')}
           </Ink>
 
           <Pressable
@@ -174,13 +174,12 @@ export function AvisFeuille({ visible, onNoter, onPlusTard }: { visible: boolean
           <Pressable
             onPress={onPlusTard}
             accessibilityRole="button"
-            accessibilityLabel="Plus tard"
+            accessibilityLabel={traduire("Plus tard")}
             hitSlop={{ top: 6, bottom: 6, left: 20, right: 20 }}
             style={({ pressed }) => ({ marginTop: 6, minHeight: 46, paddingHorizontal: 24, borderRadius: 16, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}
           >
             <Ink size={15} weight="bold" color={c.textSecondary}>
-              Plus tard
-            </Ink>
+              {traduire("Plus tard")}</Ink>
           </Pressable>
         </Animated.View>
       </Animated.View>

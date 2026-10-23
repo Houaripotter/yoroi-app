@@ -4,6 +4,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addDays, isoLocal, parseLocalDate, shortDate, startOfToday } from './dates';
+import { traduire } from '@/lib/i18n/tr';
 
 export type PhaseKey = 'generale' | 'specifique' | 'affutage';
 export type LoadLevel = 'faible' | 'modere' | 'eleve' | 'max' | 'affutage';
@@ -39,10 +40,10 @@ export const PHASE_COLORS: Record<PhaseKey, string> = {
 
 export const LOAD_LABELS: Record<LoadLevel, string> = {
   faible: 'Charge faible',
-  modere: 'Charge modérée',
-  eleve: 'Charge élevée',
+  modere: traduire('Charge modérée'),
+  eleve: traduire('Charge élevée'),
   max: 'Charge max',
-  affutage: 'Affûtage',
+  affutage: traduire('Affûtage'),
 };
 
 export function generateCamp(totalWeeks: number, currentSessionsPerWeek: number, startDate: Date = startOfToday()): { phases: CampPhase[]; weeks: CampWeek[] } {
@@ -67,46 +68,46 @@ export function generateCamp(totalWeeks: number, currentSessionsPerWeek: number,
     {
       key: 'generale',
       name: 'Préparation générale',
-      short: 'Générale',
+      short: traduire('Générale'),
       kanji: '基',
       weeks: prepWeeks,
-      focus: 'Volume élevé, intensité modérée. Renforcement général, cardio, technique de base.',
+      focus: traduire('Volume élevé, intensité modérée. Renforcement général, cardio, technique de base.'),
       color: PHASE_COLORS.generale,
       tips: [
-        'Augmente le volume progressivement (+10 % par semaine au maximum).',
-        'Travaille les fondamentaux techniques.',
-        'Garde au moins un jour de récupération active.',
-        'Renforcement musculaire général deux fois par semaine.',
+        traduire('Augmente le volume progressivement (+10 % par semaine au maximum).'),
+        traduire('Travaille les fondamentaux techniques.'),
+        traduire('Garde au moins un jour de récupération active.'),
+        traduire('Renforcement musculaire général deux fois par semaine.'),
       ],
     },
     {
       key: 'specifique',
       name: 'Préparation spécifique',
-      short: 'Spécifique',
+      short: traduire('Spécifique'),
       kanji: '戦',
       weeks: specWeeks,
-      focus: 'Charge maximale, haute intensité. Sparring intense, tactique, situations de compétition.',
+      focus: traduire('Charge maximale, haute intensité. Sparring intense, tactique, situations de compétition.'),
       color: PHASE_COLORS.specifique,
       tips: [
-        'Sparring de compétition deux à trois fois par semaine.',
-        'Travaille les points faibles que tu as repérés.',
-        'Simule des combats à la durée réglementaire.',
-        'Nutrition et récupération en priorité.',
+        traduire('Sparring de compétition deux à trois fois par semaine.'),
+        traduire('Travaille les points faibles que tu as repérés.'),
+        traduire('Simule des combats à la durée réglementaire.'),
+        traduire('Nutrition et récupération en priorité.'),
       ],
     },
     {
       key: 'affutage',
-      name: 'Affûtage',
-      short: 'Affûtage',
+      name: traduire('Affûtage'),
+      short: traduire('Affûtage'),
       kanji: '刃',
       weeks: taperingWeeks,
-      focus: "Réduction du volume, maintien de l'intensité. Fraîcheur physique et mentale.",
+      focus: traduire("Réduction du volume, maintien de l'intensité. Fraîcheur physique et mentale."),
       color: PHASE_COLORS.affutage,
       tips: [
-        'Réduis le volume de 40 à 60 %.',
-        "Garde l'intensité sur des séances courtes.",
-        'Priorité au sommeil, huit heures et plus.',
-        'Dernier sparring intense au plus tard dix jours avant.',
+        traduire('Réduis le volume de 40 à 60 %.'),
+        traduire("Garde l'intensité sur des séances courtes."),
+        traduire('Priorité au sommeil, huit heures et plus.'),
+        traduire('Dernier sparring intense au plus tard dix jours avant.'),
       ],
     },
   ];

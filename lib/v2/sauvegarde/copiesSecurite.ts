@@ -18,6 +18,7 @@ import { openDatabase } from '@/lib/database';
 import { SAFETY_DIR_NAME, buildShareableSafetyFile, type SafetySnapshot } from './avantMiseAJour';
 import { restoreAllStorage, restoreSecure, restoreTables, type IdMaps } from './fusion';
 import { entreesDeCopieDuCoffre, reprendrePeseesDuCoffre } from '@/lib/databaseReprisePesees';
+import { traduire } from '@/lib/i18n/tr';
 
 export const SAFETY_FILE_KIND = 'copie_securite_mise_a_jour';
 
@@ -87,7 +88,7 @@ export async function shareSafetyCopy(copy: SafetySnapshot): Promise<boolean> {
   const file = await buildShareableSafetyFile({ ...copy, dir: copy.dir });
   if (!file) return false;
   if (!(await isAvailableAsync().catch(() => false))) return false;
-  await shareAsync(file, { mimeType: 'application/json', UTI: 'public.json', dialogTitle: 'Range ta copie dans ton cloud' });
+  await shareAsync(file, { mimeType: 'application/json', UTI: 'public.json', dialogTitle: traduire('Range ta copie dans ton cloud') });
   return true;
 }
 

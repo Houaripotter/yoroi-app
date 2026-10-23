@@ -20,6 +20,7 @@ import { Kozane as KozanePlates, Pastille } from '@/components/yoroi/v2/dojo/Koz
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 /** Palette v2 : vivante depuis la vague 35 (claire ou sombre, voir components/yoroi/livePalette.ts) */
 export { P };
 
@@ -113,7 +114,7 @@ export function Kozane({ on, w = 34, h = 43, partial, sport }: { on: boolean; w?
 export function KozaneBar({ progress, count = 10, w, h = 30, sport }: { progress: number; count?: number; w?: number; h?: number; sport?: string }) {
   const p = Math.max(0, Math.min(1, progress));
   const taille = w ?? Math.round(h * 0.8);
-  return <KozanePlates nombre={count} rempli={p * count} taille={taille} ecart={4} sport={sport} accessibilityLabel={`Progression : ${Math.round(p * 100)} pour cent`} />;
+  return <KozanePlates nombre={count} rempli={p * count} taille={taille} ecart={4} sport={sport} accessibilityLabel={traduire("Progression : {0} pour cent", Math.round(p * 100))} />;
 }
 
 /** Tampon rouge des records : sceau dessine, une etoile au centre (aucune ecriture). char est garde pour compatibilite et ignore. */

@@ -31,6 +31,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { WorkoutMapRoute } from '@/components/WorkoutMapRoute';
 import { healthConnect } from '@/lib/healthConnect';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 interface PlanningSeancesContentProps {
   workouts: Training[];
@@ -97,8 +98,8 @@ const formatDurationCompact = (minutes: number): string => {
 };
 
 const formatCalories = (cal: number): string => {
-  if (cal >= 1000) return `${(cal / 1000).toFixed(1).replace('.', ',')}k`;
-  return cal.toLocaleString('fr-FR');
+  if (cal >= 1000) return `${(cal / 1000).toFixed(1).replace('.', DECIMAL)}k`;
+  return cal.toLocaleString(LOCALE);
 };
 
 const formatPace = (secondsPerKm: number): string => {

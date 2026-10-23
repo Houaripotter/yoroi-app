@@ -6,6 +6,7 @@
  */
 
 /** Ecart au-dela duquel un poids semble loin des dernieres pesees */
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export const ECART_MAX = 0.08;
 /** Les pesees de reference : 21 jours autour de la date du bloc */
 export const WINDOW_DAYS = 21;
@@ -19,7 +20,7 @@ export type CoherenceWarning = {
   ref?: number;
 };
 
-const fr = (v: number, d = 1) => v.toFixed(d).replace('.', ',');
+const fr = (v: number, d = 1) => v.toFixed(d).replace('.', DECIMAL);
 const dayNum = (iso: string) => {
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
   return Math.round(Date.UTC(y, (m || 1) - 1, d || 1) / 86400000);
@@ -70,8 +71,8 @@ export function checkCoherence(input: {
       kind: 'ecart',
       ref: ref.weight,
       text: fromHistory
-        ? `Ce poids semble loin de tes dernières pesées (${fr(ref.weight)} kg) : vérifie la photo.`
-        : `Ce poids semble loin de l’autre pesée collée (${fr(ref.weight)} kg) : vérifie la photo.`,
+        ? traduire("Ce poids semble loin de tes dernières pesées ({0} kg) : vérifie la photo.", fr(ref.weight))
+        : traduire("Ce poids semble loin de l’autre pesée collée ({0} kg) : vérifie la photo.", fr(ref.weight)),
     });
   }
   // 2. IMC et poids incompatibles pour ta taille
@@ -85,19 +86,19 @@ export function checkCoherence(input: {
         out.push({
           kind: 'imc',
           ref: Math.round(implied * 10) / 10,
-          text: `L’IMC lu (${fr(imc)}) ne va pas avec ${fr(w)} kg pour ta taille (${fr(h, 2)} m) : il correspond plutôt à ${fr(implied)} kg. Vérifie la photo.`,
+          text: traduire("L’IMC lu ({0}) ne va pas avec {1} kg pour ta taille ({2} m) : il correspond plutôt à {3} kg. Vérifie la photo.", fr(imc), fr(w), fr(h, 2), fr(implied)),
         });
       }
     } else {
       const implied = Math.sqrt(w / imc);
-      if (implied < 1.4 || implied > 2.15) out.push({ kind: 'imc', text: `L’IMC lu (${fr(imc)}) et le poids (${fr(w)} kg) ne vont pas ensemble : vérifie la photo.` });
+      if (implied < 1.4 || implied > 2.15) out.push({ kind: 'imc', text: traduire("L’IMC lu ({0}) et le poids ({1} kg) ne vont pas ensemble : vérifie la photo.", fr(imc), fr(w)) });
     }
   }
   // 3. muscle et os plus lourds que le poids
   const mus = input.values.muscle_kg;
   const os = input.values.os_kg;
   if ((okNum(mus) || okNum(os)) && (mus ?? 0) + (os ?? 0) >= w) {
-    out.push({ kind: 'masse', text: `Muscle et os (${fr((mus ?? 0) + (os ?? 0))} kg) pèsent plus que le poids lu (${fr(w)} kg) : une valeur est mal lue.` });
+    out.push({ kind: 'masse', text: traduire("Muscle et os ({0} kg) pèsent plus que le poids lu ({1} kg) : une valeur est mal lue.", fr((mus ?? 0) + (os ?? 0)), fr(w)) });
   }
   // 4. graisse en kg et en % qui ne vont pas ensemble
   const fkg = input.values.graisse_kg;
@@ -105,7 +106,7 @@ export function checkCoherence(input: {
   if (okNum(fkg) && okNum(fpct)) {
     const expected = (fpct / 100) * w;
     if (Math.abs(fkg - expected) > Math.max(2, expected * 0.15)) {
-      out.push({ kind: 'graisse', text: `La graisse en kg (${fr(fkg)}) ne va pas avec ${fr(fpct)} % de ${fr(w)} kg : vérifie la photo.` });
+      out.push({ kind: 'graisse', text: traduire("La graisse en kg ({0}) ne va pas avec {1} % de {2} kg : vérifie la photo.", fr(fkg), fr(fpct), fr(w)) });
     }
   }
   return out;

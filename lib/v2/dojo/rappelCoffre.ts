@@ -14,6 +14,7 @@ import * as Notifications from 'expo-notifications';
 import { logger } from '@/lib/security/logger';
 import type { ArmureState } from '@/lib/v2/armure';
 import { vitrineActive } from '@/lib/v2/visite/vitrine';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const KEY = '@yoroi_rappel_coffre_v1';
 export const RAPPEL_COFFRE_TYPE = 'coffre_du_jour';
@@ -55,15 +56,15 @@ async function annuler(): Promise<void> {
 export function texteRappel(state: Pick<ArmureState, 'serie' | 'coffre'> | null, pourDemain: boolean): { title: string; body: string } {
   const serie = state?.serie?.jours ?? 0;
   if (!pourDemain && state?.coffre?.etat === 'pret') {
-    return { title: 'Ton coffre est prêt', body: 'Ta récompense du jour t’attend dans le Dojo.' };
+    return { title: traduire('Ton coffre est prêt'), body: traduire('Ta récompense du jour t’attend dans le Dojo.') };
   }
   if (!pourDemain && state?.coffre?.grandDans === 0) {
-    return { title: 'C’est le jour du grand coffre', body: 'Un geste aujourd’hui et il s’ouvre : une séance, une pesée ou un verre d’eau.' };
+    return { title: traduire('C’est le jour du grand coffre'), body: traduire('Un geste aujourd’hui et il s’ouvre : une séance, une pesée ou un verre d’eau.') };
   }
   if (!pourDemain && serie > 0) {
-    return { title: `${serie} jour${serie > 1 ? 's' : ''} d’affilée, et demain ?`, body: 'Un verre d’eau noté suffit pour ouvrir ton coffre du jour.' };
+    return { title: traduirePluriel(serie, serie > 1, "{0} jour d’affilée, et demain ?", "{0} jours d’affilée, et demain ?", serie), body: traduire('Un verre d’eau noté suffit pour ouvrir ton coffre du jour.') };
   }
-  return { title: 'Ton coffre du jour t’attend', body: 'Une séance, une pesée ou un verre d’eau, et il s’ouvre.' };
+  return { title: traduire('Ton coffre du jour t’attend'), body: traduire('Une séance, une pesée ou un verre d’eau, et il s’ouvre.') };
 }
 
 /** Programme le prochain rappel (aujourd'hui 19 h si le coffre n'est pas ouvert, sinon demain 19 h). */

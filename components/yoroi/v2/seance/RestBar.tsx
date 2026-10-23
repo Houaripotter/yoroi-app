@@ -14,6 +14,7 @@ import { fmtClock } from '@/lib/v2/seance/format';
 import { PHASE_COLORS } from '@/lib/v2/carnet/chrono';
 import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
   endsAt: number;
@@ -72,16 +73,16 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
     <View
       style={{ position: 'absolute', left: 12, right: 12, bottom, borderRadius: 26, backgroundColor: pc.soft, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', overflow: 'hidden', shadowColor: INK, shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 10 }}
       accessibilityLiveRegion="polite"
-      accessibilityLabel={`Repos, ${fmtClock(left)}`}
+      accessibilityLabel={traduire("Repos, {0}", fmtClock(left))}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 16, paddingRight: 10, paddingTop: 10, paddingBottom: 12 }}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Ink size={12} weight="extraBold" color={pc.deep} numberOfLines={1}>{final ? 'Ça repart' : 'Repos'}</Ink>
+          <Ink size={12} weight="extraBold" color={pc.deep} numberOfLines={1}>{final ? traduire('Ça repart') : traduire('Repos')}</Ink>
           <Ink size={32} weight="black" color={final ? pc.deep : INK} style={{ fontVariant: ['tabular-nums'] }} numberOfLines={1}>{fmtClock(left)}</Ink>
         </View>
-        {btn('15 s', 'Enlever 15 secondes de repos', () => onAdd(-15), 'minus')}
-        {btn('15 s', 'Ajouter 15 secondes de repos', () => onAdd(15), 'plus')}
-        {btn('Passer', 'Passer le repos', onSkip)}
+        {btn('15 s', traduire('Enlever 15 secondes de repos'), () => onAdd(-15), 'minus')}
+        {btn('15 s', traduire('Ajouter 15 secondes de repos'), () => onAdd(15), 'plus')}
+        {btn('Passer', traduire('Passer le repos'), onSkip)}
       </View>
       {/* le temps qui reste, en barre sur toute la largeur */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 5, backgroundColor: 'rgba(29,32,41,0.06)' }}>

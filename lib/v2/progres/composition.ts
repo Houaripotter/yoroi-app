@@ -10,6 +10,7 @@ import type { BodyComposition } from '@/lib/bodyComposition';
 import { logger } from '@/lib/security/logger';
 import { parseScaleJson } from '@/lib/v2/balance/format';
 import type { ScaleJson } from '@/lib/v2/balance/format';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CompoPoint = {
   date: string;
@@ -67,11 +68,11 @@ export const COMPO_METRICS: CompoMetric[] = [
   { key: 'muscle', label: 'Muscle', short: 'Muscle', unit: '%', digits: 1, good: 'up' },
   { key: 'water', label: 'Eau', short: 'Eau', unit: '%', digits: 1, good: 'none' },
   { key: 'weight', label: 'Poids', short: 'Poids', unit: 'kg', digits: 1, good: 'none' },
-  { key: 'muscleKg', label: 'Masse musculaire', short: 'Muscle en kg', unit: 'kg', digits: 1, good: 'up' },
+  { key: 'muscleKg', label: traduire('Masse musculaire'), short: 'Muscle en kg', unit: 'kg', digits: 1, good: 'up' },
   { key: 'bone', label: 'Masse osseuse', short: 'Os', unit: 'kg', digits: 1, good: 'none' },
-  { key: 'visceral', label: 'Graisse viscérale', short: 'Viscérale', unit: '', digits: 1, good: 'down', hint: 'niveau de 1 à 59, sain jusqu’à 12' },
-  { key: 'metabolicAge', label: 'Âge métabolique', short: 'Âge méta.', unit: 'ans', digits: 0, good: 'down' },
-  { key: 'bmr', label: 'Métabolisme de base', short: 'Métabolisme', unit: 'kcal', digits: 0, good: 'none' },
+  { key: 'visceral', label: 'Graisse viscérale', short: traduire('Viscérale'), unit: '', digits: 1, good: 'down', hint: traduire('niveau de 1 à 59, sain jusqu’à 12') },
+  { key: 'metabolicAge', label: traduire('Âge métabolique'), short: traduire('Âge méta.'), unit: 'ans', digits: 0, good: 'down' },
+  { key: 'bmr', label: traduire('Métabolisme de base'), short: traduire('Métabolisme'), unit: 'kcal', digits: 0, good: 'none' },
 ];
 
 /** Anciens identifiants de l'ecran composition (parametre metric) */

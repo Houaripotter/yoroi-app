@@ -20,6 +20,7 @@ import { COULEURS_COURBE, STYLES_COURBE, usePrefsCourbes, type CouleurCourbe, ty
 import { ApercuFond, FONDS_PROPOSES, sceneDuFond } from '@/components/yoroi/v2/charts/FondCourbe';
 import { ApercuCourbe, arretsCourbe } from '@/components/yoroi/v2/charts/CourbePoids';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Vague 45 : apercu d'une couleur de trait, une petite courbe avec son halo et son point final */
 function ApercuCouleur({ couleur, width = 76, height = 40 }: { couleur: CouleurCourbe; width?: number; height?: number }) {
@@ -53,13 +54,13 @@ export default function TesCourbes() {
 
   const style = STYLES_COURBE.find((x) => x.id === courbes.style) ?? STYLES_COURBE[0];
   const fondAuto = sceneDuFond('auto', espace.scene);
-  const fondNom = courbes.fond === 'aucun' ? 'Sans fond' : courbes.fond === 'auto' ? 'Ton accueil' : sceneMeta(courbes.fond).nom;
+  const fondNom = courbes.fond === 'aucun' ? traduire('Sans fond') : courbes.fond === 'auto' ? traduire('Ton accueil') : sceneMeta(courbes.fond).nom;
   const fondScene = sceneDuFond(courbes.fond, espace.scene);
   const { width } = useWindowDimensions();
   const W = Math.max(240, Math.min(560, width) - 44 - 28);
 
   return (
-    <EspaceScreen title="Tes courbes" subtitle="L’allure de ta courbe de poids" gap={14}>
+    <EspaceScreen title={traduire("Tes courbes")} subtitle={traduire("L’allure de ta courbe de poids")} gap={14}>
       {/* apercu : le style et le fond choisis */}
       <Card>
         <View style={{ padding: 14, gap: 10, alignItems: 'center' }}>
@@ -77,14 +78,14 @@ export default function TesCourbes() {
       </Card>
 
       <Card>
-        <ValueRow first tint={TUILE.bleu} icon="pulse" label="Style de la courbe" value={`Style ${style.id}`} onPress={() => setPicker('style')} />
-        <ValueRow tint={TUILE.or} icon="wand" label="Couleur de ta courbe" value={couleur.nom} onPress={() => setPicker('couleur')} />
-        <ValueRow tint={TUILE.mousse} icon="image" label="Fond de la courbe" value={fondNom} onPress={() => setPicker('fond')} />
+        <ValueRow first tint={TUILE.bleu} icon="pulse" label={traduire("Style de la courbe")} value={`Style ${style.id}`} onPress={() => setPicker('style')} />
+        <ValueRow tint={TUILE.or} icon="wand" label={traduire("Couleur de ta courbe")} value={couleur.nom} onPress={() => setPicker('couleur')} />
+        <ValueRow tint={TUILE.mousse} icon="image" label={traduire("Fond de la courbe")} value={fondNom} onPress={() => setPicker('fond')} />
         <ValueRow
           tint={TUILE.indigo}
           icon="target"
-          label="Ton cap et ton rythme prévu"
-          sub="Ton torii et tes tirets verts sur tes courbes"
+          label={traduire("Ton cap et ton rythme prévu")}
+          sub={traduire("Ton torii et tes tirets verts sur tes courbes")}
           onPress={() => courbes.set({ cap: !courbes.cap })}
           action={<Interrupteur on={courbes.cap} />}
         />
@@ -93,11 +94,11 @@ export default function TesCourbes() {
       <ChoiceSheet
         visible={picker === 'style'}
         onClose={() => setPicker(null)}
-        title="Style de la courbe"
-        subtitle="Glisse ton doigt sur la courbe : chaque style te montre la pesée touchée"
+        title={traduire("Style de la courbe")}
+        subtitle={traduire("Glisse ton doigt sur la courbe : chaque style te montre la pesée touchée")}
         options={STYLES_COURBE.map((x) => ({
           key: x.id,
-          label: `${x.id}. ${x.nom}${x.id === 1 ? ', par défaut' : ''}`,
+          label: `${x.id}. ${x.nom}${x.id === 1 ? traduire(', par défaut') : ''}`,
           sub: x.phrase,
           preview: <ApercuCourbe style={x.id} />,
         }))}
@@ -107,8 +108,8 @@ export default function TesCourbes() {
       <ChoiceSheet
         visible={picker === 'couleur'}
         onClose={() => setPicker(null)}
-        title="Couleur de ta courbe"
-        subtitle="Le trait de ta courbe de poids, à l’accueil, dans le détail et dans Progrès"
+        title={traduire("Couleur de ta courbe")}
+        subtitle={traduire("Le trait de ta courbe de poids, à l’accueil, dans le détail et dans Progrès")}
         options={COULEURS_COURBE.map((x) => ({ key: x.id, label: x.nom, sub: x.phrase, preview: <ApercuCouleur couleur={x.id} /> }))}
         value={courbes.couleur}
         onChange={(v) => courbes.set({ couleur: v as CouleurCourbe })}
@@ -116,11 +117,11 @@ export default function TesCourbes() {
       <ChoiceSheet
         visible={picker === 'fond'}
         onClose={() => setPicker(null)}
-        title="Fond de la courbe"
-        subtitle="Une scène derrière ta courbe de poids, sous un voile de papier"
+        title={traduire("Fond de la courbe")}
+        subtitle={traduire("Une scène derrière ta courbe de poids, sous un voile de papier")}
         options={[
-          { key: 'auto' as FondCourbe, label: 'Comme ton accueil', sub: fondAuto && fondAuto !== espace.scene ? `${sceneMeta(fondAuto).nom}, ta scène a déjà un torii` : sceneMeta(fondAuto ?? undefined).nom, preview: <ApercuFond scene={fondAuto} /> },
-          { key: 'aucun' as FondCourbe, label: 'Sans fond, par défaut', sub: 'Le papier seul, le plus lisible', preview: <ApercuFond scene={null} /> },
+          { key: 'auto' as FondCourbe, label: traduire('Comme ton accueil'), sub: fondAuto && fondAuto !== espace.scene ? traduire("{0}, ta scène a déjà un torii", sceneMeta(fondAuto).nom) : sceneMeta(fondAuto ?? undefined).nom, preview: <ApercuFond scene={fondAuto} /> },
+          { key: 'aucun' as FondCourbe, label: traduire('Sans fond, par défaut'), sub: traduire('Le papier seul, le plus lisible'), preview: <ApercuFond scene={null} /> },
           ...FONDS_PROPOSES.map((id) => ({ key: id as FondCourbe, label: sceneMeta(id).nom, preview: <ApercuFond scene={id} /> })),
         ]}
         value={courbes.fond}

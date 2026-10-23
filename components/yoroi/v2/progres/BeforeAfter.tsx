@@ -17,6 +17,7 @@ import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
 import { P } from '@/components/yoroi/livePalette';
 import { dateCourte, kg } from '@/lib/v2/photos/outils';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Shot = { uri: string; date: string; weight?: number };
 export type CompareMode = 'glisser' | 'cote' | 'fondu';
@@ -208,7 +209,7 @@ export const BeforeAfter = forwardRef<View, Props>(function BeforeAfter({ before
   const thumbStyle = useAnimatedStyle(() => ({ left: `${pos.value * 100}%` }));
 
   const accessibilityLabel =
-    mode === 'glisser' ? 'Avant et après. Glisse ton doigt sur la photo pour déplacer le rideau.' : mode === 'fondu' ? 'Avant et après en fondu. Glisse vers la droite pour faire apparaître la photo d’après.' : 'Avant et après, côte à côte.';
+    mode === 'glisser' ? traduire('Avant et après. Glisse ton doigt sur la photo pour déplacer le rideau.') : mode === 'fondu' ? traduire('Avant et après en fondu. Glisse vers la droite pour faire apparaître la photo d’après.') : traduire('Avant et après, côte à côte.');
 
   return (
     <View ref={ref} collapsable={false}>
@@ -221,7 +222,7 @@ export const BeforeAfter = forwardRef<View, Props>(function BeforeAfter({ before
                   <View key={i} style={{ flex: 1, overflow: 'hidden' }}>
                     <Animated.Image source={{ uri: s.uri }} style={[{ width: '100%', height: '100%' }, zoomStyle]} resizeMode="cover" />
                     <View pointerEvents="none" style={{ position: 'absolute', left: 8, right: 8, bottom: 10 }}>
-                      <Etiquette word={i === 0 ? 'Avant' : 'Après'} s={s} align={i === 0 ? 'left' : 'right'} />
+                      <Etiquette word={i === 0 ? traduire('Avant') : traduire('Après')} s={s} align={i === 0 ? 'left' : 'right'} />
                     </View>
                   </View>
                 ))}
@@ -249,10 +250,10 @@ export const BeforeAfter = forwardRef<View, Props>(function BeforeAfter({ before
                   </Animated.View>
                 )}
                 <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 12, top: 12 }, beforeLabel]}>
-                  <Etiquette word="Avant" s={before} align="left" />
+                  <Etiquette word={traduire("Avant")} s={before} align="left" />
                 </Animated.View>
                 <Animated.View pointerEvents="none" style={[{ position: 'absolute', right: 12, top: 12 }, afterLabel]}>
-                  <Etiquette word="Après" s={after} align="right" />
+                  <Etiquette word={traduire("Après")} s={after} align="right" />
                 </Animated.View>
                 {mode === 'fondu' ? (
                   <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 16, gap: 8 }}>
@@ -260,8 +261,8 @@ export const BeforeAfter = forwardRef<View, Props>(function BeforeAfter({ before
                       <Animated.View style={[{ position: 'absolute', top: -9, marginLeft: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: P.pureWhite, borderWidth: 3, borderColor: c.accent }, thumbStyle]} />
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Ink size={12} weight="extraBold" color={P.pureWhite}>Avant</Ink>
-                      <Ink size={12} weight="extraBold" color={P.pureWhite}>Après</Ink>
+                      <Ink size={12} weight="extraBold" color={P.pureWhite}>{traduire("Avant")}</Ink>
+                      <Ink size={12} weight="extraBold" color={P.pureWhite}>{traduire("Après")}</Ink>
                     </View>
                   </View>
                 ) : null}

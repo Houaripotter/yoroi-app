@@ -7,6 +7,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
 import { intensite, niveauRpe } from './v2/intensite';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -114,8 +115,8 @@ export const WATCH_EXERCISE_TEMPLATES: {
   color: string;
 }[] = [
   // ─── PECTORAUX (20) ────────────────────────────────────────────────────────
-  { id: 'bench-press', name: 'Développé Couché (Barre)', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
-  { id: 'incline-bench-press', name: 'Développé Incliné (Barre)', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'bench-press', name: traduire('Développé Couché (Barre)'), category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
+  { id: 'incline-bench-press', name: traduire('Développé Incliné (Barre)'), category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
   { id: 'decline-bench-press', name: 'Développé Décliné (Barre)', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
   { id: 'dumbbell-bench-press', name: 'Développé Haltères', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
   { id: 'incline-dumbbell-press', name: 'Développé Haltères Incliné', category: 'musculation', unit: 'kg', muscleGroup: 'Pectoraux', iconName: 'dumbbell', color: '#EF4444' },
@@ -149,7 +150,7 @@ export const WATCH_EXERCISE_TEMPLATES: {
   { id: 'lat-pulldown-unilateral', name: 'Tirage Unilatéral', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
   { id: 'barbell-row', name: 'Rowing Barre', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
   { id: 'pendlay-row', name: 'Rowing Pendlay', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
-  { id: 'dumbbell-row', name: 'Rowing Haltère (One Arm)', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
+  { id: 'dumbbell-row', name: traduire('Rowing Haltère (One Arm)'), category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
   { id: 'seated-cable-row', name: 'Rowing Câble Assis', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
   { id: 't-bar-row', name: 'Rowing T-Bar', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
   { id: 'seal-row', name: 'Rowing Plat-Ventre (Seal Row)', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
@@ -160,8 +161,8 @@ export const WATCH_EXERCISE_TEMPLATES: {
   { id: 'good-morning', name: 'Inclinaison Barre (Good Morning)', category: 'musculation', unit: 'kg', muscleGroup: 'Dos', iconName: 'dumbbell', color: '#3B82F6' },
 
   // ─── EPAULES (16) ──────────────────────────────────────────────────────────
-  { id: 'military-press', name: 'Développé Militaire (Barre)', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#F59E0B' },
-  { id: 'dumbbell-shoulder-press', name: 'Développé Haltères Assis', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'military-press', name: traduire('Développé Militaire (Barre)'), category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#F59E0B' },
+  { id: 'dumbbell-shoulder-press', name: traduire('Développé Haltères Assis'), category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#F59E0B' },
   { id: 'dumbbell-shoulder-press-stand', name: 'Développé Haltères Debout', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#F59E0B' },
   { id: 'arnold-press', name: 'Arnold Press', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#F59E0B' },
   { id: 'lateral-raise', name: 'Elévations Latérales', category: 'musculation', unit: 'kg', muscleGroup: 'Epaules', iconName: 'dumbbell', color: '#F59E0B' },
@@ -204,7 +205,7 @@ export const WATCH_EXERCISE_TEMPLATES: {
   { id: 'goblet-squat', name: 'Squat Coupe (Goblet Squat)', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
   { id: 'box-squat', name: 'Squat sur Boîte (Box Squat)', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
   { id: 'bulgarian-split-squat', name: 'Squat Bulgare', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
-  { id: 'leg-press', name: 'Presse à Cuisses', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
+  { id: 'leg-press', name: traduire('Presse à Cuisses'), category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
   { id: 'lunges', name: 'Fentes Avant', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
   { id: 'reverse-lunges', name: 'Fentes Arrière', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
   { id: 'walking-lunges', name: 'Fentes Marchées', category: 'musculation', unit: 'kg', muscleGroup: 'Jambes', iconName: 'dumbbell', color: '#10B981' },
@@ -250,7 +251,7 @@ export const WATCH_EXERCISE_TEMPLATES: {
   { id: 'tricep-machine', name: 'Extension Triceps Machine', category: 'musculation', unit: 'kg', muscleGroup: 'Machines', iconName: 'dumbbell', color: '#6B7280' },
 
   // ─── HALTÉROPHILIE OLYMPIQUE (12) ──────────────────────────────────────────
-  { id: 'snatch', name: 'Arraché', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
+  { id: 'snatch', name: traduire('Arraché'), category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
   { id: 'clean-and-jerk', name: 'Epaulé-Jeté', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
   { id: 'power-clean', name: 'Power Clean', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
   { id: 'hang-clean', name: 'Hang Clean', category: 'musculation', unit: 'kg', muscleGroup: 'Olympique', iconName: 'dumbbell', color: '#DC2626' },
@@ -368,21 +369,21 @@ export const WATCH_EXERCISE_TEMPLATES: {
   { id: 'hiit-session', name: 'Séance HIIT (Fractionné Intensif)', category: 'cardio', unit: 'time', muscleGroup: 'Cardio', iconName: 'activity', color: '#06B6D4' },
 
   // ─── COMBAT / MMA (15) ─────────────────────────────────────────────────────
-  { id: 'bjj-gi', name: 'BJJ Kimono', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'bjj-nogi', name: 'BJJ No-Gi / Grappling', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'boxing', name: 'Boxe Anglaise', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'muay-thai', name: 'Muay Thai', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'savate', name: 'Savate / Boxe Française', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'kickboxing', name: 'Kickboxing / K-1', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'wrestling', name: 'Lutte (Wrestling)', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'judo', name: 'Judo', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'mma', name: 'MMA', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'sparring', name: 'Sparring (Assaut Libre)', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'padwork', name: 'Travail aux Pattes', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'bag-work', name: 'Sac de Frappe', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'shadow-boxing', name: 'Boxe à l\'Ombre (Shadow Boxing)', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'catch-wrestling', name: 'Lutte avec Soumissions (Catch)', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
-  { id: 'competition', name: 'Compétition', category: 'custom', unit: 'time', muscleGroup: 'Combat', iconName: 'target', color: '#8B5CF6' },
+  { id: 'bjj-gi', name: 'BJJ Kimono', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'bjj-nogi', name: 'BJJ No-Gi / Grappling', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'boxing', name: 'Boxe Anglaise', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'muay-thai', name: 'Muay Thai', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'savate', name: 'Savate / Boxe Française', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'kickboxing', name: 'Kickboxing / K-1', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'wrestling', name: 'Lutte (Wrestling)', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'judo', name: 'Judo', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'mma', name: 'MMA', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'sparring', name: 'Sparring (Assaut Libre)', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'padwork', name: 'Travail aux Pattes', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'bag-work', name: 'Sac de Frappe', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'shadow-boxing', name: 'Boxe à l\'Ombre (Shadow Boxing)', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'catch-wrestling', name: 'Lutte avec Soumissions (Catch)', category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
+  { id: 'competition', name: traduire('Compétition'), category: 'custom', unit: 'time', muscleGroup: traduire('Combat'), iconName: 'target', color: '#8B5CF6' },
 
   // ─── STREET WORKOUT (15) ───────────────────────────────────────────────────
   { id: 'street-pull-up', name: 'Tractions Max', category: 'street_workout', unit: 'reps', muscleGroup: 'Street Workout', iconName: 'dumbbell', color: '#F59E0B' },
@@ -429,7 +430,7 @@ export const FORCE_BENCHMARKS: Omit<Benchmark, 'id' | 'entries' | 'createdAt'>[]
   { name: 'Développé Militaire', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444' },
   { name: 'Tractions', category: 'force', unit: 'reps', iconName: 'dumbbell', color: '#EF4444' },
   { name: 'Dips', category: 'force', unit: 'reps', iconName: 'dumbbell', color: '#EF4444' },
-  { name: 'Presse à Cuisses', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444' },
+  { name: traduire('Presse à Cuisses'), category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444' },
 ];
 
 // RUNNING - Les classiques
@@ -558,9 +559,9 @@ export const SKILL_CATEGORIES: Record<SkillCategory, { label: string; color: str
 };
 
 export const SKILL_STATUS_CONFIG: Record<SkillStatus, { label: string; color: string; bgColor: string }> = {
-  to_learn: { label: 'À apprendre', color: '#EF4444', bgColor: '#EF444420' },
+  to_learn: { label: traduire('À apprendre'), color: '#EF4444', bgColor: '#EF444420' },
   in_progress: { label: 'En cours', color: '#F59E0B', bgColor: '#F59E0B20' },
-  mastered: { label: 'Maîtrisé', color: '#10B981', bgColor: '#10B98120' },
+  mastered: { label: traduire('Maîtrisé'), color: '#10B981', bgColor: '#10B98120' },
 };
 
 // ============================================
@@ -666,7 +667,7 @@ export const getRPELabel = (rpe: number): string => {
   if (rpe <= 5) return 'Modere';
   if (rpe <= 7) return 'Difficile';
   if (rpe <= 9) return 'Tres dur';
-  return 'Max';
+  return traduire('Max');
 };
 
 // Vague 32 : echelle d'intensite commune (lib/v2/intensite.ts), sans rouge
@@ -1256,7 +1257,7 @@ export const cleanDemoData = async (): Promise<{ removed: number; message: strin
     if (demoBenchmarks.length === 0) {
       return {
         removed: 0,
-        message: 'Aucune donnée de démo à nettoyer',
+        message: traduire('Aucune donnée de démo à nettoyer'),
       };
     }
 
@@ -1266,13 +1267,13 @@ export const cleanDemoData = async (): Promise<{ removed: number; message: strin
 
     return {
       removed: demoBenchmarks.length,
-      message: `${demoBenchmarks.length} record(s) de démo supprimé(s)`,
+      message: traduire("{0} record(s) de démo supprimé(s)", demoBenchmarks.length),
     };
   } catch (error) {
     logger.error('Error cleaning demo data:', error);
     return {
       removed: 0,
-      message: 'Erreur lors du nettoyage',
+      message: traduire('Erreur lors du nettoyage'),
     };
   }
 };

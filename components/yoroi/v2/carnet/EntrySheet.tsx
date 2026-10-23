@@ -17,6 +17,7 @@ import { entryText, isWeightCategory, sortedEntries } from '@/lib/v2/carnet/jour
 import { shortDate } from '@/lib/v2/carnet/format';
 import { intensite, niveauRpe } from '@/lib/v2/intensite';
 import { P, Press, CIcon, Hanko, BigButton, Field, Label, MiniChips } from './ui';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type EntryValues = {
   value: number;
@@ -31,7 +32,7 @@ export type EntryValues = {
 
 type HyroxEffort = 'course' | 'station_force' | 'repetitions';
 
-const RPE_LABEL = (v: number) => (v <= 3 ? 'Facile' : v <= 5 ? 'Modéré' : v <= 7 ? 'Difficile' : v <= 9 ? 'Très dur' : 'Maximum');
+const RPE_LABEL = (v: number) => (v <= 3 ? 'Facile' : v <= 5 ? traduire('Modéré') : v <= 7 ? 'Difficile' : v <= 9 ? traduire('Très dur') : 'Maximum');
 
 function shift(d: Date, days: number): Date {
   const n = new Date(d);
@@ -118,24 +119,24 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
     if (!benchmark || busy) return;
     let value: number;
     if (isWeight) {
-      if (!reps) return onError('Indique au moins une répétition.');
+      if (!reps) return onError(traduire('Indique au moins une répétition.'));
       value = weight;
     } else if (isBody) {
       value = reps;
     } else if (isRun && unit === 'time') {
       value = totalSeconds;
-      if (value === 0) return onError('Indique ta durée.');
+      if (value === 0) return onError(traduire('Indique ta durée.'));
     } else if (isRun) {
       value = distKm;
     } else if ((isCardio || isHyrox) && unit === 'time') {
       value = (parseInt(duration, 10) || 0) * 60;
-      if (value === 0) return onError('Indique ta durée.');
+      if (value === 0) return onError(traduire('Indique ta durée.'));
     } else if (unit === 'time') {
       value = parseTimeToSeconds(valueText.trim());
     } else {
       value = parseFloat(valueText.replace(',', '.'));
     }
-    if (!isFinite(value) || isNaN(value) || value <= 0) return onError('La valeur n’est pas valide.');
+    if (!isFinite(value) || isNaN(value) || value <= 0) return onError(traduire('La valeur n’est pas valide.'));
     const dur = duration.trim() ? parseInt(duration, 10) : undefined;
     let cal = calories.trim() ? parseInt(calories, 10) : undefined;
     if (!cal && dur && dur > 0) cal = calculateCalories(dur, userWeight, benchmark.category);
@@ -164,7 +165,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
     <Sheet visible={visible} onClose={onClose} scroll>
       <View style={{ gap: 2 }}>
         <Ink size={24} weight="black" tight numberOfLines={2}>{niceName(benchmark.name)}</Ink>
-        {pr ? <Ink size={13} weight="bold" color={P.accent}>{`Ton record : ${entryText(benchmark, pr)}`}</Ink> : <Ink size={13} weight="bold" color={P.ink2}>Ta première perf sera ton record</Ink>}
+        {pr ? <Ink size={13} weight="bold" color={P.accent}>{traduire("Ton record : {0}", entryText(benchmark, pr))}</Ink> : <Ink size={13} weight="bold" color={P.ink2}>{traduire("Ta première perf sera ton record")}</Ink>}
       </View>
 
       {history.length > 0 ? (
@@ -186,19 +187,19 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
       {isHyrox ? (
         <>
           <Label>Type d’effort</Label>
-          <MiniChips items={[{ key: 'course' as HyroxEffort, label: 'Course' }, { key: 'station_force' as HyroxEffort, label: 'Station force' }, { key: 'repetitions' as HyroxEffort, label: 'Répétitions' }]} value={hyrox} onChange={setHyrox} />
+          <MiniChips items={[{ key: 'course' as HyroxEffort, label: 'Course' }, { key: 'station_force' as HyroxEffort, label: 'Station force' }, { key: 'repetitions' as HyroxEffort, label: traduire('Répétitions') }]} value={hyrox} onChange={setHyrox} />
         </>
       ) : null}
 
       {isWeight ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1, alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-            <Ink size={13} weight="bold" color={P.ink2}>Charge</Ink>
-            <Stepper value={weight} step={2} fine={0.5} min={0} max={600} decimals onChange={setWeight} unit="kilos" size={28} button={36} format={(v) => `${String(v).replace('.', ',')} ${unit === 'lbs' ? 'lbs' : 'kg'}`} />
+            <Ink size={13} weight="bold" color={P.ink2}>{traduire("Charge")}</Ink>
+            <Stepper value={weight} step={2} fine={0.5} min={0} max={600} decimals onChange={setWeight} unit="kilos" size={28} button={36} format={(v) => `${String(v).replace('.', DECIMAL)} ${unit === 'lbs' ? 'lbs' : 'kg'}`} />
           </View>
           <View style={{ flex: 1, alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-            <Ink size={13} weight="bold" color={P.ink2}>Répétitions</Ink>
-            <Stepper value={reps} step={1} min={1} max={200} onChange={setReps} unit="répétitions" size={28} button={36} />
+            <Ink size={13} weight="bold" color={P.ink2}>{traduire("Répétitions")}</Ink>
+            <Stepper value={reps} step={1} min={1} max={200} onChange={setReps} unit={traduire("répétitions")} size={28} button={36} />
           </View>
         </View>
       ) : null}
@@ -206,17 +207,17 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
 
       {isBody ? (
         <View style={{ alignItems: 'center', gap: 6, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-          <Ink size={13} weight="bold" color={P.ink2}>Répétitions</Ink>
-          <Stepper value={reps} step={1} min={1} max={500} onChange={setReps} unit="répétitions" size={34} />
+          <Ink size={13} weight="bold" color={P.ink2}>{traduire("Répétitions")}</Ink>
+          <Stepper value={reps} step={1} min={1} max={500} onChange={setReps} unit={traduire("répétitions")} size={34} />
         </View>
       ) : null}
 
       {isRun ? (
         <>
-          <Field label="Distance en km" value={distance} onChangeText={(t) => setDistance(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="10" />
+          <Field label={traduire("Distance en km")} value={distance} onChangeText={(t) => setDistance(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="10" />
           {unit === 'time' || unit === 'km' ? (
             <>
-              <Label>Durée</Label>
+              <Label>{traduire("Durée")}</Label>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {[
                   { v: h, set: setH, u: 'h', ph: '0' },
@@ -224,7 +225,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
                   { v: s, set: setS, u: 's', ph: '30' },
                 ].map((f) => (
                   <View key={f.u} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 56, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line, paddingHorizontal: 12 }}>
-                    <TextInput value={f.v} onChangeText={f.set} keyboardType="number-pad" maxLength={2} placeholder={f.ph} placeholderTextColor={P.muted} accessibilityLabel={`Durée en ${f.u}`} style={[fontStyle('black'), { flex: 1, fontSize: 22, color: P.ink, textAlign: 'center', paddingVertical: 0 }]} />
+                    <TextInput value={f.v} onChangeText={f.set} keyboardType="number-pad" maxLength={2} placeholder={f.ph} placeholderTextColor={P.muted} accessibilityLabel={traduire("Durée en {0}", f.u)} style={[fontStyle('black'), { flex: 1, fontSize: 22, color: P.ink, textAlign: 'center', paddingVertical: 0 }]} />
                     <Ink size={13} weight="bold" color={P.muted}>{f.u}</Ink>
                   </View>
                 ))}
@@ -232,22 +233,22 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
               {paceText ? <Ink size={14} weight="extraBold" color={P.indigo} style={{ paddingHorizontal: 4 }}>{`Allure : ${paceText}`}</Ink> : null}
             </>
           ) : null}
-          <Field label="Dénivelé en mètres, si tu veux" value={incline} onChangeText={setIncline} keyboardType="number-pad" placeholder="150" />
+          <Field label={traduire("Dénivelé en mètres, si tu veux")} value={incline} onChangeText={setIncline} keyboardType="number-pad" placeholder="150" />
         </>
       ) : null}
 
       {isCardio ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label="Distance (km)" value={distance} onChangeText={(t) => setDistance(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="5" /></View>
-          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label="Vitesse (km/h)" value={speed} onChangeText={(t) => setSpeed(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="12,5" /></View>
+          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label={traduire("Distance (km)")} value={distance} onChangeText={(t) => setDistance(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="5" /></View>
+          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label={traduire("Vitesse (km/h)")} value={speed} onChangeText={(t) => setSpeed(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="12,5" /></View>
           <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label="Puissance (W)" value={watts} onChangeText={setWatts} keyboardType="number-pad" placeholder="250" /></View>
-          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label="Niveau" value={level} onChangeText={setLevel} keyboardType="number-pad" placeholder="8" /></View>
+          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label={traduire("Niveau")} value={level} onChangeText={setLevel} keyboardType="number-pad" placeholder="8" /></View>
         </View>
       ) : null}
 
       {genericValue && !isRun ? (
         <Field
-          label={unit === 'time' ? 'Ton temps (min:s)' : unit === 'reps' ? 'Répétitions' : unit === 'km' ? 'Kilomètres' : unit === 'meters' ? 'Mètres' : unit === 'lbs' ? 'Livres' : 'Kilos'}
+          label={unit === 'time' ? traduire('Ton temps (min:s)') : unit === 'reps' ? traduire('Répétitions') : unit === 'km' ? traduire('Kilomètres') : unit === 'meters' ? traduire('Mètres') : unit === 'lbs' ? 'Livres' : 'Kilos'}
           value={valueText}
           onChangeText={setValueText}
           keyboardType={unit === 'time' ? 'numbers-and-punctuation' : 'decimal-pad'}
@@ -257,16 +258,16 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
 
       {!isWeight && !isBody ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}><Field label="Durée (min)" value={duration} onChangeText={setDuration} keyboardType="number-pad" placeholder="45" /></View>
-          <View style={{ flex: 1 }}><Field label="Calories" value={calories} onChangeText={setCalories} keyboardType="number-pad" placeholder="350" /></View>
+          <View style={{ flex: 1 }}><Field label={traduire("Durée (min)")} value={duration} onChangeText={setDuration} keyboardType="number-pad" placeholder="45" /></View>
+          <View style={{ flex: 1 }}><Field label={traduire("Calories")} value={calories} onChangeText={setCalories} keyboardType="number-pad" placeholder="350" /></View>
         </View>
       ) : null}
-      {!isWeight && !isBody ? <Ink size={12} weight="medium" color={P.muted} style={{ paddingHorizontal: 4 }}>{`Calories estimées avec ton poids et un coefficient d’effort de ${METS_VALUES[benchmark.category] || 5}.`}</Ink> : null}
+      {!isWeight && !isBody ? <Ink size={12} weight="medium" color={P.muted} style={{ paddingHorizontal: 4 }}>{traduire("Calories estimées avec ton poids et un coefficient d’effort de {0}.", METS_VALUES[benchmark.category] || 5)}</Ink> : null}
 
       <View style={{ gap: 8 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 4 }}>
           <Ink size={13} weight="bold" color={P.ink2}>Effort ressenti</Ink>
-          <Ink size={15} weight="black" color={intensite(niveauRpe(rpe)).text}>{`${rpe} sur 10, ${RPE_LABEL(rpe).toLowerCase()}`}</Ink>
+          <Ink size={15} weight="black" color={intensite(niveauRpe(rpe)).text}>{traduire("{0} sur 10, {1}", rpe, RPE_LABEL(rpe).toLowerCase())}</Ink>
         </View>
         <View style={{ flexDirection: 'row', gap: 4 }}>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
@@ -281,9 +282,9 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
         </View>
       </View>
 
-      <Field value={notes} onChangeText={setNotes} placeholder="Une note : sensations, matériel, conditions" multiline accessibilityLabel="Note" />
+      <Field value={notes} onChangeText={setNotes} placeholder={traduire("Une note : sensations, matériel, conditions")} multiline accessibilityLabel="Note" />
 
-      <BigButton label={busy ? 'Enregistrement...' : 'Enregistrer'} icon="check" disabled={busy} onPress={submit} />
+      <BigButton label={busy ? 'Enregistrement...' : traduire('Enregistrer')} icon="check" disabled={busy} onPress={submit} />
     </Sheet>
   );
 }

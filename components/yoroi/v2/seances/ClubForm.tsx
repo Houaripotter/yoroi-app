@@ -19,6 +19,7 @@ import { Icon } from './Icon';
 import { BackButton, BigButton, Chip, tap } from './ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const COLORS = ['#2C4A84', '#B0282E', '#C59D45', '#6E8C3A', '#3D5D9E', '#A8832F', '#1D2029', '#8B8D96'];
 const QUICK = ['jjb', 'musculation', 'boxe', 'mma', 'muay_thai', 'judo', 'crossfit', 'running', 'grappling', 'kickboxing', 'yoga', 'natation'];
@@ -71,7 +72,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
     try {
       const perm = source === 'camera' ? await requestCameraPermissionsAsync() : await requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        appAlert('Autorisation nécessaire', source === 'camera' ? 'Autorise l’accès à l’appareil photo dans les réglages.' : 'Autorise l’accès à tes photos dans les réglages.');
+        appAlert(traduire('Autorisation nécessaire'), source === 'camera' ? traduire('Autorise l’accès à l’appareil photo dans les réglages.') : traduire('Autorise l’accès à tes photos dans les réglages.'));
         return;
       }
       const res = source === 'camera'
@@ -86,7 +87,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
   const save = async () => {
     if (!name.trim()) {
       notificationAsync(NotificationFeedbackType.Error).catch(() => {});
-      appAlert('Il manque le nom', 'Donne un nom à ton club.');
+      appAlert(traduire('Il manque le nom'), traduire('Donne un nom à ton club.'));
       return;
     }
     if (savingRef.current) return;
@@ -101,7 +102,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
       onDone();
     } catch (e) {
       logger.error('Erreur sauvegarde club', e);
-      appAlert('Oups', 'Le club n’a pas pu être enregistré. Réessaie.');
+      appAlert('Oups', traduire('Le club n’a pas pu être enregistré. Réessaie.'));
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -115,7 +116,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 30, gap: 16 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <BackButton onPress={onCancel} />
-          <Ink size={26} weight="black" tight style={{ flex: 1 }}>{editingClub ? 'Modifier le club' : 'Nouveau club'}</Ink>
+          <Ink size={26} weight="black" tight style={{ flex: 1 }}>{editingClub ? traduire('Modifier le club') : traduire('Nouveau club')}</Ink>
         </View>
 
         <View style={{ alignItems: 'center', gap: 10 }}>
@@ -130,8 +131,8 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
         </View>
 
         <View style={{ gap: 6 }}>
-          <Ink size={14} weight="bold" color={c.textSecondary}>Nom du club</Ink>
-          <TextInput value={name} onChangeText={setName} placeholder="Ex. Dojo du quartier" placeholderTextColor={c.textMuted} style={{ minHeight: 52, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 16, color: c.ink }} />
+          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Nom du club")}</Ink>
+          <TextInput value={name} onChangeText={setName} placeholder={traduire("Ex. Dojo du quartier")} placeholderTextColor={c.textMuted} style={{ minHeight: 52, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 16, color: c.ink }} />
         </View>
 
         <View style={{ gap: 8 }}>
@@ -143,7 +144,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border }}>
             <Icon name="search" size={18} color={c.textMuted} />
-            <TextInput value={search} onChangeText={setSearch} placeholder="Chercher un autre sport" placeholderTextColor={c.textMuted} style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 10 }} />
+            <TextInput value={search} onChangeText={setSearch} placeholder={traduire("Chercher un autre sport")} placeholderTextColor={c.textMuted} style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 10 }} />
           </View>
           {results.length ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -155,16 +156,16 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
         </View>
 
         <View style={{ gap: 8 }}>
-          <Ink size={14} weight="bold" color={c.textSecondary}>Ton objectif dans ce sport, si tu en veux un</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Ton objectif dans ce sport, si tu en veux un")}</Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 18, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
-            <Pressable onPress={() => { tap(); setGoalValue((g) => Math.max(0, g - 1)); }} accessibilityRole="button" accessibilityLabel="Une séance de moins" style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={() => { tap(); setGoalValue((g) => Math.max(0, g - 1)); }} accessibilityRole="button" accessibilityLabel={traduire("Une séance de moins")} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
               <Ink size={22} weight="black">−</Ink>
             </Pressable>
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Ink size={goal > 0 ? 34 : 20} weight="black" tight>{goal > 0 ? String(goal) : 'Aucun'}</Ink>
-              <Ink size={12} weight="bold" color={c.textMuted}>{goal > 0 ? `séance${goal > 1 ? 's' : ''} par semaine` : 'objectif pour l’instant'}</Ink>
+              <Ink size={goal > 0 ? 34 : 20} weight="black" tight>{goal > 0 ? String(goal) : traduire('Aucun')}</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted}>{goal > 0 ? traduirePluriel(goal, goal > 1, "séance par semaine", "séances par semaine") : traduire('objectif pour l’instant')}</Ink>
             </View>
-            <Pressable onPress={() => { tap(); setGoalValue((g) => Math.min(14, g + 1)); }} accessibilityRole="button" accessibilityLabel="Une séance de plus" style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={() => { tap(); setGoalValue((g) => Math.min(14, g + 1)); }} accessibilityRole="button" accessibilityLabel={traduire("Une séance de plus")} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="plus" size={20} color={c.ink} strokeWidth={2.6} />
             </Pressable>
           </View>
@@ -175,13 +176,13 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
             <Ink size={14} weight="bold" color={c.textSecondary}>Couleur</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {COLORS.map((col) => (
-                <Pressable key={col} onPress={() => { tap(); setColor(col); }} accessibilityRole="button" accessibilityLabel="Choisir cette couleur" accessibilityState={{ selected: col === color }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: col, borderWidth: col === color ? 3 : 0, borderColor: P.white, shadowColor: c.ink, shadowOpacity: col === color ? 0.25 : 0, shadowRadius: 6 }} />
+                <Pressable key={col} onPress={() => { tap(); setColor(col); }} accessibilityRole="button" accessibilityLabel={traduire("Choisir cette couleur")} accessibilityState={{ selected: col === color }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: col, borderWidth: col === color ? 3 : 0, borderColor: P.white, shadowColor: c.ink, shadowOpacity: col === color ? 0.25 : 0, shadowRadius: 6 }} />
               ))}
             </View>
           </View>
         ) : null}
 
-        <BigButton label={saving ? 'Enregistrement...' : editingClub ? 'Enregistrer' : 'Ajouter le club'} icon="check" onPress={() => { if (!saving) save(); }} />
+        <BigButton label={saving ? 'Enregistrement...' : editingClub ? traduire('Enregistrer') : traduire('Ajouter le club')} icon="check" onPress={() => { if (!saving) save(); }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

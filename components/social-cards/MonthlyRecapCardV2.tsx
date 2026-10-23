@@ -9,6 +9,7 @@ import type { MonthStats } from '@/lib/social-cards/useMonthStats';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { StoryCard } from '@/components/yoroi/v2/partage/StoryCard';
 import { Mini, Panel, cardWidthFor, figureFor, toVariant } from '@/components/yoroi/v2/partage/cardKit';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export interface MonthlyRecapCardV2Props {
   stats: MonthStats;
@@ -49,12 +50,12 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
         square={format === 'square'}
         photo={backgroundImage}
         label={`${stats.monthName} ${stats.year}`}
-        kicker={`Mon mois de ${stats.monthName.toLowerCase()}`}
+        kicker={traduire("Mon mois de {0}", stats.monthName.toLowerCase())}
         name={username || id.name || undefined}
         big={stats.activeDays}
         bigUnit="jours"
-        caption={`${stats.totalTrainings} séance${stats.totalTrainings > 1 ? 's' : ''} sur ${stats.totalDays} jours`}
-        subCaption={stats.bestWeek?.daysActive ? `Meilleure semaine : ${stats.bestWeek.daysActive} jours` : undefined}
+        caption={traduirePluriel(stats.totalTrainings, stats.totalTrainings > 1, "{0} séance sur {1} jours", "{0} séances sur {1} jours", stats.totalTrainings, stats.totalDays)}
+        subCaption={stats.bestWeek?.daysActive ? traduire("Meilleure semaine : {0} jours", stats.bestWeek.daysActive) : undefined}
         figure={figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre })}
         rankKanji={id.rankKanji}
         rankName={id.rankName}
@@ -75,9 +76,9 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
         )}
         panel={(p) => (
           <Panel p={p} style={{ flexDirection: 'row', gap: 10 }}>
-            <Mini p={p} onPanel value={`${Math.round(stats.percentage)} %`} label="Mois rempli" />
-            <Mini p={p} onPanel value={`${id.weekStreak}`} label="Semaines réussies" accent={p.accent} />
-            <Mini p={p} onPanel value={w ? `${w.change > 0 ? '+' : ''}${w.change.toFixed(1).replace('.', ',')} kg` : topClub ? `${topClub.count}` : `${stats.totalTrainings}`} label={w ? 'Poids' : topClub ? topClub.clubName : 'Séances'} />
+            <Mini p={p} onPanel value={`${Math.round(stats.percentage)} %`} label={traduire("Mois rempli")} />
+            <Mini p={p} onPanel value={`${id.weekStreak}`} label={traduire("Semaines réussies")} accent={p.accent} />
+            <Mini p={p} onPanel value={w ? `${w.change > 0 ? '+' : ''}${w.change.toFixed(1).replace('.', DECIMAL)} kg` : topClub ? `${topClub.count}` : `${stats.totalTrainings}`} label={w ? 'Poids' : topClub ? topClub.clubName : traduire('Séances')} />
           </Panel>
         )}
       />

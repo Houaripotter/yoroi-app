@@ -11,6 +11,7 @@
  * Generer un jeton : node scripts/creator-token.mjs sign [etiquette] [jours]
  */
 import { ed25519 } from '@noble/curves/ed25519';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Cle publique Ed25519 (base64url). Se remplace en refaisant une paire avec le script. */
 export const CREATOR_PUBLIC_KEY = 'nE70thmOlDyI1CLbTHHH9A9tDxyWrHECClhMjM_mvg4';
@@ -127,6 +128,6 @@ export function tokenErrorMessage(reason: TokenRefus): string {
     case 'contenu':
       return 'Ce jeton n’est pas valide.';
     default:
-      return 'Jeton illisible. Colle-le en entier, sans rien ajouter.';
+      return traduire('Jeton illisible. Colle-le en entier, sans rien ajouter.');
   }
 }

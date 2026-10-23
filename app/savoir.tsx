@@ -18,6 +18,7 @@ import { protocolData, scienceData } from '@/lib/v2/competition/savoirData';
 import { LAB_PROTOCOLS } from '@/data/labProtocols';
 import { safeOpenURL } from '@/lib/security/validators';
 import { ProgressBar } from '@/components/yoroi/v2/espace/ProgressBar';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const SAVOIR_READ_ARTICLES_KEY = '@yoroi_savoir_read_articles';
 const SAVOIR_READ_PROTOCOLS_KEY = '@yoroi_savoir_read_protocols';
@@ -69,9 +70,9 @@ function frenchCase(title: string): string {
       const core = w.replace(/[^0-9A-Za-zÀ-ÖØ-öø-ÿŒœ]/g, '');
       const acronym = core.length >= 2 && core === core.toUpperCase() && /[A-Za-zÀ-ÖØ-öø-ÿŒœ]/.test(core);
       let out = w;
-      if (!acronym && !/\d/.test(core)) out = w.toLocaleLowerCase('fr-FR');
+      if (!acronym && !/\d/.test(core)) out = w.toLocaleLowerCase(LOCALE);
       if (first && core) {
-        out = out.replace(/[A-Za-zÀ-ÖØ-öø-ÿŒœ]/, (ch) => ch.toLocaleUpperCase('fr-FR'));
+        out = out.replace(/[A-Za-zÀ-ÖØ-öø-ÿŒœ]/, (ch) => ch.toLocaleUpperCase(LOCALE));
         first = false;
       }
       return out;
@@ -118,7 +119,7 @@ export default function SavoirScreen() {
   const readerRead = reader ? (reader.kind === 'article' ? articles.set : protocols.set).has(reader.id) : false;
 
   return (
-    <DetailScreen title="Savoir" subtitle="La science derrière ton entraînement">
+    <DetailScreen title="Savoir" subtitle={traduire("La science derrière ton entraînement")}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
           <Pill
@@ -148,19 +149,19 @@ export default function SavoirScreen() {
             <Ink size={34} weight="black" tight>
               {String(readSet.set.size)}
               <Ink size={15} weight="bold" color={P.muted}>
-                {` sur ${list.length} lues`}
+                {traduire(" sur {0} lues", list.length)}
               </Ink>
             </Ink>
             <Ink size={12} weight="bold" color={P.ink2}>
-              {readSet.set.size >= list.length ? 'Tout lu, bravo' : 'Ta progression de lecture'}
+              {readSet.set.size >= list.length ? traduire('Tout lu, bravo') : traduire('Ta progression de lecture')}
             </Ink>
           </View>
-          <ProgressBar progress={list.length ? readSet.set.size / list.length : 0} accessibilityLabel="Ta progression de lecture" />
+          <ProgressBar progress={list.length ? readSet.set.size / list.length : 0} accessibilityLabel={traduire("Ta progression de lecture")} />
         </Glass>
       </Enter>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Chip label="Toutes" active={cat === null} onPress={() => setCat(null)} />
+        <Chip label={traduire("Toutes")} active={cat === null} onPress={() => setCat(null)} />
         {categories.map((c) => (
           <Chip key={c} label={c} active={cat === c} onPress={() => setCat(cat === c ? null : c)} />
         ))}
@@ -195,23 +196,22 @@ export default function SavoirScreen() {
               ))}
         {shown.length === 0 ? (
           <Ink size={14} weight="bold" color={P.muted} style={{ textAlign: 'center', paddingVertical: 20 }}>
-            Aucune fiche dans cette catégorie.
-          </Ink>
+            {traduire("Aucune fiche dans cette catégorie.")}</Ink>
         ) : null}
       </View>
 
       {tab === 'PROTOCOLES' ? (
         <>
-          <SectionTitle>Protocoles à cocher</SectionTitle>
+          <SectionTitle>{traduire("Protocoles à cocher")}</SectionTitle>
           {LAB_PROTOCOLS.map((p) => (
             <ProtocolChecklist key={p.id} protocol={p} />
           ))}
-          <SectionTitle>Indicateur d'hydratation</SectionTitle>
+          <SectionTitle>{traduire("Indicateur d'hydratation")}</SectionTitle>
           <HydrationScale />
         </>
       ) : null}
 
-      <FeatureList title="Les sources" items={[{ label: 'Sources scientifiques', sub: 'les études derrière les calculs de YOROI', href: '/scientific-sources' }]} />
+      <FeatureList title={traduire("Les sources")} items={[{ label: 'Sources scientifiques', sub: traduire('les études derrière les calculs de YOROI'), href: '/scientific-sources' }]} />
 
       <Reader
         content={reader}

@@ -10,7 +10,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle as SvgCircle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, Rect } from 'react-native-svg';
 import { ArrowLeftRight, TrendingUp, TrendingDown, Minus, Maximize2, X } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 

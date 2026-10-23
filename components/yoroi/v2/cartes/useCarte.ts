@@ -16,6 +16,7 @@ import type { StyleMemorise } from '@/lib/v2/cartes/store';
 import { enregistrerCarte, partagerCarte } from '@/lib/v2/cartes/export';
 import type { CarteData, OptionsCarte, StatKey } from '@/lib/v2/cartes/types';
 import type { VisuelsCarte } from './CarteRendu';
+import { traduire } from '@/lib/i18n/tr';
 
 export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>) {
   const ref = useRef<View>(null);
@@ -117,7 +118,7 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     /** il y a une personne a retirer : un personnage choisi ou ta photo en fond */
     possible: !!personnage || photoEnFond,
     visible: !style.sansPersonne && !style.epure && (photoEnFond || (!!personnage && style.personnage)),
-    libelle: photoEnFond && !!personnage && style.personnage ? 'Ma photo et mon personnage sur la carte' : photoEnFond ? 'Ma photo sur la carte' : 'Mon personnage sur la carte',
+    libelle: photoEnFond && !!personnage && style.personnage ? traduire('Ma photo et mon personnage sur la carte') : photoEnFond ? traduire('Ma photo sur la carte') : traduire('Mon personnage sur la carte'),
     icone: (photoEnFond ? 'image' : 'user') as 'image' | 'user',
   };
   const basculerPersonne = useCallback(() => {

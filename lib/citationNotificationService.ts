@@ -15,6 +15,7 @@ import {
 } from './citations';
 import logger from './security/logger';
 import { saveNotification } from './notificationHistoryService';
+import { traduire } from '@/lib/i18n/tr';
 
 // ═══════════════════════════════════════════════
 // CONFIGURATION
@@ -66,7 +67,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#2C4A84',
-        description: 'Notifications de citations motivantes quotidiennes',
+        description: traduire('Notifications de citations motivantes quotidiennes'),
       });
     }
 
@@ -195,7 +196,7 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
  * Fini les titres aléatoires qui spamment ("Motivation YOROI", "Citation du moment", etc.)
  */
 const getNotificationTitle = (): string => {
-  return 'Citation du jour';
+  return traduire('Citation du jour');
 };
 
 // ═══════════════════════════════════════════════

@@ -18,6 +18,7 @@ import type { Result } from '@/lib/v2/combat/rounds';
 import { CIcon } from './Icon';
 import type { CIconName } from './Icon';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export { P, tap, Enter, Glass, Card, Kozane, KozaneBar, BrushRing, BigButton, Pill, Stat } from '@/components/yoroi/v2/accueil/kit';
 export { Hanko, DetailScreen, EmptyState } from '@/components/yoroi/v2/ornements/screens';
@@ -134,7 +135,7 @@ export function RecordBars({ wins, losses, draws, compact }: { wins: number; los
   const max = Math.max(1, wins, losses, draws);
   const rows: { label: string; v: number; c: string }[] = [
     { label: compact ? 'V' : 'Victoires', v: wins, c: V },
-    { label: compact ? 'D' : 'Défaites', v: losses, c: D },
+    { label: compact ? 'D' : traduire('Défaites'), v: losses, c: D },
     { label: compact ? 'N' : 'Nuls', v: draws, c: N },
   ];
   const h = compact ? 8 : 12;
@@ -222,7 +223,7 @@ export function Field({ label, style, multiline, ...rest }: TextInputProps & { l
 }
 
 /** Etiquettes modifiables (forces, faiblesses...) */
-export function TagEditor({ items, color, onChange, placeholder = 'Ajouter' }: { items: string[]; color: string; onChange: (next: string[]) => void; placeholder?: string }) {
+export function TagEditor({ items, color, onChange, placeholder = traduire('Ajouter') }: { items: string[]; color: string; onChange: (next: string[]) => void; placeholder?: string }) {
   const [draft, setDraft] = useState('');
   const add = () => {
     const v = draft.trim();
@@ -261,7 +262,7 @@ export function TagEditor({ items, color, onChange, placeholder = 'Ajouter' }: {
           placeholderTextColor={P.muted}
           style={{ flex: 1, height: 46, borderRadius: 14, borderWidth: 1, borderColor: P.line, backgroundColor: P.white, paddingHorizontal: 12, fontSize: 15, color: P.ink }}
         />
-        <Press onPress={add} accessibilityRole="button" accessibilityLabel="Ajouter">
+        <Press onPress={add} accessibilityRole="button" accessibilityLabel={traduire("Ajouter")}>
           <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="plus" size={20} color={P.white} width={2.6} />
           </View>
@@ -298,7 +299,7 @@ export function FormSheet({ visible, onClose, title, sub, children }: { visible:
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.45)' }} onPress={onClose} accessibilityLabel="Fermer" />
+        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.45)' }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
         <View style={{ backgroundColor: P.paper, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 10, paddingHorizontal: 22, paddingBottom: insets.bottom + 18, maxHeight: '90%' }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.line, marginBottom: 12 }} />
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
@@ -312,7 +313,7 @@ export function FormSheet({ visible, onClose, title, sub, children }: { visible:
                 </Ink>
               ) : null}
             </View>
-            <IconBtn icon="close" label="Fermer" onPress={onClose} />
+            <IconBtn icon="close" label={traduire("Fermer")} onPress={onClose} />
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 6 }}>
             {children}
@@ -327,7 +328,7 @@ export function FormSheet({ visible, onClose, title, sub, children }: { visible:
 export function Stepper({ value, onChange, step = 1, min = 0, max = 9999, format, color = P.ink }: { value: number; onChange: (v: number) => void; step?: number; min?: number; max?: number; format?: (v: number) => string; color?: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Press onPress={() => onChange(Math.max(min, value - step))} accessibilityRole="button" accessibilityLabel="Moins">
+      <Press onPress={() => onChange(Math.max(min, value - step))} accessibilityRole="button" accessibilityLabel={traduire("Moins")}>
         <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: '#E6E4DD', alignItems: 'center', justifyContent: 'center' }}>
           <CIcon name="minus" size={18} color={P.ink} width={2.8} />
         </View>

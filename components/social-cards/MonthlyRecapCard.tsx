@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, TrendingDown, TrendingUp, Award } from 'lucide-react-native';
 import { MonthStats } from '@/lib/social-cards/useMonthStats';
 import { ThemeColors } from '@/lib/ThemeContext';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // MONTHLY RECAP CARD - Récap mensuel avec calendrier
@@ -121,8 +122,7 @@ export const MonthlyRecapCard = React.memo(forwardRef<View, MonthlyRecapCardProp
               {stats.activeDays}/{stats.totalDays}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>
-              jours actifs
-            </Text>
+              {traduire("jours actifs")}</Text>
           </View>
 
           {/* CALENDRIER */}
@@ -132,8 +132,7 @@ export const MonthlyRecapCard = React.memo(forwardRef<View, MonthlyRecapCardProp
           {stats.evolution.weight && (
             <View style={[styles.evolutionContainer, { gap: gap / 2 }]}>
               <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                ÉVOLUTION
-              </Text>
+                {traduire("ÉVOLUTION")}</Text>
               <View style={styles.evolutionRow}>
                 <Text style={[styles.evolutionLabel, { color: colors.textSecondary }]}>
                   Poids:
@@ -170,8 +169,7 @@ export const MonthlyRecapCard = React.memo(forwardRef<View, MonthlyRecapCardProp
             <View style={[styles.bestWeekContainer, { backgroundColor: colors.backgroundElevated || colors.card }]}>
               <Award size={18} color={colors.gold || colors.accent} />
               <Text style={[styles.bestWeekText, { color: colors.textPrimary }]}>
-                Meilleure semaine: Semaine {stats.bestWeek.weekNumber} • {stats.bestWeek.daysActive} jours
-              </Text>
+                {traduire("Meilleure semaine: Semaine {0} • {1} jours", stats.bestWeek.weekNumber, stats.bestWeek.daysActive)}</Text>
             </View>
           )}
 

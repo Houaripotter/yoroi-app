@@ -29,6 +29,7 @@ import {
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import logger from '@/lib/security/logger';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -755,7 +756,7 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
 
       success++;
     } catch (err: unknown) {
-      importErrors.push({ line: row.lineNumber, error: err instanceof Error ? err.message : 'Erreur inconnue' });
+      importErrors.push({ line: row.lineNumber, error: err instanceof Error ? err.message : traduire('Erreur inconnue') });
     }
   }
 
@@ -814,7 +815,7 @@ export async function exportUnifiedCSV(): Promise<string> {
   // Trier par date décroissante
   const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
 
-  const now = new Date().toLocaleDateString('fr-FR');
+  const now = new Date().toLocaleDateString(LOCALE);
   const lines: string[] = [
     `# YOROI - Export de données`,
     `# Date d'export : ${now}`,
@@ -956,7 +957,7 @@ export async function shareFilteredTrainingsCSV(filters: TrainingExportFilters =
     if (filtered.length === 0) return false;
 
     const SEP = ';';
-    const headers = ['Date', 'Sport', 'Type séance', 'Durée (min)', 'Intensité (RPE)', 'Calories', 'Distance (km)', 'FC moy.', 'Notes'];
+    const headers = ['Date', 'Sport', 'Type séance', traduire('Durée (min)'), 'Intensité (RPE)', traduire('Calories'), traduire('Distance (km)'), 'FC moy.', 'Notes'];
     const lines: string[] = [
       `# YOROI - Export séances`,
       `# Filtres : sport=${filters.sport ?? 'tous'} | du=${filters.dateFrom ?? '-'} au=${filters.dateTo ?? '-'}`,

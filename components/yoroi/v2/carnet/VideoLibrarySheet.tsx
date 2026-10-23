@@ -18,6 +18,7 @@ import { shortDate } from '@/lib/v2/carnet/format';
 import { P, CIcon, IconBtn, BigButton, Field, ChoiceLine, EmptyState, Press } from './ui';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type VideoContext = {
   muscleGroup?: string;
@@ -41,7 +42,7 @@ function Player({ uri, onClose }: { uri: string; onClose: () => void }) {
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#000', zIndex: 20 }}>
       <VideoView player={player} style={{ flex: 1 }} contentFit="contain" nativeControls allowsPictureInPicture fullscreenOptions={{ enable: true }} />
       <View style={{ position: 'absolute', top: insets.top + 10, left: 16 }}>
-        <IconBtn name="close" label="Fermer la vidéo" onPress={onClose} />
+        <IconBtn name="close" label={traduire("Fermer la vidéo")} onPress={onClose} />
       </View>
     </View>
   );
@@ -61,7 +62,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
 
   const isForBenchmark = !!benchmarkId;
   const isForSport = !!sport;
-  const heading = isForBenchmark ? benchmarkName || 'Exercice' : isForSport ? sportLabel || sport || 'Sport' : muscleGroupLabel || muscleGroup || 'Sans catégorie';
+  const heading = isForBenchmark ? benchmarkName || traduire('Exercice') : isForSport ? sportLabel || sport || 'Sport' : muscleGroupLabel || muscleGroup || traduire('Sans catégorie');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,7 +106,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        appAlert('Accès refusé', 'Autorise l’accès à ta galerie dans les réglages du téléphone.');
+        appAlert(traduire('Accès refusé'), traduire('Autorise l’accès à ta galerie dans les réglages du téléphone.'));
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], allowsEditing: false, quality: 1 });
@@ -129,7 +130,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
       await load();
     } catch (e) {
       logger.error('[VideoLibrarySheet] copie impossible', e);
-      appAlert('Oups', 'La vidéo n’a pas pu être enregistrée.');
+      appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
     } finally {
       setSaving(false);
     }
@@ -138,12 +139,12 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
   const saveLink = async () => {
     if (!url.trim()) return;
     if (!title.trim()) {
-      appAlert('Titre manquant', 'Donne un titre à cette vidéo.');
+      appAlert('Titre manquant', traduire('Donne un titre à cette vidéo.'));
       return;
     }
     const link = url.trim();
     if (!link.startsWith('http://') && !link.startsWith('https://')) {
-      appAlert('Lien invalide', 'Le lien doit commencer par https://');
+      appAlert('Lien invalide', traduire('Le lien doit commencer par https://'));
       return;
     }
     setSaving(true);
@@ -162,14 +163,14 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
       return;
     }
     const opened = await safeOpenURL(v.uri);
-    if (!opened) appAlert('Impossible d’ouvrir', 'Installe l’application ou ouvre ce lien dans ton navigateur.');
+    if (!opened) appAlert(traduire('Impossible d’ouvrir'), traduire('Installe l’application ou ouvre ce lien dans ton navigateur.'));
   };
 
   const remove = (v: ExerciseVideo) => {
-    appAlert('Supprimer la vidéo ?', `« ${v.title} » sera retirée.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer la vidéo ?'), traduire("« {0} » sera retirée.", v.title), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           await deleteVideo(v.id);
@@ -184,31 +185,31 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 110, gap: 14 }} showsVerticalScrollIndicator={false}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: -6, minHeight: 44 }}>
-            <IconBtn name="back" label="Fermer" onPress={onClose} />
+            <IconBtn name="back" label={traduire("Fermer")} onPress={onClose} />
           </View>
           <View style={{ paddingHorizontal: 4, gap: 2 }}>
-            <Ink size={13} weight="bold" color={P.ink2}>Bibliothèque de mouvements</Ink>
+            <Ink size={13} weight="bold" color={P.ink2}>{traduire("Bibliothèque de mouvements")}</Ink>
             <Ink size={30} weight="black" tight accessibilityRole="header">{heading}</Ink>
           </View>
           {loading ? (
             <ChargementBloc style={{ marginTop: 16 }} />
           ) : videos.length === 0 ? (
-            <EmptyState title="Aucune vidéo" text="Garde tes vidéos de technique ici pour revoir le mouvement juste avant ta séance." action="Ajouter une vidéo" onAction={openAdd} />
+            <EmptyState title={traduire("Aucune vidéo")} text={traduire("Garde tes vidéos de technique ici pour revoir le mouvement juste avant ta séance.")} action={traduire("Ajouter une vidéo")} onAction={openAdd} />
           ) : (
             <>
-              <Ink size={13} weight="bold" color={P.ink2} style={{ paddingHorizontal: 4 }}>{`${videos.length} vidéo${videos.length > 1 ? 's' : ''}`}</Ink>
+              <Ink size={13} weight="bold" color={P.ink2} style={{ paddingHorizontal: 4 }}>{traduirePluriel(videos.length, videos.length > 1, "{0} vidéo", "{0} vidéos", videos.length)}</Ink>
               {videos.map((v) => (
                 <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-                  <Press onPress={() => play(v)} accessibilityRole="button" accessibilityLabel={`Lire ${v.title}`}>
+                  <Press onPress={() => play(v)} accessibilityRole="button" accessibilityLabel={traduire("Lire {0}", v.title)}>
                     <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
                       <CIcon name={v.isUrl ? 'link' : 'play'} size={24} color={P.goldLight} />
                     </View>
                   </Press>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Ink size={15} weight="extraBold" numberOfLines={2}>{v.title}</Ink>
-                    <Ink size={12} weight="bold" color={P.muted}>{`${v.isUrl ? 'Lien' : 'Sur ton téléphone'}, ${shortDate(v.createdAt)}`}</Ink>
+                    <Ink size={12} weight="bold" color={P.muted}>{`${v.isUrl ? 'Lien' : traduire('Sur ton téléphone')}, ${shortDate(v.createdAt)}`}</Ink>
                   </View>
-                  <IconBtn name="trash" label={`Supprimer ${v.title}`} onPress={() => remove(v)} tone="soft" />
+                  <IconBtn name="trash" label={traduire("Supprimer {0}", v.title)} onPress={() => remove(v)} tone="soft" />
                 </View>
               ))}
             </>
@@ -216,28 +217,28 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
         </ScrollView>
         {!loading && videos.length > 0 ? (
           <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>
-            <BigButton label="Ajouter une vidéo" icon="plus" onPress={openAdd} />
+            <BigButton label={traduire("Ajouter une vidéo")} icon="plus" onPress={openAdd} />
           </View>
         ) : null}
 
-        <Sheet visible={addOpen} onClose={() => setAddOpen(false)} title={mode === 'link' ? 'Ajouter un lien' : mode === 'name' ? 'Nomme ta vidéo' : 'Ajouter une vidéo'} scroll>
+        <Sheet visible={addOpen} onClose={() => setAddOpen(false)} title={mode === 'link' ? traduire('Ajouter un lien') : mode === 'name' ? traduire('Nomme ta vidéo') : traduire('Ajouter une vidéo')} scroll>
           {mode === 'choice' ? (
             <>
-              <ChoiceLine title="Depuis ta galerie" sub="La vidéo est copiée dans YOROI" icon="image" onPress={pickFromGallery} />
-              <ChoiceLine title="Un lien" sub="YouTube, Instagram..." icon="link" onPress={() => setMode('link')} />
+              <ChoiceLine title={traduire("Depuis ta galerie")} sub={traduire("La vidéo est copiée dans YOROI")} icon="image" onPress={pickFromGallery} />
+              <ChoiceLine title={traduire("Un lien")} sub="YouTube, Instagram..." icon="link" onPress={() => setMode('link')} />
             </>
           ) : null}
           {mode === 'name' ? (
             <>
-              <Field value={title} onChangeText={setTitle} placeholder="Ex : technique développé couché prise large" autoFocus />
-              <BigButton label={saving ? 'Enregistrement...' : 'Enregistrer'} icon="check" disabled={saving || !title.trim()} onPress={saveLocal} />
+              <Field value={title} onChangeText={setTitle} placeholder={traduire("Ex : technique développé couché prise large")} autoFocus />
+              <BigButton label={saving ? 'Enregistrement...' : traduire('Enregistrer')} icon="check" disabled={saving || !title.trim()} onPress={saveLocal} />
             </>
           ) : null}
           {mode === 'link' ? (
             <>
-              <Field value={title} onChangeText={setTitle} placeholder="Titre de la vidéo" />
+              <Field value={title} onChangeText={setTitle} placeholder={traduire("Titre de la vidéo")} />
               <Field value={url} onChangeText={setUrl} placeholder="https://..." autoCapitalize="none" keyboardType="url" autoCorrect={false} />
-              <BigButton label={saving ? 'Enregistrement...' : 'Ajouter'} icon="check" disabled={saving} onPress={saveLink} />
+              <BigButton label={saving ? 'Enregistrement...' : traduire('Ajouter')} icon="check" disabled={saving} onPress={saveLink} />
             </>
           ) : null}
         </Sheet>

@@ -13,11 +13,12 @@ import { useYoroiTheme } from '../YoroiThemeProvider';
 import { Ink } from './Ink';
 import { blancA } from '@/components/yoroi/livePalette';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
+import { traduire } from '@/lib/i18n/tr';
 
 const ICONS: Record<string, { label: string; d: string[]; join?: boolean }> = {
-  index: { label: 'Accueil', d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true },
-  seances: { label: 'Séances', d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'] },
-  progres: { label: 'Progrès', d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true },
+  index: { label: traduire('Accueil'), d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true },
+  seances: { label: traduire('Séances'), d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'] },
+  progres: { label: traduire('Progrès'), d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true },
   dojo: { label: 'Dojo', d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'] },
 };
 const LEFT = ['index', 'seances'];
@@ -92,7 +93,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
               onPressAdd();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Enregistrer une séance, une pesée ou une mesure"
+            accessibilityLabel={traduire("Enregistrer une séance, une pesée ou une mesure")}
             style={({ pressed }) => [
               styles.add,
               { backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent, transform: [{ scale: pressed ? 0.94 : 1 }] },

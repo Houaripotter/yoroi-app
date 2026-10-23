@@ -14,6 +14,7 @@ import type { SanteSource } from '@/lib/v2/sante/data';
 import { SanteIcon } from './SanteIcon';
 import type { SanteIconName } from './SanteIcon';
 import { P, P_SOMBRE, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /**
  * Palette des ecrans Sante. Audit 43 : elle suit le theme (memes valeurs qu'avant en clair,
@@ -93,19 +94,19 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
           </View>
           <View style={{ flex: 1 }}>
             <Ink size={17} weight="black" tight>
-              {__DEV__ ? 'Disponible dans l’app installée' : 'Lecture santé indisponible ici'}
+              {__DEV__ ? traduire('Disponible dans l’app installée') : traduire('Lecture santé indisponible ici')}
             </Ink>
             <Ink size={13} weight="bold" color={S.ink2}>
-              {__DEV__ ? (source.mode === 'web' ? 'Mode test\u00A0: pas de lecture santé sur le web' : `Mode test\u00A0: ${p} ne s’ouvre pas dans Expo Go`) : `${p} n’est pas joignable sur cet appareil`}
+              {__DEV__ ? (source.mode === 'web' ? traduire('Mode test\u00A0: pas de lecture santé sur le web') : traduire("Mode test : {0} ne s’ouvre pas dans Expo Go", p)) : traduire("{0} n’est pas joignable sur cet appareil", p)}
             </Ink>
           </View>
         </View>
         <Ink size={14} weight="medium" color={S.ink2}>
           {!__DEV__
-            ? 'Tu vois ici ce qui est déjà enregistré dans YOROI. Ouvre l’app sur ton téléphone pour lire tes données de santé en direct.'
+            ? traduire('Tu vois ici ce qui est déjà enregistré dans YOROI. Ouvre l’app sur ton téléphone pour lire tes données de santé en direct.')
             : source.mode === 'web'
-            ? 'Ouvre YOROI sur ton téléphone pour lire tes données de santé.'
-            : `Installe YOROI depuis ${source.platform === 'android' ? 'le Play Store' : "l'App Store ou TestFlight"} pour lire ${p} en direct. Ici, tu vois ce qui est déjà enregistré sur ton téléphone.`}
+            ? traduire('Ouvre YOROI sur ton téléphone pour lire tes données de santé.')
+            : traduire("Installe YOROI depuis {0} pour lire {1} en direct. Ici, tu vois ce qui est déjà enregistré sur ton téléphone.", source.platform === 'android' ? 'le Play Store' : "l'App Store ou TestFlight", p)}
         </Ink>
       </GlassBox>
     );
@@ -122,8 +123,7 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
               {`Relie ${p}`}
             </Ink>
             <Ink size={13} weight="bold" color={S.ink2}>
-              Ta montre et ta balance remplissent cet écran toutes seules
-            </Ink>
+              {traduire("Ta montre et ta balance remplissent cet écran toutes seules")}</Ink>
           </View>
         </View>
         {onConnect ? <SmallButton label={connecting ? 'Connexion' : `Connecter ${p}`} tone="red" icon="link" busy={connecting} onPress={onConnect} /> : null}
@@ -134,7 +134,7 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 }}>
       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: S.moss }} />
       <Ink size={13} weight="bold" color={S.ink2} style={{ flex: 1 }} numberOfLines={2}>
-        {`${p} relié, ${relativeSync(source.lastSync)}`}
+        {traduire("{0} relié, {1}", p, relativeSync(source.lastSync))}
       </Ink>
       {onSync ? (
         <Press onPress={syncing ? undefined : onSync} accessibilityRole="button" accessibilityLabel="Synchroniser maintenant" hitSlop={8}>
@@ -161,7 +161,7 @@ export function PeriodSegments<T extends string>({ items, value, onChange, accen
         const onSeg = paletteSombre() ? P_SOMBRE.paper : '#FFFFFF';
         return (
           <View key={it.key} style={{ flex: 1 }}>
-          <Press onPress={() => onChange(it.key)} accessibilityRole="button" accessibilityLabel={it.locked ? `${it.label}, réservé Premium` : it.label} accessibilityState={{ selected: on }}>
+          <Press onPress={() => onChange(it.key)} accessibilityRole="button" accessibilityLabel={it.locked ? traduire("{0}, réservé Premium", it.label) : it.label} accessibilityState={{ selected: on }}>
             <View style={{ minHeight: 44, borderRadius: 14, backgroundColor: on ? accent : 'transparent', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 4 }}>
               {it.locked ? <SanteIcon name="lock" size={12} color={on ? onSeg : S.muted} width={2.4} /> : null}
               <Ink size={14} weight="extraBold" color={on ? onSeg : S.ink2}>

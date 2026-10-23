@@ -5,6 +5,7 @@
 // Pour les icônes, on utilise MaterialCommunityIcons d'Expo (40,000+ icônes)
 // Les noms des icônes sont stockés comme strings
 // Exemple: 'karate', 'boxing-glove', 'arm-flex', etc.
+import { traduire } from '@/lib/i18n/tr';
 
 export interface Sport {
   id: string;
@@ -157,7 +158,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'stretching',
-    name: 'Étirements',
+    name: traduire('Étirements'),
     icon: 'human-handsup',
     color: '#8B5CF6',
     category: 'fitness',
@@ -202,7 +203,7 @@ export const SPORTS: Sport[] = [
   // === CARDIO ===
   {
     id: 'running',
-    name: 'Course à pied',
+    name: traduire('Course à pied'),
     icon: 'run',
     color: '#38A169',
     category: 'cardio',
@@ -223,7 +224,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'obstacle',
-    name: 'Course à obstacles',
+    name: traduire('Course à obstacles'),
     icon: 'wall',
     color: '#D97706',
     category: 'cardio',
@@ -265,7 +266,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'corde_a_sauter',
-    name: 'Corde à sauter',
+    name: traduire('Corde à sauter'),
     icon: 'jump-rope',
     color: '#ED64A6',
     category: 'cardio',
@@ -436,7 +437,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'equitation',
-    name: 'Équitation',
+    name: traduire('Équitation'),
     icon: 'horse',
     color: '#92400E',
     category: 'nature',
@@ -464,7 +465,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'randonnee',
-    name: 'Randonnée',
+    name: traduire('Randonnée'),
     icon: 'hiking',
     color: '#84CC16',
     category: 'nature',
@@ -795,7 +796,7 @@ export const SPORTS: Sport[] = [
   // === RAQUETTES (ajouts) ===
   {
     id: 'tennis_de_table',
-    name: 'Tennis de table',
+    name: traduire('Tennis de table'),
     icon: 'table-tennis',
     color: '#EF4444',
     category: 'raquettes',
@@ -825,7 +826,7 @@ export const SPORTS: Sport[] = [
   // === FITNESS (ajouts Apple Health / Garmin) ===
   {
     id: 'halterophilie',
-    name: 'Haltérophilie',
+    name: traduire('Haltérophilie'),
     icon: 'weight-lifter',
     color: '#9B2C2C',
     category: 'fitness',
@@ -839,7 +840,7 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'barre_au_sol',
-    name: 'Barre au sol',
+    name: traduire('Barre au sol'),
     icon: 'human-female-dance',
     color: '#EC4899',
     category: 'fitness',
@@ -1506,17 +1507,17 @@ export const SPORTS_BY_CATEGORY = {
 
 // Labels français pour les catégories
 export const CATEGORY_LABELS: Record<string, string> = {
-  combat_striking: 'Combat pieds-poings',
-  combat_grappling: 'Combat au sol',
-  fitness: 'Musculation et fitness',
+  combat_striking: traduire('Combat pieds-poings'),
+  combat_grappling: traduire('Combat au sol'),
+  fitness: traduire('Musculation et fitness'),
   cardio: 'Cardio',
   collectif: 'Sports collectifs',
   raquettes: 'Raquettes',
   danse: 'Danse',
-  glisse: 'Sports de glisse',
-  nature: 'Nature et extérieur',
+  glisse: traduire('Sports de glisse'),
+  nature: traduire('Nature et extérieur'),
   aquatique: 'Sports aquatiques',
-  precision: 'Précision et adresse',
+  precision: traduire('Précision et adresse'),
   autre: 'Autres',
 };
 
@@ -1568,15 +1569,15 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
   cours: 'Cours',
   drilling: 'Drilling',
   sparring: 'Sparring',
-  technique: 'Technique',
-  competition: 'Compétition',
-  competition_prep: 'Prépa compétition',
+  technique: traduire('Technique'),
+  competition: traduire('Compétition'),
+  competition_prep: traduire('Prépa compétition'),
   guerre: 'Guerre',
   rolling: 'Rolling',
   entrainement: 'Entraînement',
-  warmup: 'Échauffement',
-  warm_up: 'Échauffement',
-  recovery: 'Récupération',
+  warmup: traduire('Échauffement'),
+  warm_up: traduire('Échauffement'),
+  recovery: traduire('Récupération'),
   conditioning: 'Conditioning',
   push: 'Push',
   pull: 'Pull',
@@ -1586,7 +1587,7 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
   hiit: 'HIIT',
   course: 'Course',
   yoga: 'Yoga',
-  mobility: 'Mobilité',
+  mobility: traduire('Mobilité'),
 };
 
 /**

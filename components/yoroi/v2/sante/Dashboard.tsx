@@ -21,12 +21,13 @@ import { MetricCard } from './MetricCard';
 import { IconDot, METRIC_ICON, SanteIcon } from './SanteIcon';
 import { GlassBox, S, SmallButton } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 
 const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
 export function ringItems(r: Rings | null, g: RingGoals): RingItem[] {
   const items: RingItem[] = [{ key: 'move', label: 'Bouger', value: r?.move ?? null, goal: g.move, unit: 'kcal' }];
-  if (!r || r.hasExercise) items.push({ key: 'exercise', label: 'Exercice', value: r?.exercise ?? null, goal: g.exercise, unit: 'min' });
+  if (!r || r.hasExercise) items.push({ key: 'exercise', label: traduire('Exercice'), value: r?.exercise ?? null, goal: g.exercise, unit: 'min' });
   if (r?.hasStand) items.push({ key: 'stand', label: 'Debout', value: r?.stand ?? null, goal: g.stand, unit: 'h' });
   return items;
 }
@@ -53,12 +54,11 @@ export function RingsCard({ rings, goals, week, onEditGoals }: { rings: Rings | 
           );
         })}
       </View>
-      <Press onPress={onEditGoals} accessibilityRole="button" accessibilityLabel="Modifier mes objectifs du jour">
+      <Press onPress={onEditGoals} accessibilityRole="button" accessibilityLabel={traduire("Modifier mes objectifs du jour")}>
         <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <SanteIcon name="spark" size={15} color={S.accent} />
           <Ink size={13} weight="extraBold" color={S.accent}>
-            Ajuster mes objectifs
-          </Ink>
+            {traduire("Ajuster mes objectifs")}</Ink>
         </View>
       </Press>
     </GlassBox>
@@ -67,7 +67,7 @@ export function RingsCard({ rings, goals, week, onEditGoals }: { rings: Rings | 
 
 function Stepper({ label, value, unit, step, min, max, onChange }: { label: string; value: number; unit: string; step: number; min: number; max: number; onChange: (v: number) => void }) {
   const btn = (sign: 1 | -1) => (
-    <Press onPress={() => onChange(Math.max(min, Math.min(max, value + sign * step)))} accessibilityRole="button" accessibilityLabel={`${sign > 0 ? 'Plus' : 'Moins'} ${step} ${unit}`}>
+    <Press onPress={() => onChange(Math.max(min, Math.min(max, value + sign * step)))} accessibilityRole="button" accessibilityLabel={`${sign > 0 ? 'Plus' : traduire('Moins')} ${step} ${unit}`}>
       <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, alignItems: 'center', justifyContent: 'center' }}>
         <Ink size={24} weight="black">
           {sign > 0 ? '+' : '−'}
@@ -100,14 +100,13 @@ export function GoalsSheet({ visible, goals, hasStand, hasExercise, onClose, onS
     if (visible) setG(goals);
   }, [visible, goals]);
   return (
-    <Sheet visible={visible} onClose={onClose} title="Tes objectifs du jour">
+    <Sheet visible={visible} onClose={onClose} title={traduire("Tes objectifs du jour")}>
       <Ink size={14} weight="medium" color={S.ink2} style={{ paddingHorizontal: 4 }}>
-        Ils servent à remplir tes anneaux dans YOROI. Ils ne changent rien dans ta montre.
-      </Ink>
+        {traduire("Ils servent à remplir tes anneaux dans YOROI. Ils ne changent rien dans ta montre.")}</Ink>
       <Stepper label="Bouger" value={g.move} unit="kcal" step={25} min={50} max={3000} onChange={(v) => setG({ ...g, move: v })} />
-      {hasExercise ? <Stepper label="Exercice" value={g.exercise} unit="min" step={5} min={5} max={240} onChange={(v) => setG({ ...g, exercise: v })} /> : null}
+      {hasExercise ? <Stepper label={traduire("Exercice")} value={g.exercise} unit="min" step={5} min={5} max={240} onChange={(v) => setG({ ...g, exercise: v })} /> : null}
       {hasStand ? <Stepper label="Debout" value={g.stand} unit="h" step={1} min={1} max={18} onChange={(v) => setG({ ...g, stand: v })} /> : null}
-      <SmallButton label="Enregistrer" tone="red" icon="check" onPress={() => onSave(g)} />
+      <SmallButton label={traduire("Enregistrer")} tone="red" icon="check" onPress={() => onSave(g)} />
     </Sheet>
   );
 }
@@ -173,14 +172,13 @@ export function WaitingList({ defs, onOpen }: { defs: MetricDef[]; onOpen: (k: M
   return (
     <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6, gap: 4 }}>
       <Ink size={14} weight="medium" color={S.ink2} style={{ paddingBottom: 6 }}>
-        Elles apparaîtront dès qu'une montre, une bague ou une balance les envoie à Santé sur iPhone ou à Health Connect sur Android.
-      </Ink>
+        {traduire("Elles apparaîtront dès qu'une montre, une bague ou une balance les envoie à Santé sur iPhone ou à Health Connect sur Android.")}</Ink>
       {groups.map(({ f, list }) => {
         const fam = FAMILY[f];
         const isOpen = open === f;
         return (
           <View key={f} style={{ borderTopWidth: 1, borderTopColor: S.line2 }}>
-            <Press onPress={() => setOpen(isOpen ? null : f)} accessibilityRole="button" accessibilityState={{ expanded: isOpen }} accessibilityLabel={`${fam.label}, ${list.length} mesures en attente`}>
+            <Press onPress={() => setOpen(isOpen ? null : f)} accessibilityRole="button" accessibilityState={{ expanded: isOpen }} accessibilityLabel={traduire("{0}, {1} mesures en attente", fam.label, list.length)}>
               <View style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 32, height: 32, borderRadius: 11, backgroundColor: fam.tint, alignItems: 'center', justifyContent: 'center' }}>
                   <FamilyIcon family={f} size={18} color={fam.color} />
@@ -220,7 +218,7 @@ const ACTIVITY_FR: Record<string, string> = {
   walking: 'Marche',
   cycling: 'Vélo',
   swimming: 'Natation',
-  hiking: 'Randonnée',
+  hiking: traduire('Randonnée'),
   boxing: 'Boxe',
   kickboxing: 'Kick-boxing',
   martialarts: 'Arts martiaux',
@@ -228,19 +226,19 @@ const ACTIVITY_FR: Record<string, string> = {
   traditionalstrengthtraining: 'Musculation',
   functionalstrengthtraining: 'Renforcement',
   strengthtraining: 'Musculation',
-  highintensityintervaltraining: 'Fractionné intense',
+  highintensityintervaltraining: traduire('Fractionné intense'),
   crosstraining: 'Cross training',
   yoga: 'Yoga',
   rowing: 'Rameur',
   elliptical: 'Elliptique',
   coretraining: 'Gainage',
   mixedcardio: 'Cardio',
-  other: 'Séance',
+  other: traduire('Séance'),
 };
 
 export function workoutName(t: string): string {
   const k = String(t || '').toLowerCase().replace(/[^a-z]/g, '');
-  return ACTIVITY_FR[k] ?? (t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Séance');
+  return ACTIVITY_FR[k] ?? (t ? t.charAt(0).toUpperCase() + t.slice(1) : traduire('Séance'));
 }
 
 export function WorkoutList({ workouts, limit, onMore }: { workouts: HealthWorkout[]; limit: number; onMore?: () => void }) {
@@ -249,12 +247,12 @@ export function WorkoutList({ workouts, limit, onMore }: { workouts: HealthWorko
     <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, paddingHorizontal: 16, paddingVertical: 4 }}>
       {list.map((w, i) => {
         const d = new Date(w.startDate);
-        const when = Number.isFinite(d.getTime()) ? d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' }) : '';
+        const when = Number.isFinite(d.getTime()) ? d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'short' }) : '';
         // duree en minutes ; une valeur au-dela d'une journee vient d'un pont qui donne des secondes
         const minutes = w.duration > 1440 ? w.duration / 60 : w.duration;
         // format unique des durees (lib/v2/trainingWeek) : « 45 min », « 1 h 05 »
         const bits = minutes > 0 ? [formatDuration(minutes)] : [];
-        if (w.distance && w.distance > 0) bits.push(`${String(Math.round(w.distance * 10) / 10).replace('.', ',')} km`);
+        if (w.distance && w.distance > 0) bits.push(`${String(Math.round(w.distance * 10) / 10).replace('.', DECIMAL)} km`);
         if (w.calories && w.calories > 0) bits.push(`${thousands(w.calories)} kcal`);
         if (w.averageHeartRate && w.averageHeartRate > 0) bits.push(`${Math.round(w.averageHeartRate)} bpm`);
         return (
@@ -272,11 +270,11 @@ export function WorkoutList({ workouts, limit, onMore }: { workouts: HealthWorko
         );
       })}
       {onMore ? (
-        <Press onPress={onMore} accessibilityRole="button" accessibilityLabel="Voir toutes les séances avec Premium">
+        <Press onPress={onMore} accessibilityRole="button" accessibilityLabel={traduire("Voir toutes les séances avec Premium")}>
           <View style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderTopWidth: 1, borderTopColor: S.line2 }}>
             <SanteIcon name="lock" size={14} color={S.accent} />
             <Ink size={13} weight="extraBold" color={S.accent}>
-              {`Voir les ${workouts.length} séances avec Premium`}
+              {traduire("Voir les {0} séances avec Premium", workouts.length)}
             </Ink>
           </View>
         </Press>

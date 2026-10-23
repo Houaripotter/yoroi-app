@@ -20,11 +20,12 @@ import { viewSeries } from '@/lib/v2/progres/measures';
 import { Icon, P, Press, useAccent } from './kit';
 import { FeuilleEau } from './EauFeuille';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
+import { DECIMAL } from '@/lib/i18n/tr';
 
 type IconKey = 'bolt' | 'moon' | 'drop' | 'body';
 
 // mensurations : toujours 1 decimale, comme Progres (vague 32)
-const cm = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const cm = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 function Tuile({ width, icon, iconColor, label, value, unit, hint, hintColor, gauge, empty, onPress, a11y }: {
   width: number;

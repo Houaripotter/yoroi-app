@@ -62,8 +62,9 @@ import { FeuilleObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, P, Press } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
-const PERIODE_TEXTE: Record<number, string> = { 30: 'en 1 mois', 90: 'en 3 mois', 180: 'en 6 mois', 365: 'en 1 an', [PERIODE_PLAN]: 'depuis ton début' };
+const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
 
 /** Couleur du mot cle de la phrase de statut, lisible en clair et en sombre (vague 42) */
 function couleurTon(ton: Statut['ton']): string {
@@ -95,7 +96,7 @@ const BOUTON_STYLE_L = 54;
 /** Le petit bouton « Style » sous la courbe : il ouvre le choix du style de courbe, avec ses apercus */
 function BoutonStyle({ onPress }: { onPress: () => void }) {
   return (
-    <Press onPress={onPress} haptic="light" accessibilityRole="button" accessibilityLabel="Changer le style de ta courbe" hitSlop={8}>
+    <Press onPress={onPress} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Changer le style de ta courbe")} hitSlop={8}>
       <View style={{ width: BOUTON_STYLE_L, height: 28, borderRadius: 14, borderWidth: 1, borderColor: P.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
           <Path d="M5 19L16 8M14 6l4 4M18 3v3M16.5 4.5h3" stroke={POIDS.softText} strokeWidth={2.6} strokeLinecap="round" />
@@ -183,7 +184,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
     vu.current = f.date;
     const t = texteFenetreTorii(f.kind, f.date, targetWeight, today);
     const timer = setTimeout(() => {
-      appAlert(t.titre, t.texte, [{ text: 'Garder ce rythme', style: 'cancel' }, { text: 'Voir mon plan', onPress: () => router.push('/poids-detail' as any) }], {
+      appAlert(t.titre, t.texte, [{ text: traduire('Garder ce rythme'), style: 'cancel' }, { text: traduire('Voir mon plan'), onPress: () => router.push('/poids-detail' as any) }], {
         illustration: (
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#F6EFD9', alignItems: 'center', justifyContent: 'center' }}>
             <ToriiImage width={42} />
@@ -196,16 +197,14 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
 
   if (!last) {
     return (
-      <Press onPress={() => router.push('/progres' as any)} accessibilityRole="button" accessibilityLabel="Ton poids. Touche plus pour ta première pesée">
+      <Press onPress={() => router.push('/progres' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ton poids. Touche plus pour ta première pesée")}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={{ flex: 1, gap: 8 }}>
             <Ink size={13} weight="extraBold" color={POIDS.softText}>
-              Ton poids
-            </Ink>
+              {traduire("Ton poids")}</Ink>
             <Ink size={20} weight="black" tight>
-              Ta courbe démarre à ta première pesée
-            </Ink>
-            <PlusHint text="Touche + pour ta première pesée" />
+              {traduire("Ta courbe démarre à ta première pesée")}</Ink>
+            <PlusHint text={traduire("Touche + pour ta première pesée")} />
           </View>
           <View style={{ width: 64, height: 64, borderRadius: 22, backgroundColor: POIDS.soft, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="scale" size={28} color={POIDS.softText} width={2.2} />
@@ -233,7 +232,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
     goal === null ? null : plan.ligne ? (plan.ligne.mode === 'perte' || plan.ligne.mode === 'prise' ? plan.ligne.mode : 'maintien') : Math.abs(goal - start) < 0.2 ? 'maintien' : gp?.losing ? 'perte' : 'prise';
   const lossGoal = mode === 'perte' || (mode === null && delta !== null && delta < 0);
   const towardGoal = delta !== null && goal !== null && mode !== 'maintien' && Math.abs(delta) >= 0.05 && ((lossGoal && delta < 0) || (!lossGoal && delta > 0));
-  const deltaText = delta === null ? 'ta tendance arrive' : Math.abs(delta) < 0.05 ? `stable ${periodeTxt}` : `${delta < 0 ? '−' : '+'}${formatKg(Math.abs(delta))} kg ${periodeTxt}`;
+  const deltaText = delta === null ? traduire('ta tendance arrive') : Math.abs(delta) < 0.05 ? `stable ${periodeTxt}` : `${delta < 0 ? '−' : '+'}${formatKg(Math.abs(delta))} kg ${periodeTxt}`;
   // le chiffre cle seul (en couleur), le reste de la ligne en encre secondaire
   const deltaChiffre = delta !== null && Math.abs(delta) >= 0.05 ? `${delta < 0 ? '−' : '+'}${formatKg(Math.abs(delta))} kg` : null;
   const atteint = plan.atteint || (mode !== 'maintien' && etat.atteint);
@@ -245,7 +244,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   // vague 42 : une phrase de tous les jours a la place de la pastille ; au doigt, elle parle de la pesee touchee
   // hors du doigt : la phrase de la source unique, qui ne contredit jamais ta projection
   const phrase = capOn && plan.ligne ? (follow && scrub ? phraseStatut(plan.ligne, scrub.point.date, scrub.point.value, plan.torii, true) : etat.phrase ?? phraseStatut(plan.ligne, last.date, last.value, plan.torii)) : null;
-  const quand = follow && scrub ? `${scrub.point.week ? 'semaine du ' : 'le '}${jourCourt(scrub.point.date)}` : null;
+  const quand = follow && scrub ? `${scrub.point.week ? traduire('semaine du ') : traduire('le ')}${jourCourt(scrub.point.date)}` : null;
   const ecartDepuis = follow && scrub ? last.value - scrub.point.value : 0;
 
   // 17 octobre (Houari : « la parenthèse est de la même couleur verte que le texte ») : plus de parentheses ;
@@ -255,12 +254,12 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       <Ink size={13} weight="bold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>
         {quand}
         {Math.abs(ecartDepuis) < 0.05 ? (
-          ', comme aujourd’hui'
+          traduire(', comme aujourd’hui')
         ) : (
           <>
             {', '}
             <Ink size={13} weight="extraBold" color={POIDS.softText}>{`${formatKg(Math.abs(ecartDepuis))} kg`}</Ink>
-            {ecartDepuis < 0 ? ' perdus depuis' : ' repris depuis'}
+            {ecartDepuis < 0 ? traduire(' perdus depuis') : traduire(' repris depuis')}
           </>
         )}
       </Ink>
@@ -303,20 +302,19 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
     {/* vague 49 : meme carte que Ta semaine, sans papier washi ni double bordure */}
     <Card style={{ padding: 0, overflow: 'hidden' }}>
       {/* le heros : le grand chiffre (il suit ton doigt), l'ecart en pastille, le statut en une ligne */}
-      <Press onPress={openDetail} haptic="light" accessibilityRole="button" accessibilityLabel={`${a11y}. Voir le détail`}>
+      <Press onPress={openDetail} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("{0}. Voir le détail", a11y)}>
         <View style={{ paddingHorizontal: 18, paddingTop: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 20 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
               <Icon name="scale" size={16} color={POIDS.softText} width={2.5} />
               <Ink size={13} weight="extraBold" color={POIDS.softText} numberOfLines={1}>
-                Ton poids
-              </Ink>
+                {traduire("Ton poids")}</Ink>
             </View>
             {!follow ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 {isToday ? <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: POIDS.capText }} /> : null}
                 <Ink size={12} weight="bold" color={isToday ? P.ink2 : P.muted} numberOfLines={1}>
-                  {isToday ? 'pesée du jour' : relativeDay(last.date)}
+                  {isToday ? traduire('pesée du jour') : relativeDay(last.date)}
                 </Ink>
               </View>
             ) : null}
@@ -385,7 +383,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
               onScrub={setScrub}
               onPress={() => setLegende((v) => !v)}
               onToriiPress={planOk ? () => setPeriod(PERIODE_PLAN) : undefined}
-              label={`Ta courbe de poids ${periode === PERIODE_PLAN ? 'sur ton plan, jusqu’au torii' : periodeTxt.replace('en ', 'sur ')}. Touche pour ${legende ? 'cacher' : 'voir'} la légende`}
+              label={traduire("Ta courbe de poids {0}. Touche pour {1} la légende", periode === PERIODE_PLAN ? 'sur ton plan, jusqu’au torii' : periodeTxt.replace('en ', 'sur '), legende ? 'cacher' : 'voir')}
             />
           </SceneCourbe>
           {/* les periodes en onglets discrets, au centre ; le bouton « Style » a droite */}
@@ -403,16 +401,16 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
 
       {/* le chemin vers le torii en une barre fine (ou de quoi fixer ton cap) */}
       {chemin ? (
-        <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={`${atteint ? 'Torii atteint' : `${Math.round(chemin.part * 100)} % du chemin, encore ${formatKg(chemin.reste)} kilos`}${arrivee ? `, arrivée prévue ${arrivee}` : ''}. Voir le détail de ton poids`}>
+        <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("{0}{1}. Voir le détail de ton poids", atteint ? 'Torii atteint' : `${Math.round(chemin.part * 100)} % du chemin, encore ${formatKg(chemin.reste)} kilos`, arrivee ? `, arrivée prévue ${arrivee}` : '')}>
           <View style={{ marginHorizontal: 18, marginTop: 12, marginBottom: 16, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
               <Ink size={12.5} weight="extraBold" color={P.ink} numberOfLines={1}>
-                {atteint ? 'Torii atteint' : `${Math.round(chemin.part * 100)} % du chemin`}
+                {atteint ? 'Torii atteint' : traduire("{0} % du chemin", Math.round(chemin.part * 100))}
               </Ink>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
                 {!atteint ? (
                   <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={1}>
-                    {`encore ${formatKg(chemin.reste)} kg`}
+                    {traduire("encore {0} kg", formatKg(chemin.reste))}
                   </Ink>
                 ) : null}
                 <ToriiImage width={20} />
@@ -423,24 +421,22 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
             </View>
             {arrivee ? (
               <Ink size={11.5} weight="bold" color={P.muted} numberOfLines={1} style={{ textAlign: 'right' }}>
-                {`${plan.choisie ? 'ta date du cap' : 'arrivée prévue'} ${arrivee}`}
+                {`${plan.choisie ? traduire('ta date du cap') : traduire('arrivée prévue')} ${arrivee}`}
               </Ink>
             ) : null}
           </View>
         </Press>
       ) : goal === null && !exemple ? (
-        <Press onPress={() => router.push('/profile' as any)} accessibilityRole="button" accessibilityLabel="Fixer ton cap de poids">
+        <Press onPress={() => router.push('/profile' as any)} accessibilityRole="button" accessibilityLabel={traduire("Fixer ton cap de poids")}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 18, marginTop: 10, paddingVertical: 12, marginBottom: 4, borderTopWidth: 1, borderColor: P.line2 }}>
             <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: '#F6EFD9', alignItems: 'center', justifyContent: 'center' }}>
               <ToriiImage width={26} />
             </View>
             <View style={{ flex: 1, gap: 1 }}>
               <Ink size={14.5} weight="extraBold" numberOfLines={1}>
-                Fixe ton cap
-              </Ink>
+                {traduire("Fixe ton cap")}</Ink>
               <Ink size={12.5} weight="medium" color={P.ink2} numberOfLines={2}>
-                Ton torii et ton rythme prévu apparaissent sur ta courbe
-              </Ink>
+                {traduire("Ton torii et ton rythme prévu apparaissent sur ta courbe")}</Ink>
             </View>
             <Icon name="chevron" size={15} color={P.muted} width={2.6} />
           </View>
@@ -452,10 +448,10 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       {objectifTxt ? (
         // 18 octobre 2026 : ancre de la visite guidee (« Ton objectif », avec Changer)
         <TourAnchor id="accueil.objectif">
-        <Press onPress={() => setFeuille({ quoi: null })} haptic="light" accessibilityRole="button" accessibilityLabel={`Ton objectif : ${objectifTxt}${plan.torii ? `, date du cap le ${jourCourt(plan.torii)}` : ''}. Changer ton début, ton objectif ou ta date du cap`}>
+        <Press onPress={() => setFeuille({ quoi: null })} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Ton objectif : {0}{1}. Changer ton début, ton objectif ou ta date du cap", objectifTxt, plan.torii ? `, date du cap le ${jourCourt(plan.torii)}` : '')}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginHorizontal: 18, marginTop: chemin ? -6 : 0, marginBottom: 14, paddingTop: 10, borderTopWidth: 1, borderColor: P.line2 }}>
             <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>
-              {`Ton objectif : ${objectifTxt}`}
+              {traduire("Ton objectif : {0}", objectifTxt)}
             </Ink>
             <Ink size={12.5} weight="extraBold" color={POIDS.softText} numberOfLines={1}>
               Changer

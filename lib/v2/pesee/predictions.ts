@@ -17,6 +17,7 @@ import type { DayWeight } from '@/lib/v2/weightStats';
 import type { Ligne } from './ligneDirectrice';
 import { ecartJours, isoDuTemps, jourCourt, jourDe, medianeA } from './ligneDirectrice';
 import { PERTE_MAX, PRISE_MAX } from './estimation';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export const MIN_PESEES = 5;
 export const MIN_JOURS = 14;
@@ -201,11 +202,11 @@ export type Prevision = {
 };
 
 const HORIZONS: { id: string; label: string; jours?: number; mois?: number }[] = [
-  { id: '1s', label: 'Dans 1 semaine', jours: 7 },
-  { id: '2s', label: 'Dans 2 semaines', jours: 14 },
-  { id: '1m', label: 'Dans 1 mois', mois: 1 },
-  { id: '2m', label: 'Dans 2 mois', mois: 2 },
-  { id: '3m', label: 'Dans 3 mois', mois: 3 },
+  { id: '1s', label: traduire('Dans 1 semaine'), jours: 7 },
+  { id: '2s', label: traduire('Dans 2 semaines'), jours: 14 },
+  { id: '1m', label: traduire('Dans 1 mois'), mois: 1 },
+  { id: '2m', label: traduire('Dans 2 mois'), mois: 2 },
+  { id: '3m', label: traduire('Dans 3 mois'), mois: 3 },
 ];
 
 /**
@@ -276,7 +277,7 @@ export function prevoir(args: { series: { date: string; value: number }[]; today
   });
   if (torii && ecartJours(today, torii) <= nSim) {
     const p = point(ecartJours(today, torii));
-    dates.push({ ...p, id: 'torii', label: `Au torii, le ${jourCourt(torii)}` });
+    dates.push({ ...p, id: 'torii', label: traduire("Au torii, le {0}", jourCourt(torii)) });
     dates.sort((a, b) => a.jours - b.jours);
   }
 
@@ -305,11 +306,11 @@ export const versUnite = (kg: number, u: Unite) => (u === 'lb' ? kg * LB : kg);
 /** « 80,4 kg », « 177,2 lb » */
 export function poidsTexte(kg: number, u: Unite, unite = true): string {
   const v = Math.round(versUnite(kg, u) * 10) / 10;
-  return `${v.toFixed(1).replace('.', ',')}${unite ? ` ${u}` : ''}`;
+  return `${v.toFixed(1).replace('.', DECIMAL)}${unite ? ` ${u}` : ''}`;
 }
 const rond = (kg: number, u: Unite) => {
   const v = versUnite(kg, u);
-  return Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+  return Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 };
 
 /** Le palier entier suivant dans ton sens (sans cap) : 81,4 kg en baisse donne 81 kg */
@@ -334,48 +335,48 @@ export function phrasePrevision(p: Prevision, u: Unite, debut?: string): string 
 function phraseBrute(p: Prevision, u: Unite): string {
   const mois = p.dates.find((d) => d.id === '1m');
   const dansUnMois = mois ? poidsTexte(mois.valeur, u) : '';
-  if (p.auCap && p.cap != null) return `Tu es à ton cap. Si tu le tiens, tu restes autour de ${rond(p.cap, u)} ${u}`;
+  if (p.auCap && p.cap != null) return traduire("Tu es à ton cap. Si tu le tiens, tu restes autour de {0} {1}", rond(p.cap, u), u);
   if (p.cap != null && p.versCap) {
-    const sous = p.cap < p.ajustement.niveau ? 'tu passes sous' : 'tu passes au-dessus de';
-    if (p.arrivee) return `À ce rythme, ${sous} ${rond(p.cap, u)} ${u} vers le ${jourCourt(p.arrivee.date)}`;
-    return `À ce rythme, ton cap est encore à plus d’un an. Dans un mois : environ ${dansUnMois}`;
+    const sous = p.cap < p.ajustement.niveau ? traduire('tu passes sous') : traduire('tu passes au-dessus de');
+    if (p.arrivee) return traduire("À ce rythme, {0} {1} {2} vers le {3}", sous, rond(p.cap, u), u, jourCourt(p.arrivee.date));
+    return traduire("À ce rythme, ton cap est encore à plus d’un an. Dans un mois : environ {0}", dansUnMois);
   }
-  if (p.sens === 'stable') return `Ton poids est stable : autour de ${dansUnMois} dans un mois`;
-  if (p.cap != null && !p.versCap) return `À ce rythme, tu t’éloignes de ton cap : environ ${dansUnMois} dans un mois`;
+  if (p.sens === 'stable') return traduire("Ton poids est stable : autour de {0} dans un mois", dansUnMois);
+  if (p.cap != null && !p.versCap) return traduire("À ce rythme, tu t’éloignes de ton cap : environ {0} dans un mois", dansUnMois);
   // sans cap : le prochain palier entier
   const cible = palier(p.ajustement.niveau, p.sens, u);
   const d = p.courbe.findIndex((q) => (p.sens === 'baisse' ? q.valeur <= cible : q.valeur >= cible));
-  if (d > 0) return `À ce rythme, ${p.sens === 'baisse' ? 'tu passes sous' : 'tu passes au-dessus de'} ${rond(cible, u)} ${u} vers le ${jourCourt(p.courbe[d].date)}`;
-  return `À ce rythme : environ ${dansUnMois} dans un mois`;
+  if (d > 0) return traduire("À ce rythme, {0} {1} {2} vers le {3}", p.sens === 'baisse' ? 'tu passes sous' : 'tu passes au-dessus de', rond(cible, u), u, jourCourt(p.courbe[d].date));
+  return traduire("À ce rythme : environ {0} dans un mois", dansUnMois);
 }
 
 /** Ton arrivee comparee au torii, en mots (null sans les deux) */
 export function phraseTorii(p: Prevision): string | null {
   if (p.ecartTorii == null || !p.torii) return null;
   const e = p.ecartTorii;
-  if (Math.abs(e) <= 3) return fin(`Pile à la date de ton torii, le ${jourCourt(p.torii)}`);
+  if (Math.abs(e) <= 3) return fin(traduire("Pile à la date de ton torii, le {0}", jourCourt(p.torii)));
   const j = Math.abs(e);
-  const duree = j >= 14 ? `${Math.round(j / 7)} semaines` : `${j} jours`;
-  return e < 0 ? `${duree} avant ton torii (${jourCourt(p.torii)}).` : `${duree} après ton torii (${jourCourt(p.torii)}).`;
+  const duree = j >= 14 ? traduire("{0} semaines", Math.round(j / 7)) : traduire("{0} jours", j);
+  return e < 0 ? traduire("{0} avant ton torii ({1}).", duree, jourCourt(p.torii)) : traduire("{0} après ton torii ({1}).", duree, jourCourt(p.torii));
 }
 
 /** Version courte pour la carte de l'accueil : « sous 80 kg vers le 10 déc. » ou « 79,6 kg dans 1 mois » */
 export function resumeCourt(p: Prevision, u: Unite = 'kg'): string {
-  if (p.cap != null && p.versCap && p.arrivee) return `${p.cap < p.ajustement.niveau ? 'Sous' : 'Au-dessus de'} ${rond(p.cap, u)} ${u} vers le ${jourCourt(p.arrivee.date)}`;
+  if (p.cap != null && p.versCap && p.arrivee) return traduire("{0} {1} {2} vers le {3}", p.cap < p.ajustement.niveau ? 'Sous' : 'Au-dessus de', rond(p.cap, u), u, jourCourt(p.arrivee.date));
   const mois = p.dates.find((d) => d.id === '1m');
-  return mois ? `${poidsTexte(mois.valeur, u)} dans 1 mois` : '';
+  return mois ? traduire("{0} dans 1 mois", poidsTexte(mois.valeur, u)) : '';
 }
 
 /** Ce qu'il manque, en mots */
 export function texteManque(m: Manque): { titre: string; texte: string } {
-  if (m.raison === 'aucune') return { titre: 'Pas encore de pesée', texte: `Pour prévoir ta courbe, il faut au moins ${MIN_PESEES} pesées étalées sur ${MIN_JOURS} jours. Pèse-toi le matin, à jeun.` };
-  if (m.raison === 'ancien') return { titre: 'Ta dernière pesée date un peu', texte: `Ta dernière pesée a plus de ${MAX_ANCIENNETE} jours. Pèse-toi quelques matins de suite et ta prévision revient.` };
+  if (m.raison === 'aucune') return { titre: traduire('Pas encore de pesée'), texte: traduire("Pour prévoir ta courbe, il faut au moins {0} pesées étalées sur {1} jours. Pèse-toi le matin, à jeun.", MIN_PESEES, MIN_JOURS) };
+  if (m.raison === 'ancien') return { titre: traduire('Ta dernière pesée date un peu'), texte: traduire("Ta dernière pesée a plus de {0} jours. Pèse-toi quelques matins de suite et ta prévision revient.", MAX_ANCIENNETE) };
   if (m.raison === 'peu') {
     const n = m.manquePesees;
-    return { titre: 'Encore quelques pesées', texte: `Il te manque ${n} pesée${n > 1 ? 's' : ''} : il en faut au moins ${MIN_PESEES} sur ${MIN_JOURS} jours pour une prévision honnête.` };
+    return { titre: traduire('Encore quelques pesées'), texte: traduirePluriel(n, n > 1, "Il te manque {0} pesée : il en faut au moins {1} sur {2} jours pour une prévision honnête.", "Il te manque {0} pesées : il en faut au moins {1} sur {2} jours pour une prévision honnête.", n, MIN_PESEES, MIN_JOURS) };
   }
   const j = m.manqueJours;
-  return { titre: 'Encore quelques jours', texte: `Tes pesées couvrent ${m.jours} jour${m.jours > 1 ? 's' : ''}. Encore ${j} jour${j > 1 ? 's' : ''} de pesées et ta prévision s’affiche.` };
+  return { titre: traduire('Encore quelques jours'), texte: `Tes pesées couvrent ${m.jours} jour${m.jours > 1 ? 's' : ''}. Encore ${j} jour${j > 1 ? 's' : ''} de pesées et ta prévision s’affiche.` };
 }
 
 /**
@@ -384,12 +385,12 @@ export function texteManque(m: Manque): { titre: string; texte: string } {
  */
 export function resumeCarte(p: Prevision, u: Unite = 'kg'): { valeur: string; note: string | null } {
   const mois = p.dates.find((d) => d.id === '1m');
-  const valeur = mois ? `${poidsTexte(mois.valeur, u)} dans 1 mois` : resumeCourt(p, u);
+  const valeur = mois ? traduire("{0} dans 1 mois", poidsTexte(mois.valeur, u)) : resumeCourt(p, u);
   let note: string | null = null;
   if (p.ecartTorii != null && p.torii) {
     const j = Math.abs(p.ecartTorii);
-    note = j <= 3 ? 'tu arrives pile au torii' : `tu arrives ${j >= 14 ? `${Math.round(j / 7)} semaines` : `${j} jours`} ${p.ecartTorii < 0 ? 'avant' : 'après'} le torii`;
-  } else if (p.cap != null && p.versCap && p.arrivee) note = `tu passes ton cap vers le ${jourCourt(p.arrivee.date)}`;
-  else if (p.auCap) note = 'tu restes à ton cap';
+    note = j <= 3 ? traduire('tu arrives pile au torii') : traduire("tu arrives {0} {1} le torii", j >= 14 ? `${Math.round(j / 7)} semaines` : `${j} jours`, p.ecartTorii < 0 ? 'avant' : 'après');
+  } else if (p.cap != null && p.versCap && p.arrivee) note = traduire("tu passes ton cap vers le {0}", jourCourt(p.arrivee.date));
+  else if (p.auCap) note = traduire('tu restes à ton cap');
   return { valeur, note };
 }

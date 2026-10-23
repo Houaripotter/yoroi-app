@@ -19,10 +19,11 @@ import type { NotificationHistoryItem } from '@/lib/notificationHistoryService';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { cheminDirect } from '@/lib/v2/nav/direct';
 import { cibleDeNotification, deposerCible } from '@/lib/v2/notifications/toucher';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const NB = ' ';
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 type Kind = 'accent' | 'indigo' | 'gold' | 'moss' | 'ink' | 'record';
 
@@ -34,13 +35,13 @@ function look(type: string): { icon: IconName; kind: Kind; label: string } {
     case 'workouts_complete':
       return { icon: 'dumbbell', kind: 'accent', label: 'Entraînement' };
     case 'hydration':
-      return { icon: 'drop', kind: 'indigo', label: 'Hydratation' };
+      return { icon: 'drop', kind: 'indigo', label: traduire('Hydratation') };
     case 'streak':
-      return { icon: 'flame', kind: 'accent', label: 'Série' };
+      return { icon: 'flame', kind: 'accent', label: traduire('Série') };
     case 'sleep':
-      return { icon: 'bed', kind: 'indigo', label: 'Sommeil' };
+      return { icon: 'bed', kind: 'indigo', label: traduire('Sommeil') };
     case 'achievement':
-      return { icon: 'trophy', kind: 'record', label: 'Récompense' };
+      return { icon: 'trophy', kind: 'record', label: traduire('Récompense') };
     case 'briefing':
       return { icon: 'sun', kind: 'gold', label: 'Briefing' };
     case 'smart_check':
@@ -51,11 +52,11 @@ function look(type: string): { icon: IconName; kind: Kind; label: string } {
       return { icon: 'brain', kind: 'moss', label: 'Rappel malin' };
     case 'social_card_weekly':
     case 'social_card_monthly':
-      return { icon: 'share', kind: 'indigo', label: 'Carte à partager' };
+      return { icon: 'share', kind: 'indigo', label: traduire('Carte à partager') };
     case 'weekly_recap':
       return { icon: 'calendar', kind: 'gold', label: 'Bilan' };
     case 'weighing':
-      return { icon: 'scale', kind: 'ink', label: 'Pesée' };
+      return { icon: 'scale', kind: 'ink', label: traduire('Pesée') };
     case 'citation':
       return { icon: 'quote', kind: 'gold', label: 'Citation' };
     default:
@@ -74,8 +75,8 @@ function dayLabel(ts: number): string {
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diff = Math.round((start - day) / 86400000);
-  if (diff === 0) return 'Aujourd’hui';
-  if (diff === 1) return 'Hier';
+  if (diff === 0) return traduire('Aujourd’hui');
+  if (diff === 1) return traduire('Hier');
   const base = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
   const txt = d.getFullYear() === now.getFullYear() ? base : `${base} ${d.getFullYear()}`;
   return txt.charAt(0).toUpperCase() + txt.slice(1);
@@ -185,7 +186,7 @@ export default function CentreNotifications() {
     // Pas de partage du texte d'une notification : il peut contenir une valeur de sante
     appAlert(item.title, item.body, [
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           await deleteNotification(item.id);
@@ -193,7 +194,7 @@ export default function CentreNotifications() {
           DeviceEventEmitter.emit('YOROI_NOTIF_READ');
         },
       },
-      { text: 'Annuler', style: 'cancel' },
+      { text: traduire('Annuler'), style: 'cancel' },
     ]);
   };
 
@@ -205,8 +206,8 @@ export default function CentreNotifications() {
   };
 
   const wipe = () => {
-    appAlert('Tout effacer ?', 'Toutes les notifications reçues seront supprimées. Tes rappels restent réglés.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Tout effacer ?'), traduire('Toutes les notifications reçues seront supprimées. Tes rappels restent réglés.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Effacer',
         style: 'destructive',
@@ -232,25 +233,25 @@ export default function CentreNotifications() {
     return out;
   }, [shown]);
 
-  const subtitle = !loaded ? undefined : items.length === 0 ? 'Ce que YOROI t’envoie arrive ici.' : unread > 0 ? `${unread} non lue${unread > 1 ? 's' : ''} sur ${items.length}` : `Tout est lu, ${items.length} au total`;
+  const subtitle = !loaded ? undefined : items.length === 0 ? traduire('Ce que YOROI t’envoie arrive ici.') : unread > 0 ? traduirePluriel(unread, unread > 1, "{0} non lue sur {1}", "{0} non lues sur {1}", unread, items.length) : traduire("Tout est lu, {0} au total", items.length);
 
   return (
     <EspaceScreen
-      title="Notifications reçues"
+      title={traduire("Notifications reçues")}
       subtitle={subtitle}
       gap={14}
     >
       {loaded && items.length === 0 ? (
         <Animated.View entering={ENTREE} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 22, gap: 12, alignItems: 'center' }}>
           <Hanko size={78} color={c.accent} tampon="frein_motivation" />
-          <Ink size={20} weight="black" tight style={{ textAlign: 'center' }}>Rien de neuf pour l’instant</Ink>
-          <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>Tes rappels de pesée et d’entraînement, ton bilan du dimanche et tes cartes à partager arriveront ici.</Ink>
+          <Ink size={20} weight="black" tight style={{ textAlign: 'center' }}>{traduire("Rien de neuf pour l’instant")}</Ink>
+          <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Tes rappels de pesée et d’entraînement, ton bilan du dimanche et tes cartes à partager arriveront ici.")}</Ink>
           <Pressable
             onPress={() => router.push('/notifications' as any)}
             accessibilityRole="button"
             style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 4, minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>Régler mes rappels</Ink>
+            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Régler mes rappels")}</Ink>
           </Pressable>
         </Animated.View>
       ) : null}
@@ -258,7 +259,7 @@ export default function CentreNotifications() {
       {items.length > 0 ? (
         <Animated.View entering={ENTREE} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ flexDirection: 'row', backgroundColor: c.fillSubtle, borderRadius: 16, padding: 3, flex: 1 }}>
-            {([['all', 'Toutes'], ['unread', unread ? `Non lues (${unread})` : 'Non lues']] as ['all' | 'unread', string][]).map(([id, label]) => {
+            {([['all', traduire('Toutes')], ['unread', unread ? traduire("Non lues ({0})", unread) : traduire('Non lues')]] as ['all' | 'unread', string][]).map(([id, label]) => {
               const on = filter === id;
               return (
                 <Pressable
@@ -279,7 +280,7 @@ export default function CentreNotifications() {
           <Pressable
             onPress={wipe}
             accessibilityRole="button"
-            accessibilityLabel="Tout effacer"
+            accessibilityLabel={traduire("Tout effacer")}
             style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' })}
           >
             <Icon name="trash" size={19} color={c.textSecondary} />
@@ -294,14 +295,14 @@ export default function CentreNotifications() {
           style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: pressed ? c.accentTint : 'transparent', borderWidth: 1, borderColor: c.accentTint })}
         >
           <Icon name="check" size={17} color={c.accent} stroke={2.6} />
-          <Ink size={14} weight="extraBold" color={c.accent}>Tout marquer comme lu</Ink>
+          <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Tout marquer comme lu")}</Ink>
         </Pressable>
       ) : null}
 
       {items.length > 0 && filter === 'unread' && unread === 0 ? (
         <View style={{ alignItems: 'center', paddingVertical: 24, gap: 6 }}>
           <Icon name="check" size={28} color={c.successText} stroke={2.6} />
-          <Ink size={16} weight="extraBold">Tout est lu</Ink>
+          <Ink size={16} weight="extraBold">{traduire("Tout est lu")}</Ink>
         </View>
       ) : null}
 
@@ -321,8 +322,8 @@ export default function CentreNotifications() {
                     onPress={() => open(n)}
                     onLongPress={() => actions(n)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${n.read ? '' : 'Non lue. '}${l.label}, ${clock(n.timestamp)}. ${n.title}. ${n.body}`}
-                    accessibilityHint="Appui long pour partager ou supprimer"
+                    accessibilityLabel={`${n.read ? '' : traduire('Non lue. ')}${l.label}, ${clock(n.timestamp)}. ${n.title}. ${n.body}`}
+                    accessibilityHint={traduire("Appui long pour partager ou supprimer")}
                     style={({ pressed }) => ({
                       flexDirection: 'row',
                       gap: 12,
@@ -349,7 +350,7 @@ export default function CentreNotifications() {
                     <Pressable
                       onPress={() => actions(n)}
                       accessibilityRole="button"
-                      accessibilityLabel={`Options pour ${n.title}`}
+                      accessibilityLabel={traduire("Options pour {0}", n.title)}
                       hitSlop={4}
                       style={({ pressed }) => ({ width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}
                     >

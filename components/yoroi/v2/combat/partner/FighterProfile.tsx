@@ -14,20 +14,21 @@ import { DEFAULT_STYLE, STYLE_AXES } from '@/lib/v2/combat/partnerInsights';
 import type { PartnerInsights } from '@/lib/v2/combat/partnerInsights';
 import { StyleRadar } from '../charts';
 import { Card, Chip, CIcon, D, Field, FormSheet, P, Press, TagEditor, tap } from '../ui';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 /** Sigle du style de combat, en lettres latines */
 const ARCH_MARK: Record<Archetype, string> = { gardien: 'GA', passeur: 'PA', striker: 'ST', bagarreur: 'BA', takedown: 'TD', polyvalent: 'PO' };
 const ARCH_COLOR: Record<Archetype, string> = { gardien: '#2C4A84', passeur: '#A8832F', striker: '#3D5D9E', bagarreur: '#8C6A3F', takedown: '#4F6B28', polyvalent: '#454A58' };
 const ARCH_DESC: Record<Archetype, string> = {
-  gardien: 'Joue la garde, triangle, attaques du dessous.',
-  passeur: 'Jeu du dessus, pression, passage de garde.',
-  striker: 'Debout, poings, pieds, distance.',
-  bagarreur: 'Volume, corps à corps, usure, physique.',
-  takedown: 'Lutteur ou judoka, il t\'amène au sol.',
-  polyvalent: 'Style équilibré, il s\'adapte.',
+  gardien: traduire('Joue la garde, triangle, attaques du dessous.'),
+  passeur: traduire('Jeu du dessus, pression, passage de garde.'),
+  striker: traduire('Debout, poings, pieds, distance.'),
+  bagarreur: traduire('Volume, corps à corps, usure, physique.'),
+  takedown: traduire('Lutteur ou judoka, il t\'amène au sol.'),
+  polyvalent: traduire('Style équilibré, il s\'adapte.'),
 };
-const LEVEL_LABEL: Record<ExperienceLevel, string> = { debutant: 'Débutant', experimente: 'Expérimenté', competiteur: 'Compétiteur', pro: 'Professionnel' };
-const GARDES = ['Fermée', 'De La Riva', 'X-Guard', 'Spider', 'Lasso', '50/50', 'Demi-garde', 'Papillon', 'Debout'];
+const LEVEL_LABEL: Record<ExperienceLevel, string> = { debutant: 'Débutant', experimente: traduire('Expérimenté'), competiteur: traduire('Compétiteur'), pro: 'Professionnel' };
+const GARDES = [traduire('Fermée'), traduire('De La Riva'), 'X-Guard', 'Spider', 'Lasso', '50/50', 'Demi-garde', 'Papillon', 'Debout'];
 
 export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerInsights; onChange: (patch: Partial<Partner>) => void }) {
   const [archOpen, setArchOpen] = useState(false);
@@ -41,7 +42,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
   const gardes = p.gardePreferred ?? [];
   return (
     <View style={{ gap: 12 }}>
-      <Press onPress={() => setArchOpen(true)} accessibilityRole="button" accessibilityLabel="Choisir son style de combat">
+      <Press onPress={() => setArchOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Choisir son style de combat")}>
         <View style={{ borderRadius: 24, padding: 18, backgroundColor: color, flexDirection: 'row', alignItems: 'center', gap: 14, overflow: 'hidden' }}>
           <View style={{ position: 'absolute', right: -10, top: -26 }} pointerEvents="none">
             <Glyph kind="sakura" size={130} color="rgba(255,255,255,0.12)" />
@@ -57,13 +58,12 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={13} weight="bold" color={surFixe || !paletteSombre() ? 'rgba(255,255,255,0.8)' : 'rgba(29,32,41,0.8)'}>
-              Style de combat
-            </Ink>
+              {traduire("Style de combat")}</Ink>
             <Ink size={24} weight="black" tight color={fg}>
-              {arch ? ARCHETYPE_META[arch].label : 'À définir'}
+              {arch ? ARCHETYPE_META[arch].label : traduire('À définir')}
             </Ink>
             <Ink size={13} color={surFixe || !paletteSombre() ? 'rgba(255,255,255,0.88)' : 'rgba(29,32,41,0.88)'} numberOfLines={2}>
-              {arch ? ARCH_DESC[arch] : 'Touche pour choisir son style dominant'}
+              {arch ? ARCH_DESC[arch] : traduire('Touche pour choisir son style dominant')}
             </Ink>
           </View>
           <CIcon name="chevron" size={18} color={surFixe || !paletteSombre() ? 'rgba(255,255,255,0.8)' : 'rgba(29,32,41,0.8)'} />
@@ -71,13 +71,12 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
       </Press>
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Press onPress={() => setLvlOpen(true)} accessibilityRole="button" accessibilityLabel="Choisir son niveau" style={{ flex: 1 }}>
+        <Press onPress={() => setLvlOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Choisir son niveau")} style={{ flex: 1 }}>
           <Card style={{ padding: 14, gap: 2 }}>
             <Ink size={12} weight="bold" color={P.ink2}>
-              Niveau
-            </Ink>
+              {traduire("Niveau")}</Ink>
             <Ink size={17} weight="black" tight>
-              {p.experienceLevel ? LEVEL_LABEL[p.experienceLevel] : 'À choisir'}
+              {p.experienceLevel ? LEVEL_LABEL[p.experienceLevel] : traduire('À choisir')}
             </Ink>
           </Card>
         </Press>
@@ -86,7 +85,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
             Menace
           </Ink>
           <Ink size={17} weight="black" tight color={ins.fighterThreat.color}>
-            {`${String(ins.fighterThreat.score).replace('.', ',')} sur 10`}
+            {traduire("{0} sur 10", String(ins.fighterThreat.score).replace('.', DECIMAL))}
           </Ink>
           <Ink size={12} weight="bold" color={ins.fighterThreat.color}>
             {ins.fighterThreat.label}
@@ -97,11 +96,9 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
       <Card style={{ gap: 12 }}>
         <View>
           <Ink size={18} weight="black" tight>
-            ADN de jeu
-          </Ink>
+            {traduire("ADN de jeu")}</Ink>
           <Ink size={13} color={P.ink2}>
-            Touche les plaques pour noter chaque qualité de 1 à 5
-          </Ink>
+            {traduire("Touche les plaques pour noter chaque qualité de 1 à 5")}</Ink>
         </View>
         <View style={{ alignItems: 'center' }}>
           <StyleRadar axes={STYLE_AXES.map((a) => a.label)} values={STYLE_AXES.map((a) => stats[a.key] ?? 0)} color={color} size={250} />
@@ -123,7 +120,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
                       onChange({ styleStats: next });
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={`${ax.label} ${n} sur 5`}
+                    accessibilityLabel={traduire("{0} {1} sur 5", ax.label, n)}
                     hitSlop={4}
                     style={{ flex: 1, height: 36, borderRadius: 10, backgroundColor: n <= v ? color : P.line2, alignItems: 'center', justifyContent: 'center' }}
                   >
@@ -138,18 +135,17 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
 
       <Card style={{ gap: 12 }}>
         <Field
-          label="Son surnom de combat"
+          label={traduire("Son surnom de combat")}
           defaultValue={p.nickname ?? ''}
           onEndEditing={(e) => {
             const v = e.nativeEvent.text.trim();
             if (v !== (p.nickname ?? '')) onChange({ nickname: v || undefined });
           }}
-          placeholder="Par exemple : le sorcier du triangle"
+          placeholder={traduire("Par exemple : le sorcier du triangle")}
         />
         <View style={{ gap: 8 }}>
           <Ink size={13} weight="bold" color={P.ink2}>
-            Ses gardes et positions préférées
-          </Ink>
+            {traduire("Ses gardes et positions préférées")}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {GARDES.map((g) => {
               const on = gardes.includes(g);
@@ -165,8 +161,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
             Comparaison physique
           </Ink>
           <Ink size={13} color={P.ink2}>
-            Écart par rapport à toi : plus, il est plus lourd ou plus grand
-          </Ink>
+            {traduire("Écart par rapport à toi : plus, il est plus lourd ou plus grand")}</Ink>
         </View>
         <Physical label="Poids" unit="kg" value={p.weightDeltaKg} onChange={(v) => onChange({ weightDeltaKg: v })} />
         <Physical label="Taille" unit="cm" value={p.heightDeltaCm} onChange={(v) => onChange({ heightDeltaCm: v })} />
@@ -177,28 +172,26 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <CIcon name="shield" size={18} color={D} />
           <Ink size={18} weight="black" tight>
-            Attention à
-          </Ink>
+            {traduire("Attention à")}</Ink>
         </View>
         <Ink size={13} color={P.ink2}>
-          Les attaques qu'il place souvent
-        </Ink>
-        <TagEditor items={p.dangerousMoves ?? []} color={D} onChange={(next) => onChange({ dangerousMoves: next })} placeholder="Triangle, clé de bras, kimura" />
+          {traduire("Les attaques qu'il place souvent")}</Ink>
+        <TagEditor items={p.dangerousMoves ?? []} color={D} onChange={(next) => onChange({ dangerousMoves: next })} placeholder={traduire("Triangle, clé de bras, kimura")} />
       </Card>
 
       <Card style={{ gap: 10 }}>
         <Field
-          label="Il ressemble à quel combattant connu ?"
+          label={traduire("Il ressemble à quel combattant connu ?")}
           defaultValue={p.similarTo ?? ''}
           onEndEditing={(e) => {
             const v = e.nativeEvent.text.trim();
             if (v !== (p.similarTo ?? '')) onChange({ similarTo: v || undefined });
           }}
-          placeholder="Un combattant qui a le même jeu"
+          placeholder={traduire("Un combattant qui a le même jeu")}
         />
       </Card>
 
-      <FormSheet visible={archOpen} onClose={() => setArchOpen(false)} title={`Style de ${p.name}`}>
+      <FormSheet visible={archOpen} onClose={() => setArchOpen(false)} title={traduire("Style de {0}", p.name)}>
         {(Object.keys(ARCHETYPE_META) as Archetype[]).map((a) => {
           const on = arch === a;
           return (
@@ -231,7 +224,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
         })}
       </FormSheet>
 
-      <FormSheet visible={lvlOpen} onClose={() => setLvlOpen(false)} title="Son niveau">
+      <FormSheet visible={lvlOpen} onClose={() => setLvlOpen(false)} title={traduire("Son niveau")}>
         {(Object.keys(EXPERIENCE_LEVEL_META) as ExperienceLevel[]).map((l) => {
           const on = p.experienceLevel === l;
           return (
@@ -282,9 +275,9 @@ function Physical({ label, unit, value, onChange }: { label: string; unit: strin
             onChange(isNaN(n) ? undefined : n);
           }}
           keyboardType="numbers-and-punctuation"
-          placeholder={`écart en ${unit}`}
+          placeholder={traduire("écart en {0}", unit)}
           placeholderTextColor={P.muted}
-          accessibilityLabel={`Écart de ${label.toLowerCase()} en ${unit}`}
+          accessibilityLabel={traduire("Écart de {0} en {1}", label.toLowerCase(), unit)}
           style={{ minWidth: 110, height: 44, borderRadius: 12, borderWidth: 1, borderColor: P.line, backgroundColor: P.white, paddingHorizontal: 10, textAlign: 'right', fontSize: 15, fontWeight: '800', color }}
         />
       </View>
@@ -295,11 +288,9 @@ function Physical({ label, unit, value, onChange }: { label: string; unit: strin
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <Ink size={11} weight="bold" color={P.muted}>
-          Avantage pour toi
-        </Ink>
+          {traduire("Avantage pour toi")}</Ink>
         <Ink size={11} weight="bold" color={P.muted}>
-          Avantage pour lui
-        </Ink>
+          {traduire("Avantage pour lui")}</Ink>
       </View>
     </View>
   );

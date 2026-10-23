@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Deine wichtigsten Werte auf einen Blick</string>
+  <string name="widget_hydration_desc">Behalte deine tägliche Wassermenge im Blick</string>
+  <string name="widget_streak_desc">Deine Serie aufeinanderfolgender Trainings</string>
+</resources>

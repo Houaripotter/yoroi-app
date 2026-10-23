@@ -17,6 +17,7 @@ import { compositionBar, gaugePos } from '@/lib/v2/progres/biomarkers';
 import type { BarPart, BioKey, BioList, BioRange, BioRow, KeyMass, StatusWord, Trend } from '@/lib/v2/progres/biomarkers';
 import { capitalize, dayLong, num, todayIso } from '@/lib/v2/progres/format';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Teintes des statuts : jamais le rouge, reserve aux records et aux erreurs */
 const GOLD_TEXT = '#86671F';
@@ -55,7 +56,7 @@ export function Gauge({ range, value, style }: { range: BioRange; value: number;
   const pos = gaugePos(range, value);
   const active = range.segments.findIndex((s, i) => value < s.to || i === n - 1);
   return (
-    <View style={style} onLayout={(e) => setW(e.nativeEvent.layout.width)} accessible accessibilityLabel={`Repère : ${range.segments.map((s) => s.status.toLowerCase()).join(', ')}`}>
+    <View style={style} onLayout={(e) => setW(e.nativeEvent.layout.width)} accessible accessibilityLabel={traduire("Repère : {0}", range.segments.map((s) => s.status.toLowerCase()).join(', '))}>
       <View style={{ height: 18, justifyContent: 'center' }}>
         <View style={{ flexDirection: 'row', gap: 3 }}>
           {range.segments.map((s, i) => (
@@ -115,7 +116,7 @@ export function BioRowView({ row, onPress, first }: { row: BioRow; onPress?: () 
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 26 }}>
         <Ink size={13} weight="bold" color={row.deltaGood ? c.successText : c.textSecondary} style={{ flex: 1 }} numberOfLines={2}>
-          {row.delta ? capitalize(row.delta) : 'Première mesure'}
+          {row.delta ? capitalize(row.delta) : traduire('Première mesure')}
         </Ink>
         {row.status ? <StatusPill status={row.status} /> : null}
       </View>
@@ -131,7 +132,7 @@ export function BioRowView({ row, onPress, first }: { row: BioRow; onPress?: () 
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${row.label}, ${row.value}${row.unit ? ` ${row.unit}` : ''}${row.status ? `, ${row.status.toLowerCase()}` : ''}, voir le détail`}
+      accessibilityLabel={traduire("{0}, {1}{2}{3}, voir le détail", row.label, row.value, row.unit ? ` ${row.unit}` : '', row.status ? `, ${row.status.toLowerCase()}` : '')}
       style={({ pressed }) => [wrap, { backgroundColor: pressed ? c.fillSoft : 'transparent' }]}
     >
       {body}
@@ -168,20 +169,17 @@ export function BioListCard({
             onPress={onAddHeight}
             disabled={!onAddHeight}
             accessibilityRole="button"
-            accessibilityLabel="Ajouter ta taille pour calculer ton IMC"
+            accessibilityLabel={traduire("Ajouter ta taille pour calculer ton IMC")}
             style={({ pressed }) => ({ borderTopWidth: list.rows.length ? 1 : 0, borderColor: c.divider, paddingHorizontal: 16, paddingVertical: 14, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
           >
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={15} weight="extraBold">
-                IMC
-              </Ink>
+                {traduire("IMC")}</Ink>
               <Ink size={12} color={c.textSecondary}>
-                Ajoute ta taille dans ton profil pour le calculer.
-              </Ink>
+                {traduire("Ajoute ta taille dans ton profil pour le calculer.")}</Ink>
             </View>
             <Ink size={13} weight="extraBold" color={c.accent}>
-              Ajouter
-            </Ink>
+              {traduire("Ajouter")}</Ink>
           </Pressable>
         ) : null}
         {list.missing.length ? (
@@ -189,13 +187,12 @@ export function BioListCard({
             onPress={onAddMissing}
             disabled={!onAddMissing}
             accessibilityRole="button"
-            accessibilityLabel="Ajouter les mesures manquantes"
+            accessibilityLabel={traduire("Ajouter les mesures manquantes")}
             style={({ pressed }) => ({ borderTopWidth: list.rows.length || list.needHeight ? 1 : 0, borderColor: c.divider, paddingHorizontal: 16, paddingVertical: 14, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
           >
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={14} weight="extraBold" color={c.textSecondary}>
-                À saisir
-              </Ink>
+                {traduire("À saisir")}</Ink>
               <Ink size={12} color={c.textSecondary}>
                 {capitalize(list.missing.join(', '))}
               </Ink>
@@ -206,13 +203,11 @@ export function BioListCard({
       </View>
       {hasStatus ? (
         <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>
-          Statut affiché seulement quand un repère reconnu existe : OMS pour l’IMC, Gallagher 2000 selon ton sexe et ton âge pour la masse grasse, Tanita pour l’eau et la graisse viscérale. Ta balance donne une estimation.
-        </Ink>
+          {traduire("Statut affiché seulement quand un repère reconnu existe : OMS pour l’IMC, Gallagher 2000 selon ton sexe et ton âge pour la masse grasse, Tanita pour l’eau et la graisse viscérale. Ta balance donne une estimation.")}</Ink>
       ) : null}
       {fatWithout ? (
         <Ink size={12} color={c.textSecondary} style={{ marginTop: 6 }} onPress={onAddHeight} suppressHighlighting>
-          Pour situer ta masse grasse, renseigne ton sexe et ta date de naissance dans ton profil.
-        </Ink>
+          {traduire("Pour situer ta masse grasse, renseigne ton sexe et ta date de naissance dans ton profil.")}</Ink>
       ) : null}
     </View>
   );
@@ -262,8 +257,7 @@ export function CompositionBar({ point, style }: { point: CompoPoint; style?: St
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
               <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: CORPS.eau }} />
               <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ flexShrink: 1 }}>
-                Eau, présente dans les muscles et les organes
-              </Ink>
+                {traduire("Eau, présente dans les muscles et les organes")}</Ink>
             </View>
             <Ink size={15} weight="black" numberOfLines={1} style={{ flexShrink: 0 }}>{`${num(point.water, 1)}\u00A0%`}</Ink>
           </View>
@@ -315,7 +309,7 @@ export function CompositionCard({ point, trend, onPress, showDate = true, style 
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${trend?.title ?? 'Composition'}, voir chaque mesure`}
+      accessibilityLabel={traduire("{0}, voir chaque mesure", trend?.title ?? 'Composition')}
       style={({ pressed }) => [base, style, pressed ? { backgroundColor: c.fillSoft } : null]}
     >
       {content}
@@ -334,7 +328,7 @@ function NavButton({ dir, disabled, onPress }: { dir: 'left' | 'right'; disabled
       }}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={dir === 'left' ? 'Mesure précédente' : 'Mesure suivante'}
+      accessibilityLabel={dir === 'left' ? traduire('Mesure précédente') : traduire('Mesure suivante')}
       accessibilityState={{ disabled }}
       style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : P.carte, borderWidth: 1, borderColor: c.divider, opacity: disabled ? 0.3 : 1 })}
     >
@@ -351,12 +345,12 @@ export function MeasureNav({ date, index, total, caption, onPrev, onNext, style 
   return (
     <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10 }, style]}>
       <NavButton dir="left" disabled={index <= 0} onPress={onPrev} />
-      <View style={{ flex: 1, alignItems: 'center', gap: 2 }} accessible accessibilityLabel={`Mesure du ${dayLong(date)}, ${index + 1} sur ${total}`}>
+      <View style={{ flex: 1, alignItems: 'center', gap: 2 }} accessible accessibilityLabel={traduire("Mesure du {0}, {1} sur {2}", dayLong(date), index + 1, total)}>
         <Ink size={17} weight="extraBold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
           {`${capitalize(dayLong(date))}${date.slice(0, 4) !== thisYear ? ` ${date.slice(0, 4)}` : ''}`}
         </Ink>
         <Ink size={12} color={c.textSecondary} numberOfLines={2} style={{ textAlign: 'center' }}>
-          {`Mesure ${index + 1} sur ${total}${caption ? `, ${caption}` : ''}`}
+          {traduire("Mesure {0} sur {1}{2}", index + 1, total, caption ? `, ${caption}` : '')}
         </Ink>
       </View>
       <NavButton dir="right" disabled={index >= total - 1} onPress={onNext} />
@@ -386,7 +380,7 @@ export function KeyMassCards({ masses, onPress, style }: { masses: KeyMass[]; on
         const color = m.key === 'muscleKg' ? CORPS.muscle : CORPS.graisse;
         const stable = m.diff !== undefined && Math.abs(m.diff) < 0.05;
         const good = m.diff !== undefined && !stable && ((m.good === 'up' && m.diff > 0) || (m.good === 'down' && m.diff < 0));
-        const deltaText = m.diff === undefined ? 'Première mesure' : stable ? 'Stable' : `${m.diff > 0 ? '+' : '-'}${num(Math.abs(m.diff), 1)} kg`;
+        const deltaText = m.diff === undefined ? traduire('Première mesure') : stable ? 'Stable' : `${m.diff > 0 ? '+' : '-'}${num(Math.abs(m.diff), 1)} kg`;
         const body = (
           <View style={{ padding: 14, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -406,7 +400,7 @@ export function KeyMassCards({ masses, onPress, style }: { masses: KeyMass[]; on
             <Ink size={12} weight="bold" color={good ? c.successText : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               {`${deltaText}${m.pct ? `, ${num(m.pct, 1)} %` : ''}`}
             </Ink>
-            {m.spark.length >= 2 ? <Spark values={m.spark} color={color} /> : <View style={{ height: 34, justifyContent: 'center' }}><Ink size={11} color={c.textMuted} numberOfLines={2}>La courbe vient avec la mesure suivante.</Ink></View>}
+            {m.spark.length >= 2 ? <Spark values={m.spark} color={color} /> : <View style={{ height: 34, justifyContent: 'center' }}><Ink size={11} color={c.textMuted} numberOfLines={2}>{traduire("La courbe vient avec la mesure suivante.")}</Ink></View>}
             {m.status ? (
               <View style={{ alignSelf: 'flex-start' }}>
                 <StatusPill status={m.status} />
@@ -424,7 +418,7 @@ export function KeyMassCards({ masses, onPress, style }: { masses: KeyMass[]; on
               onPress(m.key);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`${m.label}, ${num(m.kg, 1)} kilos, ${deltaText}, voir la courbe`}
+            accessibilityLabel={traduire("{0}, {1} kilos, {2}, voir la courbe", m.label, num(m.kg, 1), deltaText)}
             style={({ pressed }) => [base, pressed ? { backgroundColor: c.fillSoft } : null]}
           >
             {body}

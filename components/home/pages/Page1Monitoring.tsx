@@ -9,7 +9,7 @@ import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { formatHoursHM } from '@/lib/formatDuration';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
 import { TrendingUp, TrendingDown, Minus, Plus, Dumbbell, Droplet, Moon, Zap, Bell, BellOff, Check, Target, Calendar, Activity, AlertTriangle, CheckCircle, Clock, Settings, Footprints, Flame, Heart, Wind } from 'lucide-react-native';
@@ -31,6 +31,7 @@ import { logger } from '@/lib/security/logger';
 import HomeChallengesSection from '@/components/home/HomeChallengesSection';
 import { NotificationBellPopup } from '@/components/NotificationBellPopup';
 import { useResponsive } from '@/constants/responsive';
+import { LOCALE } from '@/lib/i18n/tr';
 
 const CARD_PADDING = 12; // Padding horizontal pour réduire la largeur des cartes
 
@@ -2190,7 +2191,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Footprints size={16} color="#3B82F6" />
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{steps > 0 ? steps.toLocaleString('fr-FR') : '--'}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{steps > 0 ? steps.toLocaleString(LOCALE) : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.steps')}</Text>
                     </View>
                   </TouchableOpacity>

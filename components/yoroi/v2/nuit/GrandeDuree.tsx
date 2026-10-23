@@ -2,6 +2,7 @@
 import React from 'react';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export function GrandeDuree({ min, size = 68 }: { min: number; size?: number }) {
   const h = Math.floor(min / 60);
@@ -12,7 +13,7 @@ export function GrandeDuree({ min, size = 68 }: { min: number; size?: number }) 
     </Ink>
   );
   return (
-    <Ink size={size} weight="black" tight accessibilityLabel={h > 0 ? `${h} heures ${m} minutes` : `${m} minutes`}>
+    <Ink size={size} weight="black" tight accessibilityLabel={h > 0 ? traduire("{0} heures {1} minutes", h, m) : traduire("{0} minutes", m)}>
       {h > 0 ? String(h) : String(m)}
       {h > 0 ? unite(' h ') : unite(' min')}
       {h > 0 ? String(m).padStart(2, '0') : ''}

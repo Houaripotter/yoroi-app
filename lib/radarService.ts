@@ -2,6 +2,7 @@ import { openDatabase } from './database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface RadarScores {
   force: number;      // 0-100
@@ -189,7 +190,7 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
   if (scores.force < 30) {
     return {
       icon: 'dumbbell',
-      text: "Ton score force est en retrait. Deux séances de renforcement par semaine, c'est un bon début.",
+      text: traduire("Ton score force est en retrait. Deux séances de renforcement par semaine, c'est un bon début."),
       source: "ACSM (2009) : deux à trois séances par semaine pour débuter le renforcement",
     };
   }
@@ -198,7 +199,7 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
   if (scores.cardio < 30) {
     return {
       icon: 'heart',
-      text: "Ton cardio est en retrait. Ajoute une ou deux séances d'endurance dans ta semaine.",
+      text: traduire("Ton cardio est en retrait. Ajoute une ou deux séances d'endurance dans ta semaine."),
       source: "OMS (2020) : 150 à 300 minutes d'activité modérée par semaine pour un adulte",
     };
   }
@@ -207,7 +208,7 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
   if (scores.mental < 40) {
     return {
       icon: 'brain',
-      text: "La régularité bat l'intensité. Vise 3 séances légères plutôt qu'une grosse.",
+      text: traduire("La régularité bat l'intensité. Vise 3 séances légères plutôt qu'une grosse."),
       source: "Lally et al. (2010) : en moyenne 66 jours pour ancrer une habitude",
     };
   }
@@ -216,7 +217,7 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
   if (scores.souplesse < 20) {
     return {
       icon: 'flame',
-      text: "Quelques minutes d'étirements après ta séance t'aident à garder ta mobilité.",
+      text: traduire("Quelques minutes d'étirements après ta séance t'aident à garder ta mobilité."),
       source: null,
     };
   }
@@ -225,7 +226,7 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
   if (scores.technique === 0) {
     return {
       icon: 'target',
-      text: 'Note ta technique après chaque séance pour suivre ta progression.',
+      text: traduire('Note ta technique après chaque séance pour suivre ta progression.'),
       source: null,
     };
   }
@@ -235,7 +236,7 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
   if (avg >= 50) {
     return {
       icon: 'trophy',
-      text: 'Profil équilibré. Tu es sur la bonne voie, continue comme ça.',
+      text: traduire('Profil équilibré. Tu es sur la bonne voie, continue comme ça.'),
       source: null,
     };
   }
@@ -243,7 +244,7 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
   // Par défaut
   return {
     icon: 'lightbulb',
-    text: 'Varie tes entraînements pour développer un profil complet.',
+    text: traduire('Varie tes entraînements pour développer un profil complet.'),
     source: null,
   };
 };
@@ -254,68 +255,68 @@ export const getRadarInsight = (scores: RadarScores): RadarInsight => {
  */
 export const RADAR_REFERENCES = {
   charge: {
-    title: 'Charge',
-    description: "Basé sur la fréquence et l'intensité de tes entraînements.",
-    reference: "Monter la charge d'entraînement progressivement aide à limiter les blessures.",
+    title: traduire('Charge'),
+    description: traduire("Basé sur la fréquence et l'intensité de tes entraînements."),
+    reference: traduire("Monter la charge d'entraînement progressivement aide à limiter les blessures."),
     source: 'Gabbett, The training-injury prevention paradox, British Journal of Sports Medicine, 2016',
     url: 'https://pubmed.ncbi.nlm.nih.gov/26758673/',
   },
   hydratation: {
-    title: 'Hydratation',
-    description: 'Basé sur ton apport quotidien en eau.',
-    reference: "Perdre plus de 2 % de ton poids en eau pendant l'effort peut faire baisser tes performances.",
+    title: traduire('Hydratation'),
+    description: traduire('Basé sur ton apport quotidien en eau.'),
+    reference: traduire("Perdre plus de 2 % de ton poids en eau pendant l'effort peut faire baisser tes performances."),
     source: 'Exercise and Fluid Replacement, ACSM Position Stand, 2007',
     url: 'https://pubmed.ncbi.nlm.nih.gov/17277604/',
   },
   poids: {
     title: 'Poids',
-    description: 'Basé sur ta progression vers ton objectif de poids.',
-    reference: 'Ta composition corporelle compte autant que ton poids sur la balance.',
+    description: traduire('Basé sur ta progression vers ton objectif de poids.'),
+    reference: traduire('Ta composition corporelle compte autant que ton poids sur la balance.'),
   },
   régularité: {
-    title: 'Régularité',
-    description: 'Basé sur ta constance dans les entraînements.',
-    reference: "Il faut en moyenne 66 jours pour ancrer une habitude. La constance compte plus que l'intensité.",
+    title: traduire('Régularité'),
+    description: traduire('Basé sur ta constance dans les entraînements.'),
+    reference: traduire("Il faut en moyenne 66 jours pour ancrer une habitude. La constance compte plus que l'intensité."),
     source: 'Lally et al., How are habits formed, European Journal of Social Psychology, 2010',
     url: 'https://doi.org/10.1002/ejsp.674',
   },
   sommeil: {
-    title: 'Sommeil',
-    description: 'Basé sur la qualité et la durée de ton sommeil.',
-    reference: 'Sept à neuf heures de sommeil sont recommandées pour un adulte, elles aident ta récupération.',
+    title: traduire('Sommeil'),
+    description: traduire('Basé sur la qualité et la durée de ton sommeil.'),
+    reference: traduire('Sept à neuf heures de sommeil sont recommandées pour un adulte, elles aident ta récupération.'),
     source: 'National Sleep Foundation',
     url: 'https://www.sleepfoundation.org/how-sleep-works/how-much-sleep-do-we-really-need',
   },
   force: {
     title: 'Force',
-    description: 'Basé sur tes séances de musculation, crossfit, haltérophilie, kettlebell.',
-    reference: 'Deux à trois séances de renforcement par semaine suffisent pour progresser quand tu débutes.',
+    description: traduire('Basé sur tes séances de musculation, crossfit, haltérophilie, kettlebell.'),
+    reference: traduire('Deux à trois séances de renforcement par semaine suffisent pour progresser quand tu débutes.'),
     source: 'Progression Models in Resistance Training for Healthy Adults, ACSM Position Stand, 2009',
     url: 'https://pubmed.ncbi.nlm.nih.gov/19204579/',
   },
   cardio: {
     title: 'Cardio',
-    description: 'Basé sur tes séances de running, boxe, MMA, HIIT, natation, vélo.',
-    reference: "L'OMS recommande 150 à 300 minutes d'activité modérée par semaine pour un adulte.",
+    description: traduire('Basé sur tes séances de running, boxe, MMA, HIIT, natation, vélo.'),
+    reference: traduire("L'OMS recommande 150 à 300 minutes d'activité modérée par semaine pour un adulte."),
     source: "Lignes directrices de l'OMS sur l'activité physique, 2020",
   },
   mental: {
-    title: 'Mental',
-    description: 'Basé sur ta régularité (série de jours) et ta constance sur 4 semaines.',
-    reference: "Une activité physique régulière fait du bien au moral. La constance compte plus que l'intensité.",
+    title: traduire('Mental'),
+    description: traduire('Basé sur ta régularité (série de jours) et ta constance sur 4 semaines.'),
+    reference: traduire("Une activité physique régulière fait du bien au moral. La constance compte plus que l'intensité."),
   },
   technique: {
-    title: 'Technique',
-    description: 'Basé sur tes auto-évaluations après chaque séance (1 à 5 étoiles).',
-    reference: "Noter tes séances t'aide à voir ce qui progresse et ce qui coince.",
+    title: traduire('Technique'),
+    description: traduire('Basé sur tes auto-évaluations après chaque séance (1 à 5 étoiles).'),
+    reference: traduire("Noter tes séances t'aide à voir ce qui progresse et ce qui coince."),
   },
   souplesse: {
-    title: 'Souplesse',
-    description: 'Basé sur tes séances de yoga, stretching, pilates, mobilité.',
-    reference: "S'étirer régulièrement entretient ta mobilité.",
+    title: traduire('Souplesse'),
+    description: traduire('Basé sur tes séances de yoga, stretching, pilates, mobilité.'),
+    reference: traduire("S'étirer régulièrement entretient ta mobilité."),
   },
   intro: {
-    title: 'Ton radar expliqué',
-    description: 'Ce radar résume 5 dimensions de ton entraînement, calculées à partir de tes séances réelles.',
+    title: traduire('Ton radar expliqué'),
+    description: traduire('Ce radar résume 5 dimensions de ton entraînement, calculées à partir de tes séances réelles.'),
   },
 };

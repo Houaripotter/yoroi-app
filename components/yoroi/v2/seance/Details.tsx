@@ -33,6 +33,7 @@ import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { Icon } from './Icon';
 import { Stepper } from './Stepper';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const DURATIONS = [30, 45, 60, 90, 120];
 
@@ -44,11 +45,11 @@ function shiftDay(iso: string, days: number): string {
 
 export function dayLabel(iso: string): string {
   const today = isoDay(new Date());
-  if (iso === today) return "Aujourd'hui";
-  if (iso === shiftDay(today, -1)) return 'Hier';
-  if (iso === shiftDay(today, 1)) return 'Demain';
+  if (iso === today) return traduire("Aujourd'hui");
+  if (iso === shiftDay(today, -1)) return traduire('Hier');
+  if (iso === shiftDay(today, 1)) return traduire('Demain');
   const s = longDay(iso);
-  return s.charAt(0).toLocaleUpperCase('fr-FR') + s.slice(1);
+  return s.charAt(0).toLocaleUpperCase(LOCALE) + s.slice(1);
 }
 
 type Place = { name: string; lat: number | null; lon: number | null };
@@ -156,7 +157,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
       const Location = await import('expo-location');
       const perm = await Location.requestForegroundPermissionsAsync();
       if (perm.status !== 'granted') {
-        setLocError('Accès à ta position refusé. Écris l’endroit à la main, ou autorise la position dans les réglages.');
+        setLocError(traduire('Accès à ta position refusé. Écris l’endroit à la main, ou autorise la position dans les réglages.'));
         return;
       }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
@@ -171,7 +172,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
       onChange({ lat: pos.coords.latitude, lon: pos.coords.longitude, place: name || value.place || 'Position GPS' });
     } catch (err) {
       logger.warn('Position indisponible', err);
-      setLocError('Position introuvable pour le moment. Écris l’endroit à la main.');
+      setLocError(traduire('Position introuvable pour le moment. Écris l’endroit à la main.'));
     } finally {
       setLocating(false);
     }
@@ -210,8 +211,8 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
         <Section icon="calendar" title="Quand">
           <DayNav value={value.date} onChange={(iso) => onChange({ date: iso })} label={dayLabel(value.date)} maxDate={null} inline />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4, paddingHorizontal: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-            <Ink size={15} weight="bold">Début</Ink>
-            <Stepper value={value.startMin} step={15} min={0} max={23 * 60 + 45} unit="minutes" size={22} button={34} format={(v) => `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`} onChange={(v) => onChange({ startMin: v })} />
+            <Ink size={15} weight="bold">{traduire("Début")}</Ink>
+            <Stepper value={value.startMin} step={15} min={0} max={23 * 60 + 45} unit={traduire("minutes")} size={22} button={34} format={(v) => `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`} onChange={(v) => onChange({ startMin: v })} />
           </View>
           {!hideDuration ? (
             <>
@@ -219,22 +220,22 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
                 {DURATIONS.map((m) => {
                   const on = m === value.duration;
                   return (
-                    <Pressable key={m} onPress={() => { selectionAsync().catch(() => {}); onChange({ duration: m }); }} accessibilityRole="button" accessibilityLabel={`Durée ${fmtMinutes(m)}`} accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? d.plein : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border }}>
+                    <Pressable key={m} onPress={() => { selectionAsync().catch(() => {}); onChange({ duration: m }); }} accessibilityRole="button" accessibilityLabel={traduire("Durée {0}", fmtMinutes(m))} accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? d.plein : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border }}>
                       <Ink size={12} weight="extraBold" color={on ? d.surPlein : c.ink}>{fmtMinutes(m)}</Ink>
                     </Pressable>
                   );
                 })}
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4, paddingHorizontal: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-                <Ink size={15} weight="bold">Durée</Ink>
-                <Stepper value={value.duration} step={5} min={5} max={600} unit="minutes" size={22} button={34} format={(v) => fmtMinutes(v)} onChange={(v) => onChange({ duration: v })} />
+                <Ink size={15} weight="bold">{traduire("Durée")}</Ink>
+                <Stepper value={value.duration} step={5} min={5} max={600} unit={traduire("minutes")} size={22} button={34} format={(v) => fmtMinutes(v)} onChange={(v) => onChange({ duration: v })} />
               </View>
             </>
           ) : null}
         </Section>
       ) : null}
 
-      <Section icon="pin" title="Où">
+      <Section icon="pin" title={traduire("Où")}>
         {clubs.length > 0 ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {sortedClubs.map((cl) => {
@@ -247,11 +248,11 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
               );
             })}
             <Pressable onPress={() => pickClub(null)} accessibilityRole="button" accessibilityState={{ selected: value.clubId === null }} style={{ ...chosen(value.clubId === null), minHeight: 48, paddingHorizontal: 14, borderRadius: 16, justifyContent: 'center' }}>
-              <Ink size={14} weight="extraBold" color={value.clubId === null ? d.texte : c.ink}>Sans club</Ink>
+              <Ink size={14} weight="extraBold" color={value.clubId === null ? d.texte : c.ink}>{traduire("Sans club")}</Ink>
             </Pressable>
-            <Pressable onPress={() => router.push('/add-club' as any)} accessibilityRole="button" accessibilityLabel="Ajouter un club" style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: c.border }}>
+            <Pressable onPress={() => router.push('/add-club' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter un club")} style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: c.border }}>
               <Icon name="plus" size={14} strokeWidth={2.8} color={c.textSecondary} />
-              <Ink size={13} weight="bold" color={c.textSecondary}>Un club</Ink>
+              <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Un club")}</Ink>
             </Pressable>
           </View>
         ) : null}
@@ -263,15 +264,15 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
               <View style={{ flex: 1, gap: 1 }}>
                 <Ink size={15} weight="extraBold" numberOfLines={2}>{club.name}</Ink>
                 <Ink size={13} color={c.textSecondary} numberOfLines={2}>
-                  {value.outdoor ? 'Séance du club, dehors' : club.address?.trim() ? club.address.trim() : 'Au club, en salle'}
+                  {value.outdoor ? traduire('Séance du club, dehors') : club.address?.trim() ? club.address.trim() : traduire('Au club, en salle')}
                 </Ink>
               </View>
             </View>
-            <Pressable onPress={() => setOutdoor(!value.outdoor)} accessibilityRole="switch" accessibilityLabel="Séance en extérieur" accessibilityState={{ checked: value.outdoor }} style={{ minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderTopWidth: 1, borderColor: c.border }}>
+            <Pressable onPress={() => setOutdoor(!value.outdoor)} accessibilityRole="switch" accessibilityLabel={traduire("Séance en extérieur")} accessibilityState={{ checked: value.outdoor }} style={{ minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderTopWidth: 1, borderColor: c.border }}>
               <PlaceGlyph kind="exterieur" size={20} color={value.outdoor ? d.texte : c.textSecondary} />
               <View style={{ flex: 1 }}>
-                <Ink size={15} weight="bold">Séance en extérieur</Ink>
-                <Ink size={12} color={c.textMuted}>Active si tu t’es entraîné dehors</Ink>
+                <Ink size={15} weight="bold">{traduire("Séance en extérieur")}</Ink>
+                <Ink size={12} color={c.textMuted}>{traduire("Active si tu t’es entraîné dehors")}</Ink>
               </View>
               <Toggle on={value.outdoor} />
             </Pressable>
@@ -300,17 +301,17 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
             <TextInput
               value={value.place}
               onChangeText={(t) => onChange({ place: t, lat: null, lon: null })}
-              placeholder={cadre === 'salle' && !club ? 'Nom de la salle, facultatif' : 'Parc, plage, stade, facultatif'}
+              placeholder={cadre === 'salle' && !club ? traduire('Nom de la salle, facultatif') : 'Parc, plage, stade, facultatif'}
               placeholderTextColor={c.textMuted}
-              accessibilityLabel={cadre === 'salle' && !club ? 'Nom de la salle' : 'Endroit de la séance'}
+              accessibilityLabel={cadre === 'salle' && !club ? traduire('Nom de la salle') : traduire('Endroit de la séance')}
               style={[fontStyle('bold'), { height: 50, fontSize: 15, color: c.ink, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
             />
             {club || cadre === 'exterieur' ? (
-              <Pressable onPress={locate} disabled={locating} accessibilityRole="button" accessibilityLabel="Utiliser ma position actuelle" accessibilityHint="Remplit l’endroit avec le lieu où tu te trouves" style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderRadius: 16, backgroundColor: pressed ? d.bord : d.fond })}>
+              <Pressable onPress={locate} disabled={locating} accessibilityRole="button" accessibilityLabel={traduire("Utiliser ma position actuelle")} accessibilityHint={traduire("Remplit l’endroit avec le lieu où tu te trouves")} style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderRadius: 16, backgroundColor: pressed ? d.bord : d.fond })}>
                 {locating ? <ActivityIndicator size="small" color={d.texte} /> : <PlaceGlyph kind="gps" size={20} color={d.texte} />}
                 <View style={{ flex: 1 }}>
-                  <Ink size={14} weight="extraBold" color={d.texte}>{locating ? 'Recherche de ta position...' : 'Utiliser ma position actuelle'}</Ink>
-                  <Ink size={12} color={c.textSecondary}>Remplit l’endroit avec le lieu où tu te trouves</Ink>
+                  <Ink size={14} weight="extraBold" color={d.texte}>{locating ? traduire('Recherche de ta position...') : traduire('Utiliser ma position actuelle')}</Ink>
+                  <Ink size={12} color={c.textSecondary}>{traduire("Remplit l’endroit avec le lieu où tu te trouves")}</Ink>
                 </View>
               </Pressable>
             ) : null}
@@ -333,7 +334,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
         {clubs.length === 0 ? (
           <Pressable onPress={() => router.push('/add-club' as any)} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
             <Icon name="plus" size={14} strokeWidth={2.8} color={d.texte} />
-            <Ink size={14} weight="bold" color={d.texte}>Ajouter ton club</Ink>
+            <Ink size={14} weight="bold" color={d.texte}>{traduire("Ajouter ton club")}</Ink>
           </Pressable>
         ) : null}
       </Section>
@@ -347,18 +348,18 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
             const picked = sel === n;
             const col = couleurNote(n);
             return (
-              <Pressable key={mot} onPress={() => { selectionAsync().catch(() => {}); onChange({ technique: value.technique === n ? null : n }); }} accessibilityRole="button" accessibilityLabel={`${note.nom} ${n} sur 5, ${mot}`} accessibilityState={{ selected: value.technique === n }} style={{ flex: 1, minHeight: 50, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: picked ? col.fill : on ? col.tint : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border }}>
+              <Pressable key={mot} onPress={() => { selectionAsync().catch(() => {}); onChange({ technique: value.technique === n ? null : n }); }} accessibilityRole="button" accessibilityLabel={traduire("{0} {1} sur 5, {2}", note.nom, n, mot)} accessibilityState={{ selected: value.technique === n }} style={{ flex: 1, minHeight: 50, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: picked ? col.fill : on ? col.tint : blancA(0.75), borderWidth: on ? 0 : 1, borderColor: c.border }}>
                 <Ink size={17} weight="black" color={picked ? col.onFill : on ? col.text : c.textMuted}>{n}</Ink>
               </Pressable>
             );
           })}
         </View>
         {value.technique ? (
-          <Ink size={13} weight="extraBold" color={couleurNote(value.technique).text} style={{ paddingHorizontal: 4 }}>{`${value.technique} sur 5, ${note.mots[value.technique - 1].toLocaleLowerCase('fr-FR')}`}</Ink>
+          <Ink size={13} weight="extraBold" color={couleurNote(value.technique).text} style={{ paddingHorizontal: 4 }}>{traduire("{0} sur 5, {1}", value.technique, note.mots[value.technique - 1].toLocaleLowerCase(LOCALE))}</Ink>
         ) : (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 }}>
-            <Ink size={12} color={c.textMuted}>{`1, ${note.mots[0].toLocaleLowerCase('fr-FR')}`}</Ink>
-            <Ink size={12} color={c.textMuted}>{`5, ${note.mots[4].toLocaleLowerCase('fr-FR')}`}</Ink>
+            <Ink size={12} color={c.textMuted}>{`1, ${note.mots[0].toLocaleLowerCase(LOCALE)}`}</Ink>
+            <Ink size={12} color={c.textMuted}>{`5, ${note.mots[4].toLocaleLowerCase(LOCALE)}`}</Ink>
           </View>
         )}
       </Section>
@@ -406,7 +407,7 @@ function ClubMark({ club, size }: { club: Club; size: number }) {
   const src = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
   return (
     <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: src ? '#FFFFFF' : club.color || '#2C4A84', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: paletteSombre() ? 1 : 0, borderColor: 'rgba(242,241,236,0.18)' }}>
-      {src ? <Image source={src} style={{ width: size, height: size }} resizeMode="cover" /> : <Ink size={size * 0.44} weight="black" color="#FFFFFF">{(club.name?.trim()[0] ?? '?').toLocaleUpperCase('fr-FR')}</Ink>}
+      {src ? <Image source={src} style={{ width: size, height: size }} resizeMode="cover" /> : <Ink size={size * 0.44} weight="black" color="#FFFFFF">{(club.name?.trim()[0] ?? '?').toLocaleUpperCase(LOCALE)}</Ink>}
     </View>
   );
 }

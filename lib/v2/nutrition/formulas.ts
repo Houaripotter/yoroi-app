@@ -4,6 +4,7 @@
  * (memes coefficients, memes sources), avec quelques garde-fous de securite.
  */
 
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export type Gender = 'male' | 'female';
 
 // ============================================
@@ -13,16 +14,16 @@ export type Gender = 'male' | 'female';
 export type Source = { label: string; ref: string; url?: string };
 
 export const SOURCES = {
-  imc: { label: 'Indice de masse corporelle', ref: 'Organisation mondiale de la santé, classification de l’IMC chez l’adulte' },
-  deurenberg: { label: 'Formule de Deurenberg (1991)', ref: 'British Journal of Nutrition' },
+  imc: { label: traduire('Indice de masse corporelle'), ref: 'Organisation mondiale de la santé, classification de l’IMC chez l’adulte' },
+  deurenberg: { label: traduire('Formule de Deurenberg (1991)'), ref: 'British Journal of Nutrition' },
   mifflin: { label: 'Formule Mifflin-St Jeor (1990)', ref: 'American Journal of Clinical Nutrition', url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/' },
-  lorentz: { label: 'Formule de Lorentz (1929)', ref: 'Formule historique, donnée à titre indicatif' },
-  devine: { label: 'Formule de Devine (1974)', ref: 'Formule pharmacologique, donnée à titre indicatif' },
+  lorentz: { label: traduire('Formule de Lorentz (1929)'), ref: 'Formule historique, donnée à titre indicatif' },
+  devine: { label: traduire('Formule de Devine (1974)'), ref: 'Formule pharmacologique, donnée à titre indicatif' },
   epley: { label: 'Formule d’Epley (1985)', ref: 'Estimation de la charge maximale à partir des répétitions' },
-  protein: { label: 'Position officielle de l’ISSN sur les protéines (2017)', ref: 'Journal of the International Society of Sports Nutrition', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8' },
-  carbs: { label: 'Burke et al. (2011)', ref: 'Journal of Sports Sciences', url: 'https://www.tandfonline.com/doi/abs/10.1080/02640414.2011.585473' },
+  protein: { label: traduire('Position officielle de l’ISSN sur les protéines (2017)'), ref: 'Journal of the International Society of Sports Nutrition', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8' },
+  carbs: { label: traduire('Burke et al. (2011)'), ref: 'Journal of Sports Sciences', url: 'https://www.tandfonline.com/doi/abs/10.1080/02640414.2011.585473' },
   hydration: { label: 'American College of Sports Medicine (2007)', ref: 'Effort et réhydratation, article en anglais', url: 'https://journals.lww.com/acsm-msse/fulltext/2007/02000/exercise_and_fluid_replacement.22.aspx' },
-  timing: { label: 'Kerksick et al. (2017)', ref: 'Position officielle de l’ISSN sur le moment des repas', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0189-4' },
+  timing: { label: traduire('Kerksick et al. (2017)'), ref: 'Position officielle de l’ISSN sur le moment des repas', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0189-4' },
 } satisfies Record<string, Source>;
 
 // ============================================
@@ -47,7 +48,7 @@ export function ageFromBirth(birth?: string | null): number | null {
   return a > 0 && a < 120 ? a : null;
 }
 
-export const fmt = (v: number, d = 1) => v.toFixed(d).replace('.', ',');
+export const fmt = (v: number, d = 1) => v.toFixed(d).replace('.', DECIMAL);
 
 // ============================================
 // CALCULATEURS
@@ -57,17 +58,17 @@ export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'ver
 export type CalcGoal = 'lose' | 'maintain' | 'gain';
 
 export const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, { label: string; value: number; desc: string }> = {
-  sedentary: { label: 'Sédentaire', value: 1.2, desc: 'Peu ou pas d’exercice' },
-  light: { label: 'Légèrement actif', value: 1.375, desc: '1 à 3 jours par semaine' },
-  moderate: { label: 'Modérément actif', value: 1.55, desc: '3 à 5 jours par semaine' },
-  active: { label: 'Très actif', value: 1.725, desc: '6 à 7 jours par semaine' },
-  very_active: { label: 'Extrêmement actif', value: 1.9, desc: 'Athlète, travail physique' },
+  sedentary: { label: traduire('Sédentaire'), value: 1.2, desc: traduire('Peu ou pas d’exercice') },
+  light: { label: traduire('Légèrement actif'), value: 1.375, desc: traduire('1 à 3 jours par semaine') },
+  moderate: { label: traduire('Modérément actif'), value: 1.55, desc: traduire('3 à 5 jours par semaine') },
+  active: { label: traduire('Très actif'), value: 1.725, desc: traduire('6 à 7 jours par semaine') },
+  very_active: { label: traduire('Extrêmement actif'), value: 1.9, desc: traduire('Athlète, travail physique') },
 };
 
 export const MACROS_BY_GOAL: Record<CalcGoal, { protein: number; carbs: number; fat: number; label: string; note: string; delta: number }> = {
-  lose: { protein: 40, carbs: 30, fat: 30, label: 'Perte de poids', note: 'Déficit de 500 kcal, soit environ 0,5 kg par semaine', delta: -500 },
-  maintain: { protein: 30, carbs: 40, fat: 30, label: 'Maintien', note: 'Équilibre pour garder ton poids actuel', delta: 0 },
-  gain: { protein: 35, carbs: 45, fat: 20, label: 'Prise de muscle', note: 'Surplus de 300 kcal pour une prise de masse sèche', delta: 300 },
+  lose: { protein: 40, carbs: 30, fat: 30, label: traduire('Perte de poids'), note: traduire('Déficit de 500 kcal, soit environ 0,5 kg par semaine'), delta: -500 },
+  maintain: { protein: 30, carbs: 40, fat: 30, label: 'Maintien', note: traduire('Équilibre pour garder ton poids actuel'), delta: 0 },
+  gain: { protein: 35, carbs: 45, fat: 20, label: traduire('Prise de muscle'), note: traduire('Surplus de 300 kcal pour une prise de masse sèche'), delta: 300 },
 };
 
 export function imc(weight: number, heightCm: number): number {
@@ -78,7 +79,7 @@ export function imc(weight: number, heightCm: number): number {
 export type Level = { label: string; tone: 'indigo' | 'moss' | 'gold' | 'red' };
 
 export function imcCategory(v: number): Level {
-  if (v < 18.5) return { label: 'Insuffisance pondérale', tone: 'indigo' };
+  if (v < 18.5) return { label: traduire('Insuffisance pondérale'), tone: 'indigo' };
   if (v < 25) return { label: 'Corpulence normale', tone: 'moss' };
   if (v < 30) return { label: 'Surpoids', tone: 'gold' };
   return { label: 'Obésité', tone: 'red' };
@@ -92,29 +93,29 @@ export function img(weight: number, heightCm: number, age: number, gender: Gende
 
 export function imgCategory(v: number, gender: Gender): Level {
   if (gender === 'male') {
-    if (v < 10) return { label: 'Très maigre', tone: 'indigo' };
-    if (v < 20) return { label: 'Athlète', tone: 'moss' };
+    if (v < 10) return { label: traduire('Très maigre'), tone: 'indigo' };
+    if (v < 20) return { label: traduire('Athlète'), tone: 'moss' };
     if (v < 25) return { label: 'Normal', tone: 'moss' };
     return { label: 'Élevé', tone: 'gold' };
   }
-  if (v < 18) return { label: 'Très maigre', tone: 'indigo' };
-  if (v < 25) return { label: 'Athlète', tone: 'moss' };
+  if (v < 18) return { label: traduire('Très maigre'), tone: 'indigo' };
+  if (v < 25) return { label: traduire('Athlète'), tone: 'moss' };
   if (v < 32) return { label: 'Normal', tone: 'moss' };
   return { label: 'Élevé', tone: 'gold' };
 }
 
 export const IMG_RANGES: Record<Gender, { range: string; label: string }[]> = {
   male: [
-    { range: 'moins de 10 %', label: 'Très maigre' },
-    { range: '10 à 20 %', label: 'Athlète' },
-    { range: '20 à 25 %', label: 'Normal' },
-    { range: 'plus de 25 %', label: 'Élevé' },
+    { range: traduire('moins de 10 %'), label: traduire('Très maigre') },
+    { range: traduire('10 à 20 %'), label: traduire('Athlète') },
+    { range: traduire('20 à 25 %'), label: 'Normal' },
+    { range: traduire('plus de 25 %'), label: 'Élevé' },
   ],
   female: [
-    { range: 'moins de 18 %', label: 'Très maigre' },
-    { range: '18 à 25 %', label: 'Athlète' },
-    { range: '25 à 32 %', label: 'Normal' },
-    { range: 'plus de 32 %', label: 'Élevé' },
+    { range: traduire('moins de 18 %'), label: traduire('Très maigre') },
+    { range: traduire('18 à 25 %'), label: traduire('Athlète') },
+    { range: traduire('25 à 32 %'), label: 'Normal' },
+    { range: traduire('plus de 32 %'), label: 'Élevé' },
   ],
 };
 
@@ -163,8 +164,8 @@ export type ExerciseType = 'squat' | 'bench' | 'deadlift' | 'overhead' | 'row' |
 
 export const EXERCISES: Record<ExerciseType, { name: string; standards: { beginner: number; intermediate: number; advanced: number; elite: number } }> = {
   squat: { name: 'Squat', standards: { beginner: 0.75, intermediate: 1.25, advanced: 1.75, elite: 2.5 } },
-  bench: { name: 'Développé couché', standards: { beginner: 0.5, intermediate: 0.85, advanced: 1.25, elite: 1.75 } },
-  deadlift: { name: 'Soulevé de terre', standards: { beginner: 1.0, intermediate: 1.5, advanced: 2.0, elite: 2.75 } },
+  bench: { name: traduire('Développé couché'), standards: { beginner: 0.5, intermediate: 0.85, advanced: 1.25, elite: 1.75 } },
+  deadlift: { name: traduire('Soulevé de terre'), standards: { beginner: 1.0, intermediate: 1.5, advanced: 2.0, elite: 2.75 } },
   overhead: { name: 'Développé militaire', standards: { beginner: 0.35, intermediate: 0.55, advanced: 0.8, elite: 1.1 } },
   row: { name: 'Rowing barre', standards: { beginner: 0.4, intermediate: 0.65, advanced: 0.95, elite: 1.3 } },
   custom: { name: 'Autre exercice', standards: { beginner: 0.5, intermediate: 1.0, advanced: 1.5, elite: 2.0 } },
@@ -178,20 +179,20 @@ export function oneRM(load: number, reps: number): number {
 
 export function repRanges(max: number) {
   return [
-    { reps: 1, weight: max, percent: 100, label: '1 répétition max' },
-    { reps: 3, weight: Math.round(max * 0.93), percent: 93, label: '3 répétitions' },
-    { reps: 5, weight: Math.round(max * 0.87), percent: 87, label: '5 répétitions' },
-    { reps: 8, weight: Math.round(max * 0.8), percent: 80, label: '8 répétitions' },
-    { reps: 10, weight: Math.round(max * 0.75), percent: 75, label: '10 répétitions' },
-    { reps: 12, weight: Math.round(max * 0.7), percent: 70, label: '12 répétitions' },
-    { reps: 15, weight: Math.round(max * 0.65), percent: 65, label: '15 répétitions' },
+    { reps: 1, weight: max, percent: 100, label: traduire('1 répétition max') },
+    { reps: 3, weight: Math.round(max * 0.93), percent: 93, label: traduire('3 répétitions') },
+    { reps: 5, weight: Math.round(max * 0.87), percent: 87, label: traduire('5 répétitions') },
+    { reps: 8, weight: Math.round(max * 0.8), percent: 80, label: traduire('8 répétitions') },
+    { reps: 10, weight: Math.round(max * 0.75), percent: 75, label: traduire('10 répétitions') },
+    { reps: 12, weight: Math.round(max * 0.7), percent: 70, label: traduire('12 répétitions') },
+    { reps: 15, weight: Math.round(max * 0.65), percent: 65, label: traduire('15 répétitions') },
   ];
 }
 
 export function strengthLevel(max: number, bodyweight: number, ex: ExerciseType): { label: string; tone: Level['tone'] | 'muted'; ratio: number } {
   const ratio = bodyweight > 0 ? max / bodyweight : 0;
   const s = EXERCISES[ex].standards;
-  if (ratio >= s.elite) return { label: 'Élite', tone: 'gold', ratio };
+  if (ratio >= s.elite) return { label: traduire('Élite'), tone: 'gold', ratio };
   if (ratio >= s.advanced) return { label: 'Avancé', tone: 'moss', ratio };
   if (ratio >= s.intermediate) return { label: 'Intermédiaire', tone: 'indigo', ratio };
   return { label: 'Débutant', tone: 'muted', ratio };
@@ -204,10 +205,10 @@ export function strengthLevel(max: number, bodyweight: number, ex: ExerciseType)
 export type QuickActivity = 'low' | 'moderate' | 'high' | 'intense';
 
 export const QUICK_ACTIVITY: Record<QuickActivity, { label: string; carbs: [number, number]; mult: number; phrase: string }> = {
-  low: { label: 'Faible', carbs: [3, 5], mult: 1.2, phrase: 'activité légère' },
-  moderate: { label: 'Modérée', carbs: [5, 7], mult: 1.55, phrase: 'activité modérée' },
-  high: { label: 'Élevée', carbs: [6, 10], mult: 1.725, phrase: 'activité élevée' },
-  intense: { label: 'Intense', carbs: [8, 12], mult: 1.9, phrase: 'activité intense' },
+  low: { label: traduire('Faible'), carbs: [3, 5], mult: 1.2, phrase: traduire('activité légère') },
+  moderate: { label: traduire('Modérée'), carbs: [5, 7], mult: 1.55, phrase: traduire('activité modérée') },
+  high: { label: traduire('Élevée'), carbs: [6, 10], mult: 1.725, phrase: traduire('activité élevée') },
+  intense: { label: traduire('Intense'), carbs: [8, 12], mult: 1.9, phrase: traduire('activité intense') },
 };
 
 export function quickNeeds(weight: number, heightCm: number, act: QuickActivity, age = 30) {
@@ -218,7 +219,7 @@ export function quickNeeds(weight: number, heightCm: number, act: QuickActivity,
   const b = 10 * w + 6.25 * h - 5 * age + 5;
   return {
     protein: { min: Math.round(w * 1.6), max: Math.round(w * 2.2) },
-    carbs: { min: Math.round(w * r.carbs[0]), max: Math.round(w * r.carbs[1]), perKg: `${r.carbs[0]} à ${r.carbs[1]}` },
+    carbs: { min: Math.round(w * r.carbs[0]), max: Math.round(w * r.carbs[1]), perKg: traduire("{0} à {1}", r.carbs[0], r.carbs[1]) },
     water: { min: round1((w * 30) / 1000), max: round1((w * 35) / 1000) },
     bmr: Math.round(b),
     tdee: Math.round(b * r.mult),
@@ -271,8 +272,8 @@ export function simulateCut(current: number, target: number, days: number): CutP
       name: 'Déficit calorique',
       days: fatDays,
       targetWeight: current - actualFatCut,
-      method: 'Déficit de 500 à 750 kcal par jour',
-      tips: ['Garde tes protéines autour de 2 g par kg', 'Baisse les glucides progressivement', 'Continue ton entraînement normal'],
+      method: traduire('Déficit de 500 à 750 kcal par jour'),
+      tips: [traduire('Garde tes protéines autour de 2 g par kg'), traduire('Baisse les glucides progressivement'), traduire('Continue ton entraînement normal')],
     });
   }
   if (days >= 5) {
@@ -281,15 +282,15 @@ export function simulateCut(current: number, target: number, days: number): CutP
       days: 4,
       targetWeight: current - (fatCutNeeded > 0 ? fatCutNeeded * 0.7 : 0),
       method: 'Hyperhydratation puis restriction',
-      tips: ['De J-5 à J-3 : beaucoup d’eau, sous contrôle', 'Sel normal les premiers jours', 'Baisse le sel progressivement'],
+      tips: [traduire('De J-5 à J-3 : beaucoup d’eau, sous contrôle'), traduire('Sel normal les premiers jours'), traduire('Baisse le sel progressivement')],
     });
   }
   phases.push({
     name: 'Dernière coupe d’eau',
     days: Math.min(2, days),
     targetWeight: target,
-    method: 'Restriction hydrique et sudation',
-    tips: ['Sauna ou bain chaud, jamais seul', 'Vêtements de sudation', 'Pas plus de 2 h de sauna par séance', 'Surveille les signes de déshydratation'],
+    method: traduire('Restriction hydrique et sudation'),
+    tips: [traduire('Sauna ou bain chaud, jamais seul'), traduire('Vêtements de sudation'), traduire('Pas plus de 2 h de sauna par séance'), traduire('Surveille les signes de déshydratation')],
   });
 
   const hydrationProtocol: HydrationDay[] = [
@@ -308,8 +309,8 @@ export function simulateCut(current: number, target: number, days: number): CutP
 
 export const RISK_LABEL: Record<CutRisk, string> = {
   safe: 'Coupe raisonnable',
-  moderate: 'Coupe modérée',
-  risky: 'Coupe risquée',
+  moderate: traduire('Coupe modérée'),
+  risky: traduire('Coupe risquée'),
   dangerous: 'Coupe dangereuse',
 };
 
@@ -342,9 +343,9 @@ export const WEIGHT_CATEGORIES: Record<'mma' | 'jjb' | 'boxe', { name: string; m
     { name: 'Mouche', maxKg: 56.7 },
     { name: 'Coq', maxKg: 61.2 },
     { name: 'Plume', maxKg: 65.8 },
-    { name: 'Léger', maxKg: 70.3 },
+    { name: traduire('Léger'), maxKg: 70.3 },
     { name: 'Mi-moyen', maxKg: 77.1 },
-    { name: 'Moyen', maxKg: 83.9 },
+    { name: traduire('Moyen'), maxKg: 83.9 },
     { name: 'Mi-lourd', maxKg: 93 },
     { name: 'Lourd', maxKg: 120.2 },
   ],
@@ -363,10 +364,10 @@ export const WEIGHT_CATEGORIES: Record<'mma' | 'jjb' | 'boxe', { name: string; m
     { name: 'Mouche', maxKg: 50.8 },
     { name: 'Coq', maxKg: 53.5 },
     { name: 'Plume', maxKg: 57.2 },
-    { name: 'Léger', maxKg: 61.2 },
+    { name: traduire('Léger'), maxKg: 61.2 },
     { name: 'Super-léger', maxKg: 63.5 },
     { name: 'Welter', maxKg: 66.7 },
-    { name: 'Moyen', maxKg: 72.6 },
+    { name: traduire('Moyen'), maxKg: 72.6 },
     { name: 'Lourd-léger', maxKg: 79.4 },
     { name: 'Lourd', maxKg: 90.7 },
   ],
@@ -385,12 +386,12 @@ export function painColor(v: number): string {
 }
 
 export function painWord(v: number): string {
-  if (v === 0) return 'Aucune douleur';
-  if (v <= 2) return 'Douleur légère';
-  if (v <= 4) return 'Douleur modérée';
-  if (v <= 6) return 'Douleur nette';
-  if (v <= 8) return 'Douleur forte';
-  return 'Douleur intense';
+  if (v === 0) return traduire('Aucune douleur');
+  if (v <= 2) return traduire('Douleur légère');
+  if (v <= 4) return traduire('Douleur modérée');
+  if (v <= 6) return traduire('Douleur nette');
+  if (v <= 8) return traduire('Douleur forte');
+  return traduire('Douleur intense');
 }
 
 export function suggestedRecoveryDays(eva: number): number {
@@ -415,35 +416,35 @@ export function returnFamily(zoneId: string, zoneName = ''): ReturnFamily {
 
 export const RETURN_PLANS: Record<ReturnFamily, ReturnWeek[]> = {
   upper: [
-    { week: 1, label: 'Repos et mobilité douce', restrictions: ['Aucun effort avec les bras', 'Technique des jambes uniquement', 'Mouvements doux, amplitude réduite'] },
-    { week: 2, label: 'Technique sans résistance', restrictions: ['Technique légère des bras', 'Pas de grip ni de saisies', 'Exercices de proprioception'] },
-    { week: 3, label: 'Drilling léger', restrictions: ['Drilling technique, pas de sparring', 'Résistance minimale du partenaire', 'Stop si douleur'] },
-    { week: 4, label: 'Roulage léger avec partenaires de confiance', restrictions: ['Rolling léger uniquement', 'Partenaires de confiance', 'Communication ouverte'] },
-    { week: 5, label: 'Sparring progressif', restrictions: ['Du sparring technique vers plus intense', 'Écoute ton corps', 'Bilan avant toute compétition'] },
+    { week: 1, label: traduire('Repos et mobilité douce'), restrictions: [traduire('Aucun effort avec les bras'), traduire('Technique des jambes uniquement'), traduire('Mouvements doux, amplitude réduite')] },
+    { week: 2, label: traduire('Technique sans résistance'), restrictions: [traduire('Technique légère des bras'), traduire('Pas de grip ni de saisies'), traduire('Exercices de proprioception')] },
+    { week: 3, label: traduire('Drilling léger'), restrictions: [traduire('Drilling technique, pas de sparring'), traduire('Résistance minimale du partenaire'), traduire('Stop si douleur')] },
+    { week: 4, label: traduire('Roulage léger avec partenaires de confiance'), restrictions: [traduire('Rolling léger uniquement'), traduire('Partenaires de confiance'), 'Communication ouverte'] },
+    { week: 5, label: 'Sparring progressif', restrictions: [traduire('Du sparring technique vers plus intense'), traduire('Écoute ton corps'), traduire('Bilan avant toute compétition')] },
   ],
   lower: [
-    { week: 1, label: 'Repos et glace', restrictions: ['Aucun appui si douleur', 'Membre surélevé', 'Mobilité passive uniquement'] },
-    { week: 2, label: 'Marche et mobilité', restrictions: ['Marche sans douleur', 'Renforcement des quadriceps assis', 'Vélo d’appartement si toléré'] },
-    { week: 3, label: 'Technique debout légère', restrictions: ['Travail debout sans projections', 'Pas de genou au sol', 'Renforcement de la chaîne arrière'] },
-    { week: 4, label: 'Travail au sol progressif', restrictions: ['Drilling au sol sans pression sur la zone', 'Rolling en position haute uniquement'] },
-    { week: 5, label: 'Retour complet progressif', restrictions: ['Rolling léger puis normal', 'Bande de soutien si besoin', 'Bilan médical recommandé'] },
+    { week: 1, label: traduire('Repos et glace'), restrictions: [traduire('Aucun appui si douleur'), traduire('Membre surélevé'), traduire('Mobilité passive uniquement')] },
+    { week: 2, label: traduire('Marche et mobilité'), restrictions: [traduire('Marche sans douleur'), traduire('Renforcement des quadriceps assis'), traduire('Vélo d’appartement si toléré')] },
+    { week: 3, label: traduire('Technique debout légère'), restrictions: [traduire('Travail debout sans projections'), traduire('Pas de genou au sol'), traduire('Renforcement de la chaîne arrière')] },
+    { week: 4, label: traduire('Travail au sol progressif'), restrictions: [traduire('Drilling au sol sans pression sur la zone'), 'Rolling en position haute uniquement'] },
+    { week: 5, label: traduire('Retour complet progressif'), restrictions: [traduire('Rolling léger puis normal'), traduire('Bande de soutien si besoin'), traduire('Bilan médical recommandé')] },
   ],
   back: [
-    { week: 1, label: 'Repos relatif', restrictions: ['Pas de charge sur la colonne', 'Étirements doux', 'Chaleur ; médicaments seulement sur avis médical'] },
-    { week: 2, label: 'Mobilité douce', restrictions: ['Étirements progressifs', 'Gainage très doux', 'Pas de projections'] },
-    { week: 3, label: 'Renforcement progressif', restrictions: ['Gainage statique', 'Technique debout sans chute', 'Mobilité de la colonne'] },
-    { week: 4, label: 'Technique légère', restrictions: ['Drilling debout et au sol, léger', 'Rolling en position haute', 'Stop si douleur'] },
-    { week: 5, label: 'Sparring progressif', restrictions: ['Rolling léger', 'Communication avec ton partenaire', 'Avis médical avant de monter en intensité'] },
+    { week: 1, label: traduire('Repos relatif'), restrictions: [traduire('Pas de charge sur la colonne'), traduire('Étirements doux'), traduire('Chaleur ; médicaments seulement sur avis médical')] },
+    { week: 2, label: traduire('Mobilité douce'), restrictions: [traduire('Étirements progressifs'), traduire('Gainage très doux'), traduire('Pas de projections')] },
+    { week: 3, label: 'Renforcement progressif', restrictions: ['Gainage statique', traduire('Technique debout sans chute'), traduire('Mobilité de la colonne')] },
+    { week: 4, label: traduire('Technique légère'), restrictions: [traduire('Drilling debout et au sol, léger'), 'Rolling en position haute', traduire('Stop si douleur')] },
+    { week: 5, label: 'Sparring progressif', restrictions: [traduire('Rolling léger'), traduire('Communication avec ton partenaire'), traduire('Avis médical avant de monter en intensité')] },
   ],
 };
 
 /** Signes qui doivent faire consulter sans attendre (repères de premiers secours) */
 export const RED_FLAGS = [
-  'Déformation visible, os ou articulation qui semble déplacé',
-  'Impossible de poser le pied ou de bouger le membre',
-  'Fourmillements, perte de force ou de sensibilité',
-  'Gonflement important et rapide',
-  'Choc à la tête avec maux de tête, vomissements ou confusion',
+  traduire('Déformation visible, os ou articulation qui semble déplacé'),
+  traduire('Impossible de poser le pied ou de bouger le membre'),
+  traduire('Fourmillements, perte de force ou de sensibilité'),
+  traduire('Gonflement important et rapide'),
+  traduire('Choc à la tête avec maux de tête, vomissements ou confusion'),
 ];
 
 // ============================================
@@ -452,10 +453,10 @@ export const RED_FLAGS = [
 
 /** Reperes approximatifs pendant le jeune, variables selon chacun */
 export const FAST_MARKERS: { hour: number; label: string; text: string }[] = [
-  { hour: 0, label: 'Digestion', text: 'Ton corps utilise le dernier repas.' },
-  { hour: 4, label: 'Réserves', text: 'Il puise dans ses réserves de sucre.' },
-  { hour: 12, label: 'Bascule', text: 'La part des graisses utilisées augmente.' },
-  { hour: 18, label: 'Jeûne long', text: 'Reste attentif aux signaux de ton corps.' },
+  { hour: 0, label: 'Digestion', text: traduire('Ton corps utilise le dernier repas.') },
+  { hour: 4, label: traduire('Réserves'), text: traduire('Il puise dans ses réserves de sucre.') },
+  { hour: 12, label: 'Bascule', text: traduire('La part des graisses utilisées augmente.') },
+  { hour: 18, label: traduire('Jeûne long'), text: traduire('Reste attentif aux signaux de ton corps.') },
 ];
 
 export function hhmmValid(s: string): boolean {
@@ -467,7 +468,7 @@ export function hhmmValid(s: string): boolean {
 }
 
 export function durationBetween(start: string, end: string): string {
-  if (!hhmmValid(start) || !hhmmValid(end)) return 'non calculable';
+  if (!hhmmValid(start) || !hhmmValid(end)) return traduire('non calculable');
   const [sh, sm] = start.split(':').map(Number);
   const [eh, em] = end.split(':').map(Number);
   let d = eh * 60 + em - (sh * 60 + sm);

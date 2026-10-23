@@ -56,6 +56,7 @@ import {
   vignetteQuiJoue,
   type FiltreGalerie,
 } from '@/lib/v2/espace/presentation';
+import { traduire } from '@/lib/i18n/tr';
 
 const MARGE = 22;
 const ECART = 12;
@@ -67,19 +68,19 @@ const VOILE_VERROU = 'rgba(15,17,24,0.82)';
 /** Comment debloquer une scene, en court pour une vignette (le texte vient de themeCondition) */
 function conditionCourte(id: SceneId): string {
   const t = themeCondition(themeById(id));
-  if (!t) return 'Avec Premium';
+  if (!t) return traduire('Avec Premium');
   return t.replace(' dans le Dojo', '').replace(', ou avec Premium', ', ou Premium').replace(/^À (\d+) jours/, '$1 jours');
 }
 
 type ChoixRotation = 'fixe' | SceneRotation;
 const ROTATIONS: { key: ChoixRotation; label: string; sub: string }[] = [
-  { key: 'fixe', label: 'Non', sub: 'Ta scène reste en place' },
-  { key: 'classique', label: 'Classique', sub: 'Salle, parc, ville, mer et désert' },
-  { key: 'nature', label: 'Nature et ville', sub: 'Plage, forêt, désert et buildings' },
-  { key: 'voyages', label: 'Pack Voyages', sub: 'Tokyo, Paris, désert, neige et étoiles, animées' },
-  { key: 'samourai', label: 'Samouraï', sub: 'Katanas, armures et châteaux' },
-  { key: 'lanternes', label: 'Lanternes de nuit', sub: 'Ruelles et auberges de nuit' },
-  { key: 'toutes', label: 'Toutes', sub: 'Tous les packs mélangés' },
+  { key: 'fixe', label: traduire('Non'), sub: traduire('Ta scène reste en place') },
+  { key: 'classique', label: 'Classique', sub: traduire('Salle, parc, ville, mer et désert') },
+  { key: 'nature', label: traduire('Nature et ville'), sub: traduire('Plage, forêt, désert et buildings') },
+  { key: 'voyages', label: 'Pack Voyages', sub: traduire('Tokyo, Paris, désert, neige et étoiles, animées') },
+  { key: 'samourai', label: traduire('Samouraï'), sub: traduire('Katanas, armures et châteaux') },
+  { key: 'lanternes', label: traduire('Lanternes de nuit'), sub: traduire('Ruelles et auberges de nuit') },
+  { key: 'toutes', label: traduire('Toutes'), sub: traduire('Tous les packs mélangés') },
 ];
 
 // ── Petits pictos des badges ─────────────────────────────────────────────
@@ -110,7 +111,7 @@ function Badge({ type, surImage = true }: { type: Repere; surImage?: boolean }) 
   const nouveau = type === 'nouveau';
   const bg = nouveau ? c.goldLight : surImage ? VOILE_BADGE : '#2A2E3A';
   const fg = nouveau ? '#1D2029' : '#FFFFFF';
-  const label = type === 'animee' ? 'Animée' : type === 'son' ? 'Son' : type === 'premium' ? 'Premium' : type === 'annuel' ? 'Annuel' : 'Nouveau';
+  const label = type === 'animee' ? traduire('Animée') : type === 'son' ? 'Son' : type === 'premium' ? traduire('Premium') : type === 'annuel' ? traduire('Annuel') : traduire('Nouveau');
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 22, paddingHorizontal: 8, borderRadius: 11, backgroundColor: bg }}>
       {type === 'animee' ? <PictoLecture size={9} color={c.goldLight} /> : null}
@@ -303,23 +304,23 @@ export default function TaScene() {
   const photo = espace.identite === 'photo' ? profile?.profile_photo ?? null : null;
   const prenom = profile?.name?.trim().split(' ')[0] || null;
   const packTourne = rotation === 'fixe' ? null : sectionDuPack(rotation);
-  const libelleRotation = ROTATIONS.find((r) => r.key === rotation)?.label ?? 'Non';
+  const libelleRotation = ROTATIONS.find((r) => r.key === rotation)?.label ?? traduire('Non');
 
   const etatFocus =
     verrou && condition
       ? condition
       : estChoisie
-        ? 'Sur ton accueil en ce moment'
+        ? traduire('Sur ton accueil en ce moment')
         : focus === choisie
-          ? 'Ta scène, la rotation est active'
+          ? traduire('Ta scène, la rotation est active')
           : fiche.animee
-            ? 'Scène animée, pas encore choisie'
-            : 'Pas encore choisie';
+            ? traduire('Scène animée, pas encore choisie')
+            : traduire('Pas encore choisie');
 
   const footer = (
     <View style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} accessibilityRole="button" accessibilityLabel="Revoir l’aperçu en haut" hitSlop={6}>
+        <Pressable onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} accessibilityRole="button" accessibilityLabel={traduire("Revoir l’aperçu en haut")} hitSlop={6}>
           <Image source={fiche.image} style={{ width: 64, height: 40, borderRadius: 10, backgroundColor: c.fillSoft }} contentFit="cover" />
         </Pressable>
         <View style={{ flex: 1, gap: 1 }}>
@@ -335,18 +336,18 @@ export default function TaScene() {
         </View>
       </View>
       {estChoisie ? (
-        <Button tone="ghost" label="C’est ta scène" icon="check" disabled onPress={() => {}} />
+        <Button tone="ghost" label={traduire("C’est ta scène")} icon="check" disabled onPress={() => {}} />
       ) : (
-        <Button tone="accent" label={verrou ? (fiche.annuel ? 'Voir l’abonnement annuel' : 'Débloquer avec Premium') : 'Choisir cette scène'} onPress={choisir} />
+        <Button tone="accent" label={verrou ? (fiche.annuel ? traduire('Voir l’abonnement annuel') : traduire('Débloquer avec Premium')) : traduire('Choisir cette scène')} onPress={choisir} />
       )}
     </View>
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-    <EspaceScreen title="Ta scène" subtitle="Le décor et le son de ton accueil" gap={16} footer={footer} scrollRef={scrollRef} onScrollY={surDefilement}>
+    <EspaceScreen title={traduire("Ta scène")} subtitle={traduire("Le décor et le son de ton accueil")} gap={16} footer={footer} scrollRef={scrollRef} onScrollY={surDefilement}>
       {/* apercu fidele de ton en-tete d'accueil, et les reperes de la scene selectionnee */}
-      <View onLayout={(e) => (seuilBandeau.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height * 0.55)} style={{ height: 268, borderRadius: 26, overflow: 'hidden', backgroundColor: P.paper, borderWidth: 1, borderColor: c.border }} accessibilityLabel={`Aperçu de ton accueil avec la scène ${fiche.nom}`}>
+      <View onLayout={(e) => (seuilBandeau.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height * 0.55)} style={{ height: 268, borderRadius: 26, overflow: 'hidden', backgroundColor: P.paper, borderWidth: 1, borderColor: c.border }} accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}", fiche.nom)}>
         <SceneHero apercu largeur={apercuW} top={14} scene={focus} name={prenom} personnage={espace.personnage} rankIndex={rankIndex} photo={photo} />
         <View pointerEvents="none" style={{ position: 'absolute', top: 12, right: 12, flexDirection: 'row', gap: 6 }}>
           {fiche.animee ? <Badge type="animee" /> : null}
@@ -379,7 +380,7 @@ export default function TaScene() {
                 onPress={() => changerFiltre(f.key)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
-                accessibilityLabel={`${f.label}, ${f.nombre} scènes`}
+                accessibilityLabel={traduire("{0}, {1} scènes", f.label, f.nombre)}
                 style={({ pressed }) => ({ height: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? c.accent : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
               >
                 {f.key === 'animees' ? <PictoLecture size={10} color={on ? c.onAccent : c.ink} /> : null}
@@ -407,7 +408,7 @@ export default function TaScene() {
                   {s.titre}
                 </Ink>
                 <Ink size={13} weight="bold" color={c.textMuted}>
-                  {`${s.scenes.length} ${s.scenes.length > 1 ? 'scènes' : 'scène'}`}
+                  {`${s.scenes.length} ${s.scenes.length > 1 ? traduire('scènes') : traduire('scène')}`}
                 </Ink>
                 {packTourne === s.key ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 22, paddingHorizontal: 8, borderRadius: 11, backgroundColor: c.fillSoft }}>
@@ -468,18 +469,15 @@ export default function TaScene() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={17} weight="black" tight>
-                  Change à chaque ouverture, tous les choix
-                </Ink>
+                  {traduire("Change à chaque ouverture, tous les choix")}</Ink>
                 <Ink size={13} color={c.textSecondary}>
-                  Une scène du pack au hasard à chaque ouverture, et quand tu reviens après 30 minutes. Jamais deux fois de suite.
-                </Ink>
+                  {traduire("Une scène du pack au hasard à chaque ouverture, et quand tu reviens après 30 minutes. Jamais deux fois de suite.")}</Ink>
               </View>
               {!isPremium ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: c.fillSoft }}>
                   <Icon name="lock" size={11} color={c.goldDeep} stroke={2.6} />
                   <Ink size={11} weight="extraBold" color={c.textSecondary}>
-                    Premium
-                  </Ink>
+                    {traduire("Premium")}</Ink>
                 </View>
               ) : null}
             </View>
@@ -488,21 +486,19 @@ export default function TaScene() {
               <Pressable onPress={() => ouvrirPaywall('scenes')} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: c.fillSoft }}>
                 <Icon name="lock" size={16} color={c.goldDeep} stroke={2.4} />
                 <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>
-                  Premium n’est pas actif : la scène qui change à chaque ouverture s’arrête. Touche ici pour voir Premium.
-                </Ink>
+                  {traduire("Premium n’est pas actif : la scène qui change à chaque ouverture s’arrête. Touche ici pour voir Premium.")}</Ink>
               </Pressable>
             ) : !isPremium ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: c.fillSoft }}>
                 <Icon name="lock" size={16} color={c.goldDeep} stroke={2.4} />
                 <Ink size={13} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>
-                  Réservé à Premium : touche un pack pour voir l’offre.
-                </Ink>
+                  {traduire("Réservé à Premium : touche un pack pour voir l’offre.")}</Ink>
               </View>
             ) : rotation !== 'fixe' && espace.sceneFixe ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: c.fillSoft }}>
                 <Icon name="check" size={16} color={c.accent} stroke={2.6} />
                 <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>
-                  {`Actif. En ce moment : ${ficheScene(espace.scene).nom}. La prochaine sera différente.`}
+                  {traduire("Actif. En ce moment : {0}. La prochaine sera différente.", ficheScene(espace.scene).nom)}
                 </Ink>
               </View>
             ) : null}
@@ -525,7 +521,7 @@ export default function TaScene() {
           <Pressable
             onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
             accessibilityRole="button"
-            accessibilityLabel={`Aperçu de ton accueil avec la scène ${fiche.nom}. Toucher pour le revoir en grand`}
+            accessibilityLabel={traduire("Aperçu de ton accueil avec la scène {0}. Toucher pour le revoir en grand", fiche.nom)}
             style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
           >
             <ApercuCompact largeur={apercuW} scene={focus} prenom={prenom} personnage={espace.personnage} rankIndex={rankIndex} photo={photo} />
@@ -596,7 +592,7 @@ function Vignette({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Scène ${s.nom}${reperes ? `, ${reperes}` : ''}`}
+      accessibilityLabel={traduire("Scène {0}{1}", s.nom, reperes ? `, ${reperes}` : '')}
       accessibilityState={{ selected: on }}
       style={({ pressed }) => ({ width: largeur, gap: 8, opacity: pressed ? 0.9 : 1 })}
     >
@@ -644,14 +640,14 @@ function LignePack({ r, on, choisie, enCours, onPress }: { r: { key: ChoixRotati
   const c = theme.colors;
   const scenes = r.key === 'fixe' ? [choisie] : scenesQuiTournent(r.key);
   const apercu = scenes.slice(0, 3);
-  const sub = r.key === 'fixe' ? `${r.sub} : ${ficheScene(choisie).nom}` : `${scenes.length} scènes. ${r.sub}`;
+  const sub = r.key === 'fixe' ? `${r.sub} : ${ficheScene(choisie).nom}` : traduire("{0} scènes. {1}", scenes.length, r.sub);
   return (
     <View style={{ borderRadius: 16, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
       <Pressable
         onPress={onPress}
         accessibilityRole="radio"
         accessibilityState={{ selected: on }}
-        accessibilityLabel={`${r.key === 'fixe' ? 'Toujours ta scène' : `Pack ${r.label}`}, ${sub}`}
+        accessibilityLabel={`${r.key === 'fixe' ? traduire('Toujours ta scène') : `Pack ${r.label}`}, ${sub}`}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
       >
         <View style={{ width: 76, height: 46 }}>
@@ -679,14 +675,14 @@ function LignePack({ r, on, choisie, enCours, onPress }: { r: { key: ChoixRotati
       {on && r.key !== 'fixe' ? (
         <View style={{ paddingBottom: 12, gap: 8 }}>
           <Ink size={12} weight="extraBold" color={c.textSecondary} style={{ paddingHorizontal: 12 }}>
-            {`Les ${scenes.length} scènes qui tournent`}
+            {traduire("Les {0} scènes qui tournent", scenes.length)}
           </Ink>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}>
             {scenes.map((id) => {
               const f = ficheScene(id);
               const maintenant = id === enCours;
               return (
-                <View key={id} style={{ width: 84, gap: 4 }} accessibilityLabel={`${f.nom}${maintenant ? ', en ce moment' : ''}`}>
+                <View key={id} style={{ width: 84, gap: 4 }} accessibilityLabel={`${f.nom}${maintenant ? traduire(', en ce moment') : ''}`}>
                   <View style={{ width: 84, height: 52, borderRadius: 10, overflow: 'hidden', borderWidth: maintenant ? 2 : 0, borderColor: c.accent, backgroundColor: c.fillSoft }}>
                     <Image source={f.image} contentFit="cover" style={{ width: '100%', height: '100%' }} />
                     {f.animee ? (
@@ -696,7 +692,7 @@ function LignePack({ r, on, choisie, enCours, onPress }: { r: { key: ChoixRotati
                     ) : null}
                   </View>
                   <Ink size={11} weight={maintenant ? 'extraBold' : 'bold'} color={maintenant ? c.accent : c.textSecondary}>
-                    {maintenant ? 'En ce moment' : f.nom}
+                    {maintenant ? traduire('En ce moment') : f.nom}
                   </Ink>
                 </View>
               );
@@ -750,12 +746,12 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
   const ecoute = useEcoute(scene);
   const conseil = sonConseille(scene).ambiance;
   const bruitages: { cle: string; id: string; nom: string; sous?: string; ecoutable: boolean }[] = [
-    { cle: 'amb:aucune', id: 'aucune', nom: 'Sans son', ecoutable: false },
-    { cle: 'amb:scene', id: 'scene', nom: 'Selon la scène', sous: conseil ? conseil.nom : 'Rien pour cette scène', ecoutable: !!conseil },
+    { cle: 'amb:aucune', id: 'aucune', nom: traduire('Sans son'), ecoutable: false },
+    { cle: 'amb:scene', id: 'scene', nom: traduire('Selon la scène'), sous: conseil ? conseil.nom : traduire('Rien pour cette scène'), ecoutable: !!conseil },
     ...AMBIANCES.map((a) => ({ cle: `amb:${a.id}`, id: a.id, nom: a.nom, ecoutable: true })),
   ];
   const musiques: { cle: string; id: string; nom: string; sous?: string; ecoutable: boolean }[] = [
-    { cle: 'mus:aucune', id: 'aucune', nom: 'Sans musique', ecoutable: false },
+    { cle: 'mus:aucune', id: 'aucune', nom: traduire('Sans musique'), ecoutable: false },
     ...MUSIQUES.map((m) => ({ cle: `mus:${m.id}`, id: m.id, nom: m.nom, ecoutable: true })),
   ];
   const son = r.musique !== 'aucune' || r.ambiance !== 'aucune';
@@ -802,7 +798,7 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
                   hitSlop={6}
                   accessibilityRole="button"
                   accessibilityState={{ selected: joue }}
-                  accessibilityLabel={joue ? `Arrêter ${o.nom}` : `Écouter ${o.nom}`}
+                  accessibilityLabel={joue ? traduire("Arrêter {0}", o.nom) : traduire("Écouter {0}", o.nom)}
                   style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 17, marginLeft: 4, marginRight: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: joue ? c.goldLight : on ? 'rgba(255,255,255,0.22)' : pressed ? c.border : c.fillSoft })}
                 >
                   {joue ? (
@@ -828,7 +824,7 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
           </Ink>
         </View>
         <Ink size={12} color={c.textSecondary}>
-          {son ? 'Joue sur ton accueil, sans couper ta musique. Touche le rond pour écouter.' : 'Choisis un son pour ton accueil. Touche le rond pour écouter.'}
+          {son ? traduire('Joue sur ton accueil, sans couper ta musique. Touche le rond pour écouter.') : traduire('Choisis un son pour ton accueil. Touche le rond pour écouter.')}
         </Ink>
       </View>
       {rangee('Bruitage', bruitages, r.ambiance, (v) => set({ ambiance: v, coupe: false }))}
@@ -854,24 +850,22 @@ function TournePack({ titre, on, isPremium, onPress }: { titre: string; on: bool
       onPress={onPress}
       accessibilityRole="switch"
       accessibilityState={{ checked: on }}
-      accessibilityLabel={`Change à chaque ouverture, pack ${titre}${isPremium ? '' : ', avec Premium'}`}
+      accessibilityLabel={traduire("Change à chaque ouverture, pack {0}{1}", titre, isPremium ? '' : ', avec Premium')}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border })}
     >
       <Icon name="sync" size={20} color={on ? c.accent : c.textSecondary} stroke={2.4} />
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={14} weight="extraBold">
-          Change à chaque ouverture
-        </Ink>
+          {traduire("Change à chaque ouverture")}</Ink>
         <Ink size={12} color={c.textSecondary}>
-          {on ? `Actif : une scène ${titre} au hasard à chaque ouverture` : `Une scène ${titre} au hasard, jamais deux fois de suite`}
+          {on ? traduire("Actif : une scène {0} au hasard à chaque ouverture", titre) : traduire("Une scène {0} au hasard, jamais deux fois de suite", titre)}
         </Ink>
       </View>
       {!isPremium ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 8, borderRadius: 12, backgroundColor: c.fillSoft }}>
           <Icon name="lock" size={11} color={c.goldDeep} stroke={2.6} />
           <Ink size={11} weight="extraBold" color={c.textSecondary}>
-            Premium
-          </Ink>
+            {traduire("Premium")}</Ink>
         </View>
       ) : null}
       <View style={{ width: 48, height: 28, borderRadius: 14, padding: 3, backgroundColor: on ? c.accent : c.border, alignItems: on ? 'flex-end' : 'flex-start' }}>
@@ -889,10 +883,10 @@ function Animation({ scene }: { scene: SceneId }) {
   const reduire = useReduireAnimations();
   const animee = aUneVersionAnimee(scene) || ficheScene(scene).animee;
   const sousAnime = reduire
-    ? 'En pause : « Réduire les animations » est actif sur ton téléphone'
+    ? traduire('En pause : « Réduire les animations » est actif sur ton téléphone')
     : animee
-      ? 'Cette scène bouge en douceur'
-      : 'Pour les scènes marquées Animée';
+      ? traduire('Cette scène bouge en douceur')
+      : traduire('Pour les scènes marquées Animée');
   return (
     <Card>
       <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 2 }}>
@@ -900,14 +894,12 @@ function Animation({ scene }: { scene: SceneId }) {
           Animation
         </Ink>
         <Ink size={13} color={c.textSecondary}>
-          Ce qui bouge sur ton accueil
-        </Ink>
+          {traduire("Ce qui bouge sur ton accueil")}</Ink>
       </View>
-      <ToggleRow first label="Scène animée" sub={sousAnime} value={r.anime} onChange={(v) => set({ anime: v })} />
+      <ToggleRow first label={traduire("Scène animée")} sub={sousAnime} value={r.anime} onChange={(v) => set({ anime: v })} />
       <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
         <Ink size={12} color={c.textMuted}>
-          Le son joue seulement sur ton accueil, se mêle à ta musique sans la couper et se tait en mode silencieux. Un petit bouton sur la scène le coupe ou le remet.
-        </Ink>
+          {traduire("Le son joue seulement sur ton accueil, se mêle à ta musique sans la couper et se tait en mode silencieux. Un petit bouton sur la scène le coupe ou le remet.")}</Ink>
       </View>
     </Card>
   );

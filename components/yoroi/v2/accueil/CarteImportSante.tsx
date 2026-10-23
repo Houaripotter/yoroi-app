@@ -30,6 +30,7 @@ import {
 } from '@/lib/v2/sante/importAccueil';
 import type { IssueConnexion } from '@/lib/v2/sante/connexion';
 import { tap } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
 /** L'import de tout l'historique peut etre long : au dela, il continue en arriere-plan */
 const ATTENTE_IMPORT_MAX_MS = 180000;
@@ -154,24 +155,24 @@ export function CarteImportSante({ controle, onImporte }: { controle: Controle; 
     }
 
     if (longue) {
-      appAlert('Import en cours', 'L’import continue en arrière-plan. Tes données arrivent d’ici quelques minutes.');
+      appAlert('Import en cours', traduire('L’import continue en arrière-plan. Tes données arrivent d’ici quelques minutes.'));
       return;
     }
     const m = messageImport(issue, Platform.OS, compte);
     if (m.action === 'playstore') {
       const fn = (healthConnect as unknown as { openHealthConnectPlayStore?: () => Promise<void> }).openHealthConnectPlayStore;
       appAlert(m.titre, m.texte, [
-        { text: 'Plus tard', style: 'cancel' },
-        { text: 'Installer', onPress: () => void (typeof fn === 'function' ? fn.call(healthConnect) : undefined) },
+        { text: traduire('Plus tard'), style: 'cancel' },
+        { text: traduire('Installer'), onPress: () => void (typeof fn === 'function' ? fn.call(healthConnect) : undefined) },
       ]);
       return;
     }
     if (m.action === 'reglages') {
       const fn = (healthConnect as unknown as { openHealthConnectSettings?: () => Promise<void> }).openHealthConnectSettings;
       appAlert(m.titre, m.texte, [
-        { text: 'Plus tard', style: 'cancel' },
+        { text: traduire('Plus tard'), style: 'cancel' },
         {
-          text: Platform.OS === 'android' ? 'Ouvrir Health Connect' : 'Ouvrir Santé',
+          text: Platform.OS === 'android' ? 'Ouvrir Health Connect' : traduire('Ouvrir Santé'),
           onPress: () => void ouvrirReglagesSante(Platform.OS === 'android' && typeof fn === 'function' ? () => fn.call(healthConnect) : undefined),
         },
       ]);

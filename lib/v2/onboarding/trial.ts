@@ -6,8 +6,9 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export type FreeTrial = { days: number; end: Date };
 
@@ -74,8 +75,8 @@ export async function scheduleTrialReminder(end: Date): Promise<boolean> {
     if (at.getTime() < Date.now() + 3600000) return false;
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Ton essai Premium se termine bientôt',
-        body: `Il prend fin le ${longDate(end)}. Pour ne pas être débité, annule-le avant dans les réglages de ton compte ${storeName()}.`,
+        title: traduire('Ton essai Premium se termine bientôt'),
+        body: traduire("Il prend fin le {0}. Pour ne pas être débité, annule-le avant dans les réglages de ton compte {1}.", longDate(end), storeName()),
         data: { type: 'trial_reminder' },
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },

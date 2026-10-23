@@ -25,10 +25,11 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
 import { dateOf, isoOf } from '@/lib/v2/progres/format';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Stats = { totalInjuries: number; activeInjuries: number; healedInjuries: number; mostAffectedZone: string | null; averageRecoveryDays: number };
 
-const RISK_LABELS: Record<string, string> = { safe: 'charge correcte', moderate: 'charge modérée', high: 'charge élevée', danger: 'surcharge' };
+const RISK_LABELS: Record<string, string> = { safe: 'charge correcte', moderate: traduire('charge modérée'), high: traduire('charge élevée'), danger: 'surcharge' };
 
 export default function InfirmaryScreen() {
   return (
@@ -109,9 +110,9 @@ function Infirmary() {
   };
 
   const status = {
-    operational: { title: 'Opérationnel', text: 'Aucune douleur active. Continue de bien récupérer.', bg: c.successTint, fg: c.successText },
-    restricted: { title: 'Restreint', text: 'Une douleur modérée est notée. Adapte l’intensité sur la zone.', bg: intensite(3).tint, fg: intensite(3).text },
-    unfit: { title: 'Attention', text: 'Douleur importante notée. Repos de la zone et avis d’un professionnel de santé.', bg: c.accentTint, fg: c.accentPressed },
+    operational: { title: traduire('Opérationnel'), text: traduire('Aucune douleur active. Continue de bien récupérer.'), bg: c.successTint, fg: c.successText },
+    restricted: { title: 'Restreint', text: traduire('Une douleur modérée est notée. Adapte l’intensité sur la zone.'), bg: intensite(3).tint, fg: intensite(3).text },
+    unfit: { title: traduire('Attention'), text: traduire('Douleur importante notée. Repos de la zone et avis d’un professionnel de santé.'), bg: c.accentTint, fg: c.accentPressed },
   }[fit];
 
   const evaColor = levelColor;
@@ -120,7 +121,7 @@ function Infirmary() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <DetailHeader title="Infirmerie" sub="Ton carnet de soins, pour revenir plus fort." />
+        <DetailHeader title="Infirmerie" sub={traduire("Ton carnet de soins, pour revenir plus fort.")} />
 
         <View style={{ marginHorizontal: GUTTER, marginTop: 14, padding: 16, borderRadius: 22, backgroundColor: status.bg, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Svg width={34} height={34} viewBox="0 0 24 24" fill="none">
@@ -138,8 +139,8 @@ function Infirmary() {
             style={{ marginHorizontal: GUTTER, marginTop: 18 }}
             items={[
               { value: String(stats.activeInjuries), label: 'en cours' },
-              { value: String(stats.healedInjuries), label: 'guéries' },
-              { value: `${Math.round(stats.averageRecoveryDays || 0)} j`, label: 'de récupération en moyenne' },
+              { value: String(stats.healedInjuries), label: traduire('guéries') },
+              { value: `${Math.round(stats.averageRecoveryDays || 0)} j`, label: traduire('de récupération en moyenne') },
             ]}
           />
         ) : null}
@@ -147,8 +148,8 @@ function Infirmary() {
         {recovery !== null && stats ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 16, gap: 6 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Ink size={14} weight="bold" color={c.textSecondary}>Taux de guérison</Ink>
-              <Ink size={14} weight="black">{`${recovery}\u00A0%, ${stats.healedInjuries} sur ${stats.totalInjuries}`}</Ink>
+              <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Taux de guérison")}</Ink>
+              <Ink size={14} weight="black">{traduire("{0} %, {1} sur {2}", recovery, stats.healedInjuries, stats.totalInjuries)}</Ink>
             </View>
             <View style={{ height: 10, borderRadius: 5, backgroundColor: c.fillSoft, overflow: 'hidden' }}>
               <View style={{ width: `${recovery}%`, height: 10, borderRadius: 5, backgroundColor: intensite(2).fill }} />
@@ -158,15 +159,15 @@ function Infirmary() {
 
         {stats?.mostAffectedZone && stats.totalInjuries >= 2 ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 16, padding: 14, borderRadius: 18, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 2 }}>
-            <Ink size={13} weight="bold" color={c.textSecondary}>Zone à surveiller</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Zone à surveiller")}</Ink>
             <Ink size={17} weight="black" tight>{sentenceCase(getZoneDisplayName(stats.mostAffectedZone, 'front'))}</Ink>
-            <Ink size={13} color={c.textSecondary}>Ta zone la plus souvent touchée. Renforcement et mobilité ciblés.</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Ta zone la plus souvent touchée. Renforcement et mobilité ciblés.")}</Ink>
           </View>
         ) : null}
 
         <View style={{ paddingHorizontal: GUTTER, marginTop: 24 }}>
-          <SectionHead title="Où as-tu mal ?" />
-          <Ink size={14} color={c.textSecondary} style={{ marginTop: 2 }}>Touche la zone sur le corps pour la noter ou suivre une blessure.</Ink>
+          <SectionHead title={traduire("Où as-tu mal ?")} />
+          <Ink size={14} color={c.textSecondary} style={{ marginTop: 2 }}>{traduire("Touche la zone sur le corps pour la noter ou suivre une blessure.")}</Ink>
         </View>
         <View style={{ marginHorizontal: GUTTER, marginTop: 12, padding: 14, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 14 }}>
           <View style={{ flexDirection: 'row', padding: 4, borderRadius: 16, backgroundColor: c.fillSoft }}>
@@ -181,7 +182,7 @@ function Infirmary() {
                   }}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
-                  accessibilityLabel={v === 'front' ? 'Vue de face' : 'Vue de dos'}
+                  accessibilityLabel={v === 'front' ? traduire('Vue de face') : traduire('Vue de dos')}
                   style={{ flex: 1, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? P.white : 'transparent' }}
                 >
                   <Ink size={15} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>
@@ -194,9 +195,9 @@ function Infirmary() {
           <BodyPicker view={view} height={420} injured={injuries.map((i) => ({ zone_id: i.zone_id, zone_view: i.zone_view, eva_score: i.eva_score ?? 0 }))} onPick={onPick} />
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 18 }}>
             {[
-              { l: 'Léger', col: LEVEL_COLORS.light },
-              { l: 'Modéré', col: LEVEL_COLORS.moderate },
-              { l: 'Sévère', col: LEVEL_COLORS.severe },
+              { l: traduire('Léger'), col: LEVEL_COLORS.light },
+              { l: traduire('Modéré'), col: LEVEL_COLORS.moderate },
+              { l: traduire('Sévère'), col: LEVEL_COLORS.severe },
             ].map((it) => (
               <View key={it.l} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: it.col }} />
@@ -209,11 +210,11 @@ function Infirmary() {
         </View>
 
         <View style={{ paddingHorizontal: GUTTER, marginTop: 18, gap: 10 }}>
-          <SectionHead title="Blessures en cours" aside={injuries.length ? String(injuries.length) : undefined} />
+          <SectionHead title={traduire("Blessures en cours")} aside={injuries.length ? String(injuries.length) : undefined} />
           {injuries.length === 0 ? (
             <View style={{ padding: 16, borderRadius: 20, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 4 }}>
-              <Ink size={16} weight="extraBold">Aucune blessure</Ink>
-              <Ink size={13} color={c.textSecondary}>Si une douleur apparaît, note-la tout de suite : tu suivras son évolution jour après jour.</Ink>
+              <Ink size={16} weight="extraBold">{traduire("Aucune blessure")}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Si une douleur apparaît, note-la tout de suite : tu suivras son évolution jour après jour.")}</Ink>
             </View>
           ) : (
             injuries.map((inj) => {
@@ -227,7 +228,7 @@ function Infirmary() {
                     router.push(`/injury-detail?id=${inj.id}` as any);
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={`${inj.zone_name ? sentenceCase(inj.zone_name) : 'Blessure'}, douleur ${inj.eva_score} sur 10`}
+                  accessibilityLabel={traduire("{0}, douleur {1} sur 10", inj.zone_name ? sentenceCase(inj.zone_name) : 'Blessure', inj.eva_score)}
                   style={({ pressed }) => ({ padding: 14, borderRadius: 20, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider, flexDirection: 'row', alignItems: 'center', gap: 12 })}
                 >
                   <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: evaColor(inj.eva_score ?? 0), alignItems: 'center', justifyContent: 'center' }}>
@@ -235,8 +236,8 @@ function Infirmary() {
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Ink size={15} weight="extraBold">{inj.zone_name ? sentenceCase(inj.zone_name) : 'Zone'}</Ink>
-                    <Ink size={12} color={c.textSecondary}>{`douleur ${inj.eva_score ?? 0} sur 10, depuis ${days} jour${days > 1 ? 's' : ''}`}</Ink>
-                    {load && load.totalLoad > 0 ? <Ink size={12} color={c.textSecondary}>{`semaine d’avant : ${RISK_LABELS[load.riskLevel] ?? load.riskLevel}, ${load.totalLoad} points`}</Ink> : null}
+                    <Ink size={12} color={c.textSecondary}>{traduirePluriel(days, days > 1, "douleur {0} sur 10, depuis {1} jour", "douleur {0} sur 10, depuis {1} jours", inj.eva_score ?? 0, days)}</Ink>
+                    {load && load.totalLoad > 0 ? <Ink size={12} color={c.textSecondary}>{traduire("semaine d’avant : {0}, {1} points", RISK_LABELS[load.riskLevel] ?? load.riskLevel, load.totalLoad)}</Ink> : null}
                   </View>
                   <Chevron color={c.textMuted} />
                 </Pressable>
@@ -246,8 +247,7 @@ function Infirmary() {
         </View>
 
         <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 18 }}>
-          Ce carnet t’aide à suivre tes douleurs. Il ne remplace pas l’avis d’un médecin ou d’un kiné.
-        </Ink>
+          {traduire("Ce carnet t’aide à suivre tes douleurs. Il ne remplace pas l’avis d’un médecin ou d’un kiné.")}</Ink>
       </ScrollView>
 
       <ZoneSelectionModal visible={zoneModal} zones={overlapping} onSelect={(z: { id: string; name: string }) => {

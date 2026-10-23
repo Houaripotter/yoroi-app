@@ -57,6 +57,7 @@ import {
   QuestId,
 } from '@/lib/quests';
 import logger from '@/lib/security/logger';
+import { LOCALE } from '@/lib/i18n/tr';
 
 // ============================================
 // ICON MAPPING (couleur de l'icone uniquement)
@@ -345,7 +346,7 @@ export default function HomeChallengesSection({ onXPGained }: Props) {
                   />
                 </View>
                 <Text style={[styles.progressText, { color: colors.textMuted }]}>
-                  {quest.current.toLocaleString('fr-FR')}/{quest.target.toLocaleString('fr-FR')}{quest.unit ? ` ${quest.unit}` : ''}
+                  {quest.current.toLocaleString(LOCALE)}/{quest.target.toLocaleString(LOCALE)}{quest.unit ? ` ${quest.unit}` : ''}
                 </Text>
               </View>
             )}

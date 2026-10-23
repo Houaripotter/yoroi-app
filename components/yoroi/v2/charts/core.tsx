@@ -15,6 +15,7 @@ import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { fontFamilies } from '../../fonts';
 import { Ink } from '../Ink';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Mousse : teinte d'une courbe seule (eau du corps) */
 export const CHART_MOSS = '#4D6F2A';
@@ -465,11 +466,10 @@ export function TropheeRecord({ size = 18, couleurs }: { size?: number; couleurs
 export function BadgeRecord({ size = 15 }: { size?: number }) {
   const k = useChartInk();
   return (
-    <View accessible accessibilityLabel="Record" style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+    <View accessible accessibilityLabel={traduire("Record")} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
       <TropheeRecord size={Math.round(size * 1.35)} />
       <Ink size={size} weight="black" color={k.ink} numberOfLines={1}>
-        Record
-      </Ink>
+        {traduire("Record")}</Ink>
     </View>
   );
 }
@@ -488,8 +488,7 @@ export function ChartTooltip({ x, width, value, caption, record }: { x: number; 
           <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <TropheeRecord size={16} />
             <Ink size={12} weight="black" color={k.surface} numberOfLines={1}>
-              Record
-            </Ink>
+              {traduire("Record")}</Ink>
           </View>
         ) : null}
         <Ink size={13} weight="black" color={k.surface} numberOfLines={1}>

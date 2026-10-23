@@ -18,6 +18,7 @@ import { Hanko as SealOr } from '@/components/yoroi/v2/seance/Hanko';
 import { BigButton, BrushRing, Card, CIcon, D, Enter, Field, Glass, IconBtn, N, P, Press, Section, tap, V } from '@/components/yoroi/v2/combat/ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
+import { traduire } from '@/lib/i18n/tr';
 
 type EventType = 'takedown' | 'guard_pass' | 'sweep' | 'mount' | 'back_control' | 'sub_attempt' | 'tap' | 'advantage' | 'penalty' | 'points_custom';
 interface MatchEvent {
@@ -47,20 +48,20 @@ interface Action {
 }
 
 const MY: Action[] = [
-  { type: 'takedown', label: 'Amenée au sol', short: 'Amenée', points: 2, side: 'me' },
-  { type: 'guard_pass', label: 'Passage de garde', short: 'Passage', points: 3, side: 'me' },
+  { type: 'takedown', label: traduire('Amenée au sol'), short: traduire('Amenée'), points: 2, side: 'me' },
+  { type: 'guard_pass', label: traduire('Passage de garde'), short: 'Passage', points: 3, side: 'me' },
   { type: 'sweep', label: 'Renversement', short: 'Renvers.', points: 2, side: 'me' },
-  { type: 'mount', label: 'Montée', short: 'Montée', points: 4, side: 'me' },
-  { type: 'back_control', label: 'Prise du dos', short: 'Dos', points: 4, side: 'me' },
+  { type: 'mount', label: traduire('Montée'), short: traduire('Montée'), points: 4, side: 'me' },
+  { type: 'back_control', label: traduire('Prise du dos'), short: 'Dos', points: 4, side: 'me' },
   { type: 'advantage', label: 'Avantage', short: 'Avantage', points: 1, side: 'me' },
-  { type: 'sub_attempt', label: 'Tentative de soumission', short: 'Tentative', points: 0, side: 'me' },
-  { type: 'tap', label: 'Il tape', short: 'Il tape', points: 0, side: 'me' },
+  { type: 'sub_attempt', label: traduire('Tentative de soumission'), short: 'Tentative', points: 0, side: 'me' },
+  { type: 'tap', label: traduire('Il tape'), short: traduire('Il tape'), points: 0, side: 'me' },
 ];
 const OPP: Action[] = [
-  { type: 'takedown', label: 'Amenée adverse', short: 'Amenée', points: 2, side: 'opponent' },
+  { type: 'takedown', label: traduire('Amenée adverse'), short: traduire('Amenée'), points: 2, side: 'opponent' },
   { type: 'guard_pass', label: 'Passage adverse', short: 'Passage', points: 3, side: 'opponent' },
   { type: 'sweep', label: 'Renversement adverse', short: 'Renvers.', points: 2, side: 'opponent' },
-  { type: 'penalty', label: 'Pénalité adverse', short: 'Pénalité', points: 1, side: 'opponent' },
+  { type: 'penalty', label: traduire('Pénalité adverse'), short: traduire('Pénalité'), points: 1, side: 'opponent' },
   { type: 'sub_attempt', label: 'Tentative adverse', short: 'Tentative', points: 0, side: 'opponent' },
   { type: 'tap', label: 'Je tape', short: 'Je tape', points: 0, side: 'opponent' },
 ];
@@ -173,7 +174,7 @@ export default function MatchTrackerScreen() {
       else router.replace('/' as any);
     } catch (e) {
       logger.error('Enregistrement du match impossible', e);
-      appAlert('Enregistrement impossible', 'Réessaie dans un instant.');
+      appAlert(traduire('Enregistrement impossible'), traduire('Réessaie dans un instant.'));
     }
   };
 
@@ -186,30 +187,28 @@ export default function MatchTrackerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }}>
-          <EnTete titre="Suivi de match" sousTitre="Une main, des gros boutons, rien à écrire" onRetour={back} style={{ marginHorizontal: -22, marginTop: -8 }} />
+          <EnTete titre={traduire("Suivi de match")} sousTitre={traduire("Une main, des gros boutons, rien à écrire")} onRetour={back} style={{ marginHorizontal: -22, marginTop: -8 }} />
           <Glass style={{ alignItems: 'center', gap: 14, paddingVertical: 26 }}>
             <SealOr size={64} rotate={-8} color={P.goldDark} />
             <Ink size={22} weight="black" tight style={{ textAlign: 'center' }}>
-              Prêt à enregistrer ton match ?
-            </Ink>
+              {traduire("Prêt à enregistrer ton match ?")}</Ink>
             <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>
-              Touche une plaque à chaque action, pour toi ou pour ton adversaire. Le score se calcule tout seul.
-            </Ink>
+              {traduire("Touche une plaque à chaque action, pour toi ou pour ton adversaire. Le score se calcule tout seul.")}</Ink>
             <View style={{ alignSelf: 'stretch', gap: 10, marginTop: 6 }}>
               <BigButton
-                label="Lancer le chrono"
+                label={traduire("Lancer le chrono")}
                 icon="play"
                 onPress={() => {
                   setStart(Date.now());
                   setPhase('live');
                 }}
               />
-              <BigButton label="Noter un match déjà fini" tone="light" icon="list" onPress={() => setPhase('live')} />
+              <BigButton label={traduire("Noter un match déjà fini")} tone="light" icon="list" onPress={() => setPhase('live')} />
             </View>
           </Glass>
           {history.length > 0 ? (
             <>
-              <Section title="Tes derniers matchs" sub={`${wins} victoires sur ${plural(history.length, 'match', 'matchs')}`} />
+              <Section title={traduire("Tes derniers matchs")} sub={traduire("{0} victoires sur {1}", wins, plural(history.length, 'match', 'matchs'))} />
               {history.slice(0, 10).map((h, i) => {
                 const c = h.winner === 'me' ? V : h.winner === 'opponent' ? D : N;
                 return (
@@ -218,9 +217,9 @@ export default function MatchTrackerScreen() {
                       <View style={{ width: 8, alignSelf: 'stretch', borderRadius: 4, backgroundColor: c }} />
                       <View style={{ flex: 1 }}>
                         <Ink size={16} weight="black" color={c}>
-                          {h.winner === 'me' ? 'Victoire' : h.winner === 'opponent' ? 'Défaite' : 'Égalité'}
+                          {h.winner === 'me' ? traduire('Victoire') : h.winner === 'opponent' ? traduire('Défaite') : traduire('Égalité')}
                           <Ink size={13} weight="bold" color={P.ink2}>
-                            {h.method === 'submission' ? ', par soumission' : h.method === 'points' ? ', aux points' : ''}
+                            {h.method === 'submission' ? traduire(', par soumission') : h.method === 'points' ? traduire(', aux points') : ''}
                           </Ink>
                         </Ink>
                         <Ink size={12} weight="bold" color={P.muted}>
@@ -228,7 +227,7 @@ export default function MatchTrackerScreen() {
                         </Ink>
                       </View>
                       <Ink size={24} weight="black" tight>
-                        {`${h.myScore} à ${h.oppScore}`}
+                        {traduire("{0} à {1}", h.myScore, h.oppScore)}
                       </Ink>
                     </Card>
                   </Enter>
@@ -247,12 +246,11 @@ export default function MatchTrackerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <IconBtn icon="close" label="Quitter le match" onPress={() => appAlert('Quitter le match ?', 'Les actions notées seront perdues.', [{ text: 'Rester', style: 'cancel' }, { text: 'Quitter', style: 'destructive', onPress: back }])} />
-          <Press onPress={end} haptic="medium" accessibilityRole="button" accessibilityLabel="Terminer le match">
+          <IconBtn icon="close" label={traduire("Quitter le match")} onPress={() => appAlert(traduire('Quitter le match ?'), traduire('Les actions notées seront perdues.'), [{ text: 'Rester', style: 'cancel' }, { text: 'Quitter', style: 'destructive', onPress: back }])} />
+          <Press onPress={end} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Terminer le match")}>
             <View style={{ height: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: P.ink, justifyContent: 'center' }}>
               <Ink size={15} weight="extraBold" color={P.paper}>
-                Terminer
-              </Ink>
+                {traduire("Terminer")}</Ink>
             </View>
           </Press>
         </View>
@@ -269,10 +267,10 @@ export default function MatchTrackerScreen() {
             <BrushRing value={start ? (sec % 300) / 300 : 0} size={110} stroke={10} color={P.accent} />
             <View style={{ position: 'absolute', alignItems: 'center' }}>
               <Ink size={26} weight="black" tight>
-                {start ? fmt(sec) : 'Après'}
+                {start ? fmt(sec) : traduire('Après')}
               </Ink>
               <Ink size={11} weight="bold" color={P.muted}>
-                {start ? 'chrono' : 'le match'}
+                {start ? 'chrono' : traduire('le match')}
               </Ink>
             </View>
           </View>
@@ -287,8 +285,7 @@ export default function MatchTrackerScreen() {
         </View>
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30, gap: 12 }}>
           <Ink size={14} weight="extraBold" color={V}>
-            Mes actions
-          </Ink>
+            {traduire("Mes actions")}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {MY.map((a) => (
               <ActionPlate key={`me_${a.type}`} a={a} onPress={() => add(a)} />
@@ -306,14 +303,12 @@ export default function MatchTrackerScreen() {
             <Card style={{ gap: 10, marginTop: 6 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Ink size={16} weight="black">
-                  Dernières actions
-                </Ink>
-                <Press onPress={undo} accessibilityRole="button" accessibilityLabel="Annuler la dernière action">
+                  {traduire("Dernières actions")}</Ink>
+                <Press onPress={undo} accessibilityRole="button" accessibilityLabel={traduire("Annuler la dernière action")}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#E6E4DD' }}>
                     <CIcon name="undo" size={16} color={P.ink} />
                     <Ink size={14} weight="extraBold">
-                      Annuler
-                    </Ink>
+                      {traduire("Annuler")}</Ink>
                   </View>
                 </Press>
               </View>
@@ -352,26 +347,25 @@ export default function MatchTrackerScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 110, gap: 14 }} keyboardShouldPersistTaps="handled">
-        <IconBtn icon="back" label="Revenir au match" onPress={() => setPhase('live')} />
+        <IconBtn icon="back" label={traduire("Revenir au match")} onPress={() => setPhase('live')} />
         <Glass style={{ alignItems: 'center', gap: 8, paddingVertical: 26 }}>
           {myWin ? <SealOr size={72} rotate={-8} color={P.goldDark} /> : <Glyph kind={oppWin ? 'vague' : 'eventail'} size={60} color={color} />}
           <Ink size={28} weight="black" tight color={color}>
-            {myWin ? 'Victoire' : oppWin ? 'Défaite' : 'Égalité'}
+            {myWin ? traduire('Victoire') : oppWin ? traduire('Défaite') : traduire('Égalité')}
           </Ink>
           <Ink size={56} weight="black" tight>
-            {`${me} à ${opp}`}
+            {traduire("{0} à {1}", me, opp)}
           </Ink>
           {elapsed.current > 0 ? (
             <Ink size={14} weight="bold" color={P.ink2}>
-              {`Durée ${fmt(elapsed.current)}`}
+              {traduire("Durée {0}", fmt(elapsed.current))}
             </Ink>
           ) : null}
         </Glass>
         {events.length > 0 ? (
           <Card style={{ gap: 10 }}>
             <Ink size={18} weight="black" tight>
-              Le match en entier
-            </Ink>
+              {traduire("Le match en entier")}</Ink>
             {events.map((ev) => (
               <View key={ev.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ink size={12} weight="bold" color={P.muted} style={{ width: 40 }}>
@@ -390,10 +384,10 @@ export default function MatchTrackerScreen() {
             ))}
           </Card>
         ) : null}
-        <Field label="Tes notes après le match" value={notes} onChangeText={setNotes} multiline placeholder="Ce qui a marché, ce qui t'a surpris, ce que tu travailles ensuite" />
+        <Field label={traduire("Tes notes après le match")} value={notes} onChangeText={setNotes} multiline placeholder={traduire("Ce qui a marché, ce qui t'a surpris, ce que tu travailles ensuite")} />
       </ScrollView>
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 14 }}>
-        <BigButton label={saved ? 'Match enregistré' : 'Enregistrer le match'} icon="check" tone={saved ? 'ink' : 'red'} onPress={save} disabled={saved} />
+        <BigButton label={saved ? traduire('Match enregistré') : traduire('Enregistrer le match')} icon="check" tone={saved ? 'ink' : 'red'} onPress={save} disabled={saved} />
       </View>
     </View>
   );

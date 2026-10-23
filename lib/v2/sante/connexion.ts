@@ -13,6 +13,7 @@
  * - sinon un message clair avec les étapes dans Réglages.
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export type StatutDemande = 'a_demander' | 'repondu' | 'inconnu';
 
 export type IssueConnexion =
@@ -144,17 +145,17 @@ export function uneSeuleFois<A extends unknown[], T>(fn: (...a: A) => Promise<T>
 // ============================================
 
 export const ETAPES_REGLAGES_IOS = [
-  'Ouvre Réglages sur ton iPhone.',
-  'Touche Santé, puis Accès aux données et appareils.',
-  'Touche YOROI, puis Tout activer.',
-  'Reviens dans YOROI.',
+  traduire('Ouvre Réglages sur ton iPhone.'),
+  traduire('Touche Santé, puis Accès aux données et appareils.'),
+  traduire('Touche YOROI, puis Tout activer.'),
+  traduire('Reviens dans YOROI.'),
 ];
 
 export const ETAPES_REGLAGES_ANDROID = [
   'Ouvre Health Connect.',
-  'Touche Autorisations des applications, puis YOROI.',
-  'Touche Tout autoriser.',
-  'Reviens dans YOROI.',
+  traduire('Touche Autorisations des applications, puis YOROI.'),
+  traduire('Touche Tout autoriser.'),
+  traduire('Reviens dans YOROI.'),
 ];
 
 export type MessageConnexion = { titre: string; texte: string; reglages: boolean };
@@ -165,27 +166,27 @@ export function messageConnexion(issue: IssueConnexion, plateforme: string): Mes
   const etapes = (android ? ETAPES_REGLAGES_ANDROID : ETAPES_REGLAGES_IOS).map((e, i) => `${i + 1}. ${e}`).join('\n');
   switch (issue) {
     case 'connecte':
-      return { titre: `${nom} est relié`, texte: 'Import en cours. Tes pesées et tes séances arrivent dans YOROI.', reglages: false };
+      return { titre: traduire("{0} est relié", nom), texte: traduire('Import en cours. Tes pesées et tes séances arrivent dans YOROI.'), reglages: false };
     case 'rien_lu':
       return {
-        titre: `YOROI ne lit rien dans ${nom}`,
+        titre: traduire("YOROI ne lit rien dans {0}", nom),
         texte: android
-          ? `L’accès n’est pas ouvert, ou ${nom} est vide. Pour l’ouvrir :\n${etapes}`
-          : `Soit l’accès est coupé, soit ton iPhone n’a encore rien enregistré. Apple ne dit pas lequel. Pour vérifier :\n${etapes}`,
+          ? traduire("L’accès n’est pas ouvert, ou {0} est vide. Pour l’ouvrir :\n{1}", nom, etapes)
+          : traduire("Soit l’accès est coupé, soit ton iPhone n’a encore rien enregistré. Apple ne dit pas lequel. Pour vérifier :\n{0}", etapes),
         reglages: true,
       };
     case 'refuse':
-      return { titre: 'Accès refusé', texte: `Rien n’est autorisé pour YOROI. Pour l’ouvrir :\n${etapes}`, reglages: true };
+      return { titre: traduire('Accès refusé'), texte: traduire("Rien n’est autorisé pour YOROI. Pour l’ouvrir :\n{0}", etapes), reglages: true };
     case 'abandon':
       return {
-        titre: 'La fenêtre n’a pas été validée',
-        texte: android ? 'Réessaie, ou ouvre l’accès toi-même :\n' + etapes : 'Réessaie et touche Autoriser en haut à droite. Ou ouvre l’accès toi-même :\n' + etapes,
+        titre: traduire('La fenêtre n’a pas été validée'),
+        texte: android ? traduire('Réessaie, ou ouvre l’accès toi-même :\n') + etapes : traduire('Réessaie et touche Autoriser en haut à droite. Ou ouvre l’accès toi-même :\n') + etapes,
         reglages: true,
       };
     case 'indisponible':
-      return { titre: `${nom} indisponible`, texte: android ? 'Installe Health Connect depuis le Play Store, puis réessaie.' : 'L’app Santé n’existe pas sur cet appareil.', reglages: false };
+      return { titre: `${nom} indisponible`, texte: android ? traduire('Installe Health Connect depuis le Play Store, puis réessaie.') : traduire('L’app Santé n’existe pas sur cet appareil.'), reglages: false };
     default:
-      return { titre: 'Connexion impossible', texte: `Réessaie dans un instant. Si ça recommence :\n${etapes}`, reglages: true };
+      return { titre: traduire('Connexion impossible'), texte: traduire("Réessaie dans un instant. Si ça recommence :\n{0}", etapes), reglages: true };
   }
 }
 
@@ -199,11 +200,11 @@ export type CompteImport = { weights?: number; workouts?: number; sleep?: number
 export function texteCompte(c: CompteImport | null | undefined): string {
   if (!c) return '';
   const p = (n: number | undefined, un: string, plusieurs: string) => (n && n > 0 ? `${n} ${n > 1 ? plusieurs : un}` : null);
-  return [p(c.weights, 'pesée', 'pesées'), p(c.workouts, 'séance', 'séances'), p(c.sleep, 'nuit', 'nuits')].filter(Boolean).join(', ');
+  return [p(c.weights, traduire('pesée'), traduire('pesées')), p(c.workouts, traduire('séance'), traduire('séances')), p(c.sleep, 'nuit', 'nuits')].filter(Boolean).join(', ');
 }
 
 export function texteImport(enCours: boolean, c: CompteImport | null | undefined): string {
   const t = texteCompte(c);
   if (enCours) return t ? `Import en cours : ${t}` : 'Import en cours';
-  return t ? `Import terminé : ${t}` : 'Import terminé';
+  return t ? traduire("Import terminé : {0}", t) : traduire('Import terminé');
 }

@@ -33,6 +33,7 @@ import {
   RC_API_KEY,
   PREMIUM_ENTITLEMENT_ID,
 } from '@/constants/premium';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Chargement des offres : delai avant chaque tentative, et temps maximum d'une tentative */
 const OFFERS_DELAYS = [0, 1000, 2500];
@@ -393,7 +394,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       if (getPurchasePreview()) return { success: false, error: PREVIEW_PURCHASE_MESSAGE };
       const Purchases = getPurchasesModule();
       if (!Purchases || !isStoreReady) {
-        return { success: false, error: 'La boutique n’est pas disponible pour le moment. Réessaie dans un instant.' };
+        return { success: false, error: traduire('La boutique n’est pas disponible pour le moment. Réessaie dans un instant.') };
       }
       try {
         const { customerInfo } = await Purchases.purchasePackage(pkg.raw as never);
@@ -415,12 +416,12 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
         return {
           success: false,
           needsRestore: true,
-          error: 'Le store a validé ton achat, mais Premium ne s’est pas encore activé. Touche Restaurer mes achats pour le récupérer. Si ça ne marche pas, écris à yoroiapp@hotmail.com.',
+          error: traduire('Le store a validé ton achat, mais Premium ne s’est pas encore activé. Touche Restaurer mes achats pour le récupérer. Si ça ne marche pas, écris à yoroiapp@hotmail.com.'),
         };
       } catch (e) {
         const err = e as { userCancelled?: boolean; message?: string };
         if (err.userCancelled) return { success: false, cancelled: true };
-        return { success: false, error: 'L’achat n’a pas pu aboutir. Vérifie ta connexion et réessaie.' };
+        return { success: false, error: traduire('L’achat n’a pas pu aboutir. Vérifie ta connexion et réessaie.') };
       }
     },
     [isStoreReady, applyEntitlement]
@@ -430,14 +431,14 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
     if (getPurchasePreview()) return { success: false, restored: false, error: PREVIEW_PURCHASE_MESSAGE };
     const Purchases = getPurchasesModule();
     if (!Purchases || !isStoreReady) {
-      return { success: false, restored: false, error: 'La boutique n’est pas disponible pour le moment.' };
+      return { success: false, restored: false, error: traduire('La boutique n’est pas disponible pour le moment.') };
     }
     try {
       const info = await Purchases.restorePurchases();
       await appliquerAvecGarde(Purchases, info);
       return { success: true, restored: etaitPremiumRef.current };
     } catch {
-      return { success: false, restored: false, error: 'La restauration n’a pas pu aboutir. Vérifie ta connexion et réessaie.' };
+      return { success: false, restored: false, error: traduire('La restauration n’a pas pu aboutir. Vérifie ta connexion et réessaie.') };
     }
   }, [isStoreReady, appliquerAvecGarde]);
 

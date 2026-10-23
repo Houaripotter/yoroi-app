@@ -9,6 +9,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useYoroiTheme } from '../YoroiThemeProvider';
 import { Ink } from './Ink';
+import { traduire } from '@/lib/i18n/tr';
 
 /** arrow : petite fleche vers le bas, a retirer sur un ecran secondaire ou la barre d'onglets n'est pas visible */
 export function PlusHint({ text, align = 'left', color, arrow = true, style }: { text: string; align?: 'left' | 'center'; color?: string; arrow?: boolean; style?: StyleProp<ViewStyle> }) {
@@ -19,7 +20,7 @@ export function PlusHint({ text, align = 'left', color, arrow = true, style }: {
     <View
       accessible
       accessibilityRole="text"
-      accessibilityLabel={`${text}. Le bouton plus est au centre de la barre d’onglets.`}
+      accessibilityLabel={traduire("{0}. Le bouton plus est au centre de la barre d’onglets.", text)}
       style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: align === 'center' ? 'center' : 'flex-start' }, style]}
     >
       <View style={{ width: 28, height: 28, borderRadius: 10, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>

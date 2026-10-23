@@ -5,6 +5,7 @@
  * dans son profil. Les identifiants (couleurs) restent les memes pour ne rien casser.
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export type BeltId = 'blanche' | 'jaune' | 'orange' | 'verte' | 'verte_bleue' | 'bleue' | 'bleue_marron' | 'marron' | 'marron_noire' | 'noire';
 
 /** name : nom du niveau, affiche partout (« niveau Solide »). Vague 47 : aucun nom commun avec les rangs (Regulier, Confirme, Expert sont des rangs Classique). */
@@ -44,5 +45,5 @@ export function beltFor(count: number): BeltProgress {
 }
 
 export function seancesWord(n: number): string {
-  return n > 1 ? `${n} séances` : `${n} séance`;
+  return n > 1 ? traduire("{0} séances", n) : traduire("{0} séance", n);
 }

@@ -11,6 +11,7 @@ import { JoursPicker, JOURS_LETTRES, JOURS_NOMS, joursTexte } from '@/components
 import type { Goal } from '@/lib/v2/onboarding/draft';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Ancien repere selon l'objectif : plus propose a l'ecran, garde pour les appelants */
 export function suggestedSessions(goal: Goal | null): number {
@@ -23,7 +24,7 @@ export function suggestedSessions(goal: Goal | null): number {
 export function WeekDots({ count, days, size = 36 }: { count: number; days?: number[]; size?: number }) {
   const c = useColors();
   const isOn = (i: number) => (days && days.length ? days.includes(i) : i < count);
-  const label = days && days.length ? `${days.length} séances : ${joursTexte(days)}` : `${count} séances sur 7 jours`;
+  const label = days && days.length ? traduire("{0} séances : {1}", days.length, joursTexte(days)) : traduire("{0} séances sur 7 jours", count);
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }} accessible accessibilityLabel={label}>
       {JOURS_LETTRES.map((d, i) => {
@@ -49,18 +50,18 @@ export function Rythme({ nav, days, onToggle, onNext }: { nav: Nav; goal?: Goal 
   return (
     <Shell
       {...nav}
-      title="Tes **jours d’entraînement**"
-      sub="Touche les jours où tu peux t’entraîner. Le nombre de séances suit tout seul."
+      title={traduire("Tes **jours d’entraînement**")}
+      sub={traduire("Touche les jours où tu peux t’entraîner. Le nombre de séances suit tout seul.")}
       footer={<MainButton label="Continuer" onPress={onNext} disabled={!n} />}
     >
       <JoursPicker value={days} onToggle={onToggle} label="Entraînement" />
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 4 }}>
-        <Ink size={13} weight="bold" color={c.textMuted}>Ta semaine</Ink>
-        <Riche size={26} weight="black" color={c.ink} lineHeight={31} style={{ letterSpacing: -1 }} text={n ? `**${n} ${n > 1 ? 'séances' : 'séance'}** par semaine` : 'À toi de choisir'} />
-        <Ink size={14} weight="bold" color={c.textSecondary} style={{ lineHeight: 20 }}>{n ? majuscule(joursTexte(days)) : 'Aucun jour imposé : c’est toi qui sais quand tu peux.'}</Ink>
+        <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine")}</Ink>
+        <Riche size={26} weight="black" color={c.ink} lineHeight={31} style={{ letterSpacing: -1 }} text={n ? traduire("**{0} {1}** par semaine", n, n > 1 ? 'séances' : 'séance') : traduire('À toi de choisir')} />
+        <Ink size={14} weight="bold" color={c.textSecondary} style={{ lineHeight: 20 }}>{n ? majuscule(joursTexte(days)) : traduire('Aucun jour imposé : c’est toi qui sais quand tu peux.')}</Ink>
       </View>
       <Animated.View entering={FadeIn.delay(200)} style={{ borderRadius: 18, backgroundColor: c.accentTint, padding: 14 }}>
-        <Ink size={14} color={c.ink} style={{ lineHeight: 20 }}>Choisis ce que tu peux tenir. Tu pourras les changer quand tu veux dans Réglages, Objectif de la semaine.</Ink>
+        <Ink size={14} color={c.ink} style={{ lineHeight: 20 }}>{traduire("Choisis ce que tu peux tenir. Tu pourras les changer quand tu veux dans Réglages, Objectif de la semaine.")}</Ink>
       </Animated.View>
     </Shell>
   );

@@ -8,6 +8,7 @@ import { healthConnect } from '@/lib/healthConnect';
 import { logger } from '@/lib/security/logger';
 import { getSanteSource } from '@/lib/v2/sante/data';
 import type { SanteMode } from '@/lib/v2/sante/data';
+import { traduire } from '@/lib/i18n/tr';
 
 export type HealthDay = {
   date: string;
@@ -148,5 +149,5 @@ export function pendingImport(read: HealthRead | null, rows: Array<{ date: strin
 
 /** « depuis Apple Santé, balance Withings » */
 export function sourceText(provider: string, day?: Pick<HealthDay, 'sourceLabel'> | null): string {
-  return day?.sourceLabel ? `depuis ${provider}, ${day.sourceLabel}` : `depuis ${provider}`;
+  return day?.sourceLabel ? traduire("depuis {0}, {1}", provider, day.sourceLabel) : traduire("depuis {0}", provider);
 }

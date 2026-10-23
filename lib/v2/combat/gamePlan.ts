@@ -5,6 +5,7 @@
 import type { CombatRound, Training } from '@/lib/database';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
 import { roundsOf } from './rounds';
+import { traduire } from '@/lib/i18n/tr';
 
 export const CHECKED_KEY = '@yoroi_gameplan_checked';
 
@@ -37,7 +38,7 @@ export function buildGamePlan(trainings: Training[], partnerName?: string) {
   const defenses = entries
     .filter((e) => e.round.counteredBy?.trim())
     .slice(0, 15)
-    .map((e) => ({ id: `def_${e.trainingId ?? 0}_${e.round.number}`, text: `Défendre : ${e.round.counteredBy!.trim()}`, date: e.date, partner: e.round.partner ?? null, source: 'defense' as const }));
+    .map((e) => ({ id: `def_${e.trainingId ?? 0}_${e.round.number}`, text: traduire("Défendre : {0}", e.round.counteredBy!.trim()), date: e.date, partner: e.round.partner ?? null, source: 'defense' as const }));
   const seen = new Set<string>();
   const checklist = [...improvements, ...defenses]
     .filter((it) => {

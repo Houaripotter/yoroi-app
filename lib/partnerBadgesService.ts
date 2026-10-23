@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import type { PartnerBadge } from './partnerModel';
+import { traduire } from '@/lib/i18n/tr';
 
 const PARTNERS_KEY = '@yoroi_sparring_partners';
 
@@ -23,7 +24,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'first_round',
     name: 'Premier round',
-    description: 'Ton tout premier sparring avec ce partenaire.',
+    description: traduire('Ton tout premier sparring avec ce partenaire.'),
     icon: 'Sparkles',
     color: '#D4AF37',
     check: s => s.total >= 1,
@@ -31,7 +32,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'first_win',
     name: 'Premiere victoire',
-    description: 'Ta premiere domination claire.',
+    description: traduire('Ta premiere domination claire.'),
     icon: 'Trophy',
     color: '#10B981',
     check: s => s.wins >= 1,
@@ -39,7 +40,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'first_tap',
     name: 'Premier tap out',
-    description: 'Tu as fait tapper pour la premiere fois.',
+    description: traduire('Tu as fait tapper pour la premiere fois.'),
     icon: 'Hand',
     color: '#F59E0B',
     check: s => s.wins >= 1,
@@ -47,7 +48,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'ten_rounds',
     name: '10 rounds ensemble',
-    description: 'Vous roulez serieusement.',
+    description: traduire('Vous roulez serieusement.'),
     icon: 'Flame',
     color: '#EF4444',
     check: s => s.roundsWithPartner >= 10,
@@ -55,7 +56,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'fifty_rounds',
     name: '50 rounds',
-    description: 'Partenaire de route.',
+    description: traduire('Partenaire de route.'),
     icon: 'Mountain',
     color: '#8B5CF6',
     check: s => s.roundsWithPartner >= 50,
@@ -79,7 +80,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'comeback',
     name: 'Comeback',
-    description: 'Victoire apres 3 defaites contre ce partenaire.',
+    description: traduire('Victoire apres 3 defaites contre ce partenaire.'),
     icon: 'RefreshCw',
     color: '#3B82F6',
     check: s => s.wins >= 1 && s.losses >= 3,
@@ -87,7 +88,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'no_tap_12',
     name: 'Incassable',
-    description: '12 rounds consecutifs sans tapper.',
+    description: traduire('12 rounds consecutifs sans tapper.'),
     icon: 'Shield',
     color: '#10B981',
     check: s => s.streakNoTap >= 12,
@@ -95,7 +96,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'regular_month',
     name: 'Routine',
-    description: 'Roule avec ce partenaire chaque semaine pendant 1 mois.',
+    description: traduire('Roule avec ce partenaire chaque semaine pendant 1 mois.'),
     icon: 'Calendar',
     color: '#06B6D4',
     check: s => s.weeksInARow >= 4,

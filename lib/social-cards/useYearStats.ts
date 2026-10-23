@@ -4,6 +4,7 @@ import { getClubLogoSource } from '@/lib/sports';
 import { getGlobalGoalStats } from '@/lib/trainingGoalsService';
 import logger from '@/lib/security/logger';
 import { compterSeances } from './compteurSeances';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -136,12 +137,12 @@ const findBusiestMonth = (trainings: any[]): { month: string; monthNumber: numbe
   });
 
   const monthNames = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    traduire('Janvier'), traduire('Février'), traduire('Mars'), traduire('Avril'), traduire('Mai'), traduire('Juin'),
+    traduire('Juillet'), traduire('Août'), traduire('Septembre'), traduire('Octobre'), traduire('Novembre'), traduire('Décembre')
   ];
 
   return {
-    month: monthNames[busiestMonth] || 'Janvier',
+    month: monthNames[busiestMonth] || traduire('Janvier'),
     monthNumber: busiestMonth,
     daysActive: maxDays,
   };
@@ -206,7 +207,7 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
       const clubCounts: { [clubName: string]: { count: number; logo?: string } } = {};
 
       yearTrainings.forEach(t => {
-        const clubName = t.club_name || 'Sans club';
+        const clubName = t.club_name || traduire('Sans club');
         if (!clubCounts[clubName]) {
           clubCounts[clubName] = { count: 0, logo: t.club_logo };
         }
@@ -235,7 +236,7 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
       // 4. MOIS LE PLUS ACTIF
       const busiestMonth = yearTrainings.length > 0
         ? findBusiestMonth(yearTrainings)
-        : { month: 'Aucun', monthNumber: 0, daysActive: 0 };
+        : { month: traduire('Aucun'), monthNumber: 0, daysActive: 0 };
 
       // 5. PROJECTION FIN D'ANNÉE
       const daysSoFar = Math.floor((endDate.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -254,7 +255,7 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
         projection = {
           estimatedTotal,
           onTrackFor200: estimatedTotal >= 200,
-          note: daysSoFar < 30 ? 'Trop tôt pour une projection fiable' : undefined,
+          note: daysSoFar < 30 ? traduire('Trop tôt pour une projection fiable') : undefined,
         };
       }
 
@@ -289,7 +290,7 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
       setStats(yearStats);
     } catch (err) {
       logger.error('Erreur chargement stats annuelles:', err);
-      setError('Impossible de charger les statistiques');
+      setError(traduire('Impossible de charger les statistiques'));
     } finally {
       setIsLoading(false);
     }

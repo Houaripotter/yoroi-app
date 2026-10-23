@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { freeTrialOf, type FreeTrial } from '@/lib/v2/onboarding/trial';
 import { FREE_LIMITS } from '@/lib/v2/premium/limits';
+import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 // ===== Ce que Premium ajoute (verifie dans le code, ecran par ecran) =====
 
@@ -40,16 +41,16 @@ const FREE_MONTHS = Math.round(FREE_LIMITS.chartDays / 30);
  *  - monde : isThemeUnlocked et isPackUnlocked (lib/v2/dojo/personnages.ts)
  */
 export const PREMIUM_ROWS: PremiumRow[] = [
-  { id: 'courbes', label: 'Courbes et historique', sub: 'Poids, mesures, force et santé', free: `${FREE_MONTHS} mois`, premium: 'Tout', desc: 'Tes courbes sur 6 mois, 1 an et tout ton historique', icon: 'calendar', perkIcon: 'infinite' },
-  { id: 'analyses', label: 'Analyses et prédictions', sub: 'Toutes tes prévisions, radar, bilan PDF', free: 'Une ligne', premium: 'Incluses', desc: 'Ton poids projeté, ton radar de performance et ton bilan en PDF', icon: 'target', perkIcon: 'chart' },
-  { id: 'combat', label: 'Combat et compétition', sub: 'Compétitions, rounds, camp, coupe', free: `${FREE_LIMITS.upcomingCompetitions} à venir`, premium: 'Sans limite', desc: 'Tes rounds analysés, ton camp et ta coupe jusqu’à la pesée', icon: 'swords', perkIcon: 'trophy' },
-  { id: 'carnet', label: 'Vidéos et progression', sub: 'Dans ton carnet, records gratuits', free: null, premium: 'Incluses', desc: 'Tes vidéos et la progression de tes mouvements, dans ton carnet', icon: 'camera', perkIcon: 'save' },
-  { id: 'photos', label: 'Photos de progression', sub: 'Dans ton coffre, sur ton téléphone', free: `${FREE_LIMITS.progressPhotos} photos`, premium: 'Sans limite', desc: 'Autant de photos de progression que tu veux', icon: 'image', perkIcon: 'save' },
-  { id: 'monde', label: 'Scènes et personnages', sub: 'Tout le monde samouraï', free: 'Une partie', premium: 'Tous', desc: 'Toutes les scènes et tous les personnages du monde samouraï, sans attendre', icon: 'image', perkIcon: 'save' },
+  { id: 'courbes', label: traduire('Courbes et historique'), sub: traduire('Poids, mesures, force et santé'), free: traduire("{0} mois", FREE_MONTHS), premium: traduire('Tout'), desc: traduire('Tes courbes sur 6 mois, 1 an et tout ton historique'), icon: 'calendar', perkIcon: 'infinite' },
+  { id: 'analyses', label: traduire('Analyses et prédictions'), sub: traduire('Toutes tes prévisions, radar, bilan PDF'), free: traduire('Une ligne'), premium: 'Incluses', desc: traduire('Ton poids projeté, ton radar de performance et ton bilan en PDF'), icon: 'target', perkIcon: 'chart' },
+  { id: 'combat', label: traduire('Combat et compétition'), sub: traduire('Compétitions, rounds, camp, coupe'), free: traduire("{0} à venir", FREE_LIMITS.upcomingCompetitions), premium: traduire('Sans limite'), desc: traduire('Tes rounds analysés, ton camp et ta coupe jusqu’à la pesée'), icon: 'swords', perkIcon: 'trophy' },
+  { id: 'carnet', label: traduire('Vidéos et progression'), sub: traduire('Dans ton carnet, records gratuits'), free: null, premium: 'Incluses', desc: traduire('Tes vidéos et la progression de tes mouvements, dans ton carnet'), icon: 'camera', perkIcon: 'save' },
+  { id: 'photos', label: traduire('Photos de progression'), sub: traduire('Dans ton coffre, sur ton téléphone'), free: `${FREE_LIMITS.progressPhotos} photos`, premium: traduire('Sans limite'), desc: traduire('Autant de photos de progression que tu veux'), icon: 'image', perkIcon: 'save' },
+  { id: 'monde', label: traduire('Scènes et personnages'), sub: traduire('Tout le monde samouraï'), free: traduire('Une partie'), premium: traduire('Tous'), desc: traduire('Toutes les scènes et tous les personnages du monde samouraï, sans attendre'), icon: 'image', perkIcon: 'save' },
 ];
 
 /** Ce qui reste gratuit, a dire clairement */
-export const FREE_FOREVER = 'Peser, noter tes séances, voir ta semaine, le Dojo et les chronos : gratuit, sans limite.';
+export const FREE_FOREVER = traduire('Peser, noter tes séances, voir ta semaine, le Dojo et les chronos : gratuit, sans limite.');
 
 // ===== Preuve sociale =====
 
@@ -73,9 +74,9 @@ export function ratingLine(): string | null {
   if (list.length === 0) return null;
   const total = list.reduce((n, r) => n + r.notes, 0);
   const moyenne = list.reduce((n, r) => n + r.note * r.notes, 0) / total;
-  const note = (Math.floor(moyenne * 10) / 10).toFixed(1).replace('.', ',');
-  const stores = REAL_STORE_RATING.appStore && REAL_STORE_RATING.googlePlay ? 'sur l’App Store et Google Play' : REAL_STORE_RATING.appStore ? 'sur l’App Store' : 'sur Google Play';
-  return `${note} sur 5, ${total} ${total > 1 ? 'notes' : 'note'} ${stores}`;
+  const note = (Math.floor(moyenne * 10) / 10).toFixed(1).replace('.', DECIMAL);
+  const stores = REAL_STORE_RATING.appStore && REAL_STORE_RATING.googlePlay ? traduire('sur l’App Store et Google Play') : REAL_STORE_RATING.appStore ? traduire('sur l’App Store') : traduire('sur Google Play');
+  return traduire("{0} sur 5, {1} {2} {3}", note, total, total > 1 ? 'notes' : 'note', stores);
 }
 
 /** La note des deux stores reunis, pour la note avec lauriers : « 5,0 », 49, « App Store et Google Play » */
@@ -84,8 +85,8 @@ export function storeRating(): { note: string; total: number; stores: string } |
   if (list.length === 0) return null;
   const total = list.reduce((n, r) => n + r.notes, 0);
   const moyenne = list.reduce((n, r) => n + r.note * r.notes, 0) / total;
-  const note = (Math.floor(moyenne * 10) / 10).toFixed(1).replace('.', ',');
-  const stores = REAL_STORE_RATING.appStore && REAL_STORE_RATING.googlePlay ? 'App Store et Google Play' : REAL_STORE_RATING.appStore ? 'App Store' : 'Google Play';
+  const note = (Math.floor(moyenne * 10) / 10).toFixed(1).replace('.', DECIMAL);
+  const stores = REAL_STORE_RATING.appStore && REAL_STORE_RATING.googlePlay ? traduire('App Store et Google Play') : REAL_STORE_RATING.appStore ? 'App Store' : 'Google Play';
   return { note, total, stores };
 }
 
@@ -111,13 +112,13 @@ export function periodPhrase(p: StorePeriod): string {
   const n = p.count;
   switch (p.unit) {
     case 'YEAR':
-      return n === 1 ? 'par an' : `tous les ${n} ans`;
+      return n === 1 ? traduire('par an') : `tous les ${n} ans`;
     case 'MONTH':
-      return n === 1 ? 'par mois' : `tous les ${n} mois`;
+      return n === 1 ? traduire('par mois') : `tous les ${n} mois`;
     case 'WEEK':
       return n === 1 ? 'par semaine' : `toutes les ${n} semaines`;
     default:
-      return n === 1 ? 'par jour' : `tous les ${n} jours`;
+      return n === 1 ? 'par jour' : traduire("tous les {0} jours", n);
   }
 }
 
@@ -126,13 +127,13 @@ export function durationPhrase(p: StorePeriod): string {
   const n = p.count;
   switch (p.unit) {
     case 'YEAR':
-      return n === 1 ? '1 an' : `${n} ans`;
+      return n === 1 ? '1 an' : traduire("{0} ans", n);
     case 'MONTH':
-      return `${n} mois`;
+      return traduire("{0} mois", n);
     case 'WEEK':
-      return n === 1 ? '1 semaine' : `${n} semaines`;
+      return n === 1 ? '1 semaine' : traduire("{0} semaines", n);
     default:
-      return n === 1 ? '1 jour' : `${n} jours`;
+      return n === 1 ? traduire('1 jour') : traduire("{0} jours", n);
   }
 }
 
@@ -147,9 +148,9 @@ export function monthsIn(p: StorePeriod): number {
 /** Montant dans la devise du store, au format francais */
 export function formatMoney(value: number, currency: string): string {
   try {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(value);
+    return new Intl.NumberFormat(LOCALE, { style: 'currency', currency }).format(value);
   } catch {
-    return `${value.toFixed(2).replace('.', ',')} ${currency}`;
+    return `${value.toFixed(2).replace('.', DECIMAL)} ${currency}`;
   }
 }
 
@@ -226,7 +227,7 @@ export function describeOffer(raw: unknown, priceStringFallback = ''): OfferInfo
     perMonth,
     perDay,
     name: kind === 'annual' ? 'YOROI Premium annuel' : kind === 'monthly' ? 'YOROI Premium mensuel' : period ? `YOROI Premium ${durationPhrase(period)}` : 'YOROI Premium',
-    short: kind === 'annual' ? 'Annuel' : kind === 'monthly' ? 'Mensuel' : period ? durationPhrase(period).replace(/^./, (x) => x.toUpperCase()) : 'Abonnement',
+    short: kind === 'annual' ? traduire('Annuel') : kind === 'monthly' ? traduire('Mensuel') : period ? durationPhrase(period).replace(/^./, (x) => x.toUpperCase()) : traduire('Abonnement'),
     duration: period ? durationPhrase(period) : '',
   };
 }

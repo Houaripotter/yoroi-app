@@ -33,6 +33,7 @@ import {
   type AppAlertButton,
   type FenetreRequest,
 } from './api';
+import { traduire } from '@/lib/i18n/tr';
 
 const VEIL = 'rgba(29,32,41,0.38)';
 const IN_MS = 160;
@@ -214,7 +215,7 @@ function Fenetre({ req }: { req: FenetreRequest }) {
           onPress={onBackdrop}
           accessible={!!cancel}
           accessibilityRole={cancel ? 'button' : undefined}
-          accessibilityLabel={cancel ? cancel.text ?? 'Fermer' : undefined}
+          accessibilityLabel={cancel ? cancel.text ?? traduire('Fermer') : undefined}
         />
       </Animated.View>
       <View

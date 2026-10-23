@@ -19,6 +19,7 @@ import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { ROUTES_PERSONNALISER } from '@/lib/v2/personnaliser/acces';
 import { Card, Icon, P, Press, useAccent } from './kit';
 import { carteNeutre } from './domaines';
+import { traduire } from '@/lib/i18n/tr';
 
 function Fleche({ up, color }: { up: boolean; color: string }) {
   return (
@@ -60,7 +61,7 @@ export function DispositionEditor() {
         const on = !caches.includes(id);
         return (
           <View key={id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, paddingLeft: 12, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
-            <Pressable onPress={() => toggle(id)} accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={`${b.titre}, ${on ? 'affiché' : 'caché'}`} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
+            <Pressable onPress={() => toggle(id)} accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={`${b.titre}, ${on ? traduire('affiché') : traduire('caché')}`} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
               <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 2, borderColor: on ? accent : P.dashed, backgroundColor: on ? accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 {on ? <Icon name="check" size={14} color={P.white} width={3.2} /> : null}
               </View>
@@ -82,11 +83,10 @@ export function DispositionEditor() {
           </View>
         );
       })}
-      <Press onPress={() => changer(DISPOSITION_DEFAUT)} haptic="light" accessibilityRole="button" accessibilityLabel="Revenir à l’accueil de départ">
+      <Press onPress={() => changer(DISPOSITION_DEFAUT)} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Revenir à l’accueil de départ")}>
         <View style={{ alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 }}>
           <Ink size={14} weight="extraBold" color={accent}>
-            Revenir à l’accueil de départ
-          </Ink>
+            {traduire("Revenir à l’accueil de départ")}</Ink>
         </View>
       </Press>
     </View>
@@ -110,29 +110,25 @@ export function PersonnaliserAccueil() {
             </View>
             <View style={{ flex: 1, gap: 1 }}>
               <Ink size={15.5} weight="black" tight>
-                Personnalise ton accueil
-              </Ink>
+                {traduire("Personnalise ton accueil")}</Ink>
               <Ink size={12.5} weight="medium" color={P.ink2} numberOfLines={2}>
-                Affiche ou cache tes blocs, comme tes pas, change ta scène et tes courbes
-              </Ink>
+                {traduire("Affiche ou cache tes blocs, comme tes pas, change ta scène et tes courbes")}</Ink>
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}>
-              <Press onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel="Tes blocs : montrer, cacher et ranger les blocs de l’accueil">
+              <Press onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Tes blocs : montrer, cacher et ranger les blocs de l’accueil")}>
                 <View style={{ minHeight: 44, borderRadius: 22, borderWidth: 1.5, borderColor: accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 }}>
                   <Ink size={14} weight="extraBold" color={accent} numberOfLines={1}>
-                    Tes blocs
-                  </Ink>
+                    {traduire("Tes blocs")}</Ink>
                 </View>
               </Press>
             </View>
             <View style={{ flex: 1.3 }}>
-              <Press onPress={() => router.push(ROUTES_PERSONNALISER.personnaliser as any)} accessibilityRole="button" accessibilityLabel="Tout personnaliser : scène, personnage, courbes, widgets et icône">
+              <Press onPress={() => router.push(ROUTES_PERSONNALISER.personnaliser as any)} accessibilityRole="button" accessibilityLabel={traduire("Tout personnaliser : scène, personnage, courbes, widgets et icône")}>
                 <View style={{ minHeight: 44, borderRadius: 22, backgroundColor: accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 }}>
                   <Ink size={14} weight="extraBold" color={theme.colors.onAccent} numberOfLines={1}>
-                    Tout personnaliser
-                  </Ink>
+                    {traduire("Tout personnaliser")}</Ink>
                 </View>
               </Press>
             </View>
@@ -140,15 +136,14 @@ export function PersonnaliserAccueil() {
         </Card>
       </TourAnchor>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable onPress={() => setOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(16,19,27,0.45)', justifyContent: 'flex-end' }} accessibilityLabel="Fermer">
+        <Pressable onPress={() => setOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(16,19,27,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
           <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12, maxHeight: '88%' }}>
             <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.line, marginBottom: 6 }} />
             <ScrollView bounces={false} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 16, gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Ink size={22} weight="black" tight accessibilityRole="header">
-                  Ton accueil
-                </Ink>
-                <Press onPress={() => setOpen(false)} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={8}>
+                  {traduire("Ton accueil")}</Ink>
+                <Press onPress={() => setOpen(false)} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={8}>
                   <View style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 }}>
                     <Ink size={15} weight="extraBold" color={accent}>
                       OK
@@ -157,8 +152,7 @@ export function PersonnaliserAccueil() {
                 </Press>
               </View>
               <Ink size={13} weight="medium" color={P.ink2}>
-                Tes outils et Ton poids restent en haut. Décoche un bloc pour le cacher, coche-le pour le retrouver, range-le avec les flèches.
-              </Ink>
+                {traduire("Tes outils et Ton poids restent en haut. Décoche un bloc pour le cacher, coche-le pour le retrouver, range-le avec les flèches.")}</Ink>
               <DispositionEditor />
             </ScrollView>
           </Pressable>

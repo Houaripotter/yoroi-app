@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { RefreshCw, House } from 'lucide-react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { traduire } from '@/lib/i18n/tr';
 
 interface Props {
   children: ReactNode;
@@ -36,11 +37,9 @@ function ErrorScreen({ error, onRetry, onHome }: { error: Error | null; onRetry:
           <Glyph kind="sakura" size={38} color={c.accent} />
         </View>
         <Ink size={28} weight="black" tight style={{ textAlign: 'center' }}>
-          Cet écran a eu un souci
-        </Ink>
+          {traduire("Cet écran a eu un souci")}</Ink>
         <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center', paddingHorizontal: 8 }}>
-          Tes données restent sur ton téléphone. Réessaie, ou reviens à l’accueil.
-        </Ink>
+          {traduire("Tes données restent sur ton téléphone. Réessaie, ou reviens à l’accueil.")}</Ink>
 
         {__DEV__ && error ? (
           <ScrollView style={{ maxHeight: 200, backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.border, marginTop: 4 }} contentContainerStyle={{ padding: 12, gap: 6 }}>
@@ -53,20 +52,20 @@ function ErrorScreen({ error, onRetry, onHome }: { error: Error | null; onRetry:
           <Pressable
             onPress={onRetry}
             accessibilityRole="button"
-            accessibilityLabel="Réessayer"
+            accessibilityLabel={traduire("Réessayer")}
             style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}
           >
             <RefreshCw size={20} color="#FFFFFF" strokeWidth={2.4} />
-            <Ink size={16} weight="extraBold" color="#FFFFFF">Réessayer</Ink>
+            <Ink size={16} weight="extraBold" color="#FFFFFF">{traduire("Réessayer")}</Ink>
           </Pressable>
           <Pressable
             onPress={onHome}
             accessibilityRole="button"
-            accessibilityLabel="Retour à l’accueil"
+            accessibilityLabel={traduire("Retour à l’accueil")}
             style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}
           >
             <House size={20} color={c.ink} strokeWidth={2.2} />
-            <Ink size={16} weight="extraBold">Retour à l’accueil</Ink>
+            <Ink size={16} weight="extraBold">{traduire("Retour à l’accueil")}</Ink>
           </Pressable>
         </View>
       </View>

@@ -8,6 +8,7 @@
  */
 import { BALANCE_PROMPT, readPhotoRefs } from './format';
 import type { DateSource } from './format';
+import { traduire } from '@/lib/i18n/tr';
 
 export { readPhotoRefs };
 
@@ -117,7 +118,7 @@ export function groupSessions(sorted: { at?: number }[], gap: number = SAME_SESS
   return out;
 }
 
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 /** Jour local AAAA-MM-JJ d'une date en ms */
 export function isoDay(at: number): string {
@@ -129,7 +130,7 @@ export function isoDay(at: number): string {
 export function frenchDateTime(at: number): string {
   const d = new Date(at);
   const day = d.getDate() === 1 ? '1er' : String(d.getDate());
-  return `${day} ${MOIS[d.getMonth()]} ${d.getFullYear()} à ${d.getHours()} h ${pad2(d.getMinutes())}`;
+  return traduire("{0} {1} {2} à {3} h {4}", day, MOIS[d.getMonth()], d.getFullYear(), d.getHours(), pad2(d.getMinutes()));
 }
 
 /** « 8 h 12 » */
@@ -141,7 +142,7 @@ export function frenchTime(at: number): string {
 /** Le nom de la copie envoyee : 2026-10-03_08h12_photo-01.jpg (sans-date_photo-03.jpg si aucune date) */
 export function photoFileName(at: number | undefined, n: number, ext = 'jpg'): string {
   const num = `photo-${pad2(n)}`;
-  if (at === undefined) return `sans-date_${num}.${ext}`;
+  if (at === undefined) return traduire("sans-date_{0}.{1}", num, ext);
   const d = new Date(at);
   return `${isoDay(at)}_${pad2(d.getHours())}h${pad2(d.getMinutes())}_${num}.${ext}`;
 }
@@ -152,18 +153,18 @@ export function documentName(sorted: { at?: number }[]): string {
   if (!days.length) return 'YOROI_photos.pdf';
   const first = days[0];
   const last = days[days.length - 1];
-  return first === last ? `YOROI_photos_${first}.pdf` : `YOROI_photos_${first}_au_${last}.pdf`;
+  return first === last ? `YOROI_photos_${first}.pdf` : traduire("YOROI_photos_{0}_au_{1}.pdf", first, last);
 }
 
 /** « Photo 1 : prise le 3 octobre 2026 à 8 h 12 ; » une ligne par photo, dans l'ordre */
 export function photoListLines(sorted: { at?: number }[]): string[] {
-  return sorted.map((p, i) => `Photo ${i + 1} : ${p.at !== undefined ? `prise le ${frenchDateTime(p.at)}` : 'date de prise inconnue'}`);
+  return sorted.map((p, i) => `Photo ${i + 1} : ${p.at !== undefined ? traduire("prise le {0}", frenchDateTime(p.at)) : traduire('date de prise inconnue')}`);
 }
 
 /** « 1, 2 et 3 » */
 function andList(nums: number[]): string {
   if (nums.length <= 1) return nums.join('');
-  return `${nums.slice(0, -1).join(', ')} et ${nums[nums.length - 1]}`;
+  return traduire("{0} et {1}", nums.slice(0, -1).join(', '), nums[nums.length - 1]);
 }
 
 /** Ce que YOROI ajoute a la fin de la consigne quand il connait les dates des photos */
@@ -171,14 +172,14 @@ export function photoSection(sorted: { at?: number }[]): string {
   if (!sorted.length) return '';
   const groups = groupSessions(sorted).filter((g) => g.length > 1);
   const lines = [
-    'Dates de prise des photos, lues par YOROI sur mon téléphone :',
+    traduire('Dates de prise des photos, lues par YOROI sur mon téléphone :'),
     ...photoListLines(sorted).map((l, i, all) => `${l}${i < all.length - 1 ? ' ;' : '.'}`),
     '',
-    'Les photos sont numérotées dans cet ordre, de la plus ancienne à la plus récente. Elles peuvent arriver dans un document PDF, une photo par page avec son numéro et sa date en haut de la page, ou en fichiers nommés avec la date et le numéro, par exemple 2026-10-03_08h12_photo-01.jpg.',
-    "Pour la date d'un bloc : si une date est visible sur l'écran, la capture, le ticket ou la note photographiés, elle prime (date_source: ecran ou ticket). Si aucune date n'est visible, utilise la date de prise de la photo donnée dans cette liste. Écris alors date_source: photo.",
-    'Photos prises à moins de 30 minutes d’intervalle : c’est la même pesée, un seul bloc.',
-    ...(groups.length ? [`Même pesée : ${groups.map((g) => `photos ${andList(g.map((i) => i + 1))}`).join(' ; ')}.`] : []),
-    'Dans chaque bloc, ajoute la ligne photos: avec les numéros des photos lues pour ce bloc, par exemple photos: 1, 2, 3.',
+    traduire('Les photos sont numérotées dans cet ordre, de la plus ancienne à la plus récente. Elles peuvent arriver dans un document PDF, une photo par page avec son numéro et sa date en haut de la page, ou en fichiers nommés avec la date et le numéro, par exemple 2026-10-03_08h12_photo-01.jpg.'),
+    traduire("Pour la date d'un bloc : si une date est visible sur l'écran, la capture, le ticket ou la note photographiés, elle prime (date_source: ecran ou ticket). Si aucune date n'est visible, utilise la date de prise de la photo donnée dans cette liste. Écris alors date_source: photo."),
+    traduire('Photos prises à moins de 30 minutes d’intervalle : c’est la même pesée, un seul bloc.'),
+    ...(groups.length ? [traduire("Même pesée : {0}.", groups.map((g) => `photos ${andList(g.map((i) => i + 1))}`).join(' ; '))] : []),
+    traduire('Dans chaque bloc, ajoute la ligne photos: avec les numéros des photos lues pour ce bloc, par exemple photos: 1, 2, 3.'),
   ];
   return lines.join('\n');
 }
@@ -289,7 +290,7 @@ export function dateProposal(
 export function proposalLabel(p: DateProposal, yearAdded?: boolean): string {
   switch (p.source) {
     case 'ecran':
-      return yearAdded ? 'écran de la balance, année ajoutée' : 'écran de la balance';
+      return yearAdded ? 'écran de la balance, année ajoutée' : traduire('écran de la balance');
     case 'ticket':
       return yearAdded ? 'ticket, année ajoutée' : 'ticket';
     case 'photo':
@@ -301,6 +302,6 @@ export function proposalLabel(p: DateProposal, yearAdded?: boolean): string {
     case 'aujourdhui':
       return 'aucune date trouvée, aujourd’hui par défaut';
     default:
-      return 'aucune date trouvée';
+      return traduire('aucune date trouvée');
   }
 }

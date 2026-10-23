@@ -10,6 +10,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { activerCopieAuto, nomDuCloud } from '@/lib/v2/sauvegarde/copieAuto';
 import { sauvegarderMaintenant } from '@/lib/v2/sauvegarde/rappel';
 import { etapesSelecteur } from '@/lib/v2/sauvegarde/textesCopie';
+import { traduire } from '@/lib/i18n/tr';
 
 export { etapesSelecteur };
 
@@ -19,13 +20,13 @@ export async function choisirDossierEtCopier(apres?: (ok: boolean) => void): Pro
   const r = await activerCopieAuto();
   if (r === 'ok') {
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-    appAlert('Tes données sont à l’abri', `Première copie faite dans ${cloud}. La suivante partira demain, toute seule. Si tu changes de téléphone : « J’ai déjà une sauvegarde » au premier écran.`);
+    appAlert(traduire('Tes données sont à l’abri'), traduire("Première copie faite dans {0}. La suivante partira demain, toute seule. Si tu changes de téléphone : « J’ai déjà une sauvegarde » au premier écran.", cloud));
     apres?.(true);
   } else if (r === 'non_dispo') {
     await sauvegarderMaintenant();
     apres?.(false);
   } else if (r === 'echec') {
-    appAlert('La copie n’est pas passée', `Le dossier est bien choisi, mais la première copie n’a pas réussi. Vérifie qu’il reste de la place dans ${cloud}, puis réessaie depuis Réglages, Mes sauvegardes.`);
+    appAlert(traduire('La copie n’est pas passée'), traduire("Le dossier est bien choisi, mais la première copie n’a pas réussi. Vérifie qu’il reste de la place dans {0}, puis réessaie depuis Réglages, Mes sauvegardes.", cloud));
     apres?.(false);
   } else {
     apres?.(false);
@@ -37,10 +38,10 @@ export function lancerCopieAuto(apres?: (ok: boolean) => void): void {
   const cloud = nomDuCloud();
   appAlert(
     'Copie automatique',
-    `Tu choisis une fois un dossier dans ${cloud}. Ensuite, YOROI y range une copie de toutes tes données chaque jour, tout seul.\n\n${etapesSelecteur()}`,
+    traduire("Tu choisis une fois un dossier dans {0}. Ensuite, YOROI y range une copie de toutes tes données chaque jour, tout seul.\n\n{1}", cloud, etapesSelecteur()),
     [
-      { text: 'Annuler', style: 'cancel', onPress: () => apres?.(false) },
-      { text: 'Choisir le dossier', isPreferred: true, onPress: () => void choisirDossierEtCopier(apres) },
+      { text: traduire('Annuler'), style: 'cancel', onPress: () => apres?.(false) },
+      { text: traduire('Choisir le dossier'), isPreferred: true, onPress: () => void choisirDossierEtCopier(apres) },
     ],
   );
 }

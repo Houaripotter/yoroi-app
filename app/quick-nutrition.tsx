@@ -15,6 +15,7 @@ import { QUICK_ACTIVITY, SOURCES, num, quickNeeds } from '@/lib/v2/nutrition/for
 import type { QuickActivity } from '@/lib/v2/nutrition/formulas';
 import { getAllMeasurements, getUserSettings } from '@/lib/storage';
 import { logger } from '@/lib/security/logger';
+import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 type PhaseId = 'pre_training' | 'post_training' | 'fight_day' | 'recovery';
 type Meal = { timing: string; title: string; foods: string[]; macros: { protein: number; carbs: number; fat: number }; tips: string[] };
@@ -26,11 +27,11 @@ const PHASES: Phase[] = [
     name: 'Avant l’entraînement',
     icon: 'bolt',
     tone: 'gold',
-    description: 'Optimise ton énergie avant la séance',
+    description: traduire('Optimise ton énergie avant la séance'),
     meals: [
-      { timing: '3 à 4 h avant', title: 'Repas complet', foods: ['Riz ou pâtes', 'Poulet ou poisson', 'Légumes', 'Huile d’olive'], macros: { protein: 30, carbs: 80, fat: 15 }, tips: ['Évite les fibres lourdes', 'Hydrate-toi bien'] },
-      { timing: '1 à 2 h avant', title: 'Collation légère', foods: ['Banane', 'Barre de céréales', 'Pain et miel'], macros: { protein: 5, carbs: 40, fat: 5 }, tips: ['Glucides rapides', 'Facile à digérer'] },
-      { timing: '30 min avant', title: 'Coup de pouce', foods: ['Datte', 'Gel énergétique', 'Boisson isotonique'], macros: { protein: 0, carbs: 25, fat: 0 }, tips: ['Optionnel si tu as mangé récemment', 'Pour les séances intenses'] },
+      { timing: traduire('3 à 4 h avant'), title: traduire('Repas complet'), foods: [traduire('Riz ou pâtes'), traduire('Poulet ou poisson'), traduire('Légumes'), 'Huile d’olive'], macros: { protein: 30, carbs: 80, fat: 15 }, tips: [traduire('Évite les fibres lourdes'), traduire('Hydrate-toi bien')] },
+      { timing: traduire('1 à 2 h avant'), title: traduire('Collation légère'), foods: ['Banane', traduire('Barre de céréales'), traduire('Pain et miel')], macros: { protein: 5, carbs: 40, fat: 5 }, tips: [traduire('Glucides rapides'), traduire('Facile à digérer')] },
+      { timing: traduire('30 min avant'), title: traduire('Coup de pouce'), foods: ['Datte', traduire('Gel énergétique'), 'Boisson isotonique'], macros: { protein: 0, carbs: 25, fat: 0 }, tips: [traduire('Optionnel si tu as mangé récemment'), traduire('Pour les séances intenses')] },
     ],
   },
   {
@@ -38,10 +39,10 @@ const PHASES: Phase[] = [
     name: 'Après l’entraînement',
     icon: 'dumbbell',
     tone: 'moss',
-    description: 'Récupère mieux',
+    description: traduire('Récupère mieux'),
     meals: [
-      { timing: '0 à 30 min après', title: 'Premier apport', foods: ['Protéine en poudre', 'Banane', 'Lait'], macros: { protein: 30, carbs: 40, fat: 5 }, tips: ['Protéines rapides', 'Glucides pour recharger'] },
-      { timing: '1 à 2 h après', title: 'Repas de récupération', foods: ['Poulet ou saumon', 'Riz ou patate douce', 'Légumes verts', 'Avocat'], macros: { protein: 40, carbs: 60, fat: 20 }, tips: ['Protéines de qualité', 'Glucides complexes', 'Graisses saines'] },
+      { timing: traduire('0 à 30 min après'), title: 'Premier apport', foods: [traduire('Protéine en poudre'), 'Banane', 'Lait'], macros: { protein: 30, carbs: 40, fat: 5 }, tips: [traduire('Protéines rapides'), traduire('Glucides pour recharger')] },
+      { timing: traduire('1 à 2 h après'), title: traduire('Repas de récupération'), foods: [traduire('Poulet ou saumon'), traduire('Riz ou patate douce'), traduire('Légumes verts'), 'Avocat'], macros: { protein: 40, carbs: 60, fat: 20 }, tips: [traduire('Protéines de qualité'), traduire('Glucides complexes'), 'Graisses saines'] },
     ],
   },
   {
@@ -49,29 +50,29 @@ const PHASES: Phase[] = [
     name: 'Jour de combat',
     icon: 'swords',
     tone: 'red',
-    description: 'Ton protocole du jour J',
+    description: traduire('Ton protocole du jour J'),
     meals: [
-      { timing: 'Après la pesée', title: 'Réhydratation', foods: ['Eau et électrolytes', 'Boisson isotonique', 'Jus de raisin dilué'], macros: { protein: 0, carbs: 30, fat: 0 }, tips: ['Petites gorgées', 'Ne bois pas trop vite'] },
-      { timing: '4 à 5 h avant le combat', title: 'Repas principal', foods: ['Pâtes ou riz blanc', 'Poulet grillé', 'Peu de légumes', 'Miel'], macros: { protein: 25, carbs: 100, fat: 10 }, tips: ['Glucides simples', 'Évite fibres et gras', 'Un repas que tu connais'] },
-      { timing: '2 h avant le combat', title: 'Collation légère', foods: ['Pain blanc et confiture', 'Banane', 'Barre énergétique'], macros: { protein: 5, carbs: 50, fat: 5 }, tips: ['Digestion rapide', 'Ce que tu connais'] },
-      { timing: '30 min avant', title: 'Dernier coup de pouce', foods: ['Gel ou datte', 'Café (optionnel)', 'Quelques gorgées d’eau'], macros: { protein: 0, carbs: 25, fat: 0 }, tips: ['Énergie immédiate', 'Aucune nouveauté'] },
+      { timing: traduire('Après la pesée'), title: traduire('Réhydratation'), foods: [traduire('Eau et électrolytes'), 'Boisson isotonique', traduire('Jus de raisin dilué')], macros: { protein: 0, carbs: 30, fat: 0 }, tips: [traduire('Petites gorgées'), traduire('Ne bois pas trop vite')] },
+      { timing: traduire('4 à 5 h avant le combat'), title: traduire('Repas principal'), foods: [traduire('Pâtes ou riz blanc'), traduire('Poulet grillé'), traduire('Peu de légumes'), 'Miel'], macros: { protein: 25, carbs: 100, fat: 10 }, tips: [traduire('Glucides simples'), traduire('Évite fibres et gras'), traduire('Un repas que tu connais')] },
+      { timing: traduire('2 h avant le combat'), title: traduire('Collation légère'), foods: [traduire('Pain blanc et confiture'), 'Banane', traduire('Barre énergétique')], macros: { protein: 5, carbs: 50, fat: 5 }, tips: ['Digestion rapide', traduire('Ce que tu connais')] },
+      { timing: traduire('30 min avant'), title: traduire('Dernier coup de pouce'), foods: [traduire('Gel ou datte'), traduire('Café (optionnel)'), traduire('Quelques gorgées d’eau')], macros: { protein: 0, carbs: 25, fat: 0 }, tips: [traduire('Énergie immédiate'), traduire('Aucune nouveauté')] },
     ],
   },
   {
     id: 'recovery',
-    name: 'Jour de repos',
+    name: traduire('Jour de repos'),
     icon: 'moon',
     tone: 'indigo',
-    description: 'Laisse ton corps se réparer',
+    description: traduire('Laisse ton corps se réparer'),
     meals: [
-      { timing: 'Petit-déjeuner', title: 'Riche en protéines', foods: ['Œufs', 'Avocat', 'Pain complet', 'Fruits'], macros: { protein: 30, carbs: 40, fat: 25 }, tips: ['Protéines pour réparer', 'Bonnes graisses'] },
-      { timing: 'Déjeuner', title: 'Repas équilibré', foods: ['Saumon ou poulet', 'Quinoa ou riz complet', 'Légumes', 'Huile d’olive'], macros: { protein: 40, carbs: 50, fat: 20 }, tips: ['Oméga-3', 'Glucides complexes'] },
-      { timing: 'Dîner', title: 'Repas léger', foods: ['Poisson blanc', 'Légumes vapeur', 'Riz', 'Yaourt grec'], macros: { protein: 35, carbs: 40, fat: 10 }, tips: ['Digestion facile', 'Caséine pour la nuit'] },
+      { timing: traduire('Petit-déjeuner'), title: traduire('Riche en protéines'), foods: [traduire('Œufs'), 'Avocat', 'Pain complet', 'Fruits'], macros: { protein: 30, carbs: 40, fat: 25 }, tips: [traduire('Protéines pour réparer'), 'Bonnes graisses'] },
+      { timing: traduire('Déjeuner'), title: traduire('Repas équilibré'), foods: [traduire('Saumon ou poulet'), traduire('Quinoa ou riz complet'), traduire('Légumes'), 'Huile d’olive'], macros: { protein: 40, carbs: 50, fat: 20 }, tips: [traduire('Oméga-3'), traduire('Glucides complexes')] },
+      { timing: traduire('Dîner'), title: traduire('Repas léger'), foods: ['Poisson blanc', traduire('Légumes vapeur'), 'Riz', 'Yaourt grec'], macros: { protein: 35, carbs: 40, fat: 10 }, tips: ['Digestion facile', traduire('Caséine pour la nuit')] },
     ],
   },
 ];
 
-const TIPS = ['Hydrate-toi : environ 35 ml par kg de poids', 'Mange ce que tu connais avant un combat', 'Évite les aliments nouveaux le jour J', 'Des protéines à chaque repas pour récupérer'];
+const TIPS = [traduire('Hydrate-toi : environ 35 ml par kg de poids'), traduire('Mange ce que tu connais avant un combat'), traduire('Évite les aliments nouveaux le jour J'), traduire('Des protéines à chaque repas pour récupérer')];
 
 export default function QuickNutritionScreen() {
   const [phaseId, setPhaseId] = useState<PhaseId>('pre_training');
@@ -106,7 +107,7 @@ export default function QuickNutritionScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <DetailScreen title="Repas du jour" subtitle="Quoi manger, et quand">
+      <DetailScreen title={traduire("Repas du jour")} subtitle={traduire("Quoi manger, et quand")}>
         {/* MOMENT */}
         <Enter i={0}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -167,9 +168,9 @@ export default function QuickNutritionScreen() {
                     ))}
                   </View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <MacroPill label="Protéines" value={m.macros.protein} color={SERIES.moss} />
-                    <MacroPill label="Glucides" value={m.macros.carbs} color={SERIES.blue} />
-                    <MacroPill label="Lipides" value={m.macros.fat} color={SERIES.gold} />
+                    <MacroPill label={traduire("Protéines")} value={m.macros.protein} color={SERIES.moss} />
+                    <MacroPill label={traduire("Glucides")} value={m.macros.carbs} color={SERIES.blue} />
+                    <MacroPill label={traduire("Lipides")} value={m.macros.fat} color={SERIES.gold} />
                   </View>
                   <View style={{ gap: 4 }}>
                     {m.tips.map((t) => (
@@ -186,13 +187,13 @@ export default function QuickNutritionScreen() {
 
         {phaseId === 'fight_day' ? (
           <Enter i={2}>
-            <Notice tone="danger" title="Après une coupe de poids" text="Réhydrate-toi progressivement. Si tu as des vertiges, des crampes ou une confusion, préviens le staff médical." />
+            <Notice tone="danger" title={traduire("Après une coupe de poids")} text={traduire("Réhydrate-toi progressivement. Si tu as des vertiges, des crampes ou une confusion, préviens le staff médical.")} />
           </Enter>
         ) : null}
 
         {/* TES BESOINS */}
         <Enter i={3}>
-          <H2 sub="Repris de ta dernière pesée, modifiable">Tes besoins du jour</H2>
+          <H2 sub={traduire("Repris de ta dernière pesée, modifiable")}>{traduire("Tes besoins du jour")}</H2>
           <View style={{ gap: 10, marginTop: 10 }}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <NumField label="Poids" value={weight} onChange={setWeight} unit="kg" placeholder="75" maxLength={5} />
@@ -204,15 +205,13 @@ export default function QuickNutritionScreen() {
 
         <Enter i={4}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            <NeedCard icon="leaf" tone="red" title="Protéines" value={`${needs.protein.min} à ${needs.protein.max}`} unit="g" sub="1,6 à 2,2 g par kg" />
-            <NeedCard icon="bolt" tone="indigo" title="Glucides" value={`${needs.carbs.min} à ${needs.carbs.max}`} unit="g" sub={`${needs.carbs.perKg} g par kg, ${QUICK_ACTIVITY[activity].phrase}`} />
-            <NeedCard icon="drop" tone="indigo" title="Eau" value={`${String(needs.water.min).replace('.', ',')} à ${String(needs.water.max).replace('.', ',')}`} unit="L" sub="30 à 35 ml par kg" />
-            <NeedCard icon="flame" tone="gold" title="Calories" value={needs.tdee.toLocaleString('fr-FR')} unit="kcal" sub={`Métabolisme de base ${needs.bmr} kcal`} />
+            <NeedCard icon="leaf" tone="red" title={traduire("Protéines")} value={traduire("{0} à {1}", needs.protein.min, needs.protein.max)} unit="g" sub={traduire("1,6 à 2,2 g par kg")} />
+            <NeedCard icon="bolt" tone="indigo" title={traduire("Glucides")} value={traduire("{0} à {1}", needs.carbs.min, needs.carbs.max)} unit="g" sub={traduire("{0} g par kg, {1}", needs.carbs.perKg, QUICK_ACTIVITY[activity].phrase)} />
+            <NeedCard icon="drop" tone="indigo" title="Eau" value={traduire("{0} à {1}", String(needs.water.min).replace('.', DECIMAL), String(needs.water.max).replace('.', DECIMAL))} unit="L" sub={traduire("30 à 35 ml par kg")} />
+            <NeedCard icon="flame" tone="gold" title={traduire("Calories")} value={needs.tdee.toLocaleString(LOCALE)} unit="kcal" sub={traduire("Métabolisme de base {0} kcal", needs.bmr)} />
           </View>
           <Ink size={12} weight="medium" color={P.ink2} style={{ marginTop: 8, paddingHorizontal: 4 }}>
-            {age ? 'Calories estimées avec la formule Mifflin-St Jeor, version homme, et ton âge. ' : 'Calories estimées avec la formule Mifflin-St Jeor, version homme, pour un âge de 30 ans. '}
-            Pour un calcul complet, ouvre le plan nutritionnel.
-          </Ink>
+            {traduire("{0}Pour un calcul complet, ouvre le plan nutritionnel.", age ? 'Calories estimées avec la formule Mifflin-St Jeor, version homme, et ton âge. ' : 'Calories estimées avec la formule Mifflin-St Jeor, version homme, pour un âge de 30 ans. ')}</Ink>
         </Enter>
 
         {/* CONSEILS */}
@@ -221,8 +220,7 @@ export default function QuickNutritionScreen() {
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
               <NIcon name="star" size={18} color={P.goldDark} />
               <Ink size={16} weight="black" color={P.goldDark}>
-                Conseils du guerrier
-              </Ink>
+                {traduire("Conseils du guerrier")}</Ink>
             </View>
             {TIPS.map((t) => (
               <Bullet key={t} color={P.goldDark}>

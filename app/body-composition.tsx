@@ -29,6 +29,7 @@ import { logger } from '@/lib/security/logger';
 import { readHealthWeighIns, sourceText } from '@/lib/v2/pesee/health';
 import type { HealthRead } from '@/lib/v2/pesee/health';
 import { HeartDot } from '@/components/yoroi/v2/pesee/CompositionSection';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 type FieldKey = 'weight' | 'fat' | 'muscleKg' | 'water' | 'bone' | 'visceral' | 'metabolicAge' | 'bmr';
 type Field = { key: FieldKey; label: string; unit: string; hint?: string; step: number; min: number; max: number; int?: boolean };
@@ -36,14 +37,14 @@ type Field = { key: FieldKey; label: string; unit: string; hint?: string; step: 
 const MAIN: Field[] = [
   { key: 'weight', label: 'Poids', unit: 'kg', step: 0.1, min: 20, max: 300 },
   { key: 'fat', label: 'Masse grasse', unit: '%', step: 0.1, min: 2, max: 70 },
-  { key: 'muscleKg', label: 'Masse musculaire', unit: 'kg', step: 0.1, min: 5, max: 150 },
+  { key: 'muscleKg', label: traduire('Masse musculaire'), unit: 'kg', step: 0.1, min: 5, max: 150 },
   { key: 'water', label: 'Eau', unit: '%', step: 0.1, min: 20, max: 80 },
 ];
 const MORE: Field[] = [
   { key: 'bone', label: 'Masse osseuse', unit: 'kg', step: 0.1, min: 0.5, max: 10 },
-  { key: 'visceral', label: 'Graisse viscérale', unit: 'niveau', hint: 'de 1 à 59, sain jusqu’à 12', step: 1, min: 1, max: 59, int: true },
-  { key: 'metabolicAge', label: 'Âge métabolique', unit: 'ans', step: 1, min: 10, max: 100, int: true },
-  { key: 'bmr', label: 'Métabolisme de base', unit: 'kcal', hint: 'calories brûlées au repos', step: 10, min: 600, max: 5000, int: true },
+  { key: 'visceral', label: 'Graisse viscérale', unit: 'niveau', hint: traduire('de 1 à 59, sain jusqu’à 12'), step: 1, min: 1, max: 59, int: true },
+  { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', step: 1, min: 10, max: 100, int: true },
+  { key: 'bmr', label: traduire('Métabolisme de base'), unit: 'kcal', hint: traduire('calories brûlées au repos'), step: 10, min: 600, max: 5000, int: true },
 ];
 
 export default function BodyCompositionScreen() {
@@ -232,7 +233,7 @@ function BodyComposition() {
   const save = async () => {
     if (saving) return;
     if (!weight || !fat) {
-      setError('Il faut au moins ton poids et ta masse grasse.');
+      setError(traduire('Il faut au moins ton poids et ta masse grasse.'));
       notificationAsync(NotificationFeedbackType.Warning).catch(() => {});
       return;
     }
@@ -258,7 +259,7 @@ function BodyComposition() {
       void apresMesure(router as never, { type: 'corps', date, origine: 'composition' });
     } catch (err) {
       logger.error('Enregistrement de la composition impossible', err);
-      setError('Enregistrement impossible, réessaie.');
+      setError(traduire('Enregistrement impossible, réessaie.'));
       setSaving(false);
     }
   };
@@ -268,10 +269,10 @@ function BodyComposition() {
     const shown = text[f.key] ?? '';
     const placeholder = f.key === 'bmr' && bmrHint ? String(bmrHint) : f.int ? '0' : '0,0';
     const sub = prev
-      ? `${f.key === 'weight' ? 'ta dernière pesée' : 'la dernière fois'} ${f.int ? Math.round(prev) : num(prev, 1, false)} ${f.unit}`
+      ? `${f.key === 'weight' ? traduire('ta dernière pesée') : traduire('la dernière fois')} ${f.int ? Math.round(prev) : num(prev, 1, false)} ${f.unit}`
       : f.key === 'bmr' && bmrHint
-        ? `estimé à ${bmrHint} kcal`
-        : f.hint ?? 'si ta balance le donne';
+        ? traduire("estimé à {0} kcal", bmrHint)
+        : f.hint ?? traduire('si ta balance le donne');
     return (
       <View key={f.key} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: c.divider, gap: 8 }}>
         <View style={{ gap: 2 }}>
@@ -279,7 +280,7 @@ function BodyComposition() {
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{sub}</Ink>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Pressable onPress={() => bump(f, -1)} accessibilityRole="button" accessibilityLabel={`${f.label}, moins`} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+          <Pressable onPress={() => bump(f, -1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins", f.label)} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
             <Ink size={22} weight="extraBold">−</Ink>
           </Pressable>
           <View style={{ flex: 1, height: 60, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 }}>
@@ -287,7 +288,7 @@ function BodyComposition() {
               value={shown}
               onChangeText={(t) => {
                 edited.current[f.key] = true;
-                setText((s) => ({ ...s, [f.key]: t.replace('.', ',') }));
+                setText((s) => ({ ...s, [f.key]: t.replace('.', DECIMAL) }));
               }}
               placeholder={placeholder}
               placeholderTextColor={c.textMuted}
@@ -300,7 +301,7 @@ function BodyComposition() {
             />
             <Ink size={15} weight="bold" color={c.textSecondary} style={{ marginLeft: 6 }}>{f.unit}</Ink>
           </View>
-          <Pressable onPress={() => bump(f, 1)} accessibilityRole="button" accessibilityLabel={`${f.label}, plus`} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+          <Pressable onPress={() => bump(f, 1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus", f.label)} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
             <Ink size={22} weight="extraBold">+</Ink>
           </Pressable>
         </View>
@@ -318,11 +319,11 @@ function BodyComposition() {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
         <DetailHeader
-          title="Ta composition"
-          sub="Pré-remplie avec ta dernière mesure : ajuste avec ce qu’affiche ta balance."
+          title={traduire("Ta composition")}
+          sub={traduire("Pré-remplie avec ta dernière mesure : ajuste avec ce qu’affiche ta balance.")}
           right={
             <>
-              <IconButton label="Tes courbes de composition" onPress={() => router.push('/composition-detail' as any)}>
+              <IconButton label={traduire("Tes courbes de composition")} onPress={() => router.push('/composition-detail' as any)}>
                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                   <Path d="M3 17l6-6 4 3 8-8M15 6h6v6" stroke={c.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
@@ -335,7 +336,7 @@ function BodyComposition() {
         <Pressable
           onPress={() => router.push('/balance-photo' as any)}
           accessibilityRole="button"
-          accessibilityLabel="Importer depuis une photo de ta balance"
+          accessibilityLabel={traduire("Importer depuis une photo de ta balance")}
           style={({ pressed }) => ({ marginHorizontal: GUTTER, marginTop: 14, minHeight: 64, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
         >
           <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
@@ -345,8 +346,8 @@ function BodyComposition() {
             </Svg>
           </View>
           <View style={{ flex: 1, gap: 1 }}>
-            <Ink size={15} weight="extraBold" numberOfLines={1}>Importer depuis une photo</Ink>
-            <Ink size={12} color={c.textSecondary} numberOfLines={2}>Balance pas connectée : une IA lit l’écran, tu vérifies.</Ink>
+            <Ink size={15} weight="extraBold" numberOfLines={1}>{traduire("Importer depuis une photo")}</Ink>
+            <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire("Balance pas connectée : une IA lit l’écran, tu vérifies.")}</Ink>
           </View>
           <Svg width={16} height={16} viewBox="0 0 24 24"><Path d="M9 6l6 6-6 6" stroke={c.textMuted} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
         </Pressable>
@@ -356,13 +357,13 @@ function BodyComposition() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: GUTTER, marginTop: 12 }}>
             <HeartDot color={c.indigo} />
             <Ink size={12} color={c.indigo} style={{ flex: 1 }}>
-              {`${healthDay.weight && healthDay.fat ? 'Poids et masse grasse' : healthDay.weight ? 'Poids' : 'Masse grasse'} ${sourceText(health?.provider ?? (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé'), healthDay)}. Le reste est à recopier depuis l’app de ta balance.`}
+              {traduire("{0} {1}. Le reste est à recopier depuis l’app de ta balance.", healthDay.weight && healthDay.fat ? 'Poids et masse grasse' : healthDay.weight ? 'Poids' : 'Masse grasse', sourceText(health?.provider ?? (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé'), healthDay))}
             </Ink>
           </View>
         ) : null}
 
         <View style={{ marginHorizontal: GUTTER, marginTop: 18, padding: 16, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 10 }}>
-          <Ink size={14} weight="bold" color={c.textSecondary}>Aperçu, en pourcentage de ton poids</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Aperçu, en pourcentage de ton poids")}</Ink>
           {bars.map((b) => (
             <View key={b.label} style={{ gap: 4 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -370,7 +371,7 @@ function BodyComposition() {
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: b.color }} />
                   <Ink size={13} weight="bold">{b.label}</Ink>
                 </View>
-                <Ink size={13} weight="black">{b.v ? `${num(b.v, 1, false)} %` : 'à remplir'}</Ink>
+                <Ink size={13} weight="black">{b.v ? `${num(b.v, 1, false)} %` : traduire('à remplir')}</Ink>
               </View>
               <View style={{ height: 12, borderRadius: 6, backgroundColor: c.fillSoft, overflow: 'hidden' }}>
                 <View style={{ width: `${Math.min(100, b.v ?? 0)}%`, height: 12, borderRadius: 6, backgroundColor: b.color }} />
@@ -390,8 +391,8 @@ function BodyComposition() {
             accessibilityState={{ expanded: more }}
             style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: c.divider }}
           >
-            <Ink size={15} weight="extraBold">Mesures avancées</Ink>
-            <Ink size={13} color={c.textSecondary}>{more ? 'masquer' : 'os, viscérale, âge, métabolisme'}</Ink>
+            <Ink size={15} weight="extraBold">{traduire("Mesures avancées")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{more ? 'masquer' : traduire('os, viscérale, âge, métabolisme')}</Ink>
           </Pressable>
           {more ? MORE.map(renderField) : null}
         </View>
@@ -402,12 +403,11 @@ function BodyComposition() {
           </View>
         ) : null}
         <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 14 }}>
-          Les balances à impédance donnent une estimation. Compare-toi à toi-même, à la même heure, dans les mêmes conditions.
-        </Ink>
+          {traduire("Les balances à impédance donnent une estimation. Compare-toi à toi-même, à la même heure, dans les mêmes conditions.")}</Ink>
       </ScrollView>
 
       <View style={{ position: 'absolute', left: GUTTER, right: GUTTER, bottom: insets.bottom + 18 }}>
-        <StampButton label={saving ? 'Enregistrement en cours' : 'Enregistrer'} onPress={save} disabled={saving} dim={saving} />
+        <StampButton label={saving ? 'Enregistrement en cours' : traduire('Enregistrer')} onPress={save} disabled={saving} dim={saving} />
       </View>
     </KeyboardAvoidingView>
   );

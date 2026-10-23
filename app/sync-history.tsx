@@ -19,17 +19,18 @@ import type { SyncEvent } from '@/lib/syncHistoryService';
 import { formatRelative, formatSize } from '@/lib/utils/formatDate';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 const EVENT_LOOK: Record<string, { icon: SanteIconName; color: string; tint: string; label: string }> = {
-  auto_backup: { icon: 'sync', color: S.indigo, tint: S.indigoSoft, label: 'Sauvegarde automatique' },
-  manual_backup: { icon: 'save', color: S.indigo, tint: S.indigoSoft, label: 'Sauvegarde manuelle' },
-  safety_backup: { icon: 'shield', color: S.gold, tint: S.goldSoft, label: 'Sauvegarde de sécurité' },
-  cloud_push: { icon: 'upload', color: S.mossText, tint: S.mossSoft, label: 'Envoi vers le cloud' },
-  cloud_pull: { icon: 'cloud', color: S.mossText, tint: S.mossSoft, label: 'Récupération depuis le cloud' },
-  peer_sync: { icon: 'tablet', color: S.accent, tint: S.accentSoft, label: 'Synchro iPhone et iPad' },
-  import_file: { icon: 'download', color: S.ink2, tint: '#ECE9E2', label: 'Import de fichier' },
-  restore_safety: { icon: 'restore', color: S.gold, tint: S.goldSoft, label: 'Retour à un état précédent' },
-  watch_sync: { icon: 'watch', color: S.accent, tint: S.accentSoft, label: 'Synchro de la montre' },
+  auto_backup: { icon: 'sync', color: S.indigo, tint: S.indigoSoft, label: traduire('Sauvegarde automatique') },
+  manual_backup: { icon: 'save', color: S.indigo, tint: S.indigoSoft, label: traduire('Sauvegarde manuelle') },
+  safety_backup: { icon: 'shield', color: S.gold, tint: S.goldSoft, label: traduire('Sauvegarde de sécurité') },
+  cloud_push: { icon: 'upload', color: S.mossText, tint: S.mossSoft, label: traduire('Envoi vers le cloud') },
+  cloud_pull: { icon: 'cloud', color: S.mossText, tint: S.mossSoft, label: traduire('Récupération depuis le cloud') },
+  peer_sync: { icon: 'tablet', color: S.accent, tint: S.accentSoft, label: traduire('Synchro iPhone et iPad') },
+  import_file: { icon: 'download', color: S.ink2, tint: '#ECE9E2', label: traduire('Import de fichier') },
+  restore_safety: { icon: 'restore', color: S.gold, tint: S.goldSoft, label: traduire('Retour à un état précédent') },
+  watch_sync: { icon: 'watch', color: S.accent, tint: S.accentSoft, label: traduire('Synchro de la montre') },
   export_share: { icon: 'external', color: S.ink2, tint: '#ECE9E2', label: 'Partage' },
 };
 
@@ -38,9 +39,9 @@ function dayKey(ts: string): string {
   const today = new Date();
   const y = new Date();
   y.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return "Aujourd'hui";
-  if (d.toDateString() === y.toDateString()) return 'Hier';
-  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (d.toDateString() === today.toDateString()) return traduire("Aujourd'hui");
+  if (d.toDateString() === y.toDateString()) return traduire('Hier');
+  return d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 export default function SyncHistoryScreen() {
@@ -67,8 +68,8 @@ export default function SyncHistoryScreen() {
 
   const handleClear = () => {
     impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-    appAlert("Effacer le journal ?", "Seul le journal des opérations est supprimé. Tes données et tes sauvegardes restent intactes.", [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire("Effacer le journal ?"), traduire("Seul le journal des opérations est supprimé. Tes données et tes sauvegardes restent intactes."), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Effacer',
         style: 'destructive',
@@ -101,9 +102,9 @@ export default function SyncHistoryScreen() {
         showsVerticalScrollIndicator={false}
       >
         <EnTete
-          titre="Journal de synchro"
-          sousTitre={history.length === 0 ? 'Rien pour le moment' : `${history.length} opération${history.length > 1 ? 's' : ''} récente${history.length > 1 ? 's' : ''}`}
-          droite={history.length > 0 ? <RoundButton icon="trash" label="Effacer le journal" onPress={handleClear} /> : null}
+          titre={traduire("Journal de synchro")}
+          sousTitre={history.length === 0 ? traduire('Rien pour le moment') : traduirePluriel(history.length, history.length > 1, "{0} opération récente", "{0} opérations récentes", history.length)}
+          droite={history.length > 0 ? <RoundButton icon="trash" label={traduire("Effacer le journal")} onPress={handleClear} /> : null}
           onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
           style={{ marginHorizontal: -16, marginTop: -8 }}
         />
@@ -112,11 +113,9 @@ export default function SyncHistoryScreen() {
           <GlassBox style={{ alignItems: 'center', gap: 10, paddingVertical: 28 }}>
             <Ornement name="torii" size={84} />
             <Ink size={19} weight="black" tight style={{ textAlign: 'center' }}>
-              Aucune activité récente
-            </Ink>
+              {traduire("Aucune activité récente")}</Ink>
             <Ink size={14} weight="medium" color={S.ink2} style={{ textAlign: 'center' }}>
-              Dès qu'une sauvegarde ou une synchro a lieu, elle s'inscrit ici.
-            </Ink>
+              {traduire("Dès qu'une sauvegarde ou une synchro a lieu, elle s'inscrit ici.")}</Ink>
           </GlassBox>
         ) : (
           <>
@@ -126,16 +125,14 @@ export default function SyncHistoryScreen() {
                   {String(ok)}
                 </Ink>
                 <Ink size={12} weight="bold" color={S.ink2}>
-                  réussie{ok > 1 ? 's' : ''}
-                </Ink>
+                  {traduirePluriel(ok, ok > 1, "réussie", "réussies")}</Ink>
               </View>
               <View style={{ flex: 1, borderRadius: 22, backgroundColor: fails ? S.dangerSoft : P.white, borderWidth: 1, borderColor: fails ? S.dangerSoft : S.line2, padding: 14 }}>
                 <Ink size={28} weight="black" tight color={fails ? S.danger : S.ink}>
                   {String(fails)}
                 </Ink>
                 <Ink size={12} weight="bold" color={S.ink2}>
-                  en échec
-                </Ink>
+                  {traduire("en échec")}</Ink>
               </View>
             </View>
             {groups.map((g) => (
@@ -148,7 +145,7 @@ export default function SyncHistoryScreen() {
                     const look = EVENT_LOOK[event.type] ?? { icon: 'info' as SanteIconName, color: S.ink2, tint: '#ECE9E2', label: SYNC_EVENT_LABELS[event.type]?.label ?? event.type };
                     const details: string[] = [formatRelative(new Date(event.timestamp))];
                     if (event.device) details.push(event.device);
-                    if (event.itemsCount !== undefined) details.push(`${event.itemsCount} élément${event.itemsCount > 1 ? 's' : ''}`);
+                    if (event.itemsCount !== undefined) details.push(traduirePluriel(event.itemsCount, event.itemsCount > 1, "{0} élément", "{0} éléments", event.itemsCount));
                     if (event.sizeBytes !== undefined) details.push(formatSize(event.sizeBytes));
                     return (
                       <View key={`${event.timestamp}_${i}`} style={{ flexDirection: 'row', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: S.line2 }}>
@@ -162,7 +159,7 @@ export default function SyncHistoryScreen() {
                             </Ink>
                             <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: event.success ? S.mossSoft : S.dangerSoft, justifyContent: 'center' }}>
                               <Ink size={11} weight="extraBold" color={event.success ? S.mossText : S.danger}>
-                                {event.success ? 'Réussi' : 'Échec'}
+                                {event.success ? traduire('Réussi') : traduire('Échec')}
                               </Ink>
                             </View>
                           </View>

@@ -31,6 +31,7 @@ import { aUneDonnee, eauDuJour, jourA11y, mesuresDuJour, nuitDuJour, retenirSeri
 import type { SeriesJour } from '@/lib/v2/sante/anneauxJours';
 import { RangeeSemaine } from './AnneauxSemaine';
 import type { StyleValeurs } from '@/lib/v2/accueil/proposition';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 export function TitreSection({ titre, sous }: { titre: string; sous?: string }) {
   return (
@@ -128,7 +129,7 @@ export function TableauDuJour({
   const trois = ORDRE_ACTIVITE.map((k) => ({ cle: k, m: mesuresJour.find((x) => x.cle === k) ?? null }));
   const avecAnneaux = avecSemaine || trois.some((x) => x.m);
   const autres = mesuresJour.filter((m) => !['pas', 'energie-active', 'exercice', 'sommeil'].includes(m.cle));
-  const nombre = (n: number) => Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g, ' ');
+  const nombre = (n: number) => Math.round(n).toLocaleString(LOCALE).replace(/[  ]/g, ' ');
   // 17 octobre nuit : deux solutions de lisibilite, A (pastille noire, retenue) ou B (encre et barre), reglage interne
   const styleValeurs = useStyleValeurs();
   const styleContour = useStyleContour();
@@ -140,7 +141,7 @@ export function TableauDuJour({
         <Ink size={21} weight="black" tight accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1 }}>
           {titreJour(choisi, aujourdhui)}
         </Ink>
-        <Pressable onPress={() => router.push('/sante' as any)} accessibilityRole="button" accessibilityLabel="Ouvrir Santé" hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+        <Pressable onPress={() => router.push('/sante' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ouvrir Santé")} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
           <Ink size={12.5} weight="extraBold" color={P.accent}>
             Santé
           </Ink>
@@ -161,20 +162,19 @@ export function TableauDuJour({
               const part = m && o && o.cible > 0 ? Math.min(1, m.valeur / o.cible) : 0;
               const texteValeur = `${m ? texteMesureSante(m).valeur : '0'}${cible ? `/${cible}` : ''}`;
               return (
-                <Pressable key={cle} onPress={() => router.push(`/sante/${cle}` as any)} accessibilityRole="button" accessibilityLabel={vide ? `${MESURE_SANTE[cle].nom} : pas de donnée` : `${MESURE_SANTE[cle].nom} : ${m ? texteMesureSante(m).valeur : ''}${o ? `, ${o.texte}` : ''}`} style={{ gap: 3 }}>
+                <Pressable key={cle} onPress={() => router.push(`/sante/${cle}` as any)} accessibilityRole="button" accessibilityLabel={vide ? traduire("{0} : pas de donnée", MESURE_SANTE[cle].nom) : `${MESURE_SANTE[cle].nom} : ${m ? texteMesureSante(m).valeur : ''}${o ? `, ${o.texte}` : ''}`} style={{ gap: 3 }}>
                   <Ink size={12} weight="extraBold" color={P.ink} numberOfLines={1}>
                     {MESURE_SANTE[cle].nom}
                     {o?.repere ? (
                       <Ink size={11} weight="bold" color={P.ink2}>
-                        {'  repère'}
+                        {traduire('  repère')}
                       </Ink>
                     ) : null}
                   </Ink>
                   {vide ? (
                     // 19 octobre : sans donnee ce jour-la, on le dit (avant : « 0/8 000 » en gris)
                     <Ink size={etroit ? 14 : 15} weight="extraBold" color={P.ink2} numberOfLines={1} style={{ paddingVertical: 3 }}>
-                      Pas de donnée
-                    </Ink>
+                      {traduire("Pas de donnée")}</Ink>
                   ) : styleValeurs !== 'barre' ? (
                     // pastille noire (retenue) ou l'un des trois traitements legers a l'essai, dans la couleur exacte de l'anneau
                     <ValeurLegere style={styleValeurs} couleur={vide ? (styleValeurs === 'pastille' ? 'rgba(255,255,255,0.6)' : P.ink2) : c.anneau} size={etroit ? 16 : 17.5} rayon={10} valeur={texteValeur} unite={` ${unites[cle]}`} />
@@ -199,7 +199,7 @@ export function TableauDuJour({
           <Pressable
             onPress={() => router.push(`/sante/anneaux?jour=${choisi}` as any)}
             accessibilityRole="button"
-            accessibilityLabel={`Tes anneaux, ${estAujourdhui ? 'aujourd’hui' : jourA11y(choisi)}. Ouvrir l’historique`}
+            accessibilityLabel={traduire("Tes anneaux, {0}. Ouvrir l’historique", estAujourdhui ? 'aujourd’hui' : jourA11y(choisi))}
             hitSlop={6}
           >
             <AnneauxConcentriques
@@ -235,11 +235,11 @@ export function TableauDuJour({
             const { valeur, unite } = texteMesureSante(m);
             const court = COURT[m.cle] ?? { nom: MESURE_SANTE[m.cle].nom, unite };
             return (
-              <Pressable key={m.cle} onPress={() => setFeuille(true)} accessibilityRole="button" accessibilityLabel={`${MESURE_SANTE[m.cle].nom} : ${valeur} ${unite}. Voir le détail de tes mesures`} style={{ flex: 1, minWidth: 0, gap: 2, paddingRight: 2 }}>
+              <Pressable key={m.cle} onPress={() => setFeuille(true)} accessibilityRole="button" accessibilityLabel={traduire("{0} : {1} {2}. Voir le détail de tes mesures", MESURE_SANTE[m.cle].nom, valeur, unite)} style={{ flex: 1, minWidth: 0, gap: 2, paddingRight: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: COULEUR_AUTRE[m.cle] ?? P.ink2 }} />
                   <Ink size={10} weight="extraBold" color={P.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={{ flexShrink: 1 }}>
-                    {m.hier ? `${court.nom}, hier` : court.nom}
+                    {m.hier ? traduire("{0}, hier", court.nom) : court.nom}
                   </Ink>
                 </View>
                 <Ink size={15} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ fontVariant: ['tabular-nums'] }}>
@@ -258,11 +258,10 @@ export function TableauDuJour({
       {!autres.length && !estAujourdhui && avecSemaine ? (
         <View style={{ borderTopWidth: 1, borderTopColor: P.line2, paddingTop: 12 }}>
           <Ink size={11.5} weight="bold" color={P.ink2}>
-            Pas d’autre mesure de Santé ce jour-là
-          </Ink>
+            {traduire("Pas d’autre mesure de Santé ce jour-là")}</Ink>
         </View>
       ) : null}
-      <FeuilleMesures visible={feuille} onFermer={() => setFeuille(false)} mesures={autres} titre={estAujourdhui ? 'Tes autres mesures du jour' : `Tes autres mesures, ${jourA11y(choisi)}`} />
+      <FeuilleMesures visible={feuille} onFermer={() => setFeuille(false)} mesures={autres} titre={estAujourdhui ? traduire('Tes autres mesures du jour') : traduire("Tes autres mesures, {0}", jourA11y(choisi))} />
     </View>
   );
 }
@@ -284,29 +283,29 @@ const COULEUR_AUTRE: Partial<Record<string, string>> = {
 const COURT: Partial<Record<string, { nom: string; unite: string }>> = {
   distance: { nom: 'Dist.', unite: 'km' },
   'frequence-cardiaque': { nom: 'FC', unite: 'bpm' },
-  'fc-repos': { nom: 'FC repos', unite: 'bpm' },
-  oxygene: { nom: 'SpO2', unite: '%' },
+  'fc-repos': { nom: traduire('FC repos'), unite: 'bpm' },
+  oxygene: { nom: traduire('SpO2'), unite: '%' },
   respiration: { nom: 'FR', unite: '/min' },
   debout: { nom: 'Debout', unite: 'h' },
 };
 
 /** Le nom complet et une phrase simple pour chaque mesure de la ligne du bas */
 const EXPLICATION: Partial<Record<string, { nom: string; phrase: string }>> = {
-  distance: { nom: 'Distance', phrase: 'distance parcourue aujourd’hui' },
-  'frequence-cardiaque': { nom: 'FC du jour', phrase: 'fréquence cardiaque moyenne aujourd’hui' },
-  'fc-repos': { nom: 'FC repos', phrase: 'fréquence cardiaque au repos' },
-  oxygene: { nom: 'SpO2', phrase: 'saturation en oxygène du sang' },
-  respiration: { nom: 'FR', phrase: 'fréquence respiratoire, respirations par minute' },
-  debout: { nom: 'Debout', phrase: 'heures où tu as bougé au moins une minute' },
+  distance: { nom: 'Distance', phrase: traduire('distance parcourue aujourd’hui') },
+  'frequence-cardiaque': { nom: traduire('FC du jour'), phrase: traduire('fréquence cardiaque moyenne aujourd’hui') },
+  'fc-repos': { nom: traduire('FC repos'), phrase: traduire('fréquence cardiaque au repos') },
+  oxygene: { nom: traduire('SpO2'), phrase: traduire('saturation en oxygène du sang') },
+  respiration: { nom: 'FR', phrase: traduire('fréquence respiratoire, respirations par minute') },
+  debout: { nom: 'Debout', phrase: traduire('heures où tu as bougé au moins une minute') },
 };
 
 /** La petite feuille des mesures : noms complets, une phrase, la valeur, un lien vers le detail Sante de chacune */
-function FeuilleMesures({ visible, onFermer, mesures, titre = 'Tes autres mesures du jour' }: { visible: boolean; onFermer: () => void; mesures: MesureSanteJour[]; titre?: string }) {
+function FeuilleMesures({ visible, onFermer, mesures, titre = traduire('Tes autres mesures du jour') }: { visible: boolean; onFermer: () => void; mesures: MesureSanteJour[]; titre?: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onFermer}>
-      <Pressable onPress={onFermer} style={{ flex: 1, backgroundColor: 'rgba(16,19,27,0.45)', justifyContent: 'flex-end' }} accessibilityLabel="Fermer">
+      <Pressable onPress={onFermer} style={{ flex: 1, backgroundColor: 'rgba(16,19,27,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
         <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12, paddingHorizontal: 20, paddingBottom: insets.bottom + 16, gap: 6 }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.line, marginBottom: 8 }} />
           <Ink size={20} weight="black" tight accessibilityRole="header">
@@ -324,7 +323,7 @@ function FeuilleMesures({ visible, onFermer, mesures, titre = 'Tes autres mesure
                     router.push(`/sante/${m.cle}` as any);
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={`${e.nom} : ${e.phrase}. ${valeur} ${unite}${m.hier ? ', mesure d’hier' : ''}. Voir le détail`}
+                  accessibilityLabel={traduire("{0} : {1}. {2} {3}{4}. Voir le détail", e.nom, e.phrase, valeur, unite, m.hier ? ', mesure d’hier' : '')}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderTopColor: P.line2, opacity: pressed ? 0.6 : 1 })}
                 >
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COULEUR_AUTRE[m.cle] ?? P.ink2 }} />
@@ -339,7 +338,7 @@ function FeuilleMesures({ visible, onFermer, mesures, titre = 'Tes autres mesure
                   <Ink size={16} weight="black" tight style={{ fontVariant: ['tabular-nums'] }}>
                     {valeur}
                     <Ink size={11} weight="bold" color={P.ink2}>{` ${unite}`}</Ink>
-                    {m.hier ? <Ink size={11} weight="bold" color={P.ink2}>{', hier'}</Ink> : null}
+                    {m.hier ? <Ink size={11} weight="bold" color={P.ink2}>{traduire(', hier')}</Ink> : null}
                   </Ink>
                   <Icon name="chevron" size={14} color={P.ink2} width={2.6} />
                 </Pressable>
@@ -374,11 +373,10 @@ function MiniRecup({ forme, passe = false }: { forme: FormeResult | null; passe?
   // 19 octobre : le score de recuperation se calcule pour aujourd'hui seulement, aucun score n'est garde par jour
   if (passe) {
     return (
-      <CadreMini onPress={() => router.push('/readiness-detail' as any)} a11y="Récupération : pas de score ce jour-là, le score se calcule pour aujourd’hui" titre="Récupération" couleur={t.texte}>
+      <CadreMini onPress={() => router.push('/readiness-detail' as any)} a11y={traduire("Récupération : pas de score ce jour-là, le score se calcule pour aujourd’hui")} titre={traduire("Récupération")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-            Pas de score ce jour-là
-          </Ink>
+            {traduire("Pas de score ce jour-là")}</Ink>
         </View>
       </CadreMini>
     );
@@ -388,7 +386,7 @@ function MiniRecup({ forme, passe = false }: { forme: FormeResult | null; passe?
     const manqueNuit = forme.missing.includes('sommeil');
     const message = messageScoreIncomplet(manqueNuit);
     return (
-      <CadreMini onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={`Récupération : ${message}. ${manqueNuit ? 'Note ta nuit' : 'Voir le détail'}`} titre="Récupération" couleur={t.texte}>
+      <CadreMini onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={traduire("Récupération : {0}. {1}", message, manqueNuit ? 'Note ta nuit' : 'Voir le détail')} titre={traduire("Récupération")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
             {message}
@@ -399,17 +397,16 @@ function MiniRecup({ forme, passe = false }: { forme: FormeResult | null; passe?
   }
   if (score === null) {
     return (
-      <CadreMini onPress={() => router.push('/sleep-input' as any)} a11y="Récupération : note ta nuit pour la voir" titre="Récupération" couleur={t.texte}>
+      <CadreMini onPress={() => router.push('/sleep-input' as any)} a11y={traduire("Récupération : note ta nuit pour la voir")} titre={traduire("Récupération")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-            Note ta nuit pour la voir
-          </Ink>
+            {traduire("Note ta nuit pour la voir")}</Ink>
         </View>
       </CadreMini>
     );
   }
   return (
-    <CadreMini onPress={() => router.push('/readiness-detail' as any)} a11y={`Récupération : ${score} sur 100, ${forme!.level!.label}. ${phraseRecup(score)}`} titre="Récupération" couleur={t.texte}>
+    <CadreMini onPress={() => router.push('/readiness-detail' as any)} a11y={traduire("Récupération : {0} sur 100, {1}. {2}", score, forme!.level!.label, phraseRecup(score))} titre={traduire("Récupération")} couleur={t.texte}>
       <JaugeRecup score={score} taille={84} epaisseur={8} cle="mini:recup" />
       <Ink size={13} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ textAlign: 'center' }}>
         {forme!.level!.label}
@@ -429,30 +426,28 @@ function MiniSommeil({ sleep, sleepGoal, jour = null }: { sleep: SleepEntry[]; s
   const nuits = useMemo(() => septNuits(sleep, jour ?? localISO()), [sleep, jour]);
   if (!nuit && jour) {
     return (
-      <CadreMini onPress={() => router.push('/sleep' as any)} a11y="Sommeil : pas de nuit notée ce jour-là" titre="Sommeil" couleur={t.texte}>
+      <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : pas de nuit notée ce jour-là")} titre={traduire("Sommeil")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-            Pas de nuit notée ce jour-là
-          </Ink>
+            {traduire("Pas de nuit notée ce jour-là")}</Ink>
         </View>
       </CadreMini>
     );
   }
   if (!nuit) {
     return (
-      <CadreMini onPress={() => router.push('/sleep-input' as any)} a11y="Sommeil : ajoute ta dernière nuit" titre="Sommeil" couleur={t.texte}>
+      <CadreMini onPress={() => router.push('/sleep-input' as any)} a11y={traduire("Sommeil : ajoute ta dernière nuit")} titre={traduire("Sommeil")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-            Ajoute ta dernière nuit
-          </Ink>
+            {traduire("Ajoute ta dernière nuit")}</Ink>
         </View>
       </CadreMini>
     );
   }
-  const heures = nuit.bedTime && nuit.wakeTime ? `${nuit.bedTime.replace(':', ' h ')} à ${nuit.wakeTime.replace(':', ' h ')}` : null;
+  const heures = nuit.bedTime && nuit.wakeTime ? traduire("{0} à {1}", nuit.bedTime.replace(':', ' h '), nuit.wakeTime.replace(':', ' h ')) : null;
   return (
-    <CadreMini onPress={() => router.push('/sleep' as any)} a11y={`Sommeil : ${formatMinutes(nuit.duration)}${heures ? `, de ${heures}` : ''}`} titre="Sommeil" couleur={t.texte}>
-      <ChiffreAnime valeur={nuit.duration} format={(x) => formatMinutes(Math.round(x))} cle={jour ? `mini:sommeil:${jour}` : 'mini:sommeil'} taille={18} />
+    <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : {0}{1}", formatMinutes(nuit.duration), heures ? `, de ${heures}` : '')} titre={traduire("Sommeil")} couleur={t.texte}>
+      <ChiffreAnime valeur={nuit.duration} format={(x) => formatMinutes(Math.round(x))} cle={jour ? traduire("mini:sommeil:{0}", jour) : 'mini:sommeil'} taille={18} />
       <View style={{ alignSelf: 'stretch', paddingHorizontal: 2, marginTop: 2 }}>
         <Barres7 valeurs={nuits} objectif={sleepGoal} couleur={t.plein} douce={t.bord} hauteur={44} cle="mini:sommeil" derniere />
       </View>
@@ -500,15 +495,15 @@ function MiniEau({ water, waterGoal, onOuvrir }: { water: number; waterGoal: num
   };
   return (
     <View style={{ flex: 1, minWidth: 0 }}>
-      <CadreMini onPress={onOuvrir} a11y={`Eau : ${formatLiters(affiche)} litre sur ${formatLiters(waterGoal)}. Ouvrir l’eau du jour`} titre="Eau" couleur={trait} titreAGauche>
+      <CadreMini onPress={onOuvrir} a11y={traduire("Eau : {0} litre sur {1}. Ouvrir l’eau du jour", formatLiters(affiche), formatLiters(waterGoal))} titre="Eau" couleur={trait} titreAGauche>
         <Bouteille part={waterGoal > 0 ? affiche / waterGoal : 0} couleur={c.anneau} vague={c.fin} contour={trait} largeur={30} hauteur={56} cle="mini:eau" />
         {/* la quantite dans le cyan exact de l'anneau, sur la meme pastille noire que les valeurs des anneaux (AA) */}
         <ValeurLegere style={styleValeurs === 'barre' ? 'pastille' : styleValeurs} couleur={c.anneau} size={15} rayon={9} centre valeur={`${formatLiters(quantite)} L`} />
         <Ink size={9.5} weight="bold" color={ok ? P.mossText : P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ textAlign: 'center', alignSelf: 'stretch', marginHorizontal: -4 }}>
-          {ok ? 'objectif atteint' : `encore ${formatLiters(reste)} L`}
+          {ok ? traduire('objectif atteint') : traduire("encore {0} L", formatLiters(reste))}
         </Ink>
       </CadreMini>
-      <Pressable onPress={verre} accessibilityRole="button" accessibilityLabel="Ajouter un verre d’eau" hitSlop={8} style={({ pressed }) => ({ position: 'absolute', right: 6, top: 6, width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderColor: trait, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.92 : 1 }] })}>
+      <Pressable onPress={verre} accessibilityRole="button" accessibilityLabel={traduire("Ajouter un verre d’eau")} hitSlop={8} style={({ pressed }) => ({ position: 'absolute', right: 6, top: 6, width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderColor: trait, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.92 : 1 }] })}>
         <Icon name="plus" size={14} color={trait} width={3} />
       </Pressable>
     </View>
@@ -525,11 +520,10 @@ function MiniEauPassee({ eau, goal }: { eau: { amount: number; goal: number | nu
   if (!eau) {
     return (
       <View style={{ flex: 1, minWidth: 0 }}>
-        <CadreMini onPress={ouvrir} a11y="Eau : pas de donnée ce jour-là. Ouvrir l’eau" titre="Eau" couleur={trait} titreAGauche>
+        <CadreMini onPress={ouvrir} a11y={traduire("Eau : pas de donnée ce jour-là. Ouvrir l’eau")} titre="Eau" couleur={trait} titreAGauche>
           <View style={{ flex: 1, justifyContent: 'center' }}>
             <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-              Pas de donnée
-            </Ink>
+              {traduire("Pas de donnée")}</Ink>
           </View>
         </CadreMini>
       </View>
@@ -538,13 +532,13 @@ function MiniEauPassee({ eau, goal }: { eau: { amount: number; goal: number | nu
   const ok = g > 0 && eau.amount >= g;
   return (
     <View style={{ flex: 1, minWidth: 0 }}>
-      <CadreMini onPress={ouvrir} a11y={`Eau : ${formatLiters(eau.amount)} litre${g > 0 ? ` sur ${formatLiters(g)}` : ''} ce jour-là. Ouvrir l’eau`} titre="Eau" couleur={trait} titreAGauche>
+      <CadreMini onPress={ouvrir} a11y={traduire("Eau : {0} litre{1} ce jour-là. Ouvrir l’eau", formatLiters(eau.amount), g > 0 ? ` sur ${formatLiters(g)}` : '')} titre="Eau" couleur={trait} titreAGauche>
         <Bouteille part={g > 0 ? eau.amount / g : 0} couleur={c.anneau} vague={c.fin} contour={trait} largeur={30} hauteur={56} cle="mini:eau:passee" />
         <Ink size={15} weight="black" color={trait} style={{ textAlign: 'center' }}>
           {`${formatLiters(eau.amount)} L`}
         </Ink>
         <Ink size={9.5} weight="bold" color={ok ? P.mossText : P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ textAlign: 'center', alignSelf: 'stretch', marginHorizontal: -4 }}>
-          {ok ? 'objectif atteint' : g > 0 ? `sur ${formatLiters(g)} L` : ' '}
+          {ok ? traduire('objectif atteint') : g > 0 ? traduire("sur {0} L", formatLiters(g)) : ' '}
         </Ink>
       </CadreMini>
     </View>
@@ -583,7 +577,7 @@ export function Carrousel({ titre, items }: { titre: string; items: { cle: strin
           snapToAlignment="start"
           disableIntervalMomentum
           scrollEventThrottle={16}
-          accessibilityLabel={`${titre}, ${items.length} tuiles, fais glisser pour voir la suite`}
+          accessibilityLabel={traduire("{0}, {1} tuiles, fais glisser pour voir la suite", titre, items.length)}
         >
           {items.map((x) => (
             <View key={x.cle} style={{ width: L, minHeight: 150 }}>

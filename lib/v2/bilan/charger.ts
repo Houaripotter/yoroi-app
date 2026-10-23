@@ -25,6 +25,7 @@ import type { CarteData } from '@/lib/v2/cartes/types';
 import { bilanCorps, bilanSeance, dateLongue, joursEntre, MESURES, moinsJours } from './texte';
 import { chargerResumeRepas } from '@/lib/v2/nutrition/useMange';
 import type { BilanCorps, BilanSeance, CompoJ, MesureJ, OrigineCorps, SeanceJ } from './texte';
+import { traduire } from '@/lib/i18n/tr';
 
 const TORII_KEY = 'yoroi_torii_v1';
 
@@ -87,7 +88,7 @@ export async function chargerBilanCorps(date: string, origine: OrigineCorps): Pr
         const p = prevoir({ series: pesees, today, cap, ligne: sansTorii ? null : ligne, torii, atteint });
         if (p.ok) {
           // une prevision, dite comme telle ; le torii (la date du cap) dans la phrase suivante
-          prevision = phrasePrevision(p, 'kg', 'À ton rythme actuel');
+          prevision = phrasePrevision(p, 'kg', traduire('À ton rythme actuel'));
           toriiTexte = phraseTorii(p);
         }
       }
@@ -95,7 +96,7 @@ export async function chargerBilanCorps(date: string, origine: OrigineCorps): Pr
       const derniere = series[series.length - 1];
       if (jour >= derniere.date) {
         const p = prevoir({ series: pesees, today, cap: null });
-        if (p.ok) prevision = phrasePrevision(p, 'kg', 'À ton rythme actuel');
+        if (p.ok) prevision = phrasePrevision(p, 'kg', traduire('À ton rythme actuel'));
       }
     }
     bruit = ajuster(pesees, today)?.bruit ?? null;
@@ -169,7 +170,7 @@ export function seanceJ(t: Training): SeanceJ {
     id: t.id ?? 0,
     date: jourDe(t),
     sport: premierSport(t),
-    nomSport: nomSport(t.sport) || 'Séance',
+    nomSport: nomSport(t.sport) || traduire('Séance'),
     dureeMin: durationOf(t),
     intensite: t.intensity ?? null,
     fcMoy: t.heart_rate ?? null,

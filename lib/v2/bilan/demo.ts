@@ -7,6 +7,7 @@ import { bilanCorps, bilanSeance, moinsJours } from './texte';
 import type { BilanCorps, BilanSeance, PeseeJ } from './texte';
 import { resumerRepas } from '@/lib/v2/nutrition/mange';
 import { demoRepas } from '@/lib/v2/nutrition/mangeDemo';
+import { traduire } from '@/lib/i18n/tr';
 
 const JOUR = '2026-10-16';
 
@@ -41,8 +42,8 @@ export function demoBilanCorps(origine: 'pesee' | 'mensurations' | 'composition'
       { date: JOUR, valeurs: { waist: 87, navel: 90, hips: 100.5, chest: 104.5, arm: 37 } },
     ],
     objectif: { depart: { date: '2026-09-01', poids: 84.9 }, cap: 78, mode: 'perte' },
-    ligne: { ton: 'vert', texte: 'Sur ton rythme prévu, à 0,2 kg près' },
-    prevision: 'À ton rythme actuel, tu passes sous 78 kg vers le 9 janv.',
+    ligne: { ton: 'vert', texte: traduire('Sur ton rythme prévu, à 0,2 kg près') },
+    prevision: traduire('À ton rythme actuel, tu passes sous 78 kg vers le 9 janv.'),
     bruit: 0.25,
     origine,
     repas: (() => {
@@ -59,7 +60,7 @@ export function demoBilanSeance(): BilanSeance {
     compteurs: { jour: 1, semaine: 3, mois: 12, annee: 178, total: 412 },
     objectifSemaine: 4,
     annee: { fait: 178, total: 208, ecart: 15 },
-    records: ['record de rounds, 8 rounds'],
+    records: [traduire('record de rounds, 8 rounds')],
     techniques: { liste: ['Juji gatame', 'Triangle', 'Omoplata'], appris: true },
     regularite: { semainesActives: 4, sur: 4, serie: 0, joursDepuis: 3 },
   });
@@ -67,5 +68,5 @@ export function demoBilanSeance(): BilanSeance {
 
 export function demoCarteBilan(type: 'corps' | 'seance'): CarteData {
   const e = type === 'corps' ? demoBilanCorps().carte! : demoBilanSeance().carte!;
-  return { moment: 'exploit', titre: e.surtitre, sousTitre: 'Vendredi 16 octobre', exploit: e, sport: type === 'seance' ? 'jjb' : null, source: { type: 'bilan', ref: `${type}:demo` }, cle: `exploit:demo:bilan_${type}` };
+  return { moment: 'exploit', titre: e.surtitre, sousTitre: traduire('Vendredi 16 octobre'), exploit: e, sport: type === 'seance' ? 'jjb' : null, source: { type: 'bilan', ref: `${type}:demo` }, cle: `exploit:demo:bilan_${type}` };
 }

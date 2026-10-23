@@ -10,6 +10,7 @@ import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { StoryCard } from '@/components/yoroi/v2/partage/StoryCard';
 import { Mini, Panel, Plate, cardWidthFor, figureFor, toVariant } from '@/components/yoroi/v2/partage/cardKit';
 import { libelleObjectifSeances, objectifTenu } from '@/lib/social-cards/compteurSeances';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export interface WeeklyRecapCardV2Props {
   stats: WeekStats;
@@ -26,7 +27,7 @@ export interface WeeklyRecapCardV2Props {
   width?: number;
 }
 
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MONTHS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 export const WeeklyRecapCardV2 = React.memo(forwardRef<View, WeeklyRecapCardV2Props>(
   ({ stats, format, backgroundImage, backgroundType = 'black', username, weeklyGoal, width: widthProp }, ref) => {
@@ -41,7 +42,7 @@ export const WeeklyRecapCardV2 = React.memo(forwardRef<View, WeeklyRecapCardV2Pr
     const start = new Date(stats.weekStart);
     const end = new Date(stats.weekEnd);
     // 18 octobre (audit) : semaine a cheval sur deux mois, « du 29 sept. au 5 oct. » (avant : « du 29 au 5 oct. »)
-    const range = start.getMonth() === end.getMonth() ? `${start.getDate()} au ${end.getDate()} ${MONTHS[end.getMonth()] ?? ''}` : `${start.getDate()} ${MONTHS[start.getMonth()] ?? ''} au ${end.getDate()} ${MONTHS[end.getMonth()] ?? ''}`;
+    const range = start.getMonth() === end.getMonth() ? traduire("{0} au {1} {2}", start.getDate(), end.getDate(), MONTHS[end.getMonth()] ?? '') : traduire("{0} {1} au {2} {3}", start.getDate(), MONTHS[start.getMonth()] ?? '', end.getDate(), MONTHS[end.getMonth()] ?? '');
     const plateW = Math.floor((width - 80) / 7) - 4;
     const w = stats.evolution?.weight;
     return (
@@ -51,13 +52,13 @@ export const WeeklyRecapCardV2 = React.memo(forwardRef<View, WeeklyRecapCardV2Pr
         width={width}
         square={format === 'square'}
         photo={backgroundImage}
-        label={`Semaine ${stats.weekNumber}`}
-        kicker={`Ma semaine, du ${range}`}
+        label={traduire("Semaine {0}", stats.weekNumber)}
+        kicker={traduire("Ma semaine, du {0}", range)}
         name={username || id.name || undefined}
         big={stats.activeDays}
         bigUnit="/ 7"
-        caption={`${stats.totalSessions} séance${stats.totalSessions > 1 ? 's' : ''} cette semaine`}
-        subCaption={held ? 'Semaine réussie, la série grandit' : libelleObjectifSeances(goal)}
+        caption={traduirePluriel(stats.totalSessions, stats.totalSessions > 1, "{0} séance cette semaine", "{0} séances cette semaine", stats.totalSessions)}
+        subCaption={held ? traduire('Semaine réussie, la série grandit') : libelleObjectifSeances(goal)}
         figure={figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre })}
         rankKanji={id.rankKanji}
         rankName={id.rankName}
@@ -74,9 +75,9 @@ export const WeeklyRecapCardV2 = React.memo(forwardRef<View, WeeklyRecapCardV2Pr
         )}
         panel={(p) => (
           <Panel p={p} style={{ flexDirection: 'row', gap: 10 }}>
-            <Mini p={p} onPanel value={`${id.weekStreak}`} label="Semaines réussies" accent={p.accent} />
-            <Mini p={p} onPanel value={stats.bestDay?.dayName ?? 'À venir'} label="Meilleur jour" />
-            <Mini p={p} onPanel value={w ? `${w.change > 0 ? '+' : ''}${w.change.toFixed(1).replace('.', ',')} kg` : `${Math.round(stats.percentage)} %`} label={w ? 'Poids' : 'Semaine remplie'} />
+            <Mini p={p} onPanel value={`${id.weekStreak}`} label={traduire("Semaines réussies")} accent={p.accent} />
+            <Mini p={p} onPanel value={stats.bestDay?.dayName ?? traduire('À venir')} label={traduire("Meilleur jour")} />
+            <Mini p={p} onPanel value={w ? `${w.change > 0 ? '+' : ''}${w.change.toFixed(1).replace('.', DECIMAL)} kg` : `${Math.round(stats.percentage)} %`} label={w ? 'Poids' : traduire('Semaine remplie')} />
           </Panel>
         )}
         extra={stats.clubs.length > 0 ? (p) => (

@@ -12,6 +12,7 @@ import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
 import type { DayCell } from '@/lib/v2/progres/year';
 import { monthShortIdx } from '@/lib/v2/progres/format';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Ancienne rampe des plaques, gardee pour compatibilite (plus utilisee par la grille) */
 export const KOZANE_RAMP = ['#E2DFD8', '#AFC0DE', '#6A86BE', '#2C4A84', '#172A52'];
@@ -67,7 +68,7 @@ export function KozaneYear({ weeks, monthMarks, selected, onSelect }: Props) {
             </Svg>
             <Pressable
               style={{ position: 'absolute', left: 0, top: 0, width: w, height: h }}
-              accessibilityLabel="Carte des jours, touche un jour pour voir la séance"
+              accessibilityLabel={traduire("Carte des jours, touche un jour pour voir la séance")}
               onPress={(e) => {
                 const x = Math.floor(e.nativeEvent.locationX / (CW + GAP_X));
                 const y = Math.floor(e.nativeEvent.locationY / (CH + GAP_Y));
@@ -103,8 +104,7 @@ export function KozaneLegend() {
       </Ink>
       <View style={{ width: 11, height: 11, borderRadius: 6, backgroundColor: c.accent, marginLeft: 10 }} />
       <Ink size={12} weight="bold" color={c.textSecondary}>
-        séance
-      </Ink>
+        {traduire("séance")}</Ink>
       <View style={{ width: 11, height: 11, borderRadius: 6, borderWidth: 1.6, borderColor: c.gold, marginLeft: 10 }} />
       <Ink size={12} weight="bold" color={c.textSecondary}>
         reprise

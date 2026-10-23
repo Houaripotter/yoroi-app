@@ -20,6 +20,7 @@ import { construction } from '@/lib/v2/dojo/pieces';
 import { rangTitre } from '@/lib/v2/dojo/univers';
 import { texteUnivers, universDe } from '@/lib/v2/dojo/dojoAffichage';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const SOURCE_COLORS: Record<XpSource, string> = {
   seance: DOJO.indigo,
@@ -72,15 +73,15 @@ export default function Journal() {
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40 }}
         ListHeaderComponent={
           <View style={{ gap: 14, marginBottom: 6 }}>
-            <BackHeader title="Journal d’XP" scene={u === 'classique' ? THEME_IMAGES.classique_ville_nuit : THEME_IMAGES.camp} subtitle="Tout ce que tu as gagné, ligne par ligne" />
+            <BackHeader title="Journal d’XP" scene={u === 'classique' ? THEME_IMAGES.classique_ville_nuit : THEME_IMAGES.camp} subtitle={traduire("Tout ce que tu as gagné, ligne par ligne")} />
             <Animated.View entering={ENTREE} style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                 <Ink size={48} weight="black" tight color={c.accent}>{formatXp(xp)}</Ink>
                 <Ink size={16} weight="extraBold" color={c.textSecondary} style={{ marginBottom: 8 }}>XP</Ink>
               </View>
               {/* Vague 45 : ou tu en es, dans ton univers */}
-              <Ink size={14} weight="bold">{`Tu es ${titreRang}. Encore ${formatXp(cons.resteXp)} XP pour ${cons.palier}.`}</Ink>
-              <Ink size={13} color={c.textSecondary}>Ton XP ne baisse jamais. Supprimer une séance ne retire rien.</Ink>
+              <Ink size={14} weight="bold">{traduire("Tu es {0}. Encore {1} XP pour {2}.", titreRang, formatXp(cons.resteXp), cons.palier)}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Ton XP ne baisse jamais. Supprimer une séance ne retire rien.")}</Ink>
               {totals.length ? (
                 <View style={{ gap: 10, marginTop: 2 }}>
                   {totals.map((t) => (
@@ -101,8 +102,8 @@ export default function Journal() {
         ListEmptyComponent={
           <View style={{ alignItems: 'center', gap: 10, paddingVertical: 30 }}>
             <Hanko size={84} color={c.accent} tampon="toro" />
-            <Ink size={18} weight="black">Ton journal est vierge</Ink>
-            <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{`Une séance, c’est ${XP_VALUES.seance} XP. Une pesée, ${XP_VALUES.pesee} XP. Tout s’inscrit ici.`}</Ink>
+            <Ink size={18} weight="black">{traduire("Ton journal est vierge")}</Ink>
+            <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Une séance, c’est {0} XP. Une pesée, {1} XP. Tout s’inscrit ici.", XP_VALUES.seance, XP_VALUES.pesee)}</Ink>
             <Pressable
               onPress={() => {
                 tap();
@@ -111,7 +112,7 @@ export default function Journal() {
               accessibilityRole="button"
               style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 6, minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.98 : 1 }] })}
             >
-              <Ink size={16} weight="extraBold" color={c.onAccent}>Enregistrer une séance</Ink>
+              <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Enregistrer une séance")}</Ink>
             </Pressable>
           </View>
         }

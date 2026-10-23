@@ -12,15 +12,16 @@
  * fonctions d'image (accueil, profil, Dojo, paywall...) appliquent la meme regle.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SilhouetteId = 'elancee' | 'equilibree' | 'athletique' | 'robuste';
 export type SilhouetteMode = 'classique' | 'auto' | SilhouetteId;
 
 export const SILHOUETTES: { id: SilhouetteId; nom: string; phrase: string }[] = [
-  { id: 'elancee', nom: 'Élancée', phrase: 'Fine et légère, toute en vitesse' },
-  { id: 'equilibree', nom: 'Équilibrée', phrase: 'Entre les deux, le juste milieu' },
-  { id: 'athletique', nom: 'Athlétique', phrase: 'Épaules larges, muscles marqués' },
-  { id: 'robuste', nom: 'Robuste', phrase: 'Large et solide, une force tranquille' },
+  { id: 'elancee', nom: traduire('Élancée'), phrase: traduire('Fine et légère, toute en vitesse') },
+  { id: 'equilibree', nom: traduire('Équilibrée'), phrase: traduire('Entre les deux, le juste milieu') },
+  { id: 'athletique', nom: traduire('Athlétique'), phrase: traduire('Épaules larges, muscles marqués') },
+  { id: 'robuste', nom: 'Robuste', phrase: traduire('Large et solide, une force tranquille') },
 ];
 
 const IDS: SilhouetteId[] = ['elancee', 'equilibree', 'athletique', 'robuste'];
@@ -30,7 +31,7 @@ export function isSilhouetteId(v: unknown): v is SilhouetteId {
 }
 
 export function silhouetteNom(id: SilhouetteId): string {
-  return SILHOUETTES.find((s) => s.id === id)?.nom ?? 'Équilibrée';
+  return SILHOUETTES.find((s) => s.id === id)?.nom ?? traduire('Équilibrée');
 }
 
 export type BodyInput = {

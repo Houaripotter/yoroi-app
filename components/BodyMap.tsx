@@ -32,6 +32,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import { traduire } from '@/lib/i18n/tr';
 
 // Limites de zoom pour éviter d'aller trop loin
 const ZOOM_MIN = 1;
@@ -64,76 +65,76 @@ interface BodyMapProps {
 export const INITIAL_DATA: { front: BodyZone[]; back: BodyZone[] } = {
   front: [
     // === TÊTE & COU ===
-    { id: 'head', label: 'Tête / Visage', x: 50, y: 6, w: 15, h: 8, injuries: ['Commotion', 'Coupure arcade', 'Contusion', 'Fracture nez'] },
-    { id: 'jaw', label: 'Mâchoire', x: 50, y: 13, w: 14, h: 5, injuries: ['Fracture', 'Luxation ATM', 'Contusion'] },
-    { id: 'neck_front', label: 'Cou (avant)', x: 50, y: 18, w: 10, h: 6, injuries: ['Torticolis', 'Contracture', 'Coup du lapin'] },
+    { id: 'head', label: traduire('Tête / Visage'), x: 50, y: 6, w: 15, h: 8, injuries: ['Commotion', 'Coupure arcade', 'Contusion', 'Fracture nez'] },
+    { id: 'jaw', label: traduire('Mâchoire'), x: 50, y: 13, w: 14, h: 5, injuries: ['Fracture', 'Luxation ATM', 'Contusion'] },
+    { id: 'neck_front', label: traduire('Cou (avant)'), x: 50, y: 18, w: 10, h: 6, injuries: ['Torticolis', 'Contracture', traduire('Coup du lapin')] },
     
     // === ÉPAULES ===
-    { id: 'shoulder_l', label: 'Épaule G', x: 66, y: 23, w: 14, h: 8, injuries: ['Luxation', 'Tendinite coiffe', 'Bursite', 'Fracture clavicule'] },
-    { id: 'shoulder_r', label: 'Épaule D', x: 35, y: 23, w: 14, h: 9, injuries: ['Luxation', 'Tendinite coiffe', 'Bursite', 'Fracture clavicule'] },
+    { id: 'shoulder_l', label: traduire('Épaule G'), x: 66, y: 23, w: 14, h: 8, injuries: ['Luxation', 'Tendinite coiffe', 'Bursite', 'Fracture clavicule'] },
+    { id: 'shoulder_r', label: traduire('Épaule D'), x: 35, y: 23, w: 14, h: 9, injuries: ['Luxation', 'Tendinite coiffe', 'Bursite', 'Fracture clavicule'] },
     
     // === PECTORAUX ===
-    { id: 'pec_l', label: 'Pectoral G', x: 57, y: 26, w: 11, h: 9, injuries: ['Déchirure', 'Contracture', 'Claquage'] },
-    { id: 'pec_r', label: 'Pectoral D', x: 44, y: 26, w: 11, h: 9, injuries: ['Déchirure', 'Contracture', 'Claquage'] },
+    { id: 'pec_l', label: 'Pectoral G', x: 57, y: 26, w: 11, h: 9, injuries: [traduire('Déchirure'), 'Contracture', 'Claquage'] },
+    { id: 'pec_r', label: 'Pectoral D', x: 44, y: 26, w: 11, h: 9, injuries: [traduire('Déchirure'), 'Contracture', 'Claquage'] },
     
     // === BRAS ===
-    { id: 'biceps_l', label: 'Biceps G', x: 66, y: 32, w: 9, h: 7, injuries: ['Déchirure', 'Tendinite', 'Contracture'] },
-    { id: 'biceps_r', label: 'Biceps D', x: 35, y: 31, w: 8, h: 7, injuries: ['Déchirure', 'Tendinite', 'Contracture'] },
+    { id: 'biceps_l', label: 'Biceps G', x: 66, y: 32, w: 9, h: 7, injuries: [traduire('Déchirure'), 'Tendinite', 'Contracture'] },
+    { id: 'biceps_r', label: 'Biceps D', x: 35, y: 31, w: 8, h: 7, injuries: [traduire('Déchirure'), 'Tendinite', 'Contracture'] },
     
     // === COUDES ===
     { id: 'elbow_l', label: 'Coude G', x: 69, y: 36, w: 12, h: 5, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Hygroma'] },
     { id: 'elbow_r', label: 'Coude D', x: 32, y: 36, w: 11, h: 6, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Hygroma'] },
     
     // === AVANT-BRAS ===
-    { id: 'forearm_l', label: 'Avant-bras G', x: 71, y: 42, w: 11, h: 8, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
-    { id: 'forearm_r', label: 'Avant-bras D', x: 32, y: 41, w: 8, h: 10, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
+    { id: 'forearm_l', label: traduire('Avant-bras G'), x: 71, y: 42, w: 11, h: 8, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
+    { id: 'forearm_r', label: traduire('Avant-bras D'), x: 32, y: 41, w: 8, h: 10, injuries: ['Tendinite', 'Contracture', 'Fracture'] },
     
     // === POIGNETS ===
-    { id: 'wrist_l', label: 'Poignet G', x: 75, y: 48, w: 9, h: 4, injuries: ['Entorse', 'Fracture scaphoïde', 'Tendinite', 'Kyste synovial'] },
-    { id: 'wrist_r', label: 'Poignet D', x: 26, y: 48, w: 10, h: 4, injuries: ['Entorse', 'Fracture scaphoïde', 'Tendinite', 'Kyste synovial'] },
+    { id: 'wrist_l', label: 'Poignet G', x: 75, y: 48, w: 9, h: 4, injuries: ['Entorse', traduire('Fracture scaphoïde'), 'Tendinite', 'Kyste synovial'] },
+    { id: 'wrist_r', label: 'Poignet D', x: 26, y: 48, w: 10, h: 4, injuries: ['Entorse', traduire('Fracture scaphoïde'), 'Tendinite', 'Kyste synovial'] },
     
     // === MAINS ===
-    { id: 'hand_l', label: 'Main G', x: 77, y: 53, w: 10, h: 11, injuries: ['Entorse doigt', 'Fracture métacarpe', 'Luxation', 'Contusion'] },
-    { id: 'hand_r', label: 'Main D', x: 23, y: 53, w: 10, h: 10, injuries: ['Entorse doigt', 'Fracture métacarpe', 'Luxation', 'Contusion'] },
+    { id: 'hand_l', label: 'Main G', x: 77, y: 53, w: 10, h: 11, injuries: ['Entorse doigt', traduire('Fracture métacarpe'), 'Luxation', 'Contusion'] },
+    { id: 'hand_r', label: 'Main D', x: 23, y: 53, w: 10, h: 10, injuries: ['Entorse doigt', traduire('Fracture métacarpe'), 'Luxation', 'Contusion'] },
     { id: 'thumb_l', label: 'Pouce G', x: 82, y: 51, w: 5, h: 6, injuries: ['Entorse', 'Fracture Bennett', 'Luxation'] },
     { id: 'thumb_r', label: 'Pouce D', x: 20, y: 51, w: 6, h: 6, injuries: ['Entorse', 'Fracture Bennett', 'Luxation'] },
     
     // === TRONC ===
     { id: 'sternum', label: 'Sternum', x: 50, y: 26, w: 5, h: 9, injuries: ['Contusion', 'Fracture', 'Point douloureux'] },
-    { id: 'ribs_l', label: 'Côtes G', x: 60, y: 34, w: 8, h: 8, injuries: ['Fracture', 'Fissure', 'Contusion'] },
-    { id: 'ribs_r', label: 'Côtes D', x: 41, y: 34, w: 8, h: 7, injuries: ['Fracture', 'Fissure', 'Contusion'] },
-    { id: 'abs', label: 'Abdominaux', x: 50, y: 39, w: 12, h: 18, injuries: ['Déchirure', 'Contracture', 'Hernie'] },
-    { id: 'oblique_l', label: 'Oblique G', x: 59, y: 41, w: 8, h: 8, injuries: ['Élongation', 'Déchirure', 'Point de côté'] },
-    { id: 'oblique_r', label: 'Oblique D', x: 41, y: 41, w: 8, h: 7, injuries: ['Élongation', 'Déchirure', 'Point de côté'] },
+    { id: 'ribs_l', label: traduire('Côtes G'), x: 60, y: 34, w: 8, h: 8, injuries: ['Fracture', 'Fissure', 'Contusion'] },
+    { id: 'ribs_r', label: traduire('Côtes D'), x: 41, y: 34, w: 8, h: 7, injuries: ['Fracture', 'Fissure', 'Contusion'] },
+    { id: 'abs', label: 'Abdominaux', x: 50, y: 39, w: 12, h: 18, injuries: [traduire('Déchirure'), 'Contracture', 'Hernie'] },
+    { id: 'oblique_l', label: 'Oblique G', x: 59, y: 41, w: 8, h: 8, injuries: [traduire('Élongation'), traduire('Déchirure'), traduire('Point de côté')] },
+    { id: 'oblique_r', label: 'Oblique D', x: 41, y: 41, w: 8, h: 7, injuries: [traduire('Élongation'), traduire('Déchirure'), traduire('Point de côté')] },
     
     // === BASSIN & HANCHES ===
-    { id: 'pubis', label: 'Pubis', x: 50, y: 50, w: 16, h: 4, injuries: ['Pubalgie', 'Ostéite pubienne', 'Tendinite adducteurs'] },
+    { id: 'pubis', label: 'Pubis', x: 50, y: 50, w: 16, h: 4, injuries: ['Pubalgie', traduire('Ostéite pubienne'), 'Tendinite adducteurs'] },
     { id: 'hip_l', label: 'Hanche G', x: 61, y: 48, w: 11, h: 8, injuries: ['Bursite', 'Tendinite TFL', 'Conflit FAI', 'Arthrose'] },
     { id: 'hip_r', label: 'Hanche D', x: 40, y: 48, w: 9, h: 8, injuries: ['Bursite', 'Tendinite TFL', 'Conflit FAI', 'Arthrose'] },
     { id: 'groin_l', label: 'Aine G', x: 58, y: 52, w: 10, h: 6, injuries: ['Pubalgie', 'Hernie inguinale', 'Adducteurs'] },
     { id: 'groin_r', label: 'Aine D', x: 47, y: 52, w: 8, h: 3, injuries: ['Pubalgie', 'Hernie inguinale', 'Adducteurs'] },
     
     // === CUISSES ===
-    { id: 'quad_l', label: 'Quadriceps G', x: 58, y: 59, w: 14, h: 20, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
-    { id: 'quad_r', label: 'Quadriceps D', x: 42, y: 59, w: 14, h: 20, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
-    { id: 'adductor_l', label: 'Adducteur G', x: 54, y: 55, w: 8, h: 9, injuries: ['Élongation', 'Déchirure', 'Pubalgie'] },
-    { id: 'adductor_r', label: 'Adducteur D', x: 48, y: 55, w: 5, h: 9, injuries: ['Élongation', 'Déchirure', 'Pubalgie'] },
+    { id: 'quad_l', label: 'Quadriceps G', x: 58, y: 59, w: 14, h: 20, injuries: ['Contracture', traduire('Élongation'), traduire('Déchirure'), 'Contusion'] },
+    { id: 'quad_r', label: 'Quadriceps D', x: 42, y: 59, w: 14, h: 20, injuries: ['Contracture', traduire('Élongation'), traduire('Déchirure'), 'Contusion'] },
+    { id: 'adductor_l', label: 'Adducteur G', x: 54, y: 55, w: 8, h: 9, injuries: [traduire('Élongation'), traduire('Déchirure'), 'Pubalgie'] },
+    { id: 'adductor_r', label: 'Adducteur D', x: 48, y: 55, w: 5, h: 9, injuries: [traduire('Élongation'), traduire('Déchirure'), 'Pubalgie'] },
     
     // === GENOUX ===
-    { id: 'knee_l', label: 'Genou G', x: 57, y: 72, w: 10, h: 9, injuries: ['Entorse LCA', 'LCL', 'Ménisque', 'Tendinite rotulienne', 'Syndrome rotulien'] },
-    { id: 'knee_r', label: 'Genou D', x: 43, y: 72, w: 10, h: 8, injuries: ['Entorse LCA', 'LCL', 'Ménisque', 'Tendinite rotulienne', 'Syndrome rotulien'] },
+    { id: 'knee_l', label: 'Genou G', x: 57, y: 72, w: 10, h: 9, injuries: ['Entorse LCA', 'LCL', traduire('Ménisque'), 'Tendinite rotulienne', 'Syndrome rotulien'] },
+    { id: 'knee_r', label: 'Genou D', x: 43, y: 72, w: 10, h: 8, injuries: ['Entorse LCA', 'LCL', traduire('Ménisque'), 'Tendinite rotulienne', 'Syndrome rotulien'] },
     
     // === JAMBES ===
-    { id: 'shin_l', label: 'Tibia G', x: 56, y: 82, w: 12, h: 13, injuries: ['Périostite', 'Fracture de fatigue', 'Contusion'] },
-    { id: 'shin_r', label: 'Tibia D', x: 43, y: 82, w: 11, h: 12, injuries: ['Périostite', 'Fracture de fatigue', 'Contusion'] },
+    { id: 'shin_l', label: 'Tibia G', x: 56, y: 82, w: 12, h: 13, injuries: [traduire('Périostite'), traduire('Fracture de fatigue'), 'Contusion'] },
+    { id: 'shin_r', label: 'Tibia D', x: 43, y: 82, w: 11, h: 12, injuries: [traduire('Périostite'), traduire('Fracture de fatigue'), 'Contusion'] },
     
     // === CHEVILLES ===
-    { id: 'ankle_l', label: 'Cheville G', x: 56, y: 91, w: 10, h: 4, injuries: ['Entorse', 'Fracture malléole', 'Tendinite péroniers'] },
-    { id: 'ankle_r', label: 'Cheville D', x: 44, y: 91, w: 10, h: 4, injuries: ['Entorse', 'Fracture malléole', 'Tendinite péroniers'] },
+    { id: 'ankle_l', label: 'Cheville G', x: 56, y: 91, w: 10, h: 4, injuries: ['Entorse', traduire('Fracture malléole'), traduire('Tendinite péroniers')] },
+    { id: 'ankle_r', label: 'Cheville D', x: 44, y: 91, w: 10, h: 4, injuries: ['Entorse', traduire('Fracture malléole'), traduire('Tendinite péroniers')] },
     
     // === PIEDS ===
-    { id: 'foot_l', label: 'Pied G', x: 58, y: 95, w: 13, h: 5, injuries: ['Fasciite plantaire', 'Fracture métatarse', 'Entorse Lisfranc'] },
-    { id: 'foot_r', label: 'Pied D', x: 42, y: 95, w: 11, h: 5, injuries: ['Fasciite plantaire', 'Fracture métatarse', 'Entorse Lisfranc'] },
+    { id: 'foot_l', label: 'Pied G', x: 58, y: 95, w: 13, h: 5, injuries: ['Fasciite plantaire', traduire('Fracture métatarse'), 'Entorse Lisfranc'] },
+    { id: 'foot_r', label: 'Pied D', x: 42, y: 95, w: 11, h: 5, injuries: ['Fasciite plantaire', traduire('Fracture métatarse'), 'Entorse Lisfranc'] },
   ],
   
   // ============================================
@@ -141,57 +142,57 @@ export const INITIAL_DATA: { front: BodyZone[]; back: BodyZone[] } = {
   // ============================================
   back: [
     // === TÊTE & COU ===
-    { id: 'skull', label: 'Crâne', x: 50, y: 7, w: 15, h: 10, injuries: ['Commotion', 'Contusion', 'Plaie'] },
-    { id: 'neck_back', label: 'Nuque', x: 50, y: 15, w: 12, h: 6, injuries: ['Torticolis', 'Cervicalgie', 'Contracture trapèze'] },
+    { id: 'skull', label: traduire('Crâne'), x: 50, y: 7, w: 15, h: 10, injuries: ['Commotion', 'Contusion', 'Plaie'] },
+    { id: 'neck_back', label: 'Nuque', x: 50, y: 15, w: 12, h: 6, injuries: ['Torticolis', 'Cervicalgie', traduire('Contracture trapèze')] },
     
     // === TRAPÈZES & ÉPAULES ===
-    { id: 'trap_l', label: 'Trapèze G', x: 58, y: 18, w: 10, h: 5, injuries: ['Contracture', 'Tension', 'Point trigger'] },
-    { id: 'trap_r', label: 'Trapèze D', x: 43, y: 18, w: 10, h: 4, injuries: ['Contracture', 'Tension', 'Point trigger'] },
-    { id: 'shoulder_back_l', label: 'Épaule G (arr)', x: 66, y: 22, w: 12, h: 8, injuries: ['Tendinite infra-épineux', 'Bursite', 'SLAP'] },
-    { id: 'shoulder_back_r', label: 'Épaule D (arr)', x: 37, y: 22, w: 12, h: 8, injuries: ['Tendinite infra-épineux', 'Bursite', 'SLAP'] },
+    { id: 'trap_l', label: traduire('Trapèze G'), x: 58, y: 18, w: 10, h: 5, injuries: ['Contracture', 'Tension', 'Point trigger'] },
+    { id: 'trap_r', label: traduire('Trapèze D'), x: 43, y: 18, w: 10, h: 4, injuries: ['Contracture', 'Tension', 'Point trigger'] },
+    { id: 'shoulder_back_l', label: traduire('Épaule G (arr)'), x: 66, y: 22, w: 12, h: 8, injuries: [traduire('Tendinite infra-épineux'), 'Bursite', 'SLAP'] },
+    { id: 'shoulder_back_r', label: traduire('Épaule D (arr)'), x: 37, y: 22, w: 12, h: 8, injuries: [traduire('Tendinite infra-épineux'), 'Bursite', 'SLAP'] },
     
     // === DOS HAUT ===
-    { id: 'rhomboid_l', label: 'Rhomboïde G', x: 57, y: 21, w: 16, h: 10, injuries: ['Contracture', 'Élongation', 'Point douloureux'] },
-    { id: 'rhomboid_r', label: 'Rhomboïde D', x: 45, y: 21, w: 16, h: 10, injuries: ['Contracture', 'Élongation', 'Point douloureux'] },
-    { id: 'thoracic', label: 'Dorsales', x: 50, y: 28, w: 15, h: 15, injuries: ['Dorsalgie', 'Blocage vertébral', 'Contracture'] },
-    { id: 'lat_l', label: 'Grand dorsal G', x: 56, y: 32, w: 12, h: 15, injuries: ['Contracture', 'Déchirure', 'Élongation'] },
-    { id: 'lat_r', label: 'Grand dorsal D', x: 44, y: 32, w: 11, h: 14, injuries: ['Contracture', 'Déchirure', 'Élongation'] },
+    { id: 'rhomboid_l', label: traduire('Rhomboïde G'), x: 57, y: 21, w: 16, h: 10, injuries: ['Contracture', traduire('Élongation'), 'Point douloureux'] },
+    { id: 'rhomboid_r', label: traduire('Rhomboïde D'), x: 45, y: 21, w: 16, h: 10, injuries: ['Contracture', traduire('Élongation'), 'Point douloureux'] },
+    { id: 'thoracic', label: 'Dorsales', x: 50, y: 28, w: 15, h: 15, injuries: ['Dorsalgie', traduire('Blocage vertébral'), 'Contracture'] },
+    { id: 'lat_l', label: 'Grand dorsal G', x: 56, y: 32, w: 12, h: 15, injuries: ['Contracture', traduire('Déchirure'), traduire('Élongation')] },
+    { id: 'lat_r', label: 'Grand dorsal D', x: 44, y: 32, w: 11, h: 14, injuries: ['Contracture', traduire('Déchirure'), traduire('Élongation')] },
     
     // === TRICEPS ===
-    { id: 'triceps_l', label: 'Triceps G', x: 66, y: 30, w: 9, h: 11, injuries: ['Tendinite', 'Déchirure', 'Contracture'] },
-    { id: 'triceps_r', label: 'Triceps D', x: 34, y: 30, w: 11, h: 12, injuries: ['Tendinite', 'Déchirure', 'Contracture'] },
+    { id: 'triceps_l', label: 'Triceps G', x: 66, y: 30, w: 9, h: 11, injuries: ['Tendinite', traduire('Déchirure'), 'Contracture'] },
+    { id: 'triceps_r', label: 'Triceps D', x: 34, y: 30, w: 11, h: 12, injuries: ['Tendinite', traduire('Déchirure'), 'Contracture'] },
     
     // === COUDES (dos) ===
-    { id: 'elbow_back_l', label: 'Coude G (arr)', x: 69, y: 38, w: 14, h: 6, injuries: ['Bursite olécrane', 'Tendinite triceps'] },
-    { id: 'elbow_back_r', label: 'Coude D (arr)', x: 31, y: 37, w: 10, h: 6, injuries: ['Bursite olécrane', 'Tendinite triceps'] },
+    { id: 'elbow_back_l', label: 'Coude G (arr)', x: 69, y: 38, w: 14, h: 6, injuries: [traduire('Bursite olécrane'), 'Tendinite triceps'] },
+    { id: 'elbow_back_r', label: 'Coude D (arr)', x: 31, y: 37, w: 10, h: 6, injuries: [traduire('Bursite olécrane'), 'Tendinite triceps'] },
     
     // === LOMBAIRES ===
     { id: 'lumbar', label: 'Lombaires', x: 50, y: 42, w: 26, h: 9, injuries: ['Lumbago', 'Hernie discale', 'Sciatique', 'Contracture'] },
-    { id: 'sacrum', label: 'Sacrum', x: 50, y: 48, w: 9, h: 8, injuries: ['Sacro-iliaque', 'Contusion', 'Fracture de fatigue'] },
+    { id: 'sacrum', label: 'Sacrum', x: 50, y: 48, w: 9, h: 8, injuries: ['Sacro-iliaque', 'Contusion', traduire('Fracture de fatigue')] },
     
     // === FESSIERS ===
     { id: 'glute_l', label: 'Fessier G', x: 56, y: 50, w: 13, h: 10, injuries: ['Contracture', 'Syndrome piriforme', 'Tendinite moyen fessier'] },
     { id: 'glute_r', label: 'Fessier D', x: 42, y: 50, w: 14, h: 11, injuries: ['Contracture', 'Syndrome piriforme', 'Tendinite moyen fessier'] },
     
     // === ISCHIO-JAMBIERS ===
-    { id: 'hamstring_l', label: 'Ischio G', x: 57, y: 63, w: 14, h: 17, injuries: ['Élongation', 'Déchirure', 'Claquage', 'Tendinite'] },
-    { id: 'hamstring_r', label: 'Ischio D', x: 44, y: 63, w: 14, h: 16, injuries: ['Élongation', 'Déchirure', 'Claquage', 'Tendinite'] },
+    { id: 'hamstring_l', label: 'Ischio G', x: 57, y: 63, w: 14, h: 17, injuries: [traduire('Élongation'), traduire('Déchirure'), 'Claquage', 'Tendinite'] },
+    { id: 'hamstring_r', label: 'Ischio D', x: 44, y: 63, w: 14, h: 16, injuries: [traduire('Élongation'), traduire('Déchirure'), 'Claquage', 'Tendinite'] },
     
     // === CREUX POPLITÉ ===
-    { id: 'popliteal_l', label: 'Creux poplité G', x: 57, y: 71, w: 13, h: 6, injuries: ['Kyste Baker', 'Tendinite', 'Lésion LCP'] },
-    { id: 'popliteal_r', label: 'Creux poplité D', x: 43, y: 71, w: 14, h: 5, injuries: ['Kyste Baker', 'Tendinite', 'Lésion LCP'] },
+    { id: 'popliteal_l', label: traduire('Creux poplité G'), x: 57, y: 71, w: 13, h: 6, injuries: ['Kyste Baker', 'Tendinite', traduire('Lésion LCP')] },
+    { id: 'popliteal_r', label: traduire('Creux poplité D'), x: 43, y: 71, w: 14, h: 5, injuries: ['Kyste Baker', 'Tendinite', traduire('Lésion LCP')] },
     
     // === MOLLETS ===
-    { id: 'calf_l', label: 'Mollet G', x: 58, y: 78, w: 14, h: 12, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
-    { id: 'calf_r', label: 'Mollet D', x: 43, y: 78, w: 14, h: 12, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
+    { id: 'calf_l', label: 'Mollet G', x: 58, y: 78, w: 14, h: 12, injuries: ['Contracture', 'Claquage', traduire('Déchirure'), 'Crampe'] },
+    { id: 'calf_r', label: 'Mollet D', x: 43, y: 78, w: 14, h: 12, injuries: ['Contracture', 'Claquage', traduire('Déchirure'), 'Crampe'] },
     
     // === TENDON D'ACHILLE ===
     { id: 'achilles_l', label: 'Achille G', x: 58, y: 94, w: 11, h: 3, injuries: ['Tendinite', 'Rupture', 'Tendinopathie'] },
     { id: 'achilles_r', label: 'Achille D', x: 43, y: 94, w: 12, h: 3, injuries: ['Tendinite', 'Rupture', 'Tendinopathie'] },
     
     // === TALONS ===
-    { id: 'heel_l', label: 'Talon G', x: 58, y: 96, w: 11, h: 3, injuries: ['Épine calcanéenne', 'Contusion', 'Fracture de fatigue'] },
-    { id: 'heel_r', label: 'Talon D', x: 43, y: 96, w: 10, h: 3, injuries: ['Épine calcanéenne', 'Contusion', 'Fracture de fatigue'] },
+    { id: 'heel_l', label: 'Talon G', x: 58, y: 96, w: 11, h: 3, injuries: [traduire('Épine calcanéenne'), 'Contusion', traduire('Fracture de fatigue')] },
+    { id: 'heel_r', label: 'Talon D', x: 43, y: 96, w: 10, h: 3, injuries: [traduire('Épine calcanéenne'), 'Contusion', traduire('Fracture de fatigue')] },
   ],
 };
 
@@ -343,7 +344,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
 
     await setStringAsync(code);
     notificationAsync(NotificationFeedbackType.Success);
-    showPopup('Copié', `${activeZones.length} zones copiées.`, [{ text: 'OK', style: 'primary' }]);
+    showPopup(traduire('Copié'), traduire("{0} zones copiées.", activeZones.length), [{ text: 'OK', style: 'primary' }]);
   };
 
   const copySelectedZone = async () => {
@@ -351,7 +352,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
     const code = `{ id: '${selectedZone.id}', label: '${selectedZone.label}', x: ${selectedZone.x}, y: ${selectedZone.y}, w: ${selectedZone.w}, h: ${selectedZone.h} }`;
     await setStringAsync(code);
     notificationAsync(NotificationFeedbackType.Success);
-    showPopup('Copié', `Zone « ${selectedZone.label} » copiée.`, [{ text: 'OK', style: 'primary' }]);
+    showPopup(traduire('Copié'), traduire("Zone « {0} » copiée.", selectedZone.label), [{ text: 'OK', style: 'primary' }]);
   };
 
   return (
@@ -361,7 +362,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
           <View>
             <Text style={[styles.title, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>
-              {debug ? 'Mode Chirurgien' : 'Sélecteur'}
+              {debug ? 'Mode Chirurgien' : traduire('Sélecteur')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {view === 'front' ? activeZones.length : activeZones.length} zones
@@ -397,15 +398,15 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
       <View style={[styles.legend, { backgroundColor: colors.backgroundCard, marginBottom: SPACING.md }]}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: 'rgba(139, 195, 74, 0.8)' }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Léger</Text>
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{traduire("Léger")}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: 'rgba(255, 152, 0, 0.8)' }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Modéré</Text>
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{traduire("Modéré")}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: 'rgba(244, 67, 54, 0.8)' }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Sévère</Text>
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{traduire("Sévère")}</Text>
         </View>
       </View>
 
@@ -530,7 +531,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
                 flexDirection: 'row', alignItems: 'center', gap: 5,
               }} pointerEvents="none">
                 <ZoomIn size={12} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>Pince pour zoomer</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>{traduire("Pince pour zoomer")}</Text>
               </View>
             )}
 
@@ -545,7 +546,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
                   alignItems: 'center', justifyContent: 'center',
                   zIndex: 200,
                 }}
-                accessibilityLabel="Réinitialiser le zoom"
+                accessibilityLabel={traduire("Réinitialiser le zoom")}
               >
                 <Maximize2 size={16} color="#FFFFFF" strokeWidth={2.5} />
               </TouchableOpacity>
@@ -614,11 +615,10 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
       {debug && !selectedZone && (
         <View style={[styles.helpBox, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.helpText, { color: colors.textSecondary }]}>
-            Touche une zone pour la modifier
-          </Text>
+            {traduire("Touche une zone pour la modifier")}</Text>
           <TouchableOpacity onPress={copyAllZones} style={styles.copyAllBtn}>
             <Copy size={18} color="white" />
-            <Text style={styles.copyAllBtnText}>COPIER TOUTES LES ZONES ({activeZones.length})</Text>
+            <Text style={styles.copyAllBtnText}>{traduire("COPIER TOUTES LES ZONES ({0})", activeZones.length)}</Text>
           </TouchableOpacity>
         </View>
       )}

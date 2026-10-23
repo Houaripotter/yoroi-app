@@ -5,6 +5,7 @@
  */
 import type { IssueConnexion } from './connexion';
 import { messageConnexion } from './connexion';
+import { traduire } from '@/lib/i18n/tr';
 
 /** « Plus tard » touche : la carte ne revient plus */
 export const CLE_IMPORT_ACCUEIL_MASQUE = '@yoroi_import_accueil_masque_v1';
@@ -41,10 +42,10 @@ export function libellesImport(platform: string): LibellesImport {
   const nom = nomSantePlateforme(platform);
   return {
     nom,
-    titre: 'Importe tes données',
-    texte: `Récupère ton poids, tes pas, ton sommeil et tes entraînements depuis ${nom}.`,
-    bouton: 'Importer',
-    plusTard: 'Plus tard',
+    titre: traduire('Importe tes données'),
+    texte: traduire("Récupère ton poids, tes pas, ton sommeil et tes entraînements depuis {0}.", nom),
+    bouton: traduire('Importer'),
+    plusTard: traduire('Plus tard'),
     enCours: 'Import en cours…',
   };
 }
@@ -54,11 +55,11 @@ export type CompteImportAccueil = { pesees: number; seances: number; nuits: numb
 /** « 42 pesées et 18 séances importées », ou null si rien de nouveau */
 export function texteResultatImport(c: CompteImportAccueil): string | null {
   const p = (n: number, un: string, plusieurs: string) => (n > 0 ? `${n} ${n > 1 ? plusieurs : un}` : null);
-  const parts = [p(c.pesees, 'pesée', 'pesées'), p(c.seances, 'séance', 'séances'), p(c.nuits, 'nuit', 'nuits')].filter(Boolean) as string[];
+  const parts = [p(c.pesees, traduire('pesée'), traduire('pesées')), p(c.seances, traduire('séance'), traduire('séances')), p(c.nuits, 'nuit', 'nuits')].filter(Boolean) as string[];
   if (!parts.length) return null;
-  const liste = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} et ${parts[parts.length - 1]}`;
+  const liste = parts.length === 1 ? parts[0] : traduire("{0} et {1}", parts.slice(0, -1).join(', '), parts[parts.length - 1]);
   const total = c.pesees + c.seances + c.nuits;
-  return `${liste} ${total > 1 ? 'importées' : 'importée'}`;
+  return `${liste} ${total > 1 ? traduire('importées') : traduire('importée')}`;
 }
 
 export type MessageImport = { titre: string; texte: string; action: 'reglages' | 'playstore' | null };
@@ -69,13 +70,13 @@ export function messageImport(issue: IssueConnexion, platform: string, compte: C
   if (issue === 'connecte') {
     const t = compte ? texteResultatImport(compte) : null;
     return t
-      ? { titre: 'Import terminé', texte: `${t}.`, action: null }
-      : { titre: 'Import terminé', texte: `Aucune nouvelle pesée, séance ou nuit trouvée dans ${nom}.`, action: null };
+      ? { titre: traduire('Import terminé'), texte: `${t}.`, action: null }
+      : { titre: traduire('Import terminé'), texte: traduire("Aucune nouvelle pesée, séance ou nuit trouvée dans {0}.", nom), action: null };
   }
   if (issue === 'indisponible' && platform === 'android') {
-    return { titre: 'Health Connect absent', texte: 'Installe ou mets à jour Health Connect depuis le Play Store, puis touche à nouveau Importer.', action: 'playstore' };
+    return { titre: 'Health Connect absent', texte: traduire('Installe ou mets à jour Health Connect depuis le Play Store, puis touche à nouveau Importer.'), action: 'playstore' };
   }
   const m = messageConnexion(issue, platform);
-  if (issue === 'rien_lu') return { titre: `Rien trouvé dans ${nom}`, texte: m.texte, action: 'reglages' };
+  if (issue === 'rien_lu') return { titre: traduire("Rien trouvé dans {0}", nom), texte: m.texte, action: 'reglages' };
   return { titre: m.titre, texte: m.texte, action: m.reglages ? 'reglages' : null };
 }

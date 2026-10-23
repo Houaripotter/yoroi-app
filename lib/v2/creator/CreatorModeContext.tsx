@@ -12,6 +12,7 @@ import { tokenErrorMessage, verifyCreatorToken } from './creatorToken';
 import { clearToken, LEGACY_ASYNC_KEYS, MAX_FAILS, readAttempts, readToken, registerFailure, resetAttempts, writeToken } from './creatorStore';
 import { setDevClockEnabled } from './devClock';
 import { setCreatorPremium } from './premiumFlags';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const CREATOR_CHANGED_EVENT = 'YOROI_CREATOR_CHANGED';
 
@@ -39,10 +40,10 @@ const MAX_TIMER_MS = 2147483000;
 
 function lockMessage(until: number): string {
   const s = Math.max(1, Math.ceil((until - Date.now()) / 1000));
-  if (s < 90) return `Trop d’essais. Réessaie dans ${s} secondes.`;
+  if (s < 90) return traduire("Trop d’essais. Réessaie dans {0} secondes.", s);
   const m = Math.ceil(s / 60);
-  if (m < 90) return `Trop d’essais. Réessaie dans ${m} minutes.`;
-  return `Trop d’essais. Réessaie dans ${Math.ceil(m / 60)} heures.`;
+  if (m < 90) return traduire("Trop d’essais. Réessaie dans {0} minutes.", m);
+  return traduire("Trop d’essais. Réessaie dans {0} heures.", Math.ceil(m / 60));
 }
 
 export function CreatorModeProvider({ children }: { children: ReactNode }) {
@@ -124,10 +125,10 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
         const a = await registerFailure();
         if (a.lockedUntil > Date.now()) return { ok: false, message: lockMessage(a.lockedUntil), lockedUntil: a.lockedUntil };
         const left = MAX_FAILS - a.fails;
-        return { ok: false, message: `${tokenErrorMessage(r.reason)} Encore ${left} essai${left > 1 ? 's' : ''} avant un blocage.`, left };
+        return { ok: false, message: traduirePluriel(left, left > 1, "{0} Encore {1} essai avant un blocage.", "{0} Encore {1} essais avant un blocage.", tokenErrorMessage(r.reason), left), left };
       }
       const saved = await writeToken(raw.replace(/\s+/g, ''));
-      if (!saved) return { ok: false, message: 'Le jeton n’a pas pu être gardé sur ce téléphone. Réessaie.' };
+      if (!saved) return { ok: false, message: traduire('Le jeton n’a pas pu être gardé sur ce téléphone. Réessaie.') };
       await resetAttempts();
       apply(r.payload.exp * 1000, r.payload.sub);
       return { ok: true };
@@ -153,7 +154,7 @@ const FALLBACK: CreatorModeValue = {
   isCreator: false,
   expiresAt: null,
   label: null,
-  unlock: async () => ({ ok: false, message: 'Mode créateur indisponible.' }),
+  unlock: async () => ({ ok: false, message: traduire('Mode créateur indisponible.') }),
   lock: async () => undefined,
   recheck: async () => false,
   getLockedUntil: async () => 0,

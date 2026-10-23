@@ -18,6 +18,7 @@ import { P, CIcon, IconBtn, Hanko, BigButton, Sheet2, BlockTitle, Press } from '
 import { VideoLibrarySheet } from './VideoLibrarySheet';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 /** Reperes d'un temps : 2 ou 3 minutes rondes (50:00, 55:00), jamais 56:40 */
 function minutesRondes(min: number, max: number): number[] {
@@ -65,10 +66,10 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 110, paddingHorizontal: 22, gap: 14 }} showsVerticalScrollIndicator={false}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: -6, minHeight: 44 }}>
-            <IconBtn name="back" label="Retour" onPress={onClose} />
+            <IconBtn name="back" label={traduire("Retour")} onPress={onClose} />
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <IconBtn name="film" label="Vidéos de l’exercice" onPress={() => setVideos(true)} />
-              <IconBtn name="trash" label="Supprimer ce suivi" onPress={() => onDelete(benchmark.id)} />
+              <IconBtn name="film" label={traduire("Vidéos de l’exercice")} onPress={() => setVideos(true)} />
+              <IconBtn name="trash" label={traduire("Supprimer ce suivi")} onPress={() => onDelete(benchmark.id)} />
             </View>
           </View>
           <View style={{ paddingHorizontal: 4, gap: 2 }}>
@@ -83,22 +84,22 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
             </View>
             <Ink size={13} weight="bold" color={paletteSombre() ? '#E3C47B' : P.goldLight}>Record personnel</Ink>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Ink size={34} weight="black" tight color={P.pureWhite} style={{ flex: 1 }} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{pr ? entryText(benchmark, pr) : 'Pas encore'}</Ink>
+              <Ink size={34} weight="black" tight color={P.pureWhite} style={{ flex: 1 }} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{pr ? entryText(benchmark, pr) : traduire('Pas encore')}</Ink>
               {pr ? (
                 <View style={{ backgroundColor: P.pureWhite, borderRadius: 14, padding: 4 }}>
                   <Hanko size={46} />
                 </View>
               ) : null}
             </View>
-            {pr ? <Ink size={13} weight="medium" color="rgba(255,255,255,0.7)">{`${longDate(pr.date)}${pr.calories ? `, ${pr.calories} kcal` : ''}`}</Ink> : <Ink size={13} weight="medium" color="rgba(255,255,255,0.7)">Note ta première perf : elle deviendra ton record.</Ink>}
+            {pr ? <Ink size={13} weight="medium" color="rgba(255,255,255,0.7)">{`${longDate(pr.date)}${pr.calories ? `, ${pr.calories} kcal` : ''}`}</Ink> : <Ink size={13} weight="medium" color="rgba(255,255,255,0.7)">{traduire("Note ta première perf : elle deviendra ton record.")}</Ink>}
           </View>
 
           {chrono.length > 1 ? (
             <Sheet2>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Ink size={18} weight="black" tight>Progression</Ink>
+                <Ink size={18} weight="black" tight>{traduire("Progression")}</Ink>
                 <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, justifyContent: 'center', backgroundColor: better ? P.mossSoft : P.dangerSoft }}>
-                  <Ink size={13} weight="black" color={better ? P.mossText : P.danger}>{`${pct >= 0 ? '+' : ''}${pct.toFixed(1).replace('.', ',')} %`}</Ink>
+                  <Ink size={13} weight="black" color={better ? P.mossText : P.danger}>{`${pct >= 0 ? '+' : ''}${pct.toFixed(1).replace('.', DECIMAL)} %`}</Ink>
                 </View>
               </View>
               {/* 16 octobre : le style et la couleur choisis dans Reglages, Tes courbes (comme la carte Poids de l'accueil),
@@ -116,19 +117,19 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
                   tickFormat={benchmark.unit === 'time' ? (v) => formatTime(Math.round(v)) : undefined}
                   ticksFor={benchmark.unit === 'time' ? minutesRondes : undefined}
                   format={(v) => (benchmark.unit === 'time' ? formatTime(Math.round(v)) : entryText(benchmark, { ...chrono[0], value: v, reps: undefined } as BenchmarkEntry))}
-                  label={`Ta progression en ${niceName(benchmark.name)}`}
+                  label={traduire("Ta progression en {0}", niceName(benchmark.name))}
                 />
               </View>
               <Ink size={12} weight="medium" color={P.muted}>
                 {benchmark.unit === 'time'
-                  ? `Tes ${chrono.length} perfs. Plus haut, c’est plus rapide : le meilleur temps est en haut. Glisse ton doigt pour revoir chaque perf.`
-                  : `Tes ${chrono.length} perfs, la plus récente au bout. Glisse ton doigt pour revoir chaque perf.`}
+                  ? traduire("Tes {0} perfs. Plus haut, c’est plus rapide : le meilleur temps est en haut. Glisse ton doigt pour revoir chaque perf.", chrono.length)
+                  : traduire("Tes {0} perfs, la plus récente au bout. Glisse ton doigt pour revoir chaque perf.", chrono.length)}
               </Ink>
             </Sheet2>
           ) : null}
 
-          <BlockTitle title="Historique" aside={entries.length > 0 ? 'Garde appuyé sur une perf pour la retirer' : undefined} />
-          {entries.length === 0 ? <Ink size={14} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>Rien pour l’instant.</Ink> : null}
+          <BlockTitle title={traduire("Historique")} aside={entries.length > 0 ? traduire('Garde appuyé sur une perf pour la retirer') : undefined} />
+          {entries.length === 0 ? <Ink size={14} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>{traduire("Rien pour l’instant.")}</Ink> : null}
           {entries.map((e) => {
             const isPR = !!pr && e.id === pr.id;
             const pace = entryPace(benchmark, e);
@@ -139,23 +140,23 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
             if (timeS) chips.push(formatTime(timeS));
             if (pace) chips.push(`${pace} /km`);
             if (e.speed) chips.push(`${e.speed} km/h`);
-            if (e.incline) chips.push(`${e.incline} m de dénivelé`);
+            if (e.incline) chips.push(traduire("{0} m de dénivelé", e.incline));
             if (e.watts) chips.push(`${e.watts} W`);
             if (e.calories) chips.push(`${e.calories} kcal`);
-            if (e.rpe) chips.push(`effort ${e.rpe} sur 10`);
+            if (e.rpe) chips.push(traduire("effort {0} sur 10", e.rpe));
             return (
               <Press
                 key={e.id}
                 onPress={() => onShare(e, isPR)}
                 onLongPress={() =>
-                  appAlert('Retirer cette perf ?', entryText(benchmark, e), [
-                    { text: 'Annuler', style: 'cancel' },
+                  appAlert(traduire('Retirer cette perf ?'), entryText(benchmark, e), [
+                    { text: traduire('Annuler'), style: 'cancel' },
                     { text: 'Retirer', style: 'destructive', onPress: () => onDeleteEntry(e) },
                   ])
                 }
                 accessibilityRole="button"
                 accessibilityLabel={`${entryText(benchmark, e)}, ${relative(e.date)}`}
-                accessibilityHint="Touche pour partager, garde appuyé pour retirer"
+                accessibilityHint={traduire("Touche pour partager, garde appuyé pour retirer")}
               >
                 <View style={{ flexDirection: 'row', gap: 12, padding: 14, borderRadius: 20, backgroundColor: isPR ? P.accentSoft : P.white, borderWidth: 1, borderColor: isPR ? 'transparent' : P.line2 }}>
                   <View style={{ flex: 1, gap: 6 }}>
@@ -184,7 +185,7 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
           })}
         </ScrollView>
         <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>
-          <BigButton label="Ajouter une perf" icon="plus" onPress={onAddEntry} />
+          <BigButton label={traduire("Ajouter une perf")} icon="plus" onPress={onAddEntry} />
         </View>
         <VideoLibrarySheet visible={videos} onClose={() => setVideos(false)} benchmarkId={benchmark.id} benchmarkName={benchmark.name} />
         {children}

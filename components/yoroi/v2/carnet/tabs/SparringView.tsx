@@ -28,6 +28,7 @@ import { EditPartnerSheet, GoalSheet, PartnerRow, PartnerSheet, Podium } from '.
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { partagerTexte } from '@/lib/v2/partage/texte';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 
 type PodiumMode = 'volume' | 'wins' | 'losses' | 'winrate' | 'subsGiven';
 type SortMode = 'volume' | 'winrate' | 'recent' | 'level';
@@ -159,7 +160,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
   const podiumMetric = (p: PartnerStats) => {
     if (podiumMode === 'wins') return `${p.wins} victoires`;
-    if (podiumMode === 'losses') return `${p.losses} défaites`;
+    if (podiumMode === 'losses') return traduire("{0} défaites", p.losses);
     if (podiumMode === 'winrate') return `${Math.round((p.wins / Math.max(1, p.wins + p.losses)) * 100)} %`;
     if (podiumMode === 'subsGiven') return `${p.submissionsGiven} soumissions`;
     return `${p.totalRounds} rounds, ${p.wins} V ${p.losses} D`;
@@ -169,23 +170,23 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        appAlert('Accès refusé', 'Autorise l’accès à la galerie dans les réglages du téléphone.');
+        appAlert(traduire('Accès refusé'), traduire('Autorise l’accès à la galerie dans les réglages du téléphone.'));
         return null;
       }
       const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
       if (!r.canceled && r.assets?.[0]?.uri) return savePhotoPermanently(r.assets[0].uri);
     } catch (e) {
-      appAlert('Oups', 'La galerie ne s’ouvre pas. Réessaie.');
+      appAlert('Oups', traduire('La galerie ne s’ouvre pas. Réessaie.'));
     }
     return null;
   };
 
   const photoMenu = (p: PartnerStats) => {
     const has = !!photoOf(p.name);
-    appAlert(`Photo de ${p.name}`, has ? 'Changer ou retirer la photo ?' : 'Ajouter une photo ?', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire("Photo de {0}", p.name), has ? traduire('Changer ou retirer la photo ?') : traduire('Ajouter une photo ?'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: has ? 'Changer' : 'Choisir dans la galerie',
+        text: has ? 'Changer' : traduire('Choisir dans la galerie'),
         onPress: async () => {
           const uri = await pickImage();
           if (uri) {
@@ -224,14 +225,14 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
       await reload();
       await refreshPhotos();
     } catch (e) {
-      appAlert('Oups', 'La fiche n’a pas pu être enregistrée. Réessaie.');
+      appAlert('Oups', traduire('La fiche n’a pas pu être enregistrée. Réessaie.'));
     } finally {
       setSavingEdit(false);
     }
   };
 
   const shareStats = () => {
-    partagerTexte({ source: 'sparring', message: `Mon sparring YOROI : ${totals.rounds} rounds, ${totals.partners} partenaires, ${totals.winRate !== null ? `${totals.winRate} % de victoires` : 'premiers rounds'}, ${totals.techniques} techniques travaillées.` });
+    partagerTexte({ source: 'sparring', message: traduire("Mon sparring YOROI : {0} rounds, {1} partenaires, {2}, {3} techniques travaillées.", totals.rounds, totals.partners, totals.winRate !== null ? `${totals.winRate} % de victoires` : 'premiers rounds', totals.techniques) });
   };
 
   if (loading) return <TabLoading />;
@@ -254,29 +255,29 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
-          <Press onPress={() => router.push('/matchup-matrix' as any)} accessibilityRole="button" accessibilityLabel="Matrice des confrontations">
+          <Press onPress={() => router.push('/matchup-matrix' as any)} accessibilityRole="button" accessibilityLabel={traduire("Matrice des confrontations")}>
             <View style={{ padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 4 }}>
               <CIcon name="grid" size={20} color={P.indigo} />
               <Ink size={14} weight="extraBold">Matrice</Ink>
-              <Ink size={12} weight="medium" color={P.muted} numberOfLines={1}>Volume et victoires</Ink>
+              <Ink size={12} weight="medium" color={P.muted} numberOfLines={1}>{traduire("Volume et victoires")}</Ink>
             </View>
           </Press>
         </View>
         <View style={{ flex: 1 }}>
-          <Press onPress={() => router.push('/partners-tier-list' as any)} accessibilityRole="button" accessibilityLabel="Classement des partenaires">
+          <Press onPress={() => router.push('/partners-tier-list' as any)} accessibilityRole="button" accessibilityLabel={traduire("Classement des partenaires")}>
             <View style={{ padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 4 }}>
               <CIcon name="crown" size={20} color={P.goldDark} />
               <Ink size={14} weight="extraBold">Classement</Ink>
-              <Ink size={12} weight="medium" color={P.muted} numberOfLines={1}>Tes partenaires classés</Ink>
+              <Ink size={12} weight="medium" color={P.muted} numberOfLines={1}>{traduire("Tes partenaires classés")}</Ink>
             </View>
           </Press>
         </View>
       </View>
 
-      {combatSports.length > 1 ? <MiniChips items={[{ key: null as string | null, label: 'Tous' }, ...combatSports.map((s) => ({ key: s as string | null, label: getSportName(s) }))]} value={sport} onChange={(k) => setSport(k === sport ? null : k)} /> : null}
+      {combatSports.length > 1 ? <MiniChips items={[{ key: null as string | null, label: traduire('Tous') }, ...combatSports.map((s) => ({ key: s as string | null, label: getSportName(s) }))]} value={sport} onChange={(k) => setSport(k === sport ? null : k)} /> : null}
 
       {isEmpty ? (
-        <TabEmpty title="Démarre ton suivi de sparring" text="Enregistre ta première séance de combat : partenaires, résultats et finitions seront analysés ici." action="Démarrer une séance de combat" href="/seance/combat?sport=jjb" />
+        <TabEmpty title={traduire("Démarre ton suivi de sparring")} text={traduire("Enregistre ta première séance de combat : partenaires, résultats et finitions seront analysés ici.")} action={traduire("Démarrer une séance de combat")} href="/seance/combat?sport=jjb" />
       ) : (
         <>
           <Sheet2>
@@ -285,13 +286,13 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                 { value: String(totals.rounds), label: 'rounds' },
                 { value: String(totals.partners), label: 'partenaires', color: P.indigo },
                 { value: String(totals.techniques), label: 'techniques' },
-                { value: totals.winRate !== null ? `${totals.winRate} %` : '--', label: 'de victoires', color: winColor(totals.winRate) },
+                { value: totals.winRate !== null ? `${totals.winRate} %` : '--', label: traduire('de victoires'), color: winColor(totals.winRate) },
               ]}
             />
             {streak.current > 0 || streak.best > 1 ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: '#F4F2EC' }}>
                 <Kozane on={streak.current > 0} w={24} h={30} />
-                <Ink size={14} weight="extraBold" style={{ flex: 1 }}>{streak.current > 0 ? `${streak.current} semaine${streak.current > 1 ? 's' : ''} d’affilée au tatami` : 'Reviens cette semaine pour relancer ta série'}</Ink>
+                <Ink size={14} weight="extraBold" style={{ flex: 1 }}>{streak.current > 0 ? traduirePluriel(streak.current, streak.current > 1, "{0} semaine d’affilée au tatami", "{0} semaines d’affilée au tatami", streak.current) : traduire('Reviens cette semaine pour relancer ta série')}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>{`record ${streak.best}`}</Ink>
               </View>
             ) : null}
@@ -299,7 +300,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {autoInsights.length > 0 || coach.length > 0 ? (
             <View style={{ gap: 8 }}>
-              <BlockTitle title="Le coach" aside="Ce que disent tes rounds" />
+              <BlockTitle title={traduire("Le coach")} aside={traduire("Ce que disent tes rounds")} />
               {autoInsights.map((ins) => {
                 const t = TONE[ins.tone] ?? TONE.neutral;
                 return (
@@ -323,62 +324,62 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {partners.length >= 2 ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Le podium</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Le podium")}</Ink>
               <MiniChips
                 items={[
-                  { key: 'volume' as PodiumMode, label: 'Volume' },
+                  { key: 'volume' as PodiumMode, label: traduire('Volume') },
                   { key: 'wins' as PodiumMode, label: 'Victoires' },
-                  { key: 'losses' as PodiumMode, label: 'Défaites' },
-                  { key: 'winrate' as PodiumMode, label: 'Taux de victoire' },
+                  { key: 'losses' as PodiumMode, label: traduire('Défaites') },
+                  { key: 'winrate' as PodiumMode, label: traduire('Taux de victoire') },
                   { key: 'subsGiven' as PodiumMode, label: 'Soumissions' },
                 ]}
                 value={podiumMode}
                 onChange={setPodiumMode}
               />
-              {podium.length > 0 ? <Podium partners={podium} photos={photos} metric={podiumMetric} onSelect={(p) => router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any)} /> : <Ink size={13} weight="medium" color={P.ink2}>Pas assez de rounds pour ce classement.</Ink>}
+              {podium.length > 0 ? <Podium partners={podium} photos={photos} metric={podiumMetric} onSelect={(p) => router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any)} /> : <Ink size={13} weight="medium" color={P.ink2}>{traduire("Pas assez de rounds pour ce classement.")}</Ink>}
             </Sheet2>
           ) : null}
 
           {/* Les badges de combat (gamification) sont dans le Dojo, section Combat et partage */}
-          <Press onPress={() => router.push('/game-plan' as any)} accessibilityRole="button" accessibilityLabel="Mon plan de jeu">
+          <Press onPress={() => router.push('/game-plan' as any)} accessibilityRole="button" accessibilityLabel={traduire("Mon plan de jeu")}>
             <View style={{ padding: 16, borderRadius: 22, backgroundColor: P.ink, flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 80 }}>
               <Glyph kind="eventail" size={34} color={P.goldLight} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={16} weight="extraBold" color={P.white}>Mon plan de jeu</Ink>
-                <Ink size={12} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>Checklist et journal</Ink>
+                <Ink size={16} weight="extraBold" color={P.white}>{traduire("Mon plan de jeu")}</Ink>
+                <Ink size={12} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>{traduire("Checklist et journal")}</Ink>
               </View>
             </View>
           </Press>
 
           <Sheet2>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Ink size={18} weight="black" tight>Objectif de la semaine</Ink>
-              <Press onPress={() => { setGoalDraft(goal); setGoalOpen(true); }} accessibilityRole="button" accessibilityLabel="Modifier l’objectif">
+              <Ink size={18} weight="black" tight>{traduire("Objectif de la semaine")}</Ink>
+              <Press onPress={() => { setGoalDraft(goal); setGoalOpen(true); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier l’objectif")}>
                 <View style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: '#F4F2EC' }}>
-                  <Ink size={12} weight="extraBold" color={P.ink2}>Modifier</Ink>
+                  <Ink size={12} weight="extraBold" color={P.ink2}>{traduire("Modifier")}</Ink>
                 </View>
               </Press>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
               <Ink size={44} weight="black" tight color={reached ? P.mossText : P.ink}>{String(thisWeek)}</Ink>
-              <Ink size={16} weight="bold" color={P.muted}>{`sur ${goal} rounds`}</Ink>
+              <Ink size={16} weight="bold" color={P.muted}>{traduire("sur {0} rounds", goal)}</Ink>
             </View>
             <View style={{ flexDirection: 'row', gap: 3, flexWrap: 'wrap' }}>
               {Array.from({ length: Math.min(goal, 20) }).map((_, i) => (
                 <Kozane key={i} on={i < Math.round(progress * Math.min(goal, 20))} w={goal > 14 ? 14 : 20} h={goal > 14 ? 18 : 26} />
               ))}
             </View>
-            <Ink size={13} weight="extraBold" color={reached ? P.mossText : P.goldDark}>{reached ? 'Objectif atteint, armure lacée.' : `Encore ${goal - thisWeek} round${goal - thisWeek > 1 ? 's' : ''}`}</Ink>
+            <Ink size={13} weight="extraBold" color={reached ? P.mossText : P.goldDark}>{reached ? traduire('Objectif atteint, armure lacée.') : traduirePluriel(goal - thisWeek, goal - thisWeek > 1, "Encore {0} round", "Encore {0} rounds", goal - thisWeek)}</Ink>
           </Sheet2>
 
           {recent.length > 0 ? (
             <>
-              <BlockTitle title="Séances récentes" />
+              <BlockTitle title={traduire("Séances récentes")} />
               {recent.map((s, i) => (
                 <View key={s.id ?? i} style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
                   <View style={{ width: 50, borderRadius: 14, backgroundColor: '#F4F2EC', alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}>
                     <Ink size={20} weight="black" tight color={P.accent}>{String(dayDate(s.date).getDate())}</Ink>
-                    <Ink size={11} weight="bold" color={P.ink2}>{dayDate(s.date).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')}</Ink>
+                    <Ink size={11} weight="bold" color={P.ink2}>{dayDate(s.date).toLocaleDateString(LOCALE, { month: 'short' }).replace('.', '')}</Ink>
                   </View>
                   <View style={{ flex: 1, gap: 3 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
@@ -386,7 +387,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                       {s.roundsCount > 0 ? <Ink size={13} weight="bold" color={P.indigo}>{`${s.roundsCount} round${s.roundsCount > 1 ? 's' : ''}`}</Ink> : null}
                     </View>
                     {s.technicalTheme ? <Ink size={13} weight="bold" color={P.goldDark} numberOfLines={1}>{s.technicalTheme}</Ink> : null}
-                    {s.partners.length > 0 ? <Ink size={12} weight="medium" color={P.ink2} numberOfLines={1}>{`Avec ${s.partners.join(', ')}`}</Ink> : null}
+                    {s.partners.length > 0 ? <Ink size={12} weight="medium" color={P.ink2} numberOfLines={1}>{traduire("Avec {0}", s.partners.join(', '))}</Ink> : null}
                     {s.wins > 0 || s.losses > 0 ? <Ink size={12} weight="extraBold" color={P.ink2}>{`${s.wins} V, ${s.losses} D`}</Ink> : null}
                   </View>
                 </View>
@@ -396,29 +397,29 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {weekly.length > 0 ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Rounds par semaine</Ink>
-              {weekly.length < 3 ? <Ink size={13} weight="medium" color={P.ink2}>Encore quelques semaines et ta courbe apparaîtra.</Ink> : <Columns items={weekly} goal={goal} />}
-              <Ink size={12} weight="medium" color={P.muted}>{`Ligne d’or : ton objectif de ${goal} rounds.`}</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Rounds par semaine")}</Ink>
+              {weekly.length < 3 ? <Ink size={13} weight="medium" color={P.ink2}>{traduire("Encore quelques semaines et ta courbe apparaîtra.")}</Ink> : <Columns items={weekly} goal={goal} />}
+              <Ink size={12} weight="medium" color={P.muted}>{traduire("Ligne d’or : ton objectif de {0} rounds.", goal)}</Ink>
             </Sheet2>
           ) : null}
 
           {monthly.length > 0 ? (
             <Sheet2>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Ink size={18} weight="black" tight>Victoires par mois</Ink>
+                <Ink size={18} weight="black" tight>{traduire("Victoires par mois")}</Ink>
                 <Ink size={16} weight="black" color={winColor(monthly[monthly.length - 1].value)}>{`${monthly[monthly.length - 1].value} %`}</Ink>
               </View>
-              {monthly.length < 3 ? <Ink size={13} weight="medium" color={P.ink2}>Encore quelques mois pour voir ta tendance.</Ink> : <Columns items={monthly.map((m) => ({ label: monthLabel(m.key), value: m.value, display: `${m.value} %`, color: winColor(m.value) }))} highlightLast={false} />}
+              {monthly.length < 3 ? <Ink size={13} weight="medium" color={P.ink2}>{traduire("Encore quelques mois pour voir ta tendance.")}</Ink> : <Columns items={monthly.map((m) => ({ label: monthLabel(m.key), value: m.value, display: `${m.value} %`, color: winColor(m.value) }))} highlightLast={false} />}
             </Sheet2>
           ) : null}
 
           {topTaken.length > 0 ? (
             <Sheet2 tint={P.dangerSoft}>
-              <Ink size={18} weight="black" tight color={P.danger}>Finitions subies, à défendre</Ink>
+              <Ink size={18} weight="black" tight color={P.danger}>{traduire("Finitions subies, à défendre")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {topTaken.map(([n, c]) => (
                   <View key={n} style={{ paddingHorizontal: 12, height: 32, borderRadius: 16, justifyContent: 'center', backgroundColor: blancA(0.75) }}>
-                    <Ink size={13} weight="extraBold" color={P.danger}>{`${n}, ${c} fois`}</Ink>
+                    <Ink size={13} weight="extraBold" color={P.danger}>{traduire("{0}, {1} fois", n, c)}</Ink>
                   </View>
                 ))}
               </View>
@@ -427,14 +428,14 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {partners.length > 0 ? (
             <>
-              <BlockTitle title="Partenaires" aside={`${partners.length} au total, garde appuyé pour modifier`} />
+              <BlockTitle title="Partenaires" aside={traduire("{0} au total, garde appuyé pour modifier", partners.length)} />
               {partners.length >= 2 ? (
                 <MiniChips
                   items={[
-                    { key: 'volume' as SortMode, label: 'Volume' },
-                    { key: 'winrate' as SortMode, label: 'Taux de victoire' },
-                    { key: 'recent' as SortMode, label: 'Récent' },
-                    { key: 'level' as SortMode, label: 'Niveau' },
+                    { key: 'volume' as SortMode, label: traduire('Volume') },
+                    { key: 'winrate' as SortMode, label: traduire('Taux de victoire') },
+                    { key: 'recent' as SortMode, label: traduire('Récent') },
+                    { key: 'level' as SortMode, label: traduire('Niveau') },
                   ]}
                   value={sortMode}
                   onChange={setSortMode}
@@ -458,9 +459,9 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {techniques.length > 0 ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Techniques travaillées</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Techniques travaillées")}</Ink>
               {techniques.slice(0, 10).map((t, i) => (
-                <RankRow key={t.name} rank={i + 1} title={t.name} value={`${t.count} fois`} ratio={t.count / techniques[0].count} color={P.goldDark} sub={t.lastSession ? `Dernière fois ${relative(t.lastSession)}` : undefined} />
+                <RankRow key={t.name} rank={i + 1} title={t.name} value={traduire("{0} fois", t.count)} ratio={t.count / techniques[0].count} color={P.goldDark} sub={t.lastSession ? traduire("Dernière fois {0}", relative(t.lastSession)) : undefined} />
               ))}
             </Sheet2>
           ) : null}
@@ -471,7 +472,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
               {finitions.map((s) => (
                 <View key={s.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{s.name}</Ink>
-                  {s.given > 0 ? <Ink size={13} weight="extraBold" color={P.mossText}>{`${s.given} placée${s.given > 1 ? 's' : ''}`}</Ink> : null}
+                  {s.given > 0 ? <Ink size={13} weight="extraBold" color={P.mossText}>{traduirePluriel(s.given, s.given > 1, "{0} placée", "{0} placées", s.given)}</Ink> : null}
                   {s.taken > 0 ? <Ink size={13} weight="extraBold" color={P.danger}>{`${s.taken} subie${s.taken > 1 ? 's' : ''}`}</Ink> : null}
                 </View>
               ))}
@@ -480,22 +481,22 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {records.longest || records.mostSubs || records.best ? (
             <>
-              <BlockTitle title="Tes records de sparring" />
+              <BlockTitle title={traduire("Tes records de sparring")} />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {records.longest ? <RecordTile label="Plus longue séance" value={`${records.longest.n} rounds`} sub={shortDate(records.longest.date)} tone="indigo" /> : null}
-                {records.mostSubs ? <RecordTile label="Soumissions en une séance" value={String(records.mostSubs.n)} sub={shortDate(records.mostSubs.date)} tone="moss" /> : null}
-                {records.best ? <RecordTile label="Meilleur taux" value={`${Math.round(records.best.rate)} %`} sub={`${records.best.wins} sur ${records.best.total}, ${shortDate(records.best.date)}`} tone="red" /> : null}
+                {records.longest ? <RecordTile label={traduire("Plus longue séance")} value={`${records.longest.n} rounds`} sub={shortDate(records.longest.date)} tone="indigo" /> : null}
+                {records.mostSubs ? <RecordTile label={traduire("Soumissions en une séance")} value={String(records.mostSubs.n)} sub={shortDate(records.mostSubs.date)} tone="moss" /> : null}
+                {records.best ? <RecordTile label="Meilleur taux" value={`${Math.round(records.best.rate)} %`} sub={traduire("{0} sur {1}, {2}", records.best.wins, records.best.total, shortDate(records.best.date))} tone="red" /> : null}
               </View>
             </>
           ) : null}
 
           {intensity.guerre.total + intensity.technique.total + intensity.detendu.total > 0 ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Selon l’intensité</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Selon l’intensité")}</Ink>
               {([
-                { k: 'guerre' as const, label: 'Guerre', sub: 'rounds à fond' },
-                { k: 'technique' as const, label: 'Technique', sub: 'travail du geste' },
-                { k: 'detendu' as const, label: 'Détendu', sub: 'sparring léger' },
+                { k: 'guerre' as const, label: 'Guerre', sub: traduire('rounds à fond') },
+                { k: 'technique' as const, label: traduire('Technique'), sub: traduire('travail du geste') },
+                { k: 'detendu' as const, label: traduire('Détendu'), sub: traduire('sparring léger') },
               ]).map((m) => {
                 const s = intensity[m.k];
                 if (s.total === 0) return null;
@@ -517,7 +518,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {weekday.some((d) => d.sessions > 0) ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Selon le jour</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Selon le jour")}</Ink>
               <Columns
                 items={weekday.map((d) => {
                   const wr = d.total > 0 ? Math.round((d.wins / d.total) * 100) : null;
@@ -525,27 +526,27 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                 })}
                 highlightLast={false}
               />
-              <Ink size={12} weight="medium" color={P.muted}>Hauteur : nombre de séances. Couleur : taux de victoire (vert au-dessus de 60 %, or entre 40 et 60, rouge en dessous).</Ink>
+              <Ink size={12} weight="medium" color={P.muted}>{traduire("Hauteur : nombre de séances. Couleur : taux de victoire (vert au-dessus de 60 %, or entre 40 et 60, rouge en dessous).")}</Ink>
             </Sheet2>
           ) : null}
 
           {cardio.hours > 0 || cardio.kcal > 0 || cardio.avgHR !== null ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {cardio.hours > 0 ? <RecordTile label="Temps total" value={`${cardio.hours >= 100 ? Math.round(cardio.hours) : cardio.hours.toFixed(1).replace('.', ',')} h`} sub="sur le tatami" tone="indigo" /> : null}
-              {cardio.kcal > 0 ? <RecordTile label="Calories" value={compact(cardio.kcal)} sub="brûlées au total" tone="gold" /> : null}
-              {cardio.avgHR !== null ? <RecordTile label="Cœur moyen" value={`${cardio.avgHR} bpm`} sub={`sur ${cardio.hrCount} séances`} tone="red" /> : null}
-              {cardio.maxHR ? <RecordTile label="Cœur au plus haut" value={`${Math.round(cardio.maxHR)} bpm`} sub="ton record" tone="red" /> : null}
+              {cardio.hours > 0 ? <RecordTile label={traduire("Temps total")} value={`${cardio.hours >= 100 ? Math.round(cardio.hours) : cardio.hours.toFixed(1).replace('.', DECIMAL)} h`} sub={traduire("sur le tatami")} tone="indigo" /> : null}
+              {cardio.kcal > 0 ? <RecordTile label={traduire("Calories")} value={compact(cardio.kcal)} sub={traduire("brûlées au total")} tone="gold" /> : null}
+              {cardio.avgHR !== null ? <RecordTile label={traduire("Cœur moyen")} value={`${cardio.avgHR} bpm`} sub={traduire("sur {0} séances", cardio.hrCount)} tone="red" /> : null}
+              {cardio.maxHR ? <RecordTile label={traduire("Cœur au plus haut")} value={`${Math.round(cardio.maxHR)} bpm`} sub={traduire("ton record")} tone="red" /> : null}
             </View>
           ) : null}
 
           {combined.length > 0 ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Carte des finitions</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Carte des finitions")}</Ink>
               {combined.slice(0, 10).map((m) => (
                 <View key={m.method} style={{ gap: 5 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Ink size={14} weight="bold" numberOfLines={1} style={{ flex: 1 }}>{m.method}</Ink>
-                    <Ink size={12} weight="extraBold" color={P.ink2}>{`${m.given} placées, ${m.taken} subies`}</Ink>
+                    <Ink size={12} weight="extraBold" color={P.ink2}>{traduire("{0} placées, {1} subies", m.given, m.taken)}</Ink>
                   </View>
                   <SplitBar parts={[{ value: m.given, color: P.moss }, { value: m.taken, color: P.danger }]} height={8} />
                 </View>
@@ -555,7 +556,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {timeline.length > 0 ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Tes finitions mois après mois</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Tes finitions mois après mois")}</Ink>
               {timeline.map((tl, i) => (
                 <View key={tl.name} style={{ gap: 4 }}>
                   <Ink size={14} weight="extraBold" color={['#3D5D9E', '#6E8C3A', '#A8832F'][i]}>{tl.name}</Ink>
@@ -567,18 +568,18 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {topGiven.length > 0 ? (
             <Sheet2 tint={P.mossSoft}>
-              <Ink size={18} weight="black" tight color={P.mossText}>Tes meilleures armes</Ink>
+              <Ink size={18} weight="black" tight color={P.mossText}>{traduire("Tes meilleures armes")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {topGiven.map(([n, c]) => (
                   <View key={n} style={{ paddingHorizontal: 12, height: 32, borderRadius: 16, justifyContent: 'center', backgroundColor: blancA(0.75) }}>
-                    <Ink size={13} weight="extraBold" color={P.mossText}>{`${n}, ${c} fois`}</Ink>
+                    <Ink size={13} weight="extraBold" color={P.mossText}>{traduire("{0}, {1} fois", n, c)}</Ink>
                   </View>
                 ))}
               </View>
             </Sheet2>
           ) : null}
 
-          {totals.rounds > 0 ? <BigButton label="Partager mes stats de sparring" tone="light" icon="share" onPress={shareStats} /> : null}
+          {totals.rounds > 0 ? <BigButton label={traduire("Partager mes stats de sparring")} tone="light" icon="share" onPress={shareStats} /> : null}
         </>
       )}
 

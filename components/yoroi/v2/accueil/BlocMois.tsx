@@ -19,8 +19,9 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { MonthCard, SessionMark } from '@/components/yoroi/v2/seances/MonthMarks';
 import { Section } from './Sections';
 import { Icon, P, Press, useAccent } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
-const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const JOURS = [traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi'), traduire('dimanche')];
 
 export type SeancePrevue = { key: string; quand: string; titre: string; club: string | null; slot: WeeklyPlan };
 
@@ -43,7 +44,7 @@ export function seancesAVenir(plan: WeeklyPlan[], trainings: Training[], max = 3
       .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
     for (const p of items) {
       if (out.length >= max) break;
-      const jour = off === 0 ? (p.time && p.time < '17:00' ? 'Aujourd’hui' : p.time ? 'Ce soir' : 'Aujourd’hui') : off === 1 ? 'Demain' : `${JOURS[day].charAt(0).toUpperCase()}${JOURS[day].slice(1)}`;
+      const jour = off === 0 ? (p.time && p.time < '17:00' ? traduire('Aujourd’hui') : p.time ? traduire('Ce soir') : traduire('Aujourd’hui')) : off === 1 ? traduire('Demain') : `${JOURS[day].charAt(0).toUpperCase()}${JOURS[day].slice(1)}`;
       const h = formatHour(p.time);
       out.push({
         key: `${off}-${p.id ?? p.sport}-${p.time ?? ''}`,
@@ -88,15 +89,14 @@ export function BlocMois({ trainings }: { trainings: Training[] }) {
 
   return (
     <View style={{ gap: 10 }}>
-      <Section title="Ton mois" action="Planning" onAction={() => router.push('/planning' as any)} />
+      <Section title={traduire("Ton mois")} action="Planning" onAction={() => router.push('/planning' as any)} />
       <MonthCard trainings={trainings} competitions={comps} onOpen={ouvrir} />
       {prevues.length ? (
         <View style={{ borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 14, paddingVertical: 6 }}>
           <Ink size={12} weight="extraBold" color={P.ink2} style={{ paddingTop: 6, paddingBottom: 2 }}>
-            À venir
-          </Ink>
+            {traduire("À venir")}</Ink>
           {prevues.map((s, i) => (
-            <Press key={s.key} onPress={ouvrir} haptic="light" accessibilityRole="button" accessibilityLabel={`${s.quand}, ${s.titre}${s.club ? `, ${s.club}` : ''}. Ouvrir le calendrier`}>
+            <Press key={s.key} onPress={ouvrir} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("{0}, {1}{2}. Ouvrir le calendrier", s.quand, s.titre, s.club ? `, ${s.club}` : '')}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, borderTopWidth: i === 0 ? 0 : 1, borderColor: P.line2 }}>
                 <SessionMark t={{ sport: s.slot.sport, club_id: s.slot.club_id, club_name: s.slot.club_name, club_logo: s.slot.club_logo, club_color: s.slot.club_color, date: '' } as unknown as Training} size={26} />
                 <View style={{ flex: 1 }}>

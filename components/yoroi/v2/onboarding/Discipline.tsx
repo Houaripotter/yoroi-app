@@ -11,9 +11,10 @@ import { RappelsDiscipline } from '@/components/yoroi/v2/notifications/RappelsDi
 import type { ChoixRappels } from '@/lib/v2/notifications/discipline';
 import type { EcranPermission } from '@/lib/v2/notifications/permission';
 import { useColors } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
-export const DISCIPLINE_TITRE = 'La régularité fait le résultat.';
-export const DISCIPLINE_TEXTE = 'YOROI t’aide à tenir ton rythme, semaine après semaine. Des rappels, seulement si tu les veux : rien ne s’allume sans toi.';
+export const DISCIPLINE_TITRE = traduire('La régularité fait le résultat.');
+export const DISCIPLINE_TEXTE = traduire('YOROI t’aide à tenir ton rythme, semaine après semaine. Des rappels, seulement si tu les veux : rien ne s’allume sans toi.');
 
 /** Le message seul (carte indigo) */
 export function MessageDiscipline() {
@@ -43,7 +44,7 @@ export function BlocDiscipline({ value, onChange, ecran, apercu, joursAutoTexte,
   return (
     <View style={{ gap: 12, paddingTop: 6 }}>
       {sansMessage ? null : <MessageDiscipline />}
-      <Ink size={13} weight="bold" color={c.textSecondary}>Tes rappels, si tu veux. Tu pourras les changer dans Réglages, Rappels.</Ink>
+      <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tes rappels, si tu veux. Tu pourras les changer dans Réglages, Rappels.")}</Ink>
       <RappelsDiscipline value={value} onChange={onChange} ecran={ecran} apercu={apercu} joursAutoTexte={joursAutoTexte} />
     </View>
   );

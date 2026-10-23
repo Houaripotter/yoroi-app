@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import CryptoJS from 'crypto-js';
 import secureStorage from './security/secureStorage';
 import logger from './security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 const ENCRYPTION_ENABLED_KEY = '@yoroi_backup_encryption_enabled';
 const ENCRYPTION_PASSWORD_KEY = '@yoroi_backup_encryption_password'; // stocké en secureStorage (Keychain/Keystore)
@@ -237,12 +238,12 @@ export function decryptBackup(encryptedObj: any, password: string): any {
     });
     const dataJson = decrypted.toString(CryptoJS.enc.Utf8);
     if (!dataJson) {
-      throw new DecryptionError('WRONG_PASSWORD', 'Mot de passe incorrect');
+      throw new DecryptionError('WRONG_PASSWORD', traduire('Mot de passe incorrect'));
     }
     if (checksum) {
       const computed = CryptoJS.SHA256(dataJson).toString();
       if (computed !== checksum) {
-        throw new DecryptionError('WRONG_PASSWORD', 'Mot de passe incorrect');
+        throw new DecryptionError('WRONG_PASSWORD', traduire('Mot de passe incorrect'));
       }
     }
     try {
@@ -253,6 +254,6 @@ export function decryptBackup(encryptedObj: any, password: string): any {
   } catch (e) {
     if (e instanceof DecryptionError) throw e;
     logger.error('[BackupEncryption] Erreur déchiffrement inattendue:', e);
-    throw new DecryptionError('WRONG_PASSWORD', 'Mot de passe incorrect');
+    throw new DecryptionError('WRONG_PASSWORD', traduire('Mot de passe incorrect'));
   }
 }

@@ -31,6 +31,7 @@ import { AvantApresVue } from './AvantApresVue';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { chargeGrand, donneesEnUnite, exploitEnUnite, statsEnUnite } from '@/lib/v2/cartes/unite';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const CARTE_W = 360;
 export const HAUTEURS: Record<FormatId, number> = { story: 640, post: 450, carre: 360 };
@@ -271,13 +272,13 @@ function Record({ data, pal, largeur = 300, centre }: { data: CarteData; pal: Pa
   const r = data.seance?.records?.[0];
   if (!r) return null;
   const plus = (data.seance?.records?.length ?? 0) - 1;
-  const texte = plus > 0 ? `${r.nom} et ${plus} autre${plus > 1 ? 's' : ''}` : `${r.nom}, ${r.texte}`;
+  const texte = plus > 0 ? traduirePluriel(plus, plus > 1, "{0} et {1} autre", "{0} et {1} autres", r.nom, plus) : `${r.nom}, ${r.texte}`;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: largeur, alignSelf: centre ? 'center' : 'flex-start' }}>
       <TropheeRecord size={30} couleurs={{ fond: '#C9A13B', trophee: '#FFFFFF' }} />
       <View style={{ flexShrink: 1, minWidth: 0, gap: 1 }}>
         {/* sur une image sombre le rouge se perd : le libelle prend l'or du trophee ; sur clair, le rouge des records */}
-        <T size={12} weight="black" color={pal.ink === '#FFFFFF' ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{plus > 0 ? 'Nouveaux records' : 'Nouveau record'}</T>
+        <T size={12} weight="black" color={pal.ink === '#FFFFFF' ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{plus > 0 ? traduire('Nouveaux records') : traduire('Nouveau record')}</T>
         <T size={13} weight="extraBold" color={pal.ink} lines={2} style={pal.shadow}>{texte}</T>
       </View>
     </View>
@@ -294,7 +295,7 @@ function BarreObjectif({ data, pal, largeur, legende = true }: { data: CarteData
       <View style={{ height: 8, borderRadius: 4, backgroundColor: pal.track, overflow: 'hidden' }}>
         <View style={{ width: `${Math.max(3, pct * 100)}%`, height: 8, borderRadius: 4, backgroundColor: pal.ink }} />
       </View>
-      {legende ? <T size={11} weight="bold" color={pal.muted} style={pal.shadow}>{`${Math.round(pct * 100)} % du chemin vers ton objectif`}</T> : null}
+      {legende ? <T size={11} weight="bold" color={pal.muted} style={pal.shadow}>{traduire("{0} % du chemin vers ton objectif", Math.round(pct * 100))}</T> : null}
     </View>
   );
 }
@@ -682,8 +683,8 @@ function Anneau({ d, o, pal, W, stats, titre, fig: figure, padTop, padBas }: Ctx
     prop?.pct === undefined
       ? null
       : d.moment === 'semaine' && d.semaine
-        ? { value: `${d.semaine.seances}/${d.semaine.objectif}`, label: 'séances de ton objectif', court: 'séances' }
-        : { value: String(Math.round(prop.pct * 100)), unit: '%', label: 'du chemin vers ton objectif', court: 'du chemin' };
+        ? { value: `${d.semaine.seances}/${d.semaine.objectif}`, label: traduire('séances de ton objectif'), court: traduire('séances') }
+        : { value: String(Math.round(prop.pct * 100)), unit: '%', label: traduire('du chemin vers ton objectif'), court: traduire('du chemin') };
   const doublon = d.moment === 'semaine' ? 'seances' : 'objectif_pct';
   const dessous = (progres ? stats.filter((x) => x.key !== doublon) : stats).slice(0, 3);
   // dans l'anneau le libelle court tient entre les traits ; dessous, la phrase entiere
@@ -775,7 +776,7 @@ function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TropheeRecord size={Math.round(46 * Math.max(k, 0.7))} couleurs={{ fond: '#C9A13B', trophee: '#FFFFFF' }} />
             {/* sur une image sombre le rouge se perd : le libelle prend l'or du trophee ; sur clair, le rouge des records */}
-            <T size={story ? 16 : 13} weight="black" color={sombre ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{autres > 0 ? 'Nouveaux records' : 'Nouveau record'}</T>
+            <T size={story ? 16 : 13} weight="black" color={sombre ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{autres > 0 ? traduire('Nouveaux records') : traduire('Nouveau record')}</T>
           </View>
           <T size={fit(r.nom, L, Math.round(30 * k), 0.58)} weight="black" color={pal.ink} style={[{ letterSpacing: -0.4 }, pal.shadow]}>{r.nom}</T>
           {r.poids ? (
@@ -783,7 +784,7 @@ function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
           ) : (
             <T size={story ? 22 : 16} weight="black" color={pal.ink} lines={2} style={pal.shadow}>{r.texte}</T>
           )}
-          {r.poids && r.reps && !carre ? <T size={story ? 16 : 13} weight="extraBold" color={pal.ink2} style={pal.shadow}>{`pour ${r.reps} ${r.reps > 1 ? 'répétitions' : 'répétition'}`}</T> : null}
+          {r.poids && r.reps && !carre ? <T size={story ? 16 : 13} weight="extraBold" color={pal.ink2} style={pal.shadow}>{traduire("pour {0} {1}", r.reps, r.reps > 1 ? 'répétitions' : 'répétition')}</T> : null}
           {gain !== null && gain > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 10 : 6, marginTop: story ? 4 : 2 }}>
               <T size={13} weight="bold" color={pal.muted} style={pal.shadow}>Ancien record</T>
@@ -794,7 +795,7 @@ function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
             </View>
           ) : null}
           {autres > 0 && !carre ? (
-            <T size={12.5} weight="bold" color={pal.ink2} lines={2} style={pal.shadow}>{`Et ${autres} autre${autres > 1 ? 's' : ''} : ${recs.slice(1, 3).map((x) => x.nom).join(', ')}${autres > 2 ? '…' : ''}`}</T>
+            <T size={12.5} weight="bold" color={pal.ink2} lines={2} style={pal.shadow}>{traduirePluriel(autres, autres > 1, "Et {0} autre : {1}{2}", "Et {0} autres : {1}{2}", autres, recs.slice(1, 3).map((x) => x.nom).join(', '), autres > 2 ? '…' : '')}</T>
           ) : null}
           <View style={{ height: story ? 6 : 2 }} />
           <Signature pal={pal} slogan={o.slogan} compact={!story} />
@@ -806,7 +807,7 @@ function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
   );
 }
 
-const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const JOURS_COURTS = [traduire('Lun'), traduire('Mar'), traduire('Mer'), traduire('Jeu'), traduire('Ven'), traduire('Sam'), traduire('Dim')];
 
 /** Le rond d'un club : son logo, ou ses initiales */
 function ClubRond({ club, pal, D }: { club: NonNullable<CarteData['club']>; pal: Palette; D: number }) {
@@ -1036,16 +1037,16 @@ export type ModeleInfo = { id: ModeleId; nom: string; explication: string };
 
 /** Les modeles, dans l'ordre du choix : un nom parlant et une ligne qui dit ce que montre la carte */
 export const MODELES: ModeleInfo[] = [
-  { id: 'affiche', nom: 'Affiche', explication: 'Ton chiffre fort en grand, les autres en dessous.' },
-  { id: 'minimal', nom: 'Minimal', explication: 'Un seul grand chiffre, ton titre et la signature.' },
-  { id: 'record', nom: 'Record', explication: 'Ton record en vedette, avec le trophée et l’ancien record.' },
-  { id: 'semaine', nom: 'Semaine', explication: 'Tes 7 jours, avec les sports faits et tes clubs.' },
-  { id: 'anneau', nom: 'Objectif', explication: 'L’anneau montre où tu en es de ton objectif.' },
-  { id: 'bandeau', nom: 'Bandeau', explication: 'Tous tes chiffres côte à côte, à égalité.' },
-  { id: 'colonne', nom: 'Colonne', explication: 'Tes chiffres empilés, du plus fort au plus petit.' },
-  { id: 'ticket', nom: 'Ticket', explication: 'Le détail ligne par ligne, puis le total.' },
-  { id: 'cadre', nom: 'Polaroid', explication: 'Ta scène ou ta photo encadrée, tes chiffres sur le papier.' },
-  { id: 'geant', nom: 'Géant', explication: 'Le nom de ton sport en lettres géantes.' },
+  { id: 'affiche', nom: 'Affiche', explication: traduire('Ton chiffre fort en grand, les autres en dessous.') },
+  { id: 'minimal', nom: 'Minimal', explication: traduire('Un seul grand chiffre, ton titre et la signature.') },
+  { id: 'record', nom: traduire('Record'), explication: traduire('Ton record en vedette, avec le trophée et l’ancien record.') },
+  { id: 'semaine', nom: traduire('Semaine'), explication: traduire('Tes 7 jours, avec les sports faits et tes clubs.') },
+  { id: 'anneau', nom: traduire('Objectif'), explication: traduire('L’anneau montre où tu en es de ton objectif.') },
+  { id: 'bandeau', nom: 'Bandeau', explication: traduire('Tous tes chiffres côte à côte, à égalité.') },
+  { id: 'colonne', nom: 'Colonne', explication: traduire('Tes chiffres empilés, du plus fort au plus petit.') },
+  { id: 'ticket', nom: 'Ticket', explication: traduire('Le détail ligne par ligne, puis le total.') },
+  { id: 'cadre', nom: 'Polaroid', explication: traduire('Ta scène ou ta photo encadrée, tes chiffres sur le papier.') },
+  { id: 'geant', nom: traduire('Géant'), explication: traduire('Le nom de ton sport en lettres géantes.') },
 ];
 
 /** Un modele n'est propose que si ses donnees existent : Objectif sans objectif, Record sans record, jamais */
@@ -1067,7 +1068,7 @@ export function modeleEffectif(d: CarteData, id: ModeleId): ModeleId {
 
 /** L'explication du modele pour cette carte (Objectif dit de quel objectif il parle) */
 export function explicationModele(m: ModeleInfo, d: CarteData): string {
-  if (m.id === 'anneau') return d.moment === 'pesee' ? 'L’anneau montre le chemin fait vers ton objectif de poids.' : 'L’anneau montre tes séances faites sur ton objectif de la semaine.';
+  if (m.id === 'anneau') return d.moment === 'pesee' ? traduire('L’anneau montre le chemin fait vers ton objectif de poids.') : traduire('L’anneau montre tes séances faites sur ton objectif de la semaine.');
   return m.explication;
 }
 

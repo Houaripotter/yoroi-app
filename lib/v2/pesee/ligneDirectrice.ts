@@ -20,6 +20,7 @@
 import { IMC_BAS, PERTE_MAX, PERTE_MIN, PRISE_MAX, PRISE_MIN, estimerArrivee, imcDe } from './estimation';
 import { projection } from '@/lib/v2/accueil/projection';
 import type { DayWeight } from '@/lib/v2/weightStats';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 /**
  * Tolerance autour de la bande, en kg : l'eau, le sel et le dernier repas font bouger la balance
@@ -189,26 +190,26 @@ export type Statut = { id: StatutId; label: string; ton: 'vert' | 'bleu' | 'oran
  */
 export function statutLigne(l: Ligne, iso: string, poids: number, torii?: string | null): Statut {
   const b = bornesA(l, iso, torii);
-  if (!b) return { id: 'avant', label: 'Avant ton plan', ton: 'gris' };
+  if (!b) return { id: 'avant', label: traduire('Avant ton plan'), ton: 'gris' };
   const t = TOLERANCE_KG;
   if (l.mode === 'perte') {
-    if (poids > b.haut + t) return { id: 'lent', label: 'Au-dessus de ton rythme prévu', ton: 'bleu' };
-    if (poids < b.bas - t) return { id: 'vite', label: 'Plus vite que prévu', ton: 'orange' };
+    if (poids > b.haut + t) return { id: 'lent', label: traduire('Au-dessus de ton rythme prévu'), ton: 'bleu' };
+    if (poids < b.bas - t) return { id: 'vite', label: traduire('Plus vite que prévu'), ton: 'orange' };
   } else if (l.mode === 'prise') {
-    if (poids < b.bas - t) return { id: 'lent', label: 'En dessous de ton rythme prévu', ton: 'bleu' };
-    if (poids > b.haut + t) return { id: 'vite', label: 'Plus vite que prévu', ton: 'orange' };
+    if (poids < b.bas - t) return { id: 'lent', label: traduire('En dessous de ton rythme prévu'), ton: 'bleu' };
+    if (poids > b.haut + t) return { id: 'vite', label: traduire('Plus vite que prévu'), ton: 'orange' };
   } else {
-    if (poids > b.haut + t) return { id: 'dessus', label: 'Au-dessus de ta zone de forme', ton: 'bleu' };
-    if (poids < b.bas - t) return { id: 'dessous', label: 'En dessous de ta zone de forme', ton: 'bleu' };
-    return { id: 'sur', label: 'Dans ta zone de forme', ton: 'vert' };
+    if (poids > b.haut + t) return { id: 'dessus', label: traduire('Au-dessus de ta zone de forme'), ton: 'bleu' };
+    if (poids < b.bas - t) return { id: 'dessous', label: traduire('En dessous de ta zone de forme'), ton: 'bleu' };
+    return { id: 'sur', label: traduire('Dans ta zone de forme'), ton: 'vert' };
   }
-  return { id: 'sur', label: 'Sur ton rythme prévu', ton: 'vert' };
+  return { id: 'sur', label: traduire('Sur ton rythme prévu'), ton: 'vert' };
 }
 
 /** Une phrase en morceaux : le morceau « cle » prend la couleur du statut */
 export type PhraseStatut = { ton: Statut['ton']; avant: string; cle: string; apres: string };
 
-const kgPhrase = (v: number) => `${(Math.round(Math.abs(v) * 10) / 10).toFixed(1).replace('.', ',')} kg`;
+const kgPhrase = (v: number) => `${(Math.round(Math.abs(v) * 10) / 10).toFixed(1).replace('.', DECIMAL)} kg`;
 
 /**
  * Vague 42 (Houari : « on ne comprend pas énormément les choses ») : la pastille « Au-dessus de ta ligne » devient
@@ -223,19 +224,19 @@ export function phraseStatut(l: Ligne, iso: string, poids: number, torii?: strin
   const st = statutLigne(l, iso, poids, torii);
   const m = medianeA(l, torii ?? null, iso);
   const ecart = m == null ? 0 : poids - m;
-  const tu = passe ? 'Ce jour-là, tu étais ' : 'Tu es ';
-  if (st.id === 'avant') return { ton: 'gris', avant: passe ? 'Ce jour-là, ' : '', cle: passe ? 'avant le début de ton plan' : 'Avant le début de ton plan', apres: '' };
+  const tu = passe ? traduire('Ce jour-là, tu étais ') : traduire('Tu es ');
+  if (st.id === 'avant') return { ton: 'gris', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'avant le début de ton plan' : 'Avant le début de ton plan', apres: '' };
   if (l.mode === 'maintien' || l.mode === 'recompo') {
-    if (st.id === 'sur') return { ton: 'vert', avant: passe ? 'Ce jour-là, ' : '', cle: passe ? 'dans ta zone de forme' : 'Dans ta zone de forme', apres: '' };
-    return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${ecart > 0 ? 'au-dessus' : 'en dessous'}`, apres: ' de ton poids de forme' };
+    if (st.id === 'sur') return { ton: 'vert', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'dans ta zone de forme' : 'Dans ta zone de forme', apres: '' };
+    return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${ecart > 0 ? 'au-dessus' : 'en dessous'}`, apres: traduire(' de ton poids de forme') };
   }
-  if (st.id === 'lent') return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${l.mode === 'perte' ? 'au-dessus' : 'en dessous'}`, apres: ' de ton rythme prévu' };
+  if (st.id === 'lent') return { ton: 'bleu', avant: tu, cle: `${kgPhrase(ecart)} ${l.mode === 'perte' ? 'au-dessus' : 'en dessous'}`, apres: traduire(' de ton rythme prévu') };
   if (st.id === 'vite') {
-    const verbe = l.mode === 'perte' ? (passe ? 'Ce jour-là, tu descendais ' : 'Tu descends ') : passe ? 'Ce jour-là, tu montais ' : 'Tu montes ';
-    return { ton: 'orange', avant: verbe, cle: 'plus vite que prévu', apres: passe ? '' : ', ralentis un peu' };
+    const verbe = l.mode === 'perte' ? (passe ? traduire('Ce jour-là, tu descendais ') : traduire('Tu descends ')) : passe ? traduire('Ce jour-là, tu montais ') : traduire('Tu montes ');
+    return { ton: 'orange', avant: verbe, cle: 'plus vite que prévu', apres: passe ? '' : traduire(', ralentis un peu') };
   }
-  if (Math.abs(ecart) <= TOLERANCE_KG) return { ton: 'vert', avant: passe ? 'Ce jour-là, ' : '', cle: passe ? 'pile sur ton rythme prévu' : 'Pile sur ton rythme prévu', apres: '' };
-  return { ton: 'vert', avant: passe ? 'Ce jour-là, ' : '', cle: passe ? 'sur ton rythme prévu' : 'Sur ton rythme prévu', apres: `, à ${kgPhrase(ecart)} près` };
+  if (Math.abs(ecart) <= TOLERANCE_KG) return { ton: 'vert', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'pile sur ton rythme prévu' : 'Pile sur ton rythme prévu', apres: '' };
+  return { ton: 'vert', avant: passe ? traduire('Ce jour-là, ') : '', cle: passe ? 'sur ton rythme prévu' : 'Sur ton rythme prévu', apres: traduire(", à {0} près", kgPhrase(ecart)) };
 }
 
 /**
@@ -376,8 +377,8 @@ export function decisionTorii(
   return { date: tend, atteint: false, fenetre, jours, memo: { cle: base.cle, date: tend, fenetreLe: fenetre ? today : base.fenetreLe ?? null } };
 }
 
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MOIS_COURT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 const num = (d: Date) => (d.getDate() === 1 ? '1er' : String(d.getDate()));
 
 /** « 18 novembre », avec l'annee si elle change */
@@ -399,23 +400,23 @@ export function duAu(earliest: string, latest: string, today: string): string {
   const an = String(today).slice(0, 4);
   const anB = String(b.getFullYear()) !== an ? ` ${b.getFullYear()}` : '';
   const anA = a.getFullYear() !== b.getFullYear() ? ` ${a.getFullYear()}` : '';
-  if (earliest === latest) return `le ${num(b)} ${MOIS[b.getMonth()]}${anB}`;
-  if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return `du ${num(a)} au ${num(b)} ${MOIS[b.getMonth()]}${anB}`;
-  return `du ${num(a)} ${MOIS[a.getMonth()]}${anA} au ${num(b)} ${MOIS[b.getMonth()]}${anB}`;
+  if (earliest === latest) return traduire("le {0} {1}{2}", num(b), MOIS[b.getMonth()], anB);
+  if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return traduire("du {0} au {1} {2}{3}", num(a), num(b), MOIS[b.getMonth()], anB);
+  return traduire("du {0} {1}{2} au {3} {4}{5}", num(a), MOIS[a.getMonth()], anA, num(b), MOIS[b.getMonth()], anB);
 }
 
-const kg = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', ','));
+const kg = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL));
 
 /** Textes des deux fenetres in-app du torii */
 export function texteFenetreTorii(kind: 'recule' | 'rapproche', date: string, cap: number, today: string): { titre: string; texte: string } {
   if (kind === 'recule') {
     return {
-      titre: 'Ton torii a reculé de quelques jours',
-      texte: `Ces deux dernières semaines, tu as avancé un peu moins vite. Rien de grave : ton arrivée est maintenant prévue le ${jourLong(date, today)}. Ton cap reste ${kg(cap)} kg.`,
+      titre: traduire('Ton torii a reculé de quelques jours'),
+      texte: traduire("Ces deux dernières semaines, tu as avancé un peu moins vite. Rien de grave : ton arrivée est maintenant prévue le {0}. Ton cap reste {1} kg.", jourLong(date, today), kg(cap)),
     };
   }
   return {
-    titre: 'Ton torii s’est rapproché',
-    texte: `Belle régularité : ton arrivée est maintenant prévue le ${jourLong(date, today)}. Ton cap reste ${kg(cap)} kg.`,
+    titre: traduire('Ton torii s’est rapproché'),
+    texte: traduire("Belle régularité : ton arrivée est maintenant prévue le {0}. Ton cap reste {1} kg.", jourLong(date, today), kg(cap)),
   };
 }

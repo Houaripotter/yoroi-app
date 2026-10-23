@@ -21,9 +21,10 @@ import { computeLifts } from '@/lib/v2/progres/strength';
 import { dayLong, num } from '@/lib/v2/progres/format';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 function reps(n: number): string {
-  return `${n} répétition${n > 1 ? 's' : ''}`;
+  return traduirePluriel(n, n > 1, "{0} répétition", "{0} répétitions", n);
 }
 
 export default function ForceDetailScreen() {
@@ -45,7 +46,7 @@ export default function ForceDetailScreen() {
   const cv = (kg: number) => versUnitePoids(kg, unite);
   const mot = unite === 'lb' ? 'livres' : 'kilos';
   const points: DetailPoint[] = useMemo(
-    () => (lift ? lift.points.map((p) => ({ date: p.date, value: versUnitePoids(p.value, unite), record: p.record, caption: `${num(versUnitePoids(p.weight, unite), 1)} ${unite === 'lb' ? 'livres' : 'kilos'} pour ${reps(p.reps)}` })) : []),
+    () => (lift ? lift.points.map((p) => ({ date: p.date, value: versUnitePoids(p.value, unite), record: p.record, caption: traduire("{0} {1} pour {2}", num(versUnitePoids(p.weight, unite), 1), unite === 'lb' ? 'livres' : 'kilos', reps(p.reps)) })) : []),
     [lift, unite],
   );
   // 16 octobre : l'indigo des seances (accueil) ou la couleur choisie dans Reglages, Tes courbes
@@ -56,8 +57,8 @@ export default function ForceDetailScreen() {
   return (
     <MetricDetail
       key={`${lift?.key ?? 'vide'}-${unite}`}
-      title={lift?.name ?? 'Ta force'}
-      sub="Ton maximum estimé sur une répétition, séance après séance."
+      title={lift?.name ?? traduire('Ta force')}
+      sub={traduire("Ton maximum estimé sur une répétition, séance après séance.")}
       picker={
         lifts.length > 1 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER, paddingTop: 12 }}>
@@ -65,7 +66,7 @@ export default function ForceDetailScreen() {
           </ScrollView>
         ) : null
       }
-      spec={{ label: 'Maximum estimé', unit: unite === 'lb' ? 'lb' : 'kg', digits: 1, good: 'up', deltaOne: unite === 'lb' ? 'livre' : 'kilo', deltaMany: mot, eps: 0.5, minSpan: 4 }}
+      spec={{ label: traduire('Maximum estimé'), unit: unite === 'lb' ? 'lb' : 'kg', digits: 1, good: 'up', deltaOne: unite === 'lb' ? 'livre' : 'kilo', deltaMany: mot, eps: 0.5, minSpan: 4 }}
       points={points}
       color={trait}
       domaine="seances"
@@ -73,10 +74,10 @@ export default function ForceDetailScreen() {
       loading={loading}
       defaultPeriod={180}
       scrubLine={(p) => p.caption ?? ' '}
-      historyNoun={['séance', 'séances']}
+      historyNoun={[traduire('séance'), traduire('séances')]}
       legend={
         <>
-          <LegendMark kind="line" color={trait} label="maximum estimé" />
+          <LegendMark kind="line" color={trait} label={traduire("maximum estimé")} />
           <LegendMark kind="seal" color={RECORD_RED} label="record" />
         </>
       }
@@ -87,17 +88,17 @@ export default function ForceDetailScreen() {
               <Hanko size={30} tampon="record_force" />
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={15} weight="extraBold">{`Dernier record, ${dayLong(lastRecord.date)}`}</Ink>
-                <Ink size={13} color={c.textSecondary}>{`${num(cv(lastRecord.weight), 1)} ${mot} pour ${reps(lastRecord.reps)}, soit ${num(cv(lastRecord.value), cv(lastRecord.value) >= 100 ? 0 : 1)} ${mot} estimé${unite === 'lb' ? 'e' : ''}s`}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("{0} {1} pour {2}, soit {3} {4} estimé{5}s", num(cv(lastRecord.weight), 1), mot, reps(lastRecord.reps), num(cv(lastRecord.value), cv(lastRecord.value) >= 100 ? 0 : 1), mot, unite === 'lb' ? 'e' : '')}</Ink>
               </View>
             </GlassCard>
           ) : null}
-          <GhostButton label="Tous tes records" onPress={() => router.push('/records' as any)} />
+          <GhostButton label={traduire("Tous tes records")} onPress={() => router.push('/records' as any)} />
         </View>
       }
       empty={{
-        title: 'Pas encore de courbe de force',
-        text: 'Note tes séries avec la charge et les répétitions. YOROI estime ton maximum et marque chaque record.',
-        plusHint: 'Note ta séance avec le bouton + de la barre d’onglets',
+        title: traduire('Pas encore de courbe de force'),
+        text: traduire('Note tes séries avec la charge et les répétitions. YOROI estime ton maximum et marque chaque record.'),
+        plusHint: traduire('Note ta séance avec le bouton + de la barre d’onglets'),
       }}
     />
   );

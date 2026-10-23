@@ -22,6 +22,7 @@
  * Tout le reste arrive en lignes « autre: Nom = valeur unite », gardees telles quelles.
  */
 
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export type BalanceKind = 'muscle' | 'graisse' | 'os' | 'eau' | null;
 export type BalanceGroup = 'principal' | 'avance' | 'segment' | 'mensuration';
 /** Les mensurations de l'app (table measurements, lib/v2/progres/measures.ts, MeasureKey) */
@@ -59,11 +60,11 @@ export type BalanceFieldSpec = {
 };
 
 const SEGMENTS: { seg: SegmentKey; key: string; label: string; de: string; names: string[] }[] = [
-  { seg: 'arm_right', key: 'bras_droit', label: 'bras droit', de: 'du bras droit', names: ['bras_droit', 'bras_d', 'bd', 'right_arm', 'arm_right', 'r_arm', 'arm_r'] },
-  { seg: 'arm_left', key: 'bras_gauche', label: 'bras gauche', de: 'du bras gauche', names: ['bras_gauche', 'bras_g', 'bg', 'left_arm', 'arm_left', 'l_arm', 'arm_l'] },
-  { seg: 'trunk', key: 'tronc', label: 'tronc', de: 'du tronc', names: ['tronc', 'torse', 'trunk', 'torso', 'core'] },
-  { seg: 'leg_right', key: 'jambe_droite', label: 'jambe droite', de: 'de la jambe droite', names: ['jambe_droite', 'jambe_d', 'jd', 'right_leg', 'leg_right', 'r_leg', 'leg_r'] },
-  { seg: 'leg_left', key: 'jambe_gauche', label: 'jambe gauche', de: 'de la jambe gauche', names: ['jambe_gauche', 'jambe_g', 'jg', 'left_leg', 'leg_left', 'l_leg', 'leg_l'] },
+  { seg: 'arm_right', key: 'bras_droit', label: 'bras droit', de: traduire('du bras droit'), names: ['bras_droit', 'bras_d', 'bd', 'right_arm', 'arm_right', 'r_arm', 'arm_r'] },
+  { seg: 'arm_left', key: 'bras_gauche', label: 'bras gauche', de: traduire('du bras gauche'), names: ['bras_gauche', 'bras_g', 'bg', 'left_arm', 'arm_left', 'l_arm', 'arm_l'] },
+  { seg: 'trunk', key: 'tronc', label: 'tronc', de: traduire('du tronc'), names: ['tronc', 'torse', 'trunk', 'torso', 'core'] },
+  { seg: 'leg_right', key: 'jambe_droite', label: 'jambe droite', de: traduire('de la jambe droite'), names: ['jambe_droite', 'jambe_d', 'jd', 'right_leg', 'leg_right', 'r_leg', 'leg_r'] },
+  { seg: 'leg_left', key: 'jambe_gauche', label: 'jambe gauche', de: traduire('de la jambe gauche'), names: ['jambe_gauche', 'jambe_g', 'jg', 'left_leg', 'leg_left', 'l_leg', 'leg_l'] },
 ];
 
 /**
@@ -73,24 +74,24 @@ const SEGMENTS: { seg: SegmentKey; key: string; label: string; de: string; names
  * Bras, cuisse, mollet sans cote precise : range a gauche, comme l'ancien ecran (arms, thighs).
  */
 const MEASURES: { key: string; label: string; measure?: MeasureTarget; min: number; max: number; ai: string; aliases: string[] }[] = [
-  { key: 'tour_de_cou_cm', label: 'Cou', measure: 'neck', min: 20, max: 70, ai: 'tour de cou', aliases: ['neck', 'cou', 'tour_cou', 'tour_du_cou', 'neck_circumference'] },
-  { key: 'tour_d_epaules_cm', label: 'Épaules', measure: 'shoulders', min: 60, max: 190, ai: 'tour d’épaules', aliases: ['shoulders', 'epaules', 'tour_epaules', 'tour_des_epaules', 'carrure'] },
-  { key: 'tour_de_poitrine_cm', label: 'Poitrine', measure: 'chest', min: 50, max: 200, ai: 'tour de poitrine', aliases: ['chest', 'poitrine', 'tour_poitrine', 'pectoraux', 'chest_circumference', 'tour_de_torse', 'torse_cm'] },
-  { key: 'tour_de_taille_cm', label: 'Tour de taille', measure: 'waist', min: 40, max: 200, ai: 'tour de taille', aliases: ['waist', 'tour_taille', 'tour_de_taille', 'waist_circumference', 'tour_de_ventre'] },
-  { key: 'tour_au_nombril_cm', label: 'Nombril', measure: 'navel', min: 40, max: 200, ai: 'tour au niveau du nombril', aliases: ['navel', 'nombril', 'tour_nombril', 'tour_de_nombril', 'tour_ombilical'] },
-  { key: 'tour_de_hanches_cm', label: 'Hanches', measure: 'hips', min: 50, max: 200, ai: 'tour de hanches', aliases: ['hips', 'hanches', 'tour_hanches', 'hip', 'hip_circumference', 'tour_de_bassin'] },
-  { key: 'tour_bras_droit_cm', label: 'Bras droit', measure: 'armR', min: 15, max: 70, ai: 'tour du bras droit', aliases: ['right_arm', 'tour_de_bras_droit', 'biceps_droit', 'bras_droit_cm'] },
-  { key: 'tour_bras_gauche_cm', label: 'Bras gauche', measure: 'armL', min: 15, max: 70, ai: 'tour du bras gauche', aliases: ['left_arm', 'tour_de_bras_gauche', 'biceps_gauche', 'bras_gauche_cm'] },
-  { key: 'tour_de_bras_cm', label: 'Bras', measure: 'armL', min: 15, max: 70, ai: 'tour de bras, si le côté n’est pas indiqué', aliases: ['arms', 'arm', 'tour_bras', 'biceps', 'bras_cm'] },
-  { key: 'tour_avant_bras_droit_cm', label: 'Avant-bras droit', min: 15, max: 50, ai: 'tour de l’avant-bras droit', aliases: ['right_forearm', 'tour_d_avant_bras_droit', 'avant_bras_droit'] },
-  { key: 'tour_avant_bras_gauche_cm', label: 'Avant-bras gauche', min: 15, max: 50, ai: 'tour de l’avant-bras gauche', aliases: ['left_forearm', 'tour_d_avant_bras_gauche', 'avant_bras_gauche'] },
-  { key: 'tour_avant_bras_cm', label: 'Avant-bras', min: 15, max: 50, ai: 'tour d’avant-bras, si le côté n’est pas indiqué', aliases: ['forearm', 'avant_bras', 'tour_d_avant_bras', 'tour_avant_bras'] },
-  { key: 'tour_cuisse_droite_cm', label: 'Cuisse droite', measure: 'thighR', min: 30, max: 110, ai: 'tour de la cuisse droite', aliases: ['right_thigh', 'tour_de_cuisse_droite', 'cuisse_droite'] },
-  { key: 'tour_cuisse_gauche_cm', label: 'Cuisse gauche', measure: 'thighL', min: 30, max: 110, ai: 'tour de la cuisse gauche', aliases: ['left_thigh', 'tour_de_cuisse_gauche', 'cuisse_gauche'] },
-  { key: 'tour_de_cuisse_cm', label: 'Cuisse', measure: 'thighL', min: 30, max: 110, ai: 'tour de cuisse, si le côté n’est pas indiqué', aliases: ['thighs', 'thigh', 'cuisse', 'cuisses', 'tour_cuisse'] },
-  { key: 'tour_mollet_droit_cm', label: 'Mollet droit', measure: 'calfR', min: 20, max: 70, ai: 'tour du mollet droit', aliases: ['right_calf', 'tour_de_mollet_droit', 'mollet_droit'] },
-  { key: 'tour_mollet_gauche_cm', label: 'Mollet gauche', measure: 'calfL', min: 20, max: 70, ai: 'tour du mollet gauche', aliases: ['left_calf', 'tour_de_mollet_gauche', 'mollet_gauche'] },
-  { key: 'tour_de_mollet_cm', label: 'Mollet', measure: 'calfL', min: 20, max: 70, ai: 'tour de mollet, si le côté n’est pas indiqué', aliases: ['calf', 'calves', 'mollet', 'mollets', 'tour_mollet'] },
+  { key: 'tour_de_cou_cm', label: 'Cou', measure: 'neck', min: 20, max: 70, ai: traduire('tour de cou'), aliases: ['neck', 'cou', 'tour_cou', 'tour_du_cou', 'neck_circumference'] },
+  { key: 'tour_d_epaules_cm', label: 'Épaules', measure: 'shoulders', min: 60, max: 190, ai: traduire('tour d’épaules'), aliases: ['shoulders', 'epaules', 'tour_epaules', 'tour_des_epaules', 'carrure'] },
+  { key: 'tour_de_poitrine_cm', label: 'Poitrine', measure: 'chest', min: 50, max: 200, ai: traduire('tour de poitrine'), aliases: ['chest', 'poitrine', 'tour_poitrine', 'pectoraux', 'chest_circumference', 'tour_de_torse', 'torse_cm'] },
+  { key: 'tour_de_taille_cm', label: 'Tour de taille', measure: 'waist', min: 40, max: 200, ai: traduire('tour de taille'), aliases: ['waist', 'tour_taille', 'tour_de_taille', 'waist_circumference', 'tour_de_ventre'] },
+  { key: 'tour_au_nombril_cm', label: 'Nombril', measure: 'navel', min: 40, max: 200, ai: traduire('tour au niveau du nombril'), aliases: ['navel', 'nombril', 'tour_nombril', 'tour_de_nombril', 'tour_ombilical'] },
+  { key: 'tour_de_hanches_cm', label: 'Hanches', measure: 'hips', min: 50, max: 200, ai: traduire('tour de hanches'), aliases: ['hips', 'hanches', 'tour_hanches', 'hip', 'hip_circumference', 'tour_de_bassin'] },
+  { key: 'tour_bras_droit_cm', label: traduire('Bras droit'), measure: 'armR', min: 15, max: 70, ai: traduire('tour du bras droit'), aliases: ['right_arm', 'tour_de_bras_droit', 'biceps_droit', 'bras_droit_cm'] },
+  { key: 'tour_bras_gauche_cm', label: traduire('Bras gauche'), measure: 'armL', min: 15, max: 70, ai: traduire('tour du bras gauche'), aliases: ['left_arm', 'tour_de_bras_gauche', 'biceps_gauche', 'bras_gauche_cm'] },
+  { key: 'tour_de_bras_cm', label: 'Bras', measure: 'armL', min: 15, max: 70, ai: traduire('tour de bras, si le côté n’est pas indiqué'), aliases: ['arms', 'arm', 'tour_bras', 'biceps', 'bras_cm'] },
+  { key: 'tour_avant_bras_droit_cm', label: traduire('Avant-bras droit'), min: 15, max: 50, ai: traduire('tour de l’avant-bras droit'), aliases: ['right_forearm', 'tour_d_avant_bras_droit', 'avant_bras_droit'] },
+  { key: 'tour_avant_bras_gauche_cm', label: traduire('Avant-bras gauche'), min: 15, max: 50, ai: traduire('tour de l’avant-bras gauche'), aliases: ['left_forearm', 'tour_d_avant_bras_gauche', 'avant_bras_gauche'] },
+  { key: 'tour_avant_bras_cm', label: 'Avant-bras', min: 15, max: 50, ai: traduire('tour d’avant-bras, si le côté n’est pas indiqué'), aliases: ['forearm', 'avant_bras', 'tour_d_avant_bras', 'tour_avant_bras'] },
+  { key: 'tour_cuisse_droite_cm', label: traduire('Cuisse droite'), measure: 'thighR', min: 30, max: 110, ai: traduire('tour de la cuisse droite'), aliases: ['right_thigh', 'tour_de_cuisse_droite', 'cuisse_droite'] },
+  { key: 'tour_cuisse_gauche_cm', label: traduire('Cuisse gauche'), measure: 'thighL', min: 30, max: 110, ai: traduire('tour de la cuisse gauche'), aliases: ['left_thigh', 'tour_de_cuisse_gauche', 'cuisse_gauche'] },
+  { key: 'tour_de_cuisse_cm', label: 'Cuisse', measure: 'thighL', min: 30, max: 110, ai: traduire('tour de cuisse, si le côté n’est pas indiqué'), aliases: ['thighs', 'thigh', 'cuisse', 'cuisses', 'tour_cuisse'] },
+  { key: 'tour_mollet_droit_cm', label: traduire('Mollet droit'), measure: 'calfR', min: 20, max: 70, ai: traduire('tour du mollet droit'), aliases: ['right_calf', 'tour_de_mollet_droit', 'mollet_droit'] },
+  { key: 'tour_mollet_gauche_cm', label: traduire('Mollet gauche'), measure: 'calfL', min: 20, max: 70, ai: traduire('tour du mollet gauche'), aliases: ['left_calf', 'tour_de_mollet_gauche', 'mollet_gauche'] },
+  { key: 'tour_de_mollet_cm', label: 'Mollet', measure: 'calfL', min: 20, max: 70, ai: traduire('tour de mollet, si le côté n’est pas indiqué'), aliases: ['calf', 'calves', 'mollet', 'mollets', 'tour_mollet'] },
 ];
 
 function measureFields(): BalanceFieldSpec[] {
@@ -190,7 +191,7 @@ function segFields(): BalanceFieldSpec[] {
     out.push({
       ...base,
       key: `eau_${s.key}_kg`,
-      label: `Eau ${s.label}`,
+      label: traduire("Eau {0}", s.label),
       unit: 'kg',
       min: 0.3,
       max: 45,
@@ -198,42 +199,42 @@ function segFields(): BalanceFieldSpec[] {
       segment: s.seg,
       mass: true,
       json: true,
-      ai: `eau ${s.de} en kg ou en litres`,
-      aliases: s.names.flatMap((n) => [`eau_${n}`, `${n}_eau`, `water_${n}`, `${n}_water`, `body_water_${n}`, `eau_${n}_l`]),
+      ai: traduire("eau {0} en kg ou en litres", s.de),
+      aliases: s.names.flatMap((n) => [traduire("eau_{0}", n), traduire("{0}_eau", n), `water_${n}`, `${n}_water`, `body_water_${n}`, traduire("eau_{0}_l", n)]),
     });
   }
   return out;
 }
 
 export const BALANCE_FIELDS: BalanceFieldSpec[] = [
-  { key: 'poids_kg', label: 'Poids', unit: 'kg', min: 20, max: 300, step: 0.1, group: 'principal', kind: null, mass: true, ai: 'poids en kg', aliases: ['poids', 'weight', 'masse', 'body_weight', 'poids_corporel'] },
-  { key: 'graisse_pct', label: 'Masse grasse', unit: '%', min: 2, max: 75, step: 0.1, group: 'principal', kind: 'graisse', ai: 'masse grasse du corps entier en %', aliases: ['graisse', 'masse_grasse', 'masse_grasse_pct', 'body_fat', 'fat', 'bf', 'pbf', 'percent_body_fat', 'taux_de_graisse', 'graisse_corporelle'] },
-  { key: 'muscle_kg', label: 'Masse musculaire', unit: 'kg', min: 5, max: 150, step: 0.1, group: 'principal', kind: 'muscle', mass: true, ai: 'masse musculaire du corps entier en kg', aliases: ['muscle', 'masse_musculaire', 'muscle_mass', 'muscles'] },
-  { key: 'eau_pct', label: 'Eau', unit: '%', min: 20, max: 80, step: 0.1, group: 'principal', kind: 'eau', ai: 'eau corporelle totale en %', aliases: ['eau', 'eau_corporelle', 'eau_totale', 'water', 'body_water', 'tbw', 'hydratation', 'hydration'] },
+  { key: 'poids_kg', label: 'Poids', unit: 'kg', min: 20, max: 300, step: 0.1, group: 'principal', kind: null, mass: true, ai: traduire('poids en kg'), aliases: ['poids', 'weight', 'masse', 'body_weight', 'poids_corporel'] },
+  { key: 'graisse_pct', label: 'Masse grasse', unit: '%', min: 2, max: 75, step: 0.1, group: 'principal', kind: 'graisse', ai: traduire('masse grasse du corps entier en %'), aliases: ['graisse', 'masse_grasse', 'masse_grasse_pct', 'body_fat', 'fat', 'bf', 'pbf', 'percent_body_fat', 'taux_de_graisse', 'graisse_corporelle'] },
+  { key: 'muscle_kg', label: traduire('Masse musculaire'), unit: 'kg', min: 5, max: 150, step: 0.1, group: 'principal', kind: 'muscle', mass: true, ai: traduire('masse musculaire du corps entier en kg'), aliases: ['muscle', 'masse_musculaire', 'muscle_mass', 'muscles'] },
+  { key: 'eau_pct', label: 'Eau', unit: '%', min: 20, max: 80, step: 0.1, group: 'principal', kind: 'eau', ai: traduire('eau corporelle totale en %'), aliases: ['eau', 'eau_corporelle', 'eau_totale', 'water', 'body_water', 'tbw', 'hydratation', 'hydration'] },
   { key: 'os_kg', label: 'Masse osseuse', unit: 'kg', min: 0.5, max: 10, step: 0.1, group: 'avance', kind: 'os', mass: true, ai: 'masse osseuse en kg', aliases: ['os', 'masse_osseuse', 'bone', 'bone_mass', 'ossature'] },
-  { key: 'graisse_viscerale', label: 'Graisse viscérale', unit: 'niveau', min: 1, max: 59, step: 0.5, group: 'avance', kind: 'graisse', ai: 'indice de graisse viscérale, de 1 à 59', aliases: ['viscerale', 'visceral', 'visceral_fat', 'graisse_viscerale_niveau', 'gras_visceral', 'visceral_fat_rating', 'visceral_fat_level'] },
-  { key: 'metabolisme_kcal', label: 'Métabolisme de base', unit: 'kcal', min: 600, max: 5000, step: 1, group: 'avance', kind: null, ai: 'métabolisme de base en kcal', aliases: ['metabolisme', 'metabolisme_de_base', 'mb', 'bmr', 'basal_metabolic_rate', 'dee', 'metabolisme_au_repos', 'resting_metabolism'] },
-  { key: 'metabolisme_kj', label: 'Métabolisme de base', unit: 'kJ', min: 2500, max: 21000, step: 1, group: 'avance', kind: null, convert: { to: 'metabolisme_kcal', factor: 1 / 4.184 }, ai: 'métabolisme de base en kJ, seulement si la balance ne donne pas les kcal', aliases: ['metabolisme_de_base_kj', 'bmr_kj', 'kj'] },
-  { key: 'age_metabolique', label: 'Âge métabolique', unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, ai: 'âge métabolique en années', aliases: ['age_metabolique_ans', 'metabolic_age', 'age_meta'] },
-  { key: 'imc', label: 'IMC', unit: '', min: 10, max: 70, step: 0.1, group: 'avance', kind: null, ai: 'IMC affiché par la balance', aliases: ['bmi', 'indice_de_masse_corporelle'] },
-  { key: 'physique', label: 'Morphologie', unit: 'sur 9', min: 1, max: 9, step: 1, group: 'avance', kind: null, ai: 'physique rating, chiffre de 1 à 9', aliases: ['physique_rating', 'morphologie', 'type_physique'] },
+  { key: 'graisse_viscerale', label: 'Graisse viscérale', unit: 'niveau', min: 1, max: 59, step: 0.5, group: 'avance', kind: 'graisse', ai: traduire('indice de graisse viscérale, de 1 à 59'), aliases: ['viscerale', 'visceral', 'visceral_fat', 'graisse_viscerale_niveau', 'gras_visceral', 'visceral_fat_rating', 'visceral_fat_level'] },
+  { key: 'metabolisme_kcal', label: traduire('Métabolisme de base'), unit: 'kcal', min: 600, max: 5000, step: 1, group: 'avance', kind: null, ai: traduire('métabolisme de base en kcal'), aliases: ['metabolisme', 'metabolisme_de_base', 'mb', 'bmr', 'basal_metabolic_rate', 'dee', 'metabolisme_au_repos', 'resting_metabolism'] },
+  { key: 'metabolisme_kj', label: traduire('Métabolisme de base'), unit: 'kJ', min: 2500, max: 21000, step: 1, group: 'avance', kind: null, convert: { to: 'metabolisme_kcal', factor: 1 / 4.184 }, ai: traduire('métabolisme de base en kJ, seulement si la balance ne donne pas les kcal'), aliases: ['metabolisme_de_base_kj', 'bmr_kj', 'kj'] },
+  { key: 'age_metabolique', label: traduire('Âge métabolique'), unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, ai: traduire('âge métabolique en années'), aliases: ['age_metabolique_ans', 'metabolic_age', 'age_meta'] },
+  { key: 'imc', label: traduire('IMC'), unit: '', min: 10, max: 70, step: 0.1, group: 'avance', kind: null, ai: traduire('IMC affiché par la balance'), aliases: ['bmi', 'indice_de_masse_corporelle'] },
+  { key: 'physique', label: 'Morphologie', unit: 'sur 9', min: 1, max: 9, step: 1, group: 'avance', kind: null, ai: traduire('physique rating, chiffre de 1 à 9'), aliases: ['physique_rating', 'morphologie', 'type_physique'] },
   { key: 'graisse_kg', label: 'Masse grasse en kilos', unit: 'kg', min: 1, max: 200, step: 0.1, group: 'avance', kind: 'graisse', mass: true, ai: 'masse grasse en kg', aliases: ['masse_grasse_kg', 'fat_mass', 'fat_kg', 'body_fat_mass'] },
-  { key: 'muscle_pct', label: 'Muscle en pourcentage', unit: '%', min: 10, max: 90, step: 0.1, group: 'avance', kind: 'muscle', ai: 'muscle en %, seulement si la balance le donne en %', aliases: ['masse_musculaire_pct', 'muscle_percent', 'taux_de_muscle'] },
+  { key: 'muscle_pct', label: 'Muscle en pourcentage', unit: '%', min: 10, max: 90, step: 0.1, group: 'avance', kind: 'muscle', ai: traduire('muscle en %, seulement si la balance le donne en %'), aliases: ['masse_musculaire_pct', 'muscle_percent', 'taux_de_muscle'] },
   // BALANCE 2 : ce que donnent souvent les autres balances et les feuilles InBody (colonne JSON scale_extras)
-  { key: 'masse_maigre_kg', label: 'Masse maigre', unit: 'kg', min: 10, max: 200, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: 'masse maigre ou masse non grasse en kg', aliases: ['masse_maigre', 'masse_non_grasse', 'lean_mass', 'lean_body_mass', 'lbm', 'fat_free_mass', 'ffm', 'fat_free_body_weight', 'poids_sans_graisse'] },
+  { key: 'masse_maigre_kg', label: 'Masse maigre', unit: 'kg', min: 10, max: 200, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: traduire('masse maigre ou masse non grasse en kg'), aliases: ['masse_maigre', 'masse_non_grasse', 'lean_mass', 'lean_body_mass', 'lbm', 'fat_free_mass', 'ffm', 'fat_free_body_weight', 'poids_sans_graisse'] },
   { key: 'muscle_squelettique_kg', label: 'Muscle squelettique', unit: 'kg', min: 5, max: 100, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: 'masse musculaire squelettique en kg', aliases: ['muscle_squelettique', 'masse_musculaire_squelettique', 'skeletal_muscle', 'skeletal_muscle_mass', 'smm'] },
   { key: 'muscle_squelettique_pct', label: 'Muscle squelettique', unit: '%', min: 10, max: 70, step: 0.1, group: 'avance', kind: 'muscle', json: true, ai: 'muscle squelettique en %', aliases: ['skeletal_muscle_percent', 'taux_de_muscle_squelettique'] },
-  { key: 'eau_kg', label: 'Eau en kilos', unit: 'kg', min: 10, max: 120, step: 0.1, group: 'avance', kind: 'eau', mass: true, json: true, ai: 'eau corporelle totale en kg ou en litres', aliases: ['water_mass', 'masse_d_eau', 'eau_totale_kg', 'total_body_water_kg', 'eau_l', 'eau_totale_l'] },
-  { key: 'proteines_kg', label: 'Protéines', unit: 'kg', min: 1, max: 40, step: 0.1, group: 'avance', kind: null, mass: true, json: true, ai: 'protéines en kg', aliases: ['proteines', 'protein', 'proteins', 'protein_mass', 'proteine'] },
-  { key: 'proteines_pct', label: 'Protéines', unit: '%', min: 5, max: 30, step: 0.1, group: 'avance', kind: null, json: true, ai: 'protéines en %', aliases: ['protein_percent', 'taux_de_proteines'] },
-  { key: 'mineraux_kg', label: 'Minéraux', unit: 'kg', min: 0.5, max: 10, step: 0.01, group: 'avance', kind: 'os', mass: true, json: true, ai: 'minéraux en kg', aliases: ['mineraux', 'minerals', 'mineral', 'masse_minerale', 'mineral_mass'] },
-  { key: 'graisse_sous_cutanee_pct', label: 'Graisse sous-cutanée', unit: '%', min: 1, max: 70, step: 0.1, group: 'avance', kind: 'graisse', json: true, ai: 'graisse sous cutanée en %', aliases: ['graisse_sous_cutanee', 'sous_cutanee', 'subcutaneous_fat', 'subcutaneous_fat_percent', 'gras_sous_cutane'] },
-  { key: 'ratio_eau_extracellulaire', label: 'Ratio eau extracellulaire', unit: 'ECW/TBW', min: 0.3, max: 0.5, step: 0.001, group: 'avance', kind: 'eau', json: true, ai: 'ratio ECW/TBW, par exemple 0.380', aliases: ['ecw_tbw', 'ecw_tbw_ratio', 'ratio_ecw_tbw', 'ecw_ratio', 'extracellular_water_ratio', 'ratio_eau_extracellulaire_eau_totale'] },
-  { key: 'angle_de_phase', label: 'Angle de phase', unit: '°', min: 1, max: 15, step: 0.1, group: 'avance', kind: null, json: true, ai: 'angle de phase en degrés', aliases: ['phase_angle', 'angle_phase', 'whole_body_phase_angle', 'angle_de_phase_50khz'] },
-  { key: 'score_corporel', label: 'Score corporel', unit: 'points', min: 1, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: 'score InBody ou score corporel sur 100', aliases: ['score', 'inbody_score', 'score_inbody', 'body_score', 'health_score', 'score_sante', 'score_corps'] },
-  { key: 'fc_repos', label: 'Fréquence cardiaque', unit: 'bpm', min: 30, max: 200, step: 1, group: 'avance', kind: null, json: true, ai: 'fréquence cardiaque mesurée par la balance, en bpm', aliases: ['frequence_cardiaque', 'fc', 'pouls', 'heart_rate', 'hr', 'bpm', 'standing_heart_rate', 'resting_heart_rate', 'rythme_cardiaque'] },
-  { key: 'age_corporel', label: 'Âge corporel', unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: 'âge corporel en années, s’il est distinct de l’âge métabolique', aliases: ['body_age', 'age_du_corps', 'age_biologique'] },
-  { key: 'poids_ideal_kg', label: 'Poids idéal ou cible', unit: 'kg', min: 20, max: 300, step: 0.1, group: 'avance', kind: null, mass: true, json: true, ai: 'poids idéal ou poids cible affiché, en kg', aliases: ['poids_ideal', 'poids_cible', 'ideal_weight', 'target_weight', 'poids_de_reference', 'standard_weight'] },
+  { key: 'eau_kg', label: traduire('Eau en kilos'), unit: 'kg', min: 10, max: 120, step: 0.1, group: 'avance', kind: 'eau', mass: true, json: true, ai: traduire('eau corporelle totale en kg ou en litres'), aliases: ['water_mass', 'masse_d_eau', 'eau_totale_kg', 'total_body_water_kg', 'eau_l', 'eau_totale_l'] },
+  { key: 'proteines_kg', label: traduire('Protéines'), unit: 'kg', min: 1, max: 40, step: 0.1, group: 'avance', kind: null, mass: true, json: true, ai: traduire('protéines en kg'), aliases: ['proteines', 'protein', 'proteins', 'protein_mass', 'proteine'] },
+  { key: 'proteines_pct', label: traduire('Protéines'), unit: '%', min: 5, max: 30, step: 0.1, group: 'avance', kind: null, json: true, ai: traduire('protéines en %'), aliases: ['protein_percent', 'taux_de_proteines'] },
+  { key: 'mineraux_kg', label: traduire('Minéraux'), unit: 'kg', min: 0.5, max: 10, step: 0.01, group: 'avance', kind: 'os', mass: true, json: true, ai: traduire('minéraux en kg'), aliases: ['mineraux', 'minerals', 'mineral', 'masse_minerale', 'mineral_mass'] },
+  { key: 'graisse_sous_cutanee_pct', label: traduire('Graisse sous-cutanée'), unit: '%', min: 1, max: 70, step: 0.1, group: 'avance', kind: 'graisse', json: true, ai: traduire('graisse sous cutanée en %'), aliases: ['graisse_sous_cutanee', 'sous_cutanee', 'subcutaneous_fat', 'subcutaneous_fat_percent', 'gras_sous_cutane'] },
+  { key: 'ratio_eau_extracellulaire', label: traduire('Ratio eau extracellulaire'), unit: 'ECW/TBW', min: 0.3, max: 0.5, step: 0.001, group: 'avance', kind: 'eau', json: true, ai: traduire('ratio ECW/TBW, par exemple 0.380'), aliases: ['ecw_tbw', 'ecw_tbw_ratio', 'ratio_ecw_tbw', 'ecw_ratio', 'extracellular_water_ratio', 'ratio_eau_extracellulaire_eau_totale'] },
+  { key: 'angle_de_phase', label: traduire('Angle de phase'), unit: '°', min: 1, max: 15, step: 0.1, group: 'avance', kind: null, json: true, ai: traduire('angle de phase en degrés'), aliases: ['phase_angle', 'angle_phase', 'whole_body_phase_angle', 'angle_de_phase_50khz'] },
+  { key: 'score_corporel', label: 'Score corporel', unit: 'points', min: 1, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('score InBody ou score corporel sur 100'), aliases: ['score', 'inbody_score', 'score_inbody', 'body_score', 'health_score', 'score_sante', 'score_corps'] },
+  { key: 'fc_repos', label: traduire('Fréquence cardiaque'), unit: 'bpm', min: 30, max: 200, step: 1, group: 'avance', kind: null, json: true, ai: traduire('fréquence cardiaque mesurée par la balance, en bpm'), aliases: ['frequence_cardiaque', 'fc', 'pouls', 'heart_rate', 'hr', 'bpm', 'standing_heart_rate', 'resting_heart_rate', 'rythme_cardiaque'] },
+  { key: 'age_corporel', label: traduire('Âge corporel'), unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('âge corporel en années, s’il est distinct de l’âge métabolique'), aliases: ['body_age', 'age_du_corps', 'age_biologique'] },
+  { key: 'poids_ideal_kg', label: traduire('Poids idéal ou cible'), unit: 'kg', min: 20, max: 300, step: 0.1, group: 'avance', kind: null, mass: true, json: true, ai: traduire('poids idéal ou poids cible affiché, en kg'), aliases: ['poids_ideal', 'poids_cible', 'ideal_weight', 'target_weight', 'poids_de_reference', 'standard_weight'] },
   ...segFields(),
   ...measureFields(),
 ];
@@ -245,20 +246,20 @@ export const JSON_FIELDS: BalanceFieldSpec[] = BALANCE_FIELDS.filter((f) => f.js
 
 /** Les 9 morphologies de la Tanita (tanita.co.uk, physique rating) */
 export const PHYSIQUE_LABELS: Record<number, string> = {
-  1: 'obésité cachée',
-  2: 'obèse',
+  1: traduire('obésité cachée'),
+  2: traduire('obèse'),
   3: 'costaud',
-  4: 'manque d’exercice',
+  4: traduire('manque d’exercice'),
   5: 'standard',
-  6: 'standard musclé',
+  6: traduire('standard musclé'),
   7: 'mince',
-  8: 'mince et musclé',
-  9: 'très musclé',
+  8: traduire('mince et musclé'),
+  9: traduire('très musclé'),
 };
 
 export const SEGMENT_LABELS: Record<SegmentKey, string> = {
-  arm_right: 'Bras droit',
-  arm_left: 'Bras gauche',
+  arm_right: traduire('Bras droit'),
+  arm_left: traduire('Bras gauche'),
   trunk: 'Tronc',
   leg_right: 'Jambe droite',
   leg_left: 'Jambe gauche',
@@ -279,76 +280,7 @@ function measureLines(): string {
     .join('\n');
 }
 
-export const BALANCE_PROMPT = `Je t'envoie des photos pour mon application YOROI, parfois tout un dossier pris à des dates différentes : écrans de balance (toute marque), captures d'une application de balance connectée (Withings, Zepp Life ou Mi Fit, Renpho, Eufy, Garmin Connect, Apple Santé, Samsung Health, Google Fit...) avec leurs historiques et graphiques chiffrés, tickets ou feuilles imprimées (InBody, Tanita...), et mensurations en centimètres (note, carnet, capture). Lis les valeurs et recopie-les.
-
-Règles :
-1. Recopie seulement les chiffres que tu vois clairement. Ne devine rien, ne calcule rien, ne convertis rien.
-2. Si une valeur n'apparaît nulle part, ou si tu as un doute, n'écris pas sa ligne.
-3. Réponds UNIQUEMENT avec les blocs ci-dessous : aucun texte avant, après ou entre, aucune explication.
-4. Une ligne par valeur, au format cle: nombre, avec un point pour les décimales. Garde exactement les noms des clés. Pas d'unité, sauf pour une masse en livres ou en stones (écris lb ou st après le nombre, exemple : poids_kg: 12 st 4 lb) et pour une longueur en pouces (écris in après le nombre).
-5. Un bloc par date, de YOROI BALANCE v1 à FIN. Tout ce qui a été mesuré le même jour va dans un seul bloc, même si cela vient de plusieurs photos (la balance le matin, le mètre ruban le soir). Les photos arrivent dans n'importe quel ordre et peuvent se répéter : une valeur vue sur deux photos ne s'écrit qu'une fois.
-6. La date de chaque bloc : cherche-la dans cet ordre. La date affichée sur l'écran de la balance ou dans la capture de l'application (date_source: ecran). La date imprimée sur un ticket ou une feuille (date_source: ticket). Sinon la date de prise de vue de la photo, si tu y as accès ou si elle est dans la liste « Dates de prise des photos » à la fin de ce message (date_source: photo). Écris-la au format date: AAAA-MM-JJ, et sur la ligne suivante d'où elle vient : date_source: ecran, ticket ou photo. Si le jour et le mois sont visibles mais pas l'année, écris date: JJ/MM, l'app ajoutera l'année. Si tu ne trouves aucune date, écris date: inconnue et date_source: inconnue, l'app demandera le jour. Une date visible sur la photo prime toujours sur la date de prise de vue. N'invente jamais une date, n'utilise pas la date du fichier ni celle de l'envoi, jamais la date d'aujourd'hui.
-7. Historique ou graphique d'une application : chaque ligne qui montre une date et un chiffre écrits devient un bloc à sa date. Ne lis pas une valeur sur la hauteur d'une courbe, seulement les chiffres écrits. Une moyenne de la semaine ou du mois n'est pas une pesée : ne l'écris pas.
-8. Beaucoup de balances (Tanita comprise) n'écrivent pas le nom de la mesure : reconnais-la par son unité, son petit symbole et sa plage de valeurs.
-   kg avec la silhouette debout, valeur la plus grande : poids_kg.
-   kg avec la silhouette musclée (haltère), environ 30 à 90 : muscle_kg.
-   kg petit, environ 1 à 6, avec le symbole os : os_kg.
-   % avec la silhouette et le symbole %, environ 3 à 50 : graisse_pct.
-   % avec la goutte d'eau, environ 35 à 75 : eau_pct.
-   Level : graisse_viscerale. Age : age_metabolique.
-   kcal : metabolisme_kcal. kJ : metabolisme_kj, seulement si aucun écran ne donne les kcal (ne convertis pas).
-   Chiffre seul sans unité de 1 à 9 avec le symbole silhouette : physique. Nombre à virgule sans unité, environ 15 à 45, avec BMI : imc.
-   bpm ou un cœur : fc_repos. Degrés (°) : angle_de_phase. Nombre comme 0.380 avec ECW/TBW : ratio_eau_extracellulaire.
-   Si deux valeurs peuvent correspondre à la même clé et que tu ne peux pas trancher, n'écris aucune des deux.
-9. Bras, jambes, tronc d'une balance (sur une Tanita : les écrans des deux boutons orange, graisse en % et muscle en kg) : le côté droit ou gauche est celui indiqué par la balance ou la feuille. Si tu ne sais pas de quel segment il s'agit, n'écris pas la ligne. Un pourcentage « de la norme » (InBody) n'est pas un pourcentage du segment : mets-le en ligne autre.
-10. Mensurations au mètre ruban, en cm : prends la clé avec le côté s'il est écrit, sinon la clé sans côté. Un tour de bras en cm n'est pas le muscle du bras en kg.
-11. Toute autre mesure affichée avec son nom, une ligne chacune, au format :
-   autre: Nom exact affiché = valeur unité
-   N'écris pas en autre une mesure qui a déjà sa clé.
-12. Si tu sais de quelles photos viennent les valeurs d'un bloc, ajoute la ligne photos: avec leurs numéros, dans l'ordre de la liste ou de l'envoi (exemple : photos: 1, 2, 3). Sinon n'écris pas cette ligne.
-
-Clés possibles (écris seulement celles que tu vois) :
-date: (AAAA-MM-JJ, JJ/MM sans l'année, ou inconnue)
-date_source: (ecran, ticket, photo ou inconnue : d'où vient la date)
-photos: (numéros des photos lues pour ce bloc, facultatif)
-${promptLines()}
-
-Mensurations, en cm :
-${measureLines()}
-
-Bras, jambes, tronc d'une balance, avec SEGMENT = bras_droit, bras_gauche, tronc, jambe_droite ou jambe_gauche :
-graisse_SEGMENT_pct: (graisse du segment en %)
-graisse_SEGMENT_kg: (graisse du segment en kg)
-muscle_SEGMENT_kg: (muscle du segment en kg)
-muscle_SEGMENT_pct: (muscle du segment en %)
-eau_SEGMENT_kg: (eau du segment en kg ou en litres)
-
-Exemple de réponse attendue pour un dossier de photos :
-YOROI BALANCE v1
-date: 2026-10-13
-date_source: ecran
-photos: 1, 2, 3
-poids_kg: 82.4
-graisse_pct: 18.2
-muscle_kg: 63.5
-graisse_bras_droit_pct: 15.3
-tour_de_taille_cm: 84.5
-autre: Eau intracellulaire = 28.1 L
-FIN
-
-YOROI BALANCE v1
-date: 2026-10-06
-date_source: ticket
-poids_kg: 83.1
-graisse_pct: 18.6
-FIN
-
-YOROI BALANCE v1
-date: inconnue
-date_source: inconnue
-tour_de_hanches_cm: 98
-tour_bras_droit_cm: 36.5
-FIN`;
+export const BALANCE_PROMPT = traduire("Je t'envoie des photos pour mon application YOROI, parfois tout un dossier pris à des dates différentes : écrans de balance (toute marque), captures d'une application de balance connectée (Withings, Zepp Life ou Mi Fit, Renpho, Eufy, Garmin Connect, Apple Santé, Samsung Health, Google Fit...) avec leurs historiques et graphiques chiffrés, tickets ou feuilles imprimées (InBody, Tanita...), et mensurations en centimètres (note, carnet, capture). Lis les valeurs et recopie-les.\n\nRègles :\n1. Recopie seulement les chiffres que tu vois clairement. Ne devine rien, ne calcule rien, ne convertis rien.\n2. Si une valeur n'apparaît nulle part, ou si tu as un doute, n'écris pas sa ligne.\n3. Réponds UNIQUEMENT avec les blocs ci-dessous : aucun texte avant, après ou entre, aucune explication.\n4. Une ligne par valeur, au format cle: nombre, avec un point pour les décimales. Garde exactement les noms des clés. Pas d'unité, sauf pour une masse en livres ou en stones (écris lb ou st après le nombre, exemple : poids_kg: 12 st 4 lb) et pour une longueur en pouces (écris in après le nombre).\n5. Un bloc par date, de YOROI BALANCE v1 à FIN. Tout ce qui a été mesuré le même jour va dans un seul bloc, même si cela vient de plusieurs photos (la balance le matin, le mètre ruban le soir). Les photos arrivent dans n'importe quel ordre et peuvent se répéter : une valeur vue sur deux photos ne s'écrit qu'une fois.\n6. La date de chaque bloc : cherche-la dans cet ordre. La date affichée sur l'écran de la balance ou dans la capture de l'application (date_source: ecran). La date imprimée sur un ticket ou une feuille (date_source: ticket). Sinon la date de prise de vue de la photo, si tu y as accès ou si elle est dans la liste « Dates de prise des photos » à la fin de ce message (date_source: photo). Écris-la au format date: AAAA-MM-JJ, et sur la ligne suivante d'où elle vient : date_source: ecran, ticket ou photo. Si le jour et le mois sont visibles mais pas l'année, écris date: JJ/MM, l'app ajoutera l'année. Si tu ne trouves aucune date, écris date: inconnue et date_source: inconnue, l'app demandera le jour. Une date visible sur la photo prime toujours sur la date de prise de vue. N'invente jamais une date, n'utilise pas la date du fichier ni celle de l'envoi, jamais la date d'aujourd'hui.\n7. Historique ou graphique d'une application : chaque ligne qui montre une date et un chiffre écrits devient un bloc à sa date. Ne lis pas une valeur sur la hauteur d'une courbe, seulement les chiffres écrits. Une moyenne de la semaine ou du mois n'est pas une pesée : ne l'écris pas.\n8. Beaucoup de balances (Tanita comprise) n'écrivent pas le nom de la mesure : reconnais-la par son unité, son petit symbole et sa plage de valeurs.\n   kg avec la silhouette debout, valeur la plus grande : poids_kg.\n   kg avec la silhouette musclée (haltère), environ 30 à 90 : muscle_kg.\n   kg petit, environ 1 à 6, avec le symbole os : os_kg.\n   % avec la silhouette et le symbole %, environ 3 à 50 : graisse_pct.\n   % avec la goutte d'eau, environ 35 à 75 : eau_pct.\n   Level : graisse_viscerale. Age : age_metabolique.\n   kcal : metabolisme_kcal. kJ : metabolisme_kj, seulement si aucun écran ne donne les kcal (ne convertis pas).\n   Chiffre seul sans unité de 1 à 9 avec le symbole silhouette : physique. Nombre à virgule sans unité, environ 15 à 45, avec BMI : imc.\n   bpm ou un cœur : fc_repos. Degrés (°) : angle_de_phase. Nombre comme 0.380 avec ECW/TBW : ratio_eau_extracellulaire.\n   Si deux valeurs peuvent correspondre à la même clé et que tu ne peux pas trancher, n'écris aucune des deux.\n9. Bras, jambes, tronc d'une balance (sur une Tanita : les écrans des deux boutons orange, graisse en % et muscle en kg) : le côté droit ou gauche est celui indiqué par la balance ou la feuille. Si tu ne sais pas de quel segment il s'agit, n'écris pas la ligne. Un pourcentage « de la norme » (InBody) n'est pas un pourcentage du segment : mets-le en ligne autre.\n10. Mensurations au mètre ruban, en cm : prends la clé avec le côté s'il est écrit, sinon la clé sans côté. Un tour de bras en cm n'est pas le muscle du bras en kg.\n11. Toute autre mesure affichée avec son nom, une ligne chacune, au format :\n   autre: Nom exact affiché = valeur unité\n   N'écris pas en autre une mesure qui a déjà sa clé.\n12. Si tu sais de quelles photos viennent les valeurs d'un bloc, ajoute la ligne photos: avec leurs numéros, dans l'ordre de la liste ou de l'envoi (exemple : photos: 1, 2, 3). Sinon n'écris pas cette ligne.\n\nClés possibles (écris seulement celles que tu vois) :\ndate: (AAAA-MM-JJ, JJ/MM sans l'année, ou inconnue)\ndate_source: (ecran, ticket, photo ou inconnue : d'où vient la date)\nphotos: (numéros des photos lues pour ce bloc, facultatif)\n{0}\n\nMensurations, en cm :\n{1}\n\nBras, jambes, tronc d'une balance, avec SEGMENT = bras_droit, bras_gauche, tronc, jambe_droite ou jambe_gauche :\ngraisse_SEGMENT_pct: (graisse du segment en %)\ngraisse_SEGMENT_kg: (graisse du segment en kg)\nmuscle_SEGMENT_kg: (muscle du segment en kg)\nmuscle_SEGMENT_pct: (muscle du segment en %)\neau_SEGMENT_kg: (eau du segment en kg ou en litres)\n\nExemple de réponse attendue pour un dossier de photos :\nYOROI BALANCE v1\ndate: 2026-10-13\ndate_source: ecran\nphotos: 1, 2, 3\npoids_kg: 82.4\ngraisse_pct: 18.2\nmuscle_kg: 63.5\ngraisse_bras_droit_pct: 15.3\ntour_de_taille_cm: 84.5\nautre: Eau intracellulaire = 28.1 L\nFIN\n\nYOROI BALANCE v1\ndate: 2026-10-06\ndate_source: ticket\npoids_kg: 83.1\ngraisse_pct: 18.6\nFIN\n\nYOROI BALANCE v1\ndate: inconnue\ndate_source: inconnue\ntour_de_hanches_cm: 98\ntour_bras_droit_cm: 36.5\nFIN", promptLines(), measureLines());
 
 // ---------- l'analyse du texte colle ----------
 
@@ -384,10 +316,10 @@ export function readDateSource(raw: string): DateSource | undefined {
 
 /** « l'écran de la balance », pour « Date détectée : 12 oct. (l'écran de la balance) » */
 export const DATE_SOURCE_LABEL: Record<DateSource, string> = {
-  ecran: 'écran de la balance',
+  ecran: traduire('écran de la balance'),
   ticket: 'ticket',
-  photo: 'date de prise de la photo',
-  inconnue: 'aucune date trouvée',
+  photo: traduire('date de prise de la photo'),
+  inconnue: traduire('aucune date trouvée'),
 };
 
 export type ParseResult = {
@@ -1017,14 +949,14 @@ export const PHOTO_SOURCE_LABEL = 'Balance (photo)';
 /** Valeur en texte francais pour un champ de l'apercu */
 export function fmtBalance(v: number, step: number): string {
   if (step >= 1) return String(Math.round(v));
-  if (step === 0.5) return String(Math.round(v * 2) / 2).replace('.', ',');
-  return roundTo(v, step).toFixed(decimalsOf(step)).replace('.', ',');
+  if (step === 0.5) return String(Math.round(v * 2) / 2).replace('.', DECIMAL);
+  return roundTo(v, step).toFixed(decimalsOf(step)).replace('.', DECIMAL);
 }
 
 /** Une mesure en plus, en texte francais (garde les decimales lues, trois au plus) */
 export function fmtAutre(v: number): string {
   const r = Math.round(v * 1000) / 1000;
-  return String(r).replace('.', ',');
+  return String(r).replace('.', DECIMAL);
 }
 
 /** Saisie d'une correction dans l'apercu */

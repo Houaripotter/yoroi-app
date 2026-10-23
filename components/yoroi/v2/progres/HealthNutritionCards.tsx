@@ -30,6 +30,7 @@ import { logger } from '@/lib/security/logger';
 import { calculateNutritionPlan } from '@/lib/nutrition';
 import { loadBodyData } from '@/lib/v2/nutrition/body';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** value : un vrai chiffre. cta : l'action quand rien n'est encore note. sub : une phrase. spark : petite courbe des derniers jours (vague 26). */
 type Spark = { values: number[]; kind: 'line' | 'bars'; color: string; label: string };
@@ -134,17 +135,16 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
 
   if (st.hasData) {
     const parts: string[] = [];
-    if (move !== null && goals) parts.push(`${Math.round(move)} sur ${goals.move} kcal bougées`);
-    if (exercise !== null && goals) parts.push(`${Math.round(exercise)} min d’exercice`);
-    const sentence = parts.length ? `${parts.join(', ')}.` : 'Tes anneaux du jour, ton cœur et ton sommeil.';
-    const value = st.steps ? `${thousands(st.steps)} pas` : move !== null ? `${Math.round(move)} kcal` : `${Math.round(exercise ?? 0)} min`;
+    if (move !== null && goals) parts.push(traduire("{0} sur {1} kcal bougées", Math.round(move), goals.move));
+    if (exercise !== null && goals) parts.push(traduire("{0} min d’exercice", Math.round(exercise)));
+    const sentence = parts.length ? `${parts.join(', ')}.` : traduire('Tes anneaux du jour, ton cœur et ton sommeil.');
+    const value = st.steps ? traduire("{0} pas", thousands(st.steps)) : move !== null ? `${Math.round(move)} kcal` : `${Math.round(exercise ?? 0)} min`;
     return (
-      <GlassCard onPress={() => router.push('/sante' as any)} label={`Santé aujourd’hui, ${value}, ${sentence}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 16, padding: 16 }}>
+      <GlassCard onPress={() => router.push('/sante' as any)} label={traduire("Santé aujourd’hui, {0}, {1}", value, sentence)} style={{ flexDirection: 'row', alignItems: 'center', gap: 16, padding: 16 }}>
         <MiniRings move={frac(move, goals?.move)} exercise={frac(exercise, goals?.exercise)} stand={frac(rings?.stand ?? null, goals?.stand)} hasStand={!!rings?.hasStand} size={76} />
         <View style={{ flex: 1, gap: 3 }}>
           <Ink size={14} weight="extraBold" color={c.textSecondary}>
-            Aujourd’hui
-          </Ink>
+            {traduire("Aujourd’hui")}</Ink>
           <Ink size={28} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             {value}
           </Ink>
@@ -152,7 +152,7 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
             {sentence}
           </Ink>
           {steps7 && steps7.filter((v) => v > 0).length >= 2 ? (
-            <View style={{ marginTop: 4 }} accessibilityLabel="Tes pas des sept derniers jours">
+            <View style={{ marginTop: 4 }} accessibilityLabel={traduire("Tes pas des sept derniers jours")}>
               <SparkBars values={steps7} color={FAMILY.activite.color} width={140} height={26} />
             </View>
           ) : null}
@@ -163,17 +163,16 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
   }
 
   return (
-    <GlassCard onPress={() => router.push('/sante' as any)} label="Santé, aucune donnée aujourd’hui" style={{ padding: 16, gap: 14 }}>
+    <GlassCard onPress={() => router.push('/sante' as any)} label={traduire("Santé, aucune donnée aujourd’hui")} style={{ padding: 16, gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
           <SanteIcon name="watch" size={26} color={RING_COLORS.move} width={2.2} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={20} weight="black" tight>
-            Ta montre
-          </Ink>
+            {traduire("Ta montre")}</Ink>
           <Ink size={13} color={c.textSecondary}>
-            {`Pas, cœur, calories et sommeil arrivent tout seuls depuis ${st.provider || 'ton téléphone'}.`}
+            {traduire("Pas, cœur, calories et sommeil arrivent tout seuls depuis {0}.", st.provider || 'ton téléphone')}
           </Ink>
         </View>
       </View>
@@ -183,12 +182,11 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
           router.push('/sante/montre' as any);
         }}
         accessibilityRole="button"
-        accessibilityLabel="Relie ta montre"
+        accessibilityLabel={traduire("Relie ta montre")}
         style={({ pressed }) => ({ height: 48, borderRadius: 16, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
       >
         <Ink size={15} weight="extraBold" color={c.onAccent}>
-          Relie ta montre
-        </Ink>
+          {traduire("Relie ta montre")}</Ink>
       </Pressable>
     </GlassCard>
   );
@@ -261,36 +259,36 @@ export function HealthNutritionCards() {
     setSteps7(stepDays);
     const age = profile?.birth_date ? Math.floor(daysDiff(profile.birth_date.slice(0, 10), today) / 365.25) : profile?.age;
     out.zones = rest && rest.value > 0
-      ? { value: `${Math.round(rest.value)} bpm`, sub: age ? `Au repos. Maximum théorique : ${220 - age}.` : 'Ton cœur au repos, base de tes cinq zones.' }
+      ? { value: `${Math.round(rest.value)} bpm`, sub: age ? traduire("Au repos. Maximum théorique : {0}.", 220 - age) : traduire('Ton cœur au repos, base de tes cinq zones.') }
       : age && age > 10
-        ? { value: `${220 - age} bpm`, sub: 'Ton maximum théorique, base de tes cinq zones.' }
-        : { cta: 'Régler mes zones', sub: 'Cale ton cardio sur ton propre cœur.' };
+        ? { value: `${220 - age} bpm`, sub: traduire('Ton maximum théorique, base de tes cinq zones.') }
+        : { cta: traduire('Régler mes zones'), sub: traduire('Cale ton cardio sur ton propre cœur.') };
     out.sleep = sleep && sleep.lastNightDuration > 0
-      ? { value: formatDuration(sleep.lastNightDuration), sub: sleep.averageDuration > 0 ? `Ta dernière nuit, moyenne ${formatDuration(Math.round(sleep.averageDuration))}.` : 'Ta dernière nuit.' }
+      ? { value: formatDuration(sleep.lastNightDuration), sub: sleep.averageDuration > 0 ? traduire("Ta dernière nuit, moyenne {0}.", formatDuration(Math.round(sleep.averageDuration))) : traduire('Ta dernière nuit.') }
       : sleepPts.length
-        ? { value: formatDuration(sleepPts[sleepPts.length - 1]), sub: sleepPts.length >= 2 ? `Ta dernière nuit, moyenne ${formatDuration(Math.round(sleepPts.reduce((a, b) => a + b, 0) / sleepPts.length))}.` : 'Ta dernière nuit.' }
-        : { cta: 'Voir', sub: 'Note ta nuit avec le bouton +, la récupération commence là.' };
-    if (out.zones?.value && restPts.length >= 3) out.zones.spark = { values: restPts, kind: 'line', color: FAMILY.coeur.color, label: `Ton cœur au repos, ${restPts.length} jours` };
-    if (out.sleep?.value && sleepPts.length >= 2) out.sleep.spark = { values: sleepPts, kind: 'bars', color: FAMILY.sommeil.color, label: `Tes ${sleepPts.length} dernières nuits` };
+        ? { value: formatDuration(sleepPts[sleepPts.length - 1]), sub: sleepPts.length >= 2 ? traduire("Ta dernière nuit, moyenne {0}.", formatDuration(Math.round(sleepPts.reduce((a, b) => a + b, 0) / sleepPts.length))) : traduire('Ta dernière nuit.') }
+        : { cta: traduire('Voir'), sub: traduire('Note ta nuit avec le bouton +, la récupération commence là.') };
+    if (out.zones?.value && restPts.length >= 3) out.zones.spark = { values: restPts, kind: 'line', color: FAMILY.coeur.color, label: traduire("Ton cœur au repos, {0} jours", restPts.length) };
+    if (out.sleep?.value && sleepPts.length >= 2) out.sleep.spark = { values: sleepPts, kind: 'bars', color: FAMILY.sommeil.color, label: traduire("Tes {0} dernières nuits", sleepPts.length) };
     const n = injuries?.length ?? 0;
-    out.infirmary = n > 0 ? { value: `${n} blessure${n > 1 ? 's' : ''}`, sub: 'En cours. Suis tes soins jour après jour.' } : { value: 'En forme', sub: 'Aucune blessure en cours.' };
+    out.infirmary = n > 0 ? { value: `${n} blessure${n > 1 ? 's' : ''}`, sub: traduire('En cours. Suis tes soins jour après jour.') } : { value: 'En forme', sub: traduire('Aucune blessure en cours.') };
     out.fasting = fasting?.isActive && fasting.startTime
-      ? { value: `${formatDuration(Math.max(1, Math.round((Date.now() - new Date(fasting.startTime).getTime()) / 60000)))}`, sub: 'Jeûne en cours.' }
-      : { cta: 'Lancer un jeûne', sub: '16/8, 18/6 ou Ramadan.' };
+      ? { value: `${formatDuration(Math.max(1, Math.round((Date.now() - new Date(fasting.startTime).getTime()) / 60000)))}`, sub: traduire('Jeûne en cours.') }
+      : { cta: traduire('Lancer un jeûne'), sub: traduire('16/8, 18/6 ou Ramadan.') };
     out.cut = compet
       ? { value: `J-${Math.max(0, daysDiff(today, compet.date.slice(0, 10)))}`, sub: compet.poids_max ? `${compet.nom}, ${num(compet.poids_max, 1)} kg maximum.` : `${compet.nom}.` }
-      : { cta: 'Préparer ma pesée', sub: 'Les derniers kilos avant un combat, sans casse.' };
+      : { cta: traduire('Préparer ma pesée'), sub: traduire('Les derniers kilos avant un combat, sans casse.') };
     out.height = { value: profile?.height_cm ? String(profile.height_cm) : '', sub: '' };
     const body = await safe(() => loadBodyData());
     if (body?.weight && body.height && body.age) {
       try {
         const plan = calculateNutritionPlan(body.weight, body.height, body.age, body.gender, 'moderate', 'maintain', 'high_protein');
-        if (plan.goalCalories > 0) out.plan = { value: `${thousands(plan.goalCalories)} kcal`, sub: 'Par jour pour ton poids. Protéines et repas.' };
+        if (plan.goalCalories > 0) out.plan = { value: `${thousands(plan.goalCalories)} kcal`, sub: traduire('Par jour pour ton poids. Protéines et repas.') };
       } catch (err) {
         logger.error('Plan nutrition indisponible', err);
       }
     }
-    if (!out.plan) out.plan = { cta: 'Créer mon plan', sub: 'Calories, protéines et repas.' };
+    if (!out.plan) out.plan = { cta: traduire('Créer mon plan'), sub: traduire('Calories, protéines et repas.') };
     setPv(out);
   }, []);
 
@@ -308,25 +306,25 @@ export function HealthNutritionCards() {
   return (
     <View style={{ paddingHorizontal: GUTTER, gap: 28 }}>
       <View style={{ gap: 12 }}>
-        <SectionHead title="Ta santé" />
+        <SectionHead title={traduire("Ta santé")} />
         <SanteCard steps7={steps7} />
         <Grid>
           {[
             <AccessCard key="z" icon="heart" tint={c.accentTint} title="Zones cardiaques" preview={pv.zones} href="/heart-zones-settings" />,
-            <AccessCard key="s" icon="moon" tint={c.indigoTint} title="Sommeil" preview={pv.sleep} href="/sleep" />,
+            <AccessCard key="s" icon="moon" tint={c.indigoTint} title={traduire("Sommeil")} preview={pv.sleep} href="/sleep" />,
             <AccessCard key="i" icon="cross" tint={c.successTint} title="Infirmerie" preview={pv.infirmary} href="/infirmary" />,
           ]}
         </Grid>
       </View>
       <View style={{ gap: 12 }}>
-        <SectionHead title="Nutrition et poids de forme" style={{ marginTop: 4 }} />
+        <SectionHead title={traduire("Nutrition et poids de forme")} style={{ marginTop: 4 }} />
         <Grid>
           {[
             <AccessCard key="n" icon="bowl" tint={c.goldTint} title="Plan nutritionnel" preview={pv.plan} href="/nutrition-plan" />,
-            <AccessCard key="f" icon="clock" tint={c.goldTint} title="Jeûne" preview={pv.fasting} href="/fasting" />,
-            <AccessCard key="c" icon="scale" tint={c.accentTint} title="Coupe de poids" preview={pv.cut} href="/cut-mode" />,
-            <AccessCard key="k" icon="calc" tint={c.fillSoft} title="Calculateurs" preview={bmi ? { value: `IMC ${num(bmi, 1, false)}`, sub: 'Et tes besoins, ta fréquence maximale, tes protéines.' } : { cta: 'Calculer', sub: 'IMC, besoins, fréquence maximale, protéines, eau.' }} href="/calculators" />,
-            <AccessCard key="q" icon="bowl" tint={c.successTint} title="Repas du jour" preview={{ cta: 'Voir', sub: 'Quoi manger avant et après ta séance.' }} href="/quick-nutrition" />,
+            <AccessCard key="f" icon="clock" tint={c.goldTint} title={traduire("Jeûne")} preview={pv.fasting} href="/fasting" />,
+            <AccessCard key="c" icon="scale" tint={c.accentTint} title={traduire("Coupe de poids")} preview={pv.cut} href="/cut-mode" />,
+            <AccessCard key="k" icon="calc" tint={c.fillSoft} title="Calculateurs" preview={bmi ? { value: `IMC ${num(bmi, 1, false)}`, sub: traduire('Et tes besoins, ta fréquence maximale, tes protéines.') } : { cta: 'Calculer', sub: traduire('IMC, besoins, fréquence maximale, protéines, eau.') }} href="/calculators" />,
+            <AccessCard key="q" icon="bowl" tint={c.successTint} title={traduire("Repas du jour")} preview={{ cta: traduire('Voir'), sub: traduire('Quoi manger avant et après ta séance.') }} href="/quick-nutrition" />,
           ]}
         </Grid>
       </View>

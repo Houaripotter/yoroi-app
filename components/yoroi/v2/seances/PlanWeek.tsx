@@ -23,6 +23,7 @@ import { DayDot } from './WeekPlates';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
+import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
   plan: WeeklyPlan[];
@@ -90,14 +91,14 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
   const sunday = addDaysISO(monday, 6);
   const md = dateOf(monday);
   const sd = dateOf(sunday);
-  const title = offset === 0 ? 'Cette semaine' : offset === -1 ? 'Semaine dernière' : offset === 1 ? 'Semaine prochaine' : `Semaine du ${md.getDate()} ${MONTHS[md.getMonth()]}`;
-  const range = `du ${md.getDate()} ${md.getMonth() !== sd.getMonth() ? MONTHS_SHORT[md.getMonth()] + ' ' : ''}au ${sd.getDate()} ${MONTHS_SHORT[sd.getMonth()]}`;
+  const title = offset === 0 ? traduire('Cette semaine') : offset === -1 ? traduire('Semaine dernière') : offset === 1 ? traduire('Semaine prochaine') : traduire("Semaine du {0} {1}", md.getDate(), MONTHS[md.getMonth()]);
+  const range = traduire("du {0} {1}au {2} {3}", md.getDate(), md.getMonth() !== sd.getMonth() ? MONTHS_SHORT[md.getMonth()] + ' ' : '', sd.getDate(), MONTHS_SHORT[sd.getMonth()]);
 
   const statusOf = (s: SlotView): { label: string; tone: string; state: 'done' | 'planned' | 'missed' | 'cancelled' } => {
     if (s.occ?.status === 'validated') return { label: 'fait', tone: c.successText, state: 'done' };
-    if (s.occ?.status === 'cancelled' || s.occ?.status === 'skipped') return { label: s.occ.cancel_reason ? `annulé, ${s.occ.cancel_reason.toLowerCase()}` : 'annulé', tone: c.textMuted, state: 'cancelled' };
-    if (s.iso < today) return { label: 'pas validé', tone: c.accent, state: 'missed' };
-    return { label: 'prévu', tone: c.indigo, state: 'planned' };
+    if (s.occ?.status === 'cancelled' || s.occ?.status === 'skipped') return { label: s.occ.cancel_reason ? traduire("annulé, {0}", s.occ.cancel_reason.toLowerCase()) : traduire('annulé'), tone: c.textMuted, state: 'cancelled' };
+    if (s.iso < today) return { label: traduire('pas validé'), tone: c.accent, state: 'missed' };
+    return { label: traduire('prévu'), tone: c.indigo, state: 'planned' };
   };
 
   const validate = (s: SlotView) => {
@@ -127,7 +128,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
       onChanged();
     } catch (e) {
       logger.error('Annulation du créneau impossible', e);
-      appAlert('Oups', 'Le créneau n’a pas pu être annulé.');
+      appAlert('Oups', traduire('Le créneau n’a pas pu être annulé.'));
     }
   };
 
@@ -161,14 +162,14 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable onPress={() => { tap(); setOffset((o) => o - 1); }} accessibilityRole="button" accessibilityLabel="Semaine précédente" style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => { tap(); setOffset((o) => o - 1); }} accessibilityRole="button" accessibilityLabel={traduire("Semaine précédente")} style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="chevronLeft" size={20} color={c.ink} />
         </Pressable>
-        <Pressable onPress={() => { if (offset !== 0) { tap(); setOffset(0); } }} accessibilityRole="button" accessibilityLabel="Revenir à cette semaine" style={{ flex: 1, alignItems: 'center' }}>
+        <Pressable onPress={() => { if (offset !== 0) { tap(); setOffset(0); } }} accessibilityRole="button" accessibilityLabel={traduire("Revenir à cette semaine")} style={{ flex: 1, alignItems: 'center' }}>
           <Ink size={18} weight="black" tight>{title}</Ink>
           <Ink size={12} weight="bold" color={c.textSecondary}>{range}</Ink>
         </Pressable>
-        <Pressable onPress={() => { tap(); setOffset((o) => o + 1); }} accessibilityRole="button" accessibilityLabel="Semaine suivante" style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => { tap(); setOffset((o) => o + 1); }} accessibilityRole="button" accessibilityLabel={traduire("Semaine suivante")} style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="chevron" size={20} color={c.ink} />
         </Pressable>
       </View>
@@ -176,15 +177,15 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {allSlots.length > 0 ? (
           <View style={{ flex: 1, padding: 14, borderRadius: 18, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
-            <Ink size={12} weight="bold" color={c.textSecondary}>Créneaux validés</Ink>
+            <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Créneaux validés")}</Ink>
             <Ink size={28} weight="black" tight>
               {String(validated)}
-              <Ink size={14} weight="bold" color={c.textSecondary}>{` sur ${allSlots.length}`}</Ink>
+              <Ink size={14} weight="bold" color={c.textSecondary}>{traduire(" sur {0}", allSlots.length)}</Ink>
             </Ink>
           </View>
         ) : null}
         <View style={{ flex: 1, padding: 14, borderRadius: 18, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
-          <Ink size={12} weight="bold" color={c.textSecondary}>Séances faites</Ink>
+          <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Séances faites")}</Ink>
           <Ink size={28} weight="black" tight>{String(sessions)}</Ink>
         </View>
         {allSlots.length === 0 ? (
@@ -206,10 +207,10 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
               <DayDot state={plate} count={d.done.length} size={30} />
             </View>
             <View style={{ flex: 1, gap: 6, paddingBottom: 6 }}>
-              <Pressable onPress={() => { tap(); setDay(d.iso); }} accessibilityRole="button" accessibilityLabel={`${PLAN_DAYS[d.i]} ${dd.getDate()}, options du jour`} style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Pressable onPress={() => { tap(); setDay(d.iso); }} accessibilityRole="button" accessibilityLabel={traduire("{0} {1}, options du jour", PLAN_DAYS[d.i], dd.getDate())} style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Ink size={15} weight="extraBold" color={isToday ? c.accent : c.ink}>
                   {`${PLAN_DAYS[d.i]} ${dd.getDate()}`}
-                  {isToday ? <Ink size={12} weight="bold" color={c.accent}>{'  aujourd’hui'}</Ink> : null}
+                  {isToday ? <Ink size={12} weight="bold" color={c.accent}>{traduire('  aujourd’hui')}</Ink> : null}
                 </Ink>
                 <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name="plus" size={16} color={c.textSecondary} strokeWidth={2.6} />
@@ -250,20 +251,20 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                 <SessionRow key={`t${t.id}`} t={t} showDate={false} stamps={t.id ? stampedTrainings.get(t.id) ?? 0 : 0} />
               ))}
               {d.done.filter((t) => d.slots.some((s) => s.occ?.training_id === t.id)).length ? (
-                <Ink size={12} color={c.textMuted}>Séance liée au créneau, touche le créneau pour l’ouvrir.</Ink>
+                <Ink size={12} color={c.textMuted}>{traduire("Séance liée au créneau, touche le créneau pour l’ouvrir.")}</Ink>
               ) : null}
-              {empty ? <Ink size={13} color={c.textMuted}>{d.rest ? 'Repos' : 'Libre'}</Ink> : null}
+              {empty ? <Ink size={13} color={c.textMuted}>{d.rest ? traduire('Repos') : 'Libre'}</Ink> : null}
             </View>
           </View>
         );
       })}
 
       {plan.filter((p) => !p.is_rest_day).length === 0 ? (
-        <Glass onPress={() => router.push('/slots' as any)} label="Créer tes créneaux réguliers" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Glass onPress={() => router.push('/slots' as any)} label={traduire("Créer tes créneaux réguliers")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Icon name="repeat" size={24} color={c.indigo} />
           <View style={{ flex: 1 }}>
-            <Ink size={15} weight="extraBold">Crée tes créneaux réguliers</Ink>
-            <Ink size={13} color={c.textSecondary}>Ton cours du mardi, ta muscu du jeudi... Ils reviennent chaque semaine, tu n’as plus qu’à valider.</Ink>
+            <Ink size={15} weight="extraBold">{traduire("Crée tes créneaux réguliers")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Ton cours du mardi, ta muscu du jeudi... Ils reviennent chaque semaine, tu n’as plus qu’à valider.")}</Ink>
           </View>
         </Glass>
       ) : null}
@@ -277,23 +278,23 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
             </Ink>
             {slotInjury && statusOf(slot).state !== 'done' ? (
               <View style={{ padding: 12, borderRadius: 16, backgroundColor: c.dangerTint, gap: 2 }}>
-                <Ink size={14} weight="extraBold" color={c.danger}>Attention à ta blessure</Ink>
-                <Ink size={13} color={c.textSecondary}>{`${slotInjury.zone_name ?? 'Une blessure en cours'} peut être sollicitée dans ce sport. Écoute ton corps.`}</Ink>
+                <Ink size={14} weight="extraBold" color={c.danger}>{traduire("Attention à ta blessure")}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("{0} peut être sollicitée dans ce sport. Écoute ton corps.", slotInjury.zone_name ?? 'Une blessure en cours')}</Ink>
               </View>
             ) : null}
             {statusOf(slot).state === 'done' ? (
               <>
-                <Row title="Créneau validé" sub="Bien joué, une séance de plus" icon="check" />
-                {slot.occ?.training_id ? <Row title="Voir la séance" icon="list" onPress={() => { const id = slot.occ!.training_id!; setSlot(null); router.push({ pathname: '/workout-detail', params: { id: String(id) } } as any); }} /> : null}
+                <Row title={traduire("Créneau validé")} sub={traduire("Bien joué, une séance de plus")} icon="check" />
+                {slot.occ?.training_id ? <Row title={traduire("Voir la séance")} icon="list" onPress={() => { const id = slot.occ!.training_id!; setSlot(null); router.push({ pathname: '/workout-detail', params: { id: String(id) } } as any); }} /> : null}
               </>
             ) : statusOf(slot).state === 'cancelled' ? (
               <>
-                <Row title="Créneau annulé" sub={slot.occ?.cancel_reason || undefined} icon="close" />
-                {offset === 0 ? <Row title="Rétablir le créneau" icon="refresh" onPress={() => restore(slot)} /> : null}
+                <Row title={traduire("Créneau annulé")} sub={slot.occ?.cancel_reason || undefined} icon="close" />
+                {offset === 0 ? <Row title={traduire("Rétablir le créneau")} icon="refresh" onPress={() => restore(slot)} /> : null}
               </>
             ) : cancelMode ? (
               <>
-                <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>Pourquoi tu l’annules ?</Ink>
+                <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>{traduire("Pourquoi tu l’annules ?")}</Ink>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {REASONS.map((r) => (
                     <Pressable key={r} onPress={() => { tap(); setReason(r); }} accessibilityRole="button" accessibilityState={{ selected: reason === r }} style={{ minHeight: 40, paddingHorizontal: 13, justifyContent: 'center', borderRadius: 12, backgroundColor: reason === r ? c.ink : 'transparent', borderWidth: reason === r ? 0 : 1.5, borderColor: '#D5D2CA' }}>
@@ -301,24 +302,24 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                     </Pressable>
                   ))}
                 </View>
-                <TextInput value={REASONS.includes(reason) ? '' : reason} onChangeText={setReason} placeholder="Ou écris ta raison (facultatif)" placeholderTextColor={c.textMuted} style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 15, color: c.ink }} />
-                <BigButton label="Annuler ce créneau" tone="danger" icon="close" onPress={() => doCancel(slot)} />
-                <BigButton label="Finalement je le garde" tone="soft" onPress={() => setCancelMode(false)} />
+                <TextInput value={REASONS.includes(reason) ? '' : reason} onChangeText={setReason} placeholder={traduire("Ou écris ta raison (facultatif)")} placeholderTextColor={c.textMuted} style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 15, color: c.ink }} />
+                <BigButton label={traduire("Annuler ce créneau")} tone="danger" icon="close" onPress={() => doCancel(slot)} />
+                <BigButton label={traduire("Finalement je le garde")} tone="soft" onPress={() => setCancelMode(false)} />
               </>
             ) : offset === 0 ? (
               <>
-                <BigButton label="Valider, j’y suis allé" icon="check" onPress={() => validate(slot)} />
-                <BigButton label="Annuler cette semaine" tone="soft" icon="close" onPress={() => setCancelMode(true)} />
-                <Row title="Modifier mes créneaux réguliers" icon="edit" onPress={() => { setSlot(null); router.push('/slots' as any); }} />
+                <BigButton label={traduire("Valider, j’y suis allé")} icon="check" onPress={() => validate(slot)} />
+                <BigButton label={traduire("Annuler cette semaine")} tone="soft" icon="close" onPress={() => setCancelMode(true)} />
+                <Row title={traduire("Modifier mes créneaux réguliers")} icon="edit" onPress={() => { setSlot(null); router.push('/slots' as any); }} />
               </>
             ) : (
               <>
                 {slot.iso <= today ? (
-                  <Row title="Ajouter la séance de ce jour" sub="Le créneau d’une autre semaine ne se valide plus" icon="plus" onPress={() => { const iso = slot.iso; setSlot(null); router.push(`/seance?date=${iso}` as any); }} />
+                  <Row title={traduire("Ajouter la séance de ce jour")} sub={traduire("Le créneau d’une autre semaine ne se valide plus")} icon="plus" onPress={() => { const iso = slot.iso; setSlot(null); router.push(`/seance?date=${iso}` as any); }} />
                 ) : (
-                  <Row title="Prévu ce jour" sub="Tu pourras le valider dans sa semaine" icon="calendar" />
+                  <Row title={traduire("Prévu ce jour")} sub={traduire("Tu pourras le valider dans sa semaine")} icon="calendar" />
                 )}
-                <Row title="Modifier mes créneaux réguliers" icon="edit" onPress={() => { setSlot(null); router.push('/slots' as any); }} />
+                <Row title={traduire("Modifier mes créneaux réguliers")} icon="edit" onPress={() => { setSlot(null); router.push('/slots' as any); }} />
               </>
             )}
           </>
@@ -329,10 +330,10 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
       <Sheet visible={!!dayData} onClose={() => setDay(null)} title={dayData ? `${PLAN_DAYS[dayData.i]} ${dateOf(dayData.iso).getDate()} ${MONTHS[dateOf(dayData.iso).getMonth()]}` : undefined}>
         {dayData ? (
           <>
-            <Row title="Ajouter une séance ce jour" icon="plus" onPress={() => { const iso = dayData.iso; setDay(null); router.push(`/seance?date=${iso}` as any); }} />
-            <Row title={restDays.has(dayData.iso) ? 'Ce n’est plus un jour de repos' : 'Marquer comme jour de repos'} icon="moon" onPress={() => toggleRest(dayData.iso)} />
-            <Row title="Gérer mes créneaux réguliers" icon="repeat" onPress={() => { setDay(null); router.push('/slots' as any); }} />
-            <Row title="Ajouter une compétition" icon="trophy" onPress={() => { setDay(null); router.push('/add-competition' as any); }} />
+            <Row title={traduire("Ajouter une séance ce jour")} icon="plus" onPress={() => { const iso = dayData.iso; setDay(null); router.push(`/seance?date=${iso}` as any); }} />
+            <Row title={restDays.has(dayData.iso) ? traduire('Ce n’est plus un jour de repos') : traduire('Marquer comme jour de repos')} icon="moon" onPress={() => toggleRest(dayData.iso)} />
+            <Row title={traduire("Gérer mes créneaux réguliers")} icon="repeat" onPress={() => { setDay(null); router.push('/slots' as any); }} />
+            <Row title={traduire("Ajouter une compétition")} icon="trophy" onPress={() => { setDay(null); router.push('/add-competition' as any); }} />
           </>
         ) : null}
       </Sheet>

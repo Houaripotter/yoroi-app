@@ -22,6 +22,7 @@ import { enregistrerDateCap, enregistrerDebut, enregistrerObjectif } from '@/lib
 import { poidsAuDebut } from '@/lib/v2/pesee/debutObjectif';
 import { jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
 import { plusJours } from '@/lib/v2/pesee/predictions';
+import { traduire } from '@/lib/i18n/tr';
 
 export type QuoiObjectif = 'debut' | 'objectif' | 'date';
 type PeseeJour = { date: string; value: number; trend?: number };
@@ -56,20 +57,19 @@ function Ligne({ libelle, valeur, onPress, a11y, bord }: { libelle: string; vale
 export function CarteObjectif({ etat, onChanger, style }: { etat: EtatObjectif; onChanger: (q: QuoiObjectif) => void; style?: object }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const debut = texteDebut(etat) ?? 'pas encore choisi';
-  const objectif = texteObjectif(etat) ?? 'pas encore fixé';
+  const debut = texteDebut(etat) ?? traduire('pas encore choisi');
+  const objectif = texteObjectif(etat) ?? traduire('pas encore fixé');
   const date = texteDateCap(etat);
-  const dateTxt = date ? `${date}${etat.dateCapChoisie ? '' : ', prévue à ton rythme sain'}` : 'à choisir';
+  const dateTxt = date ? `${date}${etat.dateCapChoisie ? '' : traduire(', prévue à ton rythme sain')}` : traduire('à choisir');
   return (
     <View style={[{ borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }, style]}>
       <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2 }}>
         <Ink size={14} weight="black" numberOfLines={1}>
-          Ton objectif
-        </Ink>
+          {traduire("Ton objectif")}</Ink>
       </View>
-      <Ligne libelle="Début" valeur={debut} onPress={() => onChanger('debut')} a11y={`Début de ton objectif : ${debut}. Changer`} bord={false} />
-      <Ligne libelle="Objectif" valeur={objectif} onPress={() => onChanger('objectif')} a11y={`Ton objectif : ${objectif}. Changer`} bord />
-      <Ligne libelle="Date du cap" valeur={dateTxt} onPress={() => onChanger('date')} a11y={`Date du cap : ${dateTxt}. Changer`} bord />
+      <Ligne libelle={traduire("Début")} valeur={debut} onPress={() => onChanger('debut')} a11y={traduire("Début de ton objectif : {0}. Changer", debut)} bord={false} />
+      <Ligne libelle={traduire("Objectif")} valeur={objectif} onPress={() => onChanger('objectif')} a11y={traduire("Ton objectif : {0}. Changer", objectif)} bord />
+      <Ligne libelle={traduire("Date du cap")} valeur={dateTxt} onPress={() => onChanger('date')} a11y={traduire("Date du cap : {0}. Changer", dateTxt)} bord />
     </View>
   );
 }
@@ -137,7 +137,7 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
       else setErreur(r.raison);
     } catch (err) {
       logger.error('Objectif de poids impossible a enregistrer', err);
-      setErreur('Ton objectif n’a pas pu être enregistré.');
+      setErreur(traduire('Ton objectif n’a pas pu être enregistré.'));
     } finally {
       setEnvoi(false);
     }
@@ -150,7 +150,7 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
   const erreurCap = quoi === 'objectif' ? validerObjectif(cap, actuel) : null;
   const ecartCap = debutRef != null ? Math.abs(cap - debutRef) : null;
 
-  const titre = quoi === 'debut' ? 'Début de ton objectif' : quoi === 'objectif' ? 'Ton poids objectif' : quoi === 'date' ? 'Ta date du cap' : 'Ton objectif';
+  const titre = quoi === 'debut' ? traduire('Début de ton objectif') : quoi === 'objectif' ? traduire('Ton poids objectif') : quoi === 'date' ? traduire('Ta date du cap') : traduire('Ton objectif');
   const demain = plusJours(today, 1);
 
   return (
@@ -165,7 +165,7 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
               visible
               value={dateDebut}
               maxDate={today}
-              title="Début de ton objectif"
+              title={traduire("Début de ton objectif")}
               onClose={() => setCalendrier(false)}
               onPick={(iso) => {
                 setDateDebut(iso);
@@ -176,25 +176,24 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
             />
           ) : (
             <>
-              <Pressable onPress={() => setCalendrier(true)} accessibilityRole="button" accessibilityLabel={`Date de début : le ${jourCourt(dateDebut)}. Changer la date`} style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+              <Pressable onPress={() => setCalendrier(true)} accessibilityRole="button" accessibilityLabel={traduire("Date de début : le {0}. Changer la date", jourCourt(dateDebut))} style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
                 <View style={{ gap: 1 }}>
-                  <Ink size={12.5} weight="bold" color={c.textSecondary}>Date de début</Ink>
-                  <Ink size={15} weight="extraBold">{`le ${jourCourt(dateDebut)}`}</Ink>
+                  <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("Date de début")}</Ink>
+                  <Ink size={15} weight="extraBold">{traduire("le {0}", jourCourt(dateDebut))}</Ink>
                 </View>
                 <Ink size={13.5} weight="extraBold" color={c.accent}>Changer</Ink>
               </Pressable>
               <View style={{ alignItems: 'center', gap: 2 }}>
-                <Ink size={12.5} weight="bold" color={c.textSecondary}>Ton poids ce jour-là</Ink>
+                <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("Ton poids ce jour-là")}</Ink>
                 <Ink size={34} weight="black" tight>{`${kg1(poidsDebut)} kg`}</Ink>
               </View>
-              <Ruler value={poidsDebut} onChange={(v) => setPoidsDebut(clamp(v))} hardMin={30} hardMax={250} label="Règle du poids de début, fais glisser pour régler" />
+              <Ruler value={poidsDebut} onChange={(v) => setPoidsDebut(clamp(v))} hardMin={30} hardMax={250} label={traduire("Règle du poids de début, fais glisser pour régler")} />
               <Pas value={poidsDebut} onChange={setPoidsDebut} pas={PAS_KG} clamp={clamp} />
               <Ink size={12.5} weight="medium" color={c.textSecondary}>
-                Proposé d’après ta pesée de ce jour, ou la plus proche. Ta courbe, ton rythme prévu et ton chemin repartent de ce point.
-              </Ink>
+                {traduire("Proposé d’après ta pesée de ce jour, ou la plus proche. Ta courbe, ton rythme prévu et ton chemin repartent de ce point.")}</Ink>
               {erreur ? <Ink size={13} weight="bold" color={c.danger}>{erreur}</Ink> : null}
-              <Bouton libelle={envoi ? 'Enregistrement…' : 'Enregistrer'} onPress={() => enregistrer(() => enregistrerDebut(dateDebut, poidsDebut, series, today))} />
-              <Bouton libelle="Annuler" plein={false} onPress={fermer} />
+              <Bouton libelle={envoi ? 'Enregistrement…' : traduire('Enregistrer')} onPress={() => enregistrer(() => enregistrerDebut(dateDebut, poidsDebut, series, today))} />
+              <Bouton libelle={traduire("Annuler")} plein={false} onPress={fermer} />
             </>
           )}
         </View>
@@ -203,32 +202,31 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
           <View style={{ alignItems: 'center', gap: 2 }}>
             <Ink size={34} weight="black" tight>{`${kgCourt(cap)} kg`}</Ink>
             <Ink size={13} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>
-              {erreurCap ?? (ecartCap == null || sensCap === 'maintain' ? 'Maintien de ton poids' : `${sensCap === 'lose' ? 'Perte' : 'Prise de masse'} de ${kgCourt(ecartCap)} kg depuis ton début`)}
+              {erreurCap ?? (ecartCap == null || sensCap === 'maintain' ? traduire('Maintien de ton poids') : traduire("{0} de {1} kg depuis ton début", sensCap === 'lose' ? 'Perte' : 'Prise de masse', kgCourt(ecartCap)))}
             </Ink>
           </View>
-          <Ruler value={cap} onChange={(v) => setCap(clamp(v))} hardMin={30} hardMax={250} label="Règle du poids objectif, fais glisser pour régler" />
+          <Ruler value={cap} onChange={(v) => setCap(clamp(v))} hardMin={30} hardMax={250} label={traduire("Règle du poids objectif, fais glisser pour régler")} />
           <Pas value={cap} onChange={setCap} pas={PAS_KG} clamp={clamp} />
           {actuel != null ? (
             <Ink size={12.5} weight="medium" color={c.textSecondary}>
-              {`Ton poids actuel : ${kg1(actuel)} kg. Au-dessus de ton début, c’est une prise de masse ; en dessous, une perte.`}
+              {traduire("Ton poids actuel : {0} kg. Au-dessus de ton début, c’est une prise de masse ; en dessous, une perte.", kg1(actuel))}
             </Ink>
           ) : null}
           {erreur ? <Ink size={13} weight="bold" color={c.danger}>{erreur}</Ink> : null}
-          <Bouton libelle={envoi ? 'Enregistrement…' : 'Enregistrer'} onPress={() => (erreurCap ? setErreur(erreurCap) : enregistrer(() => enregistrerObjectif(cap, actuel, etat.debut?.poids ?? null)))} />
-          <Bouton libelle="Annuler" plein={false} onPress={fermer} />
+          <Bouton libelle={envoi ? 'Enregistrement…' : traduire('Enregistrer')} onPress={() => (erreurCap ? setErreur(erreurCap) : enregistrer(() => enregistrerObjectif(cap, actuel, etat.debut?.poids ?? null)))} />
+          <Bouton libelle={traduire("Annuler")} plein={false} onPress={fermer} />
         </View>
       ) : (
         <View style={{ gap: 12 }}>
           <Ink size={13} weight="medium" color={c.textSecondary}>
-            Le jour où tu veux arriver à ton cap. Ton rythme prévu va de ton début jusqu’à ce jour, et ton torii s’y pose.
-          </Ink>
+            {traduire("Le jour où tu veux arriver à ton cap. Ton rythme prévu va de ton début jusqu’à ce jour, et ton torii s’y pose.")}</Ink>
           <DatePickerSheet
             inline
             visible
             value={etat.dateCap && etat.dateCap > today ? etat.dateCap : plusJours(today, 60)}
             minDate={demain}
             maxDate={null}
-            title="Ta date du cap"
+            title={traduire("Ta date du cap")}
             onClose={() => {
               if (pris.current) {
                 pris.current = false;

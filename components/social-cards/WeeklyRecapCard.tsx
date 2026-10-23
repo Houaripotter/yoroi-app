@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { WeekStats } from '@/lib/social-cards/useWeekStats';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
+import { traduire } from '@/lib/i18n/tr';
 
 const GOLD_COLOR = '#D4AF37';
 
@@ -143,10 +144,10 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
 
           {/* INFOS BAS DE PHOTO */}
           <View style={styles.photoBottomInfo}>
-            <Text style={styles.mainTitle}>RÉCAPITULATIF HEBDO</Text>
+            <Text style={styles.mainTitle}>{traduire("RÉCAPITULATIF HEBDO")}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4 }}>
               <Text style={styles.bigNumber}>{stats.totalSessions}</Text>
-              <Text style={styles.bigLabel}>ENTRAÎNEMENTS</Text>
+              <Text style={styles.bigLabel}>{traduire("ENTRAÎNEMENTS")}</Text>
             </View>
           </View>
         </View>
@@ -203,7 +204,7 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
           <View style={[styles.statsRow, { backgroundColor: isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)', borderColor }]}>
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text style={{ color: GOLD_COLOR, fontSize: 16, fontWeight: '900' }}>{stats.activeDays}</Text>
-              <Text style={{ color: subTxt, fontSize: 8, fontWeight: '800' }}>JOURS ACTIFS</Text>
+              <Text style={{ color: subTxt, fontSize: 8, fontWeight: '800' }}>{traduire("JOURS ACTIFS")}</Text>
             </View>
             <View style={{ width: 1, height: 30, backgroundColor: borderColor }} />
             <View style={{ flex: 1, alignItems: 'center' }}>

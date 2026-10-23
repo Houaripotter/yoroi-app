@@ -10,6 +10,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { ChevronIcon, tap } from '@/components/yoroi/v2/dojo/parts';
 import type { BadgeVitrine, Vignette } from '@/lib/v2/dojo/dojoAffichage';
+import { traduire } from '@/lib/i18n/tr';
 
 const LARGEUR = 132;
 const ECART = 10;
@@ -66,7 +67,7 @@ export function VitrineBoutique({ vignettes, total, onOuvrir }: { vignettes: Vig
       decelerationRate="fast"
     >
       {vignettes.map((v) => (
-        <Carte key={v.key} label={`${v.nom}, ${v.badge.texte}. Ouvrir la boutique`} onPress={onOuvrir}>
+        <Carte key={v.key} label={traduire("{0}, {1}. Ouvrir la boutique", v.nom, v.badge.texte)} onPress={onOuvrir}>
           <View style={cadre}>
             <View style={{ height: 116, borderRadius: 15, overflow: 'hidden', backgroundColor: v.fond ?? c.fillSoft, alignItems: 'center', justifyContent: 'flex-end' }}>
               {v.genre === 'scene' ? (
@@ -83,12 +84,12 @@ export function VitrineBoutique({ vignettes, total, onOuvrir }: { vignettes: Vig
         </Carte>
       ))}
       {/* Vague 45 : la derniere vignette ouvre toute la boutique */}
-      <Carte label={`Tout voir, ${total}`} onPress={onOuvrir}>
+      <Carte label={traduire("Tout voir, {0}", total)} onPress={onOuvrir}>
         <View style={[cadre, { flex: 1, minHeight: 180, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentTint, borderColor: c.accentTint }]}>
           <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
             <ChevronIcon size={18} color={c.onAccent} />
           </View>
-          <Ink size={14} weight="extraBold" color={c.accent} style={{ textAlign: 'center' }}>Tout voir</Ink>
+          <Ink size={14} weight="extraBold" color={c.accent} style={{ textAlign: 'center' }}>{traduire("Tout voir")}</Ink>
           <Ink size={11} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }} numberOfLines={3}>{total}</Ink>
         </View>
       </Carte>

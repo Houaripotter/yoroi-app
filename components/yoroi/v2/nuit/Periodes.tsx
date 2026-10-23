@@ -11,10 +11,11 @@ import { P } from '@/components/yoroi/livePalette';
 import type { SleepEntry } from '@/lib/sleepService';
 import { duree } from './outils';
 import { GrandeDuree } from './GrandeDuree';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Periode = 'J' | 'S' | 'M' | '6M';
 const LIBELLE: Record<Periode, string> = { J: 'J', S: 'S', M: 'M', '6M': '6 M' };
-const NOM: Record<Periode, string> = { J: 'jour', S: 'semaine', M: 'mois', '6M': 'six mois' };
+const NOM: Record<Periode, string> = { J: 'jour', S: 'semaine', M: 'mois', '6M': traduire('six mois') };
 
 export function OngletsPeriode({ value, onChange }: { value: Periode; onChange: (p: Periode) => void }) {
   return (
@@ -42,7 +43,7 @@ export function OngletsPeriode({ value, onChange }: { value: Periode; onChange: 
 
 const JOURS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 const JOURS_LONG = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MOIS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 function cle(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -80,7 +81,7 @@ export function barresPeriode(entries: SleepEntry[], fin: string, periode: Exclu
       const prem = s === 0 || a.getDate() <= 7;
       barres.push({
         label: prem ? MOIS[a.getMonth()] : '',
-        detail: `Semaine du ${a.getDate()} ${MOIS[a.getMonth()]}${n.length ? `, ${n.length} ${n.length > 1 ? 'nuits' : 'nuit'}` : ''}`,
+        detail: traduire("Semaine du {0} {1}{2}", a.getDate(), MOIS[a.getMonth()], n.length ? `, ${n.length} ${n.length > 1 ? 'nuits' : 'nuit'}` : ''),
         valeur: n.length ? Math.round(n.reduce((x, y) => x + y, 0) / n.length) : null,
       });
     }
@@ -114,20 +115,19 @@ export function Historique({ entries, fin, periode }: { entries: SleepEntry[]; f
   const grads = [0, top / 2, top];
   const toucher = (e: GestureResponderEvent) => setSel(Math.min(barres.length - 1, Math.max(0, Math.floor(e.nativeEvent.locationX / pas))));
   const b = sel !== null ? barres[sel] : null;
-  const plage = `${du.getDate()} ${MOIS[du.getMonth()]} au ${au.getDate()} ${MOIS[au.getMonth()]}`;
+  const plage = traduire("{0} {1} au {2} {3}", du.getDate(), MOIS[du.getMonth()], au.getDate(), MOIS[au.getMonth()]);
 
   return (
     <View style={{ gap: 14 }}>
       <View style={{ paddingHorizontal: 4, gap: 2 }}>
         <Ink size={13} weight="bold" color={P.muted}>
-          {periode === '6M' ? 'Moyenne par nuit, sur six mois' : 'Moyenne par nuit'}
+          {periode === '6M' ? traduire('Moyenne par nuit, sur six mois') : traduire('Moyenne par nuit')}
         </Ink>
         {moyenne !== null ? (
           <GrandeDuree min={moyenne} size={60} />
         ) : (
           <Ink size={20} weight="black" tight style={{ paddingVertical: 6 }}>
-            Pas encore de nuit sur cette période
-          </Ink>
+            {traduire("Pas encore de nuit sur cette période")}</Ink>
         )}
         <Ink size={14} weight="bold" color={P.ink2}>
           {plage}
@@ -136,7 +136,7 @@ export function Historique({ entries, fin, periode }: { entries: SleepEntry[]; f
       <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 18, gap: 8 }}>
         <View style={{ minHeight: 18, justifyContent: 'center' }}>
           <Ink size={13} weight={b ? 'extraBold' : 'bold'} color={b ? P.ink : P.muted} numberOfLines={1}>
-            {b ? `${b.detail} : ${b.valeur ? duree(b.valeur) : 'pas de nuit'}` : 'Touche une barre pour lire la nuit'}
+            {b ? `${b.detail} : ${b.valeur ? duree(b.valeur) : traduire('pas de nuit')}` : traduire('Touche une barre pour lire la nuit')}
           </Ink>
         </View>
         <View
@@ -144,7 +144,7 @@ export function Historique({ entries, fin, periode }: { entries: SleepEntry[]; f
           style={{ height: H + AXE }}
           accessible
           accessibilityRole="image"
-          accessibilityLabel={`Durée de sommeil, ${plage}${moyenne !== null ? `, moyenne ${duree(moyenne)}` : ''}`}
+          accessibilityLabel={traduire("Durée de sommeil, {0}{1}", plage, moyenne !== null ? `, moyenne ${duree(moyenne)}` : '')}
           onStartShouldSetResponder={() => true}
           onMoveShouldSetResponder={() => true}
           onResponderTerminationRequest={() => false}

@@ -9,6 +9,7 @@ import { SKILL_CATEGORIES } from '@/lib/carnetService';
 import type { SkillCategory, SkillStatus } from '@/lib/carnetService';
 import { STATUS_LABEL, skillCategoryLabel, skillTone } from '@/lib/v2/carnet/journal';
 import { P, Press, CIcon, Field, BigButton, Label, Plate, IconBtn } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
   visible: boolean;
@@ -31,8 +32,8 @@ type Props = {
 
 export function AddSkillSheet(p: Props) {
   return (
-    <Sheet visible={p.visible} onClose={p.onClose} title="Nouvelle technique" scroll>
-      <Field value={p.name} onChangeText={p.setName} placeholder="Berimbolo, défense de clé de jambe..." maxLength={50} accessibilityLabel="Nom de la technique" />
+    <Sheet visible={p.visible} onClose={p.onClose} title={traduire("Nouvelle technique")} scroll>
+      <Field value={p.name} onChangeText={p.setName} placeholder={traduire("Berimbolo, défense de clé de jambe...")} maxLength={50} accessibilityLabel={traduire("Nom de la technique")} />
       <Label>Discipline</Label>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {(Object.keys(SKILL_CATEGORIES) as SkillCategory[]).map((k) => {
@@ -47,7 +48,7 @@ export function AddSkillSheet(p: Props) {
           );
         })}
       </ScrollView>
-      <Label>Où tu en es</Label>
+      <Label>{traduire("Où tu en es")}</Label>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {(['to_learn', 'in_progress', 'mastered'] as SkillStatus[]).map((k) => {
           const on = p.status === k;
@@ -63,15 +64,15 @@ export function AddSkillSheet(p: Props) {
           );
         })}
       </View>
-      <Field label="Notes techniques" value={p.notes} onChangeText={p.setNotes} placeholder="Saisir le pantalon d’abord, puis entrer les jambes" multiline maxLength={500} />
-      <Label>Vidéo</Label>
+      <Field label="Notes techniques" value={p.notes} onChangeText={p.setNotes} placeholder={traduire("Saisir le pantalon d’abord, puis entrer les jambes")} multiline maxLength={500} />
+      <Label>{traduire("Vidéo")}</Label>
       {p.videoUri ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
           <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="play" size={20} color={P.goldLight} />
           </View>
-          <Ink size={15} weight="bold" style={{ flex: 1 }}>Vidéo prête</Ink>
-          <IconBtn name="close" label="Retirer la vidéo" onPress={() => p.setVideoUri(null)} tone="soft" />
+          <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Vidéo prête")}</Ink>
+          <IconBtn name="close" label={traduire("Retirer la vidéo")} onPress={() => p.setVideoUri(null)} tone="soft" />
         </View>
       ) : (
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -79,7 +80,7 @@ export function AddSkillSheet(p: Props) {
           <View style={{ flex: 1 }}><BigButton label="Galerie" tone="light" onPress={p.onPickVideo} /></View>
         </View>
       )}
-      <BigButton label={p.busy ? 'Création...' : 'Ajouter la technique'} icon="check" disabled={p.busy || !p.name.trim()} onPress={p.onSubmit} />
+      <BigButton label={p.busy ? traduire('Création...') : traduire('Ajouter la technique')} icon="check" disabled={p.busy || !p.name.trim()} onPress={p.onSubmit} />
     </Sheet>
   );
 }

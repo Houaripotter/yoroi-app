@@ -12,6 +12,7 @@ import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
 import { Plate, figureFor, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
+import { traduire } from '@/lib/i18n/tr';
 
 const papier = paletteOf('papier');
 const laque = paletteOf('laque');
@@ -19,13 +20,13 @@ const laque = paletteOf('laque');
 type Tile = { id: string; title: string; text: string; route: string; dark?: boolean; visual: 'plates7' | 'month' | 'year' | 'session' | 'fighter' | 'wrapped' | 'duel' };
 
 const TILES: Tile[] = [
-  { id: 'session', title: 'Ma séance', text: 'La dernière, en grand', route: '/social-share/last-session', visual: 'session' },
-  { id: 'week', title: 'Ma semaine', text: 'Un rond par jour', route: '/social-share/weekly-recap-v2', visual: 'plates7', dark: true },
-  { id: 'month', title: 'Mon mois', text: 'Tes jours en un regard', route: '/social-share/monthly-recap-v2', visual: 'month', dark: true },
-  { id: 'year', title: 'Mon année', text: 'Ton compteur de jours', route: '/social-share/year-counter-v2', visual: 'year' },
-  { id: 'fighter', title: 'Carte de combattant', text: 'Tes chiffres de combattant', route: '/fighter-card', visual: 'fighter' },
-  { id: 'wrapped', title: 'Bilan de l’année', text: 'L’histoire de ton année', route: '/wrapped', visual: 'wrapped', dark: true },
-  { id: 'duel', title: 'Carte de duel', text: 'Toi contre ton partenaire', route: '/sparring-partners', visual: 'duel' },
+  { id: 'session', title: traduire('Ma séance'), text: traduire('La dernière, en grand'), route: '/social-share/last-session', visual: 'session' },
+  { id: 'week', title: traduire('Ma semaine'), text: traduire('Un rond par jour'), route: '/social-share/weekly-recap-v2', visual: 'plates7', dark: true },
+  { id: 'month', title: traduire('Mon mois'), text: traduire('Tes jours en un regard'), route: '/social-share/monthly-recap-v2', visual: 'month', dark: true },
+  { id: 'year', title: traduire('Mon année'), text: traduire('Ton compteur de jours'), route: '/social-share/year-counter-v2', visual: 'year' },
+  { id: 'fighter', title: traduire('Carte de combattant'), text: traduire('Tes chiffres de combattant'), route: '/fighter-card', visual: 'fighter' },
+  { id: 'wrapped', title: traduire('Bilan de l’année'), text: traduire('L’histoire de ton année'), route: '/wrapped', visual: 'wrapped', dark: true },
+  { id: 'duel', title: traduire('Carte de duel'), text: traduire('Toi contre ton partenaire'), route: '/sparring-partners', visual: 'duel' },
 ];
 
 export default function ShareHubScreen() {
@@ -77,16 +78,16 @@ export default function ShareHubScreen() {
   };
 
   return (
-    <DetailScreen title="Partager" subtitle="Des cartes faites pour tes stories">
+    <DetailScreen title={traduire("Partager")} subtitle={traduire("Des cartes faites pour tes stories")}>
       <Enter i={0}>
-        <Press onPress={() => router.push('/mes-cartes' as any)} accessibilityRole="button" accessibilityLabel="Mes cartes">
+        <Press onPress={() => router.push('/mes-cartes' as any)} accessibilityRole="button" accessibilityLabel={traduire("Mes cartes")}>
         <View style={{ borderRadius: 26, overflow: 'hidden', height: 220 }}>
           <Image source={sceneMeta('dojo').image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" />
           <Image source={fig} style={{ position: 'absolute', right: -6, bottom: 0, width: 170, height: 214 }} resizeMode="contain" />
           <View style={{ flex: 1, justifyContent: 'flex-end', padding: 14 }}>
             <Glass style={{ maxWidth: '64%', padding: 14, gap: 4 }}>
-              <Ink size={20} weight="black" tight>Mes cartes</Ink>
-              <Ink size={13} weight="medium" color={P.ink2}>Tes séances, tes pesées et tes semaines, prêtes à poster</Ink>
+              <Ink size={20} weight="black" tight>{traduire("Mes cartes")}</Ink>
+              <Ink size={13} weight="medium" color={P.ink2}>{traduire("Tes séances, tes pesées et tes semaines, prêtes à poster")}</Ink>
             </Glass>
           </View>
         </View>

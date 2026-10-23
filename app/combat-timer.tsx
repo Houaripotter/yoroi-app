@@ -23,6 +23,7 @@ import { humanSeconds } from '@/lib/v2/carnet/format';
 import { soundManager } from '@/lib/sounds';
 import logger from '@/lib/security/logger';
 import { startLiveActivity, updateLiveActivity, endLiveActivity } from '@/lib/liveActivityBridge';
+import { traduire } from '@/lib/i18n/tr';
 
 type AppPhase = 'setup' | 'active' | 'summary';
 type RoundResult = 'V' | 'D' | 'N' | null;
@@ -41,7 +42,7 @@ interface SetupConfig {
   partnerName: string;
 }
 
-const RESULT_LABEL: Record<NonNullable<RoundResult>, string> = { V: 'Victoire', D: 'Défaite', N: 'Nul' };
+const RESULT_LABEL: Record<NonNullable<RoundResult>, string> = { V: traduire('Victoire'), D: traduire('Défaite'), N: 'Nul' };
 const RESULT_COLOR: Record<NonNullable<RoundResult>, string> = { V: P.moss, D: P.danger, N: P.gold };
 
 function safe(fn: () => void) {
@@ -193,8 +194,8 @@ export default function CombatTimerScreen() {
     const end = endedAtRef.current ?? Date.now();
     const minutes = Math.max(1, Math.round((end - (startedAtRef.current || end)) / 60000));
     const partner = config.partnerName.trim();
-    const detail = roundsHistory.map((r) => `R${r.roundNumber} ${r.result ? RESULT_LABEL[r.result].toLowerCase() : 'sans résultat'}${r.notes.trim() ? ` (${r.notes.trim()})` : ''}`).join(', ');
-    const notes = `Sparring${partner ? ` avec ${partner}` : ''} : ${roundsHistory.length} rounds, ${wins} V, ${losses} D, ${draws} N. ${detail}`;
+    const detail = roundsHistory.map((r) => `R${r.roundNumber} ${r.result ? RESULT_LABEL[r.result].toLowerCase() : traduire('sans résultat')}${r.notes.trim() ? ` (${r.notes.trim()})` : ''}`).join(', ');
+    const notes = `Sparring${partner ? traduire(" avec {0}", partner) : ''} : ${roundsHistory.length} rounds, ${wins} V, ${losses} D, ${draws} N. ${detail}`;
     router.push({ pathname: '/seance/deja-faite' as any, params: { sport, duration: String(minutes), notes } });
   };
 
@@ -225,7 +226,7 @@ export default function CombatTimerScreen() {
           confirmStop
           canSkip={false}
           onReset={engine.restartPhase}
-          nextOverride={engine.status === 'holding' ? 'Note le résultat du round' : undefined}
+          nextOverride={engine.status === 'holding' ? traduire('Note le résultat du round') : undefined}
           track={{ done: roundsHistory.length, total: config.totalRounds, current: engine.phase?.kind === 'repos' ? currentRound + 1 : currentRound }}
         >
           {roundsHistory.length > 0 ? (
@@ -235,8 +236,8 @@ export default function CombatTimerScreen() {
           ) : null}
         </ActiveChrono>
 
-        <Sheet visible={showResultSheet} onClose={() => {}} title={`Round ${currentRound} terminé`}>
-          <Ink size={14} weight="medium" color={P.ink2}>Quel a été le résultat ? Un appui suffit.</Ink>
+        <Sheet visible={showResultSheet} onClose={() => {}} title={traduire("Round {0} terminé", currentRound)}>
+          <Ink size={14} weight="medium" color={P.ink2}>{traduire("Quel a été le résultat ? Un appui suffit.")}</Ink>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {(['V', 'D', 'N'] as NonNullable<RoundResult>[]).map((r) => {
               const on = pendingResult === r;
@@ -252,9 +253,9 @@ export default function CombatTimerScreen() {
               );
             })}
           </View>
-          <Field value={pendingNotes} onChangeText={setPendingNotes} placeholder="Une note rapide : une soumission, un placement" returnKeyType="done" onSubmitEditing={Keyboard.dismiss} accessibilityLabel="Note du round" />
+          <Field value={pendingNotes} onChangeText={setPendingNotes} placeholder={traduire("Une note rapide : une soumission, un placement")} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} accessibilityLabel={traduire("Note du round")} />
           <BigButton
-            label={lastRound ? 'Terminer la session' : config.restSeconds > 0 ? `Lancer le repos de ${humanSeconds(config.restSeconds)}` : 'Round suivant'}
+            label={lastRound ? traduire('Terminer la session') : config.restSeconds > 0 ? traduire("Lancer le repos de {0}", humanSeconds(config.restSeconds)) : traduire('Round suivant')}
             icon={lastRound ? 'flag' : 'play'}
             tone={lastRound ? 'ink' : 'red'}
             onPress={handleConfirmResult}
@@ -272,26 +273,26 @@ export default function CombatTimerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-          <ScreenHead title="Session terminée" subtitle={config.partnerName.trim() ? `Contre ${config.partnerName.trim()}` : 'Beau travail sur le tatami'} onBack={newSession} />
+          <ScreenHead title={traduire("Session terminée")} subtitle={config.partnerName.trim() ? `Contre ${config.partnerName.trim()}` : traduire('Beau travail sur le tatami')} onBack={newSession} />
           <View style={{ paddingHorizontal: 22, gap: 14, marginTop: 18 }}>
             <Sheet2>
               <BigStats
                 items={[
                   { value: String(roundsHistory.length), label: 'Rounds' },
                   { value: String(wins), label: 'Victoires', color: P.mossText },
-                  { value: String(losses), label: 'Défaites', color: P.danger },
-                  { value: rate !== null ? `${rate} %` : String(draws), label: rate !== null ? 'Taux de victoire' : 'Nuls', color: P.indigo },
+                  { value: String(losses), label: traduire('Défaites'), color: P.danger },
+                  { value: rate !== null ? `${rate} %` : String(draws), label: rate !== null ? traduire('Taux de victoire') : 'Nuls', color: P.indigo },
                 ]}
               />
             </Sheet2>
             {roundsHistory.length > 0 ? (
               <Sheet2>
-                <Ink size={18} weight="black" tight>Round par round</Ink>
+                <Ink size={18} weight="black" tight>{traduire("Round par round")}</Ink>
                 {roundsHistory.map((e, i) => (
                   <View key={e.roundNumber} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: i === 0 ? 0 : 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2 }}>
                     <ResultDot result={e.result} size={32} />
                     <View style={{ flex: 1 }}>
-                      <Ink size={15} weight="bold">{`Round ${e.roundNumber}, ${e.result ? RESULT_LABEL[e.result].toLowerCase() : 'sans résultat'}`}</Ink>
+                      <Ink size={15} weight="bold">{`Round ${e.roundNumber}, ${e.result ? RESULT_LABEL[e.result].toLowerCase() : traduire('sans résultat')}`}</Ink>
                       {e.notes ? <Ink size={13} weight="medium" color={P.ink2} numberOfLines={2}>{e.notes}</Ink> : null}
                     </View>
                   </View>
@@ -299,11 +300,11 @@ export default function CombatTimerScreen() {
               </Sheet2>
             ) : null}
             <Sheet2>
-              <Ink size={16} weight="black" tight>Sport de la séance</Ink>
+              <Ink size={16} weight="black" tight>{traduire("Sport de la séance")}</Ink>
               <MiniChips items={SAVE_SPORTS_COMBAT.map((s) => ({ key: s.id, label: s.label }))} value={sport} onChange={(k) => setSport(k)} />
             </Sheet2>
-            <BigButton label="Enregistrer la séance" icon="check" onPress={saveSession} />
-            <BigButton label="Nouvelle session" tone="light" icon="refresh" onPress={newSession} />
+            <BigButton label={traduire("Enregistrer la séance")} icon="check" onPress={saveSession} />
+            <BigButton label={traduire("Nouvelle session")} tone="light" icon="refresh" onPress={newSession} />
           </View>
         </ScrollView>
       </View>
@@ -319,37 +320,37 @@ export default function CombatTimerScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + DOCK_SPACE }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <ScreenHead title="Sparring" subtitle="Round par round : à chaque fin de round, tu notes le résultat." />
+        <ScreenHead title="Sparring" subtitle={traduire("Round par round : à chaque fin de round, tu notes le résultat.")} />
         <View style={{ paddingHorizontal: 20, gap: 14, marginTop: 18 }}>
           <SetupHero
-            label="Durée totale"
+            label={traduire("Durée totale")}
             big={humanSeconds(totalDuration)}
             line={roundsSummary(config.totalRounds, config.roundSeconds, config.restSeconds)}
             band={band.length > 1 ? band : undefined}
             legend={[
               { color: PHASE_COLORS.effort.main, text: 'Round' },
-              ...(config.restSeconds > 0 ? [{ color: PHASE_COLORS.repos.main, text: 'Repos' }] : []),
-              ...(config.prepaSeconds > 0 ? [{ color: PHASE_COLORS.prepa.main, text: `${config.prepaSeconds} s pour te préparer au début` }] : []),
+              ...(config.restSeconds > 0 ? [{ color: PHASE_COLORS.repos.main, text: traduire('Repos') }] : []),
+              ...(config.prepaSeconds > 0 ? [{ color: PHASE_COLORS.prepa.main, text: traduire("{0} s pour te préparer au début", config.prepaSeconds) }] : []),
             ]}
           />
-          <SetupBlock title="Tes rounds">
+          <SetupBlock title={traduire("Tes rounds")}>
             <View>
               <SettingRow label="Round" dot={PHASE_COLORS.effort.main} value={humanSeconds(config.roundSeconds)} onMinus={() => step('roundSeconds', -30, 30, 900)} onPlus={() => step('roundSeconds', 30, 30, 900)} accent={PHASE_COLORS.effort.deep} />
-              <SettingRow label="Repos" dot={PHASE_COLORS.repos.main} value={config.restSeconds === 0 ? 'Aucun' : humanSeconds(config.restSeconds)} onMinus={() => step('restSeconds', -15, 0, 300)} onPlus={() => step('restSeconds', 15, 0, 300)} accent={PHASE_COLORS.repos.deep} />
-              <SettingRow label="Rounds" hint="en tout" value={String(config.totalRounds)} onMinus={() => step('totalRounds', -1, 1, 20)} onPlus={() => step('totalRounds', 1, 1, 20)} />
-              <SettingRow label="Préparation" hint="avant le premier gong" dot={PHASE_COLORS.prepa.main} value={config.prepaSeconds === 0 ? 'Aucune' : `${config.prepaSeconds} s`} onMinus={() => step('prepaSeconds', -5, 0, 30)} onPlus={() => step('prepaSeconds', 5, 0, 30)} />
+              <SettingRow label={traduire("Repos")} dot={PHASE_COLORS.repos.main} value={config.restSeconds === 0 ? traduire('Aucun') : humanSeconds(config.restSeconds)} onMinus={() => step('restSeconds', -15, 0, 300)} onPlus={() => step('restSeconds', 15, 0, 300)} accent={PHASE_COLORS.repos.deep} />
+              <SettingRow label="Rounds" hint={traduire("en tout")} value={String(config.totalRounds)} onMinus={() => step('totalRounds', -1, 1, 20)} onPlus={() => step('totalRounds', 1, 1, 20)} />
+              <SettingRow label={traduire("Préparation")} hint={traduire("avant le premier gong")} dot={PHASE_COLORS.prepa.main} value={config.prepaSeconds === 0 ? traduire('Aucune') : `${config.prepaSeconds} s`} onMinus={() => step('prepaSeconds', -5, 0, 30)} onPlus={() => step('prepaSeconds', 5, 0, 30)} />
             </View>
             <View style={{ height: 1, backgroundColor: P.line2 }} />
-            <ToggleRow label="Claquettes à 10 s" hint="Clac clac clac à 10 s de la fin de chaque round, comme à l’UFC" value={clapOn} onChange={toggleClap} />
+            <ToggleRow label={traduire("Claquettes à 10 s")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round, comme à l’UFC")} value={clapOn} onChange={toggleClap} />
           </SetupBlock>
-          <SetupBlock title="Ton partenaire" hint="Facultatif, pour le retrouver dans ton historique">
-            <Field value={config.partnerName} onChangeText={(v) => setConfig((p) => ({ ...p, partnerName: v }))} placeholder="Nom de ton partenaire" returnKeyType="done" onSubmitEditing={Keyboard.dismiss} accessibilityLabel="Nom de ton partenaire" />
+          <SetupBlock title={traduire("Ton partenaire")} hint={traduire("Facultatif, pour le retrouver dans ton historique")}>
+            <Field value={config.partnerName} onChangeText={(v) => setConfig((p) => ({ ...p, partnerName: v }))} placeholder={traduire("Nom de ton partenaire")} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} accessibilityLabel={traduire("Nom de ton partenaire")} />
           </SetupBlock>
-          <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 6 }}>{config.prepaSeconds > 0 ? `${config.prepaSeconds} s de préparation, puis le gong lance le round 1. À chaque fin de round, le chrono attend ton résultat : victoire, défaite ou nul.` : 'Le gong lance le round 1. À chaque fin de round, le chrono attend ton résultat : victoire, défaite ou nul.'}</Ink>
+          <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 6 }}>{config.prepaSeconds > 0 ? traduire("{0} s de préparation, puis le gong lance le round 1. À chaque fin de round, le chrono attend ton résultat : victoire, défaite ou nul.", config.prepaSeconds) : traduire('Le gong lance le round 1. À chaque fin de round, le chrono attend ton résultat : victoire, défaite ou nul.')}</Ink>
         </View>
       </ScrollView>
       <StartDock>
-        <HugeButton title="Démarrer le sparring" sub={`${humanSeconds(totalDuration)} en tout`} icon="play" onPress={handleStart} />
+        <HugeButton title={traduire("Démarrer le sparring")} sub={traduire("{0} en tout", humanSeconds(totalDuration))} icon="play" onPress={handleStart} />
       </StartDock>
     </View>
   );

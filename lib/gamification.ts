@@ -5,6 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface Level {
   level: number;
@@ -25,7 +26,7 @@ export const LEVELS: Level[] = [
     pointsRequired: 0,
     icon: 'Sprout',
     color: '#6B7280',
-    description: 'Tu commences ton voyage',
+    description: traduire('Tu commences ton voyage'),
   },
   {
     level: 2,
@@ -34,16 +35,16 @@ export const LEVELS: Level[] = [
     pointsRequired: 100,
     icon: 'Shield',
     color: '#3B82F6',
-    description: 'Tu apprends les bases',
+    description: traduire('Tu apprends les bases'),
   },
   {
     level: 3,
-    name: 'Athlète',
+    name: traduire('Athlète'),
     nameJp: '戦士',
     pointsRequired: 300,
     icon: 'Swords',
     color: '#10B981',
-    description: 'Tu maitrises la discipline',
+    description: traduire('Tu maitrises la discipline'),
   },
   {
     level: 4,
@@ -52,7 +53,7 @@ export const LEVELS: Level[] = [
     pointsRequired: 600,
     icon: 'Trophy',
     color: '#F59E0B',
-    description: 'Tu inspires les autres',
+    description: traduire('Tu inspires les autres'),
   },
   {
     level: 5,
@@ -61,7 +62,7 @@ export const LEVELS: Level[] = [
     pointsRequired: 1000,
     icon: 'Crown',
     color: '#FFD700',
-    description: 'Tu as atteint le sommet',
+    description: traduire('Tu as atteint le sommet'),
   },
 ];
 

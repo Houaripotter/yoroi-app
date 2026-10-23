@@ -12,6 +12,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { COMPO_FIELDS, fmtValue } from '@/lib/v2/pesee/fields';
 import type { CompoField, FieldSpec } from '@/lib/v2/pesee/fields';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type Origin = 'health' | 'row' | 'last' | 'user' | 'none';
 
@@ -43,19 +44,19 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
   const allRow = filled.length > 0 && filled.every((f) => origin[f.key] === 'row');
 
   const summary = filled.length === 0
-    ? 'masse grasse, muscle, eau, os, viscérale'
+    ? traduire('masse grasse, muscle, eau, os, viscérale')
     : allRow
-    ? `${filled.length} ${filled.length > 1 ? 'mesures déjà enregistrées' : 'mesure déjà enregistrée'} ce jour-là`
-    : `${filled.length} ${filled.length > 1 ? 'mesures pré-remplies' : 'mesure pré-remplie'}${fromHealth ? `, ${healthText ?? `depuis ${provider}`}` : ''}`;
+    ? traduire("{0} {1} ce jour-là", filled.length, filled.length > 1 ? 'mesures déjà enregistrées' : 'mesure déjà enregistrée')
+    : `${filled.length} ${filled.length > 1 ? traduire('mesures pré-remplies') : traduire('mesure pré-remplie')}${fromHealth ? `, ${healthText ?? traduire("depuis {0}", provider)}` : ''}`;
 
   const subOf = (f: FieldSpec): { t: string; tone: 'health' | 'muted' | 'plain' } => {
     const o = origin[f.key] ?? 'none';
-    if (o === 'health') return { t: healthText ?? `depuis ${provider}`, tone: 'health' };
-    if (o === 'row') return { t: allRow ? '' : 'déjà enregistrée ce jour-là', tone: 'plain' };
-    if (o === 'last') return { t: lastDate[f.key] ? `ta dernière mesure, le ${lastDate[f.key]}` : 'ta dernière mesure', tone: 'muted' };
-    if (o === 'user') return { t: 'saisie à la main', tone: 'plain' };
-    if (!f.fromHealth && live && scaleBrand) return { t: `à recopier depuis l’app ${scaleBrand}`, tone: 'plain' };
-    return { t: f.hint ?? 'si ta balance la donne', tone: 'plain' };
+    if (o === 'health') return { t: healthText ?? traduire("depuis {0}", provider), tone: 'health' };
+    if (o === 'row') return { t: allRow ? '' : traduire('déjà enregistrée ce jour-là'), tone: 'plain' };
+    if (o === 'last') return { t: lastDate[f.key] ? traduire("ta dernière mesure, le {0}", lastDate[f.key]) : traduire('ta dernière mesure'), tone: 'muted' };
+    if (o === 'user') return { t: traduire('saisie à la main'), tone: 'plain' };
+    if (!f.fromHealth && live && scaleBrand) return { t: traduire("à recopier depuis l’app {0}", scaleBrand), tone: 'plain' };
+    return { t: f.hint ?? traduire('si ta balance la donne'), tone: 'plain' };
   };
 
   return (
@@ -67,7 +68,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
         }}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel={open ? 'Masquer la composition' : 'Afficher la composition'}
+        accessibilityLabel={open ? traduire('Masquer la composition') : traduire('Afficher la composition')}
         style={({ pressed }) => ({ minHeight: 64, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}
       >
         <BodyGlyph color={c.indigo} bg={c.indigoTint} />
@@ -96,13 +97,13 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
                     </View>
                   ) : null}
                 </View>
-                <Pressable onPress={() => onBump(f.key, -1)} accessibilityRole="button" accessibilityLabel={`${f.label}, moins`} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+                <Pressable onPress={() => onBump(f.key, -1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins", f.label)} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
                   <Ink size={20} weight="extraBold">−</Ink>
                 </Pressable>
                 <View style={{ width: 90, height: 50, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
                   <TextInput
                     value={text[f.key] ?? ''}
-                    onChangeText={(t) => onChange(f.key, t.replace('.', ','))}
+                    onChangeText={(t) => onChange(f.key, t.replace('.', DECIMAL))}
                     placeholder={f.int ? '0' : '0,0'}
                     placeholderTextColor={c.textMuted}
                     keyboardType={f.int ? 'number-pad' : 'decimal-pad'}
@@ -114,7 +115,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
                   />
                   <Ink size={11} weight="bold" color={c.textSecondary} style={{ marginLeft: 4 }}>{f.unit}</Ink>
                 </View>
-                <Pressable onPress={() => onBump(f.key, 1)} accessibilityRole="button" accessibilityLabel={`${f.label}, plus`} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
+                <Pressable onPress={() => onBump(f.key, 1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus", f.label)} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
                   <Ink size={20} weight="extraBold">+</Ink>
                 </Pressable>
               </View>
@@ -123,13 +124,13 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
 
           {lean || bmi ? (
             <View style={{ flexDirection: 'row', gap: 10, paddingTop: 12, borderTopWidth: 1, borderColor: c.divider }}>
-              {lean ? <Info label="Masse maigre" value={`${fmtValue(lean)} kg`} sub={`lue dans ${provider}`} /> : null}
-              {bmi ? <Info label="IMC" value={fmtValue(bmi.value)} sub={bmi.from === 'health' ? `lu dans ${provider}` : 'calculé avec ta taille'} /> : null}
+              {lean ? <Info label="Masse maigre" value={`${fmtValue(lean)} kg`} sub={traduire("lue dans {0}", provider)} /> : null}
+              {bmi ? <Info label={traduire("IMC")} value={fmtValue(bmi.value)} sub={bmi.from === 'health' ? traduire("lu dans {0}", provider) : traduire('calculé avec ta taille')} /> : null}
             </View>
           ) : null}
 
           <Ink size={12} color={c.textSecondary} style={{ marginTop: 12 }}>
-            {`${provider} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie-les depuis l’app ${scaleBrand ?? 'de ta balance'}. Une mesure grisée vient de ta dernière saisie, ajuste-la ou efface-la.`}
+            {traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie-les depuis l’app {1}. Une mesure grisée vient de ta dernière saisie, ajuste-la ou efface-la.", provider, scaleBrand ?? 'de ta balance')}
           </Ink>
         </View>
       ) : null}

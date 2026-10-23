@@ -7,15 +7,16 @@ import { Card, Row } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { StudioSection, SubTitle } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 type Lien = { label: string; sub: string; url: string; icon: IconName };
 
 const CONSOLES: Lien[] = [
-  { label: 'App Store Connect', sub: 'Versions iOS, TestFlight, fiche de l’app', url: 'https://appstoreconnect.apple.com', icon: 'upload' },
-  { label: 'Google Play Console', sub: 'Versions Android, tests, fiche de l’app', url: 'https://play.google.com/console', icon: 'upload' },
-  { label: 'RevenueCat', sub: 'Abonnements, clients, Premium offert', url: 'https://app.revenuecat.com', icon: 'crown' },
-  { label: 'Sentry', sub: 'Pas branché dans l’app pour l’instant', url: 'https://sentry.io', icon: 'pulse' },
-  { label: 'Expo', sub: 'Builds EAS et mises à jour', url: 'https://expo.dev', icon: 'code' },
+  { label: 'App Store Connect', sub: traduire('Versions iOS, TestFlight, fiche de l’app'), url: 'https://appstoreconnect.apple.com', icon: 'upload' },
+  { label: 'Google Play Console', sub: traduire('Versions Android, tests, fiche de l’app'), url: 'https://play.google.com/console', icon: 'upload' },
+  { label: 'RevenueCat', sub: traduire('Abonnements, clients, Premium offert'), url: 'https://app.revenuecat.com', icon: 'crown' },
+  { label: 'Sentry', sub: traduire('Pas branché dans l’app pour l’instant'), url: 'https://sentry.io', icon: 'pulse' },
+  { label: 'Expo', sub: traduire('Builds EAS et mises à jour'), url: 'https://expo.dev', icon: 'code' },
 ];
 
 const FICHES: Lien[] = [
@@ -24,9 +25,9 @@ const FICHES: Lien[] = [
 ];
 
 export function Liens() {
-  const open = (url: string) => Linking.openURL(url).catch(() => appAlert('Oups', 'Le lien ne s’est pas ouvert.'));
+  const open = (url: string) => Linking.openURL(url).catch(() => appAlert('Oups', traduire('Le lien ne s’est pas ouvert.')));
   return (
-    <StudioSection id="liens" icon="globe" title="Liens" sub="Consoles de publication et fiches des stores" keywords="liens app store connect google play console revenuecat sentry expo fiche store">
+    <StudioSection id="liens" icon="globe" title="Liens" sub={traduire("Consoles de publication et fiches des stores")} keywords="liens app store connect google play console revenuecat sentry expo fiche store">
       <Card>
         {CONSOLES.map((l, i) => (
           <Row key={l.url} first={i === 0} icon={l.icon} label={l.label} sub={l.sub} onPress={() => void open(l.url)} />

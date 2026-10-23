@@ -50,12 +50,13 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { INTENSITES } from '@/lib/v2/intensite';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
+import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
 // Vague 32 : zones sur l'echelle d'intensite commune (lib/v2/intensite.ts), plus de rouge
 const ZONE_INK = INTENSITES.map((x) => x.fill);
-const ZONE_LABEL = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Maximum'];
+const ZONE_LABEL = [traduire('Récupération'), 'Endurance', 'Tempo', 'Seuil', 'Maximum'];
 
 // Exemple de course, uniquement pour demo=1 (captures d'ecran). 14 octobre 2026 : reprend la course
 // de Houari du 25 septembre a Bamako (valeurs Apple : 15:39, 2,26 km, 179 kcal, 12 m, 154 bpm).
@@ -74,7 +75,7 @@ function demoTraining(): Training {
     intensity: 7,
     is_outdoor: true,
     source: 'apple_watch',
-    notes: 'Exemple de séance, pour découvrir l’écran.',
+    notes: traduire('Exemple de séance, pour découvrir l’écran.'),
   };
 }
 
@@ -139,13 +140,13 @@ function demoDetails(_t: Training, apple = false): WorkoutDetails {
 }
 
 function effortLabel(v: number): string {
-  if (v <= 2) return 'très léger';
-  if (v <= 3) return 'léger';
+  if (v <= 2) return traduire('très léger');
+  if (v <= 3) return traduire('léger');
   if (v <= 4) return 'facile';
-  if (v <= 6) return 'modéré';
+  if (v <= 6) return traduire('modéré');
   if (v <= 7) return 'intense';
-  if (v <= 8) return 'très intense';
-  return 'extrême';
+  if (v <= 8) return traduire('très intense');
+  return traduire('extrême');
 }
 
 
@@ -317,10 +318,10 @@ export default function WorkoutDetailScreen() {
 
   const onDelete = () => {
     if (!training?.id) return;
-    appAlert('Supprimer cette séance ?', 'Elle sera retirée de ton historique et de tes records.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cette séance ?'), traduire('Elle sera retirée de ton historique et de tes records.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -331,7 +332,7 @@ export default function WorkoutDetailScreen() {
             else router.replace('/(tabs)/seances' as any);
           } catch (e) {
             logger.error('[Seance] Suppression impossible', e);
-            appAlert('Oups', 'La séance n’a pas pu être supprimée. Réessaie.');
+            appAlert('Oups', traduire('La séance n’a pas pu être supprimée. Réessaie.'));
           }
         },
       },
@@ -371,7 +372,7 @@ export default function WorkoutDetailScreen() {
             ))}
           </View>
         ) : (
-          <EmptyState title="Séance introuvable" text="Elle a peut-être été supprimée. Retrouve tes autres séances dans l’historique." action="Voir mes séances" onAction={() => router.replace('/(tabs)/seances' as any)} />
+          <EmptyState title={traduire("Séance introuvable")} text={traduire("Elle a peut-être été supprimée. Retrouve tes autres séances dans l’historique.")} action={traduire("Voir mes séances")} onAction={() => router.replace('/(tabs)/seances' as any)} />
         )}
       </View>
     );
@@ -409,43 +410,43 @@ export default function WorkoutDetailScreen() {
   const showMuscles = !!t.sport && !(sportObj && ['cardio', 'nature', 'aquatique', 'glisse', 'danse', 'raquettes', 'precision'].includes(sportObj.category) && !t.muscles);
   // Heures exactes de la montre, minutes tronquees comme Forme (17:57 a 18:22)
   const timeRange = details?.workoutStart && details?.workoutEnd
-    ? `${clockOf(details.workoutStart)} à ${clockOf(details.workoutEnd)}`
-    : t.start_time ? `${t.start_time}${endTime(t.start_time, duration) ? ` à ${endTime(t.start_time, duration)}` : ''}` : '';
+    ? traduire("{0} à {1}", clockOf(details.workoutStart), clockOf(details.workoutEnd))
+    : t.start_time ? `${t.start_time}${endTime(t.start_time, duration) ? traduire(" à {0}", endTime(t.start_time, duration)) : ''}` : '';
   const zoneTotal = hrZones ? hrZones.reduce((s, z) => s + (z.durationSeconds || 0), 0) : 0;
   const cw = width - 44 - 32;
 
   // Chiffres du haut, selon le sport
   const big: { v: string; u: string; l: string }[] = [];
   // duree d'entrainement Apple a la seconde (15:39), sinon la duree saisie
-  if (durSec) big.push({ v: appleDuration(durSec), u: '', l: 'durée' });
-  else if (duration) big.push({ v: formatDuration(duration).replace(' min', ''), u: duration < 60 ? 'min' : '', l: 'durée' });
+  if (durSec) big.push({ v: appleDuration(durSec), u: '', l: traduire('durée') });
+  else if (duration) big.push({ v: formatDuration(duration).replace(' min', ''), u: duration < 60 ? 'min' : '', l: traduire('durée') });
   // format unique du tonnage (lib/v2/trainingWeek)
   if (fam === 'muscu' && tons > 0) big.push({ v: tonnageParts(tons, unite).value, u: tonnageParts(tons, unite).unit, l: accordSouleve(tons, unite) });
   else if (distance) big.push({ v: formatKg(distance, 2), u: 'km', l: 'distance' });
   else if (rounds.length || t.rounds) big.push({ v: String(rounds.length || t.rounds), u: '', l: 'rounds' });
   else if (calories) big.push({ v: String(Math.round(calories)), u: 'kcal', l: 'dépensées' });
-  if (fam === 'muscu' && nSets) big.push({ v: String(nSets), u: '', l: 'séries' });
+  if (fam === 'muscu' && nSets) big.push({ v: String(nSets), u: '', l: traduire('séries') });
   else if (pace && fam === 'cardio' && !isSpeed) big.push({ v: applePace(pace), u: '/km', l: 'allure' });
   else if (avgHR) big.push({ v: String(Math.round(avgHR)), u: 'bpm', l: 'cœur moyen' });
 
   const stats: { v: string; u?: string; l: string }[] = [];
   // 17 octobre 2026 : score des sports de match, dans ses colonnes (les seances d'avant l'ont dans la note, affichee telle quelle)
-  if (t.score_for != null || t.score_against != null) stats.push({ v: `${t.score_for ?? 0} à ${t.score_against ?? 0}`, l: 'Score' });
-  if (calories && !big.some((b) => b.l === 'dépensées')) stats.push({ v: String(Math.round(calories)), u: 'kcal', l: 'Calories actives' });
-  if (details?.totalCalories) stats.push({ v: String(Math.round(details.totalCalories)), u: 'kcal', l: 'Calories totales' });
+  if (t.score_for != null || t.score_against != null) stats.push({ v: traduire("{0} à {1}", t.score_for ?? 0, t.score_against ?? 0), l: traduire('Score') });
+  if (calories && !big.some((b) => b.l === 'dépensées')) stats.push({ v: String(Math.round(calories)), u: 'kcal', l: traduire('Calories actives') });
+  if (details?.totalCalories) stats.push({ v: String(Math.round(details.totalCalories)), u: 'kcal', l: traduire('Calories totales') });
   if (distance && !big.some((b) => b.l === 'distance')) stats.push({ v: formatKg(distance, 2), u: 'km', l: 'Distance' });
-  if (isSpeed && speed) stats.push({ v: formatKg(speed), u: 'km/h', l: 'Vitesse' });
+  if (isSpeed && speed) stats.push({ v: formatKg(speed), u: 'km/h', l: traduire('Vitesse') });
   // 14 octobre 2026 : pas d'allure pour le foot ou le combat (Forme ne l'affiche que pour la course, la marche...)
   if (!isSpeed && pace && fam === 'cardio' && !big.some((b) => b.l === 'allure')) stats.push({ v: applePace(pace), u: '/km', l: 'Allure' });
-  if (avgHR && !big.some((b) => b.l === 'cœur moyen')) stats.push({ v: String(Math.round(avgHR)), u: 'bpm', l: 'Cœur moyen' });
-  if (maxHR) stats.push({ v: String(Math.round(maxHR)), u: 'bpm', l: 'Cœur max' });
-  if (details?.elevationAscended != null && details.elevationAscended > 0) stats.push({ v: String(Math.floor(details.elevationAscended)), u: 'm', l: 'Dénivelé' });
+  if (avgHR && !big.some((b) => b.l === 'cœur moyen')) stats.push({ v: String(Math.round(avgHR)), u: 'bpm', l: traduire('Cœur moyen') });
+  if (maxHR) stats.push({ v: String(Math.round(maxHR)), u: 'bpm', l: traduire('Cœur max') });
+  if (details?.elevationAscended != null && details.elevationAscended > 0) stats.push({ v: String(Math.floor(details.elevationAscended)), u: 'm', l: traduire('Dénivelé') });
   if (watts) stats.push({ v: String(Math.round(watts)), u: 'W', l: 'Puissance moyenne' });
   if (cadence) stats.push({ v: String(Math.round(cadence)), u: isSpeed ? 'tr/min' : 'pas/min', l: 'Cadence moyenne' });
-  if (details?.stepsCount != null && details.stepsCount > 0) stats.push({ v: details.stepsCount.toLocaleString('fr-FR'), l: 'Pas' });
+  if (details?.stepsCount != null && details.stepsCount > 0) stats.push({ v: details.stepsCount.toLocaleString(LOCALE), l: traduire('Pas') });
   if (t.pente) stats.push({ v: String(t.pente), u: '%', l: 'Pente' });
-  if (t.resistance) stats.push({ v: String(t.resistance), l: 'Résistance' });
-  if ((t.rounds ?? 0) > 0 && (t.round_duration ?? 0) > 0) stats.push({ v: `${t.rounds} × ${String(t.round_duration).replace('.', ',')}`, u: 'min', l: 'Rounds' }); // virgule francaise (4,5 min)
+  if (t.resistance) stats.push({ v: String(t.resistance), l: traduire('Résistance') });
+  if ((t.rounds ?? 0) > 0 && (t.round_duration ?? 0) > 0) stats.push({ v: `${t.rounds} × ${String(t.round_duration).replace('.', DECIMAL)}`, u: 'min', l: 'Rounds' }); // virgule francaise (4,5 min)
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -466,8 +467,8 @@ export default function WorkoutDetailScreen() {
             <BackButton />
             {params.demo === '1' ? null : (
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <RoundIcon name="share" label="Partager la séance" onPress={onShare} />
-                <RoundIcon name="edit" label="Modifier la séance" onPress={onEdit} />
+                <RoundIcon name="share" label={traduire("Partager la séance")} onPress={onShare} />
+                <RoundIcon name="edit" label={traduire("Modifier la séance")} onPress={onEdit} />
               </View>
             )}
           </View>
@@ -499,7 +500,7 @@ export default function WorkoutDetailScreen() {
                 17 octobre : sans elle, isIndoor reste vide (les anciens details gardent false : d'ou la condition du trace ou du cardio). */}
             {t.is_outdoor || (details?.isIndoor === false && (hasRoute || fam === 'cardio')) ? (
               <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: c.successTint }}>
-                <Ink size={12} weight="extraBold" color={c.successText}>En extérieur</Ink>
+                <Ink size={12} weight="extraBold" color={c.successText}>{traduire("En extérieur")}</Ink>
               </View>
             ) : null}
           </View>
@@ -511,7 +512,7 @@ export default function WorkoutDetailScreen() {
                 <Hanko size={30} rotate={-6} />
                 <View style={{ flex: 1 }}>
                   <Ink size={17} weight="black" tight>{records.length > 1 ? `${records.length} records battus` : 'Record battu'}</Ink>
-                  <Ink size={13} color={c.textSecondary}>Tu as battu ta meilleure marque.</Ink>
+                  <Ink size={13} color={c.textSecondary}>{traduire("Tu as battu ta meilleure marque.")}</Ink>
                 </View>
               </View>
               {records.map((r) => {
@@ -519,7 +520,7 @@ export default function WorkoutDetailScreen() {
                 return (
                   <Pressable key={r.line.key} onPress={() => { tap(); router.push({ pathname: '/records', params: { focus: r.line.key } } as any); }} accessibilityRole="button" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, borderTopWidth: 1, borderColor: c.divider }}>
                     <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{r.line.name}</Ink>
-                    <Ink size={15} weight="black">{r.line.kind === 'force' ? `${Math.round(cv(r.point.value))} ${uL} estimé${unite === 'lb' ? 'e' : ''}s` : v.main}</Ink>
+                    <Ink size={15} weight="black">{r.line.kind === 'force' ? traduire("{0} {1} estimé{2}s", Math.round(cv(r.point.value)), uL, unite === 'lb' ? 'e' : '') : v.main}</Ink>
                   </Pressable>
                 );
               })}
@@ -537,7 +538,7 @@ export default function WorkoutDetailScreen() {
           {/* Exercices */}
           {exercises.length > 0 ? (
             <>
-              <SectionTitle title="Exercices" sub={[nSets ? `${nSets} série${nSets > 1 ? 's' : ''}` : '', tons >= 100 ? `${tonnageParts(tons, unite).value} ${tonnageParts(tons, unite).unit} ${accordSouleve(tons, unite)}` : ''].filter(Boolean).join(', ')} />
+              <SectionTitle title={traduire("Exercices")} sub={[nSets ? `${nSets} série${nSets > 1 ? 's' : ''}` : '', tons >= 100 ? `${tonnageParts(tons, unite).value} ${tonnageParts(tons, unite).unit} ${accordSouleve(tons, unite)}` : ''].filter(Boolean).join(', ')} />
               {exercises.map((ex, idx) => {
                 const sets = ex.setsData && ex.setsData.length > 0 ? ex.setsData : workSets(ex);
                 const vol = sets.filter((s) => s.type !== 'warmup').reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
@@ -546,7 +547,7 @@ export default function WorkoutDetailScreen() {
                   <Glass key={`${ex.name}${idx}`} style={{ gap: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <View style={{ flex: 1 }}>
-                        <Ink size={17} weight="black" tight>{ex.name || 'Exercice'}</Ink>
+                        <Ink size={17} weight="black" tight>{ex.name || traduire('Exercice')}</Ink>
                         {ex.muscle_group ? <Ink size={12} weight="bold" color={c.textMuted}>{ex.muscle_group}</Ink> : null}
                       </View>
                       {isRec ? <Hanko size={22} /> : null}
@@ -558,13 +559,13 @@ export default function WorkoutDetailScreen() {
                           return (
                             <View key={si} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                               <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: s.type === 'warmup' ? c.goldTint : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-                                <Ink size={12} weight="black" color={c.textSecondary}>{s.type === 'warmup' ? 'É' : String(si + 1)}</Ink>
+                                <Ink size={12} weight="black" color={c.textSecondary}>{s.type === 'warmup' ? traduire('É') : String(si + 1)}</Ink>
                               </View>
                               <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
-                                {s.weight > 0 ? `${formatKg(cv(s.weight))} ${uL} × ${s.reps}` : `${s.reps} répétitions`}
-                                {s.type === 'dropset' ? <Ink size={12} weight="bold" color={c.textMuted}>{'  dégressive'}</Ink> : s.type === 'superset' ? <Ink size={12} weight="bold" color={c.textMuted}>{'  superset'}</Ink> : null}
+                                {s.weight > 0 ? `${formatKg(cv(s.weight))} ${uL} × ${s.reps}` : traduire("{0} répétitions", s.reps)}
+                                {s.type === 'dropset' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire('  dégressive')}</Ink> : s.type === 'superset' ? <Ink size={12} weight="bold" color={c.textMuted}>{'  superset'}</Ink> : null}
                               </Ink>
-                              {m > 0 && s.type !== 'warmup' ? <Ink size={12} weight="bold" color={c.textMuted}>{`max estimé ${Math.round(cv(m))}`}</Ink> : null}
+                              {m > 0 && s.type !== 'warmup' ? <Ink size={12} weight="bold" color={c.textMuted}>{traduire("max estimé {0}", Math.round(cv(m)))}</Ink> : null}
                             </View>
                           );
                         })}
@@ -588,7 +589,7 @@ export default function WorkoutDetailScreen() {
             <Glass style={{ gap: 8 }}>
               {t.technical_theme ? (
                 <>
-                  <Ink size={12} weight="bold" color={c.textSecondary}>Thème technique</Ink>
+                  <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Thème technique")}</Ink>
                   <Ink size={17} weight="extraBold">{t.technical_theme}</Ink>
                 </>
               ) : null}
@@ -597,14 +598,14 @@ export default function WorkoutDetailScreen() {
                 const n = Math.max(1, Math.min(5, Math.round(t.technique_rating ?? 1)));
                 const note = noteSeance(t.sport);
                 return (
-                  <View style={{ gap: 6 }} accessibilityLabel={`${note.nom} ${n} sur 5, ${note.mots[n - 1]}`}>
+                  <View style={{ gap: 6 }} accessibilityLabel={traduire("{0} {1} sur 5, {2}", note.nom, n, note.mots[n - 1])}>
                     <Ink size={12} weight="bold" color={c.textSecondary}>{note.nom}</Ink>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       {[1, 2, 3, 4, 5].map((i) => (
                         <View key={i} style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: i === n ? couleurNote(i).fill : i < n ? couleurNote(i).tint : c.fillSubtle }} />
                       ))}
                     </View>
-                    <Ink size={15} weight="extraBold" color={couleurNote(n).text}>{`${n} sur 5, ${note.mots[n - 1].toLocaleLowerCase('fr-FR')}`}</Ink>
+                    <Ink size={15} weight="extraBold" color={couleurNote(n).text}>{traduire("{0} sur 5, {1}", n, note.mots[n - 1].toLocaleLowerCase(LOCALE))}</Ink>
                   </View>
                 );
               })() : null}
@@ -624,7 +625,7 @@ export default function WorkoutDetailScreen() {
                 })()}
               />
               {rounds.map((r, i) => {
-                const res = r.result === 'win' ? { t: 'Gagné', bg: c.successTint, fg: c.successText } : r.result === 'loss' ? { t: 'Perdu', bg: c.accentTint, fg: c.accent } : r.result === 'draw' ? { t: 'Nul', bg: c.goldTint, fg: c.goldDeep } : null;
+                const res = r.result === 'win' ? { t: traduire('Gagné'), bg: c.successTint, fg: c.successText } : r.result === 'loss' ? { t: 'Perdu', bg: c.accentTint, fg: c.accent } : r.result === 'draw' ? { t: 'Nul', bg: c.goldTint, fg: c.goldDeep } : null;
                 const analysis = [
                   { l: 'Game plan', v: r.gamePlan },
                   { l: 'Ce qui a marché', v: r.whatWorked },
@@ -640,7 +641,7 @@ export default function WorkoutDetailScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Ink size={16} weight="extraBold" numberOfLines={1}>{r.partner ? `Contre ${r.partner}` : `Round ${r.number ?? i + 1}`}</Ink>
-                        {r.roundIntensity ? <Ink size={12} color={c.textMuted}>{r.roundIntensity === 'guerre' ? 'à fond' : r.roundIntensity === 'technique' ? 'technique' : 'détendu'}</Ink> : null}
+                        {r.roundIntensity ? <Ink size={12} color={c.textMuted}>{r.roundIntensity === 'guerre' ? traduire('à fond') : r.roundIntensity === 'technique' ? 'technique' : traduire('détendu')}</Ink> : null}
                       </View>
                       {res ? (
                         <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: res.bg }}>
@@ -672,7 +673,7 @@ export default function WorkoutDetailScreen() {
                         ))}
                       </View>
                     ) : null}
-                    {(r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0 ? <Ink size={14} weight="bold">{`Points : ${r.pointsFor ?? 0} pour, ${r.pointsAgainst ?? 0} contre`}</Ink> : null}
+                    {(r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0 ? <Ink size={14} weight="bold">{traduire("Points : {0} pour, {1} contre", r.pointsFor ?? 0, r.pointsAgainst ?? 0)}</Ink> : null}
                     {r.notes ? <Ink size={13} color={c.textSecondary}>{r.notes}</Ink> : null}
                     {analysis.map((a) => (
                       <View key={a.l} style={{ gap: 1 }}>
@@ -683,7 +684,7 @@ export default function WorkoutDetailScreen() {
                     {r.partner ? (
                       <Pressable onPress={() => { tap(); router.push({ pathname: '/sparring-partners', params: { partnerName: r.partner } } as any); }} accessibilityRole="button" style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Icon name="users" size={16} color={c.indigo} />
-                        <Ink size={13} weight="extraBold" color={c.indigo}>{`Voir la fiche de ${r.partner}`}</Ink>
+                        <Ink size={13} weight="extraBold" color={c.indigo}>{traduire("Voir la fiche de {0}", r.partner)}</Ink>
                       </Pressable>
                     ) : null}
                   </Glass>
@@ -695,7 +696,7 @@ export default function WorkoutDetailScreen() {
           {/* Bilan de seance (sports de combat) */}
           {t.game_plan || t.what_worked || t.what_didnt_work ? (
             <Glass style={{ gap: 10 }}>
-              <Ink size={17} weight="black" tight>Ton bilan</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Ton bilan")}</Ink>
               {[{ l: 'Game plan', v: t.game_plan }, { l: 'Ce qui a marché', v: t.what_worked }, { l: 'Ce qui n’a pas marché', v: t.what_didnt_work }].filter((a) => !!a.v).map((a) => (
                 <View key={a.l} style={{ gap: 1 }}>
                   <Ink size={12} weight="bold" color={c.textMuted}>{a.l}</Ink>
@@ -709,7 +710,7 @@ export default function WorkoutDetailScreen() {
           {detailsLoading && !details ? <View style={{ height: 120, borderRadius: 22, backgroundColor: c.fillSubtle, opacity: 0.6 }} /> : null}
           {details?.heartRateSamples && details.heartRateSamples.length > 1 ? (
             <>
-              <SectionTitle title="Ton cœur" />
+              <SectionTitle title={traduire("Ton cœur")} />
               <Glass style={{ gap: 12 }}>
                 <Ink size={34} weight="black" tight>
                   {hrSummary.avg ? String(Math.round(hrSummary.avg)) : '--'}
@@ -717,7 +718,7 @@ export default function WorkoutDetailScreen() {
                 </Ink>
                 <HrChart samples={details.heartRateSamples} width={cw} avg={hrSummary.avg} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {[{ l: 'Min', v: hrSummary.min }, { l: 'Moyenne', v: hrSummary.avg }, { l: 'Max', v: hrSummary.max }].map((x) => (
+                  {[{ l: traduire('Min'), v: hrSummary.min }, { l: traduire('Moyenne'), v: hrSummary.avg }, { l: traduire('Max'), v: hrSummary.max }].map((x) => (
                     <View key={x.l} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: c.fillSoft }}>
                       <Ink size={11} weight="bold" color={c.textMuted}>{x.l}</Ink>
                       <Ink size={18} weight="black">{x.v ? String(Math.round(x.v)) : ''}</Ink>
@@ -734,11 +735,11 @@ export default function WorkoutDetailScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Ink size={17} weight="black" tight>Zones cardiaques</Ink>
                   <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: appleZones ? c.accentTint : c.fillSubtle }}>
-                    <Ink size={11} weight="extraBold" color={appleZones ? c.accent : c.textMuted}>{appleZones ? 'Apple' : 'estimé'}</Ink>
+                    <Ink size={11} weight="extraBold" color={appleZones ? c.accent : c.textMuted}>{appleZones ? 'Apple' : traduire('estimé')}</Ink>
                   </View>
                 </View>
                 <Pressable onPress={() => { tap(); router.push('/heart-zones-settings' as any); }} accessibilityRole="button" hitSlop={10} style={{ minHeight: 40, justifyContent: 'center' }}>
-                  <Ink size={13} weight="extraBold" color={c.accent}>{userZones?.source === 'custom' ? 'Modifier' : 'Personnaliser'}</Ink>
+                  <Ink size={13} weight="extraBold" color={c.accent}>{userZones?.source === 'custom' ? traduire('Modifier') : 'Personnaliser'}</Ink>
                 </Pressable>
               </View>
               {hrZones.map((z, i) => {
@@ -758,18 +759,18 @@ export default function WorkoutDetailScreen() {
                 );
               })}
               {appleZones ? (
-                <Ink size={12} color={c.textMuted}>{`Temps calculés par Apple, avec ${appleZones.source === 'user' ? 'tes zones manuelles' : appleZones.source === 'app' ? 'les zones de l’app de séance' : 'tes zones automatiques'} de Santé.`}</Ink>
+                <Ink size={12} color={c.textMuted}>{traduire("Temps calculés par Apple, avec {0} de Santé.", appleZones.source === 'user' ? 'tes zones manuelles' : appleZones.source === 'app' ? 'les zones de l’app de séance' : 'tes zones automatiques')}</Ink>
               ) : (
-                <Ink size={12} color={c.textMuted}>{userZones?.origin === 'apple' && userZones?.source === 'custom' ? 'Temps estimés par Yoroi avec tes zones Apple Santé : Apple n’a pas de temps par zone pour cette séance.' : userZones?.source === 'custom' ? (Platform.OS === 'ios' ? 'Temps estimés par Yoroi avec tes zones. Les chiffres exacts d’Apple arrivent avec iOS 27.' : 'Temps estimés par Yoroi avec tes zones.') : 'Temps estimés. Règle tes zones comme sur ta montre (app Watch, Ma montre, Exercice, Zones de fréquence cardiaque) pour qu’ils collent au mieux.'}</Ink>
+                <Ink size={12} color={c.textMuted}>{userZones?.origin === 'apple' && userZones?.source === 'custom' ? traduire('Temps estimés par Yoroi avec tes zones Apple Santé : Apple n’a pas de temps par zone pour cette séance.') : userZones?.source === 'custom' ? (Platform.OS === 'ios' ? traduire('Temps estimés par Yoroi avec tes zones. Les chiffres exacts d’Apple arrivent avec iOS 27.') : traduire('Temps estimés par Yoroi avec tes zones.')) : traduire('Temps estimés. Règle tes zones comme sur ta montre (app Watch, Ma montre, Exercice, Zones de fréquence cardiaque) pour qu’ils collent au mieux.')}</Ink>
               )}
-              {appleNotice ? <Ink size={12} weight="bold" color={c.accent}>Tes zones viennent d’Apple Santé.</Ink> : null}
+              {appleNotice ? <Ink size={12} weight="bold" color={c.accent}>{traduire("Tes zones viennent d’Apple Santé.")}</Ink> : null}
             </Glass>
           ) : details?.heartRateSamples && details.heartRateSamples.length > 0 && userZones?.source !== 'custom' ? (
-            <Glass onPress={() => router.push('/heart-zones-settings' as any)} label="Configurer tes zones cardiaques" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Glass onPress={() => router.push('/heart-zones-settings' as any)} label={traduire("Configurer tes zones cardiaques")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Icon name="heart" size={26} color={c.accent} />
               <View style={{ flex: 1 }}>
-                <Ink size={15} weight="extraBold">Configure tes zones cardiaques</Ink>
-                <Ink size={13} color={c.textSecondary}>Pour voir le temps passé dans chaque zone.</Ink>
+                <Ink size={15} weight="extraBold">{traduire("Configure tes zones cardiaques")}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("Pour voir le temps passé dans chaque zone.")}</Ink>
               </View>
               <Icon name="chevron" size={18} color={c.textMuted} />
             </Glass>
@@ -783,7 +784,7 @@ export default function WorkoutDetailScreen() {
             return (
               <Glass style={{ gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Ink size={17} weight="black" tight>Zones de puissance</Ink>
+                  <Ink size={17} weight="black" tight>{traduire("Zones de puissance")}</Ink>
                   <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: c.accentTint }}>
                     <Ink size={11} weight="extraBold" color={c.accent}>Apple</Ink>
                   </View>
@@ -791,7 +792,7 @@ export default function WorkoutDetailScreen() {
                 {pz.map((z, i) => {
                   const lo = w(z.min);
                   const hi = w(z.max);
-                  const range = lo == null && hi != null ? `moins de ${hi} W` : hi == null && lo != null ? `${lo} W et plus` : lo != null && hi != null ? `${lo} à ${Math.max(lo, hi - 1)} W` : '';
+                  const range = lo == null && hi != null ? traduire("moins de {0} W", hi) : hi == null && lo != null ? traduire("{0} W et plus", lo) : lo != null && hi != null ? traduire("{0} à {1} W", lo, Math.max(lo, hi - 1)) : '';
                   return (
                     <View key={i} style={{ gap: 4 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
@@ -811,7 +812,7 @@ export default function WorkoutDetailScreen() {
 
           {details?.recoveryHR ? (
             <Glass style={{ gap: 10 }}>
-              <Ink size={17} weight="black" tight>Récupération</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Récupération")}</Ink>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {[{ l: 'À la fin', v: details.recoveryHR.atEnd, d: 0 }, { l: 'Après 1 min', v: details.recoveryHR.after1Min, d: details.recoveryHR.after1Min != null ? details.recoveryHR.atEnd - details.recoveryHR.after1Min : 0 }, { l: 'Après 2 min', v: details.recoveryHR.after2Min, d: details.recoveryHR.after2Min != null ? details.recoveryHR.atEnd - details.recoveryHR.after2Min : 0 }]
                   .filter((x) => x.v != null)
@@ -819,7 +820,7 @@ export default function WorkoutDetailScreen() {
                     <View key={x.l} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: c.fillSoft }}>
                       <Ink size={11} weight="bold" color={c.textMuted}>{x.l}</Ink>
                       <Ink size={18} weight="black">{`${Math.round(x.v!)}`}</Ink>
-                      {x.d > 0 ? <Ink size={11} weight="bold" color={c.successText}>{`moins ${Math.round(x.d)}`}</Ink> : null}
+                      {x.d > 0 ? <Ink size={11} weight="bold" color={c.successText}>{traduire("moins {0}", Math.round(x.d))}</Ink> : null}
                     </View>
                   ))}
               </View>
@@ -830,9 +831,9 @@ export default function WorkoutDetailScreen() {
             <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Icon name="gauge" size={26} color={c.indigo} />
               <View style={{ flex: 1 }}>
-                <Ink size={12} weight="bold" color={c.textSecondary}>VO2 max mesurée par ta montre</Ink>
+                <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("VO2 max mesurée par ta montre")}</Ink>
                 <Ink size={24} weight="black" tight>
-                  {details.vo2Max.toFixed(1).replace('.', ',')}
+                  {details.vo2Max.toFixed(1).replace('.', DECIMAL)}
                   <Ink size={13} weight="bold" color={c.textSecondary}> ml/kg/min</Ink>
                 </Ink>
               </View>
@@ -842,11 +843,11 @@ export default function WorkoutDetailScreen() {
           {/* Intermediaires, comme Forme : duree, allure, FC et puissance par kilometre */}
           {splits.length > 0 ? (
             <>
-              <SectionTitle title="Intermédiaires" />
+              <SectionTitle title={traduire("Intermédiaires")} />
               <Glass style={{ gap: 2, paddingVertical: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 24 }}>
                   <View style={{ width: 20 }} />
-                  {['Durée', 'Allure', 'FC', splits.some((x) => x.avgPowerWatts) ? 'Puissance' : ''].map((h, k) => (
+                  {[traduire('Durée'), 'Allure', 'FC', splits.some((x) => x.avgPowerWatts) ? 'Puissance' : ''].map((h, k) => (
                     <Ink key={k} size={11} weight="bold" color={c.textMuted} style={{ flex: 1, textAlign: k === 0 ? 'left' : 'right' }}>{h}</Ink>
                   ))}
                 </View>
@@ -859,7 +860,7 @@ export default function WorkoutDetailScreen() {
                     <Ink size={14} weight="extraBold" style={{ flex: 1, textAlign: 'right' }}>{(s as { avgPowerWatts?: number }).avgPowerWatts ? `${(s as { avgPowerWatts?: number }).avgPowerWatts} W` : ''}</Ink>
                   </View>
                 ))}
-                <Ink size={11} color={c.textMuted} style={{ marginTop: 6 }}>{`Par kilomètre${splits[splits.length - 1].distanceKm < 1 ? `, le dernier sur ${formatKg(splits[splits.length - 1].distanceKm, 2)} km` : ''}. FC en bpm, ton kilomètre le plus rapide en indigo.`}</Ink>
+                <Ink size={11} color={c.textMuted} style={{ marginTop: 6 }}>{traduire("Par kilomètre{0}. FC en bpm, ton kilomètre le plus rapide en indigo.", splits[splits.length - 1].distanceKm < 1 ? `, le dernier sur ${formatKg(splits[splits.length - 1].distanceKm, 2)} km` : '')}</Ink>
               </Glass>
             </>
           ) : null}
@@ -867,7 +868,7 @@ export default function WorkoutDetailScreen() {
           {/* Mesures de course de la montre, comme Forme (moyenne et plage) */}
           {details?.groundContactMs || details?.strideLengthM || details?.verticalOscCm ? (
             <Glass style={{ gap: 10 }}>
-              <Ink size={17} weight="black" tight>Ta foulée</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Ta foulée")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {[
                   { l: 'Contact au sol', m: details.groundContactMs, u: 'ms', f: (x: number) => String(x) },
@@ -877,7 +878,7 @@ export default function WorkoutDetailScreen() {
                   <View key={x.l} style={{ flexGrow: 1, flexBasis: '45%', padding: 10, borderRadius: 14, backgroundColor: c.fillSoft }}>
                     <Ink size={11} weight="bold" color={c.textMuted}>{x.l}</Ink>
                     <Ink size={18} weight="black">{x.f(x.m!.avg)}<Ink size={12} weight="bold" color={c.textSecondary}>{` ${x.u}`}</Ink></Ink>
-                    {x.m!.min != null && x.m!.max != null ? <Ink size={11} weight="bold" color={c.textMuted}>{`de ${x.f(x.m!.min)} à ${x.f(x.m!.max)} ${x.u}`}</Ink> : null}
+                    {x.m!.min != null && x.m!.max != null ? <Ink size={11} weight="bold" color={c.textMuted}>{traduire("de {0} à {1} {2}", x.f(x.m!.min), x.f(x.m!.max), x.u)}</Ink> : null}
                   </View>
                 ))}
               </View>
@@ -894,7 +895,7 @@ export default function WorkoutDetailScreen() {
                 </View>
                 <View style={{ position: 'absolute', left: 16, right: 16, bottom: insets.bottom + 16, padding: 12, borderRadius: 16, backgroundColor: 'rgba(20,24,34,0.82)' }}>
                   <Ink size={13} weight="bold" color="#FFFFFF">{[city, details?.distanceKm ? `${formatKg(details.distanceKm, 2)} km` : '', details?.elevationAscended ? `${Math.floor(details.elevationAscended)} m de montée` : ''].filter(Boolean).join(', ')}</Ink>
-                  <Ink size={11} color="rgba(255,255,255,0.75)">Départ en vert, arrivée en rouge. Jaune quand tu vas moins vite, vert quand tu accélères.</Ink>
+                  <Ink size={11} color="rgba(255,255,255,0.75)">{traduire("Départ en vert, arrivée en rouge. Jaune quand tu vas moins vite, vert quand tu accélères.")}</Ink>
                 </View>
               </View>
             </Modal>
@@ -906,7 +907,7 @@ export default function WorkoutDetailScreen() {
                   <Marker coordinate={{ latitude: pinLat!, longitude: pinLon! }} pinColor={c.accent} />
                 </MapView>
                 <View style={{ position: 'absolute', right: 10, top: 10 }}>
-                  <RoundIcon name="map" label="Agrandir la carte" onPress={() => setMapFull(true)} />
+                  <RoundIcon name="map" label={traduire("Agrandir la carte")} onPress={() => setMapFull(true)} />
                 </View>
               </View>
               <Modal visible={mapFull} animationType="fade" onRequestClose={() => setMapFull(false)}>
@@ -927,9 +928,9 @@ export default function WorkoutDetailScreen() {
             <Glass style={{ gap: 10 }}>
               <Ink size={17} weight="black" tight>Conditions</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {details?.weatherTemp != null ? <Stat value={`${appleTemperature(details.weatherTemp)}°`} label="Température" /> : null}
-                {details?.weatherHumidity != null ? <Stat value={`${appleHumidity(details.weatherHumidity)}`} unit="%" label="Humidité" /> : null}
-                {details?.airQualityIndex != null ? <Stat value={String(details.airQualityIndex)} label={details.airQualityCategory ? `Air, ${details.airQualityCategory.toLowerCase()}` : 'Qualité de l’air'} /> : null}
+                {details?.weatherTemp != null ? <Stat value={`${appleTemperature(details.weatherTemp)}°`} label={traduire("Température")} /> : null}
+                {details?.weatherHumidity != null ? <Stat value={`${appleHumidity(details.weatherHumidity)}`} unit="%" label={traduire("Humidité")} /> : null}
+                {details?.airQualityIndex != null ? <Stat value={String(details.airQualityIndex)} label={details.airQualityCategory ? `Air, ${details.airQualityCategory.toLowerCase()}` : traduire('Qualité de l’air')} /> : null}
               </View>
               {details?.weatherCondition ? <Ink size={14} color={c.textSecondary}>{details.weatherCondition}</Ink> : null}
             </Glass>
@@ -951,8 +952,8 @@ export default function WorkoutDetailScreen() {
               {effort > 0 ? (
                 <View style={{ gap: 6 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <Ink size={17} weight="black" tight>{details?.effortEstimated ? 'Effort estimé' : 'Effort ressenti'}</Ink>
-                    <Ink size={15} weight="black">{`${effort} sur 10, ${effortLabel(effort)}`}</Ink>
+                    <Ink size={17} weight="black" tight>{details?.effortEstimated ? traduire('Effort estimé') : 'Effort ressenti'}</Ink>
+                    <Ink size={15} weight="black">{traduire("{0} sur 10, {1}", effort, effortLabel(effort))}</Ink>
                   </View>
                   <View style={{ flexDirection: 'row', gap: 3 }}>
                     {Array.from({ length: 10 }, (_, i) => (
@@ -972,7 +973,7 @@ export default function WorkoutDetailScreen() {
 
           {t.session_rating ? (
             <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Ink size={15} weight="extraBold" style={{ flex: 1 }}>Ta note de séance</Ink>
+              <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{traduire("Ta note de séance")}</Ink>
               <View style={{ flexDirection: 'row', gap: 3 }}>
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Icon key={i} name="star" size={18} color={c.gold} fill={i <= (t.session_rating ?? 0) ? c.gold : undefined} />
@@ -983,17 +984,17 @@ export default function WorkoutDetailScreen() {
 
           {params.demo === '1' ? null : (
             <View style={{ gap: 10, marginTop: 8 }}>
-              <BigButton label="Voir le bilan" icon="chart" tone="ink" onPress={onBilan} />
+              <BigButton label={traduire("Voir le bilan")} icon="chart" tone="ink" onPress={onBilan} />
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <BigButton label="Modifier" icon="edit" onPress={onEdit} style={{ flex: 1 }} />
-                <BigButton label="Partager" icon="share" tone="soft" onPress={onShare} style={{ flex: 1 }} />
+                <BigButton label={traduire("Modifier")} icon="edit" onPress={onEdit} style={{ flex: 1 }} />
+                <BigButton label={traduire("Partager")} icon="share" tone="soft" onPress={onShare} style={{ flex: 1 }} />
               </View>
-              <BigButton label="Supprimer la séance" icon="trash" tone="danger" onPress={onDelete} />
+              <BigButton label={traduire("Supprimer la séance")} icon="trash" tone="danger" onPress={onDelete} />
             </View>
           )}
           {t.source && t.source !== 'manual' ? (
             <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>
-              {`Importée depuis ${({ apple_watch: 'Apple Watch', apple_health: 'Apple Santé', iphone: 'iPhone', strava: 'Strava', garmin: 'Garmin', polar: 'Polar', whoop: 'Whoop', suunto: 'Suunto', coros: 'Coros', wahoo: 'Wahoo', samsung: 'Samsung', fitbit: 'Fitbit', withings: 'Withings', health_connect: 'Health Connect' } as Record<string, string>)[t.source] ?? 'ta montre'}`}
+              {traduire("Importée depuis {0}", ({ apple_watch: 'Apple Watch', apple_health: 'Apple Santé', iphone: 'iPhone', strava: 'Strava', garmin: 'Garmin', polar: 'Polar', whoop: 'Whoop', suunto: 'Suunto', coros: 'Coros', wahoo: 'Wahoo', samsung: 'Samsung', fitbit: 'Fitbit', withings: 'Withings', health_connect: 'Health Connect' } as Record<string, string>)[t.source] ?? 'ta montre')}
             </Ink>
           ) : null}
           {details?.durationMinutes && !duration ? <Ink size={12} color={c.textMuted}>{formatClock(details.durationMinutes * 60)}</Ink> : null}

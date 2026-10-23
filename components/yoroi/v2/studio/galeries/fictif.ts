@@ -9,12 +9,13 @@ import type { YearStats } from '@/lib/social-cards/useYearStats';
 import type { CombatRoundData } from '@/components/social-cards/SessionCard';
 import type { CardIdentity } from '@/lib/v2/partage/identity';
 import type { FighterData } from '@/components/yoroi/v2/partage/FighterCardView';
+import { traduire } from '@/lib/i18n/tr';
 
 export const NOM = 'Heny';
 const CLUB_JJB = 'First Jiu-Jitsu Academy';
 const CLUB_MUSCU = 'Basic-Fit Prado';
 
-const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const JOURS = [traduire('Lun'), traduire('Mar'), traduire('Mer'), traduire('Jeu'), traduire('Ven'), traduire('Sam'), traduire('Dim')];
 
 function lundi(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -48,7 +49,7 @@ export function semaineFictive(now = new Date()): WeekStats {
     weekNumber: wn,
     weekStart: start,
     weekEnd: end,
-    weekLabel: `Semaine ${wn}`,
+    weekLabel: traduire("Semaine {0}", wn),
     activeDays: 4,
     totalSessions: 5,
     totalDays: 7,
@@ -59,11 +60,11 @@ export function semaineFictive(now = new Date()): WeekStats {
       { clubName: CLUB_MUSCU, count: 2 },
     ],
     evolution: { weight: { start: 64.8, end: 64.2, change: -0.6 } },
-    bestDay: { dayName: 'Mercredi', date: calendar[2].date, sessions: 2 },
+    bestDay: { dayName: traduire('Mercredi'), date: calendar[2].date, sessions: 2 },
   };
 }
 
-const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const MOIS = [traduire('Janvier'), traduire('Février'), traduire('Mars'), traduire('Avril'), traduire('Mai'), traduire('Juin'), traduire('Juillet'), traduire('Août'), traduire('Septembre'), traduire('Octobre'), traduire('Novembre'), traduire('Décembre')];
 
 /** Mois precedent : 16 jours actifs sur le mois */
 export function moisFictif(now = new Date()): MonthStats {
@@ -111,7 +112,7 @@ export function anneeFictive(now = new Date()): YearStats {
     ],
     bestStreak: 11,
     currentStreak: 4,
-    busiestMonth: { month: 'Mars', monthNumber: 2, daysActive: 21 },
+    busiestMonth: { month: traduire('Mars'), monthNumber: 2, daysActive: 21 },
     projection: { estimatedTotal: 218, onTrackFor200: true },
   };
 }
@@ -134,10 +135,10 @@ export const SEANCE_MUSCU: Partial<Training> = {
 };
 
 export const OPTIONS_MUSCU = [
-  { label: 'Développé couché', weight: '42,5', reps: '6', sets: '4' },
+  { label: traduire('Développé couché'), weight: '42,5', reps: '6', sets: '4' },
   { label: 'Squat', weight: '70', reps: '5', sets: '5' },
   { label: 'Tractions', reps: '6', sets: '4' },
-  { label: 'Rowing haltère', weight: '16', reps: '10', sets: '3' },
+  { label: traduire('Rowing haltère'), weight: '16', reps: '10', sets: '3' },
 ];
 
 export const SEANCE_JJB: Partial<Training> = {
@@ -146,7 +147,7 @@ export const SEANCE_JJB: Partial<Training> = {
   start_time: '19:30',
   duration_minutes: 90,
   session_types: JSON.stringify(['cours', 'sparring']),
-  technical_theme: 'Passage de garde',
+  technical_theme: traduire('Passage de garde'),
   rounds: 5,
   round_duration: 6,
   intensity: 7,
@@ -155,10 +156,10 @@ export const SEANCE_JJB: Partial<Training> = {
 
 export const ROUNDS_JJB: CombatRoundData[] = [
   { number: 1, result: 'win', methodsGiven: ['Triangle'], partner: 'Sarah', duration: 360 },
-  { number: 2, result: 'loss', methodsTaken: ['Clé de bras'], partner: 'Inès', duration: 360 },
+  { number: 2, result: 'loss', methodsTaken: [traduire('Clé de bras')], partner: traduire('Inès'), duration: 360 },
   { number: 3, result: 'draw', partner: 'Camille', duration: 360 },
-  { number: 4, result: 'win', methodsGiven: ['Étranglement arrière'], partner: 'Sarah', duration: 360 },
-  { number: 5, result: 'win', methodsGiven: ['Triangle'], partner: 'Léa', duration: 360 },
+  { number: 4, result: 'win', methodsGiven: [traduire('Étranglement arrière')], partner: 'Sarah', duration: 360 },
+  { number: 5, result: 'win', methodsGiven: ['Triangle'], partner: traduire('Léa'), duration: 360 },
 ];
 
 export const DUEL = {
@@ -171,7 +172,7 @@ export const DUEL = {
   draws: 2,
   totalRounds: 14,
   topMethodGiven: 'Triangle',
-  topMethodTaken: 'Clé de bras',
+  topMethodTaken: traduire('Clé de bras'),
   lastSessions: ['win', 'loss', 'win', 'draw', 'win'] as ('win' | 'loss' | 'draw')[],
   sport: 'jjb',
 };
@@ -208,6 +209,6 @@ export const COMBATTANT: FighterData = {
 };
 
 export const RECORDS_PARTAGE = [
-  { label: 'Record muscu', sub: 'Développé couché, nouveau record', data: { exerciseName: 'Développé couché', performance: '45 kg x 5 reps', date: hier('18:30').slice(0, 10), isPR: true, previous: '42,5 kg x 5 reps' } },
-  { label: 'Perf du jour', sub: 'Tractions, sans record', data: { exerciseName: 'Tractions', performance: '8 reps', date: hier('18:30').slice(0, 10), isPR: false } },
+  { label: 'Record muscu', sub: traduire('Développé couché, nouveau record'), data: { exerciseName: traduire('Développé couché'), performance: '45 kg x 5 reps', date: hier('18:30').slice(0, 10), isPR: true, previous: '42,5 kg x 5 reps' } },
+  { label: traduire('Perf du jour'), sub: traduire('Tractions, sans record'), data: { exerciseName: 'Tractions', performance: '8 reps', date: hier('18:30').slice(0, 10), isPR: false } },
 ];

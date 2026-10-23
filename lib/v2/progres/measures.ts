@@ -8,6 +8,7 @@ import type { Measurement } from '@/lib/database';
 import { deleteMeasurement as deleteLegacyMeasurement, getAllMeasurements as getLegacyMeasurements } from '@/lib/bodyComposition';
 import type { BodyMeasurement } from '@/lib/bodyComposition';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export type MeasureKey = 'chest' | 'waist' | 'navel' | 'hips' | 'shoulders' | 'neck' | 'armL' | 'armR' | 'thighL' | 'thighR' | 'calfL' | 'calfR';
 
@@ -23,24 +24,24 @@ export const MEASURE_FIELDS: { key: MeasureKey; label: string; group: 'haut' | '
   { key: 'waist', label: 'Taille', group: 'tronc' },
   { key: 'navel', label: 'Nombril', group: 'tronc' },
   { key: 'hips', label: 'Hanches', group: 'tronc' },
-  { key: 'armR', label: 'Bras droit', group: 'bras' },
-  { key: 'armL', label: 'Bras gauche', group: 'bras' },
-  { key: 'thighR', label: 'Cuisse droite', group: 'jambes' },
-  { key: 'thighL', label: 'Cuisse gauche', group: 'jambes' },
-  { key: 'calfR', label: 'Mollet droit', group: 'jambes' },
-  { key: 'calfL', label: 'Mollet gauche', group: 'jambes' },
+  { key: 'armR', label: traduire('Bras droit'), group: 'bras' },
+  { key: 'armL', label: traduire('Bras gauche'), group: 'bras' },
+  { key: 'thighR', label: traduire('Cuisse droite'), group: 'jambes' },
+  { key: 'thighL', label: traduire('Cuisse gauche'), group: 'jambes' },
+  { key: 'calfR', label: traduire('Mollet droit'), group: 'jambes' },
+  { key: 'calfL', label: traduire('Mollet gauche'), group: 'jambes' },
 ];
 
 export const VIEW_FIELDS: { key: ViewKey; label: string; long: string; good: 'up' | 'down' | 'none' }[] = [
-  { key: 'shoulders', label: 'Épaules', long: 'Tour d’épaules', good: 'up' },
-  { key: 'chest', label: 'Poitrine', long: 'Tour de poitrine', good: 'up' },
-  { key: 'arm', label: 'Bras', long: 'Tour de bras', good: 'up' },
+  { key: 'shoulders', label: 'Épaules', long: traduire('Tour d’épaules'), good: 'up' },
+  { key: 'chest', label: 'Poitrine', long: traduire('Tour de poitrine'), good: 'up' },
+  { key: 'arm', label: 'Bras', long: traduire('Tour de bras'), good: 'up' },
   { key: 'waist', label: 'Taille', long: 'Tour de taille', good: 'down' },
-  { key: 'navel', label: 'Nombril', long: 'Tour au nombril', good: 'down' },
-  { key: 'hips', label: 'Hanches', long: 'Tour de hanches', good: 'none' },
-  { key: 'thigh', label: 'Cuisse', long: 'Tour de cuisse', good: 'none' },
-  { key: 'calf', label: 'Mollet', long: 'Tour de mollet', good: 'none' },
-  { key: 'neck', label: 'Cou', long: 'Tour de cou', good: 'none' },
+  { key: 'navel', label: 'Nombril', long: traduire('Tour au nombril'), good: 'down' },
+  { key: 'hips', label: 'Hanches', long: traduire('Tour de hanches'), good: 'none' },
+  { key: 'thigh', label: 'Cuisse', long: traduire('Tour de cuisse'), good: 'none' },
+  { key: 'calf', label: 'Mollet', long: traduire('Tour de mollet'), good: 'none' },
+  { key: 'neck', label: 'Cou', long: traduire('Tour de cou'), good: 'none' },
 ];
 
 const pos = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);

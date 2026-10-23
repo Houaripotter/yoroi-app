@@ -17,6 +17,7 @@ import { debriefStats } from '@/lib/v2/combat/analytics';
 import { plural, shortDate } from '@/lib/v2/combat/rounds';
 import { BigButton, Card, Chip, ChipScroll, CIcon, D, EmptyState, Enter, Glass, IconBtn, InkBar, N, P, RankRow, Section, V } from '@/components/yoroi/v2/combat/ui';
 import { BrushTrend } from '@/components/yoroi/v2/combat/charts';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 function TopCard({ title, sub, items, color, alerts }: { title: string; sub?: string; items: { label: string; count: number }[]; color: string; alerts?: boolean }) {
   if (items.length === 0) return null;
@@ -34,13 +35,12 @@ function TopCard({ title, sub, items, color, alerts }: { title: string; sub?: st
       </View>
       {items.map((it, i) => (
         <View key={`${it.label}_${i}`} style={{ gap: 4 }}>
-          <RankRow index={i} label={it.label} value={it.count} max={items[0].count} color={color} suffix=" fois" />
+          <RankRow index={i} label={it.label} value={it.count} max={items[0].count} color={color} suffix={traduire(" fois")} />
           {alerts && it.count >= 3 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 36 }}>
               <CIcon name="flag" size={13} color={color} />
               <Ink size={12} weight="extraBold" color={color}>
-                Revient souvent, à travailler en priorité
-              </Ink>
+                {traduire("Revient souvent, à travailler en priorité")}</Ink>
             </View>
           ) : null}
         </View>
@@ -60,15 +60,15 @@ export default function RoundsInsightsScreen() {
 
   const head = (
     <EnTete
-      titre="Tes débriefs"
-      sousTitre={s.nbDebriefed > 0 ? `${plural(s.nbDebriefed, 'round débriefé', 'rounds débriefés')} sur ${plural(s.nbSessions, 'séance')}` : 'Ce que tu notes après chaque round'}
+      titre={traduire("Tes débriefs")}
+      sousTitre={s.nbDebriefed > 0 ? traduire("{0} sur {1}", plural(s.nbDebriefed, 'round débriefé', 'rounds débriefés'), plural(s.nbSessions, 'séance')) : traduire('Ce que tu notes après chaque round')}
       onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
       style={{ marginHorizontal: -22, marginTop: -8 }}
     />
   );
 
   return (
-    <PremiumGate source="rounds" featureTitle="Analyse des rounds" perks={['Tous tes débriefs de rounds réunis', 'Ce qui a marché et ce qui a bloqué', 'Ta tendance par sport']}>
+    <PremiumGate source="rounds" featureTitle={traduire("Analyse des rounds")} perks={[traduire('Tous tes débriefs de rounds réunis'), traduire('Ce qui a marché et ce qui a bloqué'), traduire('Ta tendance par sport')]}>
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView
           contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }}
@@ -89,7 +89,7 @@ export default function RoundsInsightsScreen() {
 
           {s.sports.length > 1 ? (
             <ChipScroll>
-              <Chip label="Tous les sports" on={sport === 'all'} onPress={() => setSport('all')} />
+              <Chip label={traduire("Tous les sports")} on={sport === 'all'} onPress={() => setSport('all')} />
               {s.sports.map((sp) => (
                 <Chip key={sp} label={SPORTS.some((x) => x.id === sp) ? getSportName(sp) : sp} on={sport === sp} onPress={() => setSport(sp)} />
               ))}
@@ -97,7 +97,7 @@ export default function RoundsInsightsScreen() {
           ) : null}
 
           {loaded && s.nbDebriefed === 0 ? (
-            <EmptyState title="Aucun round débriefé" text="Après chaque round, note ton ressenti, ce qui a marché et ce qui a bloqué. Plus tu notes, plus tu vois clair." action="Nouvelle séance de combat" onAction={() => router.push('/seance/combat' as any)} />
+            <EmptyState title={traduire("Aucun round débriefé")} text={traduire("Après chaque round, note ton ressenti, ce qui a marché et ce qui a bloqué. Plus tu notes, plus tu vois clair.")} action={traduire("Nouvelle séance de combat")} onAction={() => router.push('/seance/combat' as any)} />
           ) : null}
 
           {s.nbDebriefed > 0 ? (
@@ -107,22 +107,20 @@ export default function RoundsInsightsScreen() {
                   <View style={{ flexDirection: 'row', gap: 12 }}>
                     <View style={{ flex: 1, gap: 2 }}>
                       <Ink size={40} weight="black" tight color={N}>
-                        {s.avgRating > 0 ? s.avgRating.toFixed(1).replace('.', ',') : '0'}
+                        {s.avgRating > 0 ? s.avgRating.toFixed(1).replace('.', DECIMAL) : '0'}
                         <Ink size={14} weight="bold" color={P.muted}>
-                          {' sur 10'}
+                          {traduire(' sur 10')}
                         </Ink>
                       </Ink>
                       <Ink size={12} weight="bold" color={P.ink2}>
-                        ta note moyenne
-                      </Ink>
+                        {traduire("ta note moyenne")}</Ink>
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
                       <Ink size={40} weight="black" tight>
                         {String(s.nbDebriefed)}
                       </Ink>
                       <Ink size={12} weight="bold" color={P.ink2}>
-                        rounds débriefés
-                      </Ink>
+                        {traduire("rounds débriefés")}</Ink>
                     </View>
                   </View>
                   {dominant ? (
@@ -132,8 +130,7 @@ export default function RoundsInsightsScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Ink size={12} weight="bold" color={P.ink2}>
-                          Ton ressenti le plus fréquent
-                        </Ink>
+                          {traduire("Ton ressenti le plus fréquent")}</Ink>
                         <Ink size={18} weight="black" color={dominant.info.color}>
                           {dominant.info.label}
                         </Ink>
@@ -146,23 +143,20 @@ export default function RoundsInsightsScreen() {
               {s.evolution.length > 1 ? (
                 <Card style={{ gap: 10 }}>
                   <Ink size={18} weight="black" tight>
-                    L'évolution de tes notes
-                  </Ink>
+                    {traduire("L'évolution de tes notes")}</Ink>
                   <Ink size={13} color={P.ink2}>
-                    {`Moyenne par séance, ${plural(s.evolution.length, 'dernière séance', 'dernières séances')}`}
+                    {traduire("Moyenne par séance, {0}", plural(s.evolution.length, 'dernière séance', 'dernières séances'))}
                   </Ink>
-                  <BrushTrend points={s.evolution.map((e) => ({ label: shortDate(e.date).split(' ')[0], value: e.avg * 10 }))} color={N} guide={null} unit=" sur 100" />
+                  <BrushTrend points={s.evolution.map((e) => ({ label: shortDate(e.date).split(' ')[0], value: e.avg * 10 }))} color={N} guide={null} unit={traduire(" sur 100")} />
                   <Ink size={12} color={P.muted}>
-                    Échelle sur 100 : 70 correspond à une note de 7 sur 10
-                  </Ink>
+                    {traduire("Échelle sur 100 : 70 correspond à une note de 7 sur 10")}</Ink>
                 </Card>
               ) : null}
 
               {s.moods.length > 0 ? (
                 <Card style={{ gap: 12 }}>
                   <Ink size={18} weight="black" tight>
-                    Tes ressentis
-                  </Ink>
+                    {traduire("Tes ressentis")}</Ink>
                   {s.moods.map((m) => {
                     const pct = Math.round((m.count / s.totalMoods) * 100);
                     return (
@@ -185,12 +179,12 @@ export default function RoundsInsightsScreen() {
                 </Card>
               ) : null}
 
-              <TopCard title="Ce qui marche pour toi" sub="Les techniques et positions que tu cites le plus" items={s.topWorked} color={V} />
-              <TopCard title="Ce qui te pose problème" sub="Ce qui n'a pas marché et ce qui t'a contré" items={s.topProblems} color={D} alerts />
-              <TopCard title="Tes objectifs récurrents" sub="Un objectif qui revient souvent mérite ton attention" items={s.topObjectives} color={P.indigo} alerts />
+              <TopCard title={traduire("Ce qui marche pour toi")} sub={traduire("Les techniques et positions que tu cites le plus")} items={s.topWorked} color={V} />
+              <TopCard title={traduire("Ce qui te pose problème")} sub={traduire("Ce qui n'a pas marché et ce qui t'a contré")} items={s.topProblems} color={D} alerts />
+              <TopCard title={traduire("Tes objectifs récurrents")} sub={traduire("Un objectif qui revient souvent mérite ton attention")} items={s.topObjectives} color={P.indigo} alerts />
 
-              <Section title="Passer à l'action" />
-              <BigButton label="Ouvrir mon plan de jeu" icon="flag" onPress={() => router.push('/game-plan' as any)} />
+              <Section title={traduire("Passer à l'action")} />
+              <BigButton label={traduire("Ouvrir mon plan de jeu")} icon="flag" onPress={() => router.push('/game-plan' as any)} />
             </>
           ) : null}
         </ScrollView>

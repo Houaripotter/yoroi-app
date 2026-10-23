@@ -19,6 +19,7 @@ import { ENCRE_FREIN, TAMPON_FREIN } from './Frein';
 import { ENCRES_THEME as ENCRES } from './couleurs';
 import { MainButton, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 /** « du texte **cle** » vers des morceaux, les cles en gras et en couleur */
 export function morceaux(t: string): { txt: string; cle: boolean }[] {
@@ -59,7 +60,7 @@ function Descends() {
       <Animated.View style={anim}>
         <Icon name="down" size={16} color={c.accent} stroke={2.6} />
       </Animated.View>
-      <Ink size={13} weight="extraBold" color={c.accent}>Descends pour continuer</Ink>
+      <Ink size={13} weight="extraBold" color={c.accent}>{traduire("Descends pour continuer")}</Ink>
     </Animated.View>
   );
 }
@@ -94,7 +95,7 @@ export function Affirmation({ nav, name, freins, genre = null, onNext, children 
             label="Continuer"
             onPress={onNext}
             disabled={!fin}
-            accessibilityLabel={fin ? 'Continuer' : 'Continuer, indisponible : descends jusqu’en bas de la page'}
+            accessibilityLabel={fin ? 'Continuer' : traduire('Continuer, indisponible : descends jusqu’en bas de la page')}
           />
         </>
       }

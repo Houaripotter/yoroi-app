@@ -7,97 +7,98 @@ import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Star, Check, X, Search } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { traduire } from '@/lib/i18n/tr';
 
 const FAV_KEY = 'bjj_fav_submissions_v2';
 
 // ── Soumissions : nom français en premier, nom international en description ──
 export const ALL_SUBMISSIONS: { id: string; short: string; full: string }[] = [
   // ── ÉTRANGLEMENTS DOS ──────────────────────────────────────
-  { id: 'rnc',          short: 'RNC / Mata Leão',     full: 'Rear Naked Choke, étranglement dos' },
-  { id: 'bowarrow',     short: 'Bow & Arrow',         full: 'Bow & Arrow Choke, étrang. gi depuis le dos' },
-  { id: 'bodytri',      short: 'Body Triangle',       full: 'Body Triangle RNC : ciseaux + étrang. dos' },
-  { id: 'reartri',      short: 'Triangle arrière',    full: 'Rear Triangle, triangle depuis le dos' },
-  { id: 'crucifix',     short: 'Crucifix',            full: 'Crucifix Choke, dos, bras verrouillé' },
+  { id: 'rnc',          short: 'RNC / Mata Leão',     full: traduire('Rear Naked Choke, étranglement dos') },
+  { id: 'bowarrow',     short: 'Bow & Arrow',         full: traduire('Bow & Arrow Choke, étrang. gi depuis le dos') },
+  { id: 'bodytri',      short: 'Body Triangle',       full: traduire('Body Triangle RNC : ciseaux + étrang. dos') },
+  { id: 'reartri',      short: traduire('Triangle arrière'),    full: traduire('Rear Triangle, triangle depuis le dos') },
+  { id: 'crucifix',     short: 'Crucifix',            full: traduire('Crucifix Choke, dos, bras verrouillé') },
 
   // ── ÉTRANGLEMENTS GARDE ────────────────────────────────────
-  { id: 'triangle',     short: 'Triangle',            full: 'Triangle Choke, étranglement par les jambes' },
-  { id: 'triangleinv',  short: 'Triangle inversé',    full: 'Inverted Triangle, depuis les hanches' },
-  { id: 'montedtri',    short: 'Triangle monté',      full: 'Mounted Triangle, position montée' },
-  { id: 'guillotine',   short: 'Guillotine',          full: 'Guillotine Choke, avant du cou' },
-  { id: 'guillarmin',   short: 'Arm-in Guillotine',   full: 'Guillotine bras inclus, emprisonne le bras' },
+  { id: 'triangle',     short: 'Triangle',            full: traduire('Triangle Choke, étranglement par les jambes') },
+  { id: 'triangleinv',  short: traduire('Triangle inversé'),    full: traduire('Inverted Triangle, depuis les hanches') },
+  { id: 'montedtri',    short: traduire('Triangle monté'),      full: traduire('Mounted Triangle, position montée') },
+  { id: 'guillotine',   short: 'Guillotine',          full: traduire('Guillotine Choke, avant du cou') },
+  { id: 'guillarmin',   short: 'Arm-in Guillotine',   full: traduire('Guillotine bras inclus, emprisonne le bras') },
   { id: 'marcelo',      short: 'Guillotine haute',    full: 'High Elbow Guillotine, Marcelotine' },
-  { id: 'hipbumpguil',  short: 'Hip Bump Guillotine', full: 'Hip Bump + Guillotine, rebond de hanche' },
+  { id: 'hipbumpguil',  short: 'Hip Bump Guillotine', full: traduire('Hip Bump + Guillotine, rebond de hanche') },
 
   // ── ÉTRANGLEMENTS AU SOL ───────────────────────────────────
-  { id: 'darce',        short: "D'Arce",              full: "D'Arce Choke, étranglement latéral avant" },
-  { id: 'anaconda',     short: 'Anaconda',            full: 'Anaconda Choke, roulade, avant gorge' },
-  { id: 'armtri',       short: 'Arm Triangle',        full: 'Arm Triangle / Kata Gatame, bras + épaule' },
+  { id: 'darce',        short: "D'Arce",              full: traduire("D'Arce Choke, étranglement latéral avant") },
+  { id: 'anaconda',     short: 'Anaconda',            full: traduire('Anaconda Choke, roulade, avant gorge') },
+  { id: 'armtri',       short: 'Arm Triangle',        full: traduire('Arm Triangle / Kata Gatame, bras + épaule') },
   { id: 'northsouth',   short: 'Nord-Sud',            full: 'North-South Choke, position nord-sud' },
-  { id: 'ezekiel',      short: 'Ezekiel',             full: 'Ezekiel Choke / Sode Guruma, depuis mont' },
-  { id: 'buggy',        short: 'Buggy Choke',         full: 'Buggy Choke, avant-bras, de côté' },
+  { id: 'ezekiel',      short: 'Ezekiel',             full: traduire('Ezekiel Choke / Sode Guruma, depuis mont') },
+  { id: 'buggy',        short: 'Buggy Choke',         full: traduire('Buggy Choke, avant-bras, de côté') },
   { id: 'loop',         short: 'Loop Choke',          full: 'Loop Choke, gi, col + manche' },
-  { id: 'baseball',     short: 'Baseball Bat',        full: 'Baseball Bat Choke, gi, croisé' },
+  { id: 'baseball',     short: 'Baseball Bat',        full: traduire('Baseball Bat Choke, gi, croisé') },
   { id: 'papercutter',  short: 'Paper Cutter',        full: 'Paper Cutter Choke, gi, tranche' },
-  { id: 'brabo',        short: 'Brabo',               full: 'Brabo Choke, gi, sous l\'aisselle' },
-  { id: 'clockchoke',   short: 'Clock Choke',         full: 'Clock Choke, depuis turtle, gi' },
+  { id: 'brabo',        short: 'Brabo',               full: traduire('Brabo Choke, gi, sous l\'aisselle') },
+  { id: 'clockchoke',   short: 'Clock Choke',         full: traduire('Clock Choke, depuis turtle, gi') },
   { id: 'vonflue',      short: 'Von Flue',            full: 'Von Flue Choke, contre guillotine' },
   { id: 'peruvian',     short: 'Peruvian Necktie',    full: 'Peruvian Necktie, triangle + rotation' },
-  { id: 'gogoplata',    short: 'Gogoplata',           full: 'Gogoplata, tibia sur la gorge' },
-  { id: 'twister',      short: 'Twister',             full: 'Twister, rotation vertébrale' },
-  { id: 'lapelchoke',   short: 'Lapel Choke',         full: 'Lapel Choke, gi, revers de veste' },
-  { id: 'daratine',     short: 'Daratine',            full: "D'Arce-Triangle, combiné" },
-  { id: 'katahajime',   short: 'Kata Ha Jime',        full: 'Kata Ha Jime, étranglement épaule + cou' },
-  { id: 'japanesenetie',short: 'Japanese Necktie',    full: 'Japanese Necktie, étranglement avant-bras' },
-  { id: 'mountedguill', short: 'Guillotine montée',   full: 'Mounted Guillotine, depuis position montée' },
-  { id: 'kesagatame',   short: 'Kesa Gatame',         full: 'Kesa Gatame Choke, étranglement écharpe' },
-  { id: 'headscissor',  short: 'Head Scissors',       full: 'Head Scissors, pression tête par les jambes' },
-  { id: 'ezekielguard', short: 'Ezekiel garde',       full: 'Ezekiel depuis garde fermée' },
+  { id: 'gogoplata',    short: 'Gogoplata',           full: traduire('Gogoplata, tibia sur la gorge') },
+  { id: 'twister',      short: 'Twister',             full: traduire('Twister, rotation vertébrale') },
+  { id: 'lapelchoke',   short: 'Lapel Choke',         full: traduire('Lapel Choke, gi, revers de veste') },
+  { id: 'daratine',     short: 'Daratine',            full: traduire("D'Arce-Triangle, combiné") },
+  { id: 'katahajime',   short: 'Kata Ha Jime',        full: traduire('Kata Ha Jime, étranglement épaule + cou') },
+  { id: 'japanesenetie',short: 'Japanese Necktie',    full: traduire('Japanese Necktie, étranglement avant-bras') },
+  { id: 'mountedguill', short: traduire('Guillotine montée'),   full: traduire('Mounted Guillotine, depuis position montée') },
+  { id: 'kesagatame',   short: 'Kesa Gatame',         full: traduire('Kesa Gatame Choke, étranglement écharpe') },
+  { id: 'headscissor',  short: 'Head Scissors',       full: traduire('Head Scissors, pression tête par les jambes') },
+  { id: 'ezekielguard', short: 'Ezekiel garde',       full: traduire('Ezekiel depuis garde fermée') },
   { id: 'necklace',     short: 'Necklace Choke',      full: 'Necklace Choke, cou libre, no-gi' },
   { id: 'chinstrap',    short: 'Chin Strap',          full: 'Chin Strap Choke, pression menton no-gi' },
-  { id: 'crosstri',     short: 'Triangle croisé',     full: 'Cross Body Triangle, sol croisé' },
+  { id: 'crosstri',     short: traduire('Triangle croisé'),     full: traduire('Cross Body Triangle, sol croisé') },
 
   // ── LOCKS DE BRAS ──────────────────────────────────────────
-  { id: 'armbar',       short: 'Clé de bras',         full: 'Armbar / Juji-gatame, hyperextension coude' },
-  { id: 'armbarguard',  short: 'Clé de bras garde',   full: 'Armbar depuis garde fermée' },
-  { id: 'armbarmount',  short: 'Clé de bras montée',  full: 'Armbar depuis position montée' },
-  { id: 'armbarback',   short: 'Clé de bras dos',     full: 'Armbar depuis contrôle du dos' },
-  { id: 'kimura',       short: 'Kimura',              full: 'Kimura, rotation épaule externe (bras derrière)' },
-  { id: 'kimuratrap',   short: 'Kimura Trap',         full: 'Kimura Trap, système de contrôle kimura' },
-  { id: 'americana',    short: 'Américaine',          full: 'Americana / Ude-garami, rotation épaule interne' },
-  { id: 'omoplata',     short: 'Omoplata',            full: 'Omoplata, rotation épaule par les jambes' },
-  { id: 'monoplata',    short: 'Monoplata',           full: 'Monoplata, variante omoplata une jambe' },
-  { id: 'baratoplata',  short: 'Baratoplata',         full: 'Baratoplata, lock épaule inversé' },
-  { id: 'tarikoplata',  short: 'Tarikoplata',         full: 'Tarikoplata, depuis turtle, épaule' },
-  { id: 'wristlock',    short: 'Clé de poignet',      full: 'Wristlock, verrouillage du poignet' },
+  { id: 'armbar',       short: traduire('Clé de bras'),         full: 'Armbar / Juji-gatame, hyperextension coude' },
+  { id: 'armbarguard',  short: traduire('Clé de bras garde'),   full: traduire('Armbar depuis garde fermée') },
+  { id: 'armbarmount',  short: traduire('Clé de bras montée'),  full: traduire('Armbar depuis position montée') },
+  { id: 'armbarback',   short: traduire('Clé de bras dos'),     full: traduire('Armbar depuis contrôle du dos') },
+  { id: 'kimura',       short: 'Kimura',              full: traduire('Kimura, rotation épaule externe (bras derrière)') },
+  { id: 'kimuratrap',   short: 'Kimura Trap',         full: traduire('Kimura Trap, système de contrôle kimura') },
+  { id: 'americana',    short: traduire('Américaine'),          full: traduire('Americana / Ude-garami, rotation épaule interne') },
+  { id: 'omoplata',     short: 'Omoplata',            full: traduire('Omoplata, rotation épaule par les jambes') },
+  { id: 'monoplata',    short: 'Monoplata',           full: traduire('Monoplata, variante omoplata une jambe') },
+  { id: 'baratoplata',  short: 'Baratoplata',         full: traduire('Baratoplata, lock épaule inversé') },
+  { id: 'tarikoplata',  short: 'Tarikoplata',         full: traduire('Tarikoplata, depuis turtle, épaule') },
+  { id: 'wristlock',    short: traduire('Clé de poignet'),      full: traduire('Wristlock, verrouillage du poignet') },
   { id: 'bicepslicer',  short: 'Bicep Slicer',        full: 'Bicep Slicer, compression biceps' },
-  { id: 'shoulder',     short: 'Clé d\'épaule',       full: 'Shoulder Lock, luxation épaule' },
-  { id: 'hammerlock',   short: 'Hammerlock',          full: 'Hammerlock, bras verrouillé dans le dos' },
+  { id: 'shoulder',     short: traduire('Clé d\'épaule'),       full: traduire('Shoulder Lock, luxation épaule') },
+  { id: 'hammerlock',   short: 'Hammerlock',          full: traduire('Hammerlock, bras verrouillé dans le dos') },
   { id: 'straightarm',  short: 'Straight Arm Lock',   full: 'Straight Arm Lock, coude tendu en extension' },
-  { id: 'chickenwing',  short: 'Chicken Wing',        full: 'Chicken Wing, clé épaule + dos' },
-  { id: 'spiderweb',    short: 'Spider Web',          full: 'Spider Web Armbar, isolation du bras' },
-  { id: 'reversearmbar',short: 'Reverse Armbar',      full: 'Reverse Armbar, coude vers intérieur' },
-  { id: 'mirlock',      short: 'Mir Lock',            full: 'Mir Lock, genou + bras combinés' },
+  { id: 'chickenwing',  short: 'Chicken Wing',        full: traduire('Chicken Wing, clé épaule + dos') },
+  { id: 'spiderweb',    short: 'Spider Web',          full: traduire('Spider Web Armbar, isolation du bras') },
+  { id: 'reversearmbar',short: 'Reverse Armbar',      full: traduire('Reverse Armbar, coude vers intérieur') },
+  { id: 'mirlock',      short: 'Mir Lock',            full: traduire('Mir Lock, genou + bras combinés') },
   { id: 'gooseneck',    short: 'Gooseneck',           full: 'Gooseneck Wristlock, verrou poignet en S' },
-  { id: 'canopener',    short: 'Can Opener',          full: 'Can Opener, pression nuque en garde fermée' },
+  { id: 'canopener',    short: 'Can Opener',          full: traduire('Can Opener, pression nuque en garde fermée') },
 
   // ── LOCKS DE JAMBES ────────────────────────────────────────
   { id: 'heelint',      short: 'Heel Hook int.',      full: 'Inside Heel Hook, rotation genou interne' },
   { id: 'heelext',      short: 'Heel Hook ext.',      full: 'Outside Heel Hook, rotation genou externe' },
-  { id: 'crossheel',    short: 'Cross Heel Hook',     full: 'Cross Heel Hook, heel hook croisé' },
-  { id: 'kneebar',      short: 'Clé de genou',        full: 'Kneebar, hyperextension genou' },
-  { id: 'anklelock',    short: 'Clé de cheville',     full: 'Straight Ankle Lock, extension cheville' },
+  { id: 'crossheel',    short: 'Cross Heel Hook',     full: traduire('Cross Heel Hook, heel hook croisé') },
+  { id: 'kneebar',      short: traduire('Clé de genou'),        full: 'Kneebar, hyperextension genou' },
+  { id: 'anklelock',    short: traduire('Clé de cheville'),     full: 'Straight Ankle Lock, extension cheville' },
   { id: 'anklerot',     short: 'Ankle Lock rotatif',  full: 'Rotational Ankle Lock, rotation + extension' },
-  { id: 'toehold',      short: 'Clé de pied',         full: 'Toe Hold, rotation pied + cheville' },
+  { id: 'toehold',      short: traduire('Clé de pied'),         full: 'Toe Hold, rotation pied + cheville' },
   { id: 'calfslicer',   short: 'Calf Slicer',         full: 'Calf Slicer, compression mollet' },
-  { id: 'estima',       short: 'Estima Lock',         full: 'Estima Lock, depuis spider guard' },
-  { id: 'electricchair',short: 'Electric Chair',      full: 'Electric Chair, depuis demi-garde' },
-  { id: 'bananasplit',  short: 'Banana Split',        full: 'Banana Split, écartement des jambes' },
-  { id: 'saddle',       short: 'Saddle / Sankaku',    full: 'Inside Sankaku / Saddle, heel hook intérieur' },
+  { id: 'estima',       short: 'Estima Lock',         full: traduire('Estima Lock, depuis spider guard') },
+  { id: 'electricchair',short: 'Electric Chair',      full: traduire('Electric Chair, depuis demi-garde') },
+  { id: 'bananasplit',  short: 'Banana Split',        full: traduire('Banana Split, écartement des jambes') },
+  { id: 'saddle',       short: 'Saddle / Sankaku',    full: traduire('Inside Sankaku / Saddle, heel hook intérieur') },
   { id: 'straightfoot', short: 'Straight Foot Lock',  full: 'Straight Foot Lock, extension cheville droite' },
-  { id: 'suloev',       short: 'Suloev Stretch',      full: 'Suloev Stretch, extension hanche depuis turtle' },
+  { id: 'suloev',       short: 'Suloev Stretch',      full: traduire('Suloev Stretch, extension hanche depuis turtle') },
   { id: 'aokilock',     short: 'Aoki Lock',           full: 'Aoki Lock, rotation cheville + pied' },
   { id: 'revheelhook',  short: 'Reverse Heel Hook',   full: 'Reverse Heel Hook, rotation interne genou' },
-  { id: 'fig4ankle',    short: 'Figure 4 Ankle',      full: 'Figure 4 Ankle Lock, cheville croisée' },
+  { id: 'fig4ankle',    short: 'Figure 4 Ankle',      full: traduire('Figure 4 Ankle Lock, cheville croisée') },
   { id: 'texasclover',  short: 'Texas Cloverleaf',    full: 'Texas Cloverleaf, dos + jambes' },
 ];
 
@@ -107,7 +108,7 @@ const POINTS_GROUPS = [
     label: 'DEBOUT',
     color: '#3B82F6',
     actions: [
-      { label: 'Takedown', pts: 2, desc: 'Amenée au sol' },
+      { label: 'Takedown', pts: 2, desc: traduire('Amenée au sol') },
       { label: 'Renversement debout', pts: 2, desc: 'Projection / trip' },
     ],
   },
@@ -115,24 +116,24 @@ const POINTS_GROUPS = [
     label: 'SOL : 2 pts',
     color: '#22C55E',
     actions: [
-      { label: 'Sweep', pts: 2, desc: 'Renversement depuis garde' },
-      { label: "Genou sur l'estomac", pts: 2, desc: 'Knee on belly' },
+      { label: 'Sweep', pts: 2, desc: traduire('Renversement depuis garde') },
+      { label: traduire("Genou sur l'estomac"), pts: 2, desc: 'Knee on belly' },
     ],
   },
   {
     label: 'SOL : 3 pts',
     color: '#10B981',
     actions: [
-      { label: 'Passage de garde', pts: 3, desc: 'Guard pass' },
+      { label: traduire('Passage de garde'), pts: 3, desc: 'Guard pass' },
     ],
   },
   {
     label: 'POSITIONS DOMINANTES : 4 pts',
     color: '#A855F7',
     actions: [
-      { label: 'Position montée', pts: 4, desc: 'Mount' },
-      { label: 'Montée arrière', pts: 4, desc: 'Back mount' },
-      { label: 'Contrôle du dos', pts: 4, desc: 'Back control' },
+      { label: traduire('Position montée'), pts: 4, desc: 'Mount' },
+      { label: traduire('Montée arrière'), pts: 4, desc: 'Back mount' },
+      { label: traduire('Contrôle du dos'), pts: 4, desc: 'Back control' },
       { label: 'Body triangle', pts: 4, desc: 'Body triangle dos' },
     ],
   },
@@ -145,8 +146,8 @@ const POINTS_GROUPS = [
       { label: 'Quasi-sweep', pts: 1, desc: 'Near sweep' },
       { label: 'Quasi-takedown', pts: 1, desc: 'Near takedown' },
       { label: 'Quasi-passe', pts: 1, desc: 'Near guard pass' },
-      { label: 'Pénalité adv. +1', pts: 1, desc: '2e faute adverse' },
-      { label: 'Pénalité adv. +2', pts: 2, desc: '3e faute adverse' },
+      { label: traduire('Pénalité adv. +1'), pts: 1, desc: '2e faute adverse' },
+      { label: traduire('Pénalité adv. +2'), pts: 2, desc: '3e faute adverse' },
     ],
   },
 ];
@@ -395,7 +396,7 @@ export function BJJBodyMap({
           )}
           <ScrollView style={{ maxHeight: SCROLL_HEIGHT }} nestedScrollEnabled showsVerticalScrollIndicator>
             {filteredMe.length === 0 ? (
-              <Text style={[styles.noResult, { color: mutedColor }]}>Aucun résultat</Text>
+              <Text style={[styles.noResult, { color: mutedColor }]}>{traduire("Aucun résultat")}</Text>
             ) : filteredMe.map((sub, i) => (
               <React.Fragment key={sub.id}>
                 {!showSearchMe && i === favSubs.length && favSubs.length > 0 && (
@@ -458,7 +459,7 @@ export function BJJBodyMap({
           )}
           <ScrollView style={{ maxHeight: SCROLL_HEIGHT }} nestedScrollEnabled showsVerticalScrollIndicator>
             {filteredOpp.length === 0 ? (
-              <Text style={[styles.noResult, { color: mutedColor }]}>Aucun résultat</Text>
+              <Text style={[styles.noResult, { color: mutedColor }]}>{traduire("Aucun résultat")}</Text>
             ) : filteredOpp.map((sub, i) => (
               <React.Fragment key={sub.id}>
                 {!showSearchOpp && i === favSubs.length && favSubs.length > 0 && (
@@ -484,7 +485,7 @@ export function BJJBodyMap({
           </Text>
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={[styles.pointsColMid, { color: mutedColor }]}>POINTS CFJJB</Text>
-            <Text style={{ fontSize: 8, color: mutedColor, fontStyle: 'italic', marginTop: 1 }}>Appui long = annuler</Text>
+            <Text style={{ fontSize: 8, color: mutedColor, fontStyle: 'italic', marginTop: 1 }}>{traduire("Appui long = annuler")}</Text>
           </View>
           <Text style={[styles.pointsColName, { color: '#EF4444', textAlign: 'right' }]}>
             {(opponentName || 'ADV').slice(0, 8).toUpperCase()}

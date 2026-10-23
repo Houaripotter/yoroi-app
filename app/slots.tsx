@@ -28,6 +28,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { BackButton, BigButton, Chip, EmptyState, Glass, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const QUICK = ['jjb', 'musculation', 'boxe', 'mma', 'muay_thai', 'judo', 'grappling', 'crossfit', 'running', 'kickboxing'];
 
@@ -130,7 +131,7 @@ export default function SlotsScreen() {
       await load();
     } catch (e) {
       logger.error('Enregistrement du créneau impossible', e);
-      appAlert('Oups', 'Le créneau n’a pas pu être enregistré.');
+      appAlert('Oups', traduire('Le créneau n’a pas pu être enregistré.'));
     } finally {
       setSaving(false);
     }
@@ -139,10 +140,10 @@ export default function SlotsScreen() {
   const remove = () => {
     if (!draft?.id) return;
     const id = draft.id;
-    appAlert('Supprimer ce créneau ?', 'Il ne reviendra plus chaque semaine. Tes séances déjà faites restent.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer ce créneau ?'), traduire('Il ne reviendra plus chaque semaine. Tes séances déjà faites restent.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -163,7 +164,7 @@ export default function SlotsScreen() {
     try {
       for (const s of impactedPending) {
         const inj = injuries.find((i) => i.fit_for_duty !== 'operational' && isSportImpactedByInjury(s.sport, i));
-        if (s.id) await cancelSlot(s.id, weekKey, 'Blessure active', inj?.id);
+        if (s.id) await cancelSlot(s.id, weekKey, traduire('Blessure active'), inj?.id);
       }
       notificationAsync(NotificationFeedbackType.Warning).catch(() => {});
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
@@ -184,18 +185,18 @@ export default function SlotsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 12 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre="Créneaux réguliers" sousTitre={work.length ? `${work.length} créneau${work.length > 1 ? 'x' : ''} par semaine` : 'Tes entraînements de chaque semaine'} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={traduire("Créneaux réguliers")} sousTitre={work.length ? traduirePluriel(work.length, work.length > 1, "{0} créneau par semaine", "{0} créneaux par semaine", work.length) : traduire('Tes entraînements de chaque semaine')} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         {impactedPending.length > 0 ? (
           <Glass style={{ gap: 8, borderColor: c.dangerTint }}>
-            <Ink size={16} weight="black" tight color={c.danger}>Une blessure touche certains créneaux</Ink>
-            <Ink size={13} color={c.textSecondary}>{`${impactedPending.length} créneau${impactedPending.length > 1 ? 'x' : ''} de cette semaine sollicite${impactedPending.length > 1 ? 'nt' : ''} la zone blessée.`}</Ink>
-            <BigButton label="Les annuler cette semaine" tone="danger" icon="close" onPress={cancelInjured} />
+            <Ink size={16} weight="black" tight color={c.danger}>{traduire("Une blessure touche certains créneaux")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduirePluriel(impactedPending.length, impactedPending.length > 1, "{0} créneau de cette semaine sollicite{1} la zone blessée.", "{0} créneaux de cette semaine sollicite{1} la zone blessée.", impactedPending.length, impactedPending.length > 1 ? 'nt' : '')}</Ink>
+            <BigButton label={traduire("Les annuler cette semaine")} tone="danger" icon="close" onPress={cancelInjured} />
           </Glass>
         ) : null}
 
         {work.length === 0 ? (
-          <EmptyState title="Aucun créneau pour l’instant" text="Ajoute ton cours du mardi soir ou ta muscu du jeudi. Il revient chaque semaine dans ton planning, tu n’as plus qu’à valider." action="Ajouter un créneau" onAction={() => openNew()} />
+          <EmptyState title={traduire("Aucun créneau pour l’instant")} text={traduire("Ajoute ton cours du mardi soir ou ta muscu du jeudi. Il revient chaque semaine dans ton planning, tu n’as plus qu’à valider.")} action={traduire("Ajouter un créneau")} onAction={() => openNew()} />
         ) : null}
 
         {PLAN_DAYS.map((dname, d) => {
@@ -205,7 +206,7 @@ export default function SlotsScreen() {
             <View key={dname} style={{ gap: 8 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, marginTop: 4 }}>
                 <Ink size={16} weight="extraBold">{dname.charAt(0).toUpperCase() + dname.slice(1)}</Ink>
-                <Pressable onPress={() => { tap(); openNew(d); }} accessibilityRole="button" accessibilityLabel={`Ajouter un créneau le ${dname}`} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => { tap(); openNew(d); }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter un créneau le {0}", dname)} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name="plus" size={16} color={c.textSecondary} strokeWidth={2.6} />
                 </Pressable>
               </View>
@@ -214,15 +215,15 @@ export default function SlotsScreen() {
                 const r = s.id ? rates[s.id] : undefined;
                 const hurt = impacted.some((x) => x.id === s.id);
                 return (
-                  <Pressable key={s.id} onPress={() => { tap(); openEdit(s); }} accessibilityRole="button" accessibilityLabel={`Modifier ${s.label || getSportName(s.sport)}`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: pressed ? P.white : blancA(0.8), borderWidth: 1, borderColor: hurt ? c.accentTint : c.divider })}>
+                  <Pressable key={s.id} onPress={() => { tap(); openEdit(s); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier {0}", s.label || getSportName(s.sport))} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: pressed ? P.white : blancA(0.8), borderWidth: 1, borderColor: hurt ? c.accentTint : c.divider })}>
                     <View style={{ width: 6, alignSelf: 'stretch', borderRadius: 3, backgroundColor: s.club_color || familyInk(s.sport) }} />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Ink size={16} weight="extraBold" numberOfLines={1}>{s.label || sportLabel(s.sport)}</Ink>
                       <Ink size={12} color={c.textSecondary} numberOfLines={1}>{[s.time ? `${s.time}${s.duration_minutes ? ` à ${endTime(s.time, s.duration_minutes)}` : ''}` : '', s.club_name, s.session_type].filter(Boolean).join(', ')}</Ink>
-                      {r && r.total > 0 ? <Ink size={11} weight="bold" color={c.textMuted}>{`${r.validated} sur ${r.total} ces dernières semaines`}</Ink> : null}
+                      {r && r.total > 0 ? <Ink size={11} weight="bold" color={c.textMuted}>{traduire("{0} sur {1} ces dernières semaines", r.validated, r.total)}</Ink> : null}
                     </View>
                     <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 9, backgroundColor: o?.status === 'validated' ? c.successTint : o?.status === 'cancelled' ? c.fillSubtle : c.indigoTint }}>
-                      <Ink size={11} weight="extraBold" color={o?.status === 'validated' ? c.successText : o?.status === 'cancelled' ? c.textMuted : c.indigo}>{o?.status === 'validated' ? 'fait' : o?.status === 'cancelled' ? 'annulé' : 'prévu'}</Ink>
+                      <Ink size={11} weight="extraBold" color={o?.status === 'validated' ? c.successText : o?.status === 'cancelled' ? c.textMuted : c.indigo}>{o?.status === 'validated' ? 'fait' : o?.status === 'cancelled' ? traduire('annulé') : traduire('prévu')}</Ink>
                     </View>
                   </Pressable>
                 );
@@ -231,21 +232,21 @@ export default function SlotsScreen() {
           );
         })}
 
-        {work.length > 0 ? <BigButton label="Ajouter un créneau" icon="plus" onPress={() => openNew()} style={{ marginTop: 6 }} /> : null}
+        {work.length > 0 ? <BigButton label={traduire("Ajouter un créneau")} icon="plus" onPress={() => openNew()} style={{ marginTop: 6 }} /> : null}
         <Pressable onPress={() => { tap(); router.push('/planning' as any); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={14} weight="extraBold" color={c.accent}>Voir mon planning de la semaine</Ink>
+          <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Voir mon planning de la semaine")}</Ink>
         </Pressable>
         {hasRoutine ? (
           <Pressable onPress={() => { tap(); router.push('/sport' as any); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-            <Ink size={14} weight="bold" color={c.textSecondary}>Ta semaine type</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Ta semaine type")}</Ink>
           </Pressable>
         ) : null}
       </ScrollView>
 
-      <Sheet visible={!!draft} onClose={() => setDraft(null)} title={draft?.id ? 'Modifier le créneau' : 'Nouveau créneau'}>
+      <Sheet visible={!!draft} onClose={() => setDraft(null)} title={draft?.id ? traduire('Modifier le créneau') : traduire('Nouveau créneau')}>
         {draft ? (
           <>
-            <Ink size={14} weight="bold" color={c.textSecondary}>Jour</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Jour")}</Ink>
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {PLAN_DAYS_SHORT.map((l, i) => {
                 const on = draft.day === i;
@@ -265,7 +266,7 @@ export default function SlotsScreen() {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, minHeight: 46, borderRadius: 14, backgroundColor: P.white, borderWidth: 1, borderColor: c.border }}>
               <Icon name="search" size={18} color={c.textMuted} />
-              <TextInput value={search} onChangeText={setSearch} placeholder="Un autre sport" placeholderTextColor={c.textMuted} style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 8 }} />
+              <TextInput value={search} onChangeText={setSearch} placeholder={traduire("Un autre sport")} placeholderTextColor={c.textMuted} style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 8 }} />
             </View>
             {sportResults.length ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -279,7 +280,7 @@ export default function SlotsScreen() {
               <>
                 <Ink size={14} weight="bold" color={c.textSecondary}>Club</Ink>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  <Chip label="Aucun" on={!draft.clubId} onPress={() => setDraft({ ...draft, clubId: null })} />
+                  <Chip label={traduire("Aucun")} on={!draft.clubId} onPress={() => setDraft({ ...draft, clubId: null })} />
                   {clubs.map((cl) => (
                     <Chip key={cl.id} label={cl.name} on={draft.clubId === cl.id} onPress={() => setDraft({ ...draft, clubId: cl.id ?? null, sport: draft.clubId === cl.id ? draft.sport : cl.sport })} />
                   ))}
@@ -287,16 +288,16 @@ export default function SlotsScreen() {
               </>
             ) : null}
 
-            <Ink size={14} weight="bold" color={c.textSecondary}>Heure</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Heure")}</Ink>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Pressable onPress={() => { tap(); setDraft({ ...draft, time: shiftTime(draft.time, -15) }); }} accessibilityRole="button" accessibilityLabel="Un quart d’heure plus tôt" style={{ width: 48, height: 48, borderRadius: 15, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => { tap(); setDraft({ ...draft, time: shiftTime(draft.time, -15) }); }} accessibilityRole="button" accessibilityLabel={traduire("Un quart d’heure plus tôt")} style={{ width: 48, height: 48, borderRadius: 15, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={22} weight="black">−</Ink>
               </Pressable>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Ink size={34} weight="black" tight>{draft.time.replace(':', ' h ')}</Ink>
-                <Ink size={12} weight="bold" color={c.textMuted}>{`fin à ${endTime(draft.time, draft.duration)}`}</Ink>
+                <Ink size={12} weight="bold" color={c.textMuted}>{traduire("fin à {0}", endTime(draft.time, draft.duration))}</Ink>
               </View>
-              <Pressable onPress={() => { tap(); setDraft({ ...draft, time: shiftTime(draft.time, 15) }); }} accessibilityRole="button" accessibilityLabel="Un quart d’heure plus tard" style={{ width: 48, height: 48, borderRadius: 15, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => { tap(); setDraft({ ...draft, time: shiftTime(draft.time, 15) }); }} accessibilityRole="button" accessibilityLabel={traduire("Un quart d’heure plus tard")} style={{ width: 48, height: 48, borderRadius: 15, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="plus" size={20} color={c.ink} strokeWidth={2.6} />
               </Pressable>
             </View>
@@ -306,14 +307,14 @@ export default function SlotsScreen() {
               ))}
             </View>
 
-            <Ink size={14} weight="bold" color={c.textSecondary}>Durée</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Durée")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {DURATION_PRESETS.map((d) => (
                 <Chip key={d.value} label={formatDuration(d.value)} on={draft.duration === d.value} onPress={() => setDraft({ ...draft, duration: d.value })} />
               ))}
             </View>
 
-            <Ink size={14} weight="bold" color={c.textSecondary}>Type de séance</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Type de séance")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {types.map((t) => (
                 <Chip key={t} label={t} on={draft.type === t} onPress={() => setDraft({ ...draft, type: draft.type === t ? '' : t })} />
@@ -321,10 +322,10 @@ export default function SlotsScreen() {
             </View>
 
             <Ink size={14} weight="bold" color={c.textSecondary}>Nom (facultatif)</Ink>
-            <TextInput value={draft.label} onChangeText={(v) => setDraft({ ...draft, label: v })} placeholder="Ex. Cours débutants, Haut du corps" placeholderTextColor={c.textMuted} style={{ minHeight: 48, borderRadius: 14, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 15, color: c.ink }} />
+            <TextInput value={draft.label} onChangeText={(v) => setDraft({ ...draft, label: v })} placeholder={traduire("Ex. Cours débutants, Haut du corps")} placeholderTextColor={c.textMuted} style={{ minHeight: 48, borderRadius: 14, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 15, color: c.ink }} />
 
-            <BigButton label={saving ? 'Enregistrement...' : draft.id ? 'Enregistrer' : 'Ajouter ce créneau'} icon="check" onPress={save} />
-            {draft.id ? <BigButton label="Supprimer ce créneau" icon="trash" tone="danger" onPress={remove} /> : null}
+            <BigButton label={saving ? 'Enregistrement...' : draft.id ? traduire('Enregistrer') : traduire('Ajouter ce créneau')} icon="check" onPress={save} />
+            {draft.id ? <BigButton label={traduire("Supprimer ce créneau")} icon="trash" tone="danger" onPress={remove} /> : null}
           </>
         ) : null}
       </Sheet>

@@ -12,6 +12,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Button, Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean; onClose: () => void; onUnlocked: () => void }) {
   const { theme } = useYoroiTheme();
@@ -73,19 +74,19 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
     try {
       const text = await Clipboard.getStringAsync();
       if (!text) {
-        setMessage('Le presse-papiers est vide. Copie d’abord ton jeton.');
+        setMessage(traduire('Le presse-papiers est vide. Copie d’abord ton jeton.'));
         return;
       }
       await submit(text, true);
     } catch {
-      setMessage('Le presse-papiers est illisible. Colle le jeton dans le champ.');
+      setMessage(traduire('Le presse-papiers est illisible. Colle le jeton dans le champ.'));
     }
   };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.5)', paddingTop: insets.top + 56, paddingHorizontal: 16 }}>
-        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} onPress={onClose} accessibilityLabel="Fermer" />
+        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
         <View style={{ backgroundColor: c.background, borderRadius: 28, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
@@ -93,9 +94,9 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={20} weight="black" tight>Studio YOROI</Ink>
-              <Ink size={13} color={c.textSecondary}>Colle ton jeton créateur</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Colle ton jeton créateur")}</Ink>
             </View>
-            <RoundButton icon="close" label="Fermer" onPress={onClose} />
+            <RoundButton icon="close" label={traduire("Fermer")} onPress={onClose} />
           </View>
 
           <TextInput
@@ -116,20 +117,20 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
             editable={!locked && !busy}
             returnKeyType="done"
             onSubmitEditing={() => void submit(value, false)}
-            accessibilityLabel="Jeton créateur"
+            accessibilityLabel={traduire("Jeton créateur")}
             style={{ minHeight: 52, borderRadius: 16, borderWidth: 1, borderColor: message ? c.danger : c.border, backgroundColor: c.surface, paddingHorizontal: 14, fontSize: 16, color: c.ink }}
           />
 
           {message || locked ? (
             <Ink size={13} weight="bold" color={c.danger}>
-              {locked ? `Trop d’essais. Réessaie dans ${wait} seconde${wait > 1 ? 's' : ''}.` : message}
+              {locked ? traduirePluriel(wait, wait > 1, "Trop d’essais. Réessaie dans {0} seconde.", "Trop d’essais. Réessaie dans {0} secondes.", wait) : message}
             </Ink>
           ) : (
-            <Ink size={13} color={c.textMuted}>Le jeton est dans le dossier privé de ton ordinateur. Il n’est jamais affiché ici.</Ink>
+            <Ink size={13} color={c.textMuted}>{traduire("Le jeton est dans le dossier privé de ton ordinateur. Il n’est jamais affiché ici.")}</Ink>
           )}
 
-          <Button tone="accent" icon="doc" label="Coller et ouvrir" onPress={() => void paste()} loading={busy} disabled={locked} />
-          {value.trim() ? <Button tone="ghost" label="Ouvrir avec le jeton saisi" onPress={() => void submit(value, false)} disabled={locked || busy} /> : null}
+          <Button tone="accent" icon="doc" label={traduire("Coller et ouvrir")} onPress={() => void paste()} loading={busy} disabled={locked} />
+          {value.trim() ? <Button tone="ghost" label={traduire("Ouvrir avec le jeton saisi")} onPress={() => void submit(value, false)} disabled={locked || busy} /> : null}
         </View>
       </View>
     </Modal>

@@ -12,6 +12,7 @@ import { getProfile, saveProfile } from '@/lib/database';
 import { annoncerDebut, changerDebutObjectif } from './debutObjectif';
 import { choisirDateCap } from './usePlanPoids';
 import { sensPourObjectif, validerDateCap, validerDebut, validerObjectif } from './etatObjectif';
+import { traduire } from '@/lib/i18n/tr';
 
 type PeseeJour = { date: string; value: number; trend?: number };
 
@@ -22,7 +23,7 @@ export async function enregistrerDebut(date: string, poids: number | null, serie
   const r = validerDebut(date, poids, today);
   if (r) return { ok: false, raison: r };
   const n = await changerDebutObjectif(date, series, today, poids);
-  return n ? { ok: true } : { ok: false, raison: 'Ton profil n’a pas pu être enregistré.' };
+  return n ? { ok: true } : { ok: false, raison: traduire('Ton profil n’a pas pu être enregistré.') };
 }
 
 /** Ton poids objectif (different de ton poids actuel) ; le sens suit : au-dessus de ton debut, prise de masse */
@@ -30,7 +31,7 @@ export async function enregistrerObjectif(poids: number, actuel: number | null, 
   const r = validerObjectif(poids, actuel);
   if (r) return { ok: false, raison: r };
   const profil = await getProfile();
-  if (!profil) return { ok: false, raison: 'Ton profil n’a pas pu être lu.' };
+  if (!profil) return { ok: false, raison: traduire('Ton profil n’a pas pu être lu.') };
   const cap = Math.round(poids * 10) / 10;
   await saveProfile({ ...profil, target_weight: cap, weight_goal: sensPourObjectif(cap, debut ?? profil.start_weight ?? actuel) });
   annoncerDebut();
@@ -42,5 +43,5 @@ export async function enregistrerDateCap(date: string, cle: string | null, today
   const r = validerDateCap(date, today);
   if (r) return { ok: false, raison: r };
   const ok = await choisirDateCap(date, cle, today);
-  return ok ? { ok: true } : { ok: false, raison: 'Ta date n’a pas pu être enregistrée.' };
+  return ok ? { ok: true } : { ok: false, raison: traduire('Ta date n’a pas pu être enregistrée.') };
 }

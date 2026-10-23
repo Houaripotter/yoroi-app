@@ -23,6 +23,7 @@ import { PlanMonth } from '@/components/yoroi/v2/seances/PlanMonth';
 import { PlanEvents } from '@/components/yoroi/v2/seances/PlanEvents';
 import { PlanClubs } from '@/components/yoroi/v2/seances/PlanClubs';
 import { BackButton, RoundIcon, Segments } from '@/components/yoroi/v2/seances/ui';
+import { traduire } from '@/lib/i18n/tr';
 
 type View_ = 'semaine' | 'mois' | 'competitions' | 'clubs';
 
@@ -100,17 +101,17 @@ export default function PlanningScreen() {
           <Image source={sportArt(bannerSport, gender, 1)} style={{ position: 'absolute', right: -6, bottom: -36, width: 140, height: 186 }} resizeMode="contain" />
           <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
             <BackButton />
-            <RoundIcon name="repeat" label="Gérer tes créneaux réguliers" onPress={() => router.push('/slots' as any)} />
+            <RoundIcon name="repeat" label={traduire("Gérer tes créneaux réguliers")} onPress={() => router.push('/slots' as any)} />
           </View>
           <View style={{ position: 'absolute', left: 22, bottom: 18, maxWidth: '56%' }}>
             <Ink size={30} weight="black" tight accessibilityRole="header">Planning</Ink>
-            <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>Ta semaine, ton mois, tes échéances</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("Ta semaine, ton mois, tes échéances")}</Ink>
           </View>
         </View>
 
         <View style={{ paddingHorizontal: 22, paddingTop: 14, gap: 14 }}>
           <Segments
-            items={[{ key: 'semaine', label: 'Semaine' }, { key: 'mois', label: 'Mois' }, { key: 'competitions', label: 'Compét.' }, { key: 'clubs', label: 'Clubs' }]}
+            items={[{ key: 'semaine', label: traduire('Semaine') }, { key: 'mois', label: traduire('Mois') }, { key: 'competitions', label: traduire('Compét.') }, { key: 'clubs', label: 'Clubs' }]}
             value={view}
             onChange={setView}
           />

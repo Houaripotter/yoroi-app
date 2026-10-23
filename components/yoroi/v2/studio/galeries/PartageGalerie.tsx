@@ -26,22 +26,23 @@ import { useStudio } from '@/lib/v2/partage/useStudio';
 import type { CardVariant } from '@/components/yoroi/v2/partage/cardKit';
 import { COMBATTANT, DUEL, NOM, OPTIONS_MUSCU, RECORDS_PARTAGE, ROUNDS_JJB, SEANCE_JJB, SEANCE_MUSCU, anneeFictive, identiteFictive, moisFictif, semaineFictive } from './fictif';
 import { Bloc, Bouton, GalerieScreen, Ligne, Lignes, Pastille, PastilleRow, Rubrique } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
 type CarteId = 'semaine' | 'mois' | 'annee' | 'seance_muscu' | 'seance_jjb' | 'duel' | 'combattant' | 'universelle' | 'combat' | 'ancienne_semaine' | 'ancien_mois' | 'ancienne_annee';
 
 const CARTES: { id: CarteId; label: string; fichier: string; utilisee: boolean }[] = [
-  { id: 'semaine', label: 'Ma semaine', fichier: 'WeeklyRecapCardV2', utilisee: true },
-  { id: 'mois', label: 'Mon mois', fichier: 'MonthlyRecapCardV2', utilisee: true },
-  { id: 'annee', label: 'Mon année', fichier: 'YearCounterCardV2', utilisee: true },
-  { id: 'seance_muscu', label: 'Séance muscu', fichier: 'SessionCard', utilisee: true },
-  { id: 'seance_jjb', label: 'Séance JJB', fichier: 'SessionCard, avec les rounds', utilisee: true },
+  { id: 'semaine', label: traduire('Ma semaine'), fichier: 'WeeklyRecapCardV2', utilisee: true },
+  { id: 'mois', label: traduire('Mon mois'), fichier: 'MonthlyRecapCardV2', utilisee: true },
+  { id: 'annee', label: traduire('Mon année'), fichier: 'YearCounterCardV2', utilisee: true },
+  { id: 'seance_muscu', label: traduire('Séance muscu'), fichier: 'SessionCard', utilisee: true },
+  { id: 'seance_jjb', label: traduire('Séance JJB'), fichier: traduire('SessionCard, avec les rounds'), utilisee: true },
   { id: 'duel', label: 'Duel', fichier: 'DuelCard', utilisee: true },
-  { id: 'combattant', label: 'Carte de combattant', fichier: 'FighterCardView', utilisee: true },
+  { id: 'combattant', label: traduire('Carte de combattant'), fichier: 'FighterCardView', utilisee: true },
   { id: 'universelle', label: 'Carte universelle', fichier: 'UniversalShareCard', utilisee: false },
-  { id: 'combat', label: 'Carte combat', fichier: 'CombatShareCard', utilisee: false },
-  { id: 'ancienne_semaine', label: 'Ancienne semaine', fichier: 'WeeklyRecapCard', utilisee: false },
-  { id: 'ancien_mois', label: 'Ancien mois', fichier: 'MonthlyRecapCard', utilisee: false },
-  { id: 'ancienne_annee', label: 'Ancienne année', fichier: 'YearCounterCard', utilisee: false },
+  { id: 'combat', label: traduire('Carte combat'), fichier: 'CombatShareCard', utilisee: false },
+  { id: 'ancienne_semaine', label: traduire('Ancienne semaine'), fichier: 'WeeklyRecapCard', utilisee: false },
+  { id: 'ancien_mois', label: traduire('Ancien mois'), fichier: 'MonthlyRecapCard', utilisee: false },
+  { id: 'ancienne_annee', label: traduire('Ancienne année'), fichier: 'YearCounterCard', utilisee: false },
 ];
 
 const STYLES: { key: CardVariant; label: string }[] = [
@@ -56,7 +57,7 @@ export function PartageGalerie() {
   const { colors: legacyColors } = useTheme();
   const { width: sw } = useWindowDimensions();
   const width = cardWidthFor(sw);
-  const studio = useStudio({ dialogTitle: 'Partager ma carte YOROI' });
+  const studio = useStudio({ dialogTitle: traduire('Partager ma carte YOROI') });
   const [carte, setCarte] = useState<CarteId>('semaine');
   const [genre, setGenre] = useState<'h' | 'f'>('f');
   const [record, setRecord] = useState<ShareRecord | null>(null);
@@ -102,8 +103,8 @@ export function PartageGalerie() {
 
   return (
     <GalerieScreen
-      title="Cartes de partage"
-      sub={`Chaque carte avec les données fictives de ${NOM}, musculation et JJB. Le bouton Partager envoie la vraie image.`}
+      title={traduire("Cartes de partage")}
+      sub={traduire("Chaque carte avec les données fictives de {0}, musculation et JJB. Le bouton Partager envoie la vraie image.", NOM)}
       overlay={<RecordShareSheet data={record} onClose={() => setRecord(null)} />}
     >
       <PastilleRow>
@@ -117,17 +118,17 @@ export function PartageGalerie() {
         ))}
         {carte === 'combattant' ? (
           <>
-            <Pastille label="Guerrière" on={genre === 'f'} onPress={() => setGenre('f')} />
+            <Pastille label={traduire("Guerrière")} on={genre === 'f'} onPress={() => setGenre('f')} />
             <Pastille label="Guerrier" on={genre === 'h'} onPress={() => setGenre('h')} />
           </>
         ) : null}
       </PastilleRow>
 
       <Bloc style={{ paddingVertical: 12, gap: 2 }}>
-        <Ink size={16} weight="black">{`${i + 1} sur ${CARTES.length}, ${info.label}`}</Ink>
+        <Ink size={16} weight="black">{traduire("{0} sur {1}, {2}", i + 1, CARTES.length, info.label)}</Ink>
         <Ink size={12} color={c.textMuted}>{info.fichier}</Ink>
         <Ink size={12} weight="bold" color={info.utilisee ? c.successText : c.textSecondary}>
-          {info.utilisee ? 'Utilisée dans l’app' : 'Plus appelée nulle part dans l’app'}
+          {info.utilisee ? traduire('Utilisée dans l’app') : traduire('Plus appelée nulle part dans l’app')}
         </Ink>
       </Bloc>
 
@@ -137,15 +138,15 @@ export function PartageGalerie() {
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1 }}>
-          <Bouton label="Précédente" light onPress={() => setCarte(CARTES[(i - 1 + CARTES.length) % CARTES.length].id)} />
+          <Bouton label={traduire("Précédente")} light onPress={() => setCarte(CARTES[(i - 1 + CARTES.length) % CARTES.length].id)} />
         </View>
         <View style={{ flex: 1 }}>
           <Bouton label="Suivante" light onPress={() => setCarte(CARTES[(i + 1) % CARTES.length].id)} />
         </View>
       </View>
-      <Bouton label={studio.busy ? 'Un instant' : 'Partager cette carte'} icon="share" onPress={studio.share} disabled={studio.busy} />
+      <Bouton label={studio.busy ? traduire('Un instant') : traduire('Partager cette carte')} icon="share" onPress={studio.share} disabled={studio.busy} />
 
-      <Rubrique title="Record du carnet" sub="La feuille de partage d’un record, avec ses fonds partage_ et ses deux formats" />
+      <Rubrique title={traduire("Record du carnet")} sub={traduire("La feuille de partage d’un record, avec ses fonds partage_ et ses deux formats")} />
       <Lignes>
         {RECORDS_PARTAGE.map((r, k) => (
           <Ligne key={r.label} first={k === 0} icon={r.data.isPR ? 'trophy' : 'dumbbell'} label={r.label} sub={r.sub} onPress={() => setRecord(r.data)} />

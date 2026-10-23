@@ -9,6 +9,7 @@ import * as SQLite from 'expo-sqlite';
 import secureStorage from '@/lib/security/secureStorage';
 import { isDemoDataActive } from '@/lib/demoDataService';
 import { CREATOR_SECURE_KEYS } from './creatorStore';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Cles SecureStore connues (relevees dans le code ; les cles AsyncStorage sont aussi tentees) */
 export const YOROI_SECURE_KEYS = [
@@ -37,7 +38,7 @@ export const YOROI_SECURE_KEYS = [
 
 export class DemoActiveError extends Error {
   constructor() {
-    super('Une démo est chargée : restaure d’abord tes vraies données.');
+    super(traduire('Une démo est chargée : restaure d’abord tes vraies données.'));
   }
 }
 

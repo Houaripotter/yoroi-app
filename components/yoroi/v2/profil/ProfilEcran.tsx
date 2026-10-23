@@ -23,6 +23,7 @@ import { contourDe } from '@/components/yoroi/v2/reglages/contour';
 import { RondInitiales } from '@/components/yoroi/v2/espace/RondInitiales';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Hauteur du bandeau illustre : la scene descend sous l'heure */
 function bannerHeight(top: number): number {
@@ -66,9 +67,9 @@ export function ProfilEcran({ hero, children, footer }: { hero: (top: number) =>
       <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: insets.top + 58 }}>
         <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: c.background, borderBottomWidth: 1, borderColor: c.divider }, barStyle]} />
         <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, top: insets.top + 6, height: 44, flexDirection: 'row', alignItems: 'center' }}>
-          <RoundButton icon="back" label="Retour" onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as any))} />
+          <RoundButton icon="back" label={traduire("Retour")} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as any))} />
           <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 52, right: 52, alignItems: 'center' }, titleStyle]}>
-            <Ink size={17} weight="extraBold" numberOfLines={1}>Ton profil</Ink>
+            <Ink size={17} weight="extraBold" numberOfLines={1}>{traduire("Ton profil")}</Ink>
           </Animated.View>
         </View>
       </View>
@@ -145,13 +146,13 @@ export function ProfilHero({ top, scene, photo, personnage, onPhoto, name, onNam
           style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: H * 0.42 }}
         />
         {showChar ? (
-          <Image source={personnage} style={{ position: 'absolute', right: charRight, bottom: 0, width: charW, height: charH }} resizeMode="contain" accessibilityLabel="Ton personnage" />
+          <Image source={personnage} style={{ position: 'absolute', right: charRight, bottom: 0, width: charW, height: charH }} resizeMode="contain" accessibilityLabel={traduire("Ton personnage")} />
         ) : null}
       </View>
 
       {/* ta photo, a cheval sur le bas de la scene */}
       <View style={{ alignItems: 'center', marginTop: -PHOTO / 2 - 10, gap: 10 }}>
-        <Pressable onPress={onPhoto} accessibilityRole="button" accessibilityLabel="Changer ta photo" style={{ width: PHOTO, height: PHOTO }}>
+        <Pressable onPress={onPhoto} accessibilityRole="button" accessibilityLabel={traduire("Changer ta photo")} style={{ width: PHOTO, height: PHOTO }}>
           <View style={{ width: PHOTO, height: PHOTO, borderRadius: PHOTO / 2, overflow: 'hidden', ...bord, backgroundColor: c.fillSoft, alignItems: 'center', shadowColor: c.ink, shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } }}>
             {photo ? (
               <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} />
@@ -169,10 +170,10 @@ export function ProfilHero({ top, scene, photo, personnage, onPhoto, name, onNam
         <TextInput
           value={name}
           onChangeText={onName}
-          placeholder="Ton prénom"
+          placeholder={traduire("Ton prénom")}
           placeholderTextColor={c.textMuted}
           maxLength={40}
-          accessibilityLabel="Ton prénom"
+          accessibilityLabel={traduire("Ton prénom")}
           style={{ fontSize: 34, fontWeight: '900', letterSpacing: -1.2, color: c.ink, textAlign: 'center', minWidth: 200, maxWidth: width - 2 * GUTTER, paddingVertical: 2, borderBottomWidth: 2, borderColor: name.trim() ? 'transparent' : c.accent }}
         />
 

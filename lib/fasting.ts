@@ -12,6 +12,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -152,7 +153,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'intermittent',
     fastingHours: 12,
     eatingHours: 12,
-    description: 'Pour debuter. 12h de jeune, 12h pour manger.',
+    description: traduire('Pour debuter. 12h de jeune, 12h pour manger.'),
   },
   {
     id: '14_10',
@@ -161,7 +162,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'intermittent',
     fastingHours: 14,
     eatingHours: 10,
-    description: 'Progression douce. 14h de jeune, 10h pour manger.',
+    description: traduire('Progression douce. 14h de jeune, 10h pour manger.'),
   },
   {
     id: '16_8',
@@ -170,7 +171,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'intermittent',
     fastingHours: 16,
     eatingHours: 8,
-    description: 'Le plus populaire. 16h de jeune, 8h pour manger.',
+    description: traduire('Le plus populaire. 16h de jeune, 8h pour manger.'),
   },
   {
     id: '18_6',
@@ -179,7 +180,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'intermittent',
     fastingHours: 18,
     eatingHours: 6,
-    description: 'Plus intense. 18h de jeune, 6h pour manger.',
+    description: traduire('Plus intense. 18h de jeune, 6h pour manger.'),
   },
   {
     id: '20_4',
@@ -188,7 +189,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'intermittent',
     fastingHours: 20,
     eatingHours: 4,
-    description: "Le regime de l'athlète. 20h de jeune, 4h pour manger.",
+    description: traduire("Le regime de l'athlète. 20h de jeune, 4h pour manger."),
   },
   {
     id: 'omad',
@@ -197,7 +198,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'intermittent',
     fastingHours: 23,
     eatingHours: 1,
-    description: 'One Meal A Day. Un seul repas par jour.',
+    description: traduire('One Meal A Day. Un seul repas par jour.'),
   },
 
   // RELIGIEUX
@@ -208,7 +209,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'religious',
     fastingHours: null,
     eatingHours: null,
-    description: "Jeune de l'aube au coucher du soleil.",
+    description: traduire("Jeune de l'aube au coucher du soleil."),
     special: 'sunrise_sunset',
   },
   {
@@ -218,7 +219,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'religious',
     fastingHours: 25,
     eatingHours: 0,
-    description: 'Grand Pardon. Jeune de 25h.',
+    description: traduire('Grand Pardon. Jeune de 25h.'),
   },
   {
     id: 'careme',
@@ -227,7 +228,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'religious',
     fastingHours: null,
     eatingHours: null,
-    description: '40 jours avant Paques. Abstinence ou jeune partiel.',
+    description: traduire('40 jours avant Paques. Abstinence ou jeune partiel.'),
     special: 'lent',
   },
 
@@ -239,7 +240,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'advanced',
     fastingHours: 24,
     eatingHours: 0,
-    description: 'Jeune de 24h, 1-2 fois par semaine.',
+    description: traduire('Jeune de 24h, 1-2 fois par semaine.'),
     special: 'weekly',
   },
   {
@@ -249,7 +250,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'advanced',
     fastingHours: 36,
     eatingHours: 0,
-    description: '36h de jeune. Pour les habitues.',
+    description: traduire('36h de jeune. Pour les habitues.'),
     warning: true,
   },
   {
@@ -259,7 +260,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'advanced',
     fastingHours: 48,
     eatingHours: 0,
-    description: '48h de jeune. Uniquement pour les experimentes.',
+    description: traduire('48h de jeune. Uniquement pour les experimentes.'),
     warning: true,
   },
   {
@@ -269,7 +270,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'advanced',
     fastingHours: 72,
     eatingHours: 0,
-    description: '72h de jeune. Supervision medicale recommandee.',
+    description: traduire('72h de jeune. Supervision medicale recommandee.'),
     warning: true,
   },
 
@@ -281,7 +282,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'custom',
     fastingHours: null,
     eatingHours: null,
-    description: 'Definis tes propres horaires.',
+    description: traduire('Definis tes propres horaires.'),
   },
 ];
 
@@ -834,11 +835,11 @@ export const analyzeFastingWeightCorrelation = async (
 
     if (diff > 0.1) {
       const multiplier = Math.abs(avgFasting) > 0.01 ? Math.abs(avgNonFasting / avgFasting) : 3;
-      recommendation = `Le jeune t'aide a perdre ${multiplier.toFixed(1)}x plus vite !`;
+      recommendation = traduire("Le jeune t'aide a perdre {0}x plus vite !", multiplier.toFixed(1));
     } else if (diff > 0) {
-      recommendation = 'Le jeune a un impact positif sur ta perte de poids.';
+      recommendation = traduire('Le jeune a un impact positif sur ta perte de poids.');
     } else {
-      recommendation = 'Continue le jeune pour voir les resultats a long terme.';
+      recommendation = traduire('Continue le jeune pour voir les resultats a long terme.');
     }
 
     return {
@@ -886,7 +887,7 @@ export const getProgressPercentage = (startTime: string, targetEndTime: string):
  */
 export const formatTime = (dateStr: string): string => {
   const date = new Date(dateStr);
-  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
 };
 
 /**
@@ -903,7 +904,7 @@ export const formatDate = (dateStr: string): string => {
   } else if (date.toDateString() === yesterday.toDateString()) {
     return 'hier';
   } else {
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' });
   }
 };
 

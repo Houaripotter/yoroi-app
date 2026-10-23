@@ -15,6 +15,7 @@ import { setPropositionsAuto } from '@/lib/v2/cartes/store';
 import type { CarteData, ModeleId } from '@/lib/v2/cartes/types';
 import { CarteApercu, CARTE_W, HAUTEURS, modeleEffectif, modelesPour } from './CarteRendu';
 import { useCarte } from './useCarte';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Nom court d'une carte dans le choix de la feuille */
 export function nomCourt(d: CarteData): string {
@@ -23,10 +24,10 @@ export function nomCourt(d: CarteData): string {
     if (t.startsWith('record_')) return t === 'record_charge' ? `Record ${d.exploit.accroche.toLowerCase()}` : d.exploit.surtitre;
     if (t === 'techniques') return 'Techniques';
     if (t === 'compteur') return 'Compteur';
-    if (t === 'annee_progression') return 'Mon année';
+    if (t === 'annee_progression') return traduire('Mon année');
     return d.exploit.surtitre;
   }
-  return d.moment === 'seance' ? 'Ma séance' : d.moment === 'pesee' ? 'Ma pesée' : 'Ma semaine';
+  return d.moment === 'seance' ? traduire('Ma séance') : d.moment === 'pesee' ? traduire('Ma pesée') : traduire('Ma semaine');
 }
 
 export function lienEditeur(d: CarteData): string {
@@ -50,7 +51,7 @@ export function FeuilleCarte({ data, autres, visible, onClose }: { data: CarteDa
   const cur = cartes[Math.min(sel, cartes.length - 1)];
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable onPress={onClose} accessibilityLabel="Fermer" style={{ flex: 1, backgroundColor: 'rgba(15,16,20,0.45)' }} />
+      <Pressable onPress={onClose} accessibilityLabel={traduire("Fermer")} style={{ flex: 1, backgroundColor: 'rgba(15,16,20,0.45)' }} />
       <Contenu key={cur.cle} data={cur} onClose={onClose} choix={cartes.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }} style={{ marginHorizontal: -20 }}>
           <View style={{ width: 12 }} />
@@ -106,8 +107,8 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
       <View style={{ backgroundColor: c.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, paddingBottom: insets.bottom + 14, paddingHorizontal: 20, gap: 12 }}>
         <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.fillSubtle }} />
         <View style={{ gap: 2 }}>
-          <Ink size={22} weight="black" tight accessibilityRole="header">{nombre > 1 ? `${nombre} cartes pour toi` : 'Ta carte est prête'}</Ink>
-          <Ink size={14} color={c.textSecondary}>{nombre > 1 ? 'Choisis celle que tu veux poster.' : 'Enregistre-la dans ta pellicule ou poste-la.'}</Ink>
+          <Ink size={22} weight="black" tight accessibilityRole="header">{nombre > 1 ? traduire("{0} cartes pour toi", nombre) : traduire('Ta carte est prête')}</Ink>
+          <Ink size={14} color={c.textSecondary}>{nombre > 1 ? traduire('Choisis celle que tu veux poster.') : traduire('Enregistre-la dans ta pellicule ou poste-la.')}</Ink>
         </View>
         {choix}
 
@@ -135,7 +136,7 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
                 onPress={() => k.setStyle({ modele: m.id as ModeleId })}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                accessibilityLabel={`Modèle ${m.nom}`}
+                accessibilityLabel={traduire("Modèle {0}", m.nom)}
                 style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: on ? c.ink : c.surface, borderWidth: 1, borderColor: on ? c.ink : c.border }}
               >
                 <Ink size={14} weight="extraBold" color={on ? c.background : c.ink}>{m.nom}</Ink>
@@ -150,28 +151,28 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
             onPress={() => { setErreur(null); void k.enregistrer(onErreur); }}
             disabled={!!k.busy}
             accessibilityRole="button"
-            accessibilityLabel="Enregistrer dans la pellicule"
+            accessibilityLabel={traduire("Enregistrer dans la pellicule")}
             style={({ pressed }) => ({ flex: 1, height: 54, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
           >
             <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
-            <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? 'Un instant' : k.saved ? 'Enregistrée' : 'Enregistrer'}</Ink>
+            <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
           </Pressable>
           <Pressable
             onPress={() => { setErreur(null); void k.partager(onErreur); }}
             disabled={!!k.busy}
             accessibilityRole="button"
-            accessibilityLabel="Partager la carte"
+            accessibilityLabel={traduire("Partager la carte")}
             style={({ pressed }) => ({ flex: 1.2, height: 54, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
           >
             <Icon name="share" size={19} color={c.onAccent} />
-            <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? 'Un instant' : 'Partager'}</Ink>
+            <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
           </Pressable>
         </View>
 
         {erreur ? <Ink size={13} weight="bold" color={c.danger}>{erreur}</Ink> : null}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Pressable onPress={onClose} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', paddingRight: 12 }}>
-            <Ink size={15} weight="extraBold" color={c.textSecondary}>Pas maintenant</Ink>
+            <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire("Pas maintenant")}</Ink>
           </Pressable>
           <Pressable onPress={personnaliser} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', paddingLeft: 12 }}>
             <Ink size={15} weight="extraBold" color={c.accent}>Personnaliser</Ink>
@@ -179,7 +180,7 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
         </View>
         <Pressable onPress={plusJamais} accessibilityRole="button" style={{ minHeight: 36, alignItems: 'center', justifyContent: 'center', marginTop: -6 }}>
           <Ink size={12} weight="bold" color={confirme ? c.accent : c.textMuted} style={{ textAlign: 'center' }}>
-            {confirme ? 'Touche encore pour couper. Tes cartes restent dans Mes cartes.' : 'Ne plus me proposer de cartes'}
+            {confirme ? traduire('Touche encore pour couper. Tes cartes restent dans Mes cartes.') : traduire('Ne plus me proposer de cartes')}
           </Ink>
         </Pressable>
       </View>

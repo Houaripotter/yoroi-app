@@ -21,6 +21,7 @@ import { getSportName } from '@/lib/sports';
 import { sportShortName } from '@/lib/v2/seance/sportVisuals';
 import { dayLong, monthShortIdx, todayIso } from '@/lib/v2/progres/format';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SCENE = require('@/assets/avatars/app/themes/theme_nuit.webp');
 
@@ -51,9 +52,9 @@ export function AnneeSection() {
     return (
       <View style={{ paddingTop: 22 }}>
         <ExamplePreview
-          title="Ton année se tisse ici"
-          text="Chaque séance remplit un jour de ton calendrier. Plus la séance est longue, plus la case est foncée."
-          plusHint="Touche + pour noter ta séance"
+          title={traduire("Ton année se tisse ici")}
+          text={traduire("Chaque séance remplit un jour de ton calendrier. Plus la séance est longue, plus la case est foncée.")}
+          plusHint={traduire("Touche + pour noter ta séance")}
         >
           <KozaneYear weeks={ex.weeks} monthMarks={ex.monthMarks} selected={null} onSelect={() => {}} />
           <View style={{ marginTop: 10 }}>
@@ -68,11 +69,11 @@ export function AnneeSection() {
     <View style={{ paddingTop: 22 }}>
       <View style={{ paddingHorizontal: GUTTER, gap: 4 }}>
         <Ink size={52} weight="black" tight>
-          {String(totals.sessions)} <Ink size={20} weight="black" color={c.textSecondary}>{`séance${totals.sessions > 1 ? 's' : ''} en ${year}`}</Ink>
+          {String(totals.sessions)} <Ink size={20} weight="black" color={c.textSecondary}>{traduirePluriel(totals.sessions, totals.sessions > 1, "séance en {0}", "séances en {0}", year)}</Ink>
         </Ink>
         <Ink size={14} weight="bold" color={c.textSecondary}>
-          {streaks.best > 1 ? `Ta meilleure série : ${streaks.best} semaines d’affilée` : 'Enchaîne les semaines pour lancer ta série'}
-          {streaks.current > 1 && streaks.current < streaks.best ? `, en cours ${streaks.current}` : streaks.current > 1 && streaks.current === streaks.best ? ', et elle est en cours' : ''}
+          {streaks.best > 1 ? traduire("Ta meilleure série : {0} semaines d’affilée", streaks.best) : traduire('Enchaîne les semaines pour lancer ta série')}
+          {streaks.current > 1 && streaks.current < streaks.best ? `, en cours ${streaks.current}` : streaks.current > 1 && streaks.current === streaks.best ? traduire(', et elle est en cours') : ''}
         </Ink>
       </View>
 
@@ -95,7 +96,7 @@ export function AnneeSection() {
       </View>
 
       <View style={{ paddingHorizontal: GUTTER, marginTop: 26 }}>
-        <SectionHead title="Séances par mois" aside={monthSel !== null ? `${monthShortIdx(monthSel)} : ${shownMonths[monthSel]}` : avg !== null ? `moyenne ${Math.round(avg)}` : undefined} />
+        <SectionHead title={traduire("Séances par mois")} aside={monthSel !== null ? `${monthShortIdx(monthSel)} : ${shownMonths[monthSel]}` : avg !== null ? `moyenne ${Math.round(avg)}` : undefined} />
         <View style={{ marginTop: 12 }}>
           <InkBarChart
             bars={shownMonths.map((n, i) => ({ label: monthShortIdx(i).replace('.', ''), value: n }))}
@@ -105,12 +106,12 @@ export function AnneeSection() {
             showValues="all"
             onSelect={setMonthSel}
             height={170}
-            label={`Séances par mois en ${year}, le mois en cours en indigo`}
+            label={traduire("Séances par mois en {0}, le mois en cours en indigo", year)}
           />
         </View>
         <View style={{ flexDirection: 'row', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
-          <LegendMark kind="square" color={tint(CHART_COLORS.blue, 0.58)} label="mois passés" />
-          <LegendMark kind="square" color={c.accent} label="ce mois-ci" />
+          <LegendMark kind="square" color={tint(CHART_COLORS.blue, 0.58)} label={traduire("mois passés")} />
+          <LegendMark kind="square" color={c.accent} label={traduire("ce mois-ci")} />
           {avg !== null ? <LegendMark kind="dash" color={c.textSecondary} label="moyenne" /> : null}
         </View>
       </View>
@@ -118,9 +119,9 @@ export function AnneeSection() {
       <StatStrip
         style={{ marginHorizontal: GUTTER, marginTop: 26 }}
         items={[
-          { value: formatDuration(totals.minutes) || '0 h', label: `d’entraînement en ${year}` },
-          { value: String(totals.days), label: 'jours actifs' },
-          { value: totals.topSport ? sportShortName(totals.topSport) : 'à venir', label: totals.topSport ? `ton sport, ${totals.topCount} fois` : 'ton sport favori' },
+          { value: formatDuration(totals.minutes) || '0 h', label: traduire("d’entraînement en {0}", year) },
+          { value: String(totals.days), label: traduire('jours actifs') },
+          { value: totals.topSport ? sportShortName(totals.topSport) : 'à venir', label: totals.topSport ? traduire("ton sport, {0} fois", totals.topCount) : traduire('ton sport favori') },
         ]}
       />
 
@@ -132,21 +133,19 @@ export function AnneeSection() {
           router.push('/wrapped' as any);
         }}
         accessibilityRole="button"
-        accessibilityLabel={`Ouvrir ton bilan ${year}`}
+        accessibilityLabel={traduire("Ouvrir ton bilan {0}", year)}
         style={({ pressed }) => ({ marginHorizontal: GUTTER, marginTop: 26, borderRadius: 26, overflow: 'hidden', opacity: pressed ? 0.94 : 1 })}
       >
         <ImageBackground source={SCENE} resizeMode="cover" style={{ height: 190, justifyContent: 'flex-end' }}>
           <View style={{ margin: 12, borderRadius: 20, padding: 16, backgroundColor: P.carte, borderWidth: 1, borderColor: P.carte, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={18} weight="black" tight>{`Ton bilan ${year}`}</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Ton bilan {0}", year)}</Ink>
               <Ink size={13} color={c.textSecondary}>
-                Ton année en quelques écrans, à garder ou à partager.
-              </Ink>
+                {traduire("Ton année en quelques écrans, à garder ou à partager.")}</Ink>
             </View>
             <View style={{ height: 40, paddingHorizontal: 14, borderRadius: 14, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
               <Ink size={14} weight="extraBold" color={c.onAccent}>
-                Voir
-              </Ink>
+                {traduire("Voir")}</Ink>
             </View>
           </View>
         </ImageBackground>

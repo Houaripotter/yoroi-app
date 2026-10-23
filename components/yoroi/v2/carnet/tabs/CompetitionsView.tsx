@@ -17,8 +17,9 @@ import logger from '@/lib/security/logger';
 import { longDate, shortDate } from '@/lib/v2/carnet/format';
 import { P, Sheet2, BigStats, RankRow, ResultDot, BigButton, Press, Hanko, winColor } from '../ui';
 import { TabEmpty, TabLoading } from './common';
+import { traduire } from '@/lib/i18n/tr';
 
-const METHOD_LABEL: Record<string, string> = { soumission: 'Soumission', points: 'Points', decision: 'Décision', 'décision': 'Décision', ko: 'KO', tko: 'Arrêt de l’arbitre', autre: 'Autre' };
+const METHOD_LABEL: Record<string, string> = { soumission: 'Soumission', points: 'Points', decision: traduire('Décision'), 'décision': traduire('Décision'), ko: 'KO', tko: traduire('Arrêt de l’arbitre'), autre: 'Autre' };
 
 export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
   const router = useRouter();
@@ -96,7 +97,7 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
 
   if (loading) return <TabLoading />;
   if (combats.length === 0 && comps.length === 0) {
-    return <TabEmpty title="Pas encore de compétition" text="Ajoute tes compétitions et tes combats : ton palmarès, tes finitions et tes adversaires apparaîtront ici." action="Aller aux compétitions" href="/competitions" />;
+    return <TabEmpty title={traduire("Pas encore de compétition")} text={traduire("Ajoute tes compétitions et tes combats : ton palmarès, tes finitions et tes adversaires apparaîtront ici.")} action={traduire("Aller aux compétitions")} href="/competitions" />;
   }
 
   const res = (r?: string) => (r === 'victoire' ? 'V' : r === 'defaite' ? 'D' : 'N');
@@ -108,38 +109,38 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
           items={[
             { value: String(st.total), label: 'combats' },
             { value: String(st.wins), label: 'victoires', color: P.mossText },
-            { value: String(st.losses), label: 'défaites', color: P.danger },
-            { value: st.rate !== null ? `${st.rate} %` : '--', label: 'de victoires', color: winColor(st.rate) },
+            { value: String(st.losses), label: traduire('défaites'), color: P.danger },
+            { value: st.rate !== null ? `${st.rate} %` : '--', label: traduire('de victoires'), color: winColor(st.rate) },
           ]}
         />
       </Sheet2>
 
       {next && daysLeft !== null ? (
-        <Press onPress={() => router.push('/competitions' as any)} accessibilityRole="button" accessibilityLabel={`Prochaine compétition : ${next.nom}`}>
+        <Press onPress={() => router.push('/competitions' as any)} accessibilityRole="button" accessibilityLabel={traduire("Prochaine compétition : {0}", next.nom)}>
           <View style={{ borderRadius: 28, backgroundColor: P.ink, padding: 20, gap: 6, overflow: 'hidden' }}>
             <View pointerEvents="none" style={{ position: 'absolute', right: -8, top: -22 }}>
               <Glyph kind="sakura" size={140} color="rgba(255,255,255,0.05)" />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Ink size={13} weight="bold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight}>Prochaine compétition</Ink>
+              <Ink size={13} weight="bold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight}>{traduire("Prochaine compétition")}</Ink>
               <View style={{ paddingHorizontal: 12, height: 30, borderRadius: 15, justifyContent: 'center', backgroundColor: daysLeft <= 7 ? P.accent : daysLeft <= 30 ? P.gold : P.moss }}>
-                <Ink size={13} weight="black" color={P.white}>{daysLeft <= 0 ? "Aujourd'hui" : `J moins ${daysLeft}`}</Ink>
+                <Ink size={13} weight="black" color={P.white}>{daysLeft <= 0 ? traduire("Aujourd'hui") : traduire("J moins {0}", daysLeft)}</Ink>
               </View>
             </View>
             <Ink size={24} weight="black" tight color={P.white} numberOfLines={2}>{next.nom}</Ink>
             <Ink size={13} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.75)' : 'rgba(255,255,255,0.75)'}>{`${longDate(next.date)}${next.lieu ? `, ${next.lieu}` : ''}`}</Ink>
-            {next.categorie_poids ? <Ink size={13} weight="extraBold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight}>{`Catégorie ${next.categorie_poids}`}</Ink> : null}
+            {next.categorie_poids ? <Ink size={13} weight="extraBold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight}>{traduire("Catégorie {0}", next.categorie_poids)}</Ink> : null}
           </View>
         </Press>
       ) : null}
 
       {last ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Dernier combat</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Dernier combat")}</Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <ResultDot result={res(last.resultat)} size={40} />
             <View style={{ flex: 1 }}>
-              <Ink size={16} weight="extraBold" numberOfLines={1}>{`Contre ${last.adversaire_nom ?? 'un adversaire'}`}</Ink>
+              <Ink size={16} weight="extraBold" numberOfLines={1}>{`Contre ${last.adversaire_nom ?? traduire('un adversaire')}`}</Ink>
               {last.adversaire_club ? <Ink size={12} weight="bold" color={P.muted}>{last.adversaire_club}</Ink> : null}
               {last.methode || last.technique ? <Ink size={13} weight="medium" color={P.ink2}>{`${last.methode ? METHOD_LABEL[last.methode] ?? last.methode : ''}${last.technique ? `${last.methode ? ', ' : ''}${last.technique}` : ''}`}</Ink> : null}
             </View>
@@ -150,9 +151,9 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
 
       {methods.length > 0 ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Comment tu gagnes</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Comment tu gagnes")}</Ink>
           {methods.map((m, i) => (
-            <RankRow key={m.method} title={METHOD_LABEL[m.method] ?? m.method} value={`${m.count} sur ${st.wins}`} sub={methods.length > 1 ? `soit ${m.pct} % de tes victoires` : undefined} ratio={m.pct / 100} color={['#6E8C3A', '#3D5D9E', '#A8832F'][i % 3]} />
+            <RankRow key={m.method} title={METHOD_LABEL[m.method] ?? m.method} value={traduire("{0} sur {1}", m.count, st.wins)} sub={methods.length > 1 ? traduire("soit {0} % de tes victoires", m.pct) : undefined} ratio={m.pct / 100} color={['#6E8C3A', '#3D5D9E', '#A8832F'][i % 3]} />
           ))}
         </Sheet2>
       ) : null}
@@ -161,17 +162,17 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
         <Sheet2>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Hanko size={30} tampon="record_combat" />
-            <Ink size={18} weight="black" tight>Tes finitions préférées</Ink>
+            <Ink size={18} weight="black" tight>{traduire("Tes finitions préférées")}</Ink>
           </View>
           {techniques.map(([t, c], i) => (
-            <RankRow key={t} rank={i + 1} title={t} value={`${c} fois`} ratio={c / techniques[0][1]} color={P.accent} />
+            <RankRow key={t} rank={i + 1} title={t} value={traduire("{0} fois", c)} ratio={c / techniques[0][1]} color={P.accent} />
           ))}
         </Sheet2>
       ) : null}
 
       {opponents.length > 0 ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Adversaires récurrents</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Adversaires récurrents")}</Ink>
           {opponents.map(([name, d]) => {
             const decided = d.wins + d.losses;
             const wr = decided > 0 ? Math.round((d.wins / decided) * 100) : null;
@@ -190,7 +191,7 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
         </Sheet2>
       ) : null}
 
-      <BigButton label={`Voir tous les combats, ${st.total}`} tone="ink" icon="chevron" onPress={() => router.push('/competitions' as any)} />
+      <BigButton label={traduire("Voir tous les combats, {0}", st.total)} tone="ink" icon="chevron" onPress={() => router.push('/competitions' as any)} />
     </View>
   );
 }

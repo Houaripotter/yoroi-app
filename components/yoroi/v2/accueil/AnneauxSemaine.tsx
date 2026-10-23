@@ -16,6 +16,7 @@ import type { AnneauxJour } from '@/lib/v2/sante/anneauxJours';
 import type { ObjectifsSante } from '@/lib/v2/accueil/enPlus';
 import { P, tap } from './kit';
 import { couleurActivite } from './Visus';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 /** Trois anneaux fixes sur un disque noir ; parts de 0 a 2 (au-dela d'un tour, l'anneau est plein) */
 export function MiniAnneaux({ parts, taille = 28, futur = false }: { parts: [number, number, number]; taille?: number; futur?: boolean }) {
@@ -62,16 +63,16 @@ export function MiniAnneaux({ parts, taille = 28, futur = false }: { parts: [num
   );
 }
 
-const entier = (n: number) => Math.round(n).toLocaleString('fr-FR').replace(/[   ]/g, ' ');
+const entier = (n: number) => Math.round(n).toLocaleString(LOCALE).replace(/[   ]/g, ' ');
 
 /** Ce que dit le lecteur d'ecran pour un jour : ses trois valeurs, ou « pas de donnée » */
 export function a11yJourAnneaux(a: AnneauxJour, aujourdhui: string): string {
-  const nom = a.date === aujourdhui ? `Aujourd’hui, ${jourA11y(a.date)}` : jourA11y(a.date);
-  if (a.futur) return `${nom} : jour à venir`;
-  if (!aUneDonnee(a)) return `${nom} : pas de donnée`;
-  const pas = a.pas !== null ? `${entier(a.pas)} pas` : 'pas : pas de donnée';
-  const ex = a.exercice !== null ? `${entier(a.exercice)} minutes d’exercice` : 'exercice : pas de donnée';
-  const kcal = a.kcal !== null ? `${entier(a.kcal)} kilocalories` : 'calories : pas de donnée';
+  const nom = a.date === aujourdhui ? traduire("Aujourd’hui, {0}", jourA11y(a.date)) : jourA11y(a.date);
+  if (a.futur) return traduire("{0} : jour à venir", nom);
+  if (!aUneDonnee(a)) return traduire("{0} : pas de donnée", nom);
+  const pas = a.pas !== null ? traduire("{0} pas", entier(a.pas)) : traduire('pas : pas de donnée');
+  const ex = a.exercice !== null ? traduire("{0} minutes d’exercice", entier(a.exercice)) : traduire('exercice : pas de donnée');
+  const kcal = a.kcal !== null ? `${entier(a.kcal)} kilocalories` : traduire('calories : pas de donnée');
   return `${nom} : ${pas}, ${ex}, ${kcal}`;
 }
 
@@ -93,7 +94,7 @@ export function RangeeSemaine({ jours, choisi, aujourdhui, objectifs, onChoisir 
             accessibilityRole="tab"
             accessibilityState={{ selected: sel, disabled: a.futur }}
             accessibilityLabel={a11yJourAnneaux(a, aujourdhui)}
-            accessibilityHint={a.futur ? undefined : 'Affiche les données de ce jour dans la carte'}
+            accessibilityHint={a.futur ? undefined : traduire('Affiche les données de ce jour dans la carte')}
             style={({ pressed }) => ({
               flex: 1,
               minWidth: 44,

@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Hauteur de la ligne de l'en-tete, hors zone sure */
 export const ENTETE_HAUTEUR = 56;
@@ -25,7 +26,7 @@ export const ENTETE_HAUTEUR = 56;
 const RAPIDE = Easing.bezier(0.4, 0, 0.2, 1);
 
 /** Bouton retour compact : cercle de 40, zone de toucher de 44, libelle VoiceOver « Retour » */
-export function RetourCompact({ onPress, label = 'Retour', repli = '/(tabs)' }: { onPress?: () => void; label?: string; repli?: string }) {
+export function RetourCompact({ onPress, label = traduire('Retour'), repli = '/(tabs)' }: { onPress?: () => void; label?: string; repli?: string }) {
   const router = useRouter();
   const { theme } = useYoroiTheme();
   const c = theme.colors;

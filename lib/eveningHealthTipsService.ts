@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './security/logger';
 import { saveNotification } from './notificationHistoryService';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -35,126 +36,126 @@ export const HEALTH_TIPS: HealthTip[] = [
   // === POIDS ===
   {
     id: "w1",
-    title: "Le muscle dépense",
-    content: "Le muscle consomme plus d'énergie que la graisse, même au repos. Entretenir ta masse musculaire aide à garder une bonne dépense.",
+    title: traduire("Le muscle dépense"),
+    content: traduire("Le muscle consomme plus d'énergie que la graisse, même au repos. Entretenir ta masse musculaire aide à garder une bonne dépense."),
     category: 'weight',
   },
   {
     id: "w2",
-    title: "Poids qui bouge",
-    content: "Ton poids peut varier d'un ou deux kilos dans la journée. L'eau, le sel et les repas jouent. Regarde la tendance sur plusieurs jours.",
+    title: traduire("Poids qui bouge"),
+    content: traduire("Ton poids peut varier d'un ou deux kilos dans la journée. L'eau, le sel et les repas jouent. Regarde la tendance sur plusieurs jours."),
     category: 'weight',
   },
   {
     id: "w3",
-    title: "Rythme de perte",
-    content: "Perdre trop vite fait souvent perdre du muscle. Un rythme de 0,5 à 1 kg par semaine se tient mieux.",
+    title: traduire("Rythme de perte"),
+    content: traduire("Perdre trop vite fait souvent perdre du muscle. Un rythme de 0,5 à 1 kg par semaine se tient mieux."),
     category: 'weight',
   },
   {
     id: "w4",
-    title: "Petit écart chaque jour",
-    content: "Un kilo de graisse représente environ 7 700 kcal. Un petit écart tenu chaque jour suffit, inutile de te priver d'un coup.",
+    title: traduire("Petit écart chaque jour"),
+    content: traduire("Un kilo de graisse représente environ 7 700 kcal. Un petit écart tenu chaque jour suffit, inutile de te priver d'un coup."),
     category: 'weight',
   },
   {
     id: "w5",
-    title: "Même poids, autre silhouette",
-    content: "Le muscle prend moins de place que la graisse. À poids égal, ta silhouette peut changer. Ton tour de taille le montre mieux que la balance.",
+    title: traduire("Même poids, autre silhouette"),
+    content: traduire("Le muscle prend moins de place que la graisse. À poids égal, ta silhouette peut changer. Ton tour de taille le montre mieux que la balance."),
     category: 'weight',
   },
   {
     id: "w6",
     title: "Plateau",
-    content: "Un plateau est normal, ton corps s'adapte. Laisse passer deux ou trois semaines avant de changer tes repas ou ton entraînement.",
+    content: traduire("Un plateau est normal, ton corps s'adapte. Laisse passer deux ou trois semaines avant de changer tes repas ou ton entraînement."),
     category: 'weight',
   },
   {
     id: "w7",
-    title: "Bien te peser",
-    content: "Pèse-toi toujours dans les mêmes conditions : le matin, à jeun, après être passé aux toilettes.",
+    title: traduire("Bien te peser"),
+    content: traduire("Pèse-toi toujours dans les mêmes conditions : le matin, à jeun, après être passé aux toilettes."),
     category: 'weight',
   },
 
   // === NUTRITION ===
   {
     id: "n1",
-    title: "Protéines",
-    content: "Les protéines calent bien et protègent ton muscle quand tu surveilles ton poids. Mets-en une source à chaque repas.",
+    title: traduire("Protéines"),
+    content: traduire("Les protéines calent bien et protègent ton muscle quand tu surveilles ton poids. Mets-en une source à chaque repas."),
     category: 'nutrition',
   },
   {
     id: "n2",
-    title: "Taille des portions",
-    content: "Une assiette plus petite aide à te servir moins sans te sentir frustré. L'œil compte autant que l'estomac.",
+    title: traduire("Taille des portions"),
+    content: traduire("Une assiette plus petite aide à te servir moins sans te sentir frustré. L'œil compte autant que l'estomac."),
     category: 'nutrition',
   },
   {
     id: "n3",
     title: "Bonnes graisses",
-    content: "Les graisses ne sont pas l'ennemi. Avocat, noix, huile d'olive : ton corps en a besoin, en quantité raisonnable.",
+    content: traduire("Les graisses ne sont pas l'ennemi. Avocat, noix, huile d'olive : ton corps en a besoin, en quantité raisonnable."),
     category: 'nutrition',
   },
   {
     id: "n4",
-    title: "Glucides",
-    content: "Les glucides sont ton carburant pour l'entraînement. Riz complet, patate douce, flocons d'avoine donnent une énergie plus stable.",
+    title: traduire("Glucides"),
+    content: traduire("Les glucides sont ton carburant pour l'entraînement. Riz complet, patate douce, flocons d'avoine donnent une énergie plus stable."),
     category: 'nutrition',
   },
   {
     id: "n5",
-    title: "Jeûne intermittent",
-    content: "Le jeûne 16/8 n'a rien de magique : il aide surtout à manger moins. S'il ne te convient pas, tu ne rates rien.",
+    title: traduire("Jeûne intermittent"),
+    content: traduire("Le jeûne 16/8 n'a rien de magique : il aide surtout à manger moins. S'il ne te convient pas, tu ne rates rien."),
     category: 'nutrition',
   },
   {
     id: "n6",
     title: "Petits plaisirs",
-    content: "Tout t'interdire mène souvent au craquage. Garde une petite place pour le plaisir, c'est ce qui permet de tenir.",
+    content: traduire("Tout t'interdire mène souvent au craquage. Garde une petite place pour le plaisir, c'est ce qui permet de tenir."),
     category: 'nutrition',
   },
   {
     id: "n7",
     title: "Fibres",
-    content: "Légumes, fruits, légumineuses, céréales complètes : les fibres calent et aident la digestion. Vise environ 25 à 30 g par jour.",
+    content: traduire("Légumes, fruits, légumineuses, céréales complètes : les fibres calent et aident la digestion. Vise environ 25 à 30 g par jour."),
     category: 'nutrition',
   },
   {
     id: "n8",
     title: "Sel",
-    content: "Trop de sel fait retenir de l'eau et gonfle le chiffre de la balance. Les plats préparés en contiennent beaucoup.",
+    content: traduire("Trop de sel fait retenir de l'eau et gonfle le chiffre de la balance. Les plats préparés en contiennent beaucoup."),
     category: 'nutrition',
   },
 
   // === SOMMEIL ===
   {
     id: "s1",
-    title: "Sommeil et faim",
-    content: "Après une mauvaise nuit, la faim est souvent plus forte. Bien dormir aide aussi à mieux manger.",
+    title: traduire("Sommeil et faim"),
+    content: traduire("Après une mauvaise nuit, la faim est souvent plus forte. Bien dormir aide aussi à mieux manger."),
     category: 'sleep',
   },
   {
     id: "s2",
-    title: "Récupérer en dormant",
-    content: "C'est pendant le sommeil que ton corps récupère de l'entraînement. Mal dormir, c'est moins profiter de tes séances.",
+    title: traduire("Récupérer en dormant"),
+    content: traduire("C'est pendant le sommeil que ton corps récupère de l'entraînement. Mal dormir, c'est moins profiter de tes séances."),
     category: 'sleep',
   },
   {
     id: "s3",
-    title: "Écrans",
-    content: "La lumière des écrans retarde l'endormissement. Essaie de les poser une heure avant de te coucher.",
+    title: traduire("Écrans"),
+    content: traduire("La lumière des écrans retarde l'endormissement. Essaie de les poser une heure avant de te coucher."),
     category: 'sleep',
   },
   {
     id: "s4",
-    title: "Heures fixes",
-    content: "Te coucher et te lever à heures fixes aide ton sommeil, week-end compris.",
+    title: traduire("Heures fixes"),
+    content: traduire("Te coucher et te lever à heures fixes aide ton sommeil, week-end compris."),
     category: 'sleep',
   },
   {
     id: "s5",
-    title: "Chambre fraîche",
-    content: "Une chambre autour de 18 °C aide à t'endormir. Ton corps baisse sa température pour trouver le sommeil.",
+    title: traduire("Chambre fraîche"),
+    content: traduire("Une chambre autour de 18 °C aide à t'endormir. Ton corps baisse sa température pour trouver le sommeil."),
     category: 'sleep',
   },
 
@@ -162,63 +163,63 @@ export const HEALTH_TIPS: HealthTip[] = [
   {
     id: "e1",
     title: "Musculation",
-    content: "La musculation entretient ton muscle et ta force. Elle reste utile quand ton objectif est de perdre du poids.",
+    content: traduire("La musculation entretient ton muscle et ta force. Elle reste utile quand ton objectif est de perdre du poids."),
     category: 'exercise',
   },
   {
     id: "e2",
-    title: "Bouger hors du sport",
-    content: "Marcher, prendre les escaliers, rester moins assis : ces petits gestes pèsent lourd dans ta dépense de la journée.",
+    title: traduire("Bouger hors du sport"),
+    content: traduire("Marcher, prendre les escaliers, rester moins assis : ces petits gestes pèsent lourd dans ta dépense de la journée."),
     category: 'exercise',
   },
   {
     id: "e3",
-    title: "Fractionné",
-    content: "Le fractionné intense donne beaucoup en peu de temps. Garde-le pour une ou deux séances par semaine, il fatigue vite.",
+    title: traduire("Fractionné"),
+    content: traduire("Le fractionné intense donne beaucoup en peu de temps. Garde-le pour une ou deux séances par semaine, il fatigue vite."),
     category: 'exercise',
   },
   {
     id: "e4",
-    title: "Repos",
-    content: "Ton muscle se renforce pendant le repos. Laisse environ 48 h avant de retravailler à fond les mêmes muscles.",
+    title: traduire("Repos"),
+    content: traduire("Ton muscle se renforce pendant le repos. Laisse environ 48 h avant de retravailler à fond les mêmes muscles."),
     category: 'exercise',
   },
   {
     id: "e5",
-    title: "Régularité",
-    content: "Trois séances chaque semaine valent mieux que six une semaine puis rien la suivante.",
+    title: traduire("Régularité"),
+    content: traduire("Trois séances chaque semaine valent mieux que six une semaine puis rien la suivante."),
     category: 'exercise',
   },
   {
     id: "e6",
-    title: "Progression",
-    content: "Ajoute petit à petit une répétition ou un peu de charge. C'est ce qui fait progresser sur la durée.",
+    title: traduire("Progression"),
+    content: traduire("Ajoute petit à petit une répétition ou un peu de charge. C'est ce qui fait progresser sur la durée."),
     category: 'exercise',
   },
 
   // === HYDRATATION ===
   {
     id: "h1",
-    title: "Faim ou soif",
-    content: "On confond parfois faim et soif. Bois un verre d'eau et attends un peu avant de grignoter.",
+    title: traduire("Faim ou soif"),
+    content: traduire("On confond parfois faim et soif. Bois un verre d'eau et attends un peu avant de grignoter."),
     category: 'hydration',
   },
   {
     id: "h2",
-    title: "Boire tout au long du jour",
-    content: "Garde une bouteille à portée de main. Boire un peu toute la journée est plus simple que tout d'un coup le soir.",
+    title: traduire("Boire tout au long du jour"),
+    content: traduire("Garde une bouteille à portée de main. Boire un peu toute la journée est plus simple que tout d'un coup le soir."),
     category: 'hydration',
   },
   {
     id: "h3",
-    title: "Eau et entraînement",
-    content: "Même un léger manque d'eau peut te rendre moins efficace à l'entraînement. Bois avant, pendant et après.",
+    title: traduire("Eau et entraînement"),
+    content: traduire("Même un léger manque d'eau peut te rendre moins efficace à l'entraînement. Bois avant, pendant et après."),
     category: 'hydration',
   },
   {
     id: "h4",
-    title: "Repère d'hydratation",
-    content: "Des urines jaune clair indiquent en général que tu bois assez. Plus foncées, pense à boire.",
+    title: traduire("Repère d'hydratation"),
+    content: traduire("Des urines jaune clair indiquent en général que tu bois assez. Plus foncées, pense à boire."),
     category: 'hydration',
   },
 
@@ -226,31 +227,31 @@ export const HEALTH_TIPS: HealthTip[] = [
   {
     id: "m1",
     title: "Stress",
-    content: "Le stress qui dure pèse sur ton sommeil et ton appétit. Une marche ou quelques respirations lentes aident à redescendre.",
+    content: traduire("Le stress qui dure pèse sur ton sommeil et ton appétit. Une marche ou quelques respirations lentes aident à redescendre."),
     category: 'mental',
   },
   {
     id: "m2",
     title: "Suivi",
-    content: "Noter ton poids et tes repas t'aide à voir ce qui marche vraiment. Le suivi rend tes progrès visibles.",
+    content: traduire("Noter ton poids et tes repas t'aide à voir ce qui marche vraiment. Le suivi rend tes progrès visibles."),
     category: 'mental',
   },
   {
     id: "m3",
-    title: "Objectifs",
-    content: "Un objectif précis et daté se tient mieux qu'un vague souhait. Par exemple : trois séances par semaine pendant un mois.",
+    title: traduire("Objectifs"),
+    content: traduire("Un objectif précis et daté se tient mieux qu'un vague souhait. Par exemple : trois séances par semaine pendant un mois."),
     category: 'mental',
   },
   {
     id: "m4",
     title: "Habitudes",
-    content: "Une habitude met souvent plusieurs semaines à s'installer. Sois patient, elle finit par devenir naturelle.",
+    content: traduire("Une habitude met souvent plusieurs semaines à s'installer. Sois patient, elle finit par devenir naturelle."),
     category: 'mental',
   },
   {
     id: "m5",
     title: "Motivation",
-    content: "La motivation va et vient, les habitudes restent. Mise sur une routine simple plutôt que sur l'envie du moment.",
+    content: traduire("La motivation va et vient, les habitudes restent. Mise sur une routine simple plutôt que sur l'envie du moment."),
     category: 'mental',
   },
 ];
@@ -355,7 +356,7 @@ export const scheduleHealthTipNotifications = async (): Promise<boolean> => {
       await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
         name: 'Conseils du soir',
         importance: Notifications.AndroidImportance.DEFAULT,
-        description: 'Conseils santé du soir',
+        description: traduire('Conseils santé du soir'),
       });
     }
 

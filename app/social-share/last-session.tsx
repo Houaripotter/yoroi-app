@@ -19,13 +19,14 @@ import { Card, P, Pill, tap } from '@/components/yoroi/v2/accueil/kit';
 import { ShareStudio } from '@/components/yoroi/v2/partage/ShareStudio';
 import { Stamp, cardWidthFor, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
 import { useStudio } from '@/lib/v2/partage/useStudio';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function LastSessionScreen() {
   const { avatarImage: contextAvatar } = useAvatar();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const CARD_WIDTH = cardWidthFor(SCREEN_WIDTH);
   const params = useLocalSearchParams<{ id?: string }>();
-  const studio = useStudio({ dialogTitle: 'Partager ma séance', source: 'derniere_seance' });
+  const studio = useStudio({ dialogTitle: traduire('Partager ma séance'), source: 'derniere_seance' });
 
   // Pont avec la lecture d'origine : la photo de profil devient le fond par defaut
   const setBackgroundImage = (uri?: string) => { if (uri) studio.setPhoto(uri); };
@@ -105,13 +106,13 @@ export default function LastSessionScreen() {
                 // Si on a les séries détaillées, afficher chaque série
                 if (Array.isArray(ex.setsData) && ex.setsData.length > 0) {
                   return ex.setsData.map((set: any, i: number) => ({
-                    label: i === 0 ? (ex.name ?? 'Exercice') : '',
+                    label: i === 0 ? (ex.name ?? traduire('Exercice')) : '',
                     weight: (set.weight ?? 0) > 0 ? set.weight.toString() : undefined,
                     reps: (set.reps ?? 0) > 0 ? set.reps.toString() : undefined,
                   }));
                 }
                 return [{
-                  label: ex.name ?? 'Exercice',
+                  label: ex.name ?? traduire('Exercice'),
                   weight: (ex.weight ?? 0) > 0 ? ex.weight.toString() : undefined,
                   reps: (ex.reps ?? 0) > 0 ? ex.reps.toString() : undefined,
                   sets: (ex.sets ?? 0) > 1 ? ex.sets.toString() : undefined,
@@ -153,7 +154,7 @@ export default function LastSessionScreen() {
                       const scorePart = (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0
                         ? `${r.pointsFor ?? 0}-${r.pointsAgainst ?? 0}pts` : '';
                       const givenSub = Array.isArray(r.methodsGiven) && r.methodsGiven.length > 0
-                        ? `donné ${getMethodDisplayName(r.methodsGiven[0])}` : '';
+                        ? traduire("donné {0}", getMethodDisplayName(r.methodsGiven[0])) : '';
                       const takenSub = Array.isArray(r.methodsTaken) && r.methodsTaken.length > 0
                         ? `subi ${getMethodDisplayName(r.methodsTaken[0])}` : '';
                       const rightParts = [resultEmoji ? `${resultEmoji}${resultLabel}` : '', scorePart, givenSub, takenSub].filter(Boolean);
@@ -170,24 +171,24 @@ export default function LastSessionScreen() {
                     } else {
                       // ── Mode full / medium ──
                       const label = r.partner ? `Round ${r.number} contre ${r.partner}` : `Round ${r.number}`;
-                      rows.push({ label, pace: resultEmoji ? `${resultEmoji} ${r.result === 'win' ? 'Victoire' : r.result === 'loss' ? 'Défaite' : 'Nul'}` : undefined });
+                      rows.push({ label, pace: resultEmoji ? `${resultEmoji} ${r.result === 'win' ? traduire('Victoire') : r.result === 'loss' ? traduire('Défaite') : 'Nul'}` : undefined });
 
                       if (r.partnerRating) {
-                        const ratingLabel = r.partnerRating <= 2 ? 'Débutant' : r.partnerRating <= 4 ? 'Intermédiaire' : r.partnerRating <= 6 ? 'Bon niveau' : r.partnerRating <= 8 ? 'Avancé' : r.partnerRating === 9 ? 'Expert' : 'Élite';
-                        rows.push({ label: `  Niveau adverse`, pace: `${r.partnerRating}/10, ${ratingLabel}` });
+                        const ratingLabel = r.partnerRating <= 2 ? 'Débutant' : r.partnerRating <= 4 ? 'Intermédiaire' : r.partnerRating <= 6 ? traduire('Bon niveau') : r.partnerRating <= 8 ? 'Avancé' : r.partnerRating === 9 ? 'Expert' : traduire('Élite');
+                        rows.push({ label: traduire(`  Niveau adverse`), pace: `${r.partnerRating}/10, ${ratingLabel}` });
                       }
 
                       if (r.roundIntensity) {
-                        const intensityMap: Record<string, string> = { guerre: 'Guerre', technique: 'Technique', detendu: 'Détendu' };
+                        const intensityMap: Record<string, string> = { guerre: 'Guerre', technique: traduire('Technique'), detendu: traduire('Détendu') };
                         rows.push({ label: `  ${intensityMap[r.roundIntensity] ?? r.roundIntensity}` });
                       }
 
                       if ((r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0) {
-                        rows.push({ label: `  Score`, pace: `${r.pointsFor ?? 0} à ${r.pointsAgainst ?? 0} pts` });
+                        rows.push({ label: traduire(`  Score`), pace: traduire("{0} à {1} pts", r.pointsFor ?? 0, r.pointsAgainst ?? 0) });
                       }
 
                       if (Array.isArray(r.methodsGiven) && r.methodsGiven.length > 0) {
-                        r.methodsGiven.forEach((m: string) => rows.push({ label: `  ${m}`, pace: 'donné' }));
+                        r.methodsGiven.forEach((m: string) => rows.push({ label: `  ${m}`, pace: traduire('donné') }));
                       }
                       if (Array.isArray(r.methodsTaken) && r.methodsTaken.length > 0) {
                         r.methodsTaken.forEach((m: string) => rows.push({ label: `  ${m}`, pace: 'subi' }));
@@ -218,7 +219,7 @@ export default function LastSessionScreen() {
                   if (nb > 1 && (hasResults || hasPoints)) {
                     const bilanParts: string[] = [];
                     if (hasResults) bilanParts.push(`${wins}V ${losses}D ${draws}N`);
-                    if (hasPoints) bilanParts.push(`${totalFor} à ${totalAgainst} pts`);
+                    if (hasPoints) bilanParts.push(traduire("{0} à {1} pts", totalFor, totalAgainst));
                     rows.push({ label: `Bilan`, pace: bilanParts.join(', ') });
                   }
 
@@ -227,7 +228,7 @@ export default function LastSessionScreen() {
                   setCombatRoundsData(rounds as CombatRoundData[]);
 
                   // ── Détection victoire impressionnante ──
-                  const getRatingLabel = (r: number) => r <= 2 ? 'Débutant' : r <= 4 ? 'Intermédiaire' : r <= 6 ? 'Bon niveau' : r <= 8 ? 'Avancé' : r === 9 ? 'Expert' : 'Élite';
+                  const getRatingLabel = (r: number) => r <= 2 ? 'Débutant' : r <= 4 ? 'Intermédiaire' : r <= 6 ? traduire('Bon niveau') : r <= 8 ? 'Avancé' : r === 9 ? 'Expert' : traduire('Élite');
                   const winsVsRated = rounds.filter((r: any) => r.result === 'win' && (r.partnerRating ?? 0) >= 7);
                   const bestWin = winsVsRated.reduce((best: any, r: any) => (!best || r.partnerRating > best.partnerRating ? r : best), null);
                   const totalWins = rounds.filter((r: any) => r.result === 'win').length;
@@ -236,24 +237,24 @@ export default function LastSessionScreen() {
                   if (bestWin?.partnerRating >= 9) {
                     setCombatCelebration({
                       visible: true,
-                      title: bestWin.partnerRating === 10 ? 'Élite battu !' : 'Expert dominé !',
+                      title: bestWin.partnerRating === 10 ? traduire('Élite battu !') : traduire('Expert dominé !'),
                       subtitle: bestWin.partner
-                        ? `Tu as battu ${bestWin.partner} noté ${bestWin.partnerRating}/10\nLes champions se révèlent dans l'adversité !`
-                        : `Victoire contre un adversaire ${getRatingLabel(bestWin.partnerRating)} (${bestWin.partnerRating}/10) !`,
+                        ? traduire("Tu as battu {0} noté {1}/10\nLes champions se révèlent dans l'adversité !", bestWin.partner, bestWin.partnerRating)
+                        : traduire("Victoire contre un adversaire {0} ({1}/10) !", getRatingLabel(bestWin.partnerRating), bestWin.partnerRating),
                     });
                   } else if (bestWin?.partnerRating >= 7) {
                     setCombatCelebration({
                       visible: true,
                       title: 'Adversaire fort battu !',
                       subtitle: bestWin.partner
-                        ? `Victoire sur ${bestWin.partner} noté ${bestWin.partnerRating}/10\nTu progresses à grande vitesse !`
-                        : `Victoire contre un adversaire ${getRatingLabel(bestWin.partnerRating)} (${bestWin.partnerRating}/10) !`,
+                        ? traduire("Victoire sur {0} noté {1}/10\nTu progresses à grande vitesse !", bestWin.partner, bestWin.partnerRating)
+                        : traduire("Victoire contre un adversaire {0} ({1}/10) !", getRatingLabel(bestWin.partnerRating), bestWin.partnerRating),
                     });
                   } else if (totalWins > 0 && totalRounds >= 3 && totalWins === totalRounds) {
                     setCombatCelebration({
                       visible: true,
-                      title: 'Séance parfaite !',
-                      subtitle: `${totalWins} victoires sur ${totalRounds} rounds\nAucune défaite, domination totale !`,
+                      title: traduire('Séance parfaite !'),
+                      subtitle: traduire("{0} victoires sur {1} rounds\nAucune défaite, domination totale !", totalWins, totalRounds),
                     });
                   }
                 }
@@ -318,8 +319,8 @@ export default function LastSessionScreen() {
     { label: 'Date', on: showDate, set: setShowDate },
     { label: 'Club', on: showClub, set: setShowClub },
     { label: 'Lieu', on: showLieu, set: setShowLieu },
-    { label: 'Objectif', on: showYearlyCount, set: setShowYearlyCount },
-    { label: 'Détail', on: showExercises, set: setShowExercises },
+    { label: traduire('Objectif'), on: showYearlyCount, set: setShowYearlyCount },
+    { label: traduire('Détail'), on: showExercises, set: setShowExercises },
     { label: 'Stats', on: showStats, set: setShowStats },
   ];
 
@@ -327,10 +328,10 @@ export default function LastSessionScreen() {
 
   return (
     <ShareStudio
-      title="Ma séance"
-      subtitle="Montre le travail du jour"
+      title={traduire("Ma séance")}
+      subtitle={traduire("Montre le travail du jour")}
       loading={isLoadingData}
-      empty={!isLoadingData && !lastTraining ? { title: 'Aucune séance à partager', text: 'Enregistre ta première séance, ta carte sera prête juste après.', action: 'Lancer une séance', onAction: () => router.push('/seance' as any) } : null}
+      empty={!isLoadingData && !lastTraining ? { title: traduire('Aucune séance à partager'), text: traduire('Enregistre ta première séance, ta carte sera prête juste après.'), action: traduire('Lancer une séance'), onAction: () => router.push('/seance' as any) } : null}
       style={studio.style}
       onStyle={studio.setStyle}
       hasPhoto={studio.hasPhoto}
@@ -338,7 +339,7 @@ export default function LastSessionScreen() {
       onShare={studio.share}
       onSave={studio.save}
       busy={studio.busy}
-      secondary={{ label: 'Étape suivante : sauvegarder mes données', onPress: () => router.push('/social-share/backup-step' as any) }}
+      secondary={{ label: traduire('Étape suivante : sauvegarder mes données'), onPress: () => router.push('/social-share/backup-step' as any) }}
       extras={
         <View style={{ gap: 14 }}>
           {combatCelebration?.visible ? (
@@ -351,7 +352,7 @@ export default function LastSessionScreen() {
             </Card>
           ) : null}
           <View style={{ gap: 10 }}>
-            <Ink size={15} weight="black" style={{ paddingHorizontal: 4 }}>Sur la carte</Ink>
+            <Ink size={15} weight="black" style={{ paddingHorizontal: 4 }}>{traduire("Sur la carte")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {toggles.map((t) => (
                 <Pill key={t.label} label={t.label} active={t.on} onPress={() => { tap(); t.set(!t.on); }} />

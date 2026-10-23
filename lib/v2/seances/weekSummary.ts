@@ -8,6 +8,7 @@ import type { MuscleName } from '@/lib/v2/progres/strength';
 import { durationOf, mondayOf, setsCount, tonnageParts } from '@/lib/v2/trainingWeek';
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { familyOf, firstSport, parseExercises, parseRounds, workSets } from './sessionData';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export { MUSCLE_ORDER };
 export type { MuscleName };
@@ -139,8 +140,8 @@ export function topExercises(t: Training, max = 3, unite: UnitePoids = 'kg'): { 
     .map((e) => {
       const s = workSets(e);
       const top = s.reduce<{ weight: number; reps: number } | null>((b, x) => (!b || (x.weight || 0) * 100 + (x.reps || 0) > b.weight * 100 + b.reps ? { weight: x.weight || 0, reps: x.reps || 0 } : b), null);
-      const fmt = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', ',');
-      const best = top ? (top.weight > 0 ? `${fmt(versUnitePoids(top.weight, unite))} ${libelleUnite(unite)} × ${top.reps}` : `${top.reps} répétitions`) : '';
+      const fmt = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', DECIMAL);
+      const best = top ? (top.weight > 0 ? `${fmt(versUnitePoids(top.weight, unite))} ${libelleUnite(unite)} × ${top.reps}` : traduire("{0} répétitions", top.reps)) : '';
       return { name: e.name, best, sets: s.length };
     });
 }

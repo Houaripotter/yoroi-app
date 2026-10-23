@@ -19,6 +19,7 @@ import type { DayPlate } from './WeekPlates';
 import { Icon } from './Icon';
 import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const NB = ' ';
 
@@ -43,14 +44,14 @@ function volumeOf(cur: PeriodStats, prev: PeriodStats, unite: UnitePoids = 'kg')
   if (cur.tonnageKg > 0 || prev.tonnageKg > 0) return { label: 'tonnage', value: fmtKg(cur.tonnageKg, unite), delta: cur.tonnageKg - prev.tonnageKg, fmt: (n) => fmtKg(n, unite) };
   if (cur.rounds > 0 || prev.rounds > 0) return { label: 'rounds', value: String(cur.rounds), delta: cur.rounds - prev.rounds, fmt: (n) => String(Math.abs(Math.round(n))) };
   if (cur.distanceKm > 0 || prev.distanceKm > 0) return { label: 'distance', value: `${fr1(cur.distanceKm)}${NB}km`, delta: cur.distanceKm - prev.distanceKm, fmt: (n) => `${fr1(Math.abs(n))}${NB}km` };
-  return { label: 'séries', value: String(cur.sets), delta: cur.sets - prev.sets, fmt: (n) => String(Math.abs(Math.round(n))) };
+  return { label: traduire('séries'), value: String(cur.sets), delta: cur.sets - prev.sets, fmt: (n) => String(Math.abs(Math.round(n))) };
 }
 
 function Trend({ delta, text, hasPrev }: { delta: number; text: string; hasPrev: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  if (!hasPrev && delta <= 0) return <Ink size={12} weight="bold" color={c.textMuted}>rien la semaine passée</Ink>;
-  if (Math.abs(delta) < 0.5) return <Ink size={12} weight="bold" color={c.textMuted}>comme la semaine passée</Ink>;
+  if (!hasPrev && delta <= 0) return <Ink size={12} weight="bold" color={c.textMuted}>{traduire("rien la semaine passée")}</Ink>;
+  if (Math.abs(delta) < 0.5) return <Ink size={12} weight="bold" color={c.textMuted}>{traduire("comme la semaine passée")}</Ink>;
   const up = delta > 0;
   const color = up ? c.successText : c.textSecondary;
   return (
@@ -118,25 +119,25 @@ export function WeekHero({
     <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 16, gap: 14, shadowColor: c.ink, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 }}>
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={13} weight="bold" color={c.textSecondary}>{`Cette semaine, ${week.range}`}</Ink>
+          <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Cette semaine, {0}", week.range)}</Ink>
           <Ink size={44} weight="black" tight style={{ lineHeight: 48 }}>
             {String(cur.sessions)}
-            <Ink size={16} weight="bold" color={c.textSecondary}>{` séance${cur.sessions > 1 ? 's' : ''}${weeklyGoal > 0 ? ` sur ${weeklyGoal}` : ''}`}</Ink>
+            <Ink size={16} weight="bold" color={c.textSecondary}>{traduirePluriel(cur.sessions, cur.sessions > 1, " séance{0}", " séances{0}", weeklyGoal > 0 ? ` sur ${weeklyGoal}` : '')}</Ink>
           </Ink>
           {goalReached ? (
             <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: c.successTint, marginTop: 2 }}>
-              <Ink size={12} weight="extraBold" color={c.successText}>Objectif tenu</Ink>
+              <Ink size={12} weight="extraBold" color={c.successText}>{traduire("Objectif tenu")}</Ink>
             </View>
           ) : weeklyGoal > 0 ? (
             <Ink size={13} color={c.textSecondary}>
-              {cur.sessions === 0 ? 'ta semaine commence ici' : `encore ${weeklyGoal - cur.sessions} pour ton objectif`}
+              {cur.sessions === 0 ? traduire('ta semaine commence ici') : traduire("encore {0} pour ton objectif", weeklyGoal - cur.sessions)}
             </Ink>
           ) : (
             <View style={{ gap: 2 }}>
-              {cur.sessions === 0 ? <Ink size={13} color={c.textSecondary}>ta semaine commence ici</Ink> : null}
+              {cur.sessions === 0 ? <Ink size={13} color={c.textSecondary}>{traduire("ta semaine commence ici")}</Ink> : null}
               {onChooseGoal ? (
-                <Pressable onPress={onChooseGoal} accessibilityRole="button" accessibilityLabel="Choisir un objectif de séances" hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
-                  <Ink size={13} weight="extraBold" color={c.accent}>Choisir un objectif, si tu veux</Ink>
+                <Pressable onPress={onChooseGoal} accessibilityRole="button" accessibilityLabel={traduire("Choisir un objectif de séances")} hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
+                  <Ink size={13} weight="extraBold" color={c.accent}>{traduire("Choisir un objectif, si tu veux")}</Ink>
                 </Pressable>
               ) : null}
             </View>
@@ -150,24 +151,24 @@ export function WeekHero({
       <WeekPlates plates={plates} />
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Tile label="durée" value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
+        <Tile label={traduire("durée")} value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
           <Trend delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
         </Tile>
         <Tile label={vol.label} value={vol.value}>
           <Trend delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
         </Tile>
-        <Tile label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y="Ta charge d’entraînement, voir le détail">
+        <Tile label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>
           <Trend delta={prev.load > 0 ? loadPct : cur.load} text={prev.load > 0 ? `${Math.abs(loadPct)}${NB}%` : `${formatPoints(cur.load)}${NB}pts`} hasPrev={hasPrev} />
         </Tile>
-        <Tile label="jours entraînés" value={`${cur.days} sur 7`}>
-          <Trend delta={cur.days - prev.days} text={`${Math.abs(cur.days - prev.days)} jour${Math.abs(cur.days - prev.days) > 1 ? 's' : ''}`} hasPrev={hasPrev} />
+        <Tile label={traduire("jours entraînés")} value={traduire("{0} sur 7", cur.days)}>
+          <Trend delta={cur.days - prev.days} text={traduirePluriel(Math.abs(cur.days - prev.days), Math.abs(cur.days - prev.days) > 1, "{0} jour", "{0} jours", Math.abs(cur.days - prev.days))} hasPrev={hasPrev} />
         </Tile>
       </View>
 
       <Ink size={12} color={c.textMuted}>
         {full.sessions > 0
-          ? `Comparé à la semaine passée au même jour. Semaine passée entière : ${full.sessions} séance${full.sessions > 1 ? 's' : ''}${full.minutes ? `, ${fmtMin(full.minutes)}` : ''}.`
-          : 'Comparé à la semaine passée au même jour.'}
+          ? traduirePluriel(full.sessions, full.sessions > 1, "Comparé à la semaine passée au même jour. Semaine passée entière : {0} séance{1}.", "Comparé à la semaine passée au même jour. Semaine passée entière : {0} séances{1}.", full.sessions, full.minutes ? `, ${fmtMin(full.minutes)}` : '')
+          : traduire('Comparé à la semaine passée au même jour.')}
       </Ink>
     </View>
   );

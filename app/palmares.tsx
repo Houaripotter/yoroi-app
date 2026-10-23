@@ -25,11 +25,12 @@ import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { BackButton, BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, SectionTitle, tap } from '@/components/yoroi/v2/seances/ui';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SCENE = require('@/assets/avatars/app/monde/scenes/remparts.webp');
 
 type Filter = 'all' | 'victoire' | 'defaite' | 'nul';
-const METHOD_LABEL: Record<string, string> = { soumission: 'Soumission', points: 'Points', decision: 'Décision', ko: 'KO', tko: 'KO technique', abandon: 'Abandon', forfait: 'Forfait', dq: 'Disqualification' };
+const METHOD_LABEL: Record<string, string> = { soumission: 'Soumission', points: 'Points', decision: traduire('Décision'), ko: 'KO', tko: 'KO technique', abandon: 'Abandon', forfait: 'Forfait', dq: 'Disqualification' };
 const METHOD_INK = ['#2C4A84', '#A8832F', '#6E8C3A', '#8C6A3F', '#3D5D9E', '#8B8D96', '#1D2029'];
 
 export default function PalmaresScreen() {
@@ -129,16 +130,16 @@ export default function PalmaresScreen() {
             <BackButton />
           </View>
           <View style={{ position: 'absolute', left: 16, bottom: 14, maxWidth: '60%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: P.white }}>
-            <Ink size={28} weight="black" tight accessibilityRole="header">Palmarès</Ink>
-            <Ink size={13} weight="bold" color={c.textSecondary}>Tes médailles et tes combats</Ink>
+            <Ink size={28} weight="black" tight accessibilityRole="header">{traduire("Palmarès")}</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tes médailles et tes combats")}</Ink>
           </View>
         </ImageBackground>
 
         <View style={{ paddingHorizontal: 22, marginTop: 14, gap: 12 }}>
           <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 18, gap: 12, shadowColor: c.ink, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 }}>
-            <Ink size={13} weight="bold" color={c.textSecondary}>Ton palmarès</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Ton palmarès")}</Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {[{ v: record.victoires, l: 'victoires', col: c.ink }, { v: record.defaites, l: 'défaites', col: c.accent }, { v: record.nuls, l: 'nuls', col: c.textSecondary }].map((x) => (
+              {[{ v: record.victoires, l: 'victoires', col: c.ink }, { v: record.defaites, l: traduire('défaites'), col: c.accent }, { v: record.nuls, l: 'nuls', col: c.textSecondary }].map((x) => (
                 <View key={x.l} style={{ flex: 1 }}>
                   <Ink size={44} weight="black" tight color={x.col} style={{ lineHeight: 48 }}>{String(x.v)}</Ink>
                   <Ink size={12} weight="bold" color={c.textMuted}>{x.l}</Ink>
@@ -150,14 +151,14 @@ export default function PalmaresScreen() {
                 <View style={{ height: 10, borderRadius: 5, backgroundColor: c.fillSubtle, overflow: 'hidden', flexDirection: 'row' }}>
                   <View style={{ width: `${winRate}%`, backgroundColor: c.gold }} />
                 </View>
-                <Ink size={13} weight="bold" color={c.textSecondary}>{`${Math.round(winRate)} % de victoires sur ${total} combat${total > 1 ? 's' : ''}`}</Ink>
+                <Ink size={13} weight="bold" color={c.textSecondary}>{traduirePluriel(total, total > 1, "{0} % de victoires sur {1} combat", "{0} % de victoires sur {1} combats", Math.round(winRate), total)}</Ink>
               </View>
             ) : null}
           </View>
 
           {medalled.length ? (
             <Glass style={{ gap: 12 }}>
-              <Ink size={17} weight="black" tight>Tes médailles</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Tes médailles")}</Ink>
               <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                 {(['or', 'argent', 'bronze'] as Medaille[]).map((m) => (
                   <View key={m} style={{ alignItems: 'center', gap: 2 }}>
@@ -181,27 +182,27 @@ export default function PalmaresScreen() {
           ) : null}
 
           {loaded && total === 0 ? (
-            <EmptyState title="Ton premier combat t’attend" text="Note tes combats de compétition : résultat, méthode, adversaire. Ton palmarès se construit ici." action="Ajouter un combat" onAction={add} />
+            <EmptyState title={traduire("Ton premier combat t’attend")} text={traduire("Note tes combats de compétition : résultat, méthode, adversaire. Ton palmarès se construit ici.")} action={traduire("Ajouter un combat")} onAction={add} />
           ) : null}
 
           {streak && streak.n >= 2 ? (
             <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               {streak.type === 'victoire' ? <Hanko size={36} color={c.gold} /> : <Icon name="flame" size={28} color={c.accent} />}
-              <Ink size={16} weight="black" tight style={{ flex: 1 }}>{`${streak.n} ${streak.type === 'victoire' ? 'victoires' : 'défaites'} d’affilée`}</Ink>
+              <Ink size={16} weight="black" tight style={{ flex: 1 }}>{traduire("{0} {1} d’affilée", streak.n, streak.type === 'victoire' ? 'victoires' : 'défaites')}</Ink>
             </Glass>
           ) : null}
 
           {last ? (
-            <Glass onPress={() => router.push(`/combat-detail?id=${last.id}` as any)} label="Ton dernier combat" style={{ gap: 4 }}>
-              <Ink size={12} weight="bold" color={c.textSecondary}>{`Ton dernier combat, ${relativeDay(last.date.slice(0, 10), today)}`}</Ink>
-              <Ink size={18} weight="black" tight>{`${last.resultat === 'victoire' ? 'Victoire' : last.resultat === 'defaite' ? 'Défaite' : 'Nul'} contre ${last.adversaire_nom || 'un adversaire'}`}</Ink>
+            <Glass onPress={() => router.push(`/combat-detail?id=${last.id}` as any)} label={traduire("Ton dernier combat")} style={{ gap: 4 }}>
+              <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Ton dernier combat, {0}", relativeDay(last.date.slice(0, 10), today))}</Ink>
+              <Ink size={18} weight="black" tight>{`${last.resultat === 'victoire' ? traduire('Victoire') : last.resultat === 'defaite' ? traduire('Défaite') : 'Nul'} contre ${last.adversaire_nom || traduire('un adversaire')}`}</Ink>
               <Ink size={13} color={c.textSecondary}>{[last.adversaire_club, last.methode ? METHOD_LABEL[last.methode] ?? last.methode : '', last.technique, last.temps].filter(Boolean).join(', ')}</Ink>
             </Glass>
           ) : null}
 
           {topTech.length ? (
             <Glass style={{ gap: 10 }}>
-              <Ink size={17} weight="black" tight>Tes finitions préférées</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Tes finitions préférées")}</Ink>
               {topTech.map(([tech, n], i) => (
                 <View key={tech} style={{ gap: 4 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -218,7 +219,7 @@ export default function PalmaresScreen() {
 
           {methods.length ? (
             <Glass style={{ gap: 10 }}>
-              <Ink size={17} weight="black" tight>Comment tu gagnes</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Comment tu gagnes")}</Ink>
               <View style={{ height: 14, borderRadius: 7, overflow: 'hidden', flexDirection: 'row' }}>
                 {methods.map((m, i) => (
                   <View key={m.k} style={{ width: `${m.pct}%`, backgroundColor: METHOD_INK[i % METHOD_INK.length] }} />
@@ -228,7 +229,7 @@ export default function PalmaresScreen() {
                 {methods.map((m, i) => (
                   <View key={m.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: METHOD_INK[i % METHOD_INK.length] }} />
-                    <Ink size={13} weight="bold">{methods.length > 1 ? `${m.label} ${m.pct}\u00A0%` : `${m.label}, ${m.n} sur ${m.n}`}</Ink>
+                    <Ink size={13} weight="bold">{methods.length > 1 ? `${m.label} ${m.pct}\u00A0%` : traduire("{0}, {1} sur {2}", m.label, m.n, m.n)}</Ink>
                   </View>
                 ))}
               </View>
@@ -237,14 +238,14 @@ export default function PalmaresScreen() {
 
           {total > 0 ? (
             <>
-              <SectionTitle title="Tes combats" />
+              <SectionTitle title={traduire("Tes combats")} />
               <ChipRow>
-                <Chip label={`Tous ${total}`} on={filter === 'all'} onPress={() => setFilter('all')} />
+                <Chip label={traduire("Tous {0}", total)} on={filter === 'all'} onPress={() => setFilter('all')} />
                 <Chip label={`Victoires ${record.victoires}`} on={filter === 'victoire'} onPress={() => setFilter('victoire')} />
-                <Chip label={`Défaites ${record.defaites}`} on={filter === 'defaite'} onPress={() => setFilter('defaite')} />
+                <Chip label={traduire("Défaites {0}", record.defaites)} on={filter === 'defaite'} onPress={() => setFilter('defaite')} />
                 <Chip label={`Nuls ${record.nuls}`} on={filter === 'nul'} onPress={() => setFilter('nul')} />
               </ChipRow>
-              {list.length === 0 ? <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Aucun combat dans ce filtre.</Ink> : null}
+              {list.length === 0 ? <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Aucun combat dans ce filtre.")}</Ink> : null}
               {list.map((x) => {
                 const win = x.resultat === 'victoire';
                 const loss = x.resultat === 'defaite';
@@ -261,7 +262,7 @@ export default function PalmaresScreen() {
                   </Pressable>
                 );
               })}
-              <BigButton label="Ajouter un combat" icon="plus" onPress={add} style={{ marginTop: 6 }} />
+              <BigButton label={traduire("Ajouter un combat")} icon="plus" onPress={add} style={{ marginTop: 6 }} />
             </>
           ) : null}
         </View>

@@ -18,6 +18,7 @@ import { contenuSansSante } from '@/lib/v2/notifications/texte';
 import { noter } from '@/lib/v2/notifications/mesure';
 import { datesRappelSeance, messageSeance } from '@/lib/v2/notifications/discipline';
 import { getEspace, objectifVise } from '@/lib/v2/espace';
+import { traduire } from '@/lib/i18n/tr';
 
 // Règle : aucune valeur de santé (poids, kcal, FC, ml, mensurations...) dans
 // le titre ou le corps d'une notification, car elle s'affiche sur l'écran
@@ -159,86 +160,86 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 
 // Messages motivants (UNIVERSELS - pas spécifiques aux sports de combat)
 const TRAINING_MESSAGES = [
-  { title: 'C’est l’heure de ta séance', body: 'Ton créneau est arrivé. Même une séance courte compte.' },
-  { title: 'Ta séance t’attend', body: 'Un échauffement, et le reste suivra.' },
-  { title: 'On y va ?', body: 'C’est le moment que tu avais prévu pour t’entraîner.' },
-  { title: 'Ton créneau du jour', body: 'Une séance de plus sur ton chemin.' },
-  { title: 'Prêt pour ta séance ?', body: 'Prends ton sac, ta séance est prévue maintenant.' },
+  { title: traduire('C’est l’heure de ta séance'), body: traduire('Ton créneau est arrivé. Même une séance courte compte.') },
+  { title: traduire('Ta séance t’attend'), body: traduire('Un échauffement, et le reste suivra.') },
+  { title: 'On y va ?', body: traduire('C’est le moment que tu avais prévu pour t’entraîner.') },
+  { title: traduire('Ton créneau du jour'), body: traduire('Une séance de plus sur ton chemin.') },
+  { title: traduire('Prêt pour ta séance ?'), body: traduire('Prends ton sac, ta séance est prévue maintenant.') },
 ];
 
 const HYDRATION_MESSAGES = [
-  { title: 'Un verre d’eau ?', body: 'Une petite pause pour boire.' },
-  { title: 'Pause eau', body: 'Quelques gorgées maintenant, et ton corps te remercie.' },
-  { title: 'Pense à boire', body: 'Garde ta bouteille à portée de main.' },
+  { title: traduire('Un verre d’eau ?'), body: traduire('Une petite pause pour boire.') },
+  { title: traduire('Pause eau'), body: traduire('Quelques gorgées maintenant, et ton corps te remercie.') },
+  { title: traduire('Pense à boire'), body: traduire('Garde ta bouteille à portée de main.') },
 ];
 
 const WEIGHING_MESSAGES = [
-  { title: 'Ta pesée du jour', body: 'Au réveil, avant le petit déjeuner : c’est le bon moment.' },
-  { title: 'Petit passage sur la balance', body: 'Une pesée régulière rend ta courbe plus juste.' },
+  { title: traduire('Ta pesée du jour'), body: traduire('Au réveil, avant le petit déjeuner : c’est le bon moment.') },
+  { title: traduire('Petit passage sur la balance'), body: traduire('Une pesée régulière rend ta courbe plus juste.') },
 ];
 
 const STREAK_MESSAGES = [
-  { title: 'Ta série t’attend', body: 'Pas encore de séance notée aujourd’hui. Même une séance légère compte.' },
-  { title: 'Encore un jour à ajouter', body: 'Note ta séance du jour pour prolonger ta série.' },
-  { title: 'Il reste du temps', body: 'Une séance courte suffit à garder ta série.' },
+  { title: traduire('Ta série t’attend'), body: traduire('Pas encore de séance notée aujourd’hui. Même une séance légère compte.') },
+  { title: traduire('Encore un jour à ajouter'), body: traduire('Note ta séance du jour pour prolonger ta série.') },
+  { title: traduire('Il reste du temps'), body: traduire('Une séance courte suffit à garder ta série.') },
 ];
 
 const SLEEP_MESSAGES = [
-  { title: 'Bientôt l’heure de dormir', body: 'Pose l’écran, ton corps récupère pendant la nuit.' },
-  { title: 'Bonne nuit', body: 'Un bon sommeil, c’est déjà une partie de l’entraînement.' },
-  { title: 'L’heure du coucher approche', body: 'Tu avais choisi cette heure pour dormir. On s’y tient ?' },
-  { title: 'Place au repos', body: 'La récupération fait partie du progrès. Dors bien.' },
+  { title: traduire('Bientôt l’heure de dormir'), body: traduire('Pose l’écran, ton corps récupère pendant la nuit.') },
+  { title: traduire('Bonne nuit'), body: traduire('Un bon sommeil, c’est déjà une partie de l’entraînement.') },
+  { title: traduire('L’heure du coucher approche'), body: traduire('Tu avais choisi cette heure pour dormir. On s’y tient ?') },
+  { title: traduire('Place au repos'), body: traduire('La récupération fait partie du progrès. Dors bien.') },
 ];
 
 const WEEKLY_CARD_MESSAGES = [
-  { title: 'Ta semaine est prête', body: 'Ta carte de la semaine t’attend dans YOROI.' },
-  { title: 'Le bilan de ta semaine', body: 'Un coup d’œil sur tes sept derniers jours ?' },
-  { title: 'Semaine bouclée', body: 'Ta carte de la semaine est prête, à garder ou à partager.' },
+  { title: traduire('Ta semaine est prête'), body: traduire('Ta carte de la semaine t’attend dans YOROI.') },
+  { title: traduire('Le bilan de ta semaine'), body: traduire('Un coup d’œil sur tes sept derniers jours ?') },
+  { title: traduire('Semaine bouclée'), body: traduire('Ta carte de la semaine est prête, à garder ou à partager.') },
 ];
 
 const MONTHLY_CARD_MESSAGES = [
-  { title: 'Ton mois en une carte', body: 'Ta carte du mois est prête dans YOROI.' },
-  { title: 'Le bilan de ton mois', body: 'Un mois de plus sur ton chemin. Viens le voir.' },
-  { title: 'Nouveau mois', body: 'Ta carte du mois dernier t’attend, à garder ou à partager.' },
+  { title: traduire('Ton mois en une carte'), body: traduire('Ta carte du mois est prête dans YOROI.') },
+  { title: traduire('Le bilan de ton mois'), body: traduire('Un mois de plus sur ton chemin. Viens le voir.') },
+  { title: traduire('Nouveau mois'), body: traduire('Ta carte du mois dernier t’attend, à garder ou à partager.') },
 ];
 
 // Salutations selon l'heure
 const BRIEFING_GREETINGS = [
-  'Bonjour',
+  traduire('Bonjour'),
   'Ohayō',
-  'Belle journée à toi',
-  'Un nouveau jour commence',
+  traduire('Belle journée à toi'),
+  traduire('Un nouveau jour commence'),
 ];
 
 // Messages motivants du matin (UNIVERSELS)
 const BRIEFING_MOTIVATIONS = [
-  'Un pas de plus vers ton objectif.',
-  'La régularité fait la différence.',
-  'Ta séance du jour t’attend.',
-  'Tu construis ta forme jour après jour.',
-  'Fais simple aujourd’hui, mais fais-le.',
+  traduire('Un pas de plus vers ton objectif.'),
+  traduire('La régularité fait la différence.'),
+  traduire('Ta séance du jour t’attend.'),
+  traduire('Tu construis ta forme jour après jour.'),
+  traduire('Fais simple aujourd’hui, mais fais-le.'),
 ];
 
 // Messages pour rappels intelligents (UNIVERSELS)
 const SMART_MISSED_TRAINING_MESSAGES = [
-  { title: 'C’est {day}', body: 'D’habitude tu t’entraînes ce jour-là. Une séance aujourd’hui ?' },
-  { title: 'Ton jour d’entraînement', body: 'Tu t’entraînes souvent le {day}. Toujours partant ?' },
-  { title: 'Une séance ce {day} ?', body: 'C’est souvent ton jour. Même une séance courte compte.' },
+  { title: 'C’est {day}', body: traduire('D’habitude tu t’entraînes ce jour-là. Une séance aujourd’hui ?') },
+  { title: traduire('Ton jour d’entraînement'), body: traduire('Tu t’entraînes souvent le {day}. Toujours partant ?') },
+  { title: traduire('Une séance ce {day} ?'), body: traduire('C’est souvent ton jour. Même une séance courte compte.') },
 ];
 
 const SMART_REST_SUGGESTION_MESSAGES = [
-  { title: 'Et si tu soufflais ?', body: '{days} jours d’entraînement d’affilée. Le repos fait aussi progresser.' },
-  { title: 'Pense à récupérer', body: '{days} jours de suite : une journée calme peut te faire du bien.' },
-  { title: 'Recharge les batteries', body: 'Après {days} jours d’affilée, une pause aide à revenir plus fort.' },
+  { title: traduire('Et si tu soufflais ?'), body: traduire('{days} jours d’entraînement d’affilée. Le repos fait aussi progresser.') },
+  { title: traduire('Pense à récupérer'), body: traduire('{days} jours de suite : une journée calme peut te faire du bien.') },
+  { title: traduire('Recharge les batteries'), body: traduire('Après {days} jours d’affilée, une pause aide à revenir plus fort.') },
 ];
 
 const SMART_FREQUENCY_ALERT_MESSAGES = [
-  { title: 'Une semaine plus calme', body: 'Tu fais d’habitude {usual} séances par semaine, {current} cette semaine. Tout va bien ?' },
-  { title: 'Petit coup de pouce', body: 'Ton rythme a un peu baissé. Une séance courte pour reprendre ?' },
-  { title: 'On reprend ?', body: 'Moins de séances que d’habitude cette semaine. Ton objectif t’attend.' },
+  { title: traduire('Une semaine plus calme'), body: traduire('Tu fais d’habitude {usual} séances par semaine, {current} cette semaine. Tout va bien ?') },
+  { title: traduire('Petit coup de pouce'), body: traduire('Ton rythme a un peu baissé. Une séance courte pour reprendre ?') },
+  { title: 'On reprend ?', body: traduire('Moins de séances que d’habitude cette semaine. Ton objectif t’attend.') },
 ];
 
-const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const DAY_NAMES = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 // ============================================
 // ANNULATION CIBLEE
@@ -257,7 +258,7 @@ const OWN_TYPES = new Set([
 const REMINDER_SETTINGS_TYPE = 'reminder_settings';
 
 /** Titres des anciens rappels ReminderSettings, programmes sans data avant la marque */
-const LEGACY_REMINDER_TITLES = new Set(['\u2696\ufe0f Pes\u00e9e YOROI', 'Pes\u00e9e YOROI', 'Entra\u00eenement YOROI', 'YOROI']);
+const LEGACY_REMINDER_TITLES = new Set(['\u2696\ufe0f Pes\u00e9e YOROI', traduire('Pes\u00e9e YOROI'), traduire('Entra\u00eenement YOROI'), 'YOROI']);
 
 /** Notifications d'autres services qu'on ne touche jamais, meme sans marque reconnue */
 export function isProtectedNotification(n: Notifications.NotificationRequest): boolean {
@@ -770,7 +771,7 @@ class NotificationService {
       // Poids : jamais de valeur ni d'écart sur l'écran verrouillé.
       // On rappelle seulement la pesée si un objectif de poids existe.
       if (profile?.target_weight) {
-        parts.push('Pense à ta pesée');
+        parts.push(traduire('Pense à ta pesée'));
       }
 
       // Creneaux prevus aujourd'hui (avec details)
@@ -798,9 +799,9 @@ class NotificationService {
           .join(', ');
 
         if (pendingCount > 0) {
-          parts.push(`${pendingCount > 1 ? `${pendingCount} créneaux` : '1 créneau'} : ${slotsDesc}`);
+          parts.push(`${pendingCount > 1 ? traduire("{0} créneaux", pendingCount) : traduire('1 créneau')} : ${slotsDesc}`);
         } else {
-          parts.push('Tes créneaux du jour sont faits');
+          parts.push(traduire('Tes créneaux du jour sont faits'));
         }
       }
 
@@ -840,8 +841,8 @@ class NotificationService {
     for (let day = 0; day < 7; day++) {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Ta journée en un coup d’œil',
-          body: 'Ouvre YOROI pour voir où tu en es.',
+          title: traduire('Ta journée en un coup d’œil'),
+          body: traduire('Ouvre YOROI pour voir où tu en es.'),
           data: { type: 'smart_check', silent: true },
           sound: false, // Silencieux - déclenchera une analyse
         },
@@ -1065,15 +1066,15 @@ class NotificationService {
 
   async sendStreakWarning(currentStreak: number): Promise<void> {
     await this.sendInstantNotification(
-      'Protège ton streak !',
-      `Tu as ${currentStreak} jours consécutifs. Ne les perds pas aujourd'hui !`,
+      traduire('Protège ton streak !'),
+      traduire("Tu as {0} jours consécutifs. Ne les perds pas aujourd'hui !", currentStreak),
       { type: 'streak' },
       true
     );
   }
 
   async sendCongratulation(message: string): Promise<void> {
-    await this.sendInstantNotification('Félicitations !', message, { type: 'achievement', screen: 'gamification' }, true);
+    await this.sendInstantNotification(traduire('Félicitations !'), message, { type: 'achievement', screen: 'gamification' }, true);
   }
 
   async sendWeeklyCardReminder(): Promise<void> {
@@ -1097,9 +1098,9 @@ class NotificationService {
   async sendWorkoutCompletedNotification(sport: string, _durationMin: number, _calories?: number, workoutId?: number): Promise<void> {
     const messages = [
       // Aucune durée ni calorie : seulement le sport et un encouragement
-      { title: 'Séance notée', body: `${sport} : c’est fait. Ta carte de séance est prête si tu veux la partager.` },
-      { title: 'Beau travail', body: `Ta séance de ${sport} est dans ton carnet.` },
-      { title: `${sport}, c’est fait`, body: 'Bel effort. Ta carte de séance t’attend.' },
+      { title: traduire('Séance notée'), body: traduire("{0} : c’est fait. Ta carte de séance est prête si tu veux la partager.", sport) },
+      { title: 'Beau travail', body: traduire("Ta séance de {0} est dans ton carnet.", sport) },
+      { title: traduire("{0}, c’est fait", sport), body: traduire('Bel effort. Ta carte de séance t’attend.') },
     ];
     const msg = messages[Math.floor(Math.random() * messages.length)];
     await this.sendInstantNotification(
@@ -1125,26 +1126,26 @@ class NotificationService {
 
     if (patterns.usualDays.length > 0) {
       const usualDayNames = patterns.usualDays.map(d => DAY_NAMES[d]).join(', ');
-      testMessage = `Jours habituels: ${usualDayNames}`;
+      testMessage = traduire("Jours habituels: {0}", usualDayNames);
       testType = 'patterns';
     }
 
     if (patterns.consecutiveDays >= 3) {
-      testMessage += `\n${patterns.consecutiveDays} jours d'entraînement consécutifs`;
+      testMessage += traduire("\n{0} jours d'entraînement consécutifs", patterns.consecutiveDays);
       testType = 'rest';
     }
 
     if (patterns.avgFrequency > 0) {
-      testMessage += `\nMoyenne: ${patterns.avgFrequency} séances/sem`;
-      testMessage += `\nCette semaine: ${patterns.currentWeekCount} séance(s)`;
+      testMessage += traduire("\nMoyenne: {0} séances/sem", patterns.avgFrequency);
+      testMessage += traduire("\nCette semaine: {0} séance(s)", patterns.currentWeekCount);
     }
 
     if (!testMessage) {
-      testMessage = 'Pas assez de données pour analyser tes habitudes. Continue à t\'entraîner !';
+      testMessage = traduire('Pas assez de données pour analyser tes habitudes. Continue à t\'entraîner !');
     }
 
     await this.sendInstantNotification(
-      'Analyse de tes habitudes',
+      traduire('Analyse de tes habitudes'),
       testMessage,
       { type: 'smart_test' }
     );
@@ -1247,17 +1248,17 @@ export async function scheduleNotifications(settings: ReminderSettings): Promise
 
     // Message selon le type
     let title = 'YOROI';
-    let body = 'C\'est l\'heure !';
+    let body = traduire('C\'est l\'heure !');
 
     if (settings.type === 'weight') {
-      title = 'Pesée YOROI';
-      body = 'Monte sur la balance pour suivre ta progression !';
+      title = traduire('Pesée YOROI');
+      body = traduire('Monte sur la balance pour suivre ta progression !');
     } else if (settings.type === 'workout') {
-      title = 'Entraînement YOROI';
-      body = 'C\'est l\'heure de t\'entraîner ! Bouge ton corps.';
+      title = traduire('Entraînement YOROI');
+      body = traduire('C\'est l\'heure de t\'entraîner ! Bouge ton corps.');
     } else {
       title = 'YOROI';
-      body = 'N\'oublie pas ta pesée et ton entraînement !';
+      body = traduire('N\'oublie pas ta pesée et ton entraînement !');
     }
 
     await Notifications.scheduleNotificationAsync({
@@ -1281,14 +1282,14 @@ export async function scheduleNotifications(settings: ReminderSettings): Promise
 
 export async function testNotification(type: ReminderType): Promise<void> {
   let title = 'YOROI Test';
-  let body = 'Notification de test !';
+  let body = traduire('Notification de test !');
 
   if (type === 'weight') {
-    title = 'Pesée YOROI';
-    body = 'Monte sur la balance pour suivre ta progression !';
+    title = traduire('Pesée YOROI');
+    body = traduire('Monte sur la balance pour suivre ta progression !');
   } else if (type === 'workout') {
-    title = 'Entraînement YOROI';
-    body = 'C\'est l\'heure de t\'entraîner ! Bouge ton corps.';
+    title = traduire('Entraînement YOROI');
+    body = traduire('C\'est l\'heure de t\'entraîner ! Bouge ton corps.');
   }
 
   await Notifications.scheduleNotificationAsync({

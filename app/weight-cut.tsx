@@ -8,12 +8,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { PremiumGate } from '@/components/premium/PremiumGate';
 import { WeightCutHub } from '@/components/yoroi/v2/nutrition/WeightCutHub';
 import type { Tab } from '@/components/yoroi/v2/nutrition/WeightCutHub';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function WeightCutScreen() {
   const { tab } = useLocalSearchParams<{ tab?: string }>();
   const initial: Tab = tab === 'simu' || tab === 'jourj' ? tab : 'coupe';
   return (
-    <PremiumGate source="seche" featureTitle="Coupe de poids" perks={['Ta coupe planifiée jusqu’à la pesée', 'Les catégories de MMA, JJB et boxe', 'Un simulateur pour tester ton objectif']}>
+    <PremiumGate source="seche" featureTitle={traduire("Coupe de poids")} perks={[traduire('Ta coupe planifiée jusqu’à la pesée'), traduire('Les catégories de MMA, JJB et boxe'), traduire('Un simulateur pour tester ton objectif')]}>
       <WeightCutHub initialTab={initial} />
     </PremiumGate>
   );

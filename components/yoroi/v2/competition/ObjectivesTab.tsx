@@ -20,13 +20,14 @@ import { addDays, isoLocal, mediumDate, parseLocalDate, startOfToday } from '@/l
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export const TYPE_V2: Record<ObjectiveType, { label: string; glyph: GlyphKind; color: string; soft: string; text: string }> = {
-  competition: { label: 'Compétition', glyph: 'eventail', color: P.accent, soft: P.accentSoft, text: 'Un tournoi, un championnat' },
-  weight: { label: 'Objectif de poids', glyph: 'etoile', color: P.indigo, soft: P.indigoSoft, text: 'Un poids à atteindre' },
-  exam: { label: 'Examen', glyph: 'laurier', color: P.goldDark, soft: P.goldSoft, text: 'Un passage de grade' },
-  travel: { label: 'Voyage ou stage', glyph: 'vague', color: P.mossText, soft: P.mossSoft, text: 'Un camp, un séjour' },
-  custom: { label: 'Personnalisé', glyph: 'sakura', color: P.ink, soft: P.paper, text: 'Ce que tu veux' },
+  competition: { label: traduire('Compétition'), glyph: 'eventail', color: P.accent, soft: P.accentSoft, text: traduire('Un tournoi, un championnat') },
+  weight: { label: traduire('Objectif de poids'), glyph: 'etoile', color: P.indigo, soft: P.indigoSoft, text: traduire('Un poids à atteindre') },
+  exam: { label: 'Examen', glyph: 'laurier', color: P.goldDark, soft: P.goldSoft, text: traduire('Un passage de grade') },
+  travel: { label: traduire('Voyage ou stage'), glyph: 'vague', color: P.mossText, soft: P.mossSoft, text: traduire('Un camp, un séjour') },
+  custom: { label: traduire('Personnalisé'), glyph: 'sakura', color: P.ink, soft: P.paper, text: traduire('Ce que tu veux') },
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -35,8 +36,7 @@ function Countdown({ c, color }: { c: CountdownInfo; color: string }) {
   if (c.isExpired) {
     return (
       <Ink size={28} weight="black" tight color={P.ink2}>
-        Terminé
-      </Ink>
+        {traduire("Terminé")}</Ink>
     );
   }
   const frac = c.hours + c.minutes + c.seconds > 0;
@@ -125,15 +125,15 @@ export function ObjectivesTab() {
       reset();
       await load();
     } catch (error) {
-      appAlert('Ajout impossible', "L'objectif n'a pas pu être ajouté. Réessaie.");
+      appAlert(traduire('Ajout impossible'), traduire("L'objectif n'a pas pu être ajouté. Réessaie."));
     }
   };
 
   const remove = (o: Objective) => {
-    appAlert('Supprimer', `Supprimer « ${o.title} » ?`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer'), traduire("Supprimer « {0} » ?", o.title), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           await deleteObjective(o.id!);
@@ -190,10 +190,10 @@ export function ObjectivesTab() {
             <KozaneBar progress={mainC.progress} count={10} w={24} h={30} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Ink size={12} weight="bold" color={P.muted}>
-                {`${mainC.daysElapsed} jours passés`}
+                {traduire("{0} jours passés", mainC.daysElapsed)}
               </Ink>
               <Ink size={12} weight="extraBold" color={mainT.color}>
-                {`${mainC.daysRemaining} jours restants`}
+                {traduire("{0} jours restants", mainC.daysRemaining)}
               </Ink>
             </View>
           </Glass>
@@ -202,7 +202,7 @@ export function ObjectivesTab() {
 
       {objectives.length > 0 ? (
         <Enter i={1} style={{ gap: 10 }}>
-          <SectionTitle>{`Objectifs en cours, ${objectives.length}`}</SectionTitle>
+          <SectionTitle>{traduire("Objectifs en cours, {0}", objectives.length)}</SectionTitle>
           {objectives.map((o) => {
             const t = TYPE_V2[o.type];
             const c = getCountdownInfo(o);
@@ -217,7 +217,7 @@ export function ObjectivesTab() {
                       {o.title}
                     </Ink>
                     <Ink size={12} weight="bold" color={P.ink2} numberOfLines={1}>
-                      {[mediumDate(parseLocalDate(o.target_date)), o.location, o.target_weight ? `${String(o.target_weight).replace('.', ',')} kg` : null].filter(Boolean).join(', ')}
+                      {[mediumDate(parseLocalDate(o.target_date)), o.location, o.target_weight ? `${String(o.target_weight).replace('.', DECIMAL)} kg` : null].filter(Boolean).join(', ')}
                     </Ink>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
@@ -233,11 +233,11 @@ export function ObjectivesTab() {
                   <View style={{ width: `${Math.min(100, c.progress * 100)}%`, height: 8, borderRadius: 4, backgroundColor: t.color }} />
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Press onPress={() => pin(o)} accessibilityRole="button" accessibilityLabel={o.is_pinned ? 'Désépingler' : 'Épingler en premier'} style={{ flex: 1 }}>
+                  <Press onPress={() => pin(o)} accessibilityRole="button" accessibilityLabel={o.is_pinned ? traduire('Désépingler') : traduire('Épingler en premier')} style={{ flex: 1 }}>
                     <View style={{ minHeight: 44, borderRadius: 14, backgroundColor: o.is_pinned ? P.accentSoft : P.paper, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <XIcon name="pin" size={16} color={o.is_pinned ? P.accent : P.ink2} />
                       <Ink size={13} weight="extraBold" color={o.is_pinned ? P.accent : P.ink2}>
-                        {o.is_pinned ? 'Épinglé' : 'Épingler'}
+                        {o.is_pinned ? traduire('Épinglé') : traduire('Épingler')}
                       </Ink>
                     </View>
                   </Press>
@@ -249,7 +249,7 @@ export function ObjectivesTab() {
                       </Ink>
                     </View>
                   </Press>
-                  <Press onPress={() => remove(o)} accessibilityRole="button" accessibilityLabel={`Supprimer ${o.title}`}>
+                  <Press onPress={() => remove(o)} accessibilityRole="button" accessibilityLabel={traduire("Supprimer {0}", o.title)}>
                     <View style={{ width: 44, minHeight: 44, borderRadius: 14, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="trash" size={17} color={P.muted} />
                     </View>
@@ -260,17 +260,17 @@ export function ObjectivesTab() {
           })}
         </Enter>
       ) : (
-        <EmptyState title="Aucun objectif daté" text="Fixe une date : une compétition, un poids, un passage de grade. Tu verras chaque jour qui t'en sépare." action="Ajouter un objectif" onAction={() => setOpen(true)} />
+        <EmptyState title={traduire("Aucun objectif daté")} text={traduire("Fixe une date : une compétition, un poids, un passage de grade. Tu verras chaque jour qui t'en sépare.")} action={traduire("Ajouter un objectif")} onAction={() => setOpen(true)} />
       )}
 
-      {objectives.length > 0 ? <BigButton label="Ajouter un objectif" icon="plus" onPress={() => setOpen(true)} /> : null}
+      {objectives.length > 0 ? <BigButton label={traduire("Ajouter un objectif")} icon="plus" onPress={() => setOpen(true)} /> : null}
 
       {completed.length > 0 ? (
         <View style={{ gap: 10 }}>
-          <Press onPress={() => setShowDone(!showDone)} accessibilityRole="button" accessibilityLabel={showDone ? 'Masquer les objectifs terminés' : 'Voir les objectifs terminés'}>
+          <Press onPress={() => setShowDone(!showDone)} accessibilityRole="button" accessibilityLabel={showDone ? traduire('Masquer les objectifs terminés') : traduire('Voir les objectifs terminés')}>
             <View style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 }}>
               <Ink size={19} weight="black" tight>
-                {`Terminés ou passés, ${completed.length}`}
+                {traduire("Terminés ou passés, {0}", completed.length)}
               </Ink>
               <View style={{ transform: [{ rotate: showDone ? '-90deg' : '90deg' }] }}>
                 <Icon name="chevron" size={18} color={P.muted} />
@@ -292,10 +292,10 @@ export function ObjectivesTab() {
                         {o.title}
                       </Ink>
                       <Ink size={12} weight="bold" color={ok ? P.accent : P.muted}>
-                        {`${ok ? 'Atteint' : 'Date passée'}, ${mediumDate(parseLocalDate(o.target_date))}`}
+                        {`${ok ? 'Atteint' : traduire('Date passée')}, ${mediumDate(parseLocalDate(o.target_date))}`}
                       </Ink>
                     </View>
-                    <Press onPress={() => remove(o)} accessibilityRole="button" accessibilityLabel={`Supprimer ${o.title}`}>
+                    <Press onPress={() => remove(o)} accessibilityRole="button" accessibilityLabel={traduire("Supprimer {0}", o.title)}>
                       <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
                         <Icon name="trash" size={17} color={P.muted} />
                       </View>
@@ -307,7 +307,7 @@ export function ObjectivesTab() {
         </View>
       ) : null}
 
-      <Sheet visible={open} onClose={reset} title={type ? TYPE_V2[type].label : "Type d'objectif"} scroll>
+      <Sheet visible={open} onClose={reset} title={type ? TYPE_V2[type].label : traduire("Type d'objectif")} scroll>
         {!type ? (
           <View style={{ gap: 8 }}>
             {OBJECTIVE_TYPES.map((o) => {
@@ -334,8 +334,8 @@ export function ObjectivesTab() {
           </View>
         ) : (
           <View style={{ gap: 14 }}>
-            <Field value={title} onChangeText={setTitle} placeholder={type === 'competition' ? 'Ex : Championnat de France' : type === 'weight' ? 'Ex : Atteindre 75 kg' : "Titre de l'objectif"} icon="flag" maxLength={80} />
-            <DateField label="Date visée" value={date} onChange={setDate} minimumDate={addDays(startOfToday(), 1)} />
+            <Field value={title} onChangeText={setTitle} placeholder={type === 'competition' ? traduire('Ex : Championnat de France') : type === 'weight' ? 'Ex : Atteindre 75 kg' : traduire("Titre de l'objectif")} icon="flag" maxLength={80} />
+            <DateField label={traduire("Date visée")} value={date} onChange={setDate} minimumDate={addDays(startOfToday(), 1)} />
             {type === 'competition' || type === 'exam' ? (
               <View style={{ gap: 8 }}>
                 <Label>Sport</Label>
@@ -347,14 +347,14 @@ export function ObjectivesTab() {
               </View>
             ) : null}
             {type === 'competition' || type === 'travel' ? <Field label="Lieu" value={location} onChangeText={setLocation} placeholder={type === 'travel' ? 'Ex : Tokyo, Japon' : 'Ville, pays'} icon="flag" maxLength={80} /> : null}
-            {type === 'weight' ? <Field label="Poids visé" value={targetWeight} onChangeText={setTargetWeight} placeholder="Ex : 75" keyboardType="decimal-pad" suffix="kg" icon="scale" /> : null}
-            <Field label="Notes" value={description} onChangeText={setDescription} placeholder="Détails, motivation" multiline maxLength={300} />
+            {type === 'weight' ? <Field label={traduire("Poids visé")} value={targetWeight} onChangeText={setTargetWeight} placeholder="Ex : 75" keyboardType="decimal-pad" suffix="kg" icon="scale" /> : null}
+            <Field label="Notes" value={description} onChangeText={setDescription} placeholder={traduire("Détails, motivation")} multiline maxLength={300} />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
-                <BigButton label="Retour" tone="light" onPress={() => setType(null)} />
+                <BigButton label={traduire("Retour")} tone="light" onPress={() => setType(null)} />
               </View>
               <View style={{ flex: 1.4 }}>
-                <BigButton label="Ajouter" icon="check" onPress={add} disabled={!title.trim()} />
+                <BigButton label={traduire("Ajouter")} icon="check" onPress={add} disabled={!title.trim()} />
               </View>
             </View>
           </View>

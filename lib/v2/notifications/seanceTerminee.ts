@@ -15,6 +15,7 @@
  * La partie de décision est pure et testée (__tests__/unit/notifSeanceTerminee.test.ts).
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export const NOTIFIEES_KEY = '@yoroi_seances_notifiees_v1';
 /** Une séance finie depuis plus longtemps n'est plus « qui vient de finir » */
 export const FENETRE_RECENTE_MS = 3 * 60 * 60 * 1000;
@@ -109,9 +110,9 @@ export function contenuPour(choisies: SeanceTerminee[]): ContenuNotif | null {
     const s = choisies[0];
     const lignes: string[] = [];
     if (s.source) lignes.push(`Via ${s.source}`);
-    lignes.push('Tape pour partager ta séance !');
+    lignes.push(traduire('Tape pour partager ta séance !'));
     return {
-      title: s.titre || 'Belle séance',
+      title: s.titre || traduire('Belle séance'),
       body: lignes.join('\n'),
       subtitle: s.source || undefined,
       categoryIdentifier: TYPE_SEANCE,
@@ -123,8 +124,8 @@ export function contenuPour(choisies: SeanceTerminee[]): ContenuNotif | null {
     };
   }
   return {
-    title: `${choisies.length} séances ajoutées`,
-    body: 'Tape pour les voir et choisir celle à partager.',
+    title: traduire("{0} séances ajoutées", choisies.length),
+    body: traduire('Tape pour les voir et choisir celle à partager.'),
     data: { type: TYPE_SEANCES, workoutIds: choisies.map((s) => String(s.trainingId)).join(',') },
   };
 }

@@ -13,6 +13,7 @@ import { relative } from '@/lib/v2/carnet/format';
 import { SportThumb } from '@/components/yoroi/v2/seances/SessionRow';
 import { P, Press, CIcon, Hanko } from './ui';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export function SeanceRecords({ records, max = 5 }: { records: RecordsResult; max?: number }) {
   const router = useRouter();
@@ -23,14 +24,14 @@ export function SeanceRecords({ records, max = 5 }: { records: RecordsResult; ma
   const n = records.totalStamps;
   return (
     <View style={{ borderRadius: 26, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6, gap: 4 }}>
-      <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={`${n} records battus en séance, tout voir`}>
+      <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={traduire("{0} records battus en séance, tout voir", n)}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
           <Hanko size={30} rotate={-8} />
           <View style={{ flex: 1, gap: 1 }}>
-            <Ink size={17} weight="black" tight>{`${n} record${n > 1 ? 's' : ''} battu${n > 1 ? 's' : ''} en séance`}</Ink>
-            <Ink size={12} weight="bold" color={P.ink2}>les mêmes que dans Séances, calculés sur tes séances</Ink>
+            <Ink size={17} weight="black" tight>{traduirePluriel(n, n > 1, "{0} record battu en séance", "{0} records battus en séance", n)}</Ink>
+            <Ink size={12} weight="bold" color={P.ink2}>{traduire("les mêmes que dans Séances, calculés sur tes séances")}</Ink>
           </View>
-          <Ink size={13} weight="extraBold" color={P.accent}>Tout voir</Ink>
+          <Ink size={13} weight="extraBold" color={P.accent}>{traduire("Tout voir")}</Ink>
           <CIcon name="chevron" size={16} color={P.muted} />
         </View>
       </Press>

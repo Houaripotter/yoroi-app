@@ -16,6 +16,7 @@ import { SportThumb } from './SessionRow';
 import { Icon } from './Icon';
 import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type NextSlot = { slot: WeeklyPlan; dayOffset: number };
 
@@ -37,8 +38,8 @@ export function findNextSlot(plan: WeeklyPlan[], doneToday: boolean): NextSlot |
 }
 
 function whenText(n: NextSlot): string {
-  const day = n.dayOffset === 0 ? 'Aujourd’hui' : n.dayOffset === 1 ? 'Demain' : PLAN_DAYS[n.slot.day_of_week].charAt(0).toUpperCase() + PLAN_DAYS[n.slot.day_of_week].slice(1);
-  return n.slot.time ? `${day} à ${n.slot.time.slice(0, 5).replace(':', ' h ')}` : day;
+  const day = n.dayOffset === 0 ? traduire('Aujourd’hui') : n.dayOffset === 1 ? traduire('Demain') : PLAN_DAYS[n.slot.day_of_week].charAt(0).toUpperCase() + PLAN_DAYS[n.slot.day_of_week].slice(1);
+  return n.slot.time ? traduire("{0} à {1}", day, n.slot.time.slice(0, 5).replace(':', ' h ')) : day;
 }
 
 export function NextUp({
@@ -67,7 +68,7 @@ export function NextUp({
     <Pressable
       onPress={() => { tap(); onCalendar(); }}
       accessibilityRole="link"
-      accessibilityLabel="Ouvrir ton calendrier du mois"
+      accessibilityLabel={traduire("Ouvrir ton calendrier du mois")}
       hitSlop={6}
       style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, alignSelf: 'flex-start' })}
     >
@@ -81,16 +82,16 @@ export function NextUp({
       <Pressable
         onPress={() => { tap(); slotsCount === 0 ? onCreate() : onPlanning(); }}
         accessibilityRole="button"
-        accessibilityLabel={slotsCount === 0 ? 'Créer ta semaine type' : 'Ouvrir le planning'}
+        accessibilityLabel={slotsCount === 0 ? traduire('Créer ta semaine type') : traduire('Ouvrir le planning')}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, borderWidth: 1.5, borderStyle: 'dashed', borderColor: P.dashed, backgroundColor: pressed ? P.white : P.carte })}
       >
         <View style={{ width: 48, height: 48, borderRadius: 15, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="calendar" size={22} color={c.indigo} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold">{slotsCount === 0 ? 'Pose ta semaine type' : 'Rien de prévu cette semaine'}</Ink>
+          <Ink size={15} weight="extraBold">{slotsCount === 0 ? traduire('Pose ta semaine type') : traduire('Rien de prévu cette semaine')}</Ink>
           <Ink size={13} color={c.textSecondary}>
-            {slotsCount === 0 ? 'Lundi JJB à 19 h, jeudi muscu : ton prochain entraînement s’affiche ici.' : 'Ouvre ton planning pour ajouter un créneau.'}
+            {slotsCount === 0 ? traduire('Lundi JJB à 19 h, jeudi muscu : ton prochain entraînement s’affiche ici.') : traduire('Ouvre ton planning pour ajouter un créneau.')}
           </Ink>
         </View>
         <Icon name="chevron" size={18} color={c.textMuted} />
@@ -111,10 +112,10 @@ export function NextUp({
 
   return (
     <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 14, gap: 12 }}>
-      <Pressable onPress={() => { tap(); onPlanning(); }} accessibilityRole="button" accessibilityLabel={`Prochain entraînement, ${title}, ${whenText(next)}. Ouvrir le planning`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Pressable onPress={() => { tap(); onPlanning(); }} accessibilityRole="button" accessibilityLabel={traduire("Prochain entraînement, {0}, {1}. Ouvrir le planning", title, whenText(next))} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <SportThumb sport={s.sport} femme={femme} size={56} />
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={12} weight="bold" color={c.indigo}>Prochain entraînement</Ink>
+          <Ink size={12} weight="bold" color={c.indigo}>{traduire("Prochain entraînement")}</Ink>
           <Ink size={17} weight="black" tight numberOfLines={2}>{title}</Ink>
           <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{[whenText(next), sub].filter(Boolean).join(', ')}</Ink>
         </View>
@@ -125,18 +126,18 @@ export function NextUp({
           <Pressable
             onPress={() => { tap(); onStart(next); }}
             accessibilityRole="button"
-            accessibilityLabel={`Commencer ${title}`}
+            accessibilityLabel={traduire("Commencer {0}", title)}
             style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: pressed ? c.fillSoft : P.white, borderWidth: 1.5, borderColor: c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}
           >
             <Icon name="play" size={16} color={c.accent} fill={c.accent} />
-            <Ink size={15} weight="extraBold" color={c.accent} numberOfLines={1}>Lancer ce créneau</Ink>
+            <Ink size={15} weight="extraBold" color={c.accent} numberOfLines={1}>{traduire("Lancer ce créneau")}</Ink>
           </Pressable>
         ) : (
           <View style={{ flex: 1 }}>{calendarLink}</View>
         )}
         <View style={{ flexShrink: 1, alignItems: 'flex-end' }}>
-          <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>{`${validated} sur ${slotsCount} créneau${slotsCount > 1 ? 'x' : ''}`}</Ink>
-          <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>validé{validated > 1 ? 's' : ''} cette semaine</Ink>
+          <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>{traduirePluriel(slotsCount, slotsCount > 1, "{0} sur {1} créneau", "{0} sur {1} créneaux", validated, slotsCount)}</Ink>
+          <Ink size={12} weight="bold" color={c.textMuted} style={{ textAlign: 'right' }}>{traduirePluriel(validated, validated > 1, "validé cette semaine", "validés cette semaine")}</Ink>
         </View>
       </View>
     </View>

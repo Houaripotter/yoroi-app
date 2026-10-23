@@ -19,20 +19,21 @@ import { useEspace } from '@/lib/v2/espace/useEspace';
 import { logger } from '@/lib/security/logger';
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Format = 'json' | 'csv' | 'txt';
 
 const FORMATS: { id: Format; icon: IconName; label: string; sub: string }[] = [
-  { id: 'csv', icon: 'table', label: 'Tableur', sub: 'Pour Excel ou Google Sheets, réimportable dans YOROI' },
-  { id: 'json', icon: 'archive', label: 'Fichier complet', sub: 'Toutes tes séances et exercices, pour archiver' },
-  { id: 'txt', icon: 'doc', label: 'Rapport texte', sub: 'Un résumé lisible de ta progression, facile à partager' },
+  { id: 'csv', icon: 'table', label: 'Tableur', sub: traduire('Pour Excel ou Google Sheets, réimportable dans YOROI') },
+  { id: 'json', icon: 'archive', label: 'Fichier complet', sub: traduire('Toutes tes séances et exercices, pour archiver') },
+  { id: 'txt', icon: 'doc', label: 'Rapport texte', sub: traduire('Un résumé lisible de ta progression, facile à partager') },
 ];
 
 const PERIODS: { id: string; label: string; days: number | null }[] = [
-  { id: '30', label: '30 jours', days: 30 },
-  { id: '90', label: '3 mois', days: 90 },
+  { id: '30', label: traduire('30 jours'), days: 30 },
+  { id: '90', label: traduire('3 mois'), days: 90 },
   { id: '365', label: '1 an', days: 365 },
-  { id: 'all', label: 'Tout', days: null },
+  { id: 'all', label: traduire('Tout'), days: null },
 ];
 
 function isoDaysAgo(days: number): string {
@@ -72,7 +73,7 @@ export default function ExportDataScreen() {
 
   const fail = (err: unknown) => {
     logger.error('[Export] erreur', err);
-    showPopup('Oups', 'L’export n’a pas abouti. Réessaie.');
+    showPopup('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
   };
 
   const exportFormat = async (f: Format) => {
@@ -114,7 +115,7 @@ export default function ExportDataScreen() {
         dateTo: undefined,
       });
       if (ok) flash('filtered');
-      else showPopup('Aucune séance', 'Aucune séance ne correspond à ce choix.');
+      else showPopup(traduire('Aucune séance'), traduire('Aucune séance ne correspond à ce choix.'));
     } catch (e) {
       fail(e);
     } finally {
@@ -137,8 +138,8 @@ export default function ExportDataScreen() {
   return (
     <>
       <View style={{ flex: 1 }}>
-      <EspaceScreen title="Exporter" subtitle="Tes données t’appartiennent. Emporte-les où tu veux.">
-        <SectionTitle title="Tes séances" />
+      <EspaceScreen title={traduire("Exporter")} subtitle={traduire("Tes données t’appartiennent. Emporte-les où tu veux.")}>
+        <SectionTitle title={traduire("Tes séances")} />
         {FORMATS.map((f) => {
           const isDone = done === f.id;
           return (
@@ -155,32 +156,32 @@ export default function ExportDataScreen() {
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={16} weight="extraBold">{f.label}</Ink>
-                <Ink size={13} color={isDone ? c.successText : c.textSecondary}>{isDone ? 'Exporté' : f.sub}</Ink>
+                <Ink size={13} color={isDone ? c.successText : c.textSecondary}>{isDone ? traduire('Exporté') : f.sub}</Ink>
               </View>
               <Icon name="share" size={18} color={c.textMuted} />
             </Pressable>
           );
         })}
 
-        <SectionTitle title="Ton corps" sub="Poids, composition et mensurations, une ligne par date" />
-        <Button tone={done === 'body' ? 'ghost' : 'accent'} icon={done === 'body' ? 'check' : 'table'} label={done === 'body' ? 'Exporté' : 'Exporter en tableur'} loading={busy === 'body'} onPress={exportBody} />
+        <SectionTitle title={traduire("Ton corps")} sub={traduire("Poids, composition et mensurations, une ligne par date")} />
+        <Button tone={done === 'body' ? 'ghost' : 'accent'} icon={done === 'body' ? 'check' : 'table'} label={done === 'body' ? traduire('Exporté') : traduire('Exporter en tableur')} loading={busy === 'body'} onPress={exportBody} />
 
-        <SectionTitle title="Une sélection de séances" sub="Choisis un sport et une période" />
+        <SectionTitle title={traduire("Une sélection de séances")} sub={traduire("Choisis un sport et une période")} />
         <Card style={{ padding: 14, gap: 14 }}>
           <View style={{ gap: 8 }}>
             <Ink size={14} weight="extraBold">Sport</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {chip('all', 'Tous', sport === '', () => setSport(''))}
+              {chip('all', traduire('Tous'), sport === '', () => setSport(''))}
               {sports.map((id) => chip(id, getSportName(id), sport === id, () => setSport(id)))}
             </View>
           </View>
           <View style={{ gap: 8 }}>
-            <Ink size={14} weight="extraBold">Période</Ink>
+            <Ink size={14} weight="extraBold">{traduire("Période")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {PERIODS.map((p) => chip(p.id, p.label, period === p.id, () => setPeriod(p.id)))}
             </View>
           </View>
-          <Button tone={done === 'filtered' ? 'ghost' : 'accent'} icon={done === 'filtered' ? 'check' : 'download'} label={done === 'filtered' ? 'Exporté' : 'Exporter la sélection'} loading={busy === 'filtered'} onPress={exportFiltered} />
+          <Button tone={done === 'filtered' ? 'ghost' : 'accent'} icon={done === 'filtered' ? 'check' : 'download'} label={done === 'filtered' ? traduire('Exporté') : traduire('Exporter la sélection')} loading={busy === 'filtered'} onPress={exportFiltered} />
         </Card>
         <PopupComponent />
       </EspaceScreen>

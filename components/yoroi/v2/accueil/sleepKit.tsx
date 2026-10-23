@@ -7,11 +7,12 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { SleepEntry } from '@/lib/sleepService';
 import { Icon, P, Press, tap } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
-export const QUALITY_LABELS = ['', 'Très mauvaise', 'Mauvaise', 'Correcte', 'Bonne', 'Excellente'];
+export const QUALITY_LABELS = ['', traduire('Très mauvaise'), 'Mauvaise', 'Correcte', 'Bonne', 'Excellente'];
 const DAYS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-const DAYS_LONG = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const DAYS_LONG = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 export function hm(min: number): string {
   if (min <= 0) return '0 h';
@@ -58,7 +59,7 @@ export function Stars({ value, size = 14, onChange }: { value: number; size?: nu
         const star = <Icon name="star" size={size} color={i <= value ? P.gold : P.dashed} fill={i <= value ? P.goldLight : 'none'} width={1.8} />;
         if (!onChange) return <View key={i}>{star}</View>;
         return (
-          <Pressable key={i} onPress={() => { tap(); onChange(i); }} accessibilityRole="button" accessibilityLabel={`${i} sur 5 : ${QUALITY_LABELS[i]}`} hitSlop={4} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable key={i} onPress={() => { tap(); onChange(i); }} accessibilityRole="button" accessibilityLabel={traduire("{0} sur 5 : {1}", i, QUALITY_LABELS[i])} hitSlop={4} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
             {star}
           </Pressable>
         );
@@ -118,7 +119,7 @@ export function NightRow({ entry, goal, onPress, onLongPress, locked, first }: {
             {dayLabel(entry.date, true)}
           </Ink>
           <Ink size={12} weight="bold" color={P.ink2}>
-            {entry.bedTime && entry.wakeTime ? `${clock(entry.bedTime)} à ${clock(entry.wakeTime)}` : entry.source === 'healthkit' ? 'Santé' : ''}
+            {entry.bedTime && entry.wakeTime ? traduire("{0} à {1}", clock(entry.bedTime), clock(entry.wakeTime)) : entry.source === 'healthkit' ? 'Santé' : ''}
           </Ink>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 3 }}>
@@ -137,7 +138,7 @@ export function NightRow({ entry, goal, onPress, onLongPress, locked, first }: {
 export function Stepper({ value, onMinus, onPlus, label, color = P.ink }: { value: string; onMinus: () => void; onPlus: () => void; label: string; color?: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Press onPress={onMinus} accessibilityRole="button" accessibilityLabel={`${label} : moins`}>
+      <Press onPress={onMinus} accessibilityRole="button" accessibilityLabel={traduire("{0} : moins", label)}>
         <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="minus" size={20} />
         </View>
@@ -145,7 +146,7 @@ export function Stepper({ value, onMinus, onPlus, label, color = P.ink }: { valu
       <Ink size={26} weight="black" tight color={color} style={{ flex: 1, textAlign: 'center' }}>
         {value}
       </Ink>
-      <Press onPress={onPlus} accessibilityRole="button" accessibilityLabel={`${label} : plus`}>
+      <Press onPress={onPlus} accessibilityRole="button" accessibilityLabel={traduire("{0} : plus", label)}>
         <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="plus" size={20} color={P.white} />
         </View>

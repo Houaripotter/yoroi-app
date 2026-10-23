@@ -25,6 +25,7 @@ import type { ActivityToday, NextTarget } from './Today';
 import { PlusHint } from '@/components/yoroi/v2/PlusHint';
 import { P_CLAIR, paletteSombre } from '@/components/yoroi/livePalette';
 import { Card, Icon, P, Press, useAccent } from './kit';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /* ============ Titre de section ============ */
 
@@ -76,7 +77,7 @@ export function SessionToday({ trainings, target, femme }: { trainings: Training
       <Press
         onPress={() => router.push((t.id ? { pathname: '/workout-detail', params: { id: String(t.id) } } : '/seances') as any)}
         accessibilityRole="button"
-        accessibilityLabel={`Séance faite aujourd’hui : ${sport}. Voir le détail`}
+        accessibilityLabel={traduire("Séance faite aujourd’hui : {0}. Voir le détail", sport)}
       >
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: P.mossSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -84,7 +85,7 @@ export function SessionToday({ trainings, target, femme }: { trainings: Training
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={12} weight="bold" color={P.mossText}>
-              {done.length > 1 ? `${done.length} séances faites aujourd’hui` : 'Séance faite aujourd’hui'}
+              {done.length > 1 ? traduire("{0} séances faites aujourd’hui", done.length) : traduire('Séance faite aujourd’hui')}
             </Ink>
             <Ink size={19} weight="black" tight numberOfLines={2}>
               {sport}
@@ -105,7 +106,7 @@ export function SessionToday({ trainings, target, femme }: { trainings: Training
   const first = trainings.length === 0;
   // l'accueil consulte : il renvoie vers l'onglet Seances, le lancement se fait avec le bouton +
   return (
-    <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={`${target.over} : ${target.title}. Voir tes séances`}>
+    <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={traduire("{0} : {1}. Voir tes séances", target.over, target.title)}>
       <View style={{ minHeight: 132, borderRadius: 22, backgroundColor: P.ink, overflow: 'hidden', flexDirection: 'row' }}>
         <View style={{ flex: 1, padding: 18, paddingRight: 6, justifyContent: 'center', gap: 4 }}>
           <Ink size={13} weight="extraBold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight} numberOfLines={2}>
@@ -119,7 +120,7 @@ export function SessionToday({ trainings, target, femme }: { trainings: Training
               {target.sub}
             </Ink>
           ) : null}
-          {first ? <PlusHint text="Touche + pour ta première séance" color={P.white} style={{ marginTop: 8 }} /> : null}
+          {first ? <PlusHint text={traduire("Touche + pour ta première séance")} color={P.white} style={{ marginTop: 8 }} /> : null}
         </View>
         <SessionArt art={art} />
       </View>
@@ -156,18 +157,16 @@ export function ActivityCard({ a }: { a: ActivityToday }) {
 
   if (!a.connected) {
     return (
-      <Press onPress={() => router.push('/sante/montre' as any)} accessibilityRole="button" accessibilityLabel="Relie ta montre pour voir tes pas et tes anneaux">
+      <Press onPress={() => router.push('/sante/montre' as any)} accessibilityRole="button" accessibilityLabel={traduire("Relie ta montre pour voir tes pas et tes anneaux")}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 }}>
           <View style={{ opacity: 0.45 }} pointerEvents="none">
             <ActivityRings items={[{ key: 'move', label: '', value: 0, goal: 1, unit: '' }, { key: 'exercise', label: '', value: 0, goal: 1, unit: '' }, { key: 'stand', label: '', value: 0, goal: 1, unit: '' }]} size={48} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={15} weight="extraBold">
-              Tes pas et tes anneaux
-            </Ink>
+              {traduire("Tes pas et tes anneaux")}</Ink>
             <Ink size={13} weight="medium" color={P.ink2}>
-              Relie ta montre pour les voir ici chaque jour.
-            </Ink>
+              {traduire("Relie ta montre pour les voir ici chaque jour.")}</Ink>
           </View>
           <Chevron color={accent} />
         </Card>
@@ -176,9 +175,9 @@ export function ActivityCard({ a }: { a: ActivityToday }) {
   }
 
   const items: RingItem[] = [
-    { key: 'move', label: 'Calories actives', value: a.move, goal: a.moveGoal, unit: 'kcal' },
-    { key: 'exercise', label: 'Exercice', value: a.exercise, goal: a.exerciseGoal, unit: 'min' },
-    { key: 'stand', label: 'Pas', value: a.steps, goal: STEPS_GOAL, unit: 'pas' },
+    { key: 'move', label: traduire('Calories actives'), value: a.move, goal: a.moveGoal, unit: 'kcal' },
+    { key: 'exercise', label: traduire('Exercice'), value: a.exercise, goal: a.exerciseGoal, unit: 'min' },
+    { key: 'stand', label: traduire('Pas'), value: a.steps, goal: STEPS_GOAL, unit: 'pas' },
   ];
   const cols = [
     { color: RING_COLORS.stand, value: a.steps !== null ? thousands(a.steps) : '0', unit: 'pas' },
@@ -189,7 +188,7 @@ export function ActivityCard({ a }: { a: ActivityToday }) {
     <Press
       onPress={() => router.push('/sante' as any)}
       accessibilityRole="button"
-      accessibilityLabel={`Activité du jour : ${cols[0].value} pas, ${cols[1].value} calories actives, ${cols[2].value} minutes d’exercice`}
+      accessibilityLabel={traduire("Activité du jour : {0} pas, {1} calories actives, {2} minutes d’exercice", cols[0].value, cols[1].value, cols[2].value)}
     >
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 16 }}>
         <ActivityRings items={items} size={76} />
@@ -242,8 +241,8 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
   const over = goal > 0 && n > goal;
   // sans objectif : rien a ajouter sous le nombre, sauf la premiere seance a venir
   const status = goal <= 0
-    ? n === 0 ? 'ta première séance t’attend' : null
-    : over ? `objectif de ${goal} dépassé` : reached ? 'objectif tenu' : n === 0 ? 'ta première séance t’attend' : `encore ${goal - n} pour l’objectif`;
+    ? n === 0 ? traduire('ta première séance t’attend') : null
+    : over ? traduire("objectif de {0} dépassé", goal) : reached ? traduire('objectif tenu') : n === 0 ? traduire('ta première séance t’attend') : traduire("encore {0} pour l’objectif", goal - n);
   const volume = `${formatTonnage(tons, unite)} ${accordSouleve(tons, unite)}`;
   const facts = [formatDuration(minutes) ? `${formatDuration(minutes)} de sport` : null, tons > 0 ? volume : null, n > 0 ? `${done.size} ${done.size > 1 ? 'jours actifs' : 'jour actif'}` : null].filter(Boolean).join(', ');
   // barre du jour : hauteur selon le temps de sport (minimum visible si une seance est notee sans duree)
@@ -259,16 +258,15 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
 
   return (
     <Card style={{ padding: 0, overflow: 'hidden' }}>
-      <Press onPress={() => router.push('/seances' as any)} haptic="light" accessibilityRole="button" accessibilityLabel={goal > 0 ? `Ta semaine : ${n} séances sur ${goal}, ${status ?? ''}. Voir tes séances` : `Ta semaine : ${n} séance${n > 1 ? 's' : ''}. Voir tes séances`}>
+      <Press onPress={() => router.push('/seances' as any)} haptic="light" accessibilityRole="button" accessibilityLabel={goal > 0 ? traduire("Ta semaine : {0} séances sur {1}, {2}. Voir tes séances", n, goal, status ?? '') : traduirePluriel(n, n > 1, "Ta semaine : {0} séance. Voir tes séances", "Ta semaine : {0} séances. Voir tes séances", n)}>
         <View style={{ paddingHorizontal: 18, paddingTop: 14, paddingBottom: goal <= 0 ? 4 : 12, gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
             <View style={{ flex: 1, gap: 0 }}>
               <Ink size={13} weight="bold" color={P.ink2} numberOfLines={1}>
-                Ta semaine, depuis lundi
-              </Ink>
+                {traduire("Ta semaine, depuis lundi")}</Ink>
               <Ink size={36} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {String(n)}
-                <Ink size={16} weight="black" color={P.muted}>{goal > 0 && !over ? ` / ${goal} séances` : n > 1 ? ' séances' : ' séance'}</Ink>
+                <Ink size={16} weight="black" color={P.muted}>{goal > 0 && !over ? ` / ${goal} séances` : n > 1 ? traduire(' séances') : traduire(' séance')}</Ink>
               </Ink>
               {status ? (
                 <Ink size={13} weight="extraBold" color={reached ? P.mossText : P.ink2} numberOfLines={2}>
@@ -299,23 +297,22 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
       {/* (vague 26, qualite) le lien d'objectif est hors de l'appui de la carte : deux zones d'appui separees, pas un appui dans un appui */}
       {goal <= 0 ? (
         <View style={{ paddingHorizontal: 18, paddingBottom: 10 }}>
-          <Pressable onPress={() => router.push('/settings?objectif=1' as any)} accessibilityRole="button" accessibilityLabel="Choisir un objectif de séances" hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
-            <Ink size={13} weight="extraBold" color={accent}>Choisir un objectif, si tu veux</Ink>
+          <Pressable onPress={() => router.push('/settings?objectif=1' as any)} accessibilityRole="button" accessibilityLabel={traduire("Choisir un objectif de séances")} hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
+            <Ink size={13} weight="extraBold" color={accent}>{traduire("Choisir un objectif, si tu veux")}</Ink>
           </Pressable>
         </View>
       ) : null}
 
       {/* vague 36 : ta prochaine seance prevue, en une ligne (ex-carte sombre) */}
       {next && next.sportId ? (
-        <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={`Ta prochaine séance : ${nextLine(next)}. Voir tes séances`}>
+        <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ta prochaine séance : {0}. Voir tes séances", nextLine(next))}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 10, borderTopWidth: 1, borderColor: P.line2, backgroundColor: P.bande }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="calendar" size={19} color={accent} width={2.4} />
             </View>
             <View style={{ flex: 1, gap: 0 }}>
               <Ink size={12} weight="bold" color={P.muted} numberOfLines={1}>
-                Ta prochaine séance
-              </Ink>
+                {traduire("Ta prochaine séance")}</Ink>
               <Ink size={15} weight="black" tight numberOfLines={2}>
                 {nextHead(next)}
                 {nextTail(next) ? <Ink size={13} weight="bold" color={P.ink2}>{`, ${nextTail(next)}`}</Ink> : null}
@@ -331,7 +328,7 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
         <Press
           onPress={() => router.push((last.id ? { pathname: '/workout-detail', params: { id: String(last.id) } } : '/seances') as any)}
           accessibilityRole="button"
-          accessibilityLabel={`Ta dernière séance : ${getSportName(lastSport)}, ${lastSub}. Voir le détail`}
+          accessibilityLabel={traduire("Ta dernière séance : {0}, {1}. Voir le détail", getSportName(lastSport), lastSub)}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 10, borderTopWidth: 1, borderColor: P.line2, backgroundColor: P.bande }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: P.line2, overflow: 'hidden', alignItems: 'center' }}>
@@ -339,8 +336,7 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
             </View>
             <View style={{ flex: 1, gap: 0 }}>
               <Ink size={12} weight="bold" color={P.muted} numberOfLines={1}>
-                Ta dernière séance
-              </Ink>
+                {traduire("Ta dernière séance")}</Ink>
               <Ink size={15} weight="black" tight numberOfLines={1}>
                 {getSportName(lastSport)}
                 <Ink size={13} weight="bold" color={P.ink2}>{`, ${lastSub}`}</Ink>

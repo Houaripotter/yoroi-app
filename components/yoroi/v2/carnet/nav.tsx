@@ -13,14 +13,15 @@ import { carnetImage } from './images';
 import type { CarnetIllus } from './images';
 import { P, Press, CIcon, tap } from './ui';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CarnetSection = 'records' | 'techniques' | 'videos' | 'combat';
 
 export const SECTION_META: Record<CarnetSection, { label: string; illus: CarnetIllus; phrase: string; add: string }> = {
-  records: { label: 'Records', illus: 'records', phrase: 'Tes meilleures perfs et leur évolution.', add: 'Record' },
-  techniques: { label: 'Techniques', illus: 'techniques', phrase: 'Ce que tu apprends, et ce que tu maîtrises.', add: 'Technique' },
-  videos: { label: 'Vidéos', illus: 'videos', phrase: 'Les vidéos qui t’inspirent, rangées et prêtes à revoir.', add: 'Vidéo' },
-  combat: { label: 'Combat', illus: 'combat', phrase: 'Tes rounds, tes combats et ton palmarès.', add: 'Combat' },
+  records: { label: 'Records', illus: 'records', phrase: traduire('Tes meilleures perfs et leur évolution.'), add: traduire('Record') },
+  techniques: { label: 'Techniques', illus: 'techniques', phrase: traduire('Ce que tu apprends, et ce que tu maîtrises.'), add: traduire('Technique') },
+  videos: { label: traduire('Vidéos'), illus: 'videos', phrase: traduire('Les vidéos qui t’inspirent, rangées et prêtes à revoir.'), add: traduire('Vidéo') },
+  combat: { label: traduire('Combat'), illus: 'combat', phrase: traduire('Tes rounds, tes combats et ton palmarès.'), add: traduire('Combat') },
 };
 
 /** Illustration du carnet, decorative */
@@ -102,7 +103,7 @@ export function FilterChips<T extends string>({ items, value, onChange }: { item
 export function AddPill({ label, onPress }: { label: string; onPress: () => void }) {
   const { accent } = useAccent();
   return (
-    <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={`Ajouter : ${label}`} hitSlop={4}>
+    <Press onPress={onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Ajouter : {0}", label)} hitSlop={4}>
       <View style={{ minHeight: 44, paddingLeft: 12, paddingRight: 16, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 }}>
         <CIcon name="plus" size={18} color={P.white} width={2.8} />
         <Ink size={15} weight="extraBold" color={P.white}>

@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Line, Circle as SvgCircle, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
+import { LOCALE } from '@/lib/i18n/tr';
 
 interface MatchupPoint {
   date: string;
@@ -33,7 +34,7 @@ export const PartnerWinrateTrend: React.FC<Props> = ({ matchups }) => {
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('fr-FR', { month: 'short' });
+      const label = d.toLocaleDateString(LOCALE, { month: 'short' });
       months.push({ key, label, wins: 0, losses: 0, winrate: null });
     }
     matchups.forEach(m => {

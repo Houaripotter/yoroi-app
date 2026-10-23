@@ -18,6 +18,7 @@ import { MAX_PARTICULES, RATIO_SCENES, SCENES_ANIMEES_CODE, particulesScene, res
 import { videoDeScene } from '@/lib/v2/scenes/medias';
 import type { SceneAnimeeId } from '@/lib/v2/scenes/animations';
 import { Chip, ChipWrap, Note } from './parts';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Images fixes des scenes du pack Voyages */
 const IMAGES_APERCU: Partial<Record<SceneAnimeeId, ImageSourcePropType>> = {
@@ -70,10 +71,10 @@ export function ApercuScenes({ visible, onClose }: { visible: boolean; onClose: 
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12, marginBottom: 10 }}>
-          <RoundButton icon="close" label="Fermer" onPress={onClose} />
+          <RoundButton icon="close" label={traduire("Fermer")} onPress={onClose} />
           <View style={{ flex: 1 }}>
-            <Ink size={17} weight="extraBold" numberOfLines={1}>Aperçu des scènes animées</Ink>
-            <Ink size={13} color={c.textSecondary}>{`${index + 1} sur ${total}, glisse pour changer`}</Ink>
+            <Ink size={17} weight="extraBold" numberOfLines={1}>{traduire("Aperçu des scènes animées")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("{0} sur {1}, glisse pour changer", index + 1, total)}</Ink>
           </View>
         </View>
 
@@ -93,22 +94,22 @@ export function ApercuScenes({ visible, onClose }: { visible: boolean; onClose: 
           <Ink size={16} weight="extraBold" numberOfLines={1}>{`${courante.numero}. ${courante.nom}`}</Ink>
           {courante.mouvement ? (
             <Ink size={13} numberOfLines={3}>
-              {`${videoDeScene(courante.id) != null ? 'Vidéo en boucle' : 'Calques mobiles'} : ${courante.mouvement}`}
+              {`${videoDeScene(courante.id) != null ? traduire('Vidéo en boucle') : 'Calques mobiles'} : ${courante.mouvement}`}
             </Ink>
           ) : null}
           <Ink size={13} color={c.textSecondary} numberOfLines={2}>
-            {`Effets en plus : ${resumeEffets(courante).join(', ')}. ${particulesScene(courante)} éléments animés sur ${MAX_PARTICULES}.`}
+            {traduire("Effets en plus : {0}. {1} éléments animés sur {2}.", resumeEffets(courante).join(', '), particulesScene(courante), MAX_PARTICULES)}
           </Ink>
           <ChipWrap>
-            <Chip label={mouvement ? 'Mouvement visible' : 'Mouvement masqué'} on={mouvement} onPress={() => setMouvement((v) => !v)} accessibilityLabel="Montrer ou masquer le mouvement de la scène" />
-            <Chip label={effets ? 'Effets visibles' : 'Effets masqués'} on={effets} onPress={() => setEffets((v) => !v)} accessibilityLabel="Montrer ou masquer les effets" />
-            <Chip label="Image entière" on={format === 'image'} onPress={() => setFormat('image')} />
-            <Chip label="Cadre du Dojo" on={format === 'dojo'} onPress={() => setFormat('dojo')} />
+            <Chip label={mouvement ? 'Mouvement visible' : traduire('Mouvement masqué')} on={mouvement} onPress={() => setMouvement((v) => !v)} accessibilityLabel={traduire("Montrer ou masquer le mouvement de la scène")} />
+            <Chip label={effets ? 'Effets visibles' : traduire('Effets masqués')} on={effets} onPress={() => setEffets((v) => !v)} accessibilityLabel={traduire("Montrer ou masquer les effets")} />
+            <Chip label={traduire("Image entière")} on={format === 'image'} onPress={() => setFormat('image')} />
+            <Chip label={traduire("Cadre du Dojo")} on={format === 'dojo'} onPress={() => setFormat('dojo')} />
           </ChipWrap>
-          {reduire ? <Note tone="warn">« Réduire les animations » est activé sur ce téléphone : les scènes restent fixes, c’est voulu.</Note> : null}
+          {reduire ? <Note tone="warn">{traduire("« Réduire les animations » est activé sur ce téléphone : les scènes restent fixes, c’est voulu.")}</Note> : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 'auto' }}>
             <View style={{ flex: 1 }}>
-              <Button tone="ghost" small icon="back" label="Précédente" disabled={index === 0} onPress={() => aller(index - 1)} />
+              <Button tone="ghost" small icon="back" label={traduire("Précédente")} disabled={index === 0} onPress={() => aller(index - 1)} />
             </View>
             <View style={{ flex: 1 }}>
               <Button tone="ink" small icon="chevron" label="Suivante" disabled={index === total - 1} onPress={() => aller(index + 1)} />

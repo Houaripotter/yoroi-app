@@ -18,6 +18,7 @@ import { ibjjfAdvised, ibjjfCategories, ibjjfWeightLabel, normalizeIbjjfId } fro
 import type { IbjjfCategory } from '@/lib/v2/competition/ibjjf';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const COMPETITOR_PROFILE_KEY = '@yoroi_competitor_profile';
 
@@ -25,11 +26,11 @@ type Cat = { id: string; name: string; weight: string; maxWeight: number };
 /** Liste commune de l'app (noms officiels portugais), voir lib/v2/competition/ibjjf.ts */
 const toCat = (c: IbjjfCategory): Cat => ({ id: c.id, name: c.name, weight: ibjjfWeightLabel(c), maxWeight: c.maxWeight });
 const BJJ_BELTS = [
-  { id: 'white', name: 'Blanche', color: '#FFFFFF', edge: '#CFCAC0' },
-  { id: 'blue', name: 'Bleue', color: '#2C4A84', edge: '#2C4A84' },
-  { id: 'purple', name: 'Violette', color: '#5B3F86', edge: '#5B3F86' },
-  { id: 'brown', name: 'Marron', color: '#6B4226', edge: '#6B4226' },
-  { id: 'black', name: 'Noire', color: '#1D2029', edge: '#1D2029' },
+  { id: 'white', name: traduire('Blanche'), color: '#FFFFFF', edge: '#CFCAC0' },
+  { id: 'blue', name: traduire('Bleue'), color: '#2C4A84', edge: '#2C4A84' },
+  { id: 'purple', name: traduire('Violette'), color: '#5B3F86', edge: '#5B3F86' },
+  { id: 'brown', name: traduire('Marron'), color: '#6B4226', edge: '#6B4226' },
+  { id: 'black', name: traduire('Noire'), color: '#1D2029', edge: '#1D2029' },
 ];
 
 type CompetitorProfile = { gender: 'male' | 'female' | null; category: string | null; belt: string | null; currentWeight: number | null };
@@ -57,7 +58,7 @@ export default function CompetitorProfileScreen() {
               AsyncStorage.setItem(COMPETITOR_PROFILE_KEY, JSON.stringify(parsed)).catch(() => {});
             }
             setProfile(parsed);
-            if (parsed.currentWeight) setWeightInput(String(parsed.currentWeight).replace('.', ','));
+            if (parsed.currentWeight) setWeightInput(String(parsed.currentWeight).replace('.', DECIMAL));
           }
         }
       } catch (error) {
@@ -93,7 +94,7 @@ export default function CompetitorProfileScreen() {
   const saveWeight = (raw = weightInput) => {
     const w = parseFloat(raw.replace(',', '.'));
     if (isNaN(w) || w <= 0 || w > 400) {
-      appAlert('Poids invalide', 'Entre un poids en kilos, par exemple 75,5.');
+      appAlert(traduire('Poids invalide'), traduire('Entre un poids en kilos, par exemple 75,5.'));
       return;
     }
     save({ ...profile, currentWeight: w });
@@ -103,7 +104,7 @@ export default function CompetitorProfileScreen() {
   };
 
   return (
-    <DetailScreen title="Profil compétiteur" subtitle="Ta fiche pour les compétitions">
+    <DetailScreen title={traduire("Profil compétiteur")} subtitle={traduire("Ta fiche pour les compétitions")}>
       <Enter i={0} style={{ gap: 10 }}>
         <SectionTitle>Genre</SectionTitle>
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -126,18 +127,18 @@ export default function CompetitorProfileScreen() {
             );
           })}
         </View>
-        {genderFromProfile ? <Ink size={12} weight="bold" color={P.muted} style={{ paddingHorizontal: 4 }}>Repris de ton profil, touche l’autre carte pour changer.</Ink> : null}
+        {genderFromProfile ? <Ink size={12} weight="bold" color={P.muted} style={{ paddingHorizontal: 4 }}>{traduire("Repris de ton profil, touche l’autre carte pour changer.")}</Ink> : null}
       </Enter>
 
       {profile.gender ? (
         <>
           <Enter i={1} style={{ gap: 10 }}>
-            <SectionTitle>Poids actuel</SectionTitle>
+            <SectionTitle>{traduire("Poids actuel")}</SectionTitle>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <Field value={weightInput} onChangeText={setWeightInput} placeholder="Ex : 75,5" keyboardType="decimal-pad" suffix="kg" icon="scale" onSubmit={() => saveWeight()} />
               </View>
-              <Press onPress={() => saveWeight()} accessibilityRole="button" accessibilityLabel="Enregistrer le poids">
+              <Press onPress={() => saveWeight()} accessibilityRole="button" accessibilityLabel={traduire("Enregistrer le poids")}>
                 <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: savedFlash ? P.moss : P.accent, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name="check" size={24} color={P.white} width={3} />
                 </View>
@@ -151,12 +152,12 @@ export default function CompetitorProfileScreen() {
                   saveWeight(v);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Utiliser ma dernière pesée"
+                accessibilityLabel={traduire("Utiliser ma dernière pesée")}
               >
                 <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
                   <Icon name="refresh" size={16} color={P.indigo} />
                   <Ink size={13} weight="extraBold" color={P.indigo}>
-                    {`Utiliser ma dernière pesée, ${formatKg(lastWeight.weight)} kg`}
+                    {traduire("Utiliser ma dernière pesée, {0} kg", formatKg(lastWeight.weight))}
                   </Ink>
                 </View>
               </Press>
@@ -165,17 +166,16 @@ export default function CompetitorProfileScreen() {
               <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, backgroundColor: P.mossSoft, borderColor: '#D3DEC0' }}>
                 <Icon name="star" size={20} color={P.mossText} />
                 <Ink size={14} weight="extraBold" color={P.mossText} style={{ flex: 1 }}>
-                  {`Catégorie conseillée : ${recommended.name} (${recommended.weight})`}
+                  {traduire("Catégorie conseillée : {0} ({1})", recommended.name, recommended.weight)}
                 </Ink>
               </Card>
             ) : null}
           </Enter>
 
           <Enter i={2} style={{ gap: 10 }}>
-            <SectionTitle>Catégorie IBJJF</SectionTitle>
+            <SectionTitle>{traduire("Catégorie IBJJF")}</SectionTitle>
             <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4, marginTop: -4 }}>
-              Ta catégorie de poids officielle, avec le kimono.
-            </Ink>
+              {traduire("Ta catégorie de poids officielle, avec le kimono.")}</Ink>
             <ChipScroll>
               {cats.map((c) => (
                 <Chip key={c.id} label={c.name} sub={c.weight} accent={P.accent} active={profile.category === c.id} onPress={() => save({ ...profile, category: c.id })} />
@@ -184,12 +184,12 @@ export default function CompetitorProfileScreen() {
           </Enter>
 
           <Enter i={3} style={{ gap: 10 }}>
-            <SectionTitle>Ceinture de jiu-jitsu</SectionTitle>
+            <SectionTitle>{traduire("Ceinture de jiu-jitsu")}</SectionTitle>
             <Card style={{ padding: 8, gap: 0 }}>
               {BJJ_BELTS.map((b, i) => {
                 const on = profile.belt === b.id;
                 return (
-                  <Press key={b.id} onPress={() => save({ ...profile, belt: b.id })} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Ceinture ${b.name}`}>
+                  <Press key={b.id} onPress={() => save({ ...profile, belt: b.id })} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire("Ceinture {0}", b.name)}>
                     <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2, backgroundColor: on ? P.paper : 'transparent', borderRadius: 14 }}>
                       <BeltSwatch color={b.color} edge={b.edge} width={58} height={14} />
                       <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
@@ -206,11 +206,9 @@ export default function CompetitorProfileScreen() {
       ) : (
         <Card style={{ alignItems: 'center', gap: 6, paddingVertical: 22 }}>
           <Ink size={15} weight="extraBold">
-            Commence par ton genre
-          </Ink>
+            {traduire("Commence par ton genre")}</Ink>
           <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>
-            Les catégories de poids en dépendent.
-          </Ink>
+            {traduire("Les catégories de poids en dépendent.")}</Ink>
         </Card>
       )}
 
@@ -220,8 +218,7 @@ export default function CompetitorProfileScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Ink size={12} weight="bold" color={P.muted}>
-                  Ta fiche de combattant
-                </Ink>
+                  {traduire("Ta fiche de combattant")}</Ink>
                 <Ink size={22} weight="black" tight>
                   {category?.name ?? ''}
                 </Ink>
@@ -230,9 +227,9 @@ export default function CompetitorProfileScreen() {
             </View>
             {[
               ['Genre', profile.gender === 'male' ? 'Homme' : 'Femme'],
-              ['Poids actuel', profile.currentWeight ? `${formatKg(profile.currentWeight)} kg` : 'Non renseigné'],
-              ['Catégorie', category ? `${category.name}, ${category.weight}` : ''],
-              ['Ceinture', belt?.name ?? ''],
+              [traduire('Poids actuel'), profile.currentWeight ? `${formatKg(profile.currentWeight)} kg` : traduire('Non renseigné')],
+              [traduire('Catégorie'), category ? `${category.name}, ${category.weight}` : ''],
+              [traduire('Ceinture'), belt?.name ?? ''],
             ].map(([k, v]) => (
               <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Ink size={14} weight="bold" color={P.ink2}>
@@ -243,7 +240,7 @@ export default function CompetitorProfileScreen() {
                 </Ink>
               </View>
             ))}
-            <BigButton label="Voir mes compétitions" onPress={() => router.push('/competitions' as any)} />
+            <BigButton label={traduire("Voir mes compétitions")} onPress={() => router.push('/competitions' as any)} />
           </Glass>
         </Enter>
       ) : null}

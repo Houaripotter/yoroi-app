@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, ReactNode, use
 import { Badge, checkAndUnlockBadges, setFirstUseDate } from './badges';
 import { Celebration } from '@/components/Celebration';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // BADGE CONTEXT - Gestion des badges et celebrations
@@ -102,7 +103,7 @@ export function BadgeProvider({ children }: BadgeProviderProps) {
         <Celebration
           visible={!!celebratingBadge}
           type="milestone"
-          title="Badge débloqué !"
+          title={traduire("Badge débloqué !")}
           subtitle={`${celebratingBadge.name}\n${celebratingBadge.description}`}
           xpGained={celebratingBadge.xpReward}
           icon=""

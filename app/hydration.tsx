@@ -26,10 +26,11 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { Stepper, Toggle, clock, dayLabel, shiftTime } from '@/components/yoroi/v2/accueil/sleepKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 type Slot = { enabled: boolean; time: string; amount: number };
 type SlotKey = 'morning' | 'afternoon' | 'evening';
-const SLOT_LABEL: Record<SlotKey, string> = { morning: 'Matin', afternoon: 'Après-midi', evening: 'Soir' };
+const SLOT_LABEL: Record<SlotKey, string> = { morning: traduire('Matin'), afternoon: traduire('Après-midi'), evening: traduire('Soir') };
 const DEFAULT_SLOTS: Record<SlotKey, Slot> = {
   morning: { enabled: true, time: '09:00', amount: 750 },
   afternoon: { enabled: true, time: '14:00', amount: 750 },
@@ -133,7 +134,7 @@ export default function Hydratation() {
     if (goalDraft === null) return;
     const ok = await saveHydrationGoal(goalDraft);
     if (!ok) {
-      appAlert('Objectif invalide', 'Choisis un objectif entre 0,5 et 10 litres.');
+      appAlert(traduire('Objectif invalide'), traduire('Choisis un objectif entre 0,5 et 10 litres.'));
       return;
     }
     tap('success');
@@ -145,7 +146,7 @@ export default function Hydratation() {
     if (v) {
       const granted = await requestNotificationPermissions();
       if (!granted) {
-        appAlert('Autorisation nécessaire', 'Active les notifications pour YOROI dans les réglages de ton téléphone.');
+        appAlert(traduire('Autorisation nécessaire'), traduire('Active les notifications pour YOROI dans les réglages de ton téléphone.'));
         return;
       }
     }
@@ -193,7 +194,7 @@ export default function Hydratation() {
   const locked: typeof sorted = [];
 
   return (
-    <DetailScreen title="Hydratation" subtitle={reached ? 'Objectif atteint, bravo' : `Objectif ${formatLiters(goal)} litres`}>
+    <DetailScreen title={traduire("Hydratation")} subtitle={reached ? traduire('Objectif atteint, bravo') : traduire("Objectif {0} litres", formatLiters(goal))}>
       <Enter i={0}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 22 }}>
           <View>
@@ -210,24 +211,23 @@ export default function Hydratation() {
           </View>
           <View style={{ flex: 1, gap: 4 }}>
             <Ink size={13} weight="bold" color={P.ink2}>
-              Aujourd’hui
-            </Ink>
+              {traduire("Aujourd’hui")}</Ink>
             <Ink size={52} weight="black" tight color={reached ? P.mossText : P.water}>
               {formatLiters(amount)}
               <Ink size={18} weight="black" color={P.muted}>
                 {' L'}
               </Ink>
             </Ink>
-            <Press onPress={() => setGoalDraft(goalDraft === null ? goal : null)} accessibilityRole="button" accessibilityLabel="Modifier l’objectif">
+            <Press onPress={() => setGoalDraft(goalDraft === null ? goal : null)} accessibilityRole="button" accessibilityLabel={traduire("Modifier l’objectif")}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
                 <Ink size={14} weight="bold" color={P.ink2}>
-                  {`sur ${formatLiters(goal)} L`}
+                  {traduire("sur {0} L", formatLiters(goal))}
                 </Ink>
                 <Icon name="settings" size={14} color={P.muted} width={2} />
               </View>
             </Press>
             <Ink size={13} weight="bold" color={reached ? P.mossText : P.ink2}>
-              {reached ? 'Objectif atteint' : `encore ${formatLiters(Math.max(0, goal - amount))} L, soit ${Math.ceil(Math.max(0, goal - amount) / 0.25)} verres`}
+              {reached ? traduire('Objectif atteint') : traduire("encore {0} L, soit {1} verres", formatLiters(Math.max(0, goal - amount)), Math.ceil(Math.max(0, goal - amount) / 0.25))}
             </Ink>
           </View>
         </Card>
@@ -237,10 +237,9 @@ export default function Hydratation() {
         <Enter i={0}>
           <Card style={{ gap: 12 }}>
             <Ink size={15} weight="extraBold">
-              Ton objectif par jour
-            </Ink>
-            <Stepper value={`${formatLiters(goalDraft)} L`} label="Objectif d’eau" onMinus={() => setGoalDraft(Math.max(0.5, Math.round((goalDraft - 0.25) * 100) / 100))} onPlus={() => setGoalDraft(Math.min(10, Math.round((goalDraft + 0.25) * 100) / 100))} color={P.water} />
-            <BigButton label="Enregistrer" onPress={saveGoal} />
+              {traduire("Ton objectif par jour")}</Ink>
+            <Stepper value={`${formatLiters(goalDraft)} L`} label={traduire("Objectif d’eau")} onMinus={() => setGoalDraft(Math.max(0.5, Math.round((goalDraft - 0.25) * 100) / 100))} onPlus={() => setGoalDraft(Math.min(10, Math.round((goalDraft + 0.25) * 100) / 100))} color={P.water} />
+            <BigButton label={traduire("Enregistrer")} onPress={saveGoal} />
           </Card>
         </Enter>
       ) : null}
@@ -254,11 +253,10 @@ export default function Hydratation() {
             </View>
           </Press>
           <View style={{ flex: 1 }}>
-            <Press onPress={() => add(0.25)} haptic="none" accessibilityRole="button" accessibilityLabel="Ajouter un verre, 250 millilitres">
+            <Press onPress={() => add(0.25)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Ajouter un verre, 250 millilitres")}>
               <View style={{ height: 64, borderRadius: 20, backgroundColor: paletteSombre() ? P.indigoSoft : '#E6ECF6', alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={17} weight="black" color={P.water}>
-                  + un verre
-                </Ink>
+                  {traduire("+ un verre")}</Ink>
                 <Ink size={11} weight="bold" color={P.water}>
                   250 ml
                 </Ink>
@@ -266,11 +264,10 @@ export default function Hydratation() {
             </Press>
           </View>
           <View style={{ flex: 1 }}>
-            <Press onPress={() => add(0.5)} haptic="none" accessibilityRole="button" accessibilityLabel="Ajouter une bouteille, 500 millilitres">
+            <Press onPress={() => add(0.5)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Ajouter une bouteille, 500 millilitres")}>
               <View style={{ height: 64, borderRadius: 20, backgroundColor: P.water, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={17} weight="black" color={P.white}>
-                  + une gourde
-                </Ink>
+                  {traduire("+ une gourde")}</Ink>
                 <Ink size={11} weight="bold" color={paletteSombre() ? 'rgba(29,32,41,0.75)' : '#DCE4F3'}>
                   500 ml
                 </Ink>
@@ -281,7 +278,7 @@ export default function Hydratation() {
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {[0.1, 0.33, 0.75, 1].map((l) => (
             <View key={l} style={{ flex: 1 }}>
-              <Press onPress={() => add(l)} haptic="none" accessibilityRole="button" accessibilityLabel={`Ajouter ${Math.round(l * 1000)} millilitres`}>
+              <Press onPress={() => add(l)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} millilitres", Math.round(l * 1000))}>
                 <View style={{ height: 46, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
                   <Ink size={14} weight="extraBold" color={P.water}>
                     {l >= 1 ? '+1 L' : `+${Math.round(l * 1000)} ml`}
@@ -295,7 +292,7 @@ export default function Hydratation() {
 
       {/* Semaine */}
       <Enter i={2} style={{ gap: 10 }}>
-        <SectionTitle>Ta semaine</SectionTitle>
+        <SectionTitle>{traduire("Ta semaine")}</SectionTitle>
         <Card style={{ gap: 12 }}>
           <Svg width={chartW} height={110}>
             {week.map((w, i) => {
@@ -316,27 +313,25 @@ export default function Hydratation() {
             ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 10, paddingTop: 12, borderTopWidth: 1, borderTopColor: P.line2 }}>
-            <Stat value={`${success}/7`} label="jours réussis" color={P.mossText} />
-            <Stat value={avg > 0 ? formatLiters(Math.round(avg * 10) / 10) : '0'} unit="L" label="par jour en moyenne" color={P.water} />
-            <Stat value={withData.length > 0 ? `${Math.round((success / withData.length) * 100)} %` : '0 %'} label="de réussite" />
+            <Stat value={`${success}/7`} label={traduire("jours réussis")} color={P.mossText} />
+            <Stat value={avg > 0 ? formatLiters(Math.round(avg * 10) / 10) : '0'} unit="L" label={traduire("par jour en moyenne")} color={P.water} />
+            <Stat value={withData.length > 0 ? `${Math.round((success / withData.length) * 100)} %` : '0 %'} label={traduire("de réussite")} />
           </View>
         </Card>
       </Enter>
 
       {/* Rappels */}
       <Enter i={3} style={{ gap: 10 }}>
-        <SectionTitle>Tes rappels</SectionTitle>
+        <SectionTitle>{traduire("Tes rappels")}</SectionTitle>
         <Card style={{ gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Ink size={15} weight="extraBold">
-                Penser à boire
-              </Ink>
+                {traduire("Penser à boire")}</Ink>
               <Ink size={13} weight="medium" color={P.ink2}>
-                Un rappel le matin, l’après-midi et le soir.
-              </Ink>
+                {traduire("Un rappel le matin, l’après-midi et le soir.")}</Ink>
             </View>
-            <Toggle value={notif} onChange={toggleNotif} label="Rappels d’hydratation" />
+            <Toggle value={notif} onChange={toggleNotif} label={traduire("Rappels d’hydratation")} />
           </View>
           {notif && !slotsOpen ? (
             <Press onPress={() => setSlotsOpen(true)} accessibilityRole="button">
@@ -345,11 +340,10 @@ export default function Hydratation() {
                   {(Object.keys(SLOT_LABEL) as SlotKey[])
                     .filter((k) => slots[k].enabled)
                     .map((k) => `${SLOT_LABEL[k].toLowerCase()} ${clock(slots[k].time)}`)
-                    .join(', ') || 'aucun créneau actif'}
+                    .join(', ') || traduire('aucun créneau actif')}
                 </Ink>
                 <Ink size={14} weight="bold" color={P.accent}>
-                  Régler
-                </Ink>
+                  {traduire("Régler")}</Ink>
               </View>
             </Press>
           ) : null}
@@ -361,17 +355,17 @@ export default function Hydratation() {
                     <Ink size={15} weight="extraBold" style={{ flex: 1 }}>
                       {SLOT_LABEL[k]}
                     </Ink>
-                    <Toggle value={slots[k].enabled} onChange={(v) => setSlots({ ...slots, [k]: { ...slots[k], enabled: v } })} label={`Rappel du ${SLOT_LABEL[k].toLowerCase()}`} />
+                    <Toggle value={slots[k].enabled} onChange={(v) => setSlots({ ...slots, [k]: { ...slots[k], enabled: v } })} label={traduire("Rappel du {0}", SLOT_LABEL[k].toLowerCase())} />
                   </View>
                   {slots[k].enabled ? (
                     <>
-                      <Stepper value={clock(slots[k].time)} label={`Heure du ${SLOT_LABEL[k].toLowerCase()}`} onMinus={() => setSlots({ ...slots, [k]: { ...slots[k], time: shiftTime(slots[k].time, -30) } })} onPlus={() => setSlots({ ...slots, [k]: { ...slots[k], time: shiftTime(slots[k].time, 30) } })} />
-                      <Stepper value={`${slots[k].amount} ml`} label={`Quantité du ${SLOT_LABEL[k].toLowerCase()}`} onMinus={() => setSlots({ ...slots, [k]: { ...slots[k], amount: Math.max(100, slots[k].amount - 50) } })} onPlus={() => setSlots({ ...slots, [k]: { ...slots[k], amount: Math.min(2000, slots[k].amount + 50) } })} color={P.water} />
+                      <Stepper value={clock(slots[k].time)} label={traduire("Heure du {0}", SLOT_LABEL[k].toLowerCase())} onMinus={() => setSlots({ ...slots, [k]: { ...slots[k], time: shiftTime(slots[k].time, -30) } })} onPlus={() => setSlots({ ...slots, [k]: { ...slots[k], time: shiftTime(slots[k].time, 30) } })} />
+                      <Stepper value={`${slots[k].amount} ml`} label={traduire("Quantité du {0}", SLOT_LABEL[k].toLowerCase())} onMinus={() => setSlots({ ...slots, [k]: { ...slots[k], amount: Math.max(100, slots[k].amount - 50) } })} onPlus={() => setSlots({ ...slots, [k]: { ...slots[k], amount: Math.min(2000, slots[k].amount + 50) } })} color={P.water} />
                     </>
                   ) : null}
                 </View>
               ))}
-              <BigButton label="Enregistrer mes rappels" onPress={saveSlots} />
+              <BigButton label={traduire("Enregistrer mes rappels")} onPress={saveSlots} />
             </View>
           ) : null}
         </Card>
@@ -380,7 +374,7 @@ export default function Hydratation() {
       {/* Historique */}
       {sorted.length > 0 ? (
         <Enter i={4} style={{ gap: 10 }}>
-          <SectionTitle>Historique</SectionTitle>
+          <SectionTitle>{traduire("Historique")}</SectionTitle>
           <Card style={{ paddingVertical: 6 }}>
             {[...visible.map((d) => ({ d, lock: false })), ...locked.map((d) => ({ d, lock: true }))].map(({ d, lock }, i) => {
               const ok = d.amount >= d.goal;
@@ -399,7 +393,7 @@ export default function Hydratation() {
               );
             })}
             {locked.length > 0 ? (
-              <View style={{ marginVertical: 8 }}><BigButton label="Voir tout l’historique" tone="ink" onPress={() => ouvrirPaywall('periode_longue')} /></View>
+              <View style={{ marginVertical: 8 }}><BigButton label={traduire("Voir tout l’historique")} tone="ink" onPress={() => ouvrirPaywall('periode_longue')} /></View>
             ) : null}
           </Card>
         </Enter>

@@ -13,9 +13,10 @@ import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
+import { traduire } from '@/lib/i18n/tr';
 
 // Vague 45 : « Ton univers » apres Toi
-export const ONBOARDING_SCREEN_LABELS = ['Accroche', 'Prénom', 'Toi', 'Ton univers', 'Objectif', 'Ce qui te freine', 'Affirmation', 'Sports', 'Apple Santé', 'Poids du jour', 'Taille', 'Cap', 'Rythme', 'Moment de la pesée', 'Démonstration', 'Tout au même endroit', 'Préparation', 'Ton plan', 'Premium'];
+export const ONBOARDING_SCREEN_LABELS = ['Accroche', traduire('Prénom'), traduire('Toi'), traduire('Ton univers'), traduire('Objectif'), traduire('Ce qui te freine'), 'Affirmation', 'Sports', 'Apple Santé', traduire('Poids du jour'), 'Taille', 'Cap', 'Rythme', traduire('Moment de la pesée'), traduire('Démonstration'), traduire('Tout au même endroit'), traduire('Préparation'), traduire('Ton plan'), traduire('Premium')];
 const COUNT = ONBOARDING_SCREEN_LABELS.length;
 const LAST = COUNT - 1;
 const GLASS = 'rgba(29,32,41,0.86)';
@@ -51,21 +52,21 @@ function Pastille({ a, compact, withClose }: { a: Apercu; compact?: boolean; wit
   const label = `${a.page + 1}/${COUNT} ${ONBOARDING_SCREEN_LABELS[a.page] ?? ''}`;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 3, height: compact ? 36 : 40, borderRadius: 20, backgroundColor: GLASS, maxWidth: '100%', flexShrink: 1 }}>
-      <Pressable onPress={tapIt(() => a.onGo(Math.max(0, a.page - 1)))} disabled={a.page === 0} accessibilityRole="button" accessibilityLabel="Écran précédent" style={[btn, { opacity: a.page === 0 ? 0.35 : 1 }]}>
+      <Pressable onPress={tapIt(() => a.onGo(Math.max(0, a.page - 1)))} disabled={a.page === 0} accessibilityRole="button" accessibilityLabel={traduire("Écran précédent")} style={[btn, { opacity: a.page === 0 ? 0.35 : 1 }]}>
         <Icon name="back" size={14} color={c.onDark} />
       </Pressable>
-      <Pressable onPress={tapIt(a.openGrid)} accessibilityRole="button" accessibilityLabel={`Aperçu, choisir un écran, ${label}`} style={{ paddingHorizontal: 2, height: 32, justifyContent: 'center', flexShrink: 1 }}>
+      <Pressable onPress={tapIt(a.openGrid)} accessibilityRole="button" accessibilityLabel={traduire("Aperçu, choisir un écran, {0}", label)} style={{ paddingHorizontal: 2, height: 32, justifyContent: 'center', flexShrink: 1 }}>
         <Ink size={compact ? 11 : 12} weight="extraBold" color={c.onDark} numberOfLines={1}>{label}</Ink>
       </Pressable>
-      <Pressable onPress={tapIt(() => a.onGo(Math.min(LAST, a.page + 1)))} disabled={a.page === LAST} accessibilityRole="button" accessibilityLabel="Écran suivant" style={[btn, { opacity: a.page === LAST ? 0.35 : 1 }]}>
+      <Pressable onPress={tapIt(() => a.onGo(Math.min(LAST, a.page + 1)))} disabled={a.page === LAST} accessibilityRole="button" accessibilityLabel={traduire("Écran suivant")} style={[btn, { opacity: a.page === LAST ? 0.35 : 1 }]}>
         <Icon name="chevron" size={14} color={c.onDark} />
       </Pressable>
       <View style={{ width: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.25)', marginHorizontal: 1 }} />
-      <Pressable onPress={tapIt(() => a.setHidden(true))} accessibilityRole="button" accessibilityLabel="Masquer la barre pour voir tout l’écran" style={btn}>
+      <Pressable onPress={tapIt(() => a.setHidden(true))} accessibilityRole="button" accessibilityLabel={traduire("Masquer la barre pour voir tout l’écran")} style={btn}>
         <Icon name="eye" size={14} color={c.onDark} />
       </Pressable>
       {withClose ? (
-        <Pressable onPress={tapIt(a.onClose)} accessibilityRole="button" accessibilityLabel="Fermer l’aperçu" style={btn}>
+        <Pressable onPress={tapIt(a.onClose)} accessibilityRole="button" accessibilityLabel={traduire("Fermer l’aperçu")} style={btn}>
           <Icon name="close" size={14} color={c.onDark} />
         </Pressable>
       ) : null}
@@ -124,7 +125,7 @@ export function PreviewBar({ enabled = true, page, onGo, onClose, children }: { 
         <Pressable
           onPress={tapIt(() => setHidden(false))}
           accessibilityRole="button"
-          accessibilityLabel="Montrer la barre d’aperçu"
+          accessibilityLabel={traduire("Montrer la barre d’aperçu")}
           hitSlop={14}
           style={{ position: 'absolute', right: 6, top: insets.top + 64, width: 14, height: 14, borderRadius: 7, backgroundColor: c.accent, opacity: 0.75 }}
         />
@@ -138,8 +139,8 @@ export function PreviewBar({ enabled = true, page, onGo, onClose, children }: { 
         <Pressable onPress={() => setGrid(false)} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }}>
           <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, paddingHorizontal: 16, paddingBottom: insets.bottom + 16, maxHeight: '75%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <Ink size={18} weight="black" style={{ flex: 1 }}>Aller à un écran</Ink>
-              <Pressable onPress={tapIt(() => setGrid(false))} accessibilityRole="button" accessibilityLabel="Fermer" style={[btn, { backgroundColor: c.fillSoft }]}>
+              <Ink size={18} weight="black" style={{ flex: 1 }}>{traduire("Aller à un écran")}</Ink>
+              <Pressable onPress={tapIt(() => setGrid(false))} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} style={[btn, { backgroundColor: c.fillSoft }]}>
                 <Icon name="close" size={15} color={c.ink} />
               </Pressable>
             </View>

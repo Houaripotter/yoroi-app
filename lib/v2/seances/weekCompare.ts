@@ -8,6 +8,7 @@ import { sessionTonnage } from '@/lib/v2/progres/strength';
 import { durationOf, formatTonnage, mondayOf, setsCount } from '@/lib/v2/trainingWeek';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { MONTHS, MONTHS_SHORT, addDaysISO, daysFrom, firstSport, parseRounds, workSets, parseExercises } from './sessionData';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 /** Effort retenu quand la seance n'a pas d'effort note, comme l'ecran Charge (lib/v2/chargeReelle) */
 const DEFAULT_RPE = 5;
@@ -39,7 +40,7 @@ export function isImported(t: Training): boolean {
 }
 
 export function sourceLabel(t: Training): string {
-  return SOURCE_LABEL[(t.source ?? '').toLowerCase()] ?? 'ta montre';
+  return SOURCE_LABEL[(t.source ?? '').toLowerCase()] ?? traduire('ta montre');
 }
 
 export function loadOf(t: Training): number {
@@ -108,8 +109,8 @@ export function weekCompare(trainings: Training[], today: string): WeekCompare {
   const md = new Date(monday + 'T12:00:00');
   const sd = new Date(sunday + 'T12:00:00');
   const range = md.getMonth() === sd.getMonth()
-    ? `du ${md.getDate()} au ${sd.getDate()} ${MONTHS_SHORT[sd.getMonth()]}`
-    : `du ${md.getDate()} ${MONTHS_SHORT[md.getMonth()]} au ${sd.getDate()} ${MONTHS_SHORT[sd.getMonth()]}`;
+    ? traduire("du {0} au {1} {2}", md.getDate(), sd.getDate(), MONTHS_SHORT[sd.getMonth()])
+    : traduire("du {0} {1} au {2} {3}", md.getDate(), MONTHS_SHORT[md.getMonth()], sd.getDate(), MONTHS_SHORT[sd.getMonth()]);
   return {
     monday,
     sunday,
@@ -128,7 +129,7 @@ export function formatPoints(n: number): string {
 
 /** Nombre a une decimale a la francaise */
 export function fr1(n: number): string {
-  return (Math.round(n * 10) / 10).toString().replace('.', ',');
+  return (Math.round(n * 10) / 10).toString().replace('.', DECIMAL);
 }
 
 export type HistoryGroup = {
@@ -181,16 +182,16 @@ export function groupHistory(trainings: Training[], today: string, mode: 'semain
       const md = new Date(k + 'T12:00:00');
       const sd = new Date(addDaysISO(k, 6) + 'T12:00:00');
       title = k === thisMonday
-        ? 'Cette semaine'
+        ? traduire('Cette semaine')
         : k === lastMonday
-          ? 'Semaine dernière'
+          ? traduire('Semaine dernière')
           : md.getMonth() === sd.getMonth()
-            ? `Du ${md.getDate()} au ${sd.getDate()} ${MONTHS_SHORT[sd.getMonth()]}${k.slice(0, 4) !== year ? ` ${k.slice(0, 4)}` : ''}`
-            : `Du ${md.getDate()} ${MONTHS_SHORT[md.getMonth()]} au ${sd.getDate()} ${MONTHS_SHORT[sd.getMonth()]}${k.slice(0, 4) !== year ? ` ${k.slice(0, 4)}` : ''}`;
+            ? traduire("Du {0} au {1} {2}{3}", md.getDate(), sd.getDate(), MONTHS_SHORT[sd.getMonth()], k.slice(0, 4) !== year ? ` ${k.slice(0, 4)}` : '')
+            : traduire("Du {0} {1} au {2} {3}{4}", md.getDate(), MONTHS_SHORT[md.getMonth()], sd.getDate(), MONTHS_SHORT[sd.getMonth()], k.slice(0, 4) !== year ? ` ${k.slice(0, 4)}` : '');
     } else {
       const m = Number(k.slice(5, 7)) - 1;
       const name = MONTHS[m].charAt(0).toUpperCase() + MONTHS[m].slice(1);
-      title = k === thisMonth ? `${name}, ce mois-ci` : k.slice(0, 4) !== year ? `${name} ${k.slice(0, 4)}` : name;
+      title = k === thisMonth ? traduire("{0}, ce mois-ci", name) : k.slice(0, 4) !== year ? `${name} ${k.slice(0, 4)}` : name;
     }
     return summarize(k, title, items);
   });
@@ -222,7 +223,7 @@ export function keyFacts(t: Training, unite: UnitePoids = 'kg'): KeyFact[] {
   if (tonnage >= 100) out.push({ kind: 'volume', text: formatTonnage(tonnage, unite) });
   else {
     const sets = setsOf(t);
-    if (sets > 0) out.push({ kind: 'series', text: `${sets} série${sets > 1 ? 's' : ''}` });
+    if (sets > 0) out.push({ kind: 'series', text: traduirePluriel(sets, sets > 1, "{0} série", "{0} séries", sets) });
   }
   const r = roundsOf(t);
   if (r > 0) out.push({ kind: 'rounds', text: `${r} round${r > 1 ? 's' : ''}` });

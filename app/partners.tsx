@@ -14,6 +14,7 @@ import type { Club, Coach } from '@/data/partners';
 import { BigButton, Card, CIcon, DetailScreen, Enter, Glass, Hanko, IconBtn, P, Press, Section } from '@/components/yoroi/v2/combat/ui';
 import type { CIconName } from '@/components/yoroi/v2/combat/ui';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Item = Coach | Club;
 const isCoach = (x: Item): x is Coach => 'specialties' in x;
@@ -33,7 +34,7 @@ const openMap = (address: string) => {
 function ItemCard({ item, onPress }: { item: Item; onPress: () => void }) {
   const sub = isCoach(item) ? `${item.title}, ${item.location}` : `${item.type}, ${item.location}`;
   return (
-    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`Voir ${item.name}`}>
+    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire("Voir {0}", item.name)}>
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <View style={{ height: 170, backgroundColor: P.ink }}>
           {item.imageUrl ? (
@@ -71,12 +72,12 @@ function ItemCard({ item, onPress }: { item: Item; onPress: () => void }) {
             </View>
           ) : item.trainers && item.trainers.length > 0 ? (
             <Ink size={13} color={P.ink2} numberOfLines={2}>
-              {`Avec ${item.trainers.join(', ')}`}
+              {traduire("Avec {0}", item.trainers.join(', '))}
             </Ink>
           ) : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={13} weight="bold" color={P.muted}>
-              {item.instagram ? (Array.isArray(item.instagram) ? `${item.instagram.length} comptes Instagram` : item.instagram) : item.featured ? 'Coup de cœur' : 'Voir la fiche'}
+              {item.instagram ? (Array.isArray(item.instagram) ? `${item.instagram.length} comptes Instagram` : item.instagram) : item.featured ? traduire('Coup de cœur') : traduire('Voir la fiche')}
             </Ink>
             <CIcon name="chevron" size={16} color={P.muted} />
           </View>
@@ -108,7 +109,7 @@ export default function PartnersScreen() {
   const list: Item[] = tab === 'coaches' ? coaches : CLUBS;
 
   return (
-    <DetailScreen title="Sélection YOROI" subtitle="Des coachs et des clubs que je recommande">
+    <DetailScreen title={traduire("Sélection YOROI")} subtitle={traduire("Des coachs et des clubs que je recommande")}>
       <View style={{ flexDirection: 'row', backgroundColor: '#E6E4DD', borderRadius: 18, padding: 4 }}>
         {([
           { k: 'coaches', l: 'Coachs', n: coaches.length },
@@ -138,22 +139,19 @@ export default function PartnersScreen() {
 
       <Glass style={{ gap: 10 }}>
         <Ink size={20} weight="black" tight>
-          Tu veux être dans la sélection ?
-        </Ink>
+          {traduire("Tu veux être dans la sélection ?")}</Ink>
         <Ink size={14} color={P.ink2}>
-          Écris-moi sur Instagram, je serai ravi de te mettre en avant.
-        </Ink>
-        <BigButton label="Nous contacter" icon="share" onPress={() => openEmail()} />
+          {traduire("Écris-moi sur Instagram, je serai ravi de te mettre en avant.")}</Ink>
+        <BigButton label={traduire("Nous contacter")} icon="share" onPress={() => openEmail()} />
       </Glass>
       <Ink size={12} color={P.muted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
-        Sélection personnelle et subjective. Ces professionnels ne sont pas liés par contrat à Yoroi.
-      </Ink>
+        {traduire("Sélection personnelle et subjective. Ces professionnels ne sont pas liés par contrat à Yoroi.")}</Ink>
 
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setSelected(null); setZoom(false); }}>
         {selected ? (
           <View style={{ flex: 1, backgroundColor: P.paper }}>
             <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-              <Pressable onPress={() => selected.imageUrl && setZoom(true)} accessibilityRole="button" accessibilityLabel="Agrandir la photo" style={{ height: 340, backgroundColor: P.lacquer }}>
+              <Pressable onPress={() => selected.imageUrl && setZoom(true)} accessibilityRole="button" accessibilityLabel={traduire("Agrandir la photo")} style={{ height: 340, backgroundColor: P.lacquer }}>
                 {selected.imageUrl ? (
                   <Image source={selected.imageUrl} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                 ) : (
@@ -164,7 +162,7 @@ export default function PartnersScreen() {
                 <LinearGradient colors={['transparent', 'rgba(242,241,236,1)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 }} />
               </Pressable>
               <View style={{ position: 'absolute', top: 16, right: 16 }}>
-                <IconBtn icon="close" label="Fermer" onPress={() => { setSelected(null); setZoom(false); }} />
+                <IconBtn icon="close" label={traduire("Fermer")} onPress={() => { setSelected(null); setZoom(false); }} />
               </View>
               <View style={{ paddingHorizontal: 22, marginTop: -40, gap: 14 }}>
                 <View style={{ gap: 4 }}>
@@ -203,7 +201,7 @@ export default function PartnersScreen() {
                 ) : null}
                 {isCoach(selected) && selected.specialties.length > 0 ? (
                   <>
-                    <Section title="Spécialités" />
+                    <Section title={traduire("Spécialités")} />
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {selected.specialties.map((s) => (
                         <View key={s} style={{ paddingHorizontal: 14, height: 36, borderRadius: 18, justifyContent: 'center', backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
@@ -217,7 +215,7 @@ export default function PartnersScreen() {
                 ) : null}
                 {!isCoach(selected) && selected.trainers && selected.trainers.length > 0 ? (
                   <>
-                    <Section title="Entraîneurs" />
+                    <Section title={traduire("Entraîneurs")} />
                     <Card style={{ gap: 8 }}>
                       {selected.trainers.map((t) => (
                         <View key={t} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -231,7 +229,7 @@ export default function PartnersScreen() {
                   </>
                 ) : null}
                 {selected.location ? (
-                  <Press onPress={() => openMap(selected.location)} accessibilityRole="button" accessibilityLabel={`Ouvrir l'adresse ${selected.location} dans Plans`}>
+                  <Press onPress={() => openMap(selected.location)} accessibilityRole="button" accessibilityLabel={traduire("Ouvrir l'adresse {0} dans Plans", selected.location)}>
                     <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                       <CIcon name="pin" size={22} color={P.accent} />
                       <Ink size={15} weight="bold" style={{ flex: 1 }}>
@@ -244,7 +242,7 @@ export default function PartnersScreen() {
               </View>
             </ScrollView>
             <Modal visible={zoom} transparent animationType="fade" onRequestClose={() => setZoom(false)}>
-              <Pressable onPress={() => setZoom(false)} accessibilityLabel="Fermer la photo" style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.94)', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => setZoom(false)} accessibilityLabel={traduire("Fermer la photo")} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.94)', alignItems: 'center', justifyContent: 'center' }}>
                 {selected.imageUrl ? <Image source={selected.imageUrl} style={{ width: '94%', height: '80%' }} resizeMode="contain" /> : null}
               </Pressable>
             </Modal>

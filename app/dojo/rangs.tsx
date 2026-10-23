@@ -23,10 +23,11 @@ import { THEME_IMAGES, aUnPersonnage, personnageImage } from '@/lib/v2/dojo/pers
 import { pieceDuRang } from '@/lib/v2/dojo/pieces';
 import { libelleChemin, libelleConstruction, rangNom, rangTenue, rangTitre } from '@/lib/v2/dojo/univers';
 import { imageDuRang, universDe } from '@/lib/v2/dojo/dojoAffichage';
+import { traduire } from '@/lib/i18n/tr';
 
 const NB = ' ';
 /** au rythme de 3 seances par semaine (simulation du moteur d'XP) */
-const DUREES = ['au départ', 'environ 1 semaine', 'environ 3 mois', 'environ 1 an', 'plusieurs années'];
+const DUREES = [traduire('au départ'), traduire('environ 1 semaine'), traduire('environ 3 mois'), traduire('environ 1 an'), traduire('plusieurs années')];
 
 export default function Rangs() {
   const { theme } = useYoroiTheme();
@@ -51,8 +52,8 @@ export default function Rangs() {
   const cons = construction(xp, u);
   const image = personnageImage(espace.personnage, current, st?.sportCounts ?? {});
   // Vague 45 : ce que gagne chaque rang, la tenue du personnage ou, sans personnage, la piece du rang
-  const gainDuRang = (i: number) => (avecPerso ? rangTenue(i, u) : i >= 1 ? pieceDuRang(i, u).nom : 'Le départ');
-  const sousTitre = !avecPerso ? 'Chaque rang débloque une nouvelle pièce' : u === 'classique' ? 'Chaque rang ajoute une pièce à ta tenue' : 'Chaque rang ajoute une pièce à ton armure';
+  const gainDuRang = (i: number) => (avecPerso ? rangTenue(i, u) : i >= 1 ? pieceDuRang(i, u).nom : traduire('Le départ'));
+  const sousTitre = !avecPerso ? traduire('Chaque rang débloque une nouvelle pièce') : u === 'classique' ? traduire('Chaque rang ajoute une pièce à ta tenue') : traduire('Chaque rang ajoute une pièce à ton armure');
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -64,7 +65,7 @@ export default function Rangs() {
           <ScenePlate scene={THEME_IMAGES[espace.scene] ?? THEME_IMAGES.dojo} height={heroH}>
             <View style={{ position: 'absolute', left: 14, top: 14, right: 14, flexDirection: 'row' }}>
               <GlassTag style={{ maxWidth: '86%' }}>
-                <Ink size={12} weight="extraBold" color={c.goldDeep}>{`Ton rang, ${current + 1} sur ${RANKS.length}`}</Ink>
+                <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Ton rang, {0} sur {1}", current + 1, RANKS.length)}</Ink>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                   <Ink size={28} weight="black" tight numberOfLines={1} style={{ flexShrink: 1 }}>{title}</Ink>
                 </View>
@@ -73,7 +74,7 @@ export default function Rangs() {
             {/* Vague 45 : « Sans personnage », la scene seule */}
             {avecPerso ? (
               <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' }}>
-                <BreathingFigure source={image} width={figW} height={figH} label={`Ton personnage au rang ${rangNom(current, u)}`} />
+                <BreathingFigure source={image} width={figW} height={figH} label={traduire("Ton personnage au rang {0}", rangNom(current, u))} />
               </View>
             ) : null}
           </ScenePlate>
@@ -83,7 +84,7 @@ export default function Rangs() {
         <Animated.View
           entering={ENTREE}
           accessible
-          accessibilityLabel={`${cons.titre}, étape ${cons.enCours} sur 3. ${formatXp(xp)} XP sur ${formatXp(cons.objectifXp)}, encore ${formatXp(cons.resteXp)} XP`}
+          accessibilityLabel={traduire("{0}, étape {1} sur 3. {2} XP sur {3}, encore {4} XP", cons.titre, cons.enCours, formatXp(xp), formatXp(cons.objectifXp), formatXp(cons.resteXp))}
           style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 12 }}
         >
           <View style={{ gap: 3 }}>
@@ -112,13 +113,13 @@ export default function Rangs() {
           <EtapesPiece faites={cons.faites} />
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
             <Ink size={15} weight="black" style={{ flex: 1 }} numberOfLines={1}>{`${formatXp(xp)} / ${formatXp(cons.objectifXp)}${NB}XP`}</Ink>
-            <Ink size={13} weight="extraBold" color={c.accent} numberOfLines={1}>{`encore ${formatXp(cons.resteXp)}${NB}XP`}</Ink>
+            <Ink size={13} weight="extraBold" color={c.accent} numberOfLines={1}>{traduire("encore {0}{1}XP", formatXp(cons.resteXp), NB)}</Ink>
           </View>
         </Animated.View>
 
         {/* Le chemin */}
         <Animated.View entering={ENTREE} style={{ gap: 0, marginTop: 6 }}>
-          <Ink size={20} weight="black" tight style={{ paddingHorizontal: 2, marginBottom: 10 }} accessibilityRole="header">Les 5 rangs</Ink>
+          <Ink size={20} weight="black" tight style={{ paddingHorizontal: 2, marginBottom: 10 }} accessibilityRole="header">{traduire("Les 5 rangs")}</Ink>
           {RANKS.map((k, i) => {
             const done = k.index < current;
             const here = k.index === current;
@@ -167,11 +168,11 @@ export default function Rangs() {
                   <Ink size={13} color={done || here ? c.textSecondary : c.textMuted}>{gainDuRang(k.index)}</Ink>
                   {here ? (
                     <View style={{ alignSelf: 'flex-start', marginTop: 4, borderRadius: 999, backgroundColor: c.accent, paddingHorizontal: 10, paddingVertical: 4 }}>
-                      <Ink size={12} weight="extraBold" color={c.onAccent}>Tu es ici</Ink>
+                      <Ink size={12} weight="extraBold" color={c.onAccent}>{traduire("Tu es ici")}</Ink>
                     </View>
                   ) : (
                     <Ink size={12} weight="bold" color={c.textMuted}>
-                      {done ? `Gagné, dès ${formatXp(k.minXp)}${NB}XP` : `${formatXp(k.minXp)}${NB}XP, ${DUREES[k.index]}`}
+                      {done ? traduire("Gagné, dès {0}{1}XP", formatXp(k.minXp), NB) : `${formatXp(k.minXp)}${NB}XP, ${DUREES[k.index]}`}
                     </Ink>
                   )}
                 </View>
@@ -186,17 +187,17 @@ export default function Rangs() {
               </View>
             </View>
             <View style={{ flex: 1, paddingTop: 8, gap: 3 }}>
-              <Ink size={18} weight="black" tight color={dan > 0 ? c.ink : c.textSecondary}>Les dan</Ink>
-              <Ink size={13} color={dan > 0 ? c.textSecondary : c.textMuted}>{`Après ${rangNom(RANKS.length - 1, u)}, un dan tous les ${formatXp(DAN_STEP)}${NB}XP, sans fin.`}</Ink>
+              <Ink size={18} weight="black" tight color={dan > 0 ? c.ink : c.textSecondary}>{traduire("Les dan")}</Ink>
+              <Ink size={13} color={dan > 0 ? c.textSecondary : c.textMuted}>{traduire("Après {0}, un dan tous les {1}{2}XP, sans fin.", rangNom(RANKS.length - 1, u), formatXp(DAN_STEP), NB)}</Ink>
               <Ink size={12} weight="bold" color={dan > 0 ? c.goldDeep : c.textMuted}>
-                {dan > 0 ? `Tu es ${danLabel(dan)}` : `${danLabel(1)} à ${formatXp(RANKS[RANKS.length - 1].minXp + DAN_STEP)}${NB}XP`}
+                {dan > 0 ? traduire("Tu es {0}", danLabel(dan)) : traduire("{0} à {1}{2}XP", danLabel(1), formatXp(RANKS[RANKS.length - 1].minXp + DAN_STEP), NB)}
               </Ink>
             </View>
           </View>
         </Animated.View>
 
         <Animated.View entering={ENTREE} style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 10, marginTop: 6 }}>
-          <Ink size={17} weight="black">Comment gagner de l’XP</Ink>
+          <Ink size={17} weight="black">{traduire("Comment gagner de l’XP")}</Ink>
           {rules.map((rule, i) => (
             <View key={rule.source} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, paddingTop: i === 0 ? 0 : 10 }}>
               <View style={{ flex: 1 }}>
@@ -209,8 +210,7 @@ export default function Rangs() {
             </View>
           ))}
           <Ink size={12} color={c.textSecondary}>
-            Ton XP ne baisse jamais. Supprimer une séance ne retire rien. Une séance notée plus de 7 jours après sa date ne rapporte pas d’XP (30 jours pour Apple Santé ou une montre). L’historique d’Apple Santé d’avant ton arrivée dans YOROI ne compte pas. Rien n’est lié à un nombre de kilos.
-          </Ink>
+            {traduire("Ton XP ne baisse jamais. Supprimer une séance ne retire rien. Une séance notée plus de 7 jours après sa date ne rapporte pas d’XP (30 jours pour Apple Santé ou une montre). L’historique d’Apple Santé d’avant ton arrivée dans YOROI ne compte pas. Rien n’est lié à un nombre de kilos.")}</Ink>
         </Animated.View>
 
         <Pressable
@@ -221,7 +221,7 @@ export default function Rangs() {
           accessibilityRole="button"
           style={({ pressed }) => ({ minHeight: 54, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, borderRadius: 18, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
         >
-          <Ink size={15} weight="bold" style={{ flex: 1 }}>Voir ton journal d’XP</Ink>
+          <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Voir ton journal d’XP")}</Ink>
           <ChevronIcon />
         </Pressable>
       </ScrollView>

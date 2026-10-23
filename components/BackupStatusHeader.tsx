@@ -14,6 +14,7 @@ import { shareLatestBackup } from '@/lib/backupShareService';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 import { formatRelative } from '@/lib/utils/formatDate';
+import { traduire } from '@/lib/i18n/tr';
 
 const BackupStatusHeaderInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -69,9 +70,9 @@ const BackupStatusHeaderInner: React.FC = () => {
   const color = statusLevel === 'safe' ? '#16A34A'
               : statusLevel === 'warn' ? '#D97706'
               : '#DC2626';
-  const title = statusLevel === 'safe' ? 'Tes données sont en sécurité'
-              : statusLevel === 'warn' ? 'Pense à faire une sauvegarde'
-              : !hasBackup ? 'Aucune sauvegarde' : 'Sauvegarde trop ancienne';
+  const title = statusLevel === 'safe' ? traduire('Tes données sont en sécurité')
+              : statusLevel === 'warn' ? traduire('Pense à faire une sauvegarde')
+              : !hasBackup ? traduire('Aucune sauvegarde') : traduire('Sauvegarde trop ancienne');
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? bgDark : bg, borderColor: `${color}40` }]}>
@@ -89,7 +90,7 @@ const BackupStatusHeaderInner: React.FC = () => {
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color }]}>{title}</Text>
           <Text style={[styles.sub, { color: colors.text }]}>
-            {lastBackup ? `Dernier backup ${formatRelative(lastBackup)}` : 'Jamais sauvegardé'}
+            {lastBackup ? `Dernier backup ${formatRelative(lastBackup)}` : traduire('Jamais sauvegardé')}
           </Text>
         </View>
       </View>
@@ -105,7 +106,7 @@ const BackupStatusHeaderInner: React.FC = () => {
         <View style={styles.infoItem}>
           {cloud ? <Cloud size={12} color={color} /> : <CloudOff size={12} color="#6B7280" />}
           <Text style={[styles.infoText, { color: colors.textMuted ?? '#666' }]}>
-            {cloud ? cloud.displayName : 'Cloud non configuré'}
+            {cloud ? cloud.displayName : traduire('Cloud non configuré')}
           </Text>
         </View>
       </View>
@@ -123,7 +124,7 @@ const BackupStatusHeaderInner: React.FC = () => {
         >
           <RefreshCw size={14} color="#fff" strokeWidth={2.5} />
           <Text style={styles.btnText}>
-            {triggering ? 'Sauvegarde…' : 'Sauvegarder'}
+            {triggering ? traduire('Sauvegarde…') : 'Sauvegarder'}
           </Text>
         </TouchableOpacity>
         {/* Partage (email/WhatsApp/Drive), fallback pour users sans cloud configuré */}
@@ -132,11 +133,11 @@ const BackupStatusHeaderInner: React.FC = () => {
             onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); shareLatestBackup(); }}
             activeOpacity={0.8}
             style={[styles.btn, styles.btnSecondary, { borderColor: `${color}80` }]}
-            accessibilityLabel="Partager la sauvegarde par email ou messagerie"
+            accessibilityLabel={traduire("Partager la sauvegarde par email ou messagerie")}
             accessibilityRole="button"
           >
             <Share2 size={14} color={color} strokeWidth={2.5} />
-            <Text style={[styles.btnTextSecondary, { color }]}>Partager</Text>
+            <Text style={[styles.btnTextSecondary, { color }]}>{traduire("Partager")}</Text>
           </TouchableOpacity>
         )}
       </View>

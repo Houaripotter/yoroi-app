@@ -49,6 +49,7 @@ import { GUTTER, MainButton, RoundIcon, decouper } from './ui';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
 import { P } from '@/components/yoroi/livePalette';
 import { LiensLegaux } from '@/components/yoroi/v2/premium/LiensLegaux';
+import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 
 const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
 
@@ -57,10 +58,10 @@ function count(id: string): number | null {
   const v = CONTENT_COUNTS.find((x) => x.id === id)?.value;
   return typeof v === 'number' && v > 0 ? v : null;
 }
-const fmt = (n: number) => n.toLocaleString('fr-FR').replace(/ | /g, ' ');
+const fmt = (n: number) => n.toLocaleString(LOCALE).replace(/ | /g, ' ');
 
 const N_SPORTS = count('sports');
-const N_EXOS = count('exercices');
+const N_EXOS = count(traduire('exercices'));
 const N_TECH = count('techniques');
 const N_SCENES = count('scenes');
 const N_CITATIONS = count('citations');
@@ -69,18 +70,18 @@ type PageId = 'mur' | 'accueil' | 'poids' | 'records' | 'chrono' | 'sports' | 's
 
 // vague 30 : le mot cle de chaque titre en couleur (entre ** **). Vague 50 : une page par titre, la premiere est le tout
 const PAGES: { id: PageId; titre: string; sous: string }[] = [
-  { id: 'mur', titre: 'Ton carnet de **combattant**', sous: 'Poids, séances, records, chrono et ton Dojo. Glisse pour tout voir.' },
+  { id: 'mur', titre: traduire('Ton carnet de **combattant**'), sous: traduire('Poids, séances, records, chrono et ton Dojo. Glisse pour tout voir.') },
   // 17 octobre 2026 (revue de l'onboarding) : les nouveautes, dessinees avec les vrais composants (Vitrines.tsx)
-  { id: 'accueil', titre: 'Ton accueil **en couleurs**', sous: 'Une tuile par sujet, et ta santé du jour en un coup d’œil.' },
-  { id: 'poids', titre: 'Ton poids, **enfin lisible**', sous: `Ta vraie tendance, pas le bruit de la balance. Avec ${healthName()} si tu veux.` },
-  { id: 'records', titre: 'Tes records, **tamponnés**', sous: 'Chaque record battu gagne son tampon dans ton carnet.' },
-  { id: 'chrono', titre: 'Le chrono **des combattants**', sous: 'Rounds, Tabata, repos muscu. Le gong, et les claquettes à 10 s de la fin.' },
-  { id: 'sports', titre: 'Tous tes sports, **au même endroit**', sous: N_SPORTS && N_EXOS ? `${fmt(N_SPORTS)} sports, ${fmt(N_EXOS)} exercices, ta semaine en un coup d’œil.` : 'Tous tes sports, ta semaine d’un coup d’œil.' },
-  { id: 'seance', titre: 'Tes séances, **plus simples**', sous: 'Exercices en français, ta machine en image, ton lieu en un geste.' },
-  { id: 'partage', titre: 'Tes **cartes** à partager', sous: 'Story, Publication ou Carré, et des modèles Record, Semaine, Minimal.' },
-  { id: 'personnages', titre: 'Des personnages **qui te ressemblent**', sous: 'De toutes origines, homme ou femme. Choisis ton visage.' },
-  { id: 'armure', titre: 'Ton armure **grandit avec toi**', sous: 'Cinq rangs, d’Ashigaru à Shōgun, et un Dojo à remplir de personnages.' },
-  { id: 'tel', titre: 'Tout reste **sur ton téléphone**', sous: 'Pas de compte à créer, pas de publicité. Ton suivi marche sans réseau.' },
+  { id: 'accueil', titre: traduire('Ton accueil **en couleurs**'), sous: traduire('Une tuile par sujet, et ta santé du jour en un coup d’œil.') },
+  { id: 'poids', titre: traduire('Ton poids, **enfin lisible**'), sous: traduire("Ta vraie tendance, pas le bruit de la balance. Avec {0} si tu veux.", healthName()) },
+  { id: 'records', titre: traduire('Tes records, **tamponnés**'), sous: traduire('Chaque record battu gagne son tampon dans ton carnet.') },
+  { id: 'chrono', titre: traduire('Le chrono **des combattants**'), sous: traduire('Rounds, Tabata, repos muscu. Le gong, et les claquettes à 10 s de la fin.') },
+  { id: 'sports', titre: traduire('Tous tes sports, **au même endroit**'), sous: N_SPORTS && N_EXOS ? traduire("{0} sports, {1} exercices, ta semaine en un coup d’œil.", fmt(N_SPORTS), fmt(N_EXOS)) : traduire('Tous tes sports, ta semaine d’un coup d’œil.') },
+  { id: 'seance', titre: traduire('Tes séances, **plus simples**'), sous: traduire('Exercices en français, ta machine en image, ton lieu en un geste.') },
+  { id: 'partage', titre: traduire('Tes **cartes** à partager'), sous: traduire('Story, Publication ou Carré, et des modèles Record, Semaine, Minimal.') },
+  { id: 'personnages', titre: traduire('Des personnages **qui te ressemblent**'), sous: traduire('De toutes origines, homme ou femme. Choisis ton visage.') },
+  { id: 'armure', titre: traduire('Ton armure **grandit avec toi**'), sous: traduire('Cinq rangs, d’Ashigaru à Shōgun, et un Dojo à remplir de personnages.') },
+  { id: 'tel', titre: traduire('Tout reste **sur ton téléphone**'), sous: traduire('Pas de compte à créer, pas de publicité. Ton suivi marche sans réseau.') },
 ];
 const N_PAGES = PAGES.length;
 /** vague 50 : une page toutes les 5 s, reprise 6 s apres le dernier toucher */
@@ -117,7 +118,7 @@ function origines(g: 'h' | 'f'): Tile[] {
   const un = (id: string, t: 'peau_foncee' | 'peau_mate' | 'asie', gg: 'h' | 'f', fond: string) => {
     const p = VIE_PERSONNAGES.find((x) => x.id === id);
     const src = imageTeinte(id, t, gg);
-    if (p && src !== undefined) out.push({ k: 'image', w: 112, src, label: p.names?.[gg] ?? p.name, sub: 'Vie réelle', fond });
+    if (p && src !== undefined) out.push({ k: 'image', w: 112, src, label: p.names?.[gg] ?? p.name, sub: traduire('Vie réelle'), fond });
   };
   un('basket', 'peau_foncee', g, '#F6E3DF');
   un('soignant', 'asie', g === 'h' ? 'f' : 'h', '#E3E9F3');
@@ -146,27 +147,27 @@ function buildRows(g: 'h' | 'f'): Tile[][] {
   const autre: 'h' | 'f' = g === 'h' ? 'f' : 'h';
   const r1: (Tile | null)[] = [
     { k: 'poids', w: 0 },
-    { k: 'tampons', w: 196, ids: ['record_force', 'record_endurance', 'record_combat'], title: 'Records tamponnés', sub: 'Muscu, course, combat' },
-    { k: 'illu', w: 188, src: ILLU.chrono, fond: '#F5EDD9', ink: '#A87B22', kicker: 'Chrono', title: 'Rounds et Tabata', sub: 'Le gong, les claquettes' },
-    { k: 'image', w: 116, src: GUERRIER_IMAGES[g][4], label: 'Shōgun', sub: 'ton armure', fond: '#F3EBDA' },
-    { k: 'couleur', w: 196, bg: 'gold', icon: 'share', kicker: 'Partage', title: 'Tes cartes', sub: 'Story, Publication, Carré', nouveau: true },
-    N_SPORTS ? { k: 'stat', w: 128, n: fmt(N_SPORTS), label: 'sports', sub: 'à noter en deux touches' } : null,
+    { k: 'tampons', w: 196, ids: ['record_force', 'record_endurance', 'record_combat'], title: traduire('Records tamponnés'), sub: traduire('Muscu, course, combat') },
+    { k: 'illu', w: 188, src: ILLU.chrono, fond: '#F5EDD9', ink: '#A87B22', kicker: 'Chrono', title: traduire('Rounds et Tabata'), sub: traduire('Le gong, les claquettes') },
+    { k: 'image', w: 116, src: GUERRIER_IMAGES[g][4], label: 'Shōgun', sub: traduire('ton armure'), fond: '#F3EBDA' },
+    { k: 'couleur', w: 196, bg: 'gold', icon: 'share', kicker: 'Partage', title: traduire('Tes cartes'), sub: traduire('Story, Publication, Carré'), nouveau: true },
+    N_SPORTS ? { k: 'stat', w: 128, n: fmt(N_SPORTS), label: 'sports', sub: traduire('à noter en deux touches') } : null,
   ];
   const r2: (Tile | null)[] = [
-    { k: 'illu', w: 196, src: ILLU.jjb, fond: '#F2E4EE', ink: '#7B3F6E', kicker: 'Carnet', title: N_TECH ? `${fmt(N_TECH)} techniques` : 'Tes techniques', sub: 'JJB, lutte et frappes' },
-    { k: 'tampons', w: 200, ids: ['medaille_or', 'medaille_argent', 'medaille_bronze'], title: 'Compétitions', sub: 'Ta catégorie, tes médailles' },
-    N_SCENES ? { k: 'scene', w: 168, src: scene('sommet'), label: `${N_SCENES} scènes`, sub: `dont ${NEW_SCENES.length} nouvelles`, nouveau: true } : null,
-    { k: 'illu', w: 188, src: ILLU.ruban, fond: '#E8EEDB', ink: '#5A7631', kicker: 'Mensurations', title: 'Taille, ventre, bras', sub: 'Ce que la balance ne dit pas' },
-    N_EXOS ? { k: 'stat', w: 144, n: fmt(N_EXOS), label: 'exercices', sub: 'dans la bibliothèque', tone: 'gold' } : null,
+    { k: 'illu', w: 196, src: ILLU.jjb, fond: '#F2E4EE', ink: '#7B3F6E', kicker: 'Carnet', title: N_TECH ? `${fmt(N_TECH)} techniques` : traduire('Tes techniques'), sub: traduire('JJB, lutte et frappes') },
+    { k: 'tampons', w: 200, ids: ['medaille_or', 'medaille_argent', 'medaille_bronze'], title: traduire('Compétitions'), sub: traduire('Ta catégorie, tes médailles') },
+    N_SCENES ? { k: 'scene', w: 168, src: scene('sommet'), label: traduire("{0} scènes", N_SCENES), sub: `dont ${NEW_SCENES.length} nouvelles`, nouveau: true } : null,
+    { k: 'illu', w: 188, src: ILLU.ruban, fond: '#E8EEDB', ink: '#5A7631', kicker: 'Mensurations', title: traduire('Taille, ventre, bras'), sub: traduire('Ce que la balance ne dit pas') },
+    N_EXOS ? { k: 'stat', w: 144, n: fmt(N_EXOS), label: traduire('exercices'), sub: traduire('dans la bibliothèque'), tone: 'gold' } : null,
     { k: 'image', w: 112, src: sport('boxe', autre), label: 'Boxe', fond: '#F6E3DF' },
   ];
   const r3: (Tile | null)[] = [
-    { k: 'image', w: 120, src: monde('ninja', g), label: 'Ninja', sub: 'le Dojo', fond: '#ECEAEE' },
+    { k: 'image', w: 120, src: monde('ninja', g), label: 'Ninja', sub: traduire('le Dojo'), fond: '#ECEAEE' },
     ...origines(g),
-    { k: 'scene', w: 168, src: scene('dojo'), label: 'Le Dojo', sub: 'tes personnages' },
-    { k: 'couleur', w: 204, bg: 'ink', icon: 'heart', kicker: 'Ta santé aujourd’hui', title: healthName(), sub: 'Pas, cœur, sommeil sur l’accueil', nouveau: true },
-    { k: 'couleur', w: 196, bg: 'indigo', icon: 'calendar', kicker: 'Ton cap', title: 'Ta date estimée', sub: 'Une fourchette honnête' },
-    N_CITATIONS ? { k: 'stat', w: 132, n: fmt(N_CITATIONS), label: 'citations', sub: 'une par jour', tone: 'gold' } : null,
+    { k: 'scene', w: 168, src: scene('dojo'), label: traduire('Le Dojo'), sub: traduire('tes personnages') },
+    { k: 'couleur', w: 204, bg: 'ink', icon: 'heart', kicker: traduire('Ta santé aujourd’hui'), title: healthName(), sub: traduire('Pas, cœur, sommeil sur l’accueil'), nouveau: true },
+    { k: 'couleur', w: 196, bg: 'indigo', icon: 'calendar', kicker: traduire('Ton cap'), title: traduire('Ta date estimée'), sub: traduire('Une fourchette honnête') },
+    N_CITATIONS ? { k: 'stat', w: 132, n: fmt(N_CITATIONS), label: 'citations', sub: traduire('une par jour'), tone: 'gold' } : null,
     { k: 'image', w: 112, src: sport('jjb', g), label: 'JJB', fond: '#E3E9F3' },
   ];
   return [r1, r2, r3].map((r) => r.filter((t): t is Tile => t !== null));
@@ -272,7 +273,7 @@ function TileView({ t, h }: { t: Tile; h: number }) {
             <View style={{ width: small ? 28 : 32, height: small ? 28 : 32, borderRadius: 10, backgroundColor: iconBg, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name={t.icon} size={small ? 15 : 17} color={iconCol} />
             </View>
-            {t.nouveau ? <Pastille label="Nouveau" /> : null}
+            {t.nouveau ? <Pastille label={traduire("Nouveau")} /> : null}
           </View>
           <View style={{ gap: 1 }}>
             {/* vague 31 : carte basse (petits iPhone avec les avis), le titre seul pour ne rien couper */}
@@ -300,7 +301,7 @@ function TileView({ t, h }: { t: Tile; h: number }) {
           <LinearGradient colors={['rgba(16,20,34,0)', 'rgba(16,20,34,0.78)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%' }} />
           {t.nouveau ? (
             <View style={{ position: 'absolute', top: 9, right: 9 }}>
-              <Pastille label="Nouveau" />
+              <Pastille label={traduire("Nouveau")} />
             </View>
           ) : null}
           <View style={{ position: 'absolute', left: 12, right: 12, bottom: 9 }}>
@@ -384,22 +385,22 @@ function PagePoids({ designW }: { designW: number }) {
   return (
     <PageCarte style={{ gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Ink size={13} weight="bold" color={c.textMuted}>Ton poids</Ink>
+        <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton poids")}</Ink>
         <Pastille label="Exemple" tinte />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
-        <Ink size={34} weight="black" tight style={{ lineHeight: 38 }}>{`${String(der).replace('.', ',')} kg`}</Ink>
-        <Ink size={13.5} weight="extraBold" color={c.successText} style={{ paddingBottom: 5 }}>{`${String(perdu).replace('.', ',')} kg en 2 mois`}</Ink>
+        <Ink size={34} weight="black" tight style={{ lineHeight: 38 }}>{`${String(der).replace('.', DECIMAL)} kg`}</Ink>
+        <Ink size={13.5} weight="extraBold" color={c.successText} style={{ paddingBottom: 5 }}>{traduire("{0} kg en 2 mois", String(perdu).replace('.', DECIMAL))}</Ink>
       </View>
-      <CourbePoids points={ex.points} style={1} cap={ex.cap} ligne={ex.ligne} torii={ex.torii} height={168} legende label="Exemple de courbe de poids, avec ton rythme prévu jusqu’au torii" />
+      <CourbePoids points={ex.points} style={1} cap={ex.cap} ligne={ex.ligne} torii={ex.torii} height={168} legende label={traduire("Exemple de courbe de poids, avec ton rythme prévu jusqu’au torii")} />
     </PageCarte>
   );
 }
 
 const RECORDS: { t: TamponId; kicker: string; titre: string; sous: string }[] = [
-  { t: 'record_force', kicker: 'Record de force', titre: 'Développé couché, 100 kg', sous: '5 kg de plus que ton ancien record' },
-  { t: 'record_endurance', kicker: 'Record d’endurance', titre: '10 km en 46 min 20', sous: '1 min 05 plus vite' },
-  { t: 'record_combat', kicker: 'Record de combat', titre: '6 rounds de sparring', sous: 'Ta plus longue séance de combat' },
+  { t: 'record_force', kicker: traduire('Record de force'), titre: traduire('Développé couché, 100 kg'), sous: traduire('5 kg de plus que ton ancien record') },
+  { t: 'record_endurance', kicker: 'Record d’endurance', titre: '10 km en 46 min 20', sous: traduire('1 min 05 plus vite') },
+  { t: 'record_combat', kicker: traduire('Record de combat'), titre: traduire('6 rounds de sparring'), sous: traduire('Ta plus longue séance de combat') },
 ];
 
 function PageRecords() {
@@ -445,12 +446,12 @@ function PageChrono({ g }: { g: 'h' | 'f' }) {
       <Image source={sport('boxe', g)} resizeMode="contain" style={{ position: 'absolute', right: -18, top: 8, width: 132, height: 176, opacity: 0.95 }} accessibilityIgnoresInvertColors />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
-          <Ink size={11} weight="black" color={c.goldLight} style={{ letterSpacing: 1 }}>{`ROUND ${actuel} SUR ${rounds}`}</Ink>
+          <Ink size={11} weight="black" color={c.goldLight} style={{ letterSpacing: 1 }}>{traduire("ROUND {0} SUR {1}", actuel, rounds)}</Ink>
         </View>
         <Pastille label="Exemple" blanche />
       </View>
       <View style={{ gap: 0 }}>
-        <Ink size={13} weight="extraBold" color="rgba(255,255,255,0.72)">Boxe, rounds de 3 min</Ink>
+        <Ink size={13} weight="extraBold" color="rgba(255,255,255,0.72)">{traduire("Boxe, rounds de 3 min")}</Ink>
         <Ink size={78} weight="black" tight color={ROUGE_CHRONO} style={{ lineHeight: 86, fontVariant: ['tabular-nums'] }}>0:08</Ink>
       </View>
       {/* la frise des rounds : barre haute l'effort, barre basse le repos, comme sur l'ecran du chrono */}
@@ -471,11 +472,11 @@ function PageChrono({ g }: { g: 'h' | 'f' }) {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(240,100,75,0.18)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
           <Icon name="bell" size={14} color={ROUGE_CHRONO} stroke={2.6} />
-          <Ink size={12.5} weight="extraBold" color="#FFFFFF">Clac clac clac, plus que 10 s</Ink>
+          <Ink size={12.5} weight="extraBold" color="#FFFFFF">{traduire("Clac clac clac, plus que 10 s")}</Ink>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
           <Icon name="timer" size={14} color={c.goldLight} stroke={2.4} />
-          <Ink size={12.5} weight="extraBold" color="#FFFFFF">Gong au début et à la fin</Ink>
+          <Ink size={12.5} weight="extraBold" color="#FFFFFF">{traduire("Gong au début et à la fin")}</Ink>
         </View>
       </View>
     </View>
@@ -524,7 +525,7 @@ function PageSports({ g, designW }: { g: 'h' | 'f'; designW: number }) {
   );
 }
 
-const RANGS = ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'];
+const RANGS = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 
 function PageArmure({ g, designW }: { g: 'h' | 'f'; designW: number }) {
   const { theme } = useYoroiTheme();
@@ -550,7 +551,7 @@ function PageArmure({ g, designW }: { g: 'h' | 'f'; designW: number }) {
         <View style={{ flex: 1, gap: 4 }}>
           <Ink size={10.5} weight="black" color={c.goldDeep} style={{ letterSpacing: 1 }}>EN CONSTRUCTION</Ink>
           <Ink size={17} weight="black" tight numberOfLines={1}>{PIECES.samourai.nom}</Ink>
-          <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>Tes séances dévoilent ta pièce suivante, étape par étape.</Ink>
+          <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("Tes séances dévoilent ta pièce suivante, étape par étape.")}</Ink>
           <EtapesPiece faites={2} />
         </View>
       </PageCarte>
@@ -559,11 +560,11 @@ function PageArmure({ g, designW }: { g: 'h' | 'f'; designW: number }) {
 }
 
 const SUR_TEL: { icon: IconName; titre: string; sous: string }[] = [
-  { icon: 'user', titre: 'Pas de compte à créer', sous: 'Tu ouvres l’app, tu commences.' },
-  { icon: 'shield', titre: 'Ton suivi marche sans réseau', sous: 'À la salle, au dojo, en déplacement.' },
-  { icon: 'lock', titre: 'Tes données restent chez toi', sous: 'Sur ton téléphone, sans compte en ligne.' },
-  { icon: 'close', titre: 'Aucune publicité', sous: 'Ni en gratuit, ni en Premium.' },
-  { icon: 'save', titre: 'Ta sauvegarde, quand tu veux', sous: 'À remettre sur un autre téléphone.' },
+  { icon: 'user', titre: traduire('Pas de compte à créer'), sous: traduire('Tu ouvres l’app, tu commences.') },
+  { icon: 'shield', titre: traduire('Ton suivi marche sans réseau'), sous: traduire('À la salle, au dojo, en déplacement.') },
+  { icon: 'lock', titre: traduire('Tes données restent chez toi'), sous: traduire('Sur ton téléphone, sans compte en ligne.') },
+  { icon: 'close', titre: traduire('Aucune publicité'), sous: traduire('Ni en gratuit, ni en Premium.') },
+  { icon: 'save', titre: traduire('Ta sauvegarde, quand tu veux'), sous: traduire('À remettre sur un autre téléphone.') },
 ];
 
 function PageTel() {
@@ -670,16 +671,16 @@ export function Accroche({
   // « Deja abonne ? » : l'abonnement revient tout de suite, l'onboarding continue pour creer le profil
   const onRestorePurchases = async () => {
     if (preview) {
-      appAlert('Aperçu', PREVIEW_PURCHASE_MESSAGE);
+      appAlert(traduire('Aperçu'), PREVIEW_PURCHASE_MESSAGE);
       return;
     }
     setRestoringPurchases(true);
-    const res = await restore().catch(() => ({ success: false, restored: false, error: 'Réessaie dans un instant.' }));
+    const res = await restore().catch(() => ({ success: false, restored: false, error: traduire('Réessaie dans un instant.') }));
     setRestoringPurchases(false);
     paywallEvent('restauration', { source: 'onboarding', resultat: res.success ? (res.restored ? 'retrouve' : 'aucun') : 'erreur' });
-    if (res.success && res.restored) appAlert('Ton Premium est de retour', 'Ton abonnement est actif. Termine ton profil, tout sera ouvert.');
-    else if (res.success) appAlert('Aucun achat trouvé', `Aucun abonnement actif n’est associé à ce compte ${storeName()}.`);
-    else appAlert('Restauration impossible', res.error ?? 'Réessaie dans un instant.');
+    if (res.success && res.restored) appAlert(traduire('Ton Premium est de retour'), traduire('Ton abonnement est actif. Termine ton profil, tout sera ouvert.'));
+    else if (res.success) appAlert(traduire('Aucun achat trouvé'), traduire("Aucun abonnement actif n’est associé à ce compte {0}.", storeName()));
+    else appAlert(traduire('Restauration impossible'), res.error ?? traduire('Réessaie dans un instant.'));
   };
 
   // une page toutes les 5 s, sauf quand l'ecran est cache ou que le doigt vient de toucher le carrousel
@@ -762,14 +763,14 @@ export function Accroche({
         <Pressable
           onPress={restoringBackup ? undefined : onRestoreBackup}
           accessibilityRole="button"
-          accessibilityLabel="J’ai déjà une sauvegarde"
+          accessibilityLabel={traduire("J’ai déjà une sauvegarde")}
           hitSlop={6}
           style={({ pressed }) => ({ minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
         >
           {restoringBackup ? <ActivityIndicator size="small" color={c.accent} /> : <Icon name="restore" size={14} color={c.accent} />}
-          {apercu ? null : <Ink size={12} weight="extraBold" color={c.ink} numberOfLines={1}>{restoringBackup ? 'Restauration' : 'J’ai déjà une sauvegarde'}</Ink>}
+          {apercu ? null : <Ink size={12} weight="extraBold" color={c.ink} numberOfLines={1}>{restoringBackup ? 'Restauration' : traduire('J’ai déjà une sauvegarde')}</Ink>}
         </Pressable>
-        {onClose ? <RoundIcon name="close" label="Fermer l’aperçu" onPress={onClose} /> : null}
+        {onClose ? <RoundIcon name="close" label={traduire("Fermer l’aperçu")} onPress={onClose} /> : null}
       </View>
 
       {/* vague 50 : le carrousel de pages plein ecran, chaque page avec son titre et son contenu */}
@@ -791,10 +792,10 @@ export function Accroche({
             decelerationRate="fast"
             disableIntervalMomentum
             style={{ flex: 1 }}
-            accessibilityLabel="Les pages de présentation de YOROI, glisse à gauche ou à droite"
+            accessibilityLabel={traduire("Les pages de présentation de YOROI, glisse à gauche ou à droite")}
           >
             {PAGES.map((p, k) => (
-              <View key={p.id} style={{ width, height: pagerH }} accessible accessibilityLabel={`Page ${k + 1} sur ${N_PAGES}. ${p.titre.replace(/\*\*/g, '')}. ${p.sous}`}>
+              <View key={p.id} style={{ width, height: pagerH }} accessible accessibilityLabel={traduire("Page {0} sur {1}. {2}. {3}", k + 1, N_PAGES, p.titre.replace(/\*\*/g, ''), p.sous)}>
                 <View style={{ paddingHorizontal: GUTTER, paddingTop: padTop }}>
                   <View style={{ height: titreH, justifyContent: 'center' }}>
                     <Ink size={short ? 26 : 29} weight="black" tight numberOfLines={2} style={{ textAlign: 'center', lineHeight: short ? 30 : 34 }} accessibilityRole="header">
@@ -824,7 +825,7 @@ export function Accroche({
               reprendre();
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Page ${k + 1} sur ${N_PAGES}, ${p.titre.replace(/\*\*/g, '')}`}
+            accessibilityLabel={traduire("Page {0} sur {1}, {2}", k + 1, N_PAGES, p.titre.replace(/\*\*/g, ''))}
             accessibilityState={{ selected: k === i }}
             hitSlop={{ top: 10, bottom: 10, left: 2, right: 2 }}
             style={{ paddingHorizontal: 4, paddingVertical: 8 }}
@@ -843,31 +844,30 @@ export function Accroche({
         {tiny ? <View style={{ height: 6 }} /> : <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 28, marginTop: 10, marginBottom: short ? 6 : 8 }} />}
         <NoteLauriers compact={short} />
         <View style={{ paddingHorizontal: GUTTER, paddingTop: tiny ? 8 : short ? 10 : 12, gap: tiny ? 6 : short ? 8 : 10 }}>
-          <MainButton label="Commencer" onPress={onStart} />
+          <MainButton label={traduire("Commencer")} onPress={onStart} />
           {/* vague 30 : les vrais atouts, en grand (plus de « Version gratuite » : l'app est freemium) */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 4, marginHorizontal: -8 }}>
             <Atout icon="shield" label="Hors ligne" tiny={tiny} />
-            <Atout icon="close" label="Sans publicité" tiny={tiny} />
-            <Atout icon="lock" label="Données sur ton téléphone" tiny={tiny} large />
+            <Atout icon="close" label={traduire("Sans publicité")} tiny={tiny} />
+            <Atout icon="lock" label={traduire("Données sur ton téléphone")} tiny={tiny} large />
             <Atout icon="heart" label={healthName()} tiny={tiny} large />
           </View>
           <View style={{ alignItems: 'center' }}>
-            <Pressable onPress={restoringPurchases ? undefined : () => void onRestorePurchases()} accessibilityRole="button" accessibilityLabel="Déjà abonné ? Restaurer mes achats" hitSlop={4} style={{ minHeight: 30, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Pressable onPress={restoringPurchases ? undefined : () => void onRestorePurchases()} accessibilityRole="button" accessibilityLabel={traduire("Déjà abonné ? Restaurer mes achats")} hitSlop={4} style={{ minHeight: 30, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {restoringPurchases ? <ActivityIndicator size="small" color={c.accent} /> : null}
               <Ink size={12.5} color={c.textSecondary}>
-                {'Déjà abonné ? '}
-                <Ink size={12.5} weight="extraBold" color={c.accent}>Restaurer mes achats</Ink>
+                {traduire('Déjà abonné ? ')}
+                <Ink size={12.5} weight="extraBold" color={c.accent}>{traduire("Restaurer mes achats")}</Ink>
               </Ink>
             </Pressable>
             {/* vague 49 : la phrase seule, puis les deux liens centres sur une ligne (meme style que le paywall) */}
             <Ink size={11} color={c.textMuted} style={{ textAlign: 'center', lineHeight: 16, maxWidth: width - GUTTER * 2 }}>
-              En continuant, tu confirmes avoir 13 ans ou plus et tu acceptes ces conditions.
-            </Ink>
+              {traduire("En continuant, tu confirmes avoir 13 ans ou plus et tu acceptes ces conditions.")}</Ink>
             <LiensLegaux
               size={11.5}
               liens={[
                 { label: Platform.OS === 'ios' ? 'Conditions d’utilisation (EULA)' : 'Conditions d’utilisation', onPress: onOpenTerms },
-                { label: 'Confidentialité', onPress: onOpenPrivacy },
+                { label: traduire('Confidentialité'), onPress: onOpenPrivacy },
               ]}
             />
           </View>

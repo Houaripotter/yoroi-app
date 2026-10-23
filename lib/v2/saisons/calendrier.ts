@@ -14,6 +14,7 @@
  * useSaison.ts). Les decorations : components/yoroi/v2/saisons/DecorSaison.tsx.
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export type SaisonId = 'halloween' | 'noel';
 
 /** Un jour de l'annee : mois de 1 (janvier) a 12, jour de 1 a 31 */
@@ -30,10 +31,10 @@ export type FenetreSaison = {
 
 export const FENETRES_SAISONS: FenetreSaison[] = [
   { id: 'halloween', nom: 'Halloween', debut: { mois: 10, jour: 1 }, fin: { mois: 11, jour: 1 } },
-  { id: 'noel', nom: 'Noël', debut: { mois: 11, jour: 25 }, fin: { mois: 1, jour: 1 } },
+  { id: 'noel', nom: traduire('Noël'), debut: { mois: 11, jour: 25 }, fin: { mois: 1, jour: 1 } },
 ];
 
-export const NOMS_SAISONS: Record<SaisonId, string> = { halloween: 'Halloween', noel: 'Noël' };
+export const NOMS_SAISONS: Record<SaisonId, string> = { halloween: 'Halloween', noel: traduire('Noël') };
 
 /** Rang d'un jour dans l'annee (mois * 100 + jour) : se compare sans tenir compte des annees bissextiles */
 function rang(j: JourAnnee): number {
@@ -79,10 +80,10 @@ export function saisonAffichee(opts: { date: Date; active: boolean; apercu?: Cho
 
 /** Libelle court pour les reglages : ce qui est en cours, ou la prochaine saison */
 export function resumeSaison(d: Date, active: boolean, fenetres: FenetreSaison[] = FENETRES_SAISONS): string {
-  if (!active) return 'Désactivées';
+  if (!active) return traduire('Désactivées');
   const s = saisonDuJour(d, fenetres);
-  if (s) return `${NOMS_SAISONS[s]} en ce moment, sur ton accueil et tes widgets`;
-  return 'Halloween et Noël, sur ton accueil et tes widgets';
+  if (s) return traduire("{0} en ce moment, sur ton accueil et tes widgets", NOMS_SAISONS[s]);
+  return traduire('Halloween et Noël, sur ton accueil et tes widgets');
 }
 
 /**

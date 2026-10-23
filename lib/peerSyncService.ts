@@ -66,6 +66,7 @@ import {
 import MultipeerBridge, { PeerChangedEvent, DataReceivedEvent } from './multipeerBridge';
 import { openDatabase } from './database';
 import logger from './security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // CONSTANTES
@@ -217,7 +218,7 @@ export interface SyncStatus {
   outdatedPeer?: string | null;
 }
 
-let myDeviceName = 'Mon appareil';
+let myDeviceName = traduire('Mon appareil');
 let myDeviceId = '';
 let subscriptions: Array<{ remove: () => void }> = [];
 let statusListeners: Array<(s: SyncStatus) => void> = [];
@@ -270,7 +271,7 @@ const scheduleBackgroundScan = () => {
   scanTimer = setTimeout(() => {
     scanTimer = null;
     if (status.isSyncing) return;
-    enqueue('détection des changements', async () => {
+    enqueue(traduire('détection des changements'), async () => {
       if (await demoBlocksSync()) return;
       const db = await openDatabase();
       await scanAll(db);

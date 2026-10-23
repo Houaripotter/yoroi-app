@@ -24,6 +24,7 @@ import logger from '@/lib/security/logger';
 import { STUDIO_TEST_KEYS } from './CreatorGuard';
 import { KV, Note, StudioSection, SubTitle, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const DATA_EVENTS = ['YOROI_DATA_CHANGED', 'YOROI_PARTNERS_CHANGED', 'YOROI_PROFILE_CHANGED', 'YOROI_DEMO_CHANGED'];
 
@@ -33,21 +34,21 @@ export function emitAllData() {
 
 /** Ce que contient Heny, dit simplement */
 export const HENY_LINES = [
-  'Musculation quatre fois par semaine à 18 h au Basic-Fit Prado (poussée, tirage, jambes, haut du corps)',
-  'Jiu-jitsu brésilien lundi, mardi et jeudi à midi à First Jiu-Jitsu Academy : cours, drilling et sparring',
-  'Course sur la Corniche le samedi matin, avec trace et zones cardiaques, et foot à 5 un dimanche soir sur deux ou trois',
-  'Ceinture bleue, rounds de sparring avec six partenaires et leurs fiches',
-  'Pesées de 86,4 à 81,6 kg, composition du corps et mensurations',
-  'Charges et records qui montent : squat, couché, soulevé de terre, tractions',
-  'Six combats (argent puis or), aucune compétition : c’est toi qui ajoutes les tiennes',
-  'Sommeil, eau, santé du jour (pas, cœur, oxygène, respiration), une blessure guérie et une légère. Santé n’est pas lue pendant la démo',
+  traduire('Musculation quatre fois par semaine à 18 h au Basic-Fit Prado (poussée, tirage, jambes, haut du corps)'),
+  traduire('Jiu-jitsu brésilien lundi, mardi et jeudi à midi à First Jiu-Jitsu Academy : cours, drilling et sparring'),
+  traduire('Course sur la Corniche le samedi matin, avec trace et zones cardiaques, et foot à 5 un dimanche soir sur deux ou trois'),
+  traduire('Ceinture bleue, rounds de sparring avec six partenaires et leurs fiches'),
+  traduire('Pesées de 86,4 à 81,6 kg, composition du corps et mensurations'),
+  traduire('Charges et records qui montent : squat, couché, soulevé de terre, tractions'),
+  traduire('Six combats (argent puis or), aucune compétition : c’est toi qui ajoutes les tiennes'),
+  traduire('Sommeil, eau, santé du jour (pas, cœur, oxygène, respiration), une blessure guérie et une légère. Santé n’est pas lue pendant la démo'),
 ];
 
 /** Charge Heny (tes vraies donnees sont copiees avant). Renvoie le message a montrer. */
 export async function loadHeny(): Promise<string> {
   const r: HenyStats = await generateHenyDemoData();
   emitAllData();
-  return `Heny est chargée : ${r.workouts} séances (${r.muscu} de musculation, ${r.jjb} de JJB, ${r.course} courses, ${r.foot} foot à 5), ${r.weights} pesées, ${r.measurements} mensurations, ${r.combats} combats, ${r.sleepEntries} nuits.`;
+  return traduire("Heny est chargée : {0} séances ({1} de musculation, {2} de JJB, {3} courses, {4} foot à 5), {5} pesées, {6} mensurations, {7} combats, {8} nuits.", r.workouts, r.muscu, r.jjb, r.course, r.foot, r.weights, r.measurements, r.combats, r.sleepEntries);
 }
 
 /** Remet tes vraies donnees, tes vraies XP et l'heure reelle */
@@ -91,10 +92,10 @@ export function Demo() {
       refreshDemo();
       await load();
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      if (msg) appAlert('C’est fait', msg);
+      if (msg) appAlert(traduire('C’est fait'), msg);
     } catch (e) {
       logger.error(`[Studio] ${id}`, e);
-      appAlert('Oups', 'L’opération n’a pas abouti. Tes vraies données restent de côté.');
+      appAlert('Oups', traduire('L’opération n’a pas abouti. Tes vraies données restent de côté.'));
     } finally {
       setBusy(null);
     }
@@ -103,14 +104,14 @@ export function Demo() {
   const heny = () => run('heny', loadHeny);
 
   const restore = () =>
-    appAlert('Revenir à tes données ?', 'Heny est retirée et tes vraies données reviennent, avec tes vraies XP.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Revenir à tes données ?'), traduire('Heny est retirée et tes vraies données reviennent, avec tes vraies XP.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Revenir',
         onPress: () =>
           void run('restore', async () => {
             await backToRealData();
-            return 'Tes vraies données sont de retour.';
+            return traduire('Tes vraies données sont de retour.');
           }),
       },
     ]);
@@ -124,7 +125,7 @@ export function Demo() {
   const working = busy !== null;
 
   return (
-    <StudioSection id="demo" icon="camera" title="Démo et captures" sub="Heny, retour à tes données, captures" keywords="demo heny profil captures screenshot 09:41 barre etat marketing kit carnet vraies donnees sauvegarde restaurer">
+    <StudioSection id="demo" icon="camera" title={traduire("Démo et captures")} sub={traduire("Heny, retour à tes données, captures")} keywords={traduire("demo heny profil captures screenshot 09:41 barre etat marketing kit carnet vraies donnees sauvegarde restaurer")}>
       <Card style={{ padding: 14, gap: 12, borderWidth: demoActive ? 2 : 1, borderColor: demoActive ? c.success : c.border }}>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <View style={{ width: 64, height: 80, borderRadius: 16, backgroundColor: c.accentTint, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
@@ -135,11 +136,11 @@ export function Demo() {
               <Ink size={20} weight="black">Heny</Ink>
               {demoActive ? (
                 <View style={{ backgroundColor: c.successTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-                  <Ink size={11} weight="extraBold" color={c.successText}>Chargée</Ink>
+                  <Ink size={11} weight="extraBold" color={c.successText}>{traduire("Chargée")}</Ink>
                 </View>
               ) : null}
             </View>
-            <Ink size={13} color={c.textSecondary}>Musculation et jiu-jitsu brésilien, 30 ans, 1,78 m, ceinture bleue. Sept mois d’historique.</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Musculation et jiu-jitsu brésilien, 30 ans, 1,78 m, ceinture bleue. Sept mois d’historique.")}</Ink>
           </View>
           {working ? <ActivityIndicator color={c.accent} /> : null}
         </View>
@@ -152,29 +153,29 @@ export function Demo() {
           ))}
         </View>
         <Button tone="accent" icon="sync" label={demoActive ? 'Recharger Heny' : 'Charger Heny'} onPress={() => void heny()} loading={busy === 'heny'} disabled={working} />
-        <Button tone="ghost" icon="restore" label="Revenir à mes données" onPress={restore} loading={busy === 'restore'} disabled={working || !demoActive} />
+        <Button tone="ghost" icon="restore" label={traduire("Revenir à mes données")} onPress={restore} loading={busy === 'restore'} disabled={working || !demoActive} />
       </Card>
 
-      <SubTitle>Tes vraies données</SubTitle>
+      <SubTitle>{traduire("Tes vraies données")}</SubTitle>
       <Card>
         {backup?.active ? (
           <>
-            <KV first label="À l’abri pendant la démo" value={backup.mode === 'full' ? 'Copie complète' : backup.mode === 'legacy' ? 'Copie d’une ancienne démo' : 'Copie de secours'} />
-            {backup.tables ? <KV label="Tables copiées" value={`${backup.tables}, ${backup.rows.toLocaleString('fr-FR')} lignes`} /> : null}
-            {backup.at ? <KV label="Depuis" value={new Date(backup.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} /> : null}
+            <KV first label={traduire("À l’abri pendant la démo")} value={backup.mode === 'full' ? traduire('Copie complète') : backup.mode === 'legacy' ? traduire('Copie d’une ancienne démo') : traduire('Copie de secours')} />
+            {backup.tables ? <KV label={traduire("Tables copiées")} value={`${backup.tables}, ${backup.rows.toLocaleString(LOCALE)} lignes`} /> : null}
+            {backup.at ? <KV label={traduire("Depuis")} value={new Date(backup.at).toLocaleString(LOCALE, { dateStyle: 'short', timeStyle: 'short' })} /> : null}
           </>
         ) : (
-          <KV first label="Dans l’app" value="Tes vraies données" />
+          <KV first label={traduire("Dans l’app")} value={traduire("Tes vraies données")} />
         )}
       </Card>
-      <Note>Avant Heny, chaque table de la base est copiée dans la base elle-même, avec tes réglages, ton XP et tes clés sécurisées. Au retour, tout est remis ligne par ligne, puis les copies sont effacées. La synchro entre appareils est coupée pendant la démo.</Note>
+      <Note>{traduire("Avant Heny, chaque table de la base est copiée dans la base elle-même, avec tes réglages, ton XP et tes clés sécurisées. Au retour, tout est remis ligne par ligne, puis les copies sont effacées. La synchro entre appareils est coupée pendant la démo.")}</Note>
 
       <SubTitle>Captures</SubTitle>
       <Card>
-        <ToggleRow first icon="camera" label="Mode capture propre" sub="Masque badges, boutons et messages de test" value={isScreenshotMode} onChange={() => void toggleScreenshotMode()} />
-        <ToggleRow icon="timer" label="Barre d’état 09:41" sub={isScreenshotMode ? 'Heure, batterie et réseau parfaits' : 'Allume d’abord le mode capture'} value={useFakeStatusBar} onChange={() => void toggleFakeStatusBar()} disabled={!isScreenshotMode} />
-        <ToggleRow icon="doc" label="Carnet rempli" sub="Le carnet montre des données d’exemple" value={journal} onChange={(v) => void toggleJournal(v)} />
-        <Row icon="image" label="Kit marketing" sub="Les 6 captures qui racontent l’app" onPress={() => router.push('/marketing-kit' as never)} />
+        <ToggleRow first icon="camera" label="Mode capture propre" sub={traduire("Masque badges, boutons et messages de test")} value={isScreenshotMode} onChange={() => void toggleScreenshotMode()} />
+        <ToggleRow icon="timer" label={traduire("Barre d’état 09:41")} sub={isScreenshotMode ? traduire('Heure, batterie et réseau parfaits') : traduire('Allume d’abord le mode capture')} value={useFakeStatusBar} onChange={() => void toggleFakeStatusBar()} disabled={!isScreenshotMode} />
+        <ToggleRow icon="doc" label="Carnet rempli" sub={traduire("Le carnet montre des données d’exemple")} value={journal} onChange={(v) => void toggleJournal(v)} />
+        <Row icon="image" label="Kit marketing" sub={traduire("Les 6 captures qui racontent l’app")} onPress={() => router.push('/marketing-kit' as never)} />
       </Card>
     </StudioSection>
   );
@@ -197,7 +198,7 @@ export function useResetAll() {
     if (useFakeStatusBar) await toggleFakeStatusBar().catch(() => undefined);
     if (simulateFreeUser) setSimulateFreeUser(false);
     emitAllData();
-    return demoActive ? 'Les aperçus sont remis normal. Heny reste chargée : son bouton te ramène à tes vraies données.' : 'Tout est remis normal.';
+    return demoActive ? traduire('Les aperçus sont remis normal. Heny reste chargée : son bouton te ramène à tes vraies données.') : traduire('Tout est remis normal.');
   };
 }
 

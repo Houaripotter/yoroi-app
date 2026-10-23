@@ -5,6 +5,7 @@
  */
 import type { CarteData, Famille, Masque, StatKey, StatValue } from './types';
 import { exploitVisible } from './exploits';
+import { traduire } from '@/lib/i18n/tr';
 
 export const MIN_CHIFFRES = 2;
 export const MAX_CHIFFRES = 4;
@@ -63,11 +64,11 @@ export const PRIORITE_SEANCE: Record<Famille, StatKey[]> = {
 const PRIORITE_PESEE: StatKey[] = ['poids', 'ecart', 'objectif_pct', 'reste', 'serie_semaines'];
 const PRIORITE_SEMAINE: StatKey[] = ['seances', 'temps_total', 'poids_semaine', 'serie_semaines'];
 
-const ZONES_NOMS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Maximum'];
+const ZONES_NOMS = [traduire('Récupération'), 'Endurance', 'Tempo', 'Seuil', 'Maximum'];
 
 /** Libelle « perdus » ou « pris » selon le sens */
 function sensLabel(d: number): string {
-  return d < 0 ? 'perdus' : 'pris';
+  return d < 0 ? 'perdus' : traduire('pris');
 }
 
 /** Pourcentage signe d'un ecart par rapport a une base : -2,9 % */
@@ -92,20 +93,20 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
     if (v && v.value) out.push(v);
   };
   const serie = d.serieSemaines ?? 0;
-  const serieStat: StatValue | null = serie >= 2 ? { key: 'serie_semaines', label: 'semaines d’affilée', value: String(serie) } : null;
+  const serieStat: StatValue | null = serie >= 2 ? { key: 'serie_semaines', label: traduire('semaines d’affilée'), value: String(serie) } : null;
 
   if (d.moment === 'seance' && d.seance) {
     const s = d.seance;
     const fam = d.famille ?? 'autre';
     const all: Partial<Record<StatKey, StatValue | null>> = {
-      duree: s.dureeMin > 0 ? { key: 'duree', label: 'durée', ...duree(s.dureeMin) } : null,
+      duree: s.dureeMin > 0 ? { key: 'duree', label: traduire('durée'), ...duree(s.dureeMin) } : null,
       rounds: s.rounds > 0 ? { key: 'rounds', label: s.rounds > 1 ? 'rounds' : 'round', value: String(s.rounds) } : null,
-      series: s.series > 0 ? { key: 'series', label: s.series > 1 ? 'séries' : 'série', value: String(s.series) } : null,
+      series: s.series > 0 ? { key: 'series', label: s.series > 1 ? traduire('séries') : traduire('série'), value: String(s.series) } : null,
       charge:
         s.tonnage >= 1
           ? s.tonnage >= 1000
-            ? { key: 'charge', label: 'soulevées', value: nombre(s.tonnage / 1000, 1), unit: 't' }
-            : { key: 'charge', label: 'soulevés', value: nombre(s.tonnage, 0), unit: 'kg' }
+            ? { key: 'charge', label: traduire('soulevées'), value: nombre(s.tonnage / 1000, 1), unit: 't' }
+            : { key: 'charge', label: traduire('soulevés'), value: nombre(s.tonnage, 0), unit: 'kg' }
           : null,
       distance: s.distanceKm > 0 ? { key: 'distance', label: 'distance', value: nombre(s.distanceKm, s.distanceKm >= 100 ? 0 : 2), unit: 'km' } : null,
       allure: (() => {
@@ -135,7 +136,7 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
     const p = d.pesee;
     const ref = p.depart && p.depart > 0 ? p.depart : p.precedent && p.precedent > 0 ? p.precedent : null;
     const ecart = ref ? p.poids - ref : null;
-    const depuis = p.depart && p.depart > 0 ? 'depuis le départ' : 'depuis la dernière';
+    const depuis = p.depart && p.depart > 0 ? traduire('depuis le départ') : traduire('depuis la dernière');
     const hasGoal = !!(p.objectif && p.objectif > 0 && p.depart && p.depart > 0 && Math.abs(p.depart - p.objectif) >= 0.1);
     let pctObjectif: number | null = null;
     let reste: number | null = null;
@@ -149,7 +150,7 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
     const all: Partial<Record<StatKey, StatValue | null>> = {
       poids:
         masque === 'aucun'
-          ? { key: 'poids', label: 'aujourd’hui', value: nombre(p.poids, 1), unit: 'kg' }
+          ? { key: 'poids', label: traduire('aujourd’hui'), value: nombre(p.poids, 1), unit: 'kg' }
           : null,
       ecart:
         ecart !== null && Math.abs(ecart) >= 0.1
@@ -157,12 +158,12 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
             ? { key: 'ecart', label: `${sensLabel(ecart)} ${depuis}`, value: pct(ecart, ref!), unit: '%' }
             : { key: 'ecart', label: `${sensLabel(ecart)} ${depuis}`, value: kgSigne(ecart), unit: 'kg' }
           : null,
-      objectif_pct: pctObjectif !== null ? { key: 'objectif_pct', label: 'du chemin vers l’objectif', value: String(Math.round(pctObjectif * 100)), unit: '%' } : null,
+      objectif_pct: pctObjectif !== null ? { key: 'objectif_pct', label: traduire('du chemin vers l’objectif'), value: String(Math.round(pctObjectif * 100)), unit: '%' } : null,
       reste:
         reste !== null && reste >= 0.1
           ? masque === 'pourcentage'
-            ? { key: 'reste', label: 'avant l’objectif', value: nombre((reste / p.depart!) * 100, 1), unit: '%' }
-            : { key: 'reste', label: 'avant l’objectif', value: nombre(reste, 1), unit: 'kg' }
+            ? { key: 'reste', label: traduire('avant l’objectif'), value: nombre((reste / p.depart!) * 100, 1), unit: '%' }
+            : { key: 'reste', label: traduire('avant l’objectif'), value: nombre(reste, 1), unit: 'kg' }
           : null,
       serie_semaines: serieStat,
     };
@@ -180,17 +181,17 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
   if (d.moment === 'semaine' && d.semaine) {
     const w = d.semaine;
     const all: Partial<Record<StatKey, StatValue | null>> = {
-      seances: w.seances > 0 ? { key: 'seances', label: `${w.seances > 1 ? 'séances' : 'séance'}${w.objectif > 0 ? `, objectif ${w.objectif}` : ''}`, value: String(w.seances) } : null,
-      temps_total: w.minutes > 0 ? { key: 'temps_total', label: 'd’entraînement', ...duree(w.minutes) } : null,
+      seances: w.seances > 0 ? { key: 'seances', label: `${w.seances > 1 ? traduire('séances') : traduire('séance')}${w.objectif > 0 ? traduire(", objectif {0}", w.objectif) : ''}`, value: String(w.seances) } : null,
+      temps_total: w.minutes > 0 ? { key: 'temps_total', label: traduire('d’entraînement'), ...duree(w.minutes) } : null,
       poids_semaine:
         masque === 'aucun'
           ? w.poidsFin
-            ? { key: 'poids_semaine', label: w.poidsEcart !== null && Math.abs(w.poidsEcart) >= 0.1 ? `cette semaine, ${kgSigne(w.poidsEcart)} kg` : 'cette semaine', value: nombre(w.poidsFin, 1), unit: 'kg' }
+            ? { key: 'poids_semaine', label: w.poidsEcart !== null && Math.abs(w.poidsEcart) >= 0.1 ? traduire("cette semaine, {0} kg", kgSigne(w.poidsEcart)) : traduire('cette semaine'), value: nombre(w.poidsFin, 1), unit: 'kg' }
             : null
           : w.poidsEcart !== null && Math.abs(w.poidsEcart) >= 0.1 && w.poidsFin
             ? masque === 'pourcentage'
-              ? { key: 'poids_semaine', label: `${sensLabel(w.poidsEcart)} cette semaine`, value: pct(w.poidsEcart, w.poidsFin - w.poidsEcart), unit: '%' }
-              : { key: 'poids_semaine', label: `${sensLabel(w.poidsEcart)} cette semaine`, value: kgSigne(w.poidsEcart), unit: 'kg' }
+              ? { key: 'poids_semaine', label: traduire("{0} cette semaine", sensLabel(w.poidsEcart)), value: pct(w.poidsEcart, w.poidsFin - w.poidsEcart), unit: '%' }
+              : { key: 'poids_semaine', label: traduire("{0} cette semaine", sensLabel(w.poidsEcart)), value: kgSigne(w.poidsEcart), unit: 'kg' }
             : null,
       serie_semaines: serieStat,
     };
@@ -235,24 +236,24 @@ export function basculerChiffre(choix: StatKey[], k: StatKey): StatKey[] {
 
 /** Libelle des chiffres pour l'editeur */
 export const NOMS_CHIFFRES: Record<StatKey, string> = {
-  duree: 'Durée',
+  duree: traduire('Durée'),
   rounds: 'Rounds',
-  series: 'Séries',
+  series: traduire('Séries'),
   charge: 'Charge totale',
   distance: 'Distance',
   allure: 'Allure',
   fc_moy: 'FC moyenne',
   fc_max: 'FC max',
-  calories: 'Calories',
+  calories: traduire('Calories'),
   zones: 'Zones',
   poids: 'Poids',
-  ecart: 'Poids perdu ou pris',
+  ecart: traduire('Poids perdu ou pris'),
   reste: 'Reste',
-  objectif_pct: 'Objectif en %',
-  seances: 'Séances',
-  temps_total: 'Temps total',
-  poids_semaine: 'Poids de la semaine',
-  serie_semaines: 'Série de semaines',
+  objectif_pct: traduire('Objectif en %'),
+  seances: traduire('Séances'),
+  temps_total: traduire('Temps total'),
+  poids_semaine: traduire('Poids de la semaine'),
+  serie_semaines: traduire('Série de semaines'),
   exploit: 'Chiffre',
 };
 
@@ -265,11 +266,11 @@ export function titreCarte(d: CarteData, masque: Masque = 'aucun'): string {
   if (d.moment === 'exploit' && d.exploit) return exploitVisible(d.exploit, masque).surtitre;
   if (d.moment !== 'pesee' || masque === 'aucun') return d.titre;
   const r = d.pesee?.raison;
-  if (!r) return 'Ma pesée';
+  if (!r) return traduire('Ma pesée');
   if (r.type === 'palier') {
     const relatif = /kg (perdus|pris)$/.test(r.texte);
-    return relatif && masque === 'ecart' ? r.texte : 'Nouveau palier';
+    return relatif && masque === 'ecart' ? r.texte : traduire('Nouveau palier');
   }
-  if (r.type === 'progres') return masque === 'ecart' ? r.texte : 'En progrès';
+  if (r.type === 'progres') return masque === 'ecart' ? r.texte : traduire('En progrès');
   return r.texte;
 }

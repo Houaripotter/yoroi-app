@@ -8,6 +8,7 @@ import { addWeeklyPlanItem, getTrainings } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { getSportCategory, getSportName } from '@/lib/sports';
 import type { detectSlotPatterns } from '@/lib/slotSuggestionService';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 export type SlotIdea = Awaited<ReturnType<typeof detectSlotPatterns>>[number];
 
@@ -17,10 +18,10 @@ export type SessionExtras = {
   backup: boolean;
 };
 
-const DAYS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const DAYS = [traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi'), traduire('dimanche')];
 
 export function slotIdeaText(s: SlotIdea): string {
-  return `Tu fais du ${getSportName(s.sport).toLocaleLowerCase('fr-FR')} le ${DAYS[s.dayOfWeek] ?? ''} depuis ${s.count} semaines. On en fait un créneau de ton planning ?`;
+  return traduire("Tu fais du {0} le {1} depuis {2} semaines. On en fait un créneau de ton planning ?", getSportName(s.sport).toLocaleLowerCase(LOCALE), DAYS[s.dayOfWeek] ?? '', s.count);
 }
 
 export async function createSlotFromIdea(s: SlotIdea): Promise<void> {

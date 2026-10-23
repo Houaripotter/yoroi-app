@@ -22,14 +22,15 @@ import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { useStudio } from '@/lib/v2/partage/useStudio';
 import { shareCard } from '@/lib/v2/partage/capture';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const STORY_DURATION = 5000;
-const ACCENTS: Record<string, string> = { Fevrier: 'Février', Aout: 'Août', Decembre: 'Décembre' };
+const ACCENTS: Record<string, string> = { Fevrier: traduire('Février'), Aout: traduire('Août'), Decembre: traduire('Décembre') };
 
 type Fact = { value: string; label: string; accent?: boolean };
 type Slide = { dark: boolean; label: string; big: string; unit?: string; sub?: string; foot?: string; figure?: 'guerrier' | 'sport'; plates?: number; facts?: Fact[]; hero?: boolean };
 
-const frNum = (n: number, d = 1) => (Math.round(n * 10 ** d) / 10 ** d).toString().replace('.', ',');
+const frNum = (n: number, d = 1) => (Math.round(n * 10 ** d) / 10 ** d).toString().replace('.', DECIMAL);
 
 function formatMinutes(min: number): string {
   if (min < 60) return `${Math.round(min)} min`;
@@ -54,7 +55,7 @@ export default function WrappedScreen() {
   const [slideIdx, setSlideIdx] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
   const enter = useRef(new Animated.Value(0)).current;
-  const studio = useStudio({ initialStyle: 'laque', dialogTitle: 'Partager mon bilan' });
+  const studio = useStudio({ initialStyle: 'laque', dialogTitle: traduire('Partager mon bilan') });
 
   useEffect(() => {
     heavyHaptic().catch(() => {});
@@ -70,83 +71,83 @@ export default function WrappedScreen() {
     {
       dark: true,
       hero: true,
-      label: `Ton année ${stats.year}`,
+      label: traduire("Ton année {0}", stats.year),
       big: `${stats.totalSessions}`,
-      unit: stats.totalSessions > 1 ? 'séances' : 'séance',
-      sub: `${hours} d’entraînement`,
+      unit: stats.totalSessions > 1 ? traduire('séances') : traduire('séance'),
+      sub: traduire("{0} d’entraînement", hours),
       facts: [
         { value: sport || 'À trouver', label: 'Sport favori' },
-        { value: month, label: 'Mois le plus fort' },
-        { value: `${stats.longestStreak}\u00A0j`, label: 'Plus longue série', accent: true },
+        { value: month, label: traduire('Mois le plus fort') },
+        { value: `${stats.longestStreak}\u00A0j`, label: traduire('Plus longue série'), accent: true },
         { value: String(stats.personalBests), label: stats.personalBests > 1 ? 'Records battus' : 'Record battu' },
-        { value: String(stats.uniqueDays), label: 'Jours actifs' },
+        { value: String(stats.uniqueDays), label: traduire('Jours actifs') },
       ],
-      foot: 'Touche pour revivre ton année',
+      foot: traduire('Touche pour revivre ton année'),
       figure: 'guerrier',
     },
     {
       dark: false,
-      label: 'Séances',
+      label: traduire('Séances'),
       big: `${stats.totalSessions}`,
-      sub: `${stats.uniqueDays} jours actifs`,
+      sub: traduire("{0} jours actifs", stats.uniqueDays),
       facts: [
         { value: frNum(stats.avgPerWeek), label: 'par semaine' },
-        { value: `${stats.monthsActive}`, label: stats.monthsActive > 1 ? 'mois actifs' : 'mois actif' },
-        { value: hours, label: 'au total' },
+        { value: `${stats.monthsActive}`, label: stats.monthsActive > 1 ? traduire('mois actifs') : traduire('mois actif') },
+        { value: hours, label: traduire('au total') },
       ],
-      foot: 'Chaque séance compte',
+      foot: traduire('Chaque séance compte'),
     },
     {
       dark: true,
-      label: 'Ta plus longue série',
+      label: traduire('Ta plus longue série'),
       big: `${stats.longestStreak}`,
       unit: 'jours',
-      sub: 'd’affilée',
+      sub: traduire('d’affilée'),
       plates: Math.min(1, stats.longestStreak / 30),
       facts: [
-        { value: `${stats.uniqueDays}`, label: 'jours actifs' },
-        { value: frNum(stats.avgPerWeek), label: 'séances par semaine' },
+        { value: `${stats.uniqueDays}`, label: traduire('jours actifs') },
+        { value: frNum(stats.avgPerWeek), label: traduire('séances par semaine') },
       ],
-      foot: 'La discipline, c’est toi',
+      foot: traduire('La discipline, c’est toi'),
     },
     {
       dark: false,
-      label: 'Ton sport',
-      big: sport || 'À trouver',
-      sub: stats.topSportCount ? `${stats.topSportCount} séances` : undefined,
+      label: traduire('Ton sport'),
+      big: sport || traduire('À trouver'),
+      sub: stats.topSportCount ? traduire("{0} séances", stats.topSportCount) : undefined,
       facts: stats.topSportCount && stats.totalSessions ? [
-        { value: `${Math.round((stats.topSportCount / stats.totalSessions) * 100)}\u00A0%`, label: 'de tes séances' },
-        { value: `${stats.totalSessions - stats.topSportCount}`, label: 'dans tes autres sports' },
+        { value: `${Math.round((stats.topSportCount / stats.totalSessions) * 100)}\u00A0%`, label: traduire('de tes séances') },
+        { value: `${stats.totalSessions - stats.topSportCount}`, label: traduire('dans tes autres sports') },
       ] : undefined,
-      foot: sport ? `Ton arme favorite en ${stats.year}` : undefined,
+      foot: sport ? traduire("Ton arme favorite en {0}", stats.year) : undefined,
       figure: 'sport',
     },
     {
       dark: true,
-      label: 'Temps total',
+      label: traduire('Temps total'),
       big: hours,
-      sub: 'à t’entraîner',
+      sub: traduire('à t’entraîner'),
       facts: stats.totalSessions ? [
-        { value: `${Math.round(stats.totalMinutes / stats.totalSessions)}\u00A0min`, label: 'par séance' },
-        { value: `${stats.totalSessions}`, label: 'séances' },
+        { value: `${Math.round(stats.totalMinutes / stats.totalSessions)}\u00A0min`, label: traduire('par séance') },
+        { value: `${stats.totalSessions}`, label: traduire('séances') },
       ] : undefined,
-      foot: 'Chaque minute compte',
+      foot: traduire('Chaque minute compte'),
     },
     {
       dark: false,
-      label: 'Ton mois le plus fort',
+      label: traduire('Ton mois le plus fort'),
       big: month,
-      sub: `${stats.bestMonth.sessions} séances`,
-      facts: [{ value: `${stats.monthsActive}`, label: stats.monthsActive > 1 ? 'mois actifs dans l’année' : 'mois actif dans l’année' }],
-      foot: 'Ton pic de forme',
+      sub: traduire("{0} séances", stats.bestMonth.sessions),
+      facts: [{ value: `${stats.monthsActive}`, label: stats.monthsActive > 1 ? traduire('mois actifs dans l’année') : traduire('mois actif dans l’année') }],
+      foot: traduire('Ton pic de forme'),
     },
     {
       dark: true,
-      label: 'Tes records',
+      label: traduire('Tes records'),
       big: `${stats.personalBests}`,
       unit: stats.personalBests > 1 ? 'records battus' : 'record battu',
-      facts: wEvo ? [{ value: `${wEvo.delta > 0 ? '+' : '\u2212'}${frNum(Math.abs(wEvo.delta))}\u00A0${wEvo.unit}`, label: 'sur la balance depuis janvier' }] : undefined,
-      foot: 'Le tampon rouge te va bien',
+      facts: wEvo ? [{ value: `${wEvo.delta > 0 ? '+' : '\u2212'}${frNum(Math.abs(wEvo.delta))}\u00A0${wEvo.unit}`, label: traduire('sur la balance depuis janvier') }] : undefined,
+      foot: traduire('Le tampon rouge te va bien'),
     },
   ] : [];
   const total = slides.length + 1; // derniere page : la carte
@@ -174,9 +175,9 @@ export default function WrappedScreen() {
 
   if (!stats) {
     return (
-      <DetailScreen title="Bilan de l’année">
+      <DetailScreen title={traduire("Bilan de l’année")}>
         <View style={{ paddingVertical: 80, alignItems: 'center' }}>
-          <Ink size={15} weight="bold" color={P.ink2}>Ton bilan se prépare</Ink>
+          <Ink size={15} weight="bold" color={P.ink2}>{traduire("Ton bilan se prépare")}</Ink>
         </View>
       </DetailScreen>
     );
@@ -184,13 +185,13 @@ export default function WrappedScreen() {
 
   if (!stats.ready) {
     return (
-      <DetailScreen title="Bilan de l’année">
-        <EmptyState title={`Ton bilan ${stats.year} arrive`} text="Il faut au moins 5 séances enregistrées pour débloquer ton bilan. Continue, il se construit à chaque entraînement." action="Lancer une séance" onAction={() => router.push('/seance' as any)} />
+      <DetailScreen title={traduire("Bilan de l’année")}>
+        <EmptyState title={traduire("Ton bilan {0} arrive", stats.year)} text={traduire("Il faut au moins 5 séances enregistrées pour débloquer ton bilan. Continue, il se construit à chaque entraînement.")} action={traduire("Lancer une séance")} onAction={() => router.push('/seance' as any)} />
       </DetailScreen>
     );
   }
 
-  const fallback = `Mon bilan YOROI ${stats.year} : ${stats.totalSessions} séances, ${stats.longestStreak} jours d’affilée, ${formatMinutes(stats.totalMinutes)} d’entraînement.`;
+  const fallback = traduire("Mon bilan YOROI {0} : {1} séances, {2} jours d’affilée, {3} d’entraînement.", stats.year, stats.totalSessions, stats.longestStreak, formatMinutes(stats.totalMinutes));
   const s = slides[slideIdx];
   const p = paletteOf(isLast ? 'papier' : s.dark ? 'laque' : 'papier');
   const fig = figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre, sport: s?.figure === 'sport' ? stats.topSport : null });
@@ -198,7 +199,7 @@ export default function WrappedScreen() {
   const cardW = Math.max(220, Math.min(W - 64, 360, Math.floor(((H - insets.top - insets.bottom - 290) * 9) / 16)));
 
   return (
-    <PremiumGate source="bilan_annuel" featureTitle="Bilan de l’année" perks={['Ton année résumée en quelques écrans', 'Tes séances, tes jours actifs et tes temps forts', 'Un bilan à partager']}>
+    <PremiumGate source="bilan_annuel" featureTitle={traduire("Bilan de l’année")} perks={[traduire('Ton année résumée en quelques écrans'), traduire('Tes séances, tes jours actifs et tes temps forts'), traduire('Un bilan à partager')]}>
       <View style={{ flex: 1, backgroundColor: p.bg[1] }}>
         <StatusBar barStyle={!isLast && s.dark ? 'light-content' : 'dark-content'} />
         <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: p.bg[0] }} />
@@ -217,14 +218,14 @@ export default function WrappedScreen() {
         </View>
 
         <View style={{ position: 'absolute', right: 16, top: insets.top + 26, zIndex: 6 }}>
-          <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={8} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: !isLast && s.dark ? 'rgba(255,255,255,0.12)' : blancA(0.9), alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={8} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: !isLast && s.dark ? 'rgba(255,255,255,0.12)' : blancA(0.9), alignItems: 'center', justifyContent: 'center' }}>
             <EIcon name="close" size={20} color={!isLast && s.dark ? '#FFFFFF' : P.ink} stroke={2.6} />
           </Pressable>
         </View>
 
         {!isLast ? (
           <>
-            <Pressable onPress={prev} accessibilityRole="button" accessibilityLabel="Page précédente" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '35%', zIndex: 2 }} />
+            <Pressable onPress={prev} accessibilityRole="button" accessibilityLabel={traduire("Page précédente")} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '35%', zIndex: 2 }} />
             <Pressable onPress={next} accessibilityRole="button" accessibilityLabel="Page suivante" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '65%', zIndex: 2 }} />
             <Animated.View style={{ flex: 1, paddingTop: insets.top + 90, paddingHorizontal: 28, paddingBottom: insets.bottom + 30, opacity: enter, transform: [{ scale }] }}>
               <Ink size={16} weight="bold" color={p.ink2}>{s.label}</Ink>
@@ -261,7 +262,7 @@ export default function WrappedScreen() {
           </>
         ) : (
           <Animated.View style={{ flex: 1, paddingTop: insets.top + 70, paddingBottom: insets.bottom + 14, paddingHorizontal: 22, alignItems: 'center', gap: 14, opacity: enter }}>
-            <Pressable onPress={prev} accessibilityRole="button" accessibilityLabel="Page précédente" style={{ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' }}>
+            <Pressable onPress={prev} accessibilityRole="button" accessibilityLabel={traduire("Page précédente")} style={{ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' }}>
               <Ink size={14} weight="bold" color={P.ink2}>Revoir l’histoire</Ink>
             </Pressable>
             <View style={{ shadowColor: P.ink, shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 8 }}>
@@ -270,11 +271,11 @@ export default function WrappedScreen() {
                 variant={studio.style === 'photo' ? 'laque' : studio.style}
                 width={cardW}
                 label={`Bilan ${stats.year}`}
-                kicker={`Mon année ${stats.year}`}
+                kicker={traduire("Mon année {0}", stats.year)}
                 name={id.name || undefined}
                 big={stats.totalSessions}
-                bigUnit="séances"
-                caption={`${stats.uniqueDays} jours actifs`}
+                bigUnit={traduire("séances")}
+                caption={traduire("{0} jours actifs", stats.uniqueDays)}
                 subCaption={sport ? `Sport favori : ${sport}` : undefined}
                 figure={figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre })}
                 rankKanji={id.rankKanji}
@@ -282,9 +283,9 @@ export default function WrappedScreen() {
                 stamp="record"
                 panel={(pp) => (
                   <Panel p={pp} style={{ flexDirection: 'row', gap: 10 }}>
-                    <Mini p={pp} onPanel value={`${stats.longestStreak} j`} label="Plus longue série" accent={pp.accent} />
-                    <Mini p={pp} onPanel value={formatMinutes(stats.totalMinutes)} label="Temps total" />
-                    <Mini p={pp} onPanel value={month} label="Meilleur mois" />
+                    <Mini p={pp} onPanel value={`${stats.longestStreak} j`} label={traduire("Plus longue série")} accent={pp.accent} />
+                    <Mini p={pp} onPanel value={formatMinutes(stats.totalMinutes)} label={traduire("Temps total")} />
+                    <Mini p={pp} onPanel value={month} label={traduire("Meilleur mois")} />
                   </Panel>
                 )}
               />
@@ -297,7 +298,7 @@ export default function WrappedScreen() {
               ))}
             </View>
             <View style={{ alignSelf: 'stretch', gap: 8 }}>
-              <BigButton label="Partager mon bilan" icon="share" onPress={() => { shareCard(studio.cardRef, 'Partager mon bilan', fallback, 'bilan_annuel'); }} />
+              <BigButton label={traduire("Partager mon bilan")} icon="share" onPress={() => { shareCard(studio.cardRef, traduire('Partager mon bilan'), fallback, 'bilan_annuel'); }} />
             </View>
           </Animated.View>
         )}

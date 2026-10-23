@@ -3,6 +3,7 @@
 // ============================================
 // Un seul systeme : 5 rangs bases sur les XP totaux
 // Le streak donne des XP bonus (via gamification.ts)
+import { traduire } from '@/lib/i18n/tr';
 
 export interface Rank {
   id: string;
@@ -26,9 +27,9 @@ export const RANKS: Rank[] = [
     icon: 'target',
     minPoints: 0,
     color: '#60A5FA',
-    description: "Fantassin loyal. Le voyage commence.",
-    descriptionFemale: "Fantassine loyale. Le voyage commence.",
-    reward: 'Demarrage du parcours',
+    description: traduire("Fantassin loyal. Le voyage commence."),
+    descriptionFemale: traduire("Fantassine loyale. Le voyage commence."),
+    reward: traduire('Demarrage du parcours'),
   },
   {
     id: 'bushi',
@@ -38,9 +39,9 @@ export const RANKS: Rank[] = [
     icon: 'shield',
     minPoints: 500,
     color: '#34D399',
-    description: "Athlete discipline. L'honneur guide tes pas.",
-    descriptionFemale: "Guerriere disciplinee. L'honneur guide tes pas.",
-    reward: 'Nouveaux avatars debloques',
+    description: traduire("Athlete discipline. L'honneur guide tes pas."),
+    descriptionFemale: traduire("Guerriere disciplinee. L'honneur guide tes pas."),
+    reward: traduire('Nouveaux avatars debloques'),
   },
   {
     id: 'samurai',
@@ -50,9 +51,9 @@ export const RANKS: Rank[] = [
     icon: 'sword',
     minPoints: 2000,
     color: '#D4AF37',
-    description: "Athlete d'elite. La voie du bushido est la tienne.",
-    descriptionFemale: "Guerriere d'elite. La voie du bushido est la tienne.",
-    reward: "Packs d'avatars elites",
+    description: traduire("Athlete d'elite. La voie du bushido est la tienne."),
+    descriptionFemale: traduire("Guerriere d'elite. La voie du bushido est la tienne."),
+    reward: traduire("Packs d'avatars elites"),
   },
   {
     id: 'ronin',
@@ -62,9 +63,9 @@ export const RANKS: Rank[] = [
     icon: 'moon',
     minPoints: 5000,
     color: '#A855F7',
-    description: 'Maitre vagabond. Tu forges ta propre voie.',
-    descriptionFemale: 'Maitre vagabonde. Tu forges ta propre voie.',
-    reward: 'Packs de collection exclusifs',
+    description: traduire('Maitre vagabond. Tu forges ta propre voie.'),
+    descriptionFemale: traduire('Maitre vagabonde. Tu forges ta propre voie.'),
+    reward: traduire('Packs de collection exclusifs'),
   },
   {
     id: 'shogun',

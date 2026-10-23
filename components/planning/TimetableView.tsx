@@ -16,7 +16,7 @@ import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 import { getClubLogoSource, getSportColor } from '@/lib/sports';
 import { WeeklySlotWithStatus } from '@/hooks/useWeeklySlots';
 import { format, addDays, startOfWeek, endOfWeek, getWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import logger from '@/lib/security/logger';
 import { Training, Club } from '@/lib/database';
 

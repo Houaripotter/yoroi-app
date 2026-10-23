@@ -7,7 +7,7 @@ import { MultiLineComparisonCard } from '../../charts/MultiLineComparisonCard';
 import { DualComparisonCard } from '../../charts/DualComparisonCard';
 import { Heart, Zap, Activity, Wind, TrendingUp, TrendingDown, Minus, Thermometer, Droplets } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import Svg, { Path, Line as SvgLine, Circle as SvgCircle, Text as SvgText } from 'react-native-svg';
 import { HRV_RANGES, RESTING_HEART_RATE_RANGES } from '@/lib/healthRanges';
 import { useI18n } from '@/lib/I18nContext';

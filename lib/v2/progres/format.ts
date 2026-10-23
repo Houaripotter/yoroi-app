@@ -2,9 +2,10 @@
  * Petits formats partages par les ecrans Progres (refonte v2).
  */
 
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 export function pad2(n: number): string {
   return String(n).padStart(2, '0');
@@ -30,7 +31,7 @@ export function daysDiff(a: string, b: string): number {
 
 /** 1 décimale, virgule française, sans ,0 inutile si round */
 export function num(v: number, digits = 1, trimZero = true): string {
-  const s = v.toFixed(digits).replace('.', ',');
+  const s = v.toFixed(digits).replace('.', DECIMAL);
   if (trimZero && digits > 0 && /,0+$/.test(s)) return s.replace(/,0+$/, '');
   return s;
 }
@@ -69,7 +70,7 @@ export function dayShort(iso: string, withYear = false): string {
 export function sinceText(iso: string): string {
   const d = dateOf(iso);
   const thisYear = new Date().getFullYear();
-  return `depuis le ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() !== thisYear ? ` ${d.getFullYear()}` : ''}`;
+  return traduire("depuis le {0} {1}{2}", d.getDate() === 1 ? '1er' : d.getDate(), MONTHS[d.getMonth()], d.getFullYear() !== thisYear ? ` ${d.getFullYear()}` : '');
 }
 
 export function capitalize(s: string): string {

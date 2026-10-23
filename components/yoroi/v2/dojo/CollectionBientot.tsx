@@ -15,6 +15,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { classiqueImage } from '@/lib/v2/dojo/personnages';
 import type { Gender } from '@/lib/v2/dojo/personnages';
 import { PACKS_VIE, PACKS_VIE_A_VENIR, PACKS_VIE_PRETS, texteCompteurCollection } from '@/lib/v2/dojo/packsVie';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Date de ton « Me prévenir », gardée sur ce téléphone seulement */
 export const INTERET_COLLECTION_KEY = 'yoroi_collection_interet_v1';
@@ -52,16 +53,16 @@ export function CollectionBientot({ gender }: { gender: Gender }) {
     <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: c.border, padding: 16, gap: 14, marginTop: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
         <View style={{ flex: 1, gap: 4 }}>
-          <Ink size={18} weight="black" tight accessibilityRole="header">Collection complète</Ink>
+          <Ink size={18} weight="black" tight accessibilityRole="header">{traduire("Collection complète")}</Ink>
           <Ink size={14} weight="bold" color={c.textSecondary}>{texteCompteurCollection(PACKS_VIE.length, PACKS_VIE_PRETS.length)}</Ink>
         </View>
         <View style={{ borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5, backgroundColor: P.accentSoft }}>
-          <Ink size={12} weight="extraBold" color={P.accent}>Bientôt disponible</Ink>
+          <Ink size={12} weight="extraBold" color={P.accent}>{traduire("Bientôt disponible")}</Ink>
         </View>
       </View>
 
       {/* les packs a venir, en silhouettes, avec leur vrai nom */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }} accessible accessibilityLabel={`${packs.length} packs à venir : ${packs.map((p) => p.nom).join(', ')}`}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }} accessible accessibilityLabel={traduire("{0} packs à venir : {1}", packs.length, packs.map((p) => p.nom).join(', '))}>
         {packs.map((p, i) => (
           <View key={p.id} style={{ width: 74, alignItems: 'center', gap: 4 }}>
             <View style={{ width: 62, height: 72, borderRadius: 14, backgroundColor: p.fond, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end', opacity: 0.92 }}>
@@ -78,14 +79,14 @@ export function CollectionBientot({ gender }: { gender: Gender }) {
         ))}
       </View>
 
-      <Ink size={13} color={c.textSecondary}>Homme et femme dans chaque pack, avec sa scène quand elle est prévue. Ils s’ouvriront avec Premium, comme les autres personnages Premium.</Ink>
+      <Ink size={13} color={c.textSecondary}>{traduire("Homme et femme dans chaque pack, avec sa scène quand elle est prévue. Ils s’ouvriront avec Premium, comme les autres personnages Premium.")}</Ink>
 
       <Pressable
         onPress={prevenir}
         disabled={note}
         accessibilityRole="button"
         accessibilityState={{ disabled: note, checked: note }}
-        accessibilityLabel={note ? 'C’est noté, ton intérêt est enregistré sur ce téléphone' : 'Me prévenir quand de nouveaux packs arrivent'}
+        accessibilityLabel={note ? traduire('C’est noté, ton intérêt est enregistré sur ce téléphone') : traduire('Me prévenir quand de nouveaux packs arrivent')}
         style={({ pressed }) => ({
           minHeight: 50,
           borderRadius: 16,
@@ -96,9 +97,9 @@ export function CollectionBientot({ gender }: { gender: Gender }) {
           opacity: pressed ? 0.88 : 1,
         })}
       >
-        <Ink size={15} weight="extraBold" color={note ? c.textSecondary : P.paper}>{note ? 'C’est noté' : 'Me prévenir'}</Ink>
+        <Ink size={15} weight="extraBold" color={note ? c.textSecondary : P.paper}>{note ? traduire('C’est noté') : traduire('Me prévenir')}</Ink>
       </Pressable>
-      {note ? <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', marginTop: -6 }}>Ton intérêt est gardé sur ce téléphone, rien n’est envoyé.</Ink> : null}
+      {note ? <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', marginTop: -6 }}>{traduire("Ton intérêt est gardé sur ce téléphone, rien n’est envoyé.")}</Ink> : null}
     </View>
   );
 }

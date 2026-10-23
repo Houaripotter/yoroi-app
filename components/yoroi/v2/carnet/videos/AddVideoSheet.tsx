@@ -18,6 +18,7 @@ import { P, Press, CIcon, Field, BigButton, Label, ChoiceLine, tap } from '../ui
 import { Illus } from '../nav';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const COMMON_SPORTS = ['jjb', 'boxe', 'mma', 'muay_thai', 'lutte', 'judo', 'grappling', 'kickboxing', 'musculation', 'crossfit', 'hyrox', 'running', 'yoga'];
 
@@ -44,7 +45,7 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 }
 
 function KindCard({ k, on, onPress }: { k: VideoKind; on: boolean; onPress: () => void }) {
-  const meta = k === 'muscle' ? { t: 'Un muscle', s: 'exemple d’exercice', il: 'musculation' as const } : k === 'technique' ? { t: 'Une technique', s: 'd’un sport', il: 'jjb' as const } : { t: 'Autre', s: 'sans rangement', il: 'videos' as const };
+  const meta = k === 'muscle' ? { t: traduire('Un muscle'), s: traduire('exemple d’exercice'), il: 'musculation' as const } : k === 'technique' ? { t: traduire('Une technique'), s: traduire('d’un sport'), il: 'jjb' as const } : { t: 'Autre', s: traduire('sans rangement'), il: 'videos' as const };
   return (
     <View style={{ flex: 1 }}>
       <Press onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${meta.t}, ${meta.s}`}>
@@ -103,7 +104,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        appAlert('Accès refusé', 'Autorise l’accès à ta galerie dans les réglages du téléphone pour importer une vidéo.');
+        appAlert(traduire('Accès refusé'), traduire('Autorise l’accès à ta galerie dans les réglages du téléphone pour importer une vidéo.'));
         return;
       }
       const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], allowsEditing: false, quality: 1 });
@@ -115,7 +116,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
       tap();
     } catch (e) {
       logger.error('[AddVideoSheet] galerie', e);
-      appAlert('Oups', 'La galerie n’a pas pu s’ouvrir.');
+      appAlert('Oups', traduire('La galerie n’a pas pu s’ouvrir.'));
     }
   };
 
@@ -146,7 +147,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
       else {
         const link = url.trim();
         if (!/^https?:\/\//i.test(link)) {
-          appAlert('Lien invalide', 'Le lien doit commencer par https://');
+          appAlert('Lien invalide', traduire('Le lien doit commencer par https://'));
           setSaving(false);
           return;
         }
@@ -159,53 +160,52 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
       onClose();
     } catch (e) {
       logger.error('[AddVideoSheet] enregistrement', e);
-      appAlert('Oups', 'La vidéo n’a pas pu être enregistrée.');
+      appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
     } finally {
       setSaving(false);
     }
   };
 
-  const sheetTitle = editing ? 'Modifier la vidéo' : step === 'source' ? 'Ajouter une vidéo' : step === 'link' ? 'Ajouter un lien' : 'Range ta vidéo';
+  const sheetTitle = editing ? traduire('Modifier la vidéo') : step === 'source' ? traduire('Ajouter une vidéo') : step === 'link' ? traduire('Ajouter un lien') : traduire('Range ta vidéo');
 
   return (
     <Sheet visible={visible} onClose={onClose} title={sheetTitle} scroll>
       {step === 'source' ? (
         <>
           <Ink size={14} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-            Une vidéo TikTok ou Instagram enregistrée sur ton téléphone, ou que tu as filmée : importe-la, elle reste dans YOROI.
-          </Ink>
-          <Press onPress={pickFromGallery} haptic="medium" accessibilityRole="button" accessibilityLabel="Importer depuis ta galerie">
+            {traduire("Une vidéo TikTok ou Instagram enregistrée sur ton téléphone, ou que tu as filmée : importe-la, elle reste dans YOROI.")}</Ink>
+          <Press onPress={pickFromGallery} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Importer depuis ta galerie")}>
             <View style={{ minHeight: 96, borderRadius: 22, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: P.accent }}>
               <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: blancA(0.92), alignItems: 'center', justifyContent: 'center' }}>
                 <Illus name="videos" size={48} />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={18} weight="black" color={P.white}>Depuis ta galerie</Ink>
-                <Ink size={13} weight="bold" color="rgba(255,255,255,0.8)">Choisis la vidéo, donne-lui un titre</Ink>
+                <Ink size={18} weight="black" color={P.white}>{traduire("Depuis ta galerie")}</Ink>
+                <Ink size={13} weight="bold" color="rgba(255,255,255,0.8)">{traduire("Choisis la vidéo, donne-lui un titre")}</Ink>
               </View>
               <CIcon name="chevron" size={18} color={P.white} />
             </View>
           </Press>
-          <ChoiceLine title="Un lien" sub="YouTube, Instagram, TikTok..." icon="link" onPress={() => setStep('link')} />
+          <ChoiceLine title={traduire("Un lien")} sub="YouTube, Instagram, TikTok..." icon="link" onPress={() => setStep('link')} />
         </>
       ) : null}
 
       {step === 'link' ? (
         <>
-          <Field label="Lien de la vidéo" value={url} onChangeText={setUrl} placeholder="https://..." autoCapitalize="none" keyboardType="url" autoCorrect={false} />
+          <Field label={traduire("Lien de la vidéo")} value={url} onChangeText={setUrl} placeholder="https://..." autoCapitalize="none" keyboardType="url" autoCorrect={false} />
           <BigButton label="Continuer" icon="chevron" disabled={!/^https?:\/\/.+/i.test(url.trim())} onPress={() => setStep('form')} />
-          <BigButton label="Retour" tone="light" icon="back" onPress={() => setStep('source')} />
+          <BigButton label={traduire("Retour")} tone="light" icon="back" onPress={() => setStep('source')} />
         </>
       ) : null}
 
       {step === 'form' ? (
         <View style={{ gap: 14 }}>
-          <Field label="Titre" value={title} onChangeText={setTitle} placeholder="Ex : rowing haltère, coudes serrés" maxLength={80} autoFocus={!editing} />
+          <Field label="Titre" value={title} onChangeText={setTitle} placeholder={traduire("Ex : rowing haltère, coudes serrés")} maxLength={80} autoFocus={!editing} />
           {fromBenchmark ? (
-            <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>{`Rangée avec l’exercice ${preset?.benchmarkName ?? ''}.`}</Ink>
+            <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>{traduire("Rangée avec l’exercice {0}.", preset?.benchmarkName ?? '')}</Ink>
           ) : (
             <>
-              <Label>Ce qu’elle montre</Label>
+              <Label>{traduire("Ce qu’elle montre")}</Label>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <KindCard k="muscle" on={kind === 'muscle'} onPress={() => setKind('muscle')} />
                 <KindCard k="technique" on={kind === 'technique'} onPress={() => setKind('technique')} />
@@ -213,7 +213,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
               </View>
               {kind === 'muscle' ? (
                 <>
-                  <Label>Muscle travaillé</Label>
+                  <Label>{traduire("Muscle travaillé")}</Label>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {MUSCLES_VIDEO.map((m) => (
                       <Chip key={m} label={m} on={muscle === m} onPress={() => setMuscle(m)} />
@@ -233,8 +233,8 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
               ) : null}
             </>
           )}
-          <BigButton label={saving ? 'Enregistrement...' : editing ? 'Enregistrer' : 'Ranger la vidéo'} icon="check" disabled={!canSave} onPress={save} />
-          {!editing ? <BigButton label="Choisir une autre vidéo" tone="light" onPress={() => setStep('source')} /> : null}
+          <BigButton label={saving ? 'Enregistrement...' : editing ? traduire('Enregistrer') : traduire('Ranger la vidéo')} icon="check" disabled={!canSave} onPress={save} />
+          {!editing ? <BigButton label={traduire("Choisir une autre vidéo")} tone="light" onPress={() => setStep('source')} /> : null}
         </View>
       ) : null}
     </Sheet>

@@ -31,7 +31,7 @@ import Constants from 'expo-constants';
 import Animated, { Easing, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, runOnJS, type SharedValue } from 'react-native-reanimated';
 import Svg, { Defs, Path, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon, RoundButton, type IconName } from '@/components/yoroi/v2/espace/ui';
@@ -79,6 +79,7 @@ import { playLevelUpSound } from '@/lib/soundManager';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const CASTLE = require('@/assets/avatars/app/monde/fonds/verticale_chateau.webp');
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
@@ -156,14 +157,14 @@ const COURBE_EXEMPLE = (() => {
 
 /** Une seule formule partout (vague 31) : « 7 jours gratuits », « 14 jours gratuits », « 1 jour gratuit ». La duree vient du store. */
 function essaiGratuit(days: number): string {
-  return days > 1 ? `${days} jours gratuits` : '1 jour gratuit';
+  return days > 1 ? traduire("{0} jours gratuits", days) : traduire('1 jour gratuit');
 }
 
 /** « d’un an », « d’un mois », « de 3 mois », « d’une semaine » */
 function deDuree(d: string): string {
-  if (d === '1 semaine') return 'd’une semaine';
-  if (d.startsWith('1 ')) return `d’un ${d.slice(2)}`;
-  return `de ${d}`;
+  if (d === '1 semaine') return traduire('d’une semaine');
+  if (d.startsWith('1 ')) return traduire("d’un {0}", d.slice(2));
+  return traduire("de {0}", d);
 }
 
 // ===== Animation d'entree : une seule fois, puis ecran calme =====
@@ -411,7 +412,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
 
   const doRestore = useCallback(async () => {
     if (preview) {
-      appAlert('Aperçu', PREVIEW_PURCHASE_MESSAGE);
+      appAlert(traduire('Aperçu'), PREVIEW_PURCHASE_MESSAGE);
       return;
     }
     setBusy(true);
@@ -419,8 +420,8 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     setBusy(false);
     paywallEvent('restauration', { source: src, resultat: res.success ? (res.restored ? 'retrouve' : 'aucun') : 'erreur' });
     if (res.success && res.restored) startCelebration({ trialEnd: null, restored: true });
-    else if (res.success) appAlert('Aucun achat trouvé', `Aucun abonnement actif n’est associé à ce compte ${store}.`);
-    else if (res.error) appAlert('Restauration impossible', res.error);
+    else if (res.success) appAlert(traduire('Aucun achat trouvé'), traduire("Aucun abonnement actif n’est associé à ce compte {0}.", store));
+    else if (res.error) appAlert(traduire('Restauration impossible'), res.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview, restore, src, store]);
 
@@ -428,7 +429,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     if (!selected || busy) return;
     paywallEvent('appui_bouton', { source: src, formule: selected.info.kind, essai: Boolean(trial) });
     if (preview) {
-      appAlert('Aperçu', PREVIEW_PURCHASE_MESSAGE);
+      appAlert(traduire('Aperçu'), PREVIEW_PURCHASE_MESSAGE);
       return;
     }
     setBusy(true);
@@ -445,12 +446,12 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     }
     paywallEvent('achat_erreur', { source: src, formule: selected.info.kind, raison: res.needsRestore ? 'acces_inactif' : 'erreur' });
     if (res.needsRestore) {
-      appAlert('Achat validé, Premium pas encore actif', res.error, [
-        { text: 'Plus tard', style: 'cancel' },
-        { text: 'Restaurer mes achats', onPress: () => void doRestore() },
+      appAlert(traduire('Achat validé, Premium pas encore actif'), res.error, [
+        { text: traduire('Plus tard'), style: 'cancel' },
+        { text: traduire('Restaurer mes achats'), onPress: () => void doRestore() },
       ]);
     } else if (res.error) {
-      appAlert('Achat impossible', res.error);
+      appAlert(traduire('Achat impossible'), res.error);
     }
   };
 
@@ -503,28 +504,28 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   // ===== Textes =====
   const heroTrial = trial ?? annualTrial;
   const titleBottom = isPremium || !heroTrial ? null : `${essaiGratuit(heroTrial.days).replace(/^./, (x) => x.toUpperCase())}.`;
-  const heroTitle = isPremium ? (me.personnage && parsePersonnage(me.personnage).kind !== 'guerrier' && parsePersonnage(me.personnage).kind !== 'pack' ? 'Ton Premium est à toi.' : 'Ton armure Premium est à toi.') : titleBottom ? 'Essaie YOROI en entier.' : 'Passe à YOROI Premium.';
-  const subtitle = isPremium ? 'Tout ce qui est marqué Premium est ouvert.' : 'Tout ton historique, tes analyses, le combat et tout le monde samouraï. Ton suivi, lui, reste gratuit.';
-  const buyLabel = trial ? 'Commencer mon essai gratuit' : 'M’abonner';
+  const heroTitle = isPremium ? (me.personnage && parsePersonnage(me.personnage).kind !== 'guerrier' && parsePersonnage(me.personnage).kind !== 'pack' ? traduire('Ton Premium est à toi.') : traduire('Ton armure Premium est à toi.')) : titleBottom ? 'Essaie YOROI en entier.' : traduire('Passe à YOROI Premium.');
+  const subtitle = isPremium ? traduire('Tout ce qui est marqué Premium est ouvert.') : traduire('Tout ton historique, tes analyses, le combat et tout le monde samouraï. Ton suivi, lui, reste gratuit.');
+  const buyLabel = trial ? traduire('Commencer mon essai gratuit') : 'M’abonner';
   // la ligne collee sous le bouton : prix total, periode, apres l'essai
   // espaces insecables : un prix et sa periode ne se coupent jamais en fin de ligne
   const nb = (x: string) => x.replace(/ /g, '\u00A0');
-  const perMonth = selected?.info.perMonth && selected.info.kind !== 'monthly' ? nb(`${selected.info.perMonth} par mois`) : null;
+  const perMonth = selected?.info.perMonth && selected.info.kind !== 'monthly' ? nb(traduire("{0} par mois", selected.info.perMonth)) : null;
   const priceLine = !selected
     ? ''
     : trial
       ? `${nb(essaiGratuit(trial.days))}, puis ${nb(`${selected.info.priceString} ${selected.info.per}`)}`
       : `${nb(`${selected.info.priceString} ${selected.info.per}`)}${perMonth ? `, soit ${perMonth}` : ''}`;
   const priceSub = trial
-    ? `${perMonth ? `Soit ${perMonth}. ` : ''}Rien à payer aujourd’hui, annulable à tout\u00A0moment.`
-    : 'Renouvellement automatique, annulable à tout\u00A0moment.';
+    ? traduire("{0}Rien à payer aujourd’hui, annulable à tout moment.", perMonth ? `Soit ${perMonth}. ` : '')
+    : traduire('Renouvellement automatique, annulable à tout\u00A0moment.');
   // sans offres : ce qui se passe, pres du bouton
   const waiting = retrying || offersStatus === 'loading';
   const noOfferLine = waiting
-    ? 'Chargement des prix du store'
+    ? traduire('Chargement des prix du store')
     : offersStatus === 'unavailable'
-      ? `L’abonnement passe par ${store}, il n’est pas disponible sur cette version de l’app.`
-      : 'Les prix n’ont pas pu se charger, vérifie ta connexion puis réessaie.';
+      ? traduire("L’abonnement passe par {0}, il n’est pas disponible sur cette version de l’app.", store)
+      : traduire('Les prix n’ont pas pu se charger, vérifie ta connexion puis réessaie.');
 
   // vague 32 : ton plan en carte de membre, trois lignes et la date d'arrivee estimee (jamais inventee)
   // weight_goal vaut « maintain » par defaut en base : avec un poids vise loin du poids du jour, on ne l'affiche pas
@@ -533,7 +534,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const maintient = me.goal === 'maintain' && !contradiction;
   const planLines: LignePlan[] = [];
   if (goalEntry) {
-    planLines.push({ icon: 'target', ink: INK_TEXTE[goalEntry.encre.ink] ?? goalEntry.encre.ink, fond: goalEntry.encre.fond, cle: goalEntry.label, a11y: `objectif, ${goalEntry.label.toLowerCase()}` });
+    planLines.push({ icon: 'target', ink: INK_TEXTE[goalEntry.encre.ink] ?? goalEntry.encre.ink, fond: goalEntry.encre.fond, cle: goalEntry.label, a11y: traduire("objectif, {0}", goalEntry.label.toLowerCase()) });
   }
   if (me.target && !maintient) {
     const from = me.start != null && Math.abs(me.start - me.target) >= 0.2 ? me.start : null;
@@ -543,15 +544,15 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
       fond: ENCRES.indigo.fond,
       depuis: from != null ? `${kg(from)} kg` : undefined,
       cle: `${kg(me.target)} kg`,
-      apres: from != null ? undefined : 'visés',
-      a11y: from != null ? `de ${kg(from)} à ${kg(me.target)} kilos` : `${kg(me.target)} kilos visés`,
+      apres: from != null ? undefined : traduire('visés'),
+      a11y: from != null ? traduire("de {0} à {1} kilos", kg(from), kg(me.target)) : traduire("{0} kilos visés", kg(me.target)),
     });
   } else if (maintient && me.start != null) {
-    planLines.push({ icon: 'scale', ink: ENCRES.indigo.ink, fond: ENCRES.indigo.fond, cle: `${kg(me.start)} kg`, apres: 'à garder', a11y: `${kg(me.start)} kilos à garder` });
+    planLines.push({ icon: 'scale', ink: ENCRES.indigo.ink, fond: ENCRES.indigo.fond, cle: `${kg(me.start)} kg`, apres: traduire('à garder'), a11y: traduire("{0} kilos à garder", kg(me.start)) });
   }
   if (me.sessions) {
-    const nbS = `${me.sessions} ${me.sessions > 1 ? 'séances' : 'séance'}`;
-    planLines.push({ icon: 'calendar', ink: ENCRES.mousse.ink, fond: ENCRES.mousse.fond, cle: nbS, apres: 'par semaine', a11y: `${nbS} par semaine` });
+    const nbS = `${me.sessions} ${me.sessions > 1 ? traduire('séances') : traduire('séance')}`;
+    planLines.push({ icon: 'calendar', ink: ENCRES.mousse.ink, fond: ENCRES.mousse.fond, cle: nbS, apres: 'par semaine', a11y: traduire("{0} par semaine", nbS) });
   }
   const estimation = !maintient && me.start != null && me.target != null
     ? estimerArrivee({ start: me.start, target: me.target, sessions: me.sessions, heightCm: me.height, recompo: me.recompo && me.target < me.start })
@@ -563,11 +564,11 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const goalPlan = goalEntry ? me.goal : null;
   const ciblePlan = me.target && !maintient ? kg(me.target) : null;
   const lignesGenerales: LignePlan[] = [
-    { icon: 'target', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton objectif', a11y: 'ton objectif' },
-    { icon: 'scale', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton poids visé', a11y: 'ton poids visé' },
-    { icon: 'calendar', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton rythme', apres: 'par semaine', a11y: 'ton rythme par semaine' },
+    { icon: 'target', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton objectif', a11y: traduire('ton objectif') },
+    { icon: 'scale', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton poids visé', a11y: traduire('ton poids visé') },
+    { icon: 'calendar', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton rythme', apres: 'par semaine', a11y: traduire('ton rythme par semaine') },
   ];
-  const titreCourbe = (goalPlan === 'lose' || goalPlan === 'gain') && ciblePlan ? `Ta courbe jusqu’à ${ciblePlan}\u00A0kg` : maintient ? 'Ton poids, mois après mois' : 'Ta courbe en entier';
+  const titreCourbe = (goalPlan === 'lose' || goalPlan === 'gain') && ciblePlan ? traduire("Ta courbe jusqu’à {0} kg", ciblePlan) : maintient ? traduire('Ton poids, mois après mois') : traduire('Ta courbe en entier');
   // vague 48 (Houari) : l'en-tete suit tes choix. Ton personnage a ton rang, Classique ou Japon ;
   // sans personnage, un visuel du produit (la courbe et son torii). A l'onboarding, l'univers que tu viens de choisir.
   const persoHero: string = (() => {
@@ -752,7 +753,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const attenuer = !isPremium;
   const allerEnBas = () => scrollRef.current?.scrollToEnd({ animated: !reduireAnim });
 
-  const closeLabel = source === 'onboarding' && onBack ? 'Retour' : 'Fermer';
+  const closeLabel = source === 'onboarding' && onBack ? traduire('Retour') : traduire('Fermer');
   const onTopButton = () => {
     if (source === 'onboarding' && onBack) onBack();
     else if (onClose) onClose();
@@ -765,17 +766,17 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const apres = !selected
     ? null
     : trial
-      ? `Aujourd’hui tout est ouvert${reminderPossible ? `, rappel le ${dayMonth(new Date(trial.end.getTime() - REMINDER_DAYS * DAY))}` : ''}, premier débit le ${dayMonth(trial.end)} sauf si tu annules avant.`
-      : `Tout est ouvert dès l’achat. Annulable à tout moment dans ton compte ${store}.`;
+      ? traduire("Aujourd’hui tout est ouvert{0}, premier débit le {1} sauf si tu annules avant.", reminderPossible ? `, rappel le ${dayMonth(new Date(trial.end.getTime() - REMINDER_DAYS * DAY))}` : '', dayMonth(trial.end))
+      : traduire("Tout est ouvert dès l’achat. Annulable à tout moment dans ton compte {0}.", store);
 
   // texte legal complet (3.1.2) : nom, duree, prix, apres l'essai, renouvellement, resiliation, debit, gestion
   const legal = offers.length
     ? [
         ...offers.map((o) => {
           const t = trialOf(o.pkg.raw);
-          return `${o.info.name} : abonnement ${o.info.duration ? `${deDuree(o.info.duration)} ` : ''}à ${o.info.priceString}${o.info.perMonth ? `, soit ${o.info.perMonth} par mois` : ''}${t ? `, après ${essaiGratuit(t.days)}` : ''}.`;
+          return traduire("{0} : abonnement {1}à {2}{3}{4}.", o.info.name, o.info.duration ? `${deDuree(o.info.duration)} ` : '', o.info.priceString, o.info.perMonth ? `, soit ${o.info.perMonth} par mois` : '', t ? `, après ${essaiGratuit(t.days)}` : '');
         }),
-        `Le paiement est débité sur ton compte ${store} ${trial ? 'à la fin de l’essai gratuit' : 'à la confirmation de l’achat'}. L’abonnement se renouvelle automatiquement au même prix, sauf résiliation au moins 24 heures avant la fin de la période en cours. Tu le gères et tu le résilies à tout moment dans les réglages de ton compte ${store}. Supprimer l’app ne l’annule pas.`,
+        traduire("Le paiement est débité sur ton compte {0} {1}. L’abonnement se renouvelle automatiquement au même prix, sauf résiliation au moins 24 heures avant la fin de la période en cours. Tu le gères et tu le résilies à tout moment dans les réglages de ton compte {2}. Supprimer l’app ne l’annule pas.", store, trial ? 'à la fin de l’essai gratuit' : 'à la confirmation de l’achat', store),
       ].join(' ')
     : '';
 
@@ -871,7 +872,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
               {apercuBarre ? <ApercuDansBarre /> : preview ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(16,20,34,0.75)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
                   <Icon name="eye" size={14} color={c.goldLight} />
-                  <Ink size={12} weight="extraBold" color="#FFFFFF" numberOfLines={1}>{exemple ? 'Aperçu, prix d’exemple' : 'Aperçu, sans achat'}</Ink>
+                  <Ink size={12} weight="extraBold" color="#FFFFFF" numberOfLines={1}>{exemple ? traduire('Aperçu, prix d’exemple') : traduire('Aperçu, sans achat')}</Ink>
                 </View>
               ) : null}
             </View>
@@ -880,11 +881,11 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                 onPress={() => void doRestore()}
                 disabled={busy}
                 accessibilityRole="button"
-                accessibilityLabel="Restaurer mes achats"
+                accessibilityLabel={traduire("Restaurer mes achats")}
                 hitSlop={6}
                 style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 999, justifyContent: 'center', backgroundColor: pressed ? P.white : blancA(0.88) })}
               >
-                <Ink size={13} weight="extraBold">Restaurer</Ink>
+                <Ink size={13} weight="extraBold">{traduire("Restaurer")}</Ink>
               </Pressable>
             ) : (
               <View style={{ width: 44 }} />
@@ -894,7 +895,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
             <View style={{ alignItems: 'center', marginTop: 6 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(16,20,34,0.75)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}>
                 <Icon name="eye" size={13} color={c.goldLight} />
-                <Ink size={11.5} weight="extraBold" color="#FFFFFF" numberOfLines={1}>{exemple ? 'Aperçu, prix d’exemple' : 'Aperçu, sans achat'}</Ink>
+                <Ink size={11.5} weight="extraBold" color="#FFFFFF" numberOfLines={1}>{exemple ? traduire('Aperçu, prix d’exemple') : traduire('Aperçu, sans achat')}</Ink>
               </View>
             </View>
           ) : null}
@@ -908,7 +909,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Icon name="crown" size={14} color={OR_BANDEAU} />
-              <Ink size={11.5} weight="black" color={OR_BANDEAU} style={[{ letterSpacing: 1.6 }, OMBRE_TEXTE]}>YOROI PREMIUM</Ink>
+              <Ink size={11.5} weight="black" color={OR_BANDEAU} style={[{ letterSpacing: 1.6 }, OMBRE_TEXTE]}>{traduire("YOROI PREMIUM")}</Ink>
             </View>
             <Ink size={small ? 24 : 28} weight="black" tight color="#FFFFFF" style={[{ textAlign: 'center', lineHeight: small ? 28 : 33 }, OMBRE_TEXTE]} accessibilityRole="header">
               {heroTitle}
@@ -927,15 +928,15 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                 <Animated.Image
                   source={imgBandeau}
                   resizeMode="contain"
-                  accessibilityLabel={vitrineVue ? 'Un personnage Premium' : 'Ton personnage'}
+                  accessibilityLabel={vitrineVue ? traduire('Un personnage Premium') : traduire('Ton personnage')}
                   style={[{ position: 'absolute', right: Math.round(width * 0.025), bottom: 0, width: charH * 0.75, height: charH }, armorStyle]}
                 />
               ) : null}
             </View>
           ) : (
-            <Animated.View style={[{ marginTop: 8, marginHorizontal: GUTTER, marginBottom: 14, borderRadius: 18, backgroundColor: c.surface, paddingTop: 10, paddingBottom: 4, paddingHorizontal: 10, overflow: 'hidden' }, armorStyle]} accessible accessibilityLabel="Exemple de ta courbe de poids, jusqu’au torii de ton cap">
+            <Animated.View style={[{ marginTop: 8, marginHorizontal: GUTTER, marginBottom: 14, borderRadius: 18, backgroundColor: c.surface, paddingTop: 10, paddingBottom: 4, paddingHorizontal: 10, overflow: 'hidden' }, armorStyle]} accessible accessibilityLabel={traduire("Exemple de ta courbe de poids, jusqu’au torii de ton cap")}>
               <View pointerEvents="none">
-                <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={Math.max(64, armorH - 16)} compact label="Exemple de courbe de poids" />
+                <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={Math.max(64, armorH - 16)} compact label={traduire("Exemple de courbe de poids")} />
               </View>
               <View style={{ position: 'absolute', top: 7, left: 10, backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
                 <Ink size={9.5} weight="black" color={c.accent} style={{ letterSpacing: 0.8 }}>EXEMPLE</Ink>
@@ -948,7 +949,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           {isPremium ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.successTint, borderRadius: 16, padding: 14 }}>
               <Icon name="check" size={18} color={c.successText} stroke={3} />
-              <Ink size={15} weight="extraBold" color={c.successText}>Ton accès Premium est actif</Ink>
+              <Ink size={15} weight="extraBold" color={c.successText}>{traduire("Ton accès Premium est actif")}</Ink>
             </View>
           ) : null}
 
@@ -959,7 +960,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           {!isPremium && mur ? (
             <ApercuSource libelle={mur.libelle} phrase={mur.phrase(compteur)} {...couleursSource(c, mur.accent)} icone={mur.icone}>
               {mur.courbe && curve.length >= 2 ? (
-                <View style={{ height: 110, overflow: 'hidden', borderRadius: 14 }} accessible accessibilityLabel="Aperçu de ta courbe de poids, la suite est avec Premium">
+                <View style={{ height: 110, overflow: 'hidden', borderRadius: 14 }} accessible accessibilityLabel={traduire("Aperçu de ta courbe de poids, la suite est avec Premium")}>
                   <WeightCurve points={curve} width={innerW} height={110} color={c.accent} surface={c.surface} ligne={plan6.ligne} torii={plan6.torii} />
                 </View>
               ) : null}
@@ -975,17 +976,17 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           {/* 2 bis. Ce que Premium fait de ton plan : la courbe en entier (ta vraie courbe voilee, sinon un exemple marque),
               puis trois benefices concrets illustres, dans l'ordre de ton objectif (components/yoroi/v2/premium/Benefices.tsx) */}
           {!isPremium && !(mur?.courbe && curve.length >= 2) ? (
-            <CarteCourbe titre={titreCourbe} exemple={curve.length < 2} pastille={<PastillePremium />} ligne={curve.length >= 2 ? `Tes vraies pesées. Au-delà de ${FREE_MONTHS} mois, c’est avec Premium.` : 'Avec Premium, ta courbe se voit sur 6 mois, 1 an et tout ton historique, avec ton poids projeté.'}>
+            <CarteCourbe titre={titreCourbe} exemple={curve.length < 2} pastille={<PastillePremium />} ligne={curve.length >= 2 ? traduire("Tes vraies pesées. Au-delà de {0} mois, c’est avec Premium.", FREE_MONTHS) : traduire('Avec Premium, ta courbe se voit sur 6 mois, 1 an et tout ton historique, avec ton poids projeté.')}>
               {curve.length >= 2 ? (
                 <View style={{ gap: 8 }}>
-                  <View style={{ height: 110, overflow: 'hidden', borderRadius: 14 }} accessible accessibilityLabel="Aperçu de ta courbe de poids sur 6 mois, la suite est avec Premium">
+                  <View style={{ height: 110, overflow: 'hidden', borderRadius: 14 }} accessible accessibilityLabel={traduire("Aperçu de ta courbe de poids sur 6 mois, la suite est avec Premium")}>
                     <WeightCurve points={curve} width={innerW} height={110} color={c.accent} surface={c.surface} ligne={plan6.ligne} torii={plan6.torii} />
                   </View>
                   {plan6.ligne ? <LegendeCourbe rythme cap={null} torii={null} /> : null}
                 </View>
               ) : (
-                <View pointerEvents="none" accessible accessibilityLabel="Exemple de courbe de poids">
-                  <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={110} compact label="Exemple de courbe de poids" />
+                <View pointerEvents="none" accessible accessibilityLabel={traduire("Exemple de courbe de poids")}>
+                  <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={110} compact label={traduire("Exemple de courbe de poids")} />
                 </View>
               )}
             </CarteCourbe>
@@ -995,15 +996,15 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           {/* 3. Ce que change l'abonnement, tire de lib/v2/premium/limits.ts et offer.ts (6 lignes) */}
           {!isPremium ? (
             <View style={{ gap: 10 }}>
-              <SectionTitle>Ce que change l’abonnement</SectionTitle>
+              <SectionTitle>{traduire("Ce que change l’abonnement")}</SectionTitle>
               <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
                 <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: PREM_W, backgroundColor: c.accentTint }} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 14, paddingVertical: 12 }}>
                   <View style={{ flex: 1 }} />
-                  <Ink size={11.5} weight="black" color={c.textMuted} style={{ width: FREE_W, textAlign: 'center', letterSpacing: 1 }}>GRATUIT</Ink>
+                  <Ink size={11.5} weight="black" color={c.textMuted} style={{ width: FREE_W, textAlign: 'center', letterSpacing: 1 }}>{traduire("GRATUIT")}</Ink>
                   <View style={{ width: PREM_W, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                     <Icon name="crown" size={12} color={c.accent} />
-                    <Ink size={11.5} weight="black" color={c.accent} style={{ letterSpacing: 1 }}>PREMIUM</Ink>
+                    <Ink size={11.5} weight="black" color={c.accent} style={{ letterSpacing: 1 }}>{traduire("PREMIUM")}</Ink>
                   </View>
                 </View>
                 {PREMIUM_ROWS.slice(0, 6).map((r) => (
@@ -1016,7 +1017,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                       {r.free ? (
                         <Ink size={12} weight="bold" color={c.textSecondary} style={{ textAlign: 'center', lineHeight: 15 }}>{r.free}</Ink>
                       ) : (
-                        <View accessible accessibilityLabel="Pas inclus">
+                        <View accessible accessibilityLabel={traduire("Pas inclus")}>
                           <Icon name="lock" size={15} color={c.textMuted} />
                         </View>
                       )}
@@ -1051,19 +1052,19 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                   onPress={() => pick(annual)}
                   name={annual.info.duration || annual.info.short}
                   pill={annualTrial ? essaiGratuit(annualTrial.days) : null}
-                  badge={savings ? `Économise ${savings} %` : null}
+                  badge={savings ? traduire("Économise {0} %", savings) : null}
                   price={annual.info.priceString}
                   per={annual.info.per}
-                  left={annual.info.perMonth ? `Soit ${annual.info.perMonth} par mois` : null}
-                  right={annual.info.perDay ? `${annual.info.perDay} par jour` : null}
-                  extra="+ une scène exclusive offerte"
-                  a11y={`${annual.info.name}, ${annual.info.priceString} ${annual.info.per}${annual.info.perMonth ? `, soit ${annual.info.perMonth} par mois` : ''}${annualTrial ? `, ${annualTrial.days} jours gratuits` : ''}`}
+                  left={annual.info.perMonth ? traduire("Soit {0} par mois", annual.info.perMonth) : null}
+                  right={annual.info.perDay ? traduire("{0} par jour", annual.info.perDay) : null}
+                  extra={traduire("+ une scène exclusive offerte")}
+                  a11y={`${annual.info.name}, ${annual.info.priceString} ${annual.info.per}${annual.info.perMonth ? traduire(", soit {0} par mois", annual.info.perMonth) : ''}${annualTrial ? traduire(", {0} jours gratuits", annualTrial.days) : ''}`}
                 />
               ) : null}
               {monthly ? (
                 annual && selected?.pkg.identifier !== monthly.pkg.identifier ? (
-                  <Pressable onPress={() => pick(monthly)} accessibilityRole="button" accessibilityLabel={`Choisir le mensuel, ${monthly.info.priceString} par mois, sans engagement`} hitSlop={6} style={{ minHeight: 40, alignItems: 'center', justifyContent: 'center' }}>
-                    <Ink size={14} weight="extraBold" color={c.ink} style={{ textDecorationLine: 'underline' }}>{`ou ${monthly.info.priceString} par mois, sans engagement`}</Ink>
+                  <Pressable onPress={() => pick(monthly)} accessibilityRole="button" accessibilityLabel={traduire("Choisir le mensuel, {0} par mois, sans engagement", monthly.info.priceString)} hitSlop={6} style={{ minHeight: 40, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={14} weight="extraBold" color={c.ink} style={{ textDecorationLine: 'underline' }}>{traduire("ou {0} par mois, sans engagement", monthly.info.priceString)}</Ink>
                   </Pressable>
                 ) : (
                   <PlanCard
@@ -1087,7 +1088,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                   pill={trialOf(o.pkg.raw) ? essaiGratuit(trialOf(o.pkg.raw)!.days) : null}
                   price={o.info.priceString}
                   per={o.info.per}
-                  left={o.info.perMonth ? `Soit ${o.info.perMonth} par mois` : null}
+                  left={o.info.perMonth ? traduire("Soit {0} par mois", o.info.perMonth) : null}
                   compact
                   a11y={`${o.info.name}, ${o.info.priceString} ${o.info.per}`}
                 />
@@ -1096,7 +1097,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           ) : waiting ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 8 }}>
               <ChargementPetit size={18} />
-              <Ink size={13} weight="bold" color={c.textSecondary}>Chargement des offres</Ink>
+              <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Chargement des offres")}</Ink>
             </View>
           ) : (
             <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: 12, paddingHorizontal: 12 }}>
@@ -1106,14 +1107,14 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
               </View>
               <View style={{ flex: 1, gap: 1 }}>
                 <Ink size={13.5} weight="extraBold" style={{ lineHeight: 18 }}>
-                  {offersStatus === 'unavailable' || TEST_BUILD ? 'Prix indisponibles ici' : 'Prix momentanément indisponibles'}
+                  {offersStatus === 'unavailable' || TEST_BUILD ? traduire('Prix indisponibles ici') : traduire('Prix momentanément indisponibles')}
                 </Ink>
                 <Ink size={12} weight="medium" color={c.textSecondary} style={{ lineHeight: 16 }}>
                   {TEST_BUILD
-                    ? 'Ils s’affichent dans l’app installée.'
+                    ? traduire('Ils s’affichent dans l’app installée.')
                     : offersStatus === 'unavailable'
-                      ? `L’abonnement passe par ${store}.`
-                      : 'Rien n’a été débité. Touche Réessayer en bas.'}
+                      ? traduire("L’abonnement passe par {0}.", store)
+                      : traduire('Rien n’a été débité. Touche Réessayer en bas.')}
                 </Ink>
               </View>
             </View>
@@ -1136,11 +1137,11 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
             <LiensLegaux
               liens={[
                 { label: 'Conditions d’utilisation (EULA)', onPress: openTerms },
-                { label: 'Confidentialité', onPress: openPrivacy },
+                { label: traduire('Confidentialité'), onPress: openPrivacy },
               ]}
             />
-            {Platform.OS === 'ios' ? <LienLegalTexte label="Contrat de licence Apple" onPress={() => void safeOpenURL(APPLE_EULA_URL)} /> : null}
-            {!isPremium ? <LienLegalTexte label="Restaurer mes achats" onPress={() => void doRestore()} role="button" /> : null}
+            {Platform.OS === 'ios' ? <LienLegalTexte label={traduire("Contrat de licence Apple")} onPress={() => void safeOpenURL(APPLE_EULA_URL)} /> : null}
+            {!isPremium ? <LienLegalTexte label={traduire("Restaurer mes achats")} onPress={() => void doRestore()} role="button" /> : null}
           </View>
         </View>
       </ScrollView>
@@ -1156,7 +1157,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
               <BottomButton label={buyLabel} onPress={() => void buy()} loading={busy} vif={attenuer ? vif : undefined} />
             ) : (
               <BottomButton
-                label={offersStatus === 'unavailable' ? 'Abonnement indisponible ici' : 'Réessayer'}
+                label={offersStatus === 'unavailable' ? traduire('Abonnement indisponible ici') : traduire('Réessayer')}
                 onPress={retryOffers}
                 loading={waiting}
                 disabled={offersStatus === 'unavailable'}
@@ -1172,7 +1173,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
               <View style={{ marginTop: 6, gap: 2, alignItems: 'center' }} accessibilityLiveRegion="polite">
                 <Ink size={13} weight="bold" color={!waiting && offersStatus === 'error' ? c.ink : c.textSecondary} style={{ textAlign: 'center', lineHeight: 17 }}>{noOfferLine}</Ink>
                 {IN_EXPO_GO ? (
-                  <Ink size={11.5} color={c.textMuted} style={{ textAlign: 'center', lineHeight: 15 }}>Dans Expo Go, l’achat est impossible : il ne marche que dans l’app installée.</Ink>
+                  <Ink size={11.5} color={c.textMuted} style={{ textAlign: 'center', lineHeight: 15 }}>{traduire("Dans Expo Go, l’achat est impossible : il ne marche que dans l’app installée.")}</Ink>
                 ) : null}
               </View>
             )}
@@ -1272,7 +1273,7 @@ function PastillePremium() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
       <Icon name="lock" size={12} color={c.accent} />
-      <Ink size={11} weight="extraBold" color={c.accent}>Premium</Ink>
+      <Ink size={11} weight="extraBold" color={c.accent}>{traduire("Premium")}</Ink>
     </View>
   );
 }
@@ -1297,7 +1298,7 @@ function ApercuSource({ libelle, phrase, encre, fond, icone, children }: { libel
       </View>
       <Ink size={14} weight="bold" color={c.textSecondary} style={{ lineHeight: 20 }}>{phrase}</Ink>
       {children ?? (
-        <View style={{ gap: 10, paddingTop: 2 }} accessible accessibilityLabel={`Aperçu de ${libelle}, la suite est avec Premium`}>
+        <View style={{ gap: 10, paddingTop: 2 }} accessible accessibilityLabel={traduire("Aperçu de {0}, la suite est avec Premium", libelle)}>
           {largeurs.map((w, k) => (
             <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: fond }} />
@@ -1334,11 +1335,11 @@ function IndicateurDefiler({ onPress, reduire }: { onPress: () => void; reduire:
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel="Fais défiler pour tout voir"
+        accessibilityLabel={traduire("Fais défiler pour tout voir")}
         hitSlop={8}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: 14, borderRadius: 999, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4 })}
       >
-        <Ink size={13} weight="bold" color={c.textSecondary}>Fais défiler pour tout voir</Ink>
+        <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Fais défiler pour tout voir")}</Ink>
         <Animated.View style={fleche}>
           <Icon name="down" size={15} color={c.accent} stroke={2.6} />
         </Animated.View>
@@ -1453,17 +1454,17 @@ function Welcome({ genre, personnage = null, restored, trialEnd, reminder, onDon
           return img ? <Animated.Image source={img} resizeMode="contain" style={[{ width: 260, height: 347, marginBottom: 8 }, armorStyle]} /> : <View style={{ height: 120 }} />;
         })()}
         <View style={{ alignSelf: 'stretch', paddingHorizontal: GUTTER, paddingBottom: insets.bottom + 16, gap: 10 }}>
-          <Ink size={30} weight="black" tight color={c.onDark} style={{ textAlign: 'center' }}>{restored ? 'Ton Premium est de retour' : 'Bienvenue dans YOROI Premium'}</Ink>
+          <Ink size={30} weight="black" tight color={c.onDark} style={{ textAlign: 'center' }}>{restored ? traduire('Ton Premium est de retour') : traduire('Bienvenue dans YOROI Premium')}</Ink>
           <Ink size={15} color={c.onDarkSecondary} style={{ textAlign: 'center', lineHeight: 21 }}>
-            {trialEnd ? `Tout ce qui est marqué Premium est ouvert dès maintenant. Ton essai court jusqu’au ${longDate(trialEnd)}.` : 'Tout ce qui est marqué Premium est ouvert dès maintenant.'}
+            {trialEnd ? traduire("Tout ce qui est marqué Premium est ouvert dès maintenant. Ton essai court jusqu’au {0}.", longDate(trialEnd)) : traduire('Tout ce qui est marqué Premium est ouvert dès maintenant.')}
           </Ink>
           {reminder ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: 12 }}>
               <Icon name="bell" size={16} color={c.goldLight} />
-              <Ink size={13} weight="bold" color={c.onDark} style={{ flex: 1 }}>Pour te rappeler la fin de l’essai 2 jours avant, ton téléphone va te demander d’autoriser les notifications.</Ink>
+              <Ink size={13} weight="bold" color={c.onDark} style={{ flex: 1 }}>{traduire("Pour te rappeler la fin de l’essai 2 jours avant, ton téléphone va te demander d’autoriser les notifications.")}</Ink>
             </View>
           ) : null}
-          <BottomButton label="C’est parti" onPress={onDone} />
+          <BottomButton label={traduire("C’est parti")} onPress={onDone} />
         </View>
       </View>
     </Animated.View>

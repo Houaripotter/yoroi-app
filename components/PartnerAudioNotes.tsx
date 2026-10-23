@@ -18,6 +18,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { lightHaptic, successHaptic, errorHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { LOCALE } from '@/lib/i18n/tr';
 
 interface AudioNote {
   id: string;
@@ -217,7 +218,7 @@ export const PartnerAudioNotes: React.FC<Props> = ({ notes, onChange }) => {
               </TouchableOpacity>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.noteDate, { color: colors.text }]}>
-                  {new Date(n.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })}
+                  {new Date(n.date).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short', year: '2-digit' })}
                 </Text>
                 <Text style={[styles.noteDuration, { color: colors.textMuted }]}>
                   {(n.durationMs / 1000).toFixed(1)}s

@@ -6,6 +6,7 @@ import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { getCombatThemesForSport } from '@/lib/combatThemeLibrary';
 import { getSportCategory } from '@/lib/sports';
 import type { CombatDraft, CombatSessionType, CombatTimer, LiveRound, RoundIntensity } from './model';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 /** Libelles affiches, ids identiques a add-combat-session.tsx */
 export const SESSION_TYPES: { value: CombatSessionType; label: string }[] = [
@@ -13,7 +14,7 @@ export const SESSION_TYPES: { value: CombatSessionType; label: string }[] = [
   { value: 'technique', label: 'Drilling' },
   { value: 'guerre', label: 'Sparring' },
   { value: 'openmat', label: 'Open mat' },
-  { value: 'competition', label: 'Compétition' },
+  { value: 'competition', label: traduire('Compétition') },
 ];
 
 export function sessionTypeLabel(t: CombatSessionType): string {
@@ -49,20 +50,20 @@ export function typeAEnregistrer(d: { sessionType: CombatSessionType; sessionTyp
 /** Libelle du type : celui de la liste, ou le type hors liste tel quel (premiere lettre en capitale) */
 export function libelleTypeSeance(d: { sessionType: CombatSessionType; sessionTypeOrig?: string }, alias: (t: string) => string = (t) => t): string {
   const libre = typeLibre(d, alias);
-  if (libre) return libre.charAt(0).toLocaleUpperCase('fr-FR') + libre.slice(1).replace(/_/g, ' ');
+  if (libre) return libre.charAt(0).toLocaleUpperCase(LOCALE) + libre.slice(1).replace(/_/g, ' ');
   return sessionTypeLabel(d.sessionType);
 }
 
 export const ROUND_INTENSITIES: { value: RoundIntensity; label: string }[] = [
   { value: 'detendu', label: 'Tranquille' },
-  { value: 'technique', label: 'Appliqué' },
-  { value: 'guerre', label: 'La guerre' },
+  { value: 'technique', label: traduire('Appliqué') },
+  { value: 'guerre', label: traduire('La guerre') },
 ];
 
 export const RESULTS: { value: 'win' | 'loss' | 'draw'; label: string }[] = [
-  { value: 'win', label: 'Gagné' },
+  { value: 'win', label: traduire('Gagné') },
   { value: 'loss', label: 'Perdu' },
-  { value: 'draw', label: 'Égalité' },
+  { value: 'draw', label: traduire('Égalité') },
 ];
 
 export function isGrappling(sport: string): boolean {
@@ -166,7 +167,7 @@ export function methodSuggestions(sport: string, trainings: Training[]): string[
   }
   const base = isGrappling(sport)
     ? EXERCISE_LIBRARY.filter((e) => e.category === 'jjb' && (e.muscle === 'SOUMISSIONS' || e.muscle === 'CLÉS' || e.muscle === 'LEG LOCKS')).map((e) => e.name)
-    : ['KO', 'Arrêt de l’arbitre', 'Aux points', 'Abandon'];
+    : ['KO', traduire('Arrêt de l’arbitre'), traduire('Aux points'), 'Abandon'];
   const out = [...Array.from(used.entries()).sort((a, b) => b[1] - a[1]).map(([m]) => m)];
   for (const b of base) if (!out.includes(b)) out.push(b);
   return out.slice(0, 40);
@@ -183,5 +184,5 @@ export function themeCategories(sport: string, trainings: Training[]): { label: 
     }
   }
   const lib = getCombatThemesForSport(sport).map((c) => ({ label: c.label, themes: c.themes }));
-  return mine.length > 0 ? [{ label: 'Les tiens', themes: mine.slice(0, 20) }, ...lib] : lib;
+  return mine.length > 0 ? [{ label: traduire('Les tiens'), themes: mine.slice(0, 20) }, ...lib] : lib;
 }

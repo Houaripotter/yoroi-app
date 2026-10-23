@@ -37,6 +37,7 @@ import {
   type CloudFolder,
 } from '@/lib/cloudFolderService';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 interface BackupFile {
   name: string;
@@ -57,13 +58,13 @@ interface BackupFile {
   protegee?: boolean;
 }
 
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', DECIMAL)} Mo`;
 }
 function formatDay(ts: number): string {
   const d = new Date(ts);
@@ -182,7 +183,7 @@ export default function BackupHistoryScreen() {
 
   const download = async (b: BackupFile) => {
     try {
-      await shareAsync(b.uri, { mimeType: 'application/json', dialogTitle: 'Partager cette sauvegarde', UTI: 'public.json' });
+      await shareAsync(b.uri, { mimeType: 'application/json', dialogTitle: traduire('Partager cette sauvegarde'), UTI: 'public.json' });
     } catch (e) {
       logger.error('[BackupHistory] Erreur téléchargement:', e);
     }
@@ -216,12 +217,12 @@ export default function BackupHistoryScreen() {
       }
       if (!opened) {
         const { requestPassword } = await import('@/lib/passwordPromptController');
-        const pwd = await requestPassword({ title: 'Sauvegarde protégée', message: 'Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.', confirmLabel: 'Ouvrir' });
+        const pwd = await requestPassword({ title: traduire('Sauvegarde protégée'), message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.'), confirmLabel: 'Ouvrir' });
         if (!pwd) return false;
         try {
           opened = enc.decryptBackup(raw, pwd);
         } catch {
-          showPopup('Mot de passe incorrect', 'Vérifie ton mot de passe, puis réessaie.');
+          showPopup(traduire('Mot de passe incorrect'), traduire('Vérifie ton mot de passe, puis réessaie.'));
           return false;
         }
       }
@@ -240,10 +241,10 @@ export default function BackupHistoryScreen() {
 
   const restore = (b: BackupFile) => {
     impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-    showPopup('Restaurer cette sauvegarde ?', `${formatDay(b.modifiedAt)}, ${b.protegee ? 'sauvegarde protégée par un mot de passe' : `${b.weightsCount} pesées et ${b.trainingsCount} séances`}.\n\nCes données s’ajoutent à tes données actuelles.`, [
-      { text: 'Annuler', style: 'cancel' },
+    showPopup(traduire('Restaurer cette sauvegarde ?'), traduire("{0}, {1}.\n\nCes données s’ajoutent à tes données actuelles.", formatDay(b.modifiedAt), b.protegee ? 'sauvegarde protégée par un mot de passe' : `${b.weightsCount} pesées et ${b.trainingsCount} séances`), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Restaurer',
+        text: traduire('Restaurer'),
         style: 'primary',
         onPress: async () => {
           setRestoringUri(b.uri);
@@ -251,11 +252,11 @@ export default function BackupHistoryScreen() {
             const ok = await restoreRaw(await FileSystem.readAsStringAsync(b.uri, { encoding: FileSystem.EncodingType.UTF8 }));
             if (ok) {
               notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-              showPopup('Restauration réussie', 'Tes données sont revenues.', [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)' as any) }]);
+              showPopup(traduire('Restauration réussie'), traduire('Tes données sont revenues.'), [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)' as any) }]);
             }
           } catch (e) {
             logger.error('[BackupHistory] Erreur restauration:', e);
-            showPopup('Oups', 'Cette sauvegarde n’a pas pu être restaurée.');
+            showPopup('Oups', traduire('Cette sauvegarde n’a pas pu être restaurée.'));
           } finally {
             setRestoringUri(null);
           }
@@ -265,10 +266,10 @@ export default function BackupHistoryScreen() {
   };
 
   const remove = (b: BackupFile) => {
-    showPopup('Supprimer cette sauvegarde ?', `${formatDay(b.modifiedAt)}, ${formatSize(b.size)}. C’est définitif.`, [
-      { text: 'Annuler', style: 'cancel' },
+    showPopup(traduire('Supprimer cette sauvegarde ?'), traduire("{0}, {1}. C’est définitif.", formatDay(b.modifiedAt), formatSize(b.size)), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -276,7 +277,7 @@ export default function BackupHistoryScreen() {
             notificationAsync(NotificationFeedbackType.Success).catch(() => {});
             setBackups((p) => p.filter((x) => x.uri !== b.uri));
           } catch {
-            showPopup('Oups', 'Ce fichier n’a pas pu être supprimé.');
+            showPopup('Oups', traduire('Ce fichier n’a pas pu être supprimé.'));
           }
         },
       },
@@ -293,36 +294,36 @@ export default function BackupHistoryScreen() {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       }
     } catch {
-      showPopup('Oups', 'Le dossier n’a pas pu être connecté.');
+      showPopup('Oups', traduire('Le dossier n’a pas pu être connecté.'));
     } finally {
       setConnecting(false);
     }
   };
 
   const disconnectCloud = () => {
-    showPopup('Déconnecter le dossier ?', `« ${cloudFolder?.displayName} » sera déconnecté. Tes sauvegardes locales restent intactes.`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Déconnecter', style: 'primary', onPress: async () => { await disconnectCloudFolder(); setCloudFolder(null); setCloudBackups([]); } },
+    showPopup(traduire('Déconnecter le dossier ?'), traduire("« {0} » sera déconnecté. Tes sauvegardes locales restent intactes.", cloudFolder?.displayName), [
+      { text: traduire('Annuler'), style: 'cancel' },
+      { text: traduire('Déconnecter'), style: 'primary', onPress: async () => { await disconnectCloudFolder(); setCloudFolder(null); setCloudBackups([]); } },
     ]);
   };
 
   const restoreCloud = (f: CloudBackupFile) => {
-    showPopup('Restaurer depuis le cloud ?', `${formatDay(f.modifiedAt)}, ${formatSize(f.size)}.\n\nCes données s’ajoutent à tes données actuelles.`, [
-      { text: 'Annuler', style: 'cancel' },
+    showPopup(traduire('Restaurer depuis le cloud ?'), traduire("{0}, {1}.\n\nCes données s’ajoutent à tes données actuelles.", formatDay(f.modifiedAt), formatSize(f.size)), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Restaurer',
+        text: traduire('Restaurer'),
         style: 'primary',
         onPress: async () => {
           setRestoringCloud(f.name);
           try {
             const content = await readCloudBackupFile(f.name);
-            if (!content) { showPopup('Oups', 'Le fichier cloud est illisible.'); return; }
+            if (!content) { showPopup('Oups', traduire('Le fichier cloud est illisible.')); return; }
             if (await restoreRaw(content)) {
               notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-              showPopup('Restauration réussie', 'Tes données sont revenues.', [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)' as any) }]);
+              showPopup(traduire('Restauration réussie'), traduire('Tes données sont revenues.'), [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)' as any) }]);
             }
           } catch {
-            showPopup('Oups', 'Cette sauvegarde cloud n’a pas pu être restaurée.');
+            showPopup('Oups', traduire('Cette sauvegarde cloud n’a pas pu être restaurée.'));
           } finally {
             setRestoringCloud(null);
           }
@@ -341,17 +342,17 @@ export default function BackupHistoryScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
       >
-        <EspaceHeader title="Mes sauvegardes" />
+        <EspaceHeader title={traduire("Mes sauvegardes")} />
 
         <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 18, gap: 14, overflow: 'hidden' }}>
           <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
           <View style={{ gap: 4 }}>
             <Ink size={44} weight="black" tight color={c.onDark}>{loading ? ' ' : String(backups.length)}</Ink>
             <Ink size={14} color={c.onDarkSecondary}>
-              {loading ? 'Recherche de tes sauvegardes' : latest ? `sauvegarde${backups.length > 1 ? 's' : ''} sur ce téléphone, la dernière ${ageDays === 0 ? 'aujourd’hui' : ageDays === 1 ? 'hier' : `il y a ${ageDays} jours`}` : 'Aucune sauvegarde pour l’instant'}
+              {loading ? traduire('Recherche de tes sauvegardes') : latest ? traduirePluriel(backups.length, backups.length > 1, "sauvegarde sur ce téléphone, la dernière {0}", "sauvegardes sur ce téléphone, la dernière {0}", ageDays === 0 ? 'aujourd’hui' : ageDays === 1 ? 'hier' : `il y a ${ageDays} jours`) : traduire('Aucune sauvegarde pour l’instant')}
             </Ink>
           </View>
-          <Button tone="gold" icon="plus" label={creating ? 'Création' : 'Nouvelle sauvegarde'} loading={creating} onPress={newBackup} />
+          <Button tone="gold" icon="plus" label={creating ? traduire('Création') : traduire('Nouvelle sauvegarde')} loading={creating} onPress={newBackup} />
         </View>
 
         {loading ? (
@@ -359,14 +360,14 @@ export default function BackupHistoryScreen() {
         ) : backups.length === 0 ? (
           <Card style={{ padding: 18, gap: 6, alignItems: 'center' }}>
             <Icon name="archive" size={34} color={c.textMuted} />
-            <Ink size={16} weight="extraBold">Ta bibliothèque est vide</Ink>
-            <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>Crée ta première sauvegarde. Elle garde ton historique si tu changes de téléphone.</Ink>
+            <Ink size={16} weight="extraBold">{traduire("Ta bibliothèque est vide")}</Ink>
+            <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Crée ta première sauvegarde. Elle garde ton historique si tu changes de téléphone.")}</Ink>
           </Card>
         ) : (
           <>
-            <SectionTitle title="Sur ce téléphone" />
+            <SectionTitle title={traduire("Sur ce téléphone")} />
             {backups.map((b, i) => (
-              <Pressable key={b.uri} onPress={() => setPreview(b)} accessibilityRole="button" accessibilityLabel={`Sauvegarde du ${formatDay(b.modifiedAt)}`}>
+              <Pressable key={b.uri} onPress={() => setPreview(b)} accessibilityRole="button" accessibilityLabel={traduire("Sauvegarde du {0}", formatDay(b.modifiedAt))}>
                 <Card style={{ padding: 14, gap: 12, borderColor: i === 0 ? c.ink : c.border, borderWidth: i === 0 ? 2 : 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: i === 0 ? c.ink : c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -378,7 +379,7 @@ export default function BackupHistoryScreen() {
                     </View>
                     {i === 0 ? (
                       <View style={{ backgroundColor: c.successTint, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
-                        <Ink size={11} weight="extraBold" color={c.successText}>La plus récente</Ink>
+                        <Ink size={11} weight="extraBold" color={c.successText}>{traduire("La plus récente")}</Ink>
                       </View>
                     ) : null}
                   </View>
@@ -386,15 +387,15 @@ export default function BackupHistoryScreen() {
                     <Protegee />
                   ) : (
                     <View style={{ flexDirection: 'row', gap: 8 }}>
-                      <Stat n={b.weightsCount} label="pesées" />
-                      <Stat n={b.trainingsCount} label="séances" />
+                      <Stat n={b.weightsCount} label={traduire("pesées")} />
+                      <Stat n={b.trainingsCount} label={traduire("séances")} />
                       <Stat n={b.photosCount} label="photos" />
                     </View>
                   )}
                   <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <Action icon="restore" label="Restaurer" busy={restoringUri === b.uri} onPress={() => restore(b)} />
-                    <Action icon={cloudFolder ? 'upload' : 'share'} label={cloudFolder ? 'Vers le cloud' : 'Partager'} busy={syncingUri === b.uri} onPress={() => (cloudFolder ? copyCloud(b) : download(b))} />
-                    <Action icon="trash" label="Supprimer" danger onPress={() => remove(b)} />
+                    <Action icon="restore" label={traduire("Restaurer")} busy={restoringUri === b.uri} onPress={() => restore(b)} />
+                    <Action icon={cloudFolder ? 'upload' : 'share'} label={cloudFolder ? traduire('Vers le cloud') : traduire('Partager')} busy={syncingUri === b.uri} onPress={() => (cloudFolder ? copyCloud(b) : download(b))} />
+                    <Action icon="trash" label={traduire("Supprimer")} danger onPress={() => remove(b)} />
                   </View>
                 </Card>
               </Pressable>
@@ -412,9 +413,9 @@ export default function BackupHistoryScreen() {
                     <Icon name="archive" size={20} color={c.indigo} />
                     <View style={{ flex: 1 }}>
                       <Ink size={15} weight="extraBold" numberOfLines={1}>{cloudFolder.displayName}</Ink>
-                      <Ink size={12} color={c.textMuted}>{cloudBackups.length ? `${cloudBackups.length} sauvegarde${cloudBackups.length > 1 ? 's' : ''}` : 'Aucune sauvegarde dans ce dossier'}</Ink>
+                      <Ink size={12} color={c.textMuted}>{cloudBackups.length ? traduirePluriel(cloudBackups.length, cloudBackups.length > 1, "{0} sauvegarde", "{0} sauvegardes", cloudBackups.length) : traduire('Aucune sauvegarde dans ce dossier')}</Ink>
                     </View>
-                    <RoundButton icon="close" label="Déconnecter le dossier" onPress={disconnectCloud} />
+                    <RoundButton icon="close" label={traduire("Déconnecter le dossier")} onPress={disconnectCloud} />
                   </View>
                   {cloudBackups.map((f) => (
                     <View key={f.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderColor: c.divider }}>
@@ -422,7 +423,7 @@ export default function BackupHistoryScreen() {
                         <Ink size={14} weight="bold">{`${formatDay(f.modifiedAt)}, ${formatTime(f.modifiedAt)}`}</Ink>
                         <Ink size={12} color={c.textMuted}>{formatSize(f.size)}</Ink>
                       </View>
-                      <Button small tone="ghost" label="Restaurer" loading={restoringCloud === f.name} onPress={() => restoreCloud(f)} />
+                      <Button small tone="ghost" label={traduire("Restaurer")} loading={restoringCloud === f.name} onPress={() => restoreCloud(f)} />
                     </View>
                   ))}
                 </>
@@ -430,8 +431,8 @@ export default function BackupHistoryScreen() {
                 <Pressable onPress={connectCloud} disabled={connecting} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, minHeight: 60 }}>
                   {connecting ? <ActivityIndicator color={c.accent} /> : <Icon name="plus" size={20} color={c.accent} />}
                   <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold">Connecter un dossier cloud</Ink>
-                    <Ink size={12} color={c.textMuted}>Une copie de chaque sauvegarde, hors du téléphone</Ink>
+                    <Ink size={15} weight="extraBold">{traduire("Connecter un dossier cloud")}</Ink>
+                    <Ink size={12} color={c.textMuted}>{traduire("Une copie de chaque sauvegarde, hors du téléphone")}</Ink>
                   </View>
                   <Icon name="chevron" size={16} color={c.textMuted} />
                 </Pressable>
@@ -441,7 +442,7 @@ export default function BackupHistoryScreen() {
         ) : null}
 
         <Pressable onPress={() => setShowTools((v) => !v)} accessibilityRole="button" style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
-          <Ink size={19} weight="black" tight style={{ flex: 1 }}>Outils avancés</Ink>
+          <Ink size={19} weight="black" tight style={{ flex: 1 }}>{traduire("Outils avancés")}</Ink>
           <Icon name={showTools ? 'up' : 'down'} size={18} />
         </Pressable>
         {showTools ? (
@@ -459,7 +460,7 @@ export default function BackupHistoryScreen() {
 
       <Modal visible={!!preview} transparent animationType="slide" onRequestClose={() => setPreview(null)}>
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(29,32,41,0.45)' }}>
-          <Pressable style={{ flex: 1 }} onPress={() => setPreview(null)} accessibilityLabel="Fermer" />
+          <Pressable style={{ flex: 1 }} onPress={() => setPreview(null)} accessibilityLabel={traduire("Fermer")} />
           {preview ? (
             <View style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 22, paddingTop: 10, paddingBottom: insets.bottom + 22, gap: 14 }}>
               <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border }} />
@@ -467,20 +468,20 @@ export default function BackupHistoryScreen() {
                 <View style={{ flex: 1, gap: 2 }}>
                   <Ink size={22} weight="black" tight>{formatLong(preview.modifiedAt)}</Ink>
                   <Ink size={13} color={c.textMuted}>{preview.protegee ? `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}` : `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}, version ${preview.version}`}</Ink>
-                  {preview.userName !== '?' ? <Ink size={13} weight="bold" color={c.indigo}>{`Profil de ${preview.userName}`}</Ink> : null}
+                  {preview.userName !== '?' ? <Ink size={13} weight="bold" color={c.indigo}>{traduire("Profil de {0}", preview.userName)}</Ink> : null}
                 </View>
-                <RoundButton icon="close" label="Fermer" onPress={() => setPreview(null)} />
+                <RoundButton icon="close" label={traduire("Fermer")} onPress={() => setPreview(null)} />
               </View>
               {preview.protegee ? <Protegee /> : null}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, display: preview.protegee ? 'none' : 'flex' }}>
                 {([
-                  ['scale', 'Pesées', preview.weightsCount],
-                  ['dumbbell', 'Séances', preview.trainingsCount],
+                  ['scale', traduire('Pesées'), preview.weightsCount],
+                  ['dumbbell', traduire('Séances'), preview.trainingsCount],
                   ['camera', 'Photos', preview.photosCount],
-                  ['moon', 'Sommeil', preview.sleepCount],
-                  ['drop', 'Hydratation', preview.hydrationCount],
-                  ['heart', 'Blessures', preview.injuriesCount],
-                  ['trophy', 'Compétitions', preview.competitionsCount],
+                  ['moon', traduire('Sommeil'), preview.sleepCount],
+                  ['drop', traduire('Hydratation'), preview.hydrationCount],
+                  ['heart', traduire('Blessures'), preview.injuriesCount],
+                  ['trophy', traduire('Compétitions'), preview.competitionsCount],
                   ['home', 'Clubs', preview.clubsCount],
                 ] as [IconName, string, number][]).map(([icon, label, n]) => (
                   <View key={label} style={{ width: '23%', flexGrow: 1, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 10, gap: 4, alignItems: 'center' }}>
@@ -491,11 +492,11 @@ export default function BackupHistoryScreen() {
                 ))}
               </View>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1 }}><Button tone="ink" icon="restore" label="Restaurer" onPress={() => { const b = preview; setPreview(null); setTimeout(() => restore(b), 300); }} /></View>
-                <View style={{ flex: 1 }}><Button tone="ghost" icon="share" label="Partager" onPress={() => { const b = preview; setPreview(null); setTimeout(() => download(b), 300); }} /></View>
+                <View style={{ flex: 1 }}><Button tone="ink" icon="restore" label={traduire("Restaurer")} onPress={() => { const b = preview; setPreview(null); setTimeout(() => restore(b), 300); }} /></View>
+                <View style={{ flex: 1 }}><Button tone="ghost" icon="share" label={traduire("Partager")} onPress={() => { const b = preview; setPreview(null); setTimeout(() => download(b), 300); }} /></View>
               </View>
               <Pressable onPress={() => { const b = preview; setPreview(null); setTimeout(() => remove(b), 300); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-                <Ink size={14} weight="extraBold" color={c.danger}>Supprimer cette sauvegarde</Ink>
+                <Ink size={14} weight="extraBold" color={c.danger}>{traduire("Supprimer cette sauvegarde")}</Ink>
               </Pressable>
             </View>
           ) : null}
@@ -515,8 +516,8 @@ function Protegee() {
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, backgroundColor: c.fillSoft, paddingVertical: 10, paddingHorizontal: 12 }}>
       <Icon name="lock" size={16} color={c.indigo} />
       <View style={{ flex: 1, gap: 1 }}>
-        <Ink size={14} weight="extraBold">Sauvegarde protégée</Ink>
-        <Ink size={11} color={c.textMuted}>Son contenu s’affiche avec ton mot de passe, au moment de la restaurer.</Ink>
+        <Ink size={14} weight="extraBold">{traduire("Sauvegarde protégée")}</Ink>
+        <Ink size={11} color={c.textMuted}>{traduire("Son contenu s’affiche avec ton mot de passe, au moment de la restaurer.")}</Ink>
       </View>
     </View>
   );

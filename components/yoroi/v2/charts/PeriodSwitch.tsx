@@ -12,16 +12,17 @@ import { FREE_LIMITS } from '@/lib/v2/premium/limits';
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 export type PeriodOption = { value: number; label: string };
 
 /** Periodes communes (en jours, 0 = tout l'historique) */
 export const CHART_PERIODS: PeriodOption[] = [
-  { value: 30, label: '1 mois' },
-  { value: 90, label: '3 mois' },
-  { value: 180, label: '6 mois' },
+  { value: 30, label: traduire('1 mois') },
+  { value: 90, label: traduire('3 mois') },
+  { value: 180, label: traduire('6 mois') },
   { value: 365, label: '1 an' },
-  { value: 0, label: 'Tout' },
+  { value: 0, label: traduire('Tout') },
 ];
 
 /**
@@ -30,11 +31,11 @@ export const CHART_PERIODS: PeriodOption[] = [
  * et 3 mois restent gratuits ; 1 an et Tout suivent la regle Premium de lib/v2/premium/limits.ts.
  */
 export const SHORT_PERIODS: PeriodOption[] = [
-  { value: 7, label: '7 jours' },
-  { value: 30, label: '1 mois' },
-  { value: 90, label: '3 mois' },
+  { value: 7, label: traduire('7 jours') },
+  { value: 30, label: traduire('1 mois') },
+  { value: 90, label: traduire('3 mois') },
   { value: 365, label: '1 an' },
-  { value: 0, label: 'Tout' },
+  { value: 0, label: traduire('Tout') },
 ];
 
 /** Courbe de poids (vague 32) : 1 M, 3 M, 6 M, 1 A, comme le labo des courbes valide */
@@ -50,7 +51,7 @@ export const POIDS_PERIODS: PeriodOption[] = [
  * qui generait le doigt qui lit les valeurs. Seulement quand tu as un plan avec un torii.
  */
 export const PERIODE_PLAN = -1;
-export const POIDS_PERIODS_PLAN: PeriodOption[] = [...POIDS_PERIODS, { value: PERIODE_PLAN, label: 'Mon plan' }];
+export const POIDS_PERIODS_PLAN: PeriodOption[] = [...POIDS_PERIODS, { value: PERIODE_PLAN, label: traduire('Mon plan') }];
 /** Vague 34, carte « rouleau » de l'accueil : les memes periodes en onglets legers, « Plan » en un mot */
 export const POIDS_PERIODS_PLAN_COURT: PeriodOption[] = [...POIDS_PERIODS, { value: PERIODE_PLAN, label: 'Plan' }];
 
@@ -62,10 +63,10 @@ const PERIOD_LEGER = 'rgba(123,92,255,0.12)';
 
 /** « sur 3 mois », « sur 7 jours », « depuis le début » */
 export function periodPhrase(days: number): string {
-  if (days === PERIODE_PLAN) return 'sur ton plan';
+  if (days === PERIODE_PLAN) return traduire('sur ton plan');
   const p = CHART_PERIODS.find((x) => x.value === days) ?? SHORT_PERIODS.find((x) => x.value === days);
-  if (!days || !p) return 'depuis le début';
-  return `sur ${p.label}`;
+  if (!days || !p) return traduire('depuis le début');
+  return traduire("sur {0}", p.label);
 }
 
 /** Periode la plus longue offerte en version gratuite (en jours), lue dans lib/v2/premium/limits.ts */
@@ -141,7 +142,7 @@ export function PeriodSwitch({
             }}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={`${p.value === PERIODE_PLAN ? 'Mon plan, du début jusqu’au torii' : p.value ? `Période ${spoken(p)}` : 'Tout l’historique'}${locked ? ', avec Premium' : ''}`}
+            accessibilityLabel={`${p.value === PERIODE_PLAN ? traduire('Mon plan, du début jusqu’au torii') : p.value ? traduire("Période {0}", spoken(p)) : traduire('Tout l’historique')}${locked ? traduire(', avec Premium') : ''}`}
             hitSlop={leger ? { top: 8, bottom: 8 } : undefined}
             style={[
               leger

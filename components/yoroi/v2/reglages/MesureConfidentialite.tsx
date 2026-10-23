@@ -9,6 +9,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card, SectionTitle, ToggleRow } from '@/components/yoroi/v2/espace/ui';
 import { consentementActif, lireCompteurLocal, mesureDisponible, setConsentement } from '@/utils/telemetry';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export function MesureConfidentialite() {
   const { theme } = useYoroiTheme();
@@ -27,23 +28,20 @@ export function MesureConfidentialite() {
 
   return (
     <>
-      <SectionTitle title="Mesure de l’app" sub="Pour savoir ce qui sert et corriger les bugs" />
+      <SectionTitle title={traduire("Mesure de l’app")} sub={traduire("Pour savoir ce qui sert et corriger les bugs")} />
       <Card style={{ padding: 16, gap: 10 }}>
-        <ToggleRow first icon="eye" label="Statistiques d’usage et plantages" sub={actif ? 'Activé' : 'Coupé'} value={actif} onChange={changer} />
+        <ToggleRow first icon="eye" label={traduire("Statistiques d’usage et plantages")} sub={actif ? traduire('Activé') : traduire('Coupé')} value={actif} onChange={changer} />
         <Ink size={13} color={c.textSecondary}>
-          Ce qui part : des faits, sans valeur. Par exemple « une pesée a été saisie » ou « l’écran Progrès a été ouvert ».
-        </Ink>
+          {traduire("Ce qui part : des faits, sans valeur. Par exemple « une pesée a été saisie » ou « l’écran Progrès a été ouvert ».")}</Ink>
         <Ink size={13} color={c.textSecondary}>
-          Ce qui ne part jamais : ton poids, tes mensurations, tes calories, ta fréquence cardiaque, tes séances en détail, tes données Apple Santé ou Health Connect, ce que tu écris.
-        </Ink>
+          {traduire("Ce qui ne part jamais : ton poids, tes mensurations, tes calories, ta fréquence cardiaque, tes séances en détail, tes données Apple Santé ou Health Connect, ce que tu écris.")}</Ink>
         <Ink size={13} color={c.textSecondary}>
-          Couper arrête tout envoi tout de suite, rapports de plantage compris.
-        </Ink>
+          {traduire("Couper arrête tout envoi tout de suite, rapports de plantage compris.")}</Ink>
         <View style={{ borderTopWidth: 1, borderTopColor: c.border, paddingTop: 10 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>
             {total == null
               ? 'Compteur local : lecture en cours'
-              : `Compteur local : ${total} événement${total > 1 ? 's' : ''} noté${total > 1 ? 's' : ''} sur ce téléphone${mesureDisponible() ? '' : ', rien n’est encore envoyé'}`}
+              : traduirePluriel(total, total > 1, "Compteur local : {0} événement noté sur ce téléphone{1}", "Compteur local : {0} événements notés sur ce téléphone{1}", total, mesureDisponible() ? '' : ', rien n’est encore envoyé')}
           </Ink>
         </View>
       </Card>

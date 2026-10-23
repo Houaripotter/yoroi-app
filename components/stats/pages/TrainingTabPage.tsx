@@ -24,7 +24,7 @@ import { Flame, Target, Calendar, Award, Timer } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { format, parseISO, startOfWeek, getISOWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { logger } from '@/lib/security/logger';
 import { ImportProgressBanner } from '@/components/ImportProgressBanner';
 import { SkeletonGrid } from '../SkeletonCard';

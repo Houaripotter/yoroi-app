@@ -36,6 +36,7 @@ import { VIE_PERSONNAGES } from '@/lib/v2/dojo/personnages';
 import { VARIANTES_TEINTE, imageTeinte } from '@/lib/v2/dojo/packsTeintes';
 import { styleBuste } from '@/lib/v2/espace/cadrageBuste';
 import { useColors } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
 // ===== Briques =====
 
@@ -93,7 +94,7 @@ export function VitrineAccueil() {
         tuiles={[
           { cle: 'sante', taille: 'pleine', contenu: <TuileSanteJour mesures={SANTE_EXEMPLE} /> },
           { cle: 'serie', taille: 'demi', groupe: 'g', contenu: <TuileSerie semaines={6} goal={3} /> },
-          { cle: 'record', taille: 'demi', groupe: 'g', contenu: <TuileRecord record={{ titre: 'Développé couché', valeur: '100 kg', date: aujourdhui }} /> },
+          { cle: 'record', taille: 'demi', groupe: 'g', contenu: <TuileRecord record={{ titre: traduire('Développé couché'), valeur: '100 kg', date: aujourdhui }} /> },
         ]}
       />
     </View>
@@ -156,7 +157,7 @@ export function VitrinePersonnages({ genre }: { genre: 'h' | 'f' }) {
       </View>
       {visages.length > 1 ? (
         <Carte gap={8} pad={12}>
-          <Ink size={13} weight="extraBold" color={c.ink}>Choisis ton visage</Ink>
+          <Ink size={13} weight="extraBold" color={c.ink}>{traduire("Choisis ton visage")}</Ink>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {visages.map((src, k) => {
               const on = k === choisi;
@@ -188,25 +189,25 @@ const CARTE_RECORD: CarteData = {
   sousTitre: 'Exemple',
   sport: 'musculation',
   famille: 'muscu',
-  seance: { dureeMin: 64, rounds: 0, series: 16, tonnage: 9800, distanceKm: 0, fcMoy: 0, fcMax: 0, calories: 0, zones: null, records: [{ nom: 'Développé couché', texte: '100 kg pour 5 répétitions', poids: 100, reps: 5, avant: 96 }] },
+  seance: { dureeMin: 64, rounds: 0, series: 16, tonnage: 9800, distanceKm: 0, fcMoy: 0, fcMax: 0, calories: 0, zones: null, records: [{ nom: traduire('Développé couché'), texte: traduire('100 kg pour 5 répétitions'), poids: 100, reps: 5, avant: 96 }] },
   cle: 'onboarding:record',
 };
 
 /** Exemple de semaine (modele Semaine) */
 const CARTE_SEMAINE: CarteData = {
   moment: 'semaine',
-  titre: 'Ma semaine',
+  titre: traduire('Ma semaine'),
   sousTitre: 'Exemple',
   semaine: {
     debut: LUNDI,
     jours: [true, false, true, false, true, true, false],
     seances: 4,
     minutes: 290,
-    sports: [{ nom: 'Jiu-jitsu brésilien', n: 2 }, { nom: 'Musculation', n: 1 }, { nom: 'Course à pied', n: 1 }],
+    sports: [{ nom: 'Jiu-jitsu brésilien', n: 2 }, { nom: 'Musculation', n: 1 }, { nom: traduire('Course à pied'), n: 1 }],
     poidsFin: null,
     poidsEcart: null,
     objectif: 4,
-    parJour: [{ sports: ['Jiu-jitsu brésilien'] }, { sports: [] }, { sports: ['Musculation'] }, { sports: [] }, { sports: ['Jiu-jitsu brésilien'] }, { sports: ['Course à pied'] }, { sports: [] }],
+    parJour: [{ sports: ['Jiu-jitsu brésilien'] }, { sports: [] }, { sports: ['Musculation'] }, { sports: [] }, { sports: ['Jiu-jitsu brésilien'] }, { sports: [traduire('Course à pied')] }, { sports: [] }],
   },
   cle: 'onboarding:semaine',
 };
@@ -214,7 +215,7 @@ const CARTE_SEMAINE: CarteData = {
 /** Exemple de course (modele Minimal) */
 const CARTE_MINIMAL: CarteData = {
   moment: 'seance',
-  titre: 'Course à pied',
+  titre: traduire('Course à pied'),
   sousTitre: 'Exemple',
   sport: 'running',
   famille: 'course',
@@ -225,12 +226,12 @@ const CARTE_MINIMAL: CarteData = {
 const BASE_CARTE: OptionsCarte = { modele: 'affiche', format: 'story', fond: 'uni', sombre: false, personnage: false, masque: 'aucun', chiffres: [], slogan: 0, epure: true };
 
 const FORMATS: { format: FormatId; nom: string; usage: string; data: CarteData; modele: ModeleId; sombre: boolean }[] = [
-  { format: 'story', nom: 'Story', usage: 'plein écran', data: CARTE_RECORD, modele: 'record', sombre: true },
-  { format: 'post', nom: 'Publication', usage: 'dans le fil', data: CARTE_SEMAINE, modele: 'semaine', sombre: false },
-  { format: 'carre', nom: 'Carré', usage: 'partout', data: CARTE_MINIMAL, modele: 'minimal', sombre: false },
+  { format: 'story', nom: 'Story', usage: traduire('plein écran'), data: CARTE_RECORD, modele: 'record', sombre: true },
+  { format: 'post', nom: 'Publication', usage: traduire('dans le fil'), data: CARTE_SEMAINE, modele: 'semaine', sombre: false },
+  { format: 'carre', nom: traduire('Carré'), usage: 'partout', data: CARTE_MINIMAL, modele: 'minimal', sombre: false },
 ];
 
-export const MODELES_NOUVEAUX = ['Record', 'Semaine', 'Minimal', 'Avant après'];
+export const MODELES_NOUVEAUX = [traduire('Record'), traduire('Semaine'), 'Minimal', traduire('Avant après')];
 
 export function VitrinePartage({ largeur }: { largeur: number }) {
   const c = useColors();
@@ -269,10 +270,10 @@ export function VitrinePartage({ largeur }: { largeur: number }) {
 // ===== 5. Le bilan colore apres chaque seance =====
 
 const BILAN_EXEMPLE: PhraseRiche[] = [
-  { phare: true, segments: [{ texte: 'Tu en es à ta ' }, { texte: '3e séance', role: 'seance' }, { texte: ' de la semaine.' }] },
-  { icone: 'objectif', segments: [{ texte: 'Encore ' }, { texte: '1 séance', role: 'seance' }, { texte: ' pour ton objectif de la semaine.' }] },
-  { icone: 'comparaison', segments: [{ texte: 'Par rapport à ta dernière séance : ' }, { texte: '2 rounds', role: 'seance' }, { texte: ' de plus.' }] },
-  { icone: 'record', segments: [{ texte: 'Et un record tombe : ' }, { texte: 'record de rounds', role: 'record' }, { texte: '.' }] },
+  { phare: true, segments: [{ texte: traduire('Tu en es à ta ') }, { texte: traduire('3e séance'), role: 'seance' }, { texte: traduire(' de la semaine.') }] },
+  { icone: 'objectif', segments: [{ texte: traduire('Encore ') }, { texte: traduire('1 séance'), role: 'seance' }, { texte: traduire(' pour ton objectif de la semaine.') }] },
+  { icone: 'comparaison', segments: [{ texte: traduire('Par rapport à ta dernière séance : ') }, { texte: '2 rounds', role: 'seance' }, { texte: traduire(' de plus.') }] },
+  { icone: 'record', segments: [{ texte: traduire('Et un record tombe : ') }, { texte: traduire('record de rounds'), role: 'record' }, { texte: '.' }] },
 ];
 
 export function VitrineBilan() {
@@ -281,7 +282,7 @@ export function VitrineBilan() {
     <View pointerEvents="none">
       <Carte gap={12}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Ink size={13} weight="black" color={c.textMuted}>Ton bilan</Ink>
+          <Ink size={13} weight="black" color={c.textMuted}>{traduire("Ton bilan")}</Ink>
           <PastilleExemple />
         </View>
         {BILAN_EXEMPLE.map((p, i) => <PhraseVue key={i} p={p} />)}
@@ -302,10 +303,10 @@ export function VitrineSeance() {
     <View pointerEvents="none" style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 12 }}>
         <Icon name="search" size={16} color={c.textMuted} />
-        <Ink size={14} weight="bold" color={c.ink} style={{ flex: 1 }} numberOfLines={1}>soulevé de terre</Ink>
+        <Ink size={14} weight="bold" color={c.ink} style={{ flex: 1 }} numberOfLines={1}>{traduire("soulevé de terre")}</Ink>
       </View>
       <Carte gap={8} pad={12}>
-        <Tete domaine="seances" icone="camera" titre="Trouve ta machine" exemple={false} />
+        <Tete domaine="seances" icone="camera" titre={traduire("Trouve ta machine")} exemple={false} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {machines.map((x) => (
             <View key={x.m!.id} style={{ flex: 1, gap: 4 }}>
@@ -319,8 +320,8 @@ export function VitrineSeance() {
       </Carte>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {([
-          { icone: 'dumbbell' as IconName, titre: 'Kilos', sous: 'pas de 2, et 0,5' },
-          { icone: 'home' as IconName, titre: 'Lieu', sous: 'ton club ou dehors' },
+          { icone: 'dumbbell' as IconName, titre: 'Kilos', sous: traduire('pas de 2, et 0,5') },
+          { icone: 'home' as IconName, titre: 'Lieu', sous: traduire('ton club ou dehors') },
         ]).map((x) => (
           <View key={x.titre} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 16, backgroundColor: t.fond, borderWidth: 1, borderColor: t.bord, padding: 10 }}>
             <Icon name={x.icone} size={18} color={t.texte} stroke={2.4} />
@@ -348,12 +349,12 @@ export type Vitrine = { id: string; titre: string; sous: string; rendu: (largeur
 /** Les vitrines dans l'ordre de la mini page des nouveautes */
 export function vitrinesNouveautes(genre: 'h' | 'f'): Vitrine[] {
   return [
-    { id: 'accueil', titre: 'Ton accueil **en couleurs**', sous: 'Une tuile par sujet, et ta santé du jour en un coup d’œil.', rendu: () => <VitrineAccueil /> },
-    { id: 'citation', titre: 'Ta **citation** du jour', sous: 'Trois styles au choix, dans Réglages, Personnaliser.', rendu: () => <VitrineCitations /> },
-    { id: 'personnages', titre: 'Des personnages **qui te ressemblent**', sous: 'De toutes origines. Choisis ton visage.', rendu: () => <VitrinePersonnages genre={genre} /> },
-    { id: 'partage', titre: 'Tes **cartes** à partager', sous: 'Story, Publication ou Carré. Nouveaux modèles.', rendu: (l) => <VitrinePartage largeur={l} /> },
-    { id: 'bilan', titre: 'Ton **bilan** après chaque séance', sous: 'Les mots importants en couleur, tes records en rouge.', rendu: () => <VitrineBilan /> },
-    { id: 'seance', titre: 'Tes séances, **plus simples**', sous: 'Exercices en français, ta machine en image, ton lieu en un geste.', rendu: () => <VitrineSeance /> },
+    { id: 'accueil', titre: traduire('Ton accueil **en couleurs**'), sous: traduire('Une tuile par sujet, et ta santé du jour en un coup d’œil.'), rendu: () => <VitrineAccueil /> },
+    { id: 'citation', titre: traduire('Ta **citation** du jour'), sous: traduire('Trois styles au choix, dans Réglages, Personnaliser.'), rendu: () => <VitrineCitations /> },
+    { id: 'personnages', titre: traduire('Des personnages **qui te ressemblent**'), sous: traduire('De toutes origines. Choisis ton visage.'), rendu: () => <VitrinePersonnages genre={genre} /> },
+    { id: 'partage', titre: traduire('Tes **cartes** à partager'), sous: traduire('Story, Publication ou Carré. Nouveaux modèles.'), rendu: (l) => <VitrinePartage largeur={l} /> },
+    { id: 'bilan', titre: traduire('Ton **bilan** après chaque séance'), sous: traduire('Les mots importants en couleur, tes records en rouge.'), rendu: () => <VitrineBilan /> },
+    { id: 'seance', titre: traduire('Tes séances, **plus simples**'), sous: traduire('Exercices en français, ta machine en image, ton lieu en un geste.'), rendu: () => <VitrineSeance /> },
   ];
 }
 
@@ -422,7 +423,7 @@ export function CarrouselVitrines({ vitrines, titreRendu }: { vitrines: Vitrine[
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
         {vitrines.map((v, k) => (
-          <Point key={v.id} on={k === i} label={`Nouveauté ${k + 1} sur ${n}`} onPress={() => { setAuto(false); aller(k); }} />
+          <Point key={v.id} on={k === i} label={traduire("Nouveauté {0} sur {1}", k + 1, n)} onPress={() => { setAuto(false); aller(k); }} />
         ))}
       </View>
     </View>

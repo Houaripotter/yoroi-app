@@ -4,7 +4,7 @@ import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { SPACING, RADIUS } from '@/constants/design';
 import { TrendingUp, TrendingDown, Maximize2 } from 'lucide-react-native';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 
 interface TrendLineChartProps {
   title: string;

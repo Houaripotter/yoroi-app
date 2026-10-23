@@ -7,14 +7,15 @@
  * Premium ou gratuit : la scene animee suit exactement la scene fixe correspondante (rien a declarer ici).
  */
 import type { SceneId } from '@/lib/v2/espace';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SceneAnimee = { id: string; nom: string; scene: SceneId; video: number; ambiance: string | null; musique: string | null };
 export type SonScene = { id: string; nom: string; source: number };
 
 export const SCENES_ANIMEES: SceneAnimee[] = [
-  { id: "machiya_nuit", nom: "Ruelle de nuit", scene: "machiya_nuit", video: require('@/assets/avatars/app/monde/anime/machiya_nuit.mp4'), ambiance: null, musique: "nuit_de_lanternes" },
-  { id: "lanternes_pluie", nom: "Ruelle sous la pluie", scene: "lanternes_pluie", video: require('@/assets/avatars/app/monde/anime/lanternes_pluie.mp4'), ambiance: "pluie", musique: "nuit_de_lanternes" },
-  { id: "lanternes_neige", nom: "Auberge sous la neige", scene: "lanternes_neige", video: require('@/assets/avatars/app/monde/anime/lanternes_neige.mp4'), ambiance: "neige", musique: "montee_du_guerrier" },
+  { id: "machiya_nuit", nom: traduire("Ruelle de nuit"), scene: "machiya_nuit", video: require('@/assets/avatars/app/monde/anime/machiya_nuit.mp4'), ambiance: null, musique: "nuit_de_lanternes" },
+  { id: "lanternes_pluie", nom: traduire("Ruelle sous la pluie"), scene: "lanternes_pluie", video: require('@/assets/avatars/app/monde/anime/lanternes_pluie.mp4'), ambiance: "pluie", musique: "nuit_de_lanternes" },
+  { id: "lanternes_neige", nom: traduire("Auberge sous la neige"), scene: "lanternes_neige", video: require('@/assets/avatars/app/monde/anime/lanternes_neige.mp4'), ambiance: "neige", musique: "montee_du_guerrier" },
 ];
 
 /** Sons conseilles d'une scene fixe qui n'a pas (encore) de video */
@@ -32,16 +33,16 @@ export const SONS_DES_SCENES: Partial<Record<SceneId, { ambiance: string | null;
 
 export const AMBIANCES: SonScene[] = [
   { id: "pluie", nom: "Pluie", source: require('@/assets/sounds/ambiance/ambiance_pluie.mp3') },
-  { id: "neige", nom: "Neige et vent", source: require('@/assets/sounds/ambiance/ambiance_neige.mp3') },
+  { id: "neige", nom: traduire("Neige et vent"), source: require('@/assets/sounds/ambiance/ambiance_neige.mp3') },
   { id: "mer", nom: "Vagues", source: require('@/assets/sounds/ambiance/ambiance_mer.mp3') },
-  { id: "desert", nom: "Vent du désert", source: require('@/assets/sounds/ambiance/ambiance_desert.mp3') },
-  { id: "foret", nom: "Forêt et ruisseau", source: require('@/assets/sounds/ambiance/ambiance_foret.mp3') },
+  { id: "desert", nom: traduire("Vent du désert"), source: require('@/assets/sounds/ambiance/ambiance_desert.mp3') },
+  { id: "foret", nom: traduire("Forêt et ruisseau"), source: require('@/assets/sounds/ambiance/ambiance_foret.mp3') },
 ];
 
 export const MUSIQUES: SonScene[] = [
-  { id: "nuit_de_lanternes", nom: "Nuit de lanternes", source: require('@/assets/sounds/ambiance/musique_nuit_de_lanternes.mp3') },
-  { id: "montee_du_guerrier", nom: "Montée du guerrier", source: require('@/assets/sounds/ambiance/musique_montee_du_guerrier.mp3') },
-  { id: "horizon_dore", nom: "Horizon doré", source: require('@/assets/sounds/ambiance/musique_horizon_dore.mp3') },
+  { id: "nuit_de_lanternes", nom: traduire("Nuit de lanternes"), source: require('@/assets/sounds/ambiance/musique_nuit_de_lanternes.mp3') },
+  { id: "montee_du_guerrier", nom: traduire("Montée du guerrier"), source: require('@/assets/sounds/ambiance/musique_montee_du_guerrier.mp3') },
+  { id: "horizon_dore", nom: traduire("Horizon doré"), source: require('@/assets/sounds/ambiance/musique_horizon_dore.mp3') },
 ];
 
 /** La version animee d'une scene fixe, s'il y en a une */

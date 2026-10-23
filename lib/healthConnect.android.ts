@@ -19,6 +19,7 @@ import { ANDROID_ECRITURE, ANDROID_LECTURE, ANDROID_LECTURE_AVANCE, clePermissio
 import type { StatutDemande } from './v2/sante/connexion';
 import { enregistrementSommeilHC } from './v2/sante/sommeilHC';
 import type { NuitAEcrire } from './v2/sante/sommeilHC';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // HEALTH CONNECT SDK (Android)
@@ -528,7 +529,7 @@ const ANDROID_SPORT_LABELS: Record<string, string> = {
   'rugby': 'Rugby', 'handball': 'Handball', 'volleyball': 'Volleyball',
   // Raquette
   'squash': 'Squash', 'racquetball': 'Racquetball',
-  'tennis_de_table': 'Tennis de table', 'pickleball': 'Pickleball',
+  'tennis_de_table': traduire('Tennis de table'), 'pickleball': 'Pickleball',
   // Golf & individuel
   'golf': 'Golf', 'gymnastique': 'Gymnastique', 'equitation': 'Equitation',
   'escrime': 'Escrime', 'baseball': 'Baseball',
@@ -3470,7 +3471,7 @@ class HealthConnectService {
         : workout.source === 'xiaomi' ? 'Xiaomi'
         : '';
 
-      const title = `Bravo pour ta séance de ${sportLabel.toLowerCase()} !`;
+      const title = traduire("Bravo pour ta séance de {0} !", sportLabel.toLowerCase());
 
       signalerSeanceTerminee({
         trainingId,
@@ -3645,7 +3646,7 @@ class HealthConnectService {
         if (trainingId > 0) {
           signalerSeanceTerminee({
             trainingId,
-            titre: `Bravo pour ta séance de ${sportLabel.toLowerCase()} !`,
+            titre: traduire("Bravo pour ta séance de {0} !", sportLabel.toLowerCase()),
             debutIso: startTime.toISOString(),
             finIso: endTime.toISOString(),
             dureeMin: durationMin,
@@ -3712,10 +3713,10 @@ export const getProviderIcon = (): string => {
 
 export const getConnectionInstructions = (): string[] => {
   return [
-    "1. Assure-toi que Health Connect est installé sur ton téléphone",
-    "2. YOROI va demander l'accès à tes données de santé",
-    "3. Autorise l'accès au poids, aux pas, au sommeil et au reste",
-    "4. Tes données seront synchronisées automatiquement",
+    traduire("1. Assure-toi que Health Connect est installé sur ton téléphone"),
+    traduire("2. YOROI va demander l'accès à tes données de santé"),
+    traduire("3. Autorise l'accès au poids, aux pas, au sommeil et au reste"),
+    traduire("4. Tes données seront synchronisées automatiquement"),
   ];
 };
 

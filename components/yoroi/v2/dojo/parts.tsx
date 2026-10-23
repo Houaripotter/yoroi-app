@@ -13,6 +13,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { P, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 /** Palette du Dojo : lue dans la palette vivante a chaque rendu (vague 35, clair ou sombre) */
 export const DOJO = {
@@ -218,10 +219,10 @@ export function KintsugiVein({ width = 300, height = 18, color = DOJO.goldLight 
 }
 
 export function formatXp(n: number): string {
-  return Math.round(n).toLocaleString('fr-FR');
+  return Math.round(n).toLocaleString(LOCALE);
 }
 
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 export function formatDay(iso: string): string {
   const d = new Date(iso.slice(0, 10) + 'T12:00:00');

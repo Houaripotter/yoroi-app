@@ -29,12 +29,13 @@ import type { ChoixRappels } from './discipline';
 import { cancelLegacyReminderSettings, notificationService } from '@/lib/notificationService';
 import { getHabitudePesee, planifierRappelPesee, saveHabitudePesee } from '@/lib/v2/pesee/rappelHabitude';
 import { cancelWeeklyRecap, isWeeklyRecapEnabled, scheduleWeeklyRecap } from '@/lib/weeklyRecapNotification';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ResultatPermission = 'ok' | 'refuse' | 'plus_tard';
 
-export const TITRE_PERMISSION = 'Des rappels, seulement les tiens';
+export const TITRE_PERMISSION = traduire('Des rappels, seulement les tiens');
 export const TEXTE_PERMISSION =
-  'YOROI te prévient les jours et à l’heure que tu choisis, rien de plus. Jamais de chiffre de santé sur l’écran verrouillé. Ton téléphone va te demander l’autorisation.';
+  traduire('YOROI te prévient les jours et à l’heure que tu choisis, rien de plus. Jamais de chiffre de santé sur l’écran verrouillé. Ton téléphone va te demander l’autorisation.');
 
 async function statut(): Promise<{ status: string; canAskAgain: boolean } | null> {
   if (Platform.OS === 'web') return null;

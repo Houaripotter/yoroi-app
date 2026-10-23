@@ -8,15 +8,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import { logger } from './security/logger';
 import frTranslations from './i18n/fr.json';
-// 18 octobre 2026 : lancement en français seul. Les anciens en.json et ja.json ne sont plus chargés.
-// Les nouvelles langues seront rebranchées ici.
+import { traduire, LOCALE } from '@/lib/i18n/tr';
+// 23 octobre 2026 : les anciens en.json et ja.json ne sont plus chargés.
+// Les textes viennent de fr.json puis passent par traduire(), dans la langue du téléphone.
 const FORCED_LANGUAGE = 'fr' as const;
 
 const LANGUAGE_STORAGE_KEY = '@yoroi_language';
 
 // Locale pour toLocaleDateString
 export const LOCALE_MAP: Record<string, string> = {
-  fr: 'fr-FR',
+  fr: LOCALE,
   en: 'en-US',
   ja: 'ja-JP',
 };
@@ -104,6 +105,8 @@ const getTranslation = (key: string, lang: LanguageCode, options?: any): string 
     return key;
   }
 
+  value = traduire(value);
+
   if (options) {
     return value.replace(/\{\{(\w+)\}\}/g, (_: string, varName: string) => {
       return options[varName]?.toString() ?? '';
@@ -179,13 +182,13 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
 
   const formatDate = useCallback((date: Date | string, options?: Intl.DateTimeFormatOptions): string => {
     const d = typeof date === 'string' ? new Date(date) : date;
-    const locale = LOCALE_MAP[language] ?? 'fr-FR';
+    const locale = LOCALE;
     return d.toLocaleDateString(locale, options);
   }, [language]);
 
   const value: I18nContextType = useMemo(() => ({
     language,
-    locale: LOCALE_MAP[language] ?? 'fr-FR',
+    locale: LOCALE,
     setLanguage,
     t,
     formatDate,

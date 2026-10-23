@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES } from '@/lib/healthRanges';
 import { formatHoursHM } from '@/lib/formatDuration';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { useStatsHealth, SanteTab } from '@/lib/StatsHealthContext';
 import { usePremium } from '@/context/PremiumContext';
 

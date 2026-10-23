@@ -19,6 +19,7 @@ import { ornementPour } from '@/components/yoroi/v2/ornements/images';
 import type { OrnementKey } from '@/components/yoroi/v2/ornements/images';
 import { P } from '@/components/yoroi/livePalette';
 import { Pastille } from '@/components/yoroi/v2/dojo/Kozane';
+import { traduire } from '@/lib/i18n/tr';
 
 export const tap = () => {
   impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
@@ -205,7 +206,7 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable onPress={onClose} accessibilityLabel="Fermer" style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }}>
+      <Pressable onPress={onClose} accessibilityLabel={traduire("Fermer")} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }}>
         <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 22, maxHeight: '88%' }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 12 }} />
           {title ? <Ink size={22} weight="black" tight style={{ paddingHorizontal: 4, marginBottom: 10 }}>{title}</Ink> : null}

@@ -8,6 +8,7 @@
  * Chaque limite est annoncee a l'endroit concerne, avec un lien doux vers le paywall.
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export const FREE_LIMITS = {
   /** periode la plus longue des courbes en version gratuite, en jours (6 mois, 1 an et Tout sont Premium) */
   chartDays: 90,
@@ -36,13 +37,13 @@ export function limitNotice(key: FreeLimitKey, count: number): { title: string; 
   switch (key) {
     case 'upcomingCompetitions':
       return {
-        title: `${n} compétitions à venir en version gratuite`,
-        text: `Tu en suis déjà ${count}, elles restent toutes là. Pour en suivre plus en même temps, passe à Premium, ou attends que l’une d’elles soit passée.`,
+        title: traduire("{0} compétitions à venir en version gratuite", n),
+        text: traduire("Tu en suis déjà {0}, elles restent toutes là. Pour en suivre plus en même temps, passe à Premium, ou attends que l’une d’elles soit passée.", count),
       };
     case 'progressPhotos':
       return {
         title: `${n} photos en version gratuite`,
-        text: `Tes ${count} photos restent là et tu peux toujours les comparer. Pour en ajouter d’autres, passe à Premium.`,
+        text: traduire("Tes {0} photos restent là et tu peux toujours les comparer. Pour en ajouter d’autres, passe à Premium.", count),
       };
     default:
       return null;

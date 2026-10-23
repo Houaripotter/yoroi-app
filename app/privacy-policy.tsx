@@ -15,6 +15,7 @@ import { lienConfidentialite } from '@/lib/appConfig';
 
 import POLITIQUE from '@/data/politiqueConfidentialite.json';
 import { mesureDisponible } from '@/utils/telemetry';
+import { traduire } from '@/lib/i18n/tr';
 
 /**
  * Le texte vit dans data/politiqueConfidentialite.json, partage avec la version web
@@ -37,14 +38,14 @@ export default function PrivacyPolicyScreen() {
   const LAST_UPDATE = isFR ? POLITIQUE.miseAJour.fr : POLITIQUE.miseAJour.en;
 
   return (
-    <EspaceScreen title={isFR ? 'Confidentialité' : 'Privacy'}>
+    <EspaceScreen title={isFR ? traduire('Confidentialité') : 'Privacy'}>
       <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
         <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
-        <Ink size={26} weight="black" tight color={c.onDark}>{isFR ? 'Politique de confidentialité' : 'Privacy policy'}</Ink>
-        <Ink size={13} color={c.onDarkSecondary}>{`${isFR ? 'Dernière mise à jour' : 'Last updated'} : ${LAST_UPDATE}`}</Ink>
+        <Ink size={26} weight="black" tight color={c.onDark}>{isFR ? traduire('Politique de confidentialité') : 'Privacy policy'}</Ink>
+        <Ink size={13} color={c.onDarkSecondary}>{`${isFR ? traduire('Dernière mise à jour') : 'Last updated'} : ${LAST_UPDATE}`}</Ink>
         <View style={{ alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.goldLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
           <Icon name="check" size={14} color={c.ink} stroke={3} />
-          <Ink size={13} weight="extraBold">{isFR ? 'Tes données de santé restent sur ton téléphone' : 'Your health data stays on your phone'}</Ink>
+          <Ink size={13} weight="extraBold">{isFR ? traduire('Tes données de santé restent sur ton téléphone') : 'Your health data stays on your phone'}</Ink>
         </View>
       </View>
 
@@ -72,13 +73,13 @@ export default function PrivacyPolicyScreen() {
       <Card style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Icon name="mail" size={20} color={c.indigo} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={13} color={c.textMuted}>{isFR ? 'Pour toute question' : 'For any questions'}</Ink>
+          <Ink size={13} color={c.textMuted}>{isFR ? traduire('Pour toute question') : 'For any questions'}</Ink>
           <Ink size={15} weight="extraBold" color={c.indigo} onPress={() => safeOpenURL('mailto:yoroiapp@hotmail.com')} accessibilityRole="link">yoroiapp@hotmail.com</Ink>
         </View>
       </Card>
       {/* 18 octobre 2026 : la version en ligne, sur yoroiapp.com (francais ou anglais selon la langue de l'app) */}
-      <Ink size={14} weight="extraBold" color={c.indigo} style={{ textAlign: 'center', textDecorationLine: 'underline' }} onPress={() => void safeOpenURL(lienConfidentialite(language))} accessibilityRole="link">{isFR ? 'Lire la politique sur yoroiapp.com' : 'Read the policy on yoroiapp.com'}</Ink>
-      <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>{isFR ? '© 2026 YOROI. Tous droits réservés.' : '© 2026 Yoroi. All rights reserved.'}</Ink>
+      <Ink size={14} weight="extraBold" color={c.indigo} style={{ textAlign: 'center', textDecorationLine: 'underline' }} onPress={() => void safeOpenURL(lienConfidentialite(language))} accessibilityRole="link">{isFR ? traduire('Lire la politique sur yoroiapp.com') : 'Read the policy on yoroiapp.com'}</Ink>
+      <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>{isFR ? traduire('© 2026 YOROI. Tous droits réservés.') : '© 2026 Yoroi. All rights reserved.'}</Ink>
     </EspaceScreen>
   );
 }

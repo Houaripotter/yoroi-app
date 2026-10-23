@@ -7,6 +7,7 @@
  * Le sens du poids (cap, estimation, plan) decoule de la combinaison. Fonctions pures, testees par un script node.
  */
 import type { Goal } from './draft';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Sens du poids pour le cap et l'estimation */
 export type Sens = 'baisse' | 'recompo' | 'stable' | 'hausse' | 'categorie' | 'aucun';
@@ -43,8 +44,8 @@ export function toggleObjectif(list: Goal[], id: Goal): { list: Goal[]; note: st
   let note: string | null = null;
   if (retires.length) {
     note = id === 'lose'
-      ? 'Perdre du poids et le maintenir vont dans deux sens, on garde Perdre du poids.'
-      : 'Te maintenir et perdre du poids vont dans deux sens, on garde Me maintenir.';
+      ? traduire('Perdre du poids et le maintenir vont dans deux sens, on garde Perdre du poids.')
+      : traduire('Te maintenir et perdre du poids vont dans deux sens, on garde Me maintenir.');
   }
   return { list: next, note };
 }
@@ -63,12 +64,12 @@ export function phraseCombinaison(list: Goal[]): string | null {
   const l = objectifsPropres(list);
   const combat = l.includes('combat');
   const s = sensDe(l);
-  if (s === 'recompo') return 'Perdre du gras et prendre du muscle : une recomposition. Ton poids baisse lentement.';
-  if (s === 'stable' && l.includes('gain')) return 'Ton poids reste stable pendant que le muscle se construit.';
-  if (s === 'hausse') return combat ? 'Une prise de poids lente, pour du muscle plutôt que du gras, sans perdre ta forme de combat.' : 'Une prise de poids lente, pour du muscle plutôt que du gras.';
-  if (s === 'baisse' && combat) return 'Ton poids baisse, ta forme de combat reste au centre.';
-  if (s === 'stable' && combat) return 'Ton poids reste stable, ta forme de combat reste au centre.';
-  if (s === 'categorie') return 'Ta catégorie de poids guidera ton cap, si tu en as une.';
+  if (s === 'recompo') return traduire('Perdre du gras et prendre du muscle : une recomposition. Ton poids baisse lentement.');
+  if (s === 'stable' && l.includes('gain')) return traduire('Ton poids reste stable pendant que le muscle se construit.');
+  if (s === 'hausse') return combat ? traduire('Une prise de poids lente, pour du muscle plutôt que du gras, sans perdre ta forme de combat.') : traduire('Une prise de poids lente, pour du muscle plutôt que du gras.');
+  if (s === 'baisse' && combat) return traduire('Ton poids baisse, ta forme de combat reste au centre.');
+  if (s === 'stable' && combat) return traduire('Ton poids reste stable, ta forme de combat reste au centre.');
+  if (s === 'categorie') return traduire('Ta catégorie de poids guidera ton cap, si tu en as une.');
   return null;
 }
 

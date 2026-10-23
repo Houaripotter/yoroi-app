@@ -23,6 +23,7 @@ import type { Domaine } from '@/components/yoroi/v2/accueil/domaines';
 import { PictoCarnet, PictoTableur, PictoTroisApps } from './PictosEvolution';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Rythme du recit : un etage toutes les 1,5 s (au moins 1,2 s demande), fondu de 0,7 s */
 export const ETAGE_MS = 1500;
@@ -32,9 +33,9 @@ const FONDU_MS = 700;
 const KABUTO = require('@/assets/avatars/app/ornements/kabuto.webp');
 
 const AVANT: { cle: string; quand: string; titre: string; sous: string; Picto: React.ComponentType<{ size?: number }> }[] = [
-  { cle: 'carnet', quand: 'Avant', titre: 'Le carnet papier', sous: 'Des pages qui se perdent.', Picto: PictoCarnet },
-  { cle: 'tableur', quand: 'Puis', titre: 'Le tableur', sous: 'Des colonnes à remplir le soir.', Picto: PictoTableur },
-  { cle: 'apps', quand: 'Puis', titre: 'Trois apps différentes', sous: 'Rien ne se parle.', Picto: PictoTroisApps },
+  { cle: 'carnet', quand: traduire('Avant'), titre: traduire('Le carnet papier'), sous: traduire('Des pages qui se perdent.'), Picto: PictoCarnet },
+  { cle: 'tableur', quand: 'Puis', titre: traduire('Le tableur'), sous: traduire('Des colonnes à remplir le soir.'), Picto: PictoTableur },
+  { cle: 'apps', quand: 'Puis', titre: traduire('Trois apps différentes'), sous: traduire('Rien ne se parle.'), Picto: PictoTroisApps },
 ];
 
 /**
@@ -43,10 +44,10 @@ const AVANT: { cle: string; quand: string; titre: string; sous: string; Picto: R
  */
 const TUILES: { src: ImageSourcePropType; titre: string; domaine: Domaine }[] = [
   { src: require('@/assets/avatars/app/sceaux/decouverte/balance.webp'), titre: 'Poids', domaine: 'poids' },
-  { src: require('@/assets/avatars/app/carnet/musculation.webp'), titre: 'Séances', domaine: 'seances' },
-  { src: require('@/assets/avatars/app/sceaux/regularite/lune_soleil.webp'), titre: 'Ta santé', domaine: 'forme' },
+  { src: require('@/assets/avatars/app/carnet/musculation.webp'), titre: traduire('Séances'), domaine: 'seances' },
+  { src: require('@/assets/avatars/app/sceaux/regularite/lune_soleil.webp'), titre: traduire('Ta santé'), domaine: 'forme' },
   { src: require('@/assets/avatars/app/ornements/vague.webp'), titre: 'Eau', domaine: 'eau' },
-  { src: require('@/assets/avatars/app/ornements/kabuto.webp'), titre: 'Compétitions', domaine: 'competition' },
+  { src: require('@/assets/avatars/app/ornements/kabuto.webp'), titre: traduire('Compétitions'), domaine: 'competition' },
   { src: require('@/assets/avatars/app/sceaux/decouverte/metre_ruban.webp'), titre: 'Mensurations', domaine: 'mensurations' },
 ];
 
@@ -127,7 +128,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
   const yoroi = etape >= 4;
 
   return (
-    <Shell {...nav} title="Tout au **même endroit**" gap={0} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Tout au **même endroit**")} gap={0} footer={<MainButton label="Continuer" onPress={onNext} />}>
       <View style={{ height: petit ? 6 : 16 }} />
       {AVANT.map((e, i) => (
         <React.Fragment key={e.cle}>
@@ -141,14 +142,14 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
           entering={calme ? undefined : FadeInDown.duration(FONDU_MS)}
           style={{ borderRadius: 24, backgroundColor: ENCRES.indigo.fond, borderWidth: 2, borderColor: ENCRES.indigo.ink, padding: 14, gap: 12 }}
         >
-          <View accessible accessibilityRole="header" accessibilityLabel="Aujourd’hui : tout est dans YOROI. Tout ton suivi, une seule app." style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View accessible accessibilityRole="header" accessibilityLabel={traduire("Aujourd’hui : tout est dans YOROI. Tout ton suivi, une seule app.")} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ width: picto + 12, height: picto + 12, borderRadius: 18, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               <Image source={perso ?? KABUTO} style={{ width: picto + 4, height: picto + 4 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={12} weight="extraBold" color={ENCRES.indigo.ink} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>Aujourd’hui</Ink>
+              <Ink size={12} weight="extraBold" color={ENCRES.indigo.ink} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{traduire("Aujourd’hui")}</Ink>
               <Ink size={petit ? 24 : 28} weight="black" tight color={c.ink} style={{ letterSpacing: 3 }}>YOROI</Ink>
-              <Riche text="Tout ton suivi. **Une seule app.**" size={14} weight="bold" color={c.ink} ink={ENCRES.indigo.ink} />
+              <Riche text={traduire("Tout ton suivi. **Une seule app.**")} size={14} weight="bold" color={c.ink} ink={ENCRES.indigo.ink} />
             </View>
           </View>
           {etape >= 5 ? (
@@ -168,7 +169,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
       {etape >= 5 ? (
         <Animated.View entering={calme ? undefined : FadeIn.delay(300).duration(FONDU_MS)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 14 }}>
           <Icon name="shield" size={16} color={c.accent} />
-          <Riche text="**Hors ligne**, tout reste sur ton téléphone" size={14} weight="bold" color={c.ink} />
+          <Riche text={traduire("**Hors ligne**, tout reste sur ton téléphone")} size={14} weight="bold" color={c.ink} />
         </Animated.View>
       ) : null}
     </Shell>

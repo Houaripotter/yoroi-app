@@ -25,6 +25,7 @@ import {
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -98,26 +99,26 @@ export function generateCSVTemplate(): string {
   lines.push(CSV_HEADERS.join(','));
 
   // Examples - POIDS
-  lines.push('POIDS,2025-01-15,82.5,18.2,42.1,55.3,3.2,8,35,1850,Apres competition,csv,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,');
-  lines.push('POIDS,2025-01-20,81.8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,');
+  lines.push(traduire('POIDS,2025-01-15,82.5,18.2,42.1,55.3,3.2,8,35,1850,Apres competition,csv,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,'));
+  lines.push(traduire('POIDS,2025-01-20,81.8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,'));
 
   // Examples - ENTRAÎNEMENT
-  lines.push('ENTRAÎNEMENT,2025-01-15,,,,,,,,,,jjb,18:30,90,8,650,,5,5,dos|epaules,,0,,,,,Bonne séance,,,,,,,,,,,,,,,,');
-  lines.push('ENTRAÎNEMENT,2025-01-16,,,,,,,,,,running,07:00,45,6,380,8.5,,,,,,1,,12,,,Footing matinal,,,,,,,,,,,,,,,,');
+  lines.push(traduire('ENTRAÎNEMENT,2025-01-15,,,,,,,,,,jjb,18:30,90,8,650,,5,5,dos|epaules,,0,,,,,Bonne séance,,,,,,,,,,,,,,,,'));
+  lines.push(traduire('ENTRAÎNEMENT,2025-01-16,,,,,,,,,,running,07:00,45,6,380,8.5,,,,,,1,,12,,,Footing matinal,,,,,,,,,,,,,,,,'));
 
   // Examples - MENSURATION
   lines.push('MENSURATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,102,78,82,97,36,37,58,59,38,39,120,38,,,,,,');
 
   // Examples - SOMMEIL
-  lines.push('SOMMEIL,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23:00,07:00,4,,,,');
-  lines.push('SOMMEIL,2025-01-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,22:30,06:45,3,,,,');
+  lines.push(traduire('SOMMEIL,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23:00,07:00,4,,,,'));
+  lines.push(traduire('SOMMEIL,2025-01-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,22:30,06:45,3,,,,'));
 
   // Examples - HYDRATATION
-  lines.push('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,500,,');
-  lines.push('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,350,,');
+  lines.push(traduire('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,500,,'));
+  lines.push(traduire('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,350,,'));
 
   // Examples - HUMEUR
-  lines.push('HUMEUR,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,bien,4');
+  lines.push(traduire('HUMEUR,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,bien,4'));
 
   return lines.join('\n');
 }
@@ -285,7 +286,7 @@ export function validateRow(type: CSVRowType, data: Record<string, string>): Row
 
   // Validate YYYY-MM-DD format
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return { valid: false, error: `Format de date invalide: "${date}". Utiliser YYYY-MM-DD` };
+    return { valid: false, error: traduire("Format de date invalide: \"{0}\". Utiliser YYYY-MM-DD", date) };
   }
 
   const dateResult = validateDate(date);
@@ -314,7 +315,7 @@ export function validateRow(type: CSVRowType, data: Record<string, string>): Row
 function validatePoidsRow(data: Record<string, string>, errors: string[]): RowValidation {
   const weight = getOptionalFloat(data, 'weight');
   if (weight === undefined) {
-    return { valid: false, error: 'Poids manquant' };
+    return { valid: false, error: traduire('Poids manquant') };
   }
   const wr = validateWeight(weight);
   if (!wr.valid) errors.push(wr.error!);
@@ -374,13 +375,13 @@ function validateEntrainementRow(data: Record<string, string>, errors: string[])
 
   const technique = getOptionalFloat(data, 'technique_rating');
   if (technique !== undefined) {
-    const r = validateNumber(technique, 1, 5, 'Technique');
+    const r = validateNumber(technique, 1, 5, traduire('Technique'));
     if (!r.valid) errors.push(r.error!);
   }
 
   const calories = getOptionalFloat(data, 'calories');
   if (calories !== undefined) {
-    const r = validateNumber(calories, 0, 5000, 'Calories');
+    const r = validateNumber(calories, 0, 5000, traduire('Calories'));
     if (!r.valid) errors.push(r.error!);
   }
 
@@ -406,7 +407,7 @@ function validateMensurationRow(data: Record<string, string>, errors: string[]):
   }
 
   if (!hasAtLeastOne) {
-    return { valid: false, error: 'Au moins une mensuration requise' };
+    return { valid: false, error: traduire('Au moins une mensuration requise') };
   }
 
   return errors.length > 0
@@ -418,16 +419,16 @@ function validateSommeilRow(data: Record<string, string>, errors: string[]): Row
   const bedTime = getOptionalString(data, 'bedTime');
   const wakeTime = getOptionalString(data, 'wakeTime');
 
-  if (!bedTime) return { valid: false, error: 'Heure de coucher manquante' };
-  if (!wakeTime) return { valid: false, error: 'Heure de reveil manquante' };
+  if (!bedTime) return { valid: false, error: traduire('Heure de coucher manquante') };
+  if (!wakeTime) return { valid: false, error: traduire('Heure de reveil manquante') };
 
   const timeRegex = /^\d{2}:\d{2}$/;
-  if (!timeRegex.test(bedTime)) errors.push(`Format heure coucher invalide: "${bedTime}". Utiliser HH:MM`);
-  if (!timeRegex.test(wakeTime)) errors.push(`Format heure reveil invalide: "${wakeTime}". Utiliser HH:MM`);
+  if (!timeRegex.test(bedTime)) errors.push(traduire("Format heure coucher invalide: \"{0}\". Utiliser HH:MM", bedTime));
+  if (!timeRegex.test(wakeTime)) errors.push(traduire("Format heure reveil invalide: \"{0}\". Utiliser HH:MM", wakeTime));
 
   const quality = getOptionalFloat(data, 'quality');
   if (quality !== undefined) {
-    const r = validateNumber(quality, 1, 5, 'Qualité sommeil');
+    const r = validateNumber(quality, 1, 5, traduire('Qualité sommeil'));
     if (!r.valid) errors.push(r.error!);
   }
 
@@ -451,9 +452,9 @@ function validateHumeurRow(data: Record<string, string>, errors: string[]): RowV
   if (!mood) return { valid: false, error: 'Humeur (mood) manquante' };
 
   const energy = getOptionalFloat(data, 'energy');
-  if (energy === undefined) return { valid: false, error: 'Énergie (energy) manquante' };
+  if (energy === undefined) return { valid: false, error: traduire('Énergie (energy) manquante') };
 
-  const r = validateNumber(energy, 1, 5, 'Énergie');
+  const r = validateNumber(energy, 1, 5, traduire('Énergie'));
   if (!r.valid) return { valid: false, error: r.error };
 
   return { valid: true };
@@ -496,7 +497,7 @@ export async function importParsedRows(rows: ParsedCSVRow[]): Promise<CSVImportR
       importErrors.push({
         line: row.lineNumber,
         type: row.type,
-        error: err instanceof Error ? err.message : 'Erreur inconnue',
+        error: err instanceof Error ? err.message : traduire('Erreur inconnue'),
       });
     }
   }

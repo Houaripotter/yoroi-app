@@ -14,6 +14,7 @@ import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 // ===== Contexte du Studio =====
 
@@ -206,7 +207,7 @@ export function ActionTile({ icon, label, state, onPress, on, color, busy, disab
         <Icon name={busy ? 'sync' : icon} size={20} color={on ? '#FFFFFF' : color ?? c.accent} />
       </View>
       <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink} numberOfLines={2} style={{ lineHeight: 17 }}>{label}</Ink>
-      <Ink size={11.5} weight="bold" color={on ? 'rgba(255,255,255,0.9)' : c.textMuted} numberOfLines={2} style={{ lineHeight: 14 }}>{busy ? 'Un instant' : state}</Ink>
+      <Ink size={11.5} weight="bold" color={on ? 'rgba(255,255,255,0.9)' : c.textMuted} numberOfLines={2} style={{ lineHeight: 14 }}>{busy ? traduire('Un instant') : state}</Ink>
     </Pressable>
   );
 }
@@ -317,7 +318,7 @@ export function SearchField({ value, onChange, placeholder, label }: { value: st
         style={{ flex: 1, fontSize: 16, color: c.ink, paddingVertical: 12 }}
       />
       {value ? (
-        <Pressable onPress={() => onChange('')} accessibilityRole="button" accessibilityLabel="Effacer la recherche" hitSlop={8} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => onChange('')} accessibilityRole="button" accessibilityLabel={traduire("Effacer la recherche")} hitSlop={8} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="close" size={16} color={c.textMuted} />
         </Pressable>
       ) : null}
@@ -328,7 +329,7 @@ export function SearchField({ value, onChange, placeholder, label }: { value: st
 /** Demande de confirmation (une seule) */
 export function confirm(title: string, message: string, okLabel: string, onOk: () => void, destructive = false) {
   appAlert(title, message, [
-    { text: 'Annuler', style: 'cancel' },
+    { text: traduire('Annuler'), style: 'cancel' },
     { text: okLabel, style: destructive ? 'destructive' : 'default', onPress: onOk },
   ]);
 }

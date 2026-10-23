@@ -12,11 +12,12 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { fontFamilies } from '@/components/yoroi/fonts';
 import type { DayPoint } from '@/lib/v2/sante/stats';
 import { barPath, brushPath, CHART, Reveal } from '@/components/yoroi/v2/charts/core';
+import { traduire } from '@/lib/i18n/tr';
 
 export const SLEEP_COLORS = { deep: '#1F3566', core: '#4F6AA3', rem: '#93A6CF', awake: '#E3C47B' };
 /** Tension : chiffre haut en prune (famille coeur), chiffre bas en bleu clair ; paire validee (daltonisme et vision normale) */
 export const TENSION_COLORS: [string, string] = ['#7B3B63', '#5577B8'];
-export const SLEEP_LABELS = { deep: 'Profond', core: 'Léger', rem: 'Paradoxal', awake: 'Éveillé' };
+export const SLEEP_LABELS = { deep: 'Profond', core: traduire('Léger'), rem: 'Paradoxal', awake: traduire('Éveillé') };
 
 export function Legend({ items }: { items: { color: string; label: string; kind?: 'square' | 'line' }[] }) {
   return (

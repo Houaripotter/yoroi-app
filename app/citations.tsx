@@ -23,8 +23,9 @@ import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
 import { Toggle } from '@/components/yoroi/v2/accueil/sleepKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { partagerTexte } from '@/lib/v2/partage/texte';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-const FREQ_TEXT = ['', 'Une citation par jour.', 'Deux citations par jour.', 'Trois citations par jour.', 'Quatre citations par jour.', 'Cinq citations par jour.'];
+const FREQ_TEXT = ['', traduire('Une citation par jour.'), traduire('Deux citations par jour.'), traduire('Trois citations par jour.'), traduire('Quatre citations par jour.'), traduire('Cinq citations par jour.')];
 
 export default function Citations() {
   const [quote, setQuote] = useState<string | null>(null);
@@ -73,7 +74,7 @@ export default function Citations() {
       if (enabled) {
         const ok = await requestNotificationPermissions();
         if (!ok) {
-          appAlert('Autorisation nécessaire', 'Active les notifications pour YOROI dans les réglages de ton téléphone.');
+          appAlert(traduire('Autorisation nécessaire'), traduire('Active les notifications pour YOROI dans les réglages de ton téléphone.'));
           return;
         }
       }
@@ -83,7 +84,7 @@ export default function Citations() {
       const done = await updateCitationNotifications(next);
       if (enabled && done) {
         tap('success');
-        appAlert('Rappels activés', `Tu recevras ${next.frequency} citation${next.frequency > 1 ? 's' : ''} par jour, prévues pour les 7 prochains jours.`, [
+        appAlert(traduire('Rappels activés'), traduirePluriel(next.frequency, next.frequency > 1, "Tu recevras {0} citation par jour, prévues pour les 7 prochains jours.", "Tu recevras {0} citations par jour, prévues pour les 7 prochains jours.", next.frequency), [
           { text: 'OK' },
           { text: 'Essayer maintenant', onPress: () => sendImmediateCitationNotification() },
         ]);
@@ -105,33 +106,30 @@ export default function Citations() {
   };
 
   return (
-    <DetailScreen title="Citations" subtitle="Un mot pour te lancer chaque jour">
+    <DetailScreen title="Citations" subtitle={traduire("Un mot pour te lancer chaque jour")}>
       <Enter i={0}>
         <View style={{ borderRadius: 26, backgroundColor: P.ink, padding: 24, gap: 18, overflow: 'hidden' }}>
           <View pointerEvents="none" style={{ position: 'absolute', right: -30, bottom: -30 }}>
             <Glyph kind="sakura" size={170} color={paletteSombre() ? '#D6D4CC' : '#262A35'} />
           </View>
           <Ink size={13} weight="bold" color={paletteSombre() ? '#B0282E' : '#E9A6A0'}>
-            Ta citation du jour
-          </Ink>
+            {traduire("Ta citation du jour")}</Ink>
           <Ink size={23} weight="black" color={P.white} style={{ lineHeight: 31 }}>
-            {quote ? `« ${quote} »` : 'Ta citation arrive.'}
+            {quote ? `« ${quote} »` : traduire('Ta citation arrive.')}
           </Ink>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Press onPress={another} haptic="none" accessibilityRole="button" accessibilityLabel="Une autre citation">
+            <Press onPress={another} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Une autre citation")}>
               <View style={{ height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: P.accent, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Icon name="refresh" size={17} color={P.white} />
                 <Ink size={14} weight="extraBold" color={P.white}>
-                  Une autre
-                </Ink>
+                  {traduire("Une autre")}</Ink>
               </View>
             </Press>
-            <Press onPress={share} haptic="none" accessibilityRole="button" accessibilityLabel="Partager la citation">
+            <Press onPress={share} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Partager la citation")}>
               <View style={{ height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: '#30343F', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Icon name="share" size={17} color={P.white} />
                 <Ink size={14} weight="extraBold" color={P.white}>
-                  Partager
-                </Ink>
+                  {traduire("Partager")}</Ink>
               </View>
             </Press>
           </View>
@@ -139,7 +137,7 @@ export default function Citations() {
       </Enter>
 
       <Enter i={1} style={{ gap: 10 }}>
-        <SectionTitle>Ton style</SectionTitle>
+        <SectionTitle>{traduire("Ton style")}</SectionTitle>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {CITATION_STYLE_OPTIONS.map((o) => {
             const on = o.id === style;
@@ -149,7 +147,7 @@ export default function Citations() {
                   <View style={{ minHeight: 96, borderRadius: 20, padding: 14, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2, gap: 4, overflow: 'hidden' }}>
                     <Glyph kind="sakura" size={20} color={on ? P.goldLight : P.goldDark} />
                     <Ink size={16} weight="black" tight color={on ? P.white : P.ink}>
-                      {o.label === 'Perseverance' ? 'Persévérance' : o.label}
+                      {o.label === 'Perseverance' ? traduire('Persévérance') : o.label}
                     </Ink>
                     <Ink size={12} weight="bold" color={on ? (paletteSombre() ? '#4A4E5A' : '#B9BBC4') : P.ink2} numberOfLines={2}>
                       {o.description.replace('Depassement', 'Dépassement').replace('Melange aleatoire', 'Mélange aléatoire').replace('Mindset de champion', 'Mental de champion')}
@@ -163,18 +161,16 @@ export default function Citations() {
       </Enter>
 
       <Enter i={2} style={{ gap: 10 }}>
-        <SectionTitle>Tes rappels</SectionTitle>
+        <SectionTitle>{traduire("Tes rappels")}</SectionTitle>
         <Card style={{ gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Ink size={15} weight="extraBold">
-                Recevoir des citations
-              </Ink>
+                {traduire("Recevoir des citations")}</Ink>
               <Ink size={13} weight="medium" color={P.ink2}>
-                Une notification pour te motiver.
-              </Ink>
+                {traduire("Une notification pour te motiver.")}</Ink>
             </View>
-            <Toggle value={notif.enabled} onChange={toggle} label="Recevoir des citations" />
+            <Toggle value={notif.enabled} onChange={toggle} label={traduire("Recevoir des citations")} />
           </View>
           {notif.enabled ? (
             <View style={{ gap: 10 }}>

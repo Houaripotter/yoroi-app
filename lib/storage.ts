@@ -9,6 +9,7 @@ import logger from './security/logger';
 import secureStorage from './security/secureStorage';
 import { rebaseLocalUri } from './v2/sauvegarde/chemins';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 // ThemeName supprimé - utilise maintenant string pour compatibilité avec le nouveau système de thèmes
 
 // ============================================
@@ -100,13 +101,13 @@ export interface LogoOption {
 // (logo_new, logo1 a logo6) n'existent plus : getSelectedLogo les ramene a 'default'.
 export const LOGO_OPTIONS: LogoOption[] = [
   { id: 'default', name: 'Noir', description: 'Logo officiel', isPremium: false, color: '#17151A', nativeName: null, image: require('@/assets/images/logos_couleurs/logo_default.png') },
-  { id: 'bleu_nuit', name: 'Bleu nuit', description: 'Fond bleu nuit', isPremium: false, color: '#1D2340', nativeName: 'BleuNuit', image: require('@/assets/images/logos_couleurs/logo_bleu_nuit.png') },
+  { id: 'bleu_nuit', name: 'Bleu nuit', description: traduire('Fond bleu nuit'), isPremium: false, color: '#1D2340', nativeName: 'BleuNuit', image: require('@/assets/images/logos_couleurs/logo_bleu_nuit.png') },
   { id: 'indigo', name: 'Indigo', description: 'Fond indigo', isPremium: false, color: '#2C4A84', nativeName: 'Indigo', image: require('@/assets/images/logos_couleurs/logo_indigo.png') },
   { id: 'papier', name: 'Papier', description: 'Fond clair', isPremium: false, color: '#F2F1EC', nativeName: 'Papier', image: require('@/assets/images/logos_couleurs/logo_papier.png') },
   { id: 'ardoise', name: 'Ardoise', description: 'Fond ardoise', isPremium: true, color: '#3A3F4A', nativeName: 'Ardoise', image: require('@/assets/images/logos_couleurs/logo_ardoise.png') },
-  { id: 'foret', name: 'Forêt', description: 'Fond vert forêt', isPremium: true, color: '#1F3A2E', nativeName: 'Foret', image: require('@/assets/images/logos_couleurs/logo_foret.png') },
+  { id: 'foret', name: traduire('Forêt'), description: traduire('Fond vert forêt'), isPremium: true, color: '#1F3A2E', nativeName: 'Foret', image: require('@/assets/images/logos_couleurs/logo_foret.png') },
   { id: 'bordeaux', name: 'Bordeaux', description: 'Fond bordeaux', isPremium: true, color: '#4A1E2A', nativeName: 'Bordeaux', image: require('@/assets/images/logos_couleurs/logo_bordeaux.png') },
-  { id: 'crepuscule', name: 'Crépuscule', description: 'Dégradé indigo vers nuit', isPremium: true, color: '#2C4A84', nativeName: 'Crepuscule', image: require('@/assets/images/logos_couleurs/logo_crepuscule.png') },
+  { id: 'crepuscule', name: 'Crépuscule', description: traduire('Dégradé indigo vers nuit'), isPremium: true, color: '#2C4A84', nativeName: 'Crepuscule', image: require('@/assets/images/logos_couleurs/logo_crepuscule.png') },
 ];
 
 /** ramene toute valeur inconnue (anciens logos, valeur corrompue) au logo par defaut */
@@ -161,14 +162,14 @@ export interface HomeSection {
 }
 
 export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
-  { id: 'hero', label: 'Poids actuel', visible: true },
-  { id: 'composition', label: 'Composition corporelle', visible: true },
-  { id: 'prediction', label: 'Prédiction', visible: true },
-  { id: 'shortcuts', label: 'Accès rapide', visible: true },
-  { id: 'score_streak', label: 'Mon parcours', visible: true },
-  { id: 'quests', label: 'Quêtes du jour', visible: true },
-  { id: 'hydration', label: 'Hydratation', visible: true },
-  { id: 'activity_chart', label: 'Activité semaine', visible: true },
+  { id: 'hero', label: traduire('Poids actuel'), visible: true },
+  { id: 'composition', label: traduire('Composition corporelle'), visible: true },
+  { id: 'prediction', label: traduire('Prédiction'), visible: true },
+  { id: 'shortcuts', label: traduire('Accès rapide'), visible: true },
+  { id: 'score_streak', label: traduire('Mon parcours'), visible: true },
+  { id: 'quests', label: traduire('Quêtes du jour'), visible: true },
+  { id: 'hydration', label: traduire('Hydratation'), visible: true },
+  { id: 'activity_chart', label: traduire('Activité semaine'), visible: true },
   { id: 'composition_chart', label: 'Graphique composition', visible: true },
   { id: 'quote', label: 'Citation', visible: true },
 ];
@@ -776,7 +777,7 @@ export const savePhotoToStorage = async (
     return newPhoto;
   } catch (error: unknown) {
     logger.error('Erreur sauvegarde photo:', error);
-    appAlert('Oups', 'La photo n’a pas pu être enregistrée. Réessaie.');
+    appAlert('Oups', traduire('La photo n’a pas pu être enregistrée. Réessaie.'));
     return null;
   }
 };
@@ -941,7 +942,7 @@ export const getUserClubs = async (): Promise<UserClub[]> => {
       },
       {
         id: generateId(),
-        name: 'Extérieur',
+        name: traduire('Extérieur'),
         type: 'running',
         logoUri: null,
         created_at: new Date().toISOString(),
@@ -1014,7 +1015,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Kimono Blanc',
-        brand: 'Mon kimono',
+        brand: traduire('Mon kimono'),
         type: 'kimono',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -1022,7 +1023,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Chaussures Running',
-        brand: 'Mes chaussures',
+        brand: traduire('Mes chaussures'),
         type: 'chaussure',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -1030,7 +1031,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Gants de Boxe',
-        brand: 'Mes gants',
+        brand: traduire('Mes gants'),
         type: 'gants',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -1213,7 +1214,7 @@ export const exportData = async (): Promise<boolean> => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      appAlert('Sauvegarde prête', 'Le fichier de sauvegarde est téléchargé.');
+      appAlert(traduire('Sauvegarde prête'), traduire('Le fichier de sauvegarde est téléchargé.'));
       return true;
     }
 
@@ -1226,7 +1227,7 @@ export const exportData = async (): Promise<boolean> => {
       // Fallback : copier dans le presse-papier ou afficher les données
       appAlert(
         'Export alternatif',
-        `Données exportées :\n- ${stats.measurements} mesures\n- ${stats.workouts} entraînements\n- ${stats.photos} photos\n\nL’enregistrement de fichiers n’est pas disponible sur cet appareil.`,
+        traduire("Données exportées :\n- {0} mesures\n- {1} entraînements\n- {2} photos\n\nL’enregistrement de fichiers n’est pas disponible sur cet appareil.", stats.measurements, stats.workouts, stats.photos),
         [{ text: 'OK' }]
       );
       return true;
@@ -1243,16 +1244,16 @@ export const exportData = async (): Promise<boolean> => {
     if (canShare) {
       await shareAsync(fileUri, {
         mimeType: 'application/json',
-        dialogTitle: 'Sauvegarder tes données Yoroi',
+        dialogTitle: traduire('Sauvegarder tes données Yoroi'),
       });
     } else {
-      appAlert('Sauvegarde prête', `Fichier créé : ${filename}`);
+      appAlert(traduire('Sauvegarde prête'), traduire("Fichier créé : {0}", filename));
     }
     
     return true;
   } catch (error: unknown) {
     logger.error('Erreur export:', error);
-    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
+    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
     return false;
   }
 };
@@ -1271,7 +1272,7 @@ export const importData = async (): Promise<boolean> => {
     const uri = result.assets ? result.assets[0].uri : null;
 
     if (!uri) {
-      appAlert('Aucun fichier', 'Choisis un fichier de sauvegarde.');
+      appAlert(traduire('Aucun fichier'), traduire('Choisis un fichier de sauvegarde.'));
       return false;
     }
 
@@ -1290,28 +1291,28 @@ export const importData = async (): Promise<boolean> => {
       backup = JSON.parse(fileContent);
     } catch (parseError) {
       logger.error('JSON parse error in importData:', parseError);
-      appAlert('Fichier illisible', 'Ce fichier de sauvegarde ne peut pas être lu.');
+      appAlert('Fichier illisible', traduire('Ce fichier de sauvegarde ne peut pas être lu.'));
       return false;
     }
 
     if (!backup || backup.version !== 1) {
-      appAlert('Fichier illisible', 'Ce fichier de sauvegarde est abîmé ou incomplet.');
+      appAlert('Fichier illisible', traduire('Ce fichier de sauvegarde est abîmé ou incomplet.'));
       return false;
     }
 
     // Validate array contents
     if (!Array.isArray(backup.measurements) || !Array.isArray(backup.workouts) ||
         !Array.isArray(backup.photos) || !Array.isArray(backup.badges)) {
-      appAlert('Fichier illisible', 'Ce fichier contient des données que YOROI ne reconnaît pas.');
+      appAlert('Fichier illisible', traduire('Ce fichier contient des données que YOROI ne reconnaît pas.'));
       return false;
     }
 
     const confirm = await new Promise<boolean>((resolve) => {
       appAlert(
-        'Remplacer tes données ?',
-        `Toutes tes données actuelles seront remplacées.\n\nLe fichier contient :\n- ${backup.stats.measurements} mesures\n- ${backup.stats.workouts} entraînements\n- ${backup.stats.photos} photos\n\nContinuer ?`,
+        traduire('Remplacer tes données ?'),
+        traduire("Toutes tes données actuelles seront remplacées.\n\nLe fichier contient :\n- {0} mesures\n- {1} entraînements\n- {2} photos\n\nContinuer ?", backup.stats.measurements, backup.stats.workouts, backup.stats.photos),
         [
-          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+          { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
           { text: 'Confirmer', style: 'destructive', onPress: () => resolve(true) },
         ]
       );
@@ -1328,11 +1329,11 @@ export const importData = async (): Promise<boolean> => {
     await secureStorage.setItem(STORAGE_KEYS.USER_SETTINGS, backup.settings || {});
     await saveData(STORAGE_KEYS.USER_BADGES, backup.badges || []);
 
-    appAlert('Restauration réussie', 'Tes données sont revenues.');
+    appAlert(traduire('Restauration réussie'), traduire('Tes données sont revenues.'));
     return true;
   } catch (error: unknown) {
     logger.error('Erreur importation:', error);
-    appAlert('Oups', 'L’import n’a pas abouti. Vérifie le fichier et réessaie.');
+    appAlert('Oups', traduire('L’import n’a pas abouti. Vérifie le fichier et réessaie.'));
     return false;
   }
 };
@@ -1408,21 +1409,21 @@ export const effacerToutesMesDonnees = async (): Promise<ResultatEffacement> => 
       await Notifications.setBadgeCountAsync(0).catch(() => false);
     });
   }
-  await etape('historique des notifications', async () => {
+  await etape(traduire('historique des notifications'), async () => {
     const { clearAll } = (require('./notificationHistoryService') as typeof import('./notificationHistoryService'));
     await clearAll();
   });
 
   // 2. Appareils appaires (cle de chiffrement de la synchro comprise)
   if (Platform.OS !== 'web') {
-    await etape('appareils appairés', async () => {
+    await etape(traduire('appareils appairés'), async () => {
       const { oublierTousLesAppareils } = (require('./peerSyncService') as typeof import('./peerSyncService'));
       await oublierTousLesAppareils();
     });
   }
 
   // 3. Base SQLite
-  await etape('base de données', async () => {
+  await etape(traduire('base de données'), async () => {
     const { openDatabase } = (require('./database') as typeof import('./database'));
     const db = await openDatabase();
     if (!db) return; // web : pas de SQLite
@@ -1491,7 +1492,7 @@ export const effacerToutesMesDonnees = async (): Promise<ResultatEffacement> => 
     const ratees = resultats.filter((r) => !r).length;
     if (ratees) throw new Error(`${ratees} clé(s) du trousseau non effacée(s)`);
   });
-  await etape('réglages', async () => {
+  await etape(traduire('réglages'), async () => {
     await AsyncStorage.clear();
   });
 
@@ -1899,9 +1900,9 @@ export const analyzeHydrationWeightCorrelation = async (): Promise<{
     let recommendation = '';
     if (avgHigh < avgLow) {
       const diff = Math.abs(avgLow - avgHigh).toFixed(2);
-      recommendation = `Les jours où tu bois plus de ${(goalMl * 0.8 / 1000).toFixed(1)}L, tu perds en moyenne ${diff} kg de plus !`;
+      recommendation = traduire("Les jours où tu bois plus de {0}L, tu perds en moyenne {1} kg de plus !", (goalMl * 0.8 / 1000).toFixed(1), diff);
     } else {
-      recommendation = 'Continue à bien t\'hydrater pour optimiser ta perte de poids.';
+      recommendation = traduire('Continue à bien t\'hydrater pour optimiser ta perte de poids.');
     }
 
     return {

@@ -1,6 +1,7 @@
 // ============================================
 // SPORT PACKS : mapping des sports vers des packs d'onglets
 // ============================================
+import { traduire } from '@/lib/i18n/tr';
 
 export type SportPack = 'combat' | 'endurance' | 'force' | 'musculation' | 'nature' | 'all';
 
@@ -60,7 +61,7 @@ export interface PackMeta {
 export const PACK_META: Record<SportPack, PackMeta> = {
   combat: {
     key: 'combat',
-    label: 'Combat',
+    label: traduire('Combat'),
     emoji: '',
     description: 'JJB, MMA, Boxe, Grappling',
     color: '#DC2626',
@@ -94,15 +95,15 @@ export const PACK_META: Record<SportPack, PackMeta> = {
     key: 'nature',
     label: 'Nature',
     emoji: '',
-    description: 'Escalade, ski, extérieur',
+    description: traduire('Escalade, ski, extérieur'),
     color: '#8B5CF6',
     primarySport: 'climbing',
   },
   all: {
     key: 'all',
-    label: 'Tous',
+    label: traduire('Tous'),
     emoji: '',
-    description: 'Tous sports mélangés',
+    description: traduire('Tous sports mélangés'),
     color: '#6B7280',
     primarySport: '',
   },

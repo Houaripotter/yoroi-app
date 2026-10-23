@@ -15,6 +15,7 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import { formatRelative } from '@/lib/utils/formatDate';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 interface SafetyBackup {
   name: string;
@@ -44,11 +45,11 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
     const latest = safeties[0];
     const confirmed = await new Promise<boolean>((resolve) => {
       appAlert(
-        'Restaurer l’état précédent ?',
-        `Tu vas revenir à l'état de tes données avant la dernière action risquée (${latest.label}, ${formatRelative(latest.date)}).\n\nLes modifications faites depuis seront remplacées.\n\nUne nouvelle sauvegarde de sécurité est créée avant la restauration, tu peux toujours revenir en arrière.`,
+        traduire('Restaurer l’état précédent ?'),
+        traduire("Tu vas revenir à l'état de tes données avant la dernière action risquée ({0}, {1}).\n\nLes modifications faites depuis seront remplacées.\n\nUne nouvelle sauvegarde de sécurité est créée avant la restauration, tu peux toujours revenir en arrière.", latest.label, formatRelative(latest.date)),
         [
-          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-          { text: 'Restaurer', style: 'destructive', onPress: () => resolve(true) },
+          { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
+          { text: traduire('Restaurer'), style: 'destructive', onPress: () => resolve(true) },
         ]
       );
     });
@@ -63,14 +64,14 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
       const ok = await importDataFromBackupObject(data);
       if (ok) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-        appAlert('Restauration réussie', 'Ton état précédent a été restauré.');
+        appAlert(traduire('Restauration réussie'), traduire('Ton état précédent a été restauré.'));
         await refresh();
       } else {
-        appAlert('Oups', 'L’état précédent n’a pas pu être restauré.');
+        appAlert('Oups', traduire('L’état précédent n’a pas pu être restauré.'));
       }
     } catch (e) {
       logger.error('[SafetyBackupRestore] Erreur:', e);
-      appAlert('Restauration impossible', 'Le fichier est peut-être abîmé.');
+      appAlert(traduire('Restauration impossible'), traduire('Le fichier est peut-être abîmé.'));
     } finally {
       setRestoring(false);
     }
@@ -87,10 +88,9 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
           <Shield size={18} color="#F59E0B" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text }]}>Revenir à un état précédent</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{traduire("Revenir à un état précédent")}</Text>
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
-            {safeties.length} sauvegarde{safeties.length > 1 ? 's' : ''} de sécurité, dernière {formatRelative(latest.date)}
-          </Text>
+            {traduirePluriel(safeties.length, safeties.length > 1, "{0} sauvegarde de sécurité, dernière {1}", "{0} sauvegardes de sécurité, dernière {1}", safeties.length, formatRelative(latest.date))}</Text>
         </View>
       </View>
 
@@ -99,7 +99,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
         disabled={restoring}
         activeOpacity={0.8}
         style={[styles.btn, { backgroundColor: '#F59E0B', opacity: restoring ? 0.6 : 1 }]}
-        accessibilityLabel="Restaurer au dernier état précédent"
+        accessibilityLabel={traduire("Restaurer au dernier état précédent")}
         accessibilityRole="button"
       >
         {restoring ? (
@@ -108,7 +108,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
           <RotateCcw size={14} color="#fff" strokeWidth={2.5} />
         )}
         <Text style={styles.btnText}>
-          {restoring ? 'Restauration…' : 'Annuler la dernière restauration'}
+          {restoring ? 'Restauration…' : traduire('Annuler la dernière restauration')}
         </Text>
       </TouchableOpacity>
     </View>

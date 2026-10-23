@@ -12,14 +12,15 @@
  */
 import type { Training } from '@/lib/database';
 import { estMemeSeance, richesseSeance } from './dedupe';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type PeriodeImport = '30j' | '3m' | '1a' | 'tout';
 
 export const PERIODES_IMPORT: { key: PeriodeImport; label: string; jours: number | null }[] = [
-  { key: '30j', label: '30 jours', jours: 30 },
-  { key: '3m', label: '3 mois', jours: 92 },
+  { key: '30j', label: traduire('30 jours'), jours: 30 },
+  { key: '3m', label: traduire('3 mois'), jours: 92 },
   { key: '1a', label: '1 an', jours: 366 },
-  { key: 'tout', label: 'Tout', jours: null },
+  { key: 'tout', label: traduire('Tout'), jours: null },
 ];
 
 export const joursDe = (p: PeriodeImport): number | null => PERIODES_IMPORT.find((x) => x.key === p)?.jours ?? null;
@@ -130,15 +131,15 @@ const n = (v: number, un: string, plusieurs: string) => `${v} ${v > 1 ? plusieur
 /** « 12 séances importées, 3 déjà présentes », puis le détail (reliées, en double, erreurs) */
 export function texteResultat(r: ResultatImport, source: string): { titre: string; detail: string } {
   if (r.trouvees === 0) {
-    return { titre: 'Aucune séance trouvée', detail: `${source} n’a aucune séance sur cette période.` };
+    return { titre: traduire('Aucune séance trouvée'), detail: traduire("{0} n’a aucune séance sur cette période.", source) };
   }
   const deja = r.dejaPresentes + r.reliees;
   let titre: string;
-  if (r.importees === 0) titre = deja > 0 ? `Rien de nouveau, ${n(deja, 'séance déjà présente', 'séances déjà présentes')}` : 'Aucune séance importée';
-  else titre = `${n(r.importees, 'séance importée', 'séances importées')}${deja > 0 ? `, ${deja} déjà présente${deja > 1 ? 's' : ''}` : ''}`;
+  if (r.importees === 0) titre = deja > 0 ? traduire("Rien de nouveau, {0}", n(deja, 'séance déjà présente', 'séances déjà présentes')) : traduire('Aucune séance importée');
+  else titre = `${n(r.importees, traduire('séance importée'), traduire('séances importées'))}${deja > 0 ? traduirePluriel(deja, deja > 1, ", {0} déjà présente", ", {0} déjà présentes", deja) : ''}`;
   const lignes: string[] = [];
-  if (r.reliees > 0) lignes.push(`${n(r.reliees, 'séance reliée', 'séances reliées')} à celles notées dans YOROI ou par ta montre YOROI, sans doublon.`);
-  if (r.enDouble > 0) lignes.push(`${n(r.enDouble, 'séance en double', 'séances en double')} dans ${source}, gardée${r.enDouble > 1 ? 's' : ''} une seule fois.`);
-  if (r.erreurs > 0) lignes.push(`${n(r.erreurs, 'séance n’a pas pu être enregistrée', 'séances n’ont pas pu être enregistrées')}. Relance l’import pour réessayer.`);
+  if (r.reliees > 0) lignes.push(traduire("{0} à celles notées dans YOROI ou par ta montre YOROI, sans doublon.", n(r.reliees, 'séance reliée', 'séances reliées')));
+  if (r.enDouble > 0) lignes.push(traduirePluriel(r.enDouble, r.enDouble > 1, "{0} dans {1}, gardée une seule fois.", "{0} dans {1}, gardées une seule fois.", n(r.enDouble, 'séance en double', 'séances en double'), source));
+  if (r.erreurs > 0) lignes.push(traduire("{0}. Relance l’import pour réessayer.", n(r.erreurs, 'séance n’a pas pu être enregistrée', 'séances n’ont pas pu être enregistrées')));
   return { titre, detail: lignes.join('\n') };
 }

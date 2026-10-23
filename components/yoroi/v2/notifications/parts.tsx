@@ -15,18 +15,19 @@ import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const NBSP = ' ';
 
 /** Jours dans l'ordre francais (lundi d'abord), avec leur numero JavaScript (dimanche = 0). */
 export const WEEK_DAYS: { js: number; short: string; name: string }[] = [
-  { js: 1, short: 'L', name: 'lundi' },
-  { js: 2, short: 'M', name: 'mardi' },
-  { js: 3, short: 'M', name: 'mercredi' },
-  { js: 4, short: 'J', name: 'jeudi' },
-  { js: 5, short: 'V', name: 'vendredi' },
-  { js: 6, short: 'S', name: 'samedi' },
-  { js: 0, short: 'D', name: 'dimanche' },
+  { js: 1, short: 'L', name: traduire('lundi') },
+  { js: 2, short: 'M', name: traduire('mardi') },
+  { js: 3, short: 'M', name: traduire('mercredi') },
+  { js: 4, short: 'J', name: traduire('jeudi') },
+  { js: 5, short: 'V', name: traduire('vendredi') },
+  { js: 6, short: 'S', name: traduire('samedi') },
+  { js: 0, short: 'D', name: traduire('dimanche') },
 ];
 
 export const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
@@ -44,12 +45,12 @@ export function sayTime(hhmm?: string | null): string {
 /** Les jours choisis, en clair : « tous les jours », « en semaine », « lun., mer., ven. » */
 export function sayDays(days: number[]): string {
   const set = new Set(days);
-  if (set.size === 7) return 'tous les jours';
-  if (set.size === 5 && WEEKDAYS.every((d) => set.has(d))) return 'en semaine';
+  if (set.size === 7) return traduire('tous les jours');
+  if (set.size === 5 && WEEKDAYS.every((d) => set.has(d))) return traduire('en semaine');
   if (set.size === 2 && set.has(0) && set.has(6)) return 'le week-end';
   if (set.size === 1) {
     const d = WEEK_DAYS.find((x) => set.has(x.js));
-    return d ? `le ${d.name}` : '';
+    return d ? traduire("le {0}", d.name) : '';
   }
   return WEEK_DAYS.filter((d) => set.has(d.js)).map((d) => `${d.name.slice(0, 3)}.`).join(', ');
 }
@@ -83,10 +84,10 @@ export function sayWhen(d: Date, from = new Date()): string {
   const start = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime();
   const diff = Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - start) / 86400000);
   const t = sayTime(toHhmm(d));
-  if (diff === 0) return `aujourd’hui à ${t}`;
-  if (diff === 1) return `demain à ${t}`;
+  if (diff === 0) return traduire("aujourd’hui à {0}", t);
+  if (diff === 1) return traduire("demain à {0}", t);
   const name = WEEK_DAYS.find((x) => x.js === d.getDay())?.name ?? '';
-  return `${name} à ${t}`;
+  return traduire("{0} à {1}", name, t);
 }
 
 function hap() {
@@ -118,7 +119,7 @@ export function TimeField({ label, value, onChange }: { label: string; value: st
           setOpen(true);
         }}
         accessibilityRole="button"
-        accessibilityLabel={`${label} : ${sayTime(value)}. Modifier`}
+        accessibilityLabel={traduire("{0} : {1}. Modifier", label, sayTime(value))}
         style={({ pressed }) => ({
           minHeight: 56,
           borderRadius: 16,
@@ -155,7 +156,7 @@ export function TimeField({ label, value, onChange }: { label: string; value: st
       {Platform.OS !== 'android' ? (
         <Sheet visible={open} onClose={() => setOpen(false)} title={label}>
           <View style={{ alignItems: 'center' }}>
-            <DateTimePicker value={draft} mode="time" display="spinner" is24Hour locale="fr-FR" minuteInterval={5} themeVariant="light" onChange={(_, d) => d && setDraft(d)} />
+            <DateTimePicker value={draft} mode="time" display="spinner" is24Hour locale={LOCALE} minuteInterval={5} themeVariant="light" onChange={(_, d) => d && setDraft(d)} />
           </View>
           <Pressable
             onPress={() => {
@@ -166,7 +167,7 @@ export function TimeField({ label, value, onChange }: { label: string; value: st
             accessibilityRole="button"
             style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>{`Valider ${sayTime(toHhmm(draft))}`}</Ink>
+            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Valider {0}", sayTime(toHhmm(draft)))}</Ink>
           </Pressable>
         </Sheet>
       ) : null}
@@ -183,16 +184,15 @@ export function DaysPicker({ value, onChange }: { value: number[]; onChange: (v:
   const c = theme.colors;
   const set = new Set(value);
   const presets: { label: string; days: number[] }[] = [
-    { label: 'Tous les jours', days: EVERY_DAY },
-    { label: 'En semaine', days: WEEKDAYS },
+    { label: traduire('Tous les jours'), days: EVERY_DAY },
+    { label: traduire('En semaine'), days: WEEKDAYS },
     { label: 'Week-end', days: [0, 6] },
   ];
   return (
     <View style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>
-          Les jours
-        </Ink>
+          {traduire("Les jours")}</Ink>
         <Ink size={13} weight="extraBold" color={c.accent}>
           {sayDays(value)}
         </Ink>
@@ -344,11 +344,10 @@ export function NotifPreview({ title, body, when }: { title: string; body: strin
   return (
     <View style={{ gap: 6 }}>
       <Ink size={12} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 2 }}>
-        Aperçu
-      </Ink>
+        {traduire("Aperçu")}</Ink>
       <View
         accessible
-        accessibilityLabel={`Aperçu de la notification : ${title}. ${body}`}
+        accessibilityLabel={traduire("Aperçu de la notification : {0}. {1}", title, body)}
         style={{
           flexDirection: 'row',
           gap: 10,
@@ -424,7 +423,7 @@ export function NotifCard({ icon, title, summary, pitch, on, onToggle, preview, 
           disabled={!on || !hasBody}
           accessibilityRole="button"
           accessibilityState={{ expanded }}
-          accessibilityLabel={`${title}. ${on ? summary : 'Éteint'}${on && hasBody ? '. Régler' : ''}`}
+          accessibilityLabel={`${title}. ${on ? summary : traduire('Éteint')}${on && hasBody ? traduire('. Régler') : ''}`}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}
         >
           <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: on ? c.accentTint : c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>

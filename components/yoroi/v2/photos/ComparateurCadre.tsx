@@ -20,6 +20,7 @@ import { dateCourte, kg } from '@/lib/v2/photos/outils';
 import { containSize, defaultCadre, panCadre, pinchCadre } from '@/lib/v2/photos/cadrage';
 import type { Cadre, Dims } from '@/lib/v2/photos/cadrage';
 import type { Shot } from '../progres/BeforeAfter';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Cote = 'avant' | 'apres';
 export type ModeComparaison = 'glisser' | 'cote' | 'fondu';
@@ -265,12 +266,12 @@ export const ComparateurCadre = forwardRef<View, Props>(function ComparateurCadr
   const frameH = !reglage && mode === 'cote' ? ph : H;
 
   const accessibilityLabel = reglage
-    ? `Réglage de la photo ${reglage === 'avant' ? 'avant' : 'après'}. Pince pour zoomer, glisse pour déplacer, touche deux fois pour revenir.`
+    ? traduire("Réglage de la photo {0}. Pince pour zoomer, glisse pour déplacer, touche deux fois pour revenir.", reglage === 'avant' ? 'avant' : 'après')
     : mode === 'glisser'
-      ? 'Avant et après. Glisse ton doigt sur la photo pour déplacer le curseur.'
+      ? traduire('Avant et après. Glisse ton doigt sur la photo pour déplacer le curseur.')
       : mode === 'fondu'
-        ? 'Avant et après en fondu. Glisse vers la droite pour faire apparaître la photo d’après.'
-        : 'Avant et après, côte à côte.';
+        ? traduire('Avant et après en fondu. Glisse vers la droite pour faire apparaître la photo d’après.')
+        : traduire('Avant et après, côte à côte.');
 
   const shotOf = (s: Cote) => (s === 'avant' ? before : after);
   const svOf = (s: Cote) => (s === 'avant' ? svA : svB);
@@ -291,7 +292,7 @@ export const ComparateurCadre = forwardRef<View, Props>(function ComparateurCadr
                 <View style={{ position: 'absolute', top: 0, bottom: 0, left: Math.round(W / 2), width: 1, backgroundColor: 'rgba(255,255,255,0.3)' }} />
               </View>
               <View pointerEvents="none" style={{ position: 'absolute', left: 12, top: 12 }}>
-                <Etiquette word={side === 'avant' ? 'Réglage, avant' : 'Réglage, après'} s={shotOf(side)} align="left" />
+                <Etiquette word={side === 'avant' ? traduire('Réglage, avant') : traduire('Réglage, après')} s={shotOf(side)} align="left" />
               </View>
             </>
           ) : mode === 'cote' ? (
@@ -300,7 +301,7 @@ export const ComparateurCadre = forwardRef<View, Props>(function ComparateurCadr
                 <View key={s} style={{ width: pw, height: ph, overflow: 'hidden' }}>
                   <PhotoCadree uri={shotOf(s).uri} w={pw} h={ph} size={sizes[s]} sv={svOf(s)} />
                   <View pointerEvents="none" style={{ position: 'absolute', left: 6, right: 6, bottom: 8 }}>
-                    <Etiquette word={s === 'avant' ? 'Avant' : 'Après'} s={shotOf(s)} align={s === 'avant' ? 'left' : 'right'} />
+                    <Etiquette word={s === 'avant' ? traduire('Avant') : traduire('Après')} s={shotOf(s)} align={s === 'avant' ? 'left' : 'right'} />
                   </View>
                 </View>
               ))}
@@ -328,10 +329,10 @@ export const ComparateurCadre = forwardRef<View, Props>(function ComparateurCadr
                 </Animated.View>
               )}
               <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 12, top: 12 }, beforeLabel]}>
-                <Etiquette word="Avant" s={before} align="left" />
+                <Etiquette word={traduire("Avant")} s={before} align="left" />
               </Animated.View>
               <Animated.View pointerEvents="none" style={[{ position: 'absolute', right: 12, top: 12 }, afterLabel]}>
-                <Etiquette word="Après" s={after} align="right" />
+                <Etiquette word={traduire("Après")} s={after} align="right" />
               </Animated.View>
               {mode === 'fondu' ? (
                 <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 16, gap: 8 }}>
@@ -339,8 +340,8 @@ export const ComparateurCadre = forwardRef<View, Props>(function ComparateurCadr
                     <Animated.View style={[{ position: 'absolute', top: -9, marginLeft: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: P.pureWhite, borderWidth: 3, borderColor: c.accent }, thumbStyle]} />
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Ink size={12} weight="extraBold" color={P.pureWhite}>Avant</Ink>
-                    <Ink size={12} weight="extraBold" color={P.pureWhite}>Après</Ink>
+                    <Ink size={12} weight="extraBold" color={P.pureWhite}>{traduire("Avant")}</Ink>
+                    <Ink size={12} weight="extraBold" color={P.pureWhite}>{traduire("Après")}</Ink>
                   </View>
                 </View>
               ) : null}

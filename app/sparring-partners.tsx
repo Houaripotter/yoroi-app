@@ -16,6 +16,7 @@ import { agoText, BELTS, daysAgo, makeId, plural } from '@/lib/v2/combat/rounds'
 import { BeltBar, BigButton, Card, Chip, ChipScroll, CIcon, D, DetailScreen, Enter, Field, FormSheet, Glass, IconBtn, P, Press, RecordBars, Seal, Section, sportLabel, Stat, V } from '@/components/yoroi/v2/combat/ui';
 import { PartnerDetail } from '@/components/yoroi/v2/combat/partner/PartnerDetail';
 import { useCombatArt } from '@/components/yoroi/v2/combat/images';
+import { traduire } from '@/lib/i18n/tr';
 
 type Filter = 'tous' | 'noires' | 'favorables' | 'revoir';
 
@@ -48,8 +49,8 @@ export default function SparringPartnersScreen() {
             return;
           }
           await proposerNotifications('sparring', {
-            titre: 'Un rappel pour tes objectifs',
-            texte: 'Un rappel quand un objectif de sparring attend depuis un moment. Jamais de chiffre de santé sur l’écran verrouillé.',
+            titre: traduire('Un rappel pour tes objectifs'),
+            texte: traduire('Un rappel quand un objectif de sparring attend depuis un moment. Jamais de chiffre de santé sur l’écran verrouillé.'),
             onAccepte: () => void scheduleSparringReminders(partners as never),
           });
         })
@@ -121,11 +122,11 @@ export default function SparringPartnersScreen() {
     <>
       <DetailScreen
         title="Partenaires"
-        subtitle="Ton carnet de guerre, un guerrier par carte"
+        subtitle={traduire("Ton carnet de guerre, un guerrier par carte")}
         right={
           <>
             <IconBtn icon="crown" label="Classement" onPress={() => router.push('/sparring-ranking' as any)} />
-            <IconBtn icon="plus" label="Ajouter un partenaire" tone="red" onPress={() => { setNewName(''); setAddOpen(true); }} />
+            <IconBtn icon="plus" label={traduire("Ajouter un partenaire")} tone="red" onPress={() => { setNewName(''); setAddOpen(true); }} />
           </>
         }
       >
@@ -135,16 +136,14 @@ export default function SparringPartnersScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
                 <View style={{ flex: 1, padding: 20, gap: 8 }}>
                   <Ink size={24} weight="black" tight>
-                    Tes adversaires ont tous un point faible
-                  </Ink>
+                    {traduire("Tes adversaires ont tous un point faible")}</Ink>
                   <Ink size={14} color={P.ink2}>
-                    Ajoute les gens avec qui tu roules. Note leurs forces, leurs failles, ce qui marche contre eux. Ton bilan se remplit tout seul à chaque séance.
-                  </Ink>
+                    {traduire("Ajoute les gens avec qui tu roules. Note leurs forces, leurs failles, ce qui marche contre eux. Ton bilan se remplit tout seul à chaque séance.")}</Ink>
                 </View>
                 <Image source={art} style={{ width: 120, height: 170 }} resizeMode="contain" />
               </View>
               <View style={{ padding: 16, paddingTop: 0 }}>
-                <BigButton label="Ajouter mon premier partenaire" icon="plus" onPress={() => { setNewName(''); setAddOpen(true); }} />
+                <BigButton label={traduire("Ajouter mon premier partenaire")} icon="plus" onPress={() => { setNewName(''); setAddOpen(true); }} />
               </View>
             </Glass>
           </Enter>
@@ -155,19 +154,18 @@ export default function SparringPartnersScreen() {
             <Glass style={{ gap: 14 }}>
               <View style={{ flexDirection: 'row' }}>
                 <Stat value={String(partners.length)} label={partners.length > 1 ? 'partenaires' : 'partenaire'} />
-                <Stat value={String(totals.rounds)} label="rounds notés" />
-                <Stat value={totals.rounds > 0 ? `${Math.round((totals.wins / totals.rounds) * 100)}\u00A0%` : '0\u00A0%'} label="de victoires" color={V} />
+                <Stat value={String(totals.rounds)} label={traduire("rounds notés")} />
+                <Stat value={totals.rounds > 0 ? `${Math.round((totals.wins / totals.rounds) * 100)}\u00A0%` : '0\u00A0%'} label={traduire("de victoires")} color={V} />
               </View>
               {nemesis ? (
-                <Press onPress={() => setSelectedId(nemesis.p.id)} accessibilityRole="button" accessibilityLabel={`Ta bête noire : ${nemesis.p.name}`}>
+                <Press onPress={() => setSelectedId(nemesis.p.id)} accessibilityRole="button" accessibilityLabel={traduire("Ta bête noire : {0}", nemesis.p.name)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: P.accentSoft }}>
                     <Seal name={nemesis.p.name} photoUri={nemesis.p.photoUri} belt={nemesis.p.belt} size={44} />
                     <View style={{ flex: 1 }}>
                       <Ink size={12} weight="extraBold" color={D}>
-                        Ta bête noire
-                      </Ink>
+                        {traduire("Ta bête noire")}</Ink>
                       <Ink size={16} weight="black">
-                        {`${nemesis.p.name}, ${nemesis.s.winRateVD}\u00A0% de victoires`}
+                        {traduire("{0}, {1} % de victoires", nemesis.p.name, nemesis.s.winRateVD)}
                       </Ink>
                     </View>
                     <CIcon name="chevron" size={16} color={D} />
@@ -183,7 +181,7 @@ export default function SparringPartnersScreen() {
             <View style={{ flexDirection: 'row', gap: 10 }}>
               {[
                 { label: 'Classement', icon: 'crown' as const, route: '/sparring-ranking' },
-                { label: 'Rangs S à D', icon: 'flag' as const, route: '/partners-tier-list' },
+                { label: traduire('Rangs S à D'), icon: 'flag' as const, route: '/partners-tier-list' },
                 { label: 'Matrice', icon: 'grid' as const, route: '/matchup-matrix' },
               ].map((l) => (
                 <Press key={l.route} onPress={() => router.push(l.route as any)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={l.label}>
@@ -215,14 +213,13 @@ export default function SparringPartnersScreen() {
         {partners.length > 0 && filtered.length === 0 ? (
           <Card>
             <Ink size={14} color={P.ink2}>
-              Personne dans ce filtre pour l'instant.
-            </Ink>
+              {traduire("Personne dans ce filtre pour l'instant.")}</Ink>
           </Card>
         ) : null}
 
         {filtered.map(({ p, s }, i) => (
           <Enter key={p.id} i={Math.min(i + 2, 8)}>
-            <Press onPress={() => setSelectedId(p.id)} accessibilityRole="button" accessibilityLabel={`Ouvrir la fiche de ${p.name}`}>
+            <Press onPress={() => setSelectedId(p.id)} accessibilityRole="button" accessibilityLabel={traduire("Ouvrir la fiche de {0}", p.name)}>
               <Card style={{ gap: 12 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                   <Seal name={p.name} photoUri={p.photoUri} belt={p.belt} size={64} />
@@ -239,7 +236,7 @@ export default function SparringPartnersScreen() {
                       ))}
                     </View>
                     <Ink size={12} weight="bold" color={(daysAgo(s.lastDate) ?? 0) > 21 ? '#A8832F' : P.ink2}>
-                      {s.total > 0 ? `${plural(s.total, 'round')}${s.lastDate ? `, ${agoText(s.lastDate)}` : ''}` : 'Pas encore de round'}
+                      {s.total > 0 ? `${plural(s.total, 'round')}${s.lastDate ? `, ${agoText(s.lastDate)}` : ''}` : traduire('Pas encore de round')}
                     </Ink>
                   </View>
                   {s.total > 0 ? (
@@ -277,18 +274,17 @@ export default function SparringPartnersScreen() {
           </Enter>
         ))}
 
-        {partners.length > 0 ? <Section title="Un nouveau partenaire ?" sub="Ajoute-le, son bilan se calcule à partir de tes rounds" action="Ajouter" onAction={() => { setNewName(''); setAddOpen(true); }} /> : null}
+        {partners.length > 0 ? <Section title={traduire("Un nouveau partenaire ?")} sub={traduire("Ajoute-le, son bilan se calcule à partir de tes rounds")} action={traduire("Ajouter")} onAction={() => { setNewName(''); setAddOpen(true); }} /> : null}
 
-        <FormSheet visible={addOpen} onClose={() => setAddOpen(false)} title="Nouveau partenaire" sub="Écris le même nom que dans tes rounds pour relier son bilan.">
-          <Field value={newName} onChangeText={setNewName} autoFocus placeholder="Prénom ou surnom" returnKeyType="done" onSubmitEditing={add} />
+        <FormSheet visible={addOpen} onClose={() => setAddOpen(false)} title={traduire("Nouveau partenaire")} sub={traduire("Écris le même nom que dans tes rounds pour relier son bilan.")}>
+          <Field value={newName} onChangeText={setNewName} autoFocus placeholder={traduire("Prénom ou surnom")} returnKeyType="done" onSubmitEditing={add} />
           <Ink size={13} weight="bold" color={P.ink2}>
-            Sa ceinture
-          </Ink>
+            {traduire("Sa ceinture")}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {BELTS.map((b) => {
               const on = newBelt === b.key;
               return (
-                <Press key={b.key} onPress={() => setNewBelt(on ? undefined : b.key)} accessibilityRole="button" accessibilityLabel={`Ceinture ${b.label}`} accessibilityState={{ selected: on }}>
+                <Press key={b.key} onPress={() => setNewBelt(on ? undefined : b.key)} accessibilityRole="button" accessibilityLabel={traduire("Ceinture {0}", b.label)} accessibilityState={{ selected: on }}>
                   <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                     <View style={{ width: 22, height: 9, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.edge }} />
                     <Ink size={14} weight="bold" color={on ? P.white : P.ink2}>
@@ -299,7 +295,7 @@ export default function SparringPartnersScreen() {
               );
             })}
           </View>
-          <BigButton label="Ajouter" icon="plus" onPress={add} disabled={!newName.trim()} />
+          <BigButton label={traduire("Ajouter")} icon="plus" onPress={add} disabled={!newName.trim()} />
         </FormSheet>
       </DetailScreen>
     </>

@@ -7,7 +7,7 @@ import { getSportIcon, getSportName, getSportColor } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dumbbell, ArrowDown, ArrowUp } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { router } from 'expo-router';
 import { RichTrainingCard } from '@/components/training/RichTrainingCard';
 import { SessionsHeatmap } from '@/components/stats/SessionsHeatmap';
@@ -17,6 +17,7 @@ import { FunComparisonsCard } from '@/components/stats/FunComparisonsCard';
 import { generateFunComparisons } from '@/lib/funComparisons';
 import { PersonalRecordsCard } from '@/components/stats/PersonalRecordsCard';
 import { ShareStatsButton } from '@/components/stats/ShareStatsButton';
+import { DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 // Accepte toujours les trainings depuis le parent (rétrocompatibilité)
 // mais charge aussi les siennes si le parent ne donne rien
@@ -145,8 +146,8 @@ export const SeancesTab: React.FC<SeancesTabProps> = React.memo(({ trainings: pr
   const { totalSessions, totalMinutes, totalCalories } = aggregates;
 
   const formatCalories = (cal: number): string => {
-    if (cal >= 1000) return `${(cal / 1000).toFixed(1).replace('.', ',')}k`;
-    return cal.toLocaleString('fr-FR');
+    if (cal >= 1000) return `${(cal / 1000).toFixed(1).replace('.', DECIMAL)}k`;
+    return cal.toLocaleString(LOCALE);
   };
 
   // 3 KPI affichés en tête de l'onglet, version structurée pour AnimatedCounter

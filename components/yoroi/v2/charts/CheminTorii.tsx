@@ -14,13 +14,14 @@ import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { Ink } from '../Ink';
 import { MARGE_STABLE, jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
 import { POIDS, ToriiIcone } from './CourbePoids';
+import { DECIMAL } from '@/lib/i18n/tr';
 
 const PISTE = '#EEEDF4';
 const BAR_H = 10;
 const TORII_W = 26;
 
 /** 80,7 : toujours une decimale, comme le grand chiffre */
-const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 export type ModeChemin = 'perte' | 'prise' | 'maintien';
 

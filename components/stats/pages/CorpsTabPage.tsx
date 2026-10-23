@@ -32,7 +32,7 @@ import { Scale, Target, TrendingUp, TrendingDown, BarChart3, Activity, Droplet, 
 import { router } from 'expo-router';
 import Svg, { Path, Circle as SvgCircle, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { logger } from '@/lib/security/logger';
 import { buildCacheKey, getCached, setCached, invalidateCachePrefix } from '@/lib/statsMemoryCache';
 import { StatsEmptyState } from '../StatsEmptyState';

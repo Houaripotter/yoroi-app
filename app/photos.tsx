@@ -42,6 +42,7 @@ import { usePremium } from '@/context/PremiumContext';
 import { canAddMore } from '@/lib/v2/premium/limits';
 import { LimitNotice } from '@/components/yoroi/v2/premium/LimitNotice';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const PRIVACY_CHALLENGE_KEY = '@yoroi_privacy_challenge_shown';
 const LAST_POSE_KEY = '@yoroi_photos_derniere_pose';
@@ -164,7 +165,7 @@ export default function PhotosScreen() {
     try {
       const lib = await requestMediaLibraryPermissionsAsync();
       if (lib.status !== 'granted') {
-        setMessage({ title: 'Autorisation nécessaire', text: 'YOROI a besoin de ta galerie pour ajouter une photo. Tu peux l’autoriser dans les réglages de ton téléphone.', reglages: true });
+        setMessage({ title: traduire('Autorisation nécessaire'), text: traduire('YOROI a besoin de ta galerie pour ajouter une photo. Tu peux l’autoriser dans les réglages de ton téléphone.'), reglages: true });
         return;
       }
       const r = await launchImageLibraryAsync({ mediaTypes: 'images', allowsEditing: false, quality: 0.8, selectionLimit: 1, exif: true });
@@ -223,7 +224,7 @@ export default function PhotosScreen() {
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {
       logger.error('Enregistrement de la photo impossible', err);
-      setMessage({ title: 'Photo non enregistrée', text: 'Un souci est survenu, réessaie.' });
+      setMessage({ title: traduire('Photo non enregistrée'), text: traduire('Un souci est survenu, réessaie.') });
     } finally {
       setUploading(false);
       fetchPhotos();
@@ -246,7 +247,7 @@ export default function PhotosScreen() {
       fetchPhotos();
     } else {
       notificationAsync(NotificationFeedbackType.Error).catch(() => {});
-      setMessage({ title: 'Suppression impossible', text: 'La photo n’a pas pu être supprimée.' });
+      setMessage({ title: traduire('Suppression impossible'), text: traduire('La photo n’a pas pu être supprimée.') });
     }
   };
 
@@ -293,20 +294,20 @@ export default function PhotosScreen() {
 
   const statItems = first
     ? [
-        { value: String(sorted.length), label: sorted.length > 1 ? 'photos dans ton coffre' : 'photo dans ton coffre' },
+        { value: String(sorted.length), label: sorted.length > 1 ? traduire('photos dans ton coffre') : traduire('photo dans ton coffre') },
         sinceToday === 0
-          ? { value: 'Aujourd’hui', label: 'ta première photo' }
-          : { value: dateCourte(first.date.slice(0, 10)), label: `ta première photo, il y a ${dureeTexte(sinceToday)}` },
+          ? { value: 'Aujourd’hui', label: traduire('ta première photo') }
+          : { value: dateCourte(first.date.slice(0, 10)), label: traduire("ta première photo, il y a {0}", dureeTexte(sinceToday)) },
         ...(weightDiff !== null
-          ? [{ value: ecartTexte(weightDiff), label: `en ${dureeTexte(span)}, de la première à la dernière` }]
+          ? [{ value: ecartTexte(weightDiff), label: traduire("en {0}, de la première à la dernière", dureeTexte(span)) }]
           : span > 0
-            ? [{ value: capitalize(dureeTexte(span)), label: 'entre la première et la dernière' }]
+            ? [{ value: capitalize(dureeTexte(span)), label: traduire('entre la première et la dernière') }]
             : []),
       ]
     : [];
 
   const filterItems: { value: Filtre; label: string }[] = [
-    { value: 'toutes', label: `Toutes, ${sorted.length}` },
+    { value: 'toutes', label: traduire("Toutes, {0}", sorted.length) },
     ...POSES.filter((p) => counts[p.value] > 0).map((p) => ({ value: p.value as Filtre, label: `${p.label}, ${counts[p.value]}` })),
   ];
 
@@ -314,11 +315,11 @@ export default function PhotosScreen() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
         <DetailHeader
-          title="Tes photos"
-          sub="Ton coffre de progression, rangé par mois."
+          title={traduire("Tes photos")}
+          sub={traduire("Ton coffre de progression, rangé par mois.")}
           right={
             sorted.length ? (
-              <IconButton label={veiled ? 'Afficher les photos' : 'Flouter les photos'} onPress={() => setVeiled((v) => !v)}>
+              <IconButton label={veiled ? traduire('Afficher les photos') : traduire('Flouter les photos')} onPress={() => setVeiled((v) => !v)}>
                 <Eye color={c.ink} off={veiled} />
               </IconButton>
             ) : undefined
@@ -327,7 +328,7 @@ export default function PhotosScreen() {
 
         {screenshotDetected ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 8, padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
-            <Ink size={13} weight="bold">Capture d’écran repérée. Tes photos sont sensibles.</Ink>
+            <Ink size={13} weight="bold">{traduire("Capture d’écran repérée. Tes photos sont sensibles.")}</Ink>
           </View>
         ) : null}
 
@@ -335,7 +336,7 @@ export default function PhotosScreen() {
           <Lock color={c.successText} />
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={15} weight="extraBold" color={c.successText}>Coffre 100 % local</Ink>
-            <Ink size={13} color={c.textSecondary}>Tes photos restent sur ton téléphone. Elles ne partent jamais en ligne.</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Tes photos restent sur ton téléphone. Elles ne partent jamais en ligne.")}</Ink>
           </View>
         </View>
 
@@ -345,14 +346,14 @@ export default function PhotosScreen() {
           <LimitNotice limit="progressPhotos" count={photos.length} style={{ marginHorizontal: GUTTER, marginTop: 18 }} />
         ) : (
           <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 18 }}>
-            <PrimaryButton label={uploading ? 'Enregistrement en cours' : 'Prendre une photo'} onPress={takePhoto} disabled={uploading} style={{ flex: 1 }} />
+            <PrimaryButton label={uploading ? 'Enregistrement en cours' : traduire('Prendre une photo')} onPress={takePhoto} disabled={uploading} style={{ flex: 1 }} />
             <GhostButton label="Galerie" onPress={pickImage} style={{ width: 120, height: 56 }} />
           </View>
         )}
         {sorted.length >= 2 ? (
           <>
-            <GhostButton label="Comparer avant et après" onPress={() => router.push('/transformation' as any)} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
-            <GhostButton label="Créer ma carte avant après" onPress={() => router.push(carteAvantApresDirecte() as never)} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
+            <GhostButton label={traduire("Comparer avant et après")} onPress={() => router.push('/transformation' as any)} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
+            <GhostButton label={traduire("Créer ma carte avant après")} onPress={() => router.push(carteAvantApresDirecte() as never)} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
           </>
         ) : null}
 
@@ -362,8 +363,8 @@ export default function PhotosScreen() {
           </View>
         ) : sorted.length === 0 ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 22, padding: 18, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 10 }}>
-            <Ink size={20} weight="black" tight>Commence ta transformation</Ink>
-            <Ink size={14} color={c.textSecondary}>Une photo par mois suffit. Même lumière, même tenue, même cadrage : face, profil et dos. La prochaine fois, la caméra te montre ta dernière photo en transparence pour te replacer au même endroit.</Ink>
+            <Ink size={20} weight="black" tight>{traduire("Commence ta transformation")}</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire("Une photo par mois suffit. Même lumière, même tenue, même cadrage : face, profil et dos. La prochaine fois, la caméra te montre ta dernière photo en transparence pour te replacer au même endroit.")}</Ink>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
               {POSES.map((v) => (
                 <View key={v.value} style={{ flex: 1, height: 120, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
@@ -380,8 +381,7 @@ export default function PhotosScreen() {
               </ScrollView>
             ) : (
               <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 20 }}>
-                Donne une pose à tes photos (face, profil, dos) en les ouvrant : la comparaison se fera à cadrage égal.
-              </Ink>
+                {traduire("Donne une pose à tes photos (face, profil, dos) en les ouvrant : la comparaison se fera à cadrage égal.")}</Ink>
             )}
             {groups.map((g) => (
               <View key={g.key} style={{ marginTop: 22, paddingHorizontal: GUTTER }}>
@@ -405,8 +405,8 @@ export default function PhotosScreen() {
                           setToDelete(p);
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel={`Photo du ${dateComplete(p.date.slice(0, 10))}${p.weight ? `, ${num(p.weight, 1)} kilos` : ''}${pose ? `, ${poseLabel(pose)}` : ''}`}
-                        accessibilityHint="Appui long pour supprimer"
+                        accessibilityLabel={traduire("Photo du {0}{1}{2}", dateComplete(p.date.slice(0, 10)), p.weight ? `, ${num(p.weight, 1)} kilos` : '', pose ? `, ${poseLabel(pose)}` : '')}
+                        accessibilityHint={traduire("Appui long pour supprimer")}
                         style={{ width: cell, gap: 5 }}
                       >
                         <View>
@@ -419,7 +419,7 @@ export default function PhotosScreen() {
                         </View>
                         <View>
                           <Ink size={12} weight="extraBold" numberOfLines={1}>{dateComplete(p.date.slice(0, 10))}</Ink>
-                          <Ink size={12} color={c.textSecondary} numberOfLines={1}>{p.weight && !veiled ? kg(p.weight) : 'Sans poids'}</Ink>
+                          <Ink size={12} color={c.textSecondary} numberOfLines={1}>{p.weight && !veiled ? kg(p.weight) : traduire('Sans poids')}</Ink>
                         </View>
                       </Pressable>
                     );
@@ -427,7 +427,7 @@ export default function PhotosScreen() {
                 </View>
               </View>
             ))}
-            <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 16 }}>Touche une photo pour la voir en grand et glisser vers les autres. Appui long pour la supprimer.</Ink>
+            <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 16 }}>{traduire("Touche une photo pour la voir en grand et glisser vers les autres. Appui long pour la supprimer.")}</Ink>
           </>
         )}
       </ScrollView>
@@ -448,10 +448,10 @@ export default function PhotosScreen() {
       <Sheet
         visible={!!toDelete && !viewerId}
         onClose={() => setToDelete(null)}
-        title="Supprimer cette photo ?"
-        text={toDelete ? `La photo du ${dateComplete(toDelete.date.slice(0, 10))} sera effacée de ton coffre. Ce n’est pas réversible.` : undefined}
+        title={traduire("Supprimer cette photo ?")}
+        text={toDelete ? traduire("La photo du {0} sera effacée de ton coffre. Ce n’est pas réversible.", dateComplete(toDelete.date.slice(0, 10))) : undefined}
         actions={[
-          { label: 'Supprimer', tone: 'danger', onPress: () => toDelete && doDelete(toDelete) },
+          { label: traduire('Supprimer'), tone: 'danger', onPress: () => toDelete && doDelete(toDelete) },
           { label: 'Garder', onPress: () => setToDelete(null) },
         ]}
       />
@@ -459,11 +459,11 @@ export default function PhotosScreen() {
       <Sheet
         visible={!!pendingUri}
         onClose={() => setPendingUri(null)}
-        title="Range cette photo"
-        text="La pose et le poids servent à comparer des photos qui se ressemblent."
+        title={traduire("Range cette photo")}
+        text={traduire("La pose et le poids servent à comparer des photos qui se ressemblent.")}
         actions={[
-          { label: 'Enregistrer la photo', tone: 'ink', onPress: savePending },
-          { label: 'Annuler', onPress: () => setPendingUri(null) },
+          { label: traduire('Enregistrer la photo'), tone: 'ink', onPress: savePending },
+          { label: traduire('Annuler'), onPress: () => setPendingUri(null) },
         ]}
       >
         {pendingUri && !dateOpen ? <Image source={{ uri: pendingUri }} style={{ width: 84, height: 112, borderRadius: 14, alignSelf: 'center' }} resizeMode="cover" /> : null}
@@ -473,11 +473,11 @@ export default function PhotosScreen() {
             <Pressable
               onPress={() => { selectionAsync().catch(() => {}); setDateOpen((o) => !o); }}
               accessibilityRole="button"
-              accessibilityLabel={`Date de la photo, ${dateComplete(pendingDay.date)}. Toucher pour changer.`}
+              accessibilityLabel={traduire("Date de la photo, {0}. Toucher pour changer.", dateComplete(pendingDay.date))}
               style={{ minHeight: 48, borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1.5, borderColor: c.border }}
             >
               <Ink size={15} weight="extraBold">{dateComplete(pendingDay.date)}</Ink>
-              <Ink size={13} weight="bold" color={c.accent}>{dateOpen ? 'Fermer' : 'Changer'}</Ink>
+              <Ink size={13} weight="bold" color={c.accent}>{dateOpen ? traduire('Fermer') : 'Changer'}</Ink>
             </Pressable>
             <DatePickerSheet
               inline
@@ -508,8 +508,8 @@ export default function PhotosScreen() {
           <Ink size={12} weight="bold" color={c.textSecondary}>Poids</Ink>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {[
-              { on: useCurrent, label: currentWeight ? `Mon poids, ${kg(currentWeight)}` : 'Pas de pesée', disabled: !currentWeight, press: () => setUseCurrent(true) },
-              { on: !useCurrent, label: 'Saisir un poids', disabled: false, press: () => setUseCurrent(false) },
+              { on: useCurrent, label: currentWeight ? traduire("Mon poids, {0}", kg(currentWeight)) : traduire('Pas de pesée'), disabled: !currentWeight, press: () => setUseCurrent(true) },
+              { on: !useCurrent, label: traduire('Saisir un poids'), disabled: false, press: () => setUseCurrent(false) },
             ].map((o) => (
               <Pressable key={o.label} disabled={o.disabled} onPress={() => { selectionAsync().catch(() => {}); o.press(); }} accessibilityRole="button" accessibilityState={{ selected: o.on }} style={{ flex: 1, minHeight: 46, borderRadius: 14, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: o.on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: o.on ? c.ink : c.border, opacity: o.disabled ? 0.45 : 1 }}>
                 <Ink size={13} weight="extraBold" color={o.on ? P.paper : c.textSecondary} numberOfLines={1}>{o.label}</Ink>
@@ -518,9 +518,9 @@ export default function PhotosScreen() {
           </View>
         </View>
         {!useCurrent ? (
-          <TextInput value={weightInput} onChangeText={setWeightInput} keyboardType="decimal-pad" placeholder="Poids en kilos, facultatif" placeholderTextColor={c.textMuted} maxLength={6} style={{ height: 52, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 18, color: c.ink }} />
+          <TextInput value={weightInput} onChangeText={setWeightInput} keyboardType="decimal-pad" placeholder={traduire("Poids en kilos, facultatif")} placeholderTextColor={c.textMuted} maxLength={6} style={{ height: 52, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 18, color: c.ink }} />
         ) : null}
-        <TextInput value={note} onChangeText={setNote} placeholder="Une note, facultatif" placeholderTextColor={c.textMuted} maxLength={80} style={{ height: 48, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 15, color: c.ink }} />
+        <TextInput value={note} onChangeText={setNote} placeholder={traduire("Une note, facultatif")} placeholderTextColor={c.textMuted} maxLength={80} style={{ height: 48, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 15, color: c.ink }} />
         </>
         ) : null}
       </Sheet>
@@ -528,12 +528,12 @@ export default function PhotosScreen() {
       <Sheet
         visible={privacyVisible}
         onClose={() => setPrivacyVisible(false)}
-        title="Test de confiance"
-        text="Passe en mode avion et ajoute une photo : ça marche, parce que tout reste sur ton téléphone. Rien ne part en ligne."
+        title={traduire("Test de confiance")}
+        text={traduire("Passe en mode avion et ajoute une photo : ça marche, parce que tout reste sur ton téléphone. Rien ne part en ligne.")}
         actions={[{ label: 'Compris', tone: 'ink', onPress: () => setPrivacyVisible(false) }]}
       />
 
-      <Sheet visible={!!message} onClose={() => setMessage(null)} title={message?.title ?? ''} text={message?.text} actions={message?.reglages ? [{ label: 'Ouvrir les réglages', tone: 'ink', onPress: () => { setMessage(null); Linking.openSettings().catch(() => {}); } }, { label: 'Plus tard', tone: 'ghost', onPress: () => setMessage(null) }] : [{ label: 'D’accord', tone: 'ink', onPress: () => setMessage(null) }]} />
+      <Sheet visible={!!message} onClose={() => setMessage(null)} title={message?.title ?? ''} text={message?.text} actions={message?.reglages ? [{ label: traduire('Ouvrir les réglages'), tone: 'ink', onPress: () => { setMessage(null); Linking.openSettings().catch(() => {}); } }, { label: traduire('Plus tard'), tone: 'ghost', onPress: () => setMessage(null) }] : [{ label: 'D’accord', tone: 'ink', onPress: () => setMessage(null) }]} />
 
       {appBlurred && Platform.OS === 'ios' ? <BlurView style={StyleSheet.absoluteFill} intensity={100} tint="light" /> : null}
     </View>

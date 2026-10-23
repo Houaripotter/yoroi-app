@@ -10,6 +10,7 @@ import type { FormeResult } from '@/lib/v2/accueil/forme';
 import type { MetricKey } from './metrics';
 import type { DayPoint } from './stats';
 import { messageScoreIncomplet, scoreRecupFiable } from '@/lib/v2/recuperation';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type ScorePart = {
   key: MetricKey;
@@ -39,7 +40,7 @@ export type Readiness = {
 };
 
 const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
-const fr = (v: number, d = 0) => v.toFixed(d).replace('.', ',');
+const fr = (v: number, d = 0) => v.toFixed(d).replace('.', DECIMAL);
 
 /** Dernière valeur des 2 derniers jours et moyenne des 28 jours d'avant */
 function todayAndBaseline(points: DayPoint[] | undefined): { today: DayPoint | null; base: number | null; n: number } {
@@ -65,16 +66,16 @@ export function santeFlags(series: Partial<Record<MetricKey, DayPoint[]>> | null
   const flags: string[] = [];
   if (!series) return flags;
   const rr = todayAndBaseline(series.respiration);
-  if (rr.today && rr.base && rr.today.value - rr.base >= 1.5) flags.push(`Ta respiration de la nuit est plus rapide que d'habitude (${fr(rr.today.value, 1)} contre ${fr(rr.base, 1)} par minute).`);
+  if (rr.today && rr.base && rr.today.value - rr.base >= 1.5) flags.push(traduire("Ta respiration de la nuit est plus rapide que d'habitude ({0} contre {1} par minute).", fr(rr.today.value, 1), fr(rr.base, 1)));
   const wt = todayAndBaseline(series['temperature-poignet']);
-  if (wt.today && wt.base && wt.today.value - wt.base >= 0.5) flags.push(`Ton poignet est plus chaud que d'habitude cette nuit (+${fr(wt.today.value - wt.base, 1)} °C).`);
+  if (wt.today && wt.base && wt.today.value - wt.base >= 0.5) flags.push(traduire("Ton poignet est plus chaud que d'habitude cette nuit (+{0} °C).", fr(wt.today.value - wt.base, 1)));
   return flags;
 }
 
 /** Le score unique de recuperation, mis en forme pour la carte Sante */
 export function readinessFromForme(forme: FormeResult | null, series: Partial<Record<MetricKey, DayPoint[]>> | null): Readiness {
   const flags = santeFlags(series);
-  if (!forme) return { score: null, title: 'Pas encore de score', advice: '', tone: 'none', parts: [], missing: ['tes mesures'], flags };
+  if (!forme) return { score: null, title: traduire('Pas encore de score'), advice: '', tone: 'none', parts: [], missing: [traduire('tes mesures')], flags };
   const parts: ScorePart[] = forme.factors.map((f) => ({
     key: (RECUP_METRIC[f.key] ?? f.key) as MetricKey,
     label: f.label,
@@ -86,9 +87,9 @@ export function readinessFromForme(forme: FormeResult | null, series: Partial<Re
     weight: 0,
     factor: f.key,
   }));
-  const LABEL: Record<string, string> = { sommeil: 'ta nuit de sommeil', charge: 'une séance récente', hydratation: 'ton eau du jour', corps: 'ton état du corps' };
+  const LABEL: Record<string, string> = { sommeil: traduire('ta nuit de sommeil'), charge: traduire('une séance récente'), hydratation: traduire('ton eau du jour'), corps: traduire('ton état du corps') };
   const missing = forme.missing.map((k) => LABEL[k] ?? k);
-  if (forme.score === null || !forme.level) return { score: null, title: 'Pas encore de score', advice: '', tone: 'none', parts, missing, flags };
+  if (forme.score === null || !forme.level) return { score: null, title: traduire('Pas encore de score'), advice: '', tone: 'none', parts, missing, flags };
   // audit 18 octobre : meme regle que l'accueil et l'ecran detail, pas de score sur 100 avec un seul element mesure
   if (!scoreRecupFiable(forme.score, forme.factors.length)) {
     return { score: null, title: messageScoreIncomplet(forme.missing.includes('sommeil')), advice: '', tone: 'none', parts, missing, flags };

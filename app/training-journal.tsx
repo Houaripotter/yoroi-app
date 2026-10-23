@@ -54,6 +54,7 @@ import { ResultSheet } from '@/components/yoroi/v2/carnet/ResultSheet';
 import type { ResultInfo } from '@/components/yoroi/v2/carnet/ResultSheet';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const JOURNAL_CACHE_KEY = '@yoroi_journal_data_cache_v1';
 const JOURNAL_CACHE_TTL = 5 * 60 * 1000;
@@ -128,12 +129,12 @@ export default function TrainingJournalScreen() {
       if (screenshot) {
         const now = new Date().toISOString();
         setBenchmarks([
-          { id: 'bench_1', name: 'Développé couché', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#2C4A84', createdAt: now, muscleGroup: 'Pectoraux', entries: [{ id: 'e1', value: 100, reps: 5, date: now, rpe: 9, notes: 'Record personnel' }, { id: 'e2', value: 95, reps: 5, date: new Date(Date.now() - 86400000 * 7).toISOString(), rpe: 8 }] },
+          { id: 'bench_1', name: traduire('Développé couché'), category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#2C4A84', createdAt: now, muscleGroup: 'Pectoraux', entries: [{ id: 'e1', value: 100, reps: 5, date: now, rpe: 9, notes: 'Record personnel' }, { id: 'e2', value: 95, reps: 5, date: new Date(Date.now() - 86400000 * 7).toISOString(), rpe: 8 }] },
           { id: 'bench_2', name: 'Squat', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#2C4A84', createdAt: now, muscleGroup: 'Jambes', entries: [{ id: 'e3', value: 140, reps: 3, date: now, rpe: 9 }] },
           { id: 'bench_3', name: '10 km', category: 'running', unit: 'time', iconName: 'timer', color: '#3D5D9E', createdAt: now, entries: [{ id: 'e4', value: 2400, date: now, duration: 40, distance: 10 }] },
         ]);
         setSkills([
-          { id: 'skill_1', name: 'Triangle', category: 'jjb_soumission', status: 'mastered', drillCount: 150, createdAt: now, updatedAt: now, notes: [{ id: 'n1', text: 'Bien couper l’angle', date: now }] },
+          { id: 'skill_1', name: 'Triangle', category: 'jjb_soumission', status: 'mastered', drillCount: 150, createdAt: now, updatedAt: now, notes: [{ id: 'n1', text: traduire('Bien couper l’angle'), date: now }] },
           { id: 'skill_2', name: 'Passage toreando', category: 'jjb_passage', status: 'in_progress', drillCount: 45, createdAt: now, updatedAt: now, notes: [] },
           { id: 'skill_3', name: 'Berimbolo', category: 'jjb_garde', status: 'to_learn', drillCount: 0, createdAt: now, updatedAt: now, notes: [] },
         ]);
@@ -285,9 +286,9 @@ export default function TrainingJournalScreen() {
   const handleCreateCustom = async (name: string, category: BenchmarkCategory, unit: BenchmarkUnit) => {
     if (busy) return;
     if (!isPremium && benchmarks.length >= FREE_BENCHMARKS_LIMIT) {
-      appAlert('Limite atteinte', `Tu as atteint la limite de ${FREE_BENCHMARKS_LIMIT} suivis en version gratuite. Passe à Premium pour en créer autant que tu veux.`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Débloquer Premium', onPress: () => ouvrirPaywall('progression_mouvements', benchmarks.length) },
+      appAlert('Limite atteinte', traduire("Tu as atteint la limite de {0} suivis en version gratuite. Passe à Premium pour en créer autant que tu veux.", FREE_BENCHMARKS_LIMIT), [
+        { text: traduire('Annuler'), style: 'cancel' },
+        { text: traduire('Débloquer Premium'), onPress: () => ouvrirPaywall('progression_mouvements', benchmarks.length) },
       ]);
       return;
     }
@@ -298,12 +299,12 @@ export default function TrainingJournalScreen() {
       if (created) {
         setPicker(false);
         await loadData();
-        setToast('Suivi créé');
+        setToast(traduire('Suivi créé'));
         setTimeout(() => openEntry(created), 300);
       }
     } catch (error) {
       logger.error('Création du suivi impossible', error);
-      appAlert('Oups', 'Le suivi n’a pas pu être créé.');
+      appAlert('Oups', traduire('Le suivi n’a pas pu être créé.'));
     } finally {
       setBusy(false);
     }
@@ -334,7 +335,7 @@ export default function TrainingJournalScreen() {
       }
     } catch (error) {
       logger.error('Ajout de la perf impossible', error);
-      appAlert('Oups', 'La perf n’a pas pu être enregistrée.');
+      appAlert('Oups', traduire('La perf n’a pas pu être enregistrée.'));
     } finally {
       setBusy(false);
     }
@@ -352,10 +353,10 @@ export default function TrainingJournalScreen() {
   };
 
   const handleDeleteBenchmark = (id: string) => {
-    appAlert('Supprimer ce suivi ?', 'Il ira dans la corbeille, tu pourras le restaurer.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer ce suivi ?'), traduire('Il ira dans la corbeille, tu pourras le restaurer.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           await deleteBenchmark(id);
@@ -363,7 +364,7 @@ export default function TrainingJournalScreen() {
           setSelectedBenchmark(null);
           await loadData();
           changed();
-          setToast('Suivi mis à la corbeille');
+          setToast(traduire('Suivi mis à la corbeille'));
         },
       },
     ]);
@@ -373,7 +374,7 @@ export default function TrainingJournalScreen() {
     await deleteBenchmark(b.id);
     await loadData();
     changed();
-    setToast('Suivi mis à la corbeille');
+    setToast(traduire('Suivi mis à la corbeille'));
   };
 
   const handleDeleteEntry = async (e: BenchmarkEntry) => {
@@ -405,37 +406,37 @@ export default function TrainingJournalScreen() {
   const pickSkillVideo = async () => {
     const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      appAlert('Accès refusé', 'Autorise l’accès à la galerie pour ajouter une vidéo.');
+      appAlert(traduire('Accès refusé'), traduire('Autorise l’accès à la galerie pour ajouter une vidéo.'));
       return;
     }
     const r = await launchImageLibraryAsync({ mediaTypes: ['videos'], allowsEditing: false, quality: 0.8 });
     if (!r.canceled && r.assets[0]) {
       const uri = await saveVideoPermanently(r.assets[0].uri);
       if (uri) setNewSkillVideoUri(uri);
-      else appAlert('Oups', 'La vidéo n’a pas pu être enregistrée.');
+      else appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
     }
   };
 
   const recordSkillVideo = async () => {
     const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      appAlert('Accès refusé', 'Autorise l’accès à la caméra pour filmer.');
+      appAlert(traduire('Accès refusé'), traduire('Autorise l’accès à la caméra pour filmer.'));
       return;
     }
     const r = await launchCameraAsync({ mediaTypes: ['videos'], allowsEditing: true, quality: 0.8, videoMaxDuration: 60 });
     if (!r.canceled && r.assets[0]) {
       const uri = await saveVideoPermanently(r.assets[0].uri);
       if (uri) setNewSkillVideoUri(uri);
-      else appAlert('Oups', 'La vidéo n’a pas pu être enregistrée.');
+      else appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
     }
   };
 
   const handleAddSkill = async () => {
     if (busy) return;
     if (!isPremium && skills.length >= FREE_SKILLS_LIMIT) {
-      appAlert('Limite atteinte', `Tu as atteint la limite de ${FREE_SKILLS_LIMIT} techniques en version gratuite. Passe à Premium pour en ajouter autant que tu veux.`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Débloquer Premium', onPress: () => ouvrirPaywall('progression_mouvements', skills.length) },
+      appAlert('Limite atteinte', traduire("Tu as atteint la limite de {0} techniques en version gratuite. Passe à Premium pour en ajouter autant que tu veux.", FREE_SKILLS_LIMIT), [
+        { text: traduire('Annuler'), style: 'cancel' },
+        { text: traduire('Débloquer Premium'), onPress: () => ouvrirPaywall('progression_mouvements', skills.length) },
       ]);
       return;
     }
@@ -450,13 +451,13 @@ export default function TrainingJournalScreen() {
         setNewSkillStatus('to_learn');
         setNewSkillNotes('');
         setNewSkillVideoUri(null);
-        setToast(newSkillStatus === 'mastered' ? 'Technique maîtrisée, bravo' : 'Technique ajoutée');
+        setToast(newSkillStatus === 'mastered' ? traduire('Technique maîtrisée, bravo') : traduire('Technique ajoutée'));
         await loadData();
         changed();
       }
     } catch (error) {
       logger.error('Création de la technique impossible', error);
-      appAlert('Oups', 'La technique n’a pas pu être créée.');
+      appAlert('Oups', traduire('La technique n’a pas pu être créée.'));
     } finally {
       setBusy(false);
     }
@@ -472,7 +473,7 @@ export default function TrainingJournalScreen() {
   const handleUpdateSkillStatus = async (id: string, status: SkillStatus) => {
     await updateSkillStatus(id, status);
     await refreshSkill(id);
-    if (status === 'mastered') setToast('Maîtrisée : tampon posé');
+    if (status === 'mastered') setToast(traduire('Maîtrisée : tampon posé'));
     changed();
   };
 
@@ -486,7 +487,7 @@ export default function TrainingJournalScreen() {
       changed();
     } catch (error) {
       logger.error('Ajout de note impossible', error);
-      appAlert('Oups', 'La note n’a pas pu être ajoutée.');
+      appAlert('Oups', traduire('La note n’a pas pu être ajoutée.'));
     } finally {
       setBusy(false);
     }
@@ -509,15 +510,15 @@ export default function TrainingJournalScreen() {
   const handleUpdateVideoUrl = async () => {
     if (!selectedSkill) return;
     await updateSkillVideoUrl(selectedSkill.id, editingVideoUrl.trim());
-    setToast('Lien vidéo enregistré');
+    setToast(traduire('Lien vidéo enregistré'));
     await refreshSkill(selectedSkill.id);
   };
 
   const handleDeleteSkill = (id: string) => {
-    appAlert('Supprimer cette technique ?', 'Elle ira dans la corbeille, tu pourras la restaurer.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cette technique ?'), traduire('Elle ira dans la corbeille, tu pourras la restaurer.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           await deleteSkill(id);
@@ -535,23 +536,23 @@ export default function TrainingJournalScreen() {
   const handleRestoreBenchmark = async (id: string) => {
     if (await restoreBenchmark(id)) {
       await Promise.all([loadData(), loadTrash()]);
-      setToast('Suivi restauré');
+      setToast(traduire('Suivi restauré'));
       changed();
-    } else appAlert('Oups', 'Impossible de restaurer.');
+    } else appAlert('Oups', traduire('Impossible de restaurer.'));
   };
 
   const handleRestoreSkill = async (id: string) => {
     if (await restoreSkill(id)) {
       await Promise.all([loadData(), loadTrash()]);
-      setToast('Technique restaurée');
+      setToast(traduire('Technique restaurée'));
       changed();
-    } else appAlert('Oups', 'Impossible de restaurer.');
+    } else appAlert('Oups', traduire('Impossible de restaurer.'));
   };
 
   const handleEmptyTrash = () => {
     if (trashCount === 0) return;
-    appAlert('Vider la corbeille ?', `${trashCount} élément${trashCount > 1 ? 's' : ''} seront supprimés pour de bon.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Vider la corbeille ?'), traduirePluriel(trashCount, trashCount > 1, "{0} élément seront supprimés pour de bon.", "{0} éléments seront supprimés pour de bon.", trashCount), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Vider',
         style: 'destructive',
@@ -560,10 +561,10 @@ export default function TrainingJournalScreen() {
             await emptyTrash();
             await Promise.all([loadData(), loadTrash()]);
             setShowTrash(false);
-            setToast('Corbeille vidée');
+            setToast(traduire('Corbeille vidée'));
           } catch (error) {
             logger.error('Vidage de la corbeille impossible', error);
-            appAlert('Oups', 'La corbeille n’a pas pu être vidée.');
+            appAlert('Oups', traduire('La corbeille n’a pas pu être vidée.'));
           }
         },
       },
@@ -580,7 +581,7 @@ export default function TrainingJournalScreen() {
         }
       }
       await loadData();
-      setToast('Bibliothèque installée');
+      setToast(traduire('Bibliothèque installée'));
     } catch (error) {
       logger.error('Installation de la bibliothèque impossible', error);
     } finally {
@@ -593,7 +594,7 @@ export default function TrainingJournalScreen() {
     try {
       const r = await cleanDemoData();
       await loadData();
-      appAlert(r.removed > 0 ? 'Carnet nettoyé' : 'Déjà propre', r.message);
+      appAlert(r.removed > 0 ? traduire('Carnet nettoyé') : traduire('Déjà propre'), r.message);
     } catch (error) {
       logger.error('Nettoyage impossible', error);
     }
@@ -601,7 +602,7 @@ export default function TrainingJournalScreen() {
 
   const shareStats = () => {
     setMoreMenu(false);
-    partagerTexte({ source: 'carnet', message: `Mon carnet YOROI : ${totals.perfs} perfs notées, ${totals.mastered} techniques maîtrisées, ${totals.drills} répétitions, ${skills.length} techniques en tout.` });
+    partagerTexte({ source: 'carnet', message: traduire("Mon carnet YOROI : {0} perfs notées, {1} techniques maîtrisées, {2} répétitions, {3} techniques en tout.", totals.perfs, totals.mastered, totals.drills, skills.length) });
   };
 
   // ─── Rendu ────────────────────────────────────────────────────────────
@@ -626,7 +627,7 @@ export default function TrainingJournalScreen() {
 
   const overlays = (
     <>
-      <EntrySheet visible={showEntry} benchmark={selectedBenchmark} busy={busy} userWeight={userWeight} onClose={() => setShowEntry(false)} onSubmit={handleAddEntry} onError={(m) => appAlert('À compléter', m)} />
+      <EntrySheet visible={showEntry} benchmark={selectedBenchmark} busy={busy} userWeight={userWeight} onClose={() => setShowEntry(false)} onSubmit={handleAddEntry} onError={(m) => appAlert(traduire('À compléter'), m)} />
       <ResultSheet
         result={result}
         onClose={() => {
@@ -660,7 +661,7 @@ export default function TrainingJournalScreen() {
           right={
             <>
               <AddPill label={meta.add} onPress={onAddPress} />
-              <IconBtn name="more" label="Options du carnet" badge={trashCount} onPress={() => setMoreMenu(true)} />
+              <IconBtn name="more" label={traduire("Options du carnet")} badge={trashCount} onPress={() => setMoreMenu(true)} />
             </>
           }
         />
@@ -695,13 +696,12 @@ export default function TrainingJournalScreen() {
               <Illus name="videos" size={120} />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <CIcon name="lock" size={18} color={P.goldDark} />
-                <Ink size={20} weight="black" tight>Ta vidéothèque, avec Premium</Ink>
+                <Ink size={20} weight="black" tight>{traduire("Ta vidéothèque, avec Premium")}</Ink>
               </View>
               <Ink size={14} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>
-                Importe les vidéos qui t’inspirent, range-les par muscle ou par sport, et revois le geste juste avant ta séance.
-              </Ink>
+                {traduire("Importe les vidéos qui t’inspirent, range-les par muscle ou par sport, et revois le geste juste avant ta séance.")}</Ink>
               <View style={{ alignSelf: 'stretch' }}>
-                <BigButton label="Découvrir Premium" onPress={() => ouvrirPaywall('videos')} />
+                <BigButton label={traduire("Découvrir Premium")} onPress={() => ouvrirPaywall('videos')} />
               </View>
             </View>
           ) : null}
@@ -710,17 +710,17 @@ export default function TrainingJournalScreen() {
         </View>
       </ScrollView>
 
-      <Sheet visible={combatMenu} onClose={() => setCombatMenu(false)} title="Noter côté combat">
-        <ChoiceLine title="Une séance de sparring" sub="Rounds, partenaires, soumissions" icon="swords" onPress={() => { setCombatMenu(false); router.push(`/seance/combat?sport=${pratique.combatSport}` as any); }} />
-        <ChoiceLine title="Un combat en compétition" sub="Résultat, méthode, adversaire" icon="trophy" onPress={() => { setCombatMenu(false); router.push('/seance/match' as any); }} />
-        <ChoiceLine title="Une compétition à venir" sub="La date, pour le compte à rebours" icon="calendar" onPress={() => { setCombatMenu(false); router.push('/add-competition' as any); }} />
+      <Sheet visible={combatMenu} onClose={() => setCombatMenu(false)} title={traduire("Noter côté combat")}>
+        <ChoiceLine title={traduire("Une séance de sparring")} sub="Rounds, partenaires, soumissions" icon="swords" onPress={() => { setCombatMenu(false); router.push(`/seance/combat?sport=${pratique.combatSport}` as any); }} />
+        <ChoiceLine title={traduire("Un combat en compétition")} sub={traduire("Résultat, méthode, adversaire")} icon="trophy" onPress={() => { setCombatMenu(false); router.push('/seance/match' as any); }} />
+        <ChoiceLine title={traduire("Une compétition à venir")} sub={traduire("La date, pour le compte à rebours")} icon="calendar" onPress={() => { setCombatMenu(false); router.push('/add-competition' as any); }} />
       </Sheet>
 
-      <Sheet visible={moreMenu} onClose={() => setMoreMenu(false)} title="Options du carnet">
-        <ChoiceLine title="Installer la bibliothèque d’exercices" sub={`${EXERCISE_LIBRARY.length} exercices prêts à suivre`} icon="book" onPress={handleInstallLibrary} />
-        <ChoiceLine title="Retirer les suivis vides de démonstration" sub="Garde un carnet propre" icon="refresh" onPress={handleCleanDemo} />
-        <ChoiceLine title="Partager mon carnet" sub="Tes chiffres en une phrase" icon="share" onPress={shareStats} />
-        <ChoiceLine title="Corbeille" sub={trashCount > 0 ? `${trashCount} élément${trashCount > 1 ? 's' : ''} à restaurer ou à vider` : 'Vide'} icon="trash" onPress={async () => { setMoreMenu(false); await loadTrash(); setTimeout(() => setShowTrash(true), 300); }} />
+      <Sheet visible={moreMenu} onClose={() => setMoreMenu(false)} title={traduire("Options du carnet")}>
+        <ChoiceLine title={traduire("Installer la bibliothèque d’exercices")} sub={traduire("{0} exercices prêts à suivre", EXERCISE_LIBRARY.length)} icon="book" onPress={handleInstallLibrary} />
+        <ChoiceLine title={traduire("Retirer les suivis vides de démonstration")} sub={traduire("Garde un carnet propre")} icon="refresh" onPress={handleCleanDemo} />
+        <ChoiceLine title={traduire("Partager mon carnet")} sub={traduire("Tes chiffres en une phrase")} icon="share" onPress={shareStats} />
+        <ChoiceLine title="Corbeille" sub={trashCount > 0 ? traduirePluriel(trashCount, trashCount > 1, "{0} élément à restaurer ou à vider", "{0} éléments à restaurer ou à vider", trashCount) : 'Vide'} icon="trash" onPress={async () => { setMoreMenu(false); await loadTrash(); setTimeout(() => setShowTrash(true), 300); }} />
       </Sheet>
 
       <RecordPicker visible={picker} onClose={() => setPicker(false)} busy={busy} onPickTemplate={handlePickTemplate} onCreateCustom={handleCreateCustom} />
@@ -793,7 +793,7 @@ export default function TrainingJournalScreen() {
       {busy && !showEntry && !picker && !showAddSkill ? (
         <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 12, alignSelf: 'center' }}>
           <View style={{ paddingHorizontal: 14, height: 34, borderRadius: 17, backgroundColor: P.ink, justifyContent: 'center' }}>
-            <Ink size={12} weight="extraBold" color={P.white}>Un instant...</Ink>
+            <Ink size={12} weight="extraBold" color={P.white}>{traduire("Un instant...")}</Ink>
           </View>
         </View>
       ) : null}

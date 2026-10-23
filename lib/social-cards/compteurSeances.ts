@@ -6,6 +6,7 @@
  */
 import type { Training } from '@/lib/database';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
+import { traduirePluriel } from '@/lib/i18n/tr';
 
 const jourDe = (t: Training) => String(t?.date ?? '').slice(0, 10);
 
@@ -30,5 +31,5 @@ export function objectifTenu(seances: number, objectif: number): boolean {
 /** « Objectif : 4 séances » ; rien sans objectif */
 export function libelleObjectifSeances(objectif: number): string | undefined {
   if (!(objectif > 0)) return undefined;
-  return `Objectif : ${objectif} séance${objectif > 1 ? 's' : ''}`;
+  return traduirePluriel(objectif, objectif > 1, "Objectif : {0} séance", "Objectif : {0} séances", objectif);
 }

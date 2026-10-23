@@ -28,6 +28,7 @@ import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { genreDuPersonnage } from '@/lib/v2/dojo/choisirUnivers';
 import { choisirPhoto, ouvrirReglagesTelephone, retirerPhoto } from '@/lib/v2/espace/photoProfil';
+import { traduire } from '@/lib/i18n/tr';
 
 function BoutonPhoto({ icon, label, onPress, disabled, principal }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; principal?: boolean }) {
   const { theme } = useYoroiTheme();
@@ -83,7 +84,7 @@ export default function PhotoEtContour() {
   const montrePhoto = !!photo && (espace.identite === 'photo' || !avecPerso);
   const contour = contourDe(espace);
   const scene = sceneMeta(espace.sceneFixe ?? espace.scene);
-  const prenom = profile?.name?.trim() || 'Ton prénom';
+  const prenom = profile?.name?.trim() || traduire('Ton prénom');
 
   const contenu = (S: number) =>
     montrePhoto ? (
@@ -104,12 +105,12 @@ export default function PhotoEtContour() {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         reload();
       } else if (r === 'refuse') {
-        appAlert(source === 'camera' ? 'Caméra' : 'Photos', source === 'camera' ? 'Autorise la caméra dans les réglages du téléphone pour prendre une photo.' : 'Autorise l’accès aux photos dans les réglages du téléphone.', [
-          { text: 'Ouvrir les réglages', style: 'primary', onPress: ouvrirReglagesTelephone },
-          { text: 'Annuler', style: 'cancel' },
+        appAlert(source === 'camera' ? traduire('Caméra') : 'Photos', source === 'camera' ? traduire('Autorise la caméra dans les réglages du téléphone pour prendre une photo.') : traduire('Autorise l’accès aux photos dans les réglages du téléphone.'), [
+          { text: traduire('Ouvrir les réglages'), style: 'primary', onPress: ouvrirReglagesTelephone },
+          { text: traduire('Annuler'), style: 'cancel' },
         ]);
       } else if (r === 'erreur') {
-        appAlert('Photo indisponible', source === 'camera' ? 'Choisis plutôt une photo dans ta galerie.' : 'La photo n’a pas pu être chargée. Réessaie.');
+        appAlert('Photo indisponible', source === 'camera' ? traduire('Choisis plutôt une photo dans ta galerie.') : traduire('La photo n’a pas pu être chargée. Réessaie.'));
       }
     } finally {
       setOccupe(false);
@@ -117,9 +118,9 @@ export default function PhotoEtContour() {
   };
 
   const retirer = () => {
-    appAlert('Retirer ta photo ?', avecPerso ? 'Le rond montrera ton personnage.' : 'Le rond montrera tes initiales.', [
+    appAlert(traduire('Retirer ta photo ?'), avecPerso ? traduire('Le rond montrera ton personnage.') : traduire('Le rond montrera tes initiales.'), [
       { text: 'Retirer', style: 'destructive', onPress: () => { retirerPhoto().then(reload).catch(() => {}); } },
-      { text: 'Annuler', style: 'cancel' },
+      { text: traduire('Annuler'), style: 'cancel' },
     ]);
   };
 
@@ -139,7 +140,7 @@ export default function PhotoEtContour() {
   const colContour = Math.floor((W - 20 - 3 * 6) / 4);
 
   return (
-    <EspaceScreen title="Photo et contour" subtitle="Ton rond de profil, à l’accueil, dans Réglages et sur ton profil" gap={14}>
+    <EspaceScreen title={traduire("Photo et contour")} subtitle={traduire("Ton rond de profil, à l’accueil, dans Réglages et sur ton profil")} gap={14}>
       {/* apercu en direct : sur ta scene (accueil) et sur le papier (Reglages) */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1.15, height: 160, borderRadius: 22, overflow: 'hidden', backgroundColor: c.fillSoft, borderWidth: 1, borderColor: c.border, justifyContent: 'flex-end', padding: 14 }}>
@@ -152,20 +153,20 @@ export default function PhotoEtContour() {
         </View>
       </View>
 
-      <Groupe title="Ta photo" sub={photo ? 'Change-la quand tu veux' : 'Ajoute-la pour la voir dans ton rond'} />
+      <Groupe title={traduire("Ta photo")} sub={photo ? traduire('Change-la quand tu veux') : traduire('Ajoute-la pour la voir dans ton rond')} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <BoutonPhoto icon="camera" label="Prendre" onPress={() => prendre('camera')} disabled={occupe} principal={!photo} />
         <BoutonPhoto icon="image" label="Galerie" onPress={() => prendre('galerie')} disabled={occupe} />
       </View>
       {photo ? (
         <Pressable onPress={retirer} accessibilityRole="button" style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', paddingHorizontal: 4, opacity: pressed ? 0.6 : 1 })}>
-          <Ink size={13} weight="bold" color={c.textSecondary}>Retirer la photo</Ink>
+          <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Retirer la photo")}</Ink>
         </Pressable>
       ) : null}
 
       {avecPerso ? (
         <>
-          <Groupe title="Dans le rond" sub="Ta photo ou ton personnage" />
+          <Groupe title={traduire("Dans le rond")} sub={traduire("Ta photo ou ton personnage")} />
           <View style={{ flexDirection: 'row', backgroundColor: c.fillSubtle, borderRadius: 16, padding: 4 }}>
             {(['photo', 'personnage'] as const).map((v) => {
               const on = (v === 'photo') === montrePhoto;
@@ -179,16 +180,16 @@ export default function PhotoEtContour() {
                   accessibilityState={{ selected: on, disabled: off }}
                   style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent', opacity: off ? 0.45 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}
                 >
-                  <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{v === 'photo' ? 'Ta photo' : 'Ton personnage'}</Ink>
+                  <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{v === 'photo' ? traduire('Ta photo') : traduire('Ton personnage')}</Ink>
                 </Pressable>
               );
             })}
           </View>
-          {!photo ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>Ajoute d’abord une photo pour la choisir.</Ink> : null}
+          {!photo ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>{traduire("Ajoute d’abord une photo pour la choisir.")}</Ink> : null}
         </>
       ) : null}
 
-      <Groupe title="Contour" sub="Un simple choix de style, sans lien avec ton rang" />
+      <Groupe title="Contour" sub={traduire("Un simple choix de style, sans lien avec ton rang")} />
       <Card>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 6, padding: 10 }}>
           {CONTOURS.map((o) => {

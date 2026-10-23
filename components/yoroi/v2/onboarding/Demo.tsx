@@ -32,6 +32,7 @@ import type { Nav } from './types';
 import { P } from '@/components/yoroi/livePalette';
 import { TropheeRecord } from '@/components/yoroi/v2/charts/core';
 import { VitrineAccueil, VitrineBilan } from './Vitrines';
+import { traduire } from '@/lib/i18n/tr';
 
 const WEEKS = 4;
 
@@ -54,21 +55,21 @@ export function projectedSeries(start: number, target: number | null, goal: Goal
 }
 
 const SLIDES = [
-  { titre: 'Ton poids, **sans le bruit** des jours', sous: 'Ta carte Poids dans quatre semaines, si tu tiens un rythme sain vers ton cap.' },
-  { titre: 'Ta semaine, **d’un coup d’œil**', sous: 'Ton objectif de séances, et ce qu’il te reste à faire.' },
-  { titre: 'Ton accueil, **en couleurs**', sous: 'Une tuile par sujet. Ta santé du jour arrive seule de ta montre.' },
-  { titre: 'Après chaque séance, **ton bilan**', sous: 'Ce qui a changé, en quelques lignes, les mots importants en couleur.' },
-  { titre: 'Tes records, **tamponnés**', sous: 'Chaque record battu gagne son tampon et son trophée. Quelques exemples :' },
+  { titre: traduire('Ton poids, **sans le bruit** des jours'), sous: traduire('Ta carte Poids dans quatre semaines, si tu tiens un rythme sain vers ton cap.') },
+  { titre: traduire('Ta semaine, **d’un coup d’œil**'), sous: traduire('Ton objectif de séances, et ce qu’il te reste à faire.') },
+  { titre: traduire('Ton accueil, **en couleurs**'), sous: traduire('Une tuile par sujet. Ta santé du jour arrive seule de ta montre.') },
+  { titre: traduire('Après chaque séance, **ton bilan**'), sous: traduire('Ce qui a changé, en quelques lignes, les mots importants en couleur.') },
+  { titre: traduire('Tes records, **tamponnés**'), sous: traduire('Chaque record battu gagne son tampon et son trophée. Quelques exemples :') },
 ];
 
 const AUTO_MS = 3500;
 
 /** Exemples de records, un par famille, chacun avec son tampon de la collection (aucun n'est a toi) */
 const EXEMPLES: { tampon: TamponId; famille: string; titre: string; valeur: string }[] = [
-  { tampon: 'record_force', famille: 'Musculation', titre: 'Développé couché', valeur: '100 kg × 3' },
+  { tampon: 'record_force', famille: 'Musculation', titre: traduire('Développé couché'), valeur: '100 kg × 3' },
   { tampon: 'record_endurance', famille: 'Course', titre: '10 km', valeur: '47 min 30 s' },
-  { tampon: 'record_combat', famille: 'Combat', titre: 'Sparring', valeur: '8 rounds de 5 min' },
-  { tampon: 'record_poids', famille: 'Poids', titre: 'Pesée la plus basse', valeur: '77,4 kg' },
+  { tampon: 'record_combat', famille: traduire('Combat'), titre: 'Sparring', valeur: traduire('8 rounds de 5 min') },
+  { tampon: 'record_poids', famille: 'Poids', titre: traduire('Pesée la plus basse'), valeur: '77,4 kg' },
 ];
 
 function RecordsExemples() {
@@ -76,7 +77,7 @@ function RecordsExemples() {
   return (
     <View style={{ borderRadius: 22, backgroundColor: c.surface, paddingVertical: 8, paddingHorizontal: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
-        <Ink size={15} weight="black">Ton carnet de records</Ink>
+        <Ink size={15} weight="black">{traduire("Ton carnet de records")}</Ink>
         <View style={{ borderRadius: 999, backgroundColor: c.fillSoft, paddingHorizontal: 9, paddingVertical: 3 }}>
           <Ink size={11} weight="black" color={c.textSecondary} style={{ letterSpacing: 0.6 }}>EXEMPLES</Ink>
         </View>
@@ -103,7 +104,7 @@ function Dot({ on, index, onPress }: { on: boolean; index: number; onPress: () =
   const c = useColors();
   const style = useAnimatedStyle(() => ({ width: withTiming(on ? 26 : 9, { duration: 200 }), backgroundColor: on ? c.ink : c.border }), [on, c.ink, c.border]);
   return (
-    <Pressable onPress={onPress} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Image ${index + 1} sur ${SLIDES.length}`} accessibilityState={{ selected: on }} style={{ minWidth: 30, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable onPress={onPress} hitSlop={6} accessibilityRole="button" accessibilityLabel={traduire("Image {0} sur {1}", index + 1, SLIDES.length)} accessibilityState={{ selected: on }} style={{ minWidth: 30, height: 44, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={[{ height: 9, borderRadius: 5 }, style]} />
     </Pressable>
   );
@@ -159,7 +160,7 @@ export function Demo({ nav, start, target, goal, recompo = false, sessions, days
   }, [auto, index, w]);
 
   return (
-    <Shell {...nav} title="Voilà ce qui **t’attend**" gap={10} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Voilà ce qui **t’attend**")} gap={10} footer={<MainButton label="Continuer" onPress={onNext} />}>
       <View onLayout={(e) => setW(Math.round(e.nativeEvent.layout.width))} onTouchStart={stopAuto} style={{ marginHorizontal: -4 }}>
         {w > 0 ? (
           <ScrollView
@@ -172,7 +173,7 @@ export function Demo({ nav, start, target, goal, recompo = false, sessions, days
             onScrollEndDrag={onScrollEnd}
             scrollEventThrottle={16}
             decelerationRate="fast"
-            accessibilityLabel={`Glisse pour voir les ${SLIDES.length} images`}
+            accessibilityLabel={traduire("Glisse pour voir les {0} images", SLIDES.length)}
           >
             {SLIDES.map((s, i) => (
               <View key={i} style={{ width: w, paddingHorizontal: 4, gap: 12 }} accessibilityLabel={`${s.titre.replace(/\*\*/g, '')}. ${s.sous}`}>

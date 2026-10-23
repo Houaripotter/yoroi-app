@@ -16,29 +16,30 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { DEV_CLOCK_CHANGED, devNowMs, getDevClockOffset, setDevClockOffset } from '@/lib/v2/creator/devClock';
 import { formatDateTime } from '@/lib/v2/creator/deviceInfo';
 import { Chip, ChipWrap, Note, StudioSection, useStudio } from './parts';
+import { traduire } from '@/lib/i18n/tr';
 
 const H = 3600 * 1000;
 const D = 24 * H;
 export const CLOCK_PRESETS: { label: string; ms: number; a11y: string }[] = [
-  { label: 'Maintenant', ms: 0, a11y: 'Revenir à l’heure réelle' },
-  { label: 'moins 3 h', ms: -3 * H, a11y: 'Reculer de 3 heures' },
-  { label: '+3 h', ms: 3 * H, a11y: 'Avancer de 3 heures' },
-  { label: '+12 h', ms: 12 * H, a11y: 'Avancer de 12 heures' },
-  { label: 'Demain', ms: D, a11y: 'Avancer d’un jour' },
-  { label: '+3 jours', ms: 3 * D, a11y: 'Avancer de 3 jours' },
-  { label: '+7 jours', ms: 7 * D, a11y: 'Avancer de 7 jours' },
+  { label: 'Maintenant', ms: 0, a11y: traduire('Revenir à l’heure réelle') },
+  { label: traduire('moins 3 h'), ms: -3 * H, a11y: traduire('Reculer de 3 heures') },
+  { label: '+3 h', ms: 3 * H, a11y: traduire('Avancer de 3 heures') },
+  { label: '+12 h', ms: 12 * H, a11y: traduire('Avancer de 12 heures') },
+  { label: traduire('Demain'), ms: D, a11y: traduire('Avancer d’un jour') },
+  { label: traduire('+3 jours'), ms: 3 * D, a11y: traduire('Avancer de 3 jours') },
+  { label: traduire('+7 jours'), ms: 7 * D, a11y: traduire('Avancer de 7 jours') },
 ];
 
 const TEXT_SIZES: { level: FontSizeLevel; label: string }[] = [
   { level: 1, label: 'Petite' },
   { level: 2, label: 'Normale' },
   { level: 3, label: 'Grande' },
-  { level: 4, label: 'Très grande' },
+  { level: 4, label: traduire('Très grande') },
 ];
 
 function offsetText(ms: number): string {
-  if (ms === 0) return 'Heure réelle';
-  const sign = ms > 0 ? 'En avance de' : 'En retard de';
+  if (ms === 0) return traduire('Heure réelle');
+  const sign = ms > 0 ? traduire('En avance de') : traduire('En retard de');
   const abs = Math.abs(ms);
   const days = Math.floor(abs / D);
   const hours = Math.round((abs % D) / H);
@@ -81,15 +82,15 @@ export function Ambiance() {
   };
 
   return (
-    <StudioSection id="ambiance" icon="sun" title="Ambiance" sub="Scène, personnage, horloge de test, taille du texte" keywords="scene decor personnage avatar horloge heure date devnow demain taille texte police">
+    <StudioSection id="ambiance" icon="sun" title="Ambiance" sub={traduire("Scène, personnage, horloge de test, taille du texte")} keywords={traduire("scene decor personnage avatar horloge heure date devnow demain taille texte police")}>
       <Card>
-        <Row first icon="image" label="Scène" sub="Le décor de ton accueil" onPress={() => router.push('/themes' as never)} />
-        <Row icon="user" label="Personnage" sub="Guerrier, guerrière et personnages du monde" onPress={() => router.push('/avatar-selection' as never)} />
+        <Row first icon="image" label={traduire("Scène")} sub={traduire("Le décor de ton accueil")} onPress={() => router.push('/themes' as never)} />
+        <Row icon="user" label="Personnage" sub={traduire("Guerrier, guerrière et personnages du monde")} onPress={() => router.push('/avatar-selection' as never)} />
       </Card>
 
       <Card style={{ padding: 14, gap: 12 }}>
         <View style={{ gap: 2 }}>
-          <Ink size={15} weight="extraBold">Horloge de test</Ink>
+          <Ink size={15} weight="extraBold">{traduire("Horloge de test")}</Ink>
           <Ink size={22} weight="black" tight>{formatDateTime(now)}</Ink>
           <Ink size={13} weight="bold" color={offset === 0 ? c.textMuted : c.accent}>{offsetText(offset)}</Ink>
         </View>
@@ -101,21 +102,21 @@ export function Ambiance() {
           </ChipWrap>
         ) : (
           <View style={{ gap: 8 }}>
-            <Ink size={13} color={c.textSecondary}>Charge Heny pour décaler l’heure. Le moteur d’XP lit la date du jour : tes vraies XP ne verront jamais une fausse date.</Ink>
-            <Chip label="Aller à Démo et captures" onPress={() => openSection('demo')} />
+            <Ink size={13} color={c.textSecondary}>{traduire("Charge Heny pour décaler l’heure. Le moteur d’XP lit la date du jour : tes vraies XP ne verront jamais une fausse date.")}</Ink>
+            <Chip label={traduire("Aller à Démo et captures")} onPress={() => openSection('demo')} />
           </View>
         )}
       </Card>
-      <Note>Le jour de l’armure, les semaines, la semaine des séances et l’accueil suivent cette horloge. Le reste de l’app garde l’heure réelle. Elle revient à l’heure réelle à la fermeture de l’app ou quand tu remets tes vraies données.</Note>
+      <Note>{traduire("Le jour de l’armure, les semaines, la semaine des séances et l’accueil suivent cette horloge. Le reste de l’app garde l’heure réelle. Elle revient à l’heure réelle à la fermeture de l’app ou quand tu remets tes vraies données.")}</Note>
 
       <Card style={{ padding: 14, gap: 10 }}>
-        <Ink size={15} weight="extraBold">Taille du texte</Ink>
+        <Ink size={15} weight="extraBold">{traduire("Taille du texte")}</Ink>
         <ChipWrap>
           {TEXT_SIZES.map((t) => (
             <Chip key={t.level} label={t.label} on={(fontSizeLevel ?? 2) === t.level} onPress={() => void setFontSizeLevel(t.level)} />
           ))}
         </ChipWrap>
-        <Note>Pour vérifier qu’aucun écran ne se casse. C’est le vrai réglage de l’app, remets Normale après.</Note>
+        <Note>{traduire("Pour vérifier qu’aucun écran ne se casse. C’est le vrai réglage de l’app, remets Normale après.")}</Note>
       </Card>
     </StudioSection>
   );

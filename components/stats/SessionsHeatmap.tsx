@@ -9,7 +9,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { format, parseISO, startOfDay, subDays, addDays, getDay, getMonth } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 
 interface TrainingPoint {
   date: string;

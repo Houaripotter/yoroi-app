@@ -12,6 +12,7 @@ import { logger } from '@/lib/security/logger';
 import { BigButton, Card, Icon, P, Pill, Press, tap } from './kit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { intensite, niveauDouleur } from '@/lib/v2/intensite';
+import { traduire } from '@/lib/i18n/tr';
 
 export const BODY_ZONES: { key: string; label: string }[] = [
   { key: 'neck', label: 'Nuque' },
@@ -25,8 +26,8 @@ export const BODY_ZONES: { key: string; label: string }[] = [
 ];
 
 const STATUS: Record<BodyZoneData['status'], { label: string; color: string; soft: string }> = {
-  ok: { label: 'Tout va bien', color: P.mossText, soft: P.mossSoft },
-  warning: { label: 'Gêne', color: P.goldDark, soft: P.goldSoft },
+  ok: { label: traduire('Tout va bien'), color: P.mossText, soft: P.mossSoft },
+  warning: { label: traduire('Gêne'), color: P.goldDark, soft: P.goldSoft },
   injury: { label: 'Blessure', color: P.danger, soft: P.dangerSoft },
 };
 
@@ -49,7 +50,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
   const save = async () => {
     if (!zone || saving) return;
     if (status === 'injury' && !note.trim()) {
-      appAlert('Ajoute une note', 'Dis en quelques mots ce qui s’est passé, ça t’aidera à suivre ta blessure.');
+      appAlert(traduire('Ajoute une note'), traduire('Dis en quelques mots ce qui s’est passé, ça t’aidera à suivre ta blessure.'));
       return;
     }
     setSaving(true);
@@ -64,7 +65,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
       setZone(null);
     } catch (err) {
       logger.error('Enregistrement de l’état du corps impossible', err);
-      appAlert('Oups', 'L’enregistrement n’a pas marché. Réessaie.');
+      appAlert('Oups', traduire('L’enregistrement n’a pas marché. Réessaie.'));
     } finally {
       setSaving(false);
     }
@@ -94,13 +95,13 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
           const s = st ? STATUS[st] : null;
           return (
             <View key={z.key} style={{ width: '48.6%' }}>
-            <Press onPress={() => open(z.key)} accessibilityRole="button" accessibilityLabel={`${z.label} : ${s ? s.label : 'rien de signalé'}`}>
+            <Press onPress={() => open(z.key)} accessibilityRole="button" accessibilityLabel={`${z.label} : ${s ? s.label : traduire('rien de signalé')}`}>
               <View style={{ minHeight: 64, borderRadius: 18, backgroundColor: s ? s.soft : P.white, borderWidth: 1, borderColor: s ? s.soft : P.line2, paddingHorizontal: 14, paddingVertical: 10, justifyContent: 'center', gap: 2 }}>
                 <Ink size={15} weight="extraBold">
                   {z.label}
                 </Ink>
                 <Ink size={12} weight="bold" color={s ? s.color : P.muted}>
-                  {st === 'warning' ? `gêne ${body[z.key]?.pain ?? 5} sur 10` : s ? s.label.toLowerCase() : 'rien de signalé'}
+                  {st === 'warning' ? traduire("gêne {0} sur 10", body[z.key]?.pain ?? 5) : s ? s.label.toLowerCase() : traduire('rien de signalé')}
                 </Ink>
               </View>
             </Press>
@@ -111,14 +112,14 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
 
       <Modal visible={zone !== null} transparent animationType="slide" onRequestClose={() => setZone(null)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
-          <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.35)' }} onPress={() => setZone(null)} accessibilityLabel="Fermer" />
+          <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.35)' }} onPress={() => setZone(null)} accessibilityLabel={traduire("Fermer")} />
           <View style={{ backgroundColor: P.paper, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 22, paddingTop: 10, paddingBottom: insets.bottom + 22, gap: 16 }}>
             <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.line }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Ink size={22} weight="black" tight>
                 {label}
               </Ink>
-              <Pressable onPress={() => setZone(null)} accessibilityRole="button" accessibilityLabel="Fermer" style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => setZone(null)} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="close" size={18} />
               </Pressable>
             </View>
@@ -132,14 +133,14 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
             {status === 'warning' ? (
               <Card style={{ gap: 10, padding: 14 }}>
                 <Ink size={14} weight="bold" color={P.ink2}>
-                  {`Douleur : ${pain} sur 10`}
+                  {traduire("Douleur : {0} sur 10", pain)}
                 </Ink>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   {Array.from({ length: 10 }).map((_, i) => {
                     const v = i + 1;
                     const on = v <= pain;
                     return (
-                      <Pressable key={v} onPress={() => { tap(); setPain(v); }} accessibilityLabel={`Douleur ${v}`} hitSlop={4} style={{ width: 28, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                      <Pressable key={v} onPress={() => { tap(); setPain(v); }} accessibilityLabel={traduire("Douleur {0}", v)} hitSlop={4} style={{ width: 28, height: 44, alignItems: 'center', justifyContent: 'center' }}>
                         <View style={{ width: 24, height: 12 + v * 2.6, borderRadius: 6, backgroundColor: on ? intensite(niveauDouleur(v)).fill : P.line }} />
                       </Pressable>
                     );
@@ -151,18 +152,17 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
               <TextInput
                 value={note}
                 onChangeText={setNote}
-                placeholder="Ce qui s’est passé, ce qu’a dit le médecin"
+                placeholder={traduire("Ce qui s’est passé, ce qu’a dit le médecin")}
                 placeholderTextColor={P.muted}
                 multiline
                 style={{ minHeight: 90, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 14, fontSize: 15, color: P.ink, textAlignVertical: 'top' }}
               />
             ) : null}
-            <BigButton label={saving ? 'Enregistrement' : 'Enregistrer'} onPress={save} disabled={saving} />
+            <BigButton label={saving ? 'Enregistrement' : traduire('Enregistrer')} onPress={save} disabled={saving} />
             {zone && body[zone] ? (
               <Pressable onPress={clear} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={14} weight="bold" color={P.danger}>
-                  Effacer cette zone
-                </Ink>
+                  {traduire("Effacer cette zone")}</Ink>
               </Pressable>
             ) : null}
           </View>

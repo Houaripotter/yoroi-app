@@ -10,6 +10,7 @@ import { Smartphone, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { CrossPlatformMigration } from './CrossPlatformMigration';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { traduire } from '@/lib/i18n/tr';
 
 const CrossPlatformMigrationButtonInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -21,7 +22,7 @@ const CrossPlatformMigrationButtonInner: React.FC = () => {
         onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setVisible(true); }}
         activeOpacity={0.8}
         style={[styles.container, { backgroundColor: isDark ? '#1E1E22' : '#fff', borderColor: '#0EA5E940' }]}
-        accessibilityLabel="Migrer vers un autre appareil"
+        accessibilityLabel={traduire("Migrer vers un autre appareil")}
         accessibilityRole="button"
       >
         <View style={styles.iconWrap}>
@@ -30,10 +31,9 @@ const CrossPlatformMigrationButtonInner: React.FC = () => {
           <Smartphone size={18} color="#0EA5E9" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text }]}>Migrer vers un autre appareil</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{traduire("Migrer vers un autre appareil")}</Text>
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
-            iPhone ↔ Android ↔ iPad ↔ Tablette. Tous les sens supportés.
-          </Text>
+            {traduire("iPhone ↔ Android ↔ iPad ↔ Tablette. Tous les sens supportés.")}</Text>
         </View>
         <ArrowRight size={16} color="#0EA5E9" />
       </TouchableOpacity>

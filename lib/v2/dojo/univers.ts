@@ -7,6 +7,7 @@
  * L'univers actif est garde en memoire (universCourant), comme la silhouette, pour que tous les ecrans
  * appliquent la meme regle sans relire le stockage.
  */
+import { traduire } from '@/lib/i18n/tr';
 export type Univers = 'japon' | 'classique';
 
 /** Cle de personnage du choix « Sans personnage » : la scene seule, sans figure */
@@ -28,14 +29,14 @@ export function isUnivers(v: unknown): v is Univers {
 
 /** Noms des 5 rangs dans chaque univers, du premier au dernier */
 export const RANG_NOMS: Record<Univers, [string, string, string, string, string]> = {
-  japon: ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'],
-  classique: ['Débutant', 'Régulier', 'Confirmé', 'Expert', 'Champion'],
+  japon: ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'],
+  classique: ['Débutant', traduire('Régulier'), traduire('Confirmé'), 'Expert', 'Champion'],
 };
 
 /** Ce que porte le personnage a chaque rang */
 export const RANG_TENUES: Record<Univers, [string, string, string, string, string]> = {
-  japon: ['Tenue d’entraînement et bandeau', 'Kimono indigo et plastron', 'Armure complète', 'Cape et chapeau de paille', 'Armure d’apparat noir et or'],
-  classique: ['T-shirt et short', 'Veste d’entraînement', 'Tenue technique', 'Coupe-vent et sac de sport', 'Tenue de champion bleu nuit et or'],
+  japon: [traduire('Tenue d’entraînement et bandeau'), traduire('Kimono indigo et plastron'), traduire('Armure complète'), traduire('Cape et chapeau de paille'), traduire('Armure d’apparat noir et or')],
+  classique: [traduire('T-shirt et short'), traduire('Veste d’entraînement'), 'Tenue technique', traduire('Coupe-vent et sac de sport'), traduire('Tenue de champion bleu nuit et or')],
 };
 
 /** Nom du rang affiche (0 a 4), dans l'univers donne ou l'univers actif */
@@ -58,16 +59,16 @@ export function rangTitre(index: number, dan = 0, u: Univers = courant): string 
 
 /** Ce que construit le personnage entre deux rangs : « Ton armure se construit » ou « Ta tenue se construit » */
 export function libelleConstruction(u: Univers = courant): string {
-  return u === 'classique' ? 'Ta tenue se construit' : 'Ton armure se construit';
+  return u === 'classique' ? traduire('Ta tenue se construit') : traduire('Ton armure se construit');
 }
 
 /** « Le chemin de l'armure » ou « Le chemin du champion » */
 export function libelleChemin(u: Univers = courant): string {
-  return u === 'classique' ? 'Le chemin du champion' : 'Le chemin de l’armure';
+  return u === 'classique' ? traduire('Le chemin du champion') : traduire('Le chemin de l’armure');
 }
 
 export const UNIVERS_CHOIX: { id: 'japon' | 'classique' | 'aucun'; nom: string; phrase: string }[] = [
-  { id: 'japon', nom: 'Japon', phrase: 'Un guerrier qui gagne son armure, des scènes du Japon ancien' },
-  { id: 'classique', nom: 'Classique', phrase: 'Un sportif d’aujourd’hui, des scènes de salle, de parc et de ville' },
-  { id: 'aucun', nom: 'Sans personnage', phrase: 'Juste ta scène, sans figure' },
+  { id: 'japon', nom: 'Japon', phrase: traduire('Un guerrier qui gagne son armure, des scènes du Japon ancien') },
+  { id: 'classique', nom: 'Classique', phrase: traduire('Un sportif d’aujourd’hui, des scènes de salle, de parc et de ville') },
+  { id: 'aucun', nom: traduire('Sans personnage'), phrase: traduire('Juste ta scène, sans figure') },
 ];

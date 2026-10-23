@@ -14,16 +14,17 @@ import { BigButton, Kozane, P } from '@/components/yoroi/v2/accueil/kit';
 import { DetailScreen, Hanko } from '@/components/yoroi/v2/ornements/screens';
 import { Card, Icon, SectionTitle, ToggleRow } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
+import { traduire } from '@/lib/i18n/tr';
 
 type Step = { id: string; title: string; story: string; route: string; icon: IconName; hint: string };
 
 const STEPS: Step[] = [
-  { id: 'accueil', title: 'Accueil', story: 'Premier contact : ta semaine, ton armure et ta dernière pesée.', route: '/(tabs)', icon: 'home', hint: 'Onglet Accueil, en haut de l’écran' },
-  { id: 'progres', title: 'Courbe de poids', story: 'Six mois de progression tracés au pinceau.', route: '/(tabs)/progres', icon: 'scale', hint: 'Onglet Progrès, période 6 mois' },
-  { id: 'seances', title: 'Séances', story: 'Un historique bien rempli : musculation, combat, cardio.', route: '/(tabs)/seances', icon: 'dumbbell', hint: 'Onglet Séances, fais défiler un peu' },
-  { id: 'dojo', title: 'Dojo', story: 'L’armure qui se construit plaque après plaque.', route: '/(tabs)/dojo', icon: 'belt', hint: 'Onglet Dojo, carte du rang en haut' },
-  { id: 'records', title: 'Records', story: 'Les records tamponnés du sceau rouge.', route: '/records', icon: 'trophy', hint: 'Séances, puis Records' },
-  { id: 'transformation', title: 'Avant, après', story: 'Le résultat concret, côte à côte.', route: '/transformation', icon: 'image', hint: 'Progrès, puis Transformation' },
+  { id: 'accueil', title: traduire('Accueil'), story: traduire('Premier contact : ta semaine, ton armure et ta dernière pesée.'), route: '/(tabs)', icon: 'home', hint: traduire('Onglet Accueil, en haut de l’écran') },
+  { id: 'progres', title: traduire('Courbe de poids'), story: traduire('Six mois de progression tracés au pinceau.'), route: '/(tabs)/progres', icon: 'scale', hint: traduire('Onglet Progrès, période 6 mois') },
+  { id: 'seances', title: traduire('Séances'), story: traduire('Un historique bien rempli : musculation, combat, cardio.'), route: '/(tabs)/seances', icon: 'dumbbell', hint: traduire('Onglet Séances, fais défiler un peu') },
+  { id: 'dojo', title: 'Dojo', story: traduire('L’armure qui se construit plaque après plaque.'), route: '/(tabs)/dojo', icon: 'belt', hint: traduire('Onglet Dojo, carte du rang en haut') },
+  { id: 'records', title: 'Records', story: traduire('Les records tamponnés du sceau rouge.'), route: '/records', icon: 'trophy', hint: traduire('Séances, puis Records') },
+  { id: 'transformation', title: traduire('Avant, après'), story: traduire('Le résultat concret, côte à côte.'), route: '/transformation', icon: 'image', hint: traduire('Progrès, puis Transformation') },
 ];
 
 function MarketingKitInner() {
@@ -60,13 +61,13 @@ function MarketingKitInner() {
   const complete = done.size === STEPS.length;
 
   return (
-    <DetailScreen title="Kit marketing" subtitle="6 captures qui racontent l’app, dans l’ordre">
+    <DetailScreen title="Kit marketing" subtitle={traduire("6 captures qui racontent l’app, dans l’ordre")}>
       {/* Progression en plaques kozane */}
       <Card style={{ padding: 16, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ gap: 2, flex: 1 }}>
-            <Ink size={28} weight="black" tight>{`${done.size} sur ${STEPS.length}`}</Ink>
-            <Ink size={13} weight="bold" color={P.ink2}>{complete ? 'Séquence complète' : nextStep ? `Prochaine : ${nextStep.title}` : ''}</Ink>
+            <Ink size={28} weight="black" tight>{traduire("{0} sur {1}", done.size, STEPS.length)}</Ink>
+            <Ink size={13} weight="bold" color={P.ink2}>{complete ? traduire('Séquence complète') : nextStep ? `Prochaine : ${nextStep.title}` : ''}</Ink>
           </View>
           {complete ? <Hanko size={48} /> : null}
         </View>
@@ -77,22 +78,22 @@ function MarketingKitInner() {
         </View>
       </Card>
 
-      <BigButton label="Démarrer la séquence" icon="play" onPress={start} />
-      <Ink size={12} color={P.muted} style={{ textAlign: 'center' }}>Active le mode capture propre et la barre d’état 09:41.</Ink>
+      <BigButton label={traduire("Démarrer la séquence")} icon="play" onPress={start} />
+      <Ink size={12} color={P.muted} style={{ textAlign: 'center' }}>{traduire("Active le mode capture propre et la barre d’état 09:41.")}</Ink>
 
       <Card>
-        <ToggleRow first icon="camera" label="Mode capture propre" sub="Masque badges et messages de test" value={isScreenshotMode} onChange={() => toggleScreenshotMode()} />
-        <ToggleRow icon="timer" label="Barre d’état 09:41" sub="Heure, batterie et réseau parfaits" value={useFakeStatusBar} onChange={() => toggleFakeStatusBar()} disabled={!isScreenshotMode} />
+        <ToggleRow first icon="camera" label="Mode capture propre" sub={traduire("Masque badges et messages de test")} value={isScreenshotMode} onChange={() => toggleScreenshotMode()} />
+        <ToggleRow icon="timer" label={traduire("Barre d’état 09:41")} sub={traduire("Heure, batterie et réseau parfaits")} value={useFakeStatusBar} onChange={() => toggleFakeStatusBar()} disabled={!isScreenshotMode} />
       </Card>
 
       <Card style={{ padding: 14, gap: 6, backgroundColor: P.indigoSoft, borderColor: P.indigoSoft }}>
         <Ink size={14} weight="extraBold" color={P.indigo}>Comment capturer</Ink>
-        <Ink size={13} color={P.indigo}>1. Touche Ouvrir sur une étape.</Ink>
-        <Ink size={13} color={P.indigo}>2. Fais la capture : bouton latéral et volume haut en même temps.</Ink>
-        <Ink size={13} color={P.indigo}>3. Reviens ici et coche l’étape.</Ink>
+        <Ink size={13} color={P.indigo}>{traduire("1. Touche Ouvrir sur une étape.")}</Ink>
+        <Ink size={13} color={P.indigo}>{traduire("2. Fais la capture : bouton latéral et volume haut en même temps.")}</Ink>
+        <Ink size={13} color={P.indigo}>{traduire("3. Reviens ici et coche l’étape.")}</Ink>
       </Card>
 
-      <SectionTitle title="Les étapes" />
+      <SectionTitle title={traduire("Les étapes")} />
       <View style={{ gap: 10 }}>
         {STEPS.map((step, idx) => {
           const ok = done.has(step.id);
@@ -124,10 +125,10 @@ function MarketingKitInner() {
                   onPress={() => toggleStep(step.id)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: ok }}
-                  accessibilityLabel={ok ? `${step.title}, capturé` : `Marquer ${step.title} comme capturé`}
+                  accessibilityLabel={ok ? traduire("{0}, capturé", step.title) : traduire("Marquer {0} comme capturé", step.title)}
                   style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, backgroundColor: pressed ? '#EEECE6' : P.white, borderWidth: 1, borderColor: ok ? P.moss : P.line, alignItems: 'center', justifyContent: 'center' })}
                 >
-                  <Ink size={14} weight="extraBold" color={ok ? P.mossText : P.ink}>{ok ? 'Capturé' : 'Marquer fait'}</Ink>
+                  <Ink size={14} weight="extraBold" color={ok ? P.mossText : P.ink}>{ok ? traduire('Capturé') : 'Marquer fait'}</Ink>
                 </Pressable>
               </View>
             </Card>
@@ -137,8 +138,8 @@ function MarketingKitInner() {
 
       {complete ? (
         <Card style={{ padding: 16, gap: 6, alignItems: 'center', backgroundColor: P.mossSoft, borderColor: P.mossSoft }}>
-          <Ink size={17} weight="black" color={P.mossText}>Séquence complète</Ink>
-          <Ink size={13} color={P.mossText} style={{ textAlign: 'center' }}>Tes 6 captures sont dans tes Photos. Range-les dans cet ordre pour l’App Store ou Instagram.</Ink>
+          <Ink size={17} weight="black" color={P.mossText}>{traduire("Séquence complète")}</Ink>
+          <Ink size={13} color={P.mossText} style={{ textAlign: 'center' }}>{traduire("Tes 6 captures sont dans tes Photos. Range-les dans cet ordre pour l’App Store ou Instagram.")}</Ink>
         </Card>
       ) : null}
     </DetailScreen>

@@ -21,6 +21,7 @@ import type { RecupKey, RecupPoint } from '../recuperation';
 import { getSanteSource, loadSeries } from '../sante/data';
 import { dedupeTrainings } from '../seances/dedupe';
 import { formatDuration } from '../trainingWeek';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type FactorKey = RecupKey;
 
@@ -59,11 +60,11 @@ export type FormeSeries = { vfc?: RecupPoint[]; 'fc-repos'?: RecupPoint[]; somme
 
 export function levelFor(score: number): FormeLevel {
   const id = recupLevelId(score);
-  if (id === 'top') return { id, label: 'Prêt à tout donner', advice: 'Ton corps est frais. C’est le jour pour une séance intense.', color: intensite(2).text };
-  if (id === 'bien') return { id, label: 'En forme', advice: 'Tu peux t’entraîner normalement.', color: intensite(2).text };
-  if (id === 'moyen') return { id, label: 'Écoute ton corps', advice: 'Entraîne-toi, mais garde une marge sur l’intensité.', color: intensite(3).text };
-  if (id === 'bas') return { id, label: 'Récupère', advice: 'Privilégie une séance légère, de la mobilité ou de la technique.', color: intensite(4).text };
-  return { id, label: 'Repos', advice: 'Une vraie journée de repos te fera gagner du terrain.', color: intensite(5).text };
+  if (id === 'top') return { id, label: traduire('Prêt à tout donner'), advice: traduire('Ton corps est frais. C’est le jour pour une séance intense.'), color: intensite(2).text };
+  if (id === 'bien') return { id, label: traduire('En forme'), advice: traduire('Tu peux t’entraîner normalement.'), color: intensite(2).text };
+  if (id === 'moyen') return { id, label: traduire('Écoute ton corps'), advice: traduire('Entraîne-toi, mais garde une marge sur l’intensité.'), color: intensite(3).text };
+  if (id === 'bas') return { id, label: traduire('Récupère'), advice: traduire('Privilégie une séance légère, de la mobilité ou de la technique.'), color: intensite(4).text };
+  return { id, label: traduire('Repos'), advice: traduire('Une vraie journée de repos te fera gagner du terrain.'), color: intensite(5).text };
 }
 
 function durationOf(t: Training): number {
@@ -130,9 +131,9 @@ export async function computeForme(opts?: { series?: FormeSeries }): Promise<For
   const lastNight = recent[0] ?? null;
   const watchNight = todayAndBaseline(series.sommeil, today).today;
   if (lastNight) {
-    factors.push({ key: 'sommeil', label: 'Sommeil', score: scoreSleep(lastNight.duration, goal, lastNight.quality), detail: `${formatMinutes(lastNight.duration)} cette nuit`, value: formatMinutes(lastNight.duration) });
+    factors.push({ key: 'sommeil', label: traduire('Sommeil'), score: scoreSleep(lastNight.duration, goal, lastNight.quality), detail: traduire("{0} cette nuit", formatMinutes(lastNight.duration)), value: formatMinutes(lastNight.duration) });
   } else if (watchNight) {
-    factors.push({ key: 'sommeil', label: 'Sommeil', score: scoreSleep(watchNight.value, goal), detail: `${formatMinutes(watchNight.value)} cette nuit, selon ta montre`, value: formatMinutes(watchNight.value) });
+    factors.push({ key: 'sommeil', label: traduire('Sommeil'), score: scoreSleep(watchNight.value, goal), detail: traduire("{0} cette nuit, selon ta montre", formatMinutes(watchNight.value)), value: formatMinutes(watchNight.value) });
   } else missing.push('sommeil');
 
   // Sommeil moyen sur 7 nuits : SOURCE UNIQUE (detail de la recuperation). Meme fenetre que Sante (7 derniers jours).
@@ -153,32 +154,32 @@ export async function computeForme(opts?: { series?: FormeSeries }): Promise<For
   const charge = scoreCharge(list.filter((t) => t && t.date).map((t) => ({ date: t.date.slice(0, 10), minutes: durationOf(t) })), today);
   const sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
   const daysSinceLast = sorted[0] ? daysAgo(sorted[0].date) : null;
-  if (charge) factors.push({ key: 'charge', label: 'Charge d’entraînement', score: charge.score, detail: charge.detail, value: `${charge.sessions7} séance${charge.sessions7 > 1 ? 's' : ''} en 7 jours` });
+  if (charge) factors.push({ key: 'charge', label: traduire('Charge d’entraînement'), score: charge.score, detail: charge.detail, value: `${charge.sessions7} séance${charge.sessions7 > 1 ? 's' : ''} en 7 jours` });
   else missing.push('charge');
 
   // Hydratation du jour (seulement si tu as note quelque chose)
   if (hyd.amount > 0) {
-    factors.push({ key: 'hydratation', label: 'Hydratation', score: Math.round(Math.min(1, hyd.amount / hyd.goal) * 100), detail: `${String(Math.round(hyd.amount * 100) / 100).replace('.', ',')} L sur ${String(hyd.goal).replace('.', ',')} L`, value: `${String(Math.round(hyd.amount * 10) / 10).replace('.', ',')} L` });
+    factors.push({ key: 'hydratation', label: traduire('Hydratation'), score: Math.round(Math.min(1, hyd.amount / hyd.goal) * 100), detail: traduire("{0} L sur {1} L", String(Math.round(hyd.amount * 100) / 100).replace('.', DECIMAL), String(hyd.goal).replace('.', DECIMAL)), value: `${String(Math.round(hyd.amount * 10) / 10).replace('.', DECIMAL)} L` });
   } else missing.push('hydratation');
 
   // Etat du corps
   const zones = Object.values(body ?? {});
   if (zones.length > 0) {
     let s = 100;
-    let worst = 'aucune gêne signalée';
+    let worst = traduire('aucune gêne signalée');
     for (const z of zones) {
       if (z.status === 'injury') {
         s = Math.min(s, 30);
-        worst = 'une blessure en cours';
+        worst = traduire('une blessure en cours');
       } else if (z.status === 'warning') {
         const v = 100 - (z.pain ?? 5) * 6;
         if (v < s) {
           s = v;
-          worst = `une gêne à ${z.pain ?? 5} sur 10`;
+          worst = traduire("une gêne à {0} sur 10", z.pain ?? 5);
         }
       }
     }
-    factors.push({ key: 'corps', label: 'État du corps', score: Math.round(s), detail: worst, value: s >= 100 ? 'rien à signaler' : 'gêne signalée' });
+    factors.push({ key: 'corps', label: traduire('État du corps'), score: Math.round(s), detail: worst, value: s >= 100 ? 'rien à signaler' : 'gêne signalée' });
   } else missing.push('corps');
 
   // Coeur au repos et variabilite : la mesure de la nuit comparee a ta moyenne (Sante), sinon la derniere gardee
@@ -189,9 +190,9 @@ export async function computeForme(opts?: { series?: FormeSeries }): Promise<For
     const diff = base ? Math.round(hr - base) : 0;
     factors.push({
       key: 'coeur',
-      label: 'Fréquence au repos',
+      label: traduire('Fréquence au repos'),
       score: scoreRhr(hr, base),
-      detail: base ? (diff === 0 ? 'comme ta moyenne' : `${diff > 0 ? '+' : ''}${diff} bpm par rapport à ta moyenne`) : `${fr0(hr)} battements par minute`,
+      detail: base ? (diff === 0 ? traduire('comme ta moyenne') : traduire("{0}{1} bpm par rapport à ta moyenne", diff > 0 ? '+' : '', diff)) : traduire("{0} battements par minute", fr0(hr)),
       value: `${fr0(hr)} bpm`,
       baseline: base ? `${fr0(base)} bpm` : undefined,
     });
@@ -203,9 +204,9 @@ export async function computeForme(opts?: { series?: FormeSeries }): Promise<For
     const ratio = base ? Math.round(((hrv - base) / base) * 100) : 0;
     factors.push({
       key: 'vfc',
-      label: 'Variabilité cardiaque',
+      label: traduire('Variabilité cardiaque'),
       score: scoreHrv(hrv, base),
-      detail: base ? `${ratio >= 0 ? '+' : ''}${ratio} % par rapport à ta moyenne` : `${fr0(hrv)} ms`,
+      detail: base ? traduire("{0}{1} % par rapport à ta moyenne", ratio >= 0 ? '+' : '', ratio) : `${fr0(hrv)} ms`,
       value: `${fr0(hrv)} ms`,
       baseline: base ? `${fr0(base)} ms` : undefined,
     });

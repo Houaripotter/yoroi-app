@@ -3,6 +3,7 @@ import { getTrainings, getWeights, Training } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -59,10 +60,10 @@ const getDaysInMonth = (year: number, month: number): number => {
  */
 const getMonthName = (month: number): string => {
   const monthNames = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    traduire('Janvier'), traduire('Février'), traduire('Mars'), traduire('Avril'), traduire('Mai'), traduire('Juin'),
+    traduire('Juillet'), traduire('Août'), traduire('Septembre'), traduire('Octobre'), traduire('Novembre'), traduire('Décembre')
   ];
-  return monthNames[month] || 'Janvier';
+  return monthNames[month] || traduire('Janvier');
 };
 
 /**
@@ -287,7 +288,7 @@ export const useMonthStats = (
       setStats(monthStats);
     } catch (err) {
       logger.error('Erreur chargement stats mensuelles:', err);
-      setError('Impossible de charger les statistiques');
+      setError(traduire('Impossible de charger les statistiques'));
     } finally {
       setIsLoading(false);
     }

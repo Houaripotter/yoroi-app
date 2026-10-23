@@ -15,14 +15,15 @@ import { computeStats, listAchievements } from '@/lib/combatAchievements';
 import type { Achievement, CombatStats } from '@/lib/combatAchievements';
 import { P } from '@/components/yoroi/livePalette';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Item = Achievement & { unlocked: boolean };
 
 const CATEGORIES: { id: Achievement['category']; label: string; color: string }[] = [
   { id: 'milestone', label: 'Jalons', color: DOJO.indigo },
   { id: 'technique', label: 'Techniques', color: DOJO.mossText },
-  { id: 'mental', label: 'Mental et analyse', color: '#A8832F' },
-  { id: 'legendary', label: 'Légendaires', color: DOJO.ink },
+  { id: 'mental', label: traduire('Mental et analyse'), color: '#A8832F' },
+  { id: 'legendary', label: traduire('Légendaires'), color: DOJO.ink },
 ];
 
 export default function CombatAchievementsScreen() {
@@ -64,19 +65,19 @@ export default function CombatAchievementsScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={DOJO.accent} />}
       >
-        <BackHeader title="Succès de sparring" subtitle="Tes rounds, tes finitions, tes partenaires" />
+        <BackHeader title={traduire("Succès de sparring")} subtitle={traduire("Tes rounds, tes finitions, tes partenaires")} />
 
         <View style={{ backgroundColor: DOJO.inkCard, borderRadius: 22, padding: 18, gap: 12, marginTop: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
             <Ink size={52} weight="black" tight color={P.paper}>{unlocked}</Ink>
-            <Ink size={16} weight="bold" color={paletteSombre() ? '#4A4E5A' : '#B9BBC4'} style={{ marginBottom: 8 }}>sur {total || 36} succès</Ink>
+            <Ink size={16} weight="bold" color={paletteSombre() ? '#4A4E5A' : '#B9BBC4'} style={{ marginBottom: 8 }}>{traduire("sur {0} succès", total || 36)}</Ink>
           </View>
           <Bar progress={total ? unlocked / total : 0} color={DOJO.goldLight} track="#33363F" />
           {stats ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[
                 { v: stats.totalRounds, l: 'rounds' },
-                { v: stats.totalSessions, l: 'séances' },
+                { v: stats.totalSessions, l: traduire('séances') },
                 { v: stats.uniquePartners, l: 'partenaires' },
               ].map((x) => (
                 <View key={x.l} style={{ flex: 1 }}>
@@ -87,7 +88,7 @@ export default function CombatAchievementsScreen() {
             </View>
           ) : null}
           {loaded && stats && stats.totalRounds === 0 ? (
-            <Ink size={13} color={DOJO.goldLight}>Note tes rounds de sparring dans une séance de combat : chaque round compte ici.</Ink>
+            <Ink size={13} color={DOJO.goldLight}>{traduire("Note tes rounds de sparring dans une séance de combat : chaque round compte ici.")}</Ink>
           ) : null}
         </View>
 
@@ -99,14 +100,14 @@ export default function CombatAchievementsScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: cat.color }} />
                 <Ink size={17} weight="black" style={{ flex: 1 }}>{cat.label}</Ink>
-                <Ink size={13} weight="bold" color={c.textMuted}>{`${list.filter((i) => i.unlocked).length} sur ${list.length}`}</Ink>
+                <Ink size={13} weight="bold" color={c.textMuted}>{traduire("{0} sur {1}", list.filter((i) => i.unlocked).length, list.length)}</Ink>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 }}>
                 {list.map((a, i) => (
                   <View
                     key={a.id}
                     accessible
-                    accessibilityLabel={`${a.title}, ${a.unlocked ? 'débloqué' : 'à débloquer'}. ${a.description}`}
+                    accessibilityLabel={`${a.title}, ${a.unlocked ? traduire('débloqué') : traduire('à débloquer')}. ${a.description}`}
                     style={{ width: '48.5%', gap: 8, padding: 10, borderRadius: 16, backgroundColor: a.unlocked ? '#FBFAF7' : 'transparent', borderWidth: 1, borderColor: a.unlocked ? c.border : c.divider, borderStyle: a.unlocked ? 'solid' : 'dashed' }}
                   >
                     <Hanko color={cat.color} size={38} earned={a.unlocked} tampon={i % 2 ? 'record_combat' : 'victoire'} />

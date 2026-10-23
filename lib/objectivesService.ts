@@ -5,6 +5,7 @@
 // Avec countdown et ratio sable pour le sablier
 
 import { openDatabase, Objective } from './database.native';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -22,7 +23,7 @@ export interface ObjectiveTypeConfig {
 
 export const OBJECTIVE_TYPES: ObjectiveTypeConfig[] = [
   { type: 'competition', label: 'Competition', icon: 'Swords', defaultColor: '#EF4444', emoji: '' },
-  { type: 'weight', label: 'Objectif Poids', icon: 'Scale', defaultColor: '#3B82F6', emoji: '' },
+  { type: 'weight', label: traduire('Objectif Poids'), icon: 'Scale', defaultColor: '#3B82F6', emoji: '' },
   { type: 'exam', label: 'Examen', icon: 'GraduationCap', defaultColor: '#EAB308', emoji: '' },
   { type: 'travel', label: 'Voyage / Stage', icon: 'Plane', defaultColor: '#22C55E', emoji: '' },
   { type: 'custom', label: 'Personnalise', icon: 'Target', defaultColor: '#A855F7', emoji: '' },

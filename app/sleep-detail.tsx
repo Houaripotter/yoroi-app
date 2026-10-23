@@ -28,16 +28,17 @@ import { Historique, OngletsPeriode } from '@/components/yoroi/v2/nuit/Periodes'
 import type { Periode } from '@/components/yoroi/v2/nuit/Periodes';
 import { couleursPhases, duree, heure } from '@/components/yoroi/v2/nuit/outils';
 import { GrandeDuree } from '@/components/yoroi/v2/nuit/GrandeDuree';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 type Detail = { nuit: NuitCalculee; coeur: MesureNuit | null; respiration: MesureNuit | null; temperature: MesureNuit | null };
 
 /** Dans l'ordre des lignes du graphique, de haut en bas */
 const PHASES: { key: PhaseNuit; title: string; desc: string }[] = [
-  { key: 'eveil', title: 'Éveils', desc: 'Quelques minutes d’éveil entre les cycles, c’est normal.' },
-  { key: 'endormi', title: 'Sommeil sans phase', desc: 'Ta source a vu que tu dormais, sans préciser la phase.' },
-  { key: 'paradoxal', title: 'Sommeil paradoxal', desc: 'Le cerveau travaille : rêves, apprentissage, émotions.' },
-  { key: 'leger', title: 'Sommeil léger', desc: 'La transition : le corps se détend, la température baisse.' },
-  { key: 'profond', title: 'Sommeil profond', desc: 'La phase qui répare : muscles, défenses, mémoire.' },
+  { key: 'eveil', title: traduire('Éveils'), desc: traduire('Quelques minutes d’éveil entre les cycles, c’est normal.') },
+  { key: 'endormi', title: traduire('Sommeil sans phase'), desc: traduire('Ta source a vu que tu dormais, sans préciser la phase.') },
+  { key: 'paradoxal', title: traduire('Sommeil paradoxal'), desc: traduire('Le cerveau travaille : rêves, apprentissage, émotions.') },
+  { key: 'leger', title: traduire('Sommeil léger'), desc: traduire('La transition : le corps se détend, la température baisse.') },
+  { key: 'profond', title: traduire('Sommeil profond'), desc: traduire('La phase qui répare : muscles, défenses, mémoire.') },
 ];
 
 /** Qualite estimee a partir des phases (duree 40 %, profond 30 %, paradoxal 20 %, efficacite 10 %) */
@@ -66,14 +67,12 @@ function SleepExample() {
       <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ opacity: 0.42 }}>
         <View style={{ borderRadius: 26, backgroundColor: P.indigo, padding: 22, gap: 12 }}>
           <Ink size={13} weight="bold" color="#C9D3EA">
-            Ta dernière nuit
-          </Ink>
+            {traduire("Ta dernière nuit")}</Ink>
           <Ink size={60} weight="black" tight color={P.white}>
             7 h 30
           </Ink>
           <Ink size={15} weight="bold" color="#E4E9F3">
-            23 h 10 à 6 h 40
-          </Ink>
+            {traduire("23 h 10 à 6 h 40")}</Ink>
           <View style={{ flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden' }}>
             <View style={{ flex: 80, backgroundColor: '#0F1F45' }} />
             <View style={{ flex: 230, backgroundColor: '#6E86C0' }} />
@@ -175,12 +174,12 @@ export default function DetailNuit() {
     };
   }, [target]);
 
-  const title = target ? dayLabel(target, true) : 'Ta dernière nuit notée';
+  const title = target ? dayLabel(target, true) : traduire('Ta dernière nuit notée');
   const n = detail?.nuit ?? null;
 
   if (!entry && !n) {
     return (
-      <DetailScreen title="Ta nuit" subtitle={title}>
+      <DetailScreen title={traduire("Ta nuit")} subtitle={title}>
         {loading ? (
           <Card style={{ height: 160 }}>
             <View />
@@ -190,13 +189,11 @@ export default function DetailNuit() {
             <SleepExample />
             <View style={{ gap: 4, paddingHorizontal: 4 }}>
               <Ink size={20} weight="black" tight>
-                Rien de noté pour cette nuit
-              </Ink>
+                {traduire("Rien de noté pour cette nuit")}</Ink>
               <Ink size={14} weight="medium" color={P.ink2}>
-                Note-la en deux appuis : durée, heure du coucher et qualité. Elle apparaîtra ici comme dans l’exemple.
-              </Ink>
+                {traduire("Note-la en deux appuis : durée, heure du coucher et qualité. Elle apparaîtra ici comme dans l’exemple.")}</Ink>
             </View>
-            <BigButton label="Noter cette nuit" icon="moon" onPress={() => router.replace('/sleep-input' as any)} />
+            <BigButton label={traduire("Noter cette nuit")} icon="moon" onPress={() => router.replace('/sleep-input' as any)} />
           </View>
         )}
       </DetailScreen>
@@ -224,7 +221,7 @@ export default function DetailNuit() {
   const hasVitals = !!(coeur || resp || temp || fcStockee || respStockee);
 
   return (
-    <DetailScreen title="Ta nuit" subtitle={title}>
+    <DetailScreen title={traduire("Ta nuit")} subtitle={title}>
       <OngletsPeriode value={periode} onChange={setPeriode} />
 
       {periode !== 'J' ? (
@@ -235,21 +232,20 @@ export default function DetailNuit() {
           <Enter i={0}>
             <View style={{ paddingHorizontal: 4, gap: 8, paddingTop: 4 }}>
               <Ink size={13} weight="bold" color={P.muted}>
-                Durée du sommeil
-              </Ink>
+                {traduire("Durée du sommeil")}</Ink>
               <GrandeDuree min={total} />
               {coucher && reveil ? (
                 <View style={{ flexDirection: 'row', gap: 18, flexWrap: 'wrap' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Icon name="moon" size={16} color={P.indigo} />
                     <Ink size={15} weight="bold" color={P.ink2}>
-                      {`Couché ${coucher}`}
+                      {traduire("Couché {0}", coucher)}
                     </Ink>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Icon name="sun" size={16} color={P.gold} />
                     <Ink size={15} weight="bold" color={P.ink2}>
-                      {`Réveil ${reveil}`}
+                      {traduire("Réveil {0}", reveil)}
                     </Ink>
                   </View>
                 </View>
@@ -258,13 +254,13 @@ export default function DetailNuit() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Stars value={quality} size={16} />
                   <Ink size={14} weight="bold" color={P.ink2}>
-                    {`qualité ${QUALITY_LABELS[Math.round(quality)]?.toLowerCase() ?? ''}`}
+                    {traduire("qualité {0}", QUALITY_LABELS[Math.round(quality)]?.toLowerCase() ?? '')}
                   </Ink>
                 </View>
               ) : null}
               {efficacite !== null && efficacite !== undefined && hasPhases ? (
                 <Ink size={14} weight="bold" color={P.ink2}>
-                  {auLit > total ? `${efficacite} % d’efficacité, ${duree(auLit)} au lit` : `${efficacite} % d’efficacité`}
+                  {auLit > total ? traduire("{0} % d’efficacité, {1} au lit", efficacite, duree(auLit)) : traduire("{0} % d’efficacité", efficacite)}
                 </Ink>
               ) : null}
             </View>
@@ -312,17 +308,16 @@ export default function DetailNuit() {
 
           {hasVitals ? (
             <Enter i={3} style={{ gap: 10 }}>
-              <SectionTitle>Pendant ton sommeil</SectionTitle>
+              <SectionTitle>{traduire("Pendant ton sommeil")}</SectionTitle>
               <Card style={{ gap: 14 }}>
                 {isPremium ? (
                   <>
                     {coeur || fcStockee ? (
                       <View style={{ gap: 4 }}>
                         <Ink size={13} weight="bold" color={P.muted}>
-                          Fréquence cardiaque
-                        </Ink>
+                          {traduire("Fréquence cardiaque")}</Ink>
                         <Ink size={26} weight="black" tight>
-                          {coeur ? `${coeur.min} à ${coeur.max}` : `${Math.round(fcStockee!.min)} à ${Math.round(fcStockee!.max)}`}
+                          {coeur ? traduire("{0} à {1}", coeur.min, coeur.max) : traduire("{0} à {1}", Math.round(fcStockee!.min), Math.round(fcStockee!.max))}
                           <Ink size={13} weight="bold" color={P.muted}>
                             {` bpm, moyenne ${coeur ? coeur.moy : Math.round(fcStockee!.avg)}`}
                           </Ink>
@@ -333,23 +328,23 @@ export default function DetailNuit() {
                     {resp || respStockee ? (
                       <Ligne
                         titre="Respiration"
-                        valeur={resp ? `${String(resp.moy).replace('.', ',')}` : `${Math.round(respStockee!.avg ?? (respStockee!.min + respStockee!.max) / 2)}`}
-                        unite="par minute"
-                        detail={resp ? `de ${String(resp.min).replace('.', ',')} à ${String(resp.max).replace('.', ',')}` : undefined}
+                        valeur={resp ? `${String(resp.moy).replace('.', DECIMAL)}` : `${Math.round(respStockee!.avg ?? (respStockee!.min + respStockee!.max) / 2)}`}
+                        unite={traduire("par minute")}
+                        detail={resp ? traduire("de {0} à {1}", String(resp.min).replace('.', DECIMAL), String(resp.max).replace('.', DECIMAL)) : undefined}
                         trait={!!(coeur || fcStockee)}
                       />
                     ) : null}
-                    {temp ? <Ligne titre="Température du poignet" valeur={String(temp.moy).replace('.', ',')} unite="°C" trait={!!(coeur || fcStockee || resp || respStockee)} /> : null}
+                    {temp ? <Ligne titre={traduire("Température du poignet")} valeur={String(temp.moy).replace('.', DECIMAL)} unite="°C" trait={!!(coeur || fcStockee || resp || respStockee)} /> : null}
                   </>
                 ) : (
                   /* Sans Premium : aucune vraie valeur, seulement la place qu'elles prennent */
-                  <View style={{ flexDirection: 'row', gap: 10 }} accessible accessibilityLabel="Signes vitaux de la nuit, valeurs masquées, disponibles avec Premium">
-                    {coeur || fcStockee ? <ValeurMasquee unit="bpm" label="cœur" color={P.heart} /> : null}
-                    {resp || respStockee ? <ValeurMasquee unit="par min" label="respiration" color={P.indigo} /> : null}
+                  <View style={{ flexDirection: 'row', gap: 10 }} accessible accessibilityLabel={traduire("Signes vitaux de la nuit, valeurs masquées, disponibles avec Premium")}>
+                    {coeur || fcStockee ? <ValeurMasquee unit="bpm" label={traduire("cœur")} color={P.heart} /> : null}
+                    {resp || respStockee ? <ValeurMasquee unit={traduire("par min")} label="respiration" color={P.indigo} /> : null}
                     {temp ? <ValeurMasquee unit="°C" label="poignet" color={P.ink2} /> : null}
                   </View>
                 )}
-                {!isPremium ? <BigButton label="Débloquer tes signes vitaux" tone="light" onPress={() => ouvrirPaywall('signes_vitaux')} /> : null}
+                {!isPremium ? <BigButton label={traduire("Débloquer tes signes vitaux")} tone="light" onPress={() => ouvrirPaywall('signes_vitaux')} /> : null}
               </Card>
             </Enter>
           ) : null}
@@ -358,8 +353,7 @@ export default function DetailNuit() {
             <Enter i={4}>
               <Card style={{ gap: 6 }}>
                 <Ink size={15} weight="extraBold">
-                  Tes notes
-                </Ink>
+                  {traduire("Tes notes")}</Ink>
                 <Ink size={14} color={P.ink2}>
                   {entry.notes}
                 </Ink>
@@ -369,14 +363,14 @@ export default function DetailNuit() {
 
           {n ? (
             <Ink size={12} weight="medium" color={P.muted} style={{ paddingHorizontal: 4 }}>
-              {`Source : ${n.source}${n.sources.length > 1 ? `. Comme Santé, une seule source par nuit (${n.sources.length - 1} autre${n.sources.length > 2 ? 's' : ''} ignorée${n.sources.length > 2 ? 's' : ''}).` : '.'}`}
+              {`Source : ${n.source}${n.sources.length > 1 ? traduirePluriel(n.sources.length, n.sources.length > 2, ". Comme Santé, une seule source par nuit ({0} autre ignorée).", ". Comme Santé, une seule source par nuit ({0} autres ignorées).", n.sources.length - 1) : '.'}`}
             </Ink>
           ) : null}
         </>
       )}
 
       <Enter i={5}>
-        <BigButton label="Toutes tes nuits" tone="light" icon="list" onPress={() => router.push('/sleep-history' as any)} />
+        <BigButton label={traduire("Toutes tes nuits")} tone="light" icon="list" onPress={() => router.push('/sleep-history' as any)} />
       </Enter>
     </DetailScreen>
   );

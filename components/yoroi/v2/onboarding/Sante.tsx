@@ -15,6 +15,7 @@ import { ecouterEtatSante, lireEtatSante } from '@/lib/v2/sante/importEtat';
 import type { EtatSante } from '@/lib/v2/sante/importEtat';
 import { texteImport } from '@/lib/v2/sante/connexion';
 import { CATEGORIES_SANTE, resumeDemande } from '@/lib/v2/sante/typesSante';
+import { traduire } from '@/lib/i18n/tr';
 
 function Bloc({ icon, titre, texte, ink, fond }: { icon: IconName; titre: string; texte: string; ink: string; fond: string }) {
   const c = useColors();
@@ -54,30 +55,30 @@ export function Sante({ nav, busy, onConnect, onLater, platform = Platform.OS }:
   // Les memes categories que la fenetre du systeme (lib/v2/sante/typesSante.ts), sans chiffre trompeur
   const resume = resumeDemande(platform);
   const lit = android
-    ? 'Ton poids et ta composition, tes pas, ton sommeil, ton cœur, l’eau et les repas, et les séances de ta montre.'
-    : `${resume.categories.map((x) => CATEGORIES_SANTE[x.cat].label).join(', ')}. Les séances de ton Apple Watch ou de ta montre, avec leurs tracés.`;
+    ? traduire('Ton poids et ta composition, tes pas, ton sommeil, ton cœur, l’eau et les repas, et les séances de ta montre.')
+    : traduire("{0}. Les séances de ton Apple Watch ou de ta montre, avec leurs tracés.", resume.categories.map((x) => CATEGORIES_SANTE[x.cat].label).join(', '));
   return (
     <Shell
       {...nav}
       title={`Relie **${nom}**`}
-      sub="Ton suivi se remplit tout seul : tes pesées, tes pas et tes séances arrivent sans rien saisir."
+      sub={traduire("Ton suivi se remplit tout seul : tes pesées, tes pas et tes séances arrivent sans rien saisir.")}
       gap={12}
       footer={
         <>
-          <MainButton label="Autoriser l’accès" onPress={onConnect} loading={busy} />
-          <Pressable onPress={onLater} disabled={busy} accessibilityRole="button" accessibilityLabel="Plus tard" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-            <Ink size={15} weight="bold" color={c.textSecondary}>Plus tard</Ink>
+          <MainButton label={traduire("Autoriser l’accès")} onPress={onConnect} loading={busy} />
+          <Pressable onPress={onLater} disabled={busy} accessibilityRole="button" accessibilityLabel={traduire("Plus tard")} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+            <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("Plus tard")}</Ink>
           </Pressable>
         </>
       }
     >
-      <Bloc icon="download" titre="Ce que YOROI lit" texte={lit} ink={c.accent} fond={c.accentTint} />
-      <Bloc icon="upload" titre="Ce que YOROI écrit" texte="Tes pesées et ta masse grasse, ton eau, ton sommeil noté à la main et les séances que tu notes dans YOROI." ink={c.successText} fond={c.successTint} />
-      <Bloc icon="shield" titre="Rien ne quitte ton téléphone" texte="Pas de compte, pas de serveur : tout reste entre YOROI et Santé, sur ce téléphone." ink={c.goldDeep} fond={c.goldTint} />
+      <Bloc icon="download" titre={traduire("Ce que YOROI lit")} texte={lit} ink={c.accent} fond={c.accentTint} />
+      <Bloc icon="upload" titre={traduire("Ce que YOROI écrit")} texte={traduire("Tes pesées et ta masse grasse, ton eau, ton sommeil noté à la main et les séances que tu notes dans YOROI.")} ink={c.successText} fond={c.successTint} />
+      <Bloc icon="shield" titre={traduire("Rien ne quitte ton téléphone")} texte={traduire("Pas de compte, pas de serveur : tout reste entre YOROI et Santé, sur ce téléphone.")} ink={c.goldDeep} fond={c.goldTint} />
       <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19, paddingHorizontal: 2 }}>
         {android
-          ? 'Dans la fenêtre qui suit, active ce que tu veux partager. Tu pourras changer d’avis dans Health Connect.'
-          : `Dans la fenêtre qui suit, touche « Tout activer », ou choisis une par une (${resume.lecture} en lecture, ${resume.ecriture} en écriture). Tu pourras changer d’avis dans l’app Santé.`}
+          ? traduire('Dans la fenêtre qui suit, active ce que tu veux partager. Tu pourras changer d’avis dans Health Connect.')
+          : traduire("Dans la fenêtre qui suit, touche « Tout activer », ou choisis une par une ({0} en lecture, {1} en écriture). Tu pourras changer d’avis dans l’app Santé.", resume.lecture, resume.ecriture)}
       </Ink>
       {busy && texteEtape(etape, nom) ? (
         <Ink size={14} weight="bold" color={c.accent} style={{ lineHeight: 20, paddingHorizontal: 2 }} accessibilityLiveRegion="polite">

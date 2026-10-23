@@ -36,11 +36,12 @@ import {
 } from '@/lib/v2/sante/anneauxJours';
 import type { AnneauxJour, CleAnneau, PageCalendrier } from '@/lib/v2/sante/anneauxJours';
 import { useAnneauxHistorique } from '@/lib/v2/sante/useAnneauxHistorique';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
-const NOM: Record<CleAnneau, string> = { pas: 'Pas', exercice: 'Exercice', 'energie-active': 'Calories' };
+const NOM: Record<CleAnneau, string> = { pas: traduire('Pas'), exercice: traduire('Exercice'), 'energie-active': traduire('Calories') };
 const UNITE: Record<CleAnneau, string> = { pas: 'pas', exercice: 'min', 'energie-active': 'kcal' };
 const MAX_PAGES = 10;
-const entier = (n: number) => Math.round(n).toLocaleString('fr-FR').replace(/[   ]/g, ' ');
+const entier = (n: number) => Math.round(n).toLocaleString(LOCALE).replace(/[   ]/g, ' ');
 
 function valeurDe(a: AnneauxJour, cle: CleAnneau): number | null {
   return cle === 'pas' ? a.pas : cle === 'exercice' ? a.exercice : a.kcal;
@@ -51,7 +52,7 @@ function LigneAnneau({ cle, a, o }: { cle: CleAnneau; a: AnneauxJour; o: Objecti
   const v = valeurDe(a, cle);
   const obj = objectifMesure(cle, o);
   const pct = v !== null && obj && obj.cible > 0 ? Math.round((v / obj.cible) * 100) : null;
-  const label = v === null ? `${NOM[cle]} : pas de donnée` : `${NOM[cle]} : ${entier(v)} ${UNITE[cle]}${obj ? ` sur ${entier(obj.cible)}, ${pct} pour cent` : ''}`;
+  const label = v === null ? traduire("{0} : pas de donnée", NOM[cle]) : `${NOM[cle]} : ${entier(v)} ${UNITE[cle]}${obj ? traduire(" sur {0}, {1} pour cent", entier(obj.cible), pct) : ''}`;
   return (
     <View accessible accessibilityLabel={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, borderTopWidth: cle === 'pas' ? 0 : 1, borderTopColor: P.line2 }}>
       <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.anneau }} />
@@ -59,14 +60,13 @@ function LigneAnneau({ cle, a, o }: { cle: CleAnneau; a: AnneauxJour; o: Objecti
         {NOM[cle]}
         {cle === 'pas' && obj?.repere ? (
           <Ink size={11} weight="bold" color={P.ink2}>
-            {'  repère'}
+            {traduire('  repère')}
           </Ink>
         ) : null}
       </Ink>
       {v === null ? (
         <Ink size={14} weight="extraBold" color={P.ink2}>
-          Pas de donnée
-        </Ink>
+          {traduire("Pas de donnée")}</Ink>
       ) : (
         <Ink size={19} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ fontVariant: ['tabular-nums'], flexShrink: 1 }}>
           {entier(v)}
@@ -99,7 +99,7 @@ function PageGrille({ page, largeur, jours, choisi, aujourdhui, o, onChoisir }: 
             accessibilityRole="button"
             accessibilityState={{ selected: sel, disabled: a.futur }}
             accessibilityLabel={a11yJourAnneaux(a, aujourdhui)}
-            accessibilityHint={a.futur ? undefined : 'Affiche le détail de ce jour'}
+            accessibilityHint={a.futur ? undefined : traduire('Affiche le détail de ce jour')}
             style={({ pressed }) => ({
               width: cote,
               height: 56,
@@ -184,11 +184,11 @@ export default function TesAnneaux() {
 
   const android = Platform.OS === 'android';
   const sourceTexte = h.direct
-    ? `Pas et calories : ${android ? 'Health Connect' : 'Apple Santé'}. Exercice : ${android ? 'tes séances Health Connect' : 'Apple Santé'}${seancesDuJour ? ` et ${seancesDuJour > 1 ? `tes ${seancesDuJour} séances notées` : 'ta séance notée'} dans YOROI ce jour-là` : ' et tes séances YOROI'}.`
-    : `Exercice : tes séances notées dans YOROI. Relie ${android ? 'Health Connect' : 'Apple Santé'} pour tes pas et tes calories.`;
+    ? traduire("Pas et calories : {0}. Exercice : {1}{2}.", android ? 'Health Connect' : 'Apple Santé', android ? 'tes séances Health Connect' : 'Apple Santé', seancesDuJour ? ` et ${seancesDuJour > 1 ? `tes ${seancesDuJour} séances notées` : 'ta séance notée'} dans YOROI ce jour-là` : ' et tes séances YOROI')
+    : traduire("Exercice : tes séances notées dans YOROI. Relie {0} pour tes pas et tes calories.", android ? 'Health Connect' : 'Apple Santé');
 
   return (
-    <DetailScreen title="Tes anneaux" subtitle={jour === aujourdhui ? 'Aujourd’hui' : jourLong(jour, aujourdhui)} scroll={false}>
+    <DetailScreen title={traduire("Tes anneaux")} subtitle={jour === aujourdhui ? traduire('Aujourd’hui') : jourLong(jour, aujourdhui)} scroll={false}>
       <ScrollView
         ref={defilement}
         style={{ marginHorizontal: -22 }}
@@ -222,8 +222,7 @@ export default function TesAnneaux() {
           </View>
           {!aUneDonnee(a) && !h.chargement ? (
             <Ink size={13} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
-              Pas de donnée ce jour-là
-            </Ink>
+              {traduire("Pas de donnée ce jour-là")}</Ink>
           ) : null}
           <View>
             {CLES_ANNEAUX.map((cle) => (
@@ -242,7 +241,7 @@ export default function TesAnneaux() {
               onPress={() => allerPage(page + 1)}
               disabled={page >= MAX_PAGES - 1}
               accessibilityRole="button"
-              accessibilityLabel="Semaines d’avant"
+              accessibilityLabel={traduire("Semaines d’avant")}
               style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? P.paper : 'transparent', opacity: page >= MAX_PAGES - 1 ? 0.3 : 1 })}
             >
               <Icon name="back" size={18} color={P.accent} width={2.8} />
@@ -254,7 +253,7 @@ export default function TesAnneaux() {
               onPress={() => allerPage(page - 1)}
               disabled={page === 0}
               accessibilityRole="button"
-              accessibilityLabel="Semaines suivantes"
+              accessibilityLabel={traduire("Semaines suivantes")}
               style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? P.paper : 'transparent', opacity: page === 0 ? 0.3 : 1 })}
             >
               <Icon name="chevron" size={18} color={P.accent} width={2.8} />
@@ -286,7 +285,7 @@ export default function TesAnneaux() {
             />
           ) : null}
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center', lineHeight: 16 }}>
-            {h.chargement ? 'Lecture de ton historique…' : 'Balaye vers la droite pour les semaines d’avant. Touche un jour pour voir son détail.'}
+            {h.chargement ? traduire('Lecture de ton historique…') : traduire('Balaye vers la droite pour les semaines d’avant. Touche un jour pour voir son détail.')}
           </Ink>
         </View>
       </ScrollView>

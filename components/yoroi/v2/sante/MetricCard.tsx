@@ -15,6 +15,7 @@ import { formatValue, headline, sevenDays, trendText, unitFor, weekTrend, whenLa
 import type { DayPoint } from '@/lib/v2/sante/stats';
 import { IconDot, METRIC_ICON, SanteIcon } from './SanteIcon';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Mini graphique : barres arrondies pour un cumul (le jour en cours en couleur pleine), mini courbe fine pour une moyenne */
 export function Spark({ points, kind, color, width, height = 46 }: { points: DayPoint[]; kind: 'bars' | 'line'; color: string; width: number; height?: number }) {
@@ -50,7 +51,7 @@ export function Spark({ points, kind, color, width, height = 46 }: { points: Day
 }
 
 export function headlineText(m: MetricDef, p: DayPoint | null): string {
-  if (!p) return 'Pas de donnée';
+  if (!p) return traduire('Pas de donnée');
   if (m.key === 'tension' && p.v2) return `${Math.round(p.value)}/${Math.round(p.v2)}`;
   return formatValue(m, p.value);
 }
@@ -88,7 +89,7 @@ export function MetricCard({ def, points, onPress, wide }: { def: MetricDef; poi
             ) : null}
           </Ink>
           <Ink size={12} weight="bold" color={P.muted}>
-            {h ? whenLabel(h.date) : def.event ? 'aucun pour l’instant' : 'en attente de ta montre'}
+            {h ? whenLabel(h.date) : def.event ? traduire('aucun pour l’instant') : traduire('en attente de ta montre')}
           </Ink>
         </View>
         <View onLayout={onLayout} style={{ justifyContent: 'flex-end' }}>

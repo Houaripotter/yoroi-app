@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { saveNotification } from '@/lib/notificationHistoryService';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { traduire } from '@/lib/i18n/tr';
 
 /**
  * Son de la notification de fin. wizz.mp3 n'existe que dans l'app compilee
@@ -138,8 +139,8 @@ class TimerNotificationsService {
       if (await this.requestPermissions()) return;
       const { proposerNotifications } = await import('@/lib/v2/notifications/permission');
       await proposerNotifications('timer', {
-        titre: 'Une alerte à la fin du round',
-        texte: 'Pour te prévenir à la fin du round ou du repos, même téléphone verrouillé. Jamais de chiffre de santé sur l’écran verrouillé.',
+        titre: traduire('Une alerte à la fin du round'),
+        texte: traduire('Pour te prévenir à la fin du round ou du repos, même téléphone verrouillé. Jamais de chiffre de santé sur l’écran verrouillé.'),
         onAccepte: () => {
           this.permissionGranted = true;
         },
@@ -240,10 +241,10 @@ class TimerNotificationsService {
 
     if (mode === 'musculation') {
       if (!this.settings.restFinished) return;
-      await this.scheduleTimerFinishedNotification('Repos terminé', 'À toi pour la série suivante.', targetTimestampMs);
+      await this.scheduleTimerFinishedNotification(traduire('Repos terminé'), traduire('À toi pour la série suivante.'), targetTimestampMs);
     } else {
       if (!this.settings.roundFinished) return;
-      await this.scheduleTimerFinishedNotification('Minuteur terminé', 'Beau travail.', targetTimestampMs);
+      await this.scheduleTimerFinishedNotification(traduire('Minuteur terminé'), 'Beau travail.', targetTimestampMs);
     }
   }
 
@@ -253,7 +254,7 @@ class TimerNotificationsService {
   async notifyRestFinished(): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
     if (!this.settings.restFinished) return;
-    await this.scheduleTimerFinishedNotification('Repos terminé', 'À toi pour la série suivante.', Date.now() + 1000);
+    await this.scheduleTimerFinishedNotification(traduire('Repos terminé'), traduire('À toi pour la série suivante.'), Date.now() + 1000);
   }
 
   /**
@@ -264,10 +265,10 @@ class TimerNotificationsService {
     if (!this.settings.roundFinished) return;
 
     const message = roundNumber < totalRounds
-      ? `Round ${roundNumber} sur ${totalRounds} terminé. Souffle un peu.`
-      : 'Dernier round terminé. Beau travail.';
+      ? traduire("Round {0} sur {1} terminé. Souffle un peu.", roundNumber, totalRounds)
+      : traduire('Dernier round terminé. Beau travail.');
 
-    await this.scheduleTimerFinishedNotification('Round terminé', message, Date.now() + 1000);
+    await this.scheduleTimerFinishedNotification(traduire('Round terminé'), message, Date.now() + 1000);
   }
 
   /**
@@ -278,17 +279,17 @@ class TimerNotificationsService {
     if (!this.settings.workoutFinished) return;
 
     const titles: Record<string, string> = {
-      musculation: 'Entraînement terminé',
-      combat: 'Combat terminé',
-      tabata: 'Tabata terminé',
-      emom: 'EMOM terminé',
-      amrap: 'AMRAP terminé',
-      fortime: 'For Time terminé',
+      musculation: traduire('Entraînement terminé'),
+      combat: traduire('Combat terminé'),
+      tabata: traduire('Tabata terminé'),
+      emom: traduire('EMOM terminé'),
+      amrap: traduire('AMRAP terminé'),
+      fortime: traduire('For Time terminé'),
     };
 
     await this.scheduleTimerFinishedNotification(
-      titles[mode] || 'Entraînement terminé',
-      'Beau travail. Pense à boire et à t’étirer.',
+      titles[mode] || traduire('Entraînement terminé'),
+      traduire('Beau travail. Pense à boire et à t’étirer.'),
       Date.now() + 1000
     );
   }

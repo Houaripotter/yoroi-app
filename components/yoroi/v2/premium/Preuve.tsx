@@ -18,6 +18,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { AVIS, type Avis } from '@/lib/v2/premium/avis';
 import { storeRating } from '@/lib/v2/premium/offer';
+import { traduire } from '@/lib/i18n/tr';
 
 // ===== Visibilite : l'app au premier plan et l'ecran affiche =====
 
@@ -209,7 +210,7 @@ export function NoteLauriers({ compact = false }: { compact?: boolean }) {
     <View
       style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: compact ? 4 : 8 }}
       accessible
-      accessibilityLabel={`${r.note} sur 5, ${r.total} notes, ${r.stores}`}
+      accessibilityLabel={traduire("{0} sur 5, {1} notes, {2}", r.note, r.total, r.stores)}
     >
       <Laurier height={h} />
       <View style={{ alignItems: 'center', gap: compact ? 1 : 3, paddingHorizontal: 2 }}>
@@ -261,7 +262,7 @@ function AvisCarteCompacte({ avis, width }: { avis: Avis; width: number }) {
 
 export function AvisDefilants({ paused, compact = false, draggable = false }: { paused?: boolean; compact?: boolean; draggable?: boolean }) {
   return (
-    <View style={{ overflow: 'hidden' }} accessible accessibilityLabel={`${AVIS.length} avis de l’App Store`}>
+    <View style={{ overflow: 'hidden' }} accessible accessibilityLabel={traduire("{0} avis de l’App Store", AVIS.length)}>
       <Defilement speed={26} paused={paused} start={0.15} draggable={draggable}>
         {AVIS.map((a) =>
           compact ? (

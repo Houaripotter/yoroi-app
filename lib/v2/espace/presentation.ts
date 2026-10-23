@@ -19,6 +19,7 @@ import { NEW_SCENES, themeById } from '@/lib/v2/dojo/personnages';
 import { SCENES as CATALOGUE } from '@/components/yoroi/v2/espace/assets';
 import { SCENES as IMAGES } from '@/components/yoroi/v2/accueil/images';
 import { imageMiroir } from '@/lib/v2/espace/miroir';
+import { traduire } from '@/lib/i18n/tr';
 
 export type FicheScene = {
   id: SceneId;
@@ -83,21 +84,21 @@ export type FiltreGalerie = 'toutes' | 'animees' | 'gratuites' | PackGalerie;
 
 /** Titres des sections : ceux des onglets, avec le Japon nomme pour les scenes rangees par moment */
 const TITRES: Partial<Record<PackGalerie, string>> = {
-  jour: 'Japon, le jour',
-  saisons: 'Japon, les saisons',
-  soir: 'Japon, le soir et la nuit',
+  jour: traduire('Japon, le jour'),
+  saisons: traduire('Japon, les saisons'),
+  soir: traduire('Japon, le soir et la nuit'),
 };
 
 const PHRASES: Record<PackGalerie, string> = {
-  voyages: 'Tokyo, Paris, désert, neige et ciel étoilé, animés',
-  vie: 'Caserne, chantier, stade, château et station spatiale',
-  classique: 'Salle, parc, ville, mer et désert, sans le Japon',
-  nature: 'Plage, forêt, cascade, désert et buildings',
-  samourai: 'Katanas, armures et châteaux',
-  lanternes: 'Ruelles, auberges et ports à la nuit tombée',
-  jour: 'Dojo, jardins et temples en pleine lumière',
-  saisons: 'Cerisiers, érables et neige',
-  soir: 'Couchants, lanternes et lune',
+  voyages: traduire('Tokyo, Paris, désert, neige et ciel étoilé, animés'),
+  vie: traduire('Caserne, chantier, stade, château et station spatiale'),
+  classique: traduire('Salle, parc, ville, mer et désert, sans le Japon'),
+  nature: traduire('Plage, forêt, cascade, désert et buildings'),
+  samourai: traduire('Katanas, armures et châteaux'),
+  lanternes: traduire('Ruelles, auberges et ports à la nuit tombée'),
+  jour: traduire('Dojo, jardins et temples en pleine lumière'),
+  saisons: traduire('Cerisiers, érables et neige'),
+  soir: traduire('Couchants, lanternes et lune'),
 };
 
 export const PACKS_GALERIE: { key: PackGalerie; titre: string; phrase: string }[] = GROUPES.filter((g) => g.key !== 'toutes').map((g) => {
@@ -125,8 +126,8 @@ export function sectionsGalerie(f: FiltreGalerie): SectionGalerie[] {
 export function filtresGalerie(): { key: FiltreGalerie; label: string; nombre: number }[] {
   const n = (f: FiltreGalerie) => sectionsGalerie(f).reduce((t, s) => t + s.scenes.length, 0);
   return [
-    { key: 'toutes', label: 'Toutes', nombre: n('toutes') },
-    { key: 'animees', label: 'Animées', nombre: n('animees') },
+    { key: 'toutes', label: traduire('Toutes'), nombre: n('toutes') },
+    { key: 'animees', label: traduire('Animées'), nombre: n('animees') },
     { key: 'gratuites', label: 'Gratuites', nombre: n('gratuites') },
     ...PACKS_GALERIE.map((p) => ({ key: p.key as FiltreGalerie, label: p.titre, nombre: n(p.key) })),
   ];

@@ -20,6 +20,7 @@ import { chargerIdsMontre, idMontreDejaRecu, retenirIdMontre } from './idsRecus'
 import { demanderBilan } from '@/lib/v2/bilan/reglage';
 import { fini, lireAction } from './contrat';
 import type { ActionMontre } from './contrat';
+import { traduire } from '@/lib/i18n/tr';
 
 /** source rangee en base pour ce qui vient de la montre YOROI (une seance YOROI, pas un import) */
 export const SOURCE_MONTRE = 'yoroi_montre';
@@ -65,7 +66,7 @@ async function appliquerSeance(a: ActionMontre): Promise<number | null> {
     rounds: entier(a.rounds, 1, 100),
     source: SOURCE_MONTRE,
   };
-  const r = await saveSeance(t, { title: getSportName(sport) || 'Séance', skipHealth: a.dansSante === true });
+  const r = await saveSeance(t, { title: getSportName(sport) || traduire('Séance'), skipHealth: a.dansSante === true });
   return r?.id ?? null;
 }
 

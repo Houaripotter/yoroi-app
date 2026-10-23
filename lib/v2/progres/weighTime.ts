@@ -3,6 +3,7 @@
  * Lit l'heure dans la date (AAAA-MM-JJTHH:MM) ou, a defaut, dans created_at.
  */
 import type { Weight } from '@/lib/database';
+import { traduire } from '@/lib/i18n/tr';
 
 function hhmm(raw: string | undefined, utc: boolean): string | null {
   if (!raw) return null;
@@ -37,9 +38,9 @@ export function daysWithSeveral(list: Weight[]): Set<string> {
 /** « à 7 h 40 », ou « 1re pesée » et « 2e pesée » quand l'heure manque */
 export function sameDayTag(w: Weight, list: Weight[]): string {
   const t = weighTime(w);
-  if (t) return `à ${t}`;
+  if (t) return traduire("à {0}", t);
   const day = w.date.slice(0, 10);
   const same = list.filter((x) => x.date.slice(0, 10) === day).sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
   const i = same.indexOf(w) + 1;
-  return i <= 1 ? '1re pesée du jour' : `${i}e pesée du jour`;
+  return i <= 1 ? traduire('1re pesée du jour') : traduire("{0}e pesée du jour", i);
 }

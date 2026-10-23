@@ -18,6 +18,7 @@
 import type { Training } from '@/lib/database';
 import { activiteAvecSeances, objectifMesure, santeDuJour } from '@/lib/v2/accueil/enPlus';
 import type { MesureSanteJour, ObjectifsSante } from '@/lib/v2/accueil/enPlus';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Point = { date: string; value: number };
 export type SeriesJour = Partial<Record<string, Point[] | null | undefined>>;
@@ -27,9 +28,9 @@ export const CLES_ANNEAUX = ['pas', 'exercice', 'energie-active'] as const;
 export type CleAnneau = (typeof CLES_ANNEAUX)[number];
 
 export const LETTRES_JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const NOMS_JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MOIS_COURT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const NOMS_JOURS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 const maj = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -71,8 +72,8 @@ export function ecartJours(a: string, b: string): number {
 
 /** « Aujourd’hui », « Hier », sinon « Mercredi 15 oct. » */
 export function titreJour(iso: string, aujourdhui: string): string {
-  if (iso === aujourdhui) return 'Aujourd’hui';
-  if (iso === ajouterJours(aujourdhui, -1)) return 'Hier';
+  if (iso === aujourdhui) return traduire('Aujourd’hui');
+  if (iso === ajouterJours(aujourdhui, -1)) return traduire('Hier');
   const d = midi(iso);
   return `${maj(NOMS_JOURS[d.getDay()])} ${d.getDate()} ${MOIS_COURT[d.getMonth()]}`;
 }
@@ -95,7 +96,7 @@ export function libellePeriode(debut: string, fin: string): string {
   const a = midi(debut);
   const b = midi(fin);
   const annee = a.getFullYear() !== b.getFullYear() ? ` ${a.getFullYear()}` : '';
-  return `${a.getDate()} ${MOIS_COURT[a.getMonth()]}${annee} au ${b.getDate()} ${MOIS_COURT[b.getMonth()]}`;
+  return traduire("{0} {1}{2} au {3} {4}", a.getDate(), MOIS_COURT[a.getMonth()], annee, b.getDate(), MOIS_COURT[b.getMonth()]);
 }
 
 /* ============ Les donnees d'un jour ============ */

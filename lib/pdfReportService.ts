@@ -10,6 +10,7 @@ import { getTrainings, getWeights, getProfile, getCompetitions, type Training, t
 import { getAllMeasurements } from './storage';
 import { getUnlockedBadges } from './badges';
 import logger from '@/lib/security/logger';
+import { LOCALE } from '@/lib/i18n/tr';
 
 export type ReportPeriod = 'month' | 'quarter' | 'year';
 
@@ -32,7 +33,7 @@ async function collectData(period: ReportPeriod): Promise<ReportData> {
 
   if (period === 'month') {
     dateFrom = new Date(now.getFullYear(), now.getMonth(), 1);
-    periodLabel = dateFrom.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    periodLabel = dateFrom.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' });
   } else if (period === 'quarter') {
     dateFrom = new Date(now.getTime() - 90 * 86400000);
     periodLabel = `90 derniers jours`;
@@ -103,7 +104,7 @@ function buildHTML(data: ReportData): string {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .map(t => `
       <tr>
-        <td>${new Date(t.date).toLocaleDateString('fr-FR')}</td>
+        <td>${new Date(t.date).toLocaleDateString(LOCALE)}</td>
         <td>${escapeHtml(t.sport || '-')}</td>
         <td>${t.duration ?? '-'}</td>
         <td>${t.intensity ?? (t as any).rpe ?? '-'}</td>
@@ -134,7 +135,7 @@ function buildHTML(data: ReportData): string {
     })
     .map(c => `
       <tr>
-        <td>${new Date(c.date).toLocaleDateString('fr-FR')}</td>
+        <td>${new Date(c.date).toLocaleDateString(LOCALE)}</td>
         <td>${escapeHtml(c.nom)}</td>
         <td>${escapeHtml(c.sport)}</td>
         <td>${escapeHtml(c.statut || '-')}</td>
@@ -142,7 +143,7 @@ function buildHTML(data: ReportData): string {
     `).join('');
 
   const profileName = profile?.name ? escapeHtml(profile.name) : 'Yoroi';
-  const generatedAt = new Date().toLocaleString('fr-FR');
+  const generatedAt = new Date().toLocaleString(LOCALE);
 
   return `
     <!DOCTYPE html>

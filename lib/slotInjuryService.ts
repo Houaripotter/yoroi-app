@@ -1,4 +1,5 @@
 import { getActiveInjuries, getWeeklyPlan, cancelSlot, Injury, WeeklyPlan } from '@/lib/database';
+import { traduire } from '@/lib/i18n/tr';
 
 // Mapping zones corporelles -> sports impactes
 const ZONE_SPORT_IMPACT: Record<string, string[]> = {
@@ -107,7 +108,7 @@ export const cancelSlotsForInjury = async (injury: Injury): Promise<number> => {
       await cancelSlot(
         slot.id,
         weekStart,
-        `Blessure: ${injury.zone_id} (EVA ${injury.eva_score}/10)`,
+        traduire("Blessure: {0} (EVA {1}/10)", injury.zone_id, injury.eva_score),
         injury.id
       );
       count++;

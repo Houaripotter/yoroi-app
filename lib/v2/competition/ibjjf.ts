@@ -5,6 +5,7 @@
  * par l'ancien profil competiteur sont lus et convertis en douceur.
  */
 
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export type IbjjfGender = 'male' | 'female';
 
 export type IbjjfCategory = {
@@ -25,7 +26,7 @@ export const IBJJF_MEN: IbjjfCategory[] = [
   { id: 'pluma', name: 'Pluma', maxWeight: 64 },
   { id: 'pena', name: 'Pena', maxWeight: 70 },
   { id: 'leve', name: 'Leve', maxWeight: 76 },
-  { id: 'medio', name: 'Médio', maxWeight: 82.3 },
+  { id: 'medio', name: traduire('Médio'), maxWeight: 82.3 },
   { id: 'meio_pesado', name: 'Meio-Pesado', maxWeight: 88.3 },
   { id: 'pesado', name: 'Pesado', maxWeight: 94.3 },
   { id: 'super_pesado', name: 'Super-Pesado', maxWeight: 100.5 },
@@ -38,7 +39,7 @@ export const IBJJF_WOMEN: IbjjfCategory[] = [
   { id: 'pluma', name: 'Pluma', maxWeight: 53.5 },
   { id: 'pena', name: 'Pena', maxWeight: 58.5 },
   { id: 'leve', name: 'Leve', maxWeight: 64 },
-  { id: 'medio', name: 'Médio', maxWeight: 69 },
+  { id: 'medio', name: traduire('Médio'), maxWeight: 69 },
   { id: 'meio_pesado', name: 'Meio-Pesado', maxWeight: 74 },
   { id: 'pesado', name: 'Pesado', maxWeight: 79.3 },
   { id: 'super_pesado', name: 'Super-Pesado', maxWeight: 999, minWeight: 79.3 },
@@ -75,8 +76,8 @@ const LEGACY_NAMES: Record<string, string> = {
   'light feather': 'Pluma',
   feather: 'Pena',
   light: 'Leve',
-  middle: 'Médio',
-  medio: 'Médio',
+  middle: traduire('Médio'),
+  medio: traduire('Médio'),
   'medium heavy': 'Meio-Pesado',
   'meio pesado': 'Meio-Pesado',
   heavy: 'Pesado',
@@ -114,8 +115,8 @@ export function ibjjfAdvised(gender: string | null | undefined, weight: number):
 
 /** Libelle du poids pour une puce : « 57,5 kg », « plus de 100,5 kg », « toutes catégories » */
 export function ibjjfWeightLabel(c: IbjjfCategory): string {
-  const fr = (n: number) => String(n).replace('.', ',');
-  if (c.open) return 'toutes catégories';
-  if (c.maxWeight >= 900) return c.minWeight ? `plus de ${fr(c.minWeight)} kg` : 'sans limite';
+  const fr = (n: number) => String(n).replace('.', DECIMAL);
+  if (c.open) return traduire('toutes catégories');
+  if (c.maxWeight >= 900) return c.minWeight ? traduire("plus de {0} kg", fr(c.minWeight)) : traduire('sans limite');
   return `${fr(c.maxWeight)} kg`;
 }

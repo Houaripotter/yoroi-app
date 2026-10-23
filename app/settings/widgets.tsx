@@ -12,6 +12,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card, EspaceScreen, GUTTER, Icon } from '@/components/yoroi/v2/espace/ui';
 import { STYLES_WIDGETS, setStyleWidgets, useStyleWidgets, type StyleWidgets } from '@/lib/v2/widgets/style';
+import { traduire } from '@/lib/i18n/tr';
 
 const APERCUS: Record<StyleWidgets, { clair: number; sombre: number }> = {
   A: { clair: require('@/assets/widgets/apercu_a_clair.jpg'), sombre: require('@/assets/widgets/apercu_a_sombre.jpg') },
@@ -38,7 +39,7 @@ export default function StyleDesWidgets() {
   };
 
   return (
-    <EspaceScreen title="Style des widgets" subtitle="Sur ton écran d’accueil et ton écran verrouillé" gap={14}>
+    <EspaceScreen title={traduire("Style des widgets")} subtitle={traduire("Sur ton écran d’accueil et ton écran verrouillé")} gap={14}>
       <Card>
         <View style={{ padding: 12, flexDirection: 'row', gap: 10 }}>
           {STYLES_WIDGETS.map((s) => {
@@ -49,7 +50,7 @@ export default function StyleDesWidgets() {
                 onPress={() => choisir(s.id)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: actif }}
-                accessibilityLabel={`${s.nom}${s.id === 'A' ? ', par défaut' : ''}`}
+                accessibilityLabel={`${s.nom}${s.id === 'A' ? traduire(', par défaut') : ''}`}
                 style={({ pressed }) => ({ width: tuile, gap: 6, opacity: pressed ? 0.85 : 1 })}
               >
                 <View style={{ width: tuile, height: tuile, borderRadius: 18, borderWidth: 2.5, borderColor: actif ? c.accent : 'transparent', padding: 2 }}>
@@ -67,7 +68,7 @@ export default function StyleDesWidgets() {
                 </View>
                 <View style={{ gap: 1 }}>
                   <Ink size={13} weight="bold" color={actif ? c.ink : c.textSecondary} numberOfLines={2}>{s.nom}</Ink>
-                  {s.id === 'A' ? <Ink size={11} color={c.textMuted} numberOfLines={1}>Par défaut</Ink> : null}
+                  {s.id === 'A' ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{traduire("Par défaut")}</Ink> : null}
                 </View>
               </Pressable>
             );
@@ -93,9 +94,9 @@ export default function StyleDesWidgets() {
       </Card>
 
       <View style={{ paddingHorizontal: 6, gap: 6 }}>
-        <Ink size={13} color={c.textSecondary}>Tes widgets changent tout de suite, en clair comme en sombre.</Ink>
+        <Ink size={13} color={c.textSecondary}>{traduire("Tes widgets changent tout de suite, en clair comme en sombre.")}</Ink>
         {Platform.OS === 'ios' ? (
-          <Ink size={13} color={c.textSecondary}>Pour un seul widget : appui long sur le widget, Modifier le widget, puis Style.</Ink>
+          <Ink size={13} color={c.textSecondary}>{traduire("Pour un seul widget : appui long sur le widget, Modifier le widget, puis Style.")}</Ink>
         ) : null}
       </View>
     </EspaceScreen>

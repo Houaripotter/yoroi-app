@@ -10,6 +10,7 @@ import type { MetricDef } from '@/lib/v2/sante/metrics';
 import type { HealthEvent } from '@/lib/v2/sante/data';
 import { S } from './ui';
 import { SanteIcon } from './SanteIcon';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 /** « 1 alerte », « 3 alertes », « 2 ECG » */
 export function countLabel(n: number, unit: string): string {
@@ -23,14 +24,14 @@ function whenText(iso: string): { day: string; time: string } {
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
     const [y, m, d] = iso.split('-').map(Number);
     const t = new Date(y, m - 1, d);
-    return { day: t.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }), time: '' };
+    return { day: t.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' }), time: '' };
   }
   const t = new Date(iso);
   if (!Number.isFinite(t.getTime())) return { day: '', time: '' };
   const sameYear = t.getFullYear() === new Date().getFullYear();
   return {
-    day: t.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) }),
-    time: t.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    day: t.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) }),
+    time: t.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' }),
   };
 }
 
@@ -89,7 +90,7 @@ export function EventList({ def, events, color, tint, emptyText }: { def: Metric
                 {e.title}
               </Ink>
               <Ink size={12} weight="bold" color={S.ink2}>
-                {[w.day, w.time].filter(Boolean).join(' à ')}
+                {[w.day, w.time].filter(Boolean).join(traduire(' à '))}
               </Ink>
               {e.detail ? (
                 <Ink size={12} weight="medium" color={S.muted}>
@@ -101,10 +102,10 @@ export function EventList({ def, events, color, tint, emptyText }: { def: Metric
         );
       })}
       {events.length > shown.length || all ? (
-        <Press onPress={() => setAll((v) => !v)} accessibilityRole="button" accessibilityLabel={all ? 'Voir moins' : `Voir les ${events.length} lignes`}>
+        <Press onPress={() => setAll((v) => !v)} accessibilityRole="button" accessibilityLabel={all ? traduire('Voir moins') : traduire("Voir les {0} lignes", events.length)}>
           <View style={{ minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderTopWidth: 1, borderTopColor: S.line2 }}>
             <Ink size={13} weight="extraBold" color={S.accent}>
-              {all ? 'Voir moins' : `Voir les ${events.length} lignes`}
+              {all ? traduire('Voir moins') : traduire("Voir les {0} lignes", events.length)}
             </Ink>
             <SanteIcon name={all ? 'up' : 'down'} size={15} color={S.accent} />
           </View>

@@ -10,11 +10,12 @@ import { useBenchmarks } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, Hanko, BlockTitle } from '../ui';
 import { TabEmpty, TabLoading } from './common';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const STATIONS = [
   { key: 'ski_erg', label: 'SkiErg', unit: 'sec', target: '1000 m', kw: ['ski erg', 'skierg', 'ski-erg'] },
-  { key: 'sled_push', label: 'Sled push', unit: 'sec', target: '50 m', kw: ['sled push', 'sled-push', 'push sled', 'traîneau poussé'] },
-  { key: 'sled_pull', label: 'Sled pull', unit: 'sec', target: '50 m', kw: ['sled pull', 'sled-pull', 'pull sled', 'traîneau tiré'] },
+  { key: 'sled_push', label: 'Sled push', unit: 'sec', target: '50 m', kw: ['sled push', 'sled-push', 'push sled', traduire('traîneau poussé')] },
+  { key: 'sled_pull', label: 'Sled pull', unit: 'sec', target: '50 m', kw: ['sled pull', 'sled-pull', 'pull sled', traduire('traîneau tiré')] },
   { key: 'burpee_broad_jump', label: 'Burpee broad jump', unit: 'sec', target: '80 m', kw: ['burpee broad jump', 'burpee-broad', 'bbj', 'burpee jump'] },
   { key: 'rower', label: 'Rameur', unit: 'sec', target: '1000 m', kw: ['rower', 'rameur', 'rowing'] },
   { key: 'farmer_carry', label: 'Farmer carry', unit: 'sec', target: '200 m, 24 kg', kw: ['farmer carry', 'farmer', 'farmers walk', 'farmer walk'] },
@@ -24,9 +25,9 @@ const STATIONS = [
 
 const FORCE_LIFTS = [
   { key: 'squat', label: 'Squat', kw: ['squat', 'back squat', 'front squat'] },
-  { key: 'bench', label: 'Développé couché', kw: ['développé couché', 'developpé couché', 'bench press', 'developpe couche', 'dc', 'bench'] },
-  { key: 'deadlift', label: 'Soulevé de terre', kw: ['soulevé de terre', 'souleve de terre', 'deadlift', 'sdt'] },
-  { key: 'press', label: 'Développé militaire', kw: ['développé militaire', 'developpé militaire', 'ohp', 'overhead press', 'militaire'] },
+  { key: 'bench', label: traduire('Développé couché'), kw: [traduire('développé couché'), traduire('developpé couché'), 'bench press', 'developpe couche', 'dc', 'bench'] },
+  { key: 'deadlift', label: traduire('Soulevé de terre'), kw: [traduire('soulevé de terre'), traduire('souleve de terre'), 'deadlift', 'sdt'] },
+  { key: 'press', label: 'Développé militaire', kw: [traduire('développé militaire'), traduire('developpé militaire'), 'ohp', 'overhead press', 'militaire'] },
 ];
 
 const has = (name: string, kws: string[]) => kws.some((k) => name.toLowerCase().includes(k));
@@ -77,7 +78,7 @@ export function StationsView({ refreshKey, hideEmpty }: { refreshKey: number; hi
   if (loading) return <TabLoading />;
   const any = stations.some((s) => s.best) || lifts.some((l) => l.best);
   if (!any) {
-    return hideEmpty ? null : <TabEmpty title="Aucune station enregistrée" text="Note tes temps sur les 8 stations Hyrox ou tes maximums en squat, développé couché et soulevé de terre dans l’onglet Records." />;
+    return hideEmpty ? null : <TabEmpty title={traduire("Aucune station enregistrée")} text={traduire("Note tes temps sur les 8 stations Hyrox ou tes maximums en squat, développé couché et soulevé de terre dans l’onglet Records.")} />;
   }
 
   const squat = lifts.find((l) => l.key === 'squat')?.best?.value ?? 0;
@@ -87,7 +88,7 @@ export function StationsView({ refreshKey, hideEmpty }: { refreshKey: number; hi
 
   return (
     <View style={{ gap: 14 }}>
-      <BlockTitle title="Les 8 stations Hyrox" aside="Ton meilleur temps sur chaque station" />
+      <BlockTitle title={traduire("Les 8 stations Hyrox")} aside={traduire("Ton meilleur temps sur chaque station")} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {stations.map((s, i) => (
           <View key={s.key} style={{ flexBasis: '48%', flexGrow: 1, borderRadius: 20, padding: 14, gap: 4, backgroundColor: s.best ? P.white : blancA(0.55), borderWidth: 1, borderColor: P.line2 }}>
@@ -97,7 +98,7 @@ export function StationsView({ refreshKey, hideEmpty }: { refreshKey: number; hi
             </View>
             <Ink size={14} weight="extraBold" numberOfLines={1}>{s.label}</Ink>
             <Ink size={24} weight="black" tight color={s.best ? P.accent : P.dashed}>{s.best ? (s.unit === 'sec' ? sec(s.best.value) : `${s.best.value} reps`) : '--'}</Ink>
-            <Ink size={11} weight="bold" color={P.muted}>{s.best ? `${shortDate(s.best.date)}, objectif ${s.target}` : `Objectif ${s.target}`}</Ink>
+            <Ink size={11} weight="bold" color={P.muted}>{s.best ? traduire("{0}, objectif {1}", shortDate(s.best.date), s.target) : traduire("Objectif {0}", s.target)}</Ink>
           </View>
         ))}
       </View>
@@ -118,9 +119,9 @@ export function StationsView({ refreshKey, hideEmpty }: { refreshKey: number; hi
           ))}
           {total > 0 ? (
             <View style={{ borderRadius: 18, backgroundColor: P.ink, padding: 16, gap: 2 }}>
-              <Ink size={12} weight="bold" color={P.goldLight}>Total des trois mouvements</Ink>
+              <Ink size={12} weight="bold" color={P.goldLight}>{traduire("Total des trois mouvements")}</Ink>
               <Ink size={32} weight="black" tight color={P.white}>{`${total} kg`}</Ink>
-              <Ink size={12} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>{`Squat ${squat}, développé couché ${bench}, soulevé de terre ${dl}`}</Ink>
+              <Ink size={12} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.7)' : 'rgba(255,255,255,0.7)'}>{traduire("Squat {0}, développé couché {1}, soulevé de terre {2}", squat, bench, dl)}</Ink>
             </View>
           ) : null}
         </Sheet2>

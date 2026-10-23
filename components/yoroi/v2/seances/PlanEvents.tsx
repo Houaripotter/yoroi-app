@@ -19,6 +19,7 @@ import { Icon } from './Icon';
 import { BigButton, Chip, ChipRow, EmptyState, SectionTitle, tap } from './ui';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SAVED_EVENTS_KEY = 'my_saved_events';
 const EUROPE = new Set([
@@ -28,7 +29,7 @@ const EUROPE = new Set([
 ]);
 type Region = 'france' | 'europe' | 'monde';
 type Cat = 'all' | 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
-const CAT_LABEL: Record<Cat, string> = { all: 'Tout', combat: 'Combat', endurance: 'Endurance', force: 'Force', nature: 'Nature', autre: 'Autres' };
+const CAT_LABEL: Record<Cat, string> = { all: traduire('Tout'), combat: traduire('Combat'), endurance: 'Endurance', force: 'Force', nature: 'Nature', autre: 'Autres' };
 const CAT_TINT: Record<string, string> = { combat: '#EEE1DF', endurance: '#E4EADB', force: '#E3E6EE', nature: '#E9E4D8', autre: '#E6E4DD' };
 
 function eventParams(e: SportEvent) {
@@ -144,7 +145,7 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[longDate(e.date_start.slice(0, 10)), e.location?.city, e.location?.country !== 'France' ? e.location?.country : ''].filter(Boolean).join(', ')}</Ink>
           <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={2}>{[getSportTagLabel(e.sport_tag), e.federation].filter(Boolean).join(', ')}</Ink>
         </View>
-        <Pressable onPress={() => toggleSave(e)} accessibilityRole="button" accessibilityLabel={on ? 'Retirer de tes événements' : 'Garder cet événement'} hitSlop={6} style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.ink : c.fillSubtle }}>
+        <Pressable onPress={() => toggleSave(e)} accessibilityRole="button" accessibilityLabel={on ? traduire('Retirer de tes événements') : traduire('Garder cet événement')} hitSlop={6} style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.ink : c.fillSubtle }}>
           <Icon name={on ? 'bookmarkOn' : 'bookmark'} size={19} color={on ? P.paper : c.ink} />
         </Pressable>
       </Pressable>
@@ -153,9 +154,9 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
 
   return (
     <View style={{ gap: 12 }}>
-      <SectionTitle title="Tes compétitions" action="Ajouter" onAction={() => router.push('/add-competition' as any)} />
+      <SectionTitle title={traduire("Tes compétitions")} action={traduire("Ajouter")} onAction={() => router.push('/add-competition' as any)} />
       {upcoming.length === 0 ? (
-        <EmptyState title="Aucune compétition prévue" text="Ajoute ta prochaine échéance : le compte à rebours t’aidera à préparer ton camp et ta pesée." action="Ajouter une compétition" onAction={() => router.push('/add-competition' as any)} />
+        <EmptyState title={traduire("Aucune compétition prévue")} text={traduire("Ajoute ta prochaine échéance : le compte à rebours t’aidera à préparer ton camp et ta pesée.")} action={traduire("Ajouter une compétition")} onAction={() => router.push('/add-competition' as any)} />
       ) : (
         upcoming.map((cp, i) => {
           const n = daysFrom(today, cp.date.slice(0, 10));
@@ -164,11 +165,11 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
               key={cp.id}
               onPress={() => { tap(); router.push(`/competition-detail?id=${cp.id}` as any); }}
               accessibilityRole="button"
-              accessibilityLabel={`${cp.nom}, dans ${n} jours`}
+              accessibilityLabel={traduire("{0}, dans {1} jours", cp.nom, n)}
               style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 24, backgroundColor: i === 0 ? c.ink : P.carte, borderWidth: i === 0 ? 0 : 1, borderColor: c.divider, opacity: pressed ? 0.92 : 1 })}
             >
               <View style={{ alignItems: 'center', minWidth: 64 }}>
-                <Ink size={i === 0 ? 40 : 30} weight="black" tight color={i === 0 ? c.goldLight : c.ink} style={{ lineHeight: i === 0 ? 42 : 32 }}>{n === 0 ? 'Jour J' : String(n)}</Ink>
+                <Ink size={i === 0 ? 40 : 30} weight="black" tight color={i === 0 ? c.goldLight : c.ink} style={{ lineHeight: i === 0 ? 42 : 32 }}>{n === 0 ? traduire('Jour J') : String(n)}</Ink>
                 {n > 0 ? <Ink size={11} weight="bold" color={i === 0 ? c.onDarkSecondary : c.textMuted}>{n > 1 ? 'jours' : 'jour'}</Ink> : null}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
@@ -183,25 +184,25 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
       {past.length ? (
         <Pressable onPress={() => { tap(); router.push('/palmares' as any); }} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
           <Icon name="medal" size={18} color={c.goldDeep} />
-          <Ink size={14} weight="extraBold" color={c.textSecondary}>{`${past.length} compétition${past.length > 1 ? 's' : ''} passée${past.length > 1 ? 's' : ''}, voir ton palmarès`}</Ink>
+          <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduirePluriel(past.length, past.length > 1, "{0} compétition passée, voir ton palmarès", "{0} compétitions passées, voir ton palmarès", past.length)}</Ink>
         </Pressable>
       ) : null}
 
       {savedFuture.length ? (
         <>
-          <SectionTitle title="Tes événements" sub="ceux que tu as gardés" />
+          <SectionTitle title={traduire("Tes événements")} sub={traduire("ceux que tu as gardés")} />
           {savedFuture.map((e) => (
             <EventCard key={`s${e.id}`} e={e} />
           ))}
         </>
       ) : null}
 
-      <SectionTitle title="Trouver une compétition" sub={loading ? 'chargement...' : `${filtered.length} à venir`} />
+      <SectionTitle title={traduire("Trouver une compétition")} sub={loading ? 'chargement...' : traduire("{0} à venir", filtered.length)} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: c.border }}>
         <Icon name="search" size={18} color={c.textMuted} />
-        <TextInput value={query} onChangeText={setQuery} placeholder="Nom, ville, fédération..." placeholderTextColor={c.textMuted} style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 10 }} returnKeyType="search" />
+        <TextInput value={query} onChangeText={setQuery} placeholder={traduire("Nom, ville, fédération...")} placeholderTextColor={c.textMuted} style={{ flex: 1, fontSize: 15, color: c.ink, paddingVertical: 10 }} returnKeyType="search" />
         {query ? (
-          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Effacer la recherche" hitSlop={10}>
+          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={traduire("Effacer la recherche")} hitSlop={10}>
             <Icon name="close" size={18} color={c.textMuted} />
           </Pressable>
         ) : null}
@@ -217,11 +218,11 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
         ))}
       </ChipRow>
       {loading ? <ChargementBloc style={{ paddingVertical: 20 }} /> : null}
-      {!loading && filtered.length === 0 ? <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Aucun événement ne correspond. Essaie une autre région ou un autre mot.</Ink> : null}
+      {!loading && filtered.length === 0 ? <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Aucun événement ne correspond. Essaie une autre région ou un autre mot.")}</Ink> : null}
       {filtered.slice(0, shown).map((e) => (
         <EventCard key={e.id} e={e} />
       ))}
-      {filtered.length > shown ? <BigButton label="Voir plus d’événements" tone="soft" onPress={() => setShown((n) => n + 20)} /> : null}
+      {filtered.length > shown ? <BigButton label={traduire("Voir plus d’événements")} tone="soft" onPress={() => setShown((n) => n + 20)} /> : null}
     </View>
   );
 }

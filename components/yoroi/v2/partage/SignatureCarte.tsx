@@ -7,10 +7,11 @@ import React from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { SITE_URL, signatureImage } from '@/constants/partage';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Texte de la ligne de signature des cartes */
 export function texteSignatureCarte(): string {
-  return SITE_URL ? signatureImage() : 'YOROI, sur l’App Store et Google Play';
+  return SITE_URL ? signatureImage() : traduire('YOROI, sur l’App Store et Google Play');
 }
 
 export function SignatureCarte({

@@ -99,6 +99,7 @@ import { useMange } from '@/lib/v2/nutrition/useMange';
 import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
 import { DecorCarte, DecorOutils, DecorScene } from '@/components/yoroi/v2/saisons/DecorSaison';
 import { useSaison } from '@/lib/v2/saisons/useSaison';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function Accueil() {
   const insets = useSafeAreaInsets();
@@ -284,8 +285,8 @@ export default function Accueil() {
             </TourAnchor>
           ) : null}
           <GrilleAccueil tuiles={prochaine} />
-          <Carrousel titre="Ton entraînement" items={toutes.filter((t) => entrainement.includes(t.cle))} />
-          <Carrousel titre="Ton corps" items={toutes.filter((t) => corps.includes(t.cle))} />
+          <Carrousel titre={traduire("Ton entraînement")} items={toutes.filter((t) => entrainement.includes(t.cle))} />
+          <Carrousel titre={traduire("Ton corps")} items={toutes.filter((t) => corps.includes(t.cle))} />
           <GrilleAccueil tuiles={autres} />
         </View>
       );

@@ -15,6 +15,7 @@ import { tap } from '@/components/yoroi/v2/dojo/parts';
 import { PROTECTION_CHANGED_EVENT, etatProtection, lireProtection, type EtatProtection } from '@/lib/v2/sauvegarde/copieAuto';
 import { texteAbri } from '@/lib/v2/sauvegarde/textesCopie';
 import { lancerCopieAuto } from '@/components/yoroi/v2/sauvegarde/lancerCopieAuto';
+import { traduire } from '@/lib/i18n/tr';
 
 const PLUS_TARD = '@yoroi_abri_dojo_plus_tard';
 const INSTALL = '@yoroi_install_date';
@@ -74,10 +75,10 @@ export function AbriDojo({ rang, xp, serie }: { rang: string; xp: number; serie:
         accessibilityRole="button"
         style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.accent })}
       >
-        <Ink size={15} weight="extraBold" color={c.onAccent}>{etat === 'en_panne' ? 'Choisir le dossier' : 'Activer la copie automatique'}</Ink>
+        <Ink size={15} weight="extraBold" color={c.onAccent}>{etat === 'en_panne' ? traduire('Choisir le dossier') : traduire('Activer la copie automatique')}</Ink>
       </Pressable>
       <Pressable onPress={plusTard} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'center', minHeight: 32, justifyContent: 'center' }}>
-        <Ink size={13} weight="bold" color={c.textMuted}>Plus tard</Ink>
+        <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Plus tard")}</Ink>
       </Pressable>
     </View>
   );

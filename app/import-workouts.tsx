@@ -22,6 +22,7 @@ import { Chip, Sheet } from '@/components/yoroi/v2/seances/ui';
 import { DoneBlock, NumberedSteps, SummaryHero } from '@/components/yoroi/v2/partage/importKit';
 import { SPORT_ILLUS } from '@/components/yoroi/v2/espace/assets';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const formatDuration = (mins: number) => {
   const h = Math.floor(mins / 60);
@@ -52,7 +53,7 @@ export default function ImportWorkoutsScreen() {
       const fileName = file.name || 'unknown.gpx';
       const ext = fileName.toLowerCase().split('.').pop();
       if (ext !== 'gpx' && ext !== 'tcx' && ext !== 'xml') {
-        appAlert('Format non reconnu', 'Choisis un fichier GPX ou TCX.');
+        appAlert(traduire('Format non reconnu'), traduire('Choisis un fichier GPX ou TCX.'));
         return;
       }
       setIsParsing(true);
@@ -65,11 +66,11 @@ export default function ImportWorkoutsScreen() {
         setStep('preview');
         await impactAsync(ImpactFeedbackStyle.Medium);
       } else {
-        appAlert('Aucune séance', parsed.errors.length > 0 ? parsed.errors[0] : 'Aucune séance trouvée dans ce fichier.');
+        appAlert(traduire('Aucune séance'), parsed.errors.length > 0 ? parsed.errors[0] : traduire('Aucune séance trouvée dans ce fichier.'));
       }
     } catch (error: any) {
       logger.error('Import file error:', error);
-      appAlert('Lecture impossible', 'Le fichier n’a pas pu être lu. Vérifie que c’est bien un fichier GPX ou TCX.');
+      appAlert(traduire('Lecture impossible'), traduire('Le fichier n’a pas pu être lu. Vérifie que c’est bien un fichier GPX ou TCX.'));
     } finally {
       setIsParsing(false);
     }
@@ -104,7 +105,7 @@ export default function ImportWorkoutsScreen() {
     } catch (error: any) {
       logger.error('Import error:', error);
       if (successCount > 0) DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
-      appAlert('Import incomplet', successCount > 0 ? `${plural(successCount, 'séance importée', 'séances importées')} avant l’arrêt.` : 'L’import n’a pas pu aller au bout.');
+      appAlert('Import incomplet', successCount > 0 ? traduire("{0} avant l’arrêt.", plural(successCount, 'séance importée', 'séances importées')) : traduire('L’import n’a pas pu aller au bout.'));
     } finally {
       setIsImporting(false);
     }
@@ -120,7 +121,7 @@ export default function ImportWorkoutsScreen() {
   };
 
   return (
-    <DetailScreen title={step === 'done' ? 'Import terminé' : 'Importer des séances'} subtitle={step === 'select' ? 'Depuis Strava, Garmin et les autres' : undefined} onBack={back}>
+    <DetailScreen title={step === 'done' ? traduire('Import terminé') : traduire('Importer des séances')} subtitle={step === 'select' ? traduire('Depuis Strava, Garmin et les autres') : undefined} onBack={back}>
       {step === 'select' ? (
         <>
           <Enter i={0}>
@@ -131,7 +132,7 @@ export default function ImportWorkoutsScreen() {
                 ))}
               </View>
               <View style={{ padding: 16, gap: 10, maxWidth: '60%' }}>
-                <Ink size={19} weight="black" tight>Ramène tes séances ici</Ink>
+                <Ink size={19} weight="black" tight>{traduire("Ramène tes séances ici")}</Ink>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <View style={{ backgroundColor: P.accentSoft, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}>
                     <Ink size={14} weight="black" color={P.accent}>GPX</Ink>
@@ -147,13 +148,13 @@ export default function ImportWorkoutsScreen() {
           </Enter>
           <Enter i={1}>
             <NumberedSteps steps={[
-              { title: 'Exporte ta séance', text: 'Depuis Strava ou Garmin, en fichier GPX ou TCX.' },
-              { title: 'Choisis le fichier', text: 'YOROI repère toutes les séances qu’il contient.' },
-              { title: 'Vérifie et importe', text: 'Coche celles à garder, corrige le sport si besoin.' },
+              { title: traduire('Exporte ta séance'), text: traduire('Depuis Strava ou Garmin, en fichier GPX ou TCX.') },
+              { title: traduire('Choisis le fichier'), text: traduire('YOROI repère toutes les séances qu’il contient.') },
+              { title: traduire('Vérifie et importe'), text: traduire('Coche celles à garder, corrige le sport si besoin.') },
             ]} />
           </Enter>
           <Enter i={2}>
-            <BigButton label={isParsing ? 'Analyse du fichier' : 'Choisir un fichier'} icon="plus" onPress={pickFile} disabled={isParsing} />
+            <BigButton label={isParsing ? traduire('Analyse du fichier') : traduire('Choisir un fichier')} icon="plus" onPress={pickFile} disabled={isParsing} />
           </Enter>
           {isParsing ? <ActivityIndicator color={P.accent} /> : null}
         </>
@@ -161,11 +162,11 @@ export default function ImportWorkoutsScreen() {
 
       {step === 'preview' ? (
         <>
-          <SummaryHero big={activities.length} label={activities.length > 1 ? 'séances trouvées' : 'séance trouvée'} sub={`Fichier ${format.toUpperCase()}, ${selectedCount} cochée${selectedCount > 1 ? 's' : ''}`} />
-          <Press onPress={toggleAll} accessibilityRole="button" accessibilityLabel="Tout cocher">
+          <SummaryHero big={activities.length} label={activities.length > 1 ? traduire('séances trouvées') : traduire('séance trouvée')} sub={traduirePluriel(selectedCount, selectedCount > 1, "Fichier {0}, {1} cochée", "Fichier {0}, {1} cochées", format.toUpperCase(), selectedCount)} />
+          <Press onPress={toggleAll} accessibilityRole="button" accessibilityLabel={traduire("Tout cocher")}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, paddingHorizontal: 4 }}>
               <CheckDot on={allSelected} />
-              <Ink size={15} weight="extraBold">Tout cocher</Ink>
+              <Ink size={15} weight="extraBold">{traduire("Tout cocher")}</Ink>
             </View>
           </Press>
           {errors.length > 0 ? (
@@ -175,7 +176,7 @@ export default function ImportWorkoutsScreen() {
           ) : null}
           {activities.map((a) => (
             <Card key={a.id} style={{ padding: 14, gap: 10, opacity: a.selected ? 1 : 0.55, borderColor: a.selected ? P.ink : P.line2, borderWidth: a.selected ? 1.5 : 1 }}>
-              <Press onPress={() => toggleActivity(a.id)} accessibilityRole="button" accessibilityLabel={`${a.selected ? 'Décocher' : 'Cocher'} ${a.name}`} haptic="light">
+              <Press onPress={() => toggleActivity(a.id)} accessibilityRole="button" accessibilityLabel={`${a.selected ? traduire('Décocher') : 'Cocher'} ${a.name}`} haptic="light">
                 <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                   <CheckDot on={a.selected} />
                   <View style={{ flex: 1 }}>
@@ -185,12 +186,12 @@ export default function ImportWorkoutsScreen() {
                 </View>
               </Press>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 8 }}>
-                <MiniStat value={formatDuration(a.durationMinutes)} label="Durée" />
-                {a.distanceKm != null ? <MiniStat value={`${String(a.distanceKm).replace('.', ',')} km`} label="Distance" /> : null}
-                {a.avgHeartRate != null ? <MiniStat value={`${a.avgHeartRate}`} label="Cœur moyen" /> : null}
-                {a.calories != null ? <MiniStat value={`${a.calories}`} label="Calories" /> : null}
+                <MiniStat value={formatDuration(a.durationMinutes)} label={traduire("Durée")} />
+                {a.distanceKm != null ? <MiniStat value={`${String(a.distanceKm).replace('.', DECIMAL)} km`} label="Distance" /> : null}
+                {a.avgHeartRate != null ? <MiniStat value={`${a.avgHeartRate}`} label={traduire("Cœur moyen")} /> : null}
+                {a.calories != null ? <MiniStat value={`${a.calories}`} label={traduire("Calories")} /> : null}
               </View>
-              <Press onPress={() => setSportPickerId(a.id)} accessibilityRole="button" accessibilityLabel={`Changer le sport, actuellement ${getSportName(a.yoroiSportId)}`}>
+              <Press onPress={() => setSportPickerId(a.id)} accessibilityRole="button" accessibilityLabel={traduire("Changer le sport, actuellement {0}", getSportName(a.yoroiSportId))}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: P.paper, borderWidth: 1, borderColor: P.line2 }}>
                   <EIcon name="dumbbell" size={16} />
                   <Ink size={14} weight="bold">{getSportName(a.yoroiSportId)}</Ink>
@@ -200,16 +201,16 @@ export default function ImportWorkoutsScreen() {
             </Card>
           ))}
           {isImporting ? <ActivityIndicator color={P.accent} /> : null}
-          <BigButton label={`Importer ${plural(selectedCount, 'séance', 'séances')}`} icon="check" onPress={importSelected} disabled={selectedCount === 0 || isImporting} />
-          <BigButton label="Changer le fichier" tone="light" onPress={() => { setStep('select'); setActivities([]); setErrors([]); }} />
+          <BigButton label={traduire("Importer {0}", plural(selectedCount, 'séance', 'séances'))} icon="check" onPress={importSelected} disabled={selectedCount === 0 || isImporting} />
+          <BigButton label={traduire("Changer le fichier")} tone="light" onPress={() => { setStep('select'); setActivities([]); setErrors([]); }} />
         </>
       ) : null}
 
       {step === 'done' ? (
         <>
-          <DoneBlock title="Séances ajoutées" sub={`${plural(importedCount, 'séance ajoutée', 'séances ajoutées')} à ton historique.`} />
-          <BigButton label="Terminé" onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
-          <BigButton label="Importer un autre fichier" tone="light" onPress={() => { setStep('select'); setActivities([]); setErrors([]); setImportedCount(0); }} />
+          <DoneBlock title={traduire("Séances ajoutées")} sub={traduire("{0} à ton historique.", plural(importedCount, 'séance ajoutée', 'séances ajoutées'))} />
+          <BigButton label={traduire("Terminé")} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
+          <BigButton label={traduire("Importer un autre fichier")} tone="light" onPress={() => { setStep('select'); setActivities([]); setErrors([]); setImportedCount(0); }} />
         </>
       ) : null}
 

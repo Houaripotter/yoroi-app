@@ -18,30 +18,31 @@ import {
   figureFor, fmtDuration, paletteOf, toVariant,
 } from '@/components/yoroi/v2/partage/cardKit';
 import type { CardPalette } from '@/components/yoroi/v2/partage/cardKit';
+import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 // Nom d'affichage des soumissions
 const SUBMISSION_NAME_MAP: Record<string, string> = {
-  rnc: 'RNC', bowarrow: 'Bow and Arrow', bodytri: 'Body Triangle', reartri: 'Triangle arrière',
-  crucifix: 'Crucifix', triangle: 'Triangle', triangleinv: 'Triangle inversé', montedtri: 'Triangle monté',
+  rnc: 'RNC', bowarrow: 'Bow and Arrow', bodytri: 'Body Triangle', reartri: traduire('Triangle arrière'),
+  crucifix: 'Crucifix', triangle: 'Triangle', triangleinv: traduire('Triangle inversé'), montedtri: traduire('Triangle monté'),
   guillotine: 'Guillotine', guillarmin: 'Arm-in Guillotine', marcelo: 'Guillotine haute',
   hipbumpguil: 'Hip Bump Guillotine', darce: "D'Arce", anaconda: 'Anaconda', armtri: 'Arm Triangle',
   northsouth: 'Nord-Sud', ezekiel: 'Ezekiel', buggy: 'Buggy Choke', loop: 'Loop Choke',
   baseball: 'Baseball Bat', papercutter: 'Paper Cutter', brabo: 'Brabo', clockchoke: 'Clock Choke',
   vonflue: 'Von Flue', peruvian: 'Peruvian Necktie', gogoplata: 'Gogoplata', twister: 'Twister',
   lapelchoke: 'Lapel Choke', daratine: 'Daratine', katahajime: 'Kata Ha Jime',
-  japanesenetie: 'Japanese Necktie', mountedguill: 'Guillotine montée', kesagatame: 'Kesa Gatame',
+  japanesenetie: 'Japanese Necktie', mountedguill: traduire('Guillotine montée'), kesagatame: 'Kesa Gatame',
   headscissor: 'Head Scissors', ezekielguard: 'Ezekiel garde', necklace: 'Necklace Choke',
-  chinstrap: 'Chin Strap', crosstri: 'Triangle croisé',
-  armbar: 'Clé de bras', armbarguard: 'Clé de bras garde', armbarmount: 'Clé de bras montée',
-  armbarback: 'Clé de bras dos', kimura: 'Kimura', kimuratrap: 'Kimura Trap',
-  americana: 'Américaine', omoplata: 'Omoplata', monoplata: 'Monoplata', baratoplata: 'Baratoplata',
-  tarikoplata: 'Tarikoplata', wristlock: 'Clé de poignet', bicepslicer: 'Bicep Slicer',
-  shoulder: "Clé d'épaule", hammerlock: 'Hammerlock', straightarm: 'Straight Arm Lock',
+  chinstrap: 'Chin Strap', crosstri: traduire('Triangle croisé'),
+  armbar: traduire('Clé de bras'), armbarguard: traduire('Clé de bras garde'), armbarmount: traduire('Clé de bras montée'),
+  armbarback: traduire('Clé de bras dos'), kimura: 'Kimura', kimuratrap: 'Kimura Trap',
+  americana: traduire('Américaine'), omoplata: 'Omoplata', monoplata: 'Monoplata', baratoplata: 'Baratoplata',
+  tarikoplata: 'Tarikoplata', wristlock: traduire('Clé de poignet'), bicepslicer: 'Bicep Slicer',
+  shoulder: traduire("Clé d'épaule"), hammerlock: 'Hammerlock', straightarm: 'Straight Arm Lock',
   chickenwing: 'Chicken Wing', spiderweb: 'Spider Web', reversearmbar: 'Reverse Armbar',
   mirlock: 'Mir Lock', gooseneck: 'Gooseneck', canopener: 'Can Opener',
   heelint: 'Heel Hook int.', heelext: 'Heel Hook ext.', crossheel: 'Cross Heel Hook',
-  kneebar: 'Clé de genou', anklelock: 'Clé de cheville', anklerot: 'Ankle Lock rotatif',
-  toehold: 'Clé de pied', calfslicer: 'Calf Slicer', estima: 'Estima Lock',
+  kneebar: traduire('Clé de genou'), anklelock: traduire('Clé de cheville'), anklerot: 'Ankle Lock rotatif',
+  toehold: traduire('Clé de pied'), calfslicer: 'Calf Slicer', estima: 'Estima Lock',
   electricchair: 'Electric Chair', bananasplit: 'Banana Split', saddle: 'Saddle, Sankaku',
   straightfoot: 'Straight Foot Lock', suloev: 'Suloev Stretch', aokilock: 'Aoki Lock',
   revheelhook: 'Reverse Heel Hook', fig4ankle: 'Figure 4 Ankle', texasclover: 'Texas Cloverleaf',
@@ -111,7 +112,7 @@ interface SessionCardProps {
 const num = (v?: string) => parseFloat((v || '0').replace(',', '.'));
 const fr = (v: number | string, d = 1) => {
   const n = typeof v === 'string' ? num(v) : v;
-  return Number.isInteger(n) ? String(n) : n.toFixed(d).replace('.', ',');
+  return Number.isInteger(n) ? String(n) : n.toFixed(d).replace('.', DECIMAL);
 };
 
 function paceFromSpeed(speed?: string): string | null {
@@ -128,17 +129,17 @@ function optionValue(o: CardOption, unite: UnitePoids = 'kg'): string {
   // 18 octobre 2026 : charge stockee en kilos, affichee dans l'unite du reglage
   if (o.weight) parts.push(unite === 'kg' ? `${fr(o.weight)} kg` : chargeTexte(num(o.weight), unite, 1));
   if (o.reps) parts.push(`${o.reps} reps`);
-  if (o.sets && parseInt(o.sets, 10) > 1) parts.push(`${o.sets} séries`);
+  if (o.sets && parseInt(o.sets, 10) > 1) parts.push(traduire("{0} séries", o.sets));
   if (o.distance) parts.push(`${fr(o.distance, 2)} km`);
   if (o.duration) parts.push(`${o.duration} min`);
   if (o.watts) parts.push(`${o.watts} W`);
-  if (o.resistance) parts.push(`niveau ${o.resistance}`);
+  if (o.resistance) parts.push(traduire("niveau {0}", o.resistance));
   if (o.speed) parts.push(`${fr(o.speed)} km/h`);
   const pace = paceFromSpeed(o.speed);
-  if (pace) parts.push(`${pace} au km`);
+  if (pace) parts.push(traduire("{0} au km", pace));
   else if (o.pace) parts.push(o.pace);
   if (o.pente) parts.push(`${fr(o.pente)} %`);
-  if (o.stairs) parts.push(`${o.stairs} étages`);
+  if (o.stairs) parts.push(traduire("{0} étages", o.stairs));
   if (o.calories) parts.push(`${o.calories} kcal`);
   return parts.join(', ');
 }
@@ -160,9 +161,9 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     const pad = Math.round(width * 0.055);
 
     const date = training.date ? new Date(training.date) : new Date();
-    const dateLabel = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    const dateLabel = date.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short' });
     const sports = (training.sport ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-    const sportName = sports.length ? sports.map((s) => getSportName(s) ?? s).join(' et ') : 'Séance';
+    const sportName = sports.length ? sports.map((s) => getSportName(s) ?? s).join(' et ') : traduire('Séance');
     const clubLogo = training.club_logo ? getClubLogoSource(training.club_logo) : null;
     const place = customLocation || training.location_name || '';
     const duration = training.duration_minutes || 0;
@@ -213,21 +214,21 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     if ((training.distance || 0) > 0) metrics.push({ value: `${fr(training.distance || 0, 2)} km`, label: 'Distance' });
     if ((training.distance || 0) > 0 && duration > 0) {
       const sec = Math.round((duration * 60) / (training.distance || 1));
-      metrics.push({ value: `${Math.floor(sec / 60)}'${String(sec % 60).padStart(2, '0')}"`, label: 'Allure au km' });
+      metrics.push({ value: `${Math.floor(sec / 60)}'${String(sec % 60).padStart(2, '0')}"`, label: traduire('Allure au km') });
     } else if ((training.speed || 0) > 0) {
       const pc = paceFromSpeed(String(training.speed));
-      if (pc) metrics.push({ value: pc, label: 'Allure au km' });
+      if (pc) metrics.push({ value: pc, label: traduire('Allure au km') });
     }
-    if ((training.speed || 0) > 0) metrics.push({ value: `${fr(training.speed || 0)} km/h`, label: 'Vitesse' });
-    if ((training.heart_rate || 0) > 0) metrics.push({ value: `${training.heart_rate}`, label: 'Cœur moyen' });
-    if ((training.max_heart_rate || 0) > 0) metrics.push({ value: `${training.max_heart_rate}`, label: 'Cœur max' });
+    if ((training.speed || 0) > 0) metrics.push({ value: `${fr(training.speed || 0)} km/h`, label: traduire('Vitesse') });
+    if ((training.heart_rate || 0) > 0) metrics.push({ value: `${training.heart_rate}`, label: traduire('Cœur moyen') });
+    if ((training.max_heart_rate || 0) > 0) metrics.push({ value: `${training.max_heart_rate}`, label: traduire('Cœur max') });
     if ((training.calories || 0) > 0) metrics.push({ value: `${Math.round(training.calories || 0)}`, label: 'Kcal' });
     if ((training.watts || 0) > 0) metrics.push({ value: `${Math.round(training.watts || 0)} W`, label: 'Puissance' });
     if ((training.cadence || 0) > 0) metrics.push({ value: `${Math.round(training.cadence || 0)}`, label: 'Cadence' });
     if ((training.pente || 0) > 0) metrics.push({ value: `${fr(training.pente || 0)} %`, label: 'Pente' });
-    if ((training.resistance || 0) > 0) metrics.push({ value: `${training.resistance}`, label: 'Résistance' });
+    if ((training.resistance || 0) > 0) metrics.push({ value: `${training.resistance}`, label: traduire('Résistance') });
     if ((training.rounds || 0) > 0) metrics.push({ value: `${training.rounds}${training.round_duration ? ` x ${training.round_duration} min` : ''}`, label: 'Rounds' });
-    if ((training.intensity || 0) > 0) metrics.push({ value: `${training.intensity}/10`, label: 'Intensité' });
+    if ((training.intensity || 0) > 0) metrics.push({ value: `${training.intensity}/10`, label: traduire('Intensité') });
 
     const maxLines = Math.max(4, Math.floor((height - 470) / 22));
     const opts = options ?? [];
@@ -246,12 +247,12 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
             <Score pp={pp} value={combat.wins} label="Victoires" color={pp.accent} />
             <Score pp={pp} value={combat.draws} label="Nuls" color={pp.panelInk2} />
-            <Score pp={pp} value={combat.losses} label="Défaites" color={pp.panelInk} />
+            <Score pp={pp} value={combat.losses} label={traduire("Défaites")} color={pp.panelInk} />
             <View style={{ flex: 1 }} />
-            {combat.pf > 0 || combat.pa > 0 ? <Ink size={13} weight="black" color={pp.panelInk}>{`${combat.pf} à ${combat.pa} pts`}</Ink> : null}
+            {combat.pf > 0 || combat.pa > 0 ? <Ink size={13} weight="black" color={pp.panelInk}>{traduire("{0} à {1} pts", combat.pf, combat.pa)}</Ink> : null}
           </View>
           {rounds.map((r, i) => {
-            const res = r.result === 'win' ? 'Victoire' : r.result === 'loss' ? 'Défaite' : r.result === 'draw' ? 'Nul' : '';
+            const res = r.result === 'win' ? traduire('Victoire') : r.result === 'loss' ? traduire('Défaite') : r.result === 'draw' ? 'Nul' : '';
             const subs = [...(r.methodsGiven ?? []).map((m) => subName(m)), ...(r.methodsTaken ?? []).map((m) => `subi : ${subName(m)}`)].slice(0, 2).join(', ');
             return (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -264,7 +265,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               </View>
             );
           })}
-          {combatRounds.length > rounds.length ? <Ink size={10} weight="bold" color={pp.panelInk2}>{`et ${combatRounds.length - rounds.length} autres rounds`}</Ink> : null}
+          {combatRounds.length > rounds.length ? <Ink size={10} weight="bold" color={pp.panelInk2}>{traduire("et {0} autres rounds", combatRounds.length - rounds.length)}</Ink> : null}
           {combat.techs.length > 0 ? <Ink size={10} weight="bold" color={pp.panelInk2} numberOfLines={1}>{combat.techs.join(', ')}</Ink> : null}
         </Panel>
       );
@@ -276,7 +277,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
         return (
           <Panel p={pp} style={{ gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-              <Ink size={12} weight="black" color={pp.panelInk} style={{ flex: 1 }}>Le détail</Ink>
+              <Ink size={12} weight="black" color={pp.panelInk} style={{ flex: 1 }}>{traduire("Le détail")}</Ink>
               {tonnage > 0 ? <Ink size={12} weight="black" color={pp.accent}>{`${formatTonnage(tonnage, unite)} ${accordSouleve(tonnage, unite)}`}</Ink> : null}
             </View>
             {shown.map((o, i) => {
@@ -293,7 +294,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
                 </React.Fragment>
               );
             })}
-            {hidden > 0 ? <Ink size={10} weight="bold" color={pp.panelInk2}>{`et ${hidden} autre${hidden > 1 ? 's' : ''}`}</Ink> : null}
+            {hidden > 0 ? <Ink size={10} weight="bold" color={pp.panelInk2}>{traduirePluriel(hidden, hidden > 1, "et {0} autre", "et {0} autres", hidden)}</Ink> : null}
           </Panel>
         );
       }
@@ -312,7 +313,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
       }
       return (
         <Panel p={pp}>
-          <Ink size={13} weight="bold" color={pp.panelInk} numberOfLines={3}>{training.notes?.trim() || 'Séance validée, un jour de plus dans ton année.'}</Ink>
+          <Ink size={13} weight="bold" color={pp.panelInk} numberOfLines={3}>{training.notes?.trim() || traduire('Séance validée, un jour de plus dans ton année.')}</Ink>
         </Panel>
       );
     };
@@ -330,7 +331,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               </View>
             ) : null}
             <View style={{ gap: 4, maxWidth: isPhoto ? '100%' : width * 0.56, paddingTop: isPhoto ? 0 : 8 }}>
-              <Ink size={14} weight="bold" color={p.ink2} numberOfLines={1}>{name ? `La séance de ${name}` : 'Séance du jour'}</Ink>
+              <Ink size={14} weight="bold" color={p.ink2} numberOfLines={1}>{name ? traduire("La séance de {0}", name) : traduire('Séance du jour')}</Ink>
               <Ink size={titleSize(sportName, width)} weight="black" tight color={p.ink} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>{sportName}</Ink>
               {typeLabels.length > 0 ? (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -344,7 +345,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               {showClub ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                   {clubLogo ? <Image source={clubLogo} style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: '#FFFFFF' }} resizeMode="contain" /> : null}
-                  <Ink size={13} weight="bold" color={p.ink} numberOfLines={1}>{training.club_name || 'Séance en solo'}</Ink>
+                  <Ink size={13} weight="bold" color={p.ink} numberOfLines={1}>{training.club_name || traduire('Séance en solo')}</Ink>
                 </View>
               ) : null}
               {showLieu && place ? <Ink size={12} weight="bold" color={p.muted} numberOfLines={1}>{place}</Ink> : null}
@@ -367,7 +368,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
           {showStats && showYearlyCount && yearlyCount > 0 ? (
             <View style={{ gap: 6 }}>
               <PlateRow p={p} progress={yearlyCount / objective} count={12} w={Math.floor((width - 70) / 12) - 2} />
-              <Ink size={11} weight="bold" color={p.ink2}>{`${yearlyCount} séance${yearlyCount > 1 ? 's' : ''} cette année, objectif ${objective}`}</Ink>
+              <Ink size={11} weight="bold" color={p.ink2}>{traduirePluriel(yearlyCount, yearlyCount > 1, "{0} séance cette année, objectif {1}", "{0} séances cette année, objectif {1}", yearlyCount, objective)}</Ink>
             </View>
           ) : null}
 

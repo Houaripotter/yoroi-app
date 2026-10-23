@@ -17,12 +17,13 @@ import { ENCRES_THEME as ENCRES } from './couleurs';
 import type { Encre } from './couleurs';
 import { ChoiceCard, MainButton, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 export const GOALS: { id: Goal; label: string; line: string; tampon: TamponId; encre: Encre }[] = [
-  { id: 'lose', label: 'Perdre du poids', line: 'Suivre ta perte semaine après semaine.', tampon: 'objectif_perdre', encre: ENCRES.sarcelle },
-  { id: 'gain', label: 'Prendre du muscle', line: 'Voir ton poids et tes charges monter.', tampon: 'objectif_muscle', encre: ENCRES.or },
-  { id: 'combat', label: 'Performer en combat', line: 'Ta catégorie, tes rounds, tes compétitions.', tampon: 'objectif_combat', encre: ENCRES.vermillon },
-  { id: 'maintain', label: 'Me maintenir', line: 'Garder ton poids et ta régularité.', tampon: 'objectif_maintien', encre: ENCRES.indigo },
+  { id: 'lose', label: traduire('Perdre du poids'), line: traduire('Suivre ta perte semaine après semaine.'), tampon: 'objectif_perdre', encre: ENCRES.sarcelle },
+  { id: 'gain', label: traduire('Prendre du muscle'), line: traduire('Voir ton poids et tes charges monter.'), tampon: 'objectif_muscle', encre: ENCRES.or },
+  { id: 'combat', label: traduire('Performer en combat'), line: traduire('Ta catégorie, tes rounds, tes compétitions.'), tampon: 'objectif_combat', encre: ENCRES.vermillon },
+  { id: 'maintain', label: 'Me maintenir', line: traduire('Garder ton poids et ta régularité.'), tampon: 'objectif_maintien', encre: ENCRES.indigo },
 ];
 
 export function Objectif({ nav, name = '', goals, onChange, onNext }: { nav: Nav; name?: string; goals: Goal[]; onChange: (list: Goal[]) => void; onNext: () => void }) {
@@ -31,7 +32,7 @@ export function Objectif({ nav, name = '', goals, onChange, onNext }: { nav: Nav
   const phrase = note ?? phraseCombinaison(goals);
   const petit = useWindowDimensions().height < 720;
   return (
-    <Shell {...nav} title={name.trim() ? `Qu’est-ce que tu **vises**, ${name.trim()} ?` : 'Qu’est-ce que tu **vises** ?'} sub="Ce que tu viens chercher dans YOROI. Choisis-en un ou plusieurs." gap={petit ? 8 : 12} footer={<MainButton label="Continuer" onPress={onNext} disabled={!goals.length} />}>
+    <Shell {...nav} title={name.trim() ? traduire("Qu’est-ce que tu **vises**, {0} ?", name.trim()) : traduire('Qu’est-ce que tu **vises** ?')} sub={traduire("Ce que tu viens chercher dans YOROI. Choisis-en un ou plusieurs.")} gap={petit ? 8 : 12} footer={<MainButton label="Continuer" onPress={onNext} disabled={!goals.length} />}>
       {GOALS.map((g) => {
         const on = goals.includes(g.id);
         return (

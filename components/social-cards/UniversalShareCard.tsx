@@ -10,6 +10,7 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Training } from '@/lib/database';
 import { CombatRoundData } from '@/components/social-cards/SessionCard';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const GOLD  = '#D4AF37';
 const WHITE = '#FFFFFF';
@@ -20,11 +21,11 @@ const DRAW  = '#9CA3AF';
 // ─── Sport config (toutes variantes orthographiques) ────────────────────────
 
 const SPORT_CFG: Record<string, { color: string; label: string; cat: 'combat' | 'running' | 'cycling' | 'strength' | 'generic' }> = {
-  bjj:                { color: '#3B82F6', label: 'JIU-JITSU BRÉSILIEN', cat: 'combat'   },
-  jjb:                { color: '#3B82F6', label: 'JIU-JITSU BRÉSILIEN', cat: 'combat'   },
-  jiujitsu:           { color: '#3B82F6', label: 'JIU-JITSU BRÉSILIEN', cat: 'combat'   },
-  jiujitsubrasileiro: { color: '#3B82F6', label: 'JIU-JITSU BRÉSILIEN', cat: 'combat'   },
-  jiujitsub:          { color: '#3B82F6', label: 'JIU-JITSU BRÉSILIEN', cat: 'combat'   },
+  bjj:                { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
+  jjb:                { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
+  jiujitsu:           { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
+  jiujitsubrasileiro: { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
+  jiujitsub:          { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
   judo:               { color: '#2563EB', label: 'JUDO',                cat: 'combat'   },
   mma:                { color: '#EF4444', label: 'MMA',                 cat: 'combat'   },
   muaythai:           { color: '#A855F7', label: 'MUAY THAI',           cat: 'combat'   },
@@ -37,7 +38,7 @@ const SPORT_CFG: Record<string, { color: string; label: string; cat: 'combat' | 
   wrestling:          { color: '#6366F1', label: 'WRESTLING',           cat: 'combat'   },
   lutte:              { color: '#6366F1', label: 'LUTTE',               cat: 'combat'   },
   sambo:              { color: '#EC4899', label: 'SAMBO',               cat: 'combat'   },
-  karate:             { color: '#8B5CF6', label: 'KARATÉ',              cat: 'combat'   },
+  karate:             { color: '#8B5CF6', label: traduire('KARATÉ'),              cat: 'combat'   },
   taekwondo:          { color: '#14B8A6', label: 'TAEKWONDO',           cat: 'combat'   },
   running:            { color: '#22C55E', label: 'RUNNING',             cat: 'running'  },
   course:             { color: '#22C55E', label: 'RUNNING',             cat: 'running'  },
@@ -82,7 +83,7 @@ function fmtPace(speed?: number) {
 }
 function fmtDate(d?: string) {
   if (!d) return '';
-  return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+  return new Date(d).toLocaleDateString(LOCALE, { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -139,7 +140,7 @@ export const UniversalShareCard = React.memo(
       if (cat === 'combat') {
         return {
           heroNum: fmtDur(training.duration_minutes ?? training.duration),
-          heroSub: 'DURÉE', badge: null,
+          heroSub: traduire('DURÉE'), badge: null,
           stats: [
             training.rounds     ? { v: String(training.rounds),            l: 'ROUNDS'    } : null,
             training.intensity  ? { v: `RPE ${training.intensity}`,        l: 'INTENSITÉ' } : null,
@@ -154,7 +155,7 @@ export const UniversalShareCard = React.memo(
         if (km) {
           const distNum = training.distance!;
           return {
-            heroNum: km, heroSub: 'KILOMÈTRES',
+            heroNum: km, heroSub: traduire('KILOMÈTRES'),
             badge: distNum >= 42.195 ? 'MARATHON' : distNum >= 21.1 ? 'SEMI-MARATHON' : distNum >= 10 ? '10 KM+' : null,
             stats: [
               { v: fmtDur(training.duration_minutes ?? training.duration), l: 'DURÉE' },
@@ -170,7 +171,7 @@ export const UniversalShareCard = React.memo(
         const km = fmtDist(training.distance);
         return {
           heroNum: km ?? fmtDur(training.duration_minutes ?? training.duration),
-          heroSub: km ? 'KILOMÈTRES' : 'DURÉE', badge: null,
+          heroSub: km ? traduire('KILOMÈTRES') : traduire('DURÉE'), badge: null,
           stats: [
             { v: fmtDur(training.duration_minutes ?? training.duration), l: 'DURÉE' },
             training.watts    ? { v: `${training.watts}W`,      l: 'WATTS'   } : null,
@@ -197,7 +198,7 @@ export const UniversalShareCard = React.memo(
         }
         return {
           heroNum: fmtDur(training.duration_minutes ?? training.duration),
-          heroSub: 'DURÉE', badge: null,
+          heroSub: traduire('DURÉE'), badge: null,
           stats: [
             training.exercises?.length ? { v: String(training.exercises.length), l: 'EXERCICES' } : null,
             training.intensity  ? { v: `RPE ${training.intensity}`,              l: 'INTENSITÉ' } : null,
@@ -209,7 +210,7 @@ export const UniversalShareCard = React.memo(
 
       return {
         heroNum: fmtDur(training.duration_minutes ?? training.duration),
-        heroSub: 'DURÉE', badge: null,
+        heroSub: traduire('DURÉE'), badge: null,
         stats: [
           training.intensity  ? { v: `RPE ${training.intensity}`,  l: 'INTENSITÉ' } : null,
           training.calories   ? { v: `${training.calories} kcal`,  l: 'CALORIES'  } : null,
@@ -336,7 +337,7 @@ export const UniversalShareCard = React.memo(
               {/* Titre section */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 * s, marginBottom: 7 * s }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: `${accent}45` }} />
-                <Text style={{ color: accent, fontSize: 7.5 * s, fontWeight: '900', letterSpacing: 2 }}>COMBAT LOG</Text>
+                <Text style={{ color: accent, fontSize: 7.5 * s, fontWeight: '900', letterSpacing: 2 }}>{traduire("COMBAT LOG")}</Text>
                 <View style={{ flex: 1, height: 1, backgroundColor: `${accent}45` }} />
               </View>
 
@@ -399,8 +400,7 @@ export const UniversalShareCard = React.memo(
 
               {moreRounds > 0 && (
                 <Text style={{ color: 'rgba(255,255,255,0.30)', fontSize: 7.5 * s, fontWeight: '700', marginTop: 3 * s }}>
-                  +{moreRounds} rounds supplémentaires
-                </Text>
+                  {traduire("+{0} rounds supplémentaires", moreRounds)}</Text>
               )}
             </View>
           )}
@@ -438,7 +438,7 @@ export const UniversalShareCard = React.memo(
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 * s, marginBottom: 10 * s }}>
               <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
               <Text style={{ color: 'rgba(255,255,255,0.30)', fontSize: 7 * s, fontWeight: '700', letterSpacing: 1 }}>
-                {`SÉANCE #${yearlyCount}${yearlyObjective ? ` SUR ${yearlyObjective}` : ''}, ${new Date().getFullYear()}`}
+                {traduire("SÉANCE #{0}{1}, {2}", yearlyCount, yearlyObjective ? ` SUR ${yearlyObjective}` : '', new Date().getFullYear())}
               </Text>
               <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
             </View>
@@ -457,7 +457,7 @@ export const UniversalShareCard = React.memo(
               </View>
               <View>
                 <Text style={{ color: GOLD, fontSize: 13 * s, fontWeight: '900', letterSpacing: 2.5 }}>YOROI</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 6.5 * s, fontWeight: '700', letterSpacing: 0.5 }}>SUIVI SPORT & BIEN-ÊTRE</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 6.5 * s, fontWeight: '700', letterSpacing: 0.5 }}>{traduire("SUIVI SPORT & BIEN-ÊTRE")}</Text>
               </View>
             </View>
 

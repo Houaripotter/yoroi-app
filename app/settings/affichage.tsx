@@ -12,8 +12,9 @@ import { TUILE } from '@/components/yoroi/v2/reglages/kit';
 import { useTheme } from '@/lib/ThemeContext';
 import type { FontSizeLevel } from '@/lib/fontScaleManager';
 import { getSelectedLogo, LOGO_OPTIONS } from '@/lib/storage';
+import { traduire } from '@/lib/i18n/tr';
 
-const FONT_LABELS = ['Petite', 'Normale', 'Grande', 'Très grande'];
+const FONT_LABELS = ['Petite', 'Normale', 'Grande', traduire('Très grande')];
 
 export default function AffichageEtIcone() {
   const router = useRouter();
@@ -31,17 +32,17 @@ export default function AffichageEtIcone() {
   );
 
   return (
-    <EspaceScreen title="Affichage et icône" subtitle="La taille du texte et l’icône de l’app" gap={14}>
+    <EspaceScreen title={traduire("Affichage et icône")} subtitle={traduire("La taille du texte et l’icône de l’app")} gap={14}>
       <Card>
-        <ValueRow first tint={TUILE.ardoise} icon="text" label="Taille du texte" value={FONT_LABELS[(fontSizeLevel ?? 2) - 1] ?? 'Normale'} onPress={() => setOpen(true)} />
-        <ValueRow tint={TUILE.or} icon="frame" label="Icône de l’app" value={logoName} onPress={() => router.push('/logo-selection' as any)} />
+        <ValueRow first tint={TUILE.ardoise} icon="text" label={traduire("Taille du texte")} value={FONT_LABELS[(fontSizeLevel ?? 2) - 1] ?? 'Normale'} onPress={() => setOpen(true)} />
+        <ValueRow tint={TUILE.or} icon="frame" label={traduire("Icône de l’app")} value={logoName} onPress={() => router.push('/logo-selection' as any)} />
       </Card>
 
       <ChoiceSheet
         visible={open}
         onClose={() => setOpen(false)}
-        title="Taille du texte"
-        subtitle="Pour toute l’app"
+        title={traduire("Taille du texte")}
+        subtitle={traduire("Pour toute l’app")}
         options={([1, 2, 3, 4] as FontSizeLevel[]).map((lvl) => ({
           key: lvl,
           label: FONT_LABELS[lvl - 1],

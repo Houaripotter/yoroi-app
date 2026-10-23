@@ -20,9 +20,10 @@ import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { fontStyle } from '@/components/yoroi/fonts';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { usePremium } from '@/context/PremiumContext';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { LOCALE } from '@/lib/i18n/tr';
 
 function Glyph({ d, size, color }: { d: string; size: number; color: string }) {
   return (
@@ -287,7 +288,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                 mode="date"
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 maximumDate={new Date()}
-                locale="fr-FR"
+                locale={LOCALE}
                 onChange={(_event, date) => {
                   if (Platform.OS !== 'ios') setPickerMode(null);
                   if (!date) return;

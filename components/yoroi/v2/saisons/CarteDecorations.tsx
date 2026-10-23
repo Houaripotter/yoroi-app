@@ -16,6 +16,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { CitrouilleInro } from '@/components/yoroi/v2/saisons/inro/halloween';
 import { SapinInro } from '@/components/yoroi/v2/saisons/inro/noel';
 import { resumeSaison, saisonEnTete, type SaisonId } from '@/lib/v2/saisons/calendrier';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Teinte de la carte selon la saison qui passe devant */
 const TEINTES: Record<SaisonId, { clair: string; sombre: string; bord: string }> = {
@@ -63,7 +64,7 @@ export function CarteDecorations({ active, onChange, date }: { active: boolean; 
       }}
       accessibilityRole="switch"
       accessibilityState={{ checked: active }}
-      accessibilityLabel="Décorations de saison"
+      accessibilityLabel={traduire("Décorations de saison")}
       accessibilityHint={resumeSaison(date, active)}
       style={({ pressed }) => ({ borderRadius: 22, overflow: 'hidden', backgroundColor: c.surface, borderWidth: 1.5, borderColor: active ? t.bord : c.border, transform: [{ scale: pressed ? 0.985 : 1 }] })}
     >
@@ -72,10 +73,9 @@ export function CarteDecorations({ active, onChange, date }: { active: boolean; 
         <Dessins tete={tete} on={active} />
         <View style={{ flex: 1, gap: 3 }}>
           <Ink size={16} weight="black" numberOfLines={2}>
-            Décorations de saison
-          </Ink>
+            {traduire("Décorations de saison")}</Ink>
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>
-            {active ? resumeSaison(date, true) : 'Coupées. Touche pour les remettre.'}
+            {active ? resumeSaison(date, true) : traduire('Coupées. Touche pour les remettre.')}
           </Ink>
         </View>
         <GrosInterrupteur on={active} couleur={accent} />

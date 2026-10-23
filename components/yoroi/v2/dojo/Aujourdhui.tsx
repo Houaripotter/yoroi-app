@@ -16,6 +16,7 @@ import { tap } from '@/components/yoroi/v2/dojo/parts';
 import type { ArmureState } from '@/lib/v2/armure';
 import { OuvertureCoffre, imageCoffre, type ResultatCoffre } from '@/components/yoroi/v2/dojo/OuvertureCoffre';
 import { rappelCoffreActif, setRappelCoffre } from '@/lib/v2/dojo/rappelCoffre';
+import { traduire } from '@/lib/i18n/tr';
 
 const NB = ' ';
 const JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
@@ -109,20 +110,20 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
     setBusy(false);
   };
 
-  const titreSerie = serie.jours > 1 ? 'jours d’affilée' : 'jour d’affilée';
+  const titreSerie = serie.jours > 1 ? traduire('jours d’affilée') : traduire('jour d’affilée');
   const sousSerie = serie.aSauver
-    ? 'Fais un geste aujourd’hui pour garder ta série.'
+    ? traduire('Fais un geste aujourd’hui pour garder ta série.')
     : serie.jours === 0
-      ? 'Fais un geste aujourd’hui pour lancer ta série.'
-      : 'Ta série continue. Reviens demain.';
+      ? traduire('Fais un geste aujourd’hui pour lancer ta série.')
+      : traduire('Ta série continue. Reviens demain.');
 
   const tourne = secoue.interpolate({ inputRange: [-1, 1], outputRange: ['-6deg', '6deg'] });
-  const grandTexte = coffre.grandDans === 0 ? 'C’est le grand coffre aujourd’hui' : coffre.grandDans === 1 ? 'Grand coffre demain' : `Grand coffre dans ${coffre.grandDans} jours`;
+  const grandTexte = coffre.grandDans === 0 ? traduire('C’est le grand coffre aujourd’hui') : coffre.grandDans === 1 ? traduire('Grand coffre demain') : traduire("Grand coffre dans {0} jours", coffre.grandDans);
 
   return (
     <View style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 }}>
       {/* ta serie */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }} accessible accessibilityLabel={`${serie.jours} ${titreSerie}. Ton record : ${serie.record}. ${sousSerie}`}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }} accessible accessibilityLabel={traduire("{0} {1}. Ton record : {2}. {3}", serie.jours, titreSerie, serie.record, sousSerie)}>
         <Flamme size={44} vive={vive} />
         <View style={{ flex: 1, gap: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
@@ -146,16 +147,16 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
         </Animated.View>
         <View style={{ flex: 1, gap: 4 }}>
           <Ink size={15} weight="black">
-            {coffre.etat === 'ouvert' ? (coffre.grand ? 'Grand coffre ouvert' : 'Coffre ouvert') : coffre.grand ? 'Ton grand coffre' : 'Ton coffre du jour'}
+            {coffre.etat === 'ouvert' ? (coffre.grand ? 'Grand coffre ouvert' : 'Coffre ouvert') : coffre.grand ? traduire('Ton grand coffre') : traduire('Ton coffre du jour')}
           </Ink>
           {coffre.etat === 'verrouille' ? (
-            <Ink size={13} color={c.textSecondary}>{'Une séance, une pesée ou un verre d’eau pour l’ouvrir.'}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire('Une séance, une pesée ou un verre d’eau pour l’ouvrir.')}</Ink>
           ) : coffre.etat === 'pret' ? (
-            <Ink size={13} color={c.textSecondary}>{'Ton geste est fait. Ouvre-le pour découvrir ta récompense.'}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire('Ton geste est fait. Ouvre-le pour découvrir ta récompense.')}</Ink>
           ) : (
-            <Ink size={13} color={c.textSecondary}>{`+${coffre.xp}${NB}XP gagnés. Le prochain s’ouvre demain.`}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("+{0}{1}XP gagnés. Le prochain s’ouvre demain.", coffre.xp, NB)}</Ink>
           )}
-          <Ink size={12} weight="bold" color={c.goldDeep}>{coffre.etat === 'ouvert' && coffre.grandDans === 7 ? 'Grand coffre dans 7 jours' : grandTexte}</Ink>
+          <Ink size={12} weight="bold" color={c.goldDeep}>{coffre.etat === 'ouvert' && coffre.grandDans === 7 ? traduire('Grand coffre dans 7 jours') : grandTexte}</Ink>
         </View>
         {gain != null && coffre.etat === 'ouvert' ? (
           <Animated.View style={{ transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }], opacity: pop }}>
@@ -169,20 +170,20 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
           onPress={ouvrir}
           disabled={busy}
           accessibilityRole="button"
-          accessibilityLabel="Ouvrir ton coffre"
+          accessibilityLabel={traduire("Ouvrir ton coffre")}
           style={({ pressed }) => ({ minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.goldDeep : c.gold })}
         >
-          <Ink size={16} weight="black" color="#1D2029">Ouvrir mon coffre</Ink>
+          <Ink size={16} weight="black" color="#1D2029">{traduire("Ouvrir mon coffre")}</Ink>
         </Pressable>
       ) : coffre.etat === 'verrouille' ? (
         <Pressable
           onPress={verre}
           disabled={busy}
           accessibilityRole="button"
-          accessibilityLabel="Noter un verre d’eau, 25 centilitres"
+          accessibilityLabel={traduire("Noter un verre d’eau, 25 centilitres")}
           style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.surface, borderWidth: 1.5, borderColor: c.accent })}
         >
-          <Ink size={15} weight="extraBold" color={c.accent}>Noter un verre d’eau</Ink>
+          <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Noter un verre d’eau")}</Ink>
         </Pressable>
       ) : null}
       {/* les 7 jours de la semaine */}
@@ -204,13 +205,13 @@ export function Aujourdhui({ serie, coffre, onOuvrir, onVerre, suite, onCadeau, 
           <Ink size={13} weight="bold" color={c.ink} style={{ flex: 1 }}>{palier}</Ink>
         </View>
       ) : null}
-      <Ink size={12} color={c.textMuted}>Un jour sans geste par semaine est pardonné, ta série ne casse pas.</Ink>
+      <Ink size={12} color={c.textMuted}>{traduire("Un jour sans geste par semaine est pardonné, ta série ne casse pas.")}</Ink>
 
       <Pressable onPress={basculerRappel} accessibilityRole="switch" accessibilityState={{ checked: rappel }} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32 }}>
         <View style={{ width: 34, height: 20, borderRadius: 10, padding: 2, backgroundColor: rappel ? c.accent : c.fillSoft, alignItems: rappel ? 'flex-end' : 'flex-start' }}>
           <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#FFFFFF' }} />
         </View>
-        <Ink size={12} color={c.textSecondary} style={{ flex: 1 }}>{rappel ? 'Petit rappel à 19 h si ton coffre t’attend encore' : 'Rappel du soir coupé'}</Ink>
+        <Ink size={12} color={c.textSecondary} style={{ flex: 1 }}>{rappel ? traduire('Petit rappel à 19 h si ton coffre t’attend encore') : traduire('Rappel du soir coupé')}</Ink>
       </Pressable>
       <OuvertureCoffre visible={ouverture} grand={coffre.grand} serie={serie.jours} ouvrir={ouvrirVraiment} suite={suite} onCadeau={onCadeau} onClose={() => setOuverture(false)} />
     </View>

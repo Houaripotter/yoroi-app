@@ -6,6 +6,7 @@
 
 import { type Insight } from '@/components/health-charts/InsightCard';
 import { formatDurationHM } from '@/lib/formatDuration';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 interface HistoricalData {
   date: string;
@@ -50,34 +51,34 @@ export class HealthInsightsGenerator {
     if (change > 10) {
       insights.push({
         type: 'success',
-        title: 'Récupération excellente',
+        title: traduire('Récupération excellente'),
         message:
-          'Ta variabilité cardiaque monte nettement. Tu récupères bien, ton corps est prêt pour une séance intense.',
+          traduire('Ta variabilité cardiaque monte nettement. Tu récupères bien, ton corps est prêt pour une séance intense.'),
         metric: `${recentAvg.toFixed(0)} ms`,
         change,
       });
     } else if (change < -10) {
       insights.push({
         type: 'warning',
-        title: 'Récupération en baisse',
+        title: traduire('Récupération en baisse'),
         message:
-          'Ta variabilité cardiaque a nettement baissé. Ton corps a peut-être besoin de repos : séance légère ou jour off.',
+          traduire('Ta variabilité cardiaque a nettement baissé. Ton corps a peut-être besoin de repos : séance légère ou jour off.'),
         metric: `${recentAvg.toFixed(0)} ms`,
         change,
       });
     } else if (recentAvg > 60) {
       insights.push({
         type: 'success',
-        title: 'Variabilité cardiaque haute',
-        message: 'Ta variabilité cardiaque est haute cette semaine, signe d\'une bonne récupération.',
+        title: traduire('Variabilité cardiaque haute'),
+        message: traduire('Ta variabilité cardiaque est haute cette semaine, signe d\'une bonne récupération.'),
         metric: `${recentAvg.toFixed(0)} ms`,
       });
     } else if (recentAvg < 30) {
       insights.push({
         type: 'danger',
-        title: 'Variabilité cardiaque basse',
+        title: traduire('Variabilité cardiaque basse'),
         message:
-          'Ta variabilité cardiaque est basse. Laisse plus de temps à la récupération et soigne ton sommeil.',
+          traduire('Ta variabilité cardiaque est basse. Laisse plus de temps à la récupération et soigne ton sommeil.'),
         metric: `${recentAvg.toFixed(0)} ms`,
       });
     }
@@ -106,18 +107,18 @@ export class HealthInsightsGenerator {
     if (change < -5) {
       insights.push({
         type: 'success',
-        title: 'Ton cœur se renforce',
+        title: traduire('Ton cœur se renforce'),
         message:
-          'Ta fréquence cardiaque au repos baisse, signe d\'une meilleure condition physique.',
+          traduire('Ta fréquence cardiaque au repos baisse, signe d\'une meilleure condition physique.'),
         metric: `${recentAvg.toFixed(0)} BPM`,
         change,
       });
     } else if (change > 10) {
       insights.push({
         type: 'warning',
-        title: 'Fréquence au repos en hausse',
+        title: traduire('Fréquence au repos en hausse'),
         message:
-          'Ta fréquence cardiaque au repos a augmenté. Ça peut venir de la fatigue, du stress ou d\'un excès d\'entraînement.',
+          traduire('Ta fréquence cardiaque au repos a augmenté. Ça peut venir de la fatigue, du stress ou d\'un excès d\'entraînement.'),
         metric: `${recentAvg.toFixed(0)} BPM`,
         change,
       });
@@ -147,14 +148,14 @@ export class HealthInsightsGenerator {
       insights.push({
         type: 'success',
         title: 'Bonnes nuits',
-        message: `Tu dors en moyenne ${formatDurationHM(avgTotal)} par nuit. Idéal pour récupérer.`,
+        message: traduire("Tu dors en moyenne {0} par nuit. Idéal pour récupérer.", formatDurationHM(avgTotal)),
       });
     } else if (avgTotal < 360) {
       // < 6h
       insights.push({
         type: 'danger',
         title: 'Nuits trop courtes',
-        message: `Tu ne dors que ${formatDurationHM(avgTotal)} en moyenne. Augmente ton temps de sommeil pour optimiser ta récupération.`,
+        message: traduire("Tu ne dors que {0} en moyenne. Augmente ton temps de sommeil pour optimiser ta récupération.", formatDurationHM(avgTotal)),
       });
     }
 
@@ -163,14 +164,14 @@ export class HealthInsightsGenerator {
     if (deepPercent >= 20) {
       insights.push({
         type: 'success',
-        title: 'Beaucoup de sommeil profond',
-        message: `${deepPercent.toFixed(0)}\u00a0% de sommeil profond. Idéal pour la récupération musculaire.`,
+        title: traduire('Beaucoup de sommeil profond'),
+        message: traduire("{0} % de sommeil profond. Idéal pour la récupération musculaire.", deepPercent.toFixed(0)),
       });
     } else if (deepPercent < 13) {
       insights.push({
         type: 'warning',
-        title: 'Peu de sommeil profond',
-        message: `Seulement ${deepPercent.toFixed(0)}\u00a0% de sommeil profond. Améliore ton hygiène de sommeil (température, obscurité, régularité).`,
+        title: traduire('Peu de sommeil profond'),
+        message: traduire("Seulement {0} % de sommeil profond. Améliore ton hygiène de sommeil (température, obscurité, régularité).", deepPercent.toFixed(0)),
       });
     }
 
@@ -179,8 +180,8 @@ export class HealthInsightsGenerator {
     if (remPercent < 15) {
       insights.push({
         type: 'info',
-        title: 'Peu de sommeil paradoxal',
-        message: `${remPercent.toFixed(0)}\u00a0% de sommeil paradoxal. Il compte pour la mémoire et la récupération mentale.`,
+        title: traduire('Peu de sommeil paradoxal'),
+        message: traduire("{0} % de sommeil paradoxal. Il compte pour la mémoire et la récupération mentale.", remPercent.toFixed(0)),
       });
     }
 
@@ -188,8 +189,8 @@ export class HealthInsightsGenerator {
     if (avgAwake > 60) {
       insights.push({
         type: 'warning',
-        title: 'Nuits agitées',
-        message: `Tu passes ${avgAwake.toFixed(0)} minutes éveillé en moyenne. Réduis la caféine et les écrans avant de dormir.`,
+        title: traduire('Nuits agitées'),
+        message: traduire("Tu passes {0} minutes éveillé en moyenne. Réduis la caféine et les écrans avant de dormir.", avgAwake.toFixed(0)),
       });
     }
 
@@ -211,14 +212,14 @@ export class HealthInsightsGenerator {
     if (avgActive > 600) {
       insights.push({
         type: 'success',
-        title: 'Grosse activité',
-        message: `Tu brûles ${avgActive.toFixed(0)} kcal actives en moyenne par jour. Très bon niveau d'activité.`,
+        title: traduire('Grosse activité'),
+        message: traduire("Tu brûles {0} kcal actives en moyenne par jour. Très bon niveau d'activité.", avgActive.toFixed(0)),
       });
     } else if (avgActive < 300) {
       insights.push({
         type: 'info',
-        title: 'Activité modérée',
-        message: `${avgActive.toFixed(0)} kcal actives en moyenne. Augmente ton activité quotidienne pour améliorer ta condition physique.`,
+        title: traduire('Activité modérée'),
+        message: traduire("{0} kcal actives en moyenne. Augmente ton activité quotidienne pour améliorer ta condition physique.", avgActive.toFixed(0)),
       });
     }
 
@@ -227,8 +228,8 @@ export class HealthInsightsGenerator {
     if (stdDev < 100) {
       insights.push({
         type: 'success',
-        title: 'Activité régulière',
-        message: 'Ton niveau d\'activité est très régulier d\'un jour à l\'autre.',
+        title: traduire('Activité régulière'),
+        message: traduire('Ton niveau d\'activité est très régulier d\'un jour à l\'autre.'),
       });
     }
 
@@ -257,21 +258,21 @@ export class HealthInsightsGenerator {
       if (remaining <= 0) {
         insights.push({
           type: 'success',
-          title: 'Objectif atteint',
-          message: `Bravo, tu as atteint ton objectif de ${goal} kg. Tu es à ${current} kg.`,
+          title: traduire('Objectif atteint'),
+          message: traduire("Bravo, tu as atteint ton objectif de {0} kg. Tu es à {1} kg.", goal, current),
         });
       } else if (change < -0.5) {
         const weeksToGoal = Math.ceil(remaining / Math.abs(change));
         insights.push({
           type: 'success',
           title: 'Belle progression',
-          message: `Tu perds ${Math.abs(change).toFixed(1).replace('.', ',')} kg par semaine. À ce rythme, ton objectif est dans environ ${weeksToGoal} semaines.`,
+          message: traduire("Tu perds {0} kg par semaine. À ce rythme, ton objectif est dans environ {1} semaines.", Math.abs(change).toFixed(1).replace('.', DECIMAL), weeksToGoal),
         });
       } else if (change > 0.5) {
         insights.push({
           type: 'warning',
-          title: 'Poids en hausse',
-          message: `Tu as pris ${change.toFixed(1).replace('.', ',')} kg cette semaine. Vérifie ton alimentation et ton niveau d'activité.`,
+          title: traduire('Poids en hausse'),
+          message: traduire("Tu as pris {0} kg cette semaine. Vérifie ton alimentation et ton niveau d'activité.", change.toFixed(1).replace('.', DECIMAL)),
         });
       }
     }
@@ -284,8 +285,8 @@ export class HealthInsightsGenerator {
       if (Math.abs(twoWeekChange) < 0.3) {
         insights.push({
           type: 'info',
-          title: 'Poids stable',
-          message: 'Ton poids est stable depuis 2 semaines. Ajuste ton plan si tu veux continuer à progresser.',
+          title: traduire('Poids stable'),
+          message: traduire('Ton poids est stable depuis 2 semaines. Ajuste ton plan si tu veux continuer à progresser.'),
         });
       }
     }

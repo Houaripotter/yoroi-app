@@ -19,6 +19,7 @@ import { VISITE_TITRES } from '@/components/yoroi/v2/tour/VisiteGuidee';
 import { ONBOARDING_SCREEN_LABELS } from './PreviewBar';
 import { Chip, ChipWrap, KV, Note, SmallAction, StudioSection, SubTitle, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 type Router = ReturnType<typeof useRouter>;
 
@@ -59,7 +60,7 @@ export function Apercus() {
       setDone((prev) => new Set(prev).add(id));
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch {
-      appAlert('Oups', 'Cette fenêtre n’a pas pu être réarmée.');
+      appAlert('Oups', traduire('Cette fenêtre n’a pas pu être réarmée.'));
     }
   };
 
@@ -72,28 +73,28 @@ export function Apercus() {
   };
 
   const v = PAYWALL_VARIANTS.find((x) => x.id === variant) ?? PAYWALL_VARIANTS[0];
-  const fmt = (n: number) => (Number.isFinite(n) ? String(n) : 'sans limite');
+  const fmt = (n: number) => (Number.isFinite(n) ? String(n) : traduire('sans limite'));
 
   return (
     <StudioSection
       id="apercus"
       icon="eye"
-      title="Aperçus"
-      sub="Onboarding, paywalls, présentation, chargement, fenêtres une fois"
-      keywords="onboarding paywall abonnement premium nouveautes visite guidee tour presentation bienvenue notification essai chargement splash fenetre rearmer gratuit limites"
+      title={traduire("Aperçus")}
+      sub={traduire("Onboarding, paywalls, présentation, chargement, fenêtres une fois")}
+      keywords={traduire("onboarding paywall abonnement premium nouveautes visite guidee tour presentation bienvenue notification essai chargement splash fenetre rearmer gratuit limites")}
     >
       <Card style={{ padding: 14, gap: 10 }}>
-        <Ink size={15} weight="extraBold">Onboarding, écran par écran</Ink>
+        <Ink size={15} weight="extraBold">{traduire("Onboarding, écran par écran")}</Ink>
         <ChipWrap>
           {ONBOARDING_SCREEN_LABELS.map((label, i) => (
-            <Chip key={label} label={`${i + 1}. ${label}`} accessibilityLabel={`Ouvrir l’écran ${i + 1}, ${label}`} onPress={() => openOnboardingPreview(router, i)} />
+            <Chip key={label} label={`${i + 1}. ${label}`} accessibilityLabel={traduire("Ouvrir l’écran {0}, {1}", i + 1, label)} onPress={() => openOnboardingPreview(router, i)} />
           ))}
         </ChipWrap>
-        <Note>Une barre en bas te fait passer d’un écran à l’autre, la croix ferme. Aucune réponse, pesée ou achat n’est enregistré.</Note>
+        <Note>{traduire("Une barre en bas te fait passer d’un écran à l’autre, la croix ferme. Aucune réponse, pesée ou achat n’est enregistré.")}</Note>
       </Card>
 
       <Card style={{ padding: 14, gap: 10 }}>
-        <Ink size={15} weight="extraBold">Paywall, en aperçu sans achat</Ink>
+        <Ink size={15} weight="extraBold">{traduire("Paywall, en aperçu sans achat")}</Ink>
         <ChipWrap>
           {PAYWALL_VARIANTS.map((x) => (
             <Chip key={x.id} label={x.label} on={variant === x.id} onPress={() => setVariant(x.id)} />
@@ -102,13 +103,13 @@ export function Apercus() {
         <Ink size={13} color={c.textSecondary}>{v.sub}</Ink>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ flex: 1 }}>
-            <Button tone="accent" small label="De l’app" onPress={() => openPaywallPreview(router, variant)} />
+            <Button tone="accent" small label={traduire("De l’app")} onPress={() => openPaywallPreview(router, variant)} />
           </View>
           <View style={{ flex: 1 }}>
             <Button
               tone="ghost"
               small
-              label="De l’onboarding"
+              label={traduire("De l’onboarding")}
               onPress={() => {
                 setPaywallVariant(variant);
                 router.push({ pathname: '/onboarding', params: { preview: 'true', page: String(PAYWALL_PAGE) } } as never);
@@ -116,73 +117,73 @@ export function Apercus() {
             />
           </View>
         </View>
-        <Note>La variante vit en mémoire et ne s’applique qu’en aperçu : achat et restauration sont bloqués, le store n’est jamais appelé pour acheter. Sans offres du store (Expo Go, web), des prix d’exemple s’affichent avec un bandeau.</Note>
+        <Note>{traduire("La variante vit en mémoire et ne s’applique qu’en aperçu : achat et restauration sont bloqués, le store n’est jamais appelé pour acheter. Sans offres du store (Expo Go, web), des prix d’exemple s’affichent avec un bandeau.")}</Note>
       </Card>
 
       <Card>
-        <Row first icon="crown" label="Bienvenue Premium" sub="L’écran après l’achat, avec la fin de l’essai" onPress={() => openPaywallPreview(router, 'bienvenue')} />
-        <Row icon="bell" label="Notification de l’essai" sub="« C’est parti » montre la demande du téléphone, sans rien programmer" onPress={() => openPaywallPreview(router, 'bienvenue')} />
-        <Row icon="restore" label="Premium restauré" sub="L’écran après une restauration d’achat" onPress={() => openPaywallPreview(router, 'restaure')} />
+        <Row first icon="crown" label={traduire("Bienvenue Premium")} sub={traduire("L’écran après l’achat, avec la fin de l’essai")} onPress={() => openPaywallPreview(router, 'bienvenue')} />
+        <Row icon="bell" label={traduire("Notification de l’essai")} sub={traduire("« C’est parti » montre la demande du téléphone, sans rien programmer")} onPress={() => openPaywallPreview(router, 'bienvenue')} />
+        <Row icon="restore" label={traduire("Premium restauré")} sub={traduire("L’écran après une restauration d’achat")} onPress={() => openPaywallPreview(router, 'restaure')} />
       </Card>
 
       <Card style={{ padding: 14, gap: 10 }}>
-        <Ink size={15} weight="extraBold">Visite guidée</Ink>
-        <Ink size={13} color={c.textSecondary}>Elle remplace les nouveautés de la 3.0 : les vrais écrans, le doigt et la voix. Choisis l’étape de départ.</Ink>
+        <Ink size={15} weight="extraBold">{traduire("Visite guidée")}</Ink>
+        <Ink size={13} color={c.textSecondary}>{traduire("Elle remplace les nouveautés de la 3.0 : les vrais écrans, le doigt et la voix. Choisis l’étape de départ.")}</Ink>
         <ChipWrap>
           {VISITE_TITRES.map((t, i) => (
-            <Chip key={t} label={`${i + 1}. ${t}`} accessibilityLabel={`Ouvrir la visite à l’étape ${i + 1}, ${t}`} onPress={() => openPresentation(router, i)} />
+            <Chip key={t} label={`${i + 1}. ${t}`} accessibilityLabel={traduire("Ouvrir la visite à l’étape {0}, {1}", i + 1, t)} onPress={() => openPresentation(router, i)} />
           ))}
         </ChipWrap>
-        <Note>Rien n’est marqué comme vu : la vraie fenêtre reste armée si elle l’était.</Note>
+        <Note>{traduire("Rien n’est marqué comme vu : la vraie fenêtre reste armée si elle l’était.")}</Note>
       </Card>
 
       <Card>
-        <Row first icon="spark" label="Écran de chargement" sub="EcranChargement en plein écran, touche pour rejouer" onPress={() => show({ kind: 'chargement' })} />
-        <Row icon="grid" label="Petits indicateurs et états" sub="ChargementPetit, ChargementBloc, états vides, erreur simulée" onPress={() => router.push('/studio/etats' as never)} />
+        <Row first icon="spark" label={traduire("Écran de chargement")} sub={traduire("EcranChargement en plein écran, touche pour rejouer")} onPress={() => show({ kind: 'chargement' })} />
+        <Row icon="grid" label={traduire("Petits indicateurs et états")} sub={traduire("ChargementPetit, ChargementBloc, états vides, erreur simulée")} onPress={() => router.push('/studio/etats' as never)} />
       </Card>
 
-      <SubTitle>Fenêtres vues une seule fois</SubTitle>
+      <SubTitle>{traduire("Fenêtres vues une seule fois")}</SubTitle>
       <Card>
         {ONCE_WINDOWS.map((w, i) => (
           <Row
             key={w.id}
             first={i === 0}
             label={w.label}
-            sub={done.has(w.id) ? 'Réarmée, elle se remontrera' : w.sub}
+            sub={done.has(w.id) ? traduire('Réarmée, elle se remontrera') : w.sub}
             chevron={false}
-            right={<SmallAction label={done.has(w.id) ? 'Fait' : 'Réarmer'} onPress={() => void rearm(w.id)} />}
+            right={<SmallAction label={done.has(w.id) ? 'Fait' : traduire('Réarmer')} onPress={() => void rearm(w.id)} />}
           />
         ))}
       </Card>
       <View style={{ gap: 6 }}>
-        <Button tone="ghost" icon="restore" label="Tout réarmer" onPress={() => void rearmAll()} loading={busy} />
-        <Note>Aucune XP n’est touchée. L’accueil et le Dojo remontrent leurs fenêtres à la prochaine visite.</Note>
+        <Button tone="ghost" icon="restore" label={traduire("Tout réarmer")} onPress={() => void rearmAll()} loading={busy} />
+        <Note>{traduire("Aucune XP n’est touchée. L’accueil et le Dojo remontrent leurs fenêtres à la prochaine visite.")}</Note>
       </View>
 
-      <SubTitle>Gratuit et Premium</SubTitle>
+      <SubTitle>{traduire("Gratuit et Premium")}</SubTitle>
       <Card>
         <ToggleRow
           first
           icon="eye"
           label="Vue gratuite"
-          sub={simulateFreeUser ? 'Tu vois les cadenas Premium comme un nouveau venu' : 'Voir l’app sans Premium, le temps du test'}
+          sub={simulateFreeUser ? traduire('Tu vois les cadenas Premium comme un nouveau venu') : traduire('Voir l’app sans Premium, le temps du test')}
           value={simulateFreeUser}
           onChange={(on) => setSimulateFreeUser(on)}
         />
-        <KV label="Courbes en gratuit" value={`${FREE_LIMITS.chartDays} jours`} />
-        <KV label="Compétitions à venir" value={fmt(FREE_LIMITS.upcomingCompetitions)} />
-        <KV label="Photos de progression" value={fmt(FREE_LIMITS.progressPhotos)} />
-        <KV label="Records du carnet" value={fmt(FREE_LIMITS.carnetBenchmarks)} />
-        <KV label="Techniques du carnet" value={fmt(FREE_LIMITS.carnetSkills)} />
+        <KV label={traduire("Courbes en gratuit")} value={traduire("{0} jours", FREE_LIMITS.chartDays)} />
+        <KV label={traduire("Compétitions à venir")} value={fmt(FREE_LIMITS.upcomingCompetitions)} />
+        <KV label={traduire("Photos de progression")} value={fmt(FREE_LIMITS.progressPhotos)} />
+        <KV label={traduire("Records du carnet")} value={fmt(FREE_LIMITS.carnetBenchmarks)} />
+        <KV label={traduire("Techniques du carnet")} value={fmt(FREE_LIMITS.carnetSkills)} />
       </Card>
       <Card>
         <KV
           first
-          label="Premium créateur offert"
-          value={simulateFreeUser ? 'Masqué par la vue gratuite' : isPremium ? (hasActiveSubscription ? 'Abonnement réel actif' : 'Actif, sans achat') : 'Inactif'}
+          label={traduire("Premium créateur offert")}
+          value={simulateFreeUser ? traduire('Masqué par la vue gratuite') : isPremium ? (hasActiveSubscription ? traduire('Abonnement réel actif') : traduire('Actif, sans achat')) : 'Inactif'}
         />
       </Card>
-      <Note>Le mode créateur ouvre Premium sans aucun achat, tant que ton jeton est valide. Les limites viennent de lib/v2/premium/limits.ts, la seule source de l’app.</Note>
+      <Note>{traduire("Le mode créateur ouvre Premium sans aucun achat, tant que ton jeton est valide. Les limites viennent de lib/v2/premium/limits.ts, la seule source de l’app.")}</Note>
     </StudioSection>
   );
 }

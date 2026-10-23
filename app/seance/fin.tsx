@@ -44,6 +44,7 @@ import { programmerAvis } from '@/lib/v2/bilan/avis';
 import { chargerBilanSeance, lienCarteBilan } from '@/lib/v2/bilan/charger';
 import { lireBilanAuto } from '@/lib/v2/bilan/reglage';
 import type { BilanSeance } from '@/lib/v2/bilan/texte';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const PAPER = '#F2F1EC';
 
@@ -193,15 +194,15 @@ export default function SeanceFin() {
   const bars = goal > 0 ? Math.min(Math.max(goal, Math.min(sessions, 7)), 7) : Math.max(1, Math.min(sessions, 7));
   const reached = goal > 0 && sessions >= goal;
   const weekLine = goal <= 0
-    ? 'Tu peux te fixer un objectif de séances dans les réglages, si tu veux.'
+    ? traduire('Tu peux te fixer un objectif de séances dans les réglages, si tu veux.')
     : reached
-      ? sessions > goal ? `${sessions} séances cette semaine, au-delà de ton objectif` : 'Objectif de la semaine atteint'
-      : `Encore ${goal - sessions} pour ton objectif de la semaine`;
+      ? sessions > goal ? traduire("{0} séances cette semaine, au-delà de ton objectif", sessions) : traduire('Objectif de la semaine atteint')
+      : traduire("Encore {0} pour ton objectif de la semaine", goal - sessions);
 
   const stats: { label: string; value: string }[] = [];
   if (result) {
-    if (result.durationMin) stats.push({ label: 'durée', value: fmtMinutes(result.durationMin) });
-    if (result.sets) stats.push({ label: 'séries', value: String(result.sets) });
+    if (result.durationMin) stats.push({ label: traduire('durée'), value: fmtMinutes(result.durationMin) });
+    if (result.sets) stats.push({ label: traduire('séries'), value: String(result.sets) });
     if (result.tonnage >= 1) stats.push({ label: accordSouleve(result.tonnage, unite), value: formatTonnage(result.tonnage, unite) });
     if (result.rounds) stats.push({ label: result.rounds > 1 ? 'rounds' : 'round', value: String(result.rounds) });
     if (result.distance) stats.push({ label: 'distance', value: `${fmtNum(result.distance, 2)} km` });
@@ -239,15 +240,15 @@ export default function SeanceFin() {
   // Une seule ligne de conseil au plus : l'idee de creneau d'abord, sinon le rappel de sauvegarde
   const tip: { text: string; action: string; onPress: () => void; done: string | null } | null = extras?.slotIdea
     ? {
-        text: slotDone === 'done' ? 'Créneau ajouté à ton planning.' : slotIdeaText(extras.slotIdea),
-        action: slotDone === 'done' ? 'Voir mon planning' : 'Ajouter au planning',
+        text: slotDone === 'done' ? traduire('Créneau ajouté à ton planning.') : slotIdeaText(extras.slotIdea),
+        action: slotDone === 'done' ? traduire('Voir mon planning') : traduire('Ajouter au planning'),
         onPress: slotDone === 'done' ? () => router.push('/planning' as any) : createSlot,
         done: null,
       }
     : extras?.backup
       ? {
-          text: backupDone ? 'Sauvegarde faite, rien ne se perd.' : 'Tes séances restent sur ton téléphone. Une copie de temps en temps et rien ne se perd.',
-          action: 'Sauvegarder mes données',
+          text: backupDone ? traduire('Sauvegarde faite, rien ne se perd.') : traduire('Tes séances restent sur ton téléphone. Une copie de temps en temps et rien ne se perd.'),
+          action: traduire('Sauvegarder mes données'),
           onPress: backup,
           done: backupDone ? 'ok' : null,
         }
@@ -258,18 +259,18 @@ export default function SeanceFin() {
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 60, paddingBottom: insets.bottom + 24, paddingHorizontal: 24, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
         <Stack.Screen options={{ gestureEnabled: true, animation: 'fade' }} />
         <Ornement name="kabuto" size={96} />
-        <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>Séance introuvable</Ink>
-        <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center' }}>Cette séance n’existe plus ou n’a pas été enregistrée. Retrouve toutes tes séances dans l’onglet Séances.</Ink>
+        <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>{traduire("Séance introuvable")}</Ink>
+        <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Cette séance n’existe plus ou n’a pas été enregistrée. Retrouve toutes tes séances dans l’onglet Séances.")}</Ink>
         <Pressable
           onPress={() => router.replace('/(tabs)/seances' as any)}
           accessibilityRole="button"
-          accessibilityLabel="Voir mes séances"
+          accessibilityLabel={traduire("Voir mes séances")}
           style={({ pressed }) => ({ alignSelf: 'stretch', marginTop: 10, height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
         >
-          <Ink size={17} weight="extraBold" color={c.onAccent}>Voir mes séances</Ink>
+          <Ink size={17} weight="extraBold" color={c.onAccent}>{traduire("Voir mes séances")}</Ink>
         </Pressable>
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Retour à l’accueil" style={{ alignSelf: 'stretch', height: 56, borderRadius: 18, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={16} weight="extraBold">Retour à l’accueil</Ink>
+        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Retour à l’accueil")} style={{ alignSelf: 'stretch', height: 56, borderRadius: 18, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+          <Ink size={16} weight="extraBold">{traduire("Retour à l’accueil")}</Ink>
         </Pressable>
       </View>
     );
@@ -286,9 +287,9 @@ export default function SeanceFin() {
             <Icon name="check" size={24} color={c.successText} />
           </View>
           <Ink size={15} weight="bold" color={c.textSecondary} numberOfLines={2}>
-            {result ? result.title : 'Ta séance'}
+            {result ? result.title : traduire('Ta séance')}
           </Ink>
-          <Ink size={34} weight="black" tight accessibilityRole="header">Séance enregistrée</Ink>
+          <Ink size={34} weight="black" tight accessibilityRole="header">{traduire("Séance enregistrée")}</Ink>
         </Animated.View>
 
         {stats.length > 0 ? (
@@ -307,8 +308,8 @@ export default function SeanceFin() {
           <View key={r.name} style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Hanko size={30} rotate={-6} color={c.record} animate />
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={16} weight="extraBold">{r.kind === 'charge' ? 'Nouveau record de charge' : 'Nouveau record'}</Ink>
-              <Ink size={14} color={c.textSecondary}>{r.name}, {fmtNum(versUnitePoids(r.weight, unite), unite === 'lb' ? 1 : 2)} {unite === 'lb' ? 'livres' : 'kilos'} pour {r.reps} {r.reps > 1 ? 'répétitions' : 'répétition'}</Ink>
+              <Ink size={16} weight="extraBold">{r.kind === 'charge' ? traduire('Nouveau record de charge') : traduire('Nouveau record')}</Ink>
+              <Ink size={14} color={c.textSecondary}>{traduire("{0}, {1} {2} pour {3} {4}", r.name, fmtNum(versUnitePoids(r.weight, unite), unite === 'lb' ? 1 : 2), unite === 'lb' ? 'livres' : 'kilos', r.reps, r.reps > 1 ? 'répétitions' : 'répétition')}</Ink>
             </View>
           </View>
         ))}
@@ -328,10 +329,10 @@ export default function SeanceFin() {
 
         {/* Ta semaine, en seances (le bilan l'inclut deja quand il est la) */}
         {state && !bilan ? (
-          <View style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, padding: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 10 }} accessibilityLabel={goal > 0 ? `${sessions} séances sur ${goal} cette semaine. ${weekLine}` : `${sessions} séance${sessions > 1 ? 's' : ''} cette semaine. ${weekLine}`}>
+          <View style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, padding: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 10 }} accessibilityLabel={goal > 0 ? traduire("{0} séances sur {1} cette semaine. {2}", sessions, goal, weekLine) : traduirePluriel(sessions, sessions > 1, "{0} séance cette semaine. {1}", "{0} séances cette semaine. {1}", sessions, weekLine)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <Ink size={15} weight="extraBold">Ta semaine</Ink>
-              <Ink size={15} weight="black">{goal > 0 ? `${sessions} sur ${goal}` : `${sessions} séance${sessions > 1 ? 's' : ''}`}</Ink>
+              <Ink size={15} weight="extraBold">{traduire("Ta semaine")}</Ink>
+              <Ink size={15} weight="black">{goal > 0 ? traduire("{0} sur {1}", sessions, goal) : traduirePluriel(sessions, sessions > 1, "{0} séance", "{0} séances", sessions)}</Ink>
             </View>
             <View style={{ flexDirection: 'row', gap: 4 }}>
               {Array.from({ length: bars }, (_, i) => (
@@ -360,8 +361,8 @@ export default function SeanceFin() {
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.divider, flexDirection: 'row', gap: 10 }}>
         <BoutonCarte onPress={() => router.push((bilan?.carte ? lienCarteBilan(`seance:${id}`) : `/carte?moment=seance&id=${id}`) as any)} />
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Terminer" style={({ pressed }) => ({ flex: 1, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>Terminer</Ink>
+        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel={traduire("Terminer")} style={({ pressed }) => ({ flex: 1, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Terminer")}</Ink>
         </Pressable>
       </View>
 

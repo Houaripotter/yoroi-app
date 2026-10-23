@@ -12,6 +12,7 @@ import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { StoryCard } from '@/components/yoroi/v2/partage/StoryCard';
 import { Mini, Panel, PlateRow, cardWidthFor, figureFor, toVariant } from '@/components/yoroi/v2/partage/cardKit';
 import { objectifTenu } from '@/lib/social-cards/compteurSeances';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface YearCounterCardV2Props {
   stats: YearStats;
@@ -47,13 +48,13 @@ export const YearCounterCardV2 = React.memo(forwardRef<View, YearCounterCardV2Pr
         width={width}
         square={format === 'square'}
         photo={backgroundImage}
-        label={`Année ${stats.year}`}
-        kicker="Mon année d'entraînement"
+        label={traduire("Année {0}", stats.year)}
+        kicker={traduire("Mon année d'entraînement")}
         name={username || id.name || undefined}
         big={sessions}
-        bigUnit={sessions > 1 ? 'séances' : 'séance'}
-        caption={goal > 0 ? `sur ${goal} visées` : `d’entraînement en ${stats.year}`}
-        subCaption={goal <= 0 ? undefined : reached ? 'Objectif de l’année tenu' : `${Math.round(Math.min(100, (sessions / goal) * 100))} % du chemin`}
+        bigUnit={sessions > 1 ? traduire('séances') : traduire('séance')}
+        caption={goal > 0 ? traduire("sur {0} visées", goal) : traduire("d’entraînement en {0}", stats.year)}
+        subCaption={goal <= 0 ? undefined : reached ? traduire('Objectif de l’année tenu') : traduire("{0} % du chemin", Math.round(Math.min(100, (sessions / goal) * 100)))}
         figure={figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre })}
         rankKanji={id.rankKanji}
         rankName={id.rankName}
@@ -61,14 +62,14 @@ export const YearCounterCardV2 = React.memo(forwardRef<View, YearCounterCardV2Pr
         progress={(p) => (
           <>
             <PlateRow p={p} progress={goal > 0 ? sessions / goal : stats.totalDays / yearDays} count={12} w={Math.floor((width - 70) / 12) - 2} />
-            <Ink size={11} weight="bold" color={p.muted}>Ton objectif de l’année</Ink>
+            <Ink size={11} weight="bold" color={p.muted}>{traduire("Ton objectif de l’année")}</Ink>
           </>
         )}
         panel={(p) => (
           <Panel p={p} style={{ flexDirection: 'row', gap: 10 }}>
-            <Mini p={p} onPanel value={`${stats.bestStreak} j`} label="Meilleure série" />
-            <Mini p={p} onPanel value={`${stats.currentStreak} j`} label="Série en cours" accent={p.accent} />
-            <Mini p={p} onPanel value={stats.busiestMonth?.daysActive ? stats.busiestMonth.month : 'À venir'} label="Mois le plus fort" />
+            <Mini p={p} onPanel value={`${stats.bestStreak} j`} label={traduire("Meilleure série")} />
+            <Mini p={p} onPanel value={`${stats.currentStreak} j`} label={traduire("Série en cours")} accent={p.accent} />
+            <Mini p={p} onPanel value={stats.busiestMonth?.daysActive ? stats.busiestMonth.month : traduire('À venir')} label={traduire("Mois le plus fort")} />
           </Panel>
         )}
         extra={clubs.length > 0 ? (p) => (

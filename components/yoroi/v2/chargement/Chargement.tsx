@@ -21,6 +21,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { FondEpoque } from '@/components/yoroi/v2/fonds/FondEpoque';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Doit rester identique a app.json (plugin expo-splash-screen) : meme fond, meme image, meme largeur */
 export const SPLASH_BG = '#F2F1EC';
@@ -181,7 +182,7 @@ export function ChargementPetit({ size = 28, color, style }: { size?: number; co
   const r = (size - sw) / 2;
   const circ = 2 * Math.PI * r;
   return (
-    <View style={[{ width: size, height: size }, style]} accessibilityRole="progressbar" accessibilityLabel="Chargement">
+    <View style={[{ width: size, height: size }, style]} accessibilityRole="progressbar" accessibilityLabel={traduire("Chargement")}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={col} strokeOpacity={0.14} strokeWidth={sw} fill="none" />
       </Svg>

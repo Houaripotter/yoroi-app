@@ -71,15 +71,16 @@ import { BoutonSon, SonDeScene, VideoScene, useEcranVisible, useVideoDeScene } f
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ROUTES_PERSONNALISER } from '@/lib/v2/personnaliser/acces';
+import { traduire } from '@/lib/i18n/tr';
 
-const DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const DAYS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 function greeting(): string {
   const h = devNow().getHours();
-  if (h < 5) return 'Bonne nuit';
-  if (h < 18) return 'Bonjour';
-  return 'Bonsoir';
+  if (h < 5) return traduire('Bonne nuit');
+  if (h < 18) return traduire('Bonjour');
+  return traduire('Bonsoir');
 }
 
 /**
@@ -235,7 +236,7 @@ export function SceneHero({ top, scene, name, personnage, rankIndex, photo, scro
           }}
           delayLongPress={450}
           accessibilityRole="button"
-          accessibilityLabel="Changer ta scène"
+          accessibilityLabel={traduire("Changer ta scène")}
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
         />
       )}
@@ -245,7 +246,7 @@ export function SceneHero({ top, scene, name, personnage, rankIndex, photo, scro
         <Animated.View entering={ENTREE} pointerEvents="none" style={[{ position: 'absolute', right: charRight, bottom: place.bas - OMBRE_MARGE, width: charW, height: charH + OMBRE_MARGE }, stylePerso]}>
           {/* 15 octobre : plus d'ombre noire ; seulement un leger ancrage quand les pieds sont poses au dessus des raccourcis */}
           {place.compromis ? <OmbrePieds largeur={charW} y={charH - (H - place.pieds - place.bas)} sombre={dark} /> : null}
-          <Image source={personnageImage(personnage, rankIndex)} style={{ position: 'absolute', left: 0, top: 0, width: charW, height: charH }} resizeMode="contain" accessibilityLabel="Ton personnage" />
+          <Image source={personnageImage(personnage, rankIndex)} style={{ position: 'absolute', left: 0, top: 0, width: charW, height: charH }} resizeMode="contain" accessibilityLabel={traduire("Ton personnage")} />
         </Animated.View>
       ) : null}
       {/* 16 octobre : la zone du dessin du personnage (21 % a 83 % de l'image) : appui long, Ton personnage */}
@@ -258,8 +259,8 @@ export function SceneHero({ top, scene, name, personnage, rankIndex, photo, scro
           }}
           delayLongPress={450}
           accessibilityRole="button"
-          accessibilityLabel="Ton personnage. Appui long pour le changer"
-          accessibilityActions={[{ name: 'longpress', label: 'Changer ton personnage' }]}
+          accessibilityLabel={traduire("Ton personnage. Appui long pour le changer")}
+          accessibilityActions={[{ name: 'longpress', label: traduire('Changer ton personnage') }]}
           onAccessibilityAction={(e) => {
             if (e.nativeEvent.actionName === 'longpress') router.push(ROUTES_PERSONNALISER.personnage as any);
           }}
@@ -299,7 +300,7 @@ export function SceneHero({ top, scene, name, personnage, rankIndex, photo, scro
           </TourAnchor>
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={21} weight="black" tight color={ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} accessibilityRole="header" style={textShadow}>
-              {`${greeting()}, ${name ?? 'Athlète'}`}
+              {`${greeting()}, ${name ?? traduire('Athlète')}`}
             </Ink>
             <Ink size={13} weight="bold" color={ink2} numberOfLines={1} style={textShadow}>
               {`${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`}
@@ -397,7 +398,7 @@ function RondProfil({ photo: initialPhoto, personnage: initialPerso, rankIndex, 
   // 19 octobre : 50 points (58 avec le contour), au lieu de 64 (72) : un bandeau compact
   const S = 50;
   return (
-    <Press disabled={apercu} onPress={() => router.push('/settings' as any)} accessibilityRole={apercu ? undefined : 'button'} accessibilityLabel={apercu ? 'Ton rond de profil' : 'Ton profil et tes réglages'} hitSlop={6}>
+    <Press disabled={apercu} onPress={() => router.push('/settings' as any)} accessibilityRole={apercu ? undefined : 'button'} accessibilityLabel={apercu ? traduire('Ton rond de profil') : traduire('Ton profil et tes réglages')} hitSlop={6}>
       <View style={[{ width: S + 8, height: S + 8, borderRadius: (S + 8) / 2 }, shadow]}>
         <RondCadre size={S + 8} contour={contour} fond="scene" fill={P.paper}>
           {shown ? (

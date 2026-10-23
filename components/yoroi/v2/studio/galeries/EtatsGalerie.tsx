@@ -33,17 +33,18 @@ import { THEME_IMAGES, guerrierImage } from '@/lib/v2/dojo/personnages';
 import { NOM } from './fictif';
 import { Bloc, Bouton, G, GalerieScreen, Pastille, PastilleRow } from './kit';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type EtatId = 'accueil' | 'progres' | 'carnet' | 'competitions' | 'dojo' | 'chargements' | 'erreur';
 
 const ETATS: { id: EtatId; label: string }[] = [
-  { id: 'accueil', label: 'Accueil vide' },
-  { id: 'progres', label: 'Progrès vide' },
+  { id: 'accueil', label: traduire('Accueil vide') },
+  { id: 'progres', label: traduire('Progrès vide') },
   { id: 'carnet', label: 'Carnet vide' },
-  { id: 'competitions', label: 'Compétitions vide' },
-  { id: 'dojo', label: 'Dojo débutant' },
+  { id: 'competitions', label: traduire('Compétitions vide') },
+  { id: 'dojo', label: traduire('Dojo débutant') },
   { id: 'chargements', label: 'Chargements' },
-  { id: 'erreur', label: 'Erreur' },
+  { id: 'erreur', label: traduire('Erreur') },
 ];
 
 const NB = ' ';
@@ -71,18 +72,18 @@ function AccueilVide() {
   const target = useMemo(() => nextTarget(null, [], 'musculation'), []);
   return (
     <View style={{ gap: 12 }}>
-      <Legende text="Premier jour : aucune pesée, aucune séance, pas de montre reliée, pas d’objectif choisi." />
+      <Legende text={traduire("Premier jour : aucune pesée, aucune séance, pas de montre reliée, pas d’objectif choisi.")} />
       <Fige bleed>
         <SceneHero top={0} scene="chateau" name={NOM} personnage="guerrier_f" rankIndex={0} photo={null} series={[]} targetWeight={null} />
       </Fige>
       <Fige>
         <View style={{ gap: 12 }}>
-          <Section title="Aujourd’hui" />
+          <Section title={traduire("Aujourd’hui")} />
           <SessionToday trainings={[]} target={target} femme />
           <ActivityCard a={{ connected: false, steps: null, move: null, exercise: null, moveGoal: 500, exerciseGoal: 30 }} />
-          <Section title="Ta semaine" />
+          <Section title={traduire("Ta semaine")} />
           <WeekCard trainings={[]} goal={0} />
-          <Section title="Ton suivi" />
+          <Section title={traduire("Ton suivi")} />
           <ConseilDuJour trainings={[]} lastWeighIso={null} goal={0} />
           <BlocRecords record={null} />
           <BlocCompetition competition={null} />
@@ -93,7 +94,7 @@ function AccueilVide() {
 }
 
 function rateText(rate: number | null): string {
-  if (rate === null) return 'Bientôt';
+  if (rate === null) return traduire('Bientôt');
   const grams = Math.round((Math.abs(rate) * 1000) / 10) * 10;
   return grams >= 1000 ? `${formatKg(grams / 1000)} kg` : `${grams} g`;
 }
@@ -116,25 +117,25 @@ function ProgresVide() {
   const last = sample[sample.length - 1];
   return (
     <View style={{ gap: 12 }}>
-      <Legende text="Onglet Progrès sans aucune pesée : la courbe d’exemple en filigrane." />
+      <Legende text={traduire("Onglet Progrès sans aucune pesée : la courbe d’exemple en filigrane.")} />
       <Fige bleed>
         <ExamplePreview
           bleed
           dim={0.4}
-          title="Ta courbe se dessine dès la troisième pesée"
-          text="Pèse-toi le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance."
-          plusHint="Touche + pour ta première pesée"
+          title={traduire("Ta courbe se dessine dès la troisième pesée")}
+          text={traduire("Pèse-toi le matin, à jeun, quelques fois par semaine. YOROI lisse les variations et te montre la vraie tendance.")}
+          plusHint={traduire("Touche + pour ta première pesée")}
         >
           <WeightTrendChart points={sample} goal={SAMPLE_GOAL} height={230} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 22, marginTop: 8, flexWrap: 'wrap' }}>
             <LegendMark kind="line" color={CHART_COLORS.blue} label="tendance" />
-            <LegendMark kind="dot" color={c.textMuted} label="pesées" />
+            <LegendMark kind="dot" color={c.textMuted} label={traduire("pesées")} />
             <LegendMark kind="dash" color={c.successText} label="objectif" />
           </View>
           <View style={{ flexDirection: 'row', marginHorizontal: 22, marginTop: 14, paddingVertical: 12, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
-            <Chiffre value={formatKg(last.value)} label="dernière pesée" />
-            <Chiffre value={formatKg(last.trend)} label="tendance lissée" border />
-            <Chiffre value={rateText(rate)} label="en moins par semaine" border />
+            <Chiffre value={formatKg(last.value)} label={traduire("dernière pesée")} />
+            <Chiffre value={formatKg(last.trend)} label={traduire("tendance lissée")} border />
+            <Chiffre value={rateText(rate)} label={traduire("en moins par semaine")} border />
           </View>
         </ExamplePreview>
       </Fige>
@@ -145,23 +146,23 @@ function ProgresVide() {
 function CarnetVide() {
   return (
     <View style={{ gap: 12 }}>
-      <Legende text="Carnet, onglet Records, sans aucune perf notée." />
+      <Legende text={traduire("Carnet, onglet Records, sans aucune perf notée.")} />
       <Fige>
         <CarnetEmpty
           illus="records"
-          title="Ton premier record t’attend"
-          text="Squat, 10 km, tractions : note une perf. YOROI garde ton meilleur et pose un tampon rouge chaque fois que tu le bats."
-          action="Noter mon premier record"
+          title={traduire("Ton premier record t’attend")}
+          text={traduire("Squat, 10 km, tractions : note une perf. YOROI garde ton meilleur et pose un tampon rouge chaque fois que tu le bats.")}
+          action={traduire("Noter mon premier record")}
           onAction={() => undefined}
         />
       </Fige>
-      <Legende text="Carnet, onglet Techniques, sans aucune technique." />
+      <Legende text={traduire("Carnet, onglet Techniques, sans aucune technique.")} />
       <Fige>
         <CarnetEmpty
           illus="techniques"
-          title="Note ce que tu apprends"
-          text="Une garde, un passage, un enchaînement : ajoute-la, compte tes répétitions, et marque-la maîtrisée le jour où elle sort toute seule."
-          action="Ajouter ma première technique"
+          title={traduire("Note ce que tu apprends")}
+          text={traduire("Une garde, un passage, un enchaînement : ajoute-la, compte tes répétitions, et marque-la maîtrisée le jour où elle sort toute seule.")}
+          action={traduire("Ajouter ma première technique")}
           onAction={() => undefined}
         />
       </Fige>
@@ -174,23 +175,23 @@ function CompetitionsVide() {
   const c = theme.colors;
   return (
     <View style={{ gap: 12 }}>
-      <Legende text="Compétitions sans aucune échéance prévue." />
+      <Legende text={traduire("Compétitions sans aucune échéance prévue.")} />
       <Fige bleed>
         <ImageBackground source={SCENE_COMPETITIONS} resizeMode="cover" style={{ height: 228, overflow: 'hidden' }}>
           <View style={{ position: 'absolute', left: 16, bottom: 14, maxWidth: '60%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: P.white }}>
-            <Ink size={28} weight="black" tight numberOfLines={1}>Compétitions</Ink>
-            <Ink size={13} weight="bold" color={c.textSecondary}>Tes rendez-vous sur le tapis</Ink>
+            <Ink size={28} weight="black" tight numberOfLines={1}>{traduire("Compétitions")}</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Tes rendez-vous sur le tapis")}</Ink>
           </View>
         </ImageBackground>
       </Fige>
       <Fige>
         <View style={{ gap: 12 }}>
           <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 18, gap: 6 }}>
-            <Ink size={13} weight="bold" color={c.textSecondary}>Aucune compétition prévue</Ink>
-            <Ink size={22} weight="black" tight>Prépare ta prochaine échéance</Ink>
-            <Ink size={13} color={c.textSecondary}>Ajoute-la en quelques secondes : compte à rebours, rappels et suivi de ta catégorie de poids.</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Aucune compétition prévue")}</Ink>
+            <Ink size={22} weight="black" tight>{traduire("Prépare ta prochaine échéance")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Ajoute-la en quelques secondes : compte à rebours, rappels et suivi de ta catégorie de poids.")}</Ink>
           </View>
-          <BigButton label="Ajouter une compétition" icon="plus" onPress={() => undefined} />
+          <BigButton label={traduire("Ajouter une compétition")} icon="plus" onPress={() => undefined} />
         </View>
       </Fige>
     </View>
@@ -209,14 +210,14 @@ function DojoDebutant() {
   const next = RANKS[1];
   return (
     <View style={{ gap: 12 }}>
-      <Legende text={`Dojo au premier jour : rang ${rank.name}, 0 XP, aucune plaque.`} />
+      <Legende text={traduire("Dojo au premier jour : rang {0}, 0 XP, aucune plaque.", rank.name)} />
       <Fige>
         <View style={{ gap: 12 }}>
           <RankFrame rankIndex={0} dan={0}>
             <ScenePlate scene={THEME_IMAGES.dojo} height={heroH}>
               <View style={{ position: 'absolute', left: 14, right: 14, top: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                 <GlassTag style={{ flexShrink: 1, maxWidth: '86%' }}>
-                  <Ink size={12} weight="extraBold" color={c.goldDeep}>{`Rang 1 sur ${RANKS.length}`}</Ink>
+                  <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Rang 1 sur {0}", RANKS.length)}</Ink>
                   <Ink size={30} weight="black" tight numberOfLines={1}>{rank.name}</Ink>
                   <Ink size={12} color={c.textSecondary} numberOfLines={2}>{rank.piece ?? ''}</Ink>
                 </GlassTag>
@@ -229,10 +230,10 @@ function DojoDebutant() {
           <View style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ flex: 1, gap: 3 }}>
-                <Ink size={12} weight="extraBold" color={c.textMuted}>Tes plaques d’armure</Ink>
+                <Ink size={12} weight="extraBold" color={c.textMuted}>{traduire("Tes plaques d’armure")}</Ink>
                 <Ink size={19} weight="black" tight numberOfLines={2}>{`Vers ${next.name}`}</Ink>
                 <Ink size={13} color={c.textSecondary} numberOfLines={3}>
-                  {`Une plaque à chaque tiers du chemin. Au bout : ${next.piece?.charAt(0).toLowerCase()}${next.piece?.slice(1) ?? ''}`}
+                  {traduire("Une plaque à chaque tiers du chemin. Au bout : {0}{1}", next.piece?.charAt(0).toLowerCase(), next.piece?.slice(1) ?? '')}
                 </Ink>
               </View>
               <View style={{ width: 58, height: 74, borderRadius: 14, backgroundColor: c.fillSoft, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
@@ -247,14 +248,14 @@ function DojoDebutant() {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
               <Ink size={15} weight="black" style={{ flex: 1 }} numberOfLines={1}>{`${formatXp(0)} / ${formatXp(next.minXp)}${NB}XP`}</Ink>
-              <Ink size={13} weight="extraBold" color={c.accent} numberOfLines={1}>{`encore ${formatXp(next.minXp)}${NB}XP`}</Ink>
+              <Ink size={13} weight="extraBold" color={c.accent} numberOfLines={1}>{traduire("encore {0}{1}XP", formatXp(next.minXp), NB)}</Ink>
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
             <CheckBox checked={false} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={15} weight="extraBold">Ton geste du jour</Ink>
-              <Ink size={13} color={c.textSecondary}>Une séance, une pesée ou de l’eau notée aujourd’hui.</Ink>
+              <Ink size={15} weight="extraBold">{traduire("Ton geste du jour")}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Une séance, une pesée ou de l’eau notée aujourd’hui.")}</Ink>
             </View>
             <Ink size={14} weight="black" color={c.accent}>{`+${XP_VALUES.geste}${NB}XP`}</Ink>
           </View>
@@ -272,13 +273,13 @@ function Chargements() {
   return (
     <View style={{ gap: 12 }}>
       <Bloc>
-        <Ink size={16} weight="black">Écran de chargement</Ink>
-        <Ink size={13} color={c.textSecondary}>EcranChargement, plein écran, au lancement de l’app. L’intro ne se rejoue qu’au premier affichage.</Ink>
-        <Bouton label="Afficher en plein écran" icon="eye" onPress={() => setPlein(true)} />
+        <Ink size={16} weight="black">{traduire("Écran de chargement")}</Ink>
+        <Ink size={13} color={c.textSecondary}>{traduire("EcranChargement, plein écran, au lancement de l’app. L’intro ne se rejoue qu’au premier affichage.")}</Ink>
+        <Bouton label={traduire("Afficher en plein écran")} icon="eye" onPress={() => setPlein(true)} />
       </Bloc>
       <Bloc style={{ alignItems: 'center' }}>
         <Ink size={16} weight="black" style={{ alignSelf: 'stretch' }}>Petit indicateur</Ink>
-        <Ink size={13} color={c.textSecondary} style={{ alignSelf: 'stretch' }}>ChargementPetit, à la place de la roue du système.</Ink>
+        <Ink size={13} color={c.textSecondary} style={{ alignSelf: 'stretch' }}>{traduire("ChargementPetit, à la place de la roue du système.")}</Ink>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingVertical: 10 }}>
           <ChargementPetit size={20} />
           <ChargementPetit />
@@ -290,14 +291,14 @@ function Chargements() {
       </Bloc>
       <Bloc>
         <Ink size={16} weight="black">Zone d’attente</Ink>
-        <Ink size={13} color={c.textSecondary}>ChargementBloc, au milieu d’une page qui se remplit.</Ink>
-        <ChargementBloc message="Lecture de tes séances" />
+        <Ink size={13} color={c.textSecondary}>{traduire("ChargementBloc, au milieu d’une page qui se remplit.")}</Ink>
+        <ChargementBloc message={traduire("Lecture de tes séances")} />
       </Bloc>
       <Modal visible={plein} animationType="fade" onRequestClose={() => setPlein(false)} statusBarTranslucent>
         <View style={{ flex: 1 }}>
-          <EcranChargement message="Préparation de ton espace" />
+          <EcranChargement message={traduire("Préparation de ton espace")} />
           <View style={{ position: 'absolute', top: insets.top + 8, left: 16 }}>
-            <RoundButton icon="close" label="Fermer l’écran de chargement" onPress={() => setPlein(false)} />
+            <RoundButton icon="close" label={traduire("Fermer l’écran de chargement")} onPress={() => setPlein(false)} />
           </View>
         </View>
       </Modal>
@@ -318,10 +319,10 @@ function Bombe({ arme, onFerme }: { arme: React.MutableRefObject<boolean>; onFer
       <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: c.successTint, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="check" size={34} color={c.successText} />
       </View>
-      <Ink size={22} weight="black" style={{ textAlign: 'center' }}>L’écran est revenu</Ink>
-      <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>Réessayer a bien remonté l’écran. L’app n’a pas planté.</Ink>
+      <Ink size={22} weight="black" style={{ textAlign: 'center' }}>{traduire("L’écran est revenu")}</Ink>
+      <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Réessayer a bien remonté l’écran. L’app n’a pas planté.")}</Ink>
       <View style={{ alignSelf: 'stretch' }}>
-        <Bouton label="Fermer" onPress={onFerme} />
+        <Bouton label={traduire("Fermer")} onPress={onFerme} />
       </View>
     </View>
   );
@@ -336,12 +337,11 @@ function Erreur() {
   return (
     <View style={{ gap: 12 }}>
       <Bloc>
-        <Ink size={16} weight="black">Écran d’erreur</Ink>
+        <Ink size={16} weight="black">{traduire("Écran d’erreur")}</Ink>
         <Ink size={13} color={c.textSecondary}>
-          Un morceau d’écran plante volontairement dans son propre cadre. Tu vois l’écran d’erreur de l’app, puis Réessayer le remonte. Le bouton Retour à l’accueil ramène vraiment à l’accueil.
-        </Ink>
+          {traduire("Un morceau d’écran plante volontairement dans son propre cadre. Tu vois l’écran d’erreur de l’app, puis Réessayer le remonte. Le bouton Retour à l’accueil ramène vraiment à l’accueil.")}</Ink>
         <Bouton
-          label="Simuler une erreur"
+          label={traduire("Simuler une erreur")}
           icon="info"
           onPress={() => {
             arme.current = true;
@@ -362,7 +362,7 @@ function Erreur() {
 export function EtatsGalerie() {
   const [etat, setEtat] = useState<EtatId>('accueil');
   return (
-    <GalerieScreen title="États" sub="Les écrans vides, les chargements et l’erreur, avec des données fictives. Rien n’est écrit, les aperçus sont figés.">
+    <GalerieScreen title={traduire("États")} sub={traduire("Les écrans vides, les chargements et l’erreur, avec des données fictives. Rien n’est écrit, les aperçus sont figés.")}>
       <PastilleRow>
         {ETATS.map((e) => (
           <Pastille key={e.id} label={e.label} on={etat === e.id} onPress={() => setEtat(e.id)} />

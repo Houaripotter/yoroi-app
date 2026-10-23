@@ -5,6 +5,7 @@
 // ============================================
 
 import { differenceInDays, parseISO } from 'date-fns';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface Insight {
   id: string;
@@ -52,14 +53,14 @@ const weightDelta = (weights: WeightLike[]): Insight | null => {
   if (delta < 0) {
     return {
       id: 'weight-loss',
-      text: `Tu as perdu ${fmtKg(delta)} kg récemment`,
+      text: traduire("Tu as perdu {0} kg récemment", fmtKg(delta)),
       tone: 'celebration',
       icon: 'trending-down',
     };
   }
   return {
     id: 'weight-gain',
-    text: `Tu as pris ${fmtKg(delta)} kg récemment`,
+    text: traduire("Tu as pris {0} kg récemment", fmtKg(delta)),
     tone: 'neutral',
     icon: 'trending-up',
   };
@@ -77,7 +78,7 @@ const trainingsWeekly = (trainings: TrainingLike[]): Insight | null => {
   if (last7 >= 5) {
     return {
       id: 'trainings-streak',
-      text: `${last7} séances cette semaine, t'es en feu`,
+      text: traduire("{0} séances cette semaine, t'es en feu", last7),
       tone: 'celebration',
       icon: 'fire',
     };
@@ -85,7 +86,7 @@ const trainingsWeekly = (trainings: TrainingLike[]): Insight | null => {
   if (last7 > avg7 * 1.4) {
     return {
       id: 'trainings-up',
-      text: `${last7} séances cette semaine, +${Math.round((last7 / Math.max(avg7, 0.1) - 1) * 100)}% vs moyenne`,
+      text: traduire("{0} séances cette semaine, +{1}% vs moyenne", last7, Math.round((last7 / Math.max(avg7, 0.1) - 1) * 100)),
       tone: 'positive',
       icon: 'trending-up',
     };
@@ -93,7 +94,7 @@ const trainingsWeekly = (trainings: TrainingLike[]): Insight | null => {
   if (last7 === 0) {
     return {
       id: 'trainings-zero',
-      text: `Aucune séance cette semaine, reprends doucement`,
+      text: traduire(`Aucune séance cette semaine, reprends doucement`),
       tone: 'warning',
       icon: 'alert-circle',
     };
@@ -113,7 +114,7 @@ const sleepInsight = (nights: SleepLike[], goalMinutes: number = 480): Insight |
   if (Math.abs(deltaMin) < 20) {
     return {
       id: 'sleep-on-goal',
-      text: `Sommeil pile sur ton objectif (${Math.round(avgMin / 60 * 10) / 10}h moy.)`,
+      text: traduire("Sommeil pile sur ton objectif ({0}h moy.)", Math.round(avgMin / 60 * 10) / 10),
       tone: 'positive',
       icon: 'moon',
     };
@@ -123,7 +124,7 @@ const sleepInsight = (nights: SleepLike[], goalMinutes: number = 480): Insight |
     const m = Math.round(deltaMin % 60);
     return {
       id: 'sleep-debt',
-      text: `Dette de sommeil : ${h > 0 ? `${h}h` : ''}${m}min/nuit en moyenne`,
+      text: traduire("Dette de sommeil : {0}{1}min/nuit en moyenne", h > 0 ? `${h}h` : '', m),
       tone: 'warning',
       icon: 'moon',
     };
@@ -149,7 +150,7 @@ const compositionDelta = (weights: WeightLike[]): Insight | null => {
   if (delta < 0) {
     return {
       id: 'fat-loss',
-      text: `Masse grasse en baisse : -${Math.abs(delta).toFixed(1)} pts récents`,
+      text: traduire("Masse grasse en baisse : -{0} pts récents", Math.abs(delta).toFixed(1)),
       tone: 'celebration',
       icon: 'fire',
     };

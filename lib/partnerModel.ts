@@ -1,6 +1,7 @@
 // ============================================
 // PARTNER MODEL : Types etendus pour les partenaires tactiques
 // ============================================
+import { traduire } from '@/lib/i18n/tr';
 
 export type Archetype =
   | 'gardien'      // JJB : joue la garde, triangle, omoplata
@@ -53,19 +54,19 @@ export interface ExtendedPartnerFields {
 export const ARCHETYPE_META: Record<Archetype, { label: string; description: string; color: string; icon: string }> = {
   gardien: {
     label: 'Gardien',
-    description: 'Joue la garde, triangle, attaques du bas.',
+    description: traduire('Joue la garde, triangle, attaques du bas.'),
     color: '#8B5CF6',
     icon: 'Shield',
   },
   passeur: {
     label: 'Passeur',
-    description: 'Top game, pression, passage de garde.',
+    description: traduire('Top game, pression, passage de garde.'),
     color: '#F59E0B',
     icon: 'Mountain',
   },
   striker: {
     label: 'Striker',
-    description: 'Debout, punch, kick, distance.',
+    description: traduire('Debout, punch, kick, distance.'),
     color: '#EF4444',
     icon: 'Zap',
   },
@@ -77,7 +78,7 @@ export const ARCHETYPE_META: Record<Archetype, { label: string; description: str
   },
   takedown: {
     label: 'Takedown',
-    description: 'Wrestler/judoka, amene au sol.',
+    description: traduire('Wrestler/judoka, amene au sol.'),
     color: '#10B981',
     icon: 'Swords',
   },

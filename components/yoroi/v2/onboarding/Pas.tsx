@@ -10,23 +10,24 @@ import { selectionAsync } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { useColors } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
 export type PasDef = { delta: number; label: string; a11y: string };
 
 /** Le jeu de boutons du poids : moins 1 kg, moins 0,1, plus 0,1, plus 1 kg */
 export const PAS_KG: PasDef[] = [
-  { delta: -1, label: '1 kg', a11y: 'Moins 1 kilo' },
-  { delta: -0.1, label: '0,1', a11y: 'Moins 100 grammes' },
-  { delta: 0.1, label: '0,1', a11y: 'Plus 100 grammes' },
-  { delta: 1, label: '1 kg', a11y: 'Plus 1 kilo' },
+  { delta: -1, label: '1 kg', a11y: traduire('Moins 1 kilo') },
+  { delta: -0.1, label: '0,1', a11y: traduire('Moins 100 grammes') },
+  { delta: 0.1, label: '0,1', a11y: traduire('Plus 100 grammes') },
+  { delta: 1, label: '1 kg', a11y: traduire('Plus 1 kilo') },
 ];
 
 /** Le jeu de boutons de la taille : moins 5, moins 1, plus 1, plus 5 cm */
 export const PAS_CM: PasDef[] = [
-  { delta: -5, label: '5 cm', a11y: 'Moins 5 centimètres' },
-  { delta: -1, label: '1 cm', a11y: 'Moins 1 centimètre' },
-  { delta: 1, label: '1 cm', a11y: 'Plus 1 centimètre' },
-  { delta: 5, label: '5 cm', a11y: 'Plus 5 centimètres' },
+  { delta: -5, label: '5 cm', a11y: traduire('Moins 5 centimètres') },
+  { delta: -1, label: '1 cm', a11y: traduire('Moins 1 centimètre') },
+  { delta: 1, label: '1 cm', a11y: traduire('Plus 1 centimètre') },
+  { delta: 5, label: '5 cm', a11y: traduire('Plus 5 centimètres') },
 ];
 
 function Bouton({ pas, fort, onStep }: { pas: PasDef; fort: boolean; onStep: (d: number) => void }) {
@@ -60,7 +61,7 @@ function Bouton({ pas, fort, onStep }: { pas: PasDef; fort: boolean; onStep: (d:
       onPressOut={stop}
       accessibilityRole="button"
       accessibilityLabel={pas.a11y}
-      accessibilityHint="Appui long pour aller plus vite"
+      accessibilityHint={traduire("Appui long pour aller plus vite")}
       style={{ flex: 1 }}
     >
       {({ pressed }) => (

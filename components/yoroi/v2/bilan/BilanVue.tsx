@@ -25,6 +25,7 @@ import { Icon } from '@/components/yoroi/v2/seance/Icon';
 import type { IconName } from '@/components/yoroi/v2/seance/Icon';
 import { Hanko } from '@/components/yoroi/v2/seance/Hanko';
 import { dateCourte, kg1, nb, signe } from '@/lib/v2/bilan/texte';
+import { traduire } from '@/lib/i18n/tr';
 
 const GUT = 20;
 
@@ -139,7 +140,7 @@ export function Topo({ phrases, riche }: { phrases: string[]; riche?: PhraseRich
   if (!phrases.length) return null;
   return (
     <Carte gap={14}>
-      <Titre>Ton bilan</Titre>
+      <Titre>{traduire("Ton bilan")}</Titre>
       {riche && riche.length === phrases.length
         ? riche.map((p, i) => <PhraseVue key={i} p={p} />)
         : phrases.map((p, i) => (
@@ -167,12 +168,12 @@ export function BoutonCarte({ onPress }: { onPress: () => void }) {
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Créer ma carte"
-      accessibilityHint="Une image de ce bilan, à partager ou à garder"
+      accessibilityLabel={traduire("Créer ma carte")}
+      accessibilityHint={traduire("Une image de ce bilan, à partager ou à garder")}
       style={({ pressed }) => ({ flex: 1, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: t.fond, borderWidth: 1.5, borderColor: t.texte, opacity: pressed ? 0.75 : 1 })}
     >
       <IconePartage color={t.texte} />
-      <Ink size={16} weight="extraBold" color={t.texte}>Créer ma carte</Ink>
+      <Ink size={16} weight="extraBold" color={t.texte}>{traduire("Créer ma carte")}</Ink>
     </Pressable>
   );
 }
@@ -212,7 +213,7 @@ function MiniCourbe({ serie }: { serie: PeseeJ[] }) {
   const trend = serie.map((p, i) => `${i ? 'L' : 'M'}${x(p.date).toFixed(1)} ${y(p.trend ?? p.value).toFixed(1)}`).join(' ');
   const last = serie[serie.length - 1];
   return (
-    <View accessibilityLabel="Tes pesées des 30 derniers jours et ta tendance lissée" style={{ alignItems: 'center' }}>
+    <View accessibilityLabel={traduire("Tes pesées des 30 derniers jours et ta tendance lissée")} style={{ alignItems: 'center' }}>
       <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
         {serie.map((p) => (
           <Circle key={p.date} cx={x(p.date)} cy={y(p.value)} r={2.6} fill={c.textMuted} opacity={0.55} />
@@ -225,7 +226,7 @@ function MiniCourbe({ serie }: { serie: PeseeJ[] }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.textMuted }} />
-            <Ink size={11} weight="bold" color={c.textMuted}>pesées</Ink>
+            <Ink size={11} weight="bold" color={c.textMuted}>{traduire("pesées")}</Ink>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: c.indigo }} />
@@ -250,7 +251,7 @@ function TuileCompo({ l }: { l: LigneCompo }) {
       {l.ecartTexte ? (
         <Ink size={12} weight="extraBold" color={couleurEcart(c, l.bon, l.bruit)} numberOfLines={1}>{l.ecartTexte}</Ink>
       ) : (
-        <Ink size={12} color={c.textMuted}>première mesure</Ink>
+        <Ink size={12} color={c.textMuted}>{traduire("première mesure")}</Ink>
       )}
     </View>
   );
@@ -263,7 +264,7 @@ function Pied({ onShare, onDone, partage }: { onShare?: () => void; onDone: () =
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: GUT, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.divider, flexDirection: 'row', gap: 10 }}>
       {partage && onShare ? <BoutonCarte onPress={onShare} /> : null}
       <View style={{ flex: 1 }}>
-        <StampButton label="Terminé" onPress={onDone} />
+        <StampButton label={traduire("Terminé")} onPress={onDone} />
       </View>
     </View>
   );
@@ -281,7 +282,7 @@ function Jauge({ poids, pct, depart, cap, atteint }: { poids: number; pct: numbe
   const len = Math.PI * JR;
   const ang = Math.PI * (1 - pct);
   return (
-    <View style={{ alignItems: 'center' }} accessible accessibilityLabel={`${nb(poids)} kilos, ${atteint ? 'objectif atteint' : `${Math.round(pct * 100)} pour cent du chemin vers ton objectif`}`}>
+    <View style={{ alignItems: 'center' }} accessible accessibilityLabel={`${nb(poids)} kilos, ${atteint ? traduire('objectif atteint') : traduire("{0} pour cent du chemin vers ton objectif", Math.round(pct * 100))}`}>
       <View style={{ width: JW, height: cy + 8 }}>
         <Svg width={JW} height={cy + 8}>
           <Path d={arc} stroke={c.fillSubtle} strokeWidth={JS} strokeLinecap="round" fill="none" />
@@ -296,8 +297,8 @@ function Jauge({ poids, pct, depart, cap, atteint }: { poids: number; pct: numbe
         </View>
       </View>
       <View style={{ width: JW + 16, flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-        <Ink size={12} weight="bold" color={c.textMuted}>{`départ ${kg1(depart)}`}</Ink>
-        <Ink size={12} weight="bold" color={c.textMuted}>{`objectif ${nb(cap)}`}</Ink>
+        <Ink size={12} weight="bold" color={c.textMuted}>{traduire("départ {0}", kg1(depart))}</Ink>
+        <Ink size={12} weight="bold" color={c.textMuted}>{traduire("objectif {0}", nb(cap))}</Ink>
       </View>
     </View>
   );
@@ -320,7 +321,7 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
               <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.successTint, alignItems: 'center', justifyContent: 'center' }}>
                 <Svg width={14} height={14} viewBox="0 0 24 24"><Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.successText} strokeWidth={3.2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
               </View>
-              <Ink size={13} weight="extraBold" color={c.successText}>{enTete ?? 'Enregistré'}</Ink>
+              <Ink size={13} weight="extraBold" color={c.successText}>{enTete ?? traduire('Enregistré')}</Ink>
             </View>
             <Ink size={30} weight="black" tight accessibilityRole="header">{b.titre}</Ink>
             <Ink size={14} weight="bold" color={c.textSecondary}>{b.sousTitre}</Ink>
@@ -336,7 +337,7 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
                   <Ink size={20} weight="bold" color={c.textSecondary}>kg</Ink>
                 </View>
               )}
-              {!b.peseeDuJour ? <Ink size={12} color={c.textMuted}>ta dernière pesée</Ink> : null}
+              {!b.peseeDuJour ? <Ink size={12} color={c.textMuted}>{traduire("ta dernière pesée")}</Ink> : null}
               {v ? (
                 <View style={{ alignItems: 'center', gap: 2, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 16, backgroundColor: v.bon === true ? c.successTint : c.indigoTint }}>
                   <Ink size={17} weight="black" color={v.bon === true ? c.successText : c.indigo} style={{ textAlign: 'center' }}>{v.titre}</Ink>
@@ -350,13 +351,13 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
 
           {b.comparaisons.length && !mensurationsSeules ? (
             <Carte gap={0}>
-              <Titre>Ton poids</Titre>
+              <Titre>{traduire("Ton poids")}</Titre>
               <View style={{ height: 4 }} />
               {b.comparaisons.map((x, i) => (
                 <Rangee
                   key={x.id}
                   label={x.label}
-                  sous={x.bruit ? `depuis le ${dateCourte(x.depuis)}, dans la marge normale` : `depuis le ${dateCourte(x.depuis)}`}
+                  sous={x.bruit ? traduire("depuis le {0}, dans la marge normale", dateCourte(x.depuis)) : traduire("depuis le {0}", dateCourte(x.depuis))}
                   valeur={`${signe(x.ecart)} kg`}
                   couleur={couleurEcart(c, x.bon, x.bruit)}
                   last={i === b.comparaisons.length - 1}
@@ -367,31 +368,31 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
 
           {b.tendance && b.serie.length >= 3 ? (
             <Carte>
-              <Titre>Ta tendance lissée</Titre>
+              <Titre>{traduire("Ta tendance lissée")}</Titre>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                 <Ink size={28} weight="black" tight style={{ fontVariant: ['tabular-nums'] }}>{kg1(b.tendance.valeur)}</Ink>
                 <Ink size={14} weight="bold" color={c.textSecondary}>kg</Ink>
                 {b.tendance.parSemaine !== null ? (
                   <Ink size={14} weight="extraBold" color={c.indigo} style={{ marginLeft: 6 }}>
-                    {Math.abs(b.tendance.parSemaine) < 0.1 ? 'stable' : `${signe(b.tendance.parSemaine)} kg par semaine`}
+                    {Math.abs(b.tendance.parSemaine) < 0.1 ? 'stable' : traduire("{0} kg par semaine", signe(b.tendance.parSemaine))}
                   </Ink>
                 ) : null}
               </View>
               <MiniCourbe serie={b.serie} />
-              <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>Une moyenne qui gomme l’eau, le sel et les repas d’un jour à l’autre.</Ink>
+              <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire("Une moyenne qui gomme l’eau, le sel et les repas d’un jour à l’autre.")}</Ink>
             </Carte>
           ) : null}
 
           {b.compo ? (
             <Carte>
-              <Titre>Ta composition</Titre>
-              {b.compo.depuis ? <Ink size={13} color={c.textSecondary}>{`Écarts depuis ta mesure du ${dateCourte(b.compo.depuis)}`}</Ink> : null}
+              <Titre>{traduire("Ta composition")}</Titre>
+              {b.compo.depuis ? <Ink size={13} color={c.textSecondary}>{traduire("Écarts depuis ta mesure du {0}", dateCourte(b.compo.depuis))}</Ink> : null}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {b.compo.lignes.map((l) => (
                   <TuileCompo key={l.id} l={l} />
                 ))}
               </View>
-              <Ink size={12} color={c.textMuted} style={{ lineHeight: 17 }}>En gris, l’écart reste dans la précision de ta balance. Une balance à impédance donne une estimation : compare des mesures prises dans les mêmes conditions.</Ink>
+              <Ink size={12} color={c.textMuted} style={{ lineHeight: 17 }}>{traduire("En gris, l’écart reste dans la précision de ta balance. Une balance à impédance donne une estimation : compare des mesures prises dans les mêmes conditions.")}</Ink>
             </Carte>
           ) : null}
 
@@ -403,7 +404,7 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
                 <Rangee
                   key={l.key}
                   label={l.label.charAt(0).toUpperCase() + l.label.slice(1)}
-                  sous={l.ecart === null ? 'première mesure' : `${signe(l.ecart)} cm depuis le ${dateCourte(l.depuis as string)}${l.bruit ? ', stable' : ''}`}
+                  sous={l.ecart === null ? traduire('première mesure') : traduire("{0} cm depuis le {1}{2}", signe(l.ecart), dateCourte(l.depuis as string), l.bruit ? ', stable' : '')}
                   valeur={`${nb(l.valeur)} cm`}
                   couleur={couleurEcart(c, l.bon, l.bruit)}
                   last={i === b.mesures!.lignes.length - 1}
@@ -414,13 +415,13 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
 
           {b.objectif || b.ligne || b.prevision ? (
             <Carte tint>
-              <Titre>Ton objectif</Titre>
+              <Titre>{traduire("Ton objectif")}</Titre>
               {b.objectif && b.objectif.pct !== null ? (
                 <View style={{ gap: 6 }}>
                   <View style={{ height: 10, borderRadius: 5, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
                     <View style={{ width: `${Math.round(b.objectif.pct * 100)}%`, height: 10, borderRadius: 5, backgroundColor: b.objectif.atteint ? c.successText : c.indigo }} />
                   </View>
-                  <Ink size={13} weight="extraBold" color={c.indigo}>{b.objectif.atteint ? 'Objectif atteint' : `${Math.round(b.objectif.pct * 100)} % du chemin`}</Ink>
+                  <Ink size={13} weight="extraBold" color={c.indigo}>{b.objectif.atteint ? traduire('Objectif atteint') : traduire("{0} % du chemin", Math.round(b.objectif.pct * 100))}</Ink>
                 </View>
               ) : null}
               {b.ligne ? <Ink size={15} weight="extraBold" color={tonCouleur(c, b.ligne.ton)}>{b.ligne.texte}</Ink> : null}
@@ -466,7 +467,7 @@ export function BilanSeanceSections({ b }: { b: BilanSeance }) {
       <Topo phrases={b.paragraphe} riche={b.riche} />
 
       <Carte>
-        <Titre>Ton compteur</Titre>
+        <Titre>{traduire("Ton compteur")}</Titre>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {b.compteurs.map((k) => (
             <View key={k.label} style={{ flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 10, borderRadius: 16, backgroundColor: c.background, borderWidth: 1, borderColor: c.divider }}>
@@ -489,7 +490,7 @@ export function BilanSeanceSections({ b }: { b: BilanSeance }) {
 
       {b.coeur ? (
         <Carte>
-          <Titre>Ton cœur</Titre>
+          <Titre>{traduire("Ton cœur")}</Titre>
           <View style={{ flexDirection: 'row', gap: 18 }}>
             {b.coeur.fcMoy ? (
               <View>
@@ -525,14 +526,14 @@ export function BilanSeanceSections({ b }: { b: BilanSeance }) {
         </Carte>
       ) : b.intensite ? (
         <Carte>
-          <Titre>Ton ressenti</Titre>
+          <Titre>{traduire("Ton ressenti")}</Titre>
           <Ink size={22} weight="black">{`${b.intensite.valeur}/10, ${b.intensite.mot}`}</Ink>
         </Carte>
       ) : null}
 
       {b.comparaison && b.comparaison.lignes.length ? (
         <Carte gap={0}>
-          <Titre>{`Par rapport au ${dateCourte(b.comparaison.depuis)}`}</Titre>
+          <Titre>{traduire("Par rapport au {0}", dateCourte(b.comparaison.depuis))}</Titre>
           <View style={{ height: 4 }} />
           {b.comparaison.lignes.map((l, i) => (
             <View key={l} style={{ paddingVertical: 10, borderBottomWidth: i === b.comparaison!.lignes.length - 1 ? 0 : 1, borderColor: c.divider }}>

@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '@/lib/security/logger';
 import { documentName, frenchDateTime, photoFileName, pickPhotoTime, sortPhotos } from './photos';
 import type { DatedPhoto, StoredPhotoDates } from './photos';
+import { traduire } from '@/lib/i18n/tr';
 
 export const PHOTO_LIMIT = 30;
 const DATES_KEY = 'yoroi_balance_photo_dates_v1';
@@ -120,18 +121,11 @@ export async function preparePhotos(sorted: DatedPhoto[], onProgress?: (done: nu
     } catch (err) {
       logger.warn('[Photos datees] copie nommee impossible', err);
     }
-    const caption = `Photo ${i + 1} sur ${sorted.length}, ${p.at !== undefined ? `prise le ${frenchDateTime(p.at)}` : 'date de prise inconnue'}`;
+    const caption = traduire("Photo {0} sur {1}, {2}", i + 1, sorted.length, p.at !== undefined ? `prise le ${frenchDateTime(p.at)}` : 'date de prise inconnue');
     pages.push(`<section><h1>${escapeHtml(caption)}</h1><img src="data:image/jpeg;base64,${r.base64 ?? ''}" /></section>`);
     onProgress?.(i + 1, sorted.length);
   }
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-    @page { margin: 24px; }
-    body { margin: 0; font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1D2029; }
-    section { page-break-after: always; break-after: page; text-align: center; }
-    section:last-child { page-break-after: auto; break-after: auto; }
-    h1 { font-size: 18px; margin: 0 0 12px; text-align: left; }
-    img { max-width: 100%; max-height: 700px; object-fit: contain; }
-  </style></head><body>${pages.join('')}</body></html>`;
+  const html = traduire("<!doctype html><html><head><meta charset=\"utf-8\"><style>\n    @page { margin: 24px; }\n    body { margin: 0; font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1D2029; }\n    section { page-break-after: always; break-after: page; text-align: center; }\n    section:last-child { page-break-after: auto; break-after: auto; }\n    h1 { font-size: 18px; margin: 0 0 12px; text-align: left; }\n    img { max-width: 100%; max-height: 700px; object-fit: contain; }\n  </style></head><body>{0}</body></html>", pages.join(''));
   const printed = await Print.printToFileAsync({ html, width: 612, height: 792 });
   const pdf = `${dir}${documentName(sorted)}`;
   try {
@@ -145,7 +139,7 @@ export async function preparePhotos(sorted: DatedPhoto[], onProgress?: (done: nu
 /** Ouvre la feuille de partage du systeme avec le document */
 export async function shareDocument(pdf: string): Promise<boolean> {
   if (!(await Sharing.isAvailableAsync())) return false;
-  await Sharing.shareAsync(pdf, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: 'Envoyer à mon IA' });
+  await Sharing.shareAsync(pdf, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: traduire('Envoyer à mon IA') });
   return true;
 }
 

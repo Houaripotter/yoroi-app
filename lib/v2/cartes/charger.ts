@@ -17,9 +17,10 @@ import { familleDe, nombre } from './chiffres';
 import { cleMoment, isoJour, lundiDe, raisonPesee } from './moments';
 import { bilanAnnee, bilanMois, cleExploit, exploitsPesee, exploitsSeance } from './exploits';
 import type { CarteData, Exploit, RecordCarte } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
-const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const JOURS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 function dateDe(iso: string): Date {
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
@@ -36,8 +37,8 @@ export function dateLongue(iso: string): string {
 export function plageSemaine(lundi: string): string {
   const a = dateDe(lundi);
   const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6, 12);
-  if (a.getMonth() === b.getMonth()) return `Du ${a.getDate()} au ${b.getDate()} ${MOIS[b.getMonth()]}`;
-  return `Du ${a.getDate()} ${MOIS[a.getMonth()]} au ${b.getDate()} ${MOIS[b.getMonth()]}`;
+  if (a.getMonth() === b.getMonth()) return traduire("Du {0} au {1} {2}", a.getDate(), b.getDate(), MOIS[b.getMonth()]);
+  return traduire("Du {0} {1} au {2} {3}", a.getDate(), MOIS[a.getMonth()], b.getDate(), MOIS[b.getMonth()]);
 }
 
 async function serieSemaines(): Promise<number> {
@@ -84,7 +85,7 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
   try {
     const r = await getSeanceResult(id);
     for (const x of r?.records ?? []) {
-      records.push({ nom: x.name, texte: `${nombre(x.weight, 1)} kg pour ${x.reps} ${x.reps > 1 ? 'répétitions' : 'répétition'}`, poids: x.weight, reps: x.reps });
+      records.push({ nom: x.name, texte: traduire("{0} kg pour {1} {2}", nombre(x.weight, 1), x.reps, x.reps > 1 ? 'répétitions' : 'répétition'), poids: x.weight, reps: x.reps });
     }
   } catch {
     // pas de record connu
@@ -104,7 +105,7 @@ export async function chargerSeance(id: number): Promise<CarteData | null> {
   }
   return {
     moment: 'seance',
-    titre: nomSport(t.sport) || 'Ma séance',
+    titre: nomSport(t.sport) || traduire('Ma séance'),
     sousTitre: dateLongue(t.date),
     sport: first,
     famille: familleDe(getSportCategory(first), first),
@@ -144,7 +145,7 @@ function carteDePesee(ctx: Contexte, idx: number, serie: number): CarteData {
   const raison = raisonPesee({ poids: w.weight, historique, depart: ctx.depart, objectif: ctx.objectif, sens: ctx.sens });
   return {
     moment: 'pesee',
-    titre: raison?.texte ?? 'Ma pesée',
+    titre: raison?.texte ?? traduire('Ma pesée'),
     sousTitre: dateLongue(w.date),
     pesee: { poids: w.weight, precedent: historique.length ? historique[historique.length - 1] : null, depart: ctx.depart, objectif: ctx.objectif, raison },
     serieSemaines: serie,
@@ -183,7 +184,7 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
     const dow = (dateDe(t.date).getDay() + 6) % 7;
     jours[dow] = true;
     minutes += durationOf(t);
-    const n = nomSport(t.sport) || 'Séance';
+    const n = nomSport(t.sport) || traduire('Séance');
     sports.set(n, (sports.get(n) ?? 0) + 1);
     const j = parJour![dow];
     if (!j.sports.includes(n)) j.sports.push(n);
@@ -202,7 +203,7 @@ export async function chargerSemaine(lundi: string, deja?: { trainings?: Trainin
   }
   return {
     moment: 'semaine',
-    titre: 'Ma semaine',
+    titre: traduire('Ma semaine'),
     sousTitre: plageSemaine(lundi),
     semaine: {
       debut: lundi,

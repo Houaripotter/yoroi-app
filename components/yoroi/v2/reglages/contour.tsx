@@ -15,22 +15,23 @@ import React from 'react';
 import { View } from 'react-native';
 import type { Espace } from '@/lib/v2/espace';
 import { useYoroiTheme } from '@/components/yoroi';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ContourRond = NonNullable<Espace['contourRond']>;
 
 export const CONTOURS: { id: ContourRond; nom: string; sub: string }[] = [
-  { id: 'aucun', nom: 'Aucun', sub: 'Ta photo seule' },
-  { id: 'fin', nom: 'Fin', sub: 'Un cercle blanc discret' },
-  { id: 'or', nom: 'Or', sub: 'Un cercle doré' },
-  { id: 'indigo', nom: 'Indigo', sub: 'Un cercle bleu nuit' },
-  { id: 'noir', nom: 'Noir', sub: 'Un cercle noir, cerné de clair la nuit' },
-  { id: 'blanc', nom: 'Blanc', sub: 'Un cercle blanc franc' },
-  { id: 'rouge', nom: 'Rouge', sub: 'Un cercle rouge brique' },
-  { id: 'vert', nom: 'Vert', sub: 'Un cercle vert forêt' },
-  { id: 'ciel', nom: 'Bleu ciel', sub: 'Un cercle bleu ciel' },
-  { id: 'violet', nom: 'Violet', sub: 'Un cercle violet' },
-  { id: 'rose', nom: 'Rose', sub: 'Un cercle rose framboise' },
-  { id: 'orange', nom: 'Orange', sub: 'Un cercle orange cuivré' },
+  { id: 'aucun', nom: traduire('Aucun'), sub: traduire('Ta photo seule') },
+  { id: 'fin', nom: 'Fin', sub: traduire('Un cercle blanc discret') },
+  { id: 'or', nom: 'Or', sub: traduire('Un cercle doré') },
+  { id: 'indigo', nom: 'Indigo', sub: traduire('Un cercle bleu nuit') },
+  { id: 'noir', nom: 'Noir', sub: traduire('Un cercle noir, cerné de clair la nuit') },
+  { id: 'blanc', nom: 'Blanc', sub: traduire('Un cercle blanc franc') },
+  { id: 'rouge', nom: 'Rouge', sub: traduire('Un cercle rouge brique') },
+  { id: 'vert', nom: 'Vert', sub: traduire('Un cercle vert forêt') },
+  { id: 'ciel', nom: 'Bleu ciel', sub: traduire('Un cercle bleu ciel') },
+  { id: 'violet', nom: 'Violet', sub: traduire('Un cercle violet') },
+  { id: 'rose', nom: 'Rose', sub: traduire('Un cercle rose framboise') },
+  { id: 'orange', nom: 'Orange', sub: traduire('Un cercle orange cuivré') },
 ];
 
 /** Les anneaux de couleur : franche (papier clair et scene) et lumineuse (papier sombre) */

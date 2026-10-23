@@ -8,6 +8,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { BigButton, Hanko } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type LastSessionVM = {
   title: string;
@@ -68,7 +69,7 @@ export function LastSessionCard({ vm, onRepeat, onOpen }: { vm: LastSessionVM; o
         {onRepeat || onOpen ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {onRepeat ? <BigButton label="Refaire" icon="repeat" tone="accent" onPress={onRepeat} style={{ flex: 1 }} /> : null}
-            {onOpen ? <BigButton label="Détails" tone="soft" onPress={onOpen} style={{ flex: 1 }} /> : null}
+            {onOpen ? <BigButton label={traduire("Détails")} tone="soft" onPress={onOpen} style={{ flex: 1 }} /> : null}
           </View>
         ) : null}
       </View>

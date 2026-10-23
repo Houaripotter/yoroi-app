@@ -15,13 +15,14 @@ import { BrushRing, Card, CIcon, D, DetailScreen, EmptyState, Enter, Glass, InkB
 import type { CIconName } from '@/components/yoroi/v2/combat/ui';
 import { Legend, StackColumns } from '@/components/yoroi/v2/combat/charts';
 import { useCombatArt } from '@/components/yoroi/v2/combat/images';
+import { traduire } from '@/lib/i18n/tr';
 
 const LINKS: { label: string; sub: string; icon: CIconName; route: string }[] = [
-  { label: 'Partenaires', sub: 'Ton sparring', icon: 'users', route: '/sparring-partners' },
-  { label: 'Débriefs', sub: 'Tes rounds notés', icon: 'book', route: '/rounds-insights' },
-  { label: 'Plan de jeu', sub: 'Ta checklist', icon: 'target', route: '/game-plan' },
+  { label: 'Partenaires', sub: traduire('Ton sparring'), icon: 'users', route: '/sparring-partners' },
+  { label: traduire('Débriefs'), sub: traduire('Tes rounds notés'), icon: 'book', route: '/rounds-insights' },
+  { label: traduire('Plan de jeu'), sub: traduire('Ta checklist'), icon: 'target', route: '/game-plan' },
   { label: 'Carte JJB', sub: 'Positions, finitions', icon: 'map', route: '/bjj-positions' },
-  { label: 'Tatami', sub: 'Ton temps de mat', icon: 'clock', route: '/mat-time' },
+  { label: 'Tatami', sub: traduire('Ton temps de mat'), icon: 'clock', route: '/mat-time' },
 ];
 
 export default function CombatAnalyticsScreen() {
@@ -38,28 +39,25 @@ export default function CombatAnalyticsScreen() {
   const wr = decided > 0 ? Math.round((g.w / decided) * 100) : 0;
 
   return (
-    <PremiumGate source="analyse_combat" featureTitle="Analyse de combat" perks={['Ton taux de victoire sur tous tes rounds', 'Tes partenaires et tes soumissions analysés', 'Tes fiches tactiques et ton plan de jeu']}>
-      <DetailScreen title="Analyse de combat" subtitle="Ce que disent tes rounds">
+    <PremiumGate source="analyse_combat" featureTitle={traduire("Analyse de combat")} perks={[traduire('Ton taux de victoire sur tous tes rounds'), traduire('Tes partenaires et tes soumissions analysés'), traduire('Tes fiches tactiques et ton plan de jeu')]}>
+      <DetailScreen title={traduire("Analyse de combat")} subtitle={traduire("Ce que disent tes rounds")}>
         {loaded && empty ? (
           <Enter i={0}>
             <Glass style={{ padding: 0, overflow: 'hidden' }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
                 <View style={{ flex: 1, padding: 20, gap: 8 }}>
                   <Ink size={23} weight="black" tight>
-                    Tes combats vont parler
-                  </Ink>
+                    {traduire("Tes combats vont parler")}</Ink>
                   <Ink size={14} color={P.ink2}>
-                    Note tes rounds de sparring : partenaire, résultat, finition. Ici, tu verras qui te pose problème et ce qui passe.
-                  </Ink>
+                    {traduire("Note tes rounds de sparring : partenaire, résultat, finition. Ici, tu verras qui te pose problème et ce qui passe.")}</Ink>
                 </View>
                 <Image source={art} style={{ width: 118, height: 165 }} resizeMode="contain" />
               </View>
               <View style={{ padding: 16, paddingTop: 0 }}>
-                <Press onPress={() => router.push('/seance/combat' as any)} haptic="medium" accessibilityRole="button" accessibilityLabel="Nouvelle séance de combat">
+                <Press onPress={() => router.push('/seance/combat' as any)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Nouvelle séance de combat")}>
                   <View style={{ height: 58, borderRadius: 20, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
                     <Ink size={17} weight="extraBold" color={P.white}>
-                      Nouvelle séance de combat
-                    </Ink>
+                      {traduire("Nouvelle séance de combat")}</Ink>
                   </View>
                 </Press>
               </View>
@@ -78,8 +76,7 @@ export default function CombatAnalyticsScreen() {
                       {pctText(wr)}
                     </Ink>
                     <Ink size={11} weight="bold" color={P.ink2}>
-                      de victoires
-                    </Ink>
+                      {traduire("de victoires")}</Ink>
                   </View>
                 </View>
                 <View style={{ flex: 1 }}>
@@ -90,7 +87,7 @@ export default function CombatAnalyticsScreen() {
                 <Stat value={String(g.rounds)} label="rounds" />
                 <Stat value={String(partners.length)} label="partenaires" />
                 <Stat value={String(g.sg)} label="finitions" color={V} />
-                <Stat value={String(techniques.length)} label="thèmes" />
+                <Stat value={String(techniques.length)} label={traduire("thèmes")} />
               </View>
             </Glass>
           </Enter>
@@ -118,12 +115,12 @@ export default function CombatAnalyticsScreen() {
 
         {partners.length > 0 ? (
           <>
-            <Section title="Partenaires de sparring" sub={plural(partners.length, 'partenaire')} action="Tous" onAction={() => router.push('/sparring-partners' as any)} />
+            <Section title={traduire("Partenaires de sparring")} sub={plural(partners.length, 'partenaire')} action={traduire("Tous")} onAction={() => router.push('/sparring-partners' as any)} />
             {partners.slice(0, 12).map((p, i) => {
               const d = p.wins + p.losses + p.draws;
               return (
                 <Enter key={p.name} i={Math.min(i, 8)}>
-                  <Press onPress={() => router.push({ pathname: '/sparring-partners', params: { partnerName: p.name } } as any)} accessibilityRole="button" accessibilityLabel={`Profil de ${p.name}`}>
+                  <Press onPress={() => router.push({ pathname: '/sparring-partners', params: { partnerName: p.name } } as any)} accessibilityRole="button" accessibilityLabel={traduire("Profil de {0}", p.name)}>
                     <Card style={{ gap: 10 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                         <Ink size={14} weight="black" color={i < 3 ? P.accent : P.muted} style={{ width: 22 }}>
@@ -163,14 +160,14 @@ export default function CombatAnalyticsScreen() {
 
         {techniques.length > 0 ? (
           <>
-            <Section title="Techniques travaillées" sub={plural(techniques.length, 'thème différent', 'thèmes différents')} />
+            <Section title={traduire("Techniques travaillées")} sub={plural(techniques.length, traduire('thème différent'), traduire('thèmes différents'))} />
             <Card style={{ gap: 14 }}>
               {techniques.slice(0, 10).map((t, i) => (
                 <View key={t.name} style={{ gap: 2 }}>
-                  <RankRow index={i} label={t.name} value={t.count} max={techniques[0].count} color={N} suffix=" fois" />
+                  <RankRow index={i} label={t.name} value={t.count} max={techniques[0].count} color={N} suffix={traduire(" fois")} />
                   {t.lastSession ? (
                     <Ink size={11} weight="bold" color={P.muted} style={{ paddingLeft: 36 }}>
-                      {`Dernière fois le ${shortDate(t.lastSession, true)}`}
+                      {traduire("Dernière fois le {0}", shortDate(t.lastSession, true))}
                     </Ink>
                   ) : null}
                 </View>
@@ -181,9 +178,9 @@ export default function CombatAnalyticsScreen() {
 
         {subs.length > 0 ? (
           <>
-            <Section title="Forces et failles" sub="Soumissions placées et subies" />
+            <Section title={traduire("Forces et failles")} sub={traduire("Soumissions placées et subies")} />
             <Card style={{ gap: 14 }}>
-              <Legend items={[{ label: 'Placées', color: V }, { label: 'Subies', color: D }]} />
+              <Legend items={[{ label: traduire('Placées'), color: V }, { label: 'Subies', color: D }]} />
               {subs.slice(0, 12).map((s) => {
                 const m = Math.max(1, s.given, s.taken);
                 const force = s.given >= s.taken;
@@ -224,7 +221,7 @@ export default function CombatAnalyticsScreen() {
 
         {ratio.total > 0 ? (
           <>
-            <Section title="Drilling et sparring" sub="Séances des six derniers mois" />
+            <Section title={traduire("Drilling et sparring")} sub={traduire("Séances des six derniers mois")} />
             <Card style={{ gap: 14 }}>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1, gap: 2 }}>
@@ -232,7 +229,7 @@ export default function CombatAnalyticsScreen() {
                     {pctText(ratio.dPct)}
                   </Ink>
                   <Ink size={12} weight="bold" color={P.ink2}>
-                    {`drilling, ${plural(ratio.drilling, 'séance')}`}
+                    {`drilling, ${plural(ratio.drilling, traduire('séance'))}`}
                   </Ink>
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
@@ -240,7 +237,7 @@ export default function CombatAnalyticsScreen() {
                     {pctText(ratio.sPct)}
                   </Ink>
                   <Ink size={12} weight="bold" color={P.ink2}>
-                    {`sparring, ${plural(ratio.sparring, 'séance')}`}
+                    {`sparring, ${plural(ratio.sparring, traduire('séance'))}`}
                   </Ink>
                 </View>
               </View>
@@ -258,7 +255,7 @@ export default function CombatAnalyticsScreen() {
           </>
         ) : null}
 
-        {loaded && empty ? null : !loaded ? <EmptyState title="Lecture de tes rounds" text="Un instant." /> : null}
+        {loaded && empty ? null : !loaded ? <EmptyState title={traduire("Lecture de tes rounds")} text={traduire("Un instant.")} /> : null}
       </DetailScreen>
     </PremiumGate>
   );

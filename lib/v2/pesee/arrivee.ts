@@ -15,6 +15,7 @@ import { IMC_BAS, imcDe } from './estimation';
 import { prevoir } from './predictions';
 import type { DecisionTorii, Ligne, MemoTorii, ModeLigne } from './ligneDirectrice';
 import { arriveeReelle, cleDuPlan, creerLigne, dateArriveePlan, decisionTorii, departDuPlan, jourLong, modeDuPlan, toriiDeRepli } from './ligneDirectrice';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type ProfilPlan = { start_date?: string | null; start_weight?: number | null; height_cm?: number | null; weight_goal?: string | null };
 type Pesee = { date: string; value: number };
@@ -85,10 +86,10 @@ export function toriiDuJour(args: { profil: ProfilPlan | null | undefined; serie
  */
 export function arriveePrevueTexte(t: Pick<ToriiDuJour, 'torii' | 'atteint'>, today: string): string | null {
   if (!t.torii || t.atteint || t.torii.slice(0, 10) <= today) return null;
-  return `le ${jourLong(t.torii, today)}`;
+  return traduire("le {0}", jourLong(t.torii, today));
 }
 
-const kgCourt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', ','));
+const kgCourt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL));
 
 /**
  * La mini carte de Progres (« Ton arrivée prévue ») : ton cap et la date du torii, « 80 kg vers le 10 novembre ».
@@ -96,5 +97,5 @@ const kgCourt = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math
  */
 export function ligneArriveeCap(t: Pick<ToriiDuJour, 'torii' | 'atteint'>, cap: number | null, today: string): string | null {
   if (cap == null || !(cap > 0) || !t.torii || t.atteint || t.torii.slice(0, 10) <= today) return null;
-  return `${kgCourt(cap)} kg vers le ${jourLong(t.torii, today)}`;
+  return traduire("{0} kg vers le {1}", kgCourt(cap), jourLong(t.torii, today));
 }

@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { traduire } from '@/lib/i18n/tr';
 
 export type StyleSante = 'anneaux' | 'clair' | 'cadran' | 'nuit' | 'mosaique';
 
@@ -19,8 +20,8 @@ export const STYLES_SANTE: { id: StyleSante; nom: string }[] = [
   { id: 'anneaux', nom: 'Anneaux' },
   { id: 'clair', nom: 'Clair' },
   { id: 'cadran', nom: 'Cadran' },
-  { id: 'nuit', nom: 'Nuit' },
-  { id: 'mosaique', nom: 'Mosaïque' },
+  { id: 'nuit', nom: traduire('Nuit') },
+  { id: 'mosaique', nom: traduire('Mosaïque') },
 ];
 
 /**

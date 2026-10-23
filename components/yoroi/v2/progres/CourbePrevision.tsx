@@ -15,13 +15,14 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { jourCourt, jourDe } from '@/lib/v2/pesee/ligneDirectrice';
 import type { Prevision, Unite } from '@/lib/v2/pesee/predictions';
 import { poidsTexte, versUnite } from '@/lib/v2/pesee/predictions';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const DAY = 86400000;
 const TORII_W = 30;
 const TORII_H = TORII_W / TORII_RATIO;
 const AXIS = fontFamilies.medium;
 const BOLD = fontFamilies.extraBold ?? fontFamilies.bold;
-const MOIS_COURT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 export function CourbePrevision({ passe, prev, unite, height = 230 }: { passe: { date: string; value: number; trend: number }[]; prev: Prevision; unite: Unite; height?: number }) {
   const [width, setWidth] = useState(0);
@@ -94,7 +95,7 @@ export function CourbePrevision({ passe, prev, unite, height = 230 }: { passe: {
     for (let v = Math.ceil(uLo / pasU) * pasU; v <= uHi; v += pasU) ticks.push(unite === 'lb' ? v / 2.20462 : v);
     const tickTxt = (t: number) => {
       const v = versUnite(t, unite);
-      return Math.abs(v - Math.round(v)) < 0.01 ? String(Math.round(v)) : v.toFixed(1).replace('.', ',');
+      return Math.abs(v - Math.round(v)) < 0.01 ? String(Math.round(v)) : v.toFixed(1).replace('.', DECIMAL);
     };
     // mois
     const mois: { x: number; t: string }[] = [];
@@ -109,7 +110,7 @@ export function CourbePrevision({ passe, prev, unite, height = 230 }: { passe: {
   }, [width, height, passe, prev, unite]);
 
   const derniere = prev.dates[prev.dates.length - 1];
-  const a11y = `Ta prévision : ta tendance des dernières semaines, puis ${poidsTexte(derniere.valeur, unite)} ${derniere.label.toLowerCase()}, entre ${poidsTexte(derniere.bas, unite)} et ${poidsTexte(derniere.haut, unite)}${prev.torii && prev.cap != null ? `. Ta ligne arrive à ${poidsTexte(prev.cap, unite)} au torii, le ${jourCourt(prev.torii)}` : ''}.`;
+  const a11y = traduire("Ta prévision : ta tendance des dernières semaines, puis {0} {1}, entre {2} et {3}{4}.", poidsTexte(derniere.valeur, unite), derniere.label.toLowerCase(), poidsTexte(derniere.bas, unite), poidsTexte(derniere.haut, unite), prev.torii && prev.cap != null ? `. Ta ligne arrive à ${poidsTexte(prev.cap, unite)} au torii, le ${jourCourt(prev.torii)}` : '');
 
   return (
     <View onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))} style={{ height }} accessible accessibilityRole="image" accessibilityLabel={a11y}>
@@ -127,8 +128,7 @@ export function CourbePrevision({ passe, prev, unite, height = 230 }: { passe: {
             {/* aujourd'hui */}
             <Line x1={g.xAuj} x2={g.xAuj} y1={g.top - 8} y2={g.base} stroke={POIDS.encre} strokeOpacity={0.22} strokeWidth={1.2} strokeDasharray="3 4" />
             <SvgText x={g.xAuj} y={g.top - 12} textAnchor="middle" fontSize={10.5} fontFamily={BOLD} fill={POIDS.axe}>
-              aujourd’hui
-            </SvgText>
+              {traduire("aujourd’hui")}</SvgText>
             {/* la fourchette, puis ta ligne, puis ta prevision */}
             <Path d={g.bande} fill={POIDS.c2} fillOpacity={sombre ? 0.2 : 0.13} />
             {g.mid ? <Path d={g.mid} fill="none" stroke={sombre ? '#12141B' : '#FFFFFF'} strokeWidth={6} strokeOpacity={0.9} strokeDasharray="8 5" strokeDashoffset={g.offset} strokeLinecap="round" /> : null}
@@ -147,7 +147,7 @@ export function CourbePrevision({ passe, prev, unite, height = 230 }: { passe: {
             ) : null}
             {g.horsChamp && prev.torii && g.yFinLigne != null ? (
               <SvgText x={g.W - g.GUT} y={Math.max(g.top, g.yFinLigne - 8)} textAnchor="end" fontSize={11} fontFamily={BOLD} fill={POIDS.or}>
-                {`torii le ${jourCourt(prev.torii)} ›`}
+                {traduire("torii le {0} ›", jourCourt(prev.torii))}
               </SvgText>
             ) : null}
             {g.mois.map((m) => (

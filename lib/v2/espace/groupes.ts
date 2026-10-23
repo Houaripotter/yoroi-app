@@ -9,24 +9,25 @@ import { CLASSIQUE_SCENE_IDS } from '@/lib/v2/espace/classique';
 import { NATURE_SCENE_IDS } from '@/lib/v2/espace/nature';
 import { VIE_SCENE_IDS } from '@/lib/v2/espace/packsScenes';
 import { VOYAGE_SCENE_IDS } from '@/lib/v2/espace/voyages';
+import { traduire } from '@/lib/i18n/tr';
 
 export type GroupeScenes = 'toutes' | 'voyages' | 'vie' | 'classique' | 'nature' | 'samourai' | 'lanternes' | 'jour' | 'saisons' | 'soir';
 
 export const GROUPES: { key: GroupeScenes; label: string }[] = [
-  { key: 'toutes', label: 'Toutes' },
+  { key: 'toutes', label: traduire('Toutes') },
   // 18 octobre 2026 : le pack Voyages, scenes animees (Tokyo, Paris, desert, neige, avion)
   { key: 'voyages', label: 'Voyages' },
   // 16 octobre 2026 : les scenes des packs Vie reelle (caserne, chantier, stade, chateau...)
-  { key: 'vie', label: 'Vie réelle' },
+  { key: 'vie', label: traduire('Vie réelle') },
   // vague 45 : les scenes neutres, sans le Japon
   { key: 'classique', label: 'Classique' },
   // 14 octobre 2026 : plage, desert, foret, cascade, mer et buildings, sans le Japon
-  { key: 'nature', label: 'Nature et ville' },
-  { key: 'samourai', label: 'Samouraï' },
-  { key: 'lanternes', label: 'Lanternes de nuit' },
-  { key: 'jour', label: 'Jour' },
+  { key: 'nature', label: traduire('Nature et ville') },
+  { key: 'samourai', label: traduire('Samouraï') },
+  { key: 'lanternes', label: traduire('Lanternes de nuit') },
+  { key: 'jour', label: traduire('Jour') },
   { key: 'saisons', label: 'Saisons' },
-  { key: 'soir', label: 'Soir et nuit' },
+  { key: 'soir', label: traduire('Soir et nuit') },
 ];
 
 const JOUR: SceneId[] = ['dojo', 'bambous', 'jardin', 'sommet', 'machiya_aube', 'rizieres', 'temple', 'montagne'];

@@ -11,6 +11,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getTrainings } from './database';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 const LAST_CHECK_KEY = '@yoroi_streak_risk_last_check';
 const LAST_SENT_KEY = '@yoroi_streak_risk_last_sent';
@@ -95,17 +96,17 @@ export async function checkAndNotifyStreakAtRisk(): Promise<void> {
     // 6. Streak ≥ 3 + pas de séance aujourd'hui → notifier
     const messages = streak >= 20
       ? {
-          title: `Ta série de ${streak} jours t’attend`,
-          body: `Pas encore de séance notée aujourd’hui. Quinze minutes suffisent pour la garder.`,
+          title: traduire("Ta série de {0} jours t’attend", streak),
+          body: traduire(`Pas encore de séance notée aujourd’hui. Quinze minutes suffisent pour la garder.`),
         }
       : streak >= 10
       ? {
-          title: `${streak} jours d’affilée`,
-          body: `Il te reste deux heures pour noter ta séance du jour.`,
+          title: traduire("{0} jours d’affilée", streak),
+          body: traduire(`Il te reste deux heures pour noter ta séance du jour.`),
         }
       : {
-          title: `${streak} jours d’affilée`,
-          body: `Ta séance du jour prolonge ta série. Tu as encore le temps.`,
+          title: traduire("{0} jours d’affilée", streak),
+          body: traduire(`Ta séance du jour prolonge ta série. Tu as encore le temps.`),
         };
 
     // Pas de demande d'autorisation surprise : on n'envoie que si déjà autorisé

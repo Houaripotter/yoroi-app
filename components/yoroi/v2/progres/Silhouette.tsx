@@ -10,6 +10,7 @@ import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { Ink } from '../Ink';
 import type { ViewKey } from '@/lib/v2/progres/measures';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 type Zone = { d: string; left: [number, number]; right: [number, number]; side: 'left' | 'right' };
 
@@ -91,7 +92,7 @@ function spread(ys: number[], min: number, max: number, gap: number): number[] {
 function deltaText(d: number | null | undefined): string {
   if (d === null || d === undefined) return '';
   if (Math.abs(d) < 0.25) return '=';
-  return `${d < 0 ? '−' : '+'}${Math.abs(d).toFixed(1).replace('.', ',').replace(',0', '')}`;
+  return `${d < 0 ? '−' : '+'}${Math.abs(d).toFixed(1).replace('.', DECIMAL).replace(',0', '')}`;
 }
 
 export function Silhouette({ items, height = 310, active = null, onPressItem }: Props) {
@@ -175,7 +176,7 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
             const pos = { position: 'absolute' as const, top: p.top, width: colW, height: CALLOUT_H, justifyContent: 'center' as const, [p.side === 'left' ? 'left' : 'right']: 0 };
             if (!onPressItem) return <View key={p.item.key} style={pos}>{body}</View>;
             return (
-              <Pressable key={p.item.key} onPress={() => onPressItem(p.item.key)} accessibilityRole="button" accessibilityLabel={`${p.item.label}, ${p.item.value}${dt && dt !== '=' ? `, ${dt} centimètre` : ''}`} accessibilityState={{ selected: on }} hitSlop={4} style={pos}>
+              <Pressable key={p.item.key} onPress={() => onPressItem(p.item.key)} accessibilityRole="button" accessibilityLabel={`${p.item.label}, ${p.item.value}${dt && dt !== '=' ? traduire(", {0} centimètre", dt) : ''}`} accessibilityState={{ selected: on }} hitSlop={4} style={pos}>
                 {body}
               </Pressable>
             );

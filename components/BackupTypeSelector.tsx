@@ -12,6 +12,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const BackupTypeSelectorInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -26,7 +27,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         includePhotos: type === 'full',
       });
       if (!ok) {
-        appAlert('Oups', 'La sauvegarde n’a pas pu être créée.');
+        appAlert('Oups', traduire('La sauvegarde n’a pas pu être créée.'));
       }
     } finally {
       setExporting(null);
@@ -35,7 +36,7 @@ const BackupTypeSelectorInner: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#1E1E22' : '#fff', borderColor: colors.border ?? '#E5E7EB' }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Type de sauvegarde</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{traduire("Type de sauvegarde")}</Text>
 
       {/* Complet (avec photos) */}
       <TouchableOpacity
@@ -43,17 +44,16 @@ const BackupTypeSelectorInner: React.FC = () => {
         disabled={!!exporting}
         activeOpacity={0.8}
         style={[styles.option, { borderColor: '#0EA5E940', backgroundColor: isDark ? 'rgba(14,165,233,0.08)' : '#F0F9FF' }]}
-        accessibilityLabel="Sauvegarde complète avec photos"
+        accessibilityLabel={traduire("Sauvegarde complète avec photos")}
         accessibilityRole="button"
       >
         <View style={[styles.iconWrap, { backgroundColor: '#0EA5E920' }]}>
           <ImageIcon size={20} color="#0EA5E9" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.optionTitle, { color: colors.text }]}>Complète (avec photos)</Text>
+          <Text style={[styles.optionTitle, { color: colors.text }]}>{traduire("Complète (avec photos)")}</Text>
           <Text style={[styles.optionSub, { color: colors.textMuted ?? '#888' }]}>
-            Tout : données + photos profil/clubs/transformation. Taille : 5-50 MB.
-          </Text>
+            {traduire("Tout : données + photos profil/clubs/transformation. Taille : 5-50 MB.")}</Text>
         </View>
         {exporting === 'full' ? (
           <ActivityIndicator color="#0EA5E9" size="small" />
@@ -68,17 +68,16 @@ const BackupTypeSelectorInner: React.FC = () => {
         disabled={!!exporting}
         activeOpacity={0.8}
         style={[styles.option, { borderColor: '#8B5CF640', backgroundColor: isDark ? 'rgba(139,92,246,0.08)' : '#F5F3FF' }]}
-        accessibilityLabel="Sauvegarde légère sans photos"
+        accessibilityLabel={traduire("Sauvegarde légère sans photos")}
         accessibilityRole="button"
       >
         <View style={[styles.iconWrap, { backgroundColor: '#8B5CF620' }]}>
           <FileText size={20} color="#8B5CF6" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.optionTitle, { color: colors.text }]}>Légère (sans photos)</Text>
+          <Text style={[styles.optionTitle, { color: colors.text }]}>{traduire("Légère (sans photos)")}</Text>
           <Text style={[styles.optionSub, { color: colors.textMuted ?? '#888' }]}>
-            Seulement les données. Taille : 100-500 KB. Idéal pour email.
-          </Text>
+            {traduire("Seulement les données. Taille : 100-500 KB. Idéal pour email.")}</Text>
         </View>
         {exporting === 'light' ? (
           <ActivityIndicator color="#8B5CF6" size="small" />

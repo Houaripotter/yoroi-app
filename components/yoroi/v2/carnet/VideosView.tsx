@@ -15,6 +15,7 @@ import { PlayerModal } from './videos/PlayerModal';
 import { AddVideoSheet } from './videos/AddVideoSheet';
 import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** Liste du module conservee pour les anciens appelants */
 export const MUSCLE_OPTIONS = [
@@ -37,7 +38,7 @@ export async function openVideo(v: CarnetVideo, play: (v: CarnetVideo) => void) 
     return;
   }
   const ok = await safeOpenURL(v.uri);
-  if (!ok) appAlert('Impossible d’ouvrir', 'Installe l’application ou ouvre ce lien dans ton navigateur.');
+  if (!ok) appAlert(traduire('Impossible d’ouvrir'), traduire('Installe l’application ou ouvre ce lien dans ton navigateur.'));
 }
 
 type Props = {
@@ -81,12 +82,12 @@ export function VideosView({ refreshKey, addKey = 0 }: Props) {
     const m = new Map<string, { key: string; label: string; count: number }>();
     videos.forEach((v) => {
       const k = keyOf(v);
-      const label = k === 'muscle' ? 'Muscles' : k === 'autre' ? 'Sans rangement' : v.sportLabel || 'Sport';
+      const label = k === 'muscle' ? 'Muscles' : k === 'autre' ? traduire('Sans rangement') : v.sportLabel || 'Sport';
       if (!m.has(k)) m.set(k, { key: k, label, count: 0 });
       m.get(k)!.count++;
     });
     const rest = Array.from(m.values()).sort((a, b) => (a.key === 'autre' ? 1 : b.key === 'autre' ? -1 : a.key === 'muscle' ? -1 : b.key === 'muscle' ? 1 : b.count - a.count));
-    return [{ key: 'all', label: 'Toutes', count: videos.length }, ...rest];
+    return [{ key: 'all', label: traduire('Toutes'), count: videos.length }, ...rest];
   }, [videos]);
 
   const list = useMemo(() => {
@@ -113,17 +114,17 @@ export function VideosView({ refreshKey, addKey = 0 }: Props) {
 
   const manage = (v: CarnetVideo) => {
     appAlert(v.title, placeOf(v), [
-      { text: 'Renommer ou ranger', onPress: () => setEditing(v) },
+      { text: traduire('Renommer ou ranger'), onPress: () => setEditing(v) },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: () =>
-          appAlert('Supprimer la vidéo ?', `« ${v.title} » sera retirée de YOROI.`, [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Supprimer', style: 'destructive', onPress: () => removeVideo(v).then(load) },
+          appAlert(traduire('Supprimer la vidéo ?'), traduire("« {0} » sera retirée de YOROI.", v.title), [
+            { text: traduire('Annuler'), style: 'cancel' },
+            { text: traduire('Supprimer'), style: 'destructive', onPress: () => removeVideo(v).then(load) },
           ]),
       },
-      { text: 'Annuler', style: 'cancel' },
+      { text: traduire('Annuler'), style: 'cancel' },
     ]);
   };
 
@@ -136,9 +137,9 @@ export function VideosView({ refreshKey, addKey = 0 }: Props) {
       {videos.length === 0 ? (
         <CarnetEmpty
           illus="videos"
-          title="Garde ici les vidéos qui t’inspirent"
-          text="Un exercice, une technique : importe la vidéo depuis ta galerie, donne-lui un titre et range-la par muscle ou par sport."
-          action="Importer une vidéo"
+          title={traduire("Garde ici les vidéos qui t’inspirent")}
+          text={traduire("Un exercice, une technique : importe la vidéo depuis ta galerie, donne-lui un titre et range-la par muscle ou par sport.")}
+          action={traduire("Importer une vidéo")}
           onAction={() => setAdding(true)}
         />
       ) : (
@@ -147,16 +148,16 @@ export function VideosView({ refreshKey, addKey = 0 }: Props) {
             <Summary
               illus="videos"
               items={[
-                { value: String(videos.length), label: `vidéo${videos.length > 1 ? 's' : ''}` },
-                { value: String(stats.muscles), label: `muscle${stats.muscles > 1 ? 's' : ''} rangé${stats.muscles > 1 ? 's' : ''}` },
+                { value: String(videos.length), label: traduirePluriel(videos.length, videos.length > 1, "vidéo", "vidéos") },
+                { value: String(stats.muscles), label: traduirePluriel(stats.muscles, stats.muscles > 1, "muscle rangé", "muscles rangés") },
                 { value: String(stats.tech), label: `technique${stats.tech > 1 ? 's' : ''}` },
               ]}
             />
           </Enter>
           <FilterChips items={chips} value={filter} onChange={(k) => { setFilter(k); setQuery(''); }} />
-          {videos.length > 6 ? <Field value={query} onChangeText={setQuery} placeholder="Chercher une vidéo" maxLength={60} autoCorrect={false} accessibilityLabel="Chercher une vidéo" /> : null}
+          {videos.length > 6 ? <Field value={query} onChangeText={setQuery} placeholder={traduire("Chercher une vidéo")} maxLength={60} autoCorrect={false} accessibilityLabel={traduire("Chercher une vidéo")} /> : null}
           {list.length === 0 ? (
-            <CarnetEmpty compact illus="videos" title="Rien trouvé" text="Aucune vidéo ne correspond. Essaie un autre mot ou un autre rangement." />
+            <CarnetEmpty compact illus="videos" title={traduire("Rien trouvé")} text={traduire("Aucune vidéo ne correspond. Essaie un autre mot ou un autre rangement.")} />
           ) : (
             sections.map((s) => (
               <View key={s.title || 'toutes'} style={{ gap: 10 }}>

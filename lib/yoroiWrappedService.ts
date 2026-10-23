@@ -8,6 +8,7 @@ import { getTrainings, getWeights } from './database';
 import { getAllMeasurements } from './storage';
 import { getUnlockedBadges } from './badges';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface WrappedStats {
   year: number;
@@ -27,8 +28,8 @@ export interface WrappedStats {
 }
 
 const MONTH_NAMES = [
-  'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre',
+  traduire('Janvier'), 'Fevrier', traduire('Mars'), traduire('Avril'), traduire('Mai'), traduire('Juin'),
+  traduire('Juillet'), 'Aout', traduire('Septembre'), traduire('Octobre'), traduire('Novembre'), 'Decembre',
 ];
 
 export async function generateWrappedStats(year?: number): Promise<WrappedStats> {

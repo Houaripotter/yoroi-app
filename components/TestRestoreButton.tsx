@@ -18,6 +18,7 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import { formatSize } from '@/lib/utils/formatDate';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const TestRestoreButtonInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -41,17 +42,17 @@ const TestRestoreButtonInner: React.FC = () => {
       try {
         parsed = JSON.parse(content);
       } catch {
-        showResult(false, 'Fichier invalide', 'Le fichier n\'est pas un JSON valide.', size);
+        showResult(false, 'Fichier invalide', traduire('Le fichier n\'est pas un JSON valide.'), size);
         return;
       }
 
       // Détection chiffré
       if (isEncryptedBackup(parsed)) {
-        showResult(true, 'Backup chiffré détecté',
-          'Le fichier est un backup chiffré valide.\n\n' +
-          `Taille : ${formatSize(size)}\n` +
+        showResult(true, traduire('Backup chiffré détecté'),
+          traduire('Le fichier est un backup chiffré valide.\n\n') +
+          traduire("Taille : {0}\n", formatSize(size)) +
           `Algorithme : ${parsed.yoroi_encrypted === '2.0' ? 'AES-256 + HMAC' : 'AES-256 (legacy)'}\n\n` +
-          'Pour voir le contenu, il faudrait le mot de passe, mais le chiffrement est valide et le fichier n\'a pas été altéré.', size);
+          traduire('Pour voir le contenu, il faudrait le mot de passe, mais le chiffrement est valide et le fichier n\'a pas été altéré.'), size);
         return;
       }
 
@@ -63,15 +64,15 @@ const TestRestoreButtonInner: React.FC = () => {
       }
 
       // Vérif checksum si présent
-      let checksumStatus = 'Non présent';
+      let checksumStatus = traduire('Non présent');
       if (parsed.integrity?.checksum && parsed.integrity.algorithm === 'SHA-256') {
         try {
           const { integrity, ...without } = parsed;
           const recomputed = await digestStringAsync(CryptoDigestAlgorithm.SHA256, JSON.stringify(without));
-          checksumStatus = recomputed === integrity.checksum ? 'Valide (intégrité OK)' : 'Invalide (fichier altéré !)';
+          checksumStatus = recomputed === integrity.checksum ? traduire('Valide (intégrité OK)') : traduire('Invalide (fichier altéré !)');
           if (recomputed !== integrity.checksum) {
-            showResult(false, 'Fichier altéré',
-              'Le checksum ne correspond pas. Le fichier a été modifié ou corrompu.', size);
+            showResult(false, traduire('Fichier altéré'),
+              traduire('Le checksum ne correspond pas. Le fichier a été modifié ou corrompu.'), size);
             return;
           }
         } catch { /* ignore */ }
@@ -80,15 +81,15 @@ const TestRestoreButtonInner: React.FC = () => {
       // Compute diff
       const diff = await computeBackupDiff(parsed);
 
-      showResult(true, 'Backup valide et lisible',
-        `Taille : ${formatSize(size)}\n` +
+      showResult(true, traduire('Backup valide et lisible'),
+        traduire("Taille : {0}\n", formatSize(size)) +
         `Version : ${parsed.version ?? 'inconnue'}\n` +
         `Checksum : ${checksumStatus}\n\n` +
-        `Si tu le restaures maintenant :\n${formatDiffMessage(diff)}\n\n` +
-        `Aucune donnée modifiée, c'était juste un test.`, size);
+        traduire("Si tu le restaures maintenant :\n{0}\n\n", formatDiffMessage(diff)) +
+        traduire(`Aucune donnée modifiée, c'était juste un test.`), size);
     } catch (e) {
       logger.error('[TestRestore] Erreur:', e);
-      appAlert('Oups', 'Ce fichier n’a pas pu être vérifié.');
+      appAlert('Oups', traduire('Ce fichier n’a pas pu être vérifié.'));
     } finally {
       setTesting(false);
     }
@@ -106,7 +107,7 @@ const TestRestoreButtonInner: React.FC = () => {
       disabled={testing}
       activeOpacity={0.8}
       style={[styles.container, { backgroundColor: isDark ? '#1E1E22' : '#fff', borderColor: '#10B98140' }]}
-      accessibilityLabel="Tester un backup sans modifier les données"
+      accessibilityLabel={traduire("Tester un backup sans modifier les données")}
       accessibilityRole="button"
     >
       <View style={styles.iconWrap}>
@@ -114,11 +115,10 @@ const TestRestoreButtonInner: React.FC = () => {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.text }]}>
-          {testing ? 'Vérification en cours…' : 'Tester un backup (dry-run)'}
+          {testing ? traduire('Vérification en cours…') : traduire('Tester un backup (dry-run)')}
         </Text>
         <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
-          Vérifie qu'un fichier est valide SANS modifier tes données actuelles.
-        </Text>
+          {traduire("Vérifie qu'un fichier est valide SANS modifier tes données actuelles.")}</Text>
       </View>
       <CheckCircle2 size={16} color="#10B981" />
     </TouchableOpacity>

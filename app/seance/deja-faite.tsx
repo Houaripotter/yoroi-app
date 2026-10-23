@@ -32,12 +32,13 @@ import { saveSeance } from '@/lib/v2/seance/save';
 import { DEFAULT_SPORTS, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const RPE = [
   { value: 3, label: 'Facile' },
-  { value: 5, label: 'Correct' },
+  { value: 5, label: traduire('Correct') },
   { value: 7, label: 'Dur' },
-  { value: 9, label: 'À bloc' },
+  { value: 9, label: traduire('À bloc') },
 ];
 
 const DURATIONS = [30, 45, 60, 90, 120];
@@ -121,7 +122,7 @@ export default function SeanceDejaFaite() {
     setQuery('');
   };
 
-  const dayLabel = date === today ? 'Aujourd’hui' : date === shift(today, -1) ? 'Hier' : longDay(date).charAt(0).toUpperCase() + longDay(date).slice(1);
+  const dayLabel = date === today ? traduire('Aujourd’hui') : date === shift(today, -1) ? traduire('Hier') : longDay(date).charAt(0).toUpperCase() + longDay(date).slice(1);
 
   const save = async () => {
     if (!sport || savingRef.current || saving) return;
@@ -144,7 +145,7 @@ export default function SeanceDejaFaite() {
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       logger.error('Enregistrement impossible', err);
-      appAlert('Oups', 'La séance n’a pas pu être enregistrée. Réessaie.');
+      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -153,7 +154,7 @@ export default function SeanceDejaFaite() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 110, gap: 14 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
-        <EnTete titre="Séance déjà faite" onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={traduire("Séance déjà faite")} onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         <Section title="Sport">
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -168,7 +169,7 @@ export default function SeanceDejaFaite() {
           </View>
           <View style={{ height: 48, borderRadius: 16, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, gap: 10 }}>
             <Icon name="search" size={18} color={c.textMuted} />
-            <TextInput value={query} onChangeText={setQuery} placeholder="Un autre sport" placeholderTextColor={c.textMuted} autoCorrect={false} accessibilityLabel="Chercher un sport" style={[fontStyle('bold'), { flex: 1, fontSize: 15, color: c.ink, paddingVertical: 0 }]} />
+            <TextInput value={query} onChangeText={setQuery} placeholder={traduire("Un autre sport")} placeholderTextColor={c.textMuted} autoCorrect={false} accessibilityLabel={traduire("Chercher un sport")} style={[fontStyle('bold'), { flex: 1, fontSize: 15, color: c.ink, paddingVertical: 0 }]} />
           </View>
           {results.map((s) => (
             <Pressable key={s.id} onPress={() => pickSport(s.id)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, paddingHorizontal: 14, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface })}>
@@ -180,12 +181,12 @@ export default function SeanceDejaFaite() {
         <Section title="Quand">
           <DayNav value={date} onChange={setDate} label={dayLabel} size={20} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 18, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border }}>
-            <Ink size={15} weight="bold">Début</Ink>
-            <Stepper value={startMin} step={15} min={0} max={23 * 60 + 45} unit="minutes" size={22} button={34} format={(v) => `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`} onChange={setStartMin} />
+            <Ink size={15} weight="bold">{traduire("Début")}</Ink>
+            <Stepper value={startMin} step={15} min={0} max={23 * 60 + 45} unit={traduire("minutes")} size={22} button={34} format={(v) => `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`} onChange={setStartMin} />
           </View>
         </Section>
 
-        <Section title="Durée">
+        <Section title={traduire("Durée")}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {DURATIONS.map((d) => {
               const on = d === duration;
@@ -197,11 +198,11 @@ export default function SeanceDejaFaite() {
             })}
           </View>
           <View style={{ alignItems: 'center' }}>
-            <Stepper value={duration} step={5} min={5} max={600} unit="minutes" size={30} format={(v) => fmtMinutes(v)} onChange={setDuration} />
+            <Stepper value={duration} step={5} min={5} max={600} unit={traduire("minutes")} size={30} format={(v) => fmtMinutes(v)} onChange={setDuration} />
           </View>
         </Section>
 
-        <Section title="Comment c’était ?">
+        <Section title={traduire("Comment c’était ?")}>
           <ChoiceRow options={RPE} value={intensity} onChange={setIntensity} columns={4} niveau={niveauRpe} />
         </Section>
 
@@ -210,17 +211,17 @@ export default function SeanceDejaFaite() {
         <TextInput
           value={notes}
           onChangeText={setNotes}
-          placeholder="Une note : ce que tu as travaillé, avec qui"
+          placeholder={traduire("Une note : ce que tu as travaillé, avec qui")}
           placeholderTextColor={c.textMuted}
           multiline
-          accessibilityLabel="Note sur la séance"
+          accessibilityLabel={traduire("Note sur la séance")}
           style={[fontStyle('medium'), { minHeight: 80, fontSize: 15, color: c.ink, padding: 14, borderRadius: 18, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
         />
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 18 }}>
         <Pressable onPress={save} disabled={!sport || saving} accessibilityRole="button" style={({ pressed }) => ({ height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: !sport ? c.border : pressed ? c.accentPressed : c.accent, opacity: saving ? 0.6 : 1, shadowColor: c.accent, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : 'Enregistrer la séance'}</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{saving ? 'Enregistrement...' : traduire('Enregistrer la séance')}</Ink>
         </Pressable>
       </View>
     </View>

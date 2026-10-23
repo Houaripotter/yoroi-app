@@ -18,6 +18,7 @@ import type { IconName } from './Icon';
 import { Hanko, tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { traduire } from '@/lib/i18n/tr';
 
 const FACT_ICON: Record<KeyFact['kind'], IconName> = {
   duree: 'clock',
@@ -49,7 +50,7 @@ export function HistoryCard({ t, femme, stamps = 0, showMonth }: { t: Training; 
         router.push({ pathname: '/workout-detail', params: { id: String(t.id) } } as any);
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${when}${facts.length ? `, ${facts.map((f) => f.text).join(', ')}` : ''}${watch ? `, importée depuis ${sourceLabel(t)}` : ''}${stamps > 0 ? ', record battu' : ''}`}
+      accessibilityLabel={`${title}, ${when}${facts.length ? `, ${facts.map((f) => f.text).join(', ')}` : ''}${watch ? traduire(", importée depuis {0}", sourceLabel(t)) : ''}${stamps > 0 ? ', record battu' : ''}`}
       style={({ pressed }) => ({ flexDirection: 'row', gap: 12, padding: 12, borderRadius: 20, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
     >
       <SportThumb sport={t.sport} femme={femme} size={52} />

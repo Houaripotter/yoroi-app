@@ -48,16 +48,17 @@ import { snapshotBeforeImport } from '@/lib/v2/sauvegarde/avantMiseAJour';
 import { todayIso } from '@/lib/v2/progres/format';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const GROUPS: { id: BalanceGroup; title: string }[] = [
-  { id: 'principal', title: 'Poids et composition' },
-  { id: 'avance', title: 'Les autres mesures' },
+  { id: 'principal', title: traduire('Poids et composition') },
+  { id: 'avance', title: traduire('Les autres mesures') },
   { id: 'segment', title: 'Bras, jambes, tronc' },
   { id: 'mensuration', title: 'Mensurations' },
 ];
 
-const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MOIS_COURT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 const JOURS_COURT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 
 function longDate(iso: string): string {
@@ -77,11 +78,11 @@ function dayTitle(iso: string): string {
 
 /** NUIT 14 : « 89,2 kg enregistré le 13 oct. », avec l'ancien poids s'il est remplace */
 function savedText(weight: number, date: string, old?: number): string {
-  const base = `${fmtBalance(weight, 0.1)} kg enregistré le ${shortDate(date)}`;
-  return old !== undefined ? `${base}, à la place de ${fmtBalance(old, 0.1)} kg (gardé dans tes pesées)` : base;
+  const base = traduire("{0} kg enregistré le {1}", fmtBalance(weight, 0.1), shortDate(date));
+  return old !== undefined ? traduire("{0}, à la place de {1} kg (gardé dans tes pesées)", base, fmtBalance(old, 0.1)) : base;
 }
 
-const FROM: Record<string, string> = { lb: 'converti depuis les livres', st: 'converti depuis les stones', kj: 'converti depuis les kJ', in: 'converti depuis les pouces' };
+const FROM: Record<string, string> = { lb: traduire('converti depuis les livres'), st: traduire('converti depuis les stones'), kj: traduire('converti depuis les kJ'), in: traduire('converti depuis les pouces') };
 /** au-dela, une copie de securite locale est faite avant l'import */
 const SNAPSHOT_OVER = 3;
 
@@ -277,7 +278,7 @@ export default function BalancePhotoScreen() {
   const choosePhotos = async () => {
     if (progress) return;
     try {
-      setProgress('Lecture des dates de tes photos');
+      setProgress(traduire('Lecture des dates de tes photos'));
       const list = await pickDatedPhotos();
       if (!list) return;
       await cleanupPhotos(photos, prepared?.copies);
@@ -288,7 +289,7 @@ export default function BalancePhotoScreen() {
       selectionAsync().catch(() => {});
     } catch (err) {
       logger.warn('[Balance photo] choix des photos impossible', err);
-      setError('Impossible d’ouvrir tes photos. Vérifie que YOROI y a accès dans les réglages du téléphone.');
+      setError(traduire('Impossible d’ouvrir tes photos. Vérifie que YOROI y a accès dans les réglages du téléphone.'));
     } finally {
       setProgress(null);
     }
@@ -302,22 +303,22 @@ export default function BalancePhotoScreen() {
     } catch (err) {
       logger.warn('[Balance photo] copie impossible', err);
     }
-    setSendNotice('Consigne copiée, colle-la dans ton IA avec tes photos.');
+    setSendNotice(traduire('Consigne copiée, colle-la dans ton IA avec tes photos.'));
     notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     if (Platform.OS === 'web') return;
     try {
       let ready = prepared;
       if (!ready) {
-        setProgress(`Préparation de tes photos, 0 sur ${photos.length}`);
-        ready = await preparePhotos(photos, (d, t) => setProgress(`Préparation de tes photos, ${d} sur ${t}`));
+        setProgress(traduire("Préparation de tes photos, 0 sur {0}", photos.length));
+        ready = await preparePhotos(photos, (d, t) => setProgress(traduire("Préparation de tes photos, {0} sur {1}", d, t)));
         setPrepared(ready);
       }
       setProgress(null);
       const shared = await shareDocument(ready.pdf);
-      if (!shared) setSendNotice('Consigne copiée. Le partage n’est pas disponible : dans ton IA, ajoute tes photos depuis ta galerie, de la plus ancienne à la plus récente, puis colle la consigne.');
+      if (!shared) setSendNotice(traduire('Consigne copiée. Le partage n’est pas disponible : dans ton IA, ajoute tes photos depuis ta galerie, de la plus ancienne à la plus récente, puis colle la consigne.'));
     } catch (err) {
       logger.warn('[Balance photo] preparation ou partage impossible', err);
-      setSendNotice('Consigne copiée. Le document n’a pas pu être préparé : dans ton IA, ajoute tes photos depuis ta galerie, de la plus ancienne à la plus récente, puis colle la consigne.');
+      setSendNotice(traduire('Consigne copiée. Le document n’a pas pu être préparé : dans ton IA, ajoute tes photos depuis ta galerie, de la plus ancienne à la plus récente, puis colle la consigne.'));
     } finally {
       setProgress(null);
     }
@@ -338,12 +339,12 @@ export default function BalancePhotoScreen() {
   const paste = async () => {
     try {
       const t = await Clipboard.getStringAsync();
-      if (t && t.trim() && isOwnPrompt(t)) setError('C’est la consigne de YOROI qui est copiée. Dans ton IA, copie sa réponse, puis reviens ici.');
+      if (t && t.trim() && isOwnPrompt(t)) setError(traduire('C’est la consigne de YOROI qui est copiée. Dans ton IA, copie sa réponse, puis reviens ici.'));
       else if (t && t.trim()) importText(t);
-      else setError('Le presse-papiers est vide. Copie la réponse de ton IA, puis réessaie.');
+      else setError(traduire('Le presse-papiers est vide. Copie la réponse de ton IA, puis réessaie.'));
     } catch (err) {
       logger.warn('[Balance photo] lecture du presse-papiers impossible', err);
-      setError('Lecture du presse-papiers impossible. Colle la réponse dans le champ.');
+      setError(traduire('Lecture du presse-papiers impossible. Colle la réponse dans le champ.'));
     }
   };
 
@@ -390,13 +391,13 @@ export default function BalancePhotoScreen() {
     }
     const count = Object.keys(values).length + list.length;
     const err = !st.date
-      ? 'Choisis le jour de cette pesée : aucune date trouvée.'
+      ? traduire('Choisis le jour de cette pesée : aucune date trouvée.')
       : !st.confirmed
-        ? 'Confirme la date de cette pesée : touche Oui ou Changer.'
+        ? traduire('Confirme la date de cette pesée : touche Oui ou Changer.')
       : bad.length
-        ? `À vérifier : ${bad.join(', ')}. Corrige la valeur ou décoche la ligne.`
+        ? traduire("À vérifier : {0}. Corrige la valeur ou décoche la ligne.", bad.join(', '))
         : !count
-          ? 'Coche au moins une valeur.'
+          ? traduire('Coche au moins une valeur.')
           : undefined;
     return { values, list, replace, err };
   };
@@ -414,17 +415,17 @@ export default function BalancePhotoScreen() {
     const had = existingOf(st).has;
     const res = await saveImportBlock(st.date, values, list, replace);
     if (!res.ok) {
-      update(i, (s) => ({ ...s, open: true, error: 'Il manque ton poids : il n’est pas sur les photos et aucune pesée n’est notée ce jour-là. Écris-le dans la ligne Poids, ou décoche les valeurs de la balance.' }));
+      update(i, (s) => ({ ...s, open: true, error: traduire('Il manque ton poids : il n’est pas sur les photos et aucune pesée n’est notée ce jour-là. Écris-le dans la ligne Poids, ou décoche les valeurs de la balance.') }));
       return null;
     }
-    const kept = res.kept ? `, ${res.kept} ${res.kept > 1 ? 'valeurs gardées' : 'valeur gardée'}` : '';
+    const kept = res.kept ? `, ${res.kept} ${res.kept > 1 ? traduire('valeurs gardées') : traduire('valeur gardée')}` : '';
     const done = res.nothingNew
-      ? 'Déjà à jour, rien de nouveau.'
+      ? traduire('Déjà à jour, rien de nouveau.')
       : res.weight
         ? `${savedText(res.weight, res.date, res.replaced?.weight)}${kept}.`
         : had
-          ? `Pesée complétée${kept}.`
-          : 'Pesée enregistrée.';
+          ? traduire("Pesée complétée{0}.", kept)
+          : traduire('Pesée enregistrée.');
     update(i, (s) => ({ ...s, error: undefined, done, open: false, include: false }));
     if (res.weight && !res.nothingNew) lastSaved.current = savedText(res.weight, res.date, res.replaced?.weight) + '.';
     return res.nothingNew ? 'same' : had && !res.replaced ? 'merged' : 'new';
@@ -445,7 +446,7 @@ export default function BalancePhotoScreen() {
     // NUIT 14 : la confirmation reste a l'ecran (« 89,2 kg enregistré le 13 oct. »), plus de depart automatique
     // vers un autre ecran qui la cachait ; « Voir ma courbe » y mene.
     const one = ok.length === 1 && lastSaved.current;
-    setNotice(one ? `${lastSaved.current} Ta courbe est à jour.` : `${ok.length} ${ok.length > 1 ? 'pesées enregistrées' : 'pesée enregistrée'}${parts.length ? ` : ${parts.join(', ')}` : ''}. Tes courbes sont à jour.`);
+    setNotice(one ? traduire("{0} Ta courbe est à jour.", lastSaved.current) : traduire("{0} {1}{2}. Tes courbes sont à jour.", ok.length, ok.length > 1 ? 'pesées enregistrées' : 'pesée enregistrée', parts.length ? ` : ${parts.join(', ')}` : ''));
     lastSaved.current = null;
     // 16 octobre : une seule pesee lue, la page de bilan s'ouvre ; plusieurs (import en masse), jamais un bilan par pesee,
     // un seul resume sur demande (« Voir mon bilan »)
@@ -467,7 +468,7 @@ export default function BalancePhotoScreen() {
       setAllDone(states.every((s, k) => k === i ? !!r : !!s.done));
     } catch (err) {
       logger.error('[Balance photo] enregistrement impossible', err);
-      setError('Enregistrement impossible, réessaie.');
+      setError(traduire('Enregistrement impossible, réessaie.'));
     } finally {
       setSaving(false);
     }
@@ -477,14 +478,14 @@ export default function BalancePhotoScreen() {
     if (saving) return;
     const todo = states.map((s, i) => ({ s, i })).filter(({ s }) => s.include && !s.done);
     if (!todo.length) {
-      setError('Coche au moins une pesée.');
+      setError(traduire('Coche au moins une pesée.'));
       return;
     }
     // tout est verifie avant d'ecrire quoi que ce soit
     const invalid = todo.filter(({ s, i }) => !!collect(blocks[i], s).err);
     if (invalid.length) {
       setStates((all) => all.map((s, i) => (invalid.some((x) => x.i === i) ? { ...s, open: true, error: collect(blocks[i], s).err } : s)));
-      setError(invalid.length > 1 ? `${invalid.length} pesées à vérifier avant d’enregistrer, elles sont ouvertes.` : 'Une pesée est à vérifier avant d’enregistrer, elle est ouverte.');
+      setError(invalid.length > 1 ? traduire("{0} pesées à vérifier avant d’enregistrer, elles sont ouvertes.", invalid.length) : traduire('Une pesée est à vérifier avant d’enregistrer, elle est ouverte.'));
       notificationAsync(NotificationFeedbackType.Warning).catch(() => {});
       return;
     }
@@ -495,7 +496,7 @@ export default function BalancePhotoScreen() {
         // copie de securite locale avant un gros import (jamais bloquante)
         try {
           const db = await openDatabase();
-          await snapshotBeforeImport(db, `Avant l’import de ${todo.length} pesées`);
+          await snapshotBeforeImport(db, traduire("Avant l’import de {0} pesées", todo.length));
         } catch (err) {
           logger.warn('[Balance photo] copie avant import impossible', err);
         }
@@ -504,7 +505,7 @@ export default function BalancePhotoScreen() {
       for (const { i } of todo) results.push(await saveBlock(i));
       finish(results, todo.map(({ s }) => s.date));
       const failed = results.filter((r) => !r).length;
-      if (failed) setError(`${failed} ${failed > 1 ? 'pesées n’ont pas pu être enregistrées' : 'pesée n’a pas pu être enregistrée'}, regarde la carte ouverte.`);
+      if (failed) setError(traduire("{0} {1}, regarde la carte ouverte.", failed, failed > 1 ? 'pesées n’ont pas pu être enregistrées' : 'pesée n’a pas pu être enregistrée'));
       else {
         setAllDone(true);
         void cleanupPhotos(photos, prepared?.copies);
@@ -512,7 +513,7 @@ export default function BalancePhotoScreen() {
       }
     } catch (err) {
       logger.error('[Balance photo] enregistrement impossible', err);
-      setError('Enregistrement impossible, réessaie.');
+      setError(traduire('Enregistrement impossible, réessaie.'));
     } finally {
       setSaving(false);
     }
@@ -565,7 +566,7 @@ export default function BalancePhotoScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <TextInput
             value={st.edits[p.id] ?? ''}
-            onChangeText={(t) => update(bi, (s) => ({ ...s, edits: { ...s.edits, [p.id]: t.replace('.', ',') }, checked: { ...s.checked, [p.id]: true }, error: undefined }))}
+            onChangeText={(t) => update(bi, (s) => ({ ...s, edits: { ...s.edits, [p.id]: t.replace('.', DECIMAL) }, checked: { ...s.checked, [p.id]: true }, error: undefined }))}
             keyboardType="decimal-pad"
             returnKeyType="done"
             selectTextOnFocus
@@ -581,7 +582,7 @@ export default function BalancePhotoScreen() {
         </View>
       </View>
           {p.status === 'same' ? (
-            <Ink size={12} color={c.textSecondary} numberOfLines={2} style={{ paddingLeft: 47 }}>Déjà notée, identique</Ink>
+            <Ink size={12} color={c.textSecondary} numberOfLines={2} style={{ paddingLeft: 47 }}>{traduire("Déjà notée, identique")}</Ink>
           ) : p.status === 'conflict' && p.old ? (
             <Pressable
               onPress={() => {
@@ -591,18 +592,18 @@ export default function BalancePhotoScreen() {
               hitSlop={6}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: rep }}
-              accessibilityLabel={isWeight ? `Remplacer ${p.old}, déjà noté ce jour-là, par ${nowTxt} de la balance` : `Remplacer ${p.label}, déjà notée ${p.old}`}
+              accessibilityLabel={isWeight ? traduire("Remplacer {0}, déjà noté ce jour-là, par {1} de la balance", p.old, nowTxt) : traduire("Remplacer {0}, déjà notée {1}", p.label, p.old)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32, paddingLeft: 47 }}
             >
               <Check on={rep} size={18} />
               <Ink size={12} weight="bold" color={rep ? c.accent : c.textSecondary} style={{ flexShrink: 1 }} numberOfLines={isWeight ? 4 : 2}>
                 {isWeight
                   ? rep
-                    ? `Déjà noté ce jour-là : ${p.old}. La balance fait foi : ${nowTxt} le remplace, ${p.old} reste dans tes pesées.`
-                    : `Déjà noté ce jour-là : ${p.old}, gardé. Coche pour prendre ${nowTxt} de la balance.`
+                    ? traduire("Déjà noté ce jour-là : {0}. La balance fait foi : {1} le remplace, {2} reste dans tes pesées.", p.old, nowTxt, p.old)
+                    : traduire("Déjà noté ce jour-là : {0}, gardé. Coche pour prendre {1} de la balance.", p.old, nowTxt)
                   : rep
                     ? `Remplacer ${p.old}`
-                    : `Déjà notée : ${p.old}, gardée`}
+                    : traduire("Déjà notée : {0}, gardée", p.old)}
               </Ink>
             </Pressable>
           ) : null}
@@ -630,7 +631,7 @@ export default function BalancePhotoScreen() {
   /** BALANCE 3 : « Date détectée : 12 oct. (écran de la balance). C'est bon ? » Oui / Changer, jamais de date silencieuse */
   const dateStrip = (b: ParseResult, st: BlockState, bi: number) => {
     const p = st.proposal;
-    const label = st.chosen ? 'choisie par toi' : proposalLabel(p, b.yearAdded);
+    const label = st.chosen ? traduire('choisie par toi') : proposalLabel(p, b.yearAdded);
     if (st.confirmed && st.date) {
       return (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 14, marginBottom: 12, paddingHorizontal: 12, minHeight: 44, borderRadius: 14, backgroundColor: c.fillSubtle }}>
@@ -638,7 +639,7 @@ export default function BalancePhotoScreen() {
             <Path d="M5 12.5l4.5 4.5L19 7.5" stroke={c.successText} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
           <Ink size={13} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{`${shortDate(st.date)}, ${label}`}</Ink>
-          <Pressable onPress={() => setPicker(bi)} accessibilityRole="button" accessibilityLabel="Changer le jour de cette pesée" hitSlop={8} style={{ minHeight: 40, justifyContent: 'center' }}>
+          <Pressable onPress={() => setPicker(bi)} accessibilityRole="button" accessibilityLabel={traduire("Changer le jour de cette pesée")} hitSlop={8} style={{ minHeight: 40, justifyContent: 'center' }}>
             <Ink size={13} weight="extraBold" color={c.accent}>Changer</Ink>
           </Pressable>
         </View>
@@ -661,10 +662,10 @@ export default function BalancePhotoScreen() {
       );
       return (
         <View style={box}>
-          <Ink size={14} weight="extraBold">Deux dates possibles : laquelle est la bonne ?</Ink>
-          {choice(p.date, dayTitle(p.date), `lue par l’IA, ${label}`)}
-          {choice(cf.date, dayTitle(cf.date), `${cf.photo ? `prise de la photo ${cf.photo}` : 'prise de tes photos'}, le ${frenchDateTime(cf.at)}`)}
-          <View style={{ flexDirection: 'row' }}>{pill('Autre jour', () => setPicker(bi), false, 'Choisir un autre jour')}</View>
+          <Ink size={14} weight="extraBold">{traduire("Deux dates possibles : laquelle est la bonne ?")}</Ink>
+          {choice(p.date, dayTitle(p.date), traduire("lue par l’IA, {0}", label))}
+          {choice(cf.date, dayTitle(cf.date), traduire("{0}, le {1}", cf.photo ? `prise de la photo ${cf.photo}` : 'prise de tes photos', frenchDateTime(cf.at)))}
+          <View style={{ flexDirection: 'row' }}>{pill(traduire('Autre jour'), () => setPicker(bi), false, traduire('Choisir un autre jour'))}</View>
         </View>
       );
     }
@@ -672,21 +673,21 @@ export default function BalancePhotoScreen() {
       return (
         <View style={box}>
           <Ink size={14} weight="bold">
-            {p.source === 'aujourdhui' && !st.chosen ? 'Aucune date trouvée : ' : 'Date détectée : '}
+            {p.source === 'aujourdhui' && !st.chosen ? traduire('Aucune date trouvée : ') : traduire('Date détectée : ')}
             <Ink size={14} weight="black">{shortDate(st.date)}</Ink>
-            {` (${label}). C’est bon ?`}
+            {traduire(" ({0}). C’est bon ?", label)}
           </Ink>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            {pill('Oui', () => confirmDate(bi, st.date, st.chosen), true, `Oui, la pesée est du ${longDate(st.date)}`)}
-            {pill('Changer', () => setPicker(bi), false, 'Changer le jour de cette pesée')}
+            {pill(traduire('Oui'), () => confirmDate(bi, st.date, st.chosen), true, traduire("Oui, la pesée est du {0}", longDate(st.date)))}
+            {pill('Changer', () => setPicker(bi), false, traduire('Changer le jour de cette pesée'))}
           </View>
         </View>
       );
     }
     return (
       <View style={box}>
-        <Ink size={14} weight="bold">{b.badDate ? 'Date illisible sur la photo : choisis le jour.' : 'Aucune date trouvée : choisis le jour.'}</Ink>
-        <View style={{ flexDirection: 'row' }}>{pill('Choisir le jour', () => setPicker(bi), true)}</View>
+        <Ink size={14} weight="bold">{b.badDate ? traduire('Date illisible sur la photo : choisis le jour.') : traduire('Aucune date trouvée : choisis le jour.')}</Ink>
+        <View style={{ flexDirection: 'row' }}>{pill(traduire('Choisir le jour'), () => setPicker(bi), true)}</View>
       </View>
     );
   };
@@ -709,10 +710,10 @@ export default function BalancePhotoScreen() {
       const sub =
         f.key === 'poids_kg' && !hasWeight
           ? dayWeight
-            ? 'pas sur les photos : ta pesée de ce jour-là'
-            : 'pas sur les photos : écris-le'
+            ? traduire('pas sur les photos : ta pesée de ce jour-là')
+            : traduire('pas sur les photos : écris-le')
           : off
-            ? `à vérifier, de ${String(f.min).replace('.', ',')} à ${String(f.max).replace('.', ',')}`
+            ? traduire("à vérifier, de {0} à {1}", String(f.min).replace('.', DECIMAL), String(f.max).replace('.', DECIMAL))
             : f.key === 'physique' && edited
               ? PHYSIQUE_LABELS[edited] ?? undefined
               : pv?.from
@@ -722,7 +723,7 @@ export default function BalancePhotoScreen() {
       const status = edited !== undefined && oldV !== undefined && !(f.key === 'poids_kg' && !hasWeight) ? valueStatus(f.key, edited, ex.values) : undefined;
       return row(bi, st, { id: f.key, label: f.label, unit: f.unit, color: f.kind ? CORPS[f.kind] : f.group === 'mensuration' ? c.accent : c.textMuted, sub, off, placeholder: f.step >= 1 ? '0' : '0,0', first, old: oldV !== undefined ? `${fmtBalance(oldV, f.step)}${f.unit && f.unit !== 'niveau' ? ` ${f.unit}` : ''}` : undefined, status });
     };
-    const title = st.date ? dayTitle(st.date) : 'Date à choisir';
+    const title = st.date ? dayTitle(st.date) : traduire('Date à choisir');
     // BALANCE 3 : poids loin de tes dernieres pesees, IMC qui ne va pas avec ton poids et ta taille
     const num = (k: string) => (st.checked[k] && st.edits[k] !== undefined ? readEdited(st.edits[k] ?? '', BALANCE_FIELD[k]) : undefined);
     const others: WeightPoint[] = states.flatMap((o, k) => {
@@ -750,7 +751,7 @@ export default function BalancePhotoScreen() {
               hitSlop={8}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: st.include }}
-              accessibilityLabel={`Garder la pesée ${st.date ? `du ${longDate(st.date)}` : 'sans date'}`}
+              accessibilityLabel={traduire("Garder la pesée {0}", st.date ? `du ${longDate(st.date)}` : 'sans date')}
             >
               <Check on={st.include} />
             </Pressable>
@@ -759,7 +760,7 @@ export default function BalancePhotoScreen() {
             onPress={() => update(bi, (s) => ({ ...s, open: !s.open }))}
             accessibilityRole="button"
             accessibilityState={{ expanded: st.open }}
-            accessibilityLabel={`${title}, ${summary}. ${st.open ? 'Replier' : 'Déplier'}`}
+            accessibilityLabel={`${title}, ${summary}. ${st.open ? 'Replier' : traduire('Déplier')}`}
             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}
           >
             <View style={{ flex: 1, gap: 3 }}>
@@ -767,11 +768,11 @@ export default function BalancePhotoScreen() {
               <Ink size={12} color={c.textSecondary} numberOfLines={2}>{st.done ?? summary}</Ink>
               {weightClash && !st.done ? (
                 <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: c.accentTint, marginTop: 2 }}>
-                  <Ink size={12} weight="bold" color={c.accent} numberOfLines={3}>{`Déjà noté le ${shortDate(st.date)} : ${fmtBalance(ex.values.poids_kg as number, 0.1)} kg. La balance : ${fmtBalance(poids as number, 0.1)} kg.`}</Ink>
+                  <Ink size={12} weight="bold" color={c.accent} numberOfLines={3}>{traduire("Déjà noté le {0} : {1} kg. La balance : {2} kg.", shortDate(st.date), fmtBalance(ex.values.poids_kg as number, 0.1), fmtBalance(poids as number, 0.1))}</Ink>
                 </View>
               ) : ex.has && st.date && !st.done ? (
                 <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: c.accentTint, marginTop: 2 }}>
-                  <Ink size={12} weight="bold" color={c.accent} numberOfLines={2}>{`Complète ta pesée du ${shortDate(st.date)}`}</Ink>
+                  <Ink size={12} weight="bold" color={c.accent} numberOfLines={2}>{traduire("Complète ta pesée du {0}", shortDate(st.date))}</Ink>
                 </View>
               ) : null}
             </View>
@@ -808,8 +809,8 @@ export default function BalancePhotoScreen() {
             })}
             {b.autres.length ? (
               <View style={{ borderRadius: 14, backgroundColor: c.fillSubtle, paddingHorizontal: 12, paddingVertical: 4 }}>
-                <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ paddingTop: 8 }}>Mesures en plus de ta balance</Ink>
-                <Ink size={12} color={c.textSecondary} style={{ paddingBottom: 2 }}>Gardées telles quelles, avec le nom affiché.</Ink>
+                <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ paddingTop: 8 }}>{traduire("Mesures en plus de ta balance")}</Ink>
+                <Ink size={12} color={c.textSecondary} style={{ paddingBottom: 2 }}>{traduire("Gardées telles quelles, avec le nom affiché.")}</Ink>
                 {b.autres.map((a, i) => {
                   const old = ex.autres.get(autreReplaceId(a.name).slice(6));
                   const edited = readNumber(st.edits[autreId(i)] ?? '')?.value;
@@ -824,7 +825,7 @@ export default function BalancePhotoScreen() {
               </View>
             ) : null}
             {blocks.length > 1 && !st.done ? (
-              <GhostButton label={st.date ? `Enregistrer seulement le ${shortDate(st.date)}` : 'Enregistrer seulement cette pesée'} onPress={() => void saveOne(bi)} />
+              <GhostButton label={st.date ? traduire("Enregistrer seulement le {0}", shortDate(st.date)) : traduire('Enregistrer seulement cette pesée')} onPress={() => void saveOne(bi)} />
             ) : null}
           </View>
         ) : null}
@@ -836,8 +837,8 @@ export default function BalancePhotoScreen() {
   const status = !text.trim()
     ? null
     : total
-      ? `${total} ${total > 1 ? 'valeurs reconnues' : 'valeur reconnue'}${blocks.some((b) => b.values.some((v) => v.outOfRange)) ? ', certaines à vérifier' : ''}.`
-      : 'Aucune valeur reconnue. Colle les blocs YOROI BALANCE en entier, de la première ligne à FIN.';
+      ? `${total} ${total > 1 ? 'valeurs reconnues' : 'valeur reconnue'}${blocks.some((b) => b.values.some((v) => v.outOfRange)) ? traduire(', certaines à vérifier') : ''}.`
+      : traduire('Aucune valeur reconnue. Colle les blocs YOROI BALANCE en entier, de la première ligne à FIN.');
   const ignored = blocks.flatMap((b) => b.unknown);
   const multi = blocks.length > 1;
   const pending = states.filter((s) => s.include && !s.done).length;
@@ -850,11 +851,11 @@ export default function BalancePhotoScreen() {
     // defile jusqu'au champ ; plus de KeyboardAvoidingView en padding qui laissait le champ sous le clavier
     <KeyboardAvoidingView behavior={undefined} style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'} showsVerticalScrollIndicator={false}>
-        <DetailHeader title="Pesée par photo" sub="Ton IA lit les photos de ta balance, tu colles sa réponse ici. Trois étapes." />
+        <DetailHeader title={traduire("Pesée par photo")} sub={traduire("Ton IA lit les photos de ta balance, tu colles sa réponse ici. Trois étapes.")} />
 
         {/* BALANCE 3 : les trois etapes, visibles d'un coup d'oeil */}
         <View style={{ flexDirection: 'row', gap: 6, marginHorizontal: GUTTER, marginTop: 12 }}>
-          {['Consigne et photos', 'Ton IA', 'Colle la réponse'].map((t, i) => {
+          {[traduire('Consigne et photos'), traduire('Ton IA'), traduire('Colle la réponse')].map((t, i) => {
             const done = i === 0 ? copied || photos.length > 0 || !!sendNotice : i === 1 ? !!sendNotice || !!text.trim() : blocks.length > 0;
             return (
               <View key={t} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 8, borderRadius: 12, backgroundColor: done ? c.accentTint : c.fillSubtle }}>
@@ -869,14 +870,14 @@ export default function BalancePhotoScreen() {
 
         {/* 1. La consigne et les photos */}
         <GlassCard style={{ marginHorizontal: GUTTER, marginTop: 12, gap: 12 }}>
-          <StepTitle n={1} title="Copie la consigne et choisis tes photos" />
+          <StepTitle n={1} title={traduire("Copie la consigne et choisis tes photos")} />
           {photos.length ? (
             <View style={{ gap: 8 }}>
-              <Ink size={14} weight="extraBold">{`${photos.length} ${photos.length > 1 ? 'photos' : 'photo'}, ${sessions.length} ${sessions.length > 1 ? 'pesées' : 'pesée'}`}</Ink>
+              <Ink size={14} weight="extraBold">{`${photos.length} ${photos.length > 1 ? 'photos' : 'photo'}, ${sessions.length} ${sessions.length > 1 ? traduire('pesées') : traduire('pesée')}`}</Ink>
               {sessions.map((g, gi) => {
                 const first = photos[g[0]];
                 const last = photos[g[g.length - 1]];
-                const when = first.at !== undefined ? `${dayTitle(isoDay(first.at))}, ${frenchTime(first.at)}${last.at !== undefined && g.length > 1 && frenchTime(last.at) !== frenchTime(first.at) ? ` à ${frenchTime(last.at)}` : ''}` : 'Date inconnue';
+                const when = first.at !== undefined ? `${dayTitle(isoDay(first.at))}, ${frenchTime(first.at)}${last.at !== undefined && g.length > 1 && frenchTime(last.at) !== frenchTime(first.at) ? traduire(" à {0}", frenchTime(last.at)) : ''}` : 'Date inconnue';
                 return (
                   <View key={`g${gi}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: 14, backgroundColor: c.fillSubtle }}>
                     <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -898,30 +899,30 @@ export default function BalancePhotoScreen() {
                       <Ink size={13} weight="extraBold" color={first.at !== undefined ? c.ink : c.danger} numberOfLines={2}>{when}</Ink>
                       <Ink size={12} color={c.textSecondary} numberOfLines={2}>
                         {first.at === undefined
-                          ? 'Tu choisiras le jour après.'
+                          ? traduire('Tu choisiras le jour après.')
                           : g.length > 1
-                            ? `Photos ${g[0] + 1} à ${g[g.length - 1] + 1}, une seule pesée`
+                            ? traduire("Photos {0} à {1}, une seule pesée", g[0] + 1, g[g.length - 1] + 1)
                             : `Photo ${g[0] + 1}`}
                       </Ink>
                     </View>
                   </View>
                 );
               })}
-              <GhostButton label="Changer de photos" onPress={() => void choosePhotos()} />
+              <GhostButton label={traduire("Changer de photos")} onPress={() => void choosePhotos()} />
             </View>
           ) : (
             <>
-              <Ink size={13} color={c.textSecondary}>YOROI lit le jour et l’heure de chaque photo et les ajoute à la consigne.</Ink>
-              <PrimaryButton label={progress ?? 'Choisir mes photos'} onPress={() => void choosePhotos()} disabled={!!progress} />
+              <Ink size={13} color={c.textSecondary}>{traduire("YOROI lit le jour et l’heure de chaque photo et les ajoute à la consigne.")}</Ink>
+              <PrimaryButton label={progress ?? traduire('Choisir mes photos')} onPress={() => void choosePhotos()} disabled={!!progress} />
             </>
           )}
-          <GhostButton label={copied ? 'Consigne copiée' : photos.length ? 'Copier seulement la consigne' : 'Ou copie seulement la consigne'} onPress={copyPrompt} />
+          <GhostButton label={copied ? traduire('Consigne copiée') : photos.length ? traduire('Copier seulement la consigne') : traduire('Ou copie seulement la consigne')} onPress={copyPrompt} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 18 }}>
             <Pressable onPress={() => setShowPrompt((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: showPrompt }} hitSlop={6} style={{ minHeight: 32, justifyContent: 'center' }}>
-              <Ink size={13} weight="bold" color={c.accent}>{showPrompt ? 'Masquer la consigne' : 'Voir la consigne'}</Ink>
+              <Ink size={13} weight="bold" color={c.accent}>{showPrompt ? traduire('Masquer la consigne') : traduire('Voir la consigne')}</Ink>
             </Pressable>
             <Pressable onPress={() => setShowTips((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: showTips }} hitSlop={6} style={{ minHeight: 32, justifyContent: 'center' }}>
-              <Ink size={13} weight="bold" color={c.accent}>{showTips ? 'Masquer les conseils' : 'Bien prendre tes photos'}</Ink>
+              <Ink size={13} weight="bold" color={c.accent}>{showTips ? traduire('Masquer les conseils') : traduire('Bien prendre tes photos')}</Ink>
             </Pressable>
           </View>
           {showPrompt ? (
@@ -934,10 +935,10 @@ export default function BalancePhotoScreen() {
           {showTips ? (
             <View style={{ gap: 8, borderRadius: 14, backgroundColor: c.fillSubtle, padding: 12 }}>
               {[
-                'Une photo par écran : la Tanita fait défiler ses valeurs, photographie chacune, segments compris (les deux boutons orange).',
-                'Bien en face, sans reflet, chiffres nets. Toute balance marche, connectée ou pas.',
-                'Tout un dossier de photos, même de dates différentes : chaque date devient une pesée.',
-                'Un ticket InBody, une capture de l’historique d’une app de balance ou tes mensurations notées marchent aussi.',
+                traduire('Une photo par écran : la Tanita fait défiler ses valeurs, photographie chacune, segments compris (les deux boutons orange).'),
+                traduire('Bien en face, sans reflet, chiffres nets. Toute balance marche, connectée ou pas.'),
+                traduire('Tout un dossier de photos, même de dates différentes : chaque date devient une pesée.'),
+                traduire('Un ticket InBody, une capture de l’historique d’une app de balance ou tes mensurations notées marchent aussi.'),
               ].map((t, i) => (
                 <View key={i} style={{ flexDirection: 'row', gap: 10 }}>
                   <Ink size={13} weight="black" color={c.accent} style={{ width: 14 }}>{String(i + 1)}</Ink>
@@ -950,14 +951,14 @@ export default function BalancePhotoScreen() {
 
         {/* 2. Envoyer a ton IA */}
         <GlassCard style={{ marginHorizontal: GUTTER, marginTop: 12, gap: 12 }}>
-          <StepTitle n={2} title="Envoie à ton IA" />
+          <StepTitle n={2} title={traduire("Envoie à ton IA")} />
           {photos.length ? (
             <>
-              <Ink size={13} color={c.textSecondary}>Un appui : la consigne est copiée et le partage s’ouvre avec tes photos datées. Choisis ChatGPT, Claude, Gemini ou une autre IA, colle la consigne, envoie.</Ink>
-              <PrimaryButton label={progress ?? 'Envoyer à mon IA'} onPress={() => void sendToAi()} disabled={!!progress} />
+              <Ink size={13} color={c.textSecondary}>{traduire("Un appui : la consigne est copiée et le partage s’ouvre avec tes photos datées. Choisis ChatGPT, Claude, Gemini ou une autre IA, colle la consigne, envoie.")}</Ink>
+              <PrimaryButton label={progress ?? traduire('Envoyer à mon IA')} onPress={() => void sendToAi()} disabled={!!progress} />
             </>
           ) : (
-            <Ink size={13} color={c.textSecondary}>Ouvre ChatGPT, Claude, Gemini ou une autre IA. Colle la consigne, ajoute tes photos, envoie. Quand elle répond, copie sa réponse et reviens ici.</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Ouvre ChatGPT, Claude, Gemini ou une autre IA. Colle la consigne, ajoute tes photos, envoie. Quand elle répond, copie sa réponse et reviens ici.")}</Ink>
           )}
           {sendNotice ? (
             <View style={{ padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
@@ -969,26 +970,26 @@ export default function BalancePhotoScreen() {
               <Rect x={5} y={10.5} width={14} height={10} rx={2.5} {...stroke} />
               <Path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" {...stroke} />
             </Svg>
-            <Ink size={12} weight="bold" style={{ flex: 1 }}>YOROI n’envoie rien à aucune IA et ne garde aucune photo.</Ink>
+            <Ink size={12} weight="bold" style={{ flex: 1 }}>{traduire("YOROI n’envoie rien à aucune IA et ne garde aucune photo.")}</Ink>
           </View>
         </GlassCard>
 
         {/* 3. Coller la reponse : un gros bouton, sans clavier */}
         <View onLayout={(e) => (pasteY.current = e.nativeEvent.layout.y)}>
           <GlassCard style={{ marginHorizontal: GUTTER, marginTop: 12, gap: 12, borderWidth: 1.5, borderColor: c.accent }}>
-            <StepTitle n={3} title="Colle sa réponse" />
+            <StepTitle n={3} title={traduire("Colle sa réponse")} />
             {clipFound ? (
               <View accessibilityLiveRegion="polite" style={{ padding: 12, borderRadius: 14, backgroundColor: c.accentTint, gap: 10 }}>
-                <Ink size={14} weight="extraBold">Texte de l’IA trouvé : l’importer ?</Ink>
+                <Ink size={14} weight="extraBold">{traduire("Texte de l’IA trouvé : l’importer ?")}</Ink>
                 <Ink size={12} color={c.textSecondary} numberOfLines={2}>{clipFound.replace(/\s+/g, ' ').trim().slice(0, 90)}</Ink>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {pill('Importer', () => importText(clipFound), true, 'Importer le texte de l’IA copié')}
-                  {pill('Non', () => setClipFound(null), false, 'Ne pas importer')}
+                  {pill(traduire('Importer'), () => importText(clipFound), true, traduire('Importer le texte de l’IA copié'))}
+                  {pill(traduire('Non'), () => setClipFound(null), false, traduire('Ne pas importer'))}
                 </View>
               </View>
             ) : null}
-            <PrimaryButton label="Coller depuis le presse-papiers" onPress={() => void paste()} />
-            <Ink size={12} color={c.textSecondary}>Ou colle-la dans le champ :</Ink>
+            <PrimaryButton label={traduire("Coller depuis le presse-papiers")} onPress={() => void paste()} />
+            <Ink size={12} color={c.textSecondary}>{traduire("Ou colle-la dans le champ :")}</Ink>
             <TextInput
               value={text}
               onChangeText={setText}
@@ -998,11 +999,11 @@ export default function BalancePhotoScreen() {
                 scrollToPaste();
               }}
               onBlur={() => (pasteFocused.current = false)}
-              placeholder={'YOROI BALANCE v1\ndate: 2026-10-12\npoids_kg: 82.4\n...\nFIN'}
+              placeholder={traduire('YOROI BALANCE v1\ndate: 2026-10-12\npoids_kg: 82.4\n...\nFIN')}
               placeholderTextColor={c.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
-              accessibilityLabel="Réponse de ton IA"
+              accessibilityLabel={traduire("Réponse de ton IA")}
               style={[fontStyle('medium'), { minHeight: 110, maxHeight: 200, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, color: c.ink, fontSize: 14, padding: 12, textAlignVertical: 'top' }]}
             />
             {status ? (
@@ -1011,7 +1012,7 @@ export default function BalancePhotoScreen() {
               </Ink>
             ) : null}
             {ignored.length ? (
-              <Ink size={12} color={c.textSecondary}>{`Ignoré, sans valeur lisible : ${ignored.slice(0, 4).join(', ')}${ignored.length > 4 ? '...' : ''}`}</Ink>
+              <Ink size={12} color={c.textSecondary}>{traduire("Ignoré, sans valeur lisible : {0}{1}", ignored.slice(0, 4).join(', '), ignored.length > 4 ? '...' : '')}</Ink>
             ) : null}
           </GlassCard>
         </View>
@@ -1020,14 +1021,14 @@ export default function BalancePhotoScreen() {
         {blocks.length && states.length === blocks.length ? (
           <View onLayout={(e) => (previewY.current = e.nativeEvent.layout.y)} style={{ marginHorizontal: GUTTER, marginTop: 22, gap: 12 }}>
             <View style={{ gap: 4 }}>
-              <Ink size={20} weight="black" tight>{`${blocks.length} ${blocks.length > 1 ? 'pesées trouvées' : 'pesée trouvée'}`}</Ink>
+              <Ink size={20} weight="black" tight>{`${blocks.length} ${blocks.length > 1 ? traduire('pesées trouvées') : traduire('pesée trouvée')}`}</Ink>
               {toChoose ? (
-                <Ink size={13} weight="bold" color={c.danger}>{`${toChoose} ${toChoose > 1 ? 'pesées sans date : choisis leur jour' : 'pesée sans date : choisis son jour'} avant d’enregistrer.`}</Ink>
+                <Ink size={13} weight="bold" color={c.danger}>{traduire("{0} {1} avant d’enregistrer.", toChoose, toChoose > 1 ? 'pesées sans date : choisis leur jour' : 'pesée sans date : choisis son jour')}</Ink>
               ) : null}
               <Ink size={13} color={c.textSecondary}>
                 {multi
-                  ? 'Ouvre une date pour vérifier ses valeurs, corrige un chiffre si l’IA s’est trompée, décoche ce que tu ne veux pas garder.'
-                  : 'Corrige un chiffre si l’IA s’est trompée, décoche ce que tu ne veux pas garder.'}
+                  ? traduire('Ouvre une date pour vérifier ses valeurs, corrige un chiffre si l’IA s’est trompée, décoche ce que tu ne veux pas garder.')
+                  : traduire('Corrige un chiffre si l’IA s’est trompée, décoche ce que tu ne veux pas garder.')}
               </Ink>
             </View>
             {blocks.map((b, i) => (states[i] ? card(b, states[i], i) : null))}
@@ -1041,13 +1042,13 @@ export default function BalancePhotoScreen() {
                 </View>
                 {allDone && states.some((s) => s.date) ? (
                   <GhostButton
-                    label="Voir mon bilan"
+                    label={traduire("Voir mon bilan")}
                     onPress={() => router.replace(lienBilan({ type: 'corps', date: states.map((s) => s.date).filter(Boolean).sort().slice(-1)[0] as string, origine: 'photo' }) as never)}
                   />
                 ) : null}
                 {allDone ? (
                   <GhostButton
-                    label={blocks.some((b) => b.values.some((v) => v.key === 'poids_kg')) ? 'Voir ma courbe' : 'Voir mes mesures'}
+                    label={blocks.some((b) => b.values.some((v) => v.key === 'poids_kg')) ? traduire('Voir ma courbe') : traduire('Voir mes mesures')}
                     onPress={() => router.replace((blocks.some((b) => b.values.some((v) => v.key === 'poids_kg')) ? '/poids-detail' : multi ? '/measurements' : { pathname: '/composition-detail', params: { mode: 'mesure', date: states[0]?.date } }) as any)}
                   />
                 ) : null}
@@ -1065,20 +1066,20 @@ export default function BalancePhotoScreen() {
                     ? 'Enregistrement en cours'
                     : multi
                       ? pending > 1
-                        ? `Tout enregistrer, ${pending} pesées`
+                        ? traduire("Tout enregistrer, {0} pesées", pending)
                         : pending === 1
-                          ? 'Enregistrer la pesée cochée'
-                          : 'Coche une pesée'
-                      : `Enregistrer ${singleCount} ${singleCount > 1 ? 'valeurs' : 'valeur'}`
+                          ? traduire('Enregistrer la pesée cochée')
+                          : traduire('Coche une pesée')
+                      : traduire("Enregistrer {0} {1}", singleCount, singleCount > 1 ? 'valeurs' : 'valeur')
                 }
                 onPress={() => void saveAll()}
                 disabled={saving || (multi ? !pending : !singleCount)}
               />
             ) : null}
             {multi && pending > SNAPSHOT_OVER && !allDone ? (
-              <Ink size={12} color={c.textSecondary}>Une copie de sécurité de tes données est faite sur ce téléphone avant l’import.</Ink>
+              <Ink size={12} color={c.textSecondary}>{traduire("Une copie de sécurité de tes données est faite sur ce téléphone avant l’import.")}</Ink>
             ) : null}
-            <Ink size={12} color={c.textSecondary}>Une valeur déjà notée n’est jamais écrasée, sauf si tu coches Remplacer. Source notée : Balance (photo). Les balances à impédance donnent une estimation, compare-toi à toi-même.</Ink>
+            <Ink size={12} color={c.textSecondary}>{traduire("Une valeur déjà notée n’est jamais écrasée, sauf si tu coches Remplacer. Source notée : Balance (photo). Les balances à impédance donnent une estimation, compare-toi à toi-même.")}</Ink>
           </View>
         ) : error ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 12, padding: 12, borderRadius: 14, backgroundColor: c.dangerTint }}>
@@ -1089,7 +1090,7 @@ export default function BalancePhotoScreen() {
       <DatePickerSheet
         visible={picker !== null}
         value={(picker !== null && states[picker]?.date) || todayIso()}
-        title="Jour de cette pesée"
+        title={traduire("Jour de cette pesée")}
         onClose={() => setPicker(null)}
         onPick={(iso) => {
           if (picker !== null) update(picker, (s) => ({ ...s, date: iso, confirmed: true, chosen: iso !== s.proposal.date, error: undefined }));

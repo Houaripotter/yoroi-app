@@ -9,6 +9,7 @@ import Animated, { Easing, useAnimatedProps, useSharedValue, withDelay, withTimi
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { thousands } from '@/lib/v2/progres/format';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const ACircle = Animated.createAnimatedComponent(Circle);
 
@@ -89,8 +90,7 @@ export function RingLegend({ items }: { items: RingItem[] }) {
             )}
             {pct !== null && pct >= 100 ? (
               <Ink size={12} weight="extraBold" color="#4F6B28">
-                Objectif atteint
-              </Ink>
+                {traduire("Objectif atteint")}</Ink>
             ) : null}
           </View>
         );

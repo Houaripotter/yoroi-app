@@ -11,13 +11,14 @@ import { DATA_MATRIX, DATA_TYPE_LABELS, SOURCE_DISPLAY } from './brands';
 import { SanteIcon } from './SanteIcon';
 import { Accordion, BrandMark, S, SmallButton, Steps } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export function BrandGuide({ brand, detected }: { brand: BrandConfig; detected?: boolean }) {
   const ios = Platform.OS !== 'android';
   const steps = ios ? brand.stepsIOS : brand.stepsAndroid;
   const intro = ios ? brand.introIOS : brand.introAndroid;
   return (
-    <Accordion title={brand.name} sub={brand.types.join(', ')} badge={detected ? 'Détecté' : undefined} color={brand.color} mark={<BrandMark text={brand.emoji} kind={brand.key === 'scales' ? 'Balance' : undefined} />}>
+    <Accordion title={brand.name} sub={brand.types.join(', ')} badge={detected ? traduire('Détecté') : undefined} color={brand.color} mark={<BrandMark text={brand.emoji} kind={brand.key === 'scales' ? 'Balance' : undefined} />}>
       {intro ? (
         <View style={{ borderRadius: 16, backgroundColor: '#F7F5F0', padding: 12 }}>
           <Ink size={13} weight="medium" color={S.ink2}>
@@ -50,7 +51,7 @@ export function LinesSheet({ visible, title, lines, actions, onClose }: { visibl
       {(actions ?? []).map((a) => (
         <SmallButton key={a.label} label={a.label} tone={a.tone ?? 'ink'} onPress={a.onPress} />
       ))}
-      <SmallButton label="Fermer" tone="light" onPress={onClose} />
+      <SmallButton label={traduire("Fermer")} tone="light" onPress={onClose} />
     </Sheet>
   );
 }

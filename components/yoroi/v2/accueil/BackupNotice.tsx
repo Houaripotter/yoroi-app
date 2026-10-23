@@ -21,6 +21,7 @@ import { texteCopieAuto } from '@/lib/v2/sauvegarde/textesCopie';
 import { lancerCopieAuto } from '@/components/yoroi/v2/sauvegarde/lancerCopieAuto';
 import { CarteMessage } from '@/components/yoroi/v2/messages/CarteMessage';
 import { IllusSauvegarde } from '@/components/yoroi/v2/messages/Illustrations';
+import { traduire } from '@/lib/i18n/tr';
 
 const WARNING_DAYS = 7;
 const GRACE_HOURS = 48;
@@ -32,9 +33,9 @@ const LATER_KEY = '@yoroi_rappel_copie_plus_tard';
 export function texteRappelCopie(days: number | null, os: string = Platform.OS): { titre: string; texte: string } {
   const cloud = os === 'android' ? 'Google Drive' : 'iCloud Drive';
   if (days === null) {
-    return { titre: 'Tes données vivent sur ce téléphone', texte: `Une copie dans ${cloud} les garde à l’abri, même si tu changes de téléphone.` };
+    return { titre: traduire('Tes données vivent sur ce téléphone'), texte: traduire("Une copie dans {0} les garde à l’abri, même si tu changes de téléphone.", cloud) };
   }
-  return { titre: `Ta dernière copie a ${days} jours`, texte: `Une copie fraîche dans ${cloud} garde tes dernières séances à l’abri.` };
+  return { titre: traduire("Ta dernière copie a {0} jours", days), texte: traduire("Une copie fraîche dans {0} garde tes dernières séances à l’abri.", cloud) };
 }
 
 export function BackupNotice() {
@@ -85,7 +86,7 @@ export function BackupNotice() {
 
   if (!state.show) return null;
   const auto = state.etat === 'a_activer' || state.etat === 'en_panne';
-  const t = auto ? texteCopieAuto(state.etat, state.days, state.dossier) : { ...texteRappelCopie(state.days), bouton: 'Faire ma copie' };
+  const t = auto ? texteCopieAuto(state.etat, state.days, state.dossier) : { ...texteRappelCopie(state.days), bouton: traduire('Faire ma copie') };
   const { titre, texte } = t;
 
   const activer = () => lancerCopieAuto(() => load());
@@ -116,8 +117,8 @@ export function BackupNotice() {
       illustration={<IllusSauvegarde size={64} disque />}
       titre={titre}
       texte={texte}
-      principal={{ label: t.bouton, onPress: auto ? activer : copier, busy, busyLabel: 'Un instant…' }}
-      liens={[{ label: 'Plus tard', onPress: plusTard }]}
+      principal={{ label: t.bouton, onPress: auto ? activer : copier, busy, busyLabel: traduire('Un instant…') }}
+      liens={[{ label: traduire('Plus tard'), onPress: plusTard }]}
     />
   );
 }

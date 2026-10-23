@@ -16,12 +16,13 @@ import { VIEW_FIELDS, viewSeries } from '@/lib/v2/progres/measures';
 import type { ViewKey } from '@/lib/v2/progres/measures';
 import { relativeDay } from '@/lib/v2/accueil/home';
 import { Card, Icon, P, Press } from './kit';
+import { DECIMAL } from '@/lib/i18n/tr';
 
 /** ordre de preference des mesures secondaires */
 const SECOND: ViewKey[] = ['chest', 'arm', 'hips', 'thigh', 'navel', 'shoulders', 'calf', 'neck'];
 
 // mensurations : toujours 1 decimale, comme Progres (vague 32)
-const cm = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const cm = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 type Row = { key: ViewKey; label: string; long: string; good: 'up' | 'down' | 'none'; s: { date: string; value: number }[] };
 

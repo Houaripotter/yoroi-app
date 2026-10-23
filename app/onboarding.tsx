@@ -20,7 +20,7 @@ import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import Animated, { FadeInLeft, FadeInRight, FadeOutLeft, FadeOutRight } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { tap } from '@/components/yoroi/v2/accueil/kit';
@@ -87,6 +87,7 @@ import { Resultat } from '@/components/yoroi/v2/onboarding/Resultat';
 import { Premium } from '@/components/yoroi/v2/onboarding/Premium';
 import type { Nav } from '@/components/yoroi/v2/onboarding/types';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
@@ -308,7 +309,7 @@ export default function OnboardingScreen() {
   // ===== Ouverture =====
   const start = async () => {
     if (!isPreview) await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true').catch(() => {});
-    onboardingEvent('reponse', { ecran: 'ouverture', question: 'commencer' });
+    onboardingEvent('reponse', { ecran: 'ouverture', question: traduire('commencer') });
     goTo(PRENOM);
   };
 
@@ -347,7 +348,7 @@ export default function OnboardingScreen() {
     } catch (error) {
       logger.error('Onboarding restore failed', error);
       const msg = error instanceof Error ? error.message : String(error);
-      appAlert('Restauration impossible', msg);
+      appAlert(traduire('Restauration impossible'), msg);
       setRestoring(false);
     }
   };
@@ -392,7 +393,7 @@ export default function OnboardingScreen() {
   // ===== Poids =====
   const reprendreSante = async () => {
     if (isPreview) {
-      setNotice('Aperçu : rien n’est lu ni enregistré.');
+      setNotice(traduire('Aperçu : rien n’est lu ni enregistré.'));
       return;
     }
     onboardingEvent('reponse', { ecran: 'poids', question: 'reprendre_sante' });
@@ -403,13 +404,13 @@ export default function OnboardingScreen() {
       if (src.mode !== 'live') {
         const ok = await connectHealth();
         if (!ok) {
-          appAlert('Autorisation requise', `Autorise ${healthName()} pour reprendre tes pesées. Tu peux aussi régler ton poids à la main.`);
+          appAlert('Autorisation requise', traduire("Autorise {0} pour reprendre tes pesées. Tu peux aussi régler ton poids à la main.", healthName()));
           return;
         }
       }
       const day = await latestHealthWeighIn();
       if (!day?.weight) {
-        setNotice(`Aucune pesée trouvée dans ${healthName()} ces 31 derniers jours. Règle ton poids à la main.`);
+        setNotice(traduire("Aucune pesée trouvée dans {0} ces 31 derniers jours. Règle ton poids à la main.", healthName()));
         return;
       }
       setHealthDay(day);
@@ -417,7 +418,7 @@ export default function OnboardingScreen() {
       patch({ weight: day.weight, weightOrigin: 'health', healthDate: day.date });
     } catch (e) {
       logger.warn('[Onboarding] lecture de la derniere pesee impossible', e);
-      setNotice('Lecture impossible pour le moment. Règle ton poids à la main.');
+      setNotice(traduire('Lecture impossible pour le moment. Règle ton poids à la main.'));
     } finally {
       setReading(false);
     }
@@ -451,7 +452,7 @@ export default function OnboardingScreen() {
   };
 
   const healthLabel = d.weightOrigin === 'health' && d.healthDate
-    ? `Pesée du ${format(new Date(`${d.healthDate}T12:00:00`), 'd MMMM', { locale: fr })}, ${healthDay?.sourceLabel ?? healthName()}`
+    ? traduire("Pesée du {0}, {1}", format(new Date(`${d.healthDate}T12:00:00`), 'd MMMM', { locale: fr }), healthDay?.sourceLabel ?? healthName())
     : null;
 
   const validateWeight = async () => {
@@ -485,7 +486,7 @@ export default function OnboardingScreen() {
       }
     } catch (e) {
       logger.error('[Onboarding] pesee non enregistree', e);
-      appAlert('Enregistrement impossible', 'Ton profil n’a pas pu être enregistré. Réessaie.');
+      appAlert(traduire('Enregistrement impossible'), traduire('Ton profil n’a pas pu être enregistré. Réessaie.'));
     } finally {
       setSavingWeight(false);
     }
@@ -575,7 +576,7 @@ export default function OnboardingScreen() {
               onChange={(r) => answer('rappels', { rappels: r })}
               ecran="onboarding"
               apercu={isPreview}
-              joursAutoTexte="Tes jours d’entraînement, choisis plus loin. Ou touche tes jours ici."
+              joursAutoTexte={traduire("Tes jours d’entraînement, choisis plus loin. Ou touche tes jours ici.")}
             />
           </Affirmation>
         );

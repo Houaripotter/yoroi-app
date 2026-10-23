@@ -43,6 +43,7 @@ import type { Ligne, Statut } from '@/lib/v2/pesee/ligneDirectrice';
 import { TOLERANCE_KG, bornesA, isoDuTemps, jourCourt, jourDe, medianeA, statutLigne, trajectoirePlate } from '@/lib/v2/pesee/ligneDirectrice';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { echelleCourbe } from '@/lib/v2/pesee/cadrageCourbe';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 /**
  * Vague 45 : la couleur du trait choisie dans Reglages, Tes courbes (degrade par defaut, indigo, encre).
@@ -131,16 +132,16 @@ export function couleurPointStatut(ton: Statut['ton'] | null | undefined, sombre
 export type PointPoids = { date: string; value: number; week?: boolean };
 export type ScrubPoids = { point: PointPoids; index: number; last: boolean; statut: Statut | null };
 
-const MOIS_COURT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 const DAY = 86400000;
 const AXIS_FONT = fontFamilies.medium;
 const BOLD_FONT = fontFamilies.extraBold ?? fontFamilies.bold;
 
 /** 80 plutot que 80,0 ; une decimale sinon */
 export function kgCourt(v: number): string {
-  return Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+  return Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 }
-const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const kg1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 /** Porte japonaise (torii) dessinee simplement, posee sur la ligne du cap : base au point (cx, by) */
 export function ToriiG({ cx, by, color = POIDS.encre, scale = 1 }: { cx: number; by: number; color?: string; scale?: number }) {
@@ -310,7 +311,7 @@ type Props = {
   debut?: string | null;
 };
 
-export function CourbePoids({ points, style = 1, showCap = true, cap = null, ligne = null, torii = null, atteint = false, periode, today, height = 170, onScrub, onPress, onToriiPress, label = 'Ta courbe de poids', surScene = false, compact = false, legende = false, debut: debutAxe = null, projection = null }: Props) {
+export function CourbePoids({ points, style = 1, showCap = true, cap = null, ligne = null, torii = null, atteint = false, periode, today, height = 170, onScrub, onPress, onToriiPress, label = traduire('Ta courbe de poids'), surScene = false, compact = false, legende = false, debut: debutAxe = null, projection = null }: Props) {
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
   // vague 45 : redessine quand la couleur du trait change dans les reglages
@@ -486,7 +487,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
         if (toriiOn && tT != null && fin.m != null && Math.abs(fin.t - tT) < DAY / 2) finLigne = { x: XT(fin.t), y: Y(fin.m) };
       }
       const td = jourDe(lg.depart.date);
-      const txt = `Début, ${kgCourt(lg.depart.poids)} kg`;
+      const txt = traduire("Début, {0} kg", kgCourt(lg.depart.poids));
       const w = Math.round(6 + txt.length * 6);
       const h = DEBUT_H;
       if (td >= t0 && td <= tE) {
@@ -707,14 +708,14 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
   const shownI = act ?? lastI;
   const showBubble = act !== null && style !== 1;
   const g = geo;
-  const toriiTxt = toriiDate ? (atteint ? `Arrivée le ${jourCourt(toriiDate)}` : jourCourt(toriiDate)) : '';
+  const toriiTxt = toriiDate ? (atteint ? traduire("Arrivée le {0}", jourCourt(toriiDate)) : jourCourt(toriiDate)) : '';
 
   // accessibilite : la derniere valeur et le statut, et le reglage au doigt pesee par pesee
   const lastP = pts[lastI];
   const lastStatut = lastP ? statutRef.current(lastP) : null;
-  const toriiA11y = toriiDate ? (atteint ? `, cap atteint le ${jourCourt(toriiDate)}` : `, arrivée prévue le ${jourCourt(toriiDate)}`) : '';
+  const toriiA11y = toriiDate ? (atteint ? traduire(", cap atteint le {0}", jourCourt(toriiDate)) : traduire(", arrivée prévue le {0}", jourCourt(toriiDate))) : '';
   const a11y = lastP
-    ? `${label}. Dernière pesée : ${kg1(lastP.value)} kilos, le ${jourCourt(lastP.date)}${lastStatut ? `, ${lastStatut.label.toLowerCase()}` : ''}${capOn ? `. Cap ${kg1(cap as number)} kilos${toriiA11y}` : ''}. Glisse ton doigt pour revoir chaque pesée.`
+    ? traduire("{0}. Dernière pesée : {1} kilos, le {2}{3}{4}. Glisse ton doigt pour revoir chaque pesée.", label, kg1(lastP.value), jourCourt(lastP.date), lastStatut ? `, ${lastStatut.label.toLowerCase()}` : '', capOn ? `. Cap ${kg1(cap as number)} kilos${toriiA11y}` : '')
     : label;
 
   const bubble = (() => {
@@ -725,7 +726,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
     const y = style === 3 ? g.ys[act] : g.ysVrai[act];
     const bw = 186;
     const leftPx = Math.min(Math.max(x - bw / 2, 0), g.W - bw);
-    const quand = `${p.week ? 'semaine du ' : 'le '}${jourCourt(p.date)}`;
+    const quand = `${p.week ? traduire('semaine du ') : traduire('le ')}${jourCourt(p.date)}`;
     const two = (style === 4 && capOn) || !!st;
     // vague 45 : jamais coupee par le haut de la carte : trop haut, la bulle passe sous le doigt
     const bh = two ? 62 : 38;
@@ -740,7 +741,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
           </Ink>
           {style === 4 && capOn ? (
             <Ink size={12} weight="bold" color={POIDS.surEncre} style={{ opacity: 0.8 }} numberOfLines={1}>
-              {Math.abs(p.value - (cap as number)) < 0.05 ? 'pile sur ton cap' : `encore ${kg1(Math.abs(p.value - (cap as number)))} kg avant le cap`}
+              {Math.abs(p.value - (cap as number)) < 0.05 ? traduire('pile sur ton cap') : traduire("encore {0} kg avant le cap", kg1(Math.abs(p.value - (cap as number))))}
             </Ink>
           ) : st ? (
             <PastilleStatut statut={st} small />
@@ -787,8 +788,8 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={a11y}
-        accessibilityValue={act !== null ? { text: `${kg1(pts[act].value)} kilos, le ${jourCourt(pts[act].date)}` } : undefined}
-        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }, ...(onPress ? [{ name: 'activate' as const }] : []), ...(g?.pastille && onToriiPress ? [{ name: 'plan', label: 'Voir mon plan jusqu’au torii' }] : [])]}
+        accessibilityValue={act !== null ? { text: traduire("{0} kilos, le {1}", kg1(pts[act].value), jourCourt(pts[act].date)) } : undefined}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }, ...(onPress ? [{ name: 'activate' as const }] : []), ...(g?.pastille && onToriiPress ? [{ name: 'plan', label: traduire('Voir mon plan jusqu’au torii') }] : [])]}
         onAccessibilityAction={(e) => {
           const n = e.nativeEvent.actionName;
           if (n === 'activate') {
@@ -983,18 +984,18 @@ export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, pro
   const sombre = paletteSombre();
   const vert = sombre ? '#3FB27F' : POIDS.cap;
   const txt = POIDS.axe;
-  const capLong = cap == null ? null : atteint && torii ? `cap atteint le ${jourCourt(torii)}` : `ton cap, ${kgCourt(cap)} kg${torii ? ` le ${jourCourt(torii)}` : ''}`;
+  const capLong = cap == null ? null : atteint && torii ? traduire("cap atteint le {0}", jourCourt(torii)) : traduire("ton cap, {0} kg{1}", kgCourt(cap), torii ? ` le ${jourCourt(torii)}` : '');
   // une seule ligne : si la place manque (375 points), le poids du cap part (il est ecrit juste dessous, au bout du
   // chemin), puis les « ton » des deux derniers
   const largeur = (t: string) => t.length * 5.75 + 21;
-  const tient = (r: string | null, c: string | null) => largeur('ton poids') + (r ? largeur(r) : 0) + (c ? largeur(c) : 0) + 20 <= w;
-  const capCourt = capLong && atteint ? 'cap atteint' : capLong && torii ? `ton cap le ${jourCourt(torii)}` : capLong;
-  let rythmeTxt: string | null = rythme ? 'ton rythme prévu' : null;
+  const tient = (r: string | null, c: string | null) => largeur(traduire('ton poids')) + (r ? largeur(r) : 0) + (c ? largeur(c) : 0) + 20 <= w;
+  const capCourt = capLong && atteint ? 'cap atteint' : capLong && torii ? traduire("ton cap le {0}", jourCourt(torii)) : capLong;
+  let rythmeTxt: string | null = rythme ? traduire('ton rythme prévu') : null;
   let capTxt = capLong;
   if (w > 0 && !tient(rythmeTxt, capTxt)) {
     capTxt = capCourt;
     if (!tient(rythmeTxt, capTxt)) {
-      rythmeTxt = rythme ? 'rythme prévu' : null;
+      rythmeTxt = rythme ? traduire('rythme prévu') : null;
       capTxt = capCourt ? capCourt.replace(/^ton /, '') : capCourt;
     }
   }
@@ -1012,8 +1013,7 @@ export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, pro
           <Line x1={1.5} x2={14.5} y1={3} y2={3} stroke={`url(#${id})`} strokeWidth={3} strokeLinecap="round" />
         </Svg>
         <Ink size={10.5} weight="bold" color={txt} numberOfLines={1}>
-          ton poids
-        </Ink>
+          {traduire("ton poids")}</Ink>
       </View>
       {rythme ? (
         <View style={item}>
@@ -1035,8 +1035,7 @@ export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, pro
             <Circle cx={6} cy={6} r={3} fill={sombre ? '#22262F' : '#FFFFFF'} stroke={vert} strokeWidth={1.8} />
           </Svg>
           <Ink size={10.5} weight="bold" color={txt} numberOfLines={1}>
-            ton allure du jour
-          </Ink>
+            {traduire("ton allure du jour")}</Ink>
         </View>
       ) : null}
       {projection ? (
@@ -1045,8 +1044,7 @@ export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, pro
             <Line x1={2} x2={16} y1={3} y2={3} stroke={POIDS.c3} strokeWidth={2.5} strokeDasharray="1 4.5" strokeLinecap="round" />
           </Svg>
           <Ink size={10.5} weight="bold" color={txt} numberOfLines={1}>
-            à ton rythme
-          </Ink>
+            {traduire("à ton rythme")}</Ink>
         </View>
       ) : null}
       {capTxt ? (

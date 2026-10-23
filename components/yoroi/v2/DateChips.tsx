@@ -14,11 +14,12 @@ import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const DAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-const DAYS_LONG = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-const MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const MONTHS_LONG = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const DAYS_LONG = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
+const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const MONTHS_LONG = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -54,9 +55,9 @@ export function shortDayLabel(iso: string): string {
 /** « Aujourd'hui », « Hier », « Demain » ou « Mardi 12 août » */
 export function relativeDayLabel(iso: string): string {
   const today = todayLocalIso();
-  if (iso === today) return 'Aujourd’hui';
-  if (iso === shiftIso(today, -1)) return 'Hier';
-  if (iso === shiftIso(today, 1)) return 'Demain';
+  if (iso === today) return traduire('Aujourd’hui');
+  if (iso === shiftIso(today, -1)) return traduire('Hier');
+  if (iso === shiftIso(today, 1)) return traduire('Demain');
   const d = dateFromIso(iso);
   const year = d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '';
   const s = `${DAYS_LONG[d.getDay()]} ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS_LONG[d.getMonth()]}${year}`;
@@ -169,7 +170,7 @@ export function DatePickerSheet({ visible, value, onClose, onPick, maxDate, minD
           value={draft}
           mode="date"
           display="inline"
-          locale="fr-FR"
+          locale={LOCALE}
           themeVariant="light"
           accentColor={c.accent}
           maximumDate={max}
@@ -185,12 +186,12 @@ export function DatePickerSheet({ visible, value, onClose, onPick, maxDate, minD
       </View>
       {time !== undefined ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, minHeight: 56, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
-          <Ink size={15} weight="bold">Heure, si tu veux</Ink>
+          <Ink size={15} weight="bold">{traduire("Heure, si tu veux")}</Ink>
           <DateTimePicker
             value={draft}
             mode="time"
             display="compact"
-            locale="fr-FR"
+            locale={LOCALE}
             themeVariant="light"
             accentColor={c.accent}
             minuteInterval={5}
@@ -207,11 +208,11 @@ export function DatePickerSheet({ visible, value, onClose, onPick, maxDate, minD
         accessibilityRole="button"
         style={({ pressed }) => ({ height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
       >
-        <Ink size={16} weight="extraBold" color={c.onAccent}>{`Choisir ${shortDayLabel(isoLocalDay(draft))}`}</Ink>
+        <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Choisir {0}", shortDayLabel(isoLocalDay(draft)))}</Ink>
       </Pressable>
       {inline ? (
         <Pressable onPress={onClose} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={14} weight="bold" color={c.textSecondary}>Annuler</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Annuler")}</Ink>
         </Pressable>
       ) : null}
     </View>
@@ -219,7 +220,7 @@ export function DatePickerSheet({ visible, value, onClose, onPick, maxDate, minD
 
   if (inline) return visible ? content : null;
   return (
-    <Sheet visible={visible} onClose={onClose} title={title ?? 'Choisis le jour'} scroll>
+    <Sheet visible={visible} onClose={onClose} title={title ?? traduire('Choisis le jour')} scroll>
       {content}
     </Sheet>
   );
@@ -285,9 +286,9 @@ export function DateChips({ value, onChange, maxDate, minDate, time, onTimeChang
   return (
     <View style={style}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {chip(todayLabel ?? 'Aujourd’hui', value === today, () => onChange(today))}
-        {chip(yesterdayLabel ?? 'Hier', value === yesterday, () => onChange(yesterday))}
-        {chip(other ? shortDayLabel(value) : 'Autre date', other, () => setOpen(true), true, other ? `Date choisie : ${shortDayLabel(value)}, toucher pour changer` : 'Choisir une autre date')}
+        {chip(todayLabel ?? traduire('Aujourd’hui'), value === today, () => onChange(today))}
+        {chip(yesterdayLabel ?? traduire('Hier'), value === yesterday, () => onChange(yesterday))}
+        {chip(other ? shortDayLabel(value) : 'Autre date', other, () => setOpen(true), true, other ? traduire("Date choisie : {0}, toucher pour changer", shortDayLabel(value)) : traduire('Choisir une autre date'))}
       </View>
       {inline && open ? <View style={{ marginTop: 10 }} /> : null}
       <DatePickerSheet
@@ -343,7 +344,7 @@ export function DayNav({ value, onChange, maxDate, minDate, label, prevLabel, ne
           }}
           disabled={!canPrev}
           accessibilityRole="button"
-          accessibilityLabel={prevLabel ?? 'Jour précédent'}
+          accessibilityLabel={prevLabel ?? traduire('Jour précédent')}
           style={[round, buttonStyle, { opacity: canPrev ? 1 : 0.35 }]}
         >
           <Chevron dir="left" color={c.ink} />
@@ -354,7 +355,7 @@ export function DayNav({ value, onChange, maxDate, minDate, label, prevLabel, ne
             setOpen((o) => !o);
           }}
           accessibilityRole="button"
-          accessibilityLabel={`${text}, toucher pour choisir dans le calendrier`}
+          accessibilityLabel={traduire("{0}, toucher pour choisir dans le calendrier", text)}
           style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 8, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}
         >
           <Ink size={size} weight="black" tight numberOfLines={1} style={{ flexShrink: 1 }}>
@@ -370,7 +371,7 @@ export function DayNav({ value, onChange, maxDate, minDate, label, prevLabel, ne
           }}
           disabled={!canNext}
           accessibilityRole="button"
-          accessibilityLabel={nextLabel ?? 'Jour suivant'}
+          accessibilityLabel={nextLabel ?? traduire('Jour suivant')}
           style={[round, buttonStyle, { opacity: canNext ? 1 : 0.35 }]}
         >
           <Chevron dir="right" color={c.ink} />

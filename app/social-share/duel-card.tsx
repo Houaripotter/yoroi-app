@@ -12,6 +12,7 @@ import { DuelCard } from '@/components/social-cards/DuelCard';
 import logger from '@/lib/security/logger';
 import { ShareStudio } from '@/components/yoroi/v2/partage/ShareStudio';
 import { useStudio } from '@/lib/v2/partage/useStudio';
+import { traduire } from '@/lib/i18n/tr';
 
 const STORAGE_KEY = '@yoroi_sparring_partners';
 
@@ -86,7 +87,7 @@ export default function DuelCardScreen() {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const params = useLocalSearchParams<{ partnerName?: string; partnerBelt?: string }>();
   const CARD_SIZE = Math.min(SCREEN_WIDTH - 44, 375);
-  const studio = useStudio({ square: true, dialogTitle: 'Partager ma carte de duel', source: 'duel' });
+  const studio = useStudio({ square: true, dialogTitle: traduire('Partager ma carte de duel'), source: 'duel' });
 
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [myName, setMyName] = useState('Moi');
@@ -159,13 +160,13 @@ export default function DuelCardScreen() {
 
   const total = wins + losses + draws;
   const empty = !isLoadingData && (!params.partnerName || totalRounds === 0)
-    ? { title: 'Pas encore de duel', text: params.partnerName ? `Note un round contre ${params.partnerName} pendant ta séance de combat, ton bilan apparaîtra ici.` : 'Choisis un partenaire de sparring pour créer ta carte.', action: 'Mes partenaires', onAction: () => router.push('/sparring-partners' as any) }
+    ? { title: traduire('Pas encore de duel'), text: params.partnerName ? traduire("Note un round contre {0} pendant ta séance de combat, ton bilan apparaîtra ici.", params.partnerName) : traduire('Choisis un partenaire de sparring pour créer ta carte.'), action: traduire('Mes partenaires'), onAction: () => router.push('/sparring-partners' as any) }
     : null;
 
   return (
     <ShareStudio
-      title="Carte de duel"
-      subtitle={total > 0 ? `${total} rounds notés contre ${opponentName}` : `Toi contre ${opponentName}`}
+      title={traduire("Carte de duel")}
+      subtitle={total > 0 ? traduire("{0} rounds notés contre {1}", total, opponentName) : traduire("Toi contre {0}", opponentName)}
       loading={isLoadingData}
       empty={empty}
       style={studio.style}

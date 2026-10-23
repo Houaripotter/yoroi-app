@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, useWindowDimensions, Image, TouchableOpacity, S
 import { useTheme } from '@/lib/ThemeContext';
 import { Training } from '@/lib/database';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { getSportIcon } from '@/constants/sportIcons';
 import { getClubLogoSource } from '@/lib/sports';

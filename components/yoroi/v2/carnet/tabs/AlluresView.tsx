@@ -11,6 +11,7 @@ import { kmOf, useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, Columns, Hanko, BlockTitle } from '../ui';
 import { TabEmpty, TabLoading } from './common';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const ENDURANCE = new Set(sportsInPack('endurance'));
 const DISTANCES = [
@@ -72,17 +73,17 @@ export function AlluresView({ refreshKey, hideEmpty }: { refreshKey: number; hid
 
   if (loading) return <TabLoading />;
   if (trainings.length === 0) {
-    return hideEmpty ? null : <TabEmpty title="Aucune allure enregistrée" text="Cours au moins 5 km avec ton temps pour débloquer tes records par distance." action="Ajouter une sortie" href="/seance/deja-faite?sport=running" />;
+    return hideEmpty ? null : <TabEmpty title={traduire("Aucune allure enregistrée")} text={traduire("Cours au moins 5 km avec ton temps pour débloquer tes records par distance.")} action={traduire("Ajouter une sortie")} href="/seance/deja-faite?sport=running" />;
   }
 
   return (
     <View style={{ gap: 14 }}>
-      <BlockTitle title="Tes meilleurs temps" aside="Par distance, à quelques centaines de mètres près" />
+      <BlockTitle title={traduire("Tes meilleurs temps")} aside={traduire("Par distance, à quelques centaines de mètres près")} />
       {prs.map((p) => (
         <View key={p.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 22, backgroundColor: p.best ? P.white : blancA(0.55), borderWidth: 1, borderColor: P.line2 }}>
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={14} weight="bold" color={p.best ? P.indigo : P.muted}>{p.label}</Ink>
-            {p.best ? <Ink size={24} weight="black" tight>{timeText(p.best.min)}</Ink> : <Ink size={14} weight="medium" color={P.muted}>Pas encore de sortie à cette distance</Ink>}
+            {p.best ? <Ink size={24} weight="black" tight>{timeText(p.best.min)}</Ink> : <Ink size={14} weight="medium" color={P.muted}>{traduire("Pas encore de sortie à cette distance")}</Ink>}
             {p.count > 0 ? <Ink size={12} weight="bold" color={P.muted}>{`${p.count} sortie${p.count > 1 ? 's' : ''}`}</Ink> : null}
           </View>
           {p.best ? (
@@ -96,9 +97,9 @@ export function AlluresView({ refreshKey, hideEmpty }: { refreshKey: number; hid
       ))}
       {evo.series.some((s) => s.pace > 0) ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Allure moyenne, 6 mois</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Allure moyenne, 6 mois")}</Ink>
           <Columns items={evo.series.map((s) => ({ label: s.label, value: s.pace > 0 ? evo.slow * 1.15 - s.pace : 0, display: s.pace > 0 ? pace(s.pace) : '' }))} color={P.indigo} />
-          <Ink size={12} weight="medium" color={P.muted}>Plus la colonne est haute, plus tu as couru vite ce mois-là.</Ink>
+          <Ink size={12} weight="medium" color={P.muted}>{traduire("Plus la colonne est haute, plus tu as couru vite ce mois-là.")}</Ink>
         </Sheet2>
       ) : null}
     </View>

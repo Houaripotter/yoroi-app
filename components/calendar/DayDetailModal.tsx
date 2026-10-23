@@ -12,7 +12,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Plus, Trash2, Clock, Edit3, Calendar, Check, RefreshCw } from 'lucide-react-native';
 import { format, getDay } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training, Club } from '@/lib/database';
 import { getClubLogoSource, getSportIcon, getSportColor, getSportName, getSessionTypeLabel } from '@/lib/sports';

@@ -18,6 +18,7 @@ import { calculateStreak } from './database';
 import { getCurrentRank, getNextRank, getDaysToNextRank, getRankProgress, RANKS, type Rank } from './ranks';
 import { getUnifiedPoints } from './gamification';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================================================
 // TYPES
@@ -172,7 +173,7 @@ const PACK_METADATA: PackMetadata[] = [
 
   // NIVEAU 1 - ASHIGARU (Avatars de démarrage)
   { id: 'ninja', name: 'Ninja', type: 'character', requiredRankLevel: 1, category: 'male' },
-  { id: 'samurai', name: 'Samouraï', type: 'character', requiredRankLevel: 1, category: 'male' },
+  { id: 'samurai', name: traduire('Samouraï'), type: 'character', requiredRankLevel: 1, category: 'male' },
   { id: 'ninja_alt', name: 'Ninja 2', type: 'character', requiredRankLevel: 1, category: 'male' },
   { id: 'samurai_alt', name: 'Samouraï 2', type: 'character', requiredRankLevel: 1, category: 'male' },
   { id: 'boxer', name: 'Boxeur', type: 'character', requiredRankLevel: 1, category: 'male' },
@@ -198,7 +199,7 @@ const PACK_METADATA: PackMetadata[] = [
 
   // NIVEAU 1 - Débutante
   { id: 'ninja', name: 'Ninja', type: 'character', requiredRankLevel: 1, category: 'female' },
-  { id: 'samurai', name: 'Samouraï', type: 'character', requiredRankLevel: 1, category: 'female' },
+  { id: 'samurai', name: traduire('Samouraï'), type: 'character', requiredRankLevel: 1, category: 'female' },
   { id: 'bjj', name: 'BJJ', type: 'character', requiredRankLevel: 1, category: 'female' },
   {
     id: 'pack_femmes',

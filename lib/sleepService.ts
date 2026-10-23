@@ -5,9 +5,10 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, subDays, differenceInMinutes, parseISO, startOfWeek, endOfWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -441,22 +442,22 @@ export const formatSleepDuration = (minutes: number): string => {
 export const getSleepAdvice = (debtHours: number): { message: string; severity: 'good' | 'warning' | 'danger' } => {
   if (debtHours <= 2) {
     return {
-      message: 'Sommeil optimal ! Tu es en pleine forme',
+      message: traduire('Sommeil optimal ! Tu es en pleine forme'),
       severity: 'good',
     };
   } else if (debtHours <= 5) {
     return {
-      message: `Tu as ${debtHours}h de dette. Couche-toi plus tôt ce soir.`,
+      message: traduire("Tu as {0}h de dette. Couche-toi plus tôt ce soir.", debtHours),
       severity: 'warning',
     };
   } else if (debtHours <= 10) {
     return {
-      message: `Attention ! ${debtHours}h de dette. Risque de fatigue intense.`,
+      message: traduire("Attention ! {0}h de dette. Risque de fatigue intense.", debtHours),
       severity: 'warning',
     };
   } else {
     return {
-      message: `Dette critique : ${debtHours}h ! Repos obligatoire.`,
+      message: traduire("Dette critique : {0}h ! Repos obligatoire.", debtHours),
       severity: 'danger',
     };
   }
@@ -470,7 +471,7 @@ export const exportSleepToCSV = async (): Promise<string> => {
     const entries = await getSleepEntries();
 
     // En-tête CSV
-    let csv = 'Date,Heure Coucher,Heure Réveil,Durée (heures),Qualité (1-5),Notes\n';
+    let csv = traduire('Date,Heure Coucher,Heure Réveil,Durée (heures),Qualité (1-5),Notes\n');
 
     // Ajouter chaque entrée (du plus récent au plus ancien)
     const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
@@ -497,29 +498,29 @@ export const generateSleepShareText = async (): Promise<string> => {
     const stats = await getSleepStats();
     const goal = await getSleepGoal();
 
-    let text = 'Mes Stats Sommeil - YOROI\n\n';
+    let text = traduire('Mes Stats Sommeil - YOROI\n\n');
 
     if (stats.currentStreak > 0) {
-      text += `Streak actuel : ${stats.currentStreak} jour${stats.currentStreak > 1 ? 's' : ''}\n`;
+      text += traduirePluriel(stats.currentStreak, stats.currentStreak > 1, "Streak actuel : {0} jour\n", "Streak actuel : {0} jours\n", stats.currentStreak);
     }
     if (stats.longestStreak > 0) {
-      text += `Record : ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}\n`;
+      text += traduirePluriel(stats.longestStreak, stats.longestStreak > 1, "Record : {0} jour\n", "Record : {0} jours\n", stats.longestStreak);
     }
 
     text += `\nMoyenne : ${formatSleepDuration(stats.averageDuration)}\n`;
-    text += `Qualité : ${stats.averageQuality}/5\n`;
+    text += traduire("Qualité : {0}/5\n", stats.averageQuality);
 
     if (goal > 0) {
-      text += `Objectif : ${formatSleepDuration(goal)}\n`;
+      text += traduire("Objectif : {0}\n", formatSleepDuration(goal));
       const successRate = stats.totalDays > 0 ? Math.round((stats.goalReachedDays / stats.totalDays) * 100) : 0;
-      text += `Réussite : ${successRate}% (${stats.goalReachedDays}/${stats.totalDays} jours)\n`;
+      text += traduire("Réussite : {0}% ({1}/{2} jours)\n", successRate, stats.goalReachedDays, stats.totalDays);
     }
 
     if (stats.sleepDebtHours > 0) {
       text += `\nDette : ${stats.sleepDebtHours}h\n`;
     }
 
-    text += '\nGénéré avec YOROI';
+    text += traduire('\nGénéré avec YOROI');
 
     return text;
   } catch (error) {

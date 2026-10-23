@@ -20,12 +20,13 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SAVED_EVENTS_KEY = 'my_saved_events';
 const SCENE = require('@/assets/avatars/app/themes/theme_matcha.webp');
 
 const CATEGORY_META: Record<string, { label: string; color: string }> = {
-  combat: { label: 'Combat', color: P.accent },
+  combat: { label: traduire('Combat'), color: P.accent },
   endurance: { label: 'Endurance', color: P.mossText },
   force: { label: 'Force', color: P.goldDark },
   nature: { label: 'Nature', color: '#8C6A3F' },
@@ -99,14 +100,14 @@ export default function EventDetailScreen() {
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
     } catch (e) {
       logger.error('[EventDetail] toggle saved error', e);
-      appAlert('Enregistrement impossible', "Cet événement n'a pas pu être ajouté.");
+      appAlert(traduire('Enregistrement impossible'), traduire("Cet événement n'a pas pu être ajouté."));
     }
   };
 
   const openRegistration = async () => {
     if (!params.registration_link) return;
     const ok = await safeOpenURL(params.registration_link);
-    if (!ok) appAlert('Lien invalide', "Ce lien d'inscription n'a pas pu être ouvert.");
+    if (!ok) appAlert('Lien invalide', traduire("Ce lien d'inscription n'a pas pu être ouvert."));
   };
 
   const place = [params.city, params.country].filter(Boolean).join(', ');
@@ -114,14 +115,14 @@ export default function EventDetailScreen() {
   if (eventDate && !isNaN(eventDate.getTime())) rows.push({ icon: 'calendar', label: 'Date', value: capitalize(longDate(eventDate)) });
   if (place) rows.push({ icon: 'flag', label: 'Lieu', value: place });
   if (params.full_address) rows.push({ icon: 'flag', label: 'Adresse', value: params.full_address });
-  if (params.federation) rows.push({ icon: 'shield', label: 'Fédération', value: params.federation });
+  if (params.federation) rows.push({ icon: 'shield', label: traduire('Fédération'), value: params.federation });
 
   return (
     <DetailScreen
-      title="Événement"
+      title={traduire("Événement")}
       subtitle={meta.label}
-      right={<RoundAction icon="bookmark" label={isSaved ? 'Retirer de mes rendez-vous' : 'Ajouter à mes rendez-vous'} tint={isSaved ? P.accent : P.ink} onPress={toggleSaved} />}
-      footer={params.registration_link ? <BigButton label="S'inscrire en ligne" icon="share" onPress={openRegistration} /> : undefined}
+      right={<RoundAction icon="bookmark" label={isSaved ? traduire('Retirer de mes rendez-vous') : traduire('Ajouter à mes rendez-vous')} tint={isSaved ? P.accent : P.ink} onPress={toggleSaved} />}
+      footer={params.registration_link ? <BigButton label={traduire("S'inscrire en ligne")} icon="share" onPress={openRegistration} /> : undefined}
     >
       <Enter i={0}>
         <ImageBackground source={SCENE} style={{ borderRadius: 28, overflow: 'hidden', minHeight: 230 }} resizeMode="cover">
@@ -136,7 +137,7 @@ export default function EventDetailScreen() {
             <Glass style={{ alignSelf: 'flex-start', maxWidth: params.image_logo_url ? '100%' : '56%', padding: 16, gap: 6 }}>
               <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, height: 26, borderRadius: 9, backgroundColor: meta.color, justifyContent: 'center' }}>
                 <Ink size={12} weight="extraBold" color={P.white}>
-                  {days !== null && days >= 0 ? (days === 0 ? "Aujourd'hui" : `Dans ${days} jour${days > 1 ? 's' : ''}`) : meta.label}
+                  {days !== null && days >= 0 ? (days === 0 ? traduire("Aujourd'hui") : traduirePluriel(days, days > 1, "Dans {0} jour", "Dans {0} jours", days)) : meta.label}
                 </Ink>
               </View>
               <Ink size={22} weight="black" tight>
@@ -161,19 +162,18 @@ export default function EventDetailScreen() {
         <Enter i={2}>
           <Card style={{ gap: 10 }}>
             <Ink size={15} weight="black" tight>
-              Une plaque par jour jusqu'au départ
-            </Ink>
+              {traduire("Une plaque par jour jusqu'au départ")}</Ink>
             <CountdownPlates daysLeft={days} max={35} plate={22} />
           </Card>
         </Enter>
       ) : null}
 
       <Enter i={3}>
-        <Press onPress={toggleSaved} accessibilityRole="button" accessibilityLabel={isSaved ? 'Retirer de mes rendez-vous' : 'Ajouter à mes rendez-vous'}>
+        <Press onPress={toggleSaved} accessibilityRole="button" accessibilityLabel={isSaved ? traduire('Retirer de mes rendez-vous') : traduire('Ajouter à mes rendez-vous')}>
           <View style={{ minHeight: 60, borderRadius: 20, backgroundColor: isSaved ? P.accentSoft : P.white, borderWidth: 1, borderColor: isSaved ? P.accent : P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
             <XIcon name="bookmark" size={20} color={isSaved ? P.accent : P.ink} />
             <Ink size={16} weight="extraBold" color={isSaved ? P.accent : P.ink}>
-              {isSaved ? 'Dans mes rendez-vous' : 'Ajouter à mes rendez-vous'}
+              {isSaved ? traduire('Dans mes rendez-vous') : traduire('Ajouter à mes rendez-vous')}
             </Ink>
           </View>
         </Press>

@@ -18,6 +18,7 @@
  * La periode se compte depuis ta derniere pesee (comme filterPeriod), jamais dans le futur.
  */
 import { jourCourt, jourDe, medianeA, statutLigne, type Ligne } from './ligneDirectrice';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 /** meme valeur que PERIODE_PLAN (components/yoroi/v2/charts/PeriodSwitch.tsx), sans dependre d'un composant */
 export const PERIODE_PLAN_CADRAGE = -1;
@@ -91,16 +92,16 @@ export function cadrerPeriode<T extends { date: string }>(series: T[], periode: 
   const premiere = win[0].date.slice(0, 10);
   // l'objectif commence juste avant ta premiere pesee montree (et dans la periode) : l'axe part de lui
   const debut = dObj && dObj < premiere && dObj >= limite ? dObj : premiere;
-  const mention = periode > 0 && jours(limite, debut) > MARGE_MENTION_JOURS ? `depuis le ${jourCourt(debut)}` : null;
+  const mention = periode > 0 && jours(limite, debut) > MARGE_MENTION_JOURS ? traduire("depuis le {0}", jourCourt(debut)) : null;
   return { points: win, debut, mention };
 }
 
 /** « en 3 mois », « depuis le 3 oct. », « depuis ton début » : l'ecart de la periode, dit juste */
-export function texteDePeriode(periode: number, mention: string | null, plan = 'depuis ton début'): string {
+export function texteDePeriode(periode: number, mention: string | null, plan = traduire('depuis ton début')): string {
   if (periode === PERIODE_PLAN_CADRAGE) return plan;
   if (mention) return mention;
-  const t: Record<number, string> = { 30: 'en 1 mois', 90: 'en 3 mois', 180: 'en 6 mois', 365: 'en 1 an' };
-  return t[periode] ?? 'sur la période';
+  const t: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an') };
+  return t[periode] ?? traduire('sur la période');
 }
 
 /**
@@ -154,7 +155,7 @@ export type PartiesAllure = {
   ton: 'vert' | 'bleu' | 'orange' | 'gris';
 };
 
-const kgUn = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+const kgUn = (v: number) => (Math.round(v * 10) / 10).toFixed(1).replace('.', DECIMAL);
 
 /**
  * Courbe v2 (Houari, 16 octobre : « la bulle ton allure gâche la vue ») : l'allure ne se pose plus sur la courbe,
@@ -169,9 +170,9 @@ export function partiesAllure(l: Ligne | null | undefined, torii: string | null 
   if (st.id === 'avant') return null;
   const m = medianeA(l, torii ?? null, d);
   if (m == null || !isFinite(m)) return null;
-  const quand = passe ? 'ce jour-là' : d === today ? 'aujourd’hui' : `le ${jourCourt(d)}`;
+  const quand = passe ? traduire('ce jour-là') : d === today ? traduire('aujourd’hui') : traduire("le {0}", jourCourt(d));
   // 16 octobre (Houari) : plus d'ecart « toi +0,3 kg », la phrase de statut au dessus le dit deja
-  return { debut: `Ton allure ${quand}`, valeur: `${kgUn(m)} kg`, ton: st.ton };
+  return { debut: traduire("Ton allure {0}", quand), valeur: `${kgUn(m)} kg`, ton: st.ton };
 }
 
 /** La meme ligne en texte simple (lecteur d'ecran, tests) : « Ton allure aujourd’hui : 80,4 kg » */

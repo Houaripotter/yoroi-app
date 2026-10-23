@@ -5,6 +5,7 @@
  * sans ecriture. Premium comme le pack Lanternes, sauf la Salle d'armes, offerte. Require statiques pour Metro.
  */
 import type { ImageSourcePropType } from 'react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 export const SAMOURAI_IDS = [
   'samourai_armurerie', 'samourai_kenjutsu', 'samourai_cour', 'samourai_camp_nuit', 'samourai_forge_nuit',
@@ -29,16 +30,16 @@ export type SceneSamourai = {
 };
 
 export const SCENES_SAMOURAI: SceneSamourai[] = [
-  { id: 'samourai_armurerie', nom: 'Salle d’armes', phrase: 'L’armure et les râteliers de sabres', description: 'L’armure sur son support et les katanas alignés', focus: 0.3, sombre: true, torii: false, offerte: true, image: require('@/assets/avatars/app/monde/scenes/samourai_armurerie.webp') },
-  { id: 'samourai_kenjutsu', nom: 'Dojo de kenjutsu', phrase: 'Les bokken et les katanas au mur', description: 'Le parquet ciré et le râtelier des sabres de bois', focus: 0.3, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_kenjutsu.webp') },
-  { id: 'samourai_cour', nom: 'Cour du château', phrase: 'Les bannières devant le donjon', description: 'Le gravier ratissé, le pin et les bannières', focus: 0.45, sombre: false, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_cour.webp') },
-  { id: 'samourai_camp_nuit', nom: 'Tente du général', phrase: 'L’éventail de commandant, la nuit', description: 'Les armures et les braseros du camp de guerre', focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_camp_nuit.webp') },
-  { id: 'samourai_forge_nuit', nom: 'Forge de nuit', phrase: 'Les lames sur la braise', description: 'Le feu de la forge où naissent les katanas', focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_forge_nuit.webp') },
-  { id: 'samourai_pavillon_aube', nom: 'Pavillon de l’armure', phrase: 'L’armure exposée à l’aube', description: 'Le pavillon de bois au-dessus de l’étang', focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_pavillon_aube.webp') },
-  { id: 'samourai_porte_nuit', nom: 'Porte du château', phrase: 'Les lanternes de la garde', description: 'La grande porte de bois sous la lune', focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_porte_nuit.webp') },
-  { id: 'samourai_meditation', nom: 'Salle de méditation', phrase: 'Le katana sur son support', description: 'Le tatami, l’encens et le sabre au repos', focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_meditation.webp') },
-  { id: 'samourai_pont_nuit', nom: 'Pont des bannières', phrase: 'Les lanternes sur la rivière', description: 'Le pont de bois et ses bannières, le soir', focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_pont_nuit.webp') },
-  { id: 'samourai_armurerie_nuit', nom: 'Salle d’armes de nuit', phrase: 'Les sabres à la lueur des lanternes', description: 'L’armure et les katanas sous les lanternes', focus: 0.3, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_armurerie_nuit.webp') },
+  { id: 'samourai_armurerie', nom: 'Salle d’armes', phrase: traduire('L’armure et les râteliers de sabres'), description: traduire('L’armure sur son support et les katanas alignés'), focus: 0.3, sombre: true, torii: false, offerte: true, image: require('@/assets/avatars/app/monde/scenes/samourai_armurerie.webp') },
+  { id: 'samourai_kenjutsu', nom: traduire('Dojo de kenjutsu'), phrase: traduire('Les bokken et les katanas au mur'), description: traduire('Le parquet ciré et le râtelier des sabres de bois'), focus: 0.3, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_kenjutsu.webp') },
+  { id: 'samourai_cour', nom: traduire('Cour du château'), phrase: traduire('Les bannières devant le donjon'), description: traduire('Le gravier ratissé, le pin et les bannières'), focus: 0.45, sombre: false, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_cour.webp') },
+  { id: 'samourai_camp_nuit', nom: traduire('Tente du général'), phrase: traduire('L’éventail de commandant, la nuit'), description: traduire('Les armures et les braseros du camp de guerre'), focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_camp_nuit.webp') },
+  { id: 'samourai_forge_nuit', nom: traduire('Forge de nuit'), phrase: traduire('Les lames sur la braise'), description: traduire('Le feu de la forge où naissent les katanas'), focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_forge_nuit.webp') },
+  { id: 'samourai_pavillon_aube', nom: traduire('Pavillon de l’armure'), phrase: traduire('L’armure exposée à l’aube'), description: traduire('Le pavillon de bois au-dessus de l’étang'), focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_pavillon_aube.webp') },
+  { id: 'samourai_porte_nuit', nom: traduire('Porte du château'), phrase: traduire('Les lanternes de la garde'), description: traduire('La grande porte de bois sous la lune'), focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_porte_nuit.webp') },
+  { id: 'samourai_meditation', nom: traduire('Salle de méditation'), phrase: traduire('Le katana sur son support'), description: traduire('Le tatami, l’encens et le sabre au repos'), focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_meditation.webp') },
+  { id: 'samourai_pont_nuit', nom: traduire('Pont des bannières'), phrase: traduire('Les lanternes sur la rivière'), description: traduire('Le pont de bois et ses bannières, le soir'), focus: 0.4, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_pont_nuit.webp') },
+  { id: 'samourai_armurerie_nuit', nom: traduire('Salle d’armes de nuit'), phrase: traduire('Les sabres à la lueur des lanternes'), description: traduire('L’armure et les katanas sous les lanternes'), focus: 0.3, sombre: true, torii: false, image: require('@/assets/avatars/app/monde/scenes/samourai_armurerie_nuit.webp') },
 ];
 
 /** Les images par id (pour les tables Record<SceneId, ...>) */

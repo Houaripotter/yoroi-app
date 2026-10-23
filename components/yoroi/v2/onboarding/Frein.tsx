@@ -14,6 +14,7 @@ import { ENCRES_THEME as ENCRES } from './couleurs';
 import type { Encre } from './couleurs';
 import { ChoiceCard, MainButton, Shell, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Un tampon ancien par frein */
 export const TAMPON_FREIN: Record<FreinId, TamponId> = {
@@ -39,7 +40,7 @@ export function Frein({ nav, value, onToggle, onNext }: { nav: Nav; value: Frein
   const c = useColors();
   const petit = useWindowDimensions().width < 380;
   return (
-    <Shell {...nav} title="Qu’est-ce qui t’a **freiné** jusqu’ici ?" sub="Choisis tout ce qui te parle, la suite s’adapte à ta réponse." gap={10} footer={<MainButton label="Continuer" onPress={onNext} disabled={value.length === 0} />}>
+    <Shell {...nav} title={traduire("Qu’est-ce qui t’a **freiné** jusqu’ici ?")} sub={traduire("Choisis tout ce qui te parle, la suite s’adapte à ta réponse.")} gap={10} footer={<MainButton label="Continuer" onPress={onNext} disabled={value.length === 0} />}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
         {FREINS.map((f) => {
           const on = value.includes(f.id);

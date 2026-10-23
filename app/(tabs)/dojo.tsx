@@ -53,9 +53,10 @@ import { useArmure } from '@/lib/v2/dojo/useArmure';
 import { PACKS, THEMES, THEME_IMAGES, aUnPersonnage, parsePersonnage, personnageImage, personnageName } from '@/lib/v2/dojo/personnages';
 import type { Gender } from '@/lib/v2/dojo/personnages';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const NB = ' ';
-const SHORT_MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const SHORT_MONTHS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 const shortDay = (iso: string) => {
   const d = new Date(iso + 'T12:00:00');
   return `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`;
@@ -257,7 +258,7 @@ export default function Dojo() {
   }, []);
   const palierSuivant = st?.serie ? prochainPalier(Math.max(st.serie.jours, 0)) : null;
   const textePalier = palierSuivant
-    ? `Encore ${palierSuivant.reste} jour${palierSuivant.reste > 1 ? 's' : ''} d’affilée pour gagner la scène ${SCENES_VOYAGES.find((x) => x.id === palierSuivant.scene)?.nom ?? ''}`
+    ? traduirePluriel(palierSuivant.reste, palierSuivant.reste > 1, "Encore {0} jour d’affilée pour gagner la scène {1}", "Encore {0} jours d’affilée pour gagner la scène {1}", palierSuivant.reste, SCENES_VOYAGES.find((x) => x.id === palierSuivant.scene)?.nom ?? '')
     : undefined;
   const noterVerre = useCallback(async () => {
     const h = await loadHydration();
@@ -323,7 +324,7 @@ export default function Dojo() {
               setVisite(true);
             }}
             accessibilityRole="button"
-            accessibilityLabel="Comment marche le Dojo, la visite avec la voix"
+            accessibilityLabel={traduire("Comment marche le Dojo, la visite avec la voix")}
             style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
           >
             <Ink size={18} weight="black" color={c.accent}>?</Ink>
@@ -335,7 +336,7 @@ export default function Dojo() {
               go('/dojo/boutique');
             }}
             accessibilityRole="button"
-            accessibilityLabel="Personnages et scènes"
+            accessibilityLabel={traduire("Personnages et scènes")}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 14, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
           >
             <PersonIcon color={c.accent} />
@@ -351,13 +352,13 @@ export default function Dojo() {
               go('/dojo/rangs');
             }}
             accessibilityRole="button"
-            accessibilityLabel={`${avecPerso ? `${personnageName(espace.personnage)}, ` : ''}rang ${title}, ${formatXp(xp)} XP. Voir ${libelleChemin(u).toLowerCase()}`}
+            accessibilityLabel={traduire("{0}rang {1}, {2} XP. Voir {3}", avecPerso ? `${personnageName(espace.personnage)}, ` : '', title, formatXp(xp), libelleChemin(u).toLowerCase())}
           >
             <RankFrame rankIndex={rank.index} dan={rank.dan ?? 0}>
             <ScenePlate scene={scene} height={heroH} animation={animationDeScene(espace.scene)}>
               <View style={{ position: 'absolute', left: 14, right: 14, top: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                 <GlassTag style={{ flexShrink: 1, maxWidth: '86%' }}>
-                  <Ink size={12} weight="extraBold" color={c.goldDeep}>{rank.dan ? `Rang ${RANKS.length} sur ${RANKS.length}, ${rank.dan === 1 ? '1er' : `${rank.dan}e`} dan` : `Rang ${rank.index + 1} sur ${RANKS.length}`}</Ink>
+                  <Ink size={12} weight="extraBold" color={c.goldDeep}>{rank.dan ? traduire("Rang {0} sur {1}, {2} dan", RANKS.length, RANKS.length, rank.dan === 1 ? '1er' : `${rank.dan}e`) : traduire("Rang {0} sur {1}", rank.index + 1, RANKS.length)}</Ink>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                     <Ink size={30} weight="black" tight numberOfLines={1} style={{ flexShrink: 1 }}>
                       {rangNom(rank.index, u)}
@@ -381,7 +382,7 @@ export default function Dojo() {
         {/* Vague 47 : aujourd'hui, ta serie de jours et ton coffre du jour (la raison de revenir chaque jour) */}
         {st?.serie && st.coffre ? (
           <Section i={1} ancre="aujourdhui">
-            <Aujourdhui serie={st.serie} coffre={st.coffre} onOuvrir={ouvrirCoffre} onVerre={noterVerre} onCadeau={(id) => void mettreScene(id, true)} palier={isPremium ? undefined : textePalier} suite={cons.resteXp > 0 ? `Encore ${formatXp(cons.resteXp)}${NB}XP pour ${cons.palier}` : undefined} />
+            <Aujourdhui serie={st.serie} coffre={st.coffre} onOuvrir={ouvrirCoffre} onVerre={noterVerre} onCadeau={(id) => void mettreScene(id, true)} palier={isPremium ? undefined : textePalier} suite={cons.resteXp > 0 ? traduire("Encore {0}{1}XP pour {2}", formatXp(cons.resteXp), NB, cons.palier) : undefined} />
             {/* 18 octobre : ton rang, ton XP et ta serie a l'abri, copie automatique dans ton cloud */}
             <AbriDojo rang={title} xp={xp} serie={st.serie.jours} />
           </Section>
@@ -395,7 +396,7 @@ export default function Dojo() {
               go('/dojo/rangs');
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Ta prochaine récompense : ${cons.palier}, ${cons.piece.nom}, étape ${cons.enCours} sur 3, ${cons.piece.etapes[cons.faites]}. ${formatXp(xp)} XP sur ${formatXp(cons.objectifXp)}, encore ${formatXp(cons.resteXp)} XP`}
+            accessibilityLabel={traduire("Ta prochaine récompense : {0}, {1}, étape {2} sur 3, {3}. {4} XP sur {5}, encore {6} XP", cons.palier, cons.piece.nom, cons.enCours, cons.piece.etapes[cons.faites], formatXp(xp), formatXp(cons.objectifXp), formatXp(cons.resteXp))}
             style={({ pressed }) => ({ backgroundColor: pressed ? P.bande : c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 })}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -404,11 +405,11 @@ export default function Dojo() {
                 <EtapesPiece faites={cons.faites} />
               </View>
               <View style={{ flex: 1, gap: 3 }}>
-                <Ink size={12} weight="extraBold" color={c.goldDeep}>Ta prochaine récompense</Ink>
+                <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Ta prochaine récompense")}</Ink>
                 <Ink size={20} weight="black" tight numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>{cons.palier}</Ink>
                 <Ink size={14} weight="extraBold" numberOfLines={2}>{cons.piece.nom}</Ink>
                 <Ink size={12} color={c.textSecondary} numberOfLines={3}>
-                  {`${tenueEvolue ? libelleConstruction(u) : 'Ta récompense se construit'} : étape ${cons.enCours} sur 3, ${cons.piece.etapes[cons.faites]}`}
+                  {traduire("{0} : étape {1} sur 3, {2}", tenueEvolue ? libelleConstruction(u) : 'Ta récompense se construit', cons.enCours, cons.piece.etapes[cons.faites])}
                 </Ink>
               </View>
               <ChevronIcon />
@@ -416,8 +417,8 @@ export default function Dojo() {
             <View style={{ gap: 6 }}>
               <Bar progress={cons.progres} color={c.gold} track={c.fillSoft} height={8} />
               <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 8, rowGap: 2 }}>
-                <Ink size={13} weight="bold" color={c.textSecondary} style={{ flexGrow: 1 }}>{`${formatXp(xp)}${NB}XP sur ${formatXp(cons.objectifXp)}`}</Ink>
-                <Ink size={13} weight="extraBold" color={c.accent}>{`encore ${formatXp(cons.resteXp)}${NB}XP`}</Ink>
+                <Ink size={13} weight="bold" color={c.textSecondary} style={{ flexGrow: 1 }}>{traduire("{0}{1}XP sur {2}", formatXp(xp), NB, formatXp(cons.objectifXp))}</Ink>
+                <Ink size={13} weight="extraBold" color={c.accent}>{traduire("encore {0}{1}XP", formatXp(cons.resteXp), NB)}</Ink>
               </View>
             </View>
           </Pressable>
@@ -431,25 +432,25 @@ export default function Dojo() {
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                   <Ink size={34} weight="black" tight color={st && st.weekStreak > 0 ? c.accent : c.ink}>{String(st?.weekStreak ?? 0)}</Ink>
                   <Ink size={16} weight="extraBold" style={{ flexShrink: 1 }}>
-                    {(st?.weekStreak ?? 0) > 1 ? 'semaines réussies d’affilée' : 'semaine réussie d’affilée'}
+                    {(st?.weekStreak ?? 0) > 1 ? traduire('semaines réussies d’affilée') : traduire('semaine réussie d’affilée')}
                   </Ink>
                 </View>
                 <Ink size={13} color={c.textSecondary}>
-                  {`Ton objectif : ${weekGoal} séance${weekGoal > 1 ? 's' : ''} par semaine. Chaque semaine réussie : +${st?.weekXp ?? 50}${NB}XP.`}
+                  {traduirePluriel(weekGoal, weekGoal > 1, "Ton objectif : {0} séance par semaine. Chaque semaine réussie : +{1}{2}XP.", "Ton objectif : {0} séances par semaine. Chaque semaine réussie : +{1}{2}XP.", weekGoal, st?.weekXp ?? 50, NB)}
                 </Ink>
-                {st?.bestStreak ? <Ink size={13} color={c.textSecondary}>{`Ton record : ${st.bestStreak} semaine${st.bestStreak > 1 ? 's' : ''}.`}</Ink> : null}
+                {st?.bestStreak ? <Ink size={13} color={c.textSecondary}>{traduirePluriel(st.bestStreak, st.bestStreak > 1, "Ton record : {0} semaine.", "Ton record : {0} semaines.", st.bestStreak)}</Ink> : null}
                 {goalOpen ? (
-                  <Pressable onPress={() => router.push('/settings?objectif=1' as any)} accessibilityRole="button" accessibilityLabel="Choisir mon objectif de séances" hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
-                    <Ink size={13} weight="extraBold" color={c.accent}>Choisir mon objectif</Ink>
+                  <Pressable onPress={() => router.push('/settings?objectif=1' as any)} accessibilityRole="button" accessibilityLabel={traduire("Choisir mon objectif de séances")} hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
+                    <Ink size={13} weight="extraBold" color={c.accent}>{traduire("Choisir mon objectif")}</Ink>
                   </Pressable>
                 ) : null}
               </View>
-              <View style={{ alignItems: 'center', gap: 2 }} accessible accessibilityLabel={`${st?.shields ?? 0} joker${(st?.shields ?? 0) > 1 ? 's' : ''} sur 2`}>
+              <View style={{ alignItems: 'center', gap: 2 }} accessible accessibilityLabel={traduirePluriel((st?.shields ?? 0), (st?.shields ?? 0) > 1, "{0} joker sur 2", "{0} jokers sur 2", st?.shields ?? 0)}>
                 <View style={{ flexDirection: 'row', gap: 2 }}>
                   <MaterialCommunityIcons name={(st?.shields ?? 0) >= 1 ? 'cards-playing' : 'cards-playing-outline'} size={28} color={(st?.shields ?? 0) >= 1 ? c.gold : c.textMuted} />
                   <MaterialCommunityIcons name={(st?.shields ?? 0) >= 2 ? 'cards-playing' : 'cards-playing-outline'} size={28} color={(st?.shields ?? 0) >= 2 ? c.gold : c.textMuted} />
                 </View>
-                <Ink size={11} weight="bold" color={c.textMuted}>{(st?.shields ?? 0) === 0 ? 'aucun joker' : `${st?.shields} joker${(st?.shields ?? 0) > 1 ? 's' : ''}`}</Ink>
+                <Ink size={11} weight="bold" color={c.textMuted}>{(st?.shields ?? 0) === 0 ? traduire('aucun joker') : `${st?.shields} joker${(st?.shields ?? 0) > 1 ? 's' : ''}`}</Ink>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -460,21 +461,21 @@ export default function Dojo() {
                 <View key={`v${i}`} style={{ flex: 1, height: 40, borderRadius: 12, borderWidth: 1.5, borderColor: c.border, borderStyle: 'dashed' }} />
               ))}
             </View>
-            <Ink size={13} color={c.textSecondary}>Tu rates une semaine ? Un joker la sauve et ta série continue. Tu gagnes un joker toutes les 4 semaines réussies, 2 au maximum.</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Tu rates une semaine ? Un joker la sauve et ta série continue. Tu gagnes un joker toutes les 4 semaines réussies, 2 au maximum.")}</Ink>
             <BoutonPause pause={st?.pauseThisWeek ?? null} onPause={() => setPauseOuverte(true)} onReprendre={reprendreSemaine} />
           </View>
         </Section>
 
         {/* Sceaux */}
         <Section i={5} ancre="sceaux">
-          <SectionHead title="Tes sceaux" action="Collection" onAction={() => go('/dojo/sceaux')} />
+          <SectionHead title={traduire("Tes sceaux")} action="Collection" onAction={() => go('/dojo/sceaux')} />
           <Pressable
             onPress={() => {
               tap();
               go('/dojo/sceaux');
             }}
             accessibilityRole="button"
-            accessibilityLabel={`${sealsCount} sceaux sur ${sealsTotal}. Voir la collection`}
+            accessibilityLabel={traduire("{0} sceaux sur {1}. Voir la collection", sealsCount, sealsTotal)}
             style={({ pressed }) => ({ backgroundColor: pressed ? P.bande : c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14 })}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -495,11 +496,11 @@ export default function Dojo() {
             <View style={{ gap: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                 <Ink size={22} weight="black" tight>{String(sealsCount)}</Ink>
-                <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>{`sceau${sealsCount > 1 ? 'x' : ''} sur ${sealsTotal}`}</Ink>
+                <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }}>{traduirePluriel(sealsCount, sealsCount > 1, "sceau sur {0}", "sceaux sur {0}", sealsTotal)}</Ink>
               </View>
               <Bar progress={sealsTotal ? sealsCount / sealsTotal : 0} color={c.gold} />
               {nextSeal ? (
-                <Ink size={13} color={c.textSecondary} numberOfLines={2}>{`Le plus proche : ${nomSceau(nextSeal, u)}, ${nextSeal.current} sur ${nextSeal.target}`}</Ink>
+                <Ink size={13} color={c.textSecondary} numberOfLines={2}>{traduire("Le plus proche : {0}, {1} sur {2}", nomSceau(nextSeal, u), nextSeal.current, nextSeal.target)}</Ink>
               ) : null}
             </View>
           </Pressable>
@@ -507,7 +508,7 @@ export default function Dojo() {
 
         {/* Niveaux de pratique par sport */}
         <Section i={4}>
-          <SectionHead title="Tes niveaux par sport" action="Tout voir" onAction={() => go('/dojo/ceintures')} />
+          <SectionHead title={traduire("Tes niveaux par sport")} action={traduire("Tout voir")} onAction={() => go('/dojo/ceintures')} />
           {belts.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 10 }} snapToInterval={158} decelerationRate="fast">
               {belts.map((b) => (
@@ -527,8 +528,8 @@ export default function Dojo() {
                 <Image source={PACKS[0].images[gender][0]} style={{ width: 64, height: 78 }} resizeMode="contain" />
               </View>
               <View style={{ flex: 1, gap: 4 }}>
-                <Ink size={15} weight="extraBold">Un niveau par sport</Ink>
-                <Ink size={13} color={c.textSecondary}>Ta première séance te fait Novice. Initié arrive à 10 séances, Maître à 365.</Ink>
+                <Ink size={15} weight="extraBold">{traduire("Un niveau par sport")}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("Ta première séance te fait Novice. Initié arrive à 10 séances, Maître à 365.")}</Ink>
               </View>
               <ChevronIcon />
             </Pressable>
@@ -537,7 +538,7 @@ export default function Dojo() {
 
         {/* Portes du Dojo */}
         <Section i={6}>
-          <SectionHead title="Explorer le Dojo" />
+          <SectionHead title={traduire("Explorer le Dojo")} />
           <Gates
             width={W}
             gates={[
@@ -564,17 +565,17 @@ export default function Dojo() {
 
         {/* Vague 45 : la vitrine de la boutique remplace la porte « Personnages et scènes » */}
         <Section i={6}>
-          <SectionHead title={avecPerso ? 'Personnages et scènes' : 'Scènes'} action="Boutique" onAction={() => go('/dojo/boutique')} />
-          <VitrineBoutique vignettes={vignettes} total={`${PACKS.length + 1} personnages, ${THEMES.length} scènes`} onOuvrir={() => go('/dojo/boutique')} />
+          <SectionHead title={avecPerso ? traduire('Personnages et scènes') : traduire('Scènes')} action="Boutique" onAction={() => go('/dojo/boutique')} />
+          <VitrineBoutique vignettes={vignettes} total={traduire("{0} personnages, {1} scènes", PACKS.length + 1, THEMES.length)} onOuvrir={() => go('/dojo/boutique')} />
         </Section>
 
         <Section i={7}>
           <FeatureList
-            title="Combat et partage"
+            title={traduire("Combat et partage")}
             items={[
-              { label: 'Succès de sparring', sub: 'Tes rounds, tes finitions, tes partenaires', href: '/combat-achievements' },
-              { label: 'Carte de combattant', href: '/fighter-card' },
-              { label: 'Partager tes séances et bilans', href: '/share-hub' },
+              { label: traduire('Succès de sparring'), sub: traduire('Tes rounds, tes finitions, tes partenaires'), href: '/combat-achievements' },
+              { label: traduire('Carte de combattant'), href: '/fighter-card' },
+              { label: traduire('Partager tes séances et bilans'), href: '/share-hub' },
             ]}
           />
         </Section>
@@ -631,7 +632,7 @@ function SportCard({ b, gender, onPress }: { b: BeltInfo; gender: Gender; onPres
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${b.sportName}, niveau ${b.belt.name}, ${b.count} séances`}
+      accessibilityLabel={traduire("{0}, niveau {1}, {2} séances", b.sportName, b.belt.name, b.count)}
       style={({ pressed }) => ({ width: 148, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 8, paddingBottom: 12, gap: 8, opacity: pressed ? 0.85 : 1 })}
     >
       <View style={{ height: 120, borderRadius: 16, backgroundColor: pack?.fond ?? c.fillSoft, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
@@ -642,11 +643,11 @@ function SportCard({ b, gender, onPress }: { b: BeltInfo; gender: Gender; onPres
       </View>
       <View style={{ paddingHorizontal: 4, gap: 3 }}>
         <Ink size={14} weight="extraBold" numberOfLines={2}>{b.sportName}</Ink>
-        <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{`${b.belt.name}, ${b.count} séance${b.count > 1 ? 's' : ''}`}</Ink>
+        <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduirePluriel(b.count, b.count > 1, "{0}, {1} séance", "{0}, {1} séances", b.belt.name, b.count)}</Ink>
         <View style={{ marginTop: 4 }}>
           <Bar progress={b.progress} color={barColor} height={6} />
         </View>
-        <Ink size={11} color={c.textMuted} numberOfLines={2}>{b.next ? `encore ${b.remaining} pour ${b.next.name}` : 'sommet atteint'}</Ink>
+        <Ink size={11} color={c.textMuted} numberOfLines={2}>{b.next ? traduire("encore {0} pour {1}", b.remaining, b.next.name) : 'sommet atteint'}</Ink>
       </View>
     </Pressable>
   );
@@ -658,7 +659,7 @@ function WeekTile({ w }: { w: WeekStatus }) {
   let bg: string = c.fillSoft;
   let border = 'transparent';
   let color: string = c.textSecondary;
-  let label = `${w.count} sur ${w.goal}`;
+  let label = traduire("{0} sur {1}", w.count, w.goal);
   let dashed = false;
   if (w.status === 'tenue') {
     bg = c.accent;
@@ -681,7 +682,7 @@ function WeekTile({ w }: { w: WeekStatus }) {
     dashed = true;
   }
   return (
-    <View style={{ flex: 1, gap: 4 }} accessible accessibilityLabel={`Semaine du ${shortDay(w.monday)} : ${label}`}>
+    <View style={{ flex: 1, gap: 4 }} accessible accessibilityLabel={traduire("Semaine du {0} : {1}", shortDay(w.monday), label)}>
       <View style={{ height: 40, borderRadius: 12, backgroundColor: bg, borderWidth: border === 'transparent' ? 0 : 2, borderColor: border, borderStyle: dashed ? 'dashed' : 'solid', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 }}>
         <Ink size={12} weight="extraBold" color={color} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Ink>
       </View>

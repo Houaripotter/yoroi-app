@@ -11,6 +11,7 @@
 import type { DayWeight } from '@/lib/v2/weightStats';
 import { daysBetween, filterPeriod, weeklyRate } from '@/lib/v2/weightStats';
 import { semainesAuRythme } from '@/lib/v2/pesee/estimation';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Projection =
   /** date estimee de l'objectif */
@@ -18,7 +19,7 @@ export type Projection =
   /** sans objectif : le poids de tendance attendu dans 30 jours */
   | { kind: 'month'; value: number; date: string; days: number };
 
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
 
 function shift(iso: string, days: number): string {
   const d = new Date(iso + 'T12:00:00');

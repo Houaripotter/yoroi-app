@@ -26,6 +26,7 @@ import { SignatureCarte } from '@/components/yoroi/v2/partage/SignatureCarte';
 import { signaturePartage } from '@/constants/partage';
 import { noterPartage } from '@/lib/v2/partage/mesure';
 import type { SourcePartage } from '@/lib/v2/partage/mesure';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ShareRecord = {
   exerciseName: string;
@@ -74,7 +75,7 @@ function Card({ data, fond, photo, format, width, name }: { data: ShareRecord; f
           </Ink>
         ) : null}
         <Ink size={4.2 * u} weight="bold" color={ink2}>
-          {data.isPR ? 'Nouveau record personnel' : 'Ma perf du jour'}
+          {data.isPR ? traduire('Nouveau record personnel') : traduire('Ma perf du jour')}
         </Ink>
       </View>
 
@@ -141,7 +142,7 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        appAlert('Accès refusé', 'Autorise l’accès à tes photos pour mettre la tienne en fond.');
+        appAlert(traduire('Accès refusé'), traduire('Autorise l’accès à tes photos pour mettre la tienne en fond.'));
         return;
       }
       const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.9 });
@@ -162,14 +163,14 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
     try {
       const uri = await shot.current.capture();
       if (!uri) return;
-      if (await isAvailableAsync()) await shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Partager mon record' });
+      if (await isAvailableAsync()) await shareAsync(uri, { mimeType: 'image/png', dialogTitle: traduire('Partager mon record') });
       else {
         const res = await Share.share({ url: uri, message: signaturePartage() });
         if (res.action === Share.sharedAction) noterPartage(source, true);
       }
     } catch (e) {
       logger.error('[RecordShareSheet] partage', e);
-      appAlert('Oups', 'La carte n’a pas pu être partagée.');
+      appAlert('Oups', traduire('La carte n’a pas pu être partagée.'));
     } finally {
       setBusy(false);
     }
@@ -182,10 +183,9 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 24, paddingHorizontal: 22, gap: 16 }} showsVerticalScrollIndicator={false}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: -6 }}>
-            <IconBtn name="close" label="Fermer" onPress={onClose} />
+            <IconBtn name="close" label={traduire("Fermer")} onPress={onClose} />
             <Ink size={22} weight="black" tight style={{ flex: 1 }} accessibilityRole="header">
-              Partage ton record
-            </Ink>
+              {traduire("Partage ton record")}</Ink>
           </View>
 
           {data ? (
@@ -200,10 +200,10 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
             {(['story', 'carre'] as Format[]).map((f) => {
               const on = format === f;
               return (
-                <Press key={f} onPress={() => setFormat(f)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={f === 'story' ? 'Format story' : 'Format carré'}>
+                <Press key={f} onPress={() => setFormat(f)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={f === 'story' ? 'Format story' : traduire('Format carré')}>
                   <View style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                     <View style={{ width: f === 'story' ? 10 : 14, height: f === 'story' ? 16 : 14, borderRadius: 3, borderWidth: 2, borderColor: on ? P.white : P.ink2 }} />
-                    <Ink size={14} weight="extraBold" color={on ? P.white : P.ink2}>{f === 'story' ? 'Story' : 'Carré'}</Ink>
+                    <Ink size={14} weight="extraBold" color={on ? P.white : P.ink2}>{f === 'story' ? 'Story' : traduire('Carré')}</Ink>
                   </View>
                 </Press>
               );
@@ -224,17 +224,17 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
                 </Press>
               );
             })}
-            <Press onPress={pickPhoto} accessibilityRole="button" accessibilityState={{ selected: fond === 'photo' }} accessibilityLabel="Ta photo en fond">
+            <Press onPress={pickPhoto} accessibilityRole="button" accessibilityState={{ selected: fond === 'photo' }} accessibilityLabel={traduire("Ta photo en fond")}>
               <View style={{ alignItems: 'center', gap: 4 }}>
                 <View style={{ width: 58, height: 58, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: P.white, borderWidth: fond === 'photo' ? 3 : 1, borderColor: fond === 'photo' ? P.accent : P.line2 }}>
                   {photo ? <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} resizeMode="cover" /> : <CIcon name="image" size={24} color={P.ink2} />}
                 </View>
-                <Ink size={12} weight={fond === 'photo' ? 'extraBold' : 'bold'} color={fond === 'photo' ? P.accent : P.ink2}>Ta photo</Ink>
+                <Ink size={12} weight={fond === 'photo' ? 'extraBold' : 'bold'} color={fond === 'photo' ? P.accent : P.ink2}>{traduire("Ta photo")}</Ink>
               </View>
             </Press>
           </View>
 
-          <BigButton label={busy ? 'Préparation...' : 'Partager'} icon="share" disabled={busy || !data} onPress={share} />
+          <BigButton label={busy ? traduire('Préparation...') : traduire('Partager')} icon="share" disabled={busy || !data} onPress={share} />
         </ScrollView>
       </View>
     </Modal>

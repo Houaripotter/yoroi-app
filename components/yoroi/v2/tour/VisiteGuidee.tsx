@@ -33,6 +33,7 @@ import { ETAPES, ciblesDe, type Onglet } from './etapes';
 import { entrerExemple, sortirExemple } from '@/lib/v2/visite/demoVisite';
 import { remiseAZeroAuDemarrage } from '@/lib/v2/visite/vitrine';
 import { appliquerVitesse, libelleVitesse, useVitesseVoix } from '@/lib/v2/visite/vitesseVoix';
+import { traduire } from '@/lib/i18n/tr';
 
 const ONBOARDING_DONE_KEY = 'yoroi_onboarding_done';
 
@@ -265,7 +266,7 @@ export function VisiteGuidee() {
         } catch {
           // la phrase generale
         }
-        setFinMessage(neuf ? 'À toi maintenant : fais ta première pesée avec le bouton plus.' : 'Te revoilà sur tes données. Note ta pesée du jour avec le bouton plus.');
+        setFinMessage(neuf ? traduire('À toi maintenant : fais ta première pesée avec le bouton plus.') : traduire('Te revoilà sur tes données. Note ta pesée du jour avec le bouton plus.'));
         setTimeout(() => setFinMessage(null), 5000);
       })
       .catch(() => undefined);
@@ -666,9 +667,9 @@ export function VisiteGuidee() {
       {/* 18 octobre : tout ce que montre la visite est un exemple, jamais tes donnees */}
       {pastille ? (
         <View pointerEvents="none" style={[s.pastilleWrap, { top: insets.top + 6 }]}>
-          <View style={[s.pastille, { backgroundColor: c.surface, borderColor: c.border }]} accessibilityRole="text" accessibilityLabel={exemple === 'oui' ? 'Exemple : profil de démo. Ce ne sont pas tes données' : 'Préparation de l’exemple'}>
+          <View style={[s.pastille, { backgroundColor: c.surface, borderColor: c.border }]} accessibilityRole="text" accessibilityLabel={exemple === 'oui' ? traduire('Exemple : profil de démo. Ce ne sont pas tes données') : traduire('Préparation de l’exemple')}>
             <View style={[s.pastillePoint, { backgroundColor: c.accent }]} />
-            <Ink size={12.5} weight="extraBold" color={c.ink}>{exemple === 'oui' ? 'Exemple : profil de démo' : 'Préparation de l’exemple…'}</Ink>
+            <Ink size={12.5} weight="extraBold" color={c.ink}>{exemple === 'oui' ? traduire('Exemple : profil de démo') : traduire('Préparation de l’exemple…')}</Ink>
           </View>
         </View>
       ) : null}
@@ -680,11 +681,11 @@ export function VisiteGuidee() {
           style={[s.bubble, { width: bubbleW, left: (W - bubbleW) / 2, top: bubbleTop, bottom: bubbleBottom, backgroundColor: c.surface, borderColor: c.border, shadowColor: '#000' }]}
         >
           <View style={s.head}>
-            <Ink size={12.5} weight="extraBold" color={c.accent}>{`${index + 1} sur ${ETAPES.length}`}</Ink>
+            <Ink size={12.5} weight="extraBold" color={c.accent}>{traduire("{0} sur {1}", index + 1, ETAPES.length)}</Ink>
             <View style={[s.track, { backgroundColor: c.accentTint }]}>
               <View style={{ width: `${((index + 1) / ETAPES.length) * 100}%`, height: '100%', borderRadius: 2, backgroundColor: c.accent }} />
             </View>
-            <Pressable onPress={toggleVoix} hitSlop={10} style={[s.voixBtn, { backgroundColor: c.accentTint }]} accessibilityRole="button" accessibilityLabel={voix ? 'Couper la voix' : 'Remettre la voix'}>
+            <Pressable onPress={toggleVoix} hitSlop={10} style={[s.voixBtn, { backgroundColor: c.accentTint }]} accessibilityRole="button" accessibilityLabel={voix ? traduire('Couper la voix') : traduire('Remettre la voix')}>
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                 <Path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" stroke={c.accent} strokeWidth={2} strokeLinejoin="round" />
                 {voix ? (
@@ -695,12 +696,12 @@ export function VisiteGuidee() {
               </Svg>
             </Pressable>
             {voix ? (
-              <Pressable onPress={vitesseSuivante} hitSlop={8} style={[s.vitesseBtn, { backgroundColor: c.accentTint }]} accessibilityRole="button" accessibilityLabel={`Vitesse de la voix : ${libelleVitesse(vitesse)}. Changer`}>
+              <Pressable onPress={vitesseSuivante} hitSlop={8} style={[s.vitesseBtn, { backgroundColor: c.accentTint }]} accessibilityRole="button" accessibilityLabel={traduire("Vitesse de la voix : {0}. Changer", libelleVitesse(vitesse))}>
                 <Ink size={13} weight="extraBold" color={c.accent}>{libelleVitesse(vitesse)}</Ink>
               </Pressable>
             ) : null}
             {!last ? (
-              <Pressable onPress={() => finish()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Quitter la visite">
+              <Pressable onPress={() => finish()} hitSlop={12} accessibilityRole="button" accessibilityLabel={traduire("Quitter la visite")}>
                 <Ink size={14} weight="bold" color={c.textSecondary}>Passer</Ink>
               </Pressable>
             ) : null}
@@ -715,7 +716,7 @@ export function VisiteGuidee() {
 
           <View style={s.actions}>
             {!first ? (
-              <Pressable onPress={() => go(index - 1)} hitSlop={8} style={[s.prev, { backgroundColor: c.fillSoft }]} accessibilityRole="button" accessibilityLabel="Étape précédente">
+              <Pressable onPress={() => go(index - 1)} hitSlop={8} style={[s.prev, { backgroundColor: c.fillSoft }]} accessibilityRole="button" accessibilityLabel={traduire("Étape précédente")}>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path d="M15 5l-7 7 7 7" stroke={c.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
@@ -726,9 +727,9 @@ export function VisiteGuidee() {
               onPress={() => (last ? finish() : go(index + 1))}
               style={({ pressed }) => [s.cta, { backgroundColor: pressed ? c.accentPressed : c.accent }]}
               accessibilityRole="button"
-              accessibilityLabel={last ? 'Terminer la visite' : 'Étape suivante'}
+              accessibilityLabel={last ? traduire('Terminer la visite') : traduire('Étape suivante')}
             >
-              <Ink size={15.5} weight="black" color={c.onAccent}>{last ? 'C’est parti' : first ? 'On y va' : 'Suivant'}</Ink>
+              <Ink size={15.5} weight="black" color={c.onAccent}>{last ? traduire('C’est parti') : first ? 'On y va' : traduire('Suivant')}</Ink>
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                 <Path d="M5 12h13M13 6l6 6-6 6" stroke={c.onAccent} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>

@@ -8,6 +8,7 @@
 import type { CarteData, Exploit, Grand, StatValue } from './types';
 import { texteEnUnitePoids, valeurKgEnUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { nombre } from './chiffres';
+import { traduire } from '@/lib/i18n/tr';
 
 function grandEnUnite<G extends { value: string; unit?: string }>(g: G, u: UnitePoids): G {
   if (u === 'kg' || g.unit !== 'kg') return g;
@@ -25,7 +26,7 @@ export function statsEnUnite(stats: StatValue[], u: UnitePoids): StatValue[] {
     const n = Number(s.value.replace(/[\s\u00A0\u202F]/g, '').replace(',', '.'));
     const kg = s.unit === 't' ? n * 1000 : s.unit === 'kg' ? n : NaN;
     if (!Number.isFinite(kg)) return s;
-    return { ...s, value: nombre(Math.round(versUnitePoids(kg, 'lb')), 0), unit: 'lb', label: 'soulevées' };
+    return { ...s, value: nombre(Math.round(versUnitePoids(kg, 'lb')), 0), unit: 'lb', label: traduire('soulevées') };
   });
 }
 

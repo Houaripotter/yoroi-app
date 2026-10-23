@@ -9,6 +9,7 @@ import * as FS from 'expo-file-system/legacy';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 // Type assertion pour expo-file-system
 const FileSystem = FS as typeof FS & {
@@ -53,12 +54,12 @@ export const exportTrainingToJSON = async (): Promise<string | null> => {
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
+      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur export JSON:', error);
-    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
+    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
     return null;
   }
 };
@@ -76,13 +77,13 @@ export const exportTrainingToCSV = async (sport?: string): Promise<string | null
     }
 
     // Header CSV
-    let csvContent = 'Date,Exercice,Sport,Type,Sets,Reps,Poids (kg),Distance (km),Temps (min),Qualité (1-5)\n';
+    let csvContent = traduire('Date,Exercice,Sport,Type,Sets,Reps,Poids (kg),Distance (km),Temps (min),Qualité (1-5)\n');
 
     items.forEach((item) => {
       const logs = getPracticeLogsByItemId(item.id);
 
       logs.forEach((log) => {
-        const date = new Date(log.date).toLocaleDateString('fr-FR');
+        const date = new Date(log.date).toLocaleDateString(LOCALE);
         const exerciseName = item.name.replace(/,/g, ' ');
         const sets = log.sets || '';
         const reps = log.reps || '';
@@ -105,12 +106,12 @@ export const exportTrainingToCSV = async (sport?: string): Promise<string | null
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
+      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur export CSV:', error);
-    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
+    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
     return null;
   }
 };
@@ -124,9 +125,9 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
     const items = getProgressionItems();
 
     let report = '========================================\n';
-    report += 'YOROI - RAPPORT D\'ENTRAÎNEMENT\n';
+    report += traduire('YOROI - RAPPORT D\'ENTRAÎNEMENT\n');
     report += '========================================\n\n';
-    report += `Date du rapport : ${new Date().toLocaleDateString('fr-FR')}\n\n`;
+    report += traduire("Date du rapport : {0}\n\n", new Date().toLocaleDateString(LOCALE));
 
     // Stats générales
     const stats = {
@@ -136,12 +137,12 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
       mastered: items.filter((i) => i.status === 'mastered').length,
     };
 
-    report += 'STATISTIQUES GLOBALES\n';
+    report += traduire('STATISTIQUES GLOBALES\n');
     report += '----------------------------------------\n';
-    report += `Total d'objectifs : ${stats.total}\n`;
-    report += `À faire : ${stats.todo}\n`;
+    report += traduire("Total d'objectifs : {0}\n", stats.total);
+    report += traduire("À faire : {0}\n", stats.todo);
     report += `En cours : ${stats.in_progress}\n`;
-    report += `Maîtrisés : ${stats.mastered}\n\n`;
+    report += traduire("Maîtrisés : {0}\n\n", stats.mastered);
 
     // Par sport
     const sportStats: Record<string, number> = {};
@@ -149,22 +150,22 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
       sportStats[item.sport] = (sportStats[item.sport] || 0) + 1;
     });
 
-    report += 'RÉPARTITION PAR SPORT\n';
+    report += traduire('RÉPARTITION PAR SPORT\n');
     report += '----------------------------------------\n';
     Object.entries(sportStats).forEach(([sport, count]) => {
-      report += `${sport} : ${count} objectifs\n`;
+      report += traduire("{0} : {1} objectifs\n", sport, count);
     });
     report += '\n';
 
     // Objectifs en cours
     const inProgress = items.filter((i) => i.status === 'in_progress');
     if (inProgress.length > 0) {
-      report += 'OBJECTIFS EN COURS\n';
+      report += traduire('OBJECTIFS EN COURS\n');
       report += '----------------------------------------\n';
       inProgress.forEach((item) => {
         report += `- ${item.name} (${item.sport})\n`;
         if (item.practice_count > 0) {
-          report += `  Pratiqué ${item.practice_count} fois\n`;
+          report += traduire("  Pratiqué {0} fois\n", item.practice_count);
         }
         if (item.progress_percent > 0) {
           report += `  Progression : ${item.progress_percent}%\n`;
@@ -176,19 +177,19 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
     // Objectifs maîtrisés
     const mastered = items.filter((i) => i.status === 'mastered');
     if (mastered.length > 0) {
-      report += 'OBJECTIFS MAÎTRISÉS\n';
+      report += traduire('OBJECTIFS MAÎTRISÉS\n');
       report += '----------------------------------------\n';
       mastered.forEach((item) => {
         report += `- ${item.name} (${item.sport})\n`;
         if (item.mastered_date) {
-          const masteredDate = new Date(item.mastered_date).toLocaleDateString('fr-FR');
-          report += `  Maîtrisé le : ${masteredDate}\n`;
+          const masteredDate = new Date(item.mastered_date).toLocaleDateString(LOCALE);
+          report += traduire("  Maîtrisé le : {0}\n", masteredDate);
         }
       });
     }
 
     report += '\n========================================\n';
-    report += 'Généré avec Yoroi\n';
+    report += traduire('Généré avec Yoroi\n');
     report += '========================================\n';
 
     const fileName = `yoroi_rapport_${new Date().toISOString().split('T')[0]}.txt`;
@@ -201,12 +202,12 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
+      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur génération rapport:', error);
-    appAlert('Oups', 'Le rapport n’a pas pu être créé.');
+    appAlert('Oups', traduire('Le rapport n’a pas pu être créé.'));
     return null;
   }
 };
@@ -219,11 +220,11 @@ export const exportExerciseHistory = async (exerciseId: number, exerciseName: st
   try {
     const logs = getPracticeLogsByItemId(exerciseId);
 
-    let content = `HISTORIQUE : ${exerciseName}\n`;
+    let content = traduire("HISTORIQUE : {0}\n", exerciseName);
     content += '========================================\n\n';
 
     logs.forEach((log) => {
-      const date = new Date(log.date).toLocaleDateString('fr-FR');
+      const date = new Date(log.date).toLocaleDateString(LOCALE);
       content += `Date : ${date}\n`;
 
       if (log.sets) content += `Séries : ${log.sets}\n`;
@@ -231,7 +232,7 @@ export const exportExerciseHistory = async (exerciseId: number, exerciseName: st
       if (log.weight) content += `Poids : ${log.weight}kg\n`;
       if (log.distance) content += `Distance : ${log.distance}km\n`;
       if (log.time) content += `Temps : ${Math.floor(log.time / 60)}min ${log.time % 60}s\n`;
-      if (log.quality_rating) content += `Qualité : ${log.quality_rating}/5\n`;
+      if (log.quality_rating) content += traduire("Qualité : {0}/5\n", log.quality_rating);
       if (log.notes) content += `Notes : ${log.notes}\n`;
 
       content += '\n';
@@ -247,12 +248,12 @@ export const exportExerciseHistory = async (exerciseId: number, exerciseName: st
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
+      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur export exercice:', error);
-    appAlert('Oups', 'L’historique n’a pas pu être exporté.');
+    appAlert('Oups', traduire('L’historique n’a pas pu être exporté.'));
     return null;
   }
 };

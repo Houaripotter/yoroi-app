@@ -16,6 +16,7 @@ import { CheckDot, InkBar, XIcon } from './ui';
 import type { LabProtocol } from '@/data/labProtocols';
 import { sentenceCase } from '@/lib/v2/competition/dates';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 /**
  * Vague 47 : couleurs des categories lues au moment du rendu (la palette P change avec le mode sombre ;
@@ -72,7 +73,7 @@ export function FicheCard({ title, category, read, difficulty, onOpen, onToggleR
       </Press>
       </View>
       <View style={{ width: 56, alignItems: 'center', justifyContent: 'center' }}>
-        <CheckDot on={read} onPress={onToggleRead} label={read ? 'Marquer comme non lue' : 'Marquer comme lue'} />
+        <CheckDot on={read} onPress={onToggleRead} label={read ? traduire('Marquer comme non lue') : 'Marquer comme lue'} />
       </View>
     </View>
   );
@@ -125,16 +126,16 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
           </View>
           {content.kind === 'article' ? (
             <>
-              <Block label="C'est quoi" color={m.color}>
+              <Block label={traduire("C'est quoi")} color={m.color}>
                 <Body>{content.what}</Body>
               </Block>
-              <Block label="Pourquoi ça marche" color={m.color}>
+              <Block label={traduire("Pourquoi ça marche")} color={m.color}>
                 <Body>{content.why}</Body>
               </Block>
-              <Block label="Comment l'appliquer" color={m.color}>
+              <Block label={traduire("Comment l'appliquer")} color={m.color}>
                 <Body>{content.how}</Body>
               </Block>
-              <Press onPress={() => onSource(content.sourceUrl)} accessibilityRole="link" accessibilityLabel={`Ouvrir la source : ${content.sourceName}`}>
+              <Press onPress={() => onSource(content.sourceUrl)} accessibilityRole="link" accessibilityLabel={traduire("Ouvrir la source : {0}", content.sourceName)}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, backgroundColor: P.paper, padding: 14, minHeight: 56 }}>
                   <XIcon name="book" size={20} color={m.color} />
                   <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>
@@ -146,13 +147,13 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
             </>
           ) : (
             <>
-              <Block label="Objectif" color={m.color}>
+              <Block label={traduire("Objectif")} color={m.color}>
                 <Body>{content.objective}</Body>
               </Block>
-              <Block label="Durée" color={m.color}>
+              <Block label={traduire("Durée")} color={m.color}>
                 <Body>{content.duration}</Body>
               </Block>
-              <Block label="Le protocole" color={m.color}>
+              <Block label={traduire("Le protocole")} color={m.color}>
                 <View style={{ gap: 10 }}>
                   {content.protocol.map((s, i) => (
                     <View key={i} style={{ flexDirection: 'row', gap: 12 }}>
@@ -168,7 +169,7 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
                   ))}
                 </View>
               </Block>
-              <Block label="Fréquence" color={m.color}>
+              <Block label={traduire("Fréquence")} color={m.color}>
                 <Body>{content.frequency}</Body>
               </Block>
               <View style={{ borderRadius: 18, backgroundColor: P.goldSoft, padding: 14 }}>
@@ -178,7 +179,7 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
               </View>
             </>
           )}
-          <BigButton label={read ? 'Marquer comme non lue' : 'Marquer comme lue'} tone={read ? 'light' : 'ink'} icon="check" onPress={onToggleRead} />
+          <BigButton label={read ? traduire('Marquer comme non lue') : 'Marquer comme lue'} tone={read ? 'light' : 'ink'} icon="check" onPress={onToggleRead} />
         </View>
       ) : null}
     </Sheet>
@@ -235,7 +236,7 @@ export function ProtocolChecklist({ protocol }: { protocol: LabProtocol }) {
         </View>
         {all ? <Hanko size={40} /> : (
           <Ink size={14} weight="black" color={P.ink2}>
-            {`${done} sur ${items.length}`}
+            {traduire("{0} sur {1}", done, items.length)}
           </Ink>
         )}
       </View>
@@ -259,21 +260,20 @@ export function ProtocolChecklist({ protocol }: { protocol: LabProtocol }) {
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {references.length ? (
-          <Press onPress={() => setOpenRefs(!openRefs)} accessibilityRole="button" accessibilityLabel={openRefs ? 'Masquer les références' : 'Voir les références'} style={{ flex: 1 }}>
+          <Press onPress={() => setOpenRefs(!openRefs)} accessibilityRole="button" accessibilityLabel={openRefs ? traduire('Masquer les références') : traduire('Voir les références')} style={{ flex: 1 }}>
             <View style={{ minHeight: 44, borderRadius: 14, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
               <Ink size={13} weight="extraBold" color={P.ink2}>
-                {openRefs ? 'Masquer les références' : `Références, ${references.length}`}
+                {openRefs ? traduire('Masquer les références') : traduire("Références, {0}", references.length)}
               </Ink>
             </View>
           </Press>
         ) : null}
         {done > 0 ? (
-          <Press onPress={reset} accessibilityRole="button" accessibilityLabel="Tout décocher" style={{ flex: 1 }}>
+          <Press onPress={reset} accessibilityRole="button" accessibilityLabel={traduire("Tout décocher")} style={{ flex: 1 }}>
             <View style={{ minHeight: 44, borderRadius: 14, backgroundColor: P.paper, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
               <XIcon name="undo" size={16} color={P.ink2} />
               <Ink size={13} weight="extraBold" color={P.ink2}>
-                Tout décocher
-              </Ink>
+                {traduire("Tout décocher")}</Ink>
             </View>
           </Press>
         ) : null}
@@ -290,13 +290,13 @@ export function ProtocolChecklist({ protocol }: { protocol: LabProtocol }) {
 }
 
 const HYDRATION = [
-  { level: 1, color: '#F7F3E3', status: 'ok', label: 'Hydratation optimale', advice: 'Jaune très pâle. État idéal, garde ce rythme.' },
-  { level: 2, color: '#F5E6B3', status: 'ok', label: 'Bien hydraté', advice: 'Jaune pâle. Hydratation correcte, continue ainsi.' },
-  { level: 3, color: '#F0D870', status: 'ok', label: 'Hydratation normale', advice: 'Jaune clair. Niveau acceptable, bois régulièrement.' },
-  { level: 4, color: '#E8C547', status: 'warn', label: 'Début de déshydratation', advice: "Jaune foncé. Augmente l'apport en eau tout de suite." },
-  { level: 5, color: '#D4A520', status: 'warn', label: 'Déshydratation modérée', advice: "Jaune ambré. Bois 500 à 750 ml d'eau dans l'heure." },
-  { level: 6, color: '#B8860B', status: 'bad', label: 'Déshydratation sévère', advice: "Jaune brun foncé. Bois un litre d'eau peu à peu, avec des électrolytes." },
-  { level: 7, color: '#8B6914', status: 'bad', label: 'Déshydratation critique', advice: 'Brun foncé. État dangereux, réhydratation urgente.' },
+  { level: 1, color: '#F7F3E3', status: 'ok', label: traduire('Hydratation optimale'), advice: traduire('Jaune très pâle. État idéal, garde ce rythme.') },
+  { level: 2, color: '#F5E6B3', status: 'ok', label: traduire('Bien hydraté'), advice: traduire('Jaune pâle. Hydratation correcte, continue ainsi.') },
+  { level: 3, color: '#F0D870', status: 'ok', label: traduire('Hydratation normale'), advice: traduire('Jaune clair. Niveau acceptable, bois régulièrement.') },
+  { level: 4, color: '#E8C547', status: 'warn', label: traduire('Début de déshydratation'), advice: traduire("Jaune foncé. Augmente l'apport en eau tout de suite.") },
+  { level: 5, color: '#D4A520', status: 'warn', label: traduire('Déshydratation modérée'), advice: traduire("Jaune ambré. Bois 500 à 750 ml d'eau dans l'heure.") },
+  { level: 6, color: '#B8860B', status: 'bad', label: traduire('Déshydratation sévère'), advice: traduire("Jaune brun foncé. Bois un litre d'eau peu à peu, avec des électrolytes.") },
+  { level: 7, color: '#8B6914', status: 'bad', label: traduire('Déshydratation critique'), advice: traduire('Brun foncé. État dangereux, réhydratation urgente.') },
 ];
 
 /** Echelle d'hydratation par la couleur des urines */
@@ -305,11 +305,9 @@ export function HydrationScale() {
     <Card style={{ gap: 12 }}>
       <View style={{ gap: 2 }}>
         <Ink size={17} weight="black" tight>
-          Échelle d'hydratation
-        </Ink>
+          {traduire("Échelle d'hydratation")}</Ink>
         <Ink size={13} weight="medium" color={P.ink2}>
-          Regarde la couleur de tes urines pour estimer ton hydratation.
-        </Ink>
+          {traduire("Regarde la couleur de tes urines pour estimer ton hydratation.")}</Ink>
       </View>
       <View style={{ flexDirection: 'row', height: 18, borderRadius: 9, overflow: 'hidden' }}>
         {HYDRATION.map((h) => (
@@ -335,11 +333,9 @@ export function HydrationScale() {
       ))}
       <View style={{ borderRadius: 16, backgroundColor: P.paper, padding: 12, gap: 6 }}>
         <Ink size={13} weight="medium" color={P.ink} style={{ lineHeight: 19 }}>
-          Un jaune pâle (niveaux 1 à 3) indique une bonne hydratation. Au-delà du niveau 5, tes performances et ta concentration peuvent baisser.
-        </Ink>
+          {traduire("Un jaune pâle (niveaux 1 à 3) indique une bonne hydratation. Au-delà du niveau 5, tes performances et ta concentration peuvent baisser.")}</Ink>
         <Ink size={11} weight="medium" color={P.muted}>
-          Armstrong et al. (1994). Urinary Indices of Hydration Status. Int J Sport Nutr 4(3) : 265 à 279. DOI 10.1123/ijsn.4.3.265
-        </Ink>
+          {traduire("Armstrong et al. (1994). Urinary Indices of Hydration Status. Int J Sport Nutr 4(3) : 265 à 279. DOI 10.1123/ijsn.4.3.265")}</Ink>
       </View>
     </Card>
   );

@@ -28,6 +28,7 @@ import { VoiesView } from './tabs/VoiesView';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { useSessionRecords } from '@/lib/v2/seances/useSessionRecords';
 import { SeanceRecords } from './SeanceRecords';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type RecordsFilter = 'all' | RecordFamily | 'escalade';
 
@@ -71,7 +72,7 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
   }, [withEntries]);
 
   const chips = useMemo(() => {
-    const out: { key: RecordsFilter; label: string; count?: number }[] = [{ key: 'all', label: 'Tout', count: withEntries.length }];
+    const out: { key: RecordsFilter; label: string; count?: number }[] = [{ key: 'all', label: traduire('Tout'), count: withEntries.length }];
     const practised: Partial<Record<RecordFamily, boolean>> = { muscu: pratique.musculation, course: pratique.course, cross: pratique.cross };
     ORDER.forEach((f) => {
       if (counts[f] > 0 || practised[f]) out.push({ key: f, label: FAMILY_LABEL[f], count: counts[f] });
@@ -115,9 +116,9 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
           <CarnetEmpty
             compact
             illus="records"
-            title="Note aussi une perf hors séance"
-            text="Un test de 1 RM, un 10 km chronométré : YOROI garde ton meilleur et pose un tampon rouge chaque fois que tu le bats."
-            action="Noter une perf"
+            title={traduire("Note aussi une perf hors séance")}
+            text={traduire("Un test de 1 RM, un 10 km chronométré : YOROI garde ton meilleur et pose un tampon rouge chaque fois que tu le bats.")}
+            action={traduire("Noter une perf")}
             onAction={onCreate}
           />
         </View>
@@ -126,9 +127,9 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
     return (
       <CarnetEmpty
         illus="records"
-        title="Ton premier record t’attend"
-        text="Squat, 10 km, tractions : note une perf. YOROI garde ton meilleur et pose un tampon rouge chaque fois que tu le bats."
-        action="Noter mon premier record"
+        title={traduire("Ton premier record t’attend")}
+        text={traduire("Squat, 10 km, tractions : note une perf. YOROI garde ton meilleur et pose un tampon rouge chaque fois que tu le bats.")}
+        action={traduire("Noter mon premier record")}
         onAction={onCreate}
       />
     );
@@ -148,9 +149,9 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
           <Summary
             illus="records"
             items={[
-              { value: String(withEntries.length), label: `exercice${withEntries.length > 1 ? 's' : ''} suivi${withEntries.length > 1 ? 's' : ''}` },
-              { value: String(stats.perfs), label: `perf${stats.perfs > 1 ? 's' : ''} notée${stats.perfs > 1 ? 's' : ''}` },
-              { value: String(stats.beatenMonth), label: 'battus en 30 jours', color: stats.beatenMonth > 0 ? P.record : P.ink },
+              { value: String(withEntries.length), label: traduirePluriel(withEntries.length, withEntries.length > 1, "exercice suivi", "exercices suivis") },
+              { value: String(stats.perfs), label: traduirePluriel(stats.perfs, stats.perfs > 1, "perf notée", "perfs notées") },
+              { value: String(stats.beatenMonth), label: traduire('battus en 30 jours'), color: stats.beatenMonth > 0 ? P.record : P.ink },
             ]}
           >
             {lb ? (
@@ -172,20 +173,20 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
       <FilterChips items={chips} value={filter} onChange={(k) => { setFilter(k); setQuery(''); }} />
 
       {withEntries.length > 6 && filter !== 'escalade' ? (
-        <Field value={query} onChangeText={setQuery} placeholder="Chercher un exercice" maxLength={60} autoCorrect={false} accessibilityLabel="Chercher un exercice" />
+        <Field value={query} onChangeText={setQuery} placeholder={traduire("Chercher un exercice")} maxLength={60} autoCorrect={false} accessibilityLabel={traduire("Chercher un exercice")} />
       ) : null}
 
       {filter !== 'escalade' ? (
         list.length === 0 ? (
           query.trim() !== '' ? (
-            <CarnetEmpty compact illus="records" title="Rien trouvé" text={`Aucun exercice ne contient « ${query.trim()} ».`} action={`Créer « ${query.trim()} »`} onAction={onCreate} />
+            <CarnetEmpty compact illus="records" title={traduire("Rien trouvé")} text={traduire("Aucun exercice ne contient « {0} ».", query.trim())} action={traduire("Créer « {0} »", query.trim())} onAction={onCreate} />
           ) : (
             <CarnetEmpty
               compact
               illus={filter === 'all' ? 'records' : FAMILY_ILLUS[filter]}
-              title={filter === 'all' ? (hasSessionRecords ? 'Note aussi une perf hors séance' : 'Ton premier record t’attend') : `Pas encore de record en ${FAMILY_LABEL[filter].toLowerCase()}`}
-              text={filter === 'all' && hasSessionRecords ? 'Un test de 1 RM, un 10 km chronométré : ton meilleur s’affichera ici en grand, avec son évolution.' : 'Note une perf : ton meilleur s’affichera ici en grand, avec son évolution.'}
-              action="Noter un record"
+              title={filter === 'all' ? (hasSessionRecords ? traduire('Note aussi une perf hors séance') : traduire('Ton premier record t’attend')) : traduire("Pas encore de record en {0}", FAMILY_LABEL[filter].toLowerCase())}
+              text={filter === 'all' && hasSessionRecords ? traduire('Un test de 1 RM, un 10 km chronométré : ton meilleur s’affichera ici en grand, avec son évolution.') : traduire('Note une perf : ton meilleur s’affichera ici en grand, avec son évolution.')}
+              action={traduire("Noter un record")}
               onAction={onCreate}
             />
           )
@@ -215,7 +216,7 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
 
       {filter === 'muscu' ? (
         <>
-          {isPremium ? <ProgressionView refreshKey={refreshKey} hideEmpty /> : <PremiumLine text="Ta progression sur les gros mouvements" onPress={onPremium} />}
+          {isPremium ? <ProgressionView refreshKey={refreshKey} hideEmpty /> : <PremiumLine text={traduire("Ta progression sur les gros mouvements")} onPress={onPremium} />}
           <MusclesView refreshKey={refreshKey} hideEmpty />
           <SeancesMuscuView refreshKey={refreshKey} hideEmpty />
         </>
@@ -236,8 +237,7 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
 
       {list.length > 0 && filter !== 'escalade' ? (
         <Ink size={12} weight="medium" color={P.muted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
-          Touche une carte pour son historique, garde appuyé pour la supprimer.
-        </Ink>
+          {traduire("Touche une carte pour son historique, garde appuyé pour la supprimer.")}</Ink>
       ) : null}
     </View>
   );
@@ -245,12 +245,12 @@ export function RecordsView({ benchmarks, pratique, isPremium, refreshKey, onOpe
 
 function PremiumLine({ text, onPress }: { text: string; onPress: () => void }) {
   return (
-    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${text}, disponible avec Premium`}>
+    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire("{0}, disponible avec Premium", text)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: P.goldSoft }}>
         <CIcon name="lock" size={20} color={P.goldDark} />
         <View style={{ flex: 1 }}>
           <Ink size={15} weight="extraBold">{text}</Ink>
-          <Ink size={12} weight="bold" color={P.goldDark}>Disponible avec Premium</Ink>
+          <Ink size={12} weight="bold" color={P.goldDark}>{traduire("Disponible avec Premium")}</Ink>
         </View>
         <CIcon name="chevron" size={16} color={P.goldDark} />
       </View>
@@ -273,15 +273,15 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
     <Press
       onPress={() => onOpen(b)}
       onLongPress={() =>
-        appAlert('Supprimer ce suivi ?', `${name} ira dans la corbeille. Tu pourras le restaurer.`, [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Supprimer', style: 'destructive', onPress: () => onDelete(b) },
+        appAlert(traduire('Supprimer ce suivi ?'), traduire("{0} ira dans la corbeille. Tu pourras le restaurer.", name), [
+          { text: traduire('Annuler'), style: 'cancel' },
+          { text: traduire('Supprimer'), style: 'destructive', onPress: () => onDelete(b) },
         ])
       }
       delayLongPress={450}
       accessibilityRole="button"
       accessibilityLabel={`${name}, record ${perfText(b, s.pr)}${s.beaten ? ', record battu' : ''}`}
-      accessibilityHint="Touche pour l’historique, garde appuyé pour supprimer"
+      accessibilityHint={traduire("Touche pour l’historique, garde appuyé pour supprimer")}
     >
       <View style={{ padding: 16, borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: s.lastIsBest ? 'rgba(176,40,46,0.28)' : P.line2, gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
@@ -297,7 +297,7 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
 
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
           <View style={{ flex: 1, gap: 0 }}>
-            <Ink size={12} weight="bold" color={P.ink2}>Ton meilleur</Ink>
+            <Ink size={12} weight="bold" color={P.ink2}>{traduire("Ton meilleur")}</Ink>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ink size={30} weight="black" tight numberOfLines={1} style={{ flexShrink: 1 }}>
                 {best.main}
@@ -318,17 +318,17 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 4 }}>
           {s.gain ? (
             <View style={{ paddingHorizontal: 9, minHeight: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: P.mossSoft }}>
-              <Ink size={12} weight="extraBold" color={P.mossText}>{`${s.gain} depuis le début`}</Ink>
+              <Ink size={12} weight="extraBold" color={P.mossText}>{traduire("{0} depuis le début", s.gain)}</Ink>
             </View>
           ) : null}
           <Ink size={12} weight="medium" color={P.muted} style={{ flexShrink: 1 }}>
-            {s.lastIsBest && s.pr ? `Record battu ${relative(s.pr.date)}` : s.last && s.pr && s.last.id !== s.pr.id ? `Dernière : ${perfText(b, s.last)}, ${relative(s.last.date)}` : s.last ? `Noté ${relative(s.last.date)}` : ''}
+            {s.lastIsBest && s.pr ? `Record battu ${relative(s.pr.date)}` : s.last && s.pr && s.last.id !== s.pr.id ? traduire("Dernière : {0}, {1}", perfText(b, s.last), relative(s.last.date)) : s.last ? traduire("Noté {0}", relative(s.last.date)) : ''}
           </Ink>
         </View>
       </View>
     </Press>
       <View style={{ position: 'absolute', top: 16, right: 16 }}>
-        <Press onPress={() => onAdd(b)} haptic="medium" accessibilityRole="button" accessibilityLabel={`Noter une perf en ${name}`} hitSlop={6}>
+        <Press onPress={() => onAdd(b)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Noter une perf en {0}", name)} hitSlop={6}>
           <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="plus" size={20} color={accent} width={2.8} />
           </View>

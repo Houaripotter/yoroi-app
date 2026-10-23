@@ -11,6 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { ChoiceCard, MainButton, Shell, useColors } from './ui';
 import { DEFILE, DEFILE_PAS_MS } from './defile';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 function Card({ genre, label, selected, onPress, height, index }: { genre: 'h' | 'f'; label: string; selected: boolean; onPress: () => void; height: number; index: number }) {
   const c = useColors();
@@ -76,7 +77,7 @@ export function Toi({ nav, name = '', gender, onPick, onNext }: { nav: Nav; name
   const cardH = Math.max(230, Math.min(330, Math.round(height * 0.4)));
   const idx = useDefile();
   return (
-    <Shell {...nav} title={name.trim() ? `Ravi de te connaître, **${name.trim()}**` : 'Ravi de te **connaître**'} sub="Homme ou femme ? Ton personnage et tes repères de masse grasse en dépendent." footer={<MainButton label="Continuer" onPress={onNext} disabled={!gender} />}>
+    <Shell {...nav} title={name.trim() ? traduire("Ravi de te connaître, **{0}**", name.trim()) : traduire('Ravi de te **connaître**')} sub={traduire("Homme ou femme ? Ton personnage et tes repères de masse grasse en dépendent.")} footer={<MainButton label="Continuer" onPress={onNext} disabled={!gender} />}>
       <View style={{ flexDirection: 'row', gap: 12, paddingTop: 6 }}>
         <Card genre="h" label="Homme" selected={gender === 'homme'} onPress={() => onPick('homme')} height={cardH} index={idx.h} />
         <Card genre="f" label="Femme" selected={gender === 'femme'} onPress={() => onPick('femme')} height={cardH} index={idx.f} />

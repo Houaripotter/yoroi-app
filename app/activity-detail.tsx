@@ -24,12 +24,13 @@ import { PeriodSwitch } from '@/components/yoroi/v2/charts/PeriodSwitch';
 import { addDaysISO, isoOf, sportLabel } from '@/lib/v2/seances/sessionData';
 import { BackButton, EmptyState, Glass } from '@/components/yoroi/v2/seances/ui';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const PERIODS = [
-  { value: 7, label: '7 jours' },
-  { value: 30, label: '1 mois' },
-  { value: 90, label: '3 mois' },
-  { value: 0, label: 'Tout' },
+  { value: 7, label: traduire('7 jours') },
+  { value: 30, label: traduire('1 mois') },
+  { value: 90, label: traduire('3 mois') },
+  { value: 0, label: traduire('Tout') },
 ];
 
 function Tile({ value, unit, label }: { value: string; unit?: string; label: string }) {
@@ -105,54 +106,54 @@ export default function ActivityDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre="Ton activité" sousTitre="Volume, fréquence et effort, semaine par semaine" repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={traduire("Ton activité")} sousTitre={traduire("Volume, fréquence et effort, semaine par semaine")} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         <PeriodSwitch value={period} onChange={setPeriod} options={PERIODS} />
 
         {loaded && filtered.length === 0 ? (
-          <EmptyState title="Rien sur cette période" text="Enregistre une séance et ton activité prend forme ici, semaine après semaine." action="Commencer une séance" onAction={() => router.push('/seance' as any)} />
+          <EmptyState title={traduire("Rien sur cette période")} text={traduire("Enregistre une séance et ton activité prend forme ici, semaine après semaine.")} action={traduire("Commencer une séance")} onAction={() => router.push('/seance' as any)} />
         ) : null}
 
         {filtered.length > 0 ? (
           <>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <Tile value={String(filtered.length)} label="Séances" />
-              <Tile value={hoursText(totalMin)} label="Temps total" />
-              <Tile value={perWeek.toFixed(1).replace('.', ',')} label="Par semaine" />
-              {mainType ? <Tile value={mainType} label="Le plus fréquent" /> : null}
+              <Tile value={String(filtered.length)} label={traduire("Séances")} />
+              <Tile value={hoursText(totalMin)} label={traduire("Temps total")} />
+              <Tile value={perWeek.toFixed(1).replace('.', DECIMAL)} label={traduire("Par semaine")} />
+              {mainType ? <Tile value={mainType} label={traduire("Le plus fréquent")} /> : null}
             </View>
 
             <Glass style={{ gap: 8 }}>
-              <Ink size={17} weight="black" tight>Volume</Ink>
-              <Ink size={13} color={c.textSecondary}>Heures d’entraînement par semaine</Ink>
-              <InkBarChart bars={volume} color="#3D5D9E" highlight={thisWeek} average={avgOf(volume)} format={(v) => hoursText(v * 60)} showValues="highlight" sparseLabels label="Heures d’entraînement par semaine" />
+              <Ink size={17} weight="black" tight>{traduire("Volume")}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Heures d’entraînement par semaine")}</Ink>
+              <InkBarChart bars={volume} color="#3D5D9E" highlight={thisWeek} average={avgOf(volume)} format={(v) => hoursText(v * 60)} showValues="highlight" sparseLabels label={traduire("Heures d’entraînement par semaine")} />
             </Glass>
 
             <Glass style={{ gap: 8 }}>
-              <Ink size={17} weight="black" tight>Fréquence</Ink>
-              <Ink size={13} color={c.textSecondary}>Séances par semaine</Ink>
-              <InkBarChart bars={freq} color={CHART_COLORS.gold} highlight={thisWeek} average={avgOf(freq)} format={(v) => `${Math.round(v)}`} showValues={weeks.length <= 6 ? 'all' : 'highlight'} sparseLabels label="Séances par semaine" />
+              <Ink size={17} weight="black" tight>{traduire("Fréquence")}</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Séances par semaine")}</Ink>
+              <InkBarChart bars={freq} color={CHART_COLORS.gold} highlight={thisWeek} average={avgOf(freq)} format={(v) => `${Math.round(v)}`} showValues={weeks.length <= 6 ? 'all' : 'highlight'} sparseLabels label={traduire("Séances par semaine")} />
             </Glass>
 
             <Glass style={{ gap: 8 }}>
               <Ink size={17} weight="black" tight>Effort moyen</Ink>
-              <Ink size={13} color={c.textSecondary}>Effort ressenti sur 10, quand tu l’as noté</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Effort ressenti sur 10, quand tu l’as noté")}</Ink>
               {hasRpe ? (
-                <InkBarChart bars={rpe} color={c.accent} highlight={thisWeek} format={(v) => v.toFixed(1).replace('.', ',').replace(',0', '')} showValues={weeks.length <= 6 ? 'all' : 'highlight'} sparseLabels label="Effort moyen par semaine" />
+                <InkBarChart bars={rpe} color={c.accent} highlight={thisWeek} format={(v) => v.toFixed(1).replace('.', DECIMAL).replace(',0', '')} showValues={weeks.length <= 6 ? 'all' : 'highlight'} sparseLabels label={traduire("Effort moyen par semaine")} />
               ) : (
-                <Ink size={14} color={c.textSecondary}>Note ton effort à la fin de tes séances pour voir ces barres.</Ink>
+                <Ink size={14} color={c.textSecondary}>{traduire("Note ton effort à la fin de tes séances pour voir ces barres.")}</Ink>
               )}
             </Glass>
 
             {hasRpe ? (
               <Glass style={{ gap: 8 }}>
-                <Ink size={17} weight="black" tight>Charge</Ink>
-                <Ink size={13} color={c.textSecondary}>Effort ressenti multiplié par les heures. Une semaine bien plus haute que ta moyenne demande de la récupération.</Ink>
-                <InkBarChart bars={loadBars} color={c.indigo} highlight={thisWeek} average={avgOf(loadBars)} format={(v) => String(Math.round(v))} showValues="highlight" sparseLabels label="Charge par semaine" />
-                {hard > 0 ? <Ink size={13} weight="bold" color={c.textSecondary}>{`${hard} séance${hard > 1 ? 's' : ''} dure${hard > 1 ? 's' : ''} sur la période, effort de 8 ou plus.`}</Ink> : null}
+                <Ink size={17} weight="black" tight>{traduire("Charge")}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("Effort ressenti multiplié par les heures. Une semaine bien plus haute que ta moyenne demande de la récupération.")}</Ink>
+                <InkBarChart bars={loadBars} color={c.indigo} highlight={thisWeek} average={avgOf(loadBars)} format={(v) => String(Math.round(v))} showValues="highlight" sparseLabels label={traduire("Charge par semaine")} />
+                {hard > 0 ? <Ink size={13} weight="bold" color={c.textSecondary}>{traduirePluriel(hard, hard > 1, "{0} séance dure sur la période, effort de 8 ou plus.", "{0} séances dures sur la période, effort de 8 ou plus.", hard)}</Ink> : null}
               </Glass>
             ) : null}
-            <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Barre rouge : la semaine en cours. Pointillés : ta moyenne. Touche une barre pour la lire.</Ink>
+            <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Barre rouge : la semaine en cours. Pointillés : ta moyenne. Touche une barre pour la lire.")}</Ink>
           </>
         ) : null}
       </ScrollView>

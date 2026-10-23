@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { illustrer } from '@/components/yoroi/v2/messages/illustrer';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 const MANUAL_KEY = '@yoroi_last_manual_export';
 const CLOUD_KEY = '@yoroi_last_cloud_sync_success';
@@ -55,15 +56,15 @@ export async function proposerSauvegardeDouce(): Promise<void> {
     const auto = etatProtection(await lireProtection()) === 'a_activer';
     const { etapesSelecteur } = await import('@/components/yoroi/v2/sauvegarde/lancerCopieAuto');
     appAlert(
-      'Tes données, chez toi',
+      traduire('Tes données, chez toi'),
       auto
-        ? `YOROI n’a ni compte ni serveur : tout ce que tu notes reste sur ce téléphone. Active la copie automatique : une copie part chaque jour dans ${cloud}, même si tu changes de téléphone.\n\n${etapesSelecteur()}`
-        : `YOROI n’a ni compte ni serveur : tout ce que tu notes reste sur ce téléphone. Une copie dans ${cloud} le protège, même si tu changes de téléphone. Pour la remettre un jour : « J’ai déjà une sauvegarde », au premier écran.`,
+        ? traduire("YOROI n’a ni compte ni serveur : tout ce que tu notes reste sur ce téléphone. Active la copie automatique : une copie part chaque jour dans {0}, même si tu changes de téléphone.\n\n{1}", cloud, etapesSelecteur())
+        : traduire("YOROI n’a ni compte ni serveur : tout ce que tu notes reste sur ce téléphone. Une copie dans {0} le protège, même si tu changes de téléphone. Pour la remettre un jour : « J’ai déjà une sauvegarde », au premier écran.", cloud),
       [
-        { text: 'Plus tard', style: 'cancel' },
+        { text: traduire('Plus tard'), style: 'cancel' },
         {
           // 18 octobre 2026 : la copie automatique d'abord (dossier choisi une fois), sinon la copie a la main
-          text: auto ? 'Activer la copie automatique' : 'Faire ma copie',
+          text: auto ? traduire('Activer la copie automatique') : traduire('Faire ma copie'),
           isPreferred: true,
           onPress: () => {
             if (!auto) return void sauvegarderMaintenant();

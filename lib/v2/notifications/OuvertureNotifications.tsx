@@ -11,6 +11,7 @@ import { navigationPrete } from '@/lib/v2/widgets/liens';
 import { delaiRestant } from '@/lib/v2/nav/direct';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { cibleEnAttente, lienCarteSeance, prendreCible, resoudreSeance, ROUTE_SEANCES, surCible } from './toucher';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Laisse la redirection de la route racine se terminer avant d'ouvrir l'écran */
 const DELAI_MS = 350;
@@ -60,7 +61,7 @@ export function OuvertureNotifications() {
             router.push(lienCarteSeance(id) as never);
           } else {
             router.navigate(ROUTE_SEANCES as never);
-            appAlert('Séance introuvable', 'Cette séance n’est plus dans ton carnet. Voici tes séances : choisis celle que tu veux partager.');
+            appAlert(traduire('Séance introuvable'), traduire('Cette séance n’est plus dans ton carnet. Voici tes séances : choisis celle que tu veux partager.'));
           }
         } catch (e) {
           logger.warn('[Notifications] écran non ouvert', e);

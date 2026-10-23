@@ -29,20 +29,21 @@ import { sportArt } from '@/lib/v2/seances/illustrations';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const SCENE = require('@/assets/avatars/app/themes/theme_dojo.webp');
 
 const RESULT: Record<string, { label: string; color: string }> = {
-  victoire: { label: 'Victoire', color: P.accent },
-  defaite: { label: 'Défaite', color: P.ink2 },
+  victoire: { label: traduire('Victoire'), color: P.accent },
+  defaite: { label: traduire('Défaite'), color: P.ink2 },
   nul: { label: 'Match nul', color: P.goldDark },
 };
-const METHODE: Record<string, string> = { soumission: 'par soumission', ko: 'par KO', tko: 'par KO technique', points: 'aux points', decision: 'par décision', dq: 'par disqualification' };
-const MEDAL_TITLE: Record<Medaille, string> = { or: 'Médaille d’or', argent: 'Médaille d’argent', bronze: 'Médaille de bronze', aucune: 'Pas de podium cette fois' };
+const METHODE: Record<string, string> = { soumission: traduire('par soumission'), ko: traduire('par KO'), tko: traduire('par KO technique'), points: traduire('aux points'), decision: traduire('par décision'), dq: traduire('par disqualification') };
+const MEDAL_TITLE: Record<Medaille, string> = { or: traduire('Médaille d’or'), argent: traduire('Médaille d’argent'), bronze: traduire('Médaille de bronze'), aucune: traduire('Pas de podium cette fois') };
 const STATUTS: { key: CompetitionStatut; label: string }[] = [
-  { key: 'a_venir', label: 'À venir' },
-  { key: 'terminee', label: 'Terminée' },
-  { key: 'annulee', label: 'Annulée' },
+  { key: 'a_venir', label: traduire('À venir') },
+  { key: 'terminee', label: traduire('Terminée') },
+  { key: 'annulee', label: traduire('Annulée') },
 ];
 
 export default function CompetitionDetailScreen() {
@@ -81,10 +82,10 @@ export default function CompetitionDetailScreen() {
 
   const remove = () => {
     if (busy || !comp) return;
-    appAlert('Supprimer la compétition', `« ${comp.nom} » sera supprimée. Cette action est définitive.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer la compétition'), traduire("« {0} » sera supprimée. Cette action est définitive.", comp.nom), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           setBusy(true);
@@ -97,7 +98,7 @@ export default function CompetitionDetailScreen() {
             router.back();
           } catch (error) {
             logger.error('Error deleting competition:', error);
-            appAlert('Suppression impossible', 'Réessaie dans un instant.');
+            appAlert(traduire('Suppression impossible'), traduire('Réessaie dans un instant.'));
           } finally {
             setBusy(false);
           }
@@ -126,7 +127,7 @@ export default function CompetitionDetailScreen() {
     const n = await applyReminders(comp, next);
     if (on && n < 0) {
       setExtraState(await setExtra(id, { rappels: false }));
-      appAlert('Notifications coupées', 'Autorise les notifications de YOROI dans les réglages du téléphone pour recevoir tes rappels.');
+      appAlert(traduire('Notifications coupées'), traduire('Autorise les notifications de YOROI dans les réglages du téléphone pour recevoir tes rappels.'));
     }
   };
 
@@ -134,11 +135,11 @@ export default function CompetitionDetailScreen() {
     if (!comp) return;
     const r = await addCompetitionToCalendar(comp, extra);
     if (r === 'saved') notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-    if (r === 'failed') appAlert('Calendrier indisponible', 'Ton téléphone n’a pas pu ouvrir le calendrier. Réessaie dans un instant.');
+    if (r === 'failed') appAlert('Calendrier indisponible', traduire('Ton téléphone n’a pas pu ouvrir le calendrier. Réessaie dans un instant.'));
   };
 
   const openSite = () => {
-    if (extra.url) WebBrowser.openBrowserAsync(extra.url).catch(() => appAlert('Site indisponible', 'Le site ne s’ouvre pas. Vérifie son adresse dans Modifier.'));
+    if (extra.url) WebBrowser.openBrowserAsync(extra.url).catch(() => appAlert('Site indisponible', traduire('Le site ne s’ouvre pas. Vérifie son adresse dans Modifier.')));
   };
 
   const setMedal = async (m: Medaille) => {
@@ -156,7 +157,7 @@ export default function CompetitionDetailScreen() {
 
   if (loading) {
     return (
-      <DetailScreen title="Compétition">
+      <DetailScreen title={traduire("Compétition")}>
         <View style={{ paddingTop: 60, alignItems: 'center' }}>
           <ActivityIndicator color={P.accent} />
         </View>
@@ -165,8 +166,8 @@ export default function CompetitionDetailScreen() {
   }
   if (!comp) {
     return (
-      <DetailScreen title="Compétition">
-        <EmptyState title="Compétition introuvable" text="Elle n'existe plus ou a été supprimée." action="Mes compétitions" onAction={() => router.replace('/competitions' as any)} />
+      <DetailScreen title={traduire("Compétition")}>
+        <EmptyState title={traduire("Compétition introuvable")} text={traduire("Elle n'existe plus ou a été supprimée.")} action={traduire("Mes compétitions")} onAction={() => router.replace('/competitions' as any)} />
       </DetailScreen>
     );
   }
@@ -185,8 +186,8 @@ export default function CompetitionDetailScreen() {
       subtitle={subtitle}
       right={
         <>
-          <RoundAction icon="pencil" label="Modifier la compétition" onPress={() => router.push(`/edit-competition?id=${id}` as any)} />
-          <RoundAction icon="trash" label="Supprimer la compétition" onPress={remove} />
+          <RoundAction icon="pencil" label={traduire("Modifier la compétition")} onPress={() => router.push(`/edit-competition?id=${id}` as any)} />
+          <RoundAction icon="trash" label={traduire("Supprimer la compétition")} onPress={remove} />
         </>
       }
     >
@@ -198,8 +199,7 @@ export default function CompetitionDetailScreen() {
               {upcoming ? (
                 days === 0 ? (
                   <Ink size={30} weight="black" tight color={P.accent}>
-                    Aujourd'hui
-                  </Ink>
+                    {traduire("Aujourd'hui")}</Ink>
                 ) : (
                   <Ink size={54} weight="black" tight color={P.ink}>
                     {String(days)}
@@ -210,7 +210,7 @@ export default function CompetitionDetailScreen() {
                 )
               ) : (
                 <Ink size={26} weight="black" tight color={P.ink2}>
-                  {comp.statut === 'annulee' ? 'Annulée' : 'Terminée'}
+                  {comp.statut === 'annulee' ? traduire('Annulée') : traduire('Terminée')}
                 </Ink>
               )}
               <Ink size={13} weight="extraBold">
@@ -231,10 +231,9 @@ export default function CompetitionDetailScreen() {
           <Card style={{ gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <Ink size={17} weight="black" tight>
-                Une plaque par jour
-              </Ink>
+                {traduire("Une plaque par jour")}</Ink>
               <Ink size={12} weight="bold" color={P.muted}>
-                {days === 0 ? 'Jour J' : `J moins ${days}`}
+                {days === 0 ? traduire('Jour J') : traduire("J moins {0}", days)}
               </Ink>
             </View>
             <CountdownPlates daysLeft={days} max={42} plate={24} />
@@ -245,12 +244,11 @@ export default function CompetitionDetailScreen() {
       {upcoming ? (
         <Enter i={1}>
           <Card style={{ gap: 4, paddingVertical: 8 }}>
-            <Press onPress={toCalendar} accessibilityRole="button" accessibilityLabel="Ajouter au calendrier du téléphone">
+            <Press onPress={toCalendar} accessibilityRole="button" accessibilityLabel={traduire("Ajouter au calendrier du téléphone")}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 }}>
                 <Icon name="calendar" size={21} color={P.accent} />
                 <Ink size={15} weight="extraBold" style={{ flex: 1 }}>
-                  Ajouter à mon calendrier
-                </Ink>
+                  {traduire("Ajouter à mon calendrier")}</Ink>
                 <Icon name="chevron" size={18} color={P.muted} />
               </View>
             </Press>
@@ -262,20 +260,19 @@ export default function CompetitionDetailScreen() {
                   Rappels
                 </Ink>
                 <Ink size={12} weight="bold" color={P.ink2}>
-                  {extra.pesee ? 'J moins 30, J moins 7, la veille et la pesée' : 'J moins 30, J moins 7 et la veille'}
+                  {extra.pesee ? traduire('J moins 30, J moins 7, la veille et la pesée') : traduire('J moins 30, J moins 7 et la veille')}
                 </Ink>
               </View>
-              <Switch value={!!extra.rappels} onValueChange={toggleReminders} trackColor={{ true: P.accent, false: P.line }} thumbColor={P.white} accessibilityLabel="Rappels de la compétition" />
+              <Switch value={!!extra.rappels} onValueChange={toggleReminders} trackColor={{ true: P.accent, false: P.line }} thumbColor={P.white} accessibilityLabel={traduire("Rappels de la compétition")} />
             </View>
             {extra.url ? (
               <>
                 <View style={{ height: 1, backgroundColor: P.line2 }} />
-                <Press onPress={openSite} accessibilityRole="link" accessibilityLabel="Ouvrir le site de l’événement">
+                <Press onPress={openSite} accessibilityRole="link" accessibilityLabel={traduire("Ouvrir le site de l’événement")}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 }}>
                     <XIcon name="link" size={21} color={P.accent} />
                     <Ink size={15} weight="extraBold" style={{ flex: 1 }}>
-                      Site de l’événement
-                    </Ink>
+                      {traduire("Site de l’événement")}</Ink>
                     <Icon name="chevron" size={18} color={P.muted} />
                   </View>
                 </Press>
@@ -288,8 +285,8 @@ export default function CompetitionDetailScreen() {
       {upcoming ? (
         <Enter i={2}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <AccessTile title="Check-list" text="Ce qu'il te reste à préparer" tone="ink" onPress={() => router.push(`/competition-countdown?compId=${id}` as any)} />
-            <AccessTile title="Camp" text="Ton plan semaine par semaine" onPress={() => router.push(`/competition-camp?compId=${id}` as any)} />
+            <AccessTile title="Check-list" text={traduire("Ce qu'il te reste à préparer")} tone="ink" onPress={() => router.push(`/competition-countdown?compId=${id}` as any)} />
+            <AccessTile title="Camp" text={traduire("Ton plan semaine par semaine")} onPress={() => router.push(`/competition-camp?compId=${id}` as any)} />
           </View>
         </Enter>
       ) : null}
@@ -301,7 +298,7 @@ export default function CompetitionDetailScreen() {
           weight={lastWeight?.weight}
           weightDate={lastWeight?.date}
           daysLeft={days}
-          peseeLabel={extra.pesee === 'veille' ? 'la veille' : extra.pesee === 'jour' ? 'le jour même' : undefined}
+          peseeLabel={extra.pesee === 'veille' ? traduire('la veille') : extra.pesee === 'jour' ? traduire('le jour même') : undefined}
           onWeigh={() => router.push('/pesee' as any)}
           onCut={upcoming ? () => router.push('/weight-cut' as any) : undefined}
         />
@@ -309,7 +306,7 @@ export default function CompetitionDetailScreen() {
 
       {happened ? (
         <Enter i={3} style={{ gap: 10 }}>
-          <SectionTitle>Ton résultat</SectionTitle>
+          <SectionTitle>{traduire("Ton résultat")}</SectionTitle>
           <Card style={{ gap: 12 }}>
             {extra.medaille ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -319,14 +316,13 @@ export default function CompetitionDetailScreen() {
                     {MEDAL_TITLE[extra.medaille]}
                   </Ink>
                   <Ink size={13} weight="bold" color={P.ink2}>
-                    {combats.length ? `${plural(wins, 'victoire')}, ${plural(losses, 'défaite')}` : 'Ajoute tes combats juste en dessous'}
+                    {combats.length ? `${plural(wins, 'victoire')}, ${plural(losses, traduire('défaite'))}` : traduire('Ajoute tes combats juste en dessous')}
                   </Ink>
                 </View>
               </View>
             ) : (
               <Ink size={15} weight="bold" color={P.ink2}>
-                Comment ça s’est passé ? Choisis ton résultat, il rejoint ton palmarès.
-              </Ink>
+                {traduire("Comment ça s’est passé ? Choisis ton résultat, il rejoint ton palmarès.")}</Ink>
             )}
             <MedalPicker value={extra.medaille} onChange={setMedal} />
           </Card>
@@ -334,13 +330,13 @@ export default function CompetitionDetailScreen() {
       ) : null}
 
       <Enter i={4} style={{ gap: 10 }}>
-        <SectionTitle>{combats.length ? `Combats, ${combats.length}` : 'Combats'}</SectionTitle>
+        <SectionTitle>{combats.length ? traduire("Combats, {0}", combats.length) : traduire('Combats')}</SectionTitle>
         {combats.length > 0 ? (
           <>
             <Card style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 14 }}>
               {[
                 { n: wins, l: 'victoires', c: P.accent },
-                { n: losses, l: 'défaites', c: P.ink },
+                { n: losses, l: traduire('défaites'), c: P.ink },
                 { n: draws, l: 'nuls', c: P.goldDark },
               ].map((s) => (
                 <View key={s.l} style={{ alignItems: 'center' }}>
@@ -357,12 +353,12 @@ export default function CompetitionDetailScreen() {
               const r = RESULT[c.resultat] ?? RESULT.nul;
               const how = [c.methode ? METHODE[c.methode] : null, c.technique].filter(Boolean).join(', ');
               return (
-                <Press key={c.id} onPress={() => router.push(`/combat-detail?id=${c.id}` as any)} accessibilityRole="button" accessibilityLabel={`Combat ${i + 1}, ${r.label}${c.adversaire_nom ? ` contre ${c.adversaire_nom}` : ''}`}>
+                <Press key={c.id} onPress={() => router.push(`/combat-detail?id=${c.id}` as any)} accessibilityRole="button" accessibilityLabel={traduire("Combat {0}, {1}{2}", i + 1, r.label, c.adversaire_nom ? ` contre ${c.adversaire_nom}` : '')}>
                   <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 }}>
                     <Hanko size={46} rotate={i % 2 ? 5 : -6} />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Ink size={12} weight="bold" color={P.muted}>
-                        {`Combat ${i + 1}`}
+                        {traduire("Combat {0}", i + 1)}
                       </Ink>
                       <Ink size={16} weight="black" tight color={r.color}>
                         {r.label}
@@ -384,9 +380,9 @@ export default function CompetitionDetailScreen() {
             })}
           </>
         ) : (
-          <EmptyState title="Aucun combat noté" text={upcoming ? 'Après la compétition, note chaque combat : résultat, méthode, adversaire.' : 'Note tes combats pour garder ton palmarès à jour.'} />
+          <EmptyState title={traduire("Aucun combat noté")} text={upcoming ? traduire('Après la compétition, note chaque combat : résultat, méthode, adversaire.') : traduire('Note tes combats pour garder ton palmarès à jour.')} />
         )}
-        <BigButton label="Ajouter un combat" icon="plus" tone={happened ? 'red' : 'light'} onPress={() => router.push(`/seance/match?competitionId=${id}` as any)} />
+        <BigButton label={traduire("Ajouter un combat")} icon="plus" tone={happened ? 'red' : 'light'} onPress={() => router.push(`/seance/match?competitionId=${id}` as any)} />
       </Enter>
 
       <Enter i={5} style={{ gap: 10 }}>
@@ -398,7 +394,7 @@ export default function CompetitionDetailScreen() {
         </View>
         {comp.statut === 'terminee' && combats.length > 0 ? (
           <Ink size={13} weight="bold" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-            {`Bilan : ${plural(wins, 'victoire')}, ${plural(losses, 'défaite')}.`}
+            {`Bilan : ${plural(wins, 'victoire')}, ${plural(losses, traduire('défaite'))}.`}
           </Ink>
         ) : null}
       </Enter>

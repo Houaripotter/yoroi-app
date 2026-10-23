@@ -17,6 +17,7 @@ import { PlusHint } from '../PlusHint';
 import { RecordSeal } from '@/components/yoroi/v2/ornements/RecordSeal';
 import type { TamponId } from '@/components/yoroi/v2/tampons/table';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export const GUTTER = 22;
 export const GLASS = 'rgba(255,255,255,0.78)';
@@ -288,7 +289,7 @@ export function StampButton({ label, onPress, disabled, dim }: { label: string; 
 }
 
 /** Repere « Voir le detail » : dit qu'un graphique s'ouvre d'un appui */
-export function DetailCue({ onPress, label = 'Voir le détail', style }: { onPress: () => void; label?: string; style?: StyleProp<ViewStyle> }) {
+export function DetailCue({ onPress, label = traduire('Voir le détail'), style }: { onPress: () => void; label?: string; style?: StyleProp<ViewStyle> }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
@@ -336,7 +337,7 @@ export function StatGrid({ items, style }: { items: { value: string; label: stri
 }
 
 /** Carte « Ce que ça mesure » : explication courte de la donnee */
-export function ExplainCard({ title = 'Ce que ça mesure', text, tip, style }: { title?: string; text: string; tip?: string; style?: StyleProp<ViewStyle> }) {
+export function ExplainCard({ title = traduire('Ce que ça mesure'), text, tip, style }: { title?: string; text: string; tip?: string; style?: StyleProp<ViewStyle> }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (

@@ -24,6 +24,7 @@ import { logger } from '@/lib/security/logger';
 import { usePremium } from '@/context/PremiumContext';
 import { isBiometricHardwareAvailable, isBiometricLockEnabled, setBiometricLockEnabled } from '@/lib/biometricLockService';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 // Version 3.0.0 : « Verrouiller l'app » est masqué. Le module expo-local-authentication n'est pas
 // installé (absent de package.json et de node_modules), donc le verrou répondait toujours
@@ -53,10 +54,10 @@ export default function MesDonnees() {
   const go = (href: string) => router.push(href as any);
 
   const handleImport = () => {
-    showPopup('Restaurer une sauvegarde', 'Choisis ton fichier de sauvegarde YOROI. Les anciennes versions sont reconnues automatiquement.', [
-      { text: 'Annuler', style: 'cancel' },
+    showPopup(traduire('Restaurer une sauvegarde'), traduire('Choisis ton fichier de sauvegarde YOROI. Les anciennes versions sont reconnues automatiquement.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Choisir le fichier',
+        text: traduire('Choisir le fichier'),
         style: 'primary',
         onPress: async () => {
           try {
@@ -81,16 +82,16 @@ export default function MesDonnees() {
       router.push('/paywall' as any);
       return;
     }
-    showPopup('Bilan en PDF', 'Un bilan de ta progression, prêt à partager avec ton coach ou ton médecin.', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: '30 jours', style: 'default', onPress: () => generateProgressPDF('30j').catch(() => showPopup('Oups', 'Le bilan n’a pas pu être créé.')) },
-      { text: '90 jours', style: 'primary', onPress: () => generateProgressPDF('90j').catch(() => showPopup('Oups', 'Le bilan n’a pas pu être créé.')) },
+    showPopup('Bilan en PDF', traduire('Un bilan de ta progression, prêt à partager avec ton coach ou ton médecin.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
+      { text: traduire('30 jours'), style: 'default', onPress: () => generateProgressPDF('30j').catch(() => showPopup('Oups', traduire('Le bilan n’a pas pu être créé.'))) },
+      { text: traduire('90 jours'), style: 'primary', onPress: () => generateProgressPDF('90j').catch(() => showPopup('Oups', traduire('Le bilan n’a pas pu être créé.'))) },
     ]);
   };
 
   const handleDedupe = () => {
-    showPopup('Nettoyer les doublons', `Les séances en double venues ${Platform.OS === 'android' ? 'de Health Connect' : 'd’Apple Santé'} seront supprimées. Celles que tu as créées toi-même ne bougent pas.\n\nFais une sauvegarde avant, par sécurité.`, [
-      { text: 'Annuler', style: 'cancel' },
+    showPopup(traduire('Nettoyer les doublons'), traduire("Les séances en double venues {0} seront supprimées. Celles que tu as créées toi-même ne bougent pas.\n\nFais une sauvegarde avant, par sécurité.", Platform.OS === 'android' ? 'de Health Connect' : 'd’Apple Santé'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Nettoyer',
         style: 'destructive',
@@ -99,10 +100,10 @@ export default function MesDonnees() {
           try {
             const n = await deduplicateTrainings();
             DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-            showPopup(n === 0 ? 'Aucun doublon' : 'Nettoyage terminé', n === 0 ? 'Ton journal est déjà propre.' : `${n} séance${n > 1 ? 's' : ''} en double supprimée${n > 1 ? 's' : ''}.`);
+            showPopup(n === 0 ? traduire('Aucun doublon') : traduire('Nettoyage terminé'), n === 0 ? traduire('Ton journal est déjà propre.') : traduirePluriel(n, n > 1, "{0} séance en double supprimée.", "{0} séances en double supprimées.", n));
           } catch (e) {
             logger.error('[Donnees] doublons', e);
-            showPopup('Oups', 'Le nettoyage n’a pas abouti. Réessaie.');
+            showPopup('Oups', traduire('Le nettoyage n’a pas abouti. Réessaie.'));
           } finally {
             setBusy(false);
           }
@@ -114,7 +115,7 @@ export default function MesDonnees() {
   // 14 octobre 2026 (zones_apple) : fichier brut des séances Apple, pour caler les zones sur Forme
   const handleDiagnostic = async () => {
     if (Platform.OS !== 'ios') {
-      showPopup('Diagnostic', 'Disponible sur iPhone, avec Apple Santé.');
+      showPopup('Diagnostic', traduire('Disponible sur iPhone, avec Apple Santé.'));
       return;
     }
     setBusy(true);
@@ -124,25 +125,25 @@ export default function MesDonnees() {
       const res = fn ? await fn.call(healthConnect, 30) : null;
       setBusy(false);
       if (!res) {
-        showPopup('Diagnostic', 'Apple Santé n’a rien renvoyé. Vérifie que Yoroi a accès aux entraînements et à la fréquence cardiaque.');
+        showPopup('Diagnostic', traduire('Apple Santé n’a rien renvoyé. Vérifie que Yoroi a accès aux entraînements et à la fréquence cardiaque.'));
         return;
       }
       const Sharing = await import('expo-sharing');
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(res.path, { mimeType: 'application/json', dialogTitle: `${res.count} séance${res.count > 1 ? 's' : ''}, 30 derniers jours`, UTI: 'public.json' });
+        await Sharing.shareAsync(res.path, { mimeType: 'application/json', dialogTitle: traduirePluriel(res.count, res.count > 1, "{0} séance, 30 derniers jours", "{0} séances, 30 derniers jours", res.count), UTI: 'public.json' });
       } else {
-        showPopup('Diagnostic', `Fichier prêt : ${res.path}`);
+        showPopup('Diagnostic', traduire("Fichier prêt : {0}", res.path));
       }
     } catch (e) {
       setBusy(false);
       logger.warn('[Diagnostic] Export des séances impossible', e);
-      showPopup('Oups', 'Le fichier de diagnostic n’a pas pu être créé.');
+      showPopup('Oups', traduire('Le fichier de diagnostic n’a pas pu être créé.'));
     }
   };
 
   const handleClearCache = () => {
-    showPopup('Vider le cache', 'Les fichiers temporaires seront supprimés. Tes données restent intactes.', [
-      { text: 'Annuler', style: 'cancel' },
+    showPopup(traduire('Vider le cache'), traduire('Les fichiers temporaires seront supprimés. Tes données restent intactes.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Vider',
         style: 'primary',
@@ -161,10 +162,10 @@ export default function MesDonnees() {
             if (cacheKeys.length) await AsyncStorage.multiRemove(cacheKeys);
             notificationAsync(NotificationFeedbackType.Success).catch(() => {});
             reloadStatus();
-            showPopup('Cache vidé', 'C’est fait.');
+            showPopup(traduire('Cache vidé'), traduire('C’est fait.'));
           } catch (e) {
             logger.error('[Donnees] cache', e);
-            showPopup('Oups', 'Le cache n’a pas pu être vidé.');
+            showPopup('Oups', traduire('Le cache n’a pas pu être vidé.'));
           } finally {
             setBusy(false);
           }
@@ -177,7 +178,7 @@ export default function MesDonnees() {
     if (v) {
       const ok = await isBiometricHardwareAvailable();
       if (!ok) {
-        showPopup('Indisponible', 'Face ID ou l’empreinte ne sont pas disponibles sur ce téléphone, ou ne sont pas configurés.');
+        showPopup('Indisponible', traduire('Face ID ou l’empreinte ne sont pas disponibles sur ce téléphone, ou ne sont pas configurés.'));
         return;
       }
     }
@@ -193,8 +194,8 @@ export default function MesDonnees() {
   const resetOk = ['SUPPRIMER', 'SUPRIMER', 'EFFACER', 'OUI', 'YES', 'DELETE'].includes(confirmWord);
 
   const handleResetAll = () => {
-    showPopup('Sauvegarde conseillée', 'Avant de tout effacer, garde une copie de tes données.', [
-      { text: 'Annuler', style: 'cancel' },
+    showPopup(traduire('Sauvegarde conseillée'), traduire('Avant de tout effacer, garde une copie de tes données.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Sauvegarder d’abord',
         style: 'primary',
@@ -204,7 +205,7 @@ export default function MesDonnees() {
           setResetVisible(true);
         },
       },
-      { text: 'Continuer sans', style: 'default', onPress: () => { setResetText(''); setResetVisible(true); } },
+      { text: traduire('Continuer sans'), style: 'default', onPress: () => { setResetText(''); setResetVisible(true); } },
     ]);
   };
 
@@ -217,13 +218,13 @@ export default function MesDonnees() {
       const { ok } = await effacerToutesMesDonnees();
       if (ok) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-        showPopup('Tout est effacé', 'L’app repart de zéro.', [{ text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding' as any) }]);
+        showPopup(traduire('Tout est effacé'), traduire('L’app repart de zéro.'), [{ text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding' as any) }]);
       } else {
-        showPopup('Effacement incomplet', 'Presque tout est effacé, mais une partie a résisté. Relance « Tout effacer » pour finir.');
+        showPopup('Effacement incomplet', traduire('Presque tout est effacé, mais une partie a résisté. Relance « Tout effacer » pour finir.'));
       }
     } catch (e) {
       logger.error('[Donnees] reset', e);
-      showPopup('Oups', 'L’effacement n’a pas abouti. Réessaie.');
+      showPopup('Oups', traduire('L’effacement n’a pas abouti. Réessaie.'));
     } finally {
       setBusy(false);
     }
@@ -238,11 +239,11 @@ export default function MesDonnees() {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         setCleanStep(1);
       } else {
-        showPopup('Effacement incomplet', 'Presque tout est effacé, mais une partie a résisté. Réessaie avant de supprimer l’app.');
+        showPopup('Effacement incomplet', traduire('Presque tout est effacé, mais une partie a résisté. Réessaie avant de supprimer l’app.'));
       }
     } catch (e) {
       logger.error('[Donnees] désinstallation propre', e);
-      showPopup('Oups', 'Le nettoyage n’a pas abouti.');
+      showPopup('Oups', traduire('Le nettoyage n’a pas abouti.'));
     } finally {
       setBusy(false);
     }
@@ -256,50 +257,50 @@ export default function MesDonnees() {
 
   const counts = status.counts;
   const privacySub = counts
-    ? `${plural(counts.weights, 'pesée', 'pesées')}, ${plural(counts.trainings, 'séance', 'séances')}${status.storage ? `, ${status.storage}` : ''}`
-    : 'Ce qui est stocké, et où';
+    ? `${plural(counts.weights, traduire('pesée'), traduire('pesées'))}, ${plural(counts.trainings, traduire('séance'), traduire('séances'))}${status.storage ? `, ${status.storage}` : ''}`
+    : traduire('Ce qui est stocké, et où');
 
   return (
     <View style={{ flex: 1 }}>
-      <EspaceScreen title="Mes données" subtitle="Elles restent sur ton téléphone" gap={14}>
+      <EspaceScreen title={traduire("Mes données")} subtitle={traduire("Elles restent sur ton téléphone")} gap={14}>
         <Card>
-          <ValueRow first icon="restore" label="Restaurer une sauvegarde" onPress={handleImport} />
-          <ValueRow icon="download" label="Exporter" sub="Tableur, fichier complet, texte" onPress={() => go('/export-data')} />
-          <ValueRow icon="doc" label="Bilan en PDF" sub="Pour ton coach ou ton médecin" value={isPremium ? undefined : 'Premium'} valueColor={c.goldDeep} onPress={handlePDF} />
+          <ValueRow first icon="restore" label={traduire("Restaurer une sauvegarde")} onPress={handleImport} />
+          <ValueRow icon="download" label={traduire("Exporter")} sub="Tableur, fichier complet, texte" onPress={() => go('/export-data')} />
+          <ValueRow icon="doc" label="Bilan en PDF" sub={traduire("Pour ton coach ou ton médecin")} value={isPremium ? undefined : traduire('Premium')} valueColor={c.goldDeep} onPress={handlePDF} />
         </Card>
 
-        <SectionTitle title="Importer et ranger" />
+        <SectionTitle title={traduire("Importer et ranger")} />
         <Card>
-          <ValueRow first icon="upload" label="Importer un tableur" sub="Pesées et mensurations" onPress={() => go('/import-csv')} />
-          <ValueRow icon="dumbbell" label="Importer des séances" sub="Depuis une autre app" onPress={() => go('/import-workouts')} />
-          <ValueRow icon="table" label="Tableau du corps" sub="Poids, composition et mensurations" onPress={() => go('/companion')} />
-          <ValueRow icon="broom" label="Nettoyer les doublons" sub="Séances importées en double" onPress={handleDedupe} />
-          <ValueRow icon="trash" label="Vider le cache" sub="Tes données restent" onPress={handleClearCache} />
-          <ValueRow icon="sync" label={Platform.OS === 'ios' ? 'Synchro iPhone et iPad' : 'Synchro entre appareils'} sub="Sans internet" onPress={() => go('/sync-devices')} />
+          <ValueRow first icon="upload" label={traduire("Importer un tableur")} sub={traduire("Pesées et mensurations")} onPress={() => go('/import-csv')} />
+          <ValueRow icon="dumbbell" label={traduire("Importer des séances")} sub={traduire("Depuis une autre app")} onPress={() => go('/import-workouts')} />
+          <ValueRow icon="table" label={traduire("Tableau du corps")} sub={traduire("Poids, composition et mensurations")} onPress={() => go('/companion')} />
+          <ValueRow icon="broom" label={traduire("Nettoyer les doublons")} sub={traduire("Séances importées en double")} onPress={handleDedupe} />
+          <ValueRow icon="trash" label={traduire("Vider le cache")} sub={traduire("Tes données restent")} onPress={handleClearCache} />
+          <ValueRow icon="sync" label={Platform.OS === 'ios' ? traduire('Synchro iPhone et iPad') : traduire('Synchro entre appareils')} sub={traduire("Sans internet")} onPress={() => go('/sync-devices')} />
         </Card>
 
-        <SectionTitle title="Confidentialité" />
+        <SectionTitle title={traduire("Confidentialité")} />
         <Card>
           {VERROU_DISPONIBLE ? (
-            <ToggleRow first icon="lock" label="Verrouiller l’app" sub={Platform.OS === 'ios' ? 'Face ID ou Touch ID à l’ouverture' : 'Empreinte à l’ouverture'} value={bioOn} onChange={handleBiometric} />
+            <ToggleRow first icon="lock" label="Verrouiller l’app" sub={Platform.OS === 'ios' ? traduire('Face ID ou Touch ID à l’ouverture') : traduire('Empreinte à l’ouverture')} value={bioOn} onChange={handleBiometric} />
           ) : null}
-          <ValueRow first={!VERROU_DISPONIBLE} icon="shield" label="Confidentialité" sub={privacySub} onPress={() => go('/privacy-data')} />
-          <ValueRow icon="doc" label="Politique de confidentialité" onPress={() => go('/privacy-policy')} />
+          <ValueRow first={!VERROU_DISPONIBLE} icon="shield" label={traduire("Confidentialité")} sub={privacySub} onPress={() => go('/privacy-data')} />
+          <ValueRow icon="doc" label={traduire("Politique de confidentialité")} onPress={() => go('/privacy-policy')} />
         </Card>
 
         {Platform.OS === 'ios' ? (
           <>
             <SectionTitle title="Diagnostic" />
             <Card>
-              <ValueRow first icon="doc" label="Exporter les données brutes des séances" sub="30 derniers jours, pour caler tes zones cardiaques" onPress={handleDiagnostic} />
+              <ValueRow first icon="doc" label={traduire("Exporter les données brutes des séances")} sub={traduire("30 derniers jours, pour caler tes zones cardiaques")} onPress={handleDiagnostic} />
             </Card>
           </>
         ) : null}
 
         <SectionTitle title="Zone sensible" />
         <Card>
-          <ValueRow first danger icon="exit" label="Désinstallation propre" sub="Tout effacer avant de supprimer l’app" onPress={() => { setCleanStep(0); setCleanVisible(true); }} />
-          <ValueRow danger icon="trash" label="Tout effacer" sub="Repartir de zéro, c’est définitif" onPress={handleResetAll} />
+          <ValueRow first danger icon="exit" label={traduire("Désinstallation propre")} sub={traduire("Tout effacer avant de supprimer l’app")} onPress={() => { setCleanStep(0); setCleanVisible(true); }} />
+          <ValueRow danger icon="trash" label={traduire("Tout effacer")} sub={traduire("Repartir de zéro, c’est définitif")} onPress={handleResetAll} />
         </Card>
       </EspaceScreen>
 
@@ -311,57 +312,56 @@ export default function MesDonnees() {
         </View>
       ) : null}
 
-      <Sheet visible={resetVisible} onClose={() => setResetVisible(false)} title="Tout effacer">
+      <Sheet visible={resetVisible} onClose={() => setResetVisible(false)} title={traduire("Tout effacer")}>
         <View style={{ backgroundColor: c.dangerTint, borderRadius: 18, padding: 14, gap: 6 }}>
-          <Ink size={15} weight="extraBold" color={c.danger}>C’est définitif</Ink>
+          <Ink size={15} weight="extraBold" color={c.danger}>{traduire("C’est définitif")}</Ink>
           <Ink size={14} color={c.textSecondary}>{TEXTE_EFFACE}</Ink>
         </View>
         <Ink size={14} color={c.textSecondary}>{texteResteEnDehors(Platform.OS)}</Ink>
-        <Ink size={14} weight="bold">Écris SUPPRIMER pour confirmer</Ink>
+        <Ink size={14} weight="bold">{traduire("Écris SUPPRIMER pour confirmer")}</Ink>
         <TextInput
           value={resetText}
           onChangeText={setResetText}
-          placeholder="SUPPRIMER"
+          placeholder={traduire("SUPPRIMER")}
           placeholderTextColor={c.textMuted}
           autoCapitalize="characters"
           autoCorrect={false}
-          accessibilityLabel="Mot de confirmation"
+          accessibilityLabel={traduire("Mot de confirmation")}
           style={{ height: 52, borderRadius: 14, borderWidth: 2, borderColor: resetOk ? c.success : c.border, backgroundColor: c.surface, paddingHorizontal: 14, fontSize: 17, fontWeight: '800', color: c.ink }}
         />
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}><Button tone="ghost" label="Annuler" onPress={() => setResetVisible(false)} /></View>
-          <View style={{ flex: 1 }}><Button tone="danger" label="Tout effacer" disabled={!resetOk} onPress={confirmReset} /></View>
+          <View style={{ flex: 1 }}><Button tone="ghost" label={traduire("Annuler")} onPress={() => setResetVisible(false)} /></View>
+          <View style={{ flex: 1 }}><Button tone="danger" label={traduire("Tout effacer")} disabled={!resetOk} onPress={confirmReset} /></View>
         </View>
       </Sheet>
 
-      <Sheet visible={cleanVisible} onClose={closeCleanSheet} title="Désinstallation propre">
+      <Sheet visible={cleanVisible} onClose={closeCleanSheet} title={traduire("Désinstallation propre")}>
         {cleanStep === 0 ? (
           <>
             <Ink size={14} color={c.textSecondary}>
-              Avant de supprimer YOROI, efface tout ce qu’il a gardé sur ton téléphone. Pense à faire une sauvegarde si tu veux revenir un jour.
-            </Ink>
+              {traduire("Avant de supprimer YOROI, efface tout ce qu’il a gardé sur ton téléphone. Pense à faire une sauvegarde si tu veux revenir un jour.")}</Ink>
             <Ink size={14} color={c.textSecondary}>{TEXTE_EFFACE}</Ink>
             <Ink size={14} color={c.textSecondary}>{texteResteEnDehors(Platform.OS)}</Ink>
-            <Button tone="danger" icon="trash" label="Effacer les données de YOROI" onPress={handleCleanUninstall} />
-            <Button tone="ghost" label="Annuler" onPress={() => setCleanVisible(false)} />
+            <Button tone="danger" icon="trash" label={traduire("Effacer les données de YOROI")} onPress={handleCleanUninstall} />
+            <Button tone="ghost" label={traduire("Annuler")} onPress={() => setCleanVisible(false)} />
           </>
         ) : (
           <>
             <View style={{ backgroundColor: c.successTint, borderRadius: 18, padding: 14, gap: 4 }}>
-              <Ink size={15} weight="extraBold" color={c.successText}>Données effacées</Ink>
-              <Ink size={14} color={c.textSecondary}>{Platform.OS === 'ios' ? 'Il reste deux étapes, à faire toi-même.' : 'Il reste une étape, à faire toi-même.'}</Ink>
+              <Ink size={15} weight="extraBold" color={c.successText}>{traduire("Données effacées")}</Ink>
+              <Ink size={14} color={c.textSecondary}>{Platform.OS === 'ios' ? traduire('Il reste deux étapes, à faire toi-même.') : traduire('Il reste une étape, à faire toi-même.')}</Ink>
             </View>
             {Platform.OS === 'ios' ? (
               <>
-                <Ink size={15} weight="extraBold">1. Apple Santé</Ink>
-                <Ink size={14} color={c.textSecondary}>Dans Santé, profil, Apps, YOROI : retire les autorisations et supprime les données écrites par l’app si tu le souhaites.</Ink>
-                <Button tone="accent" label="Ouvrir Santé" onPress={() => safeOpenURL('x-apple-health://')} />
+                <Ink size={15} weight="extraBold">{traduire("1. Apple Santé")}</Ink>
+                <Ink size={14} color={c.textSecondary}>{traduire("Dans Santé, profil, Apps, YOROI : retire les autorisations et supprime les données écrites par l’app si tu le souhaites.")}</Ink>
+                <Button tone="accent" label={traduire("Ouvrir Santé")} onPress={() => safeOpenURL('x-apple-health://')} />
               </>
             ) : null}
             <Ink size={15} weight="extraBold">{Platform.OS === 'ios' ? '2. Autorisations' : '1. Autorisations'}</Ink>
-            <Ink size={14} color={c.textSecondary}>Coupe les autorisations restantes (notifications, photos, caméra) puis supprime l’app depuis l’écran d’accueil.</Ink>
-            <Button tone="accent" label="Ouvrir les réglages du téléphone" onPress={() => Linking.openSettings()} />
-            <Button tone="ghost" label="Terminé" onPress={closeCleanSheet} />
+            <Ink size={14} color={c.textSecondary}>{traduire("Coupe les autorisations restantes (notifications, photos, caméra) puis supprime l’app depuis l’écran d’accueil.")}</Ink>
+            <Button tone="accent" label={traduire("Ouvrir les réglages du téléphone")} onPress={() => Linking.openSettings()} />
+            <Button tone="ghost" label={traduire("Terminé")} onPress={closeCleanSheet} />
           </>
         )}
       </Sheet>

@@ -6,6 +6,7 @@
  */
 
 /** Prefixe des copies de tables faites par le mode demo (lib/demoDataService.ts) */
+import { traduire } from '@/lib/i18n/tr';
 export const PREFIXE_SAUVEGARDE_DEMO = 'demo_bak_';
 
 /**
@@ -109,13 +110,13 @@ export function fichiersDocumentsAEffacer(noms: readonly string[]): string[] {
 
 /** Ce que « Tout effacer » efface (texte affiche avant de confirmer) */
 export const TEXTE_EFFACE =
-  'Tout ce que YOROI garde sur ce téléphone est effacé : pesées, mensurations, séances, photos, sauvegardes, réglages, rappels.';
+  traduire('Tout ce que YOROI garde sur ce téléphone est effacé : pesées, mensurations, séances, photos, sauvegardes, réglages, rappels.');
 
 /** Ce que « Tout effacer » ne peut pas effacer, selon le telephone */
 export function texteResteEnDehors(os: string): string {
   const sante = os === 'android' ? 'Health Connect' : os === 'ios' ? 'Apple Santé' : null;
-  const debut = sante ? `ce qui a été écrit dans ${sante}, ` : '';
-  return `Restent en dehors de YOROI : ${debut}tes sauvegardes copiées dans ton dossier cloud, et les images enregistrées dans ta galerie. Tu peux les supprimer toi-même.`;
+  const debut = sante ? traduire("ce qui a été écrit dans {0}, ", sante) : '';
+  return traduire("Restent en dehors de YOROI : {0}tes sauvegardes copiées dans ton dossier cloud, et les images enregistrées dans ta galerie. Tu peux les supprimer toi-même.", debut);
 }
 
 /** Les deux paragraphes ensemble, pour une fenetre de confirmation */

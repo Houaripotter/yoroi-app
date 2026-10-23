@@ -6,6 +6,7 @@
  * du pack Classique. Le desert de jour est dans le pack Classique. Require statiques pour Metro.
  */
 import type { ImageSourcePropType } from 'react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 export const NATURE_SCENE_IDS = [
   'nature_plage_jour', 'nature_plage_couchant', 'nature_foret', 'nature_cascade', 'nature_ville_jour',
@@ -27,14 +28,14 @@ export type SceneNature = {
 };
 
 export const SCENES_NATURE: SceneNature[] = [
-  { id: 'nature_plage_jour', nom: 'Plage', phrase: 'Le sable et les palmiers', description: 'La plage de sable, la mer turquoise et les palmiers', focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/plage_jour.webp') },
-  { id: 'nature_plage_couchant', nom: 'Plage au couchant', phrase: 'Le soleil sur la mer', description: 'La plage au coucher du soleil, le ciel rose et or', focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/plage_couchant.webp') },
-  { id: 'nature_foret', nom: 'Forêt', phrase: 'Le sentier sous les arbres', description: 'Le sous bois lumineux et les rayons du soleil', focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/foret.webp') },
-  { id: 'nature_cascade', nom: 'Cascade', phrase: 'La chute d’eau dans la forêt', description: 'La cascade, la brume et le bassin turquoise', focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/cascade.webp') },
-  { id: 'nature_ville_jour', nom: 'Buildings', phrase: 'Les tours au bord de l’eau', description: 'Les gratte ciel et le fleuve sous le ciel bleu', focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/ville_jour.webp') },
-  { id: 'nature_desert_nuit', nom: 'Désert étoilé', phrase: 'Les dunes sous la Voie lactée', description: 'Les dunes et l’oasis sous la lune et les étoiles', focus: 0.4, sombre: true, image: require('@/assets/avatars/app/nature/scenes/desert_nuit.webp') },
-  { id: 'nature_mer_nuit', nom: 'Mer la nuit', phrase: 'La lune sur les vagues', description: 'Les rochers et la mer sous la pleine lune', focus: 0.4, sombre: true, image: require('@/assets/avatars/app/nature/scenes/mer_nuit.webp') },
-  { id: 'nature_ville_nuit', nom: 'Buildings de nuit', phrase: 'Les fenêtres allumées sur le fleuve', description: 'Les tours éclairées et leurs reflets dans l’eau', focus: 0.4, sombre: true, image: require('@/assets/avatars/app/nature/scenes/ville_nuit.webp') },
+  { id: 'nature_plage_jour', nom: 'Plage', phrase: traduire('Le sable et les palmiers'), description: traduire('La plage de sable, la mer turquoise et les palmiers'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/plage_jour.webp') },
+  { id: 'nature_plage_couchant', nom: traduire('Plage au couchant'), phrase: traduire('Le soleil sur la mer'), description: traduire('La plage au coucher du soleil, le ciel rose et or'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/plage_couchant.webp') },
+  { id: 'nature_foret', nom: traduire('Forêt'), phrase: traduire('Le sentier sous les arbres'), description: traduire('Le sous bois lumineux et les rayons du soleil'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/foret.webp') },
+  { id: 'nature_cascade', nom: 'Cascade', phrase: traduire('La chute d’eau dans la forêt'), description: traduire('La cascade, la brume et le bassin turquoise'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/cascade.webp') },
+  { id: 'nature_ville_jour', nom: 'Buildings', phrase: traduire('Les tours au bord de l’eau'), description: traduire('Les gratte ciel et le fleuve sous le ciel bleu'), focus: 0.4, sombre: false, image: require('@/assets/avatars/app/nature/scenes/ville_jour.webp') },
+  { id: 'nature_desert_nuit', nom: traduire('Désert étoilé'), phrase: traduire('Les dunes sous la Voie lactée'), description: traduire('Les dunes et l’oasis sous la lune et les étoiles'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/nature/scenes/desert_nuit.webp') },
+  { id: 'nature_mer_nuit', nom: traduire('Mer la nuit'), phrase: traduire('La lune sur les vagues'), description: traduire('Les rochers et la mer sous la pleine lune'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/nature/scenes/mer_nuit.webp') },
+  { id: 'nature_ville_nuit', nom: traduire('Buildings de nuit'), phrase: traduire('Les fenêtres allumées sur le fleuve'), description: traduire('Les tours éclairées et leurs reflets dans l’eau'), focus: 0.4, sombre: true, image: require('@/assets/avatars/app/nature/scenes/ville_nuit.webp') },
 ];
 
 export const NATURE_SCENE_IMAGES = Object.fromEntries(SCENES_NATURE.map((s) => [s.id, s.image])) as Record<NatureSceneId, ImageSourcePropType>;

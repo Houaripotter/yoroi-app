@@ -18,6 +18,7 @@ import type { PartnerInsights, Zone } from '@/lib/v2/combat/partnerInsights';
 import { ZONE_LABELS } from '@/lib/v2/combat/partnerInsights';
 import { BrushColumns, BrushTrend } from '../charts';
 import { BeltBar, BigButton, Card, CIcon, D, Field, Glass, Hanko, InkBar, Kozane, N, P, Press, RecordBars, ResultPlate, Seal, Section, sportLabel, Stepper, tap, V } from '../ui';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 // ─── Carte de guerrier ────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export function WarriorCard({ p, ins, onPhoto }: { p: Partner; ins: PartnerInsig
       </View>
       <View style={{ padding: 18, gap: 16 }}>
         <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-          <Press onPress={onPhoto} accessibilityRole="button" accessibilityLabel={`Photo de ${p.name}`}>
+          <Press onPress={onPhoto} accessibilityRole="button" accessibilityLabel={traduire("Photo de {0}", p.name)}>
             <View>
               <Seal name={p.name} photoUri={p.photoUri} belt={p.belt} size={104} tone={ins.title.color} />
               <View style={{ position: 'absolute', right: -6, bottom: -6, width: 34, height: 34, borderRadius: 17, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: P.white }}>
@@ -72,28 +73,25 @@ export function WarriorCard({ p, ins, onPhoto }: { p: Partner; ins: PartnerInsig
                 {`${ins.winRate ?? 0}%`}
               </Ink>
               <Ink size={12} weight="bold" color={P.ink2}>
-                de victoires
-              </Ink>
+                {traduire("de victoires")}</Ink>
             </View>
           </View>
         ) : (
           <Ink size={14} color={P.ink2}>
-            Aucun round encore. Lance une séance de combat et indique son nom dans un round : son bilan se remplit tout seul.
-          </Ink>
+            {traduire("Aucun round encore. Lance une séance de combat et indique son nom dans un round : son bilan se remplit tout seul.")}</Ink>
         )}
         {ins.total > 0 ? (
           <View style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Ink size={13} weight="bold" color={P.ink2}>
-                Niveau de menace
-              </Ink>
+                {traduire("Niveau de menace")}</Ink>
               <Ink size={13} weight="extraBold" color={ins.threat >= 70 ? D : ins.threat >= 40 ? N : '#4F6B28'}>
-                {`${ins.threat >= 70 ? 'Élevé' : ins.threat >= 40 ? 'Modéré' : 'Faible'}, ${ins.threat} %`}
+                {`${ins.threat >= 70 ? 'Élevé' : ins.threat >= 40 ? traduire('Modéré') : traduire('Faible')}, ${ins.threat} %`}
               </Ink>
             </View>
             <InkBar value={ins.threat / 100} color={ins.threat >= 70 ? D : ins.threat >= 40 ? N : '#6E8C3A'} />
             <Ink size={12} color={P.muted}>
-              {`${ins.title.description}${ins.avgRating != null ? `. Niveau perçu ${String(ins.avgRating).replace('.', ',')} sur 10` : ''}`}
+              {`${ins.title.description}${ins.avgRating != null ? traduire(". Niveau perçu {0} sur 10", String(ins.avgRating).replace('.', DECIMAL)) : ''}`}
             </Ink>
           </View>
         ) : null}
@@ -111,12 +109,11 @@ export function Predictor({ ins }: { ins: PartnerInsights }) {
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Ink size={14} weight="extraBold" color={P.ink2}>
-          Avant de rouler
-        </Ink>
+          {traduire("Avant de rouler")}</Ink>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <CIcon name={ins.prediction.trend === 'up' ? 'up' : ins.prediction.trend === 'down' ? 'down' : 'flat'} size={16} color={ins.prediction.trend === 'up' ? '#4F6B28' : ins.prediction.trend === 'down' ? D : P.muted} />
           <Ink size={13} weight="bold" color={P.muted}>
-            {ins.prediction.trend === 'up' ? 'En forme' : ins.prediction.trend === 'down' ? 'Dans le creux' : 'Stable'}
+            {ins.prediction.trend === 'up' ? traduire('En forme') : ins.prediction.trend === 'down' ? traduire('Dans le creux') : 'Stable'}
           </Ink>
         </View>
       </View>
@@ -126,7 +123,7 @@ export function Predictor({ ins }: { ins: PartnerInsights }) {
             {ins.prediction.mood}
           </Ink>
           <Ink size={13} color={P.ink2}>
-            {ins.total < 3 ? 'Pas encore assez de rounds, estimation neutre' : `Confiance ${ins.prediction.confidence}, d'après ton historique et ta forme récente`}
+            {ins.total < 3 ? traduire('Pas encore assez de rounds, estimation neutre') : traduire("Confiance {0}, d'après ton historique et ta forme récente", ins.prediction.confidence)}
           </Ink>
         </View>
         <View style={{ width: 82, height: 82, borderRadius: 22, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
@@ -135,8 +132,7 @@ export function Predictor({ ins }: { ins: PartnerInsights }) {
             {`${pv}`}
           </Ink>
           <Ink size={11} weight="bold" color="rgba(255,255,255,0.85)">
-            % de chances
-          </Ink>
+            {traduire("% de chances")}</Ink>
         </View>
       </View>
       <InkBar value={pv / 100} color={color} height={10} />
@@ -158,10 +154,9 @@ export function GamePlanFlash({ p, ins, onOpenPlan }: { p: Partner; ins: Partner
         <Hanko size={40} />
         <View style={{ flex: 1 }}>
           <Ink size={18} weight="black" tight>
-            Plan pour monter sur le tapis
-          </Ink>
+            {traduire("Plan pour monter sur le tapis")}</Ink>
           <Ink size={13} color={P.ink2}>
-            {`Ce qui marche contre ${p.name} et ses failles`}
+            {traduire("Ce qui marche contre {0} et ses failles", p.name)}
           </Ink>
         </View>
       </View>
@@ -171,24 +166,22 @@ export function GamePlanFlash({ p, ins, onOpenPlan }: { p: Partner; ins: Partner
             <CIcon name={l.k === 'ok' ? 'check' : 'target'} size={13} color={P.white} width={2.8} />
           </View>
           <Ink size={15} weight="bold" style={{ flex: 1 }}>
-            {l.k === 'ok' ? l.t : `Cible : ${l.t}`}
+            {l.k === 'ok' ? l.t : traduire("Cible : {0}", l.t)}
           </Ink>
         </View>
       ))}
       {last ? (
         <View style={{ paddingTop: 10, borderTopWidth: 1, borderTopColor: P.line2, gap: 2 }}>
           <Ink size={12} weight="bold" color={P.muted}>
-            Dernier résultat
-          </Ink>
+            {traduire("Dernier résultat")}</Ink>
           <Ink size={14} weight="extraBold" color={RESULT_COLOR[last.result]}>
-            {`${RESULT_LABEL[last.result]}${ins.lastImprovement ? `, à travailler : ${ins.lastImprovement.text}` : ''}`}
+            {`${RESULT_LABEL[last.result]}${ins.lastImprovement ? traduire(", à travailler : {0}", ins.lastImprovement.text) : ''}`}
           </Ink>
         </View>
       ) : null}
       <Pressable onPress={() => { tap(); onOpenPlan(); }} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <Ink size={14} weight="extraBold" color={P.accent}>
-          Ouvrir le plan de jeu complet
-        </Ink>
+          {traduire("Ouvrir le plan de jeu complet")}</Ink>
         <CIcon name="chevron" size={14} color={P.accent} />
       </Pressable>
     </Card>
@@ -221,7 +214,7 @@ export function MissionCard({ partnerId, entries }: { partnerId: string; entries
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={13} weight="extraBold" color={done ? '#4F6B28' : N}>
-            {done ? 'Mission du mois accomplie' : 'Mission du mois'}
+            {done ? traduire('Mission du mois accomplie') : traduire('Mission du mois')}
           </Ink>
           <Ink size={17} weight="black" tight>
             {mission.text}
@@ -235,7 +228,7 @@ export function MissionCard({ partnerId, entries }: { partnerId: string; entries
         ))}
       </View>
       <Ink size={13} weight="bold" color={P.ink2}>
-        {`${Math.min(progress, target)} sur ${target}`}
+        {traduire("{0} sur {1}", Math.min(progress, target), target)}
       </Ink>
     </Card>
   );
@@ -246,9 +239,9 @@ export function MissionCard({ partnerId, entries }: { partnerId: string; entries
 export function StreaksAndBadges({ ins, p }: { ins: PartnerInsights; p: Partner }) {
   const s = ins.streaks;
   const items: { label: string; value: string; color: string; icon: 'flame' | 'shield' | 'trophy' }[] = [];
-  if (s.currentWinStreak >= 2) items.push({ label: 'Série en cours', value: plural(s.currentWinStreak, 'victoire'), color: D, icon: 'flame' });
-  if (s.longestWinStreak >= 3 && s.longestWinStreak !== s.currentWinStreak) items.push({ label: 'Record de série', value: plural(s.longestWinStreak, 'victoire'), color: N, icon: 'trophy' });
-  if (s.currentNoTapStreak >= 5) items.push({ label: 'Sans taper', value: plural(s.currentNoTapStreak, 'round'), color: '#4F6B28', icon: 'shield' });
+  if (s.currentWinStreak >= 2) items.push({ label: traduire('Série en cours'), value: plural(s.currentWinStreak, 'victoire'), color: D, icon: 'flame' });
+  if (s.longestWinStreak >= 3 && s.longestWinStreak !== s.currentWinStreak) items.push({ label: traduire('Record de série'), value: plural(s.longestWinStreak, 'victoire'), color: N, icon: 'trophy' });
+  if (s.currentNoTapStreak >= 5) items.push({ label: traduire('Sans taper'), value: plural(s.currentNoTapStreak, 'round'), color: '#4F6B28', icon: 'shield' });
   const badges = p.unlockedBadges ?? [];
   if (items.length === 0 && badges.length === 0) return null;
   return (
@@ -270,7 +263,7 @@ export function StreaksAndBadges({ ins, p }: { ins: PartnerInsights; p: Partner 
       ) : null}
       {badges.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Section title="Sceaux gagnés" sub={`${badges.length} contre ${p.name}`} />
+          <Section title={traduire("Sceaux gagnés")} sub={`${badges.length} contre ${p.name}`} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
             {badges.map((b) => (
               <View key={b.id} style={{ width: 132, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 8, alignItems: 'flex-start' }}>
@@ -299,7 +292,7 @@ export function Timeline({ ins, name }: { ins: PartnerInsights; name: string }) 
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Ink size={18} weight="black" tight>
-          {`Tous les rounds contre ${name}`}
+          {traduire("Tous les rounds contre {0}", name)}
         </Ink>
         <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, justifyContent: 'center', backgroundColor: `${ins.momentum.color}18` }}>
           <Ink size={12} weight="extraBold" color={ins.momentum.color}>
@@ -316,8 +309,7 @@ export function Timeline({ ins, name }: { ins: PartnerInsights; name: string }) 
         ))}
       </ScrollView>
       <Ink size={12} color={P.muted}>
-        Du plus ancien au plus récent. Un point noir sous la plaque : tu as tapé.
-      </Ink>
+        {traduire("Du plus ancien au plus récent. Un point noir sous la plaque : tu as tapé.")}</Ink>
     </Card>
   );
 }
@@ -327,11 +319,9 @@ export function YearTrend({ ins }: { ins: PartnerInsights }) {
   return (
     <Card style={{ gap: 10 }}>
       <Ink size={18} weight="black" tight>
-        Ton taux de victoire sur 12 mois
-      </Ink>
+        {traduire("Ton taux de victoire sur 12 mois")}</Ink>
       <Ink size={13} color={P.ink2}>
-        Victoires sur les rounds gagnés ou perdus, mois par mois
-      </Ink>
+        {traduire("Victoires sur les rounds gagnés ou perdus, mois par mois")}</Ink>
       <BrushTrend points={ins.year} color={V} />
     </Card>
   );
@@ -351,11 +341,9 @@ export function TaleOfTape({ ins, name }: { ins: PartnerInsights; name: string }
     <Card style={{ gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Ink size={14} weight="black" color={V} style={{ flex: 1 }}>
-          Toi
-        </Ink>
+          {traduire("Toi")}</Ink>
         <Ink size={13} weight="extraBold" color={P.muted}>
-          face à face
-        </Ink>
+          {traduire("face à face")}</Ink>
         <Ink size={14} weight="black" color={D} style={{ flex: 1, textAlign: 'right' }} numberOfLines={1}>
           {name}
         </Ink>
@@ -450,9 +438,9 @@ export function Arsenal({ ins, name }: { ins: PartnerInsights; name: string }) {
   if (ins.total === 0 || (ins.methodsGiven.length === 0 && ins.methodsTaken.length === 0)) return null;
   return (
     <View style={{ gap: 10 }}>
-      <Section title="Arsenal" sub="Qui finit qui, et avec quoi" />
-      <ArsenalList title="Ses armes contre toi" sub={`${name} t'a fini ${ins.subTaken} fois`} items={ins.methodsTaken} color={D} />
-      <ArsenalList title="Tes armes contre lui" sub={`Tu l'as fini ${ins.subGiven} fois`} items={ins.methodsGiven} color={V} />
+      <Section title="Arsenal" sub={traduire("Qui finit qui, et avec quoi")} />
+      <ArsenalList title={traduire("Ses armes contre toi")} sub={traduire("{0} t'a fini {1} fois", name, ins.subTaken)} items={ins.methodsTaken} color={D} />
+      <ArsenalList title={traduire("Tes armes contre lui")} sub={traduire("Tu l'as fini {0} fois", ins.subGiven)} items={ins.methodsGiven} color={V} />
     </View>
   );
 }
@@ -465,22 +453,21 @@ export function RatingCard({ ins }: { ins: PartnerInsights }) {
   const avg = r.reduce((s, x) => s + x.rating, 0) / r.length;
   const t = ins.ratingTrend;
   const msg =
-    t > 1 ? `Tu le perçois ${t} points plus fort qu'au début : il progresse.` : t < -1 ? `Tu le perçois ${Math.abs(t)} points moins fort qu'au début : tu progresses sur lui.` : t === 1 ? 'Légère montée en puissance.' : t === -1 ? 'Tu commences à le dominer légèrement.' : 'Niveau stable round après round.';
+    t > 1 ? traduire("Tu le perçois {0} points plus fort qu'au début : il progresse.", t) : t < -1 ? traduire("Tu le perçois {0} points moins fort qu'au début : tu progresses sur lui.", Math.abs(t)) : t === 1 ? traduire('Légère montée en puissance.') : t === -1 ? traduire('Tu commences à le dominer légèrement.') : traduire('Niveau stable round après round.');
   return (
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
         <View>
           <Ink size={18} weight="black" tight>
-            Niveau perçu, round par round
-          </Ink>
+            {traduire("Niveau perçu, round par round")}</Ink>
           <Ink size={13} color={P.ink2}>
-            {`Sur ${plural(r.length, 'round')}, de ${Math.min(...r.map((x) => x.rating))} à ${Math.max(...r.map((x) => x.rating))}`}
+            {traduire("Sur {0}, de {1} à {2}", plural(r.length, 'round'), Math.min(...r.map((x) => x.rating)), Math.max(...r.map((x) => x.rating)))}
           </Ink>
         </View>
         <Ink size={30} weight="black" tight color={N}>
-          {(Math.round(avg * 10) / 10).toString().replace('.', ',')}
+          {(Math.round(avg * 10) / 10).toString().replace('.', DECIMAL)}
           <Ink size={13} weight="bold" color={P.muted}>
-            {' sur 10'}
+            {traduire(' sur 10')}
           </Ink>
         </Ink>
       </View>
@@ -501,11 +488,10 @@ export function Progression({ ins }: { ins: PartnerInsights }) {
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Ink size={18} weight="black" tight>
-          Séance par séance
-        </Ink>
+          {traduire("Séance par séance")}</Ink>
         {ins.currentStreak && ins.currentStreak.count >= 2 ? (
           <Ink size={13} weight="extraBold" color={ins.currentStreak.type === 'win' ? V : D}>
-            {`${ins.currentStreak.count} ${ins.currentStreak.type === 'win' ? 'victoires' : 'défaites'} d'affilée`}
+            {traduire("{0} {1} d'affilée", ins.currentStreak.count, ins.currentStreak.type === 'win' ? 'victoires' : 'défaites')}
           </Ink>
         ) : null}
       </View>
@@ -515,17 +501,15 @@ export function Progression({ ins }: { ins: PartnerInsights }) {
         ))}
       </ScrollView>
       <Ink size={12} color={P.muted}>
-        La plus récente à gauche
-      </Ink>
+        {traduire("La plus récente à gauche")}</Ink>
       {ins.monthly.length >= 2 ? (
         <View style={{ gap: 6, marginTop: 4 }}>
           <Ink size={14} weight="extraBold" color={P.ink2}>
-            Taux de victoire par mois
-          </Ink>
+            {traduire("Taux de victoire par mois")}</Ink>
           <BrushColumns data={ins.monthly.map((m) => ({ label: m.label, value: m.rate }))} max={100} format={(v) => `${v}%`} color={V} />
           {Math.abs(diff) >= 5 ? (
             <Ink size={13} weight="extraBold" color={diff > 0 ? '#4F6B28' : D}>
-              {`${diff > 0 ? '+' : ''}${diff} points sur ${ins.monthly.length} mois`}
+              {traduire("{0}{1} points sur {2} mois", diff > 0 ? '+' : '', diff, ins.monthly.length)}
             </Ink>
           ) : null}
         </View>
@@ -558,12 +542,11 @@ export function Patterns({ ins }: { ins: PartnerInsights }) {
   return (
     <Card style={{ gap: 14 }}>
       <Ink size={18} weight="black" tight>
-        Ce qui revient
-      </Ink>
+        {traduire("Ce qui revient")}</Ink>
       {ins.lastImprovement ? (
         <View style={{ padding: 12, borderRadius: 16, backgroundColor: P.indigoSoft, gap: 2 }}>
           <Ink size={12} weight="extraBold" color={P.indigo}>
-            {`Dernier objectif, ${shortDate(ins.lastImprovement.date)}`}
+            {traduire("Dernier objectif, {0}", shortDate(ins.lastImprovement.date))}
           </Ink>
           <Ink size={15} weight="bold">
             {ins.lastImprovement.text}
@@ -573,24 +556,21 @@ export function Patterns({ ins }: { ins: PartnerInsights }) {
       {ins.topGiven.length > 0 ? (
         <View style={{ gap: 6 }}>
           <Ink size={13} weight="extraBold" color={V}>
-            Tes meilleures finitions
-          </Ink>
+            {traduire("Tes meilleures finitions")}</Ink>
           <ChipList items={ins.topGiven} color={V} />
         </View>
       ) : null}
       {ins.topTaken.length > 0 ? (
         <View style={{ gap: 6 }}>
           <Ink size={13} weight="extraBold" color={D}>
-            Il te finit le plus souvent par
-          </Ink>
+            {traduire("Il te finit le plus souvent par")}</Ink>
           <ChipList items={ins.topTaken} color={D} />
         </View>
       ) : null}
       {ins.topWhatWorked.length > 0 ? (
         <View style={{ gap: 6 }}>
           <Ink size={13} weight="extraBold" color={N}>
-            Ce qui fonctionne le mieux
-          </Ink>
+            {traduire("Ce qui fonctionne le mieux")}</Ink>
           <ChipList items={ins.topWhatWorked} color={N} />
         </View>
       ) : null}
@@ -615,8 +595,7 @@ export function ZoneMap({ ins }: { ins: PartnerInsights }) {
   return (
     <Card style={{ gap: 10 }}>
       <Ink size={18} weight="black" tight>
-        Où il t'attrape
-      </Ink>
+        {traduire("Où il t'attrape")}</Ink>
       <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         <Svg width={110} height={210} viewBox="0 0 110 220">
           <Circle cx={55} cy={22} r={17} fill={P.line} />
@@ -631,8 +610,7 @@ export function ZoneMap({ ins }: { ins: PartnerInsights }) {
         <View style={{ flex: 1, gap: 8 }}>
           {order.length === 0 ? (
             <Ink size={13} color={P.muted}>
-              Les finitions notées ne correspondent à aucune zone connue.
-            </Ink>
+              {traduire("Les finitions notées ne correspondent à aucune zone connue.")}</Ink>
           ) : (
             order.map((k) => (
               <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -661,19 +639,18 @@ export function ActiveGoal({ p, onSet, onAchieved }: { p: Partner; onSet: (text:
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Ink size={18} weight="black" tight>
-          Objectif du prochain combat
-        </Ink>
+          {traduire("Objectif du prochain combat")}</Ink>
         <Pressable onPress={() => { tap(); setDraft(p.activeGoal?.text ?? ''); setEditing((v) => !v); }} hitSlop={10} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
           <Ink size={14} weight="extraBold" color={P.accent}>
-            {editing ? 'Annuler' : p.activeGoal?.text ? 'Modifier' : 'Définir'}
+            {editing ? traduire('Annuler') : p.activeGoal?.text ? traduire('Modifier') : traduire('Définir')}
           </Ink>
         </Pressable>
       </View>
       {editing ? (
         <View style={{ gap: 10 }}>
-          <Field value={draft} onChangeText={setDraft} multiline autoFocus placeholder="Par exemple : travailler ma garde papillon, finir en triangle" />
+          <Field value={draft} onChangeText={setDraft} multiline autoFocus placeholder={traduire("Par exemple : travailler ma garde papillon, finir en triangle")} />
           <BigButton
-            label="Enregistrer l'objectif"
+            label={traduire("Enregistrer l'objectif")}
             onPress={() => {
               if (!draft.trim()) return;
               onSet(draft.trim());
@@ -688,15 +665,14 @@ export function ActiveGoal({ p, onSet, onAchieved }: { p: Partner; onSet: (text:
               {p.activeGoal.text}
             </Ink>
             <Ink size={12} weight="bold" color={P.ink2} style={{ marginTop: 4 }}>
-              {`Depuis le ${shortDate(p.activeGoal.createdAt)}`}
+              {traduire("Depuis le {0}", shortDate(p.activeGoal.createdAt))}
             </Ink>
           </View>
-          <BigButton label="Objectif atteint" tone="ink" icon="check" onPress={onAchieved} />
+          <BigButton label={traduire("Objectif atteint")} tone="ink" icon="check" onPress={onAchieved} />
         </View>
       ) : (
         <Ink size={14} color={P.ink2}>
-          Fixe-toi un objectif précis pour ton prochain combat contre lui.
-        </Ink>
+          {traduire("Fixe-toi un objectif précis pour ton prochain combat contre lui.")}</Ink>
       )}
     </Card>
   );
@@ -716,31 +692,28 @@ export function LongTermGoal({ p, winRate, onSet, onClear }: { p: Partner; winRa
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Ink size={18} weight="black" tight>
-          Objectif à long terme
-        </Ink>
+          {traduire("Objectif à long terme")}</Ink>
         <Pressable onPress={() => { tap(); setText(g?.text ?? ''); setRate(g?.targetWinRate ?? 60); setEditing((v) => !v); }} hitSlop={10} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
           <Ink size={14} weight="extraBold" color={P.accent}>
-            {editing ? 'Annuler' : g ? 'Modifier' : 'Définir'}
+            {editing ? traduire('Annuler') : g ? traduire('Modifier') : traduire('Définir')}
           </Ink>
         </Pressable>
       </View>
       {editing ? (
         <View style={{ gap: 12 }}>
-          <Field value={text} onChangeText={setText} placeholder="Par exemple : le dominer en garde fermée" />
+          <Field value={text} onChangeText={setText} placeholder={traduire("Par exemple : le dominer en garde fermée")} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={14} weight="bold" color={P.ink2}>
-              Taux de victoire visé
-            </Ink>
+              {traduire("Taux de victoire visé")}</Ink>
             <Stepper value={rate} onChange={setRate} step={10} min={10} max={100} format={(v) => `${v}%`} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={14} weight="bold" color={P.ink2}>
-              Délai
-            </Ink>
-            <Stepper value={months} onChange={setMonths} min={1} max={24} format={(v) => `${v} mois`} />
+              {traduire("Délai")}</Ink>
+            <Stepper value={months} onChange={setMonths} min={1} max={24} format={(v) => traduire("{0} mois", v)} />
           </View>
           <BigButton
-            label="Enregistrer l'objectif"
+            label={traduire("Enregistrer l'objectif")}
             onPress={() => {
               if (!text.trim()) return;
               const d = new Date();
@@ -758,19 +731,18 @@ export function LongTermGoal({ p, winRate, onSet, onClear }: { p: Partner; winRa
           </Ink>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Ink size={13} weight="bold" color={P.ink2}>
-              {`${progress} % aujourd'hui, objectif ${g.targetWinRate} %`}
+              {traduire("{0} % aujourd'hui, objectif {1} %", progress, g.targetWinRate)}
             </Ink>
             <Ink size={13} weight="extraBold" color={daysLeft > 0 ? P.indigo : D}>
-              {daysLeft > 0 ? `encore ${plural(daysLeft, 'jour')}` : 'délai dépassé'}
+              {daysLeft > 0 ? traduire("encore {0}", plural(daysLeft, 'jour')) : traduire('délai dépassé')}
             </Ink>
           </View>
           <InkBar value={pct / 100} color={pct >= 100 ? '#6E8C3A' : P.indigo} height={12} />
-          {pct >= 100 ? <BigButton label="Objectif atteint" tone="ink" icon="trophy" onPress={onClear} /> : null}
+          {pct >= 100 ? <BigButton label={traduire("Objectif atteint")} tone="ink" icon="trophy" onPress={onClear} /> : null}
         </View>
       ) : (
         <Ink size={14} color={P.ink2}>
-          Fixe un taux de victoire à atteindre avant une date.
-        </Ink>
+          {traduire("Fixe un taux de victoire à atteindre avant une date.")}</Ink>
       )}
     </Card>
   );
@@ -784,13 +756,12 @@ export function SessionHistory({ entries, name, onNew }: { entries: SessionEntry
       <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
         <CIcon name="swords" size={34} color={P.muted} />
         <Ink size={17} weight="black" tight>
-          Aucune séance encore
-        </Ink>
+          {traduire("Aucune séance encore")}</Ink>
         <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>
-          {`Lance une séance de combat et écris « ${name} » dans un round : tout s'affiche ici.`}
+          {traduire("Lance une séance de combat et écris « {0} » dans un round : tout s'affiche ici.", name)}
         </Ink>
         <View style={{ alignSelf: 'stretch', marginTop: 4 }}>
-          <BigButton label="Nouvelle séance de combat" onPress={onNew} />
+          <BigButton label={traduire("Nouvelle séance de combat")} onPress={onNew} />
         </View>
       </Card>
     );
@@ -850,7 +821,7 @@ function SessionRow({ entry }: { entry: SessionEntry }) {
                   ) : null}
                   {r.pointsFor != null || r.pointsAgainst != null ? (
                     <Ink size={13} weight="bold" color={P.ink2}>
-                      {`${r.pointsFor ?? 0} à ${r.pointsAgainst ?? 0}`}
+                      {traduire("{0} à {1}", r.pointsFor ?? 0, r.pointsAgainst ?? 0)}
                     </Ink>
                   ) : null}
                 </View>

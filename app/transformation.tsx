@@ -37,20 +37,21 @@ import type { Pose } from '@/lib/v2/photos/outils';
 import { logger } from '@/lib/security/logger';
 import { carteAvantApresDirecte } from '@/lib/v2/nav/direct';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Filtre = Pose | 'toutes';
 type Cible = 'avant' | 'apres';
 
 const MODES: { value: CompareMode; label: string }[] = [
   { value: 'glisser', label: 'Curseur' },
-  { value: 'cote', label: 'Côte à côte' },
+  { value: 'cote', label: traduire('Côte à côte') },
   { value: 'fondu', label: 'Fondu' },
 ];
 
 const CONSIGNE: Record<CompareMode, string> = {
-  glisser: 'Glisse le curseur de gauche à droite.',
-  cote: 'Tes deux photos, l’une à côté de l’autre.',
-  fondu: 'Glisse vers la droite : l’après apparaît sur l’avant.',
+  glisser: traduire('Glisse le curseur de gauche à droite.'),
+  cote: traduire('Tes deux photos, l’une à côté de l’autre.'),
+  fondu: traduire('Glisse vers la droite : l’après apparaît sur l’avant.'),
 };
 
 export default function TransformationScreen() {
@@ -116,12 +117,12 @@ export default function TransformationScreen() {
   if (!loading && asc.length < 2) {
     return (
       <View style={{ flex: 1, backgroundColor: c.background }}>
-        <DetailHeader title="Ta transformation" />
+        <DetailHeader title={traduire("Ta transformation")} />
         <EmptyInvite
           style={{ margin: GUTTER }}
-          title="Il faut deux photos"
-          text={asc.length === 1 ? 'Ta première photo est dans le coffre. Reprends-en une dans quelques semaines, même cadrage, et compare ici.' : 'Prends une photo aujourd’hui, puis une autre dans quelques semaines. Tu les verras ici côte à côte, au doigt.'}
-          cta="Ouvrir mes photos"
+          title={traduire("Il faut deux photos")}
+          text={asc.length === 1 ? traduire('Ta première photo est dans le coffre. Reprends-en une dans quelques semaines, même cadrage, et compare ici.') : traduire('Prends une photo aujourd’hui, puis une autre dans quelques semaines. Tu les verras ici côte à côte, au doigt.')}
+          cta={traduire("Ouvrir mes photos")}
           onPress={() => router.push('/photos' as any)}
         />
       </View>
@@ -180,7 +181,7 @@ export default function TransformationScreen() {
       const uri = await captureRef(cardRef, { format: 'jpg', quality: 0.92, width: 1080 });
       setShareOpen(false);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      if (await isAvailableAsync()) await shareAsync(uri, { mimeType: 'image/jpeg', dialogTitle: 'Ton avant et après' });
+      if (await isAvailableAsync()) await shareAsync(uri, { mimeType: 'image/jpeg', dialogTitle: traduire('Ton avant et après') });
       else {
         const res = await Share.share({ url: uri, message: signaturePartage() });
         if (res.action === Share.sharedAction) noterPartage('avant_apres', true);
@@ -188,7 +189,7 @@ export default function TransformationScreen() {
     } catch (err) {
       logger.error('Partage de la comparaison impossible', err);
       setShareOpen(false);
-      setNotice('L’image n’a pas pu être créée, réessaie.');
+      setNotice(traduire('L’image n’a pas pu être créée, réessaie.'));
     }
   };
 
@@ -201,17 +202,17 @@ export default function TransformationScreen() {
       if (status === 'granted') {
         await saveToLibraryAsync(uri);
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-        setNotice('Image enregistrée dans ta galerie.');
-      } else setNotice('Autorise l’accès à ta galerie dans les réglages pour enregistrer l’image.');
+        setNotice(traduire('Image enregistrée dans ta galerie.'));
+      } else setNotice(traduire('Autorise l’accès à ta galerie dans les réglages pour enregistrer l’image.'));
     } catch (err) {
       logger.error('Enregistrement dans la galerie impossible', err);
       setShareOpen(false);
-      setNotice('Enregistrement impossible, réessaie.');
+      setNotice(traduire('Enregistrement impossible, réessaie.'));
     }
   };
 
   const filterItems: { value: Filtre; label: string }[] = [
-    { value: 'toutes', label: 'Toutes' },
+    { value: 'toutes', label: traduire('Toutes') },
     ...POSES.filter((p) => counts[p.value] >= 1).map((p) => ({ value: p.value as Filtre, label: p.label })),
   ];
   const thumbW = 66;
@@ -221,10 +222,10 @@ export default function TransformationScreen() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView scrollEnabled={!reglage} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
         <DetailHeader
-          title="Ta transformation"
-          sub={reglage ? 'Règle chaque photo : pince pour zoomer, glisse pour la placer.' : CONSIGNE[mode]}
+          title={traduire("Ta transformation")}
+          sub={reglage ? traduire('Règle chaque photo : pince pour zoomer, glisse pour la placer.') : CONSIGNE[mode]}
           right={
-            <IconButton label="Partager la comparaison" onPress={() => setShareOpen(true)}>
+            <IconButton label={traduire("Partager la comparaison")} onPress={() => setShareOpen(true)}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path d="M12 15V4M8 8l4-4 4 4M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" stroke={c.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
@@ -236,14 +237,14 @@ export default function TransformationScreen() {
           <View style={{ paddingHorizontal: GUTTER, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Pills
               items={[
-                { value: 'avant' as Cote, label: 'Avant' },
-                { value: 'apres' as Cote, label: 'Après' },
+                { value: 'avant' as Cote, label: traduire('Avant') },
+                { value: 'apres' as Cote, label: traduire('Après') },
               ]}
               value={reglage}
               onChange={(v) => setReglage(v)}
             />
             <View style={{ flex: 1 }} />
-            <PrimaryButton label="Terminé" onPress={() => { tapLight(); setReglage(null); setTransparence(false); }} style={{ height: 44, paddingHorizontal: 18 }} />
+            <PrimaryButton label={traduire("Terminé")} onPress={() => { tapLight(); setReglage(null); setTransparence(false); }} style={{ height: 44, paddingHorizontal: 18 }} />
           </View>
         ) : (
           <View style={{ paddingHorizontal: GUTTER, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -258,46 +259,45 @@ export default function TransformationScreen() {
           {reglage ? (
             <>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                <GhostButton label={transparence ? 'Sans transparence' : 'Transparence'} onPress={() => setTransparence((t) => !t)} style={{ flex: 1 }} />
+                <GhostButton label={transparence ? traduire('Sans transparence') : 'Transparence'} onPress={() => setTransparence((t) => !t)} style={{ flex: 1 }} />
                 <GhostButton label="Aligner pareil" onPress={alignerAutre} style={{ flex: 1 }} />
               </View>
               <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>
-                {`Les lignes t’aident à mettre épaules, nombril et hanches à la même hauteur. Touche deux fois pour revenir. « Aligner pareil » donne le même cadrage à la photo ${reglage === 'avant' ? 'après' : 'avant'}.`}
+                {traduire("Les lignes t’aident à mettre épaules, nombril et hanches à la même hauteur. Touche deux fois pour revenir. « Aligner pareil » donne le même cadrage à la photo {0}.", reglage === 'avant' ? 'après' : 'avant')}
               </Ink>
             </>
           ) : (
             <>
-              <GhostButton label="Ajuster le cadrage de chaque photo" onPress={() => { tapLight(); setReglage('avant'); }} style={{ marginTop: 10 }} />
-              <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>Une photo en pied, l’autre en buste ? Ajuste : zoome et place chaque photo pour qu’elles se répondent. Le réglage est gardé.</Ink>
+              <GhostButton label={traduire("Ajuster le cadrage de chaque photo")} onPress={() => { tapLight(); setReglage('avant'); }} style={{ marginTop: 10 }} />
+              <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>{traduire("Une photo en pied, l’autre en buste ? Ajuste : zoome et place chaque photo pour qu’elles se répondent. Le réglage est gardé.")}</Ink>
             </>
           )}
         </View>
 
         {days === 0 ? (
           <View style={{ marginHorizontal: GUTTER, marginTop: 18, padding: 16, borderRadius: 20, backgroundColor: c.accentTint, gap: 4 }}>
-            <Ink size={15} weight="extraBold">Ces deux photos sont du même jour</Ink>
+            <Ink size={15} weight="extraBold">{traduire("Ces deux photos sont du même jour")}</Ink>
             <Ink size={13} color={c.textSecondary}>
               {asc.length > 2 && daysDiff(asc[0].date.slice(0, 10), asc[asc.length - 1].date.slice(0, 10)) > 0
-                ? 'Choisis une photo plus ancienne dans le bandeau ci-dessous pour voir ton chemin.'
-                : 'Reprends une photo dans 3 ou 4 semaines, même lumière et même cadrage : c’est là que la différence se verra.'}
+                ? traduire('Choisis une photo plus ancienne dans le bandeau ci-dessous pour voir ton chemin.')
+                : traduire('Reprends une photo dans 3 ou 4 semaines, même lumière et même cadrage : c’est là que la différence se verra.')}
             </Ink>
           </View>
         ) : (
           <StatStrip
             style={{ marginHorizontal: GUTTER, marginTop: 18 }}
             items={[
-              weightDiff === null ? { value: 'Sans poids', label: 'pas de poids sur ces photos' } : { value: ecartTexte(weightDiff), label: ecartLibelle(weightDiff) },
-              { value: dureeTexte(days), label: `entre les deux photos${days >= 21 ? `, ${days} jours` : ''}` },
+              weightDiff === null ? { value: 'Sans poids', label: traduire('pas de poids sur ces photos') } : { value: ecartTexte(weightDiff), label: ecartLibelle(weightDiff) },
+              { value: dureeTexte(days), label: traduire("entre les deux photos{0}", days >= 21 ? `, ${days} jours` : '') },
             ]}
           />
         )}
         {posesDiff ? (
           <Ink size={12} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 8 }}>
-            Attention : ces deux photos n’ont pas la même pose.
-          </Ink>
+            {traduire("Attention : ces deux photos n’ont pas la même pose.")}</Ink>
         ) : null}
 
-        <Ink size={17} weight="black" tight style={{ paddingHorizontal: GUTTER, marginTop: 26 }}>Choisir les photos</Ink>
+        <Ink size={17} weight="black" tight style={{ paddingHorizontal: GUTTER, marginTop: 26 }}>{traduire("Choisir les photos")}</Ink>
         {filterItems.length > 1 ? (
           <View style={{ paddingHorizontal: GUTTER, marginTop: 10 }}>
             <Pills items={filterItems} value={filtre} onChange={(v) => setFiltre(v)} />
@@ -306,12 +306,12 @@ export default function TransformationScreen() {
 
         <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 12 }}>
           {([
-            { k: 'avant' as Cible, p: a, word: 'Avant' },
-            { k: 'apres' as Cible, p: b, word: 'Après' },
+            { k: 'avant' as Cible, p: a, word: traduire('Avant') },
+            { k: 'apres' as Cible, p: b, word: traduire('Après') },
           ]).map((o) => {
             const on = cible === o.k;
             return (
-              <Pressable key={o.k} onPress={() => { tapLight(); setCible(o.k); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Changer la photo ${o.word.toLowerCase()}`} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: 18, backgroundColor: on ? c.accentTint : P.carte, borderWidth: 2, borderColor: on ? c.accent : c.divider }}>
+              <Pressable key={o.k} onPress={() => { tapLight(); setCible(o.k); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire("Changer la photo {0}", o.word.toLowerCase())} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: 18, backgroundColor: on ? c.accentTint : P.carte, borderWidth: 2, borderColor: on ? c.accent : c.divider }}>
                 <Image source={{ uri: o.p.file_uri }} style={{ width: 40, height: 54, borderRadius: 9 }} resizeMode="cover" />
                 <View style={{ flex: 1 }}>
                   <Ink size={14} weight="extraBold" color={on ? c.accent : c.ink}>{o.word}</Ink>
@@ -323,19 +323,19 @@ export default function TransformationScreen() {
           })}
         </View>
         <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 8 }}>
-          {`Touche une vignette pour la mettre en ${cible === 'avant' ? 'avant' : 'après'}.`}
+          {traduire("Touche une vignette pour la mettre en {0}.", cible === 'avant' ? 'avant' : 'après')}
         </Ink>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER, gap: 8 }} style={{ marginTop: 10 }}>
           {pool.map((p) => {
             const isA = p.id === a.id;
             const isB = p.id === b.id;
             return (
-              <Pressable key={p.id} onPress={() => pick(p)} accessibilityRole="button" accessibilityLabel={`Photo du ${dateCourte(p.date.slice(0, 10))}${isA ? ', en avant' : isB ? ', en après' : ''}`} style={{ width: thumbW, gap: 4 }}>
+              <Pressable key={p.id} onPress={() => pick(p)} accessibilityRole="button" accessibilityLabel={traduire("Photo du {0}{1}", dateCourte(p.date.slice(0, 10)), isA ? ', en avant' : isB ? ', en après' : '')} style={{ width: thumbW, gap: 4 }}>
                 <View>
                   <Image source={{ uri: p.file_uri }} style={{ width: thumbW, height: thumbW * 1.33, borderRadius: 12, borderWidth: isA || isB ? 3 : 0, borderColor: c.accent, opacity: isA || isB ? 1 : 0.85 }} resizeMode="cover" />
                   {isA || isB ? (
                     <View style={{ position: 'absolute', left: 4, bottom: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 7, backgroundColor: c.accent }}>
-                      <Ink size={10} weight="extraBold" color={c.onAccent}>{isA ? 'Avant' : 'Après'}</Ink>
+                      <Ink size={10} weight="extraBold" color={c.onAccent}>{isA ? traduire('Avant') : traduire('Après')}</Ink>
                     </View>
                   ) : null}
                 </View>
@@ -347,7 +347,7 @@ export default function TransformationScreen() {
 
         <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 18 }}>
           <GhostButton
-            label="Tout le chemin"
+            label={traduire("Tout le chemin")}
             onPress={() => {
               tapLight();
               const pair = paireParDefaut(asc, filtre === 'toutes' ? null : filtre);
@@ -355,25 +355,24 @@ export default function TransformationScreen() {
             }}
             style={{ flex: 1 }}
           />
-          <PrimaryButton label="Partager" onPress={() => setShareOpen(true)} style={{ flex: 1, height: 54 }} />
+          <PrimaryButton label={traduire("Partager")} onPress={() => setShareOpen(true)} style={{ flex: 1, height: 54 }} />
         </View>
         {asc.length >= 2 ? (
-          <GhostButton label="Créer ma carte avant après" onPress={() => { tapLight(); router.push(carteAvantApresDirecte(ids) as never); }} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
+          <GhostButton label={traduire("Créer ma carte avant après")} onPress={() => { tapLight(); router.push(carteAvantApresDirecte(ids) as never); }} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
         ) : null}
         <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 14 }}>
-          Même lumière, même cadrage, même heure : c’est ce qui rend la comparaison juste.
-        </Ink>
+          {traduire("Même lumière, même cadrage, même heure : c’est ce qui rend la comparaison juste.")}</Ink>
       </ScrollView>
 
       <Sheet
         visible={shareOpen}
         onClose={() => setShareOpen(false)}
-        title="Ton avant et après"
-        text="L’image est créée sur ton téléphone. Elle ne le quitte que si tu la partages."
+        title={traduire("Ton avant et après")}
+        text={traduire("L’image est créée sur ton téléphone. Elle ne le quitte que si tu la partages.")}
         actions={[
-          { label: 'Partager', tone: 'accent', onPress: doShare },
-          { label: 'Enregistrer dans ma galerie', tone: 'ink', onPress: doSave },
-          { label: 'Annuler', onPress: () => setShareOpen(false) },
+          { label: traduire('Partager'), tone: 'accent', onPress: doShare },
+          { label: traduire('Enregistrer dans ma galerie'), tone: 'ink', onPress: doSave },
+          { label: traduire('Annuler'), onPress: () => setShareOpen(false) },
         ]}
       >
         <View style={{ alignItems: 'center' }}>

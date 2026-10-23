@@ -9,6 +9,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import logger from './security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 /**
  * Retourne le chemin du dernier backup local disponible, ou null si aucun.
@@ -38,26 +39,26 @@ export async function shareLatestBackup(): Promise<boolean> {
   try {
     const path = await getLatestLocalBackupPath();
     if (!path) {
-      appAlert('Aucune sauvegarde', 'Crée d\'abord une sauvegarde avant de la partager.');
+      appAlert(traduire('Aucune sauvegarde'), traduire('Crée d\'abord une sauvegarde avant de la partager.'));
       return false;
     }
 
     const canShare = await isAvailableAsync();
     if (!canShare) {
-      appAlert('Partage indisponible', "Le partage n’est pas disponible sur ce téléphone.");
+      appAlert('Partage indisponible', traduire("Le partage n’est pas disponible sur ce téléphone."));
       return false;
     }
 
     await shareAsync(path, {
       mimeType: 'application/json',
-      dialogTitle: 'Partager ta sauvegarde',
+      dialogTitle: traduire('Partager ta sauvegarde'),
       UTI: 'public.json',
     });
     logger.info('[BackupShare] Backup partagé:', path.split('/').pop());
     return true;
   } catch (e) {
     logger.error('[BackupShare] Erreur partage:', e);
-    appAlert('Oups', 'La sauvegarde n’a pas pu être partagée.');
+    appAlert('Oups', traduire('La sauvegarde n’a pas pu être partagée.'));
     return false;
   }
 }
@@ -69,12 +70,12 @@ export async function shareBackupFile(path: string): Promise<boolean> {
   try {
     const canShare = await isAvailableAsync();
     if (!canShare) {
-      appAlert('Partage indisponible', "Le partage n’est pas disponible sur ce téléphone.");
+      appAlert('Partage indisponible', traduire("Le partage n’est pas disponible sur ce téléphone."));
       return false;
     }
     await shareAsync(path, {
       mimeType: 'application/json',
-      dialogTitle: 'Partager cette sauvegarde',
+      dialogTitle: traduire('Partager cette sauvegarde'),
       UTI: 'public.json',
     });
     return true;

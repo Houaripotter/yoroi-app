@@ -8,6 +8,7 @@ import { Animated, Easing, Image, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useYoroiTheme } from '@/components/yoroi';
 import type { PieceArmure } from '@/lib/v2/dojo/pieces';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ArmureEnConstructionProps = {
   piece: PieceArmure;
@@ -50,7 +51,7 @@ export function ArmureEnConstruction({ piece, progres, taille = 96, ton = 'auto'
   return (
     <View
       accessible
-      accessibilityLabel={accessibilityLabel ?? `${piece.nom}, ${Math.round(p * 100)} pour cent construit`}
+      accessibilityLabel={accessibilityLabel ?? traduire("{0}, {1} pour cent construit", piece.nom, Math.round(p * 100))}
       style={[{ width: box, height: h + 8, alignItems: 'center', justifyContent: 'flex-end' }, style]}
     >
       {/* ombre posee au sol, fine */}

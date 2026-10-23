@@ -20,6 +20,7 @@ import { applyReminders } from '@/lib/v2/competition/reminders';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function EditCompetitionScreen() {
   const router = useRouter();
@@ -69,12 +70,12 @@ export default function EditCompetitionScreen() {
     if (!draft) return;
     Keyboard.dismiss();
     if (!draft.nom.trim()) {
-      appAlert('Il manque le nom', 'Donne un nom à ta compétition.');
+      appAlert(traduire('Il manque le nom'), traduire('Donne un nom à ta compétition.'));
       return;
     }
     const url = cleanUrl(draft.url);
     if (draft.url.trim() && !url) {
-      appAlert('Adresse du site', 'Vérifie l’adresse du site, par exemple cfjjb.com.');
+      appAlert(traduire('Adresse du site'), traduire('Vérifie l’adresse du site, par exemple cfjjb.com.'));
       return;
     }
     setSaving(true);
@@ -94,21 +95,21 @@ export default function EditCompetitionScreen() {
       const comp = await getCompetitionById(id);
       if (comp) {
         const n = await applyReminders(comp, extra);
-        if (n < 0) appAlert('Rappels désactivés', 'Autorise les notifications de YOROI dans les réglages du téléphone pour recevoir tes rappels.');
+        if (n < 0) appAlert(traduire('Rappels désactivés'), traduire('Autorise les notifications de YOROI dans les réglages du téléphone pour recevoir tes rappels.'));
       }
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       router.back();
     } catch (error) {
       logger.error('Error updating competition:', error);
-      appAlert('Mise à jour impossible', 'Réessaie dans un instant.');
+      appAlert(traduire('Mise à jour impossible'), traduire('Réessaie dans un instant.'));
       setSaving(false);
     }
   };
 
   if (loading) {
     return (
-      <DetailScreen title="Modifier">
+      <DetailScreen title={traduire("Modifier")}>
         <View style={{ paddingTop: 60, alignItems: 'center' }}>
           <ActivityIndicator color={P.accent} />
         </View>
@@ -117,13 +118,13 @@ export default function EditCompetitionScreen() {
   }
   if (missing || !draft) {
     return (
-      <DetailScreen title="Modifier">
-        <EmptyState title="Compétition introuvable" text="Elle a peut-être été supprimée. Reviens à tes compétitions." action="Mes compétitions" onAction={() => router.replace('/competitions' as any)} />
+      <DetailScreen title={traduire("Modifier")}>
+        <EmptyState title={traduire("Compétition introuvable")} text={traduire("Elle a peut-être été supprimée. Reviens à tes compétitions.")} action={traduire("Mes compétitions")} onAction={() => router.replace('/competitions' as any)} />
       </DetailScreen>
     );
   }
   return (
-    <DetailScreen title="Modifier" subtitle={draft.nom || 'Ta compétition'} footer={<BigButton label={saving ? 'Mise à jour' : 'Mettre à jour'} icon="check" onPress={save} disabled={saving} />}>
+    <DetailScreen title={traduire("Modifier")} subtitle={draft.nom || traduire('Ta compétition')} footer={<BigButton label={saving ? traduire('Mise à jour') : traduire('Mettre à jour')} icon="check" onPress={save} disabled={saving} />}>
       <CompetitionForm draft={draft} onChange={setDraft} gender={gender} lastWeight={lastWeight?.weight} />
     </DetailScreen>
   );

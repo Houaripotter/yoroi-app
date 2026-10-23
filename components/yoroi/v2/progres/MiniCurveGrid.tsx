@@ -28,6 +28,7 @@ import type { MeasurePoint, ViewKey } from '@/lib/v2/progres/measures';
 import type { DayWeight } from '@/lib/v2/weightStats';
 import { daysDiff, dayShort, num, thousands } from '@/lib/v2/progres/format';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type MiniCurve = {
   key: string;
@@ -96,8 +97,8 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
   const head = scrub ?? (curve.latest && inPeriod ? curve.latest : null) ?? lastAll;
   const abs = diff === null ? 0 : Math.abs(diff);
   const deltaText = flat ? 'stable' : `${fmtValue(abs, curve.unit, curve.digits)} ${deltaUnit(curve.unit, abs)}`;
-  const since = anchor ? `depuis le ${dayShort(anchor.date)}` : 'sur la période';
-  const deltaLong = flat ? `stable ${since}` : `${deltaText} de ${dir === 'down' ? 'moins' : 'plus'} ${since}`;
+  const since = anchor ? traduire("depuis le {0}", dayShort(anchor.date)) : traduire('sur la période');
+  const deltaLong = flat ? `stable ${since}` : traduire("{0} de {1} {2}", deltaText, dir === 'down' ? 'moins' : 'plus', since);
   const valueText = `${fmtValue(head.value, curve.unit, curve.digits)}${curve.unit ? ` ${curve.unit}` : ''}`;
   const open = () => {
     tapLight();
@@ -109,7 +110,7 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
       <Pressable
         onPress={open}
         accessibilityRole="button"
-        accessibilityLabel={`${curve.label}, ${valueText}, ${inPeriod ? (diff === null ? 'une seule mesure sur la période' : deltaLong) : `dernière mesure le ${dayShort(lastAll.date)}`}, voir le détail`}
+        accessibilityLabel={traduire("{0}, {1}, {2}, voir le détail", curve.label, valueText, inPeriod ? (diff === null ? 'une seule mesure sur la période' : deltaLong) : `dernière mesure le ${dayShort(lastAll.date)}`)}
         style={({ pressed }) => ({ paddingHorizontal: 12, paddingTop: 11, gap: 1, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 18 }}>
@@ -134,12 +135,11 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
             </Ink>
           ) : !inPeriod ? (
             <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>
-              {`le ${dayShort(lastAll.date, lastAll.date.slice(0, 4) !== today.slice(0, 4))}`}
+              {traduire("le {0}", dayShort(lastAll.date, lastAll.date.slice(0, 4) !== today.slice(0, 4)))}
             </Ink>
           ) : diff === null ? (
             <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>
-              une seule mesure
-            </Ink>
+              {traduire("une seule mesure")}</Ink>
           ) : (
             <>
               <Arrow dir={dir} color={tone} />
@@ -151,7 +151,7 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
         </View>
         {anchor && !scrub ? (
           <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>
-            {`depuis le ${dayShort(anchor.date)}`}
+            {traduire("depuis le {0}", dayShort(anchor.date))}
           </Ink>
         ) : null}
       </Pressable>
@@ -162,7 +162,7 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
       ) : (
         <Pressable onPress={open} style={{ height: 60, paddingHorizontal: 12, justifyContent: 'center' }} accessibilityElementsHidden importantForAccessibility="no">
           <Ink size={11} color={c.textMuted} numberOfLines={2}>
-            {inPeriod ? 'La courbe se dessine dès la deuxième mesure.' : 'Aucune mesure sur cette période.'}
+            {inPeriod ? traduire('La courbe se dessine dès la deuxième mesure.') : traduire('Aucune mesure sur cette période.')}
           </Ink>
         </Pressable>
       )}
@@ -250,13 +250,13 @@ type Nav = (href: any) => void;
 
 /** Couleur fixe de chaque mesure (vague 45 : composition dans lib/v2/progres/couleursCorps.ts, ambre graisse, violet muscle, gris sable os, cyan eau ; bleu et mousse pour le reste) */
 const COMPO_SPEC: { key: BioKey; label: string; unit: string; digits: number; good: 'up' | 'down' | 'none'; color: string }[] = [
-  { key: 'visceral', label: 'Gras viscéral', unit: '', digits: 1, good: 'down', get color() { return CORPS.graisse; } },
+  { key: 'visceral', label: traduire('Gras viscéral'), unit: '', digits: 1, good: 'down', get color() { return CORPS.graisse; } },
   { key: 'bone', label: 'Masse osseuse', unit: 'kg', digits: 1, good: 'none', get color() { return CORPS.os; } },
-  { key: 'bmr', label: 'Métabolisme', unit: 'kcal', digits: 0, good: 'none', color: CHART_MOSS },
-  { key: 'metabolicAge', label: 'Âge métabolique', unit: 'ans', digits: 0, good: 'down', color: CHART_COLORS.blue },
+  { key: 'bmr', label: traduire('Métabolisme'), unit: 'kcal', digits: 0, good: 'none', color: CHART_MOSS },
+  { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', digits: 0, good: 'down', color: CHART_COLORS.blue },
   { key: 'muscleKg', label: 'Muscle en kg', unit: 'kg', digits: 1, good: 'up', get color() { return CORPS.muscle; } },
   { key: 'lean', label: 'Masse maigre', unit: '%', digits: 1, good: 'none', get color() { return CORPS.muscle; } },
-  { key: 'bmi', label: 'IMC', unit: '', digits: 1, good: 'none', color: CHART_COLORS.blue },
+  { key: 'bmi', label: traduire('IMC'), unit: '', digits: 1, good: 'none', color: CHART_COLORS.blue },
 ];
 
 const BODY_SPEC: { key: BioKey; label: string; unit: string; digits: number; good: 'up' | 'down' | 'none'; color: string }[] = [
@@ -293,8 +293,8 @@ export function bodyGroup(weights: DayWeight[], compo: CompoPoint[], ctx: BodyCo
     key: 'corps',
     title: 'Corps',
     curves,
-    aside: { label: 'Tes pesées', onPress: () => nav('/pesees') },
-    empty: { title: 'Ta première pesée', text: 'Pèse-toi le matin, à jeun. Ton poids, ton muscle, ta masse grasse et ton eau auront chacun leur courbe ici.', plusHint: 'Touche + pour te peser' },
+    aside: { label: traduire('Tes pesées'), onPress: () => nav('/pesees') },
+    empty: { title: traduire('Ta première pesée'), text: traduire('Pèse-toi le matin, à jeun. Ton poids, ton muscle, ta masse grasse et ton eau auront chacun leur courbe ici.'), plusHint: traduire('Touche + pour te peser') },
   };
 }
 
@@ -312,8 +312,8 @@ export function compositionGroup(compo: CompoPoint[], ctx: BodyContext, nav: Nav
     key: 'composition',
     title: 'Composition',
     curves,
-    aside: { label: 'Chaque mesure', onPress: () => nav({ pathname: '/composition-detail', params: { mode: 'mesure' } }) },
-    empty: { title: 'Ta composition en détail', text: 'Graisse viscérale, os, métabolisme de base, âge métabolique : si ta balance les donne, note-les avec ta pesée.', plusHint: 'Touche + pour ta composition' },
+    aside: { label: traduire('Chaque mesure'), onPress: () => nav({ pathname: '/composition-detail', params: { mode: 'mesure' } }) },
+    empty: { title: traduire('Ta composition en détail'), text: traduire('Graisse viscérale, os, métabolisme de base, âge métabolique : si ta balance les donne, note-les avec ta pesée.'), plusHint: traduire('Touche + pour ta composition') },
   };
 }
 
@@ -330,7 +330,7 @@ export function measuresGroup(measures: MeasurePoint[], nav: Nav): MiniGroup {
     key: 'mensurations',
     title: 'Mensurations',
     curves,
-    aside: { label: 'L’évolution', onPress: () => nav('/measurements-detail') },
-    empty: { title: 'Prends tes mesures une fois par mois', text: 'Tour de taille, hanches, bras, cuisses : le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle.', plusHint: 'Touche + pour tes mensurations' },
+    aside: { label: traduire('L’évolution'), onPress: () => nav('/measurements-detail') },
+    empty: { title: traduire('Prends tes mesures une fois par mois'), text: traduire('Tour de taille, hanches, bras, cuisses : le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle.'), plusHint: traduire('Touche + pour tes mensurations') },
   };
 }

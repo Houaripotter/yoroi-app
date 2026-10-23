@@ -28,6 +28,7 @@ import { PREMIUM_ROWS } from '@/lib/v2/premium/offer';
 import { SOURCES, couleurA, couleursSource, noterMurPremium, ouvrirPaywall, type SourcePremium } from '@/lib/v2/premium/sources';
 import { P, blancA, paperA } from '@/components/yoroi/livePalette';
 import { CheckMark, GoldVein, PerkIcon, PerkRow, PremiumBadge, PremiumButton, PremiumSeal, premiumTap } from './premiumKit';
+import { traduire } from '@/lib/i18n/tr';
 
 const SCENE = require('@/assets/avatars/app/themes/theme_dojo.webp');
 const WARRIOR = require('@/assets/avatars/app/guerrier/guerrier_h_5_shogun.webp');
@@ -157,17 +158,15 @@ export function PremiumPreview({ children, source, compteur = null, apercu = 'ec
               ouvrirPaywall(source, compteur);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Débloquer avec Premium, ${info.libelle}`}
+            accessibilityLabel={traduire("Débloquer avec Premium, {0}", info.libelle)}
             style={({ pressed }) => [styles.redBtn, { backgroundColor: pressed ? c.accentPressed : c.accent, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
           >
             <Ink size={16} weight="extraBold" color={c.onAccent}>
-              Débloquer avec Premium
-            </Ink>
+              {traduire("Débloquer avec Premium")}</Ink>
           </Pressable>
           <Pressable onPress={goBack} accessibilityRole="button" style={styles.backLink} hitSlop={6}>
             <Ink size={14} weight="bold" color={c.textSecondary}>
-              Plus tard
-            </Ink>
+              {traduire("Plus tard")}</Ink>
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -177,7 +176,7 @@ export function PremiumPreview({ children, source, compteur = null, apercu = 'ec
         <Pressable
           onPress={goBack}
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={traduire("Retour")}
           hitSlop={6}
           style={({ pressed }) => [styles.round, { backgroundColor: blancA(0.92), borderColor: P.tuileBord, shadowColor: c.ink, transform: [{ scale: pressed ? 0.96 : 1 }] }]}
         >
@@ -217,7 +216,7 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
           <Pressable
             onPress={goBack}
             accessibilityRole="button"
-            accessibilityLabel="Retour"
+            accessibilityLabel={traduire("Retour")}
             hitSlop={6}
             style={({ pressed }) => [styles.round, { backgroundColor: blancA(0.86), borderColor: P.tuileBord, shadowColor: c.ink, transform: [{ scale: pressed ? 0.96 : 1 }] }]}
           >
@@ -234,25 +233,22 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
         <View style={styles.glassHead}>
           <View style={{ flex: 1, gap: 6 }}>
             <Ink size={14} weight="bold" color={c.goldDeep}>
-              Pièce d'armure réservée
-            </Ink>
+              {traduire("Pièce d'armure réservée")}</Ink>
             <Ink size={30} weight="black" tight>
-              {featureTitle ?? 'Fonctionnalité Premium'}
+              {featureTitle ?? traduire('Fonctionnalité Premium')}
             </Ink>
           </View>
           <PremiumSeal size={62} />
         </View>
         <GoldVein style={{ marginVertical: 12 }} />
         <Ink size={15} weight="medium" color={c.textSecondary} style={{ lineHeight: 22 }}>
-          Cette partie est réservée aux membres Premium. Débloque-la pour forger ton armure complète.
-        </Ink>
+          {traduire("Cette partie est réservée aux membres Premium. Débloque-la pour forger ton armure complète.")}</Ink>
       </Animated.View>
 
       {/* Avantages */}
       <Animated.View entering={ENTREE} style={styles.section}>
         <Ink size={19} weight="black" tight style={{ paddingHorizontal: 4, marginBottom: 8 }}>
-          Tout ce que tu débloques
-        </Ink>
+          {traduire("Tout ce que tu débloques")}</Ink>
         <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.divider }]}>
           {PERKS.map((perk, i) => (
             <View key={perk.label}>
@@ -265,11 +261,10 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
 
       {/* Action */}
       <View style={[styles.ctaSection, { paddingBottom: insets.bottom + 32 }]}>
-        <PremiumButton label="Passer Premium" sub="Sans engagement, annulable à tout moment" onPress={() => ouvrirPaywall(source ?? 'app')} />
+        <PremiumButton label={traduire("Passer Premium")} sub={traduire("Sans engagement, annulable à tout moment")} onPress={() => ouvrirPaywall(source ?? 'app')} />
         <Pressable onPress={goBack} accessibilityRole="button" style={styles.backLink} hitSlop={8}>
           <Ink size={14} weight="bold" color={c.textSecondary}>
-            Retour à la version gratuite
-          </Ink>
+            {traduire("Retour à la version gratuite")}</Ink>
         </Pressable>
       </View>
     </ScrollView>

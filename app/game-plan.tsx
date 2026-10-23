@@ -19,6 +19,7 @@ import { daysAgo, plural, RESULT_LABEL, shortDate } from '@/lib/v2/combat/rounds
 import { BigButton, Card, CIcon, D, EmptyState, Enter, Hanko, IconBtn, InkBar, N, P, Press, RankRow, ResultPlate, Section, tap, V } from '@/components/yoroi/v2/combat/ui';
 import { ProgressBar } from '@/components/yoroi/v2/espace/ProgressBar';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function GamePlanScreen() {
   const router = useRouter();
@@ -60,11 +61,11 @@ export default function GamePlanScreen() {
   const pending = data.checklist.length - doneCount;
   const last = data.entries[0]?.date;
   const since = daysAgo(last);
-  const hint = !last ? 'À préparer' : since === 0 ? 'Ta séance du jour est notée' : since === 1 ? 'Dernière séance hier' : `Dernière séance il y a ${since}\u00A0jours`;
+  const hint = !last ? traduire('À préparer') : since === 0 ? traduire('Ta séance du jour est notée') : since === 1 ? traduire('Dernière séance hier') : traduire("Dernière séance il y a {0} jours", since);
   const empty = data.checklist.length === 0 && data.playbook.length === 0 && data.dangers.length === 0 && data.journal.length === 0;
 
   return (
-    <PremiumGate source="plan_de_match" featureTitle="Mon plan de jeu" perks={['Ton plan tiré de tes débriefs de rounds', 'Ce qui marche chez toi, à reproduire', 'Ce qui te pose problème, à défendre']}>
+    <PremiumGate source="plan_de_match" featureTitle={traduire("Mon plan de jeu")} perks={[traduire('Ton plan tiré de tes débriefs de rounds'), traduire('Ce qui marche chez toi, à reproduire'), traduire('Ce qui te pose problème, à défendre')]}>
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView
           contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }}
@@ -82,14 +83,14 @@ export default function GamePlanScreen() {
           }
         >
           <EnTete
-            titre={params.partnerName ? `Plan contre ${params.partnerName}` : 'Mon plan de jeu'}
-            sousTitre="Tiré de tes débriefs de rounds"
+            titre={params.partnerName ? `Plan contre ${params.partnerName}` : traduire('Mon plan de jeu')}
+            sousTitre={traduire("Tiré de tes débriefs de rounds")}
             onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
             style={{ marginHorizontal: -22, marginTop: -8 }}
           />
 
           {loaded && empty ? (
-            <EmptyState title="Ton plan de jeu est vide" text="Enregistre une séance de sparring et remplis l'analyse des rounds (plan, ce qui a marché, contré par, à améliorer). Ton plan se construit tout seul." action="Nouvelle séance de combat" onAction={() => router.push('/seance/combat' as any)} />
+            <EmptyState title={traduire("Ton plan de jeu est vide")} text={traduire("Enregistre une séance de sparring et remplis l'analyse des rounds (plan, ce qui a marché, contré par, à améliorer). Ton plan se construit tout seul.")} action={traduire("Nouvelle séance de combat")} onAction={() => router.push('/seance/combat' as any)} />
           ) : null}
 
           {!empty ? (
@@ -99,23 +100,22 @@ export default function GamePlanScreen() {
                   <Glyph kind="sakura" size={170} color={(paletteSombre() ? 'rgba(29,32,41,0.06)' : 'rgba(255,255,255,0.06)')} />
                 </View>
                 <Ink size={13} weight="extraBold" color={P.goldLight}>
-                  Prochaine séance
-                </Ink>
+                  {traduire("Prochaine séance")}</Ink>
                 <Ink size={28} weight="black" tight color={P.white}>
                   {hint}
                 </Ink>
                 <Ink size={14} color={(paletteSombre() ? 'rgba(29,32,41,0.82)' : 'rgba(255,255,255,0.82)')}>
-                  {pending > 0 ? `${plural(pending, 'objectif')} en attente. Coche quand c'est travaillé.` : data.checklist.length > 0 ? 'Checklist complète. Ajoute de nouveaux objectifs dans tes rounds.' : 'Remplis tes analyses de rounds pour générer ta checklist.'}
+                  {pending > 0 ? traduire("{0} en attente. Coche quand c'est travaillé.", plural(pending, 'objectif')) : data.checklist.length > 0 ? traduire('Checklist complète. Ajoute de nouveaux objectifs dans tes rounds.') : traduire('Remplis tes analyses de rounds pour générer ta checklist.')}
                 </Ink>
                 {data.checklist.length > 0 ? (
-                  <ProgressBar progress={data.checklist.filter((c) => checked.has(c.id)).length / data.checklist.length} color={P.white} track={(paletteSombre() ? 'rgba(29,32,41,0.22)' : 'rgba(255,255,255,0.22)')} accessibilityLabel="Ta checklist" />
+                  <ProgressBar progress={data.checklist.filter((c) => checked.has(c.id)).length / data.checklist.length} color={P.white} track={(paletteSombre() ? 'rgba(29,32,41,0.22)' : 'rgba(255,255,255,0.22)')} accessibilityLabel={traduire("Ta checklist")} />
                 ) : null}
                 {data.totalPlans > 0 ? (
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
                     {[
                       { v: String(data.totalPlans), l: 'plans' },
-                      { v: String(data.executed), l: 'exécutés' },
-                      { v: `${data.executionRate}%`, l: 'réussite', gold: true },
+                      { v: String(data.executed), l: traduire('exécutés') },
+                      { v: `${data.executionRate}%`, l: traduire('réussite'), gold: true },
                     ].map((x) => (
                       <View key={x.l} style={{ flex: 1, padding: 12, borderRadius: 16, backgroundColor: x.gold ? 'rgba(227,196,123,0.18)' : (paletteSombre() ? 'rgba(29,32,41,0.1)' : 'rgba(255,255,255,0.1)') }}>
                         <Ink size={24} weight="black" tight color={x.gold ? P.goldLight : P.white}>
@@ -134,7 +134,7 @@ export default function GamePlanScreen() {
 
           {data.checklist.length > 0 ? (
             <>
-              <Section title="À travailler" sub={doneCount > 0 ? `${doneCount} sur ${data.checklist.length} cochés` : plural(data.checklist.length, 'objectif')} action={doneCount > 0 ? 'Tout décocher' : undefined} onAction={doneCount > 0 ? reset : undefined} />
+              <Section title={traduire("À travailler")} sub={doneCount > 0 ? traduire("{0} sur {1} cochés", doneCount, data.checklist.length) : plural(data.checklist.length, 'objectif')} action={doneCount > 0 ? traduire('Tout décocher') : undefined} onAction={doneCount > 0 ? reset : undefined} />
               {data.checklist.map((item) => {
                 const on = checked.has(item.id);
                 const def = item.source === 'defense';
@@ -153,8 +153,7 @@ export default function GamePlanScreen() {
                           {def ? (
                             <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 11, justifyContent: 'center', backgroundColor: `${N}20` }}>
                               <Ink size={11} weight="extraBold" color={N}>
-                                Défense
-                              </Ink>
+                                {traduire("Défense")}</Ink>
                             </View>
                           ) : null}
                           <Ink size={12} weight="bold" color={P.muted}>
@@ -171,7 +170,7 @@ export default function GamePlanScreen() {
 
           {data.reliability.length > 0 ? (
             <>
-              <Section title="Fiabilité de mes plans" sub="Réussite de chaque plan testé" />
+              <Section title={traduire("Fiabilité de mes plans")} sub={traduire("Réussite de chaque plan testé")} />
               <Card style={{ gap: 14 }}>
                 {data.reliability.map((gp, i) => {
                   const c = gp.rate >= 60 ? '#4F6B28' : gp.rate >= 30 ? N : D;
@@ -186,7 +185,7 @@ export default function GamePlanScreen() {
                             {`${gp.rate}%`}
                           </Ink>
                           <Ink size={11} weight="bold" color={P.muted}>
-                            {`${gp.success} sur ${plural(gp.total, 'essai')}`}
+                            {traduire("{0} sur {1}", gp.success, plural(gp.total, 'essai'))}
                           </Ink>
                         </View>
                       </View>
@@ -200,10 +199,10 @@ export default function GamePlanScreen() {
 
           {data.playbook.length > 0 ? (
             <>
-              <Section title="Mon playbook" sub="Ce qui marche chez moi, à reproduire" />
+              <Section title={traduire("Mon playbook")} sub={traduire("Ce qui marche chez moi, à reproduire")} />
               <Card style={{ gap: 14 }}>
                 {data.playbook.map(([t, n], i) => (
-                  <RankRow key={t} index={i} label={t} value={n} max={data.playbook[0][1]} color={V} suffix=" fois" />
+                  <RankRow key={t} index={i} label={t} value={n} max={data.playbook[0][1]} color={V} suffix={traduire(" fois")} />
                 ))}
               </Card>
             </>
@@ -211,10 +210,10 @@ export default function GamePlanScreen() {
 
           {data.dangers.length > 0 ? (
             <>
-              <Section title="À défendre" sub="Ce qui te pose problème en sparring" />
+              <Section title={traduire("À défendre")} sub={traduire("Ce qui te pose problème en sparring")} />
               <Card style={{ gap: 14 }}>
                 {data.dangers.map(([t, n], i) => (
-                  <RankRow key={t} index={i} label={t} value={n} max={data.dangers[0][1]} color={D} suffix=" fois" />
+                  <RankRow key={t} index={i} label={t} value={n} max={data.dangers[0][1]} color={D} suffix={traduire(" fois")} />
                 ))}
               </Card>
             </>
@@ -222,9 +221,9 @@ export default function GamePlanScreen() {
 
           {data.journal.length > 0 ? (
             <>
-              <Section title="Journal de mes plans" sub="Ta stratégie, round par round" />
+              <Section title={traduire("Journal de mes plans")} sub={traduire("Ta stratégie, round par round")} />
               {data.journal.map((gp) => (
-                <Press key={gp.id} onPress={() => gp.trainingId && router.push(`/workout-detail?id=${gp.trainingId}` as any)} accessibilityRole="button" accessibilityLabel={`Plan du ${shortDate(gp.date)}, ouvrir la séance`}>
+                <Press key={gp.id} onPress={() => gp.trainingId && router.push(`/workout-detail?id=${gp.trainingId}` as any)} accessibilityRole="button" accessibilityLabel={traduire("Plan du {0}, ouvrir la séance", shortDate(gp.date))}>
                   <Card style={{ gap: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <ResultPlate result={gp.result ?? null} size={22} />
@@ -242,8 +241,7 @@ export default function GamePlanScreen() {
                     {gp.whatWorked ? (
                       <View style={{ paddingTop: 8, borderTopWidth: 1, borderTopColor: P.line2, gap: 2 }}>
                         <Ink size={12} weight="extraBold" color={V}>
-                          Ce qui a marché
-                        </Ink>
+                          {traduire("Ce qui a marché")}</Ink>
                         <Ink size={14} numberOfLines={2}>
                           {gp.whatWorked}
                         </Ink>
@@ -255,7 +253,7 @@ export default function GamePlanScreen() {
             </>
           ) : null}
 
-          {!empty ? <BigButton label="Nouvelle séance de combat" icon="plus" onPress={() => router.push('/seance/combat' as any)} /> : null}
+          {!empty ? <BigButton label={traduire("Nouvelle séance de combat")} icon="plus" onPress={() => router.push('/seance/combat' as any)} /> : null}
         </ScrollView>
       </View>
     </PremiumGate>

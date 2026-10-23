@@ -48,8 +48,9 @@ import { useYoroiTheme as useModeTheme } from '@/components/yoroi/YoroiThemeProv
 import type { YoroiMode } from '@/components/yoroi/tokens';
 import { useDecorationsSaison } from '@/lib/v2/saisons/reglage';
 import { CarteDecorations } from '@/components/yoroi/v2/saisons/CarteDecorations';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-const FONT_LABELS = ['Petite', 'Normale', 'Grande', 'Très grande'];
+const FONT_LABELS = ['Petite', 'Normale', 'Grande', traduire('Très grande')];
 const MODES_THEME: { key: YoroiMode; label: string }[] = [
   { key: 'clair', label: 'Clair' },
   { key: 'sombre', label: 'Sombre' },
@@ -181,9 +182,9 @@ export default function Personnaliser() {
   const styleL = Math.floor((W - 16 - 18) / 4);
 
   return (
-    <EspaceScreen title="Personnaliser" subtitle="Ta scène, ton personnage, ta photo, tes courbes, tes widgets et ton icône. Touche une tuile pour la changer." gap={12}>
+    <EspaceScreen title="Personnaliser" subtitle={traduire("Ta scène, ton personnage, ta photo, tes courbes, tes widgets et ton icône. Touche une tuile pour la changer.")} gap={12}>
       {/* ============ TON UNIVERS ============ */}
-      <Groupe title="Ton univers" sub="Le décor et l’ambiance de ton app" />
+      <Groupe title={traduire("Ton univers")} sub={traduire("Le décor et l’ambiance de ton app")} />
 
       {/* le theme : trois petits ecrans, un toucher suffit */}
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 8, gap: 8 }}>
@@ -196,7 +197,7 @@ export default function Personnaliser() {
                 onPress={() => choisirMode(m.key)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: actif }}
-                accessibilityLabel={`Thème ${m.label}`}
+                accessibilityLabel={traduire("Thème {0}", m.label)}
                 style={({ pressed }) => ({ width: themeL, gap: 6, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}
               >
                 <View style={{ width: themeL, height: 82, borderRadius: 14, overflow: 'hidden', borderWidth: 2.5, borderColor: actif ? c.accent : c.divider, flexDirection: 'row' }}>
@@ -223,8 +224,7 @@ export default function Personnaliser() {
           })}
         </View>
         <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 6, paddingBottom: 4 }}>
-          Thème. Aussi avec la petite lanterne en haut de l’accueil.
-        </Ink>
+          {traduire("Thème. Aussi avec la petite lanterne en haut de l’accueil.")}</Ink>
       </View>
 
       {/* 19 octobre 2026 : Décorations de saison, une vraie carte (citrouille et sapin, gros interrupteur), juste sous le theme */}
@@ -234,8 +234,8 @@ export default function Personnaliser() {
         <Tuile
           chevron={false}
           largeur={demi}
-          titre="Ta scène"
-          valeur={espace.sceneRotation ? 'Elle change' : scene.nom}
+          titre={traduire("Ta scène")}
+          valeur={espace.sceneRotation ? traduire('Elle change') : scene.nom}
           onPress={() => go(ROUTES_PERSONNALISER.scene)}
           apercu={
             <View style={{ height: 128, borderRadius: 15, overflow: 'hidden', backgroundColor: c.fillSoft }}>
@@ -246,7 +246,7 @@ export default function Personnaliser() {
         <Tuile
           chevron={false}
           largeur={demi}
-          titre="Ton personnage"
+          titre={traduire("Ton personnage")}
           valeur={personnageNom(espace.personnage)}
           onPress={() => go(ROUTES_PERSONNALISER.personnage)}
           apercu={
@@ -267,8 +267,8 @@ export default function Personnaliser() {
       {/* 16 octobre 2026 : Photo et contour, bien visible (Houari ne trouvait plus le contour de sa photo) */}
       <Tuile
         largeur={W}
-        titre="Photo et contour"
-        valeur={`${montrePhoto ? 'Ta photo' : avecPerso ? 'Ton personnage' : 'Tes initiales'}, contour ${nomContour(contour).toLowerCase()}`}
+        titre={traduire("Photo et contour")}
+        valeur={`${montrePhoto ? traduire('Ta photo') : avecPerso ? traduire('Ton personnage') : traduire('Tes initiales')}, contour ${nomContour(contour).toLowerCase()}`}
         onPress={() => go(ROUTES_PERSONNALISER.photo)}
         apercu={
           <View style={{ height: 92, borderRadius: 15, overflow: 'hidden', backgroundColor: c.fillSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
@@ -291,11 +291,11 @@ export default function Personnaliser() {
       />
 
       {/* ============ TON ACCUEIL ============ */}
-      <Groupe title="Ton accueil" sub="Ce que tu vois sous ta courbe, dans ton ordre" />
+      <Groupe title={traduire("Ton accueil")} sub={traduire("Ce que tu vois sous ta courbe, dans ton ordre")} />
       <Tuile
         largeur={W}
-        titre="Tes blocs"
-        valeur={`${blocs.length} bloc${blocs.length > 1 ? 's' : ''} affiché${blocs.length > 1 ? 's' : ''}, à ranger comme tu veux`}
+        titre={traduire("Tes blocs")}
+        valeur={traduirePluriel(blocs.length, blocs.length > 1, "{0} bloc affiché, à ranger comme tu veux", "{0} blocs affichés, à ranger comme tu veux", blocs.length)}
         onPress={() => go(ROUTES_PERSONNALISER.accueil)}
         apercu={
           <View style={{ flexDirection: 'row', gap: 10, height: 112 }}>
@@ -317,8 +317,8 @@ export default function Personnaliser() {
                   <Ink size={13} weight="bold" numberOfLines={1} style={{ flexShrink: 1 }}>{b}</Ink>
                 </View>
               ))}
-              {blocs.length > 4 ? <Ink size={12} color={c.textMuted}>{`et ${blocs.length - 4} de plus`}</Ink> : null}
-              {blocs.length === 0 ? <Ink size={13} color={c.textMuted}>Aucun bloc sous ta courbe</Ink> : null}
+              {blocs.length > 4 ? <Ink size={12} color={c.textMuted}>{traduire("et {0} de plus", blocs.length - 4)}</Ink> : null}
+              {blocs.length === 0 ? <Ink size={13} color={c.textMuted}>{traduire("Aucun bloc sous ta courbe")}</Ink> : null}
             </View>
           </View>
         }
@@ -327,8 +327,8 @@ export default function Personnaliser() {
       {/* 17 octobre : ta citation du jour, trois styles en vrai apercu, et la masquer */}
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 8, gap: 8 }}>
         <View style={{ paddingHorizontal: 8, paddingTop: 6, gap: 1 }}>
-          <Ink size={15} weight="black" accessibilityRole="header">Ta citation</Ink>
-          <Ink size={12.5} weight="bold" color={c.textSecondary}>La phrase du jour sous tes outils. Touche un style.</Ink>
+          <Ink size={15} weight="black" accessibilityRole="header">{traduire("Ta citation")}</Ink>
+          <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("La phrase du jour sous tes outils. Touche un style.")}</Ink>
         </View>
         {STYLES_CITATION.map((s) => {
           const actif = !citationCachee && s.id === styleCitation.style;
@@ -362,12 +362,12 @@ export default function Personnaliser() {
           }}
           accessibilityRole="switch"
           accessibilityState={{ checked: citationCachee }}
-          accessibilityLabel="Masquer la citation"
+          accessibilityLabel={traduire("Masquer la citation")}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 8, paddingVertical: 8, opacity: pressed ? 0.85 : 1 })}
         >
           <View style={{ flex: 1, gap: 1 }}>
-            <Ink size={14.5} weight="black">Masquer la citation</Ink>
-            <Ink size={12} weight="bold" color={c.textSecondary}>{citationCachee ? 'Tes outils, puis directement Ton poids' : 'Elle reste sous tes outils'}</Ink>
+            <Ink size={14.5} weight="black">{traduire("Masquer la citation")}</Ink>
+            <Ink size={12} weight="bold" color={c.textSecondary}>{citationCachee ? traduire('Tes outils, puis directement Ton poids') : traduire('Elle reste sous tes outils')}</Ink>
           </View>
           <Interrupteur on={citationCachee} />
         </Pressable>
@@ -376,15 +376,15 @@ export default function Personnaliser() {
       {/* 17 octobre soir : le traitement de la tuile Ta sante aujourd'hui */}
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 8, gap: 8 }}>
         <View style={{ paddingHorizontal: 8, paddingTop: 6, gap: 1 }}>
-          <Ink size={15} weight="black" accessibilityRole="header">Ta santé</Ink>
-          <Ink size={12.5} weight="bold" color={c.textSecondary}>L’allure du rectangle de tes mesures du jour.</Ink>
+          <Ink size={15} weight="black" accessibilityRole="header">{traduire("Ta santé")}</Ink>
+          <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("L’allure du rectangle de tes mesures du jour.")}</Ink>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {STYLES_SANTE.map((s) => {
             const actif = s.id === styleSante.style;
             const anneaux = ['#5FE3AE', '#FFA45C', '#BBA8FF'];
             return (
-              <Pressable key={s.id} onPress={() => choisirSante(s.id)} accessibilityRole="radio" accessibilityState={{ selected: actif }} accessibilityLabel={`Ta santé, style ${s.nom}`} style={({ pressed }) => ({ flex: 1, gap: 6, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}>
+              <Pressable key={s.id} onPress={() => choisirSante(s.id)} accessibilityRole="radio" accessibilityState={{ selected: actif }} accessibilityLabel={traduire("Ta santé, style {0}", s.nom)} style={({ pressed }) => ({ flex: 1, gap: 6, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}>
                 <View style={{ alignSelf: 'stretch', height: 70, borderRadius: 14, borderWidth: 2.5, borderColor: actif ? c.accent : c.divider, overflow: 'hidden', backgroundColor: c.background }}>
                   {s.id === 'anneaux' ? (
                     <View style={{ flex: 1, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
@@ -435,9 +435,9 @@ export default function Personnaliser() {
       </View>
 
       {/* ============ TES GRAPHIQUES ============ */}
-      <Groupe title="Tes graphiques" sub="L’allure de ta courbe de poids, partout dans l’app" />
+      <Groupe title={traduire("Tes graphiques")} sub={traduire("L’allure de ta courbe de poids, partout dans l’app")} />
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
-        <Pressable onPress={() => go(ROUTES_PERSONNALISER.courbes)} accessibilityRole="button" accessibilityLabel={`Tes courbes : style ${styleCourbe.id}, ${styleCourbe.nom}, ${couleur.nom}. Ouvrir`} style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
+        <Pressable onPress={() => go(ROUTES_PERSONNALISER.courbes)} accessibilityRole="button" accessibilityLabel={traduire("Tes courbes : style {0}, {1}, {2}. Ouvrir", styleCourbe.id, styleCourbe.nom, couleur.nom)} style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}>
           <View style={{ margin: 8, marginBottom: 0, height: 118, borderRadius: 15, overflow: 'hidden', backgroundColor: c.background, borderWidth: 1, borderColor: c.divider, alignItems: 'center', justifyContent: 'center' }}>
             {fondScene ? (
               <>
@@ -449,7 +449,7 @@ export default function Personnaliser() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6 }}>
             <View style={{ flex: 1, gap: 1 }}>
-              <Ink size={15} weight="black" numberOfLines={1}>Tes courbes</Ink>
+              <Ink size={15} weight="black" numberOfLines={1}>{traduire("Tes courbes")}</Ink>
               <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1}>{`Style ${styleCourbe.id}, ${styleCourbe.nom.toLowerCase()}, ${couleur.nom.toLowerCase()}`}</Ink>
             </View>
             <Icon name="chevron" size={15} color={c.textMuted} stroke={2.6} />
@@ -479,10 +479,10 @@ export default function Personnaliser() {
       </View>
 
       {/* ============ TES WIDGETS ============ */}
-      <Groupe title="Tes widgets" sub="Sur ton écran d’accueil et ton écran verrouillé" />
+      <Groupe title={traduire("Tes widgets")} sub={traduire("Sur ton écran d’accueil et ton écran verrouillé")} />
       <Tuile
         largeur={W}
-        titre="Style des widgets"
+        titre={traduire("Style des widgets")}
         valeur={widget.nom}
         onPress={() => go(ROUTES_PERSONNALISER.widgets)}
         apercu={
@@ -497,12 +497,12 @@ export default function Personnaliser() {
       />
 
       {/* ============ TON ICONE ============ */}
-      <Groupe title="Ton icône" sub="L’icône de YOROI et la taille du texte" />
+      <Groupe title={traduire("Ton icône")} sub={traduire("L’icône de YOROI et la taille du texte")} />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <Tuile
           chevron={false}
           largeur={demi}
-          titre="Icône de l’app"
+          titre={traduire("Icône de l’app")}
           valeur={logoMeta.name}
           onPress={() => go(ROUTES_PERSONNALISER.icone)}
           apercu={
@@ -514,7 +514,7 @@ export default function Personnaliser() {
         <Tuile
           chevron={false}
           largeur={demi}
-          titre="Taille du texte"
+          titre={traduire("Taille du texte")}
           valeur={taille}
           onPress={() => go(ROUTES_PERSONNALISER.affichage)}
           apercu={

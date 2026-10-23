@@ -30,6 +30,7 @@ import type { MetricKey } from '@/lib/v2/sante/metrics';
 import { dayLong, todayIso, capitalize } from '@/lib/v2/progres/format';
 import { logger } from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const ANDROID = Platform.OS === 'android';
 
@@ -83,7 +84,7 @@ export default function SanteScreen() {
       }
     } catch (e) {
       logger.error('[Sante v2] connexion', e);
-      appAlert('Connexion impossible', 'Réessaie depuis Appareils et sources.');
+      appAlert(traduire('Connexion impossible'), traduire('Réessaie depuis Appareils et sources.'));
     } finally {
       setConnecting(false);
     }
@@ -120,7 +121,7 @@ export default function SanteScreen() {
         refreshControl={<RefreshControl refreshing={st.refreshing} onRefresh={st.refresh} tintColor={S.accent} />}
       >
         <EnTete
-          titre="Ta santé"
+          titre={traduire("Ta santé")}
           sousTitre={capitalize(dayLong(todayIso()))}
           onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
           style={{ marginHorizontal: -16, marginTop: -8 }}
@@ -154,14 +155,14 @@ export default function SanteScreen() {
 
         {!st.loading ? (
           <Enter i={3} style={{ gap: 8 }}>
-            <Label aside={st.detected.length ? 'sur 30 jours' : undefined}>Tes appareils</Label>
+            <Label aside={st.detected.length ? traduire('sur 30 jours') : undefined}>{traduire("Tes appareils")}</Label>
             <BrandStrip detected={st.detected} onOpen={openBrand} onAdd={() => openBrand()} />
           </Enter>
         ) : null}
 
         {st.insights.length > 0 ? (
           <Enter i={4} style={{ gap: 10 }}>
-            <Label>Ce que disent tes données</Label>
+            <Label>{traduire("Ce que disent tes données")}</Label>
             <InsightsRow insights={st.insights} />
           </Enter>
         ) : null}
@@ -170,14 +171,14 @@ export default function SanteScreen() {
 
         {isLive && st.workouts.length > 0 ? (
           <View style={{ gap: 10 }}>
-            <Label aside={`${st.workouts.length} au total`}>Séances de ta montre</Label>
+            <Label aside={traduire("{0} au total", st.workouts.length)}>{traduire("Séances de ta montre")}</Label>
             <WorkoutList workouts={st.workouts} limit={5} />
           </View>
         ) : null}
 
         {!st.loading && waiting.length > 0 ? (
           <View style={{ gap: 10 }}>
-            <Label aside={`${waiting.length} mesures`}>Encore en attente</Label>
+            <Label aside={traduire("{0} mesures", waiting.length)}>{traduire("Encore en attente")}</Label>
             <WaitingList defs={waiting} onOpen={open} />
           </View>
         ) : null}
@@ -185,7 +186,7 @@ export default function SanteScreen() {
         {/* Une seule porte vers la gestion de la liaison ; les marques s'ouvrent depuis Tes appareils,
             les zones cardiaques depuis la fiche Fréquence cardiaque, la synchro iPhone et iPad depuis Réglages. */}
         <CardBox>
-          <ActionRow first icon="link" title="Connexion santé" sub="Autorisations, import, diagnostic" onPress={() => router.push('/health-connect' as any)} color={S.indigo} tint={S.indigoSoft} />
+          <ActionRow first icon="link" title={traduire("Connexion santé")} sub="Autorisations, import, diagnostic" onPress={() => router.push('/health-connect' as any)} color={S.indigo} tint={S.indigoSoft} />
         </CardBox>
       </ScrollView>
 

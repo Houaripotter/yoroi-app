@@ -15,13 +15,14 @@ import { allStats, effectiveStats, winrateTone } from '@/lib/v2/combat/partners'
 import type { Partner } from '@/lib/v2/combat/partners';
 import { plural } from '@/lib/v2/combat/rounds';
 import { Card, Chip, ChipScroll, DetailScreen, EmptyState, Enter, P, Press, Section } from '@/components/yoroi/v2/combat/ui';
+import { traduire } from '@/lib/i18n/tr';
 
 type Filter = 'all' | 'beasts' | 'friends';
 const LEGEND = [
-  { l: 'Moins de 30 %', c: '#B0282E' },
-  { l: '30 à 50 %', c: '#A8832F' },
-  { l: '50 à 70 %', c: '#3D5D9E' },
-  { l: 'Plus de 70 %', c: '#4F6B28' },
+  { l: traduire('Moins de 30 %'), c: '#B0282E' },
+  { l: traduire('30 à 50 %'), c: '#A8832F' },
+  { l: traduire('50 à 70 %'), c: '#3D5D9E' },
+  { l: traduire('Plus de 70 %'), c: '#4F6B28' },
 ];
 /** Sigle du style de combat, en lettres latines */
 const ARCH_MARK: Record<Archetype, string> = { gardien: 'GA', passeur: 'PA', striker: 'ST', bagarreur: 'BA', takedown: 'TD', polyvalent: 'PO' };
@@ -61,8 +62,8 @@ export default function MatchupMatrixScreen() {
   const open = (p: Partner) => router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
 
   return (
-    <PremiumGate source="matrice_adversaires" featureTitle="Matrice des confrontations" perks={['Tes confrontations sur une seule grille', 'Tes bêtes noires et tes partenaires favorables', 'Ta réussite face à chaque style']}>
-      <DetailScreen title="Matrice" subtitle="Taille selon les rounds, teinte selon ta réussite">
+    <PremiumGate source="matrice_adversaires" featureTitle={traduire("Matrice des confrontations")} perks={[traduire('Tes confrontations sur une seule grille'), traduire('Tes bêtes noires et tes partenaires favorables'), traduire('Ta réussite face à chaque style')]}>
+      <DetailScreen title="Matrice" subtitle={traduire("Taille selon les rounds, teinte selon ta réussite")}>
         <ChipScroll>
           {([
             { k: 'all', l: 'Tous' },
@@ -84,7 +85,7 @@ export default function MatchupMatrixScreen() {
         </View>
 
         {loaded && filtered.length === 0 ? (
-          <EmptyState title={rows.length === 0 ? 'Aucune confrontation' : 'Personne dans ce filtre'} text="Enregistre des séances de sparring avec un résultat par round pour voir ta matrice." action={rows.length === 0 ? 'Mes partenaires' : undefined} onAction={rows.length === 0 ? () => router.push('/sparring-partners' as any) : undefined} />
+          <EmptyState title={rows.length === 0 ? traduire('Aucune confrontation') : traduire('Personne dans ce filtre')} text={traduire("Enregistre des séances de sparring avec un résultat par round pour voir ta matrice.")} action={rows.length === 0 ? traduire('Mes partenaires') : undefined} onAction={rows.length === 0 ? () => router.push('/sparring-partners' as any) : undefined} />
         ) : null}
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -95,7 +96,7 @@ export default function MatchupMatrixScreen() {
             const tone = winrateTone(s.winRateVD);
             return (
               <Enter key={p.id} i={Math.min(i, 8)}>
-                <Press onPress={() => open(p)} accessibilityRole="button" accessibilityLabel={`${p.name}, ${s.winRateVD ?? 0} % sur ${plural(s.total, 'round')}`}>
+                <Press onPress={() => open(p)} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1} % sur {2}", p.name, s.winRateVD ?? 0, plural(s.total, 'round'))}>
                   <View style={{ width: w, height: h, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: tone, overflow: 'hidden', padding: 12, paddingBottom: 22, justifyContent: 'space-between' }}>
                     {p.photoUri ? <Image source={{ uri: p.photoUri }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.28 }} resizeMode="cover" /> : null}
                     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 12, height: 3, backgroundColor: 'rgba(255,255,255,0.32)' }} />
@@ -105,7 +106,7 @@ export default function MatchupMatrixScreen() {
                     </Ink>
                     <View>
                       <Ink size={big ? 34 : 24} weight="black" tight color={P.white} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                        {s.winRateVD != null ? `${s.winRateVD}\u00A0%` : 'Nouveau'}
+                        {s.winRateVD != null ? `${s.winRateVD}\u00A0%` : traduire('Nouveau')}
                       </Ink>
                       <Ink size={11} weight="bold" color="rgba(255,255,255,0.9)">
                         {plural(s.total, 'round')}
@@ -120,7 +121,7 @@ export default function MatchupMatrixScreen() {
 
         {rows.length > 0 ? (
           <>
-            <Section title="Face à chaque style" sub={hasStyles ? 'Ton bilan cumulé contre chaque style de combat' : 'Indique le style de tes partenaires dans leur fiche pour remplir cette grille'} />
+            <Section title={traduire("Face à chaque style")} sub={hasStyles ? traduire('Ton bilan cumulé contre chaque style de combat') : traduire('Indique le style de tes partenaires dans leur fiche pour remplir cette grille')} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {styles.map(({ k, v }) => {
                 const wr = v && v.w + v.l > 0 ? Math.round((v.w / (v.w + v.l)) * 100) : null;
@@ -138,10 +139,10 @@ export default function MatchupMatrixScreen() {
                       </Ink>
                     </View>
                     <Ink size={24} weight="black" tight color={v ? tone : P.muted}>
-                      {wr != null ? `${wr}\u00A0%` : 'À découvrir'}
+                      {wr != null ? `${wr}\u00A0%` : traduire('À découvrir')}
                     </Ink>
                     <Ink size={12} weight="bold" color={P.ink2}>
-                      {v ? `${plural(v.people, 'partenaire')}, ${plural(v.n, 'round')}` : 'Aucun partenaire de ce style'}
+                      {v ? `${plural(v.people, 'partenaire')}, ${plural(v.n, 'round')}` : traduire('Aucun partenaire de ce style')}
                     </Ink>
                   </Card>
                 );

@@ -13,6 +13,7 @@ import { getSportName } from '@/lib/sports';
 import { durationOf } from '@/lib/v2/trainingWeek';
 import { libelleUnite, versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { estimatedMax, familyOf, firstSport, parseExercises, parseRounds, workSets } from './sessionData';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type RecordKind = 'force' | 'reps' | 'distance' | 'allure' | 'rounds' | 'duree';
 
@@ -116,7 +117,7 @@ export function computeRecords(trainings: Training[]): RecordsResult {
     const dur = durationOf(t);
     if (fam === 'cardio' && dist > 0) {
       const sName = getSportName(sport);
-      push(map, `distance:${sport}`, () => ({ key: `distance:${sport}`, kind: 'distance', name: `${sName}, plus longue distance`, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dist, trainingId: t.id });
+      push(map, traduire("distance:{0}", sport), () => ({ key: `distance:${sport}`, kind: 'distance', name: `${sName}, plus longue distance`, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dist, trainingId: t.id });
       if (dist >= 1 && dur > 0) {
         const pace = (dur * 60) / dist;
         if (pace > 120 && pace < 1800) {
@@ -206,7 +207,7 @@ export type CombatSummary = {
 
 type CompCombat = { resultat?: string; methode?: string; technique?: string };
 
-const NOT_A_SUBMISSION = new Set(['points', 'aux points', 'ko', 'tko', 'décision', 'decision', 'avantages', 'arrêt de l’arbitre', 'abandon', 'dq']);
+const NOT_A_SUBMISSION = new Set(['points', traduire('aux points'), 'ko', 'tko', 'décision', 'decision', 'avantages', 'arrêt de l’arbitre', 'abandon', 'dq']);
 
 export function combatSummary(trainings: Training[], combats: CompCombat[] = []): CombatSummary {
   const out: CombatSummary = { roundsTotal: 0, wins: 0, losses: 0, draws: 0, compWins: 0, compTotal: 0, submissions: [], submissionsTotal: 0 };
@@ -309,7 +310,7 @@ export function recordsOfTraining(result: RecordsResult, trainingId: number | un
 
 export function formatRecordValue(line: RecordLine, value?: number, unite: UnitePoids = 'kg'): { main: string; sub: string } {
   const v = value ?? line.best;
-  const fmt = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', ',');
+  const fmt = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', DECIMAL);
   switch (line.kind) {
     case 'force': {
       // 18 octobre 2026 : charges stockees en kilos, affichees dans l'unite du reglage (kg ou lb)
@@ -317,28 +318,28 @@ export function formatRecordValue(line: RecordLine, value?: number, unite: Unite
       const c = (kg: number) => versUnitePoids(kg, unite);
       return {
         main: value == null && (line.maxLoad || line.bestSet) ? `${fmt(c((line.maxLoad ?? line.bestSet)!.weight))} ${u} × ${(line.maxLoad ?? line.bestSet)!.reps}` : `${Math.round(c(v))} ${u}`,
-        sub: `max estimé ${Math.round(c(v))} ${u}`,
+        sub: traduire("max estimé {0} {1}", Math.round(c(v)), u),
       };
     }
     case 'reps':
-      return { main: `${Math.round(v)} répétitions`, sub: 'au poids du corps' };
+      return { main: traduire("{0} répétitions", Math.round(v)), sub: traduire('au poids du corps') };
     case 'distance':
-      return { main: `${fmt(v)} km`, sub: 'en une séance' };
+      return { main: `${fmt(v)} km`, sub: traduire('en une séance') };
     case 'allure': {
       // 18 octobre (audit) : arrondi a la seconde d'abord, jamais « 5:60 »
       const r = Math.round(v);
       const m = Math.floor(r / 60);
       const s = r % 60;
-      return { main: `${m}:${String(s).padStart(2, '0')}`, sub: 'min par km' };
+      return { main: `${m}:${String(s).padStart(2, '0')}`, sub: traduire('min par km') };
     }
     case 'rounds':
-      return { main: `${Math.round(v)} rounds`, sub: 'en une séance' };
+      return { main: `${Math.round(v)} rounds`, sub: traduire('en une séance') };
     case 'duree': {
       // 18 octobre (audit) : arrondi a la minute d'abord, jamais « 1 h 60 »
       const r = Math.round(v);
       const h = Math.floor(r / 60);
       const m = r % 60;
-      return { main: h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`, sub: 'en une séance' };
+      return { main: h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`, sub: traduire('en une séance') };
     }
   }
 }
@@ -355,7 +356,7 @@ export function kindUnit(kind: RecordKind): string {
     case 'force':
       return 'kilos';
     case 'reps':
-      return 'répétitions';
+      return traduire('répétitions');
     case 'distance':
       return 'km';
     case 'allure':
@@ -363,6 +364,6 @@ export function kindUnit(kind: RecordKind): string {
     case 'rounds':
       return 'rounds';
     case 'duree':
-      return 'minutes';
+      return traduire('minutes');
   }
 }

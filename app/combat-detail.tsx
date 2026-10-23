@@ -24,14 +24,15 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { BackButton, BigButton, EmptyState, Glass, Hanko, RoundIcon, Stat, tap } from '@/components/yoroi/v2/seances/ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const METHODE: Record<string, string> = {
-  soumission: 'par soumission',
-  ko: 'par KO',
-  tko: 'par KO technique',
-  points: 'aux points',
-  decision: 'par décision',
-  dq: 'par disqualification',
+  soumission: traduire('par soumission'),
+  ko: traduire('par KO'),
+  tko: traduire('par KO technique'),
+  points: traduire('aux points'),
+  decision: traduire('par décision'),
+  dq: traduire('par disqualification'),
 };
 
 export default function CombatDetailScreen() {
@@ -69,10 +70,10 @@ export default function CombatDetailScreen() {
 
   const onDelete = () => {
     if (deleting || !combat) return;
-    appAlert('Supprimer ce combat ?', 'Il sera retiré de ton palmarès. Cette action est définitive.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer ce combat ?'), traduire('Il sera retiré de ton palmarès. Cette action est définitive.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           setDeleting(true);
@@ -83,7 +84,7 @@ export default function CombatDetailScreen() {
             router.back();
           } catch (error) {
             logger.error('Error deleting combat:', error);
-            appAlert('Oups', 'Le combat n’a pas pu être supprimé. Réessaie.');
+            appAlert('Oups', traduire('Le combat n’a pas pu être supprimé. Réessaie.'));
           } finally {
             setDeleting(false);
           }
@@ -99,7 +100,7 @@ export default function CombatDetailScreen() {
         {loading ? (
           <View style={{ height: 220, borderRadius: 24, backgroundColor: c.fillSubtle, opacity: 0.6 }} />
         ) : (
-          <EmptyState title="Combat introuvable" text="Il a peut-être été supprimé. Retrouve tes combats dans ton palmarès." action="Voir mon palmarès" onAction={() => router.replace('/palmares' as any)} />
+          <EmptyState title={traduire("Combat introuvable")} text={traduire("Il a peut-être été supprimé. Retrouve tes combats dans ton palmarès.")} action={traduire("Voir mon palmarès")} onAction={() => router.replace('/palmares' as any)} />
         )}
       </View>
     );
@@ -107,7 +108,7 @@ export default function CombatDetailScreen() {
 
   const win = combat.resultat === 'victoire';
   const loss = combat.resultat === 'defaite';
-  const title = win ? 'Victoire' : loss ? 'Défaite' : 'Match nul';
+  const title = win ? traduire('Victoire') : loss ? traduire('Défaite') : 'Match nul';
   const tint = win ? c.goldTint : loss ? '#EEE1DF' : c.fillSubtle;
   const diff = combat.poids_jour_j && combat.poids_pesee ? combat.poids_jour_j - combat.poids_pesee : null;
 
@@ -120,7 +121,7 @@ export default function CombatDetailScreen() {
           <Image source={sportArt(competition?.sport || mainSport(favoris, trainings), gender, 3)} style={{ position: 'absolute', right: 60, bottom: -36, width: 130, height: 174 }} resizeMode="contain" />
           <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
             <BackButton />
-            <RoundIcon name="trash" label="Supprimer le combat" onPress={onDelete} color={c.danger} />
+            <RoundIcon name="trash" label={traduire("Supprimer le combat")} onPress={onDelete} color={c.danger} />
           </View>
         </View>
 
@@ -137,12 +138,12 @@ export default function CombatDetailScreen() {
           </View>
 
           {competition ? (
-            <Glass onPress={() => router.push(`/competition-detail?id=${competition.id}` as any)} label={`Compétition ${competition.nom}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Glass onPress={() => router.push(`/competition-detail?id=${competition.id}` as any)} label={traduire("Compétition {0}", competition.nom)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c.goldTint, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="trophy" size={22} color={c.goldDeep} />
               </View>
               <View style={{ flex: 1 }}>
-                <Ink size={12} weight="bold" color={c.textSecondary}>Compétition</Ink>
+                <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Compétition")}</Ink>
                 <Ink size={16} weight="extraBold" numberOfLines={2}>{competition.nom}</Ink>
               </View>
               <Icon name="chevron" size={18} color={c.textMuted} />
@@ -151,13 +152,13 @@ export default function CombatDetailScreen() {
 
           <Glass style={{ gap: 4 }}>
             <Ink size={12} weight="bold" color={c.textSecondary}>Adversaire</Ink>
-            <Ink size={20} weight="black" tight>{combat.adversaire_nom || 'Non renseigné'}</Ink>
+            <Ink size={20} weight="black" tight>{combat.adversaire_nom || traduire('Non renseigné')}</Ink>
             {combat.adversaire_club ? <Ink size={14} color={c.textSecondary}>{combat.adversaire_club}</Ink> : null}
           </Glass>
 
           {combat.technique ? (
             <Glass style={{ gap: 4 }}>
-              <Ink size={12} weight="bold" color={c.textSecondary}>Technique</Ink>
+              <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Technique")}</Ink>
               <Ink size={18} weight="extraBold">{combat.technique}</Ink>
             </Glass>
           ) : null}
@@ -165,20 +166,20 @@ export default function CombatDetailScreen() {
           {combat.round || combat.temps ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {combat.round ? <Stat value={String(combat.round)} label="Round" /> : null}
-              {combat.temps ? <Stat value={combat.temps} label="Temps dans le round" /> : null}
+              {combat.temps ? <Stat value={combat.temps} label={traduire("Temps dans le round")} /> : null}
             </View>
           ) : null}
 
           {combat.poids_pesee || combat.poids_jour_j ? (
             <Glass style={{ gap: 10 }}>
-              <Ink size={17} weight="black" tight>Ton poids</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Ton poids")}</Ink>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                {combat.poids_pesee ? <Stat value={formatKg(combat.poids_pesee)} unit="kg" label="À la pesée" /> : null}
-                {combat.poids_jour_j ? <Stat value={formatKg(combat.poids_jour_j)} unit="kg" label="Le jour du combat" /> : null}
+                {combat.poids_pesee ? <Stat value={formatKg(combat.poids_pesee)} unit="kg" label={traduire("À la pesée")} /> : null}
+                {combat.poids_jour_j ? <Stat value={formatKg(combat.poids_jour_j)} unit="kg" label={traduire("Le jour du combat")} /> : null}
               </View>
               {diff != null ? (
                 <Ink size={13} weight="bold" color={c.textSecondary}>
-                  {Math.abs(diff) < 0.05 ? 'Même poids qu’à la pesée.' : diff > 0 ? `${formatKg(diff)} kg repris entre la pesée et le combat.` : `${formatKg(Math.abs(diff))} kg de moins qu’à la pesée.`}
+                  {Math.abs(diff) < 0.05 ? traduire('Même poids qu’à la pesée.') : diff > 0 ? traduire("{0} kg repris entre la pesée et le combat.", formatKg(diff)) : traduire("{0} kg de moins qu’à la pesée.", formatKg(Math.abs(diff)))}
                 </Ink>
               ) : null}
             </Glass>
@@ -192,9 +193,9 @@ export default function CombatDetailScreen() {
           ) : null}
 
           <Pressable onPress={() => { tap(); router.push('/palmares' as any); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-            <Ink size={14} weight="extraBold" color={c.accent}>Voir tout ton palmarès</Ink>
+            <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Voir tout ton palmarès")}</Ink>
           </Pressable>
-          <BigButton label="Supprimer ce combat" icon="trash" tone="danger" onPress={onDelete} />
+          <BigButton label={traduire("Supprimer ce combat")} icon="trash" tone="danger" onPress={onDelete} />
         </View>
       </ScrollView>
     </View>

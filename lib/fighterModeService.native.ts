@@ -15,6 +15,7 @@ import {
   ObjectifPoids,
   UserProfile,
 } from './fighterMode';
+import { traduire } from '@/lib/i18n/tr';
 
 const STORAGE_KEY_MODE = '@yoroi_user_mode';
 const STORAGE_KEY_SPORT = '@yoroi_user_sport';
@@ -431,7 +432,7 @@ export const updateCombat = async (id: number, updates: Partial<Combat>): Promis
     if (fields.length === 0) return;
 
     values.push(id);
-    const sql = `UPDATE combats SET ${fields.join(', ')} WHERE id = ?`;
+    const sql = traduire("UPDATE combats SET {0} WHERE id = ?", fields.join(', '));
     db.runSync(sql, values);
   } catch (error) {
     logger.error('Error updating combat:', error);
@@ -563,7 +564,7 @@ export const updateObjectifPoids = async (id: number, updates: Partial<ObjectifP
     if (fields.length === 0) return;
 
     values.push(id);
-    const sql = `UPDATE objectifs_poids SET ${fields.join(', ')} WHERE id = ?`;
+    const sql = traduire("UPDATE objectifs_poids SET {0} WHERE id = ?", fields.join(', '));
     db.runSync(sql, values);
   } catch (error) {
     logger.error('Error updating objectif poids:', error);

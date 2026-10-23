@@ -34,33 +34,34 @@ import { fmtMinutes, isoDay, longDay, pad2 } from '@/lib/v2/seance/format';
 import { saveSeance } from '@/lib/v2/seance/save';
 import { RESULTS, SESSION_TYPES } from '@/lib/v2/seance/combat';
 import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const EXAMPLES = [
-  'JJB ce soir, 5 rounds de 6 minutes, 2 contre Paul gagnés par triangle, les 3 autres avec Marc',
-  'Muscu hier à 18 h, 4 séries de 10 au développé couché à 80 kg, squat 5 fois 5 à 100',
-  'Footing ce matin, 8 km en 45 minutes, facile',
-  'Open mat, on a appris le juji gatame et l’omoplata',
-  'Match de foot, 90 minutes, 2 buts, une passe décisive, au poste d’ailier',
+  traduire('JJB ce soir, 5 rounds de 6 minutes, 2 contre Paul gagnés par triangle, les 3 autres avec Marc'),
+  traduire('Muscu hier à 18 h, 4 séries de 10 au développé couché à 80 kg, squat 5 fois 5 à 100'),
+  traduire('Footing ce matin, 8 km en 45 minutes, facile'),
+  traduire('Open mat, on a appris le juji gatame et l’omoplata'),
+  traduire('Match de foot, 90 minutes, 2 buts, une passe décisive, au poste d’ailier'),
 ];
 
 const RPE = [
   { value: 3, label: 'Facile' },
-  { value: 5, label: 'Correct' },
+  { value: 5, label: traduire('Correct') },
   { value: 7, label: 'Dur' },
-  { value: 9, label: 'À bloc' },
+  { value: 9, label: traduire('À bloc') },
 ];
 
 /** ressenti (memes valeurs que l'ecran de fin), avec la note de seance sur 5 qui va avec */
 const MOODS: { value: SessionMood; label: string; rating: number }[] = [
   { value: 'fire', label: 'En feu', rating: 5 },
   { value: 'solid', label: 'Solide', rating: 4 },
-  { value: 'ok', label: 'Correct', rating: 3 },
+  { value: 'ok', label: traduire('Correct'), rating: 3 },
   { value: 'hard', label: 'Difficile', rating: 2 },
-  { value: 'crushed', label: 'Écrasé', rating: 2 },
+  { value: 'crushed', label: traduire('Écrasé'), rating: 2 },
 ];
 
 const toMin = (t?: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null);
-const fmtNum = (v: number) => String(Math.round(v * 100) / 100).replace('.', ',');
+const fmtNum = (v: number) => String(Math.round(v * 100) / 100).replace('.', DECIMAL);
 
 type CardForm = { key: string; name: string; role?: string; rounds: number[]; result: RoundResult | null; given: DicteeTechnique[]; taken: DicteeTechnique[]; src: Span[] };
 
@@ -108,9 +109,9 @@ type Form = {
 };
 
 const HEALTH = Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé';
-const LEARN_HEAD: Record<DicteeLearned['mode'], string> = { appris: 'Appris', drill: 'En drill', travaille: 'Travaillé', reussi: 'Réussi en combat' };
-const FORMATS = ['Foot à 5', 'Foot à 7', 'Foot à 11', 'Futsal'].map((v) => ({ value: v, label: v.replace('Foot à ', 'À ') }));
-const CADRES = ['Entre amis', 'Club', 'Compétition'].map((v) => ({ value: v, label: v }));
+const LEARN_HEAD: Record<DicteeLearned['mode'], string> = { appris: 'Appris', drill: 'En drill', travaille: traduire('Travaillé'), reussi: traduire('Réussi en combat') };
+const FORMATS = [traduire('Foot à 5'), traduire('Foot à 7'), traduire('Foot à 11'), 'Futsal'].map((v) => ({ value: v, label: v.replace('Foot à ', 'À ') }));
+const CADRES = [traduire('Entre amis'), 'Club', traduire('Compétition')].map((v) => ({ value: v, label: v }));
 
 function exLine(e: DicteeExercise): string {
   if (e.distance) return `${e.sets} x ${fmtNum(e.distance * 1000)} m`;
@@ -248,7 +249,7 @@ export default function DicteSeance() {
     for (const k of keys) for (const s of form.spans[k] ?? []) out.push(said.slice(s.start, s.end));
     return out.filter((q, i) => out.findIndex((x) => fold(x) === fold(q)) === i);
   };
-  const exSrc = (i: number) => src(`exercice:${i}`);
+  const exSrc = (i: number) => src(traduire("exercice:{0}", i));
 
   // cartes de sparring : une modification renumerote les rounds dans l'ordre des cartes
   const setCards = (cards: CardForm[], renumber = false) => {
@@ -366,7 +367,7 @@ export default function DicteSeance() {
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       logger.error('Enregistrement de la séance dictée impossible', err);
-      appAlert('Oups', 'La séance n’a pas pu être enregistrée. Réessaie.');
+      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
       setSaving(false);
     }
   };
@@ -386,20 +387,20 @@ export default function DicteSeance() {
     router.replace({ pathname: seanceRoute(form.sport) as any, params });
   };
 
-  const dayText = form ? (form.date === today ? 'Aujourd’hui' : longDay(form.date).charAt(0).toUpperCase() + longDay(form.date).slice(1)) : '';
+  const dayText = form ? (form.date === today ? traduire('Aujourd’hui') : longDay(form.date).charAt(0).toUpperCase() + longDay(form.date).slice(1)) : '';
   const momentStart: Record<string, number> = { matin: 8 * 60, midi: 12 * 60, 'apres-midi': 15 * 60, soir: 19 * 60 };
-  const momentText: Record<string, string> = { matin: 'le matin', midi: 'le midi', 'apres-midi': 'l’après-midi', soir: 'le soir' };
+  const momentText: Record<string, string> = { matin: traduire('le matin'), midi: traduire('le midi'), 'apres-midi': traduire('l’après-midi'), soir: traduire('le soir') };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <DetailScreen
-        title="Dicte ta séance"
-        subtitle={form ? 'Vérifie, corrige si besoin, enregistre' : 'Une phrase suffit, on remplit pour toi'}
+        title={traduire("Dicte ta séance")}
+        subtitle={form ? traduire('Vérifie, corrige si besoin, enregistre') : traduire('Une phrase suffit, on remplit pour toi')}
         footer={
           form ? (
-            <BigButton label={saving ? 'Enregistrement...' : !form.sport ? 'Choisis le sport' : linked ? `Ajouter à la séance ${HEALTH}` : 'Enregistrer la séance'} icon="check" onPress={save} disabled={!form.sport || saving} />
+            <BigButton label={saving ? 'Enregistrement...' : !form.sport ? traduire('Choisis le sport') : linked ? traduire("Ajouter à la séance {0}", HEALTH) : traduire('Enregistrer la séance')} icon="check" onPress={save} disabled={!form.sport || saving} />
           ) : (
-            <BigButton label="Vérifier" icon="check" onPress={analyze} disabled={!text.trim()} />
+            <BigButton label={traduire("Vérifier")} icon="check" onPress={analyze} disabled={!text.trim()} />
           )
         }
       >
@@ -412,30 +413,30 @@ export default function DicteSeance() {
                     <Icon name="mic" size={22} color={P.white} />
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Ink size={15} weight="extraBold">Touche le micro du clavier</Ink>
-                    <Ink size={13} weight="medium" color={P.ink2}>et raconte ta séance comme à un pote.</Ink>
+                    <Ink size={15} weight="extraBold">{traduire("Touche le micro du clavier")}</Ink>
+                    <Ink size={13} weight="medium" color={P.ink2}>{traduire("et raconte ta séance comme à un pote.")}</Ink>
                   </View>
                 </View>
                 <TextInput
                   ref={input}
                   value={text}
                   onChangeText={setText}
-                  placeholder="JJB ce soir, 5 rounds de 6 minutes contre Paul, gagné par triangle"
+                  placeholder={traduire("JJB ce soir, 5 rounds de 6 minutes contre Paul, gagné par triangle")}
                   placeholderTextColor={P.muted}
                   multiline
                   textAlignVertical="top"
                   style={[fontStyle('bold'), { minHeight: 120, fontSize: 18, lineHeight: 25, color: P.ink, padding: 12, borderRadius: 14, backgroundColor: P.paper }]}
-                  accessibilityLabel="Ta séance en une phrase"
+                  accessibilityLabel={traduire("Ta séance en une phrase")}
                 />
                 {text.length > 0 ? (
-                  <Pressable onPress={() => { setText(''); input.current?.focus(); }} accessibilityRole="button" accessibilityLabel="Effacer la phrase" style={{ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' }}>
+                  <Pressable onPress={() => { setText(''); input.current?.focus(); }} accessibilityRole="button" accessibilityLabel={traduire("Effacer la phrase")} style={{ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' }}>
                     <Ink size={13} weight="bold" color={P.ink2}>Effacer</Ink>
                   </Pressable>
                 ) : null}
               </Card>
             </Enter>
             <Enter i={1} style={{ gap: 8 }}>
-              <SectionTitle>Par exemple</SectionTitle>
+              <SectionTitle>{traduire("Par exemple")}</SectionTitle>
               {EXAMPLES.map((ex) => (
                 <Press key={ex} onPress={() => setText(ex)} accessibilityRole="button" accessibilityLabel={`Exemple : ${ex}`}>
                   <View style={{ minHeight: 52, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -445,27 +446,26 @@ export default function DicteSeance() {
                 </Press>
               ))}
               <Ink size={13} weight="medium" color={P.muted} style={{ paddingHorizontal: 4 }}>
-                Je comprends le sport, le jour, l’heure, la durée, ton ressenti, les rounds avec tes partenaires, les finitions, les techniques apprises, ton grade, la distance et l’allure, les exercices avec séries et charges, même décrits avec tes mots, et pour le foot le format, les buts et ton poste. Quand je devine, je te demande. Tout reste sur ton téléphone.
-              </Ink>
+                {traduire("Je comprends le sport, le jour, l’heure, la durée, ton ressenti, les rounds avec tes partenaires, les finitions, les techniques apprises, ton grade, la distance et l’allure, les exercices avec séries et charges, même décrits avec tes mots, et pour le foot le format, les buts et ton poste. Quand je devine, je te demande. Tout reste sur ton téléphone.")}</Ink>
             </Enter>
           </>
         ) : (
           <>
             <Enter i={0}>
-              <Press onPress={() => { setText(said); setForm(null); }} accessibilityRole="button" accessibilityLabel="Modifier la phrase">
+              <Press onPress={() => { setText(said); setForm(null); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier la phrase")}>
                 <View style={{ borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 14, gap: 8 }}>
-                  <Ink size={12} weight="bold" color={P.muted}>Tu as dit</Ink>
+                  <Ink size={12} weight="bold" color={P.muted}>{traduire("Tu as dit")}</Ink>
                   <Text style={[fontStyle('bold'), { fontSize: 16, lineHeight: 24, color: P.ink2 }]}>
                     {pieces(said, form.spans).map((p, i) => (
                       <Text key={i} style={p.on ? [fontStyle('extraBold'), { color: P.ink, backgroundColor: P.accentSoft }] : undefined}>{p.t}</Text>
                     ))}
                   </Text>
-                  <Ink size={13} weight="extraBold" color={accent}>Modifier la phrase</Ink>
+                  <Ink size={13} weight="extraBold" color={accent}>{traduire("Modifier la phrase")}</Ink>
                 </View>
               </Press>
             </Enter>
             <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-              {understood === 0 ? 'Je n’ai rien reconnu. Remplis les champs ou reformule, par exemple : boxe 1 h, intense.' : 'Surligné : ce que j’ai compris. Ce qui est vide, complète-le ou laisse-le vide. Ta phrase reste dans la note.'}
+              {understood === 0 ? traduire('Je n’ai rien reconnu. Remplis les champs ou reformule, par exemple : boxe 1 h, intense.') : traduire('Surligné : ce que j’ai compris. Ce qui est vide, complète-le ou laisse-le vide. Ta phrase reste dans la note.')}
             </Ink>
 
             {form.guesses.length || (twin && form.linkId === undefined) || linked ? (
@@ -473,7 +473,7 @@ export default function DicteSeance() {
                 {form.guesses.length || (twin && form.linkId === undefined) ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
                     <Icon name="flag" size={16} color={accent} />
-                    <Ink size={15} weight="extraBold">{`À confirmer${form.guesses.length + (twin && form.linkId === undefined ? 1 : 0) > 1 ? ` (${form.guesses.length + (twin && form.linkId === undefined ? 1 : 0)})` : ''}`}</Ink>
+                    <Ink size={15} weight="extraBold">{traduire("À confirmer{0}", form.guesses.length + (twin && form.linkId === undefined ? 1 : 0) > 1 ? ` (${form.guesses.length + (twin && form.linkId === undefined ? 1 : 0)})` : '')}</Ink>
                   </View>
                 ) : null}
                 {form.guesses.map((g) => (
@@ -492,7 +492,7 @@ export default function DicteSeance() {
               </View>
             ) : null}
 
-            <Field label="Sport" src={src('sport')} empty={!form.sport ? 'pas reconnu, choisis-le' : undefined}>
+            <Field label="Sport" src={src('sport')} empty={!form.sport ? traduire('pas reconnu, choisis-le') : undefined}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {sportChips.map((s) => {
                   const on = s === form.sport;
@@ -505,41 +505,41 @@ export default function DicteSeance() {
               </View>
             </Field>
 
-            <Field label="Jour" src={src('jour')} empty={!form.dateSaid ? 'pas dit, aujourd’hui par défaut' : undefined}>
+            <Field label={traduire("Jour")} src={src('jour')} empty={!form.dateSaid ? traduire('pas dit, aujourd’hui par défaut') : undefined}>
               <DayNav value={form.date} onChange={(d) => set({ date: d, dateSaid: true })} label={dayText} size={18} />
             </Field>
 
             <Field
-              label="Début"
+              label={traduire("Début")}
               src={src('debut')}
-              empty={form.start === null ? (form.moment ? `pas d’heure, tu as dit ${momentText[form.moment] ?? form.moment}` : 'pas dit') : undefined}
+              empty={form.start === null ? (form.moment ? traduire("pas d’heure, tu as dit {0}", momentText[form.moment] ?? form.moment) : traduire('pas dit')) : undefined}
               onAdd={form.start === null ? () => set({ start: form.moment && momentStart[form.moment] !== undefined ? momentStart[form.moment] : Math.max(0, Math.floor((new Date().getHours() * 60 - (form.duration ?? 60)) / 15) * 15) }) : undefined}
               onClear={form.start !== null ? () => set({ start: null }) : undefined}
             >
-              {form.start !== null ? <Stepper value={form.start} step={15} min={0} max={23 * 60 + 45} unit="minutes" size={22} button={34} format={(v) => `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`} onChange={(v) => set({ start: v })} /> : null}
+              {form.start !== null ? <Stepper value={form.start} step={15} min={0} max={23 * 60 + 45} unit={traduire("minutes")} size={22} button={34} format={(v) => `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`} onChange={(v) => set({ start: v })} /> : null}
             </Field>
 
             <Field
-              label="Durée"
+              label={traduire("Durée")}
               src={src('duree')}
-              note={form.duration !== null && form.durationFrom ? `pas dite, déduite : ${form.durationFrom}` : undefined}
-              empty={form.duration === null ? 'pas dite' : undefined}
+              note={form.duration !== null && form.durationFrom ? traduire("pas dite, déduite : {0}", form.durationFrom) : undefined}
+              empty={form.duration === null ? traduire('pas dite') : undefined}
               onAdd={form.duration === null ? () => set({ duration: 60 }) : undefined}
               onClear={form.duration !== null ? () => set({ duration: null, durationFrom: undefined }) : undefined}
             >
-              {form.duration !== null ? <Stepper value={form.duration} step={5} min={5} max={600} unit="minutes" size={22} button={34} format={(v) => fmtMinutes(v)} onChange={(v) => set({ duration: v, durationFrom: undefined, durationSec: undefined })} /> : null}
+              {form.duration !== null ? <Stepper value={form.duration} step={5} min={5} max={600} unit={traduire("minutes")} size={22} button={34} format={(v) => fmtMinutes(v)} onChange={(v) => set({ duration: v, durationFrom: undefined, durationSec: undefined })} /> : null}
             </Field>
 
-            <Field label="Ressenti" src={src('ressenti')} empty={form.mood === null ? 'pas dit' : undefined}>
+            <Field label="Ressenti" src={src('ressenti')} empty={form.mood === null ? traduire('pas dit') : undefined}>
               <ChoiceRow options={MOODS.map((m) => ({ value: m.value, label: m.label }))} value={form.mood} onChange={(v) => set({ mood: v, rating: v ? MOODS.find((m) => m.value === v)?.rating ?? null : null })} />
             </Field>
 
-            <Field label="Intensité" src={src('intensite')} empty={form.intensity === null ? 'pas dite' : undefined}>
+            <Field label={traduire("Intensité")} src={src('intensite')} empty={form.intensity === null ? traduire('pas dite') : undefined}>
               <ChoiceRow options={RPE} value={form.intensity} onChange={(v) => set({ intensity: v })} columns={4} />
             </Field>
 
             {kind === 'combat' ? (
-              <Field label="Techniques" src={src('appris')} empty={form.learned.length === 0 ? 'aucune citée' : undefined} note={form.learned.length ? 'ce que tu as appris ou travaillé, pas les finitions de sparring' : undefined}>
+              <Field label="Techniques" src={src('appris')} empty={form.learned.length === 0 ? traduire('aucune citée') : undefined} note={form.learned.length ? traduire('ce que tu as appris ou travaillé, pas les finitions de sparring') : undefined}>
                 {(['appris', 'drill', 'travaille', 'reussi'] as const).map((mode) => {
                   const list = form.learned.filter((l) => l.mode === mode);
                   if (!list.length) return null;
@@ -563,7 +563,7 @@ export default function DicteSeance() {
             ) : null}
 
             {kind === 'combat' && (form.grade || form.gradeEvent || form.club || form.coach) ? (
-              <Field label="Contexte" src={src('grade', 'club', 'prof')} note={form.gradeEvent ? 'passage de grade, bravo' : undefined}>
+              <Field label="Contexte" src={src('grade', 'club', 'prof')} note={form.gradeEvent ? traduire('passage de grade, bravo') : undefined}>
                 <View style={{ gap: 8 }}>
                   {([['grade', 'Grade', 'Ceinture bleue...'], ['coach', 'Professeur', 'Nom du prof'], ['club', 'Club', 'Nom du club']] as const).map(([k, label, ph]) =>
                     form[k] || (k === 'grade' && form.gradeEvent) ? (
@@ -588,7 +588,7 @@ export default function DicteSeance() {
               <Field
                 label="Rounds"
                 src={src('rounds', 'blocs')}
-                empty={form.rounds === null ? 'pas dits' : form.roundMin ? `de ${form.roundMin} min` : undefined}
+                empty={form.rounds === null ? traduire('pas dits') : form.roundMin ? traduire("de {0} min", form.roundMin) : undefined}
                 onAdd={form.rounds === null ? () => set({ rounds: 5 }) : undefined}
                 onClear={form.rounds !== null ? () => set({ rounds: null, roundMin: undefined }) : undefined}
               >
@@ -600,7 +600,7 @@ export default function DicteSeance() {
               <View style={{ gap: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, gap: 8 }}>
                   <Ink size={15} weight="extraBold" style={{ flex: 1 }}>Sparring</Ink>
-                  {form.cards.length === 0 ? <Ink size={13} weight="medium" color={P.muted}>personne de cité</Ink> : null}
+                  {form.cards.length === 0 ? <Ink size={13} weight="medium" color={P.muted}>{traduire("personne de cité")}</Ink> : null}
                 </View>
                 {form.cards.map((c) => (
                   <PartnerCard
@@ -618,29 +618,29 @@ export default function DicteSeance() {
                     setCards([...form.cards, { key: `c${Date.now()}`, name: '', rounds: [next], result: null, given: [], taken: [], src: [] }]);
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel="Ajouter un partenaire"
+                  accessibilityLabel={traduire("Ajouter un partenaire")}
                   style={{ minHeight: 48, borderRadius: 16, borderWidth: 1, borderColor: P.line2, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                 >
                   <Icon name="plus" size={16} color={accent} />
-                  <Ink size={14} weight="extraBold" color={accent}>Ajouter un partenaire</Ink>
+                  <Ink size={14} weight="extraBold" color={accent}>{traduire("Ajouter un partenaire")}</Ink>
                 </Pressable>
               </View>
             ) : null}
 
             {kind === 'combat' ? (
-              <Field label="Type de séance" src={src('type')} empty={form.type === null ? 'pas dit' : undefined} note={form.sessionLabel ? `tu as dit : ${form.sessionLabel.toLowerCase()}, noté dans la note` : undefined}>
+              <Field label={traduire("Type de séance")} src={src('type')} empty={form.type === null ? traduire('pas dit') : undefined} note={form.sessionLabel ? traduire("tu as dit : {0}, noté dans la note", form.sessionLabel.toLowerCase()) : undefined}>
                 <ChoiceRow options={SESSION_TYPES} value={form.type as never} onChange={(v) => set({ type: v })} />
               </Field>
             ) : null}
 
             {kind === 'combat' ? (
-              <Field label="Thème technique" src={src('theme')} empty={!form.theme ? (form.learned.length ? 'pas dit, tes techniques serviront de thème' : 'pas dit') : undefined}>
+              <Field label={traduire("Thème technique")} src={src('theme')} empty={!form.theme ? (form.learned.length ? traduire('pas dit, tes techniques serviront de thème') : traduire('pas dit')) : undefined}>
                 <TextInput
                   value={form.theme}
                   onChangeText={(t) => set({ theme: t })}
-                  placeholder="Passage de garde, défense de dos..."
+                  placeholder={traduire("Passage de garde, défense de dos...")}
                   placeholderTextColor={P.muted}
-                  accessibilityLabel="Thème technique"
+                  accessibilityLabel={traduire("Thème technique")}
                   style={[fontStyle('bold'), { minHeight: 44, fontSize: 15, color: P.ink, paddingHorizontal: 12, borderRadius: 12, backgroundColor: P.paper }]}
                 />
               </Field>
@@ -650,26 +650,26 @@ export default function DicteSeance() {
               <Field
                 label="Distance"
                 src={src('distance')}
-                note={pace ? `allure ${form.paceSaid ? '' : 'calculée '}${pace}` : undefined}
-                empty={form.distance === null ? 'pas dite' : undefined}
+                note={pace ? `allure ${form.paceSaid ? '' : traduire('calculée ')}${pace}` : undefined}
+                empty={form.distance === null ? traduire('pas dite') : undefined}
                 onAdd={form.distance === null ? () => set({ distance: 5 }) : undefined}
                 onClear={form.distance !== null ? () => set({ distance: null }) : undefined}
               >
-                {form.distance !== null ? <Stepper value={form.distance} step={0.5} min={0.1} max={400} decimals unit="kilomètres" size={22} button={34} format={(v) => `${fmtNum(v)} km`} onChange={(v) => set({ distance: v })} /> : null}
+                {form.distance !== null ? <Stepper value={form.distance} step={0.5} min={0.1} max={400} decimals unit={traduire("kilomètres")} size={22} button={34} format={(v) => `${fmtNum(v)} km`} onChange={(v) => set({ distance: v })} /> : null}
               </Field>
             ) : null}
 
             {form.heartRate !== null || form.calories !== null ? (
               <Field label="Cardio" src={src('fc', 'calories')}>
                 <View style={{ gap: 10 }}>
-                  {form.heartRate !== null ? <Stepper value={form.heartRate} step={1} min={40} max={230} unit="battements par minute" size={20} button={32} format={(v) => `${v} bpm de moyenne`} onChange={(v) => set({ heartRate: v })} /> : null}
+                  {form.heartRate !== null ? <Stepper value={form.heartRate} step={1} min={40} max={230} unit={traduire("battements par minute")} size={20} button={32} format={(v) => traduire("{0} bpm de moyenne", v)} onChange={(v) => set({ heartRate: v })} /> : null}
                   {form.calories !== null ? <Stepper value={form.calories} step={10} min={0} max={6000} unit="calories" size={20} button={32} format={(v) => `${v} kcal`} onChange={(v) => set({ calories: v })} /> : null}
                 </View>
               </Field>
             ) : null}
 
             {kind === 'muscu' || form.exercises.length > 0 ? (
-              <Field label="Exercices" empty={form.exercises.length === 0 ? 'aucun compris, ajoute-les avec Plus de détails' : undefined}>
+              <Field label={traduire("Exercices")} empty={form.exercises.length === 0 ? traduire('aucun compris, ajoute-les avec Plus de détails') : undefined}>
                 {form.exercises.map((e, i) => (
                   <ExerciseRow
                     key={`${e.name}${i}`}
@@ -694,7 +694,7 @@ export default function DicteSeance() {
             ) : null}
 
             {team || form.team ? (
-              <Field label={form.team?.match ? 'Match' : 'Ton match'} src={src('format', 'cadre', 'buts', 'passes', 'poste', 'score', 'points', 'essais')} note="score enregistré à part, le reste dans la note de la séance">
+              <Field label={form.team?.match ? 'Match' : traduire('Ton match')} src={src('format', 'cadre', 'buts', 'passes', 'poste', 'score', 'points', 'essais')} note={traduire("score enregistré à part, le reste dans la note de la séance")}>
                 <View style={{ gap: 12 }}>
                   {form.sport === 'football' || form.sport === 'futsal' ? (
                     <View style={{ gap: 6 }}>
@@ -703,13 +703,13 @@ export default function DicteSeance() {
                     </View>
                   ) : null}
                   <View style={{ gap: 6 }}>
-                    <Ink size={13} weight="bold" color={P.ink2}>Avec qui</Ink>
+                    <Ink size={13} weight="bold" color={P.ink2}>{traduire("Avec qui")}</Ink>
                     <ChoiceRow options={CADRES} value={form.team?.cadre ?? null} onChange={(v) => set({ team: { ...(form.team ?? {}), cadre: v ?? undefined } })} columns={3} />
                   </View>
                   <TeamStepper label="Buts" value={form.team?.goals} onChange={(v) => set({ team: { ...(form.team ?? {}), goals: v } })} />
-                  <TeamStepper label="Passes décisives" value={form.team?.assists} onChange={(v) => set({ team: { ...(form.team ?? {}), assists: v } })} />
+                  <TeamStepper label={traduire("Passes décisives")} value={form.team?.assists} onChange={(v) => set({ team: { ...(form.team ?? {}), assists: v } })} />
                   {form.team?.scoreFor !== undefined && form.team?.scoreAgainst !== undefined ? (
-                    <Ink size={14} weight="bold">{`Score : ${form.team.scoreFor} à ${form.team.scoreAgainst}${form.team.result === 'win' ? ', victoire' : form.team.result === 'loss' ? ', défaite' : ', nul'}`}</Ink>
+                    <Ink size={14} weight="bold">{traduire("Score : {0} à {1}{2}", form.team.scoreFor, form.team.scoreAgainst, form.team.result === 'win' ? ', victoire' : form.team.result === 'loss' ? ', défaite' : ', nul')}</Ink>
                   ) : null}
                   <View style={{ gap: 6 }}>
                     <Ink size={13} weight="bold" color={P.ink2}>Poste</Ink>
@@ -726,24 +726,24 @@ export default function DicteSeance() {
               </Field>
             ) : null}
 
-            <Field label="Note" note={noteLines(form).length ? `ajouté en tête : ${noteLines(form).join(' ; ')}` : undefined}>
+            <Field label="Note" note={noteLines(form).length ? traduire("ajouté en tête : {0}", noteLines(form).join(' ; ')) : undefined}>
               <TextInput
                 value={form.notes}
                 onChangeText={(t) => set({ notes: t })}
                 multiline
-                placeholder="Ce que tu as travaillé, avec qui"
+                placeholder={traduire("Ce que tu as travaillé, avec qui")}
                 placeholderTextColor={P.muted}
-                accessibilityLabel="Note sur la séance"
+                accessibilityLabel={traduire("Note sur la séance")}
                 style={[fontStyle('medium'), { minHeight: 64, fontSize: 15, color: P.ink, textAlignVertical: 'top', paddingVertical: 4 }]}
               />
             </Field>
 
             {form.sport ? (
-              <Press onPress={details} accessibilityRole="button" accessibilityLabel="Plus de détails, ouvrir la saisie complète">
+              <Press onPress={details} accessibilityRole="button" accessibilityLabel={traduire("Plus de détails, ouvrir la saisie complète")}>
                 <View style={{ minHeight: 52, borderRadius: 18, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold">Plus de détails</Ink>
-                    <Ink size={12} weight="medium" color={P.ink2}>{kind === 'muscu' ? 'séries une par une, charges' : kind === 'combat' ? 'saisie complète des rounds et du bilan' : 'cardio, fréquence, lieu'}</Ink>
+                    <Ink size={15} weight="extraBold">{traduire("Plus de détails")}</Ink>
+                    <Ink size={12} weight="medium" color={P.ink2}>{kind === 'muscu' ? traduire('séries une par une, charges') : kind === 'combat' ? traduire('saisie complète des rounds et du bilan') : traduire('cardio, fréquence, lieu')}</Ink>
                   </View>
                   <Icon name="chevron" size={16} color={P.muted} />
                 </View>
@@ -766,9 +766,9 @@ function Field({ label, empty, note, src, children, onAdd, onClear }: { label: s
           <Ink size={14} weight="extraBold" style={{ flexShrink: 0 }}>{label}</Ink>
           {empty ? <Ink size={13} weight="medium" color={P.muted} style={{ flex: 1 }} numberOfLines={2}>{empty}</Ink> : <View style={{ flex: 1 }} />}
           {onAdd ? (
-            <Pressable onPress={() => { tap(); onAdd(); }} accessibilityRole="button" accessibilityLabel={`Ajouter : ${label}`} hitSlop={6} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
+            <Pressable onPress={() => { tap(); onAdd(); }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter : {0}", label)} hitSlop={6} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
               <Icon name="plus" size={14} color={accent} />
-              <Ink size={13} weight="extraBold" color={accent}>Ajouter</Ink>
+              <Ink size={13} weight="extraBold" color={accent}>{traduire("Ajouter")}</Ink>
             </Pressable>
           ) : null}
           {onClear ? (
@@ -793,10 +793,10 @@ function TeamStepper({ label, value, onChange }: { label: string; value?: number
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 40 }}>
         <Ink size={14} weight="bold" style={{ flex: 1 }}>{label}</Ink>
-        <Ink size={13} weight="medium" color={P.muted} style={{ marginRight: 8 }}>pas dit</Ink>
-        <Pressable onPress={() => { tap(); onChange(0); }} accessibilityRole="button" accessibilityLabel={`Ajouter : ${label}`} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
+        <Ink size={13} weight="medium" color={P.muted} style={{ marginRight: 8 }}>{traduire("pas dit")}</Ink>
+        <Pressable onPress={() => { tap(); onChange(0); }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter : {0}", label)} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
           <Icon name="plus" size={14} color={accent} />
-          <Ink size={13} weight="extraBold" color={accent}>Ajouter</Ink>
+          <Ink size={13} weight="extraBold" color={accent}>{traduire("Ajouter")}</Ink>
         </Pressable>
       </View>
     );
@@ -853,7 +853,7 @@ function ExerciseRow({ ex, first, src, onChange, onRemove }: { ex: DicteeExercis
       </View>
       {!cardio ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <NumBox value={ex.sets} label="séries" missing={ex.missing?.includes('sets')} onChange={(v) => onChange({ sets: Math.max(1, v), missing: dropMissing(ex, 'sets') })} />
+          <NumBox value={ex.sets} label={traduire("séries")} missing={ex.missing?.includes('sets')} onChange={(v) => onChange({ sets: Math.max(1, v), missing: dropMissing(ex, 'sets') })} />
           <NumBox value={ex.max ? 0 : ex.reps} label={ex.max ? 'reps (max)' : 'reps'} missing={ex.missing?.includes('reps')} onChange={(v) => onChange({ reps: v, max: v ? undefined : ex.max, missing: v ? dropMissing(ex, 'reps') : ex.missing })} />
           <NumBox value={ex.weight} label={ex.load === 'pdc' ? 'lest kg' : 'kg'} decimals missing={ex.missing?.includes('weight')} onChange={(v) => onChange({ weight: v, missing: v ? dropMissing(ex, 'weight') : ex.missing })} />
         </View>
@@ -880,7 +880,7 @@ function PartnerCard({ card, src, onChange, onRemove }: { card: CardForm; src: s
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
       {card[list].map((t) => (
         <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 36, borderRadius: 12, paddingLeft: 12, backgroundColor: list === 'given' ? P.mossSoft : P.goldSoft }}>
-          <Pressable onPress={() => bump(list, t)} accessibilityRole="button" accessibilityLabel={`${techniqueText(t)}, toucher pour en ajouter une`} style={{ minHeight: 36, justifyContent: 'center' }}>
+          <Pressable onPress={() => bump(list, t)} accessibilityRole="button" accessibilityLabel={traduire("{0}, toucher pour en ajouter une", techniqueText(t))} style={{ minHeight: 36, justifyContent: 'center' }}>
             <Ink size={13} weight="extraBold" color={list === 'given' ? P.mossText : P.goldDark}>{techniqueText(t)}</Ink>
           </Pressable>
           <Pressable onPress={() => remove(list, t.id)} accessibilityRole="button" accessibilityLabel={`Retirer ${t.label}`} hitSlop={4} style={{ width: 32, height: 36, alignItems: 'center', justifyContent: 'center' }}>
@@ -888,9 +888,9 @@ function PartnerCard({ card, src, onChange, onRemove }: { card: CardForm; src: s
           </Pressable>
         </View>
       ))}
-      <Pressable onPress={() => { tap(); setAdding(adding === list ? null : list); }} accessibilityRole="button" accessibilityLabel={list === 'given' ? 'Ajouter une finition donnée' : 'Ajouter une finition subie'} style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
+      <Pressable onPress={() => { tap(); setAdding(adding === list ? null : list); }} accessibilityRole="button" accessibilityLabel={list === 'given' ? traduire('Ajouter une finition donnée') : traduire('Ajouter une finition subie')} style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
         <Icon name="plus" size={13} color={accent} />
-        <Ink size={13} weight="extraBold" color={accent}>{card[list].length ? 'Autre' : 'Ajouter'}</Ink>
+        <Ink size={13} weight="extraBold" color={accent}>{card[list].length ? 'Autre' : traduire('Ajouter')}</Ink>
       </Pressable>
     </View>
   );
@@ -905,46 +905,46 @@ function PartnerCard({ card, src, onChange, onRemove }: { card: CardForm; src: s
           <TextInput
             value={card.name}
             onChangeText={(t) => onChange({ name: t })}
-            placeholder="Nom du partenaire"
+            placeholder={traduire("Nom du partenaire")}
             placeholderTextColor={P.muted}
-            accessibilityLabel="Nom du partenaire"
+            accessibilityLabel={traduire("Nom du partenaire")}
             style={[fontStyle('extraBold'), { fontSize: 16, color: P.ink, minHeight: 32, padding: 0 }]}
           />
           <Ink size={12} weight="medium" color={P.ink2}>{`${card.role ? `${card.role.charAt(0).toUpperCase()}${card.role.slice(1)}, ` : ''}${roundsText(card.rounds)}`}</Ink>
         </View>
-        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Retirer ${card.name || 'ce partenaire'}`} hitSlop={6} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Retirer ${card.name || traduire('ce partenaire')}`} hitSlop={6} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="close" size={18} color={P.muted} />
         </Pressable>
       </View>
       {src.length ? <Ink size={12} weight="bold" color={P.accent} numberOfLines={3}>{src.map((q) => `« ${q} »`).join('  ')}</Ink> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>{count > 1 ? `${count} rounds` : '1 round'}</Ink>
-        <Pressable disabled={count <= 1} onPress={() => { tap(); onChange({ rounds: card.rounds.slice(0, -1) }, true); }} accessibilityRole="button" accessibilityLabel="Un round de moins" style={{ width: 40, height: 36, borderRadius: 12, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center', opacity: count <= 1 ? 0.4 : 1 }}>
+        <Pressable disabled={count <= 1} onPress={() => { tap(); onChange({ rounds: card.rounds.slice(0, -1) }, true); }} accessibilityRole="button" accessibilityLabel={traduire("Un round de moins")} style={{ width: 40, height: 36, borderRadius: 12, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center', opacity: count <= 1 ? 0.4 : 1 }}>
           <Icon name="minus" size={16} color={P.ink} />
         </Pressable>
-        <Pressable onPress={() => { tap(); onChange({ rounds: [...card.rounds, (card.rounds[card.rounds.length - 1] ?? 0) + 1] }, true); }} accessibilityRole="button" accessibilityLabel="Un round de plus" style={{ width: 40, height: 36, borderRadius: 12, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => { tap(); onChange({ rounds: [...card.rounds, (card.rounds[card.rounds.length - 1] ?? 0) + 1] }, true); }} accessibilityRole="button" accessibilityLabel={traduire("Un round de plus")} style={{ width: 40, height: 36, borderRadius: 12, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="plus" size={16} color={P.ink} />
         </Pressable>
       </View>
       <ChoiceRow options={RESULTS} value={card.result} onChange={(v) => { tap(); onChange({ result: v }); }} columns={3} />
       <View style={{ gap: 6 }}>
-        <Ink size={13} weight="bold" color={P.ink2}>Tes finitions</Ink>
+        <Ink size={13} weight="bold" color={P.ink2}>{traduire("Tes finitions")}</Ink>
         {chips('given')}
       </View>
       {card.taken.length || adding === 'taken' ? (
         <View style={{ gap: 6 }}>
-          <Ink size={13} weight="bold" color={P.ink2}>Ses finitions sur toi</Ink>
+          <Ink size={13} weight="bold" color={P.ink2}>{traduire("Ses finitions sur toi")}</Ink>
           {chips('taken')}
         </View>
       ) : (
-        <Pressable onPress={() => { tap(); setAdding('taken'); }} accessibilityRole="button" accessibilityLabel="Il t’a soumis" style={{ minHeight: 36, justifyContent: 'center', alignSelf: 'flex-start' }}>
-          <Ink size={13} weight="bold" color={accent}>Il t’a soumis ?</Ink>
+        <Pressable onPress={() => { tap(); setAdding('taken'); }} accessibilityRole="button" accessibilityLabel={traduire("Il t’a soumis")} style={{ minHeight: 36, justifyContent: 'center', alignSelf: 'flex-start' }}>
+          <Ink size={13} weight="bold" color={accent}>{traduire("Il t’a soumis ?")}</Ink>
         </Pressable>
       )}
       {adding ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingTop: 2 }}>
           {QUICK_TECHNIQUES.map((t) => (
-            <Pressable key={t.id} onPress={() => { bump(adding, t); setAdding(null); }} accessibilityRole="button" accessibilityLabel={`${adding === 'given' ? 'Ajouter' : 'Ajouter subie'} : ${t.label}`} style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 12, justifyContent: 'center', borderWidth: 1, borderColor: P.line2 }}>
+            <Pressable key={t.id} onPress={() => { bump(adding, t); setAdding(null); }} accessibilityRole="button" accessibilityLabel={`${adding === 'given' ? traduire('Ajouter') : traduire('Ajouter subie')} : ${t.label}`} style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 12, justifyContent: 'center', borderWidth: 1, borderColor: P.line2 }}>
               <Ink size={13} weight="bold">{t.label}</Ink>
             </Pressable>
           ))}
@@ -970,13 +970,13 @@ function GuessCard({ g, onAnswer }: { g: DicteeGuess; onAnswer: (name: string | 
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {g.guess ? (
-          <Pressable onPress={() => onAnswer(null)} accessibilityRole="button" accessibilityLabel={`Oui, ${g.guess}`} style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Pressable onPress={() => onAnswer(null)} accessibilityRole="button" accessibilityLabel={traduire("Oui, {0}", g.guess)} style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon name="check" size={16} color={P.white} />
-            <Ink size={14} weight="extraBold" color={P.white}>Oui</Ink>
+            <Ink size={14} weight="extraBold" color={P.white}>{traduire("Oui")}</Ink>
           </Pressable>
         ) : null}
         {g.options.map((o) => (
-          <Pressable key={o} onPress={() => onAnswer(o)} accessibilityRole="button" accessibilityLabel={g.guess ? `Non, ${o}` : o} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center', flexShrink: 1 }}>
+          <Pressable key={o} onPress={() => onAnswer(o)} accessibilityRole="button" accessibilityLabel={g.guess ? traduire("Non, {0}", o) : o} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center', flexShrink: 1 }}>
             <Ink size={14} weight="bold">{o}</Ink>
           </Pressable>
         ))}
@@ -1002,25 +1002,25 @@ function TwinCard({ twin, linked, open, onLink, onNew, onUndo }: { twin: Trainin
           <Icon name={linked ? 'check' : 'heart'} size={18} color={linked ? P.mossText : accent} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={16} weight="extraBold">{linked ? `Reliée à ta séance ${HEALTH}` : `Déjà dans ${HEALTH} ce jour-là`}</Ink>
+          <Ink size={16} weight="extraBold">{linked ? traduire("Reliée à ta séance {0}", HEALTH) : traduire("Déjà dans {0} ce jour-là", HEALTH)}</Ink>
           <Ink size={13} weight="medium" color={P.ink2}>{`${what.charAt(0).toUpperCase()}${what.slice(1)}${bits.length ? `, ${bits.join(', ')}` : ''}`}</Ink>
         </View>
       </View>
       <Ink size={13} weight="medium" color={P.ink2}>
-        {linked ? 'Les données de la montre restent, ta note et ton ressenti s’ajoutent. Pas de seconde séance.' : 'La relier plutôt que d’en créer une seconde ? Ses données restent, ta phrase s’ajoute.'}
+        {linked ? traduire('Les données de la montre restent, ta note et ton ressenti s’ajoutent. Pas de seconde séance.') : traduire('La relier plutôt que d’en créer une seconde ? Ses données restent, ta phrase s’ajoute.')}
       </Ink>
       {linked ? (
-        <Pressable onPress={onUndo} accessibilityRole="button" accessibilityLabel="Annuler le lien" style={{ alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center' }}>
-          <Ink size={13} weight="extraBold" color={accent}>Annuler</Ink>
+        <Pressable onPress={onUndo} accessibilityRole="button" accessibilityLabel={traduire("Annuler le lien")} style={{ alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center' }}>
+          <Ink size={13} weight="extraBold" color={accent}>{traduire("Annuler")}</Ink>
         </Pressable>
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <Pressable onPress={onLink} accessibilityRole="button" accessibilityLabel="Relier à cette séance" style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Pressable onPress={onLink} accessibilityRole="button" accessibilityLabel={traduire("Relier à cette séance")} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon name="check" size={16} color={P.white} />
             <Ink size={14} weight="extraBold" color={P.white}>Relier</Ink>
           </Pressable>
-          <Pressable onPress={onNew} accessibilityRole="button" accessibilityLabel="Créer une autre séance" style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center' }}>
-            <Ink size={14} weight="bold">C’est une autre séance</Ink>
+          <Pressable onPress={onNew} accessibilityRole="button" accessibilityLabel={traduire("Créer une autre séance")} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center' }}>
+            <Ink size={14} weight="bold">{traduire("C’est une autre séance")}</Ink>
           </Pressable>
         </View>
       )}

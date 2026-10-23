@@ -52,6 +52,7 @@ import { Ecrans } from '@/components/yoroi/v2/studio/Ecrans';
 import { Diagnostic } from '@/components/yoroi/v2/studio/Diagnostic';
 import { Liens } from '@/components/yoroi/v2/studio/Liens';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function CreatorModeScreen() {
   return (
@@ -154,10 +155,10 @@ function Studio() {
       const msg = await fn();
       refreshDemo();
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      appAlert('C’est fait', msg);
+      appAlert(traduire('C’est fait'), msg);
     } catch (e) {
       logger.error(`[Studio] ${id}`, e);
-      appAlert('Oups', 'L’opération n’a pas abouti. Tes vraies données restent de côté.');
+      appAlert('Oups', traduire('L’opération n’a pas abouti. Tes vraies données restent de côté.'));
     } finally {
       setBusy(null);
     }
@@ -168,14 +169,14 @@ function Studio() {
       void run('heny', loadHeny);
       return;
     }
-    appAlert('Revenir à tes données ?', 'Heny est retirée et tes vraies données reviennent, avec tes vraies XP.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Revenir à tes données ?'), traduire('Heny est retirée et tes vraies données reviennent, avec tes vraies XP.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Revenir',
         onPress: () =>
           void run('heny', async () => {
             await backToRealData();
-            return 'Tes vraies données sont de retour.';
+            return traduire('Tes vraies données sont de retour.');
           }),
       },
     ]);
@@ -183,14 +184,14 @@ function Studio() {
 
   // les forcages d'apercu seulement : aucune donnee n'est touchee, Heny reste chargee si elle l'est
   const resetEverything = () =>
-    appAlert('Tout remettre normal ?', 'La saison revient à la date du jour, l’horloge à l’heure réelle, et les captures, la vue gratuite et les variantes du paywall sont coupées. Tes données ne bougent pas.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Tout remettre normal ?'), traduire('La saison revient à la date du jour, l’horloge à l’heure réelle, et les captures, la vue gratuite et les variantes du paywall sont coupées. Tes données ne bougent pas.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       { text: 'Remettre normal', onPress: () => void run('reset', () => resetAll(demoActive)) },
     ]);
 
   const lockStudio = () =>
-    appAlert('Verrouiller le Studio ?', 'Le jeton est retiré de ce téléphone. Il faudra le recoller pour revenir.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Verrouiller le Studio ?'), traduire('Le jeton est retiré de ce téléphone. Il faudra le recoller pour revenir.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
         text: 'Verrouiller',
         style: 'destructive',
@@ -223,64 +224,64 @@ function Studio() {
       setFenetresRearmees(true);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch {
-      appAlert('Oups', 'Les fenêtres n’ont pas pu être réarmées.');
+      appAlert('Oups', traduire('Les fenêtres n’ont pas pu être réarmées.'));
     }
   };
 
   // Ce qui est allume en ce moment
   const saisonDuJour = saisonAffichee({ date: devNow(), active: decorationsActives });
   const pills: { label: string; tone: 'accent' | 'gold' | 'moss' | 'danger' }[] = [];
-  if (choixSaison === 'halloween' || choixSaison === 'noel') pills.push({ label: `${NOMS_SAISONS[choixSaison]} forcé`, tone: 'gold' });
-  if (choixSaison === 'aucune') pills.push({ label: 'Saisons masquées', tone: 'gold' });
-  if (demoActive) pills.push({ label: 'Heny chargée', tone: 'moss' });
-  if (clockShifted) pills.push({ label: 'Horloge décalée', tone: 'gold' });
+  if (choixSaison === 'halloween' || choixSaison === 'noel') pills.push({ label: traduire("{0} forcé", NOMS_SAISONS[choixSaison]), tone: 'gold' });
+  if (choixSaison === 'aucune') pills.push({ label: traduire('Saisons masquées'), tone: 'gold' });
+  if (demoActive) pills.push({ label: traduire('Heny chargée'), tone: 'moss' });
+  if (clockShifted) pills.push({ label: traduire('Horloge décalée'), tone: 'gold' });
   if (simulateFreeUser) pills.push({ label: 'Vue gratuite', tone: 'accent' });
-  if (isPremium && !hasActiveSubscription && !simulateFreeUser) pills.push({ label: 'Premium créateur', tone: 'gold' });
-  if (purchasePreview) pills.push({ label: 'Aperçu achat', tone: 'accent' });
-  if (variant !== 'reel') pills.push({ label: 'Variante du paywall', tone: 'accent' });
+  if (isPremium && !hasActiveSubscription && !simulateFreeUser) pills.push({ label: traduire('Premium créateur'), tone: 'gold' });
+  if (purchasePreview) pills.push({ label: traduire('Aperçu achat'), tone: 'accent' });
+  if (variant !== 'reel') pills.push({ label: traduire('Variante du paywall'), tone: 'accent' });
   if (isScreenshotMode) pills.push({ label: useFakeStatusBar ? 'Captures, 09:41' : 'Mode capture', tone: 'accent' });
   const forcage = choixSaison !== 'auto' || clockShifted || simulateFreeUser || variant !== 'reel' || isScreenshotMode;
-  const variantLabel = PAYWALL_VARIANTS.find((v) => v.id === variant)?.label ?? 'Offres réelles';
+  const variantLabel = PAYWALL_VARIANTS.find((v) => v.id === variant)?.label ?? traduire('Offres réelles');
 
   const saisons: Action[] = [
-    { id: 'halloween', label: 'Halloween', icon: 'moon', color: ORANGE_HALLOWEEN, on: choixSaison === 'halloween', state: choixSaison === 'halloween' ? 'Halloween forcé, touche pour l’enlever' : 'Forcer et voir l’accueil', keywords: 'saison decoration citrouille', run: () => forcerSaison('halloween') },
-    { id: 'noel', label: 'Noël', icon: 'star', color: VERT_NOEL, on: choixSaison === 'noel', state: choixSaison === 'noel' ? 'Noël forcé, touche pour l’enlever' : 'Forcer et voir l’accueil', keywords: 'saison decoration sapin neige', run: () => forcerSaison('noel') },
+    { id: 'halloween', label: 'Halloween', icon: 'moon', color: ORANGE_HALLOWEEN, on: choixSaison === 'halloween', state: choixSaison === 'halloween' ? traduire('Halloween forcé, touche pour l’enlever') : traduire('Forcer et voir l’accueil'), keywords: 'saison decoration citrouille', run: () => forcerSaison('halloween') },
+    { id: 'noel', label: traduire('Noël'), icon: 'star', color: VERT_NOEL, on: choixSaison === 'noel', state: choixSaison === 'noel' ? traduire('Noël forcé, touche pour l’enlever') : traduire('Forcer et voir l’accueil'), keywords: 'saison decoration sapin neige', run: () => forcerSaison('noel') },
     {
       id: 'aucune',
-      label: 'Aucune saison',
+      label: traduire('Aucune saison'),
       icon: 'close',
       on: choixSaison === 'aucune',
-      state: choixSaison === 'aucune' ? 'Masquées, touche pour revenir' : choixSaison === 'auto' ? (saisonDuJour ? `Date du jour : ${NOMS_SAISONS[saisonDuJour]}` : 'Date du jour : aucune') : 'Accueil sans décor',
+      state: choixSaison === 'aucune' ? traduire('Masquées, touche pour revenir') : choixSaison === 'auto' ? (saisonDuJour ? traduire("Date du jour : {0}", NOMS_SAISONS[saisonDuJour]) : traduire('Date du jour : aucune')) : traduire('Accueil sans décor'),
       keywords: 'saison decoration date',
       run: () => forcerSaison('aucune'),
     },
   ];
 
   const voir: Action[] = [
-    { id: 'onboarding', label: 'Onboarding', icon: 'eye', state: `${ONBOARDING_SCREEN_LABELS.length} écrans, rien n’est gardé`, run: () => openOnboardingPreview(router, 0) },
-    { id: 'paywall', label: 'Paywall', icon: 'crown', on: variant !== 'reel', state: variant !== 'reel' ? variantLabel : 'Aperçu, aucun achat', keywords: 'abonnement premium', run: () => openPaywallPreview(router, variant) },
-    { id: 'visite', label: 'Visite guidée', icon: 'home', state: `${VISITE_TITRES.length} étapes, avec la voix`, keywords: 'tour presentation', run: () => openPresentation(router, 0) },
-    { id: 'nouveautes', label: 'Nouveautés', icon: 'spark', state: 'La présentation 3.0', keywords: 'presentation revoir mise a jour', run: () => router.push('/nouveautes?revoir=1' as never) },
-    { id: 'scenes', label: 'Scènes animées', icon: 'image', state: `${SCENES_ANIMEES_CODE.length} scènes, pluie, neige`, keywords: 'scene animation effets', run: () => setScenes(true) },
-    { id: 'personnages', label: 'Personnages', icon: 'user', state: `${NB_PERSONNAGES} images du monde`, keywords: 'galerie avatar', run: () => router.push('/studio/images?famille=personnages' as never) },
-    { id: 'images', label: 'Toutes les images', icon: 'grid', state: `${CATALOGUE_IMAGES.length} illustrations`, keywords: 'galerie illustrations', run: () => router.push('/studio/images' as never) },
-    { id: 'chargement', label: 'Chargement', icon: 'sync', state: 'Plein écran, rejouable', keywords: 'splash', run: () => setOverlay({ kind: 'chargement' }) },
-    { id: 'rang', label: 'Passage de rang', icon: 'trophy', state: 'Samouraï, fictif', keywords: 'celebration gamification', run: () => setOverlay({ kind: 'rang', rankIndex: 2 }) },
-    { id: 'bienvenue', label: 'Bienvenue des anciens', icon: 'user', state: 'Résumé de reprise', keywords: 'reprise anciens', run: () => setOverlay({ kind: 'bienvenue' }) },
-    { id: 'premium', label: 'Bienvenue Premium', icon: 'crown', state: 'L’écran après l’achat', keywords: 'achat essai notification', run: () => openPaywallPreview(router, 'bienvenue') },
-    { id: 'kit', label: 'Kit marketing', icon: 'camera', state: 'Les 6 captures', keywords: 'captures store', run: () => router.push('/marketing-kit' as never) },
+    { id: 'onboarding', label: 'Onboarding', icon: 'eye', state: traduire("{0} écrans, rien n’est gardé", ONBOARDING_SCREEN_LABELS.length), run: () => openOnboardingPreview(router, 0) },
+    { id: 'paywall', label: 'Paywall', icon: 'crown', on: variant !== 'reel', state: variant !== 'reel' ? variantLabel : traduire('Aperçu, aucun achat'), keywords: 'abonnement premium', run: () => openPaywallPreview(router, variant) },
+    { id: 'visite', label: traduire('Visite guidée'), icon: 'home', state: traduire("{0} étapes, avec la voix", VISITE_TITRES.length), keywords: 'tour presentation', run: () => openPresentation(router, 0) },
+    { id: 'nouveautes', label: traduire('Nouveautés'), icon: 'spark', state: traduire('La présentation 3.0'), keywords: 'presentation revoir mise a jour', run: () => router.push('/nouveautes?revoir=1' as never) },
+    { id: 'scenes', label: traduire('Scènes animées'), icon: 'image', state: traduire("{0} scènes, pluie, neige", SCENES_ANIMEES_CODE.length), keywords: 'scene animation effets', run: () => setScenes(true) },
+    { id: 'personnages', label: 'Personnages', icon: 'user', state: traduire("{0} images du monde", NB_PERSONNAGES), keywords: 'galerie avatar', run: () => router.push('/studio/images?famille=personnages' as never) },
+    { id: 'images', label: traduire('Toutes les images'), icon: 'grid', state: `${CATALOGUE_IMAGES.length} illustrations`, keywords: 'galerie illustrations', run: () => router.push('/studio/images' as never) },
+    { id: 'chargement', label: traduire('Chargement'), icon: 'sync', state: traduire('Plein écran, rejouable'), keywords: 'splash', run: () => setOverlay({ kind: 'chargement' }) },
+    { id: 'rang', label: traduire('Passage de rang'), icon: 'trophy', state: traduire('Samouraï, fictif'), keywords: 'celebration gamification', run: () => setOverlay({ kind: 'rang', rankIndex: 2 }) },
+    { id: 'bienvenue', label: traduire('Bienvenue des anciens'), icon: 'user', state: traduire('Résumé de reprise'), keywords: 'reprise anciens', run: () => setOverlay({ kind: 'bienvenue' }) },
+    { id: 'premium', label: traduire('Bienvenue Premium'), icon: 'crown', state: traduire('L’écran après l’achat'), keywords: 'achat essai notification', run: () => openPaywallPreview(router, 'bienvenue') },
+    { id: 'kit', label: 'Kit marketing', icon: 'camera', state: traduire('Les 6 captures'), keywords: 'captures store', run: () => router.push('/marketing-kit' as never) },
   ];
 
   const tester: Action[] = [
-    { id: 'installation', label: 'Première installation', icon: 'restore', state: 'Rien n’est effacé', keywords: 'simuler reinstallation onboarding paywall', run: () => simulerPremiereInstallation(router) },
-    { id: 'heny', label: 'Heny', icon: demoActive ? 'restore' : 'dumbbell', on: demoActive, state: demoActive ? 'Chargée, touche pour revenir' : 'Pas chargée, touche pour charger', keywords: 'demo profil', run: toggleHeny },
-    { id: 'gratuit', label: 'Vue gratuite', icon: 'eye', on: simulateFreeUser, state: simulateFreeUser ? 'Active, cadenas visibles' : 'Coupée', keywords: 'premium gratuit cadenas', run: () => setSimulateFreeUser(!simulateFreeUser) },
-    { id: 'capture', label: 'Mode capture', icon: 'camera', on: isScreenshotMode, state: isScreenshotMode ? 'Actif' : 'Coupé', keywords: 'screenshot captures', run: () => void toggleScreenshotMode() },
-    { id: 'notif', label: 'Notification test', icon: 'bell', on: notifEnvoyee, state: notifEnvoyee ? 'Programmée, sors de l’app' : 'Arrive en 5 secondes', keywords: 'notification rappel', run: () => void envoyerNotif() },
-    { id: 'notifs', label: 'Chaque notification', icon: 'doc', state: 'La liste, une par une', keywords: 'notification rappel vibration autorisation', run: () => ctx.openSection('tests') },
-    { id: 'chrono', label: 'Chrono test', icon: 'timer', state: '3 rounds de 15 s', keywords: 'timer cloche', run: () => router.push('/timer?mode=combat&test=studio' as never) },
-    { id: 'fenetres', label: 'Réarmer les fenêtres', icon: 'frame', on: fenetresRearmees, state: fenetresRearmees ? 'Réarmées' : `${ONCE_WINDOWS.length} fenêtres vues une fois`, keywords: 'fenetre une fois rearmer', run: () => void rearmerFenetres() },
-    { id: 'sons', label: 'Sons', icon: 'bell', state: 'Chaque son de l’app', keywords: 'galerie son audio', run: () => router.push('/studio/sons' as never) },
+    { id: 'installation', label: traduire('Première installation'), icon: 'restore', state: traduire('Rien n’est effacé'), keywords: 'simuler reinstallation onboarding paywall', run: () => simulerPremiereInstallation(router) },
+    { id: 'heny', label: 'Heny', icon: demoActive ? 'restore' : 'dumbbell', on: demoActive, state: demoActive ? traduire('Chargée, touche pour revenir') : traduire('Pas chargée, touche pour charger'), keywords: 'demo profil', run: toggleHeny },
+    { id: 'gratuit', label: 'Vue gratuite', icon: 'eye', on: simulateFreeUser, state: simulateFreeUser ? 'Active, cadenas visibles' : traduire('Coupée'), keywords: 'premium gratuit cadenas', run: () => setSimulateFreeUser(!simulateFreeUser) },
+    { id: 'capture', label: 'Mode capture', icon: 'camera', on: isScreenshotMode, state: isScreenshotMode ? 'Actif' : traduire('Coupé'), keywords: 'screenshot captures', run: () => void toggleScreenshotMode() },
+    { id: 'notif', label: 'Notification test', icon: 'bell', on: notifEnvoyee, state: notifEnvoyee ? traduire('Programmée, sors de l’app') : traduire('Arrive en 5 secondes'), keywords: 'notification rappel', run: () => void envoyerNotif() },
+    { id: 'notifs', label: traduire('Chaque notification'), icon: 'doc', state: traduire('La liste, une par une'), keywords: 'notification rappel vibration autorisation', run: () => ctx.openSection('tests') },
+    { id: 'chrono', label: 'Chrono test', icon: 'timer', state: traduire('3 rounds de 15 s'), keywords: 'timer cloche', run: () => router.push('/timer?mode=combat&test=studio' as never) },
+    { id: 'fenetres', label: traduire('Réarmer les fenêtres'), icon: 'frame', on: fenetresRearmees, state: fenetresRearmees ? traduire('Réarmées') : traduire("{0} fenêtres vues une fois", ONCE_WINDOWS.length), keywords: 'fenetre une fois rearmer', run: () => void rearmerFenetres() },
+    { id: 'sons', label: 'Sons', icon: 'bell', state: traduire('Chaque son de l’app'), keywords: 'galerie son audio', run: () => router.push('/studio/sons' as never) },
   ];
 
   const filtre = (list: Action[]) => list.filter((a) => matches(query, a.label, a.state, a.keywords));
@@ -300,12 +301,12 @@ function Studio() {
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-          <EspaceHeader title="Studio YOROI" subtitle="Tout voir, tout lancer, d’un toucher" />
+          <EspaceHeader title="Studio YOROI" subtitle={traduire("Tout voir, tout lancer, d’un toucher")} />
 
           <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 10 }}>
             <View style={{ gap: 2 }}>
               <Ink size={12} weight="bold" color={c.textMuted}>{`Version ${info.version}, build ${info.build}, ${info.model}, ${info.os}`}</Ink>
-              <Ink size={12} weight="bold" color={c.textMuted}>{expiresAt ? `Mode créateur${label ? `, ${label}` : ''}, valable jusqu’au ${formatDate(expiresAt)}` : 'Mode créateur inactif'}</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted}>{expiresAt ? traduire("Mode créateur{0}, valable jusqu’au {1}", label ? `, ${label}` : '', formatDate(expiresAt)) : traduire('Mode créateur inactif')}</Ink>
             </View>
             {pills.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -314,12 +315,12 @@ function Studio() {
                 ))}
               </View>
             ) : (
-              <Ink size={13} color={c.textSecondary}>Rien d’allumé : l’app se comporte normalement.</Ink>
+              <Ink size={13} color={c.textSecondary}>{traduire("Rien d’allumé : l’app se comporte normalement.")}</Ink>
             )}
-            <Button tone="accent" icon="restore" label="Tout remettre normal" onPress={resetEverything} loading={busy === 'reset'} disabled={busy !== null || !forcage} />
+            <Button tone="accent" icon="restore" label={traduire("Tout remettre normal")} onPress={resetEverything} loading={busy === 'reset'} disabled={busy !== null || !forcage} />
           </View>
 
-          <SearchField value={query} onChange={setQuery} placeholder="Chercher un outil : paywall, Heny, sons..." label="Chercher dans le Studio" />
+          <SearchField value={query} onChange={setQuery} placeholder={traduire("Chercher un outil : paywall, Heny, sons...")} label={traduire("Chercher dans le Studio")} />
 
           {groupes.map((g) => (
             <View key={g.titre} style={{ gap: 10 }}>
@@ -332,7 +333,7 @@ function Studio() {
             </View>
           ))}
 
-          {!query.trim() ? <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4, marginTop: 8 }}>Rubriques détaillées</Ink> : null}
+          {!query.trim() ? <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4, marginTop: 8 }}>{traduire("Rubriques détaillées")}</Ink> : null}
           <Apercus />
           <Gamification />
           <Ambiance />
@@ -346,8 +347,8 @@ function Studio() {
           <Liens />
 
           <View style={{ gap: 6, marginTop: 10 }}>
-            <Button tone="ghost" icon="lock" label="Verrouiller le Studio" onPress={lockStudio} />
-            <Note>Sans jeton valide, rien du Studio n’est visible ni ouvrable dans l’app. Le jeton n’est jamais affiché.</Note>
+            <Button tone="ghost" icon="lock" label={traduire("Verrouiller le Studio")} onPress={lockStudio} />
+            <Note>{traduire("Sans jeton valide, rien du Studio n’est visible ni ouvrable dans l’app. Le jeton n’est jamais affiché.")}</Note>
           </View>
         </ScrollView>
         <StudioOverlays overlay={overlay} onClose={() => setOverlay(null)} />

@@ -19,6 +19,7 @@
  */
 import { DRAFT_KEY } from './draft';
 import { NOUVEAUTES_30_KEY } from './parcours';
+import { traduire } from '@/lib/i18n/tr';
 
 export const ONBOARDING_DONE_KEY = 'yoroi_onboarding_done';
 export const TOUR_DONE_KEY = '@yoroi_onboarding_tour_done';
@@ -120,7 +121,7 @@ export async function etatUtilisateur(l: LecteursOuverture): Promise<EtatUtilisa
   if (!settings.ok) echec = true;
 
   // 4. Base SQLite (dans la sandbox de l'app)
-  const profile = await lire(l, 'profil SQLite', () => l.getProfile());
+  const profile = await lire(l, traduire('profil SQLite'), () => l.getProfile());
   if (profile.ok) {
     const p = profile.value;
     if (p && p.name) {

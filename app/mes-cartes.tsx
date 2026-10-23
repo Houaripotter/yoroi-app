@@ -32,6 +32,7 @@ import { chiffresAffiches, chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
 import { DEMO_EXPLOITS, DEMO_PESEE, DEMO_SEANCE_COMBAT, DEMO_SEANCE_COURSE, DEMO_SEANCE_MUSCU, DEMO_SEMAINE, demoAvantApres } from '@/lib/v2/cartes/demo';
 import { lireJournal, setPropositionsAuto } from '@/lib/v2/cartes/store';
 import type { CarteData, FondId, FormatId, ModeleId, OptionsCarte } from '@/lib/v2/cartes/types';
+import { traduire } from '@/lib/i18n/tr';
 
 function ligne(d: CarteData): string {
   return chiffresAffiches(d, chiffresParDefaut(d), 'aucun')
@@ -48,7 +49,7 @@ function ligneExploit(d: CarteData): string {
 
 function ligneAvantApres(d: CarteData): string {
   const x = d.avantApres!;
-  return `${dateAvantApres(x.avant.date)} et ${dateAvantApres(x.apres.date)}, ${tempsEcoule(d)}`;
+  return traduire("{0} et {1}, {2}", dateAvantApres(x.avant.date), dateAvantApres(x.apres.date), tempsEcoule(d));
 }
 
 function PlancheAvantApres({ photos }: { photos: (string | undefined)[] }) {
@@ -63,9 +64,9 @@ function PlancheAvantApres({ photos }: { photos: (string | undefined)[] }) {
     { nom: 'Clair, net', d, o: { sombre: false } },
     { nom: 'Sombre, net', d, o: { sombre: true } },
     { nom: 'Clair, flou', d, o: { sombre: false, flou: true } },
-    { nom: 'Sombre, écart seulement', d, o: { sombre: true, masque: 'ecart' } },
+    { nom: traduire('Sombre, écart seulement'), d, o: { sombre: true, masque: 'ecart' } },
     { nom: 'Clair, en %', d, o: { sombre: false, masque: 'pourcentage' } },
-    { nom: 'Sans pesée proche', d: sansPoids, o: { sombre: true } },
+    { nom: traduire('Sans pesée proche'), d: sansPoids, o: { sombre: true } },
   ];
   return (
     <View style={{ gap: 14 }}>
@@ -120,11 +121,11 @@ function PlancheExploits({ photo, de, a, format }: { photo?: string; de: number;
   const k = useCarte(DEMO_EXPLOITS[0], { modele: 'affiche', format: 'story', fond: 'scene', sombre: true, personnage: true, masque: 'aucun', slogan: 0 });
   const col = Math.floor((width - 16 * 2 - 8 * 4) / 5);
   const variantes: { nom: string; o: Partial<OptionsCarte> }[] = [
-    { nom: 'Scène, personnage', o: { fond: 'scene', personnage: true, sombre: true } },
-    { nom: 'Ma photo', o: { fond: 'photo', personnage: false, sombre: true } },
+    { nom: traduire('Scène, personnage'), o: { fond: 'scene', personnage: true, sombre: true } },
+    { nom: traduire('Ma photo'), o: { fond: 'photo', personnage: false, sombre: true } },
     { nom: 'Uni, personnage', o: { fond: 'uni', personnage: true, sombre: true } },
-    { nom: 'Uni clair, sans', o: { fond: 'uni', personnage: false, sombre: false } },
-    { nom: 'Que mes données', o: { epure: true, sombre: true } },
+    { nom: traduire('Uni clair, sans'), o: { fond: 'uni', personnage: false, sombre: false } },
+    { nom: traduire('Que mes données'), o: { epure: true, sombre: true } },
   ];
   return (
     <View style={{ gap: 14 }}>
@@ -233,8 +234,8 @@ export default function MesCartes() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40, paddingHorizontal: p.planche === '1' || p.planche === '3' || p.planche === '4' ? 16 : 22, gap: 10 }} showsVerticalScrollIndicator={false}>
         <EnTete
-          titre="Mes cartes"
-          sousTitre="Tes exploits, tes séances, tes pesées et tes semaines, prêts à poster."
+          titre={traduire("Mes cartes")}
+          sousTitre={traduire("Tes exploits, tes séances, tes pesées et tes semaines, prêts à poster.")}
           onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as never))}
           style={{ marginHorizontal: p.planche === '1' || p.planche === '3' || p.planche === '4' ? -16 : -22, marginTop: -8 }}
         />
@@ -260,8 +261,8 @@ export default function MesCartes() {
               style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, marginTop: 6 }}
             >
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={15} weight="extraBold">Me proposer une carte</Ink>
-                <Ink size={13} color={c.textSecondary}>Après une séance, un record, un palier, une pesée qui progresse, le dimanche soir pour ta semaine et en début de mois pour ton bilan. Une seule fois par moment.</Ink>
+                <Ink size={15} weight="extraBold">{traduire("Me proposer une carte")}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("Après une séance, un record, un palier, une pesée qui progresse, le dimanche soir pour ta semaine et en début de mois pour ton bilan. Une seule fois par moment.")}</Ink>
               </View>
               <Interrupteur on={auto} />
             </Pressable>
@@ -270,11 +271,11 @@ export default function MesCartes() {
               <View style={{ paddingVertical: 40, alignItems: 'center' }}><ChargementPetit /></View>
             ) : (
               <>
-                <Section titre="Tes exploits" items={(liste.exploits ?? []).slice(0, 30)} videTexte="Tes records, tes paliers, tes objectifs tenus et tes bilans arrivent ici." />
-                {avantApres ? <Section titre="Ton avant après" items={[avantApres]} videTexte="" /> : null}
-                <Section titre="Tes séances" items={liste.seances} videTexte="Enregistre une séance, sa carte arrive ici." />
-                <Section titre="Tes pesées en progrès" items={liste.pesees} videTexte="Quand une pesée te rapproche de ton objectif, sa carte arrive ici." />
-                <Section titre="Tes semaines" items={liste.semaines} videTexte="Le bilan de chaque semaine avec au moins une séance arrive ici." />
+                <Section titre={traduire("Tes exploits")} items={(liste.exploits ?? []).slice(0, 30)} videTexte={traduire("Tes records, tes paliers, tes objectifs tenus et tes bilans arrivent ici.")} />
+                {avantApres ? <Section titre={traduire("Ton avant après")} items={[avantApres]} videTexte="" /> : null}
+                <Section titre={traduire("Tes séances")} items={liste.seances} videTexte={traduire("Enregistre une séance, sa carte arrive ici.")} />
+                <Section titre={traduire("Tes pesées en progrès")} items={liste.pesees} videTexte={traduire("Quand une pesée te rapproche de ton objectif, sa carte arrive ici.")} />
+                <Section titre={traduire("Tes semaines")} items={liste.semaines} videTexte={traduire("Le bilan de chaque semaine avec au moins une séance arrive ici.")} />
               </>
             )}
           </>

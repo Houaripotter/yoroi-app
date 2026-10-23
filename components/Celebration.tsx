@@ -8,6 +8,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
 import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import type { GlyphKind } from '@/components/yoroi/v2/ornements/Glyph';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // CELEBRATION (refonte v2) : le tampon hanko s'imprime, l'XP tombe en plaques.
@@ -37,13 +38,13 @@ interface CelebrationProps {
 
 // Pictogramme du tampon et ton par type
 const CELEBRATION_CONFIG: Record<CelebrationType, { glyph: GlyphKind; tone: 'red' | 'gold' | 'indigo' | 'moss' | 'record'; label: string }> = {
-  goal_reached: { glyph: 'laurier', tone: 'gold', label: 'Objectif atteint' },
-  rank_up: { glyph: 'laurier', tone: 'gold', label: 'Nouveau rang' },
-  challenge_complete: { glyph: 'etoile', tone: 'red', label: 'Défi relevé' },
-  streak_record: { glyph: 'etoile', tone: 'red', label: 'Nouvelle série record' },
-  milestone: { glyph: 'eventail', tone: 'indigo', label: 'Étape franchie' },
-  new_pr: { glyph: 'laurier', tone: 'record', label: 'Nouveau record' },
-  badge_unlocked: { glyph: 'sakura', tone: 'moss', label: 'Sceau gagné' },
+  goal_reached: { glyph: 'laurier', tone: 'gold', label: traduire('Objectif atteint') },
+  rank_up: { glyph: 'laurier', tone: 'gold', label: traduire('Nouveau rang') },
+  challenge_complete: { glyph: 'etoile', tone: 'red', label: traduire('Défi relevé') },
+  streak_record: { glyph: 'etoile', tone: 'red', label: traduire('Nouvelle série record') },
+  milestone: { glyph: 'eventail', tone: 'indigo', label: traduire('Étape franchie') },
+  new_pr: { glyph: 'laurier', tone: 'record', label: traduire('Nouveau record') },
+  badge_unlocked: { glyph: 'sakura', tone: 'moss', label: traduire('Sceau gagné') },
 };
 
 
@@ -134,7 +135,7 @@ export const Celebration: React.FC<CelebrationProps> = ({
     <Modal transparent visible={visible} animationType="none" statusBarTranslucent onRequestClose={handleClose}>
       <View style={styles.container}>
         <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} accessibilityRole="button" accessibilityLabel="Fermer" />
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} />
         </Animated.View>
 
         <ConfettiCannon

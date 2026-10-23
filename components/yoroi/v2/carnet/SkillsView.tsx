@@ -10,10 +10,11 @@ import { STATUS_LABEL, skillCategoryLabel, skillTone, skillsStats } from '@/lib/
 import type { CarnetIllus } from './images';
 import { P, Press, CIcon, Stamp, Field, Enter } from './ui';
 import { BlockHead, CarnetEmpty, FilterChips, Illus, Summary } from './nav';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type SkillFilter = 'all' | 'jjb' | 'lutte' | 'boxe' | 'autre';
 
-const FILTER_LABEL: Record<SkillFilter, string> = { all: 'Tout', jjb: 'JJB', lutte: 'Lutte', boxe: 'Boxe', autre: 'Autre' };
+const FILTER_LABEL: Record<SkillFilter, string> = { all: traduire('Tout'), jjb: 'JJB', lutte: 'Lutte', boxe: 'Boxe', autre: 'Autre' };
 
 function filterOf(s: Skill): SkillFilter {
   const c = String(s.category);
@@ -32,8 +33,8 @@ function illusOf(s: Skill): CarnetIllus {
 
 const GROUPS: { status: SkillStatus; title: string }[] = [
   { status: 'in_progress', title: 'En cours' },
-  { status: 'to_learn', title: 'À apprendre' },
-  { status: 'mastered', title: 'Maîtrisées' },
+  { status: 'to_learn', title: traduire('À apprendre') },
+  { status: 'mastered', title: traduire('Maîtrisées') },
 ];
 
 type Props = {
@@ -63,9 +64,9 @@ export function SkillsView({ skills, onOpen, onCreate }: Props) {
     return (
       <CarnetEmpty
         illus="techniques"
-        title="Note ce que tu apprends"
-        text="Une garde, un passage, un enchaînement : ajoute-la, compte tes répétitions, et marque-la maîtrisée le jour où elle sort toute seule."
-        action="Ajouter ma première technique"
+        title={traduire("Note ce que tu apprends")}
+        text={traduire("Une garde, un passage, un enchaînement : ajoute-la, compte tes répétitions, et marque-la maîtrisée le jour où elle sort toute seule.")}
+        action={traduire("Ajouter ma première technique")}
         onAction={() => onCreate()}
       />
     );
@@ -78,36 +79,36 @@ export function SkillsView({ skills, onOpen, onCreate }: Props) {
           illus="techniques"
           items={[
             { value: String(st.inProgress), label: 'en cours', color: P.goldDark },
-            { value: String(st.toLearn), label: 'à apprendre' },
-            { value: String(st.mastered), label: `maîtrisée${st.mastered > 1 ? 's' : ''}`, color: P.record },
+            { value: String(st.toLearn), label: traduire('à apprendre') },
+            { value: String(st.mastered), label: traduirePluriel(st.mastered, st.mastered > 1, "maîtrisée", "maîtrisées"), color: P.record },
           ]}
         >
           {st.suggestion ? (
-            <Press onPress={() => onOpen(st.suggestion!)} accessibilityRole="button" accessibilityLabel={`À répéter : ${st.suggestion.name}`}>
+            <Press onPress={() => onOpen(st.suggestion!)} accessibilityRole="button" accessibilityLabel={traduire("À répéter : {0}", st.suggestion.name)}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: P.goldSoft }}>
                 <CIcon name="refresh" size={20} color={P.goldDark} />
                 <View style={{ flex: 1, gap: 1 }}>
-                  <Ink size={12} weight="bold" color={P.goldDark}>À répéter aujourd’hui</Ink>
+                  <Ink size={12} weight="bold" color={P.goldDark}>{traduire("À répéter aujourd’hui")}</Ink>
                   <Ink size={15} weight="extraBold" numberOfLines={2}>{st.suggestion.name}</Ink>
                 </View>
                 <CIcon name="chevron" size={16} color={P.goldDark} />
               </View>
             </Press>
           ) : drills > 0 ? (
-            <Ink size={13} weight="medium" color={P.ink2}>{`${drills} répétitions notées en tout.`}</Ink>
+            <Ink size={13} weight="medium" color={P.ink2}>{traduire("{0} répétitions notées en tout.", drills)}</Ink>
           ) : null}
         </Summary>
       </Enter>
 
       <FilterChips items={chips} value={filter} onChange={(k) => { setFilter(k); setQuery(''); }} />
 
-      {skills.length > 6 ? <Field value={query} onChangeText={setQuery} placeholder="Chercher une technique" maxLength={60} autoCorrect={false} accessibilityLabel="Chercher une technique" /> : null}
+      {skills.length > 6 ? <Field value={query} onChangeText={setQuery} placeholder={traduire("Chercher une technique")} maxLength={60} autoCorrect={false} accessibilityLabel={traduire("Chercher une technique")} /> : null}
 
       {list.length === 0 ? (
         query.trim() !== '' ? (
-          <CarnetEmpty compact illus="techniques" title="Rien trouvé" text={`Aucune technique ne contient « ${query.trim()} ».`} action={`Créer « ${query.trim()} »`} onAction={() => onCreate(query.trim())} />
+          <CarnetEmpty compact illus="techniques" title={traduire("Rien trouvé")} text={traduire("Aucune technique ne contient « {0} ».", query.trim())} action={traduire("Créer « {0} »", query.trim())} onAction={() => onCreate(query.trim())} />
         ) : (
-          <CarnetEmpty compact illus="techniques" title="Rien ici pour l’instant" text="Choisis un autre sport, ou ajoute une technique." action="Ajouter une technique" onAction={() => onCreate()} />
+          <CarnetEmpty compact illus="techniques" title={traduire("Rien ici pour l’instant")} text={traduire("Choisis un autre sport, ou ajoute une technique.")} action={traduire("Ajouter une technique")} onAction={() => onCreate()} />
         )
       ) : (
         GROUPS.map((g) => {
@@ -142,13 +143,13 @@ function SkillCard({ s, onOpen }: { s: Skill; onOpen: (s: Skill) => void }) {
           <Ink size={16} weight="extraBold" numberOfLines={2}>{s.name}</Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <Ink size={12} weight="bold" color={tone}>{skillCategoryLabel(s.category)}</Ink>
-            {s.drillCount > 0 ? <Ink size={12} weight="bold" color={P.muted}>{`${s.drillCount} répétitions`}</Ink> : null}
+            {s.drillCount > 0 ? <Ink size={12} weight="bold" color={P.muted}>{traduire("{0} répétitions", s.drillCount)}</Ink> : null}
             {s.notes && s.notes.length > 0 ? <CIcon name="note" size={14} color={P.muted} /> : null}
             {s.videoUrl ? <CIcon name="film" size={14} color={tone} /> : null}
           </View>
         </View>
         {mastered ? (
-          <Stamp size={42} label="Maîtrisée" />
+          <Stamp size={42} label={traduire("Maîtrisée")} />
         ) : (
           <View style={{ paddingHorizontal: 10, minHeight: 30, borderRadius: 15, justifyContent: 'center', backgroundColor: s.status === 'in_progress' ? P.goldSoft : '#F4F2EC' }}>
             <Ink size={12} weight="extraBold" color={s.status === 'in_progress' ? P.goldDark : P.ink2}>{STATUS_LABEL[s.status]}</Ink>

@@ -163,24 +163,25 @@ describe('1. Navigation - Structure des routes', () => {
     });
 
     test('les titres des onglets sont en français', () => {
-      expect(tabBar).toContain("label: 'Accueil'");
-      expect(tabBar).toContain("label: 'Séances'");
-      expect(tabBar).toContain("label: 'Progrès'");
-      expect(tabBar).toContain("label: 'Dojo'");
+      // Le texte français peut être passé à traduire() (langues), il reste écrit en français dans le code
+      expect(tabBar).toMatch(/label: (traduire\()?'Accueil'/);
+      expect(tabBar).toMatch(/label: (traduire\()?'Séances'/);
+      expect(tabBar).toMatch(/label: (traduire\()?'Progrès'/);
+      expect(tabBar).toMatch(/label: (traduire\()?'Dojo'/);
     });
 
     test('le bouton central + ouvre la saisie (ajouter)', () => {
       expect(tabLayout).toContain('<InkTabBar');
       expect(tabLayout).toContain("router.push('/ajouter'");
       expect(tabBar).toContain('onPressAdd()');
-      expect(tabBar).toContain('accessibilityLabel="Enregistrer');
+      expect(tabBar).toMatch(/accessibilityLabel=(\{traduire\(")?"?Enregistrer/);
     });
 
     test('les icônes des onglets sont dessinées en SVG', () => {
       expect(tabBar).toContain('<Svg');
       expect(tabBar).toContain('<Path');
       for (const name of ['index', 'seances', 'progres', 'dojo']) {
-        expect(tabBar).toMatch(new RegExp(`\\b${name}: \\{ label: '`));
+        expect(tabBar).toMatch(new RegExp(`\\b${name}: \\{ label: (traduire\\()?'`));
       }
     });
 
@@ -821,7 +822,7 @@ describe('5. Texte & Localisation', () => {
       let withFrLocale = 0;
       for (const file of dateScreens) {
         const content = readFile(file);
-        if (content.includes("date-fns/locale") || content.includes("{ fr }")) {
+        if (content.includes("date-fns/locale") || content.includes("{ fr }") || content.includes("i18n/dateLocale")) {
           withFrLocale++;
         }
       }

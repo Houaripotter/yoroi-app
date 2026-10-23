@@ -20,6 +20,7 @@
  */
 
 /** Au plus 60 elements animes par scene, pour rester fluide sur un vieil iPhone */
+import { traduire } from '@/lib/i18n/tr';
 export const MAX_PARTICULES = 60;
 
 /** Rapport largeur sur hauteur des images de scene (1200 x 670) */
@@ -217,12 +218,12 @@ export function avanceeTraversee(echelle: [number, number] | undefined, p: numbe
 
 export const LIBELLES_MOUVEMENTS: Record<MouvementCalque['type'], string> = {
   fixe: 'Fond',
-  traversee: 'Traversée',
+  traversee: traduire('Traversée'),
   balancier: 'Balancier',
   roulis: 'Roulis',
   clignote: 'Clignotement',
   flamme: 'Flamme',
-  defile: 'Défilement',
+  defile: traduire('Défilement'),
 };
 
 /** Les effets en code a montrer : tous, sauf ceux que la video montre deja quand elle joue */
@@ -234,14 +235,14 @@ export function effetsVisibles(s: ConfigScene, videoJoue: boolean): Effet[] {
 
 export const LIBELLES_EFFETS: Record<TypeEffet, string> = {
   pluie: 'Pluie fine',
-  eclaboussures: 'Éclaboussures',
+  eclaboussures: traduire('Éclaboussures'),
   neige: 'Neige',
   braises: 'Braises',
-  etoiles: 'Étoiles',
-  brume: 'Nuages et brume',
+  etoiles: traduire('Étoiles'),
+  brume: traduire('Nuages et brume'),
   lueur: 'Lueur',
   train: 'Train lumineux',
-  reflets: 'Reflets d’eau',
+  reflets: traduire('Reflets d’eau'),
 };
 
 /**
@@ -256,7 +257,7 @@ const ETOILE_FILANTE = { l: 18.333, h: 13.433 };
 
 const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
   yatai_pont: {
-    mouvement: 'Les deux lanternes se balancent au vent, le train lumineux passe sur le pont.',
+    mouvement: traduire('Les deux lanternes se balancent au vent, le train lumineux passe sur le pont.'),
     calques: [
       { image: 'sc01_fond_g', zone: { x: 29.833, y: 34.776, l: 7.917, h: 22.537 }, mouvement: { type: 'fixe' } },
       { image: 'sc01_fond_d', zone: { x: 50.5, y: 42.836, l: 6.583, h: 17.164 }, mouvement: { type: 'fixe' } },
@@ -265,14 +266,14 @@ const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
     ],
   },
   moto_tour_eiffel: {
-    mouvement: 'Un bateau-mouche passe sur la Seine devant la tour Eiffel, l’eau scintille (vidéo en boucle).',
+    mouvement: traduire('Un bateau-mouche passe sur la Seine devant la tour Eiffel, l’eau scintille (vidéo en boucle).'),
     // la video (video/sc02.mp4) montre le bateau et l'eau : plus de calque bateau, plus de reflets en code.
     // Calque d'avant la video, a remettre si on retire la video :
     // { image: 'sc02_bateau', zone: { x: 33.75, y: 58.209, l: 19.167, h: 10.448 }, mouvement: { type: 'traversee', de: { x: 43.333, y: 63.433 }, vers: { x: -11.667, y: 68.358 }, echelle: [0.42, 1.05], duree: 24, intervalle: 45, depart: 3 } },
     masquesAvecVideo: ['reflets'],
   },
   rue_tokyo: {
-    mouvement: 'Un passant remonte la ruelle et s’éloigne, l’enseigne du konbini grésille.',
+    mouvement: traduire('Un passant remonte la ruelle et s’éloigne, l’enseigne du konbini grésille.'),
     calques: [
       { image: 'sc03_fond', zone: { x: 15.833, y: 52.985, l: 6.25, h: 24.627 }, mouvement: { type: 'fixe' } },
       { image: 'sc03_passant', zone: { x: 15.917, y: 52.985, l: 6.083, h: 25.075 }, mouvement: { type: 'traversee', de: { x: 17.083, y: 85.8 }, vers: { x: 21.833, y: 59.403 }, echelle: [1.3, 0.42], pas: 1.2, duree: 16, intervalle: 26, depart: 1 } },
@@ -280,7 +281,7 @@ const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
     ],
   },
   passage_niveau_mer: {
-    mouvement: 'Le tramway vert glisse le long de la côte au coucher du soleil, la mer scintille (vidéo en boucle).',
+    mouvement: traduire('Le tramway vert glisse le long de la côte au coucher du soleil, la mer scintille (vidéo en boucle).'),
     // la video (video/sc04.mp4) montre le tramway qui passe et la mer : l'image a ete retouchee sans passage a niveau
     // (19 octobre 2026, ancienne image et calques archives dans _archive_ancien_design_2026-10-09/scenes_animees_v5/).
     // Plus de calques feux ni reflet, plus de feux rouges ni de reflets en code.
@@ -291,7 +292,7 @@ const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
     masquesAvecVideo: ['reflets'],
   },
   toit_train: {
-    mouvement: 'Le train roule vers la ville, les portiques et les poteaux de la voie défilent (vidéo en boucle).',
+    mouvement: traduire('Le train roule vers la ville, les portiques et les poteaux de la voie défilent (vidéo en boucle).'),
     // la video (video/sc05.mp4) montre le train qui avance : plus de calque poteau, plus de brume en code.
     // Calques d'avant la video, a remettre si on retire la video :
     // { image: 'sc05_fond', zone: { x: 4.333, y: 30.448, l: 8.75, h: 60.448 }, mouvement: { type: 'fixe' } },
@@ -299,18 +300,18 @@ const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
     masquesAvecVideo: ['brume'],
   },
   hublot_avion: {
-    mouvement: 'La mer de nuages défile sous l’aile, derrière le hublot.',
+    mouvement: traduire('La mer de nuages défile sous l’aile, derrière le hublot.'),
     calques: [
       { image: 'sc06_nuages', zone: { x: 19.833, y: 50.149, l: 63, h: 34.328 }, mouvement: { type: 'defile', largeur: 112, periode: 37.333, duree: 30, sens: -1 } },
       { image: 'sc06_premier_plan', zone: { x: 19.5, y: 49.552, l: 63.667, h: 35.522 }, mouvement: { type: 'fixe' } },
     ],
   },
   aile_avion: {
-    mouvement: 'L’aile penche doucement puis revient, les nuages défilent dessous (vidéo en boucle).',
+    mouvement: traduire('L’aile penche doucement puis revient, les nuages défilent dessous (vidéo en boucle).'),
     masquesAvecVideo: ['brume'],
   },
   balancoire_plage: {
-    mouvement: 'La balançoire se balance doucement sous le palmier, les vagues roulent sur le sable (vidéo en boucle).',
+    mouvement: traduire('La balançoire se balance doucement sous le palmier, les vagues roulent sur le sable (vidéo en boucle).'),
     // la video (video/sc08.mp4) montre la balancoire et les vagues : plus de calque balancoire, plus de reflets en code.
     // Calques d'avant la video, a remettre si on retire la video :
     // { image: 'sc08_fond', zone: { x: 58.333, y: 3.284, l: 18.917, h: 81.791 }, mouvement: { type: 'fixe' } },
@@ -318,14 +319,14 @@ const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
     masquesAvecVideo: ['reflets'],
   },
   bivouac_desert: {
-    mouvement: 'Les flammes du feu de camp dansent, les braises montent.',
+    mouvement: traduire('Les flammes du feu de camp dansent, les braises montent.'),
     calques: [
       { image: 'sc09_fond', zone: { x: 38.583, y: 53.582, l: 7.333, h: 19.104 }, mouvement: { type: 'fixe' } },
       { image: 'sc09_flamme', zone: { x: 38.667, y: 53.731, l: 7.083, h: 17.761 }, pivot: { x: 50, y: 98 }, mouvement: { type: 'flamme', amplitude: 0.14, periode: 0.9 } },
     ],
   },
   voie_lactee_nuages: {
-    mouvement: 'La mer de nuages glisse lentement à l’horizon, une étoile filante passe de temps en temps.',
+    mouvement: traduire('La mer de nuages glisse lentement à l’horizon, une étoile filante passe de temps en temps.'),
     calques: [
       { image: 'sc10_nuages', zone: { x: 38.5, y: 52.537, l: 61.5, h: 14.328 }, mouvement: { type: 'defile', largeur: 246, periode: 123, duree: 95, sens: 1 } },
       { image: 'sc10_bord', zone: { x: 38.5, y: 52.537, l: 4.833, h: 14.328 }, mouvement: { type: 'fixe' } },
@@ -333,13 +334,13 @@ const MOUVEMENT_SCENE: Record<SceneAnimeeId, MouvementScene> = {
     ],
   },
   lampadaire_hiver: {
-    mouvement: 'La neige tombe, la lumière du lampadaire grésille et baisse par instants.',
+    mouvement: traduire('La neige tombe, la lumière du lampadaire grésille et baisse par instants.'),
     calques: [
       { image: 'sc11_lampe_eteinte', zone: { x: 6.583, y: 0.896, l: 71.75, h: 99.104 }, mouvement: { type: 'clignote', periode: 9, repos: 0, eclat: 1, forme: 'eclats' } },
     ],
   },
   voie_lactee_cote: {
-    mouvement: 'Les vagues roulent vers la falaise, une étoile filante traverse le ciel de temps en temps.',
+    mouvement: traduire('Les vagues roulent vers la falaise, une étoile filante traverse le ciel de temps en temps.'),
     calques: [
       { image: 'sc12_mer', zone: { x: 61.25, y: 69.851, l: 38.75, h: 30.149 }, mouvement: { type: 'defile', largeur: 126.667, periode: 63.333, duree: 40, sens: -1 } },
       { image: 'sc12_bord', zone: { x: 61.25, y: 69.851, l: 4.083, h: 30.149 }, mouvement: { type: 'fixe' } },
@@ -354,7 +355,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'yatai_pont',
     numero: 1,
     fichier: 'sc01_yatai_pont.webp',
-    nom: 'Yatai sous le pont',
+    nom: traduire('Yatai sous le pont'),
     ...MOUVEMENT_SCENE.yatai_pont,
     fond: ['#3C4555', '#46414F', '#33384A'],
     effets: [
@@ -374,7 +375,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'moto_tour_eiffel',
     numero: 2,
     fichier: 'sc02_moto_tour_eiffel.webp',
-    nom: 'Moto face à la tour Eiffel',
+    nom: traduire('Moto face à la tour Eiffel'),
     ...MOUVEMENT_SCENE.moto_tour_eiffel,
     fond: ['#9A9E92', '#A79273', '#7E736B'],
     effets: [
@@ -388,7 +389,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'rue_tokyo',
     numero: 3,
     fichier: 'sc03_rue_tokyo.webp',
-    nom: 'Rue de Tokyo au crépuscule',
+    nom: traduire('Rue de Tokyo au crépuscule'),
     ...MOUVEMENT_SCENE.rue_tokyo,
     fond: ['#957897', '#8B7678', '#635560'],
     effets: [
@@ -404,7 +405,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'passage_niveau_mer',
     numero: 4,
     fichier: 'sc04_passage_niveau_mer.webp',
-    nom: 'Tramway au bord de la mer',
+    nom: traduire('Tramway au bord de la mer'),
     ...MOUVEMENT_SCENE.passage_niveau_mer,
     fond: ['#D39B90', '#A87F6C', '#865D52'],
     effets: [
@@ -431,7 +432,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'toit_train',
     numero: 5,
     fichier: 'sc05_toit_train.webp',
-    nom: 'Sur le toit du train',
+    nom: traduire('Sur le toit du train'),
     ...MOUVEMENT_SCENE.toit_train,
     fond: ['#314363', '#534A4B', '#4D4646'],
     effets: [
@@ -445,7 +446,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'hublot_avion',
     numero: 6,
     fichier: 'sc06_hublot_avion.webp',
-    nom: 'Hublot au coucher du soleil',
+    nom: traduire('Hublot au coucher du soleil'),
     ...MOUVEMENT_SCENE.hublot_avion,
     fond: ['#AC888E', '#C09371', '#9D8578'],
     effets: [
@@ -461,7 +462,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'aile_avion',
     numero: 7,
     fichier: 'sc07_aile_avion.webp',
-    nom: 'Aile au-dessus des nuages',
+    nom: traduire('Aile au-dessus des nuages'),
     ...MOUVEMENT_SCENE.aile_avion,
     fond: ['#B88790', '#D3A482', '#B3826F'],
     effets: [
@@ -476,7 +477,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'balancoire_plage',
     numero: 8,
     fichier: 'sc08_balancoire_plage.webp',
-    nom: 'Balançoire sur la plage',
+    nom: traduire('Balançoire sur la plage'),
     ...MOUVEMENT_SCENE.balancoire_plage,
     fond: ['#9DA592', '#A4AF9B', '#AFB9A6'],
     effets: [
@@ -490,7 +491,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'bivouac_desert',
     numero: 9,
     fichier: 'sc09_bivouac_desert.webp',
-    nom: 'Bivouac dans le désert',
+    nom: traduire('Bivouac dans le désert'),
     ...MOUVEMENT_SCENE.bivouac_desert,
     fond: ['#7E3D48', '#8A493C', '#854534'],
     effets: [
@@ -504,7 +505,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'voie_lactee_nuages',
     numero: 10,
     fichier: 'sc10_voie_lactee_nuages.webp',
-    nom: 'Voie lactée sur la mer de nuages',
+    nom: traduire('Voie lactée sur la mer de nuages'),
     ...MOUVEMENT_SCENE.voie_lactee_nuages,
     fond: ['#304062', '#60687F', '#5D5454'],
     effets: [
@@ -518,7 +519,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'lampadaire_hiver',
     numero: 11,
     fichier: 'sc11_lampadaire_hiver.webp',
-    nom: 'Lampadaire dans la nuit d’hiver',
+    nom: traduire('Lampadaire dans la nuit d’hiver'),
     ...MOUVEMENT_SCENE.lampadaire_hiver,
     fond: ['#30455B', '#394D63', '#677F9A'],
     effets: [
@@ -531,7 +532,7 @@ export const SCENES_ANIMEES_CODE: ConfigScene[] = [
     id: 'voie_lactee_cote',
     numero: 12,
     fichier: 'sc12_voie_lactee_cote.webp',
-    nom: 'Voie lactée sur la côte',
+    nom: traduire('Voie lactée sur la côte'),
     ...MOUVEMENT_SCENE.voie_lactee_cote,
     fond: ['#1F2951', '#38466E', '#2A3750'],
     effets: [

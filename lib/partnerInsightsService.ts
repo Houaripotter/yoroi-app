@@ -4,6 +4,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Archetype } from './partnerModel';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export interface PartnerStats {
   id: string;
@@ -53,7 +54,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
     insights.push({
       id: 'worst_matchups',
       type: 'worst_matchups',
-      title: 'Tes adversaires les plus difficiles',
+      title: traduire('Tes adversaires les plus difficiles'),
       text: bad.map(b => `${b.name} (${b.winrate}%)`).join(', '),
       color: '#EF4444',
       partnerIds: bad.map(b => b.id),
@@ -82,8 +83,8 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
     insights.push({
       id: 'archetype_weakness',
       type: 'archetype_weakness',
-      title: `Style qui te pose probleme`,
-      text: `Contre les ${worst.arch}s : ${worst.winrate}% de victoires. Travaille ce contre-style.`,
+      title: traduire(`Style qui te pose probleme`),
+      text: traduire("Contre les {0}s : {1}% de victoires. Travaille ce contre-style.", worst.arch, worst.winrate),
       color: '#F59E0B',
     });
   }
@@ -112,8 +113,8 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
       insights.push({
         id: 'belt_stat',
         type: 'belt_stat',
-        title: `Contre ceinture ${target.belt}`,
-        text: `${target.winrate}% (${target.total} rounds). ${target.winrate >= 40 ? 'Tu tiens la' : 'Zone a travailler'}.`,
+        title: traduire("Contre ceinture {0}", target.belt),
+        text: `${target.winrate}% (${target.total} rounds). ${target.winrate >= 40 ? traduire('Tu tiens la') : 'Zone a travailler'}.`,
         color: target.winrate >= 40 ? '#10B981' : '#EF4444',
       });
     }
@@ -129,7 +130,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
       id: 'dormant',
       type: 'dormant',
       title: 'Partenaires dormants',
-      text: `${dormant.length} partenaire${dormant.length > 1 ? 's' : ''} sans sparring depuis 3+ semaines.`,
+      text: traduirePluriel(dormant.length, dormant.length > 1, "{0} partenaire sans sparring depuis 3+ semaines.", "{0} partenaires sans sparring depuis 3+ semaines.", dormant.length),
       color: '#8B5CF6',
       partnerIds: dormant.map(d => d.id),
     });
@@ -144,7 +145,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
       id: 'rival_of_month',
       type: 'rival_of_month',
       title: `Rival principal`,
-      text: `${top.name} : ${top.total} rounds. ${top.winrate != null ? `Taux de victoire ${top.winrate}%.` : ''}`,
+      text: `${top.name} : ${top.total} rounds. ${top.winrate != null ? traduire("Taux de victoire {0}%.", top.winrate) : ''}`,
       color: '#D4AF37',
       partnerIds: [top.id],
     });

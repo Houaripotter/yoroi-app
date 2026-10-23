@@ -11,21 +11,22 @@ import { ShareStudio } from '@/components/yoroi/v2/partage/ShareStudio';
 import { cardWidthFor } from '@/components/yoroi/v2/partage/cardKit';
 import { useStudio } from '@/lib/v2/partage/useStudio';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function WeeklyRecapV2Screen() {
   const { width: sw } = useWindowDimensions();
   const { stats, isLoading } = useWeekStats();
   const id = useCardIdentity();
-  const studio = useStudio({ dialogTitle: 'Partager ma semaine', source: 'recap_semaine' });
+  const studio = useStudio({ dialogTitle: traduire('Partager ma semaine'), source: 'recap_semaine' });
 
   const empty = !isLoading && (!stats || stats.totalSessions === 0)
-    ? { title: 'Ta semaine est encore vierge', text: 'Fais une séance et ta carte de la semaine se remplit toute seule.', action: 'Lancer une séance', onAction: () => router.push('/seance' as any) }
+    ? { title: traduire('Ta semaine est encore vierge'), text: traduire('Fais une séance et ta carte de la semaine se remplit toute seule.'), action: traduire('Lancer une séance'), onAction: () => router.push('/seance' as any) }
     : null;
 
   return (
     <ShareStudio
-      title="Ma semaine"
-      subtitle="Tes jours d’entraînement de la semaine"
+      title={traduire("Ma semaine")}
+      subtitle={traduire("Tes jours d’entraînement de la semaine")}
       loading={isLoading}
       empty={empty}
       style={studio.style}

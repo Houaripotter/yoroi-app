@@ -13,6 +13,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { safeOpenURL } from '@/lib/security/validators';
 import { Card, P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
 import type { Source } from '@/lib/v2/nutrition/formulas';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export { P, tap };
 
@@ -236,7 +237,7 @@ export function SourceRow({ source }: { source: Source }) {
   );
   if (!source.url) return content;
   return (
-    <Pressable onPress={() => { tap(); safeOpenURL(source.url!); }} accessibilityRole="link" accessibilityLabel={`Ouvrir la source ${source.label}`}>
+    <Pressable onPress={() => { tap(); safeOpenURL(source.url!); }} accessibilityRole="link" accessibilityLabel={traduire("Ouvrir la source {0}", source.label)}>
       {content}
     </Pressable>
   );
@@ -290,7 +291,7 @@ export function NumField({
       </Ink>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
         <TextInput
-          value={integer ? value : value.replace('.', ',')}
+          value={integer ? value : value.replace('.', DECIMAL)}
           onChangeText={(t) => onChange(integer ? t.replace(/[^0-9]/g, '') : t.replace(',', '.').replace(/[^0-9.]/g, ''))}
           keyboardType={keyboardType ?? (integer ? 'number-pad' : 'decimal-pad')}
           placeholder={placeholder}
@@ -434,11 +435,11 @@ export function Stepper({ value, onChange, min = 1, max = 365, unit }: { value: 
   );
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      {btn('minus', value - 1, 'Un de moins')}
+      {btn('minus', value - 1, traduire('Un de moins'))}
       <View style={{ flex: 1, alignItems: 'center' }}>
         <BigNumber value={String(value)} unit={unit} size={44} />
       </View>
-      {btn('plus', value + 1, 'Un de plus')}
+      {btn('plus', value + 1, traduire('Un de plus'))}
     </View>
   );
 }
@@ -460,7 +461,7 @@ export function MacroBars({ lines, compact }: { lines: MacroLine[]; compact?: bo
         ))}
       </View>
       {lines.map((l) => (
-        <View key={l.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }} accessible accessibilityLabel={`${l.label} : ${l.grams} grammes, ${l.percent} pour cent`}>
+        <View key={l.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }} accessible accessibilityLabel={traduire("{0} : {1} grammes, {2} pour cent", l.label, l.grams, l.percent)}>
           <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: l.color }} />
           <Ink size={15} weight="bold" style={{ flex: 1 }}>
             {l.label}
@@ -491,7 +492,7 @@ export function BottomSheet({ visible, onClose, title, subtitle, children, foote
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.42)' }} onPress={onClose} accessibilityLabel="Fermer" />
+        <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(29,32,41,0.42)' }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
         <View style={{ maxHeight: '90%', backgroundColor: P.paper, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 10 }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.line, marginBottom: 8 }} />
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 20, gap: 12 }}>
@@ -505,7 +506,7 @@ export function BottomSheet({ visible, onClose, title, subtitle, children, foote
                 </Ink>
               ) : null}
             </View>
-            <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={6} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={6} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
               <NIcon name="close" size={18} />
             </Pressable>
           </View>

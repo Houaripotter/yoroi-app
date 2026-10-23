@@ -6,6 +6,7 @@
 // ============================================
 
 import logger from './security/logger';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export interface BackupDiff {
   newWeights: number;
@@ -155,27 +156,27 @@ export async function computeBackupDiff(backupData: any): Promise<BackupDiff> {
  */
 export function formatDiffMessage(diff: BackupDiff): string {
   if (diff.totalNew === 0 && !diff.hasProfileUpdate) {
-    return "Aucune nouvelle donnée détectée dans le backup (tu es déjà à jour).";
+    return traduire("Aucune nouvelle donnée détectée dans le backup (tu es déjà à jour).");
   }
 
   const parts: string[] = [];
-  if (diff.newTrainings > 0) parts.push(`${diff.newTrainings} séance${diff.newTrainings > 1 ? 's' : ''}`);
-  if (diff.newWeights > 0) parts.push(`${diff.newWeights} pesée${diff.newWeights > 1 ? 's' : ''}`);
+  if (diff.newTrainings > 0) parts.push(traduirePluriel(diff.newTrainings, diff.newTrainings > 1, "{0} séance", "{0} séances", diff.newTrainings));
+  if (diff.newWeights > 0) parts.push(traduirePluriel(diff.newWeights, diff.newWeights > 1, "{0} pesée", "{0} pesées", diff.newWeights));
   if (diff.newPhotos > 0) parts.push(`${diff.newPhotos} photo${diff.newPhotos > 1 ? 's' : ''}`);
   if (diff.newMeasurements > 0) parts.push(`${diff.newMeasurements} mensuration${diff.newMeasurements > 1 ? 's' : ''}`);
   if (diff.newBodyCompositions > 0) parts.push(`${diff.newBodyCompositions} composition${diff.newBodyCompositions > 1 ? 's' : ''}`);
   if (diff.newClubs > 0) parts.push(`${diff.newClubs} club${diff.newClubs > 1 ? 's' : ''}`);
   if (diff.newSparringPartners > 0) parts.push(`${diff.newSparringPartners} partenaire${diff.newSparringPartners > 1 ? 's' : ''}`);
-  if (diff.newCompetitions > 0) parts.push(`${diff.newCompetitions} compétition${diff.newCompetitions > 1 ? 's' : ''}`);
-  if (diff.newInjuries > 0) parts.push(`${diff.newInjuries} blessure${diff.newInjuries > 1 ? 's' : ''}`);
-  if (diff.newSleepEntries > 0) parts.push(`${diff.newSleepEntries} nuit${diff.newSleepEntries > 1 ? 's' : ''}`);
+  if (diff.newCompetitions > 0) parts.push(traduirePluriel(diff.newCompetitions, diff.newCompetitions > 1, "{0} compétition", "{0} compétitions", diff.newCompetitions));
+  if (diff.newInjuries > 0) parts.push(traduirePluriel(diff.newInjuries, diff.newInjuries > 1, "{0} blessure", "{0} blessures", diff.newInjuries));
+  if (diff.newSleepEntries > 0) parts.push(traduirePluriel(diff.newSleepEntries, diff.newSleepEntries > 1, "{0} nuit", "{0} nuits", diff.newSleepEntries));
   if (diff.newMoodEntries > 0) parts.push(`${diff.newMoodEntries} humeur${diff.newMoodEntries > 1 ? 's' : ''}`);
-  if (diff.newHydrationEntries > 0) parts.push(`${diff.newHydrationEntries} hydratation${diff.newHydrationEntries > 1 ? 's' : ''}`);
+  if (diff.newHydrationEntries > 0) parts.push(traduirePluriel(diff.newHydrationEntries, diff.newHydrationEntries > 1, "{0} hydratation", "{0} hydratations", diff.newHydrationEntries));
   if (diff.newBadges > 0) parts.push(`${diff.newBadges} badge${diff.newBadges > 1 ? 's' : ''}`);
 
   if (parts.length === 0) {
-    return diff.hasProfileUpdate ? "Mise à jour du profil uniquement." : "Aucune nouveauté détectée.";
+    return diff.hasProfileUpdate ? traduire("Mise à jour du profil uniquement.") : traduire("Aucune nouveauté détectée.");
   }
 
-  return `Tu vas gagner :\n• ${parts.join('\n• ')}`;
+  return traduire("Tu vas gagner :\n• {0}", parts.join('\n• '));
 }

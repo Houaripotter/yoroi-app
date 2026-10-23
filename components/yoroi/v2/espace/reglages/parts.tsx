@@ -20,6 +20,7 @@ import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { BusteRond } from '@/components/yoroi/v2/espace/BusteRond';
 import { Icon, RoundButton } from '../ui';
 import type { IconName } from '../ui';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 // ============================================
 // EN-TETE DU PROFIL (haut des Reglages)
@@ -41,7 +42,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
   const taille = profile?.height_cm ? `${profile.height_cm} cm` : null;
   // 18 octobre 2026 : le poids du corps reste en kilos partout (la pesee se saisit en kilos)
   const cible = profile?.target_weight
-    ? `objectif ${String(Math.round(profile.target_weight * 10) / 10).replace('.', ',')} kg`
+    ? traduire("objectif {0} kg", String(Math.round(profile.target_weight * 10) / 10).replace('.', DECIMAL))
     : null;
   const details = [taille, cible].filter(Boolean).join(', ');
 
@@ -60,11 +61,11 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
   const texte = (
     <>
       <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name || 'Ton prénom'}</Ink>
+        <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name || traduire('Ton prénom')}</Ink>
         <Ink size={13} weight="bold" color={sports.length ? c.textSecondary : c.accent} numberOfLines={2}>
-          {sports.length ? sports.join(', ') : 'Choisis tes sports'}
+          {sports.length ? sports.join(', ') : traduire('Choisis tes sports')}
         </Ink>
-        <Ink size={13} weight="medium" color={c.textMuted} numberOfLines={1}>{details || 'Ta taille et ton objectif de poids'}</Ink>
+        <Ink size={13} weight="medium" color={c.textMuted} numberOfLines={1}>{details || traduire('Ta taille et ton objectif de poids')}</Ink>
       </View>
       <Icon name="chevron" size={16} color={c.textMuted} stroke={2.4} />
     </>
@@ -75,7 +76,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
       <Pressable
         onPress={() => { selectionAsync().catch(() => {}); onPress(); }}
         accessibilityRole="button"
-        accessibilityLabel={`Ton profil, ${name || 'à compléter'}. Modifier`}
+        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || 'à compléter')}
         style={({ pressed }) => ({ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 14, borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, transform: [{ scale: pressed ? 0.99 : 1 }] })}
       >
         {rond}
@@ -90,7 +91,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
       <Pressable
         onPress={() => { selectionAsync().catch(() => {}); onEditPhoto(); }}
         accessibilityRole="button"
-        accessibilityLabel="Modifier ta photo et son contour"
+        accessibilityLabel={traduire("Modifier ta photo et son contour")}
         style={({ pressed }) => ({ paddingLeft: 14, paddingVertical: 14, paddingRight: 4, transform: [{ scale: pressed ? 0.96 : 1 }] })}
       >
         {rond}
@@ -101,7 +102,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
       <Pressable
         onPress={() => { selectionAsync().catch(() => {}); onPress(); }}
         accessibilityRole="button"
-        accessibilityLabel={`Ton profil, ${name || 'à compléter'}. Modifier`}
+        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || 'à compléter')}
         style={({ pressed }) => ({ flex: 1, flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 14, paddingLeft: 10, paddingRight: 14, alignSelf: 'stretch', transform: [{ scale: pressed ? 0.99 : 1 }] })}
       >
         {texte}
@@ -255,7 +256,7 @@ export function Sheet({ visible, onClose, title, subtitle, children }: { visible
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(29,32,41,0.45)' }}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Fermer" />
+        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel={traduire("Fermer")} />
         <View style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '88%' }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginTop: 10 }} />
           <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 22, gap: 14 }} keyboardShouldPersistTaps="handled">
@@ -264,7 +265,7 @@ export function Sheet({ visible, onClose, title, subtitle, children }: { visible
                 <Ink size={22} weight="black" tight>{title}</Ink>
                 {subtitle ? <Ink size={14} color={c.textSecondary}>{subtitle}</Ink> : null}
               </View>
-              <RoundButton icon="close" label="Fermer" onPress={onClose} />
+              <RoundButton icon="close" label={traduire("Fermer")} onPress={onClose} />
             </View>
             {children}
           </ScrollView>

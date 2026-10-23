@@ -15,6 +15,7 @@ import { PlusHint } from '@/components/yoroi/v2/PlusHint';
 import { Card, P, Press, useAccent } from './kit';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { devNow } from '@/lib/v2/creator/devClock';
+import { traduire } from '@/lib/i18n/tr';
 
 const TONES = {
   red: { ink: P.accent, soft: P.accentSoft },
@@ -33,7 +34,7 @@ export function ConseilDuJour({ trainings, lastWeighIso, goal, freins }: { train
   const { accent, accentTint } = useAccent();
   const tone = c.tone === 'red' ? { ink: accent, soft: accentTint } : TONES[c.tone];
   // ajout : repere vers le +, et l'appui ouvre l'onglet qui montre le resultat
-  const addHint = c.href === '/pesee' ? 'Touche + pour te peser' : c.href === '/seance' ? 'Touche + pour t’entraîner' : null;
+  const addHint = c.href === '/pesee' ? traduire('Touche + pour te peser') : c.href === '/seance' ? traduire('Touche + pour t’entraîner') : null;
   const href = c.href === '/pesee' ? '/progres' : c.href === '/seance' ? '/seances' : c.href;
 
   const body = (
@@ -43,8 +44,7 @@ export function ConseilDuJour({ trainings, lastWeighIso, goal, freins }: { train
       </View>
       <View style={{ flex: 1, gap: 3 }}>
         <Ink size={12} weight="bold" color={P.muted}>
-          Le conseil du jour
-        </Ink>
+          {traduire("Le conseil du jour")}</Ink>
         <Ink size={17} weight="black" tight numberOfLines={2}>
           {c.title}
         </Ink>
@@ -65,9 +65,9 @@ export function ConseilDuJour({ trainings, lastWeighIso, goal, freins }: { train
     </Card>
   );
 
-  if (!href) return <View accessible accessibilityLabel={`Le conseil du jour : ${c.title}. ${c.text}`}>{body}</View>;
+  if (!href) return <View accessible accessibilityLabel={traduire("Le conseil du jour : {0}. {1}", c.title, c.text)}>{body}</View>;
   return (
-    <Press onPress={() => router.push(href as any)} accessibilityRole="button" accessibilityLabel={`Le conseil du jour : ${c.title}. ${c.text} ${addHint ?? c.action ?? ''}`}>
+    <Press onPress={() => router.push(href as any)} accessibilityRole="button" accessibilityLabel={traduire("Le conseil du jour : {0}. {1} {2}", c.title, c.text, addHint ?? c.action ?? '')}>
       {body}
     </Press>
   );

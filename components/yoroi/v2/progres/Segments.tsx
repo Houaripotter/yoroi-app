@@ -14,33 +14,34 @@ import { CORPS } from '@/lib/v2/progres/couleursCorps';
 import type { CompoPoint, SegmentId } from '@/lib/v2/progres/composition';
 import { num } from '@/lib/v2/progres/format';
 import { BALANCE_FIELDS, fmtAutre, fmtBalance } from '@/lib/v2/balance/format';
+import { traduire } from '@/lib/i18n/tr';
 
 const ROWS: { id: SegmentId; label: string }[] = [
-  { id: 'arm_right', label: 'Bras droit' },
-  { id: 'arm_left', label: 'Bras gauche' },
+  { id: 'arm_right', label: traduire('Bras droit') },
+  { id: 'arm_left', label: traduire('Bras gauche') },
   { id: 'trunk', label: 'Tronc' },
   { id: 'leg_right', label: 'Jambe droite' },
   { id: 'leg_left', label: 'Jambe gauche' },
 ];
 
 const PHYSIQUE: Record<number, string> = {
-  1: 'obésité cachée',
-  2: 'obèse',
+  1: traduire('obésité cachée'),
+  2: traduire('obèse'),
   3: 'costaud',
-  4: 'manque d’exercice',
+  4: traduire('manque d’exercice'),
   5: 'standard',
-  6: 'standard musclé',
+  6: traduire('standard musclé'),
   7: 'mince',
-  8: 'mince et musclé',
-  9: 'très musclé',
+  8: traduire('mince et musclé'),
+  9: traduire('très musclé'),
 };
 
 /** L'ecart droite gauche d'une paire, en phrase courte */
 function gap(what: 'Bras' | 'Jambes', right?: number, left?: number): string | null {
   if (right === undefined || left === undefined) return null;
   const d = Math.round((right - left) * 10) / 10;
-  if (Math.abs(d) < 0.1) return `${what} : autant de muscle à droite qu’à gauche`;
-  return `${what} : ${num(Math.abs(d), 1)} kg de muscle de plus à ${d > 0 ? 'droite' : 'gauche'}`;
+  if (Math.abs(d) < 0.1) return traduire("{0} : autant de muscle à droite qu’à gauche", what);
+  return traduire("{0} : {1} kg de muscle de plus à {2}", what, num(Math.abs(d), 1), d > 0 ? 'droite' : 'gauche');
 }
 
 export function hasSegments(p: CompoPoint | null | undefined): boolean {
@@ -90,7 +91,7 @@ export function SegmentsCard({ point, style }: { point: CompoPoint; style?: Styl
               <View
                 key={r.id}
                 accessible
-                accessibilityLabel={`${r.label}${f !== undefined ? `, graisse ${num(f, 1)} pour cent` : ''}${m !== undefined ? `, muscle ${num(m, 1)} kilos` : ''}`}
+                accessibilityLabel={`${r.label}${f !== undefined ? traduire(", graisse {0} pour cent", num(f, 1)) : ''}${m !== undefined ? `, muscle ${num(m, 1)} kilos` : ''}`}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, paddingTop: i === 0 ? 0 : 8 }}
               >
                 <Ink size={13} weight="extraBold" numberOfLines={1} style={{ width: 106 }}>{r.label}</Ink>
@@ -125,7 +126,7 @@ export function SegmentsCard({ point, style }: { point: CompoPoint; style?: Styl
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: rows.length ? 10 : 0, borderTopWidth: rows.length ? 1 : 0, borderColor: c.divider }}>
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={14} weight="extraBold">Morphologie</Ink>
-            <Ink size={12} color={c.textSecondary} numberOfLines={2}>Selon ta balance, de 1 à 9</Ink>
+            <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire("Selon ta balance, de 1 à 9")}</Ink>
           </View>
           <Ink size={14} weight="black" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'right' }}>{`${physique}, ${PHYSIQUE[physique] ?? ''}`}</Ink>
         </View>
@@ -156,8 +157,8 @@ export function ExtrasCard({ point, style }: { point: CompoPoint; style?: StyleP
   ];
   return (
     <View style={[{ borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, padding: 16, gap: 6 }, style]}>
-      <Ink size={15} weight="extraBold">Autres mesures de ta balance</Ink>
-      <Ink size={12} color={c.textSecondary} style={{ marginBottom: 4 }}>Telles que ta balance les affiche, sur sa propre échelle.</Ink>
+      <Ink size={15} weight="extraBold">{traduire("Autres mesures de ta balance")}</Ink>
+      <Ink size={12} color={c.textSecondary} style={{ marginBottom: 4 }}>{traduire("Telles que ta balance les affiche, sur sa propre échelle.")}</Ink>
       {rows.map((r, i) => (
         <View
           key={r.id}

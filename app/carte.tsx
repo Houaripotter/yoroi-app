@@ -43,17 +43,18 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { dateCourte } from '@/lib/v2/photos/outils';
 import type { CarteData, FondId, FormatId, Masque, OptionsCarte, PhotoCarte } from '@/lib/v2/cartes/types';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Formats expliques par usage : le ratio reste en petit, les apps aident a choisir */
 const FORMATS: { id: FormatId; nom: string; apps: string; ratio: string; forme: { w: number; h: number } }[] = [
   { id: 'story', nom: 'Story', apps: 'Instagram, TikTok, Snapchat, WhatsApp statut', ratio: '9:16', forme: { w: 12, h: 21 } },
   { id: 'post', nom: 'Publication', apps: 'Instagram, Facebook', ratio: '4:5', forme: { w: 16, h: 20 } },
-  { id: 'carre', nom: 'Carré', apps: 'Facebook, X, messages', ratio: '1:1', forme: { w: 19, h: 19 } },
+  { id: 'carre', nom: traduire('Carré'), apps: 'Facebook, X, messages', ratio: '1:1', forme: { w: 19, h: 19 } },
 ];
 
 const MASQUES: { id: Masque; nom: string }[] = [
   { id: 'aucun', nom: 'Afficher' },
-  { id: 'ecart', nom: 'Écart seulement' },
+  { id: 'ecart', nom: traduire('Écart seulement') },
   { id: 'pourcentage', nom: 'En %' },
 ];
 
@@ -123,7 +124,7 @@ function RangeePhotos({ c, titre, liste, choisie, flou, onChoisir }: { c: Couleu
         {liste.map((ph) => {
           const on = ph.id === choisie;
           return (
-            <Pressable key={ph.id} onPress={() => onChoisir(ph.id)} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${titre}, photo du ${dateCourte(ph.date)}`} style={{ alignItems: 'center', gap: 4 }}>
+            <Pressable key={ph.id} onPress={() => onChoisir(ph.id)} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={traduire("{0}, photo du {1}", titre, dateCourte(ph.date))} style={{ alignItems: 'center', gap: 4 }}>
               <View style={{ width: 66, height: 88, borderRadius: 13, padding: on ? 2 : 0, borderWidth: on ? 2.5 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.surface }}>
                 <View style={{ flex: 1, borderRadius: on ? 9 : 12, overflow: 'hidden', backgroundColor: c.fillSubtle }}>
                   {ph.uri ? <Image source={{ uri: ph.uri }} blurRadius={flou ? FLOU : 0} style={{ width: '100%', height: '100%' }} resizeMode="cover" /> : null}
@@ -225,10 +226,10 @@ export default function CarteEditeur() {
       vue = false;
     }
     if (vue) return void k.partager();
-    appAlert('Avant de partager', 'Tes photos restent sur ton téléphone tant que tu ne partages pas la carte.', [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Avant de partager'), traduire('Tes photos restent sur ton téléphone tant que tu ne partages pas la carte.'), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Partager',
+        text: traduire('Partager'),
         style: 'primary',
         onPress: () => {
           AsyncStorage.setItem(PRUDENCE_KEY, '1').catch(() => {});
@@ -301,7 +302,7 @@ export default function CarteEditeur() {
   ] : [
     ...(o.epure ? [] : [{ id: 'fond' as Onglet, nom: 'Fond' }]),
     { id: 'format', nom: 'Format' },
-    ...(exploit ? [] : [{ id: 'modele' as Onglet, nom: 'Modèle' }]),
+    ...(exploit ? [] : [{ id: 'modele' as Onglet, nom: traduire('Modèle') }]),
     ...(exploit ? [] : [{ id: 'chiffres' as Onglet, nom: 'Chiffres' }]),
     { id: 'plus', nom: 'Plus' },
   ];
@@ -309,7 +310,7 @@ export default function CarteEditeur() {
   // L'interrupteur personnage / photo, en tete du premier onglet (Fond, ou Format si le fond n'est pas propose)
   const interrupteur = k.personne.possible && !aa && actif === onglets[0].id ? (
     <View style={{ marginBottom: 6 }}>
-      <LigneInterrupteur c={c} icon={k.personne.icone} titre={k.personne.libelle} sous={k.personne.visible ? 'Touche pour l’enlever de la carte' : 'Seulement tes chiffres et la signature'} on={k.personne.visible} onPress={k.basculerPersonne} />
+      <LigneInterrupteur c={c} icon={k.personne.icone} titre={k.personne.libelle} sous={k.personne.visible ? traduire('Touche pour l’enlever de la carte') : traduire('Seulement tes chiffres et la signature')} on={k.personne.visible} onPress={k.basculerPersonne} />
     </View>
   ) : null;
   // Fonds : ta photo d'abord (le plus demande), puis ta scene, puis les autres
@@ -318,11 +319,11 @@ export default function CarteEditeur() {
   if (vide) {
     return (
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 12, paddingHorizontal: 22, gap: 14 }}>
-        <RoundButton icon="back" label="Retour" onPress={() => router.back()} />
-        <Ink size={26} weight="black" tight>Pas de carte ici</Ink>
-        <Ink size={15} color={c.textSecondary}>{aa ? 'Il te faut au moins 2 photos de corps pour faire ta carte Avant après. Ajoute-les dans tes photos de forme.' : 'Ce moment n’a pas encore de chiffres à montrer. Retrouve tes séances, tes pesées et tes semaines dans Mes cartes.'}</Ink>
+        <RoundButton icon="back" label={traduire("Retour")} onPress={() => router.back()} />
+        <Ink size={26} weight="black" tight>{traduire("Pas de carte ici")}</Ink>
+        <Ink size={15} color={c.textSecondary}>{aa ? traduire('Il te faut au moins 2 photos de corps pour faire ta carte Avant après. Ajoute-les dans tes photos de forme.') : traduire('Ce moment n’a pas encore de chiffres à montrer. Retrouve tes séances, tes pesées et tes semaines dans Mes cartes.')}</Ink>
         <Pressable onPress={() => router.replace('/mes-cartes' as never)} accessibilityRole="button" style={{ height: 54, borderRadius: 18, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-          <Ink size={16} weight="extraBold" color={c.onAccent}>Mes cartes</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Mes cartes")}</Ink>
         </Pressable>
       </View>
     );
@@ -339,7 +340,7 @@ export default function CarteEditeur() {
         {actif === 'format' ? (
           <>
             {interrupteur}
-            <Ink size={14} color={c.textSecondary}>Choisis selon l’endroit où tu la publies.</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire("Choisis selon l’endroit où tu la publies.")}</Ink>
             <View style={{ gap: 8 }} accessibilityRole="radiogroup">
               {FORMATS.map((f) => {
                 const on = o.format === f.id;
@@ -349,7 +350,7 @@ export default function CarteEditeur() {
                     onPress={() => k.setStyle({ format: f.id })}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
-                    accessibilityLabel={`${f.nom}, pour ${f.apps}`}
+                    accessibilityLabel={traduire("{0}, pour {1}", f.nom, f.apps)}
                     style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 62, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: on ? c.accentTint : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border })}
                   >
                     <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: on ? c.accent : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
@@ -378,7 +379,7 @@ export default function CarteEditeur() {
 
         {actif === 'modele' ? (
           <>
-            <Ink size={14} color={c.textSecondary}>Chaque vignette montre ta vraie carte.</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire("Chaque vignette montre ta vraie carte.")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, rowGap: 12 }} accessibilityRole="radiogroup">
               {data
                 ? modeles.map((m) => {
@@ -418,7 +419,7 @@ export default function CarteEditeur() {
         {actif === 'fond' ? (
           <>
             {interrupteur}
-            <Ink size={14} color={c.textSecondary}>Ta photo, ta scène d’accueil, un décor ou un fond uni.</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire("Ta photo, ta scène d’accueil, un décor ou un fond uni.")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 12 }}>
               {fondsOrdre.map((f) => {
                 const on = o.fond === f.id || (f.id === 'photo' && k.style.fond === 'photo' && !!k.photo);
@@ -429,7 +430,7 @@ export default function CarteEditeur() {
                     onPress={() => (f.id === 'photo' && !k.photo ? void k.choisirPhoto('gallery') : k.setStyle(f.id === 'photo' ? { fond: 'photo', sansPersonne: false } : { fond: f.id as FondId }))}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
-                    accessibilityLabel={f.id === 'photo' ? 'Fond Ta photo' : `Fond ${f.nom}`}
+                    accessibilityLabel={f.id === 'photo' ? traduire('Fond Ta photo') : `Fond ${f.nom}`}
                     style={{ alignItems: 'center', gap: 5, width: tuile }}
                   >
                     <View style={{ width: tuile, height: tuile, borderRadius: 14, padding: on ? 3 : 0, borderWidth: on ? 2.5 : f.id === 'photo' ? 1.5 : 1, borderColor: on || f.id === 'photo' ? c.accent : c.border, backgroundColor: c.surface }}>
@@ -443,15 +444,15 @@ export default function CarteEditeur() {
                         </View>
                       ) : null}
                     </View>
-                    <Ink size={11} weight={on || f.id === 'photo' ? 'extraBold' : 'bold'} color={on || f.id === 'photo' ? c.accent : c.textSecondary} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 13 }}>{f.id === 'photo' ? 'Ta photo' : f.nom}</Ink>
+                    <Ink size={11} weight={on || f.id === 'photo' ? 'extraBold' : 'bold'} color={on || f.id === 'photo' ? c.accent : c.textSecondary} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 13 }}>{f.id === 'photo' ? traduire('Ta photo') : f.nom}</Ink>
                   </Pressable>
                 );
               })}
             </View>
             {o.fond === 'photo' || k.style.fond === 'photo' ? (
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                <Pastille c={c} on={false} icon="image" label={k.photo ? 'Changer de photo' : 'Galerie'} onPress={() => void k.choisirPhoto('gallery')} />
-                <Pastille c={c} on={false} icon="camera" label="Prendre une photo" onPress={() => void k.choisirPhoto('camera')} />
+                <Pastille c={c} on={false} icon="image" label={k.photo ? traduire('Changer de photo') : 'Galerie'} onPress={() => void k.choisirPhoto('gallery')} />
+                <Pastille c={c} on={false} icon="camera" label={traduire("Prendre une photo")} onPress={() => void k.choisirPhoto('camera')} />
               </View>
             ) : null}
           </>
@@ -459,7 +460,7 @@ export default function CarteEditeur() {
 
         {actif === 'chiffres' ? (
           <>
-            <Ink size={14} color={c.textSecondary}>{`De ${MIN_CHIFFRES} à ${MAX_CHIFFRES}. Le premier touché s’affiche en grand.`}</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire("De {0} à {1}. Le premier touché s’affiche en grand.", MIN_CHIFFRES, MAX_CHIFFRES)}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {dispo.map((s) => {
                 const i = k.chiffres.indexOf(s.key);
@@ -471,18 +472,18 @@ export default function CarteEditeur() {
 
         {actif === 'photos' && data?.avantApres ? (
           <>
-            <LigneInterrupteur c={c} icon="eye" titre="Flouter les photos" sous={flou ? 'Comme dans ton coffre, rien ne se reconnaît' : 'Tes photos sont nettes sur la carte'} on={flou} onPress={() => setFlou((v) => !v)} />
+            <LigneInterrupteur c={c} icon="eye" titre={traduire("Flouter les photos")} sous={flou ? traduire('Comme dans ton coffre, rien ne se reconnaît') : traduire('Tes photos sont nettes sur la carte')} on={flou} onPress={() => setFlou((v) => !v)} />
             <View style={{ gap: 14, marginTop: 6 }}>
-              <RangeePhotos c={c} titre="Avant" liste={photosAA} choisie={data.avantApres.avant.id} flou={flou} onChoisir={(id) => choisirAA('avant', id)} />
-              <RangeePhotos c={c} titre="Après" liste={photosAA} choisie={data.avantApres.apres.id} flou={flou} onChoisir={(id) => choisirAA('apres', id)} />
+              <RangeePhotos c={c} titre={traduire("Avant")} liste={photosAA} choisie={data.avantApres.avant.id} flou={flou} onChoisir={(id) => choisirAA('avant', id)} />
+              <RangeePhotos c={c} titre={traduire("Après")} liste={photosAA} choisie={data.avantApres.apres.id} flou={flou} onChoisir={(id) => choisirAA('apres', id)} />
             </View>
-            <Ink size={13} color={c.textSecondary}>{poidsAA?.ecart ? 'Le poids vient de ta pesée la plus proche de chaque photo, à 3 jours près.' : 'Pas de pesée à 3 jours près de ces deux photos : aucun poids sur la carte.'}</Ink>
+            <Ink size={13} color={c.textSecondary}>{poidsAA?.ecart ? traduire('Le poids vient de ta pesée la plus proche de chaque photo, à 3 jours près.') : traduire('Pas de pesée à 3 jours près de ces deux photos : aucun poids sur la carte.')}</Ink>
           </>
         ) : null}
 
         {actif === 'plus' ? (
           <>
-            {aa ? null : <LigneInterrupteur c={c} icon="eye" titre="Que mes données" sous="Fond uni, sans personnage ni décor" on={!!o.epure} onPress={() => k.setStyle({ epure: !o.epure })} />}
+            {aa ? null : <LigneInterrupteur c={c} icon="eye" titre={traduire("Que mes données")} sous={traduire("Fond uni, sans personnage ni décor")} on={!!o.epure} onPress={() => k.setStyle({ epure: !o.epure })} />}
             <Titre c={c} icon={o.sombre ? 'moon' : 'sun'}>Style</Titre>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pastille c={c} on={o.sombre} icon="moon" label="Sombre" onPress={() => k.setStyle({ sombre: true })} />
@@ -490,7 +491,7 @@ export default function CarteEditeur() {
             </View>
             {montrePoids ? (
               <>
-                <Titre c={c} icon="scale" sous="Pour ta vie privée : seulement l’écart ou le pourcentage">Ton poids</Titre>
+                <Titre c={c} icon="scale" sous={traduire("Pour ta vie privée : seulement l’écart ou le pourcentage")}>{traduire("Ton poids")}</Titre>
                 <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                   {MASQUES.map((m) => <Pastille key={m.id} c={c} on={o.masque === m.id} label={m.nom} onPress={() => k.setStyle({ masque: m.id })} />)}
                 </View>
@@ -524,19 +525,19 @@ export default function CarteEditeur() {
       </View>
 
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0, paddingTop: insets.top, height: insets.top + ENTETE, backgroundColor: c.background, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 }}>
-        <RoundButton icon="back" label="Retour" onPress={retour} />
-        <Ink size={17} weight="extraBold" accessibilityRole="header">Ta carte</Ink>
+        <RoundButton icon="back" label={traduire("Retour")} onPress={retour} />
+        <Ink size={17} weight="extraBold" accessibilityRole="header">{traduire("Ta carte")}</Ink>
         <View style={{ width: 44 }} />
       </View>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 12, paddingBottom: insets.bottom + 14, paddingHorizontal: 22, backgroundColor: c.background, borderTopWidth: 1, borderTopColor: c.border, flexDirection: 'row', gap: 10 }}>
-        <Pressable onPress={() => void k.enregistrer()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel="Enregistrer dans la pellicule" style={({ pressed }) => ({ flex: 1, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
+        <Pressable onPress={() => void k.enregistrer()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Enregistrer dans la pellicule")} style={({ pressed }) => ({ flex: 1, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
           <Icon name={k.saved ? 'check' : 'download'} size={19} color={k.saved ? c.successText : c.ink} />
-          <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? 'Un instant' : k.saved ? 'Enregistrée' : 'Enregistrer'}</Ink>
+          <Ink size={16} weight="extraBold" color={k.saved ? c.successText : c.ink}>{k.busy === 'save' ? traduire('Un instant') : k.saved ? traduire('Enregistrée') : traduire('Enregistrer')}</Ink>
         </Pressable>
-        <Pressable onPress={() => void partager()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel="Partager la carte" style={({ pressed }) => ({ flex: 1.2, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
+        <Pressable onPress={() => void partager()} disabled={!data || !!k.busy} accessibilityRole="button" accessibilityLabel={traduire("Partager la carte")} style={({ pressed }) => ({ flex: 1.2, height: 56, borderRadius: 18, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
           <Icon name="share" size={19} color={c.onAccent} />
-          <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? 'Un instant' : 'Partager'}</Ink>
+          <Ink size={16} weight="extraBold" color={c.onAccent}>{k.busy === 'share' ? traduire('Un instant') : traduire('Partager')}</Ink>
         </Pressable>
       </View>
     </View>

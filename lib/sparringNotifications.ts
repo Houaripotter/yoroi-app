@@ -8,6 +8,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
 import { contenuSansSante } from '@/lib/v2/notifications/texte';
+import { traduire } from '@/lib/i18n/tr';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -149,8 +150,8 @@ export const scheduleSparringReminders = async (
         await scheduleOrReplace(
           `sparring-inactive-${id}`,
           {
-            title: 'Objectif en attente',
-            body: `Ton objectif contre ${name} : "${goal}", ça fait ${days} jours sans sparring`,
+            title: traduire('Objectif en attente'),
+            body: traduire("Ton objectif contre {0} : \"{1}\", ça fait {2} jours sans sparring", name, goal, days),
           },
           {
             seconds: 5,
@@ -165,8 +166,8 @@ export const scheduleSparringReminders = async (
         await scheduleOrReplace(
           `sparring-goal-${id}`,
           {
-            title: `Sparring avec ${name} ?`,
-            body: `Objectif en cours : ${goal}`,
+            title: traduire("Sparring avec {0} ?", name),
+            body: traduire("Objectif en cours : {0}", goal),
           },
           tomorrowAt9am(),
         );

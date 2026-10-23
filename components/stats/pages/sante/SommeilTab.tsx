@@ -8,7 +8,7 @@ import { DualComparisonCard } from '../../charts/DualComparisonCard';
 import { Moon, Plus, ChevronRight, Coffee, Brain, Heart, Wind, Thermometer } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import Svg, { Path, Line as SvgLine, Circle as SvgCircle, Text as SvgText } from 'react-native-svg';
 import { SLEEP_DURATION_RANGES } from '@/lib/healthRanges';
 import { formatHoursHM } from '@/lib/formatDuration';

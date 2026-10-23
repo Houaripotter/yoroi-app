@@ -19,6 +19,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import { usePasswordPrompt } from './PasswordPromptModal';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const BackupEncryptionToggleInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -42,9 +43,9 @@ const BackupEncryptionToggleInner: React.FC = () => {
   // Saisie du mot de passe : fenetre maison YOROI (appPassword)
   const askPassword = (mode: 'activate' | 'change'): Promise<string | null> => {
     return promptPassword({
-      title: mode === 'activate' ? 'Active le chiffrement' : 'Nouveau mot de passe',
-      message: 'Choisis un mot de passe solide, 8 caractères au moins.\n\nSi tu l’oublies, tes prochaines sauvegardes ne pourront pas être restaurées.',
-      confirmLabel: 'Valider',
+      title: mode === 'activate' ? traduire('Active le chiffrement') : traduire('Nouveau mot de passe'),
+      message: traduire('Choisis un mot de passe solide, 8 caractères au moins.\n\nSi tu l’oublies, tes prochaines sauvegardes ne pourront pas être restaurées.'),
+      confirmLabel: traduire('Valider'),
       minLength: 8,
     });
   };
@@ -57,20 +58,20 @@ const BackupEncryptionToggleInner: React.FC = () => {
       const pwd = await askPassword('activate');
       if (!pwd) return;
       if (pwd.length < 8) {
-        appAlert('Mot de passe trop court', 'Il faut au moins 8 caractères.');
+        appAlert(traduire('Mot de passe trop court'), traduire('Il faut au moins 8 caractères.'));
         return;
       }
 
       // Confirmation du mot de passe (cross-platform)
       const confirm = await promptPassword({
-        title: 'Confirme le mot de passe',
-        message: 'Retape le même mot de passe pour être sûr.',
+        title: traduire('Confirme le mot de passe'),
+        message: traduire('Retape le même mot de passe pour être sûr.'),
         confirmLabel: 'Confirmer',
         minLength: 8,
       });
       if (!confirm) return;
       if (confirm !== pwd) {
-        appAlert('Mots de passe différents', 'Réessaie.');
+        appAlert(traduire('Mots de passe différents'), traduire('Réessaie.'));
         return;
       }
 
@@ -80,22 +81,22 @@ const BackupEncryptionToggleInner: React.FC = () => {
         setEnabled(true);
         setHasPassword(true);
         appAlert(
-          'Chiffrement activé',
-          'Tes prochaines sauvegardes seront protégées par ce mot de passe. Garde-le en lieu sûr, il te sera demandé pour les restaurer.'
+          traduire('Chiffrement activé'),
+          traduire('Tes prochaines sauvegardes seront protégées par ce mot de passe. Garde-le en lieu sûr, il te sera demandé pour les restaurer.')
         );
       } catch (e) {
         logger.error('[BackupEncryption] Erreur activation:', e);
-        appAlert('Oups', 'Le chiffrement n’a pas pu être activé.');
+        appAlert('Oups', traduire('Le chiffrement n’a pas pu être activé.'));
       }
     } else {
       // Désactivation : confirmation
       const confirmed = await new Promise<boolean>((resolve) => {
         appAlert(
-          'Désactiver le chiffrement ?',
-          'Tes prochaines sauvegardes ne seront plus protégées. Les anciennes restent protégées : garde le mot de passe pour les restaurer.',
+          traduire('Désactiver le chiffrement ?'),
+          traduire('Tes prochaines sauvegardes ne seront plus protégées. Les anciennes restent protégées : garde le mot de passe pour les restaurer.'),
           [
-            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Désactiver', style: 'destructive', onPress: () => resolve(true) },
+            { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(false) },
+            { text: traduire('Désactiver'), style: 'destructive', onPress: () => resolve(true) },
           ]
         );
       });
@@ -112,13 +113,13 @@ const BackupEncryptionToggleInner: React.FC = () => {
     const pwd = await askPassword('change');
     if (!pwd) return;
     if (pwd.length < 8) {
-      appAlert('Mot de passe trop court', 'Il faut au moins 8 caractères.');
+      appAlert(traduire('Mot de passe trop court'), traduire('Il faut au moins 8 caractères.'));
       return;
     }
     await setStoredEncryptionPassword(pwd);
     appAlert(
-      'Mot de passe changé',
-      'Tes prochaines sauvegardes utiliseront ce nouveau mot de passe.'
+      traduire('Mot de passe changé'),
+      traduire('Tes prochaines sauvegardes utiliseront ce nouveau mot de passe.')
     );
   };
 
@@ -136,8 +137,8 @@ const BackupEncryptionToggleInner: React.FC = () => {
           <Text style={[styles.title, { color: colors.text }]}>Chiffrement AES-256</Text>
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
             {enabled
-              ? 'Tes backups sont protégés par mot de passe'
-              : 'Backups en clair, quiconque peut les ouvrir'}
+              ? traduire('Tes backups sont protégés par mot de passe')
+              : traduire('Backups en clair, quiconque peut les ouvrir')}
           </Text>
         </View>
         <Switch
@@ -153,10 +154,10 @@ const BackupEncryptionToggleInner: React.FC = () => {
           onPress={handleChangePassword}
           activeOpacity={0.7}
           style={[styles.changeBtn, { borderColor: `${accent}40` }]}
-          accessibilityLabel="Changer le mot de passe de chiffrement"
+          accessibilityLabel={traduire("Changer le mot de passe de chiffrement")}
         >
           <Key size={13} color={accent} />
-          <Text style={[styles.changeBtnText, { color: accent }]}>Changer le mot de passe</Text>
+          <Text style={[styles.changeBtnText, { color: accent }]}>{traduire("Changer le mot de passe")}</Text>
         </TouchableOpacity>
       )}
       {/* Saisie du mot de passe : fenetre maison YOROI */}

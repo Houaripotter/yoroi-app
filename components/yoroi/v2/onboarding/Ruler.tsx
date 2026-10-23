@@ -10,6 +10,7 @@ import Svg, { Path } from 'react-native-svg';
 import { selectionAsync } from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { useColors } from './ui';
+import { DECIMAL } from '@/lib/i18n/tr';
 
 export function Ruler({
   value,
@@ -145,7 +146,7 @@ export function Ruler({
           <View style={{ position: 'absolute', left: width / 2 - 1, top: 58, flexDirection: 'row' }} pointerEvents="none">
             {Array.from({ length: labels }).map((_, i) => (
               <View key={i} style={{ position: 'absolute', left: i * labelEvery * tick - 21, width: 42, alignItems: 'center' }}>
-                <Ink size={12} weight="bold" color={c.textSecondary}>{String(Math.round((min + i * labelEvery * step) * 10) / 10).replace('.', ',')}</Ink>
+                <Ink size={12} weight="bold" color={c.textSecondary}>{String(Math.round((min + i * labelEvery * step) * 10) / 10).replace('.', DECIMAL)}</Ink>
               </View>
             ))}
           </View>

@@ -13,6 +13,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { getUnreadCount } from '@/lib/notificationHistoryService';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Icon, Press } from './kit';
+import { traduirePluriel } from '@/lib/i18n/tr';
 
 export function NotifBell({ sceneSombre = false }: { sceneSombre?: boolean }) {
   const router = useRouter();
@@ -35,7 +36,7 @@ export function NotifBell({ sceneSombre = false }: { sceneSombre?: boolean }) {
 
   // vague 35 (21 h 11) : toute petite, presque cachee. Un rond de 24 tres translucide, un point de couleur s'il y a du nouveau
   const S = 24;
-  const label = unread > 0 ? `Notifications, ${unread} non lue${unread > 1 ? 's' : ''}` : 'Notifications';
+  const label = unread > 0 ? traduirePluriel(unread, unread > 1, "Notifications, {0} non lue", "Notifications, {0} non lues", unread) : 'Notifications';
   return (
     <Press onPress={() => router.push('/notification-center' as any)} accessibilityRole="button" accessibilityLabel={label} hitSlop={(44 - S) / 2}>
       <View style={{ width: S, height: S, borderRadius: S / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: sceneSombre ? 'rgba(14,17,26,0.22)' : 'rgba(255,255,255,0.32)' }}>

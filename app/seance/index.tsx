@@ -39,6 +39,7 @@ import { slotWeekStart } from '@/lib/v2/seance/save';
 import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportImage, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { useNow } from '@/lib/v2/seance/useNow';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Hero = {
   over: string;
@@ -91,9 +92,9 @@ export default function OnSentraine() {
       const ok = await syncNow();
       const after = (await getTrainings(14).catch(() => [] as Training[])).length;
       const n = Math.max(0, after - before);
-      setSync(!ok ? 'La synchro n’a pas marché, réessaie.' : n === 0 ? 'Rien de nouveau depuis ta montre.' : `${n} séance${n > 1 ? 's' : ''} récupérée${n > 1 ? 's' : ''}.`);
+      setSync(!ok ? traduire('La synchro n’a pas marché, réessaie.') : n === 0 ? traduire('Rien de nouveau depuis ta montre.') : traduirePluriel(n, n > 1, "{0} séance récupérée.", "{0} séances récupérées.", n));
     } catch {
-      setSync('La synchro n’a pas marché, réessaie.');
+      setSync(traduire('La synchro n’a pas marché, réessaie.'));
     }
   };
 
@@ -182,11 +183,11 @@ export default function OnSentraine() {
       if (slot.session_type && seanceKindFor(slot.sport) === 'combat') extra.type = slot.session_type;
       const subParts = [slot.duration_minutes ? `environ ${fmtMinutes(slot.duration_minutes)}` : '', slot.club_name ?? ''].filter(Boolean);
       return {
-        over: slot.time ? `Ton créneau de ${slot.time.slice(0, 5)}` : 'Ton créneau du jour',
+        over: slot.time ? traduire("Ton créneau de {0}", slot.time.slice(0, 5)) : traduire('Ton créneau du jour'),
         title: slot.label || getSportName(slot.sport),
         sub: subParts.join(', ') || KIND_LABEL[seanceKindFor(slot.sport)],
         sport: slot.sport,
-        cta: direct ? 'Commencer' : 'Noter cette séance',
+        cta: direct ? traduire('Commencer') : traduire('Noter cette séance'),
         go: () => go(slot.sport, extra),
       };
     }
@@ -194,10 +195,10 @@ export default function OnSentraine() {
       const n = (last.exercises ?? []).length;
       return {
         over: `Comme ${relativeDay(last.date)}`,
-        title: `Refaire ta séance`,
-        sub: `${n} exercice${n > 1 ? 's' : ''}${last.duration_minutes ? `, environ ${fmtMinutes(last.duration_minutes)}` : ''}`,
+        title: traduire(`Refaire ta séance`),
+        sub: traduirePluriel(n, n > 1, "{0} exercice{1}", "{0} exercices{1}", n, last.duration_minutes ? `, environ ${fmtMinutes(last.duration_minutes)}` : ''),
         sport: last.sport,
-        cta: direct ? 'Commencer' : 'Noter cette séance',
+        cta: direct ? traduire('Commencer') : traduire('Noter cette séance'),
         go: () => go(last.sport, { repeatId: String(last.id) }),
       };
     }
@@ -219,15 +220,15 @@ export default function OnSentraine() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 16 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <EnTete titre={direct ? 'On s’entraîne' : 'Noter une séance'} onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={direct ? traduire('On s’entraîne') : traduire('Noter une séance')} onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         {/* vague 37 : le choix par defaut, noter apres coup ; le direct (chrono) en second */}
         {!later ? (
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', padding: 4, borderRadius: 18, backgroundColor: c.fillSubtle, gap: 4 }} accessibilityRole="tablist">
               {[
-                { on: !direct, label: 'Séance faite', a11y: 'Noter une séance faite', v: false },
-                { on: direct, label: 'En direct, chrono', a11y: 'Démarrer en direct, avec le chrono', v: true },
+                { on: !direct, label: traduire('Séance faite'), a11y: traduire('Noter une séance faite'), v: false },
+                { on: direct, label: 'En direct, chrono', a11y: traduire('Démarrer en direct, avec le chrono'), v: true },
               ].map((o) => (
                 <Pressable
                   key={o.label}
@@ -245,7 +246,7 @@ export default function OnSentraine() {
               ))}
             </View>
             <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
-              {direct ? 'Le chrono démarre quand tu touches ton sport.' : 'Touche ton sport : le jour, l’heure, la durée et ton ressenti, puis les détails si tu veux (exercices et séries, rounds).'}
+              {direct ? traduire('Le chrono démarre quand tu touches ton sport.') : traduire('Touche ton sport : le jour, l’heure, la durée et ton ressenti, puis les détails si tu veux (exercices et séries, rounds).')}
             </Ink>
           </View>
         ) : null}
@@ -253,9 +254,9 @@ export default function OnSentraine() {
 
         {later && params.date ? (
           <View style={{ borderRadius: 24, padding: 18, backgroundColor: c.indigoTint, gap: 4 }}>
-            <Ink size={13} weight="bold" color={c.indigo}>Séance à ajouter</Ink>
+            <Ink size={13} weight="bold" color={c.indigo}>{traduire("Séance à ajouter")}</Ink>
             <Ink size={24} weight="black" tight>{dayLabel(params.date)}</Ink>
-            <Ink size={14} color={c.textSecondary}>Choisis le sport, tu règles l’heure et la durée ensuite.</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire("Choisis le sport, tu règles l’heure et la durée ensuite.")}</Ink>
           </View>
         ) : null}
 
@@ -264,7 +265,7 @@ export default function OnSentraine() {
           <View style={{ borderRadius: 24, padding: 16, backgroundColor: c.accentTint, borderWidth: 1, borderColor: 'rgba(44,74,132,0.25)', gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent }} />
-              <Ink size={14} weight="bold" color={c.accent} style={{ flex: 1 }}>Séance en cours</Ink>
+              <Ink size={14} weight="bold" color={c.accent} style={{ flex: 1 }}>{traduire("Séance en cours")}</Ink>
               <Ink size={18} weight="black" style={{ fontVariant: ['tabular-nums'] }}>{fmtClock((now - draft.startedAt) / 1000)}</Ink>
             </View>
             <Ink size={22} weight="black" tight>{draftTitle(draft)}</Ink>
@@ -312,7 +313,7 @@ export default function OnSentraine() {
           </ScrollView>
         ) : null}
 
-        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{hero && !later ? 'Ou choisis ton sport' : 'Choisis ton sport'}</Ink>
+        <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{hero && !later ? traduire('Ou choisis ton sport') : traduire('Choisis ton sport')}</Ink>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {sports.map((s) => {
@@ -339,10 +340,10 @@ export default function OnSentraine() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Un autre sport ? Tennis, natation, yoga..."
+            placeholder={traduire("Un autre sport ? Tennis, natation, yoga...")}
             placeholderTextColor={c.textMuted}
             autoCorrect={false}
-            accessibilityLabel="Chercher un sport"
+            accessibilityLabel={traduire("Chercher un sport")}
             style={[fontStyle('bold'), { flex: 1, fontSize: 15, color: c.ink, paddingVertical: 0 }]}
           />
         </View>
@@ -360,16 +361,16 @@ export default function OnSentraine() {
             ))}
           </View>
         ) : query.trim() ? (
-          <Ink size={14} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Aucun sport ne correspond. Essaie un autre mot.</Ink>
+          <Ink size={14} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Aucun sport ne correspond. Essaie un autre mot.")}</Ink>
         ) : null}
 
         {/* vague 37 : ta montre, en un toucher, quand elle est reliee */}
         {!later && !direct && provider ? (
-          <Pressable onPress={syncWatch} accessibilityRole="button" accessibilityLabel={`Récupérer tes séances depuis ${provider}`} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 })}>
+          <Pressable onPress={syncWatch} accessibilityRole="button" accessibilityLabel={traduire("Récupérer tes séances depuis {0}", provider)} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 })}>
             <Icon name="clock" size={22} color={c.accent} />
             <View style={{ flex: 1 }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>{`Ta montre, via ${provider}`}</Ink>
-              <Ink size={15} weight="extraBold" numberOfLines={2}>{sync === 'idle' ? 'Récupérer tes séances' : sync === 'busy' ? 'Synchro en cours...' : sync}</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Ta montre, via {0}", provider)}</Ink>
+              <Ink size={15} weight="extraBold" numberOfLines={2}>{sync === 'idle' ? traduire('Récupérer tes séances') : sync === 'busy' ? 'Synchro en cours...' : sync}</Ink>
             </View>
             {sync === 'busy' ? <ActivityIndicator color={c.accent} /> : <Icon name="chevron" size={18} color={c.textMuted} />}
           </Pressable>
@@ -377,7 +378,7 @@ export default function OnSentraine() {
 
         {!later ? <Pressable onPress={() => router.push('/seance/deja-faite' as any)} accessibilityRole="button" style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 })}>
           <Icon name="clock" size={22} />
-          <Ink size={15} weight="bold" style={{ flex: 1 }}>Saisie rapide : sport, durée, ressenti</Ink>
+          <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire("Saisie rapide : sport, durée, ressenti")}</Ink>
           <Icon name="chevron" size={18} color={c.textMuted} />
         </Pressable> : null}
       </ScrollView>

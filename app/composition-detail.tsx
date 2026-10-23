@@ -29,8 +29,9 @@ import type { CompoKey } from '@/lib/v2/progres/composition';
 import { BIO_EXPLAIN, bioSeries, bmiSeries, buildBiomarkers, keyMasses, trendOf, useBiomarkers } from '@/lib/v2/progres/biomarkers';
 import type { BioKey } from '@/lib/v2/progres/biomarkers';
 import { num } from '@/lib/v2/progres/format';
+import { traduire } from '@/lib/i18n/tr';
 
-const SOURCES: Record<string, string> = { manual: 'saisie à la main', withings: 'balance Withings', garmin: 'Garmin', apple_health: 'Apple Santé', healthkit: 'Apple Santé', health_connect: 'Health Connect', xiaomi: 'balance Xiaomi', body_composition: 'saisie à la main', balance_photo: 'Balance (photo)' };
+const SOURCES: Record<string, string> = { manual: traduire('saisie à la main'), withings: 'balance Withings', garmin: 'Garmin', apple_health: 'Apple Santé', healthkit: 'Apple Santé', health_connect: 'Health Connect', xiaomi: 'balance Xiaomi', body_composition: traduire('saisie à la main'), balance_photo: 'Balance (photo)' };
 
 type DetailMetric = { key: BioKey; label: string; short: string; unit: string; digits: number; good: 'up' | 'down' | 'none' };
 
@@ -132,11 +133,11 @@ export default function CompositionDetailScreen() {
   const masses = useMemo(() => keyMasses(points, idx, ctx), [points, idx, ctx]);
 
   // consultation seulement : ajouter une composition passe par le bouton + (vague 13)
-  const ADD_HINT = 'Ajoute ta composition avec le bouton + de la barre d’onglets';
+  const ADD_HINT = traduire('Ajoute ta composition avec le bouton + de la barre d’onglets');
   const modeSwitch = points.length ? (
     <Pills
       items={[
-        { value: 'mesure' as Mode, label: 'Mesure' },
+        { value: 'mesure' as Mode, label: traduire('Mesure') },
         { value: 'courbe' as Mode, label: 'Courbe' },
       ]}
       value={mode}
@@ -149,7 +150,7 @@ export default function CompositionDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: c.background }}>
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-          <DetailHeader title="Composition" sub="Chaque pesée avec tous tes biomarqueurs." />
+          <DetailHeader title="Composition" sub={traduire("Chaque pesée avec tous tes biomarqueurs.")} />
           {modeSwitch}
           {point ? (
             <View style={{ paddingHorizontal: GUTTER, marginTop: 18 }}>
@@ -177,8 +178,8 @@ export default function CompositionDetailScreen() {
               <View style={{ marginTop: 24 }}>
                 <SectionHead title="Biomarqueurs" />
                 <Ink size={13} color={c.textSecondary} style={{ marginTop: 2, marginBottom: 10 }}>
-                  {point.weight ? `Pesée à ${num(point.weight, 1)} kg. ` : ''}
-                  {idx > 0 ? 'Écart avec la mesure précédente. Touche une ligne pour sa courbe.' : 'Touche une ligne pour sa courbe.'}
+                  {point.weight ? traduire("Pesée à {0} kg. ", num(point.weight, 1)) : ''}
+                  {idx > 0 ? traduire('Écart avec la mesure précédente. Touche une ligne pour sa courbe.') : traduire('Touche une ligne pour sa courbe.')}
                 </Ink>
                 <BioListCard
                   list={list}
@@ -193,8 +194,8 @@ export default function CompositionDetailScreen() {
           ) : !loading ? (
             <EmptyInvite
               style={{ margin: GUTTER }}
-              title="Pas encore de composition"
-              text={`Si ta balance donne la masse grasse, le muscle ou l’eau, note-les avec ta pesée, ou relie ${SANTE}. Chaque mesure apparaîtra ici.`}
+              title={traduire("Pas encore de composition")}
+              text={traduire("Si ta balance donne la masse grasse, le muscle ou l’eau, note-les avec ta pesée, ou relie {0}. Chaque mesure apparaîtra ici.", SANTE)}
               plusHint={ADD_HINT}
               plusArrow={false}
             />
@@ -210,7 +211,7 @@ export default function CompositionDetailScreen() {
     <MetricDetail
       key={metric.key}
       title={metric.label}
-      sub={metric.key === 'bmi' ? 'Calculé avec ta taille et chacune de tes pesées.' : metric.key === 'lean' ? 'Calculée à partir de ta masse grasse.' : 'Mesurée par ta balance, sur sa propre échelle.'}
+      sub={metric.key === 'bmi' ? traduire('Calculé avec ta taille et chacune de tes pesées.') : metric.key === 'lean' ? traduire('Calculée à partir de ta masse grasse.') : traduire('Mesurée par ta balance, sur sa propre échelle.')}
       picker={
         <>
           {modeSwitch}
@@ -226,16 +227,16 @@ export default function CompositionDetailScreen() {
       color={bioColor(metric.key) ?? c.ink}
       explain={explain}
       loading={loading}
-      target={metric.key === 'visceral' ? { value: 12, label: 'sain jusqu’à 12' } : metric.key === 'bmi' ? { value: 25, label: 'seuil OMS 25' } : null}
+      target={metric.key === 'visceral' ? { value: 12, label: traduire('sain jusqu’à 12') } : metric.key === 'bmi' ? { value: 25, label: 'seuil OMS 25' } : null}
       markBest={metric.good !== 'none'}
       scrubLine={(p) => p.caption ?? metric.label}
       empty={{
-        title: metric.key === 'bmi' && !ctx.heightCm ? 'Ajoute ta taille' : 'Pas encore de composition',
+        title: metric.key === 'bmi' && !ctx.heightCm ? traduire('Ajoute ta taille') : traduire('Pas encore de composition'),
         text:
           metric.key === 'bmi' && !ctx.heightCm
-            ? 'Ton IMC se calcule avec ta taille et ton poids. Renseigne ta taille dans ton profil.'
-            : `Si ta balance donne la masse grasse, le muscle ou l’eau, note-les avec ta pesée, ou relie ${SANTE}. Tes courbes apparaîtront ici.`,
-        cta: metric.key === 'bmi' && !ctx.heightCm ? 'Renseigner ma taille' : undefined,
+            ? traduire('Ton IMC se calcule avec ta taille et ton poids. Renseigne ta taille dans ton profil.')
+            : traduire("Si ta balance donne la masse grasse, le muscle ou l’eau, note-les avec ta pesée, ou relie {0}. Tes courbes apparaîtront ici.", SANTE),
+        cta: metric.key === 'bmi' && !ctx.heightCm ? traduire('Renseigner ma taille') : undefined,
         onPress: metric.key === 'bmi' && !ctx.heightCm ? () => router.push('/profile' as any) : undefined,
         plusHint: metric.key === 'bmi' && !ctx.heightCm ? undefined : ADD_HINT,
       }}

@@ -27,6 +27,7 @@ import { SCENES_VIE, VIE_SCENE_IDS, VIE_SCENE_IMAGES } from '@/lib/v2/espace/pac
 import { PACKS_VIE_PRETS } from './packsVie';
 import { VARIANTES_TEINTE, imageTeinte, variantesDisponibles, type VarianteTeinte } from './packsTeintes';
 import { imageTeinteLegende, variantesLegende } from './legendesTeintes';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Passera a true quand les produits yoroi_pack_* et yoroi_collection existeront dans RevenueCat. */
 export const PACKS_STORE_READY = false;
@@ -203,15 +204,15 @@ export const NEW_SCENES: SceneId[] = [...VOYAGE_SCENE_IDS, ...VIE_SCENE_IDS, ...
  * Les autres sont Premium, avec apercu libre dans la Boutique et les reglages.
  */
 export const THEMES: { id: SceneId; name: string; premium: boolean; description: string; kanji: string; dark?: boolean; unlockRank?: number; annual?: boolean }[] = [
-  { id: 'dojo', name: 'Dojo', premium: false, description: 'Le parquet et les sabres, offert', kanji: '' },
-  { id: 'bambous', name: 'Bambouseraie', premium: false, description: 'Le sentier sous les bambous, offert', kanji: '' },
-  { id: 'village', name: 'Village aux lanternes', premium: false, description: 'La rue du soir sous les lanternes, offert', kanji: '', dark: true },
-  { id: 'jardin', name: 'Jardin zen', premium: false, description: 'Le sable ratissé devant le pavillon, offert', kanji: '' },
+  { id: 'dojo', name: 'Dojo', premium: false, description: traduire('Le parquet et les sabres, offert'), kanji: '' },
+  { id: 'bambous', name: 'Bambouseraie', premium: false, description: traduire('Le sentier sous les bambous, offert'), kanji: '' },
+  { id: 'village', name: traduire('Village aux lanternes'), premium: false, description: traduire('La rue du soir sous les lanternes, offert'), kanji: '', dark: true },
+  { id: 'jardin', name: 'Jardin zen', premium: false, description: traduire('Le sable ratissé devant le pavillon, offert'), kanji: '' },
   // vague 27 : scene exclusive, offerte avec l'abonnement annuel seulement (jamais par le rang)
-  { id: 'sommet', name: 'Sommet des nuages', premium: true, annual: true, description: 'Le torii au-dessus de la mer de nuages, à l’aube', kanji: '' },
-  { id: 'machiya_aube', name: 'Ruelle à l’aube', premium: true, description: 'La brume du matin sur les pavés', kanji: '', unlockRank: 1 },
-  { id: 'machiya_couchant', name: 'Ruelle au couchant', premium: true, description: 'Le soleil couchant derrière la pagode', kanji: '', dark: true, unlockRank: 2 },
-  { id: 'machiya_nuit', name: 'Ruelle de nuit', premium: false, description: 'Les maisons de bois sous la lune, offerte', kanji: '', dark: true },
+  { id: 'sommet', name: traduire('Sommet des nuages'), premium: true, annual: true, description: traduire('Le torii au-dessus de la mer de nuages, à l’aube'), kanji: '' },
+  { id: 'machiya_aube', name: traduire('Ruelle à l’aube'), premium: true, description: traduire('La brume du matin sur les pavés'), kanji: '', unlockRank: 1 },
+  { id: 'machiya_couchant', name: traduire('Ruelle au couchant'), premium: true, description: traduire('Le soleil couchant derrière la pagode'), kanji: '', dark: true, unlockRank: 2 },
+  { id: 'machiya_nuit', name: traduire('Ruelle de nuit'), premium: false, description: traduire('Les maisons de bois sous la lune, offerte'), kanji: '', dark: true },
   // vague 40 : le pack Lanternes de nuit (Premium)
   ...SCENES_LANTERNES.map((s) => ({ id: s.id as SceneId, name: s.nom, premium: true, description: s.description, kanji: '', dark: true })),
   // vague 44 : le pack Samourai (Premium, la Salle d'armes offerte)
@@ -224,27 +225,27 @@ export const THEMES: { id: SceneId; name: string; premium: boolean; description:
   ...SCENES_VIE.map((s) => ({ id: s.id as SceneId, name: s.nom, premium: true, description: s.description, kanji: '', dark: s.sombre })),
   // 18 octobre 2026 : le pack Voyages (Premium ; trois scenes se gagnent avec la serie, lib/v2/dojo/recompensesScenes.ts)
   ...SCENES_VOYAGES.map((s) => ({ id: s.id as SceneId, name: s.nom, premium: true, description: s.description, kanji: '', dark: s.sombre })),
-  { id: 'kyudojo', name: 'Tir à l’arc', premium: true, description: 'Les arcs et les érables d’automne', kanji: '', dark: true, unlockRank: 4 },
-  { id: 'onsen', name: 'Source chaude', premium: true, description: 'La vapeur entre les sapins blancs', kanji: '' },
-  { id: 'rizieres', name: 'Rizières à l’aube', premium: true, description: 'Les terrasses d’eau au lever du jour', kanji: '' },
-  { id: 'cascade', name: 'Cascade sacrée', premium: true, description: 'Le torii au pied de la chute d’eau', kanji: '', dark: true },
-  { id: 'festival', name: 'Fête des lanternes', premium: true, description: 'Les lanternes sur la rivière et le feu d’artifice', kanji: '', dark: true },
-  { id: 'pavillon', name: 'Pavillon d’or', premium: true, description: 'Le pavillon d’or et son reflet sous la lune', kanji: '', dark: true },
-  { id: 'pont', name: 'Pont des cerisiers', premium: true, description: 'Le pont laqué rouge sur l’étang', kanji: '', unlockRank: 1 },
-  { id: 'chateau', name: 'Château', premium: true, description: 'Les douves et les cerisiers', kanji: '', unlockRank: 2 },
-  { id: 'temple', name: 'Temple', premium: true, description: 'Le sanctuaire au-dessus des nuages', kanji: '', unlockRank: 3 },
-  { id: 'remparts', name: 'Remparts sous la neige', premium: true, description: 'Le château blanc dans la nuit d’hiver', kanji: '', dark: true, unlockRank: 4 },
-  { id: 'pagode', name: 'Pagode d’automne', premium: true, description: 'Les érables rouges autour de la pagode', kanji: '' },
-  { id: 'montagne', name: 'Sanctuaire de montagne', premium: true, description: 'Le torii au lever du soleil', kanji: '' },
-  { id: 'plage', name: 'Torii de la mer', premium: true, description: 'Le grand torii dans les vagues au couchant', kanji: '', dark: true },
-  { id: 'salle', name: 'Salle d’honneur', premium: true, description: 'Les paravents d’or et le tatami', kanji: '', dark: true },
-  { id: 'forge', name: 'Forge du sabre', premium: true, description: 'Le feu où naissent les lames', kanji: '', dark: true },
-  { id: 'camp', name: 'Camp de guerre', premium: true, description: 'Les tentes et le feu de veille', kanji: '', dark: true },
-  { id: 'port', name: 'Port d’hiver', premium: true, description: 'Les barques sous la neige', kanji: '' },
-  { id: 'bataille', name: 'Champ de bataille', premium: true, description: 'Les bannières au soleil couchant', kanji: '', dark: true },
-  { id: 'nuit', name: 'Nuit', premium: true, description: 'La lune sur le château', kanji: '', dark: true },
-  { id: 'sakura', name: 'Sakura', premium: true, description: 'Les cerisiers en fleur', kanji: '' },
-  { id: 'matcha', name: 'Matcha', premium: true, description: 'Le jardin de thé', kanji: '' },
+  { id: 'kyudojo', name: traduire('Tir à l’arc'), premium: true, description: traduire('Les arcs et les érables d’automne'), kanji: '', dark: true, unlockRank: 4 },
+  { id: 'onsen', name: 'Source chaude', premium: true, description: traduire('La vapeur entre les sapins blancs'), kanji: '' },
+  { id: 'rizieres', name: traduire('Rizières à l’aube'), premium: true, description: traduire('Les terrasses d’eau au lever du jour'), kanji: '' },
+  { id: 'cascade', name: traduire('Cascade sacrée'), premium: true, description: traduire('Le torii au pied de la chute d’eau'), kanji: '', dark: true },
+  { id: 'festival', name: traduire('Fête des lanternes'), premium: true, description: traduire('Les lanternes sur la rivière et le feu d’artifice'), kanji: '', dark: true },
+  { id: 'pavillon', name: 'Pavillon d’or', premium: true, description: traduire('Le pavillon d’or et son reflet sous la lune'), kanji: '', dark: true },
+  { id: 'pont', name: traduire('Pont des cerisiers'), premium: true, description: traduire('Le pont laqué rouge sur l’étang'), kanji: '', unlockRank: 1 },
+  { id: 'chateau', name: traduire('Château'), premium: true, description: traduire('Les douves et les cerisiers'), kanji: '', unlockRank: 2 },
+  { id: 'temple', name: 'Temple', premium: true, description: traduire('Le sanctuaire au-dessus des nuages'), kanji: '', unlockRank: 3 },
+  { id: 'remparts', name: traduire('Remparts sous la neige'), premium: true, description: traduire('Le château blanc dans la nuit d’hiver'), kanji: '', dark: true, unlockRank: 4 },
+  { id: 'pagode', name: 'Pagode d’automne', premium: true, description: traduire('Les érables rouges autour de la pagode'), kanji: '' },
+  { id: 'montagne', name: traduire('Sanctuaire de montagne'), premium: true, description: traduire('Le torii au lever du soleil'), kanji: '' },
+  { id: 'plage', name: traduire('Torii de la mer'), premium: true, description: traduire('Le grand torii dans les vagues au couchant'), kanji: '', dark: true },
+  { id: 'salle', name: 'Salle d’honneur', premium: true, description: traduire('Les paravents d’or et le tatami'), kanji: '', dark: true },
+  { id: 'forge', name: traduire('Forge du sabre'), premium: true, description: traduire('Le feu où naissent les lames'), kanji: '', dark: true },
+  { id: 'camp', name: traduire('Camp de guerre'), premium: true, description: traduire('Les tentes et le feu de veille'), kanji: '', dark: true },
+  { id: 'port', name: 'Port d’hiver', premium: true, description: traduire('Les barques sous la neige'), kanji: '' },
+  { id: 'bataille', name: traduire('Champ de bataille'), premium: true, description: traduire('Les bannières au soleil couchant'), kanji: '', dark: true },
+  { id: 'nuit', name: traduire('Nuit'), premium: true, description: traduire('La lune sur le château'), kanji: '', dark: true },
+  { id: 'sakura', name: 'Sakura', premium: true, description: traduire('Les cerisiers en fleur'), kanji: '' },
+  { id: 'matcha', name: 'Matcha', premium: true, description: traduire('Le jardin de thé'), kanji: '' },
 ];
 
 type ThemeDef = (typeof THEMES)[number];
@@ -262,14 +263,14 @@ export function isThemeUnlocked(t: ThemeDef, rankIndex: number, isPremium: boole
 /** Condition d'une scene, en clair (null si elle est offerte) */
 export function themeCondition(t: ThemeDef): string | null {
   if (!t.premium) return null;
-  if (t.annual) return 'Offerte avec l’abonnement annuel';
+  if (t.annual) return traduire('Offerte avec l’abonnement annuel');
   const palier = palierDeScene(t.id);
-  if (palier !== null) return `À ${palier} jours d’affilée dans le Dojo, ou avec Premium`;
-  if (t.unlockRank !== undefined) return `Au rang ${RANK_LABELS_SCENES[t.unlockRank]}, ou avec Premium`;
-  return 'Avec Premium';
+  if (palier !== null) return traduire("À {0} jours d’affilée dans le Dojo, ou avec Premium", palier);
+  if (t.unlockRank !== undefined) return traduire("Au rang {0}, ou avec Premium", RANK_LABELS_SCENES[t.unlockRank]);
+  return traduire('Avec Premium');
 }
 
-const RANK_LABELS_SCENES = ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'];
+const RANK_LABELS_SCENES = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 
 export function themeById(id: SceneId | string | undefined) {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];
@@ -280,37 +281,37 @@ const MONDE: PackDef[] = [
   {
     id: 'ronin_errant', kind: 'monde', name: 'Rōnin errant', kanji: '浪人', unlockRank: 0,
     names: { h: 'Rōnin errant', f: 'Rōnin errante' }, kanjis: { h: '浪人', f: '浪人' },
-    tagline: 'Sans maître, libre sur les routes, offert dès le premier jour', fond: '#E3E9F3', sports: [], productId: '',
+    tagline: traduire('Sans maître, libre sur les routes, offert dès le premier jour'), fond: '#E3E9F3', sports: [], productId: '',
     images: { h: [require('@/assets/avatars/app/monde/personnages/ronin_errant_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/ronin_errant_f.webp')] },
   },
   {
     id: 'kyudo', kind: 'monde', name: 'Archer kyūdō', kanji: '弓道', unlockRank: 1,
-    names: { h: 'Archer kyūdō', f: 'Archère kyūdō' }, kanjis: { h: '弓道', f: '弓道' },
-    tagline: 'La voie de l’arc : le calme avant chaque flèche', fond: '#F3EBDA', sports: [], productId: '',
+    names: { h: 'Archer kyūdō', f: traduire('Archère kyūdō') }, kanjis: { h: '弓道', f: '弓道' },
+    tagline: traduire('La voie de l’arc : le calme avant chaque flèche'), fond: '#F3EBDA', sports: [], productId: '',
     images: { h: [require('@/assets/avatars/app/monde/personnages/kyudo_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/kyudo_f.webp')] },
   },
   {
     id: 'ninja', kind: 'monde', name: 'Ninja et Kunoichi', kanji: '忍者', unlockRank: 1,
     names: { h: 'Ninja', f: 'Kunoichi' }, kanjis: { h: '忍者', f: 'くノ一' },
-    tagline: 'L’ombre et la patience, la frappe au bon moment', fond: '#ECEAEE', sports: [], productId: '',
+    tagline: traduire('L’ombre et la patience, la frappe au bon moment'), fond: '#ECEAEE', sports: [], productId: '',
     images: { h: [require('@/assets/avatars/app/monde/personnages/ninja_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/ninja_f.webp')] },
   },
   {
     id: 'sohei', kind: 'monde', name: 'Sōhei', kanji: '僧兵', unlockRank: 2,
     names: { h: 'Sōhei', f: 'Sōhei' }, kanjis: { h: '僧兵', f: '僧兵' },
-    tagline: 'Le moine guerrier et sa naginata, gardien du temple', fond: '#F6EDDC', sports: [], productId: '',
+    tagline: traduire('Le moine guerrier et sa naginata, gardien du temple'), fond: '#F6EDDC', sports: [], productId: '',
     images: { h: [require('@/assets/avatars/app/monde/personnages/sohei_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/sohei_f.webp')] },
   },
   {
     id: 'sensei', kind: 'monde', name: 'Sensei', kanji: '先生', unlockRank: 3,
     names: { h: 'Sensei', f: 'Sensei' }, kanjis: { h: '先生', f: '先生' },
-    tagline: 'Le maître du dojo : des années de pratique dans chaque geste', fond: '#E4EADB', sports: [], productId: '',
+    tagline: traduire('Le maître du dojo : des années de pratique dans chaque geste'), fond: '#E4EADB', sports: [], productId: '',
     images: { h: [require('@/assets/avatars/app/monde/personnages/sensei_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/sensei_f.webp')] },
   },
   {
     id: 'daimyo', kind: 'monde', name: 'Daimyō et Onna-bugeisha', kanji: '大名', unlockRank: 4,
     names: { h: 'Daimyō', f: 'Onna-bugeisha' }, kanjis: { h: '大名', f: '女武芸者' },
-    tagline: 'Le seigneur en armure d’apparat, réservé au rang Shōgun', fond: '#F6E3DF', sports: [], productId: '',
+    tagline: traduire('Le seigneur en armure d’apparat, réservé au rang Shōgun'), fond: '#F6E3DF', sports: [], productId: '',
     images: { h: [require('@/assets/avatars/app/monde/personnages/daimyo_h.webp')], f: [require('@/assets/avatars/app/monde/personnages/daimyo_f.webp')] },
   },
 ];
@@ -329,7 +330,7 @@ export const VIE_PERSONNAGES: PackDef[] = PACKS_VIE_PRETS.map((p) => ({
 export const PACKS: PackDef[] = [
   ...MONDE,
   {
-    id: 'musculation', kind: 'sport', name: 'Musculation', kanji: '力', tagline: 'Évolue avec tes séances de musculation', fond: '#F6EDDC',
+    id: 'musculation', kind: 'sport', name: 'Musculation', kanji: '力', tagline: traduire('Évolue avec tes séances de musculation'), fond: '#F6EDDC',
     sports: ['musculation', 'powerlifting', 'halterophilie', 'strongman', 'street_workout', 'calisthenics', 'body_pump'],
     productId: 'yoroi_pack_musculation',
     images: {
@@ -338,7 +339,7 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'fitness', kind: 'sport', name: 'Fitness et cardio', kanji: '動', tagline: 'Évolue avec tes séances de fitness et de cardio', fond: '#FBE7EA',
+    id: 'fitness', kind: 'sport', name: 'Fitness et cardio', kanji: '動', tagline: traduire('Évolue avec tes séances de fitness et de cardio'), fond: '#FBE7EA',
     sports: ['fitness', 'hiit', 'cardio_mixte', 'step_aerobic', 'zumba', 'bootcamp', 'circuit_training', 'tabata', 'elliptique', 'rameur', 'velo', 'cycling', 'spinning', 'assault_bike', 'ski_erg', 'stairmaster', 'corde_a_sauter', 'aquagym', 'aquabike'],
     productId: 'yoroi_pack_fitness',
     images: {
@@ -347,7 +348,7 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'course', kind: 'sport', name: 'Course', kanji: '走', tagline: 'Évolue avec tes sorties de course', fond: '#E3EEF3',
+    id: 'course', kind: 'sport', name: 'Course', kanji: '走', tagline: traduire('Évolue avec tes sorties de course'), fond: '#E3EEF3',
     sports: ['running', 'trail', 'marathon', 'ultra_trail', 'sprint', 'course_haies', 'obstacle', 'athletisme'],
     productId: 'yoroi_pack_course',
     images: {
@@ -356,7 +357,7 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'boxe', kind: 'sport', name: 'Boxe', kanji: '拳', tagline: 'Évolue avec tes séances de boxe', fond: '#F6E3DF',
+    id: 'boxe', kind: 'sport', name: 'Boxe', kanji: '拳', tagline: traduire('Évolue avec tes séances de boxe'), fond: '#F6E3DF',
     sports: ['boxe', 'boxe_olympique', 'kickboxing', 'muay_thai', 'boxe_thai', 'boxe_francaise', 'savate'],
     productId: 'yoroi_pack_boxe',
     images: {
@@ -365,7 +366,7 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'jjb', kind: 'sport', name: 'JJB et grappling', kanji: '柔', tagline: 'Évolue avec tes séances de JJB et de grappling', fond: '#E3E9F3',
+    id: 'jjb', kind: 'sport', name: 'JJB et grappling', kanji: '柔', tagline: traduire('Évolue avec tes séances de JJB et de grappling'), fond: '#E3E9F3',
     sports: ['jjb', 'grappling', 'judo', 'lutte', 'lutte_olympique', 'sambo'],
     productId: 'yoroi_pack_jjb',
     images: {
@@ -374,7 +375,7 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'mma', kind: 'sport', name: 'MMA', kanji: '闘', tagline: 'Évolue avec tes séances de MMA', fond: '#ECEAEE',
+    id: 'mma', kind: 'sport', name: 'MMA', kanji: '闘', tagline: traduire('Évolue avec tes séances de MMA'), fond: '#ECEAEE',
     sports: ['mma'],
     productId: 'yoroi_pack_mma',
     images: {
@@ -383,7 +384,7 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'yoga', kind: 'sport', name: 'Yoga et mobilité', kanji: '息', tagline: 'Évolue avec tes séances de yoga et de mobilité', fond: '#E4EADB',
+    id: 'yoga', kind: 'sport', name: 'Yoga et mobilité', kanji: '息', tagline: traduire('Évolue avec tes séances de yoga et de mobilité'), fond: '#E4EADB',
     sports: ['yoga', 'pilates', 'stretching', 'mobilite', 'tai_chi', 'qi_gong', 'foam_roller', 'meditation', 'respiration', 'récupération', 'barre_au_sol'],
     productId: 'yoroi_pack_yoga',
     images: {
@@ -392,7 +393,7 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'crosstraining', kind: 'sport', name: 'Cross training', kanji: '鍛', tagline: 'Évolue avec tes séances de cross training', fond: '#F3EBDA',
+    id: 'crosstraining', kind: 'sport', name: 'Cross training', kanji: '鍛', tagline: traduire('Évolue avec tes séances de cross training'), fond: '#F3EBDA',
     sports: ['crossfit', 'crossfit_games', 'hyrox', 'functional_training', 'kettlebell', 'trx', 'core_training'],
     productId: 'yoroi_pack_crosstraining',
     images: {
@@ -401,38 +402,38 @@ export const PACKS: PackDef[] = [
     },
   },
   {
-    id: 'kunoichi', kind: 'legende', name: 'Kunoichi', kanji: 'くノ一', tagline: 'L’ombre qui frappe, évolue avec ton rang', fond: '#ECEAEE',
+    id: 'kunoichi', kind: 'legende', name: 'Kunoichi', kanji: 'くノ一', tagline: traduire('L’ombre qui frappe, évolue avec ton rang'), fond: '#ECEAEE',
     sports: [], productId: 'yoroi_pack_kunoichi',
     images: both([require('@/assets/avatars/app/packs/kunoichi/kunoichi_1.webp'), require('@/assets/avatars/app/packs/kunoichi/kunoichi_2.webp'), require('@/assets/avatars/app/packs/kunoichi/kunoichi_3.webp')]),
   },
   {
-    id: 'oni', kind: 'legende', name: 'Oni', kanji: '鬼', tagline: 'Le démon de la force brute, évolue avec ton rang', fond: '#F6E3DF',
+    id: 'oni', kind: 'legende', name: 'Oni', kanji: '鬼', tagline: traduire('Le démon de la force brute, évolue avec ton rang'), fond: '#F6E3DF',
     sports: [], productId: 'yoroi_pack_oni',
     images: both([require('@/assets/avatars/app/packs/oni/oni_1.webp'), require('@/assets/avatars/app/packs/oni/oni_2.webp'), require('@/assets/avatars/app/packs/oni/oni_3.webp')]),
   },
   {
-    id: 'moine', kind: 'legende', name: 'Moine de la montagne', kanji: '僧兵', tagline: 'La patience du sommet, évolue avec ton rang', fond: '#F3EBDA',
+    id: 'moine', kind: 'legende', name: traduire('Moine de la montagne'), kanji: '僧兵', tagline: traduire('La patience du sommet, évolue avec ton rang'), fond: '#F3EBDA',
     sports: [], productId: 'yoroi_pack_moine',
     images: both([require('@/assets/avatars/app/packs/moine/moine_1.webp'), require('@/assets/avatars/app/packs/moine/moine_2.webp'), require('@/assets/avatars/app/packs/moine/moine_3.webp')]),
   },
   {
-    id: 'kitsune', kind: 'legende', name: 'Kitsune', kanji: '狐', tagline: 'La ruse du renard, évolue avec ton rang', fond: '#FBEDE3',
+    id: 'kitsune', kind: 'legende', name: 'Kitsune', kanji: '狐', tagline: traduire('La ruse du renard, évolue avec ton rang'), fond: '#FBEDE3',
     sports: [], productId: 'yoroi_pack_kitsune',
     images: both([require('@/assets/avatars/app/packs/kitsune/kitsune_1.webp'), require('@/assets/avatars/app/packs/kitsune/kitsune_2.webp'), require('@/assets/avatars/app/packs/kitsune/kitsune_3.webp')]),
   },
   {
-    id: 'dragon', kind: 'legende', name: 'Dragon d’or', kanji: '龍', tagline: 'Le gardien d’or, évolue avec ton rang', fond: '#F6EDDC',
+    id: 'dragon', kind: 'legende', name: 'Dragon d’or', kanji: '龍', tagline: traduire('Le gardien d’or, évolue avec ton rang'), fond: '#F6EDDC',
     sports: [], productId: 'yoroi_pack_dragon',
     images: both([require('@/assets/avatars/app/packs/dragon/dragon_1.webp'), require('@/assets/avatars/app/packs/dragon/dragon_2.webp'), require('@/assets/avatars/app/packs/dragon/dragon_3.webp')]),
   },
   // 18 octobre 2026 : deux Legendes de plus (dessins de la conversation design), ouvertes avec Premium comme les autres
   {
-    id: 'tengu', kind: 'legende', name: 'Tengu', kanji: '天狗', tagline: 'Le gardien ailé de la montagne, évolue avec ton rang', fond: '#E6EAF2',
+    id: 'tengu', kind: 'legende', name: 'Tengu', kanji: '天狗', tagline: traduire('Le gardien ailé de la montagne, évolue avec ton rang'), fond: '#E6EAF2',
     sports: [], productId: 'yoroi_pack_tengu',
     images: both([require('@/assets/avatars/app/packs/tengu/tengu_1.webp'), require('@/assets/avatars/app/packs/tengu/tengu_2.webp'), require('@/assets/avatars/app/packs/tengu/tengu_3.webp')]),
   },
   {
-    id: 'yuki_onna', kind: 'legende', name: 'Yuki-onna', kanji: '雪女', tagline: 'La dame des neiges, évolue avec ton rang', fond: '#E8F1F6',
+    id: 'yuki_onna', kind: 'legende', name: 'Yuki-onna', kanji: '雪女', tagline: traduire('La dame des neiges, évolue avec ton rang'), fond: '#E8F1F6',
     sports: [], productId: 'yoroi_pack_yuki_onna',
     images: both([require('@/assets/avatars/app/packs/yuki_onna/yuki_onna_1.webp'), require('@/assets/avatars/app/packs/yuki_onna/yuki_onna_2.webp'), require('@/assets/avatars/app/packs/yuki_onna/yuki_onna_3.webp')]),
   },
@@ -525,19 +526,19 @@ export function packLevel(pack: PackDef, rankIndex: number, sportCounts: Record<
 /** Texte de la condition de chaque niveau. */
 export function levelCondition(pack: PackDef, level: Level): string {
   if (pack.kind === 'monde') return mondeCondition(pack);
-  if (pack.kind === 'vie') return 'avec Premium';
-  if (level === 1) return 'dès l’achat';
-  if (pack.kind === 'legende') return level === 2 ? 'rang Samouraï' : 'rang Rōnin';
+  if (pack.kind === 'vie') return traduire('avec Premium');
+  if (level === 1) return traduire('dès l’achat');
+  if (pack.kind === 'legende') return level === 2 ? traduire('rang Samouraï') : traduire('rang Rōnin');
   const sport = pack.name.toLowerCase();
-  return level === 2 ? `niveau Motivé, 25 séances de ${sport}` : `niveau Aguerri, 100 séances de ${sport}`;
+  return level === 2 ? traduire("niveau Motivé, 25 séances de {0}", sport) : traduire("niveau Aguerri, 100 séances de {0}", sport);
 }
 
-const RANK_LABELS = ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'];
+const RANK_LABELS = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 
 /** Condition d'un personnage du monde, en clair */
 export function mondeCondition(pack: PackDef): string {
   const r = pack.unlockRank ?? 0;
-  return r <= 0 ? 'offert dès le départ' : `au rang ${RANK_LABELS[r]}, ou tout de suite avec Premium`;
+  return r <= 0 ? traduire('offert dès le départ') : traduire("au rang {0}, ou tout de suite avec Premium", RANK_LABELS[r]);
 }
 
 /** Nom du rang qui debloque un personnage du monde */
@@ -630,9 +631,9 @@ export function personnageImage(key: string | null | undefined, rankIndex: numbe
 
 export function personnageName(key: string | null | undefined): string {
   const p = parsePersonnage(key);
-  if (p.kind === 'guerrier') return p.gender === 'f' ? 'La Guerrière' : 'Le Guerrier';
-  if (p.kind === 'classique') return p.gender === 'f' ? 'La Sportive' : 'Le Sportif';
-  if (p.kind === 'aucun') return 'Sans personnage';
+  if (p.kind === 'guerrier') return p.gender === 'f' ? traduire('La Guerrière') : traduire('Le Guerrier');
+  if (p.kind === 'classique') return p.gender === 'f' ? traduire('La Sportive') : traduire('Le Sportif');
+  if (p.kind === 'aucun') return traduire('Sans personnage');
   return packDisplayName(p.pack, p.gender);
 }
 

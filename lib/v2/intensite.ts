@@ -15,6 +15,7 @@
  */
 
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export type NiveauIntensite = 1 | 2 | 3 | 4 | 5;
 
@@ -34,10 +35,10 @@ export type Intensite = {
 };
 
 export const INTENSITES: readonly Intensite[] = [
-  { niveau: 1, id: 'calme', nom: 'Calme', fill: '#5A8AD0', text: '#2D5A96', tint: '#E6EEF9', onFill: '#1D2029' },
-  { niveau: 2, id: 'leger', nom: 'Léger', fill: '#3A9A5B', text: '#17704A', tint: '#E2F3EA', onFill: '#1D2029' },
+  { niveau: 1, id: 'calme', nom: traduire('Calme'), fill: '#5A8AD0', text: '#2D5A96', tint: '#E6EEF9', onFill: '#1D2029' },
+  { niveau: 2, id: 'leger', nom: traduire('Léger'), fill: '#3A9A5B', text: '#17704A', tint: '#E2F3EA', onFill: '#1D2029' },
   { niveau: 3, id: 'soutenu', nom: 'Soutenu', fill: '#D6A630', text: '#7A5A06', tint: '#F7EED3', onFill: '#1D2029' },
-  { niveau: 4, id: 'intense', nom: 'Intense', fill: '#B84F08', text: '#9A4A00', tint: '#FFEBD9', onFill: '#FFFFFF' },
+  { niveau: 4, id: 'intense', nom: traduire('Intense'), fill: '#B84F08', text: '#9A4A00', tint: '#FFEBD9', onFill: '#FFFFFF' },
   { niveau: 5, id: 'maximal', nom: 'Maximal', fill: '#74290A', text: '#74290A', tint: '#F4E2D8', onFill: '#FFFFFF' },
 ];
 

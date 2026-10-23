@@ -16,6 +16,7 @@ import { COMBAT_PRESETS, COMBAT_SETTINGS_KEY, PREPA_SECONDS, loadClapEnabled } f
 import type { CombatPreset } from '@/lib/v2/carnet/chrono';
 import type { ChronoMontre, SourcesContexte } from './contexte';
 import { kgDeCategorie } from './contexte';
+import { traduire } from '@/lib/i18n/tr';
 
 /** meme cle que lib/v2/pesee/usePlanPoids.ts (date du torii gardee par la carte Poids) */
 const TORII_KEY = 'yoroi_torii_v1';
@@ -50,7 +51,7 @@ async function lireChronos(): Promise<ChronoMontre[]> {
       if (rounds && rounds > 0 && roundS && roundS > 0 && reposS != null) {
         const preset = COMBAT_PRESETS[s?.preset as CombatPreset];
         const tel = preset && s.preset !== 'custom' && preset.rounds === rounds && preset.roundTime === roundS && preset.restTime === reposS;
-        out.push({ id: 'tes_rounds', nom: tel ? preset.name : 'Tes rounds', rounds, roundS, reposS, prepaS, alerteS });
+        out.push({ id: 'tes_rounds', nom: tel ? preset.name : traduire('Tes rounds'), rounds, roundS, reposS, prepaS, alerteS });
       }
     } catch {
       // reglages illisibles : la montre garde ses chronos par defaut
@@ -66,7 +67,7 @@ async function lireChronos(): Promise<ChronoMontre[]> {
         const work = num(r.tabataWork);
         const rest = num(r.tabataRest);
         if (tours > 0 && work && work > 0 && rest != null) {
-          out.push({ id: 'ton_tabata', nom: 'Ton Tabata', rounds: tours, roundS: work, reposS: rest, prepaS: num(r.prepa) ?? PREPA_SECONDS, alerteS: 0 });
+          out.push({ id: 'ton_tabata', nom: traduire('Ton Tabata'), rounds: tours, roundS: work, reposS: rest, prepaS: num(r.prepa) ?? PREPA_SECONDS, alerteS: 0 });
         }
       }
     } catch {

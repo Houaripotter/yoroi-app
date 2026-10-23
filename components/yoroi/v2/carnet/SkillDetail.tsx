@@ -13,6 +13,7 @@ import type { Skill, SkillStatus } from '@/lib/carnetService';
 import { STATUS_LABEL, skillCategoryLabel, skillTone } from '@/lib/v2/carnet/journal';
 import { shortDate } from '@/lib/v2/carnet/format';
 import { P, Press, CIcon, IconBtn, Sheet2, Field, BigButton, Plate, Stamp, BlockTitle } from './ui';
+import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
   visible: boolean;
@@ -35,9 +36,9 @@ type Props = {
 };
 
 const STATUSES: { key: SkillStatus; plate: 'empty' | 'half' | 'full'; sub: string }[] = [
-  { key: 'to_learn', plate: 'empty', sub: 'Je la découvre' },
-  { key: 'in_progress', plate: 'half', sub: 'Je la travaille' },
-  { key: 'mastered', plate: 'full', sub: 'Elle passe en combat' },
+  { key: 'to_learn', plate: 'empty', sub: traduire('Je la découvre') },
+  { key: 'in_progress', plate: 'half', sub: traduire('Je la travaille') },
+  { key: 'mastered', plate: 'full', sub: traduire('Elle passe en combat') },
 ];
 
 export function SkillDetail(p: Props) {
@@ -52,8 +53,8 @@ export function SkillDetail(p: Props) {
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: -6, minHeight: 44 }}>
-            <IconBtn name="back" label="Retour" onPress={p.onClose} />
-            <IconBtn name="trash" label="Supprimer la technique" onPress={() => p.onDelete(s.id)} />
+            <IconBtn name="back" label={traduire("Retour")} onPress={p.onClose} />
+            <IconBtn name="trash" label={traduire("Supprimer la technique")} onPress={() => p.onDelete(s.id)} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 4 }}>
             <View style={{ flex: 1, gap: 2 }}>
@@ -67,7 +68,7 @@ export function SkillDetail(p: Props) {
             ) : null}
           </View>
 
-          <BlockTitle title="Où tu en es" />
+          <BlockTitle title={traduire("Où tu en es")} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {STATUSES.map((it) => {
               const on = s.status === it.key;
@@ -88,7 +89,7 @@ export function SkillDetail(p: Props) {
           <Sheet2>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
               <View>
-                <Ink size={13} weight="bold" color={P.ink2}>Répétitions</Ink>
+                <Ink size={13} weight="bold" color={P.ink2}>{traduire("Répétitions")}</Ink>
                 <Ink size={48} weight="black" tight>{String(s.drillCount)}</Ink>
               </View>
               <Glyph kind="sakura" size={46} color="#ECEAE4" />
@@ -96,7 +97,7 @@ export function SkillDetail(p: Props) {
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[1, 5, 10, 25].map((n) => (
                 <View key={n} style={{ flex: 1 }}>
-                  <Press onPress={() => p.onIncrementDrill(n)} haptic="medium" accessibilityRole="button" accessibilityLabel={`Ajouter ${n} répétitions`}>
+                  <Press onPress={() => p.onIncrementDrill(n)} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} répétitions", n)}>
                     <View style={{ height: 52, borderRadius: 16, backgroundColor: n === 10 ? P.accent : '#ECEAE4', alignItems: 'center', justifyContent: 'center' }}>
                       <Ink size={16} weight="black" color={n === 10 ? P.white : P.ink}>{`+${n}`}</Ink>
                     </View>
@@ -106,20 +107,20 @@ export function SkillDetail(p: Props) {
             </View>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
               <View style={{ flex: 1 }}>
-                <Field label="Un autre nombre" value={p.drillIncrement} onChangeText={p.setDrillIncrement} keyboardType="number-pad" placeholder="10" />
+                <Field label={traduire("Un autre nombre")} value={p.drillIncrement} onChangeText={p.setDrillIncrement} keyboardType="number-pad" placeholder="10" />
               </View>
               <View style={{ width: 120 }}>
-                <BigButton label="Ajouter" tone="ink" onPress={() => p.onIncrementDrill()} />
+                <BigButton label={traduire("Ajouter")} tone="ink" onPress={() => p.onIncrementDrill()} />
               </View>
             </View>
           </Sheet2>
 
-          <BlockTitle title="Notes techniques" aside="Les détails qui font marcher le geste" />
+          <BlockTitle title="Notes techniques" aside={traduire("Les détails qui font marcher le geste")} />
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
             <View style={{ flex: 1 }}>
-              <Field value={p.newNoteText} onChangeText={p.setNewNoteText} placeholder="Ex : saisir le pantalon d’abord, puis entrer les jambes" multiline maxLength={500} accessibilityLabel="Nouvelle note" />
+              <Field value={p.newNoteText} onChangeText={p.setNewNoteText} placeholder={traduire("Ex : saisir le pantalon d’abord, puis entrer les jambes")} multiline maxLength={500} accessibilityLabel={traduire("Nouvelle note")} />
             </View>
-            <IconBtn name="plus" label="Ajouter la note" onPress={p.onAddNote} tone="red" size={52} disabled={!p.newNoteText.trim() || p.busy} />
+            <IconBtn name="plus" label={traduire("Ajouter la note")} onPress={p.onAddNote} tone="red" size={52} disabled={!p.newNoteText.trim() || p.busy} />
           </View>
           {[...(s.notes || [])].reverse().map((n) => (
             <View key={n.id} style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
@@ -128,25 +129,25 @@ export function SkillDetail(p: Props) {
                 <Ink size={15} weight="medium">{n.text}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>{shortDate(n.date)}</Ink>
               </View>
-              <IconBtn name="trash" label="Supprimer la note" onPress={() => p.onDeleteNote(n.id)} tone="soft" />
+              <IconBtn name="trash" label={traduire("Supprimer la note")} onPress={() => p.onDeleteNote(n.id)} tone="soft" />
             </View>
           ))}
 
-          <BlockTitle title="Vidéo" aside="Un lien YouTube, Instagram ou une vidéo filmée" />
+          <BlockTitle title={traduire("Vidéo")} aside={traduire("Un lien YouTube, Instagram ou une vidéo filmée")} />
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
             <View style={{ flex: 1 }}>
-              <Field value={p.editingVideoUrl} onChangeText={p.setEditingVideoUrl} placeholder="https://..." autoCapitalize="none" keyboardType="url" autoCorrect={false} maxLength={500} accessibilityLabel="Lien de la vidéo" />
+              <Field value={p.editingVideoUrl} onChangeText={p.setEditingVideoUrl} placeholder="https://..." autoCapitalize="none" keyboardType="url" autoCorrect={false} maxLength={500} accessibilityLabel={traduire("Lien de la vidéo")} />
             </View>
-            <IconBtn name="check" label="Enregistrer le lien" onPress={p.onUpdateVideoUrl} tone="ink" size={52} disabled={!p.editingVideoUrl.trim()} />
+            <IconBtn name="check" label={traduire("Enregistrer le lien")} onPress={p.onUpdateVideoUrl} tone="ink" size={52} disabled={!p.editingVideoUrl.trim()} />
           </View>
-          {s.videoUrl ? <BigButton label="Voir la vidéo" icon="play" tone="light" onPress={() => p.onOpenVideoUrl(s.videoUrl!)} /> : null}
+          {s.videoUrl ? <BigButton label={traduire("Voir la vidéo")} icon="play" tone="light" onPress={() => p.onOpenVideoUrl(s.videoUrl!)} /> : null}
           {mastered ? null : (
-            <Press onPress={() => p.onUpdateStatus(s.id, 'mastered')} haptic="medium" accessibilityRole="button" accessibilityLabel="Je la maîtrise">
+            <Press onPress={() => p.onUpdateStatus(s.id, 'mastered')} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Je la maîtrise")}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 22, borderWidth: 1.5, borderStyle: 'dashed', borderColor: P.accent }}>
                 <Stamp size={44} />
                 <View style={{ flex: 1 }}>
-                  <Ink size={16} weight="extraBold">Je la maîtrise</Ink>
-                  <Ink size={13} weight="medium" color={P.ink2}>Pose ton tampon et lace une plaque de plus.</Ink>
+                  <Ink size={16} weight="extraBold">{traduire("Je la maîtrise")}</Ink>
+                  <Ink size={13} weight="medium" color={P.ink2}>{traduire("Pose ton tampon et lace une plaque de plus.")}</Ink>
                 </View>
                 <CIcon name="chevron" size={18} color={P.accent} />
               </View>

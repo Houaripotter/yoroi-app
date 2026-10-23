@@ -8,57 +8,58 @@ import { SCENES_LANTERNES } from '@/lib/v2/espace/lanternes';
 import { SCENES_SAMOURAI } from '@/lib/v2/espace/samourai';
 import { SCENES_CLASSIQUE } from '@/lib/v2/espace/classique';
 import { guerrierImage as dojoGuerrierImage, parsePersonnage, personnageImage as dojoPersonnageImage, personnageName as dojoPersonnageName } from '@/lib/v2/dojo/personnages';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SceneMeta = { id: SceneId; nom: string; phrase: string; premium: boolean; image: ImageSourcePropType; nouveau?: boolean; annuel?: boolean };
 
 export const SCENES: SceneMeta[] = [
-  { id: 'dojo', nom: 'Dojo', phrase: 'Le parquet et la lumière du matin', premium: false, image: require('@/assets/avatars/app/themes/theme_dojo.webp') },
-  { id: 'bambous', nom: 'Bambouseraie', phrase: 'Le sentier sous les bambous', premium: false, image: require('@/assets/avatars/app/monde/scenes/bambous.webp') },
-  { id: 'village', nom: 'Village aux lanternes', phrase: 'La rue du soir sous les lanternes', premium: false, image: require('@/assets/avatars/app/monde/scenes/village.webp') },
-  { id: 'jardin', nom: 'Jardin zen', phrase: 'Le sable ratissé devant le pavillon', premium: false, image: require('@/assets/avatars/app/monde/scenes/jardin.webp') },
-  { id: 'sommet', nom: 'Sommet des nuages', phrase: 'Le torii au-dessus des nuages', premium: true, annuel: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/sommet.webp') },
-  { id: 'machiya_aube', nom: 'Ruelle à l’aube', phrase: 'La brume sur les pavés', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_aube.webp') },
-  { id: 'machiya_couchant', nom: 'Ruelle au couchant', phrase: 'Le soir sur la pagode', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_couchant.webp') },
-  { id: 'machiya_nuit', nom: 'Ruelle de nuit', phrase: 'Les lanternes allumées', premium: false, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_nuit.webp') },
+  { id: 'dojo', nom: 'Dojo', phrase: traduire('Le parquet et la lumière du matin'), premium: false, image: require('@/assets/avatars/app/themes/theme_dojo.webp') },
+  { id: 'bambous', nom: 'Bambouseraie', phrase: traduire('Le sentier sous les bambous'), premium: false, image: require('@/assets/avatars/app/monde/scenes/bambous.webp') },
+  { id: 'village', nom: traduire('Village aux lanternes'), phrase: traduire('La rue du soir sous les lanternes'), premium: false, image: require('@/assets/avatars/app/monde/scenes/village.webp') },
+  { id: 'jardin', nom: 'Jardin zen', phrase: traduire('Le sable ratissé devant le pavillon'), premium: false, image: require('@/assets/avatars/app/monde/scenes/jardin.webp') },
+  { id: 'sommet', nom: traduire('Sommet des nuages'), phrase: traduire('Le torii au-dessus des nuages'), premium: true, annuel: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/sommet.webp') },
+  { id: 'machiya_aube', nom: traduire('Ruelle à l’aube'), phrase: traduire('La brume sur les pavés'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_aube.webp') },
+  { id: 'machiya_couchant', nom: traduire('Ruelle au couchant'), phrase: traduire('Le soir sur la pagode'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_couchant.webp') },
+  { id: 'machiya_nuit', nom: traduire('Ruelle de nuit'), phrase: traduire('Les lanternes allumées'), premium: false, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/machiya_nuit.webp') },
   // vague 40 : le pack Lanternes de nuit, juste apres la Ruelle de nuit
   ...SCENES_LANTERNES.map((s): SceneMeta => ({ id: s.id, nom: s.nom, phrase: s.phrase, premium: true, nouveau: true, image: s.image })),
   // vague 44 : le pack Samourai (la Salle d'armes est offerte)
   ...SCENES_SAMOURAI.map((s): SceneMeta => ({ id: s.id, nom: s.nom, phrase: s.phrase, premium: !s.offerte, nouveau: true, image: s.image })),
   // vague 45 : le pack Classique, scenes neutres (salle de sport et parc de jour offerts)
   ...SCENES_CLASSIQUE.map((s): SceneMeta => ({ id: s.id, nom: s.nom, phrase: s.phrase, premium: !s.offerte, nouveau: true, image: s.image })),
-  { id: 'kyudojo', nom: 'Tir à l’arc', phrase: 'Les arcs, l’automne', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/kyudojo.webp') },
-  { id: 'onsen', nom: 'Source chaude', phrase: 'Vapeur et neige', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/onsen.webp') },
-  { id: 'rizieres', nom: 'Rizières à l’aube', phrase: 'L’eau au lever du jour', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/rizieres.webp') },
-  { id: 'cascade', nom: 'Cascade sacrée', phrase: 'Le torii et la chute', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/cascade.webp') },
-  { id: 'festival', nom: 'Fête des lanternes', phrase: 'Lanternes sur l’eau', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/festival.webp') },
-  { id: 'pavillon', nom: 'Pavillon d’or', phrase: 'Le reflet sous la lune', premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/pavillon.webp') },
-  { id: 'pont', nom: 'Pont des cerisiers', phrase: 'Le pont laqué rouge sur l’étang', premium: true, image: require('@/assets/avatars/app/monde/scenes/pont.webp') },
-  { id: 'chateau', nom: 'Château', phrase: 'Les douves et les cerisiers', premium: true, image: require('@/assets/avatars/app/monde/scenes/chateau.webp') },
-  { id: 'temple', nom: 'Temple', phrase: 'Le sanctuaire dans les nuages', premium: true, image: require('@/assets/avatars/app/monde/scenes/temple.webp') },
-  { id: 'remparts', nom: 'Remparts sous la neige', phrase: 'Le château blanc dans la nuit d’hiver', premium: true, image: require('@/assets/avatars/app/monde/scenes/remparts.webp') },
-  { id: 'pagode', nom: 'Pagode d’automne', phrase: 'Les érables rouges autour de la pagode', premium: true, image: require('@/assets/avatars/app/monde/scenes/pagode.webp') },
-  { id: 'montagne', nom: 'Sanctuaire de montagne', phrase: 'Le torii au lever du soleil', premium: true, image: require('@/assets/avatars/app/monde/scenes/montagne.webp') },
-  { id: 'plage', nom: 'Torii de la mer', phrase: 'Le grand torii dans les vagues', premium: true, image: require('@/assets/avatars/app/monde/scenes/plage.webp') },
-  { id: 'salle', nom: 'Salle d’honneur', phrase: 'Les paravents d’or et le tatami', premium: true, image: require('@/assets/avatars/app/monde/scenes/salle.webp') },
-  { id: 'forge', nom: 'Forge du sabre', phrase: 'Le feu où naissent les lames', premium: true, image: require('@/assets/avatars/app/monde/scenes/forge.webp') },
-  { id: 'camp', nom: 'Camp de guerre', phrase: 'Les tentes et le feu de veille', premium: true, image: require('@/assets/avatars/app/monde/scenes/camp.webp') },
-  { id: 'port', nom: 'Port d’hiver', phrase: 'Les barques sous la neige', premium: true, image: require('@/assets/avatars/app/monde/scenes/port.webp') },
-  { id: 'bataille', nom: 'Champ de bataille', phrase: 'Les bannières au couchant', premium: true, image: require('@/assets/avatars/app/monde/scenes/bataille.webp') },
-  { id: 'nuit', nom: 'Nuit', phrase: 'Les lanternes sous la lune', premium: true, image: require('@/assets/avatars/app/themes/theme_nuit.webp') },
-  { id: 'sakura', nom: 'Sakura', phrase: 'Les cerisiers en fleurs', premium: true, image: require('@/assets/avatars/app/themes/theme_sakura.webp') },
-  { id: 'matcha', nom: 'Matcha', phrase: 'Le jardin de thé', premium: true, image: require('@/assets/avatars/app/themes/theme_matcha.webp') },
+  { id: 'kyudojo', nom: traduire('Tir à l’arc'), phrase: traduire('Les arcs, l’automne'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/kyudojo.webp') },
+  { id: 'onsen', nom: 'Source chaude', phrase: traduire('Vapeur et neige'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/onsen.webp') },
+  { id: 'rizieres', nom: traduire('Rizières à l’aube'), phrase: traduire('L’eau au lever du jour'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/rizieres.webp') },
+  { id: 'cascade', nom: traduire('Cascade sacrée'), phrase: traduire('Le torii et la chute'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/cascade.webp') },
+  { id: 'festival', nom: traduire('Fête des lanternes'), phrase: traduire('Lanternes sur l’eau'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/festival.webp') },
+  { id: 'pavillon', nom: 'Pavillon d’or', phrase: traduire('Le reflet sous la lune'), premium: true, nouveau: true, image: require('@/assets/avatars/app/monde/scenes/pavillon.webp') },
+  { id: 'pont', nom: traduire('Pont des cerisiers'), phrase: traduire('Le pont laqué rouge sur l’étang'), premium: true, image: require('@/assets/avatars/app/monde/scenes/pont.webp') },
+  { id: 'chateau', nom: traduire('Château'), phrase: traduire('Les douves et les cerisiers'), premium: true, image: require('@/assets/avatars/app/monde/scenes/chateau.webp') },
+  { id: 'temple', nom: 'Temple', phrase: traduire('Le sanctuaire dans les nuages'), premium: true, image: require('@/assets/avatars/app/monde/scenes/temple.webp') },
+  { id: 'remparts', nom: traduire('Remparts sous la neige'), phrase: traduire('Le château blanc dans la nuit d’hiver'), premium: true, image: require('@/assets/avatars/app/monde/scenes/remparts.webp') },
+  { id: 'pagode', nom: 'Pagode d’automne', phrase: traduire('Les érables rouges autour de la pagode'), premium: true, image: require('@/assets/avatars/app/monde/scenes/pagode.webp') },
+  { id: 'montagne', nom: traduire('Sanctuaire de montagne'), phrase: traduire('Le torii au lever du soleil'), premium: true, image: require('@/assets/avatars/app/monde/scenes/montagne.webp') },
+  { id: 'plage', nom: traduire('Torii de la mer'), phrase: traduire('Le grand torii dans les vagues'), premium: true, image: require('@/assets/avatars/app/monde/scenes/plage.webp') },
+  { id: 'salle', nom: 'Salle d’honneur', phrase: traduire('Les paravents d’or et le tatami'), premium: true, image: require('@/assets/avatars/app/monde/scenes/salle.webp') },
+  { id: 'forge', nom: traduire('Forge du sabre'), phrase: traduire('Le feu où naissent les lames'), premium: true, image: require('@/assets/avatars/app/monde/scenes/forge.webp') },
+  { id: 'camp', nom: traduire('Camp de guerre'), phrase: traduire('Les tentes et le feu de veille'), premium: true, image: require('@/assets/avatars/app/monde/scenes/camp.webp') },
+  { id: 'port', nom: 'Port d’hiver', phrase: traduire('Les barques sous la neige'), premium: true, image: require('@/assets/avatars/app/monde/scenes/port.webp') },
+  { id: 'bataille', nom: traduire('Champ de bataille'), phrase: traduire('Les bannières au couchant'), premium: true, image: require('@/assets/avatars/app/monde/scenes/bataille.webp') },
+  { id: 'nuit', nom: traduire('Nuit'), phrase: traduire('Les lanternes sous la lune'), premium: true, image: require('@/assets/avatars/app/themes/theme_nuit.webp') },
+  { id: 'sakura', nom: 'Sakura', phrase: traduire('Les cerisiers en fleurs'), premium: true, image: require('@/assets/avatars/app/themes/theme_sakura.webp') },
+  { id: 'matcha', nom: 'Matcha', phrase: traduire('Le jardin de thé'), premium: true, image: require('@/assets/avatars/app/themes/theme_matcha.webp') },
 ];
 
 export function sceneMeta(id: SceneId | string | undefined): SceneMeta {
   return SCENES.find((s) => s.id === id) ?? SCENES[0];
 }
-export const RANK_NAMES = ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'];
+export const RANK_NAMES = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 export type PackMeta = { id: string; nom: string; kanji: string; images: ImageSourcePropType[] };
 
 export const PACKS: PackMeta[] = [
   { id: 'kunoichi', nom: 'Kunoichi', kanji: 'くノ一', images: [require('@/assets/avatars/app/packs/kunoichi/kunoichi_1.webp'), require('@/assets/avatars/app/packs/kunoichi/kunoichi_2.webp'), require('@/assets/avatars/app/packs/kunoichi/kunoichi_3.webp')] },
   { id: 'oni', nom: 'Oni', kanji: '鬼', images: [require('@/assets/avatars/app/packs/oni/oni_1.webp'), require('@/assets/avatars/app/packs/oni/oni_2.webp'), require('@/assets/avatars/app/packs/oni/oni_3.webp')] },
-  { id: 'moine', nom: 'Moine de la montagne', kanji: '僧兵', images: [require('@/assets/avatars/app/packs/moine/moine_1.webp'), require('@/assets/avatars/app/packs/moine/moine_2.webp'), require('@/assets/avatars/app/packs/moine/moine_3.webp')] },
+  { id: 'moine', nom: traduire('Moine de la montagne'), kanji: '僧兵', images: [require('@/assets/avatars/app/packs/moine/moine_1.webp'), require('@/assets/avatars/app/packs/moine/moine_2.webp'), require('@/assets/avatars/app/packs/moine/moine_3.webp')] },
   { id: 'kitsune', nom: 'Kitsune', kanji: '狐', images: [require('@/assets/avatars/app/packs/kitsune/kitsune_1.webp'), require('@/assets/avatars/app/packs/kitsune/kitsune_2.webp'), require('@/assets/avatars/app/packs/kitsune/kitsune_3.webp')] },
   { id: 'dragon', nom: 'Dragon d’or', kanji: '龍', images: [require('@/assets/avatars/app/packs/dragon/dragon_1.webp'), require('@/assets/avatars/app/packs/dragon/dragon_2.webp'), require('@/assets/avatars/app/packs/dragon/dragon_3.webp')] },
 ];
@@ -114,5 +115,5 @@ export function personnageNom(personnage: string): string {
   const pack = PACKS.find((p) => p.id === personnage);
   if (pack) return pack.nom;
   if (parsePersonnage(personnage).kind !== 'guerrier') return dojoPersonnageName(personnage);
-  return personnage === 'guerrier_f' ? 'Guerrière' : 'Guerrier';
+  return personnage === 'guerrier_f' ? traduire('Guerrière') : 'Guerrier';
 }

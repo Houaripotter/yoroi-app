@@ -22,6 +22,7 @@ import { BrushLine, BrushRing, Card, Hanko, Icon, P, Press, shadow, tap, useAcce
 import { Torii } from './Ornements';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -93,14 +94,13 @@ export function BlocPoids({ series }: { series: DayWeight[] }) {
   const delta = month.length > 1 ? last.trend - month[0].trend : null;
   const down = delta !== null && delta < -0.05;
   return (
-    <Press onPress={() => router.push('/progres' as any)} accessibilityRole="button" accessibilityLabel="Ton poids">
+    <Press onPress={() => router.push('/progres' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ton poids")}>
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {last ? (
           <>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={13} weight="bold" color={P.ink2}>
-                Ton poids
-              </Ink>
+                {traduire("Ton poids")}</Ink>
               <Ink size={44} weight="black" tight>
                 {formatKg(last.value)}
                 <Ink size={16} weight="bold" color={P.ink2}>
@@ -108,15 +108,15 @@ export function BlocPoids({ series }: { series: DayWeight[] }) {
                 </Ink>
               </Ink>
               <Ink size={13} weight="bold" color={down ? P.mossText : P.ink2}>
-                {delta === null ? `pesée ${relativeDay(last.date)}` : Math.abs(delta) < 0.05 ? 'stable sur un mois' : `${formatKg(Math.abs(delta))} kilo de ${delta < 0 ? 'moins' : 'plus'} en un mois`}
+                {delta === null ? traduire("pesée {0}", relativeDay(last.date)) : Math.abs(delta) < 0.05 ? traduire('stable sur un mois') : traduire("{0} kilo de {1} en un mois", formatKg(Math.abs(delta)), delta < 0 ? 'moins' : 'plus')}
               </Ink>
             </View>
             {month.length > 1 ? <BrushLine values={month.map((p) => p.trend)} width={120} height={56} color={P.ink} stroke={4.5} /> : null}
           </>
         ) : (
           <View style={{ flex: 1, gap: 4 }}>
-            <Head title="Ton poids" />
-            <Invite text="Ta courbe démarre dès ta première pesée." hint="Touche + pour ta première pesée" />
+            <Head title={traduire("Ton poids")} />
+            <Invite text={traduire("Ta courbe démarre dès ta première pesée.")} hint={traduire("Touche + pour ta première pesée")} />
           </View>
         )}
       </Card>
@@ -135,9 +135,9 @@ export function BlocSemaine({ trainings, goal }: { trainings: Training[]; goal: 
   const n = week.length;
   const left = Math.max(0, goal - n);
   return (
-    <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={`Ta semaine, ${n} séances sur ${goal}`}>
+    <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ta semaine, {0} séances sur {1}", n, goal)}>
       <Card style={{ gap: 14 }}>
-        <Head title="Ta semaine" right={n === 0 ? 'aucune séance encore' : left === 0 ? 'objectif tenu' : `encore ${left} séance${left > 1 ? 's' : ''}`} />
+        <Head title={traduire("Ta semaine")} right={n === 0 ? traduire('aucune séance encore') : left === 0 ? traduire('objectif tenu') : traduirePluriel(left, left > 1, "encore {0} séance", "encore {0} séances", left)} />
         <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
           <View style={{ flexDirection: 'row', gap: 4, flex: 1, justifyContent: 'space-between', paddingRight: 12 }}>
             {DAYS.map((d, i) => (
@@ -167,23 +167,23 @@ export function BlocProchaineSeance({ next }: { next: NextSession | null }) {
   const router = useRouter();
   if (!next) {
     return (
-      <Press onPress={() => router.push('/planning' as any)} accessibilityRole="button" accessibilityLabel="Planifier ta semaine">
+      <Press onPress={() => router.push('/planning' as any)} accessibilityRole="button" accessibilityLabel={traduire("Planifier ta semaine")}>
         <Card style={{ gap: 6 }}>
-          <Head title="Ta prochaine séance" />
-          <Invite text="Choisis tes jours d’entraînement dans ton planning, ta prochaine séance s’affichera ici." hint="Touche cette carte pour ouvrir ton planning" />
+          <Head title={traduire("Ta prochaine séance")} />
+          <Invite text={traduire("Choisis tes jours d’entraînement dans ton planning, ta prochaine séance s’affichera ici.")} hint={traduire("Touche cette carte pour ouvrir ton planning")} />
         </Card>
       </Press>
     );
   }
   return (
-    <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={`Prochaine séance : ${next.title}, ${next.when}${next.time ? ' à ' + next.time : ''}. Voir tes séances`}>
+    <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={traduire("Prochaine séance : {0}, {1}{2}. Voir tes séances", next.title, next.when, next.time ? ' à ' + next.time : '')}>
       <View style={{ minHeight: 84, borderRadius: 22, backgroundColor: P.ink, flexDirection: 'row', alignItems: 'center', gap: 14, paddingLeft: 18, paddingRight: 14, paddingVertical: 14, overflow: 'hidden' }}>
         <View pointerEvents="none" style={{ position: 'absolute', right: 70, top: -6 }}>
           <Torii size={96} color={paletteSombre() ? '#D6D4CC' : '#262A35'} />
         </View>
         <View style={{ flex: 1, gap: 3 }}>
           <Ink size={13} weight="bold" color={paletteSombre() ? '#B0282E' : '#E9A6A0'}>
-            {`${next.when}${next.time ? ` à ${next.time}` : ''}${next.duration ? `, ${formatMinutes(next.duration)}` : ''}`}
+            {`${next.when}${next.time ? traduire(" à {0}", next.time) : ''}${next.duration ? `, ${formatMinutes(next.duration)}` : ''}`}
           </Ink>
           <Ink size={20} weight="black" tight color={P.white} numberOfLines={1}>
             {next.title}
@@ -207,9 +207,9 @@ export function BlocForme({ forme, hideEmpty }: { forme: FormeResult | null; hid
     // accueil par defaut (jamais personnalise) : pas d'exemple en filigrane tant qu'il n'y a pas de donnees
     if (hideEmpty) return null;
     return (
-      <Press onPress={() => router.push('/readiness-detail' as any)} accessibilityRole="button" accessibilityLabel="Ta récupération. Touche plus pour noter ta nuit">
+      <Press onPress={() => router.push('/readiness-detail' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ta récupération. Touche plus pour noter ta nuit")}>
         <Card style={{ gap: 12 }}>
-          <EmptyHead title="Ta récupération" />
+          <EmptyHead title={traduire("Ta récupération")} />
           <Filigree>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center' }}>
@@ -222,21 +222,19 @@ export function BlocForme({ forme, hideEmpty }: { forme: FormeResult | null; hid
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={17} weight="black" tight>
-                  Prêt à pousser
-                </Ink>
+                  {traduire("Prêt à pousser")}</Ink>
                 <Ink size={13} weight="medium" color={P.ink2}>
-                  sommeil, charge et eau réunis
-                </Ink>
+                  {traduire("sommeil, charge et eau réunis")}</Ink>
               </View>
             </View>
           </Filigree>
-          <Invite text="Note ta nuit : on te dira chaque matin si ton corps est prêt à pousser." hint="Touche + pour noter ta nuit" />
+          <Invite text={traduire("Note ta nuit : on te dira chaque matin si ton corps est prêt à pousser.")} hint={traduire("Touche + pour noter ta nuit")} />
         </Card>
       </Press>
     );
   }
   return (
-    <Press onPress={() => router.push('/readiness-detail' as any)} accessibilityRole="button" accessibilityLabel={`Ta récupération : ${forme.score} sur 100, ${forme.level.label}`}>
+    <Press onPress={() => router.push('/readiness-detail' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ta récupération : {0} sur 100, {1}", forme.score, forme.level.label)}>
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
         <View style={{ width: 92, height: 92, alignItems: 'center', justifyContent: 'center' }}>
           <BrushRing value={forme.score / 100} size={92} stroke={10} color={forme.level.color} />
@@ -248,8 +246,7 @@ export function BlocForme({ forme, hideEmpty }: { forme: FormeResult | null; hid
         </View>
         <View style={{ flex: 1, gap: 3 }}>
           <Ink size={13} weight="bold" color={P.ink2}>
-            Ta récupération
-          </Ink>
+            {traduire("Ta récupération")}</Ink>
           <Ink size={19} weight="black" tight>
             {forme.level.label}
           </Ink>
@@ -270,9 +267,9 @@ export function BlocSommeil({ entries, goal, hideEmpty }: { entries: SleepEntry[
     // accueil par defaut : le sommeil n'apparait que s'il a des donnees
     if (hideEmpty) return null;
     return (
-      <Press onPress={() => router.push('/sleep' as any)} accessibilityRole="button" accessibilityLabel="Ton sommeil. Touche plus pour noter ta nuit">
+      <Press onPress={() => router.push('/sleep' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ton sommeil. Touche plus pour noter ta nuit")}>
         <Card style={{ gap: 12 }}>
-          <EmptyHead title="Ton sommeil" />
+          <EmptyHead title={traduire("Ton sommeil")} />
           <Filigree>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
               <View style={{ flex: 1 }}>
@@ -280,8 +277,7 @@ export function BlocSommeil({ entries, goal, hideEmpty }: { entries: SleepEntry[
                   7 h 30
                 </Ink>
                 <Ink size={13} weight="bold" color={P.ink2}>
-                  ta nuit, en un coup d’œil
-                </Ink>
+                  {traduire("ta nuit, en un coup d’œil")}</Ink>
               </View>
               <Svg width={112} height={50}>
                 {[38, 30, 44, 26, 40, 34, 42].map((h, i) => (
@@ -290,7 +286,7 @@ export function BlocSommeil({ entries, goal, hideEmpty }: { entries: SleepEntry[
               </Svg>
             </View>
           </Filigree>
-          <Invite text="Le sommeil pèse le plus dans ta récupération." hint="Touche + pour noter ta nuit" />
+          <Invite text={traduire("Le sommeil pèse le plus dans ta récupération.")} hint={traduire("Touche + pour noter ta nuit")} />
         </Card>
       </Press>
     );
@@ -304,17 +300,17 @@ export function BlocSommeil({ entries, goal, hideEmpty }: { entries: SleepEntry[
   const maxMin = Math.max(goal, ...days.map((d) => d.min));
   const reached = last.duration >= goal;
   return (
-    <Press onPress={() => router.push('/sleep' as any)} accessibilityRole="button" accessibilityLabel={`Ton sommeil : ${formatMinutes(last.duration)}`}>
+    <Press onPress={() => router.push('/sleep' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ton sommeil : {0}", formatMinutes(last.duration))}>
       <Card style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={13} weight="bold" color={P.ink2}>
-            {`Ta nuit, ${relativeDay(last.date)}`}
+            {traduire("Ta nuit, {0}", relativeDay(last.date))}
           </Ink>
           <Ink size={34} weight="black" tight color={P.indigo}>
             {formatMinutes(last.duration)}
           </Ink>
           <Ink size={13} weight="bold" color={reached ? P.mossText : P.ink2}>
-            {reached ? 'objectif atteint' : `${formatMinutes(goal - last.duration)} sous ton objectif`}
+            {reached ? traduire('objectif atteint') : traduire("{0} sous ton objectif", formatMinutes(goal - last.duration))}
           </Ink>
         </View>
         <Svg width={112} height={56}>
@@ -388,20 +384,19 @@ export function BlocHydratation({ amount, goal }: { amount: number; goal: number
 
   const pct = goal > 0 ? shown / goal : 0;
   const reached = shown >= goal && goal > 0;
-  const status = added !== null ? null : reached ? 'objectif atteint' : shown <= 0 ? 'ton premier verre t’attend' : `encore ${formatLiters(Math.max(0, goal - shown))} L`;
+  const status = added !== null ? null : reached ? traduire('objectif atteint') : shown <= 0 ? traduire('ton premier verre t’attend') : traduire("encore {0} L", formatLiters(Math.max(0, goal - shown)));
 
   return (
     <Card style={{ gap: 12, paddingVertical: 14 }}>
-      <Press onPress={() => router.push('/hydration' as any)} haptic="none" accessibilityRole="button" accessibilityLabel={`Ton eau du jour : ${formatLiters(shown)} litre sur ${formatLiters(goal)}. Voir le détail`}>
+      <Press onPress={() => router.push('/hydration' as any)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Ton eau du jour : {0} litre sur {1}. Voir le détail", formatLiters(shown), formatLiters(goal))}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Bottle pct={pct} />
           <View style={{ flex: 1, gap: 0 }}>
             <Ink size={13} weight="bold" color={P.ink2}>
-              Ton eau du jour
-            </Ink>
+              {traduire("Ton eau du jour")}</Ink>
             <Ink size={30} weight="black" tight numberOfLines={1}>
               {`${formatLiters(shown)} L`}
-              <Ink size={15} weight="bold" color={P.muted}>{` sur ${formatLiters(goal)} L`}</Ink>
+              <Ink size={15} weight="bold" color={P.muted}>{traduire(" sur {0} L", formatLiters(goal))}</Ink>
             </Ink>
             {status ? (
               <Ink size={13} weight="extraBold" color={reached ? P.mossText : P.ink2} numberOfLines={1}>
@@ -414,13 +409,12 @@ export function BlocHydratation({ amount, goal }: { amount: number; goal: number
       {added !== null ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: -6 }}>
           <Ink size={13} weight="extraBold" color={P.mossText}>
-            {`${added >= 1 ? `${formatLiters(added)} L` : `${Math.round(added * 1000)} ml`} ajoutés`}
+            {traduire("{0} ajoutés", added >= 1 ? `${formatLiters(added)} L` : `${Math.round(added * 1000)} ml`)}
           </Ink>
-          <Press onPress={() => save(-added, true)} haptic="none" hitSlop={10} accessibilityRole="button" accessibilityLabel="Annuler le dernier ajout d’eau">
+          <Press onPress={() => save(-added, true)} haptic="none" hitSlop={10} accessibilityRole="button" accessibilityLabel={traduire("Annuler le dernier ajout d’eau")}>
             <View style={{ minHeight: 30, justifyContent: 'center', paddingHorizontal: 4 }}>
               <Ink size={13} weight="extraBold" color={accent}>
-                Annuler
-              </Ink>
+                {traduire("Annuler")}</Ink>
             </View>
           </Press>
         </View>
@@ -428,7 +422,7 @@ export function BlocHydratation({ amount, goal }: { amount: number; goal: number
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {WATER_STEPS.map((w) => (
           <View key={w.label} style={{ flex: 1 }}>
-            <Press onPress={() => save(w.l)} haptic="none" accessibilityRole="button" accessibilityLabel={`Ajouter ${w.l >= 1 ? 'un litre' : `${Math.round(w.l * 1000)} millilitres`} d’eau`}>
+            <Press onPress={() => save(w.l)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} d’eau", w.l >= 1 ? 'un litre' : `${Math.round(w.l * 1000)} millilitres`)}>
               <View style={{ height: 44, borderRadius: 14, backgroundColor: accentTint, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={15} weight="black" color={accent} numberOfLines={1}>
                   {w.label}
@@ -448,7 +442,7 @@ export function BlocCitation({ text }: { text: string | null }) {
   const { accent } = useAccent();
   if (!text) return null;
   return (
-    <Press onPress={() => router.push('/citations' as any)} accessibilityRole="button" accessibilityLabel="Citation du jour">
+    <Press onPress={() => router.push('/citations' as any)} accessibilityRole="button" accessibilityLabel={traduire("Citation du jour")}>
       <View style={[{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 20, paddingTop: 22, overflow: 'hidden' }]}>
         <Svg width={26} height={20} viewBox="0 0 26 20">
           <Path d="M2 18V11C2 6 4.5 3 9 2l1 2.4C7.6 5.2 6.6 6.8 6.6 9H10v9zM15 18V11c0-5 2.5-8 7-9l1 2.4c-2.4.8-3.4 2.4-3.4 4.6H23v9z" fill={accent} />
@@ -457,8 +451,7 @@ export function BlocCitation({ text }: { text: string | null }) {
           {text}
         </Ink>
         <Ink size={12} weight="bold" color={P.muted} style={{ marginTop: 10 }}>
-          Ta citation du jour
-        </Ink>
+          {traduire("Ta citation du jour")}</Ink>
       </View>
     </Press>
   );
@@ -468,7 +461,7 @@ export function BlocCitation({ text }: { text: string | null }) {
 export function BlocRecords({ record }: { record: LastRecord | null }) {
   const router = useRouter();
   return (
-    <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={record ? `Dernier record : ${record.exercise}` : 'Tes records'}>
+    <Press onPress={() => router.push('/records' as any)} accessibilityRole="button" accessibilityLabel={record ? `Dernier record : ${record.exercise}` : traduire('Tes records')}>
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
         <Hanko size={36} />
         {record ? (
@@ -480,25 +473,22 @@ export function BlocRecords({ record }: { record: LastRecord | null }) {
               {record.exercise}
             </Ink>
             <Ink size={14} weight="bold" color={P.accent}>
-              {`${formatKg(record.weight, record.weight % 1 === 0 ? 0 : 1)} kg${record.reps ? ` × ${record.reps}` : ''}, ${formatKg(record.gain, record.gain % 1 === 0 ? 0 : 1)} kg de mieux`}
+              {traduire("{0} kg{1}, {2} kg de mieux", formatKg(record.weight, record.weight % 1 === 0 ? 0 : 1), record.reps ? ` × ${record.reps}` : '', formatKg(record.gain, record.gain % 1 === 0 ? 0 : 1))}
             </Ink>
           </View>
         ) : (
           <View style={{ flex: 1, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Ink size={17} weight="black" tight>
-                Tes records
-              </Ink>
+                {traduire("Tes records")}</Ink>
               <ExampleTag />
             </View>
             <Filigree>
               <Ink size={14} weight="extraBold" color={P.accent}>
-                Développé couché, 80 kg × 5
-              </Ink>
+                {traduire("Développé couché, 80 kg × 5")}</Ink>
             </Filigree>
             <Ink size={13} weight="medium" color={P.ink2}>
-              Note tes charges en séance : chaque record battu sera tamponné ici.
-            </Ink>
+              {traduire("Note tes charges en séance : chaque record battu sera tamponné ici.")}</Ink>
           </View>
         )}
       </Card>
@@ -512,9 +502,9 @@ export function BlocCompetition({ competition }: { competition: NextCompetition 
   const router = useRouter();
   if (!competition) {
     return (
-      <Press onPress={() => router.push('/competitions' as any)} accessibilityRole="button" accessibilityLabel="Ta prochaine compétition. Touche plus pour l’ajouter">
+      <Press onPress={() => router.push('/competitions' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ta prochaine compétition. Touche plus pour l’ajouter")}>
         <Card style={{ gap: 12 }}>
-          <EmptyHead title="Ta prochaine compétition" />
+          <EmptyHead title={traduire("Ta prochaine compétition")} />
           <Filigree>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
@@ -527,27 +517,25 @@ export function BlocCompetition({ competition }: { competition: NextCompetition 
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={16} weight="black" tight>
-                  Open régional
-                </Ink>
+                  {traduire("Open régional")}</Ink>
                 <Ink size={13} weight="medium" color={P.ink2}>
-                  compte à rebours et poids de forme
-                </Ink>
+                  {traduire("compte à rebours et poids de forme")}</Ink>
               </View>
             </View>
           </Filigree>
-          <Invite text="Ta prochaine compétition aura son compte à rebours ici." hint="Touche + pour l’ajouter" />
+          <Invite text={traduire("Ta prochaine compétition aura son compte à rebours ici.")} hint={traduire("Touche + pour l’ajouter")} />
         </Card>
       </Press>
     );
   }
   const c = competition;
   return (
-    <Press onPress={() => router.push((c.id ? { pathname: '/competition-detail', params: { id: String(c.id) } } : '/competitions') as any)} accessibilityRole="button" accessibilityLabel={`${c.name}, dans ${c.days} jours`}>
+    <Press onPress={() => router.push((c.id ? { pathname: '/competition-detail', params: { id: String(c.id) } } : '/competitions') as any)} accessibilityRole="button" accessibilityLabel={traduire("{0}, dans {1} jours", c.name, c.days)}>
       <View style={[{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 16 }]}>
         <View style={[{ width: 84, height: 84, borderRadius: 22, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }, shadow]}>
           {c.days === 0 ? (
             <Ink size={17} weight="black" color={P.white}>
-              {'Jour J'}
+              {traduire('Jour J')}
             </Ink>
           ) : (
             <>
@@ -562,7 +550,7 @@ export function BlocCompetition({ competition }: { competition: NextCompetition 
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={13} weight="bold" color={P.ink2}>
-            {`${c.sport}, le ${longDate(c.date)}`}
+            {traduire("{0}, le {1}", c.sport, longDate(c.date))}
           </Ink>
           <Ink size={18} weight="black" tight numberOfLines={2}>
             {c.name}

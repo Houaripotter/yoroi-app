@@ -14,6 +14,7 @@ import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
 import { BigButton, Icon, P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
 import { capitalize, longDate } from '@/lib/v2/competition/dates';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type IconName = React.ComponentProps<typeof Icon>['name'];
 
@@ -126,10 +127,10 @@ export function DateField({ label, value, onChange, minimumDate }: { label?: str
         />
       ) : null}
       {Platform.OS !== 'android' ? (
-        <Sheet visible={open} onClose={() => setOpen(false)} title={label ?? 'Choisis la date'}>
+        <Sheet visible={open} onClose={() => setOpen(false)} title={label ?? traduire('Choisis la date')}>
           <DateTimePicker value={draft} mode="date" display="inline" minimumDate={minimumDate} themeVariant="light" accentColor={P.accent} onChange={(_, d) => d && setDraft(d)} />
           <BigButton
-            label="Valider"
+            label={traduire("Valider")}
             onPress={() => {
               onChange(draft);
               setOpen(false);
@@ -252,7 +253,7 @@ export function Chip({ label, sub, active, onPress, accent = P.ink }: { label: s
 export function Stepper({ value, label, onMinus, onPlus, suffix }: { value: string; label: string; onMinus: () => void; onPlus: () => void; suffix?: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Press onPress={onMinus} accessibilityRole="button" accessibilityLabel={`Moins, ${label}`}>
+      <Press onPress={onMinus} accessibilityRole="button" accessibilityLabel={traduire("Moins, {0}", label)}>
         <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="minus" size={20} />
         </View>
@@ -267,7 +268,7 @@ export function Stepper({ value, label, onMinus, onPlus, suffix }: { value: stri
           </Ink>
         ) : null}
       </View>
-      <Press onPress={onPlus} accessibilityRole="button" accessibilityLabel={`Plus, ${label}`}>
+      <Press onPress={onPlus} accessibilityRole="button" accessibilityLabel={traduire("Plus, {0}", label)}>
         <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="plus" size={20} color={P.white} />
         </View>

@@ -7,7 +7,7 @@ import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { scale, isIPad, getHistoryDays } from '@/constants/responsive';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 
 const STATS_COLUMNS = isIPad() ? 4 : 2;
 const STATS_GAP = 12;

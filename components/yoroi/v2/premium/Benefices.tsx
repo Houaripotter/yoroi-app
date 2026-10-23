@@ -16,16 +16,17 @@ import { Icon, type IconName } from '@/components/yoroi/v2/espace/ui';
 import { sceneForNow } from '@/components/yoroi/v2/accueil/images';
 import { PREMIUM_ROWS } from '@/lib/v2/premium/offer';
 import type { SceneId } from '@/lib/v2/espace';
+import { traduire } from '@/lib/i18n/tr';
 
 const desc = (id: string) => PREMIUM_ROWS.find((r) => r.id === id)?.desc ?? '';
 
 /** La phrase qui relie Premium a ton plan. cible : ton poids vise deja formate (« 80 »), null sans poids vise */
 export function phrasePlan(goal: string | null, cible: string | null): string {
-  if ((goal === 'lose' || goal === 'gain') && cible) return `Premium te montre tout le chemin jusqu’à ${cible} kg : ta courbe en entier et ton poids projeté.`;
-  if (goal === 'combat') return 'Premium suit ta préparation jusqu’à la pesée : tes rounds analysés, ton camp et ta coupe.';
-  if (goal === 'maintain') return 'Premium garde tout ton historique : tu vois mois après mois si ton poids tient.';
-  if (cible) return `Premium te montre tout le chemin jusqu’à ${cible} kg : ta courbe en entier et ton poids projeté.`;
-  return 'Premium te montre tout le chemin : ta courbe en entier, ton poids projeté et tes analyses.';
+  if ((goal === 'lose' || goal === 'gain') && cible) return traduire("Premium te montre tout le chemin jusqu’à {0} kg : ta courbe en entier et ton poids projeté.", cible);
+  if (goal === 'combat') return traduire('Premium suit ta préparation jusqu’à la pesée : tes rounds analysés, ton camp et ta coupe.');
+  if (goal === 'maintain') return traduire('Premium garde tout ton historique : tu vois mois après mois si ton poids tient.');
+  if (cible) return traduire("Premium te montre tout le chemin jusqu’à {0} kg : ta courbe en entier et ton poids projeté.", cible);
+  return traduire('Premium te montre tout le chemin : ta courbe en entier, ton poids projeté et tes analyses.');
 }
 
 export function PhrasePlan({ texte }: { texte: string }) {
@@ -91,14 +92,14 @@ function TuileMonde({ scene, personnage }: { scene: SceneId; personnage: ImageSo
 export function ListeBenefices({ goal, monde: vitrine }: { goal: string | null; monde: { scene: SceneId; personnage: ImageSourcePropType } }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const analyses: Benefice = { id: 'analyses', titre: 'Analyses et bilans', texte: desc('analyses'), visuel: <Tuile fond={c.accentTint}><RadarDessin couleur={c.accent} trait={c.textMuted} /></Tuile> };
-  const combat: Benefice = { id: 'combat', titre: 'Combat et compétition', texte: desc('combat'), visuel: <TuileIcone icon="swords" fond={c.accentTint} encre={c.accent} /> };
-  const monde: Benefice = { id: 'monde', titre: 'Scènes et personnages', texte: desc('monde'), visuel: <TuileMonde scene={vitrine.scene} personnage={vitrine.personnage} /> };
+  const analyses: Benefice = { id: 'analyses', titre: traduire('Analyses et bilans'), texte: desc('analyses'), visuel: <Tuile fond={c.accentTint}><RadarDessin couleur={c.accent} trait={c.textMuted} /></Tuile> };
+  const combat: Benefice = { id: 'combat', titre: traduire('Combat et compétition'), texte: desc('combat'), visuel: <TuileIcone icon="swords" fond={c.accentTint} encre={c.accent} /> };
+  const monde: Benefice = { id: 'monde', titre: traduire('Scènes et personnages'), texte: desc('monde'), visuel: <TuileMonde scene={vitrine.scene} personnage={vitrine.personnage} /> };
   const liste = goal === 'combat' ? [combat, analyses, monde] : [analyses, combat, monde];
   return (
     <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
       {liste.map((b, i) => (
-        <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: c.divider }} accessible accessibilityLabel={`${b.titre}, avec Premium. ${b.texte}`}>
+        <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: c.divider }} accessible accessibilityLabel={traduire("{0}, avec Premium. {1}", b.titre, b.texte)}>
           {b.visuel}
           <View style={{ flex: 1, gap: 3 }}>
             <Ink size={15} weight="black" style={{ lineHeight: 19 }}>{b.titre}</Ink>

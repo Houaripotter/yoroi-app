@@ -4,6 +4,7 @@
 // Coordonnées EXACTES calibrées sur l'image anatomique
 // Le corps occupe 25-75% de la largeur de l'image
 // Centre du corps = 50%
+import { traduire } from '@/lib/i18n/tr';
 
 export interface BodyZone {
   id: string;
@@ -19,14 +20,14 @@ export interface BodyZone {
 // ============================================
 
 export const BODY_ZONES_FRONT: BodyZone[] = [
-  { id: 'head', name: 'Tête / Visage', x: 50, y: 6, size: 12, injuries: ['Commotion', 'Coupure', 'Contusion'] },
+  { id: 'head', name: traduire('Tête / Visage'), x: 50, y: 6, size: 12, injuries: ['Commotion', 'Coupure', 'Contusion'] },
   { id: 'neck', name: 'Cou', x: 50, y: 15, size: 10, injuries: ['Torticolis', 'Contracture', 'Cervicales'] },
   { id: 'shoulder_l', name: 'Épaule Gauche', x: 74, y: 20, size: 12, injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion'] },
   { id: 'shoulder_r', name: 'Épaule Droite', x: 26, y: 20, size: 12, injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion'] },
-  { id: 'chest', name: 'Thorax / Pectoraux', x: 50, y: 26, size: 18, injuries: ['Contracture', 'Déchirure', 'Contusion', 'Fissure'] },
-  { id: 'arm_l', name: 'Bras Gauche', x: 82, y: 32, size: 10, injuries: ['Contracture', 'Élongation', 'Déchirure'] },
-  { id: 'arm_r', name: 'Bras Droit', x: 18, y: 32, size: 10, injuries: ['Contracture', 'Élongation', 'Déchirure'] },
-  { id: 'abdomen', name: 'Abdomen', x: 50, y: 40, size: 14, injuries: ['Contracture', 'Déchirure', 'Contusion'] },
+  { id: 'chest', name: 'Thorax / Pectoraux', x: 50, y: 26, size: 18, injuries: ['Contracture', traduire('Déchirure'), 'Contusion', 'Fissure'] },
+  { id: 'arm_l', name: 'Bras Gauche', x: 82, y: 32, size: 10, injuries: ['Contracture', traduire('Élongation'), traduire('Déchirure')] },
+  { id: 'arm_r', name: 'Bras Droit', x: 18, y: 32, size: 10, injuries: ['Contracture', traduire('Élongation'), traduire('Déchirure')] },
+  { id: 'abdomen', name: 'Abdomen', x: 50, y: 40, size: 14, injuries: ['Contracture', traduire('Déchirure'), 'Contusion'] },
   { id: 'elbow_l', name: 'Coude Gauche', x: 85, y: 42, size: 8, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
   { id: 'elbow_r', name: 'Coude Droit', x: 15, y: 42, size: 8, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
   { id: 'forearm_l', name: 'Avant-bras Gauche', x: 90, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
@@ -43,20 +44,20 @@ export const BODY_ZONES_FRONT: BodyZone[] = [
   { id: 'fingers_l', name: 'Doigts Gauche', x: 92, y: 66, size: 6, injuries: ['Entorse', 'Luxation', 'Fracture', 'Coupure'] },
   { id: 'fingers_r', name: 'Doigts Droite', x: 8, y: 66, size: 6, injuries: ['Entorse', 'Luxation', 'Fracture', 'Coupure'] },
 
-  { id: 'thigh_l', name: 'Cuisse Gauche', x: 62, y: 65, size: 12, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
-  { id: 'thigh_r', name: 'Cuisse Droite', x: 38, y: 65, size: 12, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
-  { id: 'knee_l', name: 'Genou Gauche', x: 63, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne'] },
-  { id: 'knee_r', name: 'Genou Droit', x: 37, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne'] },
-  { id: 'shin_l', name: 'Tibia Gauche', x: 64, y: 88, size: 9, injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue'] },
-  { id: 'shin_r', name: 'Tibia Droit', x: 36, y: 88, size: 9, injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue'] },
+  { id: 'thigh_l', name: 'Cuisse Gauche', x: 62, y: 65, size: 12, injuries: ['Contracture', traduire('Élongation'), traduire('Déchirure'), 'Contusion'] },
+  { id: 'thigh_r', name: 'Cuisse Droite', x: 38, y: 65, size: 12, injuries: ['Contracture', traduire('Élongation'), traduire('Déchirure'), 'Contusion'] },
+  { id: 'knee_l', name: 'Genou Gauche', x: 63, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', traduire('Ménisque'), 'Tendinite rotulienne'] },
+  { id: 'knee_r', name: 'Genou Droit', x: 37, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', traduire('Ménisque'), 'Tendinite rotulienne'] },
+  { id: 'shin_l', name: 'Tibia Gauche', x: 64, y: 88, size: 9, injuries: [traduire('Périostite (shin splints)'), 'Contusion', traduire('Fracture de fatigue')] },
+  { id: 'shin_r', name: 'Tibia Droit', x: 36, y: 88, size: 9, injuries: [traduire('Périostite (shin splints)'), 'Contusion', traduire('Fracture de fatigue')] },
 
   // PIEDS DÉTAILLÉS (zones qui se chevauchent)
   { id: 'ankle_l', name: 'Cheville Gauche', x: 65, y: 92, size: 7, injuries: ['Entorse', 'Fracture', 'Tendinite', 'Contusion'] },
   { id: 'ankle_r', name: 'Cheville Droite', x: 35, y: 92, size: 7, injuries: ['Entorse', 'Fracture', 'Tendinite', 'Contusion'] },
   { id: 'foot_l', name: 'Pied Gauche', x: 66, y: 96, size: 8, injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil'] },
   { id: 'foot_r', name: 'Pied Droit', x: 34, y: 96, size: 8, injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil'] },
-  { id: 'toes_l', name: 'Orteils Gauche', x: 66, y: 98, size: 5, injuries: ['Fracture', 'Luxation', 'Ongle incarné', 'Contusion'] },
-  { id: 'toes_r', name: 'Orteils Droit', x: 34, y: 98, size: 5, injuries: ['Fracture', 'Luxation', 'Ongle incarné', 'Contusion'] },
+  { id: 'toes_l', name: 'Orteils Gauche', x: 66, y: 98, size: 5, injuries: ['Fracture', 'Luxation', traduire('Ongle incarné'), 'Contusion'] },
+  { id: 'toes_r', name: 'Orteils Droit', x: 34, y: 98, size: 5, injuries: ['Fracture', 'Luxation', traduire('Ongle incarné'), 'Contusion'] },
 ];
 
 // ============================================
@@ -74,10 +75,10 @@ export const BODY_ZONES_BACK: BodyZone[] = [
   { id: 'elbow_back_r', name: 'Coude Droit', x: 88, y: 42, size: 9, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
   { id: 'glute_l', name: 'Fessier Gauche', x: 38, y: 55, size: 12, injuries: ['Contracture', 'Syndrome piriforme', 'Contusion'] },
   { id: 'glute_r', name: 'Fessier Droit', x: 62, y: 55, size: 12, injuries: ['Contracture', 'Syndrome piriforme', 'Contusion'] },
-  { id: 'hamstring_l', name: 'Ischio Gauche', x: 38, y: 68, size: 10, injuries: ['Élongation', 'Déchirure', 'Claquage', 'Contracture'] },
-  { id: 'hamstring_r', name: 'Ischio Droit', x: 62, y: 68, size: 10, injuries: ['Élongation', 'Déchirure', 'Claquage', 'Contracture'] },
-  { id: 'calf_l', name: 'Mollet Gauche', x: 37, y: 82, size: 10, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
-  { id: 'calf_r', name: 'Mollet Droit', x: 63, y: 82, size: 10, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
+  { id: 'hamstring_l', name: 'Ischio Gauche', x: 38, y: 68, size: 10, injuries: [traduire('Élongation'), traduire('Déchirure'), 'Claquage', 'Contracture'] },
+  { id: 'hamstring_r', name: 'Ischio Droit', x: 62, y: 68, size: 10, injuries: [traduire('Élongation'), traduire('Déchirure'), 'Claquage', 'Contracture'] },
+  { id: 'calf_l', name: 'Mollet Gauche', x: 37, y: 82, size: 10, injuries: ['Contracture', 'Claquage', traduire('Déchirure'), 'Crampe'] },
+  { id: 'calf_r', name: 'Mollet Droit', x: 63, y: 82, size: 10, injuries: ['Contracture', 'Claquage', traduire('Déchirure'), 'Crampe'] },
 
   // MAINS DOS (zones qui se chevauchent)
   { id: 'wrist_back_l', name: 'Poignet Gauche (Arrière)', x: 8, y: 57, size: 7, injuries: ['Entorse', 'Tendinite', 'Contusion'] },
@@ -88,8 +89,8 @@ export const BODY_ZONES_BACK: BodyZone[] = [
   // PIEDS DOS (zones qui se chevauchent)
   { id: 'ankle_back_l', name: 'Cheville Gauche (Arrière)', x: 35, y: 92, size: 7, injuries: ['Entorse', 'Tendon Achille'] },
   { id: 'ankle_back_r', name: 'Cheville Droite (Arrière)', x: 65, y: 92, size: 7, injuries: ['Entorse', 'Tendon Achille'] },
-  { id: 'heel_l', name: 'Talon Gauche', x: 35, y: 95, size: 8, injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite'] },
-  { id: 'heel_r', name: 'Talon Droit', x: 65, y: 95, size: 8, injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite'] },
+  { id: 'heel_l', name: 'Talon Gauche', x: 35, y: 95, size: 8, injuries: [traduire('Épine calcanéenne'), 'Contusion', 'Fasciite'] },
+  { id: 'heel_r', name: 'Talon Droit', x: 65, y: 95, size: 8, injuries: [traduire('Épine calcanéenne'), 'Contusion', 'Fasciite'] },
 ];
 
 // ============================================
@@ -99,9 +100,9 @@ export const BODY_ZONES_BACK: BodyZone[] = [
 export type PainType = 'acute' | 'dull' | 'burning' | 'tingling' | 'stiffness' | 'cramping';
 
 export const PAIN_TYPES: { id: PainType; label: string; icon: string }[] = [
-  { id: 'acute', label: 'Aiguë', icon: 'Zap' },
+  { id: 'acute', label: traduire('Aiguë'), icon: 'Zap' },
   { id: 'dull', label: 'Sourde', icon: 'Waves' },
-  { id: 'burning', label: 'Brûlure', icon: 'Flame' },
+  { id: 'burning', label: traduire('Brûlure'), icon: 'Flame' },
   { id: 'tingling', label: 'Picotement', icon: 'Sparkles' },
   { id: 'stiffness', label: 'Raideur', icon: 'Lock' },
   { id: 'cramping', label: 'Crampe', icon: 'AlertCircle' },
@@ -138,16 +139,16 @@ export type TreatmentType =
   | 'custom';
 
 export const TREATMENT_TYPES: { id: TreatmentType; label: string; icon: string }[] = [
-  { id: 'rest', label: 'Repos', icon: 'Bed' },
-  { id: 'ice', label: 'Glaçage', icon: 'Snowflake' },
+  { id: 'rest', label: traduire('Repos'), icon: 'Bed' },
+  { id: 'ice', label: traduire('Glaçage'), icon: 'Snowflake' },
   { id: 'heat', label: 'Chaleur', icon: 'Flame' },
   { id: 'compression', label: 'Compression', icon: 'CircleDot' },
-  { id: 'elevation', label: 'Élévation', icon: 'ArrowUp' },
-  { id: 'stretch', label: 'Étirements', icon: 'Move' },
+  { id: 'elevation', label: traduire('Élévation'), icon: 'ArrowUp' },
+  { id: 'stretch', label: traduire('Étirements'), icon: 'Move' },
   { id: 'medication', label: 'Anti-inflammatoire', icon: 'Pill' },
-  { id: 'physio', label: 'Kiné', icon: 'Stethoscope' },
+  { id: 'physio', label: traduire('Kiné'), icon: 'Stethoscope' },
   { id: 'massage', label: 'Massage', icon: 'Hand' },
-  { id: 'custom', label: 'Personnalisé', icon: 'Edit3' },
+  { id: 'custom', label: traduire('Personnalisé'), icon: 'Edit3' },
 ];
 
 // ============================================
@@ -172,9 +173,9 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     color: '#4CAF50',
     backgroundColor: '#E8F5E9',
     icon: '',
-    title: 'OPÉRATIONNEL',
-    subtitle: 'Aucune douleur significative',
-    advice: 'Aucune douleur active enregistrée',
+    title: traduire('OPÉRATIONNEL'),
+    subtitle: traduire('Aucune douleur significative'),
+    advice: traduire('Aucune douleur active enregistrée'),
   },
   restricted: {
     status: 'restricted',
@@ -182,17 +183,17 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     backgroundColor: '#FFF3E0',
     icon: '',
     title: 'RESTREINT',
-    subtitle: 'Douleur modérée présente',
-    advice: 'Une ou plusieurs zones douloureuses enregistrées',
+    subtitle: traduire('Douleur modérée présente'),
+    advice: traduire('Une ou plusieurs zones douloureuses enregistrées'),
   },
   unfit: {
     status: 'unfit',
     color: '#F44336',
     backgroundColor: '#FFEBEE',
     icon: '',
-    title: 'ATTENTION',
-    subtitle: 'Douleur importante',
-    advice: 'Douleur intense enregistrée - consulter un professionnel de santé',
+    title: traduire('ATTENTION'),
+    subtitle: traduire('Douleur importante'),
+    advice: traduire('Douleur intense enregistrée - consulter un professionnel de santé'),
   },
 };
 

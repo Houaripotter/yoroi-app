@@ -15,6 +15,7 @@ import { CheckIcon, DOJO, LockIcon } from '@/components/yoroi/v2/dojo/parts';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import type { Gender } from '@/lib/v2/dojo/personnages';
 import { cadrageBuste } from '@/lib/v2/espace/cadrageBuste';
+import { traduire } from '@/lib/i18n/tr';
 
 export function selection() {
   void Haptics.selectionAsync().catch(() => undefined);
@@ -137,7 +138,7 @@ export function Teintes<T extends string>({ options, value, onChange, fond }: { 
             }}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={`Teinte ${i + 1} sur ${options.length}`}
+            accessibilityLabel={traduire("Teinte {0} sur {1}", i + 1, options.length)}
             hitSlop={4}
             style={({ pressed }) => ({ padding: 2, borderRadius: 24, borderWidth: 2, borderColor: on ? c.accent : 'transparent', transform: [{ scale: pressed ? 0.94 : 1 }] })}
           >
@@ -192,7 +193,7 @@ export function Vignette({
   const c = theme.colors;
   const h = Math.round(width * 1.2);
   const bord = etat.equipe ? c.accent : etat.regarde ? DOJO.gold : 'transparent';
-  const note = etat.equipe ? 'Équipé' : etat.note ?? '';
+  const note = etat.equipe ? traduire('Équipé') : etat.note ?? '';
   return (
     <Pressable
       onPress={onPress}

@@ -8,6 +8,13 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>fr</string>
+		<string>en</string>
+		<string>de</string>
+		<string>nl</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Yoroi</string>
 	<key>CFBundleExecutable</key>

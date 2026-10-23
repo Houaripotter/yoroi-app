@@ -14,6 +14,7 @@ import { aideActivation, ligneMange, mentionSource, milliers } from '@/lib/v2/nu
 import type { JourRepas, ResumeRepas } from '@/lib/v2/nutrition/mange';
 import { Card, Icon, P, Press, useAccent } from './kit';
 import { carteNeutre } from './domaines';
+import { traduire } from '@/lib/i18n/tr';
 
 const JOURS_COURTS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
 const jourCourt = (iso: string) => {
@@ -41,14 +42,14 @@ export function BlocMange({ resume }: { resume: ResumeRepas | null }) {
   if (!texte) return null;
   return (
     <>
-      <Press onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={`Mangé aujourd’hui : ${texte}, ${mentionSource(resume)}. Ouvrir le détail`}>
+      <Press onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Mangé aujourd’hui : {0}, {1}. Ouvrir le détail", texte, mentionSource(resume))}>
         <Card style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 }, carteNeutre()]}>
           <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: accentTint, alignItems: 'center', justifyContent: 'center' }}>
             <Bol color={accent} />
           </View>
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={14.5} weight="extraBold" numberOfLines={2}>
-              {`Mangé aujourd’hui : ${texte}`}
+              {traduire("Mangé aujourd’hui : {0}", texte)}
             </Ink>
             <Ink size={11.5} weight="medium" color={P.muted} numberOfLines={1}>
               {mentionSource(resume)}
@@ -75,8 +76,7 @@ function Case({ label, valeur, unite }: { label: string; valeur: number | null; 
         </Ink>
       ) : (
         <Ink size={14} weight="medium" color={P.muted} style={{ paddingVertical: 5 }}>
-          pas noté
-        </Ink>
+          {traduire("pas noté")}</Ink>
       )}
     </View>
   );
@@ -88,7 +88,7 @@ function Barres({ jours }: { jours: JourRepas[] }) {
   const max = Math.max(1, ...jours.map((j) => j.kcal ?? 0));
   const H = 88;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: H + 40 }} accessibilityLabel={`Calories des 7 derniers jours : ${jours.map((j) => `${jourCourt(j.date)} ${j.kcal ? `${Math.round(j.kcal)} kcal` : 'rien de noté'}`).join(', ')}`}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: H + 40 }} accessibilityLabel={traduire("Calories des 7 derniers jours : {0}", jours.map((j) => `${jourCourt(j.date)} ${j.kcal ? `${Math.round(j.kcal)} kcal` : 'rien de noté'}`).join(', '))}>
       {jours.map((j, i) => {
         const v = j.kcal ?? 0;
         const auj = i === jours.length - 1;
@@ -114,24 +114,23 @@ export function FeuilleMange({ visible, onClose, resume }: { visible: boolean; o
   const j = resume.aujourdhui;
   const m = resume.moyenne;
   const notes: string[] = [];
-  if (j?.ecartees.length) notes.push(`${j.ecartees.join(', ')} ${j.ecartees.length > 1 ? 'ont' : 'a'} aussi écrit aujourd’hui : seul ${j.source ?? 'la dernière app'} est compté, pour ne pas additionner deux fois les mêmes repas.`);
-  if (j && j.doublons > 0) notes.push(j.doublons === 1 ? 'Une entrée écrite deux fois à l’identique n’est comptée qu’une fois.' : `${j.doublons} entrées écrites deux fois à l’identique ne sont comptées qu’une fois.`);
+  if (j?.ecartees.length) notes.push(traduire("{0} {1} aussi écrit aujourd’hui : seul {2} est compté, pour ne pas additionner deux fois les mêmes repas.", j.ecartees.join(', '), j.ecartees.length > 1 ? 'ont' : 'a', j.source ?? 'la dernière app'));
+  if (j && j.doublons > 0) notes.push(j.doublons === 1 ? traduire('Une entrée écrite deux fois à l’identique n’est comptée qu’une fois.') : traduire("{0} entrées écrites deux fois à l’identique ne sont comptées qu’une fois.", j.doublons));
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(16,19,27,0.45)', justifyContent: 'flex-end' }} accessibilityLabel="Fermer">
+      <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(16,19,27,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
         <Pressable onPress={() => {}} style={{ backgroundColor: P.paper, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12, maxHeight: '90%' }}>
           <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: P.line, marginBottom: 6 }} />
           <ScrollView bounces={false} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 18, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flex: 1, gap: 1 }}>
                 <Ink size={22} weight="black" tight accessibilityRole="header">
-                  Mangé aujourd’hui
-                </Ink>
+                  {traduire("Mangé aujourd’hui")}</Ink>
                 <Ink size={12.5} weight="medium" color={P.muted}>
                   {mentionSource(resume)}
                 </Ink>
               </View>
-              <Press onPress={onClose} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={8}>
+              <Press onPress={onClose} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} hitSlop={8}>
                 <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name="close" size={18} color={P.ink} width={2.6} />
                 </View>
@@ -139,23 +138,21 @@ export function FeuilleMange({ visible, onClose, resume }: { visible: boolean; o
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              <Case label="Calories" valeur={j?.kcal ?? null} unite="kcal" />
-              <Case label="Protéines" valeur={j?.proteines ?? null} unite="g" />
-              <Case label="Glucides" valeur={j?.glucides ?? null} unite="g" />
-              <Case label="Lipides" valeur={j?.lipides ?? null} unite="g" />
+              <Case label={traduire("Calories")} valeur={j?.kcal ?? null} unite="kcal" />
+              <Case label={traduire("Protéines")} valeur={j?.proteines ?? null} unite="g" />
+              <Case label={traduire("Glucides")} valeur={j?.glucides ?? null} unite="g" />
+              <Case label={traduire("Lipides")} valeur={j?.lipides ?? null} unite="g" />
             </View>
             <Ink size={12.5} weight="medium" color={P.ink2} style={{ lineHeight: 18 }}>
-              Ta journée peut être incomplète : ton app écrit au fil de tes saisies.
-            </Ink>
+              {traduire("Ta journée peut être incomplète : ton app écrit au fil de tes saisies.")}</Ink>
 
             <View style={{ padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 8 }}>
               <Ink size={15} weight="black" tight>
-                Tes 7 derniers jours
-              </Ink>
+                {traduire("Tes 7 derniers jours")}</Ink>
               <Barres jours={resume.jours} />
               {m && ligneMange(m) ? (
                 <Ink size={12.5} weight="medium" color={P.ink2} style={{ lineHeight: 18 }}>
-                  {`En moyenne ${ligneMange(m)} par jour, sur ${m.jours === 1 ? '1 jour noté' : `${m.jours} jours notés`} avant aujourd’hui.`}
+                  {traduire("En moyenne {0} par jour, sur {1} avant aujourd’hui.", ligneMange(m), m.jours === 1 ? '1 jour noté' : `${m.jours} jours notés`)}
                 </Ink>
               ) : null}
             </View>
@@ -168,14 +165,12 @@ export function FeuilleMange({ visible, onClose, resume }: { visible: boolean; o
 
             <View style={{ gap: 4 }}>
               <Ink size={13.5} weight="extraBold">
-                D’où viennent ces chiffres
-              </Ink>
+                {traduire("D’où viennent ces chiffres")}</Ink>
               <Ink size={13} weight="medium" color={P.ink2} style={{ lineHeight: 19 }}>
                 {aideActivation(resume.fournisseur)}
               </Ink>
               <Ink size={12} weight="medium" color={P.muted} style={{ lineHeight: 17 }}>
-                Tu peux cacher cette ligne dans Ton accueil.
-              </Ink>
+                {traduire("Tu peux cacher cette ligne dans Ton accueil.")}</Ink>
             </View>
           </ScrollView>
         </Pressable>

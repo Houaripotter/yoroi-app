@@ -16,17 +16,18 @@
  */
 import { useSyncExternalStore } from 'react';
 import type { PremiumPackage } from '@/context/PremiumContext';
+import { traduire } from '@/lib/i18n/tr';
 
 export type PaywallVariant = 'reel' | 'essai' | 'sans_essai' | 'erreur' | 'chargement' | 'bienvenue' | 'restaure';
 
 export const PAYWALL_VARIANTS: { id: PaywallVariant; label: string; sub: string }[] = [
-  { id: 'reel', label: 'Offres réelles', sub: 'Ce que le store renvoie maintenant' },
-  { id: 'essai', label: 'Avec essai', sub: '7 jours gratuits sur chaque formule' },
-  { id: 'sans_essai', label: 'Sans essai', sub: 'Le prix directement' },
-  { id: 'erreur', label: 'Offres en erreur', sub: 'Le message et le bouton Réessayer' },
-  { id: 'chargement', label: 'Offres en chargement', sub: 'Le petit indicateur' },
-  { id: 'bienvenue', label: 'Après l’achat', sub: 'Bienvenue Premium, puis la demande de notification' },
-  { id: 'restaure', label: 'Après une restauration', sub: 'Ton Premium est de retour' },
+  { id: 'reel', label: traduire('Offres réelles'), sub: traduire('Ce que le store renvoie maintenant') },
+  { id: 'essai', label: traduire('Avec essai'), sub: traduire('7 jours gratuits sur chaque formule') },
+  { id: 'sans_essai', label: traduire('Sans essai'), sub: traduire('Le prix directement') },
+  { id: 'erreur', label: traduire('Offres en erreur'), sub: traduire('Le message et le bouton Réessayer') },
+  { id: 'chargement', label: traduire('Offres en chargement'), sub: traduire('Le petit indicateur') },
+  { id: 'bienvenue', label: traduire('Après l’achat'), sub: traduire('Bienvenue Premium, puis la demande de notification') },
+  { id: 'restaure', label: traduire('Après une restauration'), sub: traduire('Ton Premium est de retour') },
 ];
 
 /** Duree de l'essai simule par la variante « essai » */
@@ -81,7 +82,7 @@ function examplePackage(kind: 'annual' | 'monthly'): PremiumPackage {
     identifier: annual ? '$apercu_annuel' : '$apercu_mensuel',
     productId: annual ? 'apercu.annuel' : 'apercu.mensuel',
     priceString,
-    periodLabel: annual ? 'par an' : 'par mois',
+    periodLabel: annual ? traduire('par an') : traduire('par mois'),
     raw: {
       identifier: annual ? '$apercu_annuel' : '$apercu_mensuel',
       packageType: annual ? 'ANNUAL' : 'MONTHLY',

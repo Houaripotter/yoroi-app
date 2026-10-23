@@ -8,6 +8,7 @@
  * Ids encore en repli (0) : aucun
  */
 import type { ImageSourcePropType } from 'react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CarnetImageId =
   | 'force'
@@ -85,7 +86,7 @@ export const PARTAGE_FONDS: Record<PartageFond, ImageSourcePropType> = {
 };
 
 export const PARTAGE_FONDS_LISTE: { key: PartageFond; label: string; dark: boolean }[] = [
-  { key: 'nuit', label: 'Nuit', dark: true },
+  { key: 'nuit', label: traduire('Nuit'), dark: true },
   { key: 'aube', label: 'Aube', dark: true },
   { key: 'dojo', label: 'Dojo', dark: true },
   { key: 'sakura', label: 'Sakura', dark: false },

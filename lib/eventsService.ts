@@ -15,6 +15,7 @@
 
 import { openDatabase } from './database';
 import logger from '@/lib/security/logger';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -598,7 +599,7 @@ function mapRowToEvent(row: any): SportEvent {
 /**
  * Formate une date ISO en format lisible
  */
-export function formatEventDate(dateString: string, locale: string = 'fr-FR'): string {
+export function formatEventDate(dateString: string, locale: string = LOCALE): string {
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString(locale, {
@@ -622,17 +623,17 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
       grappling: 'Grappling',
       hyrox: 'HYROX',
       marathon: 'Marathon',
-      running: 'Course à pied',
+      running: traduire('Course à pied'),
       trail: 'Trail',
       climbing: 'Escalade',
       fitness: 'Fitness',
       powerlifting: 'Powerlifting',
       crossfit: 'CrossFit',
       triathlon: 'Triathlon',
-      obstacle: 'Course à obstacles',
+      obstacle: traduire('Course à obstacles'),
       judo: 'Judo',
       cycling: 'Cyclisme',
-      all: 'Tous les sports',
+      all: traduire('Tous les sports'),
     },
     en: {
       jjb: 'BJJ',

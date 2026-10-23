@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import Svg, { Line, Text as SvgText } from 'react-native-svg';
 import { FAMILY } from '@/lib/v2/sante/metrics';
 import { areaOf, AxisLabel, brushPath, CHART, ChartCursor, ChartGrid, ChartTooltip, nearestIndex, niceTicks, RefLine, Reveal, SeriesLine, useChartScrub } from '../charts/core';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Frequence cardiaque : couleur de la famille coeur, la meme que dans Sante */
 const HEART_COLOR = FAMILY.coeur.color;
@@ -65,7 +66,7 @@ export function HrChart({ samples, width, height = 150, avg }: { samples: { time
   if (!geo) return null;
   const act = active != null && active < geo.ds.length ? active : null;
   return (
-    <View ref={viewRef} onLayout={onLayout} style={{ width, height }} {...panHandlers} accessibilityLabel="Fréquence cardiaque pendant la séance, glisse le doigt pour lire chaque instant">
+    <View ref={viewRef} onLayout={onLayout} style={{ width, height }} {...panHandlers} accessibilityLabel={traduire("Fréquence cardiaque pendant la séance, glisse le doigt pour lire chaque instant")}>
       <Svg width={width} height={height}>
         <ChartGrid ticks={geo.ticks} y={geo.y} x1={padL} x2={width} format={(v) => String(Math.round(v))} />
         {avg ? <RefLine y={geo.y(avg)} x1={padL} x2={width} /> : null}
@@ -73,7 +74,7 @@ export function HrChart({ samples, width, height = 150, avg }: { samples: { time
           <>
             <Line x1={width - 128} x2={width - 112} y1={9} y2={9} stroke={CHART.axisInk} strokeWidth={1.6} strokeDasharray="0.1 5" strokeLinecap="round" />
             <SvgText x={width} y={13} textAnchor="end" fontSize={CHART.labelSize} fontFamily={CHART.labelFamily} fill={CHART.axisInk}>
-              {`moyenne ${Math.round(avg)} par min`}
+              {traduire("moyenne {0} par min", Math.round(avg))}
             </SvgText>
           </>
         ) : null}
@@ -85,7 +86,7 @@ export function HrChart({ samples, width, height = 150, avg }: { samples: { time
         ))}
         {act !== null ? <ChartCursor x={geo.xs[act]} top={padT - 6} bottom={height - padB} cy={geo.y(geo.ds[act].bpm)} compact color={HEART_COLOR} /> : null}
       </Svg>
-      {act !== null ? <ChartTooltip x={geo.xs[act]} width={width} value={`${Math.round(geo.ds[act].bpm)} par minute`} caption={`à ${hhmm(new Date(geo.ds[act].timestamp).getTime())}`} /> : null}
+      {act !== null ? <ChartTooltip x={geo.xs[act]} width={width} value={traduire("{0} par minute", Math.round(geo.ds[act].bpm))} caption={traduire("à {0}", hhmm(new Date(geo.ds[act].timestamp).getTime()))} /> : null}
     </View>
   );
 }

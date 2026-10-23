@@ -16,6 +16,7 @@ import type { FondId } from '@/components/yoroi/v2/fonds/FondEpoque';
 import type { FontWeightKey } from '@/components/yoroi/tokens';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
 import { finAtteinte } from '@/lib/v2/onboarding/finDefilement';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export const GUTTER = 22;
 
@@ -55,7 +56,7 @@ export function ProgressBar({ value }: { value: number }) {
       style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: c.fillSubtle, overflow: 'hidden' }}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel="Progression"
+      accessibilityLabel={traduire("Progression")}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }}
     >
       <Animated.View style={[{ height: 6, borderRadius: 3, backgroundColor: c.accent }, style]} />
@@ -230,12 +231,12 @@ export function Shell({
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {fond ? <FondEpoque fond={fond} voile="clair" /> : null}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: apercu ? 6 : 12, minHeight: insets.top + 56 }}>
-        {onBack ? <RoundIcon name="back" label="Retour" onPress={onBack} /> : <View style={{ width: 44 }} />}
+        {onBack ? <RoundIcon name="back" label={traduire("Retour")} onPress={onBack} /> : <View style={{ width: 44 }} />}
         {/* vague 30 : en apercu du Studio, la pastille prend la place de la barre de progression */}
         <ApercuDansBarre />
         {apercu ? null : progress != null ? <ProgressBar value={progress} /> : <View style={{ flex: 1 }} />}
         {onSkip ? <SkipLink onPress={onSkip} /> : <View style={{ width: 44 }} />}
-        {onClose ? <RoundIcon name="close" label="Fermer l’aperçu" onPress={onClose} /> : null}
+        {onClose ? <RoundIcon name="close" label={traduire("Fermer l’aperçu")} onPress={onClose} /> : null}
       </View>
       {scroll ? (
         <ScrollView
@@ -338,5 +339,5 @@ export function Chip({ label, on, onPress }: { label: string; on: boolean; onPre
 /** Kilos a la francaise : virgule decimale */
 export function kg(v: number, digits = 1): string {
   const r = Math.round(v * 10 ** digits) / 10 ** digits;
-  return (Number.isInteger(r) ? String(r) : r.toFixed(digits)).replace('.', ',');
+  return (Number.isInteger(r) ? String(r) : r.toFixed(digits)).replace('.', DECIMAL);
 }

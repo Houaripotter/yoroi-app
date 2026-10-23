@@ -8,6 +8,7 @@ import Svg, { Circle, G, Path } from 'react-native-svg';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { MuscleLoad, MuscleName } from '@/lib/v2/seances/weekSummary';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const MUSCLE_LEVEL_COLORS = ['#DEDAD1', '#C5CEE0', '#8197C2', '#3D5D9E'] as const;
 const NEUTRAL = '#ECE9E2';
@@ -82,11 +83,11 @@ export function MuscleFigures({ levels, height = 150 }: { levels: Record<string,
     <View style={{ flexDirection: 'row', gap: 2 }}>
       <View style={{ alignItems: 'center', gap: 4 }}>
         <Figure shapes={FRONT} levels={levels} height={height} abs />
-        <Ink size={11} weight="bold" color={c.textMuted}>Avant</Ink>
+        <Ink size={11} weight="bold" color={c.textMuted}>{traduire("Avant")}</Ink>
       </View>
       <View style={{ alignItems: 'center', gap: 4 }}>
         <Figure shapes={BACK} levels={levels} height={height} />
-        <Ink size={11} weight="bold" color={c.textMuted}>Arrière</Ink>
+        <Ink size={11} weight="bold" color={c.textMuted}>{traduire("Arrière")}</Ink>
       </View>
     </View>
   );
@@ -102,11 +103,11 @@ export function MuscleMap({ loads, height = 176 }: { loads: MuscleLoad[]; height
       <View style={{ flexDirection: 'row', gap: 2 }}>
         <View style={{ alignItems: 'center', gap: 4 }}>
           <Figure shapes={FRONT} levels={levels} height={height} abs />
-          <Ink size={11} weight="bold" color={c.textMuted}>Avant</Ink>
+          <Ink size={11} weight="bold" color={c.textMuted}>{traduire("Avant")}</Ink>
         </View>
         <View style={{ alignItems: 'center', gap: 4 }}>
           <Figure shapes={BACK} levels={levels} height={height} />
-          <Ink size={11} weight="bold" color={c.textMuted}>Arrière</Ink>
+          <Ink size={11} weight="bold" color={c.textMuted}>{traduire("Arrière")}</Ink>
         </View>
       </View>
       {/* (vague 26, qualite) le nom et l'etat l'un sous l'autre : rien de coupe a 375 points */}
@@ -117,7 +118,7 @@ export function MuscleMap({ loads, height = 176 }: { loads: MuscleLoad[]; height
             <View style={{ flex: 1, minWidth: 0 }}>
               <Ink size={13} weight="bold" numberOfLines={1}>{l.name}</Ink>
               <Ink size={11} weight={l.sets ? 'extraBold' : 'medium'} color={l.sets ? c.ink : c.textMuted} numberOfLines={1}>
-                {l.sets ? `${l.sets} série${l.sets > 1 ? 's' : ''}` : l.engaged ? 'sollicité' : 'au repos'}
+                {l.sets ? traduirePluriel(l.sets, l.sets > 1, "{0} série", "{0} séries", l.sets) : l.engaged ? traduire('sollicité') : traduire('au repos')}
               </Ink>
             </View>
           </View>
@@ -133,11 +134,11 @@ export function MuscleScale() {
   const c = theme.colors;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <Ink size={11} weight="bold" color={c.textMuted}>Léger</Ink>
+      <Ink size={11} weight="bold" color={c.textMuted}>{traduire("Léger")}</Ink>
       {MUSCLE_LEVEL_COLORS.slice(1).map((col) => (
         <View key={col} style={{ width: 22, height: 8, borderRadius: 4, backgroundColor: col }} />
       ))}
-      <Ink size={11} weight="bold" color={c.textMuted}>10 séries et plus</Ink>
+      <Ink size={11} weight="bold" color={c.textMuted}>{traduire("10 séries et plus")}</Ink>
     </View>
   );
 }

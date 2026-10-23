@@ -25,6 +25,7 @@ import type { ViewKey } from '@/lib/v2/progres/measures';
 import { num } from '@/lib/v2/progres/format';
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function MeasurementsDetailScreen() {
   const { theme } = useYoroiTheme();
@@ -62,10 +63,10 @@ export default function MeasurementsDetailScreen() {
 
   // 18 octobre 2026 : une prise fausse se supprime d'un appui, apres confirmation (meme fenetre que les pesees)
   const onHistoryPress = (pt: DetailPoint) => {
-    appAlert('Supprimer cette prise ?', `Toutes tes mensurations du ${formatLongDate(pt.date)} partent pour de bon.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cette prise ?'), traduire("Toutes tes mensurations du {0} partent pour de bon.", formatLongDate(pt.date)), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -74,7 +75,7 @@ export default function MeasurementsDetailScreen() {
             reload();
           } catch (err) {
             logger.error('Suppression des mensurations impossible', err);
-            appAlert('Oups', 'Cette prise n’a pas pu être supprimée. Réessaie.');
+            appAlert('Oups', traduire('Cette prise n’a pas pu être supprimée. Réessaie.'));
           }
         },
       },
@@ -88,8 +89,7 @@ export default function MeasurementsDetailScreen() {
       {screenshotDetected ? (
         <View style={{ padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
           <Ink size={13} weight="bold">
-            Capture d’écran repérée. Tes mesures sont personnelles.
-          </Ink>
+            {traduire("Capture d’écran repérée. Tes mesures sont personnelles.")}</Ink>
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -106,7 +106,7 @@ export default function MeasurementsDetailScreen() {
               }}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={`${f.long}, ${num(l.value, 1)} centimètres`}
+              accessibilityLabel={traduire("{0}, {1} centimètres", f.long, num(l.value, 1))}
               style={{ width: '31.5%', minHeight: 84, padding: 10, borderRadius: 18, backgroundColor: on ? c.ink : blancA(0.78), borderWidth: 1, borderColor: on ? c.ink : c.divider, gap: 2 }}
             >
               <Ink size={12} weight="bold" color={on ? c.onDarkSecondary : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
@@ -119,7 +119,7 @@ export default function MeasurementsDetailScreen() {
                 </Ink>
               </Ink>
               <Ink size={11} weight="bold" color={on ? c.onDarkSecondary : c.textSecondary} numberOfLines={2}>
-                {d === null ? 'une prise' : cmDelta(d)}
+                {d === null ? traduire('une prise') : cmDelta(d)}
               </Ink>
             </Pressable>
           );
@@ -133,29 +133,29 @@ export default function MeasurementsDetailScreen() {
       <MetricDetail
         key={active?.key ?? 'vide'}
         title="Tes mensurations"
-        sub="Une prise par mois suffit pour voir ton corps changer."
+        sub={traduire("Une prise par mois suffit pour voir ton corps changer.")}
         picker={fields.length ? picker : null}
         spec={spec}
         points={series}
         color={CHART_COLORS.blue}
-        explain={{ text: active ? MEASURE_EXPLAIN[active.key].text : 'Le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle.', tip: (active && MEASURE_EXPLAIN[active.key].tip) || MEASURE_TIP }}
+        explain={{ text: active ? MEASURE_EXPLAIN[active.key].text : traduire('Le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle.'), tip: (active && MEASURE_EXPLAIN[active.key].tip) || MEASURE_TIP }}
         loading={loading}
         defaultPeriod={180}
         markBest={active?.good !== 'none'}
         historyNoun={['prise', 'prises']}
         onHistoryPress={onHistoryPress}
-        historyHint="Une prise fausse ? Appuie dessus pour la supprimer."
-        bestLabel={active?.good === 'down' ? 'le plus fin' : 'le plus large'}
+        historyHint={traduire("Une prise fausse ? Appuie dessus pour la supprimer.")}
+        bestLabel={active?.good === 'down' ? traduire('le plus fin') : traduire('le plus large')}
         scrubLine={(p) => {
           const last = series[series.length - 1];
           if (!last) return ' ';
           const d = last.value - p.value;
-          return Math.abs(d) < 0.25 ? 'pareil qu’aujourd’hui' : `${cmDelta(d)} aujourd’hui`;
+          return Math.abs(d) < 0.25 ? traduire('pareil qu’aujourd’hui') : traduire("{0} aujourd’hui", cmDelta(d));
         }}
         empty={{
-          title: 'Aucune mesure pour l’instant',
-          text: 'Prends tes mesures une fois par mois, le matin. Tes courbes apparaîtront ici dès la deuxième prise.',
-          plusHint: 'Prends tes mesures avec le bouton + de la barre d’onglets',
+          title: traduire('Aucune mesure pour l’instant'),
+          text: traduire('Prends tes mesures une fois par mois, le matin. Tes courbes apparaîtront ici dès la deuxième prise.'),
+          plusHint: traduire('Prends tes mesures avec le bouton + de la barre d’onglets'),
         }}
       />
       {isBlurred && Platform.OS === 'ios' ? <BlurView style={StyleSheet.absoluteFill} intensity={100} tint="light" /> : null}

@@ -14,21 +14,22 @@
  * Sans sommeil ni seance recente, pas de score.
  */
 
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 export type RecupKey = 'sommeil' | 'charge' | 'hydratation' | 'corps' | 'coeur' | 'vfc';
 
 export const RECUP_WEIGHTS: Record<RecupKey, number> = { sommeil: 0.3, charge: 0.2, vfc: 0.2, coeur: 0.1, corps: 0.15, hydratation: 0.05 };
 
 /** Nom unique du score, partout dans l'app */
-export const RECUP_NAME = 'Ta récupération';
+export const RECUP_NAME = traduire('Ta récupération');
 
 /** Explication affichee sous le score (Sante et ecran detail) */
 export const RECUP_METHOD: string[] = [
-  'YOROI ne combine que ce qui est mesuré. Sans ta nuit ni séance récente, pas de score.',
-  'Sommeil de la nuit, 30 % : ta durée comparée à ton objectif de sommeil.',
-  'Charge d’entraînement, 20 % : tes 7 derniers jours comparés à tes 4 semaines d’avant.',
-  'Variabilité cardiaque, 20 %, et fréquence au repos, 10 % : comparées à ta propre moyenne des 28 jours d’avant.',
-  'État du corps, 15 %, et eau du jour, 5 % : ce que tu as noté.',
-  'Ce n’est pas la récupération WHOOP, la Body Battery Garmin ni le Readiness Oura. C’est un repère d’entraînement, pas un avis médical.',
+  traduire('YOROI ne combine que ce qui est mesuré. Sans ta nuit ni séance récente, pas de score.'),
+  traduire('Sommeil de la nuit, 30 % : ta durée comparée à ton objectif de sommeil.'),
+  traduire('Charge d’entraînement, 20 % : tes 7 derniers jours comparés à tes 4 semaines d’avant.'),
+  traduire('Variabilité cardiaque, 20 %, et fréquence au repos, 10 % : comparées à ta propre moyenne des 28 jours d’avant.'),
+  traduire('État du corps, 15 %, et eau du jour, 5 % : ce que tu as noté.'),
+  traduire('Ce n’est pas la récupération WHOOP, la Body Battery Garmin ni le Readiness Oura. C’est un repère d’entraînement, pas un avis médical.'),
 ];
 
 export const clamp100 = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
@@ -95,18 +96,18 @@ export function scoreCharge(sessions: { date: string; minutes: number }[], today
       detail = 'charge habituelle';
     } else if (r <= 1.5) {
       score = 60;
-      detail = 'semaine plus chargée que d’habitude';
+      detail = traduire('semaine plus chargée que d’habitude');
     } else {
       score = 40;
-      detail = 'semaine bien plus chargée que d’habitude';
+      detail = traduire('semaine bien plus chargée que d’habitude');
     }
   } else {
     score = last7.length >= 5 ? 60 : 80;
-    detail = `${last7.length} séance${last7.length > 1 ? 's' : ''} en 7 jours`;
+    detail = traduirePluriel(last7.length, last7.length > 1, "{0} séance en 7 jours", "{0} séances en 7 jours", last7.length);
   }
   if ([0, 1, 2].every((d) => sessions.some((s) => ago(s.date) === d))) {
     score -= 10;
-    detail = 'trois jours d’affilée sans repos';
+    detail = traduire('trois jours d’affilée sans repos');
   }
   return { score: Math.max(0, score), detail, sessions7: last7.length, minutes7 };
 }
@@ -135,14 +136,14 @@ export function scoreRecupFiable(score: number | null | undefined, elements: num
 
 /** Le message quand le score n'est pas encore fiable (meme texte sur l'accueil et l'ecran detail) */
 export function messageScoreIncomplet(manqueNuit: boolean): string {
-  return manqueNuit ? 'Il manque ta nuit pour un score fiable' : 'Il manque un élément pour un score fiable';
+  return manqueNuit ? traduire('Il manque ta nuit pour un score fiable') : traduire('Il manque un élément pour un score fiable');
 }
 
 /** Une phrase courte selon le niveau, sur les memes seuils que recupLevelId (80, 65, 50, 35) */
 export function phraseRecup(score: number): string {
   const id = recupLevelId(score);
-  if (id === 'top') return 'Prêt à pousser';
-  if (id === 'bien') return 'Entraîne-toi normalement';
+  if (id === 'top') return traduire('Prêt à pousser');
+  if (id === 'bien') return traduire('Entraîne-toi normalement');
   if (id === 'moyen' || id === 'bas') return 'Vas-y doucement';
-  return 'Récupère aujourd’hui';
+  return traduire('Récupère aujourd’hui');
 }

@@ -15,6 +15,7 @@ import type { Taille } from './ComparateurCadre';
 import type { Cadre } from '@/lib/v2/photos/cadrage';
 import { dateComplete, dureeTexte, ecartTexte, kg } from '@/lib/v2/photos/outils';
 import { daysDiff } from '@/lib/v2/progres/format';
+import { traduire } from '@/lib/i18n/tr';
 
 const PAPIER = '#F2F1EC';
 const ENCRE = '#1D2029';
@@ -37,8 +38,8 @@ export const CarteAvantApres = forwardRef<View, Props>(function CarteAvantApres(
     <View ref={ref} collapsable={false} style={{ width, backgroundColor: PAPIER, padding: pad, borderRadius: 18 }}>
       <View style={{ flexDirection: 'row', gap }}>
         {[
-          { s: before, word: 'Avant', k: 'avant' as const },
-          { s: after, word: 'Après', k: 'apres' as const },
+          { s: before, word: traduire('Avant'), k: 'avant' as const },
+          { s: after, word: traduire('Après'), k: 'apres' as const },
         ].map(({ s, word, k }) => (
           <View key={word} style={{ width: photoW, gap: 6 * f }}>
             {cadres && sizes ? (
@@ -59,7 +60,7 @@ export const CarteAvantApres = forwardRef<View, Props>(function CarteAvantApres(
           {diff !== null ? (
             <Ink size={30 * f} weight="black" tight color={ENCRE}>{ecartTexte(diff)}</Ink>
           ) : null}
-          <Ink size={13 * f} weight="bold" color={GRIS}>{days === 0 ? 'le même jour' : `en ${dureeTexte(days)}`}</Ink>
+          <Ink size={13 * f} weight="bold" color={GRIS}>{days === 0 ? traduire('le même jour') : `en ${dureeTexte(days)}`}</Ink>
         </View>
         <Ink size={12 * f} weight="extraBold" color={GRIS} style={{ letterSpacing: 2 * f }}>YOROI</Ink>
       </View>

@@ -11,6 +11,7 @@
  * Jours : 0 = lundi a 6 = dimanche ici (comme l'onboarding) ; Date.getDay() (0 = dimanche) dans les services.
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export type FrequencePesee = 'chaque_jour' | 'trois' | 'une';
 
 export type ChoixRappels = {
@@ -46,9 +47,9 @@ export const JOURS_PESEE: Record<FrequencePesee, number[]> = {
 };
 
 export const FREQUENCE_LABEL: Record<FrequencePesee, string> = {
-  chaque_jour: 'Chaque matin',
-  trois: '3 fois par semaine',
-  une: 'Le lundi',
+  chaque_jour: traduire('Chaque matin'),
+  trois: traduire('3 fois par semaine'),
+  une: traduire('Le lundi'),
 };
 
 /** Jour 0 = lundi vers Date.getDay() (0 = dimanche), et retour */
@@ -144,19 +145,19 @@ export function datesRappelSeance(ctx: ContexteSeance): Date[] {
 const NB = ' ';
 
 export const MESSAGES_SEANCE: { title: string; body: string }[] = [
-  { title: 'C’est ton jour', body: 'Ta séance t’attend. La régularité fait le résultat.' },
-  { title: 'On y va' + NB + '?', body: 'Même courte, une séance compte. Tu tiens ton rythme.' },
-  { title: 'Ton rendez-vous', body: 'Tu avais prévu de t’entraîner aujourd’hui. YOROI t’attend pour la noter.' },
-  { title: 'Un pas de plus', body: 'Chaque séance construit la suivante. À toi de jouer.' },
-  { title: 'Discipline', body: 'Pas besoin d’être parfait, juste d’être là. Bonne séance.' },
-  { title: 'L’heure du dojo', body: 'Ton corps est prêt. Une séance de plus sur ton chemin.' },
+  { title: traduire('C’est ton jour'), body: traduire('Ta séance t’attend. La régularité fait le résultat.') },
+  { title: 'On y va' + NB + '?', body: traduire('Même courte, une séance compte. Tu tiens ton rythme.') },
+  { title: traduire('Ton rendez-vous'), body: traduire('Tu avais prévu de t’entraîner aujourd’hui. YOROI t’attend pour la noter.') },
+  { title: traduire('Un pas de plus'), body: traduire('Chaque séance construit la suivante. À toi de jouer.') },
+  { title: 'Discipline', body: traduire('Pas besoin d’être parfait, juste d’être là. Bonne séance.') },
+  { title: traduire('L’heure du dojo'), body: traduire('Ton corps est prêt. Une séance de plus sur ton chemin.') },
 ];
 
 export const MESSAGES_PESEE: string[] = [
-  'Ta pesée du jour t’attend, 10 secondes suffisent.',
-  'Un passage sur la balance, et ta tendance reste juste.',
-  'Pesée du matin : un geste simple pour suivre ton cap.',
-  'Ta courbe se construit jour après jour. Note ta pesée quand tu veux.',
+  traduire('Ta pesée du jour t’attend, 10 secondes suffisent.'),
+  traduire('Un passage sur la balance, et ta tendance reste juste.'),
+  traduire('Pesée du matin : un geste simple pour suivre ton cap.'),
+  traduire('Ta courbe se construit jour après jour. Note ta pesée quand tu veux.'),
 ];
 
 /** Message du jour : il change d'un jour a l'autre, toujours le meme pour une date donnee */

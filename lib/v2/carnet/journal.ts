@@ -12,6 +12,7 @@ import {
   getBenchmarkPR,
 } from '@/lib/carnetService';
 import type { Benchmark, BenchmarkCategory, BenchmarkEntry, Skill, SkillCategory, SkillStatus } from '@/lib/carnetService';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type JournalTab =
   | 'records' | 'techniques' | 'videos' | 'combat' | 'competitions' | 'positions' | 'submissions'
@@ -20,7 +21,7 @@ export type JournalTab =
 export type GlobalFilter = 'all' | 'musculation' | 'running' | 'jjb' | 'boxe' | 'lutte' | 'grappling' | 'autre';
 
 export const GLOBAL_FILTERS: { key: GlobalFilter; label: string }[] = [
-  { key: 'all', label: 'Tout' },
+  { key: 'all', label: traduire('Tout') },
   { key: 'musculation', label: 'Musculation' },
   { key: 'running', label: 'Course' },
   { key: 'jjb', label: 'JJB' },
@@ -30,7 +31,7 @@ export const GLOBAL_FILTERS: { key: GlobalFilter; label: string }[] = [
   { key: 'autre', label: 'Autre' },
 ];
 
-export const STATUS_LABEL: Record<SkillStatus, string> = { to_learn: 'À apprendre', in_progress: 'En cours', mastered: 'Maîtrisée' };
+export const STATUS_LABEL: Record<SkillStatus, string> = { to_learn: traduire('À apprendre'), in_progress: 'En cours', mastered: traduire('Maîtrisée') };
 
 /** Couleur de la palette v2 pour une categorie de record */
 export function categoryTone(cat: BenchmarkCategory | string): string {
@@ -72,7 +73,7 @@ export function categoryKanji(cat: string): string {
 /** Ecriture lisible d'une entree ("100 kg x 5", "10 km en 5:12/km"...) */
 /** vague 45 : toujours la virgule francaise (« 99,3 kg »), une decimale au plus */
 export function nombreFr(n: number): string {
-  return String(Math.round(n * 10) / 10).replace('.', ',');
+  return String(Math.round(n * 10) / 10).replace('.', DECIMAL);
 }
 
 export function entryText(b: Benchmark, e: BenchmarkEntry | null): string {
@@ -194,9 +195,9 @@ export function tabLabel(tab: JournalTab, pack: string): string {
   const map: Record<JournalTab, string> = {
     records: 'Records',
     techniques: 'Techniques',
-    videos: 'Vidéos',
+    videos: traduire('Vidéos'),
     combat: 'Sparring',
-    competitions: pack === 'endurance' ? 'Courses' : 'Compétitions',
+    competitions: pack === 'endurance' ? 'Courses' : traduire('Compétitions'),
     positions: 'Positions',
     submissions: 'Soumissions',
     sorties: 'Sorties',
@@ -204,9 +205,9 @@ export function tabLabel(tab: JournalTab, pack: string): string {
     wods: 'WODs',
     stations: 'Stations',
     voies: 'Voies',
-    seances_muscu: 'Séances',
+    seances_muscu: traduire('Séances'),
     muscles: 'Muscles',
-    progression: 'Progression',
+    progression: traduire('Progression'),
   };
   return map[tab];
 }

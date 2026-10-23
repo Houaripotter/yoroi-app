@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SceneId } from '@/lib/v2/espace';
 import { AMBIANCES, MUSIQUES, ambianceConseillee, type SonScene } from './scenesAnimees';
+import { traduire } from '@/lib/i18n/tr';
 
 export const SON_SCENE_KEY = 'yoroi_scene_son_v1';
 
@@ -23,7 +24,7 @@ export type ReglagesSonScene = {
 };
 
 export const VOLUMES: { key: number; label: string }[] = [
-  { key: 0.2, label: 'Très doux' },
+  { key: 0.2, label: traduire('Très doux') },
   { key: 0.35, label: 'Doux' },
   { key: 0.6, label: 'Normal' },
 ];

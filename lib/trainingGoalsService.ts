@@ -7,6 +7,7 @@
 import * as SQLite from 'expo-sqlite';
 import { vitrineDb } from '@/lib/v2/visite/vitrine';
 import { Sport, SPORTS } from './sports';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 // Database locale (evite dependance circulaire)
 let db: SQLite.SQLiteDatabase | null = null;
@@ -401,10 +402,10 @@ export const getGlobalGoalStats = async (): Promise<GlobalGoalStats> => {
 // Obtenir le texte de progression
 export const getProgressText = (progress: GoalProgress): string => {
   if (progress.weekPercent >= 100) {
-    return 'Objectif atteint !';
+    return traduire('Objectif atteint !');
   }
   if (progress.isOnTrack) {
-    return `${progress.sessionsNeeded} session${progress.sessionsNeeded > 1 ? 's' : ''} restante${progress.sessionsNeeded > 1 ? 's' : ''}`;
+    return traduirePluriel(progress.sessionsNeeded, progress.sessionsNeeded > 1, "{0} session restante", "{0} sessions restantes", progress.sessionsNeeded);
   }
   return `En retard (${progress.sessionsNeeded} sessions)`;
 };
@@ -421,7 +422,7 @@ export const formatGoalsForShare = async (): Promise<string> => {
   const progressList = await getAllGoalsProgress();
 
   if (progressList.length === 0) {
-    return 'Aucun objectif defini';
+    return traduire('Aucun objectif defini');
   }
 
   const lines = progressList.map(p => {

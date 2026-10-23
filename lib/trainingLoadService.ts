@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, subDays } from 'date-fns';
 import logger from '@/lib/security/logger';
 import { INTENSITES } from './v2/intensite';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -59,16 +60,16 @@ const LOAD_THRESHOLDS = {
 
 // Descriptions RPE (échelle de Borg modifiée)
 export const RPE_SCALE = [
-  { value: 1, label: 'Très facile', emoji: '', description: 'Effort minimal' },
-  { value: 2, label: 'Facile', emoji: '', description: 'Récupération active' },
-  { value: 3, label: 'Modéré', emoji: '', description: 'Conversation possible' },
-  { value: 4, label: 'Assez dur', emoji: '', description: 'Respiration accélérée' },
+  { value: 1, label: traduire('Très facile'), emoji: '', description: 'Effort minimal' },
+  { value: 2, label: 'Facile', emoji: '', description: traduire('Récupération active') },
+  { value: 3, label: traduire('Modéré'), emoji: '', description: 'Conversation possible' },
+  { value: 4, label: 'Assez dur', emoji: '', description: traduire('Respiration accélérée') },
   { value: 5, label: 'Dur', emoji: '', description: 'Effort soutenu' },
-  { value: 6, label: 'Très dur', emoji: '', description: 'Limite aérobie' },
-  { value: 7, label: 'Intense', emoji: '', description: 'Parler difficile' },
-  { value: 8, label: 'Très intense', emoji: '', description: 'Effort maximal soutenu' },
-  { value: 9, label: 'Extrême', emoji: '', description: 'À la limite' },
-  { value: 10, label: 'Maximum', emoji: '', description: 'Effort total, épuisement' },
+  { value: 6, label: traduire('Très dur'), emoji: '', description: traduire('Limite aérobie') },
+  { value: 7, label: traduire('Intense'), emoji: '', description: 'Parler difficile' },
+  { value: 8, label: traduire('Très intense'), emoji: '', description: 'Effort maximal soutenu' },
+  { value: 9, label: traduire('Extrême'), emoji: '', description: traduire('À la limite') },
+  { value: 10, label: 'Maximum', emoji: '', description: traduire('Effort total, épuisement') },
 ];
 
 // ============================================
@@ -195,17 +196,17 @@ export const getWeeklyLoadStats = async (): Promise<WeeklyLoadStats> => {
     
     // Niveau de risque
     let riskLevel: 'safe' | 'moderate' | 'high' | 'danger' = 'safe';
-    let advice = 'Charge optimale. Continue comme ça !';
+    let advice = traduire('Charge optimale. Continue comme ça !');
     
     if (totalLoad > LOAD_THRESHOLDS.DANGER) {
       riskLevel = 'danger';
-      advice = 'ATTENTION ! Charge critique, risque de blessure élevé. Repos obligatoire !';
+      advice = traduire('ATTENTION ! Charge critique, risque de blessure élevé. Repos obligatoire !');
     } else if (totalLoad > LOAD_THRESHOLDS.HIGH) {
       riskLevel = 'high';
-      advice = 'Charge élevée. Prévois une séance légère ou un jour de repos.';
+      advice = traduire('Charge élevée. Prévois une séance légère ou un jour de repos.');
     } else if (totalLoad > LOAD_THRESHOLDS.MODERATE) {
       riskLevel = 'moderate';
-      advice = 'Bonne charge. Attention à ne pas trop en rajouter.';
+      advice = traduire('Bonne charge. Attention à ne pas trop en rajouter.');
     }
     
     return {
@@ -228,7 +229,7 @@ export const getWeeklyLoadStats = async (): Promise<WeeklyLoadStats> => {
       dailyLoads: [],
       trend: 'stable',
       riskLevel: 'safe',
-      advice: 'Pas de données disponibles.',
+      advice: traduire('Pas de données disponibles.'),
     };
   }
 };
@@ -295,12 +296,12 @@ export const checkOvertrainingAlert = async (): Promise<void> => {
     const Notifications = await import('expo-notifications');
 
     const title = stats.riskLevel === 'danger'
-      ? 'Ton corps demande du repos'
-      : 'Charge élevée cette semaine';
+      ? traduire('Ton corps demande du repos')
+      : traduire('Charge élevée cette semaine');
     // Aucun chiffre de charge : la notification s'affiche sur l'écran verrouillé
     const body = stats.riskLevel === 'danger'
-      ? 'Ta charge d’entraînement est haute cette semaine. Une vraie journée de récupération te fera du bien.'
-      : 'Ta charge d’entraînement monte. Une séance légère ou un repos, à toi de voir.';
+      ? traduire('Ta charge d’entraînement est haute cette semaine. Une vraie journée de récupération te fera du bien.')
+      : traduire('Ta charge d’entraînement monte. Une séance légère ou un repos, à toi de voir.');
 
     await Notifications.default.scheduleNotificationAsync({
       content: { title, body, sound: true },

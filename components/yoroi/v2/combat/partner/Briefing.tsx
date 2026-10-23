@@ -11,6 +11,7 @@ import { shortDate } from '@/lib/v2/combat/rounds';
 import type { Partner } from '@/lib/v2/combat/partners';
 import type { PartnerInsights } from '@/lib/v2/combat/partnerInsights';
 import { BeltBar, Card, D, Glass, IconBtn, N, P, ResultPlate, Seal, V } from '../ui';
+import { traduire } from '@/lib/i18n/tr';
 
 function Tags({ items, color }: { items: string[]; color: string }) {
   return (
@@ -46,9 +47,8 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={15} weight="extraBold" color={P.accent}>
-              Briefing avant le combat
-            </Ink>
-            <IconBtn icon="close" label="Fermer le briefing" onPress={onClose} />
+              {traduire("Briefing avant le combat")}</Ink>
+            <IconBtn icon="close" label={traduire("Fermer le briefing")} onPress={onClose} />
           </View>
           <Glass style={{ gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -81,7 +81,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {[
                   { v: ins.wins, l: 'victoires', c: V },
-                  { v: ins.losses, l: 'défaites', c: D },
+                  { v: ins.losses, l: traduire('défaites'), c: D },
                   { v: ins.draws, l: 'nuls', c: N },
                   { v: ins.total, l: 'rounds', c: P.ink },
                 ].map((s) => (
@@ -98,7 +98,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
             ) : null}
             {ins.currentStreak && ins.currentStreak.count >= 2 ? (
               <Ink size={14} weight="extraBold" color={ins.currentStreak.type === 'win' ? V : D}>
-                {`${ins.currentStreak.count} ${ins.currentStreak.type === 'win' ? 'victoires' : 'défaites'} d'affilée`}
+                {traduire("{0} {1} d'affilée", ins.currentStreak.count, ins.currentStreak.type === 'win' ? 'victoires' : 'défaites')}
               </Ink>
             ) : null}
           </Glass>
@@ -106,8 +106,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
           {p.activeGoal?.text ? (
             <View style={{ borderRadius: 24, padding: 18, backgroundColor: P.accent, gap: 6 }}>
               <Ink size={13} weight="extraBold" color="rgba(255,255,255,0.85)">
-                Objectif du jour
-              </Ink>
+                {traduire("Objectif du jour")}</Ink>
               <Ink size={20} weight="black" tight color={P.white}>
                 {p.activeGoal.text}
               </Ink>
@@ -115,7 +114,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
           ) : null}
 
           {p.longTermGoal?.text ? (
-            <Block title={`Objectif à long terme, ${p.longTermGoal.targetWinRate} % visé`} color={P.indigo}>
+            <Block title={traduire("Objectif à long terme, {0} % visé", p.longTermGoal.targetWinRate)} color={P.indigo}>
               <Ink size={15} weight="bold">
                 {p.longTermGoal.text}
               </Ink>
@@ -128,8 +127,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
               {ins.topTaken.length > 0 ? (
                 <View style={{ gap: 6 }}>
                   <Ink size={13} weight="bold" color={P.ink2}>
-                    Ses finitions préférées sur toi
-                  </Ink>
+                    {traduire("Ses finitions préférées sur toi")}</Ink>
                   <Tags items={ins.topTaken.map((t) => `${t.label} x${t.count}`)} color={D} />
                 </View>
               ) : null}
@@ -137,13 +135,12 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
           ) : null}
 
           {p.whatWorks.length > 0 || ins.topGiven.length > 0 ? (
-            <Block title="Opportunités, ce qui marche" color={V}>
+            <Block title={traduire("Opportunités, ce qui marche")} color={V}>
               {p.whatWorks.length > 0 ? <Tags items={p.whatWorks} color={V} /> : null}
               {ins.topGiven.length > 0 ? (
                 <View style={{ gap: 6 }}>
                   <Ink size={13} weight="bold" color={P.ink2}>
-                    Tes finitions qui passent
-                  </Ink>
+                    {traduire("Tes finitions qui passent")}</Ink>
                   <Tags items={ins.topGiven.map((t) => `${t.label} x${t.count}`)} color={V} />
                 </View>
               ) : null}
@@ -151,13 +148,13 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
           ) : null}
 
           {p.weaknesses.length > 0 ? (
-            <Block title="Ses faiblesses, à exploiter" color={N}>
+            <Block title={traduire("Ses faiblesses, à exploiter")} color={N}>
               <Tags items={p.weaknesses} color={N} />
             </Block>
           ) : null}
 
           {ins.lastGamePlan || ins.lastWorked || ins.lastDidnt || ins.lastImprovement ? (
-            <Block title="Dernier débrief" color={P.ink}>
+            <Block title={traduire("Dernier débrief")} color={P.ink}>
               {[
                 { k: 'Plan prévu', v: ins.lastGamePlan, c: P.ink2 },
                 { k: 'Ce qui a marché', v: ins.lastWorked, c: V },
@@ -177,20 +174,19 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
           ) : null}
 
           {ins.blocks.length > 0 ? (
-            <Block title={`Forme récente, ${ins.blocks.length} séances`} color={P.ink2}>
+            <Block title={traduire("Forme récente, {0} séances", ins.blocks.length)} color={P.ink2}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {ins.blocks.slice(0, 20).map((b, i) => (
                   <ResultPlate key={i} result={b.result} size={24} />
                 ))}
               </View>
               <Ink size={12} color={P.muted}>
-                La plus récente à gauche
-              </Ink>
+                {traduire("La plus récente à gauche")}</Ink>
             </Block>
           ) : null}
 
           {p.notes.length > 0 ? (
-            <Block title="Notes récentes" color={P.ink2}>
+            <Block title={traduire("Notes récentes")} color={P.ink2}>
               {p.notes.slice(0, 3).map((n) => (
                 <View key={n.id} style={{ gap: 2 }}>
                   <Ink size={12} weight="bold" color={P.muted}>
@@ -201,7 +197,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
               ))}
               {p.notes.length > 3 ? (
                 <Ink size={12} color={P.muted}>
-                  {`Et ${p.notes.length - 3} autres dans sa fiche`}
+                  {traduire("Et {0} autres dans sa fiche", p.notes.length - 3)}
                 </Ink>
               ) : null}
             </Block>
@@ -211,7 +207,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
             <Card style={{ alignItems: 'center', gap: 8, paddingVertical: 28 }}>
               <Ornement name="katanas" size={84} />
               <Ink size={15} color={P.ink2} style={{ textAlign: 'center' }}>
-                {`Remplis la fiche de ${p.name} (forces, faiblesses, ce qui marche) pour avoir un vrai briefing avant ton prochain combat.`}
+                {traduire("Remplis la fiche de {0} (forces, faiblesses, ce qui marche) pour avoir un vrai briefing avant ton prochain combat.", p.name)}
               </Ink>
             </Card>
           ) : null}

@@ -26,6 +26,7 @@ import type { StyleCourbe } from '@/lib/v2/courbes/prefs';
 import type { Domaine } from '../accueil/domaines';
 import { couleurTraitDomaine } from '../charts/couleurDomaine';
 import { placeTampon, pointsDesBarres, reperesCouvrants } from '@/lib/v2/courbes/graphes';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ChartPoint = { date: string; value: number; record?: boolean; week?: boolean };
 
@@ -203,7 +204,7 @@ export function InkLineChart({ points: pointsIn, color, height = 220, compact, d
   const lastI = points.length - 1;
   const act = active !== null && active < points.length ? active : null;
   const fmt = format ?? ((v: number) => num(v, digits));
-  const quand = (p: ChartPoint) => (p.week ? `semaine du ${dayShort(p.date)}, moyenne` : dayShort(p.date));
+  const quand = (p: ChartPoint) => (p.week ? traduire("semaine du {0}, moyenne", dayShort(p.date)) : dayShort(p.date));
   const ids = useRef(`yilc${++idSeq}`).current;
   const fondTrait = theme.isDark ? '#3A3F4E' : '#DAD7E6';
   const shown = act ?? lastI;
@@ -218,7 +219,7 @@ export function InkLineChart({ points: pointsIn, color, height = 220, compact, d
       {...panHandlers}
       accessible={!!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={onPress ? `${label}, touche pour voir le détail` : label}
+      accessibilityLabel={onPress ? traduire("{0}, touche pour voir le détail", label) : label}
       onAccessibilityTap={onPress}
     >
       {tete ? (
@@ -229,7 +230,7 @@ export function InkLineChart({ points: pointsIn, color, height = 220, compact, d
                 {fmt(points[shown].value)}
               </Ink>
               <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>
-                {act === null ? `${quand(points[shown])}, la plus récente` : quand(points[shown])}
+                {act === null ? traduire("{0}, la plus récente", quand(points[shown])) : quand(points[shown])}
               </Ink>
               {act !== null && points[shown].record ? <BadgeRecord size={12.5} /> : null}
             </>

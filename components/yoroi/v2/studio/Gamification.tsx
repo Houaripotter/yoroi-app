@@ -21,6 +21,7 @@ import { adjustDemoXp, setDemoRank, setDemoXp } from '@/lib/v2/creator/studioXp'
 import { ONCE_WINDOWS } from '@/lib/v2/creator/onceWindows';
 import { Chip, ChipWrap, Note, StudioSection, SubTitle, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 export function Gamification() {
   const { theme } = useYoroiTheme();
@@ -47,7 +48,7 @@ export function Gamification() {
     try {
       setXp(await fn());
     } catch (e) {
-      appAlert('Impossible', e instanceof Error ? e.message : 'L’opération n’a pas abouti.');
+      appAlert(traduire('Impossible'), e instanceof Error ? e.message : traduire('L’opération n’a pas abouti.'));
     } finally {
       setBusy(false);
     }
@@ -63,12 +64,12 @@ export function Gamification() {
       const list = await getTrainings(21);
       const last = [...list].sort((a, b) => String(b.date).localeCompare(String(a.date)) || Number(b.id) - Number(a.id))[0];
       if (!last?.id) {
-        appAlert('Aucune séance', 'Heny n’a pas de séance récente à ouvrir.');
+        appAlert(traduire('Aucune séance'), traduire('Heny n’a pas de séance récente à ouvrir.'));
         return;
       }
       router.push({ pathname: '/seance/fin', params: { id: String(last.id) } } as never);
     } catch {
-      appAlert('Oups', 'La séance n’a pas pu être lue.');
+      appAlert('Oups', traduire('La séance n’a pas pu être lue.'));
     }
   };
 
@@ -78,28 +79,28 @@ export function Gamification() {
       await w?.reset();
       router.push('/(tabs)/dojo' as never);
     } catch {
-      appAlert('Oups', 'La reprise n’a pas pu être réarmée.');
+      appAlert('Oups', traduire('La reprise n’a pas pu être réarmée.'));
     }
   };
 
   return (
-    <StudioSection id="gamif" icon="crown" title="Gamification" sub="XP, rang, dan, avatar et chaque animation" keywords="xp rang dan avatar personnage celebration plaque sceau lune semaine tenue bienvenue reprise anciens">
+    <StudioSection id="gamif" icon="crown" title="Gamification" sub={traduire("XP, rang, dan, avatar et chaque animation")} keywords={traduire("xp rang dan avatar personnage celebration plaque sceau lune semaine tenue bienvenue reprise anciens")}>
       {demoActive ? (
         <>
           <Card style={{ padding: 14, gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-              <Ink size={34} weight="black" tight>{xp === null ? 'Un instant' : xp.toLocaleString('fr-FR')}</Ink>
-              <Ink size={15} weight="bold" color={c.textSecondary}>{`XP de Heny${rank ? `, ${rankTitle(rank)}` : ''}`}</Ink>
+              <Ink size={34} weight="black" tight>{xp === null ? traduire('Un instant') : xp.toLocaleString(LOCALE)}</Ink>
+              <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("XP de Heny{0}", rank ? `, ${rankTitle(rank)}` : '')}</Ink>
             </View>
             <ChipWrap>
               {[-1000, -100, 100, 500, 2000].map((d) => (
-                <Chip key={d} label={d > 0 ? `+${d}` : `moins ${-d}`} disabled={busy} accessibilityLabel={d > 0 ? `Donner ${d} XP` : `Retirer ${-d} XP`} onPress={() => void run(() => adjustDemoXp(d))} />
+                <Chip key={d} label={d > 0 ? `+${d}` : traduire("moins {0}", -d)} disabled={busy} accessibilityLabel={d > 0 ? `Donner ${d} XP` : `Retirer ${-d} XP`} onPress={() => void run(() => adjustDemoXp(d))} />
               ))}
             </ChipWrap>
           </Card>
 
           <Card style={{ padding: 14, gap: 10 }}>
-            <Ink size={15} weight="extraBold">Rang et avatar</Ink>
+            <Ink size={15} weight="extraBold">{traduire("Rang et avatar")}</Ink>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               {RANKS.map((r) => {
                 const on = rank?.index === r.index;
@@ -113,7 +114,7 @@ export function Gamification() {
                     disabled={busy}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
-                    accessibilityLabel={`Passer Heny au rang ${r.name}`}
+                    accessibilityLabel={traduire("Passer Heny au rang {0}", r.name)}
                     style={{ width: '19%', alignItems: 'center', gap: 4, paddingVertical: 6, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accentTint : c.surface }}
                   >
                     <Image source={image(r.index)} style={{ width: 52, height: 66 }} resizeMode="contain" />
@@ -122,44 +123,44 @@ export function Gamification() {
                 );
               })}
             </View>
-            <SubTitle>{`Dan de Shōgun${dan > 0 ? `, actuel : ${dan}` : ''}`}</SubTitle>
+            <SubTitle>{traduire("Dan de Shōgun{0}", dan > 0 ? `, actuel : ${dan}` : '')}</SubTitle>
             <ChipWrap>
               {[1, 2, 3, 5].map((n) => (
                 <Chip key={n} label={`Dan ${n}`} on={dan === n} disabled={busy} onPress={() => void run(() => setDemoXp(RANKS[RANKS.length - 1].minXp + DAN_STEP * n))} />
               ))}
             </ChipWrap>
-            <Note>{`Un rang place Heny au début de ce rang, un dan ajoute ${DAN_STEP.toLocaleString('fr-FR')} XP par dan après Shōgun. L’avatar de l’accueil et du Dojo suit, et le Dojo fête le passage.`}</Note>
+            <Note>{traduire("Un rang place Heny au début de ce rang, un dan ajoute {0} XP par dan après Shōgun. L’avatar de l’accueil et du Dojo suit, et le Dojo fête le passage.", DAN_STEP.toLocaleString(LOCALE))}</Note>
           </Card>
 
           <Card>
-            <Row first icon="user" label="Choisir le personnage" sub="Guerrier, guerrière, personnages du monde" onPress={() => router.push('/avatar-selection' as never)} />
-            <Row icon="restore" label="Rejouer la reprise des anciens" sub="Réarme le résumé de reprise de Heny, puis ouvre le Dojo" onPress={() => void replayWelcome()} />
-            <Row icon="calendar" label="Semaine tenue" sub="La fin de séance de la dernière séance de Heny" onPress={() => void openWeekHeld()} />
+            <Row first icon="user" label={traduire("Choisir le personnage")} sub={traduire("Guerrier, guerrière, personnages du monde")} onPress={() => router.push('/avatar-selection' as never)} />
+            <Row icon="restore" label={traduire("Rejouer la reprise des anciens")} sub={traduire("Réarme le résumé de reprise de Heny, puis ouvre le Dojo")} onPress={() => void replayWelcome()} />
+            <Row icon="calendar" label={traduire("Semaine tenue")} sub={traduire("La fin de séance de la dernière séance de Heny")} onPress={() => void openWeekHeld()} />
           </Card>
         </>
       ) : (
         <Card style={{ padding: 16, gap: 10 }}>
-          <Ink size={15} weight="extraBold">Charge Heny pour régler les XP</Ink>
-          <Ink size={13} color={c.textSecondary}>XP, rang, dan, avatar et reprise se règlent seulement sur Heny, pour ne jamais toucher à tes vraies XP. Elles reviennent intactes quand tu remets tes vraies données. Les animations ci-dessous marchent sans elle.</Ink>
-          <Button tone="ghost" label="Aller à Démo et captures" onPress={() => openSection('demo')} small />
+          <Ink size={15} weight="extraBold">{traduire("Charge Heny pour régler les XP")}</Ink>
+          <Ink size={13} color={c.textSecondary}>{traduire("XP, rang, dan, avatar et reprise se règlent seulement sur Heny, pour ne jamais toucher à tes vraies XP. Elles reviennent intactes quand tu remets tes vraies données. Les animations ci-dessous marchent sans elle.")}</Ink>
+          <Button tone="ghost" label={traduire("Aller à Démo et captures")} onPress={() => openSection('demo')} small />
         </Card>
       )}
 
-      <SubTitle>Animations, données fictives, rien n’est écrit</SubTitle>
+      <SubTitle>{traduire("Animations, données fictives, rien n’est écrit")}</SubTitle>
       <Card style={{ padding: 14, gap: 10 }}>
-        <Ink size={15} weight="extraBold">Passage de rang</Ink>
+        <Ink size={15} weight="extraBold">{traduire("Passage de rang")}</Ink>
         <ChipWrap>
           {RANKS.map((r) => (
-            <Chip key={r.id} label={r.name} onPress={() => show({ kind: 'rang', rankIndex: r.index })} accessibilityLabel={`Voir le passage au rang ${r.name}`} />
+            <Chip key={r.id} label={r.name} onPress={() => show({ kind: 'rang', rankIndex: r.index })} accessibilityLabel={traduire("Voir le passage au rang {0}", r.name)} />
           ))}
-          <Chip label="Dan" onPress={() => show({ kind: 'dan' })} accessibilityLabel="Voir le passage d’un dan" />
+          <Chip label="Dan" onPress={() => show({ kind: 'dan' })} accessibilityLabel={traduire("Voir le passage d’un dan")} />
         </ChipWrap>
       </Card>
       <Card>
-        <Row first icon="shield" label="Nouvelle plaque d’armure" sub="Deux plaques sur trois" onPress={() => show({ kind: 'plaque' })} />
-        <Row icon="star" label="Nouveaux sceaux" sub="Trois sceaux fictifs" onPress={() => show({ kind: 'sceaux' })} />
-        <Row icon="moon" label="Lune du mois" sub="Trois semaines tenues dans le mois" onPress={() => show({ kind: 'lune' })} />
-        <Row icon="user" label="Bienvenue des anciens" sub="Le résumé de reprise, chiffres fictifs" onPress={() => show({ kind: 'bienvenue' })} />
+        <Row first icon="shield" label={traduire("Nouvelle plaque d’armure")} sub={traduire("Deux plaques sur trois")} onPress={() => show({ kind: 'plaque' })} />
+        <Row icon="star" label={traduire("Nouveaux sceaux")} sub="Trois sceaux fictifs" onPress={() => show({ kind: 'sceaux' })} />
+        <Row icon="moon" label={traduire("Lune du mois")} sub={traduire("Trois semaines tenues dans le mois")} onPress={() => show({ kind: 'lune' })} />
+        <Row icon="user" label={traduire("Bienvenue des anciens")} sub={traduire("Le résumé de reprise, chiffres fictifs")} onPress={() => show({ kind: 'bienvenue' })} />
       </Card>
     </StudioSection>
   );

@@ -45,6 +45,7 @@ const avecRappels = (l: EtapeNouveautes[]): Etape[] => {
   return i < 0 ? [...l, 'rappels'] : [...l.slice(0, i), 'rappels', ...l.slice(i)];
 };
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Au dela, une lecture qui ne repond pas est ignoree : la page ne reste jamais blanche */
 const LECTURE_MAX_MS = 2500;
@@ -219,15 +220,15 @@ export default function Nouveautes() {
         return (
           <Shell
             {...nav}
-            title={revoir ? 'La **présentation** de YOROI' : 'Bienvenue dans **YOROI 3.0**'}
-            sub={revoir ? 'Les nouveautés, les réglages, puis la visite de l’app.' : 'Tes données sont là, rien n’a bougé. Voici ce qui est nouveau.'}
+            title={revoir ? traduire('La **présentation** de YOROI') : traduire('Bienvenue dans **YOROI 3.0**')}
+            sub={revoir ? traduire('Les nouveautés, les réglages, puis la visite de l’app.') : traduire('Tes données sont là, rien n’a bougé. Voici ce qui est nouveau.')}
             gap={10}
             footer={
               <>
-                <MainButton label="C’est parti" onPress={suivant} />
+                <MainButton label={traduire("C’est parti")} onPress={suivant} />
                 {revoir ? null : (
-                  <Pressable onPress={plusTard} accessibilityRole="button" accessibilityLabel="Plus tard" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-                    <Ink size={15} weight="bold" color={c.textSecondary}>Plus tard</Ink>
+                  <Pressable onPress={plusTard} accessibilityRole="button" accessibilityLabel={traduire("Plus tard")} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("Plus tard")}</Ink>
                   </Pressable>
                 )}
               </>
@@ -241,7 +242,7 @@ export default function Nouveautes() {
         );
       case 'rappels':
         return (
-          <Shell {...nav} title="Ta **discipline**" sub="Des rappels pour tenir ton rythme, seulement ceux que tu allumes." gap={12} footer={<MainButton label="Continuer" onPress={suivant} />}>
+          <Shell {...nav} title={traduire("Ta **discipline**")} sub={traduire("Des rappels pour tenir ton rythme, seulement ceux que tu allumes.")} gap={12} footer={<MainButton label="Continuer" onPress={suivant} />}>
             <MessageDiscipline />
             <BlocDiscipline
               sansMessage
@@ -277,12 +278,12 @@ export default function Nouveautes() {
         return (
           <Shell
             {...nav}
-            title="Ta **scène** d’accueil"
-            sub="Le décor en haut de ton accueil. Tu peux la changer quand tu veux dans Réglages, Personnaliser."
+            title={traduire("Ta **scène** d’accueil")}
+            sub={traduire("Le décor en haut de ton accueil. Tu peux la changer quand tu veux dans Réglages, Personnaliser.")}
             footer={
               <>
-                <MainButton label="Choisir ma scène" tone="light" onPress={() => router.push('/settings/scene' as never)} />
-                <MainButton label={i >= n - 1 ? 'Voir la visite guidée' : 'Continuer'} onPress={suivant} />
+                <MainButton label={traduire("Choisir ma scène")} tone="light" onPress={() => router.push('/settings/scene' as never)} />
+                <MainButton label={i >= n - 1 ? traduire('Voir la visite guidée') : 'Continuer'} onPress={suivant} />
               </>
             }
           >

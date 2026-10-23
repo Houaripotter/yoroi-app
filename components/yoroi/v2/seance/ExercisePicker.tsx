@@ -17,6 +17,7 @@ import { Icon } from './Icon';
 import { MachineFinder, MachineFinderButton } from './MachineFinder';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { traduire } from '@/lib/i18n/tr';
 
 type Item = { key: string; name: string; autre?: string; muscle: string; history?: ExerciseHistory; count?: number; rang?: number };
 
@@ -91,8 +92,8 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: 18 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22 }}>
-          <Ink size={26} weight="black" tight>Ajouter un exercice</Ink>
-          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Fermer" style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+          <Ink size={26} weight="black" tight>{traduire("Ajouter un exercice")}</Ink>
+          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="close" size={18} strokeWidth={2.6} />
           </Pressable>
         </View>
@@ -102,15 +103,15 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Développé, squat, tractions..."
+            placeholder={traduire("Développé, squat, tractions...")}
             placeholderTextColor={c.textMuted}
             autoCorrect={false}
             returnKeyType="search"
-            accessibilityLabel="Chercher un exercice"
+            accessibilityLabel={traduire("Chercher un exercice")}
             style={[fontStyle('bold'), { flex: 1, fontSize: 16, color: c.ink, paddingVertical: 0 }]}
           />
           {query ? (
-            <Pressable onPress={() => setQuery('')} accessibilityLabel="Effacer la recherche" hitSlop={10}>
+            <Pressable onPress={() => setQuery('')} accessibilityLabel={traduire("Effacer la recherche")} hitSlop={10}>
               <Icon name="close" size={16} color={c.textMuted} />
             </Pressable>
           ) : null}
@@ -123,8 +124,8 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
 
         <View style={{ height: 54 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 22, alignItems: 'center' }}>
-            {recent.length > 0 ? chip('recents', 'Récents') : null}
-            {chip(null, 'Tous')}
+            {recent.length > 0 ? chip('recents', traduire('Récents')) : null}
+            {chip(null, traduire('Tous'))}
             {groups.map((g) => chip(g, niceGroup(g)))}
           </ScrollView>
         </View>
@@ -138,25 +139,25 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
             query.trim() ? (
               <View style={{ paddingVertical: 28, alignItems: 'center', gap: 14 }}>
                 <View style={{ alignItems: 'center', gap: 4 }}>
-                  <Ink size={16} weight="extraBold" style={{ textAlign: 'center' }}>Aucun exercice pour « {query.trim()} »</Ink>
-                  <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>Essaie un autre mot, en français ou en anglais, ou crée-le tel quel.</Ink>
+                  <Ink size={16} weight="extraBold" style={{ textAlign: 'center' }}>{traduire("Aucun exercice pour « {0} »", query.trim())}</Ink>
+                  <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Essaie un autre mot, en français ou en anglais, ou crée-le tel quel.")}</Ink>
                 </View>
-                <Pressable onPress={() => pick(query.trim())} accessibilityRole="button" accessibilityLabel={`Créer l’exercice ${query.trim()}`} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.accentPressed : c.accent })}>
+                <Pressable onPress={() => pick(query.trim())} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.accentPressed : c.accent })}>
                   <Icon name="plus" size={20} color={c.onAccent} strokeWidth={2.8} />
-                  <Ink size={16} weight="extraBold" color={c.onAccent}>Créer cet exercice</Ink>
+                  <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Créer cet exercice")}</Ink>
                 </Pressable>
               </View>
             ) : (
               <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                <Ink size={15} color={c.textSecondary}>Aucun exercice ici pour l’instant.</Ink>
+                <Ink size={15} color={c.textSecondary}>{traduire("Aucun exercice ici pour l’instant.")}</Ink>
               </View>
             )
           }
           ListFooterComponent={
             query.trim() && !exact && list.length > 0 ? (
-              <Pressable onPress={() => pick(query.trim())} accessibilityRole="button" accessibilityLabel={`Créer l’exercice ${query.trim()}`} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent', borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border })}>
+              <Pressable onPress={() => pick(query.trim())} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent', borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border })}>
                 <Icon name="plus" size={18} color={c.textSecondary} strokeWidth={2.6} />
-                <Ink size={15} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>Pas dans la liste ? Créer « {query.trim()} »</Ink>
+                <Ink size={15} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{traduire("Pas dans la liste ? Créer « {0} »", query.trim())}</Ink>
               </Pressable>
             ) : null
           }
@@ -167,7 +168,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
               <Pressable
                 onPress={() => pick(item.name, item.muscle)}
                 accessibilityRole="button"
-                accessibilityLabel={`Ajouter ${item.name}`}
+                accessibilityLabel={traduire("Ajouter {0}", item.name)}
                 style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.divider })}
               >
                 <View style={{ flex: 1, gap: 2 }}>

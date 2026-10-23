@@ -41,25 +41,26 @@ import { connecterSanteSuivi } from '@/lib/v2/onboarding/save';
 import { montrerIssueSante } from '@/lib/v2/sante/demandeActions';
 import { resumeDemande } from '@/lib/v2/sante/typesSante';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const PERM_LABELS: { key: keyof HealthPermissions; label: string }[] = [
   { key: 'weight', label: 'Poids' },
-  { key: 'steps', label: 'Pas' },
-  { key: 'sleep', label: 'Sommeil' },
-  { key: 'heartRate', label: 'Fréquence cardiaque' },
-  { key: 'restingHeartRate', label: 'Fréquence au repos' },
-  { key: 'heartRateVariability', label: 'Variabilité cardiaque' },
-  { key: 'calories', label: 'Calories' },
+  { key: 'steps', label: traduire('Pas') },
+  { key: 'sleep', label: traduire('Sommeil') },
+  { key: 'heartRate', label: traduire('Fréquence cardiaque') },
+  { key: 'restingHeartRate', label: traduire('Fréquence au repos') },
+  { key: 'heartRateVariability', label: traduire('Variabilité cardiaque') },
+  { key: 'calories', label: traduire('Calories') },
   { key: 'distance', label: 'Distance' },
-  { key: 'oxygenSaturation', label: 'Oxygène' },
+  { key: 'oxygenSaturation', label: traduire('Oxygène') },
   { key: 'bodyComposition', label: 'Composition' },
-  { key: 'workouts', label: 'Séances' },
+  { key: 'workouts', label: traduire('Séances') },
 ];
 
 /** Ce que la ligne Apple Watch dit, sans rien de plus : jumelee ou non, app installee ou non */
 function texteMontre(m: EtatMontre): string {
-  if (!m.jumelee) return 'Aucune Apple Watch jumelée à cet iPhone';
-  return m.installee ? 'Jumelée, l’app YOROI est installée' : 'Jumelée, l’app YOROI n’est pas encore installée';
+  if (!m.jumelee) return traduire('Aucune Apple Watch jumelée à cet iPhone');
+  return m.installee ? traduire('Jumelée, l’app YOROI est installée') : traduire('Jumelée, l’app YOROI n’est pas encore installée');
 }
 
 type Diag = { available: boolean; permissions: boolean; hasWeight: boolean; weightValue?: number; weightDate?: string };
@@ -121,12 +122,12 @@ export default function HealthConnectScreen() {
       const available = await healthConnect.isAvailable();
       if (!available) {
         appAlert(
-          'Non disponible',
+          traduire('Non disponible'),
           Platform.OS === 'ios'
             ? __DEV__
-              ? "Mode test\u00A0: l'app Santé n'est pas disponible (simulateur, tablette, ou Expo Go). Teste dans l'app installée."
-              : "L'app Santé n'est pas disponible sur cet appareil."
-            : "Health Connect n'est pas disponible sur cet appareil. Installe-le depuis le Play Store.",
+              ? traduire("Mode test\u00A0: l'app Santé n'est pas disponible (simulateur, tablette, ou Expo Go). Teste dans l'app installée.")
+              : traduire("L'app Santé n'est pas disponible sur cet appareil.")
+            : traduire("Health Connect n'est pas disponible sur cet appareil. Installe-le depuis le Play Store."),
         );
         return;
       }
@@ -136,7 +137,7 @@ export default function HealthConnectScreen() {
       const st = healthConnect.getSyncStatus();
       if (issue === 'connecte') {
         tap('success');
-        appAlert('C’est relié', `YOROI lit bien ${healthConnect.getProviderName()}. Import en cours : tes pesées et tes séances arrivent, le compte s’affiche en haut de l’Accueil.`);
+        appAlert(traduire('C’est relié'), traduire("YOROI lit bien {0}. Import en cours : tes pesées et tes séances arrivent, le compte s’affiche en haut de l’Accueil.", healthConnect.getProviderName()));
         const fin = DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => {
           fin.remove();
           DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
@@ -148,44 +149,44 @@ export default function HealthConnectScreen() {
         switch (st.failureReason as string) {
           case 'USER_DENIED':
             appAlert(
-              'Accès refusé',
+              traduire('Accès refusé'),
               Platform.OS === 'ios'
-                ? "Tu as refusé l'accès à l'app Santé. Va dans Réglages, Santé, Partage de données, YOROI et active toutes les autorisations."
-                : "Tu as refusé l'accès à Health Connect. Autorise l'accès dans les paramètres de l'app.",
+                ? traduire("Tu as refusé l'accès à l'app Santé. Va dans Réglages, Santé, Partage de données, YOROI et active toutes les autorisations.")
+                : traduire("Tu as refusé l'accès à Health Connect. Autorise l'accès dans les paramètres de l'app."),
               [
-                { text: 'Annuler', style: 'cancel' },
-                { text: 'Ouvrir Réglages', onPress: () => (Platform.OS === 'ios' ? safeOpenURL('App-Prefs:HEALTH') : Linking.openSettings()) },
+                { text: traduire('Annuler'), style: 'cancel' },
+                { text: traduire('Ouvrir Réglages'), onPress: () => (Platform.OS === 'ios' ? safeOpenURL('App-Prefs:HEALTH') : Linking.openSettings()) },
               ],
             );
             break;
           case 'MODULE_NOT_LOADED':
             appAlert(
-              'Santé indisponible',
+              traduire('Santé indisponible'),
               __DEV__
-                ? "Mode test\u00A0: le module Santé n'est pas chargé (simulateur, Expo Go, ou app compilée sans lui)."
-                : "La lecture santé n'est pas disponible sur cet appareil pour l'instant.",
+                ? traduire("Mode test\u00A0: le module Santé n'est pas chargé (simulateur, Expo Go, ou app compilée sans lui).")
+                : traduire("La lecture santé n'est pas disponible sur cet appareil pour l'instant."),
             );
             break;
           case 'DEVICE_NOT_SUPPORTED':
             appAlert(
-              'Appareil non compatible',
-              Platform.OS === 'ios' ? "L'app Santé n'est pas disponible sur cet appareil (tablette ou ancien modèle)." : "Health Connect n'est pas disponible ici. Il faut Android 9 ou plus récent.",
+              traduire('Appareil non compatible'),
+              Platform.OS === 'ios' ? traduire("L'app Santé n'est pas disponible sur cet appareil (tablette ou ancien modèle).") : traduire("Health Connect n'est pas disponible ici. Il faut Android 9 ou plus récent."),
             );
             break;
           case 'HEALTH_CONNECT_NOT_INSTALLED':
-            appAlert('Health Connect absent', "Health Connect n'est pas installé. C'est l'app de Google qui rassemble tes données de santé. Installe-la depuis le Play Store pour continuer.", [
-              { text: 'Plus tard', style: 'cancel' },
-              { text: 'Installer', onPress: () => safeOpenURL('market://details?id=com.google.android.apps.healthdata') },
+            appAlert('Health Connect absent', traduire("Health Connect n'est pas installé. C'est l'app de Google qui rassemble tes données de santé. Installe-la depuis le Play Store pour continuer."), [
+              { text: traduire('Plus tard'), style: 'cancel' },
+              { text: traduire('Installer'), onPress: () => safeOpenURL('market://details?id=com.google.android.apps.healthdata') },
             ]);
             break;
           default:
-            appAlert('Connexion impossible', `Impossible de se connecter à ${healthConnect.getProviderName()}. Vérifie que l'app est installée et réessaie.`);
+            appAlert(traduire('Connexion impossible'), traduire("Impossible de se connecter à {0}. Vérifie que l'app est installée et réessaie.", healthConnect.getProviderName()));
         }
       }
       await loadStatus();
     } catch (e) {
       logger.error('[HealthConnect v2] connexion', e);
-      appAlert('Oups', 'Ça n’a pas marché. Réessaie plus tard.');
+      appAlert('Oups', traduire('Ça n’a pas marché. Réessaie plus tard.'));
     } finally {
       setConnecting(false);
     }
@@ -193,10 +194,10 @@ export default function HealthConnectScreen() {
 
   const disconnect = () => {
     tap('medium');
-    appAlert('Déconnecter ?', `Veux-tu vraiment déconnecter YOROI de ${healthConnect.getProviderName()} ? Tes données ne seront plus synchronisées automatiquement.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Déconnecter ?'), traduire("Veux-tu vraiment déconnecter YOROI de {0} ? Tes données ne seront plus synchronisées automatiquement.", healthConnect.getProviderName()), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Déconnecter',
+        text: traduire('Déconnecter'),
         style: 'destructive',
         onPress: async () => {
           await healthConnect.disconnect();
@@ -215,7 +216,7 @@ export default function HealthConnectScreen() {
       await loadStatus();
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       tap('success');
-      appAlert('Synchronisé', 'Tes données de santé ont été mises à jour.');
+      appAlert(traduire('Synchronisé'), traduire('Tes données de santé ont été mises à jour.'));
     } catch (e) {
       logger.error('[HealthConnect v2] synchro', e);
     } finally {
@@ -227,7 +228,7 @@ export default function HealthConnectScreen() {
     if (importing) return;
     tap('light');
     setImporting(true);
-    setProgress('Démarrage');
+    setProgress(traduire('Démarrage'));
     try {
       const r = await forceReimport((step, cur, tot) => setProgress(`${step} (${cur}/${tot})`));
       setProgress('');
@@ -237,12 +238,12 @@ export default function HealthConnectScreen() {
         // audit 18 octobre : sur Android, le chemin et le bouton menent a Health Connect (avant : Reglages, Sante et un lien iOS)
         const hcSettings = (healthConnect as unknown as { openHealthConnectSettings?: () => Promise<void> }).openHealthConnectSettings;
         appAlert(
-          'Aucune séance trouvée',
+          traduire('Aucune séance trouvée'),
           Platform.OS === 'android'
-            ? "Health Connect n'a renvoyé aucune séance. Cause la plus fréquente : l'accès Exercice n'est pas autorisé pour YOROI. Ouvre Health Connect, Autorisations des applis, YOROI, et active Exercice."
-            : `${provider} n'a renvoyé aucune séance. Cause la plus fréquente : l'accès Entraînements n'est pas activé pour YOROI. Va dans Réglages, Santé, Accès aux données et appareils, YOROI, et active Entraînements.`,
+            ? traduire("Health Connect n'a renvoyé aucune séance. Cause la plus fréquente : l'accès Exercice n'est pas autorisé pour YOROI. Ouvre Health Connect, Autorisations des applis, YOROI, et active Exercice.")
+            : traduire("{0} n'a renvoyé aucune séance. Cause la plus fréquente : l'accès Entraînements n'est pas activé pour YOROI. Va dans Réglages, Santé, Accès aux données et appareils, YOROI, et active Entraînements.", provider),
           [
-            { text: 'Annuler', style: 'cancel' },
+            { text: traduire('Annuler'), style: 'cancel' },
             Platform.OS === 'android'
               ? {
                   text: 'Ouvrir Health Connect',
@@ -251,20 +252,20 @@ export default function HealthConnectScreen() {
                     else Linking.openSettings();
                   },
                 }
-              : { text: 'Ouvrir Réglages', onPress: () => safeOpenURL('app-settings:') },
+              : { text: traduire('Ouvrir Réglages'), onPress: () => safeOpenURL('app-settings:') },
           ],
         );
       } else if (r.workouts === 0 && r.insertErrors > 0) {
-        appAlert('Import impossible', `${provider} a trouvé ${r.healthkitFound} séance${s(r.healthkitFound)} mais aucune n'a pu être enregistrée. Redémarre l'app et réimporte.`);
+        appAlert(traduire('Import impossible'), traduirePluriel(r.healthkitFound, (s(r.healthkitFound)) !== '', "{0} a trouvé {1} séance mais aucune n'a pu être enregistrée. Redémarre l'app et réimporte.", "{0} a trouvé {1} séances mais aucune n'a pu être enregistrée. Redémarre l'app et réimporte.", provider, r.healthkitFound));
       } else if (r.workouts === 0) {
-        appAlert('Déjà à jour', `${provider} a trouvé ${r.healthkitFound} séance${s(r.healthkitFound)}, toutes déjà présentes dans YOROI.`);
+        appAlert(traduire('Déjà à jour'), traduirePluriel(r.healthkitFound, (s(r.healthkitFound)) !== '', "{0} a trouvé {1} séance, toutes déjà présentes dans YOROI.", "{0} a trouvé {1} séances, toutes déjà présentes dans YOROI.", provider, r.healthkitFound));
       } else {
         tap('success');
-        appAlert('Import terminé', `${r.workouts} séance${s(r.workouts)} importée${s(r.workouts)} depuis ${provider} (${r.healthkitFound} trouvée${s(r.healthkitFound)} au total).`);
+        appAlert(traduire('Import terminé'), `${r.workouts} séance${s(r.workouts)} importée${s(r.workouts)} depuis ${provider} (${r.healthkitFound} trouvée${s(r.healthkitFound)} au total).`);
       }
     } catch {
       setProgress('');
-      appAlert('Import impossible', `Les séances n’ont pas pu être importées. Vérifie ta connexion à ${provider}.`);
+      appAlert(traduire('Import impossible'), traduire("Les séances n’ont pas pu être importées. Vérifie ta connexion à {0}.", provider));
     } finally {
       setImporting(false);
     }
@@ -281,19 +282,19 @@ export default function HealthConnectScreen() {
         return;
       }
       const actions: SheetAction[] = [];
-      if (r.suggestSettings) actions.push({ label: 'Ouvrir les réglages', tone: 'red', onPress: () => safeOpenURL('App-Prefs:Privacy&path=HEALTH') });
+      if (r.suggestSettings) actions.push({ label: traduire('Ouvrir les réglages'), tone: 'red', onPress: () => safeOpenURL('App-Prefs:Privacy&path=HEALTH') });
       if (r.canImport)
         actions.push({
-          label: 'Importer maintenant',
+          label: traduire('Importer maintenant'),
           tone: 'red',
           onPress: () => {
             setReport(null);
             forceReimport().then(() => DeviceEventEmitter.emit(DATA_CHANGED_EVENT)).catch(() => {});
           },
         });
-      setReport({ title: 'Diagnostic des séances', lines: r.lines, actions });
+      setReport({ title: traduire('Diagnostic des séances'), lines: r.lines, actions });
     } catch (e: any) {
-      appAlert('Diagnostic impossible', 'Le diagnostic n’a pas pu se faire. Réessaie.');
+      appAlert(traduire('Diagnostic impossible'), traduire('Le diagnostic n’a pas pu se faire. Réessaie.'));
     } finally {
       setDiagnosing(false);
     }
@@ -316,15 +317,15 @@ export default function HealthConnectScreen() {
       const m = await etatMontre();
       if (m) setMontre(m);
       if (!m || !m.jumelee || !m.installee) {
-        appAlert('Apple Watch', m && m.jumelee ? 'Installe l’app YOROI sur ta montre depuis l’app Watch de ton iPhone, puis réessaie.' : 'Jumelle ton Apple Watch à cet iPhone, puis réessaie.');
+        appAlert('Apple Watch', m && m.jumelee ? traduire('Installe l’app YOROI sur ta montre depuis l’app Watch de ton iPhone, puis réessaie.') : traduire('Jumelle ton Apple Watch à cet iPhone, puis réessaie.'));
         return;
       }
       const ok = await envoyerContexteMontre(true);
       if (ok) {
         tap('success');
-        appAlert('Apple Watch', 'C’est envoyé. Ta montre affiche tes chiffres dès qu’elle est près de ton iPhone.');
+        appAlert('Apple Watch', traduire('C’est envoyé. Ta montre affiche tes chiffres dès qu’elle est près de ton iPhone.'));
       } else {
-        appAlert('Envoi impossible', 'Ouvre YOROI sur ta montre, puis réessaie.');
+        appAlert(traduire('Envoi impossible'), traduire('Ouvre YOROI sur ta montre, puis réessaie.'));
       }
     } finally {
       setWatchSyncing(false);
@@ -332,10 +333,10 @@ export default function HealthConnectScreen() {
   };
 
   const reset = () => {
-    appAlert('Réinitialiser la liaison', "Si la fenêtre de l'app Santé ne s'affiche pas, YOROI va oublier l'ancienne connexion et la redemander. Continuer ?", [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Réinitialiser la liaison'), traduire("Si la fenêtre de l'app Santé ne s'affiche pas, YOROI va oublier l'ancienne connexion et la redemander. Continuer ?"), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Oui, réinitialiser',
+        text: traduire('Oui, réinitialiser'),
         style: 'destructive',
         onPress: async () => {
           await AsyncStorage.removeItem('@yoroi_health_sync_status');
@@ -392,28 +393,28 @@ export default function HealthConnectScreen() {
   const anyPerm = perms ? Object.values(perms).some(Boolean) : false;
 
   return (
-    <DetailScreen title="Connexion santé" subtitle={provider}>
+    <DetailScreen title={traduire("Connexion santé")} subtitle={provider}>
       <SourceCard source={source} onConnect={connect} connecting={connecting} onSync={sync} syncing={syncing} />
 
       {isLive ? (
         <CardBox>
-          <ActionRow first icon="sync" title={importing ? progress || 'Import en cours' : 'Réimporter toutes mes séances'} sub={importing ? 'Patiente, ça peut prendre quelques minutes' : `Tout l'historique depuis ${provider}`} onPress={reimport} busy={importing} color={S.mossText} tint={S.mossSoft} />
-          {Platform.OS === 'ios' ? <ActionRow icon="search" title={diagnosing ? 'Diagnostic en cours' : 'Diagnostiquer mes séances'} sub="Comprendre pourquoi les séances ne s'importent pas" onPress={diagnose} busy={diagnosing} color={S.indigo} tint={S.indigoSoft} /> : null}
-          <ActionRow icon="spark" title={askingMore ? 'Autorisation en cours' : 'Autoriser les nouvelles mesures'} sub={Platform.OS === 'android' ? 'Tension, nutrition, puissance, historique complet' : 'Poignet, lumière du jour, nutrition, récupération'} onPress={askMore} busy={askingMore} color={S.gold} tint={S.goldSoft} />
-          <ActionRow icon="close" title="Déconnecter" sub="Arrêter la synchronisation" onPress={disconnect} color={S.danger} tint={S.dangerSoft} />
+          <ActionRow first icon="sync" title={importing ? progress || 'Import en cours' : traduire('Réimporter toutes mes séances')} sub={importing ? traduire('Patiente, ça peut prendre quelques minutes') : traduire("Tout l'historique depuis {0}", provider)} onPress={reimport} busy={importing} color={S.mossText} tint={S.mossSoft} />
+          {Platform.OS === 'ios' ? <ActionRow icon="search" title={diagnosing ? 'Diagnostic en cours' : traduire('Diagnostiquer mes séances')} sub={traduire("Comprendre pourquoi les séances ne s'importent pas")} onPress={diagnose} busy={diagnosing} color={S.indigo} tint={S.indigoSoft} /> : null}
+          <ActionRow icon="spark" title={askingMore ? 'Autorisation en cours' : traduire('Autoriser les nouvelles mesures')} sub={Platform.OS === 'android' ? traduire('Tension, nutrition, puissance, historique complet') : traduire('Poignet, lumière du jour, nutrition, récupération')} onPress={askMore} busy={askingMore} color={S.gold} tint={S.goldSoft} />
+          <ActionRow icon="close" title={traduire("Déconnecter")} sub={traduire("Arrêter la synchronisation")} onPress={disconnect} color={S.danger} tint={S.dangerSoft} />
         </CardBox>
       ) : null}
 
       {Platform.OS === 'ios' && montre ? (
         <CardBox>
           <ActionRow first icon="watch" title="Apple Watch" sub={texteMontre(montre)} color={S.accent} tint={S.accentSoft} />
-          <ActionRow icon="sync" title={watchSyncing ? 'Envoi en cours' : 'Envoyer à la montre maintenant'} onPress={watchSync} busy={watchSyncing} color={S.accent} tint={S.accentSoft} />
+          <ActionRow icon="sync" title={watchSyncing ? 'Envoi en cours' : traduire('Envoyer à la montre maintenant')} onPress={watchSync} busy={watchSyncing} color={S.accent} tint={S.accentSoft} />
         </CardBox>
       ) : null}
 
       {!isLive ? (
         <>
-          <Label>Comment ça marche</Label>
+          <Label>{traduire("Comment ça marche")}</Label>
           <DataBridge />
           <CardBox style={{ paddingVertical: 16 }}>
             <Steps steps={instructions} />
@@ -422,7 +423,7 @@ export default function HealthConnectScreen() {
       ) : null}
 
       {/* 14 octobre 2026 : le même compte que Réglages, Santé, Accès aux données (lecture et écriture séparées) */}
-      <Label aside={`${resumeDemande(Platform.OS).lecture} en lecture, ${resumeDemande(Platform.OS).ecriture} en écriture`}>Ce que YOROI lit</Label>
+      <Label aside={traduire("{0} en lecture, {1} en écriture", resumeDemande(Platform.OS).lecture, resumeDemande(Platform.OS).ecriture)}>{traduire("Ce que YOROI lit")}</Label>
       <GlassBox style={{ gap: 12 }}>
         {FAMILY_ORDER.map((f) => {
           const defs = METRICS.filter((m) => m.family === f && availableOn(m, Platform.OS === 'android'));
@@ -449,20 +450,20 @@ export default function HealthConnectScreen() {
         })}
         <Ink size={12} weight="bold" color={S.muted}>
           {Platform.OS === 'ios'
-            ? "Apple ne dit pas à YOROI ce que tu as coché. Pour changer un accès : Réglages, Santé, Accès aux données et appareils, YOROI."
-            : 'Pour changer un accès : ouvre Health Connect, Autorisations des applis, YOROI.'}
+            ? traduire("Apple ne dit pas à YOROI ce que tu as coché. Pour changer un accès : Réglages, Santé, Accès aux données et appareils, YOROI.")
+            : traduire('Pour changer un accès : ouvre Health Connect, Autorisations des applis, YOROI.')}
         </Ink>
       </GlassBox>
 
       {Platform.OS === 'android' && isLive && perms && anyPerm ? (
         <CardBox>
           {PERM_LABELS.map((p, i) => (
-            <ActionRow key={p.key} first={i === 0} icon={perms[p.key] ? 'check' : 'close'} title={p.label} sub={perms[p.key] ? 'Autorisé' : 'Non autorisé'} color={perms[p.key] ? S.mossText : S.muted} tint={perms[p.key] ? S.mossSoft : S.line2} />
+            <ActionRow key={p.key} first={i === 0} icon={perms[p.key] ? 'check' : 'close'} title={p.label} sub={perms[p.key] ? traduire('Autorisé') : traduire('Non autorisé')} color={perms[p.key] ? S.mossText : S.muted} tint={perms[p.key] ? S.mossSoft : S.line2} />
           ))}
         </CardBox>
       ) : null}
 
-      <Label aside={detected.length ? `${detected.length} sur 30 jours` : undefined}>Tes appareils</Label>
+      <Label aside={detected.length ? traduire("{0} sur 30 jours", detected.length) : undefined}>{traduire("Tes appareils")}</Label>
       {detected.length > 0 ? (
         <CardBox>
           {detected.map((d, i) => {
@@ -475,7 +476,7 @@ export default function HealthConnectScreen() {
                     {show.name}
                   </Ink>
                   <Ink size={12} weight="bold" color={S.ink2}>
-                    {[d.last_type ? DATA_TYPE_LABELS[d.last_type] ?? d.last_type : null, d.last_date ? whenLabel(d.last_date) : null].filter(Boolean).join(', ') || 'Reçu récemment'}
+                    {[d.last_type ? DATA_TYPE_LABELS[d.last_type] ?? d.last_type : null, d.last_date ? whenLabel(d.last_date) : null].filter(Boolean).join(', ') || traduire('Reçu récemment')}
                   </Ink>
                 </View>
                 <View style={{ minWidth: 36, height: 28, paddingHorizontal: 8, borderRadius: 14, backgroundColor: S.paper, alignItems: 'center', justifyContent: 'center' }}>
@@ -488,34 +489,34 @@ export default function HealthConnectScreen() {
           })}
         </CardBox>
       ) : (
-        <Notice text={native ? `Aucun appareil n'a encore envoyé de mesure. Configure ta montre ou ta balance, puis synchronise.` : "Les appareils détectés s'affichent dans l'app installée, une fois Santé ou Health Connect relié."} />
+        <Notice text={native ? traduire(`Aucun appareil n'a encore envoyé de mesure. Configure ta montre ou ta balance, puis synchronise.`) : traduire("Les appareils détectés s'affichent dans l'app installée, une fois Santé ou Health Connect relié.")} />
       )}
       <CardBox>
-        <ActionRow first icon="watch" title="Configurer ta montre ou ta balance" sub={`Le guide de ta marque, pas à pas, vers ${provider}`} onPress={() => router.push('/sante/montre' as any)} color={S.accent} tint={S.accentSoft} />
-        {native ? <ActionRow icon="external" title={`Ouvrir ${provider}`} sub="Vérifier les autorisations de YOROI" onPress={openApp} /> : null}
+        <ActionRow first icon="watch" title={traduire("Configurer ta montre ou ta balance")} sub={traduire("Le guide de ta marque, pas à pas, vers {0}", provider)} onPress={() => router.push('/sante/montre' as any)} color={S.accent} tint={S.accentSoft} />
+        {native ? <ActionRow icon="external" title={`Ouvrir ${provider}`} sub={traduire("Vérifier les autorisations de YOROI")} onPress={openApp} /> : null}
       </CardBox>
 
-      <Accordion title="Ce que chaque appareil envoie" sub="Poids, cœur, sommeil, pas, calories, VO2 max" mark={<BrandMark text="" kind="montre" color={S.accent} size={38} />}>
+      <Accordion title={traduire("Ce que chaque appareil envoie")} sub={traduire("Poids, cœur, sommeil, pas, calories, VO2 max")} mark={<BrandMark text="" kind="montre" color={S.accent} size={38} />}>
         <DataMatrix />
       </Accordion>
 
       {!isLive ? (
         <CardBox>
-          <ActionRow first icon="spark" title="Automatique" sub="Plus besoin de tout saisir à la main" color={S.accent} tint={S.accentSoft} />
-          <ActionRow icon="shield" title="Privé" sub="Tes données restent sur ton téléphone" color={S.indigo} tint={S.indigoSoft} />
-          <ActionRow icon="watch" title="Compatible" sub={`Toute marque qui partage avec ${provider}`} color={S.mossText} tint={S.mossSoft} />
+          <ActionRow first icon="spark" title="Automatique" sub={traduire("Plus besoin de tout saisir à la main")} color={S.accent} tint={S.accentSoft} />
+          <ActionRow icon="shield" title={traduire("Privé")} sub={traduire("Tes données restent sur ton téléphone")} color={S.indigo} tint={S.indigoSoft} />
+          <ActionRow icon="watch" title="Compatible" sub={traduire("Toute marque qui partage avec {0}", provider)} color={S.mossText} tint={S.mossSoft} />
         </CardBox>
       ) : null}
 
-      <Label>Un souci de liaison</Label>
+      <Label>{traduire("Un souci de liaison")}</Label>
       <CardBox style={{ paddingVertical: 14, gap: 12 }}>
-        <SmallButton label={checking ? 'Vérification' : 'Vérifier la connexion'} icon="search" busy={checking} onPress={verify} />
+        <SmallButton label={checking ? traduire('Vérification') : traduire('Vérifier la connexion')} icon="search" busy={checking} onPress={verify} />
         {check ? (
           <View>
             {[
               { label: `${provider} disponible`, ok: check.available },
-              { label: 'Autorisations accordées', ok: check.permissions },
-              { label: check.hasWeight && check.weightValue ? `Dernier poids : ${check.weightValue.toFixed(1).replace('.', ',')} kg` : 'Poids reçu', ok: check.hasWeight },
+              { label: traduire('Autorisations accordées'), ok: check.permissions },
+              { label: check.hasWeight && check.weightValue ? traduire("Dernier poids : {0} kg", check.weightValue.toFixed(1).replace('.', DECIMAL)) : traduire('Poids reçu'), ok: check.hasWeight },
             ].map((it, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: S.line2 }}>
                 <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: it.ok ? S.mossSoft : S.dangerSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -534,17 +535,17 @@ export default function HealthConnectScreen() {
             text={
               !check.available
                 ? Platform.OS === 'android'
-                  ? 'Installe Health Connect depuis le Play Store, puis reviens ici.'
+                  ? traduire('Installe Health Connect depuis le Play Store, puis reviens ici.')
                   : source?.mode === 'expoGo' && __DEV__
-                    ? "Mode test\u00A0: dans Expo Go, Apple Santé n'est pas accessible. Teste dans l'app installée."
-                    : "L'app Santé n'est pas disponible sur cet appareil."
+                    ? traduire("Mode test\u00A0: dans Expo Go, Apple Santé n'est pas accessible. Teste dans l'app installée.")
+                    : traduire("L'app Santé n'est pas disponible sur cet appareil.")
                 : !check.permissions
-                  ? `Autorise YOROI à accéder à ${provider} avec le bouton Connecter plus haut.`
-                  : `Vérifie que ton appareil partage bien ses données avec ${provider} dans son app (Garmin Connect, Withings, Fitbit). La synchro peut prendre quelques minutes.`
+                  ? traduire("Autorise YOROI à accéder à {0} avec le bouton Connecter plus haut.", provider)
+                  : traduire("Vérifie que ton appareil partage bien ses données avec {0} dans son app (Garmin Connect, Withings, Fitbit). La synchro peut prendre quelques minutes.", provider)
             }
           />
         ) : null}
-        {native ? <SmallButton label="Réinitialiser la liaison" tone="light" icon="restore" onPress={reset} /> : null}
+        {native ? <SmallButton label={traduire("Réinitialiser la liaison")} tone="light" icon="restore" onPress={reset} /> : null}
       </CardBox>
 
       <LinesSheet visible={!!report} title={report?.title ?? ''} lines={report?.lines ?? []} actions={report?.actions} onClose={() => setReport(null)} />

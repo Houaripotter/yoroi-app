@@ -12,6 +12,7 @@ import { healthConnect } from './healthConnect';
 import { addMeasurement, getAllMeasurements } from './storage';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 // Réexporter les types pour que les consommateurs n'aient plus à deviner le bon import
 export type { HealthData, SyncStatus, HealthPermissions } from './healthConnect';
@@ -43,7 +44,7 @@ const isAvailable = (): boolean => {
 };
 
 const getProviderName = (): string => {
-  if (Platform.OS === 'ios') return 'App Santé';
+  if (Platform.OS === 'ios') return traduire('App Santé');
   if (Platform.OS === 'android') return 'Health Connect';
   return 'Health';
 };
@@ -118,9 +119,9 @@ const importWeightHistory = async (days: number = 365): Promise<number> => {
       if (!connected) {
         const providerName = getProviderName();
         const settingsHint = Platform.OS === 'ios'
-          ? 'Réglages > Confidentialité > Santé > Yoroi'
-          : 'Réglages > Applications > Health Connect > Yoroi';
-        appAlert('Accès impossible', `YOROI n’a pas accès à ${providerName}. Vérifie les autorisations dans ${settingsHint}.`);
+          ? traduire('Réglages > Confidentialité > Santé > Yoroi')
+          : traduire('Réglages > Applications > Health Connect > Yoroi');
+        appAlert(traduire('Accès impossible'), traduire("YOROI n’a pas accès à {0}. Vérifie les autorisations dans {1}.", providerName, settingsHint));
         return 0;
       }
     }
@@ -128,7 +129,7 @@ const importWeightHistory = async (days: number = 365): Promise<number> => {
     const weightHistory = await healthConnect.getWeightHistory(days);
 
     if (!weightHistory || weightHistory.length === 0) {
-      appAlert('Rien à importer', `Aucune donnée de poids trouvée dans ${getProviderName()}.`);
+      appAlert(traduire('Rien à importer'), traduire("Aucune donnée de poids trouvée dans {0}.", getProviderName()));
       return 0;
     }
 
@@ -159,14 +160,14 @@ const importWeightHistory = async (days: number = 365): Promise<number> => {
 
     if (importedCount > 0) {
       logger.info(`${importedCount} nouvelles mesures importées`);
-      appAlert('Import terminé', `${importedCount} mesure${importedCount > 1 ? 's' : ''} importée${importedCount > 1 ? 's' : ''} depuis ${getProviderName()}.`);
+      appAlert(traduire('Import terminé'), traduirePluriel(importedCount, importedCount > 1, "{0} mesure importée depuis {1}.", "{0} mesures importées depuis {1}.", importedCount, getProviderName()));
     } else {
-      appAlert('Déjà à jour', 'Il n’y a pas de nouvelle donnée à importer.');
+      appAlert(traduire('Déjà à jour'), traduire('Il n’y a pas de nouvelle donnée à importer.'));
     }
     return importedCount;
   } catch (error) {
     logger.error('[HealthService] Exception lors de l\'import:', error);
-    appAlert('Oups', 'L’import n’a pas abouti. Réessaie.');
+    appAlert('Oups', traduire('L’import n’a pas abouti. Réessaie.'));
     return 0;
   }
 };

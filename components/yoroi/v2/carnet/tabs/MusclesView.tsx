@@ -10,18 +10,19 @@ import { P, Sheet2, BrushBar, IconBtn, Hanko } from '../ui';
 import { TabEmpty, TabLoading } from './common';
 import { VideoLibrarySheet } from '../VideoLibrarySheet';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const GROUPS = [
-  { key: 'pecs', label: 'Pectoraux', kw: ['pecs', 'pectoraux', 'pectoral', 'pec', 'développé couché', 'dc', 'bench', 'push', 'écartés', 'dips'] },
-  { key: 'dos', label: 'Dos', kw: ['dos', 'back', 'rowing', 'tirage', 'tractions', 'pull', 'lat', 'soulevé de terre', 'sdt', 'deadlift'] },
-  { key: 'epaules', label: 'Épaules', kw: ['épaules', 'epaule', 'shoulder', 'développé militaire', 'dm', 'ohp', 'latéral', 'face pull'] },
+  { key: 'pecs', label: 'Pectoraux', kw: ['pecs', 'pectoraux', 'pectoral', 'pec', traduire('développé couché'), 'dc', 'bench', 'push', traduire('écartés'), 'dips'] },
+  { key: 'dos', label: 'Dos', kw: ['dos', 'back', 'rowing', 'tirage', 'tractions', 'pull', 'lat', traduire('soulevé de terre'), 'sdt', 'deadlift'] },
+  { key: 'epaules', label: 'Épaules', kw: [traduire('épaules'), 'epaule', 'shoulder', traduire('développé militaire'), 'dm', 'ohp', traduire('latéral'), 'face pull'] },
   { key: 'biceps', label: 'Biceps', kw: ['biceps', 'curl', 'bicep', 'arm'] },
   { key: 'triceps', label: 'Triceps', kw: ['triceps', 'skull crusher', 'extension triceps'] },
   { key: 'jambes', label: 'Jambes', kw: ['jambes', 'legs', 'quadri', 'ischio', 'squat', 'fente', 'presse', 'leg press', 'leg extension', 'leg curl'] },
   { key: 'fessiers', label: 'Fessiers', kw: ['fessiers', 'fesses', 'glutes', 'hip thrust', 'hip-thrust'] },
   { key: 'mollets', label: 'Mollets', kw: ['mollets', 'mollet', 'calves', 'calf'] },
   { key: 'abdos', label: 'Abdos / Core', kw: ['abdos', 'abs', 'core', 'gainage', 'planche', 'crunch'] },
-  { key: 'avant_bras', label: 'Avant-bras', kw: ['avant-bras', 'avant bras', 'grip', 'forearm'] },
+  { key: 'avant_bras', label: 'Avant-bras', kw: ['avant-bras', traduire('avant bras'), 'grip', 'forearm'] },
 ];
 
 export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hideEmpty?: boolean }) {
@@ -54,7 +55,7 @@ export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
 
   if (loading) return <TabLoading />;
   if (trainings.length === 0) {
-    return hideEmpty ? null : <TabEmpty title="Aucune donnée de musculation" text="Donne un thème à tes séances (pecs, dos, jambes...) pour voir l’équilibre de ton corps." action="Commencer une séance" href="/seance/muscu" />;
+    return hideEmpty ? null : <TabEmpty title={traduire("Aucune donnée de musculation")} text={traduire("Donne un thème à tes séances (pecs, dos, jambes...) pour voir l’équilibre de ton corps.")} action={traduire("Commencer une séance")} href="/seance/muscu" />;
   }
 
   return (
@@ -63,12 +64,12 @@ export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
         <Sheet2 tint={P.mossSoft}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Hanko size={34} tampon="record_force" />
-            <Ink size={17} weight="black" tight color={P.mossText}>Bien travaillés ces 30 jours</Ink>
+            <Ink size={17} weight="black" tight color={P.mossText}>{traduire("Bien travaillés ces 30 jours")}</Ink>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {data.well.map((g) => (
               <View key={g.key} style={{ paddingHorizontal: 12, height: 32, borderRadius: 16, justifyContent: 'center', backgroundColor: blancA(0.75) }}>
-                <Ink size={13} weight="extraBold" color={P.mossText}>{`${g.label}, ${g.last30} fois`}</Ink>
+                <Ink size={13} weight="extraBold" color={P.mossText}>{traduire("{0}, {1} fois", g.label, g.last30)}</Ink>
               </View>
             ))}
           </View>
@@ -76,18 +77,18 @@ export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
       ) : null}
       {data.neglected.length > 0 ? (
         <Sheet2 tint={P.accentSoft}>
-          <Ink size={17} weight="black" tight color={P.accent}>À relancer</Ink>
+          <Ink size={17} weight="black" tight color={P.accent}>{traduire("À relancer")}</Ink>
           {data.neglected.map((g) => (
             <View key={g.key} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Ink size={15} weight="bold">{g.label}</Ink>
-              <Ink size={14} weight="extraBold" color={P.accent}>{`${g.since} jours sans`}</Ink>
+              <Ink size={14} weight="extraBold" color={P.accent}>{traduire("{0} jours sans", g.since)}</Ink>
             </View>
           ))}
         </Sheet2>
       ) : null}
       <Sheet2>
-        <Ink size={18} weight="black" tight>Volume par groupe</Ink>
-        {data.groups.filter((g) => g.total > 0).length === 0 ? <Ink size={14} weight="medium" color={P.ink2}>Ajoute un thème à tes séances pour remplir ce tableau.</Ink> : null}
+        <Ink size={18} weight="black" tight>{traduire("Volume par groupe")}</Ink>
+        {data.groups.filter((g) => g.total > 0).length === 0 ? <Ink size={14} weight="medium" color={P.ink2}>{traduire("Ajoute un thème à tes séances pour remplir ce tableau.")}</Ink> : null}
         {data.groups
           .filter((g) => g.total > 0)
           .sort((a, b) => b.total - a.total)
@@ -96,11 +97,11 @@ export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
               <View style={{ flex: 1, gap: 6 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Ink size={15} weight="bold">{g.label}</Ink>
-                  <Ink size={13} weight="extraBold" color={g.last30 >= 4 ? P.mossText : P.ink2}>{`${g.total} au total, ${g.last30} en 30 j`}</Ink>
+                  <Ink size={13} weight="extraBold" color={g.last30 >= 4 ? P.mossText : P.ink2}>{traduire("{0} au total, {1} en 30 j", g.total, g.last30)}</Ink>
                 </View>
                 <BrushBar value={g.total / data.max} color={g.last30 >= 4 ? P.moss : P.ink} height={8} />
               </View>
-              <IconBtn name="film" label={`Vidéos ${g.label}`} onPress={() => setVideo(g.label)} tone="soft" />
+              <IconBtn name="film" label={traduire("Vidéos {0}", g.label)} onPress={() => setVideo(g.label)} tone="soft" />
             </View>
           ))}
       </Sheet2>

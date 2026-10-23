@@ -5,6 +5,7 @@
 import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
+import { traduire } from '@/lib/i18n/tr';
 
 export type AppInfo = { version: string; build: string; model: string; os: string; env: string; sdk: string };
 
@@ -15,12 +16,12 @@ export function getAppInfo(): AppInfo {
     Constants.executionEnvironment === ExecutionEnvironment.StoreClient
       ? 'Expo Go'
       : Constants.executionEnvironment === ExecutionEnvironment.Standalone
-        ? 'App installée'
-        : 'Build de développement';
+        ? traduire('App installée')
+        : traduire('Build de développement');
   return {
     version: cfg?.version ?? 'inconnue',
     build: build ?? 'inconnu',
-    model: Device.modelName ?? (Device.isDevice ? 'Téléphone' : 'Simulateur'),
+    model: Device.modelName ?? (Device.isDevice ? traduire('Téléphone') : 'Simulateur'),
     os: `${Device.osName ?? Platform.OS} ${Device.osVersion ?? ''}`.trim(),
     env,
     sdk: cfg?.sdkVersion ?? 'inconnu',
@@ -30,7 +31,7 @@ export function getAppInfo(): AppInfo {
 export function formatDateTime(ms: number): string {
   const d = new Date(ms);
   const p = (n: number) => String(n).padStart(2, '0');
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} à ${d.getHours()} h ${p(d.getMinutes())}`;
+  return traduire("{0}/{1}/{2} à {3} h {4}", p(d.getDate()), p(d.getMonth() + 1), d.getFullYear(), d.getHours(), p(d.getMinutes()));
 }
 
 export function formatDate(ms: number): string {
@@ -45,10 +46,10 @@ export function appInfoText(extra: Record<string, string> = {}): string {
   const lines: [string, string][] = [
     ['YOROI', `${i.version} (build ${i.build})`],
     ['Appareil', i.model],
-    ['Système', i.os],
+    [traduire('Système'), i.os],
     ['Environnement', i.env],
     ['Expo SDK', i.sdk],
-    ['Appareil réel', Device.isDevice ? 'oui' : 'non'],
+    [traduire('Appareil réel'), Device.isDevice ? 'oui' : 'non'],
     ...Object.entries(extra),
   ];
   return lines.map(([k, v]) => `${k} : ${v}`).join('\n');

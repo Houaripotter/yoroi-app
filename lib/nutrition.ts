@@ -7,6 +7,7 @@
 // ============================================
 // TYPES
 // ============================================
+import { traduire } from '@/lib/i18n/tr';
 
 export interface ActivityLevel {
   id: string;
@@ -65,38 +66,38 @@ export interface NutritionPlan {
 export const ACTIVITY_LEVELS: ActivityLevel[] = [
   {
     id: 'sedentary',
-    name: 'Sédentaire',
+    name: traduire('Sédentaire'),
     multiplier: 1.2,
-    description: "Peu ou pas d'exercice, travail de bureau",
-    examples: 'Bureau, télétravail, peu de marche',
+    description: traduire("Peu ou pas d'exercice, travail de bureau"),
+    examples: traduire('Bureau, télétravail, peu de marche'),
   },
   {
     id: 'light',
-    name: 'Légèrement actif',
+    name: traduire('Légèrement actif'),
     multiplier: 1.375,
-    description: 'Exercice léger 1-3 jours/semaine',
-    examples: '1-2 séances de sport, marche quotidienne',
+    description: traduire('Exercice léger 1-3 jours/semaine'),
+    examples: traduire('1-2 séances de sport, marche quotidienne'),
   },
   {
     id: 'moderate',
-    name: 'Modérément actif',
+    name: traduire('Modérément actif'),
     multiplier: 1.55,
-    description: 'Exercice modéré 3-5 jours/semaine',
-    examples: '3-4 séances JJB/musculation',
+    description: traduire('Exercice modéré 3-5 jours/semaine'),
+    examples: traduire('3-4 séances JJB/musculation'),
   },
   {
     id: 'active',
-    name: 'Très actif',
+    name: traduire('Très actif'),
     multiplier: 1.725,
-    description: 'Exercice intense 6-7 jours/semaine',
-    examples: '5-6 séances, entraînement biquotidien',
+    description: traduire('Exercice intense 6-7 jours/semaine'),
+    examples: traduire('5-6 séances, entraînement biquotidien'),
   },
   {
     id: 'extreme',
-    name: 'Athlète',
+    name: traduire('Athlète'),
     multiplier: 1.9,
-    description: 'Exercice très intense + travail physique',
-    examples: 'Compétiteur, 2 entraînements/jour',
+    description: traduire('Exercice très intense + travail physique'),
+    examples: traduire('Compétiteur, 2 entraînements/jour'),
   },
 ];
 
@@ -109,15 +110,15 @@ export const GOALS: Goal[] = [
     id: 'aggressive_loss',
     name: 'Perte rapide',
     calorieAdjustment: -750,
-    description: 'Déficit important (-750 kcal)',
+    description: traduire('Déficit important (-750 kcal)'),
     weeklyChange: '-0.75 kg/sem',
-    warning: 'Ne pas maintenir plus de 4-6 semaines',
+    warning: traduire('Ne pas maintenir plus de 4-6 semaines'),
   },
   {
     id: 'moderate_loss',
     name: 'Perte modérée',
     calorieAdjustment: -500,
-    description: 'Déficit raisonnable (-500 kcal)',
+    description: traduire('Déficit raisonnable (-500 kcal)'),
     weeklyChange: '-0.5 kg/sem',
     warning: null,
   },
@@ -125,7 +126,7 @@ export const GOALS: Goal[] = [
     id: 'slow_loss',
     name: 'Perte lente',
     calorieAdjustment: -250,
-    description: 'Déficit léger (-250 kcal)',
+    description: traduire('Déficit léger (-250 kcal)'),
     weeklyChange: '-0.25 kg/sem',
     warning: null,
   },
@@ -133,7 +134,7 @@ export const GOALS: Goal[] = [
     id: 'maintain',
     name: 'Maintien',
     calorieAdjustment: 0,
-    description: 'Maintenir le poids actuel',
+    description: traduire('Maintenir le poids actuel'),
     weeklyChange: '0 kg/sem',
     warning: null,
   },
@@ -141,7 +142,7 @@ export const GOALS: Goal[] = [
     id: 'slow_gain',
     name: 'Prise lente',
     calorieAdjustment: 250,
-    description: 'Surplus léger (+250 kcal)',
+    description: traduire('Surplus léger (+250 kcal)'),
     weeklyChange: '+0.25 kg/sem',
     warning: null,
   },
@@ -149,7 +150,7 @@ export const GOALS: Goal[] = [
     id: 'moderate_gain',
     name: 'Prise modérée',
     calorieAdjustment: 500,
-    description: 'Surplus pour prise de masse (+500 kcal)',
+    description: traduire('Surplus pour prise de masse (+500 kcal)'),
     weeklyChange: '+0.5 kg/sem',
     warning: null,
   },
@@ -162,8 +163,8 @@ export const GOALS: Goal[] = [
 export const MACRO_PROFILES: MacroProfile[] = [
   {
     id: 'balanced',
-    name: 'Équilibré',
-    description: 'Répartition standard recommandée',
+    name: traduire('Équilibré'),
+    description: traduire('Répartition standard recommandée'),
     protein: 0.30,
     carbs: 0.40,
     fat: 0.30,
@@ -172,7 +173,7 @@ export const MACRO_PROFILES: MacroProfile[] = [
   {
     id: 'high_protein',
     name: 'Haute protéine',
-    description: 'Pour sportifs et prise de muscle',
+    description: traduire('Pour sportifs et prise de muscle'),
     protein: 0.35,
     carbs: 0.40,
     fat: 0.25,
@@ -181,7 +182,7 @@ export const MACRO_PROFILES: MacroProfile[] = [
   {
     id: 'low_carb',
     name: 'Low Carb',
-    description: 'Réduction des glucides',
+    description: traduire('Réduction des glucides'),
     protein: 0.35,
     carbs: 0.25,
     fat: 0.40,
@@ -190,17 +191,17 @@ export const MACRO_PROFILES: MacroProfile[] = [
   {
     id: 'keto',
     name: 'Cétogène',
-    description: 'Très faible en glucides',
+    description: traduire('Très faible en glucides'),
     protein: 0.25,
     carbs: 0.05,
     fat: 0.70,
     source: 'Régime cétogène standard',
-    warning: 'Consulter un professionnel avant de commencer',
+    warning: traduire('Consulter un professionnel avant de commencer'),
   },
   {
     id: 'athlete',
     name: 'Athlète Combat',
-    description: 'Optimisé pour sports de combat',
+    description: traduire('Optimisé pour sports de combat'),
     protein: 0.30,
     carbs: 0.50,
     fat: 0.20,
@@ -359,16 +360,16 @@ export interface MealPlan {
 
 export const MEAL_DISTRIBUTION: MealPlan[] = [
   {
-    name: 'Petit-déjeuner',
+    name: traduire('Petit-déjeuner'),
     time: '7h00',
     percentage: 0.25,
     example: 'Oeufs, pain complet, avocat, fruit',
   },
   {
-    name: 'Déjeuner',
+    name: traduire('Déjeuner'),
     time: '12h30',
     percentage: 0.35,
-    example: "Poulet, riz, légumes, huile d'olive",
+    example: traduire("Poulet, riz, légumes, huile d'olive"),
   },
   {
     name: 'Collation',
@@ -377,7 +378,7 @@ export const MEAL_DISTRIBUTION: MealPlan[] = [
     example: 'Fromage blanc, amandes, fruit',
   },
   {
-    name: 'Dîner',
+    name: traduire('Dîner'),
     time: '20h00',
     percentage: 0.30,
     example: 'Poisson, patate douce, salade',

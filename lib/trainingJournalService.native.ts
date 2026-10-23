@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import { baseOuVitrine } from '@/lib/v2/visite/vitrine';
 import { getSportName } from '@/lib/sports';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // 🔒 Platform-specific: SQLite only available on native
 const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -517,15 +518,15 @@ export const SPORT_LABELS: Record<Sport, string> = {
 };
 
 export const TYPE_LABELS: Record<ProgressionItemType, string> = {
-  technique: 'Technique',
-  exercise: 'Exercice',
+  technique: traduire('Technique'),
+  exercise: traduire('Exercice'),
   performance: 'Performance',
 };
 
 export const STATUS_LABELS: Record<ProgressionStatus, string> = {
-  todo: 'À Faire',
+  todo: traduire('À Faire'),
   in_progress: 'En Cours',
-  mastered: 'Maîtrisé',
+  mastered: traduire('Maîtrisé'),
 };
 
 export default {

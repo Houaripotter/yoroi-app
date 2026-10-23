@@ -11,6 +11,7 @@ import { DetailScreen, EmptyState } from '@/components/yoroi/v2/ornements/screen
 import { Icon as EIcon } from '@/components/yoroi/v2/espace/ui';
 import type { CardVariant } from './cardKit';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
+import { traduire } from '@/lib/i18n/tr';
 
 export type StudioStyle = CardVariant;
 
@@ -60,15 +61,15 @@ export function PhotoButtons({ hasPhoto, onPick }: { hasPhoto: boolean; onPick: 
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
       <View style={{ flex: 1 }}>
-      <Press onPress={() => onPick('gallery')} accessibilityRole="button" accessibilityLabel={hasPhoto ? 'Changer de photo' : 'Choisir une photo'}>
+      <Press onPress={() => onPick('gallery')} accessibilityRole="button" accessibilityLabel={hasPhoto ? traduire('Changer de photo') : traduire('Choisir une photo')}>
         <View style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <EIcon name="image" size={18} />
-          <Ink size={14} weight="bold">{hasPhoto ? 'Changer de photo' : 'Galerie'}</Ink>
+          <Ink size={14} weight="bold">{hasPhoto ? traduire('Changer de photo') : 'Galerie'}</Ink>
         </View>
       </Press>
       </View>
       <View style={{ flex: 1 }}>
-      <Press onPress={() => onPick('camera')} accessibilityRole="button" accessibilityLabel="Prendre une photo">
+      <Press onPress={() => onPick('camera')} accessibilityRole="button" accessibilityLabel={traduire("Prendre une photo")}>
         <View style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <EIcon name="camera" size={18} />
           <Ink size={14} weight="bold">Appareil photo</Ink>
@@ -118,7 +119,7 @@ export function ShareStudio({
       <DetailScreen title={title} subtitle={subtitle} onBack={onBack}>
         <View style={{ paddingVertical: 80, alignItems: 'center', gap: 12 }}>
           <ChargementPetit />
-          <Ink size={14} weight="bold" color={P.ink2}>Ta carte se prépare</Ink>
+          <Ink size={14} weight="bold" color={P.ink2}>{traduire("Ta carte se prépare")}</Ink>
         </View>
       </DetailScreen>
     );
@@ -138,9 +139,9 @@ export function ShareStudio({
       footer={
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <BigButton label={busy ? 'Un instant' : 'Partager'} icon="share" onPress={onShare} disabled={busy} />
+            <BigButton label={busy ? traduire('Un instant') : traduire('Partager')} icon="share" onPress={onShare} disabled={busy} />
           </View>
-          <Press onPress={onSave} accessibilityRole="button" accessibilityLabel="Enregistrer dans la galerie">
+          <Press onPress={onSave} accessibilityRole="button" accessibilityLabel={traduire("Enregistrer dans la galerie")}>
             <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
               <EIcon name="download" size={22} />
             </View>

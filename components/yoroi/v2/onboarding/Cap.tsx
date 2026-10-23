@@ -17,13 +17,14 @@ import { PAS_KG, Pas } from './Pas';
 import { PlanCurve } from './PlanCurve';
 import { MainButton, OR_PROFOND, Riche, Shell, kg, marquer, useColors } from './ui';
 import type { Nav } from './types';
+import { traduire } from '@/lib/i18n/tr';
 
 export { bmi } from './Taille';
 
 export function gapText(start: number, target: number): string {
   const d = Math.round((target - start) * 10) / 10;
-  if (Math.abs(d) < 0.1) return 'Tu es déjà sur ton cap';
-  return `${kg(Math.abs(d))} kg à ${d < 0 ? 'perdre' : 'prendre'}`;
+  if (Math.abs(d) < 0.1) return traduire('Tu es déjà sur ton cap');
+  return traduire("{0} kg à {1}", kg(Math.abs(d)), d < 0 ? 'perdre' : 'prendre');
 }
 
 /** « 5 kg à perdre, entre le 15 et le 30 décembre » */
@@ -67,22 +68,22 @@ export function Cap({ nav, start, target, height, recompo = false, onTarget, onN
   const e = estimerArrivee({ start, target, sessions: null, heightCm: height ?? null, recompo: recompo && target < start });
   const v = arriveeVue(e, start, target);
   const ok = e.kind === 'ok';
-  const sub = recompo ? 'Le **poids que tu vises**. En recomposition, il baisse lentement pendant que le muscle se construit.' : 'Le **poids que tu vises**. Tu pourras le changer quand tu veux.';
+  const sub = recompo ? traduire('Le **poids que tu vises**. En recomposition, il baisse lentement pendant que le muscle se construit.') : traduire('Le **poids que tu vises**. Tu pourras le changer quand tu veux.');
   // vague 30 : les mots importants en gras et en couleur (kilos a perdre, une estimation)
-  const texte = v.texte ? marquer(`${v.texte} ${PAS_UNE_PROMESSE}${ok ? ' Ton plan l’affinera avec tes séances.' : ''}`, [gapText(start, target), 'Une estimation', 'tes séances']) : '';
+  const texte = v.texte ? marquer(`${v.texte} ${PAS_UNE_PROMESSE}${ok ? traduire(' Ton plan l’affinera avec tes séances.') : ''}`, [gapText(start, target), traduire('Une estimation'), traduire('tes séances')]) : '';
   return (
-    <Shell {...nav} title="Où veux-tu **arriver** ?" sub={sub} gap={14} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Où veux-tu **arriver** ?")} sub={sub} gap={14} footer={<MainButton label="Continuer" onPress={onNext} />}>
       <View style={{ alignItems: 'center' }}>
         <Ink size={64} weight="black" tight numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{kg(target)}</Ink>
-        <Ink size={15} weight="bold" color={c.textSecondary}>kilos visés</Ink>
+        <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("kilos visés")}</Ink>
       </View>
-      <Ruler value={target} onChange={onTarget} hardMin={30} hardMax={250} label="Règle du poids visé, fais glisser pour régler" />
+      <Ruler value={target} onChange={onTarget} hardMin={30} hardMax={250} label={traduire("Règle du poids visé, fais glisser pour régler")} />
       {/* vague 30 : au kilo et au dixieme, appui long pour aller vite */}
       <Pas value={target} onChange={onTarget} pas={PAS_KG} clamp={(x) => Math.min(250, Math.max(30, Math.round(x * 10) / 10))} />
 
       <View onLayout={(ev) => setW(ev.nativeEvent.layout.width)} style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingVertical: 14, paddingHorizontal: 14, gap: 8 }}>
         <View style={{ gap: 1 }}>
-          {ok ? <Ink size={13} weight="bold" color={c.textMuted}>Arrivée estimée</Ink> : null}
+          {ok ? <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Arrivée estimée")}</Ink> : null}
           {/* vague 30 : la date estimee dans l'or profond, en gras, visible d'un coup d'oeil */}
           <Ink size={ok ? 21 : 17} weight="black" tight color={ok ? OR_PROFOND : c.ink} style={{ lineHeight: ok ? 26 : 22 }}>{ok ? insecable(majuscule(v.titre)) : v.titre}</Ink>
         </View>
@@ -95,10 +96,10 @@ export function Cap({ nav, start, target, height, recompo = false, onTarget, onN
               onTarget(v.cap as number);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Viser ${kg(v.cap)} kilos pour commencer`}
+            accessibilityLabel={traduire("Viser {0} kilos pour commencer", kg(v.cap))}
             style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? c.fillSoft : c.accentTint })}
           >
-            <Ink size={14} weight="extraBold" color={c.accent}>{`Viser ${kg(v.cap)} kg pour commencer`}</Ink>
+            <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Viser {0} kg pour commencer", kg(v.cap))}</Ink>
           </Pressable>
         ) : null}
       </View>

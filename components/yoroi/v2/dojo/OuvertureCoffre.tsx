@@ -10,6 +10,7 @@ import type { ImageSourcePropType } from 'react-native';
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const COFFRE_IMAGES: Record<'ferme' | 'ouvert' | 'grandFerme' | 'grandOuvert', ImageSourcePropType> = {
   ferme: require('@/assets/avatars/app/coffre/coffre_ferme.webp'),
@@ -213,14 +214,14 @@ export function OuvertureCoffre({ visible, grand, serie, ouvrir, suite, onCadeau
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: 'rgba(10,12,22,0.97)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
         <View style={{ position: 'absolute', top: '12%', alignItems: 'center', gap: 6, paddingHorizontal: 24 }}>
-          <Ink size={14} weight="extraBold" color={OR}>{g ? 'Grand coffre' : 'Coffre du jour'}</Ink>
+          <Ink size={14} weight="extraBold" color={OR}>{g ? 'Grand coffre' : traduire('Coffre du jour')}</Ink>
           <Ink size={26} weight="black" color="#FFFFFF" style={{ textAlign: 'center' }}>
-            {ouvert ? (res?.chance ? 'Coup de chance !' : 'Bien joué !') : `${serie} jour${serie > 1 ? 's' : ''} d’affilée`}
+            {ouvert ? (res?.chance ? traduire('Coup de chance !') : traduire('Bien joué !')) : traduirePluriel(serie, serie > 1, "{0} jour d’affilée", "{0} jours d’affilée", serie)}
           </Ink>
-          {!ouvert ? <Ink size={15} color="rgba(255,255,255,0.75)">{phase === 'attente' ? 'Touche le coffre pour l’ouvrir' : 'Ça s’ouvre…'}</Ink> : null}
+          {!ouvert ? <Ink size={15} color="rgba(255,255,255,0.75)">{phase === 'attente' ? traduire('Touche le coffre pour l’ouvrir') : traduire('Ça s’ouvre…')}</Ink> : null}
         </View>
 
-        <Pressable onPress={toucher} accessibilityRole="button" accessibilityLabel={ouvert ? 'Coffre ouvert' : 'Ouvrir le coffre'} style={{ width: ray, height: ray, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={toucher} accessibilityRole="button" accessibilityLabel={ouvert ? 'Coffre ouvert' : traduire('Ouvrir le coffre')} style={{ width: ray, height: ray, alignItems: 'center', justifyContent: 'center' }}>
           <Animated.View pointerEvents="none" style={{ position: 'absolute', opacity: rayons, transform: [{ rotate: rot }] }}>
             <Rayons size={ray} couleur={g ? '#C9A2FF' : '#FFD56B'} />
           </Animated.View>
@@ -236,15 +237,15 @@ export function OuvertureCoffre({ visible, grand, serie, ouvrir, suite, onCadeau
         {ouvert && res ? (
           <Animated.View style={{ position: 'absolute', bottom: res.cadeau ? '5%' : '12%', left: 24, right: 24, alignItems: 'center', gap: 8, opacity: gain, transform: [{ scale: gain.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }] }}>
             <Ink size={54} weight="black" tight color={OR}>{`+${compte}${NB}XP`}</Ink>
-            {res.chance ? <Ink size={15} weight="extraBold" color="#FFFFFF">XP doublée aujourd’hui</Ink> : null}
-            {res.grand ? <Ink size={15} weight="extraBold" color="#FFFFFF">{`Grand coffre : ${res.serie} jours d’affilée`}</Ink> : null}
+            {res.chance ? <Ink size={15} weight="extraBold" color="#FFFFFF">{traduire("XP doublée aujourd’hui")}</Ink> : null}
+            {res.grand ? <Ink size={15} weight="extraBold" color="#FFFFFF">{traduire("Grand coffre : {0} jours d’affilée", res.serie)}</Ink> : null}
             {suite && !res.cadeau ? <Ink size={14} color="rgba(255,255,255,0.75)" style={{ textAlign: 'center' }}>{suite}</Ink> : null}
             {res.cadeau ? (
               <View style={{ alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.1)', marginTop: 4 }}>
                 <Image source={res.cadeau.image} style={{ width: 86, height: 48, borderRadius: 10 }} resizeMode="cover" />
                 <View style={{ flex: 1 }}>
-                  <Ink size={13} weight="extraBold" color={OR}>Cadeau : 24 h d’essai</Ink>
-                  <Ink size={15} weight="black" color="#FFFFFF">{`Scène ${res.cadeau.nom}`}</Ink>
+                  <Ink size={13} weight="extraBold" color={OR}>{traduire("Cadeau : 24 h d’essai")}</Ink>
+                  <Ink size={15} weight="black" color="#FFFFFF">{traduire("Scène {0}", res.cadeau.nom)}</Ink>
                 </View>
                 {onCadeau ? (
                   <Pressable
@@ -254,7 +255,7 @@ export function OuvertureCoffre({ visible, grand, serie, ouvrir, suite, onCadeau
                       onCadeau(res.cadeau.id);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={cadeauMis ? 'Scène mise' : `Essayer la scène ${res.cadeau.nom}`}
+                    accessibilityLabel={cadeauMis ? traduire('Scène mise') : traduire("Essayer la scène {0}", res.cadeau.nom)}
                     style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.18)' })}
                   >
                     <Ink size={13} weight="extraBold" color="#FFFFFF">{cadeauMis ? 'Mise' : 'Essayer'}</Ink>
@@ -267,12 +268,12 @@ export function OuvertureCoffre({ visible, grand, serie, ouvrir, suite, onCadeau
               accessibilityRole="button"
               style={({ pressed }) => ({ marginTop: 10, minHeight: 54, alignSelf: 'stretch', borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? '#D9A93A' : OR })}
             >
-              <Ink size={17} weight="black" color="#1D2029">Super</Ink>
+              <Ink size={17} weight="black" color="#1D2029">{traduire("Super")}</Ink>
             </Pressable>
           </Animated.View>
         ) : (
           <Pressable onPress={onClose} accessibilityRole="button" style={{ position: 'absolute', bottom: '8%', minHeight: 44, paddingHorizontal: 18, justifyContent: 'center' }}>
-            <Ink size={14} weight="bold" color="rgba(255,255,255,0.6)">Plus tard</Ink>
+            <Ink size={14} weight="bold" color="rgba(255,255,255,0.6)">{traduire("Plus tard")}</Ink>
           </Pressable>
         )}
       </View>

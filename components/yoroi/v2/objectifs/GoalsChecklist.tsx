@@ -16,12 +16,13 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
 import { ProgressBar } from '@/components/yoroi/v2/espace/ProgressBar';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const GOALS_STORAGE_KEY = '@yoroi_user_goals';
 
 type Goal = { id: string; title: string; description?: string; target?: string; deadline?: string; completed: boolean; createdAt: string; completedAt?: string };
 
-const SUGGESTIONS = ['3 séances par semaine', 'Passer sous les 80 kg', 'Courir 10 km', 'Ma première compétition'];
+const SUGGESTIONS = [traduire('3 séances par semaine'), traduire('Passer sous les 80 kg'), 'Courir 10 km', traduire('Ma première compétition')];
 
 /** Liste d'objectifs a cocher, sans en-tete : s'affiche dans l'onglet « À cocher » de Tes objectifs. */
 export function GoalsChecklist() {
@@ -79,10 +80,10 @@ export function GoalsChecklist() {
   };
 
   const remove = (g: Goal) => {
-    appAlert('Supprimer cet objectif', `« ${g.title} » sera supprimé.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cet objectif'), traduire("« {0} » sera supprimé.", g.title), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: () => {
           tap('medium');
@@ -94,7 +95,7 @@ export function GoalsChecklist() {
 
   const row = (g: Goal, i: number) => (
     <Card key={g.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, opacity: g.completed ? 0.94 : 1 }}>
-      <Press onPress={() => toggle(g.id)} accessibilityRole="checkbox" accessibilityState={{ checked: g.completed }} accessibilityLabel={g.completed ? `${g.title}, atteint. Annuler` : `${g.title}. Marquer comme atteint`}>
+      <Press onPress={() => toggle(g.id)} accessibilityRole="checkbox" accessibilityState={{ checked: g.completed }} accessibilityLabel={g.completed ? traduire("{0}, atteint. Annuler", g.title) : `${g.title}. Marquer comme atteint`}>
         <GoalPlate done={g.completed} size={40} />
       </Press>
       <View style={{ flex: 1, gap: 2 }}>
@@ -103,14 +104,14 @@ export function GoalsChecklist() {
         </Ink>
         {g.target ? (
           <Ink size={13} weight="bold" color={P.ink2}>
-            {`Cible : ${g.target}`}
+            {traduire("Cible : {0}", g.target)}
           </Ink>
         ) : null}
         <Ink size={12} weight="bold" color={g.completed ? P.accent : P.muted}>
-          {g.completed ? 'Objectif atteint' : 'Touche la case quand c’est fait'}
+          {g.completed ? traduire('Objectif atteint') : traduire('Touche la case quand c’est fait')}
         </Ink>
       </View>
-      <Press onPress={() => remove(g)} accessibilityRole="button" accessibilityLabel={`Supprimer l'objectif ${g.title}`} hitSlop={8}>
+      <Press onPress={() => remove(g)} accessibilityRole="button" accessibilityLabel={traduire("Supprimer l'objectif {0}", g.title)} hitSlop={8}>
         <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="trash" size={18} color={P.muted} />
         </View>
@@ -128,20 +129,20 @@ export function GoalsChecklist() {
                 <Ink size={44} weight="black" tight>
                   {String(done.length)}
                   <Ink size={16} weight="bold" color={P.muted}>
-                    {` sur ${goals.length}`}
+                    {traduire(" sur {0}", goals.length)}
                   </Ink>
                 </Ink>
                 <Ink size={13} weight="bold" color={P.ink2}>
-                  {done.length > 1 ? 'objectifs atteints' : 'objectif atteint'}
+                  {done.length > 1 ? traduire('objectifs atteints') : traduire('objectif atteint')}
                 </Ink>
               </View>
             </View>
-            <ProgressBar progress={goals.length ? done.length / goals.length : 0} accessibilityLabel={`${done.length} objectifs atteints sur ${goals.length}`} />
+            <ProgressBar progress={goals.length ? done.length / goals.length : 0} accessibilityLabel={traduire("{0} objectifs atteints sur {1}", done.length, goals.length)} />
           </Glass>
         </Enter>
       ) : (
         <Enter i={0}>
-          <EmptyState title="Fixe ton premier objectif" text="Un poids, une distance, une compétition, un rythme. Choisis une cible précise et coche-la le jour où tu l’atteins." action="Ajouter un objectif" onAction={openAdd} />
+          <EmptyState title={traduire("Fixe ton premier objectif")} text={traduire("Un poids, une distance, une compétition, un rythme. Choisis une cible précise et coche-la le jour où tu l’atteins.")} action={traduire("Ajouter un objectif")} onAction={openAdd} />
         </Enter>
       )}
 
@@ -159,11 +160,11 @@ export function GoalsChecklist() {
         </Enter>
       ) : null}
 
-      {goals.length > 0 ? <BigButton label="Ajouter un objectif" icon="plus" tone="red" onPress={openAdd} /> : null}
+      {goals.length > 0 ? <BigButton label={traduire("Ajouter un objectif")} icon="plus" tone="red" onPress={openAdd} /> : null}
 
-      <Sheet visible={open} onClose={() => setOpen(false)} title="Nouvel objectif">
-        <Field value={title} onChangeText={setTitle} placeholder="Mon objectif" icon="flag" autoFocus maxLength={80} />
-        <Field value={target} onChangeText={setTarget} placeholder="Cible, ex : 80 kg, 10 km, 3 fois par semaine" icon="star" maxLength={60} onSubmit={add} />
+      <Sheet visible={open} onClose={() => setOpen(false)} title={traduire("Nouvel objectif")}>
+        <Field value={title} onChangeText={setTitle} placeholder={traduire("Mon objectif")} icon="flag" autoFocus maxLength={80} />
+        <Field value={target} onChangeText={setTarget} placeholder={traduire("Cible, ex : 80 kg, 10 km, 3 fois par semaine")} icon="star" maxLength={60} onSubmit={add} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {SUGGESTIONS.map((s) => (
             <Press key={s} onPress={() => setTitle(s)} accessibilityRole="button" accessibilityLabel={s}>
@@ -175,7 +176,7 @@ export function GoalsChecklist() {
             </Press>
           ))}
         </View>
-        <BigButton label="Ajouter l'objectif" icon="check" onPress={add} disabled={!title.trim()} />
+        <BigButton label={traduire("Ajouter l'objectif")} icon="check" onPress={add} disabled={!title.trim()} />
       </Sheet>
     </View>
   );

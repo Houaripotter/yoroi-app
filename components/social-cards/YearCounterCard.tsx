@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Flame, Calendar, Target, Dumbbell } from 'lucide-react-native';
 import { YearStats } from '@/lib/social-cards/useYearStats';
 import { ThemeColors } from '@/lib/ThemeContext';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // YEAR COUNTER CARD - Le fameux X/365
@@ -58,8 +59,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
               {stats.totalDays}/{stats.yearlyGoal || stats.totalDaysInYear}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>
-              jours d'entraînement
-            </Text>
+              {traduire("jours d'entraînement")}</Text>
           </View>
 
           {/* BARRE DE PROGRESSION */}
@@ -84,8 +84,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
           {topActivities.length > 0 && (
             <View style={[styles.activitiesContainer, { gap: gap / 2 }]}>
               <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                ACTIVITÉS
-              </Text>
+                {traduire("ACTIVITÉS")}</Text>
               <View style={styles.activitiesGrid}>
                 {topActivities.map((activity, index) => (
                   <View key={index} style={[styles.activityItem, { backgroundColor: colors.backgroundElevated || colors.card }]}>
@@ -111,7 +110,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
                 {stats.currentStreak > 0 ? stats.currentStreak : stats.bestStreak}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {stats.currentStreak > 0 ? 'Streak actuel' : 'Meilleur streak'}
+                {stats.currentStreak > 0 ? traduire('Streak actuel') : 'Meilleur streak'}
               </Text>
             </View>
 
@@ -122,8 +121,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
                 {stats.busiestMonth.month.substring(0, 3)}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Mois le plus actif
-              </Text>
+                {traduire("Mois le plus actif")}</Text>
             </View>
 
             {/* Projection */}

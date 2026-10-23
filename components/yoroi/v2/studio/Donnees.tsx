@@ -21,21 +21,22 @@ import { readDedupeBackup, readMigrations, type DedupeBackupInfo, type Migration
 import { formatDateTime } from '@/lib/v2/creator/deviceInfo';
 import { KV, Note, StudioSection, SubTitle, confirmTwice, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Health = { provider: string; connected: boolean; lastSync: string | null };
 type Imported = { trainings: { source: string; n: number }[]; weights: { source: string; n: number }[]; health: number } | null;
 
 const SOURCE_LABELS: Record<string, string> = {
-  manual: 'Notées dans YOROI',
+  manual: traduire('Notées dans YOROI'),
   apple_health: 'Apple Santé',
   healthkit: 'Apple Santé',
   health_connect: 'Health Connect',
   watch: 'Montre',
   garmin: 'Garmin',
   withings: 'Withings',
-  demo: 'Démo',
+  demo: traduire('Démo'),
 };
-const srcLabel = (s: string) => SOURCE_LABELS[s] ?? (s || 'Sans source');
+const srcLabel = (s: string) => SOURCE_LABELS[s] ?? (s || traduire('Sans source'));
 
 /** Une lecture qui ne repond pas (base fermee sur le web) ne bloque pas la rubrique */
 function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -80,9 +81,9 @@ export function Donnees() {
       const s = healthConnect.getSyncStatus();
       const stored = await AsyncStorage.getItem('@yoroi_last_health_sync').catch(() => null);
       const last = s.lastSync ?? stored;
-      setHealth({ provider: Platform.OS === 'ios' ? 'Apple Santé' : Platform.OS === 'android' ? 'Health Connect' : 'Aucune sur le web', connected: s.isConnected, lastSync: last ? formatDateTime(Date.parse(last)) : null });
+      setHealth({ provider: Platform.OS === 'ios' ? 'Apple Santé' : Platform.OS === 'android' ? 'Health Connect' : traduire('Aucune sur le web'), connected: s.isConnected, lastSync: last ? formatDateTime(Date.parse(last)) : null });
     } catch {
-      setHealth({ provider: 'Indisponible ici', connected: false, lastSync: null });
+      setHealth({ provider: traduire('Indisponible ici'), connected: false, lastSync: null });
     }
     const [imp, mig, ded] = await Promise.all([withTimeout(readImported(), 5000, null), withTimeout(readMigrations(), 5000, [] as MigrationRow[]), withTimeout(readDedupeBackup(), 5000, null)]);
     setImported(imp);
@@ -96,7 +97,7 @@ export function Donnees() {
 
   const sync = async () => {
     if (demoActive) {
-      appAlert('Démo chargée', 'Remets d’abord tes vraies données : sinon la synchro écrirait dans la démo de Heny.');
+      appAlert(traduire('Démo chargée'), traduire('Remets d’abord tes vraies données : sinon la synchro écrirait dans la démo de Heny.'));
       return;
     }
     setSyncing(true);
@@ -105,7 +106,7 @@ export function Donnees() {
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch {
-      appAlert('Synchro impossible', 'La synchro n’a pas abouti. Vérifie la connexion santé dans Réglages.');
+      appAlert(traduire('Synchro impossible'), traduire('La synchro n’a pas abouti. Vérifie la connexion santé dans Réglages.'));
     } finally {
       setSyncing(false);
       void load();
@@ -114,24 +115,24 @@ export function Donnees() {
 
   const restoreDedupe = () => {
     if (demoActive) {
-      appAlert('Démo chargée', 'Remets d’abord tes vraies données : les séances reviendraient dans la démo.');
+      appAlert(traduire('Démo chargée'), traduire('Remets d’abord tes vraies données : les séances reviendraient dans la démo.'));
       return;
     }
     if (!dedupe?.exists || dedupe.restoredAt || !dedupe.rows) {
-      appAlert('Rien à remettre', dedupe?.restoredAt ? `Les séances ont déjà été remises le ${dedupe.restoredAt}.` : 'Le nettoyage n’a rien mis de côté sur ce téléphone.');
+      appAlert(traduire('Rien à remettre'), dedupe?.restoredAt ? traduire("Les séances ont déjà été remises le {0}.", dedupe.restoredAt) : traduire('Le nettoyage n’a rien mis de côté sur ce téléphone.'));
       return;
     }
     confirmTwice(
-      { title: 'Remettre les séances effacées ?', message: `${dedupe.rows} séance${dedupe.rows > 1 ? 's' : ''} effacée${dedupe.rows > 1 ? 's' : ''} par le nettoyage des doublons reviennent dans ton historique. Les doublons d’Apple Santé peuvent réapparaître.`, ok: 'Continuer' },
-      { title: 'Vraiment ?', message: 'Les séances remises restent dans ton historique. Tu pourras les supprimer une par une.', ok: 'Remettre' },
+      { title: traduire('Remettre les séances effacées ?'), message: traduirePluriel(dedupe.rows, dedupe.rows > 1, "{0} séance effacée par le nettoyage des doublons reviennent dans ton historique. Les doublons d’Apple Santé peuvent réapparaître.", "{0} séances effacées par le nettoyage des doublons reviennent dans ton historique. Les doublons d’Apple Santé peuvent réapparaître.", dedupe.rows), ok: 'Continuer' },
+      { title: 'Vraiment ?', message: traduire('Les séances remises restent dans ton historique. Tu pourras les supprimer une par une.'), ok: 'Remettre' },
       () => {
         restoreDedupeBackup()
           .then((n) => {
             DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
-            appAlert('C’est fait', `${n} séance${n > 1 ? 's' : ''} remise${n > 1 ? 's' : ''} en place.`);
+            appAlert(traduire('C’est fait'), traduirePluriel(n, n > 1, "{0} séance remise en place.", "{0} séances remises en place.", n));
             void load();
           })
-          .catch(() => appAlert('Oups', 'Le retour des séances n’a pas abouti. Rien n’a été perdu, réessaie plus tard.'));
+          .catch(() => appAlert('Oups', traduire('Le retour des séances n’a pas abouti. Rien n’a été perdu, réessaie plus tard.')));
       },
     );
   };
@@ -139,36 +140,36 @@ export function Donnees() {
   const total = (list: { n: number }[]) => list.reduce((s, r) => s + r.n, 0);
 
   return (
-    <StudioSection id="donnees" icon="pulse" title="Données et santé" sub="Apple Santé, imports, migrations" keywords="sante apple health connect synchro import montre migration doublons dedupe reprise rangs v3 armure">
+    <StudioSection id="donnees" icon="pulse" title={traduire("Données et santé")} sub={traduire("Apple Santé, imports, migrations")} keywords="sante apple health connect synchro import montre migration doublons dedupe reprise rangs v3 armure">
       <Card>
         <KV first label="Source" value={health?.provider ?? 'Lecture'} />
-        <KV label="Connexion" value={health ? (health.connected ? 'Connectée' : 'Pas connectée') : ''} />
-        <KV label="Dernière synchro" value={health?.lastSync ?? 'Jamais'} />
+        <KV label="Connexion" value={health ? (health.connected ? traduire('Connectée') : traduire('Pas connectée')) : ''} />
+        <KV label={traduire("Dernière synchro")} value={health?.lastSync ?? 'Jamais'} />
       </Card>
       <Card>
-        <Row first icon="sync" label={syncing ? 'Synchro en cours' : 'Relancer la synchro'} sub="Lit les nouvelles données de la santé du téléphone" onPress={syncing ? undefined : () => void sync()} />
-        <Row icon="heart" label="Connexion santé" sub="Autorisations et sources" onPress={() => router.push('/health-connect' as never)} />
+        <Row first icon="sync" label={syncing ? 'Synchro en cours' : traduire('Relancer la synchro')} sub={traduire("Lit les nouvelles données de la santé du téléphone")} onPress={syncing ? undefined : () => void sync()} />
+        <Row icon="heart" label={traduire("Connexion santé")} sub={traduire("Autorisations et sources")} onPress={() => router.push('/health-connect' as never)} />
       </Card>
 
-      <SubTitle>{demoActive ? 'Dans la base (la démo de Heny)' : 'Dans la base'}</SubTitle>
+      <SubTitle>{demoActive ? traduire('Dans la base (la démo de Heny)') : traduire('Dans la base')}</SubTitle>
       <Card>
         {imported === undefined ? (
           <KV first label="Lecture en cours" value="" />
         ) : imported === null ? (
           <View style={{ padding: 14 }}>
-            <Ink size={13} color={c.textSecondary}>La base ne s’ouvre pas ici (web ou aperçu). Sur le téléphone, tu verras chaque source.</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("La base ne s’ouvre pas ici (web ou aperçu). Sur le téléphone, tu verras chaque source.")}</Ink>
           </View>
         ) : (
           <>
-            <KV first label="Séances" value={String(total(imported.trainings))} />
+            <KV first label={traduire("Séances")} value={String(total(imported.trainings))} />
             {imported.trainings.map((r) => (
               <KV key={`t${r.source}`} label={`  ${srcLabel(r.source)}`} value={String(r.n)} />
             ))}
-            <KV label="Pesées" value={String(total(imported.weights))} />
+            <KV label={traduire("Pesées")} value={String(total(imported.weights))} />
             {imported.weights.map((r) => (
               <KV key={`w${r.source}`} label={`  ${srcLabel(r.source)}`} value={String(r.n)} />
             ))}
-            <KV label="Mesures santé importées" value={String(imported.health)} />
+            <KV label={traduire("Mesures santé importées")} value={String(imported.health)} />
           </>
         )}
       </Card>
@@ -185,12 +186,12 @@ export function Donnees() {
           first
           danger
           icon="restore"
-          label="Annuler le nettoyage"
-          sub={dedupe?.exists ? (dedupe.restoredAt ? `Déjà remises le ${dedupe.restoredAt}` : `${dedupe.rows} séance${dedupe.rows > 1 ? 's' : ''} gardée${dedupe.rows > 1 ? 's' : ''} de côté`) : 'Rien de mis de côté'}
+          label={traduire("Annuler le nettoyage")}
+          sub={dedupe?.exists ? (dedupe.restoredAt ? traduire("Déjà remises le {0}", dedupe.restoredAt) : traduirePluriel(dedupe.rows, dedupe.rows > 1, "{0} séance gardée de côté", "{0} séances gardées de côté", dedupe.rows)) : traduire('Rien de mis de côté')}
           onPress={restoreDedupe}
         />
       </Card>
-      <Note>Deux confirmations. Les XP du Dojo ne bougent pas : leur registre ne redescend jamais.</Note>
+      <Note>{traduire("Deux confirmations. Les XP du Dojo ne bougent pas : leur registre ne redescend jamais.")}</Note>
     </StudioSection>
   );
 }

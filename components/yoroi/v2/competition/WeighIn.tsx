@@ -9,6 +9,7 @@ import { Card, Icon, P, Press } from '@/components/yoroi/v2/accueil/kit';
 import { Hanko } from '@/components/yoroi/v2/ornements/screens';
 import { formatKg } from '@/lib/v2/weightStats';
 import { mediumDate, parseLocalDate } from '@/lib/v2/competition/dates';
+import { traduire } from '@/lib/i18n/tr';
 
 export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft, onWeigh, onCut, peseeLabel }: { categorie?: string; poidsMax?: number; weight?: number | null; weightDate?: string; daysLeft: number; onWeigh: () => void; onCut?: () => void; peseeLabel?: string }) {
   const open = !poidsMax || poidsMax >= 900;
@@ -29,10 +30,10 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
         </View>
         <View style={{ flex: 1 }}>
           <Ink size={12} weight="bold" color={P.muted}>
-            {peseeLabel ? `Pesée officielle, ${peseeLabel}` : 'Pesée officielle'}
+            {peseeLabel ? traduire("Pesée officielle, {0}", peseeLabel) : traduire('Pesée officielle')}
           </Ink>
           <Ink size={19} weight="black" tight>
-            {categorie ? (open ? `${categorie}, sans limite` : `${categorie}, ${formatKg(poidsMax!)} kg max`) : 'Catégorie à choisir'}
+            {categorie ? (open ? traduire("{0}, sans limite", categorie) : `${categorie}, ${formatKg(poidsMax!)} kg max`) : traduire('Catégorie à choisir')}
           </Ink>
         </View>
         {inside ? <Hanko size={40} /> : null}
@@ -49,7 +50,7 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
                 </Ink>
               </Ink>
               <Ink size={12} weight="bold" color={P.ink2}>
-                {weightDate ? `Ta dernière pesée, le ${mediumDate(parseLocalDate(weightDate), false)}` : 'Ta dernière pesée'}
+                {weightDate ? traduire("Ta dernière pesée, le {0}", mediumDate(parseLocalDate(weightDate), false)) : traduire('Ta dernière pesée')}
               </Ink>
             </View>
             {gap !== null ? (
@@ -58,7 +59,7 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
                   {inside ? `${formatKg(-gap)} kg` : `${formatKg(gap)} kg`}
                 </Ink>
                 <Ink size={12} weight="bold" color={P.ink2}>
-                  {inside ? 'de marge' : 'à perdre'}
+                  {inside ? traduire('de marge') : traduire('à perdre')}
                 </Ink>
               </View>
             ) : null}
@@ -73,14 +74,13 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
           ) : null}
           {perWeek !== null ? (
             <Ink size={13} weight="bold" color={P.ink2}>
-              {perWeek > 1 ? `Soit ${formatKg(perWeek)} kg par semaine : c'est beaucoup. Parles-en à ton coach avant de couper.` : `Soit environ ${formatKg(perWeek)} kg par semaine d'ici le jour J.`}
+              {perWeek > 1 ? traduire("Soit {0} kg par semaine : c'est beaucoup. Parles-en à ton coach avant de couper.", formatKg(perWeek)) : traduire("Soit environ {0} kg par semaine d'ici le jour J.", formatKg(perWeek))}
             </Ink>
           ) : null}
         </>
       ) : (
         <Ink size={14} weight="medium" color={P.ink2}>
-          Pèse-toi pour savoir où tu en es par rapport à ta catégorie.
-        </Ink>
+          {traduire("Pèse-toi pour savoir où tu en es par rapport à ta catégorie.")}</Ink>
       )}
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -93,12 +93,11 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
           </View>
         </Press>
         {onCut && gap !== null && gap > 0 ? (
-          <Press onPress={onCut} accessibilityRole="button" accessibilityLabel="Préparer ma coupe de poids" style={{ flex: 1 }}>
+          <Press onPress={onCut} accessibilityRole="button" accessibilityLabel={traduire("Préparer ma coupe de poids")} style={{ flex: 1 }}>
             <View style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.accentSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 8 }}>
               <Icon name="scale" size={18} color={P.accent} />
               <Ink size={15} weight="extraBold" color={P.accent} numberOfLines={1}>
-                Ma coupe
-              </Ink>
+                {traduire("Ma coupe")}</Ink>
             </View>
           </Press>
         ) : null}

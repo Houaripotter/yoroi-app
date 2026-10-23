@@ -35,6 +35,7 @@ import {
   water,
 } from '@/lib/v2/nutrition/formulas';
 import type { ActivityLevel, CalcGoal, ExerciseType, Gender } from '@/lib/v2/nutrition/formulas';
+import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 
 type CalcId = 'imc' | 'img' | 'bmr' | 'tdee' | 'ideal' | 'macros' | 'water' | '1rm';
 
@@ -88,20 +89,18 @@ export default function CalculatorsScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <DetailScreen title="Calculateurs" subtitle="Tes repères santé et force, sourcés">
+      <DetailScreen title="Calculateurs" subtitle={traduire("Tes repères santé et force, sourcés")}>
         {/* MESURES */}
         <Enter i={0}>
           <Card style={{ gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Ink size={17} weight="black">
-                Tes mesures
-              </Ink>
-              <Press onPress={fillFromProfile} accessibilityRole="button" accessibilityLabel="Remplir avec mon profil">
+                {traduire("Tes mesures")}</Ink>
+              <Press onPress={fillFromProfile} accessibilityRole="button" accessibilityLabel={traduire("Remplir avec mon profil")}>
                 <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: P.paper }}>
                   <NIcon name="user" size={16} color={P.accent} />
                   <Ink size={13} weight="extraBold" color={P.accent}>
-                    Mon profil
-                  </Ink>
+                    {traduire("Mon profil")}</Ink>
                 </View>
               </Press>
             </View>
@@ -109,27 +108,27 @@ export default function CalculatorsScreen() {
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <NumField label="Poids" value={weightStr} onChange={setWeightStr} unit="kg" maxLength={5} />
               <NumField label="Taille" value={heightStr} onChange={setHeightStr} unit="cm" integer maxLength={3} />
-              <NumField label="Âge" value={ageStr} onChange={setAgeStr} unit="ans" integer maxLength={3} />
+              <NumField label={traduire("Âge")} value={ageStr} onChange={setAgeStr} unit="ans" integer maxLength={3} />
             </View>
             <Ink size={12} weight="medium" color={P.ink2}>
-              {fromProfile ? 'Repris de ton profil et de ta dernière pesée. Tu peux tout modifier.' : 'Remplis ces trois valeurs : tous les calculateurs se mettent à jour en direct.'}
+              {fromProfile ? traduire('Repris de ton profil et de ta dernière pesée. Tu peux tout modifier.') : traduire('Remplis ces trois valeurs : tous les calculateurs se mettent à jour en direct.')}
             </Ink>
           </Card>
         </Enter>
 
         {/* CORPS */}
         <Enter i={1}>
-          <H2>Ton corps</H2>
+          <H2>{traduire("Ton corps")}</H2>
         </Enter>
         <Enter i={2}>
           <CalcCard
             icon="scale"
             tone="indigo"
-            title="IMC"
-            sub="Indice de masse corporelle"
+            title={traduire("IMC")}
+            sub={traduire("Indice de masse corporelle")}
             value={hasWH ? fmt(vImc) : null}
             badge={hasWH ? { label: cImc.label, tone: cImc.tone } : undefined}
-            empty="Entre ton poids et ta taille"
+            empty={traduire("Entre ton poids et ta taille")}
             onDetail={() => setDetail('imc')}
           >
             {hasWH ? <ImcScale value={vImc} /> : null}
@@ -140,11 +139,11 @@ export default function CalculatorsScreen() {
             icon="percent"
             tone="gold"
             title="IMG"
-            sub="Estimation de ta masse grasse"
+            sub={traduire("Estimation de ta masse grasse")}
             value={hasAll ? fmt(vImg) : null}
             unit="%"
             badge={hasAll ? { label: cImg.label, tone: cImg.tone } : undefined}
-            empty="Entre poids, taille et âge"
+            empty={traduire("Entre poids, taille et âge")}
             onDetail={() => setDetail('img')}
           />
         </Enter>
@@ -152,16 +151,16 @@ export default function CalculatorsScreen() {
           <CalcCard
             icon="target"
             tone="moss"
-            title="Poids de forme"
-            sub="Fourchette pour un IMC entre 18,5 et 24,9"
-            value={ideal ? `${fmt(ideal.min)} à ${fmt(ideal.max)}` : null}
+            title={traduire("Poids de forme")}
+            sub={traduire("Fourchette pour un IMC entre 18,5 et 24,9")}
+            value={ideal ? traduire("{0} à {1}", fmt(ideal.min), fmt(ideal.max)) : null}
             unit="kg"
-            empty="Entre ta taille"
+            empty={traduire("Entre ta taille")}
             onDetail={() => setDetail('ideal')}
           >
             {ideal && w > 0 ? (
               <Ink size={13} weight="extraBold" color={w > ideal.max ? P.goldDark : w < ideal.min ? P.indigo : P.mossText}>
-                {w > ideal.max ? `${fmt(w - ideal.max)} kg au-dessus de la fourchette` : w < ideal.min ? `${fmt(ideal.min - w)} kg en dessous de la fourchette` : 'Tu es dans la fourchette'}
+                {w > ideal.max ? traduire("{0} kg au-dessus de la fourchette", fmt(w - ideal.max)) : w < ideal.min ? traduire("{0} kg en dessous de la fourchette", fmt(ideal.min - w)) : traduire('Tu es dans la fourchette')}
               </Ink>
             ) : null}
           </CalcCard>
@@ -169,13 +168,13 @@ export default function CalculatorsScreen() {
 
         {/* ENERGIE */}
         <Enter i={5}>
-          <H2>Ton énergie</H2>
+          <H2>{traduire("Ton énergie")}</H2>
         </Enter>
         <Enter i={6}>
-          <CalcCard icon="flame" tone="red" title="Métabolisme de base" sub="Ce que ton corps brûle au repos" value={hasAll ? Math.round(vBmr).toLocaleString('fr-FR') : null} unit="kcal par jour" empty="Entre poids, taille et âge" onDetail={() => setDetail('bmr')} />
+          <CalcCard icon="flame" tone="red" title={traduire("Métabolisme de base")} sub={traduire("Ce que ton corps brûle au repos")} value={hasAll ? Math.round(vBmr).toLocaleString(LOCALE) : null} unit={traduire("kcal par jour")} empty={traduire("Entre poids, taille et âge")} onDetail={() => setDetail('bmr')} />
         </Enter>
         <Enter i={7}>
-          <CalcCard icon="pulse" tone="moss" title="Besoins caloriques" sub={ACTIVITY_MULTIPLIERS[activity].label} value={hasAll ? Math.round(vTdee).toLocaleString('fr-FR') : null} unit="kcal par jour" empty="Entre poids, taille et âge" onDetail={() => setDetail('tdee')}>
+          <CalcCard icon="pulse" tone="moss" title="Besoins caloriques" sub={ACTIVITY_MULTIPLIERS[activity].label} value={hasAll ? Math.round(vTdee).toLocaleString(LOCALE) : null} unit={traduire("kcal par jour")} empty={traduire("Entre poids, taille et âge")} onDetail={() => setDetail('tdee')}>
             <HRow>
               {(Object.keys(ACTIVITY_MULTIPLIERS) as ActivityLevel[]).map((k) => (
                 <Chip key={k} label={ACTIVITY_MULTIPLIERS[k].label} active={activity === k} onPress={() => setActivity(k)} />
@@ -183,33 +182,33 @@ export default function CalculatorsScreen() {
             </HRow>
             {hasAll ? (
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <MiniTarget label="Pour perdre" value={Math.round(vTdee - 500)} color={P.accent} />
-                <MiniTarget label="Pour maintenir" value={Math.round(vTdee)} color={P.ink} />
-                <MiniTarget label="Pour prendre" value={Math.round(vTdee + 300)} color={P.goldDark} />
+                <MiniTarget label={traduire("Pour perdre")} value={Math.round(vTdee - 500)} color={P.accent} />
+                <MiniTarget label={traduire("Pour maintenir")} value={Math.round(vTdee)} color={P.ink} />
+                <MiniTarget label={traduire("Pour prendre")} value={Math.round(vTdee + 300)} color={P.goldDark} />
               </View>
             ) : null}
           </CalcCard>
         </Enter>
         <Enter i={8}>
-          <CalcCard icon="fork" tone="indigo" title="Macros" sub={MACROS_BY_GOAL[goal].note} value={macros ? macros.calories.toLocaleString('fr-FR') : null} unit="kcal par jour" empty="Entre poids, taille et âge" onDetail={() => setDetail('macros')}>
+          <CalcCard icon="fork" tone="indigo" title="Macros" sub={MACROS_BY_GOAL[goal].note} value={macros ? macros.calories.toLocaleString(LOCALE) : null} unit={traduire("kcal par jour")} empty={traduire("Entre poids, taille et âge")} onDetail={() => setDetail('macros')}>
             <Segments items={(Object.keys(MACROS_BY_GOAL) as CalcGoal[]).map((k) => ({ key: k, label: MACROS_BY_GOAL[k].label }))} value={goal} onChange={setGoal} />
             {macros ? (
               <MacroBars
                 compact
                 lines={[
-                  { key: 'p', label: 'Protéines', grams: macros.protein, percent: macros.percentages.protein, color: SERIES.moss },
-                  { key: 'g', label: 'Glucides', grams: macros.carbs, percent: macros.percentages.carbs, color: SERIES.blue },
-                  { key: 'l', label: 'Lipides', grams: macros.fat, percent: macros.percentages.fat, color: SERIES.gold },
+                  { key: 'p', label: traduire('Protéines'), grams: macros.protein, percent: macros.percentages.protein, color: SERIES.moss },
+                  { key: 'g', label: traduire('Glucides'), grams: macros.carbs, percent: macros.percentages.carbs, color: SERIES.blue },
+                  { key: 'l', label: traduire('Lipides'), grams: macros.fat, percent: macros.percentages.fat, color: SERIES.gold },
                 ]}
               />
             ) : null}
           </CalcCard>
         </Enter>
         <Enter i={9}>
-          <CalcCard icon="drop" tone="indigo" title="Eau du jour" sub={exerciseHours > 0 ? `Avec ${fmt(exerciseHours)} h d’exercice` : 'Au repos'} value={vWater ? fmt(exerciseHours > 0 ? vWater.withExercise : vWater.base) : null} unit="litres" empty="Entre ton poids" onDetail={() => setDetail('water')}>
+          <CalcCard icon="drop" tone="indigo" title={traduire("Eau du jour")} sub={exerciseHours > 0 ? traduire("Avec {0} h d’exercice", fmt(exerciseHours)) : traduire('Au repos')} value={vWater ? fmt(exerciseHours > 0 ? vWater.withExercise : vWater.base) : null} unit="litres" empty={traduire("Entre ton poids")} onDetail={() => setDetail('water')}>
             <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
               {[0, 0.5, 1, 1.5, 2].map((x) => (
-                <Chip key={x} label={x === 0 ? 'Repos' : `${fmt(x)} h`} active={exerciseHours === x} onPress={() => setExerciseHours(x)} accent={SERIES.blue} />
+                <Chip key={x} label={x === 0 ? traduire('Repos') : `${fmt(x)} h`} active={exerciseHours === x} onPress={() => setExerciseHours(x)} accent={SERIES.blue} />
               ))}
             </View>
           </CalcCard>
@@ -217,38 +216,37 @@ export default function CalculatorsScreen() {
 
         {/* FORCE */}
         <Enter i={10}>
-          <H2>Ta force</H2>
+          <H2>{traduire("Ta force")}</H2>
         </Enter>
         <Enter i={11}>
-          <CalcCard icon="dumbbell" tone="red" title="Charge maximale" sub={`${EXERCISES[exercise].name}, estimée sur 1 répétition`} value={vOne > 0 ? String(vOne) : null} unit="kg" badge={level ? { label: level.label, tone: level.tone === 'muted' ? 'muted' : level.tone } : undefined} empty="Entre une charge et tes répétitions" onDetail={() => setDetail('1rm')}>
+          <CalcCard icon="dumbbell" tone="red" title="Charge maximale" sub={traduire("{0}, estimée sur 1 répétition", EXERCISES[exercise].name)} value={vOne > 0 ? String(vOne) : null} unit="kg" badge={level ? { label: level.label, tone: level.tone === 'muted' ? 'muted' : level.tone } : undefined} empty={traduire("Entre une charge et tes répétitions")} onDetail={() => setDetail('1rm')}>
             <HRow>
               {(Object.keys(EXERCISES) as ExerciseType[]).map((k) => (
                 <Chip key={k} label={EXERCISES[k].name} active={exercise === k} onPress={() => setExercise(k)} />
               ))}
             </HRow>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <NumField label="Charge" value={liftStr} onChange={setLiftStr} unit="kg" maxLength={5} />
+              <NumField label={traduire("Charge")} value={liftStr} onChange={setLiftStr} unit="kg" maxLength={5} />
               <Ink size={20} weight="black" color={P.ink2}>
                 ×
               </Ink>
-              <NumField label="Répétitions" value={repsStr} onChange={setRepsStr} integer maxLength={2} />
+              <NumField label={traduire("Répétitions")} value={repsStr} onChange={setRepsStr} integer maxLength={2} />
             </View>
             {level && w > 0 ? (
               <Ink size={13} weight="bold" color={P.ink2}>
-                {`${fmt(level.ratio, 2)} fois ton poids de corps`}
+                {traduire("{0} fois ton poids de corps", fmt(level.ratio, 2))}
               </Ink>
             ) : null}
-            {reps > 12 ? <Notice tone="gold" text="Au-delà de 10 à 12 répétitions, l’estimation devient moins fiable." /> : null}
+            {reps > 12 ? <Notice tone="gold" text={traduire("Au-delà de 10 à 12 répétitions, l’estimation devient moins fiable.")} /> : null}
           </CalcCard>
         </Enter>
         <Enter i={12}>
-          <LinkCard icon="heart" tone="red" title="Zones cardiaques" sub="Ta fréquence cardiaque par zone d’effort" onPress={() => router.push('/heart-zones-settings?mode=repos' as any)} />
+          <LinkCard icon="heart" tone="red" title="Zones cardiaques" sub={traduire("Ta fréquence cardiaque par zone d’effort")} onPress={() => router.push('/heart-zones-settings?mode=repos' as any)} />
         </Enter>
 
         <Enter i={13}>
           <Ink size={12} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-            Ces calculs sont des estimations pour te repérer. Ils ne remplacent pas l’avis d’un professionnel de santé.
-          </Ink>
+            {traduire("Ces calculs sont des estimations pour te repérer. Ils ne remplacent pas l’avis d’un professionnel de santé.")}</Ink>
         </Enter>
       </DetailScreen>
 
@@ -256,39 +254,39 @@ export default function CalculatorsScreen() {
       <BottomSheet visible={detail !== null} onClose={() => setDetail(null)} title={detail ? DETAIL_TITLE[detail] : ''}>
         {detail === 'imc' ? (
           <>
-            <Formula lines={['IMC = poids (kg) / taille (m) au carré']} />
+            <Formula lines={[traduire('IMC = poids (kg) / taille (m) au carré')]} />
             <ImcScale value={hasWH ? vImc : null} />
-            <Notice tone="indigo" text="L’IMC ne fait pas la différence entre muscle et graisse : chez un sportif musclé, il surestime souvent la corpulence." />
+            <Notice tone="indigo" text={traduire("L’IMC ne fait pas la différence entre muscle et graisse : chez un sportif musclé, il surestime souvent la corpulence.")} />
             <SourceRow source={SOURCES.imc} />
           </>
         ) : null}
         {detail === 'img' ? (
           <>
-            <Formula lines={['Homme : 1,20 × IMC + 0,23 × âge − 10,8 − 5,4', 'Femme : 1,20 × IMC + 0,23 × âge − 5,4']} />
+            <Formula lines={[traduire('Homme : 1,20 × IMC + 0,23 × âge − 10,8 − 5,4'), traduire('Femme : 1,20 × IMC + 0,23 × âge − 5,4')]} />
             <Card style={{ paddingVertical: 6 }}>
               <Ink size={13} weight="extraBold" color={P.ink2} style={{ paddingTop: 8 }}>
-                {`Plages de référence, ${gender === 'male' ? 'homme' : 'femme'}`}
+                {traduire("Plages de référence, {0}", gender === 'male' ? 'homme' : 'femme')}
               </Ink>
               {IMG_RANGES[gender].map((r, i) => (
                 <KV key={r.range} label={r.label} value={r.range} last={i === IMG_RANGES[gender].length - 1} />
               ))}
             </Card>
-            <Notice tone="gold" text="C’est une estimation à partir de l’IMC. Une mesure par impédancemétrie ou par plis cutanés sera plus précise." />
+            <Notice tone="gold" text={traduire("C’est une estimation à partir de l’IMC. Une mesure par impédancemétrie ou par plis cutanés sera plus précise.")} />
             <SourceRow source={SOURCES.deurenberg} />
           </>
         ) : null}
         {detail === 'bmr' ? (
           <>
-            <Formula lines={['Homme : 10 × poids + 6,25 × taille − 5 × âge + 5', 'Femme : 10 × poids + 6,25 × taille − 5 × âge − 161']} />
+            <Formula lines={[traduire('Homme : 10 × poids + 6,25 × taille − 5 × âge + 5'), traduire('Femme : 10 × poids + 6,25 × taille − 5 × âge − 161')]} />
             <SourceRow source={SOURCES.mifflin} />
           </>
         ) : null}
         {detail === 'tdee' ? (
           <>
-            <Formula lines={['Besoins = métabolisme de base × coefficient d’activité']} />
+            <Formula lines={[traduire('Besoins = métabolisme de base × coefficient d’activité')]} />
             <Card style={{ paddingVertical: 6 }}>
               {(Object.keys(ACTIVITY_MULTIPLIERS) as ActivityLevel[]).map((k, i, arr) => (
-                <KV key={k} label={`${ACTIVITY_MULTIPLIERS[k].label}, ${ACTIVITY_MULTIPLIERS[k].desc.toLowerCase()}`} value={`× ${String(ACTIVITY_MULTIPLIERS[k].value).replace('.', ',')}`} strong={k === activity} last={i === arr.length - 1} />
+                <KV key={k} label={`${ACTIVITY_MULTIPLIERS[k].label}, ${ACTIVITY_MULTIPLIERS[k].desc.toLowerCase()}`} value={`× ${String(ACTIVITY_MULTIPLIERS[k].value).replace('.', DECIMAL)}`} strong={k === activity} last={i === arr.length - 1} />
               ))}
             </Card>
             <SourceRow source={SOURCES.mifflin} />
@@ -296,15 +294,15 @@ export default function CalculatorsScreen() {
         ) : null}
         {detail === 'ideal' ? (
           <>
-            <Formula lines={['Fourchette : IMC de 18,5 à 24,9 pour ta taille', 'Lorentz homme : T − 100 − (T − 150) / 4', 'Lorentz femme : T − 100 − (T − 150) / 2,5', 'Devine : 50 (homme) ou 45,5 (femme) + 2,3 × (taille en pouces − 60)']} />
+            <Formula lines={[traduire('Fourchette : IMC de 18,5 à 24,9 pour ta taille'), 'Lorentz homme : T − 100 − (T − 150) / 4', 'Lorentz femme : T − 100 − (T − 150) / 2,5', traduire('Devine : 50 (homme) ou 45,5 (femme) + 2,3 × (taille en pouces − 60)')]} />
             {ideal ? (
               <Card style={{ paddingVertical: 6 }}>
-                <KV label="Fourchette santé" value={`${fmt(ideal.min)} à ${fmt(ideal.max)} kg`} strong />
+                <KV label={traduire("Fourchette santé")} value={traduire("{0} à {1} kg", fmt(ideal.min), fmt(ideal.max))} strong />
                 <KV label="Selon Lorentz" value={`${fmt(ideal.lorentz)} kg`} />
                 <KV label="Selon Devine" value={`${fmt(ideal.devine)} kg`} last />
               </Card>
             ) : null}
-            <Notice tone="indigo" text="Pour un combattant, le bon poids dépend aussi de ta catégorie et de ta masse musculaire." />
+            <Notice tone="indigo" text={traduire("Pour un combattant, le bon poids dépend aussi de ta catégorie et de ta masse musculaire.")} />
             <SourceRow source={SOURCES.imc} />
             <SourceRow source={SOURCES.lorentz} />
             <SourceRow source={SOURCES.devine} />
@@ -312,11 +310,10 @@ export default function CalculatorsScreen() {
         ) : null}
         {detail === 'macros' ? (
           <>
-            <Formula lines={['Calories = besoins du jour + ajustement de l’objectif', 'Protéines et glucides : 4 kcal par gramme', 'Lipides : 9 kcal par gramme']} />
+            <Formula lines={[traduire('Calories = besoins du jour + ajustement de l’objectif'), traduire('Protéines et glucides : 4 kcal par gramme'), traduire('Lipides : 9 kcal par gramme')]} />
             <Card style={{ paddingVertical: 6 }}>
               <Ink size={12} weight="bold" color={P.ink2} style={{ paddingTop: 8 }}>
-                P pour protéines, G pour glucides, L pour lipides
-              </Ink>
+                {traduire("P pour protéines, G pour glucides, L pour lipides")}</Ink>
               {(Object.keys(MACROS_BY_GOAL) as CalcGoal[]).map((k, i, arr) => (
                 <KV key={k} label={MACROS_BY_GOAL[k].label} value={`P ${MACROS_BY_GOAL[k].protein} %, G ${MACROS_BY_GOAL[k].carbs} %, L ${MACROS_BY_GOAL[k].fat} %`} strong={k === goal} last={i === arr.length - 1} />
               ))}
@@ -327,25 +324,24 @@ export default function CalculatorsScreen() {
         ) : null}
         {detail === 'water' ? (
           <>
-            <Formula lines={['Eau = poids (kg) × 0,033 litre', 'Plus 0,5 litre par heure d’exercice intense']} />
+            <Formula lines={[traduire('Eau = poids (kg) × 0,033 litre'), traduire('Plus 0,5 litre par heure d’exercice intense')]} />
             {vWater ? (
               <Card style={{ paddingVertical: 6 }}>
-                <KV label="Minimum au repos" value={`${fmt(vWater.base)} L`} />
-                <KV label="Avec ton exercice" value={`${fmt(vWater.withExercise)} L`} strong last />
+                <KV label={traduire("Minimum au repos")} value={`${fmt(vWater.base)} L`} />
+                <KV label={traduire("Avec ton exercice")} value={`${fmt(vWater.withExercise)} L`} strong last />
               </Card>
             ) : null}
-            <Notice tone="indigo" text="Repère usuel. Bois davantage s’il fait chaud ou si tu transpires beaucoup." />
+            <Notice tone="indigo" text={traduire("Repère usuel. Bois davantage s’il fait chaud ou si tu transpires beaucoup.")} />
             <SourceRow source={SOURCES.hydration} />
           </>
         ) : null}
         {detail === '1rm' ? (
           <>
-            <Formula lines={['Charge maximale = charge × (1 + répétitions ÷ 30)']} />
+            <Formula lines={[traduire('Charge maximale = charge × (1 + répétitions ÷ 30)')]} />
             {vOne > 0 ? (
               <Card style={{ paddingVertical: 6 }}>
                 <Ink size={13} weight="extraBold" color={P.ink2} style={{ paddingTop: 8 }}>
-                  Charges estimées par objectif
-                </Ink>
+                  {traduire("Charges estimées par objectif")}</Ink>
                 {repRanges(vOne).map((r, i, arr) => (
                   <KV key={r.reps} label={`${r.label}, ${r.percent} %`} value={`${r.weight} kg`} strong={r.reps === 1} last={i === arr.length - 1} />
                 ))}
@@ -353,16 +349,16 @@ export default function CalculatorsScreen() {
             ) : null}
             <Card style={{ gap: 10 }}>
               <Ink size={13} weight="extraBold" color={P.ink2}>
-                {`Repères indicatifs, ${EXERCISES[exercise].name.toLowerCase()} (fois ton poids de corps)`}
+                {traduire("Repères indicatifs, {0} (fois ton poids de corps)", EXERCISES[exercise].name.toLowerCase())}
               </Ink>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <StdBox label="Débutant" value={EXERCISES[exercise].standards.beginner} color={P.ink2} />
                 <StdBox label="Intermédiaire" value={EXERCISES[exercise].standards.intermediate} color={P.indigo} />
                 <StdBox label="Avancé" value={EXERCISES[exercise].standards.advanced} color={P.mossText} />
-                <StdBox label="Élite" value={EXERCISES[exercise].standards.elite} color={P.goldDark} />
+                <StdBox label={traduire("Élite")} value={EXERCISES[exercise].standards.elite} color={P.goldDark} />
               </View>
             </Card>
-            <Notice tone="gold" text="Ne teste pas ta charge maximale seul : échauffe-toi bien et garde un pareur." />
+            <Notice tone="gold" text={traduire("Ne teste pas ta charge maximale seul : échauffe-toi bien et garde un pareur.")} />
             <SourceRow source={SOURCES.epley} />
           </>
         ) : null}
@@ -372,13 +368,13 @@ export default function CalculatorsScreen() {
 }
 
 const DETAIL_TITLE: Record<CalcId, string> = {
-  imc: 'Indice de masse corporelle',
-  img: 'Indice de masse grasse',
-  bmr: 'Métabolisme de base',
+  imc: traduire('Indice de masse corporelle'),
+  img: traduire('Indice de masse grasse'),
+  bmr: traduire('Métabolisme de base'),
   tdee: 'Besoins caloriques',
-  ideal: 'Poids de forme',
-  macros: 'Répartition des macros',
-  water: 'Eau du jour',
+  ideal: traduire('Poids de forme'),
+  macros: traduire('Répartition des macros'),
+  water: traduire('Eau du jour'),
   '1rm': 'Charge maximale',
 };
 
@@ -417,7 +413,7 @@ function CalcCard({
             {sub}
           </Ink>
         </View>
-        <Press onPress={onDetail} accessibilityRole="button" accessibilityLabel={`Formule et source : ${title}`} hitSlop={6}>
+        <Press onPress={onDetail} accessibilityRole="button" accessibilityLabel={traduire("Formule et source : {0}", title)} hitSlop={6}>
           <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
             <NIcon name="book" size={18} color={P.ink2} />
           </View>
@@ -442,10 +438,10 @@ function CalcCard({
 
 function ImcScale({ value }: { value: number | null }) {
   const bands = [
-    { from: 15, to: 18.5, color: SERIES.blue, label: 'Maigreur', range: 'moins de 18,5' },
-    { from: 18.5, to: 25, color: P.moss, label: 'Normal', range: '18,5 à 24,9' },
-    { from: 25, to: 30, color: SERIES.gold, label: 'Surpoids', range: '25 à 29,9' },
-    { from: 30, to: 40, color: P.danger, label: 'Obésité', range: '30 et plus' },
+    { from: 15, to: 18.5, color: SERIES.blue, label: traduire('Maigreur'), range: traduire('moins de 18,5') },
+    { from: 18.5, to: 25, color: P.moss, label: 'Normal', range: traduire('18,5 à 24,9') },
+    { from: 25, to: 30, color: SERIES.gold, label: 'Surpoids', range: traduire('25 à 29,9') },
+    { from: 30, to: 40, color: P.danger, label: 'Obésité', range: traduire('30 et plus') },
   ];
   const min = 15;
   const max = 40;
@@ -498,7 +494,7 @@ function MiniTarget({ label, value, color }: { label: string; value: number; col
       </Ink>
       <View style={{ width: 16, height: 3, borderRadius: 2, backgroundColor: color, marginBottom: 2 }} />
       <Ink size={17} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-        {value.toLocaleString('fr-FR')}
+        {value.toLocaleString(LOCALE)}
       </Ink>
     </View>
   );
@@ -509,7 +505,7 @@ function StdBox({ label, value, color }: { label: string; value: number; color: 
     <View style={{ flex: 1, alignItems: 'center', padding: 8, borderRadius: 14, backgroundColor: P.paper, gap: 2 }}>
       <View style={{ width: 16, height: 3, borderRadius: 2, backgroundColor: color, marginBottom: 2 }} />
       <Ink size={17} weight="black">
-        {`${String(value).replace('.', ',')}`}
+        {`${String(value).replace('.', DECIMAL)}`}
       </Ink>
       <Ink size={10} weight="bold" color={P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
         {label}

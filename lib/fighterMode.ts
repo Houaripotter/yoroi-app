@@ -1,5 +1,6 @@
 import { getSportName } from '@/lib/sports';
 import { IBJJF_MEN, ibjjfAdvised, ibjjfCategories } from '@/lib/v2/competition/ibjjf';
+import { traduire } from '@/lib/i18n/tr';
 // ============================================
 // YOROI - MODE COMPÉTITEUR / FIGHTER
 // ============================================
@@ -73,9 +74,9 @@ export const MMA_WEIGHT_CATEGORIES: WeightCategory[] = [
   { id: 'mouche', name: 'Mouche', maxWeight: 56.7 },
   { id: 'coq', name: 'Coq', maxWeight: 61.2 },
   { id: 'plume', name: 'Plume', maxWeight: 65.8 },
-  { id: 'leger', name: 'Léger', maxWeight: 70.3 },
+  { id: 'leger', name: traduire('Léger'), maxWeight: 70.3 },
   { id: 'welter', name: 'Welter', maxWeight: 77.1 },
-  { id: 'moyen', name: 'Moyen', maxWeight: 83.9 },
+  { id: 'moyen', name: traduire('Moyen'), maxWeight: 83.9 },
   { id: 'mi_lourd', name: 'Mi-lourd', maxWeight: 93 },
   { id: 'lourd', name: 'Lourd', maxWeight: 120.2 },
 ];
@@ -89,11 +90,11 @@ export const BOXE_WEIGHT_CATEGORIES: WeightCategory[] = [
   { id: 'super_coq', name: 'Super-coq', maxWeight: 55.3 },
   { id: 'plume', name: 'Plume', maxWeight: 57.2 },
   { id: 'super_plume', name: 'Super-plume', maxWeight: 59 },
-  { id: 'leger', name: 'Léger', maxWeight: 61.2 },
+  { id: 'leger', name: traduire('Léger'), maxWeight: 61.2 },
   { id: 'super_leger', name: 'Super-léger', maxWeight: 63.5 },
   { id: 'welter', name: 'Welter', maxWeight: 66.7 },
   { id: 'super_welter', name: 'Super-welter', maxWeight: 69.9 },
-  { id: 'moyen', name: 'Moyen', maxWeight: 72.6 },
+  { id: 'moyen', name: traduire('Moyen'), maxWeight: 72.6 },
   { id: 'super_moyen', name: 'Super-moyen', maxWeight: 76.2 },
   { id: 'mi_lourd', name: 'Mi-lourd', maxWeight: 79.4 },
   { id: 'lourd_leger', name: 'Lourd-léger', maxWeight: 90.7 },
@@ -106,11 +107,11 @@ export const MUAY_THAI_WEIGHT_CATEGORIES: WeightCategory[] = [
   { id: 'mouche', name: 'Mouche', maxWeight: 51 },
   { id: 'coq', name: 'Coq', maxWeight: 53.5 },
   { id: 'plume', name: 'Plume', maxWeight: 57 },
-  { id: 'leger', name: 'Léger', maxWeight: 60 },
+  { id: 'leger', name: traduire('Léger'), maxWeight: 60 },
   { id: 'super_leger', name: 'Super-léger', maxWeight: 63.5 },
   { id: 'welter', name: 'Welter', maxWeight: 67 },
   { id: 'super_welter', name: 'Super-welter', maxWeight: 71 },
-  { id: 'moyen', name: 'Moyen', maxWeight: 75 },
+  { id: 'moyen', name: traduire('Moyen'), maxWeight: 75 },
   { id: 'super_moyen', name: 'Super-moyen', maxWeight: 79 },
   { id: 'mi_lourd', name: 'Mi-lourd', maxWeight: 86 },
   { id: 'lourd', name: 'Lourd', maxWeight: 95 },
@@ -308,12 +309,12 @@ export const SPORT_LABELS: Record<Sport, string> = {
   rugby: 'Rugby',
   volleyball: 'Volleyball',
   trail: 'Trail',
-  running: 'Course à pied',
+  running: traduire('Course à pied'),
   cyclisme: 'Cyclisme',
   natation: 'Natation',
   triathlon: 'Triathlon',
   marche_nordique: 'Marche nordique',
-  randonnee: 'Randonnée',
+  randonnee: traduire('Randonnée'),
   escalade: 'Escalade',
   crossfit: 'CrossFit',
   hyrox: 'HYROX',
@@ -327,7 +328,7 @@ export const SPORT_LABELS: Record<Sport, string> = {
   snowboard: 'Snowboard',
   skate: 'Skate',
   golf: 'Golf',
-  equitation: 'Équitation',
+  equitation: traduire('Équitation'),
   danse: 'Danse',
   autre: 'Autre',
 };
@@ -381,9 +382,9 @@ export const SPORT_ICONS: Record<Sport, string> = {
 // ============================================
 
 export const JJB_BELTS = [
-  { id: 'blanche', name: 'Blanche', color: '#FFFFFF' },
-  { id: 'bleue', name: 'Bleue', color: '#0066CC' },
-  { id: 'violette', name: 'Violette', color: '#6B46C1' },
-  { id: 'marron', name: 'Marron', color: '#8B4513' },
-  { id: 'noire', name: 'Noire', color: '#000000' },
+  { id: 'blanche', name: traduire('Blanche'), color: '#FFFFFF' },
+  { id: 'bleue', name: traduire('Bleue'), color: '#0066CC' },
+  { id: 'violette', name: traduire('Violette'), color: '#6B46C1' },
+  { id: 'marron', name: traduire('Marron'), color: '#8B4513' },
+  { id: 'noire', name: traduire('Noire'), color: '#000000' },
 ];

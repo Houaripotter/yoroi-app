@@ -12,6 +12,7 @@ import type { FontWeightKey } from '@/components/yoroi/tokens';
 import { dateAvantApres, lignesPoids } from '@/lib/v2/cartes/avantApres';
 import { dureeTexte } from '@/lib/v2/photos/outils';
 import type { CarteData, OptionsCarte, PhotoCarte } from '@/lib/v2/cartes/types';
+import { traduire } from '@/lib/i18n/tr';
 
 type Couleurs = { fond: string; ink: string; muted: string; accent: string; vide: string; etiquette: string; etiquetteInk: string; etiquetteMuted: string };
 
@@ -53,25 +54,25 @@ export function AvantApresVue({ d, o, H, signature }: { d: CarteData; o: Options
   const story = o.format === 'story';
   const carre = o.format === 'carre';
   const poids = lignesPoids(d, o.masque);
-  const temps = x.jours > 0 ? dureeTexte(x.jours) : 'Le même jour';
+  const temps = x.jours > 0 ? dureeTexte(x.jours) : traduire('Le même jour');
   const flou = !!o.flou;
   const gros = carre ? 24 : story ? 32 : 28;
   return (
     <View style={{ position: 'absolute', left: 0, top: 0, right: 0, height: H, backgroundColor: k.fond, paddingTop: story ? 34 : carre ? 14 : 18, paddingHorizontal: carre ? 14 : 16, paddingBottom: story ? 16 : 12 }}>
-      <T size={carre ? 17 : 20} weight="black" color={k.ink} style={{ letterSpacing: -0.6, marginBottom: carre ? 8 : 10 }}>Avant, après</T>
+      <T size={carre ? 17 : 20} weight="black" color={k.ink} style={{ letterSpacing: -0.6, marginBottom: carre ? 8 : 10 }}>{traduire("Avant, après")}</T>
       <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
-        <Photo p={x.avant} mot="Avant" poids={poids.avant} flou={flou} k={k} compact={carre} />
-        <Photo p={x.apres} mot="Après" poids={poids.apres} flou={flou} k={k} compact={carre} />
+        <Photo p={x.avant} mot={traduire("Avant")} poids={poids.avant} flou={flou} k={k} compact={carre} />
+        <Photo p={x.apres} mot={traduire("Après")} poids={poids.apres} flou={flou} k={k} compact={carre} />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 18, marginTop: carre ? 8 : 12, marginBottom: carre ? 8 : 12 }}>
         <View style={{ flexShrink: 1 }}>
           <T size={gros} weight="black" color={k.accent} style={{ letterSpacing: -1 }}>{temps}</T>
-          <T size={carre ? 11 : 12} weight="bold" color={k.muted}>{x.jours > 0 ? 'entre les deux photos' : 'deux photos du même jour'}</T>
+          <T size={carre ? 11 : 12} weight="bold" color={k.muted}>{x.jours > 0 ? traduire('entre les deux photos') : traduire('deux photos du même jour')}</T>
         </View>
         {poids.ecart ? (
           <View style={{ flexShrink: 1 }}>
             <T size={gros} weight="black" color={k.ink} style={{ letterSpacing: -1 }}>{poids.ecart}</T>
-            <T size={carre ? 11 : 12} weight="bold" color={k.muted}>{o.masque === 'pourcentage' ? 'de mon poids' : 'sur la balance'}</T>
+            <T size={carre ? 11 : 12} weight="bold" color={k.muted}>{o.masque === 'pourcentage' ? traduire('de mon poids') : traduire('sur la balance')}</T>
           </View>
         ) : null}
       </View>

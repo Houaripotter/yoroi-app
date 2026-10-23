@@ -10,6 +10,7 @@ import type { Training } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { seancesEntre } from './compteurSeances';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // TYPES
@@ -108,12 +109,12 @@ function dayOf(raw: string): string {
 }
 
 // Noms des jours en français
-const DAY_NAMES = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const DAY_NAMES = [traduire('Dim'), traduire('Lun'), traduire('Mar'), traduire('Mer'), traduire('Jeu'), traduire('Ven'), traduire('Sam')];
 
 // Noms des mois en français
 const MONTH_NAMES = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+  traduire('Janvier'), traduire('Février'), traduire('Mars'), traduire('Avril'), traduire('Mai'), traduire('Juin'),
+  traduire('Juillet'), traduire('Août'), traduire('Septembre'), traduire('Octobre'), traduire('Novembre'), traduire('Décembre')
 ];
 
 // ============================================
@@ -162,7 +163,7 @@ export function useWeekStats(targetDate?: Date) {
           weekNumber: getWeekNumber(weekStart),
           weekStart,
           weekEnd,
-          weekLabel: `Semaine ${getWeekNumber(weekStart)} • 12-18 Janvier`,
+          weekLabel: traduire("Semaine {0} • 12-18 Janvier", getWeekNumber(weekStart)),
           activeDays: 5,
           totalSessions: 6,
           totalDays: 7,
@@ -175,7 +176,7 @@ export function useWeekStats(targetDate?: Date) {
           evolution: {
             weight: { start: 78.5, end: 76.8, change: -1.7 }
           },
-          bestDay: { dayName: 'Lundi', date: weekStart, sessions: 2 }
+          bestDay: { dayName: traduire('Lundi'), date: weekStart, sessions: 2 }
         });
         setIsLoading(false);
         return;
@@ -238,7 +239,7 @@ export function useWeekStats(targetDate?: Date) {
       // Répartition par clubs
       const clubCounts = new Map<string, { count: number; logo?: string }>();
       weekTrainings.forEach(t => {
-        const clubName = t.club_name || 'Sans club';
+        const clubName = t.club_name || traduire('Sans club');
         const existing = clubCounts.get(clubName);
         clubCounts.set(clubName, {
           count: (existing?.count || 0) + 1,
@@ -290,8 +291,8 @@ export function useWeekStats(targetDate?: Date) {
       const endMonth = MONTH_NAMES[weekEnd.getMonth()];
 
       const weekLabel = weekStart.getMonth() === weekEnd.getMonth()
-        ? `Semaine ${getWeekNumber(weekStart)} • ${startDay}-${endDay} ${startMonth}`
-        : `Semaine ${getWeekNumber(weekStart)} • ${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+        ? traduire("Semaine {0} • {1}-{2} {3}", getWeekNumber(weekStart), startDay, endDay, startMonth)
+        : traduire("Semaine {0} • {1} {2} - {3} {4}", getWeekNumber(weekStart), startDay, startMonth, endDay, endMonth);
 
       setStats({
         year: weekStart.getFullYear(),

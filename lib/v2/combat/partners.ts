@@ -8,6 +8,7 @@ import type { CombatRound, Training } from '@/lib/database';
 import type { Archetype, ExperienceLevel, PartnerBadge, PartnerMedia, PartnerMission } from '@/lib/partnerModel';
 import { countResults, letterOf, roundMatchesPartner, roundsOf } from './rounds';
 import type { Letter } from './rounds';
+import { traduire } from '@/lib/i18n/tr';
 
 export const PARTNERS_KEY = '@yoroi_sparring_partners';
 export const PARTNERS_CHANGED_EVENT = 'YOROI_PARTNERS_CHANGED';
@@ -271,11 +272,11 @@ export function matchupsOf(entries: SessionEntry[]): { date: string; result: Let
 export type Tier = 'S' | 'A' | 'B' | 'C' | 'D';
 
 export const TIER_META: Record<Tier, { name: string; kanji: string; color: string; description: string }> = {
-  S: { name: 'Bêtes noires', kanji: '鬼', color: '#B0282E', description: 'Tu gagnes moins de 30 % de tes rounds contre eux.' },
-  A: { name: 'Difficiles', kanji: '険', color: '#A8832F', description: 'Gros défis, tu gagnes entre 30 et 50 %.' },
-  B: { name: 'Équilibrés', kanji: '均', color: '#3D5D9E', description: 'Combat à armes égales, entre 50 et 65 %.' },
-  C: { name: 'Dominés', kanji: '勝', color: '#4F6B28', description: 'Tu maîtrises, plus de 65 % de victoires.' },
-  D: { name: 'À évaluer', kanji: '未', color: '#8B8D96', description: 'Moins de trois rounds, pas assez pour juger.' },
+  S: { name: traduire('Bêtes noires'), kanji: '鬼', color: '#B0282E', description: traduire('Tu gagnes moins de 30 % de tes rounds contre eux.') },
+  A: { name: 'Difficiles', kanji: '険', color: '#A8832F', description: traduire('Gros défis, tu gagnes entre 30 et 50 %.') },
+  B: { name: 'Équilibrés', kanji: '均', color: '#3D5D9E', description: traduire('Combat à armes égales, entre 50 et 65 %.') },
+  C: { name: 'Dominés', kanji: '勝', color: '#4F6B28', description: traduire('Tu maîtrises, plus de 65 % de victoires.') },
+  D: { name: 'À évaluer', kanji: '未', color: '#8B8D96', description: traduire('Moins de trois rounds, pas assez pour juger.') },
 };
 
 export function tierOf(winRateVD: number | null, total: number): Tier {

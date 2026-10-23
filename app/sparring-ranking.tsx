@@ -13,12 +13,13 @@ import { allStats, effectiveStats } from '@/lib/v2/combat/partners';
 import type { LiveStats, Partner } from '@/lib/v2/combat/partners';
 import { beltOf, plural } from '@/lib/v2/combat/rounds';
 import { BeltBar, Card, Chip, ChipScroll, CIcon, D, DetailScreen, EmptyState, Enter, N, Nobori, P, Press, Seal, sportLabel, V, WdlRow } from '@/components/yoroi/v2/combat/ui';
+import { traduire } from '@/lib/i18n/tr';
 
 type Sort = 'winrate' | 'rounds' | 'progression';
 const SORTS: { k: Sort; l: string }[] = [
-  { k: 'winrate', l: 'Taux de victoire' },
+  { k: 'winrate', l: traduire('Taux de victoire') },
   { k: 'rounds', l: 'Rounds' },
-  { k: 'progression', l: 'Progression' },
+  { k: 'progression', l: traduire('Progression') },
 ];
 const PODIUM = ['#C59D45', '#8B8D96', '#9C5B33'];
 
@@ -52,8 +53,8 @@ export default function SparringRankingScreen() {
   const podiumRank = top.length === 3 ? [1, 0, 2] : top.map((_, i) => i);
 
   return (
-    <PremiumGate source="partenaires" featureTitle="Classement sparring" perks={['Tes partenaires classés par taux de victoire', 'Tes rounds et ta progression face à chacun', 'Qui monte, qui stagne, qui baisse']}>
-      <DetailScreen title="Classement" subtitle={loaded ? plural(ranked.length, 'partenaire') : 'Lecture de tes rounds'}>
+    <PremiumGate source="partenaires" featureTitle="Classement sparring" perks={[traduire('Tes partenaires classés par taux de victoire'), traduire('Tes rounds et ta progression face à chacun'), traduire('Qui monte, qui stagne, qui baisse')]}>
+      <DetailScreen title="Classement" subtitle={loaded ? plural(ranked.length, 'partenaire') : traduire('Lecture de tes rounds')}>
         <ChipScroll>
           {SORTS.map((s) => (
             <Chip key={s.k} label={s.l} on={sort === s.k} onPress={() => setSort(s.k)} />
@@ -61,7 +62,7 @@ export default function SparringRankingScreen() {
         </ChipScroll>
 
         {loaded && ranked.length === 0 ? (
-          <EmptyState title="Personne à classer" text="Ajoute tes partenaires de sparring et note tes rounds : ils seront hissés ici selon ta domination." action="Ajouter un partenaire" onAction={() => router.push('/sparring-partners' as any)} />
+          <EmptyState title={traduire("Personne à classer")} text={traduire("Ajoute tes partenaires de sparring et note tes rounds : ils seront hissés ici selon ta domination.")} action={traduire("Ajouter un partenaire")} onAction={() => router.push('/sparring-partners' as any)} />
         ) : null}
 
         {top.length > 0 ? (
@@ -135,7 +136,7 @@ export default function SparringRankingScreen() {
                         {valueOf(row.s, sort)}
                       </Ink>
                       <Ink size={11} weight="bold" color={P.ink2}>
-                        {sort === 'rounds' ? 'rounds' : sort === 'progression' ? 'récent' : 'victoires'}
+                        {sort === 'rounds' ? 'rounds' : sort === 'progression' ? traduire('récent') : 'victoires'}
                       </Ink>
                     </View>
                   </View>

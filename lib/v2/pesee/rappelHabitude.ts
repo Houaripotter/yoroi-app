@@ -19,6 +19,7 @@ import * as Notifications from 'expo-notifications';
 import { logger } from '@/lib/security/logger';
 import type { PeseeMoment } from '@/lib/v2/onboarding/draft';
 import { messagePesee } from '@/lib/v2/notifications/discipline';
+import { traduire } from '@/lib/i18n/tr';
 
 const KEY = '@yoroi_pesee_habitude_v1';
 export const RAPPEL_PESEE_TYPE = 'pesee_habitude';
@@ -46,12 +47,12 @@ export const MOMENT_HEURE: Record<Exclude<PeseeMoment, 'inconnu' | 'heure'>, [nu
 };
 
 export const MOMENT_LABEL: Record<PeseeMoment, string> = {
-  reveil: 'Le matin au réveil',
-  douche: 'Après la douche du matin',
-  midi: 'Le midi',
-  soir: 'Le soir',
-  heure: 'À une heure précise',
-  inconnu: 'Je ne sais pas encore',
+  reveil: traduire('Le matin au réveil'),
+  douche: traduire('Après la douche du matin'),
+  midi: traduire('Le midi'),
+  soir: traduire('Le soir'),
+  heure: traduire('À une heure précise'),
+  inconnu: traduire('Je ne sais pas encore'),
 };
 
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;

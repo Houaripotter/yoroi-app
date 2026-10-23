@@ -9,8 +9,9 @@ import { DualComparisonCard } from '../../charts/DualComparisonCard';
 import { Footprints, Route, Timer, PersonStanding, Flame, Building2, Target, Droplets } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
 import { formatDurationHM } from '@/lib/formatDuration';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import Svg, { Circle as SvgCircle, Path } from 'react-native-svg';
+import { LOCALE } from '@/lib/i18n/tr';
 
 interface PasTabProps {
   steps: number;
@@ -165,7 +166,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
               {calories > 0 && (
                 <View style={styles.ringMetricItem}>
                   <Flame size={15} color="#F97316" strokeWidth={2} />
-                  <Text style={[styles.ringMetricValue, { color: '#F97316' }]}>{Math.round(calories).toLocaleString('fr-FR')}</Text>
+                  <Text style={[styles.ringMetricValue, { color: '#F97316' }]}>{Math.round(calories).toLocaleString(LOCALE)}</Text>
                   <Text style={[styles.ringMetricUnit, { color: colors.textMuted }]}>kcal</Text>
                 </View>
               )}
@@ -202,8 +203,8 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
                 <Target size={11} color={stepsColor} strokeWidth={2.5} />
                 <Text style={[styles.goalChipText, { color: stepsColor }]}>
                   {steps >= STEPS_GOAL
-                    ? `+${(steps - STEPS_GOAL).toLocaleString('fr-FR')} bonus`
-                    : `${(STEPS_GOAL - steps).toLocaleString('fr-FR')} restants`}
+                    ? `+${(steps - STEPS_GOAL).toLocaleString(LOCALE)} bonus`
+                    : `${(STEPS_GOAL - steps).toLocaleString(LOCALE)} restants`}
                 </Text>
               </View>
             </View>

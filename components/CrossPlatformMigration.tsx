@@ -17,6 +17,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 interface Props {
   visible: boolean;
@@ -26,23 +27,23 @@ interface Props {
 const STEPS = [
   {
     num: '1',
-    title: 'Crée un backup sur cet appareil',
-    body: "Tape le bouton ci-dessous. L'app crée un fichier .json qui contient toutes tes données.",
+    title: traduire('Crée un backup sur cet appareil'),
+    body: traduire("Tape le bouton ci-dessous. L'app crée un fichier .json qui contient toutes tes données."),
   },
   {
     num: '2',
-    title: 'Envoie-toi le fichier',
-    body: "Un écran de partage s'ouvre. Choisis comment envoyer :\n• Email (à toi-même)\n• WhatsApp (à toi-même)\n• Google Drive / iCloud Drive\n• AirDrop (entre iPhone et iPad / Mac)",
+    title: traduire('Envoie-toi le fichier'),
+    body: traduire("Un écran de partage s'ouvre. Choisis comment envoyer :\n• Email (à toi-même)\n• WhatsApp (à toi-même)\n• Google Drive / iCloud Drive\n• AirDrop (entre iPhone et iPad / Mac)"),
   },
   {
     num: '3',
-    title: 'Ouvre le fichier sur l\'autre appareil',
-    body: "Sur ton autre téléphone/tablette, ouvre ton email/WhatsApp et tape sur le fichier `.json`.",
+    title: traduire('Ouvre le fichier sur l\'autre appareil'),
+    body: traduire("Sur ton autre téléphone/tablette, ouvre ton email/WhatsApp et tape sur le fichier `.json`."),
   },
   {
     num: '4',
-    title: 'L\'app importe automatiquement',
-    body: "Yoroi détecte le fichier, vérifie son intégrité et te propose d'importer. Tape « Importer » et tout revient à l'identique.",
+    title: traduire('L\'app importe automatiquement'),
+    body: traduire("Yoroi détecte le fichier, vérifie son intégrité et te propose d'importer. Tape « Importer » et tout revient à l'identique."),
   },
 ];
 
@@ -57,12 +58,12 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
       const ok = await exportDataToJSON({ silent: false, includePhotos: type === 'full' });
       if (ok) {
         appAlert(
-          'Sauvegarde créée',
-          `Le fichier est prêt. Envoie-le à toi-même via le partage (email, WhatsApp, Drive…) puis ouvre-le sur ton autre appareil pour l'importer automatiquement.`
+          traduire('Sauvegarde créée'),
+          traduire(`Le fichier est prêt. Envoie-le à toi-même via le partage (email, WhatsApp, Drive…) puis ouvre-le sur ton autre appareil pour l'importer automatiquement.`)
         );
       }
     } catch (e) {
-      appAlert('Oups', 'La sauvegarde n’a pas pu être créée.');
+      appAlert('Oups', traduire('La sauvegarde n’a pas pu être créée.'));
     } finally {
       setCreating(null);
     }
@@ -76,7 +77,7 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
           <TouchableOpacity onPress={onClose} hitSlop={10}>
             <X size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Migrer vers un autre appareil</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{traduire("Migrer vers un autre appareil")}</Text>
           <View style={{ width: 22 }} />
         </View>
 
@@ -93,18 +94,16 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
               </View>
             </View>
             <Text style={[styles.heroTitle, { color: colors.text }]}>
-              Transfère tes données entre 2 appareils
-            </Text>
+              {traduire("Transfère tes données entre 2 appareils")}</Text>
             <Text style={[styles.heroSub, { color: colors.textMuted ?? '#666' }]}>
-              iPhone ↔ Android ↔ iPad ↔ Tablette Android. Marche dans tous les sens.
-            </Text>
+              {traduire("iPhone ↔ Android ↔ iPad ↔ Tablette Android. Marche dans tous les sens.")}</Text>
           </View>
 
           {/* Compatibilité */}
           <View style={[styles.infoBox, { backgroundColor: isDark ? '#1E1E22' : '#F9FAFB', borderColor: colors.border ?? '#E5E7EB' }]}>
             <Info size={16} color="#0EA5E9" />
             <Text style={[styles.infoText, { color: colors.text }]}>
-              <Text style={{ fontWeight: '700' }}>Combos supportés :{'\n'}</Text>
+              <Text style={{ fontWeight: '700' }}>{traduire("Combos supportés :{0}", '\n')}</Text>
               • iPhone → iPad / Mac (via AirDrop recommandé){'\n'}
               • iPhone → Android (via email ou Google Drive){'\n'}
               • Android → iPhone (via email ou Google Drive){'\n'}
@@ -113,7 +112,7 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
           </View>
 
           {/* Étapes */}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Comment ça marche</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{traduire("Comment ça marche")}</Text>
           {STEPS.map((step) => (
             <View key={step.num} style={[styles.step, { backgroundColor: isDark ? '#1E1E22' : '#fff', borderColor: colors.border ?? '#E5E7EB' }]}>
               <View style={styles.stepNumWrap}>
@@ -133,11 +132,11 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
               disabled={!!creating}
               activeOpacity={0.8}
               style={[styles.btn, styles.btnPrimary]}
-              accessibilityLabel="Créer un backup complet avec photos"
+              accessibilityLabel={traduire("Créer un backup complet avec photos")}
             >
               {creating === 'full' ? <ActivityIndicator color="#fff" size="small" /> : <CheckCircle2 size={16} color="#fff" />}
               <Text style={styles.btnPrimaryText}>
-                {creating === 'full' ? 'Création…' : 'Backup complet (avec photos)'}
+                {creating === 'full' ? traduire('Création…') : traduire('Backup complet (avec photos)')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -145,18 +144,17 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
               disabled={!!creating}
               activeOpacity={0.8}
               style={[styles.btn, styles.btnSecondary, { borderColor: '#0EA5E9' }]}
-              accessibilityLabel="Créer un backup léger sans photos"
+              accessibilityLabel={traduire("Créer un backup léger sans photos")}
             >
               {creating === 'light' ? <ActivityIndicator color="#0EA5E9" size="small" /> : <CheckCircle2 size={16} color="#0EA5E9" />}
               <Text style={[styles.btnSecondaryText, { color: '#0EA5E9' }]}>
-                {creating === 'light' ? 'Création…' : 'Backup léger (sans photos, rapide)'}
+                {creating === 'light' ? traduire('Création…') : traduire('Backup léger (sans photos, rapide)')}
               </Text>
             </TouchableOpacity>
           </View>
 
           <Text style={[styles.warn, { color: colors.textMuted ?? '#666' }]}>
-            Le backup est chiffré avec AES-256 si tu as activé le chiffrement. Sinon il est en clair.
-          </Text>
+            {traduire("Le backup est chiffré avec AES-256 si tu as activé le chiffrement. Sinon il est en clair.")}</Text>
         </ScrollView>
       </View>
     </Modal>

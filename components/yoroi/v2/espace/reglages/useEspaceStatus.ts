@@ -13,6 +13,7 @@ import { getSanteSource } from '@/lib/v2/sante/data';
 import type { SanteSource } from '@/lib/v2/sante/data';
 import { logger } from '@/lib/security/logger';
 import { getLastOffPhoneBackupDate } from '@/lib/v2/sauvegarde/rappel';
+import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 export type EspaceStatus = {
   /** undefined : en cours de lecture ; null : jamais sauvegarde */
@@ -24,9 +25,9 @@ export type EspaceStatus = {
 };
 
 const REMINDER_LABELS: [string, string][] = [
-  ['weighing', 'pesée'],
-  ['training', 'entraînement'],
-  ['streak', 'série'],
+  ['weighing', traduire('pesée')],
+  ['training', traduire('entraînement')],
+  ['streak', traduire('série')],
   ['briefing', 'briefing'],
   ['sleep', 'coucher'],
   ['hydration', 'eau'],
@@ -77,7 +78,7 @@ async function readStorage(): Promise<string | null> {
       }
     }
     const mb = total / (1024 * 1024);
-    return mb < 1 ? `${Math.max(1, Math.round(total / 1024))} Ko` : `${mb.toFixed(1).replace('.', ',')} Mo`;
+    return mb < 1 ? `${Math.max(1, Math.round(total / 1024))} Ko` : `${mb.toFixed(1).replace('.', DECIMAL)} Mo`;
   } catch {
     return null;
   }
@@ -116,7 +117,7 @@ export function useEspaceStatus() {
   return { status, reload };
 }
 
-const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MOIS = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 function hour(d: Date): string {
   const m = d.getMinutes();
@@ -129,10 +130,10 @@ export function backupWhen(d: Date): string {
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
   const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diff = Math.round((start - day) / 86400000);
-  if (diff <= 0) return `aujourd’hui à ${hour(d)}`;
-  if (diff === 1) return `hier à ${hour(d)}`;
+  if (diff <= 0) return traduire("aujourd’hui à {0}", hour(d));
+  if (diff === 1) return traduire("hier à {0}", hour(d));
   const y = d.getFullYear() !== today.getFullYear() ? ` ${d.getFullYear()}` : '';
-  return `le ${d.getDate()} ${MOIS[d.getMonth()]}${y}`;
+  return traduire("le {0} {1}{2}", d.getDate(), MOIS[d.getMonth()], y);
 }
 
 export function backupAgeDays(d: Date | null | undefined): number | null {
@@ -141,5 +142,5 @@ export function backupAgeDays(d: Date | null | undefined): number | null {
 }
 
 export function plural(n: number, one: string, many: string): string {
-  return `${n.toLocaleString('fr-FR').replace(/ | /g, ' ')} ${n > 1 ? many : one}`;
+  return `${n.toLocaleString(LOCALE).replace(/ | /g, ' ')} ${n > 1 ? many : one}`;
 }

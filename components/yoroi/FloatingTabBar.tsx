@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useYoroiTheme } from './YoroiThemeProvider';
 import { YText } from './YText';
+import { traduire } from '@/lib/i18n/tr';
 
 export type FloatingTabItem = {
   key: string;
@@ -30,7 +31,7 @@ export type FloatingTabBarViewProps = {
 export function FloatingTabBarView({
   items,
   onPressAdd,
-  addLabel = 'Ajouter',
+  addLabel = traduire('Ajouter'),
   inline = false,
   style,
 }: FloatingTabBarViewProps) {

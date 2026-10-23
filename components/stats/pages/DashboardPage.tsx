@@ -27,7 +27,7 @@ import { getWeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getUserSettings } from '@/lib/storage';
 import { format, parseISO, subDays } from 'date-fns';
 import { router } from 'expo-router';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { StatsHeader, Period } from '../StatsHeader';
 import { logger } from '@/lib/security/logger';

@@ -2,10 +2,11 @@ import { track } from '@/utils/telemetry';
 import { printToFileAsync, printAsync } from 'expo-print';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { getAllMeasurements } from './storage';
 import { getMeasurements, getProfile, Measurement } from './database';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // EXPORT PDF - YOROI
@@ -70,187 +71,14 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
   const lastMeasurement = measurements[measurements.length - 1];
 
   const dateStr = format(now, 'dd MMMM yyyy', { locale: fr });
-  const periodLabel = period === '30j' ? '30 derniers jours' : period === '90j' ? '90 derniers jours' : 'Toutes les données';
+  const periodLabel = period === '30j' ? traduire('30 derniers jours') : period === '90j' ? traduire('90 derniers jours') : traduire('Toutes les données');
 
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #FFFFFF;
-      color: #1F2937;
-      padding: 40px;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding-bottom: 20px;
-      border-bottom: 3px solid ${COLORS.gold};
-    }
-    .logo {
-      font-size: 32px;
-      font-weight: 800;
-      color: ${COLORS.gold};
-      margin-bottom: 8px;
-    }
-    .subtitle {
-      color: #6B7280;
-      font-size: 14px;
-    }
-    .meta {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 16px;
-      font-size: 12px;
-      color: #6B7280;
-    }
-    h2 {
-      color: ${COLORS.gold};
-      font-size: 18px;
-      margin: 30px 0 16px 0;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #E5E7EB;
-    }
-    .card {
-      background: #F9FAFB;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .stats-grid {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .stat-item {
-      flex: 1;
-      min-width: 120px;
-      text-align: center;
-      padding: 16px;
-      background: white;
-      border-radius: 8px;
-      border: 1px solid #E5E7EB;
-    }
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1F2937;
-    }
-    .stat-value.success { color: ${COLORS.success}; }
-    .stat-value.danger { color: ${COLORS.danger}; }
-    .stat-value.gold { color: ${COLORS.gold}; }
-    .stat-label {
-      font-size: 12px;
-      color: #6B7280;
-      margin-top: 4px;
-      text-transform: uppercase;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      font-size: 13px;
-    }
-    th, td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid #E5E7EB;
-    }
-    th {
-      background: #F3F4F6;
-      font-weight: 600;
-      color: #374151;
-    }
-    tr:nth-child(even) {
-      background: #F9FAFB;
-    }
-    .footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 2px solid #E5E7EB;
-      text-align: center;
-      font-size: 11px;
-      color: #9CA3AF;
-    }
-    .measurement-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #E5E7EB;
-    }
-    .measurement-label {
-      color: #374151;
-    }
-    .measurement-values {
-      display: flex;
-      gap: 20px;
-    }
-    .measurement-value {
-      text-align: right;
-    }
-    .delta {
-      font-size: 12px;
-      margin-left: 8px;
-    }
-    .delta.positive { color: ${COLORS.danger}; }
-    .delta.negative { color: ${COLORS.success}; }
-    .page-break {
-      page-break-before: always;
-    }
-    @media print {
-      body { padding: 20px; }
-      .page-break { page-break-before: always; }
-    }
-  </style>
-</head>
-<body>
-  <!-- HEADER -->
-  <div class="header">
-    <div class="logo">YOROI</div>
-    <div class="subtitle">Rapport de suivi - ${profile?.name || 'Athlète'}</div>
-    <div class="meta">
-      <span>Genere le ${dateStr}</span>
-      <span>${periodLabel}</span>
-    </div>
-  </div>
-
-  <!-- RÉSUMÉ POIDS -->
-  <h2>Résumé du poids</h2>
-  <div class="card">
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="stat-value">${firstWeight ? firstWeight.weight.toFixed(1) : '--'}</div>
-        <div class="stat-label">Poids initial (kg)</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value gold">${lastWeight ? lastWeight.weight.toFixed(1) : '--'}</div>
-        <div class="stat-label">Poids actuel (kg)</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value ${weightDelta < 0 ? 'success' : weightDelta > 0 ? 'danger' : ''}">${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)}</div>
-        <div class="stat-label">Evolution (kg)</div>
-      </div>
-      ${heightM ? `
+  return traduire("\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <style>\n    * {\n      margin: 0;\n      padding: 0;\n      box-sizing: border-box;\n    }\n    body {\n      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n      background: #FFFFFF;\n      color: #1F2937;\n      padding: 40px;\n      font-size: 14px;\n      line-height: 1.5;\n    }\n    .header {\n      text-align: center;\n      margin-bottom: 40px;\n      padding-bottom: 20px;\n      border-bottom: 3px solid {0};\n    }\n    .logo {\n      font-size: 32px;\n      font-weight: 800;\n      color: {1};\n      margin-bottom: 8px;\n    }\n    .subtitle {\n      color: #6B7280;\n      font-size: 14px;\n    }\n    .meta {\n      display: flex;\n      justify-content: space-between;\n      margin-top: 16px;\n      font-size: 12px;\n      color: #6B7280;\n    }\n    h2 {\n      color: {2};\n      font-size: 18px;\n      margin: 30px 0 16px 0;\n      padding-bottom: 8px;\n      border-bottom: 2px solid #E5E7EB;\n    }\n    .card {\n      background: #F9FAFB;\n      border-radius: 12px;\n      padding: 20px;\n      margin-bottom: 20px;\n    }\n    .stats-grid {\n      display: flex;\n      gap: 16px;\n      flex-wrap: wrap;\n    }\n    .stat-item {\n      flex: 1;\n      min-width: 120px;\n      text-align: center;\n      padding: 16px;\n      background: white;\n      border-radius: 8px;\n      border: 1px solid #E5E7EB;\n    }\n    .stat-value {\n      font-size: 28px;\n      font-weight: 700;\n      color: #1F2937;\n    }\n    .stat-value.success { color: {3}; }\n    .stat-value.danger { color: {4}; }\n    .stat-value.gold { color: {5}; }\n    .stat-label {\n      font-size: 12px;\n      color: #6B7280;\n      margin-top: 4px;\n      text-transform: uppercase;\n    }\n    table {\n      width: 100%;\n      border-collapse: collapse;\n      margin-top: 16px;\n      font-size: 13px;\n    }\n    th, td {\n      padding: 10px 12px;\n      text-align: left;\n      border-bottom: 1px solid #E5E7EB;\n    }\n    th {\n      background: #F3F4F6;\n      font-weight: 600;\n      color: #374151;\n    }\n    tr:nth-child(even) {\n      background: #F9FAFB;\n    }\n    .footer {\n      margin-top: 40px;\n      padding-top: 20px;\n      border-top: 2px solid #E5E7EB;\n      text-align: center;\n      font-size: 11px;\n      color: #9CA3AF;\n    }\n    .measurement-row {\n      display: flex;\n      justify-content: space-between;\n      padding: 12px 0;\n      border-bottom: 1px solid #E5E7EB;\n    }\n    .measurement-label {\n      color: #374151;\n    }\n    .measurement-values {\n      display: flex;\n      gap: 20px;\n    }\n    .measurement-value {\n      text-align: right;\n    }\n    .delta {\n      font-size: 12px;\n      margin-left: 8px;\n    }\n    .delta.positive { color: {6}; }\n    .delta.negative { color: {7}; }\n    .page-break {\n      page-break-before: always;\n    }\n    @media print {\n      body { padding: 20px; }\n      .page-break { page-break-before: always; }\n    }\n  </style>\n</head>\n<body>\n  <!-- HEADER -->\n  <div class=\"header\">\n    <div class=\"logo\">YOROI</div>\n    <div class=\"subtitle\">Rapport de suivi - {8}</div>\n    <div class=\"meta\">\n      <span>Genere le {9}</span>\n      <span>{10}</span>\n    </div>\n  </div>\n\n  <!-- RÉSUMÉ POIDS -->\n  <h2>Résumé du poids</h2>\n  <div class=\"card\">\n    <div class=\"stats-grid\">\n      <div class=\"stat-item\">\n        <div class=\"stat-value\">{11}</div>\n        <div class=\"stat-label\">Poids initial (kg)</div>\n      </div>\n      <div class=\"stat-item\">\n        <div class=\"stat-value gold\">{12}</div>\n        <div class=\"stat-label\">Poids actuel (kg)</div>\n      </div>\n      <div class=\"stat-item\">\n        <div class=\"stat-value {13}\">{14}{15}</div>\n        <div class=\"stat-label\">Evolution (kg)</div>\n      </div>\n      {16}\n    </div>\n  </div>\n\n  {17}\n\n  {18}\n\n  <!-- FOOTER -->\n  <div class=\"footer\">\n    <p>Document genere par <strong>YOROI</strong> - Application de suivi fitness</p>\n    <p style=\"margin-top: 4px;\">Ce rapport est fourni a titre informatif. Consultez un professionnel de santé pour toute decision medicale.</p>\n  </div>\n</body>\n</html>\n", COLORS.gold, COLORS.gold, COLORS.gold, COLORS.success, COLORS.danger, COLORS.gold, COLORS.danger, COLORS.success, profile?.name || 'Athlète', dateStr, periodLabel, firstWeight ? firstWeight.weight.toFixed(1) : '--', lastWeight ? lastWeight.weight.toFixed(1) : '--', weightDelta < 0 ? 'success' : weightDelta > 0 ? 'danger' : '', weightDelta > 0 ? '+' : '', weightDelta.toFixed(1), heightM ? `
       <div class="stat-item">
         <div class="stat-value">${lastIMC ? lastIMC.toFixed(1) : '--'}</div>
         <div class="stat-label">IMC actuel</div>
       </div>
-      ` : ''}
-    </div>
-  </div>
-
-  ${weights.length > 0 ? `
+      ` : '', weights.length > 0 ? `
   <!-- HISTORIQUE POIDS -->
   <h2>Historique des pesees (${weights.length} entrees)</h2>
   <table>
@@ -276,9 +104,7 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
     </tbody>
   </table>
   ${weights.length > 20 ? `<p style="font-size: 11px; color: #9CA3AF; margin-top: 8px;">Affichage des 20 dernieres entrees sur ${weights.length}</p>` : ''}
-  ` : ''}
-
-  ${measurements.length > 0 ? `
+  ` : '', measurements.length > 0 ? `
   <!-- MENSURATIONS -->
   <div class="page-break"></div>
   <h2>Mensurations (${measurements.length} entrees)</h2>
@@ -305,16 +131,7 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
     ${generateMeasurementRow('Mollet droit', firstMeasurement?.right_calf, lastMeasurement.right_calf)}
     ` : ''}
   </div>
-  ` : ''}
-
-  <!-- FOOTER -->
-  <div class="footer">
-    <p>Document genere par <strong>YOROI</strong> - Application de suivi fitness</p>
-    <p style="margin-top: 4px;">Ce rapport est fourni a titre informatif. Consultez un professionnel de santé pour toute decision medicale.</p>
-  </div>
-</body>
-</html>
-`;
+  ` : '');
 };
 
 // Helper pour generer une ligne de mensuration
@@ -353,7 +170,7 @@ export const generateProgressPDF = async (period: ExportPeriod = '30j'): Promise
     if (await isAvailableAsync()) {
       await shareAsync(uri, {
         mimeType: 'application/pdf',
-        dialogTitle: 'Exporter mon rapport Yoroi',
+        dialogTitle: traduire('Exporter mon rapport Yoroi'),
         UTI: 'com.adobe.pdf',
       });
     } else {

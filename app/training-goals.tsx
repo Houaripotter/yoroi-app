@@ -18,13 +18,14 @@ import { TrainingGoalsTab } from '@/components/yoroi/v2/competition/TrainingGoal
 import { GoalsChecklist } from '@/components/yoroi/v2/objectifs/GoalsChecklist';
 import { useAthlete } from '@/lib/v2/competition/athlete';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire } from '@/lib/i18n/tr';
 
 type Tab = 'liste' | 'objectives' | 'training';
 
 const SUBTITLES: Record<Tab, string> = {
-  liste: 'Fixe une cible claire et coche-la quand c’est fait',
-  objectives: 'Le temps qui te sépare de tes buts',
-  training: 'Ton rythme, sport par sport',
+  liste: traduire('Fixe une cible claire et coche-la quand c’est fait'),
+  objectives: traduire('Le temps qui te sépare de tes buts'),
+  training: traduire('Ton rythme, sport par sport'),
 };
 
 /** Carte compacte a la place d'un onglet Premium : l'onglet reste visible, le reste de l'ecran aussi */
@@ -37,7 +38,7 @@ function PremiumNote({ title, text }: { title: string; text: string }) {
       <Ink size={13} weight="bold" color={P.ink2}>
         {text}
       </Ink>
-      <BigButton label="Voir Premium" onPress={() => ouvrirPaywall('objectifs_dates')} />
+      <BigButton label={traduire("Voir Premium")} onPress={() => ouvrirPaywall('objectifs_dates')} />
     </Glass>
   );
 }
@@ -49,24 +50,24 @@ export default function TrainingGoalsScreen() {
   const { isPremium } = usePremium();
 
   return (
-    <DetailScreen title="Tes objectifs" subtitle={SUBTITLES[tab]}>
+    <DetailScreen title={traduire("Tes objectifs")} subtitle={SUBTITLES[tab]}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
-          <Pill label="À cocher" active={tab === 'liste'} accent={P.accent} onPress={() => setTab('liste')} />
+          <Pill label={traduire("À cocher")} active={tab === 'liste'} accent={P.accent} onPress={() => setTab('liste')} />
         </View>
         <View style={{ flex: 1 }}>
-          <Pill label="Datés" active={tab === 'objectives'} accent={P.accent} onPress={() => setTab('objectives')} />
+          <Pill label={traduire("Datés")} active={tab === 'objectives'} accent={P.accent} onPress={() => setTab('objectives')} />
         </View>
         <View style={{ flex: 1 }}>
-          <Pill label="Par sport" active={tab === 'training'} accent={P.accent} onPress={() => setTab('training')} />
+          <Pill label={traduire("Par sport")} active={tab === 'training'} accent={P.accent} onPress={() => setTab('training')} />
         </View>
       </View>
       {tab === 'liste' ? <GoalsChecklist /> : null}
       {tab === 'objectives' ? (
-        isPremium ? <ObjectivesTab /> : <PremiumNote title="Des objectifs datés" text="Compétition, poids, examen : un compte à rebours jusqu’à chaque but. Disponible avec Premium." />
+        isPremium ? <ObjectivesTab /> : <PremiumNote title={traduire("Des objectifs datés")} text={traduire("Compétition, poids, examen : un compte à rebours jusqu’à chaque but. Disponible avec Premium.")} />
       ) : null}
       {tab === 'training' ? (
-        isPremium ? <TrainingGoalsTab gender={gender} /> : <PremiumNote title="Un rythme par sport" text="Fixe tes séances par semaine pour chaque discipline et suis-les semaine après semaine. Disponible avec Premium." />
+        isPremium ? <TrainingGoalsTab gender={gender} /> : <PremiumNote title={traduire("Un rythme par sport")} text={traduire("Fixe tes séances par semaine pour chaque discipline et suis-les semaine après semaine. Disponible avec Premium.")} />
       ) : null}
     </DetailScreen>
   );

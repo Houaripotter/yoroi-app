@@ -19,6 +19,7 @@ import { NightBars, NightLetters, NightRow, Stars, Stepper, Toggle, QUALITY_LABE
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { intensite } from '@/lib/v2/intensite';
 import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 type HkNight = { total: number; deep: number; rem: number; core: number; awake: number };
 
@@ -31,10 +32,10 @@ async function hkLastNight(): Promise<any[] | null> {
 }
 
 function advice(debtH: number): { text: string; color: string } {
-  if (debtH <= 2) return { text: 'Ton sommeil est au rendez-vous. Garde ce rythme.', color: intensite(2).text };
-  if (debtH <= 5) return { text: `Il te manque ${String(debtH).replace('.', ',')} h sur 7 jours. Couche-toi un peu plus tôt ce soir.`, color: intensite(3).text };
-  if (debtH <= 10) return { text: `${String(debtH).replace('.', ',')} h de retard sur 7 jours. La fatigue va peser sur tes séances.`, color: intensite(4).text };
-  return { text: `${String(debtH).replace('.', ',')} h de retard. Ton corps a besoin de vraies nuits avant de pousser.`, color: intensite(5).text };
+  if (debtH <= 2) return { text: traduire('Ton sommeil est au rendez-vous. Garde ce rythme.'), color: intensite(2).text };
+  if (debtH <= 5) return { text: traduire("Il te manque {0} h sur 7 jours. Couche-toi un peu plus tôt ce soir.", String(debtH).replace('.', DECIMAL)), color: intensite(3).text };
+  if (debtH <= 10) return { text: traduire("{0} h de retard sur 7 jours. La fatigue va peser sur tes séances.", String(debtH).replace('.', DECIMAL)), color: intensite(4).text };
+  return { text: traduire("{0} h de retard. Ton corps a besoin de vraies nuits avant de pousser.", String(debtH).replace('.', DECIMAL)), color: intensite(5).text };
 }
 
 function SleepExample() {
@@ -43,14 +44,12 @@ function SleepExample() {
       <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ opacity: 0.42 }}>
         <View style={{ borderRadius: 26, backgroundColor: P.indigo, padding: 22, gap: 12 }}>
           <Ink size={13} weight="bold" color="#C9D3EA">
-            Ta dernière nuit
-          </Ink>
+            {traduire("Ta dernière nuit")}</Ink>
           <Ink size={60} weight="black" tight color={P.white}>
             7 h 30
           </Ink>
           <Ink size={15} weight="bold" color="#E4E9F3">
-            23 h 10 à 6 h 40
-          </Ink>
+            {traduire("23 h 10 à 6 h 40")}</Ink>
           <View style={{ flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden' }}>
             <View style={{ flex: 80, backgroundColor: '#0F1F45' }} />
             <View style={{ flex: 230, backgroundColor: '#6E86C0' }} />
@@ -128,7 +127,7 @@ export default function Sommeil() {
     if (value) {
       const granted = await requestNotificationPermissions();
       if (!granted) {
-        appAlert('Autorisation nécessaire', 'Active les notifications pour YOROI dans les réglages de ton téléphone.');
+        appAlert(traduire('Autorisation nécessaire'), traduire('Active les notifications pour YOROI dans les réglages de ton téléphone.'));
         return;
       }
     }
@@ -170,26 +169,25 @@ export default function Sommeil() {
 
   return (
     <DetailScreen
-      title="Ton sommeil"
-      subtitle={last ? `Objectif ${hm(goal)} par nuit` : '30 % de ta récupération'}
-      footer={<BigButton label="Noter ma nuit" icon="moon" onPress={() => router.push('/sleep-input' as any)} />}
+      title={traduire("Ton sommeil")}
+      subtitle={last ? traduire("Objectif {0} par nuit", hm(goal)) : traduire('30 % de ta récupération')}
+      footer={<BigButton label={traduire("Noter ma nuit")} icon="moon" onPress={() => router.push('/sleep-input' as any)} />}
     >
       {/* Derniere nuit */}
       <Enter i={0}>
         {lastTotal > 0 ? (
-          <Press onPress={() => last && router.push({ pathname: '/sleep-detail', params: { date: last.date } } as any)} accessibilityRole="button" accessibilityLabel={`Dernière nuit : ${hm(lastTotal)}`}>
+          <Press onPress={() => last && router.push({ pathname: '/sleep-detail', params: { date: last.date } } as any)} accessibilityRole="button" accessibilityLabel={traduire("Dernière nuit : {0}", hm(lastTotal))}>
             <View style={{ borderRadius: 26, backgroundColor: P.indigo, padding: 22, gap: 12, overflow: 'hidden' }}>
               <Ornement name="lanterne" size={84} opacity={0.92} style={{ position: 'absolute', right: 16, top: 16 }} />
               <Ink size={13} weight="bold" color="#C9D3EA">
-                Ta dernière nuit
-              </Ink>
+                {traduire("Ta dernière nuit")}</Ink>
               <Ink size={60} weight="black" tight color={P.white}>
                 {hm(lastTotal)}
               </Ink>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 {last?.bedTime && last?.wakeTime ? (
                   <Ink size={15} weight="bold" color="#E4E9F3">
-                    {`${clock(last.bedTime)} à ${clock(last.wakeTime)}`}
+                    {traduire("{0} à {1}", clock(last.bedTime), clock(last.wakeTime))}
                   </Ink>
                 ) : null}
                 {last && last.quality > 0 ? (
@@ -214,9 +212,9 @@ export default function Sommeil() {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     {[
                       { l: 'profond', v: hk.deep },
-                      { l: 'léger', v: hk.core },
+                      { l: traduire('léger'), v: hk.core },
                       { l: 'paradoxal', v: hk.rem },
-                      { l: 'éveillé', v: hk.awake },
+                      { l: traduire('éveillé'), v: hk.awake },
                     ].map((p) => (
                       <View key={p.l}>
                         <Ink size={14} weight="black" color={P.white}>
@@ -234,7 +232,7 @@ export default function Sommeil() {
                 <View style={{ width: `${Math.min(100, (lastTotal / goal) * 100)}%`, height: 6, backgroundColor: lastTotal >= goal ? P.goldLight : P.white }} />
               </View>
               <Ink size={13} weight="bold" color="#E4E9F3">
-                {lastTotal >= goal ? 'Objectif atteint' : `${hm(goal - lastTotal)} sous ton objectif`}
+                {lastTotal >= goal ? traduire('Objectif atteint') : traduire("{0} sous ton objectif", hm(goal - lastTotal))}
               </Ink>
             </View>
           </Press>
@@ -243,11 +241,9 @@ export default function Sommeil() {
             <SleepExample />
             <View style={{ gap: 4, paddingHorizontal: 4 }}>
               <Ink size={20} weight="black" tight>
-                Aucune nuit notée
-              </Ink>
+                {traduire("Aucune nuit notée")}</Ink>
               <Ink size={14} weight="medium" color={P.ink2}>
-                Note ta nuit chaque matin, ça prend deux appuis. Ton score de récupération s’en servira.
-              </Ink>
+                {traduire("Note ta nuit chaque matin, ça prend deux appuis. Ton score de récupération s’en servira.")}</Ink>
             </View>
           </View>
         )}
@@ -256,13 +252,13 @@ export default function Sommeil() {
       {/* Semaine */}
       {entries.length > 0 ? (
         <Enter i={1} style={{ gap: 10 }}>
-          <SectionTitle>Tes 7 dernières nuits</SectionTitle>
+          <SectionTitle>{traduire("Tes 7 dernières nuits")}</SectionTitle>
           <Card style={{ gap: 10 }}>
             <NightBars entries={entries} goal={goal} width={chartW} height={130} />
             <NightLetters width={chartW} />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, paddingTop: 14, borderTopWidth: 1, borderTopColor: P.line2 }}>
-              <Stat value={stats && stats.averageDuration > 0 ? hm(stats.averageDuration) : 'pas noté'} label="en moyenne" color={P.indigo} />
-              <Stat value={stats && stats.averageQuality > 0 ? String(stats.averageQuality).replace('.', ',') : 'pas noté'} unit={stats && stats.averageQuality > 0 ? 'sur 5' : undefined} label="qualité" />
+              <Stat value={stats && stats.averageDuration > 0 ? hm(stats.averageDuration) : traduire('pas noté')} label="en moyenne" color={P.indigo} />
+              <Stat value={stats && stats.averageQuality > 0 ? String(stats.averageQuality).replace('.', DECIMAL) : traduire('pas noté')} unit={stats && stats.averageQuality > 0 ? traduire('sur 5') : undefined} label={traduire("qualité")} />
               <Stat value={stats ? (stats.trend === 'improving' ? 'en hausse' : stats.trend === 'declining' ? 'en baisse' : 'stable') : 'stable'} label="tendance" color={stats?.trend === 'declining' ? intensite(4).text : stats?.trend === 'improving' ? P.mossText : P.ink} />
             </View>
             {adv ? (
@@ -281,48 +277,43 @@ export default function Sommeil() {
       {stats && stats.totalDays > 0 ? (
         <Enter i={2}>
           <Card style={{ flexDirection: 'row', gap: 10 }}>
-            <Stat value={String(stats.currentStreak)} unit={stats.currentStreak > 1 ? 'nuits' : 'nuit'} label="objectif tenu d’affilée" />
-            <Stat value={String(stats.longestStreak)} unit={stats.longestStreak > 1 ? 'nuits' : 'nuit'} label="ton record" color={P.goldDark} />
-            <Stat value={`${stats.goalReachedDays}/${stats.totalDays}`} label="nuits réussies sur 30 jours" />
+            <Stat value={String(stats.currentStreak)} unit={stats.currentStreak > 1 ? 'nuits' : 'nuit'} label={traduire("objectif tenu d’affilée")} />
+            <Stat value={String(stats.longestStreak)} unit={stats.longestStreak > 1 ? 'nuits' : 'nuit'} label={traduire("ton record")} color={P.goldDark} />
+            <Stat value={`${stats.goalReachedDays}/${stats.totalDays}`} label={traduire("nuits réussies sur 30 jours")} />
           </Card>
         </Enter>
       ) : null}
 
       {/* Objectif et rappel */}
       <Enter i={3} style={{ gap: 10 }}>
-        <SectionTitle>Tes réglages</SectionTitle>
+        <SectionTitle>{traduire("Tes réglages")}</SectionTitle>
         <Card style={{ gap: 12 }}>
           <Ink size={15} weight="extraBold">
-            Objectif par nuit
-          </Ink>
-          <Stepper value={hm(goal)} label="Objectif de sommeil" onMinus={() => changeGoal(-30)} onPlus={() => changeGoal(30)} color={P.indigo} />
+            {traduire("Objectif par nuit")}</Ink>
+          <Stepper value={hm(goal)} label={traduire("Objectif de sommeil")} onMinus={() => changeGoal(-30)} onPlus={() => changeGoal(30)} color={P.indigo} />
         </Card>
         <Card style={{ gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Ink size={15} weight="extraBold">
-                Rappel du coucher
-              </Ink>
+                {traduire("Rappel du coucher")}</Ink>
               <Ink size={13} weight="medium" color={P.ink2}>
-                Une notification pour aller dormir à l’heure.
-              </Ink>
+                {traduire("Une notification pour aller dormir à l’heure.")}</Ink>
             </View>
-            <Toggle value={notif} onChange={toggleReminder} label="Rappel du coucher" />
+            <Toggle value={notif} onChange={toggleReminder} label={traduire("Rappel du coucher")} />
           </View>
-          {notif ? <Stepper value={clock(bedtime)} label="Heure du rappel" onMinus={() => saveBedtime(shiftTime(bedtime, -15))} onPlus={() => saveBedtime(shiftTime(bedtime, 15))} /> : null}
+          {notif ? <Stepper value={clock(bedtime)} label={traduire("Heure du rappel")} onMinus={() => saveBedtime(shiftTime(bedtime, -15))} onPlus={() => saveBedtime(shiftTime(bedtime, 15))} /> : null}
         </Card>
       </Enter>
 
       {/* Historique */}
       <Enter i={4} style={{ gap: 10 }}>
-        <SectionTitle action={entries.length > 0 ? 'Tout voir' : undefined} onAction={() => router.push('/sleep-history' as any)}>
-          Historique
-        </SectionTitle>
+        <SectionTitle action={entries.length > 0 ? traduire('Tout voir') : undefined} onAction={() => router.push('/sleep-history' as any)}>
+          {traduire("Historique")}</SectionTitle>
         {entries.length === 0 ? (
           <Card>
             <Ink size={14} color={P.ink2}>
-              Tes nuits apparaîtront ici.
-            </Ink>
+              {traduire("Tes nuits apparaîtront ici.")}</Ink>
           </Card>
         ) : (
           <Card style={{ paddingVertical: 6 }}>
@@ -333,7 +324,7 @@ export default function Sommeil() {
               <NightRow key={e.id} entry={e} goal={goal} locked onPress={() => ouvrirPaywall('periode_longue', locked.length)} />
             ))}
             {locked.length > 0 ? (
-              <View style={{ marginVertical: 8 }}><BigButton label="Voir tout l’historique" tone="light" onPress={() => ouvrirPaywall('periode_longue', locked.length)} /></View>
+              <View style={{ marginVertical: 8 }}><BigButton label={traduire("Voir tout l’historique")} tone="light" onPress={() => ouvrirPaywall('periode_longue', locked.length)} /></View>
             ) : null}
           </Card>
         )}

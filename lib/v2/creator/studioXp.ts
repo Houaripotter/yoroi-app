@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import { isDemoDataActive } from '@/lib/demoDataService';
 import { ARMURE_CHANGED_EVENT, RANKS, syncArmure, todayIso } from '@/lib/v2/armure';
+import { traduire } from '@/lib/i18n/tr';
 
 const LEDGER_KEY = 'yoroi_xp_ledger_v1';
 const STUDIO_PREFIX = 'studio:';
@@ -19,7 +20,7 @@ type Row = { k: string; d: string; s: string; a: number; t: string; l: string };
 
 export class DemoRequiredError extends Error {
   constructor() {
-    super('Charge un profil démo pour modifier les XP.');
+    super(traduire('Charge un profil démo pour modifier les XP.'));
   }
 }
 
@@ -49,7 +50,7 @@ async function commit(rows: Row[]): Promise<number> {
 function withDelta(rows: Row[], delta: number): Row[] {
   const out = rows.map((r) => ({ ...r }));
   if (delta > 0) {
-    out.push({ k: `${STUDIO_PREFIX}${Date.now()}`, d: todayIso(), s: 'reprise', a: Math.round(delta), t: stamp(), l: 'Ajout du Studio (démo)' });
+    out.push({ k: `${STUDIO_PREFIX}${Date.now()}`, d: todayIso(), s: 'reprise', a: Math.round(delta), t: stamp(), l: traduire('Ajout du Studio (démo)') });
     return out;
   }
   let left = Math.round(-delta);

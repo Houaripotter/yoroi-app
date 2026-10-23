@@ -19,6 +19,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { tap } from '@/components/yoroi/v2/dojo/parts';
+import { traduire } from '@/lib/i18n/tr';
 
 export type CibleDojo = 'hero' | 'aujourdhui' | 'recompense' | 'semaines' | 'sceaux' | 'aide';
 export type Rect = { x: number; y: number; w: number; h: number };
@@ -26,14 +27,14 @@ export type Rect = { x: number; y: number; w: number; h: number };
 type Etape = { titre: string; texte: string; cible?: CibleDojo };
 
 export const ETAPES_DOJO: Etape[] = [
-  { titre: 'Bienvenue dans ton Dojo', texte: 'Bienvenue dans ton Dojo. Ici, chaque effort te rapporte des points. Je te montre tout en trente secondes.' },
-  { titre: 'Ton rang', texte: 'Voici ton personnage et ton rang. Plus tu gagnes de points, plus tu montes en rang, et plus tu débloques de récompenses.', cible: 'hero' },
-  { titre: 'Ta série', texte: 'Chaque jour, fais un petit geste : une séance, une pesée, ou juste un verre d’eau. Ta flamme compte les jours d’affilée.', cible: 'aujourdhui' },
-  { titre: 'Ton coffre du jour', texte: 'Ton geste fait, ouvre ton coffre du jour. Plus ta série est longue, plus il rapporte. Tous les sept jours, c’est le grand coffre.', cible: 'aujourdhui' },
-  { titre: 'Ta prochaine récompense', texte: 'Ici, ta prochaine récompense, et les points qu’il te reste pour l’avoir.', cible: 'recompense' },
-  { titre: 'Tes semaines', texte: 'Choisis combien de séances tu veux faire par semaine. Chaque semaine réussie rapporte des points. Tu en rates une ? Un joker te sauve. Blessé ou malade ? Mets ta semaine en pause.', cible: 'semaines' },
-  { titre: 'Sceaux et niveaux', texte: 'Plus bas, tes sceaux à collectionner, et ton niveau dans chaque sport.', cible: 'sceaux' },
-  { titre: 'À toi de jouer', texte: 'C’est tout. Reviens chaque jour ouvrir ton coffre. Pour revoir cette visite, touche le point d’interrogation, en haut du Dojo.', cible: 'aide' },
+  { titre: traduire('Bienvenue dans ton Dojo'), texte: traduire('Bienvenue dans ton Dojo. Ici, chaque effort te rapporte des points. Je te montre tout en trente secondes.') },
+  { titre: traduire('Ton rang'), texte: traduire('Voici ton personnage et ton rang. Plus tu gagnes de points, plus tu montes en rang, et plus tu débloques de récompenses.'), cible: 'hero' },
+  { titre: traduire('Ta série'), texte: traduire('Chaque jour, fais un petit geste : une séance, une pesée, ou juste un verre d’eau. Ta flamme compte les jours d’affilée.'), cible: 'aujourdhui' },
+  { titre: traduire('Ton coffre du jour'), texte: traduire('Ton geste fait, ouvre ton coffre du jour. Plus ta série est longue, plus il rapporte. Tous les sept jours, c’est le grand coffre.'), cible: 'aujourdhui' },
+  { titre: traduire('Ta prochaine récompense'), texte: traduire('Ici, ta prochaine récompense, et les points qu’il te reste pour l’avoir.'), cible: 'recompense' },
+  { titre: traduire('Tes semaines'), texte: traduire('Choisis combien de séances tu veux faire par semaine. Chaque semaine réussie rapporte des points. Tu en rates une ? Un joker te sauve. Blessé ou malade ? Mets ta semaine en pause.'), cible: 'semaines' },
+  { titre: traduire('Sceaux et niveaux'), texte: traduire('Plus bas, tes sceaux à collectionner, et ton niveau dans chaque sport.'), cible: 'sceaux' },
+  { titre: traduire('À toi de jouer'), texte: traduire('C’est tout. Reviens chaque jour ouvrir ton coffre. Pour revoir cette visite, touche le point d’interrogation, en haut du Dojo.'), cible: 'aide' },
 ];
 
 const VOIX: number[] = [
@@ -214,12 +215,12 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
 
         <Animated.View key={`b${i}`} entering={FadeIn.duration(160)} style={{ position: 'absolute', left: 16, right: 16, top: bulleTop, bottom: bulleBottom, maxWidth: Math.min(520, width - 32), alignSelf: 'center', backgroundColor: c.surface, borderRadius: 24, padding: 18, gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Ink size={12} weight="extraBold" color={c.accent} style={{ flex: 1 }}>{`${i + 1} sur ${ETAPES_DOJO.length}`}</Ink>
-            <Pressable onPress={basculerVoix} accessibilityRole="button" accessibilityLabel={voix ? 'Couper la voix' : 'Remettre la voix'} hitSlop={8} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Ink size={12} weight="extraBold" color={c.accent} style={{ flex: 1 }}>{traduire("{0} sur {1}", i + 1, ETAPES_DOJO.length)}</Ink>
+            <Pressable onPress={basculerVoix} accessibilityRole="button" accessibilityLabel={voix ? traduire('Couper la voix') : traduire('Remettre la voix')} hitSlop={8} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
               <MaterialCommunityIcons name={voix ? 'volume-high' : 'volume-off'} size={20} color={c.accent} />
             </Pressable>
             {voix ? (
-              <Pressable onPress={vitesseSuivante} accessibilityRole="button" accessibilityLabel={`Vitesse de la voix : ${libelleVitesse(vitesse)}. Changer`} hitSlop={8} style={{ minWidth: 46, height: 40, borderRadius: 20, paddingHorizontal: 10, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={vitesseSuivante} accessibilityRole="button" accessibilityLabel={traduire("Vitesse de la voix : {0}. Changer", libelleVitesse(vitesse))} hitSlop={8} style={{ minWidth: 46, height: 40, borderRadius: 20, paddingHorizontal: 10, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={13} weight="extraBold" color={c.accent}>{libelleVitesse(vitesse)}</Ink>
               </Pressable>
             ) : null}
@@ -234,7 +235,7 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
             {premiere ? (
               <Pressable onPress={() => fermer(false)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>
-                <Ink size={15} weight="extraBold" color={c.textSecondary}>Plus tard</Ink>
+                <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire("Plus tard")}</Ink>
               </Pressable>
             ) : null}
             <Pressable
@@ -246,10 +247,10 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
               accessibilityRole="button"
               style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}
             >
-              <Ink size={15} weight="black" color={c.onAccent}>{premiere ? 'C’est parti' : derniere ? 'Terminer' : 'Suivant'}</Ink>
+              <Ink size={15} weight="black" color={c.onAccent}>{premiere ? traduire('C’est parti') : derniere ? traduire('Terminer') : traduire('Suivant')}</Ink>
             </Pressable>
           </View>
-          {premiere ? <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>Tu pourras la revoir avec le bouton « ? » en haut du Dojo.</Ink> : null}
+          {premiere ? <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>{traduire("Tu pourras la revoir avec le bouton « ? » en haut du Dojo.")}</Ink> : null}
         </Animated.View>
       </View>
     </Modal>

@@ -1,0 +1,225 @@
+[
+{
+"id": "b4fbe10002",
+"fr": "{0} : rien pour l’instant",
+"zone": "ecrans",
+"ref": "app/body-history.tsx:172"
+},
+{
+"id": "ec22dd542f",
+"fr": "{0}{1} depuis le début",
+"zone": "ecrans",
+"ref": "app/body-history.tsx:186"
+},
+{
+"id": "1e548702d2",
+"fr": "sur {0} succès",
+"zone": "ecrans",
+"ref": "app/combat-achievements.tsx:72"
+},
+{
+"id": "20ad049cb7",
+"fr": "Niveau {0}, {1} séance",
+"zone": "ecrans",
+"plural": "one",
+"ref": "app/dojo/ceintures.tsx:101"
+},
+{
+"id": "c36856138b",
+"fr": "Niveau {0}, {1} séances",
+"zone": "ecrans",
+"plural": "other",
+"ref": "app/dojo/ceintures.tsx:101"
+},
+{
+"id": "302bf13d91",
+"fr": "{0} en attente. Coche quand c'est travaillé.",
+"zone": "ecrans",
+"ref": "app/game-plan.tsx:108"
+},
+{
+"id": "9bc04d3246",
+"fr": "Importer {0}",
+"ctx": "label",
+"zone": "exports_pdf_partage",
+"ref": "app/import-csv.tsx:251"
+},
+{
+"id": "a211abc4b1",
+"fr": "{0}, ton suivi est à jour.",
+"ctx": "sub",
+"zone": "exports_pdf_partage",
+"ref": "app/import-csv.tsx:301"
+},
+{
+"id": "09c6d31caa",
+"fr": "{0} avant l’arrêt.",
+"ctx": "appAlert",
+"zone": "ecrans",
+"ref": "app/import-workouts.tsx:107"
+},
+{
+"id": "2d73244536",
+"fr": "{0} à ton historique.",
+"ctx": "sub",
+"zone": "ecrans",
+"ref": "app/import-workouts.tsx:210"
+},
+{
+"id": "e6914c1977",
+"fr": "dans {0}",
+"zone": "ecrans",
+"ref": "app/mat-time.tsx:223"
+},
+{
+"id": "4811284db1",
+"fr": "{0} victoires sur {1}",
+"ctx": "sub",
+"zone": "ecrans",
+"ref": "app/match-tracker.tsx:212"
+},
+{
+"id": "fa154cb113",
+"fr": "{0}, {1} % sur {2}",
+"ctx": "accessibilityLabel",
+"zone": "ecrans",
+"ref": "app/matchup-matrix.tsx:98"
+},
+{
+"id": "7d101e34d1",
+"fr": "Moyenne par séance, {0}",
+"zone": "ecrans",
+"ref": "app/rounds-insights.tsx:152"
+},
+{
+"id": "1f64df821c",
+"fr": "{0} de séance. Touche pour changer.",
+"zone": "ecrans",
+"ref": "app/seance/combat.tsx:503"
+},
+{
+"id": "6508a5ab68",
+"fr": "Le round {0} était",
+"zone": "ecrans",
+"ref": "app/seance/combat.tsx:588"
+},
+{
+"id": "4522e2d7d9",
+"fr": "{0}, {1} {2} pour {3} {4}",
+"ctx": "localRecords.map",
+"zone": "ecrans",
+"ref": "app/seance/fin.tsx:311"
+},
+{
+"id": "4d933e7f2f",
+"fr": "La dernière fois, {0} : {1}",
+"zone": "ecrans",
+"ref": "app/seance/muscu.tsx:571"
+},
+{
+"id": "897a41cd9c",
+"fr": "{0} de {1} s, {2} s de repos",
+"ctx": "line",
+"zone": "ecrans",
+"ref": "app/timer.tsx:725"
+},
+{
+"id": "2273b0d385",
+"fr": "{0} sauvegarde de sécurité, dernière {1}",
+"zone": "composants",
+"plural": "one",
+"ref": "components/SafetyBackupRestoreButton.tsx:91"
+},
+{
+"id": "aa5d125cc5",
+"fr": "{0} sauvegardes de sécurité, dernière {1}",
+"zone": "composants",
+"plural": "other",
+"ref": "components/SafetyBackupRestoreButton.tsx:91"
+},
+{
+"id": "fe937f9b79",
+"fr": "+ {0} round supplémentaire",
+"zone": "exports_pdf_partage",
+"plural": "one",
+"ref": "components/social-cards/CombatShareCard.tsx:308"
+},
+{
+"id": "e8af2b8dc7",
+"fr": "+ {0} rounds supplémentaires",
+"zone": "exports_pdf_partage",
+"plural": "other",
+"ref": "components/social-cards/CombatShareCard.tsx:308"
+},
+{
+"id": "2ce603e82d",
+"fr": "Meilleure semaine: Semaine {0} • {1} jours",
+"zone": "exports_pdf_partage",
+"ref": "components/social-cards/MonthlyRecapCard.tsx:172"
+},
+{
+"id": "378effe5a0",
+"fr": "+{0} rounds supplémentaires",
+"zone": "exports_pdf_partage",
+"ref": "components/social-cards/UniversalShareCard.tsx:401"
+},
+{
+"id": "b336fa6333",
+"fr": "Sur {0}, de {1} à {2}",
+"zone": "composants",
+"ref": "components/yoroi/v2/combat/partner/sections.tsx:477"
+},
+{
+"id": "f15672744f",
+"fr": "encore {0}",
+"zone": "composants",
+"ref": "components/yoroi/v2/combat/partner/sections.tsx:764"
+},
+{
+"id": "f9424cb94c",
+"fr": "Aucun exercice pour « {0} »",
+"ctx": "ListEmptyComponent",
+"zone": "composants",
+"ref": "components/yoroi/v2/seance/ExercisePicker.tsx:141"
+},
+{
+"id": "d2181584cc",
+"fr": "Pas dans la liste ? Créer « {0} »",
+"ctx": "ListFooterComponent",
+"zone": "composants",
+"ref": "components/yoroi/v2/seance/ExercisePicker.tsx:159"
+},
+{
+"id": "4261ce9f20",
+"fr": "Je ne trouve pas le bloc {0} dans ce texte. Colle toute la réponse de ton IA, du titre jusqu’à FIN.",
+"zone": "composants",
+"ref": "components/yoroi/v2/seance/MachineFinder.tsx:251"
+},
+{
+"id": "5f6b2368b3",
+"fr": "{0} machines illustrées sur {1}, les autres arrivent.",
+"ctx": "ListFooterComponent",
+"zone": "composants",
+"ref": "components/yoroi/v2/seance/MachineFinder.tsx:377"
+},
+{
+"id": "f3a600399f",
+"fr": "Encore {0} {1} avec Premium",
+"zone": "composants",
+"ref": "components/yoroi/v2/seance/corps/ui.tsx:126"
+},
+{
+"id": "9c91a13b5f",
+"fr": "validé cette semaine",
+"zone": "composants",
+"plural": "one",
+"ref": "components/yoroi/v2/seances/NextUp.tsx:139"
+},
+{
+"id": "01cc361e98",
+"fr": "validés cette semaine",
+"zone": "composants",
+"plural": "other",
+"ref": "components/yoroi/v2/seances/NextUp.tsx:139"
+}
+]

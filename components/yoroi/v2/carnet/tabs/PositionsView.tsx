@@ -9,13 +9,14 @@ import { parseRounds, useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { humanMinutes } from '@/lib/v2/carnet/format';
 import { P, Sheet2, BigStats, SplitBar, RankRow } from '../ui';
 import { TabEmpty, TabLoading } from './common';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const SUBMISSION_FAMILIES: Record<string, { label: string; kw: string[] }> = {
-  chokes: { label: 'Étranglements', kw: ['triangle', 'rnc', 'rear naked', 'guillotine', "d'arce", 'darce', 'ezekiel', 'cross collar', 'anaconda', 'bow and arrow', 'étranglement', 'etranglement', 'baseball', 'north south', 'loop choke', 'peruvian'] },
-  arm: { label: 'Clés de bras', kw: ['armbar', 'kimura', 'americana', 'americaine', 'omoplata', 'clé de bras', 'clef de bras', 'arm triangle', 'bras tendu', 'wrist lock'] },
-  leg: { label: 'Clés de jambes', kw: ['heel hook', 'kneebar', 'straight footlock', 'toe hold', 'calf slicer', 'leg lock', 'ashi', '50/50', 'talon', 'genou', 'saddle'] },
-  back: { label: 'Depuis le dos', kw: ['rnc', 'rear naked', 'bow and arrow', 'crucifix', 'back mount', 'dos'] },
-  pressure: { label: 'Positions dominantes', kw: ['mount', 'side control', 'knee on belly', 'monté', 'nord sud', 'north south', 'passage'] },
+  chokes: { label: traduire('Étranglements'), kw: ['triangle', 'rnc', 'rear naked', 'guillotine', traduire("d'arce"), 'darce', 'ezekiel', 'cross collar', 'anaconda', 'bow and arrow', traduire('étranglement'), 'etranglement', 'baseball', 'north south', 'loop choke', 'peruvian'] },
+  arm: { label: traduire('Clés de bras'), kw: ['armbar', 'kimura', 'americana', 'americaine', 'omoplata', traduire('clé de bras'), traduire('clef de bras'), 'arm triangle', 'bras tendu', 'wrist lock'] },
+  leg: { label: traduire('Clés de jambes'), kw: ['heel hook', 'kneebar', 'straight footlock', 'toe hold', 'calf slicer', 'leg lock', 'ashi', '50/50', 'talon', 'genou', 'saddle'] },
+  back: { label: traduire('Depuis le dos'), kw: ['rnc', 'rear naked', 'bow and arrow', 'crucifix', 'back mount', 'dos'] },
+  pressure: { label: 'Positions dominantes', kw: ['mount', 'side control', 'knee on belly', traduire('monté'), 'nord sud', 'north south', 'passage'] },
 };
 
 function family(name: string): string | null {
@@ -65,7 +66,7 @@ export function PositionsView({ refreshKey }: { refreshKey: number }) {
 
   if (loading) return <TabLoading />;
   if (trainings.length === 0 || (themes.length === 0 && families.length === 0)) {
-    return <TabEmpty title="Pas encore de carte de ton jeu" text="Donne un thème technique à tes séances de JJB, grappling ou MMA, et note les soumissions de tes rounds." action="Démarrer une séance de combat" href="/seance/combat?sport=jjb" />;
+    return <TabEmpty title={traduire("Pas encore de carte de ton jeu")} text={traduire("Donne un thème technique à tes séances de JJB, grappling ou MMA, et note les soumissions de tes rounds.")} action={traduire("Démarrer une séance de combat")} href="/seance/combat?sport=jjb" />;
   }
 
   return (
@@ -73,20 +74,20 @@ export function PositionsView({ refreshKey }: { refreshKey: number }) {
       <Sheet2>
         <BigStats
           items={[
-            { value: String(trainings.length), label: 'séances' },
-            { value: `${hours} h`, label: 'sur le tatami', color: P.indigo },
-            { value: String(themes.length), label: 'thèmes' },
+            { value: String(trainings.length), label: traduire('séances') },
+            { value: `${hours} h`, label: traduire('sur le tatami'), color: P.indigo },
+            { value: String(themes.length), label: traduire('thèmes') },
             { value: String(families.length), label: 'familles', color: P.accent },
           ]}
         />
       </Sheet2>
       {families.length > 0 ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Familles de soumissions</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Familles de soumissions")}</Ink>
           <View style={{ flexDirection: 'row', gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: P.moss }} />
-              <Ink size={12} weight="bold" color={P.ink2}>Données</Ink>
+              <Ink size={12} weight="bold" color={P.ink2}>{traduire("Données")}</Ink>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: P.danger }} />
@@ -97,7 +98,7 @@ export function PositionsView({ refreshKey }: { refreshKey: number }) {
             <View key={f.key} style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Ink size={15} weight="bold">{f.label}</Ink>
-                <Ink size={13} weight="extraBold" color={P.ink2}>{`${f.given} données, ${f.taken} subies`}</Ink>
+                <Ink size={13} weight="extraBold" color={P.ink2}>{traduire("{0} données, {1} subies", f.given, f.taken)}</Ink>
               </View>
               <SplitBar parts={[{ value: f.given, color: P.moss }, { value: f.taken, color: P.danger }]} />
             </View>
@@ -106,10 +107,10 @@ export function PositionsView({ refreshKey }: { refreshKey: number }) {
       ) : null}
       {themes.length > 0 ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Thèmes les plus travaillés</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Thèmes les plus travaillés")}</Ink>
           {themes.map((t, i) => {
             const since = Math.floor((Date.now() - new Date(t.lastDate).getTime()) / 86400000);
-            return <RankRow key={t.theme} rank={i + 1} title={t.theme} value={`${t.sessions} fois`} ratio={t.sessions / themes[0].sessions} color={P.indigo} sub={`${humanMinutes(t.minutes)} cumulées, dernière fois il y a ${since} jour${since > 1 ? 's' : ''}`} />;
+            return <RankRow key={t.theme} rank={i + 1} title={t.theme} value={traduire("{0} fois", t.sessions)} ratio={t.sessions / themes[0].sessions} color={P.indigo} sub={traduirePluriel(since, since > 1, "{0} cumulées, dernière fois il y a {1} jour", "{0} cumulées, dernière fois il y a {1} jours", humanMinutes(t.minutes), since)} />;
           })}
         </Sheet2>
       ) : null}

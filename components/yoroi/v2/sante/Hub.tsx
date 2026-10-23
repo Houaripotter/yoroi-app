@@ -28,6 +28,7 @@ import { MetricGrid } from './Dashboard';
 import { IconDot, METRIC_ICON, SanteIcon } from './SanteIcon';
 import { BrandMark, GlassBox, S, SmallButton } from './ui';
 import { P, blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const ANDROID = Platform.OS === 'android';
 const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
@@ -64,8 +65,7 @@ function ScoreRing({ score, color, size = 132 }: { score: number | null; color: 
         {score === null ? '?' : String(score)}
       </Ink>
       <Ink size={11} weight="extraBold" color={S.muted} style={{ marginTop: -2 }}>
-        sur 100
-      </Ink>
+        {traduire("sur 100")}</Ink>
     </View>
   );
 }
@@ -89,7 +89,7 @@ export function ScoreHero({ readiness, onOpen }: { readiness: Readiness | null; 
             {readiness.title}
           </Ink>
           <Ink size={13} weight="medium" color={S.ink2}>
-            {readiness.score !== null ? readiness.advice : `Il manque ${readiness.missing.slice(0, 2).join(' et ')}.`}
+            {readiness.score !== null ? readiness.advice : traduire("Il manque {0}.", readiness.missing.slice(0, 2).join(' et '))}
           </Ink>
         </View>
       </View>
@@ -130,12 +130,11 @@ export function ScoreHero({ readiness, onOpen }: { readiness: Readiness | null; 
         </View>
       ))}
 
-      <Press onPress={() => setMethod((m) => !m)} accessibilityRole="button" accessibilityLabel="Comment ce score est calculé" accessibilityState={{ expanded: method }}>
+      <Press onPress={() => setMethod((m) => !m)} accessibilityRole="button" accessibilityLabel={traduire("Comment ce score est calculé")} accessibilityState={{ expanded: method }}>
         <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, borderTopWidth: 1, borderTopColor: S.line2, paddingTop: 8 }}>
           <SanteIcon name="info" size={15} color={S.indigo} />
           <Ink size={13} weight="extraBold" color={S.indigo} style={{ flex: 1 }}>
-            Comment il est calculé
-          </Ink>
+            {traduire("Comment il est calculé")}</Ink>
           <SanteIcon name={method ? 'up' : 'down'} size={16} color={S.muted} />
         </View>
       </Press>
@@ -178,15 +177,14 @@ export function ConnectSteps({ provider, mode, connecting, onConnect, onPickBran
     <GlassBox style={{ gap: 16 }}>
       <View style={{ gap: 2 }}>
         <Ink size={22} weight="black" tight>
-          Relie ta montre
-        </Ink>
+          {traduire("Relie ta montre")}</Ink>
         <Ink size={13} weight="medium" color={S.ink2}>
-          {`Trois gestes. Ta montre écrit dans ${provider}, YOROI lit ${provider}.`}
+          {traduire("Trois gestes. Ta montre écrit dans {0}, YOROI lit {1}.", provider, provider)}
         </Ink>
       </View>
       {step(
         1,
-        'Choisis ta marque',
+        traduire('Choisis ta marque'),
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {brands.map((w) => (
             <Press key={w.key} onPress={() => onPickBrand(w.key)} accessibilityRole="button" accessibilityLabel={`Guide ${w.name}`}>
@@ -200,13 +198,13 @@ export function ConnectSteps({ provider, mode, connecting, onConnect, onPickBran
           ))}
         </View>,
       )}
-      {step(2, `Active le partage vers ${provider} dans l’app de ta marque`, <Ink size={13} weight="medium" color={S.ink2}>Le guide de ta marque te montre où toucher.</Ink>)}
+      {step(2, traduire("Active le partage vers {0} dans l’app de ta marque", provider), <Ink size={13} weight="medium" color={S.ink2}>{traduire("Le guide de ta marque te montre où toucher.")}</Ink>)}
       {step(
         3,
-        expoGo ? (__DEV__ ? 'Installe YOROI pour autoriser la lecture' : 'Lecture indisponible ici') : 'Autorise YOROI à lire',
+        expoGo ? (__DEV__ ? traduire('Installe YOROI pour autoriser la lecture') : traduire('Lecture indisponible ici')) : traduire('Autorise YOROI à lire'),
         expoGo ? (
           <Ink size={13} weight="medium" color={S.ink2}>
-            {__DEV__ ? `Mode test\u00A0: ${provider} ne s’ouvre pas dans Expo Go. Dans l’app installée, un seul bouton suffit.` : `${provider} n’est pas disponible sur cet appareil pour l’instant.`}
+            {__DEV__ ? traduire("Mode test : {0} ne s’ouvre pas dans Expo Go. Dans l’app installée, un seul bouton suffit.", provider) : traduire("{0} n’est pas disponible sur cet appareil pour l’instant.", provider)}
           </Ink>
         ) : (
           <SmallButton label={connecting ? 'Connexion' : `Connecter ${provider}`} tone="red" icon="link" busy={connecting} onPress={onConnect} />
@@ -236,7 +234,7 @@ export function BrandStrip({ detected, onOpen, onAdd }: { detected: Detected[]; 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 2, paddingVertical: 4 }}>
       {items.map(({ w, d }) => (
-        <Press key={w.key} onPress={() => onOpen(w.key)} accessibilityRole="button" accessibilityLabel={`${w.name}, ce que ta montre envoie`}>
+        <Press key={w.key} onPress={() => onOpen(w.key)} accessibilityRole="button" accessibilityLabel={traduire("{0}, ce que ta montre envoie", w.name)}>
           <View style={[{ width: 158, borderRadius: 22, backgroundColor: blancA(0.92), borderWidth: 1, borderColor: P.white, padding: 12, gap: 10 }, shadow]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <BrandMark text={w.mark} kind={w.kind} size={34} />
@@ -247,16 +245,15 @@ export function BrandStrip({ detected, onOpen, onAdd }: { detected: Detected[]; 
                 {w.name.split(',')[0]}
               </Ink>
               <Ink size={11} weight="bold" color={S.ink2} numberOfLines={1}>
-                {`${d.count} mesure${d.count > 1 ? 's' : ''}${d.last ? `, ${whenLabel(d.last)}` : ''}`}
+                {traduirePluriel(d.count, d.count > 1, "{0} mesure{1}", "{0} mesures{1}", d.count, d.last ? `, ${whenLabel(d.last)}` : '')}
               </Ink>
             </View>
             <Ink size={12} weight="extraBold" color={S.accent}>
-              Ce qu’elle envoie
-            </Ink>
+              {traduire("Ce qu’elle envoie")}</Ink>
           </View>
         </Press>
       ))}
-      <Press onPress={onAdd} accessibilityRole="button" accessibilityLabel="Ajouter une montre ou une balance">
+      <Press onPress={onAdd} accessibilityRole="button" accessibilityLabel={traduire("Ajouter une montre ou une balance")}>
         <View style={{ width: 132, minHeight: 124, borderRadius: 22, borderWidth: 1.5, borderStyle: 'dashed', borderColor: TONE.none.color, padding: 12, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: S.ink, alignItems: 'center', justifyContent: 'center' }}>
             <Ink size={22} weight="black" color={ON()} style={{ marginTop: -2 }}>
@@ -264,7 +261,7 @@ export function BrandStrip({ detected, onOpen, onAdd }: { detected: Detected[]; 
             </Ink>
           </View>
           <Ink size={12} weight="extraBold" style={{ textAlign: 'center' }}>
-            {items.length ? 'Une autre montre' : 'Ajouter ma montre'}
+            {items.length ? traduire('Une autre montre') : traduire('Ajouter ma montre')}
           </Ink>
         </View>
       </Press>
@@ -278,15 +275,14 @@ export function ExtendedCard({ onAsk, busy }: { onAsk: () => void; busy: boolean
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <SanteIcon name="spark" size={20} color="#E3C47B" />
         <Ink size={16} weight="black" color={ON()} style={{ flex: 1 }}>
-          Mesures avancées, si tu veux
-        </Ink>
+          {traduire("Mesures avancées, si tu veux")}</Ink>
       </View>
       <Ink size={13} weight="medium" color={paletteSombre() ? P.accentSoft : '#DCE3F2'}>
         {ANDROID
-          ? 'Facultatif : glycémie et fauteuil. Le reste est déjà demandé à la connexion.'
-          : 'Facultatif : marche et équilibre, alertes du cœur, ECG, respiration, sons et UV, autres sports, glycémie, humeur, vitamines et minéraux. Rien ne sert au suivi de base.'}
+          ? traduire('Facultatif : glycémie et fauteuil. Le reste est déjà demandé à la connexion.')
+          : traduire('Facultatif : marche et équilibre, alertes du cœur, ECG, respiration, sons et UV, autres sports, glycémie, humeur, vitamines et minéraux. Rien ne sert au suivi de base.')}
       </Ink>
-      <Press onPress={busy ? undefined : onAsk} haptic="medium" accessibilityRole="button" accessibilityLabel="Autoriser les mesures avancées">
+      <Press onPress={busy ? undefined : onAsk} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("Autoriser les mesures avancées")}>
         <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
           {busy ? <ActivityIndicator size="small" color={S.indigo} /> : <SanteIcon name="check" size={16} color={S.indigo} width={2.6} />}
           <Ink size={14} weight="extraBold" color={S.indigo}>
@@ -320,40 +316,40 @@ function FeaturedChart({ def, points, onOpen }: { def: MetricDef; points: DayPoi
     const p = isSum || isSleep ? week[sel] : def.key === 'tension' ? month[sel] : month[sel];
     if (p) {
       title = dayLong(p.date);
-      value = p.value > 0 ? (def.key === 'tension' && p.v2 ? `${Math.round(p.value)}/${Math.round(p.v2)} mmHg` : fmt(p.value)) : 'Pas de mesure';
+      value = p.value > 0 ? (def.key === 'tension' && p.v2 ? `${Math.round(p.value)}/${Math.round(p.v2)} mmHg` : fmt(p.value)) : traduire('Pas de mesure');
     }
   } else if (isSum || isSleep) {
-    title = 'Moyenne sur 7 jours';
-    value = avg7 !== null ? fmt(avg7) : 'Pas de mesure';
+    title = traduire('Moyenne sur 7 jours');
+    value = avg7 !== null ? fmt(avg7) : traduire('Pas de mesure');
   } else {
-    title = 'Moyenne sur 30 jours';
-    value = avg30 !== null ? (def.key === 'tension' ? `${Math.round(avg30)}/${Math.round(mean(month.map((p) => p.v2 ?? 0).filter((v) => v > 0)) ?? 0)} mmHg` : fmt(avg30)) : 'Pas de mesure';
+    title = traduire('Moyenne sur 30 jours');
+    value = avg30 !== null ? (def.key === 'tension' ? `${Math.round(avg30)}/${Math.round(mean(month.map((p) => p.v2 ?? 0).filter((v) => v > 0)) ?? 0)} mmHg` : fmt(avg30)) : traduire('Pas de mesure');
   }
 
   let chart: React.ReactNode = null;
   if (isSleep) {
     chart = (
       <View style={{ gap: 8 }}>
-        <SleepBars points={week} labels={labels} onSelect={setSel} label="Sommeil des 7 dernières nuits" height={190} />
+        <SleepBars points={week} labels={labels} onSelect={setSel} label={traduire("Sommeil des 7 dernières nuits")} height={190} />
         {week.some((p) => p.phases) ? <Legend items={(['deep', 'core', 'rem', 'awake'] as const).map((k) => ({ color: SLEEP_COLORS[k], label: SLEEP_LABELS[k] }))} /> : null}
       </View>
     );
   } else if (def.key === 'tension') {
     chart = month.length ? (
       <View style={{ gap: 8 }}>
-        <DualLine points={month} onSelect={setSel} label="Tension artérielle, 30 jours" height={190} />
+        <DualLine points={month} onSelect={setSel} label={traduire("Tension artérielle, 30 jours")} height={190} />
         <Legend items={[{ color: TENSION_COLORS[0], label: 'Chiffre haut', kind: 'line' }, { color: TENSION_COLORS[1], label: 'Chiffre bas', kind: 'line' }]} />
       </View>
     ) : null;
   } else if (isSum) {
-    chart = <InkBarChart bars={week.map((p, i) => ({ label: labels[i], value: p.value }))} color={color} highlight={6} average={avg7} format={(v) => formatValue(def, v)} showValues="highlight" onSelect={setSel} height={180} label={`${def.label}, 7 jours`} />;
+    chart = <InkBarChart bars={week.map((p, i) => ({ label: labels[i], value: p.value }))} color={color} highlight={6} average={avg7} format={(v) => formatValue(def, v)} showValues="highlight" onSelect={setSel} height={180} label={traduire("{0}, 7 jours", def.label)} />;
   } else if (month.length >= 2) {
-    chart = <InkLineChart points={month.map((p) => ({ date: p.date, value: p.value }))} color={color} height={180} digits={def.digits} minSpan={Math.max(1, (avg30 ?? 1) * 0.06)} target={avg30 !== null && month.length >= 5 ? { value: avg30, label: 'ta moyenne' } : null} onScrub={(_p, i) => setSel(i)} label={`${def.label}, 30 jours`} />;
+    chart = <InkLineChart points={month.map((p) => ({ date: p.date, value: p.value }))} color={color} height={180} digits={def.digits} minSpan={Math.max(1, (avg30 ?? 1) * 0.06)} target={avg30 !== null && month.length >= 5 ? { value: avg30, label: traduire('ta moyenne') } : null} onScrub={(_p, i) => setSel(i)} label={traduire("{0}, 30 jours", def.label)} />;
   } else if (month.length === 1) {
     chart = (
       <View style={{ height: 90, alignItems: 'center', justifyContent: 'center' }}>
         <Ink size={13} weight="bold" color={S.ink2}>
-          {`Une seule mesure, ${whenLabel(month[0].date)}. La courbe se dessine dès la deuxième.`}
+          {traduire("Une seule mesure, {0}. La courbe se dessine dès la deuxième.", whenLabel(month[0].date))}
         </Ink>
       </View>
     );
@@ -361,7 +357,7 @@ function FeaturedChart({ def, points, onOpen }: { def: MetricDef; points: DayPoi
 
   return (
     <View style={[{ borderRadius: 26, backgroundColor: blancA(0.94), borderWidth: 1, borderColor: P.white, padding: 16, gap: 10 }, shadow]}>
-      <Press onPress={onOpen} accessibilityRole="button" accessibilityLabel={`${def.label}, voir le détail`}>
+      <Press onPress={onOpen} accessibilityRole="button" accessibilityLabel={traduire("{0}, voir le détail", def.label)}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
           <IconDot name={METRIC_ICON[def.key] ?? 'pulse'} color={color} tint={FAMILY[def.family].tint} size={36} />
           <View style={{ flex: 1 }}>
@@ -382,22 +378,21 @@ function FeaturedChart({ def, points, onOpen }: { def: MetricDef; points: DayPoi
       </Press>
       {chart}
       <Ink size={11} weight="bold" color={S.muted}>
-        Glisse le doigt sur le graphique pour lire chaque jour.
-      </Ink>
+        {traduire("Glisse le doigt sur le graphique pour lire chaque jour.")}</Ink>
     </View>
   );
 }
 
 const SECTION_TEXT: Record<SectionKey, string> = {
-  activite: 'Ce que tu bouges et dépenses',
-  mobilite: 'Ta marche, ton équilibre, tes chutes',
-  environnement: 'Le bruit et le soleil autour de toi',
-  coeur: 'Ton moteur, au repos et à l’effort',
-  sommeil: 'Tes nuits et leurs phases',
-  recuperation: 'Comment ton corps encaisse',
-  souffle: 'Ton souffle et ton cardio',
-  corps: 'Ta balance et tes mesures',
-  nutrition: 'Ce que tu manges et bois',
+  activite: traduire('Ce que tu bouges et dépenses'),
+  mobilite: traduire('Ta marche, ton équilibre, tes chutes'),
+  environnement: traduire('Le bruit et le soleil autour de toi'),
+  coeur: traduire('Ton moteur, au repos et à l’effort'),
+  sommeil: traduire('Tes nuits et leurs phases'),
+  recuperation: traduire('Comment ton corps encaisse'),
+  souffle: traduire('Ton souffle et ton cardio'),
+  corps: traduire('Ta balance et tes mesures'),
+  nutrition: traduire('Ce que tu manges et bois'),
 };
 
 export function SectionBlock({ section, series, onOpen }: { section: (typeof SECTIONS)[number]; series: Record<MetricKey, DayPoint[]>; onOpen: (k: MetricKey) => void }) {
@@ -428,7 +423,7 @@ export function SectionBlock({ section, series, onOpen }: { section: (typeof SEC
           </Ink>
         </View>
         <Ink size={12} weight="extraBold" color={S.muted}>
-          {`${defs.length} mesure${defs.length > 1 ? 's' : ''}`}
+          {traduirePluriel(defs.length, defs.length > 1, "{0} mesure", "{0} mesures", defs.length)}
         </Ink>
       </View>
       <FeaturedChart def={featured} points={series[featuredKey] ?? []} onOpen={() => onOpen(featuredKey)} />

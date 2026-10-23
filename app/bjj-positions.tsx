@@ -12,6 +12,7 @@ import { ALL_SUBMISSIONS } from '@/components/BJJBodyMap';
 import { makeId, plural } from '@/lib/v2/combat/rounds';
 import { BigButton, Card, Chip, CIcon, D, DetailScreen, Enter, Field, FormSheet, Glass, IconBtn, InkBar, N, P, Press, RankRow, Section, Stat, Stepper, tap, V } from '@/components/yoroi/v2/combat/ui';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 interface SubmissionEntry {
   id: string;
@@ -36,7 +37,7 @@ const DEFAULT_POSITIONS: BJJPosition[] = [
   { id: 'turtle', name: 'Tortue', x: 18, y: 24, color: '#A8832F', submissions: [], timeMinutes: 0 },
   { id: 'side_control', name: 'Contrôle latéral', x: 76, y: 46, color: '#6E8C3A', submissions: [], timeMinutes: 0 },
   { id: 'half_guard', name: 'Demi-garde', x: 24, y: 46, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
-  { id: 'guard', name: 'Garde fermée', x: 50, y: 58, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
+  { id: 'guard', name: traduire('Garde fermée'), x: 50, y: 58, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
   { id: 'butterfly', name: 'Papillon', x: 50, y: 74, color: '#3D5D9E', submissions: [], timeMinutes: 0 },
   { id: 'standing', name: 'Debout', x: 50, y: 90, color: '#A8832F', submissions: [], timeMinutes: 0 },
 ];
@@ -146,12 +147,12 @@ export default function BJJPositionsScreen() {
   }, [search]);
 
   return (
-    <DetailScreen title="Carte JJB" subtitle="Tes positions, tes finitions">
+    <DetailScreen title="Carte JJB" subtitle={traduire("Tes positions, tes finitions")}>
       <Enter i={0}>
         <Glass style={{ flexDirection: 'row' }}>
           <Stat value={String(g.a)} label="tentatives" color={N} />
           <Stat value={String(g.s)} label="finitions" color={V} />
-          <Stat value={`${g.rate} %`} label="réussite" color={D} />
+          <Stat value={`${g.rate} %`} label={traduire("réussite")} color={D} />
           <Stat value={g.t >= 60 ? `${Math.floor(g.t / 60)} h` : `${g.t} min`} label="en position" />
         </Glass>
       </Enter>
@@ -218,9 +219,9 @@ export default function BJJPositionsScreen() {
       </Enter>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
         {[
-          { l: 'Positions du dessus', c: '#6E8C3A' },
+          { l: traduire('Positions du dessus'), c: '#6E8C3A' },
           { l: 'Gardes', c: '#3D5D9E' },
-          { l: 'Debout et transitions', c: '#A8832F' },
+          { l: traduire('Debout et transitions'), c: '#A8832F' },
         ].map((x) => (
           <View key={x.l} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: x.c }} />
@@ -231,8 +232,7 @@ export default function BJJPositionsScreen() {
         ))}
       </View>
       <Ink size={12} color={P.muted}>
-        Plus une plaque est encrée, plus tu finis depuis cette position.
-      </Ink>
+        {traduire("Plus une plaque est encrée, plus tu finis depuis cette position.")}</Ink>
 
       {selected ? (
         <Card style={{ gap: 14, borderLeftWidth: 5, borderLeftColor: ROLE[selected.id]?.color ?? selected.color }}>
@@ -245,22 +245,20 @@ export default function BJJPositionsScreen() {
                 {selected.name}
               </Ink>
             </View>
-            <IconBtn icon="close" label="Fermer la position" onPress={() => setSelectedId(null)} />
+            <IconBtn icon="close" label={traduire("Fermer la position")} onPress={() => setSelectedId(null)} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={14} weight="bold" color={P.ink2}>
-              Temps passé ici
-            </Ink>
+              {traduire("Temps passé ici")}</Ink>
             <Stepper value={selected.timeMinutes} step={5} onChange={(v) => setTime(selected.id, v)} format={(v) => `${v} min`} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={16} weight="black">
-              Soumissions depuis ici
-            </Ink>
+              {traduire("Soumissions depuis ici")}</Ink>
             <IconBtn
               icon="plus"
               tone="red"
-              label="Ajouter une soumission"
+              label={traduire("Ajouter une soumission")}
               onPress={() => {
                 setName('');
                 setSearch('');
@@ -272,8 +270,7 @@ export default function BJJPositionsScreen() {
           </View>
           {selected.submissions.length === 0 ? (
             <Ink size={14} color={P.muted}>
-              Aucune soumission notée depuis cette position.
-            </Ink>
+              {traduire("Aucune soumission notée depuis cette position.")}</Ink>
           ) : (
             selected.submissions.map((s) => {
               const rate = s.attempts > 0 ? Math.round((s.successes / s.attempts) * 100) : 0;
@@ -291,13 +288,13 @@ export default function BJJPositionsScreen() {
                   </View>
                   <InkBar value={rate / 100} color={rc} height={7} />
                   <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <Press onPress={() => bump(selected.id, s.id, 'attempts', 1)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`Une tentative de plus pour ${s.name}`}>
+                    <Press onPress={() => bump(selected.id, s.id, 'attempts', 1)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Une tentative de plus pour {0}", s.name)}>
                       <View style={{ height: 44, borderRadius: 14, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
                         <Ink size={14} weight="extraBold" color={N}>{`${s.attempts} tentatives`}</Ink>
                         <CIcon name="plus" size={14} color={N} />
                       </View>
                     </Press>
-                    <Press onPress={() => bump(selected.id, s.id, 'successes', 1)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={`Une finition de plus pour ${s.name}`}>
+                    <Press onPress={() => bump(selected.id, s.id, 'successes', 1)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Une finition de plus pour {0}", s.name)}>
                       <View style={{ height: 44, borderRadius: 14, backgroundColor: V, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
                         <Ink size={14} weight="extraBold" color={P.white}>{`${s.successes} finitions`}</Ink>
                         <CIcon name="plus" size={14} color={P.white} />
@@ -312,14 +309,13 @@ export default function BJJPositionsScreen() {
       ) : (
         <Card>
           <Ink size={14} color={P.ink2}>
-            Touche une position sur la carte pour noter ce qui s'y passe.
-          </Ink>
+            {traduire("Touche une position sur la carte pour noter ce qui s'y passe.")}</Ink>
         </Card>
       )}
 
       {g.s > 0 ? (
         <>
-          <Section title="Tes positions offensives" sub="Là où tu finis le plus" />
+          <Section title={traduire("Tes positions offensives")} sub={traduire("Là où tu finis le plus")} />
           <Card style={{ gap: 14 }}>
             {[...positions]
               .map((p) => ({ p, s: sumSucc(p) }))
@@ -333,8 +329,8 @@ export default function BJJPositionsScreen() {
         </>
       ) : null}
 
-      <FormSheet visible={sheet} onClose={() => setSheet(false)} title="Nouvelle soumission" sub={selected ? `Depuis ${selected.name.toLowerCase()}` : undefined}>
-        <Field value={search} onChangeText={(v) => { setSearch(v); setName(v); }} placeholder="Cherche ou écris une soumission" autoFocus />
+      <FormSheet visible={sheet} onClose={() => setSheet(false)} title={traduire("Nouvelle soumission")} sub={selected ? traduire("Depuis {0}", selected.name.toLowerCase()) : undefined}>
+        <Field value={search} onChangeText={(v) => { setSearch(v); setName(v); }} placeholder={traduire("Cherche ou écris une soumission")} autoFocus />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {suggestions.map((s) => (
             <Chip key={s.id} label={s.short} on={name === s.short} onPress={() => setName(s.short)} color={P.accent} />
@@ -348,11 +344,10 @@ export default function BJJPositionsScreen() {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Ink size={14} weight="bold" color={P.ink2}>
-            Réussies
-          </Ink>
+            {traduire("Réussies")}</Ink>
           <Stepper value={successes} onChange={(v) => { setSuccesses(v); if (v > attempts) setAttempts(v); }} color={V} />
         </View>
-        <BigButton label={name.trim() ? `Ajouter ${name.trim()}` : 'Choisis une soumission'} onPress={addSub} disabled={!name.trim()} />
+        <BigButton label={name.trim() ? traduire("Ajouter {0}", name.trim()) : traduire('Choisis une soumission')} onPress={addSub} disabled={!name.trim()} />
       </FormSheet>
     </DetailScreen>
   );

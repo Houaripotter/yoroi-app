@@ -14,6 +14,7 @@ import type { Training } from '@/lib/database';
 import { computeRecords, formatRecordValue, recordShortTitle } from '@/lib/v2/seances/records';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { dedupeTrainings } from '@/lib/v2/seances/dedupe';
+import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 
 type Point = { date: string; value: number };
 
@@ -121,7 +122,7 @@ export function semainesTenues(trainings: Training[], objectif: number, aujourdh
   return n > 0 ? n : null;
 }
 
-const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const JOURS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 /**
  * Ta prochaine pesee prevue : le prochain de tes jours de pesee (Date.getDay(), 0 = dimanche).
@@ -134,7 +135,7 @@ export function prochainePesee(jours: number[] | null | undefined, heure: [numbe
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 12);
     if (!js.includes(d.getDay())) continue;
     if (i === 0 && peseAujourdhui) continue;
-    const quand = i === 0 ? 'Aujourd’hui' : i === 1 ? 'Demain' : JOURS[d.getDay()].charAt(0).toUpperCase() + JOURS[d.getDay()].slice(1);
+    const quand = i === 0 ? traduire('Aujourd’hui') : i === 1 ? traduire('Demain') : JOURS[d.getDay()].charAt(0).toUpperCase() + JOURS[d.getDay()].slice(1);
     const h = heure ? `${heure[0]} h ${p2(heure[1])}` : null;
     return { quand, dans: i, heure: h };
   }
@@ -216,8 +217,8 @@ export function santeDuJour(series: Partial<Record<string, Point[] | null | unde
 /** La valeur affichee et son unite, au format francais (aucun arrondi trompeur : celui de l'ecran Sante) */
 export function texteMesureSante(m: MesureSanteJour): { valeur: string; unite: string } {
   // espace simple entre les milliers, comme les autres tuiles (l'espace fine ne s'affiche pas partout)
-  const entier = (n: number) => Math.round(n).toLocaleString('fr-FR').replace(/[\u202f\u00a0 ]/g, ' ');
-  const dec = (n: number) => (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
+  const entier = (n: number) => Math.round(n).toLocaleString(LOCALE).replace(/[\u202f\u00a0 ]/g, ' ');
+  const dec = (n: number) => (Math.round(n * 10) / 10).toFixed(1).replace('.', DECIMAL);
   switch (m.cle) {
     case 'pas':
       return { valeur: entier(m.valeur), unite: 'pas' };
@@ -257,25 +258,25 @@ export function objectifMesure(cle: CleSanteJour, o: ObjectifsSante | null | und
   const ok = (v: number | null | undefined) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null);
   switch (cle) {
     case 'pas':
-      return { cible: REPERE_PAS, repere: true, texte: 'repère 8 000' };
+      return { cible: REPERE_PAS, repere: true, texte: traduire('repère 8 000') };
     case 'energie-active': {
       const v = ok(o?.kcal);
-      return v ? { cible: v, repere: false, texte: `sur ${Math.round(v)} kcal` } : null;
+      return v ? { cible: v, repere: false, texte: traduire("sur {0} kcal", Math.round(v)) } : null;
     }
     case 'exercice': {
       const v = ok(o?.exercice);
-      return v ? { cible: v, repere: false, texte: `sur ${Math.round(v)} min` } : null;
+      return v ? { cible: v, repere: false, texte: traduire("sur {0} min", Math.round(v)) } : null;
     }
     case 'debout': {
       const v = ok(o?.debout);
-      return v ? { cible: v, repere: false, texte: `sur ${Math.round(v)} h` } : null;
+      return v ? { cible: v, repere: false, texte: traduire("sur {0} h", Math.round(v)) } : null;
     }
     case 'sommeil': {
       const v = ok(o?.sommeilMin);
       if (!v) return null;
       const h = Math.floor(v / 60);
       const m = Math.round(v % 60);
-      return { cible: v, repere: false, texte: `sur ${h} h${m ? ` ${p2(m)}` : ''}` };
+      return { cible: v, repere: false, texte: traduire("sur {0} h{1}", h, m ? ` ${p2(m)}` : '') };
     }
     default:
       return null;

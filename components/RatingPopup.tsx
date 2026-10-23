@@ -25,6 +25,7 @@ import { BlurView } from 'expo-blur';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { requestReview, isAvailableAsync } from 'expo-store-review';
 import { router } from 'expo-router';
+import { traduire } from '@/lib/i18n/tr';
 
 interface RatingPopupProps {
   visible: boolean;
@@ -141,9 +142,9 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
   // Message personnalisé selon l'action
   const getPersonalMessage = () => {
     const messages = {
-      weight: t('rating.messageWeight') || "Tu viens d'enregistrer ton poids, c'est super de rester régulier !",
-      session: t('rating.messageSession') || "Bravo pour cette séance ! Tu fais partie des warriors qui se dépassent !",
-      general: t('rating.messageGeneral') || "Merci d'utiliser Yoroi au quotidien !",
+      weight: t('rating.messageWeight') || traduire("Tu viens d'enregistrer ton poids, c'est super de rester régulier !"),
+      session: t('rating.messageSession') || traduire("Bravo pour cette séance ! Tu fais partie des warriors qui se dépassent !"),
+      general: t('rating.messageGeneral') || traduire("Merci d'utiliser Yoroi au quotidien !"),
     };
     return messages[actionType];
   };
@@ -222,21 +223,20 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           {/* Message humble */}
           <Text style={[styles.humbleMessage, { color: colors.textSecondary }]}>
             {t('rating.humbleMessage') ||
-              "Excuse-moi de t'interrompre... Je sais que ton temps est precieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait enormement a faire grandir notre famille de warriors et a rendre l'app visible pour d'autres sportifs comme toi.\n\nSi je merite les 5 etoiles, je t'en serais infiniment reconnaissant."}
+              traduire("Excuse-moi de t'interrompre... Je sais que ton temps est precieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait enormement a faire grandir notre famille de warriors et a rendre l'app visible pour d'autres sportifs comme toi.\n\nSi je merite les 5 etoiles, je t'en serais infiniment reconnaissant.")}
           </Text>
 
           {/* Statistique encourageante */}
           <View style={[styles.statBox, { backgroundColor: `${colors.accent}15`, borderColor: `${colors.accent}30`, borderWidth: 1 }]}>
             <Ionicons name="people" size={20} color={colors.accent} />
             <Text style={[styles.statText, { color: colors.textPrimary }]}>
-              {t('rating.familyGrowing') || 'Chaque note aide la famille Yoroi à grandir !'}
+              {t('rating.familyGrowing') || traduire('Chaque note aide la famille Yoroi à grandir !')}
             </Text>
           </View>
 
           {/* Signature */}
           <Text style={[styles.signature, { color: colors.textMuted }]}>
-            Équipe Yoroi
-          </Text>
+            {traduire("Équipe Yoroi")}</Text>
 
           {/* Boutons */}
           <View style={styles.buttonsContainer}>
@@ -249,7 +249,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               <View style={styles.rateButtonGradient}>
                 <Ionicons name="star" size={22} color={colors.textOnAccent} />
                 <Text style={[styles.rateButtonText, { color: colors.textOnAccent }]}>
-                  {t('rating.rateButton') || "Je note l'app !"}
+                  {t('rating.rateButton') || traduire("Je note l'app !")}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -262,7 +262,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
             >
               <Ionicons name="bulb-outline" size={20} color={colors.accent} />
               <Text style={[styles.suggestionButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                {t('rating.suggestionButton') || "J'ai une idée / un problème"}
+                {t('rating.suggestionButton') || traduire("J'ai une idée / un problème")}
               </Text>
             </TouchableOpacity>
 
@@ -273,14 +273,14 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               activeOpacity={0.6}
             >
               <Text style={[styles.laterButtonText, { color: colors.textMuted }]}>
-                {t('rating.laterButton') || 'Plus tard, je suis pressé'}
+                {t('rating.laterButton') || traduire('Plus tard, je suis pressé')}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Message de remerciement */}
           <Text style={[styles.thankYou, { color: colors.textMuted }]}>
-            {t('rating.thankYou') || 'Merci du fond du coeur !'}
+            {t('rating.thankYou') || traduire('Merci du fond du coeur !')}
           </Text>
         </Animated.View>
       </View>

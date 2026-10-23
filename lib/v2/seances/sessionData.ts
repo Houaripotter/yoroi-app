@@ -6,14 +6,15 @@ import { getSportCategory, getSportName, getSessionTypeLabel } from '@/lib/sport
 import { accordSouleve, durationOf, formatDuration, formatTonnage, setsCount, tonnage, workSetsOf } from '@/lib/v2/trainingWeek';
 import type { UnitePoids } from '@/lib/v2/unitePoids';
 import { formatKg } from '@/lib/v2/weightStats';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const DOW_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-export const DOW_LONG = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+export const DOW_LONG = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 /** Jours du planning : 0 = lundi */
-export const PLAN_DAYS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+export const PLAN_DAYS = [traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi'), traduire('dimanche')];
 export const PLAN_DAYS_SHORT = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-export const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-export const MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+export const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+export const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 
@@ -46,13 +47,13 @@ export function longDate(iso: string, withYear = false): string {
 /** « aujourd'hui », « hier », « il y a 12 jours »... */
 export function relativeDay(iso: string, today: string): string {
   const n = daysFrom(iso.slice(0, 10), today);
-  if (n <= 0) return n === 0 ? 'aujourd’hui' : longDate(iso);
+  if (n <= 0) return n === 0 ? traduire('aujourd’hui') : longDate(iso);
   if (n === 1) return 'hier';
-  if (n < 14) return `il y a ${n} jours`;
-  if (n < 60) return `il y a ${Math.round(n / 7)} semaines`;
-  if (n < 365) return `il y a ${Math.round(n / 30)} mois`;
+  if (n < 14) return traduire("il y a {0} jours", n);
+  if (n < 60) return traduire("il y a {0} semaines", Math.round(n / 7));
+  if (n < 365) return traduire("il y a {0} mois", Math.round(n / 30));
   const y = Math.round(n / 365);
-  return `il y a ${y} an${y > 1 ? 's' : ''}`;
+  return traduirePluriel(y, y > 1, "il y a {0} an", "il y a {0} ans", y);
 }
 
 export function firstSport(sport: string | undefined): string {
@@ -61,7 +62,7 @@ export function firstSport(sport: string | undefined): string {
 
 export function sportLabel(sport: string | undefined): string {
   const ids = (sport ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-  if (ids.length === 0) return 'Séance';
+  if (ids.length === 0) return traduire('Séance');
   return ids.map((s) => getSportName(s)).join(' et ');
 }
 
@@ -175,14 +176,14 @@ export function sessionMeta(t: Training, unite: UnitePoids = 'kg'): string {
   const d = durationOf(t);
   if (d) parts.push(formatDuration(d));
   const sets = setsCount(t);
-  if (sets) parts.push(`${sets} série${sets > 1 ? 's' : ''}`);
+  if (sets) parts.push(traduirePluriel(sets, sets > 1, "{0} série", "{0} séries", sets));
   const tons = tonnage(t);
   if (tons >= 100) parts.push(`${formatTonnage(tons, unite)} ${accordSouleve(tons, unite)}`);
   const rounds = parseRounds(t).length || t.rounds || 0;
   if (rounds) parts.push(`${rounds} round${rounds > 1 ? 's' : ''}`);
   if (t.distance) parts.push(`${formatKg(t.distance)} km`);
   if (t.club_name) parts.push(t.club_name);
-  if (parts.length === 0 && t.intensity) parts.push(`effort ${t.intensity} sur 10`);
+  if (parts.length === 0 && t.intensity) parts.push(traduire("effort {0} sur 10", t.intensity));
   return parts.join(', ');
 }
 

@@ -11,6 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
+import { traduire } from '@/lib/i18n/tr';
 
 export function premiumTap() {
   try {
@@ -23,7 +24,7 @@ export function premiumTap() {
 /** Sceau Premium : tampon dore a couronne de laurier (l'excellence) */
 export function PremiumSeal({ size = 56 }: { size?: number }) {
   const { theme } = useYoroiTheme();
-  return <Hanko tampon="medaille_or" size={size} rotate={-6} accessibilityLabel="Sceau Premium" />;
+  return <Hanko tampon="medaille_or" size={size} rotate={-6} accessibilityLabel={traduire("Sceau Premium")} />;
 }
 
 /** Petite pastille « Premium » dorée */
@@ -50,8 +51,7 @@ export function PremiumBadge({ light }: { light?: boolean }) {
         <Rect x={0} y={30} width={52} height={6} fill={c.accent} />
       </Svg>
       <Ink size={12} weight="extraBold" color={c.goldDeep}>
-        Premium
-      </Ink>
+        {traduire("Premium")}</Ink>
     </View>
   );
 }

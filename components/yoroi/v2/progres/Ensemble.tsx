@@ -25,6 +25,7 @@ import type { FormeResult } from '@/lib/v2/accueil/forme';
 import { P } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type EnsembleCible = 'corps' | 'force' | 'cardio' | 'sante';
 
@@ -119,8 +120,8 @@ export function VueEnsemble({
     const rate = weeklyRate(series);
     out.push(
       last
-        ? { key: 'poids', label: 'Poids', value: formatKg(last.trend), unit: 'kg', sub: rate === null ? 'en tendance' : Math.abs(rate) < 0.03 ? 'stable en tendance' : `${gramsText(rate)} de ${rate < 0 ? 'moins' : 'plus'} par semaine`, cible: 'corps', dot: '#7A5CF0' }
-        : { key: 'poids', label: 'Poids', value: 'À noter', sub: 'ta première pesée', cible: 'corps', dot: '#7A5CF0' },
+        ? { key: 'poids', label: 'Poids', value: formatKg(last.trend), unit: 'kg', sub: rate === null ? 'en tendance' : Math.abs(rate) < 0.03 ? 'stable en tendance' : traduire("{0} de {1} par semaine", gramsText(rate), rate < 0 ? 'moins' : 'plus'), cible: 'corps', dot: '#7A5CF0' }
+        : { key: 'poids', label: 'Poids', value: 'À noter', sub: traduire('ta première pesée'), cible: 'corps', dot: '#7A5CF0' },
     );
     // Composition : la derniere masse grasse, le muscle en dessous
     const lc = [...compo].reverse().find((p) => p.fat !== undefined || p.muscle !== undefined);
@@ -131,11 +132,11 @@ export function VueEnsemble({
             label: 'Composition',
             value: lc.fat !== undefined ? num(lc.fat, 1) : num(lc.muscle ?? 0, 1),
             unit: '%',
-            sub: lc.fat !== undefined ? `de masse grasse${lc.muscle !== undefined ? `, muscle ${num(lc.muscle, 1)} %` : ''}` : 'de muscle',
+            sub: lc.fat !== undefined ? traduire("de masse grasse{0}", lc.muscle !== undefined ? `, muscle ${num(lc.muscle, 1)} %` : '') : traduire('de muscle'),
             cible: 'corps',
             dot: '#B08A2E',
           }
-        : { key: 'compo', label: 'Composition', value: 'À noter', sub: 'graisse, muscle, eau', cible: 'corps', dot: '#B08A2E' },
+        : { key: 'compo', label: 'Composition', value: 'À noter', sub: traduire('graisse, muscle, eau'), cible: 'corps', dot: '#B08A2E' },
     );
     // Mensurations : le tour de taille, sinon la premiere mesure prise
     const taille = viewSeries(measures, 'waist');
@@ -148,24 +149,24 @@ export function VueEnsemble({
         label: taille.length ? 'Tour de taille' : 'Poitrine',
         value: num(a.value, 1),
         unit: 'cm',
-        sub: autre.length < 2 || Math.abs(d) < 0.05 ? 'ta dernière mesure' : `${num(Math.abs(d), 1)} cm de ${d < 0 ? 'moins' : 'plus'} ${sinceText(autre[0].date)}`,
+        sub: autre.length < 2 || Math.abs(d) < 0.05 ? traduire('ta dernière mesure') : traduire("{0} cm de {1} {2}", num(Math.abs(d), 1), d < 0 ? 'moins' : 'plus', sinceText(autre[0].date)),
         cible: 'corps',
         dot: c.accent,
       });
-    } else out.push({ key: 'mesures', label: 'Mensurations', value: 'À prendre', sub: 'une fois par mois', cible: 'corps', dot: c.accent });
+    } else out.push({ key: 'mesures', label: 'Mensurations', value: 'À prendre', sub: traduire('une fois par mois'), cible: 'corps', dot: c.accent });
     // Forme du jour (meme calcul que l'accueil)
     out.push(
       forme && forme.score !== null && forme.level
-        ? { key: 'forme', label: 'Forme', value: String(Math.round(forme.score)), unit: 'sur 100', sub: forme.level.label, cible: 'sante', dot: '#4F8A5B' }
-        : { key: 'forme', label: 'Forme', value: 'À venir', sub: 'note ta nuit ou relie ta montre', cible: 'sante', dot: '#4F8A5B' },
+        ? { key: 'forme', label: traduire('Forme'), value: String(Math.round(forme.score)), unit: traduire('sur 100'), sub: forme.level.label, cible: 'sante', dot: '#4F8A5B' }
+        : { key: 'forme', label: traduire('Forme'), value: 'À venir', sub: traduire('note ta nuit ou relie ta montre'), cible: 'sante', dot: '#4F8A5B' },
     );
     // Force : l'exercice le plus suivi, son maximum estime
     const lift = computeLifts(trainings)[0];
     const lp = lift?.points[lift.points.length - 1];
     out.push(
       lift && lp
-        ? { key: 'force', label: 'Force', value: num(versUnitePoids(lp.value, unite), versUnitePoids(lp.value, unite) >= 100 ? 0 : 1), unit: unite === 'lb' ? 'lb' : 'kg', sub: `${lift.name}, maximum estimé`, cible: 'force', dot: '#2C4A84' }
-        : { key: 'force', label: 'Force', value: 'À venir', sub: 'note tes charges', cible: 'force', dot: '#2C4A84' },
+        ? { key: 'force', label: 'Force', value: num(versUnitePoids(lp.value, unite), versUnitePoids(lp.value, unite) >= 100 ? 0 : 1), unit: unite === 'lb' ? 'lb' : 'kg', sub: traduire("{0}, maximum estimé", lift.name), cible: 'force', dot: '#2C4A84' }
+        : { key: 'force', label: 'Force', value: 'À venir', sub: traduire('note tes charges'), cible: 'force', dot: '#2C4A84' },
     );
     // Endurance : ton temps d'entrainement du mois, tes kilometres s'il y en a
     const month = today.slice(0, 7);
@@ -176,7 +177,7 @@ export function VueEnsemble({
       key: 'endurance',
       label: 'Endurance',
       value: minutes > 0 ? formatDuration(minutes) : '0 h',
-      sub: `${inMonth.length} séance${inMonth.length > 1 ? 's' : ''} en ${monthLong(today)}${km > 0 ? `, ${num(km, 1)} km` : ''}`,
+      sub: traduirePluriel(inMonth.length, inMonth.length > 1, "{0} séance en {1}{2}", "{0} séances en {1}{2}", inMonth.length, monthLong(today), km > 0 ? `, ${num(km, 1)} km` : ''),
       cible: 'cardio',
       dot: '#C0573E',
     });

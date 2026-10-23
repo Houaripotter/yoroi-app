@@ -20,6 +20,7 @@ import { GROUPES, MACHINE_HEADER, MACHINES, buildMachinePrompt, chercherMachines
 import type { Machine, MachineBlock, MachineGroupe } from '@/lib/v2/seance/machines';
 import { machineArt } from '@/lib/v2/seance/machinesArt';
 import { Icon } from './Icon';
+import { traduire } from '@/lib/i18n/tr';
 
 type Props = {
   visible: boolean;
@@ -59,7 +60,7 @@ function Placeholder({ size, color }: { size: number; color: string }) {
         <Path d="M8 30h22M12 30v10M26 30v10M10 22h8l4 8" stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         <Path d="M33 12h4M33 17h4M33 22h4" stroke={color} strokeWidth={2} strokeLinecap="round" />
       </Svg>
-      <Ink size={11} weight="bold" color={color}>Illustration à venir</Ink>
+      <Ink size={11} weight="bold" color={color}>{traduire("Illustration à venir")}</Ink>
     </View>
   );
 }
@@ -201,12 +202,12 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
   const entete = (titre: string, retour?: () => void) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 22 }}>
       {retour ? (
-        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel="Retour" style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel={traduire("Retour")} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="back" size={18} strokeWidth={2.6} />
         </Pressable>
       ) : null}
       <Ink size={26} weight="black" tight style={{ flex: 1 }} numberOfLines={1}>{titre}</Ink>
-      <Pressable onPress={fermer} accessibilityRole="button" accessibilityLabel="Fermer" style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+      <Pressable onPress={fermer} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="close" size={18} strokeWidth={2.6} />
       </Pressable>
     </View>
@@ -220,10 +221,10 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
         <Ink size={20} weight="black">{m.nom}</Ink>
         <Ink size={13} color={c.textMuted}>{m.muscles.join(', ')}</Ink>
       </View>
-      <Ink size={15} weight="bold" color={c.textSecondary}>Quel exercice tu fais dessus ?</Ink>
+      <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("Quel exercice tu fais dessus ?")}</Ink>
       <View style={{ gap: 6 }}>
         {m.exercices.map((e) => (
-          <Pressable key={e} onPress={() => ajoute(e, m)} accessibilityRole="button" accessibilityLabel={`Ajouter ${nommer(e)}`} style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.divider })}>
+          <Pressable key={e} onPress={() => ajoute(e, m)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0}", nommer(e))} style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.divider })}>
             <Ink size={16} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>{nommer(e)}</Ink>
             <Icon name="plus" size={20} color={c.textSecondary} />
           </Pressable>
@@ -249,21 +250,20 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
     if (!b.found) {
       return (
         <Ink size={14} color={c.textSecondary}>
-          Je ne trouve pas le bloc {MACHINE_HEADER} dans ce texte. Colle toute la réponse de ton IA, du titre jusqu’à FIN.
-        </Ink>
+          {traduire("Je ne trouve pas le bloc {0} dans ce texte. Colle toute la réponse de ton IA, du titre jusqu’à FIN.", MACHINE_HEADER)}</Ink>
       );
     }
     if (!b.machine) {
       return (
         <View style={{ gap: 10 }}>
-          <Ink size={16} weight="extraBold">Ton IA ne reconnaît pas cette machine</Ink>
-          {b.description ? <Ink size={14} color={c.textSecondary}>Elle voit : {b.description}</Ink> : null}
-          <GhostButton label="Chercher dans la liste" onPress={() => { setPhoto(false); setQuery(b.description ?? ''); }} />
+          <Ink size={16} weight="extraBold">{traduire("Ton IA ne reconnaît pas cette machine")}</Ink>
+          {b.description ? <Ink size={14} color={c.textSecondary}>{traduire("Elle voit : {0}", b.description)}</Ink> : null}
+          <GhostButton label={traduire("Chercher dans la liste")} onPress={() => { setPhoto(false); setQuery(b.description ?? ''); }} />
         </View>
       );
     }
     const m = b.machine;
-    const conf = b.confiance === 'haute' ? 'Ton IA en est sûre' : b.confiance === 'moyenne' ? 'Ton IA pense que c’est elle' : b.confiance === 'faible' ? 'Ton IA hésite' : 'Proposée par ton IA';
+    const conf = b.confiance === 'haute' ? traduire('Ton IA en est sûre') : b.confiance === 'moyenne' ? traduire('Ton IA pense que c’est elle') : b.confiance === 'faible' ? traduire('Ton IA hésite') : traduire('Proposée par ton IA');
     return (
       <View style={{ gap: 12 }}>
         <Ink size={13} weight="bold" color={c.textMuted}>{conf}</Ink>
@@ -274,10 +274,10 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
             <Ink size={13} color={c.textMuted}>{m.muscles.slice(0, 3).join(', ')}</Ink>
           </View>
         </View>
-        <PrimaryButton label="C’est elle" onPress={() => { setPhoto(false); touche(m); }} />
+        <PrimaryButton label={traduire("C’est elle")} onPress={() => { setPhoto(false); touche(m); }} />
         {b.autres.length ? (
           <View style={{ gap: 6 }}>
-            <Ink size={13} weight="bold" color={c.textSecondary}>Sinon, ton IA a aussi pensé à</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Sinon, ton IA a aussi pensé à")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {b.autres.map((a) => (
                 <Pressable key={a.id} onPress={() => { setPhoto(false); touche(a); }} accessibilityRole="button" style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 12, justifyContent: 'center', borderWidth: 1.5, borderColor: c.border }}>
@@ -287,32 +287,32 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
             </View>
           </View>
         ) : null}
-        <GhostButton label="Pas la bonne, chercher dans la liste" onPress={() => setPhoto(false)} />
+        <GhostButton label={traduire("Pas la bonne, chercher dans la liste")} onPress={() => setPhoto(false)} />
       </View>
     );
   };
 
   const vuePhoto = () => (
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 14, paddingBottom: insets.bottom + 40, gap: 18 }}>
-      <Ink size={14} color={c.textSecondary}>Ton IA reconnaît la machine sur ta photo. YOROI n’envoie rien : tu passes par l’IA que tu utilises déjà.</Ink>
-      {etape(1, 'Copie la consigne', 'Elle contient la liste des machines de YOROI.')}
-      <PrimaryButton label={copied ? 'Consigne copiée' : 'Copier la consigne'} tone={copied ? 'ink' : 'accent'} onPress={() => void copier()} />
-      {etape(2, 'Envoie-la à ton IA avec ta photo', 'ChatGPT, Gemini, Claude ou une autre : colle la consigne et joins la photo de la machine, prise de côté si tu peux.')}
-      {etape(3, 'Colle sa réponse ici', `Elle commence par ${MACHINE_HEADER} et finit par FIN.`)}
+      <Ink size={14} color={c.textSecondary}>{traduire("Ton IA reconnaît la machine sur ta photo. YOROI n’envoie rien : tu passes par l’IA que tu utilises déjà.")}</Ink>
+      {etape(1, traduire('Copie la consigne'), traduire('Elle contient la liste des machines de YOROI.'))}
+      <PrimaryButton label={copied ? traduire('Consigne copiée') : traduire('Copier la consigne')} tone={copied ? 'ink' : 'accent'} onPress={() => void copier()} />
+      {etape(2, traduire('Envoie-la à ton IA avec ta photo'), traduire('ChatGPT, Gemini, Claude ou une autre : colle la consigne et joins la photo de la machine, prise de côté si tu peux.'))}
+      {etape(3, traduire('Colle sa réponse ici'), traduire("Elle commence par {0} et finit par FIN.", MACHINE_HEADER))}
       {clipFound && !bloc ? (
         <Pressable onPress={() => lire(clipFound)} accessibilityRole="button" style={({ pressed }) => ({ borderRadius: 16, padding: 14, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1.5, borderColor: c.accent, gap: 2 })}>
-          <Ink size={15} weight="extraBold" color={c.accent}>Réponse trouvée dans le presse-papiers</Ink>
-          <Ink size={13} color={c.textSecondary}>Touche pour la lire</Ink>
+          <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Réponse trouvée dans le presse-papiers")}</Ink>
+          <Ink size={13} color={c.textSecondary}>{traduire("Touche pour la lire")}</Ink>
         </Pressable>
       ) : null}
-      <PrimaryButton label="Coller depuis le presse-papiers" tone="ink" onPress={() => void coller()} />
+      <PrimaryButton label={traduire("Coller depuis le presse-papiers")} tone="ink" onPress={() => void coller()} />
       <TextInput
         value={reponse}
         onChangeText={lire}
         multiline
         placeholder={`${MACHINE_HEADER}\nmachine: ...\nFIN`}
         placeholderTextColor={c.textMuted}
-        accessibilityLabel="Réponse de ton IA"
+        accessibilityLabel={traduire("Réponse de ton IA")}
         style={[fontStyle('bold'), { minHeight: 140, borderRadius: 16, padding: 14, fontSize: 14, color: c.ink, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
       />
       {bloc ? proposition(bloc) : null}
@@ -331,11 +331,11 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
           placeholderTextColor={c.textMuted}
           autoCorrect={false}
           returnKeyType="search"
-          accessibilityLabel="Chercher une machine"
+          accessibilityLabel={traduire("Chercher une machine")}
           style={[fontStyle('bold'), { flex: 1, fontSize: 16, color: c.ink, paddingVertical: 0 }]}
         />
         {query ? (
-          <Pressable onPress={() => setQuery('')} accessibilityLabel="Effacer la recherche" hitSlop={10}>
+          <Pressable onPress={() => setQuery('')} accessibilityLabel={traduire("Effacer la recherche")} hitSlop={10}>
             <Icon name="close" size={16} color={c.textMuted} />
           </Pressable>
         ) : null}
@@ -343,7 +343,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
 
       <View style={{ height: 54 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 22, alignItems: 'center' }}>
-          {chip(null, 'Toutes')}
+          {chip(null, traduire('Toutes'))}
           {GROUPES.map((g) => chip(g.id, g.label))}
         </ScrollView>
       </View>
@@ -360,23 +360,22 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
           <Pressable onPress={() => setPhoto(true)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 60, borderRadius: 18, paddingHorizontal: 16, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.accentPressed : c.accent })}>
             <CameraGlyph color={c.onAccent} />
             <View style={{ flex: 1 }}>
-              <Ink size={16} weight="extraBold" color={c.onAccent} numberOfLines={1}>Prendre la machine en photo</Ink>
-              <Ink size={12} color={c.onAccent} numberOfLines={1} style={{ opacity: 0.85 }}>Ton IA la reconnaît pour toi</Ink>
+              <Ink size={16} weight="extraBold" color={c.onAccent} numberOfLines={1}>{traduire("Prendre la machine en photo")}</Ink>
+              <Ink size={12} color={c.onAccent} numberOfLines={1} style={{ opacity: 0.85 }}>{traduire("Ton IA la reconnaît pour toi")}</Ink>
             </View>
             <Icon name="chevron" size={18} color={c.onAccent} />
           </Pressable>
         }
         ListEmptyComponent={
           <View style={{ paddingVertical: 40, alignItems: 'center', gap: 6 }}>
-            <Ink size={15} color={c.textSecondary}>Aucune machine ne correspond.</Ink>
-            <Ink size={13} color={c.textMuted}>Essaie un autre nom, ou prends-la en photo.</Ink>
+            <Ink size={15} color={c.textSecondary}>{traduire("Aucune machine ne correspond.")}</Ink>
+            <Ink size={13} color={c.textMuted}>{traduire("Essaie un autre nom, ou prends-la en photo.")}</Ink>
           </View>
         }
         ListFooterComponent={
           liste.length ? (
             <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', marginTop: 6 }}>
-              {nbIllus} machines illustrées sur {MACHINES.length}, les autres arrivent.
-            </Ink>
+              {traduire("{0} machines illustrées sur {1}, les autres arrivent.", nbIllus, MACHINES.length)}</Ink>
           ) : null
         }
         renderItem={({ item }) => carte(item)}
@@ -389,7 +388,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: 18 }}>
         {choix ? (
           <>
-            {entete('Ta machine', () => setChoix(null))}
+            {entete(traduire('Ta machine'), () => setChoix(null))}
             {vueChoix(choix)}
           </>
         ) : photo ? (
@@ -399,7 +398,7 @@ export function MachineFinder({ visible, onClose, onPick, nommer = nomFr }: Prop
           </>
         ) : (
           <>
-            {entete('Trouve ta machine')}
+            {entete(traduire('Trouve ta machine'))}
             {vueListe()}
           </>
         )}
@@ -416,8 +415,8 @@ export function MachineFinderButton({ onPress }: { onPress: () => void }) {
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}>
       <CameraGlyph color={c.accent} size={20} />
       <View style={{ flex: 1, gap: 1 }}>
-        <Ink size={15} weight="extraBold" numberOfLines={1}>Trouve ta machine</Ink>
-        <Ink size={12} color={c.textMuted} numberOfLines={1}>En image, ou prends-la en photo</Ink>
+        <Ink size={15} weight="extraBold" numberOfLines={1}>{traduire("Trouve ta machine")}</Ink>
+        <Ink size={12} color={c.textMuted} numberOfLines={1}>{traduire("En image, ou prends-la en photo")}</Ink>
       </View>
       <Icon name="chevron" size={16} color={c.textMuted} />
     </Pressable>

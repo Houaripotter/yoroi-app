@@ -4,6 +4,7 @@
  * c'est elle qu'on montre en premier, les pesees brutes restent visibles en points.
  */
 import type { Weight } from '@/lib/database';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type DayWeight = {
   id?: number;
@@ -80,12 +81,12 @@ export function lowestPoint(series: DayWeight[]): DayWeight | null {
   return series.reduce((m, p) => (p.value < m.value ? p : m), series[0]);
 }
 
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
+const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const DAYS = [traduire('Dimanche'), traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi')];
 
 export function formatKg(v: number, digits = 1): string {
-  return v.toFixed(digits).replace('.', ',');
+  return v.toFixed(digits).replace('.', DECIMAL);
 }
 
 export function formatLongDate(date: string): string {

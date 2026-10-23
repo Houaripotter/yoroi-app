@@ -20,6 +20,7 @@ import { ouvrirReglagesSante } from '@/lib/v2/sante/demande';
 import { BigButton, Chip, ChipRow, Glass, Sheet } from './ui';
 import { Icon } from './Icon';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 type Vue =
   | { k: 'choix' }
@@ -28,18 +29,18 @@ type Vue =
   | { k: 'souci'; titre: string; texte: string; reglages: boolean };
 
 function texteEtape(e: EtapeImport | null, source: string): { ligne: string; part: number | null } {
-  if (!e) return { ligne: 'Préparation', part: null };
+  if (!e) return { ligne: traduire('Préparation'), part: null };
   switch (e.phase) {
     case 'acces':
-      return { ligne: `Autorise YOROI dans la fenêtre de ${source}`, part: null };
+      return { ligne: traduire("Autorise YOROI dans la fenêtre de {0}", source), part: null };
     case 'attente':
-      return { ligne: 'Fin de l’import de tes données en cours', part: null };
+      return { ligne: traduire('Fin de l’import de tes données en cours'), part: null };
     case 'lecture':
-      return { ligne: `Lecture de tes séances dans ${source}`, part: null };
+      return { ligne: traduire("Lecture de tes séances dans {0}", source), part: null };
     case 'ajout':
-      return { ligne: `Ajout des séances : ${e.fait} sur ${e.total}`, part: e.total ? e.fait / e.total : null };
+      return { ligne: traduire("Ajout des séances : {0} sur {1}", e.fait, e.total), part: e.total ? e.fait / e.total : null };
     case 'details':
-      return { ligne: `Fréquence cardiaque et tracés : ${e.fait} sur ${e.total}`, part: e.total ? e.fait / e.total : null };
+      return { ligne: traduire("Fréquence cardiaque et tracés : {0} sur {1}", e.fait, e.total), part: e.total ? e.fait / e.total : null };
   }
 }
 
@@ -55,18 +56,18 @@ function vueDe(r: IssueImport, source: string): Vue {
     case 'rien_lu':
       return {
         k: 'souci',
-        titre: `Aucune séance lue dans ${source}`,
+        titre: traduire("Aucune séance lue dans {0}", source),
         texte: android
-          ? `L’accès aux séances n’est pas ouvert, ou Health Connect n’en a aucune sur cette période. Pour l’ouvrir :\n${etapes}`
-          : `Soit l’accès aux entraînements est coupé, soit il n’y en a aucun sur cette période. Apple ne dit pas lequel. Pour vérifier :\n${etapes}`,
+          ? traduire("L’accès aux séances n’est pas ouvert, ou Health Connect n’en a aucune sur cette période. Pour l’ouvrir :\n{0}", etapes)
+          : traduire("Soit l’accès aux entraînements est coupé, soit il n’y en a aucun sur cette période. Apple ne dit pas lequel. Pour vérifier :\n{0}", etapes),
         reglages: true,
       };
     case 'indisponible':
-      return { k: 'souci', titre: `${source} indisponible`, texte: android ? 'Installe Health Connect depuis le Play Store, puis réessaie.' : 'L’app Santé n’existe pas sur cet appareil.', reglages: false };
+      return { k: 'souci', titre: `${source} indisponible`, texte: android ? traduire('Installe Health Connect depuis le Play Store, puis réessaie.') : traduire('L’app Santé n’existe pas sur cet appareil.'), reglages: false };
     case 'en_cours':
-      return { k: 'souci', titre: 'Un import est déjà en cours', texte: 'Attends qu’il se termine, puis relance si besoin.', reglages: false };
+      return { k: 'souci', titre: traduire('Un import est déjà en cours'), texte: traduire('Attends qu’il se termine, puis relance si besoin.'), reglages: false };
     default:
-      return { k: 'souci', titre: 'Import impossible', texte: 'Réessaie dans un instant. Rien n’a été ajouté en double.', reglages: false };
+      return { k: 'souci', titre: traduire('Import impossible'), texte: traduire('Réessaie dans un instant. Rien n’a été ajouté en double.'), reglages: false };
   }
 }
 
@@ -109,19 +110,19 @@ export function ImportSeancesSheet({ visible, onClose, onFini }: { visible: bool
   };
 
   return (
-    <Sheet visible={visible} onClose={fermer} title="Importer mes séances">
+    <Sheet visible={visible} onClose={fermer} title={traduire("Importer mes séances")}>
       {vue.k === 'choix' ? (
         <>
           <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
-            {`YOROI lit tes entraînements dans ${source} et ajoute ceux qui manquent. Une séance déjà présente, ou notée dans YOROI, n’est jamais ajoutée deux fois.`}
+            {traduire("YOROI lit tes entraînements dans {0} et ajoute ceux qui manquent. Une séance déjà présente, ou notée dans YOROI, n’est jamais ajoutée deux fois.", source)}
           </Ink>
-          <Ink size={13} weight="extraBold" color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: 6 }}>Période</Ink>
+          <Ink size={13} weight="extraBold" color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: 6 }}>{traduire("Période")}</Ink>
           <ChipRow>
             {PERIODES_IMPORT.map((p) => (
               <Chip key={p.key} label={p.label} on={periode === p.key} onPress={() => setPeriode(p.key)} />
             ))}
           </ChipRow>
-          <BigButton label="Importer" icon="download" onPress={lancer} style={{ marginTop: 6 }} />
+          <BigButton label={traduire("Importer")} icon="download" onPress={lancer} style={{ marginTop: 6 }} />
         </>
       ) : vue.k === 'en_cours' ? (
         <Progression etape={vue.etape} source={source} />
@@ -136,7 +137,7 @@ export function ImportSeancesSheet({ visible, onClose, onFini }: { visible: bool
               {vue.detail ? <Ink size={13} color={c.textSecondary}>{vue.detail}</Ink> : null}
             </View>
           </Glass>
-          <BigButton label="Fermer" tone="ink" onPress={onClose} />
+          <BigButton label={traduire("Fermer")} tone="ink" onPress={onClose} />
         </>
       ) : (
         <>
@@ -144,8 +145,8 @@ export function ImportSeancesSheet({ visible, onClose, onFini }: { visible: bool
             <Ink size={17} weight="black" tight>{vue.titre}</Ink>
             <Ink size={14} color={c.textSecondary}>{vue.texte}</Ink>
           </Glass>
-          {vue.reglages ? <BigButton label={Platform.OS === 'android' ? 'Ouvrir Health Connect' : 'Ouvrir Santé'} tone="ink" onPress={ouvrirReglages} /> : null}
-          <BigButton label="Réessayer" tone="soft" onPress={() => setVue({ k: 'choix' })} />
+          {vue.reglages ? <BigButton label={Platform.OS === 'android' ? 'Ouvrir Health Connect' : traduire('Ouvrir Santé')} tone="ink" onPress={ouvrirReglages} /> : null}
+          <BigButton label={traduire("Réessayer")} tone="soft" onPress={() => setVue({ k: 'choix' })} />
         </>
       )}
     </Sheet>
@@ -165,7 +166,7 @@ function Progression({ etape, source }: { etape: EtapeImport | null; source: str
       <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
         <View style={{ width: `${Math.round((t.part ?? 0.08) * 100)}%`, height: '100%', borderRadius: 4, backgroundColor: c.accent, opacity: t.part == null ? 0.5 : 1 }} />
       </View>
-      <Ink size={12} color={c.textMuted}>Garde YOROI ouvert pendant l’import.</Ink>
+      <Ink size={12} color={c.textMuted}>{traduire("Garde YOROI ouvert pendant l’import.")}</Ink>
     </Glass>
   );
 }
@@ -176,13 +177,13 @@ export function CarteImportSeances({ onPress }: { onPress: () => void }) {
   const c = theme.colors;
   const source = nomSourceSante();
   return (
-    <Glass onPress={onPress} label={`Importer mes séances depuis ${source}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 }}>
+    <Glass onPress={onPress} label={traduire("Importer mes séances depuis {0}", source)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 }}>
       <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, alignItems: 'center', justifyContent: 'center' }}>
         <Icon name="download" size={22} color={c.accent} strokeWidth={2.4} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={15} weight="extraBold">Importer mes séances</Ink>
-        <Ink size={13} color={c.textSecondary}>{`Depuis ${source}, sans doublon`}</Ink>
+        <Ink size={15} weight="extraBold">{traduire("Importer mes séances")}</Ink>
+        <Ink size={13} color={c.textSecondary}>{traduire("Depuis {0}, sans doublon", source)}</Ink>
       </View>
       <Icon name="chevron" size={18} color={c.textMuted} />
     </Glass>

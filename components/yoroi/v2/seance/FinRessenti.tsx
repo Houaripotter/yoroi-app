@@ -10,11 +10,12 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { MOODS, loadRessenti, saveRessenti } from '@/lib/v2/seance/ressenti';
 import type { Ressenti } from '@/lib/v2/seance/ressenti';
+import { traduire } from '@/lib/i18n/tr';
 
 const STAR = 'M12 3.2l2.7 5.5 6 .9-4.35 4.2 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.6l6-.9z';
 
-const RATING_WORDS = ['', 'Séance à oublier', 'Séance moyenne', 'Séance correcte', 'Bonne séance', 'Excellente séance'];
-const TECH_WORDS = ['', 'À revoir', 'Fragile', 'Correcte', 'Propre', 'Parfaite'];
+const RATING_WORDS = ['', traduire('Séance à oublier'), traduire('Séance moyenne'), traduire('Séance correcte'), traduire('Bonne séance'), traduire('Excellente séance')];
+const TECH_WORDS = ['', traduire('À revoir'), 'Fragile', 'Correcte', 'Propre', 'Parfaite'];
 
 function tap(success?: boolean) {
   try {
@@ -36,7 +37,7 @@ function Stars({ value, onChange, label, color, track }: { value: number | null;
             onPress={() => onChange(value === n ? null : n)}
             hitSlop={4}
             accessibilityRole="button"
-            accessibilityLabel={`${label} : ${n} sur 5`}
+            accessibilityLabel={traduire("{0} : {1} sur 5", label, n)}
             accessibilityState={{ selected: value === n }}
             style={({ pressed }) => ({ width: 52, height: 52, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.88 : 1 }] })}
           >
@@ -76,23 +77,23 @@ export function FinRessenti({ trainingId, combat }: { trainingId: number; combat
   return (
     <View style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, padding: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <Ink size={17} weight="black" tight style={{ flexShrink: 1 }}>Ta note et ton ressenti</Ink>
+        <Ink size={17} weight="black" tight style={{ flexShrink: 1 }}>{traduire("Ta note et ton ressenti")}</Ink>
         <Ink size={12} weight="bold" color={saved && anything ? c.successText : c.textMuted}>
-          {saved && anything ? 'Enregistré' : 'Un appui suffit'}
+          {saved && anything ? traduire('Enregistré') : traduire('Un appui suffit')}
         </Ink>
       </View>
 
       <View style={{ gap: 4 }}>
-        <Stars value={r.rating} onChange={(n) => update({ rating: n })} label="Note de la séance" color={c.gold} track={c.border} />
+        <Stars value={r.rating} onChange={(n) => update({ rating: n })} label={traduire("Note de la séance")} color={c.gold} track={c.border} />
         <Ink size={13} weight="bold" color={r.rating ? c.ink : c.textMuted} style={{ textAlign: 'center' }}>
-          {r.rating ? RATING_WORDS[r.rating] : 'Note ta séance'}
+          {r.rating ? RATING_WORDS[r.rating] : traduire('Note ta séance')}
         </Ink>
       </View>
 
       <View style={{ height: 1, backgroundColor: c.divider }} />
 
       <View style={{ gap: 10 }}>
-        <Ink size={14} weight="extraBold" color={c.textSecondary}>Ton ressenti</Ink>
+        <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduire("Ton ressenti")}</Ink>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {MOODS.map((m, mi) => {
             const on = r.mood === m.value;
@@ -122,10 +123,10 @@ export function FinRessenti({ trainingId, combat }: { trainingId: number; combat
         <>
           <View style={{ height: 1, backgroundColor: c.divider }} />
           <View style={{ gap: 4 }}>
-            <Ink size={14} weight="extraBold" color={c.textSecondary}>Ta technique</Ink>
+            <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduire("Ta technique")}</Ink>
             <Stars value={r.technique} onChange={(n) => update({ technique: n })} label="Note technique" color={c.indigo} track={c.border} />
             <Ink size={13} weight="bold" color={r.technique ? c.ink : c.textMuted} style={{ textAlign: 'center' }}>
-              {r.technique ? TECH_WORDS[r.technique] : 'Elle nourrit ton radar de progression'}
+              {r.technique ? TECH_WORDS[r.technique] : traduire('Elle nourrit ton radar de progression')}
             </Ink>
           </View>
         </>

@@ -4,6 +4,7 @@
 // Protège contre les données invalides et les injections
 
 import { useState } from 'react';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface ValidationRule {
   type: 'number' | 'string' | 'email' | 'date';
@@ -34,21 +35,21 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 20,
     max: 350,
     required: true,
-    errorMessage: 'Poids entre 20 et 350 kg'
+    errorMessage: traduire('Poids entre 20 et 350 kg')
   },
   height: {
     type: 'number',
     min: 50,
     max: 280,
     required: false,
-    errorMessage: 'Taille entre 50 et 280 cm'
+    errorMessage: traduire('Taille entre 50 et 280 cm')
   },
   height_cm: {
     type: 'number',
     min: 50,
     max: 280,
     required: false,
-    errorMessage: 'Taille entre 50 et 280 cm'
+    errorMessage: traduire('Taille entre 50 et 280 cm')
   },
 
   // ===== COMPOSITION CORPORELLE =====
@@ -57,112 +58,112 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 2,
     max: 60,
     required: false,
-    errorMessage: 'Masse grasse entre 2% et 60%'
+    errorMessage: traduire('Masse grasse entre 2% et 60%')
   },
   body_fat: {
     type: 'number',
     min: 2,
     max: 60,
     required: false,
-    errorMessage: 'Masse grasse entre 2% et 60%'
+    errorMessage: traduire('Masse grasse entre 2% et 60%')
   },
   fat_percent: {
     type: 'number',
     min: 2,
     max: 60,
     required: false,
-    errorMessage: 'Masse grasse entre 2% et 60%'
+    errorMessage: traduire('Masse grasse entre 2% et 60%')
   },
   muscleMass: {
     type: 'number',
     min: 10,
     max: 70,
     required: false,
-    errorMessage: 'Masse musculaire entre 10% et 70%'
+    errorMessage: traduire('Masse musculaire entre 10% et 70%')
   },
   muscle_mass: {
     type: 'number',
     min: 10,
     max: 70,
     required: false,
-    errorMessage: 'Masse musculaire entre 10% et 70%'
+    errorMessage: traduire('Masse musculaire entre 10% et 70%')
   },
   muscle_percent: {
     type: 'number',
     min: 10,
     max: 70,
     required: false,
-    errorMessage: 'Masse musculaire entre 10% et 70%'
+    errorMessage: traduire('Masse musculaire entre 10% et 70%')
   },
   water: {
     type: 'number',
     min: 30,
     max: 80,
     required: false,
-    errorMessage: 'Hydratation entre 30% et 80%'
+    errorMessage: traduire('Hydratation entre 30% et 80%')
   },
   water_percent: {
     type: 'number',
     min: 30,
     max: 80,
     required: false,
-    errorMessage: 'Hydratation entre 30% et 80%'
+    errorMessage: traduire('Hydratation entre 30% et 80%')
   },
   boneMass: {
     type: 'number',
     min: 1,
     max: 10,
     required: false,
-    errorMessage: 'Masse osseuse entre 1 et 10 kg'
+    errorMessage: traduire('Masse osseuse entre 1 et 10 kg')
   },
   bone_mass: {
     type: 'number',
     min: 1,
     max: 10,
     required: false,
-    errorMessage: 'Masse osseuse entre 1 et 10 kg'
+    errorMessage: traduire('Masse osseuse entre 1 et 10 kg')
   },
   visceralFat: {
     type: 'number',
     min: 1,
     max: 30,
     required: false,
-    errorMessage: 'Graisse viscérale entre 1 et 30'
+    errorMessage: traduire('Graisse viscérale entre 1 et 30')
   },
   visceral_fat: {
     type: 'number',
     min: 1,
     max: 30,
     required: false,
-    errorMessage: 'Graisse viscérale entre 1 et 30'
+    errorMessage: traduire('Graisse viscérale entre 1 et 30')
   },
   metabolicAge: {
     type: 'number',
     min: 12,
     max: 100,
     required: false,
-    errorMessage: 'Âge métabolique entre 12 et 100 ans'
+    errorMessage: traduire('Âge métabolique entre 12 et 100 ans')
   },
   metabolic_age: {
     type: 'number',
     min: 12,
     max: 100,
     required: false,
-    errorMessage: 'Âge métabolique entre 12 et 100 ans'
+    errorMessage: traduire('Âge métabolique entre 12 et 100 ans')
   },
   bmr: {
     type: 'number',
     min: 500,
     max: 5000,
     required: false,
-    errorMessage: 'BMR entre 500 et 5000 kcal'
+    errorMessage: traduire('BMR entre 500 et 5000 kcal')
   },
   bmi: {
     type: 'number',
     min: 10,
     max: 60,
     required: false,
-    errorMessage: 'BMI entre 10 et 60'
+    errorMessage: traduire('BMI entre 10 et 60')
   },
 
   // ===== MENSURATIONS =====
@@ -171,91 +172,91 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 40,
     max: 200,
     required: false,
-    errorMessage: 'Tour de taille entre 40 et 200 cm'
+    errorMessage: traduire('Tour de taille entre 40 et 200 cm')
   },
   hips: {
     type: 'number',
     min: 50,
     max: 200,
     required: false,
-    errorMessage: 'Hanches entre 50 et 200 cm'
+    errorMessage: traduire('Hanches entre 50 et 200 cm')
   },
   chest: {
     type: 'number',
     min: 50,
     max: 200,
     required: false,
-    errorMessage: 'Poitrine entre 50 et 200 cm'
+    errorMessage: traduire('Poitrine entre 50 et 200 cm')
   },
   neck: {
     type: 'number',
     min: 20,
     max: 60,
     required: false,
-    errorMessage: 'Cou entre 20 et 60 cm'
+    errorMessage: traduire('Cou entre 20 et 60 cm')
   },
   shoulder: {
     type: 'number',
     min: 40,
     max: 180,
     required: false,
-    errorMessage: 'Tour d’épaules entre 40 et 180 cm'
+    errorMessage: traduire('Tour d’épaules entre 40 et 180 cm')
   },
   shoulders: {
     type: 'number',
     min: 40,
     max: 180,
     required: false,
-    errorMessage: 'Tour d’épaules entre 40 et 180 cm'
+    errorMessage: traduire('Tour d’épaules entre 40 et 180 cm')
   },
   left_arm: {
     type: 'number',
     min: 15,
     max: 60,
     required: false,
-    errorMessage: 'Bras gauche entre 15 et 60 cm'
+    errorMessage: traduire('Bras gauche entre 15 et 60 cm')
   },
   right_arm: {
     type: 'number',
     min: 15,
     max: 60,
     required: false,
-    errorMessage: 'Bras droit entre 15 et 60 cm'
+    errorMessage: traduire('Bras droit entre 15 et 60 cm')
   },
   left_thigh: {
     type: 'number',
     min: 30,
     max: 100,
     required: false,
-    errorMessage: 'Cuisse gauche entre 30 et 100 cm'
+    errorMessage: traduire('Cuisse gauche entre 30 et 100 cm')
   },
   right_thigh: {
     type: 'number',
     min: 30,
     max: 100,
     required: false,
-    errorMessage: 'Cuisse droite entre 30 et 100 cm'
+    errorMessage: traduire('Cuisse droite entre 30 et 100 cm')
   },
   left_calf: {
     type: 'number',
     min: 20,
     max: 60,
     required: false,
-    errorMessage: 'Mollet gauche entre 20 et 60 cm'
+    errorMessage: traduire('Mollet gauche entre 20 et 60 cm')
   },
   right_calf: {
     type: 'number',
     min: 20,
     max: 60,
     required: false,
-    errorMessage: 'Mollet droit entre 20 et 60 cm'
+    errorMessage: traduire('Mollet droit entre 20 et 60 cm')
   },
   navel: {
     type: 'number',
     min: 40,
     max: 200,
     required: false,
-    errorMessage: 'Tour de nombril entre 40 et 200 cm'
+    errorMessage: traduire('Tour de nombril entre 40 et 200 cm')
   },
 
   // ===== UTILISATEUR =====
@@ -264,14 +265,14 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     minLength: 1,
     maxLength: 50,
     required: false,
-    errorMessage: 'Nom entre 1 et 50 caractères'
+    errorMessage: traduire('Nom entre 1 et 50 caractères')
   },
   username: {
     type: 'string',
     minLength: 1,
     maxLength: 50,
     required: false,
-    errorMessage: 'Pseudo entre 1 et 50 caractères'
+    errorMessage: traduire('Pseudo entre 1 et 50 caractères')
   },
   email: {
     type: 'email',
@@ -283,7 +284,7 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 10,
     max: 120,
     required: false,
-    errorMessage: 'Âge entre 10 et 120 ans'
+    errorMessage: traduire('Âge entre 10 et 120 ans')
   },
 
   // ===== OBJECTIFS =====
@@ -292,35 +293,35 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 30,
     max: 300,
     required: false,
-    errorMessage: 'Objectif entre 30 et 300 kg'
+    errorMessage: traduire('Objectif entre 30 et 300 kg')
   },
   weight_goal: {
     type: 'number',
     min: 30,
     max: 300,
     required: false,
-    errorMessage: 'Objectif entre 30 et 300 kg'
+    errorMessage: traduire('Objectif entre 30 et 300 kg')
   },
   goalWeight: {
     type: 'number',
     min: 30,
     max: 300,
     required: false,
-    errorMessage: 'Objectif entre 30 et 300 kg'
+    errorMessage: traduire('Objectif entre 30 et 300 kg')
   },
   targetWeight: {
     type: 'number',
     min: 30,
     max: 300,
     required: false,
-    errorMessage: 'Objectif entre 30 et 300 kg'
+    errorMessage: traduire('Objectif entre 30 et 300 kg')
   },
   start_weight: {
     type: 'number',
     min: 20,
     max: 350,
     required: false,
-    errorMessage: 'Poids de départ entre 20 et 350 kg'
+    errorMessage: traduire('Poids de départ entre 20 et 350 kg')
   },
 
   // ===== ACTIVITÉS =====
@@ -329,35 +330,35 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 1,
     max: 600,
     required: false,
-    errorMessage: 'Durée entre 1 et 600 minutes'
+    errorMessage: traduire('Durée entre 1 et 600 minutes')
   },
   duration_minutes: {
     type: 'number',
     min: 1,
     max: 600,
     required: false,
-    errorMessage: 'Durée entre 1 et 600 minutes'
+    errorMessage: traduire('Durée entre 1 et 600 minutes')
   },
   rpe: {
     type: 'number',
     min: 1,
     max: 10,
     required: false,
-    errorMessage: 'RPE entre 1 et 10'
+    errorMessage: traduire('RPE entre 1 et 10')
   },
   calories: {
     type: 'number',
     min: 0,
     max: 10000,
     required: false,
-    errorMessage: 'Calories entre 0 et 10000'
+    errorMessage: traduire('Calories entre 0 et 10000')
   },
   technique_rating: {
     type: 'number',
     min: 1,
     max: 5,
     required: false,
-    errorMessage: 'Note technique entre 1 et 5'
+    errorMessage: traduire('Note technique entre 1 et 5')
   },
 
   // ===== TEXTES =====
@@ -365,13 +366,13 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     type: 'string',
     maxLength: 1000,
     required: false,
-    errorMessage: 'Notes max 1000 caractères'
+    errorMessage: traduire('Notes max 1000 caractères')
   },
   note: {
     type: 'string',
     maxLength: 1000,
     required: false,
-    errorMessage: 'Note max 1000 caractères'
+    errorMessage: traduire('Note max 1000 caractères')
   },
 
   // ===== VITALITÉ =====
@@ -380,28 +381,28 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 0,
     max: 24,
     required: false,
-    errorMessage: 'Sommeil entre 0 et 24h'
+    errorMessage: traduire('Sommeil entre 0 et 24h')
   },
   waterIntake: {
     type: 'number',
     min: 0,
     max: 10,
     required: false,
-    errorMessage: 'Eau entre 0 et 10 litres'
+    errorMessage: traduire('Eau entre 0 et 10 litres')
   },
   energyLevel: {
     type: 'number',
     min: 1,
     max: 5,
     required: false,
-    errorMessage: 'Énergie entre 1 et 5'
+    errorMessage: traduire('Énergie entre 1 et 5')
   },
   stressLevel: {
     type: 'number',
     min: 1,
     max: 5,
     required: false,
-    errorMessage: 'Stress entre 1 et 5'
+    errorMessage: traduire('Stress entre 1 et 5')
   },
 
   // ===== HYDRATATION =====
@@ -410,14 +411,14 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 50,
     max: 2000,
     required: false,
-    errorMessage: 'Quantité entre 50 et 2000 ml'
+    errorMessage: traduire('Quantité entre 50 et 2000 ml')
   },
   dailyGoal: {
     type: 'number',
     min: 0.5,
     max: 10,
     required: false,
-    errorMessage: 'Objectif entre 0.5 et 10 litres'
+    errorMessage: traduire('Objectif entre 0.5 et 10 litres')
   },
 
   // ===== SUIVI BLESSURES =====
@@ -426,14 +427,14 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     min: 0,
     max: 10,
     required: false,
-    errorMessage: 'Échelle EVA entre 0 et 10'
+    errorMessage: traduire('Échelle EVA entre 0 et 10')
   },
   pain: {
     type: 'number',
     min: 0,
     max: 10,
     required: false,
-    errorMessage: 'Douleur entre 0 et 10'
+    errorMessage: traduire('Douleur entre 0 et 10')
   },
 };
 
@@ -453,7 +454,7 @@ export const validate = (field: string, value: any): ValidationResult => {
   if (rules.required && (value === null || value === undefined || value === '')) {
     return {
       valid: false,
-      error: rules.errorMessage || `${field} est requis`
+      error: rules.errorMessage || traduire("{0} est requis", field)
     };
   }
 
@@ -522,14 +523,14 @@ const validateString = (value: any, rules: ValidationRule): ValidationResult => 
   if (rules.minLength && str.length < rules.minLength) {
     return {
       valid: false,
-      error: rules.errorMessage || `Minimum ${rules.minLength} caractères`
+      error: rules.errorMessage || traduire("Minimum {0} caractères", rules.minLength)
     };
   }
 
   if (rules.maxLength && str.length > rules.maxLength) {
     return {
       valid: false,
-      error: rules.errorMessage || `Maximum ${rules.maxLength} caractères`
+      error: rules.errorMessage || traduire("Maximum {0} caractères", rules.maxLength)
     };
   }
 

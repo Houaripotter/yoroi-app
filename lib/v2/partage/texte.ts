@@ -8,6 +8,7 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { signaturePartage } from '@/constants/partage';
 import { noterPartage } from './mesure';
 import type { SourcePartage } from './mesure';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Texte final tel qu'il part : le message puis la signature sur sa propre ligne */
 export function texteSigne(message: string): string {
@@ -40,10 +41,10 @@ export function partagerTexte(opts: { source: SourcePartage; message: string; ti
     envoyer(opts.source, texte, opts.titre).catch(() => {});
     return;
   }
-  appAlert('Voici ce qui sera partagé', texte, [
-    { text: 'Annuler', style: 'cancel' },
+  appAlert(traduire('Voici ce qui sera partagé'), texte, [
+    { text: traduire('Annuler'), style: 'cancel' },
     {
-      text: 'Partager',
+      text: traduire('Partager'),
       style: 'primary',
       onPress: () => {
         noterPartage(opts.source);

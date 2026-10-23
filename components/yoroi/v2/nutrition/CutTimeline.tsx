@@ -10,6 +10,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { SAFE_WEEKLY_CUT, WATER_CUT_MAX, fmt } from '@/lib/v2/nutrition/formulas';
 import { P } from './ui';
 import { areaOf, brushPath, CHART, CHART_COLORS, EndDot, Reveal, SeriesLine } from '../charts/core';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 export type CutZone = 'safe' | 'water' | 'danger';
 
@@ -21,9 +22,9 @@ export function cutZones(current: number, target: number, daysLeft: number) {
 }
 
 export const ZONE_TEXT: Record<CutZone, { title: string; text: string; color: string; soft: string }> = {
-  safe: { title: 'Atteignable à un rythme sain', text: 'Ton objectif tient avec une perte d’environ 1 kg par semaine au maximum.', color: P.mossText, soft: P.mossSoft },
-  water: { title: 'Demande une coupe d’eau', text: 'Une partie devra passer par une coupe d’eau en fin de préparation. À faire encadré, jamais seul.', color: P.goldDark, soft: P.goldSoft },
-  danger: { title: 'Hors des limites de sécurité', text: 'Cet objectif dépasse ce qu’on peut perdre sans danger d’ici la pesée. Parles-en à un médecin du sport ou vise la catégorie au-dessus.', color: P.danger, soft: P.dangerSoft },
+  safe: { title: traduire('Atteignable à un rythme sain'), text: traduire('Ton objectif tient avec une perte d’environ 1 kg par semaine au maximum.'), color: P.mossText, soft: P.mossSoft },
+  water: { title: traduire('Demande une coupe d’eau'), text: traduire('Une partie devra passer par une coupe d’eau en fin de préparation. À faire encadré, jamais seul.'), color: P.goldDark, soft: P.goldSoft },
+  danger: { title: traduire('Hors des limites de sécurité'), text: traduire('Cet objectif dépasse ce qu’on peut perdre sans danger d’ici la pesée. Parles-en à un médecin du sport ou vise la catégorie au-dessus.'), color: P.danger, soft: P.dangerSoft },
 };
 
 type Pt = { date: string; weight: number };
@@ -66,10 +67,10 @@ export function CutTimeline({ startDate, targetDate, startWeight, targetWeight, 
   const yWater = y(z.waterFloor);
   const bottom = H - padB;
   const nowX = x(now);
-  const fmtD = (t: number) => new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const fmtD = (t: number) => new Date(t).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' });
 
   return (
-    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} accessible accessibilityLabel={`Ligne du temps de ta coupe : ${fmt(currentWeight)} kg aujourd’hui, objectif ${fmt(targetWeight)} kg à la pesée dans ${daysLeft} jours. ${ZONE_TEXT[z.zone].title}.`}>
+    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} accessible accessibilityLabel={traduire("Ligne du temps de ta coupe : {0} kg aujourd’hui, objectif {1} kg à la pesée dans {2} jours. {3}.", fmt(currentWeight), fmt(targetWeight), daysLeft, ZONE_TEXT[z.zone].title)}>
       {w > 0 ? (
         <Svg width={w} height={H}>
           {/* ligne cible */}
@@ -104,19 +105,19 @@ export function CutTimeline({ startDate, targetDate, startWeight, targetWeight, 
             {fmtD(t0)}
           </SvgText>
           <SvgText x={padL + innerW} y={H - 8} fontSize={CHART.axisSize} fontFamily={CHART.labelFamily} fill={P.ink} textAnchor="end">
-            {`Pesée ${fmtD(t1)}`}
+            {traduire("Pesée {0}", fmtD(t1))}
           </SvgText>
         </Svg>
       ) : (
         <View style={{ height: H }} />
       )}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 6 }}>
-        <Legend color={P.ink} label="Tes pesées" />
-        <Legend color={P.accent} label="Objectif" dashed />
-        <Legend color={P.dashed} label="Trajectoire prévue" dashed />
+        <Legend color={P.ink} label={traduire("Tes pesées")} />
+        <Legend color={P.accent} label={traduire("Objectif")} dashed />
+        <Legend color={P.dashed} label={traduire("Trajectoire prévue")} dashed />
         <Legend color={P.moss} label="Sain" />
-        <Legend color={P.gold} label="Coupe d’eau" />
-        <Legend color={P.danger} label="Danger" />
+        <Legend color={P.gold} label={traduire("Coupe d’eau")} />
+        <Legend color={P.danger} label={traduire("Danger")} />
       </View>
     </View>
   );

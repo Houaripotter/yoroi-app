@@ -10,6 +10,7 @@ import { paletteSombre } from '@/components/yoroi/livePalette';
 import { intensite } from '@/lib/v2/intensite';
 import type { SeanceKind } from './model';
 import { seanceKindFor } from './sportVisuals';
+import { traduire } from '@/lib/i18n/tr';
 
 export type NoteSeance = {
   /** titre de la question dans la feuille de fin */
@@ -21,9 +22,9 @@ export type NoteSeance = {
 };
 
 const NOTES: Record<SeanceKind, NoteSeance> = {
-  combat: { titre: 'Ta technique aujourd’hui', nom: 'Technique', mots: ['À revoir', 'Moyenne', 'Correcte', 'Propre', 'Au top'] },
-  muscu: { titre: 'L’exécution de tes mouvements', nom: 'Exécution', mots: ['À revoir', 'Moyenne', 'Correcte', 'Propre', 'Parfaite'] },
-  cardio: { titre: 'Tes sensations aujourd’hui', nom: 'Sensations', mots: ['Difficiles', 'Moyennes', 'Correctes', 'Bonnes', 'Excellentes'] },
+  combat: { titre: traduire('Ta technique aujourd’hui'), nom: traduire('Technique'), mots: ['À revoir', 'Moyenne', 'Correcte', 'Propre', 'Au top'] },
+  muscu: { titre: traduire('L’exécution de tes mouvements'), nom: traduire('Exécution'), mots: ['À revoir', 'Moyenne', 'Correcte', 'Propre', 'Parfaite'] },
+  cardio: { titre: traduire('Tes sensations aujourd’hui'), nom: 'Sensations', mots: ['Difficiles', 'Moyennes', 'Correctes', 'Bonnes', 'Excellentes'] },
 };
 
 export function noteSeance(sport: string | undefined | null): NoteSeance {

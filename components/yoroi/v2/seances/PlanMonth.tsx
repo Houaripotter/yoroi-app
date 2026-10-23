@@ -24,6 +24,7 @@ import { Row, Sheet, tap } from './ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Props = {
   trainings: Training[];
@@ -62,7 +63,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
     const m = new Map<string, { key: string; name: string; count: number; color: string; sample: Training }>();
     monthTrainings.forEach((t) => {
       const key = t.club_id ? `club:${t.club_id}` : t.is_outdoor ? 'outdoor' : `sport:${t.sport}`;
-      const name = t.club_id ? t.club_name ?? sportLabel(t.sport) : t.is_outdoor ? 'En extérieur' : sportLabel(t.sport);
+      const name = t.club_id ? t.club_name ?? sportLabel(t.sport) : t.is_outdoor ? traduire('En extérieur') : sportLabel(t.sport);
       const g = m.get(key) ?? { key, name, count: 0, color: t.club_color || familyInk(t.sport), sample: t };
       g.count += 1;
       m.set(key, g);
@@ -78,10 +79,10 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
 
   const remove = (t: Training) => {
     if (!t.id) return;
-    appAlert('Supprimer cette séance ?', `${sessionTitle(t)} sera retirée de ton historique.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer cette séance ?'), traduire("{0} sera retirée de ton historique.", sessionTitle(t)), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -91,7 +92,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
             onChanged();
           } catch (e) {
             logger.error('Suppression impossible', e);
-            appAlert('Oups', 'La séance n’a pas pu être supprimée.');
+            appAlert('Oups', traduire('La séance n’a pas pu être supprimée.'));
           }
         },
       },
@@ -112,14 +113,14 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable onPress={() => { tap(); setCursor(new Date(y, mo - 1, 1, 12)); }} accessibilityRole="button" accessibilityLabel="Mois précédent" style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => { tap(); setCursor(new Date(y, mo - 1, 1, 12)); }} accessibilityRole="button" accessibilityLabel={traduire("Mois précédent")} style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="chevronLeft" size={20} color={c.ink} />
         </Pressable>
-        <Pressable onPress={() => { tap(); const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1, 12)); }} accessibilityRole="button" accessibilityLabel="Revenir au mois en cours" style={{ flex: 1, alignItems: 'center' }}>
+        <Pressable onPress={() => { tap(); const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1, 12)); }} accessibilityRole="button" accessibilityLabel={traduire("Revenir au mois en cours")} style={{ flex: 1, alignItems: 'center' }}>
           <Ink size={18} weight="black" tight>{`${MONTHS[mo].charAt(0).toUpperCase()}${MONTHS[mo].slice(1)} ${y}`}</Ink>
-          <Ink size={12} weight="bold" color={c.textSecondary}>{`${monthTrainings.length} séance${monthTrainings.length > 1 ? 's' : ''}${monthMinutes ? `, ${formatDuration(monthMinutes)}` : ''}`}</Ink>
+          <Ink size={12} weight="bold" color={c.textSecondary}>{traduirePluriel(monthTrainings.length, monthTrainings.length > 1, "{0} séance{1}", "{0} séances{1}", monthTrainings.length, monthMinutes ? `, ${formatDuration(monthMinutes)}` : '')}</Ink>
         </Pressable>
-        <Pressable onPress={() => { tap(); setCursor(new Date(y, mo + 1, 1, 12)); }} accessibilityRole="button" accessibilityLabel="Mois suivant" style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => { tap(); setCursor(new Date(y, mo + 1, 1, 12)); }} accessibilityRole="button" accessibilityLabel={traduire("Mois suivant")} style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: P.carte, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="chevron" size={20} color={c.ink} />
         </Pressable>
       </View>
@@ -146,7 +147,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
                   key={k}
                   onPress={() => { tap(); setDay(iso); }}
                   accessibilityRole="button"
-                  accessibilityLabel={`${dnum}, ${list.length} séance${list.length > 1 ? 's' : ''}${rest ? ', repos' : ''}${comp ? ', compétition' : ''}`}
+                  accessibilityLabel={traduirePluriel(list.length, list.length > 1, "{0}, {1} séance{2}{3}", "{0}, {1} séances{2}{3}", dnum, list.length, rest ? ', repos' : '', comp ? ', compétition' : '')}
                   style={{ flex: 1, height: 60, alignItems: 'center', justifyContent: 'center' }}
                 >
                   <View style={{ width: 42, height: 54, borderRadius: 14, alignItems: 'center', paddingTop: 5, gap: 3, backgroundColor: list.length ? c.fillSoft : 'transparent', borderWidth: isToday || comp ? 2 : 0, borderColor: isToday ? c.accent : c.gold }}>
@@ -160,11 +161,11 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
           </View>
         ))}
       </View>
-      <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Logo ou initiales : ton club. Icône : ton sport. Contour or : compétition. Petit trait : jour de repos.</Ink>
+      <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire("Logo ou initiales : ton club. Icône : ton sport. Contour or : compétition. Petit trait : jour de repos.")}</Ink>
 
       {groups.length ? (
         <View style={{ gap: 8 }}>
-          <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>Ce mois</Ink>
+          <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>{traduire("Ce mois")}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {groups.map((g) => (
               <Pressable key={g.key} onPress={() => { tap(); setGroup({ key: g.key, name: g.name }); }} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 14, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
@@ -189,21 +190,21 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <Pressable onPress={() => { tap(); edit(t); }} accessibilityRole="button" style={{ flex: 1, minHeight: 44, borderRadius: 14, backgroundColor: c.fillSubtle, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     <Icon name="edit" size={16} color={c.ink} />
-                    <Ink size={13} weight="extraBold">Modifier</Ink>
+                    <Ink size={13} weight="extraBold">{traduire("Modifier")}</Ink>
                   </Pressable>
                   <Pressable onPress={() => { tap(); remove(t); }} accessibilityRole="button" style={{ flex: 1, minHeight: 44, borderRadius: 14, backgroundColor: c.dangerTint, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     <Icon name="trash" size={16} color={c.danger} />
-                    <Ink size={13} weight="extraBold" color={c.danger}>Supprimer</Ink>
+                    <Ink size={13} weight="extraBold" color={c.danger}>{traduire("Supprimer")}</Ink>
                   </Pressable>
                 </View>
               </View>
             ))}
             {!dayList.length && daySlots.length ? (
-              <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{`Créneau prévu : ${daySlots.map((s) => `${s.label || sportLabel(s.sport)}${s.time ? ` à ${s.time}` : ''}`).join(', ')}`}</Ink>
+              <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Créneau prévu : {0}", daySlots.map((s) => `${s.label || sportLabel(s.sport)}${s.time ? ` à ${s.time}` : ''}`).join(', '))}</Ink>
             ) : null}
-            <Row title="Ajouter une séance ce jour" icon="plus" onPress={() => { const iso = day; setDay(null); router.push(`/seance?date=${iso}` as any); }} />
+            <Row title={traduire("Ajouter une séance ce jour")} icon="plus" onPress={() => { const iso = day; setDay(null); router.push(`/seance?date=${iso}` as any); }} />
             <Row
-              title={restDays.has(day) ? 'Ce n’est plus un jour de repos' : 'Marquer comme jour de repos'}
+              title={restDays.has(day) ? traduire('Ce n’est plus un jour de repos') : traduire('Marquer comme jour de repos')}
               icon="moon"
               onPress={async () => {
                 try {
@@ -221,7 +222,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
 
       <Sheet visible={!!group} onClose={() => setGroup(null)} title={group?.name}>
         <Ink size={13} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
-          {`${groupSessions.length} séance${groupSessions.length > 1 ? 's' : ''} en ${MONTHS[mo]}${groupSessions.reduce((s, t) => s + durationOf(t), 0) ? `, ${formatDuration(groupSessions.reduce((s, t) => s + durationOf(t), 0))}` : ''}`}
+          {traduirePluriel(groupSessions.length, groupSessions.length > 1, "{0} séance en {1}{2}", "{0} séances en {1}{2}", groupSessions.length, MONTHS[mo], groupSessions.reduce((s, t) => s + durationOf(t), 0) ? `, ${formatDuration(groupSessions.reduce((s, t) => s + durationOf(t), 0))}` : '')}
         </Ink>
         {groupSessions.map((t) => (
           <SessionRow key={t.id} t={t} stamps={t.id ? stampedTrainings.get(t.id) ?? 0 : 0} onBeforeOpen={() => setGroup(null)} />

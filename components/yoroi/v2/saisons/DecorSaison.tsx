@@ -110,6 +110,7 @@ import {
 } from './inro/noel';
 import { Echelle } from './inro/echelle';
 import { ampouleAllumee, vaEtVient } from './inro/mouvements';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Les deux stickers de ce qu'INRO n'a pas (generes, detoures, 18 octobre 2026) */
 const KADOMATSU = require('@/assets/saisons/noel/kadomatsu.webp');
@@ -658,7 +659,7 @@ export function DecorCarte({ saison, largeur, scrollY, seuil = 100000 }: DecorCa
           key={i}
           onPress={() => gerbe.lancer(c.x + c.w / 2, c.y + c.h * 0.35)}
           accessibilityRole="button"
-          accessibilityLabel={saison === 'halloween' ? 'Citrouille d’Halloween, touche pour des bonbons' : 'Sapin de Noël, touche pour des flocons et des cadeaux'}
+          accessibilityLabel={saison === 'halloween' ? traduire('Citrouille d’Halloween, touche pour des bonbons') : traduire('Sapin de Noël, touche pour des flocons et des cadeaux')}
           style={{ position: 'absolute', left: c.x, top: c.y, width: c.w, height: c.h }}
         />
       ))}

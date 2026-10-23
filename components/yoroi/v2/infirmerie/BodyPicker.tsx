@@ -12,6 +12,7 @@ import { BodyMap } from '@/components/yoroi/v2/nutrition/BodyMap';
 import { INITIAL_DATA } from '@/components/BodyMap';
 import type { BodyZone as OldZone } from '@/components/BodyMap';
 import { intensite, niveauDouleur } from '@/lib/v2/intensite';
+import { traduire } from '@/lib/i18n/tr';
 
 // Vague 32 : douleur sur l'echelle d'intensite commune (or, orange, braise), le rouge reste aux records et erreurs
 export const LEVEL_COLORS = { light: intensite(3).fill, moderate: intensite(4).fill, severe: intensite(5).fill } as const;
@@ -122,7 +123,7 @@ export function BodyPicker({
         onPress={onPress}
         style={{ position: 'absolute', left: 0, top: 0, width, height: drawH }}
         accessibilityRole="button"
-        accessibilityLabel={view === 'front' ? 'Carte du corps, vue de face. Touche la zone douloureuse.' : 'Carte du corps, vue de dos. Touche la zone douloureuse.'}
+        accessibilityLabel={view === 'front' ? traduire('Carte du corps, vue de face. Touche la zone douloureuse.') : traduire('Carte du corps, vue de dos. Touche la zone douloureuse.')}
       />
     </View>
   );

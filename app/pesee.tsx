@@ -37,6 +37,7 @@ import type { HealthRead } from '@/lib/v2/pesee/health';
 import { importHealthDay, saveWeighIn } from '@/lib/v2/pesee/save';
 import { proposerNotificationsApresReussite } from '@/lib/v2/notifications/permission';
 import { apresMesure } from '@/lib/v2/bilan/reglage';
+import { traduire } from '@/lib/i18n/tr';
 
 const TICK = 12; // pixels pour 0,1 kg
 const SPAN = 30; // kilos de part et d'autre
@@ -266,10 +267,10 @@ export default function Pesee() {
   const diff = previous !== null ? value - previous : null;
   const diffText =
     diff === null
-      ? 'ta première pesée'
+      ? traduire('ta première pesée')
       : Math.abs(diff) < 0.05
-        ? 'pareil que ta dernière pesée'
-        : `${Math.abs(diff) >= 1 ? `${formatKg(Math.abs(diff))} kg` : `${Math.round(Math.abs(diff) * 1000)} g`} de ${diff < 0 ? 'moins' : 'plus'} que ta dernière pesée`;
+        ? traduire('pareil que ta dernière pesée')
+        : traduire("{0} de {1} que ta dernière pesée", Math.abs(diff) >= 1 ? `${formatKg(Math.abs(diff))} kg` : `${Math.round(Math.abs(diff) * 1000)} g`, diff < 0 ? 'moins' : 'plus');
 
   const provider = health?.provider ?? (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé');
   const live = health?.mode === 'live';
@@ -283,8 +284,8 @@ export default function Pesee() {
       ? healthText
       : weightOrigin === 'row'
         ? editId
-          ? 'tu corriges cette pesée'
-          : 'déjà enregistrée ce jour-là, tu la corriges'
+          ? traduire('tu corriges cette pesée')
+          : traduire('déjà enregistrée ce jour-là, tu la corriges')
         : null;
 
   const bmi = useMemo<{ value: number; from: 'health' | 'calc' } | undefined>(() => {
@@ -323,11 +324,11 @@ export default function Pesee() {
       await reloadHistory();
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-      setNotice(`Pesée du ${formatLongDate(pending.date)} importée, ${formatKg(pending.weight ?? 0)} kg.`);
+      setNotice(traduire("Pesée du {0} importée, {1} kg.", formatLongDate(pending.date), formatKg(pending.weight ?? 0)));
     } catch (err) {
       logger.error('Import de la pesee Apple Sante impossible', err);
       notificationAsync(NotificationFeedbackType.Error).catch(() => {});
-      setNotice('Import impossible, réessaie.');
+      setNotice(traduire('Import impossible, réessaie.'));
     } finally {
       setImporting(false);
     }
@@ -367,7 +368,7 @@ export default function Pesee() {
     } catch (err) {
       logger.error('Enregistrement de la pesee impossible', err);
       notificationAsync(NotificationFeedbackType.Error).catch(() => {});
-      setNotice('Enregistrement impossible, réessaie.');
+      setNotice(traduire('Enregistrement impossible, réessaie.'));
       setSaving(false);
     }
   };
@@ -377,15 +378,15 @@ export default function Pesee() {
       <ScrollView contentContainerStyle={{ paddingTop: Platform.OS === 'ios' ? 18 : insets.top + 12, paddingBottom: insets.bottom + 120 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 22 }}>
           <BackButton />
-          <Ink size={17} weight="extraBold" accessibilityRole="header">{editId ? 'Modifier la pesée' : 'Pesée'}</Ink>
+          <Ink size={17} weight="extraBold" accessibilityRole="header">{editId ? traduire('Modifier la pesée') : traduire('Pesée')}</Ink>
           {editId ? (
-            <IconButton label="Partager cette pesée en carte" onPress={() => router.push(`/carte?moment=pesee&id=${editId}` as any)}>
+            <IconButton label={traduire("Partager cette pesée en carte")} onPress={() => router.push(`/carte?moment=pesee&id=${editId}` as any)}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path d="M12 15V3M7 8l5-5 5 5M5 12v8h14v-8" stroke={c.ink} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </IconButton>
           ) : null}
-          <IconButton label="Toutes tes pesées" onPress={() => router.push('/pesees' as any)}>
+          <IconButton label={traduire("Toutes tes pesées")} onPress={() => router.push('/pesees' as any)}>
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Rect x={4} y={4} width={16} height={16} rx={4} stroke={c.ink} strokeWidth={2} />
               <Path d="M8 10h8M8 14h5" stroke={c.ink} strokeWidth={2} strokeLinecap="round" />
@@ -400,17 +401,17 @@ export default function Pesee() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <HeartDot color={c.indigo} size={18} />
               <Ink size={14} weight="bold" style={{ flex: 1 }}>
-                {`${pending.sourceLabel ? `Ta ${pending.sourceLabel}` : 'Ta balance'} a envoyé ${formatKg(pending.weight ?? 0)} kg à ${provider} le ${formatLongDate(pending.date)}${pending.fat ? `, masse grasse ${fmtValue(pending.fat)} %` : ''}.`}
+                {traduire("{0} a envoyé {1} kg à {2} le {3}{4}.", pending.sourceLabel ? `Ta ${pending.sourceLabel}` : 'Ta balance', formatKg(pending.weight ?? 0), provider, formatLongDate(pending.date), pending.fat ? `, masse grasse ${fmtValue(pending.fat)} %` : '')}
               </Ink>
             </View>
             <Pressable
               onPress={doImport}
               disabled={importing}
               accessibilityRole="button"
-              accessibilityLabel={`Importer depuis ${provider}`}
+              accessibilityLabel={traduire("Importer depuis {0}", provider)}
               style={({ pressed }) => ({ height: 48, borderRadius: 16, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', opacity: importing ? 0.5 : 1 })}
             >
-              <Ink size={15} weight="extraBold" color={c.onAccent}>{importing ? 'Import en cours' : `Importer depuis ${provider}`}</Ink>
+              <Ink size={15} weight="extraBold" color={c.onAccent}>{importing ? 'Import en cours' : traduire("Importer depuis {0}", provider)}</Ink>
             </Pressable>
           </View>
         ) : null}
@@ -449,7 +450,7 @@ export default function Pesee() {
               contentOffset={{ x: offsetFor(value), y: 0 }}
               onLayout={() => scrollRef.current?.scrollTo({ x: offsetFor(value), animated: false })}
               contentContainerStyle={{ paddingHorizontal: width / 2 - 1 }}
-              accessibilityLabel="Règle de poids, fais glisser pour régler"
+              accessibilityLabel={traduire("Règle de poids, fais glisser pour régler")}
             >
               <Svg width={ticks * TICK + 2} height={84}>
                 <Path d={rulerPath.minor} stroke={c.textMuted} strokeOpacity={0.55} strokeWidth={2} strokeLinecap="round" />
@@ -468,10 +469,10 @@ export default function Pesee() {
         </View>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 6 }}>
-          <Pressable onPress={() => nudge(-0.1)} accessibilityRole="button" accessibilityLabel="Moins 100 grammes" style={({ pressed }) => ({ width: 56, height: 44, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center' })}>
+          <Pressable onPress={() => nudge(-0.1)} accessibilityRole="button" accessibilityLabel={traduire("Moins 100 grammes")} style={({ pressed }) => ({ width: 56, height: 44, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center' })}>
             <Ink size={20} weight="extraBold">−</Ink>
           </Pressable>
-          <Pressable onPress={() => nudge(0.1)} accessibilityRole="button" accessibilityLabel="Plus 100 grammes" style={({ pressed }) => ({ width: 56, height: 44, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center' })}>
+          <Pressable onPress={() => nudge(0.1)} accessibilityRole="button" accessibilityLabel={traduire("Plus 100 grammes")} style={({ pressed }) => ({ width: 56, height: 44, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, alignItems: 'center', justifyContent: 'center' })}>
             <Ink size={20} weight="extraBold">+</Ink>
           </Pressable>
         </View>
@@ -494,14 +495,14 @@ export default function Pesee() {
           />
           {health?.mode === 'off' ? (
             <Pressable onPress={() => router.push('/health-connect' as any)} accessibilityRole="link" style={{ minHeight: 44, justifyContent: 'center', marginTop: 6 }}>
-              <Ink size={13} weight="bold" color={c.indigo}>{`Relie ${provider} pour pré-remplir ta pesée avec ta balance`}</Ink>
+              <Ink size={13} weight="bold" color={c.indigo}>{traduire("Relie {0} pour pré-remplir ta pesée avec ta balance", provider)}</Ink>
             </Pressable>
           ) : null}
         </View>
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 20 }}>
-        <StampButton label={saving ? 'Enregistrement en cours' : 'Enregistrer'} onPress={save} disabled={saving || !ready} dim={saving} />
+        <StampButton label={saving ? 'Enregistrement en cours' : traduire('Enregistrer')} onPress={save} disabled={saving || !ready} dim={saving} />
       </View>
     </KeyboardAvoidingView>
   );

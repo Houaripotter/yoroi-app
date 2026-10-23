@@ -11,6 +11,7 @@ import { P, Press, tap, CIcon, BigButton } from '../ui';
 import { useAccent } from '@/components/yoroi/v2/accueil/kit';
 import { RPE_CHOICES } from '@/lib/v2/carnet/chrono';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Reglage plus et moins, appui long pour aller vite. Une phase par ligne, pastille de sa couleur. */
 export function SettingRow({ label, value, onMinus, onPlus, hint, accent = P.ink, dot }: { label: string; value: string; onMinus: () => void; onPlus: () => void; hint?: string; accent?: string; dot?: string }) {
@@ -48,7 +49,7 @@ export function SettingRow({ label, value, onMinus, onPlus, hint, accent = P.ink
         <Ink size={15} weight="bold" numberOfLines={2}>{label}</Ink>
         {hint ? <Ink size={12} weight="medium" color={P.muted} numberOfLines={2}>{hint}</Ink> : null}
       </View>
-      {btn('minus', onMinus, 'Moins')}
+      {btn('minus', onMinus, traduire('Moins'))}
       {/* largeur fixe : chaque valeur garde la meme taille ("5 min" comme "1 min") */}
       <View style={{ width: 84, alignItems: 'center' }}>
         <Ink size={18} weight="black" color={accent} style={{ textAlign: 'center', fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
@@ -131,7 +132,7 @@ export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color, 
   );
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 4 }}>
-      {side('stop', 'Arrêter', onStop)}
+      {side('stop', traduire('Arrêter'), onStop)}
       <View style={{ alignItems: 'center', gap: 6 }}>
         <Press onPress={onToggle} haptic="medium" accessibilityRole="button" accessibilityLabel={running ? 'Pause' : 'Reprendre'}>
           <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: color, alignItems: 'center', justifyContent: 'center', shadowColor: color, shadowOpacity: 0.32, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
@@ -140,7 +141,7 @@ export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color, 
         </Press>
         <Ink size={12} weight="bold" color={P.ink2}>{running ? 'Pause' : 'Reprendre'}</Ink>
       </View>
-      {onSkip ? side('skip', skipLabel, onSkip) : onReset ? side('reset', 'Phase à zéro', onReset) : <View style={{ width: 84 }} />}
+      {onSkip ? side('skip', skipLabel, onSkip) : onReset ? side('reset', traduire('Phase à zéro'), onReset) : <View style={{ width: 84 }} />}
     </View>
   );
 }
@@ -206,7 +207,7 @@ export function SessionTrack({ done, total, color, current }: { done: number; to
           );
         })}
       </View>
-      <Ink size={13} weight="bold" color={P.ink2}>{done === 0 ? `${total} à faire` : done >= total ? 'Tout est fait' : `${done} fait${done > 1 ? 's' : ''}, ${total - done} restant${total - done > 1 ? 's' : ''}`}</Ink>
+      <Ink size={13} weight="bold" color={P.ink2}>{done === 0 ? traduire("{0} à faire", total) : done >= total ? traduire('Tout est fait') : `${done} fait${done > 1 ? 's' : ''}, ${total - done} restant${total - done > 1 ? 's' : ''}`}</Ink>
     </View>
   );
 }
@@ -221,7 +222,7 @@ export function FinishSheet({
   onSave,
   onRestart,
   onClose,
-  saveLabel = 'Enregistrer la séance',
+  saveLabel = traduire('Enregistrer la séance'),
   children,
 }: {
   visible: boolean;
@@ -243,7 +244,7 @@ export function FinishSheet({
           <CIcon name="check" size={32} color={P.mossText} width={3} />
         </View>
         <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>{title}</Ink>
-        <Ink size={14} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>Garde une trace de ta séance dans ton historique.</Ink>
+        <Ink size={14} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Garde une trace de ta séance dans ton historique.")}</Ink>
       </View>
       {lines.length > 0 ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -257,7 +258,7 @@ export function FinishSheet({
       ) : null}
       {children}
       <View style={{ gap: 8 }}>
-        <Ink size={14} weight="bold" color={P.ink2} style={{ paddingHorizontal: 4 }}>Comment c'était ?</Ink>
+        <Ink size={14} weight="bold" color={P.ink2} style={{ paddingHorizontal: 4 }}>{traduire("Comment c'était ?")}</Ink>
         <ChoiceRow options={RPE_CHOICES} value={rpe} onChange={onRpe} columns={4} />
       </View>
       <View style={{ gap: 10, paddingBottom: insets.bottom > 0 ? 0 : 6 }}>

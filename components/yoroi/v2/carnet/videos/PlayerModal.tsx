@@ -10,6 +10,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { placeOf } from '@/lib/v2/carnet/videos';
 import type { CarnetVideo } from '@/lib/v2/carnet/videos';
 import { P, IconBtn } from '../ui';
+import { traduire } from '@/lib/i18n/tr';
 
 function Player({ v, onClose }: { v: CarnetVideo; onClose: () => void }) {
   const insets = useSafeAreaInsets();
@@ -21,7 +22,7 @@ function Player({ v, onClose }: { v: CarnetVideo; onClose: () => void }) {
     <View style={{ flex: 1, backgroundColor: '#0E1016' }}>
       <VideoView player={player} style={{ flex: 1 }} contentFit="contain" nativeControls allowsPictureInPicture fullscreenOptions={{ enable: true }} />
       <View style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <IconBtn name="close" label="Fermer la vidéo" onPress={onClose} />
+        <IconBtn name="close" label={traduire("Fermer la vidéo")} onPress={onClose} />
         <View style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: 'rgba(14,16,22,0.55)' }}>
           <Ink size={15} weight="extraBold" color={P.white} numberOfLines={2}>{v.title}</Ink>
           <Ink size={12} weight="bold" color="rgba(255,255,255,0.7)" numberOfLines={1}>{placeOf(v)}</Ink>

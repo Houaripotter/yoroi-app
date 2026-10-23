@@ -5,6 +5,7 @@
 import type { CombatRound, Training } from '@/lib/database';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
 import { countFreq, monthShort, parseDate, roundsOf } from './rounds';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface PartnerAgg {
   name: string;
@@ -113,10 +114,10 @@ export function drillSparRatio(trainings: Training[]) {
   const sPct = total > 0 ? 100 - dPct : 0;
   let advice = '';
   if (total > 0) {
-    if (dPct > 80) advice = 'Beaucoup de drilling : ajoute du sparring pour tester en vrai.';
-    else if (dPct < 20) advice = 'Beaucoup de sparring : ajoute du drilling pour ancrer tes techniques.';
-    else if (dPct >= 50 && dPct <= 70) advice = 'Bonne alternance entre drilling et sparring.';
-    else advice = `${dPct} % de drilling, ${sPct} % de sparring.`;
+    if (dPct > 80) advice = traduire('Beaucoup de drilling : ajoute du sparring pour tester en vrai.');
+    else if (dPct < 20) advice = traduire('Beaucoup de sparring : ajoute du drilling pour ancrer tes techniques.');
+    else if (dPct >= 50 && dPct <= 70) advice = traduire('Bonne alternance entre drilling et sparring.');
+    else advice = traduire("{0} % de drilling, {1} % de sparring.", dPct, sPct);
   }
   return { months, drilling, sparring, total, dPct, sPct, advice };
 }
@@ -124,14 +125,14 @@ export function drillSparRatio(trainings: Training[]) {
 // ─── Debriefs de rounds ───────────────────────────────────────────────
 
 export const MOODS: Record<string, { label: string; color: string; kanji: string }> = {
-  fire: { label: 'Au top', color: '#D9822B', kanji: '炎' },
-  strong: { label: 'En forme', color: '#4F6B28', kanji: '強' },
-  focus: { label: 'Concentré', color: '#2C4A84', kanji: '集' },
-  flow: { label: 'Dans le flow', color: '#3D5D9E', kanji: '流' },
-  gassed: { label: 'Essoufflé', color: '#A8832F', kanji: '息' },
-  tired: { label: 'Fatigué', color: '#8B8D96', kanji: '疲' },
+  fire: { label: traduire('Au top'), color: '#D9822B', kanji: '炎' },
+  strong: { label: traduire('En forme'), color: '#4F6B28', kanji: '強' },
+  focus: { label: traduire('Concentré'), color: '#2C4A84', kanji: '集' },
+  flow: { label: traduire('Dans le flow'), color: '#3D5D9E', kanji: '流' },
+  gassed: { label: traduire('Essoufflé'), color: '#A8832F', kanji: '息' },
+  tired: { label: traduire('Fatigué'), color: '#8B8D96', kanji: '疲' },
   confused: { label: 'Perdu', color: '#9C5B33', kanji: '迷' },
-  frustrated: { label: 'Frustré', color: '#7B3B63', kanji: '怒' },
+  frustrated: { label: traduire('Frustré'), color: '#7B3B63', kanji: '怒' },
 };
 
 function splitItems(text?: string): string[] {

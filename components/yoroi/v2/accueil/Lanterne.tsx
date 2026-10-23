@@ -10,6 +10,7 @@ import { selectionAsync } from 'expo-haptics';
 import { useYoroiTheme, libelleMode } from '@/components/yoroi/YoroiThemeProvider';
 import type { YoroiMode } from '@/components/yoroi/tokens';
 import { Press } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Diametre du rond (la zone de toucher monte a 44 points avec hitSlop) */
 export const ROND_ENTETE = 34;
@@ -76,7 +77,7 @@ export function LanterneMode({ sceneSombre, onChange }: { sceneSombre: boolean; 
         onChange?.(next);
       }}
       accessibilityRole="button"
-      accessibilityLabel={`Affichage : ${libelleMode(mode)}. Touche pour changer.`}
+      accessibilityLabel={traduire("Affichage : {0}. Touche pour changer.", libelleMode(mode))}
       hitSlop={(44 - S) / 2}
     >
       <View style={[{ width: S, height: S, borderRadius: S / 2, borderWidth: 1, alignItems: 'center', justifyContent: 'center' }, verreEntete(sceneSombre)]}>

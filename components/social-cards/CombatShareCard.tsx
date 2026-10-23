@@ -11,6 +11,7 @@ import { getClubLogoSource, getSportName } from '@/lib/sports';
 import { SocialCardFooter } from './SocialCardBranding';
 import { Training } from '@/lib/database';
 import { CombatRoundData } from './SessionCard';
+import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 // ── Constantes couleurs ──
 const GOLD = '#D4AF37';
@@ -50,13 +51,13 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
     const clubLogoSource = training.club_logo ? getClubLogoSource(training.club_logo) : null;
 
     const sportLabel = useMemo(() => {
-      if (!training.sport) return 'SÉANCE COMBAT';
+      if (!training.sport) return traduire('SÉANCE COMBAT');
       return training.sport.split(',').map(s => getSportName(s.trim()) ?? s.trim()).join(' + ').toUpperCase();
     }, [training.sport]);
 
     const dateLabel = useMemo(() => {
       if (!training.date) return '';
-      return new Date(training.date).toLocaleDateString('fr-FR', {
+      return new Date(training.date).toLocaleDateString(LOCALE, {
         day: 'numeric', month: 'short', year: 'numeric',
       }).toUpperCase();
     }, [training.date]);
@@ -222,7 +223,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
         {/* ── DIVIDER "COMBAT LOG" ── */}
         <View style={[styles.sectionDivider, { marginHorizontal: 18 * s, marginBottom: 8 * s }]}>
           <View style={[styles.dividerLine, { backgroundColor: sportAccent + '60' }]} />
-          <Text style={[styles.dividerLabel, { color: 'rgba(255,255,255,0.35)', fontSize: 8 * s, letterSpacing: 2 * s, paddingHorizontal: 8 * s }]}>COMBAT LOG</Text>
+          <Text style={[styles.dividerLabel, { color: 'rgba(255,255,255,0.35)', fontSize: 8 * s, letterSpacing: 2 * s, paddingHorizontal: 8 * s }]}>{traduire("COMBAT LOG")}</Text>
           <View style={[styles.dividerLine, { backgroundColor: sportAccent + '60' }]} />
         </View>
 
@@ -306,8 +307,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
           })}
           {rounds.length > (ROUND_COMPACT ? 6 : 4) && (
             <Text style={[styles.moreRoundsText, { color: 'rgba(255,255,255,0.3)', fontSize: 8 * s, marginTop: 2 * s }]}>
-              + {rounds.length - (ROUND_COMPACT ? 6 : 4)} round{rounds.length - (ROUND_COMPACT ? 6 : 4) > 1 ? 's' : ''} supplémentaire{rounds.length - (ROUND_COMPACT ? 6 : 4) > 1 ? 's' : ''}
-            </Text>
+              {traduirePluriel(rounds.length - (ROUND_COMPACT ? 6 : 4), rounds.length - (ROUND_COMPACT ? 6 : 4) > 1, "+ {0} round supplémentaire", "+ {0} rounds supplémentaires", rounds.length - (ROUND_COMPACT ? 6 : 4))}</Text>
           )}
         </View>
 

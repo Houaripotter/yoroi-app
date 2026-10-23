@@ -28,20 +28,21 @@ import { AnneauxConcentriques, ChiffreAnime, ORDRE_ACTIVITE, couleurActivite } f
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { carteNeutre, teinte } from './domaines';
 import type { Domaine } from './domaines';
+import { traduire } from '@/lib/i18n/tr';
 
 const RAYON = 22;
 
 export const MESURE_SANTE: Record<CleSanteJour, { nom: string; domaine: Domaine; d: string; a11y: string }> = {
-  pas: { nom: 'Pas', domaine: 'forme', a11y: 'pas', d: 'M8.4 3.2c1.7 0 2.6 1.9 2.4 4.2-.2 2.3-1 3.9-2.5 3.9S5.9 9.6 5.9 7.3c0-2.3.8-4.1 2.5-4.1zM6.4 14h4.2l-.4 3a1.9 1.9 0 0 1-3.5 0zM15.6 7.2c1.7 0 2.5 1.8 2.5 4.1 0 2.3-.9 3.9-2.4 3.9s-2.4-1.6-2.5-3.9c-.2-2.3.7-4.1 2.4-4.1zM13.4 18h4.2l-.3 2.1a1.9 1.9 0 0 1-3.6 0z' },
-  'energie-active': { nom: 'Calories', domaine: 'mensurations', a11y: 'kilocalories actives', d: 'M12 3c.6 3.3 4.6 5.1 4.6 10a4.6 4.6 0 0 1-9.2 0c0-2.4 1.2-3.8 2.4-4.9.3 1.6 1 2.5 1.9 2.9C12.8 8.9 12 5.7 12 3z' },
-  distance: { nom: 'Distance', domaine: 'eau', a11y: 'kilomètres', d: 'M5 20.5c0-3.4 3.3-3.9 6.4-5.3 2.6-1.2 4.6-2.4 5.4-4.7M17 3a3.2 3.2 0 0 1 3.2 3.2c0 2.4-3.2 4.8-3.2 4.8s-3.2-2.4-3.2-4.8A3.2 3.2 0 0 1 17 3zM5 18a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 5 18z' },
-  exercice: { nom: 'Exercice', domaine: 'forme', a11y: 'minutes d’exercice', d: 'M13 3L5 13.5h6L10 21l8-10.5h-6z' },
-  'frequence-cardiaque': { nom: 'FC du jour', domaine: 'competition', a11y: 'battements par minute en moyenne aujourd’hui', d: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10zM7.5 11.5h2.6l1.2-2.1 1.8 4.2 1.2-2.1h2.2' },
-  'fc-repos': { nom: 'FC repos', domaine: 'competition', a11y: 'battements par minute au repos', d: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z' },
-  oxygene: { nom: 'SpO2', domaine: 'eau', a11y: 'pour cent d’oxygène dans le sang', d: 'M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11zM12 12.2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z' },
-  respiration: { nom: 'Respiration', domaine: 'seances', a11y: 'respirations par minute', d: 'M3 9h10.5a2.8 2.8 0 1 0-2.8-2.8M3 15h14a2.8 2.8 0 1 1-2.8 2.8M3 12h6.5' },
-  sommeil: { nom: 'Sommeil', domaine: 'poids', a11y: 'de sommeil cette nuit', d: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' },
-  debout: { nom: 'Debout', domaine: 'mensurations', a11y: 'heures debout', d: 'M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 9h8M12 9v5.5M12 14.5l-2.5 6.5M12 14.5l2.5 6.5M8 9l-1.5 5M16 9l1.5 5' },
+  pas: { nom: traduire('Pas'), domaine: 'forme', a11y: 'pas', d: 'M8.4 3.2c1.7 0 2.6 1.9 2.4 4.2-.2 2.3-1 3.9-2.5 3.9S5.9 9.6 5.9 7.3c0-2.3.8-4.1 2.5-4.1zM6.4 14h4.2l-.4 3a1.9 1.9 0 0 1-3.5 0zM15.6 7.2c1.7 0 2.5 1.8 2.5 4.1 0 2.3-.9 3.9-2.4 3.9s-2.4-1.6-2.5-3.9c-.2-2.3.7-4.1 2.4-4.1zM13.4 18h4.2l-.3 2.1a1.9 1.9 0 0 1-3.6 0z' },
+  'energie-active': { nom: traduire('Calories'), domaine: 'mensurations', a11y: 'kilocalories actives', d: 'M12 3c.6 3.3 4.6 5.1 4.6 10a4.6 4.6 0 0 1-9.2 0c0-2.4 1.2-3.8 2.4-4.9.3 1.6 1 2.5 1.9 2.9C12.8 8.9 12 5.7 12 3z' },
+  distance: { nom: 'Distance', domaine: 'eau', a11y: traduire('kilomètres'), d: 'M5 20.5c0-3.4 3.3-3.9 6.4-5.3 2.6-1.2 4.6-2.4 5.4-4.7M17 3a3.2 3.2 0 0 1 3.2 3.2c0 2.4-3.2 4.8-3.2 4.8s-3.2-2.4-3.2-4.8A3.2 3.2 0 0 1 17 3zM5 18a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 5 18z' },
+  exercice: { nom: traduire('Exercice'), domaine: 'forme', a11y: traduire('minutes d’exercice'), d: 'M13 3L5 13.5h6L10 21l8-10.5h-6z' },
+  'frequence-cardiaque': { nom: traduire('FC du jour'), domaine: 'competition', a11y: traduire('battements par minute en moyenne aujourd’hui'), d: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10zM7.5 11.5h2.6l1.2-2.1 1.8 4.2 1.2-2.1h2.2' },
+  'fc-repos': { nom: traduire('FC repos'), domaine: 'competition', a11y: traduire('battements par minute au repos'), d: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z' },
+  oxygene: { nom: traduire('SpO2'), domaine: 'eau', a11y: traduire('pour cent d’oxygène dans le sang'), d: 'M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11zM12 12.2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z' },
+  respiration: { nom: 'Respiration', domaine: 'seances', a11y: traduire('respirations par minute'), d: 'M3 9h10.5a2.8 2.8 0 1 0-2.8-2.8M3 15h14a2.8 2.8 0 1 1-2.8 2.8M3 12h6.5' },
+  sommeil: { nom: traduire('Sommeil'), domaine: 'poids', a11y: traduire('de sommeil cette nuit'), d: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' },
+  debout: { nom: 'Debout', domaine: 'mensurations', a11y: traduire('heures debout'), d: 'M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 9h8M12 9v5.5M12 14.5l-2.5 6.5M12 14.5l2.5 6.5M8 9l-1.5 5M16 9l1.5 5' },
 };
 
 /** Couleurs vives du cadran (fond nuit) : toutes au-dessus de 7:1 sur #141A28 ; aucun rouge (reserve aux records) */
@@ -104,7 +105,7 @@ function Valeur({ m, couleur, douce, taille = 18 }: { m: MesureSanteJour; couleu
       {valeur}
       {unite || m.hier ? (
         <Ink size={11.5} weight="bold" color={douce}>
-          {`${unite ? ` ${unite}` : ''}${m.hier ? ', hier' : ''}`}
+          {`${unite ? ` ${unite}` : ''}${m.hier ? traduire(', hier') : ''}`}
         </Ink>
       ) : null}
     </Ink>
@@ -115,7 +116,7 @@ function a11yMesure(m: MesureSanteJour, o: ObjectifsSante | null | undefined): s
   const def = MESURE_SANTE[m.cle];
   const { valeur } = texteMesureSante(m);
   const obj = objectifMesure(m.cle, o);
-  return `${def.nom} : ${valeur} ${def.a11y}${m.hier ? ', mesure d’hier' : ''}${obj ? `, ${obj.texte}` : ''}. Voir le détail`;
+  return traduire("{0} : {1} {2}{3}{4}. Voir le détail", def.nom, valeur, def.a11y, m.hier ? ', mesure d’hier' : '', obj ? `, ${obj.texte}` : '');
 }
 
 /** Largeur reelle de la grille (onLayout), estimee d'abord a partir de l'ecran */
@@ -128,11 +129,10 @@ function useColonnes(marge: number): [number, (w: number) => void] {
 function Titre({ couleur, chevron, icone }: { couleur: string; chevron: string; icone: string }) {
   const router = useRouter();
   return (
-    <Pressable onPress={() => router.push('/sante' as any)} accessibilityRole="button" accessibilityLabel="Ta santé aujourd’hui. Ouvrir Santé" hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 22 }}>
+    <Pressable onPress={() => router.push('/sante' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ta santé aujourd’hui. Ouvrir Santé")} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 22 }}>
       <Icon name="heart" size={16} color={icone} width={2.5} />
       <Ink size={13} weight="extraBold" color={couleur} numberOfLines={1} style={{ flex: 1 }}>
-        Ta santé aujourd’hui
-      </Ink>
+        {traduire("Ta santé aujourd’hui")}</Ink>
       <Icon name="chevron" size={14} color={chevron} width={2.6} />
     </Pressable>
   );
@@ -144,7 +144,7 @@ function NoteObjectifs({ mesures, o, couleur }: { mesures: MesureSanteJour[]; o:
   if (!avec.length) return null;
   const pas = avec.some((m) => m.cle === 'pas');
   const autres = avec.some((m) => m.cle !== 'pas');
-  const texte = `${autres ? 'Tes objectifs, réglables dans Santé et Sommeil.' : ''}${autres && pas ? ' ' : ''}${pas ? 'Pas : repère de 8 000 par jour.' : ''}`;
+  const texte = `${autres ? traduire('Tes objectifs, réglables dans Santé et Sommeil.') : ''}${autres && pas ? ' ' : ''}${pas ? traduire('Pas : repère de 8 000 par jour.') : ''}`;
   return (
     <Ink size={11} weight="bold" color={couleur} numberOfLines={2}>
       {texte}
@@ -367,7 +367,7 @@ function Clair({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante |
                 ) : null}
               </Ink>
               <Ink size={11.5} weight="extraBold" color={t.texte} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 15, height: 15, textAlign: 'center', alignSelf: 'stretch' }}>
-                {m.hier ? `${MESURE_SANTE[m.cle].nom}, hier` : MESURE_SANTE[m.cle].nom}
+                {m.hier ? traduire("{0}, hier", MESURE_SANTE[m.cle].nom) : MESURE_SANTE[m.cle].nom}
               </Ink>
               {/* la ligne d'objectif est toujours reservee : toutes les cellules ont le meme dessin */}
               <Ink size={10} weight="bold" color={P.ink2} numberOfLines={1} style={{ lineHeight: 13, height: 13, textAlign: 'center', alignSelf: 'stretch' }}>
@@ -463,7 +463,7 @@ function Anneaux({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Picto cle={m.cle} couleur={t.texte} taille={13} />
                   <Ink size={11.5} weight="bold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>
-                    {m.hier ? `${MESURE_SANTE[m.cle].nom}, hier` : MESURE_SANTE[m.cle].nom}
+                    {m.hier ? traduire("{0}, hier", MESURE_SANTE[m.cle].nom) : MESURE_SANTE[m.cle].nom}
                   </Ink>
                 </View>
                 <Ink size={16} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ fontVariant: ['tabular-nums'] }}>
@@ -506,18 +506,16 @@ export function TuileSanteJourVide({ relie, rendu }: { relie: boolean; rendu?: S
     <>
       <Titre couleur={texte} chevron={doux} icone={nuit ? VIF['frequence-cardiaque'] : vert.texte} />
       <Ink size={relie ? 17 : 14} weight={relie ? 'black' : 'bold'} tight={relie} color={relie ? texte : doux} numberOfLines={2}>
-        {relie ? 'Pas encore de mesure aujourd’hui' : 'Connecte Santé pour voir tes pas, ton cœur, ton oxygène et ton sommeil'}
+        {relie ? traduire('Pas encore de mesure aujourd’hui') : traduire('Connecte Santé pour voir tes pas, ton cœur, ton oxygène et ton sommeil')}
       </Ink>
       {relie ? (
         <Ink size={12.5} weight="bold" color={doux}>
-          Ta montre ou ton téléphone les ajoutera ici
-        </Ink>
+          {traduire("Ta montre ou ton téléphone les ajoutera ici")}</Ink>
       ) : (
-        <Pressable onPress={() => router.push('/sante' as any)} accessibilityRole="button" accessibilityLabel="Connecte Santé" style={nuit ? { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingLeft: 10, paddingRight: 16, borderRadius: 20, backgroundColor: VIF.pas } : { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingLeft: 10, paddingRight: 16, borderRadius: 20, borderWidth: 1.5, borderColor: vert.texte }}>
+        <Pressable onPress={() => router.push('/sante' as any)} accessibilityRole="button" accessibilityLabel={traduire("Connecte Santé")} style={nuit ? { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingLeft: 10, paddingRight: 16, borderRadius: 20, backgroundColor: VIF.pas } : { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingLeft: 10, paddingRight: 16, borderRadius: 20, borderWidth: 1.5, borderColor: vert.texte }}>
           <Icon name="plus" size={16} color={nuit ? '#10261D' : vert.texte} width={3} />
           <Ink size={14} weight="extraBold" color={nuit ? '#10261D' : vert.texte}>
-            Connecte Santé
-          </Ink>
+            {traduire("Connecte Santé")}</Ink>
         </Pressable>
       )}
     </>

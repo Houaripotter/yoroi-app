@@ -17,11 +17,12 @@ import { Icon as EIcon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { Stamp, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'archive', title: 'Crée un dossier', text: 'Appelle-le Yoroi_Backup dans ton cloud.' },
-  { icon: 'download', title: 'Génère ta sauvegarde', text: 'Un seul fichier avec tout ton historique.' },
-  { icon: 'upload', title: 'Range-la dans ton cloud', text: 'Tu ne perdras plus rien, même en changeant de téléphone.' },
+  { icon: 'archive', title: traduire('Crée un dossier'), text: traduire('Appelle-le Yoroi_Backup dans ton cloud.') },
+  { icon: 'download', title: traduire('Génère ta sauvegarde'), text: traduire('Un seul fichier avec tout ton historique.') },
+  { icon: 'upload', title: traduire('Range-la dans ton cloud'), text: traduire('Tu ne perdras plus rien, même en changeant de téléphone.') },
 ];
 
 export default function BackupStepScreen() {
@@ -37,9 +38,9 @@ export default function BackupStepScreen() {
       setShowSuccessModal(true);
     } catch (error) {
       logger.error('Erreur export:', error);
-      appAlert('Sauvegarde impossible', 'Tes données n’ont pas pu être exportées. Vérifie les autorisations et réessaie.', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Réessayer', onPress: handleExport },
+      appAlert(traduire('Sauvegarde impossible'), traduire('Tes données n’ont pas pu être exportées. Vérifie les autorisations et réessaie.'), [
+        { text: traduire('Annuler'), style: 'cancel' },
+        { text: traduire('Réessayer'), onPress: handleExport },
       ]);
     } finally {
       setIsExporting(false);
@@ -68,12 +69,12 @@ export default function BackupStepScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
       <DetailScreen
-        title="Sauvegarde tes données"
-        subtitle="Tes données vivent sur ce téléphone, nulle part ailleurs"
+        title={traduire("Sauvegarde tes données")}
+        subtitle={traduire("Tes données vivent sur ce téléphone, nulle part ailleurs")}
         footer={
           <View style={{ gap: 10 }}>
-            <BigButton label={isExporting ? 'Génération en cours' : 'Générer ma sauvegarde'} icon="shield" onPress={handleExport} disabled={isExporting} />
-            <BigButton label="Terminer" tone="light" onPress={handleFinish} />
+            <BigButton label={isExporting ? traduire('Génération en cours') : traduire('Générer ma sauvegarde')} icon="shield" onPress={handleExport} disabled={isExporting} />
+            <BigButton label={traduire("Terminer")} tone="light" onPress={handleFinish} />
           </View>
         }
       >
@@ -84,8 +85,7 @@ export default function BackupStepScreen() {
             </View>
           </View>
           <Ink size={15} weight="bold" color={P.ink2} style={{ textAlign: 'center', paddingHorizontal: 10 }}>
-            YOROI fonctionne sans serveur pour respecter ta vie privée. Une sauvegarde te protège en cas de perte ou de vol.
-          </Ink>
+            {traduire("YOROI fonctionne sans serveur pour respecter ta vie privée. Une sauvegarde te protège en cas de perte ou de vol.")}</Ink>
         </Glass>
 
         <Card style={{ gap: 14 }}>
@@ -108,9 +108,9 @@ export default function BackupStepScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <View style={{ width: '100%', maxWidth: 380, backgroundColor: P.paper, borderRadius: 28, padding: 22, gap: 14, alignItems: 'center' }}>
             <Stamp p={paletteOf('papier')} size={64} />
-            <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>Sauvegarde prête</Ink>
-            <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>Tes données sont protégées en cas de perte, de vol ou de changement de téléphone.</Ink>
-            <Ink size={13} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>Range le fichier dans ton cloud préféré : iCloud, Google Drive ou Dropbox.</Ink>
+            <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>{traduire("Sauvegarde prête")}</Ink>
+            <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Tes données sont protégées en cas de perte, de vol ou de changement de téléphone.")}</Ink>
+            <Ink size={13} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>{traduire("Range le fichier dans ton cloud préféré : iCloud, Google Drive ou Dropbox.")}</Ink>
             <Press onPress={() => { setShowSuccessModal(false); successHaptic(); }} accessibilityRole="button" accessibilityLabel="Parfait" style={{ alignSelf: 'stretch' }}>
               <View style={{ height: 56, borderRadius: 18, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={16} weight="extraBold" color="#FFFFFF">Parfait</Ink>

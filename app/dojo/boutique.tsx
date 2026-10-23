@@ -73,6 +73,7 @@ import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 import { CollectionBientot } from '@/components/yoroi/v2/dojo/CollectionBientot';
 import { CATEGORIES_VIE, PACKS_VIE_PRETS } from '@/lib/v2/dojo/packsVie';
 import type { CategorieVie } from '@/lib/v2/dojo/packsVie';
+import { traduire } from '@/lib/i18n/tr';
 
 type Tab = 'monde' | 'classique' | 'vie' | 'sport' | 'legende' | 'themes';
 type Teinte = VarianteTeinte | 'origine';
@@ -100,8 +101,8 @@ function groupesScenes(classiqueDabord: boolean) {
   // 18 octobre 2026 : le pack Voyages, scenes animees (trois se gagnent avec la serie de jours), juste apres ta famille
   const voyage = { id: 'voyages', titre: 'Voyages', liste: THEMES.filter((t) => voyages.includes(t.id)) };
   const reste = [
-    { id: 'nature', titre: 'Nature et ville', liste: THEMES.filter((t) => nature.includes(t.id)) },
-    { id: 'vie', titre: 'Vie réelle', liste: THEMES.filter((t) => vie.includes(t.id)) },
+    { id: 'nature', titre: traduire('Nature et ville'), liste: THEMES.filter((t) => nature.includes(t.id)) },
+    { id: 'vie', titre: traduire('Vie réelle'), liste: THEMES.filter((t) => vie.includes(t.id)) },
   ];
   return [...(classiqueDabord ? [classique, voyage, japon] : [japon, voyage, classique]), ...reste].filter((g) => g.liste.length > 0);
 }
@@ -274,9 +275,9 @@ export default function Boutique() {
       const r = await restore();
       const packs = await getOwnedPacks();
       setOwned(packs);
-      if (!r.success) appAlert('Restauration impossible', r.error ?? 'Réessaie dans un moment.');
-      else if (r.restored || packs.length) appAlert('C’est fait', 'Tes achats sont de retour sur ce téléphone.');
-      else appAlert('Rien à restaurer', 'Aucun achat trouvé pour ce compte de la boutique.');
+      if (!r.success) appAlert(traduire('Restauration impossible'), r.error ?? traduire('Réessaie dans un moment.'));
+      else if (r.restored || packs.length) appAlert(traduire('C’est fait'), traduire('Tes achats sont de retour sur ce téléphone.'));
+      else appAlert(traduire('Rien à restaurer'), traduire('Aucun achat trouvé pour ce compte de la boutique.'));
     } finally {
       setRestoring(false);
     }
@@ -290,11 +291,11 @@ export default function Boutique() {
   /* ---------- textes de l'apercu ---------- */
   const conditionPerso = (): string => {
     if (shown.kind !== 'pack') return '';
-    if (shown.pack.kind === 'monde') return `Au rang ${rangNom(shown.pack.unlockRank ?? 0, univers)}, ou avec Premium`;
-    return 'Avec Premium';
+    if (shown.pack.kind === 'monde') return traduire("Au rang {0}, ou avec Premium", rangNom(shown.pack.unlockRank ?? 0, univers));
+    return traduire('Avec Premium');
   };
-  const tagLabel = !previewing ? 'Équipé' : !persoOk ? conditionPerso() : !sceneOk ? themeCondition(themeById(shownScene)) ?? 'Avec Premium' : 'Aperçu';
-  const bouton = !persoOk || !sceneOk ? 'Débloquer' : persoChange ? 'Équiper' : 'Choisir la scène';
+  const tagLabel = !previewing ? traduire('Équipé') : !persoOk ? conditionPerso() : !sceneOk ? themeCondition(themeById(shownScene)) ?? traduire('Avec Premium') : traduire('Aperçu');
+  const bouton = !persoOk || !sceneOk ? 'Débloquer' : persoChange ? traduire('Équiper') : traduire('Choisir la scène');
 
   /* ---------- une vignette de personnage ---------- */
   const vignettePerso = (base: string, fond: string, opts: { pack?: PackDef; note?: string | null; nomCourt?: string; vide?: ImageSourcePropType } = {}) => {
@@ -305,7 +306,7 @@ export default function Boutique() {
     const cle = memePersonnage(shownKey, base) ? shownKey : avecTeinteGlobale(base);
     const nom = opts.nomCourt ?? personnageName(base);
     const p = parsePersonnage(base);
-    const note = opts.note ?? (verrou && p.kind === 'pack' && p.pack.kind === 'monde' ? `Rang ${rangNom(p.pack.unlockRank ?? 0, univers)}` : null);
+    const note = opts.note ?? (verrou && p.kind === 'pack' && p.pack.kind === 'monde' ? traduire("Rang {0}", rangNom(p.pack.unlockRank ?? 0, univers)) : null);
     return (
       <Vignette
         key={base}
@@ -317,7 +318,7 @@ export default function Boutique() {
         etat={{ equipe, regarde, verrou, note }}
         onPress={() => essayer(base, opts.pack)}
         onLongPress={opts.pack ? () => ouvrirPack(opts.pack as PackDef) : undefined}
-        label={`${nom}, ${equipe ? 'équipé' : verrou ? `${note ? note.toLowerCase() : 'avec Premium'}, touche pour l’essayer` : 'touche pour l’essayer'}`}
+        label={`${nom}, ${equipe ? traduire('équipé') : verrou ? traduire("{0}, touche pour l’essayer", note ? note.toLowerCase() : 'avec Premium') : traduire('touche pour l’essayer')}`}
       />
     );
   };
@@ -328,17 +329,17 @@ export default function Boutique() {
     const verrou = !isThemeUnlocked(t, rankIndex, isPremium, isAnnualPremium);
     const palier = palierDeScene(t.id);
     const note = verrou && t.annual
-      ? 'Abonnement annuel'
+      ? traduire('Abonnement annuel')
       : verrou && t.unlockRank !== undefined
-        ? `Rang ${rangNom(t.unlockRank, univers)}`
+        ? traduire("Rang {0}", rangNom(t.unlockRank, univers))
         : verrou && palier !== null
-          ? `${palier} jours d’affilée`
+          ? traduire("{0} jours d’affilée", palier)
           : !t.premium
             ? 'Offerte'
             : !isPremium && sceneGagnee(t.id)
-              ? 'Gagnée'
+              ? traduire('Gagnée')
               : !isPremium && essaiEnCours()?.id === t.id
-                ? 'Essai 24 h'
+                ? traduire('Essai 24 h')
                 : null;
     return (
       <VignetteScene
@@ -348,28 +349,28 @@ export default function Boutique() {
         nom={t.name}
         etat={{ equipe, regarde, verrou, note }}
         onPress={() => essayerScene(t.id)}
-        label={`Scène ${t.name}, ${equipe ? 'choisie' : verrou ? `${(themeCondition(t) ?? 'avec Premium').toLowerCase()}, touche pour l’essayer` : 'touche pour l’essayer'}`}
+        label={traduire("Scène {0}, {1}", t.name, equipe ? 'choisie' : verrou ? `${(themeCondition(t) ?? 'avec Premium').toLowerCase()}, touche pour l’essayer` : 'touche pour l’essayer')}
       />
     );
   };
 
   /* ---------- onglets et compteurs, d'apres le catalogue reel ---------- */
   const TABS: { id: Tab; label: string; count: number }[] = [
-    { id: 'monde', label: 'Samouraïs', count: MONDE_PERSONNAGES.length + 1 },
+    { id: 'monde', label: traduire('Samouraïs'), count: MONDE_PERSONNAGES.length + 1 },
     { id: 'classique', label: 'Classique', count: 2 },
-    { id: 'vie', label: 'Vie réelle', count: VIE_PERSONNAGES.length },
+    { id: 'vie', label: traduire('Vie réelle'), count: VIE_PERSONNAGES.length },
     { id: 'sport', label: 'Sports', count: PACKS_SPORT.length },
-    { id: 'legende', label: 'Légendes', count: PACKS_LEGENDE.length },
-    { id: 'themes', label: 'Scènes', count: THEMES.length },
+    { id: 'legende', label: traduire('Légendes'), count: PACKS_LEGENDE.length },
+    { id: 'themes', label: traduire('Scènes'), count: THEMES.length },
   ];
 
   const intro: Record<Tab, string> = {
-    monde: isPremium ? 'Le Guerrier est gratuit, les figures du Japon féodal sont à toi avec Premium.' : 'Le Guerrier est gratuit. Ton rang débloque les autres une à une, Premium les ouvre toutes.',
-    classique: 'Des sportifs d’aujourd’hui, gratuits. La tenue suit ton rang.',
-    vie: isPremium ? 'Métiers, sports et héros d’hier, chacun avec sa scène. Tous à toi avec Premium.' : 'Métiers, sports et héros d’hier, chacun avec sa scène. Ils s’ouvrent avec Premium.',
-    sport: 'Ouverts avec Premium. Ils évoluent avec tes séances dans leur sport.',
-    legende: `Ouvertes avec Premium. Elles évoluent avec ton rang : ${rangNom(2, univers)}, puis ${rangNom(3, univers)}.`,
-    themes: 'La scène du Dojo et de ton accueil.',
+    monde: isPremium ? traduire('Le Guerrier est gratuit, les figures du Japon féodal sont à toi avec Premium.') : traduire('Le Guerrier est gratuit. Ton rang débloque les autres une à une, Premium les ouvre toutes.'),
+    classique: traduire('Des sportifs d’aujourd’hui, gratuits. La tenue suit ton rang.'),
+    vie: isPremium ? traduire('Métiers, sports et héros d’hier, chacun avec sa scène. Tous à toi avec Premium.') : traduire('Métiers, sports et héros d’hier, chacun avec sa scène. Ils s’ouvrent avec Premium.'),
+    sport: traduire('Ouverts avec Premium. Ils évoluent avec tes séances dans leur sport.'),
+    legende: traduire("Ouvertes avec Premium. Elles évoluent avec ton rang : {0}, puis {1}.", rangNom(2, univers), rangNom(3, univers)),
+    themes: traduire('La scène du Dojo et de ton accueil.'),
   };
 
   return (
@@ -379,7 +380,7 @@ export default function Boutique() {
         contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }}
         showsVerticalScrollIndicator={false}
       >
-        <BackHeader title="Personnages et scènes" subtitle="Un seul personnage équipé, dans le Dojo et à l’accueil" />
+        <BackHeader title={traduire("Personnages et scènes")} subtitle={traduire("Un seul personnage équipé, dans le Dojo et à l’accueil")} />
 
         {/* Apercu colle en haut : ce qui est equipe, ou ce que tu essaies */}
         <View style={{ marginHorizontal: -22, paddingHorizontal: 22, paddingTop: 6, paddingBottom: 8, backgroundColor: c.background, gap: 8 }}>
@@ -394,7 +395,7 @@ export default function Boutique() {
                 disabled={!shownPack}
                 onPress={() => shownPack && ouvrirPack(shownPack)}
                 accessibilityRole={shownPack ? 'button' : undefined}
-                accessibilityLabel={shownPack ? `${shownName}, voir le détail` : undefined}
+                accessibilityLabel={shownPack ? traduire("{0}, voir le détail", shownName) : undefined}
                 style={({ pressed }) => ({ maxWidth: '100%', transform: [{ scale: pressed ? 0.98 : 1 }] })}
               >
                 <GlassTag style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16 }}>
@@ -411,13 +412,13 @@ export default function Boutique() {
                   onPress={basculerSceneAssortie}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: avecSceneAssortie }}
-                  accessibilityLabel={`Avec sa scène, ${themeById(sceneAssortie).name}`}
+                  accessibilityLabel={traduire("Avec sa scène, {0}", themeById(sceneAssortie).name)}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: 10, borderRadius: 999, backgroundColor: blancA(0.9), borderWidth: 1, borderColor: P.white, transform: [{ scale: pressed ? 0.97 : 1 }] })}
                 >
                   <View style={{ width: 18, height: 18, borderRadius: 6, borderWidth: 1.5, borderColor: avecSceneAssortie ? c.accent : c.textMuted, backgroundColor: avecSceneAssortie ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                     {avecSceneAssortie ? <CheckIcon size={13} color={c.onAccent} /> : null}
                   </View>
-                  <Ink size={12} weight="extraBold">Avec sa scène</Ink>
+                  <Ink size={12} weight="extraBold">{traduire("Avec sa scène")}</Ink>
                 </Pressable>
               ) : null}
             </View>
@@ -426,7 +427,7 @@ export default function Boutique() {
                 <Pressable
                   onPress={valider}
                   accessibilityRole="button"
-                  accessibilityLabel={bouton === 'Débloquer' ? 'Débloquer avec Premium' : bouton}
+                  accessibilityLabel={bouton === 'Débloquer' ? traduire('Débloquer avec Premium') : bouton}
                   style={({ pressed }) => ({ minHeight: 42, borderRadius: 14, paddingHorizontal: 16, justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent, transform: [{ scale: pressed ? 0.97 : 1 }] })}
                 >
                   <Ink size={14} weight="extraBold" color={c.onAccent}>{bouton}</Ink>
@@ -437,10 +438,10 @@ export default function Boutique() {
                     clear();
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel="Annuler, revenir à ce qui est équipé"
+                  accessibilityLabel={traduire("Annuler, revenir à ce qui est équipé")}
                   style={({ pressed }) => ({ minHeight: 42, borderRadius: 14, paddingHorizontal: 14, justifyContent: 'center', backgroundColor: blancA(0.9), borderWidth: 1, borderColor: P.white, transform: [{ scale: pressed ? 0.97 : 1 }] })}
                 >
-                  <Ink size={14} weight="extraBold">Annuler</Ink>
+                  <Ink size={14} weight="extraBold">{traduire("Annuler")}</Ink>
                 </Pressable>
               </Animated.View>
             ) : null}
@@ -452,7 +453,7 @@ export default function Boutique() {
             {teintes.length > 1 ? (
               <Teintes options={teintes} value={teinteVue} onChange={changerTeinte} fond={fondFamille('indigo')} />
             ) : !previewing ? (
-              <Ink size={12} color={c.textMuted} numberOfLines={2} style={{ flex: 1 }}>Touche un personnage ou une scène pour l’essayer ici.</Ink>
+              <Ink size={12} color={c.textMuted} numberOfLines={2} style={{ flex: 1 }}>{traduire("Touche un personnage ou une scène pour l’essayer ici.")}</Ink>
             ) : null}
           </View>
         </View>
@@ -463,19 +464,19 @@ export default function Boutique() {
 
         {activeTab === 'monde' ? (
           <View style={{ gap: 10 }}>
-            <GroupeTitre titre="Gratuit" />
-            <Grille>{vignettePerso(`guerrier_${genre}`, fondFamille('or'), { note: 'Suit ton rang' })}</Grille>
-            <GroupeTitre titre="Le monde samouraï" count={MONDE_PERSONNAGES.length} />
+            <GroupeTitre titre={traduire("Gratuit")} />
+            <Grille>{vignettePerso(`guerrier_${genre}`, fondFamille('or'), { note: traduire('Suit ton rang') })}</Grille>
+            <GroupeTitre titre={traduire("Le monde samouraï")} count={MONDE_PERSONNAGES.length} />
             <Grille>{MONDE_PERSONNAGES.map((p) => vignettePerso(personnageKey(p, genre), fondFamille('indigo'), { pack: p }))}</Grille>
           </View>
         ) : activeTab === 'classique' ? (
           <View style={{ gap: 10 }}>
             <GroupeTitre titre="Personnages" />
             <Grille>
-              {vignettePerso(`classique_${genre}`, fondFamille('mousse'), { note: 'Gratuit' })}
-              {vignettePerso(SANS_PERSONNAGE, fondFamille('mousse'), { nomCourt: 'Sans personnage', note: 'Juste ta scène', vide: THEME_IMAGES[espace.scene] ?? THEME_IMAGES.dojo })}
+              {vignettePerso(`classique_${genre}`, fondFamille('mousse'), { note: traduire('Gratuit') })}
+              {vignettePerso(SANS_PERSONNAGE, fondFamille('mousse'), { nomCourt: traduire('Sans personnage'), note: traduire('Juste ta scène'), vide: THEME_IMAGES[espace.scene] ?? THEME_IMAGES.dojo })}
             </Grille>
-            <GroupeTitre titre="Scènes classiques" count={SCENES_CLASSIQUES.length} />
+            <GroupeTitre titre={traduire("Scènes classiques")} count={SCENES_CLASSIQUES.length} />
             <Grille gap={12}>{SCENES_CLASSIQUES.map(vignetteScene)}</Grille>
           </View>
         ) : activeTab === 'vie' ? (
@@ -515,7 +516,7 @@ export default function Boutique() {
           accessibilityRole="button"
           style={({ pressed }) => ({ alignSelf: 'center', minHeight: 44, paddingHorizontal: 16, justifyContent: 'center', opacity: pressed || restoring ? 0.6 : 1 })}
         >
-          <Ink size={14} weight="bold" color={c.textSecondary}>{restoring ? 'Restauration en cours' : 'Restaurer mes achats'}</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{restoring ? 'Restauration en cours' : traduire('Restaurer mes achats')}</Ink>
         </Pressable>
       </ScrollView>
     </View>

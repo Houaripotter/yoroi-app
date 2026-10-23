@@ -10,6 +10,7 @@ import { ShareStudio } from '@/components/yoroi/v2/partage/ShareStudio';
 import { cardWidthFor } from '@/components/yoroi/v2/partage/cardKit';
 import { useStudio } from '@/lib/v2/partage/useStudio';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
+import { traduire } from '@/lib/i18n/tr';
 
 const YEAR = new Date().getFullYear();
 
@@ -17,16 +18,16 @@ export default function YearCounterV2Screen() {
   const { width: sw } = useWindowDimensions();
   const { stats, isLoading, error } = useYearStats(YEAR);
   const id = useCardIdentity();
-  const studio = useStudio({ dialogTitle: 'Partager mon année', source: 'compteur_annee' });
+  const studio = useStudio({ dialogTitle: traduire('Partager mon année'), source: 'compteur_annee' });
 
   const empty = !isLoading && (error || !stats || stats.totalDays === 0)
-    ? { title: error ? 'Ton année ne s’affiche pas' : `Ton année ${YEAR} t’attend`, text: error ? 'Les données n’ont pas pu être lues. Réessaie dans un instant.' : 'Chaque jour d’entraînement fait monter ton compteur. Lance ta première séance.', action: 'Lancer une séance', onAction: () => router.push('/seance' as any) }
+    ? { title: error ? traduire('Ton année ne s’affiche pas') : traduire("Ton année {0} t’attend", YEAR), text: error ? traduire('Les données n’ont pas pu être lues. Réessaie dans un instant.') : traduire('Chaque jour d’entraînement fait monter ton compteur. Lance ta première séance.'), action: traduire('Lancer une séance'), onAction: () => router.push('/seance' as any) }
     : null;
 
   return (
     <ShareStudio
-      title={`Mon année ${YEAR}`}
-      subtitle="Le compteur de tes séances de l’année"
+      title={traduire("Mon année {0}", YEAR)}
+      subtitle={traduire("Le compteur de tes séances de l’année")}
       loading={isLoading}
       empty={empty}
       style={studio.style}

@@ -21,6 +21,7 @@ import { sceneAnimee } from '@/lib/v2/espace/scenesAnimees';
 import { sonsDeLaScene, useReglagesSon } from '@/lib/v2/espace/sonScene';
 import { useVisiteEnCours } from '@/components/yoroi/v2/tour/VisiteGuidee';
 import { Press } from './kit';
+import { traduire } from '@/lib/i18n/tr';
 
 /** « Reduire les animations » du telephone (suit le reglage en direct) */
 export function useReduireAnimations(): boolean {
@@ -237,7 +238,7 @@ export function BoutonSon({ scene, sceneSombre }: { scene: SceneId; sceneSombre:
     <Press
       onPress={() => setReglages({ coupe: !coupe })}
       accessibilityRole="button"
-      accessibilityLabel={coupe ? 'Remettre le son de la scène' : 'Couper le son de la scène'}
+      accessibilityLabel={coupe ? traduire('Remettre le son de la scène') : traduire('Couper le son de la scène')}
       hitSlop={(44 - S) / 2}
     >
       <View style={{ width: S, height: S, borderRadius: S / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: sceneSombre ? 'rgba(14,17,26,0.22)' : 'rgba(255,255,255,0.32)' }}>

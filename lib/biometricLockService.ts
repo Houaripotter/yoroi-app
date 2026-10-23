@@ -7,6 +7,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // expo-local-authentication est require dynamiquement : si non installe,
 // les fonctions retournent des defaults "non supporte" sans crasher.
@@ -73,8 +74,8 @@ export async function authenticateIfNeeded(): Promise<boolean> {
     if (!LocalAuthentication) return true;
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: 'Deverrouillez Yoroi',
-      fallbackLabel: 'Utiliser le code',
-      cancelLabel: 'Annuler',
+      fallbackLabel: traduire('Utiliser le code'),
+      cancelLabel: traduire('Annuler'),
       disableDeviceFallback: false,
     });
 

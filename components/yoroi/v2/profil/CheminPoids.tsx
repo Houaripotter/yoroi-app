@@ -11,6 +11,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card } from '@/components/yoroi/v2/espace/ui';
 import { ORNEMENTS } from './Ornement';
+import { traduire } from '@/lib/i18n/tr';
 
 type Pt = { x: number; y: number };
 
@@ -86,23 +87,23 @@ export function CheminPoids({ start, current, target, progress, fmt }: {
   const pct = progress === null ? null : Math.round(Math.max(0, Math.min(1, progress)) * 100);
   const reached = progress !== null && progress >= 1;
   const message = progress === null
-    ? current ? 'Indique ton poids de départ et ton objectif pour suivre ta progression.' : 'Pèse-toi une première fois pour voir ta progression.'
-    : reached ? 'Objectif atteint. Bravo, fixe-toi le prochain.' : 'du chemin parcouru';
+    ? current ? traduire('Indique ton poids de départ et ton objectif pour suivre ta progression.') : traduire('Pèse-toi une première fois pour voir ta progression.')
+    : reached ? traduire('Objectif atteint. Bravo, fixe-toi le prochain.') : traduire('du chemin parcouru');
 
   return (
     <Card style={{ padding: 16, gap: 10 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <View style={{ gap: 2, flexShrink: 1 }}>
-          <Ink size={13} weight="bold" color={c.textMuted}>Départ</Ink>
-          <Ink size={20} weight="black" tight numberOfLines={1}>{start ? `${fmt(start)} kg` : 'à fixer'}</Ink>
+          <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Départ")}</Ink>
+          <Ink size={20} weight="black" tight numberOfLines={1}>{start ? `${fmt(start)} kg` : traduire('à fixer')}</Ink>
         </View>
         <View style={{ gap: 2, alignItems: 'center', flexShrink: 1 }}>
-          <Ink size={13} weight="bold" color={c.textMuted}>Aujourd’hui</Ink>
-          <Ink size={32} weight="black" tight numberOfLines={1}>{current ? fmt(current) : 'à peser'}</Ink>
+          <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Aujourd’hui")}</Ink>
+          <Ink size={32} weight="black" tight numberOfLines={1}>{current ? fmt(current) : traduire('à peser')}</Ink>
         </View>
         <View style={{ gap: 2, alignItems: 'flex-end', flexShrink: 1 }}>
-          <Ink size={13} weight="bold" color={c.textMuted}>Objectif</Ink>
-          <Ink size={20} weight="black" tight color={c.successText} numberOfLines={1}>{target ? `${fmt(target)} kg` : 'à fixer'}</Ink>
+          <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Objectif")}</Ink>
+          <Ink size={20} weight="black" tight color={c.successText} numberOfLines={1}>{target ? `${fmt(target)} kg` : traduire('à fixer')}</Ink>
         </View>
       </View>
 
@@ -110,7 +111,7 @@ export function CheminPoids({ start, current, target, progress, fmt }: {
         onLayout={(e) => setW(Math.round(e.nativeEvent.layout.width))}
         accessible
         accessibilityRole="progressbar"
-        accessibilityLabel={pct !== null ? `${pct} pour cent du chemin vers ton objectif` : 'Progression vers ton objectif'}
+        accessibilityLabel={pct !== null ? traduire("{0} pour cent du chemin vers ton objectif", pct) : traduire('Progression vers ton objectif')}
         accessibilityValue={{ min: 0, max: 100, now: pct ?? 0 }}
         style={{ height: H, marginHorizontal: -4 }}
       >

@@ -5,12 +5,13 @@
 import { addWeeklyPlanItem, getClubs, getWeeklyPlan } from '@/lib/database';
 import type { Club, WeeklyPlan } from '@/lib/database';
 import type { UserClub } from '@/lib/storage';
+import { traduire } from '@/lib/i18n/tr';
 
 export type RoutineBlock = { time: string; activity: string; workoutType?: string };
 export type Routine = Record<string, RoutineBlock[]>;
 
 export const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-export const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+export const DAY_LABELS = [traduire('Lundi'), traduire('Mardi'), traduire('Mercredi'), traduire('Jeudi'), traduire('Vendredi'), traduire('Samedi'), traduire('Dimanche')];
 export const DAY_SHORT = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 export const isRestDay = (blocks: RoutineBlock[] | undefined) => !!blocks && blocks.length === 1 && blocks[0]?.activity === 'REPOS';

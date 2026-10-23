@@ -12,6 +12,7 @@
 // ============================================================
 
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export const CURRENT_VERSION = '6.0';
 
@@ -332,7 +333,7 @@ export function validateBackup(backup: any): ValidationResult {
   if (!backup || typeof backup !== 'object') {
     return {
       valid: false,
-      errors: ['Fichier invalide ou vide.'],
+      errors: [traduire('Fichier invalide ou vide.')],
       version: 'inconnue',
       userName: 'inconnu',
       weightsCount: 0,
@@ -341,20 +342,20 @@ export function validateBackup(backup: any): ValidationResult {
   }
 
   if (!backup.appName || backup.appName !== 'Yoroi') {
-    errors.push('Ce fichier ne semble pas être une sauvegarde YOROI.');
+    errors.push(traduire('Ce fichier ne semble pas être une sauvegarde YOROI.'));
   }
 
   if (!backup.version) {
-    errors.push('Version manquante dans le fichier.');
+    errors.push(traduire('Version manquante dans le fichier.'));
   }
 
   if (!backup.profile) {
-    errors.push('Ton profil manque dans ce fichier.');
+    errors.push(traduire('Ton profil manque dans ce fichier.'));
   }
 
   // weights peut être absent sur très vieilles versions, on ne bloque pas
   if (backup.weights !== undefined && !Array.isArray(backup.weights)) {
-    errors.push('Les pesées de ce fichier sont abîmées.');
+    errors.push(traduire('Les pesées de ce fichier sont abîmées.'));
   }
 
   return {

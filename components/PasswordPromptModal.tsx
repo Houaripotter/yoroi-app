@@ -12,6 +12,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { Lock, X } from 'lucide-react-native';
 import { appPassword } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 interface Props {
   visible: boolean;
@@ -24,7 +25,7 @@ interface Props {
 }
 
 export const PasswordPromptModal: React.FC<Props> = ({
-  visible, title, message, confirmLabel = 'Valider', onSubmit, onCancel, minLength = 0,
+  visible, title, message, confirmLabel = traduire('Valider'), onSubmit, onCancel, minLength = 0,
 }) => {
   const { colors, isDark } = useTheme();
   const [value, setValue] = useState('');
@@ -94,7 +95,7 @@ export const PasswordPromptModal: React.FC<Props> = ({
             }]}
             value={value}
             onChangeText={setValue}
-            placeholder="Mot de passe"
+            placeholder={traduire("Mot de passe")}
             placeholderTextColor={colors.textMuted ?? '#888'}
             secureTextEntry
             autoCapitalize="none"
@@ -109,7 +110,7 @@ export const PasswordPromptModal: React.FC<Props> = ({
               style={[styles.btn, styles.btnSecondary, { borderColor: colors.border ?? '#E5E7EB' }]}
               activeOpacity={0.7}
             >
-              <Text style={[styles.btnSecondaryText, { color: colors.text }]}>Annuler</Text>
+              <Text style={[styles.btnSecondaryText, { color: colors.text }]}>{traduire("Annuler")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSubmit}

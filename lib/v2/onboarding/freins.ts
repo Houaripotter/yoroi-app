@@ -4,16 +4,17 @@
  * (lib/v2/accueil/conseil.ts). Aucun chiffre, aucune etude citee : seulement ce que fait vraiment l'app.
  */
 import type { Frein } from './draft';
+import { traduire } from '@/lib/i18n/tr';
 
 export type FreinDef = { id: Frein; label: string; seau: 'sablier' | 'sentier' | 'flamme' | 'bandes' | 'boussole' | 'poing' };
 
 export const FREINS: FreinDef[] = [
-  { id: 'regularite', label: 'Je manque de régularité', seau: 'sablier' },
-  { id: 'progres', label: 'Je ne vois pas mes progrès', seau: 'sentier' },
-  { id: 'motivation', label: 'Je perds la motivation', seau: 'flamme' },
+  { id: 'regularite', label: traduire('Je manque de régularité'), seau: 'sablier' },
+  { id: 'progres', label: traduire('Je ne vois pas mes progrès'), seau: 'sentier' },
+  { id: 'motivation', label: traduire('Je perds la motivation'), seau: 'flamme' },
   { id: 'blessures', label: 'Je me blesse souvent', seau: 'bandes' },
-  { id: 'programme', label: 'Je ne sais pas quoi faire', seau: 'boussole' },
-  { id: 'rien', label: 'Rien de tout ça', seau: 'poing' },
+  { id: 'programme', label: traduire('Je ne sais pas quoi faire'), seau: 'boussole' },
+  { id: 'rien', label: traduire('Rien de tout ça'), seau: 'poing' },
 ];
 
 /** texte : les mots ou phrases cles sont entre ** (gras et en couleur a l'ecran, vague 29) */
@@ -21,34 +22,34 @@ export type Affirmation = { titre: string; texte: string; points: string[] };
 
 const AFFIRMATIONS: Record<Frein, Affirmation> = {
   regularite: {
-    titre: 'Tu n’es pas un cas à part',
-    texte: 'C’est le cas de **beaucoup de sportifs**. La régularité **se construit semaine après semaine**, et **la voir aide à tenir**. C’est ce que fait YOROI.',
-    points: ['Ta semaine de séances sous les yeux', 'L’objectif que tu choisis, pas un autre', 'Un rappel doux, seulement si tu le veux'],
+    titre: traduire('Tu n’es pas un cas à part'),
+    texte: traduire('C’est le cas de **beaucoup de sportifs**. La régularité **se construit semaine après semaine**, et **la voir aide à tenir**. C’est ce que fait YOROI.'),
+    points: [traduire('Ta semaine de séances sous les yeux'), traduire('L’objectif que tu choisis, pas un autre'), traduire('Un rappel doux, seulement si tu le veux')],
   },
   progres: {
-    titre: 'Tes progrès sont là',
-    texte: 'Ils se cachent **dans les détails**. Une pesée, une mensuration, une charge notée : mises bout à bout, elles **dessinent ta courbe**. YOROI **les garde pour toi**.',
-    points: ['Ta tendance de poids, lissée jour après jour', 'Tes mensurations et ta composition', 'Tes records, tamponnés quand tu les bats'],
+    titre: traduire('Tes progrès sont là'),
+    texte: traduire('Ils se cachent **dans les détails**. Une pesée, une mensuration, une charge notée : mises bout à bout, elles **dessinent ta courbe**. YOROI **les garde pour toi**.'),
+    points: [traduire('Ta tendance de poids, lissée jour après jour'), traduire('Tes mensurations et ta composition'), traduire('Tes records, tamponnés quand tu les bats')],
   },
   motivation: {
-    titre: 'La motivation va et vient',
-    texte: 'Ce qui reste, c’est **ce que tu as déjà fait**. YOROI te le montre, pour que **les jours sans envie comptent quand même**.',
-    points: ['Chaque séance notée reste dans ton historique', 'Ta semaine et tes records à l’accueil', 'Ton armure qui se forme dans le Dojo'],
+    titre: traduire('La motivation va et vient'),
+    texte: traduire('Ce qui reste, c’est **ce que tu as déjà fait**. YOROI te le montre, pour que **les jours sans envie comptent quand même**.'),
+    points: [traduire('Chaque séance notée reste dans ton historique'), traduire('Ta semaine et tes records à l’accueil'), traduire('Ton armure qui se forme dans le Dojo')],
   },
   blessures: {
-    titre: 'Le repos fait partie du travail',
-    texte: 'Se blesser souvent, c’est souvent **en faire trop d’un coup**. YOROI t’aide à **garder un œil sur ta charge** et sur ton corps.',
-    points: ['L’infirmerie pour noter tes blessures', 'Ta récupération du jour avant de t’entraîner', 'Tes séances et leur charge, semaine après semaine'],
+    titre: traduire('Le repos fait partie du travail'),
+    texte: traduire('Se blesser souvent, c’est souvent **en faire trop d’un coup**. YOROI t’aide à **garder un œil sur ta charge** et sur ton corps.'),
+    points: [traduire('L’infirmerie pour noter tes blessures'), traduire('Ta récupération du jour avant de t’entraîner'), traduire('Tes séances et leur charge, semaine après semaine')],
   },
   programme: {
-    titre: 'Pas besoin d’un plan parfait',
-    texte: 'Pour commencer, il suffit de **noter ce que tu fais**. YOROI garde **tes exercices et tes charges**, et **tu repars de là** la fois suivante.',
-    points: ['Ta séance notée en quelques touches', 'Le chrono pour tes rounds et tes repos', 'Ton carnet pour tes techniques'],
+    titre: traduire('Pas besoin d’un plan parfait'),
+    texte: traduire('Pour commencer, il suffit de **noter ce que tu fais**. YOROI garde **tes exercices et tes charges**, et **tu repars de là** la fois suivante.'),
+    points: [traduire('Ta séance notée en quelques touches'), traduire('Le chrono pour tes rounds et tes repos'), traduire('Ton carnet pour tes techniques')],
   },
   rien: {
-    titre: 'Rien ne t’arrête',
-    texte: '**Tu sais où tu vas**. YOROI sera **ton carnet de bord**, tout au même endroit et sur ton téléphone.',
-    points: ['Ton poids et tes mensurations', 'Tes séances, tes chronos et tes records', 'Tes compétitions et ta catégorie'],
+    titre: traduire('Rien ne t’arrête'),
+    texte: traduire('**Tu sais où tu vas**. YOROI sera **ton carnet de bord**, tout au même endroit et sur ton téléphone.'),
+    points: [traduire('Ton poids et tes mensurations'), traduire('Tes séances, tes chronos et tes records'), traduire('Tes compétitions et ta catégorie')],
   },
 };
 
@@ -79,29 +80,29 @@ type Melange = {
 
 const MELANGE: Record<Exclude<Frein, 'rien'>, Melange> = {
   regularite: {
-    court: 'C’est le cas de **beaucoup de sportifs**. La régularité **se construit semaine après semaine**, et **la voir aide à tenir**.',
-    lien: 'manquer de régularité',
-    point: 'Ta semaine de séances sous les yeux',
+    court: traduire('C’est le cas de **beaucoup de sportifs**. La régularité **se construit semaine après semaine**, et **la voir aide à tenir**.'),
+    lien: traduire('manquer de régularité'),
+    point: traduire('Ta semaine de séances sous les yeux'),
   },
   progres: {
-    court: 'Ils se cachent **dans les détails** : une pesée, une mensuration, une charge notée. YOROI **les garde pour toi**.',
-    lien: 'ne pas voir tes progrès',
-    point: 'Ta tendance de poids, lissée jour après jour',
+    court: traduire('Ils se cachent **dans les détails** : une pesée, une mensuration, une charge notée. YOROI **les garde pour toi**.'),
+    lien: traduire('ne pas voir tes progrès'),
+    point: traduire('Ta tendance de poids, lissée jour après jour'),
   },
   motivation: {
-    court: 'Ce qui reste, c’est **ce que tu as déjà fait**. YOROI te le montre, pour que **les jours sans envie comptent quand même**.',
-    lien: 'perdre la motivation',
-    point: 'Chaque séance notée reste dans ton historique',
+    court: traduire('Ce qui reste, c’est **ce que tu as déjà fait**. YOROI te le montre, pour que **les jours sans envie comptent quand même**.'),
+    lien: traduire('perdre la motivation'),
+    point: traduire('Chaque séance notée reste dans ton historique'),
   },
   blessures: {
-    court: 'Se blesser souvent, c’est souvent **en faire trop d’un coup**. YOROI t’aide à **garder un œil sur ta charge**.',
-    lien: 'te blesser souvent',
-    point: 'L’infirmerie pour noter tes blessures',
+    court: traduire('Se blesser souvent, c’est souvent **en faire trop d’un coup**. YOROI t’aide à **garder un œil sur ta charge**.'),
+    lien: traduire('te blesser souvent'),
+    point: traduire('L’infirmerie pour noter tes blessures'),
   },
   programme: {
-    court: 'Pour commencer, il suffit de **noter ce que tu fais**. YOROI garde **tes exercices et tes charges**.',
-    lien: 'ne pas savoir quoi faire',
-    point: 'Ta séance notée en quelques touches',
+    court: traduire('Pour commencer, il suffit de **noter ce que tu fais**. YOROI garde **tes exercices et tes charges**.'),
+    lien: traduire('ne pas savoir quoi faire'),
+    point: traduire('Ta séance notée en quelques touches'),
   },
 };
 
@@ -125,7 +126,7 @@ export type AffirmationMelee = {
 function liste(mots: string[]): string {
   const m = mots.map((x) => `**${x}**`);
   if (m.length <= 1) return m.join('');
-  return `${m.slice(0, -1).join(', à ')} ni à ${m[m.length - 1]}`;
+  return traduire("{0} ni à {1}", m.slice(0, -1).join(', à '), m[m.length - 1]);
 }
 
 /**
@@ -148,7 +149,7 @@ export function affirmationMelee(freins: Frein[], genre: 'h' | 'f' | null = null
   }
   const autres = vus.slice(1);
   const seul = genre === 'f' ? 'seule' : 'seul';
-  const lien = `Et tu n’es pas ${seul} à ${liste(autres.map((f) => MELANGE[f].lien))}.`;
+  const lien = traduire("Et tu n’es pas {0} à {1}.", seul, liste(autres.map((f) => MELANGE[f].lien)));
   const points: PointFrein[] = vus.map((f) => ({ texte: MELANGE[f].point, frein: f }));
   for (const p of a.points) {
     if (points.length >= 3) break;

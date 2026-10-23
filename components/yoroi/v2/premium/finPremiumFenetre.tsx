@@ -6,17 +6,18 @@ import React from 'react';
 import { Image, View } from 'react-native';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { THEME_IMAGES } from '@/lib/v2/dojo/personnages';
+import { traduire } from '@/lib/i18n/tr';
 
-export const FIN_PREMIUM_TITRE = 'Ton Premium a pris fin';
-export const FIN_PREMIUM_TEXTE = 'Tes scènes et personnages Premium t’attendent : ils reviennent dès que tu reprends Premium.';
+export const FIN_PREMIUM_TITRE = traduire('Ton Premium a pris fin');
+export const FIN_PREMIUM_TEXTE = traduire('Tes scènes et personnages Premium t’attendent : ils reviennent dès que tu reprends Premium.');
 
 export function fenetreFinPremium(onReprendre: () => void, onPlusTard?: () => void): void {
   appAlert(
     FIN_PREMIUM_TITRE,
     FIN_PREMIUM_TEXTE,
     [
-      { text: 'Plus tard', style: 'cancel', onPress: onPlusTard },
-      { text: 'Reprendre Premium', isPreferred: true, onPress: onReprendre },
+      { text: traduire('Plus tard'), style: 'cancel', onPress: onPlusTard },
+      { text: traduire('Reprendre Premium'), isPreferred: true, onPress: onReprendre },
     ],
     {
       illustration: (

@@ -17,8 +17,9 @@ import { Icon } from './Icon';
 import type { IconName } from './Icon';
 import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
-const SMALL_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'l', 'd', 'et', 'club', 'team', 'the']);
+const SMALL_WORDS = new Set([traduire('de'), 'du', 'des', 'la', traduire('le'), 'les', 'l', 'd', 'et', 'club', 'team', 'the']);
 
 /** Initiales d'un club : « Gracie Barra Marseille » donne « GB », « Basic Fit » donne « BF » */
 export function clubInitials(name?: string | null): string {
@@ -126,13 +127,13 @@ export function MonthCard({ trainings, competitions, onOpen }: { trainings: Trai
   const monthLabel = `${MONTHS[mo].charAt(0).toUpperCase()}${MONTHS[mo].slice(1)}`;
   const summary = inMonth.length
     ? [`${inMonth.length} séance${inMonth.length > 1 ? 's' : ''}`, days !== inMonth.length ? `${days} jours` : '', minutes ? formatDuration(minutes) : ''].filter(Boolean).join(', ')
-    : 'Pas encore de séance';
+    : traduire('Pas encore de séance');
 
   return (
     <Pressable
       onPress={() => { tap(); onOpen(); }}
       accessibilityRole="button"
-      accessibilityLabel={`Ton mois, ${monthLabel}, ${summary}. Ouvrir le calendrier`}
+      accessibilityLabel={traduire("Ton mois, {0}, {1}. Ouvrir le calendrier", monthLabel, summary)}
       style={({ pressed }) => ({ borderRadius: 22, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider, paddingHorizontal: 12, paddingTop: 14, paddingBottom: 10 })}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 }}>

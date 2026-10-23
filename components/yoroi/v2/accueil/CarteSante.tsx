@@ -29,6 +29,7 @@ import {
   type DemandeSante,
 } from '@/lib/v2/sante/demande';
 import { demanderAccesSante, nePlusDemanderSante, reporterRelanceSante, seancesManuelles } from '@/lib/v2/sante/demandeActions';
+import { traduire } from '@/lib/i18n/tr';
 
 type SanteVue = { loading: boolean; source: { mode: string } | null; series: Record<string, { value: number }[] | undefined> | null; reload: () => void };
 
@@ -81,10 +82,10 @@ export function CarteSante({ sante }: { sante: SanteVue }) {
   if (!visible || !etat) return null;
   const nom = nomSante();
   const reglages = guide || modeDemande(etat, Platform.OS) === 'reglages';
-  const titre = etat.lectureVide ? `YOROI ne reçoit rien de ${nom}` : `Relie ${nom} à YOROI`;
+  const titre = etat.lectureVide ? traduire("YOROI ne reçoit rien de {0}", nom) : traduire("Relie {0} à YOROI", nom);
   const texte = reglages
-    ? 'La fenêtre d’autorisation ne revient pas d’elle-même. Ça se règle en trois touches :'
-    : 'Tes pesées, tes pas et tes séances arrivent tout seuls. Rien ne quitte ton téléphone.';
+    ? traduire('La fenêtre d’autorisation ne revient pas d’elle-même. Ça se règle en trois touches :')
+    : traduire('Tes pesées, tes pas et tes séances arrivent tout seuls. Rien ne quitte ton téléphone.');
 
   const autoriser = async () => {
     if (busy) return;
@@ -131,10 +132,10 @@ export function CarteSante({ sante }: { sante: SanteVue }) {
       illustration={<IllusSante size={64} disque />}
       titre={titre}
       texte={texte}
-      principal={reglages ? { label: `Ouvrir ${app}`, onPress: ouvrir } : { label: 'Autoriser', onPress: autoriser, busy, busyLabel: 'Un instant…' }}
+      principal={reglages ? { label: `Ouvrir ${app}`, onPress: ouvrir } : { label: 'Autoriser', onPress: autoriser, busy, busyLabel: traduire('Un instant…') }}
       liens={[
-        { label: 'Plus tard', onPress: plusTard },
-        { label: 'Ne plus demander', onPress: jamais },
+        { label: traduire('Plus tard'), onPress: plusTard },
+        { label: traduire('Ne plus demander'), onPress: jamais },
       ]}
     >
       {reglages ? (

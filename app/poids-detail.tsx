@@ -50,22 +50,23 @@ import { LigneAllure } from '@/components/yoroi/v2/charts/LigneAllure';
 import { etatObjectif, texteDepuisDebut, texteDonnees, texteFourchette, texteProjection, texteRythme, texteTendance } from '@/lib/v2/pesee/etatObjectif';
 import { CarteObjectif, FeuilleObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
+import { traduire } from '@/lib/i18n/tr';
 
 /**
  * « Comment on calcule » (18 octobre 2026, Houari : « les sources doivent être visibles dans l'app ») : chaque calcul
  * du poids et sa source. Les references completes sont dans app/scientific-sources.tsx (« Poids et projection »).
  */
 const COMMENT_ON_CALCULE: { titre: string; texte: string; source: string }[] = [
-  { titre: 'Ta tendance', texte: 'Un filtre suit ton niveau et ta pente, même les jours sans pesée. Une pesée très loin de l’attendu est bornée.', source: 'Kalman (1960), Journal of Basic Engineering. Principe des tendances lissées : The Hacker’s Diet, MacroFactor.' },
-  { titre: 'Ton rythme', texte: 'La médiane des pentes entre tes pesées des 4 dernières semaines (6 si tu te pèses peu) : une pesée bizarre ne la tire pas.', source: 'Sen (1968), Journal of the American Statistical Association.' },
-  { titre: 'Le rythme conseillé', texte: 'Perte : 0,5 à 1 % de ton poids par semaine pour garder ton muscle. Prise : 0,25 à 0,5 % pour limiter le gras.', source: 'Helms et al. (2014), JISSN. Garthe et al. (2011), IJSNEM. Iraki et al. (2019), Sports.' },
-  { titre: 'Ta projection', texte: 'Ton rythme réel, jamais plus vite que ces repères, avec une fourchette de dates. Pas de règle des 7 700 kcal par kilo : elle surestime la perte sur la durée.', source: 'Hall et al. (2011), The Lancet. Thomas et al. (2013), International Journal of Obesity.' },
-  { titre: 'Le ralentissement', texte: 'Le poids répond lentement et la perte ralentit avec le temps. Près de ton cap, YOROI ralentit encore ta projection : un choix prudent, pas un chiffre d’étude.', source: 'Hall et al. (2011), The Lancet ; NIH, Body Weight Planner.' },
-  { titre: 'L’eau', texte: 'Sel, glucides, entraînement et cycle font varier l’eau d’un jour à l’autre. Au début d’une perte, une partie est de l’eau et du glycogène.', source: 'Kreitzman et al. (1992), AJCN. White et al. (2011), Obstetrics and Gynecology International. Turicchi et al. (2020), PLoS ONE.' },
-  { titre: 'Sports de combat', texte: 'YOROI suit une perte progressive. Il ne calcule pas de coupe de poids d’avant pesée : elle se prépare avec un encadrement.', source: 'Ricci et al. (2025), position de l’ISSN. Reale et al. (2017), IJSPP. Barley et al. (2019), Sports.' },
+  { titre: traduire('Ta tendance'), texte: traduire('Un filtre suit ton niveau et ta pente, même les jours sans pesée. Une pesée très loin de l’attendu est bornée.'), source: 'Kalman (1960), Journal of Basic Engineering. Principe des tendances lissées : The Hacker’s Diet, MacroFactor.' },
+  { titre: traduire('Ton rythme'), texte: traduire('La médiane des pentes entre tes pesées des 4 dernières semaines (6 si tu te pèses peu) : une pesée bizarre ne la tire pas.'), source: 'Sen (1968), Journal of the American Statistical Association.' },
+  { titre: traduire('Le rythme conseillé'), texte: traduire('Perte : 0,5 à 1 % de ton poids par semaine pour garder ton muscle. Prise : 0,25 à 0,5 % pour limiter le gras.'), source: 'Helms et al. (2014), JISSN. Garthe et al. (2011), IJSNEM. Iraki et al. (2019), Sports.' },
+  { titre: traduire('Ta projection'), texte: traduire('Ton rythme réel, jamais plus vite que ces repères, avec une fourchette de dates. Pas de règle des 7 700 kcal par kilo : elle surestime la perte sur la durée.'), source: 'Hall et al. (2011), The Lancet. Thomas et al. (2013), International Journal of Obesity.' },
+  { titre: traduire('Le ralentissement'), texte: traduire('Le poids répond lentement et la perte ralentit avec le temps. Près de ton cap, YOROI ralentit encore ta projection : un choix prudent, pas un chiffre d’étude.'), source: 'Hall et al. (2011), The Lancet ; NIH, Body Weight Planner.' },
+  { titre: traduire('L’eau'), texte: traduire('Sel, glucides, entraînement et cycle font varier l’eau d’un jour à l’autre. Au début d’une perte, une partie est de l’eau et du glycogène.'), source: 'Kreitzman et al. (1992), AJCN. White et al. (2011), Obstetrics and Gynecology International. Turicchi et al. (2020), PLoS ONE.' },
+  { titre: traduire('Sports de combat'), texte: traduire('YOROI suit une perte progressive. Il ne calcule pas de coupe de poids d’avant pesée : elle se prépare avec un encadrement.'), source: 'Ricci et al. (2025), position de l’ISSN. Reale et al. (2017), IJSPP. Barley et al. (2019), Sports.' },
 ];
 
-const PERIODE_TEXTE: Record<number, string> = { 30: 'en 1 mois', 90: 'en 3 mois', 180: 'en 6 mois', 365: 'en 1 an', [PERIODE_PLAN]: 'depuis ton début' };
+const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
 
 
 export default function PoidsDetailScreen() {
@@ -103,10 +104,10 @@ export default function PoidsDetailScreen() {
     if (!shown?.id) return;
     const kg = `${formatKg(Number(shown.weight))} kg`;
     const confirmDelete = () =>
-      appAlert('Supprimer cette pesée ?', `${kg}, ${formatLongDate(pt.date)}. Elle part pour de bon, avec sa composition.`, [
-        { text: 'Annuler', style: 'cancel' },
+      appAlert(traduire('Supprimer cette pesée ?'), traduire("{0}, {1}. Elle part pour de bon, avec sa composition.", kg, formatLongDate(pt.date)), [
+        { text: traduire('Annuler'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: traduire('Supprimer'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -118,12 +119,12 @@ export default function PoidsDetailScreen() {
           },
         },
       ]);
-    appChoices(formatLongDate(pt.date), day.length > 1 ? `${kg}, la plus récente des ${day.length} pesées de ce jour.` : kg, [
-      { text: 'Voir le bilan', onPress: () => router.push(lienBilan({ type: 'corps', date: pt.date, origine: 'detail' }) as never) },
-      { text: 'Modifier', onPress: () => router.push({ pathname: '/pesee', params: { id: String(shown.id), date: pt.date, value: String(shown.weight) } } as any) },
-      { text: 'Supprimer', style: 'destructive', onPress: confirmDelete },
-      ...(day.length > 1 ? [{ text: `Voir les ${day.length} pesées`, onPress: () => router.push('/pesees' as any) }] : []),
-      { text: 'Annuler', style: 'cancel' as const },
+    appChoices(formatLongDate(pt.date), day.length > 1 ? traduire("{0}, la plus récente des {1} pesées de ce jour.", kg, day.length) : kg, [
+      { text: traduire('Voir le bilan'), onPress: () => router.push(lienBilan({ type: 'corps', date: pt.date, origine: 'detail' }) as never) },
+      { text: traduire('Modifier'), onPress: () => router.push({ pathname: '/pesee', params: { id: String(shown.id), date: pt.date, value: String(shown.weight) } } as any) },
+      { text: traduire('Supprimer'), style: 'destructive', onPress: confirmDelete },
+      ...(day.length > 1 ? [{ text: traduire("Voir les {0} pesées", day.length), onPress: () => router.push('/pesees' as any) }] : []),
+      { text: traduire('Annuler'), style: 'cancel' as const },
     ]);
   };
 
@@ -160,7 +161,7 @@ export default function PoidsDetailScreen() {
     <Pressable
       onPress={() => router.push('/weight-predictions' as any)}
       accessibilityRole="button"
-      accessibilityLabel={`Où tu en seras : ${ouTuEnSeras.valeur}${ouTuEnSeras.note ? `, ${ouTuEnSeras.note}` : ''}${fourchette ? `, fourchette ${fourchette}` : ''}. Voir tes prédictions`}
+      accessibilityLabel={traduire("Où tu en seras : {0}{1}{2}. Voir tes prédictions", ouTuEnSeras.valeur, ouTuEnSeras.note ? `, ${ouTuEnSeras.note}` : '', fourchette ? `, fourchette ${fourchette}` : '')}
       style={({ pressed }) => ({ marginHorizontal: GUTTER, marginTop: 12, minHeight: 56, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
     >
       <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
@@ -169,14 +170,13 @@ export default function PoidsDetailScreen() {
       </Svg>
       <View style={{ flex: 1, gap: 1 }}>
         <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1}>
-          Où tu en seras
-        </Ink>
+          {traduire("Où tu en seras")}</Ink>
         <Ink size={15} weight="extraBold" numberOfLines={1}>
           {ouTuEnSeras.valeur}
         </Ink>
         {ouTuEnSeras.note ? (
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>
-            {`À ton rythme, ${ouTuEnSeras.note}`}
+            {traduire("À ton rythme, {0}", ouTuEnSeras.note)}
           </Ink>
         ) : null}
         {/* 18 octobre (etudes) : la fourchette, jamais une date seule */}
@@ -202,15 +202,14 @@ export default function PoidsDetailScreen() {
       style={{ marginHorizontal: GUTTER, marginTop: 12, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 10 }}
     >
       <Ink size={14} weight="black" numberOfLines={1}>
-        Ton rythme
-      </Ink>
+        {traduire("Ton rythme")}</Ink>
       {tendanceTxt ? (
         <View style={{ gap: 1 }}>
           <Ink size={15} weight="extraBold" numberOfLines={1}>
             {tendanceTxt.valeur}
           </Ink>
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={3}>
-            {`Ta balance : ${formatKg(last.value)} kg. ${tendanceTxt.note ? tendanceTxt.note.charAt(0).toUpperCase() + tendanceTxt.note.slice(1) : ''}.`}
+            {traduire("Ta balance : {0} kg. {1}.", formatKg(last.value), tendanceTxt.note ? tendanceTxt.note.charAt(0).toUpperCase() + tendanceTxt.note.slice(1) : '')}
           </Ink>
         </View>
       ) : null}
@@ -259,12 +258,11 @@ export default function PoidsDetailScreen() {
       <Pressable
         onPress={() => router.push('/scientific-sources' as any)}
         accessibilityRole="link"
-        accessibilityLabel="Voir toutes les sources"
+        accessibilityLabel={traduire("Voir toutes les sources")}
         style={({ pressed }) => ({ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: c.border, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
       >
         <Ink size={14} weight="extraBold" color={c.accent}>
-          Voir toutes les sources
-        </Ink>
+          {traduire("Voir toutes les sources")}</Ink>
         <Icon name="chevron" size={15} color={c.accent} width={2.6} />
       </Pressable>
     </View>
@@ -272,8 +270,8 @@ export default function PoidsDetailScreen() {
 
   return (
     <MetricDetail
-      title="Ton poids"
-      sub={goal ? `Ton cap : ${formatKg(goal)} kg` : 'Tes pesées et ta vraie tendance.'}
+      title={traduire("Ton poids")}
+      sub={goal ? traduire("Ton cap : {0} kg", formatKg(goal)) : traduire('Tes pesées et ta vraie tendance.')}
       spec={{ label: 'Poids', unit: 'kg', digits: 1, good, deltaOne: 'kilo', deltaMany: 'kilos', minSpan: 2, keepZero: true }}
       points={points}
       color={c.ink}
@@ -321,7 +319,7 @@ export default function PoidsDetailScreen() {
         const vers = diff !== null && Math.abs(diff) >= 0.05 && ((good === 'down' && diff < 0) || (good === 'up' && diff > 0));
         return (
           <Ink size={14} weight="extraBold" color={vers ? POIDS.capText : c.textSecondary} numberOfLines={1}>
-            {diff === null ? '(ta tendance arrive)' : Math.abs(diff) < 0.05 ? `(stable ${txt})` : `(${diff < 0 ? '−' : '+'}${formatKg(Math.abs(diff))} kg ${txt})`}
+            {diff === null ? traduire('(ta tendance arrive)') : Math.abs(diff) < 0.05 ? `(stable ${txt})` : `(${diff < 0 ? '−' : '+'}${formatKg(Math.abs(diff))} kg ${txt})`}
           </Ink>
         );
       }}
@@ -360,23 +358,23 @@ export default function PoidsDetailScreen() {
       // 18 octobre : la legende est celle de la carte de l'accueil, sous la courbe (LegendeCourbe), identique et complete
       legend={<></>}
       scrubLine={(p) => p.caption ?? ' '}
-      historyNoun={['pesée', 'pesées']}
+      historyNoun={[traduire('pesée'), traduire('pesées')]}
       onHistoryPress={onHistoryPress}
-      historyHint="Une pesée fausse ? Appuie dessus pour la modifier ou la supprimer."
+      historyHint={traduire("Une pesée fausse ? Appuie dessus pour la modifier ou la supprimer.")}
       after={
         <>
         <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 16 }}>
-          <GhostButton label="Toutes tes pesées" onPress={() => router.push('/pesees' as any)} style={{ flex: 1 }} />
+          <GhostButton label={traduire("Toutes tes pesées")} onPress={() => router.push('/pesees' as any)} style={{ flex: 1 }} />
           {/* courbe-pred : ou tu en seras, a ton rythme et sur ta ligne */}
-          <GhostButton label="Tes prédictions" onPress={() => router.push('/weight-predictions' as any)} style={{ flex: 1 }} />
+          <GhostButton label={traduire("Tes prédictions")} onPress={() => router.push('/weight-predictions' as any)} style={{ flex: 1 }} />
         </View>
         {blocCalcul}
         </>
       }
       empty={{
-        title: 'Pas encore de pesée',
-        text: 'Pèse-toi le matin, à jeun. Ta courbe se dessine dès la troisième pesée.',
-        plusHint: 'Pèse-toi avec le bouton + de la barre d’onglets',
+        title: traduire('Pas encore de pesée'),
+        text: traduire('Pèse-toi le matin, à jeun. Ta courbe se dessine dès la troisième pesée.'),
+        plusHint: traduire('Pèse-toi avec le bouton + de la barre d’onglets'),
       }}
     />
   );

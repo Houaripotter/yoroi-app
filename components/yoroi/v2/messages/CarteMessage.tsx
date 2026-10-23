@@ -7,6 +7,7 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { P, Press } from '@/components/yoroi/v2/accueil/kit';
+import { traduire } from '@/lib/i18n/tr';
 
 export type ActionMessage = { label: string; onPress: () => void; busy?: boolean; busyLabel?: string };
 
@@ -45,7 +46,7 @@ export function CarteMessage({
         <Press onPress={principal.onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={principal.label} disabled={principal.busy}>
           <View style={{ minHeight: 44, borderRadius: 14, paddingHorizontal: 18, backgroundColor: P.indigo, justifyContent: 'center', opacity: principal.busy ? 0.6 : 1 }}>
             <Ink size={14} weight="extraBold" color={P.white}>
-              {principal.busy ? principal.busyLabel ?? 'Un instant…' : principal.label}
+              {principal.busy ? principal.busyLabel ?? traduire('Un instant…') : principal.label}
             </Ink>
           </View>
         </Press>

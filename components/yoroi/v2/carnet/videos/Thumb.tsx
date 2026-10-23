@@ -15,6 +15,7 @@ import type { CarnetIllus } from '../images';
 import { Illus } from '../nav';
 import { P, Press, CIcon } from '../ui';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 const cache = new Map<string, VideoThumbnail | null>();
 let queue: Promise<void> = Promise.resolve();
@@ -74,7 +75,7 @@ export function VideoTile({ v, width, onPress, onLongPress }: { v: CarnetVideo; 
   const il = illusForVideo(v);
   const dur = durationLabel(v.durationSec);
   return (
-    <Press onPress={onPress} onLongPress={onLongPress} delayLongPress={450} accessibilityRole="button" accessibilityLabel={`Lire ${v.title}, ${placeOf(v)}`} accessibilityHint={onLongPress ? 'Garde appuyé pour modifier ou supprimer' : undefined}>
+    <Press onPress={onPress} onLongPress={onLongPress} delayLongPress={450} accessibilityRole="button" accessibilityLabel={traduire("Lire {0}, {1}", v.title, placeOf(v))} accessibilityHint={onLongPress ? traduire('Garde appuyé pour modifier ou supprimer') : undefined}>
       <View style={{ width, gap: 6 }}>
         <View style={{ width, height, borderRadius: 20, overflow: 'hidden', backgroundColor: TINTS[il] ?? '#EFE7D6', alignItems: 'center', justifyContent: 'center' }}>
           {thumb ? (

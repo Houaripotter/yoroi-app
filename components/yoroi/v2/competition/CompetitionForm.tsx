@@ -17,8 +17,9 @@ import { sportArt } from '@/lib/v2/seances/illustrations';
 import type { Gender } from '@/lib/v2/competition/athlete';
 import { BELTS } from '@/lib/v2/combat/rounds';
 import type { PeseeMoment } from '@/lib/v2/competition/extras';
+import { traduire } from '@/lib/i18n/tr';
 
-export const TYPE_SUGGESTIONS = ['Combat', 'Match', 'Course', 'Compétition', 'Tournoi', 'Championnat'];
+export const TYPE_SUGGESTIONS = [traduire('Combat'), 'Match', 'Course', traduire('Compétition'), 'Tournoi', 'Championnat'];
 
 export const ALL_SPORTS: Sport[] = ['jjb', 'mma', 'boxe', 'muay_thai', 'judo', 'karate', 'taekwondo', 'tennis', 'football', 'basket', 'handball', 'trail', 'running', 'cyclisme', 'natation', 'rugby', 'volleyball', 'escalade', 'crossfit', 'hyrox', 'musculation', 'autre'];
 
@@ -71,7 +72,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
 
   return (
     <View style={{ gap: 18 }}>
-      <Field label="Nom de la compétition" value={draft.nom} onChangeText={(nom) => set({ nom })} placeholder="Ex : Open de Paris" icon="trophy" maxLength={100} />
+      <Field label={traduire("Nom de la compétition")} value={draft.nom} onChangeText={(nom) => set({ nom })} placeholder={traduire("Ex : Open de Paris")} icon="trophy" maxLength={100} />
       <DateField label="Date" value={draft.date} onChange={(date) => set({ date })} minimumDate={minimumDate} />
       <Field label="Lieu" value={draft.lieu} onChangeText={(lieu) => set({ lieu })} placeholder="Ex : Paris, France" icon="flag" maxLength={100} />
 
@@ -85,8 +86,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
                 {competitionSportName(draft.sport)}
               </Ink>
               <Ink size={12} weight="bold" color={P.muted}>
-                Appuie pour changer
-              </Ink>
+                {traduire("Appuie pour changer")}</Ink>
             </View>
             <Icon name="chevron" size={18} color={P.muted} />
           </View>
@@ -95,24 +95,22 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
 
       {categories.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Label>Catégorie de poids</Label>
+          <Label>{traduire("Catégorie de poids")}</Label>
           {draft.sport === 'jjb' ? (
             <Ink size={13} color={P.muted} style={{ paddingHorizontal: 4 }}>
-              Les catégories IBJJF gardent leurs noms portugais, de Galo, la plus légère, à Pesadíssimo, sans limite. Choisis celle dont le maximum couvre ton poids le jour de la pesée.
-            </Ink>
+              {traduire("Les catégories IBJJF gardent leurs noms portugais, de Galo, la plus légère, à Pesadíssimo, sans limite. Choisis celle dont le maximum couvre ton poids le jour de la pesée.")}</Ink>
           ) : null}
           {advised && lastWeight ? (
             <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, backgroundColor: P.goldSoft, borderColor: P.goldLight }}>
               <Icon name="scale" size={20} color={P.goldDark} />
               <Ink size={13} weight="bold" color={P.ink} style={{ flex: 1 }}>
-                {`Ta dernière pesée\u00a0: ${formatKg(lastWeight)} kg. Catégorie qui te correspond\u00a0: ${advised.name}.`}
+                {traduire("Ta dernière pesée : {0} kg. Catégorie qui te correspond : {1}.", formatKg(lastWeight), advised.name)}
               </Ink>
               {draft.categorieId !== advised.id ? (
-                <Press onPress={() => set({ categorieId: advised.id })} accessibilityRole="button" accessibilityLabel={`Choisir ${advised.name}`}>
+                <Press onPress={() => set({ categorieId: advised.id })} accessibilityRole="button" accessibilityLabel={traduire("Choisir {0}", advised.name)}>
                   <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: P.accent, justifyContent: 'center' }}>
                     <Ink size={13} weight="extraBold" color={P.white}>
-                      Choisir
-                    </Ink>
+                      {traduire("Choisir")}</Ink>
                   </View>
                 </Press>
               ) : null}
@@ -120,7 +118,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           ) : null}
           <ChipScroll>
             {categories.map((cat) => (
-              <Chip key={cat.id} label={cat.name} sub={cat.open ? 'toutes catégories' : cat.maxWeight >= 900 ? 'sans limite' : `${formatKg(cat.maxWeight)} kg max`} active={draft.categorieId === cat.id} accent={P.accent} onPress={() => set({ categorieId: draft.categorieId === cat.id ? '' : cat.id })} />
+              <Chip key={cat.id} label={cat.name} sub={cat.open ? traduire('toutes catégories') : cat.maxWeight >= 900 ? traduire('sans limite') : `${formatKg(cat.maxWeight)} kg max`} active={draft.categorieId === cat.id} accent={P.accent} onPress={() => set({ categorieId: draft.categorieId === cat.id ? '' : cat.id })} />
             ))}
           </ChipScroll>
         </View>
@@ -128,7 +126,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
 
       {beltsFor(draft.sport).length ? (
         <View style={{ gap: 8 }}>
-          <Label>Ta ceinture</Label>
+          <Label>{traduire("Ta ceinture")}</Label>
           <ChipScroll>
             {beltsFor(draft.sport).map((b) => (
               <Chip key={b.key} label={b.label} active={draft.ceinture === b.key} accent={P.accent} onPress={() => set({ ceinture: draft.ceinture === b.key ? '' : b.key })} />
@@ -138,7 +136,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
       ) : null}
 
       <View style={{ gap: 8 }}>
-        <Label>Pesée officielle</Label>
+        <Label>{traduire("Pesée officielle")}</Label>
         <ChipScroll>
           {([['veille', 'La veille'], ['jour', 'Le jour même']] as const).map(([k, l]) => (
             <Chip key={k} label={l} active={draft.pesee === k} accent={P.accent} onPress={() => set({ pesee: draft.pesee === k ? '' : k })} />
@@ -146,10 +144,10 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
         </ChipScroll>
       </View>
 
-      <Field label="Site de l’événement" value={draft.url} onChangeText={(url) => set({ url })} placeholder="Ex : cfjjb.com" icon="flag" keyboardType="url" maxLength={300} />
+      <Field label={traduire("Site de l’événement")} value={draft.url} onChangeText={(url) => set({ url })} placeholder="Ex : cfjjb.com" icon="flag" keyboardType="url" maxLength={300} />
 
       <View style={{ gap: 8 }}>
-        <Label>Type d’événement</Label>
+        <Label>{traduire("Type d’événement")}</Label>
         <ChipScroll>
           {TYPE_SUGGESTIONS.map((s) => (
             <Chip key={s} label={s} active={!customOpen && draft.typeEvenement === s} onPress={() => { setCustomOpen(false); set({ typeEvenement: draft.typeEvenement === s ? '' : s }); }} />
@@ -157,7 +155,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           <Chip label="Autre" active={customOpen} onPress={() => { setCustomOpen(!customOpen); if (!customOpen && TYPE_SUGGESTIONS.includes(draft.typeEvenement)) set({ typeEvenement: '' }); }} />
         </ChipScroll>
         {customOpen ? (
-          <Field label="Ton type d’événement" value={draft.typeEvenement} onChangeText={(typeEvenement) => set({ typeEvenement })} placeholder="Ex : Open, Interclubs" icon="star" maxLength={50} />
+          <Field label={traduire("Ton type d’événement")} value={draft.typeEvenement} onChangeText={(typeEvenement) => set({ typeEvenement })} placeholder="Ex : Open, Interclubs" icon="star" maxLength={50} />
         ) : null}
       </View>
 
@@ -166,13 +164,13 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           <Icon name="bell" size={21} color={P.accent} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold">Me rappeler la compétition</Ink>
-          <Ink size={12} weight="bold" color={P.ink2}>Un mois avant, une semaine avant, la veille et le jour de la pesée</Ink>
+          <Ink size={15} weight="extraBold">{traduire("Me rappeler la compétition")}</Ink>
+          <Ink size={12} weight="bold" color={P.ink2}>{traduire("Un mois avant, une semaine avant, la veille et le jour de la pesée")}</Ink>
         </View>
-        <Switch value={draft.rappels} onValueChange={(rappels) => set({ rappels })} trackColor={{ true: P.accent, false: P.line }} thumbColor={P.white} accessibilityLabel="Me rappeler la compétition" />
+        <Switch value={draft.rappels} onValueChange={(rappels) => set({ rappels })} trackColor={{ true: P.accent, false: P.line }} thumbColor={P.white} accessibilityLabel={traduire("Me rappeler la compétition")} />
       </Card>
 
-      <Sheet visible={sportOpen} onClose={() => setSportOpen(false)} title="Ton sport" scroll>
+      <Sheet visible={sportOpen} onClose={() => setSportOpen(false)} title={traduire("Ton sport")} scroll>
         <ScrollView style={{ maxHeight: 460 }} contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {ALL_SPORTS.map((s) => (
             <Chip

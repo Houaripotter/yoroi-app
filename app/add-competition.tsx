@@ -27,6 +27,7 @@ import { addCompetitionToCalendar } from '@/lib/v2/competition/phoneCalendar';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 // Ceinture du profil competiteur (cles anglaises) vers les cles des ceintures de l'app
 const PROFILE_BELT: Record<string, string> = { white: 'blanche', blue: 'bleue', purple: 'violette', brown: 'marron', black: 'noire' };
@@ -69,12 +70,12 @@ export default function AddCompetitionScreen() {
       return;
     }
     if (!draft.nom.trim()) {
-      appAlert('Il manque le nom', 'Donne un nom à ta compétition.');
+      appAlert(traduire('Il manque le nom'), traduire('Donne un nom à ta compétition.'));
       return;
     }
     const url = cleanUrl(draft.url);
     if (draft.url.trim() && !url) {
-      appAlert('Adresse du site', 'Vérifie l’adresse du site, par exemple cfjjb.com.');
+      appAlert(traduire('Adresse du site'), traduire('Vérifie l’adresse du site, par exemple cfjjb.com.'));
       return;
     }
     setSaving(true);
@@ -96,15 +97,15 @@ export default function AddCompetitionScreen() {
       const comp = await getCompetitionById(id);
       if (comp && draft.rappels) {
         const n = await applyReminders(comp, extra);
-        if (n < 0) appAlert('Rappels désactivés', 'Autorise les notifications de YOROI dans les réglages du téléphone pour recevoir tes rappels.');
+        if (n < 0) appAlert(traduire('Rappels désactivés'), traduire('Autorise les notifications de YOROI dans les réglages du téléphone pour recevoir tes rappels.'));
       }
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       setSaving(false);
-      appAlert('Compétition ajoutée', 'Tu veux aussi l’ajouter au calendrier de ton téléphone ?', [
-        { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
+      appAlert(traduire('Compétition ajoutée'), traduire('Tu veux aussi l’ajouter au calendrier de ton téléphone ?'), [
+        { text: traduire('Plus tard'), style: 'cancel', onPress: () => router.back() },
         {
-          text: 'Ajouter',
+          text: traduire('Ajouter'),
           onPress: async () => {
             if (comp) await addCompetitionToCalendar(comp, extra);
             router.back();
@@ -113,18 +114,18 @@ export default function AddCompetitionScreen() {
       ]);
     } catch (error) {
       logger.error('Error saving competition:', error);
-      let msg = 'Vérifie les champs et réessaie.';
+      let msg = traduire('Vérifie les champs et réessaie.');
       if (error instanceof Error) {
-        if (error.message.includes('UNIQUE constraint')) msg = 'Cette compétition existe déjà. Change le nom ou la date.';
-        else if (error.message.includes('storage') || error.message.includes('quota')) msg = 'Le stockage du téléphone est plein. Libère de la place et réessaie.';
+        if (error.message.includes('UNIQUE constraint')) msg = traduire('Cette compétition existe déjà. Change le nom ou la date.');
+        else if (error.message.includes('storage') || error.message.includes('quota')) msg = traduire('Le stockage du téléphone est plein. Libère de la place et réessaie.');
       }
-      appAlert('Enregistrement impossible', msg);
+      appAlert(traduire('Enregistrement impossible'), msg);
       setSaving(false);
     }
   };
 
   return (
-    <DetailScreen title="Nouvelle compétition" subtitle="Ton prochain rendez-vous sur le tapis" footer={blocked ? <BigButton label="Voir YOROI Premium" onPress={() => ouvrirPaywall('competitions_limite', upcoming)} /> : <BigButton label={saving ? 'Enregistrement' : 'Enregistrer'} icon="check" onPress={save} disabled={saving} />}>
+    <DetailScreen title={traduire("Nouvelle compétition")} subtitle={traduire("Ton prochain rendez-vous sur le tapis")} footer={blocked ? <BigButton label={traduire("Voir YOROI Premium")} onPress={() => ouvrirPaywall('competitions_limite', upcoming)} /> : <BigButton label={saving ? 'Enregistrement' : traduire('Enregistrer')} icon="check" onPress={save} disabled={saving} />}>
       {blocked && upcoming !== null ? <LimitNotice limit="upcomingCompetitions" count={upcoming} /> : null}
       <CompetitionForm draft={draft} onChange={setDraft} gender={gender} lastWeight={lastWeight?.weight} minimumDate={startOfToday()} />
     </DetailScreen>

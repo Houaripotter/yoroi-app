@@ -23,6 +23,7 @@ import { describeSource } from '@/lib/v2/pesee/health';
 import { sourceOf } from '@/lib/v2/seance/corps';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Row = { w: Weight; delta: number | null };
 
@@ -60,10 +61,10 @@ export default function Pesees() {
   const deleteSource = (key: string) => {
     const n = counts.find(([k]) => k === key)?.[1] ?? 0;
     const label = sourceOf(key).label;
-    appAlert(`Supprimer les pesées ${label}\u00A0?`, `${n} pesée${n > 1 ? 's' : ''} seront supprimées pour de bon.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire("Supprimer les pesées {0} ?", label), traduirePluriel(n, n > 1, "{0} pesée seront supprimées pour de bon.", "{0} pesées seront supprimées pour de bon.", n), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: `Supprimer ${n}`,
+        text: traduire("Supprimer {0}", n),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -83,17 +84,17 @@ export default function Pesees() {
 
   const onRow = (w: Weight) => {
     appAlert(formatLongDate(w.date.slice(0, 10)), `${formatKg(w.weight)} kilos`, [
-      { text: 'Voir le bilan', onPress: () => router.push(lienBilan({ type: 'corps', date: w.date.slice(0, 10), origine: 'detail' }) as never) },
-      { text: 'Modifier', onPress: () => router.push({ pathname: '/pesee', params: { id: String(w.id), date: w.date.slice(0, 10), value: String(w.weight) } } as any) },
+      { text: traduire('Voir le bilan'), onPress: () => router.push(lienBilan({ type: 'corps', date: w.date.slice(0, 10), origine: 'detail' }) as never) },
+      { text: traduire('Modifier'), onPress: () => router.push({ pathname: '/pesee', params: { id: String(w.id), date: w.date.slice(0, 10), value: String(w.weight) } } as any) },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         // NUIT 14 : une confirmation avant de supprimer pour de bon
         onPress: () =>
-          appAlert('Supprimer cette pesée ?', `${formatKg(w.weight)} kg, ${formatLongDate(w.date.slice(0, 10))}. Elle part pour de bon, avec sa composition.`, [
-            { text: 'Annuler', style: 'cancel' },
+          appAlert(traduire('Supprimer cette pesée ?'), traduire("{0} kg, {1}. Elle part pour de bon, avec sa composition.", formatKg(w.weight), formatLongDate(w.date.slice(0, 10))), [
+            { text: traduire('Annuler'), style: 'cancel' },
             {
-              text: 'Supprimer',
+              text: traduire('Supprimer'),
               style: 'destructive',
               onPress: async () => {
                 try {
@@ -106,7 +107,7 @@ export default function Pesees() {
             },
           ]),
       },
-      { text: 'Annuler', style: 'cancel' },
+      { text: traduire('Annuler'), style: 'cancel' },
     ]);
   };
 
@@ -119,16 +120,16 @@ export default function Pesees() {
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40 }}
         ListHeaderComponent={
           <View style={{ gap: 16, marginBottom: 8 }}>
-            <EnTete titre="Tes pesées" repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+            <EnTete titre={traduire("Tes pesées")} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
             <View style={{ flexDirection: 'row', paddingVertical: 14, borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: c.border }}>
-              <Mini value={latest ? formatKg(latest.value) : 'à venir'} label="dernière pesée, kg" />
-              <Mini value={latest ? formatKg(latest.trend) : 'à venir'} label="tendance lissée" border />
-              <Mini value={String(raw.length)} label="pesées" border />
+              <Mini value={latest ? formatKg(latest.value) : traduire('à venir')} label={traduire("dernière pesée, kg")} />
+              <Mini value={latest ? formatKg(latest.trend) : traduire('à venir')} label={traduire("tendance lissée")} border />
+              <Mini value={String(raw.length)} label={traduire("pesées")} border />
             </View>
             {counts.length > 1 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ marginHorizontal: -22 }}>
                 <View style={{ width: 14 }} />
-                <SourceChip label={`Toutes (${raw.length})`} on={active === 'all'} onPress={() => setFilter('all')} />
+                <SourceChip label={traduire("Toutes ({0})", raw.length)} on={active === 'all'} onPress={() => setFilter('all')} />
                 {counts.map(([k, n]) => (
                   <SourceChip key={k} label={`${sourceOf(k).label} (${n})`} on={active === k} onPress={() => setFilter(active === k ? 'all' : k)} />
                 ))}
@@ -137,7 +138,7 @@ export default function Pesees() {
             ) : null}
             {active !== 'all' ? (
               <Pressable onPress={() => deleteSource(active)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, borderRadius: 16, paddingHorizontal: 16, justifyContent: 'center', backgroundColor: pressed ? c.dangerTint : blancA(0.7), borderWidth: 1, borderColor: c.border })}>
-                <Ink size={14} weight="extraBold" color={c.danger}>{`Supprimer toutes les pesées ${sourceOf(active).label}`}</Ink>
+                <Ink size={14} weight="extraBold" color={c.danger}>{traduire("Supprimer toutes les pesées {0}", sourceOf(active).label)}</Ink>
               </Pressable>
             ) : null}
           </View>
@@ -149,13 +150,13 @@ export default function Pesees() {
           const d = item.delta;
                     const deltaText = d === null ? '' : Math.abs(d) < 0.05 ? 'stable' : `${d < 0 ? '−' : '+'} ${formatKg(Math.abs(d))} kg`;
           const w0 = item.w;
-          const src = w0.source && w0.source !== 'manual' && w0.source !== 'csv' ? describeSource(w0.source, '').label ?? 'importée' : '';
-          const compo = w0.fat_percent || w0.muscle_percent || w0.water_percent || w0.bone_mass || w0.visceral_fat || w0.bmr || w0.metabolic_age ? 'avec composition' : '';
+          const src = w0.source && w0.source !== 'manual' && w0.source !== 'csv' ? describeSource(w0.source, '').label ?? traduire('importée') : '';
+          const compo = w0.fat_percent || w0.muscle_percent || w0.water_percent || w0.bone_mass || w0.visceral_fat || w0.bmr || w0.metabolic_age ? traduire('avec composition') : '';
           const base = [src, compo].filter(Boolean).join(', ');
           const when = several.has(item.w.date.slice(0, 10)) ? sameDayTag(item.w, raw) : '';
           const extra = [when, base].filter(Boolean).join(', ');
           return (
-            <Pressable onPress={() => onRow(item.w)} accessibilityRole="button" accessibilityLabel={`${formatLongDate(item.w.date.slice(0, 10))}, ${formatKg(item.w.weight)} kilos, modifier ou supprimer`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', minHeight: 58, borderBottomWidth: 1, borderColor: c.divider, opacity: pressed ? 0.6 : 1 })}>
+            <Pressable onPress={() => onRow(item.w)} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1} kilos, modifier ou supprimer", formatLongDate(item.w.date.slice(0, 10)), formatKg(item.w.weight))} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', minHeight: 58, borderBottomWidth: 1, borderColor: c.divider, opacity: pressed ? 0.6 : 1 })}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={15} weight="bold">{formatLongDate(item.w.date.slice(0, 10))}</Ink>
                 {extra ? <Ink size={12} color={c.textSecondary}>{extra}</Ink> : null}
@@ -168,9 +169,9 @@ export default function Pesees() {
           );
         }}
         ListEmptyComponent={
-          <EmptyInvite style={{ marginTop: 18 }} title="Aucune pesée pour l’instant" text="Pèse-toi le matin, à jeun, quelques fois par semaine. Ta liste et ta courbe se remplissent dès la première." plusHint="Pèse-toi avec le bouton + de la barre d’onglets" plusArrow={false} />
+          <EmptyInvite style={{ marginTop: 18 }} title={traduire("Aucune pesée pour l’instant")} text={traduire("Pèse-toi le matin, à jeun, quelques fois par semaine. Ta liste et ta courbe se remplissent dès la première.")} plusHint={traduire("Pèse-toi avec le bouton + de la barre d’onglets")} plusArrow={false} />
         }
-        ListFooterComponent={raw.length > 0 ? <Ink size={13} color={c.textSecondary} style={{ marginTop: 16 }}>Appuie sur une pesée pour la modifier ou la supprimer.</Ink> : null}
+        ListFooterComponent={raw.length > 0 ? <Ink size={13} color={c.textSecondary} style={{ marginTop: 16 }}>{traduire("Appuie sur une pesée pour la modifier ou la supprimer.")}</Ink> : null}
       />
     </View>
   );

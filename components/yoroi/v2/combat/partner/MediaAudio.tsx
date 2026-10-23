@@ -23,6 +23,7 @@ import { SignatureCarte } from '@/components/yoroi/v2/partage/SignatureCarte';
 import { signaturePartage } from '@/constants/partage';
 import { noterPartage } from '@/lib/v2/partage/mesure';
 import { blancA } from '@/components/yoroi/livePalette';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 // ─── Galerie ──────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
     const u = url.trim();
     if (!u) return;
     if (!/^https?:\/\//i.test(u)) {
-      appAlert('Lien invalide', 'Le lien doit commencer par https://');
+      appAlert('Lien invalide', traduire('Le lien doit commencer par https://'));
       return;
     }
     onChange([{ id: makeId(), type: 'video_link', uri: u, caption: caption.trim() || undefined, date: new Date().toISOString() }, ...media]);
@@ -56,8 +57,8 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
     setCaption('');
   };
   const remove = (id: string) => {
-    appAlert('Retirer ce média ?', undefined, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Retirer ce média ?'), undefined, [
+      { text: traduire('Annuler'), style: 'cancel' },
       { text: 'Retirer', style: 'destructive', onPress: () => onChange(media.filter((m) => m.id !== id)) },
     ]);
   };
@@ -66,21 +67,18 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View>
           <Ink size={18} weight="black" tight>
-            Photos et vidéos
-          </Ink>
+            {traduire("Photos et vidéos")}</Ink>
           <Ink size={13} color={P.ink2}>
-            Ses positions, tes combats filmés
-          </Ink>
+            {traduire("Ses positions, tes combats filmés")}</Ink>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <IconBtn icon="camera" label="Ajouter une photo" onPress={addPhoto} />
-          <IconBtn icon="video" label="Ajouter un lien vidéo" onPress={() => setLinkOpen(true)} />
+          <IconBtn icon="camera" label={traduire("Ajouter une photo")} onPress={addPhoto} />
+          <IconBtn icon="video" label={traduire("Ajouter un lien vidéo")} onPress={() => setLinkOpen(true)} />
         </View>
       </View>
       {media.length === 0 ? (
         <Ink size={14} color={P.muted}>
-          Rien pour l'instant. Ajoute une photo ou le lien d'une vidéo.
-        </Ink>
+          {traduire("Rien pour l'instant. Ajoute une photo ou le lien d'une vidéo.")}</Ink>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
           {media.map((m) => (
@@ -89,7 +87,7 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
               onPress={() => (m.type === 'photo' ? setZoom(m.uri) : safeOpenURL(m.uri))}
               onLongPress={() => remove(m.id)}
               accessibilityRole="button"
-              accessibilityLabel={m.type === 'photo' ? 'Voir la photo, appui long pour retirer' : 'Ouvrir la vidéo, appui long pour retirer'}
+              accessibilityLabel={m.type === 'photo' ? traduire('Voir la photo, appui long pour retirer') : traduire('Ouvrir la vidéo, appui long pour retirer')}
               style={{ width: 120, height: 150, borderRadius: 18, overflow: 'hidden', backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}
             >
               {m.type === 'photo' ? (
@@ -98,7 +96,7 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 10, gap: 8, backgroundColor: P.accentSoft }}>
                   <CIcon name="play" size={30} color={P.accent} fill={P.accent} />
                   <Ink size={12} weight="bold" numberOfLines={3} style={{ textAlign: 'center' }}>
-                    {m.caption || 'Ouvrir la vidéo'}
+                    {m.caption || traduire('Ouvrir la vidéo')}
                   </Ink>
                 </View>
               )}
@@ -108,16 +106,15 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
       )}
       {media.length > 0 ? (
         <Ink size={12} color={P.muted}>
-          Appui long sur un média pour le retirer
-        </Ink>
+          {traduire("Appui long sur un média pour le retirer")}</Ink>
       ) : null}
-      <FormSheet visible={linkOpen} onClose={() => setLinkOpen(false)} title="Lien d'une vidéo">
+      <FormSheet visible={linkOpen} onClose={() => setLinkOpen(false)} title={traduire("Lien d'une vidéo")}>
         <Field value={url} onChangeText={setUrl} autoCapitalize="none" keyboardType="url" autoFocus placeholder="https://" />
         <Field value={caption} onChangeText={setCaption} placeholder="Description (facultatif)" />
-        <BigButton label="Ajouter" onPress={addLink} />
+        <BigButton label={traduire("Ajouter")} onPress={addLink} />
       </FormSheet>
       <Modal visible={!!zoom} transparent animationType="fade" onRequestClose={() => setZoom(null)}>
-        <Pressable onPress={() => setZoom(null)} accessibilityLabel="Fermer" style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.92)', alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => setZoom(null)} accessibilityLabel={traduire("Fermer")} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.92)', alignItems: 'center', justifyContent: 'center' }}>
           {zoom ? <Image source={{ uri: zoom }} style={{ width: '92%', height: '80%' }} resizeMode="contain" /> : null}
         </Pressable>
       </Modal>
@@ -188,7 +185,7 @@ export function AudioNotes({ notes, onChange }: { notes: AudioNote[]; onChange: 
       let ok = cur.granted;
       if (!ok) {
         if (!cur.canAskAgain) {
-          appAlert('Micro bloqué', 'Autorise le micro pour Yoroi dans les réglages de ton téléphone.');
+          appAlert(traduire('Micro bloqué'), traduire('Autorise le micro pour Yoroi dans les réglages de ton téléphone.'));
           return;
         }
         ok = (await requestRecordingPermissionsAsync()).granted;
@@ -208,7 +205,7 @@ export function AudioNotes({ notes, onChange }: { notes: AudioNote[]; onChange: 
       }, 100);
     } catch (e) {
       logger.warn('Enregistrement vocal impossible', e);
-      appAlert('Enregistrement impossible', 'Vérifie que le micro est autorisé.');
+      appAlert(traduire('Enregistrement impossible'), traduire('Vérifie que le micro est autorisé.'));
       setRecording(false);
     }
   };
@@ -253,36 +250,35 @@ export function AudioNotes({ notes, onChange }: { notes: AudioNote[]; onChange: 
           Notes vocales
         </Ink>
         <Ink size={13} color={P.ink2}>
-          30 secondes maximum, juste après le combat
-        </Ink>
+          {traduire("30 secondes maximum, juste après le combat")}</Ink>
       </View>
-      <Press onPress={recording ? stop : start} haptic="none" accessibilityRole="button" accessibilityLabel={recording ? 'Arrêter l\'enregistrement' : 'Enregistrer une note vocale'}>
+      <Press onPress={recording ? stop : start} haptic="none" accessibilityRole="button" accessibilityLabel={recording ? traduire('Arrêter l\'enregistrement') : traduire('Enregistrer une note vocale')}>
         <View style={{ height: 60, borderRadius: 20, backgroundColor: recording ? P.danger : P.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <CIcon name={recording ? 'stop' : 'mic'} size={20} color={P.white} fill={recording ? P.white : undefined} />
           <Ink size={17} weight="extraBold" color={P.white}>
-            {recording ? `Arrêter, ${(elapsed / 1000).toFixed(1).replace('.', ',')} s` : 'Enregistrer une note'}
+            {recording ? traduire("Arrêter, {0} s", (elapsed / 1000).toFixed(1).replace('.', DECIMAL)) : traduire('Enregistrer une note')}
           </Ink>
         </View>
       </Press>
       {recording ? <View style={{ height: 6, borderRadius: 3, backgroundColor: P.line2, overflow: 'hidden' }}><View style={{ width: `${Math.min(100, (elapsed / MAX_MS) * 100)}%`, height: '100%', backgroundColor: P.danger }} /></View> : null}
       {notes.map((n) => (
         <View key={n.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 18, backgroundColor: P.paper }}>
-          <IconBtn icon={playing === n.id ? 'pause' : 'play'} label={playing === n.id ? 'Pause' : 'Écouter'} tone={playing === n.id ? 'red' : 'ink'} onPress={() => play(n)} />
+          <IconBtn icon={playing === n.id ? 'pause' : 'play'} label={playing === n.id ? 'Pause' : traduire('Écouter')} tone={playing === n.id ? 'red' : 'ink'} onPress={() => play(n)} />
           <View style={{ flex: 1 }}>
             <Ink size={15} weight="extraBold">
               {shortDate(n.date, true)}
             </Ink>
             <Ink size={13} color={P.ink2}>
-              {`${(n.durationMs / 1000).toFixed(1).replace('.', ',')} s`}
+              {`${(n.durationMs / 1000).toFixed(1).replace('.', DECIMAL)} s`}
             </Ink>
           </View>
           <IconBtn
             icon="trash"
-            label="Supprimer la note"
+            label={traduire("Supprimer la note")}
             onPress={() =>
-              appAlert('Supprimer cette note vocale ?', undefined, [
-                { text: 'Annuler', style: 'cancel' },
-                { text: 'Supprimer', style: 'destructive', onPress: () => onChange(notes.filter((x) => x.id !== n.id)) },
+              appAlert(traduire('Supprimer cette note vocale ?'), undefined, [
+                { text: traduire('Annuler'), style: 'cancel' },
+                { text: traduire('Supprimer'), style: 'destructive', onPress: () => onChange(notes.filter((x) => x.id !== n.id)) },
               ])
             }
           />
@@ -311,15 +307,15 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
     setBusy(true);
     try {
       const uri = await captureRef(shot, { format: 'png', quality: 1, result: 'tmpfile' });
-      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Face à face Yoroi' });
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: traduire('Face à face Yoroi') });
       else {
-        const res = await Share.share({ url: uri, title: 'Face à face Yoroi', message: signaturePartage() });
+        const res = await Share.share({ url: uri, title: traduire('Face à face Yoroi'), message: signaturePartage() });
         if (res.action === Share.sharedAction) noterPartage('partenaire', true);
       }
       tap('success');
     } catch (e) {
       logger.warn('Partage du face a face impossible', e);
-      appAlert('Image impossible', 'Réessaie dans un instant.');
+      appAlert(traduire('Image impossible'), traduire('Réessaie dans un instant.'));
     } finally {
       setBusy(false);
     }
@@ -327,18 +323,16 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
 
   return (
     <>
-      <Press onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel="Créer la carte face à face">
+      <Press onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Créer la carte face à face")}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="swords" size={24} color={P.goldLight} />
           </View>
           <View style={{ flex: 1 }}>
             <Ink size={16} weight="black">
-              Carte face à face
-            </Ink>
+              {traduire("Carte face à face")}</Ink>
             <Ink size={13} color={P.ink2}>
-              Une image à partager avec ton bilan contre lui
-            </Ink>
+              {traduire("Une image à partager avec ton bilan contre lui")}</Ink>
           </View>
           <CIcon name="chevron" size={16} color={P.muted} />
         </Card>
@@ -346,10 +340,9 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, backgroundColor: P.paper, paddingTop: insets.top + 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 }}>
-            <IconBtn icon="close" label="Fermer" onPress={() => setOpen(false)} />
+            <IconBtn icon="close" label={traduire("Fermer")} onPress={() => setOpen(false)} />
             <Ink size={18} weight="black">
-              Face à face
-            </Ink>
+              {traduire("Face à face")}</Ink>
             <View style={{ width: 44 }} />
           </View>
           <ScrollView contentContainerStyle={{ alignItems: 'center', padding: 16, paddingBottom: insets.bottom + 110 }}>
@@ -386,9 +379,9 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {[
                     { v: String(wins), l: 'victoires', c: V },
-                    { v: String(losses), l: 'défaites', c: D },
+                    { v: String(losses), l: traduire('défaites'), c: D },
                     { v: String(total), l: 'rounds', c: P.ink },
-                    ...(wr != null ? [{ v: `${wr}%`, l: 'réussite', c: wr >= 50 ? V : D }] : []),
+                    ...(wr != null ? [{ v: `${wr}%`, l: traduire('réussite'), c: wr >= 50 ? V : D }] : []),
                   ].map((s) => (
                     <View key={s.l} style={{ flex: 1, paddingVertical: 12, borderRadius: 18, backgroundColor: blancA(0.85), alignItems: 'center' }}>
                       <Ink size={24} weight="black" tight color={s.c}>
@@ -410,7 +403,7 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
             </ViewShot>
           </ScrollView>
           <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 14 }}>
-            <BigButton label={busy ? 'Préparation' : "Partager l'image"} icon="share" onPress={share} disabled={busy} />
+            <BigButton label={busy ? traduire('Préparation') : traduire("Partager l'image")} icon="share" onPress={share} disabled={busy} />
           </View>
         </View>
       </Modal>

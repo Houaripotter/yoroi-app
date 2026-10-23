@@ -8,15 +8,16 @@ import { getTrainingById, updateTraining } from '@/lib/database';
 import type { Training } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SessionMood = 'fire' | 'solid' | 'ok' | 'hard' | 'crushed';
 
 export const MOODS: { value: SessionMood; label: string; kanji: string }[] = [
   { value: 'fire', label: 'En feu', kanji: '炎' },
   { value: 'solid', label: 'Solide', kanji: '剛' },
-  { value: 'ok', label: 'Correct', kanji: '平' },
+  { value: 'ok', label: traduire('Correct'), kanji: '平' },
   { value: 'hard', label: 'Difficile', kanji: '苦' },
-  { value: 'crushed', label: 'Écrasé', kanji: '倒' },
+  { value: 'crushed', label: traduire('Écrasé'), kanji: '倒' },
 ];
 
 export type Ressenti = { rating: number | null; mood: string | null; technique: number | null };

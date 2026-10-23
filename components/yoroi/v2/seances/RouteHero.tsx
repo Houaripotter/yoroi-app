@@ -10,6 +10,7 @@ import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { PACE_COLORS, paceSegments, routeRegion } from '@/lib/v2/seances/workoutMath';
 import type { RoutePoint } from '@/lib/v2/seances/workoutMath';
+import { traduire } from '@/lib/i18n/tr';
 
 const START = '#3FA34D';
 const END = '#D64541';
@@ -97,7 +98,7 @@ export function RouteHero({ points, width, height, onPress, interactive, clearTo
 
   if (!onPress) return <View style={{ width, height, backgroundColor: BG }}>{content}</View>;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Ton parcours sur la carte, départ en vert, arrivée en rouge. Touche pour agrandir." style={{ width, height, backgroundColor: BG }}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire("Ton parcours sur la carte, départ en vert, arrivée en rouge. Touche pour agrandir.")} style={{ width, height, backgroundColor: BG }}>
       {content}
     </Pressable>
   );

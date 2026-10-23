@@ -123,6 +123,7 @@
 		WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */; };
 		YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */; };
 		YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */; };
+		1A18N0000000000000000002 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18N0000000000000000001 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -300,6 +301,10 @@
 		WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = wizz.mp3; path = YoroiWatch/wizz.mp3; sourceTree = "<group>"; };
 		YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiHealthKitModule.m; path = Yoroi/YoroiHealthKitModule.m; sourceTree = "<group>"; };
 		YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiHealthKitModule.swift; path = Yoroi/YoroiHealthKitModule.swift; sourceTree = "<group>"; };
+		1A18N0000000000000000003 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = Yoroi/fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18N0000000000000000004 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Yoroi/en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18N0000000000000000005 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = Yoroi/de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18N0000000000000000006 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = Yoroi/nl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -367,6 +372,7 @@
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
+				1A18N0000000000000000001 /* InfoPlist.strings */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */,
 				F1REBA5E0000000000000001 /* GoogleService-Info.plist */,
@@ -783,6 +789,8 @@
 				en,
 				Base,
 				fr,
+				de,
+				nl,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
@@ -803,6 +811,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
+				1A18N0000000000000000002 /* InfoPlist.strings in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				0A5D19028469480DB02D69A3 /* PrivacyInfo.xcprivacy in Resources */,
@@ -1181,6 +1190,17 @@
 				7F120D6C60857B0DA85F81A6 /* fr */,
 			);
 			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+		1A18N0000000000000000001 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1A18N0000000000000000003 /* fr */,
+				1A18N0000000000000000004 /* en */,
+				1A18N0000000000000000005 /* de */,
+				1A18N0000000000000000006 /* nl */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

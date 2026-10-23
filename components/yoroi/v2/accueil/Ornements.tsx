@@ -9,6 +9,7 @@ import React from 'react';
 import { View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { Tampon } from '@/components/yoroi/v2/tampons/Tampon';
+import { traduire } from '@/lib/i18n/tr';
 
 /** Portique torii seul, dessine sur une grille 24 x 24 */
 export function Torii({ size = 24, color = '#1D2029', opacity = 1 }: { size?: number; color?: string; opacity?: number }) {
@@ -38,5 +39,5 @@ export function Embleme({ size = 56, color = '#2C4A84', ring = '#C59D45' }: { si
 /** Tampon des records (vague 28) : le sceau ancien de la collection. Une encre autre que le rouge (gris d'un record passe) teinte le tampon. */
 export function SceauEtoile({ size = 28, color = '#B0282E', rotate = -8 }: { size?: number; color?: string; filled?: boolean; rotate?: number }) {
   const red = color.toUpperCase() === '#B0282E';
-  return <Tampon name="record" size={size} rotate={rotate} ink={red ? undefined : color} accessibilityLabel="Record" />;
+  return <Tampon name="record" size={size} rotate={rotate} ink={red ? undefined : color} accessibilityLabel={traduire("Record")} />;
 }

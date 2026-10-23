@@ -19,6 +19,7 @@
 import { SPORTS } from '@/lib/sports';
 import { APPRIS_RE, BELTS, CHARGE_LABEL, CHARGE_RE, COMBAT_TERMS, DRILL_RE, EXOS, EXO_BY_ID, EXO_DESCRIPTIONS, EXO_VAGUES, SESSION_WORDS, TRAVAIL_RE } from './lexique';
 import type { Charge, CombatTerm, TermKind } from './lexique';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export type { Charge } from './lexique';
 export { CHARGE_LABEL } from './lexique';
@@ -189,7 +190,7 @@ const ORDINALS: Record<string, number> = {
   sixieme: 6, septieme: 7, huitieme: 8, neuvieme: 9, dixieme: 10, onzieme: 11, douzieme: 12,
 };
 const FILLER_WORDS = new Set(['euh', 'heu', 'hum', 'hmm', 'bah', 'euhh', 'heuu', 'mmh', 'hein']);
-const SHORT_REPEAT = new Set(['des', 'de', 'le', 'la', 'les', 'un', 'une', 'du', 'au', 'aux', 'je', "j'ai", 'il', 'on', 'et', 'a', 'en']);
+const SHORT_REPEAT = new Set(['des', traduire('de'), traduire('le'), 'la', 'les', 'un', 'une', 'du', 'au', 'aux', 'je', "j'ai", 'il', 'on', 'et', 'a', 'en']);
 
 /** nombre en lettres a partir du mot i : valeur et nombre de mots lus */
 function readNumberWords(w: string[], i: number): { v: number; len: number } | null {
@@ -397,8 +398,8 @@ class Reader {
 
 const num = (s: string | undefined): number => (s ? Number(s.replace(',', '.')) : NaN);
 const I = '(\\d{1,3})';
-const MIN = '(?:min|mn|minutes?|mins)';
-const HOUR = '(?:h|heures?)';
+const MIN = traduire('(?:min|mn|minutes?|mins)');
+const HOUR = traduire('(?:h|heures?)');
 
 /* ------------------------------------------------------------------ */
 /* Sport                                                                */
@@ -417,13 +418,13 @@ const SPORT_ALIASES: [string, string][] = [
   ['karate', 'karate'], ['taekwondo', 'taekwondo'], ['judo', 'judo'], ['lutte', 'lutte'], ['wrestling', 'lutte'],
   ['sambo', 'sambo'], ['krav maga', 'krav_maga'], ['krav', 'krav_maga'], ['aikido', 'aikido'], ['capoeira', 'capoeira'],
   ['self defense', 'self_defense'],
-  ['musculation', 'musculation'], ['muscu', 'musculation'], ['renforcement', 'musculation'], ['renfo', 'musculation'], ['salle de sport', 'musculation'],
+  ['musculation', 'musculation'], ['muscu', 'musculation'], ['renforcement', 'musculation'], ['renfo', 'musculation'], [traduire('salle de sport'), 'musculation'],
   ['powerlifting', 'powerlifting'], ['street workout', 'street_workout'], ['callisthenie', 'calisthenics'], ['calisthenics', 'calisthenics'],
   ['crossfit', 'crossfit'], ['cross fit', 'crossfit'], ['wod', 'crossfit'], ['hiit', 'hiit'], ['hyrox', 'hyrox'],
   ['yoga', 'yoga'], ['pilates', 'pilates'], ['etirements', 'stretching'], ['stretching', 'stretching'], ['mobilite', 'mobilite'],
   ['course a pied', 'running'], ['footing', 'running'], ['jogging', 'running'], ['running', 'running'], ['fractionne', 'running'], ['course', 'running'], ['run', 'running'], ['couru', 'running'],
   ['ultra trail', 'ultra_trail'], ['trail', 'trail'], ['semi marathon', 'running'], ['marathon', 'marathon'], ['triathlon', 'triathlon'],
-  ['vtt', 'vtt'], ['spinning', 'spinning'], ['rpm', 'spinning'], ['cyclisme', 'cycling'], ['velo de route', 'velo_route'], ['velo', 'velo'],
+  ['vtt', 'vtt'], ['spinning', 'spinning'], ['rpm', 'spinning'], ['cyclisme', 'cycling'], [traduire('velo de route'), 'velo_route'], ['velo', 'velo'],
   ['natation', 'natation'], ['piscine', 'natation'], ['nage', 'natation'], ['nager', 'natation'], ['nage', 'natation'],
   ['randonnee', 'randonnee'], ['rando', 'randonnee'], ['marche nordique', 'marche_nordique'], ['marche', 'marche'],
   ['rameur', 'rameur'], ['aviron', 'aviron'], ['corde a sauter', 'corde_a_sauter'],
@@ -487,8 +488,8 @@ function addDays(d: Date, n: number): Date {
   x.setDate(x.getDate() + n);
   return x;
 }
-const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-const MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+const WEEKDAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
+const MONTHS = [traduire('janvier'), 'fevrier', traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), 'aout', traduire('septembre'), traduire('octobre'), traduire('novembre'), 'decembre'];
 
 function findDate(r: Reader, now: Date): { date?: string; moment?: string } {
   const out: { date?: string; moment?: string } = {};
@@ -496,7 +497,7 @@ function findDate(r: Reader, now: Date): { date?: string; moment?: string } {
   const mom = /(?:^| )((?:ce |hier |avant hier |lundi |mardi |mercredi |jeudi |vendredi |samedi |dimanche |cet |en fin d'|en fin de |dans l'|dans la |tot le |tot ce |le )(matin|midi|apres midi|aprem|soir|soiree|nuit|journee)|a l'aube|pause dej|a la pause dej|entre midi et 2)(?= |$)/.exec(s);
   if (mom) {
     const w = mom[2] ?? mom[1];
-    out.moment = /aube|matin/.test(w) ? 'matin' : /apres|aprem/.test(w) ? 'apres-midi' : /midi|dej/.test(w) ? 'midi' : /soir|nuit/.test(w) ? 'soir' : /journee/.test(w) && /fin/.test(mom[1]) ? 'soir' : undefined;
+    out.moment = /aube|matin/.test(w) ? traduire('matin') : /apres|aprem/.test(w) ? 'apres-midi' : /midi|dej/.test(w) ? 'midi' : /soir|nuit/.test(w) ? 'soir' : /journee/.test(w) && /fin/.test(mom[1]) ? 'soir' : undefined;
     if (out.moment) r.markM('debut', mom, false);
   }
   const day = (re: RegExp, offset: number): boolean => {
@@ -599,7 +600,7 @@ function findTimes(r: Reader, moment: string | undefined): { time?: string; dura
 /* Rounds, blocs de frappe, fractionne                                  */
 /* ------------------------------------------------------------------ */
 
-const ROUND_WORDS = '(?:rounds?|rondes?|reprises?|rolls?|randoris?|combats?|assauts?|manches?|sparrings?)';
+const ROUND_WORDS = traduire('(?:rounds?|rondes?|reprises?|rolls?|randoris?|combats?|assauts?|manches?|sparrings?)');
 const BLOC_KINDS: [RegExp, string][] = [
   [/^(?:de |au |a la |aux |sur le )?(?:sacs?)(?: de frappe)?/, 'Sac'],
   [/^(?:de |aux |au )?(?:pattes? d'ours|paos?|pads)/, 'Pattes d’ours'],
@@ -613,8 +614,8 @@ function findRounds(r: Reader, combat: boolean): { rounds?: number; roundMin?: n
   let rounds: number | undefined;
   let roundMin: number | undefined;
   let sparring: number | undefined;
-  const PER = `(?: (?:de|d'|a|chacun de|chacune de) ${I} ?${MIN}?| de ${I}(?= |$))?`;
-  const TAIL = "((?: (?:de |au |aux |a la |en |sur le )?[a-z']+){0,3})";
+  const PER = traduire("(?: (?:de|d'|a|chacun de|chacune de) {0} ?{1}?| de {2}(?= |$))?", I, MIN, I);
+  const TAIL = traduire("((?: (?:de |au |aux |a la |en |sur le )?[a-z']+){0,3})");
   const list: { n: number; per?: number; tail: string; a: number; b: number }[] = [];
   // « 6 x 3 min », « 6 fois 3 minutes » (en combat, ou suivi d'un mot de frappe)
   for (const m of r.all(new RegExp(`(?:^| )(\\d{1,2}) (?:x|fois) ${I} ${MIN}${TAIL}`))) {
@@ -669,12 +670,12 @@ function findRounds(r: Reader, combat: boolean): { rounds?: number; roundMin?: n
 
 function findIntervals(r: Reader, sport: string | undefined): DicteeExercise[] {
   const out: DicteeExercise[] = [];
-  const name = (what: string) => (sport && SWIM.has(sport) ? `Séries de ${what}` : !sport || PACE_KM.has(sport) ? `Fractionné ${what}` : `Intervalles ${what}`);
+  const name = (what: string) => (sport && SWIM.has(sport) ? traduire("Séries de {0}", what) : !sport || PACE_KM.has(sport) ? traduire("Fractionné {0}", what) : `Intervalles ${what}`);
   const push = (e: DicteeExercise, m: RegExpExecArray) => {
     const before = r.free().slice(Math.max(0, m.index - 32), m.index + 1).split(/[,.;!?]/).pop() ?? '';
     if (new RegExp(EXO_RE.source).test(before.trim())) return;
     out.push(e);
-    r.markM(`exercice:${out.length - 1}`, m);
+    r.markM(traduire("exercice:{0}", out.length - 1), m);
   };
   for (const m of r.all(/(?:^| )(\d{1,2}) (?:x|fois|series? de|repetitions? de) (\d{2,4}) ?(?:m|metres?)(?= |$)/)) {
     const d = +m[2];
@@ -683,7 +684,7 @@ function findIntervals(r: Reader, sport: string | undefined): DicteeExercise[] {
   }
   for (const m of r.all(/(?:^| )(\d{1,2}) (?:x|fois) (\d{1,2}(?:[.,]\d)?) ?(?:km|kilometres?|bornes)(?= |$)/)) {
     const d = num(m[2]);
-    push({ name: name(`${String(d).replace('.', ',')} km`), sets: +m[1], reps: 1, weight: 0, distance: d }, m);
+    push({ name: name(`${String(d).replace('.', DECIMAL)} km`), sets: +m[1], reps: 1, weight: 0, distance: d }, m);
   }
   const cardio = !sport || PACE_KM.has(sport) || SPEED.has(sport) || SWIM.has(sport) || sport === 'rameur';
   if (cardio) {
@@ -725,7 +726,7 @@ const EXO_TABLE = aliasTable(EXOS, (e) => e.aliases, (e) => e.id);
 const EX_ALT = EXO_TABLE.alt;
 const EXO_RE = new RegExp(`(?:^| )(?:l'|d')?(${EX_ALT})(?= |$)`, 'g');
 const VAGUE_RE = new RegExp(`(?:^| )(${EXO_VAGUES.map((v) => `(?:${v.re})`).join('|')})(?= |$)`, 'g');
-const NAME_STOP = new Set(['et', 'puis', 'ensuite', 'apres', 'avec', 'du', 'de', 'des', "d'", 'le', 'la', 'les', 'au', 'aux', 'en', 'un', 'une', 'fait', "j'ai", 'sur', 'on', 'a', 'pour', 'mon', 'ma', 'mes', 'ai', 'fais', 'fini', 'commence', 'par', 'termine', 'je', 'suis', 'reps', 'repetitions', 'series', 'serie', 'kilos', 'kg', 'kilo', 'fois', 'x', 'max', 'enchaine', 'enchainer', "c'etait", 'seance', 'aujourd\'hui', 'hier', 'ce', 'matin', 'soir', '_']);
+const NAME_STOP = new Set(['et', 'puis', 'ensuite', 'apres', 'avec', 'du', traduire('de'), 'des', "d'", traduire('le'), 'la', 'les', 'au', 'aux', 'en', 'un', 'une', 'fait', "j'ai", 'sur', 'on', 'a', 'pour', 'mon', 'ma', 'mes', 'ai', 'fais', 'fini', 'commence', 'par', 'termine', 'je', 'suis', 'reps', 'repetitions', 'series', 'serie', 'kilos', 'kg', 'kilo', traduire('fois'), 'x', 'max', 'enchaine', 'enchainer', "c'etait", 'seance', 'aujourd\'hui', 'hier', 'ce', traduire('matin'), 'soir', '_']);
 
 function exoLabel(id: string): string {
   return EXO_BY_ID.get(id)?.label ?? id;
@@ -792,7 +793,7 @@ function descIn(seg: string, block: string): number {
 const W = '(\\d{1,3}(?:[.,]\\d{1,2})?)';
 const KG_AFTER = new RegExp(`^(?: (?:a|avec|de|@|en))? ${W} ?(?:kg|kilos?|kilogrammes?)(?= |$)|^ (?:a|avec) ${W}(?= |$)`);
 const KG_ANY = new RegExp(`(?:^| )(?:(?:a|avec|@|leste a|leste de|lestee a|lestees a|lestes a) )?${W} ?(?:kg|kilos?)(?= |$)`);
-const NOT_UNIT = '(?! ?(?:min|mn|minutes?|m|metres?|km|s|sec|kg|kilos?|h|heures?)(?= |$))';
+const NOT_UNIT = traduire('(?! ?(?:min|mn|minutes?|m|metres?|km|s|sec|kg|kilos?|h|heures?)(?= |$))');
 
 /** ce qu'un bloc de phrase dit d'un exercice : series, repetitions, charge */
 type Numbers = { sets: number; reps: number; max: boolean; weight: number; duration?: number; load?: Charge; marks: [number, number][] };
@@ -1023,7 +1024,7 @@ function findExercises(r: Reader, sport: string | undefined, offset: number): { 
           }
         }
       }
-      guess = { said: saidTxt(from, to), question: `Tu as fait ${EXO_BY_ID.get(id)?.dit ?? name.toLowerCase()}, c’est ça ?`, guess: name, options: d.choix.map(exoLabel) };
+      guess = { said: saidTxt(from, to), question: traduire("Tu as fait {0}, c’est ça ?", EXO_BY_ID.get(id)?.dit ?? name.toLowerCase()), guess: name, options: d.choix.map(exoLabel) };
     } else if (bl.mentions[0]?.vague !== undefined) {
       if (!said) continue;
       const v = EXO_VAGUES[bl.mentions[0].vague];
@@ -1031,10 +1032,10 @@ function findExercises(r: Reader, sport: string | undefined, offset: number): { 
       if (v.defaut) {
         id = v.defaut;
         name = exoLabel(id);
-        guess = { said: saidTxt(mt.a, mt.b), question: `Tu as fait ${EXO_BY_ID.get(id)?.dit ?? name.toLowerCase()}, c’est ça ?`, guess: name, options: v.choix.map(exoLabel) };
+        guess = { said: saidTxt(mt.a, mt.b), question: traduire("Tu as fait {0}, c’est ça ?", EXO_BY_ID.get(id)?.dit ?? name.toLowerCase()), guess: name, options: v.choix.map(exoLabel) };
       } else {
         name = v.dit;
-        guess = { said: saidTxt(mt.a, mt.b), question: `${v.dit} : c’était quel exercice ?`, options: v.choix.map(exoLabel) };
+        guess = { said: saidTxt(mt.a, mt.b), question: traduire("{0} : c’était quel exercice ?", v.dit), options: v.choix.map(exoLabel) };
       }
     } else continue;
     // sans chiffre, un exercice seulement s'il est bien nomme (« developpe couche, tractions ») en musculation
@@ -1085,7 +1086,7 @@ function findExercises(r: Reader, sport: string | undefined, offset: number): { 
   for (const it of items.slice(0, 20)) {
     const idx = offset + out.length;
     out.push(it.ex);
-    for (const [x, y] of it.marks) r.mark(`exercice:${idx}`, x, y);
+    for (const [x, y] of it.marks) r.mark(traduire("exercice:{0}", idx), x, y);
     if (it.guess) guesses.push({ index: idx, ...it.guess });
   }
   return { list: out, guesses };
@@ -1136,7 +1137,7 @@ function findDistance(r: Reader, sport: string | undefined): { distance?: number
 }
 
 function findDuration(r: Reader): { duration?: number; durationSec?: number } {
-  const P = '(?:pendant |en |durant |sur )?';
+  const P = traduire('(?:pendant |en |durant |sur )?');
   const words: [RegExp, (m: RegExpExecArray) => number][] = [
     [new RegExp(`(?:^| )${P}(\\d) ${HOUR} et (?:demie?|demi)(?= |$)`), (m) => +m[1] * 60 + 30],
     [new RegExp(`(?:^| )${P}(\\d) ${HOUR} et quart(?= |$)`), (m) => +m[1] * 60 + 15],
@@ -1179,8 +1180,8 @@ function findDuration(r: Reader): { duration?: number; durationSec?: number } {
 }
 
 /** « un quart d'heure d'echauffement », « 20 minutes de technique » : morceaux d'une seance */
-const PORTIONS = "echauffement|technique|drill|drilling|cardio|gainage|stretching|etirements|retour au calme|sac|shadow|corde|mobilite|abdos|sparring|randori|randoris|rolls|tapis|velo|course|footing|natation|yoga|meditation|renfo|renforcement|musculation|muscu|jeu|match|travail technique|situation|situations|opposition";
-const DUR = `(?:\\d ${HOUR} et (?:demie?|quart)|\\d ${HOUR}(?: \\d{1,2})?|(?:1 )?demi ?heure|\\d quarts? d'heure|quart d'heure|\\d{1,3} ${MIN})`;
+const PORTIONS = traduire("echauffement|technique|drill|drilling|cardio|gainage|stretching|etirements|retour au calme|sac|shadow|corde|mobilite|abdos|sparring|randori|randoris|rolls|tapis|velo|course|footing|natation|yoga|meditation|renfo|renforcement|musculation|muscu|jeu|match|travail technique|situation|situations|opposition");
+const DUR = traduire("(?:\\d {0} et (?:demie?|quart)|\\d {1}(?: \\d{1,2})?|(?:1 )?demi ?heure|\\d quarts? d'heure|quart d'heure|\\d{1,3} {2})", HOUR, HOUR, MIN);
 
 function minutesOf(t: string): number | undefined {
   let m: RegExpExecArray | null;
@@ -1333,13 +1334,13 @@ function findTheme(r: Reader): string | undefined {
 /* ------------------------------------------------------------------ */
 
 const POSITIONS: [string, string][] = [
-  ['avant centre|pointe|numero 9', 'Avant-centre'], ['ailier droit', 'Ailier droit'], ['ailier gauche', 'Ailier gauche'], ['ailiers?|ailiere', 'Ailier'],
-  ['attaquante?', 'Attaquant'], ['meneur de jeu|numero 10', 'Meneur de jeu'], ['milieu defensif|sentinelle|numero 6', 'Milieu défensif'], ['milieu offensif', 'Milieu offensif'],
-  ['milieu de terrain|milieu', 'Milieu'], ['defenseur central|defense centrale|stoppeur', 'Défenseur central'], ['lateral droit|arriere droit', 'Latéral droit'],
-  ['lateral gauche|arriere gauche', 'Latéral gauche'], ['laterale?|piston', 'Latéral'], ['defenseure?|defense', 'Défenseur'], ['gardien de but|gardienne|gardien|goal|keeper', 'Gardien'],
-  ['meneuse|meneur', 'Meneur'], ['pivot', 'Pivot'], ['demi de melee', 'Demi de mêlée'], ['ouvreur|demi d\'ouverture', 'Ouvreur'], ['arriere', 'Arrière'],
-  ['pilier', 'Pilier'], ['talonneur', 'Talonneur'], ['3e ligne', 'Troisième ligne'], ['2e ligne', 'Deuxième ligne'], ['centre', 'Centre'],
-  ['libero', 'Libéro'], ['passeuse|passeur', 'Passeur'], ['demi centre', 'Demi-centre'],
+  [traduire('avant centre|pointe|numero 9'), 'Avant-centre'], ['ailier droit', 'Ailier droit'], ['ailier gauche', 'Ailier gauche'], ['ailiers?|ailiere', 'Ailier'],
+  ['attaquante?', 'Attaquant'], [traduire('meneur de jeu|numero 10'), traduire('Meneur de jeu')], ['milieu defensif|sentinelle|numero 6', traduire('Milieu défensif')], ['milieu offensif', 'Milieu offensif'],
+  [traduire('milieu de terrain|milieu'), 'Milieu'], ['defenseur central|defense centrale|stoppeur', traduire('Défenseur central')], ['lateral droit|arriere droit', traduire('Latéral droit')],
+  ['lateral gauche|arriere gauche', traduire('Latéral gauche')], ['laterale?|piston', traduire('Latéral')], ['defenseure?|defense', traduire('Défenseur')], [traduire('gardien de but|gardienne|gardien|goal|keeper'), 'Gardien'],
+  ['meneuse|meneur', 'Meneur'], ['pivot', 'Pivot'], [traduire('demi de melee'), traduire('Demi de mêlée')], [traduire('ouvreur|demi d\'ouverture'), 'Ouvreur'], ['arriere', traduire('Arrière')],
+  ['pilier', 'Pilier'], ['talonneur', 'Talonneur'], ['3e ligne', traduire('Troisième ligne')], ['2e ligne', traduire('Deuxième ligne')], ['centre', 'Centre'],
+  ['libero', traduire('Libéro')], ['passeuse|passeur', 'Passeur'], ['demi centre', 'Demi-centre'],
 ];
 
 function findTeam(r: Reader, sport: string | undefined): DicteeTeam | undefined {
@@ -1425,18 +1426,18 @@ function findTeam(r: Reader, sport: string | undefined): DicteeTeam | undefined 
     const fm = /(?:^| )(?:(?:foot|football|match|partie|five|terrain) (?:a |de )?|(?:j'ai|on a|on s'est|je me suis) (?:fait|joue|refait|tape|organise) (?:1 )?(?:petit |bon )?(?:foot )?(?:a )?)(5|7|8|11)(?= |$)/.exec(r.norm);
     const fw = /(?:^| )(futsal|five|le five|urban soccer|soccer five|foot en salle|foot salle)(?= |$)/.exec(r.norm);
     if (fm) {
-      t.format = `Foot à ${fm[1]}`;
+      t.format = traduire("Foot à {0}", fm[1]);
       r.markM('format', fm, false);
     } else if (fw) {
-      t.format = /futsal|salle/.test(fw[1]) ? 'Futsal' : 'Foot à 5';
+      t.format = /futsal|salle/.test(fw[1]) ? 'Futsal' : traduire('Foot à 5');
       r.markM('format', fw, false);
     } else if (sport === 'futsal') t.format = 'Futsal';
   }
   if (sport && TEAM_SPORTS.has(sport)) {
     const cadres: [string, RegExp][] = [
-      ['Compétition', /(?:^| )(?:championnat|match officiel|coupe|tournoi|en compet|competition|en ligue)(?= |$)/],
+      [traduire('Compétition'), /(?:^| )(?:championnat|match officiel|coupe|tournoi|en compet|competition|en ligue)(?= |$)/],
       ['Club', /(?:^| )(?:avec (?:mon |le |l')?(?:club|equipe)|en club|au club|entrainement du club|avec mon equipe|avec l'equipe|a l'entrainement)(?= |$)/],
-      ['Entre amis', /(?:^| )(?:avec (?:mes |des |les |quelques |deux |trois )?(?:amis|potes|copains|copines|collegues|freres|cousins|gars|voisins)|avec la famille|entre (?:amis|potes|copains|collegues|nous)|pour le fun|loisir|en loisir|petit match entre)(?= |$)/],
+      [traduire('Entre amis'), /(?:^| )(?:avec (?:mes |des |les |quelques |deux |trois )?(?:amis|potes|copains|copines|collegues|freres|cousins|gars|voisins)|avec la famille|entre (?:amis|potes|copains|collegues|nous)|pour le fun|loisir|en loisir|petit match entre)(?= |$)/],
     ];
     for (const [label, re] of cadres) {
       const cm = re.exec(r.norm);
@@ -1462,39 +1463,39 @@ function findTeam(r: Reader, sport: string | undefined): DicteeTeam | undefined 
 
 /** finitions dites vers l'id de la bibliotheque (components/BJJBodyMap) ou un libelle libre */
 const TECHNIQUES: [string, string, string][] = [
-  ['cles? de bras|clefs? de bras|armbars?|arm bars?|armlocks?|arm locks?|juji gatame|jujigatame|juji gatami|ju ji gatame|jiu ji gatame|juji katame|jugi gatame', 'armbar', 'Clé de bras'],
-  ['triangles? de bras|arm triangles?|kata gatame', 'armtri', 'Triangle de bras'],
-  ['triangles? inverses?', 'triangleinv', 'Triangle inversé'],
+  [traduire('cles? de bras|clefs? de bras|armbars?|arm bars?|armlocks?|arm locks?|juji gatame|jujigatame|juji gatami|ju ji gatame|jiu ji gatame|juji katame|jugi gatame'), 'armbar', traduire('Clé de bras')],
+  [traduire('triangles? de bras|arm triangles?|kata gatame'), 'armtri', traduire('Triangle de bras')],
+  ['triangles? inverses?', 'triangleinv', traduire('Triangle inversé')],
   ['triangles?|sankaku(?: jime)?', 'triangle', 'Triangle'],
-  ['etranglements? arrieres?|etranglements? par derriere|etranglements? dans le dos|mata leao|mata leon|matalao|hadaka jime|rnc|rear naked chokes?|rear naked|sangles? arrieres?|etranglements? sanguins?', 'rnc', 'Étranglement arrière'],
+  [traduire('etranglements? arrieres?|etranglements? par derriere|etranglements? dans le dos|mata leao|mata leon|matalao|hadaka jime|rnc|rear naked chokes?|rear naked|sangles? arrieres?|etranglements? sanguins?'), 'rnc', traduire('Étranglement arrière')],
   ['kimuras?|kimouras?|kimoras?', 'kimura', 'Kimura'],
-  ['americaines?|americanas?|ude garami|keylocks?|key locks?', 'americana', 'Américaine'],
+  ['americaines?|americanas?|ude garami|keylocks?|key locks?', 'americana', traduire('Américaine')],
   ['omoplatas?|omo platas?|omoplattes?|homoplatas?|omoplattas?', 'omoplata', 'Omoplata'],
   ['guillotines?|guiyotines?|gillotines?', 'guillotine', 'Guillotine'],
-  ["d'arces?|darces?|d arce|darses?|d'arses?|brabos?", 'darce', "D'Arce"],
+  [traduire("d'arces?|darces?|d arce|darses?|d'arses?|brabos?"), 'darce', "D'Arce"],
   ['anacondas?', 'anaconda', 'Anaconda'],
   ['ezekiels?|ezequiels?|ezechiels?', 'ezekiel', 'Ezekiel'],
   ['bow and arrows?', 'bowarrow', 'Bow and arrow'],
   ['nord sud|north south', 'northsouth', 'Nord-Sud'],
   ['gogoplatas?', 'gogoplata', 'Gogoplata'],
   ['loop chokes?', 'loop', 'Loop choke'],
-  ['cles? de genou|kneebars?|knee bars?', 'kneebar', 'Clé de genou'],
-  ['cles? de cheville|ankle locks?|foot locks?|footlocks?', 'anklelock', 'Clé de cheville'],
-  ['toe holds?|cles? de pied', 'toehold', 'Clé de pied'],
-  ['heel hooks?|heelhooks?|hill hooks?|cles? de talon', 'Heel hook', 'Heel hook'],
-  ['cles? de poignet|wrist locks?|wristlocks?', 'wristlock', 'Clé de poignet'],
-  ["cles? d'epaule", 'shoulder', "Clé d'épaule"],
+  [traduire('cles? de genou|kneebars?|knee bars?'), 'kneebar', traduire('Clé de genou')],
+  [traduire('cles? de cheville|ankle locks?|foot locks?|footlocks?'), 'anklelock', traduire('Clé de cheville')],
+  [traduire('toe holds?|cles? de pied'), 'toehold', traduire('Clé de pied')],
+  [traduire('heel hooks?|heelhooks?|hill hooks?|cles? de talon'), 'Heel hook', 'Heel hook'],
+  [traduire('cles? de poignet|wrist locks?|wristlocks?'), 'wristlock', traduire('Clé de poignet')],
+  [traduire("cles? d'epaule"), 'shoulder', traduire("Clé d'épaule")],
   ['calf slicers?', 'calfslicer', 'Calf slicer'],
-  ['etranglements? au col|etranglements? croises?|col croise|cross collars?', 'lapelchoke', 'Étranglement au col'],
-  ['etranglements?|chokes?', 'Étranglement', 'Étranglement'],
+  [traduire('etranglements? au col|etranglements? croises?|col croise|cross collars?'), 'lapelchoke', traduire('Étranglement au col')],
+  ['etranglements?|chokes?', traduire('Étranglement'), traduire('Étranglement')],
   ['ko|k o|knock out|knockout', 'KO', 'KO'],
 ];
 /** pas des finitions : techniques utilisees (frappe, lutte) */
 const MOVES: [string, string][] = [
-  ['passages? de garde', 'Passage de garde'], ['renversements?|sweeps?|balayages?', 'Renversement'], ['prises? de dos', 'Prise de dos'],
-  ['takedowns?|amenees? au sol|double legs?|single legs?|projections?', 'Amenée au sol'],
+  [traduire('passages? de garde'), traduire('Passage de garde')], ['renversements?|sweeps?|balayages?', 'Renversement'], [traduire('prises? de dos'), traduire('Prise de dos')],
+  [traduire('takedowns?|amenees? au sol|double legs?|single legs?|projections?'), traduire('Amenée au sol')],
   ['crochets?', 'Crochet'], ['uppercuts?', 'Uppercut'], ['jabs?', 'Jab'], ['low kicks?', 'Low kick'],
-  ['middle kicks?', 'Middle kick'], ['high kicks?', 'High kick'], ['coups? de genou', 'Coup de genou'], ['coups? de coude', 'Coup de coude'],
+  ['middle kicks?', 'Middle kick'], ['high kicks?', 'High kick'], [traduire('coups? de genou'), traduire('Coup de genou')], [traduire('coups? de coude'), traduire('Coup de coude')],
 ];
 const TECH_ALT = TECHNIQUES.map((t) => `(?:${t[0]})`).join('|');
 const SUB_RE = new RegExp(`(?:^| )(?:(\\d{1,2}) |que des |des |en |par |sur |le |la |les |mon |ma |sa |son |avec des |avec )?(${TECH_ALT})(?= |$)`, 'g');
@@ -1502,8 +1503,8 @@ const TAKEN_RE = /m'a (?:pris|mis|chope|choppe|eu|fini|soumis|attrape|place|rent
 const WIN_RE = /(?:^| )(?:gagne|gagnee|gagner|gagnes|gagnes|l'ai eu|les ai eus?|l'ai soumis|l'ai fini|l'ai eclate|l'ai explose|l'ai domine|l'ai bouge|l'ai battu|j'ai battu|l'ai mis ko|l'ai mis k o|victoire|remporte|il a tape|elle a tape|l'ai fait taper|les ai fait taper|j'ai soumis|j'ai fini [a-z]+ (?:en|par|sur|avec)|j'ai domine|l'ai defonce|l'ai demonte|l'ai detruit)(?= |$)/;
 const LOSS_RE = /(?:^| )(?:perdu|perdus|perdue|m'a eu|m'a soumis|m'a battu|m'a domine|m'a fini|m'a eclate|m'a explose|m'a pris|m'a chope|m'a choppe|m'a defonce|je me suis fait (?:soumettre|eclater|defoncer|demonter|bouger|dominer|avoir|finir)|j'ai tape|defaite|j'ai subi)(?= |$)/;
 const DRAW_RE = /(?:^| )(?:nul|match nul|egalite|ex aequo|personne n'a gagne|personne n'a soumis|0 a 0|0 partout)(?= |$)/;
-const NAME_STOPWORDS = new Set(['le', 'la', 'les', 'un', 'une', 'des', 'du', 'mon', 'ma', 'mes', 'son', 'sa', 'ses', 'lui', 'moi', 'eux', 'elle', 'il', 'tout', 'tous', 'toutes', 'ce', 'cet', 'cette', 'ces', 'qui', 'que', "quelqu'un", 'personne', 'gants', 'sac', 'barre', 'poids', 'charge', 'kilos', 'kg', 'et', 'je', "j'ai", 'mais', 'puis', 'ensuite', 'a', 'au', 'aux', 'en', 'de', "d'", 'pour', 'par', 'sur', 'dans', 'avec', 'contre', 'autres', 'autre', 'gars', 'mec', 'partenaire', 'partenaires', 'groupe', 'club', 'equipe', 'copains', 'potes', 'amis', 'difficulte', 'facilite', 'succes', 'plaisir', 'envie', 'intensite', 'motivation', 'force', 'vitesse']);
-const ROLE_WORDS = "professeur|prof|coach|maitre|instructeur|sensei|mestre|entraineur|pote|ami|amie|copain|copine|frere|soeur|cousin|cousine|collegue|partenaire|ceinture (?:blanche|bleue|violette|marron|noire)";
+const NAME_STOPWORDS = new Set([traduire('le'), 'la', 'les', 'un', 'une', 'des', 'du', 'mon', 'ma', 'mes', 'son', 'sa', 'ses', 'lui', 'moi', 'eux', 'elle', 'il', 'tout', 'tous', 'toutes', 'ce', 'cet', 'cette', 'ces', 'qui', 'que', "quelqu'un", 'personne', 'gants', 'sac', 'barre', 'poids', 'charge', 'kilos', 'kg', 'et', 'je', "j'ai", 'mais', 'puis', 'ensuite', 'a', 'au', 'aux', 'en', traduire('de'), "d'", 'pour', 'par', 'sur', 'dans', 'avec', 'contre', 'autres', 'autre', 'gars', 'mec', 'partenaire', 'partenaires', 'groupe', 'club', 'equipe', 'copains', 'potes', 'amis', 'difficulte', 'facilite', 'succes', 'plaisir', 'envie', 'intensite', 'motivation', 'force', 'vitesse']);
+const ROLE_WORDS = traduire("professeur|prof|coach|maitre|instructeur|sensei|mestre|entraineur|pote|ami|amie|copain|copine|frere|soeur|cousin|cousine|collegue|partenaire|ceinture (?:blanche|bleue|violette|marron|noire)");
 const NOT_NAME = /^(?:triangles?|kimuras?|guillotines?|omoplatas?|cles?|armbars?|etranglements?|sac|pattes?|shadow|rounds?|rondes?|sparring|technique|drilling|cours|entrainement|\d.*)$/;
 
 type PartnerHit = { name: string; role?: string; b: number; markerA: number; mention?: boolean };
@@ -1548,7 +1549,7 @@ function findPartners(r: Reader): PartnerHit[] {
       // « avec le prof » sans nom : le role sert de nom
       if (role && /prof|coach|maitre|instructeur|sensei|mestre|entraineur/.test(role)) {
         const roleA = m.index + m[0].lastIndexOf(role);
-        out.push({ name: role === 'prof' || role === 'professeur' ? 'Le prof' : role === 'coach' ? 'Le coach' : `Le ${role}`, role, b: roleA + role.length, markerA });
+        out.push({ name: role === 'prof' || role === 'professeur' ? 'Le prof' : role === 'coach' ? traduire('Le coach') : `Le ${role}`, role, b: roleA + role.length, markerA });
       }
       continue;
     }
@@ -2026,7 +2027,7 @@ function findGrade(r: Reader): { grade?: string; event?: boolean } {
     const at = m.index + (m[0].startsWith(' ') ? 1 : 0);
     // « avec une ceinture noire » : c'est un partenaire
     if (/(?:^| )(?:avec|contre|face a)(?: (?:une|un|la|le|des|les|deux|2|3))?(?: \w+)? $/.test(s.slice(Math.max(0, at - 22), at)) || /(?:^| )(?:une|des|les|un|deux|2|3) $/.test(s.slice(Math.max(0, at - 6), at))) continue;
-    const label = `Ceinture ${m[2]}${m[3] ? `, ${m[3]} barrette${+m[3] > 1 ? 's' : ''}` : ''}`;
+    const label = traduire("Ceinture {0}{1}", m[2], m[3] ? `, ${m[3]} barrette${+m[3] > 1 ? 's' : ''}` : '');
     r.mark('grade', at, m.index + m[0].length, false);
     const around = s.slice(Math.max(0, at - 40), m.index + m[0].length);
     return { grade: label, event: /(?:^| )(?:j'ai eu|j'ai obtenu|j'ai recu|je suis passe|je suis passee|passe|passee|passage de grade|passage|ma nouvelle|nouvelle|remise)(?= |$)/.test(around) };
@@ -2034,7 +2035,7 @@ function findGrade(r: Reader): { grade?: string; event?: boolean } {
   const dan = /(?:^| )((?:j'ai eu |j'ai obtenu |je suis passe |passage |mon |ma )?(\d{1,2})e? (dan|kyu|barrettes?|degres?|stripes?))(?= |$)/.exec(s);
   if (dan) {
     r.markM('grade', dan, false);
-    const unit = /^barrette/.test(dan[3]) ? 'barrette' : /^degre/.test(dan[3]) ? 'degré' : dan[3];
+    const unit = /^barrette/.test(dan[3]) ? 'barrette' : /^degre/.test(dan[3]) ? traduire('degré') : dan[3];
     return { grade: `${dan[2] === '1' ? '1er' : `${dan[2]}e`} ${unit}`, event: /^(?:j'ai eu|j'ai obtenu|je suis passe|passage)/.test(dan[1]) };
   }
   const ev = /(?:^| )(passage de grade|passage de ceinture|remise des ceintures|remise de ceinture|j'ai eu ma ceinture|gradation)(?= |$)/.exec(s);
@@ -2154,7 +2155,7 @@ export function parseDictee(text: string, now = new Date()): DicteeResult {
   res.distance = dist.distance;
   if (dist.note) res.extraNotes.push(dist.note);
   const elev = /(?:^| )(\d{2,4}) ?(?:m|metres?)? (?:de denivele|de d\+|d\+)/.exec(r.norm);
-  if (elev) res.extraNotes.push(`${elev[1]} m de dénivelé`);
+  if (elev) res.extraNotes.push(traduire("{0} m de dénivelé", elev[1]));
 
   const portions = findPortions(r, res.sport, (rd.rounds ? 1 : 0) + rd.blocs.length + (res.exercises.length ? 1 : 0));
   if (portions.length) res.extraNotes.push(portions.map((x) => `${x.label} ${fmtMinutesShort(x.min)}`).join(', '));
@@ -2232,7 +2233,7 @@ export function parseDictee(text: string, now = new Date()): DicteeResult {
     } else if (res.distance && pace) {
       res.durationSec = Math.round(res.distance * pace);
       res.duration = Math.round(res.durationSec / 60);
-      res.durationFrom = 'distance et allure';
+      res.durationFrom = traduire('distance et allure');
     }
   }
   const sec = res.durationSec ?? (res.duration ? res.duration * 60 : undefined);
@@ -2255,9 +2256,9 @@ export function parseDictee(text: string, now = new Date()): DicteeResult {
   if (res.sport) res.found.push('sport');
   if (res.date) res.found.push('jour');
   if (res.time) res.found.push('heure');
-  if (res.duration) res.found.push('durée');
+  if (res.duration) res.found.push(traduire('durée'));
   if (res.rating || res.mood) res.found.push('ressenti');
-  if (res.intensity) res.found.push('intensité');
+  if (res.intensity) res.found.push(traduire('intensité'));
   if (res.distance) res.found.push('distance');
   if (res.paceSec || res.speed) res.found.push('allure');
   if (res.rounds) res.found.push('rounds');
@@ -2265,7 +2266,7 @@ export function parseDictee(text: string, now = new Date()): DicteeResult {
   if (res.sessionType) res.found.push('type');
   if (res.learned.length) res.found.push('techniques');
   if (res.grade || res.gradeEvent || res.club || res.coach) res.found.push('contexte');
-  if (res.exercises.length) res.found.push('exercices');
+  if (res.exercises.length) res.found.push(traduire('exercices'));
   if (res.team) res.found.push('match');
   if (res.heartRate || res.calories) res.found.push('cardio');
   return res;
@@ -2307,8 +2308,8 @@ export function roundsText(list: number[]): string {
   if (!list.length) return '';
   if (list.length === 1) return `round ${list[0]}`;
   const contiguous = list.every((n, i) => i === 0 || n === list[i - 1] + 1);
-  if (contiguous) return `rounds ${list[0]} à ${list[list.length - 1]}`;
-  return `rounds ${list.slice(0, -1).join(', ')} et ${list[list.length - 1]}`;
+  if (contiguous) return traduire("rounds {0} à {1}", list[0], list[list.length - 1]);
+  return traduire("rounds {0} et {1}", list.slice(0, -1).join(', '), list[list.length - 1]);
 }
 
 export const TEAM_POSITIONS = POSITIONS.map(([, label]) => label).filter((v, i, a) => a.indexOf(v) === i);
@@ -2316,17 +2317,17 @@ export const TEAM_POSITIONS = POSITIONS.map(([, label]) => label).filter((v, i, 
 /** la ligne du match pour la note de seance (la fiche n'a pas de colonne buts ni passes) */
 export function teamLine(t: DicteeTeam): string {
   const bits: string[] = [];
-  if (t.scoreFor !== undefined && t.scoreAgainst !== undefined) bits.push(`${t.result === 'win' ? 'Victoire' : t.result === 'loss' ? 'Défaite' : 'Nul'} ${t.scoreFor} à ${t.scoreAgainst}`);
-  else if (t.result) bits.push(t.result === 'win' ? 'Victoire' : t.result === 'loss' ? 'Défaite' : 'Nul');
+  if (t.scoreFor !== undefined && t.scoreAgainst !== undefined) bits.push(traduire("{0} {1} à {2}", t.result === 'win' ? 'Victoire' : t.result === 'loss' ? 'Défaite' : 'Nul', t.scoreFor, t.scoreAgainst));
+  else if (t.result) bits.push(t.result === 'win' ? traduire('Victoire') : t.result === 'loss' ? traduire('Défaite') : 'Nul');
   if (t.goals !== undefined) bits.push(`${t.goals} but${t.goals > 1 ? 's' : ''}`);
-  if (t.assists !== undefined) bits.push(`${t.assists} passe${t.assists > 1 ? 's' : ''} décisive${t.assists > 1 ? 's' : ''}`);
+  if (t.assists !== undefined) bits.push(traduirePluriel(t.assists, t.assists > 1, "{0} passe décisive", "{0} passes décisives", t.assists));
   if (t.points !== undefined) bits.push(`${t.points} points`);
-  if (t.tries !== undefined) bits.push(`${t.tries} essai${t.tries > 1 ? 's' : ''}`);
+  if (t.tries !== undefined) bits.push(traduirePluriel(t.tries, t.tries > 1, "{0} essai", "{0} essais", t.tries));
   if (t.position) bits.push(`poste : ${t.position.toLowerCase()}`);
   if (t.format) bits.push(t.format.charAt(0).toLowerCase() + t.format.slice(1));
   if (t.cadre) bits.push(t.cadre.toLowerCase());
   if (!bits.length) return '';
-  return `${t.match ? 'Match' : 'Séance'} : ${bits.join(', ')}`;
+  return `${t.match ? 'Match' : traduire('Séance')} : ${bits.join(', ')}`;
 }
 
 /** carte de sparring telle que l'ecran la modifie */
@@ -2372,17 +2373,17 @@ export function cardsToRounds(total: number, cards: RoundCard[]): DicteeRound[] 
 
 /** finitions proposees sur une carte, dans l'ordre ou on les dit le plus */
 export const QUICK_TECHNIQUES: DicteeTechnique[] = [
-  { id: 'armbar', label: 'Clé de bras' },
+  { id: 'armbar', label: traduire('Clé de bras') },
   { id: 'triangle', label: 'Triangle' },
-  { id: 'rnc', label: 'Étranglement arrière' },
+  { id: 'rnc', label: traduire('Étranglement arrière') },
   { id: 'kimura', label: 'Kimura' },
   { id: 'guillotine', label: 'Guillotine' },
   { id: 'omoplata', label: 'Omoplata' },
-  { id: 'americana', label: 'Américaine' },
+  { id: 'americana', label: traduire('Américaine') },
   { id: 'darce', label: "D'Arce" },
-  { id: 'Étranglement', label: 'Étranglement' },
-  { id: 'kneebar', label: 'Clé de genou' },
-  { id: 'anklelock', label: 'Clé de cheville' },
+  { id: 'Étranglement', label: traduire('Étranglement') },
+  { id: 'kneebar', label: traduire('Clé de genou') },
+  { id: 'anklelock', label: traduire('Clé de cheville') },
   { id: 'KO', label: 'KO' },
 ];
 
@@ -2392,15 +2393,15 @@ export function learnedLine(list: DicteeLearned[]): string {
     const xs = list.filter((x) => x.mode === mode).map((x) => `${x.label.charAt(0).toLowerCase()}${x.label.slice(1)}${x.note ? ` (${x.note})` : ''}`);
     return xs.length ? `${head} : ${xs.join(', ')}` : '';
   };
-  const bits = [part('appris', 'Appris'), part('drill', 'En drill'), part('travaille', 'Travaillé'), part('reussi', 'Réussi en combat')].filter(Boolean);
+  const bits = [part('appris', 'Appris'), part('drill', 'En drill'), part('travaille', traduire('Travaillé')), part('reussi', traduire('Réussi en combat'))].filter(Boolean);
   return bits.join(' ; ');
 }
 
 /** grade, club et professeur pour la note */
 export function contextLine(c: { grade?: string; gradeEvent?: boolean; club?: string; coach?: string }): string {
   const bits: string[] = [];
-  if (c.grade) bits.push(`${c.grade}${c.gradeEvent ? ' (passage de grade)' : ''}`);
-  else if (c.gradeEvent) bits.push('Passage de grade');
+  if (c.grade) bits.push(`${c.grade}${c.gradeEvent ? traduire(' (passage de grade)') : ''}`);
+  else if (c.gradeEvent) bits.push(traduire('Passage de grade'));
   if (c.coach) bits.push(`professeur : ${c.coach}`);
   if (c.club) bits.push(`club : ${c.club}`);
   const s = bits.join(', ');

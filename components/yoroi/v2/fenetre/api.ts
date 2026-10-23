@@ -11,6 +11,7 @@
  * Fichier sans dependance (pas de react-native) : il peut etre importe depuis n'importe quel service.
  */
 import type { ReactNode } from 'react';
+import { traduire } from '@/lib/i18n/tr';
 
 export type AppAlertButtonStyle = 'default' | 'cancel' | 'destructive' | 'primary';
 
@@ -91,7 +92,7 @@ export function appChoices(
   options?: AppAlertOptions & { cancelText?: string },
 ): void {
   const list = (choices ?? []).filter(Boolean);
-  const withCancel = list.some((b) => b.style === 'cancel') ? list : [...list, { text: options?.cancelText ?? 'Annuler', style: 'cancel' as const }];
+  const withCancel = list.some((b) => b.style === 'cancel') ? list : [...list, { text: options?.cancelText ?? traduire('Annuler'), style: 'cancel' as const }];
   push({ kind: 'choices', title: title ?? '', message: message ?? undefined, buttons: withCancel, options });
 }
 
@@ -108,12 +109,12 @@ export function appPrompt(
   const buttons: AppAlertButton[] =
     typeof callbackOrButtons === 'function'
       ? [
-          { text: 'Annuler', style: 'cancel' },
+          { text: traduire('Annuler'), style: 'cancel' },
           { text: 'OK', onPress: (v) => callbackOrButtons(v ?? '') },
         ]
       : callbackOrButtons && callbackOrButtons.length > 0
         ? callbackOrButtons
-        : [{ text: 'Annuler', style: 'cancel' }, { text: 'OK' }];
+        : [{ text: traduire('Annuler'), style: 'cancel' }, { text: 'OK' }];
   push({
     kind: 'prompt',
     title: title ?? '',
@@ -135,19 +136,19 @@ export function appPassword(opts: { title: string; message?: string; confirmLabe
         opts.title,
         opts.message,
         [
-          { text: 'Annuler', style: 'cancel', onPress: () => resolve(null) },
+          { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(null) },
           {
-            text: opts.confirmLabel ?? 'Valider',
+            text: opts.confirmLabel ?? traduire('Valider'),
             onPress: (v) => {
               const typed = v ?? '';
               const min = opts.minLength ?? 0;
               if (typed.length === 0 || typed.length < min) {
                 appAlert(
-                  typed.length === 0 ? 'Mot de passe vide' : 'Mot de passe trop court',
-                  min > 0 ? `Il faut au moins ${min} caractères.` : 'Tape ton mot de passe.',
+                  typed.length === 0 ? traduire('Mot de passe vide') : traduire('Mot de passe trop court'),
+                  min > 0 ? traduire("Il faut au moins {0} caractères.", min) : traduire('Tape ton mot de passe.'),
                   [
-                    { text: 'Annuler', style: 'cancel', onPress: () => resolve(null) },
-                    { text: 'Réessayer', onPress: ask },
+                    { text: traduire('Annuler'), style: 'cancel', onPress: () => resolve(null) },
+                    { text: traduire('Réessayer'), onPress: ask },
                   ],
                 );
                 return;
@@ -159,7 +160,7 @@ export function appPassword(opts: { title: string; message?: string; confirmLabe
         'secure-text',
         '',
         undefined,
-        { placeholder: 'Mot de passe' },
+        { placeholder: traduire('Mot de passe') },
       );
     ask();
   });

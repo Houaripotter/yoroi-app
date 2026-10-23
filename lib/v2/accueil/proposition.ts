@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { traduire } from '@/lib/i18n/tr';
 
 export type PropositionAccueil = 'A' | 'B' | 'C';
 
@@ -42,10 +43,10 @@ export function sectionDuBloc(b: string): 'jour' | 'entrainement' | 'corps' | 'm
 }
 
 export const TITRES_SECTIONS: Record<'jour' | 'entrainement' | 'corps' | 'mois', string> = {
-  jour: 'Aujourd’hui',
-  entrainement: 'Ton entraînement',
-  corps: 'Ton corps',
-  mois: 'Ton mois',
+  jour: traduire('Aujourd’hui'),
+  entrainement: traduire('Ton entraînement'),
+  corps: traduire('Ton corps'),
+  mois: traduire('Ton mois'),
 };
 
 /**

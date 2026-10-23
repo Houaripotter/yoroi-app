@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements, getAllWorkouts } from './storage';
 import { getMeasurements } from './database';
 import logger from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -118,13 +119,13 @@ const getMonthKey = (date: Date): string => {
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
-  const months = ['jan', 'fev', 'mar', 'avr', 'mai', 'juin', 'juil', 'aout', 'sept', 'oct', 'nov', 'dec'];
+  const months = ['jan', 'fev', 'mar', 'avr', traduire('mai'), traduire('juin'), 'juil', 'aout', 'sept', 'oct', 'nov', 'dec'];
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 };
 
 const formatMonthYear = (monthKey: string): string => {
   const [year, month] = monthKey.split('-');
-  const months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aout', 'Sept', 'Oct', 'Nov', 'Dec'];
+  const months = ['Jan', 'Fev', traduire('Mar'), 'Avr', traduire('Mai'), traduire('Juin'), 'Juil', 'Aout', 'Sept', 'Oct', 'Nov', 'Dec'];
   return `${months[parseInt(month) - 1]} ${year}`;
 };
 
@@ -187,7 +188,7 @@ export const calculateAllRecords = async (): Promise<{
       oldValue: previousRecords.lowestWeight.value,
       newValue: lowestWeight.weight,
       date: lowestWeight.date,
-      message: `Nouveau poids record ! ${lowestWeight.weight.toFixed(1)} kg`,
+      message: traduire("Nouveau poids record ! {0} kg", lowestWeight.weight.toFixed(1)),
       emoji: '',
     });
   }
@@ -230,7 +231,7 @@ export const calculateAllRecords = async (): Promise<{
         oldValue: previousRecords.maxWeeklyLoss.value,
         newValue: maxWeeklyLoss,
         date: maxWeeklyLossDate,
-        message: `Record ! -${maxWeeklyLoss.toFixed(1)} kg cette semaine`,
+        message: traduire("Record ! -{0} kg cette semaine", maxWeeklyLoss.toFixed(1)),
         emoji: '',
       });
     }
@@ -334,7 +335,7 @@ export const calculateAllRecords = async (): Promise<{
         oldValue: previousRecords.longestStreak.value,
         newValue: longestStreak,
         date: longestStreakEndDate,
-        message: `Nouveau record de streak ! ${longestStreak} jours`,
+        message: traduire("Nouveau record de streak ! {0} jours", longestStreak),
         emoji: '',
       });
     }
@@ -360,7 +361,7 @@ export const calculateAllRecords = async (): Promise<{
         oldValue: previousRecords.lowestWaist.value,
         newValue: sortedWaist[0].waist!,
         date: sortedWaist[0].date,
-        message: `Record tour de taille ! ${sortedWaist[0].waist} cm`,
+        message: traduire("Record tour de taille ! {0} cm", sortedWaist[0].waist),
         emoji: '',
       });
     }
@@ -404,7 +405,7 @@ export const calculateAllRecords = async (): Promise<{
           oldValue: previousRecords.maxWeeklyWorkouts.value,
           newValue: maxWeeklyWorkouts,
           date: maxWeeklyWorkoutsDate,
-          message: `Record ! ${maxWeeklyWorkouts} entraînements cette semaine`,
+          message: traduire("Record ! {0} entraînements cette semaine", maxWeeklyWorkouts),
           emoji: '',
         });
       }
@@ -594,14 +595,14 @@ export const getSportName = (type: string): string => {
  */
 export const generateRecordShareText = (type: RecordType, value: number): string => {
   const texts: Record<RecordType, string> = {
-    lowestWeight: `J'ai atteint mon poids record de ${value.toFixed(1)} kg !`,
-    maxWeeklyLoss: `J'ai battu mon record ! -${value.toFixed(1)} kg cette semaine`,
-    maxMonthlyLoss: `Record du mois ! -${value.toFixed(1)} kg de perdus`,
-    longestStreak: `Nouveau record de streak ! ${value} jours consecutifs`,
-    lowestWaist: `Record tour de taille ! ${value} cm atteints`,
-    maxWeeklyWorkouts: `${value} entraînements cette semaine ! Nouveau record`,
-    bestMonthRegularity: `${value}% de régularité ce mois-ci !`,
-    bestEnergyStreak: `${value} jours d'énergie au top !`,
+    lowestWeight: traduire("J'ai atteint mon poids record de {0} kg !", value.toFixed(1)),
+    maxWeeklyLoss: traduire("J'ai battu mon record ! -{0} kg cette semaine", value.toFixed(1)),
+    maxMonthlyLoss: traduire("Record du mois ! -{0} kg de perdus", value.toFixed(1)),
+    longestStreak: traduire("Nouveau record de streak ! {0} jours consecutifs", value),
+    lowestWaist: traduire("Record tour de taille ! {0} cm atteints", value),
+    maxWeeklyWorkouts: traduire("{0} entraînements cette semaine ! Nouveau record", value),
+    bestMonthRegularity: traduire("{0}% de régularité ce mois-ci !", value),
+    bestEnergyStreak: traduire("{0} jours d'énergie au top !", value),
   };
   return texts[type] + '\n\n#Yoroi #Transformation #Record';
 };

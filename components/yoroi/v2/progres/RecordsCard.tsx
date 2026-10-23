@@ -15,6 +15,7 @@ import { Hanko, tap } from '../seances/ui';
 import { P } from '@/components/yoroi/livePalette';
 import { todayIso, shiftDays } from '@/lib/v2/progres/format';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { traduire } from '@/lib/i18n/tr';
 
 export function RecordsCard({ trainings, femme }: { trainings: Training[]; femme: boolean }) {
   const { theme } = useYoroiTheme();
@@ -32,13 +33,13 @@ export function RecordsCard({ trainings, femme }: { trainings: Training[]; femme
           router.push('/records' as any);
         }}
         accessibilityRole="button"
-        accessibilityLabel="Tes records"
+        accessibilityLabel={traduire("Tes records")}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}
       >
         <Hanko size={28} color={c.textMuted} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold">Ton premier record t’attend</Ink>
-          <Ink size={13} color={c.textSecondary}>Note tes charges, tes distances ou tes rounds : chaque marque battue reçoit son tampon ici.</Ink>
+          <Ink size={15} weight="extraBold">{traduire("Ton premier record t’attend")}</Ink>
+          <Ink size={13} color={c.textSecondary}>{traduire("Note tes charges, tes distances ou tes rounds : chaque marque battue reçoit son tampon ici.")}</Ink>
         </View>
       </Pressable>
     );

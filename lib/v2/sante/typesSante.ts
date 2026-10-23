@@ -13,21 +13,22 @@
  * (permissions jamais déclarées, donc jamais accordées).
  */
 
+import { traduire } from '@/lib/i18n/tr';
 export type CategorieSante = 'corps' | 'activite' | 'coeur' | 'sommeil' | 'seances' | 'nutrition' | 'mobilite' | 'alertes' | 'souffle' | 'environnement' | 'autres-sports' | 'suivi-medical';
 
 export const CATEGORIES_SANTE: Record<CategorieSante, { label: string; exemples: string }> = {
-  corps: { label: 'Poids et corps', exemples: 'poids, masse grasse, masse maigre, taille, tour de taille' },
-  activite: { label: 'Activité', exemples: 'pas, distance, calories, exercice, étages' },
-  coeur: { label: 'Cœur et souffle', exemples: 'fréquence cardiaque, au repos, variabilité, VO2 max, oxygène, tension' },
-  sommeil: { label: 'Sommeil', exemples: 'nuits, température au poignet, respiration la nuit' },
-  seances: { label: 'Séances', exemples: 'entraînements, tracés GPS, effort, foulée, puissance, vélo, nage' },
-  nutrition: { label: 'Eau et repas', exemples: 'eau, calories mangées, protéines, glucides, lipides, caféine' },
-  mobilite: { label: 'Marche et équilibre', exemples: 'vitesse de marche, longueur du pas, asymétrie, chutes' },
-  alertes: { label: 'Alertes du cœur', exemples: 'rythme irrégulier, FC haute ou basse, ECG, fibrillation' },
-  souffle: { label: 'Respiration', exemples: 'capacité vitale, débit expiratoire, apnées' },
-  environnement: { label: 'Sons, UV et lumière', exemples: 'son au casque, bruit ambiant, UV, lumière du jour' },
-  'autres-sports': { label: 'Autres sports', exemples: 'ski, glisse, rame, pagaie, plongée, fauteuil' },
-  'suivi-medical': { label: 'Suivi médical et nutriments', exemples: 'glycémie, température, humeur, vitamines, minéraux' },
+  corps: { label: traduire('Poids et corps'), exemples: traduire('poids, masse grasse, masse maigre, taille, tour de taille') },
+  activite: { label: traduire('Activité'), exemples: traduire('pas, distance, calories, exercice, étages') },
+  coeur: { label: traduire('Cœur et souffle'), exemples: traduire('fréquence cardiaque, au repos, variabilité, VO2 max, oxygène, tension') },
+  sommeil: { label: traduire('Sommeil'), exemples: traduire('nuits, température au poignet, respiration la nuit') },
+  seances: { label: traduire('Séances'), exemples: traduire('entraînements, tracés GPS, effort, foulée, puissance, vélo, nage') },
+  nutrition: { label: traduire('Eau et repas'), exemples: traduire('eau, calories mangées, protéines, glucides, lipides, caféine') },
+  mobilite: { label: traduire('Marche et équilibre'), exemples: traduire('vitesse de marche, longueur du pas, asymétrie, chutes') },
+  alertes: { label: traduire('Alertes du cœur'), exemples: traduire('rythme irrégulier, FC haute ou basse, ECG, fibrillation') },
+  souffle: { label: 'Respiration', exemples: traduire('capacité vitale, débit expiratoire, apnées') },
+  environnement: { label: traduire('Sons, UV et lumière'), exemples: traduire('son au casque, bruit ambiant, UV, lumière du jour') },
+  'autres-sports': { label: 'Autres sports', exemples: traduire('ski, glisse, rame, pagaie, plongée, fauteuil') },
+  'suivi-medical': { label: traduire('Suivi médical et nutriments'), exemples: traduire('glycémie, température, humeur, vitamines, minéraux') },
 };
 
 export type TypeSante = { id: string; cat: CategorieSante };
@@ -282,7 +283,7 @@ export function resumeDemande(platform: string, avance = false): ResumeDemande {
 /** « 52 en lecture, 7 en écriture » */
 export function texteResume(platform: string, avance = false): string {
   const r0 = resumeDemande(platform, avance);
-  return `${r0.lecture} en lecture, ${r0.ecriture} en écriture`;
+  return traduire("{0} en lecture, {1} en écriture", r0.lecture, r0.ecriture);
 }
 
 /** Nombre de types ajoutés par les mesures avancées */

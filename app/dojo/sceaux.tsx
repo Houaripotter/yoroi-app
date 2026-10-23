@@ -20,6 +20,7 @@ import type { SealView } from '@/lib/v2/armure';
 import { XP_VALUES } from '@/lib/v2/armure';
 import { useArmure } from '@/lib/v2/dojo/useArmure';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export default function Sceaux() {
   const { theme } = useYoroiTheme();
@@ -40,14 +41,14 @@ export default function Sceaux() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <BackHeader title="Tes sceaux" scene={classique ? THEME_IMAGES.classique_salle_nuit : THEME_IMAGES.forge} subtitle={`${XP_VALUES.sceau} XP chacun, aucun ne dépend de ton poids`} />
+        <BackHeader title={traduire("Tes sceaux")} scene={classique ? THEME_IMAGES.classique_salle_nuit : THEME_IMAGES.forge} subtitle={traduire("{0} XP chacun, aucun ne dépend de ton poids", XP_VALUES.sceau)} />
 
         <Animated.View entering={ENTREE} style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 14, marginTop: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                 <Ink size={50} weight="black" tight color={c.goldDeep}>{String(earned)}</Ink>
-                <Ink size={15} weight="bold" color={c.textSecondary} style={{ marginBottom: 8, flexShrink: 1 }}>{`sceau${earned > 1 ? 'x' : ''} sur ${seals.length || 41}`}</Ink>
+                <Ink size={15} weight="bold" color={c.textSecondary} style={{ marginBottom: 8, flexShrink: 1 }}>{traduirePluriel(earned, earned > 1, "sceau sur {0}", "sceaux sur {0}", seals.length || 41)}</Ink>
               </View>
             </View>
             <View style={{ flexDirection: 'row' }}>
@@ -59,20 +60,20 @@ export default function Sceaux() {
             </View>
           </View>
           <Bar progress={seals.length ? earned / seals.length : 0} color={c.gold} />
-          <Ink size={13} color={c.textSecondary}>{latest[0] ? `Dernier gagné : ${nomSceau(latest[0], (classique ? 'classique' : 'japon'))}${latest[0].earnedAt ? `, le ${formatDay(latest[0].earnedAt)}` : ''}` : 'Ton premier sceau t’attend. Appuie sur un sceau pour voir comment le gagner.'}</Ink>
+          <Ink size={13} color={c.textSecondary}>{latest[0] ? traduire("Dernier gagné : {0}{1}", nomSceau(latest[0], (classique ? 'classique' : 'japon')), latest[0].earnedAt ? `, le ${formatDay(latest[0].earnedAt)}` : '') : traduire('Ton premier sceau t’attend. Appuie sur un sceau pour voir comment le gagner.')}</Ink>
         </Animated.View>
 
         <Animated.View entering={ENTREE} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16 }}>
           <Hanko size={56} shape="rond" color={c.indigo} earned={lunes > 0} tampon="lapin_lune" />
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={17} weight="black">{LUNE.name}</Ink>
-            <Ink size={13} color={c.textSecondary}>{`${LUNE.condition}. Il se gagne chaque mois, +${XP_VALUES.lune} XP à chaque fois.`}</Ink>
-            <Ink size={14} weight="extraBold" color={lunes > 0 ? c.indigo : c.textMuted}>{lunes > 0 ? `Gagnée ${lunes} fois` : 'Pas encore gagnée'}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("{0}. Il se gagne chaque mois, +{1} XP à chaque fois.", LUNE.condition, XP_VALUES.lune)}</Ink>
+            <Ink size={14} weight="extraBold" color={lunes > 0 ? c.indigo : c.textMuted}>{lunes > 0 ? traduire("Gagnée {0} fois", lunes) : traduire('Pas encore gagnée')}</Ink>
           </View>
         </Animated.View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 8 }}>
-          {([{ id: 'all', name: 'Tous' }, ...SEAL_FAMILIES] as { id: string; name: string }[]).map((f) => {
+          {([{ id: 'all', name: traduire('Tous') }, ...SEAL_FAMILIES] as { id: string; name: string }[]).map((f) => {
             const on = filter === f.id;
             const list = f.id === 'all' ? seals : seals.filter((x) => x.family === f.id);
             return (
@@ -116,7 +117,7 @@ export default function Sceaux() {
                       setOpen(s);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={`${nomSceau(s, (classique ? 'classique' : 'japon'))}, ${s.earned ? 'gagné' : `à gagner, ${s.current} sur ${s.target}`}`}
+                    accessibilityLabel={`${nomSceau(s, (classique ? 'classique' : 'japon'))}, ${s.earned ? traduire('gagné') : traduire("à gagner, {0} sur {1}", s.current, s.target)}`}
                     style={({ pressed }) => ({ width: '33.333%', paddingHorizontal: 4, minHeight: 128, alignItems: 'center', gap: 6, paddingVertical: 8, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
                   >
                     <SealMedal id={s.id} color={f.ink} size={66} earned={s.earned} />
@@ -136,7 +137,7 @@ export default function Sceaux() {
       </ScrollView>
 
       <Modal visible={!!open} transparent animationType="fade" onRequestClose={() => setOpen(null)}>
-        <Pressable onPress={() => setOpen(null)} accessibilityLabel="Fermer" style={{ flex: 1, backgroundColor: 'rgba(20,22,30,0.55)', justifyContent: 'flex-end' }}>
+        <Pressable onPress={() => setOpen(null)} accessibilityLabel={traduire("Fermer")} style={{ flex: 1, backgroundColor: 'rgba(20,22,30,0.55)', justifyContent: 'flex-end' }}>
           {open ? (
             <Pressable onPress={() => undefined} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 22, alignItems: 'center', gap: 10 }}>
               <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 10 }} />
@@ -144,12 +145,12 @@ export default function Sceaux() {
               <Ink size={24} weight="black" tight style={{ marginTop: 6 }}>{nomSceau(open, (classique ? 'classique' : 'japon'))}</Ink>
               <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center' }}>{conditionSceau(open.condition, (classique ? 'classique' : 'japon'))}</Ink>
               {open.earned ? (
-                <Ink size={14} weight="bold" color={c.successText}>{`Gagné le ${formatDay(open.earnedAt ?? '')}, +${XP_VALUES.sceau} XP`}</Ink>
+                <Ink size={14} weight="bold" color={c.successText}>{traduire("Gagné le {0}, +{1} XP", formatDay(open.earnedAt ?? ''), XP_VALUES.sceau)}</Ink>
               ) : (
                 <View style={{ alignSelf: 'stretch', gap: 6, marginTop: 4 }}>
                   <Bar progress={open.current / open.target} color={famColor(open.family)} />
                   <Ink size={14} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>
-                    {`${open.target > 1 ? `${open.current} sur ${open.target}` : 'Pas encore'}, +${XP_VALUES.sceau} XP à la clé`}
+                    {traduire("{0}, +{1} XP à la clé", open.target > 1 ? `${open.current} sur ${open.target}` : 'Pas encore', XP_VALUES.sceau)}
                   </Ink>
                 </View>
               )}
@@ -161,7 +162,7 @@ export default function Sceaux() {
                 accessibilityRole="button"
                 style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, marginTop: 10, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}
               >
-                <Ink size={16} weight="extraBold">Fermer</Ink>
+                <Ink size={16} weight="extraBold">{traduire("Fermer")}</Ink>
               </Pressable>
             </Pressable>
           ) : null}

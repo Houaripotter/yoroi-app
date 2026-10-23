@@ -12,6 +12,7 @@ import { compact, humanMinutes, lastMonths, monthLabel, shortDate } from '@/lib/
 import { useTrainings } from '@/lib/v2/carnet/useCarnetData';
 import { P, Sheet2, BigStats, Columns, RankRow, RecordTile, BlockTitle } from '../ui';
 import { SessionLine, TabEmpty, TabLoading } from './common';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const FORCE = new Set(sportsInPack('force'));
 
@@ -41,7 +42,7 @@ export function WodsView({ refreshKey, hideEmpty }: { refreshKey: number; hideEm
 
   if (loading) return <TabLoading />;
   if (trainings.length === 0) {
-    return hideEmpty ? null : <TabEmpty title="Aucun WOD enregistré" text="Hyrox, CrossFit, powerlifting : ajoute tes sessions pour suivre ton volume et ton intensité." action="Ajouter une séance" href="/seance/deja-faite?sport=crossfit" />;
+    return hideEmpty ? null : <TabEmpty title={traduire("Aucun WOD enregistré")} text={traduire("Hyrox, CrossFit, powerlifting : ajoute tes sessions pour suivre ton volume et ton intensité.")} action={traduire("Ajouter une séance")} href="/seance/deja-faite?sport=crossfit" />;
   }
 
   return (
@@ -50,30 +51,30 @@ export function WodsView({ refreshKey, hideEmpty }: { refreshKey: number; hideEm
         <BigStats
           items={[
             { value: String(st.n), label: 'sessions', color: P.accent },
-            { value: humanMinutes(st.min), label: 'au total' },
+            { value: humanMinutes(st.min), label: traduire('au total') },
             { value: compact(st.kcal), label: 'kcal' },
-            { value: st.avgI ? `${String(st.avgI).replace('.', ',')}` : '--', unit: 'sur 10', label: 'intensité moyenne', color: P.indigo },
+            { value: st.avgI ? `${String(st.avgI).replace('.', DECIMAL)}` : '--', unit: traduire('sur 10'), label: traduire('intensité moyenne'), color: P.indigo },
           ]}
         />
       </Sheet2>
       <Sheet2>
-        <Ink size={18} weight="black" tight>Sessions, 6 mois</Ink>
+        <Ink size={18} weight="black" tight>{traduire("Sessions, 6 mois")}</Ink>
         <Columns items={st.months} color={P.ink} />
       </Sheet2>
       {st.dist.length > 1 ? (
         <Sheet2>
-          <Ink size={18} weight="black" tight>Par discipline</Ink>
+          <Ink size={18} weight="black" tight>{traduire("Par discipline")}</Ink>
           {st.dist.map((d) => (
-            <RankRow key={d.sport} title={getSportName(d.sport)} value={`${d.count} sur ${st.n}`} sub={`soit ${Math.round((d.count / st.n) * 100)} % de tes sessions`} ratio={d.count / st.dist[0].count} color={P.accent} />
+            <RankRow key={d.sport} title={getSportName(d.sport)} value={traduire("{0} sur {1}", d.count, st.n)} sub={traduire("soit {0} % de tes sessions", Math.round((d.count / st.n) * 100))} ratio={d.count / st.dist[0].count} color={P.accent} />
           ))}
         </Sheet2>
       ) : null}
-      {st.longest ? <RecordTile label="Session la plus longue" value={humanMinutes(st.longest.duration_minutes || 0)} sub={`${getSportName(st.longest.sport)}, ${shortDate(st.longest.date)}`} tone="gold" /> : null}
-      <BlockTitle title="Dernières sessions" />
+      {st.longest ? <RecordTile label={traduire("Session la plus longue")} value={humanMinutes(st.longest.duration_minutes || 0)} sub={`${getSportName(st.longest.sport)}, ${shortDate(st.longest.date)}`} tone="gold" /> : null}
+      <BlockTitle title={traduire("Dernières sessions")} />
       {recent.map((t) => {
         const chips: string[] = [];
         if (t.duration_minutes) chips.push(humanMinutes(t.duration_minutes));
-        if (t.intensity) chips.push(`effort ${t.intensity} sur 10`);
+        if (t.intensity) chips.push(traduire("effort {0} sur 10", t.intensity));
         if (t.calories) chips.push(`${t.calories} kcal`);
         return <SessionLine key={t.id ?? t.date} t={t} title={`${getSportName(t.sport)}${t.technical_theme ? `, ${t.technical_theme}` : ''}`} chips={chips} tone={P.accent} />;
       })}

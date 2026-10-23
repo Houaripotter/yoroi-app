@@ -29,6 +29,7 @@ import { accordSouleve, formatTonnage, mondayOf } from '@/lib/v2/trainingWeek';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { dayLong, dayShort, daysDiff, monthLong, num, shiftDays, thousands, todayIso } from '@/lib/v2/progres/format';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 function kilos(v: number): string {
   return `${num(v, v >= 100 ? 0 : 1)}`;
@@ -94,20 +95,20 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
       <View style={{ paddingTop: showCardio ? 18 : 6, gap: 26 }}>
         {showCardio ? <AnalysesRow style={{ marginHorizontal: GUTTER }} /> : null}
         {showCardio && trainings.length ? <TrainingCharts trainings={trainings} style={{ marginHorizontal: GUTTER }} /> : null}
-        {showCardio ? <SectionHead title="Ta force" style={{ marginHorizontal: GUTTER, marginBottom: -14 }} /> : null}
+        {showCardio ? <SectionHead title={traduire("Ta force")} style={{ marginHorizontal: GUTTER, marginBottom: -14 }} /> : null}
         <ExamplePreview
-          title="Tes courbes de force naissent ici"
-          text="Note tes séries avec la charge et les répétitions. YOROI estime ton maximum sur une répétition et marque chaque record."
-          plusHint="Touche + pour noter ta séance"
+          title={traduire("Tes courbes de force naissent ici")}
+          text={traduire("Note tes séries avec la charge et les répétitions. YOROI estime ton maximum sur une répétition et marque chaque record.")}
+          plusHint={traduire("Touche + pour noter ta séance")}
         >
           <Ink size={14} weight="bold" color={c.textSecondary}>
-            {`${ex.name}, maximum estimé`}
+            {traduire("{0}, maximum estimé", ex.name)}
           </Ink>
           <View style={{ marginTop: 8, marginHorizontal: -14 }}>
-            <InkLineChart points={ex.points} domaine="seances" height={190} digits={0} minSpan={4} label="Exemple de courbe de force" />
+            <InkLineChart points={ex.points} domaine="seances" height={190} digits={0} minSpan={4} label={traduire("Exemple de courbe de force")} />
           </View>
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
-            <LegendMark kind="line" color={couleurTraitDomaine('seances')} label="maximum estimé" />
+            <LegendMark kind="line" color={couleurTraitDomaine('seances')} label={traduire("maximum estimé")} />
             <LegendMark kind="seal" color={RECORD_RED} label="record" />
           </View>
         </ExamplePreview>
@@ -129,7 +130,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
       {/* Vague 26 : les analyses en haut, puis tes seances semaine par semaine, puis ta force */}
       {showCardio ? <AnalysesRow style={{ marginHorizontal: GUTTER }} /> : null}
       {showCardio ? <TrainingCharts trainings={trainings} style={{ marginHorizontal: GUTTER, marginTop: 26 }} /> : null}
-      {showCardio ? <SectionHead title="Ta force" style={{ marginHorizontal: GUTTER, marginTop: 34, marginBottom: 12 }} /> : <View style={{ height: 6 }} />}
+      {showCardio ? <SectionHead title={traduire("Ta force")} style={{ marginHorizontal: GUTTER, marginTop: 34, marginBottom: 12 }} /> : <View style={{ height: 6 }} />}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER }}>
         <Pills
           scroll
@@ -145,9 +146,9 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
       <View style={{ paddingHorizontal: GUTTER, marginTop: 18, minHeight: 104, gap: 2 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 28 }}>
           <Ink size={14} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={2}>
-            {head ? dayLong(head.date) : 'Ton maximum estimé sur une répétition'}
+            {head ? dayLong(head.date) : traduire('Ton maximum estimé sur une répétition')}
           </Ink>
-          <DetailCue onPress={openDetail} label="Détail" style={{ marginVertical: -8 }} />
+          <DetailCue onPress={openDetail} label={traduire("Détail")} style={{ marginVertical: -8 }} />
         </View>
         <Ink size={52} weight="black" tight>
           {kilos(cv(head ? head.value : last.value))} <Ink size={20} weight="black" color={c.textSecondary}>{mot}</Ink>
@@ -156,12 +157,12 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
         {head?.record ? <BadgeRecord size={13} /> : null}
         <Ink size={14} weight="bold" color={c.ink}>
           {head
-            ? `${num(cv(head.weight), 1)} ${mot} pour ${head.reps} répétition${head.reps > 1 ? 's' : ''}`
+            ? traduirePluriel(head.reps, head.reps > 1, "{0} {1} pour {2} répétition", "{0} {1} pour {2} répétitions", num(cv(head.weight), 1), mot, head.reps)
             : shown.length < 2
-              ? 'Encore une séance pour voir ta courbe'
+              ? traduire('Encore une séance pour voir ta courbe')
               : Math.abs(gain) < 0.5
-                ? `stable depuis ${monthLong(first.date)}`
-                : `${kilos(Math.abs(gain))} ${mot1}${Math.abs(gain) >= 2 ? 's' : ''} de ${gain > 0 ? 'plus' : 'moins'} depuis ${monthLong(first.date)}`}
+                ? traduire("stable depuis {0}", monthLong(first.date))
+                : traduirePluriel(Math.abs(gain), Math.abs(gain) >= 2, "{0} {1} de {2} depuis {3}", "{0} {1}s de {2} depuis {3}", kilos(Math.abs(gain)), mot1, gain > 0 ? 'plus' : 'moins', monthLong(first.date))}
         </Ink>
       </View>
 
@@ -175,41 +176,39 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
             minSpan={4}
             onScrub={(p) => setScrub(p)}
             onPress={openDetail}
-            label={`Maximum estimé, ${lift.name}, de ${kilos(cv(first.value))} à ${kilos(cv(last.value))} ${mot}`}
+            label={traduire("Maximum estimé, {0}, de {1} à {2} {3}", lift.name, kilos(cv(first.value)), kilos(cv(last.value)), mot)}
           />
         ) : (
           <View style={{ height: 120, justifyContent: 'center', paddingHorizontal: 14 }}>
             <Ink size={14} color={c.textSecondary}>
-              Aucune séance sur cette période pour cet exercice. Élargis la période.
-            </Ink>
+              {traduire("Aucune séance sur cette période pour cet exercice. Élargis la période.")}</Ink>
           </View>
         )}
       </View>
       <View style={{ flexDirection: 'row', gap: 14, paddingHorizontal: GUTTER, marginTop: 8, flexWrap: 'wrap' }}>
-        <LegendMark kind="line" color={couleurTraitDomaine('seances')} label="maximum estimé" />
+        <LegendMark kind="line" color={couleurTraitDomaine('seances')} label={traduire("maximum estimé")} />
         <LegendMark kind="seal" color={RECORD_RED} label="record" />
       </View>
       <PeriodSwitch value={period} onChange={setPeriod} style={{ marginHorizontal: GUTTER, marginTop: 14 }} />
       <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 10 }}>
-        Estimation par la formule d’Epley à partir de ta meilleure série du jour. Touche la courbe pour son détail, glisse ton doigt pour revoir chaque séance.
-      </Ink>
+        {traduire("Estimation par la formule d’Epley à partir de ta meilleure série du jour. Touche la courbe pour son détail, glisse ton doigt pour revoir chaque séance.")}</Ink>
 
       {lastRecord ? (
         <GlassCard style={{ marginHorizontal: GUTTER, marginTop: 18, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 }}>
           <Hanko size={30} tampon="record_force" />
           <View style={{ flex: 1, gap: 2 }}>
             <Ink size={15} weight="extraBold">{`Dernier record, ${dayLong(lastRecord.date)}`}</Ink>
-            <Ink size={13} color={c.textSecondary}>{`${num(cv(lastRecord.weight), 1)} ${mot} pour ${lastRecord.reps} répétition${lastRecord.reps > 1 ? 's' : ''}, soit ${kilos(cv(lastRecord.value))} ${mot} estimé${unite === 'lb' ? 'e' : ''}s`}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduirePluriel(lastRecord.reps, lastRecord.reps > 1, "{0} {1} pour {2} répétition, soit {3} {4} estimé{5}s", "{0} {1} pour {2} répétitions, soit {3} {4} estimé{5}s", num(cv(lastRecord.weight), 1), mot, lastRecord.reps, kilos(cv(lastRecord.value)), mot, unite === 'lb' ? 'e' : '')}</Ink>
           </View>
         </GlassCard>
       ) : null}
 
       <View style={{ paddingHorizontal: GUTTER, marginTop: 30 }}>
-        <SectionHead title="Séries par muscle" aside={weekOffset === 0 ? 'cette semaine' : `semaine du ${dayShort(weekStart)}`} />
+        <SectionHead title={traduire("Séries par muscle")} aside={weekOffset === 0 ? traduire('cette semaine') : traduire("semaine du {0}", dayShort(weekStart))} />
         <Pills
           items={[
-            { value: 0, label: 'Cette semaine' },
-            { value: 1, label: 'La précédente' },
+            { value: 0, label: traduire('Cette semaine') },
+            { value: 1, label: traduire('La précédente') },
           ]}
           value={weekOffset}
           onChange={setWeekOffset}
@@ -225,7 +224,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
           {MUSCLE_ORDER.map((m) => {
             const n = muscles[m];
             return (
-              <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} accessibilityLabel={`${m}, ${n} séries`}>
+              <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} accessibilityLabel={traduire("{0}, {1} séries", m, n)}>
                 <Ink size={14} weight="bold" color={c.textSecondary} style={{ width: 84 }}>
                   {m}
                 </Ink>
@@ -242,17 +241,16 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
           })}
         </View>
         <Ink size={12} color={c.textSecondary} style={{ marginTop: 10 }}>
-          Le trait pointillé marque 10 séries dans la semaine, un bon repère pour progresser.
-        </Ink>
+          {traduire("Le trait pointillé marque 10 séries dans la semaine, un bon repère pour progresser.")}</Ink>
       </View>
 
       <View style={{ paddingHorizontal: GUTTER, marginTop: 30 }}>
         <SectionHead
-          title="Tonnage par semaine"
-          aside={tonSel !== null ? `semaine du ${dayShort(tonnage[tonSel].monday)}` : tonAvg ? `moyenne ${tonnageText(tonAvg, unite)}` : undefined}
+          title={traduire("Tonnage par semaine")}
+          aside={tonSel !== null ? traduire("semaine du {0}", dayShort(tonnage[tonSel].monday)) : tonAvg ? `moyenne ${tonnageText(tonAvg, unite)}` : undefined}
         />
         <Ink size={14} color={c.textSecondary} style={{ marginTop: 2 }}>
-          {tonSel !== null ? `${tonnageText(tonnage[tonSel].value, unite)} ${accordSouleve(tonnage[tonSel].value, unite)}` : 'Charge multipliée par les répétitions, toutes séries confondues'}
+          {tonSel !== null ? `${tonnageText(tonnage[tonSel].value, unite)} ${accordSouleve(tonnage[tonSel].value, unite)}` : traduire('Charge multipliée par les répétitions, toutes séries confondues')}
         </Ink>
         <View style={{ marginTop: 12 }}>
           <InkBarChart
@@ -261,12 +259,12 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
             average={tonAvg}
             format={(v: number) => tonnageText(v, unite)}
             onSelect={setTonSel}
-            label="Tonnage des dix dernières semaines, la semaine en cours en indigo"
+            label={traduire("Tonnage des dix dernières semaines, la semaine en cours en indigo")}
           />
         </View>
         <View style={{ flexDirection: 'row', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
-          <LegendMark kind="square" color={tint(CHART_COLORS.blue, 0.58)} label="semaines passées" />
-          <LegendMark kind="square" color={c.accent} label="cette semaine" />
+          <LegendMark kind="square" color={tint(CHART_COLORS.blue, 0.58)} label={traduire("semaines passées")} />
+          <LegendMark kind="square" color={c.accent} label={traduire("cette semaine")} />
           {tonAvg ? <LegendMark kind="dash" color={c.textSecondary} label="moyenne" /> : null}
         </View>
       </View>

@@ -15,13 +15,14 @@ import type { FighterData } from '@/components/yoroi/v2/partage/FighterCardView'
 import { cardWidthFor } from '@/components/yoroi/v2/partage/cardKit';
 import { useStudio } from '@/lib/v2/partage/useStudio';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 export default function FighterCardScreen() {
   const { width: sw } = useWindowDimensions();
   const id = useCardIdentity();
   const [data, setData] = useState<FighterData | null>(null);
   const [loading, setLoading] = useState(true);
-  const studio = useStudio({ initialStyle: 'papier', dialogTitle: 'Partager ma carte de combattant', fallbackMessage: 'Ma carte de combattant YOROI', source: 'carte_combattant' });
+  const studio = useStudio({ initialStyle: 'papier', dialogTitle: traduire('Partager ma carte de combattant'), fallbackMessage: traduire('Ma carte de combattant YOROI'), source: 'carte_combattant' });
 
   useEffect(() => {
     (async () => {
@@ -46,14 +47,14 @@ export default function FighterCardScreen() {
         const start = profile?.start_weight || current;
         const lost = current > 0 ? Math.max(0, start - current) : 0;
         const since = profile?.start_date || profile?.created_at;
-        const joinDate = since ? new Date(since).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        const joinDate = since ? new Date(since).toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' });
         setData({
           name: profile?.name || settings?.username || 'Guerrier YOROI',
           weight: current,
           height: settings?.height || profile?.height_cm || 0,
           totalTrainings: trainings.length,
           totalMinutes: minutes,
-          discipline: top ? (getSportName(top) ?? top) : 'À découvrir',
+          discipline: top ? (getSportName(top) ?? top) : traduire('À découvrir'),
           disciplineId: top,
           joinDate,
           weightLost: Math.round(lost * 10) / 10,
@@ -69,10 +70,10 @@ export default function FighterCardScreen() {
 
   return (
     <ShareStudio
-      title="Carte de combattant"
-      subtitle="Ton rang et tes chiffres, prêts pour Instagram"
+      title={traduire("Carte de combattant")}
+      subtitle={traduire("Ton rang et tes chiffres, prêts pour Instagram")}
       loading={loading}
-      empty={!loading && !data ? { title: 'Ta carte ne s’affiche pas', text: 'Tes données n’ont pas pu être lues. Réessaie dans un instant.', action: 'Retour', onAction: () => router.back() } : null}
+      empty={!loading && !data ? { title: traduire('Ta carte ne s’affiche pas'), text: traduire('Tes données n’ont pas pu être lues. Réessaie dans un instant.'), action: traduire('Retour'), onAction: () => router.back() } : null}
       style={studio.style}
       onStyle={studio.setStyle}
       hasPhoto={studio.hasPhoto}

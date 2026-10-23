@@ -19,6 +19,7 @@ import { Icon } from './Icon';
 import { BigButton, EmptyState, Glass, SectionTitle, tap } from './ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export function ClubLogo({ club, size = 52 }: { club: Club; size?: number }) {
   const src = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
@@ -63,10 +64,10 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
   const outdoor = trainings.filter((t) => t.is_outdoor);
 
   const remove = (club: Club) => {
-    appAlert('Supprimer ce club ?', `${club.name} sera retiré. Tes séances restent dans ton historique.`, [
-      { text: 'Annuler', style: 'cancel' },
+    appAlert(traduire('Supprimer ce club ?'), traduire("{0} sera retiré. Tes séances restent dans ton historique.", club.name), [
+      { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: traduire('Supprimer'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -75,7 +76,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
             onChanged();
           } catch (e) {
             logger.error('Suppression du club impossible', e);
-            appAlert('Oups', 'Le club n’a pas pu être supprimé.');
+            appAlert('Oups', traduire('Le club n’a pas pu être supprimé.'));
           }
         },
       },
@@ -84,9 +85,9 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
 
   return (
     <View style={{ gap: 12 }}>
-      <SectionTitle title="Tes clubs" action="Ajouter" onAction={() => { setEditing(null); setFormOpen(true); }} />
+      <SectionTitle title={traduire("Tes clubs")} action={traduire("Ajouter")} onAction={() => { setEditing(null); setFormOpen(true); }} />
       {clubs.length === 0 ? (
-        <EmptyState title="Ajoute ton club" text="Ta salle, ton dojo, ta box : tes séances s’y rattachent et tu vois ta régularité club par club." action="Ajouter un club" onAction={() => { setEditing(null); setFormOpen(true); }} />
+        <EmptyState title={traduire("Ajoute ton club")} text={traduire("Ta salle, ton dojo, ta box : tes séances s’y rattachent et tu vois ta régularité club par club.")} action={traduire("Ajouter un club")} onAction={() => { setEditing(null); setFormOpen(true); }} />
       ) : (
         clubs.map((club) => {
           const all = trainings.filter((t) => t.club_id === club.id);
@@ -96,12 +97,12 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
               <ClubLogo club={club} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Ink size={16} weight="extraBold" numberOfLines={2}>{club.name}</Ink>
-                <Ink size={12} color={c.textSecondary}>{`${getSportName(club.sport)}, ${month} ce mois, ${all.length} au total`}</Ink>
+                <Ink size={12} color={c.textSecondary}>{traduire("{0}, {1} ce mois, {2} au total", getSportName(club.sport), month, all.length)}</Ink>
               </View>
-              <Pressable onPress={() => { tap(); setEditing(club); setFormOpen(true); }} accessibilityRole="button" accessibilityLabel={`Modifier ${club.name}`} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => { tap(); setEditing(club); setFormOpen(true); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier {0}", club.name)} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="edit" size={18} color={c.ink} />
               </Pressable>
-              <Pressable onPress={() => { tap(); remove(club); }} accessibilityRole="button" accessibilityLabel={`Supprimer ${club.name}`} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.dangerTint, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => { tap(); remove(club); }} accessibilityRole="button" accessibilityLabel={traduire("Supprimer {0}", club.name)} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.dangerTint, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="trash" size={18} color={c.danger} />
               </Pressable>
             </Glass>
@@ -115,19 +116,19 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
             <Icon name="mountain" size={24} color={c.successText} />
           </View>
           <View style={{ flex: 1 }}>
-            <Ink size={16} weight="extraBold">En extérieur</Ink>
-            <Ink size={12} color={c.textSecondary}>{`${outdoor.filter(inMonth).length} ce mois, ${outdoor.length} au total`}</Ink>
+            <Ink size={16} weight="extraBold">{traduire("En extérieur")}</Ink>
+            <Ink size={12} color={c.textSecondary}>{traduire("{0} ce mois, {1} au total", outdoor.filter(inMonth).length, outdoor.length)}</Ink>
           </View>
         </Glass>
       ) : null}
 
-      <SectionTitle title="Tes objectifs" action="Régler" onAction={() => router.push('/training-goals?tab=training' as any)} />
+      <SectionTitle title={traduire("Tes objectifs")} action={traduire("Régler")} onAction={() => router.push('/training-goals?tab=training' as any)} />
       {goals.length === 0 ? (
-        <Glass onPress={() => router.push('/training-goals?tab=training' as any)} label="Fixer un objectif" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Glass onPress={() => router.push('/training-goals?tab=training' as any)} label={traduire("Fixer un objectif")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Icon name="target" size={24} color={c.accent} />
           <View style={{ flex: 1 }}>
-            <Ink size={15} weight="extraBold">Fixe-toi un objectif par sport</Ink>
-            <Ink size={13} color={c.textSecondary}>Par exemple trois séances de JJB par semaine.</Ink>
+            <Ink size={15} weight="extraBold">{traduire("Fixe-toi un objectif par sport")}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire("Par exemple trois séances de JJB par semaine.")}</Ink>
           </View>
         </Glass>
       ) : (
@@ -135,19 +136,19 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
           <Glass key={g.goal.sport_id} style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Ink size={15} weight="extraBold">{g.sport?.name ?? getSportName(g.goal.sport_id)}</Ink>
-              <Ink size={14} weight="black">{`${g.weekCount} sur ${g.weekTarget}`}</Ink>
+              <Ink size={14} weight="black">{traduire("{0} sur {1}", g.weekCount, g.weekTarget)}</Ink>
             </View>
             <View style={{ flexDirection: 'row', gap: 4 }}>
               {Array.from({ length: Math.max(1, g.weekTarget) }, (_, i) => (
                 <View key={i} style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: i < g.weekCount ? c.accent : c.fillSubtle }} />
               ))}
             </View>
-            <Ink size={12} color={c.textMuted}>{g.weekCount >= g.weekTarget ? 'Objectif de la semaine tenu' : `Encore ${g.sessionsNeeded} séance${g.sessionsNeeded > 1 ? 's' : ''} cette semaine`}</Ink>
+            <Ink size={12} color={c.textMuted}>{g.weekCount >= g.weekTarget ? traduire('Objectif de la semaine tenu') : traduirePluriel(g.sessionsNeeded, g.sessionsNeeded > 1, "Encore {0} séance cette semaine", "Encore {0} séances cette semaine", g.sessionsNeeded)}</Ink>
           </Glass>
         ))
       )}
 
-      {clubs.length > 0 ? <BigButton label="Ajouter un club" tone="soft" icon="plus" onPress={() => { setEditing(null); setFormOpen(true); }} /> : null}
+      {clubs.length > 0 ? <BigButton label={traduire("Ajouter un club")} tone="soft" icon="plus" onPress={() => { setEditing(null); setFormOpen(true); }} /> : null}
 
       <ClubFormModal visible={formOpen} editingClub={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSave={() => { load(); onChanged(); }} />
     </View>

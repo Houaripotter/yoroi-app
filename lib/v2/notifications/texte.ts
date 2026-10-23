@@ -10,10 +10,11 @@
 // ============================================
 
 /** Texte de repli quand un titre contient une valeur interdite. */
+import { traduire } from '@/lib/i18n/tr';
 export const TITRE_NEUTRE = 'YOROI';
 
 /** Texte de repli quand un corps contient une valeur interdite. */
-export const CORPS_NEUTRE = 'Ouvre YOROI pour voir le détail.';
+export const CORPS_NEUTRE = traduire('Ouvre YOROI pour voir le détail.');
 
 // Un nombre (entier ou décimal, virgule ou point, signe éventuel)
 const NOMBRE = String.raw`[+-]?\d+(?:[.,]\d+)?`;
@@ -21,14 +22,14 @@ const NOMBRE = String.raw`[+-]?\d+(?:[.,]\d+)?`;
 // Unités de santé qui ne doivent jamais suivre un chiffre
 const UNITES_APRES_CHIFFRE = [
   'kg', 'kgs', 'kilos?', 'lbs?', 'g',
-  'kcal', 'cal', 'calories?',
+  'kcal', 'cal', traduire('calories?'),
   'bpm', 'bat(?:tements)?/min',
   'ml', 'cl', 'dl', 'l', 'litres?',
   'cm', 'mm',
-  'km', 'm', 'mètres?', 'metres?',
-  'pts', 'points de charge',
-  'h de sommeil', 'heures? de sommeil', 'h sans boire', 'heures? sans boire',
-  '%\\s*de masse grasse', '%\\s*mg',
+  'km', 'm', traduire('mètres?'), 'metres?',
+  'pts', traduire('points de charge'),
+  traduire('h de sommeil'), traduire('heures? de sommeil'), traduire('h sans boire'), traduire('heures? sans boire'),
+  traduire('%\\s*de masse grasse'), '%\\s*mg',
 ];
 
 const MOTIF_CHIFFRE_UNITE = new RegExp(

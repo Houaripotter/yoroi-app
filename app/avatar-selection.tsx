@@ -23,6 +23,7 @@ import { usePremium } from '@/context/PremiumContext';
 import { MONDE_PERSONNAGES, classiqueImage, isPackUnlocked, packDisplayName, packImage, parsePersonnage, personnageKey } from '@/lib/v2/dojo/personnages';
 import { UNIVERS_CHOIX } from '@/lib/v2/dojo/univers';
 import { choisirUnivers, genreDuPersonnage, type ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
+import { traduire } from '@/lib/i18n/tr';
 
 const phraseUnivers = (id: ChoixUnivers) => UNIVERS_CHOIX.find((u) => u.id === id)?.phrase;
 
@@ -76,11 +77,11 @@ export default function TonPersonnage() {
   const aucunOn = kind === 'aucun';
 
   return (
-    <EspaceScreen title="Ton personnage" subtitle="Il décore ton accueil et ton rond de profil.">
+    <EspaceScreen title={traduire("Ton personnage")} subtitle={traduire("Il décore ton accueil et ton rond de profil.")}>
       <SectionTitle title="Japon" sub={phraseUnivers('japon')} />
       <GuerrierPicker value={espace.personnage} rankIndex={rankIndex} onPick={pick} height={290} />
       {kind === 'pack' || (kind === 'guerrier' && !estGuerrier) ? (
-        <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Ton personnage actuel vient d’un pack ou du monde samouraï. Choisis le guerrier ou la guerrière pour y revenir.</Ink>
+        <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Ton personnage actuel vient d’un pack ou du monde samouraï. Choisis le guerrier ou la guerrière pour y revenir.")}</Ink>
       ) : null}
 
       {/* vague 45 : l'univers Classique, gratuit comme le Guerrier */}
@@ -94,21 +95,21 @@ export default function TonPersonnage() {
       <Pressable
         onPress={() => { selectionAsync().catch(() => {}); void pickAucun(); }}
         accessibilityRole="button"
-        accessibilityLabel={`Sans personnage. ${phraseUnivers('aucun') ?? ''}`}
+        accessibilityLabel={traduire("Sans personnage. {0}", phraseUnivers('aucun') ?? '')}
         accessibilityState={{ selected: aucunOn }}
         style={{ height: 120, borderRadius: 22, overflow: 'hidden', borderWidth: aucunOn ? 3 : 1, borderColor: aucunOn ? c.accent : c.border, backgroundColor: c.fillSoft }}
       >
         <Image source={sceneMeta('classique_salle_jour').image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
         <View style={{ position: 'absolute', left: 12, bottom: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ backgroundColor: aucunOn ? c.accent : c.surface, borderWidth: aucunOn ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
-            <Ink size={14} weight="extraBold" color={aucunOn ? '#FFFFFF' : c.ink}>Sans personnage</Ink>
+            <Ink size={14} weight="extraBold" color={aucunOn ? '#FFFFFF' : c.ink}>{traduire("Sans personnage")}</Ink>
           </View>
         </View>
         {aucunOn ? <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={14} color="#FFFFFF" stroke={3} /></View> : null}
       </Pressable>
       <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: -4 }}>{phraseUnivers('aucun')}</Ink>
 
-      <SectionTitle title="Le monde samouraï" sub={isPremium ? 'Six figures du Japon féodal, toutes à toi avec Premium' : 'Six figures du Japon féodal, à débloquer dans le Dojo'} />
+      <SectionTitle title={traduire("Le monde samouraï")} sub={isPremium ? traduire('Six figures du Japon féodal, toutes à toi avec Premium') : traduire('Six figures du Japon féodal, à débloquer dans le Dojo')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 10 }}>
         {MONDE_PERSONNAGES.map((p) => {
           const key = personnageKey(p, genre);
@@ -127,19 +128,19 @@ export default function TonPersonnage() {
               }}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={`${name}, ${on ? 'ton personnage' : unlocked ? 'touche pour le choisir' : 'à débloquer dans le Dojo'}`}
+              accessibilityLabel={`${name}, ${on ? traduire('ton personnage') : unlocked ? traduire('touche pour le choisir') : traduire('à débloquer dans le Dojo')}`}
               style={{ width: 160, borderRadius: 22, backgroundColor: p.fond, borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, padding: 10, gap: 4 }}
             >
               <Image source={packImage(p, genre)} style={{ width: '100%', height: 200 }} resizeMode="contain" />
               {!unlocked ? <View style={{ position: 'absolute', top: 8, right: 8 }}><LockBadge size={24} /></View> : null}
               <Ink size={14} weight="extraBold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Ink>
-              <Ink size={12} weight="bold" color={on ? c.accent : unlocked ? c.successText : c.textMuted}>{on ? 'Ton personnage' : unlocked ? 'Choisir' : 'À débloquer'}</Ink>
+              <Ink size={12} weight="bold" color={on ? c.accent : unlocked ? c.successText : c.textMuted}>{on ? traduire('Ton personnage') : unlocked ? traduire('Choisir') : traduire('À débloquer')}</Ink>
             </Pressable>
           );
         })}
       </ScrollView>
 
-      <SectionTitle title="Les légendes" sub="Des personnages en trois niveaux, dans la boutique du dojo" />
+      <SectionTitle title={traduire("Les légendes")} sub={traduire("Des personnages en trois niveaux, dans la boutique du dojo")} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 10 }}>
         {PACKS.map((p) => {
           const on = espace.personnage === p.id;
@@ -148,14 +149,14 @@ export default function TonPersonnage() {
               key={p.id}
               onPress={() => router.push('/dojo/boutique' as any)}
               accessibilityRole="button"
-              accessibilityLabel={`${p.nom}, voir dans la boutique`}
+              accessibilityLabel={traduire("{0}, voir dans la boutique", p.nom)}
               style={{ width: 150, borderRadius: 22, backgroundColor: c.surface, borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, padding: 12, gap: 6 }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{p.nom}</Ink>
               </View>
               <Image source={p.images[on ? packLevel(rankIndex) - 1 : 0]} style={{ width: '100%', height: 150 }} resizeMode="contain" />
-              <Ink size={12} weight="bold" color={on ? c.accent : c.textMuted}>{on ? 'Ton personnage' : 'Voir le pack'}</Ink>
+              <Ink size={12} weight="bold" color={on ? c.accent : c.textMuted}>{on ? traduire('Ton personnage') : traduire('Voir le pack')}</Ink>
             </Pressable>
           );
         })}

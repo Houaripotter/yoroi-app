@@ -3,6 +3,7 @@
  * separes par des virgules dans training.muscles), regroupes en 6 zones pour la silhouette v2.
  */
 import type { MuscleName } from '@/lib/v2/progres/strength';
+import { traduire } from '@/lib/i18n/tr';
 
 export type MuscleId =
   | 'pectoraux' | 'deltoide_ant' | 'biceps' | 'avant_bras' | 'abdominaux'
@@ -13,8 +14,8 @@ export type MuscleId =
 export const ALL_MUSCLES: { id: MuscleId; label: string; group: MuscleName }[] = [
   { id: 'pectoraux', label: 'Pectoraux', group: 'Pectoraux' },
   { id: 'deltoide_ant', label: 'Épaules', group: 'Épaules' },
-  { id: 'deltoide_post', label: 'Arrière d’épaules', group: 'Épaules' },
-  { id: 'trapeze', label: 'Trapèzes', group: 'Dos' },
+  { id: 'deltoide_post', label: traduire('Arrière d’épaules'), group: 'Épaules' },
+  { id: 'trapeze', label: traduire('Trapèzes'), group: 'Dos' },
   { id: 'dorsaux', label: 'Dorsaux', group: 'Dos' },
   { id: 'lombaires', label: 'Lombaires', group: 'Dos' },
   { id: 'biceps', label: 'Biceps', group: 'Bras' },
@@ -27,7 +28,7 @@ export const ALL_MUSCLES: { id: MuscleId; label: string; group: MuscleName }[] =
   { id: 'fessiers', label: 'Fessiers', group: 'Jambes' },
   { id: 'mollets', label: 'Mollets', group: 'Jambes' },
   { id: 'tibialis', label: 'Tibias', group: 'Jambes' },
-  { id: 'flechisseurs', label: 'Fléchisseurs de hanche', group: 'Jambes' },
+  { id: 'flechisseurs', label: traduire('Fléchisseurs de hanche'), group: 'Jambes' },
 ];
 
 export const SPORT_MUSCLES: Record<string, { primary: MuscleId[]; secondary: MuscleId[] }> = {

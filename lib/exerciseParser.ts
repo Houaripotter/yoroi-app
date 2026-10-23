@@ -12,6 +12,7 @@
  */
 
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface ExerciseStats {
   label: string;
@@ -186,11 +187,11 @@ export function formatExercisesToText(exercises: ExerciseStats[]): string {
     if (ex.distance) stats.push(`${ex.distance}km`);
     if (ex.speed) stats.push(`${ex.speed}km/h`);
     if (ex.calories) stats.push(`${ex.calories}kcal`);
-    if (ex.stairs) stats.push(`${ex.stairs} étages`);
+    if (ex.stairs) stats.push(traduire("{0} étages", ex.stairs));
     if (ex.duration) stats.push(`${ex.duration}min`);
     if (ex.pente) stats.push(`${ex.pente}%`);
     if (ex.watts) stats.push(`${ex.watts}W`);
-    if (ex.resistance) stats.push(`niveau ${ex.resistance}`);
+    if (ex.resistance) stats.push(traduire("niveau {0}", ex.resistance));
     if (ex.cadence) stats.push(`${ex.cadence} rpm`);
 
     return stats.length > 0 ? `• ${ex.label} (${stats.join(', ')})` : `• ${ex.label}`;
@@ -215,12 +216,12 @@ export function validateExerciseFormat(notes: string): { valid: boolean; errors:
 
     // Vérifier que la ligne commence par un bullet point
     if (!/^\s*[•\-*]/.test(line)) {
-      errors.push(`Ligne ${i + 1}: Doit commencer par • ou - ou *`);
+      errors.push(traduire("Ligne {0}: Doit commencer par • ou - ou *", i + 1));
     }
 
     // Vérifier la présence de parenthèses si des stats sont attendues
     if (line.includes('(') && !line.includes(')')) {
-      errors.push(`Ligne ${i + 1}: Parenthèse non fermée`);
+      errors.push(traduire("Ligne {0}: Parenthèse non fermée", i + 1));
     }
   }
 
@@ -236,9 +237,9 @@ export function validateExerciseFormat(notes: string): { valid: boolean; errors:
 export const EXERCISE_FORMAT_EXAMPLES = [
   '• Squat (100kg x 10)',
   '• Course (5km, 25min, 12km/h)',
-  '• Vélo (45min, 250W, 85 rpm)',
+  traduire('• Vélo (45min, 250W, 85 rpm)'),
   '• Rameur (2000m, 350kcal)',
-  '• StairMaster (20 étages)',
-  '• Tapis de course (5km, 30min, pente 5%)',
-  '• Repos actif',
+  traduire('• StairMaster (20 étages)'),
+  traduire('• Tapis de course (5km, 30min, pente 5%)'),
+  traduire('• Repos actif'),
 ];

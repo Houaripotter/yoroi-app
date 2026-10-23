@@ -19,6 +19,7 @@ import { hoursText, weekBuckets, weekLabels } from '@/lib/v2/progres/weekly';
 import { sportLabel } from '@/lib/v2/seances/sessionData';
 import { dayShort, isoOf, num } from '@/lib/v2/progres/format';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const WEEKS = 12;
 
@@ -51,7 +52,7 @@ function WeekChart({ title, sub, bars, weeks, format, readOut, label, onMore }: 
     <View>
       <SectionHead title={title} aside={onMore?.label} onPress={onMore ? () => { tapLight(); onMore.onPress(); } : undefined} />
       <Ink size={14} color={sel !== null ? c.ink : c.textSecondary} weight={sel !== null ? 'bold' : 'medium'} style={{ marginTop: 2 }} numberOfLines={2}>
-        {sel !== null ? `Semaine du ${dayShort(weeks[sel])} : ${readOut(bars[sel].value)}` : avg !== null ? `${sub}, en moyenne ${format(avg)}` : sub}
+        {sel !== null ? traduire("Semaine du {0} : {1}", dayShort(weeks[sel]), readOut(bars[sel].value)) : avg !== null ? `${sub}, en moyenne ${format(avg)}` : sub}
       </Ink>
       <View style={{ marginTop: 10 }}>
         <InkBarChart bars={bars} highlight={bars.length - 1} average={avg} format={format} onSelect={setSel} label={label} sparseLabels height={160} />
@@ -107,53 +108,53 @@ export function TrainingCharts({ trainings, compact, more, style }: { trainings:
     <View style={[{ gap: 26 }, style]}>
       {sports.length >= 2 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER }} style={{ marginHorizontal: -GUTTER, marginBottom: -12 }}>
-          <Pills scroll items={[{ value: 'all', label: 'Tous les sports' }, ...sports.slice(0, 6).map(([id]) => ({ value: id, label: sportLabel(id) }))]} value={sport} onChange={setSport} />
+          <Pills scroll items={[{ value: 'all', label: traduire('Tous les sports') }, ...sports.slice(0, 6).map(([id]) => ({ value: id, label: sportLabel(id) }))]} value={sport} onChange={setSport} />
         </ScrollView>
       ) : null}
 
       <WeekChart
-        title="Séances par semaine"
-        sub={total ? `${total} séance${total > 1 ? 's' : ''} en 12 semaines` : 'Aucune séance sur 12 semaines'}
+        title={traduire("Séances par semaine")}
+        sub={total ? traduirePluriel(total, total > 1, "{0} séance en 12 semaines", "{0} séances en 12 semaines", total) : traduire('Aucune séance sur 12 semaines')}
         bars={count}
         weeks={weeks}
         format={(v) => num(v, v % 1 ? 1 : 0)}
-        readOut={(v) => `${v} séance${v > 1 ? 's' : ''}`}
-        label="Nombre de séances par semaine sur 12 semaines, la semaine en cours en indigo"
-        onMore={more ?? { label: 'Ton activité', onPress: () => router.push('/activity-detail' as any) }}
+        readOut={(v) => traduirePluriel(v, v > 1, "{0} séance", "{0} séances", v)}
+        label={traduire("Nombre de séances par semaine sur 12 semaines, la semaine en cours en indigo")}
+        onMore={more ?? { label: traduire('Ton activité'), onPress: () => router.push('/activity-detail' as any) }}
       />
 
       <WeekChart
-        title="Durée par semaine"
-        sub="Temps d’entraînement"
+        title={traduire("Durée par semaine")}
+        sub={traduire("Temps d’entraînement")}
         bars={hours}
         weeks={weeks}
         format={(v) => hoursText(v)}
         readOut={(v) => hoursText(v)}
-        label="Heures d’entraînement par semaine sur 12 semaines"
+        label={traduire("Heures d’entraînement par semaine sur 12 semaines")}
       />
 
       {!compact && hasRpe ? (
         <WeekChart
           title="Effort ressenti"
-          sub="Moyenne de la semaine, sur 10"
+          sub={traduire("Moyenne de la semaine, sur 10")}
           bars={effort}
           weeks={weeks}
           format={(v) => num(v, 1)}
-          readOut={(v) => (v > 0 ? `effort moyen ${num(v, 1)} sur 10` : 'aucun effort noté')}
-          label="Effort ressenti moyen par semaine, sur 10"
-          onMore={{ label: 'Ta charge', onPress: () => router.push('/charge' as any) }}
+          readOut={(v) => (v > 0 ? traduire("effort moyen {0} sur 10", num(v, 1)) : traduire('aucun effort noté'))}
+          label={traduire("Effort ressenti moyen par semaine, sur 10")}
+          onMore={{ label: traduire('Ta charge'), onPress: () => router.push('/charge' as any) }}
         />
       ) : null}
 
       {!compact && bySport.length ? (
         <View>
-          <SectionHead title="Par sport" aside="12 semaines" />
+          <SectionHead title={traduire("Par sport")} aside={traduire("12 semaines")} />
           <View style={{ gap: 12, marginTop: 12 }}>
             {bySport.map((s) => (
-              <Pressable key={s.id} onPress={() => { tapLight(); setSport(s.id); }} accessibilityRole="button" accessibilityLabel={`${s.label}, ${s.count} séances, ${hoursText(s.minutes)}, voir ses courbes`} style={{ gap: 5 }}>
+              <Pressable key={s.id} onPress={() => { tapLight(); setSport(s.id); }} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1} séances, {2}, voir ses courbes", s.label, s.count, hoursText(s.minutes))} style={{ gap: 5 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                   <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>{s.label}</Ink>
-                  <Ink size={13} weight="bold" color={c.textSecondary}>{`${s.count} séance${s.count > 1 ? 's' : ''}, ${hoursText(s.minutes)}`}</Ink>
+                  <Ink size={13} weight="bold" color={c.textSecondary}>{traduirePluriel(s.count, s.count > 1, "{0} séance, {1}", "{0} séances, {1}", s.count, hoursText(s.minutes))}</Ink>
                 </View>
                 <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSoft }}>
                   <View style={{ width: `${Math.max(2, (s.minutes / maxSport) * 100)}%`, height: 8, borderRadius: 4, backgroundColor: CHART_COLORS.blue }} />
@@ -161,13 +162,13 @@ export function TrainingCharts({ trainings, compact, more, style }: { trainings:
               </Pressable>
             ))}
           </View>
-          <Ink size={12} color={c.textSecondary} style={{ marginTop: 10 }}>Barres à la durée. Touche un sport pour ne voir que ses semaines.</Ink>
+          <Ink size={12} color={c.textSecondary} style={{ marginTop: 10 }}>{traduire("Barres à la durée. Touche un sport pour ne voir que ses semaines.")}</Ink>
         </View>
       ) : null}
 
       <View style={{ flexDirection: 'row', gap: 14, flexWrap: 'wrap', marginTop: -12 }}>
-        <LegendMark kind="square" color={tint(CHART_COLORS.blue, 0.58)} label="semaines passées" />
-        <LegendMark kind="square" color={c.accent} label="cette semaine" />
+        <LegendMark kind="square" color={tint(CHART_COLORS.blue, 0.58)} label={traduire("semaines passées")} />
+        <LegendMark kind="square" color={c.accent} label={traduire("cette semaine")} />
         <LegendMark kind="dash" color={c.textSecondary} label="moyenne" />
       </View>
     </View>
@@ -180,9 +181,9 @@ export function AnalysesRow({ style }: { style?: object }) {
   const c = theme.colors;
   const router = useRouter();
   const items = [
-    { label: 'Charge', sub: 'fatigue et forme', href: '/charge' },
-    { label: 'Profil', sub: 'ton radar de performance', href: '/radar-performance' },
-    { label: 'Activité', sub: 'semaine par semaine', href: '/activity-detail' },
+    { label: traduire('Charge'), sub: traduire('fatigue et forme'), href: '/charge' },
+    { label: traduire('Profil'), sub: traduire('ton radar de performance'), href: '/radar-performance' },
+    { label: traduire('Activité'), sub: traduire('semaine par semaine'), href: '/activity-detail' },
   ];
   return (
     <View style={[{ flexDirection: 'row', gap: 8 }, style]}>

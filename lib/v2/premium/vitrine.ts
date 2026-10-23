@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ImageSourcePropType } from 'react-native';
 import type { SceneId } from '@/lib/v2/espace';
 import { guerrierImage, packById, packDisplayName, packImage, parsePersonnage } from '@/lib/v2/dojo/personnages';
+import { traduire } from '@/lib/i18n/tr';
 
 export type MondeVitrine = 'japon' | 'hors_japon';
 
@@ -142,8 +143,8 @@ export function voileMax(liste: Vitrine[]): number {
 export function libelleVitrine(v: Vitrine): string {
   const p = parsePersonnage(v.cle);
   if (p.kind !== 'pack') return 'Armure Shōgun';
-  if (p.pack.kind === 'legende') return `Légende ${p.pack.name}`;
-  if (p.pack.kind === 'monde') return `Monde samouraï, ${packDisplayName(p.pack, p.gender)}`;
+  if (p.pack.kind === 'legende') return traduire("Légende {0}", p.pack.name);
+  if (p.pack.kind === 'monde') return traduire("Monde samouraï, {0}", packDisplayName(p.pack, p.gender));
   return `Pack ${p.pack.name}`;
 }
 

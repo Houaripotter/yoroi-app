@@ -4,6 +4,7 @@
 import type { Training } from '@/lib/database';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -100,13 +101,13 @@ export function tonnageParts(kg: number, unite: UnitePoids = 'kg'): { value: str
   const v = Math.max(0, kg || 0);
   // 18 octobre 2026 : en livres, le total en livres entieres (« 27 558 lb »), jamais en tonnes
   if (unite === 'lb') return { value: String(Math.round(versUnitePoids(v, 'lb'))).replace(/\B(?=(\d{3})+(?!\d))/g, ' '), unit: 'lb' };
-  if (v >= 1000) return { value: (Math.round(v / 100) / 10).toFixed(1).replace('.', ','), unit: 't' };
+  if (v >= 1000) return { value: (Math.round(v / 100) / 10).toFixed(1).replace('.', DECIMAL), unit: 't' };
   return { value: String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '), unit: 'kg' };
 }
 
 /** « soulevés » (kilos) ou « soulevées » (tonnes, livres) */
 export function accordSouleve(kg: number, unite: UnitePoids = 'kg'): string {
-  return unite === 'lb' || kg >= 1000 ? 'soulevées' : 'soulevés';
+  return unite === 'lb' || kg >= 1000 ? traduire('soulevées') : traduire('soulevés');
 }
 
 /** « 850 kg » ou « 3,2 t » */
@@ -147,10 +148,10 @@ export function groupByWeek(trainings: Training[], today: string = todayLocalIso
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(t);
     });
-  const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  const months = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
   return Array.from(map.entries()).map(([monday, items]) => {
     const d = new Date(monday + 'T12:00:00');
-    const title = monday === thisMonday ? 'Cette semaine' : monday === lastMonday ? 'Semaine dernière' : `Semaine du ${d.getDate()} ${months[d.getMonth()]}`;
+    const title = monday === thisMonday ? traduire('Cette semaine') : monday === lastMonday ? traduire('Semaine dernière') : traduire("Semaine du {0} {1}", d.getDate(), months[d.getMonth()]);
     return { monday, title, count: items.length, minutes: items.reduce((s, t) => s + durationOf(t), 0), items };
   });
 }

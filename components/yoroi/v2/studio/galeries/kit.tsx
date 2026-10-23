@@ -16,6 +16,7 @@ import { Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
+import { traduire } from '@/lib/i18n/tr';
 
 export const G = 22;
 
@@ -56,9 +57,9 @@ export function GalerieGate({ children }: { children: React.ReactNode }) {
     return (
       <View style={{ flex: 1, backgroundColor: c.background }}>
         <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16 }}>
-          <RoundButton icon="back" label="Retour" onPress={() => goBack(router)} />
+          <RoundButton icon="back" label={traduire("Retour")} onPress={() => goBack(router)} />
         </View>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }} accessible accessibilityLabel="Verrouillé">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }} accessible accessibilityLabel={traduire("Verrouillé")}>
           <View style={{ width: 96, height: 96, borderRadius: 32, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="lock" size={42} color={c.textMuted} />
           </View>

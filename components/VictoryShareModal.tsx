@@ -40,6 +40,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { calculatePace, formatDuration, formatDistance, formatValue, BenchmarkEntry } from '@/lib/carnetService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '@/lib/security/logger';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface VictorySessionData {
   exerciseName: string;
@@ -107,7 +108,7 @@ export default function VictoryShareModal({
   const pickImage = async () => {
     const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      showPopup('Accès aux photos', 'Autorise l’accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(traduire('Accès aux photos'), traduire('Autorise l’accès à tes photos pour ajouter une image.'), [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -127,7 +128,7 @@ export default function VictoryShareModal({
   const takePhoto = async () => {
     const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      showPopup('Accès à la caméra', 'Autorise la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(traduire('Accès à la caméra'), traduire('Autorise la caméra pour prendre une photo.'), [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -154,12 +155,12 @@ export default function VictoryShareModal({
       if (uri && (await isAvailableAsync())) {
         await shareAsync(uri, {
           mimeType: 'image/png',
-          dialogTitle: 'Partager ma performance',
+          dialogTitle: traduire('Partager ma performance'),
         });
       }
     } catch (error) {
       logger.error('Error sharing:', error);
-      showPopup('Oups', 'La carte n’a pas pu être partagée.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', traduire('La carte n’a pas pu être partagée.'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -178,13 +179,13 @@ export default function VictoryShareModal({
         if (await isAvailableAsync()) {
           await shareAsync(uri, {
             mimeType: 'image/png',
-            dialogTitle: 'Enregistrer la carte',
+            dialogTitle: traduire('Enregistrer la carte'),
           });
         }
       }
     } catch (error) {
       logger.error('Error saving:', error);
-      showPopup('Oups', 'La carte n’a pas pu être enregistrée.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', traduire('La carte n’a pas pu être enregistrée.'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -291,8 +292,7 @@ export default function VictoryShareModal({
         {distanceDisplay && (
           <View style={styles.runningStatBlock}>
             <Text style={[styles.runningStatLabel, { color: secondaryColor }, textShadow]}>
-              DISTANCE
-            </Text>
+              {traduire("DISTANCE")}</Text>
             <Text style={[styles.runningDistanceValue, { color: textColor }, textShadow]}>
               {distanceDisplay}
             </Text>
@@ -461,7 +461,7 @@ export default function VictoryShareModal({
           {/* DISTANCE */}
           {sessionData.distanceKm !== undefined && (
             <View style={[styles.miniStatBlock, { backgroundColor: getCategoryColor() + '30', borderColor: getCategoryColor() + '50', borderWidth: 1 }]}>
-              <Text style={[styles.miniStatLabel, { color: getCategoryColor() }, textShadow]}>DISTANCE</Text>
+              <Text style={[styles.miniStatLabel, { color: getCategoryColor() }, textShadow]}>{traduire("DISTANCE")}</Text>
               <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{formatDistance(sessionData.distanceKm)}</Text>
             </View>
           )}
@@ -477,7 +477,7 @@ export default function VictoryShareModal({
           {/* SPEED */}
           {sessionData.speed !== undefined && (
             <View style={[styles.miniStatBlock, { backgroundColor: '#10B98130', borderColor: '#10B98150', borderWidth: 1 }]}>
-              <Text style={[styles.miniStatLabel, { color: '#10B981' }, textShadow]}>VITESSE</Text>
+              <Text style={[styles.miniStatLabel, { color: '#10B981' }, textShadow]}>{traduire("VITESSE")}</Text>
               <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.speed} km/h</Text>
             </View>
           )}
@@ -493,7 +493,7 @@ export default function VictoryShareModal({
           {/* LEVEL / RESISTANCE */}
           {sessionData.level !== undefined && (
             <View style={[styles.miniStatBlock, { backgroundColor: '#8B5CF630', borderColor: '#8B5CF650', borderWidth: 1 }]}>
-              <Text style={[styles.miniStatLabel, { color: '#8B5CF6' }, textShadow]}>NIVEAU</Text>
+              <Text style={[styles.miniStatLabel, { color: '#8B5CF6' }, textShadow]}>{traduire("NIVEAU")}</Text>
               <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>Lvl {sessionData.level}</Text>
             </View>
           )}
@@ -551,8 +551,7 @@ export default function VictoryShareModal({
           <View style={styles.headerCenter}>
             <Trophy size={20} color="#F59E0B" />
             <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-              Victoire !
-            </Text>
+              {traduire("Victoire !")}</Text>
           </View>
           <View style={{ width: 40 }} />
         </View>
@@ -632,7 +631,7 @@ export default function VictoryShareModal({
                     {sessionData.isPR && (
                       <View style={styles.prBanner}>
                         <Award size={16} color="#F59E0B" />
-                        <Text style={styles.prText}>NOUVEAU RECORD</Text>
+                        <Text style={styles.prText}>{traduire("NOUVEAU RECORD")}</Text>
                       </View>
                     )}
 
@@ -689,7 +688,7 @@ export default function VictoryShareModal({
                           <Text style={[
                             styles.footerTagline,
                             selectedTemplate === 'light' && { color: 'rgba(0,0,0,0.6)' }
-                          ]}>Suivi du poids & sport</Text>
+                          ]}>{traduire("Suivi du poids & sport")}</Text>
                         </View>
 
                         {/* RIGHT: Store Badges */}
@@ -748,15 +747,14 @@ export default function VictoryShareModal({
             {selectedTemplate === 'photo' && !userPhoto && (
               <View style={styles.photoPickerContainer}>
                 <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
-                  Ajoute ta photo
-                </Text>
+                  {traduire("Ajoute ta photo")}</Text>
                 <View style={styles.photoPickerButtons}>
                   <TouchableOpacity
                     style={[styles.photoPickerBtn, { backgroundColor: getCategoryColor() }]}
                     onPress={takePhoto}
                   >
                     <Camera size={22} color="#FFFFFF" />
-                    <Text style={styles.photoPickerBtnText}>Prendre une photo</Text>
+                    <Text style={styles.photoPickerBtnText}>{traduire("Prendre une photo")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.photoPickerBtn, styles.photoPickerBtnSecondary, { borderColor: getCategoryColor() }]}
@@ -782,7 +780,7 @@ export default function VictoryShareModal({
                   onPress={takePhoto}
                 >
                   <Camera size={18} color={colors.textPrimary} />
-                  <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
+                  <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>{traduire("Nouvelle")}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -799,7 +797,7 @@ export default function VictoryShareModal({
                 ) : (
                   <>
                     <Share2 size={20} color="#FFFFFF" />
-                    <Text style={styles.shareBtnText}>Partager</Text>
+                    <Text style={styles.shareBtnText}>{traduire("Partager")}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -814,7 +812,7 @@ export default function VictoryShareModal({
 
             {/* Close Button */}
             <TouchableOpacity style={styles.skipBtn} onPress={onClose}>
-              <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
+              <Text style={[styles.skipText, { color: colors.textMuted }]}>{traduire("Fermer")}</Text>
             </TouchableOpacity>
         </ScrollView>
         <PopupComponent />

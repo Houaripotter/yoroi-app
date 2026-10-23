@@ -9,6 +9,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { getSportName } from '@/lib/sports';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { CardFoot, CardFrame, CardTop, Panel, Plate, Stamp, figureFor, paletteOf, toVariant } from '@/components/yoroi/v2/partage/cardKit';
+import { traduire } from '@/lib/i18n/tr';
 
 const BELT_COLORS: Record<string, string> = {
   blanche: '#FFFFFF', bleue: '#2C4A84', violette: '#6B3FA0', marron: '#7A4A22', noire: '#1D2029',
@@ -64,7 +65,7 @@ export const DuelCard = React.memo(
                 <View style={{ width: 34, height: 8, borderRadius: 2, backgroundColor: bc, borderWidth: bc === '#FFFFFF' ? 1 : 0, borderColor: p.line }}>
                   <View style={{ position: 'absolute', right: 5, top: 0, bottom: 0, width: 7, backgroundColor: bc === '#1D2029' ? p.accent : '#1D2029' }} />
                 </View>
-                <Ink size={10} weight="bold" color={p.muted}>{`Ceinture ${belt}`}</Ink>
+                <Ink size={10} weight="bold" color={p.muted}>{traduire("Ceinture {0}", belt)}</Ink>
               </View>
             ) : null}
           </View>
@@ -88,7 +89,7 @@ export const DuelCard = React.memo(
               <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
                 <Count value={wins} label="Victoires" color={p.accent} muted={p.muted} />
                 <Count value={draws} label="Nuls" color={p.ink2} muted={p.muted} />
-                <Count value={losses} label="Défaites" color={p.ink} muted={p.muted} />
+                <Count value={losses} label={traduire("Défaites")} color={p.ink} muted={p.muted} />
               </View>
               {variant !== 'photo' ? <Image source={figure} style={{ width: width * 0.26, height: width * 0.32 }} resizeMode="contain" /> : null}
               {ahead && total >= 3 ? <View style={{ position: 'absolute', right: width * 0.2, top: -4 }}><Stamp p={p} size={40} /></View> : null}
@@ -101,19 +102,19 @@ export const DuelCard = React.memo(
                     r === 'win' ? <Plate key={i} p={p} on w={20} /> : r === 'draw' ? <Plate key={i} p={p} on={false} partial w={20} /> : <Plate key={i} p={p} on={false} w={20} />
                   ))}
                 </View>
-                <Ink size={10} weight="bold" color={p.muted}>Dernières séances, de la plus récente à la plus ancienne</Ink>
+                <Ink size={10} weight="bold" color={p.muted}>{traduire("Dernières séances, de la plus récente à la plus ancienne")}</Ink>
               </View>
             ) : null}
 
             <Panel p={p} style={{ flexDirection: 'row', gap: 10, paddingVertical: 9 }}>
               <View style={{ flex: 1 }}>
                 <Ink size={18} weight="black" color={p.panelInk}>{`${winRate} %`}</Ink>
-                <Ink size={10} weight="bold" color={p.panelInk2}>{`de victoires sur ${totalRounds} rounds`}</Ink>
+                <Ink size={10} weight="bold" color={p.panelInk2}>{traduire("de victoires sur {0} rounds", totalRounds)}</Ink>
               </View>
               {topMethodGiven || topMethodTaken ? (
                 <View style={{ flex: 1.3, gap: 2 }}>
                   {topMethodGiven ? <Ink size={11} weight="extraBold" color={p.panelInk} numberOfLines={1}>{`Arme : ${topMethodGiven}`}</Ink> : null}
-                  {topMethodTaken ? <Ink size={11} weight="bold" color={p.panelInk2} numberOfLines={1}>{`À surveiller : ${topMethodTaken}`}</Ink> : null}
+                  {topMethodTaken ? <Ink size={11} weight="bold" color={p.panelInk2} numberOfLines={1}>{traduire("À surveiller : {0}", topMethodTaken)}</Ink> : null}
                 </View>
               ) : null}
             </Panel>

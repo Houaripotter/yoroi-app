@@ -10,6 +10,7 @@ import { BODY_ZONES_BACK, BODY_ZONES_FRONT } from '@/constants/bodyZones';
 import type { BodyZone } from '@/constants/bodyZones';
 import { painColor, painWord } from '@/lib/v2/nutrition/formulas';
 import { P, tap } from './ui';
+import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 export function findZone(zoneId: string, view: 'front' | 'back'): BodyZone | null {
   const list = view === 'back' ? BODY_ZONES_BACK : BODY_ZONES_FRONT;
@@ -27,8 +28,8 @@ const Y = 1.6;
 /** « Poignet Droit » devient « Poignet droit » (casse de phrase) */
 export function sentenceCase(name: string): string {
   if (!name) return name;
-  const lower = name.toLocaleLowerCase('fr-FR');
-  return lower.charAt(0).toLocaleUpperCase('fr-FR') + lower.slice(1);
+  const lower = name.toLocaleLowerCase(LOCALE);
+  return lower.charAt(0).toLocaleUpperCase(LOCALE) + lower.slice(1);
 }
 
 // Demi-contour (cote droit de l'image) dans le repere 100 x 160, cale sur les zones de constants/bodyZones
@@ -66,7 +67,7 @@ export function BodyMap({ zoneId, view, color = P.accent, height = 300 }: { zone
   const fill = '#E6E3DC';
   const edge = '#CBC7BD';
   return (
-    <View style={{ width, height }} accessible accessibilityLabel={zone ? `Zone touchée : ${sentenceCase(zone.name)}, vue ${view === 'back' ? 'de dos' : 'de face'}` : 'Carte du corps'}>
+    <View style={{ width, height }} accessible accessibilityLabel={zone ? traduire("Zone touchée : {0}, vue {1}", sentenceCase(zone.name), view === 'back' ? 'de dos' : 'de face') : traduire('Carte du corps')}>
       <Svg width={width} height={drawH} viewBox="0 0 100 160">
         <Path d={BODY} fill={fill} stroke={edge} strokeWidth={0.9} strokeLinejoin="round" />
         <Ellipse cx={50} cy={9.4} rx={6.6} ry={7.8} fill={fill} stroke={edge} strokeWidth={0.9} />
@@ -87,7 +88,7 @@ export function BodyMap({ zoneId, view, color = P.accent, height = 300 }: { zone
       </Svg>
       <View style={{ height: 18, alignItems: 'center', justifyContent: 'flex-end' }}>
         <Ink size={11} weight="extraBold" color={P.ink2}>
-          {view === 'back' ? 'Vue de dos' : 'Vue de face'}
+          {view === 'back' ? traduire('Vue de dos') : traduire('Vue de face')}
         </Ink>
       </View>
     </View>
@@ -110,7 +111,7 @@ export function PainScale({ value, onChange }: { value: number | null; onChange:
                 onChange(v);
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Douleur ${v} sur 10, ${painWord(v).toLowerCase()}`}
+              accessibilityLabel={traduire("Douleur {0} sur 10, {1}", v, painWord(v).toLowerCase())}
               accessibilityState={{ selected: sel }}
               hitSlop={{ top: 10, bottom: 10, left: 1, right: 1 }}
               style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: 96 }}

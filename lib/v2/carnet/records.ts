@@ -6,6 +6,7 @@ import { formatTime, getBenchmarkPR } from '@/lib/carnetService';
 import type { Benchmark, BenchmarkEntry } from '@/lib/carnetService';
 import { entryText, sortedEntries } from './journal';
 import type { CarnetIllus } from '@/components/yoroi/v2/carnet/images';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 export type RecordFamily = 'muscu' | 'course' | 'cross' | 'cardio' | 'autre';
 
@@ -36,7 +37,7 @@ export function familyOf(b: Pick<Benchmark, 'category'>): RecordFamily {
 
 /** « Développé Couché (Barre) » devient « Développé couché (barre) » ; SkiErg, RDL, 10 km restent tels quels */
 /** vague 45 : les noms d'une ancienne demo sans accents (« Souleve de terre », « Developpe couche ») */
-const ACCENTS: Record<string, string> = { souleve: 'soulevé', developpe: 'développé', couche: 'couché', incline: 'incliné', decline: 'décliné', epaule: 'épaule', epaules: 'épaules', fentes: 'fentes', ecarte: 'écarté', eleve: 'élevé', elevations: 'élévations', elevation: 'élévation' };
+const ACCENTS: Record<string, string> = { souleve: traduire('soulevé'), developpe: traduire('développé'), couche: traduire('couché'), incline: traduire('incliné'), decline: traduire('décliné'), epaule: 'épaule', epaules: traduire('épaules'), fentes: 'fentes', ecarte: traduire('écarté'), eleve: traduire('élevé'), elevations: traduire('élévations'), elevation: traduire('élévation') };
 function accentuer(w: string): string {
   const m = w.match(/^([A-Za-z]+)(.*)$/);
   if (!m) return w;
@@ -62,17 +63,17 @@ export function niceName(name: string): string {
 /** Coupe une perf en valeur principale et complement : « 100 kg x 5 reps » donne 100 kg et 5 répétitions */
 export function splitPerf(text: string): { main: string; sub: string | null } {
   const m = text.match(/^(.+?) x (\d+) reps$/);
-  if (m) return { main: m[1], sub: `${m[2]} répétition${m[2] === '1' ? '' : 's'}` };
+  if (m) return { main: m[1], sub: traduire("{0} répétition{1}", m[2], m[2] === '1' ? '' : 's') };
   const r = text.match(/^(\d+(?:[.,]\d+)?) reps$/);
-  if (r) return { main: r[1], sub: 'répétitions' };
+  if (r) return { main: r[1], sub: traduire('répétitions') };
   const k = text.match(/^(.+? km), (.+ \/km)$/);
   if (k) return { main: k[1], sub: `${k[2]} d’allure` };
-  return { main: text.replace('.', ','), sub: null };
+  return { main: text.replace('.', DECIMAL), sub: null };
 }
 
 function fmtNum(n: number): string {
   const r = Math.round(n * 10) / 10;
-  return String(r).replace('.', ',');
+  return String(r).replace('.', DECIMAL);
 }
 
 /** Ecart lisible entre deux valeurs d'un meme suivi, null si pas de progres */
@@ -80,7 +81,7 @@ export function gainBetween(b: Pick<Benchmark, 'unit'>, from: number, to: number
   if (b.unit === 'time') {
     const d = from - to;
     if (d <= 0) return null;
-    return `${d < 60 ? `${Math.round(d)} s` : formatTime(Math.round(d))} de mieux`;
+    return traduire("{0} de mieux", d < 60 ? `${Math.round(d)} s` : formatTime(Math.round(d)));
   }
   const d = to - from;
   if (d <= 0) return null;

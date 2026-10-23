@@ -11,13 +11,14 @@ import { useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ecrireStyleNatif, rechargerWidgetsNatif } from './natif';
+import { traduire } from '@/lib/i18n/tr';
 
 export type StyleWidgets = 'A' | 'B' | 'C';
 
 export const STYLES_WIDGETS: { id: StyleWidgets; nom: string; court: string; phrase: string }[] = [
-  { id: 'A', nom: 'Nuit de lanternes', court: 'Lanternes', phrase: 'Ta scène en fond, lueur de lanterne' },
-  { id: 'B', nom: 'Rouleau et encre', court: 'Rouleau', phrase: 'Papier washi, pinceau et cachets' },
-  { id: 'C', nom: 'Armure laquée', court: 'Armure', phrase: 'Laque, filets dorés et ton personnage' },
+  { id: 'A', nom: traduire('Nuit de lanternes'), court: 'Lanternes', phrase: traduire('Ta scène en fond, lueur de lanterne') },
+  { id: 'B', nom: traduire('Rouleau et encre'), court: 'Rouleau', phrase: traduire('Papier washi, pinceau et cachets') },
+  { id: 'C', nom: traduire('Armure laquée'), court: 'Armure', phrase: traduire('Laque, filets dorés et ton personnage') },
 ];
 
 export const STYLE_WIDGETS_PAR_DEFAUT: StyleWidgets = 'A';

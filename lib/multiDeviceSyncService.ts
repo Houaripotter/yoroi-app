@@ -23,6 +23,7 @@ import logger from './security/logger';
 import { getSavedCloudFolder, listCloudBackups, readCloudBackupFile } from './cloudFolderService';
 import { importDataFromBackupObject } from './exportService';
 import { vitrineActive } from './v2/visite/vitrine';
+import { traduire } from '@/lib/i18n/tr';
 
 // Clé pour tracker le dernier backup cloud déjà connu (éviter double-prompt)
 const LAST_KNOWN_CLOUD_BACKUP_KEY = '@yoroi_last_known_cloud_backup';
@@ -138,8 +139,8 @@ export async function checkForCloudSync(): Promise<void> {
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Nouveau contenu depuis ton autre appareil',
-          body: 'Une copie plus récente t’attend. Ouvre YOROI pour la récupérer.',
+          title: traduire('Nouveau contenu depuis ton autre appareil'),
+          body: traduire('Une copie plus récente t’attend. Ouvre YOROI pour la récupérer.'),
           data: { type: 'cloud_sync_available', backupName: latest.name },
           sound: 'default',
         },

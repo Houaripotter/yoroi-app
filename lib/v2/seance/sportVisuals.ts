@@ -5,6 +5,7 @@ import type { ImageSourcePropType } from 'react-native';
 import { getSportCategory, getSportName } from '@/lib/sports';
 import type { SeanceKind } from './model';
 import { pickSportArt } from './sportArt';
+import { traduire } from '@/lib/i18n/tr';
 
 const MUSCU_SPORTS = new Set([
   'musculation', 'powerlifting', 'halterophilie', 'street_workout', 'calisthenics', 'crossfit', 'kettlebell',
@@ -54,7 +55,7 @@ const SHORT: Record<string, string> = {
   running: 'Course',
   fitness: 'Fitness',
   crossfit: 'Crossfit',
-  muay_thai: 'Muay thaï',
+  muay_thai: traduire('Muay thaï'),
   kickboxing: 'Kickboxing',
   judo: 'Judo',
   lutte: 'Lutte',
