@@ -19,7 +19,9 @@
 import { SPORTS } from '@/lib/sports';
 import { APPRIS_RE, BELTS, CHARGE_LABEL, CHARGE_RE, COMBAT_TERMS, DRILL_RE, EXOS, EXO_BY_ID, EXO_DESCRIPTIONS, EXO_VAGUES, SESSION_WORDS, TRAVAIL_RE } from './lexique';
 import type { Charge, CombatTerm, TermKind } from './lexique';
-import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL, LANG } from '@/lib/i18n/tr';
+import type { Lang } from '@/lib/i18n/tr';
+import { traduireJetons } from './dicteeLangues';
 
 export type { Charge } from './lexique';
 export { CHARGE_LABEL } from './lexique';
@@ -254,7 +256,7 @@ function readNumberWords(w: string[], i: number): { v: number; len: number } | n
 type Norm = { toks: Tok[]; norm: string };
 
 /** mots, hesitations retirees, nombres en chiffres ; chaque mot garde sa position d'origine */
-function normalize(original: string): Norm {
+function normalize(original: string, lang: Lang = 'fr'): Norm {
   const folded = fold(original);
   const raw: { t: string; s: number; e: number; cap: boolean }[] = [];
   const re = /\d+(?:[.,]\d+)?|[a-z]+(?:'[a-z]+)*'?|[.,;:!?]/g;
@@ -276,7 +278,7 @@ function normalize(original: string): Norm {
     merged.push(a);
   }
   // hesitations
-  const keep: typeof raw = [];
+  let keep: typeof raw = [];
   for (let i = 0; i < merged.length; i += 1) {
     const a = merged[i];
     const next = merged[i + 1];
@@ -296,6 +298,8 @@ function normalize(original: string): Norm {
     }
     keep.push(a);
   }
+  // 23 octobre 2026 : les autres langues passent par leur lexique, vers les mots français
+  if (lang !== 'fr') keep = traduireJetons(keep, lang);
   // nombres et ordinaux en lettres
   const words = keep.map((k) => k.t);
   const toks: Tok[] = [];
@@ -334,9 +338,9 @@ class Reader {
   used: boolean[];
   spans: Record<string, Span[]> = {};
   original: string;
-  constructor(original: string) {
+  constructor(original: string, lang: Lang = 'fr') {
     this.original = original;
-    const n = normalize(original);
+    const n = normalize(original, lang);
     this.toks = n.toks;
     this.norm = n.norm;
     this.used = n.toks.map(() => false);
@@ -2126,9 +2130,9 @@ function guessSport(r: Reader, res: DicteeResult): string | undefined {
   return undefined;
 }
 
-export function parseDictee(text: string, now = new Date()): DicteeResult {
+export function parseDictee(text: string, now = new Date(), lang: Lang = LANG): DicteeResult {
   const original = text.slice(0, 1500);
-  const r = new Reader(original);
+  const r = new Reader(original, lang);
   const res: DicteeResult = { exercises: [], partners: [], combatRounds: [], blocs: [], learned: [], guesses: [], extraNotes: [], found: [], spans: {} };
 
   res.sport = findSport(r);
