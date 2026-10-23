@@ -46,3 +46,13 @@
 "Touche un rond pour l'épingler ou le retirer." = "Tik op een rondje om het vast te zetten of te verwijderen.";
 "Tourne la couronne" = "Draai aan de Digital Crown";
 "bpm" = "bpm";
+/* Textes avec une valeur (23 octobre 2026) */
+"sur %lld" = "van %lld";
+"Arrivée prévue du %@ au %@" = "Verwachte aankomst %@ tot %@";
+"%@ %@ par rapport au rythme" = "%@ %@ ten opzichte van je tempo";
+"sur %@" = "van %@";
+"Alarme : %@" = "Alarm: %@";
+"Minuteur de %@" = "Timer van %@";
+"Zone %lld" = "Zone %lld";
+"Catégorie %@ %@" = "Gewichtsklasse %@ %@";
+"Encore %@ %@ à faire" = "Nog %@ %@ te gaan";

@@ -46,3 +46,13 @@
 "Touche un rond pour l'épingler ou le retirer." = "Touche un rond pour l'épingler ou le retirer.";
 "Tourne la couronne" = "Tourne la couronne";
 "bpm" = "bpm";
+/* Textes avec une valeur (23 octobre 2026) */
+"sur %lld" = "sur %lld";
+"Arrivée prévue du %@ au %@" = "Arrivée prévue du %@ au %@";
+"%@ %@ par rapport au rythme" = "%@ %@ par rapport au rythme";
+"sur %@" = "sur %@";
+"Alarme : %@" = "Alarme : %@";
+"Minuteur de %@" = "Minuteur de %@";
+"Zone %lld" = "Zone %lld";
+"Catégorie %@ %@" = "Catégorie %@ %@";
+"Encore %@ %@ à faire" = "Encore %@ %@ à faire";

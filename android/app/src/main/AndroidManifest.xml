@@ -58,7 +58,7 @@
     <package android:name="com.google.android.apps.healthdata"/>
   </queries>
   <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false" android:fullBackupContent="@xml/yoroi_backup_rules" android:dataExtractionRules="@xml/yoroi_data_extraction_rules">
+  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false" android:fullBackupContent="@xml/yoroi_backup_rules" android:dataExtractionRules="@xml/yoroi_data_extraction_rules" android:localeConfig="@xml/locales_config">
     <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" tools:replace="android:value"/>
     <meta-data android:name="google_analytics_automatic_screen_reporting_enabled" android:value="false" tools:replace="android:value"/>
     <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" tools:replace="android:value"/>

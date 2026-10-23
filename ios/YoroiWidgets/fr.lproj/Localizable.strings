@@ -30,3 +30,10 @@
 "Ton eau du jour vers ton objectif. Ajoute un verre sans ouvrir l'app." = "Ton eau du jour vers ton objectif. Ajoute un verre sans ouvrir l'app.";
 "Ton poids, ta semaine, ton eau et ton prochain combat, sous ta scène." = "Ton poids, ta semaine, ton eau et ton prochain combat, sous ta scène.";
 "Ton poids, ton écart au rythme prévu et ta courbe de 30 jours." = "Ton poids, ton écart au rythme prévu et ta courbe de 30 jours.";
+/* Textes avec une valeur (23 octobre 2026) */
+"Round %lld sur %lld" = "Round %lld sur %lld";
+"Poids %@ %@" = "Poids %@ %@";
+"Semaine %@" = "Semaine %@";
+"Eau %@" = "Eau %@";
+"un verre : %@" = "un verre : %@";
+"Ton poids %@ %@" = "Ton poids %@ %@";

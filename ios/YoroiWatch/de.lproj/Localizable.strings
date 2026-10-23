@@ -46,3 +46,13 @@
 "Touche un rond pour l'épingler ou le retirer." = "Tippe auf einen Kreis, um ihn anzuheften oder zu entfernen.";
 "Tourne la couronne" = "Dreh die Krone";
 "bpm" = "bpm";
+/* Textes avec une valeur (23 octobre 2026) */
+"sur %lld" = "von %lld";
+"Arrivée prévue du %@ au %@" = "Voraussichtliche Ankunft %@ bis %@";
+"%@ %@ par rapport au rythme" = "%@ %@ gegenüber deinem Tempo";
+"sur %@" = "von %@";
+"Alarme : %@" = "Alarm: %@";
+"Minuteur de %@" = "%@-Timer";
+"Zone %lld" = "Zone %lld";
+"Catégorie %@ %@" = "Gewichtsklasse %@ %@";
+"Encore %@ %@ à faire" = "Noch %@ %@";

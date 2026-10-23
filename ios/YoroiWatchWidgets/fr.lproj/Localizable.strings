@@ -30,3 +30,9 @@
 "Yoroi Respiration" = "Yoroi Respiration";
 "Yoroi Semaine" = "Yoroi Semaine";
 "en pause" = "en pause";
+/* Textes avec une valeur (23 octobre 2026) */
+"Minuteur %@" = "Minuteur %@";
+"Arrivée du %@ au %@" = "Arrivée du %@ au %@";
+"sur %@" = "sur %@";
+"Encore %@ %@ à faire" = "Encore %@ %@ à faire";
+"Catégorie %@ %@" = "Catégorie %@ %@";

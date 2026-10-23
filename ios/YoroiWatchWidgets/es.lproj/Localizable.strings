@@ -30,3 +30,9 @@
 "Yoroi Respiration" = "Yoroi Respiración";
 "Yoroi Semaine" = "Yoroi Semana";
 "en pause" = "en pausa";
+/* Textes avec une valeur (23 octobre 2026) */
+"Minuteur %@" = "Temporizador %@";
+"Arrivée du %@ au %@" = "Llegada del %@ al %@";
+"sur %@" = "de %@";
+"Encore %@ %@ à faire" = "Faltan %@ %@";
+"Catégorie %@ %@" = "Categoría %@ %@";

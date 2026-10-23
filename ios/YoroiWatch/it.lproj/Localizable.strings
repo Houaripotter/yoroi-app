@@ -46,3 +46,13 @@
 "Touche un rond pour l'épingler ou le retirer." = "Tocca un cerchio per fissarlo o toglierlo.";
 "Tourne la couronne" = "Ruota la corona";
 "bpm" = "bpm";
+/* Textes avec une valeur (23 octobre 2026) */
+"sur %lld" = "su %lld";
+"Arrivée prévue du %@ au %@" = "Arrivo previsto dal %@ al %@";
+"%@ %@ par rapport au rythme" = "%@ %@ rispetto al tuo ritmo";
+"sur %@" = "su %@";
+"Alarme : %@" = "Allarme: %@";
+"Minuteur de %@" = "Timer da %@";
+"Zone %lld" = "Zona %lld";
+"Catégorie %@ %@" = "Categoria %@ %@";
+"Encore %@ %@ à faire" = "Ancora %@ %@";

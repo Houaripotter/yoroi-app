@@ -30,3 +30,10 @@
 "Ton eau du jour vers ton objectif. Ajoute un verre sans ouvrir l'app." = "Tu agua del día hacia tu objetivo. Añade un vaso sin abrir la app.";
 "Ton poids, ta semaine, ton eau et ton prochain combat, sous ta scène." = "Tu peso, tu semana, tu agua y tu próximo combate, bajo tu escena.";
 "Ton poids, ton écart au rythme prévu et ta courbe de 30 jours." = "Tu peso, tu desvío respecto al ritmo previsto y tu gráfica de 30 días.";
+/* Textes avec une valeur (23 octobre 2026) */
+"Round %lld sur %lld" = "Round %lld de %lld";
+"Poids %@ %@" = "Peso %@ %@";
+"Semaine %@" = "Semana %@";
+"Eau %@" = "Agua %@";
+"un verre : %@" = "un vaso: %@";
+"Ton poids %@ %@" = "Tu peso %@ %@";

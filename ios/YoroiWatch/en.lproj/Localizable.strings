@@ -46,3 +46,13 @@
 "Touche un rond pour l'épingler ou le retirer." = "Tap a circle to pin or remove it.";
 "Tourne la couronne" = "Turn the Digital Crown";
 "bpm" = "bpm";
+/* Textes avec une valeur (23 octobre 2026) */
+"sur %lld" = "of %lld";
+"Arrivée prévue du %@ au %@" = "Expected arrival %@ to %@";
+"%@ %@ par rapport au rythme" = "%@ %@ vs. your pace";
+"sur %@" = "of %@";
+"Alarme : %@" = "Alarm: %@";
+"Minuteur de %@" = "%@ timer";
+"Zone %lld" = "Zone %lld";
+"Catégorie %@ %@" = "Weight class %@ %@";
+"Encore %@ %@ à faire" = "%@ %@ to go";
