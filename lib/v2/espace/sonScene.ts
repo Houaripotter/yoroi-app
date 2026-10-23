@@ -25,7 +25,7 @@ export type ReglagesSonScene = {
 
 export const VOLUMES: { key: number; label: string }[] = [
   { key: 0.2, label: traduire('Très doux') },
-  { key: 0.35, label: 'Doux' },
+  { key: 0.35, label: traduire('Doux') },
   { key: 0.6, label: 'Normal' },
 ];
 

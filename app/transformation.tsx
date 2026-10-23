@@ -43,9 +43,9 @@ type Filtre = Pose | 'toutes';
 type Cible = 'avant' | 'apres';
 
 const MODES: { value: CompareMode; label: string }[] = [
-  { value: 'glisser', label: 'Curseur' },
+  { value: 'glisser', label: traduire('Curseur') },
   { value: 'cote', label: traduire('Côte à côte') },
-  { value: 'fondu', label: 'Fondu' },
+  { value: 'fondu', label: traduire('Fondu') },
 ];
 
 const CONSIGNE: Record<CompareMode, string> = {
@@ -260,7 +260,7 @@ export default function TransformationScreen() {
             <>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                 <GhostButton label={transparence ? traduire('Sans transparence') : 'Transparence'} onPress={() => setTransparence((t) => !t)} style={{ flex: 1 }} />
-                <GhostButton label="Aligner pareil" onPress={alignerAutre} style={{ flex: 1 }} />
+                <GhostButton label={traduire("Aligner pareil")} onPress={alignerAutre} style={{ flex: 1 }} />
               </View>
               <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>
                 {traduire("Les lignes t’aident à mettre épaules, nombril et hanches à la même hauteur. Touche deux fois pour revenir. « Aligner pareil » donne le même cadrage à la photo {0}.", reglage === 'avant' ? 'après' : 'avant')}
@@ -379,7 +379,7 @@ export default function TransformationScreen() {
           <CarteAvantApres ref={cardRef} before={shotA} after={shotB} width={cardW} cadres={cadres} sizes={{ avant: sizeA, apres: sizeB }} />
         </View>
       </Sheet>
-      <Sheet visible={!!notice} onClose={() => setNotice(null)} title={notice ?? ''} actions={[{ label: 'D’accord', tone: 'ink', onPress: () => setNotice(null) }]} />
+      <Sheet visible={!!notice} onClose={() => setNotice(null)} title={notice ?? ''} actions={[{ label: traduire('D’accord'), tone: 'ink', onPress: () => setNotice(null) }]} />
     </View>
   );
 }

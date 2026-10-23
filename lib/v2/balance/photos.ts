@@ -142,7 +142,7 @@ export function frenchTime(at: number): string {
 /** Le nom de la copie envoyee : 2026-10-03_08h12_photo-01.jpg (sans-date_photo-03.jpg si aucune date) */
 export function photoFileName(at: number | undefined, n: number, ext = 'jpg'): string {
   const num = `photo-${pad2(n)}`;
-  if (at === undefined) return traduire("sans-date_{0}.{1}", num, ext);
+  if (at === undefined) return `sans-date_${num}.${ext}`;
   const d = new Date(at);
   return `${isoDay(at)}_${pad2(d.getHours())}h${pad2(d.getMinutes())}_${num}.${ext}`;
 }
@@ -153,7 +153,7 @@ export function documentName(sorted: { at?: number }[]): string {
   if (!days.length) return 'YOROI_photos.pdf';
   const first = days[0];
   const last = days[days.length - 1];
-  return first === last ? `YOROI_photos_${first}.pdf` : traduire("YOROI_photos_{0}_au_{1}.pdf", first, last);
+  return first === last ? `YOROI_photos_${first}.pdf` : `YOROI_photos_${first}_au_${last}.pdf`;
 }
 
 /** « Photo 1 : prise le 3 octobre 2026 à 8 h 12 ; » une ligne par photo, dans l'ordre */

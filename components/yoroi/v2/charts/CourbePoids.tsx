@@ -171,7 +171,7 @@ export function PastilleStatut({ statut, small }: { statut: Statut; small?: bool
   return (
     <View style={{ alignSelf: 'flex-start', paddingHorizontal: small ? 8 : 9, paddingVertical: small ? 1 : 2, borderRadius: 999, backgroundColor: t.bg }}>
       <Ink size={small ? 11.5 : 12.5} weight="extraBold" color={t.fg} numberOfLines={1}>
-        {statut.label}
+        {traduire(statut.label)}
       </Ink>
     </View>
   );
@@ -931,7 +931,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
             {g.labels.map((l) =>
               l.x < 12 || l.x > g.W - g.GUT ? null : (
                 <Etiq key={`m${l.text}${l.x.toFixed(0)}`} halo={surScene} x={l.x} y={height - 4} textAnchor="middle" fontSize={11} fontFamily={surScene ? BOLD_FONT : AXIS_FONT} fill={surScene ? POIDS.encre : POIDS.axe} fillOpacity={surScene ? (sombre ? 0.92 : 0.8) : 1}>
-                  {l.text}
+                  {traduire(l.text)}
                 </Etiq>
               ),
             )}

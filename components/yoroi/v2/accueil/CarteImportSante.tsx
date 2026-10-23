@@ -155,7 +155,7 @@ export function CarteImportSante({ controle, onImporte }: { controle: Controle; 
     }
 
     if (longue) {
-      appAlert('Import en cours', traduire('L’import continue en arrière-plan. Tes données arrivent d’ici quelques minutes.'));
+      appAlert(traduire('Import en cours'), traduire('L’import continue en arrière-plan. Tes données arrivent d’ici quelques minutes.'));
       return;
     }
     const m = messageImport(issue, Platform.OS, compte);
@@ -172,7 +172,7 @@ export function CarteImportSante({ controle, onImporte }: { controle: Controle; 
       appAlert(m.titre, m.texte, [
         { text: traduire('Plus tard'), style: 'cancel' },
         {
-          text: Platform.OS === 'android' ? 'Ouvrir Health Connect' : traduire('Ouvrir Santé'),
+          text: Platform.OS === 'android' ? traduire('Ouvrir Health Connect') : traduire('Ouvrir Santé'),
           onPress: () => void ouvrirReglagesSante(Platform.OS === 'android' && typeof fn === 'function' ? () => fn.call(healthConnect) : undefined),
         },
       ]);

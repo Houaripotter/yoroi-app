@@ -99,7 +99,7 @@ function groupesScenes(classiqueDabord: boolean) {
   const japon = { id: 'japon', titre: 'Japon', liste: THEMES.filter((t) => !estSceneClassique(t.id) && !nature.includes(t.id) && !vie.includes(t.id) && !voyages.includes(t.id)) };
   const classique = { id: 'classique', titre: 'Classique', liste: SCENES_CLASSIQUES };
   // 18 octobre 2026 : le pack Voyages, scenes animees (trois se gagnent avec la serie de jours), juste apres ta famille
-  const voyage = { id: 'voyages', titre: 'Voyages', liste: THEMES.filter((t) => voyages.includes(t.id)) };
+  const voyage = { id: 'voyages', titre: traduire('Voyages'), liste: THEMES.filter((t) => voyages.includes(t.id)) };
   const reste = [
     { id: 'nature', titre: traduire('Nature et ville'), liste: THEMES.filter((t) => nature.includes(t.id)) },
     { id: 'vie', titre: traduire('Vie réelle'), liste: THEMES.filter((t) => vie.includes(t.id)) },
@@ -359,7 +359,7 @@ export default function Boutique() {
     { id: 'monde', label: traduire('Samouraïs'), count: MONDE_PERSONNAGES.length + 1 },
     { id: 'classique', label: 'Classique', count: 2 },
     { id: 'vie', label: traduire('Vie réelle'), count: VIE_PERSONNAGES.length },
-    { id: 'sport', label: 'Sports', count: PACKS_SPORT.length },
+    { id: 'sport', label: traduire('Sports'), count: PACKS_SPORT.length },
     { id: 'legende', label: traduire('Légendes'), count: PACKS_LEGENDE.length },
     { id: 'themes', label: traduire('Scènes'), count: THEMES.length },
   ];
@@ -404,7 +404,7 @@ export default function Boutique() {
                     <Ink size={16} weight="black" numberOfLines={1} style={{ flexShrink: 1 }}>{shownName}</Ink>
                     {shownPack ? <ChevronIcon size={13} color={c.textMuted} /> : null}
                   </View>
-                  <Ink size={12} color={c.textSecondary} numberOfLines={1}>{themeById(shownScene).name}</Ink>
+                  <Ink size={12} color={c.textSecondary} numberOfLines={1}>{traduire(themeById(shownScene).name)}</Ink>
                 </GlassTag>
               </Pressable>
               {montrerSceneAssortie && sceneAssortie ? (
@@ -471,7 +471,7 @@ export default function Boutique() {
           </View>
         ) : activeTab === 'classique' ? (
           <View style={{ gap: 10 }}>
-            <GroupeTitre titre="Personnages" />
+            <GroupeTitre titre={traduire("Personnages")} />
             <Grille>
               {vignettePerso(`classique_${genre}`, fondFamille('mousse'), { note: traduire('Gratuit') })}
               {vignettePerso(SANS_PERSONNAGE, fondFamille('mousse'), { nomCourt: traduire('Sans personnage'), note: traduire('Juste ta scène'), vide: THEME_IMAGES[espace.scene] ?? THEME_IMAGES.dojo })}

@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { PasswordPromptModal } from './PasswordPromptModal';
 import { subscribeToPasswordRequests, respondToPasswordRequest, PasswordPromptRequest } from '@/lib/passwordPromptController';
+import { traduire } from '@/lib/i18n/tr';
 
 export const GlobalPasswordPromptMount: React.FC = () => {
   const [req, setReq] = useState<PasswordPromptRequest | null>(null);
@@ -37,7 +38,7 @@ export const GlobalPasswordPromptMount: React.FC = () => {
   return (
     <PasswordPromptModal
       visible={!!req}
-      title={req.title}
+      title={traduire(req.title)}
       message={req.message}
       confirmLabel={req.confirmLabel}
       minLength={req.minLength}

@@ -19,7 +19,7 @@ const CATEGORIES: { id: IdeaCategory; label: string }[] = [
   { id: 'feature', label: traduire('Une idée') },
   { id: 'design', label: traduire('Le design') },
   { id: 'bug', label: traduire('Un souci') },
-  { id: 'other', label: 'Autre chose' },
+  { id: 'other', label: traduire('Autre chose') },
 ];
 
 export default function IdeasScreen() {
@@ -32,7 +32,7 @@ export default function IdeasScreen() {
   }, [params.category]);
 
   const send = async () => {
-    const label = CATEGORIES.find((c) => c.id === category)?.label ?? 'Autre chose';
+    const label = CATEGORIES.find((c) => c.id === category)?.label ?? traduire('Autre chose');
     const subject = encodeURIComponent(`[Yoroi] ${label}`);
     const body = encodeURIComponent(traduire("{0}\n\nEnvoyé depuis l’app Yoroi", text.trim()));
     const mailto = `mailto:${APP_CONFIG.supportEmail}?subject=${subject}&body=${body}`;
@@ -47,10 +47,10 @@ export default function IdeasScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <DetailScreen title={traduire("Boîte à idées")} subtitle="On lit tout, vraiment">
+      <DetailScreen title={traduire("Boîte à idées")} subtitle={traduire("On lit tout, vraiment")}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {CATEGORIES.map((c) => (
-            <Pill key={c.id} label={c.label} active={category === c.id} onPress={() => setCategory(c.id)} accent={P.accent} />
+            <Pill key={c.id} label={traduire(c.label)} active={category === c.id} onPress={() => setCategory(c.id)} accent={P.accent} />
           ))}
         </View>
         <Card style={{ padding: 14 }}>

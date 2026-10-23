@@ -25,7 +25,7 @@ import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export const TYPE_V2: Record<ObjectiveType, { label: string; glyph: GlyphKind; color: string; soft: string; text: string }> = {
   competition: { label: traduire('Compétition'), glyph: 'eventail', color: P.accent, soft: P.accentSoft, text: traduire('Un tournoi, un championnat') },
   weight: { label: traduire('Objectif de poids'), glyph: 'etoile', color: P.indigo, soft: P.indigoSoft, text: traduire('Un poids à atteindre') },
-  exam: { label: 'Examen', glyph: 'laurier', color: P.goldDark, soft: P.goldSoft, text: traduire('Un passage de grade') },
+  exam: { label: traduire('Examen'), glyph: 'laurier', color: P.goldDark, soft: P.goldSoft, text: traduire('Un passage de grade') },
   travel: { label: traduire('Voyage ou stage'), glyph: 'vague', color: P.mossText, soft: P.mossSoft, text: traduire('Un camp, un séjour') },
   custom: { label: traduire('Personnalisé'), glyph: 'sakura', color: P.ink, soft: P.paper, text: traduire('Ce que tu veux') },
 };
@@ -173,13 +173,13 @@ export function ObjectivesTab() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ paddingHorizontal: 10, height: 26, borderRadius: 9, backgroundColor: mainT.color, justifyContent: 'center' }}>
                 <Ink size={12} weight="extraBold" color={P.white}>
-                  {mainT.label}
+                  {traduire(mainT.label)}
                 </Ink>
               </View>
               {main.is_pinned ? <XIcon name="pin" size={16} color={P.accent} /> : null}
             </View>
             <Ink size={24} weight="black" tight numberOfLines={2}>
-              {main.title}
+              {traduire(main.title)}
             </Ink>
             <Countdown c={mainC} color={mainT.color} />
             {main.location ? (
@@ -214,7 +214,7 @@ export function ObjectivesTab() {
                   </View>
                   <View style={{ flex: 1, gap: 1 }}>
                     <Ink size={16} weight="black" tight numberOfLines={1}>
-                      {o.title}
+                      {traduire(o.title)}
                     </Ink>
                     <Ink size={12} weight="bold" color={P.ink2} numberOfLines={1}>
                       {[mediumDate(parseLocalDate(o.target_date)), o.location, o.target_weight ? `${String(o.target_weight).replace('.', DECIMAL)} kg` : null].filter(Boolean).join(', ')}
@@ -245,8 +245,7 @@ export function ObjectivesTab() {
                     <View style={{ minHeight: 44, borderRadius: 14, backgroundColor: P.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <Icon name="check" size={16} color={P.white} width={3} />
                       <Ink size={13} weight="extraBold" color={P.white}>
-                        Atteint
-                      </Ink>
+                        {traduire("Atteint")}</Ink>
                     </View>
                   </Press>
                   <Press onPress={() => remove(o)} accessibilityRole="button" accessibilityLabel={traduire("Supprimer {0}", o.title)}>
@@ -289,10 +288,10 @@ export function ObjectivesTab() {
                     )}
                     <View style={{ flex: 1 }}>
                       <Ink size={15} weight="extraBold" color={ok ? P.ink : P.ink2} numberOfLines={1}>
-                        {o.title}
+                        {traduire(o.title)}
                       </Ink>
                       <Ink size={12} weight="bold" color={ok ? P.accent : P.muted}>
-                        {`${ok ? 'Atteint' : traduire('Date passée')}, ${mediumDate(parseLocalDate(o.target_date))}`}
+                        {`${ok ? traduire('Atteint') : traduire('Date passée')}, ${mediumDate(parseLocalDate(o.target_date))}`}
                       </Ink>
                     </View>
                     <Press onPress={() => remove(o)} accessibilityRole="button" accessibilityLabel={traduire("Supprimer {0}", o.title)}>
@@ -313,17 +312,17 @@ export function ObjectivesTab() {
             {OBJECTIVE_TYPES.map((o) => {
               const t = TYPE_V2[o.type];
               return (
-                <Press key={o.type} onPress={() => setType(o.type)} accessibilityRole="button" accessibilityLabel={t.label}>
+                <Press key={o.type} onPress={() => setType(o.type)} accessibilityRole="button" accessibilityLabel={traduire(t.label)}>
                   <View style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
                     <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: t.soft, alignItems: 'center', justifyContent: 'center' }}>
                       <Glyph kind={t.glyph} size={22} color={t.color} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Ink size={16} weight="extraBold">
-                        {t.label}
+                        {traduire(t.label)}
                       </Ink>
                       <Ink size={12} weight="bold" color={P.muted}>
-                        {t.text}
+                        {traduire(t.text)}
                       </Ink>
                     </View>
                     <Icon name="chevron" size={18} color={P.muted} />
@@ -338,16 +337,16 @@ export function ObjectivesTab() {
             <DateField label={traduire("Date visée")} value={date} onChange={setDate} minimumDate={addDays(startOfToday(), 1)} />
             {type === 'competition' || type === 'exam' ? (
               <View style={{ gap: 8 }}>
-                <Label>Sport</Label>
+                <Label>{traduire("Sport")}</Label>
                 <ChipScroll>
                   {combatSports.map((s) => (
-                    <Chip key={s.id} label={s.name} active={sportId === s.id} onPress={() => setSportId(sportId === s.id ? '' : s.id)} />
+                    <Chip key={s.id} label={traduire(s.name)} active={sportId === s.id} onPress={() => setSportId(sportId === s.id ? '' : s.id)} />
                   ))}
                 </ChipScroll>
               </View>
             ) : null}
-            {type === 'competition' || type === 'travel' ? <Field label="Lieu" value={location} onChangeText={setLocation} placeholder={type === 'travel' ? 'Ex : Tokyo, Japon' : 'Ville, pays'} icon="flag" maxLength={80} /> : null}
-            {type === 'weight' ? <Field label={traduire("Poids visé")} value={targetWeight} onChangeText={setTargetWeight} placeholder="Ex : 75" keyboardType="decimal-pad" suffix="kg" icon="scale" /> : null}
+            {type === 'competition' || type === 'travel' ? <Field label={traduire("Lieu")} value={location} onChangeText={setLocation} placeholder={type === 'travel' ? 'Ex : Tokyo, Japon' : 'Ville, pays'} icon="flag" maxLength={80} /> : null}
+            {type === 'weight' ? <Field label={traduire("Poids visé")} value={targetWeight} onChangeText={setTargetWeight} placeholder={traduire("Ex : 75")} keyboardType="decimal-pad" suffix="kg" icon="scale" /> : null}
             <Field label="Notes" value={description} onChangeText={setDescription} placeholder={traduire("Détails, motivation")} multiline maxLength={300} />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>

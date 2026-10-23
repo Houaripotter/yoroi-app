@@ -73,7 +73,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
       >
         <BodyGlyph color={c.indigo} bg={c.indigoTint} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={16} weight="extraBold">Composition</Ink>
+          <Ink size={16} weight="extraBold">{traduire("Composition")}</Ink>
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{summary}</Ink>
         </View>
         <Svg width={18} height={18} viewBox="0 0 24 24" style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
@@ -89,7 +89,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
             return (
               <View key={f.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, borderTopWidth: 1, borderColor: c.divider }}>
                 <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
-                  <Ink size={14} weight="bold" numberOfLines={2}>{f.label}</Ink>
+                  <Ink size={14} weight="bold" numberOfLines={2}>{traduire(f.label)}</Ink>
                   {sub.t ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       {sub.tone === 'health' ? <HeartDot color={c.indigo} /> : null}
@@ -124,7 +124,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
 
           {lean || bmi ? (
             <View style={{ flexDirection: 'row', gap: 10, paddingTop: 12, borderTopWidth: 1, borderColor: c.divider }}>
-              {lean ? <Info label="Masse maigre" value={`${fmtValue(lean)} kg`} sub={traduire("lue dans {0}", provider)} /> : null}
+              {lean ? <Info label={traduire("Masse maigre")} value={`${fmtValue(lean)} kg`} sub={traduire("lue dans {0}", provider)} /> : null}
               {bmi ? <Info label={traduire("IMC")} value={fmtValue(bmi.value)} sub={bmi.from === 'health' ? traduire("lu dans {0}", provider) : traduire('calculé avec ta taille')} /> : null}
             </View>
           ) : null}

@@ -42,7 +42,7 @@ interface SetupConfig {
   partnerName: string;
 }
 
-const RESULT_LABEL: Record<NonNullable<RoundResult>, string> = { V: traduire('Victoire'), D: traduire('Défaite'), N: 'Nul' };
+const RESULT_LABEL: Record<NonNullable<RoundResult>, string> = { V: traduire('Victoire'), D: traduire('Défaite'), N: traduire('Nul') };
 const RESULT_COLOR: Record<NonNullable<RoundResult>, string> = { V: P.moss, D: P.danger, N: P.gold };
 
 function safe(fn: () => void) {
@@ -278,10 +278,10 @@ export default function CombatTimerScreen() {
             <Sheet2>
               <BigStats
                 items={[
-                  { value: String(roundsHistory.length), label: 'Rounds' },
-                  { value: String(wins), label: 'Victoires', color: P.mossText },
+                  { value: String(roundsHistory.length), label: traduire('Rounds') },
+                  { value: String(wins), label: traduire('Victoires'), color: P.mossText },
                   { value: String(losses), label: traduire('Défaites'), color: P.danger },
-                  { value: rate !== null ? `${rate} %` : String(draws), label: rate !== null ? traduire('Taux de victoire') : 'Nuls', color: P.indigo },
+                  { value: rate !== null ? `${rate} %` : String(draws), label: rate !== null ? traduire('Taux de victoire') : traduire('Nuls'), color: P.indigo },
                 ]}
               />
             </Sheet2>
@@ -328,16 +328,16 @@ export default function CombatTimerScreen() {
             line={roundsSummary(config.totalRounds, config.roundSeconds, config.restSeconds)}
             band={band.length > 1 ? band : undefined}
             legend={[
-              { color: PHASE_COLORS.effort.main, text: 'Round' },
+              { color: PHASE_COLORS.effort.main, text: traduire('Round') },
               ...(config.restSeconds > 0 ? [{ color: PHASE_COLORS.repos.main, text: traduire('Repos') }] : []),
               ...(config.prepaSeconds > 0 ? [{ color: PHASE_COLORS.prepa.main, text: traduire("{0} s pour te préparer au début", config.prepaSeconds) }] : []),
             ]}
           />
           <SetupBlock title={traduire("Tes rounds")}>
             <View>
-              <SettingRow label="Round" dot={PHASE_COLORS.effort.main} value={humanSeconds(config.roundSeconds)} onMinus={() => step('roundSeconds', -30, 30, 900)} onPlus={() => step('roundSeconds', 30, 30, 900)} accent={PHASE_COLORS.effort.deep} />
+              <SettingRow label={traduire("Round")} dot={PHASE_COLORS.effort.main} value={humanSeconds(config.roundSeconds)} onMinus={() => step('roundSeconds', -30, 30, 900)} onPlus={() => step('roundSeconds', 30, 30, 900)} accent={PHASE_COLORS.effort.deep} />
               <SettingRow label={traduire("Repos")} dot={PHASE_COLORS.repos.main} value={config.restSeconds === 0 ? traduire('Aucun') : humanSeconds(config.restSeconds)} onMinus={() => step('restSeconds', -15, 0, 300)} onPlus={() => step('restSeconds', 15, 0, 300)} accent={PHASE_COLORS.repos.deep} />
-              <SettingRow label="Rounds" hint={traduire("en tout")} value={String(config.totalRounds)} onMinus={() => step('totalRounds', -1, 1, 20)} onPlus={() => step('totalRounds', 1, 1, 20)} />
+              <SettingRow label={traduire("Rounds")} hint={traduire("en tout")} value={String(config.totalRounds)} onMinus={() => step('totalRounds', -1, 1, 20)} onPlus={() => step('totalRounds', 1, 1, 20)} />
               <SettingRow label={traduire("Préparation")} hint={traduire("avant le premier gong")} dot={PHASE_COLORS.prepa.main} value={config.prepaSeconds === 0 ? traduire('Aucune') : `${config.prepaSeconds} s`} onMinus={() => step('prepaSeconds', -5, 0, 30)} onPlus={() => step('prepaSeconds', 5, 0, 30)} />
             </View>
             <View style={{ height: 1, backgroundColor: P.line2 }} />

@@ -29,7 +29,7 @@ type Info = {
   error: string | null;
 };
 
-const PERIOD: Record<string, string> = { NORMAL: 'Normale', TRIAL: traduire('Essai gratuit'), INTRO: traduire('Prix de lancement'), PREPAID: traduire('Prépayée') };
+const PERIOD: Record<string, string> = { NORMAL: traduire('Normale'), TRIAL: traduire('Essai gratuit'), INTRO: traduire('Prix de lancement'), PREPAID: traduire('Prépayée') };
 
 function purchases(): { getCustomerInfo: () => Promise<any>; getOfferings: () => Promise<any> } | null {
   try {
@@ -98,7 +98,7 @@ export function Abonnement() {
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       appAlert(traduire('Copié'), traduire('L’identifiant client RevenueCat est dans le presse-papiers.'));
     } catch {
-      appAlert('Oups', traduire('Le presse-papiers est indisponible.'));
+      appAlert(traduire('Oups'), traduire('Le presse-papiers est indisponible.'));
     }
   };
 
@@ -106,27 +106,27 @@ export function Abonnement() {
   const access = simulateFreeUser ? traduire('Gratuit (vue gratuite)') : hasActiveSubscription ? traduire('Premium, abonnement réel') : isPremium ? traduire('Premium offert (Studio)') : traduire('Gratuit');
 
   return (
-    <StudioSection id="abonnement" icon="crown" title={traduire("Abonnement")} sub="Lecture seule : RevenueCat, entitlement, offres" keywords={traduire("abonnement premium revenuecat entitlement expiration client identifiant offering paquets prix store")}>
+    <StudioSection id="abonnement" icon="crown" title={traduire("Abonnement")} sub={traduire("Lecture seule : RevenueCat, entitlement, offres")} keywords="abonnement premium revenuecat entitlement expiration client identifiant offering paquets prix store">
       <Card>
         <KV first label={traduire("Accès dans l’app")} value={access} />
         <KV label={traduire("Abonnement réel")} value={hasActiveSubscription ? 'Actif' : traduire('Aucun')} />
         <KV label={traduire("Store prêt")} value={isStoreReady ? traduire('Oui') : traduire('Non')} />
-        <KV label="Offres" value={offersStatus === 'ready' ? traduire('Chargées') : offersStatus === 'loading' ? traduire('En chargement') : offersStatus === 'error' ? traduire('En erreur') : 'Indisponibles'} />
+        <KV label={traduire("Offres")} value={offersStatus === 'ready' ? traduire('Chargées') : offersStatus === 'loading' ? traduire('En chargement') : offersStatus === 'error' ? traduire('En erreur') : 'Indisponibles'} />
       </Card>
 
       <SubTitle>{`Entitlement « ${PREMIUM_ENTITLEMENT_ID} »`}</SubTitle>
       <Card>
-        <KV first label="Actif chez RevenueCat" value={info ? yesNo(info.error && !info.product ? null : info.active) : 'Lecture'} />
-        <KV label="Produit" value={info?.product ?? traduire('Aucun')} />
-        <KV label="Expiration" value={info?.expires ?? traduire('Aucune')} />
+        <KV first label={traduire("Actif chez RevenueCat")} value={info ? yesNo(info.error && !info.product ? null : info.active) : 'Lecture'} />
+        <KV label={traduire("Produit")} value={info?.product ?? traduire('Aucun')} />
+        <KV label={traduire("Expiration")} value={info?.expires ?? traduire('Aucune')} />
         <KV label={traduire("Période")} value={info?.period ?? traduire('Aucune')} />
-        <KV label="Renouvellement" value={yesNo(info?.willRenew ?? null)} />
-        <KV label="Store" value={info?.store ?? traduire('Aucun')} />
+        <KV label={traduire("Renouvellement")} value={yesNo(info?.willRenew ?? null)} />
+        <KV label={traduire("Store")} value={info?.store ?? traduire('Aucun')} />
       </Card>
 
-      <SubTitle>Identifiant client RevenueCat</SubTitle>
+      <SubTitle>{traduire("Identifiant client RevenueCat")}</SubTitle>
       <Card>
-        <KV first label={appUserId ?? traduire('Pas encore connu')} value="" right={appUserId ? <SmallAction label="Copier" onPress={() => void copyId()} /> : undefined} />
+        <KV first label={appUserId ?? traduire('Pas encore connu')} value="" right={appUserId ? <SmallAction label={traduire("Copier")} onPress={() => void copyId()} /> : undefined} />
       </Card>
       <Note>{traduire("Colle-le dans RevenueCat pour offrir Premium à ce téléphone. Ce n’est pas un secret, juste un numéro de client.")}</Note>
 

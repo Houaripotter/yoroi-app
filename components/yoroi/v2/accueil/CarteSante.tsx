@@ -132,7 +132,7 @@ export function CarteSante({ sante }: { sante: SanteVue }) {
       illustration={<IllusSante size={64} disque />}
       titre={titre}
       texte={texte}
-      principal={reglages ? { label: `Ouvrir ${app}`, onPress: ouvrir } : { label: 'Autoriser', onPress: autoriser, busy, busyLabel: traduire('Un instant…') }}
+      principal={reglages ? { label: `Ouvrir ${app}`, onPress: ouvrir } : { label: traduire('Autoriser'), onPress: autoriser, busy, busyLabel: traduire('Un instant…') }}
       liens={[
         { label: traduire('Plus tard'), onPress: plusTard },
         { label: traduire('Ne plus demander'), onPress: jamais },

@@ -28,7 +28,7 @@ const ARCH_DESC: Record<Archetype, string> = {
   polyvalent: traduire('Style équilibré, il s\'adapte.'),
 };
 const LEVEL_LABEL: Record<ExperienceLevel, string> = { debutant: 'Débutant', experimente: traduire('Expérimenté'), competiteur: traduire('Compétiteur'), pro: 'Professionnel' };
-const GARDES = [traduire('Fermée'), traduire('De La Riva'), 'X-Guard', 'Spider', 'Lasso', '50/50', 'Demi-garde', 'Papillon', 'Debout'];
+const GARDES = ['Fermée', 'De La Riva', 'X-Guard', 'Spider', 'Lasso', '50/50', 'Demi-garde', 'Papillon', 'Debout'];
 
 export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerInsights; onChange: (patch: Partial<Partner>) => void }) {
   const [archOpen, setArchOpen] = useState(false);
@@ -82,13 +82,12 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
         </Press>
         <Card style={{ flex: 1, padding: 14, gap: 2, borderColor: `${ins.fighterThreat.color}55` }}>
           <Ink size={12} weight="bold" color={P.ink2}>
-            Menace
-          </Ink>
+            {traduire("Menace")}</Ink>
           <Ink size={17} weight="black" tight color={ins.fighterThreat.color}>
             {traduire("{0} sur 10", String(ins.fighterThreat.score).replace('.', DECIMAL))}
           </Ink>
           <Ink size={12} weight="bold" color={ins.fighterThreat.color}>
-            {ins.fighterThreat.label}
+            {traduire(ins.fighterThreat.label)}
           </Ink>
         </Card>
       </View>
@@ -108,7 +107,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
           return (
             <View key={ax.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Ink size={14} weight="bold" style={{ width: 92 }}>
-                {ax.label}
+                {traduire(ax.label)}
               </Ink>
               <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
                 {[1, 2, 3, 4, 5].map((n) => (
@@ -149,7 +148,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {GARDES.map((g) => {
               const on = gardes.includes(g);
-              return <Chip key={g} label={g} on={on} color={color} onPress={() => onChange({ gardePreferred: on ? gardes.filter((x) => x !== g) : [...gardes, g] })} />;
+              return <Chip key={g} label={traduire(g)} on={on} color={color} onPress={() => onChange({ gardePreferred: on ? gardes.filter((x) => x !== g) : [...gardes, g] })} />;
             })}
           </View>
         </View>
@@ -158,14 +157,13 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
       <Card style={{ gap: 14 }}>
         <View>
           <Ink size={18} weight="black" tight>
-            Comparaison physique
-          </Ink>
+            {traduire("Comparaison physique")}</Ink>
           <Ink size={13} color={P.ink2}>
             {traduire("Écart par rapport à toi : plus, il est plus lourd ou plus grand")}</Ink>
         </View>
         <Physical label="Poids" unit="kg" value={p.weightDeltaKg} onChange={(v) => onChange({ weightDeltaKg: v })} />
         <Physical label="Taille" unit="cm" value={p.heightDeltaCm} onChange={(v) => onChange({ heightDeltaCm: v })} />
-        <Physical label="Allonge" unit="cm" value={p.reachDeltaCm} onChange={(v) => onChange({ reachDeltaCm: v })} />
+        <Physical label={traduire("Allonge")} unit="cm" value={p.reachDeltaCm} onChange={(v) => onChange({ reachDeltaCm: v })} />
       </Card>
 
       <Card style={{ gap: 10, borderColor: '#EBC9C7' }}>
@@ -202,7 +200,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
                 setArchOpen(false);
               }}
               accessibilityRole="button"
-              accessibilityLabel={ARCHETYPE_META[a].label}
+              accessibilityLabel={traduire(ARCHETYPE_META[a].label)}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: on ? `${ARCH_COLOR[a]}14` : P.white, borderWidth: 1.5, borderColor: on ? ARCH_COLOR[a] : P.line2 }}>
                 <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: ARCH_COLOR[a], alignItems: 'center', justifyContent: 'center' }}>
@@ -212,7 +210,7 @@ export function FighterProfile({ p, ins, onChange }: { p: Partner; ins: PartnerI
                 </View>
                 <View style={{ flex: 1 }}>
                   <Ink size={16} weight="black">
-                    {ARCHETYPE_META[a].label}
+                    {traduire(ARCHETYPE_META[a].label)}
                   </Ink>
                   <Ink size={13} color={P.ink2}>
                     {ARCH_DESC[a]}

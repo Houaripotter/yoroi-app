@@ -61,7 +61,7 @@ function count(id: string): number | null {
 const fmt = (n: number) => n.toLocaleString(LOCALE).replace(/ | /g, ' ');
 
 const N_SPORTS = count('sports');
-const N_EXOS = count(traduire('exercices'));
+const N_EXOS = count('exercices');
 const N_TECH = count('techniques');
 const N_SCENES = count('scenes');
 const N_CITATIONS = count('citations');
@@ -233,8 +233,8 @@ function TileView({ t, h }: { t: Tile; h: number }) {
             ))}
           </View>
           <View style={{ gap: 1 }}>
-            <Ink size={15} weight="black" tight numberOfLines={1}>{t.title}</Ink>
-            {!small ? <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{t.sub}</Ink> : null}
+            <Ink size={15} weight="black" tight numberOfLines={1}>{traduire(t.title)}</Ink>
+            {!small ? <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire(t.sub)}</Ink> : null}
           </View>
         </View>
       );
@@ -245,8 +245,8 @@ function TileView({ t, h }: { t: Tile; h: number }) {
           <View style={{ gap: 1, paddingRight: 6 }}>
             {/* vague 47 : fond pastel fixe, donc encre fixe (en sombre, le texte clair du theme ne se lisait plus) */}
             <Ink size={10} weight="black" color={t.ink} style={{ letterSpacing: 0.9 }} numberOfLines={1}>{t.kicker.toUpperCase()}</Ink>
-            <Ink size={15} weight="black" color={ENCRE_PASTEL} tight numberOfLines={1}>{t.title}</Ink>
-            {!small ? <Ink size={11} weight="bold" color={ENCRE_PASTEL_DOUCE} numberOfLines={1}>{t.sub}</Ink> : null}
+            <Ink size={15} weight="black" color={ENCRE_PASTEL} tight numberOfLines={1}>{traduire(t.title)}</Ink>
+            {!small ? <Ink size={11} weight="bold" color={ENCRE_PASTEL_DOUCE} numberOfLines={1}>{traduire(t.sub)}</Ink> : null}
           </View>
         </View>
       );
@@ -255,8 +255,8 @@ function TileView({ t, h }: { t: Tile; h: number }) {
       return (
         <View style={[white, { paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', gap: small ? 0 : 2 }]}>
           <Ink size={small ? 26 : 32} weight="black" tight color={col} style={{ lineHeight: small ? 30 : 38 }} numberOfLines={1}>{t.n}</Ink>
-          <Ink size={13} weight="extraBold" numberOfLines={1}>{t.label}</Ink>
-          {!small ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{t.sub}</Ink> : null}
+          <Ink size={13} weight="extraBold" numberOfLines={1}>{traduire(t.label)}</Ink>
+          {!small ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{traduire(t.sub)}</Ink> : null}
         </View>
       );
     }
@@ -278,8 +278,8 @@ function TileView({ t, h }: { t: Tile; h: number }) {
           <View style={{ gap: 1 }}>
             {/* vague 31 : carte basse (petits iPhone avec les avis), le titre seul pour ne rien couper */}
             {h >= 84 ? <Ink size={10} weight="black" color={soft} style={{ letterSpacing: 0.9 }} numberOfLines={1}>{t.kicker.toUpperCase()}</Ink> : null}
-            <Ink size={15} weight="black" color={onBg} tight numberOfLines={1}>{t.title}</Ink>
-            {!small ? <Ink size={11} weight="medium" color={soft} numberOfLines={1}>{t.sub}</Ink> : null}
+            <Ink size={15} weight="black" color={onBg} tight numberOfLines={1}>{traduire(t.title)}</Ink>
+            {!small ? <Ink size={11} weight="medium" color={soft} numberOfLines={1}>{traduire(t.sub)}</Ink> : null}
           </View>
         </View>
       );
@@ -289,8 +289,8 @@ function TileView({ t, h }: { t: Tile; h: number }) {
         <View style={[card, { backgroundColor: t.fond, alignItems: 'center', justifyContent: 'flex-end' }]}>
           <Image source={t.src} resizeMode="contain" style={{ position: 'absolute', top: -h * 0.06, left: -t.w * 0.2, width: t.w * 1.4, height: h * 1.06 - (small ? 20 : 30) }} accessibilityIgnoresInvertColors />
           <View style={{ alignItems: 'center', paddingBottom: small ? 5 : 7 }}>
-            <Ink size={12} weight="black" color={ENCRE_PASTEL} numberOfLines={1}>{t.label}</Ink>
-            {t.sub && !small ? <Ink size={10} weight="bold" color={ENCRE_PASTEL_DOUCE} numberOfLines={1}>{t.sub}</Ink> : null}
+            <Ink size={12} weight="black" color={ENCRE_PASTEL} numberOfLines={1}>{traduire(t.label)}</Ink>
+            {t.sub && !small ? <Ink size={10} weight="bold" color={ENCRE_PASTEL_DOUCE} numberOfLines={1}>{traduire(t.sub)}</Ink> : null}
           </View>
         </View>
       );
@@ -305,8 +305,8 @@ function TileView({ t, h }: { t: Tile; h: number }) {
             </View>
           ) : null}
           <View style={{ position: 'absolute', left: 12, right: 12, bottom: 9 }}>
-            <Ink size={15} weight="black" color="#FFFFFF" tight numberOfLines={1}>{t.label}</Ink>
-            {t.sub && !small ? <Ink size={11} weight="bold" color="rgba(255,255,255,0.82)" numberOfLines={1}>{t.sub}</Ink> : null}
+            <Ink size={15} weight="black" color="#FFFFFF" tight numberOfLines={1}>{traduire(t.label)}</Ink>
+            {t.sub && !small ? <Ink size={11} weight="bold" color="rgba(255,255,255,0.82)" numberOfLines={1}>{traduire(t.sub)}</Ink> : null}
           </View>
         </View>
       );
@@ -315,8 +315,8 @@ function TileView({ t, h }: { t: Tile; h: number }) {
         <View style={[white, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, gap: 10 }]}>
           <Tampon name={t.t} size={small ? 46 : 62} rotate={-8} accessibilityLabel={null} />
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={15} weight="black" tight numberOfLines={1}>{t.title}</Ink>
-            <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={2}>{t.sub}</Ink>
+            <Ink size={15} weight="black" tight numberOfLines={1}>{traduire(t.title)}</Ink>
+            <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={2}>{traduire(t.sub)}</Ink>
           </View>
         </View>
       );
@@ -416,7 +416,7 @@ function PageRecords() {
               <TropheeRecord size={16} />
               <Ink size={10.5} weight="black" color={c.record} style={{ letterSpacing: 1 }} numberOfLines={1}>{r.kicker.toUpperCase()}</Ink>
             </View>
-            <Ink size={17} weight="black" tight numberOfLines={1}>{r.titre}</Ink>
+            <Ink size={17} weight="black" tight numberOfLines={1}>{traduire(r.titre)}</Ink>
             <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1}>{r.sous}</Ink>
           </View>
           {k === 0 ? (
@@ -506,7 +506,7 @@ function PageSports({ g, designW }: { g: 'h' | 'f'; designW: number }) {
           return (
             <View key={s.id} style={{ width: tw, height: 112, borderRadius: 18, backgroundColor: s.fond, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
               <Image source={k % 2 ? (g === 'f' ? il.h : il.f) : g === 'f' ? il.f : il.h} resizeMode="contain" style={{ position: 'absolute', top: 4, left: 0, width: tw, height: 84 }} accessibilityIgnoresInvertColors />
-              <Ink size={12.5} weight="black" color={ENCRE_PASTEL} style={{ paddingBottom: 6 }} numberOfLines={1}>{il.nom}</Ink>
+              <Ink size={12.5} weight="black" color={ENCRE_PASTEL} style={{ paddingBottom: 6 }} numberOfLines={1}>{traduire(il.nom)}</Ink>
             </View>
           );
         })}
@@ -550,7 +550,7 @@ function PageArmure({ g, designW }: { g: 'h' | 'f'; designW: number }) {
         <ArmureEnConstruction piece={PIECES.samourai} progres={0.66} taille={84} />
         <View style={{ flex: 1, gap: 4 }}>
           <Ink size={10.5} weight="black" color={c.goldDeep} style={{ letterSpacing: 1 }}>EN CONSTRUCTION</Ink>
-          <Ink size={17} weight="black" tight numberOfLines={1}>{PIECES.samourai.nom}</Ink>
+          <Ink size={17} weight="black" tight numberOfLines={1}>{traduire(PIECES.samourai.nom)}</Ink>
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("Tes séances dévoilent ta pièce suivante, étape par étape.")}</Ink>
           <EtapesPiece faites={2} />
         </View>
@@ -578,7 +578,7 @@ function PageTel() {
             <Icon name={r.icon} size={18} color={c.onAccent} stroke={2.5} />
           </View>
           <View style={{ flex: 1, gap: 1 }}>
-            <Ink size={15} weight="black" tight numberOfLines={1}>{r.titre}</Ink>
+            <Ink size={15} weight="black" tight numberOfLines={1}>{traduire(r.titre)}</Ink>
             <Ink size={12.5} weight="medium" color={c.textSecondary} numberOfLines={1}>{r.sous}</Ink>
           </View>
         </View>

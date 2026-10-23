@@ -66,7 +66,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
       const confirm = await promptPassword({
         title: traduire('Confirme le mot de passe'),
         message: traduire('Retape le même mot de passe pour être sûr.'),
-        confirmLabel: 'Confirmer',
+        confirmLabel: traduire('Confirmer'),
         minLength: 8,
       });
       if (!confirm) return;
@@ -86,7 +86,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
         );
       } catch (e) {
         logger.error('[BackupEncryption] Erreur activation:', e);
-        appAlert('Oups', traduire('Le chiffrement n’a pas pu être activé.'));
+        appAlert(traduire('Oups'), traduire('Le chiffrement n’a pas pu être activé.'));
       }
     } else {
       // Désactivation : confirmation
@@ -134,7 +134,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
           {enabled ? <Lock size={18} color={accent} /> : <Unlock size={18} color={accent} />}
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text }]}>Chiffrement AES-256</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{traduire("Chiffrement AES-256")}</Text>
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
             {enabled
               ? traduire('Tes backups sont protégés par mot de passe')

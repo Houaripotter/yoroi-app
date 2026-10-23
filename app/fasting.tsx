@@ -177,7 +177,7 @@ export default function FastingScreen() {
     appAlert(traduire('Avant de commencer'), mode.warning ? PROLONGED_WARNING : HEALTH_WARNING, [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'J’ai compris',
+        text: traduire('J’ai compris'),
         onPress: () => {
           if (mode.id === 'ramadan') setRamadanOpen(true);
           else if (mode.id === 'custom') setCustomOpen(true);
@@ -189,7 +189,7 @@ export default function FastingScreen() {
 
   const askStop = () => {
     appAlert(traduire('Arrêter le jeûne ?'), traduire('Tu peux t’arrêter à tout moment. Ce jeûne ne sera pas compté comme terminé.'), [
-      { text: 'Continuer', style: 'cancel' },
+      { text: traduire('Continuer'), style: 'cancel' },
       {
         text: traduire('Arrêter'),
         style: 'destructive',
@@ -507,13 +507,13 @@ export default function FastingScreen() {
         subtitle={traduire("Entre les heures de prière de ta ville")}
         footer={<BigButton label={saving ? traduire('Démarrage') : traduire('Commencer le jeûne')} onPress={saveRamadan} disabled={saving} icon="moon" />}
       >
-        <TextField label="Ville" value={city} onChange={setCity} placeholder="Paris" />
+        <TextField label="Ville" value={city} onChange={setCity} placeholder={traduire("Paris")} />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
-            <TextField label="Fajr (aube)" value={fajr} onChange={setFajr} placeholder="05:30" />
+            <TextField label={traduire("Fajr (aube)")} value={fajr} onChange={setFajr} placeholder="05:30" />
           </View>
           <View style={{ flex: 1 }}>
-            <TextField label="Maghrib (coucher)" value={maghrib} onChange={setMaghrib} placeholder="18:45" />
+            <TextField label={traduire("Maghrib (coucher)")} value={maghrib} onChange={setMaghrib} placeholder="18:45" />
           </View>
         </View>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: P.goldSoft, borderColor: P.goldSoft }}>

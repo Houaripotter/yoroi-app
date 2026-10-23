@@ -432,7 +432,7 @@ export const updateCombat = async (id: number, updates: Partial<Combat>): Promis
     if (fields.length === 0) return;
 
     values.push(id);
-    const sql = traduire("UPDATE combats SET {0} WHERE id = ?", fields.join(', '));
+    const sql = `UPDATE combats SET ${fields.join(', ')} WHERE id = ?`;
     db.runSync(sql, values);
   } catch (error) {
     logger.error('Error updating combat:', error);
@@ -564,7 +564,7 @@ export const updateObjectifPoids = async (id: number, updates: Partial<ObjectifP
     if (fields.length === 0) return;
 
     values.push(id);
-    const sql = traduire("UPDATE objectifs_poids SET {0} WHERE id = ?", fields.join(', '));
+    const sql = `UPDATE objectifs_poids SET ${fields.join(', ')} WHERE id = ?`;
     db.runSync(sql, values);
   } catch (error) {
     logger.error('Error updating objectif poids:', error);

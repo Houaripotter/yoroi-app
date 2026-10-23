@@ -26,61 +26,61 @@ export const THEMES_JJB: ThemeCategory[] = [
     label: 'Self-defense',
     color: '#0EA5E9',
     themes: [
-      traduire('Défense saisie poignet'), traduire('Défense saisie col 1 main'), traduire('Défense saisie col 2 mains'),
-      traduire('Défense étranglement de face'), traduire('Défense étranglement de dos'), traduire('Défense étranglement au sol'),
-      traduire('Défense headlock debout'), traduire('Défense headlock au sol'),
-      traduire('Défense ceinture avant (bear hug)'), traduire('Défense ceinture arrière'),
-      traduire('Défense contre poing'), 'Cadre en garde contre coups',
-      traduire('Défense guillotine debout'), traduire('Défense clinch debout'),
-      traduire('Relevé technique (technical stand up)'), traduire('Clinch de survie'),
+      'Défense saisie poignet', 'Défense saisie col 1 main', 'Défense saisie col 2 mains',
+      'Défense étranglement de face', 'Défense étranglement de dos', 'Défense étranglement au sol',
+      'Défense headlock debout', 'Défense headlock au sol',
+      'Défense ceinture avant (bear hug)', 'Défense ceinture arrière',
+      'Défense contre poing', 'Cadre en garde contre coups',
+      'Défense guillotine debout', 'Défense clinch debout',
+      'Relevé technique (technical stand up)', 'Clinch de survie',
     ],
   },
   {
-    label: 'Debout & takedowns',
+    label: traduire('Debout & takedowns'),
     color: '#3B82F6',
     themes: [
-      'Posture & base debout', traduire('Chute avant / arrière / latérale'),
-      traduire('Amenée au sol'), 'Single leg', 'Double leg',
-      traduire('Projection de hanche'), traduire('Projection d\'épaule'),
+      'Posture & base debout', 'Chute avant / arrière / latérale',
+      'Amenée au sol', 'Single leg', 'Double leg',
+      'Projection de hanche', 'Projection d\'épaule',
       'Uchi mata', 'Seoi nage', 'Ippon seoi nage',
       'Ouchi gari', 'Kouchi gari', 'Osoto gari', 'Tai otoshi', 'Harai goshi',
       'Fauchage', 'Ankle pick', 'Arm drag', 'Snap down',
-      'Tir (shoot)', traduire('Corps à corps'), traduire('Entrée en jambes'),
-      traduire('Défense takedown'), 'Sprawl',
-      traduire('Tirage de garde (pull guard)'), 'Sit pull', 'Flying triangle',
+      'Tir (shoot)', 'Corps à corps', 'Entrée en jambes',
+      'Défense takedown', 'Sprawl',
+      'Tirage de garde (pull guard)', 'Sit pull', 'Flying triangle',
     ],
   },
   {
-    label: 'Gardes',
+    label: traduire('Gardes'),
     color: '#8B5CF6',
     themes: [
-      traduire('Garde fermée'), 'Garde ouverte',
-      traduire('Ouvrir la garde debout'), traduire('Ouvrir la garde au sol'),
+      'Garde fermée', 'Garde ouverte',
+      'Ouvrir la garde debout', 'Ouvrir la garde au sol',
       'Demi-garde', 'Deep half',
       'Butterfly', 'Butterfly assis',
       'Spider guard', 'Lasso',
-      traduire('De la Riva (DLR)'), traduire('Reverse De la Riva (RDLR)'),
+      'De la Riva (DLR)', 'Reverse De la Riva (RDLR)',
       'X-guard', 'Single leg X (SLX / ashi garami)',
       '50/50', 'Saddle (411 / honey hole)',
       'Worm guard', 'Lapel guard', 'Rubber guard', 'Z-guard',
       'Garde assise', 'Col-manche', 'Knee shield',
-      'Octopus guard', 'Tornado guard', traduire('Garde inversée (inverted)'),
+      'Octopus guard', 'Tornado guard', 'Garde inversée (inverted)',
       'Williams guard', 'Squid guard', 'Tarantula', 'Waiter', 'K-guard',
-      traduire('Rétention de garde'), traduire('Transitions entre gardes'),
+      'Rétention de garde', 'Transitions entre gardes',
     ],
   },
   {
-    label: 'Balayages (sweeps)',
+    label: traduire('Balayages (sweeps)'),
     color: '#14B8A6',
     themes: [
       'Ciseau', 'Pendule', 'Hip bump',
       'Butterfly sweep', 'Hook sweep', 'Tripod sweep',
       'Renversement omoplata', 'Lumberjack',
       'X-guard sweep', 'Single leg X sweep',
-      traduire('De la Riva sweep'), 'Reverse DLR sweep', 'Berimbolo',
+      'De la Riva sweep', 'Reverse DLR sweep', 'Berimbolo',
       'Half guard plan B', 'Deep half sweep',
       'Spider sweep', 'Lasso sweep', 'Col-manche sweep',
-      traduire('Arm drag depuis butterfly'),
+      'Arm drag depuis butterfly',
     ],
   },
   {
@@ -113,87 +113,87 @@ export const THEMES_JJB: ThemeCategory[] = [
     label: traduire('Soumissions, bras/épaule'),
     color: '#EF4444',
     themes: [
-      'Armbar (juji gatame)', traduire('Armbar depuis la garde'), traduire('Armbar depuis le mount'),
-      'Kimura', traduire('Kimura depuis la garde'), 'Kimura trap',
-      'Americana', traduire('Americana depuis le mount'),
+      'Armbar (juji gatame)', 'Armbar depuis la garde', 'Armbar depuis le mount',
+      'Kimura', 'Kimura depuis la garde', 'Kimura trap',
+      'Americana', 'Americana depuis le mount',
       'Omoplata', 'Baratoplata', 'Monoplata',
-      traduire('Clé de poignet'), 'Biceps slicer',
+      'Clé de poignet', 'Biceps slicer',
     ],
   },
   {
-    label: 'Soumissions, cou',
+    label: traduire('Soumissions, cou'),
     color: '#DC2626',
     themes: [
-      'Triangle', traduire('Triangle depuis la garde'), traduire('Triangle depuis le mount'), traduire('Triangle inversé'),
+      'Triangle', 'Triangle depuis la garde', 'Triangle depuis le mount', 'Triangle inversé',
       'Guillotine', 'High elbow guillotine', 'Arm-in guillotine',
-      'Mata leão (RNC)', 'Cross choke', traduire('Cross choke depuis la garde'),
-      traduire('Collar choke depuis le dos'), 'Bow and arrow',
-      'Ezekiel', traduire('Ezekiel depuis le mount'),
+      'Mata leão (RNC)', 'Cross choke', 'Cross choke depuis la garde',
+      'Collar choke depuis le dos', 'Bow and arrow',
+      'Ezekiel', 'Ezekiel depuis le mount',
       'Clock choke', "D'Arce", 'Anaconda',
       'North-south choke', 'Loop choke', 'Baseball choke',
       // ── Étranglements avec la lapelle / pan du gi ──
-      traduire('Bread cutter (étrangleur de pain)'), 'Papercutter choke',
-      traduire('Nogueira choke (pan dans le dos)'), 'Cariño choke',
-      traduire('Étranglement avec pan adverse'), traduire('Étranglement lapelle'),
+      'Bread cutter (étrangleur de pain)', 'Papercutter choke',
+      'Nogueira choke (pan dans le dos)', 'Cariño choke',
+      'Étranglement avec pan adverse', 'Étranglement lapelle',
       'Collar drag choke', 'Gift wrap choke',
       'Shoelace choke', 'Spaghetti choke',
       'Napão choke (big head)', 'Reverse Ezekiel',
-      'Sit-up Ezekiel', traduire('Gogoplata avec lapelle'),
-      traduire('Étranglement depuis worm guard'), traduire('Étranglement depuis lapel guard'),
+      'Sit-up Ezekiel', 'Gogoplata avec lapelle',
+      'Étranglement depuis worm guard', 'Étranglement depuis lapel guard',
     ],
   },
   {
-    label: 'Soumissions, jambes',
+    label: traduire('Soumissions, jambes'),
     color: '#B91C1C',
     themes: [
-      traduire('Clé de cheville'), 'Heel hook', traduire('Heel hook inversé'),
-      'Kneebar', traduire('Kimura de cheville (toe hold)'), 'Estima lock', traduire('Compression du mollet'),
+      'Clé de cheville', 'Heel hook', 'Heel hook inversé',
+      'Kneebar', 'Kimura de cheville (toe hold)', 'Estima lock', 'Compression du mollet',
     ],
   },
   {
     label: traduire('Défense & évasions'),
     color: '#64748B',
     themes: [
-      traduire('Récupération de garde'), 'Hip escape (shrimp)', 'Upa (bridge & roll)',
-      'Elbow escape (mount)', traduire('Sortie de side control'),
-      traduire('Sortie de back control'), traduire('Sortie de rear mount'),
+      'Récupération de garde', 'Hip escape (shrimp)', 'Upa (bridge & roll)',
+      'Elbow escape (mount)', 'Sortie de side control',
+      'Sortie de back control', 'Sortie de rear mount',
       'Ghost escape',
-      traduire('Défense armbar'), traduire('Défense triangle'), traduire('Défense kimura'),
-      traduire('Défense RNC / mata leão'), traduire('Défense heel hook'),
-      'Cadres (frames)', traduire('Retour sur le ventre'), 'Contre-attaque',
+      'Défense armbar', 'Défense triangle', 'Défense kimura',
+      'Défense RNC / mata leão', 'Défense heel hook',
+      'Cadres (frames)', 'Retour sur le ventre', 'Contre-attaque',
     ],
   },
   {
-    label: 'Drills & concepts',
+    label: traduire('Drills & concepts'),
     color: '#A855F7',
     themes: [
-      traduire('Solo drills (shrimp, upa, relevé technique)'),
+      'Solo drills (shrimp, upa, relevé technique)',
       'Flow rolling', 'Positional sparring',
       'Specific training (ex : 5 min side control)',
       'Timing & connexion', 'Placement & pression',
-      'Grip fighting', traduire('Casser les grips'),
-      'Base & posture', traduire('Respiration & gestion du cardio'),
-      traduire('Enchaînements de soumissions'),
-      traduire('Système de leg locks (SLX → heel hook → kneebar)'),
+      'Grip fighting', 'Casser les grips',
+      'Base & posture', 'Respiration & gestion du cardio',
+      'Enchaînements de soumissions',
+      'Système de leg locks (SLX → heel hook → kneebar)',
       'Back attack system', 'Counter flow rolling',
-      traduire('Jiu-jitsu sans force'), 'Transitions invisibles',
+      'Jiu-jitsu sans force', 'Transitions invisibles',
     ],
   },
   {
     label: traduire('Tactique & compétition'),
     color: '#F43F5E',
     themes: [
-      traduire('Stratégie de match (gi)'), traduire('Stratégie de match (no-gi)'),
-      traduire('Gestion des points & avantages'), traduire('Gestion du chrono'),
-      traduire('Pénalités & stalling'), traduire('Règles de compétition'),
-      traduire('Pull guard en compète'), traduire('Takedowns en compète'),
-      traduire('Sweep pour les 2 points'), traduire('Pass + monté = 4 pts'),
-      traduire('Prise de dos sécurisée (4 pts)'), traduire('Jeu défensif'),
-      traduire('Warm up compétition'), traduire('Gestion du stress'), traduire('Visualisation avant match'),
-      traduire('Coupe de poids'), traduire('Hydratation & nutrition compète'),
-      traduire('Drilling spécifique compète'), 'Match simulation',
-      traduire('Cardio compète'), traduire('Récupération entre matchs'),
-      traduire('Stratégie tournoi (bracket)'),
+      'Stratégie de match (gi)', 'Stratégie de match (no-gi)',
+      'Gestion des points & avantages', 'Gestion du chrono',
+      'Pénalités & stalling', 'Règles de compétition',
+      'Pull guard en compète', 'Takedowns en compète',
+      'Sweep pour les 2 points', 'Pass + monté = 4 pts',
+      'Prise de dos sécurisée (4 pts)', 'Jeu défensif',
+      'Warm up compétition', 'Gestion du stress', 'Visualisation avant match',
+      'Coupe de poids', 'Hydratation & nutrition compète',
+      'Drilling spécifique compète', 'Match simulation',
+      'Cardio compète', 'Récupération entre matchs',
+      'Stratégie tournoi (bracket)',
     ],
   },
 ];
@@ -203,11 +203,11 @@ export const THEMES_JJB: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_JUDO: ThemeCategory[] = [
   {
-    label: 'Kumi-kata (saisies)',
+    label: traduire('Kumi-kata (saisies)'),
     color: '#3B82F6',
     themes: [
       'Saisie classique', 'Saisie revers', 'Saisie manche', 'Saisie haute',
-      traduire('Saisie croisée'), traduire('Casser les saisies'), traduire('Combat de saisies'),
+      'Saisie croisée', 'Casser les saisies', 'Combat de saisies',
     ],
   },
   {
@@ -219,7 +219,7 @@ export const THEMES_JUDO: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Koshi-waza (hanches)',
+    label: traduire('Koshi-waza (hanches)'),
     color: '#F97316',
     themes: [
       'O goshi', 'Uki goshi', 'Harai goshi', 'Tsuri goshi', 'Tsuri komi goshi',
@@ -227,16 +227,16 @@ export const THEMES_JUDO: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Ashi-waza (jambes)',
+    label: traduire('Ashi-waza (jambes)'),
     color: '#22C55E',
     themes: [
-      traduire('De ashi harai'), 'Hiza guruma', 'Sasae tsuri komi ashi', 'Okuri ashi harai',
+      'De ashi harai', 'Hiza guruma', 'Sasae tsuri komi ashi', 'Okuri ashi harai',
       'Uchi mata', 'Ouchi gari', 'Kouchi gari', 'O soto gari', 'Ko soto gari',
       'Ashi guruma', 'Harai tsuri komi ashi',
     ],
   },
   {
-    label: 'Sutemi-waza (sacrifice)',
+    label: traduire('Sutemi-waza (sacrifice)'),
     color: '#06B6D4',
     themes: [
       'Tomoe nage', 'Sumi gaeshi', 'Ura nage', 'Yoko tomoe nage',
@@ -248,11 +248,11 @@ export const THEMES_JUDO: ThemeCategory[] = [
     color: '#14B8A6',
     themes: [
       'Kesa gatame', 'Kuzure kesa gatame', 'Yoko shiho gatame', 'Kami shiho gatame',
-      'Tate shiho gatame', 'Retournement', traduire('Sortie de contrôle'), traduire('Passage à ne-waza'),
+      'Tate shiho gatame', 'Retournement', 'Sortie de contrôle', 'Passage à ne-waza',
     ],
   },
   {
-    label: 'Soumissions',
+    label: traduire('Soumissions'),
     color: '#EF4444',
     themes: [
       'Juji gatame', 'Ude garami (kimura)', 'Ude gatame', 'Hadaka jime (RNC)',
@@ -264,7 +264,7 @@ export const THEMES_JUDO: ThemeCategory[] = [
     color: '#64748B',
     themes: [
       'Esquive projection', 'Blocage hanches', 'Contre-attaque (kaeshi-waza)',
-      traduire('Enchaînements (renzoku-waza)'), traduire('Fuites de saisie'), traduire('Gestion de fin de combat'),
+      'Enchaînements (renzoku-waza)', 'Fuites de saisie', 'Gestion de fin de combat',
     ],
   },
 ];
@@ -274,7 +274,7 @@ export const THEMES_JUDO: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_LUTTE: ThemeCategory[] = [
   {
-    label: 'Debout, attaques',
+    label: traduire('Debout, attaques'),
     color: '#3B82F6',
     themes: [
       'Single leg', 'Double leg', 'High crotch', 'Ankle pick', 'Low single',
@@ -286,7 +286,7 @@ export const THEMES_LUTTE: ThemeCategory[] = [
     label: traduire('Gréco-romaine (debout)'),
     color: '#06B6D4',
     themes: [
-      traduire('Suplex arrière'), traduire('Suplex avant'), 'Bodylock', 'Pummeling',
+      'Suplex arrière', 'Suplex avant', 'Bodylock', 'Pummeling',
       'Throw-by', 'Gut wrench debout', 'Headlock toss',
     ],
   },
@@ -294,7 +294,7 @@ export const THEMES_LUTTE: ThemeCategory[] = [
     label: traduire('Finitions de takedown'),
     color: '#F97316',
     themes: [
-      'Running the pipe', traduire('Finish single jambe en l\'air'), 'Dump',
+      'Running the pipe', 'Finish single jambe en l\'air', 'Dump',
       'Limp leg', 'Trip', 'Hip throw', 'Double leg finish',
     ],
   },
@@ -315,7 +315,7 @@ export const THEMES_LUTTE: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Escapes & reversals',
+    label: traduire('Escapes & reversals'),
     color: '#64748B',
     themes: [
       'Stand up escape', 'Sit out', 'Switch', 'Hip heist', 'Granby roll',
@@ -329,16 +329,16 @@ export const THEMES_LUTTE: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_GRAPPLING: ThemeCategory[] = [
   {
-    label: 'Debout',
+    label: traduire('Debout'),
     color: '#3B82F6',
     themes: [
       'Single leg', 'Double leg', 'High crotch', 'Ankle pick',
       'Arm drag', 'Snap down', 'Front head lock', 'Underhook',
-      'Russian tie', 'Tir direct', traduire('Défense takedown'), 'Sprawl',
+      'Russian tie', 'Tir direct', 'Défense takedown', 'Sprawl',
     ],
   },
   {
-    label: 'Gardes no-gi',
+    label: traduire('Gardes no-gi'),
     color: '#8B5CF6',
     themes: [
       'Butterfly guard', 'Half guard', 'Z-guard', 'Deep half',
@@ -363,11 +363,11 @@ export const THEMES_GRAPPLING: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Leg locks',
+    label: traduire('Leg locks'),
     color: '#B91C1C',
     themes: [
       'Straight ankle lock', 'Heel hook (inside/outside)', 'Kneebar',
-      traduire('Kimura de cheville (toe hold)'), 'Estima lock', 'Calf slicer', 'Ashi garami entry',
+      'Kimura de cheville (toe hold)', 'Estima lock', 'Calf slicer', 'Ashi garami entry',
       '50/50 entry', 'Saddle entry',
     ],
   },
@@ -383,7 +383,7 @@ export const THEMES_GRAPPLING: ThemeCategory[] = [
     label: traduire('Défense & évasions'),
     color: '#64748B',
     themes: [
-      'Hip escape', 'Bridge & roll', 'Frames', traduire('Défense leg lock'),
+      'Hip escape', 'Bridge & roll', 'Frames', 'Défense leg lock',
       'Back escape', 'Reguard', 'Flow rolling',
     ],
   },
@@ -394,7 +394,7 @@ export const THEMES_GRAPPLING: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_SAMBO: ThemeCategory[] = [
   {
-    label: 'Projections',
+    label: traduire('Projections'),
     color: '#3B82F6',
     themes: [
       'Tomoe nage', 'Uchi mata', 'Harai goshi', 'Sumi gaeshi', 'Sacrifice',
@@ -413,12 +413,12 @@ export const THEMES_SAMBO: ThemeCategory[] = [
     label: traduire('Leg locks (spécialité sambo)'),
     color: '#B91C1C',
     themes: [
-      'Straight ankle lock', traduire('Heel hook (Combat Sambo)'), 'Kneebar',
-      traduire('Kimura de cheville (toe hold)'), 'Achille', 'Calf slicer', 'Hip lock',
+      'Straight ankle lock', 'Heel hook (Combat Sambo)', 'Kneebar',
+      'Kimura de cheville (toe hold)', 'Achille', 'Calf slicer', 'Hip lock',
     ],
   },
   {
-    label: 'Armlocks & kimuras',
+    label: traduire('Armlocks & kimuras'),
     color: '#EF4444',
     themes: [
       'Juji gatame', 'Kimura', 'Americana', 'Ude garami', 'Wristlock',
@@ -428,14 +428,14 @@ export const THEMES_SAMBO: ThemeCategory[] = [
     label: traduire('Combat Sambo (striking)'),
     color: '#F97316',
     themes: [
-      'Jab-cross', 'Low kick', 'Clinch', 'Genou', traduire('Défense striking'), 'Enchainement frappes-projection',
+      'Jab-cross', 'Low kick', 'Clinch', 'Genou', 'Défense striking', 'Enchainement frappes-projection',
     ],
   },
   {
     label: traduire('Défense & évasions'),
     color: '#64748B',
     themes: [
-      'Contre-projection', 'Sortie side control', traduire('Défense leg lock'),
+      'Contre-projection', 'Sortie side control', 'Défense leg lock',
       'Hip escape', 'Bridge & roll',
     ],
   },
@@ -446,7 +446,7 @@ export const THEMES_SAMBO: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_CATCH: ThemeCategory[] = [
   {
-    label: 'Takedowns',
+    label: traduire('Takedowns'),
     color: '#3B82F6',
     themes: [
       'Double leg', 'Single leg', 'Headlock takedown', 'Snap down',
@@ -462,7 +462,7 @@ export const THEMES_CATCH: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Stretches & cranks',
+    label: traduire('Stretches & cranks'),
     color: '#F97316',
     themes: [
       'Neck crank', 'Boston crab', 'Surfboard', 'Full nelson',
@@ -470,16 +470,16 @@ export const THEMES_CATCH: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Submissions',
+    label: traduire('Submissions'),
     color: '#EF4444',
     themes: [
       'Double wrist lock (Kimura)', 'Hammerlock', 'Short arm scissor',
       'Top wrist lock', 'Key lock', 'Neck crank', 'Head scissor',
-      'Guillotine', traduire('Kimura de cheville (toe hold)'),
+      'Guillotine', 'Kimura de cheville (toe hold)',
     ],
   },
   {
-    label: 'Escapes & contres',
+    label: traduire('Escapes & contres'),
     color: '#64748B',
     themes: [
       'Stand up', 'Hip heist', 'Switch', 'Sit out', 'Granby', 'Contre-lock',
@@ -492,24 +492,24 @@ export const THEMES_CATCH: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_MMA: ThemeCategory[] = [
   {
-    label: 'Frappes debout',
+    label: traduire('Frappes debout'),
     color: '#3B82F6',
     themes: [
       'Jab', 'Cross', 'Crochet', 'Uppercut', 'Overhand', 'Superman punch',
       'Low kick', 'Middle kick', 'High kick', 'Teep / push kick',
-      traduire('Coup de genou'), traduire('Coup de coude'), 'Spinning back kick', 'Spinning back fist',
+      'Coup de genou', 'Coup de coude', 'Spinning back kick', 'Spinning back fist',
     ],
   },
   {
-    label: 'Combinaisons',
+    label: traduire('Combinaisons'),
     color: '#06B6D4',
     themes: [
-      'Jab-cross', 'Jab-cross-crochet (1-2-3)', traduire('Corps-tête'), 'Head-body-head',
-      traduire('Kick après main'), 'Kick-punch', 'Feinte + contre', 'Kick low-high',
+      'Jab-cross', 'Jab-cross-crochet (1-2-3)', 'Corps-tête', 'Head-body-head',
+      'Kick après main', 'Kick-punch', 'Feinte + contre', 'Kick low-high',
     ],
   },
   {
-    label: 'Takedowns',
+    label: traduire('Takedowns'),
     color: '#8B5CF6',
     themes: [
       'Double leg', 'Single leg', 'Ankle pick', 'Body lock', 'Cage wrestling',
@@ -517,27 +517,27 @@ export const THEMES_MMA: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Clinch & cage',
+    label: traduire('Clinch & cage'),
     color: '#EF4444',
     themes: [
-      'Thai clinch', 'Plum', 'Underhook', 'Overhook', traduire('Coup de genou clinch'),
+      'Thai clinch', 'Plum', 'Underhook', 'Overhook', 'Coup de genou clinch',
       'Coude clinch', 'Pummel', 'Cage control', 'Dirty boxing',
     ],
   },
   {
-    label: 'Ground & Pound',
+    label: traduire('Ground & Pound'),
     color: '#F97316',
     themes: [
       'GnP en mount', 'GnP en side control', 'GnP en back control',
-      'GnP en guard top', 'Postures & cadres', 'Stand up safe', traduire('Elbows du dessus'),
+      'GnP en guard top', 'Postures & cadres', 'Stand up safe', 'Elbows du dessus',
     ],
   },
   {
-    label: 'Soumissions',
+    label: traduire('Soumissions'),
     color: '#DC2626',
     themes: [
       'RNC', 'Triangle', 'Armbar', 'Kimura', "D'Arce", 'Anaconda', 'Guillotine',
-      'Heel hook', 'Kneebar', traduire('Kimura de cheville (toe hold)'), 'Americana',
+      'Heel hook', 'Kneebar', 'Kimura de cheville (toe hold)', 'Americana',
     ],
   },
   {
@@ -558,17 +558,17 @@ export const THEMES_BOXE: ThemeCategory[] = [
     label: traduire('Frappes de base'),
     color: '#3B82F6',
     themes: [
-      'Jab', traduire('Cross (direct arrière)'), traduire('Crochet avant (lead hook)'),
-      traduire('Crochet arrière (rear hook)'), traduire('Uppercut avant'), traduire('Uppercut arrière'),
+      'Jab', 'Cross (direct arrière)', 'Crochet avant (lead hook)',
+      'Crochet arrière (rear hook)', 'Uppercut avant', 'Uppercut arrière',
       'Overhand', 'Check hook',
     ],
   },
   {
-    label: 'Combinaisons',
+    label: traduire('Combinaisons'),
     color: '#F97316',
     themes: [
       '1-2 (jab-cross)', '1-2-3', '1-1-2', '1-2-3-2', 'Double jab',
-      'Jab-cross-uppercut', traduire('Body-tête'), traduire('Tête-corps-tête'), 'Feinte + 1-2',
+      'Jab-cross-uppercut', 'Body-tête', 'Tête-corps-tête', 'Feinte + 1-2',
       'Long-short combo',
     ],
   },
@@ -577,32 +577,32 @@ export const THEMES_BOXE: ThemeCategory[] = [
     color: '#EF4444',
     themes: [
       'Body jab', 'Body cross', 'Body hook', 'Liver shot',
-      'Shovel hook', traduire('Uppercut au corps'),
+      'Shovel hook', 'Uppercut au corps',
     ],
   },
   {
     label: traduire('Défense'),
     color: '#22C55E',
     themes: [
-      traduire('Slip intérieur'), traduire('Slip extérieur'), 'Bob & weave', 'Roll',
+      'Slip intérieur', 'Slip extérieur', 'Bob & weave', 'Roll',
       'Parry (jab/cross)', 'Block (garde haute)', 'Shoulder roll',
       'Pull counter', 'Couverture',
     ],
   },
   {
-    label: 'Footwork & angles',
+    label: traduire('Footwork & angles'),
     color: '#8B5CF6',
     themes: [
-      traduire('Pas glissé avant/arrière'), 'Pivot', 'Pivot angle', 'Side step',
-      'L-step', 'Out-of-range', traduire('Gestion de distance'), 'Coupe-ring',
+      'Pas glissé avant/arrière', 'Pivot', 'Pivot angle', 'Side step',
+      'L-step', 'Out-of-range', 'Gestion de distance', 'Coupe-ring',
     ],
   },
   {
-    label: 'Tactique & sparring',
+    label: traduire('Tactique & sparring'),
     color: '#06B6D4',
     themes: [
-      'Feintes', traduire('Drills de réaction'), traduire('Travail de pads'), 'Sac lourd',
-      'Ombre', 'Sparring technique', traduire('Gestion des rounds'),
+      'Feintes', 'Drills de réaction', 'Travail de pads', 'Sac lourd',
+      'Ombre', 'Sparring technique', 'Gestion des rounds',
     ],
   },
 ];
@@ -620,37 +620,37 @@ export const THEMES_MUAY_THAI: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Coudes (sok)',
+    label: traduire('Coudes (sok)'),
     color: '#DC2626',
     themes: [
       'Coude horizontal (sok tat)', 'Coude descendant (sok ti)',
-      'Coude remontant (sok ngat)', traduire('Coude retourné (sok klab)'),
-      traduire('Coude sauté (sok kratood)'), 'Coude diagonal',
+      'Coude remontant (sok ngat)', 'Coude retourné (sok klab)',
+      'Coude sauté (sok kratood)', 'Coude diagonal',
     ],
   },
   {
-    label: 'Genoux (kao)',
+    label: traduire('Genoux (kao)'),
     color: '#F97316',
     themes: [
       'Kao trong (droit)', 'Kao chiang (diagonal)', 'Kao kong (courbe)',
-      'Kao tat (rotation)', traduire('Kao loi (sauté)'), 'Genou clinch',
+      'Kao tat (rotation)', 'Kao loi (sauté)', 'Genou clinch',
     ],
   },
   {
     label: traduire('Pieds (te)'),
     color: '#8B5CF6',
     themes: [
-      traduire('Low kick (te tat)'), 'Middle kick', 'High kick', 'Teep (push kick)',
-      traduire('Teep arrière'), traduire('Te khao (rotation)'), 'Spinning back kick',
+      'Low kick (te tat)', 'Middle kick', 'High kick', 'Teep (push kick)',
+      'Teep arrière', 'Te khao (rotation)', 'Spinning back kick',
       'Cut kick', 'Question mark kick',
     ],
   },
   {
-    label: 'Clinch Thai',
+    label: traduire('Clinch Thai'),
     color: '#EF4444',
     themes: [
-      'Plum (double collar tie)', traduire('Pummel pour dominer'), 'Sweeps en clinch',
-      'Genoux en clinch', 'Coudes en clinch', traduire('Sortie de clinch'),
+      'Plum (double collar tie)', 'Pummel pour dominer', 'Sweeps en clinch',
+      'Genoux en clinch', 'Coudes en clinch', 'Sortie de clinch',
       'Lock & break',
     ],
   },
@@ -658,12 +658,12 @@ export const THEMES_MUAY_THAI: ThemeCategory[] = [
     label: traduire('Défense'),
     color: '#22C55E',
     themes: [
-      'Block low kick (check)', 'Block middle', 'Parry', traduire('Teep défense'),
-      'Esquive', 'Catch kick', traduire('Sweep après catch'), 'Garde longue',
+      'Block low kick (check)', 'Block middle', 'Parry', 'Teep défense',
+      'Esquive', 'Catch kick', 'Sweep après catch', 'Garde longue',
     ],
   },
   {
-    label: 'Tactique & conditionnement',
+    label: traduire('Tactique & conditionnement'),
     color: '#06B6D4',
     themes: [
       'Pads (Thai pads)', 'Sac lourd', 'Ombre', 'Conditionnement tibias',
@@ -677,7 +677,7 @@ export const THEMES_MUAY_THAI: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_KICKBOXING: ThemeCategory[] = [
   {
-    label: 'Poings',
+    label: traduire('Poings'),
     color: '#3B82F6',
     themes: [
       'Jab', 'Cross', 'Crochet', 'Uppercut', 'Overhand',
@@ -694,7 +694,7 @@ export const THEMES_KICKBOXING: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Combinaisons',
+    label: traduire('Combinaisons'),
     color: '#F97316',
     themes: [
       'Jab-cross-kick', '1-2-low kick', 'Double jab + kick', 'Kick-punch',
@@ -710,18 +710,18 @@ export const THEMES_KICKBOXING: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Footwork & angles',
+    label: traduire('Footwork & angles'),
     color: '#06B6D4',
     themes: [
-      traduire('Pas glissé'), 'Pivot', 'Switch step', 'Side step', 'Coupe-ring',
-      traduire('Distance management'), 'L-step',
+      'Pas glissé', 'Pivot', 'Switch step', 'Side step', 'Coupe-ring',
+      'Distance management', 'L-step',
     ],
   },
   {
-    label: 'Tactique',
+    label: traduire('Tactique'),
     color: '#64748B',
     themes: [
-      'Feintes', 'Pads', 'Sac lourd', 'Ombre', traduire('Drills réactivité'),
+      'Feintes', 'Pads', 'Sac lourd', 'Ombre', 'Drills réactivité',
       'Sparring technique',
     ],
   },
@@ -732,7 +732,7 @@ export const THEMES_KICKBOXING: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_KARATE: ThemeCategory[] = [
   {
-    label: 'Kihon (bases)',
+    label: traduire('Kihon (bases)'),
     color: '#3B82F6',
     themes: [
       'Gyaku zuki', 'Oi zuki', 'Kizami zuki', 'Uraken uchi',
@@ -749,7 +749,7 @@ export const THEMES_KARATE: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Blocages (uke waza)',
+    label: traduire('Blocages (uke waza)'),
     color: '#22C55E',
     themes: [
       'Gedan barai', 'Age uke', 'Soto uke', 'Uchi uke', 'Shuto uke',
@@ -769,16 +769,16 @@ export const THEMES_KARATE: ThemeCategory[] = [
     label: traduire('Kumité'),
     color: '#EF4444',
     themes: [
-      traduire('Kihon kumité'), traduire('Ippon kumité'), traduire('Sanbon kumité'), traduire('Jiyu kumité (libre)'),
-      traduire('Timing & distance'), 'Feintes', 'Contre-attaque',
+      'Kihon kumité', 'Ippon kumité', 'Sanbon kumité', 'Jiyu kumité (libre)',
+      'Timing & distance', 'Feintes', 'Contre-attaque',
     ],
   },
   {
-    label: 'Tactique & conditionnement',
+    label: traduire('Tactique & conditionnement'),
     color: '#64748B',
     themes: [
-      traduire('Maai (distance)'), 'Zanshin', traduire('Déplacements'), 'Makiwara',
-      traduire('Travail cible'), 'Respiration',
+      'Maai (distance)', 'Zanshin', 'Déplacements', 'Makiwara',
+      'Travail cible', 'Respiration',
     ],
   },
 ];
@@ -805,7 +805,7 @@ export const THEMES_TAEKWONDO: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Poings & mains',
+    label: traduire('Poings & mains'),
     color: '#F97316',
     themes: [
       'Jireugi (direct)', 'Jab', 'Cross', 'Uppercut', 'Hammer fist',
@@ -813,10 +813,10 @@ export const THEMES_TAEKWONDO: ThemeCategory[] = [
     ],
   },
   {
-    label: 'Poomsae (formes)',
+    label: traduire('Poomsae (formes)'),
     color: '#06B6D4',
     themes: [
-      traduire('Taegeuk il jang'), 'Taegeuk i jang', 'Taegeuk sam jang', 'Taegeuk sa jang',
+      'Taegeuk il jang', 'Taegeuk i jang', 'Taegeuk sam jang', 'Taegeuk sa jang',
       'Taegeuk o jang', 'Koryo', 'Keumgang',
     ],
   },
@@ -824,8 +824,8 @@ export const THEMES_TAEKWONDO: ThemeCategory[] = [
     label: traduire('Kyorugi (combat)'),
     color: '#EF4444',
     themes: [
-      'Step sparring', traduire('Combat libre'), traduire('Gestion distance'), 'Feintes',
-      'Contres', 'Double kick counter', traduire('Attaque sur entrée'),
+      'Step sparring', 'Combat libre', 'Gestion distance', 'Feintes',
+      'Contres', 'Double kick counter', 'Attaque sur entrée',
     ],
   },
   {
@@ -833,7 +833,7 @@ export const THEMES_TAEKWONDO: ThemeCategory[] = [
     color: '#22C55E',
     themes: [
       'Blocages poings', 'Esquive', 'Jam (casser rythme)',
-      'Cutting kick', 'Contre-kick', traduire('Pivot défensif'),
+      'Cutting kick', 'Contre-kick', 'Pivot défensif',
     ],
   },
 ];
@@ -843,10 +843,10 @@ export const THEMES_TAEKWONDO: ThemeCategory[] = [
 // ─────────────────────────────────────────────────────────────────────
 export const THEMES_BOXE_FRANCAISE: ThemeCategory[] = [
   {
-    label: 'Poings',
+    label: traduire('Poings'),
     color: '#3B82F6',
     themes: [
-      'Direct', traduire('Direct du bras arrière'), 'Crochet', 'Uppercut',
+      'Direct', 'Direct du bras arrière', 'Crochet', 'Uppercut',
       'Swing', 'Crochet bas',
     ],
   },
@@ -854,42 +854,42 @@ export const THEMES_BOXE_FRANCAISE: ThemeCategory[] = [
     label: traduire('Pieds, techniques de base'),
     color: '#8B5CF6',
     themes: [
-      traduire('Fouetté bas'), traduire('Fouetté médian'), traduire('Fouetté figure'),
-      traduire('Chassé frontal'), traduire('Chassé latéral'), traduire('Chassé bas'),
-      traduire('Revers (frontal, latéral, figure)'), traduire('Coup de pied bas (CPB)'),
+      'Fouetté bas', 'Fouetté médian', 'Fouetté figure',
+      'Chassé frontal', 'Chassé latéral', 'Chassé bas',
+      'Revers (frontal, latéral, figure)', 'Coup de pied bas (CPB)',
     ],
   },
   {
     label: traduire('Pieds, techniques avancées'),
     color: '#F97316',
     themes: [
-      traduire('Double fouetté'), traduire('Fouetté revers'), traduire('Chassé retourné'),
-      traduire('Coup de pied sauté'), traduire('Enchaînement pieds-poings'),
+      'Double fouetté', 'Fouetté revers', 'Chassé retourné',
+      'Coup de pied sauté', 'Enchaînement pieds-poings',
     ],
   },
   {
     label: traduire('Défense'),
     color: '#22C55E',
     themes: [
-      traduire('Parade bloquée'), traduire('Parade chassée'), 'Parade opposition',
-      'Esquive rotative', traduire('Esquive latérale'), traduire('Esquive sautée'),
-      traduire('Déblayage'), 'Contre frappe',
+      'Parade bloquée', 'Parade chassée', 'Parade opposition',
+      'Esquive rotative', 'Esquive latérale', 'Esquive sautée',
+      'Déblayage', 'Contre frappe',
     ],
   },
   {
     label: traduire('Déplacements & distance'),
     color: '#06B6D4',
     themes: [
-      traduire('Pas de côté'), traduire('Pas croisé'), traduire('Pas chassé'), 'Rupture',
+      'Pas de côté', 'Pas croisé', 'Pas chassé', 'Rupture',
       'Glissade', 'Placement',
     ],
   },
   {
-    label: 'Assauts & tactique',
+    label: traduire('Assauts & tactique'),
     color: '#64748B',
     themes: [
-      'Assaut technique', traduire('Pré-combat'), traduire('Combat'), 'Feintes',
-      traduire('Gestion de la distance'), traduire('Touches de précision'),
+      'Assaut technique', 'Pré-combat', 'Combat', 'Feintes',
+      'Gestion de la distance', 'Touches de précision',
     ],
   },
 ];
@@ -903,53 +903,53 @@ export const THEMES_KRAV_MAGA: ThemeCategory[] = [
     color: '#3B82F6',
     themes: [
       'Direct paume', 'Direct poing', 'Coude', 'Genou',
-      traduire('Coup de pied bas'), 'Front kick', 'Round kick',
-      'Hammer fist', traduire('Coup de tête'),
+      'Coup de pied bas', 'Front kick', 'Round kick',
+      'Hammer fist', 'Coup de tête',
     ],
   },
   {
     label: traduire('Défense face à face'),
     color: '#22C55E',
     themes: [
-      traduire('Défense contre poing direct'), traduire('Défense contre crochet'),
-      traduire('Défense contre coup de pied'), traduire('Défense contre clinch'),
-      traduire('Défense contre saisie cou'), traduire('Défense contre saisie de face'),
-      traduire('Défense contre saisie dos'),
+      'Défense contre poing direct', 'Défense contre crochet',
+      'Défense contre coup de pied', 'Défense contre clinch',
+      'Défense contre saisie cou', 'Défense contre saisie de face',
+      'Défense contre saisie dos',
     ],
   },
   {
     label: traduire('Défense armes'),
     color: '#EF4444',
     themes: [
-      traduire('Défense couteau (de face)'), traduire('Défense couteau (de dos)'),
-      traduire('Défense pistolet (de face)'), traduire('Défense pistolet (de dos)'),
-      traduire('Défense bâton (de haut)'), traduire('Défense bâton (latéral)'),
-      traduire('Désarmement'),
+      'Défense couteau (de face)', 'Défense couteau (de dos)',
+      'Défense pistolet (de face)', 'Défense pistolet (de dos)',
+      'Défense bâton (de haut)', 'Défense bâton (latéral)',
+      'Désarmement',
     ],
   },
   {
-    label: 'Situations tactiques',
+    label: traduire('Situations tactiques'),
     color: '#F97316',
     themes: [
-      'Agresseur multiple', traduire('Agression au sol (ground)'),
-      traduire('Voiture / espace confiné'), traduire('Défense 3e partie'),
+      'Agresseur multiple', 'Agression au sol (ground)',
+      'Voiture / espace confiné', 'Défense 3e partie',
       'Environnement obscur',
     ],
   },
   {
-    label: 'Sol & ground',
+    label: traduire('Sol & ground'),
     color: '#8B5CF6',
     themes: [
-      'Get up safe', traduire('Kicks au sol'), traduire('Défense en monté'),
-      traduire('Sortie de garde forcée'), traduire('Se relever en sécurité'),
+      'Get up safe', 'Kicks au sol', 'Défense en monté',
+      'Sortie de garde forcée', 'Se relever en sécurité',
     ],
   },
   {
-    label: 'Conditionnement & mindset',
+    label: traduire('Conditionnement & mindset'),
     color: '#64748B',
     themes: [
       'Stress drills', 'Conditionnement physique', 'Pads',
-      'Visualisation', traduire('Sparring réaliste'), 'Gestion panique',
+      'Visualisation', 'Sparring réaliste', 'Gestion panique',
     ],
   },
 ];

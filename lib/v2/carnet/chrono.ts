@@ -14,7 +14,7 @@ export type Phase = 'effort' | 'repos' | 'prepa' | 'fini' | 'pret' | 'final';
  * soft : fond plein ecran de la phase, deep : chiffres et titres.
  */
 export const PHASE_COLORS: Record<Phase, { main: string; soft: string; deep: string; label: string }> = {
-  effort: { main: '#2C4A84', soft: '#E4E9F3', deep: '#1F3766', label: 'Effort' },
+  effort: { main: '#2C4A84', soft: '#E4E9F3', deep: '#1F3766', label: traduire('Effort') },
   repos: { main: '#6E8C3A', soft: '#E8EEDC', deep: '#4F6B28', label: traduire('Repos') },
   prepa: { main: '#C59D45', soft: '#F5ECD6', deep: '#8A6A22', label: traduire('Préparation') },
   final: { main: '#B0282E', soft: '#F6E3E1', deep: '#8C1E23', label: traduire('10 dernières secondes') },
@@ -27,8 +27,8 @@ export const PHASE_COLORS: Record<Phase, { main: string; soft: string; deep: str
  * sub : une phrase qui dit comment ca marche, short : le nom court (Live Activity, notes).
  */
 export const MODES: { id: TimerMode; label: string; short: string; tag?: string; sub: string }[] = [
-  { id: 'musculation', label: traduire('Repos entre les séries'), short: traduire('Repos muscu'), tag: 'Muscu', sub: traduire('Tu finis ta série, tu touches : le repos se lance et tes séries sont comptées.') },
-  { id: 'combat', label: traduire('Rounds de combat'), short: 'Rounds', tag: 'Boxe, MMA, JJB', sub: traduire('Des rounds et des repos, avec le gong et les claquettes à 10 s de la fin.') },
+  { id: 'musculation', label: traduire('Repos entre les séries'), short: traduire('Repos muscu'), tag: traduire('Muscu'), sub: traduire('Tu finis ta série, tu touches : le repos se lance et tes séries sont comptées.') },
+  { id: 'combat', label: traduire('Rounds de combat'), short: traduire('Rounds'), tag: traduire('Boxe, MMA, JJB'), sub: traduire('Des rounds et des repos, avec le gong et les claquettes à 10 s de la fin.') },
   { id: 'tabata', label: 'Tabata', short: 'Tabata', tag: '20 s, 10 s', sub: traduire('20 s à fond, 10 s de repos, 8 fois de suite. Court et très intense.') },
   { id: 'emom', label: traduire('Chaque minute'), short: traduire('Chaque minute'), sub: traduire('Au début de chaque minute, tu fais ton exercice. Le reste de la minute, tu souffles.') },
   { id: 'amrap', label: traduire('Un maximum de tours'), short: traduire('Maximum de tours'), sub: traduire('Autant de tours de ton circuit que possible dans le temps donné.') },
@@ -37,22 +37,22 @@ export const MODES: { id: TimerMode; label: string; short: string; tag?: string;
 
 export const MUSCU_PRESETS = [
   { seconds: 30, label: '30 s', sub: 'Endurance' },
-  { seconds: 60, label: '1 min', sub: traduire('Volume') },
-  { seconds: 90, label: '1 min 30', sub: traduire('Volume') },
-  { seconds: 120, label: '2 min', sub: 'Force' },
-  { seconds: 180, label: '3 min', sub: 'Lourd' },
-  { seconds: 300, label: '5 min', sub: traduire('Très lourd') },
+  { seconds: 60, label: traduire('1 min'), sub: traduire('Volume') },
+  { seconds: 90, label: traduire('1 min 30'), sub: traduire('Volume') },
+  { seconds: 120, label: traduire('2 min'), sub: 'Force' },
+  { seconds: 180, label: traduire('3 min'), sub: 'Lourd' },
+  { seconds: 300, label: traduire('5 min'), sub: traduire('Très lourd') },
 ];
 
 export const COMBAT_PRESETS: Record<CombatPreset, { name: string; roundTime: number; restTime: number; rounds: number; sub: string; sport: string }> = {
   // 15 octobre 2026 (Houari) : par defaut un open mat, 4 rounds de 5 min, 1 min de repos (la montre suit, defaut.jjb)
-  jjb: { name: 'JJB', roundTime: 300, restTime: 60, rounds: 4, sub: 'Open mat', sport: 'jjb' },
-  mma: { name: 'MMA', roundTime: 300, restTime: 60, rounds: 3, sub: 'Format pro', sport: 'mma' },
-  boxe: { name: 'Boxe', roundTime: 180, restTime: 60, rounds: 10, sub: 'Format pro', sport: 'boxe' },
+  jjb: { name: 'JJB', roundTime: 300, restTime: 60, rounds: 4, sub: traduire('Open mat'), sport: 'jjb' },
+  mma: { name: 'MMA', roundTime: 300, restTime: 60, rounds: 3, sub: traduire('Format pro'), sport: 'mma' },
+  boxe: { name: 'Boxe', roundTime: 180, restTime: 60, rounds: 10, sub: traduire('Format pro'), sport: 'boxe' },
   sac: { name: traduire('Sac de frappe'), roundTime: 180, restTime: 60, rounds: 6, sub: traduire('Rounds au sac'), sport: 'boxe' },
   muaythai: { name: traduire('Muay thaï'), roundTime: 180, restTime: 120, rounds: 5, sub: traduire('Format thaï'), sport: 'muay_thai' },
-  kickboxing: { name: 'Kickboxing', roundTime: 180, restTime: 60, rounds: 3, sub: 'Style K-1', sport: 'kickboxing' },
-  lutte: { name: 'Lutte', roundTime: 180, restTime: 30, rounds: 3, sub: 'Wrestling', sport: 'lutte' },
+  kickboxing: { name: 'Kickboxing', roundTime: 180, restTime: 60, rounds: 3, sub: traduire('Style K-1'), sport: 'kickboxing' },
+  lutte: { name: 'Lutte', roundTime: 180, restTime: 30, rounds: 3, sub: traduire('Wrestling'), sport: 'lutte' },
   grappling: { name: 'Grappling', roundTime: 360, restTime: 60, rounds: 3, sub: traduire('Sans kimono'), sport: 'grappling' },
   custom: { name: 'Perso', roundTime: 180, restTime: 60, rounds: 5, sub: traduire('À ta main'), sport: 'jjb' },
 };
@@ -60,9 +60,9 @@ export const COMBAT_PRESETS: Record<CombatPreset, { name: string; roundTime: num
 export const COMBAT_PRESET_ORDER: CombatPreset[] = ['jjb', 'mma', 'boxe', 'sac', 'muaythai', 'kickboxing', 'lutte', 'grappling', 'custom'];
 
 export const TABATA_PRESETS = [
-  { label: '4 min', rounds: 8, work: 20, rest: 10 },
-  { label: '8 min', rounds: 16, work: 20, rest: 10 },
-  { label: '12 min', rounds: 24, work: 20, rest: 10 },
+  { label: traduire('4 min'), rounds: 8, work: 20, rest: 10 },
+  { label: traduire('8 min'), rounds: 16, work: 20, rest: 10 },
+  { label: traduire('12 min'), rounds: 24, work: 20, rest: 10 },
 ];
 
 export const EMOM_PRESETS = [10, 15, 20, 30];
@@ -91,9 +91,9 @@ export const SAVE_SPORTS_COMBAT = [
 ];
 
 export const RPE_CHOICES = [
-  { value: 3, label: 'Facile' },
+  { value: 3, label: traduire('Facile') },
   { value: 5, label: traduire('Correct') },
-  { value: 7, label: 'Dur' },
+  { value: 7, label: traduire('Dur') },
   { value: 9, label: traduire('À bloc') },
 ];
 

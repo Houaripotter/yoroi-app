@@ -75,7 +75,7 @@ export const RANKS: Rank[] = [
     icon: 'crown',
     minPoints: 10000,
     color: '#FFD700',
-    description: 'Commandant supreme. Legende vivante.',
+    description: traduire('Commandant supreme. Legende vivante.'),
     descriptionFemale: 'Commandante supreme. Legende vivante.',
     reward: 'Avatars legendaires',
   },

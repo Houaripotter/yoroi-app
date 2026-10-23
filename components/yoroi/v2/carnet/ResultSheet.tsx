@@ -76,7 +76,7 @@ export function ResultSheet({ result, onShare, onClose }: { result: ResultInfo |
                 <Ink size={42} weight="black" tight style={{ textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {perf.main}
                 </Ink>
-                {perf.sub ? <Ink size={15} weight="bold" color={P.ink2}>{perf.sub}</Ink> : null}
+                {perf.sub ? <Ink size={15} weight="bold" color={P.ink2}>{traduire(perf.sub)}</Ink> : null}
                 <Ink size={16} weight="extraBold" style={{ textAlign: 'center', marginTop: 2 }} numberOfLines={2}>
                   {niceName(result.name)}
                 </Ink>

@@ -31,7 +31,7 @@ export const GLOBAL_FILTERS: { key: GlobalFilter; label: string }[] = [
   { key: 'autre', label: 'Autre' },
 ];
 
-export const STATUS_LABEL: Record<SkillStatus, string> = { to_learn: traduire('À apprendre'), in_progress: 'En cours', mastered: traduire('Maîtrisée') };
+export const STATUS_LABEL: Record<SkillStatus, string> = { to_learn: traduire('À apprendre'), in_progress: traduire('En cours'), mastered: traduire('Maîtrisée') };
 
 /** Couleur de la palette v2 pour une categorie de record */
 export function categoryTone(cat: BenchmarkCategory | string): string {
@@ -193,17 +193,17 @@ export function tabsForPack(pack: string): JournalTab[] {
 
 export function tabLabel(tab: JournalTab, pack: string): string {
   const map: Record<JournalTab, string> = {
-    records: 'Records',
-    techniques: 'Techniques',
+    records: traduire('Records'),
+    techniques: traduire('Techniques'),
     videos: traduire('Vidéos'),
     combat: 'Sparring',
     competitions: pack === 'endurance' ? 'Courses' : traduire('Compétitions'),
-    positions: 'Positions',
-    submissions: 'Soumissions',
+    positions: traduire('Positions'),
+    submissions: traduire('Soumissions'),
     sorties: 'Sorties',
     allures: 'Allures',
     wods: 'WODs',
-    stations: 'Stations',
+    stations: traduire('Stations'),
     voies: 'Voies',
     seances_muscu: traduire('Séances'),
     muscles: 'Muscles',

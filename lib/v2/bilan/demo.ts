@@ -61,7 +61,7 @@ export function demoBilanSeance(): BilanSeance {
     objectifSemaine: 4,
     annee: { fait: 178, total: 208, ecart: 15 },
     records: [traduire('record de rounds, 8 rounds')],
-    techniques: { liste: ['Juji gatame', 'Triangle', 'Omoplata'], appris: true },
+    techniques: { liste: [traduire('Juji gatame'), 'Triangle', 'Omoplata'], appris: true },
     regularite: { semainesActives: 4, sur: 4, serie: 0, joursDepuis: 3 },
   });
 }

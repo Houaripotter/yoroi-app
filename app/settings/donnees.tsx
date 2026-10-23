@@ -82,10 +82,10 @@ export default function MesDonnees() {
       router.push('/paywall' as any);
       return;
     }
-    showPopup('Bilan en PDF', traduire('Un bilan de ta progression, prêt à partager avec ton coach ou ton médecin.'), [
+    showPopup(traduire('Bilan en PDF'), traduire('Un bilan de ta progression, prêt à partager avec ton coach ou ton médecin.'), [
       { text: traduire('Annuler'), style: 'cancel' },
-      { text: traduire('30 jours'), style: 'default', onPress: () => generateProgressPDF('30j').catch(() => showPopup('Oups', traduire('Le bilan n’a pas pu être créé.'))) },
-      { text: traduire('90 jours'), style: 'primary', onPress: () => generateProgressPDF('90j').catch(() => showPopup('Oups', traduire('Le bilan n’a pas pu être créé.'))) },
+      { text: traduire('30 jours'), style: 'default', onPress: () => generateProgressPDF('30j').catch(() => showPopup(traduire('Oups'), traduire('Le bilan n’a pas pu être créé.'))) },
+      { text: traduire('90 jours'), style: 'primary', onPress: () => generateProgressPDF('90j').catch(() => showPopup(traduire('Oups'), traduire('Le bilan n’a pas pu être créé.'))) },
     ]);
   };
 
@@ -93,7 +93,7 @@ export default function MesDonnees() {
     showPopup(traduire('Nettoyer les doublons'), traduire("Les séances en double venues {0} seront supprimées. Celles que tu as créées toi-même ne bougent pas.\n\nFais une sauvegarde avant, par sécurité.", Platform.OS === 'android' ? 'de Health Connect' : 'd’Apple Santé'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Nettoyer',
+        text: traduire('Nettoyer'),
         style: 'destructive',
         onPress: async () => {
           setBusy(true);
@@ -103,7 +103,7 @@ export default function MesDonnees() {
             showPopup(n === 0 ? traduire('Aucun doublon') : traduire('Nettoyage terminé'), n === 0 ? traduire('Ton journal est déjà propre.') : traduirePluriel(n, n > 1, "{0} séance en double supprimée.", "{0} séances en double supprimées.", n));
           } catch (e) {
             logger.error('[Donnees] doublons', e);
-            showPopup('Oups', traduire('Le nettoyage n’a pas abouti. Réessaie.'));
+            showPopup(traduire('Oups'), traduire('Le nettoyage n’a pas abouti. Réessaie.'));
           } finally {
             setBusy(false);
           }
@@ -115,7 +115,7 @@ export default function MesDonnees() {
   // 14 octobre 2026 (zones_apple) : fichier brut des séances Apple, pour caler les zones sur Forme
   const handleDiagnostic = async () => {
     if (Platform.OS !== 'ios') {
-      showPopup('Diagnostic', traduire('Disponible sur iPhone, avec Apple Santé.'));
+      showPopup(traduire('Diagnostic'), traduire('Disponible sur iPhone, avec Apple Santé.'));
       return;
     }
     setBusy(true);
@@ -125,19 +125,19 @@ export default function MesDonnees() {
       const res = fn ? await fn.call(healthConnect, 30) : null;
       setBusy(false);
       if (!res) {
-        showPopup('Diagnostic', traduire('Apple Santé n’a rien renvoyé. Vérifie que Yoroi a accès aux entraînements et à la fréquence cardiaque.'));
+        showPopup(traduire('Diagnostic'), traduire('Apple Santé n’a rien renvoyé. Vérifie que Yoroi a accès aux entraînements et à la fréquence cardiaque.'));
         return;
       }
       const Sharing = await import('expo-sharing');
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(res.path, { mimeType: 'application/json', dialogTitle: traduirePluriel(res.count, res.count > 1, "{0} séance, 30 derniers jours", "{0} séances, 30 derniers jours", res.count), UTI: 'public.json' });
       } else {
-        showPopup('Diagnostic', traduire("Fichier prêt : {0}", res.path));
+        showPopup(traduire('Diagnostic'), traduire("Fichier prêt : {0}", res.path));
       }
     } catch (e) {
       setBusy(false);
       logger.warn('[Diagnostic] Export des séances impossible', e);
-      showPopup('Oups', traduire('Le fichier de diagnostic n’a pas pu être créé.'));
+      showPopup(traduire('Oups'), traduire('Le fichier de diagnostic n’a pas pu être créé.'));
     }
   };
 
@@ -145,7 +145,7 @@ export default function MesDonnees() {
     showPopup(traduire('Vider le cache'), traduire('Les fichiers temporaires seront supprimés. Tes données restent intactes.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Vider',
+        text: traduire('Vider'),
         style: 'primary',
         onPress: async () => {
           setBusy(true);
@@ -165,7 +165,7 @@ export default function MesDonnees() {
             showPopup(traduire('Cache vidé'), traduire('C’est fait.'));
           } catch (e) {
             logger.error('[Donnees] cache', e);
-            showPopup('Oups', traduire('Le cache n’a pas pu être vidé.'));
+            showPopup(traduire('Oups'), traduire('Le cache n’a pas pu être vidé.'));
           } finally {
             setBusy(false);
           }
@@ -178,7 +178,7 @@ export default function MesDonnees() {
     if (v) {
       const ok = await isBiometricHardwareAvailable();
       if (!ok) {
-        showPopup('Indisponible', traduire('Face ID ou l’empreinte ne sont pas disponibles sur ce téléphone, ou ne sont pas configurés.'));
+        showPopup(traduire('Indisponible'), traduire('Face ID ou l’empreinte ne sont pas disponibles sur ce téléphone, ou ne sont pas configurés.'));
         return;
       }
     }
@@ -191,13 +191,13 @@ export default function MesDonnees() {
   // ============================================
 
   const confirmWord = resetText.trim().toUpperCase();
-  const resetOk = ['SUPPRIMER', 'SUPRIMER', 'EFFACER', 'OUI', 'YES', 'DELETE'].includes(confirmWord);
+  const resetOk = ['SUPPRIMER', 'SUPRIMER', 'EFFACER', 'OUI', 'YES', 'DELETE', 'LÖSCHEN', 'LOESCHEN', 'LOSCHEN', 'JA', 'VERWIJDEREN', 'WISSEN'].includes(confirmWord);
 
   const handleResetAll = () => {
     showPopup(traduire('Sauvegarde conseillée'), traduire('Avant de tout effacer, garde une copie de tes données.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Sauvegarder d’abord',
+        text: traduire('Sauvegarder d’abord'),
         style: 'primary',
         onPress: async () => {
           await exportDataToJSON().catch(() => {});
@@ -220,11 +220,11 @@ export default function MesDonnees() {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         showPopup(traduire('Tout est effacé'), traduire('L’app repart de zéro.'), [{ text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding' as any) }]);
       } else {
-        showPopup('Effacement incomplet', traduire('Presque tout est effacé, mais une partie a résisté. Relance « Tout effacer » pour finir.'));
+        showPopup(traduire('Effacement incomplet'), traduire('Presque tout est effacé, mais une partie a résisté. Relance « Tout effacer » pour finir.'));
       }
     } catch (e) {
       logger.error('[Donnees] reset', e);
-      showPopup('Oups', traduire('L’effacement n’a pas abouti. Réessaie.'));
+      showPopup(traduire('Oups'), traduire('L’effacement n’a pas abouti. Réessaie.'));
     } finally {
       setBusy(false);
     }
@@ -239,11 +239,11 @@ export default function MesDonnees() {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         setCleanStep(1);
       } else {
-        showPopup('Effacement incomplet', traduire('Presque tout est effacé, mais une partie a résisté. Réessaie avant de supprimer l’app.'));
+        showPopup(traduire('Effacement incomplet'), traduire('Presque tout est effacé, mais une partie a résisté. Réessaie avant de supprimer l’app.'));
       }
     } catch (e) {
       logger.error('[Donnees] désinstallation propre', e);
-      showPopup('Oups', traduire('Le nettoyage n’a pas abouti.'));
+      showPopup(traduire('Oups'), traduire('Le nettoyage n’a pas abouti.'));
     } finally {
       setBusy(false);
     }
@@ -265,8 +265,8 @@ export default function MesDonnees() {
       <EspaceScreen title={traduire("Mes données")} subtitle={traduire("Elles restent sur ton téléphone")} gap={14}>
         <Card>
           <ValueRow first icon="restore" label={traduire("Restaurer une sauvegarde")} onPress={handleImport} />
-          <ValueRow icon="download" label={traduire("Exporter")} sub="Tableur, fichier complet, texte" onPress={() => go('/export-data')} />
-          <ValueRow icon="doc" label="Bilan en PDF" sub={traduire("Pour ton coach ou ton médecin")} value={isPremium ? undefined : traduire('Premium')} valueColor={c.goldDeep} onPress={handlePDF} />
+          <ValueRow icon="download" label={traduire("Exporter")} sub={traduire("Tableur, fichier complet, texte")} onPress={() => go('/export-data')} />
+          <ValueRow icon="doc" label={traduire("Bilan en PDF")} sub={traduire("Pour ton coach ou ton médecin")} value={isPremium ? undefined : traduire('Premium')} valueColor={c.goldDeep} onPress={handlePDF} />
         </Card>
 
         <SectionTitle title={traduire("Importer et ranger")} />
@@ -282,7 +282,7 @@ export default function MesDonnees() {
         <SectionTitle title={traduire("Confidentialité")} />
         <Card>
           {VERROU_DISPONIBLE ? (
-            <ToggleRow first icon="lock" label="Verrouiller l’app" sub={Platform.OS === 'ios' ? traduire('Face ID ou Touch ID à l’ouverture') : traduire('Empreinte à l’ouverture')} value={bioOn} onChange={handleBiometric} />
+            <ToggleRow first icon="lock" label={traduire("Verrouiller l’app")} sub={Platform.OS === 'ios' ? traduire('Face ID ou Touch ID à l’ouverture') : traduire('Empreinte à l’ouverture')} value={bioOn} onChange={handleBiometric} />
           ) : null}
           <ValueRow first={!VERROU_DISPONIBLE} icon="shield" label={traduire("Confidentialité")} sub={privacySub} onPress={() => go('/privacy-data')} />
           <ValueRow icon="doc" label={traduire("Politique de confidentialité")} onPress={() => go('/privacy-policy')} />
@@ -290,14 +290,14 @@ export default function MesDonnees() {
 
         {Platform.OS === 'ios' ? (
           <>
-            <SectionTitle title="Diagnostic" />
+            <SectionTitle title={traduire("Diagnostic")} />
             <Card>
               <ValueRow first icon="doc" label={traduire("Exporter les données brutes des séances")} sub={traduire("30 derniers jours, pour caler tes zones cardiaques")} onPress={handleDiagnostic} />
             </Card>
           </>
         ) : null}
 
-        <SectionTitle title="Zone sensible" />
+        <SectionTitle title={traduire("Zone sensible")} />
         <Card>
           <ValueRow first danger icon="exit" label={traduire("Désinstallation propre")} sub={traduire("Tout effacer avant de supprimer l’app")} onPress={() => { setCleanStep(0); setCleanVisible(true); }} />
           <ValueRow danger icon="trash" label={traduire("Tout effacer")} sub={traduire("Repartir de zéro, c’est définitif")} onPress={handleResetAll} />

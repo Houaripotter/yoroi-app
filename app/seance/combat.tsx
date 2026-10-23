@@ -45,9 +45,9 @@ import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
 
 const RPE = [
-  { value: 3, label: 'Facile' },
+  { value: 3, label: traduire('Facile') },
   { value: 5, label: traduire('Correct') },
-  { value: 7, label: 'Dur' },
+  { value: 7, label: traduire('Dur') },
   { value: 9, label: traduire('À bloc') },
 ];
 
@@ -191,7 +191,7 @@ export default function SeanceCombat() {
             [
               { text: traduire('Nouvelle séance'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
               {
-                text: 'Reprendre',
+                text: traduire('Reprendre'),
                 onPress: () => {
                   if (existing.kind === 'combat') setDraft(existing);
                   else router.replace({ pathname: draftRoute(existing) as any, params: { resume: '1' } });
@@ -336,15 +336,15 @@ export default function SeanceCombat() {
   const abandon = () => {
     if (draft?.form) {
       appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
-        { text: 'Rester', style: 'cancel' },
-        { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
+        { text: traduire('Rester'), style: 'cancel' },
+        { text: traduire('Quitter'), style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
       ]);
       return;
     }
     appAlert(traduire('Abandonner la séance ?'), traduire('Rien ne sera enregistré.'), [
-      { text: 'Continuer', style: 'cancel' },
+      { text: traduire('Continuer'), style: 'cancel' },
       {
-        text: 'Abandonner',
+        text: traduire('Abandonner'),
         style: 'destructive',
         onPress: async () => {
           finished.current = true;
@@ -427,7 +427,7 @@ export default function SeanceCombat() {
     } catch (err) {
       finished.current = false;
       logger.error('Enregistrement de la seance de combat impossible', err);
-      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -490,7 +490,7 @@ export default function SeanceCombat() {
             const on = s.value === draft.sessionType && !typeLibre(draft, aliasTypeSeance);
             return (
               <Pressable key={s.value} onPress={() => { selectionAsync().catch(() => {}); update((d) => ({ ...d, sessionType: s.value, sessionTypeOrig: undefined })); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: c.border }}>
-                <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary}>{s.label}</Ink>
+                <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary}>{traduire(s.label)}</Ink>
               </Pressable>
             );
           })}
@@ -539,7 +539,7 @@ export default function SeanceCombat() {
           <Pressable onPress={() => shift(-10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel={traduire("Reculer de 10 secondes")} style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
             <Ink size={15} weight="extraBold">− 10</Ink>
           </Pressable>
-          <Pressable onPress={togglePause} accessibilityRole="button" accessibilityLabel={t.phase === 'idle' ? traduire('Lancer les rounds') : t.phase === 'done' ? traduire('Encore un round') : t.paused !== null ? 'Reprendre' : 'Pause'} style={({ pressed }) => ({ width: 84, height: 84, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: t.phase === 'idle' || t.phase === 'done' ? (pressed ? c.accentPressed : c.accent) : pressed ? c.textSecondary : c.ink })}>
+          <Pressable onPress={togglePause} accessibilityRole="button" accessibilityLabel={t.phase === 'idle' ? traduire('Lancer les rounds') : t.phase === 'done' ? traduire('Encore un round') : t.paused !== null ? traduire('Reprendre') : traduire('Pause')} style={({ pressed }) => ({ width: 84, height: 84, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: t.phase === 'idle' || t.phase === 'done' ? (pressed ? c.accentPressed : c.accent) : pressed ? c.textSecondary : c.ink })}>
             <Icon name={running ? 'pause' : 'play'} size={32} color={t.phase === 'idle' || t.phase === 'done' ? c.onAccent : c.background} />
           </Pressable>
           <Pressable onPress={() => shift(10)} disabled={t.phase === 'idle' || t.phase === 'done'} accessibilityRole="button" accessibilityLabel={traduire("Avancer de 10 secondes")} style={({ pressed }) => ({ width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.border : c.fillSubtle, opacity: t.phase === 'idle' || t.phase === 'done' ? 0.4 : 1 })}>
@@ -567,7 +567,7 @@ export default function SeanceCombat() {
           {/* Reglages du chrono, hors rounds */}
           {t.phase === 'idle' || t.phase === 'done' ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Setting label={draft.form ? traduire('Durée d’un round') : 'Round'}>
+              <Setting label={draft.form ? traduire('Durée d’un round') : traduire('Round')}>
                 <Stepper value={draft.roundSec} step={30} min={30} max={1200} unit={traduire("secondes de round")} layout="stack" size={24} button={44} format={fmtClock} onChange={(v) => update((d) => ({ ...d, roundSec: v }))} />
               </Setting>
               {!draft.form ? (
@@ -575,7 +575,7 @@ export default function SeanceCombat() {
                   <Setting label={traduire("Repos")}>
                     <Stepper value={draft.restSec} step={15} min={0} max={600} unit={traduire("secondes de repos")} layout="stack" size={24} button={44} format={fmtClock} onChange={(v) => update((d) => ({ ...d, restSec: v }))} />
                   </Setting>
-                  <Setting label="Rounds">
+                  <Setting label={traduire("Rounds")}>
                     <Stepper value={draft.totalRounds} step={1} min={1} max={30} unit="rounds" layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, totalRounds: v }))} />
                   </Setting>
                 </>
@@ -615,7 +615,7 @@ export default function SeanceCombat() {
                   <Ink size={13} color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{roundSummary(r) || traduire('touche pour détailler')}</Ink>
                   {r.intensity ? (
                     <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: intensite(ROUND_NIVEAU[r.intensity]).tint }}>
-                      <Ink size={11} weight="extraBold" color={intensite(ROUND_NIVEAU[r.intensity]).text}>{ROUND_INTENSITIES.find((x) => x.value === r.intensity)?.label}</Ink>
+                      <Ink size={11} weight="extraBold" color={intensite(ROUND_NIVEAU[r.intensity]).text}>{traduire(ROUND_INTENSITIES.find((x) => x.value === r.intensity)?.label)}</Ink>
                     </View>
                   ) : null}
                 </Pressable>
@@ -630,7 +630,7 @@ export default function SeanceCombat() {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {selectedThemes.map((th) => (
                   <Pressable key={th} onPress={() => toggleTheme(th)} accessibilityRole="button" accessibilityLabel={`Retirer ${th}`} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.ink }}>
-                    <Ink size={13} weight="extraBold" color={c.background}>{th}</Ink>
+                    <Ink size={13} weight="extraBold" color={c.background}>{traduire(th)}</Ink>
                     <Icon name="close" size={12} color={c.background} strokeWidth={3} />
                   </Pressable>
                 ))}
@@ -662,7 +662,7 @@ export default function SeanceCombat() {
                         const on = i === themeCat;
                         return (
                           <Pressable key={cat.label} onPress={() => setThemeCat(i)} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.fillSubtle : 'transparent' }}>
-                            <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textMuted}>{cat.label}</Ink>
+                            <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textMuted}>{traduire(cat.label)}</Ink>
                           </Pressable>
                         );
                       })}
@@ -672,7 +672,7 @@ export default function SeanceCombat() {
                         const on = selectedThemes.includes(th);
                         return (
                           <Pressable key={th} onPress={() => toggleTheme(th)} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : blancA(0.7), borderWidth: on ? 0 : 1, borderColor: c.border }}>
-                            <Ink size={13} weight="bold" color={on ? P.paper : c.ink}>{th}</Ink>
+                            <Ink size={13} weight="bold" color={on ? P.paper : c.ink}>{traduire(th)}</Ink>
                           </Pressable>
                         );
                       })}
@@ -704,13 +704,13 @@ export default function SeanceCombat() {
       <Sheet visible={!!detail} onClose={() => setDetailFor(null)} title={detail ? `Round ${detail.number}` : undefined} scroll>
         {detail ? (
           <View style={{ gap: 12 }}>
-            <Ink size={14} weight="bold" color={c.textSecondary}>Partenaire</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Partenaire")}</Ink>
             <TextInput
               value={detail.partner ?? ''}
               onChangeText={(v) => updateRound(detail.number, { partner: v })}
               placeholder={traduire("Avec qui ?")}
               placeholderTextColor={c.textMuted}
-              accessibilityLabel="Partenaire"
+              accessibilityLabel={traduire("Partenaire")}
               style={[fontStyle('bold'), { height: 50, fontSize: 16, color: c.ink, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
             />
             {partners.length > 0 ? (
@@ -726,13 +726,13 @@ export default function SeanceCombat() {
             <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Résultat")}</Ink>
             <ChoiceRow options={RESULTS} value={detail.result ?? null} columns={3} onChange={(v) => updateRound(detail.number, { result: v ?? undefined })} />
 
-            <Ink size={14} weight="bold" color={c.textSecondary}>{grappling ? 'Soumission' : 'Finition'}</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{grappling ? traduire('Soumission') : 'Finition'}</Ink>
             <TextInput
               value={detail.method ?? ''}
               onChangeText={(v) => updateRound(detail.number, { method: v })}
               placeholder={grappling ? traduire('Triangle, clé de bras...') : traduire('KO, aux points...')}
               placeholderTextColor={c.textMuted}
-              accessibilityLabel={grappling ? 'Soumission' : 'Finition'}
+              accessibilityLabel={grappling ? traduire('Soumission') : 'Finition'}
               style={[fontStyle('bold'), { height: 50, fontSize: 16, color: c.ink, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
             />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }} keyboardShouldPersistTaps="handled">
@@ -763,7 +763,7 @@ export default function SeanceCombat() {
                 accessibilityRole="button"
                 style={{ minHeight: 52, paddingHorizontal: 16, borderRadius: 16, justifyContent: 'center', backgroundColor: c.fillSubtle }}
               >
-                <Ink size={15} weight="bold" color={c.danger}>Retirer</Ink>
+                <Ink size={15} weight="bold" color={c.danger}>{traduire("Retirer")}</Ink>
               </Pressable>
               <Pressable onPress={() => setDetailFor(null)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.textSecondary : c.ink })}>
                 <Ink size={16} weight="extraBold" color={c.background}>{traduire("Valider")}</Ink>
@@ -774,13 +774,13 @@ export default function SeanceCombat() {
       </Sheet>
 
       {/* Changer de sport */}
-      <Sheet visible={sportOpen} onClose={() => setSportOpen(false)} title="Quel sport ?" scroll>
+      <Sheet visible={sportOpen} onClose={() => setSportOpen(false)} title={traduire("Quel sport ?")} scroll>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {COMBAT_SPORTS.map((s) => {
             const on = s.id === draft.sport;
             return (
               <Pressable key={s.id} onPress={() => { update((d) => ({ ...d, sport: s.id, label: d.label === sportName ? undefined : d.label })); setThemeCat(0); setSportOpen(false); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 46, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border }}>
-                <Ink size={14} weight="extraBold" color={on ? P.paper : c.ink}>{s.name}</Ink>
+                <Ink size={14} weight="extraBold" color={on ? P.paper : c.ink}>{traduire(s.name)}</Ink>
               </Pressable>
             );
           })}
@@ -803,10 +803,10 @@ export default function SeanceCombat() {
         {bilanOpen || draft.hrAvg || draft.hrMax || draft.gamePlan || draft.worked || draft.didnt ? (
           <View style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Setting label="Cardio moyen">
+            <Setting label={traduire("Cardio moyen")}>
               <Stepper value={draft.hrAvg ?? 0} step={1} max={230} unit={traduire("battements par minute en moyenne")} layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, hrAvg: v }))} />
             </Setting>
-            <Setting label="Cardio max">
+            <Setting label={traduire("Cardio max")}>
               <Stepper value={draft.hrMax ?? 0} step={1} max={240} unit={traduire("battements par minute au maximum")} layout="stack" size={24} button={44} onChange={(v) => update((d) => ({ ...d, hrMax: v }))} />
             </Setting>
           </View>
@@ -823,7 +823,7 @@ export default function SeanceCombat() {
                 placeholder={`${f.label} : ${f.ph.toLocaleLowerCase(LOCALE)}`}
                 placeholderTextColor={c.textMuted}
                 multiline
-                accessibilityLabel={f.label}
+                accessibilityLabel={traduire(f.label)}
                 style={[fontStyle('medium'), { minHeight: 56, fontSize: 15, color: c.ink, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, textAlignVertical: 'top' }]}
               />
             ))}

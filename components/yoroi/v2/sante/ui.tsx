@@ -126,7 +126,7 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
               {traduire("Ta montre et ta balance remplissent cet écran toutes seules")}</Ink>
           </View>
         </View>
-        {onConnect ? <SmallButton label={connecting ? 'Connexion' : `Connecter ${p}`} tone="red" icon="link" busy={connecting} onPress={onConnect} /> : null}
+        {onConnect ? <SmallButton label={connecting ? traduire('Connexion') : `Connecter ${p}`} tone="red" icon="link" busy={connecting} onPress={onConnect} /> : null}
       </GlassBox>
     );
   }
@@ -137,11 +137,11 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
         {traduire("{0} relié, {1}", p, relativeSync(source.lastSync))}
       </Ink>
       {onSync ? (
-        <Press onPress={syncing ? undefined : onSync} accessibilityRole="button" accessibilityLabel="Synchroniser maintenant" hitSlop={8}>
+        <Press onPress={syncing ? undefined : onSync} accessibilityRole="button" accessibilityLabel={traduire("Synchroniser maintenant")} hitSlop={8}>
           <View style={{ height: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             {syncing ? <ActivityIndicator size="small" color={S.ink} /> : <SanteIcon name="sync" size={15} color={S.ink} width={2.3} />}
             <Ink size={12} weight="extraBold">
-              {syncing ? 'En cours' : 'Synchroniser'}
+              {syncing ? traduire('En cours') : 'Synchroniser'}
             </Ink>
           </View>
         </Press>
@@ -165,7 +165,7 @@ export function PeriodSegments<T extends string>({ items, value, onChange, accen
             <View style={{ minHeight: 44, borderRadius: 14, backgroundColor: on ? accent : 'transparent', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 4 }}>
               {it.locked ? <SanteIcon name="lock" size={12} color={on ? onSeg : S.muted} width={2.4} /> : null}
               <Ink size={14} weight="extraBold" color={on ? onSeg : S.ink2}>
-                {it.label}
+                {traduire(it.label)}
               </Ink>
             </View>
           </Press>

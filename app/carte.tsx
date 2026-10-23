@@ -155,10 +155,10 @@ function Onglets({ c, liste, actif, onChange }: { c: Couleurs; liste: { id: Ongl
             onPress={() => onChange(x.id)}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={x.nom}
+            accessibilityLabel={traduire(x.nom)}
             style={({ pressed }) => ({ flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.accent : pressed ? c.fillSubtle : 'transparent' })}
           >
-            <Ink size={13.5} weight="extraBold" color={on ? c.onAccent : c.ink} numberOfLines={1}>{x.nom}</Ink>
+            <Ink size={13.5} weight="extraBold" color={on ? c.onAccent : c.ink} numberOfLines={1}>{traduire(x.nom)}</Ink>
           </Pressable>
         );
       })}
@@ -358,7 +358,7 @@ export default function CarteEditeur() {
                     </View>
                     <View style={{ flex: 1, gap: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7 }}>
-                        <Ink size={15} weight="extraBold" color={on ? c.accent : c.ink}>{f.nom}</Ink>
+                        <Ink size={15} weight="extraBold" color={on ? c.accent : c.ink}>{traduire(f.nom)}</Ink>
                         <Ink size={11} weight="bold" color={c.textMuted}>{f.ratio}</Ink>
                       </View>
                       <Ink size={13} color={c.textSecondary}>{f.apps}</Ink>
@@ -399,7 +399,7 @@ export default function CarteEditeur() {
                         </View>
                         <View style={{ paddingHorizontal: 6, gap: 2 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Ink size={15} weight="extraBold" color={on ? c.accent : c.ink} style={{ flex: 1 }} numberOfLines={1}>{m.nom}</Ink>
+                            <Ink size={15} weight="extraBold" color={on ? c.accent : c.ink} style={{ flex: 1 }} numberOfLines={1}>{traduire(m.nom)}</Ink>
                             {on ? (
                               <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
                                 <Icon name="check" size={12} color={c.onAccent} stroke={3} />
@@ -451,7 +451,7 @@ export default function CarteEditeur() {
             </View>
             {o.fond === 'photo' || k.style.fond === 'photo' ? (
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                <Pastille c={c} on={false} icon="image" label={k.photo ? traduire('Changer de photo') : 'Galerie'} onPress={() => void k.choisirPhoto('gallery')} />
+                <Pastille c={c} on={false} icon="image" label={k.photo ? traduire('Changer de photo') : traduire('Galerie')} onPress={() => void k.choisirPhoto('gallery')} />
                 <Pastille c={c} on={false} icon="camera" label={traduire("Prendre une photo")} onPress={() => void k.choisirPhoto('camera')} />
               </View>
             ) : null}
@@ -484,16 +484,16 @@ export default function CarteEditeur() {
         {actif === 'plus' ? (
           <>
             {aa ? null : <LigneInterrupteur c={c} icon="eye" titre={traduire("Que mes données")} sous={traduire("Fond uni, sans personnage ni décor")} on={!!o.epure} onPress={() => k.setStyle({ epure: !o.epure })} />}
-            <Titre c={c} icon={o.sombre ? 'moon' : 'sun'}>Style</Titre>
+            <Titre c={c} icon={o.sombre ? 'moon' : 'sun'}>{traduire("Style")}</Titre>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pastille c={c} on={o.sombre} icon="moon" label="Sombre" onPress={() => k.setStyle({ sombre: true })} />
-              <Pastille c={c} on={!o.sombre} icon="sun" label="Clair" onPress={() => k.setStyle({ sombre: false })} />
+              <Pastille c={c} on={o.sombre} icon="moon" label={traduire("Sombre")} onPress={() => k.setStyle({ sombre: true })} />
+              <Pastille c={c} on={!o.sombre} icon="sun" label={traduire("Clair")} onPress={() => k.setStyle({ sombre: false })} />
             </View>
             {montrePoids ? (
               <>
                 <Titre c={c} icon="scale" sous={traduire("Pour ta vie privée : seulement l’écart ou le pourcentage")}>{traduire("Ton poids")}</Titre>
                 <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                  {MASQUES.map((m) => <Pastille key={m.id} c={c} on={o.masque === m.id} label={m.nom} onPress={() => k.setStyle({ masque: m.id })} />)}
+                  {MASQUES.map((m) => <Pastille key={m.id} c={c} on={o.masque === m.id} label={traduire(m.nom)} onPress={() => k.setStyle({ masque: m.id })} />)}
                 </View>
               </>
             ) : null}

@@ -134,9 +134,9 @@ export function BeltBar({ belt, width = 96, height = 14 }: { belt?: string; widt
 export function RecordBars({ wins, losses, draws, compact }: { wins: number; losses: number; draws: number; compact?: boolean }) {
   const max = Math.max(1, wins, losses, draws);
   const rows: { label: string; v: number; c: string }[] = [
-    { label: compact ? 'V' : 'Victoires', v: wins, c: V },
+    { label: compact ? 'V' : traduire('Victoires'), v: wins, c: V },
     { label: compact ? 'D' : traduire('Défaites'), v: losses, c: D },
-    { label: compact ? 'N' : 'Nuls', v: draws, c: N },
+    { label: compact ? 'N' : traduire('Nuls'), v: draws, c: N },
   ];
   const h = compact ? 8 : 12;
   return (
@@ -144,7 +144,7 @@ export function RecordBars({ wins, losses, draws, compact }: { wins: number; los
       {rows.map((r) => (
         <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Ink size={compact ? 11 : 13} weight="bold" color={P.ink2} style={{ width: compact ? 12 : 72 }}>
-            {r.label}
+            {traduire(r.label)}
           </Ink>
           <View style={{ flex: 1, height: h, borderRadius: h / 2, backgroundColor: P.line2, overflow: 'hidden' }}>
             <View style={{ width: `${(r.v / max) * 100}%`, height: '100%', borderRadius: h / 2, backgroundColor: r.c }} />

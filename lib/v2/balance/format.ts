@@ -60,11 +60,11 @@ export type BalanceFieldSpec = {
 };
 
 const SEGMENTS: { seg: SegmentKey; key: string; label: string; de: string; names: string[] }[] = [
-  { seg: 'arm_right', key: 'bras_droit', label: 'bras droit', de: traduire('du bras droit'), names: ['bras_droit', 'bras_d', 'bd', 'right_arm', 'arm_right', 'r_arm', 'arm_r'] },
-  { seg: 'arm_left', key: 'bras_gauche', label: 'bras gauche', de: traduire('du bras gauche'), names: ['bras_gauche', 'bras_g', 'bg', 'left_arm', 'arm_left', 'l_arm', 'arm_l'] },
+  { seg: 'arm_right', key: 'bras_droit', label: traduire('bras droit'), de: traduire('du bras droit'), names: ['bras_droit', 'bras_d', 'bd', 'right_arm', 'arm_right', 'r_arm', 'arm_r'] },
+  { seg: 'arm_left', key: 'bras_gauche', label: traduire('bras gauche'), de: traduire('du bras gauche'), names: ['bras_gauche', 'bras_g', 'bg', 'left_arm', 'arm_left', 'l_arm', 'arm_l'] },
   { seg: 'trunk', key: 'tronc', label: 'tronc', de: traduire('du tronc'), names: ['tronc', 'torse', 'trunk', 'torso', 'core'] },
-  { seg: 'leg_right', key: 'jambe_droite', label: 'jambe droite', de: traduire('de la jambe droite'), names: ['jambe_droite', 'jambe_d', 'jd', 'right_leg', 'leg_right', 'r_leg', 'leg_r'] },
-  { seg: 'leg_left', key: 'jambe_gauche', label: 'jambe gauche', de: traduire('de la jambe gauche'), names: ['jambe_gauche', 'jambe_g', 'jg', 'left_leg', 'leg_left', 'l_leg', 'leg_l'] },
+  { seg: 'leg_right', key: 'jambe_droite', label: traduire('jambe droite'), de: traduire('de la jambe droite'), names: ['jambe_droite', 'jambe_d', 'jd', 'right_leg', 'leg_right', 'r_leg', 'leg_r'] },
+  { seg: 'leg_left', key: 'jambe_gauche', label: traduire('jambe gauche'), de: traduire('de la jambe gauche'), names: ['jambe_gauche', 'jambe_g', 'jg', 'left_leg', 'leg_left', 'l_leg', 'leg_l'] },
 ];
 
 /**
@@ -200,7 +200,7 @@ function segFields(): BalanceFieldSpec[] {
       mass: true,
       json: true,
       ai: traduire("eau {0} en kg ou en litres", s.de),
-      aliases: s.names.flatMap((n) => [traduire("eau_{0}", n), traduire("{0}_eau", n), `water_${n}`, `${n}_water`, `body_water_${n}`, traduire("eau_{0}_l", n)]),
+      aliases: s.names.flatMap((n) => [`eau_${n}`, `${n}_eau`, `water_${n}`, `${n}_water`, `body_water_${n}`, `eau_${n}_l`]),
     });
   }
   return out;
@@ -217,13 +217,13 @@ export const BALANCE_FIELDS: BalanceFieldSpec[] = [
   { key: 'metabolisme_kj', label: traduire('Métabolisme de base'), unit: 'kJ', min: 2500, max: 21000, step: 1, group: 'avance', kind: null, convert: { to: 'metabolisme_kcal', factor: 1 / 4.184 }, ai: traduire('métabolisme de base en kJ, seulement si la balance ne donne pas les kcal'), aliases: ['metabolisme_de_base_kj', 'bmr_kj', 'kj'] },
   { key: 'age_metabolique', label: traduire('Âge métabolique'), unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, ai: traduire('âge métabolique en années'), aliases: ['age_metabolique_ans', 'metabolic_age', 'age_meta'] },
   { key: 'imc', label: traduire('IMC'), unit: '', min: 10, max: 70, step: 0.1, group: 'avance', kind: null, ai: traduire('IMC affiché par la balance'), aliases: ['bmi', 'indice_de_masse_corporelle'] },
-  { key: 'physique', label: 'Morphologie', unit: 'sur 9', min: 1, max: 9, step: 1, group: 'avance', kind: null, ai: traduire('physique rating, chiffre de 1 à 9'), aliases: ['physique_rating', 'morphologie', 'type_physique'] },
-  { key: 'graisse_kg', label: 'Masse grasse en kilos', unit: 'kg', min: 1, max: 200, step: 0.1, group: 'avance', kind: 'graisse', mass: true, ai: 'masse grasse en kg', aliases: ['masse_grasse_kg', 'fat_mass', 'fat_kg', 'body_fat_mass'] },
-  { key: 'muscle_pct', label: 'Muscle en pourcentage', unit: '%', min: 10, max: 90, step: 0.1, group: 'avance', kind: 'muscle', ai: traduire('muscle en %, seulement si la balance le donne en %'), aliases: ['masse_musculaire_pct', 'muscle_percent', 'taux_de_muscle'] },
+  { key: 'physique', label: traduire('Morphologie'), unit: 'sur 9', min: 1, max: 9, step: 1, group: 'avance', kind: null, ai: traduire('physique rating, chiffre de 1 à 9'), aliases: ['physique_rating', 'morphologie', 'type_physique'] },
+  { key: 'graisse_kg', label: traduire('Masse grasse en kilos'), unit: 'kg', min: 1, max: 200, step: 0.1, group: 'avance', kind: 'graisse', mass: true, ai: 'masse grasse en kg', aliases: ['masse_grasse_kg', 'fat_mass', 'fat_kg', 'body_fat_mass'] },
+  { key: 'muscle_pct', label: traduire('Muscle en pourcentage'), unit: '%', min: 10, max: 90, step: 0.1, group: 'avance', kind: 'muscle', ai: traduire('muscle en %, seulement si la balance le donne en %'), aliases: ['masse_musculaire_pct', 'muscle_percent', 'taux_de_muscle'] },
   // BALANCE 2 : ce que donnent souvent les autres balances et les feuilles InBody (colonne JSON scale_extras)
-  { key: 'masse_maigre_kg', label: 'Masse maigre', unit: 'kg', min: 10, max: 200, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: traduire('masse maigre ou masse non grasse en kg'), aliases: ['masse_maigre', 'masse_non_grasse', 'lean_mass', 'lean_body_mass', 'lbm', 'fat_free_mass', 'ffm', 'fat_free_body_weight', 'poids_sans_graisse'] },
-  { key: 'muscle_squelettique_kg', label: 'Muscle squelettique', unit: 'kg', min: 5, max: 100, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: 'masse musculaire squelettique en kg', aliases: ['muscle_squelettique', 'masse_musculaire_squelettique', 'skeletal_muscle', 'skeletal_muscle_mass', 'smm'] },
-  { key: 'muscle_squelettique_pct', label: 'Muscle squelettique', unit: '%', min: 10, max: 70, step: 0.1, group: 'avance', kind: 'muscle', json: true, ai: 'muscle squelettique en %', aliases: ['skeletal_muscle_percent', 'taux_de_muscle_squelettique'] },
+  { key: 'masse_maigre_kg', label: traduire('Masse maigre'), unit: 'kg', min: 10, max: 200, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: traduire('masse maigre ou masse non grasse en kg'), aliases: ['masse_maigre', 'masse_non_grasse', 'lean_mass', 'lean_body_mass', 'lbm', 'fat_free_mass', 'ffm', 'fat_free_body_weight', 'poids_sans_graisse'] },
+  { key: 'muscle_squelettique_kg', label: traduire('Muscle squelettique'), unit: 'kg', min: 5, max: 100, step: 0.1, group: 'avance', kind: 'muscle', mass: true, json: true, ai: 'masse musculaire squelettique en kg', aliases: ['muscle_squelettique', 'masse_musculaire_squelettique', 'skeletal_muscle', 'skeletal_muscle_mass', 'smm'] },
+  { key: 'muscle_squelettique_pct', label: traduire('Muscle squelettique'), unit: '%', min: 10, max: 70, step: 0.1, group: 'avance', kind: 'muscle', json: true, ai: 'muscle squelettique en %', aliases: ['skeletal_muscle_percent', 'taux_de_muscle_squelettique'] },
   { key: 'eau_kg', label: traduire('Eau en kilos'), unit: 'kg', min: 10, max: 120, step: 0.1, group: 'avance', kind: 'eau', mass: true, json: true, ai: traduire('eau corporelle totale en kg ou en litres'), aliases: ['water_mass', 'masse_d_eau', 'eau_totale_kg', 'total_body_water_kg', 'eau_l', 'eau_totale_l'] },
   { key: 'proteines_kg', label: traduire('Protéines'), unit: 'kg', min: 1, max: 40, step: 0.1, group: 'avance', kind: null, mass: true, json: true, ai: traduire('protéines en kg'), aliases: ['proteines', 'protein', 'proteins', 'protein_mass', 'proteine'] },
   { key: 'proteines_pct', label: traduire('Protéines'), unit: '%', min: 5, max: 30, step: 0.1, group: 'avance', kind: null, json: true, ai: traduire('protéines en %'), aliases: ['protein_percent', 'taux_de_proteines'] },
@@ -231,7 +231,7 @@ export const BALANCE_FIELDS: BalanceFieldSpec[] = [
   { key: 'graisse_sous_cutanee_pct', label: traduire('Graisse sous-cutanée'), unit: '%', min: 1, max: 70, step: 0.1, group: 'avance', kind: 'graisse', json: true, ai: traduire('graisse sous cutanée en %'), aliases: ['graisse_sous_cutanee', 'sous_cutanee', 'subcutaneous_fat', 'subcutaneous_fat_percent', 'gras_sous_cutane'] },
   { key: 'ratio_eau_extracellulaire', label: traduire('Ratio eau extracellulaire'), unit: 'ECW/TBW', min: 0.3, max: 0.5, step: 0.001, group: 'avance', kind: 'eau', json: true, ai: traduire('ratio ECW/TBW, par exemple 0.380'), aliases: ['ecw_tbw', 'ecw_tbw_ratio', 'ratio_ecw_tbw', 'ecw_ratio', 'extracellular_water_ratio', 'ratio_eau_extracellulaire_eau_totale'] },
   { key: 'angle_de_phase', label: traduire('Angle de phase'), unit: '°', min: 1, max: 15, step: 0.1, group: 'avance', kind: null, json: true, ai: traduire('angle de phase en degrés'), aliases: ['phase_angle', 'angle_phase', 'whole_body_phase_angle', 'angle_de_phase_50khz'] },
-  { key: 'score_corporel', label: 'Score corporel', unit: 'points', min: 1, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('score InBody ou score corporel sur 100'), aliases: ['score', 'inbody_score', 'score_inbody', 'body_score', 'health_score', 'score_sante', 'score_corps'] },
+  { key: 'score_corporel', label: traduire('Score corporel'), unit: 'points', min: 1, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('score InBody ou score corporel sur 100'), aliases: ['score', 'inbody_score', 'score_inbody', 'body_score', 'health_score', 'score_sante', 'score_corps'] },
   { key: 'fc_repos', label: traduire('Fréquence cardiaque'), unit: 'bpm', min: 30, max: 200, step: 1, group: 'avance', kind: null, json: true, ai: traduire('fréquence cardiaque mesurée par la balance, en bpm'), aliases: ['frequence_cardiaque', 'fc', 'pouls', 'heart_rate', 'hr', 'bpm', 'standing_heart_rate', 'resting_heart_rate', 'rythme_cardiaque'] },
   { key: 'age_corporel', label: traduire('Âge corporel'), unit: 'ans', min: 10, max: 100, step: 1, group: 'avance', kind: null, json: true, ai: traduire('âge corporel en années, s’il est distinct de l’âge métabolique'), aliases: ['body_age', 'age_du_corps', 'age_biologique'] },
   { key: 'poids_ideal_kg', label: traduire('Poids idéal ou cible'), unit: 'kg', min: 20, max: 300, step: 0.1, group: 'avance', kind: null, mass: true, json: true, ai: traduire('poids idéal ou poids cible affiché, en kg'), aliases: ['poids_ideal', 'poids_cible', 'ideal_weight', 'target_weight', 'poids_de_reference', 'standard_weight'] },
@@ -260,9 +260,9 @@ export const PHYSIQUE_LABELS: Record<number, string> = {
 export const SEGMENT_LABELS: Record<SegmentKey, string> = {
   arm_right: traduire('Bras droit'),
   arm_left: traduire('Bras gauche'),
-  trunk: 'Tronc',
-  leg_right: 'Jambe droite',
-  leg_left: 'Jambe gauche',
+  trunk: traduire('Tronc'),
+  leg_right: traduire('Jambe droite'),
+  leg_left: traduire('Jambe gauche'),
 };
 export const SEGMENT_ORDER: SegmentKey[] = ['arm_left', 'arm_right', 'trunk', 'leg_left', 'leg_right'];
 

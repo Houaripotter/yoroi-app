@@ -115,5 +115,5 @@ export function personnageNom(personnage: string): string {
   const pack = PACKS.find((p) => p.id === personnage);
   if (pack) return pack.nom;
   if (parsePersonnage(personnage).kind !== 'guerrier') return dojoPersonnageName(personnage);
-  return personnage === 'guerrier_f' ? traduire('Guerrière') : 'Guerrier';
+  return personnage === 'guerrier_f' ? traduire('Guerrière') : traduire('Guerrier');
 }

@@ -128,7 +128,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
       onChanged();
     } catch (e) {
       logger.error('Annulation du créneau impossible', e);
-      appAlert('Oups', traduire('Le créneau n’a pas pu être annulé.'));
+      appAlert(traduire('Oups'), traduire('Le créneau n’a pas pu être annulé.'));
     }
   };
 
@@ -190,7 +190,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
         </View>
         {allSlots.length === 0 ? (
           <View style={{ flex: 1, padding: 14, borderRadius: 18, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
-            <Ink size={12} weight="bold" color={c.textSecondary}>Temps</Ink>
+            <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Temps")}</Ink>
             <Ink size={28} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{weekMinutes ? formatDuration(weekMinutes) : '0 min'}</Ink>
           </View>
         ) : null}
@@ -220,7 +220,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                 <View key={`c${cp.id}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: c.goldTint }}>
                   <Icon name="trophy" size={20} color={c.goldDeep} />
                   <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold" numberOfLines={2}>{cp.nom}</Ink>
+                    <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(cp.nom)}</Ink>
                     <Ink size={12} color={c.textSecondary}>{[getSportName(cp.sport), cp.lieu].filter(Boolean).join(', ')}</Ink>
                   </View>
                 </View>
@@ -298,7 +298,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {REASONS.map((r) => (
                     <Pressable key={r} onPress={() => { tap(); setReason(r); }} accessibilityRole="button" accessibilityState={{ selected: reason === r }} style={{ minHeight: 40, paddingHorizontal: 13, justifyContent: 'center', borderRadius: 12, backgroundColor: reason === r ? c.ink : 'transparent', borderWidth: reason === r ? 0 : 1.5, borderColor: '#D5D2CA' }}>
-                      <Ink size={13} weight="bold" color={reason === r ? c.background : c.textSecondary}>{r}</Ink>
+                      <Ink size={13} weight="bold" color={reason === r ? c.background : c.textSecondary}>{traduire(r)}</Ink>
                     </Pressable>
                   ))}
                 </View>

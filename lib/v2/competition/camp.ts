@@ -42,7 +42,7 @@ export const LOAD_LABELS: Record<LoadLevel, string> = {
   faible: 'Charge faible',
   modere: traduire('Charge modérée'),
   eleve: traduire('Charge élevée'),
-  max: 'Charge max',
+  max: traduire('Charge max'),
   affutage: traduire('Affûtage'),
 };
 

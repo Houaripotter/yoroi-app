@@ -276,7 +276,7 @@ function BodyComposition() {
     return (
       <View key={f.key} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: c.divider, gap: 8 }}>
         <View style={{ gap: 2 }}>
-          <Ink size={15} weight="extraBold">{f.label}</Ink>
+          <Ink size={15} weight="extraBold">{traduire(f.label)}</Ink>
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{sub}</Ink>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -369,7 +369,7 @@ function BodyComposition() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: b.color }} />
-                  <Ink size={13} weight="bold">{b.label}</Ink>
+                  <Ink size={13} weight="bold">{traduire(b.label)}</Ink>
                 </View>
                 <Ink size={13} weight="black">{b.v ? `${num(b.v, 1, false)} %` : traduire('à remplir')}</Ink>
               </View>

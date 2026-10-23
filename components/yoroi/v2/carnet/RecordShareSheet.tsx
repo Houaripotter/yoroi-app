@@ -90,7 +90,7 @@ function Card({ data, fond, photo, format, width, name }: { data: ShareRecord; f
             </Ink>
             {perf.sub ? (
               <Ink size={4.8 * u} weight="bold" color={ink2}>
-                {perf.sub}
+                {traduire(perf.sub)}
               </Ink>
             ) : null}
           </View>
@@ -170,7 +170,7 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
       }
     } catch (e) {
       logger.error('[RecordShareSheet] partage', e);
-      appAlert('Oups', traduire('La carte n’a pas pu être partagée.'));
+      appAlert(traduire('Oups'), traduire('La carte n’a pas pu être partagée.'));
     } finally {
       setBusy(false);
     }
@@ -219,7 +219,7 @@ export function RecordShareSheet({ data, onClose, source = 'record_mouvement' }:
                     <View style={{ width: 58, height: 58, borderRadius: 18, overflow: 'hidden', borderWidth: on ? 3 : 1, borderColor: on ? P.accent : P.line2 }}>
                       <Image source={PARTAGE_FONDS[f.key]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                     </View>
-                    <Ink size={12} weight={on ? 'extraBold' : 'bold'} color={on ? P.accent : P.ink2}>{f.label}</Ink>
+                    <Ink size={12} weight={on ? 'extraBold' : 'bold'} color={on ? P.accent : P.ink2}>{traduire(f.label)}</Ink>
                   </View>
                 </Press>
               );

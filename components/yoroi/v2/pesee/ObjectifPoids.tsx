@@ -47,8 +47,7 @@ function Ligne({ libelle, valeur, onPress, a11y, bord }: { libelle: string; vale
         </Ink>
       </View>
       <Ink size={13.5} weight="extraBold" color={c.accent} numberOfLines={1}>
-        Changer
-      </Ink>
+        {traduire("Changer")}</Ink>
     </Pressable>
   );
 }
@@ -181,7 +180,7 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
                   <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("Date de début")}</Ink>
                   <Ink size={15} weight="extraBold">{traduire("le {0}", jourCourt(dateDebut))}</Ink>
                 </View>
-                <Ink size={13.5} weight="extraBold" color={c.accent}>Changer</Ink>
+                <Ink size={13.5} weight="extraBold" color={c.accent}>{traduire("Changer")}</Ink>
               </Pressable>
               <View style={{ alignItems: 'center', gap: 2 }}>
                 <Ink size={12.5} weight="bold" color={c.textSecondary}>{traduire("Ton poids ce jour-là")}</Ink>

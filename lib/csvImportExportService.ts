@@ -99,26 +99,26 @@ export function generateCSVTemplate(): string {
   lines.push(CSV_HEADERS.join(','));
 
   // Examples - POIDS
-  lines.push(traduire('POIDS,2025-01-15,82.5,18.2,42.1,55.3,3.2,8,35,1850,Apres competition,csv,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,'));
-  lines.push(traduire('POIDS,2025-01-20,81.8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,'));
+  lines.push('POIDS,2025-01-15,82.5,18.2,42.1,55.3,3.2,8,35,1850,Apres competition,csv,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,');
+  lines.push('POIDS,2025-01-20,81.8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,');
 
   // Examples - ENTRAÎNEMENT
-  lines.push(traduire('ENTRAÎNEMENT,2025-01-15,,,,,,,,,,jjb,18:30,90,8,650,,5,5,dos|epaules,,0,,,,,Bonne séance,,,,,,,,,,,,,,,,'));
-  lines.push(traduire('ENTRAÎNEMENT,2025-01-16,,,,,,,,,,running,07:00,45,6,380,8.5,,,,,,1,,12,,,Footing matinal,,,,,,,,,,,,,,,,'));
+  lines.push('ENTRAÎNEMENT,2025-01-15,,,,,,,,,,jjb,18:30,90,8,650,,5,5,dos|epaules,,0,,,,,Bonne séance,,,,,,,,,,,,,,,,');
+  lines.push('ENTRAÎNEMENT,2025-01-16,,,,,,,,,,running,07:00,45,6,380,8.5,,,,,,1,,12,,,Footing matinal,,,,,,,,,,,,,,,,');
 
   // Examples - MENSURATION
   lines.push('MENSURATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,102,78,82,97,36,37,58,59,38,39,120,38,,,,,,');
 
   // Examples - SOMMEIL
-  lines.push(traduire('SOMMEIL,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23:00,07:00,4,,,,'));
-  lines.push(traduire('SOMMEIL,2025-01-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,22:30,06:45,3,,,,'));
+  lines.push('SOMMEIL,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23:00,07:00,4,,,,');
+  lines.push('SOMMEIL,2025-01-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,22:30,06:45,3,,,,');
 
   // Examples - HYDRATATION
-  lines.push(traduire('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,500,,'));
-  lines.push(traduire('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,350,,'));
+  lines.push('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,500,,');
+  lines.push('HYDRATATION,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,350,,');
 
   // Examples - HUMEUR
-  lines.push(traduire('HUMEUR,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,bien,4'));
+  lines.push('HUMEUR,2025-01-15,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,bien,4');
 
   return lines.join('\n');
 }

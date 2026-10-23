@@ -63,7 +63,7 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
         );
       }
     } catch (e) {
-      appAlert('Oups', traduire('La sauvegarde n’a pas pu être créée.'));
+      appAlert(traduire('Oups'), traduire('La sauvegarde n’a pas pu être créée.'));
     } finally {
       setCreating(null);
     }
@@ -119,7 +119,7 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
                 <Text style={styles.stepNum}>{step.num}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>{step.title}</Text>
+                <Text style={[styles.stepTitle, { color: colors.text }]}>{traduire(step.title)}</Text>
                 <Text style={[styles.stepBody, { color: colors.textMuted ?? '#666' }]}>{step.body}</Text>
               </View>
             </View>

@@ -48,7 +48,7 @@ const TUILES: { src: ImageSourcePropType; titre: string; domaine: Domaine }[] = 
   { src: require('@/assets/avatars/app/sceaux/regularite/lune_soleil.webp'), titre: traduire('Ta santé'), domaine: 'forme' },
   { src: require('@/assets/avatars/app/ornements/vague.webp'), titre: 'Eau', domaine: 'eau' },
   { src: require('@/assets/avatars/app/ornements/kabuto.webp'), titre: traduire('Compétitions'), domaine: 'competition' },
-  { src: require('@/assets/avatars/app/sceaux/decouverte/metre_ruban.webp'), titre: 'Mensurations', domaine: 'mensurations' },
+  { src: require('@/assets/avatars/app/sceaux/decouverte/metre_ruban.webp'), titre: traduire('Mensurations'), domaine: 'mensurations' },
 ];
 
 /** Le petit trait qui relie deux etages */
@@ -128,7 +128,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
   const yoroi = etape >= 4;
 
   return (
-    <Shell {...nav} title={traduire("Tout au **même endroit**")} gap={0} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Tout au **même endroit**")} gap={0} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
       <View style={{ height: petit ? 6 : 16 }} />
       {AVANT.map((e, i) => (
         <React.Fragment key={e.cle}>
@@ -157,7 +157,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
               {TUILES.map((t) => (
                 <View key={t.titre} style={{ width: '31.5%', borderRadius: 14, backgroundColor: teinte(t.domaine).fond, borderWidth: 1, borderColor: teinte(t.domaine).bord, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center', gap: 4 }}>
                   <Image source={t.src} style={{ width: petit ? 30 : 36, height: petit ? 30 : 36 }} resizeMode="contain" accessibilityIgnoresInvertColors />
-                  <Ink size={11} weight="extraBold" color={teinte(t.domaine).texte} numberOfLines={1} style={{ textAlign: 'center' }}>{t.titre}</Ink>
+                  <Ink size={11} weight="extraBold" color={teinte(t.domaine).texte} numberOfLines={1} style={{ textAlign: 'center' }}>{traduire(t.titre)}</Ink>
                 </View>
               ))}
             </Animated.View>

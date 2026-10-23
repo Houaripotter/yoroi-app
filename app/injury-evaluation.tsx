@@ -83,14 +83,14 @@ export default function InjuryEvaluationScreen() {
         });
         DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
         tap('success');
-        appAlert(traduire('Blessure mise à jour'), traduire('Tes modifications sont enregistrées.'), [{ text: 'D’accord', onPress: leave }]);
+        appAlert(traduire('Blessure mise à jour'), traduire('Tes modifications sont enregistrées.'), [{ text: traduire('D’accord'), onPress: leave }]);
       } else {
         await createInjury({ zone_id: zoneId, zone_view: zoneView, pain_type: painType!, cause: cause!, eva_score: eva, estimated_recovery_days: days, notes: notes.trim() || undefined });
         DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
         tap('success');
         const rec = await checkZoneRecurrence(zoneId, zoneView);
         if (rec.isRecurring) {
-          appAlert(traduire('Zone déjà touchée'), traduire("Cette zone a été blessée {0} fois ces 30 derniers jours. Un avis médical serait utile.", rec.count), [{ text: 'D’accord', onPress: leave }]);
+          appAlert(traduire('Zone déjà touchée'), traduire("Cette zone a été blessée {0} fois ces 30 derniers jours. Un avis médical serait utile.", rec.count), [{ text: traduire('D’accord'), onPress: leave }]);
         } else {
           leave();
         }
@@ -149,7 +149,7 @@ export default function InjuryEvaluationScreen() {
           <H2 sub={isEdit ? undefined : 'Obligatoire'}>{traduire("Type de douleur")}</H2>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             {PAIN_TYPES.map((t) => (
-              <OptionTile key={t.id} icon={PAIN_ICONS[t.icon] ?? 'circle'} label={t.label} active={painType === t.id} onPress={() => setPainType(t.id)} />
+              <OptionTile key={t.id} icon={PAIN_ICONS[t.icon] ?? 'circle'} label={traduire(t.label)} active={painType === t.id} onPress={() => setPainType(t.id)} />
             ))}
           </View>
         </Enter>
@@ -159,14 +159,14 @@ export default function InjuryEvaluationScreen() {
           <H2 sub={isEdit ? undefined : 'Obligatoire'}>Cause</H2>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             {INJURY_CAUSES.map((c) => (
-              <OptionTile key={c.id} icon={CAUSE_ICONS[c.icon] ?? 'circle'} label={c.label} active={cause === c.id} onPress={() => setCause(c.id)} />
+              <OptionTile key={c.id} icon={CAUSE_ICONS[c.icon] ?? 'circle'} label={traduire(c.label)} active={cause === c.id} onPress={() => setCause(c.id)} />
             ))}
           </View>
         </Enter>
 
         {/* NOTES */}
         <Enter i={5}>
-          <TextField label="Notes (facultatif)" value={notes} onChange={setNotes} placeholder={traduire("Comment c’est arrivé ? Ce que tu ressens, ce qu’a dit le médecin")} multiline />
+          <TextField label={traduire("Notes (facultatif)")} value={notes} onChange={setNotes} placeholder={traduire("Comment c’est arrivé ? Ce que tu ressens, ce qu’a dit le médecin")} multiline />
         </Enter>
 
         {/* RECUPERATION */}

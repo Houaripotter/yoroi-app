@@ -75,7 +75,7 @@ export default function MeasurementsDetailScreen() {
             reload();
           } catch (err) {
             logger.error('Suppression des mensurations impossible', err);
-            appAlert('Oups', traduire('Cette prise n’a pas pu être supprimée. Réessaie.'));
+            appAlert(traduire('Oups'), traduire('Cette prise n’a pas pu être supprimée. Réessaie.'));
           }
         },
       },
@@ -110,7 +110,7 @@ export default function MeasurementsDetailScreen() {
               style={{ width: '31.5%', minHeight: 84, padding: 10, borderRadius: 18, backgroundColor: on ? c.ink : blancA(0.78), borderWidth: 1, borderColor: on ? c.ink : c.divider, gap: 2 }}
             >
               <Ink size={12} weight="bold" color={on ? c.onDarkSecondary : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                {f.label}
+                {traduire(f.label)}
               </Ink>
               <Ink size={19} weight="black" tight color={on ? P.paper : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {num(l.value, 1)}

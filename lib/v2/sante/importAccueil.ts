@@ -74,7 +74,7 @@ export function messageImport(issue: IssueConnexion, platform: string, compte: C
       : { titre: traduire('Import terminé'), texte: traduire("Aucune nouvelle pesée, séance ou nuit trouvée dans {0}.", nom), action: null };
   }
   if (issue === 'indisponible' && platform === 'android') {
-    return { titre: 'Health Connect absent', texte: traduire('Installe ou mets à jour Health Connect depuis le Play Store, puis touche à nouveau Importer.'), action: 'playstore' };
+    return { titre: traduire('Health Connect absent'), texte: traduire('Installe ou mets à jour Health Connect depuis le Play Store, puis touche à nouveau Importer.'), action: 'playstore' };
   }
   const m = messageConnexion(issue, platform);
   if (issue === 'rien_lu') return { titre: traduire("Rien trouvé dans {0}", nom), texte: m.texte, action: 'reglages' };

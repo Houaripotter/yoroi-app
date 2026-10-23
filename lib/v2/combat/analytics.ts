@@ -131,7 +131,7 @@ export const MOODS: Record<string, { label: string; color: string; kanji: string
   flow: { label: traduire('Dans le flow'), color: '#3D5D9E', kanji: '流' },
   gassed: { label: traduire('Essoufflé'), color: '#A8832F', kanji: '息' },
   tired: { label: traduire('Fatigué'), color: '#8B8D96', kanji: '疲' },
-  confused: { label: 'Perdu', color: '#9C5B33', kanji: '迷' },
+  confused: { label: traduire('Perdu'), color: '#9C5B33', kanji: '迷' },
   frustrated: { label: traduire('Frustré'), color: '#7B3B63', kanji: '怒' },
 };
 

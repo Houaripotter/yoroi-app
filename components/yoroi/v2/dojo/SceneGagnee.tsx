@@ -44,7 +44,7 @@ export function SceneGagnee({ sceneId, onMettre, onClose }: { sceneId: string | 
               <SceneAnimee source={s.image} scene={s.anim} width={w} height={h} accessibilityLabel={traduire("Scène {0}", s.nom)} />
             </Animated.View>
             <View style={{ alignItems: 'center', gap: 4 }}>
-              <Ink size={20} weight="black" color="#FFFFFF">{s.nom}</Ink>
+              <Ink size={20} weight="black" color="#FFFFFF">{traduire(s.nom)}</Ink>
               <Ink size={14} color="rgba(255,255,255,0.75)" style={{ textAlign: 'center' }}>{traduire("Elle est à toi pour toujours, même si ta série s’arrête un jour.")}</Ink>
             </View>
             <View style={{ alignSelf: 'stretch', gap: 8 }}>

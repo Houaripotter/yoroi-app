@@ -1002,7 +1002,7 @@ async function runSync(): Promise<ArmureSnapshot> {
   for (const w of wk.weeks) {
     if (w.status !== 'tenue') continue;
     if (!catchup && addDays(w.monday, 6) < recentLimit) continue;
-    add(traduire("semaine:{0}", w.monday), w.monday, 'semaine', weekXp(w.goal), traduire("Semaine réussie, {0} séances", w.count));
+    add(`semaine:${w.monday}`, w.monday, 'semaine', weekXp(w.goal), traduire("Semaine réussie, {0} séances", w.count));
   }
 
   // 6 bis. Lune du mois : au moins 3 semaines réussies dont le lundi tombe dans le mois, repetable
@@ -1184,7 +1184,7 @@ async function runSync(): Promise<ArmureSnapshot> {
       let n = 1;
       while (keys.has(n === 1 ? 'migration:rang' : `migration:rang${n}`) && n < 50) n += 1;
       const name = rankTitle({ name: RANKS[floorIdx].name, dan: floorDan });
-      add(n === 1 ? 'migration:rang' : traduire("migration:rang{0}", n), limitDay, 'migration', target - total, traduire("Ton rang {0} est gardé", name));
+      add(n === 1 ? 'migration:rang' : `migration:rang${n}`, limitDay, 'migration', target - total, traduire("Ton rang {0} est gardé", name));
       rankKept = name;
     }
   }

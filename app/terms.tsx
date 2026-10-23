@@ -93,7 +93,7 @@ function sections(): Section[] {
       ],
     },
     {
-      title: 'Bon usage',
+      title: traduire('Bon usage'),
       icon: 'shield',
       content: [
         traduire('L’app est pour ton usage personnel. Tu ne dois pas la copier, la revendre ni chercher à contourner l’abonnement.'),
@@ -109,7 +109,7 @@ function sections(): Section[] {
       ],
     },
     {
-      title: 'Modifications',
+      title: traduire('Modifications'),
       icon: 'doc',
       content: [
         traduire('Ces conditions peuvent évoluer avec l’app. La date de mise à jour est indiquée en haut de cette page.'),
@@ -134,10 +134,10 @@ export default function TermsScreen() {
   const c = theme.colors;
 
   return (
-    <EspaceScreen title="Conditions">
+    <EspaceScreen title={traduire("Conditions")}>
       <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
         <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
-        <Ink size={26} weight="black" tight color={c.onDark}>Conditions d’utilisation (EULA)</Ink>
+        <Ink size={26} weight="black" tight color={c.onDark}>{traduire("Conditions d’utilisation (EULA)")}</Ink>
         <Ink size={13} color={c.onDarkSecondary}>{traduire("Dernière mise à jour : {0}", LAST_UPDATE)}</Ink>
         <View style={{ alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.goldLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
           <Icon name="check" size={14} color={c.ink} stroke={3} />
@@ -157,7 +157,7 @@ export default function TermsScreen() {
             <Ink key={idx} size={14} color={c.textSecondary} style={{ lineHeight: 20 }}>{line}</Ink>
           ))}
           {section.link ? (
-            <Ink size={14} weight="extraBold" color={c.indigo} style={{ textDecorationLine: 'underline' }} onPress={() => safeOpenURL(section.link!.url)} accessibilityRole="link">{section.link.label}</Ink>
+            <Ink size={14} weight="extraBold" color={c.indigo} style={{ textDecorationLine: 'underline' }} onPress={() => safeOpenURL(section.link!.url)} accessibilityRole="link">{traduire(section.link.label)}</Ink>
           ) : null}
         </Card>
       ))}

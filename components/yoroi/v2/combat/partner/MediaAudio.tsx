@@ -47,7 +47,7 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
     const u = url.trim();
     if (!u) return;
     if (!/^https?:\/\//i.test(u)) {
-      appAlert('Lien invalide', traduire('Le lien doit commencer par https://'));
+      appAlert(traduire('Lien invalide'), traduire('Le lien doit commencer par https://'));
       return;
     }
     onChange([{ id: makeId(), type: 'video_link', uri: u, caption: caption.trim() || undefined, date: new Date().toISOString() }, ...media]);
@@ -59,7 +59,7 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
   const remove = (id: string) => {
     appAlert(traduire('Retirer ce média ?'), undefined, [
       { text: traduire('Annuler'), style: 'cancel' },
-      { text: 'Retirer', style: 'destructive', onPress: () => onChange(media.filter((m) => m.id !== id)) },
+      { text: traduire('Retirer'), style: 'destructive', onPress: () => onChange(media.filter((m) => m.id !== id)) },
     ]);
   };
   return (
@@ -110,7 +110,7 @@ export function MediaGallery({ media, onChange }: { media: PartnerMedia[]; onCha
       ) : null}
       <FormSheet visible={linkOpen} onClose={() => setLinkOpen(false)} title={traduire("Lien d'une vidéo")}>
         <Field value={url} onChangeText={setUrl} autoCapitalize="none" keyboardType="url" autoFocus placeholder="https://" />
-        <Field value={caption} onChangeText={setCaption} placeholder="Description (facultatif)" />
+        <Field value={caption} onChangeText={setCaption} placeholder={traduire("Description (facultatif)")} />
         <BigButton label={traduire("Ajouter")} onPress={addLink} />
       </FormSheet>
       <Modal visible={!!zoom} transparent animationType="fade" onRequestClose={() => setZoom(null)}>
@@ -247,8 +247,7 @@ export function AudioNotes({ notes, onChange }: { notes: AudioNote[]; onChange: 
     <Card style={{ gap: 12 }}>
       <View>
         <Ink size={18} weight="black" tight>
-          Notes vocales
-        </Ink>
+          {traduire("Notes vocales")}</Ink>
         <Ink size={13} color={P.ink2}>
           {traduire("30 secondes maximum, juste après le combat")}</Ink>
       </View>
@@ -263,7 +262,7 @@ export function AudioNotes({ notes, onChange }: { notes: AudioNote[]; onChange: 
       {recording ? <View style={{ height: 6, borderRadius: 3, backgroundColor: P.line2, overflow: 'hidden' }}><View style={{ width: `${Math.min(100, (elapsed / MAX_MS) * 100)}%`, height: '100%', backgroundColor: P.danger }} /></View> : null}
       {notes.map((n) => (
         <View key={n.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 18, backgroundColor: P.paper }}>
-          <IconBtn icon={playing === n.id ? 'pause' : 'play'} label={playing === n.id ? 'Pause' : traduire('Écouter')} tone={playing === n.id ? 'red' : 'ink'} onPress={() => play(n)} />
+          <IconBtn icon={playing === n.id ? 'pause' : 'play'} label={playing === n.id ? traduire('Pause') : traduire('Écouter')} tone={playing === n.id ? 'red' : 'ink'} onPress={() => play(n)} />
           <View style={{ flex: 1 }}>
             <Ink size={15} weight="extraBold">
               {shortDate(n.date, true)}
@@ -366,7 +365,7 @@ export function FaceoffShare({ p, wins, losses, draws }: { p: Partner; wins: num
                   <View style={{ alignItems: 'center', gap: 8, flex: 1 }}>
                     <Seal name={p.name} photoUri={p.photoUri} belt={p.belt} size={96} tone={D} rotate={5} />
                     <Ink size={18} weight="black" numberOfLines={1}>
-                      {p.name}
+                      {traduire(p.name)}
                     </Ink>
                     <BeltBar belt={p.belt} width={70} height={10} />
                   </View>

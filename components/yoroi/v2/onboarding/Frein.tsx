@@ -40,16 +40,16 @@ export function Frein({ nav, value, onToggle, onNext }: { nav: Nav; value: Frein
   const c = useColors();
   const petit = useWindowDimensions().width < 380;
   return (
-    <Shell {...nav} title={traduire("Qu’est-ce qui t’a **freiné** jusqu’ici ?")} sub={traduire("Choisis tout ce qui te parle, la suite s’adapte à ta réponse.")} gap={10} footer={<MainButton label="Continuer" onPress={onNext} disabled={value.length === 0} />}>
+    <Shell {...nav} title={traduire("Qu’est-ce qui t’a **freiné** jusqu’ici ?")} sub={traduire("Choisis tout ce qui te parle, la suite s’adapte à ta réponse.")} gap={10} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={value.length === 0} />}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
         {FREINS.map((f) => {
           const on = value.includes(f.id);
           const e = ENCRE_FREIN[f.id] ?? ENCRES.indigo;
           return (
-            <ChoiceCard key={f.id} selected={on} tint={e} onPress={() => onToggle(f.id)} label={f.label} height={132} style={{ width: '48.4%' }}>
+            <ChoiceCard key={f.id} selected={on} tint={e} onPress={() => onToggle(f.id)} label={traduire(f.label)} height={132} style={{ width: '48.4%' }}>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, gap: 8 }}>
                 <Tampon name={TAMPON_FREIN[f.id] ?? 'frein_rien'} size={petit ? 50 : 60} rotate={-5} ink={e.ink} accessibilityLabel={null} />
-                <Ink size={14} weight="extraBold" color={on ? e.ink : c.ink} style={{ textAlign: 'center', lineHeight: 18 }} numberOfLines={2}>{f.label}</Ink>
+                <Ink size={14} weight="extraBold" color={on ? e.ink : c.ink} style={{ textAlign: 'center', lineHeight: 18 }} numberOfLines={2}>{traduire(f.label)}</Ink>
               </View>
               {on ? (
                 <View style={{ position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: e.ink, alignItems: 'center', justifyContent: 'center' }}>

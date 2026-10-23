@@ -60,7 +60,7 @@ export function Apercus() {
       setDone((prev) => new Set(prev).add(id));
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch {
-      appAlert('Oups', traduire('Cette fenêtre n’a pas pu être réarmée.'));
+      appAlert(traduire('Oups'), traduire('Cette fenêtre n’a pas pu être réarmée.'));
     }
   };
 
@@ -97,10 +97,10 @@ export function Apercus() {
         <Ink size={15} weight="extraBold">{traduire("Paywall, en aperçu sans achat")}</Ink>
         <ChipWrap>
           {PAYWALL_VARIANTS.map((x) => (
-            <Chip key={x.id} label={x.label} on={variant === x.id} onPress={() => setVariant(x.id)} />
+            <Chip key={x.id} label={traduire(x.label)} on={variant === x.id} onPress={() => setVariant(x.id)} />
           ))}
         </ChipWrap>
-        <Ink size={13} color={c.textSecondary}>{v.sub}</Ink>
+        <Ink size={13} color={c.textSecondary}>{traduire(v.sub)}</Ink>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <Button tone="accent" small label={traduire("De l’app")} onPress={() => openPaywallPreview(router, variant)} />
@@ -148,7 +148,7 @@ export function Apercus() {
           <Row
             key={w.id}
             first={i === 0}
-            label={w.label}
+            label={traduire(w.label)}
             sub={done.has(w.id) ? traduire('Réarmée, elle se remontrera') : w.sub}
             chevron={false}
             right={<SmallAction label={done.has(w.id) ? 'Fait' : traduire('Réarmer')} onPress={() => void rearm(w.id)} />}
@@ -165,7 +165,7 @@ export function Apercus() {
         <ToggleRow
           first
           icon="eye"
-          label="Vue gratuite"
+          label={traduire("Vue gratuite")}
           sub={simulateFreeUser ? traduire('Tu vois les cadenas Premium comme un nouveau venu') : traduire('Voir l’app sans Premium, le temps du test')}
           value={simulateFreeUser}
           onChange={(on) => setSimulateFreeUser(on)}

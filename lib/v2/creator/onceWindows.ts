@@ -55,11 +55,11 @@ export const ONCE_WINDOWS: OnceWindow[] = [
         m.recap = seals.length > 0;
       }),
   },
-  { id: 'avis', label: 'Demande d’avis', sub: traduire('Compteurs et refus de notation'), reset: removeKeys(['yoroi_review_asked', 'yoroi_review_count', '@yoroi_avis_version_demandee', '@yoroi_review_last_prompt', '@yoroi_rating_action_count', '@yoroi_rating_has_rated', '@yoroi_rating_last_prompt', '@yoroi_rating_dismissed_count']) },
+  { id: 'avis', label: traduire('Demande d’avis'), sub: traduire('Compteurs et refus de notation'), reset: removeKeys(['yoroi_review_asked', 'yoroi_review_count', '@yoroi_avis_version_demandee', '@yoroi_review_last_prompt', '@yoroi_rating_action_count', '@yoroi_rating_has_rated', '@yoroi_rating_last_prompt', '@yoroi_rating_dismissed_count']) },
   { id: 'rappels', label: traduire('Proposition de rappels'), sub: traduire('Fenêtre qui explique les notifications, après une pesée ou une séance'), reset: removeKeys(['@yoroi_notif_permission_v1']) },
   { id: 'sante', label: traduire('Connexion santé'), sub: traduire('Apple Santé ou Health Connect'), reset: removeKeys(['@yoroi_healthkit_asked', '@yoroi_health_extended_asked_v2']) },
   { id: 'coach', label: traduire('Conseil du jour'), sub: traduire('Le conseil de l’accueil, une fois par jour'), reset: removeKeys(['@yoroi_coach_seen_date']) },
-  { id: 'aides', label: 'Petites aides', sub: traduire('Conseils d’affichage, photos, batterie, créneaux'), reset: removeKeys(['@yoroi_privacy_challenge_shown', '@yoroi_view_mode_hint_shown', '@yoroi_battery_popup_shown', '@yoroi_slots_suggestion_dismissed']) },
+  { id: 'aides', label: traduire('Petites aides'), sub: traduire('Conseils d’affichage, photos, batterie, créneaux'), reset: removeKeys(['@yoroi_privacy_challenge_shown', '@yoroi_view_mode_hint_shown', '@yoroi_battery_popup_shown', '@yoroi_slots_suggestion_dismissed']) },
 ];
 
 export async function resetAllOnceWindows(): Promise<void> {

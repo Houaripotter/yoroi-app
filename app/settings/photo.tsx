@@ -110,7 +110,7 @@ export default function PhotoEtContour() {
           { text: traduire('Annuler'), style: 'cancel' },
         ]);
       } else if (r === 'erreur') {
-        appAlert('Photo indisponible', source === 'camera' ? traduire('Choisis plutôt une photo dans ta galerie.') : traduire('La photo n’a pas pu être chargée. Réessaie.'));
+        appAlert(traduire('Photo indisponible'), source === 'camera' ? traduire('Choisis plutôt une photo dans ta galerie.') : traduire('La photo n’a pas pu être chargée. Réessaie.'));
       }
     } finally {
       setOccupe(false);
@@ -119,7 +119,7 @@ export default function PhotoEtContour() {
 
   const retirer = () => {
     appAlert(traduire('Retirer ta photo ?'), avecPerso ? traduire('Le rond montrera ton personnage.') : traduire('Le rond montrera tes initiales.'), [
-      { text: 'Retirer', style: 'destructive', onPress: () => { retirerPhoto().then(reload).catch(() => {}); } },
+      { text: traduire('Retirer'), style: 'destructive', onPress: () => { retirerPhoto().then(reload).catch(() => {}); } },
       { text: traduire('Annuler'), style: 'cancel' },
     ]);
   };
@@ -155,8 +155,8 @@ export default function PhotoEtContour() {
 
       <Groupe title={traduire("Ta photo")} sub={photo ? traduire('Change-la quand tu veux') : traduire('Ajoute-la pour la voir dans ton rond')} />
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <BoutonPhoto icon="camera" label="Prendre" onPress={() => prendre('camera')} disabled={occupe} principal={!photo} />
-        <BoutonPhoto icon="image" label="Galerie" onPress={() => prendre('galerie')} disabled={occupe} />
+        <BoutonPhoto icon="camera" label={traduire("Prendre")} onPress={() => prendre('camera')} disabled={occupe} principal={!photo} />
+        <BoutonPhoto icon="image" label={traduire("Galerie")} onPress={() => prendre('galerie')} disabled={occupe} />
       </View>
       {photo ? (
         <Pressable onPress={retirer} accessibilityRole="button" style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', paddingHorizontal: 4, opacity: pressed ? 0.6 : 1 })}>
@@ -189,7 +189,7 @@ export default function PhotoEtContour() {
         </>
       ) : null}
 
-      <Groupe title="Contour" sub={traduire("Un simple choix de style, sans lien avec ton rang")} />
+      <Groupe title={traduire("Contour")} sub={traduire("Un simple choix de style, sans lien avec ton rang")} />
       <Card>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 6, padding: 10 }}>
           {CONTOURS.map((o) => {
@@ -207,7 +207,7 @@ export default function PhotoEtContour() {
                   <Image source={scene.image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
                   <RondCadre size={50} contour={o.id as ContourRond} fond="scene" fill="#F2F1EC">{contenu(44)}</RondCadre>
                 </View>
-                <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1}>{o.nom}</Ink>
+                <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1}>{traduire(o.nom)}</Ink>
               </Pressable>
             );
           })}

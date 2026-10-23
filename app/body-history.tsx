@@ -81,7 +81,7 @@ export default function CorpsParMesure() {
       changed();
     } catch (err) {
       logger.error('Enregistrement de la mesure impossible', err);
-      appAlert('Oups', traduire('La valeur n’a pas pu être enregistrée. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('La valeur n’a pas pu être enregistrée. Réessaie.'));
     }
   };
 
@@ -114,17 +114,17 @@ export default function CorpsParMesure() {
       appAlert(traduire('Nettoyer les doublons ?'), traduirePluriel(n, n > 1, "{0} doublon trouvé. Les mesures du même jour et de la même source sont fusionnées, en gardant les valeurs les plus complètes.", "{0} doublons trouvés. Les mesures du même jour et de la même source sont fusionnées, en gardant les valeurs les plus complètes.", n), [
         { text: traduire('Annuler'), style: 'cancel' },
         {
-          text: 'Nettoyer',
+          text: traduire('Nettoyer'),
           style: 'destructive',
           onPress: async () => {
             setCleaning(true);
             try {
               const { removed } = await deduplicateWeights();
               changed();
-              appAlert('Nettoyage fait', traduirePluriel(removed, removed > 1, "{0} doublon supprimé.", "{0} doublons supprimés.", removed));
+              appAlert(traduire('Nettoyage fait'), traduirePluriel(removed, removed > 1, "{0} doublon supprimé.", "{0} doublons supprimés.", removed));
             } catch (err) {
               logger.error('Nettoyage impossible', err);
-              appAlert('Oups', traduire('Le nettoyage n’a pas pu se faire.'));
+              appAlert(traduire('Oups'), traduire('Le nettoyage n’a pas pu se faire.'));
             } finally {
               setCleaning(false);
             }
@@ -150,7 +150,7 @@ export default function CorpsParMesure() {
         <View style={{ paddingTop: 16, gap: 14 }}>
           {(['composition', 'measurements'] as const).map((g) => (
             <View key={g} style={{ gap: 6 }}>
-              <Ink size={13} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 22 }}>{g === 'composition' ? 'Composition' : 'Mensurations'}</Ink>
+              <Ink size={13} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 22 }}>{g === 'composition' ? traduire('Composition') : traduire('Mensurations')}</Ink>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 22 }}>
                 {group(g).map((m) => {
                   const on = m.key === metric.key;
@@ -187,7 +187,7 @@ export default function CorpsParMesure() {
                       <Ink size={15} weight="extraBold" color={c.indigo} style={{ paddingBottom: 12 }}>{traduire("{0}{1} depuis le début", stats.change > 0 ? '+' : '−', fmtValue(Math.abs(stats.change), metric.digits))}</Ink>
                     ) : null}
                   </View>
-                  <Ink size={13} color={c.textMuted}>{metric.label}, {longDay(stats.last.date)}</Ink>
+                  <Ink size={13} color={c.textMuted}>{traduire(metric.label)}, {longDay(stats.last.date)}</Ink>
                   {points.length > 1 ? <InkLineChart points={points} color={c.indigo} height={190} digits={metric.digits} label={`Courbe : ${metric.label}`} /> : null}
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <Mini label={traduire("plus bas")} value={`${fmtValue(stats.min, metric.digits)} ${metric.unit}`} />

@@ -12,7 +12,7 @@ export const FREINS: FreinDef[] = [
   { id: 'regularite', label: traduire('Je manque de régularité'), seau: 'sablier' },
   { id: 'progres', label: traduire('Je ne vois pas mes progrès'), seau: 'sentier' },
   { id: 'motivation', label: traduire('Je perds la motivation'), seau: 'flamme' },
-  { id: 'blessures', label: 'Je me blesse souvent', seau: 'bandes' },
+  { id: 'blessures', label: traduire('Je me blesse souvent'), seau: 'bandes' },
   { id: 'programme', label: traduire('Je ne sais pas quoi faire'), seau: 'boussole' },
   { id: 'rien', label: traduire('Rien de tout ça'), seau: 'poing' },
 ];

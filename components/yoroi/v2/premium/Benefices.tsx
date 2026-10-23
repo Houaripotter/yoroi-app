@@ -102,8 +102,8 @@ export function ListeBenefices({ goal, monde: vitrine }: { goal: string | null; 
         <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: c.divider }} accessible accessibilityLabel={traduire("{0}, avec Premium. {1}", b.titre, b.texte)}>
           {b.visuel}
           <View style={{ flex: 1, gap: 3 }}>
-            <Ink size={15} weight="black" style={{ lineHeight: 19 }}>{b.titre}</Ink>
-            <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{b.texte}</Ink>
+            <Ink size={15} weight="black" style={{ lineHeight: 19 }}>{traduire(b.titre)}</Ink>
+            <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{traduire(b.texte)}</Ink>
           </View>
         </View>
       ))}
@@ -125,7 +125,7 @@ export function CarteCourbe({ titre, ligne, exemple, children, pastille }: { tit
         {children}
         {exemple ? (
           <View style={{ position: 'absolute', top: 6, left: 6, backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-            <Ink size={10} weight="black" color={c.accent} style={{ letterSpacing: 0.8 }}>EXEMPLE</Ink>
+            <Ink size={10} weight="black" color={c.accent} style={{ letterSpacing: 0.8 }}>{traduire("EXEMPLE")}</Ink>
           </View>
         ) : null}
       </View>

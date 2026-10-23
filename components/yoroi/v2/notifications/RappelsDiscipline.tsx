@@ -90,10 +90,10 @@ function Jours({ value, auto, autoTexte, onChange }: { value: number[]; auto: bo
               }}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: on }}
-              accessibilityLabel={d.nom}
+              accessibilityLabel={traduire(d.nom)}
               style={({ pressed }) => ({ flex: 1, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.accent : pressed ? c.fillSoft : c.background, borderWidth: on ? 0 : 1, borderColor: c.border })}
             >
-              <Ink size={15} weight="black" color={on ? c.onAccent : c.textSecondary}>{d.court}</Ink>
+              <Ink size={15} weight="black" color={on ? c.onAccent : c.textSecondary}>{traduire(d.court)}</Ink>
             </Pressable>
           );
         })}
@@ -187,7 +187,7 @@ export function RappelsDiscipline({
           value={v.pesee.frequence}
           options={[
             { value: 'chaque_jour', label: traduire('Tous') },
-            { value: 'trois', label: '3 matins' },
+            { value: 'trois', label: traduire('3 matins') },
             { value: 'une', label: traduire('1 matin') },
           ]}
           onChange={(frequence) => onChange({ ...v, pesee: { ...v.pesee, frequence } })}

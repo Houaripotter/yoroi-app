@@ -73,7 +73,7 @@ export default function Journal() {
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40 }}
         ListHeaderComponent={
           <View style={{ gap: 14, marginBottom: 6 }}>
-            <BackHeader title="Journal d’XP" scene={u === 'classique' ? THEME_IMAGES.classique_ville_nuit : THEME_IMAGES.camp} subtitle={traduire("Tout ce que tu as gagné, ligne par ligne")} />
+            <BackHeader title={traduire("Journal d’XP")} scene={u === 'classique' ? THEME_IMAGES.classique_ville_nuit : THEME_IMAGES.camp} subtitle={traduire("Tout ce que tu as gagné, ligne par ligne")} />
             <Animated.View entering={ENTREE} style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                 <Ink size={48} weight="black" tight color={c.accent}>{formatXp(xp)}</Ink>
@@ -88,7 +88,7 @@ export default function Journal() {
                     <View key={t.source} style={{ gap: 5 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SOURCE_COLORS[t.source] }} />
-                        <Ink size={14} style={{ flex: 1 }}>{t.label}</Ink>
+                        <Ink size={14} style={{ flex: 1 }}>{traduire(t.label)}</Ink>
                         <Ink size={14} weight="extraBold">{formatXp(t.amount)}</Ink>
                       </View>
                       <Bar progress={xp ? t.amount / xp : 0} color={SOURCE_COLORS[t.source]} height={4} />

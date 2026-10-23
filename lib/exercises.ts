@@ -12,12 +12,12 @@ export interface ExerciseTemplate {
 
 export const MUSCLE_GROUPS = {
   pectoraux: 'Pectoraux',
-  dos: 'Dos',
+  dos: traduire('Dos'),
   epaules: 'Épaules',
   biceps: 'Biceps',
   triceps: 'Triceps',
   jambes: 'Jambes',
-  abdos: 'Abdominaux',
+  abdos: traduire('Abdominaux'),
   fessiers: 'Fessiers',
   mollets: 'Mollets',
   avant_bras: 'Avant-bras',
@@ -51,17 +51,17 @@ export const EXERCISES: ExerciseTemplate[] = [
   { id: 'tractions', name: 'Tractions (Pronation)', muscle_group: 'dos', category: 'Bodyweight' },
   { id: 'tractions_supi', name: 'Tractions (Supination)', muscle_group: 'dos', category: 'Bodyweight' },
   { id: 'rowing_barre', name: 'Rowing barre', muscle_group: 'dos', category: 'Compound' },
-  { id: 'rowing_haltere', name: traduire('Rowing haltère'), muscle_group: 'dos', category: 'Compound' },
+  { id: 'rowing_haltere', name: 'Rowing haltère', muscle_group: 'dos', category: 'Compound' },
   { id: 'tirage_vertical', name: 'Tirage poitrine', muscle_group: 'dos', category: 'Machine' },
   { id: 'tirage_horizontal', name: 'Tirage horizontal', muscle_group: 'dos', category: 'Machine' },
   { id: 'souleve_terre', name: 'Soulevé de terre (Deadlift)', muscle_group: 'dos', category: 'Compound' },
   { id: 'pull_over_poulie', name: 'Pull-over poulie haute', muscle_group: 'dos', category: 'Cables' },
-  { id: 'lombaires', name: traduire('Banc à lombaires'), muscle_group: 'dos', category: 'Isolation' },
+  { id: 'lombaires', name: 'Banc à lombaires', muscle_group: 'dos', category: 'Isolation' },
 
   // Épaules
   { id: 'dev_militaire', name: 'Développé militaire', muscle_group: 'epaules', category: 'Compound' },
   { id: 'dev_halteres_assis', name: 'Développé haltères assis', muscle_group: 'epaules', category: 'Compound' },
-  { id: 'elev_laterales', name: traduire('Élévations latérales'), muscle_group: 'epaules', category: 'Isolation' },
+  { id: 'elev_laterales', name: 'Élévations latérales', muscle_group: 'epaules', category: 'Isolation' },
   { id: 'oiseau', name: 'Oiseau haltères', muscle_group: 'epaules', category: 'Isolation' },
   { id: 'face_pull', name: 'Face Pull', muscle_group: 'epaules', category: 'Cables' },
   { id: 'arnold_press', name: 'Arnold Press', muscle_group: 'epaules', category: 'Compound' },
@@ -76,18 +76,18 @@ export const EXERCISES: ExerciseTemplate[] = [
 
   // Triceps
   { id: 'ext_poulie_corde', name: 'Extensions triceps poulie', muscle_group: 'triceps', category: 'Cables' },
-  { id: 'barre_au_front', name: traduire('Barre au front'), muscle_group: 'triceps', category: 'Isolation' },
+  { id: 'barre_au_front', name: 'Barre au front', muscle_group: 'triceps', category: 'Isolation' },
   { id: 'dips_triceps', name: 'Dips (Triceps)', muscle_group: 'triceps', category: 'Bodyweight' },
   { id: 'ext_haltere', name: 'Extension haltère nuque', muscle_group: 'triceps', category: 'Isolation' },
 
   // Jambes
   { id: 'squat_barre', name: 'Squat (Barre)', muscle_group: 'jambes', category: 'Compound' },
-  { id: 'presse_cuisses', name: traduire('Presse à cuisses'), muscle_group: 'jambes', category: 'Machine' },
+  { id: 'presse_cuisses', name: 'Presse à cuisses', muscle_group: 'jambes', category: 'Machine' },
   { id: 'leg_extension', name: 'Leg Extension', muscle_group: 'jambes', category: 'Machine' },
   { id: 'leg_curl', name: 'Leg Curl', muscle_group: 'jambes', category: 'Machine' },
   { id: 'fentes_halteres', name: 'Fentes haltères', muscle_group: 'jambes', category: 'Compound' },
   { id: 'hack_squat', name: 'Hack Squat', muscle_group: 'jambes', category: 'Machine' },
-  { id: 'sdt_jambes_tendues', name: traduire('Soulevé de terre jambes tendues'), muscle_group: 'jambes', category: 'Compound' },
+  { id: 'sdt_jambes_tendues', name: 'Soulevé de terre jambes tendues', muscle_group: 'jambes', category: 'Compound' },
 
   // Abdominaux
   { id: 'crunch', name: 'Crunch', muscle_group: 'abdos', category: 'Bodyweight' },
@@ -106,7 +106,7 @@ export const EXERCISES: ExerciseTemplate[] = [
   { id: 'skierg_pm5', name: 'SkiErg', muscle_group: 'cardio', category: 'SkiErg' },
   { id: 'assault_bike_intense', name: 'Assault Bike', muscle_group: 'cardio', category: 'Assault Bike' },
   { id: 'stairmaster', name: 'Escaliers (Stairmaster)', muscle_group: 'cardio', category: 'Escalier' },
-  { id: 'corde_sauter', name: traduire('Corde à sauter'), muscle_group: 'cardio', category: 'Corde' },
+  { id: 'corde_sauter', name: 'Corde à sauter', muscle_group: 'cardio', category: 'Corde' },
 ];
 
 export const getExercisesByMuscleGroup = (muscleGroup: string): ExerciseTemplate[] => {

@@ -35,9 +35,9 @@ import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
 const RPE = [
-  { value: 3, label: 'Facile' },
+  { value: 3, label: traduire('Facile') },
   { value: 5, label: traduire('Correct') },
-  { value: 7, label: 'Dur' },
+  { value: 7, label: traduire('Dur') },
   { value: 9, label: traduire('À bloc') },
 ];
 
@@ -145,7 +145,7 @@ export default function SeanceDejaFaite() {
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       logger.error('Enregistrement impossible', err);
-      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée. Réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -156,7 +156,7 @@ export default function SeanceDejaFaite() {
       <ScrollView contentContainerStyle={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal: 22, paddingBottom: insets.bottom + 110, gap: 14 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" showsVerticalScrollIndicator={false}>
         <EnTete titre={traduire("Séance déjà faite")} onRetour={() => router.back()} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
-        <Section title="Sport">
+        <Section title={traduire("Sport")}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {sports.map((s) => {
               const on = s === sport;
@@ -173,12 +173,12 @@ export default function SeanceDejaFaite() {
           </View>
           {results.map((s) => (
             <Pressable key={s.id} onPress={() => pickSport(s.id)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, paddingHorizontal: 14, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface })}>
-              <Ink size={15} weight="bold">{s.name}</Ink>
+              <Ink size={15} weight="bold">{traduire(s.name)}</Ink>
             </Pressable>
           ))}
         </Section>
 
-        <Section title="Quand">
+        <Section title={traduire("Quand")}>
           <DayNav value={date} onChange={setDate} label={dayLabel} size={20} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 18, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: c.border }}>
             <Ink size={15} weight="bold">{traduire("Début")}</Ink>

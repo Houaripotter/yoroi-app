@@ -154,10 +154,10 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Continuer"
+            accessibilityLabel={traduire("Continuer")}
             style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center' })}
           >
-            <Ink size={16} weight="extraBold" color={c.onAccent}>Continuer</Ink>
+            <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Continuer")}</Ink>
           </Pressable>
         </View>
       </View>

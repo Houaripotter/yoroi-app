@@ -115,7 +115,7 @@ export function raisonPesee(e: EntreePesee): RaisonPesee | null {
     const etape = Math.floor(apres / 5) * 5;
     const dansLeBonSens = sens === 'perte' ? e.poids < e.depart : e.poids > e.depart;
     if (dansLeBonSens && etape >= 5 && avant < etape) {
-      return { type: 'palier', texte: `${etape} kg ${sens === 'perte' ? 'perdus' : traduire('pris')}` };
+      return { type: 'palier', texte: `${etape} kg ${sens === 'perte' ? 'perdus' : 'pris'}` };
     }
   }
   // nouveau plus bas (ou plus haut) sur au moins 3 pesees d'avant

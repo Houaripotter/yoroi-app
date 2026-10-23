@@ -43,22 +43,22 @@ function look(type: string): { icon: IconName; kind: Kind; label: string } {
     case 'achievement':
       return { icon: 'trophy', kind: 'record', label: traduire('Récompense') };
     case 'briefing':
-      return { icon: 'sun', kind: 'gold', label: 'Briefing' };
+      return { icon: 'sun', kind: 'gold', label: traduire('Briefing') };
     case 'smart_check':
     case 'smart_missed':
     case 'smart_rest':
     case 'smart_frequency':
     case 'smart_test':
-      return { icon: 'brain', kind: 'moss', label: 'Rappel malin' };
+      return { icon: 'brain', kind: 'moss', label: traduire('Rappel malin') };
     case 'social_card_weekly':
     case 'social_card_monthly':
       return { icon: 'share', kind: 'indigo', label: traduire('Carte à partager') };
     case 'weekly_recap':
-      return { icon: 'calendar', kind: 'gold', label: 'Bilan' };
+      return { icon: 'calendar', kind: 'gold', label: traduire('Bilan') };
     case 'weighing':
       return { icon: 'scale', kind: 'ink', label: traduire('Pesée') };
     case 'citation':
-      return { icon: 'quote', kind: 'gold', label: 'Citation' };
+      return { icon: 'quote', kind: 'gold', label: traduire('Citation') };
     default:
       return { icon: 'bell', kind: 'ink', label: 'YOROI' };
   }
@@ -209,7 +209,7 @@ export default function CentreNotifications() {
     appAlert(traduire('Tout effacer ?'), traduire('Toutes les notifications reçues seront supprimées. Tes rappels restent réglés.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Effacer',
+        text: traduire('Effacer'),
         style: 'destructive',
         onPress: async () => {
           await clearAll();
@@ -309,7 +309,7 @@ export default function CentreNotifications() {
       {groups.map((g, gi) => (
         <Animated.View key={g.key} layout={LinearTransition} style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', paddingHorizontal: 4, marginTop: 4 }}>
-            <Ink size={17} weight="black" tight style={{ flex: 1 }}>{g.label}</Ink>
+            <Ink size={17} weight="black" tight style={{ flex: 1 }}>{traduire(g.label)}</Ink>
             <Ink size={12} weight="bold" color={c.textMuted}>{`${g.list.length} notification${g.list.length > 1 ? 's' : ''}`}</Ink>
           </View>
           <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
@@ -341,10 +341,10 @@ export default function CentreNotifications() {
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Ink size={12} weight="extraBold" color={t.fg} style={{ flex: 1 }} numberOfLines={1}>{l.label}</Ink>
+                        <Ink size={12} weight="extraBold" color={t.fg} style={{ flex: 1 }} numberOfLines={1}>{traduire(l.label)}</Ink>
                         <Ink size={12} weight="bold" color={c.textMuted}>{clock(n.timestamp)}</Ink>
                       </View>
-                      <Ink size={15} weight={n.read ? 'bold' : 'black'} numberOfLines={2}>{n.title}</Ink>
+                      <Ink size={15} weight={n.read ? 'bold' : 'black'} numberOfLines={2}>{traduire(n.title)}</Ink>
                       <Ink size={13} color={c.textSecondary} numberOfLines={3}>{n.body}</Ink>
                     </View>
                     <Pressable

@@ -53,8 +53,8 @@ import { traduire, DECIMAL } from '@/lib/i18n/tr';
 const GROUPS: { id: BalanceGroup; title: string }[] = [
   { id: 'principal', title: traduire('Poids et composition') },
   { id: 'avance', title: traduire('Les autres mesures') },
-  { id: 'segment', title: 'Bras, jambes, tronc' },
-  { id: 'mensuration', title: 'Mensurations' },
+  { id: 'segment', title: traduire('Bras, jambes, tronc') },
+  { id: 'mensuration', title: traduire('Mensurations') },
 ];
 
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
@@ -559,7 +559,7 @@ export default function BalancePhotoScreen() {
           </Ink>
           {p.sub ? (
             <Ink size={12} weight={p.off ? 'bold' : 'medium'} color={p.off ? c.danger : c.textSecondary} numberOfLines={2}>
-              {p.sub}
+              {traduire(p.sub)}
             </Ink>
           ) : null}
         </View>
@@ -640,7 +640,7 @@ export default function BalancePhotoScreen() {
           </Svg>
           <Ink size={13} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{`${shortDate(st.date)}, ${label}`}</Ink>
           <Pressable onPress={() => setPicker(bi)} accessibilityRole="button" accessibilityLabel={traduire("Changer le jour de cette pesée")} hitSlop={8} style={{ minHeight: 40, justifyContent: 'center' }}>
-            <Ink size={13} weight="extraBold" color={c.accent}>Changer</Ink>
+            <Ink size={13} weight="extraBold" color={c.accent}>{traduire("Changer")}</Ink>
           </Pressable>
         </View>
       );
@@ -679,7 +679,7 @@ export default function BalancePhotoScreen() {
           </Ink>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {pill(traduire('Oui'), () => confirmDate(bi, st.date, st.chosen), true, traduire("Oui, la pesée est du {0}", longDate(st.date)))}
-            {pill('Changer', () => setPicker(bi), false, traduire('Changer le jour de cette pesée'))}
+            {pill(traduire('Changer'), () => setPicker(bi), false, traduire('Changer le jour de cette pesée'))}
           </View>
         </View>
       );
@@ -790,7 +790,7 @@ export default function BalancePhotoScreen() {
             </Svg>
             <View style={{ flex: 1, gap: 4 }}>
               {warns.map((w) => (
-                <Ink key={w.kind} size={13} weight="bold" color={c.ink}>{w.text}</Ink>
+                <Ink key={w.kind} size={13} weight="bold" color={c.ink}>{traduire(w.text)}</Ink>
               ))}
             </View>
           </View>
@@ -802,7 +802,7 @@ export default function BalancePhotoScreen() {
               if (!list.length) return null;
               return (
                 <View key={g.id} style={{ borderRadius: 14, backgroundColor: c.fillSubtle, paddingHorizontal: 12, paddingVertical: 4 }}>
-                  <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ paddingTop: 8, paddingBottom: 2 }}>{g.title}</Ink>
+                  <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ paddingTop: 8, paddingBottom: 2 }}>{traduire(g.title)}</Ink>
                   {list.map((f, i) => fieldRow(f, i === 0))}
                 </View>
               );

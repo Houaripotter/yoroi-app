@@ -25,9 +25,9 @@ export const CATEGORIES_SANTE: Record<CategorieSante, { label: string; exemples:
   nutrition: { label: traduire('Eau et repas'), exemples: traduire('eau, calories mangées, protéines, glucides, lipides, caféine') },
   mobilite: { label: traduire('Marche et équilibre'), exemples: traduire('vitesse de marche, longueur du pas, asymétrie, chutes') },
   alertes: { label: traduire('Alertes du cœur'), exemples: traduire('rythme irrégulier, FC haute ou basse, ECG, fibrillation') },
-  souffle: { label: 'Respiration', exemples: traduire('capacité vitale, débit expiratoire, apnées') },
+  souffle: { label: traduire('Respiration'), exemples: traduire('capacité vitale, débit expiratoire, apnées') },
   environnement: { label: traduire('Sons, UV et lumière'), exemples: traduire('son au casque, bruit ambiant, UV, lumière du jour') },
-  'autres-sports': { label: 'Autres sports', exemples: traduire('ski, glisse, rame, pagaie, plongée, fauteuil') },
+  'autres-sports': { label: traduire('Autres sports'), exemples: traduire('ski, glisse, rame, pagaie, plongée, fauteuil') },
   'suivi-medical': { label: traduire('Suivi médical et nutriments'), exemples: traduire('glycémie, température, humeur, vitamines, minéraux') },
 };
 

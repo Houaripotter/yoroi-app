@@ -187,11 +187,11 @@ export function formatExercisesToText(exercises: ExerciseStats[]): string {
     if (ex.distance) stats.push(`${ex.distance}km`);
     if (ex.speed) stats.push(`${ex.speed}km/h`);
     if (ex.calories) stats.push(`${ex.calories}kcal`);
-    if (ex.stairs) stats.push(traduire("{0} étages", ex.stairs));
+    if (ex.stairs) stats.push(`${ex.stairs} étages`);
     if (ex.duration) stats.push(`${ex.duration}min`);
     if (ex.pente) stats.push(`${ex.pente}%`);
     if (ex.watts) stats.push(`${ex.watts}W`);
-    if (ex.resistance) stats.push(traduire("niveau {0}", ex.resistance));
+    if (ex.resistance) stats.push(`niveau ${ex.resistance}`);
     if (ex.cadence) stats.push(`${ex.cadence} rpm`);
 
     return stats.length > 0 ? `• ${ex.label} (${stats.join(', ')})` : `• ${ex.label}`;
@@ -237,9 +237,9 @@ export function validateExerciseFormat(notes: string): { valid: boolean; errors:
 export const EXERCISE_FORMAT_EXAMPLES = [
   '• Squat (100kg x 10)',
   '• Course (5km, 25min, 12km/h)',
-  traduire('• Vélo (45min, 250W, 85 rpm)'),
+  '• Vélo (45min, 250W, 85 rpm)',
   '• Rameur (2000m, 350kcal)',
-  traduire('• StairMaster (20 étages)'),
-  traduire('• Tapis de course (5km, 30min, pente 5%)'),
-  traduire('• Repos actif'),
+  '• StairMaster (20 étages)',
+  '• Tapis de course (5km, 30min, pente 5%)',
+  '• Repos actif',
 ];

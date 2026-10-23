@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en de. */
+"NSHealthShareUsageDescription" = "YOROI liest aus Apple Health deine Herzfrequenz, deine Sauerstoffsättigung, deine Ruheherzfrequenz, deine Herzfrequenzvariabilität, deine Atemfrequenz, deine Kalorien, dein Gewicht und dein Geburtsdatum (für deine Herzfrequenzzonen), um dir deine Herzfrequenz live, deine Trainingsübersicht und deine Komplikationen Herz, Sauerstoff, Ruhe und Atmung anzuzeigen.";
+"NSHealthUpdateUsageDescription" = "YOROI speichert in Apple Health deine Trainings mit Herzfrequenz und Kalorien, deine Wiegedaten und deine Gläser Wasser, damit alles an einem Ort bleibt.";
+"NSUserNotificationUsageDescription" = "YOROI benachrichtigt dich am Ende jeder Runde und wenn deine Timer ablaufen, während der Bildschirm aus ist.";
+"CFBundleDisplayName" = "Yoroi";

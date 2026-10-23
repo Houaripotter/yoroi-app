@@ -24,8 +24,8 @@ export type CompetitionExtra = {
 
 export const MEDAILLES: { key: Medaille; label: string; color: string; edge: string }[] = [
   { key: 'or', label: 'Or', color: '#E3C47B', edge: '#C59D45' },
-  { key: 'argent', label: 'Argent', color: '#D9DBE0', edge: '#A9ADB7' },
-  { key: 'bronze', label: 'Bronze', color: '#D9A877', edge: '#A8743F' },
+  { key: 'argent', label: traduire('Argent'), color: '#D9DBE0', edge: '#A9ADB7' },
+  { key: 'bronze', label: traduire('Bronze'), color: '#D9A877', edge: '#A8743F' },
   { key: 'aucune', label: traduire('Pas de podium'), color: '#EFECE5', edge: '#D5D2CA' },
 ];
 

@@ -87,7 +87,7 @@ export function EventList({ def, events, color, tint, emptyText }: { def: Metric
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={15} weight="extraBold">
-                {e.title}
+                {traduire(e.title)}
               </Ink>
               <Ink size={12} weight="bold" color={S.ink2}>
                 {[w.day, w.time].filter(Boolean).join(traduire(' à '))}

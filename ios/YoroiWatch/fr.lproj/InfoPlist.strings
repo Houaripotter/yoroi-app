@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en fr. */
+"NSHealthShareUsageDescription" = "YOROI lit dans Apple Santé ta fréquence cardiaque, ta saturation en oxygène, ta FC au repos, ta variabilité cardiaque, ta fréquence respiratoire, tes calories, ton poids et ta date de naissance (pour tes zones cardiaques), pour t'afficher ta FC en direct, ton bilan de séance et tes complications Cœur, Oxygène, Repos et Respiration.";
+"NSHealthUpdateUsageDescription" = "YOROI enregistre dans Apple Santé tes séances, avec leur fréquence cardiaque et leurs calories, tes pesées et tes verres d'eau, pour que tout reste au même endroit.";
+"NSUserNotificationUsageDescription" = "YOROI te prévient à chaque fin de round et à la fin de tes minuteurs quand l'écran est éteint.";
+"CFBundleDisplayName" = "Yoroi";

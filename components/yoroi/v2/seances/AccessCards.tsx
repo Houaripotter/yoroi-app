@@ -14,6 +14,7 @@ import { tap } from './ui';
 import { Ornement } from '@/components/yoroi/v2/ornements/Ornement';
 import type { OrnementKey } from '@/components/yoroi/v2/ornements/images';
 import { P, paletteSombre } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 // audit 43 : les fonds pastel des tuiles passent a leur version de nuit en sombre (texte clair lisible)
 const TUILE_NUIT: Record<string, string> = { '#E3E6EE': '#1E2537', '#E9E4D8': '#28241C', '#E6E4DD': '#232733', '#EEE1DF': '#2A1F22', '#E4EADB': '#1F271D', '#ECE3E8': '#27202A', '#F3EBDA': '#28241C', '#EFE7D6': '#28241C' };
@@ -33,7 +34,7 @@ export function HeroAccess({ a }: { a: Access }) {
         router.push(a.href as any);
       }}
       accessibilityRole="button"
-      accessibilityLabel={a.title}
+      accessibilityLabel={traduire(a.title)}
       style={({ pressed }) => ({ height: 150, borderRadius: 26, backgroundColor: fondTuile(a.tint), overflow: 'hidden', transform: [{ scale: pressed ? 0.985 : 1 }] })}
     >
       {a.ornement ? (
@@ -42,8 +43,8 @@ export function HeroAccess({ a }: { a: Access }) {
         <Image source={a.art} style={{ position: 'absolute', right: -6, bottom: -62, width: 150, height: 200 }} resizeMode="contain" />
       ) : null}
       <View style={{ position: 'absolute', left: 14, bottom: 14, maxWidth: a.ornement ? '56%' : '62%', padding: 12, borderRadius: 18, backgroundColor: P.carte, borderWidth: 1, borderColor: P.white, gap: 2 }}>
-        <Ink size={17} weight="black" tight>{a.title}</Ink>
-        <Ink size={12} color={c.textSecondary} numberOfLines={2}>{a.sub}</Ink>
+        <Ink size={17} weight="black" tight>{traduire(a.title)}</Ink>
+        <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire(a.sub)}</Ink>
       </View>
     </Pressable>
   );
@@ -61,7 +62,7 @@ export function TileAccess({ a }: { a: Access }) {
         router.push(a.href as any);
       }}
       accessibilityRole="button"
-      accessibilityLabel={a.title}
+      accessibilityLabel={traduire(a.title)}
       style={({ pressed }) => ({ width: '48.5%', height: 144, borderRadius: 22, backgroundColor: fondTuile(a.tint), overflow: 'hidden', padding: 14, justifyContent: 'space-between', transform: [{ scale: pressed ? 0.98 : 1 }] })}
     >
       {a.ornement ? (
@@ -73,8 +74,8 @@ export function TileAccess({ a }: { a: Access }) {
         {a.icon ? <Icon name={a.icon} size={21} color={c.ink} /> : null}
       </View>
       <View style={{ gap: 1 }}>
-        <Ink size={15} weight="black" tight numberOfLines={2}>{a.title}</Ink>
-        <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2}>{a.sub}</Ink>
+        <Ink size={15} weight="black" tight numberOfLines={2}>{traduire(a.title)}</Ink>
+        <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire(a.sub)}</Ink>
       </View>
     </Pressable>
   );

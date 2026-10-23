@@ -199,7 +199,7 @@ export function Columns({ items, height = 120, color = CHART_COLORS.blue, highli
               <Ink size={10} weight="extraBold" color={last ? P.accent : P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{it.display ?? String(Math.round(it.value))}</Ink>
             ) : null}
             <View style={{ width: '56%', maxWidth: 22, height: h, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, backgroundColor: it.value > 0 ? c : '#ECEAE4', marginTop: 3 }} />
-            <Ink size={10} weight="bold" color={P.muted} style={{ marginTop: 4 }} numberOfLines={1}>{it.label}</Ink>
+            <Ink size={10} weight="bold" color={P.muted} style={{ marginTop: 4 }} numberOfLines={1}>{traduire(it.label)}</Ink>
           </View>
         );
       })}
@@ -237,7 +237,7 @@ export function BigStats({ items }: { items: { value: string; unit?: string; lab
             {it.value}
             {it.unit ? <Ink size={13} weight="bold" color={P.muted}>{` ${it.unit}`}</Ink> : null}
           </Ink>
-          <Ink size={12} weight="bold" color={P.ink2}>{it.label}</Ink>
+          <Ink size={12} weight="bold" color={P.ink2}>{traduire(it.label)}</Ink>
         </View>
       ))}
     </View>
@@ -288,11 +288,11 @@ export function TabChips<T extends string>({ items, value, onChange }: { items: 
             onPress={() => { tap(); onChange(it.key); }}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={it.label}
+            accessibilityLabel={traduire(it.label)}
             style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}
           >
             {it.locked ? <CIcon name="lock" size={13} color={on ? P.goldLight : P.gold} width={2.4} /> : null}
-            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>{it.label}</Ink>
+            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>{traduire(it.label)}</Ink>
             {it.count ? (
               <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.18)' : '#ECEAE4' }}>
                 <Ink size={11} weight="black" color={on ? P.white : P.ink2}>{it.count > 99 ? '99+' : String(it.count)}</Ink>
@@ -313,7 +313,7 @@ export function MiniChips<T extends string | null>({ items, value, onChange }: {
         const on = it.key === value;
         return (
           <Pressable key={String(it.key)} onPress={() => { tap(); onChange(it.key); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 38, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? P.ink : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: '#D5D2CA' }}>
-            <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>{it.label}</Ink>
+            <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>{traduire(it.label)}</Ink>
           </Pressable>
         );
       })}

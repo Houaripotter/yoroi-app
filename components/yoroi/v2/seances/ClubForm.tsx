@@ -102,7 +102,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
       onDone();
     } catch (e) {
       logger.error('Erreur sauvegarde club', e);
-      appAlert('Oups', traduire('Le club n’a pas pu être enregistré. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('Le club n’a pas pu être enregistré. Réessaie.'));
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -124,9 +124,9 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
             {logoSrc ? <Image source={logoSrc} style={{ width: 110, height: 110 }} resizeMode="cover" /> : <Ink size={46} weight="black" color="#FFFFFF">{(name.trim()[0] ?? 'C').toUpperCase()}</Ink>}
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Chip label="Galerie" on={false} onPress={() => pick('gallery')} />
-            <Chip label="Appareil photo" on={false} onPress={() => pick('camera')} />
-            {logo ? <Chip label="Retirer" on={false} onPress={() => setLogo(null)} /> : null}
+            <Chip label={traduire("Galerie")} on={false} onPress={() => pick('gallery')} />
+            <Chip label={traduire("Appareil photo")} on={false} onPress={() => pick('camera')} />
+            {logo ? <Chip label={traduire("Retirer")} on={false} onPress={() => setLogo(null)} /> : null}
           </View>
         </View>
 
@@ -149,7 +149,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
           {results.length ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {results.map((s) => (
-                <Chip key={s.id} label={s.name} on={s.id === sport} onPress={() => { setSport(s.id); setSearch(''); }} />
+                <Chip key={s.id} label={traduire(s.name)} on={s.id === sport} onPress={() => { setSport(s.id); setSearch(''); }} />
               ))}
             </View>
           ) : null}
@@ -173,7 +173,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
 
         {!logoSrc ? (
           <View style={{ gap: 8 }}>
-            <Ink size={14} weight="bold" color={c.textSecondary}>Couleur</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Couleur")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {COLORS.map((col) => (
                 <Pressable key={col} onPress={() => { tap(); setColor(col); }} accessibilityRole="button" accessibilityLabel={traduire("Choisir cette couleur")} accessibilityState={{ selected: col === color }} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: col, borderWidth: col === color ? 3 : 0, borderColor: P.white, shadowColor: c.ink, shadowOpacity: col === color ? 0.25 : 0, shadowRadius: 6 }} />

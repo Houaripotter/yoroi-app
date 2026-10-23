@@ -153,7 +153,7 @@ export default function TonPersonnage() {
               style={{ width: 150, borderRadius: 22, backgroundColor: c.surface, borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, padding: 12, gap: 6 }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{p.nom}</Ink>
+                <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{traduire(p.nom)}</Ink>
               </View>
               <Image source={p.images[on ? packLevel(rankIndex) - 1 : 0]} style={{ width: '100%', height: 150 }} resizeMode="contain" />
               <Ink size={12} weight="bold" color={on ? c.accent : c.textMuted}>{on ? traduire('Ton personnage') : traduire('Voir le pack')}</Ink>

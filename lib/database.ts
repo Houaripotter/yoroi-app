@@ -333,7 +333,7 @@ const _performInit = async () => {
     `ALTER TABLE trash_trainings ADD COLUMN location_lat REAL`,
     `ALTER TABLE trash_trainings ADD COLUMN location_lon REAL`,
     `ALTER TABLE trash_trainings ADD COLUMN location_name TEXT`,
-    traduire(`ALTER TABLE trash_trainings ADD COLUMN combat_rounds TEXT`),
+    `ALTER TABLE trash_trainings ADD COLUMN combat_rounds TEXT`,
   ];
   for (const sql of trashMigrations) {
     try { await database.execAsync(sql); } catch (e) { _logUnexpectedMigrationError(e); }
@@ -481,7 +481,7 @@ const _performInit = async () => {
     'victoires INTEGER',
     'defaites INTEGER',
     'notes TEXT',
-    traduire('temps_total TEXT'),
+    'temps_total TEXT',
   ];
   for (const column of competitionsColumnsToAdd) {
     // Format: 'colName TYPE' → split sur le premier espace
@@ -1930,7 +1930,7 @@ export const updateWeeklyPlanItem = async (id: number, data: Partial<WeeklyPlan>
   if (data.club_id !== undefined) { updates.push('club_id = ?'); values.push(data.club_id); }
   if (data.sport !== undefined) { updates.push('sport = ?'); values.push(data.sport); }
   if (data.time !== undefined) { updates.push('time = ?'); values.push(data.time); }
-  if (data.duration_minutes !== undefined) { updates.push(traduire('duration_minutes = ?')); values.push(data.duration_minutes); }
+  if (data.duration_minutes !== undefined) { updates.push('duration_minutes = ?'); values.push(data.duration_minutes); }
   if (data.muscles !== undefined) { updates.push('muscles = ?'); values.push(data.muscles); }
   if (data.is_rest_day !== undefined) { updates.push('is_rest_day = ?'); values.push(data.is_rest_day ? 1 : 0); }
   if (data.session_type !== undefined) { updates.push('session_type = ?'); values.push(data.session_type); }
@@ -2601,8 +2601,8 @@ export const updateCompetition = async (id: number, competition: Partial<Competi
   if (competition.date !== undefined) { fields.push('date = ?'); values.push(competition.date); }
   if (competition.lieu !== undefined) { fields.push('lieu = ?'); values.push(competition.lieu); }
   if (competition.sport !== undefined) { fields.push('sport = ?'); values.push(competition.sport); }
-  if (competition.categorie_poids !== undefined) { fields.push(traduire('categorie_poids = ?')); values.push(competition.categorie_poids); }
-  if (competition.poids_max !== undefined) { fields.push(traduire('poids_max = ?')); values.push(competition.poids_max); }
+  if (competition.categorie_poids !== undefined) { fields.push('categorie_poids = ?'); values.push(competition.categorie_poids); }
+  if (competition.poids_max !== undefined) { fields.push('poids_max = ?'); values.push(competition.poids_max); }
   if (competition.statut !== undefined) { fields.push('statut = ?'); values.push(competition.statut); }
   if (competition.lien_inscription !== undefined) { fields.push('lien_inscription = ?'); values.push(competition.lien_inscription); }
 

@@ -128,8 +128,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible,
           <View style={styles.header}>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={26} weight="black" tight>
-                Quelle zone ?
-              </Ink>
+                {traduire("Quelle zone ?")}</Ink>
               <Ink size={14} weight="medium" color={c.textSecondary}>
                 {traduire("Plusieurs zones se touchent ici. Choisis la bonne.")}</Ink>
             </View>
@@ -152,7 +151,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible,
                 key={zone.id}
                 onPress={() => handleSelect(zone)}
                 accessibilityRole="button"
-                accessibilityLabel={zone.name}
+                accessibilityLabel={traduire(zone.name)}
                 style={({ pressed }) => [
                   styles.zoneItem,
                   { backgroundColor: c.surface, borderColor: pressed ? c.accent : c.divider, transform: [{ scale: pressed ? 0.98 : 1 }] },
@@ -162,7 +161,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible,
                   <ZoneGlyph name={zone.name} />
                 </View>
                 <Ink size={17} weight="extraBold" style={{ flex: 1 }}>
-                  {zone.name}
+                  {traduire(zone.name)}
                 </Ink>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />

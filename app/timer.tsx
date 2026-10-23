@@ -131,7 +131,7 @@ export default function TimerScreen() {
   // Au temps
   const [forTimeElapsed, setForTimeElapsed] = useState(0);
   const [forTimeCap, setForTimeCap] = useState(15 * 60);
-  const [forTimeExercises, setForTimeExercises] = useState<string[]>(['21-15-9', 'Thrusters', 'Tractions']);
+  const [forTimeExercises, setForTimeExercises] = useState<string[]>(['21-15-9', traduire('Thrusters'), 'Tractions']);
 
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
   const [showFinish, setShowFinish] = useState(false);
@@ -264,7 +264,7 @@ export default function TimerScreen() {
     [engine],
   );
   // Live Activity (ecran verrouille et Dynamic Island) : round, phase et compte a rebours, seulement si le module natif existe
-  useActiviteChrono(engine, MODES.find((x) => x.id === mode)?.label ?? 'Chrono');
+  useActiviteChrono(engine, MODES.find((x) => x.id === mode)?.label ?? traduire('Chrono'));
   const status = engine.status;
   // Lien de widget recu alors que le chrono est deja ouvert (yoroi://w/timer?mode=combat) : passe au mode demande,
   // seulement si aucun chrono ne tourne ; les reglages des rounds restent les derniers utilises
@@ -453,16 +453,16 @@ export default function TimerScreen() {
   const finishLines = (): { label: string; value: string }[] => {
     const lines = [{ label: traduire('Temps total'), value: clock(workoutSeconds()) }];
     if (mode === 'musculation') lines.push({ label: traduire('Séries'), value: String(seriesCount) });
-    if (mode === 'combat') lines.push({ label: 'Rounds', value: roundsFaitsN !== null && roundsFaitsN < totalRounds ? `${roundsFaitsN} sur ${totalRounds}` : String(totalRounds) });
-    if (mode === 'tabata') lines.push({ label: 'Rounds', value: `${tabataRounds}${tabataSets > 1 ? ` x ${tabataSets}` : ''}` });
+    if (mode === 'combat') lines.push({ label: traduire('Rounds'), value: roundsFaitsN !== null && roundsFaitsN < totalRounds ? `${roundsFaitsN} sur ${totalRounds}` : String(totalRounds) });
+    if (mode === 'tabata') lines.push({ label: traduire('Rounds'), value: `${tabataRounds}${tabataSets > 1 ? ` x ${tabataSets}` : ''}` });
     if (mode === 'emom') lines.push({ label: traduire('Minutes'), value: String(emomDuration) });
-    if (mode === 'amrap') lines.push({ label: 'Tours faits', value: String(amrapRoundsCompleted) });
+    if (mode === 'amrap') lines.push({ label: traduire('Tours faits'), value: String(amrapRoundsCompleted) });
     if (mode === 'fortime') lines.push({ label: traduire('Ton temps'), value: clock(forTimeElapsed) });
     return lines;
   };
 
   const sessionNotes = (): string => {
-    const m = MODES.find((x) => x.id === mode)?.label ?? 'Chrono';
+    const m = MODES.find((x) => x.id === mode)?.label ?? traduire('Chrono');
     if (mode === 'musculation') {
       const detail = seriesHistory.filter((s) => s.reps || s.weight).map((s) => `${s.reps ?? '?'} x ${s.weight ?? '?'} kg`).join(', ');
       return traduire("{0} : {1} séries{2}", m, seriesCount, detail ? ` (${detail})` : '');
@@ -590,7 +590,7 @@ export default function TimerScreen() {
       ) : (
         <View style={{ gap: 10 }}>
           <BigButton label={traduire("Voir le bilan")} icon="check" onPress={() => setShowFinish(true)} />
-          <BigButton label="Recommencer" tone="light" icon="refresh" onPress={handleRestart} />
+          <BigButton label={traduire("Recommencer")} tone="light" icon="refresh" onPress={handleRestart} />
         </View>
       )
     ) : undefined;
@@ -605,7 +605,7 @@ export default function TimerScreen() {
           onStop={resetTimer}
           confirmStop={mode !== 'musculation'}
           canSkip={mode !== 'amrap' && mode !== 'fortime'}
-          skipLabel={mode === 'musculation' ? traduire('Finir le repos') : 'Passer'}
+          skipLabel={mode === 'musculation' ? traduire('Finir le repos') : traduire('Passer')}
           titleOverride={finished ? finishedTitle : undefined}
           subOverride={finished ? (mode === 'musculation' ? traduire('Ton repos est fini') : undefined) : mode === 'musculation' ? traduire('Pose ton téléphone, ça sonne à la fin') : undefined}
           nextOverride={finished ? null : mode === 'musculation' ? traduire("Série {0}", seriesCount + 1) : (mode === 'amrap' || mode === 'fortime') && p?.kind === 'effort' ? null : undefined}
@@ -646,18 +646,18 @@ export default function TimerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false}>
-          <ScreenHead title="Chronos" subtitle={focusMode ? traduire('Mode épuré : pendant le chrono, juste le temps') : traduire('Choisis comment découper ton temps')} right={eyeBtn} />
+          <ScreenHead title={traduire("Chronos")} subtitle={focusMode ? traduire('Mode épuré : pendant le chrono, juste le temps') : traduire('Choisis comment découper ton temps')} right={eyeBtn} />
           {/* vague 45 (Houari : « c'est beau mais c'est fade ») : bandeau illustre, le dernier chrono a reprendre,
               une couleur et une illustration par chrono, des cartes plus genereuses */}
           <View style={{ paddingHorizontal: 20, gap: 12, marginTop: 16 }}>
             <ChronoBanner />
             {dernier ? <ReprendreCard mode={dernier.mode} resume={dernier.resume} onPress={() => reprendre(dernier)} /> : null}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 4, paddingHorizontal: 4, marginTop: 4 }}>
-              <Legend color={PHASE_COLORS.effort.main} text="Barre haute : l’effort" />
+              <Legend color={PHASE_COLORS.effort.main} text={traduire("Barre haute : l’effort")} />
               <Legend color={PHASE_COLORS.repos.main} text={traduire("Barre basse : le repos")} />
             </View>
             {MODES.map((m) => (
-              <ModeCard key={m.id} vive mode={m.id} title={m.label} tag={m.tag} text={m.sub} onPress={() => changeMode(m.id)} />
+              <ModeCard key={m.id} vive mode={m.id} title={traduire(m.label)} tag={m.tag} text={traduire(m.sub)} onPress={() => changeMode(m.id)} />
             ))}
             <ModeCard mode="sparring" dark title={traduire("Sparring, round par round")} text={traduire("Les rounds de combat, et tu notes chaque round : victoire, défaite ou nul.")} onPress={() => router.push('/combat-timer' as any)} />
           </View>
@@ -679,7 +679,7 @@ export default function TimerScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + DOCK_SPACE }} showsVerticalScrollIndicator={false}>
-        <ScreenHead title={modeMeta.label} subtitle={modeMeta.sub} onBack={() => { setPicked(false); haptic('light'); }} right={eyeBtn} />
+        <ScreenHead title={traduire(modeMeta.label)} subtitle={traduire(modeMeta.sub)} onBack={() => { setPicked(false); haptic('light'); }} right={eyeBtn} />
 
         <View style={{ paddingHorizontal: 20, gap: 14, marginTop: 18 }}>
           {mode === 'musculation' ? (
@@ -702,15 +702,15 @@ export default function TimerScreen() {
 
           {mode === 'combat' ? (
             <>
-              <SetupHero label={traduire("Durée totale")} big={humanSeconds(total)} line={roundsSummary(totalRounds, roundDuration, restDuration)} band={band.length > 1 ? band : undefined} legend={[{ color: PHASE_COLORS.effort.main, text: 'Round' }, ...(restDuration > 0 ? [{ color: PHASE_COLORS.repos.main, text: traduire('Repos') }] : []), ...prepaLegend]} />
+              <SetupHero label={traduire("Durée totale")} big={humanSeconds(total)} line={roundsSummary(totalRounds, roundDuration, restDuration)} band={band.length > 1 ? band : undefined} legend={[{ color: PHASE_COLORS.effort.main, text: traduire('Round') }, ...(restDuration > 0 ? [{ color: PHASE_COLORS.repos.main, text: traduire('Repos') }] : []), ...prepaLegend]} />
               <SetupBlock title={traduire("Ton sport")} hint={traduire("Un format tout prêt, que tu peux ajuster dessous")}>
                 <ChoiceGrid items={COMBAT_PRESET_ORDER.map((k) => ({ key: k, title: COMBAT_PRESETS[k].name, sub: `${COMBAT_PRESETS[k].rounds} x ${humanSeconds(COMBAT_PRESETS[k].roundTime)}` }))} value={combatPreset} onPick={applyCombatPreset} columns={3} />
               </SetupBlock>
               <SetupBlock title={traduire("Tes rounds")}>
                 <View>
-                  <SettingRow label="Round" dot={PHASE_COLORS.effort.main} value={humanSeconds(roundDuration)} onMinus={() => setRoundDuration((d) => Math.max(30, d - 30))} onPlus={() => setRoundDuration((d) => Math.min(600, d + 30))} accent={PHASE_COLORS.effort.deep} />
+                  <SettingRow label={traduire("Round")} dot={PHASE_COLORS.effort.main} value={humanSeconds(roundDuration)} onMinus={() => setRoundDuration((d) => Math.max(30, d - 30))} onPlus={() => setRoundDuration((d) => Math.min(600, d + 30))} accent={PHASE_COLORS.effort.deep} />
                   <SettingRow label={traduire("Repos")} dot={PHASE_COLORS.repos.main} value={restDuration === 0 ? traduire('Aucun') : humanSeconds(restDuration)} onMinus={() => setRestDuration((d) => Math.max(0, d - 15))} onPlus={() => setRestDuration((d) => Math.min(300, d + 15))} accent={PHASE_COLORS.repos.deep} />
-                  <SettingRow label="Rounds" hint={traduire("en tout")} value={String(totalRounds)} onMinus={() => setTotalRounds((r) => Math.max(1, r - 1))} onPlus={() => setTotalRounds((r) => Math.min(20, r + 1))} />
+                  <SettingRow label={traduire("Rounds")} hint={traduire("en tout")} value={String(totalRounds)} onMinus={() => setTotalRounds((r) => Math.max(1, r - 1))} onPlus={() => setTotalRounds((r) => Math.min(20, r + 1))} />
                   {prepaRow}
                 </View>
                 <View style={{ height: 1, backgroundColor: P.line2 }} />
@@ -731,9 +731,9 @@ export default function TimerScreen() {
                 <View>
                   <SettingRow label={traduire("À fond")} dot={PHASE_COLORS.effort.main} value={`${tabataWork} s`} onMinus={() => setTabataWork((w) => Math.max(10, w - 5))} onPlus={() => setTabataWork((w) => Math.min(60, w + 5))} accent={PHASE_COLORS.effort.deep} />
                   <SettingRow label={traduire("Repos")} dot={PHASE_COLORS.repos.main} value={`${tabataRest} s`} onMinus={() => setTabataRest((r) => Math.max(5, r - 5))} onPlus={() => setTabataRest((r) => Math.min(60, r + 5))} accent={PHASE_COLORS.repos.deep} />
-                  <SettingRow label="Efforts" hint={traduire("en tout")} value={String(tabataRounds)} onMinus={() => setTabataRounds((r) => Math.max(1, r - 1))} onPlus={() => setTabataRounds((r) => Math.min(30, r + 1))} />
-                  <SettingRow label="Blocs" hint={traduire("tout répété")} value={String(tabataSets)} onMinus={() => setTabataSets((s) => Math.max(1, s - 1))} onPlus={() => setTabataSets((s) => Math.min(5, s + 1))} />
-                  {tabataSets > 1 ? <SettingRow label="Pause" hint={traduire("entre deux blocs")} dot={PHASE_COLORS.repos.main} value={humanSeconds(tabataRestBetweenSets)} onMinus={() => setTabataRestBetweenSets((r) => Math.max(15, r - 15))} onPlus={() => setTabataRestBetweenSets((r) => Math.min(180, r + 15))} accent={PHASE_COLORS.repos.deep} /> : null}
+                  <SettingRow label={traduire("Efforts")} hint={traduire("en tout")} value={String(tabataRounds)} onMinus={() => setTabataRounds((r) => Math.max(1, r - 1))} onPlus={() => setTabataRounds((r) => Math.min(30, r + 1))} />
+                  <SettingRow label={traduire("Blocs")} hint={traduire("tout répété")} value={String(tabataSets)} onMinus={() => setTabataSets((s) => Math.max(1, s - 1))} onPlus={() => setTabataSets((s) => Math.min(5, s + 1))} />
+                  {tabataSets > 1 ? <SettingRow label={traduire("Pause")} hint={traduire("entre deux blocs")} dot={PHASE_COLORS.repos.main} value={humanSeconds(tabataRestBetweenSets)} onMinus={() => setTabataRestBetweenSets((r) => Math.max(15, r - 15))} onPlus={() => setTabataRestBetweenSets((r) => Math.min(180, r + 15))} accent={PHASE_COLORS.repos.deep} /> : null}
                   {prepaRow}
                 </View>
               </SetupBlock>
@@ -771,8 +771,8 @@ export default function TimerScreen() {
 
           {mode === 'fortime' ? (
             <>
-              <SetupHero label="Temps limite" big={humanSeconds(forTimeCap)} line={traduire("au maximum pour finir ton programme")} band={[{ seconds: 1, color: PHASE_COLORS.effort.main }]} legend={[{ color: PHASE_COLORS.effort.main, text: traduire('Le chrono monte, tu t’arrêtes quand tu as fini') }]} />
-              <SetupBlock title="Temps limite" hint={traduire("Le chrono s’arrête tout seul s’il est atteint")}>
+              <SetupHero label={traduire("Temps limite")} big={humanSeconds(forTimeCap)} line={traduire("au maximum pour finir ton programme")} band={[{ seconds: 1, color: PHASE_COLORS.effort.main }]} legend={[{ color: PHASE_COLORS.effort.main, text: traduire('Le chrono monte, tu t’arrêtes quand tu as fini') }]} />
+              <SetupBlock title={traduire("Temps limite")} hint={traduire("Le chrono s’arrête tout seul s’il est atteint")}>
                 <ChoiceGrid items={FORTIME_PRESETS.map((m) => ({ key: m * 60, title: `${m} min` }))} value={forTimeCap} onPick={(s) => { setForTimeCap(s); haptic('light'); }} columns={4} />
                 <View>
                   <SettingRow label={traduire("Sur mesure")} hint={traduire("à la minute près")} dot={PHASE_COLORS.effort.main} value={humanSeconds(forTimeCap)} onMinus={() => setForTimeCap((d) => Math.max(60, d - 60))} onPlus={() => setForTimeCap((d) => Math.min(3600, d + 60))} />
@@ -897,7 +897,7 @@ function RepsWeightSheet({ visible, series, reps, weight, onReps, onWeight, onSa
         </View>
       </View>
       <BigButton label={traduire("Noter la série")} icon="check" onPress={onSave} />
-      <BigButton label="Passer" tone="light" onPress={onSkip} />
+      <BigButton label={traduire("Passer")} tone="light" onPress={onSkip} />
     </Sheet>
   );
 }

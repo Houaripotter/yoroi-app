@@ -86,7 +86,7 @@ export default function Citations() {
         tap('success');
         appAlert(traduire('Rappels activés'), traduirePluriel(next.frequency, next.frequency > 1, "Tu recevras {0} citation par jour, prévues pour les 7 prochains jours.", "Tu recevras {0} citations par jour, prévues pour les 7 prochains jours.", next.frequency), [
           { text: 'OK' },
-          { text: 'Essayer maintenant', onPress: () => sendImmediateCitationNotification() },
+          { text: traduire('Essayer maintenant'), onPress: () => sendImmediateCitationNotification() },
         ]);
       }
     } catch (err) {
@@ -106,7 +106,7 @@ export default function Citations() {
   };
 
   return (
-    <DetailScreen title="Citations" subtitle={traduire("Un mot pour te lancer chaque jour")}>
+    <DetailScreen title={traduire("Citations")} subtitle={traduire("Un mot pour te lancer chaque jour")}>
       <Enter i={0}>
         <View style={{ borderRadius: 26, backgroundColor: P.ink, padding: 24, gap: 18, overflow: 'hidden' }}>
           <View pointerEvents="none" style={{ position: 'absolute', right: -30, bottom: -30 }}>
@@ -143,7 +143,7 @@ export default function Citations() {
             const on = o.id === style;
             return (
               <View key={o.id} style={{ width: '48.6%' }}>
-                <Press onPress={() => changeStyle(o.id)} haptic="medium" accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={o.label}>
+                <Press onPress={() => changeStyle(o.id)} haptic="medium" accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire(o.label)}>
                   <View style={{ minHeight: 96, borderRadius: 20, padding: 14, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2, gap: 4, overflow: 'hidden' }}>
                     <Glyph kind="sakura" size={20} color={on ? P.goldLight : P.goldDark} />
                     <Ink size={16} weight="black" tight color={on ? P.white : P.ink}>
@@ -188,8 +188,7 @@ export default function Citations() {
                 <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Icon name="bell" size={17} color={P.accent} />
                   <Ink size={14} weight="bold" color={P.accent}>
-                    Essayer maintenant
-                  </Ink>
+                    {traduire("Essayer maintenant")}</Ink>
                 </View>
               </Press>
             </View>

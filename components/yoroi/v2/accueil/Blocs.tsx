@@ -186,7 +186,7 @@ export function BlocProchaineSeance({ next }: { next: NextSession | null }) {
             {`${next.when}${next.time ? traduire(" à {0}", next.time) : ''}${next.duration ? `, ${formatMinutes(next.duration)}` : ''}`}
           </Ink>
           <Ink size={20} weight="black" tight color={P.white} numberOfLines={1}>
-            {next.title}
+            {traduire(next.title)}
           </Ink>
           {next.club || next.title !== next.sport ? (
             <Ink size={13} weight="medium" color={paletteSombre() ? '#4A4E5A' : '#B9BBC4'} numberOfLines={1}>
@@ -248,7 +248,7 @@ export function BlocForme({ forme, hideEmpty }: { forme: FormeResult | null; hid
           <Ink size={13} weight="bold" color={P.ink2}>
             {traduire("Ta récupération")}</Ink>
           <Ink size={19} weight="black" tight>
-            {forme.level.label}
+            {traduire(forme.level.label)}
           </Ink>
           <Ink size={13} weight="medium" color={P.ink2} numberOfLines={2}>
             {forme.level.advice}
@@ -328,8 +328,8 @@ export function BlocSommeil({ entries, goal, hideEmpty }: { entries: SleepEntry[
 /* Hydratation (vague 26) : l'ajout en un geste revient sur l'accueil, exception assumee a la regle du bouton +.
    +250 ml, +500 ml ou +1 L s'enregistrent sur place, partout ou l'app lit l'eau ; « annuler » reste 5 secondes. */
 const WATER_STEPS: { l: number; label: string }[] = [
-  { l: 0.25, label: '+250 ml' },
-  { l: 0.5, label: '+500 ml' },
+  { l: 0.25, label: traduire('+250 ml') },
+  { l: 0.5, label: traduire('+500 ml') },
   { l: 1, label: '+1 L' },
 ];
 
@@ -425,7 +425,7 @@ export function BlocHydratation({ amount, goal }: { amount: number; goal: number
             <Press onPress={() => save(w.l)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} d’eau", w.l >= 1 ? 'un litre' : `${Math.round(w.l * 1000)} millilitres`)}>
               <View style={{ height: 44, borderRadius: 14, backgroundColor: accentTint, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={15} weight="black" color={accent} numberOfLines={1}>
-                  {w.label}
+                  {traduire(w.label)}
                 </Ink>
               </View>
             </Press>
@@ -553,7 +553,7 @@ export function BlocCompetition({ competition }: { competition: NextCompetition 
             {traduire("{0}, le {1}", c.sport, longDate(c.date))}
           </Ink>
           <Ink size={18} weight="black" tight numberOfLines={2}>
-            {c.name}
+            {traduire(c.name)}
           </Ink>
           {c.place || c.category ? (
             <Ink size={13} weight="medium" color={P.ink2} numberOfLines={1}>

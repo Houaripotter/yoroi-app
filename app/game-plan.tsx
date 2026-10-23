@@ -140,14 +140,14 @@ export default function GamePlanScreen() {
                 const def = item.source === 'defense';
                 const color = def ? N : V;
                 return (
-                  <Pressable key={item.id} onPress={() => toggle(item.id)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={item.text}>
+                  <Pressable key={item.id} onPress={() => toggle(item.id)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={traduire(item.text)}>
                     <Card style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', opacity: on ? 0.6 : 1, borderLeftWidth: 5, borderLeftColor: on ? '#6E8C3A' : color }}>
                       <View style={{ width: 28, height: 28, borderRadius: 9, borderWidth: on ? 0 : 2, borderColor: color, backgroundColor: on ? '#6E8C3A' : 'transparent', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
                         {on ? <CIcon name="check" size={16} color={P.white} width={3} /> : null}
                       </View>
                       <View style={{ flex: 1, gap: 4 }}>
                         <Ink size={16} weight="bold" style={{ textDecorationLine: on ? 'line-through' : 'none' }}>
-                          {item.text}
+                          {traduire(item.text)}
                         </Ink>
                         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                           {def ? (
@@ -178,7 +178,7 @@ export default function GamePlanScreen() {
                     <View key={i} style={{ gap: 6 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={2}>
-                          {gp.text}
+                          {traduire(gp.text)}
                         </Ink>
                         <View style={{ alignItems: 'flex-end' }}>
                           <Ink size={18} weight="black" color={c}>
@@ -237,7 +237,7 @@ export default function GamePlanScreen() {
                       </View>
                       {gp.whatWorked ? <Hanko size={32} /> : null}
                     </View>
-                    <Ink size={15}>{gp.text}</Ink>
+                    <Ink size={15}>{traduire(gp.text)}</Ink>
                     {gp.whatWorked ? (
                       <View style={{ paddingTop: 8, borderTopWidth: 1, borderTopColor: P.line2, gap: 2 }}>
                         <Ink size={12} weight="extraBold" color={V}>

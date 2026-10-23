@@ -753,7 +753,7 @@ const getWorkoutLabel = (activityType: string): string => {
     running: 'Course', randonnee: 'Randonnee', marche: 'Marche', trail: 'Trail',
     // Musculation & fitness
     musculation: 'Musculation', crossfit: 'CrossFit', hiit: 'HIIT', hyrox: 'HYROX',
-    barre_au_sol: traduire('Barre au sol'), stretching: 'Stretching', step_aerobic: 'Step',
+    barre_au_sol: 'Barre au sol', stretching: 'Stretching', step_aerobic: 'Step',
     // Combat
     mma: 'MMA', jjb: 'JJB', boxe: 'Boxe', kickboxing: 'Kickboxing', lutte: 'Lutte',
     tai_chi: 'Tai Chi',
@@ -766,7 +766,7 @@ const getWorkoutLabel = (activityType: string): string => {
     // Basketball
     basketball: 'Basketball',
     // Raquettes
-    tennis: 'Tennis', tennis_de_table: traduire('Tennis de table'),
+    tennis: 'Tennis', tennis_de_table: 'Tennis de table',
     badminton: 'Badminton', squash: 'Squash',
     racquetball: 'Racquetball', pickleball: 'Pickleball',
     // Cardio
@@ -790,15 +790,15 @@ const getWorkoutLabel = (activityType: string): string => {
     // Individuel
     golf: 'Golf', escalade: 'Escalade', equitation: 'Equitation',
     escrime: 'Escrime', gymnastique: 'Gymnastique',
-    athletisme: 'Athletisme', tir_a_larc: traduire('Tir a l\'arc'),
+    athletisme: 'Athletisme', tir_a_larc: 'Tir a l\'arc',
     bowling: 'Bowling', disc_golf: 'Disc Golf',
     // Divers
-    récupération: traduire('Récupération'), triathlon: 'Triathlon',
+    récupération: 'Récupération', triathlon: 'Triathlon',
     transition: 'Transition',
-    jeu: traduire('Jeu'), chasse: 'Chasse', peche: 'Peche',
-    autre: traduire('Séance'),
+    jeu: 'Jeu', chasse: 'Chasse', peche: 'Peche',
+    autre: 'Séance',
   };
-  return labels[mapped] || traduire('Séance');
+  return labels[mapped] || 'Séance';
 };
 
 // Date locale AAAA-MM-JJ (toISOString donne la date UTC : décalage d'un jour la nuit ou hors d'Europe)
@@ -3134,9 +3134,9 @@ class HealthConnectService {
         const aqi = Number(rawAqi);
         if (!isNaN(aqi) && aqi > 0) {
           details.airQualityIndex = aqi;
-          if (aqi <= 50) details.airQualityCategory = traduire('Bon');
+          if (aqi <= 50) details.airQualityCategory = 'Bon';
           else if (aqi <= 100) details.airQualityCategory = 'Modere';
-          else if (aqi <= 150) details.airQualityCategory = traduire('Mauvais pour groupes sensibles');
+          else if (aqi <= 150) details.airQualityCategory = 'Mauvais pour groupes sensibles';
           else if (aqi <= 200) details.airQualityCategory = 'Mauvais';
           else if (aqi <= 300) details.airQualityCategory = 'Tres mauvais';
           else details.airQualityCategory = 'Dangereux';
@@ -3597,9 +3597,9 @@ class HealthConnectService {
             const aqiValue = aqiData?.hourly?.us_aqi?.[hour];
             if (aqiValue != null && aqiValue >= 0) {
               details.airQualityIndex = aqiValue;
-              if (aqiValue <= 50) details.airQualityCategory = traduire('Bon');
+              if (aqiValue <= 50) details.airQualityCategory = 'Bon';
               else if (aqiValue <= 100) details.airQualityCategory = 'Modere';
-              else if (aqiValue <= 150) details.airQualityCategory = traduire('Mauvais pour groupes sensibles');
+              else if (aqiValue <= 150) details.airQualityCategory = 'Mauvais pour groupes sensibles';
               else if (aqiValue <= 200) details.airQualityCategory = 'Mauvais';
               else if (aqiValue <= 300) details.airQualityCategory = 'Tres mauvais';
               else details.airQualityCategory = 'Dangereux';
@@ -6454,7 +6454,7 @@ class HealthConnectService {
         'Aviron': 'Belle sortie d’aviron',
       };
 
-      const title = titres[sportLabel] || traduire("Belle séance de {0}", sportLabel.toLowerCase());
+      const title = titres[sportLabel] || traduire("Belle séance de {0}", traduire(sportLabel).toLowerCase());
 
       // Envoi, regroupement, mémoire et réglages : lib/v2/notifications/seanceTerminee.ts (le corps y est construit,
       // sans valeur de santé, et les données portent l'id de la séance pour ouvrir sa carte)

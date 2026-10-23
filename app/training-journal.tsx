@@ -129,7 +129,7 @@ export default function TrainingJournalScreen() {
       if (screenshot) {
         const now = new Date().toISOString();
         setBenchmarks([
-          { id: 'bench_1', name: traduire('Développé couché'), category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#2C4A84', createdAt: now, muscleGroup: 'Pectoraux', entries: [{ id: 'e1', value: 100, reps: 5, date: now, rpe: 9, notes: 'Record personnel' }, { id: 'e2', value: 95, reps: 5, date: new Date(Date.now() - 86400000 * 7).toISOString(), rpe: 8 }] },
+          { id: 'bench_1', name: traduire('Développé couché'), category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#2C4A84', createdAt: now, muscleGroup: 'Pectoraux', entries: [{ id: 'e1', value: 100, reps: 5, date: now, rpe: 9, notes: traduire('Record personnel') }, { id: 'e2', value: 95, reps: 5, date: new Date(Date.now() - 86400000 * 7).toISOString(), rpe: 8 }] },
           { id: 'bench_2', name: 'Squat', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#2C4A84', createdAt: now, muscleGroup: 'Jambes', entries: [{ id: 'e3', value: 140, reps: 3, date: now, rpe: 9 }] },
           { id: 'bench_3', name: '10 km', category: 'running', unit: 'time', iconName: 'timer', color: '#3D5D9E', createdAt: now, entries: [{ id: 'e4', value: 2400, date: now, duration: 40, distance: 10 }] },
         ]);
@@ -286,7 +286,7 @@ export default function TrainingJournalScreen() {
   const handleCreateCustom = async (name: string, category: BenchmarkCategory, unit: BenchmarkUnit) => {
     if (busy) return;
     if (!isPremium && benchmarks.length >= FREE_BENCHMARKS_LIMIT) {
-      appAlert('Limite atteinte', traduire("Tu as atteint la limite de {0} suivis en version gratuite. Passe à Premium pour en créer autant que tu veux.", FREE_BENCHMARKS_LIMIT), [
+      appAlert(traduire('Limite atteinte'), traduire("Tu as atteint la limite de {0} suivis en version gratuite. Passe à Premium pour en créer autant que tu veux.", FREE_BENCHMARKS_LIMIT), [
         { text: traduire('Annuler'), style: 'cancel' },
         { text: traduire('Débloquer Premium'), onPress: () => ouvrirPaywall('progression_mouvements', benchmarks.length) },
       ]);
@@ -304,7 +304,7 @@ export default function TrainingJournalScreen() {
       }
     } catch (error) {
       logger.error('Création du suivi impossible', error);
-      appAlert('Oups', traduire('Le suivi n’a pas pu être créé.'));
+      appAlert(traduire('Oups'), traduire('Le suivi n’a pas pu être créé.'));
     } finally {
       setBusy(false);
     }
@@ -335,7 +335,7 @@ export default function TrainingJournalScreen() {
       }
     } catch (error) {
       logger.error('Ajout de la perf impossible', error);
-      appAlert('Oups', traduire('La perf n’a pas pu être enregistrée.'));
+      appAlert(traduire('Oups'), traduire('La perf n’a pas pu être enregistrée.'));
     } finally {
       setBusy(false);
     }
@@ -413,7 +413,7 @@ export default function TrainingJournalScreen() {
     if (!r.canceled && r.assets[0]) {
       const uri = await saveVideoPermanently(r.assets[0].uri);
       if (uri) setNewSkillVideoUri(uri);
-      else appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
+      else appAlert(traduire('Oups'), traduire('La vidéo n’a pas pu être enregistrée.'));
     }
   };
 
@@ -427,14 +427,14 @@ export default function TrainingJournalScreen() {
     if (!r.canceled && r.assets[0]) {
       const uri = await saveVideoPermanently(r.assets[0].uri);
       if (uri) setNewSkillVideoUri(uri);
-      else appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
+      else appAlert(traduire('Oups'), traduire('La vidéo n’a pas pu être enregistrée.'));
     }
   };
 
   const handleAddSkill = async () => {
     if (busy) return;
     if (!isPremium && skills.length >= FREE_SKILLS_LIMIT) {
-      appAlert('Limite atteinte', traduire("Tu as atteint la limite de {0} techniques en version gratuite. Passe à Premium pour en ajouter autant que tu veux.", FREE_SKILLS_LIMIT), [
+      appAlert(traduire('Limite atteinte'), traduire("Tu as atteint la limite de {0} techniques en version gratuite. Passe à Premium pour en ajouter autant que tu veux.", FREE_SKILLS_LIMIT), [
         { text: traduire('Annuler'), style: 'cancel' },
         { text: traduire('Débloquer Premium'), onPress: () => ouvrirPaywall('progression_mouvements', skills.length) },
       ]);
@@ -457,7 +457,7 @@ export default function TrainingJournalScreen() {
       }
     } catch (error) {
       logger.error('Création de la technique impossible', error);
-      appAlert('Oups', traduire('La technique n’a pas pu être créée.'));
+      appAlert(traduire('Oups'), traduire('La technique n’a pas pu être créée.'));
     } finally {
       setBusy(false);
     }
@@ -487,7 +487,7 @@ export default function TrainingJournalScreen() {
       changed();
     } catch (error) {
       logger.error('Ajout de note impossible', error);
-      appAlert('Oups', traduire('La note n’a pas pu être ajoutée.'));
+      appAlert(traduire('Oups'), traduire('La note n’a pas pu être ajoutée.'));
     } finally {
       setBusy(false);
     }
@@ -538,7 +538,7 @@ export default function TrainingJournalScreen() {
       await Promise.all([loadData(), loadTrash()]);
       setToast(traduire('Suivi restauré'));
       changed();
-    } else appAlert('Oups', traduire('Impossible de restaurer.'));
+    } else appAlert(traduire('Oups'), traduire('Impossible de restaurer.'));
   };
 
   const handleRestoreSkill = async (id: string) => {
@@ -546,7 +546,7 @@ export default function TrainingJournalScreen() {
       await Promise.all([loadData(), loadTrash()]);
       setToast(traduire('Technique restaurée'));
       changed();
-    } else appAlert('Oups', traduire('Impossible de restaurer.'));
+    } else appAlert(traduire('Oups'), traduire('Impossible de restaurer.'));
   };
 
   const handleEmptyTrash = () => {
@@ -554,7 +554,7 @@ export default function TrainingJournalScreen() {
     appAlert(traduire('Vider la corbeille ?'), traduirePluriel(trashCount, trashCount > 1, "{0} élément seront supprimés pour de bon.", "{0} éléments seront supprimés pour de bon.", trashCount), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Vider',
+        text: traduire('Vider'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -564,7 +564,7 @@ export default function TrainingJournalScreen() {
             setToast(traduire('Corbeille vidée'));
           } catch (error) {
             logger.error('Vidage de la corbeille impossible', error);
-            appAlert('Oups', traduire('La corbeille n’a pas pu être vidée.'));
+            appAlert(traduire('Oups'), traduire('La corbeille n’a pas pu être vidée.'));
           }
         },
       },
@@ -656,8 +656,8 @@ export default function TrainingJournalScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={P.accent} colors={[P.accent]} />}
       >
         <ScreenHead
-          title="Carnet"
-          subtitle={meta.phrase}
+          title={traduire("Carnet")}
+          subtitle={traduire(meta.phrase)}
           right={
             <>
               <AddPill label={meta.add} onPress={onAddPress} />
@@ -711,7 +711,7 @@ export default function TrainingJournalScreen() {
       </ScrollView>
 
       <Sheet visible={combatMenu} onClose={() => setCombatMenu(false)} title={traduire("Noter côté combat")}>
-        <ChoiceLine title={traduire("Une séance de sparring")} sub="Rounds, partenaires, soumissions" icon="swords" onPress={() => { setCombatMenu(false); router.push(`/seance/combat?sport=${pratique.combatSport}` as any); }} />
+        <ChoiceLine title={traduire("Une séance de sparring")} sub={traduire("Rounds, partenaires, soumissions")} icon="swords" onPress={() => { setCombatMenu(false); router.push(`/seance/combat?sport=${pratique.combatSport}` as any); }} />
         <ChoiceLine title={traduire("Un combat en compétition")} sub={traduire("Résultat, méthode, adversaire")} icon="trophy" onPress={() => { setCombatMenu(false); router.push('/seance/match' as any); }} />
         <ChoiceLine title={traduire("Une compétition à venir")} sub={traduire("La date, pour le compte à rebours")} icon="calendar" onPress={() => { setCombatMenu(false); router.push('/add-competition' as any); }} />
       </Sheet>
@@ -720,7 +720,7 @@ export default function TrainingJournalScreen() {
         <ChoiceLine title={traduire("Installer la bibliothèque d’exercices")} sub={traduire("{0} exercices prêts à suivre", EXERCISE_LIBRARY.length)} icon="book" onPress={handleInstallLibrary} />
         <ChoiceLine title={traduire("Retirer les suivis vides de démonstration")} sub={traduire("Garde un carnet propre")} icon="refresh" onPress={handleCleanDemo} />
         <ChoiceLine title={traduire("Partager mon carnet")} sub={traduire("Tes chiffres en une phrase")} icon="share" onPress={shareStats} />
-        <ChoiceLine title="Corbeille" sub={trashCount > 0 ? traduirePluriel(trashCount, trashCount > 1, "{0} élément à restaurer ou à vider", "{0} éléments à restaurer ou à vider", trashCount) : 'Vide'} icon="trash" onPress={async () => { setMoreMenu(false); await loadTrash(); setTimeout(() => setShowTrash(true), 300); }} />
+        <ChoiceLine title={traduire("Corbeille")} sub={trashCount > 0 ? traduirePluriel(trashCount, trashCount > 1, "{0} élément à restaurer ou à vider", "{0} éléments à restaurer ou à vider", trashCount) : 'Vide'} icon="trash" onPress={async () => { setMoreMenu(false); await loadTrash(); setTimeout(() => setShowTrash(true), 300); }} />
       </Sheet>
 
       <RecordPicker visible={picker} onClose={() => setPicker(false)} busy={busy} onPickTemplate={handlePickTemplate} onCreateCustom={handleCreateCustom} />

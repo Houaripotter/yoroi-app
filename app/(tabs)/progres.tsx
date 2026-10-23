@@ -170,7 +170,7 @@ export default function Progres() {
         <View style={{ height: 1, backgroundColor: c.divider, marginHorizontal: 22 }} />
 
         {/* Titre, phrase et illustration de l'onglet */}
-        <EnteteSection title={intro.title} sub={intro.sub} illus={intro.illus} style={{ marginHorizontal: 18, marginTop: 16 }} />
+        <EnteteSection title={traduire(intro.title)} sub={traduire(intro.sub)} illus={intro.illus} style={{ marginHorizontal: 18, marginTop: 16 }} />
 
         {section === 'Corps' ? (
           <>

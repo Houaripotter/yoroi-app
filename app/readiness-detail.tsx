@@ -120,7 +120,7 @@ export default function TaForme() {
               </View>
             </View>
             <Ink size={22} weight="black" tight>
-              {level.label}
+              {traduire(level.label)}
             </Ink>
             <Ink size={15} weight="medium" color={P.ink2} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
               {level.advice}
@@ -162,7 +162,7 @@ export default function TaForme() {
                 <View style={{ flex: 1, gap: 5 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <Ink size={15} weight="extraBold">
-                      {f.label}
+                      {traduire(f.label)}
                     </Ink>
                     <Ink size={15} weight="black" color={colorFor(f.score)}>
                       {String(f.score)}
@@ -188,10 +188,10 @@ export default function TaForme() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Ink size={15} weight="extraBold" color={P.ink2}>
-                        {m.label}
+                        {traduire(m.label)}
                       </Ink>
                       <Ink size={12} weight="bold" color={m.href ? P.accent : P.muted}>
-                        {m.text}
+                        {traduire(m.text)}
                       </Ink>
                     </View>
                     {m.href ? <Icon name="chevron" size={18} color={P.muted} /> : null}
@@ -257,8 +257,7 @@ export default function TaForme() {
       <Enter i={4}>
         <Card style={{ backgroundColor: P.goldSoft, borderColor: P.goldSoft, gap: 6 }}>
           <Ink size={15} weight="extraBold" color={P.goldDark}>
-            Comment on calcule
-          </Ink>
+            {traduire("Comment on calcule")}</Ink>
           {RECUP_METHOD.map((l) => (
             <Ink key={l} size={13} weight="medium" color={P.ink2} style={{ lineHeight: 19 }}>
               {l}

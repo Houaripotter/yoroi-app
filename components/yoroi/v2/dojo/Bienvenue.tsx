@@ -67,7 +67,7 @@ export function Bienvenue({ visible, summary, image, scene, onClose }: Props) {
                 {rows.map((r) => (
                   <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <CheckIcon size={20} color={c.accent} />
-                    <Ink size={15} weight="bold" style={{ flex: 1 }}>{r.label}</Ink>
+                    <Ink size={15} weight="bold" style={{ flex: 1 }}>{traduire(r.label)}</Ink>
                   </View>
                 ))}
               </View>

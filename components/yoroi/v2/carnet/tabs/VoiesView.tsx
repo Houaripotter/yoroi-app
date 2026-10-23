@@ -56,8 +56,8 @@ export function VoiesView({ refreshKey, hideEmpty }: { refreshKey: number; hideE
         <BigStats
           items={[
             { value: String(trainings.length), label: traduire('séances') },
-            { value: humanMinutes(st.min), label: 'en paroi' },
-            { value: st.best >= 0 ? GRADES[st.best] : '--', label: 'meilleure cotation', color: st.best >= 0 ? gradeTone(st.best) : P.muted },
+            { value: humanMinutes(st.min), label: traduire('en paroi') },
+            { value: st.best >= 0 ? GRADES[st.best] : '--', label: traduire('meilleure cotation'), color: st.best >= 0 ? gradeTone(st.best) : P.muted },
             { value: String(st.dist.length), label: traduire('cotations tentées') },
           ]}
         />

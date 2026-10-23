@@ -258,7 +258,7 @@ export default function TesNotifications() {
         DeviceEventEmitter.emit('YOROI_NOTIF_READ');
         showPopup(traduire('C’est parti'), traduire('Tu vas la recevoir dans quelques secondes.'));
       } catch {
-        showPopup('Oups', traduire('La notification de test n’a pas pu partir.'));
+        showPopup(traduire('Oups'), traduire('La notification de test n’a pas pu partir.'));
       }
     },
     [showPopup],
@@ -291,7 +291,7 @@ export default function TesNotifications() {
 
   if (!settings || !cit || !tips || !timer) {
     return (
-      <EspaceScreen title="Notifications">
+      <EspaceScreen title={traduire("Notifications")}>
         <View style={{ gap: 12 }}>
           {[0, 1, 2, 3].map((i) => (
             <View key={i} style={{ height: 70, borderRadius: 22, backgroundColor: c.fillSoft }} />
@@ -321,7 +321,7 @@ export default function TesNotifications() {
 
   return (
     <EspaceScreen
-      title="Notifications"
+      title={traduire("Notifications")}
       subtitle={traduire("Choisis ce que YOROI te rappelle, et quand.")}
     >
       {/* Autorisation */}
@@ -363,7 +363,7 @@ export default function TesNotifications() {
               <Icon name={upcoming.icon} size={19} color={c.accent} />
             </View>
             <View style={{ flex: 1 }}>
-              <Ink size={12} weight="bold" color={c.textSecondary}>Prochain rappel</Ink>
+              <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Prochain rappel")}</Ink>
               <Ink size={15} weight="extraBold">{`${upcoming.label}, ${sayWhen(upcoming.at)}`}</Ink>
             </View>
           </View>
@@ -526,7 +526,7 @@ export default function TesNotifications() {
         preview={{ title: traduire('Pause eau'), body: traduire("Ton corps a besoin d’eau. Bois un verre{0}!", NB), when: sayTime(hyd.startTime) }}
         test={{ label: traduire('M’envoyer un essai'), run: () => sendTest('hydration') }}
       >
-        <TimeField label="Premier rappel" value={hyd.startTime} onChange={(v) => patch('hydration', { startTime: v.slice(0, 3) + '00', endTime: v > hyd.endTime ? v.slice(0, 3) + '00' : hyd.endTime })} />
+        <TimeField label={traduire("Premier rappel")} value={hyd.startTime} onChange={(v) => patch('hydration', { startTime: v.slice(0, 3) + '00', endTime: v > hyd.endTime ? v.slice(0, 3) + '00' : hyd.endTime })} />
         <TimeField label={traduire("Dernier rappel au plus tard")} value={hyd.endTime} onChange={(v) => patch('hydration', { endTime: v.slice(0, 3) + '00', startTime: v < hyd.startTime ? v.slice(0, 3) + '00' : hyd.startTime })} />
         <ChoiceChips
           label={traduire("Un rappel toutes les")}
@@ -552,7 +552,7 @@ export default function TesNotifications() {
         summary={`${sayTime(tips.time)}, ${sayDays(tipDays)}`}
         on={tips.enabled}
         onToggle={(v) => setTip({ enabled: v })}
-        preview={{ title: 'Fluctuations', body: traduire('Ton poids varie d’un jour à l’autre avec l’eau et le sel : regarde la tendance, pas la pesée du jour.'), when: sayTime(tips.time) }}
+        preview={{ title: traduire('Fluctuations'), body: traduire('Ton poids varie d’un jour à l’autre avec l’eau et le sel : regarde la tendance, pas la pesée du jour.'), when: sayTime(tips.time) }}
       >
         <TimeField label={traduire("Heure du conseil")} value={tips.time} onChange={(v) => setTip({ time: v })} />
         <DaysPicker value={tipDays} onChange={(d) => setTip({ days: d })} />
@@ -575,7 +575,7 @@ export default function TesNotifications() {
       <NotifCard
         index={idx++}
         icon="brain"
-        title="Rappels malins"
+        title={traduire("Rappels malins")}
         pitch={traduire("Selon tes habitudes des 60 derniers jours")}
         summary={traduire("Analyse chaque soir à {0}", sayTime(smart.checkTime))}
         on={smart.enabled}
@@ -586,7 +586,7 @@ export default function TesNotifications() {
         <View>
           <MiniToggle label={traduire("Jour habituel manqué")} sub={traduire("Tu t’entraînes d’habitude ce jour-là")} value={smart.missedTrainingAlert} onChange={(v) => patch('smartReminders', { missedTrainingAlert: v })} />
           <MiniToggle label={traduire("Conseil de repos")} sub={traduire("Après plusieurs jours d’affilée")} value={smart.restDaySuggestion} onChange={(v) => patch('smartReminders', { restDaySuggestion: v })} />
-          <MiniToggle label="Rythme en baisse" sub={traduire("Moins de séances que d’habitude")} value={smart.frequencyAlert} onChange={(v) => patch('smartReminders', { frequencyAlert: v })} />
+          <MiniToggle label={traduire("Rythme en baisse")} sub={traduire("Moins de séances que d’habitude")} value={smart.frequencyAlert} onChange={(v) => patch('smartReminders', { frequencyAlert: v })} />
         </View>
       </NotifCard>
 

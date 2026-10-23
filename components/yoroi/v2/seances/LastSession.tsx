@@ -29,7 +29,7 @@ export function LastSessionCard({ vm, onRepeat, onOpen }: { vm: LastSessionVM; o
         {vm.art ? <Image source={vm.art} style={{ position: 'absolute', right: 0, top: 8, width: 118, height: 158 }} resizeMode="contain" /> : null}
         <View style={{ maxWidth: '68%', gap: 2 }}>
           <Ink size={12} weight="bold" color={c.textSecondary}>{vm.when}</Ink>
-          <Ink size={21} weight="black" tight numberOfLines={2}>{vm.title}</Ink>
+          <Ink size={21} weight="black" tight numberOfLines={2}>{traduire(vm.title)}</Ink>
         </View>
       </View>
 
@@ -41,7 +41,7 @@ export function LastSessionCard({ vm, onRepeat, onOpen }: { vm: LastSessionVM; o
                 {f.value}
                 {f.unit ? <Ink size={12} weight="bold" color={c.textSecondary}>{` ${f.unit}`}</Ink> : null}
               </Ink>
-              <Ink size={12} weight="bold" color={c.textMuted}>{f.label}</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire(f.label)}</Ink>
             </View>
           ))}
           {vm.stamps > 0 ? (
@@ -59,7 +59,7 @@ export function LastSessionCard({ vm, onRepeat, onOpen }: { vm: LastSessionVM; o
           <View style={{ borderRadius: 16, backgroundColor: c.fillSoft, paddingHorizontal: 12 }}>
             {vm.exercises.map((e, i) => (
               <View key={`${e.name}${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.border }}>
-                <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{e.name}</Ink>
+                <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{traduire(e.name)}</Ink>
                 {e.best ? <Ink size={14} weight="extraBold">{e.best}</Ink> : null}
               </View>
             ))}
@@ -68,7 +68,7 @@ export function LastSessionCard({ vm, onRepeat, onOpen }: { vm: LastSessionVM; o
 
         {onRepeat || onOpen ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            {onRepeat ? <BigButton label="Refaire" icon="repeat" tone="accent" onPress={onRepeat} style={{ flex: 1 }} /> : null}
+            {onRepeat ? <BigButton label={traduire("Refaire")} icon="repeat" tone="accent" onPress={onRepeat} style={{ flex: 1 }} /> : null}
             {onOpen ? <BigButton label={traduire("Détails")} tone="soft" onPress={onOpen} style={{ flex: 1 }} /> : null}
           </View>
         ) : null}

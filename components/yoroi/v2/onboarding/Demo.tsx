@@ -79,7 +79,7 @@ function RecordsExemples() {
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
         <Ink size={15} weight="black">{traduire("Ton carnet de records")}</Ink>
         <View style={{ borderRadius: 999, backgroundColor: c.fillSoft, paddingHorizontal: 9, paddingVertical: 3 }}>
-          <Ink size={11} weight="black" color={c.textSecondary} style={{ letterSpacing: 0.6 }}>EXEMPLES</Ink>
+          <Ink size={11} weight="black" color={c.textSecondary} style={{ letterSpacing: 0.6 }}>{traduire("EXEMPLES")}</Ink>
         </View>
       </View>
       {EXEMPLES.map((r, i) => (
@@ -87,7 +87,7 @@ function RecordsExemples() {
           <Tampon name={r.tampon} size={50} rotate={i % 2 ? 6 : -7} accessibilityLabel={null} />
           <View style={{ flex: 1, gap: 1 }}>
             <Ink size={11} weight="black" color={c.textMuted} style={{ letterSpacing: 0.6 }}>{r.famille.toUpperCase()}</Ink>
-            <Ink size={15} weight="black" tight numberOfLines={2}>{r.titre}</Ink>
+            <Ink size={15} weight="black" tight numberOfLines={2}>{traduire(r.titre)}</Ink>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 3 }}>
             <TropheeRecord size={18} />
@@ -160,7 +160,7 @@ export function Demo({ nav, start, target, goal, recompo = false, sessions, days
   }, [auto, index, w]);
 
   return (
-    <Shell {...nav} title={traduire("Voilà ce qui **t’attend**")} gap={10} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Voilà ce qui **t’attend**")} gap={10} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
       <View onLayout={(e) => setW(Math.round(e.nativeEvent.layout.width))} onTouchStart={stopAuto} style={{ marginHorizontal: -4 }}>
         {w > 0 ? (
           <ScrollView

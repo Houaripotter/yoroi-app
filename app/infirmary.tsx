@@ -111,7 +111,7 @@ function Infirmary() {
 
   const status = {
     operational: { title: traduire('Opérationnel'), text: traduire('Aucune douleur active. Continue de bien récupérer.'), bg: c.successTint, fg: c.successText },
-    restricted: { title: 'Restreint', text: traduire('Une douleur modérée est notée. Adapte l’intensité sur la zone.'), bg: intensite(3).tint, fg: intensite(3).text },
+    restricted: { title: traduire('Restreint'), text: traduire('Une douleur modérée est notée. Adapte l’intensité sur la zone.'), bg: intensite(3).tint, fg: intensite(3).text },
     unfit: { title: traduire('Attention'), text: traduire('Douleur importante notée. Repos de la zone et avis d’un professionnel de santé.'), bg: c.accentTint, fg: c.accentPressed },
   }[fit];
 
@@ -121,7 +121,7 @@ function Infirmary() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <DetailHeader title="Infirmerie" sub={traduire("Ton carnet de soins, pour revenir plus fort.")} />
+        <DetailHeader title={traduire("Infirmerie")} sub={traduire("Ton carnet de soins, pour revenir plus fort.")} />
 
         <View style={{ marginHorizontal: GUTTER, marginTop: 14, padding: 16, borderRadius: 22, backgroundColor: status.bg, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Svg width={34} height={34} viewBox="0 0 24 24" fill="none">
@@ -129,8 +129,8 @@ function Infirmary() {
             <Path d="M12 7.5v9M7.5 12h9" stroke={status.fg} strokeWidth={2.4} strokeLinecap="round" />
           </Svg>
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={20} weight="black" tight color={status.fg}>{status.title}</Ink>
-            <Ink size={13} color={c.textSecondary}>{status.text}</Ink>
+            <Ink size={20} weight="black" tight color={status.fg}>{traduire(status.title)}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire(status.text)}</Ink>
           </View>
         </View>
 
@@ -138,7 +138,7 @@ function Infirmary() {
           <StatStrip
             style={{ marginHorizontal: GUTTER, marginTop: 18 }}
             items={[
-              { value: String(stats.activeInjuries), label: 'en cours' },
+              { value: String(stats.activeInjuries), label: traduire('en cours') },
               { value: String(stats.healedInjuries), label: traduire('guéries') },
               { value: `${Math.round(stats.averageRecoveryDays || 0)} j`, label: traduire('de récupération en moyenne') },
             ]}
@@ -186,7 +186,7 @@ function Infirmary() {
                   style={{ flex: 1, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? P.white : 'transparent' }}
                 >
                   <Ink size={15} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>
-                    {v === 'front' ? 'Face' : 'Dos'}
+                    {v === 'front' ? traduire('Face') : traduire('Dos')}
                   </Ink>
                 </Pressable>
               );
@@ -235,7 +235,7 @@ function Infirmary() {
                     <Ink size={18} weight="black" color={levelOnColor(inj.eva_score ?? 0)}>{String(inj.eva_score ?? 0)}</Ink>
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Ink size={15} weight="extraBold">{inj.zone_name ? sentenceCase(inj.zone_name) : 'Zone'}</Ink>
+                    <Ink size={15} weight="extraBold">{inj.zone_name ? sentenceCase(inj.zone_name) : traduire('Zone')}</Ink>
                     <Ink size={12} color={c.textSecondary}>{traduirePluriel(days, days > 1, "douleur {0} sur 10, depuis {1} jour", "douleur {0} sur 10, depuis {1} jours", inj.eva_score ?? 0, days)}</Ink>
                     {load && load.totalLoad > 0 ? <Ink size={12} color={c.textSecondary}>{traduire("semaine d’avant : {0}, {1} points", RISK_LABELS[load.riskLevel] ?? load.riskLevel, load.totalLoad)}</Ink> : null}
                   </View>

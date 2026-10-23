@@ -17,8 +17,8 @@ export type StudioStyle = CardVariant;
 
 const STYLES: { key: StudioStyle; label: string }[] = [
   { key: 'papier', label: 'Papier' },
-  { key: 'laque', label: 'Laque' },
-  { key: 'photo', label: 'Photo' },
+  { key: 'laque', label: traduire('Laque') },
+  { key: 'photo', label: traduire('Photo') },
 ];
 
 function Swatch({ k }: { k: StudioStyle }) {
@@ -47,7 +47,7 @@ export function StylePicker({ value, onChange }: { value: StudioStyle; onChange:
             <Press onPress={() => onChange(s.key)} accessibilityRole="button" accessibilityLabel={`Habillage ${s.label}`} accessibilityState={{ selected: on }}>
               <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 8 }}>
                 <Swatch k={s.key} />
-                <Ink size={14} weight="extraBold" color={on ? P.white : P.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{s.label}</Ink>
+                <Ink size={14} weight="extraBold" color={on ? P.white : P.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(s.label)}</Ink>
               </View>
             </Press>
           </View>
@@ -64,7 +64,7 @@ export function PhotoButtons({ hasPhoto, onPick }: { hasPhoto: boolean; onPick: 
       <Press onPress={() => onPick('gallery')} accessibilityRole="button" accessibilityLabel={hasPhoto ? traduire('Changer de photo') : traduire('Choisir une photo')}>
         <View style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <EIcon name="image" size={18} />
-          <Ink size={14} weight="bold">{hasPhoto ? traduire('Changer de photo') : 'Galerie'}</Ink>
+          <Ink size={14} weight="bold">{hasPhoto ? traduire('Changer de photo') : traduire('Galerie')}</Ink>
         </View>
       </Press>
       </View>
@@ -72,7 +72,7 @@ export function PhotoButtons({ hasPhoto, onPick }: { hasPhoto: boolean; onPick: 
       <Press onPress={() => onPick('camera')} accessibilityRole="button" accessibilityLabel={traduire("Prendre une photo")}>
         <View style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <EIcon name="camera" size={18} />
-          <Ink size={14} weight="bold">Appareil photo</Ink>
+          <Ink size={14} weight="bold">{traduire("Appareil photo")}</Ink>
         </View>
       </Press>
       </View>
@@ -127,7 +127,7 @@ export function ShareStudio({
   if (empty) {
     return (
       <DetailScreen title={title} subtitle={subtitle} onBack={onBack}>
-        <EmptyState title={empty.title} text={empty.text} action={empty.action} onAction={empty.onAction} />
+        <EmptyState title={traduire(empty.title)} text={traduire(empty.text)} action={empty.action} onAction={empty.onAction} />
       </DetailScreen>
     );
   }
@@ -153,15 +153,15 @@ export function ShareStudio({
         {children}
       </View>
       <View style={{ gap: 10, marginTop: 6 }}>
-        <Ink size={17} weight="black" tight style={{ paddingHorizontal: 4 }}>Habillage</Ink>
+        <Ink size={17} weight="black" tight style={{ paddingHorizontal: 4 }}>{traduire("Habillage")}</Ink>
         <StylePicker value={style} onChange={onStyle} />
         {style === 'photo' ? <PhotoButtons hasPhoto={hasPhoto} onPick={onPickPhoto} /> : null}
       </View>
       {extras}
       {secondary ? (
-        <Press onPress={secondary.onPress} accessibilityRole="button" accessibilityLabel={secondary.label}>
+        <Press onPress={secondary.onPress} accessibilityRole="button" accessibilityLabel={traduire(secondary.label)}>
           <View style={{ minHeight: 52, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Ink size={15} weight="extraBold">{secondary.label}</Ink>
+            <Ink size={15} weight="extraBold">{traduire(secondary.label)}</Ink>
             <Icon name="chevron" size={16} />
           </View>
         </Press>

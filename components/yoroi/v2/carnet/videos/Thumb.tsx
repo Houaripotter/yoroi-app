@@ -93,7 +93,7 @@ export function VideoTile({ v, width, onPress, onLongPress }: { v: CarnetVideo; 
             </View>
           ) : null}
         </View>
-        <Ink size={14} weight="extraBold" numberOfLines={2}>{v.title}</Ink>
+        <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(v.title)}</Ink>
         <Ink size={12} weight="bold" color={P.muted} numberOfLines={1}>{placeOf(v)}</Ink>
       </View>
     </Press>

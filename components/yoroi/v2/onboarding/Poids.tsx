@@ -64,7 +64,7 @@ export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; uni
             <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="check" size={12} color={c.accent} stroke={3} />
             </View>
-            <Ink size={14} weight="bold" style={{ flex: 1 }}>{l.label}</Ink>
+            <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire(l.label)}</Ink>
           </Animated.View>
         ))}
       </View>
@@ -124,7 +124,7 @@ export function Poids({
 
   if (reward) {
     return (
-      <Shell {...nav} title={traduire("**Première pesée**, c’est noté")} sub={traduire("**{0} kg**, le point de départ de ta courbe.", kg(value))} footer={<MainButton label="Continuer" onPress={onNext} />}>
+      <Shell {...nav} title={traduire("**Première pesée**, c’est noté")} sub={traduire("**{0} kg**, le point de départ de ta courbe.", kg(value))} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
         <RewardPanel reward={reward} univers={univers} />
       </Shell>
     );
@@ -165,7 +165,7 @@ export function Poids({
         <View style={{ borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 10 }}>
           <Pressable onPress={reading ? undefined : onUseHealth} accessibilityRole="button" accessibilityLabel={traduire("Reprendre ma dernière pesée")} style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12 })}>
             {reading ? <ActivityIndicator color={c.indigo} /> : <Icon name="heart" size={18} color={c.indigo} />}
-            <Ink size={15} weight="extraBold" color={c.indigo}>{reading ? 'Lecture en cours' : traduire('Reprendre ma dernière pesée')}</Ink>
+            <Ink size={15} weight="extraBold" color={c.indigo}>{reading ? traduire('Lecture en cours') : traduire('Reprendre ma dernière pesée')}</Ink>
           </Pressable>
           <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{traduire("YOROI te demandera l’accès à {0} pour lire ta dernière pesée. Ensuite, tes pesées et tes séances arrivent toutes seules. Rien ne quitte ton téléphone.", healthName)}</Ink>
         </View>

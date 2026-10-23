@@ -280,7 +280,7 @@ export default function MeasurementsScreen() {
                 accessibilityState={{ selected: on }}
                 style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? c.ink : done ? c.successTint : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : done ? c.successTint : '#D5D2CA' }}
               >
-                <Ink size={13} weight="bold" color={on ? P.paper : done ? c.successText : c.textSecondary}>{f.label}</Ink>
+                <Ink size={13} weight="bold" color={on ? P.paper : done ? c.successText : c.textSecondary}>{traduire(f.label)}</Ink>
               </Pressable>
             );
           })}

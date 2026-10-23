@@ -108,8 +108,7 @@ export function FeuilleEau({ visible, onClose, water, waterGoal }: { visible: bo
           {/* retirer */}
           <View style={{ gap: 8 }}>
             <Ink size={13} weight="extraBold" color={P.ink2}>
-              Retirer
-            </Ink>
+              {traduire("Retirer")}</Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {RETRAITS.map((l) => (
                 <View key={`r${l}`} style={{ flex: 1 }}>

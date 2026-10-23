@@ -15,7 +15,7 @@ import { traduire } from '@/lib/i18n/tr';
 
 const ENDURANCE = new Set(sportsInPack('endurance'));
 const DISTANCES = [
-  { label: '5 km', km: 5, tolerance: 0.5 },
+  { label: traduire('5 km'), km: 5, tolerance: 0.5 },
   { label: '10 km', km: 10, tolerance: 1 },
   { label: 'Semi-marathon', km: 21.1, tolerance: 2 },
   { label: 'Marathon', km: 42.195, tolerance: 3 },
@@ -82,7 +82,7 @@ export function AlluresView({ refreshKey, hideEmpty }: { refreshKey: number; hid
       {prs.map((p) => (
         <View key={p.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 22, backgroundColor: p.best ? P.white : blancA(0.55), borderWidth: 1, borderColor: P.line2 }}>
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={14} weight="bold" color={p.best ? P.indigo : P.muted}>{p.label}</Ink>
+            <Ink size={14} weight="bold" color={p.best ? P.indigo : P.muted}>{traduire(p.label)}</Ink>
             {p.best ? <Ink size={24} weight="black" tight>{timeText(p.best.min)}</Ink> : <Ink size={14} weight="medium" color={P.muted}>{traduire("Pas encore de sortie à cette distance")}</Ink>}
             {p.count > 0 ? <Ink size={12} weight="bold" color={P.muted}>{`${p.count} sortie${p.count > 1 ? 's' : ''}`}</Ink> : null}
           </View>

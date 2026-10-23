@@ -103,7 +103,7 @@ export function FinRessenti({ trainingId, combat }: { trainingId: number; combat
                 key={m.value}
                 onPress={() => update({ mood: on ? null : m.value })}
                 accessibilityRole="button"
-                accessibilityLabel={m.label}
+                accessibilityLabel={traduire(m.label)}
                 accessibilityState={{ selected: on }}
                 style={({ pressed }) => ({ flex: 1, minHeight: 72, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.fillSoft, borderWidth: 1, borderColor: on ? c.accent : 'transparent' })}
               >
@@ -112,7 +112,7 @@ export function FinRessenti({ trainingId, combat }: { trainingId: number; combat
                     <View key={b} style={{ width: 4, height: 6 + b * 4, borderRadius: 2, backgroundColor: b < level ? (on ? c.onAccent : c.ink) : on ? 'rgba(255,255,255,0.3)' : c.border }} />
                   ))}
                 </View>
-                <Ink size={11} weight="bold" color={on ? c.onAccent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{m.label}</Ink>
+                <Ink size={11} weight="bold" color={on ? c.onAccent : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(m.label)}</Ink>
               </Pressable>
             );
           })}
@@ -124,7 +124,7 @@ export function FinRessenti({ trainingId, combat }: { trainingId: number; combat
           <View style={{ height: 1, backgroundColor: c.divider }} />
           <View style={{ gap: 4 }}>
             <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduire("Ta technique")}</Ink>
-            <Stars value={r.technique} onChange={(n) => update({ technique: n })} label="Note technique" color={c.indigo} track={c.border} />
+            <Stars value={r.technique} onChange={(n) => update({ technique: n })} label={traduire("Note technique")} color={c.indigo} track={c.border} />
             <Ink size={13} weight="bold" color={r.technique ? c.ink : c.textMuted} style={{ textAlign: 'center' }}>
               {r.technique ? TECH_WORDS[r.technique] : traduire('Elle nourrit ton radar de progression')}
             </Ink>

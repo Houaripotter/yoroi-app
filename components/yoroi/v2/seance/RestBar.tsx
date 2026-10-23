@@ -82,7 +82,7 @@ export function RestBar({ endsAt, total, bottom, onAdd, onSkip, onFinish }: Prop
         </View>
         {btn('15 s', traduire('Enlever 15 secondes de repos'), () => onAdd(-15), 'minus')}
         {btn('15 s', traduire('Ajouter 15 secondes de repos'), () => onAdd(15), 'plus')}
-        {btn('Passer', traduire('Passer le repos'), onSkip)}
+        {btn(traduire('Passer'), traduire('Passer le repos'), onSkip)}
       </View>
       {/* le temps qui reste, en barre sur toute la largeur */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 5, backgroundColor: 'rgba(29,32,41,0.06)' }}>

@@ -11,6 +11,7 @@ import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { appAlert, closeAppAlert } from '@/components/yoroi/v2/fenetre/api';
+import { traduire } from '@/lib/i18n/tr';
 
 export interface PopupButton {
   text: string;
@@ -119,7 +120,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
                     key={index}
                     onPress={() => handleButtonPress(button)}
                     accessibilityRole="button"
-                    accessibilityLabel={button.text}
+                    accessibilityLabel={traduire(button.text)}
                     style={({ pressed }) => [
                       styles.button,
                       !vertical && styles.buttonHorizontal,
@@ -127,7 +128,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
                     ]}
                   >
                     <Ink size={15} weight={t.weight} color={t.fg} numberOfLines={2} style={styles.center}>
-                      {button.text}
+                      {traduire(button.text)}
                     </Ink>
                   </Pressable>
                 );

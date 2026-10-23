@@ -30,7 +30,7 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 const SCENE = require('@/assets/avatars/app/monde/scenes/remparts.webp');
 
 type Filter = 'all' | 'victoire' | 'defaite' | 'nul';
-const METHOD_LABEL: Record<string, string> = { soumission: 'Soumission', points: 'Points', decision: traduire('Décision'), ko: 'KO', tko: 'KO technique', abandon: 'Abandon', forfait: 'Forfait', dq: 'Disqualification' };
+const METHOD_LABEL: Record<string, string> = { soumission: traduire('Soumission'), points: traduire('Points'), decision: traduire('Décision'), ko: 'KO', tko: 'KO technique', abandon: 'Abandon', forfait: 'Forfait', dq: traduire('Disqualification') };
 const METHOD_INK = ['#2C4A84', '#A8832F', '#6E8C3A', '#8C6A3F', '#3D5D9E', '#8B8D96', '#1D2029'];
 
 export default function PalmaresScreen() {
@@ -169,10 +169,10 @@ export default function PalmaresScreen() {
                 ))}
               </View>
               {medalled.slice(0, 5).map(({ k, m }) => (
-                <Pressable key={k.id} onPress={() => { tap(); router.push(`/competition-detail?id=${k.id}` as any); }} accessibilityRole="button" accessibilityLabel={k.nom} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
+                <Pressable key={k.id} onPress={() => { tap(); router.push(`/competition-detail?id=${k.id}` as any); }} accessibilityRole="button" accessibilityLabel={traduire(k.nom)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
                   <MedalIcon kind={m} size={30} />
                   <View style={{ flex: 1 }}>
-                    <Ink size={14} weight="extraBold" numberOfLines={2}>{k.nom}</Ink>
+                    <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(k.nom)}</Ink>
                     <Ink size={12} color={c.textSecondary}>{longDate(k.date.slice(0, 10), true)}</Ink>
                   </View>
                   <Icon name="chevron" size={16} color={c.textMuted} />
@@ -195,7 +195,7 @@ export default function PalmaresScreen() {
           {last ? (
             <Glass onPress={() => router.push(`/combat-detail?id=${last.id}` as any)} label={traduire("Ton dernier combat")} style={{ gap: 4 }}>
               <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Ton dernier combat, {0}", relativeDay(last.date.slice(0, 10), today))}</Ink>
-              <Ink size={18} weight="black" tight>{`${last.resultat === 'victoire' ? traduire('Victoire') : last.resultat === 'defaite' ? traduire('Défaite') : 'Nul'} contre ${last.adversaire_nom || traduire('un adversaire')}`}</Ink>
+              <Ink size={18} weight="black" tight>{`${last.resultat === 'victoire' ? traduire('Victoire') : last.resultat === 'defaite' ? traduire('Défaite') : traduire('Nul')} contre ${last.adversaire_nom || traduire('un adversaire')}`}</Ink>
               <Ink size={13} color={c.textSecondary}>{[last.adversaire_club, last.methode ? METHOD_LABEL[last.methode] ?? last.methode : '', last.technique, last.temps].filter(Boolean).join(', ')}</Ink>
             </Glass>
           ) : null}
@@ -255,7 +255,7 @@ export default function PalmaresScreen() {
                       <Ink size={19} weight="black" color={win ? c.goldDeep : loss ? c.accent : c.textSecondary} allowFontScaling={false}>{win ? 'V' : loss ? 'D' : 'N'}</Ink>
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Ink size={15} weight="extraBold" numberOfLines={1}>{x.adversaire_nom || 'Adversaire'}</Ink>
+                      <Ink size={15} weight="extraBold" numberOfLines={1}>{x.adversaire_nom || traduire('Adversaire')}</Ink>
                       <Ink size={12} color={c.textSecondary} numberOfLines={1}>{[longDate(x.date.slice(0, 10), true), x.methode ? METHOD_LABEL[x.methode] ?? x.methode : '', x.round && x.temps ? `round ${x.round}, ${x.temps}` : ''].filter(Boolean).join(', ')}</Ink>
                     </View>
                     <Icon name="chevron" size={18} color={c.textMuted} />

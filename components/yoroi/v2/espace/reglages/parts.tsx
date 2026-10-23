@@ -163,7 +163,7 @@ export function MiniAction({ label, onPress, busy }: { label: string; onPress: (
       accessibilityLabel={label}
       style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, backgroundColor: pressed ? c.accentPressed : c.accent, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 })}
     >
-      <Ink size={13} weight="extraBold" color={c.onAccent} numberOfLines={1}>{busy ? 'En cours' : label}</Ink>
+      <Ink size={13} weight="extraBold" color={c.onAccent} numberOfLines={1}>{busy ? traduire('En cours') : label}</Ink>
     </Pressable>
   );
 }
@@ -298,13 +298,13 @@ export function ChoiceSheet<T extends string | number>({ visible, onClose, title
               onPress={() => { selectionAsync().catch(() => {}); onChange(o.key); onClose(); }}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={o.label}
+              accessibilityLabel={traduire(o.label)}
               style={({ pressed }) => ({ minHeight: 58, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: i ? 1 : 0, borderColor: c.divider, backgroundColor: pressed ? c.fillSoft : on ? c.accentTint : 'transparent' })}
             >
               {o.preview ?? null}
               <View style={{ flex: 1, gap: 1 }}>
-                <Ink size={16} weight={on ? 'extraBold' : 'bold'}>{o.label}</Ink>
-                {o.sub ? <Ink size={12} color={c.textMuted}>{o.sub}</Ink> : null}
+                <Ink size={16} weight={on ? 'extraBold' : 'bold'}>{traduire(o.label)}</Ink>
+                {o.sub ? <Ink size={12} color={c.textMuted}>{traduire(o.sub)}</Ink> : null}
               </View>
               <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: on ? 0 : 2, borderColor: c.border, backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                 {on ? <Icon name="check" size={15} color={c.onAccent} stroke={3} /> : null}

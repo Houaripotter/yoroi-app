@@ -1915,30 +1915,30 @@ export function generateClipPath(shape: FrameShape, s: number, pad: number = 4):
 // ============================================
 export const BORDER_COLORS = [
   { id: 'none', label: traduire('Aucun'), color: null as string | null },
-  { id: 'theme', label: 'Theme', color: null as string | null },
+  { id: 'theme', label: traduire('Theme'), color: null as string | null },
   { id: 'white', label: 'Blanc', color: '#FFFFFF' },
   { id: 'black', label: 'Noir', color: '#1A1A1A' },
   { id: 'gold', label: 'Or', color: '#FFD700' },
-  { id: 'silver', label: 'Argent', color: '#C0C0C0' },
+  { id: 'silver', label: traduire('Argent'), color: '#C0C0C0' },
   { id: 'rose', label: 'Rose', color: '#F06292' },
-  { id: 'red', label: 'Rouge', color: '#EF4444' },
-  { id: 'orange', label: 'Orange', color: '#F97316' },
-  { id: 'cyan', label: 'Cyan', color: '#06B6D4' },
+  { id: 'red', label: traduire('Rouge'), color: '#EF4444' },
+  { id: 'orange', label: traduire('Orange'), color: '#F97316' },
+  { id: 'cyan', label: traduire('Cyan'), color: '#06B6D4' },
   { id: 'purple', label: 'Violet', color: '#8B5CF6' },
   { id: 'green', label: 'Vert', color: '#10B981' },
-  { id: 'blue', label: 'Bleu', color: '#3B82F6' },
+  { id: 'blue', label: traduire('Bleu'), color: '#3B82F6' },
 ];
 
 export const BORDER_THICKNESS_OPTIONS = [
-  { id: 'thin', label: 'Fine', value: 1.5 },
-  { id: 'normal', label: 'Normale', value: 2.5 },
-  { id: 'thick', label: 'Epaisse', value: 5 },
+  { id: 'thin', label: traduire('Fine'), value: 1.5 },
+  { id: 'normal', label: traduire('Normale'), value: 2.5 },
+  { id: 'thick', label: traduire('Epaisse'), value: 5 },
 ];
 
 export const BORDER_EFFECT_OPTIONS = [
-  { id: 'none' as BorderEffect, label: 'Solide' },
-  { id: 'gold' as BorderEffect, label: 'Or brillant' },
-  { id: 'neon' as BorderEffect, label: 'Neon' },
+  { id: 'none' as BorderEffect, label: traduire('Solide') },
+  { id: 'gold' as BorderEffect, label: traduire('Or brillant') },
+  { id: 'neon' as BorderEffect, label: traduire('Neon') },
 ];
 
 // ============================================

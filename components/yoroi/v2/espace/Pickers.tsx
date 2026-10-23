@@ -60,7 +60,7 @@ export function ScenePicker({ value, preview, isPremium, isAnnual = false, rankI
               <View style={{ position: 'absolute', right: 8, top: 8 }}>{chosen ? <Check size={24} /> : locked ? <LockBadge size={24} /> : null}</View>
             </View>
             <View style={{ gap: 1, paddingHorizontal: 2 }}>
-              <Ink size={15} weight="extraBold">{s.nom}</Ink>
+              <Ink size={15} weight="extraBold">{traduire(s.nom)}</Ink>
               <Ink size={12} color={s.annuel ? c.goldDeep : c.textMuted} numberOfLines={2}>{locked || s.annuel ? lockLabel : s.phrase}</Ink>
             </View>
           </Pressable>
@@ -100,7 +100,7 @@ export function GuerrierPicker({ value, rankIndex, onPick, height = 250 }: {
   };
   return (
     <View style={{ flexDirection: 'row', gap: 12 }}>
-      {card('guerrier_h', 'Guerrier')}
+      {card('guerrier_h', traduire('Guerrier'))}
       {card('guerrier_f', traduire('Guerrière'))}
     </View>
   );

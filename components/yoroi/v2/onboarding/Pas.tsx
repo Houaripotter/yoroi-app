@@ -16,18 +16,18 @@ export type PasDef = { delta: number; label: string; a11y: string };
 
 /** Le jeu de boutons du poids : moins 1 kg, moins 0,1, plus 0,1, plus 1 kg */
 export const PAS_KG: PasDef[] = [
-  { delta: -1, label: '1 kg', a11y: traduire('Moins 1 kilo') },
+  { delta: -1, label: traduire('1 kg'), a11y: traduire('Moins 1 kilo') },
   { delta: -0.1, label: '0,1', a11y: traduire('Moins 100 grammes') },
   { delta: 0.1, label: '0,1', a11y: traduire('Plus 100 grammes') },
-  { delta: 1, label: '1 kg', a11y: traduire('Plus 1 kilo') },
+  { delta: 1, label: traduire('1 kg'), a11y: traduire('Plus 1 kilo') },
 ];
 
 /** Le jeu de boutons de la taille : moins 5, moins 1, plus 1, plus 5 cm */
 export const PAS_CM: PasDef[] = [
-  { delta: -5, label: '5 cm', a11y: traduire('Moins 5 centimètres') },
-  { delta: -1, label: '1 cm', a11y: traduire('Moins 1 centimètre') },
-  { delta: 1, label: '1 cm', a11y: traduire('Plus 1 centimètre') },
-  { delta: 5, label: '5 cm', a11y: traduire('Plus 5 centimètres') },
+  { delta: -5, label: traduire('5 cm'), a11y: traduire('Moins 5 centimètres') },
+  { delta: -1, label: traduire('1 cm'), a11y: traduire('Moins 1 centimètre') },
+  { delta: 1, label: traduire('1 cm'), a11y: traduire('Plus 1 centimètre') },
+  { delta: 5, label: traduire('5 cm'), a11y: traduire('Plus 5 centimètres') },
 ];
 
 function Bouton({ pas, fort, onStep }: { pas: PasDef; fort: boolean; onStep: (d: number) => void }) {
@@ -80,7 +80,7 @@ function Bouton({ pas, fort, onStep }: { pas: PasDef; fort: boolean; onStep: (d:
           }}
         >
           <Icon name={plus ? 'plus' : 'minus'} size={15} stroke={3} color={pressed && fort ? '#FFFFFF' : ink} />
-          <Ink size={16} weight="black" color={pressed && fort ? '#FFFFFF' : ink} numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{pas.label}</Ink>
+          <Ink size={16} weight="black" color={pressed && fort ? '#FFFFFF' : ink} numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{traduire(pas.label)}</Ink>
         </View>
       )}
     </Pressable>

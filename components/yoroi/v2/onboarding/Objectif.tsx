@@ -32,7 +32,7 @@ export function Objectif({ nav, name = '', goals, onChange, onNext }: { nav: Nav
   const phrase = note ?? phraseCombinaison(goals);
   const petit = useWindowDimensions().height < 720;
   return (
-    <Shell {...nav} title={name.trim() ? traduire("Qu’est-ce que tu **vises**, {0} ?", name.trim()) : traduire('Qu’est-ce que tu **vises** ?')} sub={traduire("Ce que tu viens chercher dans YOROI. Choisis-en un ou plusieurs.")} gap={petit ? 8 : 12} footer={<MainButton label="Continuer" onPress={onNext} disabled={!goals.length} />}>
+    <Shell {...nav} title={name.trim() ? traduire("Qu’est-ce que tu **vises**, {0} ?", name.trim()) : traduire('Qu’est-ce que tu **vises** ?')} sub={traduire("Ce que tu viens chercher dans YOROI. Choisis-en un ou plusieurs.")} gap={petit ? 8 : 12} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!goals.length} />}>
       {GOALS.map((g) => {
         const on = goals.includes(g.id);
         return (
@@ -45,12 +45,12 @@ export function Objectif({ nav, name = '', goals, onChange, onNext }: { nav: Nav
               setNote(r.note);
               onChange(r.list);
             }}
-            label={g.label}
+            label={traduire(g.label)}
           >
             <View style={{ minHeight: petit ? 72 : 84, flexDirection: 'row', alignItems: 'center', gap: 14, paddingLeft: 12, paddingRight: 14, paddingVertical: petit ? 6 : 10 }}>
               <Tampon name={g.tampon} size={petit ? 52 : 62} rotate={-5} ink={g.encre.ink} accessibilityLabel={null} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={17} weight="black" tight color={on ? g.encre.ink : c.ink}>{g.label}</Ink>
+                <Ink size={17} weight="black" tight color={on ? g.encre.ink : c.ink}>{traduire(g.label)}</Ink>
                 <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{g.line}</Ink>
               </View>
               <View style={{ width: 30, alignItems: 'center' }}>

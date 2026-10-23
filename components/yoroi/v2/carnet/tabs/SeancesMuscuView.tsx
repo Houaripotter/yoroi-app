@@ -12,12 +12,12 @@ import { SessionLine, TabEmpty, TabLoading } from './common';
 import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const SPLITS: Record<string, { label: string; kw: string[] }> = {
-  push: { label: 'Push', kw: ['push', 'pecs', traduire('épaules'), 'triceps', 'dc', 'dm', traduire('développé couché'), traduire('développé militaire')] },
-  pull: { label: 'Pull', kw: ['pull', 'dos', 'biceps', 'rowing', 'traction', 'tirage', 'sdt', traduire('soulevé')] },
+  push: { label: traduire('Push'), kw: ['push', 'pecs', 'épaules', 'triceps', 'dc', 'dm', 'développé couché', 'développé militaire'] },
+  pull: { label: traduire('Pull'), kw: ['pull', 'dos', 'biceps', 'rowing', 'traction', 'tirage', 'sdt', 'soulevé'] },
   legs: { label: 'Jambes', kw: ['legs', 'jambes', 'quadri', 'ischio', 'squat', 'fente', 'mollet'] },
-  upper: { label: traduire('Haut du corps'), kw: ['upper', traduire('haut du corps')] },
-  lower: { label: traduire('Bas du corps'), kw: ['lower', traduire('bas du corps')] },
-  full: { label: 'Corps entier', kw: ['full', 'full body', 'circuit'] },
+  upper: { label: traduire('Haut du corps'), kw: ['upper', 'haut du corps'] },
+  lower: { label: traduire('Bas du corps'), kw: ['lower', 'bas du corps'] },
+  full: { label: traduire('Corps entier'), kw: ['full', 'full body', 'circuit'] },
   abs: { label: 'Abdos', kw: ['abdos', 'core', 'gainage', 'abs'] },
 };
 
@@ -74,7 +74,7 @@ export function SeancesMuscuView({ refreshKey, hideEmpty }: { refreshKey: number
         <Sheet2>
           <Ink size={18} weight="black" tight>{traduire("Ton split")}</Ink>
           {st.dist.map((d, i) => (
-            <RankRow key={d.key} title={d.label} value={traduirePluriel(d.count, d.count > 1, "{0} séance", "{0} séances", d.count)} ratio={d.count / st.dist[0].count} color={TONES[i % TONES.length]} />
+            <RankRow key={d.key} title={traduire(d.label)} value={traduirePluriel(d.count, d.count > 1, "{0} séance", "{0} séances", d.count)} ratio={d.count / st.dist[0].count} color={TONES[i % TONES.length]} />
           ))}
         </Sheet2>
       ) : null}

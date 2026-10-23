@@ -393,7 +393,7 @@ export function bilanCorps(e: EntreeCorps): BilanCorps {
     add('fat', traduire('% de graisse'), cc.fat, pc?.fat, '%', 1, BRUIT_GRAISSE_PT, (d) => (mode === 'prise' ? null : d < 0));
     add('muscleKg', 'Muscle', mk, mkP, 'kg', 1, BRUIT_COMPO_KG, (d) => d > 0);
     add('water', 'Eau', cc.water, pc?.water, '%', 1, BRUIT_EAU_PT, () => null);
-    add('bone', 'Os', cc.bone, pc?.bone, 'kg', 1, 0.15, () => null);
+    add('bone', traduire('Os'), cc.bone, pc?.bone, 'kg', 1, 0.15, () => null);
     add('visceral', traduire('Viscérale'), cc.visceral, pc?.visceral, '', 0, 1, (d) => d < 0);
 
     let phrase: string | null = null;

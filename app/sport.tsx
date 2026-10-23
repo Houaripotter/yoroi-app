@@ -324,7 +324,7 @@ export default function SportScreen() {
             <Label>{traduire("Club ou activité")}</Label>
             <ChipScroll>
               {options.map((o) => (
-                <Chip key={o.id} label={o.name} active={clubId === o.id} accent={P.accent} onPress={() => setClubId(clubId === o.id ? null : o.id)} />
+                <Chip key={o.id} label={traduire(o.name)} active={clubId === o.id} accent={P.accent} onPress={() => setClubId(clubId === o.id ? null : o.id)} />
               ))}
             </ChipScroll>
             {clubId ? <Field value={workoutType} onChangeText={setWorkoutType} placeholder={traduire("Ex : Pecs et bras, Jambes, Full body")} maxLength={30} /> : null}

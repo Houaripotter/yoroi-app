@@ -57,7 +57,7 @@ function TuileVue({ t, onPress, left, top }: { t: Tuile; onPress: () => void; le
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.dot }} />
         <Ink size={12.5} weight="extraBold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>
-          {t.label}
+          {traduire(t.label)}
         </Ink>
       </View>
       <Ink size={24} weight="black" tight numberOfLines={1}>
@@ -69,7 +69,7 @@ function TuileVue({ t, onPress, left, top }: { t: Tuile; onPress: () => void; le
         ) : null}
       </Ink>
       <Ink size={12} color={c.textSecondary} numberOfLines={2}>
-        {t.sub}
+        {traduire(t.sub)}
       </Ink>
     </Pressable>
   );
@@ -129,14 +129,14 @@ export function VueEnsemble({
       lc
         ? {
             key: 'compo',
-            label: 'Composition',
+            label: traduire('Composition'),
             value: lc.fat !== undefined ? num(lc.fat, 1) : num(lc.muscle ?? 0, 1),
             unit: '%',
             sub: lc.fat !== undefined ? traduire("de masse grasse{0}", lc.muscle !== undefined ? `, muscle ${num(lc.muscle, 1)} %` : '') : traduire('de muscle'),
             cible: 'corps',
             dot: '#B08A2E',
           }
-        : { key: 'compo', label: 'Composition', value: 'À noter', sub: traduire('graisse, muscle, eau'), cible: 'corps', dot: '#B08A2E' },
+        : { key: 'compo', label: traduire('Composition'), value: 'À noter', sub: traduire('graisse, muscle, eau'), cible: 'corps', dot: '#B08A2E' },
     );
     // Mensurations : le tour de taille, sinon la premiere mesure prise
     const taille = viewSeries(measures, 'waist');
@@ -153,7 +153,7 @@ export function VueEnsemble({
         cible: 'corps',
         dot: c.accent,
       });
-    } else out.push({ key: 'mesures', label: 'Mensurations', value: 'À prendre', sub: traduire('une fois par mois'), cible: 'corps', dot: c.accent });
+    } else out.push({ key: 'mesures', label: traduire('Mensurations'), value: 'À prendre', sub: traduire('une fois par mois'), cible: 'corps', dot: c.accent });
     // Forme du jour (meme calcul que l'accueil)
     out.push(
       forme && forme.score !== null && forme.level

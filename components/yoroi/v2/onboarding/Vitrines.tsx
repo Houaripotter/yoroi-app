@@ -41,7 +41,7 @@ import { traduire } from '@/lib/i18n/tr';
 // ===== Briques =====
 
 /** « Exemple », en haut a droite des vitrines qui montrent des chiffres */
-export function PastilleExemple({ label = 'Exemple' }: { label?: string }) {
+export function PastilleExemple({ label = traduire('Exemple') }: { label?: string }) {
   const c = useColors();
   return (
     <View style={{ alignSelf: 'flex-start', backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
@@ -116,7 +116,7 @@ export function VitrineCitations() {
     <View pointerEvents="none" style={{ gap: 8 }}>
       {STYLES_CITATION.map((s) => (
         <Carte key={s.id} gap={6} pad={12}>
-          <Ink size={12} weight="extraBold" color={c.textMuted}>{s.nom}</Ink>
+          <Ink size={12} weight="extraBold" color={c.textMuted}>{traduire(s.nom)}</Ink>
           <CitationDuJour texte={PHRASE_STYLES[s.id]} style={s.id} />
         </Carte>
       ))}
@@ -186,7 +186,7 @@ const LUNDI = (() => {
 const CARTE_RECORD: CarteData = {
   moment: 'seance',
   titre: 'Musculation',
-  sousTitre: 'Exemple',
+  sousTitre: traduire('Exemple'),
   sport: 'musculation',
   famille: 'muscu',
   seance: { dureeMin: 64, rounds: 0, series: 16, tonnage: 9800, distanceKm: 0, fcMoy: 0, fcMax: 0, calories: 0, zones: null, records: [{ nom: traduire('Développé couché'), texte: traduire('100 kg pour 5 répétitions'), poids: 100, reps: 5, avant: 96 }] },
@@ -197,7 +197,7 @@ const CARTE_RECORD: CarteData = {
 const CARTE_SEMAINE: CarteData = {
   moment: 'semaine',
   titre: traduire('Ma semaine'),
-  sousTitre: 'Exemple',
+  sousTitre: traduire('Exemple'),
   semaine: {
     debut: LUNDI,
     jours: [true, false, true, false, true, true, false],
@@ -216,7 +216,7 @@ const CARTE_SEMAINE: CarteData = {
 const CARTE_MINIMAL: CarteData = {
   moment: 'seance',
   titre: traduire('Course à pied'),
-  sousTitre: 'Exemple',
+  sousTitre: traduire('Exemple'),
   sport: 'running',
   famille: 'course',
   seance: { dureeMin: 52, rounds: 0, series: 0, tonnage: 0, distanceKm: 10, fcMoy: 0, fcMax: 0, calories: 0, zones: null, records: [] },
@@ -250,7 +250,7 @@ export function VitrinePartage({ largeur }: { largeur: number }) {
               <CarteApercu largeur={col} data={f.data} options={{ ...BASE_CARTE, format: f.format, modele: f.modele, sombre: f.sombre }} visuels={{}} />
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Ink size={13} weight="black" color={c.ink} numberOfLines={1}>{f.nom}</Ink>
+              <Ink size={13} weight="black" color={c.ink} numberOfLines={1}>{traduire(f.nom)}</Ink>
               <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{f.usage}</Ink>
             </View>
           </View>
@@ -272,7 +272,7 @@ export function VitrinePartage({ largeur }: { largeur: number }) {
 const BILAN_EXEMPLE: PhraseRiche[] = [
   { phare: true, segments: [{ texte: traduire('Tu en es à ta ') }, { texte: traduire('3e séance'), role: 'seance' }, { texte: traduire(' de la semaine.') }] },
   { icone: 'objectif', segments: [{ texte: traduire('Encore ') }, { texte: traduire('1 séance'), role: 'seance' }, { texte: traduire(' pour ton objectif de la semaine.') }] },
-  { icone: 'comparaison', segments: [{ texte: traduire('Par rapport à ta dernière séance : ') }, { texte: '2 rounds', role: 'seance' }, { texte: traduire(' de plus.') }] },
+  { icone: 'comparaison', segments: [{ texte: traduire('Par rapport à ta dernière séance : ') }, { texte: traduire('2 rounds'), role: 'seance' }, { texte: traduire(' de plus.') }] },
   { icone: 'record', segments: [{ texte: traduire('Et un record tombe : ') }, { texte: traduire('record de rounds'), role: 'record' }, { texte: '.' }] },
 ];
 
@@ -313,20 +313,20 @@ export function VitrineSeance() {
               <View style={{ height: 96, borderRadius: 14, backgroundColor: '#FBFAF6', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 <Image source={x.art!} resizeMode="contain" style={{ width: '92%', height: 90 }} accessibilityIgnoresInvertColors />
               </View>
-              <Ink size={12} weight="extraBold" color={c.ink} numberOfLines={2}>{x.m!.nom}</Ink>
+              <Ink size={12} weight="extraBold" color={c.ink} numberOfLines={2}>{traduire(x.m!.nom)}</Ink>
             </View>
           ))}
         </View>
       </Carte>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {([
-          { icone: 'dumbbell' as IconName, titre: 'Kilos', sous: traduire('pas de 2, et 0,5') },
-          { icone: 'home' as IconName, titre: 'Lieu', sous: traduire('ton club ou dehors') },
+          { icone: 'dumbbell' as IconName, titre: traduire('Kilos'), sous: traduire('pas de 2, et 0,5') },
+          { icone: 'home' as IconName, titre: traduire('Lieu'), sous: traduire('ton club ou dehors') },
         ]).map((x) => (
           <View key={x.titre} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 16, backgroundColor: t.fond, borderWidth: 1, borderColor: t.bord, padding: 10 }}>
             <Icon name={x.icone} size={18} color={t.texte} stroke={2.4} />
             <View style={{ flex: 1 }}>
-              <Ink size={13} weight="black" color={t.texte} numberOfLines={1}>{x.titre}</Ink>
+              <Ink size={13} weight="black" color={t.texte} numberOfLines={1}>{traduire(x.titre)}</Ink>
               <Ink size={11.5} weight="bold" color={c.textSecondary} numberOfLines={1}>{x.sous}</Ink>
             </View>
           </View>

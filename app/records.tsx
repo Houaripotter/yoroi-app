@@ -40,7 +40,7 @@ const RECORDS_CACHE_KEY = '@yoroi_records_cache_v1';
 const RECORDS_CACHE_TTL = 10 * 60 * 1000;
 
 type Group = 'force' | 'endurance' | 'combat' | 'regularite';
-const GROUP_LABEL: Record<Group, string> = { force: 'Muscu', endurance: 'Cardio', combat: traduire('Combat'), regularite: traduire('Régularité') };
+const GROUP_LABEL: Record<Group, string> = { force: traduire('Muscu'), endurance: 'Cardio', combat: traduire('Combat'), regularite: traduire('Régularité') };
 const ORDER: Group[] = ['force', 'endurance', 'combat', 'regularite'];
 
 function groupOf(l: RecordLine): Group {
@@ -268,7 +268,7 @@ export default function RecordsScreen() {
         </View>
         <View style={{ alignItems: 'flex-end', gap: 1, maxWidth: '44%' }}>
           <Ink size={17} weight="black" tight numberOfLines={1}>{v.main}</Ink>
-          <Ink size={11} color={c.textMuted} numberOfLines={2}>{v.sub}</Ink>
+          <Ink size={11} color={c.textMuted} numberOfLines={2}>{traduire(v.sub)}</Ink>
         </View>
       </Pressable>
     );
@@ -297,7 +297,7 @@ export default function RecordsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
       >
         <EnTete
-          titre="Records"
+          titre={traduire("Records")}
           sousTitre={records.totalStamps > 0 ? traduirePluriel(records.totalStamps, records.totalStamps > 1, "{0} record battu depuis le début", "{0} records battus depuis le début", records.totalStamps) : traduire('tes meilleures marques, sport par sport')}
           repli="/(tabs)/seances"
           style={{ marginHorizontal: -22, marginTop: -8 }}
@@ -339,11 +339,11 @@ export default function RecordsScreen() {
               </ChipRow>
             ) : null}
             <View style={{ gap: 4, paddingHorizontal: 4 }}>
-              <Ink size={15} weight="extraBold" numberOfLines={2}>{current.name}</Ink>
+              <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(current.name)}</Ink>
               {current.kind === 'force' ? (
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
                   <Tile
-                    label="Charge max"
+                    label={traduire("Charge max")}
                     value={current.maxLoad ? `${fmt1(cv(current.maxLoad.weight))}` : '0'}
                     unit={current.maxLoad ? `${uL} × ${current.maxLoad.reps}` : uL}
                   />
@@ -400,7 +400,7 @@ export default function RecordsScreen() {
                   >
                     <Hanko size={24} color={l.date >= freshLimit && l.stamps > 0 ? c.record : '#B9B6AE'} rotate={-7} />
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Ink size={15} weight="extraBold" numberOfLines={2}>{l.name}</Ink>
+                      <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(l.name)}</Ink>
                       <Ink size={12} color={c.textSecondary}>{relativeDay(l.date, today)}</Ink>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 1 }}>
@@ -429,7 +429,7 @@ export default function RecordsScreen() {
         {g0 === 'combat' ? (
           <>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              <Tile label="Victoires en sparring" value={String(combat.wins)} sub={combat.roundsTotal ? traduire("sur {0} rounds notés", combat.roundsTotal) : traduire('note tes rounds pour les compter')} />
+              <Tile label={traduire("Victoires en sparring")} value={String(combat.wins)} sub={combat.roundsTotal ? traduire("sur {0} rounds notés", combat.roundsTotal) : traduire('note tes rounds pour les compter')} />
               <Tile label={traduire("Soumissions placées")} value={String(combat.submissionsTotal)} sub={combat.submissions[0] ? `Surtout : ${combat.submissions[0].technique.trim().charAt(0).toUpperCase()}${combat.submissions[0].technique.trim().slice(1)}` : undefined} />
               {combat.compTotal > 0 ? <Tile label={traduire("Victoires en compétition")} value={String(combat.compWins)} sub={traduirePluriel(combat.compTotal, combat.compTotal > 1, "sur {0} combat", "sur {0} combats", combat.compTotal)} /> : null}
             </View>
@@ -508,7 +508,7 @@ export default function RecordsScreen() {
               {otherRows.map((r, i) => (
                 <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}>
                   <View style={{ flex: 1, gap: 1, paddingVertical: 8 }}>
-                    <Ink size={14} weight="bold">{r.label}</Ink>
+                    <Ink size={14} weight="bold">{traduire(r.label)}</Ink>
                     {r.date ? <Ink size={12} color={c.textMuted}>{dateText(r.date)}</Ink> : null}
                   </View>
                   <Ink size={16} weight="black">{r.value}</Ink>

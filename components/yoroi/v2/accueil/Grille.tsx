@@ -232,7 +232,7 @@ export function TuileProchaine({ next, trainings, plan: planFixe }: { next: Next
         <Entete domaine="seances" icone="calendar" titre={traduire("Ta prochaine séance")} />
         <Ink size={22} weight="black" tight numberOfLines={1}>
           {traduire("Rien de prévu")}</Ink>
-        <Ajouter domaine="seances" aide={traduire("Ajoute tes créneaux de la semaine, ta prochaine séance s’affichera ici.")} libelle="Planifier" />
+        <Ajouter domaine="seances" aide={traduire("Ajoute tes créneaux de la semaine, ta prochaine séance s’affichera ici.")} libelle={traduire("Planifier")} />
       </Cadre>
     );
   }
@@ -253,7 +253,7 @@ export function TuileProchaine({ next, trainings, plan: planFixe }: { next: Next
             {quand}
           </Ink>
           <Ink size={17} weight="extraBold" tight color={t.surPlein} numberOfLines={1}>
-            {next.title}
+            {traduire(next.title)}
           </Ink>
           {ou ? (
             <Ink size={13} weight="bold" color={doux} numberOfLines={1}>
@@ -266,8 +266,7 @@ export function TuileProchaine({ next, trainings, plan: planFixe }: { next: Next
       {ensuite.length ? (
         <View style={{ marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderColor: sombre ? 'rgba(26,30,41,0.18)' : 'rgba(255,255,255,0.22)', gap: 6 }}>
           <Ink size={12} weight="extraBold" color={doux}>
-            Ensuite
-          </Ink>
+            {traduire("Ensuite")}</Ink>
           {ensuite.map((s) => (
             <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <SessionMark t={marqueCreneau(s.slot)} size={22} ring={t.surPlein} />
@@ -410,7 +409,7 @@ export function TuileRecup({ forme }: { forme: FormeResult | null }) {
         </ArcJauge>
         <View style={{ flex: 1, minWidth: 0, paddingBottom: 6, gap: 1 }}>
           <Ink size={13.5} weight="black" color={P.ink} numberOfLines={2}>
-            {forme.level.label}
+            {traduire(forme.level.label)}
           </Ink>
           <Ink size={11.5} weight="bold" color={P.ink2}>
             {traduire("sur 100")}</Ink>
@@ -487,7 +486,7 @@ export function TuileMensurations({ tailleFixe }: { tailleFixe?: { value: number
   if (!last) {
     return (
       <Cadre domaine="mensurations" demi onPress={() => router.push('/add-measurement' as any)} a11y={traduire("Mensurations : ajoute ton tour de taille")}>
-        <Entete domaine="mensurations" icone="body" titre="Mensurations" />
+        <Entete domaine="mensurations" icone="body" titre={traduire("Mensurations")} />
         <Ajouter domaine="mensurations" aide={traduire("Ton tour de taille")} />
       </Cadre>
     );
@@ -571,7 +570,7 @@ export function TuileMensurationsDefile() {
               style={({ pressed }) => ({ width: L, minHeight: 124, borderRadius: 16, borderWidth: 1, borderColor: P.line2, backgroundColor: pressed ? P.paper : P.white, padding: 10, gap: 3 })}
             >
               <Ink size={11.5} weight="extraBold" color={t.texte} numberOfLines={1}>
-                {m.nom}
+                {traduire(m.nom)}
               </Ink>
               <ChiffreAnime valeur={last.value} format={(x) => cm(x)} cle={`mens:${m.cle}`} taille={22} unite=" cm" />
               {m.serie.length >= 2 ? <Courbe valeurs={m.serie.map((x) => x.value)} couleur={t.plein} largeur={L - 20} hauteur={26} cle={`mens:${m.cle}`} /> : <View style={{ height: 26 }} />}
@@ -662,7 +661,7 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
     appAlert(traduire('Retirer cette compétition ?'), traduire("{0}, le {1}. Elle disparaît de ton accueil et de tes compétitions.", c.name, longDate(c.date)), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Retirer',
+        text: traduire('Retirer'),
         style: 'destructive',
         onPress: () => {
           deleteCompetition(c.id as number)
@@ -705,7 +704,7 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
               </Ink>
             </View>
             <Ink size={17} weight="black" tight numberOfLines={2}>
-              {c.name}
+              {traduire(c.name)}
             </Ink>
             {lieu ? <Explication lignes={2}>{lieu}</Explication> : null}
           </View>
@@ -720,7 +719,7 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, paddingHorizontal: 14, paddingBottom: 12, paddingTop: 8 }}>
-        <PetitBouton libelle="Retirer" icone="close" onPress={retirer} a11y={`Retirer ${c.name}`} />
+        <PetitBouton libelle={traduire("Retirer")} icone="close" onPress={retirer} a11y={`Retirer ${c.name}`} />
         <PetitBouton libelle={traduire("Ajouter")} icone="plus" plein onPress={ajouter} a11y={traduire("Ajouter une autre compétition")} />
       </View>
     </View>
@@ -846,8 +845,7 @@ export function TuileMois({ trainings, plannedDays, competitionDate }: { trainin
           droite={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
               <Ink size={13} weight="extraBold" color={t.texte}>
-                Calendrier
-              </Ink>
+                {traduire("Calendrier")}</Ink>
               <Icon name="chevron" size={14} color={t.texte} width={2.8} />
             </View>
           }
@@ -1010,7 +1008,7 @@ export function TuileRecord({ record }: { record: { titre: string; valeur: strin
   const quand = relativeDay(record.date);
   return (
     <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduire("Ton dernier record : {0}, {1}{2}, {3}. Voir tes records", record.titre, record.valeur, record.ecart ? `, ${record.ecart} sur le précédent` : '', quand)}>
-      <Entete domaine="seances" icone="star" titre="Dernier record" />
+      <Entete domaine="seances" icone="star" titre={traduire("Dernier record")} />
       <Bas>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Trophee taille={30} />
@@ -1150,7 +1148,7 @@ export function TuileActiviteVide({ relie }: { relie: boolean }) {
           <Explication>{traduire("Ta montre ou ton téléphone les ajoutera ici")}</Explication>
         </Bas>
       ) : (
-        <Ajouter domaine="forme" aide={traduire("Connecte Santé pour voir tes pas")} libelle="Connecter" />
+        <Ajouter domaine="forme" aide={traduire("Connecte Santé pour voir tes pas")} libelle={traduire("Connecter")} />
       )}
     </Cadre>
   );
@@ -1168,7 +1166,7 @@ export function TuileCoeurVide({ relie }: { relie: boolean }) {
           <Explication>{traduire("Porte ta montre la nuit pour le mesurer")}</Explication>
         </Bas>
       ) : (
-        <Ajouter domaine="forme" aide={traduire("Connecte Santé pour le voir")} libelle="Connecter" />
+        <Ajouter domaine="forme" aide={traduire("Connecte Santé pour le voir")} libelle={traduire("Connecter")} />
       )}
     </Cadre>
   );
@@ -1178,7 +1176,7 @@ export function TuileRecordVide() {
   const router = useRouter();
   return (
     <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduire("Dernier record : aucun ces 30 derniers jours. Voir tes records")}>
-      <Entete domaine="seances" icone="star" titre="Dernier record" />
+      <Entete domaine="seances" icone="star" titre={traduire("Dernier record")} />
       <Bas>
         <Ink size={17} weight="black" tight numberOfLines={2}>
           {traduire("Pas de record ce mois-ci")}</Ink>

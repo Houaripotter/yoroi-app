@@ -34,7 +34,7 @@ const RAYON = 22;
 
 export const MESURE_SANTE: Record<CleSanteJour, { nom: string; domaine: Domaine; d: string; a11y: string }> = {
   pas: { nom: traduire('Pas'), domaine: 'forme', a11y: 'pas', d: 'M8.4 3.2c1.7 0 2.6 1.9 2.4 4.2-.2 2.3-1 3.9-2.5 3.9S5.9 9.6 5.9 7.3c0-2.3.8-4.1 2.5-4.1zM6.4 14h4.2l-.4 3a1.9 1.9 0 0 1-3.5 0zM15.6 7.2c1.7 0 2.5 1.8 2.5 4.1 0 2.3-.9 3.9-2.4 3.9s-2.4-1.6-2.5-3.9c-.2-2.3.7-4.1 2.4-4.1zM13.4 18h4.2l-.3 2.1a1.9 1.9 0 0 1-3.6 0z' },
-  'energie-active': { nom: traduire('Calories'), domaine: 'mensurations', a11y: 'kilocalories actives', d: 'M12 3c.6 3.3 4.6 5.1 4.6 10a4.6 4.6 0 0 1-9.2 0c0-2.4 1.2-3.8 2.4-4.9.3 1.6 1 2.5 1.9 2.9C12.8 8.9 12 5.7 12 3z' },
+  'energie-active': { nom: traduire('Calories'), domaine: 'mensurations', a11y: traduire('kilocalories actives'), d: 'M12 3c.6 3.3 4.6 5.1 4.6 10a4.6 4.6 0 0 1-9.2 0c0-2.4 1.2-3.8 2.4-4.9.3 1.6 1 2.5 1.9 2.9C12.8 8.9 12 5.7 12 3z' },
   distance: { nom: 'Distance', domaine: 'eau', a11y: traduire('kilomètres'), d: 'M5 20.5c0-3.4 3.3-3.9 6.4-5.3 2.6-1.2 4.6-2.4 5.4-4.7M17 3a3.2 3.2 0 0 1 3.2 3.2c0 2.4-3.2 4.8-3.2 4.8s-3.2-2.4-3.2-4.8A3.2 3.2 0 0 1 17 3zM5 18a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 5 18z' },
   exercice: { nom: traduire('Exercice'), domaine: 'forme', a11y: traduire('minutes d’exercice'), d: 'M13 3L5 13.5h6L10 21l8-10.5h-6z' },
   'frequence-cardiaque': { nom: traduire('FC du jour'), domaine: 'competition', a11y: traduire('battements par minute en moyenne aujourd’hui'), d: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10zM7.5 11.5h2.6l1.2-2.1 1.8 4.2 1.2-2.1h2.2' },
@@ -181,14 +181,14 @@ function Cadran({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante 
                   </View>
                 </Anneau>
                 <Ink size={11.5} weight="extraBold" color={c} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={{ flexShrink: 1 }}>
-                  {MESURE_SANTE[m.cle].nom}
+                  {traduire(MESURE_SANTE[m.cle].nom)}
                 </Ink>
               </View>
               <View>
                 <Valeur m={m} couleur={NUIT.texte} douce={NUIT.doux} />
                 {obj ? (
                   <Ink size={10.5} weight="bold" color={NUIT.doux} numberOfLines={1}>
-                    {obj.texte}
+                    {traduire(obj.texte)}
                   </Ink>
                 ) : null}
               </View>
@@ -222,7 +222,7 @@ function Nuit({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante | 
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <Picto cle={m.cle} couleur="#FFFFFF" />
                   <Ink size={11.5} weight="bold" color="rgba(255,255,255,0.9)" numberOfLines={1} style={{ flexShrink: 1 }}>
-                    {MESURE_SANTE[m.cle].nom}
+                    {traduire(MESURE_SANTE[m.cle].nom)}
                   </Ink>
                 </View>
                 <Valeur m={m} couleur="#FFFFFF" douce="rgba(255,255,255,0.85)" taille={21} />
@@ -247,7 +247,7 @@ function Nuit({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante | 
                     <Picto cle={m.cle} couleur={t.texte} taille={12} />
                   </View>
                   <Ink size={11.5} weight="bold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>
-                    {MESURE_SANTE[m.cle].nom}
+                    {traduire(MESURE_SANTE[m.cle].nom)}
                   </Ink>
                 </View>
                 <Valeur m={m} couleur={P.ink} douce={P.ink2} />
@@ -283,7 +283,7 @@ function Mosaique({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSant
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Picto cle={m.cle} couleur={t.texte} taille={12} />
                 <Ink size={11} weight="extraBold" color={t.texte} numberOfLines={1} style={{ flexShrink: 1 }}>
-                  {MESURE_SANTE[m.cle].nom}
+                  {traduire(MESURE_SANTE[m.cle].nom)}
                 </Ink>
               </View>
               <Valeur m={m} couleur={P.ink} douce={P.ink2} taille={17} />
@@ -293,7 +293,7 @@ function Mosaique({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSant
                     <View style={{ width: `${Math.round(partObjectif(m.valeur, obj.cible) * 100)}%`, height: 4, borderRadius: 2, backgroundColor: t.plein }} />
                   </View>
                   <Ink size={10} weight="bold" color={P.ink2} numberOfLines={1}>
-                    {obj.texte}
+                    {traduire(obj.texte)}
                   </Ink>
                 </View>
               ) : null}
@@ -431,7 +431,7 @@ function Anneaux({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c }} />
                     <Ink size={11.5} weight="extraBold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1 }}>
-                      {MESURE_SANTE[m.cle].nom}
+                      {traduire(MESURE_SANTE[m.cle].nom)}
                     </Ink>
                     {atteint ? <Icon name="check" size={12} color={P.mossText} width={3} /> : null}
                   </View>

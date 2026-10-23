@@ -52,7 +52,7 @@ export function Rythme({ nav, days, onToggle, onNext }: { nav: Nav; goal?: Goal 
       {...nav}
       title={traduire("Tes **jours d’entraînement**")}
       sub={traduire("Touche les jours où tu peux t’entraîner. Le nombre de séances suit tout seul.")}
-      footer={<MainButton label="Continuer" onPress={onNext} disabled={!n} />}
+      footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!n} />}
     >
       <JoursPicker value={days} onToggle={onToggle} label="Entraînement" />
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 4 }}>

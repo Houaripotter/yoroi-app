@@ -20,8 +20,8 @@ import { traduire } from '@/lib/i18n/tr';
 type Item = Achievement & { unlocked: boolean };
 
 const CATEGORIES: { id: Achievement['category']; label: string; color: string }[] = [
-  { id: 'milestone', label: 'Jalons', color: DOJO.indigo },
-  { id: 'technique', label: 'Techniques', color: DOJO.mossText },
+  { id: 'milestone', label: traduire('Jalons'), color: DOJO.indigo },
+  { id: 'technique', label: traduire('Techniques'), color: DOJO.mossText },
   { id: 'mental', label: traduire('Mental et analyse'), color: '#A8832F' },
   { id: 'legendary', label: traduire('Légendaires'), color: DOJO.ink },
 ];
@@ -99,7 +99,7 @@ export default function CombatAchievementsScreen() {
             <View key={cat.id} style={{ backgroundColor: P.white, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16, gap: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: cat.color }} />
-                <Ink size={17} weight="black" style={{ flex: 1 }}>{cat.label}</Ink>
+                <Ink size={17} weight="black" style={{ flex: 1 }}>{traduire(cat.label)}</Ink>
                 <Ink size={13} weight="bold" color={c.textMuted}>{traduire("{0} sur {1}", list.filter((i) => i.unlocked).length, list.length)}</Ink>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 }}>
@@ -112,8 +112,8 @@ export default function CombatAchievementsScreen() {
                   >
                     <Hanko color={cat.color} size={38} earned={a.unlocked} tampon={i % 2 ? 'record_combat' : 'victoire'} />
                     <View style={{ gap: 2 }}>
-                      <Ink size={13} weight="extraBold" color={a.unlocked ? c.ink : c.textMuted}>{a.title}</Ink>
-                      <Ink size={12} color={c.textMuted}>{a.description}</Ink>
+                      <Ink size={13} weight="extraBold" color={a.unlocked ? c.ink : c.textMuted}>{traduire(a.title)}</Ink>
+                      <Ink size={12} color={c.textMuted}>{traduire(a.description)}</Ink>
                     </View>
                   </View>
                 ))}

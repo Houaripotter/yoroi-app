@@ -128,7 +128,7 @@ export function filtresGalerie(): { key: FiltreGalerie; label: string; nombre: n
   return [
     { key: 'toutes', label: traduire('Toutes'), nombre: n('toutes') },
     { key: 'animees', label: traduire('Animées'), nombre: n('animees') },
-    { key: 'gratuites', label: 'Gratuites', nombre: n('gratuites') },
+    { key: 'gratuites', label: traduire('Gratuites'), nombre: n('gratuites') },
     ...PACKS_GALERIE.map((p) => ({ key: p.key as FiltreGalerie, label: p.titre, nombre: n(p.key) })),
   ];
 }

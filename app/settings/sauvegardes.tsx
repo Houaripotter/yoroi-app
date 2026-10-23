@@ -35,7 +35,7 @@ export default function DonneesEtSauvegardes() {
       reload();
     } catch (e) {
       logger.error('[Reglages] sauvegarde', e);
-      showPopup('Oups', traduire('La sauvegarde n’a pas abouti. Réessaie.'));
+      showPopup(traduire('Oups'), traduire('La sauvegarde n’a pas abouti. Réessaie.'));
     } finally {
       setBusy(false);
     }
@@ -50,11 +50,11 @@ export default function DonneesEtSauvegardes() {
   return (
     <EspaceScreen title={traduire("Données et sauvegardes")} subtitle={traduire("Pas de compte : tout reste sur ton téléphone")} gap={14}>
       <Card>
-        <ValueRow first tint={TUILE.mousse} icon="save" label={traduire("Sauvegarde")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label="Sauvegarder" onPress={backupNow} busy={busy} />} />
+        <ValueRow first tint={TUILE.mousse} icon="save" label={traduire("Sauvegarde")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/backup-history')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={busy} />} />
         {/* les copies faites seules avant chaque mise a jour, a voir, partager et remettre */}
         <ValueRow tint={TUILE.ardoise} icon="archive" label={traduire("Copies de sécurité automatiques")} sub={traduire("Faites avant chaque mise à jour")} onPress={() => go('/settings/copies-securite')} />
         <ValueRow tint={TUILE.indigo} icon="shield" label={traduire("Mes données")} value={traduire("Exporter, effacer")} onPress={() => go('/settings/donnees')} />
-        <ValueRow tint={TUILE.or} icon="camera" label="Coffre photos" value={nbPhotos ? `${nbPhotos} photo${nbPhotos > 1 ? 's' : ''}` : undefined} onPress={() => go('/photos')} />
+        <ValueRow tint={TUILE.or} icon="camera" label={traduire("Coffre photos")} value={nbPhotos ? `${nbPhotos} photo${nbPhotos > 1 ? 's' : ''}` : undefined} onPress={() => go('/photos')} />
       </Card>
       <PopupComponent />
     </EspaceScreen>

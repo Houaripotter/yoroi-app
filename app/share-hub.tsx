@@ -99,13 +99,13 @@ export default function ShareHubScreen() {
           const p = t.dark ? laque : papier;
           return (
             <Enter key={t.id} i={i + 1}>
-              <Press onPress={() => router.push(t.route as any)} accessibilityRole="button" accessibilityLabel={t.title}>
+              <Press onPress={() => router.push(t.route as any)} accessibilityRole="button" accessibilityLabel={traduire(t.title)}>
                 <View style={{ width: tileW, height: tileW * 1.2, borderRadius: 22, overflow: 'hidden', backgroundColor: t.dark ? '#1D2029' : P.white, borderWidth: 1, borderColor: t.dark ? '#1D2029' : P.line2, padding: 14, justifyContent: 'space-between' }}>
                   <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: P.accent }} />
                   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>{visual(t)}</View>
                   <View style={{ gap: 1 }}>
-                    <Ink size={15} weight="black" tight color={p.ink} numberOfLines={2}>{t.title}</Ink>
-                    <Ink size={12} weight="medium" color={p.muted} numberOfLines={2}>{t.text}</Ink>
+                    <Ink size={15} weight="black" tight color={p.ink} numberOfLines={2}>{traduire(t.title)}</Ink>
+                    <Ink size={12} weight="medium" color={p.muted} numberOfLines={2}>{traduire(t.text)}</Ink>
                   </View>
                 </View>
               </Press>

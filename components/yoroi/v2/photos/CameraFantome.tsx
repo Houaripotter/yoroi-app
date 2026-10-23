@@ -131,7 +131,7 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
           </Pressable>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {POSES.map((p) => (
-              <Chip key={p.value} label={p.label} on={pose === p.value} onPress={() => setPose(pose === p.value ? null : p.value)} />
+              <Chip key={p.value} label={traduire(p.label)} on={pose === p.value} onPress={() => setPose(pose === p.value ? null : p.value)} />
             ))}
           </View>
           <Pressable onPress={() => { selectionAsync().catch(() => {}); setFacing((f) => (f === 'back' ? 'front' : 'back')); }} accessibilityRole="button" accessibilityLabel={traduire("Changer de caméra")} hitSlop={10} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
@@ -197,8 +197,8 @@ export function CameraFantome({ visible, photos, initialPose, onClose, onTaken }
             <View style={{ width: count !== null ? 28 : 60, height: count !== null ? 28 : 60, borderRadius: count !== null ? 6 : 30, backgroundColor: BLANC }} />
           </Pressable>
 
-          <Pressable onPress={() => { selectionAsync().catch(() => {}); setTimer((t) => (t === 0 ? 5 : t === 5 ? 10 : 0)); }} accessibilityRole="button" accessibilityLabel="Minuteur" style={{ width: 84, minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: timer ? BLANC : 'rgba(255,255,255,0.14)' }}>
-            <Ink size={12} weight="bold" color={timer ? NOIR : 'rgba(255,255,255,0.75)'}>Minuteur</Ink>
+          <Pressable onPress={() => { selectionAsync().catch(() => {}); setTimer((t) => (t === 0 ? 5 : t === 5 ? 10 : 0)); }} accessibilityRole="button" accessibilityLabel={traduire("Minuteur")} style={{ width: 84, minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: timer ? BLANC : 'rgba(255,255,255,0.14)' }}>
+            <Ink size={12} weight="bold" color={timer ? NOIR : 'rgba(255,255,255,0.75)'}>{traduire("Minuteur")}</Ink>
             <Ink size={14} weight="extraBold" color={timer ? NOIR : BLANC}>{timer ? `${timer} s` : traduire('Non')}</Ink>
           </Pressable>
         </View>

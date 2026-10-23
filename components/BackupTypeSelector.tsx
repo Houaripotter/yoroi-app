@@ -27,7 +27,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         includePhotos: type === 'full',
       });
       if (!ok) {
-        appAlert('Oups', traduire('La sauvegarde n’a pas pu être créée.'));
+        appAlert(traduire('Oups'), traduire('La sauvegarde n’a pas pu être créée.'));
       }
     } finally {
       setExporting(null);

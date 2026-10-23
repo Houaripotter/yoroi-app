@@ -91,7 +91,7 @@ export const SEALS: SealDef[] = [
   // Souffle (course, yoga et mobilite)
   { id: 'chaussure', family: 'souffle', name: 'Chaussure', kanji: '走', condition: traduire('Ta première course'), metric: (c) => [c.runs, 1] },
   { id: 'foulee', family: 'souffle', name: 'Foulée', kanji: '歩', condition: traduire('10 sorties de course'), metric: (c) => [c.runs, 10] },
-  { id: 'riviere', family: 'souffle', name: traduire('Rivière'), kanji: '川', condition: traduire('100 kilomètres de course au total'), metric: (c) => [Math.floor(c.runKm), 100] },
+  { id: 'riviere', family: 'souffle', name: 'Rivière', kanji: '川', condition: traduire('100 kilomètres de course au total'), metric: (c) => [Math.floor(c.runKm), 100] },
   { id: 'montagne', family: 'souffle', name: 'Montagne', kanji: '山', condition: traduire('500 kilomètres de course au total'), metric: (c) => [Math.floor(c.runKm), 500] },
   { id: 'tapis', family: 'souffle', name: 'Tapis', kanji: '柔', condition: traduire('Ta première séance de yoga ou de mobilité'), metric: (c) => [c.yogaSessions, 1] },
   { id: 'lotus', family: 'souffle', name: 'Lotus', kanji: '蓮', condition: traduire('10 séances de yoga ou de mobilité'), metric: (c) => [c.yogaSessions, 10] },
@@ -100,7 +100,7 @@ export const SEALS: SealDef[] = [
   { id: 'boussole', family: 'decouverte', name: 'Boussole', kanji: '針', condition: traduire('Ton profil complété'), metric: (c) => b(c.profileComplete) },
   { id: 'carte', family: 'decouverte', name: 'Carte', kanji: '図', condition: traduire('3 sports différents pratiqués'), metric: (c) => [c.sportsCount, 3] },
   { id: 'torii', family: 'decouverte', name: 'Torii', kanji: '門', condition: traduire('Un module activé : mode compétiteur ou planning'), metric: (c) => b(c.moduleOn) },
-  { id: 'lanterne_papier', family: 'decouverte', name: traduire('Lanterne de papier'), kanji: '計', condition: traduire('Ton premier programme créé'), metric: (c) => [c.programs, 1] },
+  { id: 'lanterne_papier', family: 'decouverte', name: 'Lanterne de papier', kanji: '計', condition: traduire('Ton premier programme créé'), metric: (c) => [c.programs, 1] },
   { id: 'appareil_photo', family: 'decouverte', name: 'Appareil photo', kanji: '写', condition: traduire('Ta première photo de progression'), metric: (c) => [c.photos, 1] },
   { id: 'metre_ruban', family: 'decouverte', name: 'Mètre ruban', kanji: '測', condition: traduire('Tes premières mensurations'), metric: (c) => [c.measurements, 1] },
   { id: 'balance', family: 'decouverte', name: 'Balance', kanji: '量', condition: traduire('Ta première pesée'), metric: (c) => [c.weighDays, 1] },

@@ -258,7 +258,7 @@ const OWN_TYPES = new Set([
 const REMINDER_SETTINGS_TYPE = 'reminder_settings';
 
 /** Titres des anciens rappels ReminderSettings, programmes sans data avant la marque */
-const LEGACY_REMINDER_TITLES = new Set(['\u2696\ufe0f Pes\u00e9e YOROI', traduire('Pes\u00e9e YOROI'), traduire('Entra\u00eenement YOROI'), 'YOROI']);
+const LEGACY_REMINDER_TITLES = new Set(['\u2696\ufe0f Pes\u00e9e YOROI', 'Pes\u00e9e YOROI', 'Entra\u00eenement YOROI', 'YOROI']);
 
 /** Notifications d'autres services qu'on ne touche jamais, meme sans marque reconnue */
 export function isProtectedNotification(n: Notifications.NotificationRequest): boolean {

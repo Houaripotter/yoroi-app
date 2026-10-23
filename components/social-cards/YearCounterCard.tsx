@@ -132,8 +132,7 @@ export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>
                   {stats.projection.estimatedTotal}
                 </Text>
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  Projection 2025
-                </Text>
+                  {traduire("Projection 2025")}</Text>
               </View>
             )}
           </View>

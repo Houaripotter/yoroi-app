@@ -16,13 +16,13 @@ export type Source = { label: string; ref: string; url?: string };
 export const SOURCES = {
   imc: { label: traduire('Indice de masse corporelle'), ref: 'Organisation mondiale de la santé, classification de l’IMC chez l’adulte' },
   deurenberg: { label: traduire('Formule de Deurenberg (1991)'), ref: 'British Journal of Nutrition' },
-  mifflin: { label: 'Formule Mifflin-St Jeor (1990)', ref: 'American Journal of Clinical Nutrition', url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/' },
+  mifflin: { label: traduire('Formule Mifflin-St Jeor (1990)'), ref: 'American Journal of Clinical Nutrition', url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/' },
   lorentz: { label: traduire('Formule de Lorentz (1929)'), ref: 'Formule historique, donnée à titre indicatif' },
   devine: { label: traduire('Formule de Devine (1974)'), ref: 'Formule pharmacologique, donnée à titre indicatif' },
-  epley: { label: 'Formule d’Epley (1985)', ref: 'Estimation de la charge maximale à partir des répétitions' },
+  epley: { label: traduire('Formule d’Epley (1985)'), ref: 'Estimation de la charge maximale à partir des répétitions' },
   protein: { label: traduire('Position officielle de l’ISSN sur les protéines (2017)'), ref: 'Journal of the International Society of Sports Nutrition', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8' },
   carbs: { label: traduire('Burke et al. (2011)'), ref: 'Journal of Sports Sciences', url: 'https://www.tandfonline.com/doi/abs/10.1080/02640414.2011.585473' },
-  hydration: { label: 'American College of Sports Medicine (2007)', ref: 'Effort et réhydratation, article en anglais', url: 'https://journals.lww.com/acsm-msse/fulltext/2007/02000/exercise_and_fluid_replacement.22.aspx' },
+  hydration: { label: traduire('American College of Sports Medicine (2007)'), ref: 'Effort et réhydratation, article en anglais', url: 'https://journals.lww.com/acsm-msse/fulltext/2007/02000/exercise_and_fluid_replacement.22.aspx' },
   timing: { label: traduire('Kerksick et al. (2017)'), ref: 'Position officielle de l’ISSN sur le moment des repas', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0189-4' },
 } satisfies Record<string, Source>;
 
@@ -67,7 +67,7 @@ export const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, { label: string; value:
 
 export const MACROS_BY_GOAL: Record<CalcGoal, { protein: number; carbs: number; fat: number; label: string; note: string; delta: number }> = {
   lose: { protein: 40, carbs: 30, fat: 30, label: traduire('Perte de poids'), note: traduire('Déficit de 500 kcal, soit environ 0,5 kg par semaine'), delta: -500 },
-  maintain: { protein: 30, carbs: 40, fat: 30, label: 'Maintien', note: traduire('Équilibre pour garder ton poids actuel'), delta: 0 },
+  maintain: { protein: 30, carbs: 40, fat: 30, label: traduire('Maintien'), note: traduire('Équilibre pour garder ton poids actuel'), delta: 0 },
   gain: { protein: 35, carbs: 45, fat: 20, label: traduire('Prise de muscle'), note: traduire('Surplus de 300 kcal pour une prise de masse sèche'), delta: 300 },
 };
 
@@ -80,7 +80,7 @@ export type Level = { label: string; tone: 'indigo' | 'moss' | 'gold' | 'red' };
 
 export function imcCategory(v: number): Level {
   if (v < 18.5) return { label: traduire('Insuffisance pondérale'), tone: 'indigo' };
-  if (v < 25) return { label: 'Corpulence normale', tone: 'moss' };
+  if (v < 25) return { label: traduire('Corpulence normale'), tone: 'moss' };
   if (v < 30) return { label: 'Surpoids', tone: 'gold' };
   return { label: 'Obésité', tone: 'red' };
 }
@@ -343,9 +343,9 @@ export const WEIGHT_CATEGORIES: Record<'mma' | 'jjb' | 'boxe', { name: string; m
     { name: 'Mouche', maxKg: 56.7 },
     { name: 'Coq', maxKg: 61.2 },
     { name: 'Plume', maxKg: 65.8 },
-    { name: traduire('Léger'), maxKg: 70.3 },
+    { name: 'Léger', maxKg: 70.3 },
     { name: 'Mi-moyen', maxKg: 77.1 },
-    { name: traduire('Moyen'), maxKg: 83.9 },
+    { name: 'Moyen', maxKg: 83.9 },
     { name: 'Mi-lourd', maxKg: 93 },
     { name: 'Lourd', maxKg: 120.2 },
   ],
@@ -364,10 +364,10 @@ export const WEIGHT_CATEGORIES: Record<'mma' | 'jjb' | 'boxe', { name: string; m
     { name: 'Mouche', maxKg: 50.8 },
     { name: 'Coq', maxKg: 53.5 },
     { name: 'Plume', maxKg: 57.2 },
-    { name: traduire('Léger'), maxKg: 61.2 },
+    { name: 'Léger', maxKg: 61.2 },
     { name: 'Super-léger', maxKg: 63.5 },
     { name: 'Welter', maxKg: 66.7 },
-    { name: traduire('Moyen'), maxKg: 72.6 },
+    { name: 'Moyen', maxKg: 72.6 },
     { name: 'Lourd-léger', maxKg: 79.4 },
     { name: 'Lourd', maxKg: 90.7 },
   ],
@@ -420,7 +420,7 @@ export const RETURN_PLANS: Record<ReturnFamily, ReturnWeek[]> = {
     { week: 2, label: traduire('Technique sans résistance'), restrictions: [traduire('Technique légère des bras'), traduire('Pas de grip ni de saisies'), traduire('Exercices de proprioception')] },
     { week: 3, label: traduire('Drilling léger'), restrictions: [traduire('Drilling technique, pas de sparring'), traduire('Résistance minimale du partenaire'), traduire('Stop si douleur')] },
     { week: 4, label: traduire('Roulage léger avec partenaires de confiance'), restrictions: [traduire('Rolling léger uniquement'), traduire('Partenaires de confiance'), 'Communication ouverte'] },
-    { week: 5, label: 'Sparring progressif', restrictions: [traduire('Du sparring technique vers plus intense'), traduire('Écoute ton corps'), traduire('Bilan avant toute compétition')] },
+    { week: 5, label: traduire('Sparring progressif'), restrictions: [traduire('Du sparring technique vers plus intense'), traduire('Écoute ton corps'), traduire('Bilan avant toute compétition')] },
   ],
   lower: [
     { week: 1, label: traduire('Repos et glace'), restrictions: [traduire('Aucun appui si douleur'), traduire('Membre surélevé'), traduire('Mobilité passive uniquement')] },
@@ -432,9 +432,9 @@ export const RETURN_PLANS: Record<ReturnFamily, ReturnWeek[]> = {
   back: [
     { week: 1, label: traduire('Repos relatif'), restrictions: [traduire('Pas de charge sur la colonne'), traduire('Étirements doux'), traduire('Chaleur ; médicaments seulement sur avis médical')] },
     { week: 2, label: traduire('Mobilité douce'), restrictions: [traduire('Étirements progressifs'), traduire('Gainage très doux'), traduire('Pas de projections')] },
-    { week: 3, label: 'Renforcement progressif', restrictions: ['Gainage statique', traduire('Technique debout sans chute'), traduire('Mobilité de la colonne')] },
+    { week: 3, label: traduire('Renforcement progressif'), restrictions: ['Gainage statique', traduire('Technique debout sans chute'), traduire('Mobilité de la colonne')] },
     { week: 4, label: traduire('Technique légère'), restrictions: [traduire('Drilling debout et au sol, léger'), 'Rolling en position haute', traduire('Stop si douleur')] },
-    { week: 5, label: 'Sparring progressif', restrictions: [traduire('Rolling léger'), traduire('Communication avec ton partenaire'), traduire('Avis médical avant de monter en intensité')] },
+    { week: 5, label: traduire('Sparring progressif'), restrictions: [traduire('Rolling léger'), traduire('Communication avec ton partenaire'), traduire('Avis médical avant de monter en intensité')] },
   ],
 };
 
@@ -453,9 +453,9 @@ export const RED_FLAGS = [
 
 /** Reperes approximatifs pendant le jeune, variables selon chacun */
 export const FAST_MARKERS: { hour: number; label: string; text: string }[] = [
-  { hour: 0, label: 'Digestion', text: traduire('Ton corps utilise le dernier repas.') },
+  { hour: 0, label: traduire('Digestion'), text: traduire('Ton corps utilise le dernier repas.') },
   { hour: 4, label: traduire('Réserves'), text: traduire('Il puise dans ses réserves de sucre.') },
-  { hour: 12, label: 'Bascule', text: traduire('La part des graisses utilisées augmente.') },
+  { hour: 12, label: traduire('Bascule'), text: traduire('La part des graisses utilisées augmente.') },
   { hour: 18, label: traduire('Jeûne long'), text: traduire('Reste attentif aux signaux de ton corps.') },
 ];
 

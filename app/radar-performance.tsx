@@ -53,8 +53,8 @@ export default function RadarPerformanceScreen() {
   const size = Math.min(width - 44, 380);
 
   return (
-    <PremiumGate source="radar" featureTitle="Radar performance" perks={[traduire('Force, cardio, souplesse, mental et technique sur un radar'), traduire('Ton score global semaine après semaine'), traduire('Le détail de chaque axe')]}>
-      <DetailScreen title="Performance" subtitle={traduire("Ton profil de guerrier cette semaine")}>
+    <PremiumGate source="radar" featureTitle={traduire("Radar performance")} perks={[traduire('Force, cardio, souplesse, mental et technique sur un radar'), traduire('Ton score global semaine après semaine'), traduire('Le détail de chaque axe')]}>
+      <DetailScreen title={traduire("Performance")} subtitle={traduire("Ton profil de guerrier cette semaine")}>
         {reliable ? (
           <>
             <Enter i={0}>
@@ -112,7 +112,7 @@ export default function RadarPerformanceScreen() {
               <Icon name="bolt" size={22} color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Ink size={15} weight="bold" color={P.white} style={{ lineHeight: 21 }}>
-                  {insight.text}
+                  {traduire(insight.text)}
                 </Ink>
                 {insight.source ? (
                   <Ink size={11} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.6)' : 'rgba(255,255,255,0.6)'}>
@@ -137,7 +137,7 @@ export default function RadarPerformanceScreen() {
                     <Glyph kind="sakura" size={22} color={a.color} />
                   </View>
                   <Ink size={17} weight="black" tight style={{ flex: 1 }}>
-                    {a.label}
+                    {traduire(a.label)}
                   </Ink>
                   {ev && reliable && v > 0 ? (
                     <Ink size={12} weight="extraBold" color={ev > 0 ? P.mossText : P.danger}>
@@ -169,8 +169,7 @@ export default function RadarPerformanceScreen() {
             <XIcon name="book" size={22} color={P.indigo} />
             <View style={{ flex: 1 }}>
               <Ink size={15} weight="extraBold">
-                Sources scientifiques
-              </Ink>
+                {traduire("Sources scientifiques")}</Ink>
               <Ink size={12} weight="bold" color={P.muted}>
                 {traduire("Toutes les références derrière les calculs")}</Ink>
             </View>

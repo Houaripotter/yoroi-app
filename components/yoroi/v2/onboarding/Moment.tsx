@@ -210,7 +210,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
   const reste = freq != null && n < freq ? freq - n : 0;
   const ready = !!value && value !== 'inconnu' && n > 0;
   return (
-    <Shell {...nav} title={traduire("Ton **rendez-vous** avec la balance")} gap={14} footer={<MainButton label="Continuer" onPress={onNext} disabled={!ready} />}>
+    <Shell {...nav} title={traduire("Ton **rendez-vous** avec la balance")} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!ready} />}>
       <Animated.View entering={FadeIn.duration(260)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, backgroundColor: ENCRES.sarcelle.fond, paddingVertical: 12, paddingHorizontal: 14 }}>
         <Tampon name="objectif_perdre" size={64} rotate={-8} ink={ENCRES.sarcelle.ink} animate accessibilityLabel={null} />
         <Riche
@@ -265,7 +265,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                accessibilityLabel={m.label}
+                accessibilityLabel={traduire(m.label)}
                 style={{ flexBasis: '47%', flexGrow: 1 }}
               >
                 {({ pressed }) => (
@@ -275,7 +275,7 @@ export function Moment({ nav, value, jours, heure, onPick, onJours, onHeure, onN
                     ) : (
                       <Image source={CHRONO} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
                     )}
-                    <Ink size={15} weight="black" color={on ? m.encre.ink : c.ink} style={{ flex: 1, lineHeight: 19 }} numberOfLines={2}>{m.label}</Ink>
+                    <Ink size={15} weight="black" color={on ? m.encre.ink : c.ink} style={{ flex: 1, lineHeight: 19 }} numberOfLines={2}>{traduire(m.label)}</Ink>
                     {on ? (
                       <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: m.encre.ink, alignItems: 'center', justifyContent: 'center' }}>
                         <Icon name="check" size={12} color={c.onAccent} stroke={3} />

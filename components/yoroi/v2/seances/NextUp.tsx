@@ -73,7 +73,7 @@ export function NextUp({
       style={({ pressed }) => ({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, borderRadius: 14, backgroundColor: pressed ? c.fillSubtle : c.fillSoft, alignSelf: 'flex-start' })}
     >
       <Icon name="calendar" size={17} color={c.accent} />
-      <Ink size={14} weight="extraBold" color={c.accent}>Calendrier</Ink>
+      <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Calendrier")}</Ink>
     </Pressable>
   ) : null;
 

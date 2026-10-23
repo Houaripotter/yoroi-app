@@ -117,7 +117,7 @@ export function computeRecords(trainings: Training[]): RecordsResult {
     const dur = durationOf(t);
     if (fam === 'cardio' && dist > 0) {
       const sName = getSportName(sport);
-      push(map, traduire("distance:{0}", sport), () => ({ key: `distance:${sport}`, kind: 'distance', name: `${sName}, plus longue distance`, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dist, trainingId: t.id });
+      push(map, `distance:${sport}`, () => ({ key: `distance:${sport}`, kind: 'distance', name: `${sName}, plus longue distance`, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dist, trainingId: t.id });
       if (dist >= 1 && dur > 0) {
         const pace = (dur * 60) / dist;
         if (pace > 120 && pace < 1800) {
@@ -207,7 +207,7 @@ export type CombatSummary = {
 
 type CompCombat = { resultat?: string; methode?: string; technique?: string };
 
-const NOT_A_SUBMISSION = new Set(['points', traduire('aux points'), 'ko', 'tko', 'décision', 'decision', 'avantages', 'arrêt de l’arbitre', 'abandon', 'dq']);
+const NOT_A_SUBMISSION = new Set(['points', 'aux points', 'ko', 'tko', 'décision', 'decision', 'avantages', 'arrêt de l’arbitre', 'abandon', 'dq']);
 
 export function combatSummary(trainings: Training[], combats: CompCombat[] = []): CombatSummary {
   const out: CombatSummary = { roundsTotal: 0, wins: 0, losses: 0, draws: 0, compWins: 0, compTotal: 0, submissions: [], submissionsTotal: 0 };

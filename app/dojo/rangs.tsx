@@ -89,7 +89,7 @@ export default function Rangs() {
         >
           <View style={{ gap: 3 }}>
             <Ink size={12} weight="extraBold" color={c.textMuted}>{libelleConstruction(u)}</Ink>
-            <Ink size={19} weight="black" tight numberOfLines={2}>{cons.titre}</Ink>
+            <Ink size={19} weight="black" tight numberOfLines={2}>{traduire(cons.titre)}</Ink>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <ArmureEnConstruction piece={cons.piece} progres={cons.progres} taille={104} />
@@ -201,7 +201,7 @@ export default function Rangs() {
           {rules.map((rule, i) => (
             <View key={rule.source} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, paddingTop: i === 0 ? 0 : 10 }}>
               <View style={{ flex: 1 }}>
-                <Ink size={14} weight="bold">{rule.label}</Ink>
+                <Ink size={14} weight="bold">{traduire(rule.label)}</Ink>
                 <Ink size={12} color={c.textMuted}>{rule.limit}</Ink>
               </View>
               <View style={{ borderRadius: 12, backgroundColor: c.accentTint, paddingHorizontal: 10, paddingVertical: 5 }}>

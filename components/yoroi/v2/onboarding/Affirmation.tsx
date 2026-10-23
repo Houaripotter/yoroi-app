@@ -92,10 +92,10 @@ export function Affirmation({ nav, name, freins, genre = null, onNext, children 
         <>
           {fin ? null : <Descends />}
           <MainButton
-            label="Continuer"
+            label={traduire("Continuer")}
             onPress={onNext}
             disabled={!fin}
-            accessibilityLabel={fin ? 'Continuer' : traduire('Continuer, indisponible : descends jusqu’en bas de la page')}
+            accessibilityLabel={fin ? traduire('Continuer') : traduire('Continuer, indisponible : descends jusqu’en bas de la page')}
           />
         </>
       }
@@ -139,7 +139,7 @@ export function Affirmation({ nav, name, freins, genre = null, onNext, children 
       <View style={{ gap: petit ? 6 : 10 }}>
         {a.points.map((p, i) => {
           const pe = ENCRE_FREIN[p.frein] ?? e;
-          return <Line key={p.texte} text={p.texte} index={i} ink={pe.ink} fond={pe.fond} petit={petit} />;
+          return <Line key={p.texte} text={traduire(p.texte)} index={i} ink={pe.ink} fond={pe.fond} petit={petit} />;
         })}
       </View>
       {children}

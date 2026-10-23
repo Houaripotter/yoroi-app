@@ -36,9 +36,9 @@ const CARTES: { id: CarteId; label: string; fichier: string; utilisee: boolean }
   { id: 'annee', label: traduire('Mon année'), fichier: 'YearCounterCardV2', utilisee: true },
   { id: 'seance_muscu', label: traduire('Séance muscu'), fichier: 'SessionCard', utilisee: true },
   { id: 'seance_jjb', label: traduire('Séance JJB'), fichier: traduire('SessionCard, avec les rounds'), utilisee: true },
-  { id: 'duel', label: 'Duel', fichier: 'DuelCard', utilisee: true },
+  { id: 'duel', label: traduire('Duel'), fichier: 'DuelCard', utilisee: true },
   { id: 'combattant', label: traduire('Carte de combattant'), fichier: 'FighterCardView', utilisee: true },
-  { id: 'universelle', label: 'Carte universelle', fichier: 'UniversalShareCard', utilisee: false },
+  { id: 'universelle', label: traduire('Carte universelle'), fichier: 'UniversalShareCard', utilisee: false },
   { id: 'combat', label: traduire('Carte combat'), fichier: 'CombatShareCard', utilisee: false },
   { id: 'ancienne_semaine', label: traduire('Ancienne semaine'), fichier: 'WeeklyRecapCard', utilisee: false },
   { id: 'ancien_mois', label: traduire('Ancien mois'), fichier: 'MonthlyRecapCard', utilisee: false },
@@ -47,8 +47,8 @@ const CARTES: { id: CarteId; label: string; fichier: string; utilisee: boolean }
 
 const STYLES: { key: CardVariant; label: string }[] = [
   { key: 'papier', label: 'Papier' },
-  { key: 'laque', label: 'Laque' },
-  { key: 'photo', label: 'Photo' },
+  { key: 'laque', label: traduire('Laque') },
+  { key: 'photo', label: traduire('Photo') },
 ];
 
 export function PartageGalerie() {
@@ -109,17 +109,17 @@ export function PartageGalerie() {
     >
       <PastilleRow>
         {CARTES.map((x) => (
-          <Pastille key={x.id} label={x.label} on={carte === x.id} onPress={() => setCarte(x.id)} />
+          <Pastille key={x.id} label={traduire(x.label)} on={carte === x.id} onPress={() => setCarte(x.id)} />
         ))}
       </PastilleRow>
       <PastilleRow>
         {STYLES.map((s) => (
-          <Pastille key={s.key} label={s.label} on={studio.style === s.key} onPress={() => studio.setStyle(s.key)} />
+          <Pastille key={s.key} label={traduire(s.label)} on={studio.style === s.key} onPress={() => studio.setStyle(s.key)} />
         ))}
         {carte === 'combattant' ? (
           <>
             <Pastille label={traduire("Guerrière")} on={genre === 'f'} onPress={() => setGenre('f')} />
-            <Pastille label="Guerrier" on={genre === 'h'} onPress={() => setGenre('h')} />
+            <Pastille label={traduire("Guerrier")} on={genre === 'h'} onPress={() => setGenre('h')} />
           </>
         ) : null}
       </PastilleRow>
@@ -141,7 +141,7 @@ export function PartageGalerie() {
           <Bouton label={traduire("Précédente")} light onPress={() => setCarte(CARTES[(i - 1 + CARTES.length) % CARTES.length].id)} />
         </View>
         <View style={{ flex: 1 }}>
-          <Bouton label="Suivante" light onPress={() => setCarte(CARTES[(i + 1) % CARTES.length].id)} />
+          <Bouton label={traduire("Suivante")} light onPress={() => setCarte(CARTES[(i + 1) % CARTES.length].id)} />
         </View>
       </View>
       <Bouton label={studio.busy ? traduire('Un instant') : traduire('Partager cette carte')} icon="share" onPress={studio.share} disabled={studio.busy} />
@@ -149,7 +149,7 @@ export function PartageGalerie() {
       <Rubrique title={traduire("Record du carnet")} sub={traduire("La feuille de partage d’un record, avec ses fonds partage_ et ses deux formats")} />
       <Lignes>
         {RECORDS_PARTAGE.map((r, k) => (
-          <Ligne key={r.label} first={k === 0} icon={r.data.isPR ? 'trophy' : 'dumbbell'} label={r.label} sub={r.sub} onPress={() => setRecord(r.data)} />
+          <Ligne key={r.label} first={k === 0} icon={r.data.isPR ? 'trophy' : 'dumbbell'} label={traduire(r.label)} sub={traduire(r.sub)} onPress={() => setRecord(r.data)} />
         ))}
       </Lignes>
     </GalerieScreen>

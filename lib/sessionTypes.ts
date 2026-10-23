@@ -11,30 +11,30 @@ export interface SessionTypeConfig {
 // Types de séances par catégorie de sport
 export const SESSION_TYPES_BY_SPORT: Record<string, string[]> = {
   // === SPORTS DE COMBAT (JJB, MMA, etc.) ===
-  jjb: ['Cours', 'Sparring', 'Drilling', 'Open Mat', traduire('Compétition'), traduire('Privé')],
-  mma: ['Cours', 'Sparring', 'Drilling', 'Pads', traduire('Compétition'), traduire('Privé')],
-  boxe: ['Cours', 'Sparring', 'Shadow', 'Pads', 'Sac', traduire('Compétition')],
-  kickboxing: ['Cours', 'Sparring', 'Pads', 'Sac', traduire('Compétition')],
-  muay_thai: ['Cours', 'Sparring', 'Pads', 'Clinch', 'Sac', traduire('Compétition')],
-  lutte: ['Cours', 'Sparring', 'Drilling', traduire('Compétition')],
-  judo: ['Cours', 'Randori', 'Nage-komi', 'Uchi-komi', traduire('Compétition')],
-  karate: ['Cours', 'Kumite', 'Kata', 'Kihon', traduire('Compétition')],
-  taekwondo: ['Cours', traduire('Combat'), 'Poomsae', traduire('Compétition')],
-  sambo: ['Cours', traduire('Combat'), 'Drilling', traduire('Compétition')],
-  grappling: ['Cours', 'Sparring', 'Drilling', traduire('Compétition')],
+  jjb: ['Cours', 'Sparring', 'Drilling', 'Open Mat', 'Compétition', 'Privé'],
+  mma: ['Cours', 'Sparring', 'Drilling', 'Pads', 'Compétition', 'Privé'],
+  boxe: ['Cours', 'Sparring', 'Shadow', 'Pads', 'Sac', 'Compétition'],
+  kickboxing: ['Cours', 'Sparring', 'Pads', 'Sac', 'Compétition'],
+  muay_thai: ['Cours', 'Sparring', 'Pads', 'Clinch', 'Sac', 'Compétition'],
+  lutte: ['Cours', 'Sparring', 'Drilling', 'Compétition'],
+  judo: ['Cours', 'Randori', 'Nage-komi', 'Uchi-komi', 'Compétition'],
+  karate: ['Cours', 'Kumite', 'Kata', 'Kihon', 'Compétition'],
+  taekwondo: ['Cours', 'Combat', 'Poomsae', 'Compétition'],
+  sambo: ['Cours', 'Combat', 'Drilling', 'Compétition'],
+  grappling: ['Cours', 'Sparring', 'Drilling', 'Compétition'],
   catch: ['Cours', 'Sparring', 'Drilling'],
   boxe_francaise: ['Cours', 'Assaut', 'Pads', 'Sac'],
   krav_maga: ['Cours', 'Sparring', 'Techniques', 'Self-defense'],
 
   // === FITNESS / MUSCULATION ===
   musculation: [
-    traduire('Séance libre'),
-    traduire('Poussée'),
+    'Séance libre',
+    'Poussée',
     'Tirage',
     'Jambes',
     'Corps complet',
-    traduire('Haut du corps'),
-    traduire('Bas du corps'),
+    'Haut du corps',
+    'Bas du corps',
     'PPL',
     'Circuit',
     // Groupes musculaires spécifiques
@@ -49,22 +49,22 @@ export const SESSION_TYPES_BY_SPORT: Record<string, string[]> = {
     'Mollets',
     'Cardio',
   ],
-  crossfit: ['WOD', 'Open Gym', traduire('Technique'), 'Competition'],
-  hiit: [traduire('Séance'), 'Tabata', 'AMRAP', 'EMOM'],
+  crossfit: ['WOD', 'Open Gym', 'Technique', 'Competition'],
+  hiit: ['Séance', 'Tabata', 'AMRAP', 'EMOM'],
   yoga: ['Cours', 'Flow', 'Yin', 'Power', 'Hot Yoga'],
   pilates: ['Cours', 'Mat', 'Reformer'],
-  corde_a_sauter: ['Entraînement', traduire('Technique'), 'Endurance'],
-  stretching: [traduire('Séance'), traduire('Récupération'), traduire('Mobilité')],
+  corde_a_sauter: ['Entraînement', 'Technique', 'Endurance'],
+  stretching: ['Séance', 'Récupération', 'Mobilité'],
 
   // === ENDURANCE ===
-  running: ['Footing', traduire('Fractionné'), 'Tempo', 'Sortie longue', 'Trail', 'Course'],
-  natation: ['Entraînement', traduire('Technique'), 'Endurance', 'Sprints'],
+  running: ['Footing', 'Fractionné', 'Tempo', 'Sortie longue', 'Trail', 'Course'],
+  natation: ['Entraînement', 'Technique', 'Endurance', 'Sprints'],
   velo: ['Sortie', 'Entraînement', 'VTT', 'Indoor'],
-  marche: ['Marche', traduire('Randonnée'), 'Nordic Walking'],
-  rameur: ['Entraînement', traduire('Technique'), 'Endurance'],
+  marche: ['Marche', 'Randonnée', 'Nordic Walking'],
+  rameur: ['Entraînement', 'Technique', 'Endurance'],
 
   // === SPORTS COLLECTIFS ===
-  football: ['Match', 'Entraînement', traduire('Foot à 5'), 'Futsal'],
+  football: ['Match', 'Entraînement', 'Foot à 5', 'Futsal'],
   basketball: ['Match', 'Entraînement', '3x3'],
   rugby: ['Match', 'Entraînement', 'Touch'],
   handball: ['Match', 'Entraînement'],
@@ -76,13 +76,13 @@ export const SESSION_TYPES_BY_SPORT: Record<string, string[]> = {
   badminton: ['Match', 'Entraînement', 'Double'],
 
   // === AUTRE ===
-  escalade: [traduire('Séance'), 'Bloc', 'Voie', 'Outdoor'],
-  danse: ['Cours', traduire('Chorégraphie'), 'Freestyle'],
-  autre: [traduire('Séance'), 'Entraînement', 'Cours', 'Match'],
+  escalade: ['Séance', 'Bloc', 'Voie', 'Outdoor'],
+  danse: ['Cours', 'Chorégraphie', 'Freestyle'],
+  autre: ['Séance', 'Entraînement', 'Cours', 'Match'],
 };
 
 // Types de séances génériques (fallback)
-export const DEFAULT_SESSION_TYPES = [traduire('Séance'), 'Entraînement', 'Cours', 'Match', traduire('Compétition')];
+export const DEFAULT_SESSION_TYPES = ['Séance', 'Entraînement', 'Cours', 'Match', 'Compétition'];
 
 // Durées prédéfinies (en minutes)
 export const DURATION_PRESETS = [
@@ -103,7 +103,7 @@ export const getSessionTypesForSport = (sport: string): string[] => {
 // Obtenir le premier type de séance (défaut)
 export const getDefaultSessionType = (sport: string): string => {
   const types = getSessionTypesForSport(sport);
-  return types[0] || traduire('Séance');
+  return types[0] || 'Séance';
 };
 
 export default {

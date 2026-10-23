@@ -471,7 +471,7 @@ export const exportSleepToCSV = async (): Promise<string> => {
     const entries = await getSleepEntries();
 
     // En-tête CSV
-    let csv = traduire('Date,Heure Coucher,Heure Réveil,Durée (heures),Qualité (1-5),Notes\n');
+    let csv = 'Date,Heure Coucher,Heure Réveil,Durée (heures),Qualité (1-5),Notes\n';
 
     // Ajouter chaque entrée (du plus récent au plus ancien)
     const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));

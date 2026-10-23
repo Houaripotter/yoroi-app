@@ -86,7 +86,7 @@ export function ScoreHero({ readiness, onOpen }: { readiness: Readiness | null; 
             {RECUP_NAME}
           </Ink>
           <Ink size={21} weight="black" tight color={readiness.score === null ? S.ink : t.text}>
-            {readiness.title}
+            {traduire(readiness.title)}
           </Ink>
           <Ink size={13} weight="medium" color={S.ink2}>
             {readiness.score !== null ? readiness.advice : traduire("Il manque {0}.", readiness.missing.slice(0, 2).join(' et '))}
@@ -101,7 +101,7 @@ export function ScoreHero({ readiness, onOpen }: { readiness: Readiness | null; 
               <View style={{ gap: 5, minHeight: 44, justifyContent: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                   <Ink size={13} weight="extraBold" style={{ flex: 1 }}>
-                    {p.label}
+                    {traduire(p.label)}
                   </Ink>
                   <Ink size={13} weight="black">
                     {p.today}
@@ -207,7 +207,7 @@ export function ConnectSteps({ provider, mode, connecting, onConnect, onPickBran
             {__DEV__ ? traduire("Mode test : {0} ne s’ouvre pas dans Expo Go. Dans l’app installée, un seul bouton suffit.", provider) : traduire("{0} n’est pas disponible sur cet appareil pour l’instant.", provider)}
           </Ink>
         ) : (
-          <SmallButton label={connecting ? 'Connexion' : `Connecter ${provider}`} tone="red" icon="link" busy={connecting} onPress={onConnect} />
+          <SmallButton label={connecting ? traduire('Connexion') : `Connecter ${provider}`} tone="red" icon="link" busy={connecting} onPress={onConnect} />
         ),
       )}
     </GlassBox>
@@ -286,8 +286,7 @@ export function ExtendedCard({ onAsk, busy }: { onAsk: () => void; busy: boolean
         <View style={{ minHeight: 46, borderRadius: 16, backgroundColor: P.white, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
           {busy ? <ActivityIndicator size="small" color={S.indigo} /> : <SanteIcon name="check" size={16} color={S.indigo} width={2.6} />}
           <Ink size={14} weight="extraBold" color={S.indigo}>
-            Autoriser
-          </Ink>
+            {traduire("Autoriser")}</Ink>
         </View>
       </Press>
     </View>
@@ -338,7 +337,7 @@ function FeaturedChart({ def, points, onOpen }: { def: MetricDef; points: DayPoi
     chart = month.length ? (
       <View style={{ gap: 8 }}>
         <DualLine points={month} onSelect={setSel} label={traduire("Tension artérielle, 30 jours")} height={190} />
-        <Legend items={[{ color: TENSION_COLORS[0], label: 'Chiffre haut', kind: 'line' }, { color: TENSION_COLORS[1], label: 'Chiffre bas', kind: 'line' }]} />
+        <Legend items={[{ color: TENSION_COLORS[0], label: traduire('Chiffre haut'), kind: 'line' }, { color: TENSION_COLORS[1], label: traduire('Chiffre bas'), kind: 'line' }]} />
       </View>
     ) : null;
   } else if (isSum) {
@@ -370,7 +369,7 @@ function FeaturedChart({ def, points, onOpen }: { def: MetricDef; points: DayPoi
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
             <Ink size={12} weight="extraBold" color={color}>
-              {def.label}
+              {traduire(def.label)}
             </Ink>
             <SanteIcon name="chevron" size={14} color={color} />
           </View>
@@ -416,7 +415,7 @@ export function SectionBlock({ section, series, onOpen }: { section: (typeof SEC
         </View>
         <View style={{ flex: 1 }}>
           <Ink size={21} weight="black" tight>
-            {fam.label}
+            {traduire(fam.label)}
           </Ink>
           <Ink size={12} weight="bold" color={S.ink2}>
             {SECTION_TEXT[section.key]}

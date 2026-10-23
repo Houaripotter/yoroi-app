@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en en. */
+"NSHealthShareUsageDescription" = "YOROI reads from Apple Health your heart rate, blood oxygen, resting heart rate, heart rate variability, respiratory rate, calories, weight and date of birth (for your heart rate zones), to show your live heart rate, your session summary and your Heart, Oxygen, Rest and Breathing complications.";
+"NSHealthUpdateUsageDescription" = "YOROI saves to Apple Health your workouts, with their heart rate and calories, your weigh-ins and your glasses of water, so everything stays in one place.";
+"NSUserNotificationUsageDescription" = "YOROI alerts you at the end of every round and when your timers finish while the screen is off.";
+"CFBundleDisplayName" = "Yoroi";

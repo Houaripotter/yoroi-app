@@ -251,9 +251,9 @@ function Fenetre({ req }: { req: FenetreRequest }) {
               ) : null}
               {!req.options?.illustration && req.options?.icon ? <View style={[styles.icon, { backgroundColor: c.surface, borderColor: c.border }]}>{req.options.icon}</View> : null}
               {req.title ? (
-                <View ref={titleRef} accessible accessibilityRole="header" accessibilityLabel={req.title}>
+                <View ref={titleRef} accessible accessibilityRole="header" accessibilityLabel={traduire(req.title)}>
                   <Ink size={isChoices ? 16 : 19} weight="extraBold" tight style={isChoices ? styles.center : undefined}>
-                    {req.title}
+                    {traduire(req.title)}
                   </Ink>
                 </View>
               ) : null}
@@ -278,7 +278,7 @@ function Fenetre({ req }: { req: FenetreRequest }) {
               keyboardType={(req.input.keyboardType as KeyboardTypeOptions) ?? 'default'}
               returnKeyType="done"
               onSubmitEditing={() => mainOf && finish(mainOf.b)}
-              accessibilityLabel={req.title}
+              accessibilityLabel={traduire(req.title)}
               style={[styles.input, { backgroundColor: c.surface, borderColor: c.border, color: c.ink }]}
             />
           ) : null}

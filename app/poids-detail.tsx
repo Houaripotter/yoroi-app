@@ -216,20 +216,20 @@ export default function PoidsDetailScreen() {
       {rythmeTxt ? (
         <View style={{ gap: 1 }}>
           <Ink size={15} weight="extraBold" color={tonCouleur(rythmeTxt.ton)} numberOfLines={1}>
-            {rythmeTxt.titre}
+            {traduire(rythmeTxt.titre)}
           </Ink>
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={4}>
-            {rythmeTxt.texte}
+            {traduire(rythmeTxt.texte)}
           </Ink>
         </View>
       ) : null}
       {manqueTxt ? (
         <View style={{ gap: 1 }}>
           <Ink size={15} weight="extraBold" numberOfLines={1}>
-            {manqueTxt.titre}
+            {traduire(manqueTxt.titre)}
           </Ink>
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={4}>
-            {manqueTxt.texte}
+            {traduire(manqueTxt.texte)}
           </Ink>
         </View>
       ) : null}
@@ -240,15 +240,14 @@ export default function PoidsDetailScreen() {
   const blocCalcul = (
     <View style={{ marginHorizontal: GUTTER, marginTop: 18, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 12 }}>
       <Ink size={14} weight="black" numberOfLines={1}>
-        Comment on calcule
-      </Ink>
+        {traduire("Comment on calcule")}</Ink>
       {COMMENT_ON_CALCULE.map((l) => (
         <View key={l.titre} style={{ gap: 2 }}>
           <Ink size={13.5} weight="extraBold">
-            {l.titre}
+            {traduire(l.titre)}
           </Ink>
           <Ink size={12.5} weight="medium" color={c.textSecondary}>
-            {l.texte}
+            {traduire(l.texte)}
           </Ink>
           <Ink size={11.5} weight="bold" color={c.textSecondary}>
             {`Source : ${l.source}`}

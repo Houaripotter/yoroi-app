@@ -113,8 +113,8 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
         const a = fam === 'course' || fam === 'autre' ? allure(s.dureeMin, s.distanceKm) : null;
         return a ? { key: 'allure', label: 'allure', value: a, unit: '/km' } : null;
       })(),
-      fc_moy: s.fcMoy > 0 ? { key: 'fc_moy', label: 'FC moyenne', value: String(Math.round(s.fcMoy)), unit: 'bpm' } : null,
-      fc_max: s.fcMax > 0 ? { key: 'fc_max', label: 'FC max', value: String(Math.round(s.fcMax)), unit: 'bpm' } : null,
+      fc_moy: s.fcMoy > 0 ? { key: 'fc_moy', label: traduire('FC moyenne'), value: String(Math.round(s.fcMoy)), unit: 'bpm' } : null,
+      fc_max: s.fcMax > 0 ? { key: 'fc_max', label: traduire('FC max'), value: String(Math.round(s.fcMax)), unit: 'bpm' } : null,
       calories: s.calories > 0 ? { key: 'calories', label: 'calories', value: nombre(s.calories, 0), unit: 'kcal' } : null,
       zones: (() => {
         const z = s.zones;
@@ -122,7 +122,7 @@ export function chiffresDisponibles(d: CarteData, masque: Masque = 'aucun'): Sta
         const total = z.reduce((a, b) => a + (b > 0 ? b : 0), 0);
         if (total < 60) return null;
         const i = z.indexOf(Math.max(...z));
-        return { key: 'zones', label: 'zone dominante', value: ZONES_NOMS[i], zones: z.map((x) => (x > 0 ? x : 0)) };
+        return { key: 'zones', label: traduire('zone dominante'), value: ZONES_NOMS[i], zones: z.map((x) => (x > 0 ? x : 0)) };
       })(),
       serie_semaines: serieStat,
     };
@@ -237,18 +237,18 @@ export function basculerChiffre(choix: StatKey[], k: StatKey): StatKey[] {
 /** Libelle des chiffres pour l'editeur */
 export const NOMS_CHIFFRES: Record<StatKey, string> = {
   duree: traduire('Durée'),
-  rounds: 'Rounds',
+  rounds: traduire('Rounds'),
   series: traduire('Séries'),
   charge: 'Charge totale',
   distance: 'Distance',
-  allure: 'Allure',
-  fc_moy: 'FC moyenne',
-  fc_max: 'FC max',
+  allure: traduire('Allure'),
+  fc_moy: traduire('FC moyenne'),
+  fc_max: traduire('FC max'),
   calories: traduire('Calories'),
   zones: 'Zones',
   poids: 'Poids',
   ecart: traduire('Poids perdu ou pris'),
-  reste: 'Reste',
+  reste: traduire('Reste'),
   objectif_pct: traduire('Objectif en %'),
   seances: traduire('Séances'),
   temps_total: traduire('Temps total'),

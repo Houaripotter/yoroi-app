@@ -26,9 +26,9 @@ import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
 export function ringItems(r: Rings | null, g: RingGoals): RingItem[] {
-  const items: RingItem[] = [{ key: 'move', label: 'Bouger', value: r?.move ?? null, goal: g.move, unit: 'kcal' }];
+  const items: RingItem[] = [{ key: 'move', label: traduire('Bouger'), value: r?.move ?? null, goal: g.move, unit: 'kcal' }];
   if (!r || r.hasExercise) items.push({ key: 'exercise', label: traduire('Exercice'), value: r?.exercise ?? null, goal: g.exercise, unit: 'min' });
-  if (r?.hasStand) items.push({ key: 'stand', label: 'Debout', value: r?.stand ?? null, goal: g.stand, unit: 'h' });
+  if (r?.hasStand) items.push({ key: 'stand', label: traduire('Debout'), value: r?.stand ?? null, goal: g.stand, unit: 'h' });
   return items;
 }
 
@@ -103,9 +103,9 @@ export function GoalsSheet({ visible, goals, hasStand, hasExercise, onClose, onS
     <Sheet visible={visible} onClose={onClose} title={traduire("Tes objectifs du jour")}>
       <Ink size={14} weight="medium" color={S.ink2} style={{ paddingHorizontal: 4 }}>
         {traduire("Ils servent à remplir tes anneaux dans YOROI. Ils ne changent rien dans ta montre.")}</Ink>
-      <Stepper label="Bouger" value={g.move} unit="kcal" step={25} min={50} max={3000} onChange={(v) => setG({ ...g, move: v })} />
+      <Stepper label={traduire("Bouger")} value={g.move} unit="kcal" step={25} min={50} max={3000} onChange={(v) => setG({ ...g, move: v })} />
       {hasExercise ? <Stepper label={traduire("Exercice")} value={g.exercise} unit="min" step={5} min={5} max={240} onChange={(v) => setG({ ...g, exercise: v })} /> : null}
-      {hasStand ? <Stepper label="Debout" value={g.stand} unit="h" step={1} min={1} max={18} onChange={(v) => setG({ ...g, stand: v })} /> : null}
+      {hasStand ? <Stepper label={traduire("Debout")} value={g.stand} unit="h" step={1} min={1} max={18} onChange={(v) => setG({ ...g, stand: v })} /> : null}
       <SmallButton label={traduire("Enregistrer")} tone="red" icon="check" onPress={() => onSave(g)} />
     </Sheet>
   );
@@ -131,7 +131,7 @@ export function InsightsRow({ insights }: { insights: Insight[] }) {
             <View style={{ width: 5, borderRadius: 3, backgroundColor: t.color }} />
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={15} weight="black" tight>
-                {it.title}
+                {traduire(it.title)}
               </Ink>
               <Ink size={13} weight="medium" color={S.ink2}>
                 {it.message}
@@ -184,7 +184,7 @@ export function WaitingList({ defs, onOpen }: { defs: MetricDef[]; onOpen: (k: M
                   <FamilyIcon family={f} size={18} color={fam.color} />
                 </View>
                 <Ink size={14} weight="extraBold" style={{ flex: 1 }}>
-                  {fam.label}
+                  {traduire(fam.label)}
                 </Ink>
                 <Ink size={12} weight="bold" color={S.muted}>
                   {String(list.length)}
@@ -199,7 +199,7 @@ export function WaitingList({ defs, onOpen }: { defs: MetricDef[]; onOpen: (k: M
                     <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 6, paddingRight: 12, borderRadius: 22, backgroundColor: '#F7F5F0', borderWidth: 1, borderColor: S.line2 }}>
                       <IconDot name={METRIC_ICON[d.key] ?? 'pulse'} color={fam.color} tint={fam.tint} size={30} />
                       <Ink size={13} weight="bold" color={S.ink2}>
-                        {d.label}
+                        {traduire(d.label)}
                       </Ink>
                     </View>
                   </Press>

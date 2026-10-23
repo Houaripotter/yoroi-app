@@ -11,6 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { P } from '@/components/yoroi/v2/accueil/kit';
 import { fontFamilies } from '@/components/yoroi/fonts';
 import { areaOf, barPath, brushPath, CHART, CHART_COLORS, EndDot, Reveal, SeriesLine, tint } from '@/components/yoroi/v2/charts/core';
+import { traduire } from '@/lib/i18n/tr';
 
 function useWidth(initial = 300): [number, (e: LayoutChangeEvent) => void] {
   const [w, setW] = useState(initial);
@@ -48,7 +49,7 @@ export function BrushColumns({ data, height = 150, max, color = P.water, highlig
                 </SvgText>
               ) : null}
               <SvgText x={x} y={height - 6} fontSize={11} fontFamily={fontFamilies.bold} fill={last ? P.ink : P.muted} textAnchor="middle">
-                {d.label}
+                {traduire(d.label)}
               </SvgText>
             </React.Fragment>
           );
@@ -93,7 +94,7 @@ export function BrushTrend({ points, height = 160, color = CHART_COLORS.blue, gu
         </Reveal>
         {points.map((p, i) => (
           <SvgText key={`l${i}`} x={x(i)} y={height - 6} fontSize={10} fontFamily={fontFamilies.bold} fill={P.muted} textAnchor="middle">
-            {p.label}
+            {traduire(p.label)}
           </SvgText>
         ))}
       </Svg>
@@ -131,7 +132,7 @@ export function StackColumns({ data, height = 140, colors = ['#3D5D9E', '#A8832F
                 </SvgText>
               ) : null}
               <SvgText x={cx} y={height - 6} fontSize={11} fontFamily={fontFamilies.bold} fill={P.muted} textAnchor="middle">
-                {d.label}
+                {traduire(d.label)}
               </SvgText>
             </React.Fragment>
           );
@@ -192,7 +193,7 @@ export function Legend({ items }: { items: { label: string; color: string }[] })
         <View key={it.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ width: 11, height: 11, borderRadius: 3, backgroundColor: it.color }} />
           <Ink size={12} weight="bold" color={P.ink2}>
-            {it.label}
+            {traduire(it.label)}
           </Ink>
         </View>
       ))}

@@ -46,7 +46,7 @@ const LONG =
 
 const RESULTATS: { label: string; sub: string; r: ResultInfo }[] = [
   { label: traduire('Nouveau record'), sub: traduire('Le tampon rouge se pose'), r: { name: traduire('Développé couché'), performance: '45 kg x 5 reps', isPR: true, gain: '+2,5 kg', recordText: '42,5 kg x 5 reps', illus: 'musculation' } },
-  { label: 'Premier record', sub: traduire('La toute première perf'), r: { name: 'Tractions', performance: '6 reps', isPR: true, first: true, illus: 'force' } },
+  { label: traduire('Premier record'), sub: traduire('La toute première perf'), r: { name: 'Tractions', performance: '6 reps', isPR: true, first: true, illus: 'force' } },
   { label: traduire('Perf notée'), sub: traduire('Sans record battu'), r: { name: 'Squat', performance: '70 kg x 5 reps', isPR: false, recordText: '75 kg x 5 reps', illus: 'musculation' } },
 ];
 
@@ -89,36 +89,36 @@ export function FenetresGalerie() {
         </Ink>
       </Bloc>
 
-      <Rubrique title="Alertes" sub="appAlert" />
+      <Rubrique title={traduire("Alertes")} sub={traduire("appAlert")} />
       <Lignes>
         <Ligne first icon="info" label={traduire("Un bouton")} sub={traduire("Une information, un OK")} onPress={() => appAlert(traduire('Pesée enregistrée'), traduire('Ta courbe se met à jour.'), [{ text: 'OK', onPress: dit('OK') }])} />
         <Ligne
           icon="check"
-          label="Deux boutons"
+          label={traduire("Deux boutons")}
           sub={traduire("Annuler et une action")}
           onPress={() =>
             appAlert(traduire('Terminer la séance ?'), traduire('Ta séance sera enregistrée avec ses 6 exercices.'), [
-              { text: 'Continuer', style: 'cancel', onPress: dit('Continuer') },
+              { text: traduire('Continuer'), style: 'cancel', onPress: dit(traduire('Continuer')) },
               { text: traduire('Terminer'), onPress: dit(traduire('Terminer')) },
             ])
           }
         />
         <Ligne
           icon="grid"
-          label="Trois boutons"
+          label={traduire("Trois boutons")}
           sub={traduire("Un choix entre deux actions")}
           onPress={() =>
             appAlert(traduire('Quitter sans enregistrer ?'), traduire('Tu as noté 3 séries. Tu peux les garder pour plus tard.'), [
               { text: traduire('Annuler'), style: 'cancel', onPress: dit(traduire('Annuler')) },
               { text: traduire('Garder le brouillon'), onPress: dit(traduire('Garder le brouillon')) },
-              { text: 'Quitter', style: 'destructive', onPress: dit('Quitter') },
+              { text: traduire('Quitter'), style: 'destructive', onPress: dit(traduire('Quitter')) },
             ])
           }
         />
         <Ligne
           danger
           icon="trash"
-          label="Suppression"
+          label={traduire("Suppression")}
           sub={traduire("Bouton rouge, définitif")}
           onPress={() =>
             appAlert(traduire('Supprimer cette séance ?'), traduire('C’est définitif. Ses records restent dans ton carnet.'), [
@@ -127,7 +127,7 @@ export function FenetresGalerie() {
             ])
           }
         />
-        <Ligne icon="doc" label="Texte long" sub={traduire("Pour vérifier que rien n’est coupé")} onPress={() => appAlert(traduire('Pense à ta sauvegarde'), LONG, [{ text: traduire('Plus tard'), style: 'cancel', onPress: dit(traduire('Plus tard')) }, { text: 'Sauvegarder', onPress: dit('Sauvegarder') }])} />
+        <Ligne icon="doc" label={traduire("Texte long")} sub={traduire("Pour vérifier que rien n’est coupé")} onPress={() => appAlert(traduire('Pense à ta sauvegarde'), LONG, [{ text: traduire('Plus tard'), style: 'cancel', onPress: dit(traduire('Plus tard')) }, { text: traduire('Sauvegarder'), onPress: dit(traduire('Sauvegarder')) }])} />
         <Ligne
           icon="star"
           label={traduire("Avec pictogramme")}
@@ -151,7 +151,7 @@ export function FenetresGalerie() {
         <Ligne first icon="star" label={traduire("Ton Premium a pris fin")} sub={traduire("Reprendre Premium ou Plus tard")} onPress={() => fenetreFinPremium(dit(traduire('Reprendre Premium')), dit(traduire('Plus tard')))} />
       </Lignes>
 
-      <Rubrique title={traduire("Feuille de choix")} sub="appChoices" />
+      <Rubrique title={traduire("Feuille de choix")} sub={traduire("appChoices")} />
       <Lignes>
         <Ligne
           first
@@ -168,12 +168,12 @@ export function FenetresGalerie() {
         />
       </Lignes>
 
-      <Rubrique title="Saisie" sub={traduire("appPrompt et appPassword")} />
+      <Rubrique title={traduire("Saisie")} sub={traduire("appPrompt et appPassword")} />
       <Lignes>
-        <Ligne first icon="text" label="Texte libre" sub="Renommer quelque chose" onPress={() => appPrompt(traduire('Renommer le club'), traduire('Le nouveau nom s’affiche partout.'), (v) => setDernier(traduire("OK avec « {0} »", v)), 'plain-text', 'First Jiu-Jitsu Academy')} />
+        <Ligne first icon="text" label={traduire("Texte libre")} sub={traduire("Renommer quelque chose")} onPress={() => appPrompt(traduire('Renommer le club'), traduire('Le nouveau nom s’affiche partout.'), (v) => setDernier(traduire("OK avec « {0} »", v)), 'plain-text', 'First Jiu-Jitsu Academy')} />
         <Ligne
           icon="scale"
-          label="Nombre"
+          label={traduire("Nombre")}
           sub={traduire("Clavier chiffré")}
           onPress={() =>
             appPrompt(
@@ -205,11 +205,11 @@ export function FenetresGalerie() {
       <Rubrique title={traduire("Feuille de résultat")} sub={traduire("Après une perf notée dans le carnet")} />
       <Lignes>
         {RESULTATS.map((x, i) => (
-          <Ligne key={x.label} first={i === 0} icon={x.r.isPR ? 'trophy' : 'check'} label={x.label} sub={x.sub} onPress={() => setResultat(x.r)} />
+          <Ligne key={x.label} first={i === 0} icon={x.r.isPR ? 'trophy' : 'check'} label={traduire(x.label)} sub={traduire(x.sub)} onPress={() => setResultat(x.r)} />
         ))}
       </Lignes>
 
-      <Rubrique title="Message court" sub={traduire("En bas de l’écran, deux secondes")} />
+      <Rubrique title={traduire("Message court")} sub={traduire("En bas de l’écran, deux secondes")} />
       <Lignes>
         <Ligne first icon="check" label={traduire("Afficher le message")} sub={traduire("Technique ajoutée")} onPress={() => setToast(traduire('Technique ajoutée'))} />
       </Lignes>

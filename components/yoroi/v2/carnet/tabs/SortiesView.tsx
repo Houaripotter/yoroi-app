@@ -64,7 +64,7 @@ export function SortiesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
             { value: String(st.km).replace('.', DECIMAL), unit: 'km', label: traduire('au total'), color: P.indigo },
             { value: String(trainings.length), label: 'sorties' },
             { value: humanMinutes(st.min), label: traduire('de course') },
-            { value: pace(st.avg), unit: '/km', label: 'allure moyenne', color: P.accent },
+            { value: pace(st.avg), unit: '/km', label: traduire('allure moyenne'), color: P.accent },
           ]}
         />
       </Sheet2>
@@ -75,7 +75,7 @@ export function SortiesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
       {st.longest > 0 || isFinite(st.fastest) ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {st.longest > 0 ? <RecordTile label={traduire("Plus longue")} value={`${String(st.longest).replace('.', DECIMAL)} km`} sub={shortDate(st.longestDate)} tone="indigo" /> : null}
-          {isFinite(st.fastest) ? <RecordTile label="Meilleure allure" value={`${pace(st.fastest)} /km`} sub={shortDate(st.fastestDate)} tone="red" /> : null}
+          {isFinite(st.fastest) ? <RecordTile label={traduire("Meilleure allure")} value={`${pace(st.fastest)} /km`} sub={shortDate(st.fastestDate)} tone="red" /> : null}
         </View>
       ) : null}
       <BlockTitle title={traduire("Dernières sorties")} />

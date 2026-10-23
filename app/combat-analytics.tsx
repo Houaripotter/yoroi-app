@@ -18,11 +18,11 @@ import { useCombatArt } from '@/components/yoroi/v2/combat/images';
 import { traduire } from '@/lib/i18n/tr';
 
 const LINKS: { label: string; sub: string; icon: CIconName; route: string }[] = [
-  { label: 'Partenaires', sub: traduire('Ton sparring'), icon: 'users', route: '/sparring-partners' },
+  { label: traduire('Partenaires'), sub: traduire('Ton sparring'), icon: 'users', route: '/sparring-partners' },
   { label: traduire('Débriefs'), sub: traduire('Tes rounds notés'), icon: 'book', route: '/rounds-insights' },
   { label: traduire('Plan de jeu'), sub: traduire('Ta checklist'), icon: 'target', route: '/game-plan' },
-  { label: 'Carte JJB', sub: 'Positions, finitions', icon: 'map', route: '/bjj-positions' },
-  { label: 'Tatami', sub: traduire('Ton temps de mat'), icon: 'clock', route: '/mat-time' },
+  { label: traduire('Carte JJB'), sub: traduire('Positions, finitions'), icon: 'map', route: '/bjj-positions' },
+  { label: traduire('Tatami'), sub: traduire('Ton temps de mat'), icon: 'clock', route: '/mat-time' },
 ];
 
 export default function CombatAnalyticsScreen() {
@@ -95,17 +95,17 @@ export default function CombatAnalyticsScreen() {
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {LINKS.map((l) => (
-            <Press key={l.route} onPress={() => router.push(l.route as any)} style={{ width: '47%', flexGrow: 1 }} accessibilityRole="button" accessibilityLabel={l.label}>
+            <Press key={l.route} onPress={() => router.push(l.route as any)} style={{ width: '47%', flexGrow: 1 }} accessibilityRole="button" accessibilityLabel={traduire(l.label)}>
               <Card style={{ padding: 14, gap: 10, minHeight: 112 }}>
                 <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
                   <CIcon name={l.icon} size={21} color={P.accent} />
                 </View>
                 <View style={{ gap: 2 }}>
                   <Ink size={15} weight="black">
-                    {l.label}
+                    {traduire(l.label)}
                   </Ink>
                   <Ink size={12} weight="bold" color={P.muted}>
-                    {l.sub}
+                    {traduire(l.sub)}
                   </Ink>
                 </View>
               </Card>
@@ -129,7 +129,7 @@ export default function CombatAnalyticsScreen() {
                         <Seal name={p.name} size={42} />
                         <View style={{ flex: 1 }}>
                           <Ink size={16} weight="black" numberOfLines={1}>
-                            {p.name}
+                            {traduire(p.name)}
                           </Ink>
                           <Ink size={12} weight="bold" color={P.ink2}>
                             {`${plural(p.totalRounds, 'round')}${p.lastSession ? `, ${agoText(p.lastSession)}` : ''}`}
@@ -164,7 +164,7 @@ export default function CombatAnalyticsScreen() {
             <Card style={{ gap: 14 }}>
               {techniques.slice(0, 10).map((t, i) => (
                 <View key={t.name} style={{ gap: 2 }}>
-                  <RankRow index={i} label={t.name} value={t.count} max={techniques[0].count} color={N} suffix={traduire(" fois")} />
+                  <RankRow index={i} label={traduire(t.name)} value={t.count} max={techniques[0].count} color={N} suffix={traduire(" fois")} />
                   {t.lastSession ? (
                     <Ink size={11} weight="bold" color={P.muted} style={{ paddingLeft: 36 }}>
                       {traduire("Dernière fois le {0}", shortDate(t.lastSession, true))}
@@ -180,7 +180,7 @@ export default function CombatAnalyticsScreen() {
           <>
             <Section title={traduire("Forces et failles")} sub={traduire("Soumissions placées et subies")} />
             <Card style={{ gap: 14 }}>
-              <Legend items={[{ label: traduire('Placées'), color: V }, { label: 'Subies', color: D }]} />
+              <Legend items={[{ label: traduire('Placées'), color: V }, { label: traduire('Subies'), color: D }]} />
               {subs.slice(0, 12).map((s) => {
                 const m = Math.max(1, s.given, s.taken);
                 const force = s.given >= s.taken;
@@ -188,7 +188,7 @@ export default function CombatAnalyticsScreen() {
                   <View key={s.name} style={{ gap: 6 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>
-                        {s.name}
+                        {traduire(s.name)}
                       </Ink>
                       <View style={{ paddingHorizontal: 10, height: 26, borderRadius: 13, justifyContent: 'center', backgroundColor: force ? `${V}18` : `${D}18` }}>
                         <Ink size={12} weight="extraBold" color={force ? V : D}>
@@ -242,7 +242,7 @@ export default function CombatAnalyticsScreen() {
                 </View>
               </View>
               <StackColumns data={ratio.months} colors={['#3D5D9E', '#A8832F']} />
-              <Legend items={[{ label: 'Drilling', color: '#3D5D9E' }, { label: 'Sparring', color: D }]} />
+              <Legend items={[{ label: traduire('Drilling'), color: '#3D5D9E' }, { label: 'Sparring', color: D }]} />
               {ratio.advice ? (
                 <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 16, backgroundColor: P.indigoSoft }}>
                   <CIcon name="target" size={18} color={P.indigo} />

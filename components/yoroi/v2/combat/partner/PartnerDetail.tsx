@@ -199,10 +199,10 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
           {TABS.map((t) => {
             const on = t.key === tab;
             return (
-              <Press key={t.key} onPress={() => setTab(t.key)} style={{ flex: 1 }} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t.label}>
+              <Press key={t.key} onPress={() => setTab(t.key)} style={{ flex: 1 }} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={traduire(t.label)}>
                 <View style={{ height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? P.white : 'transparent' }}>
                   <Ink size={14} weight={on ? 'black' : 'bold'} color={on ? P.ink : P.ink2}>
-                    {t.label}
+                    {traduire(t.label)}
                   </Ink>
                 </View>
               </Press>
@@ -218,7 +218,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
               p={p}
               onSet={(text) => update({ activeGoal: { text, createdAt: new Date().toISOString() } }, true)}
               onAchieved={() => {
-                const done: TacticalNote = { id: makeId(), date: new Date().toISOString(), content: traduire("Objectif atteint : {0}", p.activeGoal?.text ?? '') };
+                const done: TacticalNote = { id: makeId(), date: new Date().toISOString(), content: `Objectif atteint : ${p.activeGoal?.text ?? ''}` };
                 update({ activeGoal: undefined, notes: [done, ...p.notes] }, true);
                 tap('success');
               }}
@@ -273,7 +273,7 @@ export function PartnerDetail({ partner, entries, loaded, onClose, onDeleted }: 
                       <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                         <View style={{ width: 22, height: 9, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.edge }} />
                         <Ink size={14} weight="bold" color={on ? P.white : P.ink2}>
-                          {b.label}
+                          {traduire(b.label)}
                         </Ink>
                       </View>
                     </Press>

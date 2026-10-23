@@ -73,13 +73,12 @@ export function RingLegend({ items }: { items: RingItem[] }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: RING_COLORS[it.key] }} />
               <Ink size={13} weight="bold" color={P.ink2}>
-                {it.label}
+                {traduire(it.label)}
               </Ink>
             </View>
             {it.value === null ? (
               <Ink size={15} weight="extraBold" color={P.muted}>
-                En attente
-              </Ink>
+                {traduire("En attente")}</Ink>
             ) : (
               <Ink size={21} weight="black" tight numberOfLines={1}>
                 {thousands(it.value)}

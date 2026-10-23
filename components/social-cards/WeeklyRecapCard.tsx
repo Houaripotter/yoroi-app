@@ -157,7 +157,7 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
 
           {/* Calendrier de la semaine */}
           <View style={{ marginBottom: 8 }}>
-            <Text style={[styles.sectionLabel, { color: GOLD_COLOR }]}>CALENDRIER</Text>
+            <Text style={[styles.sectionLabel, { color: GOLD_COLOR }]}>{traduire("CALENDRIER")}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 6 }}>
               {stats.calendar.map((day, index) => (
                 <View key={index} style={{ alignItems: 'center', gap: 3 }}>
@@ -184,7 +184,7 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
             <View style={{ marginBottom: 8 }}>
               <View style={styles.detailsHeader}>
                 <View style={[styles.detailsDivider, { backgroundColor: GOLD_COLOR }]} />
-                <Text style={styles.detailsLabel}>CLUBS</Text>
+                <Text style={styles.detailsLabel}>{traduire("CLUBS")}</Text>
                 <View style={[styles.detailsDivider, { backgroundColor: GOLD_COLOR }]} />
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
@@ -209,7 +209,7 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
             <View style={{ width: 1, height: 30, backgroundColor: borderColor }} />
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text style={{ color: GOLD_COLOR, fontSize: 16, fontWeight: '900' }}>{stats.bestDay?.dayName || '-'}</Text>
-              <Text style={{ color: subTxt, fontSize: 8, fontWeight: '800' }}>BEST DAY</Text>
+              <Text style={{ color: subTxt, fontSize: 8, fontWeight: '800' }}>{traduire("BEST DAY")}</Text>
             </View>
           </View>
         </View>

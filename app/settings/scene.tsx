@@ -77,7 +77,7 @@ const ROTATIONS: { key: ChoixRotation; label: string; sub: string }[] = [
   { key: 'fixe', label: traduire('Non'), sub: traduire('Ta scène reste en place') },
   { key: 'classique', label: 'Classique', sub: traduire('Salle, parc, ville, mer et désert') },
   { key: 'nature', label: traduire('Nature et ville'), sub: traduire('Plage, forêt, désert et buildings') },
-  { key: 'voyages', label: 'Pack Voyages', sub: traduire('Tokyo, Paris, désert, neige et étoiles, animées') },
+  { key: 'voyages', label: traduire('Pack Voyages'), sub: traduire('Tokyo, Paris, désert, neige et étoiles, animées') },
   { key: 'samourai', label: traduire('Samouraï'), sub: traduire('Katanas, armures et châteaux') },
   { key: 'lanternes', label: traduire('Lanternes de nuit'), sub: traduire('Ruelles et auberges de nuit') },
   { key: 'toutes', label: traduire('Toutes'), sub: traduire('Tous les packs mélangés') },
@@ -325,7 +325,7 @@ export default function TaScene() {
         </Pressable>
         <View style={{ flex: 1, gap: 1 }}>
           <Ink size={15} weight="extraBold" numberOfLines={1}>
-            {fiche.nom}
+            {traduire(fiche.nom)}
           </Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             {verrou ? <Icon name="lock" size={12} color={c.goldDeep} stroke={2.6} /> : null}
@@ -359,10 +359,10 @@ export default function TaScene() {
       {/* la scene selectionnee : nom et phrase */}
       <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 8, rowGap: 2, marginTop: -4, paddingHorizontal: 2 }}>
         <Ink size={19} weight="black" tight>
-          {fiche.nom}
+          {traduire(fiche.nom)}
         </Ink>
         <Ink size={13} color={c.textSecondary}>
-          {fiche.phrase}
+          {traduire(fiche.phrase)}
         </Ink>
       </View>
 
@@ -385,7 +385,7 @@ export default function TaScene() {
               >
                 {f.key === 'animees' ? <PictoLecture size={10} color={on ? c.onAccent : c.ink} /> : null}
                 <Ink size={14} weight="extraBold" color={on ? c.onAccent : c.ink}>
-                  {f.label}
+                  {traduire(f.label)}
                 </Ink>
                 <Ink size={12} weight="bold" color={on ? c.onAccent : c.textMuted}>
                   {f.nombre}
@@ -405,7 +405,7 @@ export default function TaScene() {
             <View style={{ gap: 2 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 8, rowGap: 4, flexWrap: 'wrap' }}>
                 <Ink size={18} weight="black" tight accessibilityRole="header">
-                  {s.titre}
+                  {traduire(s.titre)}
                 </Ink>
                 <Ink size={13} weight="bold" color={c.textMuted}>
                   {`${s.scenes.length} ${s.scenes.length > 1 ? traduire('scènes') : traduire('scène')}`}
@@ -414,13 +414,12 @@ export default function TaScene() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 22, paddingHorizontal: 8, borderRadius: 11, backgroundColor: c.fillSoft }}>
                     <Icon name="sync" size={11} color={c.accent} stroke={2.6} />
                     <Ink size={11} weight="extraBold" color={c.accent}>
-                      Tourne
-                    </Ink>
+                      {traduire("Tourne")}</Ink>
                   </View>
                 ) : null}
               </View>
               <Ink size={13} color={c.textSecondary}>
-                {s.phrase}
+                {traduire(s.phrase)}
               </Ink>
             </View>
             {/* 19 octobre : la rotation du pack, sous son titre (meme choix que la carte du bas) */}
@@ -624,10 +623,10 @@ function Vignette({
       </View>
       <View style={{ gap: 2, paddingHorizontal: 2 }}>
         <Ink size={14} weight="extraBold" color={on ? c.accent : c.ink}>
-          {s.nom}
+          {traduire(s.nom)}
         </Ink>
         <Ink size={12} color={c.textMuted}>
-          {s.phrase}
+          {traduire(s.phrase)}
         </Ink>
       </View>
     </Pressable>
@@ -662,7 +661,7 @@ function LignePack({ r, on, choisie, enCours, onPress }: { r: { key: ChoixRotati
         </View>
         <View style={{ flex: 1, gap: 1 }}>
           <Ink size={15} weight="extraBold">
-            {r.label}
+            {traduire(r.label)}
           </Ink>
           <Ink size={12} color={c.textMuted}>
             {sub}
@@ -780,7 +779,7 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
                 <PictoAmbiance id={o.cle} color={fg} />
                 <View>
                   <Ink size={14} weight="extraBold" color={fg} maxFontSizeMultiplier={1.3}>
-                    {o.nom}
+                    {traduire(o.nom)}
                   </Ink>
                   {o.sous ? (
                     <Ink size={11} weight="bold" color={on ? c.onAccent : c.textMuted} maxFontSizeMultiplier={1.2}>
@@ -820,8 +819,7 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <PictoSon size={18} color={c.accent} />
           <Ink size={17} weight="black" tight accessibilityRole="header">
-            Ambiance sonore
-          </Ink>
+            {traduire("Ambiance sonore")}</Ink>
         </View>
         <Ink size={12} color={c.textSecondary}>
           {son ? traduire('Joue sur ton accueil, sans couper ta musique. Touche le rond pour écouter.') : traduire('Choisis un son pour ton accueil. Touche le rond pour écouter.')}
@@ -832,8 +830,7 @@ function AmbianceSonore({ scene }: { scene: SceneId }) {
       {son ? (
         <View style={{ gap: 6 }}>
           <Ink size={12} weight="extraBold" color={c.textMuted} style={{ paddingHorizontal: 2, letterSpacing: 0.5 }}>
-            VOLUME
-          </Ink>
+            {traduire("VOLUME")}</Ink>
           <Segmented options={VOLUMES} value={r.volume} onChange={(v) => set({ volume: v })} />
         </View>
       ) : null}
@@ -891,8 +888,7 @@ function Animation({ scene }: { scene: SceneId }) {
     <Card>
       <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 2 }}>
         <Ink size={17} weight="black" tight>
-          Animation
-        </Ink>
+          {traduire("Animation")}</Ink>
         <Ink size={13} color={c.textSecondary}>
           {traduire("Ce qui bouge sur ton accueil")}</Ink>
       </View>

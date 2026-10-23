@@ -149,7 +149,7 @@ export const MESSAGES_SEANCE: { title: string; body: string }[] = [
   { title: 'On y va' + NB + '?', body: traduire('Même courte, une séance compte. Tu tiens ton rythme.') },
   { title: traduire('Ton rendez-vous'), body: traduire('Tu avais prévu de t’entraîner aujourd’hui. YOROI t’attend pour la noter.') },
   { title: traduire('Un pas de plus'), body: traduire('Chaque séance construit la suivante. À toi de jouer.') },
-  { title: 'Discipline', body: traduire('Pas besoin d’être parfait, juste d’être là. Bonne séance.') },
+  { title: traduire('Discipline'), body: traduire('Pas besoin d’être parfait, juste d’être là. Bonne séance.') },
   { title: traduire('L’heure du dojo'), body: traduire('Ton corps est prêt. Une séance de plus sur ton chemin.') },
 ];
 

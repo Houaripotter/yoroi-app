@@ -73,14 +73,14 @@ export default function CompetitionCountdownScreen() {
   const phase = phaseOf(daysLeft);
 
   return (
-    <DetailScreen title={traduire("Compte à rebours")} subtitle={comp.nom}>
+    <DetailScreen title={traduire("Compte à rebours")} subtitle={traduire(comp.nom)}>
       <Enter i={0}>
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <View style={{ backgroundColor: daysLeft < 0 ? P.paper : P.ink, padding: 20, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: daysLeft < 0 ? P.muted : phase.color === P.ink ? P.goldLight : phase.color }} />
               <Ink size={14} weight="extraBold" color={daysLeft < 0 ? P.ink2 : P.goldLight}>
-                {phase.label}
+                {traduire(phase.label)}
               </Ink>
             </View>
             {daysLeft > 1 ? (
@@ -145,13 +145,13 @@ export default function CompetitionCountdownScreen() {
                   </View>
                   <View style={{ flex: 1, gap: 1 }}>
                     <Ink size={15} weight="extraBold" color={s.checked ? P.muted : P.ink} style={{ textDecorationLine: s.checked ? 'line-through' : 'none' }}>
-                      {s.label}
+                      {traduire(s.label)}
                     </Ink>
                     <Ink size={12} weight="medium" color={P.ink2}>
-                      {s.description}
+                      {traduire(s.description)}
                     </Ink>
                   </View>
-                  <CheckDot on={s.checked} onPress={() => toggle(s.id)} label={s.label} />
+                  <CheckDot on={s.checked} onPress={() => toggle(s.id)} label={traduire(s.label)} />
                 </View>
               ))}
             </Glass>
@@ -170,7 +170,7 @@ export default function CompetitionCountdownScreen() {
                     </Ink>
                   </View>
                   <Ink size={14} weight="bold" style={{ flex: 1 }}>
-                    {s.label}
+                    {traduire(s.label)}
                   </Ink>
                 </View>
               ))}

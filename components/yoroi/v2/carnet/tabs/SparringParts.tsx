@@ -37,7 +37,7 @@ export function Podium({ partners, photos, metric, onSelect }: { partners: Partn
             <Press onPress={() => onSelect(p)} accessibilityRole="button" accessibilityLabel={`${p.name}, place ${ranks[i]}`}>
               <View style={{ alignItems: 'center', gap: 4 }}>
                 <Avatar name={p.name} uri={photos[p.name.trim().toLowerCase()]} size={i === 1 ? 58 : 48} ring={tones[i]} />
-                <Ink size={13} weight="extraBold" numberOfLines={1} style={{ textAlign: 'center' }}>{p.name}</Ink>
+                <Ink size={13} weight="extraBold" numberOfLines={1} style={{ textAlign: 'center' }}>{traduire(p.name)}</Ink>
                 <Ink size={11} weight="bold" color={P.ink2} numberOfLines={1}>{metric(p)}</Ink>
                 <View style={{ alignSelf: 'stretch', height: heights[i], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: i === 1 ? P.ink : '#ECEAE4', alignItems: 'center', paddingTop: 10, borderTopWidth: 4, borderTopColor: tones[i] }}>
                   <Ink size={26} weight="black" color={i === 1 ? P.goldLight : P.ink2}>{ranks[i]}</Ink>
@@ -68,7 +68,7 @@ export function PartnerRow({ p, top, photo, hasFiche, maxRounds, onOpen, onEdit,
         </Press>
         <View style={{ flex: 1, gap: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Ink size={16} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{p.name}</Ink>
+            <Ink size={16} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{traduire(p.name)}</Ink>
             {wr !== null ? <Ink size={14} weight="black" color={winColor(wr)}>{`${wr} %`}</Ink> : null}
             <Ink size={13} weight="bold" color={P.ink2}>{`${p.totalRounds} round${p.totalRounds > 1 ? 's' : ''}`}</Ink>
           </View>
@@ -141,7 +141,7 @@ export function PartnerSheet({ partner, onClose }: { partner: PartnerStats | nul
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Avatar name={partner.name} size={56} />
         <View style={{ flex: 1 }}>
-          <Ink size={24} weight="black" tight numberOfLines={1}>{partner.name}</Ink>
+          <Ink size={24} weight="black" tight numberOfLines={1}>{traduire(partner.name)}</Ink>
           <Ink size={13} weight="bold" color={P.ink2}>{traduirePluriel(partner.sessions.length, partner.sessions.length > 1, "{0} séance ensemble", "{0} séances ensemble", partner.sessions.length)}</Ink>
         </View>
         <IconBtn name="close" label={traduire("Fermer")} onPress={onClose} tone="soft" />
@@ -186,7 +186,7 @@ export function PartnerSheet({ partner, onClose }: { partner: PartnerStats | nul
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {topSubs.map((s) => (
               <View key={s.name} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: s.given > s.taken ? P.mossSoft : s.taken > s.given ? P.dangerSoft : '#F4F2EC' }}>
-                <Ink size={13} weight="extraBold">{s.name}</Ink>
+                <Ink size={13} weight="extraBold">{traduire(s.name)}</Ink>
                 <Ink size={11} weight="bold" color={P.ink2}>{[s.given > 0 ? `${s.given} donnée${s.given > 1 ? 's' : ''}` : '', s.taken > 0 ? `${s.taken} subie${s.taken > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ')}</Ink>
               </View>
             ))}
@@ -241,13 +241,13 @@ export function EditPartnerSheet({ name, onClose, editName, setEditName, editPho
           {editPhoto ? (
             <Press onPress={onRemovePhoto} accessibilityRole="button" accessibilityLabel={traduire("Retirer la photo")}>
               <View style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: P.dangerSoft }}>
-                <Ink size={13} weight="extraBold" color={P.danger}>Retirer</Ink>
+                <Ink size={13} weight="extraBold" color={P.danger}>{traduire("Retirer")}</Ink>
               </View>
             </Press>
           ) : null}
         </View>
       </View>
-      <Field label="Nom" value={editName} onChangeText={setEditName} placeholder={traduire("Nom du partenaire")} maxLength={40} />
+      <Field label={traduire("Nom")} value={editName} onChangeText={setEditName} placeholder={traduire("Nom du partenaire")} maxLength={40} />
       <Ink size={12} weight="medium" color={P.muted}>{traduire("Changer le nom met à jour tout l’historique de vos rounds.")}</Ink>
       <BigButton label={saving ? 'Enregistrement...' : traduire('Enregistrer')} icon="check" disabled={saving || !editName.trim()} onPress={onSave} />
       <BigButton

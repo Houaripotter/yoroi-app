@@ -136,7 +136,7 @@ export default function ActivityDetailScreen() {
             </Glass>
 
             <Glass style={{ gap: 8 }}>
-              <Ink size={17} weight="black" tight>Effort moyen</Ink>
+              <Ink size={17} weight="black" tight>{traduire("Effort moyen")}</Ink>
               <Ink size={13} color={c.textSecondary}>{traduire("Effort ressenti sur 10, quand tu l’as noté")}</Ink>
               {hasRpe ? (
                 <InkBarChart bars={rpe} color={c.accent} highlight={thisWeek} format={(v) => v.toFixed(1).replace('.', DECIMAL).replace(',0', '')} showValues={weeks.length <= 6 ? 'all' : 'highlight'} sparseLabels label={traduire("Effort moyen par semaine")} />

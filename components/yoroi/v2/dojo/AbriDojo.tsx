@@ -63,8 +63,8 @@ export function AbriDojo({ rang, xp, serie }: { rang: string; xp: number; serie:
           <MaterialCommunityIcons name={etat === 'en_panne' ? 'cloud-alert' : 'shield-check'} size={24} color={c.goldDeep} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={16} weight="black" accessibilityRole="header">{t.titre}</Ink>
-          <Ink size={13} color={c.textSecondary}>{t.texte}</Ink>
+          <Ink size={16} weight="black" accessibilityRole="header">{traduire(t.titre)}</Ink>
+          <Ink size={13} color={c.textSecondary}>{traduire(t.texte)}</Ink>
         </View>
       </View>
       <Pressable

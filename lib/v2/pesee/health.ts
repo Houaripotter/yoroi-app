@@ -149,5 +149,5 @@ export function pendingImport(read: HealthRead | null, rows: Array<{ date: strin
 
 /** « depuis Apple Santé, balance Withings » */
 export function sourceText(provider: string, day?: Pick<HealthDay, 'sourceLabel'> | null): string {
-  return day?.sourceLabel ? traduire("depuis {0}, {1}", provider, day.sourceLabel) : traduire("depuis {0}", provider);
+  return day?.sourceLabel ? traduire("depuis {0}, {1}", provider, traduire(day.sourceLabel)) : traduire("depuis {0}", provider);
 }

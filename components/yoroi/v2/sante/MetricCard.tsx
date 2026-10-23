@@ -75,7 +75,7 @@ export function MetricCard({ def, points, onPress, wide }: { def: MetricDef; poi
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <IconDot name={METRIC_ICON[def.key] ?? 'pulse'} color={fam.color} tint={fam.tint} size={32} />
           <Ink size={12} weight="extraBold" color={P.ink2} numberOfLines={2} style={{ flex: 1 }}>
-            {def.label}
+            {traduire(def.label)}
           </Ink>
           <SanteIcon name="chevron" size={14} color={P.muted} />
         </View>

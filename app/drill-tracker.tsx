@@ -38,8 +38,8 @@ const DEFAULTS: Omit<DrillTechnique, 'id'>[] = [
   { name: 'Double leg', totalReps: 0, weekReps: 0, weekGoal: 100, targetTotal: 1000 },
   { name: 'Triangle', totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
   { name: 'Guillotine', totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
-  { name: traduire('Clé de bras'), totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
-  { name: traduire('Passage de garde'), totalReps: 0, weekReps: 0, weekGoal: 80, targetTotal: 1000 },
+  { name: 'Clé de bras', totalReps: 0, weekReps: 0, weekGoal: 50, targetTotal: 1000 },
+  { name: 'Passage de garde', totalReps: 0, weekReps: 0, weekGoal: 80, targetTotal: 1000 },
   { name: 'Renversement', totalReps: 0, weekReps: 0, weekGoal: 80, targetTotal: 1000 },
 ];
 
@@ -97,7 +97,7 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
         <View style={{ flex: 1, gap: 6 }}>
           <Ink size={20} weight="black" tight numberOfLines={1}>
-            {t.name}
+            {traduire(t.name)}
           </Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <StepPlates n={step.n} />
@@ -107,7 +107,7 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
           </View>
         </View>
         {tot >= 1 ? <Hanko size={40} /> : null}
-        <IconBtn icon="edit" size={40} label={traduire("Modifier {0}", t.name)} onPress={onEdit} />
+        <IconBtn icon="edit" size={40} label={traduire("Modifier {0}", traduire(t.name))} onPress={onEdit} />
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
         <Ink size={38} weight="black" tight color={done ? '#4F6B28' : P.ink}>
@@ -130,13 +130,13 @@ function DrillCard({ t, onAdd, onEdit }: { t: DrillTechnique; onAdd: (n: number)
         <InkBar value={tot} color={V} height={7} />
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Press onPress={() => onAdd(-1)} accessibilityRole="button" accessibilityLabel={traduire("Retirer une répétition de {0}", t.name)}>
+        <Press onPress={() => onAdd(-1)} accessibilityRole="button" accessibilityLabel={traduire("Retirer une répétition de {0}", traduire(t.name))}>
           <View style={{ width: 48, height: 52, borderRadius: 16, backgroundColor: '#E6E4DD', alignItems: 'center', justifyContent: 'center' }}>
             <CIcon name="minus" size={18} color={P.ink} width={2.8} />
           </View>
         </Press>
         {[1, 5, 10, 20].map((n, i) => (
-          <Press key={n} onPress={() => onAdd(n)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} répétitions de {1}", n, t.name)}>
+          <Press key={n} onPress={() => onAdd(n)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} répétitions de {1}", n, traduire(t.name))}>
             <View style={{ height: 52, borderRadius: 16, backgroundColor: i === 3 ? P.accent : P.ink, alignItems: 'center', justifyContent: 'center' }}>
               <Ink size={17} weight="black" color={P.white}>
                 {`+${n}`}
@@ -208,7 +208,7 @@ export default function DrillTrackerScreen() {
     setSheet(null);
   };
   const remove = (t: DrillTechnique) => {
-    appAlert(traduire("Supprimer {0} ?", t.name), traduire('La technique et tous ses compteurs seront effacés.'), [
+    appAlert(traduire("Supprimer {0} ?", traduire(t.name)), traduire('La technique et tous ses compteurs seront effacés.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
         text: traduire('Supprimer'),
@@ -249,7 +249,7 @@ export default function DrillTrackerScreen() {
           </Enter>
         ))}
 
-        <FormSheet visible={sheet !== null} onClose={() => setSheet(null)} title={editing ? traduire("Modifier {0}", editing.name) : traduire('Nouvelle technique')}>
+        <FormSheet visible={sheet !== null} onClose={() => setSheet(null)} title={editing ? traduire("Modifier {0}", traduire(editing.name)) : traduire('Nouvelle technique')}>
           <Field value={name} onChangeText={setName} autoFocus={!editing} placeholder={traduire("Nom de la technique")} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Ink size={14} weight="bold" color={P.ink2}>

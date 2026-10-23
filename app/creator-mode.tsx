@@ -158,7 +158,7 @@ function Studio() {
       appAlert(traduire('C’est fait'), msg);
     } catch (e) {
       logger.error(`[Studio] ${id}`, e);
-      appAlert('Oups', traduire('L’opération n’a pas abouti. Tes vraies données restent de côté.'));
+      appAlert(traduire('Oups'), traduire('L’opération n’a pas abouti. Tes vraies données restent de côté.'));
     } finally {
       setBusy(null);
     }
@@ -172,7 +172,7 @@ function Studio() {
     appAlert(traduire('Revenir à tes données ?'), traduire('Heny est retirée et tes vraies données reviennent, avec tes vraies XP.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Revenir',
+        text: traduire('Revenir'),
         onPress: () =>
           void run('heny', async () => {
             await backToRealData();
@@ -186,14 +186,14 @@ function Studio() {
   const resetEverything = () =>
     appAlert(traduire('Tout remettre normal ?'), traduire('La saison revient à la date du jour, l’horloge à l’heure réelle, et les captures, la vue gratuite et les variantes du paywall sont coupées. Tes données ne bougent pas.'), [
       { text: traduire('Annuler'), style: 'cancel' },
-      { text: 'Remettre normal', onPress: () => void run('reset', () => resetAll(demoActive)) },
+      { text: traduire('Remettre normal'), onPress: () => void run('reset', () => resetAll(demoActive)) },
     ]);
 
   const lockStudio = () =>
     appAlert(traduire('Verrouiller le Studio ?'), traduire('Le jeton est retiré de ce téléphone. Il faudra le recoller pour revenir.'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Verrouiller',
+        text: traduire('Verrouiller'),
         style: 'destructive',
         onPress: () => {
           void lock().then(() => (router.canGoBack() ? router.back() : router.replace('/settings' as never)));
@@ -224,7 +224,7 @@ function Studio() {
       setFenetresRearmees(true);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch {
-      appAlert('Oups', traduire('Les fenêtres n’ont pas pu être réarmées.'));
+      appAlert(traduire('Oups'), traduire('Les fenêtres n’ont pas pu être réarmées.'));
     }
   };
 
@@ -235,11 +235,11 @@ function Studio() {
   if (choixSaison === 'aucune') pills.push({ label: traduire('Saisons masquées'), tone: 'gold' });
   if (demoActive) pills.push({ label: traduire('Heny chargée'), tone: 'moss' });
   if (clockShifted) pills.push({ label: traduire('Horloge décalée'), tone: 'gold' });
-  if (simulateFreeUser) pills.push({ label: 'Vue gratuite', tone: 'accent' });
+  if (simulateFreeUser) pills.push({ label: traduire('Vue gratuite'), tone: 'accent' });
   if (isPremium && !hasActiveSubscription && !simulateFreeUser) pills.push({ label: traduire('Premium créateur'), tone: 'gold' });
   if (purchasePreview) pills.push({ label: traduire('Aperçu achat'), tone: 'accent' });
   if (variant !== 'reel') pills.push({ label: traduire('Variante du paywall'), tone: 'accent' });
-  if (isScreenshotMode) pills.push({ label: useFakeStatusBar ? 'Captures, 09:41' : 'Mode capture', tone: 'accent' });
+  if (isScreenshotMode) pills.push({ label: useFakeStatusBar ? 'Captures, 09:41' : traduire('Mode capture'), tone: 'accent' });
   const forcage = choixSaison !== 'auto' || clockShifted || simulateFreeUser || variant !== 'reel' || isScreenshotMode;
   const variantLabel = PAYWALL_VARIANTS.find((v) => v.id === variant)?.label ?? traduire('Offres réelles');
 
@@ -258,30 +258,30 @@ function Studio() {
   ];
 
   const voir: Action[] = [
-    { id: 'onboarding', label: 'Onboarding', icon: 'eye', state: traduire("{0} écrans, rien n’est gardé", ONBOARDING_SCREEN_LABELS.length), run: () => openOnboardingPreview(router, 0) },
-    { id: 'paywall', label: 'Paywall', icon: 'crown', on: variant !== 'reel', state: variant !== 'reel' ? variantLabel : traduire('Aperçu, aucun achat'), keywords: 'abonnement premium', run: () => openPaywallPreview(router, variant) },
+    { id: 'onboarding', label: traduire('Onboarding'), icon: 'eye', state: traduire("{0} écrans, rien n’est gardé", ONBOARDING_SCREEN_LABELS.length), run: () => openOnboardingPreview(router, 0) },
+    { id: 'paywall', label: traduire('Paywall'), icon: 'crown', on: variant !== 'reel', state: variant !== 'reel' ? variantLabel : traduire('Aperçu, aucun achat'), keywords: 'abonnement premium', run: () => openPaywallPreview(router, variant) },
     { id: 'visite', label: traduire('Visite guidée'), icon: 'home', state: traduire("{0} étapes, avec la voix", VISITE_TITRES.length), keywords: 'tour presentation', run: () => openPresentation(router, 0) },
     { id: 'nouveautes', label: traduire('Nouveautés'), icon: 'spark', state: traduire('La présentation 3.0'), keywords: 'presentation revoir mise a jour', run: () => router.push('/nouveautes?revoir=1' as never) },
     { id: 'scenes', label: traduire('Scènes animées'), icon: 'image', state: traduire("{0} scènes, pluie, neige", SCENES_ANIMEES_CODE.length), keywords: 'scene animation effets', run: () => setScenes(true) },
-    { id: 'personnages', label: 'Personnages', icon: 'user', state: traduire("{0} images du monde", NB_PERSONNAGES), keywords: 'galerie avatar', run: () => router.push('/studio/images?famille=personnages' as never) },
+    { id: 'personnages', label: traduire('Personnages'), icon: 'user', state: traduire("{0} images du monde", NB_PERSONNAGES), keywords: 'galerie avatar', run: () => router.push('/studio/images?famille=personnages' as never) },
     { id: 'images', label: traduire('Toutes les images'), icon: 'grid', state: `${CATALOGUE_IMAGES.length} illustrations`, keywords: 'galerie illustrations', run: () => router.push('/studio/images' as never) },
     { id: 'chargement', label: traduire('Chargement'), icon: 'sync', state: traduire('Plein écran, rejouable'), keywords: 'splash', run: () => setOverlay({ kind: 'chargement' }) },
     { id: 'rang', label: traduire('Passage de rang'), icon: 'trophy', state: traduire('Samouraï, fictif'), keywords: 'celebration gamification', run: () => setOverlay({ kind: 'rang', rankIndex: 2 }) },
     { id: 'bienvenue', label: traduire('Bienvenue des anciens'), icon: 'user', state: traduire('Résumé de reprise'), keywords: 'reprise anciens', run: () => setOverlay({ kind: 'bienvenue' }) },
     { id: 'premium', label: traduire('Bienvenue Premium'), icon: 'crown', state: traduire('L’écran après l’achat'), keywords: 'achat essai notification', run: () => openPaywallPreview(router, 'bienvenue') },
-    { id: 'kit', label: 'Kit marketing', icon: 'camera', state: traduire('Les 6 captures'), keywords: 'captures store', run: () => router.push('/marketing-kit' as never) },
+    { id: 'kit', label: traduire('Kit marketing'), icon: 'camera', state: traduire('Les 6 captures'), keywords: 'captures store', run: () => router.push('/marketing-kit' as never) },
   ];
 
   const tester: Action[] = [
     { id: 'installation', label: traduire('Première installation'), icon: 'restore', state: traduire('Rien n’est effacé'), keywords: 'simuler reinstallation onboarding paywall', run: () => simulerPremiereInstallation(router) },
-    { id: 'heny', label: 'Heny', icon: demoActive ? 'restore' : 'dumbbell', on: demoActive, state: demoActive ? traduire('Chargée, touche pour revenir') : traduire('Pas chargée, touche pour charger'), keywords: 'demo profil', run: toggleHeny },
-    { id: 'gratuit', label: 'Vue gratuite', icon: 'eye', on: simulateFreeUser, state: simulateFreeUser ? 'Active, cadenas visibles' : traduire('Coupée'), keywords: 'premium gratuit cadenas', run: () => setSimulateFreeUser(!simulateFreeUser) },
-    { id: 'capture', label: 'Mode capture', icon: 'camera', on: isScreenshotMode, state: isScreenshotMode ? 'Actif' : traduire('Coupé'), keywords: 'screenshot captures', run: () => void toggleScreenshotMode() },
-    { id: 'notif', label: 'Notification test', icon: 'bell', on: notifEnvoyee, state: notifEnvoyee ? traduire('Programmée, sors de l’app') : traduire('Arrive en 5 secondes'), keywords: 'notification rappel', run: () => void envoyerNotif() },
+    { id: 'heny', label: traduire('Heny'), icon: demoActive ? 'restore' : 'dumbbell', on: demoActive, state: demoActive ? traduire('Chargée, touche pour revenir') : traduire('Pas chargée, touche pour charger'), keywords: 'demo profil', run: toggleHeny },
+    { id: 'gratuit', label: traduire('Vue gratuite'), icon: 'eye', on: simulateFreeUser, state: simulateFreeUser ? 'Active, cadenas visibles' : traduire('Coupée'), keywords: 'premium gratuit cadenas', run: () => setSimulateFreeUser(!simulateFreeUser) },
+    { id: 'capture', label: traduire('Mode capture'), icon: 'camera', on: isScreenshotMode, state: isScreenshotMode ? 'Actif' : traduire('Coupé'), keywords: 'screenshot captures', run: () => void toggleScreenshotMode() },
+    { id: 'notif', label: traduire('Notification test'), icon: 'bell', on: notifEnvoyee, state: notifEnvoyee ? traduire('Programmée, sors de l’app') : traduire('Arrive en 5 secondes'), keywords: 'notification rappel', run: () => void envoyerNotif() },
     { id: 'notifs', label: traduire('Chaque notification'), icon: 'doc', state: traduire('La liste, une par une'), keywords: 'notification rappel vibration autorisation', run: () => ctx.openSection('tests') },
-    { id: 'chrono', label: 'Chrono test', icon: 'timer', state: traduire('3 rounds de 15 s'), keywords: 'timer cloche', run: () => router.push('/timer?mode=combat&test=studio' as never) },
+    { id: 'chrono', label: traduire('Chrono test'), icon: 'timer', state: traduire('3 rounds de 15 s'), keywords: 'timer cloche', run: () => router.push('/timer?mode=combat&test=studio' as never) },
     { id: 'fenetres', label: traduire('Réarmer les fenêtres'), icon: 'frame', on: fenetresRearmees, state: fenetresRearmees ? traduire('Réarmées') : traduire("{0} fenêtres vues une fois", ONCE_WINDOWS.length), keywords: 'fenetre une fois rearmer', run: () => void rearmerFenetres() },
-    { id: 'sons', label: 'Sons', icon: 'bell', state: traduire('Chaque son de l’app'), keywords: 'galerie son audio', run: () => router.push('/studio/sons' as never) },
+    { id: 'sons', label: traduire('Sons'), icon: 'bell', state: traduire('Chaque son de l’app'), keywords: 'galerie son audio', run: () => router.push('/studio/sons' as never) },
   ];
 
   const filtre = (list: Action[]) => list.filter((a) => matches(query, a.label, a.state, a.keywords));
@@ -301,7 +301,7 @@ function Studio() {
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-          <EspaceHeader title="Studio YOROI" subtitle={traduire("Tout voir, tout lancer, d’un toucher")} />
+          <EspaceHeader title={traduire("Studio YOROI")} subtitle={traduire("Tout voir, tout lancer, d’un toucher")} />
 
           <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 10 }}>
             <View style={{ gap: 2 }}>
@@ -311,7 +311,7 @@ function Studio() {
             {pills.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {pills.map((p) => (
-                  <StatePill key={p.label} label={p.label} tone={p.tone} />
+                  <StatePill key={p.label} label={traduire(p.label)} tone={p.tone} />
                 ))}
               </View>
             ) : (
@@ -324,10 +324,10 @@ function Studio() {
 
           {groupes.map((g) => (
             <View key={g.titre} style={{ gap: 10 }}>
-              <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4, marginTop: 4 }}>{g.titre}</Ink>
+              <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4, marginTop: 4 }}>{traduire(g.titre)}</Ink>
               <ActionGrid>
                 {g.actions.map((a) => (
-                  <ActionTile key={a.id} icon={a.icon} label={a.label} state={a.state} on={a.on} color={a.color} busy={busy === a.id} onPress={a.run} />
+                  <ActionTile key={a.id} icon={a.icon} label={traduire(a.label)} state={a.state} on={a.on} color={a.color} busy={busy === a.id} onPress={a.run} />
                 ))}
               </ActionGrid>
             </View>

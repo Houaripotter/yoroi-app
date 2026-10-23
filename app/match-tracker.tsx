@@ -48,20 +48,20 @@ interface Action {
 }
 
 const MY: Action[] = [
-  { type: 'takedown', label: traduire('Amenée au sol'), short: traduire('Amenée'), points: 2, side: 'me' },
-  { type: 'guard_pass', label: traduire('Passage de garde'), short: 'Passage', points: 3, side: 'me' },
+  { type: 'takedown', label: 'Amenée au sol', short: traduire('Amenée'), points: 2, side: 'me' },
+  { type: 'guard_pass', label: 'Passage de garde', short: 'Passage', points: 3, side: 'me' },
   { type: 'sweep', label: 'Renversement', short: 'Renvers.', points: 2, side: 'me' },
-  { type: 'mount', label: traduire('Montée'), short: traduire('Montée'), points: 4, side: 'me' },
-  { type: 'back_control', label: traduire('Prise du dos'), short: 'Dos', points: 4, side: 'me' },
+  { type: 'mount', label: 'Montée', short: traduire('Montée'), points: 4, side: 'me' },
+  { type: 'back_control', label: 'Prise du dos', short: 'Dos', points: 4, side: 'me' },
   { type: 'advantage', label: 'Avantage', short: 'Avantage', points: 1, side: 'me' },
-  { type: 'sub_attempt', label: traduire('Tentative de soumission'), short: 'Tentative', points: 0, side: 'me' },
-  { type: 'tap', label: traduire('Il tape'), short: traduire('Il tape'), points: 0, side: 'me' },
+  { type: 'sub_attempt', label: 'Tentative de soumission', short: 'Tentative', points: 0, side: 'me' },
+  { type: 'tap', label: 'Il tape', short: traduire('Il tape'), points: 0, side: 'me' },
 ];
 const OPP: Action[] = [
-  { type: 'takedown', label: traduire('Amenée adverse'), short: traduire('Amenée'), points: 2, side: 'opponent' },
+  { type: 'takedown', label: 'Amenée adverse', short: traduire('Amenée'), points: 2, side: 'opponent' },
   { type: 'guard_pass', label: 'Passage adverse', short: 'Passage', points: 3, side: 'opponent' },
   { type: 'sweep', label: 'Renversement adverse', short: 'Renvers.', points: 2, side: 'opponent' },
-  { type: 'penalty', label: traduire('Pénalité adverse'), short: traduire('Pénalité'), points: 1, side: 'opponent' },
+  { type: 'penalty', label: 'Pénalité adverse', short: traduire('Pénalité'), points: 1, side: 'opponent' },
   { type: 'sub_attempt', label: 'Tentative adverse', short: 'Tentative', points: 0, side: 'opponent' },
   { type: 'tap', label: 'Je tape', short: 'Je tape', points: 0, side: 'opponent' },
 ];
@@ -90,10 +90,10 @@ function ActionPlate({ a, onPress }: { a: Action; onPress: () => void }) {
   const bg = tapAction ? (me ? V : D) : P.white;
   const fg = tapAction ? P.white : me ? V : D;
   return (
-    <Press onPress={onPress} haptic="none" accessibilityRole="button" accessibilityLabel={`${a.label}${a.points ? `, ${a.points} points` : ''}`} style={{ width: '31.5%' }}>
+    <Press onPress={onPress} haptic="none" accessibilityRole="button" accessibilityLabel={`${traduire(a.label)}${a.points ? `, ${a.points} points` : ''}`} style={{ width: '31.5%' }}>
       <View style={{ height: 78, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: bg, borderWidth: tapAction ? 0 : 1.5, borderColor: `${fg}40`, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <Ink size={15} weight="black" color={fg} numberOfLines={1}>
-          {a.short}
+          {traduire(a.short)}
         </Ink>
         {a.points > 0 ? (
           <View style={{ paddingHorizontal: 8, height: 20, borderRadius: 10, justifyContent: 'center', backgroundColor: fg }}>
@@ -322,7 +322,7 @@ export default function MatchTrackerScreen() {
                     </Ink>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ev.side === 'me' ? V : D }} />
                     <Ink size={14} weight="bold" color={ev.side === 'me' ? V : D} style={{ flex: 1 }}>
-                      {ev.label}
+                      {traduire(ev.label)}
                     </Ink>
                     {ev.points ? (
                       <Ink size={13} weight="black" color={ev.side === 'me' ? V : D}>
@@ -373,7 +373,7 @@ export default function MatchTrackerScreen() {
                 </Ink>
                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ev.side === 'me' ? V : D }} />
                 <Ink size={14} weight="bold" color={ev.side === 'me' ? V : D} style={{ flex: 1 }}>
-                  {ev.label}
+                  {traduire(ev.label)}
                 </Ink>
                 {ev.points ? (
                   <Ink size={13} weight="black" color={ev.side === 'me' ? V : D}>

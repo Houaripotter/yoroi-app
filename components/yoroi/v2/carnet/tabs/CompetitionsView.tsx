@@ -19,7 +19,7 @@ import { P, Sheet2, BigStats, RankRow, ResultDot, BigButton, Press, Hanko, winCo
 import { TabEmpty, TabLoading } from './common';
 import { traduire } from '@/lib/i18n/tr';
 
-const METHOD_LABEL: Record<string, string> = { soumission: 'Soumission', points: 'Points', decision: traduire('Décision'), 'décision': traduire('Décision'), ko: 'KO', tko: traduire('Arrêt de l’arbitre'), autre: 'Autre' };
+const METHOD_LABEL: Record<string, string> = { soumission: traduire('Soumission'), points: traduire('Points'), decision: traduire('Décision'), 'décision': traduire('Décision'), ko: 'KO', tko: traduire('Arrêt de l’arbitre'), autre: 'Autre' };
 
 export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
   const router = useRouter();
@@ -127,7 +127,7 @@ export function CompetitionsView({ refreshKey }: { refreshKey: number }) {
                 <Ink size={13} weight="black" color={P.white}>{daysLeft <= 0 ? traduire("Aujourd'hui") : traduire("J moins {0}", daysLeft)}</Ink>
               </View>
             </View>
-            <Ink size={24} weight="black" tight color={P.white} numberOfLines={2}>{next.nom}</Ink>
+            <Ink size={24} weight="black" tight color={P.white} numberOfLines={2}>{traduire(next.nom)}</Ink>
             <Ink size={13} weight="medium" color={paletteSombre() ? 'rgba(29,32,41,0.75)' : 'rgba(255,255,255,0.75)'}>{`${longDate(next.date)}${next.lieu ? `, ${next.lieu}` : ''}`}</Ink>
             {next.categorie_poids ? <Ink size={13} weight="extraBold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight}>{traduire("Catégorie {0}", next.categorie_poids)}</Ink> : null}
           </View>

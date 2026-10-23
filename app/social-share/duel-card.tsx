@@ -91,7 +91,7 @@ export default function DuelCardScreen() {
 
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [myName, setMyName] = useState('Moi');
-  const [opponentName] = useState(params.partnerName ?? 'Adversaire');
+  const [opponentName] = useState(params.partnerName ?? traduire('Adversaire'));
   const [opponentBelt, setOpponentBelt] = useState<string | undefined>(params.partnerBelt);
   const [opponentSport, setOpponentSport] = useState<string | undefined>(undefined);
   const [wins, setWins] = useState(0);

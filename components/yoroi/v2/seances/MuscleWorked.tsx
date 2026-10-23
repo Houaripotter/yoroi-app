@@ -83,7 +83,7 @@ export function MuscleWorked({ sport, customMuscles, trainingId, onMusclesUpdate
       {editing ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {ALL_MUSCLES.map((m) => (
-            <Chip key={m.id} label={m.label} on={selected.has(m.id)} onPress={() => toggle(m.id)} />
+            <Chip key={m.id} label={traduire(m.label)} on={selected.has(m.id)} onPress={() => toggle(m.id)} />
           ))}
         </View>
       ) : null}

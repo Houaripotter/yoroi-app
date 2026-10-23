@@ -31,7 +31,7 @@ export function Sport({ nav, genre, sports, onToggle, combat, category, onCatego
   const catSport = categorySportOf(sports);
   const cats = categoriesOf(catSport, genre === 'f' ? 'femme' : 'homme');
   return (
-    <Shell {...nav} title={traduire("Quels sports **te font vibrer** ?")} sub={traduire("Choisis tout ce que tu pratiques.")} gap={14} footer={<MainButton label="Continuer" onPress={onNext} disabled={sports.length === 0} />}>
+    <Shell {...nav} title={traduire("Quels sports **te font vibrer** ?")} sub={traduire("Choisis tout ce que tu pratiques.")} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={sports.length === 0} />}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 }}>
         {SPORT_ILLUS.map((s) => {
           const on = sports.includes(s.id);
@@ -72,7 +72,7 @@ export function Sport({ nav, genre, sports, onToggle, combat, category, onCatego
               <Ink size={13} color={c.textSecondary}>{traduire("En {0}. Facultatif, tu pourras la changer plus tard.", getSportName(catSport) ?? catSport)}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {cats.map((cat) => (
-                  <Chip key={cat.id} label={cat.name} on={category === cat.id} onPress={() => onCategory(category === cat.id ? null : cat.id)} />
+                  <Chip key={cat.id} label={traduire(cat.name)} on={category === cat.id} onPress={() => onCategory(category === cat.id ? null : cat.id)} />
                 ))}
               </View>
             </>

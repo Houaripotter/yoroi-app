@@ -21,20 +21,20 @@ import { traduire } from '@/lib/i18n/tr';
 const FAMILLES: { key: ImageFamille; label: string }[] = [
   { key: 'personnages', label: traduire('Personnages du monde') },
   { key: 'guerrier', label: traduire('Guerrier et guerrière') },
-  { key: 'packs', label: 'Packs' },
+  { key: 'packs', label: traduire('Packs') },
   { key: 'scenes', label: traduire('Scènes') },
-  { key: 'fonds', label: 'Fonds verticaux' },
-  { key: 'ornements', label: 'Ornements' },
-  { key: 'sports', label: 'Sports' },
-  { key: 'carnet', label: 'Carnet' },
+  { key: 'fonds', label: traduire('Fonds verticaux') },
+  { key: 'ornements', label: traduire('Ornements') },
+  { key: 'sports', label: traduire('Sports') },
+  { key: 'carnet', label: traduire('Carnet') },
   { key: 'partage', label: traduire('Fonds de partage') },
-  { key: 'sceaux', label: 'Sceaux' },
-  { key: 'tampons', label: 'Tampons' },
-  { key: 'logos', label: 'Logos' },
+  { key: 'sceaux', label: traduire('Sceaux') },
+  { key: 'tampons', label: traduire('Tampons') },
+  { key: 'logos', label: traduire('Logos') },
   { key: 'icones', label: traduire('Icônes') },
-  { key: 'partenaires', label: 'Clubs' },
-  { key: 'divers', label: 'Divers' },
-  { key: 'anciens', label: 'Anciens avatars' },
+  { key: 'partenaires', label: traduire('Clubs') },
+  { key: 'divers', label: traduire('Divers') },
+  { key: 'anciens', label: traduire('Anciens avatars') },
 ];
 
 type Genre = 'tous' | 'h' | 'f';
@@ -156,11 +156,11 @@ function Apercu({ liste, index, onIndex, onClose }: { liste: ImageEntree[]; inde
               <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("{0} sur {1}", (index ?? 0) + 1, n)}</Ink>
             </View>
             <RoundButton icon="back" label={traduire("Image précédente")} onPress={() => go(-1)} />
-            <RoundButton icon="chevron" label="Image suivante" onPress={() => go(1)} />
+            <RoundButton icon="chevron" label={traduire("Image suivante")} onPress={() => go(1)} />
           </View>
           <ScrollView contentContainerStyle={{ paddingHorizontal: G, paddingTop: 14, paddingBottom: insets.bottom + 40, gap: 16, alignItems: 'stretch', maxWidth: 520 + G * 2, width: '100%', alignSelf: 'center' }}>
             <View style={{ gap: 4 }}>
-              <Ink size={20} weight="black" tight selectable>{entree.nom}</Ink>
+              <Ink size={20} weight="black" tight selectable>{traduire(entree.nom)}</Ink>
               <Ink size={12} color={c.textMuted} selectable>{entree.chemin}</Ink>
               <Ink size={12} weight="bold" color={c.textSecondary}>
                 {dims ? `${dims.w} x ${dims.h} pixels` : traduire('Taille du fichier inconnue ici')}
@@ -232,7 +232,7 @@ export function ImagesGalerie({ familleInitiale }: { familleInitiale?: string } 
 
   const entete = (
     <View style={{ gap: 14, paddingBottom: 14 }}>
-      <GalerieHeader title="Images" sub={traduire("{0} illustrations appelées par l’app. Touche une image pour la voir en grand.", CATALOGUE_IMAGES.length)} />
+      <GalerieHeader title={traduire("Images")} sub={traduire("{0} illustrations appelées par l’app. Touche une image pour la voir en grand.", CATALOGUE_IMAGES.length)} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingHorizontal: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
         <Icon name="search" size={18} color={c.textMuted} />
         <TextInput
@@ -254,14 +254,14 @@ export function ImagesGalerie({ familleInitiale }: { familleInitiale?: string } 
       <PastilleRow>
         <Pastille label={traduire("Toutes")} count={CATALOGUE_IMAGES.length} on={famille === 'toutes'} onPress={() => choisirFamille('toutes')} />
         {FAMILLES.filter((f) => (comptes.get(f.key) ?? 0) > 0).map((f) => (
-          <Pastille key={f.key} label={f.label} count={comptes.get(f.key)} on={famille === f.key} onPress={() => choisirFamille(f.key)} />
+          <Pastille key={f.key} label={traduire(f.label)} count={comptes.get(f.key)} on={famille === f.key} onPress={() => choisirFamille(f.key)} />
         ))}
       </PastilleRow>
       {avecGenre ? (
         <PastilleRow>
           <Pastille label={traduire("Homme et femme")} on={genre === 'tous'} onPress={() => setGenre('tous')} />
-          <Pastille label="Homme" on={genre === 'h'} onPress={() => setGenre('h')} />
-          <Pastille label="Femme" on={genre === 'f'} onPress={() => setGenre('f')} />
+          <Pastille label={traduire("Homme")} on={genre === 'h'} onPress={() => setGenre('h')} />
+          <Pastille label={traduire("Femme")} on={genre === 'f'} onPress={() => setGenre('f')} />
         </PastilleRow>
       ) : null}
       {groupes.length > 1 ? (
@@ -306,7 +306,7 @@ export function ImagesGalerie({ familleInitiale }: { familleInitiale?: string } 
             <View style={{ width: tile, height: tile, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               <Image source={item.src} style={{ width: tile - 12, height: tile - 12 }} resizeMode="contain" accessibilityIgnoresInvertColors />
             </View>
-            <Ink size={11} weight="bold" numberOfLines={2} style={{ paddingHorizontal: 2 }}>{item.nom}</Ink>
+            <Ink size={11} weight="bold" numberOfLines={2} style={{ paddingHorizontal: 2 }}>{traduire(item.nom)}</Ink>
             {item.groupe ? <Ink size={10} color={c.textMuted} numberOfLines={1} style={{ paddingHorizontal: 2, marginTop: -4 }}>{joli(item.groupe)}</Ink> : null}
           </Pressable>
         )}

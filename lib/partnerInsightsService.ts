@@ -129,7 +129,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
     insights.push({
       id: 'dormant',
       type: 'dormant',
-      title: 'Partenaires dormants',
+      title: traduire('Partenaires dormants'),
       text: traduirePluriel(dormant.length, dormant.length > 1, "{0} partenaire sans sparring depuis 3+ semaines.", "{0} partenaires sans sparring depuis 3+ semaines.", dormant.length),
       color: '#8B5CF6',
       partnerIds: dormant.map(d => d.id),
@@ -144,7 +144,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
     insights.push({
       id: 'rival_of_month',
       type: 'rival_of_month',
-      title: `Rival principal`,
+      title: traduire(`Rival principal`),
       text: `${top.name} : ${top.total} rounds. ${top.winrate != null ? traduire("Taux de victoire {0}%.", top.winrate) : ''}`,
       color: '#D4AF37',
       partnerIds: [top.id],

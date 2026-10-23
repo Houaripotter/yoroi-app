@@ -92,7 +92,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
             onChanged();
           } catch (e) {
             logger.error('Suppression impossible', e);
-            appAlert('Oups', traduire('La séance n’a pas pu être supprimée.'));
+            appAlert(traduire('Oups'), traduire('La séance n’a pas pu être supprimée.'));
           }
         },
       },
@@ -170,7 +170,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
             {groups.map((g) => (
               <Pressable key={g.key} onPress={() => { tap(); setGroup({ key: g.key, name: g.name }); }} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 14, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider }}>
                 <SessionMark t={g.sample} size={24} />
-                <Ink size={14} weight="bold" numberOfLines={2} style={{ maxWidth: 170 }}>{g.name}</Ink>
+                <Ink size={14} weight="bold" numberOfLines={2} style={{ maxWidth: 170 }}>{traduire(g.name)}</Ink>
                 <Ink size={14} weight="black">{`${g.count}`}</Ink>
               </Pressable>
             ))}
@@ -182,7 +182,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
         {day ? (
           <>
             {dayComps.map((cp) => (
-              <Row key={`c${cp.id}`} title={cp.nom} sub={[cp.lieu, 'compétition'].filter(Boolean).join(', ')} icon="trophy" />
+              <Row key={`c${cp.id}`} title={traduire(cp.nom)} sub={[cp.lieu, 'compétition'].filter(Boolean).join(', ')} icon="trophy" />
             ))}
             {dayList.map((t) => (
               <View key={t.id} style={{ gap: 6 }}>
@@ -220,7 +220,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
         ) : null}
       </Sheet>
 
-      <Sheet visible={!!group} onClose={() => setGroup(null)} title={group?.name}>
+      <Sheet visible={!!group} onClose={() => setGroup(null)} title={traduire(group?.name)}>
         <Ink size={13} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
           {traduirePluriel(groupSessions.length, groupSessions.length > 1, "{0} séance en {1}{2}", "{0} séances en {1}{2}", groupSessions.length, MONTHS[mo], groupSessions.reduce((s, t) => s + durationOf(t), 0) ? `, ${formatDuration(groupSessions.reduce((s, t) => s + durationOf(t), 0))}` : '')}
         </Ink>

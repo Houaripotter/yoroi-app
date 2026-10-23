@@ -117,23 +117,23 @@ const POINTS_GROUPS = [
     color: '#22C55E',
     actions: [
       { label: 'Sweep', pts: 2, desc: traduire('Renversement depuis garde') },
-      { label: traduire("Genou sur l'estomac"), pts: 2, desc: 'Knee on belly' },
+      { label: "Genou sur l'estomac", pts: 2, desc: 'Knee on belly' },
     ],
   },
   {
     label: 'SOL : 3 pts',
     color: '#10B981',
     actions: [
-      { label: traduire('Passage de garde'), pts: 3, desc: 'Guard pass' },
+      { label: 'Passage de garde', pts: 3, desc: 'Guard pass' },
     ],
   },
   {
     label: 'POSITIONS DOMINANTES : 4 pts',
     color: '#A855F7',
     actions: [
-      { label: traduire('Position montée'), pts: 4, desc: 'Mount' },
-      { label: traduire('Montée arrière'), pts: 4, desc: 'Back mount' },
-      { label: traduire('Contrôle du dos'), pts: 4, desc: 'Back control' },
+      { label: 'Position montée', pts: 4, desc: 'Mount' },
+      { label: 'Montée arrière', pts: 4, desc: 'Back mount' },
+      { label: 'Contrôle du dos', pts: 4, desc: 'Back control' },
       { label: 'Body triangle', pts: 4, desc: 'Body triangle dos' },
     ],
   },
@@ -146,8 +146,8 @@ const POINTS_GROUPS = [
       { label: 'Quasi-sweep', pts: 1, desc: 'Near sweep' },
       { label: 'Quasi-takedown', pts: 1, desc: 'Near takedown' },
       { label: 'Quasi-passe', pts: 1, desc: 'Near guard pass' },
-      { label: traduire('Pénalité adv. +1'), pts: 1, desc: '2e faute adverse' },
-      { label: traduire('Pénalité adv. +2'), pts: 2, desc: '3e faute adverse' },
+      { label: 'Pénalité adv. +1', pts: 1, desc: '2e faute adverse' },
+      { label: 'Pénalité adv. +2', pts: 2, desc: '3e faute adverse' },
     ],
   },
 ];
@@ -323,7 +323,7 @@ export function BJJBodyMap({
               styles.subShort,
               { color: selected ? color : textColor, fontWeight: selected ? '700' : '600' },
             ]} numberOfLines={1}>
-              {sub.short}
+              {traduire(sub.short)}
             </Text>
             <ScrollView
               horizontal
@@ -333,7 +333,7 @@ export function BJJBodyMap({
               bounces={false}
             >
               <Text style={[styles.subFull, { color: mutedColor }]}>
-                {sub.full}
+                {traduire(sub.full)}
               </Text>
             </ScrollView>
           </View>
@@ -497,7 +497,7 @@ export function BJJBodyMap({
             {/* Header groupe */}
             <View style={[styles.groupHeader, { backgroundColor: `${group.color}12` }]}>
               <View style={[styles.groupDot, { backgroundColor: group.color }]} />
-              <Text style={[styles.groupLabel, { color: group.color }]}>{group.label}</Text>
+              <Text style={[styles.groupLabel, { color: group.color }]}>{traduire(group.label)}</Text>
             </View>
 
             {group.actions.map(action => {
@@ -529,10 +529,10 @@ export function BJJBodyMap({
                   {/* Nom + description */}
                   <View style={styles.ptCenter}>
                     <Text style={[styles.ptLabel, { color: (myCount > 0 || oppCount > 0) ? textColor : mutedColor }]} numberOfLines={1}>
-                      {action.label}
+                      {traduire(action.label)}
                     </Text>
                     <Text style={[styles.ptDesc, { color: mutedColor }]} numberOfLines={1}>
-                      {action.desc}
+                      {traduire(action.desc)}
                     </Text>
                   </View>
 

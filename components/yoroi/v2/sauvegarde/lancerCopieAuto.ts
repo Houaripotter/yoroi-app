@@ -37,7 +37,7 @@ export async function choisirDossierEtCopier(apres?: (ok: boolean) => void): Pro
 export function lancerCopieAuto(apres?: (ok: boolean) => void): void {
   const cloud = nomDuCloud();
   appAlert(
-    'Copie automatique',
+    traduire('Copie automatique'),
     traduire("Tu choisis une fois un dossier dans {0}. Ensuite, YOROI y range une copie de toutes tes données chaque jour, tout seul.\n\n{1}", cloud, etapesSelecteur()),
     [
       { text: traduire('Annuler'), style: 'cancel', onPress: () => apres?.(false) },

@@ -312,7 +312,7 @@ export default function Dojo() {
         {/* En-tete */}
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, gap: 10 }}>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
-            <Ink size={32} weight="black" tight accessibilityRole="header">Dojo</Ink>
+            <Ink size={32} weight="black" tight accessibilityRole="header">{traduire("Dojo")}</Ink>
           </View>
           {/* vague 48 : la visite du Dojo, a revoir quand on veut */}
           <Pressable
@@ -340,7 +340,7 @@ export default function Dojo() {
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 14, borderRadius: 22, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
           >
             <PersonIcon color={c.accent} />
-            <Ink size={14} weight="extraBold">Personnages</Ink>
+            <Ink size={14} weight="extraBold">{traduire("Personnages")}</Ink>
           </Pressable>
         </View>
 
@@ -407,7 +407,7 @@ export default function Dojo() {
               <View style={{ flex: 1, gap: 3 }}>
                 <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Ta prochaine récompense")}</Ink>
                 <Ink size={20} weight="black" tight numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>{cons.palier}</Ink>
-                <Ink size={14} weight="extraBold" numberOfLines={2}>{cons.piece.nom}</Ink>
+                <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(cons.piece.nom)}</Ink>
                 <Ink size={12} color={c.textSecondary} numberOfLines={3}>
                   {traduire("{0} : étape {1} sur 3, {2}", tenueEvolue ? libelleConstruction(u) : 'Ta récompense se construit', cons.enCours, cons.piece.etapes[cons.faites])}
                 </Ink>
@@ -552,7 +552,7 @@ export default function Dojo() {
               },
               {
                 key: 'journal',
-                title: 'Journal d’XP',
+                title: traduire('Journal d’XP'),
                 value: `${formatXp(xp)}${NB}XP gagnés`,
                 fond: c.indigoTint,
                 kanjiColor: c.indigo,
@@ -642,7 +642,7 @@ function SportCard({ b, gender, onPress }: { b: BeltInfo; gender: Gender; onPres
         </View>
       </View>
       <View style={{ paddingHorizontal: 4, gap: 3 }}>
-        <Ink size={14} weight="extraBold" numberOfLines={2}>{b.sportName}</Ink>
+        <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(b.sportName)}</Ink>
         <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduirePluriel(b.count, b.count > 1, "{0}, {1} séance", "{0}, {1} séances", b.belt.name, b.count)}</Ink>
         <View style={{ marginTop: 4 }}>
           <Bar progress={b.progress} color={barColor} height={6} />

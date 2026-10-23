@@ -210,7 +210,7 @@ function Chiffre({ s, size, pal, largeur, align = 'flex-start', labelEnHaut, her
   const sz = Math.min(size, fit(txt, largeur, size, 0.6));
   const label = (
     <T size={hero ? 15 : Math.max(11, Math.min(13, Math.round(size * 0.4)))} weight={hero ? 'extraBold' : 'bold'} color={hero ? pal.ink2 : pal.muted} style={[{ textAlign: align === 'flex-end' ? 'right' : align === 'center' ? 'center' : 'left' }, pal.shadow]}>
-      {s.label}
+      {traduire(s.label)}
     </T>
   );
   if (s.key === 'zones' && s.zones) {
@@ -334,7 +334,7 @@ function ClubPuce({ club, pal, max }: { club: NonNullable<CarteData['club']>; pa
           <T size={10} weight="black" color={sombre ? '#14161C' : '#FFFFFF'}>{initialesClub(club.nom)}</T>
         </View>
       )}
-      <T size={12} weight="extraBold" color={pal.ink} style={{ flexShrink: 1 }}>{club.nom}</T>
+      <T size={12} weight="extraBold" color={pal.ink} style={{ flexShrink: 1 }}>{traduire(club.nom)}</T>
     </View>
   );
 }
@@ -509,7 +509,7 @@ function Ticket({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
         <View style={{ borderRadius: 20, backgroundColor: panel, borderWidth: 1, borderColor: pal.line, paddingHorizontal: 18, paddingTop: story ? 16 : 11, paddingBottom: story ? 16 : 11, gap: story ? 11 : 6 }}>
           {rest.map((s) => (
             <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <T size={13} weight="bold" color={pal.ink2} style={{ flexShrink: 1 }}>{s.label}</T>
+              <T size={13} weight="bold" color={pal.ink2} style={{ flexShrink: 1 }}>{traduire(s.label)}</T>
               {s.key === 'zones' && s.zones ? (
                 <View style={{ alignItems: 'flex-end', gap: 4 }}>
                   <T size={16} weight="black" color={pal.ink}>{s.value}</T>
@@ -527,7 +527,7 @@ function Ticket({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
                 <SvgLine x1={0} y1={1} x2={inner} y2={1} stroke={pal.ink} strokeOpacity={0.5} strokeWidth={2} strokeDasharray="6 6" />
               </Svg>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
-                <T size={13} weight="black" color={pal.ink} style={{ flexShrink: 1, paddingBottom: 8 }} lines={2}>{hero.label}</T>
+                <T size={13} weight="black" color={pal.ink} style={{ flexShrink: 1, paddingBottom: 8 }} lines={2}>{traduire(hero.label)}</T>
                 {hero.key === 'zones' ? (
                   <Chiffre s={hero} size={story ? 40 : 30} pal={sans} largeur={inner * 0.62} align="flex-end" />
                 ) : (
@@ -741,7 +741,7 @@ function Minimal({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
       <View style={{ gap: story ? 14 : 8 }}>
         {hero ? (
           <View style={{ gap: story ? 2 : 0 }}>
-            <T size={story ? 17 : 14} weight="extraBold" color={pal.ink2} style={pal.shadow}>{hero.label}</T>
+            <T size={story ? 17 : 14} weight="extraBold" color={pal.ink2} style={pal.shadow}>{traduire(hero.label)}</T>
             {hero.key === 'zones' && hero.zones ? (
               <Chiffre s={hero} size={story ? 64 : 44} pal={pal} largeur={L} />
             ) : (
@@ -778,16 +778,16 @@ function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
             {/* sur une image sombre le rouge se perd : le libelle prend l'or du trophee ; sur clair, le rouge des records */}
             <T size={story ? 16 : 13} weight="black" color={sombre ? '#F2C75C' : pal.record} style={[{ letterSpacing: 0.2 }, pal.shadow]}>{autres > 0 ? traduire('Nouveaux records') : traduire('Nouveau record')}</T>
           </View>
-          <T size={fit(r.nom, L, Math.round(30 * k), 0.58)} weight="black" color={pal.ink} style={[{ letterSpacing: -0.4 }, pal.shadow]}>{r.nom}</T>
+          <T size={fit(r.nom, L, Math.round(30 * k), 0.58)} weight="black" color={pal.ink} style={[{ letterSpacing: -0.4 }, pal.shadow]}>{traduire(r.nom)}</T>
           {r.poids ? (
             <Heros g={chargeGrand(r.poids, u)} pal={pal} largeur={L} max={Math.round((carre ? 120 : 140) * k)} />
           ) : (
-            <T size={story ? 22 : 16} weight="black" color={pal.ink} lines={2} style={pal.shadow}>{r.texte}</T>
+            <T size={story ? 22 : 16} weight="black" color={pal.ink} lines={2} style={pal.shadow}>{traduire(r.texte)}</T>
           )}
           {r.poids && r.reps && !carre ? <T size={story ? 16 : 13} weight="extraBold" color={pal.ink2} style={pal.shadow}>{traduire("pour {0} {1}", r.reps, r.reps > 1 ? 'répétitions' : 'répétition')}</T> : null}
           {gain !== null && gain > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 10 : 6, marginTop: story ? 4 : 2 }}>
-              <T size={13} weight="bold" color={pal.muted} style={pal.shadow}>Ancien record</T>
+              <T size={13} weight="bold" color={pal.muted} style={pal.shadow}>{traduire("Ancien record")}</T>
               <T size={15} weight="black" color={pal.ink2} style={[{ textDecorationLine: 'line-through' }, pal.shadow]}>{`${chargeGrand(r.avant!, u).value} ${chargeGrand(r.avant!, u).unit}`}</T>
               <View style={{ height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: '#D9B04A', justifyContent: 'center' }}>
                 <T size={13} weight="black" color="#1D2029">{`+${chargeGrand(gain, u).value} ${chargeGrand(gain, u).unit}`}</T>
@@ -813,9 +813,9 @@ const JOURS_COURTS = [traduire('Lun'), traduire('Mar'), traduire('Mer'), traduir
 function ClubRond({ club, pal, D }: { club: NonNullable<CarteData['club']>; pal: Palette; D: number }) {
   const src = club.logo ? getClubLogoSource(club.logo) : null;
   const sombre = pal.ink === '#FFFFFF';
-  if (src) return <Image source={src} style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: '#FFFFFF' }} resizeMode="cover" accessibilityLabel={club.nom} />;
+  if (src) return <Image source={src} style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: '#FFFFFF' }} resizeMode="cover" accessibilityLabel={traduire(club.nom)} />;
   return (
-    <View style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: pal.ink, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={club.nom}>
+    <View style={{ width: D, height: D, borderRadius: D / 2, backgroundColor: pal.ink, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={traduire(club.nom)}>
       <T size={Math.max(7, Math.round(D * 0.38))} weight="black" color={sombre ? '#14161C' : '#FFFFFF'}>{initialesClub(club.nom)}</T>
     </View>
   );
@@ -994,7 +994,7 @@ function ExploitVue({ d, o, pal, W, fig, padTop, padBas, u }: Ctx) {
         <View style={{ gap: story ? 10 : 6, alignItems: centre ? 'center' : 'flex-start' }}>
           {e.avant ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <T size={Math.round(13 * Math.max(k, 0.85))} weight="bold" color={pal.muted} style={pal.shadow}>Ancien record</T>
+              <T size={Math.round(13 * Math.max(k, 0.85))} weight="bold" color={pal.muted} style={pal.shadow}>{traduire("Ancien record")}</T>
               <T size={Math.round(15 * Math.max(k, 0.85))} weight="black" color={pal.ink2} style={[{ textDecorationLine: 'line-through' }, pal.shadow]}>{`${e.avant.value}${e.avant.unit ? ` ${e.avant.unit}` : ''}`}</T>
             </View>
           ) : null}
@@ -1018,7 +1018,7 @@ function ExploitVue({ d, o, pal, W, fig, padTop, padBas, u }: Ctx) {
               {e.cotes.slice(0, 3).map((c) => (
                 <View key={c.label} style={{ flex: 1, minWidth: 0 }}>
                   <Valeur s={{ key: 'exploit', label: c.label, value: c.value, unit: c.unit }} size={Math.min(Math.round(28 * k), fit(`${c.value} ${c.unit ?? ''}`, (L - 28) / 3, Math.round(28 * k), 0.6))} pal={pal} />
-                  <T size={11} weight="bold" color={pal.muted} style={pal.shadow}>{c.label}</T>
+                  <T size={11} weight="bold" color={pal.muted} style={pal.shadow}>{traduire(c.label)}</T>
                 </View>
               ))}
             </View>

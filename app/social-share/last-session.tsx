@@ -171,7 +171,7 @@ export default function LastSessionScreen() {
                     } else {
                       // ── Mode full / medium ──
                       const label = r.partner ? `Round ${r.number} contre ${r.partner}` : `Round ${r.number}`;
-                      rows.push({ label, pace: resultEmoji ? `${resultEmoji} ${r.result === 'win' ? traduire('Victoire') : r.result === 'loss' ? traduire('Défaite') : 'Nul'}` : undefined });
+                      rows.push({ label, pace: resultEmoji ? `${resultEmoji} ${r.result === 'win' ? traduire('Victoire') : r.result === 'loss' ? traduire('Défaite') : traduire('Nul')}` : undefined });
 
                       if (r.partnerRating) {
                         const ratingLabel = r.partnerRating <= 2 ? 'Débutant' : r.partnerRating <= 4 ? 'Intermédiaire' : r.partnerRating <= 6 ? traduire('Bon niveau') : r.partnerRating <= 8 ? 'Avancé' : r.partnerRating === 9 ? 'Expert' : traduire('Élite');
@@ -179,7 +179,7 @@ export default function LastSessionScreen() {
                       }
 
                       if (r.roundIntensity) {
-                        const intensityMap: Record<string, string> = { guerre: 'Guerre', technique: traduire('Technique'), detendu: traduire('Détendu') };
+                        const intensityMap: Record<string, string> = { guerre: traduire('Guerre'), technique: traduire('Technique'), detendu: traduire('Détendu') };
                         rows.push({ label: `  ${intensityMap[r.roundIntensity] ?? r.roundIntensity}` });
                       }
 
@@ -220,7 +220,7 @@ export default function LastSessionScreen() {
                     const bilanParts: string[] = [];
                     if (hasResults) bilanParts.push(`${wins}V ${losses}D ${draws}N`);
                     if (hasPoints) bilanParts.push(traduire("{0} à {1} pts", totalFor, totalAgainst));
-                    rows.push({ label: `Bilan`, pace: bilanParts.join(', ') });
+                    rows.push({ label: traduire(`Bilan`), pace: bilanParts.join(', ') });
                   }
 
                   parsedOptions = rows;
@@ -245,7 +245,7 @@ export default function LastSessionScreen() {
                   } else if (bestWin?.partnerRating >= 7) {
                     setCombatCelebration({
                       visible: true,
-                      title: 'Adversaire fort battu !',
+                      title: traduire('Adversaire fort battu !'),
                       subtitle: bestWin.partner
                         ? traduire("Victoire sur {0} noté {1}/10\nTu progresses à grande vitesse !", bestWin.partner, bestWin.partnerRating)
                         : traduire("Victoire contre un adversaire {0} ({1}/10) !", getRatingLabel(bestWin.partnerRating), bestWin.partnerRating),
@@ -317,11 +317,11 @@ export default function LastSessionScreen() {
 
   const toggles: { label: string; on: boolean; set: (v: boolean) => void }[] = [
     { label: 'Date', on: showDate, set: setShowDate },
-    { label: 'Club', on: showClub, set: setShowClub },
-    { label: 'Lieu', on: showLieu, set: setShowLieu },
+    { label: traduire('Club'), on: showClub, set: setShowClub },
+    { label: traduire('Lieu'), on: showLieu, set: setShowLieu },
     { label: traduire('Objectif'), on: showYearlyCount, set: setShowYearlyCount },
     { label: traduire('Détail'), on: showExercises, set: setShowExercises },
-    { label: 'Stats', on: showStats, set: setShowStats },
+    { label: traduire('Stats'), on: showStats, set: setShowStats },
   ];
 
   const pp = paletteOf('papier');
@@ -346,8 +346,8 @@ export default function LastSessionScreen() {
             <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <Stamp p={pp} size={48} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={17} weight="black" tight>{combatCelebration.title}</Ink>
-                <Ink size={13} weight="medium" color={P.ink2}>{combatCelebration.subtitle}</Ink>
+                <Ink size={17} weight="black" tight>{traduire(combatCelebration.title)}</Ink>
+                <Ink size={13} weight="medium" color={P.ink2}>{traduire(combatCelebration.subtitle)}</Ink>
               </View>
             </Card>
           ) : null}
@@ -355,7 +355,7 @@ export default function LastSessionScreen() {
             <Ink size={15} weight="black" style={{ paddingHorizontal: 4 }}>{traduire("Sur la carte")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {toggles.map((t) => (
-                <Pill key={t.label} label={t.label} active={t.on} onPress={() => { tap(); t.set(!t.on); }} />
+                <Pill key={t.label} label={traduire(t.label)} active={t.on} onPress={() => { tap(); t.set(!t.on); }} />
               ))}
             </View>
           </View>

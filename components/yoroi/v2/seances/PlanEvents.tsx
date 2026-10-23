@@ -29,7 +29,7 @@ const EUROPE = new Set([
 ]);
 type Region = 'france' | 'europe' | 'monde';
 type Cat = 'all' | 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
-const CAT_LABEL: Record<Cat, string> = { all: traduire('Tout'), combat: traduire('Combat'), endurance: 'Endurance', force: 'Force', nature: 'Nature', autre: 'Autres' };
+const CAT_LABEL: Record<Cat, string> = { all: traduire('Tout'), combat: traduire('Combat'), endurance: 'Endurance', force: 'Force', nature: traduire('Nature'), autre: 'Autres' };
 const CAT_TINT: Record<string, string> = { combat: '#EEE1DF', endurance: '#E4EADB', force: '#E3E6EE', nature: '#E9E4D8', autre: '#E6E4DD' };
 
 function eventParams(e: SportEvent) {
@@ -133,7 +133,7 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
       <Pressable
         onPress={() => { tap(); router.push({ pathname: '/event-detail', params: eventParams(e) } as any); }}
         accessibilityRole="button"
-        accessibilityLabel={e.title}
+        accessibilityLabel={traduire(e.title)}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
       >
         <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: CAT_TINT[e.category] ?? c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
@@ -141,7 +141,7 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
           <Ink size={9} weight="bold" color={c.textSecondary} style={{ lineHeight: 11 }}>{n <= 0 ? 'jour' : n > 1 ? 'jours' : 'jour'}</Ink>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold" numberOfLines={2}>{e.title}</Ink>
+          <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(e.title)}</Ink>
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[longDate(e.date_start.slice(0, 10)), e.location?.city, e.location?.country !== 'France' ? e.location?.country : ''].filter(Boolean).join(', ')}</Ink>
           <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={2}>{[getSportTagLabel(e.sport_tag), e.federation].filter(Boolean).join(', ')}</Ink>
         </View>
@@ -173,7 +173,7 @@ export function PlanEvents({ competitions }: { competitions: Competition[] }) {
                 {n > 0 ? <Ink size={11} weight="bold" color={i === 0 ? c.onDarkSecondary : c.textMuted}>{n > 1 ? 'jours' : 'jour'}</Ink> : null}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={17} weight="extraBold" color={i === 0 ? c.background : c.ink} numberOfLines={2}>{cp.nom}</Ink>
+                <Ink size={17} weight="extraBold" color={i === 0 ? c.background : c.ink} numberOfLines={2}>{traduire(cp.nom)}</Ink>
                 <Ink size={12} color={i === 0 ? c.onDarkSecondary : c.textSecondary} numberOfLines={2}>{[longDate(cp.date.slice(0, 10)), cp.lieu, getSportName(cp.sport), cp.categorie_poids].filter(Boolean).join(', ')}</Ink>
               </View>
               <Icon name="chevron" size={18} color={i === 0 ? c.onDarkSecondary : c.textMuted} />

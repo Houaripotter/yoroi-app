@@ -31,7 +31,7 @@ import type { BioKey } from '@/lib/v2/progres/biomarkers';
 import { num } from '@/lib/v2/progres/format';
 import { traduire } from '@/lib/i18n/tr';
 
-const SOURCES: Record<string, string> = { manual: traduire('saisie à la main'), withings: 'balance Withings', garmin: 'Garmin', apple_health: 'Apple Santé', healthkit: 'Apple Santé', health_connect: 'Health Connect', xiaomi: 'balance Xiaomi', body_composition: traduire('saisie à la main'), balance_photo: 'Balance (photo)' };
+const SOURCES: Record<string, string> = { manual: traduire('saisie à la main'), withings: traduire('balance Withings'), garmin: 'Garmin', apple_health: 'Apple Santé', healthkit: 'Apple Santé', health_connect: 'Health Connect', xiaomi: traduire('balance Xiaomi'), body_composition: traduire('saisie à la main'), balance_photo: 'Balance (photo)' };
 
 type DetailMetric = { key: BioKey; label: string; short: string; unit: string; digits: number; good: 'up' | 'down' | 'none' };
 
@@ -138,7 +138,7 @@ export default function CompositionDetailScreen() {
     <Pills
       items={[
         { value: 'mesure' as Mode, label: traduire('Mesure') },
-        { value: 'courbe' as Mode, label: 'Courbe' },
+        { value: 'courbe' as Mode, label: traduire('Courbe') },
       ]}
       value={mode}
       onChange={(m) => setMode(m)}
@@ -150,7 +150,7 @@ export default function CompositionDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: c.background }}>
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-          <DetailHeader title="Composition" sub={traduire("Chaque pesée avec tous tes biomarqueurs.")} />
+          <DetailHeader title={traduire("Composition")} sub={traduire("Chaque pesée avec tous tes biomarqueurs.")} />
           {modeSwitch}
           {point ? (
             <View style={{ paddingHorizontal: GUTTER, marginTop: 18 }}>
@@ -176,7 +176,7 @@ export default function CompositionDetailScreen() {
               {/* BALANCE 2 : les autres mesures de la balance, seulement si elles existent */}
               <ExtrasCard point={point} style={{ marginTop: 10 }} />
               <View style={{ marginTop: 24 }}>
-                <SectionHead title="Biomarqueurs" />
+                <SectionHead title={traduire("Biomarqueurs")} />
                 <Ink size={13} color={c.textSecondary} style={{ marginTop: 2, marginBottom: 10 }}>
                   {point.weight ? traduire("Pesée à {0} kg. ", num(point.weight, 1)) : ''}
                   {idx > 0 ? traduire('Écart avec la mesure précédente. Touche une ligne pour sa courbe.') : traduire('Touche une ligne pour sa courbe.')}
@@ -210,7 +210,7 @@ export default function CompositionDetailScreen() {
   return (
     <MetricDetail
       key={metric.key}
-      title={metric.label}
+      title={traduire(metric.label)}
       sub={metric.key === 'bmi' ? traduire('Calculé avec ta taille et chacune de tes pesées.') : metric.key === 'lean' ? traduire('Calculée à partir de ta masse grasse.') : traduire('Mesurée par ta balance, sur sa propre échelle.')}
       picker={
         <>
@@ -227,7 +227,7 @@ export default function CompositionDetailScreen() {
       color={bioColor(metric.key) ?? c.ink}
       explain={explain}
       loading={loading}
-      target={metric.key === 'visceral' ? { value: 12, label: traduire('sain jusqu’à 12') } : metric.key === 'bmi' ? { value: 25, label: 'seuil OMS 25' } : null}
+      target={metric.key === 'visceral' ? { value: 12, label: traduire('sain jusqu’à 12') } : metric.key === 'bmi' ? { value: 25, label: traduire('seuil OMS 25') } : null}
       markBest={metric.good !== 'none'}
       scrubLine={(p) => p.caption ?? metric.label}
       empty={{

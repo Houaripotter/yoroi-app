@@ -140,7 +140,7 @@ export default function SyncDevicesScreen() {
     : null;
 
   return (
-    <DetailScreen title={Platform.OS === 'ios' ? traduire('iPhone et iPad') : traduire('Tes appareils')} subtitle="Synchronisation locale">
+    <DetailScreen title={Platform.OS === 'ios' ? traduire('iPhone et iPad') : traduire('Tes appareils')} subtitle={traduire("Synchronisation locale")}>
       <GlassBox style={{ gap: 12, alignItems: 'center' }}>
         <DevicesScene connected={isConnected} peers={n} />
         <Ink size={22} weight="black" tight style={{ textAlign: 'center' }}>
@@ -161,7 +161,7 @@ export default function SyncDevicesScreen() {
       </GlassBox>
 
       <CardBox>
-        <ActionRow first icon="phone" title={myName} sub="Cet appareil" color={S.accent} tint={S.accentSoft} />
+        <ActionRow first icon="phone" title={myName} sub={traduire("Cet appareil")} color={S.accent} tint={S.accentSoft} />
         <ActionRow icon="history" title={lastSyncStr || traduire('Aucune pour le moment')} sub={status.lastSyncDevice ? traduire("Dernière synchro, avec {0}, voir le journal", status.lastSyncDevice) : traduire('Dernière synchro, voir le journal')} onPress={() => router.push('/sync-history' as any)} color={S.indigo} tint={S.indigoSoft} />
       </CardBox>
 
@@ -175,12 +175,12 @@ export default function SyncDevicesScreen() {
                 key={p.id}
                 first={i === 0}
                 icon="tablet"
-                title={p.nom}
+                title={traduire(p.nom)}
                 sub={enLigne ? traduire('Relié, synchronisation active') : traduire('Appairé, pas à proximité')}
                 color={enLigne ? S.mossText : S.muted}
                 tint={enLigne ? S.mossSoft : S.line2}
                 right={
-                  <SmallButton label="Oublier" tone="light" icon="trash" onPress={() => { void oublierAppareil(p.id); }} />
+                  <SmallButton label={traduire("Oublier")} tone="light" icon="trash" onPress={() => { void oublierAppareil(p.id); }} />
                 }
               />
             );
@@ -220,7 +220,7 @@ export default function SyncDevicesScreen() {
             keyboardType="number-pad"
             maxLength={6}
             autoFocus
-            accessibilityLabel="Code d’appairage"
+            accessibilityLabel={traduire("Code d’appairage")}
             style={{ fontSize: 32, fontWeight: '800', letterSpacing: 6, textAlign: 'center', color: S.ink, borderRadius: 16, borderWidth: 1, borderColor: S.line2, paddingVertical: 12 }}
           />
           <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -228,7 +228,7 @@ export default function SyncDevicesScreen() {
               <SmallButton label={traduire("Annuler")} tone="light" onPress={() => setSaisie(null)} />
             </View>
             <View style={{ flex: 1 }}>
-              <SmallButton label="Appairer" tone="red" icon="link" disabled={saisie.length !== 6} onPress={() => { void validerCode(); }} />
+              <SmallButton label={traduire("Appairer")} tone="red" icon="link" disabled={saisie.length !== 6} onPress={() => { void validerCode(); }} />
             </View>
           </View>
         </GlassBox>
@@ -244,11 +244,11 @@ export default function SyncDevicesScreen() {
       )}
 
       <SmallButton label={syncing ? 'Synchronisation' : traduire('Forcer la synchronisation')} tone="red" icon="sync" busy={syncing} disabled={!isAvailable || status.paires.length === 0} onPress={handleForceSync} />
-      {msg ? <Notice text={msg.text} tone={msg.tone} /> : null}
+      {msg ? <Notice text={traduire(msg.text)} tone={msg.tone} /> : null}
 
       <Label>{traduire("Comment ça marche")}</Label>
       <CardBox>
-        <ActionRow first icon="shield" title="100 % en local" sub={traduire("Sans internet ni serveur, par Bluetooth et wifi direct. Tes données sont chiffrées de bout en bout.")} color={S.indigo} tint={S.indigoSoft} />
+        <ActionRow first icon="shield" title={traduire("100 % en local")} sub={traduire("Sans internet ni serveur, par Bluetooth et wifi direct. Tes données sont chiffrées de bout en bout.")} color={S.indigo} tint={S.indigoSoft} />
         <ActionRow icon="lock" title={traduire("Seulement tes appareils")} sub={traduire("Un appareil n'est synchronisé qu'après un appairage par code. Un téléphone inconnu à côté de toi ne reçoit rien.")} color={S.mossText} tint={S.mossSoft} />
         <ActionRow icon="wifi" title={traduire("Quand cet écran est ouvert")} sub={traduire("La synchronisation tourne pendant que cet écran est ouvert sur les deux appareils, proches l'un de l'autre.")} color={S.accent} tint={S.accentSoft} />
         <ActionRow icon="info" title={traduire("Si rien ne démarre")} sub={traduire("Réglages, Confidentialité, Réseau local : vérifie que YOROI est activé.")} color={S.gold} tint={S.goldSoft} />

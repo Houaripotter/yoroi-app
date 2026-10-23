@@ -94,8 +94,8 @@ export function BlasonConseil({ picto, couleur, fond, taille = 56 }: { picto: Co
 export function actionConseil(c: Conseil): { libelle: string; href: string; icone: 'plus' | 'scale' | 'chevron' } | null {
   if (!c.href) return null;
   if (c.href === '/seance') return { libelle: traduire('Lancer une séance'), href: '/ajouter', icone: 'plus' };
-  if (c.href === '/pesee') return { libelle: 'Me peser', href: '/pesee', icone: 'scale' };
-  return { libelle: c.action ?? 'Ouvrir', href: c.href, icone: 'chevron' };
+  if (c.href === '/pesee') return { libelle: traduire('Me peser'), href: '/pesee', icone: 'scale' };
+  return { libelle: c.action ?? traduire('Ouvrir'), href: c.href, icone: 'chevron' };
 }
 
 export function FeuilleConseil({ conseil: c, citation, style, onFermer, onMasquer, onAller }: { conseil: Conseil; citation: string; style: StyleCitation; onFermer: () => void; onMasquer: () => void; onAller: (href: string) => void }) {
@@ -173,7 +173,7 @@ export function FeuilleConseil({ conseil: c, citation, style, onFermer, onMasque
               <Ink size={13} weight="extraBold" color={t.texte}>
                 {traduire("Le conseil du jour")}</Ink>
               <Ink size={22} weight="black" tight numberOfLines={2} accessibilityRole="header">
-                {c.title}
+                {traduire(c.title)}
               </Ink>
             </View>
           </View>
@@ -195,12 +195,12 @@ export function FeuilleConseil({ conseil: c, citation, style, onFermer, onMasque
                 onAller(action.href);
               }}
               accessibilityRole="button"
-              accessibilityLabel={action.libelle}
+              accessibilityLabel={traduire(action.libelle)}
             >
               <View style={{ minHeight: 52, borderRadius: 26, backgroundColor: t.plein, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 18 }}>
                 {action.icone !== 'chevron' ? <Icon name={action.icone} size={18} color={t.surPlein} width={2.8} /> : null}
                 <Ink size={15.5} weight="extraBold" color={t.surPlein} numberOfLines={1}>
-                  {action.libelle}
+                  {traduire(action.libelle)}
                 </Ink>
                 {action.icone === 'chevron' ? <Icon name="chevron" size={15} color={t.surPlein} width={2.8} /> : null}
               </View>

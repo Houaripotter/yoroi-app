@@ -113,11 +113,11 @@ export function SessionToday({ trainings, target, femme }: { trainings: Training
             {target.over}
           </Ink>
           <Ink size={21} weight="black" tight color={P.white} numberOfLines={2}>
-            {target.title}
+            {traduire(target.title)}
           </Ink>
           {target.sub ? (
             <Ink size={13} weight="medium" color={paletteSombre() ? '#4A4E5A' : '#B9BBC4'} numberOfLines={2}>
-              {target.sub}
+              {traduire(target.sub)}
             </Ink>
           ) : null}
           {first ? <PlusHint text={traduire("Touche + pour ta première séance")} color={P.white} style={{ marginTop: 8 }} /> : null}

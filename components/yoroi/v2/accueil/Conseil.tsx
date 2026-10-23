@@ -46,10 +46,10 @@ export function ConseilDuJour({ trainings, lastWeighIso, goal, freins }: { train
         <Ink size={12} weight="bold" color={P.muted}>
           {traduire("Le conseil du jour")}</Ink>
         <Ink size={17} weight="black" tight numberOfLines={2}>
-          {c.title}
+          {traduire(c.title)}
         </Ink>
         <Ink size={13} color={P.ink2}>
-          {c.text}
+          {traduire(c.text)}
         </Ink>
         {addHint ? (
           <PlusHint text={addHint} style={{ marginTop: 6 }} />

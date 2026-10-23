@@ -106,16 +106,16 @@ export default function CompetitorProfileScreen() {
   return (
     <DetailScreen title={traduire("Profil compétiteur")} subtitle={traduire("Ta fiche pour les compétitions")}>
       <Enter i={0} style={{ gap: 10 }}>
-        <SectionTitle>Genre</SectionTitle>
+        <SectionTitle>{traduire("Genre")}</SectionTitle>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {(['male', 'female'] as const).map((g) => {
             const on = profile.gender === g;
             return (
-              <Press key={g} style={{ flex: 1 }} onPress={() => { setGenderFromProfile(false); save({ ...profile, gender: g, category: g === profile.gender ? profile.category : null }); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={g === 'male' ? 'Homme' : 'Femme'}>
+              <Press key={g} style={{ flex: 1 }} onPress={() => { setGenderFromProfile(false); save({ ...profile, gender: g, category: g === profile.gender ? profile.category : null }); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={g === 'male' ? traduire('Homme') : traduire('Femme')}>
                 <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: on ? P.ink : P.white, borderWidth: on ? 0 : 1, borderColor: P.line2 }}>
                   <View style={{ minHeight: 48, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Ink size={18} weight="black" tight color={on ? P.white : P.ink}>
-                      {g === 'male' ? 'Homme' : 'Femme'}
+                      {g === 'male' ? traduire('Homme') : traduire('Femme')}
                     </Ink>
                     {on ? <Icon name="check" size={22} color={P.goldLight} width={3} /> : null}
                   </View>
@@ -136,7 +136,7 @@ export default function CompetitorProfileScreen() {
             <SectionTitle>{traduire("Poids actuel")}</SectionTitle>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
               <View style={{ flex: 1 }}>
-                <Field value={weightInput} onChangeText={setWeightInput} placeholder="Ex : 75,5" keyboardType="decimal-pad" suffix="kg" icon="scale" onSubmit={() => saveWeight()} />
+                <Field value={weightInput} onChangeText={setWeightInput} placeholder={traduire("Ex : 75,5")} keyboardType="decimal-pad" suffix="kg" icon="scale" onSubmit={() => saveWeight()} />
               </View>
               <Press onPress={() => saveWeight()} accessibilityRole="button" accessibilityLabel={traduire("Enregistrer le poids")}>
                 <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: savedFlash ? P.moss : P.accent, alignItems: 'center', justifyContent: 'center' }}>
@@ -178,7 +178,7 @@ export default function CompetitorProfileScreen() {
               {traduire("Ta catégorie de poids officielle, avec le kimono.")}</Ink>
             <ChipScroll>
               {cats.map((c) => (
-                <Chip key={c.id} label={c.name} sub={c.weight} accent={P.accent} active={profile.category === c.id} onPress={() => save({ ...profile, category: c.id })} />
+                <Chip key={c.id} label={traduire(c.name)} sub={c.weight} accent={P.accent} active={profile.category === c.id} onPress={() => save({ ...profile, category: c.id })} />
               ))}
             </ChipScroll>
           </Enter>
@@ -193,7 +193,7 @@ export default function CompetitorProfileScreen() {
                     <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2, backgroundColor: on ? P.paper : 'transparent', borderRadius: 14 }}>
                       <BeltSwatch color={b.color} edge={b.edge} width={58} height={14} />
                       <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
-                        {b.name}
+                        {traduire(b.name)}
                       </Ink>
                       {on ? <Icon name="check" size={22} color={P.accent} width={3} /> : null}
                     </View>
@@ -226,7 +226,7 @@ export default function CompetitorProfileScreen() {
               <Hanko size={48} />
             </View>
             {[
-              ['Genre', profile.gender === 'male' ? 'Homme' : 'Femme'],
+              [traduire('Genre'), profile.gender === 'male' ? traduire('Homme') : traduire('Femme')],
               [traduire('Poids actuel'), profile.currentWeight ? `${formatKg(profile.currentWeight)} kg` : traduire('Non renseigné')],
               [traduire('Catégorie'), category ? `${category.name}, ${category.weight}` : ''],
               [traduire('Ceinture'), belt?.name ?? ''],

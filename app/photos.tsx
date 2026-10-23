@@ -335,7 +335,7 @@ export default function PhotosScreen() {
         <View style={{ marginHorizontal: GUTTER, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: c.successTint }}>
           <Lock color={c.successText} />
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={15} weight="extraBold" color={c.successText}>Coffre 100 % local</Ink>
+            <Ink size={15} weight="extraBold" color={c.successText}>{traduire("Coffre 100 % local")}</Ink>
             <Ink size={13} color={c.textSecondary}>{traduire("Tes photos restent sur ton téléphone. Elles ne partent jamais en ligne.")}</Ink>
           </View>
         </View>
@@ -347,7 +347,7 @@ export default function PhotosScreen() {
         ) : (
           <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 18 }}>
             <PrimaryButton label={uploading ? 'Enregistrement en cours' : traduire('Prendre une photo')} onPress={takePhoto} disabled={uploading} style={{ flex: 1 }} />
-            <GhostButton label="Galerie" onPress={pickImage} style={{ width: 120, height: 56 }} />
+            <GhostButton label={traduire("Galerie")} onPress={pickImage} style={{ width: 120, height: 56 }} />
           </View>
         )}
         {sorted.length >= 2 ? (
@@ -368,7 +368,7 @@ export default function PhotosScreen() {
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
               {POSES.map((v) => (
                 <View key={v.value} style={{ flex: 1, height: 120, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ink size={13} weight="bold" color={c.textSecondary}>{v.label}</Ink>
+                  <Ink size={13} weight="bold" color={c.textSecondary}>{traduire(v.label)}</Ink>
                 </View>
               ))}
             </View>
@@ -386,7 +386,7 @@ export default function PhotosScreen() {
             {groups.map((g) => (
               <View key={g.key} style={{ marginTop: 22, paddingHorizontal: GUTTER }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                  <Ink size={17} weight="black" tight>{g.title}</Ink>
+                  <Ink size={17} weight="black" tight>{traduire(g.title)}</Ink>
                   <Ink size={12} weight="bold" color={c.textMuted}>{`${g.items.length} photo${g.items.length > 1 ? 's' : ''}`}</Ink>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
@@ -452,7 +452,7 @@ export default function PhotosScreen() {
         text={toDelete ? traduire("La photo du {0} sera effacée de ton coffre. Ce n’est pas réversible.", dateComplete(toDelete.date.slice(0, 10))) : undefined}
         actions={[
           { label: traduire('Supprimer'), tone: 'danger', onPress: () => toDelete && doDelete(toDelete) },
-          { label: 'Garder', onPress: () => setToDelete(null) },
+          { label: traduire('Garder'), onPress: () => setToDelete(null) },
         ]}
       />
 
@@ -469,7 +469,7 @@ export default function PhotosScreen() {
         {pendingUri && !dateOpen ? <Image source={{ uri: pendingUri }} style={{ width: 84, height: 112, borderRadius: 14, alignSelf: 'center' }} resizeMode="cover" /> : null}
         {pendingDay ? (
           <View style={{ gap: 6 }}>
-            <Ink size={12} weight="bold" color={c.textSecondary}>{pendingDay.label}</Ink>
+            <Ink size={12} weight="bold" color={c.textSecondary}>{traduire(pendingDay.label)}</Ink>
             <Pressable
               onPress={() => { selectionAsync().catch(() => {}); setDateOpen((o) => !o); }}
               accessibilityRole="button"
@@ -477,14 +477,14 @@ export default function PhotosScreen() {
               style={{ minHeight: 48, borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1.5, borderColor: c.border }}
             >
               <Ink size={15} weight="extraBold">{dateComplete(pendingDay.date)}</Ink>
-              <Ink size={13} weight="bold" color={c.accent}>{dateOpen ? traduire('Fermer') : 'Changer'}</Ink>
+              <Ink size={13} weight="bold" color={c.accent}>{dateOpen ? traduire('Fermer') : traduire('Changer')}</Ink>
             </Pressable>
             <DatePickerSheet
               inline
               visible={dateOpen}
               value={pendingDay.date}
               onClose={() => setDateOpen(false)}
-              onPick={(iso) => setPendingDay({ date: iso, found: true, label: 'Date choisie' })}
+              onPick={(iso) => setPendingDay({ date: iso, found: true, label: traduire('Date choisie') })}
             />
           </View>
         ) : null}
@@ -492,13 +492,13 @@ export default function PhotosScreen() {
         {!dateOpen ? (
         <>
         <View style={{ gap: 6 }}>
-          <Ink size={12} weight="bold" color={c.textSecondary}>Pose</Ink>
+          <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Pose")}</Ink>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {POSES.map((o) => {
               const on = pendingPose === o.value;
               return (
                 <Pressable key={o.value} onPress={() => { selectionAsync().catch(() => {}); setPendingPose(on ? null : o.value); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : c.border }}>
-                  <Ink size={14} weight="extraBold" color={on ? P.paper : c.textSecondary}>{o.label}</Ink>
+                  <Ink size={14} weight="extraBold" color={on ? P.paper : c.textSecondary}>{traduire(o.label)}</Ink>
                 </Pressable>
               );
             })}
@@ -512,7 +512,7 @@ export default function PhotosScreen() {
               { on: !useCurrent, label: traduire('Saisir un poids'), disabled: false, press: () => setUseCurrent(false) },
             ].map((o) => (
               <Pressable key={o.label} disabled={o.disabled} onPress={() => { selectionAsync().catch(() => {}); o.press(); }} accessibilityRole="button" accessibilityState={{ selected: o.on }} style={{ flex: 1, minHeight: 46, borderRadius: 14, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: o.on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: o.on ? c.ink : c.border, opacity: o.disabled ? 0.45 : 1 }}>
-                <Ink size={13} weight="extraBold" color={o.on ? P.paper : c.textSecondary} numberOfLines={1}>{o.label}</Ink>
+                <Ink size={13} weight="extraBold" color={o.on ? P.paper : c.textSecondary} numberOfLines={1}>{traduire(o.label)}</Ink>
               </Pressable>
             ))}
           </View>
@@ -530,10 +530,10 @@ export default function PhotosScreen() {
         onClose={() => setPrivacyVisible(false)}
         title={traduire("Test de confiance")}
         text={traduire("Passe en mode avion et ajoute une photo : ça marche, parce que tout reste sur ton téléphone. Rien ne part en ligne.")}
-        actions={[{ label: 'Compris', tone: 'ink', onPress: () => setPrivacyVisible(false) }]}
+        actions={[{ label: traduire('Compris'), tone: 'ink', onPress: () => setPrivacyVisible(false) }]}
       />
 
-      <Sheet visible={!!message} onClose={() => setMessage(null)} title={message?.title ?? ''} text={message?.text} actions={message?.reglages ? [{ label: traduire('Ouvrir les réglages'), tone: 'ink', onPress: () => { setMessage(null); Linking.openSettings().catch(() => {}); } }, { label: traduire('Plus tard'), tone: 'ghost', onPress: () => setMessage(null) }] : [{ label: 'D’accord', tone: 'ink', onPress: () => setMessage(null) }]} />
+      <Sheet visible={!!message} onClose={() => setMessage(null)} title={message?.title ?? ''} text={traduire(message?.text)} actions={message?.reglages ? [{ label: traduire('Ouvrir les réglages'), tone: 'ink', onPress: () => { setMessage(null); Linking.openSettings().catch(() => {}); } }, { label: traduire('Plus tard'), tone: 'ghost', onPress: () => setMessage(null) }] : [{ label: traduire('D’accord'), tone: 'ink', onPress: () => setMessage(null) }]} />
 
       {appBlurred && Platform.OS === 'ios' ? <BlurView style={StyleSheet.absoluteFill} intensity={100} tint="light" /> : null}
     </View>

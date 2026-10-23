@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
+import { traduire } from '@/lib/i18n/tr';
 
 export function ExampleBadge() {
   const { theme } = useYoroiTheme();
@@ -21,7 +22,7 @@ export function ExampleFrame({ children, caption, style }: { children: React.Rea
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={style} accessibilityLabel={caption ? `Exemple. ${caption}` : 'Exemple'}>
+    <View style={style} accessibilityLabel={caption ? `Exemple. ${caption}` : traduire('Exemple')}>
       <View style={{ opacity: 0.42 }} pointerEvents="none">
         {children}
       </View>

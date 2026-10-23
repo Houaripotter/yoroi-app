@@ -118,13 +118,13 @@ const BackupStatusHeaderInner: React.FC = () => {
           disabled={triggering}
           activeOpacity={0.8}
           style={[styles.btn, styles.btnPrimary, { backgroundColor: color, opacity: triggering ? 0.6 : 1 }]}
-          accessibilityLabel="Sauvegarder maintenant"
+          accessibilityLabel={traduire("Sauvegarder maintenant")}
           accessibilityRole="button"
           accessibilityState={{ disabled: triggering }}
         >
           <RefreshCw size={14} color="#fff" strokeWidth={2.5} />
           <Text style={styles.btnText}>
-            {triggering ? traduire('Sauvegarde…') : 'Sauvegarder'}
+            {triggering ? traduire('Sauvegarde…') : traduire('Sauvegarder')}
           </Text>
         </TouchableOpacity>
         {/* Partage (email/WhatsApp/Drive), fallback pour users sans cloud configuré */}

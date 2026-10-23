@@ -87,8 +87,8 @@ export const DuelCard = React.memo(
 
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
-                <Count value={wins} label="Victoires" color={p.accent} muted={p.muted} />
-                <Count value={draws} label="Nuls" color={p.ink2} muted={p.muted} />
+                <Count value={wins} label={traduire("Victoires")} color={p.accent} muted={p.muted} />
+                <Count value={draws} label={traduire("Nuls")} color={p.ink2} muted={p.muted} />
                 <Count value={losses} label={traduire("Défaites")} color={p.ink} muted={p.muted} />
               </View>
               {variant !== 'photo' ? <Image source={figure} style={{ width: width * 0.26, height: width * 0.32 }} resizeMode="contain" /> : null}

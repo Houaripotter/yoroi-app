@@ -16,7 +16,7 @@ import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { traduire } from '@/lib/i18n/tr';
 
 // Vague 45 : « Ton univers » apres Toi
-export const ONBOARDING_SCREEN_LABELS = ['Accroche', traduire('Prénom'), traduire('Toi'), traduire('Ton univers'), traduire('Objectif'), traduire('Ce qui te freine'), 'Affirmation', 'Sports', 'Apple Santé', traduire('Poids du jour'), 'Taille', 'Cap', 'Rythme', traduire('Moment de la pesée'), traduire('Démonstration'), traduire('Tout au même endroit'), traduire('Préparation'), traduire('Ton plan'), traduire('Premium')];
+export const ONBOARDING_SCREEN_LABELS = ['Accroche', traduire('Prénom'), traduire('Toi'), traduire('Ton univers'), traduire('Objectif'), traduire('Ce qui te freine'), 'Affirmation', traduire('Sports'), 'Apple Santé', traduire('Poids du jour'), 'Taille', 'Cap', traduire('Rythme'), traduire('Moment de la pesée'), traduire('Démonstration'), traduire('Tout au même endroit'), traduire('Préparation'), traduire('Ton plan'), traduire('Premium')];
 const COUNT = ONBOARDING_SCREEN_LABELS.length;
 const LAST = COUNT - 1;
 const GLASS = 'rgba(29,32,41,0.86)';

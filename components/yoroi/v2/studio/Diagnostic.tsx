@@ -32,7 +32,7 @@ const COUNTERS: { key: string; label: string }[] = [
   { key: '@yoroi_rating_dismissed_count', label: traduire('Demandes d’avis refusées') },
   { key: '@yoroi_review_last_prompt', label: traduire('Dernière demande d’avis') },
   { key: '@yoroi_last_auto_backup', label: traduire('Dernière sauvegarde automatique') },
-  { key: '@yoroi_first_use_date', label: 'Premier lancement' },
+  { key: '@yoroi_first_use_date', label: traduire('Premier lancement') },
 ];
 
 type KeyRow = { key: string; size: number };
@@ -103,7 +103,7 @@ export function Diagnostic() {
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       appAlert(traduire('Copié'), traduire('Les infos de l’appareil sont dans le presse-papiers.'));
     } catch {
-      appAlert('Oups', traduire('Le presse-papiers est indisponible.'));
+      appAlert(traduire('Oups'), traduire('Le presse-papiers est indisponible.'));
     }
   };
 
@@ -113,7 +113,7 @@ export function Diagnostic() {
       await Clipboard.setStringAsync(text || 'Journal vide');
       appAlert(traduire('Copié'), traduire('Le journal est dans le presse-papiers. Rien n’a été envoyé.'));
     } catch {
-      appAlert('Oups', traduire('Le presse-papiers est indisponible.'));
+      appAlert(traduire('Oups'), traduire('Le presse-papiers est indisponible.'));
     }
   };
 
@@ -122,10 +122,10 @@ export function Diagnostic() {
       appAlert(traduire('Clé protégée'), traduire('Elle garde tes vraies données pendant une démo. Reviens à tes données depuis Démo et captures, elle partira toute seule.'));
       return;
     }
-    confirm(traduire('Effacer cette clé ?'), traduire("{0}\n\nL’écran qui l’utilise repartira de zéro sur ce point.", k), 'Effacer', () => {
+    confirm(traduire('Effacer cette clé ?'), traduire("{0}\n\nL’écran qui l’utilise repartira de zéro sur ce point.", k), traduire('Effacer'), () => {
       AsyncStorage.removeItem(k)
         .then(load)
-        .catch(() => appAlert('Oups', traduire('La clé n’a pas pu être effacée.')));
+        .catch(() => appAlert(traduire('Oups'), traduire('La clé n’a pas pu être effacée.')));
     }, true);
   };
 
@@ -135,7 +135,7 @@ export function Diagnostic() {
       return;
     }
     confirmTwice(
-      { title: traduire('Tout effacer ?'), message: traduire('Séances, pesées, réglages, sauvegardes locales et jeton créateur : le téléphone revient comme une installation neuve. Fais une sauvegarde avant si tu veux garder tes données.'), ok: 'Continuer' },
+      { title: traduire('Tout effacer ?'), message: traduire('Séances, pesées, réglages, sauvegardes locales et jeton créateur : le téléphone revient comme une installation neuve. Fais une sauvegarde avant si tu veux garder tes données.'), ok: traduire('Continuer') },
       { title: traduire('Vraiment tout ?'), message: traduire('Rien ne pourra être récupéré sur ce téléphone. Tu devras recoller ton jeton pour rouvrir le Studio.'), ok: traduire('Tout effacer') },
       () => {
         setWiping(true);
@@ -146,27 +146,27 @@ export function Diagnostic() {
           })
           .catch((e) => {
             setWiping(false);
-            appAlert('Oups', e instanceof DemoActiveError ? e.message : traduire('L’effacement s’est arrêté en route. Ferme et rouvre l’app, puis recommence.'));
+            appAlert(traduire('Oups'), e instanceof DemoActiveError ? e.message : traduire('L’effacement s’est arrêté en route. Ferme et rouvre l’app, puis recommence.'));
           });
       },
     );
   };
 
   return (
-    <StudioSection id="diag" icon="info" title="Diagnostic" sub={traduire("Appareil, stockage, compteurs, journal, tout effacer")} keywords="diagnostic appareil telephone version build stockage cle asyncstorage compteurs usage sentry journal log effacer installation neuve">
+    <StudioSection id="diag" icon="info" title={traduire("Diagnostic")} sub={traduire("Appareil, stockage, compteurs, journal, tout effacer")} keywords="diagnostic appareil telephone version build stockage cle asyncstorage compteurs usage sentry journal log effacer installation neuve">
       <Card>
-        <KV first label="Version" value={`${info.version} (build ${info.build})`} />
+        <KV first label={traduire("Version")} value={`${info.version} (build ${info.build})`} />
         <KV label={traduire("Téléphone")} value={info.model} />
         <KV label={traduire("Système")} value={info.os} />
-        <KV label="Environnement" value={info.env} />
-        <KV label="Expo SDK" value={info.sdk} />
+        <KV label={traduire("Environnement")} value={info.env} />
+        <KV label={traduire("Expo SDK")} value={info.sdk} />
       </Card>
       <Button tone="ghost" small icon="doc" label={traduire("Copier les infos de l’appareil")} onPress={() => void copyInfo()} />
 
       <SubTitle>{traduire("Compteurs d’usage de ce téléphone")}</SubTitle>
       <Card>
         {COUNTERS.map((x, i) => (
-          <KV key={x.key} first={i === 0} label={x.label} value={counterText(counters[x.key] ?? null)} />
+          <KV key={x.key} first={i === 0} label={traduire(x.label)} value={counterText(counters[x.key] ?? null)} />
         ))}
       </Card>
       <Note>{traduire("YOROI n’a aucun outil de mesure d’audience : rien d’autre n’est compté, rien n’est envoyé.")}</Note>
@@ -194,16 +194,16 @@ export function Diagnostic() {
       </Card>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
-          <Button tone="ghost" small label="Relire" onPress={() => setLogs(getRecentLogs())} />
+          <Button tone="ghost" small label={traduire("Relire")} onPress={() => setLogs(getRecentLogs())} />
         </View>
         <View style={{ flex: 1 }}>
-          <Button tone="ghost" small label="Copier" onPress={() => void copyLogs()} />
+          <Button tone="ghost" small label={traduire("Copier")} onPress={() => void copyLogs()} />
         </View>
         <View style={{ flex: 1 }}>
           <Button
             tone="ghost"
             small
-            label="Vider"
+            label={traduire("Vider")}
             onPress={() => {
               clearRecentLogs();
               setLogs([]);
@@ -212,7 +212,7 @@ export function Diagnostic() {
         </View>
       </View>
 
-      <SubTitle>Stockage local</SubTitle>
+      <SubTitle>{traduire("Stockage local")}</SubTitle>
       <SearchField value={q} onChange={setQ} placeholder={traduire("Chercher une clé")} label={traduire("Chercher une clé du stockage local")} />
       <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
         {keys === null ? traduire('Lecture du stockage') : traduire("{0} clés, {1} au total", keys.length, sizeText(total))}
@@ -230,7 +230,7 @@ export function Diagnostic() {
               label={k.key}
               sub={isProtected(k.key) ? traduire("{0}, protégée", sizeText(k.size)) : sizeText(k.size)}
               chevron={false}
-              right={<SmallAction label="Effacer" danger onPress={() => removeKey(k.key)} disabled={isProtected(k.key)} />}
+              right={<SmallAction label={traduire("Effacer")} danger onPress={() => removeKey(k.key)} disabled={isProtected(k.key)} />}
             />
           ))
         )}

@@ -142,11 +142,11 @@ export default function ChargeScreen() {
           <View style={{ paddingHorizontal: 14, height: 32, borderRadius: 12, backgroundColor: intensite(level.n).tint, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
             <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: intensite(level.n).fill }} />
             <Ink size={14} weight="extraBold" color={level.color}>
-              {level.name}
+              {traduire(level.name)}
             </Ink>
           </View>
           <Ink size={15} weight="bold" style={{ textAlign: 'center' }}>
-            {level.description}
+            {traduire(level.description)}
           </Ink>
           <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>
             {level.advice}
@@ -164,7 +164,7 @@ export default function ChargeScreen() {
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <Fig value={String(sessions)} label={sessions > 1 ? traduire('Séances') : traduire('Séance')} />
             <Fig value={fmtPoints(sessions ? load / sessions : 0)} label={traduire("Points par séance")} />
-            <Fig value={stats && stats.averageRPE ? String(stats.averageRPE).replace('.', DECIMAL) : traduire('Non noté')} unit={stats && stats.averageRPE ? traduire('sur 10') : undefined} label="Effort moyen" />
+            <Fig value={stats && stats.averageRPE ? String(stats.averageRPE).replace('.', DECIMAL) : traduire('Non noté')} unit={stats && stats.averageRPE ? traduire('sur 10') : undefined} label={traduire("Effort moyen")} />
           </View>
           <Ink size={12} weight="bold" color={P.muted}>
             {trend}
@@ -200,7 +200,7 @@ export default function ChargeScreen() {
               <View style={{ flex: 1, gap: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Ink size={15} weight="extraBold" color={l.color}>
-                    {l.name}
+                    {traduire(l.name)}
                   </Ink>
                   {on ? (
                     <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 8, backgroundColor: P.ink, justifyContent: 'center' }}>
@@ -213,7 +213,7 @@ export default function ChargeScreen() {
                   {l.range}
                 </Ink>
                 <Ink size={13} weight="medium" color={P.ink2}>
-                  {l.description}
+                  {traduire(l.description)}
                 </Ink>
               </View>
             </View>

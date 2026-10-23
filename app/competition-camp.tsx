@@ -153,7 +153,7 @@ export default function CompetitionCampScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: ph.color }} />
                 <Ink size={17} weight="black" tight style={{ flex: 1 }}>
-                  {ph.name}
+                  {traduire(ph.name)}
                 </Ink>
                 <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 10, backgroundColor: P.paper, justifyContent: 'center' }}>
                   <Ink size={12} weight="extraBold" color={ph.color}>

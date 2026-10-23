@@ -56,12 +56,12 @@ export default function NutritionPlanScreen() {
   const meals = getMealCalories(plan.goalCalories);
   const maxMeal = Math.max(...meals.map((m) => m.calories), 1);
 
-  const deltaLabel = plan.deficit > 0 ? traduire("Déficit de {0} kcal", plan.deficit) : plan.deficit < 0 ? traduire("Surplus de {0} kcal", Math.abs(plan.deficit)) : 'Maintien';
+  const deltaLabel = plan.deficit > 0 ? traduire("Déficit de {0} kcal", plan.deficit) : plan.deficit < 0 ? traduire("Surplus de {0} kcal", Math.abs(plan.deficit)) : traduire('Maintien');
 
   return (
-    <PremiumGate source="plan_nutrition" featureTitle="Plan nutritionnel" perks={[traduire('Tes calories du jour calculées pour toi'), traduire('Protéines, glucides et lipides répartis'), traduire('Un objectif de perte, de maintien ou de prise')]}>
+    <PremiumGate source="plan_nutrition" featureTitle={traduire("Plan nutritionnel")} perks={[traduire('Tes calories du jour calculées pour toi'), traduire('Protéines, glucides et lipides répartis'), traduire('Un objectif de perte, de maintien ou de prise')]}>
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <DetailScreen title="Plan nutritionnel" subtitle={traduire("Tes besoins du jour, calculés pour toi")}>
+        <DetailScreen title={traduire("Plan nutritionnel")} subtitle={traduire("Tes besoins du jour, calculés pour toi")}>
           {/* OBJECTIF CALORIQUE */}
           <Enter i={0}>
             <Glass style={{ gap: 12, paddingVertical: 22 }}>
@@ -108,7 +108,7 @@ export default function NutritionPlanScreen() {
             <View style={{ marginTop: 10 }}>
               <HRow>
                 {GOALS.map((x) => (
-                  <ChoiceTile key={x.id} title={x.name} sub={weekly(x.weeklyChange)} active={goal === x.id} warn={!!x.warning} onPress={() => setGoal(x.id)} style={{ width: 150 }} />
+                  <ChoiceTile key={x.id} title={traduire(x.name)} sub={weekly(x.weeklyChange)} active={goal === x.id} warn={!!x.warning} onPress={() => setGoal(x.id)} style={{ width: 150 }} />
                 ))}
               </HRow>
             </View>
@@ -119,7 +119,7 @@ export default function NutritionPlanScreen() {
             <H2>{traduire("Ton niveau d’activité")}</H2>
             <View style={{ gap: 8, marginTop: 10 }}>
               {ACTIVITY_LEVELS.map((l) => (
-                <ChoiceTile key={l.id} title={l.name} sub={pretty(l.description)} extra={pretty(l.examples)} active={activity === l.id} onPress={() => setActivity(l.id)} />
+                <ChoiceTile key={l.id} title={traduire(l.name)} sub={pretty(l.description)} extra={pretty(l.examples)} active={activity === l.id} onPress={() => setActivity(l.id)} />
               ))}
             </View>
           </Enter>
@@ -132,7 +132,7 @@ export default function NutritionPlanScreen() {
                 {MACRO_PROFILES.map((m) => (
                   <ChoiceTile
                     key={m.id}
-                    title={m.name}
+                    title={traduire(m.name)}
                     sub={traduire("Protéines {0} %, glucides {1} %, lipides {2} %", Math.round(m.protein * 100), Math.round(m.carbs * 100), Math.round(m.fat * 100))}
                     extra={pretty(m.description)}
                     warn={!!m.warning}
@@ -170,7 +170,7 @@ export default function NutritionPlanScreen() {
 
           {/* DETAIL DU CALCUL */}
           <Enter i={7}>
-            <H2 sub="Formule Mifflin-St Jeor (1990)">{traduire("Le détail du calcul")}</H2>
+            <H2 sub={traduire("Formule Mifflin-St Jeor (1990)")}>{traduire("Le détail du calcul")}</H2>
             <Card style={{ marginTop: 10, paddingVertical: 6 }}>
               <KV label={traduire("Métabolisme de base")} value={`${plan.bmr} kcal`} />
               <KV label={traduire("Activité : {0}", act?.name ?? '')} value={`× ${String(act?.multiplier ?? '').replace('.', DECIMAL)}`} />
@@ -198,7 +198,7 @@ export default function NutritionPlanScreen() {
                   <View style={{ flex: 1, gap: 4, paddingBottom: 4 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                       <Ink size={15} weight="extraBold">
-                        {m.name}
+                        {traduire(m.name)}
                       </Ink>
                       <Ink size={15} weight="black" tight>
                         {`${m.calories} kcal`}
@@ -218,7 +218,7 @@ export default function NutritionPlanScreen() {
 
           {/* SOURCES */}
           <Enter i={9}>
-            <H2>Sources scientifiques</H2>
+            <H2>{traduire("Sources scientifiques")}</H2>
             <View style={{ marginTop: 10 }}>
               <SourcesCard
                 sources={Object.values(SCIENTIFIC_SOURCES).map((s) => ({ label: s.name === 'ISSN Position Stand on Protein' ? traduire('Position officielle de l’ISSN sur les protéines') : s.name === 'ANSES Apports Nutritionnels' ? 'ANSES, apports nutritionnels' : s.name, ref: s.source, url: s.url }))}

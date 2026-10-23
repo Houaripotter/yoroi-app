@@ -63,7 +63,7 @@ export function montrerIssueSante(issue: IssueConnexion): void {
   appAlert(m.titre, m.texte, [
     { text: traduire('Plus tard'), style: 'cancel' },
     {
-      text: Platform.OS === 'android' ? 'Ouvrir Health Connect' : traduire('Ouvrir Santé'),
+      text: Platform.OS === 'android' ? traduire('Ouvrir Health Connect') : traduire('Ouvrir Santé'),
       onPress: () => {
         void ouvrirReglagesSante(Platform.OS === 'android' && typeof fn === 'function' ? () => fn.call(healthConnect) : undefined);
       },

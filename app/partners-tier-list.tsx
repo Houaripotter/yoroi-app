@@ -41,7 +41,7 @@ function PartnersTierList() {
   const open = (p: Partner) => router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
 
   return (
-    <DetailScreen title="Rangs" subtitle={traduire("Tes partenaires classés selon ta domination")}>
+    <DetailScreen title={traduire("Rangs")} subtitle={traduire("Tes partenaires classés selon ta domination")}>
       {loaded && partners.length === 0 ? (
         <EmptyState title={traduire("Aucun partenaire")} text={traduire("Ajoute tes partenaires et note tes rounds : ils seront rangés de S, tes bêtes noires, à C, ceux que tu domines.")} action={traduire("Ajouter un partenaire")} onAction={() => router.push('/sparring-partners' as any)} />
       ) : null}
@@ -57,7 +57,7 @@ function PartnersTierList() {
                   {t}
                 </Ink>
                 <Ink size={12} weight="extraBold" color={P.white} style={{ textAlign: 'center', paddingHorizontal: 6 }}>
-                  {m.name}
+                  {traduire(m.name)}
                 </Ink>
               </View>
               <View style={{ flex: 1, padding: 14, gap: 12 }}>
@@ -67,7 +67,7 @@ function PartnersTierList() {
                       <View style={{ alignItems: 'center', width: 78, gap: 4 }}>
                         <Seal name={p.name} photoUri={p.photoUri} belt={p.belt} size={54} tone={m.color} />
                         <Ink size={12} weight="extraBold" numberOfLines={2} style={{ textAlign: 'center', lineHeight: 15 }}>
-                          {p.name}
+                          {traduire(p.name)}
                         </Ink>
                         {s.winRateVD != null ? (
                           <Ink size={13} weight="black" color={m.color}>
@@ -82,7 +82,7 @@ function PartnersTierList() {
                   ))}
                 </View>
                 <Ink size={12} color={P.ink2}>
-                  {m.description}
+                  {traduire(m.description)}
                 </Ink>
               </View>
             </Card>

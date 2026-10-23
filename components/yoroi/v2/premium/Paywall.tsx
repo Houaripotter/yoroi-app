@@ -79,7 +79,7 @@ import { playLevelUpSound } from '@/lib/soundManager';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 const CASTLE = require('@/assets/avatars/app/monde/fonds/verticale_chateau.webp');
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
@@ -162,6 +162,8 @@ function essaiGratuit(days: number): string {
 
 /** « d’un an », « d’un mois », « de 3 mois », « d’une semaine » */
 function deDuree(d: string): string {
+  // Hors français, la durée est déjà traduite : « 1 year subscription », « Abo 1 Jahr »
+  if (LANG !== 'fr') return d;
   if (d === '1 semaine') return traduire('d’une semaine');
   if (d.startsWith('1 ')) return traduire("d’un {0}", d.slice(2));
   return traduire("de {0}", d);
@@ -774,9 +776,9 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     ? [
         ...offers.map((o) => {
           const t = trialOf(o.pkg.raw);
-          return traduire("{0} : abonnement {1}à {2}{3}{4}.", o.info.name, o.info.duration ? `${deDuree(o.info.duration)} ` : '', o.info.priceString, o.info.perMonth ? `, soit ${o.info.perMonth} par mois` : '', t ? `, après ${essaiGratuit(t.days)}` : '');
+          return traduire("{0} : abonnement {1}à {2}{3}{4}.", traduire(o.info.name), o.info.duration ? `${deDuree(o.info.duration)} ` : '', o.info.priceString, o.info.perMonth ? traduire(", soit {0} par mois", o.info.perMonth) : '', t ? traduire(", après {0}", essaiGratuit(t.days)) : '');
         }),
-        traduire("Le paiement est débité sur ton compte {0} {1}. L’abonnement se renouvelle automatiquement au même prix, sauf résiliation au moins 24 heures avant la fin de la période en cours. Tu le gères et tu le résilies à tout moment dans les réglages de ton compte {2}. Supprimer l’app ne l’annule pas.", store, trial ? 'à la fin de l’essai gratuit' : 'à la confirmation de l’achat', store),
+        traduire("Le paiement est débité sur ton compte {0} {1}. L’abonnement se renouvelle automatiquement au même prix, sauf résiliation au moins 24 heures avant la fin de la période en cours. Tu le gères et tu le résilies à tout moment dans les réglages de ton compte {2}. Supprimer l’app ne l’annule pas.", store, trial ? traduire('à la fin de l’essai gratuit') : traduire('à la confirmation de l’achat'), store),
       ].join(' ')
     : '';
 
@@ -939,7 +941,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                 <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={Math.max(64, armorH - 16)} compact label={traduire("Exemple de courbe de poids")} />
               </View>
               <View style={{ position: 'absolute', top: 7, left: 10, backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-                <Ink size={9.5} weight="black" color={c.accent} style={{ letterSpacing: 0.8 }}>EXEMPLE</Ink>
+                <Ink size={9.5} weight="black" color={c.accent} style={{ letterSpacing: 0.8 }}>{traduire("EXEMPLE")}</Ink>
               </View>
             </Animated.View>
           )}
@@ -1010,8 +1012,8 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                 {PREMIUM_ROWS.slice(0, 6).map((r) => (
                   <View key={r.id} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 14, borderTopWidth: 1, borderColor: c.divider, minHeight: 56 }}>
                     <View style={{ flex: 1, paddingRight: 8, paddingVertical: 9, gap: 2 }}>
-                      <Ink size={14} weight="extraBold" style={{ lineHeight: 18 }}>{r.label}</Ink>
-                      <Ink size={11} color={c.textMuted} style={{ lineHeight: 14 }}>{r.sub}</Ink>
+                      <Ink size={14} weight="extraBold" style={{ lineHeight: 18 }}>{traduire(r.label)}</Ink>
+                      <Ink size={11} color={c.textMuted} style={{ lineHeight: 14 }}>{traduire(r.sub)}</Ink>
                     </View>
                     <View style={{ width: FREE_W, alignItems: 'center', paddingHorizontal: 4 }}>
                       {r.free ? (
@@ -1136,7 +1138,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
             {/* vague 49 : liens centres, meme style que l'accroche ; Restaurer et le contrat Apple sur leur propre ligne */}
             <LiensLegaux
               liens={[
-                { label: 'Conditions d’utilisation (EULA)', onPress: openTerms },
+                { label: traduire('Conditions d’utilisation (EULA)'), onPress: openTerms },
                 { label: traduire('Confidentialité'), onPress: openPrivacy },
               ]}
             />
@@ -1150,7 +1152,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
       <View style={{ paddingHorizontal: GUTTER, paddingTop: 10, paddingBottom: insets.bottom + 6, backgroundColor: c.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: theme.isDark ? 1 : 0, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>
         {attenuer && !vuBas ? <IndicateurDefiler onPress={allerEnBas} reduire={!!reduireAnim} /> : null}
         {isPremium ? (
-          <BottomButton label="Continuer" onPress={() => onFinish('premium')} />
+          <BottomButton label={traduire("Continuer")} onPress={() => onFinish('premium')} />
         ) : (
           <>
             {selected ? (
@@ -1358,7 +1360,7 @@ function BoutonGratuit({ onPress, vif }: { onPress: () => void; vif?: SharedValu
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Continuer gratuitement"
+      accessibilityLabel={traduire("Continuer gratuitement")}
       style={{ minHeight: 48, marginTop: 8, borderRadius: 16, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, overflow: 'hidden' }}
     >
       {({ pressed }) => (
@@ -1366,10 +1368,10 @@ function BoutonGratuit({ onPress, vif }: { onPress: () => void; vif?: SharedValu
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: 16, borderWidth: 1.5, borderColor: c.border, backgroundColor: pressed ? c.fillSoft : c.surface }, couleur]} />
           <View>
             <Animated.View style={couleur}>
-              <Ink size={15} weight="extraBold" color={c.ink}>Continuer gratuitement</Ink>
+              <Ink size={15} weight="extraBold" color={c.ink}>{traduire("Continuer gratuitement")}</Ink>
             </Animated.View>
             <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, gris]}>
-              <Ink size={15} weight="extraBold" color={c.textSecondary}>Continuer gratuitement</Ink>
+              <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire("Continuer gratuitement")}</Ink>
             </Animated.View>
           </View>
         </>

@@ -32,7 +32,7 @@ export type EntryValues = {
 
 type HyroxEffort = 'course' | 'station_force' | 'repetitions';
 
-const RPE_LABEL = (v: number) => (v <= 3 ? 'Facile' : v <= 5 ? traduire('Modéré') : v <= 7 ? 'Difficile' : v <= 9 ? traduire('Très dur') : 'Maximum');
+const RPE_LABEL = (v: number) => (v <= 3 ? traduire('Facile') : v <= 5 ? traduire('Modéré') : v <= 7 ? traduire('Difficile') : v <= 9 ? traduire('Très dur') : 'Maximum');
 
 function shift(d: Date, days: number): Date {
   const n = new Date(d);
@@ -181,13 +181,13 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
         </View>
       ) : null}
 
-      <Label>Quand</Label>
+      <Label>{traduire("Quand")}</Label>
       <DayNav value={isoLocalDay(date)} onChange={(iso) => setDate(dateFromIso(iso))} size={18} inline />
 
       {isHyrox ? (
         <>
-          <Label>Type d’effort</Label>
-          <MiniChips items={[{ key: 'course' as HyroxEffort, label: 'Course' }, { key: 'station_force' as HyroxEffort, label: 'Station force' }, { key: 'repetitions' as HyroxEffort, label: traduire('Répétitions') }]} value={hyrox} onChange={setHyrox} />
+          <Label>{traduire("Type d’effort")}</Label>
+          <MiniChips items={[{ key: 'course' as HyroxEffort, label: 'Course' }, { key: 'station_force' as HyroxEffort, label: traduire('Station force') }, { key: 'repetitions' as HyroxEffort, label: traduire('Répétitions') }]} value={hyrox} onChange={setHyrox} />
         </>
       ) : null}
 
@@ -241,14 +241,14 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label={traduire("Distance (km)")} value={distance} onChangeText={(t) => setDistance(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="5" /></View>
           <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label={traduire("Vitesse (km/h)")} value={speed} onChangeText={(t) => setSpeed(t.replace(',', '.'))} keyboardType="decimal-pad" placeholder="12,5" /></View>
-          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label="Puissance (W)" value={watts} onChangeText={setWatts} keyboardType="number-pad" placeholder="250" /></View>
+          <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label={traduire("Puissance (W)")} value={watts} onChangeText={setWatts} keyboardType="number-pad" placeholder="250" /></View>
           <View style={{ flexBasis: '47%', flexGrow: 1 }}><Field label={traduire("Niveau")} value={level} onChangeText={setLevel} keyboardType="number-pad" placeholder="8" /></View>
         </View>
       ) : null}
 
       {genericValue && !isRun ? (
         <Field
-          label={unit === 'time' ? traduire('Ton temps (min:s)') : unit === 'reps' ? traduire('Répétitions') : unit === 'km' ? traduire('Kilomètres') : unit === 'meters' ? traduire('Mètres') : unit === 'lbs' ? 'Livres' : 'Kilos'}
+          label={unit === 'time' ? traduire('Ton temps (min:s)') : unit === 'reps' ? traduire('Répétitions') : unit === 'km' ? traduire('Kilomètres') : unit === 'meters' ? traduire('Mètres') : unit === 'lbs' ? traduire('Livres') : traduire('Kilos')}
           value={valueText}
           onChangeText={setValueText}
           keyboardType={unit === 'time' ? 'numbers-and-punctuation' : 'decimal-pad'}
@@ -266,7 +266,7 @@ export function EntrySheet({ visible, benchmark, busy, userWeight, onClose, onSu
 
       <View style={{ gap: 8 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 4 }}>
-          <Ink size={13} weight="bold" color={P.ink2}>Effort ressenti</Ink>
+          <Ink size={13} weight="bold" color={P.ink2}>{traduire("Effort ressenti")}</Ink>
           <Ink size={15} weight="black" color={intensite(niveauRpe(rpe)).text}>{traduire("{0} sur 10, {1}", rpe, RPE_LABEL(rpe).toLowerCase())}</Ink>
         </View>
         <View style={{ flexDirection: 'row', gap: 4 }}>

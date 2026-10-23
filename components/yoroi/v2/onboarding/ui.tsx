@@ -65,7 +65,7 @@ export function ProgressBar({ value }: { value: number }) {
 }
 
 /** Lien discret « Passer » (zone d'appui de 44) */
-export function SkipLink({ onPress, label = 'Passer' }: { onPress: () => void; label?: string }) {
+export function SkipLink({ onPress, label = traduire('Passer') }: { onPress: () => void; label?: string }) {
   const c = useColors();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ minHeight: 44, minWidth: 44, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' }}>

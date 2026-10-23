@@ -116,7 +116,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
       tap();
     } catch (e) {
       logger.error('[AddVideoSheet] galerie', e);
-      appAlert('Oups', traduire('La galerie n’a pas pu s’ouvrir.'));
+      appAlert(traduire('Oups'), traduire('La galerie n’a pas pu s’ouvrir.'));
     }
   };
 
@@ -147,7 +147,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
       else {
         const link = url.trim();
         if (!/^https?:\/\//i.test(link)) {
-          appAlert('Lien invalide', traduire('Le lien doit commencer par https://'));
+          appAlert(traduire('Lien invalide'), traduire('Le lien doit commencer par https://'));
           setSaving(false);
           return;
         }
@@ -160,7 +160,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
       onClose();
     } catch (e) {
       logger.error('[AddVideoSheet] enregistrement', e);
-      appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
+      appAlert(traduire('Oups'), traduire('La vidéo n’a pas pu être enregistrée.'));
     } finally {
       setSaving(false);
     }
@@ -186,21 +186,21 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
               <CIcon name="chevron" size={18} color={P.white} />
             </View>
           </Press>
-          <ChoiceLine title={traduire("Un lien")} sub="YouTube, Instagram, TikTok..." icon="link" onPress={() => setStep('link')} />
+          <ChoiceLine title={traduire("Un lien")} sub={traduire("YouTube, Instagram, TikTok...")} icon="link" onPress={() => setStep('link')} />
         </>
       ) : null}
 
       {step === 'link' ? (
         <>
           <Field label={traduire("Lien de la vidéo")} value={url} onChangeText={setUrl} placeholder="https://..." autoCapitalize="none" keyboardType="url" autoCorrect={false} />
-          <BigButton label="Continuer" icon="chevron" disabled={!/^https?:\/\/.+/i.test(url.trim())} onPress={() => setStep('form')} />
+          <BigButton label={traduire("Continuer")} icon="chevron" disabled={!/^https?:\/\/.+/i.test(url.trim())} onPress={() => setStep('form')} />
           <BigButton label={traduire("Retour")} tone="light" icon="back" onPress={() => setStep('source')} />
         </>
       ) : null}
 
       {step === 'form' ? (
         <View style={{ gap: 14 }}>
-          <Field label="Titre" value={title} onChangeText={setTitle} placeholder={traduire("Ex : rowing haltère, coudes serrés")} maxLength={80} autoFocus={!editing} />
+          <Field label={traduire("Titre")} value={title} onChangeText={setTitle} placeholder={traduire("Ex : rowing haltère, coudes serrés")} maxLength={80} autoFocus={!editing} />
           {fromBenchmark ? (
             <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>{traduire("Rangée avec l’exercice {0}.", preset?.benchmarkName ?? '')}</Ink>
           ) : (
@@ -223,7 +223,7 @@ export function AddVideoSheet({ visible, onClose, onSaved, preset, editing }: Pr
               ) : null}
               {kind === 'technique' ? (
                 <>
-                  <Label>Sport</Label>
+                  <Label>{traduire("Sport")}</Label>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {sports.map((s) => (
                       <Chip key={s} label={getSportName(s)} on={sport === s} onPress={() => setSport(s)} />

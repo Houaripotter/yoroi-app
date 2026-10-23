@@ -162,14 +162,14 @@ export interface HomeSection {
 }
 
 export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
-  { id: 'hero', label: traduire('Poids actuel'), visible: true },
-  { id: 'composition', label: traduire('Composition corporelle'), visible: true },
-  { id: 'prediction', label: traduire('Prédiction'), visible: true },
-  { id: 'shortcuts', label: traduire('Accès rapide'), visible: true },
-  { id: 'score_streak', label: traduire('Mon parcours'), visible: true },
-  { id: 'quests', label: traduire('Quêtes du jour'), visible: true },
-  { id: 'hydration', label: traduire('Hydratation'), visible: true },
-  { id: 'activity_chart', label: traduire('Activité semaine'), visible: true },
+  { id: 'hero', label: 'Poids actuel', visible: true },
+  { id: 'composition', label: 'Composition corporelle', visible: true },
+  { id: 'prediction', label: 'Prédiction', visible: true },
+  { id: 'shortcuts', label: 'Accès rapide', visible: true },
+  { id: 'score_streak', label: 'Mon parcours', visible: true },
+  { id: 'quests', label: 'Quêtes du jour', visible: true },
+  { id: 'hydration', label: 'Hydratation', visible: true },
+  { id: 'activity_chart', label: 'Activité semaine', visible: true },
   { id: 'composition_chart', label: 'Graphique composition', visible: true },
   { id: 'quote', label: 'Citation', visible: true },
 ];
@@ -942,7 +942,7 @@ export const getUserClubs = async (): Promise<UserClub[]> => {
       },
       {
         id: generateId(),
-        name: traduire('Extérieur'),
+        name: 'Extérieur',
         type: 'running',
         logoUri: null,
         created_at: new Date().toISOString(),
@@ -1015,7 +1015,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Kimono Blanc',
-        brand: traduire('Mon kimono'),
+        brand: 'Mon kimono',
         type: 'kimono',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -1023,7 +1023,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Chaussures Running',
-        brand: traduire('Mes chaussures'),
+        brand: 'Mes chaussures',
         type: 'chaussure',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -1031,7 +1031,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Gants de Boxe',
-        brand: traduire('Mes gants'),
+        brand: 'Mes gants',
         type: 'gants',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -1409,21 +1409,21 @@ export const effacerToutesMesDonnees = async (): Promise<ResultatEffacement> => 
       await Notifications.setBadgeCountAsync(0).catch(() => false);
     });
   }
-  await etape(traduire('historique des notifications'), async () => {
+  await etape('historique des notifications', async () => {
     const { clearAll } = (require('./notificationHistoryService') as typeof import('./notificationHistoryService'));
     await clearAll();
   });
 
   // 2. Appareils appaires (cle de chiffrement de la synchro comprise)
   if (Platform.OS !== 'web') {
-    await etape(traduire('appareils appairés'), async () => {
+    await etape('appareils appairés', async () => {
       const { oublierTousLesAppareils } = (require('./peerSyncService') as typeof import('./peerSyncService'));
       await oublierTousLesAppareils();
     });
   }
 
   // 3. Base SQLite
-  await etape(traduire('base de données'), async () => {
+  await etape('base de données', async () => {
     const { openDatabase } = (require('./database') as typeof import('./database'));
     const db = await openDatabase();
     if (!db) return; // web : pas de SQLite
@@ -1492,7 +1492,7 @@ export const effacerToutesMesDonnees = async (): Promise<ResultatEffacement> => 
     const ratees = resultats.filter((r) => !r).length;
     if (ratees) throw new Error(`${ratees} clé(s) du trousseau non effacée(s)`);
   });
-  await etape(traduire('réglages'), async () => {
+  await etape('réglages', async () => {
     await AsyncStorage.clear();
   });
 

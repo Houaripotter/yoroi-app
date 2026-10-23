@@ -31,7 +31,7 @@ const EVENT_LOOK: Record<string, { icon: SanteIconName; color: string; tint: str
   import_file: { icon: 'download', color: S.ink2, tint: '#ECE9E2', label: traduire('Import de fichier') },
   restore_safety: { icon: 'restore', color: S.gold, tint: S.goldSoft, label: traduire('Retour à un état précédent') },
   watch_sync: { icon: 'watch', color: S.accent, tint: S.accentSoft, label: traduire('Synchro de la montre') },
-  export_share: { icon: 'external', color: S.ink2, tint: '#ECE9E2', label: 'Partage' },
+  export_share: { icon: 'external', color: S.ink2, tint: '#ECE9E2', label: traduire('Partage') },
 };
 
 function dayKey(ts: string): string {
@@ -71,7 +71,7 @@ export default function SyncHistoryScreen() {
     appAlert(traduire("Effacer le journal ?"), traduire("Seul le journal des opérations est supprimé. Tes données et tes sauvegardes restent intactes."), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Effacer',
+        text: traduire('Effacer'),
         style: 'destructive',
         onPress: async () => {
           await clearSyncHistory();
@@ -155,7 +155,7 @@ export default function SyncHistoryScreen() {
                         <View style={{ flex: 1, gap: 2 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>
-                              {look.label}
+                              {traduire(look.label)}
                             </Ink>
                             <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: event.success ? S.mossSoft : S.dangerSoft, justifyContent: 'center' }}>
                               <Ink size={11} weight="extraBold" color={event.success ? S.mossText : S.danger}>

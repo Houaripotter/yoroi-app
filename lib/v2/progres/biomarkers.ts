@@ -259,7 +259,7 @@ export const BIO_ORDER: RowSpec[] = [
   { key: 'bmi', label: traduire('IMC'), unit: '', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
   { key: 'fat', label: 'Masse grasse', unit: '%', digits: 1, good: 'down', deltaUnit: ['point', 'points'] },
   { key: 'muscleKg', label: traduire('Masse musculaire'), unit: 'kg', digits: 1, good: 'up', deltaUnit: ['kg', 'kg'] },
-  { key: 'lean', label: 'Masse maigre', unit: '%', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
+  { key: 'lean', label: traduire('Masse maigre'), unit: '%', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
   { key: 'water', label: 'Eau', unit: '%', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
   { key: 'bone', label: 'Masse osseuse', unit: 'kg', digits: 1, good: 'none', deltaUnit: ['kg', 'kg'] },
   { key: 'visceral', label: 'Graisse viscérale', unit: '', digits: 1, good: 'down', deltaUnit: ['niveau', 'niveaux'] },
@@ -428,13 +428,13 @@ export function compositionBar(p: CompoPoint): BarPart[] {
   if (muscle && sum <= 101) {
     parts.push({ key: 'muscle', label: 'Muscle', pct: muscle });
     if (fat) parts.push({ key: 'fat', label: 'Graisse', pct: fat });
-    if (bone) parts.push({ key: 'bone', label: 'Os', pct: bone });
+    if (bone) parts.push({ key: 'bone', label: traduire('Os'), pct: bone });
     const rest = 100 - sum;
     if (rest >= 1) parts.push({ key: 'other', label: 'Autre', pct: rest });
     return parts;
   }
   if (fat) {
-    parts.push({ key: 'lean', label: 'Masse maigre', pct: 100 - fat });
+    parts.push({ key: 'lean', label: traduire('Masse maigre'), pct: 100 - fat });
     parts.push({ key: 'fat', label: 'Graisse', pct: fat });
   }
   return parts;

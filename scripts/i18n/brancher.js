@@ -9,6 +9,9 @@ const ts=require(path.join(ROOT,'node_modules/typescript'));
 const catalogue=JSON.parse(fs.readFileSync(CAT,'utf8'));
 const CONNU=new Set(catalogue.map(u=>u.fr));
 const VIVANTS=new Set(JSON.parse(fs.readFileSync(path.join(path.dirname(CAT),'fichiers-vivants.json'),'utf8')));
+// Fichiers relus et corrigés à la main : jamais retouchés automatiquement
+const EXCLUS=process.argv.includes('--exclure')?new Set(fs.readFileSync(process.argv[process.argv.indexOf('--exclure')+1],'utf8').split('\n').map(x=>x.trim()).filter(Boolean)):new Set();
+for(const x of EXCLUS)VIVANTS.delete(x);
 const norm=s=>s.replace(/\s+/g,' ').trim();
 const decode=s=>s.replace(/&apos;|&#39;/g,"'").replace(/&quot;/g,'"').replace(/&amp;/g,'&').replace(/&nbsp;/g,' ');
 const fichiers=[];
@@ -32,7 +35,7 @@ for(const f of fichiers){let s;try{s=fs.readFileSync(f,'utf8')}catch{continue}so
    else if(ts.isLiteralTypeNode(p))VALEURS.add(norm(n.text));
   }
   ts.forEachChild(n,v)})(sf)}
-const PROP_CODE=new Set(['id','key','cle','kind','type','slug','value','route','path','pathname','href','icon','iconName','testID','nativeID','storageKey','sql','table','column','field','source','uri','url','screen','event','eventName','style','color','fontFamily','mode','variant','code','ref','image','asset','lottie','sound','channelId','identifier','categoryIdentifier','format','pattern','regex','locale','lang','language','version','mime','mimeType','UTI','filename','fileName','extension','aliases','mots','motsCles','keywords','synonymes','synonyms','alias','tags','statut','plan']);
+const PROP_CODE=new Set(['id','key','cle','kind','type','slug','value','route','path','pathname','href','icon','iconName','testID','nativeID','storageKey','sql','table','column','field','source','uri','url','screen','event','eventName','style','color','fontFamily','mode','variant','code','ref','image','asset','lottie','sound','channelId','identifier','categoryIdentifier','format','pattern','regex','locale','lang','language','version','mime','mimeType','UTI','filename','fileName','extension','aliases','mots','motsCles','keywords','synonymes','synonyms','alias','tags','statut','plan','name','nom']);
 const PROP_JSX_CODE=new Set(['key','style','testID','nativeID','name','source','type','mode','variant','color','icon','href','id','pointerEvents','resizeMode','keyboardType','autoCapitalize','autoComplete','textContentType','returnKeyType','importantForAccessibility','accessibilityRole','role','fontFamily','weight','tone','kind','size','align']);
 const APPEL_CODE=/^(console\.|logger\.|log\b|log\.|require$|t$|traduire$|traduirePluriel$|i18n\.t$|StyleSheet\.create$|AsyncStorage\.|SecureStore\.|router\.|navigation\.|Platform\.select$|Sentry\.|crashReporter\.|addBreadcrumb$|captureException$|captureMessage$|logEvent$|track$|trackEvent$|setProprietes$|setUserProperties$|setUserProperty$|identify$|analytics\.|db\.|.*\.exec(Async)?$|.*\.run(Async)?$|.*\.getAll(Async)?$|.*\.getFirst(Async)?$|.*\.prepare(Async)?$|.*Sql$|querySelector$|RegExp$|Symbol$|.*\.on$|.*\.emit$|.*\.addListener$|setItem$|getItem$|fetch$|.*Storage.*|Linking\.|.*\.postMessage$|.*\.sendMessage$|.*\.updateApplicationContext$|.*\.transferUserInfo$|JSON\.parse$|parseInt$|parseFloat$|Number$|Date$)/;
 function raisonCode(n){
@@ -142,7 +145,9 @@ for(const f of fichiers){const rel=path.relative(ROOT,f);if(!VIVANTS.has(rel))co
  for(const e of edits){if(e[0]>=fin){finaux.push(e);fin=e[1]}}
  let out=src;for(const [a,b,t] of finaux.slice().reverse())out=out.slice(0,a)+t+out.slice(b);
  const besoin=['traduire','traduirePluriel'].filter(x=>finaux.some(e=>e[2].includes(x+'(')));
- if(!/from ['"]@\/lib\/i18n\/tr['"]/.test(out)){
+ const mImp=out.match(/import \{([^}]*)\} from '@\/lib\/i18n\/tr';/);
+ if(mImp){const have=mImp[1].split(',').map(x=>x.trim()).filter(Boolean);const all=[...new Set([...have,...besoin])];out=out.replace(mImp[0],`import { ${all.join(', ')} } from '@/lib/i18n/tr';`)}
+ else if(!/from ['"]@\/lib\/i18n\/tr['"]/.test(out)){
   const imp=`import { ${besoin.join(', ')} } from '@/lib/i18n/tr';`;
   const m=[...out.matchAll(/^import\s[\s\S]*?from\s+['"][^'"]+['"];?[ \t]*$/gm)];
   if(m.length){const last=m[m.length-1];const pos=last.index+last[0].length;out=out.slice(0,pos)+'\n'+imp+out.slice(pos)}

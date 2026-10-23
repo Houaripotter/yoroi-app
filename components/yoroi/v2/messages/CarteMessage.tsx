@@ -43,7 +43,7 @@ export function CarteMessage({
       </View>
       {children}
       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 4 }}>
-        <Press onPress={principal.onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={principal.label} disabled={principal.busy}>
+        <Press onPress={principal.onPress} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire(principal.label)} disabled={principal.busy}>
           <View style={{ minHeight: 44, borderRadius: 14, paddingHorizontal: 18, backgroundColor: P.indigo, justifyContent: 'center', opacity: principal.busy ? 0.6 : 1 }}>
             <Ink size={14} weight="extraBold" color={P.white}>
               {principal.busy ? principal.busyLabel ?? traduire('Un instant…') : principal.label}
@@ -51,9 +51,9 @@ export function CarteMessage({
           </View>
         </Press>
         {liens.map((l) => (
-          <Pressable key={l.label} onPress={l.onPress} accessibilityRole="button" accessibilityLabel={l.label} hitSlop={6} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 }}>
+          <Pressable key={l.label} onPress={l.onPress} accessibilityRole="button" accessibilityLabel={traduire(l.label)} hitSlop={6} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 }}>
             <Ink size={13.5} weight="bold" color={P.ink2}>
-              {l.label}
+              {traduire(l.label)}
             </Ink>
           </Pressable>
         ))}

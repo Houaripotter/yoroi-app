@@ -19,9 +19,9 @@ import { traduire } from '@/lib/i18n/tr';
 const ROWS: { id: SegmentId; label: string }[] = [
   { id: 'arm_right', label: traduire('Bras droit') },
   { id: 'arm_left', label: traduire('Bras gauche') },
-  { id: 'trunk', label: 'Tronc' },
-  { id: 'leg_right', label: 'Jambe droite' },
-  { id: 'leg_left', label: 'Jambe gauche' },
+  { id: 'trunk', label: traduire('Tronc') },
+  { id: 'leg_right', label: traduire('Jambe droite') },
+  { id: 'leg_left', label: traduire('Jambe gauche') },
 ];
 
 const PHYSIQUE: Record<number, string> = {
@@ -65,7 +65,7 @@ export function SegmentsCard({ point, style }: { point: CompoPoint; style?: Styl
       {rows.length ? (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ink size={15} weight="extraBold" style={{ flex: 1 }}>Bras, jambes, tronc</Ink>
+            <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{traduire("Bras, jambes, tronc")}</Ink>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 106 }} />
@@ -94,7 +94,7 @@ export function SegmentsCard({ point, style }: { point: CompoPoint; style?: Styl
                 accessibilityLabel={`${r.label}${f !== undefined ? traduire(", graisse {0} pour cent", num(f, 1)) : ''}${m !== undefined ? `, muscle ${num(m, 1)} kilos` : ''}`}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, paddingTop: i === 0 ? 0 : 8 }}
               >
-                <Ink size={13} weight="extraBold" numberOfLines={1} style={{ width: 106 }}>{r.label}</Ink>
+                <Ink size={13} weight="extraBold" numberOfLines={1} style={{ width: 106 }}>{traduire(r.label)}</Ink>
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   {f !== undefined ? (
                     <>
@@ -125,7 +125,7 @@ export function SegmentsCard({ point, style }: { point: CompoPoint; style?: Styl
       {physique ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: rows.length ? 10 : 0, borderTopWidth: rows.length ? 1 : 0, borderColor: c.divider }}>
           <View style={{ flex: 1, gap: 1 }}>
-            <Ink size={14} weight="extraBold">Morphologie</Ink>
+            <Ink size={14} weight="extraBold">{traduire("Morphologie")}</Ink>
             <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire("Selon ta balance, de 1 à 9")}</Ink>
           </View>
           <Ink size={14} weight="black" numberOfLines={2} style={{ flexShrink: 1, textAlign: 'right' }}>{`${physique}, ${PHYSIQUE[physique] ?? ''}`}</Ink>
@@ -167,7 +167,7 @@ export function ExtrasCard({ point, style }: { point: CompoPoint; style?: StyleP
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, paddingTop: i === 0 ? 0 : 6 }}
         >
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: r.dot }} />
-          <Ink size={13} weight="extraBold" numberOfLines={2} style={{ flex: 1 }}>{r.label}</Ink>
+          <Ink size={13} weight="extraBold" numberOfLines={2} style={{ flex: 1 }}>{traduire(r.label)}</Ink>
           <Ink size={13} weight="black" numberOfLines={1} style={{ flexShrink: 0, textAlign: 'right', maxWidth: '45%' }}>{r.value}</Ink>
         </View>
       ))}

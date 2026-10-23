@@ -14,7 +14,7 @@ export const RESULT_COLOR: Record<Result, string> = {
   loss: '#B0282E',
   draw: '#A8832F',
 };
-export const RESULT_LABEL: Record<Result, string> = { win: traduire('Victoire'), loss: traduire('Défaite'), draw: 'Nul' };
+export const RESULT_LABEL: Record<Result, string> = { win: traduire('Victoire'), loss: traduire('Défaite'), draw: traduire('Nul') };
 export const RESULT_LETTER: Record<Result, Letter> = { win: 'V', loss: 'D', draw: 'N' };
 
 /**
@@ -92,15 +92,15 @@ export function countFreq(items: string[]): { label: string; count: number }[] {
 
 export const BELTS: { key: string; label: string; color: string; edge: string }[] = [
   { key: 'blanche', label: traduire('Blanche'), color: '#FFFFFF', edge: '#D5D2CA' },
-  { key: 'grise', label: 'Grise', color: '#8B8D96', edge: '#6F717A' },
-  { key: 'jaune', label: 'Jaune', color: '#E3C47B', edge: '#C59D45' },
-  { key: 'orange', label: 'Orange', color: '#D08A3C', edge: '#A96B26' },
-  { key: 'verte', label: 'Verte', color: '#6E8C3A', edge: '#4F6B28' },
+  { key: 'grise', label: traduire('Grise'), color: '#8B8D96', edge: '#6F717A' },
+  { key: 'jaune', label: traduire('Jaune'), color: '#E3C47B', edge: '#C59D45' },
+  { key: 'orange', label: traduire('Orange'), color: '#D08A3C', edge: '#A96B26' },
+  { key: 'verte', label: traduire('Verte'), color: '#6E8C3A', edge: '#4F6B28' },
   { key: 'bleue', label: traduire('Bleue'), color: '#2C4A84', edge: '#1D3463' },
   { key: 'violette', label: traduire('Violette'), color: '#5E3C7E', edge: '#45295E' },
   { key: 'marron', label: traduire('Marron'), color: '#6B4426', edge: '#4E301A' },
   { key: 'noire', label: traduire('Noire'), color: '#1D2029', edge: '#000000' },
-  { key: 'rouge', label: 'Rouge', color: '#B0282E', edge: '#8C1E23' },
+  { key: 'rouge', label: traduire('Rouge'), color: '#B0282E', edge: '#8C1E23' },
 ];
 
 export function beltOf(belt?: string | null): { key: string; label: string; color: string; edge: string } | null {

@@ -175,7 +175,7 @@ function RootLayoutContent() {
       setCelebration({
         type: 'badge_unlocked',
         title: traduire('BADGE DÉBLOQUÉ'),
-        subtitle: payload?.name ? `${payload.name}${payload.description ? `, ${payload.description}` : ''}` : undefined,
+        subtitle: payload?.name ? `${traduire(payload.name)}${payload.description ? `, ${traduire(payload.description)}` : ''}` : undefined,
         xpGained: payload?.xpReward,
       });
     });
@@ -512,8 +512,8 @@ function RootLayoutContent() {
         <Celebration
           visible={!!celebration}
           type={celebration.type}
-          title={celebration.title}
-          subtitle={celebration.subtitle}
+          title={traduire(celebration.title)}
+          subtitle={traduire(celebration.subtitle)}
           xpGained={celebration.xpGained}
           autoClose
           autoCloseDelay={3500}

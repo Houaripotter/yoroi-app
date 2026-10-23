@@ -124,6 +124,11 @@
 		YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */; };
 		YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */; };
 		1A18N0000000000000000002 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18N0000000000000000001 /* InfoPlist.strings */; };
+		1A18N1001000000000000000 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18N1000000000000000000 /* Localizable.strings */; };
+		1A18N1011000000000000000 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18N1010000000000000000 /* Localizable.strings */; };
+		1A18N1021000000000000000 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18N1020000000000000000 /* Localizable.strings */; };
+		1A18N1031000000000000000 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18N1030000000000000000 /* Localizable.strings */; };
+		1A18N2000000000000000002 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18N2000000000000000001 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -305,6 +310,26 @@
 		1A18N0000000000000000004 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Yoroi/en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1A18N0000000000000000005 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = Yoroi/de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1A18N0000000000000000006 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = Yoroi/nl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18N1002000000000000000 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1002100000000000000 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1002200000000000000 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1002300000000000000 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1012000000000000000 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1012100000000000000 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1012200000000000000 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1012300000000000000 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1022000000000000000 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1022100000000000000 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1022200000000000000 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1022300000000000000 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1032000000000000000 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = Yoroi/fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1032100000000000000 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Yoroi/en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1032200000000000000 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = Yoroi/de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N1032300000000000000 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = Yoroi/nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1A18N2000000000000000010 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18N2000000000000000011 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18N2000000000000000012 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18N2000000000000000013 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -357,6 +382,7 @@
 		13B07FAE1A68108700A75B9A /* Yoroi */ = {
 			isa = PBXGroup;
 			children = (
+				1A18N1030000000000000000 /* Localizable.strings */,
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
 				SCENEDELEG01FILEREF000001 /* SceneDelegate.swift */,
 				F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */,
@@ -446,6 +472,8 @@
 		4FE4F2E74120D82686D88DAD /* YoroiWatch */ = {
 			isa = PBXGroup;
 			children = (
+				1A18N2000000000000000001 /* InfoPlist.strings */,
+				1A18N1000000000000000000 /* Localizable.strings */,
 				A73150D781D16EF168B0A900 /* Services */,
 				BDA7F51DE3199FA753FF4521 /* Assets.xcassets */,
 				4212EFECB655ED54B895DA96 /* Info.plist */,
@@ -510,6 +538,7 @@
 		8A692B9C6ED6284A4395960B /* YoroiWatchWidgets */ = {
 			isa = PBXGroup;
 			children = (
+				1A18N1010000000000000000 /* Localizable.strings */,
 				6E91B0B643B54DA579C42B71 /* WidgetsMontre.swift */,
 				A6BE5C0F22F2AC1504234A92 /* FournisseurYoroi.swift */,
 				542CBEA178AA763195A50E87 /* VuesWidgets.swift */,
@@ -616,6 +645,7 @@
 		E80764186CA08167F81B13B0 /* YoroiWidgets */ = {
 			isa = PBXGroup;
 			children = (
+				1A18N1020000000000000000 /* Localizable.strings */,
 				FAE5043FC082A6F46F12738F /* Partage */,
 				D8FBAF5ECD9FB4802BB7675C /* YoroiWidgetsBundle.swift */,
 				E82331BEDF28006229DD45AE /* Modele.swift */,
@@ -810,6 +840,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A18N1031000000000000000 /* Localizable.strings in Resources */,
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				1A18N0000000000000000002 /* InfoPlist.strings in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
@@ -824,6 +855,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A18N1021000000000000000 /* Localizable.strings in Resources */,
 				DE360AE1C5AF656F2A7E9DA6 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -832,6 +864,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A18N2000000000000000002 /* InfoPlist.strings in Resources */,
+				1A18N1001000000000000000 /* Localizable.strings in Resources */,
 				D33204A0A2246F4E1F69529F /* Assets.xcassets in Resources */,
 				927D6FC93B28CD31C24811AF /* PrivacyInfo.xcprivacy in Resources */,
 				WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */,
@@ -846,6 +880,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A18N1011000000000000000 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1199,6 +1234,61 @@
 				1A18N0000000000000000004 /* en */,
 				1A18N0000000000000000005 /* de */,
 				1A18N0000000000000000006 /* nl */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		1A18N1000000000000000000 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1A18N1002000000000000000 /* fr */,
+				1A18N1002100000000000000 /* en */,
+				1A18N1002200000000000000 /* de */,
+				1A18N1002300000000000000 /* nl */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		1A18N1010000000000000000 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1A18N1012000000000000000 /* fr */,
+				1A18N1012100000000000000 /* en */,
+				1A18N1012200000000000000 /* de */,
+				1A18N1012300000000000000 /* nl */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		1A18N1020000000000000000 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1A18N1022000000000000000 /* fr */,
+				1A18N1022100000000000000 /* en */,
+				1A18N1022200000000000000 /* de */,
+				1A18N1022300000000000000 /* nl */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		1A18N1030000000000000000 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1A18N1032000000000000000 /* fr */,
+				1A18N1032100000000000000 /* en */,
+				1A18N1032200000000000000 /* de */,
+				1A18N1032300000000000000 /* nl */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		1A18N2000000000000000001 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1A18N2000000000000000010 /* fr */,
+				1A18N2000000000000000011 /* en */,
+				1A18N2000000000000000012 /* de */,
+				1A18N2000000000000000013 /* nl */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";

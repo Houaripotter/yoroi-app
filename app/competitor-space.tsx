@@ -69,7 +69,7 @@ export default function CompetitorSpaceScreen() {
                       ) : null}
                     </Ink>
                     <Ink size={14} weight="extraBold" numberOfLines={2}>
-                      {next.nom}
+                      {traduire(next.nom)}
                     </Ink>
                     <Ink size={12} weight="bold" color={P.ink2}>
                       {capitalize(longDate(parseLocalDate(next.date), false))}
@@ -136,7 +136,7 @@ export default function CompetitorSpaceScreen() {
           {[0, 2].map((r) => (
             <View key={r} style={{ flexDirection: 'row', gap: 10 }}>
               {TOOLS.slice(r, r + 2).map((t, i) => (
-                <AccessTile key={t.route} title={t.title} text={t.text} tone={r === 0 && i === 0 ? 'ink' : 'light'} onPress={() => router.push(t.route as any)} />
+                <AccessTile key={t.route} title={traduire(t.title)} text={traduire(t.text)} tone={r === 0 && i === 0 ? 'ink' : 'light'} onPress={() => router.push(t.route as any)} />
               ))}
             </View>
           ))}

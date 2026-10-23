@@ -61,7 +61,7 @@ function ApercuSaison() {
       <Card style={{ padding: 14, gap: 12 }}>
         <ChipWrap>
           {CHOIX_SAISON.map((o) => (
-            <Chip key={o.id} label={o.label} on={choix === o.id} onPress={() => setApercuSaison(o.id)} accessibilityLabel={`Saison : ${o.label}`} />
+            <Chip key={o.id} label={traduire(o.label)} on={choix === o.id} onPress={() => setApercuSaison(o.id)} accessibilityLabel={`Saison : ${o.label}`} />
           ))}
         </ChipWrap>
         <View style={{ width: L - 28, height: H, borderRadius: 16, overflow: 'hidden', backgroundColor: '#1E2336' }}>
@@ -79,7 +79,7 @@ function ApercuSaison() {
           <View style={{ height: 48, justifyContent: 'flex-end' }}>
             <DecorOutils saison={saison} largeur={L - 28} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 2 }}>
-              {['Chrono', traduire('Partager'), traduire('Objectifs'), 'Records'].map((t) => (
+              {[traduire('Chrono'), traduire('Partager'), traduire('Objectifs'), traduire('Records')].map((t) => (
                 <Ink key={t} size={12.5} weight="extraBold" style={{ lineHeight: 15 }}>{t}</Ink>
               ))}
             </View>
@@ -126,20 +126,20 @@ const NOTIF_TYPES: { id: string; label: string; title: string; body: string }[] 
   { id: 'resultat', label: traduire('Résultat de compétition'), title: traduire('Comment s’est passée ta compétition ?'), body: traduire('Note ton résultat de Open de la Côte : il rejoint ton palmarès.') },
   { id: 'citation', label: traduire('Citation du jour'), title: traduire('Citation du jour'), body: '' },
   { id: 'essai', label: traduire('Fin de l’essai Premium'), title: traduire('Ton essai Premium se termine bientôt'), body: traduire('Il prend fin le 17 octobre. Pour ne pas être débité, annule-le avant dans les réglages de ton compte App Store.') },
-  { id: 'chrono', label: traduire('Chrono terminé'), title: traduire('Entraînement terminé !'), body: 'Excellent travail !' },
+  { id: 'chrono', label: traduire('Chrono terminé'), title: traduire('Entraînement terminé !'), body: traduire('Excellent travail !') },
 ];
 
 const VIBRATIONS: { id: string; label: string; run: () => void }[] = [
   { id: 'selection', label: traduire('Sélection'), run: () => void Haptics.selectionAsync().catch(() => {}) },
   { id: 'legere', label: traduire('Légère'), run: () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}) },
   { id: 'moyenne', label: traduire('Moyenne'), run: () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}) },
-  { id: 'forte', label: 'Forte', run: () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {}) },
-  { id: 'douce', label: 'Douce', run: () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {}) },
+  { id: 'forte', label: traduire('Forte'), run: () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {}) },
+  { id: 'douce', label: traduire('Douce'), run: () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {}) },
   { id: 'seche', label: traduire('Sèche'), run: () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid).catch(() => {}) },
   { id: 'succes', label: traduire('Succès'), run: () => void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}) },
-  { id: 'alerte', label: 'Alerte', run: () => void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {}) },
+  { id: 'alerte', label: traduire('Alerte'), run: () => void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {}) },
   { id: 'erreur', label: traduire('Erreur'), run: () => void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {}) },
-  { id: 'longue', label: 'Longue (chrono)', run: () => Vibration.vibrate(Platform.OS === 'android' ? [0, 400, 150, 400] : 400) },
+  { id: 'longue', label: traduire('Longue (chrono)'), run: () => Vibration.vibrate(Platform.OS === 'android' ? [0, 400, 150, 400] : 400) },
 ];
 
 type Scheduled = { id: string; title: string; when: string };
@@ -179,11 +179,11 @@ export function simulerPremiereInstallation(router: ReturnType<typeof useRouter>
     [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Simuler',
+        text: traduire('Simuler'),
         onPress: () => {
           AsyncStorage.setItem(SIMULER_INSTALLATION_KEY, 'true')
             .then(() => router.replace('/' as never))
-            .catch(() => appAlert('Oups', traduire('La simulation n’a pas pu démarrer.')));
+            .catch(() => appAlert(traduire('Oups'), traduire('La simulation n’a pas pu démarrer.')));
         },
       },
     ],
@@ -207,7 +207,7 @@ export async function programmerNotificationTest(title = 'YOROI', body = traduir
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     return true;
   } catch {
-    appAlert('Oups', traduire('La notification n’a pas pu être programmée.'));
+    appAlert(traduire('Oups'), traduire('La notification n’a pas pu être programmée.'));
     return false;
   }
 }
@@ -234,15 +234,15 @@ export function Tests() {
     const out: Perm[] = [];
     try {
       const n = await Notifications.getPermissionsAsync();
-      out.push({ label: 'Notifications', ...permText(n.status, n.granted) });
+      out.push({ label: traduire('Notifications'), ...permText(n.status, n.granted) });
     } catch {
-      out.push({ label: 'Notifications', state: 'Illisible', ok: false });
+      out.push({ label: traduire('Notifications'), state: 'Illisible', ok: false });
     }
     try {
       const cam = await ImagePicker.getCameraPermissionsAsync();
-      out.push({ label: 'Appareil photo', ...permText(cam.status, cam.granted) });
+      out.push({ label: traduire('Appareil photo'), ...permText(cam.status, cam.granted) });
     } catch {
-      out.push({ label: 'Appareil photo', state: 'Illisible', ok: false });
+      out.push({ label: traduire('Appareil photo'), state: 'Illisible', ok: false });
     }
     try {
       const lib = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -276,7 +276,7 @@ export function Tests() {
       await Notifications.cancelScheduledNotificationAsync(id);
       Haptics.selectionAsync().catch(() => {});
     } catch {
-      appAlert('Oups', traduire('Cette notification n’a pas pu être annulée.'));
+      appAlert(traduire('Oups'), traduire('Cette notification n’a pas pu être annulée.'));
     }
     void loadScheduled();
   };
@@ -284,22 +284,22 @@ export function Tests() {
   const review = async () => {
     try {
       if (!(await StoreReview.isAvailableAsync())) {
-        appAlert('Indisponible', traduire('La demande d’avis n’est pas disponible sur ce téléphone.'));
+        appAlert(traduire('Indisponible'), traduire('La demande d’avis n’est pas disponible sur ce téléphone.'));
         return;
       }
       await StoreReview.requestReview();
     } catch {
-      appAlert('Oups', traduire('La demande d’avis n’a pas pu s’ouvrir.'));
+      appAlert(traduire('Oups'), traduire('La demande d’avis n’a pas pu s’ouvrir.'));
     }
   };
 
   const simulerInstallation = () => simulerPremiereInstallation(router);
 
   return (
-    <StudioSection id="tests" icon="bell" title={traduire("Tests de l’appareil")} sub="Notifications, avis, vibrations, autorisations" keywords="notification rappel programmee avis note store vibration haptique autorisation permission reglages camera photos sante installation reinstallation onboarding paywall simuler scene scenes animees animation pluie neige saison saisons halloween noel decoration decorations">
+    <StudioSection id="tests" icon="bell" title={traduire("Tests de l’appareil")} sub={traduire("Notifications, avis, vibrations, autorisations")} keywords="notification rappel programmee avis note store vibration haptique autorisation permission reglages camera photos sante installation reinstallation onboarding paywall simuler scene scenes animees animation pluie neige saison saisons halloween noel decoration decorations">
       <Card>
-        <Row first icon="bell" label="Notification test" sub={sent === 'test' ? traduire('Programmée, elle arrive dans 5 secondes') : traduire('Elle arrive dans 5 secondes, sors de l’app pour la voir')} onPress={() => void schedule('test', 'YOROI', traduire('Notification de test du Studio. Tout marche.'))} />
-        <Row icon="star" label="Demande d’avis" sub={Platform.OS === 'ios' ? traduire('La vraie fenêtre de l’App Store') : traduire('La vraie fenêtre du Play Store')} onPress={() => void review()} />
+        <Row first icon="bell" label={traduire("Notification test")} sub={sent === 'test' ? traduire('Programmée, elle arrive dans 5 secondes') : traduire('Elle arrive dans 5 secondes, sors de l’app pour la voir')} onPress={() => void schedule('test', 'YOROI', traduire('Notification de test du Studio. Tout marche.'))} />
+        <Row icon="star" label={traduire("Demande d’avis")} sub={Platform.OS === 'ios' ? traduire('La vraie fenêtre de l’App Store') : traduire('La vraie fenêtre du Play Store')} onPress={() => void review()} />
         <Row icon="doc" label={traduire("Centre des notifications")} sub={traduire("Ce que YOROI t’a envoyé")} onPress={() => router.push('/notification-center' as never)} />
         <Row icon="restore" label={traduire("Simuler une première installation")} sub={traduire("Onboarding complet et paywall, sans rien effacer")} onPress={simulerInstallation} />
         <Row icon="image" label={traduire("Aperçu des scènes animées")} sub={traduire("Les 12 nouvelles scènes et leurs effets, pluie, neige, étoiles")} onPress={() => setApercuScenes(true)} />
@@ -311,7 +311,7 @@ export function Tests() {
       <SubTitle>{traduire("Chaque notification de l’app, dans 5 secondes")}</SubTitle>
       <Card>
         {NOTIF_TYPES.map((n, i) => (
-          <Row key={n.id} first={i === 0} label={n.label} sub={sent === n.id ? traduire('Programmée, elle arrive dans 5 secondes') : n.title} chevron={false} right={<SmallAction label={sent === n.id ? traduire('Envoyée') : traduire('Voir')} onPress={() => void schedule(n.id, n.title, n.id === 'citation' ? getRandomQuote().text : n.body)} />} />
+          <Row key={n.id} first={i === 0} label={traduire(n.label)} sub={sent === n.id ? traduire('Programmée, elle arrive dans 5 secondes') : n.title} chevron={false} right={<SmallAction label={sent === n.id ? traduire('Envoyée') : traduire('Voir')} onPress={() => void schedule(n.id, n.title, n.id === 'citation' ? getRandomQuote().text : n.body)} />} />
         ))}
       </Card>
 
@@ -319,33 +319,33 @@ export function Tests() {
       <Card>
         {scheduled === null ? (
           <View style={{ padding: 16 }}>
-            <Ink size={14} color={c.textSecondary}>Lecture en cours</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire("Lecture en cours")}</Ink>
           </View>
         ) : scheduled.length === 0 ? (
           <View style={{ padding: 16 }}>
             <Ink size={14} color={c.textSecondary}>{traduire("Aucune notification programmée sur ce téléphone.")}</Ink>
           </View>
         ) : (
-          scheduled.map((n, i) => <Row key={n.id} first={i === 0} label={n.title} sub={n.when} chevron={false} right={<SmallAction label={traduire("Annuler")} danger onPress={() => void cancelOne(n.id)} />} />)
+          scheduled.map((n, i) => <Row key={n.id} first={i === 0} label={traduire(n.title)} sub={n.when} chevron={false} right={<SmallAction label={traduire("Annuler")} danger onPress={() => void cancelOne(n.id)} />} />)
         )}
       </Card>
       <Button tone="ghost" small icon="sync" label={traduire("Relire la liste")} onPress={() => void loadScheduled()} />
 
-      <SubTitle>Vibrations</SubTitle>
+      <SubTitle>{traduire("Vibrations")}</SubTitle>
       <Card style={{ padding: 14 }}>
         <ChipWrap>
           {VIBRATIONS.map((v) => (
-            <Chip key={v.id} label={v.label} onPress={v.run} accessibilityLabel={`Vibration ${v.label}`} />
+            <Chip key={v.id} label={traduire(v.label)} onPress={v.run} accessibilityLabel={`Vibration ${v.label}`} />
           ))}
         </ChipWrap>
       </Card>
 
-      <SubTitle>Autorisations</SubTitle>
+      <SubTitle>{traduire("Autorisations")}</SubTitle>
       <Card>
         {(perms ?? []).map((p, i) => (
-          <KV key={p.label} first={i === 0} label={p.label} value={p.state} />
+          <KV key={p.label} first={i === 0} label={traduire(p.label)} value={p.state} />
         ))}
-        {perms === null ? <KV first label="Lecture en cours" value="" /> : null}
+        {perms === null ? <KV first label={traduire("Lecture en cours")} value="" /> : null}
       </Card>
       <Card>
         <Row first icon="exit" label={traduire("Réglages du téléphone")} sub={traduire("Les autorisations de YOROI")} onPress={() => void Linking.openSettings()} />

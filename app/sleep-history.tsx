@@ -80,7 +80,7 @@ export default function HistoriqueSommeil() {
         <>
           <Enter i={0}>
             <Card style={{ flexDirection: 'row', gap: 10 }}>
-              <Stat value={hm(avg)} label="en moyenne" color={P.indigo} />
+              <Stat value={hm(avg)} label={traduire("en moyenne")} color={P.indigo} />
               <Stat value={avgQ > 0 ? avgQ.toFixed(1).replace('.', DECIMAL) : traduire('pas noté')} unit={avgQ > 0 ? traduire('sur 5') : undefined} label={traduire("qualité moyenne")} />
               <Stat value={String(entries.filter((e) => e.duration >= goal).length)} label={traduire("nuits à l’objectif")} color={P.mossText} />
             </Card>

@@ -37,13 +37,13 @@ function MetricChip({ k, onPress, dim }: { k: MetricKey; onPress?: () => void; d
     <View style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 4, paddingRight: 11, borderRadius: 20, backgroundColor: dim ? '#F2F1EC' : P.white, borderWidth: 1, borderColor: dim ? S.line2 : fam.tint, opacity: dim ? 0.75 : 1 }}>
       <IconDot name={METRIC_ICON[k] ?? 'pulse'} color={dim ? S.muted : fam.color} tint={dim ? '#E8E5DE' : fam.tint} size={30} />
       <Ink size={12} weight="extraBold" color={dim ? S.ink2 : S.ink}>
-        {m.label}
+        {traduire(m.label)}
       </Ink>
     </View>
   );
   if (!onPress) return body;
   return (
-    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={m.label}>
+    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire(m.label)}>
       {body}
     </Press>
   );
@@ -72,7 +72,7 @@ function BrandList({ onOpen }: { onOpen: (k: string) => void }) {
               <BrandMark text={w.mark} kind={w.kind} size={42} />
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="black">
-                  {w.name}
+                  {traduire(w.name)}
                 </Ink>
                 <Ink size={12} weight="bold" color={p.ok ? S.ink2 : S.muted}>
                   {`${w.kind}, ${sub}`}
@@ -128,7 +128,7 @@ function BrandSheet({ w }: { w: Watch }) {
           <BrandMark text={w.mark} kind={w.kind} size={58} />
           <View style={{ flex: 1 }}>
             <Ink size={24} weight="black" tight>
-              {w.name}
+              {traduire(w.name)}
             </Ink>
             <Ink size={13} weight="bold" color={S.ink2}>
               {`${w.kind}, app ${p.app || w.ios.app || w.android.app}`}
@@ -138,7 +138,7 @@ function BrandSheet({ w }: { w: Watch }) {
         <PeriodSegments
           items={[
             { key: 'ios' as const, label: 'iPhone' },
-            { key: 'android' as const, label: 'Android' },
+            { key: 'android' as const, label: traduire('Android') },
           ]}
           value={plat}
           onChange={(k) => setPlat(k)}
@@ -330,7 +330,7 @@ function ReadsCard() {
         return (
           <Accordion
             key={f}
-            title={fam.label}
+            title={traduire(fam.label)}
             sub={list.slice(0, 3).map((m) => m.label).join(', ') + (list.length > 3 ? traduire(' et plus') : '')}
             badge={String(list.length)}
             color={fam.color}

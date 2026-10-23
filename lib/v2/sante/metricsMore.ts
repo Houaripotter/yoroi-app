@@ -134,7 +134,7 @@ export const MORE_METRICS: MetricDef[] = [
   // ============ ACTIVITÉ ET SPORTS ============
   {
     key: 'temps-mouvement',
-    label: 'Temps en mouvement',
+    label: traduire('Temps en mouvement'),
     family: 'activite',
     unit: 'min',
     kind: 'sum',
@@ -189,7 +189,7 @@ export const MORE_METRICS: MetricDef[] = [
   },
   {
     key: 'oscillation',
-    label: 'Oscillation verticale',
+    label: traduire('Oscillation verticale'),
     family: 'activite',
     unit: 'cm',
     kind: 'avg',
@@ -387,7 +387,7 @@ export const MORE_METRICS: MetricDef[] = [
   },
   {
     key: 'effort-seance',
-    label: 'Effort ressenti',
+    label: traduire('Effort ressenti'),
     family: 'activite',
     unit: '/10',
     kind: 'avg',
@@ -461,7 +461,7 @@ export const MORE_METRICS: MetricDef[] = [
   },
   {
     key: 'double-appui',
-    label: 'Temps en double appui',
+    label: traduire('Temps en double appui'),
     family: 'mobilite',
     unit: '%',
     kind: 'avg',
@@ -531,7 +531,7 @@ export const MORE_METRICS: MetricDef[] = [
   },
   {
     key: 'chutes',
-    label: 'Chutes',
+    label: traduire('Chutes'),
     family: 'mobilite',
     unit: 'chutes',
     kind: 'sum',
@@ -729,7 +729,7 @@ export const MORE_METRICS: MetricDef[] = [
     key: 'son-casque',
     label: traduire('Volume au casque'),
     family: 'environnement',
-    unit: 'dB',
+    unit: traduire('dB'),
     kind: 'avg',
     digits: 0,
     upIsGood: false,
@@ -744,9 +744,9 @@ export const MORE_METRICS: MetricDef[] = [
   },
   {
     key: 'son-ambiant',
-    label: 'Bruit ambiant',
+    label: traduire('Bruit ambiant'),
     family: 'environnement',
-    unit: 'dB',
+    unit: traduire('dB'),
     kind: 'avg',
     digits: 0,
     upIsGood: false,
@@ -823,7 +823,7 @@ export const MORE_METRICS: MetricDef[] = [
   },
   {
     key: 'insuline',
-    label: 'Insuline',
+    label: traduire('Insuline'),
     family: 'corps',
     unit: 'UI',
     kind: 'sum',
@@ -838,7 +838,7 @@ export const MORE_METRICS: MetricDef[] = [
   // ============ NUTRITION ============
   nutrient({
     key: 'boissons-alcool',
-    label: 'Verres d’alcool',
+    label: traduire('Verres d’alcool'),
     unit: 'verres',
     what: traduire("Les verres d'alcool notés dans ton app de nutrition ou dans Santé."),
     upIsGood: false,
@@ -850,20 +850,20 @@ export const MORE_METRICS: MetricDef[] = [
   }),
   nutrient({
     key: 'fibres',
-    label: 'Fibres',
+    label: traduire('Fibres'),
     unit: 'g',
     what: traduire('Les fibres mangées dans la journée : légumes, fruits, céréales complètes, légumineuses.'),
     upIsGood: true,
     norm: { text: traduire("Pour un adulte, un apport de 25 g de fibres par jour suffit à un bon transit."), source: 'Autorité européenne de sécurité des aliments (EFSA), 2010' },
   }),
-  nutrient({ key: 'sucres', label: 'Sucres', unit: 'g', what: traduire('Les sucres mangés dans la journée, ceux des fruits compris.'), upIsGood: false }),
+  nutrient({ key: 'sucres', label: traduire('Sucres'), unit: 'g', what: traduire('Les sucres mangés dans la journée, ceux des fruits compris.'), upIsGood: false }),
   nutrient({ key: 'graisses-saturees', label: traduire('Graisses saturées'), unit: 'g', what: traduire('Les graisses saturées de la journée : beurre, fromage, charcuterie, viandes grasses.'), upIsGood: false }),
   nutrient({ key: 'graisses-mono', label: traduire('Graisses mono-insaturées'), unit: 'g', what: traduire("Les graisses mono-insaturées de la journée : huile d'olive, avocat, amandes.") }),
   nutrient({ key: 'graisses-poly', label: traduire('Graisses polyinsaturées'), unit: 'g', what: traduire('Les graisses polyinsaturées de la journée : poissons gras, noix, huiles de colza et de lin.') }),
   nutrient({ key: 'cholesterol', label: traduire('Cholestérol'), unit: 'mg', what: traduire('Le cholestérol apporté par ce que tu as mangé : œufs, abats, produits animaux.') }),
   nutrient({
     key: 'sodium',
-    label: 'Sodium',
+    label: traduire('Sodium'),
     unit: 'mg',
     what: traduire('Le sodium de la journée, surtout apporté par le sel.'),
     upIsGood: false,

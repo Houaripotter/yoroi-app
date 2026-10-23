@@ -34,9 +34,9 @@ export function LimitNotice({ limit, count, style }: { limit: FreeLimitKey; coun
         <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="crown" size={17} color={c.accent} />
         </View>
-        <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{n.title}</Ink>
+        <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{traduire(n.title)}</Ink>
       </View>
-      <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{n.text}</Ink>
+      <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(n.text)}</Ink>
       <Pressable
         onPress={() => {
           selectionAsync().catch(() => {});

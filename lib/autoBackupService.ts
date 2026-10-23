@@ -192,7 +192,7 @@ export async function runAutoBackupIfDue(): Promise<boolean> {
         return true;
       }
       logger.warn('[AutoBackup] Export a échoué');
-      logSyncEvent({ type: 'auto_backup', success: false, error: traduire('Export échoué') }).catch(() => {});
+      logSyncEvent({ type: 'auto_backup', success: false, error: 'Export échoué' }).catch(() => {});
       return false;
     } catch (e) {
       logger.error('[AutoBackup] Erreur:', e);

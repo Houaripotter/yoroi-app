@@ -13,7 +13,7 @@ export const OFFICIAL_CALENDARS_CHECKED = traduire('10 octobre 2026');
 export const OFFICIAL_CALENDARS: OfficialCalendar[] = [
   { id: 'cfjjb', name: 'CFJJB', sub: traduire('Jiu-jitsu brésilien en France'), url: 'https://cfjjb.com/competitions/calendrier-competitions', sports: ['jjb'] },
   { id: 'ibjjf', name: 'IBJJF', sub: traduire('Jiu-jitsu brésilien, tournois dans le monde'), url: 'https://ibjjf.com/events/calendar', sports: ['jjb'] },
-  { id: 'smoothcomp', name: 'Smoothcomp', sub: 'Inscriptions en ligne : grappling, jiu-jitsu, MMA', url: 'https://smoothcomp.com', sports: ['jjb', 'mma', 'judo'] },
+  { id: 'smoothcomp', name: 'Smoothcomp', sub: traduire('Inscriptions en ligne : grappling, jiu-jitsu, MMA'), url: 'https://smoothcomp.com', sports: ['jjb', 'mma', 'judo'] },
   { id: 'ffjudo', name: 'Fédération française de judo', sub: traduire('Judo et jujitsu'), url: 'https://www.ffjudo.com/evenements', sports: ['judo'] },
   { id: 'ffkmda', name: 'FFKMDA', sub: traduire('Kickboxing, muay-thaï, pancrace'), url: 'https://www.ffkmda.com/calendrier/', sports: ['muay_thai', 'mma'] },
 ];

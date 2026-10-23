@@ -62,7 +62,7 @@ export function Predictions() {
     return (
       <View style={{ flex: 1, backgroundColor: P.paper }}>
         <DetailHeader title={traduire("Prédictions")} sub={traduire("Où tu en seras, à partir de tes pesées.")} />
-        <EmptyInvite style={{ margin: GUTTER, marginTop: 18 }} title={t.titre} text={t.texte} cta={traduire("Nouvelle pesée")} onPress={() => router.push('/pesee' as any)} />
+        <EmptyInvite style={{ margin: GUTTER, marginTop: 18 }} title={traduire(t.titre)} text={traduire(t.texte)} cta={traduire("Nouvelle pesée")} onPress={() => router.push('/pesee' as any)} />
         <View style={{ marginHorizontal: GUTTER, gap: 12 }}>
           <Jauge label={traduire("Pesées")} val={Math.min(r.pesees, MIN_PESEES)} max={MIN_PESEES} txt={traduire("{0} sur {1}", Math.min(r.pesees, MIN_PESEES), MIN_PESEES)} />
           <Jauge label={traduire("Jours couverts")} val={Math.min(r.jours, MIN_JOURS)} max={MIN_JOURS} txt={traduire("{0} sur {1}", Math.min(r.jours, MIN_JOURS), MIN_JOURS)} />
@@ -106,8 +106,7 @@ export function Predictions() {
 
         <View style={{ marginHorizontal: GUTTER, marginTop: 22, padding: 16, borderRadius: 22, backgroundColor: P.washi, borderWidth: 1, borderColor: P.washiBord, gap: 6 }}>
           <Ink size={15} weight="black">
-            Comment on calcule
-          </Ink>
+            {traduire("Comment on calcule")}</Ink>
           <Ink size={13.5} color={P.ink2} style={{ lineHeight: 19 }}>
             {traduire('À ton rythme actuel : la pente de tes pesées des 4 dernières semaines, mesurée pour qu’une pesée bizarre (sel, eau, balance) ne la tire pas. Vers ton cap, la perte ralentit dans le dernier tiers, comme dans la réalité, puis on suppose que tu tiens ton cap.')}
           </Ink>

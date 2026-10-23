@@ -29,7 +29,7 @@ export function Taille({ nav, height, weight, genre, onHeight, onNext }: {
   const shown = height ?? (genre === 'f' ? 165 : 175);
   const imc = bmi(weight, height);
   return (
-    <Shell {...nav} title={traduire("Et **ta taille** ?")} sub={traduire("Pour ton IMC, et pour que ton personnage prenne ta silhouette si tu le veux.")} footer={<MainButton label={height ? 'Continuer' : traduire('Valider ma taille')} onPress={() => { if (!height) onHeight(shown); onNext(); }} />}>
+    <Shell {...nav} title={traduire("Et **ta taille** ?")} sub={traduire("Pour ton IMC, et pour que ton personnage prenne ta silhouette si tu le veux.")} footer={<MainButton label={height ? traduire('Continuer') : traduire('Valider ma taille')} onPress={() => { if (!height) onHeight(shown); onNext(); }} />}>
       <View style={{ alignItems: 'center', gap: 2, paddingTop: 10 }} accessibilityLiveRegion="polite">
         <Ink size={88} weight="black" tight style={{ letterSpacing: -3, fontVariant: ['tabular-nums'] }}>{String(shown)}</Ink>
         <Ink size={17} weight="bold" color={c.textSecondary}>{traduire("centimètres")}</Ink>

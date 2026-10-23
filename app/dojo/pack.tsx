@@ -109,7 +109,7 @@ export default function Pack() {
                     accessibilityState={{ selected: gender === g }}
                     style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 11, justifyContent: 'center', backgroundColor: gender === g ? P.white : 'transparent' }}
                   >
-                    <Ink size={13} weight={gender === g ? 'extraBold' : 'bold'} color={gender === g ? c.ink : c.textSecondary}>{g === 'h' ? 'Homme' : 'Femme'}</Ink>
+                    <Ink size={13} weight={gender === g ? 'extraBold' : 'bold'} color={gender === g ? c.ink : c.textSecondary}>{g === 'h' ? traduire('Homme') : traduire('Femme')}</Ink>
                   </Pressable>
                 ))}
               </View>
@@ -155,7 +155,7 @@ export default function Pack() {
                 {l > 1 ? (
                   <View style={{ alignSelf: 'stretch', paddingHorizontal: 6, gap: 3 }}>
                     <Bar progress={pr.value} color={c.accent} height={4} track="rgba(29,32,41,0.08)" />
-                    <Ink size={10} color={pr.value >= 1 && !has ? '#4F6B28' : '#6B6E78'} style={{ textAlign: 'center' }}>{pr.label}</Ink>
+                    <Ink size={10} color={pr.value >= 1 && !has ? '#4F6B28' : '#6B6E78'} style={{ textAlign: 'center' }}>{traduire(pr.label)}</Ink>
                   </View>
                 ) : null}
               </View>

@@ -46,7 +46,7 @@ export const FighterCardView = forwardRef<View, { data: FighterData; id: CardIde
               </View>
             ) : null}
             <View style={{ maxWidth: isPhoto ? '100%' : width * 0.54, gap: 6 }}>
-              <Ink size={Math.round(width * 0.09)} weight="black" tight color={p.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{data.name}</Ink>
+              <Ink size={Math.round(width * 0.09)} weight="black" tight color={p.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{traduire(data.name)}</Ink>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <RankTag p={p} kanji={id.rankKanji} name={id.rankName} />
                 {data.weightLost > 0 ? (
@@ -77,7 +77,7 @@ export const FighterCardView = forwardRef<View, { data: FighterData; id: CardIde
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Mini p={p} onPanel value={`${data.totalTrainings}`} label={traduire("Séances")} />
               <Mini p={p} onPanel value={`${hours} h`} label={traduire("D’entraînement")} />
-              <Mini p={p} onPanel value={`${id.sealsCount}`} label="Sceaux" accent={p.gold === '#A8832F' ? '#A8832F' : undefined} />
+              <Mini p={p} onPanel value={`${id.sealsCount}`} label={traduire("Sceaux")} accent={p.gold === '#A8832F' ? '#A8832F' : undefined} />
             </View>
             {data.goals && data.goals.target > 0 ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

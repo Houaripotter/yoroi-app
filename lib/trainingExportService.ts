@@ -54,12 +54,12 @@ export const exportTrainingToJSON = async (): Promise<string | null> => {
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
+      appAlert(traduire('Partage indisponible'), traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur export JSON:', error);
-    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’export n’a pas abouti. Réessaie.'));
     return null;
   }
 };
@@ -106,12 +106,12 @@ export const exportTrainingToCSV = async (sport?: string): Promise<string | null
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
+      appAlert(traduire('Partage indisponible'), traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur export CSV:', error);
-    appAlert('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’export n’a pas abouti. Réessaie.'));
     return null;
   }
 };
@@ -202,12 +202,12 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
+      appAlert(traduire('Partage indisponible'), traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur génération rapport:', error);
-    appAlert('Oups', traduire('Le rapport n’a pas pu être créé.'));
+    appAlert(traduire('Oups'), traduire('Le rapport n’a pas pu être créé.'));
     return null;
   }
 };
@@ -248,12 +248,12 @@ export const exportExerciseHistory = async (exerciseId: number, exerciseName: st
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      appAlert('Partage indisponible', traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
+      appAlert(traduire('Partage indisponible'), traduire('Le partage de fichiers n’est pas disponible sur ce téléphone.'));
       return null;
     }
   } catch (error) {
     logger.error('Erreur export exercice:', error);
-    appAlert('Oups', traduire('L’historique n’a pas pu être exporté.'));
+    appAlert(traduire('Oups'), traduire('L’historique n’a pas pu être exporté.'));
     return null;
   }
 };

@@ -76,7 +76,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
             onChanged();
           } catch (e) {
             logger.error('Suppression du club impossible', e);
-            appAlert('Oups', traduire('Le club n’a pas pu être supprimé.'));
+            appAlert(traduire('Oups'), traduire('Le club n’a pas pu être supprimé.'));
           }
         },
       },
@@ -96,7 +96,7 @@ export function PlanClubs({ trainings, onChanged }: { trainings: Training[]; onC
             <Glass key={club.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
               <ClubLogo club={club} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={16} weight="extraBold" numberOfLines={2}>{club.name}</Ink>
+                <Ink size={16} weight="extraBold" numberOfLines={2}>{traduire(club.name)}</Ink>
                 <Ink size={12} color={c.textSecondary}>{traduire("{0}, {1} ce mois, {2} au total", getSportName(club.sport), month, all.length)}</Ink>
               </View>
               <Pressable onPress={() => { tap(); setEditing(club); setFormOpen(true); }} accessibilityRole="button" accessibilityLabel={traduire("Modifier {0}", club.name)} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>

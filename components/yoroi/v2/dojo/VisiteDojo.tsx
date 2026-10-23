@@ -226,12 +226,12 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
             ) : null}
             {!premiere && !derniere ? (
               <Pressable onPress={() => fermer(false)} accessibilityRole="button" hitSlop={8} style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 }}>
-                <Ink size={14} weight="bold" color={c.textSecondary}>Passer</Ink>
+                <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Passer")}</Ink>
               </Pressable>
             ) : null}
           </View>
-          <Ink size={20} weight="black" tight>{e.titre}</Ink>
-          <Ink size={15} color={c.textSecondary} style={{ lineHeight: 21 }}>{e.texte}</Ink>
+          <Ink size={20} weight="black" tight>{traduire(e.titre)}</Ink>
+          <Ink size={15} color={c.textSecondary} style={{ lineHeight: 21 }}>{traduire(e.texte)}</Ink>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
             {premiere ? (
               <Pressable onPress={() => fermer(false)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.fillSoft })}>

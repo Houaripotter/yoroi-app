@@ -21,7 +21,7 @@ import { traduire } from '@/lib/i18n/tr';
 const H = 3600 * 1000;
 const D = 24 * H;
 export const CLOCK_PRESETS: { label: string; ms: number; a11y: string }[] = [
-  { label: 'Maintenant', ms: 0, a11y: traduire('Revenir à l’heure réelle') },
+  { label: traduire('Maintenant'), ms: 0, a11y: traduire('Revenir à l’heure réelle') },
   { label: traduire('moins 3 h'), ms: -3 * H, a11y: traduire('Reculer de 3 heures') },
   { label: '+3 h', ms: 3 * H, a11y: traduire('Avancer de 3 heures') },
   { label: '+12 h', ms: 12 * H, a11y: traduire('Avancer de 12 heures') },
@@ -31,9 +31,9 @@ export const CLOCK_PRESETS: { label: string; ms: number; a11y: string }[] = [
 ];
 
 const TEXT_SIZES: { level: FontSizeLevel; label: string }[] = [
-  { level: 1, label: 'Petite' },
-  { level: 2, label: 'Normale' },
-  { level: 3, label: 'Grande' },
+  { level: 1, label: traduire('Petite') },
+  { level: 2, label: traduire('Normale') },
+  { level: 3, label: traduire('Grande') },
   { level: 4, label: traduire('Très grande') },
 ];
 
@@ -82,10 +82,10 @@ export function Ambiance() {
   };
 
   return (
-    <StudioSection id="ambiance" icon="sun" title="Ambiance" sub={traduire("Scène, personnage, horloge de test, taille du texte")} keywords={traduire("scene decor personnage avatar horloge heure date devnow demain taille texte police")}>
+    <StudioSection id="ambiance" icon="sun" title={traduire("Ambiance")} sub={traduire("Scène, personnage, horloge de test, taille du texte")} keywords="scene decor personnage avatar horloge heure date devnow demain taille texte police">
       <Card>
         <Row first icon="image" label={traduire("Scène")} sub={traduire("Le décor de ton accueil")} onPress={() => router.push('/themes' as never)} />
-        <Row icon="user" label="Personnage" sub={traduire("Guerrier, guerrière et personnages du monde")} onPress={() => router.push('/avatar-selection' as never)} />
+        <Row icon="user" label={traduire("Personnage")} sub={traduire("Guerrier, guerrière et personnages du monde")} onPress={() => router.push('/avatar-selection' as never)} />
       </Card>
 
       <Card style={{ padding: 14, gap: 12 }}>
@@ -97,7 +97,7 @@ export function Ambiance() {
         {demoActive ? (
           <ChipWrap>
             {CLOCK_PRESETS.map((s) => (
-              <Chip key={s.label} label={s.label} accessibilityLabel={s.a11y} on={s.ms === offset} onPress={() => apply(s.ms)} />
+              <Chip key={s.label} label={traduire(s.label)} accessibilityLabel={s.a11y} on={s.ms === offset} onPress={() => apply(s.ms)} />
             ))}
           </ChipWrap>
         ) : (
@@ -113,7 +113,7 @@ export function Ambiance() {
         <Ink size={15} weight="extraBold">{traduire("Taille du texte")}</Ink>
         <ChipWrap>
           {TEXT_SIZES.map((t) => (
-            <Chip key={t.level} label={t.label} on={(fontSizeLevel ?? 2) === t.level} onPress={() => void setFontSizeLevel(t.level)} />
+            <Chip key={t.level} label={traduire(t.label)} on={(fontSizeLevel ?? 2) === t.level} onPress={() => void setFontSizeLevel(t.level)} />
           ))}
         </ChipWrap>
         <Note>{traduire("Pour vérifier qu’aucun écran ne se casse. C’est le vrai réglage de l’app, remets Normale après.")}</Note>

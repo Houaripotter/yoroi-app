@@ -161,8 +161,8 @@ export function MetricDetail(props: Props) {
       <View style={{ flex: 1, backgroundColor: c.background }}>
         <DetailHeader title={title} right={headerRight} />
         {picker}
-        <EmptyInvite style={{ margin: GUTTER }} title={empty.title} text={empty.text} cta={empty.cta} onPress={empty.onPress} plusHint={empty.plusHint} plusArrow={false} />
-        <ExplainCard text={explain.text} tip={explain.tip} style={{ marginHorizontal: GUTTER }} />
+        <EmptyInvite style={{ margin: GUTTER }} title={traduire(empty.title)} text={traduire(empty.text)} cta={empty.cta} onPress={empty.onPress} plusHint={empty.plusHint} plusArrow={false} />
+        <ExplainCard text={traduire(explain.text)} tip={explain.tip} style={{ marginHorizontal: GUTTER }} />
       </View>
     );
   }
@@ -296,7 +296,7 @@ export function MetricDetail(props: Props) {
 
         {after}
 
-        <ExplainCard text={explain.text} tip={explain.tip} style={{ marginHorizontal: GUTTER, marginTop: 22 }} />
+        <ExplainCard text={traduire(explain.text)} tip={explain.tip} style={{ marginHorizontal: GUTTER, marginTop: 22 }} />
 
         {history.length > 0 ? (
           <View style={{ paddingHorizontal: GUTTER, marginTop: 28 }}>

@@ -33,9 +33,9 @@ export function zoneFromMethod(method: string): Zone | null {
 
 export const DEFAULT_STYLE: StyleStats = { garde: 3, passage: 3, debout: 3, cardio: 3, explosivite: 3 };
 export const STYLE_AXES: { key: keyof StyleStats; label: string }[] = [
-  { key: 'garde', label: 'Garde' },
-  { key: 'passage', label: 'Passage' },
-  { key: 'debout', label: 'Debout' },
+  { key: 'garde', label: traduire('Garde') },
+  { key: 'passage', label: traduire('Passage') },
+  { key: 'debout', label: traduire('Debout') },
   { key: 'cardio', label: 'Cardio' },
   { key: 'explosivite', label: traduire('Explosivité') },
 ];
@@ -180,10 +180,10 @@ export function analyzePartner(p: Partner, entries: SessionEntry[]): PartnerInsi
   else if (losses >= 3 && wins === 0) title = { label: traduire('Némésis'), kanji: '敵', color: '#B0282E', description: traduire("{0} défaites sans riposte", losses) };
   else if (wins >= 3 && losses === 0) title = { label: traduire('Dominé'), kanji: '勝', color: '#A8832F', description: traduire("{0} victoires sans défaite", wins) };
   else if (decided >= 10) title = { label: traduire('Légende'), kanji: '伝', color: '#2C4A84', description: `${decided} rounds ensemble` };
-  else if (total >= 5 && Math.abs(wins - losses) <= 1) title = { label: 'Rival', kanji: '競', color: '#2C4A84', description: traduire('Score équilibré') };
-  else if (winRate != null && winRate >= 60) title = { label: 'Favorable', kanji: '利', color: '#4F6B28', description: traduire("{0} % de victoires", winRate) };
-  else if (winRate != null && winRate <= 30) title = { label: traduire('Défi'), kanji: '挑', color: '#A8832F', description: 'Opposition difficile' };
-  else title = { label: 'Partenaire', kanji: '友', color: '#3D5D9E', description: `${decided} rounds` };
+  else if (total >= 5 && Math.abs(wins - losses) <= 1) title = { label: traduire('Rival'), kanji: '競', color: '#2C4A84', description: traduire('Score équilibré') };
+  else if (winRate != null && winRate >= 60) title = { label: traduire('Favorable'), kanji: '利', color: '#4F6B28', description: traduire("{0} % de victoires", winRate) };
+  else if (winRate != null && winRate <= 30) title = { label: traduire('Défi'), kanji: '挑', color: '#A8832F', description: traduire('Opposition difficile') };
+  else title = { label: traduire('Partenaire'), kanji: '友', color: '#3D5D9E', description: `${decided} rounds` };
 
   const threat = total === 0 ? 50 : Math.round(((losses / total) * 0.6 + ((avgRating ?? 5) / 10) * 0.4) * 100);
 
@@ -215,7 +215,7 @@ export function analyzePartner(p: Partner, entries: SessionEntry[]): PartnerInsi
   const sortedM = [...matchups].filter((m) => m.result).sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime());
   const last5 = sortedM.slice(-5).filter((m) => m.result === 'V').length;
   const momentum =
-    last5 >= 4 ? { label: 'En feu', color: '#4F6B28' } : last5 >= 3 ? { label: traduire('En forme'), color: '#3D5D9E' } : last5 >= 2 ? { label: traduire('Équilibré'), color: '#A8832F' } : last5 >= 1 ? { label: 'Difficile', color: '#B0282E' } : { label: traduire('En difficulté'), color: '#B0282E' };
+    last5 >= 4 ? { label: traduire('En feu'), color: '#4F6B28' } : last5 >= 3 ? { label: traduire('En forme'), color: '#3D5D9E' } : last5 >= 2 ? { label: traduire('Équilibré'), color: '#A8832F' } : last5 >= 1 ? { label: traduire('Difficile'), color: '#B0282E' } : { label: traduire('En difficulté'), color: '#B0282E' };
 
   const streaks = computePartnerStreaks(matchups);
 
@@ -264,7 +264,7 @@ export function analyzePartner(p: Partner, entries: SessionEntry[]): PartnerInsi
   if (total >= 10) score += 0.3;
   const fs = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
   const fighterThreat =
-    fs >= 8 ? { score: fs, label: traduire('Bête noire'), color: '#B0282E' } : fs >= 6 ? { score: fs, label: traduire('Sérieux défi'), color: '#A8832F' } : fs >= 4 ? { score: fs, label: 'Partenaire solide', color: '#3D5D9E' } : { score: fs, label: 'Accessible', color: '#4F6B28' };
+    fs >= 8 ? { score: fs, label: traduire('Bête noire'), color: '#B0282E' } : fs >= 6 ? { score: fs, label: traduire('Sérieux défi'), color: '#A8832F' } : fs >= 4 ? { score: fs, label: traduire('Partenaire solide'), color: '#3D5D9E' } : { score: fs, label: traduire('Accessible'), color: '#4F6B28' };
 
   return {
     wins,

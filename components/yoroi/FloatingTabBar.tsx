@@ -60,7 +60,7 @@ export function FloatingTabBarView({
           numberOfLines={1}
           style={{ fontSize: 11, lineHeight: 14, marginTop: 3, color }}
         >
-          {item.label}
+          {traduire(item.label)}
         </YText>
       </Pressable>
     );

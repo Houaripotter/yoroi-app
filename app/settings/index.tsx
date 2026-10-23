@@ -56,9 +56,9 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 
 const MODES: { key: string; label: string; court: string; sub: string }[] = [
-  { key: 'clair', label: 'Clair', court: 'Clair', sub: traduire('Le papier de riz, de jour comme de nuit') },
-  { key: 'sombre', label: 'Sombre', court: 'Sombre', sub: traduire('L’encre de nuit, plus douce le soir') },
-  { key: 'auto', label: 'Automatique', court: 'Auto', sub: traduire('Suit le réglage clair ou sombre de ton téléphone') },
+  { key: 'clair', label: traduire('Clair'), court: traduire('Clair'), sub: traduire('Le papier de riz, de jour comme de nuit') },
+  { key: 'sombre', label: traduire('Sombre'), court: traduire('Sombre'), sub: traduire('L’encre de nuit, plus douce le soir') },
+  { key: 'auto', label: traduire('Automatique'), court: traduire('Auto'), sub: traduire('Suit le réglage clair ou sombre de ton téléphone') },
 ];
 
 export default function Reglages() {
@@ -123,7 +123,7 @@ export default function Reglages() {
       reloadStatus();
     } catch (e) {
       logger.error('[Reglages] sauvegarde', e);
-      showPopup('Oups', traduire('La sauvegarde n’a pas abouti. Réessaie.'));
+      showPopup(traduire('Oups'), traduire('La sauvegarde n’a pas abouti. Réessaie.'));
     } finally {
       setBackingUp(false);
     }
@@ -202,7 +202,7 @@ export default function Reglages() {
           <ValueRow first tint={TUILE.indigo} icon="dumbbell" label={traduire("Mes sports")} value={nbSports ? `${nbSports} sport${nbSports > 1 ? 's' : ''}` : traduire('À choisir')} valueColor={nbSports ? undefined : c.accent} onPress={() => go('/espace/sports')} />
           <ValueRow tint={TUILE.bleu} icon="calendar" label={traduire("Calendrier et clubs")} onPress={() => go('/planning?tab=mois')} />
           <ValueRow tint={TUILE.mousse} icon="target" label={traduire("Objectif de la semaine")} sub={espace.joursSemaine?.length ? joursTexte(espace.joursSemaine).replace(/^./, (x) => x.toUpperCase()) : undefined} value={obj ? traduirePluriel(obj, obj > 1, "{0} séance", "{0} séances", obj) : traduire('À choisir')} valueColor={obj ? undefined : c.accent} onPress={() => setObjectifOpen(true)} />
-          <ValueRow tint={TUILE.or} icon="bell" label="Rappels" value={remValue} onPress={() => go('/notifications')} />
+          <ValueRow tint={TUILE.or} icon="bell" label={traduire("Rappels")} value={remValue} onPress={() => go('/notifications')} />
           <ValueRow tint={TUILE.bleu} icon="pulse" label={traduire("Bilan après chaque mesure")} sub={traduire("Pesée, composition, mensurations et séances")} value={bilanAuto ? traduire('Activé') : traduire('Coupé')} valueColor={bilanAuto ? c.successText : undefined} onPress={() => { const n = !bilanAuto; setBilanAuto(n); ecrireBilanAuto(n).catch(() => {}); }} />
         </Card>
 
@@ -211,7 +211,7 @@ export default function Reglages() {
         <Groupe title={traduire("Tes réglages")} />
         <Card>
           <ValueRow first tint={TUILE.mousse} icon="heart" label={traduire("Santé et appareils")} sub={Platform.OS === 'android' ? 'Health Connect, montre, balance' : traduire('Apple Santé, montre, balance')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => go('/settings/appareils')} />
-          <ValueRow tint={TUILE.ardoise} icon="save" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label="Sauvegarder" onPress={backupNow} busy={backingUp} />} />
+          <ValueRow tint={TUILE.ardoise} icon="save" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
         </Card>
 
         <Groupe title="YOROI" />
@@ -219,7 +219,7 @@ export default function Reglages() {
           <ValueRow first tint={TUILE.or} icon="crown" label={traduire("Abonnement")} value={subValue} valueColor={isPremium && !simulateFreeUser ? c.goldDeep : undefined} onPress={isPremium && hasActiveSubscription ? manageSub : () => ouvrirPaywall('reglages')} />
           <ValueRow tint={TUILE.bleu} icon="info" label={traduire("Aide et questions")} onPress={() => go('/settings/aide')} />
           <ValueRow tint={TUILE.indigo} icon="spark" label={traduire("Revoir la présentation")} sub={traduire("Personnage, Santé, scène et visite guidée")} onPress={() => go('/nouveautes?revoir=1')} />
-          <ValueRow tint={TUILE.or} icon="star" label="Noter l’app" onPress={rate} />
+          <ValueRow tint={TUILE.or} icon="star" label={traduire("Noter l’app")} onPress={rate} />
           <ValueRow tint={TUILE.ardoise} icon="doc" label={traduire("Conditions et confidentialité")} onPress={() => go('/settings/legal')} />
         </Card>
 
@@ -238,7 +238,7 @@ export default function Reglages() {
               <Icon name="wand" size={22} color={c.goldLight} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={17} weight="black" color={c.onDark}>Studio YOROI</Ink>
+              <Ink size={17} weight="black" color={c.onDark}>{traduire("Studio YOROI")}</Ink>
               <Ink size={12} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>
                 {demoActive ? traduire('Profil démo chargé, tes vraies données sont de côté') : traduire('Profils démo, captures, outils de test')}
               </Ink>

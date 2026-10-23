@@ -284,7 +284,7 @@ export default function MetriqueScreen() {
             <View key={row.label} style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Ink size={13} weight="bold" color={S.ink2}>
-                  {row.label}
+                  {traduire(row.label)}
                 </Ink>
                 <Ink size={13} weight="extraBold">
                   {row.v > 0 ? (key === 'tension' ? row.tension : withUnit(m, row.v)) : traduire('Pas de donnée')}
@@ -311,13 +311,13 @@ export default function MetriqueScreen() {
           dim={0.4}
           title={appData ? traduire('Rien sur cette période') : traduire('Aucune mesure sur cette période')}
           text={appData ? traduire('Pèse-toi le matin, à jeun : chaque pesée s’ajoute ici.') : traduire('Voici ce que tu verras quand ta montre ou ta balance enverra cette mesure.')}
-          cta={appData ? 'Me peser' : traduire('Relier ma montre')}
+          cta={appData ? traduire('Me peser') : traduire('Relier ma montre')}
           onPress={() => router.push((appData ? '/pesee' : '/sante/montre') as any)}
         >
           {isSum && period !== 'an' ? (
-            <InkBarChart bars={sample.map((p, i) => ({ label: period === 'semaine' ? DAY_LETTERS[dateOf(p.date).getDay()] : i % 5 === 4 ? String(dateOf(p.date).getDate()) : '', value: p.value }))} color={color} format={(v) => fmt(m, v)} showValues="none" height={180} label="Exemple" />
+            <InkBarChart bars={sample.map((p, i) => ({ label: period === 'semaine' ? DAY_LETTERS[dateOf(p.date).getDay()] : i % 5 === 4 ? String(dateOf(p.date).getDate()) : '', value: p.value }))} color={color} format={(v) => fmt(m, v)} showValues="none" height={180} label={traduire("Exemple")} />
           ) : (
-            <InkLineChart points={sample.map((p) => ({ date: p.date, value: p.value * scaleS }))} color={color} height={180} digits={key === 'sommeil' ? 1 : m.digits} minSpan={Math.max(1, (SAMPLE_BASE[m.key] ?? 50) * scaleS * 0.08)} label="Exemple" />
+            <InkLineChart points={sample.map((p) => ({ date: p.date, value: p.value * scaleS }))} color={color} height={180} digits={key === 'sommeil' ? 1 : m.digits} minSpan={Math.max(1, (SAMPLE_BASE[m.key] ?? 50) * scaleS * 0.08)} label={traduire("Exemple")} />
           )}
         </ExamplePreview>
       );
@@ -343,7 +343,7 @@ export default function MetriqueScreen() {
       return (
         <View style={{ gap: 10 }}>
           <DualLine points={linePts} onSelect={setSel} label={traduire("Tension artérielle")} />
-          <Legend items={[{ color: TENSION_COLORS[0], label: 'Chiffre haut', kind: 'line' }, { color: TENSION_COLORS[1], label: 'Chiffre bas', kind: 'line' }]} />
+          <Legend items={[{ color: TENSION_COLORS[0], label: traduire('Chiffre haut'), kind: 'line' }, { color: TENSION_COLORS[1], label: traduire('Chiffre bas'), kind: 'line' }]} />
         </View>
       );
     }
@@ -390,12 +390,12 @@ export default function MetriqueScreen() {
       const lowAvg = mean(measured.map((p) => p.v2 ?? 0).filter((v) => v > 0));
       const minP = measured.reduce<(typeof measured)[number] | undefined>((a, p) => (!a || p.value < a.value ? p : a), undefined);
       const maxP = measured.reduce<(typeof measured)[number] | undefined>((a, p) => (!a || p.value > a.value ? p : a), undefined);
-      statItems.push({ label: traduire('Moyenne'), value: `${Math.round(stats.avg)}/${Math.round(lowAvg ?? 0)}`, unit: 'mmHg' });
-      statItems.push({ label: traduire('La plus basse'), value: pair(minP), unit: 'mmHg' });
-      statItems.push({ label: traduire('La plus haute'), value: pair(maxP), unit: 'mmHg' });
+      statItems.push({ label: traduire('Moyenne'), value: `${Math.round(stats.avg)}/${Math.round(lowAvg ?? 0)}`, unit: traduire('mmHg') });
+      statItems.push({ label: traduire('La plus basse'), value: pair(minP), unit: traduire('mmHg') });
+      statItems.push({ label: traduire('La plus haute'), value: pair(maxP), unit: traduire('mmHg') });
     } else {
       statItems.push({ label: isSum ? traduire('Moyenne / jour') : traduire('Moyenne'), value: val(stats.avg), unit: stats.avg !== null ? u : '' });
-      statItems.push({ label: 'Minimum', value: val(stats.min), unit: stats.min !== null ? u : '' });
+      statItems.push({ label: traduire('Minimum'), value: val(stats.min), unit: stats.min !== null ? u : '' });
       statItems.push({ label: 'Maximum', value: val(stats.max), unit: stats.max !== null ? u : '' });
       if (isSum && key !== 'sommeil' && stats.total !== null && period !== 'jour') statItems.push({ label: traduire('Total'), value: val(stats.total), unit: u });
     }
@@ -421,7 +421,7 @@ export default function MetriqueScreen() {
   const sourceNames = sources.map((s) => SOURCE_NAMES[s] ?? s);
 
   return (
-    <DetailScreen title={m.label} subtitle={fam.label}>
+    <DetailScreen title={traduire(m.label)} subtitle={traduire(fam.label)}>
       {source && source.mode !== 'live' ? <SourceCard source={source} onConnect={() => router.push('/health-connect' as any)} /> : null}
 
       <GlassBox style={{ gap: 14 }}>
@@ -506,7 +506,7 @@ export default function MetriqueScreen() {
                 </Ink>
               ) : null}
               <Ink size={11} weight="bold" color={S.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                {it.label}
+                {traduire(it.label)}
               </Ink>
             </View>
           ))}
@@ -525,7 +525,7 @@ export default function MetriqueScreen() {
               <View key={s.k} style={{ width: '50%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ width: 11, height: 11, borderRadius: 3, backgroundColor: s.color }} />
                 <Ink size={13} weight="bold" color={S.ink2}>
-                  {s.label}
+                  {traduire(s.label)}
                 </Ink>
                 <Ink size={13} weight="extraBold">
                   {hoursMinutes(s.v)}
@@ -542,7 +542,7 @@ export default function MetriqueScreen() {
 
       {m.norm ? (
         <InfoBlock icon="check" title={traduire("Repère")} color={S.mossText} tint={S.mossSoft} footnote={traduire("Source : {0}. Repère général, il ne remplace pas l'avis d'un médecin.", m.norm.source)}>
-          {m.norm.text}
+          {traduire(m.norm.text)}
         </InfoBlock>
       ) : m.howToRead ? (
         <InfoBlock icon="spark" title={traduire("Comment la lire")} color={S.gold} tint={S.goldSoft}>
@@ -599,10 +599,10 @@ export default function MetriqueScreen() {
       </InfoBlock>
 
       {m.more ? (
-        <Press onPress={() => router.push(m.more!.href as any)} accessibilityRole="button" accessibilityLabel={m.more.label}>
+        <Press onPress={() => router.push(m.more!.href as any)} accessibilityRole="button" accessibilityLabel={traduire(m.more.label)}>
           <View style={{ minHeight: 56, borderRadius: 18, backgroundColor: S.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Ink size={15} weight="extraBold" color={P.white}>
-              {m.more.label}
+              {traduire(m.more.label)}
             </Ink>
             <SanteIcon name="chevron" size={16} color={P.white} />
           </View>

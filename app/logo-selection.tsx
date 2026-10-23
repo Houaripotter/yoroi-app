@@ -90,7 +90,7 @@ export default function LogoSelectionScreen() {
       );
     } catch (e) {
       logger.error('Erreur changement de logo:', e);
-      appAlert('Oups', traduire('Le logo n’a pas pu être changé. Réessaie dans un instant.'));
+      appAlert(traduire('Oups'), traduire('Le logo n’a pas pu être changé. Réessaie dans un instant.'));
     } finally {
       setSaving(false);
     }
@@ -111,7 +111,7 @@ export default function LogoSelectionScreen() {
           </View>
           <View style={{ alignItems: 'center', gap: 2 }}>
             <Ink size={20} weight="black" tight>
-              {sel.name}
+              {traduire(sel.name)}
             </Ink>
             <Ink size={14} weight="medium" color={P.ink2}>
               {selected === current ? traduire('Logo actuel') : traduire('Aperçu de ton choix')}
@@ -148,7 +148,7 @@ export default function LogoSelectionScreen() {
                     ) : null}
                   </View>
                   <Ink size={12} weight={on ? 'extraBold' : 'bold'} color={P.ink} numberOfLines={1} style={{ textAlign: 'center' }}>
-                    {o.name}
+                    {traduire(o.name)}
                   </Ink>
                   <View style={{ height: 18, justifyContent: 'center' }}>
                     {tag ? (

@@ -9,6 +9,7 @@ import {
   Info,
   Zap,
 } from 'lucide-react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 export type InsightType = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -42,7 +43,7 @@ export function InsightCard({ insight, colors }: InsightCardProps) {
         <config.Icon size={20} color={config.iconColor} />
       </View>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{insight.title}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{traduire(insight.title)}</Text>
         <Text style={[styles.message, { color: colors.textSecondary }]}>{insight.message}</Text>
         {insight.metric && insight.change !== undefined && (
           <View style={styles.metricRow}>

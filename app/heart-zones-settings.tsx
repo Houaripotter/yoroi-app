@@ -295,7 +295,7 @@ export default function HeartZonesSettingsScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <DetailScreen
-        title="Zones cardiaques"
+        title={traduire("Zones cardiaques")}
         subtitle={traduire("Tes 5 zones en battements par minute")}
         footer={<SmallButton label={saved ? traduire('Enregistré') : traduire('Enregistrer mes zones')} tone="red" icon="check" disabled={!isValid || saved} onPress={handleSave} />}
       >
@@ -313,9 +313,9 @@ export default function HeartZonesSettingsScreen() {
         {Platform.OS === 'ios' ? (
           <>
             <CardBox>
-              <ActionRow first icon="download" title={importing ? 'Lecture en cours' : traduire('Importer mes zones depuis Apple Santé')} sub={traduire("Les zones exactes de Santé avec iOS 27, sinon une estimation depuis ta FC max. Enregistré tout de suite")} onPress={handleImportFromApple} busy={importing} color="#7B3B63" tint="#F0E1EA" />
+              <ActionRow first icon="download" title={importing ? traduire('Lecture en cours') : traduire('Importer mes zones depuis Apple Santé')} sub={traduire("Les zones exactes de Santé avec iOS 27, sinon une estimation depuis ta FC max. Enregistré tout de suite")} onPress={handleImportFromApple} busy={importing} color="#7B3B63" tint="#F0E1EA" />
             </CardBox>
-            {importResult ? <Notice tone={importResult.ok ? 'good' : 'bad'} text={importResult.text} /> : null}
+            {importResult ? <Notice tone={importResult.ok ? 'good' : 'bad'} text={traduire(importResult.text)} /> : null}
           </>
         ) : null}
 
@@ -336,8 +336,7 @@ export default function HeartZonesSettingsScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="extraBold">
-                  FC max
-                </Ink>
+                  {traduire("FC max")}</Ink>
                 <Ink size={12} weight="bold" color={S.ink2}>
                   {traduire("Ton maximum absolu en bpm")}</Ink>
               </View>
@@ -361,7 +360,7 @@ export default function HeartZonesSettingsScreen() {
                 })}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: ZONE_COLORS[4] }} />
-                  <Ink size={13} weight="bold" style={{ flex: 1 }}>Z5 Max</Ink>
+                  <Ink size={13} weight="bold" style={{ flex: 1 }}>{traduire("Z5 Max")}</Ink>
                   <Ink size={13} weight="extraBold">{traduire("{0} bpm et plus", Math.round(fcmaxN * 0.9))}</Ink>
                 </View>
               </View>
@@ -387,8 +386,7 @@ export default function HeartZonesSettingsScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="extraBold">
-                  FC max
-                </Ink>
+                  {traduire("FC max")}</Ink>
                 <Ink size={12} weight="bold" color={S.ink2}>
                   {karvSources.age ? traduire('220 moins ton âge. Change-la si tu la connais.') : traduire('Règle-la : 220 moins ton âge')}
                 </Ink>

@@ -24,7 +24,7 @@ function Player({ v, onClose }: { v: CarnetVideo; onClose: () => void }) {
       <View style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <IconBtn name="close" label={traduire("Fermer la vidéo")} onPress={onClose} />
         <View style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: 'rgba(14,16,22,0.55)' }}>
-          <Ink size={15} weight="extraBold" color={P.white} numberOfLines={2}>{v.title}</Ink>
+          <Ink size={15} weight="extraBold" color={P.white} numberOfLines={2}>{traduire(v.title)}</Ink>
           <Ink size={12} weight="bold" color="rgba(255,255,255,0.7)" numberOfLines={1}>{placeOf(v)}</Ink>
         </View>
       </View>

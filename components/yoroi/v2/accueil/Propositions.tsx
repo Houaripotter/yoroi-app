@@ -164,7 +164,7 @@ export function TableauDuJour({
               return (
                 <Pressable key={cle} onPress={() => router.push(`/sante/${cle}` as any)} accessibilityRole="button" accessibilityLabel={vide ? traduire("{0} : pas de donnée", MESURE_SANTE[cle].nom) : `${MESURE_SANTE[cle].nom} : ${m ? texteMesureSante(m).valeur : ''}${o ? `, ${o.texte}` : ''}`} style={{ gap: 3 }}>
                   <Ink size={12} weight="extraBold" color={P.ink} numberOfLines={1}>
-                    {MESURE_SANTE[cle].nom}
+                    {traduire(MESURE_SANTE[cle].nom)}
                     {o?.repere ? (
                       <Ink size={11} weight="bold" color={P.ink2}>
                         {traduire('  repère')}
@@ -329,10 +329,10 @@ function FeuilleMesures({ visible, onFermer, mesures, titre = traduire('Tes autr
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COULEUR_AUTRE[m.cle] ?? P.ink2 }} />
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Ink size={14.5} weight="black" numberOfLines={1}>
-                      {e.nom}
+                      {traduire(e.nom)}
                     </Ink>
                     <Ink size={12.5} weight="bold" color={P.ink2} numberOfLines={2}>
-                      {e.phrase}
+                      {traduire(e.phrase)}
                     </Ink>
                   </View>
                   <Ink size={16} weight="black" tight style={{ fontVariant: ['tabular-nums'] }}>
@@ -409,7 +409,7 @@ function MiniRecup({ forme, passe = false }: { forme: FormeResult | null; passe?
     <CadreMini onPress={() => router.push('/readiness-detail' as any)} a11y={traduire("Récupération : {0} sur 100, {1}. {2}", score, forme!.level!.label, phraseRecup(score))} titre={traduire("Récupération")} couleur={t.texte}>
       <JaugeRecup score={score} taille={84} epaisseur={8} cle="mini:recup" />
       <Ink size={13} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ textAlign: 'center' }}>
-        {forme!.level!.label}
+        {traduire(forme!.level!.label)}
       </Ink>
       <Ink size={10} weight="bold" color={P.ink2} numberOfLines={2} style={{ textAlign: 'center' }}>
         {phraseRecup(score)}
@@ -447,7 +447,7 @@ function MiniSommeil({ sleep, sleepGoal, jour = null }: { sleep: SleepEntry[]; s
   const heures = nuit.bedTime && nuit.wakeTime ? traduire("{0} à {1}", nuit.bedTime.replace(':', ' h '), nuit.wakeTime.replace(':', ' h ')) : null;
   return (
     <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : {0}{1}", formatMinutes(nuit.duration), heures ? `, de ${heures}` : '')} titre={traduire("Sommeil")} couleur={t.texte}>
-      <ChiffreAnime valeur={nuit.duration} format={(x) => formatMinutes(Math.round(x))} cle={jour ? traduire("mini:sommeil:{0}", jour) : 'mini:sommeil'} taille={18} />
+      <ChiffreAnime valeur={nuit.duration} format={(x) => formatMinutes(Math.round(x))} cle={jour ? `mini:sommeil:${jour}` : 'mini:sommeil'} taille={18} />
       <View style={{ alignSelf: 'stretch', paddingHorizontal: 2, marginTop: 2 }}>
         <Barres7 valeurs={nuits} objectif={sleepGoal} couleur={t.plein} douce={t.bord} hauteur={44} cle="mini:sommeil" derniere />
       </View>

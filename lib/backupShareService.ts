@@ -45,7 +45,7 @@ export async function shareLatestBackup(): Promise<boolean> {
 
     const canShare = await isAvailableAsync();
     if (!canShare) {
-      appAlert('Partage indisponible', traduire("Le partage n’est pas disponible sur ce téléphone."));
+      appAlert(traduire('Partage indisponible'), traduire("Le partage n’est pas disponible sur ce téléphone."));
       return false;
     }
 
@@ -58,7 +58,7 @@ export async function shareLatestBackup(): Promise<boolean> {
     return true;
   } catch (e) {
     logger.error('[BackupShare] Erreur partage:', e);
-    appAlert('Oups', traduire('La sauvegarde n’a pas pu être partagée.'));
+    appAlert(traduire('Oups'), traduire('La sauvegarde n’a pas pu être partagée.'));
     return false;
   }
 }
@@ -70,7 +70,7 @@ export async function shareBackupFile(path: string): Promise<boolean> {
   try {
     const canShare = await isAvailableAsync();
     if (!canShare) {
-      appAlert('Partage indisponible', traduire("Le partage n’est pas disponible sur ce téléphone."));
+      appAlert(traduire('Partage indisponible'), traduire("Le partage n’est pas disponible sur ce téléphone."));
       return false;
     }
     await shareAsync(path, {

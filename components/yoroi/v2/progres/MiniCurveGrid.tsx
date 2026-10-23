@@ -116,7 +116,7 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 18 }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: curve.color }} />
           <Ink size={curve.label.length > 13 ? 12 : 13} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flex: 1 }}>
-            {curve.label}
+            {traduire(curve.label)}
           </Ink>
           <Chevron color={c.textMuted} size={11} />
         </View>
@@ -176,8 +176,8 @@ function GroupEmpty({ empty }: { empty: MiniGroup['empty'] }) {
   const c = theme.colors;
   return (
     <View style={{ marginTop: 10, padding: 16, gap: 6, borderRadius: 20, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, borderStyle: 'dashed' }}>
-      <Ink size={16} weight="extraBold">{empty.title}</Ink>
-      <Ink size={13} color={c.textSecondary}>{empty.text}</Ink>
+      <Ink size={16} weight="extraBold">{traduire(empty.title)}</Ink>
+      <Ink size={13} color={c.textSecondary}>{traduire(empty.text)}</Ink>
       <PlusHint text={empty.plusHint} style={{ marginTop: 6 }} />
     </View>
   );
@@ -195,7 +195,7 @@ export function MiniCurveGrid({ groups, period, today, style }: { groups: MiniGr
         });
         return (
           <View key={g.key}>
-            {g.title ? <SectionHead title={g.title} aside={g.curves.length ? g.aside?.label : undefined} onPress={g.curves.length ? g.aside?.onPress : undefined} /> : null}
+            {g.title ? <SectionHead title={traduire(g.title)} aside={g.curves.length ? g.aside?.label : undefined} onPress={g.curves.length ? g.aside?.onPress : undefined} /> : null}
             {g.curves.length === 0 ? (
               <GroupEmpty empty={g.empty} />
             ) : (
@@ -254,8 +254,8 @@ const COMPO_SPEC: { key: BioKey; label: string; unit: string; digits: number; go
   { key: 'bone', label: 'Masse osseuse', unit: 'kg', digits: 1, good: 'none', get color() { return CORPS.os; } },
   { key: 'bmr', label: traduire('Métabolisme'), unit: 'kcal', digits: 0, good: 'none', color: CHART_MOSS },
   { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', digits: 0, good: 'down', color: CHART_COLORS.blue },
-  { key: 'muscleKg', label: 'Muscle en kg', unit: 'kg', digits: 1, good: 'up', get color() { return CORPS.muscle; } },
-  { key: 'lean', label: 'Masse maigre', unit: '%', digits: 1, good: 'none', get color() { return CORPS.muscle; } },
+  { key: 'muscleKg', label: traduire('Muscle en kg'), unit: 'kg', digits: 1, good: 'up', get color() { return CORPS.muscle; } },
+  { key: 'lean', label: traduire('Masse maigre'), unit: '%', digits: 1, good: 'none', get color() { return CORPS.muscle; } },
   { key: 'bmi', label: traduire('IMC'), unit: '', digits: 1, good: 'none', color: CHART_COLORS.blue },
 ];
 
@@ -310,7 +310,7 @@ export function compositionGroup(compo: CompoPoint[], ctx: BodyContext, nav: Nav
   });
   return {
     key: 'composition',
-    title: 'Composition',
+    title: traduire('Composition'),
     curves,
     aside: { label: traduire('Chaque mesure'), onPress: () => nav({ pathname: '/composition-detail', params: { mode: 'mesure' } }) },
     empty: { title: traduire('Ta composition en détail'), text: traduire('Graisse viscérale, os, métabolisme de base, âge métabolique : si ta balance les donne, note-les avec ta pesée.'), plusHint: traduire('Touche + pour ta composition') },
@@ -328,7 +328,7 @@ export function measuresGroup(measures: MeasurePoint[], nav: Nav): MiniGroup {
   });
   return {
     key: 'mensurations',
-    title: 'Mensurations',
+    title: traduire('Mensurations'),
     curves,
     aside: { label: traduire('L’évolution'), onPress: () => nav('/measurements-detail') },
     empty: { title: traduire('Prends tes mesures une fois par mois'), text: traduire('Tour de taille, hanches, bras, cuisses : le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle.'), plusHint: traduire('Touche + pour tes mensurations') },

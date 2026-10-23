@@ -10,6 +10,7 @@ import { MEDAILLES } from '@/lib/v2/competition/extras';
 import type { Medaille } from '@/lib/v2/competition/extras';
 import { Tampon } from '@/components/yoroi/v2/tampons/Tampon';
 import { tamponMedaille } from '@/components/yoroi/v2/tampons/table';
+import { traduire } from '@/lib/i18n/tr';
 
 export function MedalIcon({ kind, size = 44 }: { kind: Medaille; size?: number }) {
   const m = MEDAILLES.find((x) => x.key === kind) ?? MEDAILLES[3];
@@ -21,7 +22,7 @@ export function MedalIcon({ kind, size = 44 }: { kind: Medaille; size?: number }
     );
   }
   const t = tamponMedaille(kind);
-  if (t) return <Tampon name={t} size={size} rotate={-6} accessibilityLabel={m.label} />;
+  if (t) return <Tampon name={t} size={size} rotate={-6} accessibilityLabel={traduire(m.label)} />;
   return (
     <Svg width={size} height={size} viewBox="0 0 48 48">
       <Path d="M14 2h8l6 14h-8z" fill={P.accent} />
@@ -39,11 +40,11 @@ export function MedalPicker({ value, onChange }: { value?: Medaille; onChange: (
       {MEDAILLES.map((m) => {
         const on = value === m.key;
         return (
-          <Press key={m.key} onPress={() => onChange(m.key)} accessibilityRole="button" accessibilityLabel={m.label} accessibilityState={{ selected: on }} style={{ width: '48.5%' }}>
+          <Press key={m.key} onPress={() => onChange(m.key)} accessibilityRole="button" accessibilityLabel={traduire(m.label)} accessibilityState={{ selected: on }} style={{ width: '48.5%' }}>
             <View style={{ minHeight: 64, borderRadius: 18, borderWidth: on ? 2 : 1, borderColor: on ? P.accent : P.line2, backgroundColor: on ? P.accentSoft : P.white, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 }}>
               <MedalIcon kind={m.key} size={38} />
               <Ink size={15} weight="extraBold" color={on ? P.accent : P.ink} style={{ flex: 1 }} numberOfLines={2}>
-                {m.label}
+                {traduire(m.label)}
               </Ink>
             </View>
           </Press>

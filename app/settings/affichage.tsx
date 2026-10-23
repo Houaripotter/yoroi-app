@@ -14,7 +14,7 @@ import type { FontSizeLevel } from '@/lib/fontScaleManager';
 import { getSelectedLogo, LOGO_OPTIONS } from '@/lib/storage';
 import { traduire } from '@/lib/i18n/tr';
 
-const FONT_LABELS = ['Petite', 'Normale', 'Grande', traduire('Très grande')];
+const FONT_LABELS = [traduire('Petite'), traduire('Normale'), traduire('Grande'), traduire('Très grande')];
 
 export default function AffichageEtIcone() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function AffichageEtIcone() {
   return (
     <EspaceScreen title={traduire("Affichage et icône")} subtitle={traduire("La taille du texte et l’icône de l’app")} gap={14}>
       <Card>
-        <ValueRow first tint={TUILE.ardoise} icon="text" label={traduire("Taille du texte")} value={FONT_LABELS[(fontSizeLevel ?? 2) - 1] ?? 'Normale'} onPress={() => setOpen(true)} />
+        <ValueRow first tint={TUILE.ardoise} icon="text" label={traduire("Taille du texte")} value={FONT_LABELS[(fontSizeLevel ?? 2) - 1] ?? traduire('Normale')} onPress={() => setOpen(true)} />
         <ValueRow tint={TUILE.or} icon="frame" label={traduire("Icône de l’app")} value={logoName} onPress={() => router.push('/logo-selection' as any)} />
       </Card>
 
@@ -48,7 +48,7 @@ export default function AffichageEtIcone() {
           label: FONT_LABELS[lvl - 1],
           preview: (
             <View style={{ width: 44, alignItems: 'center' }}>
-              <Ink size={12 + lvl * 3} weight="black" allowFontScaling={false}>Aa</Ink>
+              <Ink size={12 + lvl * 3} weight="black" allowFontScaling={false}>{traduire("Aa")}</Ink>
             </View>
           ),
         }))}

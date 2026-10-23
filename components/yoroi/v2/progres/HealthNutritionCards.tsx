@@ -105,7 +105,7 @@ function AccessCard({ icon, tint, title, preview, href }: { icon: string; tint: 
           </View>
         )}
         {preview?.spark ? (
-          <View accessibilityLabel={preview.spark.label} style={{ marginVertical: 2 }}>
+          <View accessibilityLabel={traduire(preview.spark.label)} style={{ marginVertical: 2 }}>
             {preview.spark.kind === 'bars' ? <SparkBars values={preview.spark.values} color={preview.spark.color} width={124} height={28} /> : <Sparkline values={preview.spark.values} color={preview.spark.color} width={124} height={28} />}
           </View>
         ) : null}
@@ -310,9 +310,9 @@ export function HealthNutritionCards() {
         <SanteCard steps7={steps7} />
         <Grid>
           {[
-            <AccessCard key="z" icon="heart" tint={c.accentTint} title="Zones cardiaques" preview={pv.zones} href="/heart-zones-settings" />,
+            <AccessCard key="z" icon="heart" tint={c.accentTint} title={traduire("Zones cardiaques")} preview={pv.zones} href="/heart-zones-settings" />,
             <AccessCard key="s" icon="moon" tint={c.indigoTint} title={traduire("Sommeil")} preview={pv.sleep} href="/sleep" />,
-            <AccessCard key="i" icon="cross" tint={c.successTint} title="Infirmerie" preview={pv.infirmary} href="/infirmary" />,
+            <AccessCard key="i" icon="cross" tint={c.successTint} title={traduire("Infirmerie")} preview={pv.infirmary} href="/infirmary" />,
           ]}
         </Grid>
       </View>
@@ -320,10 +320,10 @@ export function HealthNutritionCards() {
         <SectionHead title={traduire("Nutrition et poids de forme")} style={{ marginTop: 4 }} />
         <Grid>
           {[
-            <AccessCard key="n" icon="bowl" tint={c.goldTint} title="Plan nutritionnel" preview={pv.plan} href="/nutrition-plan" />,
+            <AccessCard key="n" icon="bowl" tint={c.goldTint} title={traduire("Plan nutritionnel")} preview={pv.plan} href="/nutrition-plan" />,
             <AccessCard key="f" icon="clock" tint={c.goldTint} title={traduire("Jeûne")} preview={pv.fasting} href="/fasting" />,
             <AccessCard key="c" icon="scale" tint={c.accentTint} title={traduire("Coupe de poids")} preview={pv.cut} href="/cut-mode" />,
-            <AccessCard key="k" icon="calc" tint={c.fillSoft} title="Calculateurs" preview={bmi ? { value: `IMC ${num(bmi, 1, false)}`, sub: traduire('Et tes besoins, ta fréquence maximale, tes protéines.') } : { cta: 'Calculer', sub: traduire('IMC, besoins, fréquence maximale, protéines, eau.') }} href="/calculators" />,
+            <AccessCard key="k" icon="calc" tint={c.fillSoft} title={traduire("Calculateurs")} preview={bmi ? { value: `IMC ${num(bmi, 1, false)}`, sub: traduire('Et tes besoins, ta fréquence maximale, tes protéines.') } : { cta: traduire('Calculer'), sub: traduire('IMC, besoins, fréquence maximale, protéines, eau.') }} href="/calculators" />,
             <AccessCard key="q" icon="bowl" tint={c.successTint} title={traduire("Repas du jour")} preview={{ cta: traduire('Voir'), sub: traduire('Quoi manger avant et après ta séance.') }} href="/quick-nutrition" />,
           ]}
         </Grid>

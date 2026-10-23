@@ -11,6 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
 import { tap } from '@/components/yoroi/v2/dojo/parts';
 import type { TamponId } from '@/components/yoroi/v2/tampons/table';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Gate = {
   key: string;
@@ -58,7 +59,7 @@ function GateTile({ g, width }: { g: Gate; width: number }) {
         </View>
         <View style={{ paddingHorizontal: 6, gap: 2 }}>
           <Ink size={15} weight="extraBold" numberOfLines={2}>
-            {g.title}
+            {traduire(g.title)}
           </Ink>
           <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>
             {g.value}

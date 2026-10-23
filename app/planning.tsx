@@ -104,14 +104,14 @@ export default function PlanningScreen() {
             <RoundIcon name="repeat" label={traduire("Gérer tes créneaux réguliers")} onPress={() => router.push('/slots' as any)} />
           </View>
           <View style={{ position: 'absolute', left: 22, bottom: 18, maxWidth: '56%' }}>
-            <Ink size={30} weight="black" tight accessibilityRole="header">Planning</Ink>
+            <Ink size={30} weight="black" tight accessibilityRole="header">{traduire("Planning")}</Ink>
             <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("Ta semaine, ton mois, tes échéances")}</Ink>
           </View>
         </View>
 
         <View style={{ paddingHorizontal: 22, paddingTop: 14, gap: 14 }}>
           <Segments
-            items={[{ key: 'semaine', label: traduire('Semaine') }, { key: 'mois', label: traduire('Mois') }, { key: 'competitions', label: traduire('Compét.') }, { key: 'clubs', label: 'Clubs' }]}
+            items={[{ key: 'semaine', label: traduire('Semaine') }, { key: 'mois', label: traduire('Mois') }, { key: 'competitions', label: traduire('Compét.') }, { key: 'clubs', label: traduire('Clubs') }]}
             value={view}
             onChange={setView}
           />

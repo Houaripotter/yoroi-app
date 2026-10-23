@@ -529,7 +529,7 @@ const ANDROID_SPORT_LABELS: Record<string, string> = {
   'rugby': 'Rugby', 'handball': 'Handball', 'volleyball': 'Volleyball',
   // Raquette
   'squash': 'Squash', 'racquetball': 'Racquetball',
-  'tennis_de_table': traduire('Tennis de table'), 'pickleball': 'Pickleball',
+  'tennis_de_table': 'Tennis de table', 'pickleball': 'Pickleball',
   // Golf & individuel
   'golf': 'Golf', 'gymnastique': 'Gymnastique', 'equitation': 'Equitation',
   'escrime': 'Escrime', 'baseball': 'Baseball',
@@ -3471,7 +3471,7 @@ class HealthConnectService {
         : workout.source === 'xiaomi' ? 'Xiaomi'
         : '';
 
-      const title = traduire("Bravo pour ta séance de {0} !", sportLabel.toLowerCase());
+      const title = traduire("Bravo pour ta séance de {0} !", traduire(sportLabel).toLowerCase());
 
       signalerSeanceTerminee({
         trainingId,
@@ -3646,7 +3646,7 @@ class HealthConnectService {
         if (trainingId > 0) {
           signalerSeanceTerminee({
             trainingId,
-            titre: traduire("Bravo pour ta séance de {0} !", sportLabel.toLowerCase()),
+            titre: traduire("Bravo pour ta séance de {0} !", traduire(sportLabel).toLowerCase()),
             debutIso: startTime.toISOString(),
             finIso: endTime.toISOString(),
             dureeMin: durationMin,

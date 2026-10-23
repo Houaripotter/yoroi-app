@@ -16,9 +16,9 @@ import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const LIFTS = [
   { key: 'squat', label: 'Squat', kw: ['squat', 'back squat', 'front squat'] },
-  { key: 'bench', label: traduire('Développé couché'), kw: [traduire('développé couché'), traduire('developpé couché'), 'bench press', 'dc', 'bench'] },
-  { key: 'deadlift', label: traduire('Soulevé de terre'), kw: [traduire('soulevé de terre'), traduire('souleve de terre'), 'deadlift', 'sdt'] },
-  { key: 'ohp', label: 'Développé militaire', kw: [traduire('développé militaire'), traduire('developpé militaire'), 'ohp', 'overhead press', 'dm'] },
+  { key: 'bench', label: traduire('Développé couché'), kw: ['développé couché', 'developpé couché', 'bench press', 'dc', 'bench'] },
+  { key: 'deadlift', label: traduire('Soulevé de terre'), kw: ['soulevé de terre', 'souleve de terre', 'deadlift', 'sdt'] },
+  { key: 'ohp', label: 'Développé militaire', kw: ['développé militaire', 'developpé militaire', 'ohp', 'overhead press', 'dm'] },
   { key: 'row', label: 'Rowing barre', kw: ['rowing', 'barbell row', 'pendlay'] },
   { key: 'dips', label: traduire('Dips lestés'), kw: ['dips'] },
   { key: 'pullup', label: traduire('Tractions lestées'), kw: ['traction', 'tractions', 'pull-up', 'pullup', 'weighted pullup'] },
@@ -75,7 +75,7 @@ export function ProgressionView({ refreshKey, hideEmpty }: { refreshKey: number;
         <Sheet2 key={l.key}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ flex: 1 }}>
-              <Ink size={17} weight="black" tight>{l.label}</Ink>
+              <Ink size={17} weight="black" tight>{traduire(l.label)}</Ink>
               <Ink size={12} weight="bold" color={P.muted}>{`${l.entries.length} perf${l.entries.length > 1 ? 's' : ''}${l.best ? traduire(", record le {0}", shortDate(l.best.date)) : ''}`}</Ink>
             </View>
             {l.trend ? (

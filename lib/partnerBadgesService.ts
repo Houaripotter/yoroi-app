@@ -24,7 +24,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'first_round',
     name: 'Premier round',
-    description: traduire('Ton tout premier sparring avec ce partenaire.'),
+    description: 'Ton tout premier sparring avec ce partenaire.',
     icon: 'Sparkles',
     color: '#D4AF37',
     check: s => s.total >= 1,
@@ -32,7 +32,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'first_win',
     name: 'Premiere victoire',
-    description: traduire('Ta premiere domination claire.'),
+    description: 'Ta premiere domination claire.',
     icon: 'Trophy',
     color: '#10B981',
     check: s => s.wins >= 1,
@@ -40,7 +40,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'first_tap',
     name: 'Premier tap out',
-    description: traduire('Tu as fait tapper pour la premiere fois.'),
+    description: 'Tu as fait tapper pour la premiere fois.',
     icon: 'Hand',
     color: '#F59E0B',
     check: s => s.wins >= 1,
@@ -48,7 +48,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'ten_rounds',
     name: '10 rounds ensemble',
-    description: traduire('Vous roulez serieusement.'),
+    description: 'Vous roulez serieusement.',
     icon: 'Flame',
     color: '#EF4444',
     check: s => s.roundsWithPartner >= 10,
@@ -56,7 +56,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'fifty_rounds',
     name: '50 rounds',
-    description: traduire('Partenaire de route.'),
+    description: 'Partenaire de route.',
     icon: 'Mountain',
     color: '#8B5CF6',
     check: s => s.roundsWithPartner >= 50,
@@ -80,7 +80,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'comeback',
     name: 'Comeback',
-    description: traduire('Victoire apres 3 defaites contre ce partenaire.'),
+    description: 'Victoire apres 3 defaites contre ce partenaire.',
     icon: 'RefreshCw',
     color: '#3B82F6',
     check: s => s.wins >= 1 && s.losses >= 3,
@@ -88,7 +88,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'no_tap_12',
     name: 'Incassable',
-    description: traduire('12 rounds consecutifs sans tapper.'),
+    description: '12 rounds consecutifs sans tapper.',
     icon: 'Shield',
     color: '#10B981',
     check: s => s.streakNoTap >= 12,
@@ -96,7 +96,7 @@ export const PARTNER_BADGE_DEFINITIONS: Array<Omit<PartnerBadge, 'unlockedAt'> &
   {
     id: 'regular_month',
     name: 'Routine',
-    description: traduire('Roule avec ce partenaire chaque semaine pendant 1 mois.'),
+    description: 'Roule avec ce partenaire chaque semaine pendant 1 mois.',
     icon: 'Calendar',
     color: '#06B6D4',
     check: s => s.weeksInARow >= 4,

@@ -520,7 +520,7 @@ export const SPORT_LABELS: Record<Sport, string> = {
 export const TYPE_LABELS: Record<ProgressionItemType, string> = {
   technique: traduire('Technique'),
   exercise: traduire('Exercice'),
-  performance: 'Performance',
+  performance: traduire('Performance'),
 };
 
 export const STATUS_LABELS: Record<ProgressionStatus, string> = {

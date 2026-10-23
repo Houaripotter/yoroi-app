@@ -19,7 +19,7 @@ const ICONS: Record<string, { label: string; d: string[]; join?: boolean }> = {
   index: { label: traduire('Accueil'), d: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], join: true },
   seances: { label: traduire('Séances'), d: ['M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11'] },
   progres: { label: traduire('Progrès'), d: ['M3 17l5-5 4 3 8-8', 'M15 7h5v5'], join: true },
-  dojo: { label: 'Dojo', d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'] },
+  dojo: { label: traduire('Dojo'), d: ['M3 6h18M5 9.5h14M7 6v15M17 6v15'] },
 };
 const LEFT = ['index', 'seances'];
 const RIGHT = ['progres', 'dojo'];
@@ -50,7 +50,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
       <Pressable
         onPress={onPress}
         accessibilityRole="tab"
-        accessibilityLabel={icon.label}
+        accessibilityLabel={traduire(icon.label)}
         accessibilityState={{ selected: focused }}
         style={styles.tab}
         hitSlop={6}
@@ -70,7 +70,7 @@ export function InkTabBar({ state, navigation, onPressAdd }: Props) {
           </Svg>
         </View>
         <Ink size={11} weight={focused ? 'extraBold' : 'bold'} color={focused ? c.accent : c.textSecondary} numberOfLines={1}>
-          {icon.label}
+          {traduire(icon.label)}
         </Ink>
       </Pressable>
       </TourAnchor>

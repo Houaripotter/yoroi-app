@@ -13,16 +13,16 @@ import { blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
 const GROUPS = [
-  { key: 'pecs', label: 'Pectoraux', kw: ['pecs', 'pectoraux', 'pectoral', 'pec', traduire('développé couché'), 'dc', 'bench', 'push', traduire('écartés'), 'dips'] },
-  { key: 'dos', label: 'Dos', kw: ['dos', 'back', 'rowing', 'tirage', 'tractions', 'pull', 'lat', traduire('soulevé de terre'), 'sdt', 'deadlift'] },
-  { key: 'epaules', label: 'Épaules', kw: [traduire('épaules'), 'epaule', 'shoulder', traduire('développé militaire'), 'dm', 'ohp', traduire('latéral'), 'face pull'] },
+  { key: 'pecs', label: 'Pectoraux', kw: ['pecs', 'pectoraux', 'pectoral', 'pec', 'développé couché', 'dc', 'bench', 'push', 'écartés', 'dips'] },
+  { key: 'dos', label: 'Dos', kw: ['dos', 'back', 'rowing', 'tirage', 'tractions', 'pull', 'lat', 'soulevé de terre', 'sdt', 'deadlift'] },
+  { key: 'epaules', label: 'Épaules', kw: ['épaules', 'epaule', 'shoulder', 'développé militaire', 'dm', 'ohp', 'latéral', 'face pull'] },
   { key: 'biceps', label: 'Biceps', kw: ['biceps', 'curl', 'bicep', 'arm'] },
   { key: 'triceps', label: 'Triceps', kw: ['triceps', 'skull crusher', 'extension triceps'] },
   { key: 'jambes', label: 'Jambes', kw: ['jambes', 'legs', 'quadri', 'ischio', 'squat', 'fente', 'presse', 'leg press', 'leg extension', 'leg curl'] },
   { key: 'fessiers', label: 'Fessiers', kw: ['fessiers', 'fesses', 'glutes', 'hip thrust', 'hip-thrust'] },
   { key: 'mollets', label: 'Mollets', kw: ['mollets', 'mollet', 'calves', 'calf'] },
   { key: 'abdos', label: 'Abdos / Core', kw: ['abdos', 'abs', 'core', 'gainage', 'planche', 'crunch'] },
-  { key: 'avant_bras', label: 'Avant-bras', kw: ['avant-bras', traduire('avant bras'), 'grip', 'forearm'] },
+  { key: 'avant_bras', label: 'Avant-bras', kw: ['avant-bras', 'avant bras', 'grip', 'forearm'] },
 ];
 
 export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hideEmpty?: boolean }) {
@@ -69,7 +69,7 @@ export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {data.well.map((g) => (
               <View key={g.key} style={{ paddingHorizontal: 12, height: 32, borderRadius: 16, justifyContent: 'center', backgroundColor: blancA(0.75) }}>
-                <Ink size={13} weight="extraBold" color={P.mossText}>{traduire("{0}, {1} fois", g.label, g.last30)}</Ink>
+                <Ink size={13} weight="extraBold" color={P.mossText}>{traduire("{0}, {1} fois", traduire(g.label), g.last30)}</Ink>
               </View>
             ))}
           </View>
@@ -80,7 +80,7 @@ export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
           <Ink size={17} weight="black" tight color={P.accent}>{traduire("À relancer")}</Ink>
           {data.neglected.map((g) => (
             <View key={g.key} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Ink size={15} weight="bold">{g.label}</Ink>
+              <Ink size={15} weight="bold">{traduire(g.label)}</Ink>
               <Ink size={14} weight="extraBold" color={P.accent}>{traduire("{0} jours sans", g.since)}</Ink>
             </View>
           ))}
@@ -96,16 +96,16 @@ export function MusclesView({ refreshKey, hideEmpty }: { refreshKey: number; hid
             <View key={g.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ flex: 1, gap: 6 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Ink size={15} weight="bold">{g.label}</Ink>
+                  <Ink size={15} weight="bold">{traduire(g.label)}</Ink>
                   <Ink size={13} weight="extraBold" color={g.last30 >= 4 ? P.mossText : P.ink2}>{traduire("{0} au total, {1} en 30 j", g.total, g.last30)}</Ink>
                 </View>
                 <BrushBar value={g.total / data.max} color={g.last30 >= 4 ? P.moss : P.ink} height={8} />
               </View>
-              <IconBtn name="film" label={traduire("Vidéos {0}", g.label)} onPress={() => setVideo(g.label)} tone="soft" />
+              <IconBtn name="film" label={traduire("Vidéos {0}", traduire(g.label))} onPress={() => setVideo(g.label)} tone="soft" />
             </View>
           ))}
       </Sheet2>
-      {video ? <VideoLibrarySheet visible onClose={() => setVideo(null)} muscleGroup={video} muscleGroupLabel={video} /> : null}
+      {video ? <VideoLibrarySheet visible onClose={() => setVideo(null)} muscleGroup={video} muscleGroupLabel={traduire(video)} /> : null}
     </View>
   );
 }

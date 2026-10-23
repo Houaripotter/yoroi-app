@@ -67,7 +67,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
         appAlert(traduire('Restauration réussie'), traduire('Ton état précédent a été restauré.'));
         await refresh();
       } else {
-        appAlert('Oups', traduire('L’état précédent n’a pas pu être restauré.'));
+        appAlert(traduire('Oups'), traduire('L’état précédent n’a pas pu être restauré.'));
       }
     } catch (e) {
       logger.error('[SafetyBackupRestore] Erreur:', e);

@@ -121,11 +121,11 @@ export default function SparringPartnersScreen() {
   return (
     <>
       <DetailScreen
-        title="Partenaires"
+        title={traduire("Partenaires")}
         subtitle={traduire("Ton carnet de guerre, un guerrier par carte")}
         right={
           <>
-            <IconBtn icon="crown" label="Classement" onPress={() => router.push('/sparring-ranking' as any)} />
+            <IconBtn icon="crown" label={traduire("Classement")} onPress={() => router.push('/sparring-ranking' as any)} />
             <IconBtn icon="plus" label={traduire("Ajouter un partenaire")} tone="red" onPress={() => { setNewName(''); setAddOpen(true); }} />
           </>
         }
@@ -180,15 +180,15 @@ export default function SparringPartnersScreen() {
           <Enter i={1}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               {[
-                { label: 'Classement', icon: 'crown' as const, route: '/sparring-ranking' },
+                { label: traduire('Classement'), icon: 'crown' as const, route: '/sparring-ranking' },
                 { label: traduire('Rangs S à D'), icon: 'flag' as const, route: '/partners-tier-list' },
-                { label: 'Matrice', icon: 'grid' as const, route: '/matchup-matrix' },
+                { label: traduire('Matrice'), icon: 'grid' as const, route: '/matchup-matrix' },
               ].map((l) => (
-                <Press key={l.route} onPress={() => router.push(l.route as any)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={l.label}>
+                <Press key={l.route} onPress={() => router.push(l.route as any)} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel={traduire(l.label)}>
                   <Card style={{ padding: 14, alignItems: 'center', gap: 8 }}>
                     <CIcon name={l.icon} size={22} color={P.accent} />
                     <Ink size={13} weight="extraBold" style={{ textAlign: 'center' }}>
-                      {l.label}
+                      {traduire(l.label)}
                     </Ink>
                   </Card>
                 </Press>
@@ -225,7 +225,7 @@ export default function SparringPartnersScreen() {
                   <Seal name={p.name} photoUri={p.photoUri} belt={p.belt} size={64} />
                   <View style={{ flex: 1, gap: 3 }}>
                     <Ink size={19} weight="black" tight numberOfLines={2}>
-                      {p.name}
+                      {traduire(p.name)}
                     </Ink>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <BeltBar belt={p.belt} width={56} height={9} />
@@ -288,7 +288,7 @@ export default function SparringPartnersScreen() {
                   <View style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                     <View style={{ width: 22, height: 9, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.edge }} />
                     <Ink size={14} weight="bold" color={on ? P.white : P.ink2}>
-                      {b.label}
+                      {traduire(b.label)}
                     </Ink>
                   </View>
                 </Press>

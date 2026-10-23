@@ -12,11 +12,11 @@ import { TabEmpty, TabLoading } from './common';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const SUBMISSION_FAMILIES: Record<string, { label: string; kw: string[] }> = {
-  chokes: { label: traduire('Étranglements'), kw: ['triangle', 'rnc', 'rear naked', 'guillotine', traduire("d'arce"), 'darce', 'ezekiel', 'cross collar', 'anaconda', 'bow and arrow', traduire('étranglement'), 'etranglement', 'baseball', 'north south', 'loop choke', 'peruvian'] },
-  arm: { label: traduire('Clés de bras'), kw: ['armbar', 'kimura', 'americana', 'americaine', 'omoplata', traduire('clé de bras'), traduire('clef de bras'), 'arm triangle', 'bras tendu', 'wrist lock'] },
+  chokes: { label: traduire('Étranglements'), kw: ['triangle', 'rnc', 'rear naked', 'guillotine', "d'arce", 'darce', 'ezekiel', 'cross collar', 'anaconda', 'bow and arrow', 'étranglement', 'etranglement', 'baseball', 'north south', 'loop choke', 'peruvian'] },
+  arm: { label: traduire('Clés de bras'), kw: ['armbar', 'kimura', 'americana', 'americaine', 'omoplata', 'clé de bras', 'clef de bras', 'arm triangle', 'bras tendu', 'wrist lock'] },
   leg: { label: traduire('Clés de jambes'), kw: ['heel hook', 'kneebar', 'straight footlock', 'toe hold', 'calf slicer', 'leg lock', 'ashi', '50/50', 'talon', 'genou', 'saddle'] },
   back: { label: traduire('Depuis le dos'), kw: ['rnc', 'rear naked', 'bow and arrow', 'crucifix', 'back mount', 'dos'] },
-  pressure: { label: 'Positions dominantes', kw: ['mount', 'side control', 'knee on belly', traduire('monté'), 'nord sud', 'north south', 'passage'] },
+  pressure: { label: traduire('Positions dominantes'), kw: ['mount', 'side control', 'knee on belly', 'monté', 'nord sud', 'north south', 'passage'] },
 };
 
 function family(name: string): string | null {
@@ -91,13 +91,13 @@ export function PositionsView({ refreshKey }: { refreshKey: number }) {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: P.danger }} />
-              <Ink size={12} weight="bold" color={P.ink2}>Subies</Ink>
+              <Ink size={12} weight="bold" color={P.ink2}>{traduire("Subies")}</Ink>
             </View>
           </View>
           {families.map((f) => (
             <View key={f.key} style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Ink size={15} weight="bold">{f.label}</Ink>
+                <Ink size={15} weight="bold">{traduire(f.label)}</Ink>
                 <Ink size={13} weight="extraBold" color={P.ink2}>{traduire("{0} données, {1} subies", f.given, f.taken)}</Ink>
               </View>
               <SplitBar parts={[{ value: f.given, color: P.moss }, { value: f.taken, color: P.danger }]} />

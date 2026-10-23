@@ -167,7 +167,7 @@ const importWeightHistory = async (days: number = 365): Promise<number> => {
     return importedCount;
   } catch (error) {
     logger.error('[HealthService] Exception lors de l\'import:', error);
-    appAlert('Oups', traduire('L’import n’a pas abouti. Réessaie.'));
+    appAlert(traduire('Oups'), traduire('L’import n’a pas abouti. Réessaie.'));
     return 0;
   }
 };

@@ -1,0 +1,2240 @@
+{
+ "stats": {
+  "fichiers": 333,
+  "remplaces": 1648,
+  "pluriels": 0,
+  "phrasesJsx": 0,
+  "ignores": {
+   "valeur": 251,
+   "identifiant": 10,
+   "recherche": 1,
+   "as": 10,
+   "propriété": 21,
+   "appel": 4,
+   "tableau": 4,
+   "type": 13
+  },
+  "inconnus": 139
+ },
+ "modifs": {
+  "app/(tabs)/dojo.tsx": 3,
+  "app/(tabs)/seances.tsx": 1,
+  "app/activity-detail.tsx": 1,
+  "app/ajouter.tsx": 4,
+  "app/backup-history.tsx": 10,
+  "app/balance-photo.tsx": 4,
+  "app/body-history.tsx": 6,
+  "app/calculators.tsx": 10,
+  "app/carte.tsx": 4,
+  "app/charge.tsx": 1,
+  "app/citations.tsx": 3,
+  "app/combat-achievements.tsx": 2,
+  "app/combat-analytics.tsx": 6,
+  "app/combat-detail.tsx": 4,
+  "app/combat-hub.tsx": 3,
+  "app/combat-timer.tsx": 7,
+  "app/companion.tsx": 4,
+  "app/competition-detail.tsx": 6,
+  "app/competitions.tsx": 3,
+  "app/competitor-profile.tsx": 9,
+  "app/composition-detail.tsx": 6,
+  "app/creator-mode.tsx": 18,
+  "app/dojo/boutique.tsx": 3,
+  "app/dojo/journal.tsx": 1,
+  "app/dojo/pack.tsx": 2,
+  "app/espace/accueil.tsx": 1,
+  "app/event-detail.tsx": 4,
+  "app/export-data.tsx": 5,
+  "app/fasting.tsx": 7,
+  "app/frame-selection.tsx": 12,
+  "app/health-connect.tsx": 8,
+  "app/health-professionals.tsx": 1,
+  "app/heart-zones-settings.tsx": 5,
+  "app/hydration.tsx": 3,
+  "app/ideas.tsx": 3,
+  "app/import-csv.tsx": 4,
+  "app/import-workouts.tsx": 2,
+  "app/infirmary.tsx": 6,
+  "app/injury-evaluation.tsx": 3,
+  "app/logo-selection.tsx": 1,
+  "app/marketing-kit.tsx": 6,
+  "app/mat-time.tsx": 1,
+  "app/matchup-matrix.tsx": 1,
+  "app/measurements-detail.tsx": 1,
+  "app/notification-center.tsx": 5,
+  "app/notifications.tsx": 8,
+  "app/nouveautes.tsx": 2,
+  "app/nutrition-plan.tsx": 5,
+  "app/palmares.tsx": 5,
+  "app/partners-tier-list.tsx": 1,
+  "app/partners.tsx": 7,
+  "app/pesee.tsx": 1,
+  "app/photos.tsx": 8,
+  "app/planning.tsx": 2,
+  "app/poids-detail.tsx": 1,
+  "app/privacy-data.tsx": 5,
+  "app/profile.tsx": 15,
+  "app/quick-nutrition.tsx": 3,
+  "app/radar-performance.tsx": 3,
+  "app/readiness-detail.tsx": 1,
+  "app/records.tsx": 4,
+  "app/sante/[metrique].tsx": 9,
+  "app/sante/index.tsx": 1,
+  "app/sante/montre.tsx": 1,
+  "app/savoir.tsx": 2,
+  "app/scientific-sources.tsx": 21,
+  "app/seance/cardio.tsx": 16,
+  "app/seance/combat.tsx": 20,
+  "app/seance/deja-faite.tsx": 5,
+  "app/seance/index.tsx": 3,
+  "app/seance/match.tsx": 11,
+  "app/settings/affichage.tsx": 5,
+  "app/settings/aide.tsx": 4,
+  "app/settings/copies-securite.tsx": 6,
+  "app/settings/donnees.tsx": 22,
+  "app/settings/index.tsx": 11,
+  "app/settings/legal.tsx": 1,
+  "app/settings/personnage.tsx": 5,
+  "app/settings/photo.tsx": 5,
+  "app/settings/sauvegardes.tsx": 3,
+  "app/settings/scene.tsx": 5,
+  "app/settings/style.tsx": 9,
+  "app/sleep-detail.tsx": 1,
+  "app/sleep-history.tsx": 1,
+  "app/sleep-input.tsx": 1,
+  "app/sleep.tsx": 1,
+  "app/social-share/backup-step.tsx": 2,
+  "app/social-share/duel-card.tsx": 1,
+  "app/social-share/last-session.tsx": 7,
+  "app/sparring-partners.tsx": 4,
+  "app/sparring-ranking.tsx": 2,
+  "app/sync-devices.tsx": 6,
+  "app/sync-history.tsx": 2,
+  "app/terms.tsx": 4,
+  "app/timer.tsx": 19,
+  "app/training-journal.tsx": 16,
+  "app/transformation.tsx": 4,
+  "app/weight-predictions.tsx": 1,
+  "app/workout-detail.tsx": 17,
+  "app/wrapped.tsx": 4,
+  "components/BackupEncryptionToggle.tsx": 3,
+  "components/BackupStatusHeader.tsx": 2,
+  "components/BackupTypeSelector.tsx": 1,
+  "components/BiometricLockOverlay.tsx": 1,
+  "components/BodyMap.tsx": 57,
+  "components/Celebration.tsx": 2,
+  "components/CrossPlatformMigration.tsx": 1,
+  "components/SafetyBackupRestoreButton.tsx": 1,
+  "components/TestRestoreButton.tsx": 2,
+  "components/VictoryShareModal.tsx": 8,
+  "components/ZoneSelectionModal.tsx": 1,
+  "components/social-cards/CombatShareCard.tsx": 1,
+  "components/social-cards/DuelCard.tsx": 2,
+  "components/social-cards/SessionCard.tsx": 10,
+  "components/social-cards/UniversalShareCard.tsx": 26,
+  "components/social-cards/WeeklyRecapCard.tsx": 3,
+  "components/social-cards/YearCounterCard.tsx": 1,
+  "components/yoroi/v2/InkTabBar.tsx": 1,
+  "components/yoroi/v2/accueil/BlocMois.tsx": 1,
+  "components/yoroi/v2/accueil/Blocs.tsx": 2,
+  "components/yoroi/v2/accueil/BodyZones.tsx": 7,
+  "components/yoroi/v2/accueil/CarteImportSante.tsx": 2,
+  "components/yoroi/v2/accueil/CartePoids.tsx": 2,
+  "components/yoroi/v2/accueil/CarteSante.tsx": 1,
+  "components/yoroi/v2/accueil/EauFeuille.tsx": 1,
+  "components/yoroi/v2/accueil/FeuilleConseil.tsx": 2,
+  "components/yoroi/v2/accueil/Grille.tsx": 10,
+  "components/yoroi/v2/accueil/NotifBell.tsx": 1,
+  "components/yoroi/v2/accueil/Raccourcis.tsx": 3,
+  "components/yoroi/v2/accueil/SanteJour.tsx": 1,
+  "components/yoroi/v2/accueil/kit.tsx": 1,
+  "components/yoroi/v2/bilan/BilanVue.tsx": 3,
+  "components/yoroi/v2/carnet/AddSkillSheet.tsx": 4,
+  "components/yoroi/v2/carnet/BenchmarkDetail.tsx": 2,
+  "components/yoroi/v2/carnet/CombatSection.tsx": 2,
+  "components/yoroi/v2/carnet/EntrySheet.tsx": 9,
+  "components/yoroi/v2/carnet/RecordPicker.tsx": 11,
+  "components/yoroi/v2/carnet/RecordShareSheet.tsx": 1,
+  "components/yoroi/v2/carnet/SkillDetail.tsx": 1,
+  "components/yoroi/v2/carnet/SkillsView.tsx": 2,
+  "components/yoroi/v2/carnet/TrashSheet.tsx": 1,
+  "components/yoroi/v2/carnet/VideoLibrarySheet.tsx": 5,
+  "components/yoroi/v2/carnet/VideosView.tsx": 3,
+  "components/yoroi/v2/carnet/chrono/ActiveChrono.tsx": 2,
+  "components/yoroi/v2/carnet/chrono/parts.tsx": 7,
+  "components/yoroi/v2/carnet/chrono/setup.tsx": 1,
+  "components/yoroi/v2/carnet/images.ts": 2,
+  "components/yoroi/v2/carnet/nav.tsx": 2,
+  "components/yoroi/v2/carnet/tabs/AlluresView.tsx": 1,
+  "components/yoroi/v2/carnet/tabs/CompetitionsView.tsx": 2,
+  "components/yoroi/v2/carnet/tabs/MusclesView.tsx": 2,
+  "components/yoroi/v2/carnet/tabs/PositionsView.tsx": 6,
+  "components/yoroi/v2/carnet/tabs/SeancesMuscuView.tsx": 3,
+  "components/yoroi/v2/carnet/tabs/SortiesView.tsx": 2,
+  "components/yoroi/v2/carnet/tabs/SparringParts.tsx": 2,
+  "components/yoroi/v2/carnet/tabs/SparringView.tsx": 12,
+  "components/yoroi/v2/carnet/tabs/VoiesView.tsx": 2,
+  "components/yoroi/v2/carnet/ui.tsx": 1,
+  "components/yoroi/v2/carnet/videos/AddVideoSheet.tsx": 7,
+  "components/yoroi/v2/cartes/CarteRendu.tsx": 2,
+  "components/yoroi/v2/cartes/FeuilleCarte.tsx": 2,
+  "components/yoroi/v2/chargement/Chargement.tsx": 1,
+  "components/yoroi/v2/charts/PeriodSwitch.tsx": 1,
+  "components/yoroi/v2/combat/partner/Briefing.tsx": 1,
+  "components/yoroi/v2/combat/partner/FighterProfile.tsx": 4,
+  "components/yoroi/v2/combat/partner/MediaAudio.tsx": 5,
+  "components/yoroi/v2/combat/partner/sections.tsx": 4,
+  "components/yoroi/v2/combat/ui.tsx": 2,
+  "components/yoroi/v2/competition/CompetitionForm.tsx": 5,
+  "components/yoroi/v2/competition/ObjectivesTab.tsx": 6,
+  "components/yoroi/v2/competition/TrainingGoalsTab.tsx": 1,
+  "components/yoroi/v2/competition/WeighIn.tsx": 2,
+  "components/yoroi/v2/dojo/Celebration.tsx": 2,
+  "components/yoroi/v2/dojo/PauseSemaine.tsx": 1,
+  "components/yoroi/v2/dojo/VisiteDojo.tsx": 1,
+  "components/yoroi/v2/dojo/personnages/Galerie.tsx": 2,
+  "components/yoroi/v2/espace/Pickers.tsx": 1,
+  "components/yoroi/v2/espace/assets.ts": 1,
+  "components/yoroi/v2/espace/reglages/parts.tsx": 1,
+  "components/yoroi/v2/notifications/RappelsDiscipline.tsx": 1,
+  "components/yoroi/v2/nutrition/CutTimeline.tsx": 1,
+  "components/yoroi/v2/nutrition/WeightCutHub.tsx": 8,
+  "components/yoroi/v2/nutrition/ui.tsx": 2,
+  "components/yoroi/v2/onboarding/Affirmation.tsx": 2,
+  "components/yoroi/v2/onboarding/Cap.tsx": 1,
+  "components/yoroi/v2/onboarding/Comparaison.tsx": 2,
+  "components/yoroi/v2/onboarding/Demo.tsx": 2,
+  "components/yoroi/v2/onboarding/Frein.tsx": 1,
+  "components/yoroi/v2/onboarding/Moment.tsx": 1,
+  "components/yoroi/v2/onboarding/Objectif.tsx": 1,
+  "components/yoroi/v2/onboarding/Pas.tsx": 6,
+  "components/yoroi/v2/onboarding/Poids.tsx": 2,
+  "components/yoroi/v2/onboarding/Prenom.tsx": 1,
+  "components/yoroi/v2/onboarding/Resultat.tsx": 1,
+  "components/yoroi/v2/onboarding/Rythme.tsx": 1,
+  "components/yoroi/v2/onboarding/Sport.tsx": 1,
+  "components/yoroi/v2/onboarding/Taille.tsx": 1,
+  "components/yoroi/v2/onboarding/Toi.tsx": 3,
+  "components/yoroi/v2/onboarding/Univers.tsx": 1,
+  "components/yoroi/v2/onboarding/Vitrines.tsx": 7,
+  "components/yoroi/v2/onboarding/ui.tsx": 1,
+  "components/yoroi/v2/partage/FighterCardView.tsx": 1,
+  "components/yoroi/v2/partage/ShareStudio.tsx": 5,
+  "components/yoroi/v2/pesee/CompositionSection.tsx": 2,
+  "components/yoroi/v2/pesee/ObjectifPoids.tsx": 2,
+  "components/yoroi/v2/photos/CameraFantome.tsx": 2,
+  "components/yoroi/v2/photos/VisionneusePhotos.tsx": 2,
+  "components/yoroi/v2/premium/Benefices.tsx": 1,
+  "components/yoroi/v2/premium/Paywall.tsx": 6,
+  "components/yoroi/v2/progres/CorpsSection.tsx": 3,
+  "components/yoroi/v2/progres/Ensemble.tsx": 3,
+  "components/yoroi/v2/progres/ExamplePreview.tsx": 1,
+  "components/yoroi/v2/progres/HealthNutritionCards.tsx": 5,
+  "components/yoroi/v2/progres/MiniCurveGrid.tsx": 4,
+  "components/yoroi/v2/progres/Segments.tsx": 5,
+  "components/yoroi/v2/progres/TrainingCharts.tsx": 1,
+  "components/yoroi/v2/reglages/EntreePersonnaliser.tsx": 1,
+  "components/yoroi/v2/sante/Dashboard.tsx": 4,
+  "components/yoroi/v2/sante/Devices.tsx": 1,
+  "components/yoroi/v2/sante/Hub.tsx": 4,
+  "components/yoroi/v2/sante/Rings.tsx": 1,
+  "components/yoroi/v2/sante/SanteIcon.tsx": 1,
+  "components/yoroi/v2/sante/brands.ts": 5,
+  "components/yoroi/v2/sante/ui.tsx": 3,
+  "components/yoroi/v2/sauvegarde/lancerCopieAuto.ts": 1,
+  "components/yoroi/v2/seance/Details.tsx": 1,
+  "components/yoroi/v2/seance/FinRessenti.tsx": 1,
+  "components/yoroi/v2/seance/MachineFinder.tsx": 1,
+  "components/yoroi/v2/seance/RestBar.tsx": 1,
+  "components/yoroi/v2/seances/ClubForm.tsx": 5,
+  "components/yoroi/v2/seances/Example.tsx": 1,
+  "components/yoroi/v2/seances/ImportSeances.tsx": 1,
+  "components/yoroi/v2/seances/LastSession.tsx": 1,
+  "components/yoroi/v2/seances/MonthMarks.tsx": 1,
+  "components/yoroi/v2/seances/NextUp.tsx": 1,
+  "components/yoroi/v2/seances/PlanClubs.tsx": 1,
+  "components/yoroi/v2/seances/PlanEvents.tsx": 1,
+  "components/yoroi/v2/seances/PlanMonth.tsx": 1,
+  "components/yoroi/v2/seances/PlanWeek.tsx": 3,
+  "components/yoroi/v2/studio/Abonnement.tsx": 11,
+  "components/yoroi/v2/studio/Ambiance.tsx": 6,
+  "components/yoroi/v2/studio/ApercuScenes.tsx": 1,
+  "components/yoroi/v2/studio/Apercus.tsx": 2,
+  "components/yoroi/v2/studio/Contenu.tsx": 3,
+  "components/yoroi/v2/studio/Diagnostic.tsx": 16,
+  "components/yoroi/v2/studio/Donnees.tsx": 8,
+  "components/yoroi/v2/studio/Gamification.tsx": 5,
+  "components/yoroi/v2/studio/Liens.tsx": 11,
+  "components/yoroi/v2/studio/PreviewBar.tsx": 2,
+  "components/yoroi/v2/studio/Tests.tsx": 24,
+  "components/yoroi/v2/studio/TokenSheet.tsx": 2,
+  "components/yoroi/v2/studio/galeries/EtatsGalerie.tsx": 4,
+  "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx": 19,
+  "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx": 15,
+  "components/yoroi/v2/studio/galeries/PartageGalerie.tsx": 6,
+  "components/yoroi/v2/studio/galeries/SonsGalerie.tsx": 2,
+  "components/yoroi/v2/studio/galeries/fictif.ts": 2,
+  "components/yoroi/v2/tour/VisiteGuidee.tsx": 1,
+  "components/yoroi/v2/tour/etapes.ts": 1,
+  "lib/backupShareService.ts": 3,
+  "lib/badges.ts": 2,
+  "lib/citations.ts": 3,
+  "lib/combatAchievements.ts": 22,
+  "lib/combatThemeLibrary.ts": 161,
+  "lib/eveningHealthTipsService.ts": 8,
+  "lib/exercises.ts": 2,
+  "lib/healthInsights.ts": 3,
+  "lib/healthRanges.ts": 2,
+  "lib/healthService.ts": 1,
+  "lib/objectivesService.ts": 4,
+  "lib/partnerInsightsService.ts": 2,
+  "lib/partnerModel.ts": 11,
+  "lib/ranks.ts": 1,
+  "lib/security/validators.ts": 1,
+  "lib/sessionTypes.ts": 35,
+  "lib/sportPacks.ts": 6,
+  "lib/sports.ts": 7,
+  "lib/syncHistoryService.ts": 7,
+  "lib/trainingExportService.ts": 8,
+  "lib/trainingJournalService.native.ts": 1,
+  "lib/trainingJournalService.ts": 1,
+  "lib/trainingLoadService.ts": 8,
+  "lib/v2/accueil/conseil.ts": 4,
+  "lib/v2/balance/format.ts": 14,
+  "lib/v2/bilan/demo.ts": 1,
+  "lib/v2/bilan/texte.ts": 1,
+  "lib/v2/carnet/chrono.ts": 19,
+  "lib/v2/carnet/journal.ts": 8,
+  "lib/v2/carnet/videos.ts": 2,
+  "lib/v2/cartes/chiffres.ts": 8,
+  "lib/v2/cartes/demo.ts": 1,
+  "lib/v2/cartes/export.ts": 2,
+  "lib/v2/combat/analytics.ts": 1,
+  "lib/v2/combat/partnerInsights.ts": 11,
+  "lib/v2/combat/rounds.ts": 6,
+  "lib/v2/competition/camp.ts": 1,
+  "lib/v2/competition/checklist.ts": 2,
+  "lib/v2/competition/extras.ts": 2,
+  "lib/v2/competition/officialCalendars.ts": 1,
+  "lib/v2/competition/savoirData.ts": 16,
+  "lib/v2/creator/contentReport.generated.ts": 9,
+  "lib/v2/creator/deviceInfo.ts": 3,
+  "lib/v2/creator/onceWindows.ts": 2,
+  "lib/v2/creator/screens.ts": 4,
+  "lib/v2/dojo/dojoAffichage.ts": 5,
+  "lib/v2/espace/groupes.ts": 2,
+  "lib/v2/espace/presentation.ts": 1,
+  "lib/v2/espace/sonScene.ts": 1,
+  "lib/v2/notifications/discipline.ts": 1,
+  "lib/v2/nutrition/formulas.ts": 10,
+  "lib/v2/nutrition/lireRepas.android.ts": 1,
+  "lib/v2/onboarding/freins.ts": 1,
+  "lib/v2/partage/capture.ts": 4,
+  "lib/v2/pesee/health.ts": 7,
+  "lib/v2/pesee/historiquePoids.ts": 2,
+  "lib/v2/photos/datePhoto.ts": 1,
+  "lib/v2/photos/outils.ts": 2,
+  "lib/v2/premium/sources.ts": 4,
+  "lib/v2/progres/biomarkers.ts": 3,
+  "lib/v2/progres/composition.ts": 2,
+  "lib/v2/sante/connexion.ts": 1,
+  "lib/v2/sante/demandeActions.ts": 1,
+  "lib/v2/sante/importAccueil.ts": 1,
+  "lib/v2/sante/metrics.ts": 9,
+  "lib/v2/sante/metricsMore.ts": 13,
+  "lib/v2/sante/typesSante.ts": 4,
+  "lib/v2/sante/watches.ts": 2,
+  "lib/v2/seance/corps.ts": 6,
+  "lib/v2/seance/machines.ts": 33,
+  "lib/v2/seance/ressenti.ts": 3,
+  "lib/v2/seance/sportVisuals.ts": 1,
+  "lib/v2/seances/muscles.ts": 6,
+  "lib/v2/widgets/style.ts": 3
+ },
+ "ignores": [
+  {
+   "f": "app/(tabs)/progres.tsx",
+   "l": 58,
+   "raison": "valeur utilisée par le code",
+   "txt": "Corps"
+  },
+  {
+   "f": "app/(tabs)/progres.tsx",
+   "l": 58,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "app/(tabs)/progres.tsx",
+   "l": 83,
+   "raison": "valeur utilisée par le code",
+   "txt": "Corps"
+  },
+  {
+   "f": "app/(tabs)/progres.tsx",
+   "l": 109,
+   "raison": "valeur utilisée par le code",
+   "txt": "Corps"
+  },
+  {
+   "f": "app/(tabs)/progres.tsx",
+   "l": 109,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "app/(tabs)/progres.tsx",
+   "l": 175,
+   "raison": "valeur utilisée par le code",
+   "txt": "Corps"
+  },
+  {
+   "f": "app/(tabs)/progres.tsx",
+   "l": 181,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "app/ajouter.tsx",
+   "l": 239,
+   "raison": "valeur utilisée par le code",
+   "txt": "Corps"
+  },
+  {
+   "f": "app/body-composition.tsx",
+   "l": 360,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/combat-analytics.tsx",
+   "l": 195,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "app/combat-analytics.tsx",
+   "l": 245,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "app/combat-detail.tsx",
+   "l": 190,
+   "raison": "valeur utilisée par le code",
+   "txt": "Notes"
+  },
+  {
+   "f": "app/combat-timer.tsx",
+   "l": 159,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "app/combat-timer.tsx",
+   "l": 223,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "app/combat-timer.tsx",
+   "l": 323,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "app/companion.tsx",
+   "l": 36,
+   "raison": "valeur utilisée par le code",
+   "txt": "Graisse"
+  },
+  {
+   "f": "app/companion.tsx",
+   "l": 42,
+   "raison": "valeur utilisée par le code",
+   "txt": "Bras G"
+  },
+  {
+   "f": "app/companion.tsx",
+   "l": 43,
+   "raison": "valeur utilisée par le code",
+   "txt": "Bras D"
+  },
+  {
+   "f": "app/competition-detail.tsx",
+   "l": 288,
+   "raison": "identifiant",
+   "txt": "Check-list"
+  },
+  {
+   "f": "app/composition-detail.tsx",
+   "l": 13,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/composition-detail.tsx",
+   "l": 34,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "app/composition-detail.tsx",
+   "l": 34,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/composition-detail.tsx",
+   "l": 45,
+   "raison": "recherche undefined)[]).filter",
+   "txt": "Masse maigre"
+  },
+  {
+   "f": "app/event-detail.tsx",
+   "l": 31,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "app/event-detail.tsx",
+   "l": 115,
+   "raison": "valeur utilisée par le code",
+   "txt": "Date"
+  },
+  {
+   "f": "app/health-connect.tsx",
+   "l": 85,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/health-connect.tsx",
+   "l": 320,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "app/health-connect.tsx",
+   "l": 326,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "app/health-connect.tsx",
+   "l": 410,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "app/heart-zones-settings.tsx",
+   "l": 455,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin Connect"
+  },
+  {
+   "f": "app/heart-zones-settings.tsx",
+   "l": 463,
+   "raison": "valeur utilisée par le code",
+   "txt": "Fitbit"
+  },
+  {
+   "f": "app/heart-zones-settings.tsx",
+   "l": 467,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/import-workouts.tsx",
+   "l": 143,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "app/injury-evaluation.tsx",
+   "l": 159,
+   "raison": "valeur utilisée par le code",
+   "txt": "Cause"
+  },
+  {
+   "f": "app/nouveautes.tsx",
+   "l": 239,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/partners.tsx",
+   "l": 116,
+   "raison": "as const",
+   "txt": "Clubs"
+  },
+  {
+   "f": "app/partners.tsx",
+   "l": 188,
+   "raison": "identifiant",
+   "txt": "E-mail"
+  },
+  {
+   "f": "app/pesee.tsx",
+   "l": 275,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/profile.tsx",
+   "l": 288,
+   "raison": "propriété name",
+   "txt": "Guerrier"
+  },
+  {
+   "f": "app/profile.tsx",
+   "l": 454,
+   "raison": "appel technique traduire",
+   "txt": "Langue"
+  },
+  {
+   "f": "app/radar-performance.tsx",
+   "l": 21,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "app/sante/[metrique].tsx",
+   "l": 39,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "app/sante/[metrique].tsx",
+   "l": 40,
+   "raison": "valeur utilisée par le code",
+   "txt": "iPhone"
+  },
+  {
+   "f": "app/sante/[metrique].tsx",
+   "l": 41,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/sante/[metrique].tsx",
+   "l": 42,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "app/sante/[metrique].tsx",
+   "l": 43,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "app/sante/[metrique].tsx",
+   "l": 47,
+   "raison": "valeur utilisée par le code",
+   "txt": "Fitbit"
+  },
+  {
+   "f": "app/sante/[metrique].tsx",
+   "l": 564,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/sante/anneaux.tsx",
+   "l": 187,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/sante/anneaux.tsx",
+   "l": 188,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/sante/index.tsx",
+   "l": 48,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/sante/montre.tsx",
+   "l": 95,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/sante/montre.tsx",
+   "l": 140,
+   "raison": "valeur utilisée par le code",
+   "txt": "iPhone"
+  },
+  {
+   "f": "app/sante/montre.tsx",
+   "l": 149,
+   "raison": "appel technique traduire",
+   "txt": "Android"
+  },
+  {
+   "f": "app/sante/montre.tsx",
+   "l": 149,
+   "raison": "valeur utilisée par le code",
+   "txt": "iPhone"
+  },
+  {
+   "f": "app/sante/montre.tsx",
+   "l": 266,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "app/seance/combat.tsx",
+   "l": 746,
+   "raison": "valeur utilisée par le code",
+   "txt": "Note"
+  },
+  {
+   "f": "app/seance/match.tsx",
+   "l": 218,
+   "raison": "valeur utilisée par le code",
+   "txt": "Notes"
+  },
+  {
+   "f": "app/settings/aide.tsx",
+   "l": 25,
+   "raison": "valeur utilisée par le code",
+   "txt": "iPhone"
+  },
+  {
+   "f": "app/social-share/last-session.tsx",
+   "l": 319,
+   "raison": "valeur utilisée par le code",
+   "txt": "Date"
+  },
+  {
+   "f": "app/timer.tsx",
+   "l": 134,
+   "raison": "valeur utilisée par le code",
+   "txt": "Tractions"
+  },
+  {
+   "f": "app/training-journal.tsx",
+   "l": 137,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 876,
+   "raison": "tableau de recherche",
+   "txt": "Oscillation verticale"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 967,
+   "raison": "valeur utilisée par le code",
+   "txt": "Notes"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 997,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 997,
+   "raison": "valeur utilisée par le code",
+   "txt": "iPhone"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 997,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 997,
+   "raison": "valeur utilisée par le code",
+   "txt": "Fitbit"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 997,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "app/workout-detail.tsx",
+   "l": 997,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/BodyMap.tsx",
+   "l": 186,
+   "raison": "valeur utilisée par le code",
+   "txt": "Mollet G"
+  },
+  {
+   "f": "components/BodyMap.tsx",
+   "l": 187,
+   "raison": "valeur utilisée par le code",
+   "txt": "Mollet D"
+  },
+  {
+   "f": "components/VictoryShareModal.tsx",
+   "l": 604,
+   "raison": "valeur utilisée par le code",
+   "txt": "Yoroi"
+  },
+  {
+   "f": "components/VictoryShareModal.tsx",
+   "l": 687,
+   "raison": "valeur utilisée par le code",
+   "txt": "Yoroi"
+  },
+  {
+   "f": "components/VictoryShareModal.tsx",
+   "l": 716,
+   "raison": "identifiant",
+   "txt": "Style:"
+  },
+  {
+   "f": "components/VictoryShareModal.tsx",
+   "l": 718,
+   "raison": "as const",
+   "txt": "Photo"
+  },
+  {
+   "f": "components/VictoryShareModal.tsx",
+   "l": 719,
+   "raison": "as const",
+   "txt": "Sombre"
+  },
+  {
+   "f": "components/VictoryShareModal.tsx",
+   "l": 720,
+   "raison": "as const",
+   "txt": "Clair"
+  },
+  {
+   "f": "components/social-cards/DuelCard.tsx",
+   "l": 54,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "components/social-cards/SessionCard.tsx",
+   "l": 26,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "components/social-cards/UniversalShareCard.tsx",
+   "l": 162,
+   "raison": "tableau de recherche",
+   "txt": "ALLURE"
+  },
+  {
+   "f": "components/social-cards/UniversalShareCard.tsx",
+   "l": 177,
+   "raison": "tableau de recherche",
+   "txt": "WATTS"
+  },
+  {
+   "f": "components/yoroi/Button.tsx",
+   "l": 29,
+   "raison": "type littéral",
+   "txt": "onAccent"
+  },
+  {
+   "f": "components/yoroi/Button.tsx",
+   "l": 30,
+   "raison": "type littéral",
+   "txt": "onDark"
+  },
+  {
+   "f": "components/yoroi/v2/accueil/CarteSante.tsx",
+   "l": 129,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/accueil/SanteJour.tsx",
+   "l": 43,
+   "raison": "propriété nom",
+   "txt": "Respiration"
+  },
+  {
+   "f": "components/yoroi/v2/accueil/SanteJour.tsx",
+   "l": 45,
+   "raison": "propriété nom",
+   "txt": "Debout"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/CombatSection.tsx",
+   "l": 17,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/EntrySheet.tsx",
+   "l": 285,
+   "raison": "valeur utilisée par le code",
+   "txt": "Note"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/RecordPicker.tsx",
+   "l": 24,
+   "raison": "valeur utilisée par le code",
+   "txt": "Running"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/RecordPicker.tsx",
+   "l": 24,
+   "raison": "valeur utilisée par le code",
+   "txt": "Running"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/RecordPicker.tsx",
+   "l": 31,
+   "raison": "propriété name",
+   "txt": "Street Workout"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/RecordPicker.tsx",
+   "l": 209,
+   "raison": "valeur utilisée par le code",
+   "txt": "Semi-marathon"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/VideosView.tsx",
+   "l": 23,
+   "raison": "propriété key",
+   "txt": "Dos"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/VideosView.tsx",
+   "l": 30,
+   "raison": "propriété key",
+   "txt": "Abdos / Core"
+  },
+  {
+   "f": "components/yoroi/v2/carnet/tabs/AlluresView.tsx",
+   "l": 20,
+   "raison": "valeur utilisée par le code",
+   "txt": "Semi-marathon"
+  },
+  {
+   "f": "components/yoroi/v2/combat/partner/FighterProfile.tsx",
+   "l": 31,
+   "raison": "identifiant",
+   "txt": "Demi-garde"
+  },
+  {
+   "f": "components/yoroi/v2/combat/partner/sections.tsx",
+   "l": 805,
+   "raison": "tableau de recherche",
+   "txt": "Plan"
+  },
+  {
+   "f": "components/yoroi/v2/competition/CompetitionForm.tsx",
+   "l": 76,
+   "raison": "valeur utilisée par le code",
+   "txt": "Date"
+  },
+  {
+   "f": "components/yoroi/v2/competition/ObjectivesTab.tsx",
+   "l": 351,
+   "raison": "valeur utilisée par le code",
+   "txt": "Notes"
+  },
+  {
+   "f": "components/yoroi/v2/competition/Savoir.tsx",
+   "l": 225,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "components/yoroi/v2/competition/ui.tsx",
+   "l": 103,
+   "raison": "valeur utilisée par le code",
+   "txt": "Date"
+  },
+  {
+   "f": "components/yoroi/v2/espace/assets.ts",
+   "l": 16,
+   "raison": "propriété nom",
+   "txt": "Dojo"
+  },
+  {
+   "f": "components/yoroi/v2/notifications/parts.tsx",
+   "l": 189,
+   "raison": "identifiant",
+   "txt": "Week-end"
+  },
+  {
+   "f": "components/yoroi/v2/nutrition/ui.tsx",
+   "l": 82,
+   "raison": "as const",
+   "txt": "M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM5 8h14M12 8v6M12 14l-3 7M12 14l3 7"
+  },
+  {
+   "f": "components/yoroi/v2/nutrition/ui.tsx",
+   "l": 95,
+   "raison": "as const",
+   "txt": "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1"
+  },
+  {
+   "f": "components/yoroi/v2/onboarding/Demo.tsx",
+   "l": 71,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "components/yoroi/v2/onboarding/Sante.tsx",
+   "l": 39,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/onboarding/Sante.tsx",
+   "l": 54,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/onboarding/defile.ts",
+   "l": 34,
+   "raison": "propriété nom",
+   "txt": "Sport"
+  },
+  {
+   "f": "components/yoroi/v2/progres/Biomarkers.tsx",
+   "l": 312,
+   "raison": "appel technique traduire",
+   "txt": "Composition"
+  },
+  {
+   "f": "components/yoroi/v2/progres/Ensemble.tsx",
+   "l": 168,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "components/yoroi/v2/progres/Ensemble.tsx",
+   "l": 169,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "components/yoroi/v2/progres/ExamplePreview.tsx",
+   "l": 79,
+   "raison": "appel technique traduire",
+   "txt": "Exemple"
+  },
+  {
+   "f": "components/yoroi/v2/progres/MiniCurveGrid.tsx",
+   "l": 294,
+   "raison": "valeur utilisée par le code",
+   "txt": "Corps"
+  },
+  {
+   "f": "components/yoroi/v2/progres/Segments.tsx",
+   "l": 75,
+   "raison": "valeur utilisée par le code",
+   "txt": "Graisse"
+  },
+  {
+   "f": "components/yoroi/v2/reglages/contour.tsx",
+   "l": 29,
+   "raison": "propriété nom",
+   "txt": "Rouge"
+  },
+  {
+   "f": "components/yoroi/v2/reglages/contour.tsx",
+   "l": 34,
+   "raison": "propriété nom",
+   "txt": "Orange"
+  },
+  {
+   "f": "components/yoroi/v2/sante/Bridge.tsx",
+   "l": 46,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/sante/Devices.tsx",
+   "l": 45,
+   "raison": "valeur utilisée par le code",
+   "txt": "Cause"
+  },
+  {
+   "f": "components/yoroi/v2/sante/Devices.tsx",
+   "l": 45,
+   "raison": "valeur utilisée par le code",
+   "txt": "Cause"
+  },
+  {
+   "f": "components/yoroi/v2/sante/brands.ts",
+   "l": 27,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/sante/brands.ts",
+   "l": 98,
+   "raison": "valeur utilisée par le code",
+   "txt": "iPhone"
+  },
+  {
+   "f": "components/yoroi/v2/sante/brands.ts",
+   "l": 109,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/seance/Details.tsx",
+   "l": 283,
+   "raison": "as const",
+   "txt": "En salle"
+  },
+  {
+   "f": "components/yoroi/v2/seance/Details.tsx",
+   "l": 284,
+   "raison": "as const",
+   "txt": "Dehors"
+  },
+  {
+   "f": "components/yoroi/v2/seances/MuscleMap.tsx",
+   "l": 35,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "components/yoroi/v2/seances/MuscleMap.tsx",
+   "l": 36,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "components/yoroi/v2/seances/MuscleMap.tsx",
+   "l": 41,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "components/yoroi/v2/seances/PlanEvents.tsx",
+   "l": 32,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "components/yoroi/v2/studio/Donnees.tsx",
+   "l": 33,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/studio/Donnees.tsx",
+   "l": 35,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "components/yoroi/v2/studio/Donnees.tsx",
+   "l": 36,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "components/yoroi/v2/studio/Donnees.tsx",
+   "l": 84,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/studio/Donnees.tsx",
+   "l": 145,
+   "raison": "valeur utilisée par le code",
+   "txt": "Source"
+  },
+  {
+   "f": "components/yoroi/v2/studio/Tests.tsx",
+   "l": 122,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "components/yoroi/v2/studio/Tests.tsx",
+   "l": 255,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx",
+   "l": 49,
+   "raison": "valeur utilisée par le code",
+   "txt": "Tractions"
+  },
+  {
+   "f": "components/yoroi/v2/studio/galeries/SonsGalerie.tsx",
+   "l": 150,
+   "raison": "as const",
+   "txt": "Cloche"
+  },
+  {
+   "f": "components/yoroi/v2/studio/galeries/fictif.ts",
+   "l": 140,
+   "raison": "valeur utilisée par le code",
+   "txt": "Tractions"
+  },
+  {
+   "f": "components/yoroi/v2/studio/galeries/fictif.ts",
+   "l": 158,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "components/yoroi/v2/studio/galeries/fictif.ts",
+   "l": 162,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "components/yoroi/v2/studio/galeries/fictif.ts",
+   "l": 174,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "components/yoroi/v2/studio/galeries/fictif.ts",
+   "l": 213,
+   "raison": "valeur utilisée par le code",
+   "txt": "Tractions"
+  },
+  {
+   "f": "lib/backupMigrationService.ts",
+   "l": 128,
+   "raison": "valeur utilisée par le code",
+   "txt": "Yoroi"
+  },
+  {
+   "f": "lib/backupMigrationService.ts",
+   "l": 344,
+   "raison": "valeur utilisée par le code",
+   "txt": "Yoroi"
+  },
+  {
+   "f": "lib/badges.ts",
+   "l": 118,
+   "raison": "propriété name",
+   "txt": "En feu"
+  },
+  {
+   "f": "lib/badges.ts",
+   "l": 624,
+   "raison": "propriété name",
+   "txt": "Gardien"
+  },
+  {
+   "f": "lib/combatAchievements.ts",
+   "l": 69,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "lib/combatAchievements.ts",
+   "l": 70,
+   "raison": "valeur utilisée par le code",
+   "txt": "Armbar"
+  },
+  {
+   "f": "lib/combatAchievements.ts",
+   "l": 70,
+   "raison": "valeur utilisée par le code",
+   "txt": "Armbar"
+  },
+  {
+   "f": "lib/combatAchievements.ts",
+   "l": 74,
+   "raison": "valeur utilisée par le code",
+   "txt": "Heel hook"
+  },
+  {
+   "f": "lib/combatAchievements.ts",
+   "l": 74,
+   "raison": "valeur utilisée par le code",
+   "txt": "Heel hook"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 26,
+   "raison": "identifiant",
+   "txt": "Self-defense"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 59,
+   "raison": "identifiant",
+   "txt": "Demi-garde"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 127,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 149,
+   "raison": "valeur utilisée par le code",
+   "txt": "Heel hook"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 378,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 379,
+   "raison": "valeur utilisée par le code",
+   "txt": "Armbar"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 539,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 539,
+   "raison": "valeur utilisée par le code",
+   "txt": "Armbar"
+  },
+  {
+   "f": "lib/combatThemeLibrary.ts",
+   "l": 540,
+   "raison": "valeur utilisée par le code",
+   "txt": "Heel hook"
+  },
+  {
+   "f": "lib/effacementPlan.ts",
+   "l": 117,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/eventsService.ts",
+   "l": 643,
+   "raison": "valeur utilisée par le code",
+   "txt": "Running"
+  },
+  {
+   "f": "lib/fasting.ts",
+   "l": 280,
+   "raison": "propriété name",
+   "txt": "Personnalise"
+  },
+  {
+   "f": "lib/healthService.ts",
+   "l": 48,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/nutrition.ts",
+   "l": 135,
+   "raison": "propriété name",
+   "txt": "Maintien"
+  },
+  {
+   "f": "lib/nutrition.ts",
+   "l": 403,
+   "raison": "propriété name",
+   "txt": "Formule Mifflin-St Jeor (1990)"
+  },
+  {
+   "f": "lib/radarService.ts",
+   "l": 287,
+   "raison": "propriété source",
+   "txt": "National Sleep Foundation"
+  },
+  {
+   "f": "lib/radarService.ts",
+   "l": 291,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/records.ts",
+   "l": 585,
+   "raison": "valeur utilisée par le code",
+   "txt": "Running"
+  },
+  {
+   "f": "lib/security/validators.ts",
+   "l": 413,
+   "raison": "valeur utilisée par le code",
+   "txt": "Notes"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 14,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 15,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 16,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 17,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 18,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 19,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 24,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 25,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 27,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/sessionTypes.ts",
+   "l": 27,
+   "raison": "identifiant",
+   "txt": "Self-defense"
+  },
+  {
+   "f": "lib/sportPacks.ts",
+   "l": 80,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/sports.ts",
+   "l": 1532,
+   "raison": "propriété name",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/sports.ts",
+   "l": 1571,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/v2/accueil/styleSante.ts",
+   "l": 21,
+   "raison": "propriété nom",
+   "txt": "Clair"
+  },
+  {
+   "f": "lib/v2/balance/format.ts",
+   "l": 91,
+   "raison": "valeur utilisée par le code",
+   "txt": "Cuisse"
+  },
+  {
+   "f": "lib/v2/balance/format.ts",
+   "l": 94,
+   "raison": "valeur utilisée par le code",
+   "txt": "Mollet"
+  },
+  {
+   "f": "lib/v2/balance/format.ts",
+   "l": 217,
+   "raison": "valeur utilisée par le code",
+   "txt": "kJ"
+  },
+  {
+   "f": "lib/v2/balance/format.ts",
+   "l": 232,
+   "raison": "valeur utilisée par le code",
+   "txt": "ECW/TBW"
+  },
+  {
+   "f": "lib/v2/balance/format.ts",
+   "l": 529,
+   "raison": "valeur utilisée par le code",
+   "txt": "kJ"
+  },
+  {
+   "f": "lib/v2/balance/format.ts",
+   "l": 543,
+   "raison": "valeur utilisée par le code",
+   "txt": "ECW/TBW"
+  },
+  {
+   "f": "lib/v2/bilan/demo.ts",
+   "l": 64,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "lib/v2/bilan/texte.ts",
+   "l": 392,
+   "raison": "valeur utilisée par le code",
+   "txt": "Graisse"
+  },
+  {
+   "f": "lib/v2/carnet/chrono.ts",
+   "l": 42,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/carnet/journal.ts",
+   "l": 146,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/carnet/journal.ts",
+   "l": 146,
+   "raison": "valeur utilisée par le code",
+   "txt": "Running"
+  },
+  {
+   "f": "lib/v2/carnet/journal.ts",
+   "l": 199,
+   "raison": "valeur utilisée par le code",
+   "txt": "Sparring"
+  },
+  {
+   "f": "lib/v2/cartes/demo.ts",
+   "l": 101,
+   "raison": "valeur utilisée par le code",
+   "txt": "Triangle"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 144,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 170,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 222,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 248,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 444,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 484,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 624,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 645,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/competition/savoirData.ts",
+   "l": 729,
+   "raison": "valeur utilisée par le code",
+   "txt": "Force"
+  },
+  {
+   "f": "lib/v2/dojo/belts.ts",
+   "l": 18,
+   "raison": "propriété name",
+   "txt": "Solide"
+  },
+  {
+   "f": "lib/v2/dojo/personnages.ts",
+   "l": 207,
+   "raison": "propriété name",
+   "txt": "Dojo"
+  },
+  {
+   "f": "lib/v2/espace/photoProfil.ts",
+   "l": 45,
+   "raison": "propriété name",
+   "txt": "Guerrier"
+  },
+  {
+   "f": "lib/v2/montre/actions.ts",
+   "l": 41,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/nutrition/lireRepas.android.ts",
+   "l": 11,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/nutrition/mange.ts",
+   "l": 101,
+   "raison": "valeur utilisée par le code",
+   "txt": "Fitbit"
+  },
+  {
+   "f": "lib/v2/nutrition/mange.ts",
+   "l": 256,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/onboarding/save.ts",
+   "l": 127,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/onboarding/trial.ts",
+   "l": 24,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/onboarding/trial.ts",
+   "l": 25,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/onboarding/trial.ts",
+   "l": 26,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/onboarding/trial.ts",
+   "l": 35,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/onboarding/trial.ts",
+   "l": 35,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/onboarding/trial.ts",
+   "l": 35,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/pesee/health.ts",
+   "l": 53,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "lib/v2/pesee/health.ts",
+   "l": 54,
+   "raison": "valeur utilisée par le code",
+   "txt": "Fitbit"
+  },
+  {
+   "f": "lib/v2/pesee/historiquePoids.ts",
+   "l": 14,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "lib/v2/pesee/historiquePoids.ts",
+   "l": 17,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/pesee/historiquePoids.ts",
+   "l": 20,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 95,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 95,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 95,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 102,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 102,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 102,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 106,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 114,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 116,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 118,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 129,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 131,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 133,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 142,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 143,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 144,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 201,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 202,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 203,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 204,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 205,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 206,
+   "raison": "valeur utilisée par le code",
+   "txt": "WEEK"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 215,
+   "raison": "valeur utilisée par le code",
+   "txt": "YEAR"
+  },
+  {
+   "f": "lib/v2/premium/offer.ts",
+   "l": 215,
+   "raison": "valeur utilisée par le code",
+   "txt": "MONTH"
+  },
+  {
+   "f": "lib/v2/progres/biomarkers.ts",
+   "l": 430,
+   "raison": "valeur utilisée par le code",
+   "txt": "Graisse"
+  },
+  {
+   "f": "lib/v2/progres/biomarkers.ts",
+   "l": 438,
+   "raison": "valeur utilisée par le code",
+   "txt": "Graisse"
+  },
+  {
+   "f": "lib/v2/progres/composition.ts",
+   "l": 67,
+   "raison": "valeur utilisée par le code",
+   "txt": "Graisse"
+  },
+  {
+   "f": "lib/v2/progres/measures.ts",
+   "l": 42,
+   "raison": "valeur utilisée par le code",
+   "txt": "Cuisse"
+  },
+  {
+   "f": "lib/v2/progres/measures.ts",
+   "l": 43,
+   "raison": "valeur utilisée par le code",
+   "txt": "Mollet"
+  },
+  {
+   "f": "lib/v2/progres/samples.ts",
+   "l": 64,
+   "raison": "valeur utilisée par le code",
+   "txt": "Cuisse"
+  },
+  {
+   "f": "lib/v2/progres/strength.ts",
+   "l": 90,
+   "raison": "as const",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/progres/strength.ts",
+   "l": 97,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/progres/strength.ts",
+   "l": 98,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/progres/strength.ts",
+   "l": 99,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/progres/strength.ts",
+   "l": 129,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/sante/connexion.ts",
+   "l": 165,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/sante/data.ts",
+   "l": 35,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/sante/data.ts",
+   "l": 151,
+   "raison": "valeur utilisée par le code",
+   "txt": "mg/dL"
+  },
+  {
+   "f": "lib/v2/sante/data.ts",
+   "l": 246,
+   "raison": "valeur utilisée par le code",
+   "txt": "mg/dL"
+  },
+  {
+   "f": "lib/v2/sante/demande.ts",
+   "l": 173,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/sante/importAccueil.ts",
+   "l": 37,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 106,
+   "raison": "valeur utilisée par le code",
+   "txt": "Corps"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 184,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 198,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 276,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 318,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 390,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 407,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metrics.ts",
+   "l": 679,
+   "raison": "valeur utilisée par le code",
+   "txt": "mmol/L"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 146,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 230,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 296,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 309,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 335,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 348,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 361,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 576,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 591,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 606,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 665,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/metricsMore.ts",
+   "l": 685,
+   "raison": "identifiant",
+   "txt": "L/min"
+  },
+  {
+   "f": "lib/v2/sante/watches.ts",
+   "l": 49,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/sante/watches.ts",
+   "l": 138,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "lib/v2/sante/watches.ts",
+   "l": 146,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin Connect"
+  },
+  {
+   "f": "lib/v2/sante/watches.ts",
+   "l": 156,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin Connect"
+  },
+  {
+   "f": "lib/v2/sante/watches.ts",
+   "l": 270,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "lib/v2/sante/watches.ts",
+   "l": 278,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "lib/v2/sante/watches.ts",
+   "l": 286,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "lib/v2/sauvegarde/avantMiseAJour.ts",
+   "l": 282,
+   "raison": "valeur utilisée par le code",
+   "txt": "Yoroi"
+  },
+  {
+   "f": "lib/v2/seance/corps.ts",
+   "l": 16,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/seance/corps.ts",
+   "l": 19,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "lib/v2/seance/corps.ts",
+   "l": 20,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "lib/v2/seance/corps.ts",
+   "l": 51,
+   "raison": "valeur utilisée par le code",
+   "txt": "Graisse"
+  },
+  {
+   "f": "lib/v2/seances/importSeances.ts",
+   "l": 33,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/seances/muscles.ts",
+   "l": 18,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/seances/muscles.ts",
+   "l": 19,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/seances/muscles.ts",
+   "l": 20,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/v2/seances/muscles.ts",
+   "l": 27,
+   "raison": "identifiant",
+   "txt": "Ischio-jambiers"
+  },
+  {
+   "f": "lib/v2/seances/weekCompare.ts",
+   "l": 20,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/seances/weekCompare.ts",
+   "l": 21,
+   "raison": "valeur utilisée par le code",
+   "txt": "Apple Watch"
+  },
+  {
+   "f": "lib/v2/seances/weekCompare.ts",
+   "l": 24,
+   "raison": "valeur utilisée par le code",
+   "txt": "iPhone"
+  },
+  {
+   "f": "lib/v2/seances/weekCompare.ts",
+   "l": 25,
+   "raison": "valeur utilisée par le code",
+   "txt": "Health Connect"
+  },
+  {
+   "f": "lib/v2/seances/weekCompare.ts",
+   "l": 27,
+   "raison": "valeur utilisée par le code",
+   "txt": "Garmin"
+  },
+  {
+   "f": "lib/v2/seances/weekCompare.ts",
+   "l": 34,
+   "raison": "valeur utilisée par le code",
+   "txt": "Fitbit"
+  },
+  {
+   "f": "lib/v2/seances/weekCompare.ts",
+   "l": 35,
+   "raison": "valeur utilisée par le code",
+   "txt": "Withings"
+  },
+  {
+   "f": "lib/v2/seances/weekSummary.ts",
+   "l": 67,
+   "raison": "type littéral",
+   "txt": "Dos"
+  },
+  {
+   "f": "lib/workoutImporter.ts",
+   "l": 218,
+   "raison": "valeur utilisée par le code",
+   "txt": "Running"
+  }
+ ]
+}

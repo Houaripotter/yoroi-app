@@ -121,7 +121,7 @@ export function Reader({ content, read, onClose, onToggleRead, onSource }: { con
               {read ? <Hanko size={36} /> : null}
             </View>
             <Ink size={26} weight="black" tight>
-              {content.title}
+              {traduire(content.title)}
             </Ink>
           </View>
           {content.kind === 'article' ? (
@@ -246,7 +246,7 @@ export function ProtocolChecklist({ protocol }: { protocol: LabProtocol }) {
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2, paddingVertical: 4 }}>
             <View style={{ flex: 1, gap: 1 }}>
               <Ink size={14} weight="bold" color={checked[i] ? P.muted : P.ink} style={{ textDecorationLine: checked[i] ? 'line-through' : 'none' }}>
-                {it.text}
+                {traduire(it.text)}
               </Ink>
               {it.source ? (
                 <Ink size={11} weight="medium" color={P.muted}>
@@ -254,7 +254,7 @@ export function ProtocolChecklist({ protocol }: { protocol: LabProtocol }) {
                 </Ink>
               ) : null}
             </View>
-            <CheckDot on={!!checked[i]} onPress={() => toggle(i)} label={it.text} color={m.color} />
+            <CheckDot on={!!checked[i]} onPress={() => toggle(i)} label={traduire(it.text)} color={m.color} />
           </View>
         ))}
       </View>
@@ -323,7 +323,7 @@ export function HydrationScale() {
           </View>
           <View style={{ flex: 1 }}>
             <Ink size={14} weight="extraBold" color={h.status === 'ok' ? P.mossText : h.status === 'warn' ? P.goldDark : P.danger}>
-              {h.label}
+              {traduire(h.label)}
             </Ink>
             <Ink size={12} weight="medium" color={P.ink2}>
               {h.advice}

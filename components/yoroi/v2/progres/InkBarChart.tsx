@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import Svg, { G, Line, Path, Text as SvgText } from 'react-native-svg';
 import { useYoroiTheme } from '../../YoroiThemeProvider';
 import { AxisLabel, barPath, CHART, CHART_COLORS, RefLine, Reveal, tint, useChartInk, useChartScrub } from '../charts/core';
+import { traduire } from '@/lib/i18n/tr';
 
 export type Bar = { label: string; value: number };
 
@@ -98,7 +99,7 @@ export function InkBarChart({ bars, height = 180, color, highlight = null, avera
                     {format(b.value)}
                   </SvgText>
                 ) : null}
-                {showLabel ? <AxisLabel x={cx} y={height - 5} text={b.label} strong={isActive || isHi} /> : null}
+                {showLabel ? <AxisLabel x={cx} y={height - 5} text={traduire(b.label)} strong={isActive || isHi} /> : null}
               </G>
             );
           })}

@@ -21,7 +21,7 @@ export function getAppInfo(): AppInfo {
   return {
     version: cfg?.version ?? 'inconnue',
     build: build ?? 'inconnu',
-    model: Device.modelName ?? (Device.isDevice ? traduire('Téléphone') : 'Simulateur'),
+    model: Device.modelName ?? (Device.isDevice ? traduire('Téléphone') : traduire('Simulateur')),
     os: `${Device.osName ?? Platform.OS} ${Device.osVersion ?? ''}`.trim(),
     env,
     sdk: cfg?.sdkVersion ?? 'inconnu',
@@ -47,8 +47,8 @@ export function appInfoText(extra: Record<string, string> = {}): string {
     ['YOROI', `${i.version} (build ${i.build})`],
     ['Appareil', i.model],
     [traduire('Système'), i.os],
-    ['Environnement', i.env],
-    ['Expo SDK', i.sdk],
+    [traduire('Environnement'), i.env],
+    [traduire('Expo SDK'), i.sdk],
     [traduire('Appareil réel'), Device.isDevice ? 'oui' : 'non'],
     ...Object.entries(extra),
   ];

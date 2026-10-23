@@ -20,7 +20,7 @@ export interface BodyZone {
 // ============================================
 
 export const BODY_ZONES_FRONT: BodyZone[] = [
-  { id: 'head', name: traduire('Tête / Visage'), x: 50, y: 6, size: 12, injuries: ['Commotion', 'Coupure', 'Contusion'] },
+  { id: 'head', name: 'Tête / Visage', x: 50, y: 6, size: 12, injuries: ['Commotion', 'Coupure', 'Contusion'] },
   { id: 'neck', name: 'Cou', x: 50, y: 15, size: 10, injuries: ['Torticolis', 'Contracture', 'Cervicales'] },
   { id: 'shoulder_l', name: 'Épaule Gauche', x: 74, y: 20, size: 12, injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion'] },
   { id: 'shoulder_r', name: 'Épaule Droite', x: 26, y: 20, size: 12, injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion'] },

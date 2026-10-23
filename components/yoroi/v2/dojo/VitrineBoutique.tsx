@@ -23,7 +23,7 @@ function Badge({ b }: { b: BadgeVitrine }) {
   return (
     <View style={{ alignSelf: 'flex-start', maxWidth: '100%', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: bg }}>
       {/* Vague 45 : badge sur 2 lignes possibles, jamais coupe (« Rang Shōgun », « Rang Régulier ») */}
-      <Ink size={11} weight="extraBold" color={fg} numberOfLines={2}>{b.texte}</Ink>
+      <Ink size={11} weight="extraBold" color={fg} numberOfLines={2}>{traduire(b.texte)}</Ink>
     </View>
   );
 }
@@ -77,7 +77,7 @@ export function VitrineBoutique({ vignettes, total, onOuvrir }: { vignettes: Vig
               )}
             </View>
             <View style={{ paddingHorizontal: 4, gap: 5 }}>
-              <Ink size={13} weight="extraBold" numberOfLines={2}>{v.nom}</Ink>
+              <Ink size={13} weight="extraBold" numberOfLines={2}>{traduire(v.nom)}</Ink>
               <Badge b={v.badge} />
             </View>
           </View>

@@ -26,7 +26,7 @@ export default function TonAccueil() {
   return (
     <EspaceScreen title={traduire("Ton accueil")} subtitle={traduire("Les raccourcis et Ton poids restent en haut. Coche ce que tu veux voir dessous, range-le avec les flèches.")}>
       <DispositionEditor />
-      <Groupe title="Citations" />
+      <Groupe title={traduire("Citations")} />
       <Card>
         <ValueRow first tint={TUILE.or} icon="quote" label={traduire("Citation du jour")} sub={traduire("Ton style et le rappel motivant")} value={citStyle} onPress={() => router.push('/citations' as any)} />
       </Card>

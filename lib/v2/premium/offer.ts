@@ -118,7 +118,7 @@ export function periodPhrase(p: StorePeriod): string {
     case 'WEEK':
       return n === 1 ? 'par semaine' : `toutes les ${n} semaines`;
     default:
-      return n === 1 ? 'par jour' : traduire("tous les {0} jours", n);
+      return n === 1 ? traduire('par jour') : traduire("tous les {0} jours", n);
   }
 }
 
@@ -127,11 +127,11 @@ export function durationPhrase(p: StorePeriod): string {
   const n = p.count;
   switch (p.unit) {
     case 'YEAR':
-      return n === 1 ? '1 an' : traduire("{0} ans", n);
+      return n === 1 ? traduire('1 an') : traduire("{0} ans", n);
     case 'MONTH':
       return traduire("{0} mois", n);
     case 'WEEK':
-      return n === 1 ? '1 semaine' : traduire("{0} semaines", n);
+      return n === 1 ? traduire('1 semaine') : traduire("{0} semaines", n);
     default:
       return n === 1 ? traduire('1 jour') : traduire("{0} jours", n);
   }

@@ -63,7 +63,7 @@ export function Onglets<T extends string>({ items, value, onChange, largeur }: {
               transform: [{ scale: pressed ? 0.97 : 1 }],
             })}
           >
-            <Ink size={13.5} weight={on ? 'extraBold' : 'bold'} color={on ? c.onAccent : c.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{it.label}</Ink>
+            <Ink size={13.5} weight={on ? 'extraBold' : 'bold'} color={on ? c.onAccent : c.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(it.label)}</Ink>
             <Ink size={12} weight="bold" color={on ? c.onAccent : c.textMuted} style={{ opacity: on ? 0.8 : 1 }}>{String(it.count)}</Ink>
           </Pressable>
         );
@@ -93,7 +93,7 @@ export function GenreBascule({ value, onChange }: { value: Gender; onChange: (g:
             accessibilityState={{ selected: on }}
             style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 11, justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent', transform: [{ scale: pressed ? 0.97 : 1 }] })}
           >
-            <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{g === 'h' ? 'Homme' : 'Femme'}</Ink>
+            <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{g === 'h' ? traduire('Homme') : traduire('Femme')}</Ink>
           </Pressable>
         );
       })}

@@ -208,7 +208,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
   return (
     <View style={{ gap: 22 }}>
       {showWhen ? (
-        <Section icon="calendar" title="Quand">
+        <Section icon="calendar" title={traduire("Quand")}>
           <DayNav value={value.date} onChange={(iso) => onChange({ date: iso })} label={dayLabel(value.date)} maxDate={null} inline />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4, paddingHorizontal: 14, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
             <Ink size={15} weight="bold">{traduire("Début")}</Ink>
@@ -243,7 +243,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
               return (
                 <Pressable key={cl.id} onPress={() => pickClub(cl.id ?? null)} accessibilityRole="button" accessibilityLabel={`Club ${cl.name}`} accessibilityState={{ selected: on }} style={{ ...chosen(on), maxWidth: '100%', minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 6, paddingRight: 12, paddingVertical: 6, borderRadius: 16 }}>
                   <ClubMark club={cl} size={30} />
-                  <Ink size={14} weight="extraBold" color={on ? d.texte : c.ink} numberOfLines={2} style={{ flexShrink: 1 }}>{cl.name}</Ink>
+                  <Ink size={14} weight="extraBold" color={on ? d.texte : c.ink} numberOfLines={2} style={{ flexShrink: 1 }}>{traduire(cl.name)}</Ink>
                 </Pressable>
               );
             })}
@@ -262,7 +262,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
               <ClubMark club={club} size={40} />
               <View style={{ flex: 1, gap: 1 }}>
-                <Ink size={15} weight="extraBold" numberOfLines={2}>{club.name}</Ink>
+                <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(club.name)}</Ink>
                 <Ink size={13} color={c.textSecondary} numberOfLines={2}>
                   {value.outdoor ? traduire('Séance du club, dehors') : club.address?.trim() ? club.address.trim() : traduire('Au club, en salle')}
                 </Ink>
@@ -288,7 +288,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
               return (
                 <Pressable key={o.k} onPress={() => pickCadre(o.k)} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ ...chosen(on), flex: 1, minHeight: 68, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4 }}>
                   <PlaceGlyph kind={o.k} size={22} color={on ? d.texte : c.textSecondary} />
-                  <Ink size={13} weight="extraBold" color={on ? d.texte : c.ink} numberOfLines={1}>{o.label}</Ink>
+                  <Ink size={13} weight="extraBold" color={on ? d.texte : c.ink} numberOfLines={1}>{traduire(o.label)}</Ink>
                 </Pressable>
               );
             })}
@@ -322,7 +322,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
                   const on = p.name === value.place;
                   return (
                     <Pressable key={p.name} onPress={() => onChange({ place: p.name, lat: p.lat, lon: p.lon })} accessibilityRole="button" accessibilityLabel={`Endroit ${p.name}`} accessibilityState={{ selected: on }} style={{ minHeight: 40, maxWidth: '100%', paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: on ? d.plein : c.fillSoft }}>
-                      <Ink size={13} weight="bold" color={on ? d.surPlein : c.ink} numberOfLines={1}>{p.name}</Ink>
+                      <Ink size={13} weight="bold" color={on ? d.surPlein : c.ink} numberOfLines={1}>{traduire(p.name)}</Ink>
                     </Pressable>
                   );
                 })}
@@ -339,7 +339,7 @@ export function SessionDetailsForm({ value, onChange, sport, showWhen = false, h
         ) : null}
       </Section>
 
-      <Section icon="star" title={note.titre}>
+      <Section icon="star" title={traduire(note.titre)}>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {note.mots.map((mot, i) => {
             const n = i + 1;

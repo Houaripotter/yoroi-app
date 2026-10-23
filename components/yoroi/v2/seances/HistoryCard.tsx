@@ -67,7 +67,7 @@ export function HistoryCard({ t, femme, stamps = 0, showMonth }: { t: Training; 
             {facts.map((f) => (
               <View key={f.kind} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Icon name={FACT_ICON[f.kind]} size={13} color={c.textMuted} strokeWidth={2.4} />
-                <Ink size={13} weight="extraBold">{f.text}</Ink>
+                <Ink size={13} weight="extraBold">{traduire(f.text)}</Ink>
               </View>
             ))}
             {watch ? (

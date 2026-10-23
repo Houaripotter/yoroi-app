@@ -14,8 +14,8 @@ import { traduire } from '@/lib/i18n/tr';
 
 const STATIONS = [
   { key: 'ski_erg', label: 'SkiErg', unit: 'sec', target: '1000 m', kw: ['ski erg', 'skierg', 'ski-erg'] },
-  { key: 'sled_push', label: 'Sled push', unit: 'sec', target: '50 m', kw: ['sled push', 'sled-push', 'push sled', traduire('traîneau poussé')] },
-  { key: 'sled_pull', label: 'Sled pull', unit: 'sec', target: '50 m', kw: ['sled pull', 'sled-pull', 'pull sled', traduire('traîneau tiré')] },
+  { key: 'sled_push', label: 'Sled push', unit: 'sec', target: '50 m', kw: ['sled push', 'sled-push', 'push sled', 'traîneau poussé'] },
+  { key: 'sled_pull', label: 'Sled pull', unit: 'sec', target: '50 m', kw: ['sled pull', 'sled-pull', 'pull sled', 'traîneau tiré'] },
   { key: 'burpee_broad_jump', label: 'Burpee broad jump', unit: 'sec', target: '80 m', kw: ['burpee broad jump', 'burpee-broad', 'bbj', 'burpee jump'] },
   { key: 'rower', label: 'Rameur', unit: 'sec', target: '1000 m', kw: ['rower', 'rameur', 'rowing'] },
   { key: 'farmer_carry', label: 'Farmer carry', unit: 'sec', target: '200 m, 24 kg', kw: ['farmer carry', 'farmer', 'farmers walk', 'farmer walk'] },
@@ -25,9 +25,9 @@ const STATIONS = [
 
 const FORCE_LIFTS = [
   { key: 'squat', label: 'Squat', kw: ['squat', 'back squat', 'front squat'] },
-  { key: 'bench', label: traduire('Développé couché'), kw: [traduire('développé couché'), traduire('developpé couché'), 'bench press', 'developpe couche', 'dc', 'bench'] },
-  { key: 'deadlift', label: traduire('Soulevé de terre'), kw: [traduire('soulevé de terre'), traduire('souleve de terre'), 'deadlift', 'sdt'] },
-  { key: 'press', label: 'Développé militaire', kw: [traduire('développé militaire'), traduire('developpé militaire'), 'ohp', 'overhead press', 'militaire'] },
+  { key: 'bench', label: traduire('Développé couché'), kw: ['développé couché', 'developpé couché', 'bench press', 'developpe couche', 'dc', 'bench'] },
+  { key: 'deadlift', label: traduire('Soulevé de terre'), kw: ['soulevé de terre', 'souleve de terre', 'deadlift', 'sdt'] },
+  { key: 'press', label: 'Développé militaire', kw: ['développé militaire', 'developpé militaire', 'ohp', 'overhead press', 'militaire'] },
 ];
 
 const has = (name: string, kws: string[]) => kws.some((k) => name.toLowerCase().includes(k));
@@ -96,7 +96,7 @@ export function StationsView({ refreshKey, hideEmpty }: { refreshKey: number; hi
               <Ink size={12} weight="black" color={P.muted}>{String(i + 1)}</Ink>
               {s.best ? <Hanko size={22} tampon="record_technique" /> : null}
             </View>
-            <Ink size={14} weight="extraBold" numberOfLines={1}>{s.label}</Ink>
+            <Ink size={14} weight="extraBold" numberOfLines={1}>{traduire(s.label)}</Ink>
             <Ink size={24} weight="black" tight color={s.best ? P.accent : P.dashed}>{s.best ? (s.unit === 'sec' ? sec(s.best.value) : `${s.best.value} reps`) : '--'}</Ink>
             <Ink size={11} weight="bold" color={P.muted}>{s.best ? traduire("{0}, objectif {1}", shortDate(s.best.date), s.target) : traduire("Objectif {0}", s.target)}</Ink>
           </View>
@@ -108,7 +108,7 @@ export function StationsView({ refreshKey, hideEmpty }: { refreshKey: number; hi
           {lifts.filter((l) => l.best).map((l) => (
             <View key={l.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ flex: 1 }}>
-                <Ink size={15} weight="bold">{l.label}</Ink>
+                <Ink size={15} weight="bold">{traduire(l.label)}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>{`${l.total} perf${l.total > 1 ? 's' : ''}, ${shortDate(l.best!.date)}`}</Ink>
               </View>
               <Ink size={24} weight="black" tight color={P.accent}>

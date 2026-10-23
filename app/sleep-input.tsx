@@ -105,7 +105,7 @@ export default function NoterMaNuit() {
       router.back();
     } catch (err) {
       logger.error('Enregistrement de la nuit impossible', err);
-      appAlert('Oups', traduire('Ta nuit n’a pas pu être enregistrée. Vérifie les horaires et réessaie.'));
+      appAlert(traduire('Oups'), traduire('Ta nuit n’a pas pu être enregistrée. Vérifie les horaires et réessaie.'));
     } finally {
       setSaving(false);
     }

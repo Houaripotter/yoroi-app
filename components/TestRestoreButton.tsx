@@ -42,7 +42,7 @@ const TestRestoreButtonInner: React.FC = () => {
       try {
         parsed = JSON.parse(content);
       } catch {
-        showResult(false, 'Fichier invalide', traduire('Le fichier n\'est pas un JSON valide.'), size);
+        showResult(false, traduire('Fichier invalide'), traduire('Le fichier n\'est pas un JSON valide.'), size);
         return;
       }
 
@@ -89,7 +89,7 @@ const TestRestoreButtonInner: React.FC = () => {
         traduire(`Aucune donnée modifiée, c'était juste un test.`), size);
     } catch (e) {
       logger.error('[TestRestore] Erreur:', e);
-      appAlert('Oups', traduire('Ce fichier n’a pas pu être vérifié.'));
+      appAlert(traduire('Oups'), traduire('Ce fichier n’a pas pu être vérifié.'));
     } finally {
       setTesting(false);
     }

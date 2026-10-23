@@ -11,6 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { StyleCourbe } from '@/lib/v2/courbes/prefs';
 import type { ImageSourcePropType } from 'react-native';
+import { traduire } from '@/lib/i18n/tr';
 
 export function EntreePersonnaliser({ scene, personnage, resume, onPress }: { scene: ImageSourcePropType; personnage?: ImageSourcePropType; style?: StyleCourbe; resume: string; onPress: () => void }) {
   const { theme } = useYoroiTheme();
@@ -33,7 +34,7 @@ export function EntreePersonnaliser({ scene, personnage, resume, onPress }: { sc
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Icon name="wand" size={16} color={c.accent} stroke={2.4} />
-          <Ink size={18} weight="black" tight color={c.ink}>Personnaliser</Ink>
+          <Ink size={18} weight="black" tight color={c.ink}>{traduire("Personnaliser")}</Ink>
         </View>
         <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={2}>{resume}</Ink>
       </View>

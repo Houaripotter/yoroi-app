@@ -42,7 +42,7 @@ function Card({ genre, label, selected, onPress, height, index }: { genre: 'h' |
         </Animated.View>
         <Animated.View key={`n-${genre}-${index % liste.length}`} entering={FadeIn.duration(650)} exiting={FadeOut.duration(220)} style={{ position: 'absolute', top: 10, left: 10 }}>
           <View style={{ backgroundColor: c.surface, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, borderWidth: 1, borderColor: c.border }}>
-            <Ink size={11} weight="bold" color={c.textSecondary}>{tenue.nom}</Ink>
+            <Ink size={11} weight="bold" color={c.textSecondary}>{traduire(tenue.nom)}</Ink>
           </View>
         </Animated.View>
         <View style={{ backgroundColor: selected ? c.accent : c.surface, borderWidth: selected ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 18, minHeight: 36, justifyContent: 'center' }}>
@@ -77,10 +77,10 @@ export function Toi({ nav, name = '', gender, onPick, onNext }: { nav: Nav; name
   const cardH = Math.max(230, Math.min(330, Math.round(height * 0.4)));
   const idx = useDefile();
   return (
-    <Shell {...nav} title={name.trim() ? traduire("Ravi de te connaître, **{0}**", name.trim()) : traduire('Ravi de te **connaître**')} sub={traduire("Homme ou femme ? Ton personnage et tes repères de masse grasse en dépendent.")} footer={<MainButton label="Continuer" onPress={onNext} disabled={!gender} />}>
+    <Shell {...nav} title={name.trim() ? traduire("Ravi de te connaître, **{0}**", name.trim()) : traduire('Ravi de te **connaître**')} sub={traduire("Homme ou femme ? Ton personnage et tes repères de masse grasse en dépendent.")} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!gender} />}>
       <View style={{ flexDirection: 'row', gap: 12, paddingTop: 6 }}>
-        <Card genre="h" label="Homme" selected={gender === 'homme'} onPress={() => onPick('homme')} height={cardH} index={idx.h} />
-        <Card genre="f" label="Femme" selected={gender === 'femme'} onPress={() => onPick('femme')} height={cardH} index={idx.f} />
+        <Card genre="h" label={traduire("Homme")} selected={gender === 'homme'} onPress={() => onPick('homme')} height={cardH} index={idx.h} />
+        <Card genre="f" label={traduire("Femme")} selected={gender === 'femme'} onPress={() => onPick('femme')} height={cardH} index={idx.f} />
       </View>
     </Shell>
   );

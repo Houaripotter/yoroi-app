@@ -19,7 +19,7 @@ import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
-const SMALL_WORDS = new Set([traduire('de'), 'du', 'des', 'la', traduire('le'), 'les', 'l', 'd', 'et', 'club', 'team', 'the']);
+const SMALL_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'l', 'd', 'et', 'club', 'team', 'the']);
 
 /** Initiales d'un club : « Gracie Barra Marseille » donne « GB », « Basic Fit » donne « BF » */
 export function clubInitials(name?: string | null): string {
@@ -142,7 +142,7 @@ export function MonthCard({ trainings, competitions, onOpen }: { trainings: Trai
           <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{summary}</Ink>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 }}>
-          <Ink size={13} weight="extraBold" color={c.accent}>Calendrier</Ink>
+          <Ink size={13} weight="extraBold" color={c.accent}>{traduire("Calendrier")}</Ink>
           <Icon name="chevron" size={15} color={c.accent} />
         </View>
       </View>

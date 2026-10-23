@@ -16,7 +16,7 @@ export type GroupeScenes = 'toutes' | 'voyages' | 'vie' | 'classique' | 'nature'
 export const GROUPES: { key: GroupeScenes; label: string }[] = [
   { key: 'toutes', label: traduire('Toutes') },
   // 18 octobre 2026 : le pack Voyages, scenes animees (Tokyo, Paris, desert, neige, avion)
-  { key: 'voyages', label: 'Voyages' },
+  { key: 'voyages', label: traduire('Voyages') },
   // 16 octobre 2026 : les scenes des packs Vie reelle (caserne, chantier, stade, chateau...)
   { key: 'vie', label: traduire('Vie réelle') },
   // vague 45 : les scenes neutres, sans le Japon
@@ -26,7 +26,7 @@ export const GROUPES: { key: GroupeScenes; label: string }[] = [
   { key: 'samourai', label: traduire('Samouraï') },
   { key: 'lanternes', label: traduire('Lanternes de nuit') },
   { key: 'jour', label: traduire('Jour') },
-  { key: 'saisons', label: 'Saisons' },
+  { key: 'saisons', label: traduire('Saisons') },
   { key: 'soir', label: traduire('Soir et nuit') },
 ];
 

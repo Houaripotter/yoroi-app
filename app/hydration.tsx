@@ -247,7 +247,7 @@ export default function Hydratation() {
       {/* Ajout */}
       <Enter i={1} style={{ gap: 8 }}>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Press onPress={() => add(-0.25)} haptic="none" accessibilityRole="button" accessibilityLabel="Retirer 250 millilitres">
+          <Press onPress={() => add(-0.25)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Retirer 250 millilitres")}>
             <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="minus" size={22} color={P.accent} />
             </View>
@@ -258,8 +258,7 @@ export default function Hydratation() {
                 <Ink size={17} weight="black" color={P.water}>
                   {traduire("+ un verre")}</Ink>
                 <Ink size={11} weight="bold" color={P.water}>
-                  250 ml
-                </Ink>
+                  {traduire("250 ml")}</Ink>
               </View>
             </Press>
           </View>
@@ -269,8 +268,7 @@ export default function Hydratation() {
                 <Ink size={17} weight="black" color={P.white}>
                   {traduire("+ une gourde")}</Ink>
                 <Ink size={11} weight="bold" color={paletteSombre() ? 'rgba(29,32,41,0.75)' : '#DCE4F3'}>
-                  500 ml
-                </Ink>
+                  {traduire("500 ml")}</Ink>
               </View>
             </Press>
           </View>

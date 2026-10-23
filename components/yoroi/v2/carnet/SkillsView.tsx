@@ -32,7 +32,7 @@ function illusOf(s: Skill): CarnetIllus {
 }
 
 const GROUPS: { status: SkillStatus; title: string }[] = [
-  { status: 'in_progress', title: 'En cours' },
+  { status: 'in_progress', title: traduire('En cours') },
   { status: 'to_learn', title: traduire('À apprendre') },
   { status: 'mastered', title: traduire('Maîtrisées') },
 ];
@@ -78,7 +78,7 @@ export function SkillsView({ skills, onOpen, onCreate }: Props) {
         <Summary
           illus="techniques"
           items={[
-            { value: String(st.inProgress), label: 'en cours', color: P.goldDark },
+            { value: String(st.inProgress), label: traduire('en cours'), color: P.goldDark },
             { value: String(st.toLearn), label: traduire('à apprendre') },
             { value: String(st.mastered), label: traduirePluriel(st.mastered, st.mastered > 1, "maîtrisée", "maîtrisées"), color: P.record },
           ]}
@@ -89,7 +89,7 @@ export function SkillsView({ skills, onOpen, onCreate }: Props) {
                 <CIcon name="refresh" size={20} color={P.goldDark} />
                 <View style={{ flex: 1, gap: 1 }}>
                   <Ink size={12} weight="bold" color={P.goldDark}>{traduire("À répéter aujourd’hui")}</Ink>
-                  <Ink size={15} weight="extraBold" numberOfLines={2}>{st.suggestion.name}</Ink>
+                  <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(st.suggestion.name)}</Ink>
                 </View>
                 <CIcon name="chevron" size={16} color={P.goldDark} />
               </View>
@@ -140,7 +140,7 @@ function SkillCard({ s, onOpen }: { s: Skill; onOpen: (s: Skill) => void }) {
           <Illus name={illusOf(s)} size={40} />
         </View>
         <View style={{ flex: 1, gap: 3 }}>
-          <Ink size={16} weight="extraBold" numberOfLines={2}>{s.name}</Ink>
+          <Ink size={16} weight="extraBold" numberOfLines={2}>{traduire(s.name)}</Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <Ink size={12} weight="bold" color={tone}>{skillCategoryLabel(s.category)}</Ink>
             {s.drillCount > 0 ? <Ink size={12} weight="bold" color={P.muted}>{traduire("{0} répétitions", s.drillCount)}</Ink> : null}

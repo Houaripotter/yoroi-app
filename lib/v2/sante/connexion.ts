@@ -205,6 +205,6 @@ export function texteCompte(c: CompteImport | null | undefined): string {
 
 export function texteImport(enCours: boolean, c: CompteImport | null | undefined): string {
   const t = texteCompte(c);
-  if (enCours) return t ? `Import en cours : ${t}` : 'Import en cours';
+  if (enCours) return t ? `Import en cours : ${t}` : traduire('Import en cours');
   return t ? traduire("Import terminé : {0}", t) : traduire('Import terminé');
 }

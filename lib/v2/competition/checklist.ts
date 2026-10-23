@@ -26,7 +26,7 @@ const STEPS: Omit<PrepStep, 'checked'>[] = [
   { id: 'hydration', label: traduire('Hydratation réglée'), description: traduire('Deux à trois litres par jour. Pas d’excès d’eau la veille.'), icon: 'drop', fromDays: 7 },
   { id: 'nutrition', label: traduire('Repas d’avant compétition'), description: traduire('Glucides complexes et protéines. Aucun aliment nouveau.'), icon: 'heart', fromDays: 3 },
   { id: 'gear', label: traduire('Matériel prêt'), description: traduire('Kimono ou tenue, protections, encas, eau : vérifie la veille.'), icon: 'shield', fromDays: 2 },
-  { id: 'mental', label: 'Visualisation', description: traduire('Cinq minutes les yeux fermés. Vois ton combat, calme.'), icon: 'star', fromDays: 2 },
+  { id: 'mental', label: traduire('Visualisation'), description: traduire('Cinq minutes les yeux fermés. Vois ton combat, calme.'), icon: 'star', fromDays: 2 },
   { id: 'light_breakfast', label: traduire('Petit déjeuner léger'), description: traduire('Facile à digérer, deux à trois heures avant la pesée.'), icon: 'sun', fromDays: 1 },
   { id: 'warmup_plan', label: traduire('Plan d’échauffement'), description: traduire('Une routine connue. Aucune surprise le jour J.'), icon: 'flag', fromDays: 1 },
 ];
@@ -61,7 +61,7 @@ export function phaseOf(daysLeft: number): { label: string; color: string; kanji
   if (daysLeft < 0) return { label: traduire('Terminée'), color: '#8B8D96', kanji: '終' };
   if (daysLeft === 0) return { label: traduire('Jour J'), color: '#2C4A84', kanji: '戦' };
   if (daysLeft === 1) return { label: traduire('Veille du combat'), color: '#2C4A84', kanji: '前' };
-  if (daysLeft <= 3) return { label: 'Phase finale', color: '#A8832F', kanji: '決' };
+  if (daysLeft <= 3) return { label: traduire('Phase finale'), color: '#A8832F', kanji: '決' };
   if (daysLeft <= 7) return { label: traduire('Dernière semaine'), color: '#4F6B28', kanji: '週' };
   if (daysLeft <= 14) return { label: traduire('Affûtage'), color: '#2C4A84', kanji: '刃' };
   return { label: traduire('Préparation'), color: '#1D2029', kanji: '備' };

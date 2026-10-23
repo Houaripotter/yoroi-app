@@ -14,9 +14,9 @@ import { Note, StudioSection, SubTitle } from './parts';
 import { traduire, traduirePluriel, LOCALE } from '@/lib/i18n/tr';
 
 export const GALERIES: { route: string; label: string; sub: string; icon: 'image' | 'bell' | 'frame' | 'share' | 'grid' }[] = [
-  { route: '/studio/images', label: 'Galerie d’images', sub: traduire('Chaque illustration, par famille, en grand'), icon: 'image' },
-  { route: '/studio/sons', label: 'Sons', sub: traduire('Chaque son, et la fin de round'), icon: 'bell' },
-  { route: '/studio/fenetres', label: traduire('Fenêtres'), sub: 'Alertes, choix, saisies, feuilles', icon: 'frame' },
+  { route: '/studio/images', label: traduire('Galerie d’images'), sub: traduire('Chaque illustration, par famille, en grand'), icon: 'image' },
+  { route: '/studio/sons', label: traduire('Sons'), sub: traduire('Chaque son, et la fin de round'), icon: 'bell' },
+  { route: '/studio/fenetres', label: traduire('Fenêtres'), sub: traduire('Alertes, choix, saisies, feuilles'), icon: 'frame' },
   { route: '/studio/partage', label: traduire('Cartes de partage'), sub: traduire('Toutes, au nom de Heny'), icon: 'share' },
   { route: '/studio/etats', label: traduire('États'), sub: traduire('Vides, chargements, erreur simulée'), icon: 'grid' },
 ];
@@ -33,13 +33,13 @@ export function Contenu() {
       icon="table"
       title={traduire("Contenu et revue")}
       sub={bad ? traduirePluriel(bad, bad > 1, "Compteurs, {0} contrôle à revoir, galeries", "Compteurs, {0} contrôles à revoir, galeries", bad) : traduire('Compteurs, contrôles, galeries')}
-      keywords={traduire("contenu compteurs sports exercices techniques citations personnages scenes ornements carnet sons controles coherence galerie images sons fenetres partage etats")}
+      keywords="contenu compteurs sports exercices techniques citations personnages scenes ornements carnet sons controles coherence galerie images sons fenetres partage etats"
     >
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
         {CONTENT_COUNTS.map((k) => (
           <View key={k.id} style={{ width: '31.5%', minHeight: 84, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 10, gap: 2, justifyContent: 'space-between' }}>
             <Ink size={24} weight="black" tight>{k.value.toLocaleString(LOCALE)}</Ink>
-            <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2}>{k.label}</Ink>
+            <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire(k.label)}</Ink>
           </View>
         ))}
       </View>
@@ -52,7 +52,7 @@ export function Contenu() {
               <Icon name={x.ok ? 'check' : 'info'} size={15} color={x.ok ? c.successText : c.danger} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={14} weight="extraBold">{x.label}</Ink>
+              <Ink size={14} weight="extraBold">{traduire(x.label)}</Ink>
               <Ink size={12} color={x.ok ? c.textSecondary : c.danger}>{x.detail}</Ink>
             </View>
           </View>
@@ -63,7 +63,7 @@ export function Contenu() {
       <SubTitle>{traduire("Galeries de revue")}</SubTitle>
       <Card>
         {GALERIES.map((g, i) => (
-          <Row key={g.route} first={i === 0} icon={g.icon} label={g.label} sub={g.sub} onPress={() => router.push(g.route as never)} />
+          <Row key={g.route} first={i === 0} icon={g.icon} label={traduire(g.label)} sub={traduire(g.sub)} onPress={() => router.push(g.route as never)} />
         ))}
       </Card>
     </StudioSection>

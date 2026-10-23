@@ -15,14 +15,14 @@ import { intensite, niveauDouleur } from '@/lib/v2/intensite';
 import { traduire } from '@/lib/i18n/tr';
 
 export const BODY_ZONES: { key: string; label: string }[] = [
-  { key: 'neck', label: 'Nuque' },
+  { key: 'neck', label: traduire('Nuque') },
   { key: 'shoulders', label: 'Épaules' },
-  { key: 'back', label: 'Dos' },
-  { key: 'elbows', label: 'Coudes' },
-  { key: 'wrists', label: 'Poignets' },
+  { key: 'back', label: traduire('Dos') },
+  { key: 'elbows', label: traduire('Coudes') },
+  { key: 'wrists', label: traduire('Poignets') },
   { key: 'hips', label: 'Hanches' },
-  { key: 'knees', label: 'Genoux' },
-  { key: 'ankles', label: 'Chevilles' },
+  { key: 'knees', label: traduire('Genoux') },
+  { key: 'ankles', label: traduire('Chevilles') },
 ];
 
 const STATUS: Record<BodyZoneData['status'], { label: string; color: string; soft: string }> = {
@@ -65,7 +65,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
       setZone(null);
     } catch (err) {
       logger.error('Enregistrement de l’état du corps impossible', err);
-      appAlert('Oups', traduire('L’enregistrement n’a pas marché. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('L’enregistrement n’a pas marché. Réessaie.'));
     } finally {
       setSaving(false);
     }
@@ -98,7 +98,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
             <Press onPress={() => open(z.key)} accessibilityRole="button" accessibilityLabel={`${z.label} : ${s ? s.label : traduire('rien de signalé')}`}>
               <View style={{ minHeight: 64, borderRadius: 18, backgroundColor: s ? s.soft : P.white, borderWidth: 1, borderColor: s ? s.soft : P.line2, paddingHorizontal: 14, paddingVertical: 10, justifyContent: 'center', gap: 2 }}>
                 <Ink size={15} weight="extraBold">
-                  {z.label}
+                  {traduire(z.label)}
                 </Ink>
                 <Ink size={12} weight="bold" color={s ? s.color : P.muted}>
                   {st === 'warning' ? traduire("gêne {0} sur 10", body[z.key]?.pain ?? 5) : s ? s.label.toLowerCase() : traduire('rien de signalé')}
@@ -126,7 +126,7 @@ export function BodyZones({ body, onChange }: { body: BodyStatusData; onChange: 
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {(['ok', 'warning', 'injury'] as const).map((s) => (
                 <View key={s} style={{ flex: 1 }}>
-                  <Pill label={STATUS[s].label} active={status === s} accent={STATUS[s].color} onPress={() => setStatus(s)} />
+                  <Pill label={traduire(STATUS[s].label)} active={status === s} accent={STATUS[s].color} onPress={() => setStatus(s)} />
                 </View>
               ))}
             </View>

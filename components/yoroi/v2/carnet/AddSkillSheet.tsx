@@ -34,7 +34,7 @@ export function AddSkillSheet(p: Props) {
   return (
     <Sheet visible={p.visible} onClose={p.onClose} title={traduire("Nouvelle technique")} scroll>
       <Field value={p.name} onChangeText={p.setName} placeholder={traduire("Berimbolo, défense de clé de jambe...")} maxLength={50} accessibilityLabel={traduire("Nom de la technique")} />
-      <Label>Discipline</Label>
+      <Label>{traduire("Discipline")}</Label>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {(Object.keys(SKILL_CATEGORIES) as SkillCategory[]).map((k) => {
           const on = p.category === k;
@@ -64,7 +64,7 @@ export function AddSkillSheet(p: Props) {
           );
         })}
       </View>
-      <Field label="Notes techniques" value={p.notes} onChangeText={p.setNotes} placeholder={traduire("Saisir le pantalon d’abord, puis entrer les jambes")} multiline maxLength={500} />
+      <Field label={traduire("Notes techniques")} value={p.notes} onChangeText={p.setNotes} placeholder={traduire("Saisir le pantalon d’abord, puis entrer les jambes")} multiline maxLength={500} />
       <Label>{traduire("Vidéo")}</Label>
       {p.videoUri ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
@@ -76,8 +76,8 @@ export function AddSkillSheet(p: Props) {
         </View>
       ) : (
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <View style={{ flex: 1 }}><BigButton label="Filmer" tone="ink" icon="play" onPress={p.onRecordVideo} /></View>
-          <View style={{ flex: 1 }}><BigButton label="Galerie" tone="light" onPress={p.onPickVideo} /></View>
+          <View style={{ flex: 1 }}><BigButton label={traduire("Filmer")} tone="ink" icon="play" onPress={p.onRecordVideo} /></View>
+          <View style={{ flex: 1 }}><BigButton label={traduire("Galerie")} tone="light" onPress={p.onPickVideo} /></View>
         </View>
       )}
       <BigButton label={p.busy ? traduire('Création...') : traduire('Ajouter la technique')} icon="check" disabled={p.busy || !p.name.trim()} onPress={p.onSubmit} />

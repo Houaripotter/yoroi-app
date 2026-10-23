@@ -22,8 +22,8 @@ const STEPS: Step[] = [
   { id: 'accueil', title: traduire('Accueil'), story: traduire('Premier contact : ta semaine, ton armure et ta dernière pesée.'), route: '/(tabs)', icon: 'home', hint: traduire('Onglet Accueil, en haut de l’écran') },
   { id: 'progres', title: traduire('Courbe de poids'), story: traduire('Six mois de progression tracés au pinceau.'), route: '/(tabs)/progres', icon: 'scale', hint: traduire('Onglet Progrès, période 6 mois') },
   { id: 'seances', title: traduire('Séances'), story: traduire('Un historique bien rempli : musculation, combat, cardio.'), route: '/(tabs)/seances', icon: 'dumbbell', hint: traduire('Onglet Séances, fais défiler un peu') },
-  { id: 'dojo', title: 'Dojo', story: traduire('L’armure qui se construit plaque après plaque.'), route: '/(tabs)/dojo', icon: 'belt', hint: traduire('Onglet Dojo, carte du rang en haut') },
-  { id: 'records', title: 'Records', story: traduire('Les records tamponnés du sceau rouge.'), route: '/records', icon: 'trophy', hint: traduire('Séances, puis Records') },
+  { id: 'dojo', title: traduire('Dojo'), story: traduire('L’armure qui se construit plaque après plaque.'), route: '/(tabs)/dojo', icon: 'belt', hint: traduire('Onglet Dojo, carte du rang en haut') },
+  { id: 'records', title: traduire('Records'), story: traduire('Les records tamponnés du sceau rouge.'), route: '/records', icon: 'trophy', hint: traduire('Séances, puis Records') },
   { id: 'transformation', title: traduire('Avant, après'), story: traduire('Le résultat concret, côte à côte.'), route: '/transformation', icon: 'image', hint: traduire('Progrès, puis Transformation') },
 ];
 
@@ -61,7 +61,7 @@ function MarketingKitInner() {
   const complete = done.size === STEPS.length;
 
   return (
-    <DetailScreen title="Kit marketing" subtitle={traduire("6 captures qui racontent l’app, dans l’ordre")}>
+    <DetailScreen title={traduire("Kit marketing")} subtitle={traduire("6 captures qui racontent l’app, dans l’ordre")}>
       {/* Progression en plaques kozane */}
       <Card style={{ padding: 16, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -82,12 +82,12 @@ function MarketingKitInner() {
       <Ink size={12} color={P.muted} style={{ textAlign: 'center' }}>{traduire("Active le mode capture propre et la barre d’état 09:41.")}</Ink>
 
       <Card>
-        <ToggleRow first icon="camera" label="Mode capture propre" sub={traduire("Masque badges et messages de test")} value={isScreenshotMode} onChange={() => toggleScreenshotMode()} />
+        <ToggleRow first icon="camera" label={traduire("Mode capture propre")} sub={traduire("Masque badges et messages de test")} value={isScreenshotMode} onChange={() => toggleScreenshotMode()} />
         <ToggleRow icon="timer" label={traduire("Barre d’état 09:41")} sub={traduire("Heure, batterie et réseau parfaits")} value={useFakeStatusBar} onChange={() => toggleFakeStatusBar()} disabled={!isScreenshotMode} />
       </Card>
 
       <Card style={{ padding: 14, gap: 6, backgroundColor: P.indigoSoft, borderColor: P.indigoSoft }}>
-        <Ink size={14} weight="extraBold" color={P.indigo}>Comment capturer</Ink>
+        <Ink size={14} weight="extraBold" color={P.indigo}>{traduire("Comment capturer")}</Ink>
         <Ink size={13} color={P.indigo}>{traduire("1. Touche Ouvrir sur une étape.")}</Ink>
         <Ink size={13} color={P.indigo}>{traduire("2. Fais la capture : bouton latéral et volume haut en même temps.")}</Ink>
         <Ink size={13} color={P.indigo}>{traduire("3. Reviens ici et coche l’étape.")}</Ink>
@@ -106,7 +106,7 @@ function MarketingKitInner() {
                 <View style={{ flex: 1, gap: 2 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Icon name={step.icon} size={16} color={P.ink2} />
-                    <Ink size={16} weight="black">{step.title}</Ink>
+                    <Ink size={16} weight="black">{traduire(step.title)}</Ink>
                   </View>
                   <Ink size={13} color={P.ink2}>{step.story}</Ink>
                   <Ink size={12} weight="bold" color={P.muted}>{step.hint}</Ink>
@@ -119,7 +119,7 @@ function MarketingKitInner() {
                   accessibilityLabel={`Ouvrir ${step.title}`}
                   style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 14, backgroundColor: pressed ? P.accentDark : P.accent, alignItems: 'center', justifyContent: 'center' })}
                 >
-                  <Ink size={14} weight="extraBold" color={P.white}>Ouvrir</Ink>
+                  <Ink size={14} weight="extraBold" color={P.white}>{traduire("Ouvrir")}</Ink>
                 </Pressable>
                 <Pressable
                   onPress={() => toggleStep(step.id)}

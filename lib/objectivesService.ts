@@ -22,11 +22,11 @@ export interface ObjectiveTypeConfig {
 }
 
 export const OBJECTIVE_TYPES: ObjectiveTypeConfig[] = [
-  { type: 'competition', label: 'Competition', icon: 'Swords', defaultColor: '#EF4444', emoji: '' },
+  { type: 'competition', label: traduire('Competition'), icon: 'Swords', defaultColor: '#EF4444', emoji: '' },
   { type: 'weight', label: traduire('Objectif Poids'), icon: 'Scale', defaultColor: '#3B82F6', emoji: '' },
-  { type: 'exam', label: 'Examen', icon: 'GraduationCap', defaultColor: '#EAB308', emoji: '' },
-  { type: 'travel', label: 'Voyage / Stage', icon: 'Plane', defaultColor: '#22C55E', emoji: '' },
-  { type: 'custom', label: 'Personnalise', icon: 'Target', defaultColor: '#A855F7', emoji: '' },
+  { type: 'exam', label: traduire('Examen'), icon: 'GraduationCap', defaultColor: '#EAB308', emoji: '' },
+  { type: 'travel', label: traduire('Voyage / Stage'), icon: 'Plane', defaultColor: '#22C55E', emoji: '' },
+  { type: 'custom', label: traduire('Personnalise'), icon: 'Target', defaultColor: '#A855F7', emoji: '' },
 ];
 
 export const getTypeConfig = (type: ObjectiveType): ObjectiveTypeConfig => {

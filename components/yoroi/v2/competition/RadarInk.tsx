@@ -78,7 +78,7 @@ export function RadarInk({ axes, size = 320 }: { axes: RadarAxis[]; size?: numbe
           return (
             <G key={a.key}>
               <SvgText x={x + dx} y={y - 4} textAnchor={anchor} fontSize={12} fontFamily={fontFamilies.extraBold} fill={P.ink2}>
-                {a.label}
+                {traduire(a.label)}
               </SvgText>
               <SvgText x={x + dx} y={y + 16} textAnchor={anchor} fontSize={19} fontFamily={fontFamilies.black} fill={a.value >= 60 ? a.color : P.ink}>
                 {`${Math.round(a.value)}\u00A0%`}

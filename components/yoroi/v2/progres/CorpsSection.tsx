@@ -237,7 +237,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       {/* Composition en grille de mini courbes (vague 26), deux par rangee */}
       {!showCorps ? null : !compo.loading && !hasCompo ? (
         <View style={{ paddingHorizontal: GUTTER }}>
-          <SectionHead title="Composition" />
+          <SectionHead title={traduire("Composition")} />
           <ExamplePreview
             flush
             style={{ marginTop: 12 }}
@@ -246,7 +246,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
             plusHint={traduire("Touche + pour ta composition")}
           >
             {ROWS.map((r, i) => (
-              <CompoRow key={r.key} first={i === 0} label={r.label} color={r.color} points={sample[r.key as 'fat' | 'muscle' | 'water']} unitWord={r.unitWord} />
+              <CompoRow key={r.key} first={i === 0} label={traduire(r.label)} color={r.color} points={sample[r.key as 'fat' | 'muscle' | 'water']} unitWord={r.unitWord} />
             ))}
           </ExamplePreview>
         </View>
@@ -266,7 +266,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
       {/* Mensurations */}
       {showCorps ? (
       <View style={{ paddingHorizontal: GUTTER }}>
-        <SectionHead title="Mensurations" aside={silhouette.items.length ? traduire('L’évolution') : undefined} onPress={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
+        <SectionHead title={traduire("Mensurations")} aside={silhouette.items.length ? traduire('L’évolution') : undefined} onPress={silhouette.items.length ? () => router.push('/measurements-detail' as any) : undefined} />
         {!measures.loading && silhouette.items.length === 0 ? (
           <ExamplePreview
             flush
@@ -369,8 +369,7 @@ export function CorpsSection({ part }: { part?: 'corps' | 'photos' } = {}) {
                   </View>
                   <View style={{ height: 40, paddingHorizontal: 14, borderRadius: 14, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
                     <Ink size={14} weight="extraBold" color={c.onAccent}>
-                      Comparer
-                    </Ink>
+                      {traduire("Comparer")}</Ink>
                   </View>
                 </View>
               </Pressable>

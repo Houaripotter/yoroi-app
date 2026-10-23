@@ -203,7 +203,7 @@ export default function InjuryDetailScreen() {
     monday.setDate(now.getDate() + diff);
     const weekStart = isoOf(monday);
     try {
-      for (const s of slots) if (s.id) await cancelSlot(s.id, weekStart, traduire("Blessure: {0}", injury.zone_id), injury.id);
+      for (const s of slots) if (s.id) await cancelSlot(s.id, weekStart, `Blessure: ${injury.zone_id}`, injury.id);
       tap('success');
       notify();
       appAlert(traduire('Créneaux annulés'), traduirePluriel(slots.length, slots.length > 1, "{0} créneau annulé pour cette semaine.", "{0} créneaux annuléx pour cette semaine.", slots.length));
@@ -326,7 +326,7 @@ export default function InjuryDetailScreen() {
                     </Ink>
                     {e.notes ? (
                       <Ink size={12} weight="medium" color={P.ink2}>
-                        {e.notes}
+                        {traduire(e.notes)}
                       </Ink>
                     ) : null}
                   </View>
@@ -420,7 +420,7 @@ export default function InjuryDetailScreen() {
                   </View>
                   <View style={{ flex: 1, gap: 4, paddingBottom: 16 }}>
                     <Ink size={15} weight="black">
-                      {w.label}
+                      {traduire(w.label)}
                     </Ink>
                     {w.restrictions.map((r) => (
                       <Bullet key={r} color={WEEK_COLORS[i] ?? P.ink}>
@@ -470,8 +470,8 @@ export default function InjuryDetailScreen() {
                       <TreatTile key={t.id} icon={T_ICONS[t.icon] ?? 'circle'} label={treatmentLabel(t.id, t.label)} onPress={() => addTreatment(t.id, treatmentLabel(t.id, t.label))} />
                     ))}
                   </View>
-                  <BigButton label={traduire("Remettre la douleur à 0")} tone="ink" icon="refresh" onPress={() => surgeonSet(0, traduire('Remise à zéro via mode chirurgien'), traduire('Remettre à 0 ?'), traduire('La douleur passera à 0 (guérie).'))} />
-                  <BigButton label={traduire("Forcer la douleur à 10")} tone="light" icon="bolt" onPress={() => surgeonSet(10, traduire('Douleur max via mode chirurgien'), traduire('Forcer à 10 ?'), traduire('La douleur passera à 10 (maximale).'))} />
+                  <BigButton label={traduire("Remettre la douleur à 0")} tone="ink" icon="refresh" onPress={() => surgeonSet(0, 'Remise à zéro via mode chirurgien', traduire('Remettre à 0 ?'), traduire('La douleur passera à 0 (guérie).'))} />
+                  <BigButton label={traduire("Forcer la douleur à 10")} tone="light" icon="bolt" onPress={() => surgeonSet(10, 'Douleur max via mode chirurgien', traduire('Forcer à 10 ?'), traduire('La douleur passera à 10 (maximale).'))} />
                   <View style={{ padding: 12, borderRadius: 16, backgroundColor: P.paper, gap: 2 }}>
                     <Ink size={13} weight="extraBold">
                       {traduire("Données brutes")}</Ink>

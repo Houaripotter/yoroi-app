@@ -428,7 +428,7 @@ export function validateMeasurement(data: Partial<MeasurementData>): ValidationR
  * Valide un nom d'utilisateur
  */
 export function validateUsername(username: any): ValidationResult {
-  const result = validateString(username, VALIDATION_LIMITS.NAME_MAX_LENGTH, 'Nom');
+  const result = validateString(username, VALIDATION_LIMITS.NAME_MAX_LENGTH, traduire('Nom'));
 
   if (!result.valid) return result;
 

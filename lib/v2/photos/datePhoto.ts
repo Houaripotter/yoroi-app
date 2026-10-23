@@ -30,5 +30,5 @@ export function photoDay(p: { exif?: unknown; fileName?: unknown; creationTime?:
 
 /** une photo prise maintenant avec l'appareil de l'app */
 export function cameraDay(now: number = Date.now()): PhotoDay {
-  return { date: isoDay(now), found: true, label: 'Photo prise maintenant' };
+  return { date: isoDay(now), found: true, label: traduire('Photo prise maintenant') };
 }

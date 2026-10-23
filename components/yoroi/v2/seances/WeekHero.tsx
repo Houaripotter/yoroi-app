@@ -154,7 +154,7 @@ export function WeekHero({
         <Tile label={traduire("durée")} value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
           <Trend delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
         </Tile>
-        <Tile label={vol.label} value={vol.value}>
+        <Tile label={traduire(vol.label)} value={vol.value}>
           <Trend delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
         </Tile>
         <Tile label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y={traduire("Ta charge d’entraînement, voir le détail")}>

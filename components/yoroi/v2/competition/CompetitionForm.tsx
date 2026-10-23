@@ -19,7 +19,7 @@ import { BELTS } from '@/lib/v2/combat/rounds';
 import type { PeseeMoment } from '@/lib/v2/competition/extras';
 import { traduire } from '@/lib/i18n/tr';
 
-export const TYPE_SUGGESTIONS = [traduire('Combat'), 'Match', 'Course', traduire('Compétition'), 'Tournoi', 'Championnat'];
+export const TYPE_SUGGESTIONS = ['Combat', 'Match', 'Course', 'Compétition', 'Tournoi', 'Championnat'];
 
 export const ALL_SPORTS: Sport[] = ['jjb', 'mma', 'boxe', 'muay_thai', 'judo', 'karate', 'taekwondo', 'tennis', 'football', 'basket', 'handball', 'trail', 'running', 'cyclisme', 'natation', 'rugby', 'volleyball', 'escalade', 'crossfit', 'hyrox', 'musculation', 'autre'];
 
@@ -74,10 +74,10 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
     <View style={{ gap: 18 }}>
       <Field label={traduire("Nom de la compétition")} value={draft.nom} onChangeText={(nom) => set({ nom })} placeholder={traduire("Ex : Open de Paris")} icon="trophy" maxLength={100} />
       <DateField label="Date" value={draft.date} onChange={(date) => set({ date })} minimumDate={minimumDate} />
-      <Field label="Lieu" value={draft.lieu} onChangeText={(lieu) => set({ lieu })} placeholder="Ex : Paris, France" icon="flag" maxLength={100} />
+      <Field label={traduire("Lieu")} value={draft.lieu} onChangeText={(lieu) => set({ lieu })} placeholder={traduire("Ex : Paris, France")} icon="flag" maxLength={100} />
 
       <View style={{ gap: 6 }}>
-        <Label>Sport</Label>
+        <Label>{traduire("Sport")}</Label>
         <Press onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={`Sport : ${competitionSportName(draft.sport)}. Changer`}>
           <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 76, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingLeft: 8, paddingRight: 16, overflow: 'hidden' }}>
             <Image source={sportArt(draft.sport, gender, 1)} style={{ width: 64, height: 84, marginBottom: -14 }} resizeMode="contain" />
@@ -118,7 +118,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           ) : null}
           <ChipScroll>
             {categories.map((cat) => (
-              <Chip key={cat.id} label={cat.name} sub={cat.open ? traduire('toutes catégories') : cat.maxWeight >= 900 ? traduire('sans limite') : `${formatKg(cat.maxWeight)} kg max`} active={draft.categorieId === cat.id} accent={P.accent} onPress={() => set({ categorieId: draft.categorieId === cat.id ? '' : cat.id })} />
+              <Chip key={cat.id} label={traduire(cat.name)} sub={cat.open ? traduire('toutes catégories') : cat.maxWeight >= 900 ? traduire('sans limite') : `${formatKg(cat.maxWeight)} kg max`} active={draft.categorieId === cat.id} accent={P.accent} onPress={() => set({ categorieId: draft.categorieId === cat.id ? '' : cat.id })} />
             ))}
           </ChipScroll>
         </View>
@@ -129,7 +129,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           <Label>{traduire("Ta ceinture")}</Label>
           <ChipScroll>
             {beltsFor(draft.sport).map((b) => (
-              <Chip key={b.key} label={b.label} active={draft.ceinture === b.key} accent={P.accent} onPress={() => set({ ceinture: draft.ceinture === b.key ? '' : b.key })} />
+              <Chip key={b.key} label={traduire(b.label)} active={draft.ceinture === b.key} accent={P.accent} onPress={() => set({ ceinture: draft.ceinture === b.key ? '' : b.key })} />
             ))}
           </ChipScroll>
         </View>
@@ -144,18 +144,18 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
         </ChipScroll>
       </View>
 
-      <Field label={traduire("Site de l’événement")} value={draft.url} onChangeText={(url) => set({ url })} placeholder="Ex : cfjjb.com" icon="flag" keyboardType="url" maxLength={300} />
+      <Field label={traduire("Site de l’événement")} value={draft.url} onChangeText={(url) => set({ url })} placeholder={traduire("Ex : cfjjb.com")} icon="flag" keyboardType="url" maxLength={300} />
 
       <View style={{ gap: 8 }}>
         <Label>{traduire("Type d’événement")}</Label>
         <ChipScroll>
           {TYPE_SUGGESTIONS.map((s) => (
-            <Chip key={s} label={s} active={!customOpen && draft.typeEvenement === s} onPress={() => { setCustomOpen(false); set({ typeEvenement: draft.typeEvenement === s ? '' : s }); }} />
+            <Chip key={s} label={traduire(s)} active={!customOpen && draft.typeEvenement === s} onPress={() => { setCustomOpen(false); set({ typeEvenement: draft.typeEvenement === s ? '' : s }); }} />
           ))}
           <Chip label="Autre" active={customOpen} onPress={() => { setCustomOpen(!customOpen); if (!customOpen && TYPE_SUGGESTIONS.includes(draft.typeEvenement)) set({ typeEvenement: '' }); }} />
         </ChipScroll>
         {customOpen ? (
-          <Field label={traduire("Ton type d’événement")} value={draft.typeEvenement} onChangeText={(typeEvenement) => set({ typeEvenement })} placeholder="Ex : Open, Interclubs" icon="star" maxLength={50} />
+          <Field label={traduire("Ton type d’événement")} value={draft.typeEvenement} onChangeText={(typeEvenement) => set({ typeEvenement })} placeholder={traduire("Ex : Open, Interclubs")} icon="star" maxLength={50} />
         ) : null}
       </View>
 

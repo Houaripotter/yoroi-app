@@ -35,7 +35,7 @@ function TopCard({ title, sub, items, color, alerts }: { title: string; sub?: st
       </View>
       {items.map((it, i) => (
         <View key={`${it.label}_${i}`} style={{ gap: 4 }}>
-          <RankRow index={i} label={it.label} value={it.count} max={items[0].count} color={color} suffix={traduire(" fois")} />
+          <RankRow index={i} label={traduire(it.label)} value={it.count} max={items[0].count} color={color} suffix={traduire(" fois")} />
           {alerts && it.count >= 3 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 36 }}>
               <CIcon name="flag" size={13} color={color} />
@@ -132,7 +132,7 @@ export default function RoundsInsightsScreen() {
                         <Ink size={12} weight="bold" color={P.ink2}>
                           {traduire("Ton ressenti le plus fréquent")}</Ink>
                         <Ink size={18} weight="black" color={dominant.info.color}>
-                          {dominant.info.label}
+                          {traduire(dominant.info.label)}
                         </Ink>
                       </View>
                     </View>
@@ -166,7 +166,7 @@ export default function RoundsInsightsScreen() {
                             <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: m.info.color }} />
                           </View>
                           <Ink size={15} weight="bold" style={{ flex: 1 }}>
-                            {m.info.label}
+                            {traduire(m.info.label)}
                           </Ink>
                           <Ink size={14} weight="black" color={m.info.color}>
                             {`${pct} %`}

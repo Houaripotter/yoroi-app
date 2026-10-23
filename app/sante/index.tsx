@@ -186,7 +186,7 @@ export default function SanteScreen() {
         {/* Une seule porte vers la gestion de la liaison ; les marques s'ouvrent depuis Tes appareils,
             les zones cardiaques depuis la fiche Fréquence cardiaque, la synchro iPhone et iPad depuis Réglages. */}
         <CardBox>
-          <ActionRow first icon="link" title={traduire("Connexion santé")} sub="Autorisations, import, diagnostic" onPress={() => router.push('/health-connect' as any)} color={S.indigo} tint={S.indigoSoft} />
+          <ActionRow first icon="link" title={traduire("Connexion santé")} sub={traduire("Autorisations, import, diagnostic")} onPress={() => router.push('/health-connect' as any)} color={S.indigo} tint={S.indigoSoft} />
         </CardBox>
       </ScrollView>
 

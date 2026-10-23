@@ -53,38 +53,38 @@ export interface ExtendedPartnerFields {
 
 export const ARCHETYPE_META: Record<Archetype, { label: string; description: string; color: string; icon: string }> = {
   gardien: {
-    label: 'Gardien',
+    label: traduire('Gardien'),
     description: traduire('Joue la garde, triangle, attaques du bas.'),
     color: '#8B5CF6',
     icon: 'Shield',
   },
   passeur: {
-    label: 'Passeur',
+    label: traduire('Passeur'),
     description: traduire('Top game, pression, passage de garde.'),
     color: '#F59E0B',
     icon: 'Mountain',
   },
   striker: {
-    label: 'Striker',
+    label: traduire('Striker'),
     description: traduire('Debout, punch, kick, distance.'),
     color: '#EF4444',
     icon: 'Zap',
   },
   bagarreur: {
-    label: 'Bagarreur',
-    description: 'Volume, clinch, usure, physique.',
+    label: traduire('Bagarreur'),
+    description: traduire('Volume, clinch, usure, physique.'),
     color: '#DC2626',
     icon: 'Flame',
   },
   takedown: {
-    label: 'Takedown',
+    label: traduire('Takedown'),
     description: traduire('Wrestler/judoka, amene au sol.'),
     color: '#10B981',
     icon: 'Swords',
   },
   polyvalent: {
-    label: 'Polyvalent',
-    description: 'Style equilibre, adaptable.',
+    label: traduire('Polyvalent'),
+    description: traduire('Style equilibre, adaptable.'),
     color: '#6B7280',
     icon: 'Star',
   },
@@ -92,9 +92,9 @@ export const ARCHETYPE_META: Record<Archetype, { label: string; description: str
 
 export const EXPERIENCE_LEVEL_META: Record<ExperienceLevel, { label: string; color: string }> = {
   debutant: { label: 'Debutant', color: '#10B981' },
-  experimente: { label: 'Experimente', color: '#3B82F6' },
-  competiteur: { label: 'Competiteur', color: '#F59E0B' },
-  pro: { label: 'Pro', color: '#EF4444' },
+  experimente: { label: traduire('Experimente'), color: '#3B82F6' },
+  competiteur: { label: traduire('Competiteur'), color: '#F59E0B' },
+  pro: { label: traduire('Pro'), color: '#EF4444' },
 };
 
 /**

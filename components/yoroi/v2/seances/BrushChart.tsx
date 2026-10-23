@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { MONTHS_SHORT, dateOf } from '@/lib/v2/seances/sessionData';
 import { areaOf, AxisLabel, barPath, brushPath, CHART, CHART_COLORS, ChartCursor, ChartGrid, ChartTooltip, displayPoints, EndDot, nearestIndex, niceTicks, Reveal, SealMark, SeriesLine, tint, useChartInk, useChartScrub } from '../charts/core';
+import { traduire } from '@/lib/i18n/tr';
 
 export type BrushPoint = { date: string; value: number; seal?: boolean; label?: string };
 
@@ -108,7 +109,7 @@ export function BrushChart({ points, width, height = 190, color = CHART_COLORS.b
           <SealMark key={`s${i}`} x={q.x} y={Math.min(Math.max(q.y - (invert ? -20 : 20), 12), height - padB - 12)} />
         ))}
         {geo.months.map((m, i) => (
-          <AxisLabel key={`m${i}`} x={Math.min(width - padR - 14, Math.max(padL + 14, m.x))} y={height - 6} text={m.label} />
+          <AxisLabel key={`m${i}`} x={Math.min(width - padR - 14, Math.max(padL + 14, m.x))} y={height - 6} text={traduire(m.label)} />
         ))}
         {cur ? <ChartCursor x={cur.x} top={padT - 6} bottom={base} cy={bars ? null : cur.y} color={color} /> : null}
       </Svg>

@@ -211,7 +211,7 @@ export function DaysPicker({ value, onChange }: { value: number[]; onChange: (v:
               }}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: on }}
-              accessibilityLabel={d.name}
+              accessibilityLabel={traduire(d.name)}
               style={({ pressed }) => ({
                 flex: 1,
                 height: 44,
@@ -224,7 +224,7 @@ export function DaysPicker({ value, onChange }: { value: number[]; onChange: (v:
               })}
             >
               <Ink size={15} weight="black" color={on ? c.onAccent : c.textSecondary}>
-                {d.short}
+                {traduire(d.short)}
               </Ink>
             </Pressable>
           );
@@ -253,7 +253,7 @@ export function DaysPicker({ value, onChange }: { value: number[]; onChange: (v:
               })}
             >
               <Ink size={13} weight="bold" color={on ? c.accent : c.textSecondary}>
-                {p.label}
+                {traduire(p.label)}
               </Ink>
             </Pressable>
           );
@@ -297,7 +297,7 @@ export function ChoiceChips<T extends string | number>({ label, options, value, 
               })}
             >
               <Ink size={14} weight="extraBold" color={on ? c.onAccent : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                {o.label}
+                {traduire(o.label)}
               </Ink>
             </Pressable>
           );
@@ -464,7 +464,7 @@ export function NotifCard({ icon, title, summary, pitch, on, onToggle, preview, 
       {expanded ? (
         <Animated.View entering={FadeIn.duration(220)} style={{ borderTopWidth: 1, borderColor: c.divider, padding: 14, gap: 14, backgroundColor: '#FAF9F6' }}>
           {children}
-          {preview ? <NotifPreview title={preview.title} body={preview.body} when={preview.when} /> : null}
+          {preview ? <NotifPreview title={traduire(preview.title)} body={preview.body} when={preview.when} /> : null}
           {test ? (
             <Pressable
               onPress={() => {
@@ -475,7 +475,7 @@ export function NotifCard({ icon, title, summary, pitch, on, onToggle, preview, 
               style={({ pressed }) => ({ minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: pressed ? c.fillSoft : c.surface, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 })}
             >
               <Icon name="bell" size={17} color={c.accent} />
-              <Ink size={14} weight="extraBold" color={c.accent}>{test.label}</Ink>
+              <Ink size={14} weight="extraBold" color={c.accent}>{traduire(test.label)}</Ink>
             </Pressable>
           ) : null}
         </Animated.View>

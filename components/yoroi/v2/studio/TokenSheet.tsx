@@ -93,7 +93,7 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
               <Icon name="lock" size={22} color={c.accent} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={20} weight="black" tight>Studio YOROI</Ink>
+              <Ink size={20} weight="black" tight>{traduire("Studio YOROI")}</Ink>
               <Ink size={13} color={c.textSecondary}>{traduire("Colle ton jeton créateur")}</Ink>
             </View>
             <RoundButton icon="close" label={traduire("Fermer")} onPress={onClose} />
@@ -106,7 +106,7 @@ export function TokenSheet({ visible, onClose, onUnlocked }: { visible: boolean;
               setValue(v);
               if (message && !locked) setMessage(null);
             }}
-            placeholder="Jeton"
+            placeholder={traduire("Jeton")}
             placeholderTextColor={c.textMuted}
             secureTextEntry
             autoCapitalize="none"

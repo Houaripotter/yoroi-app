@@ -20,14 +20,14 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 /** Liste du module conservee pour les anciens appelants */
 export const MUSCLE_OPTIONS = [
   { label: 'Pectoraux', key: 'Pectoraux' },
-  { label: 'Dos', key: 'Dos' },
+  { label: traduire('Dos'), key: 'Dos' },
   { label: 'Épaules', key: 'Épaules' },
   { label: 'Biceps', key: 'Biceps' },
   { label: 'Triceps', key: 'Triceps' },
   { label: 'Jambes', key: 'Jambes' },
   { label: 'Fessiers', key: 'Fessiers' },
   { label: 'Mollets', key: 'Mollets' },
-  { label: 'Abdos / Core', key: 'Abdos / Core' },
+  { label: traduire('Abdos / Core'), key: 'Abdos / Core' },
   { label: 'Avant-bras', key: 'Avant-bras' },
 ];
 
@@ -82,7 +82,7 @@ export function VideosView({ refreshKey, addKey = 0 }: Props) {
     const m = new Map<string, { key: string; label: string; count: number }>();
     videos.forEach((v) => {
       const k = keyOf(v);
-      const label = k === 'muscle' ? 'Muscles' : k === 'autre' ? traduire('Sans rangement') : v.sportLabel || 'Sport';
+      const label = k === 'muscle' ? 'Muscles' : k === 'autre' ? traduire('Sans rangement') : v.sportLabel || traduire('Sport');
       if (!m.has(k)) m.set(k, { key: k, label, count: 0 });
       m.get(k)!.count++;
     });
@@ -161,7 +161,7 @@ export function VideosView({ refreshKey, addKey = 0 }: Props) {
           ) : (
             sections.map((s) => (
               <View key={s.title || 'toutes'} style={{ gap: 10 }}>
-                {s.title ? <BlockHead title={s.title} /> : null}
+                {s.title ? <BlockHead title={traduire(s.title)} /> : null}
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16 }}>
                   {s.items.map((v) => (
                     <VideoTile key={v.id} v={v} width={tileW} onPress={() => openVideo(v, setPlaying)} onLongPress={() => manage(v)} />

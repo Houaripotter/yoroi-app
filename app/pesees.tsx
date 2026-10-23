@@ -144,7 +144,7 @@ export default function Pesees() {
           </View>
         }
         renderSectionHeader={({ section }) => (
-          <Ink size={14} weight="extraBold" color={c.textSecondary} style={{ marginTop: 18, marginBottom: 4 }}>{section.title}</Ink>
+          <Ink size={14} weight="extraBold" color={c.textSecondary} style={{ marginTop: 18, marginBottom: 4 }}>{traduire(section.title)}</Ink>
         )}
         renderItem={({ item }) => {
           const d = item.delta;

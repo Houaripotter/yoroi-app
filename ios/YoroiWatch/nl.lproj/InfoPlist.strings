@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en nl. */
+"NSHealthShareUsageDescription" = "YOROI leest in Apple Health je hartslag, je zuurstofverzadiging, je rusthartslag, je hartslagvariabiliteit, je ademhalingsfrequentie, je calorieën, je gewicht en je geboortedatum (voor je hartslagzones), om je live hartslag, je sessieoverzicht en je complicaties Hart, Zuurstof, Rust en Ademhaling te tonen.";
+"NSHealthUpdateUsageDescription" = "YOROI bewaart in Apple Health je trainingen, met hun hartslag en calorieën, je wegingen en je glazen water, zodat alles op één plek blijft.";
+"NSUserNotificationUsageDescription" = "YOROI waarschuwt je aan het einde van elke ronde en wanneer je timers aflopen terwijl het scherm uit is.";
+"CFBundleDisplayName" = "Yoroi";

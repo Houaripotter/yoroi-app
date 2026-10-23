@@ -25,7 +25,7 @@ const SPORTS: { name: string; label: string; hasMuscles: boolean; groups: string
   { name: 'Hyrox', label: 'Hyrox', hasMuscles: false, groups: ['Hyrox'], illus: 'force', tint: '#EFE7D6' },
   { name: 'CrossFit', label: 'CrossFit', hasMuscles: false, groups: ['CrossFit'], illus: 'force', tint: '#E4EADB' },
   { name: 'Cardio', label: traduire('Cardio sur machines'), hasMuscles: false, groups: ['Cardio'], illus: 'endurance', tint: '#E3EEEA' },
-  { name: traduire('Combat'), label: traduire('Combat et MMA'), hasMuscles: false, groups: [traduire('Combat')], illus: 'combat', tint: '#EEE1DF' },
+  { name: 'Combat', label: traduire('Combat et MMA'), hasMuscles: false, groups: ['Combat'], illus: 'combat', tint: '#EEE1DF' },
   { name: 'Strongman', label: 'Strongman', hasMuscles: false, groups: ['Strongman'], illus: 'force', tint: '#EFE7D6' },
   { name: 'Olympique', label: traduire('Haltérophilie'), hasMuscles: false, groups: ['Olympique'], illus: 'musculation', tint: '#E4E9F3' },
   { name: 'Street Workout', label: 'Street workout', hasMuscles: false, groups: ['Street Workout'], illus: 'musculation', tint: '#E4EADB' },
@@ -33,19 +33,19 @@ const SPORTS: { name: string; label: string; hasMuscles: boolean; groups: string
 
 const MUSCLES: { label: string; group: string }[] = [
   { label: 'Pectoraux', group: 'Pectoraux' },
-  { label: 'Dos', group: 'Dos' },
+  { label: traduire('Dos'), group: 'Dos' },
   { label: 'Épaules', group: 'Epaules' },
   { label: 'Bras', group: 'Bras' },
   { label: 'Jambes', group: 'Jambes' },
   { label: 'Abdos', group: 'Abdos' },
-  { label: 'Machines', group: 'Machines' },
+  { label: traduire('Machines'), group: 'Machines' },
   { label: traduire('Haltérophilie'), group: 'Olympique' },
 ];
 
 const UNITS: { key: BenchmarkUnit; label: string }[] = [
-  { key: 'kg', label: 'Kilos' },
-  { key: 'lbs', label: 'Livres' },
-  { key: 'time', label: 'Temps' },
+  { key: 'kg', label: traduire('Kilos') },
+  { key: 'lbs', label: traduire('Livres') },
+  { key: 'time', label: traduire('Temps') },
   { key: 'reps', label: traduire('Répétitions') },
   { key: 'km', label: traduire('Kilomètres') },
   { key: 'meters', label: traduire('Mètres') },
@@ -115,7 +115,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
         <>
           <Field value={query} onChangeText={setQuery} placeholder={traduire("Cherche un exercice : squat, rameur...")} autoCorrect={false} accessibilityLabel={traduire("Chercher un exercice")} />
           {searchResults.map((t) => (
-            <ChoiceLine key={t.id} title={niceName(t.name)} sub={BENCHMARK_CATEGORIES[t.category]?.label} icon="plus" onPress={() => onPickTemplate(t.name, t.category, t.unit, t.muscleGroup)} />
+            <ChoiceLine key={t.id} title={niceName(t.name)} sub={traduire(BENCHMARK_CATEGORIES[t.category]?.label)} icon="plus" onPress={() => onPickTemplate(t.name, t.category, t.unit, t.muscleGroup)} />
           ))}
           {query.trim() === '' ? (
             <>
@@ -138,7 +138,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
                       >
                         <View style={{ height: 138, borderRadius: 22, backgroundColor: s.tint, padding: 12, justifyContent: 'flex-end', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)' }}>
                           <Illus name={s.illus} size={78} style={{ position: 'absolute', right: 6, top: 6 }} />
-                          <Ink size={15} weight="black" tight numberOfLines={2}>{s.label}</Ink>
+                          <Ink size={15} weight="black" tight numberOfLines={2}>{traduire(s.label)}</Ink>
                           {n > 0 ? <Ink size={12} weight="bold" color={P.ink2}>{traduire("{0} exercices", n)}</Ink> : null}
                         </View>
                       </Press>
@@ -158,9 +158,9 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {MUSCLES.map((m) => (
             <View key={m.group} style={{ flexBasis: '48%', flexGrow: 1 }}>
-              <Press onPress={() => { setGroup(m.group); setStep('exercise'); }} accessibilityRole="button" accessibilityLabel={m.label}>
+              <Press onPress={() => { setGroup(m.group); setStep('exercise'); }} accessibilityRole="button" accessibilityLabel={traduire(m.label)}>
                 <View style={{ minHeight: 64, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 14, justifyContent: 'center' }}>
-                  <Ink size={15} weight="extraBold">{m.label}</Ink>
+                  <Ink size={15} weight="extraBold">{traduire(m.label)}</Ink>
                   <Ink size={12} weight="bold" color={P.muted}>{traduire("{0} exercices", WATCH_EXERCISE_TEMPLATES.filter((t) => t.muscleGroup?.toLowerCase() === m.group.toLowerCase()).length)}</Ink>
                 </View>
               </Press>
@@ -195,11 +195,11 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
                   }}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
-                  accessibilityLabel={BENCHMARK_CATEGORIES[k].label}
+                  accessibilityLabel={traduire(BENCHMARK_CATEGORIES[k].label)}
                 >
                   <View style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: categoryTone(k) }} />
-                    <Ink size={14} weight="bold" color={on ? P.white : P.ink}>{BENCHMARK_CATEGORIES[k].label}</Ink>
+                    <Ink size={14} weight="bold" color={on ? P.white : P.ink}>{traduire(BENCHMARK_CATEGORIES[k].label)}</Ink>
                   </View>
                 </Press>
               );
@@ -211,7 +211,7 @@ export function RecordPicker({ visible, onClose, busy, onPickTemplate, onCreateC
           {cat === 'force' ? (
             <MiniChips items={['Squat', 'Développé Couché', 'Soulevé de Terre'].map((n) => ({ key: n, label: n.charAt(0) + n.slice(1).toLowerCase() }))} value={name} onChange={(k) => { setName(k); setUnit('kg'); }} />
           ) : null}
-          <Field label={traduire("Nom du suivi")} value={name} onChangeText={setName} placeholder="Squat, 10 km, gainage..." maxLength={50} />
+          <Field label={traduire("Nom du suivi")} value={name} onChangeText={setName} placeholder={traduire("Squat, 10 km, gainage...")} maxLength={50} />
           {cat !== 'running' && cat !== 'trail' && cat !== 'force' ? (
             <>
               <Label>{traduire("Unité")}</Label>

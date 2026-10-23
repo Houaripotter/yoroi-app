@@ -69,7 +69,7 @@ export async function enregistrerCarte(ref: RefObject<View | null>, format: Form
     return true;
   } catch (e) {
     logger.error('[cartes] enregistrement', e);
-    dire(onErreur, 'Oups', traduire('Impossible d’enregistrer la carte dans ta pellicule.'));
+    dire(onErreur, traduire('Oups'), traduire('Impossible d’enregistrer la carte dans ta pellicule.'));
     return false;
   }
 }
@@ -91,7 +91,7 @@ export async function partagerCarte(ref: RefObject<View | null>, format: FormatI
     return true;
   } catch (e) {
     logger.error('[cartes] partage', e);
-    dire(onErreur, 'Oups', traduire('Impossible de partager la carte.'));
+    dire(onErreur, traduire('Oups'), traduire('Impossible de partager la carte.'));
     return false;
   }
 }

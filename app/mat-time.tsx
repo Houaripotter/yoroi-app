@@ -103,7 +103,7 @@ export default function MatTimeScreen() {
 
   return (
     <PremiumGate source="temps_tatami" featureTitle={traduire("Temps sur le tatami")} perks={[traduire('Ton temps total sur le tatami'), traduire('Ton objectif d’heures par semaine'), traduire('Le chemin vers les 1 000 heures')]}>
-      <DetailScreen title="Tatami" subtitle={traduire("Tes heures sur le tapis")}>
+      <DetailScreen title={traduire("Tatami")} subtitle={traduire("Tes heures sur le tapis")}>
         {loaded && s.sessions === 0 ? (
           <EmptyState title={traduire("Pas encore d'heures sur le tapis")} text={traduire("Enregistre tes séances de JJB, MMA, judo, lutte ou grappling : chaque minute s'ajoute ici.")} action={traduire("Nouvelle séance de combat")} onAction={() => router.push('/seance/combat' as any)} />
         ) : null}
@@ -175,7 +175,7 @@ export default function MatTimeScreen() {
                 <Card style={{ gap: 14 }}>
                   {s.byDisc.map((d, i) => (
                     <View key={d.name} style={{ gap: 2 }}>
-                      <RankRow index={i} label={d.name} value={Math.round(d.minutes / 6) / 10} max={Math.round(s.byDisc[0].minutes / 6) / 10} color={i === 0 ? P.goldDark : V} suffix=" h" />
+                      <RankRow index={i} label={traduire(d.name)} value={Math.round(d.minutes / 6) / 10} max={Math.round(s.byDisc[0].minutes / 6) / 10} color={i === 0 ? P.goldDark : V} suffix=" h" />
                       <Ink size={11} weight="bold" color={P.muted} style={{ paddingLeft: 36 }}>
                         {plural(d.sessions, traduire('séance'))}
                       </Ink>

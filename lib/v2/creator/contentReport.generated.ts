@@ -11,7 +11,7 @@ export const CONTENT_REPORT_AT = traduire("11/10/2026 à 1 h 21");
 export const CONTENT_COUNTS: ContentCount[] = [
   {
     "id": "sports",
-    "label": "Sports",
+    "label": traduire("Sports"),
     "value": 202
   },
   {
@@ -36,12 +36,12 @@ export const CONTENT_COUNTS: ContentCount[] = [
   },
   {
     "id": "citations",
-    "label": "Citations",
+    "label": traduire("Citations"),
     "value": 100
   },
   {
     "id": "personnages",
-    "label": "Personnages (images)",
+    "label": traduire("Personnages (images)"),
     "value": 37
   },
   {
@@ -56,12 +56,12 @@ export const CONTENT_COUNTS: ContentCount[] = [
   },
   {
     "id": "fonds",
-    "label": "Fonds verticaux",
+    "label": traduire("Fonds verticaux"),
     "value": 4
   },
   {
     "id": "ornements",
-    "label": "Ornements",
+    "label": traduire("Ornements"),
     "value": 14
   },
   {
@@ -71,7 +71,7 @@ export const CONTENT_COUNTS: ContentCount[] = [
   },
   {
     "id": "sons",
-    "label": "Sons",
+    "label": traduire("Sons"),
     "value": 10
   }
 ];
@@ -88,7 +88,7 @@ export const CONTENT_CHECKS: ContentCheck[] = [
     "id": "sports_images",
     "label": traduire("Sports illustrés complets (homme et femme, 3 niveaux)"),
     "ok": true,
-    "detail": "49 sports, 6 images chacun",
+    "detail": traduire("49 sports, 6 images chacun"),
     "count": 0
   },
   {
@@ -114,14 +114,14 @@ export const CONTENT_CHECKS: ContentCheck[] = [
   },
   {
     "id": "techniques_doublons",
-    "label": "Techniques en double",
+    "label": traduire("Techniques en double"),
     "ok": true,
     "detail": traduire("47 techniques, aucune en double"),
     "count": 0
   },
   {
     "id": "citations_doublons",
-    "label": "Citations en double",
+    "label": traduire("Citations en double"),
     "ok": true,
     "detail": traduire("100 citations, aucune en double"),
     "count": 0

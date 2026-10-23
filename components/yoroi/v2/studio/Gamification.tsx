@@ -69,7 +69,7 @@ export function Gamification() {
       }
       router.push({ pathname: '/seance/fin', params: { id: String(last.id) } } as never);
     } catch {
-      appAlert('Oups', traduire('La séance n’a pas pu être lue.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être lue.'));
     }
   };
 
@@ -79,12 +79,12 @@ export function Gamification() {
       await w?.reset();
       router.push('/(tabs)/dojo' as never);
     } catch {
-      appAlert('Oups', traduire('La reprise n’a pas pu être réarmée.'));
+      appAlert(traduire('Oups'), traduire('La reprise n’a pas pu être réarmée.'));
     }
   };
 
   return (
-    <StudioSection id="gamif" icon="crown" title="Gamification" sub={traduire("XP, rang, dan, avatar et chaque animation")} keywords={traduire("xp rang dan avatar personnage celebration plaque sceau lune semaine tenue bienvenue reprise anciens")}>
+    <StudioSection id="gamif" icon="crown" title={traduire("Gamification")} sub={traduire("XP, rang, dan, avatar et chaque animation")} keywords="xp rang dan avatar personnage celebration plaque sceau lune semaine tenue bienvenue reprise anciens">
       {demoActive ? (
         <>
           <Card style={{ padding: 14, gap: 12 }}>
@@ -118,7 +118,7 @@ export function Gamification() {
                     style={{ width: '19%', alignItems: 'center', gap: 4, paddingVertical: 6, borderRadius: 14, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accentTint : c.surface }}
                   >
                     <Image source={image(r.index)} style={{ width: 52, height: 66 }} resizeMode="contain" />
-                    <Ink size={11} weight="extraBold" numberOfLines={1}>{r.name}</Ink>
+                    <Ink size={11} weight="extraBold" numberOfLines={1}>{traduire(r.name)}</Ink>
                   </Pressable>
                 );
               })}
@@ -151,14 +151,14 @@ export function Gamification() {
         <Ink size={15} weight="extraBold">{traduire("Passage de rang")}</Ink>
         <ChipWrap>
           {RANKS.map((r) => (
-            <Chip key={r.id} label={r.name} onPress={() => show({ kind: 'rang', rankIndex: r.index })} accessibilityLabel={traduire("Voir le passage au rang {0}", r.name)} />
+            <Chip key={r.id} label={traduire(r.name)} onPress={() => show({ kind: 'rang', rankIndex: r.index })} accessibilityLabel={traduire("Voir le passage au rang {0}", r.name)} />
           ))}
-          <Chip label="Dan" onPress={() => show({ kind: 'dan' })} accessibilityLabel={traduire("Voir le passage d’un dan")} />
+          <Chip label={traduire("Dan")} onPress={() => show({ kind: 'dan' })} accessibilityLabel={traduire("Voir le passage d’un dan")} />
         </ChipWrap>
       </Card>
       <Card>
         <Row first icon="shield" label={traduire("Nouvelle plaque d’armure")} sub={traduire("Deux plaques sur trois")} onPress={() => show({ kind: 'plaque' })} />
-        <Row icon="star" label={traduire("Nouveaux sceaux")} sub="Trois sceaux fictifs" onPress={() => show({ kind: 'sceaux' })} />
+        <Row icon="star" label={traduire("Nouveaux sceaux")} sub={traduire("Trois sceaux fictifs")} onPress={() => show({ kind: 'sceaux' })} />
         <Row icon="moon" label={traduire("Lune du mois")} sub={traduire("Trois semaines tenues dans le mois")} onPress={() => show({ kind: 'lune' })} />
         <Row icon="user" label={traduire("Bienvenue des anciens")} sub={traduire("Le résumé de reprise, chiffres fictifs")} onPress={() => show({ kind: 'bienvenue' })} />
       </Card>

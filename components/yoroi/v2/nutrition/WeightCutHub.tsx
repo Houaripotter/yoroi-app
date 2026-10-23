@@ -150,7 +150,7 @@ export function WeightCutHub({ initialTab = 'coupe', extrasRoute }: { initialTab
         <Segments
           items={[
             { key: 'coupe', label: traduire('Ma coupe') },
-            { key: 'simu', label: 'Simulateur' },
+            { key: 'simu', label: traduire('Simulateur') },
             { key: 'jourj', label: traduire('Jour J') },
           ]}
           value={tab}
@@ -179,7 +179,7 @@ export function WeightCutHub({ initialTab = 'coupe', extrasRoute }: { initialTab
               }}
             />
           ) : (
-            <EmptyState title={traduire("Pèse-toi d’abord")} text={traduire("Ta coupe part de ta dernière pesée. Enregistre ton poids, puis reviens fixer ton objectif.")} action="Me peser" onAction={() => router.push('/pesee' as any)} />
+            <EmptyState title={traduire("Pèse-toi d’abord")} text={traduire("Ta coupe part de ta dernière pesée. Enregistre ton poids, puis reviens fixer ton objectif.")} action={traduire("Me peser")} onAction={() => router.push('/pesee' as any)} />
           )
         ) : tab === 'simu' ? (
           <Simulator defaultCurrent={current} defaultTarget={cut?.targetWeight ?? 0} defaultDays={cut ? daysLeft : 0} />
@@ -260,7 +260,7 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
               <Ink size={26} weight="black" tight>
                 {`${fmt(cut.targetWeight)} kg`}
               </Ink>
-              {cut.category ? <Badge label={cut.category} tone="ink" /> : null}
+              {cut.category ? <Badge label={traduire(cut.category)} tone="ink" /> : null}
             </View>
           </View>
           <CutTimeline startDate={cut.startDate} targetDate={cut.targetDate} startWeight={cut.startWeight} targetWeight={cut.targetWeight} currentWeight={cw} weights={weights.map((w) => ({ date: w.date, weight: w.weight }))} />
@@ -270,8 +270,8 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
       <Enter i={1}>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <MiniStat label={traduire("Aujourd’hui")} value={fmt(cw)} unit="kg" />
-          <MiniStat label="Reste" value={reached ? 'Atteint' : fmt(remaining)} unit={reached ? undefined : 'kg'} color={reached ? P.mossText : P.ink} />
-          <MiniStat label="Rythme" value={reached ? '0' : fmt(daily, 2)} unit={traduire("kg par jour")} color={risk === 'danger' ? P.danger : risk === 'moderate' ? P.goldDark : P.ink} />
+          <MiniStat label={traduire("Reste")} value={reached ? traduire('Atteint') : fmt(remaining)} unit={reached ? undefined : 'kg'} color={reached ? P.mossText : P.ink} />
+          <MiniStat label={traduire("Rythme")} value={reached ? '0' : fmt(daily, 2)} unit={traduire("kg par jour")} color={risk === 'danger' ? P.danger : risk === 'moderate' ? P.goldDark : P.ink} />
         </View>
       </Enter>
 
@@ -297,10 +297,10 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
         <View style={{ gap: 10 }}>
           <View style={{ padding: 14, borderRadius: 20, backgroundColor: zt.soft, gap: 4 }}>
             <Ink size={15} weight="black" color={zt.color}>
-              {zt.title}
+              {traduire(zt.title)}
             </Ink>
             <Ink size={13} weight="bold" color={zt.color}>
-              {zt.text}
+              {traduire(zt.text)}
             </Ink>
           </View>
           {!reached && risk !== 'safe' ? (
@@ -329,7 +329,7 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
             <View key={t.icon} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <IconDot name={t.icon} tone="indigo" size={36} />
               <Ink size={14} weight="medium" color={P.ink2} style={{ flex: 1 }}>
-                {t.text}
+                {traduire(t.text)}
               </Ink>
             </View>
           ))}
@@ -470,7 +470,7 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
     };
     if (z?.zone === 'danger' || risk === 'danger') {
       appAlert(traduire('Objectif dangereux'), traduire('Cet objectif dépasse les limites de sécurité. Le mieux est d’en parler à un médecin du sport ou de viser la catégorie au-dessus.'), [
-        { text: 'Revoir', style: 'cancel' },
+        { text: traduire('Revoir'), style: 'cancel' },
         { text: traduire('Garder quand même'), style: 'destructive', onPress: doSave },
       ]);
       return;
@@ -558,7 +558,7 @@ function CutForm({ current, initial, competition, onSaved, onCancel }: { current
         <Enter i={3}>
           <View style={{ padding: 14, borderRadius: 20, backgroundColor: ZONE_TEXT[z.zone].soft, gap: 4 }}>
             <Ink size={15} weight="black" color={ZONE_TEXT[z.zone].color}>
-              {ZONE_TEXT[z.zone].title}
+              {traduire(ZONE_TEXT[z.zone].title)}
             </Ink>
             <Ink size={13} weight="bold" color={ZONE_TEXT[z.zone].color}>
               {traduire("{0} kg à perdre en {1} jours, soit {2} kg par jour. {3}", fmt(toLose), days, fmt(daily, 2), ZONE_TEXT[z.zone].text)}
@@ -656,7 +656,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                   <View style={{ flex: 1, gap: 4, paddingBottom: 16 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                       <Ink size={16} weight="black">
-                        {ph.name}
+                        {traduire(ph.name)}
                       </Ink>
                       <Ink size={12} weight="bold" color={P.ink2}>
                         {traduirePluriel(ph.days, ph.days > 1, "{0} jour", "{0} jours", ph.days)}
@@ -680,8 +680,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                 <IconDot name="drop" tone="indigo" />
                 <View style={{ flex: 1 }}>
                   <Ink size={16} weight="black">
-                    Protocole hydrique classique
-                  </Ink>
+                    {traduire("Protocole hydrique classique")}</Ink>
                   <Ink size={12} weight="bold" color={P.ink2}>
                     {traduire("Eau et sel, jour par jour avant la pesée")}</Ink>
                 </View>
@@ -809,7 +808,7 @@ function DayJ() {
               <BigNumber value={fmt(plan.totalMl / 1000)} unit="litres" size={64} color={P.ink} />
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <MiniStat label={traduire("Par rappel")} value={String(plan.mlPerSlot)} unit="ml" />
-                <MiniStat label="Rappels" value={String(plan.slots)} unit={traduire("toutes les 20 min")} />
+                <MiniStat label={traduire("Rappels")} value={String(plan.slots)} unit={traduire("toutes les 20 min")} />
                 <MiniStat label={traduire("Par heure")} value={String(perHour)} unit="ml" />
               </View>
             </Glass>
@@ -821,7 +820,7 @@ function DayJ() {
               {plan.steps.slice(0, 8).map((s, i) => (
                 <View key={s.minuteOffset} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <Ink size={13} weight="black" style={{ width: 64 }}>
-                    {s.label}
+                    {traduire(s.label)}
                   </Ink>
                   <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: P.line, overflow: 'hidden' }}>
                     <View style={{ width: `${Math.min(100, ((i + 1) / plan.slots) * 100)}%`, height: '100%', backgroundColor: CHART_COLORS.blue, borderRadius: 4 }} />

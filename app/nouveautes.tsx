@@ -242,7 +242,7 @@ export default function Nouveautes() {
         );
       case 'rappels':
         return (
-          <Shell {...nav} title={traduire("Ta **discipline**")} sub={traduire("Des rappels pour tenir ton rythme, seulement ceux que tu allumes.")} gap={12} footer={<MainButton label="Continuer" onPress={suivant} />}>
+          <Shell {...nav} title={traduire("Ta **discipline**")} sub={traduire("Des rappels pour tenir ton rythme, seulement ceux que tu allumes.")} gap={12} footer={<MainButton label={traduire("Continuer")} onPress={suivant} />}>
             <MessageDiscipline />
             <BlocDiscipline
               sansMessage
@@ -283,7 +283,7 @@ export default function Nouveautes() {
             footer={
               <>
                 <MainButton label={traduire("Choisir ma scène")} tone="light" onPress={() => router.push('/settings/scene' as never)} />
-                <MainButton label={i >= n - 1 ? traduire('Voir la visite guidée') : 'Continuer'} onPress={suivant} />
+                <MainButton label={i >= n - 1 ? traduire('Voir la visite guidée') : traduire('Continuer')} onPress={suivant} />
               </>
             }
           >
@@ -291,8 +291,8 @@ export default function Nouveautes() {
               <Image source={meta.image} resizeMode="cover" style={StyleSheet.absoluteFill} accessibilityIgnoresInvertColors />
               {perso ? <Image source={perso} resizeMode="contain" style={{ position: 'absolute', right: 8, bottom: 0, width: Math.round(h * 0.75), height: h - 10 }} accessibilityIgnoresInvertColors /> : null}
             </View>
-            <Ink size={15} weight="extraBold">{meta.nom}</Ink>
-            <Ink size={14} color={c.textSecondary}>{meta.phrase}</Ink>
+            <Ink size={15} weight="extraBold">{traduire(meta.nom)}</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire(meta.phrase)}</Ink>
           </Shell>
         );
       }

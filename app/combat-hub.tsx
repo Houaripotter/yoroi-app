@@ -59,12 +59,12 @@ export default function CombatHub() {
   ];
   const fights: Access[] = [
     { title: traduire('Palmarès'), sub: traduire('médailles et victoires'), href: '/palmares', tint: '#F3EBDA', icon: 'trophy', ornement: 'fuji' },
-    { title: 'Partenaires', sub: traduire('ton sparring, tes duels'), href: '/sparring-partners', tint: '#E4EADB', icon: 'users', art: artByKey('jjb', gender, 1) },
+    { title: traduire('Partenaires'), sub: traduire('ton sparring, tes duels'), href: '/sparring-partners', tint: '#E4EADB', icon: 'users', art: artByKey('jjb', gender, 1) },
   ];
   const analyses: Access[] = [
     { title: traduire('Analyse de combat'), sub: traduire('rounds, plan de jeu, tatami'), href: '/combat-analytics', tint: '#E3E6EE', icon: 'chart', ornement: 'katanas' },
-    { title: 'Carte JJB', sub: traduire('tes positions, tes finitions'), href: '/bjj-positions', tint: '#E9E4D8', icon: 'map', art: artByKey('jjb', gender, 3) },
-    { title: 'Drills', sub: traduire('répétitions techniques'), href: '/drill-tracker', tint: '#EEE1DF', icon: 'repeat', art: artByKey('boxe', gender, 1) },
+    { title: traduire('Carte JJB'), sub: traduire('tes positions, tes finitions'), href: '/bjj-positions', tint: '#E9E4D8', icon: 'map', art: artByKey('jjb', gender, 3) },
+    { title: traduire('Drills'), sub: traduire('répétitions techniques'), href: '/drill-tracker', tint: '#EEE1DF', icon: 'repeat', art: artByKey('boxe', gender, 1) },
   ];
 
   return (

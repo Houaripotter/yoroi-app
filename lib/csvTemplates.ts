@@ -957,7 +957,7 @@ export async function shareFilteredTrainingsCSV(filters: TrainingExportFilters =
     if (filtered.length === 0) return false;
 
     const SEP = ';';
-    const headers = ['Date', 'Sport', 'Type séance', traduire('Durée (min)'), 'Intensité (RPE)', traduire('Calories'), traduire('Distance (km)'), 'FC moy.', 'Notes'];
+    const headers = ['Date', 'Sport', 'Type séance', 'Durée (min)', 'Intensité (RPE)', 'Calories', 'Distance (km)', 'FC moy.', 'Notes'];
     const lines: string[] = [
       `# YOROI - Export séances`,
       `# Filtres : sport=${filters.sport ?? 'tous'} | du=${filters.dateFrom ?? '-'} au=${filters.dateTo ?? '-'}`,

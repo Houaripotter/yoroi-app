@@ -36,7 +36,7 @@ const SCENE = require('@/assets/avatars/app/themes/theme_dojo.webp');
 const RESULT: Record<string, { label: string; color: string }> = {
   victoire: { label: traduire('Victoire'), color: P.accent },
   defaite: { label: traduire('Défaite'), color: P.ink2 },
-  nul: { label: 'Match nul', color: P.goldDark },
+  nul: { label: traduire('Match nul'), color: P.goldDark },
 };
 const METHODE: Record<string, string> = { soumission: traduire('par soumission'), ko: traduire('par KO'), tko: traduire('par KO technique'), points: traduire('aux points'), decision: traduire('par décision'), dq: traduire('par disqualification') };
 const MEDAL_TITLE: Record<Medaille, string> = { or: traduire('Médaille d’or'), argent: traduire('Médaille d’argent'), bronze: traduire('Médaille de bronze'), aucune: traduire('Pas de podium cette fois') };
@@ -135,11 +135,11 @@ export default function CompetitionDetailScreen() {
     if (!comp) return;
     const r = await addCompetitionToCalendar(comp, extra);
     if (r === 'saved') notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-    if (r === 'failed') appAlert('Calendrier indisponible', traduire('Ton téléphone n’a pas pu ouvrir le calendrier. Réessaie dans un instant.'));
+    if (r === 'failed') appAlert(traduire('Calendrier indisponible'), traduire('Ton téléphone n’a pas pu ouvrir le calendrier. Réessaie dans un instant.'));
   };
 
   const openSite = () => {
-    if (extra.url) WebBrowser.openBrowserAsync(extra.url).catch(() => appAlert('Site indisponible', traduire('Le site ne s’ouvre pas. Vérifie son adresse dans Modifier.')));
+    if (extra.url) WebBrowser.openBrowserAsync(extra.url).catch(() => appAlert(traduire('Site indisponible'), traduire('Le site ne s’ouvre pas. Vérifie son adresse dans Modifier.')));
   };
 
   const setMedal = async (m: Medaille) => {
@@ -182,7 +182,7 @@ export default function CompetitionDetailScreen() {
 
   return (
     <DetailScreen
-      title={comp.nom}
+      title={traduire(comp.nom)}
       subtitle={subtitle}
       right={
         <>
@@ -257,8 +257,7 @@ export default function CompetitionDetailScreen() {
               <Icon name="bell" size={21} color={P.accent} />
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="extraBold">
-                  Rappels
-                </Ink>
+                  {traduire("Rappels")}</Ink>
                 <Ink size={12} weight="bold" color={P.ink2}>
                   {extra.pesee ? traduire('J moins 30, J moins 7, la veille et la pesée') : traduire('J moins 30, J moins 7 et la veille')}
                 </Ink>
@@ -286,7 +285,7 @@ export default function CompetitionDetailScreen() {
         <Enter i={2}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <AccessTile title="Check-list" text={traduire("Ce qu'il te reste à préparer")} tone="ink" onPress={() => router.push(`/competition-countdown?compId=${id}` as any)} />
-            <AccessTile title="Camp" text={traduire("Ton plan semaine par semaine")} onPress={() => router.push(`/competition-camp?compId=${id}` as any)} />
+            <AccessTile title={traduire("Camp")} text={traduire("Ton plan semaine par semaine")} onPress={() => router.push(`/competition-camp?compId=${id}` as any)} />
           </View>
         </Enter>
       ) : null}
@@ -361,7 +360,7 @@ export default function CompetitionDetailScreen() {
                         {traduire("Combat {0}", i + 1)}
                       </Ink>
                       <Ink size={16} weight="black" tight color={r.color}>
-                        {r.label}
+                        {traduire(r.label)}
                         {c.adversaire_nom ? (
                           <Ink size={15} weight="extraBold" color={P.ink}>
                             {` contre ${c.adversaire_nom}`}
@@ -386,10 +385,10 @@ export default function CompetitionDetailScreen() {
       </Enter>
 
       <Enter i={5} style={{ gap: 10 }}>
-        <SectionTitle>Statut</SectionTitle>
+        <SectionTitle>{traduire("Statut")}</SectionTitle>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           {STATUTS.map((s) => (
-            <Pill key={s.key} label={s.label} active={comp.statut === s.key} accent={s.key === 'a_venir' ? P.accent : P.ink} onPress={() => setStatut(s.key)} />
+            <Pill key={s.key} label={traduire(s.label)} active={comp.statut === s.key} accent={s.key === 'a_venir' ? P.accent : P.ink} onPress={() => setStatut(s.key)} />
           ))}
         </View>
         {comp.statut === 'terminee' && combats.length > 0 ? (

@@ -119,7 +119,7 @@ export default function SavoirScreen() {
   const readerRead = reader ? (reader.kind === 'article' ? articles.set : protocols.set).has(reader.id) : false;
 
   return (
-    <DetailScreen title="Savoir" subtitle={traduire("La science derrière ton entraînement")}>
+    <DetailScreen title={traduire("Savoir")} subtitle={traduire("La science derrière ton entraînement")}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
           <Pill
@@ -211,7 +211,7 @@ export default function SavoirScreen() {
         </>
       ) : null}
 
-      <FeatureList title={traduire("Les sources")} items={[{ label: 'Sources scientifiques', sub: traduire('les études derrière les calculs de YOROI'), href: '/scientific-sources' }]} />
+      <FeatureList title={traduire("Les sources")} items={[{ label: traduire('Sources scientifiques'), sub: traduire('les études derrière les calculs de YOROI'), href: '/scientific-sources' }]} />
 
       <Reader
         content={reader}

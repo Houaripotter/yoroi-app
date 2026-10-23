@@ -100,7 +100,7 @@ export function GoalsChecklist() {
       </Press>
       <View style={{ flex: 1, gap: 2 }}>
         <Ink size={16} weight="black" tight color={g.completed ? P.ink2 : P.ink}>
-          {g.title}
+          {traduire(g.title)}
         </Ink>
         {g.target ? (
           <Ink size={13} weight="bold" color={P.ink2}>

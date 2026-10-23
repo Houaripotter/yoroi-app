@@ -25,7 +25,7 @@ const SONS: Son[] = [
   { id: 'levelup', nom: traduire('Montée de niveau'), fichier: 'level-up.mp3', ou: traduire('Premier lancement et passage à Premium'), src: require('@/assets/sounds/level-up.mp3') },
   { id: 'fanfare', nom: 'Fanfare', fichier: 'fanfare-badge.mp3', ou: traduire('Fin d’une séance enregistrée'), src: require('@/assets/sounds/fanfare-badge.mp3') },
   { id: 'victory', nom: traduire('Victoire'), fichier: 'victory.mp3', ou: traduire('Fin d’un chrono'), src: require('@/assets/sounds/victory.mp3') },
-  { id: 'wizz', nom: 'Wizz', fichier: 'wizz.mp3', ou: 'Chrono', src: require('@/assets/sounds/wizz.mp3') },
+  { id: 'wizz', nom: 'Wizz', fichier: 'wizz.mp3', ou: traduire('Chrono'), src: require('@/assets/sounds/wizz.mp3') },
   { id: 'ring', nom: 'Sonnerie courte', fichier: 'ring.mp3', ou: traduire('Record, jeûne et récompenses'), src: require('@/assets/sounds/ring.mp3') },
   { id: 'recovery', nom: traduire('Récupération'), fichier: 'recovery.mp3', ou: traduire('Chargé, mais joué nulle part pour l’instant'), src: require('@/assets/sounds/recovery.mp3') },
 ];
@@ -88,7 +88,7 @@ function LigneSon({ son, first, stopAll }: { son: Son; first: boolean; stopAll: 
           )}
         </Pressable>
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={15} weight="extraBold" numberOfLines={1}>{son.nom}</Ink>
+          <Ink size={15} weight="extraBold" numberOfLines={1}>{traduire(son.nom)}</Ink>
           <Ink size={12} color={c.textMuted} numberOfLines={1}>{son.fichier}</Ink>
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{son.ou}</Ink>
         </View>
@@ -164,7 +164,7 @@ function SequenceFinDeRound({ stopAll }: { stopAll: number }) {
           const on = etape === p.k;
           return (
             <View key={p.k} style={{ flex: 1, borderRadius: 16, padding: 12, gap: 2, backgroundColor: on ? c.accent : c.fillSoft }}>
-              <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{p.label}</Ink>
+              <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{traduire(p.label)}</Ink>
               <Ink size={11} color={on ? 'rgba(255,255,255,0.85)' : c.textMuted} numberOfLines={2}>{p.sub}</Ink>
             </View>
           );
@@ -188,7 +188,7 @@ export function SonsGalerie() {
   }, []);
 
   return (
-    <GalerieScreen title="Sons" sub={traduire("{0} sons de l’app. Le téléphone joue même en mode silencieux ici.", SONS.length)}>
+    <GalerieScreen title={traduire("Sons")} sub={traduire("{0} sons de l’app. Le téléphone joue même en mode silencieux ici.", SONS.length)}>
       <SequenceFinDeRound stopAll={stopAll} />
       <Rubrique title={traduire("Chaque son")} sub={traduire("Touche pour écouter, touche encore pour arrêter.")} />
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>

@@ -29,7 +29,7 @@ const CATEGORY_META: Record<string, { label: string; color: string }> = {
   combat: { label: traduire('Combat'), color: P.accent },
   endurance: { label: 'Endurance', color: P.mossText },
   force: { label: 'Force', color: P.goldDark },
-  nature: { label: 'Nature', color: '#8C6A3F' },
+  nature: { label: traduire('Nature'), color: '#8C6A3F' },
   autre: { label: 'Autre', color: P.ink2 },
 };
 
@@ -107,20 +107,20 @@ export default function EventDetailScreen() {
   const openRegistration = async () => {
     if (!params.registration_link) return;
     const ok = await safeOpenURL(params.registration_link);
-    if (!ok) appAlert('Lien invalide', traduire("Ce lien d'inscription n'a pas pu être ouvert."));
+    if (!ok) appAlert(traduire('Lien invalide'), traduire("Ce lien d'inscription n'a pas pu être ouvert."));
   };
 
   const place = [params.city, params.country].filter(Boolean).join(', ');
   const rows: { icon: 'calendar' | 'flag' | 'shield'; label: string; value: string }[] = [];
   if (eventDate && !isNaN(eventDate.getTime())) rows.push({ icon: 'calendar', label: 'Date', value: capitalize(longDate(eventDate)) });
-  if (place) rows.push({ icon: 'flag', label: 'Lieu', value: place });
-  if (params.full_address) rows.push({ icon: 'flag', label: 'Adresse', value: params.full_address });
+  if (place) rows.push({ icon: 'flag', label: traduire('Lieu'), value: place });
+  if (params.full_address) rows.push({ icon: 'flag', label: traduire('Adresse'), value: params.full_address });
   if (params.federation) rows.push({ icon: 'shield', label: traduire('Fédération'), value: params.federation });
 
   return (
     <DetailScreen
       title={traduire("Événement")}
-      subtitle={meta.label}
+      subtitle={traduire(meta.label)}
       right={<RoundAction icon="bookmark" label={isSaved ? traduire('Retirer de mes rendez-vous') : traduire('Ajouter à mes rendez-vous')} tint={isSaved ? P.accent : P.ink} onPress={toggleSaved} />}
       footer={params.registration_link ? <BigButton label={traduire("S'inscrire en ligne")} icon="share" onPress={openRegistration} /> : undefined}
     >
@@ -141,7 +141,7 @@ export default function EventDetailScreen() {
                 </Ink>
               </View>
               <Ink size={22} weight="black" tight>
-                {params.title}
+                {traduire(params.title)}
               </Ink>
             </Glass>
           </View>
@@ -152,7 +152,7 @@ export default function EventDetailScreen() {
         <Enter i={1}>
           <Card style={{ paddingVertical: 4 }}>
             {rows.map((r, i) => (
-              <InfoRow key={r.label} icon={r.icon} label={r.label} value={r.value} color={meta.color} last={i === rows.length - 1} />
+              <InfoRow key={r.label} icon={r.icon} label={traduire(r.label)} value={r.value} color={meta.color} last={i === rows.length - 1} />
             ))}
           </Card>
         </Enter>

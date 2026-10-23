@@ -227,7 +227,7 @@ export function SourceRow({ source }: { source: Source }) {
       <NIcon name={source.url ? 'link' : 'book'} size={16} color={source.url ? P.indigo : P.muted} />
       <View style={{ flex: 1 }}>
         <Ink size={13} weight="extraBold" color={P.ink}>
-          {source.label}
+          {traduire(source.label)}
         </Ink>
         <Ink size={12} weight="medium" color={P.ink2}>
           {source.ref}
@@ -379,7 +379,7 @@ export function Segments<T extends string>({ items, value, onChange }: { items: 
             style={{ flex: 1, minHeight: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? P.white : 'transparent', shadowColor: P.ink, shadowOpacity: on ? 0.08 : 0, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}
           >
             <Ink size={14} weight={on ? 'black' : 'bold'} color={on ? P.ink : P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ paddingHorizontal: 4 }}>
-              {it.label}
+              {traduire(it.label)}
             </Ink>
           </Pressable>
         );
@@ -415,8 +415,8 @@ export function GenderSwitch({ value, onChange }: { value: 'male' | 'female'; on
   return (
     <Segments
       items={[
-        { key: 'male', label: 'Homme' },
-        { key: 'female', label: 'Femme' },
+        { key: 'male', label: traduire('Homme') },
+        { key: 'female', label: traduire('Femme') },
       ]}
       value={value}
       onChange={onChange}
@@ -464,7 +464,7 @@ export function MacroBars({ lines, compact }: { lines: MacroLine[]; compact?: bo
         <View key={l.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }} accessible accessibilityLabel={traduire("{0} : {1} grammes, {2} pour cent", l.label, l.grams, l.percent)}>
           <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: l.color }} />
           <Ink size={15} weight="bold" style={{ flex: 1 }}>
-            {l.label}
+            {traduire(l.label)}
           </Ink>
           {!compact ? (
             <View style={{ width: 70, height: 6, borderRadius: 3, backgroundColor: P.line, overflow: 'hidden' }}>

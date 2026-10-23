@@ -90,12 +90,12 @@ export function VisionneusePhotos({ photos, startId, onClose, onDelete, onPose }
               <Ink size={14} color="rgba(255,255,255,0.75)" numberOfLines={2}>{[cur.weight ? kg(cur.weight) : 'Sans poids associé', cur.notes].filter(Boolean).join(', ')}</Ink>
             </View>
             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-              <Ink size={12} weight="bold" color="rgba(255,255,255,0.75)" style={{ marginRight: 4 }}>Pose</Ink>
+              <Ink size={12} weight="bold" color="rgba(255,255,255,0.75)" style={{ marginRight: 4 }}>{traduire("Pose")}</Ink>
               {POSES.map((p) => {
                 const on = poseOf(cur) === p.value;
                 return (
                   <Pressable key={p.value} onPress={() => { selectionAsync().catch(() => {}); onPose(cur, on ? null : p.value); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, justifyContent: 'center', backgroundColor: on ? BLANC : 'rgba(255,255,255,0.14)' }}>
-                    <Ink size={13} weight="extraBold" color={on ? NOIR : BLANC}>{p.label}</Ink>
+                    <Ink size={13} weight="extraBold" color={on ? NOIR : BLANC}>{traduire(p.label)}</Ink>
                   </Pressable>
                 );
               })}
@@ -111,7 +111,7 @@ export function VisionneusePhotos({ photos, startId, onClose, onDelete, onPose }
             text={traduire("La photo du {0} sera effacée de ton coffre. Ce n’est pas réversible.", dateComplete(confirm.date.slice(0, 10)))}
             actions={[
               { label: traduire('Supprimer'), tone: 'danger', onPress: () => { const p = confirm; setConfirm(null); if (index >= photos.length - 1) setIndex(Math.max(0, photos.length - 2)); onDelete(p); } },
-              { label: 'Garder', onPress: () => setConfirm(null) },
+              { label: traduire('Garder'), onPress: () => setConfirm(null) },
             ]}
           />
         ) : null}

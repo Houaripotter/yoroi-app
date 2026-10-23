@@ -18,8 +18,8 @@ import { traduire } from '@/lib/i18n/tr';
 export type CarnetSection = 'records' | 'techniques' | 'videos' | 'combat';
 
 export const SECTION_META: Record<CarnetSection, { label: string; illus: CarnetIllus; phrase: string; add: string }> = {
-  records: { label: 'Records', illus: 'records', phrase: traduire('Tes meilleures perfs et leur évolution.'), add: traduire('Record') },
-  techniques: { label: 'Techniques', illus: 'techniques', phrase: traduire('Ce que tu apprends, et ce que tu maîtrises.'), add: traduire('Technique') },
+  records: { label: traduire('Records'), illus: 'records', phrase: traduire('Tes meilleures perfs et leur évolution.'), add: traduire('Record') },
+  techniques: { label: traduire('Techniques'), illus: 'techniques', phrase: traduire('Ce que tu apprends, et ce que tu maîtrises.'), add: traduire('Technique') },
   videos: { label: traduire('Vidéos'), illus: 'videos', phrase: traduire('Les vidéos qui t’inspirent, rangées et prêtes à revoir.'), add: traduire('Vidéo') },
   combat: { label: traduire('Combat'), illus: 'combat', phrase: traduire('Tes rounds, tes combats et ton palmarès.'), add: traduire('Combat') },
 };
@@ -50,12 +50,12 @@ export function SectionTabs({ items, value, onChange }: { items: CarnetSection[]
             }}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={m.label}
+            accessibilityLabel={traduire(m.label)}
             style={{ flex: 1, minHeight: 70, borderRadius: 19, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 2, backgroundColor: on ? P.white : 'transparent', borderWidth: on ? 1.5 : 0, borderColor: on ? accent : 'transparent', shadowColor: '#1D2029', shadowOpacity: on ? 0.08 : 0, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: on ? 2 : 0 }}
           >
             <Illus name={m.illus} size={30} style={{ opacity: on ? 1 : 0.55 }} />
             <Ink size={12} weight={on ? 'extraBold' : 'bold'} color={on ? accent : P.ink2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-              {m.label}
+              {traduire(m.label)}
             </Ink>
           </Pressable>
         );
@@ -85,7 +85,7 @@ export function FilterChips<T extends string>({ items, value, onChange }: { item
             style={{ minHeight: 44, paddingHorizontal: 15, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? accent : P.white, borderWidth: 1, borderColor: on ? accent : P.line2 }}
           >
             <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.white : P.ink2}>
-              {it.label}
+              {traduire(it.label)}
             </Ink>
             {it.count !== undefined && it.count > 0 ? (
               <Ink size={12} weight="black" color={on ? 'rgba(255,255,255,0.75)' : P.muted}>
@@ -126,7 +126,7 @@ export function Summary({ illus, items, children }: { illus: CarnetIllus; items:
               {it.value}
             </Ink>
             <Ink size={12} weight="bold" color={P.ink2} numberOfLines={2}>
-              {it.label}
+              {traduire(it.label)}
             </Ink>
           </View>
         ))}

@@ -54,7 +54,12 @@ function load(): Record<string, string> {
 const BORDS = /^(\s*)([\s\S]*?)(\s*)$/;
 
 /** Traduit une phrase française. Les {0}, {1} sont remplacés par les valeurs, après traduction. */
-export function traduire(fr: string, ...valeurs: unknown[]): string {
+export function traduire(fr: string, ...valeurs: unknown[]): string;
+export function traduire(fr: string | undefined, ...valeurs: unknown[]): string | undefined;
+export function traduire(fr: string | null | undefined, ...valeurs: unknown[]): string | null | undefined;
+export function traduire(fr: string | null | undefined, ...valeurs: unknown[]): string | null | undefined {
+  // Une valeur vide passe telle quelle (traduction à l'affichage d'un champ facultatif)
+  if (typeof fr !== 'string') return fr;
   let out = fr;
   if (LANG !== 'fr') {
     const m = BORDS.exec(fr);

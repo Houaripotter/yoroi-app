@@ -113,7 +113,7 @@ export const createInjury = async (data: {
     injury_id: injuryId,
     eva_score: data.eva_score,
     date: today,
-    notes: traduire('Évaluation initiale'),
+    notes: 'Évaluation initiale',
   });
 
   return injuryId;
@@ -181,7 +181,7 @@ export const markInjuryAsHealed = async (injuryId: number): Promise<void> => {
     injury_id: injuryId,
     eva_score: 0,
     date: today,
-    notes: traduire('Blessure guérie'),
+    notes: 'Blessure guérie',
   });
 };
 

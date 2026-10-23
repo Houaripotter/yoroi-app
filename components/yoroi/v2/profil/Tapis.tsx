@@ -56,7 +56,7 @@ export function TapisCard({ sport, femme, belt, onBelt }: { sport?: string; femm
               <View style={{ width: 26, height: 10, borderRadius: 3, backgroundColor: b.color, borderWidth: 1, borderColor: b.id === 'blanche' ? '#C9C4B8' : c.border }}>
                 {bar ? <View style={{ position: 'absolute', right: 3, top: 0, bottom: 0, width: 5, backgroundColor: b.id === 'noire' ? '#B0282E' : '#1D2029' }} /> : null}
               </View>
-              <Ink size={14} weight={on ? 'extraBold' : 'bold'}>{b.label}</Ink>
+              <Ink size={14} weight={on ? 'extraBold' : 'bold'}>{traduire(b.label)}</Ink>
             </Pressable>
           );
         })}

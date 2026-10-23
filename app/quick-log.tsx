@@ -37,11 +37,11 @@ import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportShortName, sportTint }
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 const EXAMPLES = [
-  traduire('JJB ce soir, 5 rounds de 6 minutes, 2 contre Paul gagnés par triangle, les 3 autres avec Marc'),
-  traduire('Muscu hier à 18 h, 4 séries de 10 au développé couché à 80 kg, squat 5 fois 5 à 100'),
-  traduire('Footing ce matin, 8 km en 45 minutes, facile'),
-  traduire('Open mat, on a appris le juji gatame et l’omoplata'),
-  traduire('Match de foot, 90 minutes, 2 buts, une passe décisive, au poste d’ailier'),
+  'JJB ce soir, 5 rounds de 6 minutes, 2 contre Paul gagnés par triangle, les 3 autres avec Marc',
+  'Muscu hier à 18 h, 4 séries de 10 au développé couché à 80 kg, squat 5 fois 5 à 100',
+  'Footing ce matin, 8 km en 45 minutes, facile',
+  'Open mat, on a appris le juji gatame et l’omoplata',
+  'Match de foot, 90 minutes, 2 buts, une passe décisive, au poste d’ailier',
 ];
 
 const RPE = [
@@ -110,8 +110,8 @@ type Form = {
 
 const HEALTH = Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé';
 const LEARN_HEAD: Record<DicteeLearned['mode'], string> = { appris: 'Appris', drill: 'En drill', travaille: traduire('Travaillé'), reussi: traduire('Réussi en combat') };
-const FORMATS = [traduire('Foot à 5'), traduire('Foot à 7'), traduire('Foot à 11'), 'Futsal'].map((v) => ({ value: v, label: v.replace('Foot à ', 'À ') }));
-const CADRES = [traduire('Entre amis'), 'Club', traduire('Compétition')].map((v) => ({ value: v, label: v }));
+const FORMATS = ['Foot à 5', 'Foot à 7', 'Foot à 11', 'Futsal'].map((v) => ({ value: v, label: traduire(v.replace('Foot à ', 'À ')) }));
+const CADRES = ['Entre amis', 'Club', 'Compétition'].map((v) => ({ value: v, label: traduire(v) }));
 
 function exLine(e: DicteeExercise): string {
   if (e.distance) return `${e.sets} x ${fmtNum(e.distance * 1000)} m`;
@@ -249,7 +249,7 @@ export default function DicteSeance() {
     for (const k of keys) for (const s of form.spans[k] ?? []) out.push(said.slice(s.start, s.end));
     return out.filter((q, i) => out.findIndex((x) => fold(x) === fold(q)) === i);
   };
-  const exSrc = (i: number) => src(traduire("exercice:{0}", i));
+  const exSrc = (i: number) => src(`exercice:${i}`);
 
   // cartes de sparring : une modification renumerote les rounds dans l'ordre des cartes
   const setCards = (cards: CardForm[], renumber = false) => {
@@ -438,9 +438,9 @@ export default function DicteSeance() {
             <Enter i={1} style={{ gap: 8 }}>
               <SectionTitle>{traduire("Par exemple")}</SectionTitle>
               {EXAMPLES.map((ex) => (
-                <Press key={ex} onPress={() => setText(ex)} accessibilityRole="button" accessibilityLabel={`Exemple : ${ex}`}>
+                <Press key={ex} onPress={() => setText(ex)} accessibilityRole="button" accessibilityLabel={`Exemple : ${traduire(ex)}`}>
                   <View style={{ minHeight: 52, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>{ex}</Ink>
+                    <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>{traduire(ex)}</Ink>
                     <Icon name="chevron" size={16} color={P.muted} />
                   </View>
                 </Press>
@@ -838,7 +838,7 @@ function ExerciseRow({ ex, first, src, onChange, onRemove }: { ex: DicteeExercis
     <View style={{ paddingTop: first ? 0 : 10, borderTopWidth: first ? 0 : 1, borderTopColor: P.line2, gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold" numberOfLines={2}>{ex.name}</Ink>
+          <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(ex.name)}</Ink>
           {src.length ? <Ink size={12} weight="bold" color={P.accent} numberOfLines={2}>{src.map((q) => `« ${q} »`).join('  ')}</Ink> : null}
           {cardio ? <Ink size={13} weight="medium" color={P.ink2}>{exLine(ex)}</Ink> : null}
           {ex.load || ex.missing?.length ? (
@@ -945,7 +945,7 @@ function PartnerCard({ card, src, onChange, onRemove }: { card: CardForm; src: s
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingTop: 2 }}>
           {QUICK_TECHNIQUES.map((t) => (
             <Pressable key={t.id} onPress={() => { bump(adding, t); setAdding(null); }} accessibilityRole="button" accessibilityLabel={`${adding === 'given' ? traduire('Ajouter') : traduire('Ajouter subie')} : ${t.label}`} style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 12, justifyContent: 'center', borderWidth: 1, borderColor: P.line2 }}>
-              <Ink size={13} weight="bold">{t.label}</Ink>
+              <Ink size={13} weight="bold">{traduire(t.label)}</Ink>
             </Pressable>
           ))}
         </View>

@@ -16,8 +16,8 @@ export type CombatPart = 'sparring' | 'competitions' | 'positions' | 'soumission
 const PARTS: { key: CombatPart; label: string }[] = [
   { key: 'sparring', label: 'Sparring' },
   { key: 'competitions', label: traduire('Compétitions') },
-  { key: 'positions', label: 'Positions' },
-  { key: 'soumissions', label: 'Soumissions' },
+  { key: 'positions', label: traduire('Positions') },
+  { key: 'soumissions', label: traduire('Soumissions') },
 ];
 
 export function CombatSection({ refreshKey, initial = 'sparring' }: { refreshKey: number; initial?: CombatPart }) {

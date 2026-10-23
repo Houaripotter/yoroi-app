@@ -2160,7 +2160,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     weightsCSV += '# Modifie ce fichier puis réimporte-le dans Yoroi\n';
     weightsCSV += '# Format date: AAAA-MM-JJ\n';
     weightsCSV += '#\n';
-    weightsCSV += traduire('date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr\n');
+    weightsCSV += 'date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr\n';
 
     (weights || []).forEach((w: any) => {
       weightsCSV += `${w.date};${w.weight};`;
@@ -2174,7 +2174,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     trainingsCSV += '# Format date: AAAA-MM-JJ | Heure: HH:MM | Durée en minutes\n';
     trainingsCSV += '# Sports disponibles: musculation, jjb, mma, boxe, running, natation, velo, fitness, yoga, autre\n';
     trainingsCSV += '#\n';
-    trainingsCSV += traduire('date;sport;club;heure_debut;duree_min;type_seance;muscles;theme_technique;notes\n');
+    trainingsCSV += 'date;sport;club;heure_debut;duree_min;type_seance;muscles;theme_technique;notes\n';
 
     const clubsMap = new Map((clubs || []).map((c: any) => [c.id, c.name]));
 
@@ -2189,7 +2189,7 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     let measurementsCSV = '# YOROI - MENSURATIONS (éditable)\n';
     measurementsCSV += '# Toutes les valeurs en cm\n';
     measurementsCSV += '#\n';
-    measurementsCSV += traduire('date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou\n');
+    measurementsCSV += 'date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou\n';
 
     (measurements || []).forEach((m: any) => {
       measurementsCSV += `${m.date};${m.chest || ''};${m.waist || ''};${m.hips || ''};`;

@@ -147,14 +147,14 @@ export class HealthInsightsGenerator {
       // >= 8h
       insights.push({
         type: 'success',
-        title: 'Bonnes nuits',
+        title: traduire('Bonnes nuits'),
         message: traduire("Tu dors en moyenne {0} par nuit. Idéal pour récupérer.", formatDurationHM(avgTotal)),
       });
     } else if (avgTotal < 360) {
       // < 6h
       insights.push({
         type: 'danger',
-        title: 'Nuits trop courtes',
+        title: traduire('Nuits trop courtes'),
         message: traduire("Tu ne dors que {0} en moyenne. Augmente ton temps de sommeil pour optimiser ta récupération.", formatDurationHM(avgTotal)),
       });
     }
@@ -265,7 +265,7 @@ export class HealthInsightsGenerator {
         const weeksToGoal = Math.ceil(remaining / Math.abs(change));
         insights.push({
           type: 'success',
-          title: 'Belle progression',
+          title: traduire('Belle progression'),
           message: traduire("Tu perds {0} kg par semaine. À ce rythme, ton objectif est dans environ {1} semaines.", Math.abs(change).toFixed(1).replace('.', DECIMAL), weeksToGoal),
         });
       } else if (change > 0.5) {

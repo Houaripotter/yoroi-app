@@ -121,7 +121,7 @@ export function PremiumPreview({ children, source, compteur = null, apercu = 'ec
             <View style={{ flex: 1, gap: 8 }}>
               <PremiumBadge />
               <Ink size={22} weight="black" tight accessibilityRole="header">
-                {info.libelle}
+                {traduire(info.libelle)}
               </Ink>
             </View>
             <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
@@ -252,7 +252,7 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
         <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.divider }]}>
           {PERKS.map((perk, i) => (
             <View key={perk.label}>
-              <PerkRow label={perk.label} desc={perk.desc} icon={<PerkIcon name={perk.icon} color={c.goldDeep} />} />
+              <PerkRow label={traduire(perk.label)} desc={perk.desc} icon={<PerkIcon name={perk.icon} color={c.goldDeep} />} />
               {i < PERKS.length - 1 ? <View style={[styles.divider, { backgroundColor: c.divider }]} /> : null}
             </View>
           ))}

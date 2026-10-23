@@ -20,7 +20,7 @@ type TabKey = 'kines' | 'nutritionists' | 'osteos' | 'sport-doctors';
 
 const TABS: { key: TabKey; label: string; empty: string }[] = [
   { key: 'kines', label: traduire('Kinés'), empty: traduire('Aucun kiné pour le moment') },
-  { key: 'nutritionists', label: 'Nutrition', empty: traduire('Aucun nutritionniste pour le moment') },
+  { key: 'nutritionists', label: traduire('Nutrition'), empty: traduire('Aucun nutritionniste pour le moment') },
   { key: 'osteos', label: traduire('Ostéos'), empty: traduire('Aucun ostéopathe pour le moment') },
   { key: 'sport-doctors', label: traduire('Médecins'), empty: traduire('Aucun médecin du sport pour le moment') },
 ];
@@ -79,7 +79,7 @@ export default function HealthProfessionalsScreen() {
           {traduire("Sélection personnelle et subjective. Ces pros ne sont pas liés par contrat à YOROI.")}</Ink>
       </DetailScreen>
 
-      <BottomSheet visible={!!selected} onClose={() => setSelected(null)} title={selected?.name ?? ''} subtitle={selected?.title}>
+      <BottomSheet visible={!!selected} onClose={() => setSelected(null)} title={selected?.name ?? ''} subtitle={traduire(selected?.title)}>
         {selected ? (
           <>
             {selected.imageUrl ? (
@@ -132,7 +132,7 @@ function ProCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <Ink size={16} weight="black" style={{ flexShrink: 1 }}>
-              {pro.name}
+              {traduire(pro.name)}
             </Ink>
             {pro.featured ? <Badge label={traduire("Recommandé")} tone="red" /> : null}
           </View>

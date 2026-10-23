@@ -257,7 +257,7 @@ export default function Sommeil() {
             <NightBars entries={entries} goal={goal} width={chartW} height={130} />
             <NightLetters width={chartW} />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 6, paddingTop: 14, borderTopWidth: 1, borderTopColor: P.line2 }}>
-              <Stat value={stats && stats.averageDuration > 0 ? hm(stats.averageDuration) : traduire('pas noté')} label="en moyenne" color={P.indigo} />
+              <Stat value={stats && stats.averageDuration > 0 ? hm(stats.averageDuration) : traduire('pas noté')} label={traduire("en moyenne")} color={P.indigo} />
               <Stat value={stats && stats.averageQuality > 0 ? String(stats.averageQuality).replace('.', DECIMAL) : traduire('pas noté')} unit={stats && stats.averageQuality > 0 ? traduire('sur 5') : undefined} label={traduire("qualité")} />
               <Stat value={stats ? (stats.trend === 'improving' ? 'en hausse' : stats.trend === 'declining' ? 'en baisse' : 'stable') : 'stable'} label="tendance" color={stats?.trend === 'declining' ? intensite(4).text : stats?.trend === 'improving' ? P.mossText : P.ink} />
             </View>
@@ -265,7 +265,7 @@ export default function Sommeil() {
               <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: P.paper, borderRadius: 16, padding: 12 }}>
                 <Icon name="moon" size={18} color={adv.color} />
                 <Ink size={13} weight="bold" color={adv.color} style={{ flex: 1 }}>
-                  {adv.text}
+                  {traduire(adv.text)}
                 </Ink>
               </View>
             ) : null}

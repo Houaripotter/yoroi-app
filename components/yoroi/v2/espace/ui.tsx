@@ -15,6 +15,7 @@ import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { RecordSeal } from '@/components/yoroi/v2/ornements/RecordSeal';
 import { Tampon } from '@/components/yoroi/v2/tampons/Tampon';
 import { P } from '@/components/yoroi/livePalette';
+import { traduire } from '@/lib/i18n/tr';
 
 // ============================================
 // ICONES (traits SVG, pas de dependance externe)
@@ -360,10 +361,10 @@ export function Segmented<T extends string | number>({ options, value, onChange 
             }}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={o.label}
+            accessibilityLabel={traduire(o.label)}
             style={{ flex: 1, minHeight: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent', shadowColor: c.ink, shadowOpacity: on ? 0.08 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } }}
           >
-            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{o.label}</Ink>
+            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{traduire(o.label)}</Ink>
           </Pressable>
         );
       })}

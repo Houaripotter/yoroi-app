@@ -243,7 +243,7 @@ export const CATEGORY_ICON: Record<string, string> = {
   glisse: 'neige',
   nature: 'nature',
   aquatique: 'nage',
-  precision: traduire('cible'),
+  precision: 'cible',
   autre: 'medaille',
 };
 

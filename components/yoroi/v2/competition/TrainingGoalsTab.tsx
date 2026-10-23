@@ -30,7 +30,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   raquettes: 'Raquettes',
   danse: 'Danse',
   glisse: 'Glisse',
-  nature: 'Nature',
+  nature: traduire('Nature'),
   aquatique: 'Aquatique',
   precision: traduire('Précision'),
   autre: 'Autres',
@@ -153,7 +153,7 @@ export function TrainingGoalsTab({ gender }: { gender: Gender }) {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Ink size={17} weight="black" tight>
-                      {p.sport.name}
+                      {traduire(p.sport.name)}
                     </Ink>
                     <Ink size={12} weight="bold" color={reached ? P.accent : p.isOnTrack ? P.ink2 : P.goldDark}>
                       {reached ? traduire('Objectif de la semaine atteint') : p.isOnTrack ? traduirePluriel(p.sessionsNeeded, p.sessionsNeeded > 1, "Encore {0} séance cette semaine", "Encore {0} séances cette semaine", p.sessionsNeeded) : traduirePluriel(p.sessionsNeeded, p.sessionsNeeded > 1, "En retard de {0} séance", "En retard de {0} séances", p.sessionsNeeded)}
@@ -227,7 +227,7 @@ export function TrainingGoalsTab({ gender }: { gender: Gender }) {
                 <Label>{CATEGORY_LABELS[cat] ?? cat}</Label>
                 <ChipScroll>
                   {list.map((s) => (
-                    <Chip key={s.id} label={s.name} onPress={() => setPicked(s)} />
+                    <Chip key={s.id} label={traduire(s.name)} onPress={() => setPicked(s)} />
                   ))}
                 </ChipScroll>
               </View>

@@ -123,8 +123,8 @@ export function Donnees() {
       return;
     }
     confirmTwice(
-      { title: traduire('Remettre les séances effacées ?'), message: traduirePluriel(dedupe.rows, dedupe.rows > 1, "{0} séance effacée par le nettoyage des doublons reviennent dans ton historique. Les doublons d’Apple Santé peuvent réapparaître.", "{0} séances effacées par le nettoyage des doublons reviennent dans ton historique. Les doublons d’Apple Santé peuvent réapparaître.", dedupe.rows), ok: 'Continuer' },
-      { title: 'Vraiment ?', message: traduire('Les séances remises restent dans ton historique. Tu pourras les supprimer une par une.'), ok: 'Remettre' },
+      { title: traduire('Remettre les séances effacées ?'), message: traduirePluriel(dedupe.rows, dedupe.rows > 1, "{0} séance effacée par le nettoyage des doublons reviennent dans ton historique. Les doublons d’Apple Santé peuvent réapparaître.", "{0} séances effacées par le nettoyage des doublons reviennent dans ton historique. Les doublons d’Apple Santé peuvent réapparaître.", dedupe.rows), ok: traduire('Continuer') },
+      { title: traduire('Vraiment ?'), message: traduire('Les séances remises restent dans ton historique. Tu pourras les supprimer une par une.'), ok: traduire('Remettre') },
       () => {
         restoreDedupeBackup()
           .then((n) => {
@@ -132,7 +132,7 @@ export function Donnees() {
             appAlert(traduire('C’est fait'), traduirePluriel(n, n > 1, "{0} séance remise en place.", "{0} séances remises en place.", n));
             void load();
           })
-          .catch(() => appAlert('Oups', traduire('Le retour des séances n’a pas abouti. Rien n’a été perdu, réessaie plus tard.')));
+          .catch(() => appAlert(traduire('Oups'), traduire('Le retour des séances n’a pas abouti. Rien n’a été perdu, réessaie plus tard.')));
       },
     );
   };
@@ -143,7 +143,7 @@ export function Donnees() {
     <StudioSection id="donnees" icon="pulse" title={traduire("Données et santé")} sub={traduire("Apple Santé, imports, migrations")} keywords="sante apple health connect synchro import montre migration doublons dedupe reprise rangs v3 armure">
       <Card>
         <KV first label="Source" value={health?.provider ?? 'Lecture'} />
-        <KV label="Connexion" value={health ? (health.connected ? traduire('Connectée') : traduire('Pas connectée')) : ''} />
+        <KV label={traduire("Connexion")} value={health ? (health.connected ? traduire('Connectée') : traduire('Pas connectée')) : ''} />
         <KV label={traduire("Dernière synchro")} value={health?.lastSync ?? 'Jamais'} />
       </Card>
       <Card>
@@ -154,7 +154,7 @@ export function Donnees() {
       <SubTitle>{demoActive ? traduire('Dans la base (la démo de Heny)') : traduire('Dans la base')}</SubTitle>
       <Card>
         {imported === undefined ? (
-          <KV first label="Lecture en cours" value="" />
+          <KV first label={traduire("Lecture en cours")} value="" />
         ) : imported === null ? (
           <View style={{ padding: 14 }}>
             <Ink size={13} color={c.textSecondary}>{traduire("La base ne s’ouvre pas ici (web ou aperçu). Sur le téléphone, tu verras chaque source.")}</Ink>
@@ -174,12 +174,12 @@ export function Donnees() {
         )}
       </Card>
 
-      <SubTitle>Migrations</SubTitle>
+      <SubTitle>{traduire("Migrations")}</SubTitle>
       <Card>
         {(migrations ?? []).map((m, i) => (
-          <Row key={m.id} first={i === 0} icon={m.done ? 'check' : 'timer'} iconTint={m.done ? c.successText : c.textMuted} label={m.label} sub={m.detail ? `${m.state}, ${m.detail}` : m.state} chevron={false} />
+          <Row key={m.id} first={i === 0} icon={m.done ? 'check' : 'timer'} iconTint={m.done ? c.successText : c.textMuted} label={traduire(m.label)} sub={m.detail ? `${m.state}, ${m.detail}` : m.state} chevron={false} />
         ))}
-        {migrations === null ? <KV first label="Lecture en cours" value="" /> : null}
+        {migrations === null ? <KV first label={traduire("Lecture en cours")} value="" /> : null}
       </Card>
       <Card>
         <Row

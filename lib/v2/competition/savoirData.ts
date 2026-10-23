@@ -50,7 +50,7 @@ export const scienceData: ScienceCard[] = [
     id: '2',
     title: traduire("Déficit Calorique : La Loi Physique"),
     icon: "scale-balance",
-    category: "Nutrition",
+    category: traduire("Nutrition"),
     content: {
       what: traduire("Consommer moins d'énergie que ton corps n'en dépense. C'est la seule condition physiologique obligatoire pour perdre du gras."),
       why: traduire("C'est la Première Loi de la Thermodynamique. Peu importe le régime (Keto, Jeûne, Paleo), s'il n'y a pas de déficit, il n'y a pas de perte de gras. Kevin Hall (NIH) a prouvé que c'est le bilan énergétique qui pilote le poids, pas l'insuline seule."),
@@ -76,7 +76,7 @@ export const scienceData: ScienceCard[] = [
     id: '4',
     title: traduire("Protéines & TEF"),
     icon: "food-steak",
-    category: "Nutrition",
+    category: traduire("Nutrition"),
     content: {
       what: traduire("Le macronutriment bâtisseur."),
       why: traduire("L'Effet Thermique (TEF) des protéines est de 20-30%. Pour 100kcal ingérées, 25 sont brûlées par la digestion (contre 3% pour le gras). De plus, elles sont les plus rassasiantes via la sécrétion de l'hormone PYY."),
@@ -89,7 +89,7 @@ export const scienceData: ScienceCard[] = [
     id: '5',
     title: traduire("Fibres : L'Ozempic Naturel"),
     icon: "barley",
-    category: "Nutrition",
+    category: traduire("Nutrition"),
     content: {
       what: traduire("Glucides non digestibles présents dans les végétaux."),
       why: traduire("Les fibres solubles gonflent dans l'estomac et déclenchent la libération de GLP-1 (l'hormone de satiété imitée par les médicaments). Elles nourrissent aussi le microbiote qui régule le poids."),
@@ -171,7 +171,7 @@ export const scienceData: ScienceCard[] = [
     content: {
       what: traduire("Le temps de repos entre les séries influence l'hypertrophie."),
       why: traduire("Schoenfeld a démontré que 3 minutes de repos = +20% de gains musculaires vs 1 minute. Le repos permet la restauration des phosphocréatines et maintient l'intensité."),
-      how: "Force (1-5 reps) : 3-5 min. Hypertrophie (8-12 reps) : 2-3 min. Endurance (15+ reps) : 1-2 min.",
+      how: traduire("Force (1-5 reps) : 3-5 min. Hypertrophie (8-12 reps) : 2-3 min. Endurance (15+ reps) : 1-2 min."),
       sourceName: traduire("Étude : Schoenfeld et al. (2016), J Strength Cond Res"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/26605807/"
     }
@@ -180,7 +180,7 @@ export const scienceData: ScienceCard[] = [
     id: '12',
     title: traduire("Timing Protéines : Le Mythe de la Fenêtre"),
     icon: "food-steak",
-    category: "Nutrition",
+    category: traduire("Nutrition"),
     content: {
       what: traduire("La 'fenêtre anabolique' post-training est surestimée."),
       why: traduire("Aragon & Schoenfeld montrent que le TOTAL protéique quotidien compte plus que le timing. La fenêtre est en réalité de 4-6h, pas 30 minutes."),
@@ -232,7 +232,7 @@ export const scienceData: ScienceCard[] = [
     id: '16',
     title: traduire("Café & Performance"),
     icon: "coffee",
-    category: "Performance",
+    category: traduire("Performance"),
     content: {
       what: traduire("La caféine est l'ergogène légal le plus puissant."),
       why: traduire("3-6 mg/kg de caféine augmente la performance de 3-7% (endurance, force, sprint). Bloque l'adénosine = moins de fatigue perçue."),
@@ -243,7 +243,7 @@ export const scienceData: ScienceCard[] = [
   },
   {
     id: '17',
-    title: "Progression : Surcharge Progressive",
+    title: traduire("Progression : Surcharge Progressive"),
     icon: "trending-up",
     category: "Force",
     content: {
@@ -256,7 +256,7 @@ export const scienceData: ScienceCard[] = [
   },
   {
     id: '18',
-    title: "Cortisol & Stress Chronique",
+    title: traduire("Cortisol & Stress Chronique"),
     icon: "stress",
     category: traduire("Récupération"),
     content: {
@@ -439,7 +439,7 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p2',
-    title: "5×5 Stronglifts (Force)",
+    title: traduire("5×5 Stronglifts (Force)"),
     icon: "dumbbell",
     category: "Force",
     difficulty: 'Débutant',
@@ -479,7 +479,7 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p4',
-    title: "PPL (Push/Pull/Legs)",
+    title: traduire("PPL (Push/Pull/Legs)"),
     icon: "muscle",
     category: "Force",
     difficulty: 'Intermédiaire',
@@ -499,7 +499,7 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p5',
-    title: "Zone 2 Cardio (Mitochondries)",
+    title: traduire("Zone 2 Cardio (Mitochondries)"),
     icon: "heart-pulse",
     category: "Endurance",
     difficulty: 'Débutant',
@@ -581,7 +581,7 @@ export const protocolData: ProtocolCard[] = [
     id: 'p9',
     title: traduire("Jeûne Intermittent 16/8"),
     icon: "clock",
-    category: "Nutrition",
+    category: traduire("Nutrition"),
     difficulty: 'Intermédiaire',
     content: {
       objective: traduire("Simplifier l'alimentation et créer un déficit calorique naturel."),
@@ -601,7 +601,7 @@ export const protocolData: ProtocolCard[] = [
     id: 'p10',
     title: traduire("Hydratation Pré/Per/Post Training"),
     icon: "water",
-    category: "Performance",
+    category: traduire("Performance"),
     difficulty: 'Débutant',
     content: {
       objective: traduire("Optimiser la performance et la récupération par une hydratation stratégique."),
@@ -619,7 +619,7 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p11',
-    title: "EMOM (Every Minute On the Minute)",
+    title: traduire("EMOM (Every Minute On the Minute)"),
     icon: "clock",
     category: "Force",
     difficulty: 'Avancé',
@@ -640,7 +640,7 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p12',
-    title: "Pyramid Training (Hypertrophie)",
+    title: traduire("Pyramid Training (Hypertrophie)"),
     icon: "trending-up",
     category: "Force",
     difficulty: 'Intermédiaire',
@@ -684,7 +684,7 @@ export const protocolData: ProtocolCard[] = [
     id: 'p14',
     title: traduire("Protocole Jour de Compétition"),
     icon: "activity",
-    category: "Performance",
+    category: traduire("Performance"),
     difficulty: 'Intermédiaire',
     content: {
       objective: traduire("Préparer le corps et l'esprit pour une performance optimale le jour J."),

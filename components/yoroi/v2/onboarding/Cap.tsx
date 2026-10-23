@@ -72,7 +72,7 @@ export function Cap({ nav, start, target, height, recompo = false, onTarget, onN
   // vague 30 : les mots importants en gras et en couleur (kilos a perdre, une estimation)
   const texte = v.texte ? marquer(`${v.texte} ${PAS_UNE_PROMESSE}${ok ? traduire(' Ton plan l’affinera avec tes séances.') : ''}`, [gapText(start, target), traduire('Une estimation'), traduire('tes séances')]) : '';
   return (
-    <Shell {...nav} title={traduire("Où veux-tu **arriver** ?")} sub={sub} gap={14} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Où veux-tu **arriver** ?")} sub={sub} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
       <View style={{ alignItems: 'center' }}>
         <Ink size={64} weight="black" tight numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{kg(target)}</Ink>
         <Ink size={15} weight="bold" color={c.textSecondary}>{traduire("kilos visés")}</Ink>

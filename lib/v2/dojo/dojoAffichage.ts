@@ -57,17 +57,17 @@ export function texteUnivers(texte: string, u: Univers): string {
 export const NOMS_SCEAUX_CLASSIQUE: Record<string, { japon: string; classique: string }> = {
   fuji: { japon: 'Mont Fuji', classique: 'Sommet' },
   cerisier: { japon: 'Cerisier', classique: 'Arbre en fleur' },
-  kimono: { japon: 'Kimono', classique: traduire('Tenue de combat') },
-  katanas: { japon: 'Katanas', classique: traduire('Lames croisées') },
-  kabuto: { japon: 'Kabuto', classique: traduire('Casque de boxe') },
-  oni: { japon: 'Masque d’oni', classique: traduire('Trophée') },
-  torii: { japon: 'Torii', classique: traduire('Clé') },
-  lanterne_papier: { japon: traduire('Lanterne de papier'), classique: 'Carnet' },
+  kimono: { japon: 'Kimono', classique: 'Tenue de combat' },
+  katanas: { japon: 'Katanas', classique: 'Lames croisées' },
+  kabuto: { japon: 'Kabuto', classique: 'Casque de boxe' },
+  oni: { japon: 'Masque d’oni', classique: 'Trophée' },
+  torii: { japon: 'Torii', classique: 'Clé' },
+  lanterne_papier: { japon: 'Lanterne de papier', classique: 'Carnet' },
 };
 
 /** Nom d'un sceau dans l'univers choisi */
 export function nomSceau(s: { id: string; name: string }, u: Univers): string {
-  return u === 'classique' ? NOMS_SCEAUX_CLASSIQUE[s.id]?.classique ?? s.name : s.name;
+  return u === 'classique' ? traduire(NOMS_SCEAUX_CLASSIQUE[s.id]?.classique ?? s.name) : s.name;
 }
 
 /** Condition d'un sceau dans l'univers choisi (« Atteindre le rang Champion ») */
@@ -85,7 +85,7 @@ export type BadgeVitrine = { texte: string; ton: 'premium' | 'offert' | 'rang' }
 /** Vague 45 : badge discret d'une scene (Offert, Premium ou Rang X, texte court pour les vignettes de 132 points), d'apres themeCondition */
 export function badgeScene(t: (typeof THEMES)[number], u: Univers): BadgeVitrine {
   const cond = themeCondition(t);
-  if (cond === null) return { texte: 'Offert', ton: 'offert' };
+  if (cond === null) return { texte: traduire('Offert'), ton: 'offert' };
   if (t.annual) return { texte: traduire('Premium'), ton: 'premium' };
   if (t.unlockRank !== undefined) return { texte: traduire("Rang {0}", rangNom(t.unlockRank, u)), ton: 'rang' };
   return { texte: traduire('Premium'), ton: 'premium' };
@@ -94,7 +94,7 @@ export function badgeScene(t: (typeof THEMES)[number], u: Univers): BadgeVitrine
 /** Vague 45 : badge d'un personnage du monde samourai (offert ou gagne au rang, comme mondeCondition) */
 export function badgeMonde(unlockRank: number | undefined, u: Univers): BadgeVitrine {
   const r = unlockRank ?? 0;
-  return r <= 0 ? { texte: 'Offert', ton: 'offert' } : { texte: traduire("Rang {0}", rangNom(r, u)), ton: 'rang' };
+  return r <= 0 ? { texte: traduire('Offert'), ton: 'offert' } : { texte: traduire("Rang {0}", rangNom(r, u)), ton: 'rang' };
 }
 
 export type Vignette = {
@@ -125,7 +125,7 @@ export function vignettesBoutique(u: Univers, personnageKey: string | null | und
   // vague 47 : en Classique, les scenes Classique (salle, parc, ville, mer), pas les scenes du Japon
   const scenes =
     u === 'classique'
-      ? SCENES_CLASSIQUE.filter((x) => x.id.endsWith('_jour')).map((x) => ({ key: `scene_${x.id}`, nom: x.nom, image: x.image, genre: 'scene' as const, badge: x.offerte ? ({ texte: 'Offert', ton: 'offert' } as BadgeVitrine) : ({ texte: traduire('Premium'), ton: 'premium' } as BadgeVitrine) }))
+      ? SCENES_CLASSIQUE.filter((x) => x.id.endsWith('_jour')).map((x) => ({ key: `scene_${x.id}`, nom: x.nom, image: x.image, genre: 'scene' as const, badge: x.offerte ? ({ texte: traduire('Offert'), ton: 'offert' } as BadgeVitrine) : ({ texte: traduire('Premium'), ton: 'premium' } as BadgeVitrine) }))
       : SCENES_VITRINE.map(scene).filter((v): v is Vignette => !!v);
 
   if (!aUnPersonnage(personnageKey)) return scenes.slice(0, 5);
@@ -138,7 +138,7 @@ export function vignettesBoutique(u: Univers, personnageKey: string | null | und
       image: CLASSIQUE_IMAGES[gender][prochain] ?? classiqueImage(gender, prochain),
       genre: 'figure',
       fond: '#E3E9F3',
-      badge: { texte: 'Offert', ton: 'offert' },
+      badge: { texte: traduire('Offert'), ton: 'offert' },
     };
     return [figure, ...scenes.slice(0, 4)];
   }

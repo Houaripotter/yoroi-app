@@ -77,14 +77,14 @@ export async function clearSyncHistory(): Promise<void> {
  * Helpers de labels pour l'UI.
  */
 export const SYNC_EVENT_LABELS: Record<SyncEventType, { label: string; emoji: string; color: string }> = {
-  auto_backup:     { label: 'Backup automatique', emoji: '', color: '#0EA5E9' },
-  manual_backup:   { label: 'Backup manuel',      emoji: '', color: '#3B82F6' },
+  auto_backup:     { label: traduire('Backup automatique'), emoji: '', color: '#0EA5E9' },
+  manual_backup:   { label: traduire('Backup manuel'),      emoji: '', color: '#3B82F6' },
   safety_backup:   { label: traduire('Backup de sécurité'), emoji: '', color: '#F59E0B' },
-  cloud_push:      { label: 'Push cloud',          emoji: '', color: '#10B981' },
+  cloud_push:      { label: traduire('Push cloud'),          emoji: '', color: '#10B981' },
   cloud_pull:      { label: traduire('Sync depuis cloud'),   emoji: '', color: '#06B6D4' },
-  peer_sync:       { label: 'Sync iPhone ↔ iPad',  emoji: '', color: '#8B5CF6' },
-  import_file:     { label: 'Import fichier',      emoji: '', color: '#EF4444' },
+  peer_sync:       { label: traduire('Sync iPhone ↔ iPad'),  emoji: '', color: '#8B5CF6' },
+  import_file:     { label: traduire('Import fichier'),      emoji: '', color: '#EF4444' },
   restore_safety:  { label: traduire('Retour état précédent'), emoji: '', color: '#F97316' },
-  watch_sync:      { label: 'Sync Watch',          emoji: '', color: '#6366F1' },
-  export_share:    { label: 'Partage',             emoji: '', color: '#EC4899' },
+  watch_sync:      { label: traduire('Sync Watch'),          emoji: '', color: '#6366F1' },
+  export_share:    { label: traduire('Partage'),             emoji: '', color: '#EC4899' },
 };

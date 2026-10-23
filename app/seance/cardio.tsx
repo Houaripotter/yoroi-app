@@ -37,9 +37,9 @@ import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
 const RPE = [
-  { value: 3, label: 'Facile' },
+  { value: 3, label: traduire('Facile') },
   { value: 5, label: traduire('Correct') },
-  { value: 7, label: 'Dur' },
+  { value: 7, label: traduire('Dur') },
   { value: 9, label: traduire('À bloc') },
 ];
 
@@ -150,7 +150,7 @@ export default function SeanceCardio() {
             [
               { text: traduire('Nouvelle séance'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
               {
-                text: 'Reprendre',
+                text: traduire('Reprendre'),
                 onPress: () => {
                   if (existing.kind === 'cardio') setDraft(existing);
                   else router.replace({ pathname: draftRoute(existing) as any, params: { resume: '1' } });
@@ -205,15 +205,15 @@ export default function SeanceCardio() {
   const abandon = () => {
     if (draft.form) {
       appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
-        { text: 'Rester', style: 'cancel' },
-        { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
+        { text: traduire('Rester'), style: 'cancel' },
+        { text: traduire('Quitter'), style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
       ]);
       return;
     }
     appAlert(traduire('Abandonner la séance ?'), traduire('Rien ne sera enregistré.'), [
-      { text: 'Continuer', style: 'cancel' },
+      { text: traduire('Continuer'), style: 'cancel' },
       {
-        text: 'Abandonner',
+        text: traduire('Abandonner'),
         style: 'destructive',
         onPress: async () => {
           finished.current = true;
@@ -275,7 +275,7 @@ export default function SeanceCardio() {
     } catch (err) {
       finished.current = false;
       logger.error('Enregistrement de la seance impossible', err);
-      appAlert('Oups', traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
+      appAlert(traduire('Oups'), traduire('La séance n’a pas pu être enregistrée. Elle reste en cours, réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -322,7 +322,7 @@ export default function SeanceCardio() {
               <Stepper value={distance} step={0.5} max={500} decimals unit={traduire("kilomètres")} layout="stack" size={34} button={44} onChange={(v) => update((d) => ({ ...d, distance: String(v) }))} />
             </View>
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 8, borderRadius: 22, backgroundColor: c.fillSoft, gap: 4 }}>
-              <Ink size={13} weight="bold" color={c.textSecondary}>Allure</Ink>
+              <Ink size={13} weight="bold" color={c.textSecondary}>{traduire("Allure")}</Ink>
               {paceSec > 0 ? (
                 <>
                   <Ink size={34} weight="black" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ fontVariant: ['tabular-nums'] }}>{fmtClock(paceSec)}</Ink>
@@ -339,7 +339,7 @@ export default function SeanceCardio() {
           <TextInput
             value={draft.customName ?? ''}
             onChangeText={(v) => update((d) => ({ ...d, customName: v }))}
-            placeholder="Quel sport ? Escalade, padel..."
+            placeholder={traduire("Quel sport ? Escalade, padel...")}
             placeholderTextColor={c.textMuted}
             accessibilityLabel={traduire("Nom du sport")}
             style={[fontStyle('bold'), { height: 52, fontSize: 16, color: c.ink, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }]}
@@ -359,8 +359,8 @@ export default function SeanceCardio() {
               <Stepper value={draft.scoreFor ?? 0} step={1} max={999} unit={traduire("points pour toi")} layout="stack" size={30} button={44} onChange={(v) => update((d) => ({ ...d, scoreFor: v }))} />
             </View>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 20, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>En face</Ink>
-              <Stepper value={draft.scoreAgainst ?? 0} step={1} max={999} unit="points en face" layout="stack" size={30} button={44} onChange={(v) => update((d) => ({ ...d, scoreAgainst: v }))} />
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire("En face")}</Ink>
+              <Stepper value={draft.scoreAgainst ?? 0} step={1} max={999} unit={traduire("points en face")} layout="stack" size={30} button={44} onChange={(v) => update((d) => ({ ...d, scoreAgainst: v }))} />
             </View>
           </View>
         ) : null}
@@ -377,10 +377,10 @@ export default function SeanceCardio() {
 
         {more || hr > 0 ? (
           <>
-            <Field icon="heart" label="Cardio moyen">
+            <Field icon="heart" label={traduire("Cardio moyen")}>
               <Stepper value={hr > 0 ? hr : 0} step={1} max={230} unit={traduire("battements par minute")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, heartRate: String(v) }))} />
             </Field>
-            <Field icon="heart" label="Cardio max">
+            <Field icon="heart" label={traduire("Cardio max")}>
               <Stepper value={draft.maxHeartRate ?? 0} step={1} max={240} unit={traduire("battements par minute au maximum")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, maxHeartRate: v }))} />
             </Field>
             {machine ? (
@@ -388,13 +388,13 @@ export default function SeanceCardio() {
                 <Field icon="bolt" label={traduire("Vitesse en km/h")}>
                   <Stepper value={draft.speed ?? 0} step={0.5} max={80} decimals unit={traduire("kilomètres heure")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, speed: v }))} />
                 </Field>
-                <Field icon="up" label="Pente en %">
+                <Field icon="up" label={traduire("Pente en %")}>
                   <Stepper value={draft.pente ?? 0} step={0.5} max={40} decimals unit={traduire("pour cent de pente")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, pente: v }))} />
                 </Field>
                 <Field icon="swap" label={traduire("Résistance")}>
                   <Stepper value={draft.resistance ?? 0} step={1} max={40} unit={traduire("niveau de résistance")} size={24} button={40} onChange={(v) => update((d) => ({ ...d, resistance: v }))} />
                 </Field>
-                <Field icon="flame" label="Puissance en watts">
+                <Field icon="flame" label={traduire("Puissance en watts")}>
                   <Stepper value={draft.watts ?? 0} step={5} max={2000} unit="watts" size={24} button={40} onChange={(v) => update((d) => ({ ...d, watts: v }))} />
                 </Field>
                 <Field icon="route" label={traduire("Cadence par minute")}>

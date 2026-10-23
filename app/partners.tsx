@@ -52,7 +52,7 @@ function ItemCard({ item, onPress }: { item: Item; onPress: () => void }) {
           ) : null}
           <View style={{ position: 'absolute', left: 22, right: 22, bottom: 12 }}>
             <Ink size={20} weight="black" tight color={P.white} numberOfLines={2}>
-              {item.name}
+              {traduire(item.name)}
             </Ink>
             <Ink size={13} weight="bold" color="rgba(255,255,255,0.88)" numberOfLines={2}>
               {sub}
@@ -167,7 +167,7 @@ export default function PartnersScreen() {
               <View style={{ paddingHorizontal: 22, marginTop: -40, gap: 14 }}>
                 <View style={{ gap: 4 }}>
                   <Ink size={32} weight="black" tight>
-                    {selected.name}
+                    {traduire(selected.name)}
                   </Ink>
                   <Ink size={15} weight="bold" color={P.ink2}>
                     {isCoach(selected) ? selected.title : selected.type}
@@ -180,20 +180,19 @@ export default function PartnersScreen() {
                     </Ink>
                   </Card>
                 ) : null}
-                <Section title="Contact" />
+                <Section title={traduire("Contact")} />
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
-                  {selected.phone ? <ContactTile icon="phone" label="Appeler" tone={P.mossText} onPress={() => openPhone(selected.phone!)} /> : null}
-                  {selected.instagram && !Array.isArray(selected.instagram) ? <ContactTile icon="share" label="Instagram" tone={P.accent} onPress={() => openInstagram(selected.instagram as string)} /> : null}
-                  {selected.website ? <ContactTile icon="globe" label="Site web" tone={P.indigo} onPress={() => safeOpenURL(selected.website!)} /> : null}
+                  {selected.phone ? <ContactTile icon="phone" label={traduire("Appeler")} tone={P.mossText} onPress={() => openPhone(selected.phone!)} /> : null}
+                  {selected.instagram && !Array.isArray(selected.instagram) ? <ContactTile icon="share" label={traduire("Instagram")} tone={P.accent} onPress={() => openInstagram(selected.instagram as string)} /> : null}
+                  {selected.website ? <ContactTile icon="globe" label={traduire("Site web")} tone={P.indigo} onPress={() => safeOpenURL(selected.website!)} /> : null}
                   {selected.email ? <ContactTile icon="mail" label="E-mail" tone={P.goldDark} onPress={() => openEmail(selected.email)} /> : null}
-                  {selected.facebook ? <ContactTile icon="users" label="Facebook" tone={P.water} onPress={() => openFacebook(selected.facebook!)} /> : null}
-                  {isCoach(selected) && selected.youtube ? <ContactTile icon="play" label="YouTube" tone={P.accentDark} onPress={() => openYoutube(selected.youtube!)} /> : null}
+                  {selected.facebook ? <ContactTile icon="users" label={traduire("Facebook")} tone={P.water} onPress={() => openFacebook(selected.facebook!)} /> : null}
+                  {isCoach(selected) && selected.youtube ? <ContactTile icon="play" label={traduire("YouTube")} tone={P.accentDark} onPress={() => openYoutube(selected.youtube!)} /> : null}
                 </View>
                 {Array.isArray(selected.instagram) ? (
                   <View style={{ gap: 8 }}>
                     <Ink size={13} weight="bold" color={P.ink2}>
-                      Comptes Instagram
-                    </Ink>
+                      {traduire("Comptes Instagram")}</Ink>
                     {selected.instagram.map((h) => (
                       <BigButton key={h} label={h} tone="light" icon="share" onPress={() => openInstagram(h)} />
                     ))}

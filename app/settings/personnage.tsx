@@ -61,7 +61,7 @@ export default function TonPersonnage() {
   // vague 45 : la silhouette vaut pour le Guerrier et pour le Sportif (memes regles)
   const estClassique = espace.personnage === 'classique_h' || espace.personnage === 'classique_f';
   const estGuerrier = espace.personnage === 'guerrier_h' || espace.personnage === 'guerrier_f' || estClassique;
-  const silValue = silMode === 'classique' ? traduire('Non') : silMode === 'auto' ? (silActive ? `Auto, ${silhouetteNom(silActive)}` : 'Auto') : silhouetteNom(silMode as SilhouetteId);
+  const silValue = silMode === 'classique' ? traduire('Non') : silMode === 'auto' ? (silActive ? `Auto, ${silhouetteNom(silActive)}` : traduire('Auto')) : silhouetteNom(silMode as SilhouetteId);
   const silSub = !estGuerrier ? traduire('Pour le Guerrier et le Sportif') : silMode === 'auto' && !silActive ? traduire('Ajoute ta taille et une pesée') : undefined;
   const miniGuerrier = (sil: SilhouetteId | null) => (
     <Image source={estClassique ? classiqueImage(genre, rankIndex, sil) : guerrierImage(genre, rankIndex, sil)} style={{ width: 66, height: 88 }} resizeMode="contain" accessibilityIgnoresInvertColors />
@@ -110,14 +110,14 @@ export default function TonPersonnage() {
       </Ink>
 
       <Card>
-        <ValueRow first tint={TUILE.indigo} icon="user" label="Personnage" value={personnageNom(espace.personnage)} thumb={sansPerso ? undefined : perso} thumbFull onPress={() => go('/avatar-selection')} />
+        <ValueRow first tint={TUILE.indigo} icon="user" label={traduire("Personnage")} value={personnageNom(espace.personnage)} thumb={sansPerso ? undefined : perso} thumbFull onPress={() => go('/avatar-selection')} />
         {/* vague 45 : la silhouette existe seulement pour le Guerrier et le Sportif, la ligne disparait sinon */}
         {!sansPerso && estGuerrier ? <ValueRow tint={TUILE.bleu} icon="shield" label={traduire("Silhouette selon ton corps")} value={silValue} sub={silSub} onPress={() => setPicker('silhouette')} /> : null}
         {sansPerso ? (
           // sans personnage, le rond montre ta photo des qu'elle existe, sinon tes initiales
           <ValueRow tint={TUILE.mousse} icon="camera" label={traduire("Rond de profil")} value={hasPhoto ? traduire('Ta photo') : traduire('Tes initiales')} sub={hasPhoto ? undefined : traduire('Ajoute ta photo')} onPress={() => go('/settings/photo')} />
         ) : (
-          <ValueRow tint={TUILE.mousse} icon="camera" label={traduire("Rond de profil")} value={identite === 'photo' ? traduire('Ta photo') : 'Personnage'} onPress={() => setPicker('rond')} />
+          <ValueRow tint={TUILE.mousse} icon="camera" label={traduire("Rond de profil")} value={identite === 'photo' ? traduire('Ta photo') : traduire('Personnage')} onPress={() => setPicker('rond')} />
         )}
       </Card>
 
@@ -143,7 +143,7 @@ export default function TonPersonnage() {
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   {on ? <Icon name="check" size={13} color={c.accent} stroke={3} /> : null}
-                  <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary}>{o.nom}</Ink>
+                  <Ink size={13} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary}>{traduire(o.nom)}</Ink>
                 </View>
               </Pressable>
             );
@@ -171,8 +171,8 @@ export default function TonPersonnage() {
         title={traduire("Silhouette selon ton corps")}
         subtitle={estClassique ? traduire('Même tenue, même personnage : seule la silhouette change') : traduire('Même armure, même personnage : seule la silhouette change')}
         options={[
-          { key: 'classique' as SilhouetteMode, label: 'Dessin classique', sub: traduire('Le personnage d’origine'), preview: miniGuerrier(null) },
-          { key: 'auto' as SilhouetteMode, label: 'Automatique', sub: traduire('Il suit tes pesées et évolue avec toi'), preview: miniGuerrier(silMode === 'auto' ? silActive : null) },
+          { key: 'classique' as SilhouetteMode, label: traduire('Dessin classique'), sub: traduire('Le personnage d’origine'), preview: miniGuerrier(null) },
+          { key: 'auto' as SilhouetteMode, label: traduire('Automatique'), sub: traduire('Il suit tes pesées et évolue avec toi'), preview: miniGuerrier(silMode === 'auto' ? silActive : null) },
           // equilibree est le dessin classique : pas deux choix pour la meme image
           ...SILHOUETTES.filter((sil) => sil.id !== 'equilibree').map((sil) => ({ key: sil.id as SilhouetteMode, label: sil.nom, sub: sil.phrase, preview: miniGuerrier(sil.id) })),
         ]}

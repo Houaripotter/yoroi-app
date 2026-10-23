@@ -309,7 +309,7 @@ export default function OnboardingScreen() {
   // ===== Ouverture =====
   const start = async () => {
     if (!isPreview) await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true').catch(() => {});
-    onboardingEvent('reponse', { ecran: 'ouverture', question: traduire('commencer') });
+    onboardingEvent('reponse', { ecran: 'ouverture', question: 'commencer' });
     goTo(PRENOM);
   };
 

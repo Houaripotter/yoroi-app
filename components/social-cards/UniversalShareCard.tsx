@@ -26,33 +26,33 @@ const SPORT_CFG: Record<string, { color: string; label: string; cat: 'combat' | 
   jiujitsu:           { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
   jiujitsubrasileiro: { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
   jiujitsub:          { color: '#3B82F6', label: traduire('JIU-JITSU BRÉSILIEN'), cat: 'combat'   },
-  judo:               { color: '#2563EB', label: 'JUDO',                cat: 'combat'   },
+  judo:               { color: '#2563EB', label: traduire('JUDO'),                cat: 'combat'   },
   mma:                { color: '#EF4444', label: 'MMA',                 cat: 'combat'   },
-  muaythai:           { color: '#A855F7', label: 'MUAY THAI',           cat: 'combat'   },
-  muay:               { color: '#A855F7', label: 'MUAY THAI',           cat: 'combat'   },
-  kickboxing:         { color: '#F97316', label: 'KICK BOXING',         cat: 'combat'   },
-  kickboxe:           { color: '#F97316', label: 'KICK BOXING',         cat: 'combat'   },
-  boxing:             { color: '#F59E0B', label: 'BOXE',                cat: 'combat'   },
-  boxe:               { color: '#F59E0B', label: 'BOXE',                cat: 'combat'   },
-  grappling:          { color: '#10B981', label: 'GRAPPLING',           cat: 'combat'   },
-  wrestling:          { color: '#6366F1', label: 'WRESTLING',           cat: 'combat'   },
-  lutte:              { color: '#6366F1', label: 'LUTTE',               cat: 'combat'   },
-  sambo:              { color: '#EC4899', label: 'SAMBO',               cat: 'combat'   },
+  muaythai:           { color: '#A855F7', label: traduire('MUAY THAI'),           cat: 'combat'   },
+  muay:               { color: '#A855F7', label: traduire('MUAY THAI'),           cat: 'combat'   },
+  kickboxing:         { color: '#F97316', label: traduire('KICK BOXING'),         cat: 'combat'   },
+  kickboxe:           { color: '#F97316', label: traduire('KICK BOXING'),         cat: 'combat'   },
+  boxing:             { color: '#F59E0B', label: traduire('BOXE'),                cat: 'combat'   },
+  boxe:               { color: '#F59E0B', label: traduire('BOXE'),                cat: 'combat'   },
+  grappling:          { color: '#10B981', label: traduire('GRAPPLING'),           cat: 'combat'   },
+  wrestling:          { color: '#6366F1', label: traduire('WRESTLING'),           cat: 'combat'   },
+  lutte:              { color: '#6366F1', label: traduire('LUTTE'),               cat: 'combat'   },
+  sambo:              { color: '#EC4899', label: traduire('SAMBO'),               cat: 'combat'   },
   karate:             { color: '#8B5CF6', label: traduire('KARATÉ'),              cat: 'combat'   },
-  taekwondo:          { color: '#14B8A6', label: 'TAEKWONDO',           cat: 'combat'   },
-  running:            { color: '#22C55E', label: 'RUNNING',             cat: 'running'  },
-  course:             { color: '#22C55E', label: 'RUNNING',             cat: 'running'  },
-  trail:              { color: '#84CC16', label: 'TRAIL RUNNING',       cat: 'running'  },
-  triathlon:          { color: '#06B6D4', label: 'TRIATHLON',           cat: 'running'  },
-  natation:           { color: '#0EA5E9', label: 'NATATION',            cat: 'running'  },
-  swimming:           { color: '#0EA5E9', label: 'NATATION',            cat: 'running'  },
-  cycling:            { color: '#F59E0B', label: 'CYCLISME',            cat: 'cycling'  },
-  cyclisme:           { color: '#F59E0B', label: 'CYCLISME',            cat: 'cycling'  },
-  velo:               { color: '#F59E0B', label: 'CYCLISME',            cat: 'cycling'  },
-  musculation:        { color: '#EF4444', label: 'MUSCULATION',         cat: 'strength' },
-  crossfit:           { color: '#F97316', label: 'CROSSFIT',            cat: 'strength' },
-  fitness:            { color: '#F97316', label: 'FITNESS',             cat: 'strength' },
-  yoga:               { color: '#A78BFA', label: 'YOGA',                cat: 'generic'  },
+  taekwondo:          { color: '#14B8A6', label: traduire('TAEKWONDO'),           cat: 'combat'   },
+  running:            { color: '#22C55E', label: traduire('RUNNING'),             cat: 'running'  },
+  course:             { color: '#22C55E', label: traduire('RUNNING'),             cat: 'running'  },
+  trail:              { color: '#84CC16', label: traduire('TRAIL RUNNING'),       cat: 'running'  },
+  triathlon:          { color: '#06B6D4', label: traduire('TRIATHLON'),           cat: 'running'  },
+  natation:           { color: '#0EA5E9', label: traduire('NATATION'),            cat: 'running'  },
+  swimming:           { color: '#0EA5E9', label: traduire('NATATION'),            cat: 'running'  },
+  cycling:            { color: '#F59E0B', label: traduire('CYCLISME'),            cat: 'cycling'  },
+  cyclisme:           { color: '#F59E0B', label: traduire('CYCLISME'),            cat: 'cycling'  },
+  velo:               { color: '#F59E0B', label: traduire('CYCLISME'),            cat: 'cycling'  },
+  musculation:        { color: '#EF4444', label: traduire('MUSCULATION'),         cat: 'strength' },
+  crossfit:           { color: '#F97316', label: traduire('CROSSFIT'),            cat: 'strength' },
+  fitness:            { color: '#F97316', label: traduire('FITNESS'),             cat: 'strength' },
+  yoga:               { color: '#A78BFA', label: traduire('YOGA'),                cat: 'generic'  },
 };
 
 function getCfg(sport?: string) {
@@ -127,7 +127,7 @@ export const UniversalShareCard = React.memo(
         return {
           heroNum: `${w}V ${d}N ${l}D`,
           heroSub: 'BILAN',
-          badge: w > 0 && l === 0 ? 'IMBATTU' : null,
+          badge: w > 0 && l === 0 ? traduire('IMBATTU') : null,
           stats: [
             { v: String(rounds.length), l: 'ROUNDS' },
             { v: fmtDur(training.duration_minutes ?? training.duration), l: 'DURÉE' },
@@ -280,7 +280,7 @@ export const UniversalShareCard = React.memo(
             <Text style={{ color: WHITE, fontSize: 11 * s, fontWeight: '900', letterSpacing: 3 }}>YOROI</Text>
           </View>
           <View style={{ backgroundColor: accent, paddingHorizontal: 11 * s, paddingVertical: 6 * s, borderRadius: 30 * s }}>
-            <Text style={{ color: WHITE, fontSize: 8 * s, fontWeight: '900', letterSpacing: 1.5 }}>{cfg.label}</Text>
+            <Text style={{ color: WHITE, fontSize: 8 * s, fontWeight: '900', letterSpacing: 1.5 }}>{traduire(cfg.label)}</Text>
           </View>
         </View>
 

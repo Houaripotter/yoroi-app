@@ -176,7 +176,7 @@ export function Historique({ entries, fin, periode }: { entries: SleepEntry[]; f
             ? barres.map((br, i) =>
                 br.label ? (
                   <Ink key={`x${i}`} size={11} weight="bold" color={P.muted} numberOfLines={1} style={{ position: 'absolute', top: H + 5, left: i * pas + pas / 2 - 20, width: 40, textAlign: 'center' }}>
-                    {br.label}
+                    {traduire(br.label)}
                   </Ink>
                 ) : null,
               )

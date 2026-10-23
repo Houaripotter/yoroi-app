@@ -68,7 +68,7 @@ const DATA_RETENTION_KEY = '@yoroi_data_retention';
 const AFFICHER_CONSERVATION = false;
 
 const RETENTION_OPTIONS = [
-  { key: '0', label: 'Toujours' },
+  { key: '0', label: traduire('Toujours') },
   { key: '30', label: '30 j' },
   { key: '90', label: '90 j' },
   { key: '180', label: '180 j' },
@@ -81,7 +81,7 @@ const DATA_CATEGORIES: { id: string; key: string; icon: IconName; secure: boolea
   { id: 'hydration', key: '@yoroi_hydration_log', icon: 'drop', secure: false, label: traduire('Hydratation') },
   { id: 'photos', key: '@yoroi_photos', icon: 'camera', secure: true, label: traduire('Photos de transformation') },
   { id: 'injuries', key: '@yoroi_injuries', icon: 'heart', secure: true, label: traduire('Blessures') },
-  { id: 'mood', key: '@yoroi_mood_log', icon: 'spark', secure: true, label: 'Humeur' },
+  { id: 'mood', key: '@yoroi_mood_log', icon: 'spark', secure: true, label: traduire('Humeur') },
   { id: 'badges', key: '@yoroi_user_badges', icon: 'trophy', secure: false, label: traduire('Badges et récompenses') },
   { id: 'fasting', key: '@yoroi_fasting_history', icon: 'timer', secure: true, label: traduire('Jeûne') },
 ];
@@ -177,11 +177,11 @@ export default function PrivacyDataScreen() {
                 { text: 'OK', style: 'primary', onPress: () => router.replace('/onboarding' as any) },
               ]);
             } else {
-              appAlert('Effacement incomplet', traduire('Presque tout est effacé, mais une partie a résisté. Relance « Tout supprimer » pour finir.'));
+              appAlert(traduire('Effacement incomplet'), traduire('Presque tout est effacé, mais une partie a résisté. Relance « Tout supprimer » pour finir.'));
             }
           } catch (e) {
             logger.error('Erreur suppression totale:', e);
-            appAlert('Oups', traduire('L’effacement n’a pas abouti. Réessaie.'));
+            appAlert(traduire('Oups'), traduire('L’effacement n’a pas abouti. Réessaie.'));
           } finally {
             setSaving(false);
           }
@@ -220,7 +220,7 @@ export default function PrivacyDataScreen() {
           l'etaient. Le reglage n'etait donc pas honnete. Le code reste, a reprendre avec une vraie regle. */}
       {AFFICHER_CONSERVATION ? (
         <>
-          <SectionTitle title="Conservation" sub={traduire("Combien de temps garder tes données")} />
+          <SectionTitle title={traduire("Conservation")} sub={traduire("Combien de temps garder tes données")} />
           <Segmented options={RETENTION_OPTIONS} value={retention} onChange={changeRetention} />
         </>
       ) : null}
@@ -235,7 +235,7 @@ export default function PrivacyDataScreen() {
                 <Icon name={cat.icon} size={18} />
               </View>
               <View style={{ flex: 1, gap: 1 }}>
-                <Ink size={15} weight="bold">{cat.label}</Ink>
+                <Ink size={15} weight="bold">{traduire(cat.label)}</Ink>
                 <Ink size={12} color={c.textMuted}>{entries(n)}</Ink>
               </View>
               <Pressable

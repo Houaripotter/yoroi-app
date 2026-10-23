@@ -44,7 +44,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
   },
   {
     id: 'discipline',
-    label: 'Discipline',
+    label: traduire('Discipline'),
     labelJp: '規律',
     icon: '',
     iconComponent: Dumbbell,
@@ -52,7 +52,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
   },
   {
     id: 'mental',
-    label: 'Force mentale',
+    label: traduire('Force mentale'),
     labelJp: '精神力',
     icon: '',
     iconComponent: Shield,
@@ -64,7 +64,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
     labelJp: '戦士',
     icon: '',
     iconComponent: Swords,
-    description: 'Esprit combattant',
+    description: traduire('Esprit combattant'),
   },
   {
     id: 'perseverance',

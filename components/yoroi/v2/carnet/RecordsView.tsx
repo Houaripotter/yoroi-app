@@ -304,7 +304,7 @@ export function RecordCard({ b, onOpen, onAdd, onDelete }: { b: Benchmark; onOpe
               </Ink>
               {s.beaten ? <Hanko size={30} rotate={-10} /> : null}
             </View>
-            {best.sub ? <Ink size={13} weight="bold" color={P.ink2}>{best.sub}</Ink> : null}
+            {best.sub ? <Ink size={13} weight="bold" color={P.ink2}>{traduire(best.sub)}</Ink> : null}
           </View>
           {s.curve.length > 1 ? (
             <View style={{ alignItems: 'flex-end', gap: 2 }}>

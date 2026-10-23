@@ -53,7 +53,7 @@ function kindLabel(engine: ChronoEngine, key: Phase): string {
   if (key === 'prepa' && p.kind === 'repos') return traduire('Prépare-toi, ça repart');
   if (p.kind === 'prepa') return traduire('Préparation');
   if (p.kind === 'repos') return traduire('Repos');
-  return engine.status === 'paused' ? 'En pause' : 'Effort';
+  return engine.status === 'paused' ? 'En pause' : traduire('Effort');
 }
 
 type Props = {
@@ -103,7 +103,7 @@ export function ActiveChrono({ engine, name, focusMode, onToggleFocus, onStop, c
       return;
     }
     appAlert(traduire('Arrêter le chrono ?'), traduire('Le chrono repart de zéro.'), [
-      { text: 'Continuer', style: 'cancel' },
+      { text: traduire('Continuer'), style: 'cancel' },
       { text: traduire('Arrêter'), style: 'destructive', onPress: onStop },
     ]);
   };

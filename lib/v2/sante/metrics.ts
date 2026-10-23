@@ -100,13 +100,13 @@ export const FAMILY: Record<Family, { label: string; color: string; tint: string
   activite: { label: traduire('Activité'), color: '#2C4A84', tint: '#E4E9F3', kanji: '動' },
   energie: { label: traduire('Énergie'), color: '#A8832F', tint: '#F5ECD6', kanji: '気' },
   coeur: { label: traduire('Cœur'), color: '#7B3B63', tint: '#F0E1EA', kanji: '心' },
-  souffle: { label: 'Respiration', color: '#2F7A80', tint: '#DDEDEE', kanji: '息' },
+  souffle: { label: traduire('Respiration'), color: '#2F7A80', tint: '#DDEDEE', kanji: '息' },
   sommeil: { label: traduire('Sommeil'), color: '#5A4E96', tint: '#E7E4F1', kanji: '眠' },
   recuperation: { label: traduire('Récupération'), color: '#6E8C3A', tint: '#E8EEDC', kanji: '癒' },
   corps: { label: 'Corps', color: '#1D2029', tint: '#E8E5DE', kanji: '体' },
   mobilite: { label: traduire('Mobilité'), color: '#3D5D9E', tint: '#E2E8F2', kanji: '歩' },
-  environnement: { label: 'Environnement', color: '#5E6B3A', tint: '#E9ECDD', kanji: '環' },
-  nutrition: { label: 'Nutrition', color: '#9A5B2E', tint: '#F3E6DA', kanji: '食' },
+  environnement: { label: traduire('Environnement'), color: '#5E6B3A', tint: '#E9ECDD', kanji: '環' },
+  nutrition: { label: traduire('Nutrition'), color: '#9A5B2E', tint: '#F3E6DA', kanji: '食' },
 };
 
 export const FAMILY_ORDER: Family[] = ['activite', 'energie', 'mobilite', 'coeur', 'sommeil', 'recuperation', 'souffle', 'corps', 'environnement', 'nutrition'];
@@ -251,7 +251,7 @@ export const METRICS: MetricDef[] = [
   },
   {
     key: 'puissance',
-    label: 'Puissance',
+    label: traduire('Puissance'),
     family: 'activite',
     unit: 'W',
     kind: 'avg',
@@ -410,7 +410,7 @@ export const METRICS: MetricDef[] = [
     key: 'tension',
     label: traduire('Tension artérielle'),
     family: 'coeur',
-    unit: 'mmHg',
+    unit: traduire('mmHg'),
     kind: 'latest',
     digits: 0,
     upIsGood: false,
@@ -498,7 +498,7 @@ export const METRICS: MetricDef[] = [
   },
   {
     key: 'pleine-conscience',
-    label: 'Pleine conscience',
+    label: traduire('Pleine conscience'),
     family: 'recuperation',
     unit: 'min',
     kind: 'sum',
@@ -545,7 +545,7 @@ export const METRICS: MetricDef[] = [
   },
   {
     key: 'perturbations-respiratoires',
-    label: 'Perturbations respiratoires',
+    label: traduire('Perturbations respiratoires'),
     family: 'souffle',
     unit: '/h',
     kind: 'avg',
@@ -559,7 +559,7 @@ export const METRICS: MetricDef[] = [
   },
   {
     key: 'vo2max',
-    label: 'VO2 max',
+    label: traduire('VO2 max'),
     family: 'souffle',
     unit: 'ml/kg/min',
     kind: 'latest',
@@ -599,7 +599,7 @@ export const METRICS: MetricDef[] = [
   },
   {
     key: 'masse-maigre',
-    label: 'Masse maigre',
+    label: traduire('Masse maigre'),
     family: 'corps',
     unit: 'kg',
     kind: 'latest',

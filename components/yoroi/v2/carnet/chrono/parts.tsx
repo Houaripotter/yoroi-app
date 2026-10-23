@@ -94,8 +94,8 @@ export function PresetStrip<T extends string | number>({ items, value, onPick, c
           <View key={String(it.key)} style={{ flexBasis: basis, flexGrow: 1 }}>
             <Press onPress={() => onPick(it.key)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={it.sub ? `${it.title}, ${it.sub}` : it.title}>
               <View style={{ minHeight: it.sub ? 60 : 48, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 16, backgroundColor: on ? accent : P.white, borderWidth: 1, borderColor: on ? accent : P.line2, justifyContent: 'center' }}>
-                <Ink size={15} weight="black" tight color={on ? P.white : P.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{it.title}</Ink>
-                {it.sub ? <Ink size={12} weight="bold" color={on ? (paletteSombre() ? P.white : 'rgba(255,255,255,0.78)') : P.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{it.sub}</Ink> : null}
+                <Ink size={15} weight="black" tight color={on ? P.white : P.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{traduire(it.title)}</Ink>
+                {it.sub ? <Ink size={12} weight="bold" color={on ? (paletteSombre() ? P.white : 'rgba(255,255,255,0.78)') : P.muted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduire(it.sub)}</Ink> : null}
               </View>
             </Press>
           </View>
@@ -119,7 +119,7 @@ export function TimelineBand({ parts, height = 12 }: { parts: { seconds: number;
 }
 
 /** Commandes pendant le chrono : arreter, pause ou reprise, passer. Bien separees et legendees. */
-export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color, skipLabel = 'Passer' }: { running: boolean; onToggle: () => void; onStop: () => void; onSkip?: () => void; onReset?: () => void; color: string; skipLabel?: string }) {
+export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color, skipLabel = traduire('Passer') }: { running: boolean; onToggle: () => void; onStop: () => void; onSkip?: () => void; onReset?: () => void; color: string; skipLabel?: string }) {
   const side = (name: 'stop' | 'skip' | 'reset', label: string, fn: () => void) => (
     <View style={{ alignItems: 'center', gap: 6, width: 84 }}>
       <Press onPress={fn} accessibilityRole="button" accessibilityLabel={label} haptic="medium">
@@ -134,12 +134,12 @@ export function ControlBar({ running, onToggle, onStop, onSkip, onReset, color, 
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 4 }}>
       {side('stop', traduire('Arrêter'), onStop)}
       <View style={{ alignItems: 'center', gap: 6 }}>
-        <Press onPress={onToggle} haptic="medium" accessibilityRole="button" accessibilityLabel={running ? 'Pause' : 'Reprendre'}>
+        <Press onPress={onToggle} haptic="medium" accessibilityRole="button" accessibilityLabel={running ? traduire('Pause') : traduire('Reprendre')}>
           <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: color, alignItems: 'center', justifyContent: 'center', shadowColor: color, shadowOpacity: 0.32, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
             <CIcon name={running ? 'pause' : 'play'} size={36} color={P.white} />
           </View>
         </Press>
-        <Ink size={12} weight="bold" color={P.ink2}>{running ? 'Pause' : 'Reprendre'}</Ink>
+        <Ink size={12} weight="bold" color={P.ink2}>{running ? traduire('Pause') : traduire('Reprendre')}</Ink>
       </View>
       {onSkip ? side('skip', skipLabel, onSkip) : onReset ? side('reset', traduire('Phase à zéro'), onReset) : <View style={{ width: 84 }} />}
     </View>
@@ -173,7 +173,7 @@ export function PhaseHeader({ kind, title, sub, color, deep }: { kind: string; t
 export function NextUp({ text, color }: { text: string; color: string }) {
   return (
     <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, minHeight: 40, borderRadius: 20, backgroundColor: blancA(0.7), borderWidth: 1, borderColor: P.white, maxWidth: '92%' }}>
-      <Ink size={13} weight="bold" color={P.muted}>Ensuite</Ink>
+      <Ink size={13} weight="bold" color={P.muted}>{traduire("Ensuite")}</Ink>
       <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />
       <Ink size={15} weight="extraBold" color={P.ink} numberOfLines={1} style={{ flexShrink: 1 }}>{text}</Ink>
     </View>
@@ -250,7 +250,7 @@ export function FinishSheet({
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {lines.map((l) => (
             <View key={l.label} style={{ flexGrow: 1, flexBasis: '30%', borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 12, gap: 2 }}>
-              <Ink size={12} weight="bold" color={P.ink2}>{l.label}</Ink>
+              <Ink size={12} weight="bold" color={P.ink2}>{traduire(l.label)}</Ink>
               <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{l.value}</Ink>
             </View>
           ))}
@@ -263,7 +263,7 @@ export function FinishSheet({
       </View>
       <View style={{ gap: 10, paddingBottom: insets.bottom > 0 ? 0 : 6 }}>
         <BigButton label={saveLabel} icon="check" onPress={onSave} />
-        <BigButton label="Recommencer" tone="light" icon="refresh" onPress={onRestart} />
+        <BigButton label={traduire("Recommencer")} tone="light" icon="refresh" onPress={onRestart} />
       </View>
     </Sheet>
   );

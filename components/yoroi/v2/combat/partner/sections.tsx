@@ -42,11 +42,11 @@ export function WarriorCard({ p, ins, onPhoto }: { p: Partner; ins: PartnerInsig
           <View style={{ flex: 1, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, height: 28, borderRadius: 14, backgroundColor: `${ins.title.color}18` }}>
               <Ink size={13} weight="extraBold" color={ins.title.color}>
-                {ins.title.label}
+                {traduire(ins.title.label)}
               </Ink>
             </View>
             <Ink size={30} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              {p.name}
+              {traduire(p.name)}
             </Ink>
             {p.nickname ? (
               <Ink size={14} weight="bold" color={P.ink2} numberOfLines={1}>
@@ -217,7 +217,7 @@ export function MissionCard({ partnerId, entries }: { partnerId: string; entries
             {done ? traduire('Mission du mois accomplie') : traduire('Mission du mois')}
           </Ink>
           <Ink size={17} weight="black" tight>
-            {mission.text}
+            {traduire(mission.text)}
           </Ink>
         </View>
         {done ? <Hanko size={44} /> : null}
@@ -255,7 +255,7 @@ export function StreaksAndBadges({ ins, p }: { ins: PartnerInsights; p: Partner 
                 {it.value}
               </Ink>
               <Ink size={12} weight="bold" color={P.ink2}>
-                {it.label}
+                {traduire(it.label)}
               </Ink>
             </Card>
           ))}
@@ -269,10 +269,10 @@ export function StreaksAndBadges({ ins, p }: { ins: PartnerInsights; p: Partner 
               <View key={b.id} style={{ width: 132, padding: 12, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 8, alignItems: 'flex-start' }}>
                 <Hanko size={36} rotate={-8} />
                 <Ink size={14} weight="black" tight numberOfLines={2}>
-                  {b.name}
+                  {traduire(b.name)}
                 </Ink>
                 <Ink size={11} color={P.ink2} numberOfLines={3}>
-                  {b.description}
+                  {traduire(b.description)}
                 </Ink>
               </View>
             ))}
@@ -296,7 +296,7 @@ export function Timeline({ ins, name }: { ins: PartnerInsights; name: string }) 
         </Ink>
         <View style={{ paddingHorizontal: 10, height: 28, borderRadius: 14, justifyContent: 'center', backgroundColor: `${ins.momentum.color}18` }}>
           <Ink size={12} weight="extraBold" color={ins.momentum.color}>
-            {ins.momentum.label}
+            {traduire(ins.momentum.label)}
           </Ink>
         </View>
       </View>
@@ -332,9 +332,9 @@ export function YearTrend({ ins }: { ins: PartnerInsights }) {
 export function TaleOfTape({ ins, name }: { ins: PartnerInsights; name: string }) {
   if (ins.total === 0) return null;
   const rows = [
-    { label: 'Points', me: ins.pointsFor, him: ins.pointsAgainst },
-    { label: 'Soumissions', me: ins.subGiven, him: ins.subTaken },
-    { label: 'Victoires', me: ins.wins, him: ins.losses },
+    { label: traduire('Points'), me: ins.pointsFor, him: ins.pointsAgainst },
+    { label: traduire('Soumissions'), me: ins.subGiven, him: ins.subTaken },
+    { label: traduire('Victoires'), me: ins.wins, him: ins.losses },
   ];
   const it = ins.intensity;
   return (
@@ -357,7 +357,7 @@ export function TaleOfTape({ ins, name }: { ins: PartnerInsights; name: string }
                 {String(r.me)}
               </Ink>
               <Ink size={13} weight="bold" color={P.ink2}>
-                {r.label}
+                {traduire(r.label)}
               </Ink>
               <Ink size={22} weight="black" tight color={r.him > r.me ? D : P.ink} style={{ flex: 1, textAlign: 'right' }}>
                 {String(r.him)}
@@ -420,7 +420,7 @@ function ArsenalList({ title, sub, items, color }: { title: string; sub: string;
             {String(i + 1)}
           </Ink>
           <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={1}>
-            {m.label}
+            {traduire(m.label)}
           </Ink>
           <View style={{ width: 64 }}>
             <InkBar value={m.count / max} color={color} height={7} />
@@ -438,7 +438,7 @@ export function Arsenal({ ins, name }: { ins: PartnerInsights; name: string }) {
   if (ins.total === 0 || (ins.methodsGiven.length === 0 && ins.methodsTaken.length === 0)) return null;
   return (
     <View style={{ gap: 10 }}>
-      <Section title="Arsenal" sub={traduire("Qui finit qui, et avec quoi")} />
+      <Section title={traduire("Arsenal")} sub={traduire("Qui finit qui, et avec quoi")} />
       <ArsenalList title={traduire("Ses armes contre toi")} sub={traduire("{0} t'a fini {1} fois", name, ins.subTaken)} items={ins.methodsTaken} color={D} />
       <ArsenalList title={traduire("Tes armes contre lui")} sub={traduire("Tu l'as fini {0} fois", ins.subGiven)} items={ins.methodsGiven} color={V} />
     </View>
@@ -526,7 +526,7 @@ function ChipList({ items, color }: { items: { label: string; count: number }[];
       {items.map((t) => (
         <View key={t.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: 17, backgroundColor: `${color}14` }}>
           <Ink size={13} weight="bold" color={color}>
-            {t.label}
+            {traduire(t.label)}
           </Ink>
           <Ink size={12} weight="black" color={`${color}AA`}>
             {`x${t.count}`}
@@ -549,7 +549,7 @@ export function Patterns({ ins }: { ins: PartnerInsights }) {
             {traduire("Dernier objectif, {0}", shortDate(ins.lastImprovement.date))}
           </Ink>
           <Ink size={15} weight="bold">
-            {ins.lastImprovement.text}
+            {traduire(ins.lastImprovement.text)}
           </Ink>
         </View>
       ) : null}
@@ -662,7 +662,7 @@ export function ActiveGoal({ p, onSet, onAchieved }: { p: Partner; onSet: (text:
         <View style={{ gap: 10 }}>
           <View style={{ padding: 14, borderRadius: 18, backgroundColor: P.accentSoft }}>
             <Ink size={17} weight="extraBold">
-              {p.activeGoal.text}
+              {traduire(p.activeGoal.text)}
             </Ink>
             <Ink size={12} weight="bold" color={P.ink2} style={{ marginTop: 4 }}>
               {traduire("Depuis le {0}", shortDate(p.activeGoal.createdAt))}
@@ -727,7 +727,7 @@ export function LongTermGoal({ p, winRate, onSet, onClear }: { p: Partner; winRa
       ) : g ? (
         <View style={{ gap: 10 }}>
           <Ink size={16} weight="extraBold">
-            {g.text}
+            {traduire(g.text)}
           </Ink>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Ink size={13} weight="bold" color={P.ink2}>

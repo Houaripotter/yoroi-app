@@ -39,7 +39,7 @@ export function SourceTag({ source }: { source?: string | null }) {
   const s = sourceOf(source);
   return (
     <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: `${s.color}14` }}>
-      <Ink size={11} weight="extraBold" color={s.color}>{s.label}</Ink>
+      <Ink size={11} weight="extraBold" color={s.color}>{traduire(s.label)}</Ink>
     </View>
   );
 }

@@ -53,7 +53,7 @@ export const POIDS_PERIODS: PeriodOption[] = [
 export const PERIODE_PLAN = -1;
 export const POIDS_PERIODS_PLAN: PeriodOption[] = [...POIDS_PERIODS, { value: PERIODE_PLAN, label: traduire('Mon plan') }];
 /** Vague 34, carte « rouleau » de l'accueil : les memes periodes en onglets legers, « Plan » en un mot */
-export const POIDS_PERIODS_PLAN_COURT: PeriodOption[] = [...POIDS_PERIODS, { value: PERIODE_PLAN, label: 'Plan' }];
+export const POIDS_PERIODS_PLAN_COURT: PeriodOption[] = [...POIDS_PERIODS, { value: PERIODE_PLAN, label: traduire('Plan') }];
 
 /** Pastille de la periode choisie : violette, la meme sur tous les graphiques (vague 32) */
 export const PERIOD_ON = '#7B5CFF';
@@ -153,7 +153,7 @@ export function PeriodSwitch({
           >
             {locked ? <Padlock color={c.textMuted} /> : null}
             <Ink size={leger ? 12.5 : 13} weight={on ? 'extraBold' : 'bold'} color={on ? (leger ? PERIOD_ON : '#FFFFFF') : locked ? c.textMuted : c.textSecondary} numberOfLines={1}>
-              {p.label}
+              {traduire(p.label)}
             </Ink>
           </Pressable>
         );

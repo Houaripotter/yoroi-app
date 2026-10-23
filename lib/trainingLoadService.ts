@@ -60,14 +60,14 @@ const LOAD_THRESHOLDS = {
 
 // Descriptions RPE (échelle de Borg modifiée)
 export const RPE_SCALE = [
-  { value: 1, label: traduire('Très facile'), emoji: '', description: 'Effort minimal' },
-  { value: 2, label: 'Facile', emoji: '', description: traduire('Récupération active') },
-  { value: 3, label: traduire('Modéré'), emoji: '', description: 'Conversation possible' },
-  { value: 4, label: 'Assez dur', emoji: '', description: traduire('Respiration accélérée') },
-  { value: 5, label: 'Dur', emoji: '', description: 'Effort soutenu' },
+  { value: 1, label: traduire('Très facile'), emoji: '', description: traduire('Effort minimal') },
+  { value: 2, label: traduire('Facile'), emoji: '', description: traduire('Récupération active') },
+  { value: 3, label: traduire('Modéré'), emoji: '', description: traduire('Conversation possible') },
+  { value: 4, label: traduire('Assez dur'), emoji: '', description: traduire('Respiration accélérée') },
+  { value: 5, label: traduire('Dur'), emoji: '', description: traduire('Effort soutenu') },
   { value: 6, label: traduire('Très dur'), emoji: '', description: traduire('Limite aérobie') },
-  { value: 7, label: traduire('Intense'), emoji: '', description: 'Parler difficile' },
-  { value: 8, label: traduire('Très intense'), emoji: '', description: 'Effort maximal soutenu' },
+  { value: 7, label: traduire('Intense'), emoji: '', description: traduire('Parler difficile') },
+  { value: 8, label: traduire('Très intense'), emoji: '', description: traduire('Effort maximal soutenu') },
   { value: 9, label: traduire('Extrême'), emoji: '', description: traduire('À la limite') },
   { value: 10, label: 'Maximum', emoji: '', description: traduire('Effort total, épuisement') },
 ];

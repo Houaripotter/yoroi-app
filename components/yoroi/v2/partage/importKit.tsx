@@ -9,6 +9,7 @@ import { Card, P } from '@/components/yoroi/v2/accueil/kit';
 import { Icon as EIcon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { Stamp, paletteOf } from './cardKit';
+import { traduire } from '@/lib/i18n/tr';
 
 const papier = paletteOf('papier');
 
@@ -22,8 +23,8 @@ export function NumberedSteps({ steps }: { steps: { title: string; text: string 
             <Ink size={17} weight="black" color={P.paper} style={{ marginTop: -8 }}>{i + 1}</Ink>
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={15} weight="extraBold">{s.title}</Ink>
-            <Ink size={13} color={P.ink2}>{s.text}</Ink>
+            <Ink size={15} weight="extraBold">{traduire(s.title)}</Ink>
+            <Ink size={13} color={P.ink2}>{traduire(s.text)}</Ink>
           </View>
         </View>
       ))}

@@ -67,7 +67,7 @@ export function DispositionEditor() {
               </View>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="black" tight color={on ? P.ink : P.muted}>
-                  {b.titre}
+                  {traduire(b.titre)}
                 </Ink>
                 <Ink size={12} weight="medium" color={P.muted} numberOfLines={2}>
                   {b.aide}

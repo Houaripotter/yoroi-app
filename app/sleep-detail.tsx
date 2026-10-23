@@ -286,10 +286,10 @@ export default function DetailNuit() {
                     <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: col[p.key], marginTop: 4 }} />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Ink size={15} weight="extraBold">
-                        {p.title}
+                        {traduire(p.title)}
                       </Ink>
                       <Ink size={13} weight="medium" color={P.ink2}>
-                        {p.desc}
+                        {traduire(p.desc)}
                       </Ink>
                     </View>
                     <View style={{ alignItems: 'flex-end', minWidth: 64 }}>
@@ -327,7 +327,7 @@ export default function DetailNuit() {
                     ) : null}
                     {resp || respStockee ? (
                       <Ligne
-                        titre="Respiration"
+                        titre={traduire("Respiration")}
                         valeur={resp ? `${String(resp.moy).replace('.', DECIMAL)}` : `${Math.round(respStockee!.avg ?? (respStockee!.min + respStockee!.max) / 2)}`}
                         unite={traduire("par minute")}
                         detail={resp ? traduire("de {0} à {1}", String(resp.min).replace('.', DECIMAL), String(resp.max).replace('.', DECIMAL)) : undefined}

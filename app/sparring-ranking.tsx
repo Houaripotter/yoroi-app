@@ -18,7 +18,7 @@ import { traduire } from '@/lib/i18n/tr';
 type Sort = 'winrate' | 'rounds' | 'progression';
 const SORTS: { k: Sort; l: string }[] = [
   { k: 'winrate', l: traduire('Taux de victoire') },
-  { k: 'rounds', l: 'Rounds' },
+  { k: 'rounds', l: traduire('Rounds') },
   { k: 'progression', l: traduire('Progression') },
 ];
 const PODIUM = ['#C59D45', '#8B8D96', '#9C5B33'];
@@ -54,7 +54,7 @@ export default function SparringRankingScreen() {
 
   return (
     <PremiumGate source="partenaires" featureTitle="Classement sparring" perks={[traduire('Tes partenaires classés par taux de victoire'), traduire('Tes rounds et ta progression face à chacun'), traduire('Qui monte, qui stagne, qui baisse')]}>
-      <DetailScreen title="Classement" subtitle={loaded ? plural(ranked.length, 'partenaire') : traduire('Lecture de tes rounds')}>
+      <DetailScreen title={traduire("Classement")} subtitle={loaded ? plural(ranked.length, 'partenaire') : traduire('Lecture de tes rounds')}>
         <ChipScroll>
           {SORTS.map((s) => (
             <Chip key={s.k} label={s.l} on={sort === s.k} onPress={() => setSort(s.k)} />
@@ -83,7 +83,7 @@ export default function SparringRankingScreen() {
                         </View>
                         <Seal name={row.p.name} photoUri={row.p.photoUri} belt={row.p.belt} size={rank === 0 ? 58 : 50} tone={P.ink} rotate={0} />
                         <Ink size={13} weight="black" color={P.white} numberOfLines={2} style={{ maxWidth: 94, textAlign: 'center', lineHeight: 16 }}>
-                          {row.p.name}
+                          {traduire(row.p.name)}
                         </Ink>
                         <Ink size={rank === 0 ? 26 : 22} weight="black" tight color={P.white}>
                           {valueOf(row.s, sort)}
@@ -115,7 +115,7 @@ export default function SparringRankingScreen() {
                     <View style={{ flex: 1, gap: 3 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Ink size={16} weight="black" numberOfLines={2} style={{ flexShrink: 1 }}>
-                          {row.p.name}
+                          {traduire(row.p.name)}
                         </Ink>
                         <TrendMark t={row.s.trend} />
                       </View>

@@ -22,7 +22,7 @@ export function nomCourt(d: CarteData): string {
   if (d.moment === 'exploit' && d.exploit) {
     const t = d.exploit.type;
     if (t.startsWith('record_')) return t === 'record_charge' ? `Record ${d.exploit.accroche.toLowerCase()}` : d.exploit.surtitre;
-    if (t === 'techniques') return 'Techniques';
+    if (t === 'techniques') return traduire('Techniques');
     if (t === 'compteur') return 'Compteur';
     if (t === 'annee_progression') return traduire('Mon année');
     return d.exploit.surtitre;
@@ -122,7 +122,7 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {[{ id: 'perso', nom: 'Avec personnage', on: k.personne.visible && k.aPersonnage && k.options.personnage, f: () => k.setStyle({ epure: false, personnage: true, sansPersonne: false }), cache: !k.aPersonnage }, { id: 'sans', nom: 'Sans', on: !k.options.epure && !(k.personne.visible && k.aPersonnage && k.options.personnage), f: () => k.setStyle({ epure: false, sansPersonne: true }) }, { id: 'epure', nom: 'Que mes données', on: !!k.options.epure, f: () => k.setStyle({ epure: true }) }].filter((x) => !x.cache).map((x) => (
               <Pressable key={x.id} onPress={x.f} accessibilityRole="button" accessibilityState={{ selected: x.on }} style={{ minHeight: 40, paddingHorizontal: 13, borderRadius: 20, justifyContent: 'center', backgroundColor: x.on ? c.ink : c.surface, borderWidth: 1, borderColor: x.on ? c.ink : c.border }}>
-                <Ink size={13} weight="extraBold" color={x.on ? c.background : c.ink}>{x.nom}</Ink>
+                <Ink size={13} weight="extraBold" color={x.on ? c.background : c.ink}>{traduire(x.nom)}</Ink>
               </Pressable>
             ))}
           </View>
@@ -139,7 +139,7 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
                 accessibilityLabel={traduire("Modèle {0}", m.nom)}
                 style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: on ? c.ink : c.surface, borderWidth: 1, borderColor: on ? c.ink : c.border }}
               >
-                <Ink size={14} weight="extraBold" color={on ? c.background : c.ink}>{m.nom}</Ink>
+                <Ink size={14} weight="extraBold" color={on ? c.background : c.ink}>{traduire(m.nom)}</Ink>
               </Pressable>
             );
           })}
@@ -175,7 +175,7 @@ function Contenu({ data, onClose, choix, nombre }: { data: CarteData; onClose: (
             <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire("Pas maintenant")}</Ink>
           </Pressable>
           <Pressable onPress={personnaliser} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', paddingLeft: 12 }}>
-            <Ink size={15} weight="extraBold" color={c.accent}>Personnaliser</Ink>
+            <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Personnaliser")}</Ink>
           </Pressable>
         </View>
         <Pressable onPress={plusJamais} accessibilityRole="button" style={{ minHeight: 36, alignItems: 'center', justifyContent: 'center', marginTop: -6 }}>

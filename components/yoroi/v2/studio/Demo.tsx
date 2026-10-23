@@ -125,7 +125,7 @@ export function Demo() {
   const working = busy !== null;
 
   return (
-    <StudioSection id="demo" icon="camera" title={traduire("Démo et captures")} sub={traduire("Heny, retour à tes données, captures")} keywords={traduire("demo heny profil captures screenshot 09:41 barre etat marketing kit carnet vraies donnees sauvegarde restaurer")}>
+    <StudioSection id="demo" icon="camera" title={traduire("Démo et captures")} sub={traduire("Heny, retour à tes données, captures")} keywords="demo heny profil captures screenshot 09:41 barre etat marketing kit carnet vraies donnees sauvegarde restaurer">
       <Card style={{ padding: 14, gap: 12, borderWidth: demoActive ? 2 : 1, borderColor: demoActive ? c.success : c.border }}>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <View style={{ width: 64, height: 80, borderRadius: 16, backgroundColor: c.accentTint, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>

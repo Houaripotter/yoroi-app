@@ -37,7 +37,7 @@ export function familyOf(b: Pick<Benchmark, 'category'>): RecordFamily {
 
 /** « Développé Couché (Barre) » devient « Développé couché (barre) » ; SkiErg, RDL, 10 km restent tels quels */
 /** vague 45 : les noms d'une ancienne demo sans accents (« Souleve de terre », « Developpe couche ») */
-const ACCENTS: Record<string, string> = { souleve: traduire('soulevé'), developpe: traduire('développé'), couche: traduire('couché'), incline: traduire('incliné'), decline: traduire('décliné'), epaule: 'épaule', epaules: traduire('épaules'), fentes: 'fentes', ecarte: traduire('écarté'), eleve: traduire('élevé'), elevations: traduire('élévations'), elevation: traduire('élévation') };
+const ACCENTS: Record<string, string> = { souleve: 'soulevé', developpe: 'développé', couche: 'couché', incline: 'incliné', decline: 'décliné', epaule: 'épaule', epaules: 'épaules', fentes: 'fentes', ecarte: 'écarté', eleve: 'élevé', elevations: 'élévations', elevation: 'élévation' };
 function accentuer(w: string): string {
   const m = w.match(/^([A-Za-z]+)(.*)$/);
   if (!m) return w;

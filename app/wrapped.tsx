@@ -76,7 +76,7 @@ export default function WrappedScreen() {
       unit: stats.totalSessions > 1 ? traduire('séances') : traduire('séance'),
       sub: traduire("{0} d’entraînement", hours),
       facts: [
-        { value: sport || 'À trouver', label: 'Sport favori' },
+        { value: sport || 'À trouver', label: traduire('Sport favori') },
         { value: month, label: traduire('Mois le plus fort') },
         { value: `${stats.longestStreak}\u00A0j`, label: traduire('Plus longue série'), accent: true },
         { value: String(stats.personalBests), label: stats.personalBests > 1 ? 'Records battus' : 'Record battu' },
@@ -226,29 +226,29 @@ export default function WrappedScreen() {
         {!isLast ? (
           <>
             <Pressable onPress={prev} accessibilityRole="button" accessibilityLabel={traduire("Page précédente")} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '35%', zIndex: 2 }} />
-            <Pressable onPress={next} accessibilityRole="button" accessibilityLabel="Page suivante" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '65%', zIndex: 2 }} />
+            <Pressable onPress={next} accessibilityRole="button" accessibilityLabel={traduire("Page suivante")} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '65%', zIndex: 2 }} />
             <Animated.View style={{ flex: 1, paddingTop: insets.top + 90, paddingHorizontal: 28, paddingBottom: insets.bottom + 30, opacity: enter, transform: [{ scale }] }}>
-              <Ink size={16} weight="bold" color={p.ink2}>{s.label}</Ink>
+              <Ink size={16} weight="bold" color={p.ink2}>{traduire(s.label)}</Ink>
               {s.hero ? (
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 4 }}>
                   <View style={{ flex: 1 }}>
                     <Ink size={96} weight="black" tight color={p.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ lineHeight: 100 }}>{s.big}</Ink>
                     {s.unit ? <Ink size={26} weight="black" color={p.accent}>{s.unit}</Ink> : null}
-                    {s.sub ? <Ink size={18} weight="extraBold" color={p.ink} style={{ marginTop: 6 }}>{s.sub}</Ink> : null}
+                    {s.sub ? <Ink size={18} weight="extraBold" color={p.ink} style={{ marginTop: 6 }}>{traduire(s.sub)}</Ink> : null}
                   </View>
                   <Image source={fig} style={{ width: W * 0.34, height: W * 0.45 }} resizeMode="contain" />
                 </View>
               ) : null}
               {s.hero ? null : <Ink size={s.big.length > 6 ? 54 : 110} weight="black" tight color={p.ink} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} style={{ lineHeight: s.big.length > 6 ? 58 : 112, marginTop: 8 }}>{s.big}</Ink>}
               {!s.hero && s.unit ? <Ink size={26} weight="black" color={p.accent}>{s.unit}</Ink> : null}
-              {!s.hero && s.sub ? <Ink size={20} weight="extraBold" color={p.ink} style={{ marginTop: 6 }}>{s.sub}</Ink> : null}
+              {!s.hero && s.sub ? <Ink size={20} weight="extraBold" color={p.ink} style={{ marginTop: 6 }}>{traduire(s.sub)}</Ink> : null}
               {s.plates != null ? <View style={{ marginTop: 18 }}><PlateRow p={p} progress={s.plates} count={10} w={24} /></View> : null}
               {s.facts && s.facts.length ? (
                 <Panel p={p} style={{ marginTop: 22, gap: 14 }}>
                   {chunk(s.facts, s.facts.length === 3 ? 3 : 2).map((row, ri) => (
                     <View key={ri} style={{ flexDirection: 'row', gap: 12 }}>
                       {row.map((f) => (
-                        <Mini key={f.label} p={p} onPanel value={f.value} label={f.label} accent={f.accent ? p.accent : undefined} />
+                        <Mini key={f.label} p={p} onPanel value={f.value} label={traduire(f.label)} accent={f.accent ? p.accent : undefined} />
                       ))}
                       {row.length < (s.facts!.length === 3 ? 3 : 2) ? <View style={{ flex: (s.facts!.length === 3 ? 3 : 2) - row.length }} /> : null}
                     </View>
@@ -263,7 +263,7 @@ export default function WrappedScreen() {
         ) : (
           <Animated.View style={{ flex: 1, paddingTop: insets.top + 70, paddingBottom: insets.bottom + 14, paddingHorizontal: 22, alignItems: 'center', gap: 14, opacity: enter }}>
             <Pressable onPress={prev} accessibilityRole="button" accessibilityLabel={traduire("Page précédente")} style={{ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' }}>
-              <Ink size={14} weight="bold" color={P.ink2}>Revoir l’histoire</Ink>
+              <Ink size={14} weight="bold" color={P.ink2}>{traduire("Revoir l’histoire")}</Ink>
             </Pressable>
             <View style={{ shadowColor: P.ink, shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 8 }}>
               <StoryCard
@@ -293,7 +293,7 @@ export default function WrappedScreen() {
             <View style={{ flexDirection: 'row', gap: 8, alignSelf: 'stretch' }}>
               {(['laque', 'papier'] as const).map((k) => (
                 <Pressable key={k} onPress={() => { lightHaptic().catch(() => {}); studio.setStyleRaw(k); }} accessibilityRole="button" accessibilityLabel={k === 'laque' ? 'Habillage laque' : 'Habillage papier'} style={{ flex: 1, minHeight: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: studio.style === k ? P.ink : P.white, borderWidth: 1, borderColor: P.line2 }}>
-                  <Ink size={14} weight="extraBold" color={studio.style === k ? '#FFFFFF' : P.ink}>{k === 'laque' ? 'Laque' : 'Papier'}</Ink>
+                  <Ink size={14} weight="extraBold" color={studio.style === k ? '#FFFFFF' : P.ink}>{k === 'laque' ? traduire('Laque') : 'Papier'}</Ink>
                 </Pressable>
               ))}
             </View>

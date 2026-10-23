@@ -102,8 +102,7 @@ function BoutonStyle({ onPress }: { onPress: () => void }) {
           <Path d="M5 19L16 8M14 6l4 4M18 3v3M16.5 4.5h3" stroke={POIDS.softText} strokeWidth={2.6} strokeLinecap="round" />
         </Svg>
         <Ink size={11.5} weight="extraBold" color={POIDS.softText} numberOfLines={1}>
-          Style
-        </Ink>
+          {traduire("Style")}</Ink>
       </View>
     </Press>
   );
@@ -454,8 +453,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
               {traduire("Ton objectif : {0}", objectifTxt)}
             </Ink>
             <Ink size={12.5} weight="extraBold" color={POIDS.softText} numberOfLines={1}>
-              Changer
-            </Ink>
+              {traduire("Changer")}</Ink>
           </View>
         </Press>
         </TourAnchor>

@@ -13,7 +13,7 @@ export const IBJJF_COMPETITIONS_2025: Omit<Competition, 'id' | 'created_at'>[] =
   {
     nom: 'European IBJJF Jiu-Jitsu Championship 2025',
     date: '2025-01-17',
-    lieu: traduire('Pavilhão Multiusos de Odivelas, Odivelas, Portugal'),
+    lieu: 'Pavilhão Multiusos de Odivelas, Odivelas, Portugal',
     sport: 'jjb',
     statut: 'a_venir'
   },
@@ -84,7 +84,7 @@ export const IBJJF_COMPETITIONS_2025: Omit<Competition, 'id' | 'created_at'>[] =
   {
     nom: 'Master International Championship - Europe 2025',
     date: '2025-05-03',
-    lieu: traduire('La Mar Bella Municipal Sports Complex, Barcelona, Spain'),
+    lieu: 'La Mar Bella Municipal Sports Complex, Barcelona, Spain',
     sport: 'jjb',
     statut: 'a_venir'
   },
@@ -234,14 +234,14 @@ export const IBJJF_COMPETITIONS_2025: Omit<Competition, 'id' | 'created_at'>[] =
   {
     nom: 'Geneva International Open IBJJF Championship 2025',
     date: '2025-11-15',
-    lieu: traduire('Centre Sportif du Bois des Frères, Vernier, Switzerland'),
+    lieu: 'Centre Sportif du Bois des Frères, Vernier, Switzerland',
     sport: 'jjb',
     statut: 'a_venir'
   },
   {
     nom: 'Geneva International Open IBJJF No-Gi Championship 2025',
     date: '2025-11-15',
-    lieu: traduire('Centre Sportif du Bois des Frères, Vernier, Switzerland'),
+    lieu: 'Centre Sportif du Bois des Frères, Vernier, Switzerland',
     sport: 'jjb',
     statut: 'a_venir'
   },
@@ -275,7 +275,7 @@ export const IBJJF_COMPETITIONS_2026: Omit<Competition, 'id' | 'created_at'>[] =
   {
     nom: 'European IBJJF Championship 2026',
     date: '2026-01-15',
-    lieu: traduire('Pavilhão Multiusos de Odivelas, Odivelas, Portugal'),
+    lieu: 'Pavilhão Multiusos de Odivelas, Odivelas, Portugal',
     sport: 'jjb',
     statut: 'a_venir'
   },
@@ -323,14 +323,14 @@ export const IBJJF_COMPETITIONS_2026: Omit<Competition, 'id' | 'created_at'>[] =
   {
     nom: 'Geneva International Open IBJJF Championship 2026',
     date: '2026-05-09',
-    lieu: traduire('Salle Omnisports du Petit-Lancy, Petit-lancy, Switzerland'),
+    lieu: 'Salle Omnisports du Petit-Lancy, Petit-lancy, Switzerland',
     sport: 'jjb',
     statut: 'a_venir'
   },
   {
     nom: 'Geneva International Open IBJJF No-Gi Championship 2026',
     date: '2026-05-09',
-    lieu: traduire('Salle Omnisports du Petit-Lancy, Petit-lancy, Switzerland'),
+    lieu: 'Salle Omnisports du Petit-Lancy, Petit-lancy, Switzerland',
     sport: 'jjb',
     statut: 'a_venir'
   },

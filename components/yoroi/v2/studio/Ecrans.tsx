@@ -37,7 +37,7 @@ export function Ecrans() {
             <Ink size={14} color={c.textSecondary}>{traduire("Aucun écran ne correspond.")}</Ink>
           </View>
         ) : (
-          shown.map((s, i) => <Row key={s.route} first={i === 0} label={s.route} sub={s.sub} onPress={() => router.push(s.route as never)} />)
+          shown.map((s, i) => <Row key={s.route} first={i === 0} label={s.route} sub={traduire(s.sub)} onPress={() => router.push(s.route as never)} />)
         )}
       </Card>
       {!q.trim() && !all && list.length > FIRST ? <Button tone="ghost" label={traduire("Voir les {0} écrans", list.length)} onPress={() => setAll(true)} small /> : null}

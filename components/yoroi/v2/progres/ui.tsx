@@ -135,7 +135,7 @@ export function Pills<T extends string | number | null>({ items, value, onChange
             style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 13, borderRadius: 12, backgroundColor: on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : '#D5D2CA' }}
           >
             <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? P.paper : c.textSecondary} numberOfLines={1}>
-              {p.label}
+              {traduire(p.label)}
             </Ink>
           </Pressable>
         );
@@ -227,7 +227,7 @@ export function StatStrip({ items, style }: { items: { value: string; label: str
             {it.value}
           </Ink>
           <Ink size={12} color={c.textSecondary}>
-            {it.label}
+            {traduire(it.label)}
           </Ink>
         </View>
       ))}
@@ -325,7 +325,7 @@ export function StatGrid({ items, style }: { items: { value: string; label: stri
           accessibilityLabel={`${it.label}, ${it.value}`}
         >
           <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>
-            {it.label}
+            {traduire(it.label)}
           </Ink>
           <Ink size={22} weight="black" tight color={it.tone ?? c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             {it.value}

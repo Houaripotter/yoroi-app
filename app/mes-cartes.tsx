@@ -72,7 +72,7 @@ function PlancheAvantApres({ photos }: { photos: (string | undefined)[] }) {
     <View style={{ gap: 14 }}>
       {lignes.map((l) => (
         <View key={l.nom} style={{ gap: 4 }}>
-          <Ink size={13} weight="black">{l.nom}</Ink>
+          <Ink size={13} weight="black">{traduire(l.nom)}</Ink>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
             {formats.map((f) => <CarteApercu key={f} largeur={col} data={l.d} options={{ ...base, ...l.o, format: f }} visuels={{}} />)}
           </View>
@@ -130,7 +130,7 @@ function PlancheExploits({ photo, de, a, format }: { photo?: string; de: number;
   return (
     <View style={{ gap: 14 }}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {variantes.map((v) => <Ink key={v.nom} size={12} weight="black" style={{ width: col }}>{v.nom}</Ink>)}
+        {variantes.map((v) => <Ink key={v.nom} size={12} weight="black" style={{ width: col }}>{traduire(v.nom)}</Ink>)}
       </View>
       {DEMO_EXPLOITS.slice(de, a).map((d) => (
         <View key={d.cle} style={{ gap: 4 }}>
@@ -156,7 +156,7 @@ function PlancheTypes({ format, fond, clair, sans, photo, sansPersonne }: { form
     <View style={{ gap: 14 }}>
       {MODELES.map((m) => (
         <View key={m.id} style={{ gap: 4 }}>
-          <Ink size={13} weight="black">{m.nom}</Ink>
+          <Ink size={13} weight="black">{traduire(m.nom)}</Ink>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
             {types.map((d) => {
               const o: OptionsCarte = { modele: m.id as ModeleId, format, fond, sombre: !clair, personnage: !sans, masque: 'aucun', chiffres: d.moment === 'semaine' ? ['seances', 'temps_total', 'poids_semaine'] : chiffresParDefaut(d), slogan: 0, sansPersonne: sansPersonne };
@@ -218,7 +218,7 @@ export default function MesCartes() {
               <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   {d.exploit?.record ? <View style={{ width: 7, height: 7, borderRadius: 1.5, backgroundColor: c.record, transform: [{ rotate: '45deg' }] }} /> : null}
-                  <Ink size={15} weight="extraBold" numberOfLines={1} style={{ flexShrink: 1 }}>{d.titre}</Ink>
+                  <Ink size={15} weight="extraBold" numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(d.titre)}</Ink>
                 </View>
                 <Ink size={13} color={c.textSecondary} numberOfLines={1}>{d.avantApres ? ligneAvantApres(d) : [d.sousTitre, d.exploit ? ligneExploit(d) : ligne(d)].filter(Boolean).join(', ')}</Ink>
               </View>

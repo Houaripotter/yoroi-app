@@ -42,7 +42,7 @@ import { useEspace } from '@/lib/v2/espace/useEspace';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, DECIMAL, LANG } from '@/lib/i18n/tr';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 
@@ -134,7 +134,8 @@ export default function TonProfil() {
   const [pref, setPref] = useState<null | 'poids' | 'mesures' | 'langue'>(null);
   const { weightUnit, measurementUnit, setWeightUnit, setMeasurementUnit } = useUnits();
   const { language, setLanguage } = useI18n();
-  const langLabel = SUPPORTED_LANGUAGES.find((l) => l.code === language)?.nativeName ?? 'Français';
+  // La langue suit le réglage du téléphone (ou le réglage de langue de l'app dans les réglages iOS et Android)
+  const langLabel = ({ fr: 'Français', en: 'English', de: 'Deutsch', nl: 'Nederlands' } as const)[LANG];
 
   const load = useCallback(async () => {
     try {
@@ -252,7 +253,7 @@ export default function TonProfil() {
       await load();
     } catch (err) {
       logger.error('[Profil] enregistrement', err);
-      showPopup('Oups', traduire('Ton profil n’a pas pu être enregistré.'));
+      showPopup(traduire('Oups'), traduire('Ton profil n’a pas pu être enregistré.'));
     } finally {
       setSaving(false);
     }
@@ -313,7 +314,7 @@ export default function TonProfil() {
       if (!r.canceled && r.assets?.[0]) await savePhoto(r.assets[0].uri);
     } catch (err) {
       logger.error('[Profil] caméra', err);
-      showPopup(traduire('Caméra indisponible'), traduire('Choisis plutôt une photo dans ta galerie.'), [{ text: 'Galerie', style: 'primary', onPress: () => setTimeout(pickPhoto, 500) }]);
+      showPopup(traduire('Caméra indisponible'), traduire('Choisis plutôt une photo dans ta galerie.'), [{ text: traduire('Galerie'), style: 'primary', onPress: () => setTimeout(pickPhoto, 500) }]);
     } finally {
       setPicking(false);
     }
@@ -335,7 +336,7 @@ export default function TonProfil() {
       if (!r.canceled && r.assets?.[0]) await savePhoto(r.assets[0].uri);
     } catch (err) {
       logger.error('[Profil] galerie', err);
-      showPopup('Oups', traduire('La photo n’a pas pu être chargée.'));
+      showPopup(traduire('Oups'), traduire('La photo n’a pas pu être chargée.'));
     } finally {
       setPicking(false);
     }
@@ -399,7 +400,7 @@ export default function TonProfil() {
       <SectionTitle title={traduire("Ton objectif")} />
       <Card style={{ padding: 14, gap: 4 }}>
         <Segmented
-          options={[{ key: 'lose', label: 'Perdre' }, { key: 'maintain', label: 'Maintenir' }, { key: 'gain', label: 'Prendre' }]}
+          options={[{ key: 'lose', label: traduire('Perdre') }, { key: 'maintain', label: traduire('Maintenir') }, { key: 'gain', label: traduire('Prendre') }]}
           value={goal}
           onChange={(v) => setGoal(v as Goal)}
         />
@@ -449,31 +450,31 @@ export default function TonProfil() {
       <SectionTitle title={traduire("Tes préférences")} />
       <Card>
         <Row first icon="scale" label={traduire("Unité des charges")} value={weightUnit === 'kg' ? 'kg' : 'livres'} onPress={() => setPref('poids')} />
-        <Row icon="ruler" label="Mensurations" value={measurementUnit === 'cm' ? 'cm' : 'pouces'} onPress={() => setPref('mesures')} />
-        <Row icon="globe" label="Langue" value={langLabel} onPress={() => setPref('langue')} />
-        <Row icon="heart" label="Zones cardiaques" sub={traduire("Tes seuils de fréquence cardiaque")} onPress={() => router.push('/heart-zones-settings' as any)} />
+        <Row icon="ruler" label={traduire("Mensurations")} value={measurementUnit === 'cm' ? 'cm' : 'pouces'} onPress={() => setPref('mesures')} />
+        <Row icon="globe" label={traduire('Langue')} value={langLabel} onPress={() => Linking.openSettings()} />
+        <Row icon="heart" label={traduire("Zones cardiaques")} sub={traduire("Tes seuils de fréquence cardiaque")} onPress={() => router.push('/heart-zones-settings' as any)} />
       </Card>
 
       <ChoiceSheet
         visible={pref === 'poids'}
         onClose={() => setPref(null)}
         title={traduire("Unité des charges")}
-        options={[{ key: 'kg', label: 'Kilos', sub: traduire('Exemple : 100 kg au squat') }, { key: 'lbs', label: 'Livres', sub: traduire('Exemple : 220 lb au squat. Ton poids de corps reste en kilos') }]}
+        options={[{ key: 'kg', label: traduire('Kilos'), sub: traduire('Exemple : 100 kg au squat') }, { key: 'lbs', label: traduire('Livres'), sub: traduire('Exemple : 220 lb au squat. Ton poids de corps reste en kilos') }]}
         value={weightUnit}
         onChange={(v) => setWeightUnit(v as 'kg' | 'lbs')}
       />
       <ChoiceSheet
         visible={pref === 'mesures'}
         onClose={() => setPref(null)}
-        title="Mensurations"
-        options={[{ key: 'cm', label: traduire('Centimètres'), sub: 'Exemple : 84 cm' }, { key: 'in', label: 'Pouces', sub: 'Exemple : 33 in' }]}
+        title={traduire("Mensurations")}
+        options={[{ key: 'cm', label: traduire('Centimètres'), sub: traduire('Exemple : 84 cm') }, { key: 'in', label: traduire('Pouces'), sub: traduire('Exemple : 33 in') }]}
         value={measurementUnit}
         onChange={(v) => setMeasurementUnit(v as 'cm' | 'in')}
       />
       <ChoiceSheet
         visible={pref === 'langue'}
         onClose={() => setPref(null)}
-        title="Langue"
+        title={traduire("Langue")}
         options={SUPPORTED_LANGUAGES.map((l) => ({ key: l.code as string, label: l.nativeName }))}
         value={language as string}
         onChange={(v) => { setLanguage(v as any).catch(() => {}); }}

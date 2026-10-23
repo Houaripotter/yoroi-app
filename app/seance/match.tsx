@@ -30,16 +30,16 @@ import { traduire, DECIMAL } from '@/lib/i18n/tr';
 const RESULTS: { value: CombatResultat; label: string }[] = [
   { value: 'victoire', label: traduire('Victoire') },
   { value: 'defaite', label: traduire('Défaite') },
-  { value: 'nul', label: 'Nul' },
+  { value: 'nul', label: traduire('Nul') },
 ];
 
 const METHODS: { value: CombatMethode; label: string }[] = [
-  { value: 'soumission', label: 'Soumission' },
+  { value: 'soumission', label: traduire('Soumission') },
   { value: 'ko', label: 'KO' },
   { value: 'tko', label: traduire('Arrêt de l’arbitre') },
-  { value: 'points', label: 'Points' },
+  { value: 'points', label: traduire('Points') },
   { value: 'decision', label: traduire('Décision') },
-  { value: 'dq', label: 'Disqualification' },
+  { value: 'dq', label: traduire('Disqualification') },
 ];
 
 /** « 3:42 » a partir de secondes */
@@ -121,7 +121,7 @@ export default function SeanceMatch() {
       router.back();
     } catch (err) {
       logger.error('Enregistrement du combat impossible', err);
-      appAlert('Oups', traduire('Le combat n’a pas pu être enregistré. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('Le combat n’a pas pu être enregistré. Réessaie.'));
       savingRef.current = false;
       setSaving(false);
     }
@@ -138,7 +138,7 @@ export default function SeanceMatch() {
 
         <View style={{ padding: 16, borderRadius: 26, backgroundColor: result === 'victoire' ? c.successTint : result === 'defaite' ? c.accentTint : c.fillSoft, gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Ink size={24} weight="black" tight style={{ flex: 1 }} color={resultTone(result)}>{RESULTS.find((r) => r.value === result)?.label}</Ink>
+            <Ink size={24} weight="black" tight style={{ flex: 1 }} color={resultTone(result)}>{traduire(RESULTS.find((r) => r.value === result)?.label)}</Ink>
             {result === 'victoire' ? <Hanko size={44} rotate={-8} color={c.goldDeep} /> : null}
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -146,20 +146,20 @@ export default function SeanceMatch() {
               const on = r.value === result;
               return (
                 <Pressable key={r.value} onPress={() => { selectionAsync().catch(() => {}); setResult(r.value); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ ...chip(on, resultTone(r.value)), flex: 1 }}>
-                  <Ink size={15} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{r.label}</Ink>
+                  <Ink size={15} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{traduire(r.label)}</Ink>
                 </Pressable>
               );
             })}
           </View>
         </View>
 
-        <Section title="Comment">
+        <Section title={traduire("Comment")}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {METHODS.map((m) => {
               const on = m.value === method;
               return (
                 <Pressable key={m.value} onPress={() => { selectionAsync().catch(() => {}); setMethod(on ? null : m.value); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={chip(on)}>
-                  <Ink size={14} weight="extraBold" color={on ? c.background : c.ink}>{m.label}</Ink>
+                  <Ink size={14} weight="extraBold" color={on ? c.background : c.ink}>{traduire(m.label)}</Ink>
                 </Pressable>
               );
             })}
@@ -167,7 +167,7 @@ export default function SeanceMatch() {
           <TextInput value={technique} onChangeText={setTechnique} placeholder={method === 'soumission' ? traduire('Quelle soumission\u00a0? Triangle, clé de bras...') : traduire('La technique décisive')} placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Technique")} style={input} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>Round</Ink>
+              <Ink size={12} weight="bold" color={c.textMuted}>{traduire("Round")}</Ink>
               <Stepper value={round} step={1} min={1} max={12} unit={traduire("numéro du round")} layout="stack" size={26} button={44} format={(v) => String(v)} onChange={setRound} />
             </View>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 10, borderRadius: 18, backgroundColor: blancA(0.75), borderWidth: 1, borderColor: c.border }}>
@@ -177,12 +177,12 @@ export default function SeanceMatch() {
           </View>
         </Section>
 
-        <Section title="Adversaire">
-          <TextInput value={opponent} onChangeText={setOpponent} placeholder="Son nom" placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Nom de l'adversaire")} style={input} />
-          <TextInput value={club} onChangeText={setClub} placeholder="Son club (facultatif)" placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Club de l'adversaire")} style={input} />
+        <Section title={traduire("Adversaire")}>
+          <TextInput value={opponent} onChangeText={setOpponent} placeholder={traduire("Son nom")} placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Nom de l'adversaire")} style={input} />
+          <TextInput value={club} onChangeText={setClub} placeholder={traduire("Son club (facultatif)")} placeholderTextColor={c.textMuted} accessibilityLabel={traduire("Club de l'adversaire")} style={input} />
         </Section>
 
-        <Section title="Quand">
+        <Section title={traduire("Quand")}>
           <DayNav value={date} onChange={setDate} label={dayLabel(date)} maxDate={date > isoDay(new Date()) ? date : undefined} />
           {competitions.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -193,7 +193,7 @@ export default function SeanceMatch() {
                 const on = comp.id === competitionId;
                 return (
                   <Pressable key={comp.id} onPress={() => { setCompetitionId(comp.id); if (comp.date) setDate(comp.date.slice(0, 10)); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={chip(on)}>
-                    <Ink size={14} weight="extraBold" color={on ? c.background : c.ink} numberOfLines={1}>{comp.nom}</Ink>
+                    <Ink size={14} weight="extraBold" color={on ? c.background : c.ink} numberOfLines={1}>{traduire(comp.nom)}</Ink>
                   </Pressable>
                 );
               })}

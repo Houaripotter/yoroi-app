@@ -48,7 +48,7 @@ export function sportTint(sport: string): string {
 }
 
 const SHORT: Record<string, string> = {
-  musculation: 'Muscu',
+  musculation: traduire('Muscu'),
   jjb: 'JJB',
   boxe: 'Boxe',
   mma: 'MMA',

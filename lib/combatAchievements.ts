@@ -53,49 +53,49 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first-round',     title: 'Premier round', description: traduire('Ton tout premier round de sparring enregistré'), emoji: '', color: '#3B82F6', category: 'milestone', check: s => s.totalRounds >= 1 },
   { id: 'first-win',       title: traduire('Première victoire'), description: traduire('Ton premier round gagné'), emoji: '', color: '#22C55E', category: 'milestone', check: s => s.totalWins >= 1 },
   { id: 'first-sub',       title: traduire('Première soumission'), description: traduire('Ta première finition par soumission'), emoji: '', color: '#8B5CF6', category: 'milestone', check: s => s.totalSubmissionsGiven >= 1 },
-  { id: 'rounds-10',       title: '10 rounds', description: traduire('10 rounds enregistrés'), emoji: '', color: '#3B82F6', category: 'milestone', check: s => s.totalRounds >= 10 },
+  { id: 'rounds-10',       title: traduire('10 rounds'), description: traduire('10 rounds enregistrés'), emoji: '', color: '#3B82F6', category: 'milestone', check: s => s.totalRounds >= 10 },
   { id: 'rounds-50',       title: '50 rounds', description: traduire('50 rounds enregistrés'), emoji: '', color: '#3B82F6', category: 'milestone', check: s => s.totalRounds >= 50 },
   { id: 'rounds-100',      title: 'Centurion', description: traduire('100 rounds enregistrés'), emoji: '', color: '#F59E0B', category: 'milestone', check: s => s.totalRounds >= 100 },
   { id: 'rounds-500',      title: traduire('Rat de tatami'), description: traduire('500 rounds enregistrés'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.totalRounds >= 500 },
-  { id: 'rounds-1000',     title: '1000 rounds', description: traduire('Le club des 1000'), emoji: '', color: '#EAB308', category: 'legendary', check: s => s.totalRounds >= 1000 },
+  { id: 'rounds-1000',     title: traduire('1000 rounds'), description: traduire('Le club des 1000'), emoji: '', color: '#EAB308', category: 'legendary', check: s => s.totalRounds >= 1000 },
 
   // ─── PARTENAIRES ───
-  { id: 'partners-5',      title: 'Social', description: traduire('5 partenaires différents'), emoji: '', color: '#06B6D4', category: 'milestone', check: s => s.uniquePartners >= 5 },
+  { id: 'partners-5',      title: traduire('Social'), description: traduire('5 partenaires différents'), emoji: '', color: '#06B6D4', category: 'milestone', check: s => s.uniquePartners >= 5 },
   { id: 'partners-20',     title: traduire('Réseau'), description: traduire('20 partenaires différents'), emoji: '', color: '#06B6D4', category: 'milestone', check: s => s.uniquePartners >= 20 },
   { id: 'beat-black-belt', title: traduire('Tombeur d\'élite'), description: traduire('Battu un partenaire noté 9-10/10'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.partnersBeaten10 >= 1 },
-  { id: 'comeback',        title: 'Comeback Kid', description: traduire('Gagné contre un partenaire après 3 défaites d\'affilée'), emoji: '', color: '#EC4899', category: 'legendary', check: s => s.comebacks >= 1 },
+  { id: 'comeback',        title: traduire('Comeback Kid'), description: traduire('Gagné contre un partenaire après 3 défaites d\'affilée'), emoji: '', color: '#EC4899', category: 'legendary', check: s => s.comebacks >= 1 },
 
   // ─── TECHNIQUES ───
-  { id: 'tri',             title: 'Triangle Master', description: traduire('Premier triangle placé'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Triangle'] },
-  { id: 'arm',             title: 'Armbar', description: 'Premier armbar', emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Armbar'] },
-  { id: 'rnc',             title: 'Rear Naked Choke', description: 'Premier RNC', emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['RNC'] || !!s.methodsGivenCount['RNC / Mata Leão'] },
+  { id: 'tri',             title: traduire('Triangle Master'), description: traduire('Premier triangle placé'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Triangle'] },
+  { id: 'arm',             title: 'Armbar', description: traduire('Premier armbar'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Armbar'] },
+  { id: 'rnc',             title: traduire('Rear Naked Choke'), description: traduire('Premier RNC'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['RNC'] || !!s.methodsGivenCount['RNC / Mata Leão'] },
   { id: 'kim',             title: 'Kimura', description: traduire('Première kimura'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Kimura'] },
   { id: 'guil',            title: 'Guillotine', description: traduire('Première guillotine'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Guillotine'] || !!s.methodsGivenCount['Arm-in Guillotine'] },
-  { id: 'heel',            title: 'Heel hook', description: 'Premier heel hook', emoji: '', color: '#EF4444', category: 'technique', check: s => !!s.methodsGivenCount['Heel Hook'] || !!s.methodsGivenCount['Heel hook'] },
+  { id: 'heel',            title: 'Heel hook', description: traduire('Premier heel hook'), emoji: '', color: '#EF4444', category: 'technique', check: s => !!s.methodsGivenCount['Heel Hook'] || !!s.methodsGivenCount['Heel hook'] },
   { id: 'omo',             title: 'Omoplata', description: traduire('Première omoplata'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Omoplata'] },
-  { id: 'bow',             title: 'Bow and Arrow', description: 'Premier bow and arrow', emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Bow & Arrow'] },
+  { id: 'bow',             title: 'Bow and Arrow', description: traduire('Premier bow and arrow'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount['Bow & Arrow'] },
   { id: 'darce',           title: "D'Arce", description: traduire('Premier D\'Arce'), emoji: '', color: '#22C55E', category: 'technique', check: s => !!s.methodsGivenCount["D'Arce"] },
-  { id: 'tech-5',          title: 'Polyvalent', description: traduire('5 finitions différentes placées'), emoji: '', color: '#8B5CF6', category: 'technique', check: s => s.uniqueMethodsGiven.size >= 5 },
-  { id: 'tech-10',         title: 'Technicien', description: traduire('10 finitions différentes placées'), emoji: '', color: '#8B5CF6', category: 'technique', check: s => s.uniqueMethodsGiven.size >= 10 },
+  { id: 'tech-5',          title: traduire('Polyvalent'), description: traduire('5 finitions différentes placées'), emoji: '', color: '#8B5CF6', category: 'technique', check: s => s.uniqueMethodsGiven.size >= 5 },
+  { id: 'tech-10',         title: traduire('Technicien'), description: traduire('10 finitions différentes placées'), emoji: '', color: '#8B5CF6', category: 'technique', check: s => s.uniqueMethodsGiven.size >= 10 },
   { id: 'tech-20',         title: traduire('Encyclopédie vivante'), description: traduire('20 finitions différentes placées'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.uniqueMethodsGiven.size >= 20 },
 
   // ─── STREAKS ───
   { id: 'streak-3',        title: traduire('Tu rerolles'), description: traduire('3 victoires d\'affilée'), emoji: '', color: '#F59E0B', category: 'milestone', check: s => s.longestWinStreak >= 3 },
-  { id: 'streak-5',        title: 'En feu', description: traduire('5 victoires d\'affilée'), emoji: '', color: '#EF4444', category: 'milestone', check: s => s.longestWinStreak >= 5 },
-  { id: 'streak-10',       title: 'Invincible', description: traduire('10 victoires d\'affilée'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.longestWinStreak >= 10 },
+  { id: 'streak-5',        title: traduire('En feu'), description: traduire('5 victoires d\'affilée'), emoji: '', color: '#EF4444', category: 'milestone', check: s => s.longestWinStreak >= 5 },
+  { id: 'streak-10',       title: traduire('Invincible'), description: traduire('10 victoires d\'affilée'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.longestWinStreak >= 10 },
 
   // ─── MENTAL / ANALYSE ───
   { id: 'first-gp',        title: traduire('Stratège'), description: traduire('Premier game plan noté'), emoji: '', color: '#8B5CF6', category: 'mental', check: s => s.gamePlansFilled >= 1 },
-  { id: 'gp-10',           title: 'Penseur', description: traduire('10 game plans notés'), emoji: '', color: '#8B5CF6', category: 'mental', check: s => s.gamePlansFilled >= 10 },
-  { id: 'gp-executed',     title: 'Plan parfait', description: traduire('Un game plan exécuté avec succès'), emoji: '', color: '#22C55E', category: 'mental', check: s => s.gamePlansExecuted >= 1 },
+  { id: 'gp-10',           title: traduire('Penseur'), description: traduire('10 game plans notés'), emoji: '', color: '#8B5CF6', category: 'mental', check: s => s.gamePlansFilled >= 10 },
+  { id: 'gp-executed',     title: traduire('Plan parfait'), description: traduire('Un game plan exécuté avec succès'), emoji: '', color: '#22C55E', category: 'mental', check: s => s.gamePlansExecuted >= 1 },
   { id: 'gp-10-executed',  title: traduire('Exécutant'), description: traduire('10 game plans exécutés avec succès'), emoji: '', color: '#22C55E', category: 'mental', check: s => s.gamePlansExecuted >= 10 },
-  { id: 'perfect-round',   title: 'Round parfait', description: traduire('Auto-rating 10/10 sur un round'), emoji: '', color: '#EAB308', category: 'mental', check: s => s.maxSelfRating >= 10 },
-  { id: 'round-analyzed',  title: 'Introspectif', description: traduire('Un round analysé à fond (5 champs remplis)'), emoji: '', color: '#8B5CF6', category: 'mental', check: s => s.roundsAnalysedFull >= 1 },
+  { id: 'perfect-round',   title: traduire('Round parfait'), description: traduire('Auto-rating 10/10 sur un round'), emoji: '', color: '#EAB308', category: 'mental', check: s => s.maxSelfRating >= 10 },
+  { id: 'round-analyzed',  title: traduire('Introspectif'), description: traduire('Un round analysé à fond (5 champs remplis)'), emoji: '', color: '#8B5CF6', category: 'mental', check: s => s.roundsAnalysedFull >= 1 },
   { id: 'analyst',         title: 'Analyste', description: traduire('20 rounds analysés à fond'), emoji: '', color: '#9333EA', category: 'legendary', check: s => s.roundsAnalysedFull >= 20 },
 
   // ─── WIN RATE ───
-  { id: 'winrate-60',      title: 'Dominant', description: 'Win rate ≥ 60% (min. 20 rounds)', emoji: '', color: '#22C55E', category: 'milestone', check: s => (s.totalWins + s.totalLosses >= 20) && (s.totalWins / Math.max(1, s.totalWins + s.totalLosses)) >= 0.6 },
-  { id: 'winrate-80',      title: 'Intouchable', description: 'Win rate ≥ 80% (min. 30 rounds)', emoji: '', color: '#9333EA', category: 'legendary', check: s => (s.totalWins + s.totalLosses >= 30) && (s.totalWins / Math.max(1, s.totalWins + s.totalLosses)) >= 0.8 },
+  { id: 'winrate-60',      title: traduire('Dominant'), description: traduire('Win rate ≥ 60% (min. 20 rounds)'), emoji: '', color: '#22C55E', category: 'milestone', check: s => (s.totalWins + s.totalLosses >= 20) && (s.totalWins / Math.max(1, s.totalWins + s.totalLosses)) >= 0.6 },
+  { id: 'winrate-80',      title: traduire('Intouchable'), description: traduire('Win rate ≥ 80% (min. 30 rounds)'), emoji: '', color: '#9333EA', category: 'legendary', check: s => (s.totalWins + s.totalLosses >= 30) && (s.totalWins / Math.max(1, s.totalWins + s.totalLosses)) >= 0.8 },
 ];
 
 // ============================================

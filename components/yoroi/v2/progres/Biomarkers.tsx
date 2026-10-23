@@ -92,11 +92,11 @@ export function BioRowView({ row, onPress, first }: { row: BioRow; onPress?: () 
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="extraBold" numberOfLines={2}>
-            {row.label}
+            {traduire(row.label)}
           </Ink>
           {row.sub ? (
             <Ink size={12} color={c.textSecondary} numberOfLines={2}>
-              {row.sub}
+              {traduire(row.sub)}
             </Ink>
           ) : null}
         </View>
@@ -240,7 +240,7 @@ export function CompositionBar({ point, style }: { point: CompoPoint; style?: St
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: partColor(p.key, c) }} />
                     <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ flexShrink: 1 }}>
-                      {p.label}
+                      {traduire(p.label)}
                     </Ink>
                   </View>
                   <Ink size={19} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
@@ -289,10 +289,10 @@ export function CompositionCard({ point, trend, onPress, showDate = true, style 
         {trend ? (
           <>
             <Ink size={22} weight="black" tight>
-              {trend.title}
+              {traduire(trend.title)}
             </Ink>
             <Ink size={13} color={c.textSecondary}>
-              {trend.text}
+              {traduire(trend.text)}
             </Ink>
           </>
         ) : null}
@@ -386,7 +386,7 @@ export function KeyMassCards({ masses, onPress, style }: { masses: KeyMass[]; on
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: color }} />
               <Ink size={13} weight="extraBold" numberOfLines={2} style={{ flex: 1 }}>
-                {m.label}
+                {traduire(m.label)}
               </Ink>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>

@@ -30,7 +30,7 @@ export function Legend({ items }: { items: { color: string; label: string; kind?
             <View style={{ width: 11, height: 11, borderRadius: 3, backgroundColor: it.color }} />
           )}
           <Ink size={12} weight="bold" color="#4A4E5A">
-            {it.label}
+            {traduire(it.label)}
           </Ink>
         </View>
       ))}

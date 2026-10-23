@@ -194,7 +194,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
             {/* IMBATTU badge */}
             {stats.isUnbeaten && (
               <View style={[styles.imbattuBadge, { backgroundColor: WIN_C + '20', borderColor: WIN_C + '50', paddingHorizontal: 9 * s, paddingVertical: 4 * s, borderRadius: 8 * s }]}>
-                <Text style={[styles.imbattuText, { color: WIN_C, fontSize: 10 * s, letterSpacing: 1.5 * s }]}>IMBATTU</Text>
+                <Text style={[styles.imbattuText, { color: WIN_C, fontSize: 10 * s, letterSpacing: 1.5 * s }]}>{traduire("IMBATTU")}</Text>
               </View>
             )}
             {/* Duration badge */}

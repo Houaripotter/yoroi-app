@@ -75,7 +75,7 @@ export function ReprendreCard({ mode, resume, onPress }: { mode: TimerMode; resu
           <Image source={look.art} style={{ width: 64, height: 76 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         </View>
         <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={12} weight="extraBold" color={look.couleur}>Reprendre</Ink>
+          <Ink size={12} weight="extraBold" color={look.couleur}>{traduire("Reprendre")}</Ink>
           <Ink size={18} weight="black" tight numberOfLines={2}>{resume}</Ink>
         </View>
         <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: look.couleur, alignItems: 'center', justifyContent: 'center' }}>
@@ -167,7 +167,7 @@ export function SetupHero({ label, big, line, band, legend }: { label: string; b
       {band && band.length > 0 ? <TimelineBand parts={band} height={16} /> : null}
       {legend && legend.length > 0 ? (
         <View style={{ flexDirection: 'row', columnGap: 16, rowGap: 6, flexWrap: 'wrap' }}>
-          {legend.map((l) => <Legend key={l.text} color={l.color} text={l.text} />)}
+          {legend.map((l) => <Legend key={l.text} color={l.color} text={traduire(l.text)} />)}
         </View>
       ) : null}
     </View>
@@ -207,8 +207,8 @@ export function ChoiceGrid<T extends string | number>({ items, value, onPick, co
               <View key={String(it.key)} style={{ flex: 1 }}>
                 <Press onPress={() => onPick(it.key)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={it.sub ? `${it.title}, ${it.sub}` : it.title}>
                   <View style={{ minHeight: big ? 72 : it.sub ? 62 : 52, paddingHorizontal: 6, paddingVertical: 8, borderRadius: 18, backgroundColor: on ? accent : paletteSombre() ? P.line2 : '#F5F4EF', borderWidth: 1.5, borderColor: on ? accent : 'transparent', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                    <Ink size={big ? 19 : columns >= 3 ? 14 : 15} weight="black" tight color={on ? P.white : P.ink} style={{ textAlign: 'center' }} numberOfLines={2}>{it.title}</Ink>
-                    {it.sub ? <Ink size={12} weight="bold" color={on ? (paletteSombre() ? P.white : 'rgba(255,255,255,0.8)') : P.muted} style={{ textAlign: 'center' }} numberOfLines={1}>{it.sub}</Ink> : null}
+                    <Ink size={big ? 19 : columns >= 3 ? 14 : 15} weight="black" tight color={on ? P.white : P.ink} style={{ textAlign: 'center' }} numberOfLines={2}>{traduire(it.title)}</Ink>
+                    {it.sub ? <Ink size={12} weight="bold" color={on ? (paletteSombre() ? P.white : 'rgba(255,255,255,0.8)') : P.muted} style={{ textAlign: 'center' }} numberOfLines={1}>{traduire(it.sub)}</Ink> : null}
                   </View>
                 </Press>
               </View>

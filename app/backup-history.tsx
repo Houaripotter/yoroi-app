@@ -217,7 +217,7 @@ export default function BackupHistoryScreen() {
       }
       if (!opened) {
         const { requestPassword } = await import('@/lib/passwordPromptController');
-        const pwd = await requestPassword({ title: traduire('Sauvegarde protégée'), message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.'), confirmLabel: 'Ouvrir' });
+        const pwd = await requestPassword({ title: traduire('Sauvegarde protégée'), message: traduire('Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.'), confirmLabel: traduire('Ouvrir') });
         if (!pwd) return false;
         try {
           opened = enc.decryptBackup(raw, pwd);
@@ -231,7 +231,7 @@ export default function BackupHistoryScreen() {
     const { validateBackup } = await import('@/lib/backupMigrationService');
     const v = validateBackup(raw);
     if (!v.valid) {
-      showPopup('Fichier invalide', v.errors.join('\n'));
+      showPopup(traduire('Fichier invalide'), v.errors.join('\n'));
       return false;
     }
     const { importDataFromBackupObject } = await import('@/lib/exportService');
@@ -256,7 +256,7 @@ export default function BackupHistoryScreen() {
             }
           } catch (e) {
             logger.error('[BackupHistory] Erreur restauration:', e);
-            showPopup('Oups', traduire('Cette sauvegarde n’a pas pu être restaurée.'));
+            showPopup(traduire('Oups'), traduire('Cette sauvegarde n’a pas pu être restaurée.'));
           } finally {
             setRestoringUri(null);
           }
@@ -277,7 +277,7 @@ export default function BackupHistoryScreen() {
             notificationAsync(NotificationFeedbackType.Success).catch(() => {});
             setBackups((p) => p.filter((x) => x.uri !== b.uri));
           } catch {
-            showPopup('Oups', traduire('Ce fichier n’a pas pu être supprimé.'));
+            showPopup(traduire('Oups'), traduire('Ce fichier n’a pas pu être supprimé.'));
           }
         },
       },
@@ -294,7 +294,7 @@ export default function BackupHistoryScreen() {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       }
     } catch {
-      showPopup('Oups', traduire('Le dossier n’a pas pu être connecté.'));
+      showPopup(traduire('Oups'), traduire('Le dossier n’a pas pu être connecté.'));
     } finally {
       setConnecting(false);
     }
@@ -317,13 +317,13 @@ export default function BackupHistoryScreen() {
           setRestoringCloud(f.name);
           try {
             const content = await readCloudBackupFile(f.name);
-            if (!content) { showPopup('Oups', traduire('Le fichier cloud est illisible.')); return; }
+            if (!content) { showPopup(traduire('Oups'), traduire('Le fichier cloud est illisible.')); return; }
             if (await restoreRaw(content)) {
               notificationAsync(NotificationFeedbackType.Success).catch(() => {});
               showPopup(traduire('Restauration réussie'), traduire('Tes données sont revenues.'), [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)' as any) }]);
             }
           } catch {
-            showPopup('Oups', traduire('Cette sauvegarde cloud n’a pas pu être restaurée.'));
+            showPopup(traduire('Oups'), traduire('Cette sauvegarde cloud n’a pas pu être restaurée.'));
           } finally {
             setRestoringCloud(null);
           }
@@ -405,7 +405,7 @@ export default function BackupHistoryScreen() {
 
         {Platform.OS === 'ios' ? (
           <>
-            <SectionTitle title="Dossier cloud" sub="iCloud Drive, Google Drive, Dropbox" />
+            <SectionTitle title={traduire("Dossier cloud")} sub={traduire("iCloud Drive, Google Drive, Dropbox")} />
             <Card>
               {cloudFolder ? (
                 <>
@@ -482,7 +482,7 @@ export default function BackupHistoryScreen() {
                   ['drop', traduire('Hydratation'), preview.hydrationCount],
                   ['heart', traduire('Blessures'), preview.injuriesCount],
                   ['trophy', traduire('Compétitions'), preview.competitionsCount],
-                  ['home', 'Clubs', preview.clubsCount],
+                  ['home', traduire('Clubs'), preview.clubsCount],
                 ] as [IconName, string, number][]).map(([icon, label, n]) => (
                   <View key={label} style={{ width: '23%', flexGrow: 1, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 10, gap: 4, alignItems: 'center' }}>
                     <Icon name={icon} size={16} color={c.accent} />

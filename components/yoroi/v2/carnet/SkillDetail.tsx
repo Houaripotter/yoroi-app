@@ -59,7 +59,7 @@ export function SkillDetail(p: Props) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 4 }}>
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={13} weight="bold" color={tone}>{skillCategoryLabel(s.category)}</Ink>
-              <Ink size={30} weight="black" tight accessibilityRole="header">{s.name}</Ink>
+              <Ink size={30} weight="black" tight accessibilityRole="header">{traduire(s.name)}</Ink>
             </View>
             {mastered ? (
               <Animated.View key={s.id + s.status} entering={ENTREE}>
@@ -78,7 +78,7 @@ export function SkillDetail(p: Props) {
                     <View style={{ minHeight: 120, borderRadius: 22, padding: 12, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                       <Plate state={it.plate} w={30} h={38} />
                       <Ink size={14} weight="extraBold" color={on ? P.white : P.ink} style={{ textAlign: 'center' }}>{STATUS_LABEL[it.key]}</Ink>
-                      <Ink size={11} weight="bold" color={on ? 'rgba(255,255,255,0.7)' : P.muted} style={{ textAlign: 'center' }}>{it.sub}</Ink>
+                      <Ink size={11} weight="bold" color={on ? 'rgba(255,255,255,0.7)' : P.muted} style={{ textAlign: 'center' }}>{traduire(it.sub)}</Ink>
                     </View>
                   </Press>
                 </View>
@@ -115,7 +115,7 @@ export function SkillDetail(p: Props) {
             </View>
           </Sheet2>
 
-          <BlockTitle title="Notes techniques" aside={traduire("Les détails qui font marcher le geste")} />
+          <BlockTitle title={traduire("Notes techniques")} aside={traduire("Les détails qui font marcher le geste")} />
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
             <View style={{ flex: 1 }}>
               <Field value={p.newNoteText} onChangeText={p.setNewNoteText} placeholder={traduire("Ex : saisir le pantalon d’abord, puis entrer les jambes")} multiline maxLength={500} accessibilityLabel={traduire("Nouvelle note")} />
@@ -126,7 +126,7 @@ export function SkillDetail(p: Props) {
             <View key={n.id} style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2 }}>
               <View style={{ width: 4, borderRadius: 2, backgroundColor: P.accent }} />
               <View style={{ flex: 1, gap: 4 }}>
-                <Ink size={15} weight="medium">{n.text}</Ink>
+                <Ink size={15} weight="medium">{traduire(n.text)}</Ink>
                 <Ink size={12} weight="bold" color={P.muted}>{shortDate(n.date)}</Ink>
               </View>
               <IconBtn name="trash" label={traduire("Supprimer la note")} onPress={() => p.onDeleteNote(n.id)} tone="soft" />

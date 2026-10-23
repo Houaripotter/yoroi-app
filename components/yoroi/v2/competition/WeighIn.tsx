@@ -84,12 +84,11 @@ export function WeighInCard({ categorie, poidsMax, weight, weightDate, daysLeft,
       )}
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Press onPress={onWeigh} accessibilityRole="button" accessibilityLabel="Me peser" style={{ flex: 1 }}>
+        <Press onPress={onWeigh} accessibilityRole="button" accessibilityLabel={traduire("Me peser")} style={{ flex: 1 }}>
           <View style={{ minHeight: 48, borderRadius: 16, backgroundColor: P.paper, borderWidth: 1, borderColor: P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Icon name="plus" size={18} />
             <Ink size={15} weight="extraBold">
-              Me peser
-            </Ink>
+              {traduire("Me peser")}</Ink>
           </View>
         </Press>
         {onCut && gap !== null && gap > 0 ? (

@@ -41,7 +41,7 @@ const PHASES: Phase[] = [
     tone: 'moss',
     description: traduire('Récupère mieux'),
     meals: [
-      { timing: traduire('0 à 30 min après'), title: 'Premier apport', foods: [traduire('Protéine en poudre'), 'Banane', 'Lait'], macros: { protein: 30, carbs: 40, fat: 5 }, tips: [traduire('Protéines rapides'), traduire('Glucides pour recharger')] },
+      { timing: traduire('0 à 30 min après'), title: traduire('Premier apport'), foods: [traduire('Protéine en poudre'), 'Banane', 'Lait'], macros: { protein: 30, carbs: 40, fat: 5 }, tips: [traduire('Protéines rapides'), traduire('Glucides pour recharger')] },
       { timing: traduire('1 à 2 h après'), title: traduire('Repas de récupération'), foods: [traduire('Poulet ou saumon'), traduire('Riz ou patate douce'), traduire('Légumes verts'), 'Avocat'], macros: { protein: 40, carbs: 60, fat: 20 }, tips: [traduire('Protéines de qualité'), traduire('Glucides complexes'), 'Graisses saines'] },
     ],
   },
@@ -65,7 +65,7 @@ const PHASES: Phase[] = [
     tone: 'indigo',
     description: traduire('Laisse ton corps se réparer'),
     meals: [
-      { timing: traduire('Petit-déjeuner'), title: traduire('Riche en protéines'), foods: [traduire('Œufs'), 'Avocat', 'Pain complet', 'Fruits'], macros: { protein: 30, carbs: 40, fat: 25 }, tips: [traduire('Protéines pour réparer'), 'Bonnes graisses'] },
+      { timing: traduire('Petit-déjeuner'), title: traduire('Riche en protéines'), foods: [traduire('Œufs'), 'Avocat', 'Pain complet', 'Fruits'], macros: { protein: 30, carbs: 40, fat: 25 }, tips: [traduire('Protéines pour réparer'), traduire('Bonnes graisses')] },
       { timing: traduire('Déjeuner'), title: traduire('Repas équilibré'), foods: [traduire('Saumon ou poulet'), traduire('Quinoa ou riz complet'), traduire('Légumes'), 'Huile d’olive'], macros: { protein: 40, carbs: 50, fat: 20 }, tips: [traduire('Oméga-3'), traduire('Glucides complexes')] },
       { timing: traduire('Dîner'), title: traduire('Repas léger'), foods: ['Poisson blanc', traduire('Légumes vapeur'), 'Riz', 'Yaourt grec'], macros: { protein: 35, carbs: 40, fat: 10 }, tips: ['Digestion facile', traduire('Caséine pour la nuit')] },
     ],
@@ -116,13 +116,13 @@ export default function QuickNutritionScreen() {
               const c = toneColor(p.tone);
               return (
                 <View key={p.id} style={{ width: '48.4%' }}>
-                  <Press onPress={() => setPhaseId(p.id)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={p.name}>
+                  <Press onPress={() => setPhaseId(p.id)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire(p.name)}>
                     <View style={{ minHeight: 92, borderRadius: 22, padding: 14, gap: 10, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2 }}>
                       <View style={{ width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.fg : c.soft }}>
                         <NIcon name={p.icon} size={18} color={on ? P.white : c.fg} />
                       </View>
                       <Ink size={15} weight="extraBold" color={on ? P.white : P.ink}>
-                        {p.name}
+                        {traduire(p.name)}
                       </Ink>
                     </View>
                   </Press>
@@ -134,7 +134,7 @@ export default function QuickNutritionScreen() {
 
         {/* REPAS DU MOMENT */}
         <Enter i={1}>
-          <H2 sub={phase.description}>{phase.name}</H2>
+          <H2 sub={traduire(phase.description)}>{traduire(phase.name)}</H2>
           <View style={{ gap: 10, marginTop: 10 }}>
             {phase.meals.map((m) => {
               const kcal = m.macros.protein * 4 + m.macros.carbs * 4 + m.macros.fat * 9;
@@ -156,7 +156,7 @@ export default function QuickNutritionScreen() {
                     </Ink>
                   </View>
                   <Ink size={18} weight="black" tight>
-                    {m.title}
+                    {traduire(m.title)}
                   </Ink>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                     {m.foods.map((f) => (
@@ -231,7 +231,7 @@ export default function QuickNutritionScreen() {
         </Enter>
 
         <Enter i={6}>
-          <H2>Sources</H2>
+          <H2>{traduire("Sources")}</H2>
           <View style={{ marginTop: 10 }}>
             <SourcesCard sources={[SOURCES.protein, SOURCES.carbs, SOURCES.hydration, SOURCES.timing]} />
           </View>

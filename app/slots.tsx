@@ -164,7 +164,7 @@ export default function SlotsScreen() {
     try {
       for (const s of impactedPending) {
         const inj = injuries.find((i) => i.fit_for_duty !== 'operational' && isSportImpactedByInjury(s.sport, i));
-        if (s.id) await cancelSlot(s.id, weekKey, traduire('Blessure active'), inj?.id);
+        if (s.id) await cancelSlot(s.id, weekKey, 'Blessure active', inj?.id);
       }
       notificationAsync(NotificationFeedbackType.Warning).catch(() => {});
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
@@ -271,7 +271,7 @@ export default function SlotsScreen() {
             {sportResults.length ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {sportResults.map((s) => (
-                  <Chip key={s.id} label={s.name} on={s.id === draft.sport} onPress={() => { setDraft({ ...draft, sport: s.id, type: '' }); setSearch(''); }} />
+                  <Chip key={s.id} label={traduire(s.name)} on={s.id === draft.sport} onPress={() => { setDraft({ ...draft, sport: s.id, type: '' }); setSearch(''); }} />
                 ))}
               </View>
             ) : null}
@@ -282,7 +282,7 @@ export default function SlotsScreen() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   <Chip label={traduire("Aucun")} on={!draft.clubId} onPress={() => setDraft({ ...draft, clubId: null })} />
                   {clubs.map((cl) => (
-                    <Chip key={cl.id} label={cl.name} on={draft.clubId === cl.id} onPress={() => setDraft({ ...draft, clubId: cl.id ?? null, sport: draft.clubId === cl.id ? draft.sport : cl.sport })} />
+                    <Chip key={cl.id} label={traduire(cl.name)} on={draft.clubId === cl.id} onPress={() => setDraft({ ...draft, clubId: cl.id ?? null, sport: draft.clubId === cl.id ? draft.sport : cl.sport })} />
                   ))}
                 </View>
               </>
@@ -317,7 +317,7 @@ export default function SlotsScreen() {
             <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Type de séance")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {types.map((t) => (
-                <Chip key={t} label={t} on={draft.type === t} onPress={() => setDraft({ ...draft, type: draft.type === t ? '' : t })} />
+                <Chip key={t} label={traduire(t)} on={draft.type === t} onPress={() => setDraft({ ...draft, type: draft.type === t ? '' : t })} />
               ))}
             </View>
 

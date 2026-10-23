@@ -134,7 +134,7 @@ export default function TableauCorps() {
             changed();
           } catch (err) {
             logger.error('Suppression impossible', err);
-            appAlert('Oups', traduire('La suppression n’a pas pu se faire.'));
+            appAlert(traduire('Oups'), traduire('La suppression n’a pas pu se faire.'));
           }
         },
       },
@@ -153,7 +153,7 @@ export default function TableauCorps() {
       changed();
     } catch (err) {
       logger.error('Ajout impossible', err);
-      appAlert('Oups', traduire('La ligne n’a pas pu être ajoutée.'));
+      appAlert(traduire('Oups'), traduire('La ligne n’a pas pu être ajoutée.'));
     }
   };
 
@@ -165,7 +165,7 @@ export default function TableauCorps() {
       if (ok) notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {
       logger.error('Export impossible', err);
-      appAlert('Oups', traduire('L’export n’a pas pu se faire.'));
+      appAlert(traduire('Oups'), traduire('L’export n’a pas pu se faire.'));
     } finally {
       setExporting(false);
     }
@@ -245,7 +245,7 @@ export default function TableauCorps() {
                   <View style={{ flexDirection: 'row', height: HEAD_H, alignItems: 'center', backgroundColor: c.fillSoft }}>
                     {COLUMNS.map((col) => (
                       <View key={col.key} style={{ width: col.width, alignItems: 'flex-end', paddingRight: 12 }}>
-                        <Ink size={12} weight="extraBold" color={c.textSecondary} numberOfLines={1}>{col.label}</Ink>
+                        <Ink size={12} weight="extraBold" color={c.textSecondary} numberOfLines={1}>{traduire(col.label)}</Ink>
                         <Ink size={10} color={c.textMuted}>{col.unit}</Ink>
                       </View>
                     ))}
@@ -280,7 +280,7 @@ export default function TableauCorps() {
               ) : null}
               {fatPts.length > 1 ? (
                 <View style={{ padding: 16, borderRadius: 24, backgroundColor: blancA(0.85), borderWidth: 1, borderColor: P.white, gap: 8 }}>
-                  <Ink size={16} weight="black">Masse grasse, en %</Ink>
+                  <Ink size={16} weight="black">{traduire("Masse grasse, en %")}</Ink>
                   <InkLineChart points={fatPts} color="#A8832F" height={170} digits={1} label={traduire("Courbe de la masse grasse")} />
                 </View>
               ) : null}
@@ -336,7 +336,7 @@ function AddRowSheet({ visible, onClose, onSave }: { visible: boolean; onClose: 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {COLUMNS.map((col) => (
           <View key={col.key} style={{ width: '31%', flexGrow: 1, gap: 4 }}>
-            <Ink size={12} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{col.label}, {col.unit}</Ink>
+            <Ink size={12} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire(col.label)}, {col.unit}</Ink>
             <TextInput value={vals[col.key] ?? ''} onChangeText={(v) => setVals((p) => ({ ...p, [col.key]: v }))} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={c.textMuted} accessibilityLabel={`${col.label} en ${col.unit}`} style={field} />
           </View>
         ))}

@@ -63,7 +63,7 @@ export async function pickCardPhoto(source: 'gallery' | 'camera', opts?: { squar
     return { uri: await resizeForCard(a.uri), landscape: (a.width || 0) > (a.height || 0) };
   } catch (e) {
     logger.error('[partage] photo', e);
-    appAlert('Oups', traduire('Impossible de récupérer la photo.'));
+    appAlert(traduire('Oups'), traduire('Impossible de récupérer la photo.'));
     return null;
   }
 }
@@ -85,7 +85,7 @@ export async function shareCard(ref: RefObject<View | null>, dialogTitle = tradu
   try {
     const uri = await capture(ref);
     if (!uri) {
-      appAlert('Oups', traduire('La carte n’est pas encore prête.'));
+      appAlert(traduire('Oups'), traduire('La carte n’est pas encore prête.'));
       return false;
     }
     if (await isAvailableAsync()) {
@@ -105,7 +105,7 @@ export async function shareCard(ref: RefObject<View | null>, dialogTitle = tradu
     return true;
   } catch (e) {
     logger.error('[partage] share', e);
-    appAlert('Oups', traduire('Impossible de partager la carte.'));
+    appAlert(traduire('Oups'), traduire('Impossible de partager la carte.'));
     return false;
   }
 }
@@ -127,7 +127,7 @@ export async function saveCard(ref: RefObject<View | null>): Promise<boolean> {
     return true;
   } catch (e) {
     logger.error('[partage] save', e);
-    appAlert('Oups', traduire('Impossible d’enregistrer la carte.'));
+    appAlert(traduire('Oups'), traduire('Impossible d’enregistrer la carte.'));
     return false;
   }
 }

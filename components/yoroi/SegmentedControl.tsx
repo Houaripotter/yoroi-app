@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useYoroiTheme } from './YoroiThemeProvider';
 import { YText } from './YText';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SegmentOption<T extends string> = { value: T; label: string; accessibilityLabel?: string };
 
@@ -64,7 +65,7 @@ export function SegmentedControl<T extends string>({
             ]}
           >
             <YText variant="small" color={selected ? 'ink' : 'textMuted'} numberOfLines={1}>
-              {opt.label}
+              {traduire(opt.label)}
             </YText>
           </Pressable>
         );

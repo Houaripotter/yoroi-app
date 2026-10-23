@@ -66,7 +66,7 @@ export function ChoiceRow<T extends string | number>({ options, value, onChange,
               borderColor: c.border,
             })}
           >
-            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? (teinte ? teinte.onFill : c.background) : teinte ? teinte.text : c.ink}>{o.label}</Ink>
+            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? (teinte ? teinte.onFill : c.background) : teinte ? teinte.text : c.ink}>{traduire(o.label)}</Ink>
           </Pressable>
         );
       })}

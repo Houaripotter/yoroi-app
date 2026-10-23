@@ -62,7 +62,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
 
   const isForBenchmark = !!benchmarkId;
   const isForSport = !!sport;
-  const heading = isForBenchmark ? benchmarkName || traduire('Exercice') : isForSport ? sportLabel || sport || 'Sport' : muscleGroupLabel || muscleGroup || traduire('Sans catégorie');
+  const heading = isForBenchmark ? benchmarkName || traduire('Exercice') : isForSport ? sportLabel || sport || traduire('Sport') : muscleGroupLabel || muscleGroup || traduire('Sans catégorie');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,7 +130,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
       await load();
     } catch (e) {
       logger.error('[VideoLibrarySheet] copie impossible', e);
-      appAlert('Oups', traduire('La vidéo n’a pas pu être enregistrée.'));
+      appAlert(traduire('Oups'), traduire('La vidéo n’a pas pu être enregistrée.'));
     } finally {
       setSaving(false);
     }
@@ -139,12 +139,12 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
   const saveLink = async () => {
     if (!url.trim()) return;
     if (!title.trim()) {
-      appAlert('Titre manquant', traduire('Donne un titre à cette vidéo.'));
+      appAlert(traduire('Titre manquant'), traduire('Donne un titre à cette vidéo.'));
       return;
     }
     const link = url.trim();
     if (!link.startsWith('http://') && !link.startsWith('https://')) {
-      appAlert('Lien invalide', traduire('Le lien doit commencer par https://'));
+      appAlert(traduire('Lien invalide'), traduire('Le lien doit commencer par https://'));
       return;
     }
     setSaving(true);
@@ -206,7 +206,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
                     </View>
                   </Press>
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Ink size={15} weight="extraBold" numberOfLines={2}>{v.title}</Ink>
+                    <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(v.title)}</Ink>
                     <Ink size={12} weight="bold" color={P.muted}>{`${v.isUrl ? 'Lien' : traduire('Sur ton téléphone')}, ${shortDate(v.createdAt)}`}</Ink>
                   </View>
                   <IconBtn name="trash" label={traduire("Supprimer {0}", v.title)} onPress={() => remove(v)} tone="soft" />
@@ -225,7 +225,7 @@ export function VideoLibrarySheet({ visible, onClose, muscleGroup, muscleGroupLa
           {mode === 'choice' ? (
             <>
               <ChoiceLine title={traduire("Depuis ta galerie")} sub={traduire("La vidéo est copiée dans YOROI")} icon="image" onPress={pickFromGallery} />
-              <ChoiceLine title={traduire("Un lien")} sub="YouTube, Instagram..." icon="link" onPress={() => setMode('link')} />
+              <ChoiceLine title={traduire("Un lien")} sub={traduire("YouTube, Instagram...")} icon="link" onPress={() => setMode('link')} />
             </>
           ) : null}
           {mode === 'name' ? (

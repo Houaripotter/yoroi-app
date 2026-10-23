@@ -82,7 +82,7 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
             <View pointerEvents="none" style={{ position: 'absolute', right: -10, top: -20 }}>
               <Glyph kind="laurier" size={150} color="rgba(255,255,255,0.05)" />
             </View>
-            <Ink size={13} weight="bold" color={paletteSombre() ? '#E3C47B' : P.goldLight}>Record personnel</Ink>
+            <Ink size={13} weight="bold" color={paletteSombre() ? '#E3C47B' : P.goldLight}>{traduire("Record personnel")}</Ink>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Ink size={34} weight="black" tight color={P.pureWhite} style={{ flex: 1 }} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{pr ? entryText(benchmark, pr) : traduire('Pas encore')}</Ink>
               {pr ? (
@@ -151,7 +151,7 @@ export function BenchmarkDetail({ visible, benchmark, onClose, onAddEntry, onDel
                 onLongPress={() =>
                   appAlert(traduire('Retirer cette perf ?'), entryText(benchmark, e), [
                     { text: traduire('Annuler'), style: 'cancel' },
-                    { text: 'Retirer', style: 'destructive', onPress: () => onDeleteEntry(e) },
+                    { text: traduire('Retirer'), style: 'destructive', onPress: () => onDeleteEntry(e) },
                   ])
                 }
                 accessibilityRole="button"

@@ -36,11 +36,11 @@ type Outil = { key: string; title: string; a11y: string; href: string | { pathna
 /** Tes outils, dans l'ordre demande par Houari, avec Partager en deuxieme */
 export function outilsAccueil(): Outil[] {
   return [
-    { key: 'chrono', title: 'Chrono', a11y: traduire('Chrono : repos, rounds, Tabata'), href: '/timer', img: ORNEMENTS.chrono, tint: P.tuileOr },
+    { key: 'chrono', title: traduire('Chrono'), a11y: traduire('Chrono : repos, rounds, Tabata'), href: '/timer', img: ORNEMENTS.chrono, tint: P.tuileOr },
     { key: 'partager', title: traduire('Partager'), a11y: traduire('Partager une carte : ta séance, ton record, ta semaine'), href: null, img: null, tint: P.tuileIndigo },
     { key: 'objectifs', title: traduire('Objectifs'), a11y: traduire('Objectifs à cocher, par sport'), href: '/training-goals', img: ORNEMENTS.cible, tint: P.tuileMousse },
-    { key: 'carnet', title: 'Carnet', a11y: traduire('Carnet : techniques, records et vidéos'), href: '/training-journal', img: ORNEMENTS.carnet, tint: P.tuileIndigo },
-    { key: 'records', title: 'Records', a11y: traduire('Tes records'), href: '/records', img: RECORDS, tint: P.tuileRouge },
+    { key: 'carnet', title: traduire('Carnet'), a11y: traduire('Carnet : techniques, records et vidéos'), href: '/training-journal', img: ORNEMENTS.carnet, tint: P.tuileIndigo },
+    { key: 'records', title: traduire('Records'), a11y: traduire('Tes records'), href: '/records', img: RECORDS, tint: P.tuileRouge },
     { key: 'combat', title: traduire('Combat et compétition'), a11y: traduire('Combat et compétition : compétitions, analyse'), href: '/combat-hub', img: ORNEMENTS.combat, tint: P.tuileMousse },
   ];
 }
@@ -160,7 +160,7 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
                 <View pointerEvents="none" style={{ position: 'absolute', top: 1, right: 10, width: 15, height: 15, borderRadius: 8, backgroundColor: theme.colors.record, borderWidth: 2.5, borderColor: P.paper }} />
               ) : null}
               <Ink size={12.5} weight="extraBold" color={theme.colors.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 15 }}>
-                {o.title}
+                {traduire(o.title)}
               </Ink>
             </View>
           </Press>

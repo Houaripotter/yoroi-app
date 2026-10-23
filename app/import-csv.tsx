@@ -203,8 +203,8 @@ export default function ImportCSVScreen() {
               <Ink size={14} color={P.ink2}>{traduire("Remplis-le sur ton ordinateur, puis importe-le ici.")}</Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <TypeBadge icon="scale" label="Poids" tint={P.indigo} soft={P.indigoSoft} />
-                <TypeBadge icon="pulse" label="Composition" tint={P.mossText} soft={P.mossSoft} />
-                <TypeBadge icon="ruler" label="Mensurations" tint={P.goldDark} soft={P.goldSoft} />
+                <TypeBadge icon="pulse" label={traduire("Composition")} tint={P.mossText} soft={P.mossSoft} />
+                <TypeBadge icon="ruler" label={traduire("Mensurations")} tint={P.goldDark} soft={P.goldSoft} />
               </View>
             </Glass>
           </Enter>
@@ -223,7 +223,7 @@ export default function ImportCSVScreen() {
             <Row first icon="table" label={traduire("Import avancé")} sub={traduire("Séances, sommeil, hydratation, humeur")} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setStep('advanced-select'); }} />
           </Card>
           <Card style={{ gap: 6, backgroundColor: P.goldSoft, borderColor: P.goldSoft }}>
-            <Ink size={14} weight="extraBold" color={P.goldDark}>Astuce</Ink>
+            <Ink size={14} weight="extraBold" color={P.goldDark}>{traduire("Astuce")}</Ink>
             <Ink size={13} color={P.ink2}>
               {Platform.OS === 'ios'
                 ? traduire('Range le fichier dans iCloud Drive sur ton Mac, il apparaît dans Fichiers sur ton iPhone. AirDrop et mail marchent aussi.')
@@ -263,7 +263,7 @@ export default function ImportCSVScreen() {
               <TypeBadge icon="dumbbell" label={traduire("Séances")} tint={P.accent} soft={P.accentSoft} />
               <TypeBadge icon="bed" label={traduire("Sommeil")} tint={P.indigo} soft={P.indigoSoft} />
               <TypeBadge icon="drop" label={traduire("Hydratation")} tint={P.water} soft={P.indigoSoft} />
-              <TypeBadge icon="heart" label="Humeur" tint={P.goldDark} soft={P.goldSoft} />
+              <TypeBadge icon="heart" label={traduire("Humeur")} tint={P.goldDark} soft={P.goldSoft} />
             </View>
           </Glass>
           <BigButton label={traduire("Télécharger le modèle avancé")} tone="light" icon="list" onPress={handleAdvDownloadTemplate} />

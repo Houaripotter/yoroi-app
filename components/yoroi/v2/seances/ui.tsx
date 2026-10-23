@@ -166,7 +166,7 @@ export function Segments<T extends string>({ items, value, onChange }: { items: 
             accessibilityState={{ selected: on }}
             style={{ flex: 1, minHeight: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? P.white : 'transparent', shadowColor: c.ink, shadowOpacity: on ? 0.08 : 0, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}
           >
-            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ paddingHorizontal: 4 }}>{it.label}</Ink>
+            <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ paddingHorizontal: 4 }}>{traduire(it.label)}</Ink>
           </Pressable>
         );
       })}

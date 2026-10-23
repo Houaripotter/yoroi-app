@@ -160,7 +160,7 @@ export default function VictoryShareModal({
       }
     } catch (error) {
       logger.error('Error sharing:', error);
-      showPopup('Oups', traduire('La carte n’a pas pu être partagée.'), [{ text: 'OK', style: 'primary' }]);
+      showPopup(traduire('Oups'), traduire('La carte n’a pas pu être partagée.'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -185,7 +185,7 @@ export default function VictoryShareModal({
       }
     } catch (error) {
       logger.error('Error saving:', error);
-      showPopup('Oups', traduire('La carte n’a pas pu être enregistrée.'), [{ text: 'OK', style: 'primary' }]);
+      showPopup(traduire('Oups'), traduire('La carte n’a pas pu être enregistrée.'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -303,8 +303,7 @@ export default function VictoryShareModal({
         {pace && (
           <View style={styles.runningStatBlock}>
             <Text style={[styles.runningStatLabel, { color: secondaryColor }, textShadow]}>
-              ALLURE
-            </Text>
+              {traduire("ALLURE")}</Text>
             <View style={styles.paceRow}>
               <Gauge size={20} color={getCategoryColor()} />
               <Text style={[styles.runningPaceValue, { color: textColor }, textShadow]}>
@@ -318,8 +317,7 @@ export default function VictoryShareModal({
         {timeDisplay && (
           <View style={styles.runningStatBlock}>
             <Text style={[styles.runningStatLabel, { color: secondaryColor }, textShadow]}>
-              TEMPS
-            </Text>
+              {traduire("TEMPS")}</Text>
             <View style={styles.paceRow}>
               <Clock size={18} color={getCategoryColor()} />
               <Text style={[styles.runningTimeValue, { color: textColor }, textShadow]}>
@@ -469,7 +467,7 @@ export default function VictoryShareModal({
           {/* INCLINE / PENTE */}
           {sessionData.incline !== undefined && (
             <View style={[styles.miniStatBlock, { backgroundColor: '#F59E0B30', borderColor: '#F59E0B50', borderWidth: 1 }]}>
-              <Text style={[styles.miniStatLabel, { color: '#F59E0B' }, textShadow]}>PENTE</Text>
+              <Text style={[styles.miniStatLabel, { color: '#F59E0B' }, textShadow]}>{traduire("PENTE")}</Text>
               <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.incline}%</Text>
             </View>
           )}
@@ -485,7 +483,7 @@ export default function VictoryShareModal({
           {/* WATTS */}
           {sessionData.watts !== undefined && (
             <View style={[styles.miniStatBlock, { backgroundColor: '#3B82F630', borderColor: '#3B82F650', borderWidth: 1 }]}>
-              <Text style={[styles.miniStatLabel, { color: '#3B82F6' }, textShadow]}>WATTS</Text>
+              <Text style={[styles.miniStatLabel, { color: '#3B82F6' }, textShadow]}>{traduire("WATTS")}</Text>
               <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.watts}W</Text>
             </View>
           )}
@@ -761,7 +759,7 @@ export default function VictoryShareModal({
                     onPress={pickImage}
                   >
                     <ImageIcon size={22} color={getCategoryColor()} />
-                    <Text style={[styles.photoPickerBtnText, { color: getCategoryColor() }]}>Galerie</Text>
+                    <Text style={[styles.photoPickerBtnText, { color: getCategoryColor() }]}>{traduire("Galerie")}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -773,7 +771,7 @@ export default function VictoryShareModal({
                   onPress={pickImage}
                 >
                   <ImageIcon size={18} color={colors.textPrimary} />
-                  <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+                  <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>{traduire("Changer")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}

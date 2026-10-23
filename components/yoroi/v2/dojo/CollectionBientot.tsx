@@ -74,7 +74,7 @@ export function CollectionBientot({ gender }: { gender: Gender }) {
                 accessibilityIgnoresInvertColors
               />
             </View>
-            <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ textAlign: 'center' }}>{p.nom}</Ink>
+            <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={2} style={{ textAlign: 'center' }}>{traduire(p.nom)}</Ink>
           </View>
         ))}
       </View>

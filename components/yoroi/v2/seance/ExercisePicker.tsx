@@ -172,7 +172,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                 style={({ pressed }) => ({ minHeight: 64, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : blancA(0.75), borderWidth: 1, borderColor: c.divider })}
               >
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Ink size={16} weight="extraBold" numberOfLines={1}>{item.name}</Ink>
+                  <Ink size={16} weight="extraBold" numberOfLines={1}>{traduire(item.name)}</Ink>
                   <Ink size={12} color={c.textMuted} numberOfLines={1}>
                     {niceGroup(item.muscle)}
                     {last && item.history ? `, ${setLabel(last, unite)} ${relativeDay(item.history.lastDate)}` : ''}

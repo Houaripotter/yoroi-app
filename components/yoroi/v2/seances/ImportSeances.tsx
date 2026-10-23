@@ -119,7 +119,7 @@ export function ImportSeancesSheet({ visible, onClose, onFini }: { visible: bool
           <Ink size={13} weight="extraBold" color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: 6 }}>{traduire("Période")}</Ink>
           <ChipRow>
             {PERIODES_IMPORT.map((p) => (
-              <Chip key={p.key} label={p.label} on={periode === p.key} onPress={() => setPeriode(p.key)} />
+              <Chip key={p.key} label={traduire(p.label)} on={periode === p.key} onPress={() => setPeriode(p.key)} />
             ))}
           </ChipRow>
           <BigButton label={traduire("Importer")} icon="download" onPress={lancer} style={{ marginTop: 6 }} />
@@ -133,7 +133,7 @@ export function ImportSeancesSheet({ visible, onClose, onFini }: { visible: bool
               <Icon name="check" size={22} color="#FFFFFF" strokeWidth={2.6} />
             </View>
             <View style={{ flex: 1, gap: 3 }}>
-              <Ink size={17} weight="black" tight accessibilityLiveRegion="polite">{vue.titre}</Ink>
+              <Ink size={17} weight="black" tight accessibilityLiveRegion="polite">{traduire(vue.titre)}</Ink>
               {vue.detail ? <Ink size={13} color={c.textSecondary}>{vue.detail}</Ink> : null}
             </View>
           </Glass>
@@ -142,10 +142,10 @@ export function ImportSeancesSheet({ visible, onClose, onFini }: { visible: bool
       ) : (
         <>
           <Glass style={{ gap: 6 }}>
-            <Ink size={17} weight="black" tight>{vue.titre}</Ink>
-            <Ink size={14} color={c.textSecondary}>{vue.texte}</Ink>
+            <Ink size={17} weight="black" tight>{traduire(vue.titre)}</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire(vue.texte)}</Ink>
           </Glass>
-          {vue.reglages ? <BigButton label={Platform.OS === 'android' ? 'Ouvrir Health Connect' : traduire('Ouvrir Santé')} tone="ink" onPress={ouvrirReglages} /> : null}
+          {vue.reglages ? <BigButton label={Platform.OS === 'android' ? traduire('Ouvrir Health Connect') : traduire('Ouvrir Santé')} tone="ink" onPress={ouvrirReglages} /> : null}
           <BigButton label={traduire("Réessayer")} tone="soft" onPress={() => setVue({ k: 'choix' })} />
         </>
       )}

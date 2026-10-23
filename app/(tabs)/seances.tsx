@@ -85,7 +85,7 @@ function groupLine(g: HistoryGroup, unite: UnitePoids = 'kg'): string {
 function sampleTrainings(today: string): Training[] {
   const d = (n: number) => isoOf(new Date(new Date(today + 'T12:00:00').getTime() - n * 86400000));
   return [
-    { sport: 'musculation', date: d(1), start_time: '18:30', duration_minutes: 65, exercises: [{ name: traduire('Développé couché'), sets: 4, reps: 8, weight: 70 }, { name: 'Squat', sets: 4, reps: 6, weight: 90 }] as any },
+    { sport: 'musculation', date: d(1), start_time: '18:30', duration_minutes: 65, exercises: [{ name: 'Développé couché', sets: 4, reps: 8, weight: 70 }, { name: 'Squat', sets: 4, reps: 6, weight: 90 }] as any },
     { sport: 'jjb', session_type: 'sparring', date: d(3), start_time: '19:30', duration_minutes: 90, rounds: 6, heart_rate: 148 },
   ];
 }
@@ -151,7 +151,7 @@ export default function Seances() {
     if (f.sets > 0) facts.push({ label: traduire('séries'), value: String(f.sets) });
     if (f.rounds > 0 && facts.length < 3) facts.push({ label: 'rounds', value: String(f.rounds) });
     if (f.distanceKm > 0 && facts.length < 3) facts.push({ label: 'distance', value: fr1(f.distanceKm), unit: 'km' });
-    if (last.heart_rate && last.heart_rate > 0 && facts.length < 3) facts.push({ label: 'FC moyenne', value: String(Math.round(last.heart_rate)), unit: 'bpm' });
+    if (last.heart_rate && last.heart_rate > 0 && facts.length < 3) facts.push({ label: traduire('FC moyenne'), value: String(Math.round(last.heart_rate)), unit: 'bpm' });
     return {
       title: sessionTitle(last),
       when: [relativeDay(last.date, today), last.club_name].filter(Boolean).join(', '),
@@ -408,7 +408,7 @@ export default function Seances() {
         {groups.slice(0, groupsShown).map((g) => (
           <View key={g.key} style={{ gap: 8 }}>
             <View style={{ paddingHorizontal: 4, marginTop: 6, gap: 1 }}>
-              <Ink size={16} weight="black" tight>{g.title}</Ink>
+              <Ink size={16} weight="black" tight>{traduire(g.title)}</Ink>
               <Ink size={12} weight="bold" color={c.textSecondary}>{groupLine(g, unite)}</Ink>
             </View>
             {g.items.map((t) => (

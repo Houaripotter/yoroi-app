@@ -196,7 +196,7 @@ const addDays = (d: Date, n: number): Date => {
 const fmtTime = (h: number, m: number): string => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
 const JJB_THEMES = [
-  traduire('Passage de garde'), 'Balayage', 'Triangle depuis garde fermee',
+  'Passage de garde', 'Balayage', 'Triangle depuis garde fermee',
   'Kimura', 'Demi-garde', 'De la Riva', 'Takedowns', 'Back take',
   'Mount escapes', 'Side control', 'Knee cut', 'Etranglement arriere',
   'Arm drag', 'X-Guard', 'Berimbolo', 'Omoplata', 'Leg locks',
@@ -229,12 +229,12 @@ const JJB_TECHNIQUES = [
   { label: 'Triangle', pts: 3 },
   { label: 'Kimura', pts: 3 },
   { label: 'Armbar', pts: 3 },
-  { label: traduire('Étranglement arrière'), pts: 3 },
+  { label: 'Étranglement arrière', pts: 3 },
   { label: 'Guillotine', pts: 3 },
   { label: 'Darce', pts: 3 },
   { label: 'Omoplata', pts: 3 },
   { label: 'Leg lock', pts: 3 },
-  { label: traduire('Passage de garde'), pts: 2 },
+  { label: 'Passage de garde', pts: 2 },
   { label: 'Berimbolo', pts: 2 },
   { label: 'Balayage De la Riva', pts: 2 },
   { label: 'Balayage papillon', pts: 2 },
@@ -242,12 +242,12 @@ const JJB_TECHNIQUES = [
   { label: 'Back take', pts: 2 },
   { label: 'Mount', pts: 2 },
   { label: 'Takedown double-leg', pts: 2 },
-  { label: traduire('Garde fermée'), pts: 1 },
+  { label: 'Garde fermée', pts: 1 },
   { label: 'Demi-garde', pts: 1 },
 ];
 
 const SUBMISSIONS = [
-  'Triangle', 'Kimura', 'Armbar', traduire('Étranglement arrière'),
+  'Triangle', 'Kimura', 'Armbar', 'Étranglement arrière',
   'Guillotine', 'Darce', 'Omoplata', 'Ezekiel', 'Leg lock',
   'Americana', 'Crucifix', 'Papa-bear',
 ];
@@ -1175,8 +1175,8 @@ const PUSH: Lift[] = [
   { name: 'Développé couché (Barre)', group: 'pectoraux', sets: 4, reps: 5, from: 80, to: 100, step: 2.5 },
   { name: 'Développé militaire', group: 'epaules', sets: 3, reps: 8, from: 42.5, to: 55, step: 2.5 },
   { name: 'Développé incliné (Barre)', group: 'pectoraux', sets: 3, reps: 8, from: 60, to: 72.5, step: 2.5 },
-  { name: traduire('Élévations latérales'), group: 'epaules', sets: 3, reps: 12, from: 10, to: 14, step: 2 },
-  { name: traduire('Barre au front'), group: 'triceps', sets: 3, reps: 10, from: 25, to: 32.5, step: 2.5 },
+  { name: 'Élévations latérales', group: 'epaules', sets: 3, reps: 12, from: 10, to: 14, step: 2 },
+  { name: 'Barre au front', group: 'triceps', sets: 3, reps: 10, from: 25, to: 32.5, step: 2.5 },
 ];
 const PULL: Lift[] = [
   { name: 'Soulevé de terre (Deadlift)', group: 'dos', sets: 3, reps: 5, from: 130, to: 170, step: 2.5 },
@@ -1186,8 +1186,8 @@ const PULL: Lift[] = [
 ];
 const LEGS: Lift[] = [
   { name: 'Squat (Barre)', group: 'jambes', sets: 4, reps: 5, from: 100, to: 135, step: 2.5 },
-  { name: traduire('Presse à cuisses'), group: 'jambes', sets: 3, reps: 10, from: 180, to: 240, step: 10 },
-  { name: traduire('Soulevé de terre jambes tendues'), group: 'jambes', sets: 3, reps: 8, from: 80, to: 100, step: 2.5 },
+  { name: 'Presse à cuisses', group: 'jambes', sets: 3, reps: 10, from: 180, to: 240, step: 10 },
+  { name: 'Soulevé de terre jambes tendues', group: 'jambes', sets: 3, reps: 8, from: 80, to: 100, step: 2.5 },
   { name: 'Fentes haltères', group: 'jambes', sets: 3, reps: 10, from: 20, to: 26, step: 2 },
 ];
 
@@ -1196,8 +1196,8 @@ const LEGS: Lift[] = [
 const UPPER: Lift[] = [
   PUSH[0],
   { name: 'Tirage vertical', group: 'dos', sets: 3, reps: 10, from: 62.5, to: 62.5, step: 2.5 },
-  { name: traduire('Développé Arnold'), group: 'epaules', sets: 3, reps: 10, from: 18, to: 18, step: 2 },
-  { name: traduire('Rowing haltère'), group: 'dos', sets: 3, reps: 10, from: 32, to: 32, step: 2 },
+  { name: 'Développé Arnold', group: 'epaules', sets: 3, reps: 10, from: 18, to: 18, step: 2 },
+  { name: 'Rowing haltère', group: 'dos', sets: 3, reps: 10, from: 32, to: 32, step: 2 },
   { name: 'Curl marteau', group: 'biceps', sets: 3, reps: 12, from: 16, to: 16, step: 2 },
 ];
 
@@ -1739,7 +1739,7 @@ async function injectHeny(): Promise<HenyStats> {
       const done = (trainingsByDay.get(dateStr) ?? []).find((t) => t.sport === s.sport);
       if (done) await upsertSlotOccurrence({ weekly_plan_id: s.id, week_start: weekStart, status: 'validated', training_id: done.id });
       else if (dateStr >= todayIso) await upsertSlotOccurrence({ weekly_plan_id: s.id, week_start: weekStart, status: 'pending' });
-      else await upsertSlotOccurrence({ weekly_plan_id: s.id, week_start: weekStart, status: 'cancelled', cancel_reason: compDays.has(dateStr) ? traduire('Compétition') : 'Réunion au travail' });
+      else await upsertSlotOccurrence({ weekly_plan_id: s.id, week_start: weekStart, status: 'cancelled', cancel_reason: compDays.has(dateStr) ? 'Compétition' : 'Réunion au travail' });
     }
   }
 
@@ -1813,7 +1813,7 @@ async function injectHeny(): Promise<HenyStats> {
     { competition_id: c1, date: fmtDate(comp1), resultat: 'defaite', methode: 'points', technique: null, round: 1, temps: '5:00', adversaire_nom: 'Lucas D.', adversaire_club: 'Académie des Cigales', poids_pesee: pesee1, poids_jour_j: jourJ1, notes: 'Finale perdue 2 à 4. Sa De la Riva m’a gêné tout le combat. Médaille d’argent, à retravailler : la défense de la DLR.' },
     { competition_id: c2, date: fmtDate(comp2), resultat: 'victoire', methode: 'soumission', technique: 'Kimura', round: 1, temps: '2:41', adversaire_nom: 'Yohan P.', adversaire_club: 'Garde Haute Toulon', poids_pesee: pesee2, poids_jour_j: jourJ2, notes: 'Kimura depuis la demi-garde du dessus, en verrouillant l’épaule au sol d’abord.' },
     { competition_id: c2, date: fmtDate(comp2), resultat: 'victoire', methode: 'points', technique: null, round: 1, temps: '5:00', adversaire_nom: 'Nassim T.', adversaire_club: 'Clan du Mistral', poids_pesee: pesee2, poids_jour_j: jourJ2, notes: 'Victoire 9 à 0 : takedown, passage et prise du dos. Le cardio a tenu.' },
-    { competition_id: c2, date: fmtDate(comp2), resultat: 'victoire', methode: 'soumission', technique: traduire('Étranglement arrière'), round: 1, temps: '4:05', adversaire_nom: 'Adrien M.', adversaire_club: 'Académie des Cigales', poids_pesee: pesee2, poids_jour_j: jourJ2, notes: 'Finale gagnée : dos pris sur un scramble, crochets posés, étranglement propre. Médaille d’or.' },
+    { competition_id: c2, date: fmtDate(comp2), resultat: 'victoire', methode: 'soumission', technique: 'Étranglement arrière', round: 1, temps: '4:05', adversaire_nom: 'Adrien M.', adversaire_club: 'Académie des Cigales', poids_pesee: pesee2, poids_jour_j: jourJ2, notes: 'Finale gagnée : dos pris sur un scramble, crochets posés, étranglement propre. Médaille d’or.' },
   ];
   for (const c of combats) {
     await addCombat(c as never);

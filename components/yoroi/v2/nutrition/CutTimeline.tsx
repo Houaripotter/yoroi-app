@@ -115,7 +115,7 @@ export function CutTimeline({ startDate, targetDate, startWeight, targetWeight, 
         <Legend color={P.ink} label={traduire("Tes pesées")} />
         <Legend color={P.accent} label={traduire("Objectif")} dashed />
         <Legend color={P.dashed} label={traduire("Trajectoire prévue")} dashed />
-        <Legend color={P.moss} label="Sain" />
+        <Legend color={P.moss} label={traduire("Sain")} />
         <Legend color={P.gold} label={traduire("Coupe d’eau")} />
         <Legend color={P.danger} label={traduire("Danger")} />
       </View>

@@ -40,10 +40,10 @@ type EtatId = 'accueil' | 'progres' | 'carnet' | 'competitions' | 'dojo' | 'char
 const ETATS: { id: EtatId; label: string }[] = [
   { id: 'accueil', label: traduire('Accueil vide') },
   { id: 'progres', label: traduire('Progrès vide') },
-  { id: 'carnet', label: 'Carnet vide' },
+  { id: 'carnet', label: traduire('Carnet vide') },
   { id: 'competitions', label: traduire('Compétitions vide') },
   { id: 'dojo', label: traduire('Dojo débutant') },
-  { id: 'chargements', label: 'Chargements' },
+  { id: 'chargements', label: traduire('Chargements') },
   { id: 'erreur', label: traduire('Erreur') },
 ];
 
@@ -218,7 +218,7 @@ function DojoDebutant() {
               <View style={{ position: 'absolute', left: 14, right: 14, top: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                 <GlassTag style={{ flexShrink: 1, maxWidth: '86%' }}>
                   <Ink size={12} weight="extraBold" color={c.goldDeep}>{traduire("Rang 1 sur {0}", RANKS.length)}</Ink>
-                  <Ink size={30} weight="black" tight numberOfLines={1}>{rank.name}</Ink>
+                  <Ink size={30} weight="black" tight numberOfLines={1}>{traduire(rank.name)}</Ink>
                   <Ink size={12} color={c.textSecondary} numberOfLines={2}>{rank.piece ?? ''}</Ink>
                 </GlassTag>
               </View>
@@ -278,7 +278,7 @@ function Chargements() {
         <Bouton label={traduire("Afficher en plein écran")} icon="eye" onPress={() => setPlein(true)} />
       </Bloc>
       <Bloc style={{ alignItems: 'center' }}>
-        <Ink size={16} weight="black" style={{ alignSelf: 'stretch' }}>Petit indicateur</Ink>
+        <Ink size={16} weight="black" style={{ alignSelf: 'stretch' }}>{traduire("Petit indicateur")}</Ink>
         <Ink size={13} color={c.textSecondary} style={{ alignSelf: 'stretch' }}>{traduire("ChargementPetit, à la place de la roue du système.")}</Ink>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingVertical: 10 }}>
           <ChargementPetit size={20} />
@@ -290,7 +290,7 @@ function Chargements() {
         </View>
       </Bloc>
       <Bloc>
-        <Ink size={16} weight="black">Zone d’attente</Ink>
+        <Ink size={16} weight="black">{traduire("Zone d’attente")}</Ink>
         <Ink size={13} color={c.textSecondary}>{traduire("ChargementBloc, au milieu d’une page qui se remplit.")}</Ink>
         <ChargementBloc message={traduire("Lecture de tes séances")} />
       </Bloc>
@@ -365,7 +365,7 @@ export function EtatsGalerie() {
     <GalerieScreen title={traduire("États")} sub={traduire("Les écrans vides, les chargements et l’erreur, avec des données fictives. Rien n’est écrit, les aperçus sont figés.")}>
       <PastilleRow>
         {ETATS.map((e) => (
-          <Pastille key={e.id} label={e.label} on={etat === e.id} onPress={() => setEtat(e.id)} />
+          <Pastille key={e.id} label={traduire(e.label)} on={etat === e.id} onPress={() => setEtat(e.id)} />
         ))}
       </PastilleRow>
       <View key={etat}>

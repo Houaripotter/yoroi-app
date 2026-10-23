@@ -96,7 +96,7 @@ export default function BackupStepScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Ink size={15} weight="extraBold">{`${i + 1}. ${s.title}`}</Ink>
-                <Ink size={13} color={P.ink2}>{s.text}</Ink>
+                <Ink size={13} color={P.ink2}>{traduire(s.text)}</Ink>
               </View>
             </View>
           ))}
@@ -111,9 +111,9 @@ export default function BackupStepScreen() {
             <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>{traduire("Sauvegarde prête")}</Ink>
             <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>{traduire("Tes données sont protégées en cas de perte, de vol ou de changement de téléphone.")}</Ink>
             <Ink size={13} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>{traduire("Range le fichier dans ton cloud préféré : iCloud, Google Drive ou Dropbox.")}</Ink>
-            <Press onPress={() => { setShowSuccessModal(false); successHaptic(); }} accessibilityRole="button" accessibilityLabel="Parfait" style={{ alignSelf: 'stretch' }}>
+            <Press onPress={() => { setShowSuccessModal(false); successHaptic(); }} accessibilityRole="button" accessibilityLabel={traduire("Parfait")} style={{ alignSelf: 'stretch' }}>
               <View style={{ height: 56, borderRadius: 18, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Ink size={16} weight="extraBold" color="#FFFFFF">Parfait</Ink>
+                <Ink size={16} weight="extraBold" color="#FFFFFF">{traduire("Parfait")}</Ink>
               </View>
             </Press>
           </View>

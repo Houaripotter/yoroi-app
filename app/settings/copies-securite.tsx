@@ -63,10 +63,10 @@ export default function CopiesSecurite() {
     setBusy(true);
     try {
       const ok = await shareSafetyCopy(copy);
-      if (!ok) showPopup('Oups', traduire('Le partage n’est pas disponible sur ce téléphone.'));
+      if (!ok) showPopup(traduire('Oups'), traduire('Le partage n’est pas disponible sur ce téléphone.'));
     } catch (e) {
       logger.error('[Copies] partage', e);
-      showPopup('Oups', traduire('La copie n’a pas pu être préparée. Réessaie.'));
+      showPopup(traduire('Oups'), traduire('La copie n’a pas pu être préparée. Réessaie.'));
     } finally {
       setBusy(false);
     }
@@ -81,7 +81,7 @@ export default function CopiesSecurite() {
       [
         { text: traduire('Annuler'), style: 'cancel' },
         {
-          text: 'Remettre',
+          text: traduire('Remettre'),
           style: 'primary',
           onPress: async () => {
             setBusy(true);
@@ -89,15 +89,15 @@ export default function CopiesSecurite() {
               const rep = await restoreSafetyCopy(copy);
               if (!rep) {
                 notificationAsync(NotificationFeedbackType.Error).catch(() => {});
-                showPopup('Oups', traduire('La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.'));
+                showPopup(traduire('Oups'), traduire('La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.'));
                 return;
               }
               notificationAsync(NotificationFeedbackType.Success).catch(() => {});
               DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-              showPopup('Copie remise', safetyReportText(rep));
+              showPopup(traduire('Copie remise'), safetyReportText(rep));
             } catch (e) {
               logger.error('[Copies] restauration', e);
-              showPopup('Oups', traduire('La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.'));
+              showPopup(traduire('Oups'), traduire('La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.'));
             } finally {
               setBusy(false);
             }

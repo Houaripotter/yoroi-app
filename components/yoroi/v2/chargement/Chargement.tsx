@@ -136,7 +136,7 @@ export function EcranChargement({ message }: { message?: string }) {
   const msg = (message ?? '').replace(/\s*(\.\.\.|…)\s*$/, '');
 
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: SPLASH_BG }]} accessibilityLabel="YOROI se charge" accessibilityRole="progressbar">
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: SPLASH_BG }]} accessibilityLabel={traduire("YOROI se charge")} accessibilityRole="progressbar">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, fondStyle]}>
         <FondEpoque fond="sakura" voile="leger" />

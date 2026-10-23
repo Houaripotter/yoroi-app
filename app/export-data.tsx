@@ -24,9 +24,9 @@ import { traduire } from '@/lib/i18n/tr';
 type Format = 'json' | 'csv' | 'txt';
 
 const FORMATS: { id: Format; icon: IconName; label: string; sub: string }[] = [
-  { id: 'csv', icon: 'table', label: 'Tableur', sub: traduire('Pour Excel ou Google Sheets, réimportable dans YOROI') },
-  { id: 'json', icon: 'archive', label: 'Fichier complet', sub: traduire('Toutes tes séances et exercices, pour archiver') },
-  { id: 'txt', icon: 'doc', label: 'Rapport texte', sub: traduire('Un résumé lisible de ta progression, facile à partager') },
+  { id: 'csv', icon: 'table', label: traduire('Tableur'), sub: traduire('Pour Excel ou Google Sheets, réimportable dans YOROI') },
+  { id: 'json', icon: 'archive', label: traduire('Fichier complet'), sub: traduire('Toutes tes séances et exercices, pour archiver') },
+  { id: 'txt', icon: 'doc', label: traduire('Rapport texte'), sub: traduire('Un résumé lisible de ta progression, facile à partager') },
 ];
 
 const PERIODS: { id: string; label: string; days: number | null }[] = [
@@ -73,7 +73,7 @@ export default function ExportDataScreen() {
 
   const fail = (err: unknown) => {
     logger.error('[Export] erreur', err);
-    showPopup('Oups', traduire('L’export n’a pas abouti. Réessaie.'));
+    showPopup(traduire('Oups'), traduire('L’export n’a pas abouti. Réessaie.'));
   };
 
   const exportFormat = async (f: Format) => {
@@ -148,14 +148,14 @@ export default function ExportDataScreen() {
               onPress={() => exportFormat(f.id)}
               disabled={!!busy}
               accessibilityRole="button"
-              accessibilityLabel={f.label}
+              accessibilityLabel={traduire(f.label)}
               style={({ pressed }) => ({ borderRadius: 22, backgroundColor: c.surface, borderWidth: isDone ? 2 : 1, borderColor: isDone ? c.success : c.border, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, opacity: pressed ? 0.85 : 1 })}
             >
               <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: isDone ? c.successTint : c.ink, alignItems: 'center', justifyContent: 'center' }}>
                 {busy === f.id ? <ActivityIndicator color={c.background} /> : <Icon name={isDone ? 'check' : f.icon} size={22} color={isDone ? c.successText : c.goldLight} />}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={16} weight="extraBold">{f.label}</Ink>
+                <Ink size={16} weight="extraBold">{traduire(f.label)}</Ink>
                 <Ink size={13} color={isDone ? c.successText : c.textSecondary}>{isDone ? traduire('Exporté') : f.sub}</Ink>
               </View>
               <Icon name="share" size={18} color={c.textMuted} />
@@ -169,7 +169,7 @@ export default function ExportDataScreen() {
         <SectionTitle title={traduire("Une sélection de séances")} sub={traduire("Choisis un sport et une période")} />
         <Card style={{ padding: 14, gap: 14 }}>
           <View style={{ gap: 8 }}>
-            <Ink size={14} weight="extraBold">Sport</Ink>
+            <Ink size={14} weight="extraBold">{traduire("Sport")}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {chip('all', traduire('Tous'), sport === '', () => setSport(''))}
               {sports.map((id) => chip(id, getSportName(id), sport === id, () => setSport(id)))}

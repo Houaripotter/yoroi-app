@@ -176,7 +176,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
       const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
       if (!r.canceled && r.assets?.[0]?.uri) return savePhotoPermanently(r.assets[0].uri);
     } catch (e) {
-      appAlert('Oups', traduire('La galerie ne s’ouvre pas. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('La galerie ne s’ouvre pas. Réessaie.'));
     }
     return null;
   };
@@ -186,7 +186,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
     appAlert(traduire("Photo de {0}", p.name), has ? traduire('Changer ou retirer la photo ?') : traduire('Ajouter une photo ?'), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: has ? 'Changer' : traduire('Choisir dans la galerie'),
+        text: has ? traduire('Changer') : traduire('Choisir dans la galerie'),
         onPress: async () => {
           const uri = await pickImage();
           if (uri) {
@@ -198,7 +198,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
       ...(has
         ? [
             {
-              text: 'Retirer',
+              text: traduire('Retirer'),
               style: 'destructive' as const,
               onPress: async () => {
                 await savePartnerPhoto(p.name, '');
@@ -225,7 +225,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
       await reload();
       await refreshPhotos();
     } catch (e) {
-      appAlert('Oups', traduire('La fiche n’a pas pu être enregistrée. Réessaie.'));
+      appAlert(traduire('Oups'), traduire('La fiche n’a pas pu être enregistrée. Réessaie.'));
     } finally {
       setSavingEdit(false);
     }
@@ -246,8 +246,8 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
         <View style={{ gap: 8 }}>
           {globalInsights.slice(0, 3).map((g) => (
             <View key={g.id} style={{ padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 2 }}>
-              <Ink size={14} weight="extraBold">{g.title}</Ink>
-              <Ink size={13} weight="medium" color={P.ink2}>{g.text}</Ink>
+              <Ink size={14} weight="extraBold">{traduire(g.title)}</Ink>
+              <Ink size={13} weight="medium" color={P.ink2}>{traduire(g.text)}</Ink>
             </View>
           ))}
         </View>
@@ -258,7 +258,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
           <Press onPress={() => router.push('/matchup-matrix' as any)} accessibilityRole="button" accessibilityLabel={traduire("Matrice des confrontations")}>
             <View style={{ padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 4 }}>
               <CIcon name="grid" size={20} color={P.indigo} />
-              <Ink size={14} weight="extraBold">Matrice</Ink>
+              <Ink size={14} weight="extraBold">{traduire("Matrice")}</Ink>
               <Ink size={12} weight="medium" color={P.muted} numberOfLines={1}>{traduire("Volume et victoires")}</Ink>
             </View>
           </Press>
@@ -267,7 +267,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
           <Press onPress={() => router.push('/partners-tier-list' as any)} accessibilityRole="button" accessibilityLabel={traduire("Classement des partenaires")}>
             <View style={{ padding: 14, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, gap: 4 }}>
               <CIcon name="crown" size={20} color={P.goldDark} />
-              <Ink size={14} weight="extraBold">Classement</Ink>
+              <Ink size={14} weight="extraBold">{traduire("Classement")}</Ink>
               <Ink size={12} weight="medium" color={P.muted} numberOfLines={1}>{traduire("Tes partenaires classés")}</Ink>
             </View>
           </Press>
@@ -306,7 +306,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                 return (
                   <View key={ins.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 18, backgroundColor: t.bg }}>
                     <View style={{ width: 6, alignSelf: 'stretch', borderRadius: 3, backgroundColor: t.fg }} />
-                    <Ink size={14} weight="bold" style={{ flex: 1 }}>{ins.text}</Ink>
+                    <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire(ins.text)}</Ink>
                   </View>
                 );
               })}
@@ -315,7 +315,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                 return (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: t.bg }}>
                     <Glyph kind="sakura" size={22} color={t.fg} />
-                    <Ink size={14} weight="bold" style={{ flex: 1 }}>{c.text}</Ink>
+                    <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire(c.text)}</Ink>
                   </View>
                 );
               })}
@@ -328,10 +328,10 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
               <MiniChips
                 items={[
                   { key: 'volume' as PodiumMode, label: traduire('Volume') },
-                  { key: 'wins' as PodiumMode, label: 'Victoires' },
+                  { key: 'wins' as PodiumMode, label: traduire('Victoires') },
                   { key: 'losses' as PodiumMode, label: traduire('Défaites') },
                   { key: 'winrate' as PodiumMode, label: traduire('Taux de victoire') },
-                  { key: 'subsGiven' as PodiumMode, label: 'Soumissions' },
+                  { key: 'subsGiven' as PodiumMode, label: traduire('Soumissions') },
                 ]}
                 value={podiumMode}
                 onChange={setPodiumMode}
@@ -428,7 +428,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
 
           {partners.length > 0 ? (
             <>
-              <BlockTitle title="Partenaires" aside={traduire("{0} au total, garde appuyé pour modifier", partners.length)} />
+              <BlockTitle title={traduire("Partenaires")} aside={traduire("{0} au total, garde appuyé pour modifier", partners.length)} />
               {partners.length >= 2 ? (
                 <MiniChips
                   items={[
@@ -461,17 +461,17 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
             <Sheet2>
               <Ink size={18} weight="black" tight>{traduire("Techniques travaillées")}</Ink>
               {techniques.slice(0, 10).map((t, i) => (
-                <RankRow key={t.name} rank={i + 1} title={t.name} value={traduire("{0} fois", t.count)} ratio={t.count / techniques[0].count} color={P.goldDark} sub={t.lastSession ? traduire("Dernière fois {0}", relative(t.lastSession)) : undefined} />
+                <RankRow key={t.name} rank={i + 1} title={traduire(t.name)} value={traduire("{0} fois", t.count)} ratio={t.count / techniques[0].count} color={P.goldDark} sub={t.lastSession ? traduire("Dernière fois {0}", relative(t.lastSession)) : undefined} />
               ))}
             </Sheet2>
           ) : null}
 
           {finitions.length > 0 ? (
             <Sheet2>
-              <Ink size={18} weight="black" tight>Finitions</Ink>
+              <Ink size={18} weight="black" tight>{traduire("Finitions")}</Ink>
               {finitions.map((s) => (
                 <View key={s.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{s.name}</Ink>
+                  <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{traduire(s.name)}</Ink>
                   {s.given > 0 ? <Ink size={13} weight="extraBold" color={P.mossText}>{traduirePluriel(s.given, s.given > 1, "{0} placée", "{0} placées", s.given)}</Ink> : null}
                   {s.taken > 0 ? <Ink size={13} weight="extraBold" color={P.danger}>{`${s.taken} subie${s.taken > 1 ? 's' : ''}`}</Ink> : null}
                 </View>
@@ -485,7 +485,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {records.longest ? <RecordTile label={traduire("Plus longue séance")} value={`${records.longest.n} rounds`} sub={shortDate(records.longest.date)} tone="indigo" /> : null}
                 {records.mostSubs ? <RecordTile label={traduire("Soumissions en une séance")} value={String(records.mostSubs.n)} sub={shortDate(records.mostSubs.date)} tone="moss" /> : null}
-                {records.best ? <RecordTile label="Meilleur taux" value={`${Math.round(records.best.rate)} %`} sub={traduire("{0} sur {1}, {2}", records.best.wins, records.best.total, shortDate(records.best.date))} tone="red" /> : null}
+                {records.best ? <RecordTile label={traduire("Meilleur taux")} value={`${Math.round(records.best.rate)} %`} sub={traduire("{0} sur {1}, {2}", records.best.wins, records.best.total, shortDate(records.best.date))} tone="red" /> : null}
               </View>
             </>
           ) : null}
@@ -494,7 +494,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
             <Sheet2>
               <Ink size={18} weight="black" tight>{traduire("Selon l’intensité")}</Ink>
               {([
-                { k: 'guerre' as const, label: 'Guerre', sub: traduire('rounds à fond') },
+                { k: 'guerre' as const, label: traduire('Guerre'), sub: traduire('rounds à fond') },
                 { k: 'technique' as const, label: traduire('Technique'), sub: traduire('travail du geste') },
                 { k: 'detendu' as const, label: traduire('Détendu'), sub: traduire('sparring léger') },
               ]).map((m) => {
@@ -504,8 +504,8 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                 return (
                   <View key={m.k} style={{ gap: 6 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                      <Ink size={15} weight="extraBold">{m.label}</Ink>
-                      <Ink size={12} weight="medium" color={P.muted} style={{ flex: 1 }}>{m.sub}</Ink>
+                      <Ink size={15} weight="extraBold">{traduire(m.label)}</Ink>
+                      <Ink size={12} weight="medium" color={P.muted} style={{ flex: 1 }}>{traduire(m.sub)}</Ink>
                       <Ink size={16} weight="black" color={winColor(wr)}>{`${wr} %`}</Ink>
                     </View>
                     <SplitBar parts={[{ value: s.wins, color: P.moss }, { value: s.draws, color: P.gold }, { value: s.losses, color: P.danger }]} />
@@ -559,7 +559,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
               <Ink size={18} weight="black" tight>{traduire("Tes finitions mois après mois")}</Ink>
               {timeline.map((tl, i) => (
                 <View key={tl.name} style={{ gap: 4 }}>
-                  <Ink size={14} weight="extraBold" color={['#3D5D9E', '#6E8C3A', '#A8832F'][i]}>{tl.name}</Ink>
+                  <Ink size={14} weight="extraBold" color={['#3D5D9E', '#6E8C3A', '#A8832F'][i]}>{traduire(tl.name)}</Ink>
                   <Columns items={tl.values.map((v, j) => ({ label: monthLabel(months6[j]).slice(0, 3), value: v }))} height={84} color={['#3D5D9E', '#6E8C3A', '#A8832F'][i]} highlightLast={false} />
                 </View>
               ))}

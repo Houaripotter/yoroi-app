@@ -209,6 +209,6 @@ export const COMBATTANT: FighterData = {
 };
 
 export const RECORDS_PARTAGE = [
-  { label: 'Record muscu', sub: traduire('Développé couché, nouveau record'), data: { exerciseName: traduire('Développé couché'), performance: '45 kg x 5 reps', date: hier('18:30').slice(0, 10), isPR: true, previous: '42,5 kg x 5 reps' } },
+  { label: traduire('Record muscu'), sub: traduire('Développé couché, nouveau record'), data: { exerciseName: traduire('Développé couché'), performance: '45 kg x 5 reps', date: hier('18:30').slice(0, 10), isPR: true, previous: '42,5 kg x 5 reps' } },
   { label: traduire('Perf du jour'), sub: traduire('Tractions, sans record'), data: { exerciseName: 'Tractions', performance: '8 reps', date: hier('18:30').slice(0, 10), isPR: false } },
 ];

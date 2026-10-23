@@ -40,15 +40,15 @@ function Line({ title, sub, onRestore }: { title: string; sub: string; onRestore
 
 export function TrashSheet(p: Props) {
   return (
-    <Sheet visible={p.visible} onClose={p.onClose} title="Corbeille" scroll>
+    <Sheet visible={p.visible} onClose={p.onClose} title={traduire("Corbeille")} scroll>
       {p.trashCount === 0 ? <EmptyState title={traduire("La corbeille est vide")} text={traduire("Ce que tu supprimes du carnet arrive ici. Tu peux le restaurer quand tu veux.")} /> : null}
       {p.trashBenchmarks.length > 0 ? <Label>{traduire("Records supprimés, {0}", p.trashBenchmarks.length)}</Label> : null}
       {p.trashBenchmarks.map((t) => (
-        <Line key={t.item.id} title={t.item.name} sub={traduire("Supprimé {0}{1}", relative(t.deletedAt), t.item.entries.length > 0 ? `, ${t.item.entries.length} perf${t.item.entries.length > 1 ? 's' : ''}` : '')} onRestore={() => p.onRestoreBenchmark(t.item.id)} />
+        <Line key={t.item.id} title={traduire(t.item.name)} sub={traduire("Supprimé {0}{1}", relative(t.deletedAt), t.item.entries.length > 0 ? `, ${t.item.entries.length} perf${t.item.entries.length > 1 ? 's' : ''}` : '')} onRestore={() => p.onRestoreBenchmark(t.item.id)} />
       ))}
       {p.trashSkills.length > 0 ? <Label>{traduire("Techniques supprimées, {0}", p.trashSkills.length)}</Label> : null}
       {p.trashSkills.map((t) => (
-        <Line key={t.item.id} title={t.item.name} sub={traduire("Supprimée {0}, {1} répétitions{2}", relative(t.deletedAt), t.item.drillCount, t.item.notes.length > 0 ? `, ${t.item.notes.length} notes` : '')} onRestore={() => p.onRestoreSkill(t.item.id)} />
+        <Line key={t.item.id} title={traduire(t.item.name)} sub={traduire("Supprimée {0}, {1} répétitions{2}", relative(t.deletedAt), t.item.drillCount, t.item.notes.length > 0 ? `, ${t.item.notes.length} notes` : '')} onRestore={() => p.onRestoreSkill(t.item.id)} />
       ))}
       {p.trashCount > 0 ? <BigButton label={traduire("Vider la corbeille, {0}", p.trashCount)} icon="trash" tone="ink" onPress={p.onEmptyTrash} /> : null}
     </Sheet>

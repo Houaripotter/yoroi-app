@@ -13,10 +13,10 @@ import { traduire } from '@/lib/i18n/tr';
 export type SessionMood = 'fire' | 'solid' | 'ok' | 'hard' | 'crushed';
 
 export const MOODS: { value: SessionMood; label: string; kanji: string }[] = [
-  { value: 'fire', label: 'En feu', kanji: '炎' },
-  { value: 'solid', label: 'Solide', kanji: '剛' },
+  { value: 'fire', label: traduire('En feu'), kanji: '炎' },
+  { value: 'solid', label: traduire('Solide'), kanji: '剛' },
   { value: 'ok', label: traduire('Correct'), kanji: '平' },
-  { value: 'hard', label: 'Difficile', kanji: '苦' },
+  { value: 'hard', label: traduire('Difficile'), kanji: '苦' },
   { value: 'crushed', label: traduire('Écrasé'), kanji: '倒' },
 ];
 

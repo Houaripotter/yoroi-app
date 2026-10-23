@@ -89,7 +89,7 @@ export function BlocMois({ trainings }: { trainings: Training[] }) {
 
   return (
     <View style={{ gap: 10 }}>
-      <Section title={traduire("Ton mois")} action="Planning" onAction={() => router.push('/planning' as any)} />
+      <Section title={traduire("Ton mois")} action={traduire("Planning")} onAction={() => router.push('/planning' as any)} />
       <MonthCard trainings={trainings} competitions={comps} onOpen={ouvrir} />
       {prevues.length ? (
         <View style={{ borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 14, paddingVertical: 6 }}>
@@ -101,7 +101,7 @@ export function BlocMois({ trainings }: { trainings: Training[] }) {
                 <SessionMark t={{ sport: s.slot.sport, club_id: s.slot.club_id, club_name: s.slot.club_name, club_logo: s.slot.club_logo, club_color: s.slot.club_color, date: '' } as unknown as Training} size={26} />
                 <View style={{ flex: 1 }}>
                   <Ink size={14} weight="extraBold" numberOfLines={1}>
-                    {s.titre}
+                    {traduire(s.titre)}
                   </Ink>
                   <Ink size={12} weight="bold" color={P.muted} numberOfLines={1}>
                     {s.club ? `${s.quand}, ${s.club}` : s.quand}

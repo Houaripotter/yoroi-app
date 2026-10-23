@@ -10,12 +10,12 @@ import { traduire } from '@/lib/i18n/tr';
 
 export const WEIGHT_SOURCES: Record<string, string> = {
   manual: traduire('saisie à la main'),
-  withings: 'balance Withings',
+  withings: traduire('balance Withings'),
   garmin: 'Garmin',
   apple_health: 'Apple Santé',
   healthkit: 'Apple Santé',
   health_connect: 'Health Connect',
-  xiaomi: 'balance Xiaomi',
+  xiaomi: traduire('balance Xiaomi'),
   balance_photo: 'balance (photo)',
   yoroi_montre: 'Apple Watch',
 };

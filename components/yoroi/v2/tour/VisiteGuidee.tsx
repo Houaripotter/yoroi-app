@@ -702,16 +702,16 @@ export function VisiteGuidee() {
             ) : null}
             {!last ? (
               <Pressable onPress={() => finish()} hitSlop={12} accessibilityRole="button" accessibilityLabel={traduire("Quitter la visite")}>
-                <Ink size={14} weight="bold" color={c.textSecondary}>Passer</Ink>
+                <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Passer")}</Ink>
               </Pressable>
             ) : null}
           </View>
 
           <Ink size={19} weight="black" tight color={c.ink} style={{ marginTop: 10 }} accessibilityRole="header">
-            {e.titre}
+            {traduire(e.titre)}
           </Ink>
           <Ink size={15} weight="medium" color={c.textSecondary} style={{ marginTop: 4, lineHeight: 21 }}>
-            {e.texte}
+            {traduire(e.texte)}
           </Ink>
 
           <View style={s.actions}>

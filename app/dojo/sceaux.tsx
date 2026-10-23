@@ -66,7 +66,7 @@ export default function Sceaux() {
         <Animated.View entering={ENTREE} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 16 }}>
           <Hanko size={56} shape="rond" color={c.indigo} earned={lunes > 0} tampon="lapin_lune" />
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={17} weight="black">{LUNE.name}</Ink>
+            <Ink size={17} weight="black">{traduire(LUNE.name)}</Ink>
             <Ink size={13} color={c.textSecondary}>{traduire("{0}. Il se gagne chaque mois, +{1} XP à chaque fois.", LUNE.condition, XP_VALUES.lune)}</Ink>
             <Ink size={14} weight="extraBold" color={lunes > 0 ? c.indigo : c.textMuted}>{lunes > 0 ? traduire("Gagnée {0} fois", lunes) : traduire('Pas encore gagnée')}</Ink>
           </View>
@@ -88,7 +88,7 @@ export default function Sceaux() {
                 style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on ? c.ink : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
               >
                 {f.id !== 'all' ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: famColor(f.id) }} /> : null}
-                <Ink size={14} weight="extraBold" color={on ? P.paper : c.ink}>{f.name}</Ink>
+                <Ink size={14} weight="extraBold" color={on ? P.paper : c.ink}>{traduire(f.name)}</Ink>
                 <Ink size={12} weight="bold" color={on ? P.paper : c.textMuted} style={on ? { opacity: 0.75 } : undefined}>{`${list.filter((x) => x.earned).length}/${list.length}`}</Ink>
               </Pressable>
             );
@@ -102,10 +102,10 @@ export default function Sceaux() {
               <View style={{ gap: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: famColor(f.id) }} />
-                  <Ink size={17} weight="black" style={{ flex: 1 }}>{f.name}</Ink>
+                  <Ink size={17} weight="black" style={{ flex: 1 }}>{traduire(f.name)}</Ink>
                   <Ink size={13} weight="bold" color={c.textMuted}>{list.filter((s) => s.earned).length} / {list.length}</Ink>
                 </View>
-                <Ink size={13} color={c.textSecondary}>{f.description}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire(f.description)}</Ink>
               </View>
               {/* 3 colonnes reelles : largeurs en pourcentage, rien ne deborde a droite */}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4, rowGap: 6 }}>

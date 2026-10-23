@@ -240,7 +240,7 @@ export function InkLineChart({ points: pointsIn, color, height = 220, compact, d
       {geo ? (
         <Svg width={width} height={H}>
           {!compact ? <ChartGrid ticks={geo.ticks} y={geo.y} x1={0} x2={width - PAD_R + 6} right={width} format={tickFormat ?? ((t) => num(t, digits))} /> : null}
-          {target ? <RefLine y={geo.y(target.value)} x1={PAD_L} x2={width - PAD_R} label={target.label} color={c.successText} avoid={geo.avoid} top={PAD_T - 14} bottom={H - PAD_B} /> : null}
+          {target ? <RefLine y={geo.y(target.value)} x1={PAD_L} x2={width - PAD_R} label={traduire(target.label)} color={c.successText} avoid={geo.avoid} top={PAD_T - 14} bottom={H - PAD_B} /> : null}
           {efface ? (
             <Defs>
               <ClipPath id={`${ids}c`}>
@@ -272,7 +272,7 @@ export function InkLineChart({ points: pointsIn, color, height = 220, compact, d
                 <Circle cx={geo.x(projection.date)} cy={geo.y(projection.value)} r={4} fill={k.card} stroke={stroke} strokeOpacity={0.7} strokeWidth={1.8} />
                 {projection.label ? (
                   <SvgText x={Math.min(geo.x(projection.date), width - 4)} y={geo.y(projection.value) - 12} textAnchor="end" fontSize={CHART.labelSize} fontFamily={CHART.labelFamily} fill={c.ink}>
-                    {projection.label}
+                    {traduire(projection.label)}
                   </SvgText>
                 ) : null}
               </G>
@@ -293,7 +293,7 @@ export function InkLineChart({ points: pointsIn, color, height = 220, compact, d
           </Reveal>
           {!compact ? geo.seals.map((q) => <SealMark key={`seal${q.i}`} x={q.x} y={q.y} size={24} />) : null}
           {act !== null ? <ChartCursor x={geo.xs[act]} top={compact ? 0 : PAD_T - 10} bottom={H - (compact ? 0 : PAD_B)} cy={barres ? null : geo.y(points[act].value)} compact={compact} color={stroke} /> : null}
-          {!compact ? geo.labels.map((l) => <AxisLabel key={`${l.text}${l.x}`} x={Math.min(Math.max(l.x, PAD_L + 14), width - PAD_R - 8)} y={H - 6} text={l.text} />) : null}
+          {!compact ? geo.labels.map((l) => <AxisLabel key={`${l.text}${l.x}`} x={Math.min(Math.max(l.x, PAD_L + 14), width - PAD_R - 8)} y={H - 6} text={traduire(l.text)} />) : null}
         </Svg>
       ) : null}
       {geo && act !== null && bulle ? <ChartTooltip x={geo.xs[act]} width={width} value={fmt(points[act].value)} caption={quand(points[act])} record={!!points[act].record} /> : null}

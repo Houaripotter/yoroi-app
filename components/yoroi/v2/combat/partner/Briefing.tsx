@@ -55,7 +55,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
               <Seal name={p.name} photoUri={p.photoUri} belt={p.belt} size={76} tone={ins.title.color} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Ink size={28} weight="black" tight numberOfLines={1}>
-                  {p.name}
+                  {traduire(p.name)}
                 </Ink>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <BeltBar belt={p.belt} width={66} height={10} />
@@ -108,7 +108,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
               <Ink size={13} weight="extraBold" color="rgba(255,255,255,0.85)">
                 {traduire("Objectif du jour")}</Ink>
               <Ink size={20} weight="black" tight color={P.white}>
-                {p.activeGoal.text}
+                {traduire(p.activeGoal.text)}
               </Ink>
             </View>
           ) : null}
@@ -116,13 +116,13 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
           {p.longTermGoal?.text ? (
             <Block title={traduire("Objectif à long terme, {0} % visé", p.longTermGoal.targetWinRate)} color={P.indigo}>
               <Ink size={15} weight="bold">
-                {p.longTermGoal.text}
+                {traduire(p.longTermGoal.text)}
               </Ink>
             </Block>
           ) : null}
 
           {p.strengths.length > 0 || ins.topTaken.length > 0 ? (
-            <Block title="Dangers, ses points forts" color={D}>
+            <Block title={traduire("Dangers, ses points forts")} color={D}>
               {p.strengths.length > 0 ? <Tags items={p.strengths} color={D} /> : null}
               {ins.topTaken.length > 0 ? (
                 <View style={{ gap: 6 }}>

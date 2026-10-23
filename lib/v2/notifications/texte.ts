@@ -22,14 +22,14 @@ const NOMBRE = String.raw`[+-]?\d+(?:[.,]\d+)?`;
 // Unités de santé qui ne doivent jamais suivre un chiffre
 const UNITES_APRES_CHIFFRE = [
   'kg', 'kgs', 'kilos?', 'lbs?', 'g',
-  'kcal', 'cal', traduire('calories?'),
+  'kcal', 'cal', 'calories?',
   'bpm', 'bat(?:tements)?/min',
   'ml', 'cl', 'dl', 'l', 'litres?',
   'cm', 'mm',
-  'km', 'm', traduire('mètres?'), 'metres?',
-  'pts', traduire('points de charge'),
-  traduire('h de sommeil'), traduire('heures? de sommeil'), traduire('h sans boire'), traduire('heures? sans boire'),
-  traduire('%\\s*de masse grasse'), '%\\s*mg',
+  'km', 'm', 'mètres?', 'metres?',
+  'pts', 'points de charge',
+  'h de sommeil', 'heures? de sommeil', 'h sans boire', 'heures? sans boire',
+  '%\\s*de masse grasse', '%\\s*mg',
 ];
 
 const MOTIF_CHIFFRE_UNITE = new RegExp(

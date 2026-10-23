@@ -15,7 +15,7 @@ export default function Legal() {
   return (
     <EspaceScreen title={traduire("Conditions et confidentialité")} subtitle={traduire("Tes données restent sur ton téléphone. Voici les textes complets.")} gap={14}>
       <Card>
-        <ValueRow first tint={TUILE.ardoise} icon="doc" label="Conditions d’utilisation" onPress={() => go('/terms')} />
+        <ValueRow first tint={TUILE.ardoise} icon="doc" label={traduire("Conditions d’utilisation")} onPress={() => go('/terms')} />
         <ValueRow tint={TUILE.indigo} icon="lock" label={traduire("Politique de confidentialité")} onPress={() => go('/privacy-policy')} />
         <ValueRow tint={TUILE.mousse} icon="shield" label={traduire("Ce que YOROI garde")} onPress={() => go('/privacy-data')} />
       </Card>

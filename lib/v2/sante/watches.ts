@@ -140,7 +140,7 @@ export const WATCHES: Watch[] = [
     color: '#007CC3',
     kind: 'Montre',
     sources: ['garmin'],
-    keeps: ['Body Battery', 'Stress', 'Training Readiness', traduire('Statut de variabilité'), traduire('Score de sommeil'), traduire('Charge d’entraînement'), traduire('Minutes d’intensité')],
+    keeps: ['Body Battery', traduire('Stress'), 'Training Readiness', traduire('Statut de variabilité'), traduire('Score de sommeil'), traduire('Charge d’entraînement'), traduire('Minutes d’intensité')],
     ios: {
       ok: true,
       app: 'Garmin Connect',
@@ -199,7 +199,7 @@ export const WATCHES: Watch[] = [
     color: '#1428A0',
     kind: 'Montre',
     sources: ['samsung'],
-    keeps: [traduire('Score d’énergie'), 'Stress', 'Indice antioxydant', traduire('Composition corporelle détaillée')],
+    keeps: [traduire('Score d’énergie'), traduire('Stress'), 'Indice antioxydant', traduire('Composition corporelle détaillée')],
     ios: NONE('', traduire('Les Galaxy Watch récentes ne s’associent qu’à un téléphone Android, et Samsung Health n’existe pas sur iPhone.')),
     android: {
       ok: true,

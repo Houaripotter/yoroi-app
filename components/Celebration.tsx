@@ -167,7 +167,7 @@ export const Celebration: React.FC<CelebrationProps> = ({
           </View>
 
           <Ink size={14} weight="extraBold" color={toneColor} style={styles.center}>
-            {config.label}
+            {traduire(config.label)}
           </Ink>
 
           <Animated.View style={[styles.stamp, { opacity: stampOpacity, transform: [{ scale: stampScale }] }]}>
@@ -204,12 +204,11 @@ export const Celebration: React.FC<CelebrationProps> = ({
           <Pressable
             onPress={handleClose}
             accessibilityRole="button"
-            accessibilityLabel="Continuer"
+            accessibilityLabel={traduire("Continuer")}
             style={({ pressed }) => [styles.continueButton, { backgroundColor: pressed ? c.accentPressed : c.accent }]}
           >
             <Ink size={16} weight="extraBold" color={c.onAccent}>
-              Continuer
-            </Ink>
+              {traduire("Continuer")}</Ink>
           </Pressable>
         </Animated.View>
       </View>

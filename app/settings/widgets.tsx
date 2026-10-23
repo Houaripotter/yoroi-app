@@ -67,7 +67,7 @@ export default function StyleDesWidgets() {
                   ) : null}
                 </View>
                 <View style={{ gap: 1 }}>
-                  <Ink size={13} weight="bold" color={actif ? c.ink : c.textSecondary} numberOfLines={2}>{s.nom}</Ink>
+                  <Ink size={13} weight="bold" color={actif ? c.ink : c.textSecondary} numberOfLines={2}>{traduire(s.nom)}</Ink>
                   {s.id === 'A' ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{traduire("Par défaut")}</Ink> : null}
                 </View>
               </Pressable>
@@ -79,8 +79,8 @@ export default function StyleDesWidgets() {
       <Card>
         <View style={{ padding: 12, gap: 10 }}>
           <View style={{ gap: 2, paddingHorizontal: 2 }}>
-            <Ink size={16} weight="black">{choisi.nom}</Ink>
-            <Ink size={13} color={c.textSecondary}>{choisi.phrase}</Ink>
+            <Ink size={16} weight="black">{traduire(choisi.nom)}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire(choisi.phrase)}</Ink>
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             {(['clair', 'sombre'] as const).map((m) => (

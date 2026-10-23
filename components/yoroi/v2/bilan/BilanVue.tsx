@@ -117,10 +117,10 @@ export function PhraseVue({ p }: { p: PhraseRiche }) {
       {p.segments.map((sg, i) =>
         sg.role ? (
           <Ink key={i} size={size} weight="black" color={couleurRole(c, sg.role)} style={{ lineHeight: lh }}>
-            {sg.texte}
+            {traduire(sg.texte)}
           </Ink>
         ) : (
-          <React.Fragment key={i}>{sg.texte}</React.Fragment>
+          <React.Fragment key={i}>{traduire(sg.texte)}</React.Fragment>
         ),
       )}
     </Ink>
@@ -243,7 +243,7 @@ function TuileCompo({ l }: { l: LigneCompo }) {
   const c = useC();
   return (
     <View style={{ flexGrow: 1, flexBasis: '30%', minWidth: 96, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 12, backgroundColor: c.background, borderWidth: 1, borderColor: c.divider, gap: 2 }}>
-      <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{l.label}</Ink>
+      <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire(l.label)}</Ink>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
         <Ink size={22} weight="black" tight style={{ fontVariant: ['tabular-nums'] }}>{l.valeur}</Ink>
         {l.unite ? <Ink size={12} weight="bold" color={c.textSecondary}>{l.unite}</Ink> : null}
@@ -323,7 +323,7 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
               </View>
               <Ink size={13} weight="extraBold" color={c.successText}>{enTete ?? traduire('Enregistré')}</Ink>
             </View>
-            <Ink size={30} weight="black" tight accessibilityRole="header">{b.titre}</Ink>
+            <Ink size={30} weight="black" tight accessibilityRole="header">{traduire(b.titre)}</Ink>
             <Ink size={14} weight="bold" color={c.textSecondary}>{b.sousTitre}</Ink>
           </View>
 
@@ -340,8 +340,8 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
               {!b.peseeDuJour ? <Ink size={12} color={c.textMuted}>{traduire("ta dernière pesée")}</Ink> : null}
               {v ? (
                 <View style={{ alignItems: 'center', gap: 2, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 16, backgroundColor: v.bon === true ? c.successTint : c.indigoTint }}>
-                  <Ink size={17} weight="black" color={v.bon === true ? c.successText : c.indigo} style={{ textAlign: 'center' }}>{v.titre}</Ink>
-                  <Ink size={13} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>{v.texte}</Ink>
+                  <Ink size={17} weight="black" color={v.bon === true ? c.successText : c.indigo} style={{ textAlign: 'center' }}>{traduire(v.titre)}</Ink>
+                  <Ink size={13} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire(v.texte)}</Ink>
                 </View>
               ) : null}
             </View>
@@ -356,7 +356,7 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
               {b.comparaisons.map((x, i) => (
                 <Rangee
                   key={x.id}
-                  label={x.label}
+                  label={traduire(x.label)}
                   sous={x.bruit ? traduire("depuis le {0}, dans la marge normale", dateCourte(x.depuis)) : traduire("depuis le {0}", dateCourte(x.depuis))}
                   valeur={`${signe(x.ecart)} kg`}
                   couleur={couleurEcart(c, x.bon, x.bruit)}
@@ -424,7 +424,7 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
                   <Ink size={13} weight="extraBold" color={c.indigo}>{b.objectif.atteint ? traduire('Objectif atteint') : traduire("{0} % du chemin", Math.round(b.objectif.pct * 100))}</Ink>
                 </View>
               ) : null}
-              {b.ligne ? <Ink size={15} weight="extraBold" color={tonCouleur(c, b.ligne.ton)}>{b.ligne.texte}</Ink> : null}
+              {b.ligne ? <Ink size={15} weight="extraBold" color={tonCouleur(c, b.ligne.ton)}>{traduire(b.ligne.texte)}</Ink> : null}
               {b.prevision ? <Ink size={14} color={c.ink} style={{ lineHeight: 20 }}>{b.prevision}</Ink> : null}
             </Carte>
           ) : null}
@@ -450,7 +450,7 @@ export function BilanSeanceChiffres({ b }: { b: BilanSeance }) {
             <Ink size={26} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.value}</Ink>
             {s.unit ? <Ink size={12} weight="bold" color={c.textSecondary}>{s.unit}</Ink> : null}
           </View>
-          <Ink size={12} weight="bold" color={c.textMuted}>{s.label}</Ink>
+          <Ink size={12} weight="bold" color={c.textMuted}>{traduire(s.label)}</Ink>
         </View>
       ))}
     </View>
@@ -472,17 +472,17 @@ export function BilanSeanceSections({ b }: { b: BilanSeance }) {
           {b.compteurs.map((k) => (
             <View key={k.label} style={{ flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 10, borderRadius: 16, backgroundColor: c.background, borderWidth: 1, borderColor: c.divider }}>
               <Ink size={26} weight="black" tight numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>{k.value}</Ink>
-              <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{k.label}</Ink>
+              <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{traduire(k.label)}</Ink>
             </View>
           ))}
         </View>
-        {b.objectifSemaine ? <Ink size={14} weight="extraBold" color={b.objectifSemaine.fait >= b.objectifSemaine.total ? c.successText : c.textSecondary}>{b.objectifSemaine.texte}</Ink> : null}
+        {b.objectifSemaine ? <Ink size={14} weight="extraBold" color={b.objectifSemaine.fait >= b.objectifSemaine.total ? c.successText : c.textSecondary}>{traduire(b.objectifSemaine.texte)}</Ink> : null}
         {b.annee ? (
           <View style={{ gap: 6 }}>
             <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
               <View style={{ width: `${Math.min(100, Math.round((b.annee.fait / b.annee.total) * 100))}%`, height: 8, borderRadius: 4, backgroundColor: c.indigo }} />
             </View>
-            <Ink size={13} color={c.textSecondary}>{b.annee.texte}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduire(b.annee.texte)}</Ink>
           </View>
         ) : null}
         {b.regularite ? <Ink size={13} color={c.textSecondary}>{b.regularite}</Ink> : null}
@@ -495,13 +495,13 @@ export function BilanSeanceSections({ b }: { b: BilanSeance }) {
             {b.coeur.fcMoy ? (
               <View>
                 <Ink size={26} weight="black" tight>{String(b.coeur.fcMoy)}</Ink>
-                <Ink size={12} weight="bold" color={c.textMuted}>bpm moyen</Ink>
+                <Ink size={12} weight="bold" color={c.textMuted}>{traduire("bpm moyen")}</Ink>
               </View>
             ) : null}
             {b.coeur.fcMax ? (
               <View>
                 <Ink size={26} weight="black" tight>{String(b.coeur.fcMax)}</Ink>
-                <Ink size={12} weight="bold" color={c.textMuted}>bpm max</Ink>
+                <Ink size={12} weight="bold" color={c.textMuted}>{traduire("bpm max")}</Ink>
               </View>
             ) : null}
             {b.intensite ? (
@@ -545,7 +545,7 @@ export function BilanSeanceSections({ b }: { b: BilanSeance }) {
 
       {b.techniques.length ? (
         <Carte>
-          <Titre>{b.techniquesTitre ?? 'Techniques'}</Titre>
+          <Titre>{b.techniquesTitre ?? traduire('Techniques')}</Titre>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {b.techniques.map((t) => (
               <View key={t} style={{ paddingHorizontal: 12, minHeight: 34, justifyContent: 'center', borderRadius: 17, backgroundColor: c.indigoTint }}>
@@ -569,7 +569,7 @@ export function BilanSeanceVue({ b, onDone, onShare, records }: { b: BilanSeance
         <Animated.View entering={ENTREE} style={{ gap: 14 }}>
           <View style={{ gap: 2 }}>
             <Ink size={14} weight="bold" color={c.textSecondary}>{b.sousTitre}</Ink>
-            <Ink size={30} weight="black" tight accessibilityRole="header">{b.titre}</Ink>
+            <Ink size={30} weight="black" tight accessibilityRole="header">{traduire(b.titre)}</Ink>
           </View>
           <BilanSeanceChiffres b={b} />
           {records}

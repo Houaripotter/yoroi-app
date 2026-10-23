@@ -50,11 +50,11 @@ import { useDecorationsSaison } from '@/lib/v2/saisons/reglage';
 import { CarteDecorations } from '@/components/yoroi/v2/saisons/CarteDecorations';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-const FONT_LABELS = ['Petite', 'Normale', 'Grande', traduire('Très grande')];
+const FONT_LABELS = [traduire('Petite'), traduire('Normale'), traduire('Grande'), traduire('Très grande')];
 const MODES_THEME: { key: YoroiMode; label: string }[] = [
-  { key: 'clair', label: 'Clair' },
-  { key: 'sombre', label: 'Sombre' },
-  { key: 'auto', label: 'Automatique' },
+  { key: 'clair', label: traduire('Clair') },
+  { key: 'sombre', label: traduire('Sombre') },
+  { key: 'auto', label: traduire('Automatique') },
 ];
 const WIDGETS: Record<StyleWidgets, { clair: number; sombre: number }> = {
   A: { clair: require('@/assets/widgets/apercu_a_clair.jpg'), sombre: require('@/assets/widgets/apercu_a_sombre.jpg') },
@@ -146,7 +146,7 @@ export default function Personnaliser() {
   const widget = STYLES_WIDGETS.find((x) => x.id === styleWidgets) ?? STYLES_WIDGETS[0];
   const logoMeta = LOGO_OPTIONS.find((o) => o.id === logo) ?? LOGO_OPTIONS[0];
   const blocs = blocsAffiches(disposition.ordre, disposition.caches, BLOCS_ACCUEIL);
-  const taille = FONT_LABELS[(fontSizeLevel ?? 2) - 1] ?? 'Normale';
+  const taille = FONT_LABELS[(fontSizeLevel ?? 2) - 1] ?? traduire('Normale');
 
   const choisirMode = (m: YoroiMode) => {
     if (m === mode) return;
@@ -182,7 +182,7 @@ export default function Personnaliser() {
   const styleL = Math.floor((W - 16 - 18) / 4);
 
   return (
-    <EspaceScreen title="Personnaliser" subtitle={traduire("Ta scène, ton personnage, ta photo, tes courbes, tes widgets et ton icône. Touche une tuile pour la changer.")} gap={12}>
+    <EspaceScreen title={traduire("Personnaliser")} subtitle={traduire("Ta scène, ton personnage, ta photo, tes courbes, tes widgets et ton icône. Touche une tuile pour la changer.")} gap={12}>
       {/* ============ TON UNIVERS ============ */}
       <Groupe title={traduire("Ton univers")} sub={traduire("Le décor et l’ambiance de ton app")} />
 
@@ -217,7 +217,7 @@ export default function Personnaliser() {
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <LanterneDessin mode={m.key} size={14} />
-                  <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.ink : c.textSecondary} numberOfLines={1}>{m.label}</Ink>
+                  <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.ink : c.textSecondary} numberOfLines={1}>{traduire(m.label)}</Ink>
                 </View>
               </Pressable>
             );
@@ -349,7 +349,7 @@ export default function Personnaliser() {
                       <Icon name="check" size={11} color={c.onAccent} stroke={3} />
                     </View>
                   ) : null}
-                  <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.accent : c.textSecondary} numberOfLines={1}>{s.nom}</Ink>
+                  <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.accent : c.textSecondary} numberOfLines={1}>{traduire(s.nom)}</Ink>
                 </View>
               </View>
             </Pressable>
@@ -427,7 +427,7 @@ export default function Personnaliser() {
                     </View>
                   ) : null}
                 </View>
-                <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.ink : c.textSecondary} numberOfLines={1}>{s.nom}</Ink>
+                <Ink size={12.5} weight={actif ? 'black' : 'bold'} color={actif ? c.ink : c.textSecondary} numberOfLines={1}>{traduire(s.nom)}</Ink>
               </Pressable>
             );
           })}
@@ -520,7 +520,7 @@ export default function Personnaliser() {
           apercu={
             <View style={{ height: 104, borderRadius: 15, backgroundColor: c.fillSoft, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 4, paddingBottom: 26 }}>
               {[1, 2, 3, 4].map((lvl) => (
-                <Ink key={lvl} size={11 + lvl * 3.5} weight="black" allowFontScaling={false} color={lvl === (fontSizeLevel ?? 2) ? c.accent : c.textMuted}>Aa</Ink>
+                <Ink key={lvl} size={11 + lvl * 3.5} weight="black" allowFontScaling={false} color={lvl === (fontSizeLevel ?? 2) ? c.accent : c.textMuted}>{traduire("Aa")}</Ink>
               ))}
             </View>
           }

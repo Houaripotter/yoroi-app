@@ -134,14 +134,14 @@ export default function TesSports() {
               key={s.id}
               onPress={() => toggle(s.id)}
               accessibilityRole="button"
-              accessibilityLabel={s.nom}
+              accessibilityLabel={traduire(s.nom)}
               accessibilityState={{ selected: on }}
               style={{ width: tileW, height: 178, borderRadius: 22, overflow: 'hidden', backgroundColor: on ? c.accentTint : c.surface, borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, paddingHorizontal: TILE_PAD, paddingTop: 8, paddingBottom: 12 }}
             >
               <View style={{ flex: 1, marginBottom: 6 }}>
                 <Image source={s.image} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
               </View>
-              <Ink size={tileFont(s.nom, tileW - 2 * TILE_PAD - (on ? 6 : 0))} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{s.nom}</Ink>
+              <Ink size={tileFont(s.nom, tileW - 2 * TILE_PAD - (on ? 6 : 0))} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{traduire(s.nom)}</Ink>
               {on ? <View style={{ position: 'absolute', left: 10, top: 10 }}><Check size={24} /></View> : null}
             </Pressable>
           );
@@ -176,10 +176,10 @@ export default function TesSports() {
                     onPress={() => toggle(s.id)}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
-                    accessibilityLabel={s.name}
+                    accessibilityLabel={traduire(s.name)}
                     style={{ minHeight: 44, borderRadius: 999, paddingHorizontal: 14, justifyContent: 'center', backgroundColor: on ? c.ink : c.surface, borderWidth: 1, borderColor: on ? c.ink : c.border }}
                   >
-                    <Ink size={14} weight="bold" color={on ? P.paper : c.ink}>{s.name}</Ink>
+                    <Ink size={14} weight="bold" color={on ? P.paper : c.ink}>{traduire(s.name)}</Ink>
                   </Pressable>
                 );
               })}

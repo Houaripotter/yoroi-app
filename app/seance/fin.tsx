@@ -297,7 +297,7 @@ export default function SeanceFin() {
             {stats.map((s) => (
               <View key={s.label} style={{ flexGrow: 1, flexBasis: '30%', minWidth: 96, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
                 <Ink size={26} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.value}</Ink>
-                <Ink size={12} weight="bold" color={c.textMuted}>{s.label}</Ink>
+                <Ink size={12} weight="bold" color={c.textMuted}>{traduire(s.label)}</Ink>
               </View>
             ))}
           </View>
@@ -349,7 +349,7 @@ export default function SeanceFin() {
         {/* Une ligne discrete, seulement quand elle sert */}
         {tip ? (
           <View style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, paddingTop: 14, paddingBottom: 4, paddingHorizontal: 16, backgroundColor: c.indigoTint, gap: 2 }}>
-            <Ink size={14} color={c.textSecondary}>{tip.text}</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire(tip.text)}</Ink>
             {!tip.done && slotDone !== 'busy' ? (
               <Pressable onPress={tip.onPress} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
                 <Ink size={14} weight="extraBold" color={c.indigo}>{tip.action}</Ink>

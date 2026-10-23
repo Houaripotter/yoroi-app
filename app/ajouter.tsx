@@ -232,7 +232,7 @@ export default function Ajouter() {
                 icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={6.5} y={6} width={11} height={12} rx={3} {...accentStroke} /><Path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 10v2.5l1.5 1" {...accentStroke} /></Svg>}
               />
             ) : null}
-            <QuickRow label="En direct" title={traduire("Démarrer avec le chrono")} onPress={() => open('/seance', { live: '1' })} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>} />
+            <QuickRow label={traduire("En direct")} title={traduire("Démarrer avec le chrono")} onPress={() => open('/seance', { live: '1' })} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>} />
           </View>
 
           {/* 2. LE CORPS */}
@@ -273,11 +273,11 @@ export default function Ajouter() {
               first
               soft
               label={provider ? traduire("Composition importée {0}{1}", /^[AEIOUH]/.test(provider) ? 'd’' : 'de ', provider) : traduire('Composition, connectée ou à la main')}
-              title="Balance"
+              title={traduire("Balance")}
               onPress={() => open('/body-composition')}
               icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} {...stroke} /><Path d="M12 3a9 9 0 0 1 9 9h-9z" {...stroke} /></Svg>}
             />
-            <QuickRow soft label={traduire("Taille, bras, cuisses")} title="Mensurations" onPress={() => open('/add-measurement')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={8} {...stroke} /><Path d="M12 4v4M4 12h4M16 12h4M12 16v4" {...stroke} /></Svg>} />
+            <QuickRow soft label={traduire("Taille, bras, cuisses")} title={traduire("Mensurations")} onPress={() => open('/add-measurement')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={8} {...stroke} /><Path d="M12 4v4M4 12h4M16 12h4M12 16v4" {...stroke} /></Svg>} />
             <QuickRow soft label={traduire("Avant, après, même cadrage")} title={traduire("Photo de forme")} onPress={() => open('/photos')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M4 8h3l2-3h6l2 3h3v11H4z" {...stroke} /><Circle cx={12} cy={13} r={3.5} {...stroke} /></Svg>} />
           </View>
 
@@ -290,7 +290,7 @@ export default function Ajouter() {
             style={({ pressed }) => ({ minHeight: 50, marginTop: 4, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.7 : 1 })}
           >
             <View style={{ flex: 1 }}>
-              <Ink size={15} weight="extraBold" color={c.textSecondary}>Autre chose</Ink>
+              <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire("Autre chose")}</Ink>
               {!more ? <Ink size={12} color={c.textMuted} numberOfLines={1}>{traduire("sommeil, eau, vidéo, combat, compétition")}</Ink> : null}
             </View>
             <Svg width={18} height={18} viewBox="0 0 24 24"><Path d={more ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} {...stroke} stroke={c.textSecondary} /></Svg>
@@ -306,8 +306,8 @@ export default function Ajouter() {
                   style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}
                 >
                   <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold">{o.title}</Ink>
-                    <Ink size={12} color={c.textSecondary} numberOfLines={1}>{o.sub}</Ink>
+                    <Ink size={15} weight="extraBold">{traduire(o.title)}</Ink>
+                    <Ink size={12} color={c.textSecondary} numberOfLines={1}>{traduire(o.sub)}</Ink>
                   </View>
                   <Svg width={14} height={14} viewBox="0 0 24 24"><Path d="M9 6l6 6-6 6" {...stroke} stroke={c.textMuted} /></Svg>
                 </Pressable>

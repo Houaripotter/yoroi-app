@@ -63,7 +63,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, start,
   const phraseRang = perso ? traduire("Ton personnage commence au rang {0}. Il évolue avec toi dans le Dojo.", rankName) : traduire("Tu commences au rang {0}. Ta progression se suit dans le Dojo.", rankName);
 
   return (
-    <Shell {...nav} title={title} gap={14} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={title} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
       {start != null ? (
         <Animated.View entering={FadeInDown.duration(380)} onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 8 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton chemin")}</Ink>

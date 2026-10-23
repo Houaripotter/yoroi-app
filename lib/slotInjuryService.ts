@@ -108,7 +108,7 @@ export const cancelSlotsForInjury = async (injury: Injury): Promise<number> => {
       await cancelSlot(
         slot.id,
         weekStart,
-        traduire("Blessure: {0} (EVA {1}/10)", injury.zone_id, injury.eva_score),
+        `Blessure: ${injury.zone_id} (EVA ${injury.eva_score}/10)`,
         injury.id
       );
       count++;

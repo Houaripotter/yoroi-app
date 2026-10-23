@@ -17,7 +17,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
 
 /** Etiquette « exemple » bien visible, posee au-dessus de l'apercu (jamais sur la courbe) */
-export function ExampleTag({ text = 'Exemple' }: { text?: string }) {
+export function ExampleTag({ text = traduire('Exemple') }: { text?: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (

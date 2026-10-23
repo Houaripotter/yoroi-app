@@ -66,7 +66,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   },
   {
     id: "w6",
-    title: "Plateau",
+    title: traduire("Plateau"),
     content: traduire("Un plateau est normal, ton corps s'adapte. Laisse passer deux ou trois semaines avant de changer tes repas ou ton entraînement."),
     category: 'weight',
   },
@@ -92,7 +92,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   },
   {
     id: "n3",
-    title: "Bonnes graisses",
+    title: traduire("Bonnes graisses"),
     content: traduire("Les graisses ne sont pas l'ennemi. Avocat, noix, huile d'olive : ton corps en a besoin, en quantité raisonnable."),
     category: 'nutrition',
   },
@@ -110,19 +110,19 @@ export const HEALTH_TIPS: HealthTip[] = [
   },
   {
     id: "n6",
-    title: "Petits plaisirs",
+    title: traduire("Petits plaisirs"),
     content: traduire("Tout t'interdire mène souvent au craquage. Garde une petite place pour le plaisir, c'est ce qui permet de tenir."),
     category: 'nutrition',
   },
   {
     id: "n7",
-    title: "Fibres",
+    title: traduire("Fibres"),
     content: traduire("Légumes, fruits, légumineuses, céréales complètes : les fibres calent et aident la digestion. Vise environ 25 à 30 g par jour."),
     category: 'nutrition',
   },
   {
     id: "n8",
-    title: "Sel",
+    title: traduire("Sel"),
     content: traduire("Trop de sel fait retenir de l'eau et gonfle le chiffre de la balance. Les plats préparés en contiennent beaucoup."),
     category: 'nutrition',
   },
@@ -226,13 +226,13 @@ export const HEALTH_TIPS: HealthTip[] = [
   // === MENTAL ===
   {
     id: "m1",
-    title: "Stress",
+    title: traduire("Stress"),
     content: traduire("Le stress qui dure pèse sur ton sommeil et ton appétit. Une marche ou quelques respirations lentes aident à redescendre."),
     category: 'mental',
   },
   {
     id: "m2",
-    title: "Suivi",
+    title: traduire("Suivi"),
     content: traduire("Noter ton poids et tes repas t'aide à voir ce qui marche vraiment. Le suivi rend tes progrès visibles."),
     category: 'mental',
   },
@@ -244,7 +244,7 @@ export const HEALTH_TIPS: HealthTip[] = [
   },
   {
     id: "m4",
-    title: "Habitudes",
+    title: traduire("Habitudes"),
     content: traduire("Une habitude met souvent plusieurs semaines à s'installer. Sois patient, elle finit par devenir naturelle."),
     category: 'mental',
   },

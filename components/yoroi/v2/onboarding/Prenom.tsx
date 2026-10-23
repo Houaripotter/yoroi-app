@@ -19,7 +19,7 @@ export function Prenom({ nav, name, onChange, onNext }: { nav: Nav; name: string
   }, []);
   const shown = name.trim();
   return (
-    <Shell {...nav} title={traduire("D’abord, **ton prénom**")} footer={<MainButton label="Continuer" onPress={onNext} disabled={!valid} />}>
+    <Shell {...nav} title={traduire("D’abord, **ton prénom**")} footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!valid} />}>
       <View style={{ minHeight: 120, justifyContent: 'center', alignItems: 'center', paddingVertical: 8 }} accessibilityLiveRegion="polite">
         {shown ? (
           <Animated.View key={shown.length > 0 ? 'on' : 'off'} entering={ZoomIn.springify().damping(14)}>

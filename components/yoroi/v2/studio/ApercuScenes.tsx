@@ -112,7 +112,7 @@ export function ApercuScenes({ visible, onClose }: { visible: boolean; onClose: 
               <Button tone="ghost" small icon="back" label={traduire("Précédente")} disabled={index === 0} onPress={() => aller(index - 1)} />
             </View>
             <View style={{ flex: 1 }}>
-              <Button tone="ink" small icon="chevron" label="Suivante" disabled={index === total - 1} onPress={() => aller(index + 1)} />
+              <Button tone="ink" small icon="chevron" label={traduire("Suivante")} disabled={index === total - 1} onPress={() => aller(index + 1)} />
             </View>
           </View>
         </View>

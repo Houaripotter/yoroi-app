@@ -105,7 +105,7 @@ export default function ImportWorkoutsScreen() {
     } catch (error: any) {
       logger.error('Import error:', error);
       if (successCount > 0) DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
-      appAlert('Import incomplet', successCount > 0 ? traduire("{0} avant l’arrêt.", plural(successCount, 'séance importée', 'séances importées')) : traduire('L’import n’a pas pu aller au bout.'));
+      appAlert(traduire('Import incomplet'), successCount > 0 ? traduire("{0} avant l’arrêt.", plural(successCount, 'séance importée', 'séances importées')) : traduire('L’import n’a pas pu aller au bout.'));
     } finally {
       setIsImporting(false);
     }
@@ -180,7 +180,7 @@ export default function ImportWorkoutsScreen() {
                 <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                   <CheckDot on={a.selected} />
                   <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold" numberOfLines={1}>{a.name}</Ink>
+                    <Ink size={15} weight="extraBold" numberOfLines={1}>{traduire(a.name)}</Ink>
                     <Ink size={12} color={P.ink2}>{`${a.date}, ${a.startTime}`}</Ink>
                   </View>
                 </View>
@@ -214,10 +214,10 @@ export default function ImportWorkoutsScreen() {
         </>
       ) : null}
 
-      <Sheet visible={!!pickerActivity} onClose={() => setSportPickerId(null)} title="Quel sport ?">
+      <Sheet visible={!!pickerActivity} onClose={() => setSportPickerId(null)} title={traduire("Quel sport ?")}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {SPORTS.map((s) => (
-            <Chip key={s.id} label={s.name} on={pickerActivity?.yoroiSportId === s.id} onPress={() => pickerActivity && changeSport(pickerActivity.id, s.id)} />
+            <Chip key={s.id} label={traduire(s.name)} on={pickerActivity?.yoroiSportId === s.id} onPress={() => pickerActivity && changeSport(pickerActivity.id, s.id)} />
           ))}
         </View>
       </Sheet>

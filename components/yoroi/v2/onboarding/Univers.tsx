@@ -46,7 +46,7 @@ export function Univers({ nav, genre, value, onPick, onNext }: { nav: Nav; genre
   const { height } = useWindowDimensions();
   const cardH = Math.max(112, Math.min(150, Math.round((height - 400) / 3)));
   return (
-    <Shell {...nav} title={traduire("Ton **univers**")} sub={traduire("Le décor et le personnage qui t’accompagnent. Tu pourras changer dans Réglages, Personnaliser.")} gap={14} footer={<MainButton label="Continuer" onPress={onNext} />}>
+    <Shell {...nav} title={traduire("Ton **univers**")} sub={traduire("Le décor et le personnage qui t’accompagnent. Tu pourras changer dans Réglages, Personnaliser.")} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
       {UNIVERS_CHOIX.map((u) => (
         <Carte key={u.id} choix={u.id} nom={u.nom} phrase={u.phrase} genre={genre} selected={value === u.id} onPress={() => onPick(u.id)} height={cardH} />
       ))}

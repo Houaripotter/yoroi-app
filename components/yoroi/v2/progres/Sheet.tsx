@@ -55,7 +55,7 @@ export function Sheet({ visible, onClose, title, text, children, actions }: Prop
                   style={({ pressed }) => ({ height: 54, borderRadius: 18, backgroundColor: bg, borderWidth: a.tone === 'ghost' || !a.tone ? 1.5 : 0, borderColor: '#D5D2CA', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}
                 >
                   <Ink size={16} weight="extraBold" color={fg}>
-                    {a.label}
+                    {traduire(a.label)}
                   </Ink>
                 </Pressable>
               );

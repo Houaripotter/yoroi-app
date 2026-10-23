@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { traduire } from '@/lib/i18n/tr';
 
 export type SanteIconName =
   | 'steps'
@@ -91,7 +92,7 @@ const P: Record<SanteIconName, string> = {
   thermo: 'M10 13.5V5a2 2 0 0 1 4 0v8.5a4 4 0 1 1-4 0zM12 9v7',
   lotus: 'M12 19c-4 0-8-2-9-6 3 0 6 1 9 4 3-3 6-4 9-4-1 4-5 6-9 6zM12 17c-2-2-3-5-3-8 1 0 2.5 1 3 2 .5-1 2-2 3-2 0 3-1 6-3 8z',
   scale: 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8.5 10a3.5 3.5 0 0 1 7 0M12 10l1.5-2',
-  body: 'M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM5 8h14M12 8v6M12 14l-3 7M12 14l3 7',
+  body: traduire('M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM5 8h14M12 8v6M12 14l-3 7M12 14l3 7'),
   muscle: 'M4 15c0-4 3-6 5-6l1-4h3l-1 4c3 0 4 2 4 3 2-1 4 0 4 2s-2 4-6 4H8c-2 0-4-1-4-3z',
   sugar: 'M12 3l7 4v8l-7 4-7-4V7zM12 11l7-4M12 11L5 7M12 11v8',
   watch: 'M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zM9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2.5l1.5 1',

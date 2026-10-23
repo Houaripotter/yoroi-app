@@ -67,7 +67,7 @@ export function FastPhases({ elapsedHours, markers, color }: { elapsedHours: num
             <View style={{ flex: 1, paddingBottom: 14, gap: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                 <Ink size={15} weight={on ? 'black' : 'extraBold'} color={on ? P.ink : done ? P.ink2 : P.muted}>
-                  {m.label}
+                  {traduire(m.label)}
                 </Ink>
                 <Ink size={12} weight="bold" color={P.ink2}>
                   {m.hour === 0 ? traduire('dès le début') : `vers ${m.hour} h`}
@@ -75,7 +75,7 @@ export function FastPhases({ elapsedHours, markers, color }: { elapsedHours: num
               </View>
               {on ? (
                 <Ink size={13} weight="medium" color={P.ink2}>
-                  {m.text}
+                  {traduire(m.text)}
                 </Ink>
               ) : null}
             </View>

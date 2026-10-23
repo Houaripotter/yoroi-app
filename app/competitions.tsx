@@ -93,10 +93,10 @@ export default function CompetitionsScreen() {
   };
 
   const clearOldImports = () => {
-    appAlert('Effacer l’ancien calendrier', traduire("{0} compétitions passées venaient de l’ancien import, sans combat ni résultat. Tu veux les effacer ?", oldImports.length), [
+    appAlert(traduire('Effacer l’ancien calendrier'), traduire("{0} compétitions passées venaient de l’ancien import, sans combat ni résultat. Tu veux les effacer ?", oldImports.length), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
-        text: 'Effacer',
+        text: traduire('Effacer'),
         style: 'destructive',
         onPress: async () => {
           for (const x of oldImports) {
@@ -121,7 +121,7 @@ export default function CompetitionsScreen() {
       <Pressable
         onPress={() => go(x)}
         accessibilityRole="button"
-        accessibilityLabel={x.nom}
+        accessibilityLabel={traduire(x.nom)}
         style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: pressed ? P.white : blancA(0.86), borderWidth: 1, borderColor: c.divider, opacity: dim && !medal ? 0.8 : 1 })}
       >
         <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: dim ? c.fillSubtle : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
@@ -137,7 +137,7 @@ export default function CompetitionsScreen() {
           )}
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold" numberOfLines={2}>{x.nom}</Ink>
+          <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(x.nom)}</Ink>
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[longDate(x.date.slice(0, 10), true), x.lieu].filter(Boolean).join(', ')}</Ink>
           {x.categorie_poids ? <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{`${x.categorie_poids}${x.poids_max && x.poids_max < 900 ? `, ${formatKg(x.poids_max)} kg max` : ''}`}</Ink> : null}
         </View>
@@ -180,7 +180,7 @@ export default function CompetitionsScreen() {
                   {nextDays === 0 ? traduire('Jour J') : String(nextDays)}
                   {nextDays > 0 ? <Ink size={18} weight="bold" color={c.textSecondary}>{nextDays > 1 ? ' jours' : ' jour'}</Ink> : null}
                 </Ink>
-                <Ink size={18} weight="extraBold" numberOfLines={2}>{next.nom}</Ink>
+                <Ink size={18} weight="extraBold" numberOfLines={2}>{traduire(next.nom)}</Ink>
                 <Ink size={13} color={c.textSecondary}>{[longDate(next.date.slice(0, 10), true), next.lieu, getSportName(next.sport)].filter(Boolean).join(', ')}</Ink>
                 {gap !== null ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: gap <= 0 ? c.successTint : c.dangerTint }}>
@@ -252,15 +252,15 @@ export default function CompetitionsScreen() {
             {calendarsFor(sport as Sport).map((cal, i) => (
               <Pressable
                 key={cal.id}
-                onPress={() => { tap(); WebBrowser.openBrowserAsync(cal.url).catch(() => appAlert('Site indisponible', traduire('Le site ne s’ouvre pas pour l’instant. Réessaie plus tard.'))); }}
+                onPress={() => { tap(); WebBrowser.openBrowserAsync(cal.url).catch(() => appAlert(traduire('Site indisponible'), traduire('Le site ne s’ouvre pas pour l’instant. Réessaie plus tard.'))); }}
                 accessibilityRole="link"
                 accessibilityLabel={traduire("Ouvrir le calendrier {0}", cal.name)}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 60, paddingVertical: 10, backgroundColor: pressed ? P.white : 'transparent', borderTopWidth: i ? 1 : 0, borderTopColor: c.divider })}
               >
                 <Icon name="calendar" size={20} color={c.accent} />
                 <View style={{ flex: 1, gap: 1 }}>
-                  <Ink size={15} weight="extraBold">{cal.name}</Ink>
-                  <Ink size={12} color={c.textSecondary}>{cal.sub}</Ink>
+                  <Ink size={15} weight="extraBold">{traduire(cal.name)}</Ink>
+                  <Ink size={12} color={c.textSecondary}>{traduire(cal.sub)}</Ink>
                 </View>
                 <Icon name="chevron" size={18} color={c.textMuted} />
               </Pressable>

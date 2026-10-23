@@ -228,7 +228,7 @@ export default function OnSentraine() {
             <View style={{ flexDirection: 'row', padding: 4, borderRadius: 18, backgroundColor: c.fillSubtle, gap: 4 }} accessibilityRole="tablist">
               {[
                 { on: !direct, label: traduire('Séance faite'), a11y: traduire('Noter une séance faite'), v: false },
-                { on: direct, label: 'En direct, chrono', a11y: traduire('Démarrer en direct, avec le chrono'), v: true },
+                { on: direct, label: traduire('En direct, chrono'), a11y: traduire('Démarrer en direct, avec le chrono'), v: true },
               ].map((o) => (
                 <Pressable
                   key={o.label}
@@ -241,7 +241,7 @@ export default function OnSentraine() {
                   accessibilityLabel={o.a11y}
                   style={{ flex: 1, minHeight: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: o.on ? c.surface : 'transparent', borderWidth: o.on ? 1 : 0, borderColor: c.border }}
                 >
-                  <Ink size={14} weight="extraBold" color={o.on ? c.ink : c.textSecondary} numberOfLines={1}>{o.label}</Ink>
+                  <Ink size={14} weight="extraBold" color={o.on ? c.ink : c.textSecondary} numberOfLines={1}>{traduire(o.label)}</Ink>
                 </Pressable>
               ))}
             </View>
@@ -271,7 +271,7 @@ export default function OnSentraine() {
             <Ink size={22} weight="black" tight>{draftTitle(draft)}</Ink>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable onPress={() => router.push({ pathname: draftRoute(draft) as any, params: { resume: '1' } })} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
-                <Ink size={15} weight="extraBold" color={c.onAccent}>Reprendre</Ink>
+                <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire("Reprendre")}</Ink>
               </Pressable>
               <Pressable
                 onPress={async () => {
@@ -281,7 +281,7 @@ export default function OnSentraine() {
                 accessibilityRole="button"
                 style={{ minHeight: 48, paddingHorizontal: 16, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: blancA(0.7) }}
               >
-                <Ink size={14} weight="bold" color={c.textSecondary}>Abandonner</Ink>
+                <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Abandonner")}</Ink>
               </Pressable>
             </View>
           </View>
@@ -293,8 +293,8 @@ export default function OnSentraine() {
             {heroImg ? <Image source={heroImg} style={{ position: 'absolute', right: -10, bottom: -66, width: 165, height: 220 }} resizeMode="contain" /> : null}
             <View style={{ position: 'absolute', left: 18, top: 18, maxWidth: width * 0.55, gap: 3 }}>
               <Ink size={13} weight="bold" color={c.goldLight}>{hero.over}</Ink>
-              <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={2}>{hero.title}</Ink>
-              <Ink size={13} color={c.onDarkSecondary} numberOfLines={1}>{hero.sub}</Ink>
+              <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={2}>{traduire(hero.title)}</Ink>
+              <Ink size={13} color={c.onDarkSecondary} numberOfLines={1}>{traduire(hero.sub)}</Ink>
             </View>
             <View style={{ position: 'absolute', left: 18, bottom: 16, minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: c.accent, justifyContent: 'center' }}>
               <Ink size={15} weight="extraBold" color={c.onAccent}>{hero.cta}</Ink>
@@ -353,7 +353,7 @@ export default function OnSentraine() {
               <Pressable key={s.id} onPress={() => go(s.id)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.divider })}>
                 <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: sportTint(s.id), borderWidth: 1, borderColor: c.border }} />
                 <View style={{ flex: 1 }}>
-                  <Ink size={15} weight="extraBold">{s.name}</Ink>
+                  <Ink size={15} weight="extraBold">{traduire(s.name)}</Ink>
                   <Ink size={12} color={c.textMuted}>{KIND_LABEL[seanceKindFor(s.id)]}</Ink>
                 </View>
                 <Icon name="chevron" size={18} color={c.textMuted} />

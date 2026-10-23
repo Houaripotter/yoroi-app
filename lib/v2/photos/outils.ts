@@ -9,9 +9,9 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 export type Pose = 'face' | 'profil' | 'dos';
 
 export const POSES: { value: Pose; label: string }[] = [
-  { value: 'face', label: 'Face' },
+  { value: 'face', label: traduire('Face') },
   { value: 'profil', label: traduire('Profil') },
-  { value: 'dos', label: 'Dos' },
+  { value: 'dos', label: traduire('Dos') },
 ];
 
 export function poseLabel(p: Pose | null | undefined): string {

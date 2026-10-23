@@ -53,7 +53,7 @@ const PERM_LABELS: { key: keyof HealthPermissions; label: string }[] = [
   { key: 'calories', label: traduire('Calories') },
   { key: 'distance', label: 'Distance' },
   { key: 'oxygenSaturation', label: traduire('Oxygène') },
-  { key: 'bodyComposition', label: 'Composition' },
+  { key: 'bodyComposition', label: traduire('Composition') },
   { key: 'workouts', label: traduire('Séances') },
 ];
 
@@ -174,7 +174,7 @@ export default function HealthConnectScreen() {
             );
             break;
           case 'HEALTH_CONNECT_NOT_INSTALLED':
-            appAlert('Health Connect absent', traduire("Health Connect n'est pas installé. C'est l'app de Google qui rassemble tes données de santé. Installe-la depuis le Play Store pour continuer."), [
+            appAlert(traduire('Health Connect absent'), traduire("Health Connect n'est pas installé. C'est l'app de Google qui rassemble tes données de santé. Installe-la depuis le Play Store pour continuer."), [
               { text: traduire('Plus tard'), style: 'cancel' },
               { text: traduire('Installer'), onPress: () => safeOpenURL('market://details?id=com.google.android.apps.healthdata') },
             ]);
@@ -186,7 +186,7 @@ export default function HealthConnectScreen() {
       await loadStatus();
     } catch (e) {
       logger.error('[HealthConnect v2] connexion', e);
-      appAlert('Oups', traduire('Ça n’a pas marché. Réessaie plus tard.'));
+      appAlert(traduire('Oups'), traduire('Ça n’a pas marché. Réessaie plus tard.'));
     } finally {
       setConnecting(false);
     }
@@ -246,7 +246,7 @@ export default function HealthConnectScreen() {
             { text: traduire('Annuler'), style: 'cancel' },
             Platform.OS === 'android'
               ? {
-                  text: 'Ouvrir Health Connect',
+                  text: traduire('Ouvrir Health Connect'),
                   onPress: () => {
                     if (typeof hcSettings === 'function') Promise.resolve(hcSettings.call(healthConnect)).catch(() => Linking.openSettings());
                     else Linking.openSettings();
@@ -278,7 +278,7 @@ export default function HealthConnectScreen() {
     try {
       const r = await diagnoseWorkouts();
       if (r.unavailable) {
-        appAlert('Diagnostic', r.unavailable);
+        appAlert(traduire('Diagnostic'), r.unavailable);
         return;
       }
       const actions: SheetAction[] = [];
@@ -398,7 +398,7 @@ export default function HealthConnectScreen() {
 
       {isLive ? (
         <CardBox>
-          <ActionRow first icon="sync" title={importing ? progress || 'Import en cours' : traduire('Réimporter toutes mes séances')} sub={importing ? traduire('Patiente, ça peut prendre quelques minutes') : traduire("Tout l'historique depuis {0}", provider)} onPress={reimport} busy={importing} color={S.mossText} tint={S.mossSoft} />
+          <ActionRow first icon="sync" title={importing ? progress || traduire('Import en cours') : traduire('Réimporter toutes mes séances')} sub={importing ? traduire('Patiente, ça peut prendre quelques minutes') : traduire("Tout l'historique depuis {0}", provider)} onPress={reimport} busy={importing} color={S.mossText} tint={S.mossSoft} />
           {Platform.OS === 'ios' ? <ActionRow icon="search" title={diagnosing ? 'Diagnostic en cours' : traduire('Diagnostiquer mes séances')} sub={traduire("Comprendre pourquoi les séances ne s'importent pas")} onPress={diagnose} busy={diagnosing} color={S.indigo} tint={S.indigoSoft} /> : null}
           <ActionRow icon="spark" title={askingMore ? 'Autorisation en cours' : traduire('Autoriser les nouvelles mesures')} sub={Platform.OS === 'android' ? traduire('Tension, nutrition, puissance, historique complet') : traduire('Poignet, lumière du jour, nutrition, récupération')} onPress={askMore} busy={askingMore} color={S.gold} tint={S.goldSoft} />
           <ActionRow icon="close" title={traduire("Déconnecter")} sub={traduire("Arrêter la synchronisation")} onPress={disconnect} color={S.danger} tint={S.dangerSoft} />
@@ -431,15 +431,15 @@ export default function HealthConnectScreen() {
           return (
             <View key={f} style={{ gap: 6 }}>
               <Ink size={12} weight="extraBold" color={S.ink2}>
-                {FAMILY[f].label}
+                {traduire(FAMILY[f].label)}
               </Ink>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {defs.map((m) => (
-                  <Press key={m.key} onPress={() => router.push(`/sante/${m.key}` as any)} accessibilityRole="button" accessibilityLabel={m.label}>
+                  <Press key={m.key} onPress={() => router.push(`/sante/${m.key}` as any)} accessibilityRole="button" accessibilityLabel={traduire(m.label)}>
                     <View style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 4, paddingRight: 10, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2 }}>
                       <IconDot name={METRIC_ICON[m.key] ?? 'pulse'} color={FAMILY[f].color} tint={FAMILY[f].tint} size={28} />
                       <Ink size={12} weight="bold">
-                        {m.label}
+                        {traduire(m.label)}
                       </Ink>
                     </View>
                   </Press>
@@ -458,7 +458,7 @@ export default function HealthConnectScreen() {
       {Platform.OS === 'android' && isLive && perms && anyPerm ? (
         <CardBox>
           {PERM_LABELS.map((p, i) => (
-            <ActionRow key={p.key} first={i === 0} icon={perms[p.key] ? 'check' : 'close'} title={p.label} sub={perms[p.key] ? traduire('Autorisé') : traduire('Non autorisé')} color={perms[p.key] ? S.mossText : S.muted} tint={perms[p.key] ? S.mossSoft : S.line2} />
+            <ActionRow key={p.key} first={i === 0} icon={perms[p.key] ? 'check' : 'close'} title={traduire(p.label)} sub={perms[p.key] ? traduire('Autorisé') : traduire('Non autorisé')} color={perms[p.key] ? S.mossText : S.muted} tint={perms[p.key] ? S.mossSoft : S.line2} />
           ))}
         </CardBox>
       ) : null}
@@ -473,7 +473,7 @@ export default function HealthConnectScreen() {
                 <BrandMark text={show.emoji} color={show.color} size={38} />
                 <View style={{ flex: 1 }}>
                   <Ink size={15} weight="extraBold">
-                    {show.name}
+                    {traduire(show.name)}
                   </Ink>
                   <Ink size={12} weight="bold" color={S.ink2}>
                     {[d.last_type ? DATA_TYPE_LABELS[d.last_type] ?? d.last_type : null, d.last_date ? whenLabel(d.last_date) : null].filter(Boolean).join(', ') || traduire('Reçu récemment')}
@@ -502,9 +502,9 @@ export default function HealthConnectScreen() {
 
       {!isLive ? (
         <CardBox>
-          <ActionRow first icon="spark" title="Automatique" sub={traduire("Plus besoin de tout saisir à la main")} color={S.accent} tint={S.accentSoft} />
+          <ActionRow first icon="spark" title={traduire("Automatique")} sub={traduire("Plus besoin de tout saisir à la main")} color={S.accent} tint={S.accentSoft} />
           <ActionRow icon="shield" title={traduire("Privé")} sub={traduire("Tes données restent sur ton téléphone")} color={S.indigo} tint={S.indigoSoft} />
-          <ActionRow icon="watch" title="Compatible" sub={traduire("Toute marque qui partage avec {0}", provider)} color={S.mossText} tint={S.mossSoft} />
+          <ActionRow icon="watch" title={traduire("Compatible")} sub={traduire("Toute marque qui partage avec {0}", provider)} color={S.mossText} tint={S.mossSoft} />
         </CardBox>
       ) : null}
 
@@ -523,7 +523,7 @@ export default function HealthConnectScreen() {
                   <SanteIcon name={it.ok ? 'check' : 'close'} size={14} color={it.ok ? S.mossText : S.danger} width={2.6} />
                 </View>
                 <Ink size={14} weight="bold" style={{ flex: 1 }}>
-                  {it.label}
+                  {traduire(it.label)}
                 </Ink>
               </View>
             ))}

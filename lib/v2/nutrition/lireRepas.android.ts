@@ -7,6 +7,7 @@
 import { Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
 import type { EntreeRepas, TypeRepas } from './mange';
+import { traduire } from '@/lib/i18n/tr';
 
 export const FOURNISSEUR_REPAS = 'Health Connect';
 
@@ -40,7 +41,7 @@ export async function lireRepas(jours = 7): Promise<EntreeRepas[] | null> {
     let pageToken: string | undefined;
     for (let page = 0; page < 10; page++) {
       const res: any = await avecDelai(
-        Promise.resolve(HC.readRecords('Nutrition', { timeRangeFilter: { operator: 'between', startTime: from.toISOString(), endTime: to.toISOString() }, ...(pageToken ? { pageToken } : {}) })),
+        Promise.resolve(HC.readRecords(traduire('Nutrition'), { timeRangeFilter: { operator: 'between', startTime: from.toISOString(), endTime: to.toISOString() }, ...(pageToken ? { pageToken } : {}) })),
         15000,
       );
       for (const r of res?.records ?? []) {

@@ -167,7 +167,7 @@ export function methodSuggestions(sport: string, trainings: Training[]): string[
   }
   const base = isGrappling(sport)
     ? EXERCISE_LIBRARY.filter((e) => e.category === 'jjb' && (e.muscle === 'SOUMISSIONS' || e.muscle === 'CLÉS' || e.muscle === 'LEG LOCKS')).map((e) => e.name)
-    : ['KO', traduire('Arrêt de l’arbitre'), traduire('Aux points'), 'Abandon'];
+    : ['KO', 'Arrêt de l’arbitre', 'Aux points', 'Abandon'];
   const out = [...Array.from(used.entries()).sort((a, b) => b[1] - a[1]).map(([m]) => m)];
   for (const b of base) if (!out.includes(b)) out.push(b);
   return out.slice(0, 40);

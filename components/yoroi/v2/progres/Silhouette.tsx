@@ -159,7 +159,7 @@ export function Silhouette({ items, height = 310, active = null, onPressItem }: 
             const body = (
               <View style={{ alignItems: p.side === 'left' ? 'flex-end' : 'flex-start' }}>
                 <Ink size={12} weight="bold" color={on ? c.accent : c.textSecondary} numberOfLines={1}>
-                  {p.item.label}
+                  {traduire(p.item.label)}
                 </Ink>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
                   <Ink size={17} weight="black" tight numberOfLines={1}>

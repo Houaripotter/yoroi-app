@@ -84,7 +84,7 @@ export default function CombatDetailScreen() {
             router.back();
           } catch (error) {
             logger.error('Error deleting combat:', error);
-            appAlert('Oups', traduire('Le combat n’a pas pu être supprimé. Réessaie.'));
+            appAlert(traduire('Oups'), traduire('Le combat n’a pas pu être supprimé. Réessaie.'));
           } finally {
             setDeleting(false);
           }
@@ -108,7 +108,7 @@ export default function CombatDetailScreen() {
 
   const win = combat.resultat === 'victoire';
   const loss = combat.resultat === 'defaite';
-  const title = win ? traduire('Victoire') : loss ? traduire('Défaite') : 'Match nul';
+  const title = win ? traduire('Victoire') : loss ? traduire('Défaite') : traduire('Match nul');
   const tint = win ? c.goldTint : loss ? '#EEE1DF' : c.fillSubtle;
   const diff = combat.poids_jour_j && combat.poids_pesee ? combat.poids_jour_j - combat.poids_pesee : null;
 
@@ -144,14 +144,14 @@ export default function CombatDetailScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Compétition")}</Ink>
-                <Ink size={16} weight="extraBold" numberOfLines={2}>{competition.nom}</Ink>
+                <Ink size={16} weight="extraBold" numberOfLines={2}>{traduire(competition.nom)}</Ink>
               </View>
               <Icon name="chevron" size={18} color={c.textMuted} />
             </Glass>
           ) : null}
 
           <Glass style={{ gap: 4 }}>
-            <Ink size={12} weight="bold" color={c.textSecondary}>Adversaire</Ink>
+            <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Adversaire")}</Ink>
             <Ink size={20} weight="black" tight>{combat.adversaire_nom || traduire('Non renseigné')}</Ink>
             {combat.adversaire_club ? <Ink size={14} color={c.textSecondary}>{combat.adversaire_club}</Ink> : null}
           </Glass>
@@ -165,7 +165,7 @@ export default function CombatDetailScreen() {
 
           {combat.round || combat.temps ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {combat.round ? <Stat value={String(combat.round)} label="Round" /> : null}
+              {combat.round ? <Stat value={String(combat.round)} label={traduire("Round")} /> : null}
               {combat.temps ? <Stat value={combat.temps} label={traduire("Temps dans le round")} /> : null}
             </View>
           ) : null}

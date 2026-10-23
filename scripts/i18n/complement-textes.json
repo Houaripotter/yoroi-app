@@ -1,0 +1,7639 @@
+[
+{
+"id": "703188bfac",
+"fr": "Autorisation requise",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/onboarding.tsx:407"
+},
+{
+"id": "5dc188e52a",
+"fr": "Passer",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/tour/VisiteGuidee.tsx:705"
+},
+{
+"id": "2dd1f88352",
+"fr": "Dojo",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/(tabs)/dojo.tsx:315"
+},
+{
+"id": "b5ff8124aa",
+"fr": "Personnages",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/(tabs)/dojo.tsx:343"
+},
+{
+"id": "04b61e4121",
+"fr": "Journal d’XP",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/(tabs)/dojo.tsx:555"
+},
+{
+"id": "99a0efc6cf",
+"fr": "Style",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/carte.tsx:487"
+},
+{
+"id": "b1fa84a34a",
+"fr": "Sombre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/carte.tsx:489"
+},
+{
+"id": "1c50949afa",
+"fr": "Clair",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/carte.tsx:490"
+},
+{
+"id": "203bc66d70",
+"fr": "Face",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/photos/outils.ts:12"
+},
+{
+"id": "586c15c6fd",
+"fr": "Dos",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/photos/outils.ts:14"
+},
+{
+"id": "d54994869a",
+"fr": "Logo officiel",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/storage.ts:103"
+},
+{
+"id": "34e8a6bf46",
+"fr": "Fond indigo",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/storage.ts:105"
+},
+{
+"id": "caf0cf354f",
+"fr": "Fond clair",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/storage.ts:106"
+},
+{
+"id": "79fc3e39f6",
+"fr": "Fond ardoise",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/storage.ts:107"
+},
+{
+"id": "0914cc20c9",
+"fr": "Fond bordeaux",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/storage.ts:109"
+},
+{
+"id": "b84c9ed0a1",
+"fr": "Graphique composition",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/storage.ts:173"
+},
+{
+"id": "6eb4915552",
+"fr": "Citation",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/storage.ts:174"
+},
+{
+"id": "f7e784aedc",
+"fr": "Oups",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "lib/storage.ts:780"
+},
+{
+"id": "c389026ea2",
+"fr": "Export alternatif",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "lib/storage.ts:1229"
+},
+{
+"id": "aded9791e9",
+"fr": "Fichier illisible",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "lib/storage.ts:1294"
+},
+{
+"id": "80a664c8b3",
+"fr": "Confirmer",
+"ctx": "text",
+"zone": "affichage",
+"ref": "lib/storage.ts:1316"
+},
+{
+"id": "e7d8e9e9cd",
+"fr": "onAccent",
+"ctx": "text",
+"zone": "affichage",
+"ref": "components/yoroi/Button.tsx:29"
+},
+{
+"id": "c31d0cb5f9",
+"fr": "onDark",
+"ctx": "text",
+"zone": "affichage",
+"ref": "components/yoroi/Button.tsx:30"
+},
+{
+"id": "ec427fd4e6",
+"fr": "On y va ?",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/notificationService.ts:165"
+},
+{
+"id": "1a3f58d0e3",
+"fr": "C’est {day}",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/notificationService.ts:225"
+},
+{
+"id": "759a6362e0",
+"fr": "On reprend ?",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/notificationService.ts:239"
+},
+{
+"id": "c949e8cf9e",
+"fr": "Beau travail",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/notificationService.ts:1102"
+},
+{
+"id": "14877e80cb",
+"fr": "Discipline",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/notifications/discipline.ts:152"
+},
+{
+"id": "48990a4479",
+"fr": "Commandant supreme. Legende vivante.",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/ranks.ts:78"
+},
+{
+"id": "2e50019f7a",
+"fr": "Mensurations",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/armure.ts:321"
+},
+{
+"id": "38613fbc4d",
+"fr": "Record personnel",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/armure.ts:323"
+},
+{
+"id": "2a05e318f8",
+"fr": "En direct",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/ajouter.tsx:235"
+},
+{
+"id": "0588cb7b52",
+"fr": "Corps",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/ajouter.tsx:239"
+},
+{
+"id": "90eef61304",
+"fr": "Balance",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/ajouter.tsx:276"
+},
+{
+"id": "738f6cba9c",
+"fr": "Autre chose",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/ajouter.tsx:293"
+},
+{
+"id": "44c30d3b63",
+"fr": "Coffre 100 % local",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/photos.tsx:338"
+},
+{
+"id": "1e88ec32ff",
+"fr": "Galerie",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/photos.tsx:350"
+},
+{
+"id": "1e7164e4d4",
+"fr": "Garder",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/photos.tsx:455"
+},
+{
+"id": "b1aff1bc87",
+"fr": "Date choisie",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/photos.tsx:487"
+},
+{
+"id": "d92a04e3ca",
+"fr": "Pose",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/photos.tsx:495"
+},
+{
+"id": "2cf4d86504",
+"fr": "Compris",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/photos.tsx:533"
+},
+{
+"id": "761330e752",
+"fr": "D’accord",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/photos.tsx:536"
+},
+{
+"id": "252840471b",
+"fr": "Curseur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/transformation.tsx:46"
+},
+{
+"id": "d14abf12b3",
+"fr": "Fondu",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/transformation.tsx:48"
+},
+{
+"id": "fa9e547529",
+"fr": "Aligner pareil",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/transformation.tsx:263"
+},
+{
+"id": "4419de8ce8",
+"fr": "Facile",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:48"
+},
+{
+"id": "10dc1bcad7",
+"fr": "Dur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:50"
+},
+{
+"id": "1c56710b73",
+"fr": "Reprendre",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:194"
+},
+{
+"id": "1ce36e82ba",
+"fr": "Rester",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:339"
+},
+{
+"id": "3e4126f522",
+"fr": "Quitter",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:340"
+},
+{
+"id": "129ffff9f5",
+"fr": "Continuer",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:345"
+},
+{
+"id": "7a0662a3c1",
+"fr": "Abandonner",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:347"
+},
+{
+"id": "ceeac4ac67",
+"fr": "Rounds",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:578"
+},
+{
+"id": "ec7b598335",
+"fr": "Round",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:614"
+},
+{
+"id": "d727d03bda",
+"fr": "Partenaire",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:707"
+},
+{
+"id": "2c924e3088",
+"fr": "Note",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:746"
+},
+{
+"id": "54ec24a19c",
+"fr": "Retirer",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:766"
+},
+{
+"id": "6ae639aa44",
+"fr": "Quel sport ?",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:777"
+},
+{
+"id": "3ec6b9bc7a",
+"fr": "Cardio moyen",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:806"
+},
+{
+"id": "e457360166",
+"fr": "Cardio max",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/combat.tsx:809"
+},
+{
+"id": "4d7c770dba",
+"fr": "FC moyenne",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/(tabs)/seances.tsx:154"
+},
+{
+"id": "e51c55255b",
+"fr": "Records",
+"ctx": "titre",
+"zone": "affichage",
+"ref": "app/records.tsx:300"
+},
+{
+"id": "93c238bea0",
+"fr": "Charge max",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/records.tsx:346"
+},
+{
+"id": "2c5d8e65e8",
+"fr": "Victoires en sparring",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/records.tsx:432"
+},
+{
+"id": "70515d743c",
+"fr": "bpm en moyenne",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/workout-detail.tsx:717"
+},
+{
+"id": "825f4fe9a5",
+"fr": "Zones cardiaques",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/workout-detail.tsx:736"
+},
+{
+"id": "476432a3e8",
+"fr": "Apple",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/workout-detail.tsx:789"
+},
+{
+"id": "7791ebea90",
+"fr": "Lieu",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/workout-detail.tsx:904"
+},
+{
+"id": "5506eb6161",
+"fr": "Conditions",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/workout-detail.tsx:929"
+},
+{
+"id": "70440046a3",
+"fr": "Notes",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/workout-detail.tsx:967"
+},
+{
+"id": "e56efd6da5",
+"fr": "Partenaires",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/sparring-partners.tsx:124"
+},
+{
+"id": "ed10452eb2",
+"fr": "Classement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sparring-partners.tsx:128"
+},
+{
+"id": "84e05cfecd",
+"fr": "Matrice",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sparring-partners.tsx:185"
+},
+{
+"id": "03dc360abf",
+"fr": "M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM5 8h14M12 8v6M12 14l-3 7M12 14l3 7",
+"ctx": "body",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/kit.tsx:224"
+},
+{
+"id": "da315dce8d",
+"fr": "Grise",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/rounds.ts:95"
+},
+{
+"id": "c5638e23c8",
+"fr": "Jaune",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/rounds.ts:96"
+},
+{
+"id": "09fb6aaba7",
+"fr": "Orange",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/rounds.ts:97"
+},
+{
+"id": "2ecfa93210",
+"fr": "Verte",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/rounds.ts:98"
+},
+{
+"id": "612cfdbad5",
+"fr": "Rouge",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/rounds.ts:103"
+},
+{
+"id": "c942b26a85",
+"fr": "Gardien",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:56"
+},
+{
+"id": "8ac706e4b8",
+"fr": "Passeur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:62"
+},
+{
+"id": "d5b2515ab4",
+"fr": "Striker",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:68"
+},
+{
+"id": "91fda61220",
+"fr": "Bagarreur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:74"
+},
+{
+"id": "b31d62cd0b",
+"fr": "Volume, clinch, usure, physique.",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:75"
+},
+{
+"id": "8a0126ec91",
+"fr": "Takedown",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:80"
+},
+{
+"id": "655249d156",
+"fr": "Polyvalent",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:86"
+},
+{
+"id": "2b098ae2aa",
+"fr": "Style equilibre, adaptable.",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:87"
+},
+{
+"id": "cb84fa8464",
+"fr": "Experimente",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:95"
+},
+{
+"id": "418af63da0",
+"fr": "Competiteur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:96"
+},
+{
+"id": "66d0c5e6b1",
+"fr": "Pro",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/partnerModel.ts:97"
+},
+{
+"id": "2f3858f00f",
+"fr": "Bilan en PDF",
+"ctx": "libelle",
+"zone": "affichage",
+"ref": "lib/v2/premium/sources.ts:77"
+},
+{
+"id": "7b245d7b1d",
+"fr": "Fiche partenaire en PDF",
+"ctx": "libelle",
+"zone": "affichage",
+"ref": "lib/v2/premium/sources.ts:78"
+},
+{
+"id": "8ebabc7ad2",
+"fr": "Plan nutritionnel",
+"ctx": "libelle",
+"zone": "affichage",
+"ref": "lib/v2/premium/sources.ts:84"
+},
+{
+"id": "14f7c5a653",
+"fr": "Radar performance",
+"ctx": "libelle",
+"zone": "affichage",
+"ref": "lib/v2/premium/sources.ts:89"
+},
+{
+"id": "396e7bd812",
+"fr": "EXEMPLE",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/premium/Paywall.tsx:942"
+},
+{
+"id": "9cf9709890",
+"fr": "Conditions d’utilisation (EULA)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/premium/Paywall.tsx:1139"
+},
+{
+"id": "1644eb7aab",
+"fr": "Continuer gratuitement",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "components/yoroi/v2/premium/Paywall.tsx:1361"
+},
+{
+"id": "f515c9ae28",
+"fr": "Bon usage",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/terms.tsx:96"
+},
+{
+"id": "405f45092d",
+"fr": "Modifications",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/terms.tsx:112"
+},
+{
+"id": "a87667f3e0",
+"fr": "YOROI se charge",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "components/yoroi/v2/chargement/Chargement.tsx:139"
+},
+{
+"id": "c0f0cadca0",
+"fr": "YEAR",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/v2/premium/offer.ts:106"
+},
+{
+"id": "d3bb0c3f4f",
+"fr": "MONTH",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/v2/premium/offer.ts:202"
+},
+{
+"id": "3a79bc501d",
+"fr": "WEEK",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/v2/premium/offer.ts:206"
+},
+{
+"id": "ae2f98a099",
+"fr": "Plan",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/charts/PeriodSwitch.tsx:56"
+},
+{
+"id": "9a3474141c",
+"fr": "Rangs",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/partners-tier-list.tsx:44"
+},
+{
+"id": "6ad30343a7",
+"fr": "Fiche",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:32"
+},
+{
+"id": "a80c46238b",
+"fr": "Bilan",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:33"
+},
+{
+"id": "5e843afe7b",
+"fr": "Carnet",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:35"
+},
+{
+"id": "1855c2e357",
+"fr": "Sport",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:284"
+},
+{
+"id": "9afcca8367",
+"fr": "Ses points forts",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:295"
+},
+{
+"id": "99ed544c79",
+"fr": "Ses points faibles",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:303"
+},
+{
+"id": "251e95d4a3",
+"fr": "Carte combattant",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:314"
+},
+{
+"id": "6f8bc35bb6",
+"fr": "Notes tactiques",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:324"
+},
+{
+"id": "9b3b09e889",
+"fr": "Note rapide",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/PartnerDetail.tsx:389"
+},
+{
+"id": "35764f5b19",
+"fr": "Laque",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/partage/ShareStudio.tsx:20"
+},
+{
+"id": "d01d900383",
+"fr": "Photo",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/partage/ShareStudio.tsx:21"
+},
+{
+"id": "402dcbb9a9",
+"fr": "Appareil photo",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/partage/ShareStudio.tsx:75"
+},
+{
+"id": "dd60ff9dae",
+"fr": "Habillage",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/partage/ShareStudio.tsx:156"
+},
+{
+"id": "b4321aace1",
+"fr": "Victoires",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/DuelCard.tsx:90"
+},
+{
+"id": "e97e44905d",
+"fr": "Nuls",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/DuelCard.tsx:91"
+},
+{
+"id": "18fe40ac79",
+"fr": "DEBOUT",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:108"
+},
+{
+"id": "b9a15985ef",
+"fr": "Renversement debout",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:112"
+},
+{
+"id": "4a434595e6",
+"fr": "Projection / trip",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:112"
+},
+{
+"id": "dd32b2976b",
+"fr": "SOL : 2 pts",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:116"
+},
+{
+"id": "dfdd7fcf67",
+"fr": "Sweep",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:119"
+},
+{
+"id": "0680474aaf",
+"fr": "Knee on belly",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:120"
+},
+{
+"id": "2a5d5c2f5a",
+"fr": "SOL : 3 pts",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:124"
+},
+{
+"id": "60716f1cee",
+"fr": "Guard pass",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:127"
+},
+{
+"id": "9912f8a644",
+"fr": "POSITIONS DOMINANTES : 4 pts",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:131"
+},
+{
+"id": "25ee095909",
+"fr": "Mount",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:134"
+},
+{
+"id": "791a19fcb7",
+"fr": "Back mount",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:135"
+},
+{
+"id": "5fcc478daa",
+"fr": "Back control",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:136"
+},
+{
+"id": "337efd4c5f",
+"fr": "Body triangle",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:137"
+},
+{
+"id": "5a755a64b9",
+"fr": "Body triangle dos",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:137"
+},
+{
+"id": "f3e618cd09",
+"fr": "AVANTAGES",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:141"
+},
+{
+"id": "2d96934986",
+"fr": "Avantage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:144"
+},
+{
+"id": "56107aaa10",
+"fr": "Quasi-technique",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:144"
+},
+{
+"id": "94de853468",
+"fr": "Quasi-soumission",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:145"
+},
+{
+"id": "c184211218",
+"fr": "Near submission",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:145"
+},
+{
+"id": "e25f8d35f1",
+"fr": "Quasi-sweep",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:146"
+},
+{
+"id": "61af009d8c",
+"fr": "Near sweep",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:146"
+},
+{
+"id": "da8f736162",
+"fr": "Quasi-takedown",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:147"
+},
+{
+"id": "91def40497",
+"fr": "Near takedown",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:147"
+},
+{
+"id": "a54a62230d",
+"fr": "Quasi-passe",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:148"
+},
+{
+"id": "93b8dd7e30",
+"fr": "Near guard pass",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:148"
+},
+{
+"id": "a58fa93e47",
+"fr": "2e faute adverse",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:149"
+},
+{
+"id": "e61eadbaa1",
+"fr": "3e faute adverse",
+"ctx": "desc",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:150"
+},
+{
+"id": "8bd64daa3b",
+"fr": "Rechercher...",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:378"
+},
+{
+"id": "905ac4b8c9",
+"fr": "FAVORIS",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:394"
+},
+{
+"id": "20d3a0d1dd",
+"fr": "Appui long =",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:410"
+},
+{
+"id": "ec33d8818a",
+"fr": "POINTS CFJJB",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BJJBodyMap.tsx:487"
+},
+{
+"id": "03975a1ed4",
+"fr": "Dangers, ses points forts",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/Briefing.tsx:125"
+},
+{
+"id": "0851a4636e",
+"fr": "Garde",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:36"
+},
+{
+"id": "9e4ccf3ab7",
+"fr": "Passage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:37"
+},
+{
+"id": "41ce50f72e",
+"fr": "Debout",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:38"
+},
+{
+"id": "dca34e30d3",
+"fr": "Rival",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:183"
+},
+{
+"id": "a4357786a2",
+"fr": "Favorable",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:184"
+},
+{
+"id": "41c779e31f",
+"fr": "Opposition difficile",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:185"
+},
+{
+"id": "41b3bab38b",
+"fr": "En feu",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:218"
+},
+{
+"id": "fb1f64124e",
+"fr": "Difficile",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:218"
+},
+{
+"id": "69632d501e",
+"fr": "Partenaire solide",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:267"
+},
+{
+"id": "25772b5aaa",
+"fr": "Accessible",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/partnerInsights.ts:267"
+},
+{
+"id": "df01bd89df",
+"fr": "Lien invalide",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/MediaAudio.tsx:50"
+},
+{
+"id": "05d9d38746",
+"fr": "Description (facultatif)",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/MediaAudio.tsx:113"
+},
+{
+"id": "fac956643e",
+"fr": "Notes vocales",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/MediaAudio.tsx:250"
+},
+{
+"id": "e39bbe2519",
+"fr": "Menace",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/FighterProfile.tsx:85"
+},
+{
+"id": "f960697879",
+"fr": "Comparaison physique",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/FighterProfile.tsx:161"
+},
+{
+"id": "57a4bf685e",
+"fr": "Allonge",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/FighterProfile.tsx:168"
+},
+{
+"id": "4b2a6a3149",
+"fr": "Points",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/sections.tsx:335"
+},
+{
+"id": "6a9cbf6a2a",
+"fr": "Soumissions",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/sections.tsx:336"
+},
+{
+"id": "a5017f4d86",
+"fr": "Arsenal",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/combat/partner/sections.tsx:441"
+},
+{
+"id": "d491d2c828",
+"fr": "3 victoires consecutives.",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/partnerBadgesService.ts:67"
+},
+{
+"id": "4e96ab469b",
+"fr": "5 victoires consecutives.",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/partnerBadgesService.ts:75"
+},
+{
+"id": "c1ab1a22af",
+"fr": "En direct, chrono",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/index.tsx:231"
+},
+{
+"id": "e5f1e183d8",
+"fr": "Quand",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/seance/deja-faite.tsx:181"
+},
+{
+"id": "f1d396a45f",
+"fr": "Allure",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/seance/cardio.tsx:325"
+},
+{
+"id": "77a4729058",
+"fr": "Quel sport ? Escalade, padel...",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "app/seance/cardio.tsx:342"
+},
+{
+"id": "d8eb1ee151",
+"fr": "En face",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/seance/cardio.tsx:362"
+},
+{
+"id": "d19c0ae690",
+"fr": "points en face",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "app/seance/cardio.tsx:363"
+},
+{
+"id": "89683becd1",
+"fr": "Pente en %",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/cardio.tsx:391"
+},
+{
+"id": "a0ed9d56be",
+"fr": "Puissance en watts",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/cardio.tsx:397"
+},
+{
+"id": "9adb557612",
+"fr": "mmol/L",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.android.ts:1603"
+},
+{
+"id": "a504491cca",
+"fr": "mmHg",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.android.ts:3292"
+},
+{
+"id": "59da5ee860",
+"fr": "Respiration",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/typesSante.ts:28"
+},
+{
+"id": "1cc3dac547",
+"fr": "Autres sports",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/typesSante.ts:30"
+},
+{
+"id": "84b5fa7257",
+"fr": "mg/dL",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.ios.ts:2419"
+},
+{
+"id": "3fda22cc8a",
+"fr": "degC",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.ios.ts:4979"
+},
+{
+"id": "c32ed480cc",
+"fr": "mcS",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.ios.ts:4984"
+},
+{
+"id": "dec9ce7c54",
+"fr": "mL",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.ios.ts:4992"
+},
+{
+"id": "a9e11aee94",
+"fr": "L/min",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.ios.ts:5037"
+},
+{
+"id": "660ed6ea7f",
+"fr": "dBASPL",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/healthConnect.ios.ts:5038"
+},
+{
+"id": "ae7caab77e",
+"fr": "Effort minimal",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/trainingLoadService.ts:63"
+},
+{
+"id": "f71e01be32",
+"fr": "Conversation possible",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/trainingLoadService.ts:65"
+},
+{
+"id": "3ed9d283d1",
+"fr": "Assez dur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/trainingLoadService.ts:66"
+},
+{
+"id": "d8fdebf960",
+"fr": "Effort soutenu",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/trainingLoadService.ts:67"
+},
+{
+"id": "2e3bbb3aaf",
+"fr": "Parler difficile",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/trainingLoadService.ts:69"
+},
+{
+"id": "0ed39cf0ab",
+"fr": "Effort maximal soutenu",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/trainingLoadService.ts:70"
+},
+{
+"id": "40c1b517d9",
+"fr": "La dernière fois,",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/seance/muscu.tsx:573"
+},
+{
+"id": "cd4840bdb7",
+"fr": "En salle",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seance/Details.tsx:283"
+},
+{
+"id": "678e47df8b",
+"fr": "Dehors",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seance/Details.tsx:284"
+},
+{
+"id": "0005027d89",
+"fr": "Planning",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/planning.tsx:107"
+},
+{
+"id": "1be893ca34",
+"fr": "Clubs",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/planning.tsx:114"
+},
+{
+"id": "4014019824",
+"fr": "Club",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/slots.tsx:281"
+},
+{
+"id": "5120c4411c",
+"fr": "Nom (facultatif)",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/slots.tsx:324"
+},
+{
+"id": "67fb66597f",
+"fr": "Ice (Glace)",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/infirmaryService.ts:228"
+},
+{
+"id": "46ead4045f",
+"fr": "Compression",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/infirmaryService.ts:235"
+},
+{
+"id": "be37e77c46",
+"fr": "Pectoral G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:77"
+},
+{
+"id": "159e400f5d",
+"fr": "Pectoral D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:78"
+},
+{
+"id": "8b632d0b9d",
+"fr": "Biceps G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:81"
+},
+{
+"id": "42aca9b01f",
+"fr": "Biceps D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:82"
+},
+{
+"id": "7309ad60f8",
+"fr": "Coude G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:85"
+},
+{
+"id": "188deecda7",
+"fr": "Coude D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:86"
+},
+{
+"id": "587c76cf80",
+"fr": "Poignet G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:93"
+},
+{
+"id": "0c9db9ac09",
+"fr": "Poignet D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:94"
+},
+{
+"id": "9282ff164e",
+"fr": "Main G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:97"
+},
+{
+"id": "082c66b93e",
+"fr": "Main D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:98"
+},
+{
+"id": "f5a0ee8356",
+"fr": "Pouce G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:99"
+},
+{
+"id": "3faedbb869",
+"fr": "Pouce D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:100"
+},
+{
+"id": "43a7d052ca",
+"fr": "Sternum",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:103"
+},
+{
+"id": "f151a90749",
+"fr": "Abdominaux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:106"
+},
+{
+"id": "858b08c1ef",
+"fr": "Oblique G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:107"
+},
+{
+"id": "708f7acd71",
+"fr": "Oblique D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:108"
+},
+{
+"id": "e3a77ab2b8",
+"fr": "Pubis",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:111"
+},
+{
+"id": "5e691e4fc8",
+"fr": "Hanche G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:112"
+},
+{
+"id": "80075341ae",
+"fr": "Hanche D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:113"
+},
+{
+"id": "eee744c7d0",
+"fr": "Aine G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:114"
+},
+{
+"id": "04c27746ad",
+"fr": "Aine D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:115"
+},
+{
+"id": "afd0d5bd11",
+"fr": "Quadriceps G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:118"
+},
+{
+"id": "80fab8a586",
+"fr": "Quadriceps D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:119"
+},
+{
+"id": "8d7a70a47e",
+"fr": "Adducteur G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:120"
+},
+{
+"id": "8f0994d74b",
+"fr": "Adducteur D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:121"
+},
+{
+"id": "4cc9f9eaac",
+"fr": "Genou G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:124"
+},
+{
+"id": "85d4d0e3bf",
+"fr": "Genou D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:125"
+},
+{
+"id": "28695a616e",
+"fr": "Tibia G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:128"
+},
+{
+"id": "62d0ceaaca",
+"fr": "Tibia D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:129"
+},
+{
+"id": "3cee5fcd6b",
+"fr": "Cheville G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:132"
+},
+{
+"id": "950033ff35",
+"fr": "Cheville D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:133"
+},
+{
+"id": "1149a52b08",
+"fr": "Pied G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:136"
+},
+{
+"id": "89250e9bc0",
+"fr": "Pied D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:137"
+},
+{
+"id": "0e35b68e49",
+"fr": "Nuque",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:146"
+},
+{
+"id": "2763c3568d",
+"fr": "Dorsales",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:157"
+},
+{
+"id": "65cc0a0141",
+"fr": "Grand dorsal G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:158"
+},
+{
+"id": "6df7032795",
+"fr": "Grand dorsal D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:159"
+},
+{
+"id": "47748e967f",
+"fr": "Triceps G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:162"
+},
+{
+"id": "4efa8a2073",
+"fr": "Triceps D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:163"
+},
+{
+"id": "ecae7d01c0",
+"fr": "Coude G (arr)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:166"
+},
+{
+"id": "acb5adaf2c",
+"fr": "Coude D (arr)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:167"
+},
+{
+"id": "83eb479ca1",
+"fr": "Lombaires",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:170"
+},
+{
+"id": "fb87013ee4",
+"fr": "Sacrum",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:171"
+},
+{
+"id": "4c2e13ecea",
+"fr": "Fessier G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:174"
+},
+{
+"id": "7f4f5fb515",
+"fr": "Fessier D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:175"
+},
+{
+"id": "a978b39194",
+"fr": "Ischio G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:178"
+},
+{
+"id": "25e8564a81",
+"fr": "Ischio D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:179"
+},
+{
+"id": "b1a09c4284",
+"fr": "Mollet G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:186"
+},
+{
+"id": "51e8bf930c",
+"fr": "Mollet D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:187"
+},
+{
+"id": "1fd01c81dc",
+"fr": "Achille G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:190"
+},
+{
+"id": "66445107f7",
+"fr": "Achille D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:191"
+},
+{
+"id": "46ffdfb4de",
+"fr": "Talon G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:194"
+},
+{
+"id": "c937615fb7",
+"fr": "Talon D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:195"
+},
+{
+"id": "696af235f2",
+"fr": "FACE",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:384"
+},
+{
+"id": "cdd28e1a69",
+"fr": "Copier",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:423"
+},
+{
+"id": "cf1c85adba",
+"fr": "Position",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BodyMap.tsx:428"
+},
+{
+"id": "c3e7d73f53",
+"fr": "Sourde",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:104"
+},
+{
+"id": "196c7c93c8",
+"fr": "Picotement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:106"
+},
+{
+"id": "d789961f37",
+"fr": "Raideur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:107"
+},
+{
+"id": "1e83013c82",
+"fr": "Crampe",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:108"
+},
+{
+"id": "dcdf575423",
+"fr": "Choc/Impact",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:119"
+},
+{
+"id": "c51ee3c628",
+"fr": "Surmenage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:120"
+},
+{
+"id": "b8a7256e69",
+"fr": "Faux mouvement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:121"
+},
+{
+"id": "ca7b3b0032",
+"fr": "Inconnue",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:122"
+},
+{
+"id": "1da6c78cb2",
+"fr": "Chaleur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:144"
+},
+{
+"id": "287457cbd3",
+"fr": "Anti-inflammatoire",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:148"
+},
+{
+"id": "dd91fb8b4d",
+"fr": "Massage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:150"
+},
+{
+"id": "2d62564d37",
+"fr": "RESTREINT",
+"ctx": "title",
+"zone": "affichage",
+"ref": "constants/bodyZones.ts:185"
+},
+{
+"id": "f0a010017d",
+"fr": "Examen",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/competition/ObjectivesTab.tsx:28"
+},
+{
+"id": "e9b4022f40",
+"fr": "Atteint",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/competition/ObjectivesTab.tsx:248"
+},
+{
+"id": "4a99c17885",
+"fr": "Ex : 75",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/competition/ObjectivesTab.tsx:350"
+},
+{
+"id": "1917f4f0a4",
+"fr": "Competition",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/objectivesService.ts:25"
+},
+{
+"id": "8cda3115de",
+"fr": "Voyage / Stage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/objectivesService.ts:28"
+},
+{
+"id": "0fda17186b",
+"fr": "Personnalise",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/objectivesService.ts:29"
+},
+{
+"id": "145c4326e9",
+"fr": "Couleur",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seances/ClubForm.tsx:176"
+},
+{
+"id": "41f38a09cc",
+"fr": "Force",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/event-detail.tsx:31"
+},
+{
+"id": "bddc7adb12",
+"fr": "Nature",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/event-detail.tsx:32"
+},
+{
+"id": "eb9a4bc1c0",
+"fr": "Date",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/event-detail.tsx:115"
+},
+{
+"id": "522e146679",
+"fr": "Adresse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/event-detail.tsx:117"
+},
+{
+"id": "faab968a1c",
+"fr": "Adversaire",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/combat-detail.tsx:154"
+},
+{
+"id": "0fa40a33a9",
+"fr": "Match nul",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/competition-detail.tsx:39"
+},
+{
+"id": "fa76e9cba3",
+"fr": "Calendrier indisponible",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/competition-detail.tsx:138"
+},
+{
+"id": "7b51cddab6",
+"fr": "Site indisponible",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/competition-detail.tsx:142"
+},
+{
+"id": "2aca64b8e5",
+"fr": "Rappels",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/competition-detail.tsx:260"
+},
+{
+"id": "47440f95e3",
+"fr": "Check-list",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/competition-detail.tsx:288"
+},
+{
+"id": "6160d65f74",
+"fr": "Camp",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/competition-detail.tsx:289"
+},
+{
+"id": "659499f38a",
+"fr": "Statut",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/competition-detail.tsx:389"
+},
+{
+"id": "63323dffd9",
+"fr": "Nul",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/match.tsx:33"
+},
+{
+"id": "a4d9886c8b",
+"fr": "Soumission",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/match.tsx:37"
+},
+{
+"id": "fc71c3f25b",
+"fr": "Disqualification",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/seance/match.tsx:42"
+},
+{
+"id": "153d7a58b3",
+"fr": "Comment",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/seance/match.tsx:156"
+},
+{
+"id": "db3cc43e11",
+"fr": "Son nom",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "app/seance/match.tsx:181"
+},
+{
+"id": "1fd31dce6d",
+"fr": "Son club (facultatif)",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "app/seance/match.tsx:182"
+},
+{
+"id": "9b14114dd2",
+"fr": "Simulateur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/WeightCutHub.tsx:153"
+},
+{
+"id": "68135bb8f1",
+"fr": "Reste",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/WeightCutHub.tsx:273"
+},
+{
+"id": "d4f84f4165",
+"fr": "Rythme",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/WeightCutHub.tsx:274"
+},
+{
+"id": "85ff96833c",
+"fr": "Revoir",
+"ctx": "text",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/WeightCutHub.tsx:473"
+},
+{
+"id": "8ab06a2975",
+"fr": "Protocole hydrique classique",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/WeightCutHub.tsx:683"
+},
+{
+"id": "ca5e001204",
+"fr": "Composition",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/health-connect.tsx:56"
+},
+{
+"id": "98fd7b84c6",
+"fr": "Health Connect absent",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/health-connect.tsx:177"
+},
+{
+"id": "d34f69fd72",
+"fr": "Ouvrir Health Connect",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/health-connect.tsx:249"
+},
+{
+"id": "852a165129",
+"fr": "Diagnostic",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/health-connect.tsx:281"
+},
+{
+"id": "df01e710c2",
+"fr": "Apple Watch",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/health-connect.tsx:320"
+},
+{
+"id": "f8a3c37beb",
+"fr": "Automatique",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/health-connect.tsx:505"
+},
+{
+"id": "65013ef3b4",
+"fr": "Compatible",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/health-connect.tsx:507"
+},
+{
+"id": "c11a17db06",
+"fr": "Exemple",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sante/[metrique].tsx:318"
+},
+{
+"id": "2e7fe666df",
+"fr": "Chiffre haut",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sante/[metrique].tsx:346"
+},
+{
+"id": "c7744dbd46",
+"fr": "Chiffre bas",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sante/[metrique].tsx:346"
+},
+{
+"id": "5d398eef3e",
+"fr": "Minimum",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sante/[metrique].tsx:398"
+},
+{
+"id": "97f2142cbb",
+"fr": "iPhone",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sante/montre.tsx:140"
+},
+{
+"id": "1928f95c59",
+"fr": "Android",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sante/montre.tsx:141"
+},
+{
+"id": "d06c988515",
+"fr": "Environnement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metrics.ts:108"
+},
+{
+"id": "b3c68d7af3",
+"fr": "Nutrition",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metrics.ts:109"
+},
+{
+"id": "46daddf21f",
+"fr": "Puissance",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metrics.ts:254"
+},
+{
+"id": "9ed131efd2",
+"fr": "Pleine conscience",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metrics.ts:501"
+},
+{
+"id": "a2a7f021ab",
+"fr": "Perturbations respiratoires",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metrics.ts:548"
+},
+{
+"id": "108dc296d8",
+"fr": "VO2 max",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metrics.ts:562"
+},
+{
+"id": "a0d0227afa",
+"fr": "Masse maigre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metrics.ts:602"
+},
+{
+"id": "be6bca3ec8",
+"fr": "Health Connect",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/corps.ts:16"
+},
+{
+"id": "619d1ba3b0",
+"fr": "Tanita",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/corps.ts:17"
+},
+{
+"id": "25f8df6f78",
+"fr": "Visbody",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/corps.ts:18"
+},
+{
+"id": "2c65383a46",
+"fr": "Withings",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/corps.ts:19"
+},
+{
+"id": "b5ff8d93c6",
+"fr": "Garmin",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/corps.ts:20"
+},
+{
+"id": "eeec98db23",
+"fr": "Import CSV",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/corps.ts:21"
+},
+{
+"id": "1a9a54bb04",
+"fr": "Os",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/corps.ts:54"
+},
+{
+"id": "2b44319d84",
+"fr": "balance Withings",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:48"
+},
+{
+"id": "b0e350277c",
+"fr": "balance Renpho",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:49"
+},
+{
+"id": "fe259849bc",
+"fr": "balance Eufy",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:50"
+},
+{
+"id": "3919b4fd34",
+"fr": "balance Omron",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:51"
+},
+{
+"id": "30ef297ccf",
+"fr": "balance Xiaomi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:52"
+},
+{
+"id": "c4714b30f3",
+"fr": "Fitbit",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:54"
+},
+{
+"id": "731ccacb26",
+"fr": "balance Tanita",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:55"
+},
+{
+"id": "ee986574dd",
+"fr": "balance Huawei",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/pesee/health.ts:56"
+},
+{
+"id": "a429409baa",
+"fr": "Comment on calcule",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/weight-predictions.tsx:109"
+},
+{
+"id": "ead2b2673a",
+"fr": "Perdre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/profile.tsx:403"
+},
+{
+"id": "bcf4bc5f16",
+"fr": "Maintenir",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/profile.tsx:403"
+},
+{
+"id": "6fa01db0f0",
+"fr": "Prendre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/profile.tsx:403"
+},
+{
+"id": "4f05c096e0",
+"fr": "Kilos",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/profile.tsx:462"
+},
+{
+"id": "612cda92a2",
+"fr": "Livres",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/profile.tsx:462"
+},
+{
+"id": "9062880276",
+"fr": "Exemple : 84 cm",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/profile.tsx:470"
+},
+{
+"id": "81ffcc62d9",
+"fr": "Pouces",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/profile.tsx:470"
+},
+{
+"id": "3de43b9867",
+"fr": "Exemple : 33 in",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/profile.tsx:470"
+},
+{
+"id": "6619264a4b",
+"fr": "Langue",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/profile.tsx:477"
+},
+{
+"id": "d7ff4cee4e",
+"fr": "FC max",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/heart-zones-settings.tsx:339"
+},
+{
+"id": "f6f8e1183f",
+"fr": "Z5 Max",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/heart-zones-settings.tsx:364"
+},
+{
+"id": "606203f233",
+"fr": "Garmin Connect",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/heart-zones-settings.tsx:455"
+},
+{
+"id": "11f81dee17",
+"fr": "Synchroniser maintenant",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "components/yoroi/v2/sante/ui.tsx:140"
+},
+{
+"id": "1fc3c47737",
+"fr": "Graisse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/progres/biomarkers.ts:430"
+},
+{
+"id": "5700e45bfb",
+"fr": "bras droit",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:63"
+},
+{
+"id": "513b6c4b47",
+"fr": "bras gauche",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:64"
+},
+{
+"id": "aa75e03e9c",
+"fr": "jambe droite",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:66"
+},
+{
+"id": "63c8576303",
+"fr": "jambe gauche",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:67"
+},
+{
+"id": "73152ec058",
+"fr": "Cuisse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:91"
+},
+{
+"id": "dfd2dd7e47",
+"fr": "Mollet",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:94"
+},
+{
+"id": "ebf4661806",
+"fr": "kJ",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:217"
+},
+{
+"id": "e04752b07d",
+"fr": "Morphologie",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:220"
+},
+{
+"id": "6f07ab9040",
+"fr": "Masse grasse en kilos",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:221"
+},
+{
+"id": "26148eb354",
+"fr": "Muscle en pourcentage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:222"
+},
+{
+"id": "dc381c44a4",
+"fr": "Muscle squelettique",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:225"
+},
+{
+"id": "f8c15d7305",
+"fr": "ECW/TBW",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:232"
+},
+{
+"id": "52f7c5455f",
+"fr": "Score corporel",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/balance/format.ts:234"
+},
+{
+"id": "d999b0c231",
+"fr": "veryHigh",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/healthRanges.ts:252"
+},
+{
+"id": "922acd282c",
+"fr": "Source:",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/stats/charts/MetricRangeIndicator.tsx:132"
+},
+{
+"id": "a90240db21",
+"fr": "Kalman, R. E. (1960). A New Approach to Linear Filtering and Prediction Problems. Journal of Basic Engineering, 82(1), 35-45",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:21"
+},
+{
+"id": "ae8ea3e955",
+"fr": "Walker, J. The Hacker’s Diet, Fourmilab",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:22"
+},
+{
+"id": "546e346103",
+"fr": "MacroFactor, Weight Trend",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:23"
+},
+{
+"id": "0322110a06",
+"fr": "Sen, P. K. (1968). Estimates of the Regression Coefficient Based on Kendall’s Tau. Journal of the American Statistical Association, 63(324), 1379-1389",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:24"
+},
+{
+"id": "ad4c1b5146",
+"fr": "Turicchi, J. et al. (2020). Weekly, seasonal and holiday body weight fluctuation patterns. PLoS ONE, 15(4), e0232152",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:25"
+},
+{
+"id": "5fb0050862",
+"fr": "Kreitzman, S. N., Coxon, A. Y. et Szaz, K. F. (1992). Glycogen storage: illusions of easy weight loss. American Journal of Clinical Nutrition, 56(1), 292S-293S",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:26"
+},
+{
+"id": "33355d5697",
+"fr": "White, C. P., Hitchcock, C. L., Vigna, Y. M. et Prior, J. C. (2011). Fluid Retention over the Menstrual Cycle. Obstetrics and Gynecology International, 138451",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:27"
+},
+{
+"id": "909f84188f",
+"fr": "Hall, K. D. et al. (2011). Quantification of the effect of energy imbalance on bodyweight. The Lancet, 378(9793), 826-837",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:28"
+},
+{
+"id": "27c7ab14bc",
+"fr": "Thomas, D. M. et al. (2013). Can a weight loss of one pound a week be achieved with a 3500-kcal deficit? International Journal of Obesity, 37(12), 1611-1613",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:29"
+},
+{
+"id": "d304281f17",
+"fr": "NIH, Body Weight Planner",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:30"
+},
+{
+"id": "b8cab0b699",
+"fr": "Helms, E. R., Aragon, A. A. et Fitschen, P. J. (2014). Evidence-based recommendations for natural bodybuilding contest preparation. Journal of the International Society of Sports Nutrition, 11, 20",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:31"
+},
+{
+"id": "eb1197c63f",
+"fr": "Garthe, I. et al. (2011). Effect of Two Different Weight-Loss Rates on Body Composition and Strength and Power-Related Performance in Elite Athletes. IJSNEM, 21(2), 97-104",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:32"
+},
+{
+"id": "efe5c30837",
+"fr": "Iraki, J., Fitschen, P., Espinar, S. et Helms, E. (2019). Nutrition Recommendations for Bodybuilders in the Off-Season. Sports, 7(7), 154",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:33"
+},
+{
+"id": "441fb129f6",
+"fr": "Ricci, A. A. et al. (2025). ISSN position stand: nutrition and weight cut strategies for mixed martial arts and other combat sports. Journal of the International Society of Sports Nutrition, 22(1), 2467909",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:35"
+},
+{
+"id": "6386f0610b",
+"fr": "Reale, R., Slater, G. et Burke, L. M. (2017). Acute-Weight-Loss Strategies for Combat Sports and Applications to Olympic Success. IJSPP, 12(2), 142-151",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:36"
+},
+{
+"id": "7d336d4cf8",
+"fr": "Barley, O. R., Chapman, D. W. et Abbiss, C. R. (2019). The Current State of Weight-Cutting in Combat Sports. Sports, 7(5), 123",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:37"
+},
+{
+"id": "b23e548251",
+"fr": "National Sleep Foundation",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:52"
+},
+{
+"id": "8c8416c050",
+"fr": "Walker, M. (2017). Why We Sleep",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:53"
+},
+{
+"id": "a7d3dfc6fd",
+"fr": "Periodization: Theory and Methodology of Training",
+"ctx": "description",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:69"
+},
+{
+"id": "c417ad6a20",
+"fr": "Clear, J. (2018). Atomic Habits",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:78"
+},
+{
+"id": "b7a780834c",
+"fr": "Sources scientifiques",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/scientific-sources.tsx:97"
+},
+{
+"id": "5c742f279e",
+"fr": "Changer",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/pesee/ObjectifPoids.tsx:50"
+},
+{
+"id": "095b5fb3dc",
+"fr": "1 kg",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Pas.tsx:19"
+},
+{
+"id": "760878a8fa",
+"fr": "5 cm",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Pas.tsx:27"
+},
+{
+"id": "2d51499cc5",
+"fr": "1 cm",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Pas.tsx:28"
+},
+{
+"id": "10f218a36a",
+"fr": "Infirmerie",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/HealthNutritionCards.tsx:315"
+},
+{
+"id": "296ea5c33c",
+"fr": "Calculateurs",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/HealthNutritionCards.tsx:326"
+},
+{
+"id": "29705857ae",
+"fr": "Calculer",
+"ctx": "cta",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/HealthNutritionCards.tsx:326"
+},
+{
+"id": "7894747fbe",
+"fr": "Premier apport",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/quick-nutrition.tsx:44"
+},
+{
+"id": "2eb56be3c2",
+"fr": "Sources",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/quick-nutrition.tsx:234"
+},
+{
+"id": "76ec38a267",
+"fr": "Formule Mifflin-St Jeor (1990)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:19"
+},
+{
+"id": "47ffb88aa0",
+"fr": "Formule d’Epley (1985)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:22"
+},
+{
+"id": "8c13f6424d",
+"fr": "American College of Sports Medicine (2007)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:25"
+},
+{
+"id": "4175503830",
+"fr": "Maintien",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:70"
+},
+{
+"id": "e8087c21fa",
+"fr": "Corpulence normale",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:83"
+},
+{
+"id": "9a4d5114e6",
+"fr": "Sparring progressif",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:423"
+},
+{
+"id": "ad85fc9751",
+"fr": "Renforcement progressif",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:435"
+},
+{
+"id": "3153dd8c87",
+"fr": "Digestion",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:456"
+},
+{
+"id": "7985535a6d",
+"fr": "Bascule",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/nutrition/formulas.ts:458"
+},
+{
+"id": "b3a61faead",
+"fr": "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01",
+"ctx": "question",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/ui.tsx:95"
+},
+{
+"id": "bb08c468b1",
+"fr": "Homme",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/ui.tsx:418"
+},
+{
+"id": "5cb4722e8d",
+"fr": "Femme",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/ui.tsx:419"
+},
+{
+"id": "4c20637fe7",
+"fr": "Besoins caloriques",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/calculators.tsx:177"
+},
+{
+"id": "899bd694d2",
+"fr": "Macros",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/calculators.tsx:193"
+},
+{
+"id": "1d83d73508",
+"fr": "Charge maximale",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/calculators.tsx:222"
+},
+{
+"id": "486dfe2729",
+"fr": "Selon Lorentz",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/calculators.tsx:301"
+},
+{
+"id": "2fa7548516",
+"fr": "Selon Devine",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/calculators.tsx:302"
+},
+{
+"id": "1bb7d659c5",
+"fr": "Formule",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/calculators.tsx:478"
+},
+{
+"id": "e9be3218c0",
+"fr": "J’ai compris",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/fasting.tsx:180"
+},
+{
+"id": "22390ad11c",
+"fr": "Paris",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "app/fasting.tsx:510"
+},
+{
+"id": "64a7458516",
+"fr": "Fajr (aube)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/fasting.tsx:513"
+},
+{
+"id": "e51ebcb54e",
+"fr": "Maghrib (coucher)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/fasting.tsx:516"
+},
+{
+"id": "e19a2d6b3f",
+"fr": "Restreint",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/infirmary.tsx:114"
+},
+{
+"id": "db22a78656",
+"fr": "en cours",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/infirmary.tsx:141"
+},
+{
+"id": "03efccb49f",
+"fr": "Zone",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/injury-detail.tsx:284"
+},
+{
+"id": "08f98583c1",
+"fr": "Cause",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/injury-detail.tsx:286"
+},
+{
+"id": "b79356d754",
+"fr": "Note (facultatif)",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "app/injury-detail.tsx:305"
+},
+{
+"id": "cf3864af91",
+"fr": "Derniers soins",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/injury-detail.tsx:352"
+},
+{
+"id": "b483357f79",
+"fr": "Mode chirurgien",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "app/injury-detail.tsx:455"
+},
+{
+"id": "5884b8c132",
+"fr": "Notes (facultatif)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/injury-evaluation.tsx:169"
+},
+{
+"id": "a0637f0bbd",
+"fr": "Quelle zone ?",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/ZoneSelectionModal.tsx:131"
+},
+{
+"id": "a200627cba",
+"fr": "en moyenne",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sleep.tsx:260"
+},
+{
+"id": "22d802d448",
+"fr": "Autorisations, import, diagnostic",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/sante/index.tsx:189"
+},
+{
+"id": "d7475f4eca",
+"fr": "Bonnes nuits",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/healthInsights.ts:150"
+},
+{
+"id": "0c321314bb",
+"fr": "Nuits trop courtes",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/healthInsights.ts:157"
+},
+{
+"id": "bd49d03834",
+"fr": "Belle progression",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/healthInsights.ts:268"
+},
+{
+"id": "ff83984310",
+"fr": "Autoriser",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/sante/Hub.tsx:289"
+},
+{
+"id": "c8208cad35",
+"fr": "Retirer 250 millilitres",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "app/hydration.tsx:250"
+},
+{
+"id": "b4f98962e3",
+"fr": "250 ml",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/hydration.tsx:261"
+},
+{
+"id": "520cc0d4d0",
+"fr": "500 ml",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/hydration.tsx:272"
+},
+{
+"id": "5f82177a00",
+"fr": "Coudes",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/BodyZones.tsx:21"
+},
+{
+"id": "1ef0edf53f",
+"fr": "Poignets",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/BodyZones.tsx:22"
+},
+{
+"id": "df8fa0c6fb",
+"fr": "Genoux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/BodyZones.tsx:24"
+},
+{
+"id": "f94d8976df",
+"fr": "Chevilles",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/BodyZones.tsx:25"
+},
+{
+"id": "083c03044a",
+"fr": "Bouger",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/sante/Dashboard.tsx:29"
+},
+{
+"id": "5231158f14",
+"fr": "En attente",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/sante/Rings.tsx:81"
+},
+{
+"id": "6c8c129576",
+"fr": "Muscle en kg",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/MiniCurveGrid.tsx:257"
+},
+{
+"id": "8fc94e4f5b",
+"fr": "Comparer",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/CorpsSection.tsx:372"
+},
+{
+"id": "c0fe8ca163",
+"fr": "Courbe",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/composition-detail.tsx:141"
+},
+{
+"id": "3b1b80e115",
+"fr": "Biomarqueurs",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/composition-detail.tsx:179"
+},
+{
+"id": "631a125ab0",
+"fr": "seuil OMS 25",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/composition-detail.tsx:230"
+},
+{
+"id": "5ce0f6414b",
+"fr": "Tronc",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/Segments.tsx:22"
+},
+{
+"id": "aed948d3c1",
+"fr": "Jambe droite",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/Segments.tsx:23"
+},
+{
+"id": "aa06b6127e",
+"fr": "Jambe gauche",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/Segments.tsx:24"
+},
+{
+"id": "b72feca4db",
+"fr": "Bras, jambes, tronc",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/Segments.tsx:68"
+},
+{
+"id": "ddc0e33367",
+"fr": "Nettoyer",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/body-history.tsx:117"
+},
+{
+"id": "04b47e969f",
+"fr": "Nettoyage fait",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/body-history.tsx:124"
+},
+{
+"id": "b7ad63fe7a",
+"fr": "Sport favori",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/wrapped.tsx:79"
+},
+{
+"id": "86b1be4080",
+"fr": "Page suivante",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "app/wrapped.tsx:229"
+},
+{
+"id": "1a37b9f439",
+"fr": "Revoir l’histoire",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/wrapped.tsx:266"
+},
+{
+"id": "b9611650a0",
+"fr": "Premiere pesee enregistree",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/badges.ts:178"
+},
+{
+"id": "3fecdfeed9",
+"fr": "50 mensurations prises",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/badges.ts:429"
+},
+{
+"id": "d0ccbf13ff",
+"fr": "Effort ressenti",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/progres/TrainingCharts.tsx:138"
+},
+{
+"id": "2ab026c2cf",
+"fr": "Effort moyen",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/activity-detail.tsx:139"
+},
+{
+"id": "63c9045599",
+"fr": "Performance",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/radar-performance.tsx:57"
+},
+{
+"id": "6a82270cab",
+"fr": "Temps en mouvement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:137"
+},
+{
+"id": "b59ebb7faa",
+"fr": "Oscillation verticale",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:192"
+},
+{
+"id": "bd2b1ca8e8",
+"fr": "Temps en double appui",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:464"
+},
+{
+"id": "5a148715b1",
+"fr": "Chutes",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:534"
+},
+{
+"id": "e44622ef8a",
+"fr": "dB",
+"ctx": "unit",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:732"
+},
+{
+"id": "34268c8105",
+"fr": "Bruit ambiant",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:747"
+},
+{
+"id": "b9dc656d45",
+"fr": "Insuline",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:826"
+},
+{
+"id": "be0d2021f5",
+"fr": "Verres d’alcool",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:841"
+},
+{
+"id": "649b8e1ecc",
+"fr": "Fibres",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:853"
+},
+{
+"id": "e9a32ca9df",
+"fr": "Sucres",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:859"
+},
+{
+"id": "227f1d85e9",
+"fr": "Sodium",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/sante/metricsMore.ts:866"
+},
+{
+"id": "0de13ff438",
+"fr": "Sain",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/nutrition/CutTimeline.tsx:118"
+},
+{
+"id": "9423f6249f",
+"fr": "Argent",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/competition/extras.ts:27"
+},
+{
+"id": "af3102527f",
+"fr": "Bronze",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/competition/extras.ts:28"
+},
+{
+"id": "f6930ceb6c",
+"fr": "Ex : Paris, France",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/competition/CompetitionForm.tsx:77"
+},
+{
+"id": "7b4005c310",
+"fr": "Ex : cfjjb.com",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/competition/CompetitionForm.tsx:147"
+},
+{
+"id": "04007c5aa4",
+"fr": "Ex : Open, Interclubs",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/competition/CompetitionForm.tsx:158"
+},
+{
+"id": "c906e63d4b",
+"fr": "Visualisation",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/competition/checklist.ts:29"
+},
+{
+"id": "c4823448cd",
+"fr": "Phase finale",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/competition/checklist.ts:64"
+},
+{
+"id": "1d97ee0123",
+"fr": "Effacer l’ancien calendrier",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/competitions.tsx:96"
+},
+{
+"id": "fe23de7b57",
+"fr": "Effacer",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/competitions.tsx:99"
+},
+{
+"id": "fc8ed2a58c",
+"fr": "Inscriptions en ligne : grappling, jiu-jitsu, MMA",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/competition/officialCalendars.ts:16"
+},
+{
+"id": "1991ff1aa3",
+"fr": "Me peser",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "components/yoroi/v2/competition/WeighIn.tsx:87"
+},
+{
+"id": "4c83736b74",
+"fr": "Calendrier",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seances/MonthMarks.tsx:145"
+},
+{
+"id": "2986a8c2f2",
+"fr": "Temps",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seances/PlanWeek.tsx:193"
+},
+{
+"id": "8c974bc651",
+"fr": "Effort",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:17"
+},
+{
+"id": "c1195add2e",
+"fr": "Muscu",
+"ctx": "tag",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:30"
+},
+{
+"id": "6381ab5ebd",
+"fr": "Boxe, MMA, JJB",
+"ctx": "tag",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:31"
+},
+{
+"id": "3eb8a90885",
+"fr": "1 min",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:40"
+},
+{
+"id": "1cb8cbbffa",
+"fr": "1 min 30",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:41"
+},
+{
+"id": "47742d68e8",
+"fr": "2 min",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:42"
+},
+{
+"id": "26ace9dceb",
+"fr": "3 min",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:43"
+},
+{
+"id": "b45ebd80de",
+"fr": "5 min",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:44"
+},
+{
+"id": "da385225f6",
+"fr": "Open mat",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:49"
+},
+{
+"id": "e4bf9009ec",
+"fr": "Format pro",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:50"
+},
+{
+"id": "13d547bd83",
+"fr": "Style K-1",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:54"
+},
+{
+"id": "1c2d868d0d",
+"fr": "Wrestling",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:55"
+},
+{
+"id": "f36d1960f3",
+"fr": "4 min",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:63"
+},
+{
+"id": "55bc201c0f",
+"fr": "8 min",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:64"
+},
+{
+"id": "ede2a83e20",
+"fr": "12 min",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/carnet/chrono.ts:65"
+},
+{
+"id": "efe0ac4e21",
+"fr": "Presse, poulie, pec deck, smith...",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seance/MachineFinder.tsx:330"
+},
+{
+"id": "12aaa4b51f",
+"fr": "Cuisses",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/machines.ts:30"
+},
+{
+"id": "7ec3e522d0",
+"fr": "Ischios",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/machines.ts:31"
+},
+{
+"id": "bb42c5a700",
+"fr": "Stations",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/machines.ts:40"
+},
+{
+"id": "6b8cca8e00",
+"fr": "Pull-over",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:39"
+},
+{
+"id": "ccf5a6a0f9",
+"fr": "Dips",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:41"
+},
+{
+"id": "d04c271db7",
+"fr": "Squat bulgare",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:45"
+},
+{
+"id": "f54ba19f3e",
+"fr": "Goblet squat",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:46"
+},
+{
+"id": "0f7689264b",
+"fr": "Good morning",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:51"
+},
+{
+"id": "a265f10f1e",
+"fr": "Hip thrust",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:52"
+},
+{
+"id": "eaebf041ef",
+"fr": "Pont fessier",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:53"
+},
+{
+"id": "55147150d3",
+"fr": "Fentes",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:54"
+},
+{
+"id": "a58668c1c1",
+"fr": "Leg curl",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:57"
+},
+{
+"id": "66c502227e",
+"fr": "Adducteurs machine",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:59"
+},
+{
+"id": "f5da963db9",
+"fr": "Abducteurs machine",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:60"
+},
+{
+"id": "5501be5bdc",
+"fr": "Tractions",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:62"
+},
+{
+"id": "4bf8a43d2b",
+"fr": "Tirage vertical",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:63"
+},
+{
+"id": "918cf259ed",
+"fr": "Rowing",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:67"
+},
+{
+"id": "0a1fbd052c",
+"fr": "Rowing menton",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:68"
+},
+{
+"id": "aecbdad2dd",
+"fr": "Face pull",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:69"
+},
+{
+"id": "5825460097",
+"fr": "Curl biceps",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:72"
+},
+{
+"id": "016c6d7a4a",
+"fr": "Curl pupitre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:74"
+},
+{
+"id": "59da2b6efa",
+"fr": "Extension triceps",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:78"
+},
+{
+"id": "8d43772205",
+"fr": "Kickback triceps",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:79"
+},
+{
+"id": "07a87de5d3",
+"fr": "Oiseau",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:83"
+},
+{
+"id": "f2b7bd0146",
+"fr": "Crunchs",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:86"
+},
+{
+"id": "17df1fc262",
+"fr": "Russian twist",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:89"
+},
+{
+"id": "b20e082272",
+"fr": "Roue abdominale",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:90"
+},
+{
+"id": "057597eb6b",
+"fr": "Mountain climbers",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:91"
+},
+{
+"id": "d59730e3e4",
+"fr": "Kettlebell swing",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:93"
+},
+{
+"id": "a8dc0c1ce3",
+"fr": "Thrusters",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:94"
+},
+{
+"id": "159f2ff49b",
+"fr": "Muscle up",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:99"
+},
+{
+"id": "39c514d22b",
+"fr": "Wall ball",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:100"
+},
+{
+"id": "85f200d648",
+"fr": "Box jump",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:101"
+},
+{
+"id": "1be4301475",
+"fr": "Farmer walk",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:102"
+},
+{
+"id": "b7999b9af1",
+"fr": "Juji gatame",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:207"
+},
+{
+"id": "73d3ae245f",
+"fr": "Triangle",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:211"
+},
+{
+"id": "ad34ac6d4d",
+"fr": "Ude garami",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:214"
+},
+{
+"id": "3b6c3b2441",
+"fr": "Heel hook",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:216"
+},
+{
+"id": "50da09e706",
+"fr": "toe hold",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:219"
+},
+{
+"id": "521c28dfa5",
+"fr": "Calf slicer",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:220"
+},
+{
+"id": "ad82a09615",
+"fr": "mata leão",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:223"
+},
+{
+"id": "1fe7f5e9fc",
+"fr": "Ezekiel",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:224"
+},
+{
+"id": "e0c7d1444d",
+"fr": "Bow and arrow",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:225"
+},
+{
+"id": "126a41cfee",
+"fr": "cross collar",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:226"
+},
+{
+"id": "d8c2d2aa01",
+"fr": "D’Arce",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:227"
+},
+{
+"id": "fd7e023829",
+"fr": "Anaconda",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:228"
+},
+{
+"id": "ecb78d60d5",
+"fr": "Paper cutter",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:231"
+},
+{
+"id": "502bd5b0ad",
+"fr": "Demi-garde",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:234"
+},
+{
+"id": "7cc17706a5",
+"fr": "Garde ouverte",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:235"
+},
+{
+"id": "0ea71ff2af",
+"fr": "Garde X",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:239"
+},
+{
+"id": "b67cd2265f",
+"fr": "Garde papillon",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:240"
+},
+{
+"id": "1fabda0fa7",
+"fr": "Garde lasso",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:241"
+},
+{
+"id": "29cceec793",
+"fr": "Worm guard",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:242"
+},
+{
+"id": "986219b3cb",
+"fr": "Garde 50/50",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:243"
+},
+{
+"id": "417d07d23d",
+"fr": "Garde K",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:244"
+},
+{
+"id": "0985ca2662",
+"fr": "Montada",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:246"
+},
+{
+"id": "1e808f3f47",
+"fr": "Cent kilos",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:247"
+},
+{
+"id": "d7884ec8c0",
+"fr": "side control",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:247"
+},
+{
+"id": "0f5d747b24",
+"fr": "knee on belly",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:248"
+},
+{
+"id": "737859e1b7",
+"fr": "Nord-sud",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:249"
+},
+{
+"id": "0c75c80275",
+"fr": "Tortue",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:250"
+},
+{
+"id": "89c2fe9089",
+"fr": "back take",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:251"
+},
+{
+"id": "579a0f86c1",
+"fr": "Front headlock",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:252"
+},
+{
+"id": "341484e4af",
+"fr": "Toreando",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:255"
+},
+{
+"id": "dba18ce699",
+"fr": "Knee slice",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:256"
+},
+{
+"id": "c2d0f3e76e",
+"fr": "genou traversant",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:256"
+},
+{
+"id": "2196dd9fc6",
+"fr": "Leg drag",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:257"
+},
+{
+"id": "6145c9bf8b",
+"fr": "Over under",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:258"
+},
+{
+"id": "6663fb9411",
+"fr": "Stack pass",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:259"
+},
+{
+"id": "e2e274b2a9",
+"fr": "Smash pass",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:260"
+},
+{
+"id": "95ad9196de",
+"fr": "Long step",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:261"
+},
+{
+"id": "5278be9dd8",
+"fr": "Renversement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:263"
+},
+{
+"id": "e4c80ede43",
+"fr": "raspagem, sweep",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:263"
+},
+{
+"id": "99fcb00867",
+"fr": "Renversement ciseaux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:264"
+},
+{
+"id": "e790abe92e",
+"fr": "scissor sweep",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:264"
+},
+{
+"id": "e570bfa0a5",
+"fr": "Renversement pendule",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:265"
+},
+{
+"id": "b4f81782e6",
+"fr": "flower sweep",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:265"
+},
+{
+"id": "d5823a5ff4",
+"fr": "Hip bump",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:266"
+},
+{
+"id": "4b670de9cc",
+"fr": "Kiss of the dragon",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:268"
+},
+{
+"id": "78c3063cfe",
+"fr": "Double leg",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:272"
+},
+{
+"id": "2a93e33a5a",
+"fr": "Single leg",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:273"
+},
+{
+"id": "b76a97595e",
+"fr": "Sprawl",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:275"
+},
+{
+"id": "5515bb21b1",
+"fr": "Ankle pick",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:277"
+},
+{
+"id": "a618fa980b",
+"fr": "Arm drag",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:278"
+},
+{
+"id": "a4b01baa46",
+"fr": "Duck under",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:279"
+},
+{
+"id": "a81f1e0445",
+"fr": "Snap down",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:280"
+},
+{
+"id": "6b92639996",
+"fr": "O soto gari",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:284"
+},
+{
+"id": "45d2b83cef",
+"fr": "O uchi gari",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:285"
+},
+{
+"id": "4aca5f6fb2",
+"fr": "Ko uchi gari",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:286"
+},
+{
+"id": "ef61e97be1",
+"fr": "Ko soto gari",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:287"
+},
+{
+"id": "7e843de162",
+"fr": "Seoi nage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:289"
+},
+{
+"id": "0bb229d5f3",
+"fr": "Uchi mata",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:290"
+},
+{
+"id": "1d46bb9ae0",
+"fr": "Harai goshi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:291"
+},
+{
+"id": "2deaa697f8",
+"fr": "Tai otoshi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:292"
+},
+{
+"id": "7b4c3094d3",
+"fr": "O goshi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:293"
+},
+{
+"id": "b30d8151a5",
+"fr": "Tomoe nage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:294"
+},
+{
+"id": "aacffa1b3b",
+"fr": "Ura nage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:295"
+},
+{
+"id": "27e6617fa1",
+"fr": "Kesa gatame",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:296"
+},
+{
+"id": "f3569d935b",
+"fr": "Osaekomi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:297"
+},
+{
+"id": "f141c8e737",
+"fr": "Ippon",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:298"
+},
+{
+"id": "c793e27574",
+"fr": "Waza ari",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:299"
+},
+{
+"id": "e26a52665f",
+"fr": "Randori",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:300"
+},
+{
+"id": "15df6f2b30",
+"fr": "Uchi komi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:301"
+},
+{
+"id": "b126d705f6",
+"fr": "Nage komi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:302"
+},
+{
+"id": "6f497cf352",
+"fr": "Tachi waza",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:304"
+},
+{
+"id": "ccf62e42c3",
+"fr": "travail debout",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:304"
+},
+{
+"id": "20738d9898",
+"fr": "Ukemi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:305"
+},
+{
+"id": "856985a03b",
+"fr": "Kumite",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:308"
+},
+{
+"id": "06fbaa67b6",
+"fr": "Kihon",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:309"
+},
+{
+"id": "ed7256bd41",
+"fr": "Mae geri",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:310"
+},
+{
+"id": "574daff49a",
+"fr": "Mawashi geri",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:311"
+},
+{
+"id": "52fc2e8042",
+"fr": "Ura mawashi geri",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:312"
+},
+{
+"id": "437ab9d587",
+"fr": "Yoko geri",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:313"
+},
+{
+"id": "32d31e2cde",
+"fr": "Ushiro geri",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:314"
+},
+{
+"id": "1dbf949238",
+"fr": "Gyaku zuki",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:315"
+},
+{
+"id": "f66f16286b",
+"fr": "Oi zuki",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:316"
+},
+{
+"id": "5b4b3dfabb",
+"fr": "Blocages",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:317"
+},
+{
+"id": "7220600128",
+"fr": "Jab",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:319"
+},
+{
+"id": "bc81524a55",
+"fr": "Direct",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:320"
+},
+{
+"id": "09396dd5ec",
+"fr": "Crochet",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:321"
+},
+{
+"id": "65d8d451ee",
+"fr": "Swing",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:323"
+},
+{
+"id": "ba7e7621d4",
+"fr": "Esquives",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:324"
+},
+{
+"id": "e9e55540a6",
+"fr": "Parades",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:325"
+},
+{
+"id": "e36c38623a",
+"fr": "Shadow boxing",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:327"
+},
+{
+"id": "56da7abd19",
+"fr": "Pattes d’ours",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:329"
+},
+{
+"id": "2a32d3fad7",
+"fr": "Teep",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:332"
+},
+{
+"id": "97c247b63a",
+"fr": "front kick",
+"ctx": "note",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:332"
+},
+{
+"id": "5c82755fa2",
+"fr": "Low kick",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:333"
+},
+{
+"id": "5d3a0f8137",
+"fr": "Middle kick",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:334"
+},
+{
+"id": "e1f174f6ac",
+"fr": "High kick",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:335"
+},
+{
+"id": "f9177d0d2d",
+"fr": "Clinch",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:338"
+},
+{
+"id": "de1b39d235",
+"fr": "Side kick",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:339"
+},
+{
+"id": "0c71239551",
+"fr": "Superman punch",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:340"
+},
+{
+"id": "43fe2df5a8",
+"fr": "Balayage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:341"
+},
+{
+"id": "f1eea8064f",
+"fr": "Ground and pound",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:343"
+},
+{
+"id": "ca6d0e3aaa",
+"fr": "Stage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:356"
+},
+{
+"id": "f104fe7718",
+"fr": "Cours particulier",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:358"
+},
+{
+"id": "f8473ee61f",
+"fr": "Positionnel",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/lexique.ts:359"
+},
+{
+"id": "bcc6381a13",
+"fr": "Dorsaux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seances/muscles.ts:19"
+},
+{
+"id": "5d68b51905",
+"fr": "Obliques",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seances/muscles.ts:25"
+},
+{
+"id": "8aa750306a",
+"fr": "Quadriceps",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seances/muscles.ts:26"
+},
+{
+"id": "dff487e1c1",
+"fr": "Ischio-jambiers",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seances/muscles.ts:27"
+},
+{
+"id": "9c88a08515",
+"fr": "Tibias",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seances/muscles.ts:30"
+},
+{
+"id": "288f3841b4",
+"fr": "Import incomplet",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/import-workouts.tsx:108"
+},
+{
+"id": "c614ba7c45",
+"fr": "Auto",
+"ctx": "court",
+"zone": "affichage",
+"ref": "app/settings/index.tsx:61"
+},
+{
+"id": "9ada14395d",
+"fr": "Sauvegarder",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/index.tsx:214"
+},
+{
+"id": "2fc9459b17",
+"fr": "Noter l’app",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/index.tsx:222"
+},
+{
+"id": "7c50f80af1",
+"fr": "Studio YOROI",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/settings/index.tsx:241"
+},
+{
+"id": "5a76fdb6d2",
+"fr": "Revenir",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:175"
+},
+{
+"id": "302ac5a624",
+"fr": "Remettre normal",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:189"
+},
+{
+"id": "86fc570914",
+"fr": "Verrouiller",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:196"
+},
+{
+"id": "6e7ffaeafc",
+"fr": "Vue gratuite",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:238"
+},
+{
+"id": "8d49e065a3",
+"fr": "Onboarding",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:261"
+},
+{
+"id": "f1f70bdaff",
+"fr": "Paywall",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:262"
+},
+{
+"id": "a9b5a73445",
+"fr": "Kit marketing",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:272"
+},
+{
+"id": "bf4c433b56",
+"fr": "Heny",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:277"
+},
+{
+"id": "416c5e37d1",
+"fr": "Mode capture",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:279"
+},
+{
+"id": "5a700dfde5",
+"fr": "Notification test",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:280"
+},
+{
+"id": "a1b49b52e7",
+"fr": "Chrono test",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:282"
+},
+{
+"id": "fe8fcb126c",
+"fr": "Sons",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/creator-mode.tsx:284"
+},
+{
+"id": "10892c2d9d",
+"fr": "Cloche",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/SonsGalerie.tsx:150"
+},
+{
+"id": "bb68e389dd",
+"fr": "Tours faits",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/timer.tsx:459"
+},
+{
+"id": "a15c72adab",
+"fr": "Recommencer",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/timer.tsx:593"
+},
+{
+"id": "81a1c72dfd",
+"fr": "Chronos",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/timer.tsx:649"
+},
+{
+"id": "e2adf17d57",
+"fr": "Barre haute : l’effort",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/timer.tsx:656"
+},
+{
+"id": "f32c56cb50",
+"fr": "Efforts",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/timer.tsx:734"
+},
+{
+"id": "98e2ac457c",
+"fr": "Blocs",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/timer.tsx:735"
+},
+{
+"id": "781961bc81",
+"fr": "Pause",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/timer.tsx:736"
+},
+{
+"id": "451d8fffa5",
+"fr": "Temps limite",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/timer.tsx:774"
+},
+{
+"id": "6e24ffa883",
+"fr": "Sparring",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/combat-timer.tsx:323"
+},
+{
+"id": "421a648aec",
+"fr": "Ensuite",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/chrono/parts.tsx:176"
+},
+{
+"id": "48c1264587",
+"fr": "M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5",
+"ctx": "note",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/ui.tsx:78"
+},
+{
+"id": "5554b8526c",
+"fr": "Mode capture propre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/marketing-kit.tsx:85"
+},
+{
+"id": "345c89674e",
+"fr": "Comment capturer",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/marketing-kit.tsx:90"
+},
+{
+"id": "42c0774775",
+"fr": "Ouvrir",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/marketing-kit.tsx:122"
+},
+{
+"id": "db866831c3",
+"fr": "Packs",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:24"
+},
+{
+"id": "a43f1f0f80",
+"fr": "Fonds verticaux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:26"
+},
+{
+"id": "beeeb82a5e",
+"fr": "Ornements",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:27"
+},
+{
+"id": "2fec45a4cb",
+"fr": "Sports",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:28"
+},
+{
+"id": "c57ed549b4",
+"fr": "Sceaux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:31"
+},
+{
+"id": "3f0576b0f9",
+"fr": "Tampons",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:32"
+},
+{
+"id": "3089591a3c",
+"fr": "Logos",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:33"
+},
+{
+"id": "9a2dd276e6",
+"fr": "Divers",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:36"
+},
+{
+"id": "1e99a29187",
+"fr": "Anciens avatars",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:37"
+},
+{
+"id": "656228da09",
+"fr": "Image suivante",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:159"
+},
+{
+"id": "09e871c98f",
+"fr": "Images",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/ImagesGalerie.tsx:235"
+},
+{
+"id": "d63f401f9e",
+"fr": "Pack Voyages",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/scene.tsx:80"
+},
+{
+"id": "a4a3f3db88",
+"fr": "Tourne",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/settings/scene.tsx:417"
+},
+{
+"id": "6412ca76b8",
+"fr": "Ambiance sonore",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/settings/scene.tsx:823"
+},
+{
+"id": "de4f1aab58",
+"fr": "VOLUME",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/settings/scene.tsx:835"
+},
+{
+"id": "62afd21e88",
+"fr": "Animation",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/settings/scene.tsx:894"
+},
+{
+"id": "cc8a87ad6d",
+"fr": "Gratuites",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/espace/presentation.ts:131"
+},
+{
+"id": "b7ddeb4987",
+"fr": "Voyages",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/espace/groupes.ts:19"
+},
+{
+"id": "4d918d003c",
+"fr": "Saisons",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/espace/groupes.ts:29"
+},
+{
+"id": "65ff86d000",
+"fr": "Doux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/espace/sonScene.ts:28"
+},
+{
+"id": "2c419ecc92",
+"fr": "Aa",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/settings/affichage.tsx:51"
+},
+{
+"id": "94e3784b9d",
+"fr": "Lanternes",
+"ctx": "court",
+"zone": "affichage",
+"ref": "lib/v2/widgets/style.ts:19"
+},
+{
+"id": "2a3c05c8e7",
+"fr": "Rouleau",
+"ctx": "court",
+"zone": "affichage",
+"ref": "lib/v2/widgets/style.ts:20"
+},
+{
+"id": "7c7ac712f0",
+"fr": "Armure",
+"ctx": "court",
+"zone": "affichage",
+"ref": "lib/v2/widgets/style.ts:21"
+},
+{
+"id": "fd328df32a",
+"fr": "Citations",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/espace/accueil.tsx:29"
+},
+{
+"id": "f6056ea66b",
+"fr": "Essayer maintenant",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/citations.tsx:89"
+},
+{
+"id": "61127da3df",
+"fr": "Force mentale",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/citations.ts:55"
+},
+{
+"id": "12b33fe0ef",
+"fr": "Esprit combattant",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/citations.ts:67"
+},
+{
+"id": "9017f76497",
+"fr": "Photo indisponible",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/settings/photo.tsx:113"
+},
+{
+"id": "ae77a05fc2",
+"fr": "Contour",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/settings/photo.tsx:192"
+},
+{
+"id": "f9fcd8c232",
+"fr": "Personnage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/personnage.tsx:113"
+},
+{
+"id": "175f4db170",
+"fr": "Dessin classique",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/personnage.tsx:174"
+},
+{
+"id": "cb450d3c21",
+"fr": "Offert",
+"ctx": "texte",
+"zone": "affichage",
+"ref": "lib/v2/dojo/dojoAffichage.ts:88"
+},
+{
+"id": "b9d708187c",
+"fr": "Personnaliser",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/settings/style.tsx:185"
+},
+{
+"id": "084694536b",
+"fr": "Briefing",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/notification-center.tsx:46"
+},
+{
+"id": "2a2bfa0c45",
+"fr": "Rappel malin",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/notification-center.tsx:52"
+},
+{
+"id": "753a22b2eb",
+"fr": "Notifications",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/notifications.tsx:294"
+},
+{
+"id": "9cf632fc2c",
+"fr": "Prochain rappel",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/notifications.tsx:366"
+},
+{
+"id": "e97b35e1c4",
+"fr": "Premier rappel",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/notifications.tsx:529"
+},
+{
+"id": "a1513d2e66",
+"fr": "Fluctuations",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/notifications.tsx:555"
+},
+{
+"id": "6af8cf263a",
+"fr": "Rappels malins",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/notifications.tsx:578"
+},
+{
+"id": "3fd45482d3",
+"fr": "Rythme en baisse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/notifications.tsx:589"
+},
+{
+"id": "faae61ecb8",
+"fr": "3 matins",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/notifications/RappelsDiscipline.tsx:190"
+},
+{
+"id": "84f8dc887d",
+"fr": "Week-end",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/notifications/parts.tsx:189"
+},
+{
+"id": "57dbed5723",
+"fr": "Plateau",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/eveningHealthTipsService.ts:69"
+},
+{
+"id": "d35fbacccf",
+"fr": "Bonnes graisses",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/eveningHealthTipsService.ts:95"
+},
+{
+"id": "02eb0cd51e",
+"fr": "Petits plaisirs",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/eveningHealthTipsService.ts:113"
+},
+{
+"id": "7481b2e308",
+"fr": "Sel",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/eveningHealthTipsService.ts:125"
+},
+{
+"id": "bad3334279",
+"fr": "Stress",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/eveningHealthTipsService.ts:229"
+},
+{
+"id": "29293f77b8",
+"fr": "Suivi",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/eveningHealthTipsService.ts:235"
+},
+{
+"id": "67a48ee5ce",
+"fr": "Habitudes",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/eveningHealthTipsService.ts:247"
+},
+{
+"id": "0112e634cc",
+"fr": "On lit tout, vraiment",
+"ctx": "subtitle",
+"zone": "affichage",
+"ref": "app/ideas.tsx:50"
+},
+{
+"id": "df38c45960",
+"fr": "Limite atteinte",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "app/training-journal.tsx:289"
+},
+{
+"id": "13901111ad",
+"fr": "Vider",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/training-journal.tsx:557"
+},
+{
+"id": "f8e26fa069",
+"fr": "Rounds, partenaires, soumissions",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/training-journal.tsx:714"
+},
+{
+"id": "ab8b5fa3f3",
+"fr": "Corbeille",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/training-journal.tsx:723"
+},
+{
+"id": "0b4b058a04",
+"fr": "Techniques",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/nav.tsx:22"
+},
+{
+"id": "200d42f50a",
+"fr": "Aube",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/images.ts:90"
+},
+{
+"id": "5db5f2d334",
+"fr": "Cardio Appareils",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:543"
+},
+{
+"id": "c6284e7691",
+"fr": "Street Workout",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:544"
+},
+{
+"id": "73989d9c59",
+"fr": "Running",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:545"
+},
+{
+"id": "89867734fc",
+"fr": "JJB - Garde",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:552"
+},
+{
+"id": "1dd0fc0aae",
+"fr": "JJB - Passage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:553"
+},
+{
+"id": "b3c7beed7c",
+"fr": "JJB - Soumission",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:554"
+},
+{
+"id": "ef9f385592",
+"fr": "JJB - No Gi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:555"
+},
+{
+"id": "3ab1dd687b",
+"fr": "Striking",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:557"
+},
+{
+"id": "bc9b533a43",
+"fr": "En cours",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/carnetService.ts:563"
+},
+{
+"id": "6e460e239f",
+"fr": "Notes techniques",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/AddSkillSheet.tsx:67"
+},
+{
+"id": "1409bae3a5",
+"fr": "Filmer",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/AddSkillSheet.tsx:79"
+},
+{
+"id": "966960d24d",
+"fr": "Titre manquant",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/VideoLibrarySheet.tsx:142"
+},
+{
+"id": "849f5b1831",
+"fr": "YouTube, Instagram...",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/VideoLibrarySheet.tsx:228"
+},
+{
+"id": "87ea97c24b",
+"fr": "Type d’effort",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/EntrySheet.tsx:189"
+},
+{
+"id": "ac65a74e5f",
+"fr": "Station force",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/EntrySheet.tsx:190"
+},
+{
+"id": "6138ad0d2d",
+"fr": "Puissance (W)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/EntrySheet.tsx:244"
+},
+{
+"id": "2940ff1e5f",
+"fr": "Machines",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/RecordPicker.tsx:41"
+},
+{
+"id": "d25a50129b",
+"fr": "Squat, 10 km, gainage...",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/RecordPicker.tsx:214"
+},
+{
+"id": "26797004fe",
+"fr": "Abdos / Core",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/VideosView.tsx:30"
+},
+{
+"id": "8d5f1d0c1b",
+"fr": "YouTube, Instagram, TikTok...",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/videos/AddVideoSheet.tsx:189"
+},
+{
+"id": "eb97899aed",
+"fr": "Titre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/videos/AddVideoSheet.tsx:203"
+},
+{
+"id": "f4a59a57cd",
+"fr": "en paroi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/VoiesView.tsx:59"
+},
+{
+"id": "baf050e3e1",
+"fr": "meilleure cotation",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/VoiesView.tsx:60"
+},
+{
+"id": "504325f768",
+"fr": "JJB, MMA, Boxe, Grappling",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/sportPacks.ts:66"
+},
+{
+"id": "40193bf497",
+"fr": "Running, Marathon, Trail, Triathlon",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/sportPacks.ts:74"
+},
+{
+"id": "901c13f082",
+"fr": "Hyrox, CrossFit, Powerlifting, Strongman",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/sportPacks.ts:82"
+},
+{
+"id": "a32093f4b3",
+"fr": "Musculation, Bodybuilding, Fitness",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/sportPacks.ts:90"
+},
+{
+"id": "34c2f1af8d",
+"fr": "Sled push",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/StationsView.tsx:17"
+},
+{
+"id": "f197ad0529",
+"fr": "Sled pull",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/StationsView.tsx:18"
+},
+{
+"id": "78d68e092b",
+"fr": "Burpee broad jump",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/StationsView.tsx:19"
+},
+{
+"id": "afcb57a84a",
+"fr": "Farmer carry",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/StationsView.tsx:21"
+},
+{
+"id": "6cfa570aab",
+"fr": "Sandbag lunges",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/StationsView.tsx:22"
+},
+{
+"id": "dcb51f508b",
+"fr": "Wall balls",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/StationsView.tsx:23"
+},
+{
+"id": "243007b4e3",
+"fr": "Maximums en force",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/StationsView.tsx:107"
+},
+{
+"id": "7bda6edd16",
+"fr": "5 km",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/AlluresView.tsx:18"
+},
+{
+"id": "8b3fa6b58d",
+"fr": "Semi-marathon",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/AlluresView.tsx:20"
+},
+{
+"id": "ae1767f1e2",
+"fr": "allure moyenne",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SortiesView.tsx:67"
+},
+{
+"id": "a723087bf3",
+"fr": "Meilleure allure",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SortiesView.tsx:78"
+},
+{
+"id": "8f7f57b519",
+"fr": "Push",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SeancesMuscuView.tsx:15"
+},
+{
+"id": "5219eb9a71",
+"fr": "Pull",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SeancesMuscuView.tsx:16"
+},
+{
+"id": "28974ce24c",
+"fr": "Corps entier",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SeancesMuscuView.tsx:20"
+},
+{
+"id": "cd4683fadf",
+"fr": "Positions",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/CombatSection.tsx:19"
+},
+{
+"id": "ac0a827665",
+"fr": "Positions dominantes",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/PositionsView.tsx:19"
+},
+{
+"id": "882e76e49e",
+"fr": "Subies",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/PositionsView.tsx:94"
+},
+{
+"id": "4b0413d3c0",
+"fr": "Finitions",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SparringView.tsx:471"
+},
+{
+"id": "b9da05f614",
+"fr": "Meilleur taux",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SparringView.tsx:488"
+},
+{
+"id": "14d3e4ea40",
+"fr": "Guerre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SparringView.tsx:497"
+},
+{
+"id": "7ff20370c8",
+"fr": "Nom",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/carnet/tabs/SparringParts.tsx:250"
+},
+{
+"id": "5577544b8f",
+"fr": "Partenaires dormants",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/partnerInsightsService.ts:132"
+},
+{
+"id": "dd50c684be",
+"fr": "Rival principal",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/partnerInsightsService.ts:147"
+},
+{
+"id": "75b82dbca9",
+"fr": "ALLURE",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:306"
+},
+{
+"id": "5f326a76d2",
+"fr": "TEMPS",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:321"
+},
+{
+"id": "2e7cec76fd",
+"fr": "PENTE",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:472"
+},
+{
+"id": "897ed8a83e",
+"fr": "WATTS",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:488"
+},
+{
+"id": "cbd7fe8484",
+"fr": "Lvl",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:497"
+},
+{
+"id": "4757ed0206",
+"fr": "Allure:",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:507"
+},
+{
+"id": "d5d3946e90",
+"fr": "Yoroi",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:604"
+},
+{
+"id": "4020c08c76",
+"fr": "Style:",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/VictoryShareModal.tsx:716"
+},
+{
+"id": "0952e1514a",
+"fr": "2 rounds",
+"ctx": "texte",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Vitrines.tsx:275"
+},
+{
+"id": "1bb2022cb2",
+"fr": "Ancien record",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/cartes/CarteRendu.tsx:790"
+},
+{
+"id": "9125498719",
+"fr": "zone dominante",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/cartes/chiffres.ts:125"
+},
+{
+"id": "87b5e0f356",
+"fr": "bpm moyen",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/bilan/BilanVue.tsx:498"
+},
+{
+"id": "94cdba7738",
+"fr": "bpm max",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/bilan/BilanVue.tsx:504"
+},
+{
+"id": "8c5db08ab2",
+"fr": "Planifier",
+"ctx": "libelle",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/Grille.tsx:235"
+},
+{
+"id": "30a2a037d0",
+"fr": "Dernier record",
+"ctx": "titre",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/Grille.tsx:1013"
+},
+{
+"id": "ca28e250b9",
+"fr": "Connecter",
+"ctx": "libelle",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/Grille.tsx:1153"
+},
+{
+"id": "a140bd8212",
+"fr": "kilocalories actives",
+"ctx": "a11y",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/SanteJour.tsx:37"
+},
+{
+"id": "3200628166",
+"fr": "Patience",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/accueil/conseil.ts:39"
+},
+{
+"id": "db8e3ca482",
+"fr": "Monte doucement",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/accueil/conseil.ts:61"
+},
+{
+"id": "601bf910c5",
+"fr": "App Store Connect",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:15"
+},
+{
+"id": "3779e0084b",
+"fr": "Google Play Console",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:16"
+},
+{
+"id": "f080bfd50e",
+"fr": "RevenueCat",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:17"
+},
+{
+"id": "17f228be7f",
+"fr": "Sentry",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:18"
+},
+{
+"id": "c275355dc4",
+"fr": "Expo",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:19"
+},
+{
+"id": "8a7defc32a",
+"fr": "Fiche App Store",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:23"
+},
+{
+"id": "dda1726ca0",
+"fr": "apps.apple.com, id6757306612",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:23"
+},
+{
+"id": "6370554235",
+"fr": "Fiche Google Play",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:24"
+},
+{
+"id": "a5e26a8f9d",
+"fr": "Liens",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:30"
+},
+{
+"id": "a195ed49c0",
+"fr": "Fiches publiques",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Liens.tsx:36"
+},
+{
+"id": "e12c3cc2ca",
+"fr": "Premier lancement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Diagnostic.tsx:35"
+},
+{
+"id": "2da600bf94",
+"fr": "Version",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Diagnostic.tsx:158"
+},
+{
+"id": "e9a7979217",
+"fr": "Expo SDK",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Diagnostic.tsx:162"
+},
+{
+"id": "de5457842c",
+"fr": "Relire",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Diagnostic.tsx:197"
+},
+{
+"id": "92a84589bb",
+"fr": "Stockage local",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Diagnostic.tsx:215"
+},
+{
+"id": "58e56e61f3",
+"fr": "Onglet Seances v2, esprit Strava, Hevy, Whoop:",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/creator/screens.ts:12"
+},
+{
+"id": "009e5fdeae",
+"fr": "Composition detaillee v2, deux modes:",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/creator/screens.ts:47"
+},
+{
+"id": "4792bdf30f",
+"fr": "/espace: Ton espace est fusionne dans Reglages, une seule porte d'entree.",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/creator/screens.ts:62"
+},
+{
+"id": "ffc7885632",
+"fr": "Ancienne page Apparence, renvoie vers Reglages",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "lib/v2/creator/screens.ts:132"
+},
+{
+"id": "000b836ba5",
+"fr": "Partage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sync-history.tsx:34"
+},
+{
+"id": "297d3c8f02",
+"fr": "Backup automatique",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/syncHistoryService.ts:80"
+},
+{
+"id": "be56c135ad",
+"fr": "Backup manuel",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/syncHistoryService.ts:81"
+},
+{
+"id": "e6d22fd48c",
+"fr": "Push cloud",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/syncHistoryService.ts:83"
+},
+{
+"id": "aeda4d634f",
+"fr": "Sync iPhone ↔ iPad",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/syncHistoryService.ts:85"
+},
+{
+"id": "1509a7dcff",
+"fr": "Import fichier",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/syncHistoryService.ts:86"
+},
+{
+"id": "9877c3b526",
+"fr": "Sync Watch",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/syncHistoryService.ts:88"
+},
+{
+"id": "047ab2e6bd",
+"fr": "Synchronisation locale",
+"ctx": "subtitle",
+"zone": "affichage",
+"ref": "app/sync-devices.tsx:143"
+},
+{
+"id": "425e416e47",
+"fr": "Cet appareil",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/sync-devices.tsx:164"
+},
+{
+"id": "563faa28c1",
+"fr": "Oublier",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sync-devices.tsx:183"
+},
+{
+"id": "cf9f2ec4e2",
+"fr": "Code d’appairage",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "app/sync-devices.tsx:223"
+},
+{
+"id": "a598cf5260",
+"fr": "Appairer",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/sync-devices.tsx:231"
+},
+{
+"id": "f75cfa5817",
+"fr": "100 % en local",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/sync-devices.tsx:251"
+},
+{
+"id": "a65733b359",
+"fr": "Duel",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/PartageGalerie.tsx:39"
+},
+{
+"id": "cdc0ac6081",
+"fr": "Carte universelle",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/PartageGalerie.tsx:41"
+},
+{
+"id": "06ebbcfacf",
+"fr": "Guerrier",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/PartageGalerie.tsx:122"
+},
+{
+"id": "8e664f7c90",
+"fr": "Suivante",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/PartageGalerie.tsx:144"
+},
+{
+"id": "0ecd79e6d6",
+"fr": "Record muscu",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/fictif.ts:212"
+},
+{
+"id": "b78ae8a36b",
+"fr": "Kcal",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/SessionCard.tsx:225"
+},
+{
+"id": "68af11f073",
+"fr": "Cadence",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/SessionCard.tsx:227"
+},
+{
+"id": "3c23df160b",
+"fr": "Pente",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/SessionCard.tsx:228"
+},
+{
+"id": "afa7531f94",
+"fr": "Projection 2025",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/social-cards/YearCounterCard.tsx:135"
+},
+{
+"id": "74ea2a2793",
+"fr": "CALENDRIER",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/social-cards/WeeklyRecapCard.tsx:160"
+},
+{
+"id": "b6fa153814",
+"fr": "CLUBS",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/social-cards/WeeklyRecapCard.tsx:187"
+},
+{
+"id": "1a0807ab2e",
+"fr": "BEST DAY",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/social-cards/WeeklyRecapCard.tsx:212"
+},
+{
+"id": "b06322bb55",
+"fr": "IMBATTU",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/social-cards/CombatShareCard.tsx:197"
+},
+{
+"id": "67a948ab9a",
+"fr": "JUDO",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:29"
+},
+{
+"id": "b2797cd927",
+"fr": "MUAY THAI",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:31"
+},
+{
+"id": "d06d3b22eb",
+"fr": "KICK BOXING",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:33"
+},
+{
+"id": "f38de27912",
+"fr": "BOXE",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:35"
+},
+{
+"id": "d8a857eb6b",
+"fr": "GRAPPLING",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:37"
+},
+{
+"id": "39d239707b",
+"fr": "WRESTLING",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:38"
+},
+{
+"id": "cd2970a664",
+"fr": "LUTTE",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:39"
+},
+{
+"id": "ca42564d46",
+"fr": "SAMBO",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:40"
+},
+{
+"id": "da3201124b",
+"fr": "TAEKWONDO",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:42"
+},
+{
+"id": "5080a22965",
+"fr": "RUNNING",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:43"
+},
+{
+"id": "1283d34048",
+"fr": "TRAIL RUNNING",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:45"
+},
+{
+"id": "87b567b012",
+"fr": "TRIATHLON",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:46"
+},
+{
+"id": "9221f8bd4c",
+"fr": "NATATION",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:47"
+},
+{
+"id": "e00ba1bc9b",
+"fr": "CYCLISME",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:49"
+},
+{
+"id": "6a027de21f",
+"fr": "MUSCULATION",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:52"
+},
+{
+"id": "dd2a93d8e9",
+"fr": "CROSSFIT",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:53"
+},
+{
+"id": "11ad971a36",
+"fr": "FITNESS",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:54"
+},
+{
+"id": "24ce53b49c",
+"fr": "YOGA",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/social-cards/UniversalShareCard.tsx:55"
+},
+{
+"id": "695a1480bc",
+"fr": "Premier record",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:49"
+},
+{
+"id": "12e7de7542",
+"fr": "Alertes",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:92"
+},
+{
+"id": "9f41cced9f",
+"fr": "appAlert",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:92"
+},
+{
+"id": "03080094c4",
+"fr": "Deux boutons",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:97"
+},
+{
+"id": "d5ba9292a3",
+"fr": "Trois boutons",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:108"
+},
+{
+"id": "c3b592c081",
+"fr": "Suppression",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:121"
+},
+{
+"id": "0915752141",
+"fr": "Texte long",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:130"
+},
+{
+"id": "d4a6d22a64",
+"fr": "appChoices",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:154"
+},
+{
+"id": "3e86f8d789",
+"fr": "Saisie",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:171"
+},
+{
+"id": "3e7b29076c",
+"fr": "Texte libre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:173"
+},
+{
+"id": "98ebcd430a",
+"fr": "Renommer quelque chose",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:173"
+},
+{
+"id": "e68491e91c",
+"fr": "Nombre",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:176"
+},
+{
+"id": "516d96a04c",
+"fr": "Message court",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/FenetresGalerie.tsx:212"
+},
+{
+"id": "28ec78c439",
+"fr": "Carnet vide",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/EtatsGalerie.tsx:43"
+},
+{
+"id": "b682147a0b",
+"fr": "Chargements",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/EtatsGalerie.tsx:46"
+},
+{
+"id": "a4c13440ca",
+"fr": "Petit indicateur",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/EtatsGalerie.tsx:281"
+},
+{
+"id": "6c27f6b085",
+"fr": "Zone d’attente",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/galeries/EtatsGalerie.tsx:293"
+},
+{
+"id": "3331ae794c",
+"fr": "+250 ml",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/Blocs.tsx:331"
+},
+{
+"id": "9452ecac50",
+"fr": "+500 ml",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/Blocs.tsx:332"
+},
+{
+"id": "c05077d504",
+"fr": "Adversaire fort battu !",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/social-share/last-session.tsx:248"
+},
+{
+"id": "be763e9aba",
+"fr": "Stats",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/social-share/last-session.tsx:324"
+},
+{
+"id": "4b00c1bff3",
+"fr": "Parfait",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "app/social-share/backup-step.tsx:114"
+},
+{
+"id": "de069f0a46",
+"fr": "Remettre",
+"ctx": "text",
+"zone": "affichage",
+"ref": "lib/exportService.ts:864"
+},
+{
+"id": "785c411b21",
+"fr": "Copie remise",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "lib/exportService.ts:875"
+},
+{
+"id": "dbe822a898",
+"fr": "Fichier invalide",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "lib/exportService.ts:882"
+},
+{
+"id": "c36ae19a08",
+"fr": "Partage indisponible",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "lib/exportService.ts:1030"
+},
+{
+"id": "c0498030b6",
+"fr": "Indisponible",
+"ctx": "showPopup",
+"zone": "affichage",
+"ref": "app/settings/donnees.tsx:181"
+},
+{
+"id": "a6fa254c15",
+"fr": "Sauvegarder d’abord",
+"ctx": "text",
+"zone": "affichage",
+"ref": "app/settings/donnees.tsx:200"
+},
+{
+"id": "7df1da7e01",
+"fr": "Effacement incomplet",
+"ctx": "showPopup",
+"zone": "affichage",
+"ref": "app/settings/donnees.tsx:223"
+},
+{
+"id": "506220c4a8",
+"fr": "Tableur, fichier complet, texte",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/settings/donnees.tsx:268"
+},
+{
+"id": "494f5eb239",
+"fr": "Verrouiller l’app",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/donnees.tsx:285"
+},
+{
+"id": "20a3c96be7",
+"fr": "Zone sensible",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/settings/donnees.tsx:300"
+},
+{
+"id": "ec25a7f2df",
+"fr": "Toujours",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/privacy-data.tsx:71"
+},
+{
+"id": "2cace63e09",
+"fr": "Humeur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/privacy-data.tsx:84"
+},
+{
+"id": "d2ccd81093",
+"fr": "Conservation",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/privacy-data.tsx:223"
+},
+{
+"id": "c1a227f085",
+"fr": "Tableur",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/export-data.tsx:27"
+},
+{
+"id": "91c43aa074",
+"fr": "Fichier complet",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/export-data.tsx:28"
+},
+{
+"id": "f0b427fe2a",
+"fr": "Rapport texte",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/export-data.tsx:29"
+},
+{
+"id": "843f9006e4",
+"fr": "Bras G",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/companion.tsx:42"
+},
+{
+"id": "2958dd8b7e",
+"fr": "Bras D",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/companion.tsx:43"
+},
+{
+"id": "c4815cbd00",
+"fr": "Masse grasse, en %",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/companion.tsx:283"
+},
+{
+"id": "afc438d563",
+"fr": "Astuce",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/import-csv.tsx:226"
+},
+{
+"id": "e788dc6b42",
+"fr": "Copie automatique",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "components/yoroi/v2/sauvegarde/lancerCopieAuto.ts:40"
+},
+{
+"id": "9074eac799",
+"fr": "Conditions d’utilisation",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/legal.tsx:18"
+},
+{
+"id": "8bedbf7578",
+"fr": "Savoir",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/aide.tsx:41"
+},
+{
+"id": "d786a93aee",
+"fr": "Aide en ligne",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/aide.tsx:46"
+},
+{
+"id": "44059e05d9",
+"fr": "Force (1-5 reps) : 3-5 min. Hypertrophie (8-12 reps) : 2-3 min. Endurance (15+ reps) : 1-2 min.",
+"ctx": "how",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:174"
+},
+{
+"id": "8e35ffe2d1",
+"fr": "Progression : Surcharge Progressive",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:246"
+},
+{
+"id": "d06c9ca4ae",
+"fr": "Cortisol & Stress Chronique",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:259"
+},
+{
+"id": "5313a8d0ad",
+"fr": "5×5 Stronglifts (Force)",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:442"
+},
+{
+"id": "f595af386a",
+"fr": "PPL (Push/Pull/Legs)",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:482"
+},
+{
+"id": "ed9d6f926b",
+"fr": "Zone 2 Cardio (Mitochondries)",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:502"
+},
+{
+"id": "8cae17bcd1",
+"fr": "EMOM (Every Minute On the Minute)",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:622"
+},
+{
+"id": "9d1f54090d",
+"fr": "Pyramid Training (Hypertrophie)",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/v2/competition/savoirData.ts:643"
+},
+{
+"id": "df4349f1b6",
+"fr": "Perdu",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/combat/analytics.ts:134"
+},
+{
+"id": "ab31c54dc8",
+"fr": "Solide",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/quick-log.tsx:57"
+},
+{
+"id": "81f974bf0b",
+"fr": "Ressenti",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/quick-log.tsx:533"
+},
+{
+"id": "8112e9eb98",
+"fr": "Contexte",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/quick-log.tsx:566"
+},
+{
+"id": "a25ef9242e",
+"fr": "Buts",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/quick-log.tsx:709"
+},
+{
+"id": "86abf0cd8a",
+"fr": "Poste",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/quick-log.tsx:715"
+},
+{
+"id": "5b2ce29763",
+"fr": "Ailier, milieu, gardien...",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "app/quick-log.tsx:719"
+},
+{
+"id": "9aeaa29f4a",
+"fr": "Relier",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/quick-log.tsx:1020"
+},
+{
+"id": "2331b4eea1",
+"fr": "Cours",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/combat.ts:13"
+},
+{
+"id": "1bd03019e4",
+"fr": "Drilling",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/combat.ts:14"
+},
+{
+"id": "a735a87279",
+"fr": "Tranquille",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/seance/combat.ts:58"
+},
+{
+"id": "6b77d0e1a3",
+"fr": "Self-defense",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:26"
+},
+{
+"id": "6642c93aa0",
+"fr": "Debout & takedowns",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:39"
+},
+{
+"id": "91cb165aa1",
+"fr": "Gardes",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:54"
+},
+{
+"id": "323037bc52",
+"fr": "Balayages (sweeps)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:73"
+},
+{
+"id": "d3ce347862",
+"fr": "Soumissions, cou",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:124"
+},
+{
+"id": "2b9be8b347",
+"fr": "Soumissions, jambes",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:146"
+},
+{
+"id": "fedaa03536",
+"fr": "Drills & concepts",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:167"
+},
+{
+"id": "337f12d366",
+"fr": "Kumi-kata (saisies)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:206"
+},
+{
+"id": "3132f75652",
+"fr": "Koshi-waza (hanches)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:222"
+},
+{
+"id": "056b1d64d4",
+"fr": "Ashi-waza (jambes)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:230"
+},
+{
+"id": "ced3c73deb",
+"fr": "Sutemi-waza (sacrifice)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:239"
+},
+{
+"id": "b79e0d5e2e",
+"fr": "Debout, attaques",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:277"
+},
+{
+"id": "182251622e",
+"fr": "Escapes & reversals",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:318"
+},
+{
+"id": "250d62bcaf",
+"fr": "Gardes no-gi",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:341"
+},
+{
+"id": "38e92f2585",
+"fr": "Leg locks",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:366"
+},
+{
+"id": "c7bdffcad9",
+"fr": "Projections",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:397"
+},
+{
+"id": "13b306221d",
+"fr": "Armlocks & kimuras",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:421"
+},
+{
+"id": "c255df8e38",
+"fr": "Takedowns",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:449"
+},
+{
+"id": "6334e85434",
+"fr": "Stretches & cranks",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:465"
+},
+{
+"id": "d6f33c151f",
+"fr": "Submissions",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:473"
+},
+{
+"id": "1f681c382a",
+"fr": "Escapes & contres",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:482"
+},
+{
+"id": "be5fa3d566",
+"fr": "Frappes debout",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:495"
+},
+{
+"id": "2df4f2fcc6",
+"fr": "Combinaisons",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:504"
+},
+{
+"id": "c4f1f34fe6",
+"fr": "Clinch & cage",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:520"
+},
+{
+"id": "1f7d9d5f19",
+"fr": "Ground & Pound",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:528"
+},
+{
+"id": "34c72bdd96",
+"fr": "Footwork & angles",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:593"
+},
+{
+"id": "26c23276ab",
+"fr": "Tactique & sparring",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:601"
+},
+{
+"id": "c9732d65a6",
+"fr": "Coudes (sok)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:623"
+},
+{
+"id": "07294008bf",
+"fr": "Genoux (kao)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:632"
+},
+{
+"id": "56ddfb89cd",
+"fr": "Clinch Thai",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:649"
+},
+{
+"id": "bb91ff8633",
+"fr": "Tactique & conditionnement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:666"
+},
+{
+"id": "80c777aa39",
+"fr": "Poings",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:680"
+},
+{
+"id": "d253d05ae4",
+"fr": "Tactique",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:721"
+},
+{
+"id": "af7d3663fa",
+"fr": "Kihon (bases)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:735"
+},
+{
+"id": "efb7fa29b5",
+"fr": "Blocages (uke waza)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:752"
+},
+{
+"id": "d8e3b52043",
+"fr": "Poings & mains",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:808"
+},
+{
+"id": "c87ae58f8d",
+"fr": "Poomsae (formes)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:816"
+},
+{
+"id": "cffc5448d8",
+"fr": "Assauts & tactique",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:888"
+},
+{
+"id": "8fa8432ec9",
+"fr": "Situations tactiques",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:931"
+},
+{
+"id": "8229947228",
+"fr": "Sol & ground",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:940"
+},
+{
+"id": "cb3f8bfa09",
+"fr": "Conditionnement & mindset",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/combatThemeLibrary.ts:948"
+},
+{
+"id": "b37456c453",
+"fr": "Contact",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/partners.tsx:183"
+},
+{
+"id": "de49ee03fb",
+"fr": "Appeler",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/partners.tsx:185"
+},
+{
+"id": "5721bbef40",
+"fr": "Instagram",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/partners.tsx:186"
+},
+{
+"id": "7e78af337e",
+"fr": "Site web",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/partners.tsx:187"
+},
+{
+"id": "0d01e2e866",
+"fr": "E-mail",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/partners.tsx:188"
+},
+{
+"id": "82da67b211",
+"fr": "Facebook",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/partners.tsx:189"
+},
+{
+"id": "558865a16f",
+"fr": "YouTube",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/partners.tsx:190"
+},
+{
+"id": "58fa2f9780",
+"fr": "Comptes Instagram",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/partners.tsx:195"
+},
+{
+"id": "2a5984780f",
+"fr": "Passage adverse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/match-tracker.tsx:62"
+},
+{
+"id": "539ef760de",
+"fr": "Renversement adverse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/match-tracker.tsx:63"
+},
+{
+"id": "7499d8c9cf",
+"fr": "Tentative adverse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/match-tracker.tsx:65"
+},
+{
+"id": "beb698d662",
+"fr": "Je tape",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/match-tracker.tsx:66"
+},
+{
+"id": "e32d0f59f4",
+"fr": "Actions adverses",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/match-tracker.tsx:295"
+},
+{
+"id": "37cbf61c9b",
+"fr": "Tatami",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/mat-time.tsx:106"
+},
+{
+"id": "a797e30923",
+"fr": "Theme",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1918"
+},
+{
+"id": "8e1fe2d505",
+"fr": "Cyan",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1926"
+},
+{
+"id": "5f31f55ac9",
+"fr": "Bleu",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1929"
+},
+{
+"id": "226d7ec9af",
+"fr": "Fine",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1933"
+},
+{
+"id": "c82c13b2dd",
+"fr": "Normale",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1934"
+},
+{
+"id": "30d15ca5cd",
+"fr": "Epaisse",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1935"
+},
+{
+"id": "a0d8d4ba54",
+"fr": "Or brillant",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1940"
+},
+{
+"id": "00706b5e9e",
+"fr": "Neon",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/frame-selection.tsx:1941"
+},
+{
+"id": "c87a847472",
+"fr": "Drills",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/drill-tracker.tsx:230"
+},
+{
+"id": "2aa31fca5e",
+"fr": "Genre",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/competitor-profile.tsx:109"
+},
+{
+"id": "58d7681a3a",
+"fr": "Ex : 75,5",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "app/competitor-profile.tsx:139"
+},
+{
+"id": "ae3f1e5830",
+"fr": "Carte JJB",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/combat-hub.tsx:66"
+},
+{
+"id": "0322acc29d",
+"fr": "en position",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/bjj-positions.tsx:156"
+},
+{
+"id": "be4ddaea22",
+"fr": "Dessus",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/bjj-positions.tsx:179"
+},
+{
+"id": "1f31ea556d",
+"fr": "Tentatives",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "app/bjj-positions.tsx:341"
+},
+{
+"id": "388c914bfb",
+"fr": "Positions, finitions",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/combat-analytics.tsx:24"
+},
+{
+"id": "4bb628c96c",
+"fr": "Jalons",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/combat-achievements.tsx:23"
+},
+{
+"id": "dd393bc96b",
+"fr": "10 rounds",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:56"
+},
+{
+"id": "c5abae21f0",
+"fr": "1000 rounds",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:60"
+},
+{
+"id": "41a575086b",
+"fr": "Social",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:63"
+},
+{
+"id": "2ffda0a22b",
+"fr": "Comeback Kid",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:66"
+},
+{
+"id": "ac0085c089",
+"fr": "Triangle Master",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:69"
+},
+{
+"id": "b3ea7c4ad8",
+"fr": "Armbar",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:70"
+},
+{
+"id": "467025ac5b",
+"fr": "Premier armbar",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:70"
+},
+{
+"id": "23e511fec8",
+"fr": "Rear Naked Choke",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:71"
+},
+{
+"id": "0a1b29d06b",
+"fr": "Premier RNC",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:71"
+},
+{
+"id": "37a8b663d4",
+"fr": "Premier heel hook",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:74"
+},
+{
+"id": "ea6a9ad014",
+"fr": "Premier bow and arrow",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:76"
+},
+{
+"id": "e1583128c6",
+"fr": "Technicien",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:79"
+},
+{
+"id": "41639b1bf6",
+"fr": "Invincible",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:85"
+},
+{
+"id": "91667f09a9",
+"fr": "Penseur",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:89"
+},
+{
+"id": "59deafa167",
+"fr": "Plan parfait",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:90"
+},
+{
+"id": "64e4c98be9",
+"fr": "Round parfait",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:92"
+},
+{
+"id": "c2636a6ba1",
+"fr": "Introspectif",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:93"
+},
+{
+"id": "afa7e9c38b",
+"fr": "Dominant",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:97"
+},
+{
+"id": "f936bfeef4",
+"fr": "Win rate ≥ 60% (min. 20 rounds)",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:97"
+},
+{
+"id": "6e7662f143",
+"fr": "Intouchable",
+"ctx": "title",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:98"
+},
+{
+"id": "301fe22f52",
+"fr": "Win rate ≥ 80% (min. 30 rounds)",
+"ctx": "description",
+"zone": "affichage",
+"ref": "lib/combatAchievements.ts:98"
+},
+{
+"id": "4cb34f046c",
+"fr": "Dossier cloud",
+"ctx": "title",
+"zone": "affichage",
+"ref": "app/backup-history.tsx:408"
+},
+{
+"id": "3c67710b68",
+"fr": "iCloud Drive, Google Drive, Dropbox",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "app/backup-history.tsx:408"
+},
+{
+"id": "af576ab224",
+"fr": "• iPhone → iPad / Mac (via AirDrop recommandé)",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/CrossPlatformMigration.tsx:107"
+},
+{
+"id": "c1c6f1d97d",
+"fr": "• iPhone → Android (via email ou Google Drive)",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/CrossPlatformMigration.tsx:108"
+},
+{
+"id": "1a19315543",
+"fr": "• Android → iPhone (via email ou Google Drive)",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/CrossPlatformMigration.tsx:109"
+},
+{
+"id": "1c334d7d1b",
+"fr": "• Android → Tablette Android (via Nearby Share / Drive)",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/CrossPlatformMigration.tsx:110"
+},
+{
+"id": "529ea48322",
+"fr": "Chiffrement AES-256",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BackupEncryptionToggle.tsx:137"
+},
+{
+"id": "50a44ed1b5",
+"fr": "Auto-backup",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BackupStatusHeader.tsx:103"
+},
+{
+"id": "e24e94ad56",
+"fr": "Sauvegarder maintenant",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "components/BackupStatusHeader.tsx:121"
+},
+{
+"id": "12ca7214fc",
+"fr": "Galerie d’images",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Contenu.tsx:17"
+},
+{
+"id": "0cbe2f9e36",
+"fr": "Alertes, choix, saisies, feuilles",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Contenu.tsx:19"
+},
+{
+"id": "1766705b5a",
+"fr": "Personnages (images)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/creator/contentReport.generated.ts:44"
+},
+{
+"id": "dbdfbbe3ce",
+"fr": "49 sports, 6 images chacun",
+"ctx": "detail",
+"zone": "affichage",
+"ref": "lib/v2/creator/contentReport.generated.ts:91"
+},
+{
+"id": "c48b209c67",
+"fr": "Techniques en double",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/creator/contentReport.generated.ts:117"
+},
+{
+"id": "3c5f2091ab",
+"fr": "Citations en double",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/creator/contentReport.generated.ts:124"
+},
+{
+"id": "7c8134e39c",
+"fr": "Captures",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Demo.tsx:173"
+},
+{
+"id": "2acb18ea3a",
+"fr": "Carnet rempli",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Demo.tsx:177"
+},
+{
+"id": "8d0ed03c4f",
+"fr": "Lecture seule : RevenueCat, entitlement, offres",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:109"
+},
+{
+"id": "1b2f74c258",
+"fr": "Offres",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:114"
+},
+{
+"id": "07fcb8c2f1",
+"fr": "Actif chez RevenueCat",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:119"
+},
+{
+"id": "ff673dc28e",
+"fr": "Produit",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:120"
+},
+{
+"id": "1c82119c31",
+"fr": "Expiration",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:121"
+},
+{
+"id": "5b961f3ab5",
+"fr": "Renouvellement",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:123"
+},
+{
+"id": "0d8a7046c8",
+"fr": "Store",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:124"
+},
+{
+"id": "66d9488e25",
+"fr": "Identifiant client RevenueCat",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Abonnement.tsx:127"
+},
+{
+"id": "aa4b920c97",
+"fr": "Vraiment ?",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Donnees.tsx:127"
+},
+{
+"id": "6da13addb0",
+"fr": "Source",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Donnees.tsx:145"
+},
+{
+"id": "a33c58f5ec",
+"fr": "Connexion",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Donnees.tsx:146"
+},
+{
+"id": "3b7dad81dc",
+"fr": "Lecture en cours",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Donnees.tsx:157"
+},
+{
+"id": "dca984afd7",
+"fr": "Migrations",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Donnees.tsx:177"
+},
+{
+"id": "f0747ecfa8",
+"fr": "Excellent travail !",
+"ctx": "body",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:129"
+},
+{
+"id": "a88f9d1ec7",
+"fr": "Forte",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:136"
+},
+{
+"id": "d5b15946fe",
+"fr": "Douce",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:137"
+},
+{
+"id": "672e2f601f",
+"fr": "Alerte",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:140"
+},
+{
+"id": "a661078d1c",
+"fr": "Longue (chrono)",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:142"
+},
+{
+"id": "4c4f5484a0",
+"fr": "Simuler",
+"ctx": "text",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:182"
+},
+{
+"id": "0958a9f535",
+"fr": "Notifications, avis, vibrations, autorisations",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:299"
+},
+{
+"id": "5c67a371cb",
+"fr": "Demande d’avis",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:302"
+},
+{
+"id": "068ba18401",
+"fr": "Vibrations",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:334"
+},
+{
+"id": "ae3a207a36",
+"fr": "Autorisations",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Tests.tsx:343"
+},
+{
+"id": "aa470dd1d3",
+"fr": "Maintenant",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Ambiance.tsx:24"
+},
+{
+"id": "5a7faf5ec2",
+"fr": "Petite",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Ambiance.tsx:34"
+},
+{
+"id": "0b6d3baee9",
+"fr": "Grande",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Ambiance.tsx:36"
+},
+{
+"id": "baf046d8f0",
+"fr": "Ambiance",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Ambiance.tsx:85"
+},
+{
+"id": "e32e40425d",
+"fr": "Gamification",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Gamification.tsx:87"
+},
+{
+"id": "60b543bfaa",
+"fr": "Dan",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Gamification.tsx:156"
+},
+{
+"id": "6ccf339558",
+"fr": "Trois sceaux fictifs",
+"ctx": "sub",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/Gamification.tsx:161"
+},
+{
+"id": "5206b2c5d2",
+"fr": "Petites aides",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/creator/onceWindows.ts:62"
+},
+{
+"id": "4df3bc3c81",
+"fr": "Coffre photos",
+"ctx": "label",
+"zone": "affichage",
+"ref": "app/settings/sauvegardes.tsx:57"
+},
+{
+"id": "7198132346",
+"fr": "Jeton",
+"ctx": "placeholder",
+"zone": "affichage",
+"ref": "components/yoroi/v2/studio/TokenSheet.tsx:109"
+},
+{
+"id": "afd304f095",
+"fr": "Refaire",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seances/LastSession.tsx:71"
+},
+{
+"id": "f44a8213b6",
+"fr": "Note technique",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/seance/FinRessenti.tsx:127"
+},
+{
+"id": "6441ea02e3",
+"fr": "Minuteur",
+"ctx": "accessibilityLabel",
+"zone": "affichage",
+"ref": "components/yoroi/v2/photos/CameraFantome.tsx:200"
+},
+{
+"id": "225564bff3",
+"fr": "Photo prise maintenant",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/photos/datePhoto.ts:33"
+},
+{
+"id": "5c42eb8235",
+"fr": "Malade",
+"ctx": "titre",
+"zone": "affichage",
+"ref": "components/yoroi/v2/dojo/PauseSemaine.tsx:21"
+},
+{
+"id": "69888b0da6",
+"fr": "Import en cours",
+"ctx": "appAlert",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/CarteImportSante.tsx:158"
+},
+{
+"id": "01f8a84766",
+"fr": "Chrono",
+"ctx": "title",
+"zone": "affichage",
+"ref": "components/yoroi/v2/accueil/Raccourcis.tsx:39"
+},
+{
+"id": "c8a35e3e99",
+"fr": "EXEMPLES",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Demo.tsx:82"
+},
+{
+"id": "270da20c25",
+"fr": "Je me blesse souvent",
+"ctx": "label",
+"zone": "affichage",
+"ref": "lib/v2/onboarding/freins.ts:15"
+},
+{
+"id": "553b1f6ccb",
+"fr": "10 km en 46 min 20",
+"ctx": "titre",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Accroche.tsx:402"
+},
+{
+"id": "db05f6da94",
+"fr": "EN CONSTRUCTION",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Accroche.tsx:552"
+},
+{
+"id": "2b3e7dcedd",
+"fr": "Hors ligne",
+"ctx": "label",
+"zone": "affichage",
+"ref": "components/yoroi/v2/onboarding/Accroche.tsx:850"
+},
+{
+"id": "c0985de6b4",
+"fr": "Deverrouiller",
+"ctx": "jsx",
+"zone": "affichage",
+"ref": "components/BiometricLockOverlay.tsx:56"
+}
+]

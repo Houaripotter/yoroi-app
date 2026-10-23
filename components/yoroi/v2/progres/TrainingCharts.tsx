@@ -135,7 +135,7 @@ export function TrainingCharts({ trainings, compact, more, style }: { trainings:
 
       {!compact && hasRpe ? (
         <WeekChart
-          title="Effort ressenti"
+          title={traduire("Effort ressenti")}
           sub={traduire("Moyenne de la semaine, sur 10")}
           bars={effort}
           weeks={weeks}
@@ -153,7 +153,7 @@ export function TrainingCharts({ trainings, compact, more, style }: { trainings:
             {bySport.map((s) => (
               <Pressable key={s.id} onPress={() => { tapLight(); setSport(s.id); }} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1} séances, {2}, voir ses courbes", s.label, s.count, hoursText(s.minutes))} style={{ gap: 5 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                  <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>{s.label}</Ink>
+                  <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>{traduire(s.label)}</Ink>
                   <Ink size={13} weight="bold" color={c.textSecondary}>{traduirePluriel(s.count, s.count > 1, "{0} séance, {1}", "{0} séances, {1}", s.count, hoursText(s.minutes))}</Ink>
                 </View>
                 <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSoft }}>
@@ -199,10 +199,10 @@ export function AnalysesRow({ style }: { style?: object }) {
           style={({ pressed }) => ({ flex: 1, minWidth: 0, minHeight: 70, padding: 11, borderRadius: 18, backgroundColor: pressed ? c.fillSoft : P.carte, borderWidth: 1, borderColor: c.divider, gap: 2, justifyContent: 'space-between' })}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flexShrink: 1 }}>{it.label}</Ink>
+            <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flexShrink: 1 }}>{traduire(it.label)}</Ink>
             <Chevron color={c.accent} size={11} />
           </View>
-          <Ink size={11} color={c.textSecondary} numberOfLines={2}>{it.sub}</Ink>
+          <Ink size={11} color={c.textSecondary} numberOfLines={2}>{traduire(it.sub)}</Ink>
         </Pressable>
       ))}
     </View>

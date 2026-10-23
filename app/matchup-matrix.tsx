@@ -63,7 +63,7 @@ export default function MatchupMatrixScreen() {
 
   return (
     <PremiumGate source="matrice_adversaires" featureTitle={traduire("Matrice des confrontations")} perks={[traduire('Tes confrontations sur une seule grille'), traduire('Tes bêtes noires et tes partenaires favorables'), traduire('Ta réussite face à chaque style')]}>
-      <DetailScreen title="Matrice" subtitle={traduire("Taille selon les rounds, teinte selon ta réussite")}>
+      <DetailScreen title={traduire("Matrice")} subtitle={traduire("Taille selon les rounds, teinte selon ta réussite")}>
         <ChipScroll>
           {([
             { k: 'all', l: 'Tous' },
@@ -102,7 +102,7 @@ export default function MatchupMatrixScreen() {
                     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 12, height: 3, backgroundColor: 'rgba(255,255,255,0.32)' }} />
                     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 5, height: 3, backgroundColor: 'rgba(255,255,255,0.32)' }} />
                     <Ink size={big ? 18 : 14} weight="black" color={P.white} numberOfLines={2}>
-                      {p.name}
+                      {traduire(p.name)}
                     </Ink>
                     <View>
                       <Ink size={big ? 34 : 24} weight="black" tight color={P.white} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
@@ -135,7 +135,7 @@ export default function MatchupMatrixScreen() {
                         </Ink>
                       </View>
                       <Ink size={15} weight="black" style={{ flex: 1 }} numberOfLines={1}>
-                        {ARCHETYPE_META[k].label}
+                        {traduire(ARCHETYPE_META[k].label)}
                       </Ink>
                     </View>
                     <Ink size={24} weight="black" tight color={v ? tone : P.muted}>
