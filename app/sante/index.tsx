@@ -123,7 +123,7 @@ export default function SanteScreen() {
         <EnTete
           titre={traduire("Ta santé")}
           sousTitre={capitalize(dayLong(todayIso()))}
-          onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+          onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
           style={{ marginHorizontal: -16, marginTop: -8 }}
         />
 

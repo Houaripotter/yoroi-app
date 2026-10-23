@@ -19,7 +19,7 @@ export type DiagReport = {
 export async function diagnoseWorkouts(): Promise<DiagReport> {
   const svc = healthConnect as unknown as Record<string, any>;
   if (Platform.OS !== 'ios' || typeof svc.diagnoseWorkouts !== 'function') {
-    return { lines: [], canImport: false, suggestSettings: false, unavailable: traduire("Ce diagnostic lit Apple Santé : il fonctionne sur iPhone, dans l'app installée.") };
+    return { lines: [], canImport: false, suggestSettings: false, unavailable: traduire("Ce diagnostic lit l’app Santé de ton téléphone : il fonctionne sur iPhone, dans l'app installée.") };
   }
   const authResult: string = await requestWorkoutReadAuthNative();
   const diag: any = await svc.diagnoseWorkouts();
@@ -91,13 +91,13 @@ export async function diagnoseWorkouts(): Promise<DiagReport> {
   lines.push('');
 
   lines.push('Base YOROI');
-  lines.push(traduire("Séances enregistrées : {0} (dont {1} venues d'Apple Santé)", diag.dbCount, diag.dbFromHealthkit));
+  lines.push(traduire("Séances enregistrées : {0} (dont {1} venues de l’app Santé de ton téléphone)", diag.dbCount, diag.dbFromHealthkit));
   lines.push(traduire("Empreintes en mémoire : {0}", diag.cacheSize));
 
   const hasWorkouts = nm > 0 || diag.healthkit30d > 0 || diag.rawApiTest > 0 || diag.anchorApiTest > 0;
   if (diag.moduleLoaded && !hasWorkouts) {
     lines.push('');
-    lines.push(traduire("Cause probable : l'accès Entraînements n'est pas activé pour YOROI dans Apple Santé."));
+    lines.push(traduire("Cause probable : l'accès Entraînements n'est pas activé pour YOROI dans l’app Santé de ton téléphone."));
   }
   if (diag.error) lines.push(traduire("Erreur : {0}", diag.error));
   return { lines, canImport: hasWorkouts, suggestSettings: !hasWorkouts && (diag.moduleLoaded || nm >= 0) };

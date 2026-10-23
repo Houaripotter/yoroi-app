@@ -85,7 +85,7 @@ export default function GamePlanScreen() {
           <EnTete
             titre={params.partnerName ? `Plan contre ${params.partnerName}` : traduire('Mon plan de jeu')}
             sousTitre={traduire("Tiré de tes débriefs de rounds")}
-            onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+            onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
             style={{ marginHorizontal: -22, marginTop: -8 }}
           />
 

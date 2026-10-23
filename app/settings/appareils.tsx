@@ -25,7 +25,7 @@ export default function SanteEtAppareils() {
   const android = Platform.OS === 'android';
 
   return (
-    <EspaceScreen title={traduire("Santé et appareils")} subtitle={android ? traduire('Health Connect, ta montre et ta balance') : traduire('Apple Santé, ta montre et ta balance')} gap={14}>
+    <EspaceScreen title={traduire("Santé et appareils")} subtitle={android ? traduire('Health Connect, ta montre et ta balance') : traduire('L’app Santé de ton téléphone, ta montre et ta balance')} gap={14}>
       <Card>
         <ValueRow first tint={TUILE.mousse} icon="heart" label={android ? traduire('Health Connect et montre') : traduire('Apple Santé et ta montre')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => router.push('/health-connect' as any)} />
         <ValueRow tint={TUILE.bleu} icon="scale" label={traduire("Balance connectée")} value="Guides" onPress={() => router.push('/sante/montre' as any)} />

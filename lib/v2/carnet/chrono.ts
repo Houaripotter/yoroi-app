@@ -51,7 +51,7 @@ export const COMBAT_PRESETS: Record<CombatPreset, { name: string; roundTime: num
   boxe: { name: 'Boxe', roundTime: 180, restTime: 60, rounds: 10, sub: traduire('Format pro'), sport: 'boxe' },
   sac: { name: traduire('Sac de frappe'), roundTime: 180, restTime: 60, rounds: 6, sub: traduire('Rounds au sac'), sport: 'boxe' },
   muaythai: { name: traduire('Muay thaï'), roundTime: 180, restTime: 120, rounds: 5, sub: traduire('Format thaï'), sport: 'muay_thai' },
-  kickboxing: { name: 'Kickboxing', roundTime: 180, restTime: 60, rounds: 3, sub: traduire('Style K-1'), sport: 'kickboxing' },
+  kickboxing: { name: 'Kickboxing', roundTime: 180, restTime: 60, rounds: 3, sub: traduire('Format pro'), sport: 'kickboxing' },
   lutte: { name: 'Lutte', roundTime: 180, restTime: 30, rounds: 3, sub: traduire('Wrestling'), sport: 'lutte' },
   grappling: { name: 'Grappling', roundTime: 360, restTime: 60, rounds: 3, sub: traduire('Sans kimono'), sport: 'grappling' },
   custom: { name: 'Perso', roundTime: 180, restTime: 60, rounds: 5, sub: traduire('À ta main'), sport: 'jjb' },

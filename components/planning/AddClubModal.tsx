@@ -383,7 +383,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
                 setName(text);
                 if (errors.name) setErrors({ ...errors, name: undefined });
               }}
-              placeholder="Ex: Gracie Barra, Basic Fit..."
+              placeholder="Ex : Club de JJB, Salle de musculation..."
               placeholderTextColor={colors.textMuted}
             />
             {errors.name && (

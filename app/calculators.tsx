@@ -202,6 +202,11 @@ export default function CalculatorsScreen() {
                 ]}
               />
             ) : null}
+            {macros && w > 0 ? (
+              <Ink size={13} weight="bold" color={P.ink2}>
+                {traduire("Soit {0} g de protéines par kilo de poids. Repère conseillé pour un sportif : 1,4 à 2 g.", fmt(macros.protein / w))}
+              </Ink>
+            ) : null}
           </CalcCard>
         </Enter>
         <Enter i={9}>
@@ -237,7 +242,7 @@ export default function CalculatorsScreen() {
                 {traduire("{0} fois ton poids de corps", fmt(level.ratio, 2))}
               </Ink>
             ) : null}
-            {reps > 12 ? <Notice tone="gold" text={traduire("Au-delà de 10 à 12 répétitions, l’estimation devient moins fiable.")} /> : null}
+            {reps > 10 ? <Notice tone="gold" text={traduire("Au-delà de 10 répétitions, l’estimation devient moins fiable.")} /> : null}
           </CalcCard>
         </Enter>
         <Enter i={12}>
@@ -318,6 +323,7 @@ export default function CalculatorsScreen() {
                 <KV key={k} label={traduire(MACROS_BY_GOAL[k].label)} value={`P ${MACROS_BY_GOAL[k].protein} %, G ${MACROS_BY_GOAL[k].carbs} %, L ${MACROS_BY_GOAL[k].fat} %`} strong={k === goal} last={i === arr.length - 1} />
               ))}
             </Card>
+            <Notice tone="indigo" text={traduire("Ces pourcentages sont un repère courant, pas une recommandation officielle. Pour les protéines, vise plutôt 1,4 à 2 g par kilo et par jour, selon la source ci-dessous.")} />
             <SourceRow source={SOURCES.mifflin} />
             <SourceRow source={SOURCES.protein} />
           </>
@@ -331,7 +337,7 @@ export default function CalculatorsScreen() {
                 <KV label={traduire("Avec ton exercice")} value={`${fmt(vWater.withExercise)} L`} strong last />
               </Card>
             ) : null}
-            <Notice tone="indigo" text={traduire("Repère usuel. Bois davantage s’il fait chaud ou si tu transpires beaucoup.")} />
+            <Notice tone="indigo" text={traduire("Repère simple et courant, pas une recommandation officielle. Adapte-le à ta transpiration et à la chaleur. Pendant l’effort, évite de perdre plus de 2 % de ton poids, selon la source ci-dessous.")} />
             <SourceRow source={SOURCES.hydration} />
           </>
         ) : null}

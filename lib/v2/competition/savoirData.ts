@@ -40,10 +40,10 @@ export const scienceData: ScienceCard[] = [
     category: "Cardio",
     content: {
       what: traduire("Marcher sur un tapis avec une inclinaison (12-15%) à vitesse modérée (4-5 km/h)."),
-      why: traduire("L'inclinaison augmente la dépense énergétique de +50% vs le plat sans l'impact articulaire de la course. Une étude prouve qu'elle recrute massivement la chaîne postérieure (fessiers/ischios) et élève le métabolisme post-effort."),
+      why: traduire("Marcher en pente fait travailler ton cœur à intensité modérée, sans les chocs de la course. Une étude sur 12 adultes en surpoids montre qu'en marchant plus lentement avec de la pente (2,7 km/h sur 6°), l'effort reste modéré et la charge sur le genou baisse de 19 à 26 % par rapport à une marche rapide à plat. L'étude est petite."),
       how: traduire("Protocole '12-3-30' ou variante : 12% de pente, 5 km/h, 30 min. Idéal en fin de séance musculation."),
-      sourceName: traduire("Étude : Ehlen et al. (2011), J Strength Cond Res"),
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21904245/"
+      sourceName: traduire("Étude : Ehlen et al. (2011), Med Sci Sports Exerc"),
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21200344/"
     }
   },
   {
@@ -53,10 +53,10 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Nutrition"),
     content: {
       what: traduire("Consommer moins d'énergie que ton corps n'en dépense. C'est la seule condition physiologique obligatoire pour perdre du gras."),
-      why: traduire("C'est la Première Loi de la Thermodynamique. Peu importe le régime (Keto, Jeûne, Paleo), s'il n'y a pas de déficit, il n'y a pas de perte de gras. Kevin Hall (NIH) a prouvé que c'est le bilan énergétique qui pilote le poids, pas l'insuline seule."),
+      why: traduire("C'est la Première Loi de la Thermodynamique. Peu importe le régime (Keto, Jeûne, Paleo), s'il n'y a pas de déficit, il n'y a pas de perte de gras. Les travaux de Kevin Hall (NIH) montrent que c'est le bilan énergétique qui pilote le poids, pas l'insuline seule."),
       how: traduire("Calcule ton maintien (TDEE) et retire 300 à 500 kcal. Ne descends jamais sous ton métabolisme de base (BMR)."),
-      sourceName: traduire("Étude : Hall et al. (2017), NIH / Am J Clin Nutr"),
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/28765272/"
+      sourceName: traduire("Revue : Hall & Guo (2017), Gastroenterology"),
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/28193517/"
     }
   },
   {
@@ -66,10 +66,10 @@ export const scienceData: ScienceCard[] = [
     category: "Endurance",
     content: {
       what: traduire("L'intensité où le lactate reste stable (< 2 mmol/L). Tu peux tenir une conversation."),
-      why: traduire("C'est la seule zone qui améliore la 'flexibilité métabolique' : la capacité de tes cellules à utiliser le gras comme carburant principal. San Millán a prouvé que c'est le marqueur #1 de la santé métabolique."),
-      how: traduire("45-60 min en continu, 1 à 2 fois/semaine. Reste strict : si tu es essoufflé, tu perds les bénéfices mitochondriaux."),
-      sourceName: traduire("Étude : San Millán & Brooks (2018), Cell Metab"),
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/29283004/"
+      why: traduire("San Millán et Brooks ont comparé des cyclistes professionnels, des personnes modérément actives et des personnes avec un syndrome métabolique. Plus le lactate monte à l'effort, moins le corps utilise le gras. Le lactate reflète donc ta 'flexibilité métabolique' : la capacité de tes cellules à utiliser le gras comme carburant. L'étude compare des profils, elle ne teste pas un programme d'entraînement."),
+      how: traduire("45-60 min en continu, 1 à 2 fois/semaine. Reste strict : si tu es essoufflé, tu n'es plus en zone 2."),
+      sourceName: traduire("Étude : San Millán & Brooks (2018), Sports Med"),
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/28623613/"
     }
   },
   {
@@ -80,19 +80,19 @@ export const scienceData: ScienceCard[] = [
     content: {
       what: traduire("Le macronutriment bâtisseur."),
       why: traduire("L'Effet Thermique (TEF) des protéines est de 20-30%. Pour 100kcal ingérées, 25 sont brûlées par la digestion (contre 3% pour le gras). De plus, elles sont les plus rassasiantes via la sécrétion de l'hormone PYY."),
-      how: traduire("Vise 1.6g à 2.2g par kg de poids. Une source à chaque repas."),
+      how: traduire("Vise 1,4 à 2 g par kg de poids et par jour. Une source à chaque repas."),
       sourceName: "Consensus : ISSN Position Stand (2017)",
       sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8"
     }
   },
   {
     id: '5',
-    title: traduire("Fibres : L'Ozempic Naturel"),
+    title: traduire("Fibres : La Satiété Naturelle"),
     icon: "barley",
     category: traduire("Nutrition"),
     content: {
       what: traduire("Glucides non digestibles présents dans les végétaux."),
-      why: traduire("Les fibres solubles gonflent dans l'estomac et déclenchent la libération de GLP-1 (l'hormone de satiété imitée par les médicaments). Elles nourrissent aussi le microbiote qui régule le poids."),
+      why: traduire("Les fibres solubles gonflent dans l'estomac et déclenchent la libération de GLP-1 (l'hormone de satiété imitée par un médicament contre le diabète utilisé pour maigrir). Elles nourrissent aussi le microbiote qui régule le poids."),
       how: traduire("Mange 30g de fibres par jour (Légumes verts, avoine, graines de chia, pommes). Mange tes légumes en premier dans le repas."),
       sourceName: "Recherche : Slavin (2005), Nutrition",
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15797686/"
@@ -105,7 +105,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Récupération"),
     content: {
       what: traduire("Le pilier oublié de la performance."),
-      why: traduire("Dormir < 8h augmente le risque de blessure de 1.7x. Le manque de sommeil élève le cortisol (catabolique) et bloque l'hormone de croissance. C'est pendant la nuit que le gras s'oxyde et le muscle se répare."),
+      why: traduire("Chez des sportifs adolescents, dormir moins de 8 h était associé à un risque de blessure 1,7 fois plus élevé. Le manque de sommeil élève le cortisol (catabolique) et bloque l'hormone de croissance. C'est pendant la nuit que le gras s'oxyde et le muscle se répare."),
       how: traduire("Chambre fraîche (18°C). Pas d'écrans 1h avant (lumière bleue bloque la mélatonine)."),
       sourceName: traduire("Étude : Milewski et al. (2014), J Pediatr Orthop"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/25028798/"
@@ -118,10 +118,10 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Métabolisme"),
     content: {
       what: traduire("L'impact de l'eau sur la dépense énergétique."),
-      why: traduire("Boire 500ml d'eau augmente le métabolisme de 30% pendant l'heure qui suit (thermogenèse induite par l'eau). Une déshydratation de 2% baisse les performances de 10-20%."),
+      why: traduire("Boire de l'eau augmente un peu ta dépense d'énergie, mais l'effet est faible. Une première étude sur 14 personnes avait trouvé +30 % après 500 ml d'eau. Ce chiffre n'a pas été reproduit : une étude suivante a mesuré environ +4,5 % sur une heure avec de l'eau froide, et aucun effet avec de l'eau à température ambiante. Au-delà d'une perte de 2 % de ton poids en eau, tes performances d'endurance baissent, surtout à la chaleur (ACSM, 2007)."),
       how: traduire("Bois 500ml d'eau dès le réveil. Bois 1 verre avant chaque repas."),
-      sourceName: traduire("Étude : Boschmann et al. (2003), JCEM"),
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/14671205/"
+      sourceName: traduire("Études : Boschmann et al. (2003) et Brown et al. (2006), J Clin Endocrinol Metab"),
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/16822824/"
     }
   },
   {
@@ -131,10 +131,10 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Activité"),
     content: {
       what: traduire("Non-Exercise Activity Thermogenesis (Activité hors sport)."),
-      why: traduire("Le Dr Levine a prouvé que la différence entre une personne mince et en surpoids réside souvent dans ces 2h de mouvement inconscient par jour. C'est 500 à 800 kcal 'gratuites'."),
+      why: traduire("Le Dr Levine a observé que des personnes sédentaires en légère obésité restaient assises environ 2 h de plus par jour que des personnes minces. Bouger autant qu'elles représenterait environ 350 kcal de plus par jour. L'étude est petite (20 personnes)."),
       how: traduire("Téléphone debout. Gare-toi loin. Prends les escaliers. Vise 8000 pas hors séance."),
-      sourceName: "Recherche : Levine (2002), Science",
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/12468415/"
+      sourceName: "Recherche : Levine et al. (2005), Science",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15681386/"
     }
   },
   {
@@ -143,8 +143,8 @@ export const scienceData: ScienceCard[] = [
     icon: "dumbbell",
     category: "Force",
     content: {
-      what: traduire("La musculation 2-3 fois par semaine augmente l'espérance de vie."),
-      why: traduire("Une méta-analyse de 2022 montre que l'entraînement en force réduit la mortalité toutes causes de 15%. Il préserve la masse musculaire (sarcopénie) et améliore la sensibilité à l'insuline."),
+      what: traduire("La musculation régulière est associée à une vie plus longue."),
+      why: traduire("Une méta-analyse de 2022 (16 études d'observation) montre que la musculation est associée à un risque de mortalité toutes causes environ 15 % plus bas. Le plus grand bénéfice apparaît vers 30 à 60 min par semaine. Elle préserve la masse musculaire (sarcopénie) et améliore la sensibilité à l'insuline."),
       how: traduire("2 séances minimum par semaine. Travaille tous les groupes musculaires. 3 séries de 8-12 répétitions."),
       sourceName: traduire("Méta-analyse : Momma et al. (2022), Br J Sports Med"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/35228201/"
@@ -157,8 +157,8 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Supplémentation"),
     content: {
       what: traduire("Composé naturel présent dans la viande, améliore la production d'ATP."),
-      why: traduire("C'est le supplément le plus étudié et efficace. +5-15% de force, +2kg de muscle en 8 semaines, améliore la cognition. Plus de 1000 études confirment son efficacité et sa sécurité."),
-      how: traduire("5g par jour, tous les jours. Monohydrate (la forme la moins chère est la meilleure). Pas besoin de phase de charge."),
+      why: traduire("C'est le complément le plus étudié et l'un des plus efficaces pour les efforts courts et intenses. Après une phase de charge, la performance sur des efforts intenses et répétés progresse souvent de 10 à 20 %. Avec l'entraînement, elle aide aussi à gagner en force et en muscle. Ses effets sur le cerveau sont encore à l'étude."),
+      how: traduire("5g par jour, tous les jours. Monohydrate (la forme la moins chère est la meilleure). Pas besoin de phase de charge : sans elle, tes réserves se remplissent en 3 à 4 semaines."),
       sourceName: "Position Stand : ISSN (2017), J Int Soc Sports Nutr",
       sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0173-z"
     }
@@ -170,7 +170,7 @@ export const scienceData: ScienceCard[] = [
     category: "Force",
     content: {
       what: traduire("Le temps de repos entre les séries influence l'hypertrophie."),
-      why: traduire("Schoenfeld a démontré que 3 minutes de repos = +20% de gains musculaires vs 1 minute. Le repos permet la restauration des phosphocréatines et maintient l'intensité."),
+      why: traduire("Dans une étude de Schoenfeld sur 21 hommes entraînés pendant 8 semaines, ceux qui se reposaient 3 minutes ont gagné plus de force que ceux qui se reposaient 1 minute, avec une tendance à plus de muscle. L'étude est petite. Le repos permet la restauration des phosphocréatines et maintient l'intensité."),
       how: traduire("Force (1-5 reps) : 3-5 min. Hypertrophie (8-12 reps) : 2-3 min. Endurance (15+ reps) : 1-2 min."),
       sourceName: traduire("Étude : Schoenfeld et al. (2016), J Strength Cond Res"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/26605807/"
@@ -195,11 +195,11 @@ export const scienceData: ScienceCard[] = [
     icon: "activity",
     category: traduire("Récupération"),
     content: {
-      what: traduire("Bouger légèrement entre les séances accélère la récupération."),
-      why: traduire("La récupération active (marche, vélo léger) augmente le flux sanguin et élimine le lactate 2x plus vite que rester assis. Réduit les courbatures (DOMS) de 30%."),
+      what: traduire("Bouger légèrement après un effort intense aide à éliminer le lactate."),
+      why: traduire("Après un effort intense, une récupération active (footing ou vélo léger) fait baisser le lactate dans le sang plus vite que rester assis. Dans une petite étude sur 10 hommes, l'élimination la plus rapide venait d'une intensité proche du seuil lactique."),
       how: traduire("Jour de repos = 20-30 min de marche ou vélo très léger (Zone 1). Évite le repos total complet."),
-      sourceName: traduire("Étude : Menzies et al. (2010), Sports Med"),
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20199122/"
+      sourceName: traduire("Étude : Menzies et al. (2010), J Sports Sci"),
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20544484/"
     }
   },
   {
@@ -208,11 +208,11 @@ export const scienceData: ScienceCard[] = [
     icon: "stretch",
     category: traduire("Mobilité"),
     content: {
-      what: traduire("Les étirements statiques avant l'effort réduisent la force."),
-      why: traduire("Behm a prouvé que s'étirer avant diminue la production de force de 5-8%. Par contre, après l'effort, ils améliorent la récupération et la flexibilité."),
+      what: traduire("Les étirements statiques longs juste avant l'effort peuvent réduire la force."),
+      why: traduire("Behm montre que des étirements statiques longs juste avant l'effort peuvent baisser un peu la force. Des étirements courts (moins de 90 s au total par muscle) et sans douleur ont peu d'effet, et les étirements dynamiques n'ont pas cet inconvénient. Dans une séance à part, les étirements statiques améliorent la souplesse."),
       how: traduire("Avant : échauffement dynamique. Après : étirements statiques (30s par muscle). Ou session dédiée mobilité."),
-      sourceName: "Review : Behm & Blazevich (2011), Scand J Med Sci Sports",
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21410544/"
+      sourceName: "Review : Behm & Chaouachi (2011), Eur J Appl Physiol",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21373870/"
     }
   },
   {
@@ -222,10 +222,10 @@ export const scienceData: ScienceCard[] = [
     category: "Force",
     content: {
       what: traduire("Le muscle brûle des calories même au repos."),
-      why: traduire("1 kg de muscle brûle ~13 kcal/jour vs 4 kcal pour la graisse. Gagner 5kg de muscle = +65 kcal/jour soit 24 000 kcal/an (3kg de gras potentiels)."),
+      why: traduire("Au repos, 1 kg de muscle brûle environ 13 kcal par jour, contre 4,5 kcal pour la graisse. Gagner 5 kg de muscle représente environ 65 kcal de plus par jour. C'est modeste : le vrai bénéfice du muscle, c'est ta santé et ta force."),
       how: traduire("Programme force 3x/semaine. Surplus calorique modéré (+200-300 kcal). Patience : 0.5-1kg muscle/mois max."),
       sourceName: traduire("Recherche : Wang et al. (2010), Am J Clin Nutr"),
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20200263/"
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20962155/"
     }
   },
   {
@@ -235,7 +235,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Performance"),
     content: {
       what: traduire("La caféine est l'ergogène légal le plus puissant."),
-      why: traduire("3-6 mg/kg de caféine augmente la performance de 3-7% (endurance, force, sprint). Bloque l'adénosine = moins de fatigue perçue."),
+      why: traduire("3-6 mg/kg de caféine améliore la performance d'endurance d'environ 2 à 4 % en moyenne. Les effets sur la force et le sprint existent aussi, mais varient plus. Bloque l'adénosine = moins de fatigue perçue."),
       how: traduire("200-400mg (2-4 expressos) 45-60 min avant l'effort. Évite si sensible ou entraînement soir."),
       sourceName: "Position Stand : ISSN (2021), J Int Soc Sports Nutr",
       sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-020-00383-4"
@@ -260,11 +260,11 @@ export const scienceData: ScienceCard[] = [
     icon: "stress",
     category: traduire("Récupération"),
     content: {
-      what: traduire("L'hormone du stress détruit le muscle si elle reste élevée."),
-      why: traduire("Le cortisol chroniquement élevé bloque la testostérone, augmente le stockage abdominal et freine la récupération. C'est l'ennemi #1 de la composition corporelle."),
+      what: traduire("L'hormone du stress, quand elle reste élevée longtemps, peut freiner ta récupération."),
+      why: traduire("Chez des femmes en bonne santé, celles qui stockaient plus de graisse au niveau du ventre sécrétaient plus de cortisol face à un stress. L'étude montre un lien, pas une cause. Un stress qui dure peut aussi gêner ton sommeil et ta récupération."),
       how: traduire("Dors 8h. Médite 10 min/jour. Limite le cardio excessif. Prends des jours OFF complets."),
       sourceName: traduire("Étude : Epel et al. (2000), Psychosom Med"),
-      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/11020090/"
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/11020091/"
     }
   },
   {
@@ -274,7 +274,7 @@ export const scienceData: ScienceCard[] = [
     category: traduire("Mental"),
     content: {
       what: traduire("Le temps moyen nécessaire pour qu'un nouveau comportement devienne automatique. Ce n'est PAS 21 jours (mythe populaire sans fondement scientifique)."),
-      why: traduire("Lally et al. (2010) ont suivi 96 personnes pendant 12 semaines. Résultat : en moyenne 66 jours pour atteindre l'automaticité. La fourchette va de 18 à 254 jours selon la complexité de l'habitude."),
+      why: traduire("Lally et al. (2010) ont suivi 96 personnes pendant 12 semaines. Résultat : 66 jours en médiane pour atteindre l'automaticité. La fourchette va de 18 à 254 jours selon les personnes et l'habitude. Rater un jour ne change presque rien."),
       how: traduire("Commence petit (2 min d'exercice suffit). Attache la nouvelle habitude à une existante (après le café du matin). Ne casse jamais la chaîne 2 jours de suite. Sois patient : les 3 premières semaines sont les plus difficiles."),
       sourceName: traduire("Étude : Lally et al. (2010), Eur J Soc Psychol"),
       sourceUrl: "https://onlinelibrary.wiley.com/doi/abs/10.1002/ejsp.674"
@@ -282,45 +282,45 @@ export const scienceData: ScienceCard[] = [
   },
   {
     id: '20',
-    title: traduire("Dormir Moins Bête : Le Sommeil Profond"),
+    title: traduire("Le Sommeil Profond et la Récupération"),
     icon: "bed-clock",
     category: traduire("Récupération"),
     content: {
-      what: traduire("Le sommeil profond (stades N3) est la phase où ton corps se répare physiquement. C'est pendant cette phase que l'hormone de croissance est sécrétée (80% de la production quotidienne)."),
-      why: traduire("Walker (2017) a démontré que le sommeil profond consolide la mémoire procédurale (mouvements techniques). Sans lui, tu oublies 40% de ce que tu as appris. Il nettoie aussi les toxines cérébrales (système glymphatique)."),
-      how: traduire("Évite l'alcool (réduit le sommeil profond de 20-40%). Fais du sport mais pas tard (augmente le sommeil profond de 75%). Maintiens une routine horaire. La température idéale est 18-19°C."),
-      sourceName: "Livre : Matthew Walker, Why We Sleep (2017)",
-      sourceUrl: "https://www.sleepdiplomat.com/"
+      what: traduire("Le sommeil profond (stade N3) est la phase où ton corps récupère le plus physiquement. Une grande partie de l'hormone de croissance de la journée est sécrétée pendant cette phase, surtout en début de nuit."),
+      why: traduire("Le sommeil fixe les gestes techniques appris dans la journée. Dans une étude de Walker (2002), une séquence de doigts apprise le soir était environ 20 % plus rapide après une nuit de sommeil, contre presque rien après 12 h éveillé. Ce gain était surtout lié au sommeil léger de fin de nuit (stade 2) : une nuit complète compte. Chez la souris, le sommeil aide aussi le cerveau à évacuer ses déchets."),
+      how: traduire("Évite l'alcool le soir : il fragmente la fin de nuit et réduit le sommeil paradoxal. Fais du sport, mais évite un effort intense juste avant de dormir. Maintiens une routine horaire. La température idéale est 18-19°C."),
+      sourceName: "Étude : Walker et al. (2002), Neuron",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/12123620/"
     }
   },
   {
     id: '21',
-    title: traduire("Dormir Moins Bête : Le REM et la Performance"),
+    title: traduire("Le Sommeil Paradoxal et la Performance"),
     icon: "brain",
     category: traduire("Récupération"),
     content: {
-      what: traduire("Le sommeil REM (paradoxal) est la phase des rêves. C'est là que ton cerveau intègre les stratégies et résout les problèmes complexes."),
-      why: traduire("Une étude de Harvard montre que les athlètes privés de REM perdent 30% de leur capacité à prendre des décisions tactiques. Le REM représente 25% d'une nuit normale, chaque cycle de 90 min en contient plus en fin de nuit."),
-      how: traduire("Dors 7-9h pour avoir suffisamment de REM (les cycles tardifs en contiennent plus). La mélatonine naturelle aide, pas les somnifères qui suppriment le REM."),
+      what: traduire("Le sommeil REM (paradoxal) est la phase des rêves. Il représente environ 20 à 25 % d'une nuit d'adulte, et les cycles de fin de nuit en contiennent le plus."),
+      why: traduire("11 basketteurs universitaires ont visé 10 h au lit par nuit pendant 5 à 7 semaines. Leur sprint est passé de 16,2 à 15,5 secondes et leur adresse aux lancers francs et à 3 points a progressé d'environ 9 %. Ils se sentaient aussi moins fatigués. L'étude est petite et sans groupe témoin, mais elle montre que des nuits plus longues peuvent aider."),
+      how: traduire("Dors 7 à 9 h, et allonge tes nuits en période de charge si tu peux. Te lever trop tôt coupe les derniers cycles, les plus riches en sommeil paradoxal. L'alcool le soir réduit aussi le sommeil paradoxal."),
       sourceName: traduire("Étude : Mah et al. (2011), Sleep"),
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21731144/"
     }
   },
 
   // ══════════════════════════════════════════════
-  // RÈGLES COMBAT, JJB / GRAPPLING (CFJJB)
+  // RÈGLES COMBAT, JJB / GRAPPLING (règlement international)
   // ══════════════════════════════════════════════
   {
     id: 'c1',
-    title: traduire("Le Barème CFJJB : Vue d'ensemble"),
+    title: traduire("Le Barème des Points : Vue d'ensemble"),
     icon: "shield",
     category: traduire("Combat"),
     content: {
-      what: traduire("Tableau officiel des points CFJJB. +2 pts : amenée au sol, renversement, genou sur l'estomac. +3 pts : passage de garde. +4 pts : montée, montée arrière, contrôle du dos. Soumission = victoire immédiate quelle que soit la différence de points."),
+      what: traduire("Tableau officiel des points du règlement international de JJB. +2 pts : amenée au sol, renversement, genou sur l'estomac. +3 pts : passage de garde. +4 pts : montée, montée arrière, contrôle du dos. Soumission = victoire immédiate quelle que soit la différence de points."),
       why: traduire("La hiérarchie des positions dicte ta stratégie de match. Une montée (4 pts) vaut deux takedowns. En fin de match serré, les avantages (tiebreaker) décident avant les pénalités."),
       how: traduire("Priorité stratégique : cherche les 4 pts (montée, dos) depuis le passage de garde (3 pts). En cas d'égalité, cumule les avantages. Ne sois jamais passif, les pénalités s'accumulent contre toi."),
-      sourceName: traduire("Règlement Officiel CFJJB, Guide Général de Compétition"),
-      sourceUrl: "https://cfjjb.com"
+      sourceName: "Règlement international de JJB",
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
   {
@@ -332,8 +332,8 @@ export const scienceData: ScienceCard[] = [
       what: traduire("2 points pour deux actions distinctes. Amenée au sol : projeter/emmener l'adversaire au sol depuis debout en gardant une position de contrôle. Renversement : renverser l'adversaire depuis sa garde (sweep) pour finir dessus en position dominante."),
       why: traduire("Ce sont les actions de transition debout → sol. Maîtriser l'amenée au sol donne 2 pts + position avantageuse immédiatement. Depuis la garde adverse, un renversement retourne entièrement le rapport de force."),
       how: traduire("Amenée au sol : single leg, double leg, arm drag, projections judo. Renversement : butterfly sweep, tripod, scissor sweep, hip bump, berimbolo. Condition obligatoire : contrôle maintenu pendant 3 secondes minimum."),
-      sourceName: "CFJJB Art. 4.1 & 4.2",
-      sourceUrl: "https://cfjjb.com"
+      sourceName: "Règlement international de JJB",
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
   {
@@ -345,8 +345,8 @@ export const scienceData: ScienceCard[] = [
       what: traduire("2 points pour placer son genou sur l'estomac/ventre de l'adversaire en position de contrôle. L'adversaire est au sol, tu es en appui avec ton genou posé sur son abdomen et ton autre pied au sol. Position maintenue 3 secondes minimum."),
       why: traduire("Position de transition stratégique entre side control et montée. Elle force l'adversaire à réagir, créant des opportunités de finition ou de progression vers les 4 pts. Très efficace en no-gi pour dicter le rythme."),
       how: traduire("Chaîne classique : side control → genou sur l'estomac (2 pts) → montée (4 pts). Contrôle la ceinture + col/nuque pour maintenir la pression. Attention : le genou doit être SUR l'estomac, s'il glisse sur le côté, les points ne sont pas accordés."),
-      sourceName: "CFJJB Art. 4.3",
-      sourceUrl: "https://cfjjb.com"
+      sourceName: "Règlement international de JJB, art. 4.3",
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
   {
@@ -358,8 +358,8 @@ export const scienceData: ScienceCard[] = [
       what: traduire("3 points pour dépasser la garde de l'adversaire et stabiliser une position de contrôle latéral (side control, north-south) pendant 3 secondes. L'adversaire ne doit plus être capable d'utiliser ses jambes pour protéger ou attaquer."),
       why: traduire("Action la plus fréquente en compétition, porte d'entrée vers les positions dominantes 4 pts. 3 pts vs 2 pts = avantage potentiellement décisif. En bas niveau, beaucoup de matchs se gagnent uniquement sur les passages de garde."),
       how: traduire("Techniques clés : toreando, leg drag, knee cut, smash pass, over-under, stack pass, bull fighter, headquarters. Clé : stabiliser 3 secondes complètes SANS que l'adversaire récupère sa garde, sinon les points sont refusés."),
-      sourceName: "CFJJB Art. 4.5",
-      sourceUrl: "https://cfjjb.com"
+      sourceName: "Règlement international de JJB",
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
   {
@@ -368,50 +368,50 @@ export const scienceData: ScienceCard[] = [
     icon: "shield",
     category: traduire("Combat"),
     content: {
-      what: traduire("4 points, valeur maximale, pour deux positions distinctes. Montée : être assis sur le torse adverse, cuisses de chaque côté, face à sa tête. Contrôle du dos : être dans le dos de l'adversaire avec au minimum un crochet (hook) de jambe inséré. Montée arrière (4 pts aussi) : adversaire face sol, tu montes dans son dos."),
+      what: traduire("4 points, valeur maximale, pour deux positions distinctes. Montée : être assis sur le torse adverse, cuisses de chaque côté, face à sa tête. Contrôle du dos : être dans le dos de l'adversaire avec les deux crochets (hooks), c'est à dire tes deux talons placés entre ses cuisses, sans croiser les jambes. Montée arrière (4 pts aussi) : adversaire face sol, tu montes dans son dos."),
       why: traduire("Positions les plus haut cotées car elles offrent les meilleures opportunités de soumission. Une montée réussie oblige l'adversaire à dépenser énormément d'énergie pour défendre, même sans finition, c'est un avantage tactique massif."),
-      how: traduire("Montée : depuis side control ou KoS → montée. Contrôle du dos : prise de dos depuis turtle, berimbolo, ou basculement depuis la montée. Minimum un crochet pour valider. Body triangle = variation du contrôle dos (4 pts identiques)."),
-      sourceName: "CFJJB Art. 4.4",
-      sourceUrl: "https://cfjjb.com"
+      how: traduire("Montée : depuis side control ou KoS → montée. Contrôle du dos : prise de dos depuis turtle, berimbolo, ou basculement depuis la montée. Il faut les deux crochets pour valider. Avec un seul crochet, les jambes croisées ou un triangle de corps (body triangle), tu marques seulement un avantage, pas les 4 points."),
+      sourceName: "Règlement international de JJB, art. 4.4",
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
   {
     id: 'c6',
-    title: traduire("Les Avantages CFJJB"),
+    title: traduire("Les Avantages en Compétition"),
     icon: "shield",
     category: traduire("Combat"),
     content: {
       what: traduire("L'avantage est un tiebreaker, il ne s'additionne PAS au score principal. Accordé pour quasi-actions non finalisées : quasi-soumission, quasi-renversement, quasi-passage de garde, quasi-takedown. Si égalité de points en fin de match, le joueur avec le plus d'avantages gagne."),
       why: traduire("Décisifs en compétition, beaucoup de matchs haut niveau se terminent à égalité de points. Un avantage obtenu à la 1ère minute peut décider du résultat à la dernière seconde. Ne jamais les négliger."),
       how: traduire("Obtenir un avantage : tenter une soumission (même ratée), menacer une passe de garde sans finaliser, quasi-sweep. Rappel : 2ème pénalité adversaire = +1 avantage pour toi. Stratégie fin de match : si tu as 1 avantage d'avance sur égalité, joue la montre légalement."),
-      sourceName: "CFJJB Art. 4.6, Avantages",
-      sourceUrl: "https://cfjjb.com"
+      sourceName: "Règlement international de JJB, avantages",
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
   {
     id: 'c7',
-    title: traduire("Les Pénalités CFJJB"),
+    title: traduire("Les Pénalités en Compétition"),
     icon: "swords",
     category: traduire("Combat"),
     content: {
       what: traduire("Système progressif en 4 niveaux. 1ère pénalité : avertissement simple (aucun point accordé). 2ème pénalité : +1 avantage accordé à l'adversaire. 3ème pénalité : +2 points accordés à l'adversaire. 4ème pénalité : disqualification (DQ) immédiate."),
       why: traduire("Conçues pour punir la passivité, la fuite, les prises dangereuses ou déloyales. Un compétiteur qui accumule 3 pénalités offre 2 pts à l'adversaire, ce qui peut inverser un match jusque-là gagné."),
       how: traduire("Éviter : passivité prolongée, fuir hors du tapis, retarder intentionnellement, techniques interdites à son grade. Surveiller les pénalités adversaire : à sa 2ème, tu gagnes un avantage, à sa 3ème, tu gagnes 2 pts. Adapte ta stratégie en conséquence."),
-      sourceName: traduire("CFJJB Art. 6, Pénalités"),
-      sourceUrl: "https://cfjjb.com"
+      sourceName: traduire("Règlement international de JJB, pénalités"),
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
   {
     id: 'c8',
-    title: traduire("Soumissions Autorisées par Grade (CFJJB)"),
+    title: traduire("Soumissions Autorisées par Grade"),
     icon: "shield",
     category: traduire("Combat"),
     content: {
-      what: traduire("Les techniques autorisées varient selon le grade. Blanche : étranglements + locks de bras uniquement (armbar, kimura, americana, omoplata). Bleue/Violette : + locks de genoux sans rotation (kneebar, toehold, ankle lock droit). Marron/Noire : + heel hooks (intérieur et extérieur, reaping autorisé)."),
+      what: traduire("Les techniques autorisées varient selon le grade. Chez les adultes, en blanche : étranglements, clés de bras (armbar, kimura, americana, omoplata) et clé de cheville droite. Dès la bleue, la clé de poignet s'ajoute. En bleue et violette, kneebar et toe hold restent interdits. Marron et noire : + kneebar, toe hold, calf slicer et bicep slicer. Heel hooks, clés de genou en torsion et reaping : seulement en no-gi, catégorie adulte, ceinture marron et noire."),
       why: traduire("Appliquer une technique interdite à son grade = disqualification immédiate, même si c'est involontaire. En plus, certaines soumissions peuvent blesser un partenaire non préparé à les défendre."),
-      how: traduire("Règle pratique : en blanc, reste bras + étranglements. Bleu+, les genoux sans rotation sont disponibles. Jamais de heel hook rotatif avant marron/noir. En no-gi les règles sont souvent différentes, vérifie toujours le règlement du tournoi avant de t'inscrire."),
-      sourceName: traduire("CFJJB Annexe, Techniques autorisées par grade"),
-      sourceUrl: "https://cfjjb.com"
+      how: traduire("Règle pratique : jusqu'à la violette, la seule attaque de jambe permise est la clé de cheville droite. Kneebar et toe hold attendent la marron. Le heel hook reste interdit en kimono, à tous les grades. Chaque tournoi peut avoir son propre règlement, vérifie toujours avant de t'inscrire."),
+      sourceName: traduire("Règlement international de JJB, techniques interdites par grade"),
+      sourceUrl: "https://ibjjf.com/books-videos"
     }
   },
 ];
@@ -424,7 +424,7 @@ export const protocolData: ProtocolCard[] = [
     category: "Cardio",
     difficulty: 'Intermédiaire',
     content: {
-      objective: traduire("Brûler un maximum de calories en 4 minutes et booster le métabolisme pour 24h."),
+      objective: traduire("Travailler ton cardio et ta capacité à répéter des efforts très intenses, en 4 minutes."),
       duration: traduire("4 minutes"),
       protocol: [
         traduire("Choisis un exercice (burpees, sprints, vélo, rameur)"),
@@ -439,12 +439,12 @@ export const protocolData: ProtocolCard[] = [
   },
   {
     id: 'p2',
-    title: traduire("5×5 Stronglifts (Force)"),
+    title: traduire("Programme 5×5 (Force)"),
     icon: "dumbbell",
     category: "Force",
     difficulty: 'Débutant',
     content: {
-      objective: traduire("Gagner en force pure avec un programme simple et progressif."),
+      objective: traduire("Gagner en force pure avec un programme connu de 5 séries de 5, simple et progressif."),
       duration: traduire("45-60 minutes"),
       protocol: [
         traduire("Séance A : Squat 5×5, Bench Press 5×5, Rowing Barre 5×5"),
@@ -474,7 +474,7 @@ export const protocolData: ProtocolCard[] = [
         traduire("Tu dois pouvoir tenir une conversation")
       ],
       frequency: traduire("4-5x par semaine (ou après musculation)"),
-      notes: traduire("Populaire sur TikTok. Très efficace pour sécher sans perdre de muscle.")
+      notes: traduire("Populaire sur les réseaux sociaux. Doux pour les articulations. Garde la musculation à côté pour conserver ton muscle.")
     }
   },
   {
@@ -554,7 +554,7 @@ export const protocolData: ProtocolCard[] = [
         traduire("Sets d'approche : 50% puis 70% du poids de travail")
       ],
       frequency: traduire("AVANT chaque séance"),
-      notes: traduire("PAS d'étirements statiques avant l'effort (diminue la force de 5-8%).")
+      notes: traduire("PAS d'étirements statiques longs juste avant l'effort : ils peuvent baisser un peu ta force.")
     }
   },
   {
@@ -574,7 +574,7 @@ export const protocolData: ProtocolCard[] = [
         traduire("Focus : ischios, fléchisseurs hanches, pectoraux, dorsaux")
       ],
       frequency: traduire("APRÈS chaque séance"),
-      notes: traduire("Les étirements post-effort réduisent les courbatures de ~30%.")
+      notes: traduire("Les étirements après l'effort entretiennent ta souplesse, mais réduisent très peu les courbatures.")
     }
   },
   {
@@ -614,7 +614,7 @@ export const protocolData: ProtocolCard[] = [
         traduire("Urine claire = bien hydraté, jaune foncé = déshydraté")
       ],
       frequency: traduire("À chaque séance"),
-      notes: traduire("2% de déshydratation = -10 à 20% de performance. Ne sous-estime pas l'eau.")
+      notes: traduire("Au-delà de 2 % de ton poids perdu en eau, ta performance d'endurance baisse, surtout à la chaleur. Ne sous-estime pas l'eau.")
     }
   },
   {
@@ -673,7 +673,7 @@ export const protocolData: ProtocolCard[] = [
         traduire("Arrêt des écrans 60 min avant coucher (lumière bleue)"),
         traduire("Dernière prise de caféine > 6h avant"),
         traduire("Dîner terminé > 2-3h avant coucher"),
-        traduire("Éviter l'alcool (perturbe le sommeil profond)"),
+        traduire("Éviter l'alcool (perturbe la fin de nuit et le sommeil paradoxal)"),
         traduire("5-10 min de respiration diaphragmatique ou méditation")
       ],
       frequency: traduire("Tous les soirs"),
@@ -732,15 +732,15 @@ export const protocolData: ProtocolCard[] = [
       objective: traduire("Permettre la récupération complète et prévenir le surentraînement."),
       duration: "1 semaine",
       protocol: [
-        traduire("Réduire le volume total de 40-60% (séries × répétitions)"),
-        traduire("Maintenir l'intensité (charges) à 70-80% du max"),
-        traduire("Fréquence : 2-3 séances max dans la semaine"),
+        traduire("Réduire nettement le volume total (séries × répétitions)"),
+        traduire("Garder des charges modérées, sans aller à l'échec"),
+        traduire("Moins de séances que d'habitude dans la semaine"),
         traduire("Focus sur la technique et la connexion neuromusculaire"),
-        traduire("Privilégier le sommeil (objectif 8-9h)"),
-        traduire("Planifier tous les 4-8 semaines selon fatigue")
+        traduire("Privilégier le sommeil"),
+        traduire("La planifier régulièrement, selon ta fatigue")
       ],
-      frequency: traduire("Toutes les 4-8 semaines"),
-      notes: traduire("Sources : Zourdos et al. (2016), Pritchard et al. (2015)")
+      frequency: traduire("Régulièrement, selon ta fatigue"),
+      notes: traduire("Pratique courante chez les sportifs de force, à adapter à ta fatigue.")
     }
   }
 ];

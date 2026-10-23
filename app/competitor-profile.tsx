@@ -173,7 +173,7 @@ export default function CompetitorProfileScreen() {
           </Enter>
 
           <Enter i={2} style={{ gap: 10 }}>
-            <SectionTitle>{traduire("Catégorie IBJJF")}</SectionTitle>
+            <SectionTitle>{traduire("Catégorie de poids")}</SectionTitle>
             <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4, marginTop: -4 }}>
               {traduire("Ta catégorie de poids officielle, avec le kimono.")}</Ink>
             <ChipScroll>

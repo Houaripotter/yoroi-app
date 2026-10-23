@@ -236,7 +236,7 @@ export default function MesCartes() {
         <EnTete
           titre={traduire("Mes cartes")}
           sousTitre={traduire("Tes exploits, tes séances, tes pesées et tes semaines, prêts à poster.")}
-          onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as never))}
+          onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
           style={{ marginHorizontal: p.planche === '1' || p.planche === '3' || p.planche === '4' ? -16 : -22, marginTop: -8 }}
         />
 

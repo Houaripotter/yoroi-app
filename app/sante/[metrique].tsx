@@ -560,8 +560,8 @@ export default function MetriqueScreen() {
           {notOnAndroid
             ? traduire("Sur Android, Health Connect n'a pas cette mesure. Elle est lue sur iPhone depuis Apple Santé.")
             : notOnIos
-              ? traduire("Sur iPhone, Apple Santé n'a pas cette mesure. Elle est lue sur Android depuis Health Connect.")
-              : traduire("YOROI la lit dans {0}. Ton appareil doit y partager ses données.", Platform.OS === 'android' ? 'Health Connect' : traduire('Apple Santé'))}
+              ? traduire("Sur iPhone, l’app Santé de ton téléphone n'a pas cette mesure. Elle est lue sur Android depuis Health Connect.")
+              : traduire("YOROI la lit dans {0}. Ton appareil doit y partager ses données.", Platform.OS === 'android' ? 'Health Connect' : traduire('l’app Santé de ton téléphone'))}
         </Ink>
         {senders.length > 0 && !notHere ? (
           <View style={{ gap: 8, marginTop: 4 }}>

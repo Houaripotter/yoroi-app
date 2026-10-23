@@ -1,6 +1,6 @@
 // ============================================
 // DONNEES DE DEMO : un seul profil, Heny
-// Musculation (Basic-Fit Prado), jiu-jitsu brésilien (First Jiu-Jitsu Academy), course sur la
+// Musculation (Salle de musculation), jiu-jitsu brésilien (Club de JJB), course sur la
 // Corniche le samedi et foot à 5 un dimanche soir sur deux ou trois. Sept mois d'historique qui se
 // tiennent : pesées qui suivent le plan vers le torii, charges et records qui montent, sparrings
 // avec rounds, ceinture bleue, deux compétitions passées et une à venir (nom fictif),
@@ -40,7 +40,6 @@ import { addCombat } from './fighterModeService';
 import { setGoal } from './trainingGoalsService';
 import { saveEspace } from './v2/espace';
 import { markCelebrationSeen, markWelcomeSeen, syncArmure } from './v2/armure';
-import { LOGO_FIRST_JJA } from './v2/demo/logoFirstJJA';
 import { toDailySeries } from './v2/weightStats';
 import { dateAuRythme } from './v2/pesee/arrivee';
 import { oublierTorii } from './v2/pesee/usePlanPoids';
@@ -816,8 +815,8 @@ export const COMPETITIONS_INVENTEES_DEMO: string[] = [
 ];
 
 /** 17 octobre : clubs de la demo (noms affiches tels quels). Plus aucune competition creee par la demo. */
-export const CLUB_JJB_DEMO = 'First Jiu-Jitsu Academy';
-export const CLUB_MUSCU_DEMO = 'Basic-Fit Prado';
+export const CLUB_JJB_DEMO = 'Club de JJB';
+export const CLUB_MUSCU_DEMO = 'Salle de musculation';
 const OBJECTIF_SEMAINE = 6;
 
 const DEMO_PAST_ONLY_TABLES = ['weights', 'trainings', 'measurements', 'health_data', 'photos', 'combats', 'sleep_entries', 'hydration_logs', 'body_compositions'];
@@ -1491,16 +1490,16 @@ async function injectHeny(): Promise<HenyStats> {
   await saveEspace({ scene: 'chateau', personnage: 'guerrier_h', sportsFavoris: ['musculation', 'jjb', 'running', 'football'], objectifSemaine: OBJECTIF_SEMAINE, objectifChoisi: true, identite: 'personnage' });
 
   // ========== CLUBS ==========
-  // 17 octobre (Houari) : le club de son entraineur, First Jiu-Jitsu Academy (logo fourni), et Basic-Fit Prado
-  const gbClubId = await addClub({ name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', logo_uri: LOGO_FIRST_JJA } as never);
-  const bfClubId = await addClub({ name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', logo_uri: 'basic-fit' } as never);
+  // Noms generiques (aucun vrai club ni vraie salle), sans logo de marque : l'app affiche ses initiales
+  const gbClubId = await addClub({ name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', logo_uri: null } as never);
+  const bfClubId = await addClub({ name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', logo_uri: null } as never);
   await AsyncStorage.setItem('@yoroi_user_clubs', JSON.stringify([
     { id: gbClubId, name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', sessions_per_week: 3 },
     { id: bfClubId, name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', sessions_per_week: 4 },
   ]));
 
   // ========== EMPLOI DU TEMPS (0 = lundi) ==========
-  // 17 octobre (Houari) : JJB lundi, mardi et jeudi a midi ; Basic-Fit lundi, mardi, jeudi et vendredi a 18 h ;
+  // 17 octobre (Houari) : JJB lundi, mardi et jeudi a midi ; musculation lundi, mardi, jeudi et vendredi a 18 h ;
   // course sur la Corniche le samedi matin ; foot a 5 un dimanche soir sur deux ou trois (pas de creneau fixe)
   type Slot = { id: number; dow: number; sport: 'jjb' | 'musculation' | 'running'; time: string; dur: number; type: string };
   const slotDefs: Omit<Slot, 'id'>[] = [
@@ -1712,7 +1711,7 @@ async function injectHeny(): Promise<HenyStats> {
           heart_rate: randInt(138, 150),
           max_heart_rate: randInt(178, 188),
           is_outdoor: true,
-          location_name: 'Five',
+          location_name: 'Terrain de foot à 5',
           source: 'manual',
           session_rating: randInt(7, 9),
           notes: pick(['Foot à 5 avec les collègues.', 'Five du dimanche soir avec les collègues, bonne ambiance.', 'Five avec les collègues, trois buts et deux passes.']),

@@ -761,9 +761,9 @@ export default function WorkoutDetailScreen() {
               {appleZones ? (
                 <Ink size={12} color={c.textMuted}>{traduire("Temps calculés par Apple, avec {0} de Santé.", appleZones.source === 'user' ? traduire('tes zones manuelles') : appleZones.source === 'app' ? traduire('les zones de l’app de séance') : traduire('tes zones automatiques'))}</Ink>
               ) : (
-                <Ink size={12} color={c.textMuted}>{userZones?.origin === 'apple' && userZones?.source === 'custom' ? traduire('Temps estimés par Yoroi avec tes zones Apple Santé : Apple n’a pas de temps par zone pour cette séance.') : userZones?.source === 'custom' ? (Platform.OS === 'ios' ? traduire('Temps estimés par Yoroi avec tes zones. Les chiffres exacts d’Apple arrivent avec iOS 27.') : traduire('Temps estimés par Yoroi avec tes zones.')) : traduire('Temps estimés. Règle tes zones comme sur ta montre (app Watch, Ma montre, Exercice, Zones de fréquence cardiaque) pour qu’ils collent au mieux.')}</Ink>
+                <Ink size={12} color={c.textMuted}>{userZones?.origin === 'apple' && userZones?.source === 'custom' ? traduire('Temps estimés par Yoroi avec tes zones de l’app Santé de ton téléphone : elle n’a pas de temps par zone pour cette séance.') : userZones?.source === 'custom' ? (Platform.OS === 'ios' ? traduire('Temps estimés par Yoroi avec tes zones. Les chiffres exacts d’Apple arrivent avec iOS 27.') : traduire('Temps estimés par Yoroi avec tes zones.')) : traduire('Temps estimés. Règle tes zones comme sur ta montre (app Watch, Ma montre, Exercice, Zones de fréquence cardiaque) pour qu’ils collent au mieux.')}</Ink>
               )}
-              {appleNotice ? <Ink size={12} weight="bold" color={c.accent}>{traduire("Tes zones viennent d’Apple Santé.")}</Ink> : null}
+              {appleNotice ? <Ink size={12} weight="bold" color={c.accent}>{traduire("Tes zones viennent de l’app Santé de ton téléphone.")}</Ink> : null}
             </Glass>
           ) : details?.heartRateSamples && details.heartRateSamples.length > 0 && userZones?.source !== 'custom' ? (
             <Glass onPress={() => router.push('/heart-zones-settings' as any)} label={traduire("Configurer tes zones cardiaques")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

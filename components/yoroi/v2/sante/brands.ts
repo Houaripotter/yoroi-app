@@ -56,7 +56,7 @@ const SCALES: BrandConfig = {
   color: '#6E5A8C',
   emoji: 'B',
   types: ['Poids', 'Masse grasse', traduire('Masse maigre')],
-  introIOS: traduire('Ta balance écrit dans Apple Santé depuis son app (Renpho, Eufy, Omron, Xiaomi), et YOROI les lit là.'),
+  introIOS: traduire('Ta balance écrit dans l’app Santé de ton téléphone depuis son app (Renpho, Eufy, Omron, Xiaomi), et YOROI les lit là.'),
   introAndroid: traduire('Ta balance écrit dans Health Connect depuis son app (Renpho, Eufy, Omron), et YOROI les lit là.'),
   stepsIOS: [traduire('Ouvre l’app de ta balance.'), traduire('Cherche Santé ou Apple Santé dans ses réglages.'), traduire('Active le partage du poids et de la composition corporelle.'), traduire('Monte sur ta balance, puis tire vers le bas dans YOROI.')],
   stepsAndroid: [traduire('Ouvre l’app de ta balance.'), traduire('Cherche Health Connect dans ses réglages.'), traduire('Autorise le poids et la composition corporelle.'), traduire('Monte sur ta balance, puis tire vers le bas dans YOROI.')],
@@ -68,9 +68,9 @@ const OTHERS: BrandConfig = {
   color: '#454A58',
   emoji: '+',
   types: [traduire('Selon la marque')],
-  introIOS: traduire('Toute montre, bague ou balance qui partage vers Apple Santé est compatible avec YOROI.'),
+  introIOS: traduire('Toute montre, bague ou balance qui partage vers l’app Santé de ton téléphone est compatible avec YOROI.'),
   introAndroid: traduire('Toute montre, bague ou balance qui partage vers Health Connect est compatible avec YOROI.'),
-  stepsIOS: [traduire('Ouvre l’app officielle de ton appareil.'), traduire('Cherche Apple Santé dans ses réglages.'), traduire('Active le partage des données.'), traduire('Relie YOROI à Apple Santé.')],
+  stepsIOS: [traduire('Ouvre l’app officielle de ton appareil.'), traduire('Cherche Apple Santé dans ses réglages.'), traduire('Active le partage des données.'), traduire('Relie YOROI à l’app Santé de ton téléphone.')],
   stepsAndroid: [traduire('Ouvre l’app officielle de ton appareil.'), traduire('Cherche Health Connect dans ses réglages.'), traduire('Active le partage des données.'), traduire('Relie YOROI à Health Connect.')],
 };
 

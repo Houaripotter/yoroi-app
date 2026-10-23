@@ -75,7 +75,7 @@ export default function AddCompetitionScreen() {
     }
     const url = cleanUrl(draft.url);
     if (draft.url.trim() && !url) {
-      appAlert(traduire('Adresse du site'), traduire('Vérifie l’adresse du site, par exemple cfjjb.com.'));
+      appAlert(traduire('Adresse du site'), traduire('Vérifie l’adresse du site, par exemple www.exemple.fr.'));
       return;
     }
     setSaving(true);

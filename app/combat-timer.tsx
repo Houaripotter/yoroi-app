@@ -341,7 +341,7 @@ export default function CombatTimerScreen() {
               <SettingRow label={traduire("Préparation")} hint={traduire("avant le premier gong")} dot={PHASE_COLORS.prepa.main} value={config.prepaSeconds === 0 ? traduire('Aucune') : `${config.prepaSeconds} s`} onMinus={() => step('prepaSeconds', -5, 0, 30)} onPlus={() => step('prepaSeconds', 5, 0, 30)} />
             </View>
             <View style={{ height: 1, backgroundColor: P.line2 }} />
-            <ToggleRow label={traduire("Claquettes à 10 s")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round, comme à l’UFC")} value={clapOn} onChange={toggleClap} />
+            <ToggleRow label={traduire("Claquettes à 10 s")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round, comme en compétition")} value={clapOn} onChange={toggleClap} />
           </SetupBlock>
           <SetupBlock title={traduire("Ton partenaire")} hint={traduire("Facultatif, pour le retrouver dans ton historique")}>
             <Field value={config.partnerName} onChangeText={(v) => setConfig((p) => ({ ...p, partnerName: v }))} placeholder={traduire("Nom de ton partenaire")} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} accessibilityLabel={traduire("Nom de ton partenaire")} />

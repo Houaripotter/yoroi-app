@@ -62,7 +62,7 @@ export default function RoundsInsightsScreen() {
     <EnTete
       titre={traduire("Tes débriefs")}
       sousTitre={s.nbDebriefed > 0 ? traduire("{0} sur {1}", plural(s.nbDebriefed, 'round débriefé', 'rounds débriefés'), plural(s.nbSessions, 'séance')) : traduire('Ce que tu notes après chaque round')}
-      onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+      onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
       style={{ marginHorizontal: -22, marginTop: -8 }}
     />
   );

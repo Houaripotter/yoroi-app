@@ -210,7 +210,7 @@ export default function Rangs() {
             </View>
           ))}
           <Ink size={12} color={c.textSecondary}>
-            {traduire("Ton XP ne baisse jamais. Supprimer une séance ne retire rien. Une séance notée plus de 7 jours après sa date ne rapporte pas d’XP (30 jours pour Apple Santé ou une montre). L’historique d’Apple Santé d’avant ton arrivée dans YOROI ne compte pas. Rien n’est lié à un nombre de kilos.")}</Ink>
+            {traduire("Ton XP ne baisse jamais. Supprimer une séance ne retire rien. Une séance notée plus de 7 jours après sa date ne rapporte pas d’XP (30 jours pour l’app Santé de ton téléphone ou une montre). L’historique de l’app Santé d’avant ton arrivée dans YOROI ne compte pas. Rien n’est lié à un nombre de kilos.")}</Ink>
         </Animated.View>
 
         <Pressable

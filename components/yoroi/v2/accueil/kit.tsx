@@ -275,7 +275,7 @@ export function DetailScreen({
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const back = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/' as any)));
+  const back = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never)));
   const [defile, setDefile] = React.useState(false);
   return (
     <View style={{ flex: 1, backgroundColor: P.paper }}>

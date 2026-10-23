@@ -1,7 +1,7 @@
 /**
  * Tes niveaux de pratique : un par sport, selon le nombre de seances.
- * Novice 0, Initie 10, Regulier 25, Confirme 50, Assidu 75, Aguerri 100, Chevronne 150,
- * Expert 200, Veteran 275, Maitre 365.
+ * Novice 0, Initie 10, Motive 25, Solide 50, Assidu 75, Aguerri 100, Chevronne 150,
+ * Redoutable 200, Veteran 275, Maitre 365 (source : lib/v2/dojo/belts.ts).
  * (Route historique /dojo/ceintures conservee. Ce ne sont pas des grades officiels.)
  */
 import React from 'react';
@@ -66,7 +66,7 @@ export default function Ceintures() {
           <View style={{ backgroundColor: P.white, borderWidth: 1, borderColor: c.border, borderRadius: 22, padding: 20, gap: 12, alignItems: 'flex-start' }}>
             <LevelPlate color="#FFFFFF" edge="#D9D3CA" size={34} />
             <Ink size={18} weight="black">{traduire("Ton premier niveau t’attend")}</Ink>
-            <Ink size={14} color={c.textSecondary}>{traduire('Chaque sport a son niveau. Il monte tout seul avec tes séances\u00A0: Initié à 10, Régulier à 25, Maître à 365.')}</Ink>
+            <Ink size={14} color={c.textSecondary}>{traduire('Chaque sport a son niveau. Il monte tout seul avec tes séances\u00A0: Initié à 10, Motivé à 25, Maître à 365.')}</Ink>
             <Pressable
               onPress={() => {
                 tap();

@@ -32,7 +32,7 @@ export const LAB_PROTOCOLS: LabProtocol[] = [
       { text: 'Arrêt des écrans 60 min avant coucher (lumière bleue)', source: 'Chang et al., 2015' },
       { text: 'Dernière prise de caféine > 6h avant', source: 'Drake et al., 2013' },
       { text: 'Dîner terminé > 2-3h avant coucher', source: 'Kinsey & Ormsbee, 2015' },
-      { text: 'Éviter l\'alcool (perturbe le sommeil profond)', source: 'Ebrahim et al., 2013' },
+      { text: 'Éviter l\'alcool (perturbe la fin de nuit et le sommeil paradoxal)', source: 'Ebrahim et al., 2013' },
       { text: '5-10 min de respiration diaphragmatique ou méditation', source: 'Black et al., 2015' },
     ],
     references: [
@@ -75,7 +75,7 @@ export const LAB_PROTOCOLS: LabProtocol[] = [
       { text: 'Coucher avant 23h pour maximiser GH nocturne', source: 'Van Cauter et al., 2000' },
     ],
     references: [
-      { author: 'Shirreffs et al.', year: 2004, journal: 'J Sports Sci', doi: '10.1080/0264041031000140590' },
+      { author: 'Shirreffs et al.', year: 2004, journal: 'J Sports Sci', doi: '' },
       { author: 'Morton et al.', year: 2018, journal: 'Br J Sports Med', doi: '10.1136/bjsports-2017-097608' },
     ]
   },
@@ -86,16 +86,14 @@ export const LAB_PROTOCOLS: LabProtocol[] = [
     category: 'ENTRAÎNEMENT',
     categoryColor: '#EF4444',
     items: [
-      { text: 'Réduire le volume total de 40-60% (séries × répétitions)', source: 'Zourdos et al., 2016' },
-      { text: 'Maintenir l\'intensité (charges) à 70-80% du max', source: null },
-      { text: 'Fréquence : 2-3 séances max dans la semaine', source: null },
+      { text: 'Réduire nettement le volume total (séries × répétitions)', source: null },
+      { text: 'Garder des charges modérées, sans aller à l\'échec', source: null },
+      { text: 'Moins de séances que d\'habitude dans la semaine', source: null },
       { text: 'Focus sur la technique et la connexion neuromusculaire', source: null },
-      { text: 'Privilégier le sommeil (objectif 8-9h)', source: null },
-      { text: 'Planifier tous les 4-8 semaines selon fatigue', source: 'Pritchard et al., 2015' },
+      { text: 'Privilégier le sommeil', source: null },
+      { text: 'La planifier régulièrement, selon ta fatigue', source: null },
     ],
     references: [
-      { author: 'Zourdos et al.', year: 2016, journal: 'Sports Med', doi: '10.1007/s40279-015-0413-5' },
-      { author: 'Pritchard et al.', year: 2015, journal: 'J Strength Cond Res', doi: '10.1519/JSC.0000000000000765' },
     ]
   },
 ];

@@ -105,7 +105,7 @@ export default function SyncHistoryScreen() {
           titre={traduire("Journal de synchro")}
           sousTitre={history.length === 0 ? traduire('Rien pour le moment') : traduirePluriel(history.length, history.length > 1, "{0} opération récente", "{0} opérations récentes", history.length)}
           droite={history.length > 0 ? <RoundButton icon="trash" label={traduire("Effacer le journal")} onPress={handleClear} /> : null}
-          onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+          onRetour={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
           style={{ marginHorizontal: -16, marginTop: -8 }}
         />
 

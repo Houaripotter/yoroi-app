@@ -27,8 +27,8 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type ClubOption = { id: string; name: string; type: string; logoUri?: string | null };
 const DEFAULT_CLUBS: ClubOption[] = [
-  { id: 'gracie_barra', name: 'Gracie Barra', type: 'gracie_barra' },
-  { id: 'basic_fit', name: 'Basic Fit', type: 'basic_fit' },
+  { id: 'gracie_barra', name: 'Club de JJB', type: 'gracie_barra' },
+  { id: 'basic_fit', name: 'Salle de musculation', type: 'basic_fit' },
   { id: 'running', name: getSportName('running'), type: 'running' },
 ];
 

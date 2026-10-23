@@ -115,7 +115,7 @@ export default function MesDonnees() {
   // 14 octobre 2026 (zones_apple) : fichier brut des séances Apple, pour caler les zones sur Forme
   const handleDiagnostic = async () => {
     if (Platform.OS !== 'ios') {
-      showPopup(traduire('Diagnostic'), traduire('Disponible sur iPhone, avec Apple Santé.'));
+      showPopup(traduire('Diagnostic'), traduire('Disponible sur iPhone, avec l’app Santé de ton téléphone.'));
       return;
     }
     setBusy(true);
@@ -125,7 +125,7 @@ export default function MesDonnees() {
       const res = fn ? await fn.call(healthConnect, 30) : null;
       setBusy(false);
       if (!res) {
-        showPopup(traduire('Diagnostic'), traduire('Apple Santé n’a rien renvoyé. Vérifie que Yoroi a accès aux entraînements et à la fréquence cardiaque.'));
+        showPopup(traduire('Diagnostic'), traduire('L’app Santé de ton téléphone n’a rien renvoyé. Vérifie que Yoroi a accès aux entraînements et à la fréquence cardiaque.'));
         return;
       }
       const Sharing = await import('expo-sharing');

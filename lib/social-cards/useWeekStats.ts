@@ -170,8 +170,8 @@ export function useWeekStats(targetDate?: Date) {
           percentage: 71.4,
           calendar,
           clubs: [
-            { clubName: 'Basic-Fit Prado', count: 4 },
-            { clubName: 'First Jiu-Jitsu Academy', count: 3 },
+            { clubName: 'Salle de musculation', count: 4 },
+            { clubName: 'Club de JJB', count: 3 },
           ],
           evolution: {
             weight: { start: 78.5, end: 76.8, change: -1.7 }

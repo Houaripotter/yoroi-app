@@ -32,7 +32,7 @@ const openMap = (address: string) => {
 
 
 function ItemCard({ item, onPress }: { item: Item; onPress: () => void }) {
-  const sub = isCoach(item) ? `${item.title}, ${item.location}` : `${item.type}, ${item.location}`;
+  const sub = [isCoach(item) ? item.title : item.type, item.location].filter(Boolean).join(', ');
   return (
     <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={traduire("Voir {0}", item.name)}>
       <Card style={{ padding: 0, overflow: 'hidden' }}>
@@ -109,7 +109,7 @@ export default function PartnersScreen() {
   const list: Item[] = tab === 'coaches' ? coaches : CLUBS;
 
   return (
-    <DetailScreen title={traduire("Sélection YOROI")} subtitle={traduire("Des coachs et des clubs que je recommande")}>
+    <DetailScreen title={traduire("Sélection YOROI")} subtitle={traduire("Des exemples de profils à chercher près de chez toi")}>
       <View style={{ flexDirection: 'row', backgroundColor: '#E6E4DD', borderRadius: 18, padding: 4 }}>
         {([
           { k: 'coaches', l: 'Coachs', n: coaches.length },
@@ -145,7 +145,7 @@ export default function PartnersScreen() {
         <BigButton label={traduire("Nous contacter")} icon="share" onPress={() => openEmail()} />
       </Glass>
       <Ink size={12} color={P.muted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
-        {traduire("Sélection personnelle et subjective. Ces professionnels ne sont pas liés par contrat à Yoroi.")}</Ink>
+        {traduire("Exemples génériques, sans lien avec de vrais professionnels.")}</Ink>
 
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setSelected(null); setZoom(false); }}>
         {selected ? (

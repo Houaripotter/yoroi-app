@@ -65,7 +65,7 @@ function BrandList({ onOpen }: { onOpen: (k: string) => void }) {
       {WATCHES.map((w) => {
         const p = pathFor(w, ANDROID);
         const count = p.keys.length;
-        const sub = !p.ok ? (ANDROID ? traduire('Pas de partage avec Health Connect') : traduire('Pas de partage avec Apple Santé')) : p.list === 'unknown' ? traduire(`Partage possible, liste non publiée`) : traduirePluriel(count, count > 1, "{0} mesure pour YOROI", "{0} mesures pour YOROI", count);
+        const sub = !p.ok ? (ANDROID ? traduire('Pas de partage avec Health Connect') : traduire('Pas de partage avec l’app Santé de ton téléphone')) : p.list === 'unknown' ? traduire(`Partage possible, liste non publiée`) : traduirePluriel(count, count > 1, "{0} mesure pour YOROI", "{0} mesures pour YOROI", count);
         return (
           <Press key={w.key} onPress={() => onOpen(w.key)} accessibilityRole="button" accessibilityLabel={`${w.name}, ${sub}`}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 68, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, paddingHorizontal: 14, paddingVertical: 10, opacity: p.ok ? 1 : 0.7 }}>
@@ -366,14 +366,14 @@ export default function MontreScreen() {
     );
   }
   return (
-    <DetailScreen title={traduire("Ta montre et YOROI")} subtitle={ANDROID ? 'Via Health Connect' : traduire('Via Apple Santé')}>
+    <DetailScreen title={traduire("Ta montre et YOROI")} subtitle={ANDROID ? 'Via Health Connect' : traduire('Via l’app Santé de ton téléphone')}>
       <GlassBox style={{ gap: 8 }}>
         <Ink size={18} weight="black" tight>
           {traduire("Comment ça marche")}</Ink>
         <Ink size={14} weight="medium" color={S.ink2}>
           {ANDROID
             ? traduire('Ta montre écrit ses mesures dans Health Connect, le coffre santé d’Android. YOROI les lit là, sans serveur : tout reste sur ton téléphone.')
-            : traduire('Ta montre écrit ses mesures dans Apple Santé, le coffre santé de l’iPhone. YOROI les lit là, sans serveur : tout reste sur ton téléphone.')}
+            : traduire('Ta montre écrit ses mesures dans l’app Santé de ton téléphone, son coffre santé. YOROI les lit là, sans serveur : tout reste sur ton téléphone.')}
         </Ink>
         <Ink size={14} weight="medium" color={S.ink2}>
           {traduire("Choisis ta marque pour voir ce qu’elle envoie et comment l’activer.")}</Ink>

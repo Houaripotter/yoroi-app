@@ -171,14 +171,14 @@ export default function MatchTrackerScreen() {
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
       // navigation directe : retour tout de suite, la vibration de reussite confirme l'enregistrement
       if (router.canGoBack()) router.back();
-      else router.replace('/' as any);
+      else router.replace('/(tabs)' as never);
     } catch (e) {
       logger.error('Enregistrement du match impossible', e);
       appAlert(traduire('Enregistrement impossible'), traduire('Réessaie dans un instant.'));
     }
   };
 
-  const back = () => (router.canGoBack() ? router.back() : router.replace('/' as any));
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never));
   const sec = start ? Math.max(0, Math.floor((now - start) / 1000 + 1e-6)) : 0;
 
   // ── Preparation ──

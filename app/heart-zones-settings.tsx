@@ -228,12 +228,12 @@ export default function HeartZonesSettingsScreen() {
       // 2. Avant iOS 27 : FC max lue dans Sante, zones estimees
       const data = await getHeartZonesDataNative();
       if (!data) {
-        setImportResult({ ok: false, text: isRunningInExpoGo ? traduire("Dans Expo Go, Apple Santé n'est pas lisible. Essaie dans l'app installée.") : traduire('Lecture d’Apple Santé impossible dans cette version de l’app. Installe la dernière version, puis réessaie.') });
+        setImportResult({ ok: false, text: isRunningInExpoGo ? traduire("Dans Expo Go, Apple Santé n'est pas lisible. Essaie dans l'app installée.") : traduire('Lecture de l’app Santé de ton téléphone impossible dans cette version de l’app. Installe la dernière version, puis réessaie.') });
         return;
       }
       const fmax = data.maxHR > 0 ? data.maxHR : 0;
       if (fmax < 100) {
-        setImportResult({ ok: false, text: traduire('Apple Santé ne me donne aucune fréquence cardiaque. Vérifie l’accès : Réglages de l’iPhone, Santé, Accès aux données et appareils, Yoroi, active Fréquence cardiaque. Sinon, entre ta FC max avec « Ma FC max ».') });
+        setImportResult({ ok: false, text: traduire('L’app Santé de ton téléphone ne me donne aucune fréquence cardiaque. Vérifie l’accès : Réglages de l’iPhone, Santé, Accès aux données et appareils, Yoroi, active Fréquence cardiaque. Sinon, entre ta FC max avec « Ma FC max ».') });
         return;
       }
       const fcr = data.restingHR > 0 ? data.restingHR : 0;
@@ -245,7 +245,7 @@ export default function HeartZonesSettingsScreen() {
       const why = pref.missing ? traduire('Installe la dernière version de l’app pour lire les zones exactes d’Apple.') : pref.ios27 ? traduire('Santé ne m’a pas donné tes zones.') : traduire('Les zones exactes d’Apple ne sont lisibles qu’à partir d’iOS 27.');
       setImportResult({ ok: true, text: traduire("FC max de {0} bpm lue dans Santé (ton record des 6 derniers mois). Zones estimées et enregistrées : zone 2 dès {1}, zone 3 dès {2}, zone 4 dès {3}, zone 5 dès {4} bpm. {5}", fmax, lb[0], lb[1], lb[2], lb[3], why) });
     } catch (e) {
-      setImportResult({ ok: false, text: traduire("Erreur pendant la lecture d’Apple Santé : {0}", String((e as Error)?.message ?? e)) });
+      setImportResult({ ok: false, text: traduire("Erreur pendant la lecture de l’app Santé de ton téléphone : {0}", String((e as Error)?.message ?? e)) });
     } finally {
       setImporting(false);
     }
@@ -307,7 +307,7 @@ export default function HeartZonesSettingsScreen() {
             </Ink>
           </View>
           <ZoneBand bounds={bounds} />
-          {appleNotice ? <Ink size={12} weight="bold" color={S.ink2}>{traduire("Tes zones viennent d’Apple Santé.")}</Ink> : null}
+          {appleNotice ? <Ink size={12} weight="bold" color={S.ink2}>{traduire("Tes zones viennent de l’app Santé de ton téléphone.")}</Ink> : null}
         </GlassBox>
 
         {Platform.OS === 'ios' ? (
@@ -366,7 +366,7 @@ export default function HeartZonesSettingsScreen() {
               </View>
             ) : null}
             <Ink size={12} weight="medium" color={S.ink2}>
-              {traduire("Où la trouver : app Watch, Ma montre, Exercice, Zones de fréquence cardiaque, la FC max est en haut. Ou dans Apple Santé, Parcourir, Cœur, Fréquence cardiaque : cherche ton record pendant un effort intense.")}</Ink>
+              {traduire("Où la trouver : app Watch, Ma montre, Exercice, Zones de fréquence cardiaque, la FC max est en haut. Ou dans l’app Santé de ton téléphone, Parcourir, Cœur, Fréquence cardiaque : cherche ton record pendant un effort intense.")}</Ink>
             <SmallButton label={traduire("Appliquer ces zones")} icon="check" disabled={!fcmaxReady} onPress={handleFcmaxCalc} />
           </CardBox>
         ) : null}

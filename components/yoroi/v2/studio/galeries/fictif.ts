@@ -12,8 +12,8 @@ import type { FighterData } from '@/components/yoroi/v2/partage/FighterCardView'
 import { traduire } from '@/lib/i18n/tr';
 
 export const NOM = 'Heny';
-const CLUB_JJB = 'First Jiu-Jitsu Academy';
-const CLUB_MUSCU = 'Basic-Fit Prado';
+const CLUB_JJB = 'Club de JJB';
+const CLUB_MUSCU = 'Salle de musculation';
 
 const JOURS = [traduire('Lun'), traduire('Mar'), traduire('Mer'), traduire('Jeu'), traduire('Ven'), traduire('Sam'), traduire('Dim')];
 

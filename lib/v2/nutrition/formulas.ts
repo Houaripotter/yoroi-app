@@ -22,7 +22,7 @@ export const SOURCES = {
   epley: { label: traduire('Formule d’Epley (1985)'), ref: 'Estimation de la charge maximale à partir des répétitions' },
   protein: { label: traduire('Position officielle de l’ISSN sur les protéines (2017)'), ref: 'Journal of the International Society of Sports Nutrition', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8' },
   carbs: { label: traduire('Burke et al. (2011)'), ref: 'Journal of Sports Sciences', url: 'https://www.tandfonline.com/doi/abs/10.1080/02640414.2011.585473' },
-  hydration: { label: traduire('American College of Sports Medicine (2007)'), ref: 'Effort et réhydratation, article en anglais', url: 'https://journals.lww.com/acsm-msse/fulltext/2007/02000/exercise_and_fluid_replacement.22.aspx' },
+  hydration: { label: traduire('Sawka et al. (2007), position de l’ACSM'), ref: 'Adapter ses apports à sa transpiration, éviter de perdre plus de 2 % de son poids pendant l’effort. Article en anglais', url: 'https://pubmed.ncbi.nlm.nih.gov/17277604/' },
   timing: { label: traduire('Kerksick et al. (2017)'), ref: 'Position officielle de l’ISSN sur le moment des repas', url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0189-4' },
 } satisfies Record<string, Source>;
 
@@ -154,7 +154,7 @@ export function macrosFor(tdeeValue: number, goal: CalcGoal) {
   };
 }
 
-/** Eau : poids x 0,033 L, plus 0,5 L par heure d'exercice */
+/** Eau : poids x 0,033 L, plus 0,5 L par heure d'exercice. Repere simple et courant, pas une recommandation de l'ACSM (Sawka 2007 conseille d'adapter a la transpiration). */
 export function water(weight: number, exerciseHours: number) {
   const base = weight * 0.033;
   return { base: round1(base), withExercise: round1(base + exerciseHours * 0.5) };

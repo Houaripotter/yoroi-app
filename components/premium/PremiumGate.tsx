@@ -87,9 +87,10 @@ export function PremiumPreview({ children, source, compteur = null, apercu = 'ec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);
 
+  // sans historique (le web apres un rechargement, un ecran d'onglet) : retour aux onglets, jamais a l'ecran de demarrage
   const goBack = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/' as never);
+    else router.replace('/(tabs)' as never);
   };
 
   return (
@@ -198,9 +199,10 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
   const c = theme.colors;
   const heroH = Math.round(Math.min(width * 0.95, 420)) + insets.top;
 
+  // sans historique (le web apres un rechargement, un ecran d'onglet) : retour aux onglets, jamais a l'ecran de demarrage
   const goBack = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/' as never);
+    else router.replace('/(tabs)' as never);
   };
 
   return (

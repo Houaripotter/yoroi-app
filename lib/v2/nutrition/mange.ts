@@ -254,6 +254,6 @@ export function phraseBilanRepas(m: ResumeRepas['moyenne'] | null | undefined, a
 /** Comment l'activer, selon la plateforme */
 export function aideActivation(fournisseur: string): string {
   return fournisseur === 'Health Connect'
-    ? traduire('Ces chiffres viennent de ton app de repas (MyFitnessPal, Cronometer, Lifesum, MacroFactor...) qui les écrit dans Health Connect. YOROI les lit seulement. Pour les voir ici, active le partage avec Health Connect dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Health Connect.')
-    : traduire('Ces chiffres viennent de ton app de repas (MyFitnessPal, Cronometer, Lifesum, MacroFactor...) qui les écrit dans Apple Santé. YOROI les lit seulement. Pour les voir ici, active le partage avec Apple Santé dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Santé.');
+    ? traduire('Ces chiffres viennent de ton app de repas, qui les écrit dans Health Connect. YOROI les lit seulement. Pour les voir ici, active le partage avec Health Connect dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Health Connect.')
+    : traduire('Ces chiffres viennent de ton app de repas, qui les écrit dans l’app Santé de ton téléphone. YOROI les lit seulement. Pour les voir ici, active le partage avec l’app Santé dans les réglages de ton app de repas, puis autorise la nutrition pour YOROI dans Santé.');
 }

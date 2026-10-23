@@ -50,7 +50,7 @@ export function DataBridge() {
       <Ink size={13} weight="medium" color={S.ink2}>
         {android
           ? traduire("YOROI ne se branche pas directement sur ta montre : chaque marque envoie ses mesures à Health Connect, et YOROI les lit là. Fitbit, Garmin, Samsung et Withings passent tous par ce chemin.")
-          : traduire("YOROI ne se branche pas directement sur ta montre : chaque marque envoie ses mesures à Apple Santé, et YOROI les lit là. Apple Watch, Garmin, Withings et Fitbit passent tous par ce chemin.")}
+          : traduire("YOROI ne se branche pas directement sur ta montre : chaque marque envoie ses mesures à l’app Santé de ton téléphone, et YOROI les lit là. Apple Watch, Garmin, Withings et Fitbit passent tous par ce chemin.")}
       </Ink>
     </GlassBox>
   );

@@ -34,8 +34,8 @@ export function emitAllData() {
 
 /** Ce que contient Heny, dit simplement */
 export const HENY_LINES = [
-  traduire('Musculation quatre fois par semaine à 18 h au Basic-Fit Prado (poussée, tirage, jambes, haut du corps)'),
-  traduire('Jiu-jitsu brésilien lundi, mardi et jeudi à midi à First Jiu-Jitsu Academy : cours, drilling et sparring'),
+  traduire('Musculation quatre fois par semaine à 18 h à la salle de musculation (poussée, tirage, jambes, haut du corps)'),
+  traduire('Jiu-jitsu brésilien lundi, mardi et jeudi à midi au club de JJB : cours, drilling et sparring'),
   traduire('Course sur la Corniche le samedi matin, avec trace et zones cardiaques, et foot à 5 un dimanche soir sur deux ou trois'),
   traduire('Ceinture bleue, rounds de sparring avec six partenaires et leurs fiches'),
   traduire('Pesées de 86,4 à 81,6 kg, composition du corps et mensurations'),

@@ -73,7 +73,10 @@ export default function SeanceMatch() {
   const savingRef = useRef(false);
 
   useEffect(() => {
-    getCompetitions()
+    // Promise.resolve().then : sur le web, une fonction absente de la version web du stockage
+    // (getLatestWeight n'existe pas dans lib/database.web.ts) devient une promesse rejetee, pas un plantage
+    Promise.resolve()
+      .then(() => getCompetitions())
       .then((list) => {
         setCompetitions(list ?? []);
         const pre = (list ?? []).find((x) => x.id === competitionId);
@@ -81,7 +84,8 @@ export default function SeanceMatch() {
       })
       .catch(() => setCompetitions([]));
     // poids pre-remplis avec la derniere pesee
-    getLatestWeight()
+    Promise.resolve()
+      .then(() => getLatestWeight())
       .then((w) => {
         const v = w?.weight ? Math.round(w.weight * 10) / 10 : 0;
         if (v > 0) {

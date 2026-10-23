@@ -98,7 +98,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
           <Label>{traduire("Catégorie de poids")}</Label>
           {draft.sport === 'jjb' ? (
             <Ink size={13} color={P.muted} style={{ paddingHorizontal: 4 }}>
-              {traduire("Les catégories IBJJF gardent leurs noms portugais, de Galo, la plus légère, à Pesadíssimo, sans limite. Choisis celle dont le maximum couvre ton poids le jour de la pesée.")}</Ink>
+              {traduire("Les catégories de poids du JJB gardent leurs noms portugais, de Galo, la plus légère, à Pesadíssimo, sans limite. Choisis celle dont le maximum couvre ton poids le jour de la pesée.")}</Ink>
           ) : null}
           {advised && lastWeight ? (
             <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, backgroundColor: P.goldSoft, borderColor: P.goldLight }}>
@@ -144,7 +144,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
         </ChipScroll>
       </View>
 
-      <Field label={traduire("Site de l’événement")} value={draft.url} onChangeText={(url) => set({ url })} placeholder={traduire("Ex : cfjjb.com")} icon="flag" keyboardType="url" maxLength={300} />
+      <Field label={traduire("Site de l’événement")} value={draft.url} onChangeText={(url) => set({ url })} placeholder={traduire("Ex : www.exemple.fr")} icon="flag" keyboardType="url" maxLength={300} />
 
       <View style={{ gap: 8 }}>
         <Label>{traduire("Type d’événement")}</Label>

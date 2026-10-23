@@ -46,7 +46,7 @@ export default function HealthProfessionalsScreen() {
 
   return (
     <>
-      <DetailScreen title={traduire("Pros de santé")} subtitle={traduire("Des pros que je connais et recommande")}>
+      <DetailScreen title={traduire("Pros de santé")} subtitle={traduire("Des exemples de profils à chercher près de chez toi")}>
         <Segments items={TABS.map((t) => ({ key: t.key, label: t.label }))} value={tab} onChange={setTab} />
 
         {list.length > 0 ? (
@@ -76,7 +76,7 @@ export default function HealthProfessionalsScreen() {
         </Enter>
 
         <Ink size={12} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
-          {traduire("Sélection personnelle et subjective. Ces pros ne sont pas liés par contrat à YOROI.")}</Ink>
+          {traduire("Exemples génériques, sans lien avec de vrais professionnels.")}</Ink>
       </DetailScreen>
 
       <BottomSheet visible={!!selected} onClose={() => setSelected(null)} title={selected?.name ?? ''} subtitle={traduire(selected?.title)}>
@@ -124,7 +124,7 @@ export default function HealthProfessionalsScreen() {
 
 function ProCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
   return (
-    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${pro.name}, ${pro.title}, ${pro.location}`}>
+    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={[pro.name, pro.title, pro.location].filter(Boolean).join(', ')}>
       <Card style={{ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 12 }}>
         <View style={{ width: 84, height: 96, borderRadius: 20, overflow: 'hidden', backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
           {pro.imageUrl ? <Image source={pro.imageUrl} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors /> : <IconDot name="user" tone="ink" size={48} />}

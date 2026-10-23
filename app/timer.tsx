@@ -714,7 +714,7 @@ export default function TimerScreen() {
                   {prepaRow}
                 </View>
                 <View style={{ height: 1, backgroundColor: P.line2 }} />
-                <ToggleRow label={traduire("Claquettes à 10 s")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round, comme à l’UFC")} value={clapOn} onChange={toggleClap} />
+                <ToggleRow label={traduire("Claquettes à 10 s")} hint={traduire("Clac clac clac à 10 s de la fin de chaque round, comme en compétition")} value={clapOn} onChange={toggleClap} />
                 <Ink size={13} weight="medium" color={P.muted}>{traduire("Gong au début et à la fin de chaque round. Les 10 dernières secondes passent en rouge. Tes réglages sont gardés.")}</Ink>
               </SetupBlock>
               <ModeCard mode="sparring" dark title={traduire("Sparring, round par round")} text={traduire("Tu notes chaque round : victoire, défaite ou nul.")} onPress={() => router.push('/combat-timer' as any)} />

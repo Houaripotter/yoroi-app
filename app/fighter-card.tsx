@@ -71,7 +71,7 @@ export default function FighterCardScreen() {
   return (
     <ShareStudio
       title={traduire("Carte de combattant")}
-      subtitle={traduire("Ton rang et tes chiffres, prêts pour Instagram")}
+      subtitle={traduire("Ton rang et tes chiffres, prêts à partager")}
       loading={loading}
       empty={!loading && !data ? { title: traduire('Ta carte ne s’affiche pas'), text: traduire('Tes données n’ont pas pu être lues. Réessaie dans un instant.'), action: traduire('Retour'), onAction: () => router.back() } : null}
       style={studio.style}
