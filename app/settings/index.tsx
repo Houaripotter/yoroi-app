@@ -53,6 +53,7 @@ import { usePremium } from '@/context/PremiumContext';
 import { isDemoDataActive } from '@/lib/demoDataService';
 import { ecrireBilanAuto, lireBilanAuto } from '@/lib/v2/bilan/reglage';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
 
 
 const MODES: { key: string; label: string; court: string; sub: string }[] = [
@@ -76,6 +77,7 @@ export default function Reglages() {
 
   const [backingUp, setBackingUp] = useState(false);
   const [objectifOpen, setObjectifOpen] = useState(false);
+  const [langueOpen, setLangueOpen] = useState(false);
   // /settings?objectif=1 : ouvert depuis « Choisir un objectif » (accueil, seances, Dojo)
   const params = useLocalSearchParams<{ objectif?: string }>();
   useEffect(() => {
@@ -212,6 +214,7 @@ export default function Reglages() {
         <Card>
           <ValueRow first tint={TUILE.mousse} icon="heart" label={traduire("Santé et appareils")} sub={Platform.OS === 'android' ? 'Health Connect, montre, balance' : traduire('Apple Santé, montre, balance')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => go('/settings/appareils')} />
           <ValueRow tint={TUILE.ardoise} icon="save" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
+          <ValueRow tint={TUILE.bleu} icon="globe" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
         </Card>
 
         <Groupe title="YOROI" />
@@ -260,6 +263,7 @@ export default function Reglages() {
       </ScrollView>
 
       {/* le nombre de seances et, si tu veux, tes jours */}
+      <FeuilleLangue visible={langueOpen} onClose={() => setLangueOpen(false)} />
       <ObjectifSheet visible={objectifOpen} onClose={() => setObjectifOpen(false)} espace={espace} onSave={(p) => { update(p).catch(() => {}); }} />
 
       <WhatsNewSheet visible={whatsNew} onClose={() => setWhatsNew(false)} />

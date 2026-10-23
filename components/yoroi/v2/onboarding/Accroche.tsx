@@ -50,8 +50,8 @@ import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/
 import { P } from '@/components/yoroi/livePalette';
 import { LiensLegaux } from '@/components/yoroi/v2/premium/LiensLegaux';
 import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
+import { BoutonLangue } from '@/components/yoroi/v2/langue/ChoixLangue';
 
-const LOGO = require('@/assets/logo d\'app/yoroi-logo2.png');
 
 /** Compteur reel du contenu (null s'il manque : la carte ne s'affiche pas) */
 function count(id: string): number | null {
@@ -757,7 +757,8 @@ export function Accroche({
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} alwaysBounceVertical={false} directionalLockEnabled>
       {/* Marque, sauvegarde, fermer (apercu) */}
       <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Image source={LOGO} style={{ width: 30, height: 30, borderRadius: 8 }} accessibilityLabel="YOROI" />
+        {/* 23 octobre 2026 : le choix de la langue, en haut à gauche, dès la première page */}
+        <BoutonLangue />
         {/* vague 30 : en apercu du Studio, la pastille se loge ici, jamais sur le titre */}
         {apercu ? <ApercuDansBarre /> : <Ink size={14} weight="black" color={c.ink} style={{ letterSpacing: 3.2, flex: 1 }}>YOROI</Ink>}
         <Pressable

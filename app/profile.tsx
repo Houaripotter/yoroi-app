@@ -42,7 +42,8 @@ import { useEspace } from '@/lib/v2/espace/useEspace';
 import { useIdentite } from '@/lib/v2/espace/useIdentite';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
-import { traduire, DECIMAL, LANG } from '@/lib/i18n/tr';
+import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 
@@ -134,8 +135,8 @@ export default function TonProfil() {
   const [pref, setPref] = useState<null | 'poids' | 'mesures' | 'langue'>(null);
   const { weightUnit, measurementUnit, setWeightUnit, setMeasurementUnit } = useUnits();
   const { language, setLanguage } = useI18n();
-  // La langue suit le réglage du téléphone (ou le réglage de langue de l'app dans les réglages iOS et Android)
-  const langLabel = ({ fr: 'Français', en: 'English', de: 'Deutsch', nl: 'Nederlands', es: 'Español', pt: 'Português', it: 'Italiano' } as const)[LANG];
+  // 23 octobre 2026 : la langue se choisit dans l'app (feuille des langues)
+  const [langueOpen, setLangueOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -451,7 +452,7 @@ export default function TonProfil() {
       <Card>
         <Row first icon="scale" label={traduire("Unité des charges")} value={weightUnit === 'kg' ? 'kg' : 'livres'} onPress={() => setPref('poids')} />
         <Row icon="ruler" label={traduire("Mensurations")} value={measurementUnit === 'cm' ? 'cm' : 'pouces'} onPress={() => setPref('mesures')} />
-        <Row icon="globe" label={traduire('Langue')} value={langLabel} onPress={() => Linking.openSettings()} />
+        <Row icon="globe" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
         <Row icon="heart" label={traduire("Zones cardiaques")} sub={traduire("Tes seuils de fréquence cardiaque")} onPress={() => router.push('/heart-zones-settings' as any)} />
       </Card>
 
@@ -480,6 +481,7 @@ export default function TonProfil() {
         onChange={(v) => { setLanguage(v as any).catch(() => {}); }}
       />
 
+      <FeuilleLangue visible={langueOpen} onClose={() => setLangueOpen(false)} />
       <PopupComponent />
     </ProfilEcran>
   );

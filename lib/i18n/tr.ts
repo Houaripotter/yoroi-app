@@ -16,10 +16,34 @@ export const LANGUES_ACTIVES: readonly Lang[] = ['fr', 'en', 'de', 'nl', 'es', '
 /** Lancement en français seul : mettre à true pour forcer le français partout. */
 const FRANCAIS_FORCE = false;
 
+/** Nom, drapeau et code de chaque langue, pour le choix de la langue dans l'app. */
+export const LANGUES_INFO: Record<Lang, { nom: string; drapeau: string; code: string }> = {
+  fr: { nom: 'Français', drapeau: '🇫🇷', code: 'FR' },
+  en: { nom: 'English', drapeau: '🇬🇧', code: 'EN' },
+  de: { nom: 'Deutsch', drapeau: '🇩🇪', code: 'DE' },
+  nl: { nom: 'Nederlands', drapeau: '🇳🇱', code: 'NL' },
+  es: { nom: 'Español', drapeau: '🇪🇸', code: 'ES' },
+  pt: { nom: 'Português', drapeau: '🇧🇷', code: 'PT' },
+  it: { nom: 'Italiano', drapeau: '🇮🇹', code: 'IT' },
+};
+
+/** Langue choisie dans l'app, gardée dans le trousseau (lecture immédiate au démarrage). */
+const CLE_LANGUE = 'yoroi_langue';
+function langueEnregistree(): Lang | null {
+  try {
+    const v = require('expo-secure-store').getItem(CLE_LANGUE) as string | null;
+    return v && (LANGUES_ACTIVES as readonly string[]).includes(v) ? (v as Lang) : null;
+  } catch {
+    return null;
+  }
+}
+
 function detect(): Lang {
   if (FRANCAIS_FORCE) return 'fr';
   // Tests automatiques : toujours en français, pour vérifier que le texte d'origine est intact
   if (typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID) return 'fr';
+  const choisie = langueEnregistree();
+  if (choisie) return choisie;
   try {
     const locales = getLocales();
     for (const l of locales ?? []) {
@@ -32,8 +56,24 @@ function detect(): Lang {
   }
 }
 
-/** Langue de l'app, fixée au démarrage (le choix se fait dans les réglages du téléphone). */
+/** Langue de l'app, fixée au démarrage : celle choisie dans l'app, sinon celle du téléphone. */
 export const LANG: Lang = detect();
+
+/** Change la langue de l'app : le choix est gardé, puis l'app redémarre pour tout afficher dans la nouvelle langue. */
+export async function choisirLangue(l: Lang): Promise<void> {
+  if (!(LANGUES_ACTIVES as readonly string[]).includes(l)) return;
+  try {
+    require('expo-secure-store').setItem(CLE_LANGUE, l);
+  } catch {
+    return;
+  }
+  if (l === LANG) return;
+  try {
+    await require('expo').reloadAppAsync('langue');
+  } catch {
+    // relance impossible : la langue s'appliquera au prochain lancement
+  }
+}
 
 let dict: Record<string, string> | null = null;
 function load(): Record<string, string> {
