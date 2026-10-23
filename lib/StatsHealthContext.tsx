@@ -9,7 +9,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import {
   InteractionManager,
   unstable_batchedUpdates,
-  Alert,
   Platform,
   Linking,
   DeviceEventEmitter,
@@ -25,6 +24,7 @@ import { logger } from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useI18n } from '@/lib/I18nContext';
 import type { Period } from '@/components/stats/StatsHeader';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 export type SanteTab = 'sommeil' | 'seances' | 'signes' | 'pas';
 
@@ -33,8 +33,8 @@ export type SanteTab = 'sommeil' | 'seances' | 'signes' | 'pas';
 // -------------------------------------------------------
 const CACHE_BASE_KEY = '@yoroi_stats_health_base_v3';
 const CACHE_TAB_KEY = (tab: string, period: string) => `@yoroi_stats_health_${tab}_${period}_v3`;
-const BASE_TTL  = 20 * 60 * 1000;   // 20 min  — données "aujourd'hui" (FC, pas, etc.)
-const TAB_TTL   = 6 * 60 * 60 * 1000; // 6 heures — historiques (sommeil, FC, pas…)
+const BASE_TTL  = 20 * 60 * 1000;   // 20 min, données "aujourd'hui" (FC, pas, etc.)
+const TAB_TTL   = 6 * 60 * 60 * 1000; // 6 heures, historiques (sommeil, FC, pas…)
 
 interface VitalHistory {
   sleep: any[];
@@ -158,7 +158,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, []);
 
   // -------------------------------------------------------
-  // CACHE — lecture instantanée au montage
+  // CACHE : lecture instantanée au montage
   // -------------------------------------------------------
   const applyBaseCache = useCallback((cached: any) => {
     unstable_batchedUpdates(() => {
@@ -266,7 +266,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
           (healthConnect.getBodyTemperature?.() ?? Promise.resolve(null)),
           Promise.resolve(null),
         ]),
-        3000, // 3s max — après on affiche ce qu'on a
+        3000, // 3s max, après on affiche ce qu'on a
         Array(17).fill({ status: 'rejected', reason: 'timeout' }) as PromiseSettledResult<any>[]
       );
 
@@ -384,7 +384,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
           const validSleep = sleepHistory.filter((s: any) => {
             const h = (s.duration || s.total || 0) / 60;
-            return h >= 1 && h <= 16; // 1h min (was 3h — rejetait les nuits courtes)
+            return h >= 1 && h <= 16; // 1h min (was 3h, rejetait les nuits courtes)
           });
 
           // HealthKit → phases détaillées (Apple Watch) ; fallback SQLite si timeout
@@ -583,7 +583,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [loadHealthData]);
 
   // -------------------------------------------------------
-  // Initialisation — cache d'abord, HealthKit ensuite
+  // Initialisation, cache d'abord, HealthKit ensuite
   // -------------------------------------------------------
   useEffect(() => {
     // Étape 1 : lire le cache immédiatement (synchrone ~50ms)
@@ -654,7 +654,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         retryAfterSettingsRef.current = false;
         setConnecting(true);
         try {
-          const success = await healthConnect.connect();
+          const success = await healthConnect.connect({ sansSync: true });
           if (success) {
             setIsHealthKitConnected(true);
             await loadHealthData();
@@ -670,7 +670,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [loadHealthData]);
 
   // -------------------------------------------------------
-  // requestTabData — appelé par VitalitePage
+  // requestTabData, appelé par VitalitePage
   // Charge depuis le cache d'abord, puis HealthKit en background
   // -------------------------------------------------------
   const requestTabData = useCallback((tab: SanteTab, isConnected: boolean) => {
@@ -716,7 +716,7 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const handleConnectHealthKit = useCallback(async () => {
     setConnecting(true);
     try {
-      const success = await healthConnect.connect();
+      const success = await healthConnect.connect({ sansSync: true });
       if (success) {
         setIsHealthKitConnected(true);
         setLoadedTabs(new Set());
@@ -727,17 +727,17 @@ export const StatsHealthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       } else {
         const { failureReason } = healthConnect.getSyncStatus();
         if ((failureReason as string) === 'HEALTH_CONNECT_NOT_INSTALLED') {
-          Alert.alert(t('vitality.healthConnectRequired'), t('vitality.installHealthConnectMessage'), [
+          appAlert('Health Connect à installer', 'Installe l’app gratuite Health Connect de Google depuis le Play Store pour relier tes données.', [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('vitality.install'), onPress: () => safeOpenURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata') },
           ]);
         } else if (failureReason === 'MODULE_NOT_LOADED') {
-          Alert.alert(t('vitality.nativeBuiltRequired'), t('vitality.nativeBuiltMessage'), [{ text: 'OK' }]);
+          appAlert('Santé indisponible', __DEV__ ? 'Mode test : la lecture santé n’est pas disponible dans cette version de test.' : 'La lecture santé n’est pas disponible sur ce téléphone.', [{ text: 'OK' }]);
         } else if (failureReason === 'DEVICE_NOT_SUPPORTED') {
-          Alert.alert(t('vitality.notAvailable'), Platform.OS === 'android' ? t('vitality.healthConnectNotAvailable') : t('vitality.appleHealthNotAvailable'), [{ text: 'OK' }]);
+          appAlert('Non disponible', Platform.OS === 'android' ? 'Health Connect n’est pas disponible sur ce téléphone.' : 'Apple Santé n’est pas disponible sur cet appareil.', [{ text: 'OK' }]);
         } else {
-          Alert.alert(t('vitality.enablePermissions'),
-            Platform.OS === 'android' ? t('vitality.enablePermissionsAndroidMessage') : t('vitality.enablePermissionsIosMessage'),
+          appAlert('Accès à autoriser',
+            Platform.OS === 'android' ? 'Ouvre Health Connect et autorise YOROI à lire tes données.' : 'Va dans les réglages du téléphone : Santé, Partage de données, YOROI, puis active les données que tu veux suivre.',
             [
               { text: t('common.cancel'), style: 'cancel' },
               { text: t('vitality.openSettings'), onPress: () => { retryAfterSettingsRef.current = true; Linking.openSettings(); } },

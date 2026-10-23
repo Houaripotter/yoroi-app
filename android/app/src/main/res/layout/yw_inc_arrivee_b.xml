@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Genere pour le style B (Rouleau et encre), depuis yw_inc_arrivee.xml (scratchpad/widgets_code/gen_android.py) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/yw_arrivee" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+  <FrameLayout android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/yw_b_cachet" android:padding="4dp">
+    <ImageView android:id="@+id/yw_torii_rouge" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:importantForAccessibility="no" android:tint="@color/yw_b_creme" />
+    <ImageView android:id="@+id/yw_torii_haut" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_b_creme" android:importantForAccessibility="no" />
+  </FrameLayout>
+  <TextView android:id="@+id/yw_arrivee_texte" style="@style/YwPetit" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginLeft="6dp" android:textColor="@color/yw_b_encre" android:textStyle="bold" android:textSize="12sp" android:fontFamily="serif" />
+</LinearLayout>

@@ -1,1170 +1,235 @@
-// ============================================
-// YOROI - ÉCRAN PLAN NUTRITIONNEL
-// ============================================
-
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  TextInput,
-} from 'react-native';
-import { router } from 'expo-router';
-import { useI18n } from '@/lib/I18nContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar, Zap, Apple, Beef, Droplets } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/lib/ThemeContext';
-import { getLatestWeight, getProfile, Profile } from '@/lib/database';
-import {
-  calculateNutritionPlan,
-  getMealCalories,
-  ACTIVITY_LEVELS,
-  GOALS,
-  MACRO_PROFILES,
-  NutritionPlan,
-  SCIENTIFIC_SOURCES,
-} from '@/lib/nutrition';
-import { SPACING } from '@/constants/appTheme';
-import logger from '@/lib/security/logger';
+/**
+ * Plan nutritionnel (refonte v2) : objectif calorique en gros chiffre, barres de macros
+ * dans la palette validee, niveau d'activite, objectif, profil de macros, detail du calcul,
+ * journee type et sources. Pre-rempli avec ton profil et ta derniere pesee.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { Ink } from '@/components/yoroi/v2/Ink';
 import { PremiumGate } from '@/components/premium/PremiumGate';
+import { Card, Enter, Glass } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { BigNumber, Badge, ChoiceTile, GenderSwitch, H2, HRow, KV, MacroBars, Notice, NumField, P, SERIES, SourcesCard } from '@/components/yoroi/v2/nutrition/ui';
+import { loadBodyData } from '@/lib/v2/nutrition/body';
+import { num } from '@/lib/v2/nutrition/formulas';
+import { ACTIVITY_LEVELS, GOALS, MACRO_PROFILES, SCIENTIFIC_SOURCES, calculateNutritionPlan, getMealCalories } from '@/lib/nutrition';
+
+const weekly = (s: string) => s.replace('.', ',').replace('kg/sem', 'kg par semaine').replace(/^-/, '−');
+/** Textes de la bibliotheque rendus lisibles : « 1 à 3 jours par semaine », sans barre oblique */
+const pretty = (s: string) =>
+  s
+    .replace(/(\d)\s*-\s*(\d)/g, '$1 à $2')
+    .replace(/\/\s*semaine/g, ' par semaine')
+    .replace(/\/\s*jour/g, ' par jour')
+    .replace(/\s*\/\s*/g, ' ou ')
+    .replace(/\s\+\s/g, ' et ')
+    .replace(/\((-|\+)(\d+) kcal\)/g, (_m, sign: string, n: string) => `, ${sign === '-' ? 'moins' : 'plus'} ${n} kcal`);
 
 export default function NutritionPlanScreen() {
-  const { t } = useI18n();
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-
-  // Données utilisateur
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [userProfile, setUserProfile] = useState({
-    weight: 80,
-    height: 175,
-    age: 30,
-    gender: 'male' as 'male' | 'female',
-  });
-
-  // Sélections
-  const [activityLevel, setActivityLevel] = useState('moderate');
-  const [goal, setGoal] = useState('moderate_loss');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [activity, setActivity] = useState('moderate');
+  const [goal, setGoal] = useState('maintain');
   const [macroProfile, setMacroProfile] = useState('high_protein');
 
-  // Résultats
-  const [results, setResults] = useState<NutritionPlan | null>(null);
-
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadProfile(); }, []);
-
-  const loadProfile = async () => {
-    try {
-      const profileData = await getProfile();
-      if (profileData) {
-        const latestWeight = await getLatestWeight();
-
-        // Calculer l'âge à partir de la date de naissance si disponible
-        let age = 30; // Valeur par défaut
-        if (profileData.birth_date) {
-          const birthDate = new Date(profileData.birth_date);
-          const today = new Date();
-          age = today.getFullYear() - birthDate.getFullYear();
-          const monthDiff = today.getMonth() - birthDate.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-          }
-        }
-
-        setProfile(profileData);
-        setUserProfile({
-          weight: latestWeight?.weight ?? profileData.start_weight ?? 80,
-          height: profileData.height_cm ?? 175,
-          age,
-          gender: profileData.avatar_gender === 'femme' ? 'female' : 'male',
-        });
-      }
-    } catch (error) {
-      logger.error('Erreur chargement profil:', error);
-    }
-  };
-
-  // Calculer le plan
   useEffect(() => {
-    const plan = calculateNutritionPlan(
-      userProfile.weight,
-      userProfile.height,
-      userProfile.age,
-      userProfile.gender,
-      activityLevel,
-      goal,
-      macroProfile
-    );
-    setResults(plan);
-  }, [userProfile, activityLevel, goal, macroProfile]);
+    loadBodyData().then((b) => {
+      if (b.weight) setWeight(String(b.weight).replace('.', ','));
+      if (b.height) setHeight(String(b.height));
+      if (b.age) setAge(String(b.age));
+      setGender(b.gender);
+    });
+  }, []);
 
-  const selectedGoal = GOALS.find(g => g.id === goal);
-  const selectedActivity = ACTIVITY_LEVELS.find(a => a.id === activityLevel);
-  const selectedMacroProfile = MACRO_PROFILES.find(m => m.id === macroProfile);
-  const mealPlan = results ? getMealCalories(results.goalCalories) : [];
+  const w = num(weight) > 0 ? num(weight) : 80;
+  const h = num(height) > 0 ? num(height) : 175;
+  const a = num(age) > 0 ? Math.round(num(age)) : 30;
+  const usingDefaults = !(num(weight) > 0 && num(height) > 0 && num(age) > 0);
+
+  const plan = useMemo(() => calculateNutritionPlan(w, h, a, gender, activity, goal, macroProfile), [w, h, a, gender, activity, goal, macroProfile]);
+  const g = GOALS.find((x) => x.id === goal);
+  const act = ACTIVITY_LEVELS.find((x) => x.id === activity);
+  const mp = MACRO_PROFILES.find((x) => x.id === macroProfile);
+  const meals = getMealCalories(plan.goalCalories);
+  const maxMeal = Math.max(...meals.map((m) => m.calories), 1);
+
+  const deltaLabel = plan.deficit > 0 ? `Déficit de ${plan.deficit} kcal` : plan.deficit < 0 ? `Surplus de ${Math.abs(plan.deficit)} kcal` : 'Maintien';
 
   return (
-    <PremiumGate featureTitle="Plan nutritionnel">
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => router.back()}
-          >
-            <ChevronLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              {t('nutritionPlan.title')}
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              {t('nutritionPlan.subtitle')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Formulaire Infos Personnelles */}
-        <View style={[styles.personalInfoCard, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.personalInfoHeader}>
-            <View style={[styles.headerIconContainer, { backgroundColor: colors.accent + '15' }]}>
-              <User size={22} color={colors.accent} strokeWidth={2.5} />
-            </View>
-            <Text style={[styles.personalInfoTitle, { color: colors.textPrimary }]}>
-              {t('nutritionPlan.yourInfo')}
-            </Text>
-          </View>
-
-          <View style={styles.inputsGrid}>
-            {/* Poids */}
-            <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
-              <Weight size={18} color={colors.textMuted} />
-              <View style={styles.inputContent}>
-                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('nutritionPlan.weight')}</Text>
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  value={userProfile.weight.toString()}
-                  onChangeText={(text) => {
-                    const num = parseFloat(text.replace(',', '.'));
-                    if (isNaN(num) || num <= 0) return;
-                    setUserProfile({ ...userProfile, weight: num });
-                  }}
-                  keyboardType="decimal-pad"
-                  placeholder="80"
-                  placeholderTextColor={colors.textMuted}
-                />
+    <PremiumGate source="plan_nutrition" featureTitle="Plan nutritionnel" perks={['Tes calories du jour calculées pour toi', 'Protéines, glucides et lipides répartis', 'Un objectif de perte, de maintien ou de prise']}>
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <DetailScreen title="Plan nutritionnel" subtitle="Tes besoins du jour, calculés pour toi">
+          {/* OBJECTIF CALORIQUE */}
+          <Enter i={0}>
+            <Glass style={{ gap: 12, paddingVertical: 22 }}>
+              <Ink size={14} weight="extraBold" color={P.ink2}>
+                Ton objectif par jour
+              </Ink>
+              <BigNumber value={plan.goalCalories.toLocaleString('fr-FR')} unit="kcal" size={72} />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <Badge label={deltaLabel} tone={plan.deficit > 0 ? 'red' : plan.deficit < 0 ? 'moss' : 'indigo'} />
+                {g ? <Badge label={weekly(g.weeklyChange)} tone="ink" /> : null}
               </View>
-              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>kg</Text>
-            </View>
-
-            {/* Taille */}
-            <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
-              <Ruler size={18} color={colors.textMuted} />
-              <View style={styles.inputContent}>
-                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('nutritionPlan.height')}</Text>
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  value={userProfile.height.toString()}
-                  onChangeText={(text) => {
-                    const num = parseFloat(text.replace(',', '.')) || 0;
-                    setUserProfile({ ...userProfile, height: num });
-                  }}
-                  keyboardType="decimal-pad"
-                  placeholder="175"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>cm</Text>
-            </View>
-
-            {/* Âge */}
-            <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
-              <Calendar size={18} color={colors.textMuted} />
-              <View style={styles.inputContent}>
-                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('nutritionPlan.age')}</Text>
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  value={userProfile.age.toString()}
-                  onChangeText={(text) => {
-                    const num = parseInt(text) || 0;
-                    setUserProfile({ ...userProfile, age: num });
-                  }}
-                  keyboardType="number-pad"
-                  placeholder="30"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>ans</Text>
-            </View>
-
-            {/* Genre */}
-            <View style={styles.genderButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.genderBtn,
-                  {
-                    backgroundColor: userProfile.gender === 'male' ? colors.accent : colors.background,
-                    borderColor: userProfile.gender === 'male' ? colors.accent : colors.border,
-                  },
+              <View style={{ height: 1, backgroundColor: P.line2, marginVertical: 4 }} />
+              <MacroBars
+                lines={[
+                  { key: 'p', label: 'Protéines', grams: plan.macros.protein.grams, percent: plan.macros.protein.percentage, color: SERIES.moss },
+                  { key: 'g', label: 'Glucides', grams: plan.macros.carbs.grams, percent: plan.macros.carbs.percentage, color: SERIES.blue },
+                  { key: 'l', label: 'Lipides', grams: plan.macros.fat.grams, percent: plan.macros.fat.percentage, color: SERIES.gold },
                 ]}
-                onPress={() => setUserProfile({ ...userProfile, gender: 'male' })}
-              >
-                <Text
-                  style={[
-                    styles.genderText,
-                    { color: userProfile.gender === 'male' ? colors.textOnAccent : colors.textPrimary },
-                  ]}
-                >
-                  {t('nutritionPlan.male')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.genderBtn,
-                  {
-                    backgroundColor: userProfile.gender === 'female' ? colors.accent : colors.background,
-                    borderColor: userProfile.gender === 'female' ? colors.accent : colors.border,
-                  },
-                ]}
-                onPress={() => setUserProfile({ ...userProfile, gender: 'female' })}
-              >
-                <Text
-                  style={[
-                    styles.genderText,
-                    { color: userProfile.gender === 'female' ? colors.textOnAccent : colors.textPrimary },
-                  ]}
-                >
-                  {t('nutritionPlan.female')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+              />
+            </Glass>
+          </Enter>
 
-        {/* Carte Calories Principal - Design Premium */}
-        {results && (
-          <View style={styles.caloriesCardWrapper}>
-            <LinearGradient
-              colors={[colors.accent + '20', colors.accent + '05']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.caloriesGradient}
-            >
-              <View style={[styles.caloriesCard, { backgroundColor: 'transparent' }]}>
-                <View style={[styles.caloriesIconBg, { backgroundColor: colors.accent + '15' }]}>
-                  <Zap size={32} color={colors.accent} strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.caloriesLabel, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('nutritionPlan.caloricGoal')}</Text>
-                <View style={styles.caloriesValueContainer}>
-                  <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>{results.goalCalories}</Text>
-                  <Text style={[styles.caloriesUnit, { color: colors.textSecondary }]}>kcal</Text>
-                </View>
-                <Text style={[styles.caloriesSubtext, { color: colors.textMuted }]}>{t('nutritionPlan.perDay')}</Text>
+          {g?.warning ? (
+            <Enter i={1}>
+              <Notice tone="danger" title="À ne pas tenir longtemps" text={`${pretty(g.warning)}. Une perte trop rapide coûte du muscle, de la force et de la performance. Parles-en à un professionnel de santé.`} />
+            </Enter>
+          ) : null}
 
-                {results.deficit > 0 && (
-                  <LinearGradient
-                    colors={['#EF4444', '#DC2626']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.deficitBadge}
-                  >
-                    <Text style={styles.deficitText}>
-                      {t('nutritionPlan.deficit')} {results.deficit} kcal = {selectedGoal?.weeklyChange}
-                    </Text>
-                  </LinearGradient>
-                )}
-                {results.deficit < 0 && (
-                  <LinearGradient
-                    colors={['#10B981', '#059669']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.deficitBadge}
-                  >
-                    <Text style={styles.deficitText}>
-                      {t('nutritionPlan.surplus')} {Math.abs(results.deficit)} kcal = {selectedGoal?.weeklyChange}
-                    </Text>
-                  </LinearGradient>
-                )}
-                {results.deficit === 0 && (
-                  <LinearGradient
-                    colors={['#3B82F6', '#2563EB']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.deficitBadge}
-                  >
-                    <Text style={styles.deficitText}>{t('nutritionPlan.maintenance')}</Text>
-                  </LinearGradient>
-                )}
+          {/* TES MESURES */}
+          <Enter i={2}>
+            <H2 sub={usingDefaults ? 'Complète ce qui manque pour un calcul juste' : 'Repris de ton profil et de ta dernière pesée'}>Tes mesures</H2>
+            <View style={{ gap: 10, marginTop: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <NumField label="Poids" value={weight} onChange={setWeight} unit="kg" placeholder="80" />
+                <NumField label="Taille" value={height} onChange={setHeight} unit="cm" placeholder="175" integer />
+                <NumField label="Âge" value={age} onChange={setAge} unit="ans" placeholder="30" integer maxLength={3} />
               </View>
-            </LinearGradient>
-          </View>
-        )}
+              <GenderSwitch value={gender} onChange={setGender} />
+            </View>
+          </Enter>
 
-        {/* Niveau d'activité */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('nutritionPlan.activityLevel')}
-          </Text>
-          <View style={styles.optionsGrid}>
-            {ACTIVITY_LEVELS.map(level => (
-              <TouchableOpacity
-                key={level.id}
-                style={[
-                  styles.optionCard,
-                  {
-                    backgroundColor: activityLevel === level.id
-                      ? colors.accent
-                      : colors.backgroundCard,
-                    borderColor: activityLevel === level.id
-                      ? colors.accent
-                      : colors.border,
-                  },
-                ]}
-                onPress={() => setActivityLevel(level.id)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.optionName,
-                    { color: activityLevel === level.id ? colors.textOnAccent : colors.textPrimary },
-                  ]}
-                >
-                  {level.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.optionDesc,
-                    { color: activityLevel === level.id ? colors.textOnAccent : colors.textMuted },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {level.description}
-                </Text>
-                <Text
-                  style={[
-                    styles.optionExample,
-                    { color: activityLevel === level.id ? colors.textOnAccent : colors.textMuted },
-                  ]}
-                >
-                  {level.examples}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+          {/* OBJECTIF */}
+          <Enter i={3}>
+            <H2 sub="Une perte de 0,25 à 0,5 kg par semaine se tient sur la durée">Ton objectif</H2>
+            <View style={{ marginTop: 10 }}>
+              <HRow>
+                {GOALS.map((x) => (
+                  <ChoiceTile key={x.id} title={x.name} sub={weekly(x.weeklyChange)} active={goal === x.id} warn={!!x.warning} onPress={() => setGoal(x.id)} style={{ width: 150 }} />
+                ))}
+              </HRow>
+            </View>
+          </Enter>
 
-        {/* Objectif */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('nutritionPlan.goal')}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.goalsRow}>
-              {GOALS.map(g => (
-                <TouchableOpacity
-                  key={g.id}
-                  style={[
-                    styles.goalButton,
-                    {
-                      backgroundColor: goal === g.id ? colors.accent : colors.backgroundCard,
-                      borderColor: goal === g.id ? colors.accent : colors.border,
-                    },
-                  ]}
-                  onPress={() => setGoal(g.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.goalText,
-                      { color: goal === g.id ? colors.textOnAccent : colors.textPrimary },
-                    ]}
-                  >
-                    {g.name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.goalChange,
-                      { color: goal === g.id ? colors.textOnAccent : colors.textMuted },
-                    ]}
-                  >
-                    {g.weeklyChange}
-                  </Text>
-                </TouchableOpacity>
+          {/* ACTIVITE */}
+          <Enter i={4}>
+            <H2>Ton niveau d’activité</H2>
+            <View style={{ gap: 8, marginTop: 10 }}>
+              {ACTIVITY_LEVELS.map((l) => (
+                <ChoiceTile key={l.id} title={l.name} sub={pretty(l.description)} extra={pretty(l.examples)} active={activity === l.id} onPress={() => setActivity(l.id)} />
               ))}
             </View>
-          </ScrollView>
-          {selectedGoal?.warning && (
-            <View style={[styles.warningBox, { backgroundColor: colors.warningLight }]}>
-              <Info size={16} color={colors.warning} />
-              <Text style={[styles.warningText, { color: colors.warning }]}>
-                {selectedGoal.warning}
-              </Text>
-            </View>
-          )}
-        </View>
+          </Enter>
 
-        {/* Profil Macro */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('nutritionPlan.macroDistribution')}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.macroProfilesRow}>
-              {MACRO_PROFILES.map(profile => (
-                <TouchableOpacity
-                  key={profile.id}
-                  style={[
-                    styles.macroCard,
-                    {
-                      backgroundColor: macroProfile === profile.id ? colors.accent : colors.backgroundCard,
-                      borderColor: macroProfile === profile.id ? colors.accent : colors.border,
-                    },
-                  ]}
-                  onPress={() => setMacroProfile(profile.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.macroName,
-                      { color: macroProfile === profile.id ? colors.textOnAccent : colors.textPrimary },
-                    ]}
-                  >
-                    {profile.name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.macroRatio,
-                      { color: macroProfile === profile.id ? colors.textOnAccent : colors.textMuted },
-                    ]}
-                  >
-                    P{profile.protein * 100} / G{profile.carbs * 100} / L{profile.fat * 100}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.macroDesc,
-                      { color: macroProfile === profile.id ? colors.textOnAccent : colors.textMuted },
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {profile.description}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+          {/* PROFIL MACROS */}
+          <Enter i={5}>
+            <H2>Répartition des macros</H2>
+            <View style={{ marginTop: 10 }}>
+              <HRow>
+                {MACRO_PROFILES.map((m) => (
+                  <ChoiceTile
+                    key={m.id}
+                    title={m.name}
+                    sub={`Protéines ${Math.round(m.protein * 100)} %, glucides ${Math.round(m.carbs * 100)} %, lipides ${Math.round(m.fat * 100)} %`}
+                    extra={pretty(m.description)}
+                    warn={!!m.warning}
+                    active={macroProfile === m.id}
+                    onPress={() => setMacroProfile(m.id)}
+                    style={{ width: 176 }}
+                  />
+                ))}
+              </HRow>
             </View>
-          </ScrollView>
-          {selectedMacroProfile?.warning && (
-            <View style={[styles.warningBox, { backgroundColor: colors.warningLight }]}>
-              <Info size={16} color={colors.warning} />
-              <Text style={[styles.warningText, { color: colors.warning }]}>
-                {selectedMacroProfile.warning}
-              </Text>
-            </View>
-          )}
-        </View>
+            {mp?.warning ? <Notice tone="gold" text={pretty(mp.warning)} style={{ marginTop: 10 }} /> : null}
+            {mp?.source ? (
+              <Ink size={12} weight="medium" color={P.ink2} style={{ marginTop: 8, paddingHorizontal: 4 }}>
+                {`Repère : ${mp.source.replace(/\s+-\s+/g, ', ')}`}
+              </Ink>
+            ) : null}
+          </Enter>
 
-        {/* Résultats Macros */}
-        {results && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('nutritionPlan.dailyMacros')}
-            </Text>
+          {/* PROTEINES */}
+          <Enter i={6}>
+            <Card style={{ gap: 6 }}>
+              <Ink size={14} weight="extraBold" color={P.ink2}>
+                Protéines recommandées
+              </Ink>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: SERIES.moss }} />
+                <BigNumber value={`${plan.proteinRec.min} à ${plan.proteinRec.max}`} unit="g par jour" size={36} />
+              </View>
+              <Ink size={13} weight="bold" color={P.ink2}>
+                {`Idéal : ${plan.proteinRec.optimal} g, soit ${(plan.proteinRec.optimal / w).toFixed(1).replace('.', ',')} g par kg`}
+              </Ink>
+              <Ink size={12} weight="medium" color={P.ink2}>
+                Source : position officielle de la Société internationale de nutrition sportive sur les protéines, 2017, en anglais
+              </Ink>
+            </Card>
+          </Enter>
 
-            <View style={[styles.macrosResult, { backgroundColor: colors.backgroundCard }]}>
-              {/* Protéines */}
-              <View style={[styles.macroRow, { borderBottomColor: colors.border }]}>
-                <View style={styles.macroInfo}>
-                  <LinearGradient
-                    colors={['#E53935', '#C62828']}
-                    style={styles.macroIconGradient}
-                  >
-                    <Beef size={18} color="#FFFFFF" strokeWidth={2.5} />
-                  </LinearGradient>
-                  <View style={styles.macroTextContainer}>
-                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>{t('nutritionPlan.proteins')}</Text>
-                    <View style={styles.macroProgressBg}>
-                      <LinearGradient
-                        colors={['#E53935', '#C62828']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={[styles.macroProgressBar, { width: `${results.macros.protein.percentage}%` }]}
-                      />
+          {/* DETAIL DU CALCUL */}
+          <Enter i={7}>
+            <H2 sub="Formule Mifflin-St Jeor (1990)">Le détail du calcul</H2>
+            <Card style={{ marginTop: 10, paddingVertical: 6 }}>
+              <KV label="Métabolisme de base" value={`${plan.bmr} kcal`} />
+              <KV label={`Activité : ${act?.name ?? ''}`} value={`× ${String(act?.multiplier ?? '').replace('.', ',')}`} />
+              <KV label="Dépense du jour" value={`${plan.tdee} kcal`} />
+              <KV
+                label={`${plan.deficit > 0 ? 'Déficit' : plan.deficit < 0 ? 'Surplus' : 'Ajustement'} (${g?.name ?? ''})`}
+                value={`${plan.deficit > 0 ? 'moins ' : plan.deficit < 0 ? 'plus ' : ''}${Math.abs(plan.deficit)} kcal`}
+                              />
+              <KV label="Objectif final" value={`${plan.goalCalories} kcal`} strong last />
+            </Card>
+          </Enter>
+
+          {/* JOURNEE TYPE */}
+          <Enter i={8}>
+            <H2>Une journée type</H2>
+            <Card style={{ marginTop: 10, gap: 14 }}>
+              {meals.map((m, i) => (
+                <View key={m.name} style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={{ width: 50, alignItems: 'center' }}>
+                    <Ink size={13} weight="black">
+                      {m.time}
+                    </Ink>
+                    {i < meals.length - 1 ? <View style={{ flex: 1, width: 3, borderRadius: 2, backgroundColor: P.line, marginTop: 6 }} /> : null}
+                  </View>
+                  <View style={{ flex: 1, gap: 4, paddingBottom: 4 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <Ink size={15} weight="extraBold">
+                        {m.name}
+                      </Ink>
+                      <Ink size={15} weight="black" tight>
+                        {`${m.calories} kcal`}
+                      </Ink>
                     </View>
-                  </View>
-                </View>
-                <View style={styles.macroValues}>
-                  <Text style={[styles.macroGrams, { color: colors.textPrimary }]}>
-                    {results.macros.protein.grams}g
-                  </Text>
-                  <Text style={[styles.macroCal, { color: colors.textMuted }]}>
-                    {results.macros.protein.percentage}%
-                  </Text>
-                </View>
-              </View>
-
-              {/* Glucides */}
-              <View style={[styles.macroRow, { borderBottomColor: colors.border }]}>
-                <View style={styles.macroInfo}>
-                  <LinearGradient
-                    colors={['#FF9800', '#F57C00']}
-                    style={styles.macroIconGradient}
-                  >
-                    <Apple size={18} color="#FFFFFF" strokeWidth={2.5} />
-                  </LinearGradient>
-                  <View style={styles.macroTextContainer}>
-                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>{t('nutritionPlan.carbs')}</Text>
-                    <View style={styles.macroProgressBg}>
-                      <LinearGradient
-                        colors={['#FF9800', '#F57C00']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={[styles.macroProgressBar, { width: `${results.macros.carbs.percentage}%` }]}
-                      />
+                    <View style={{ height: 6, borderRadius: 3, backgroundColor: P.line, overflow: 'hidden' }}>
+                      <View style={{ width: `${(m.calories / maxMeal) * 100}%`, height: '100%', backgroundColor: P.ink, borderRadius: 3 }} />
                     </View>
-                  </View>
-                </View>
-                <View style={styles.macroValues}>
-                  <Text style={[styles.macroGrams, { color: colors.textPrimary }]}>
-                    {results.macros.carbs.grams}g
-                  </Text>
-                  <Text style={[styles.macroCal, { color: colors.textMuted }]}>
-                    {results.macros.carbs.percentage}%
-                  </Text>
-                </View>
-              </View>
-
-              {/* Lipides */}
-              <View style={styles.macroRow}>
-                <View style={styles.macroInfo}>
-                  <LinearGradient
-                    colors={['#4CAF50', '#388E3C']}
-                    style={styles.macroIconGradient}
-                  >
-                    <Droplets size={18} color="#FFFFFF" strokeWidth={2.5} />
-                  </LinearGradient>
-                  <View style={styles.macroTextContainer}>
-                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>{t('nutritionPlan.fats')}</Text>
-                    <View style={styles.macroProgressBg}>
-                      <LinearGradient
-                        colors={['#4CAF50', '#388E3C']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={[styles.macroProgressBar, { width: `${results.macros.fat.percentage}%` }]}
-                      />
-                    </View>
-                  </View>
-                </View>
-                <View style={styles.macroValues}>
-                  <Text style={[styles.macroGrams, { color: colors.textPrimary }]}>
-                    {results.macros.fat.grams}g
-                  </Text>
-                  <Text style={[styles.macroCal, { color: colors.textMuted }]}>
-                    {results.macros.fat.percentage}%
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Recommandation protéines */}
-            <View style={[styles.proteinRec, { backgroundColor: colors.backgroundCard }]}>
-              <Text style={[styles.proteinRecTitle, { color: colors.textPrimary }]}>
-                {t('nutritionPlan.proteinRec')}
-              </Text>
-              <Text style={[styles.proteinRecValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                {results.proteinRec.min}g - {results.proteinRec.max}g / jour
-              </Text>
-              <Text style={[styles.proteinRecNote, { color: colors.textMuted }]}>
-                {t('nutritionPlan.optimal')} : {results.proteinRec.optimal}g ({(results.proteinRec.optimal / userProfile.weight).toFixed(1)}g/kg)
-              </Text>
-              <Text style={[styles.proteinRecSource, { color: colors.textMuted }]}>
-                Source : ISSN Position Stand on Protein (2017)
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Détail des calculs */}
-        {results && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('nutritionPlan.calculationDetail')}
-            </Text>
-
-            <View style={[styles.calculDetail, { backgroundColor: colors.backgroundCard }]}>
-              <View style={styles.calculRow}>
-                <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  {t('nutritionPlan.bmr')}
-                </Text>
-                <Text style={[styles.calculValue, { color: colors.textPrimary }]}>
-                  {results.bmr} kcal
-                </Text>
-              </View>
-              <View style={styles.calculRow}>
-                <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  × {t('nutritionPlan.activityFactor')} ({selectedActivity?.name})
-                </Text>
-                <Text style={[styles.calculValue, { color: colors.textPrimary }]}>
-                  × {selectedActivity?.multiplier}
-                </Text>
-              </View>
-              <View style={[styles.calculRow, styles.calculTotal, { borderTopColor: colors.border }]}>
-                <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  = {t('nutritionPlan.tdee')}
-                </Text>
-                <Text style={[styles.calculValue, { color: colors.textPrimary }]}>
-                  {results.tdee} kcal
-                </Text>
-              </View>
-              <View style={styles.calculRow}>
-                <Text style={[styles.calculLabel, { color: colors.textMuted }]}>
-                  {results.deficit > 0 ? `- ${t('nutritionPlan.deficit')}` : results.deficit < 0 ? `+ ${t('nutritionPlan.surplus')}` : t('nutritionPlan.maintenance')} ({selectedGoal?.name})
-                </Text>
-                <Text
-                  style={[
-                    styles.calculValue,
-                    { color: results.deficit > 0 ? colors.danger : results.deficit < 0 ? colors.success : colors.info },
-                  ]}
-                >
-                  {results.deficit > 0 ? '-' : results.deficit < 0 ? '+' : ''}{Math.abs(results.deficit)} kcal
-                </Text>
-              </View>
-              <View style={[styles.calculRow, styles.calculFinal, { borderTopColor: colors.border }]}>
-                <Text style={[styles.calculLabel, { color: colors.textPrimary, fontWeight: '700' }]}>
-                  = {t('nutritionPlan.finalGoal')}
-                </Text>
-                <Text style={[styles.calculValue, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '800' }]}>
-                  {results.goalCalories} kcal
-                </Text>
-              </View>
-            </View>
-
-            <Text style={[styles.sourceNote, { color: colors.textMuted }]}>
-              Formule : Mifflin-St Jeor (1990) - American Journal of Clinical Nutrition
-            </Text>
-          </View>
-        )}
-
-        {/* Exemple journée type */}
-        {results && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('nutritionPlan.typicalDay')}
-            </Text>
-
-            <View style={[styles.mealPlan, { backgroundColor: colors.backgroundCard }]}>
-              {mealPlan.map((meal, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.mealRow,
-                    index < mealPlan.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
-                  ]}
-                >
-                  <View style={styles.mealTime}>
-                    <Text style={[styles.mealTimeText, { color: colors.textMuted }]}>{meal.time}</Text>
-                  </View>
-                  <View style={styles.mealContent}>
-                    <Text style={[styles.mealName, { color: colors.textPrimary }]}>{meal.name}</Text>
-                    <Text style={[styles.mealExample, { color: colors.textMuted }]}>{meal.example}</Text>
-                  </View>
-                  <View style={styles.mealCalories}>
-                    <Text style={[styles.mealCaloriesText, { color: isDark ? colors.accent : colors.textPrimary }]}>~{meal.calories}</Text>
-                    <Text style={[styles.mealCaloriesUnit, { color: colors.textMuted }]}>kcal</Text>
+                    <Ink size={12} weight="medium" color={P.ink2}>
+                      {m.example}
+                    </Ink>
                   </View>
                 </View>
               ))}
+            </Card>
+          </Enter>
+
+          {/* SOURCES */}
+          <Enter i={9}>
+            <H2>Sources scientifiques</H2>
+            <View style={{ marginTop: 10 }}>
+              <SourcesCard
+                sources={Object.values(SCIENTIFIC_SOURCES).map((s) => ({ label: s.name === 'ISSN Position Stand on Protein' ? 'Position officielle de l’ISSN sur les protéines' : s.name === 'ANSES Apports Nutritionnels' ? 'ANSES, apports nutritionnels' : s.name, ref: s.source, url: s.url }))}
+                note="Ces chiffres sont des estimations. Ajuste après deux à trois semaines selon ta balance et ton énergie."
+              />
             </View>
-          </View>
-        )}
-
-        {/* Sources scientifiques */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('nutritionPlan.scientificSources')}
-          </Text>
-          <View style={[styles.sourcesCard, { backgroundColor: colors.backgroundCard }]}>
-            {Object.values(SCIENTIFIC_SOURCES).map((source, index) => (
-              <View key={index} style={styles.sourceItem}>
-                <ExternalLink size={14} color={colors.accent} />
-                <View style={styles.sourceText}>
-                  <Text style={[styles.sourceName, { color: colors.textPrimary }]}>{source.name}</Text>
-                  <Text style={[styles.sourceRef, { color: colors.textMuted }]}>{source.source}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </View>
+          </Enter>
+        </DetailScreen>
+      </KeyboardAvoidingView>
     </PremiumGate>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    marginLeft: SPACING.md,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  subtitle: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-
-  // Personal Info Card
-  personalInfoCard: {
-    padding: 24,
-    borderRadius: 20,
-    marginBottom: SPACING.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  personalInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-  },
-  headerIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  personalInfoTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  inputsGrid: {
-    gap: 14,
-  },
-  inputGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 14,
-    gap: 14,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  inputContent: {
-    flex: 1,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  input: {
-    fontSize: 20,
-    fontWeight: '900',
-    padding: 0,
-    letterSpacing: -0.5,
-  },
-  inputUnit: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  genderButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  genderBtn: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 14,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  genderText: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-
-  // Calories card
-  caloriesCardWrapper: {
-    marginBottom: SPACING.xl,
-    borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  caloriesGradient: {
-    borderRadius: 24,
-  },
-  caloriesCard: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  caloriesIconBg: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  caloriesLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 2.5,
-    marginBottom: 12,
-  },
-  caloriesValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-  },
-  caloriesValue: {
-    fontSize: 68,
-    fontWeight: '900',
-    letterSpacing: -2,
-    lineHeight: 68,
-  },
-  caloriesUnit: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  caloriesSubtext: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  deficitBadge: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 24,
-    marginTop: 20,
-  },
-  deficitText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-
-  // Sections
-  section: {
-    marginBottom: SPACING.xl,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: SPACING.md,
-  },
-
-  // Options
-  optionsGrid: {
-    gap: 10,
-  },
-  optionCard: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  optionName: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  optionDesc: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  optionExample: {
-    fontSize: 11,
-    fontStyle: 'italic',
-  },
-
-  // Goals
-  goalsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingRight: 16,
-  },
-  goalButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-    minWidth: 100,
-  },
-  goalText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  goalChange: {
-    fontSize: 11,
-    marginTop: 4,
-  },
-
-  // Warning
-  warningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  warningText: {
-    fontSize: 12,
-    flex: 1,
-  },
-
-  // Macro profiles
-  macroProfilesRow: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingRight: 16,
-  },
-  macroCard: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    minWidth: 130,
-    alignItems: 'center',
-  },
-  macroName: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  macroRatio: {
-    fontSize: 11,
-    marginTop: 4,
-  },
-  macroDesc: {
-    fontSize: 10,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-
-  // Macros result
-  macrosResult: {
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  macroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  macroInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    flex: 1,
-  },
-  macroIconGradient: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  macroTextContainer: {
-    flex: 1,
-  },
-  macroLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  macroProgressBg: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    overflow: 'hidden',
-  },
-  macroProgressBar: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  macroValues: {
-    alignItems: 'flex-end',
-  },
-  macroGrams: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  macroCal: {
-    fontSize: 12,
-    marginTop: 2,
-    fontWeight: '600',
-  },
-
-  // Protein recommendation
-  proteinRec: {
-    padding: 16,
-    borderRadius: 16,
-  },
-  proteinRecTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  proteinRecValue: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  proteinRecNote: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  proteinRecSource: {
-    fontSize: 11,
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-
-  // Calcul detail
-  calculDetail: {
-    padding: 16,
-    borderRadius: 16,
-  },
-  calculRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  calculLabel: {
-    fontSize: 13,
-    flex: 1,
-  },
-  calculValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  calculTotal: {
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-  },
-  calculFinal: {
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 2,
-  },
-  sourceNote: {
-    fontSize: 11,
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-
-  // Meal plan
-  mealPlan: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  mealRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-  },
-  mealTime: {
-    width: 50,
-  },
-  mealTimeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  mealContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  mealName: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  mealExample: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  mealCalories: {
-    alignItems: 'flex-end',
-    marginLeft: 12,
-  },
-  mealCaloriesText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  mealCaloriesUnit: {
-    fontSize: 10,
-  },
-
-  // Sources
-  sourcesCard: {
-    padding: 16,
-    borderRadius: 16,
-    gap: 12,
-  },
-  sourceItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  sourceText: {
-    flex: 1,
-  },
-  sourceName: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  sourceRef: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-});

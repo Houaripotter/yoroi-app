@@ -1,473 +1,227 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { safeOpenURL } from '@/lib/security/validators';
-import { Stack, router } from 'expo-router';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { ArrowLeft, TrendingUp, BookOpen, ExternalLink, Target, Calendar } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+/**
+ * Prédictions de poids (courbe-pred, remplace l'ecran Previsions de la vague 26, archive dans
+ * _archive_ancien_design_2026-10-09/courbe_pred/) : ou tu en seras, a partir de tes vraies pesees.
+ *  - deux scenarios : « À ton rythme actuel » (regression robuste sur tes 4 dernieres semaines, avec une fourchette
+ *    qui s'elargit avec le temps) et « En suivant ta ligne » (ta ligne directrice, celle de la courbe du poids) ;
+ *  - dans 1 et 2 semaines, 1, 2 et 3 mois, et au torii ; la date ou tu touches ton cap a ton rythme, comparee au torii ;
+ *  - un petit graphique qui prolonge ta courbe en pointilles avec la fourchette, et ta ligne jusqu'au torii ;
+ *  - pas assez de pesees (5 sur 14 jours) : ce qu'il te manque.
+ * Calculs : lib/v2/pesee/predictions.ts. Ligne et torii : lib/v2/pesee/usePlanPoids.ts (les memes que la courbe).
+ * Ouverte depuis la courbe du poids (poids-detail), la carte Poids de l'accueil (« Où tu en seras ») et Progres.
+ */
+import React, { useMemo } from 'react';
+import { ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { DetailHeader, EmptyInvite, GUTTER, LegendMark } from '@/components/yoroi/v2/progres/ui';
+import { CourbePrevision } from '@/components/yoroi/v2/progres/CourbePrevision';
+import { POIDS } from '@/components/yoroi/v2/charts/CourbePoids';
+import { ToriiImage } from '@/components/yoroi/v2/charts/ToriiImage';
+import { P } from '@/components/yoroi/livePalette';
 import { PremiumGate } from '@/components/premium/PremiumGate';
-
-// ============================================
-// PAGE PRÉDICTION DE POIDS - Études Scientifiques
-// ============================================
+import { useWeightData } from '@/lib/v2/useWeightData';
+import { usePlanPoids } from '@/lib/v2/pesee/usePlanPoids';
+import { usePrefsCourbes } from '@/lib/v2/courbes/prefs';
+import { localISO } from '@/lib/v2/accueil/hydration';
+import { jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
+import type { Prevision, Unite } from '@/lib/v2/pesee/predictions';
+import { FENETRE_JOURS, MIN_JOURS, MIN_PESEES, phrasePrevision, phraseTorii, poidsTexte, prevoir, texteManque } from '@/lib/v2/pesee/predictions';
 
 export default function WeightPredictionsScreen() {
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-  const { t } = useI18n();
-
-  // Données de prédiction (à calculer depuis les vraies données utilisateur)
-  const currentWeight = 78.4;
-  const targetWeight = 77;
-  const weeklyLoss = 0.4; // kg par semaine
-  const prediction7Days = currentWeight - (weeklyLoss / 7) * 7;
-  const prediction30Days = currentWeight - (weeklyLoss / 7) * 30;
-  const prediction90Days = currentWeight - (weeklyLoss / 7) * 90;
-
-  const openStudy = (url: string) => {
-    safeOpenURL(url);
-  };
-
   return (
-    <PremiumGate featureTitle="Predictions de poids">
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Stack.Screen options={{ headerShown: false }} />
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 16, backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          {t('weightPredictions.title')}
-        </Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Introduction */}
-        <LinearGradient
-          colors={['#8B5CF6', '#7C3AED']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.introCard}
-        >
-          <TrendingUp size={32} color="#FFFFFF" strokeWidth={2.5} />
-          <Text style={styles.introTitle}>{t('weightPredictions.scienceBasedPredictions')}</Text>
-          <Text style={styles.introText}>
-            {t('weightPredictions.introText')}
-          </Text>
-        </LinearGradient>
-
-        {/* Prédictions */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('weightPredictions.yourPersonalizedPredictions')}
-          </Text>
-
-          <View style={styles.predictionsGrid}>
-            <View style={[styles.predictionCard, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)' }]}>
-              <Calendar size={20} color="#3B82F6" strokeWidth={2.5} />
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('weightPredictions.days7')}</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {prediction7Days.toFixed(1)} kg
-              </Text>
-              <Text style={[styles.predictionDiff, { color: '#3B82F6' }]}>
-                -{(currentWeight - prediction7Days).toFixed(1)} kg
-              </Text>
-            </View>
-
-            <View style={[styles.predictionCard, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)' }]}>
-              <Calendar size={20} color="#8B5CF6" strokeWidth={2.5} />
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('weightPredictions.days30')}</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {prediction30Days.toFixed(1)} kg
-              </Text>
-              <Text style={[styles.predictionDiff, { color: '#8B5CF6' }]}>
-                -{(currentWeight - prediction30Days).toFixed(1)} kg
-              </Text>
-            </View>
-
-            <View style={[styles.predictionCard, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)' }]}>
-              <Calendar size={20} color="#10B981" strokeWidth={2.5} />
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('weightPredictions.days90')}</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {prediction90Days.toFixed(1)} kg
-              </Text>
-              <Text style={[styles.predictionDiff, { color: '#10B981' }]}>
-                -{(currentWeight - prediction90Days).toFixed(1)} kg
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.targetBox, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)' }]}>
-            <Target size={20} color="#EF4444" strokeWidth={2.5} />
-            <Text style={[styles.targetText, { color: colors.textSecondary }]}>
-              {t('weightPredictions.targetMessage', {
-                targetWeight: targetWeight,
-                // '—' si non calculable
-                weeks: weeklyLoss > 0 && Number.isFinite(Math.ceil((currentWeight - targetWeight) / weeklyLoss)) ? Math.ceil((currentWeight - targetWeight) / weeklyLoss) : '—'
-              })}
-            </Text>
-          </View>
-        </View>
-
-        {/* Méthodologie */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.sectionHeader}>
-            <BookOpen size={20} color="#8B5CF6" strokeWidth={2.5} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('weightPredictions.scientificMethodology')}
-            </Text>
-          </View>
-
-          <Text style={[styles.methodText, { color: colors.textSecondary }]}>
-            {t('weightPredictions.methodologyDescription')}
-          </Text>
-
-          <View style={styles.bulletPoints}>
-            <View style={styles.bulletPoint}>
-              <View style={styles.bullet} />
-              <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                {t('weightPredictions.bmr')}
-              </Text>
-            </View>
-            <View style={styles.bulletPoint}>
-              <View style={styles.bullet} />
-              <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                {t('weightPredictions.tdee')}
-              </Text>
-            </View>
-            <View style={styles.bulletPoint}>
-              <View style={styles.bullet} />
-              <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                {t('weightPredictions.caloricDeficit')}
-              </Text>
-            </View>
-            <View style={styles.bulletPoint}>
-              <View style={styles.bullet} />
-              <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                {t('weightPredictions.metabolicAdaptation')}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.formulaBox, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)' }]}>
-            <Text style={[styles.formulaTitle, { color: '#8B5CF6' }]}>{t('weightPredictions.basicFormula')}</Text>
-            <Text style={[styles.formula, { color: colors.textPrimary }]}>
-              {t('weightPredictions.formulaText')}
-            </Text>
-            <Text style={[styles.formulaNote, { color: colors.textMuted }]}>
-              {t('weightPredictions.formulaNote')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Études scientifiques */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('weightPredictions.scientificReferences')}
-          </Text>
-
-          <TouchableOpacity
-            style={[styles.studyCard, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.05)' }]}
-            onPress={() => openStudy('https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3302369/')}
-          >
-            <View style={styles.studyHeader}>
-              <Text style={[styles.studyTitle, { color: colors.textPrimary }]}>
-                Quantification of Energy Expenditure
-              </Text>
-              <ExternalLink size={16} color="#3B82F6" strokeWidth={2.5} />
-            </View>
-            <Text style={[styles.studyAuthors, { color: colors.textMuted }]}>
-              Hall K.D., Sacks G., Chandramohan D., et al.
-            </Text>
-            <Text style={[styles.studyJournal, { color: '#3B82F6' }]}>
-              The Lancet, 2011
-            </Text>
-            <Text style={[styles.studyDescription, { color: colors.textSecondary }]}>
-              {t('weightPredictions.study1Description')}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.studyCard, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.08)' : 'rgba(139, 92, 246, 0.05)' }]}
-            onPress={() => openStudy('https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2376744/')}
-          >
-            <View style={styles.studyHeader}>
-              <Text style={[styles.studyTitle, { color: colors.textPrimary }]}>
-                Energy Balance and Obesity
-              </Text>
-              <ExternalLink size={16} color="#8B5CF6" strokeWidth={2.5} />
-            </View>
-            <Text style={[styles.studyAuthors, { color: colors.textMuted }]}>
-              Hill J.O., Wyatt H.R., Peters J.C.
-            </Text>
-            <Text style={[styles.studyJournal, { color: '#8B5CF6' }]}>
-              Circulation, 2012
-            </Text>
-            <Text style={[styles.studyDescription, { color: colors.textSecondary }]}>
-              {t('weightPredictions.study2Description')}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.studyCard, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.05)' }]}
-            onPress={() => openStudy('https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4989512/')}
-          >
-            <View style={styles.studyHeader}>
-              <Text style={[styles.studyTitle, { color: colors.textPrimary }]}>
-                Metabolic Adaptation to Weight Loss
-              </Text>
-              <ExternalLink size={16} color="#10B981" strokeWidth={2.5} />
-            </View>
-            <Text style={[styles.studyAuthors, { color: colors.textMuted }]}>
-              Trexler E.T., Smith-Ryan A.E., Norton L.E.
-            </Text>
-            <Text style={[styles.studyJournal, { color: '#10B981' }]}>
-              Journal of the International Society of Sports Nutrition, 2014
-            </Text>
-            <Text style={[styles.studyDescription, { color: colors.textSecondary }]}>
-              {t('weightPredictions.study3Description')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Avertissement */}
-        <View style={[styles.disclaimerBox, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.05)' }]}>
-          <Text style={[styles.disclaimerTitle, { color: '#F59E0B' }]}>{t('weightPredictions.important')}</Text>
-          <Text style={[styles.disclaimerText, { color: colors.textSecondary }]}>
-            {t('weightPredictions.disclaimerText1')}
-          </Text>
-          <Text style={[styles.disclaimerText, { color: colors.textSecondary, marginTop: 8 }]}>
-            {t('weightPredictions.disclaimerText2')}
-          </Text>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
-    </View>
+    <PremiumGate source="prevision_poids" featureTitle="Prédictions de poids" perks={['Où tu en seras dans 1 semaine, 1 mois, 3 mois', 'La date où tu passes ton cap, à ton rythme', 'Ton rythme réel comparé à ta ligne']}>
+      <Predictions />
     </PremiumGate>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  introCard: {
-    padding: 24,
-    borderRadius: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  introTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    marginTop: 12,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  introText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    lineHeight: 20,
-    opacity: 0.9,
-  },
-  section: {
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 16,
-    letterSpacing: -0.5,
-  },
-  predictionsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  predictionCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    gap: 8,
-  },
-  predictionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  predictionValue: {
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  predictionDiff: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  targetBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 12,
-  },
-  targetText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
-  },
-  methodText: {
-    fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  bulletPoints: {
-    gap: 12,
-    marginBottom: 16,
-  },
-  bulletPoint: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#8B5CF6',
-    marginTop: 7,
-  },
-  bulletText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 20,
-  },
-  formulaBox: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.2)',
-  },
-  formulaTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  formula: {
-    fontSize: 15,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    marginBottom: 4,
-  },
-  formulaNote: {
-    fontSize: 12,
-    fontWeight: '600',
-    fontStyle: 'italic',
-  },
-  studyCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  studyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  studyTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '800',
-    lineHeight: 20,
-    marginRight: 8,
-  },
-  studyAuthors: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  studyJournal: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  studyDescription: {
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
-  },
-  disclaimerBox: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-  },
-  disclaimerTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-    marginBottom: 8,
-  },
-  disclaimerText: {
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
-  },
-});
+/** le contenu sans la porte Premium (exporte pour les rendus de verification) */
+export function Predictions() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const today = localISO();
+  const { series: seriesIn, goal, loading } = useWeightData();
+  const series = useMemo(() => seriesIn.filter((p) => p.date <= today), [seriesIn, today]);
+  const prefs = usePrefsCourbes();
+  const plan = usePlanPoids(series, goal ?? null, { enabled: true, check: false, today });
+  // 18 octobre 2026 : le poids du corps se saisit en kilos (pesee), il s'affiche donc en kilos partout, ici aussi.
+  // Le reglage kg ou livres ne change que les charges soulevees (Force, Records, Seances, cartes).
+  const u: Unite = 'kg';
+  const capOn = prefs.cap && goal != null;
+  const r = useMemo(
+    () => prevoir({ series, today, cap: goal ?? null, ligne: capOn ? plan.ligne : null, torii: capOn ? plan.torii : null, atteint: plan.atteint }),
+    [series, today, goal, capOn, plan.ligne, plan.torii, plan.atteint],
+  );
+
+  if (loading) return <View style={{ flex: 1, backgroundColor: P.paper }} />;
+
+  if (!r.ok) {
+    const t = texteManque(r);
+    return (
+      <View style={{ flex: 1, backgroundColor: P.paper }}>
+        <DetailHeader title="Prédictions" sub="Où tu en seras, à partir de tes pesées." />
+        <EmptyInvite style={{ margin: GUTTER, marginTop: 18 }} title={t.titre} text={t.texte} cta="Nouvelle pesée" onPress={() => router.push('/pesee' as any)} />
+        <View style={{ marginHorizontal: GUTTER, gap: 12 }}>
+          <Jauge label="Pesées" val={Math.min(r.pesees, MIN_PESEES)} max={MIN_PESEES} txt={`${Math.min(r.pesees, MIN_PESEES)} sur ${MIN_PESEES}`} />
+          <Jauge label="Jours couverts" val={Math.min(r.jours, MIN_JOURS)} max={MIN_JOURS} txt={`${Math.min(r.jours, MIN_JOURS)} sur ${MIN_JOURS}`} />
+          <Ink size={12.5} color={P.muted} style={{ marginTop: 2 }}>
+            {`Pèse-toi le matin, à jeun. On regarde tes ${FENETRE_JOURS / 7} dernières semaines.`}
+          </Ink>
+        </View>
+      </View>
+    );
+  }
+
+  const passe = series.filter((p) => p.date >= r.ajustement.debut);
+  return (
+    <View style={{ flex: 1, backgroundColor: P.paper }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
+        <DetailHeader title="Prédictions" sub="Où tu en seras, à partir de tes pesées." />
+
+        {/* la phrase simple, puis ton arrivee comparee au torii */}
+        <View style={{ paddingHorizontal: GUTTER, marginTop: 14, gap: 8 }}>
+          <Ink size={21} weight="black" tight accessibilityRole="header">
+            {phrasePrevision(r, u)}
+          </Ink>
+          <RythmeLigne r={r} u={u} />
+        </View>
+
+        <View style={{ paddingHorizontal: 14, marginTop: 14 }}>
+          <CourbePrevision passe={passe} prev={r} unite={u} />
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 6, paddingHorizontal: GUTTER, marginTop: 6 }}>
+          <LegendMark kind="line" color={POIDS.c2} label="ton poids lissé" />
+          <LegendMark kind="dash" color={POIDS.c3} label="à ton rythme, avec sa fourchette" />
+          {r.torii ? <LegendMark kind="dash" color={POIDS.cap} label="ta ligne, jusqu’au torii" /> : null}
+        </View>
+
+        {/* les dates : deux scenarios cote a cote */}
+        <Tableau r={r} u={u} />
+
+        <Ink size={12} color={P.muted} style={{ paddingHorizontal: GUTTER, marginTop: 14, lineHeight: 17 }}>
+          {`Estimation à partir de tes ${r.ajustement.n} pesées des ${Math.max(2, Math.round(r.ajustement.jours / 7))} dernières semaines, pas une promesse. La fourchette s’élargit avec le temps : plus on regarde loin, moins c’est sûr.`}
+        </Ink>
+
+        <View style={{ marginHorizontal: GUTTER, marginTop: 22, padding: 16, borderRadius: 22, backgroundColor: P.washi, borderWidth: 1, borderColor: P.washiBord, gap: 6 }}>
+          <Ink size={15} weight="black">
+            Comment on calcule
+          </Ink>
+          <Ink size={13.5} color={P.ink2} style={{ lineHeight: 19 }}>
+            {'À ton rythme actuel : la pente de tes pesées des 4 dernières semaines, mesurée pour qu’une pesée bizarre (sel, eau, balance) ne la tire pas. Vers ton cap, la perte ralentit dans le dernier tiers, comme dans la réalité, puis on suppose que tu tiens ton cap.'}
+          </Ink>
+          <Ink size={13.5} color={P.ink2} style={{ lineHeight: 19 }}>
+            {r.torii ? 'En suivant ta ligne : ta ligne verte de la courbe du poids, qui arrive à ton cap le jour du torii.' : 'En suivant ta ligne : fixe ton cap pour voir ta ligne verte et ton torii.'}
+          </Ink>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+/** « Ton rythme : 0,4 kg en moins par semaine » et ton arrivee comparee au torii */
+function RythmeLigne({ r, u }: { r: Prevision; u: Unite }) {
+  const v = r.ajustement.kgSemaine;
+  const rythme = r.sens === 'stable' ? 'Ton rythme : stable' : `Ton rythme : ${poidsTexte(Math.abs(v), u)} ${v < 0 ? 'en moins' : 'en plus'} par semaine`;
+  const t = phraseTorii(r);
+  return (
+    <View style={{ gap: 6 }}>
+      <Ink size={14} weight="bold" color={P.ink2}>
+        {rythme}
+      </Ink>
+      {r.arrivee && r.arrivee.tot && r.arrivee.tard ? (
+        <Ink size={13.5} color={P.ink2}>
+          {`Ton cap à ton rythme : vers le ${jourCourt(r.arrivee.date)}, entre le ${jourCourt(r.arrivee.tot)} et le ${jourCourt(r.arrivee.tard)}`}
+        </Ink>
+      ) : null}
+      {t ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 14, backgroundColor: P.goldSoft }}>
+          <ToriiImage width={18} />
+          <Ink size={13} weight="extraBold" color={POIDS.or}>
+            {t}
+          </Ink>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function Tableau({ r, u }: { r: Prevision; u: Unite }) {
+  const avecLigne = r.dates.some((d) => d.ligne != null);
+  const cell = { width: avecLigne ? 86 : 124, alignItems: 'flex-end' as const };
+  return (
+    <View style={{ marginHorizontal: GUTTER, marginTop: 20, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: P.line, overflow: 'hidden' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 14, paddingTop: 12, paddingBottom: 8, borderBottomWidth: 1, borderColor: P.line2 }}>
+        <View style={{ flex: 1 }} />
+        <View style={cell}>
+          <Ink size={11.5} weight="extraBold" color={POIDS.softText} style={{ textAlign: 'right' }}>
+            À ton rythme actuel
+          </Ink>
+        </View>
+        {avecLigne ? (
+          <View style={cell}>
+            <Ink size={11.5} weight="extraBold" color={POIDS.capText} style={{ textAlign: 'right' }}>
+              En suivant ta ligne
+            </Ink>
+          </View>
+        ) : null}
+      </View>
+      {r.dates.map((d, i) => {
+        const torii = d.id === 'torii';
+        return (
+          <View
+            key={d.id}
+            accessible
+            accessibilityLabel={`${torii ? 'Au torii' : d.label}, le ${jourCourt(d.date)} : à ton rythme ${poidsTexte(d.valeur, u)}, entre ${poidsTexte(d.bas, u)} et ${poidsTexte(d.haut, u)}${d.ligne != null ? `. En suivant ta ligne : ${poidsTexte(d.ligne, u)}` : ''}`}
+            style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: P.line2, backgroundColor: torii ? P.goldSoft : 'transparent' }}
+          >
+            <View style={{ flex: 1, gap: 1, paddingRight: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                {torii ? <ToriiImage width={15} /> : null}
+                <Ink size={13.5} weight="extraBold" color={torii ? POIDS.or : P.ink} numberOfLines={2} style={{ flexShrink: 1 }}>
+                  {torii ? 'Au torii' : d.label}
+                </Ink>
+              </View>
+              <Ink size={11.5} color={P.muted}>
+                {`le ${jourCourt(d.date)}`}
+              </Ink>
+            </View>
+            <View style={cell}>
+              <Ink size={16} weight="black" style={{ fontVariant: ['tabular-nums'] }}>
+                {poidsTexte(d.valeur, u)}
+              </Ink>
+              <Ink size={11} color={P.muted} style={{ fontVariant: ['tabular-nums'] }} numberOfLines={1}>
+                {`${poidsTexte(d.bas, u, false)} à ${poidsTexte(d.haut, u, false)}`}
+              </Ink>
+            </View>
+            {avecLigne ? (
+              <View style={cell}>
+                <Ink size={16} weight="black" color={POIDS.capText} style={{ fontVariant: ['tabular-nums'] }}>
+                  {d.ligne != null ? poidsTexte(d.ligne, u) : ''}
+                </Ink>
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function Jauge({ label, val, max, txt }: { label: string; val: number; max: number; txt: string }) {
+  return (
+    <View style={{ gap: 5 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Ink size={13} weight="bold" color={P.ink2}>
+          {label}
+        </Ink>
+        <Ink size={13} weight="extraBold">
+          {txt}
+        </Ink>
+      </View>
+      <View style={{ height: 8, borderRadius: 4, backgroundColor: P.line2, overflow: 'hidden' }}>
+        <View style={{ width: `${Math.round((val / max) * 100)}%`, height: 8, borderRadius: 4, backgroundColor: POIDS.c2 }} />
+      </View>
+    </View>
+  );
+}

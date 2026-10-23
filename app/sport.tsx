@@ -1,1353 +1,347 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Image,
-  ScrollView,
-  TextInput,
-  Modal,
-  Platform,
-  KeyboardAvoidingView,
-  useWindowDimensions,
-  ActivityIndicator,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Check, X, Plus, Clock, Moon } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
+/**
+ * Ma semaine type (refonte v2) : l'ancienne routine hebdomadaire, toujours lisible et modifiable,
+ * avec la conversion en creneaux du planning (un seul endroit pour ta semaine).
+ * Garde la validation rapide de la seance du jour.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, Image, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getUserSettings, saveUserSettings, addWorkout, getAllWorkouts, getUserClubs } from '@/lib/storage';
-import { UserClub } from '@/lib/storage';
-import { WorkoutType } from '@/types/workout';
-import { WORKOUT_TYPES } from '@/types/workout';
-import { RewardOverlay } from '@/components/RewardOverlay';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { BigButton, Card, Enter, Glass, Icon, P, Press, SectionTitle, tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen, EmptyState } from '@/components/yoroi/v2/ornements/screens';
+import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
+import { Chip, ChipScroll, Field, Label, Stepper } from '@/components/yoroi/v2/competition/ui';
+import { addWorkout, getAllWorkouts, getUserClubs, getUserSettings, saveUserSettings } from '@/lib/storage';
+import type { UserClub } from '@/lib/storage';
+import type { WorkoutType } from '@/types/workout';
+import { convertRoutineToPlan, countBlocks, DAY_KEYS, DAY_LABELS, DAY_SHORT, guessSport, isRestDay, sportOfType } from '@/lib/v2/competition/routine';
+import type { Routine, RoutineBlock } from '@/lib/v2/competition/routine';
+import { isoLocal, mediumDate } from '@/lib/v2/competition/dates';
+import { useAthlete } from '@/lib/v2/competition/athlete';
+import { sportArt } from '@/lib/v2/seances/illustrations';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
+import { getSportName } from '@/lib/sports';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
-interface RoutineBlock {
-  time: string;
-  activity: string;
-  workoutType?: string; // Type d'entraînement (ex: "Pecs et bras")
-}
+type ClubOption = { id: string; name: string; type: string; logoUri?: string | null };
+const DEFAULT_CLUBS: ClubOption[] = [
+  { id: 'gracie_barra', name: 'Gracie Barra', type: 'gracie_barra' },
+  { id: 'basic_fit', name: 'Basic Fit', type: 'basic_fit' },
+  { id: 'running', name: getSportName('running'), type: 'running' },
+];
+
+const todayIndex = () => {
+  const d = new Date().getDay();
+  return d === 0 ? 6 : d - 1;
+};
+const fmtTime = (h: number, m: number) => `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`;
 
 export default function SportScreen() {
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
   const router = useRouter();
-  const { colors: themeColors } = useTheme();
-  const { t } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const [routine, setRoutine] = useState<{ [key: string]: Array<RoutineBlock> }>({});
-  const [loading, setLoading] = useState(true);
-  const [customLogos, setCustomLogos] = useState<{ [key: string]: string }>({});
-  const [selectedClubGlobal, setSelectedClubGlobal] = useState<string | null>(null);
-  const [editingDay, setEditingDay] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [selectedClubModal, setSelectedClubModal] = useState<string | null>(null);
-  const [userClubs, setUserClubs] = useState<UserClub[]>([]);
-  const [workoutType, setWorkoutType] = useState<string>('');
-  const rewardOverlayRef = useRef<{ trigger: () => void }>(null);
+  const { gender } = useAthlete();
+  const [routine, setRoutine] = useState<Routine>({});
+  const [clubs, setClubs] = useState<UserClub[]>([]);
+  const [convertedAt, setConvertedAt] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [hour, setHour] = useState(18);
+  const [minute, setMinute] = useState(30);
+  const [clubId, setClubId] = useState<string | null>(null);
+  const [workoutType, setWorkoutType] = useState('');
+  const [converting, setConverting] = useState(false);
 
-  // Jours traduits dynamiquement
-  const days = useMemo(() => [
-    t('dates.monday'), t('dates.tuesday'), t('dates.wednesday'), t('dates.thursday'),
-    t('dates.friday'), t('dates.saturday'), t('dates.sunday')
-  ], [t]);
-  const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-
-  // Obtenir les clubs depuis le stockage ou utiliser les défauts
-  const getAvailableClubs = (): Array<{
-    id: string;
-    name: string;
-    type: WorkoutType;
-    logo: any;
-    emoji?: string;
-    color: string;
-  }> => {
-    if (userClubs.length > 0) {
-      return userClubs.map(club => ({
-        id: club.id,
-        name: club.name,
-        type: club.type as WorkoutType,
-        logo: club.logoUri ? { uri: club.logoUri } : null,
-        emoji: getEmojiForType(club.type),
-        color: getColorForType(club.type),
-      }));
-    }
-    // Fallback vers les clubs par défaut
-    return [
-      {
-        id: 'gracie_barra',
-        name: 'Gracie Barra',
-        type: 'gracie_barra' as WorkoutType,
-        logo: null,
-        emoji: '',
-        color: '#DC2626',
-      },
-      {
-        id: 'basic_fit',
-        name: 'Basic Fit',
-        type: 'basic_fit' as WorkoutType,
-        logo: null,
-        emoji: '',
-        color: '#F59E0B',
-      },
-      {
-        id: 'running',
-        name: 'Running',
-        type: 'running' as WorkoutType,
-        logo: null,
-        emoji: '',
-        color: '#10B981',
-      },
-    ];
-  };
-
-  const getEmojiForType = (type: string) => {
-    if (type === 'gracie_barra') return '';
-    if (type === 'basic_fit') return '';
-    if (type === 'running') return '';
-    return '';
-  };
-
-  const getDefaultLogoForType = (type: string) => {
-    // Les logos sont gérés par logoUri, sinon on utilise des emojis
-    return null;
-  };
-
-  const getColorForType = (type: string) => {
-    if (type === 'gracie_barra') return '#DC2626';
-    if (type === 'basic_fit') return '#F59E0B';
-    if (type === 'running') return '#10B981';
-    if (type === 'mma') return '#EF4444';
-    if (type === 'foot') return '#3B82F6';
-    return '#64748B';
-  };
-
-  // Obtenir le jour de la semaine actuel (0 = Dimanche, 1 = Lundi, etc.)
-  const getCurrentDayIndex = () => {
-    const today = new Date();
-    const day = today.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
-    // Convertir: Dimanche (0) -> 6, Lundi (1) -> 0, etc.
-    return day === 0 ? 6 : day - 1;
-  };
-
-  const loadData = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      const [settings, clubs] = await Promise.all([
-        getUserSettings(),
-        getUserClubs(),
-      ]);
-      
-      if ((settings as any).weekly_routine) {
-        setRoutine((settings as any).weekly_routine);
-      }
-      if ((settings as any).custom_club_logos) {
-        setCustomLogos((settings as any).custom_club_logos);
-      }
-      if ((settings as any).selected_club) {
-        setSelectedClubGlobal((settings as any).selected_club);
-      }
-      
-      setUserClubs(clubs);
+      const [settings, uc] = await Promise.all([getUserSettings(), getUserClubs()]);
+      const s = settings as any;
+      if (s.weekly_routine && typeof s.weekly_routine === 'object') setRoutine(s.weekly_routine);
+      if (s.weekly_routine_converted_at) setConvertedAt(s.weekly_routine_converted_at);
+      setClubs(uc);
     } catch (error) {
       logger.error('Erreur chargement données:', error);
     } finally {
-      setLoading(false);
+      setLoaded(true);
     }
   }, []);
 
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadData(); }, []);
-
-  // Masquer le loader après 2 secondes maximum
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(t);
-  }, []);
+    load();
+  }, [load]);
 
-  // Calcul du résumé hebdomadaire (doit être avant le return conditionnel)
-  const weeklySummary = useMemo(() => {
-    let totalSessions = 0;
-    let totalHours = 0;
-    
-    Object.values(routine).forEach(dayRoutine => {
-      if (dayRoutine && dayRoutine.length > 0) {
-        dayRoutine.forEach(block => {
-          if (block.activity !== 'REPOS') {
-            totalSessions++;
-            // Estimer 1h par session (peut être amélioré)
-            totalHours += 1;
-          }
-        });
-      }
-    });
+  const options: ClubOption[] = clubs.length ? clubs.map((c) => ({ id: c.id, name: c.name, type: c.type, logoUri: c.logoUri })) : DEFAULT_CLUBS;
+  const { sessions, restDays } = useMemo(() => countBlocks(routine), [routine]);
+  const tIdx = todayIndex();
+  const todayBlocks = routine[DAY_KEYS[tIdx]] || [];
+  const todayActive = todayBlocks.length > 0 && !isRestDay(todayBlocks);
 
-    return { totalSessions, totalHours };
-  }, [routine]);
-
-  // Obtenir l'activité pour un jour donné
-  const getActivityForDay = (dayKey: string): { type: WorkoutType | 'rest' | null; label: string; clubId?: string } | null => {
-    const dayRoutine = routine[dayKey] || [];
-    if (dayRoutine.length === 0) return null;
-    
-    // Si c'est un jour de repos
-    if (dayRoutine.length === 1 && dayRoutine[0]?.activity === 'REPOS') {
-      return { type: 'rest', label: 'Repos' };
-    }
-    
-    // Prendre la première activité
-    const firstActivity = dayRoutine[0]?.activity || '';
-    const availableClubs = getAvailableClubs();
-    const club = availableClubs.find(c => c.name === firstActivity) || userClubs.find(c => c.name === firstActivity);
-    
-    if (club && (club.type === 'gracie_barra' || club.type === 'basic_fit' || club.type === 'running')) {
-      return { type: club.type as WorkoutType, label: club.name, clubId: club.id };
-    }
-    
-    // Fallback pour compatibilité avec anciennes données
-    if (firstActivity.toLowerCase().includes('jujitsu') || firstActivity.toLowerCase().includes('jjb') || firstActivity.toLowerCase().includes('gracie')) {
-      return { type: 'gracie_barra', label: 'JJB', clubId: 'gracie_barra' };
-    }
-    if (firstActivity.toLowerCase().includes('muscu') || firstActivity.toLowerCase().includes('musculation') || firstActivity.toLowerCase().includes('basic')) {
-      return { type: 'basic_fit', label: 'Muscu', clubId: 'basic_fit' };
-    }
-    if (firstActivity.toLowerCase().includes('course') || firstActivity.toLowerCase().includes('running') || firstActivity.toLowerCase().includes('run')) {
-      return { type: 'running', label: 'Course', clubId: 'running' };
-    }
-    
-    return { type: null, label: firstActivity || '·' };
+  const sportOf = (b: RoutineBlock) => {
+    const c = options.find((o) => o.name === b.activity);
+    return c ? sportOfType(c.type) : guessSport(b.activity);
   };
 
-  // Valider la séance d'aujourd'hui
-  const handleValidateToday = async () => {
-    const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-    const currentDayIndex = getCurrentDayIndex();
-    const dayKey = dayKeys[currentDayIndex];
-    const activity = getActivityForDay(dayKey);
-
-    if (!activity) {
-      showPopup('Aucune activité', 'Aucune activité prévue pour aujourd\'hui.', [
-        { text: 'OK', style: 'primary' },
-      ]);
-      return;
-    }
-
-    if (activity.type === 'rest' || activity.type === null) {
-      showPopup('Aucune activité', 'Aucune activité prévue pour aujourd\'hui.', [
-        { text: 'OK', style: 'primary' },
-      ]);
-      return;
-    }
-
+  const save = async (next: Routine) => {
+    setRoutine(next);
     try {
-      // Vérifier si un workout existe déjà pour aujourd'hui
-      const allWorkouts = await getAllWorkouts();
-      const todayWorkouts = allWorkouts.filter(w => w.date === todayString);
-      
-      if (todayWorkouts.length > 0) {
-        showPopup('Déjà validé', 'Tu as déjà validé une séance aujourd\'hui.', [
-          { text: 'OK', style: 'primary' },
-        ]);
-        return;
-      }
-
-      // Ajouter le workout
-      await addWorkout({
-        date: todayString,
-        type: activity.type,
-      });
-
-      // Déclencher l'animation de récompense
-      rewardOverlayRef.current?.trigger();
-
-      showPopup('Validé !', `Séance ${activity.label} validée pour aujourd'hui.`, [
-        { text: 'OK', style: 'primary' },
-      ]);
-    } catch (error) {
-      logger.error('Erreur validation:', error);
-      showPopup('Erreur', 'Impossible de valider la séance.', [
-        { text: 'OK', style: 'primary' },
-      ]);
-    }
-  };
-
-  // Obtenir le logo du club global (pour le header)
-  const getGlobalClubLogo = () => {
-    if (selectedClubGlobal && customLogos[selectedClubGlobal]) {
-      return { uri: customLogos[selectedClubGlobal] };
-    }
-    // Les logos sont gérés par logoUri, sinon on utilise des emojis
-    return null;
-  };
-
-  // Obtenir l'emoji du club global
-  const getGlobalClubEmoji = () => {
-    if (selectedClubGlobal) {
-      return getEmojiForType(selectedClubGlobal);
-    }
-    return '';
-  };
-
-  const saveRoutine = async (newRoutine: typeof routine) => {
-    try {
-      await saveUserSettings({ weekly_routine: newRoutine });
-      setRoutine(newRoutine);
+      await saveUserSettings({ weekly_routine: next } as any);
     } catch (error) {
       logger.error('Erreur sauvegarde routine:', error);
     }
   };
 
-  const formatTime = (date: Date): string => {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}h${minutes}`;
-  };
-
-  const getClubName = (clubId: string | null): string => {
-    if (!clubId) return '';
-    const availableClubs = getAvailableClubs();
-    const club = availableClubs.find(c => c.id === clubId) || userClubs.find(c => c.id === clubId);
-    return club ? club.name : '';
-  };
-
-  const getClubLogoById = (clubId: string | null) => {
-    if (!clubId) return null;
-    
-    // Chercher dans userClubs d'abord
-    const userClub = userClubs.find(c => c.id === clubId);
-    if (userClub && userClub.logoUri) {
-      return { uri: userClub.logoUri };
-    }
-    
-    // Fallback vers les clubs par défaut
-    const defaultClub = getAvailableClubs().find(c => c.id === clubId);
-    if (defaultClub) {
-      if (customLogos[clubId]) {
-        return { uri: customLogos[clubId] };
-      }
-      return defaultClub.logo;
-    }
-    
-    return null;
-  };
-
-  const addRoutineBlock = (dayKey: string) => {
-    if (!selectedClubModal) {
-      showPopup('Club requis', 'Sélectionne un club.', [
-        { text: 'OK', style: 'primary' },
-      ]);
-      return;
-    }
-
-    // Limiter à 3 entraînements par jour
-    const currentRoutine = routine[dayKey] || [];
-    if (currentRoutine.length >= 3) {
-      showPopup('Limite atteinte', 'Vous ne pouvez pas ajouter plus de 3 entraînements par jour.', [
-        { text: 'OK', style: 'primary' },
-      ]);
-      return;
-    }
-    
-    const timeString = formatTime(selectedTime);
-    const clubName = getClubName(selectedClubModal);
-    
-    const newRoutine = { ...routine };
-    if (!newRoutine[dayKey]) newRoutine[dayKey] = [];
-    newRoutine[dayKey].push({ 
-      time: timeString, 
-      activity: clubName,
-      workoutType: workoutType.trim() || undefined, // Type d'entraînement (ex: "Pecs et bras")
-    });
-    saveRoutine(newRoutine);
-    
-    // Reset
-    setSelectedTime(new Date());
-    setSelectedClubModal(null);
+  const openDay = (key: string) => {
+    setEditing(key);
+    setClubId(null);
     setWorkoutType('');
-    setEditingDay(null);
   };
 
-  const removeRoutineBlock = (dayKey: string, index: number) => {
-    const newRoutine = { ...routine };
-    if (newRoutine[dayKey]) {
-      newRoutine[dayKey].splice(index, 1);
-      if (newRoutine[dayKey].length === 0) delete newRoutine[dayKey];
-      saveRoutine(newRoutine);
+  const addBlock = () => {
+    if (!editing) return;
+    const club = options.find((o) => o.id === clubId);
+    if (!club) {
+      appAlert('Choisis un club', 'Sélectionne le club ou l’activité de ce créneau.');
+      return;
+    }
+    const cur = (routine[editing] || []).filter((b) => b.activity !== 'REPOS');
+    if (cur.length >= 3) {
+      appAlert('Trois créneaux au plus', 'Tu ne peux pas ajouter plus de trois entraînements par jour.');
+      return;
+    }
+    tap('medium');
+    save({ ...routine, [editing]: [...cur, { time: fmtTime(hour, minute), activity: club.name, workoutType: workoutType.trim() || undefined }] });
+    setClubId(null);
+    setWorkoutType('');
+  };
+
+  const removeBlock = (key: string, i: number) => {
+    const blocks = [...(routine[key] || [])];
+    blocks.splice(i, 1);
+    const next = { ...routine };
+    if (blocks.length) next[key] = blocks;
+    else delete next[key];
+    save(next);
+  };
+
+  const setRest = (key: string) => {
+    tap();
+    save({ ...routine, [key]: [{ time: '', activity: 'REPOS' }] });
+    setEditing(null);
+  };
+
+  const validateToday = async () => {
+    const first = todayBlocks[0];
+    if (!todayActive || !first) {
+      appAlert('Aucune activité', "Rien n'est prévu aujourd'hui dans ta semaine type.");
+      return;
+    }
+    const club = options.find((o) => o.name === first.activity);
+    const sport = sportOf(first);
+    const type: WorkoutType | null = club && ['gracie_barra', 'basic_fit', 'running'].includes(club.type) ? (club.type as WorkoutType) : sport === 'jjb' ? 'gracie_barra' : sport === 'musculation' ? 'basic_fit' : sport === 'running' ? 'running' : null;
+    if (!type) {
+      appAlert('Activité non reconnue', 'Note plutôt ta séance complète, elle comptera dans ton suivi.', [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Noter la séance', onPress: () => router.push('/seance' as any) },
+      ]);
+      return;
+    }
+    try {
+      const day = isoLocal(new Date());
+      const all = await getAllWorkouts();
+      if (all.some((w) => w.date === day)) {
+        appAlert('Déjà validé', "Tu as déjà validé une séance aujourd'hui.");
+        return;
+      }
+      await addWorkout({ date: day, type } as any);
+      tap('success');
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      appAlert('Validé', `Séance ${first.activity} validée pour aujourd'hui. Pour garder le détail, note aussi la séance complète.`, [
+        { text: 'Plus tard', style: 'cancel' },
+        { text: 'Noter la séance', onPress: () => router.push('/seance' as any) },
+      ]);
+    } catch (error) {
+      logger.error('Erreur validation:', error);
+      appAlert('Validation impossible', 'Réessaie dans un instant.');
     }
   };
 
-  const setRestDay = (dayKey: string) => {
-    const newRoutine = { ...routine };
-    newRoutine[dayKey] = [{ time: '', activity: 'REPOS' }];
-    saveRoutine(newRoutine);
+  const convert = async () => {
+    setConverting(true);
+    try {
+      const r = await convertRoutineToPlan(routine, clubs);
+      const at = new Date().toISOString();
+      await saveUserSettings({ weekly_routine_converted_at: at } as any);
+      setConvertedAt(at);
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      tap('success');
+      appAlert('Planning mis à jour', r.created ? `${r.created} créneau${r.created > 1 ? 'x' : ''} ajouté${r.created > 1 ? 's' : ''} au planning${r.skipped ? `, ${r.skipped} déjà présent${r.skipped > 1 ? 's' : ''}` : ''}.` : 'Tous tes créneaux étaient déjà dans le planning.', [
+        { text: 'Rester ici', style: 'cancel' },
+        { text: 'Ouvrir le planning', onPress: () => router.push('/planning' as any) },
+      ]);
+    } catch (error) {
+      logger.error('Conversion routine impossible', error);
+      appAlert('Conversion impossible', 'Réessaie dans un instant.');
+    } finally {
+      setConverting(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#E8EDF2', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={themeColors.accent} />
-      </View>
-    );
-  }
-
-  const clubLogo = getGlobalClubLogo();
-  const currentDayIndex = getCurrentDayIndex();
+  const hasRoutine = Object.keys(routine).length > 0;
+  const editBlocks = editing ? routine[editing] || [] : [];
+  const editCount = editBlocks.filter((b) => b.activity !== 'REPOS').length;
 
   return (
-    <ScreenWrapper noPadding>
-      <Header title="Ma Semaine Type" showBack />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* LIVE SESSION CTA */}
-        <TouchableOpacity 
-          style={[styles.liveSessionCard, { backgroundColor: themeColors.accent }]}
-          onPress={() => router.push('/add-training')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.liveSessionIcon}>
-            <MaterialCommunityIcons name="play-circle" size={32} color={themeColors.textOnAccent || "#FFFFFF"} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.liveSessionTitle, { color: themeColors.textOnAccent || "#FFFFFF" }]}>Démarrer une séance</Text>
-            <Text style={[styles.liveSessionSubtitle, { color: (themeColors.textOnAccent || "#FFFFFF") + 'CC' }]}>Enregistre tes efforts en direct</Text>
-          </View>
-          <Plus size={24} color={themeColors.textOnAccent || "#FFFFFF"} strokeWidth={3} />
-        </TouchableOpacity>
+    <DetailScreen title="Ta semaine type" subtitle="Ta routine de la semaine">
+      {loaded && hasRoutine ? (
+        <Enter i={0}>
+          <Glass style={{ gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="calendar" size={22} color={P.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Ink size={16} weight="black" tight>
+                  {convertedAt ? 'Copiée dans ton planning' : 'Passe-la dans ton planning'}
+                </Ink>
+                <Ink size={13} weight="medium" color={P.ink2}>
+                  {convertedAt ? `Le ${mediumDate(new Date(convertedAt))}. Tes créneaux vivent maintenant dans le planning.` : 'Le planning remplace cette page : rappels, séances prévues, semaine tenue.'}
+                </Ink>
+              </View>
+            </View>
+            {convertedAt ? <BigButton label="Ouvrir le planning" icon="calendar" onPress={() => router.push('/planning' as any)} /> : <BigButton label={converting ? 'Conversion' : 'Convertir en créneaux'} icon="refresh" onPress={convert} disabled={converting} />}
+          </Glass>
+        </Enter>
+      ) : null}
 
-        {/* Subtitle */}
-        <Text style={styles.headerSubtitle}>Planifie tes entraînements</Text>
+      {loaded && !hasRoutine ? (
+        <EmptyState title="Pas de semaine type" text="Tes créneaux réguliers se gèrent maintenant dans le planning. Tu peux aussi en poser un ici, jour par jour." action="Ouvrir le planning" onAction={() => router.push('/planning' as any)} />
+      ) : null}
 
-        {/* Horizontal Week ScrollView */}
-        <View style={styles.weekContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled={false}
-            snapToInterval={SCREEN_WIDTH * 0.85}
-            decelerationRate="fast"
-            contentContainerStyle={styles.weekHorizontalContent}
-          >
-            {days.map((day, index) => {
-              const dayKey = dayKeys[index];
-              const activity = getActivityForDay(dayKey);
-              const isToday = index === currentDayIndex;
-
-              const dayRoutine = routine[dayKey] || [];
-              const isRest = dayRoutine.length === 1 && dayRoutine[0]?.activity === 'REPOS';
-
+      <Enter i={1}>
+        <Card style={{ gap: 12 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {DAY_KEYS.map((k, i) => {
+              const b = routine[k] || [];
+              const rest = isRestDay(b);
               return (
-                <TouchableOpacity
-                  key={dayKey}
-                  style={[
-                    styles.dayCardHorizontal,
-                    {
-                      backgroundColor: isToday ? '#EFF6FF' : '#FFFFFF',
-                      borderWidth: isToday ? 2 : 1,
-                      borderColor: isToday ? '#2563EB' : '#E5E7EB',
-                    },
-                  ]}
-                  onPress={() => setEditingDay(dayKey)}
-                  activeOpacity={0.7}
-                >
-                  {/* Badge "Aujourd'hui" */}
-                  {isToday && (
-                    <View style={styles.todayBadge}>
-                      <Text style={styles.todayBadgeText}>Aujourd'hui</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.dayCardContent}>
-                    {/* Header du jour */}
-                    <View style={styles.dayCardHeader}>
-                      <Text style={[styles.dayName, isToday && styles.dayNameToday]}>{day}</Text>
-                      {isToday && activity && activity.type && activity.type !== 'rest' && (
-                        <TouchableOpacity
-                          style={styles.validateButtonCompact}
-                          onPress={() => {
-                            handleValidateToday();
-                          }}
-                          activeOpacity={0.7}
-                        >
-                          <Check size={16} color="#FFFFFF" strokeWidth={3} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                    
-                    {/* Contenu des entraînements */}
-                    {dayRoutine.length > 0 && !isRest ? (
-                      <View style={styles.workoutsList}>
-                        {dayRoutine.slice(0, 3).map((block, blockIndex) => {
-                          const blockClub = getAvailableClubs().find(c => c.name === block.activity) || userClubs.find(c => c.name === block.activity);
-                          const blockLogo = blockClub ? getClubLogoById(blockClub.id) : null;
-                          
-                          return (
-                            <View key={blockIndex} style={styles.workoutItemCompact}>
-                              {blockLogo ? (
-                                <Image source={blockLogo} style={styles.workoutLogoCompact} resizeMode="contain" />
-                              ) : blockClub?.id === 'running' ? (
-                                <MaterialCommunityIcons name="run" size={16} color="#10B981" />
-                              ) : (
-                                <View style={styles.workoutLogoPlaceholder} />
-                              )}
-                              <View style={styles.workoutInfoCompact}>
-                                {block.time && (
-                                  <Text style={styles.workoutTimeCompact}>{block.time}</Text>
-                                )}
-                                <Text style={styles.workoutClubNameCompact} numberOfLines={1}>
-                                  {block.activity}
-                                </Text>
-                                {block.workoutType && (
-                                  <Text style={styles.workoutTypeCompact} numberOfLines={1}>
-                                    {block.workoutType}
-                                  </Text>
-                                )}
-                              </View>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    ) : isRest ? (
-                      <View style={styles.restDayContainer}>
-                        <Moon size={18} color="#6366F1" />
-                        <Text style={styles.restDayText}>Repos</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.emptyDayContainer}>
-                        <Text style={styles.emptyDayText}>+ Ajouter</Text>
-                      </View>
-                    )}
+                <Press key={k} onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={`${DAY_LABELS[i]}, ${rest ? 'repos' : b.length ? `${b.length} entraînement` : 'rien de prévu'}. Modifier`}>
+                  <View style={{ alignItems: 'center', gap: 4, minWidth: 40, minHeight: 44 }}>
+                    <View style={{ width: 30, height: 38, borderRadius: 9, backgroundColor: b.length > 0 && !rest ? P.ink : 'transparent', borderWidth: b.length > 0 && !rest ? 0 : 1.5, borderStyle: 'dashed', borderColor: P.dashed }} />
+                    <Ink size={12} weight={i === tIdx ? 'black' : 'bold'} color={i === tIdx ? P.accent : P.ink2}>
+                      {DAY_SHORT[i]}
+                    </Ink>
                   </View>
-                </TouchableOpacity>
+                </Press>
               );
             })}
-          </ScrollView>
-        </View>
-
-        {/* Weekly Summary */}
-        <View style={styles.weeklySummary}>
-          <Text style={styles.weeklySummaryTitle}>Résumé de la semaine</Text>
-          <View style={styles.weeklySummaryStats}>
-            <View style={styles.weeklySummaryStat}>
-              <Text style={styles.weeklySummaryStatValue}>{weeklySummary.totalSessions}</Text>
-              <Text style={styles.weeklySummaryStatLabel}>Sessions</Text>
-            </View>
-            <View style={styles.weeklySummaryStat}>
-              <Text style={styles.weeklySummaryStatValue}>{weeklySummary.totalHours}h</Text>
-              <Text style={styles.weeklySummaryStatLabel}>Heures prévues</Text>
-            </View>
           </View>
-        </View>
-      </ScrollView>
-      <Modal
-        visible={editingDay !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditingDay(null)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingDay ? days[dayKeys.indexOf(editingDay)] : ''}
-              </Text>
-              <TouchableOpacity onPress={() => setEditingDay(null)}>
-                <X size={24} color="#1F2937" strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
+          <Ink size={13} weight="bold" color={P.ink2}>
+            {`${sessions} entraînement${sessions > 1 ? 's' : ''} par semaine, ${restDays} jour${restDays > 1 ? 's' : ''} de repos`}
+          </Ink>
+        </Card>
+      </Enter>
 
-            {editingDay && (
-              <ScrollView
-                style={styles.modalScrollView}
-                contentContainerStyle={styles.modalScrollContent}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={true}
-              >
-                {routine[editingDay] && routine[editingDay].length > 0 && (
-                  <View style={styles.routineBlocksContainer}>
-                    {routine[editingDay].map((block, index) => {
-                      if (block.activity === 'REPOS') {
-                        return (
-                          <View key={index} style={styles.restBlock}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                              <Moon size={14} color="#6366F1" />
-                              <Text style={styles.restText}>Repos</Text>
-                            </View>
-                            <TouchableOpacity onPress={() => {
-                              const newRoutine = { ...routine };
-                              delete newRoutine[editingDay];
-                              saveRoutine(newRoutine);
-                            }}>
-                              <X size={18} color="#9CA3AF" />
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      }
-                      const availableClubs = getAvailableClubs();
-                      const blockClub = availableClubs.find(c => c.name === block.activity) || userClubs.find(c => c.name === block.activity);
-                      const blockLogo = blockClub ? getClubLogoById(blockClub.id) : null;
-                      
-                      return (
-                        <View key={index} style={styles.routineBlock}>
-                          <View style={styles.routineBlockInfo}>
-                            <View style={styles.routineBlockHeader}>
-                              {blockLogo && (
-                                <Image source={blockLogo} style={styles.routineBlockLogo} resizeMode="contain" />
-                              )}
-                              {blockClub?.id === 'running' && (
-                                <MaterialCommunityIcons name="run" size={20} color="#10B981" />
-                              )}
-                              <Text style={styles.routineBlockTime}>{block.time}</Text>
-                            </View>
-                            <Text style={styles.routineBlockActivity}>{block.activity}</Text>
-                            {block.workoutType && (
-                              <Text style={styles.routineBlockWorkoutType}>{block.workoutType}</Text>
-                            )}
-                          </View>
-                          <TouchableOpacity onPress={() => removeRoutineBlock(editingDay, index)}>
-                            <X size={18} color="#EF4444" />
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
-                
-                {/* Limite de 3 entraînements */}
-                {editingDay && routine[editingDay] && routine[editingDay].length >= 3 && (
-                  <View style={styles.limitNotice}>
-                    <Text style={styles.limitNoticeText}>
-                      Maximum 3 entraînements par jour atteint
-                    </Text>
-                  </View>
-                )}
+      {todayActive ? (
+        <Enter i={2}>
+          <BigButton label="Valider la séance du jour" icon="check" onPress={validateToday} />
+        </Enter>
+      ) : null}
 
-                <View style={styles.addBlockForm}>
-                  {/* Time Picker */}
-                  <TouchableOpacity
-                    style={styles.timePickerButton}
-                    onPress={() => setShowTimePicker(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Clock size={20} color="#2563EB" strokeWidth={2.5} />
-                    <Text style={styles.timePickerText}>
-                      {formatTime(selectedTime)}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Clubs Selector */}
-                  <View style={styles.clubsSelector}>
-                    <Text style={styles.clubsSelectorTitle}>Clubs & Coach</Text>
-                    <View style={styles.clubsGrid}>
-                      {getAvailableClubs().map((club) => {
-                        const clubLogo = getClubLogoById(club.id);
-                        const isSelected = selectedClubModal === club.id;
-                        
-                        return (
-                          <TouchableOpacity
-                            key={club.id}
-                            style={[
-                              styles.clubCard,
-                              isSelected && styles.clubCardSelected,
-                            ]}
-                            onPress={() => setSelectedClubModal(club.id)}
-                            activeOpacity={0.7}
-                          >
-                            {clubLogo ? (
-                              <Image source={clubLogo} style={styles.clubCardLogo} resizeMode="contain" />
-                            ) : (
-                              <MaterialCommunityIcons name="run" size={32} color={club.color} />
-                            )}
-                            <Text style={[
-                              styles.clubName,
-                              isSelected && styles.clubNameSelected,
-                            ]} numberOfLines={2}>
-                              {club.name}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  {/* Type d'entraînement (ex: "Pecs et bras") */}
-                  {selectedClubModal && (
-                    <View style={styles.workoutTypeContainer}>
-                      <Text style={styles.workoutTypeLabel}>Type d'entraînement (optionnel)</Text>
-                      <TextInput
-                        style={styles.workoutTypeInput}
-                        placeholder="Ex: Pecs et bras, Jambes, Full body..."
-                        placeholderTextColor="#9CA3AF"
-                        value={workoutType}
-                        onChangeText={setWorkoutType}
-                        maxLength={30}
-                      />
-                    </View>
-                  )}
-
-                  <View style={styles.modalButtons}>
-                    <TouchableOpacity
-                      style={styles.restButton}
-                      onPress={() => {
-                        setRestDay(editingDay);
-                        setEditingDay(null);
-                      }}
-                    >
-                      <Text style={styles.restButtonText}>Repos</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.addButton, 
-                        (!selectedClubModal || (routine[editingDay]?.length || 0) >= 3) && styles.addButtonDisabled
-                      ]}
-                      onPress={() => addRoutineBlock(editingDay)}
-                      disabled={!selectedClubModal || (routine[editingDay]?.length || 0) >= 3}
-                    >
-                      <Plus size={20} color="#FFFFFF" strokeWidth={2.5} />
-                      <Text style={styles.addButtonText}>Ajouter</Text>
-                    </TouchableOpacity>
-                  </View>
+      <SectionTitle>Jour par jour</SectionTitle>
+      {DAY_KEYS.map((k, i) => {
+        const blocks = routine[k] || [];
+        const rest = isRestDay(blocks);
+        const first = blocks.find((b) => b.activity !== 'REPOS');
+        return (
+          <Enter key={k} i={3 + i}>
+            <Press onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={`Modifier ${DAY_LABELS[i]}`}>
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderColor: i === tIdx ? P.accent : P.line2, borderWidth: i === tIdx ? 1.5 : 1, overflow: 'hidden' }}>
+                <View style={{ width: 92 }}>
+                  <Ink size={15} weight="black" tight color={i === tIdx ? P.accent : P.ink} numberOfLines={1}>
+                    {DAY_LABELS[i]}
+                  </Ink>
+                  {i === tIdx ? (
+                    <Ink size={11} weight="bold" color={P.accent}>
+                      Aujourd’hui
+                    </Ink>
+                  ) : null}
                 </View>
-              </ScrollView>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+                <View style={{ flex: 1, gap: 4 }}>
+                  {rest ? (
+                    <Ink size={14} weight="bold" color={P.indigo}>
+                      Repos
+                    </Ink>
+                  ) : blocks.length ? (
+                    blocks.map((b, bi) => (
+                      <View key={bi} style={{ flexDirection: 'row', gap: 8, alignItems: 'baseline' }}>
+                        {b.time ? (
+                          <Ink size={13} weight="black" color={P.ink2}>
+                            {b.time}
+                          </Ink>
+                        ) : null}
+                        <Ink size={14} weight="extraBold" style={{ flexShrink: 1 }} numberOfLines={2}>
+                          {b.workoutType ? `${b.activity}, ${b.workoutType}` : b.activity}
+                        </Ink>
+                      </View>
+                    ))
+                  ) : (
+                    <Ink size={13} weight="bold" color={P.muted}>
+                      Rien de prévu
+                    </Ink>
+                  )}
+                </View>
+                {first ? <Image source={sportArt(sportOf(first), gender, 1)} style={{ width: 44, height: 58, marginVertical: -12 }} resizeMode="contain" /> : <Icon name="plus" size={18} color={P.muted} />}
+              </Card>
+            </Press>
+          </Enter>
+        );
+      })}
 
-      {/* Reward Overlay */}
-      <RewardOverlay ref={rewardOverlayRef} />
-
-      {/* Time Picker Modal - En dehors du Modal parent pour éviter les conflits */}
-      <PopupComponent />
-
-      {showTimePicker && Platform.OS === 'ios' && (
-        <Modal
-          visible={showTimePicker}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowTimePicker(false)}
-          statusBarTranslucent
-        >
-          <View style={styles.timePickerModalOverlay}>
-            <View style={styles.timePickerModalContent}>
-              <View style={styles.timePickerModalHeader}>
-                <Text style={styles.timePickerModalTitle}>Sélectionner l'heure</Text>
-                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                  <Text style={styles.timePickerModalDone}>Terminé</Text>
-                </TouchableOpacity>
+      <Sheet visible={!!editing} onClose={() => setEditing(null)} title={editing ? DAY_LABELS[DAY_KEYS.indexOf(editing)] : ''} scroll>
+        {editBlocks.length ? (
+          <View style={{ gap: 8 }}>
+            {editBlocks.map((b, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, borderRadius: 16, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingLeft: 14 }}>
+                <Ink size={14} weight="extraBold" style={{ flex: 1 }}>
+                  {b.activity === 'REPOS' ? 'Jour de repos' : [b.time, b.activity, b.workoutType].filter(Boolean).join(', ')}
+                </Ink>
+                <Press onPress={() => editing && removeBlock(editing, i)} accessibilityRole="button" accessibilityLabel="Retirer ce créneau">
+                  <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="close" size={18} color={P.danger} />
+                  </View>
+                </Press>
               </View>
-              <DateTimePicker
-                value={selectedTime}
-                mode="time"
-                is24Hour={true}
-                display="spinner"
-                onChange={(event, date) => {
-                  if (date) {
-                    setSelectedTime(date);
-                  }
-                }}
-                style={styles.timePickerIOS}
-              />
+            ))}
+          </View>
+        ) : null}
+        {editCount >= 3 ? (
+          <Ink size={13} weight="bold" color={P.muted}>
+            Trois entraînements par jour au maximum.
+          </Ink>
+        ) : (
+          <View style={{ gap: 14 }}>
+            <Label>Heure</Label>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+              <Stepper value={String(hour).padStart(2, '0')} suffix="heure" label="heure" onMinus={() => setHour((hour + 23) % 24)} onPlus={() => setHour((hour + 1) % 24)} />
+              <Stepper value={String(minute).padStart(2, '0')} suffix="minutes" label="minutes" onMinus={() => setMinute((minute + 45) % 60)} onPlus={() => setMinute((minute + 15) % 60)} />
+            </View>
+            <Label>Club ou activité</Label>
+            <ChipScroll>
+              {options.map((o) => (
+                <Chip key={o.id} label={o.name} active={clubId === o.id} accent={P.accent} onPress={() => setClubId(clubId === o.id ? null : o.id)} />
+              ))}
+            </ChipScroll>
+            {clubId ? <Field value={workoutType} onChangeText={setWorkoutType} placeholder="Ex : Pecs et bras, Jambes, Full body" maxLength={30} /> : null}
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <BigButton label="Jour de repos" tone="light" onPress={() => editing && setRest(editing)} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <BigButton label="Ajouter" icon="plus" onPress={addBlock} disabled={!clubId} />
+              </View>
             </View>
           </View>
-        </Modal>
-      )}
-    </ScreenWrapper>
+        )}
+      </Sheet>
+    </DetailScreen>
   );
 }
-
-const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#E8EDF2',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#E8EDF2',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    gap: 16,
-    paddingBottom: 90, // Space for tab bar (75px height)
-  },
-  header: {
-    marginBottom: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : 0,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerClubLogo: {
-    width: 40,
-    height: 40,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#1F2937',
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
-    marginTop: 2,
-  },
-  weekContainer: {
-    marginBottom: 20,
-  },
-  weekHorizontalContent: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  dayCardHorizontal: {
-    width: SCREEN_WIDTH * 0.85,
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    position: 'relative',
-    overflow: 'visible',
-    marginRight: 16,
-  },
-  weeklySummary: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  weeklySummaryTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  weeklySummaryStats: {
-    flexDirection: 'row',
-    gap: 24,
-  },
-  weeklySummaryStat: {
-    flex: 1,
-  },
-  weeklySummaryStatValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#2563EB',
-    marginBottom: 4,
-  },
-  weeklySummaryStatLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  liveSessionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
-    gap: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  liveSessionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  liveSessionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  liveSessionSubtitle: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  modalScrollView: {
-    flex: 1,
-  },
-  modalScrollContent: {
-    paddingBottom: 20,
-  },
-  dayCard: {
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    position: 'relative',
-    overflow: 'visible',
-  },
-  todayBadge: {
-    position: 'absolute',
-    top: -8,
-    right: 16,
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    zIndex: 10,
-  },
-  todayBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  dayCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  dayCardContent: {
-    gap: 8,
-  },
-  dayName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1F2937',
-  },
-  dayNameToday: {
-    color: '#2563EB',
-  },
-  activityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
-  },
-  activityLogo: {
-    width: 20,
-    height: 20,
-  },
-  activityTime: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  activityLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  workoutsList: {
-    marginTop: 8,
-    gap: 6,
-  },
-  workoutItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  workoutItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  workoutLogo: {
-    width: 20,
-    height: 20,
-  },
-  workoutTime: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748B',
-    minWidth: 45,
-  },
-  workoutTextContainer: {
-    flex: 1,
-    flexDirection: 'column',
-    gap: 2,
-  },
-  workoutClubName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  workoutType: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#64748B',
-    fontStyle: 'italic',
-  },
-  validateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  validateButtonCompact: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#2563EB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  validateButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  restDayContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    justifyContent: 'center',
-  },
-  restDayEmoji: {
-    fontSize: 24,
-  },
-  restDayText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
-  },
-  emptyDayContainer: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  emptyDayText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#9CA3AF',
-  },
-  workoutItemCompact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    marginBottom: 6,
-  },
-  workoutLogoCompact: {
-    width: 24,
-    height: 24,
-  },
-  workoutLogoPlaceholder: {
-    width: 24,
-    height: 24,
-  },
-  workoutInfoCompact: {
-    flex: 1,
-    gap: 2,
-  },
-  workoutTimeCompact: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  workoutClubNameCompact: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  workoutTypeCompact: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#64748B',
-    fontStyle: 'italic',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 20,
-    paddingBottom: 40,
-    maxHeight: '90%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1F2937',
-  },
-  routineBlocksContainer: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  routineBlock: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    padding: 16,
-    borderRadius: 16,
-  },
-  routineBlockInfo: {
-    flex: 1,
-  },
-  routineBlockTime: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
-    marginBottom: 4,
-  },
-  routineBlockActivity: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  routineBlockWorkoutType: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#64748B',
-    fontStyle: 'italic',
-    marginTop: 2,
-  },
-  limitNotice: {
-    backgroundColor: '#FEF3C7',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  limitNoticeText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#D97706',
-    textAlign: 'center',
-  },
-  workoutTypeContainer: {
-    marginTop: 16,
-  },
-  workoutTypeLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  workoutTypeInput: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1F2937',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  restBlock: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFF4E6',
-    padding: 16,
-    borderRadius: 16,
-  },
-  restText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#F59E0B',
-  },
-  addBlockForm: {
-    gap: 12,
-  },
-  timePickerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  timePickerText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  clubsSelector: {
-    marginTop: 12,
-  },
-  clubsSelectorTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  clubsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  clubCard: {
-    width: '30%',
-    aspectRatio: 1,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 20,
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  clubCardSelected: {
-    backgroundColor: '#E0F2FE',
-    borderColor: '#2563EB',
-  },
-  clubCardLogo: {
-    width: 40,
-    height: 40,
-    marginBottom: 8,
-  },
-  clubName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-    textAlign: 'center',
-  },
-  clubNameSelected: {
-    color: '#2563EB',
-    fontWeight: '700',
-  },
-  routineBlockLogo: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-  },
-  routineBlockHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  restButton: {
-    flex: 1,
-    backgroundColor: '#FFF4E6',
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  restButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#F59E0B',
-  },
-  addButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#2563EB',
-    padding: 16,
-    borderRadius: 16,
-  },
-  addButtonDisabled: {
-    backgroundColor: '#9CA3AF',
-    opacity: 0.5,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  timePickerModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-    alignItems: 'stretch',
-  },
-  timePickerModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-    minHeight: 300,
-  },
-  timePickerModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  timePickerModalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#1F2937',
-  },
-  timePickerModalDone: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#2563EB',
-  },
-  timePickerIOS: {
-    width: '100%',
-    height: 200,
-    backgroundColor: '#FFFFFF',
-  },
-});

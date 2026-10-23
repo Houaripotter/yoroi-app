@@ -1,450 +1,228 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { router } from 'expo-router';
-import {
-  ArrowLeft,
-  Activity,
-  AlertCircle,
-  CheckCircle,
-  TrendingUp,
-  Info,
-  Calendar,
-  Target,
-  Sparkles,
-  Heart,
-} from 'lucide-react-native';
-import { getWeeklyLoad, getRiskLevel, formatLoad } from '@/lib/trainingLoadService';
+/**
+ * Charge d'entrainement (refonte v2) : points de la semaine (duree x effort ressenti) sur les 7 derniers jours,
+ * jauge au pinceau (repere au milieu : ton habitude des quatre semaines precedentes), verdict mesure et conseil, charge jour par jour, et les cinq niveaux expliques.
+ * Vague 26 : jauge en indigo et barres en bleu quel que soit le niveau.
+ * Vague 32 : niveaux sur l'echelle commune lib/v2/intensite.ts (bleu, vert, or, orange, braise), plus aucun rouge.
+ */
+import React, { useCallback, useState } from 'react';
+import { View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import Svg, { Circle, Path } from 'react-native-svg';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Card, Enter, Glass, P, SectionTitle } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { Note } from '@/components/yoroi/v2/competition/ui';
+import { InkBarChart } from '@/components/yoroi/v2/progres/InkBarChart';
+import { DEFAULT_RPE, getChargeReelle } from '@/lib/v2/chargeReelle';
+import type { ChargeReelle } from '@/lib/v2/chargeReelle';
+import { dayShort, parseLocalDate } from '@/lib/v2/competition/dates';
 import logger from '@/lib/security/logger';
-import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
+import { intensite, type NiveauIntensite } from '@/lib/v2/intensite';
 
-export default function ChargeScreen() {
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
-  const { width: screenWidth } = useWindowDimensions();
-  const IS_SMALL_SCREEN = screenWidth < 375;
-  const styles = useMemo(() => createStyles(IS_SMALL_SCREEN), [IS_SMALL_SCREEN]);
-  const insets = useSafeAreaInsets();
+const LEVELS = [
+  { name: 'Récupération', range: '0 à 500 points', max: 500, n: 1 as NiveauIntensite, get color() { return intensite(1).text; }, description: "Charge d'entraînement faible.", advice: "Augmente progressivement l'intensité de tes séances." },
+  { name: 'Équilibré', range: '500 à 1 000 points', max: 1000, n: 2 as NiveauIntensite, get color() { return intensite(2).text; }, description: 'Ton entraînement est bien équilibré.', advice: 'Garde ce rythme pour progresser durablement.' },
+  { name: 'Optimal', range: '1 000 à 1 500 points', max: 1500, n: 3 as NiveauIntensite, get color() { return intensite(3).text; }, description: "Charge d'entraînement optimale.", advice: 'Tu es dans la zone de progression idéale.' },
+  { name: 'Intense', range: '1 500 à 2 000 points', max: 2000, n: 4 as NiveauIntensite, get color() { return intensite(4).text; }, description: "Charge d'entraînement élevée.", advice: 'Assure-toi de bien récupérer entre les séances.' },
+  { name: 'Très intense', range: 'plus de 2 000 points', max: Infinity, n: 5 as NiveauIntensite, get color() { return intensite(5).text; }, description: "Charge d'entraînement très élevée.", advice: 'Risque de surentraînement. Prévois des jours de repos.' },
+];
 
-  const [weeklyLoad, setWeeklyLoad] = useState(0);
-  const [riskLevel, setRiskLevel] = useState<'safe' | 'moderate' | 'high' | 'danger'>('safe');
-  const [sessions, setSessions] = useState(0);
+/** Nombre entier a la francaise : 4 100 */
+function fmtPoints(n: number): string {
+  return String(Math.round(Math.max(0, n))).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+}
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const load = await getWeeklyLoad();
-      setWeeklyLoad(load);
-      setRiskLevel(getRiskLevel(load));
-      // Calculer les sessions depuis la charge (approximation: 1 session = ~300 pts)
-      const estimatedSessions = load > 0 ? Math.max(1, Math.round(load / 300)) : 0;
-      setSessions(estimatedSessions);
-    } catch (error) {
-      logger.error('Erreur chargement charge:', error);
-    }
-  };
-
-  // Niveaux expliqués
-  const levelInfo = [
-    {
-      level: t('screens.charge.levels.recovery.name'),
-      range: '0 - 500 pts',
-      color: '#0EA5E9',
-      icon: Heart,
-      description: t('screens.charge.levels.recovery.description'),
-      advice: t('screens.charge.levels.recovery.advice'),
-    },
-    {
-      level: t('screens.charge.levels.balanced.name'),
-      range: '500 - 1000 pts',
-      color: '#10B981',
-      icon: CheckCircle,
-      description: t('screens.charge.levels.balanced.description'),
-      advice: t('screens.charge.levels.balanced.advice'),
-    },
-    {
-      level: t('screens.charge.levels.optimal.name'),
-      range: '1000 - 1500 pts',
-      color: '#22C55E',
-      icon: Sparkles,
-      description: t('screens.charge.levels.optimal.description'),
-      advice: t('screens.charge.levels.optimal.advice'),
-    },
-    {
-      level: t('screens.charge.levels.intense.name'),
-      range: '1500 - 2000 pts',
-      color: '#F59E0B',
-      icon: TrendingUp,
-      description: t('screens.charge.levels.intense.description'),
-      advice: t('screens.charge.levels.intense.advice'),
-    },
-    {
-      level: t('screens.charge.levels.veryIntense.name'),
-      range: '> 2000 pts',
-      color: '#EF4444',
-      icon: AlertCircle,
-      description: t('screens.charge.levels.veryIntense.description'),
-      advice: t('screens.charge.levels.veryIntense.advice'),
-    },
-  ];
-
-  // Trouver le niveau actuel
-  const getCurrentLevelIndex = () => {
-    if (weeklyLoad < 500) return 0;
-    if (weeklyLoad < 1000) return 1;
-    if (weeklyLoad < 1500) return 2;
-    if (weeklyLoad < 2000) return 3;
-    return 4;
-  };
-
-  const currentLevel = levelInfo[getCurrentLevelIndex()];
-  const CurrentIcon = currentLevel.icon;
-  const percentage = Math.min((weeklyLoad / 2000) * 100, 100);
-
+/** Petite statistique : chiffre puis libelle sur deux lignes au plus, sans debordement */
+function Fig({ value, unit, label }: { value: string; unit?: string; label: string }) {
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('screens.charge.title')}</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Carte principale */}
-        <View style={[styles.mainCard, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.mainCardHeader}>
-            <Activity size={24} color={currentLevel.color} />
-            <Text style={[styles.mainCardTitle, { color: colors.textPrimary }]}>
-              {t('screens.charge.thisWeek')}
-            </Text>
-          </View>
-
-          {/* Jauge circulaire */}
-          <View style={styles.gaugeContainer}>
-            <View style={[styles.gaugeBg, { borderColor: colors.border }]} />
-            <View style={[
-              styles.gaugeFill,
-              {
-                borderColor: currentLevel.color,
-                transform: [{ rotate: `${(percentage / 100) * 180 - 90}deg` }],
-              }
-            ]} />
-            <View style={styles.gaugeCenter}>
-              <CurrentIcon size={40} color={currentLevel.color} strokeWidth={1.5} />
-              <View style={{ height: 8 }} />
-              <Text style={[styles.gaugeValue, { color: colors.textPrimary }]}>
-                {formatLoad(weeklyLoad)}
-              </Text>
-              <Text style={[styles.gaugeUnit, { color: colors.textMuted }]}>{t('screens.charge.points')}</Text>
-            </View>
-          </View>
-
-          {/* Niveau actuel */}
-          <View style={[styles.currentLevelBadge, { backgroundColor: currentLevel.color + '20' }]}>
-            <Text style={[styles.currentLevelText, { color: currentLevel.color }]}>
-              {currentLevel.level}
-            </Text>
-          </View>
-
-          <Text style={[styles.currentDescription, { color: colors.textSecondary }]}>
-            {currentLevel.description}
-          </Text>
-
-          <View style={[styles.adviceBox, { backgroundColor: currentLevel.color + '10', borderColor: currentLevel.color + '30' }]}>
-            <Info size={16} color={currentLevel.color} />
-            <Text style={[styles.adviceText, { color: colors.textPrimary }]}>
-              {currentLevel.advice}
-            </Text>
-          </View>
-        </View>
-
-        {/* Stats rapides */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Calendar size={20} color="#8B5CF6" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{sessions}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('screens.charge.sessions')}</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Target size={20} color="#F59E0B" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {weeklyLoad > 0 ? Math.round(weeklyLoad / Math.max(sessions, 1)) : 0}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('screens.charge.ptsPerSession')}</Text>
-          </View>
-        </View>
-
-        {/* Explication des niveaux */}
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          {t('screens.charge.understandLevels')}
-        </Text>
-
-        {levelInfo.map((level, index) => {
-          const LevelIcon = level.icon;
-          const isCurrent = index === getCurrentLevelIndex();
-
-          return (
-            <View
-              key={level.level}
-              style={[
-                styles.levelCard,
-                { backgroundColor: colors.backgroundCard },
-                isCurrent && { borderColor: level.color, borderWidth: 2 }
-              ]}
-            >
-              <View style={styles.levelHeader}>
-                <View style={[styles.levelIconContainer, { backgroundColor: level.color + '20' }]}>
-                  <LevelIcon size={18} color={level.color} />
-                </View>
-                <View style={styles.levelInfo}>
-                  <Text style={[styles.levelName, { color: level.color }]}>
-                    {level.level}
-                  </Text>
-                  <Text style={[styles.levelRange, { color: colors.textMuted }]}>
-                    {level.range}
-                  </Text>
-                </View>
-                {isCurrent && (
-                  <View style={[styles.currentBadge, { backgroundColor: level.color }]}>
-                    <Text style={styles.currentBadgeText}>{t('screens.charge.current')}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={[styles.levelDescription, { color: colors.textSecondary }]}>
-                {level.description}
-              </Text>
-            </View>
-          );
-        })}
-
-        {/* Comment ça marche */}
-        <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>
-            {t('screens.charge.howCalculated')}
-          </Text>
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            {t('screens.charge.calculationExplanation')}
-          </Text>
-        </View>
-
-        <View style={{ height: 40 }} />
-        <PremiumTeaser variant="analytics" title="Analyse de charge complète" />
-      </ScrollView>
+    <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+      <Ink size={26} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+        {value}
+        {unit ? (
+          <Ink size={13} weight="bold" color={P.muted}>
+            {`\u00A0${unit}`}
+          </Ink>
+        ) : null}
+      </Ink>
+      <Ink size={12} weight="bold" color={P.ink2} numberOfLines={2}>
+        {label}
+      </Ink>
     </View>
   );
 }
 
-const createStyles = (IS_SMALL_SCREEN: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  mainCard: {
-    borderRadius: 20,
-    padding: 28,
-    paddingVertical: 36,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  mainCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 20,
-  },
-  mainCardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  gaugeContainer: {
-    width: IS_SMALL_SCREEN ? 150 : 180,
-    height: IS_SMALL_SCREEN ? 100 : 120,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginBottom: IS_SMALL_SCREEN ? 30 : 36,
-    marginTop: IS_SMALL_SCREEN ? 16 : 20,
-  },
-  gaugeBg: {
-    position: 'absolute',
-    width: IS_SMALL_SCREEN ? 150 : 180,
-    height: IS_SMALL_SCREEN ? 150 : 180,
-    borderRadius: IS_SMALL_SCREEN ? 75 : 90,
-    borderWidth: IS_SMALL_SCREEN ? 10 : 12, // Bordure plus fine sur petits écrans
-    borderBottomColor: 'transparent',
-    top: 0,
-  },
-  gaugeFill: {
-    position: 'absolute',
-    width: IS_SMALL_SCREEN ? 150 : 180,
-    height: IS_SMALL_SCREEN ? 150 : 180,
-    borderRadius: IS_SMALL_SCREEN ? 75 : 90,
-    borderWidth: IS_SMALL_SCREEN ? 10 : 12,
-    borderBottomColor: 'transparent',
-    borderRightColor: 'transparent',
-    top: 0,
-  },
-  gaugeCenter: {
-    alignItems: 'center',
-  },
-  gaugeValue: {
-    fontSize: IS_SMALL_SCREEN ? 28 : 32, // Plus petit sur petits écrans
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  gaugeUnit: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  currentLevelBadge: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 20,
-    marginTop: 16,
-  },
-  currentLevelText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  currentDescription: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 20,
-    paddingHorizontal: 12,
-  },
-  adviceBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  adviceText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  levelCard: {
-    borderRadius: 16,
-    padding: IS_SMALL_SCREEN ? 12 : 16, // Padding adaptatif
-    marginBottom: 12,
-  },
-  levelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  levelIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  levelInfo: {
-    flex: 1,
-  },
-  levelName: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  levelRange: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  currentBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  currentBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  levelDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  infoCard: {
-    borderRadius: 16,
-    padding: IS_SMALL_SCREEN ? 12 : 16, // Padding adaptatif
-    marginTop: 8,
-  },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 13,
-    lineHeight: 20,
-  },
-});
+type Verdict = { idx: number; n: NiveauIntensite; name: string; color: string; description: string; advice: string };
 
+/** Verdict mesure : la charge comparee a l'habitude des quatre semaines precedentes. */
+function verdictOf(load: number, habit: number): Verdict {
+  const idx = levelIndex(load);
+  if (!(habit > 0)) {
+    // Sans historique, on ne parle jamais de surentrainement.
+    const i = Math.min(idx, 3);
+    const l = LEVELS[i];
+    return { idx: i, n: l.n, name: l.name, color: l.color, description: l.description, advice: i === 3 ? 'Encore peu d’historique : assure-toi de bien récupérer entre les séances.' : l.advice };
+  }
+  const ratio = load / habit;
+  const pct = Math.round((ratio - 1) * 100);
+  if (ratio >= 1.5) {
+    if (idx >= 3) {
+      const l = LEVELS[4];
+      return { idx: 4, n: l.n, name: l.name, color: l.color, description: `Bien au-dessus de ton habitude\u00A0: ${pct}\u00A0% de plus que tes quatre semaines précédentes.`, advice: 'Risque de surentraînement. Prévois des jours de repos.' };
+    }
+    return { idx, n: 4, name: 'Forte hausse', get color() { return intensite(4).text; }, description: `Bien au-dessus de ton habitude\u00A0: ${pct}\u00A0% de plus que tes quatre semaines précédentes.`, advice: 'Monte en charge progressivement et garde un jour de repos.' };
+  }
+  if (ratio >= 1.25) {
+    return { idx: Math.min(idx, 3), n: 3, name: 'Au-dessus de ton habitude', get color() { return intensite(3).text; }, description: `Un peu plus chargé que d’habitude\u00A0: ${pct}\u00A0% de plus.`, advice: 'Soigne ton sommeil et ta récupération cette semaine.' };
+  }
+  if (ratio >= 0.8) {
+    return { idx: Math.min(idx, 3), n: 2, name: 'Dans ton habitude', get color() { return intensite(2).text; }, description: 'Ta charge ressemble à tes quatre semaines précédentes.', advice: 'Ton corps connaît ce rythme. Garde-le pour progresser durablement.' };
+  }
+  return { idx: Math.min(idx, 2), n: 1, name: 'Plus légère', get color() { return intensite(1).text; }, description: 'Semaine plus calme que tes quatre semaines précédentes.', advice: 'Parfait pour récupérer. Reprends le rythme quand tu te sens prêt.' };
+}
+
+const levelIndex = (load: number) => (load < 500 ? 0 : load < 1000 ? 1 : load < 1500 ? 2 : load < 2000 ? 3 : 4);
+
+function Gauge({ value, color, mark }: { value: number; color: string; mark?: number }) {
+  const W = 260;
+  const H = 150;
+  const r = 110;
+  const cx = W / 2;
+  const cy = 130;
+  const v = Math.max(0, Math.min(1, value));
+  const a0 = Math.PI;
+  const a = a0 + v * Math.PI;
+  const arc = (to: number) => `M${cx - r} ${cy} A${r} ${r} 0 0 1 ${(cx + r * Math.cos(to)).toFixed(1)} ${(cy + r * Math.sin(to)).toFixed(1)}`;
+  return (
+    <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+      <Path d={arc(2 * Math.PI - 0.0001)} stroke={P.line} strokeWidth={18} fill="none" strokeLinecap="round" />
+      {v > 0.005 ? <Path d={arc(a)} stroke={color} strokeWidth={18} fill="none" strokeLinecap="round" /> : null}
+      {mark != null ? (
+        <Path d={`M${(cx + (r - 14) * Math.cos(a0 + mark * Math.PI)).toFixed(1)} ${(cy + (r - 14) * Math.sin(a0 + mark * Math.PI)).toFixed(1)} L${(cx + (r + 14) * Math.cos(a0 + mark * Math.PI)).toFixed(1)} ${(cy + (r + 14) * Math.sin(a0 + mark * Math.PI)).toFixed(1)}`} stroke={P.ink} strokeWidth={3} strokeLinecap="round" opacity={0.55} />
+      ) : null}
+      <Circle cx={cx + r * Math.cos(a)} cy={cy + r * Math.sin(a)} r={7} fill={P.white} stroke={P.ink} strokeWidth={3} />
+    </Svg>
+  );
+}
+
+export default function ChargeScreen() {
+  const [stats, setStats] = useState<ChargeReelle | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      getChargeReelle()
+        .then(setStats)
+        .catch((e) => logger.error('Erreur chargement charge:', e));
+    }, []),
+  );
+
+  const load = stats?.totalLoad ?? 0;
+  const sessions = stats?.sessionsCount ?? 0;
+  const habit = stats?.habitWeeklyLoad ?? 0;
+  const level = verdictOf(load, habit);
+  const idx = level.idx;
+  const gaugeMax = habit > 0 ? Math.max(habit * 2, 500) : 2000;
+  const trend = stats?.trend === 'increasing' ? 'En hausse sur une semaine' : stats?.trend === 'decreasing' ? 'En baisse sur une semaine' : 'Stable sur une semaine';
+
+  return (
+    <DetailScreen title="Charge d'entraînement" subtitle="Sur les sept derniers jours">
+      <Enter i={0}>
+        <Glass style={{ alignItems: 'center', gap: 6 }}>
+          <View style={{ alignItems: 'center' }}>
+            <Gauge value={load / gaugeMax} color={P.accent} mark={habit > 0 ? 0.5 : undefined} />
+            <View style={{ position: 'absolute', bottom: 8, alignItems: 'center' }}>
+              <Ink size={48} weight="black" tight numberOfLines={1}>
+                {fmtPoints(load)}
+              </Ink>
+              <Ink size={12} weight="bold" color={P.muted}>
+                points
+              </Ink>
+            </View>
+          </View>
+          <View style={{ paddingHorizontal: 14, height: 32, borderRadius: 12, backgroundColor: intensite(level.n).tint, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+            <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: intensite(level.n).fill }} />
+            <Ink size={14} weight="extraBold" color={level.color}>
+              {level.name}
+            </Ink>
+          </View>
+          <Ink size={15} weight="bold" style={{ textAlign: 'center' }}>
+            {level.description}
+          </Ink>
+          <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>
+            {level.advice}
+          </Ink>
+          {habit > 0 ? (
+            <Ink size={12} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>
+              {`Ton habitude\u00A0: ${fmtPoints(habit)} points par semaine`}
+            </Ink>
+          ) : null}
+        </Glass>
+      </Enter>
+
+      <Enter i={1}>
+        <Card style={{ gap: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Fig value={String(sessions)} label={sessions > 1 ? 'Séances' : 'Séance'} />
+            <Fig value={fmtPoints(sessions ? load / sessions : 0)} label="Points par séance" />
+            <Fig value={stats && stats.averageRPE ? String(stats.averageRPE).replace('.', ',') : 'Non noté'} unit={stats && stats.averageRPE ? 'sur 10' : undefined} label="Effort moyen" />
+          </View>
+          <Ink size={12} weight="bold" color={P.muted}>
+            {trend}
+          </Ink>
+        </Card>
+      </Enter>
+
+      {stats && stats.dailyLoads.length ? (
+        <Enter i={2}>
+          <Card style={{ gap: 8 }}>
+            <Ink size={17} weight="black" tight>
+              Jour par jour
+            </Ink>
+            <InkBarChart bars={stats.dailyLoads.map((d) => ({ label: dayShort(parseLocalDate(d.date)).replace('.', ''), value: d.load }))} highlight={stats.dailyLoads.length - 1} format={(v) => `${fmtPoints(v)}\u00A0pts`} label="Charge par jour" />
+          </Card>
+        </Enter>
+      ) : null}
+
+      {sessions === 0 ? <Note>Aucune séance sur les sept derniers jours. Enregistre une séance avec ton effort ressenti : la charge se calcule toute seule.</Note> : null}
+      {stats && stats.estimatedCount > 0 ? (
+        <Note>{`${stats.estimatedCount === 1 ? '1 séance n’a' : `${stats.estimatedCount} séances n’ont`} pas d’effort noté : compté à ${DEFAULT_RPE} sur 10. Note ton effort à la fin de la séance pour un calcul juste.`}</Note>
+      ) : null}
+      {stats && stats.noDurationCount > 0 ? (
+        <Note>{`${stats.noDurationCount === 1 ? '1 séance n’a' : `${stats.noDurationCount} séances n’ont`} pas de durée : ${stats.noDurationCount === 1 ? 'elle compte' : 'elles comptent'} sans points.`}</Note>
+      ) : null}
+
+      <SectionTitle>Comprendre les niveaux</SectionTitle>
+      <Card style={{ padding: 8 }}>
+        {LEVELS.map((l, i) => {
+          const on = i === idx;
+          return (
+            <View key={l.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: on ? P.paper : 'transparent', borderTopWidth: i === 0 || on || i === idx + 1 ? 0 : 1, borderTopColor: P.line2 }}>
+              <View style={{ width: 8, alignSelf: 'stretch', borderRadius: 4, backgroundColor: intensite(l.n).fill }} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ink size={15} weight="extraBold" color={l.color}>
+                    {l.name}
+                  </Ink>
+                  {on ? (
+                    <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 8, backgroundColor: P.ink, justifyContent: 'center' }}>
+                      <Ink size={11} weight="extraBold" color={P.white}>
+                        Toi cette semaine
+                      </Ink>
+                    </View>
+                  ) : null}
+                </View>
+                <Ink size={12} weight="bold" color={P.muted}>
+                  {l.range}
+                </Ink>
+                <Ink size={13} weight="medium" color={P.ink2}>
+                  {l.description}
+                </Ink>
+              </View>
+            </View>
+          );
+        })}
+      </Card>
+
+      <Note>Calculée à partir de tes séances des sept derniers jours : la durée en minutes multipliée par l'effort ressenti sur 10.</Note>
+    </DetailScreen>
+  );
+}

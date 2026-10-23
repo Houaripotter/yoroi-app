@@ -119,7 +119,7 @@ const PersonalRecordsCardInner: React.FC<PersonalRecordsCardProps> = ({ training
       out.push({
         id: 'technique',
         label: 'Meilleure technique',
-        value: `${bestTechnique.technique_rating}/5 ★`,
+        value: `${bestTechnique.technique_rating}/5`,
         sport: getSportName(bestTechnique.sport || ''),
         date: formatDate(bestTechnique.date),
         trainingId: bestTechnique.id,
@@ -174,7 +174,7 @@ const PersonalRecordsCardInner: React.FC<PersonalRecordsCardProps> = ({ training
               <Text style={[styles.recordLabel, { color: '#64748B' }]}>{r.label}</Text>
               <Text style={[styles.recordValue, { color: r.color }]}>{r.value}</Text>
               <Text style={[styles.recordMeta, { color: '#475569' }]} numberOfLines={1}>
-                {r.sport} · {r.date}
+                {r.sport}, {r.date}
               </Text>
             </TouchableOpacity>
           );

@@ -36,6 +36,9 @@ export type PremiumFeature =
 const FREE_FEATURES = new Set<string>([
   'basic_stats', 'add_training', 'add_weight', 'basic_backup',
   'healthkit_sync', 'basic_sparring_stats',
+  // 16 octobre 2026 (Houari : la montre et les widgets sont gratuits) : les widgets et l'activite en direct restent
+  // ouverts a tous, meme si ce vieux service (plus appele nulle part) est rebranche un jour
+  'ios_widget', 'live_activity',
 ]);
 
 let _isPremium: boolean | null = null;

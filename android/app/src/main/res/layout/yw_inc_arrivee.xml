@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- « Arrivee prevue du X au Y » avec le petit torii vermillon -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/yw_arrivee"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:visibility="gone">
+  <FrameLayout android:layout_width="17dp" android:layout_height="14dp">
+    <ImageView android:id="@+id/yw_torii_rouge" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="fitCenter" android:importantForAccessibility="no" />
+    <ImageView android:id="@+id/yw_torii_haut" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="fitCenter" android:tint="@color/yw_torii_haut" android:importantForAccessibility="no" />
+  </FrameLayout>
+  <TextView android:id="@+id/yw_arrivee_texte" style="@style/YwPetit"
+      android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+      android:layout_marginLeft="6dp" android:textColor="@color/yw_encre2" />
+</LinearLayout>

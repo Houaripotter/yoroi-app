@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-native-worklets/Common/cpp/worklets/WorkletRuntime/WorkletHermesRuntime.h b/node_modules/react-native-worklets/Common/cpp/worklets/WorkletRuntime/WorkletHermesRuntime.h
+index 199327e..e6f58f4 100644
+--- a/node_modules/react-native-worklets/Common/cpp/worklets/WorkletRuntime/WorkletHermesRuntime.h
++++ b/node_modules/react-native-worklets/Common/cpp/worklets/WorkletRuntime/WorkletHermesRuntime.h
+@@ -86,6 +86,7 @@ struct WorkletsReentrancyCheck {
+       std::thread::id expected = std::this_thread::get_id();
+       bool didWrite = tid.compare_exchange_strong(expected, std::thread::id(), std::memory_order_relaxed);
+       react_native_assert(didWrite && "[Worklets] Decremented to zero, but no tid write");
++      (void)didWrite;
+     }
+   }
+ 

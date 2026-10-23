@@ -58,7 +58,7 @@ export const ONBOARDING_MESSAGES = {
 
 export const WEIGH_IN_NOTIFICATIONS = [
   "Hey combattant, la pesée t'attend. On lâche rien.",
-  "Athlète, c'est l'heure de monter sur la balance. ⚖️",
+  "Athlète, c'est l'heure de monter sur la balance.",
   "La discipline forge les champions. Pesée du jour !",
   "Un vrai champion connaît son poids. À la balance !",
   "Mission du matin : la pesée. Go champion !",
@@ -69,7 +69,7 @@ export const WEIGH_IN_NOTIFICATIONS = [
 // ═══════════════════════════════════════════════
 
 export const SUCCESS_MESSAGES = [
-  "MISSION ACCOMPLIE. La Team est fière de toi ! 🎖️",
+  "MISSION ACCOMPLIE. La Team est fière de toi !",
   "Tu as forgé ton armure, champion.",
   "Objectif atteint ! Un vrai champion.",
   "Victoire ! Le Bushido coule dans tes veines.",
@@ -151,7 +151,7 @@ export const getGreetingLong = (name: string, hour: number): string => {
     const morningGreetings = [
       `Bonjour ${firstName}, prêt pour la forge ?`,
       `Salut combattant ! Une nouvelle journée de discipline.`,
-      `${firstName}, le champion se lève tôt. Respect ! 🌅`,
+      `${firstName}, le champion se lève tôt. Respect !`,
     ];
     return morningGreetings[Math.floor(Math.random() * morningGreetings.length)];
   }
@@ -191,7 +191,7 @@ export const getRandomWeighInNotification = () => getRandomMessage(WEIGH_IN_NOTI
 // ═══════════════════════════════════════════════
 
 export const RANK_MESSAGES = {
-  rankUp: (newRank: string) => `🎖️ PROMOTION ! Tu es maintenant ${newRank}. La Team est fière !`,
+  rankUp: (newRank: string) => `PROMOTION ! Tu es maintenant ${newRank}. La Team est fière !`,
   almostRankUp: (nextRank: string, daysLeft: number) =>
     `Plus que ${daysLeft} jours pour devenir ${nextRank}. Continue, champion !`,
 };

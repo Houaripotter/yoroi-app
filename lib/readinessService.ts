@@ -19,7 +19,8 @@ export interface ReadinessScore {
   recommendation: 'go' | 'caution' | 'rest';
 }
 
-const HYDRATION_KEY = '@yoroi_hydration';
+// Memes cles que l'ecran Hydratation et l'accueil (lib/v2/accueil/hydration.ts)
+const HYDRATION_KEY = '@yoroi_hydration_today';
 const RESTING_HR_KEY = '@yoroi_health_last_resting_hr';
 const HRV_KEY = '@yoroi_health_last_hrv';
 
@@ -28,9 +29,26 @@ const HRV_KEY = '@yoroi_health_last_hrv';
  */
 const getTodayHydration = async (): Promise<number> => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const stored = await AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`);
-    return stored ? parseInt(stored, 10) : 0;
+    // Date locale AAAA-MM-JJ (et non la date UTC de toISOString)
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const [datedMl, screenJson] = await Promise.all([
+      AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`),
+      AsyncStorage.getItem(HYDRATION_KEY),
+    ]);
+    // Cle datee : millilitres
+    const fromDated = datedMl ? parseInt(datedMl, 10) || 0 : 0;
+    // Cle de l'ecran Hydratation : { date, amount } en litres
+    let fromScreen = 0;
+    if (screenJson) {
+      try {
+        const data = JSON.parse(screenJson);
+        if (data?.date === d.toDateString()) fromScreen = Math.round((Number(data.amount) || 0) * 1000);
+      } catch {
+        // donnee illisible, ignoree
+      }
+    }
+    return Math.max(fromDated, fromScreen); // en ml
   } catch {
     return 0;
   }
@@ -39,7 +57,33 @@ const getTodayHydration = async (): Promise<number> => {
 /**
  * Calcule le score de préparation (Readiness)
  */
-export const calculateReadinessScore = async (
+/**
+ * Score de recuperation pour la montre et l'ancien tableau de bord.
+ * Vague 32 : le score est le MEME que celui de l'accueil et de Sante (lib/v2/accueil/forme.ts) ;
+ * l'ancien calcul ne sert plus qu'au detail des facteurs ou quand le score unique n'existe pas.
+ */
+export const calculateReadinessScore = async (streakDays: number = 0): Promise<ReadinessScore> => {
+  const legacy = await legacyReadinessScore(streakDays);
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { safeComputeForme } = require('@/lib/v2/accueil/forme') as typeof import('@/lib/v2/accueil/forme');
+    const f = await safeComputeForme();
+    if (!f || f.score === null || !f.level) return legacy;
+    const map: Record<string, { level: ReadinessScore['level']; recommendation: ReadinessScore['recommendation'] }> = {
+      top: { level: 'optimal', recommendation: 'go' },
+      bien: { level: 'good', recommendation: 'go' },
+      moyen: { level: 'moderate', recommendation: 'caution' },
+      bas: { level: 'poor', recommendation: 'caution' },
+      repos: { level: 'critical', recommendation: 'rest' },
+    };
+    const m = map[f.level.id];
+    return { ...legacy, score: f.score, level: m.level, recommendation: m.recommendation, message: f.level.advice };
+  } catch {
+    return legacy;
+  }
+};
+
+const legacyReadinessScore = async (
   streakDays: number = 0
 ): Promise<ReadinessScore> => {
   try {
@@ -114,7 +158,7 @@ export const calculateReadinessScore = async (
     const streakImpact: 'positive' | 'neutral' | 'negative' =
       streakDays >= 7 ? 'positive' : streakDays >= 3 ? 'neutral' : 'negative';
 
-    // Score FC au repos (0-100) — FC basse = meilleure récupération
+    // Score FC au repos (0-100) : FC basse = meilleure récupération
     // FC normale au repos : 60-100 bpm. < 60 (athlète) = très bon, > 80 = stress/fatigue
     let hrScore = 50; // neutre si pas de donnée
     let hrImpact: 'positive' | 'neutral' | 'negative' = 'neutral';
@@ -126,7 +170,7 @@ export const calculateReadinessScore = async (
       else { hrScore = 20; hrImpact = 'negative'; }
     }
 
-    // Score HRV (0-100) — HRV élevée = meilleure récupération
+    // Score HRV (0-100) : HRV élevée = meilleure récupération
     // HRV normale : 20-100 ms selon l'âge/forme. > 60 ms = bon, < 25 ms = fatigue
     let hrvScore = 50; // neutre si pas de donnée
     let hrvImpact: 'positive' | 'neutral' | 'negative' = 'neutral';
@@ -138,7 +182,7 @@ export const calculateReadinessScore = async (
       else { hrvScore = 15; hrvImpact = 'negative'; }
     }
 
-    // Score global (moyenne pondérée) — avec ou sans données biometriques
+    // Score global (moyenne pondérée) : avec ou sans données biometriques
     const hasHRData = restingHR > 0;
     const hasHRVData = hrv > 0;
     let globalScore: number;

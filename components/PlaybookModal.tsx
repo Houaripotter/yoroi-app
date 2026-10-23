@@ -1,5 +1,5 @@
 // ============================================
-// YOROI · Modal bibliothèque de game plans
+// YOROI : Modal bibliothèque de game plans
 // Propose des templates pré-faits + templates perso
 // sauvegardés dans AsyncStorage
 // ============================================
@@ -15,7 +15,6 @@ import {
   FlatList,
   Platform,
   KeyboardAvoidingView,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -32,6 +31,7 @@ import {
   CUSTOM_STORAGE_KEY,
   CustomTemplate,
 } from '@/lib/combatPlaybook';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 interface PlaybookModalProps {
   visible: boolean;
@@ -58,7 +58,7 @@ export default function PlaybookModal({
   const [newTemplateText, setNewTemplateText] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const fieldMeta = FIELD_LABELS[fieldKey] ?? { title: 'Bibliothèque', emoji: '📚', color: '#8B5CF6' };
+  const fieldMeta = FIELD_LABELS[fieldKey] ?? { title: 'Bibliothèque', emoji: '', color: '#8B5CF6' };
   const rawCategories = PLAYBOOK_BY_FIELD[fieldKey] ?? [];
 
   // Charger les templates perso
@@ -143,7 +143,7 @@ export default function PlaybookModal({
   };
 
   const deleteCustomTemplate = (id: string) => {
-    Alert.alert('Supprimer ce template ?', '', [
+    appAlert('Supprimer ce modèle ?', undefined, [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer',
@@ -198,7 +198,7 @@ export default function PlaybookModal({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 10, fontWeight: '900', color: 'rgba(255,255,255,0.7)', letterSpacing: 1.5 }}>
-                    BIBLIOTHÈQUE · {sportId.toUpperCase()}
+                    BIBLIOTHÈQUE : {sportId.toUpperCase()}
                   </Text>
                   <Text style={{ fontSize: 18, fontWeight: '900', color: '#fff', letterSpacing: 0.3 }}>
                     {fieldMeta.title}
@@ -281,7 +281,7 @@ export default function PlaybookModal({
                       gap: 5,
                     }}
                   >
-                    <Text style={{ fontSize: 12 }}>📚</Text>
+                    <Text style={{ fontSize: 12 }}></Text>
                     <Text style={{ fontSize: 11, fontWeight: '800', color: !selectedCategory ? '#fff' : colors.textMuted ?? '#888' }}>
                       Tout ({totalEntries})
                     </Text>

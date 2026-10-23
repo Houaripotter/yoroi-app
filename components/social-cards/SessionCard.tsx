@@ -1,26 +1,27 @@
-// ============================================
-// SESSION CARD COMPONENT - V22 OPTIMIZED
-// ============================================
-// Optimisations:
-// - Remplacement des styles inline par StyleSheet
-// - Amélioration des performances de rendu
-// - Code plus maintenable
-// - Conversion des styles inline en useMemo pour réduire les re-allocations
+/**
+ * Carte « Ma séance » (refonte v2, l'armure vivante).
+ * Sport en grand, illustration du sport ou guerrier du rang, duree, details (series, cardio,
+ * rounds de combat), objectif de l'annee en pastilles, pied YOROI.
+ * Les props restent celles de l'ancienne carte : tous les ecrans qui l'utilisent continuent de marcher.
+ */
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, useWindowDimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Training } from '@/lib/database';
-import { getClubLogoSource, getSportName } from '@/lib/sports';
-import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
+import { Image, View, useWindowDimensions } from 'react-native';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import type { Training } from '@/lib/database';
+import { accordSouleve, formatTonnage, tonnage as trainingTonnage } from '@/lib/v2/trainingWeek';
+import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { chargeTexte, type UnitePoids } from '@/lib/v2/unitePoids';
+import { getClubLogoSource, getSessionTypeLabel, getSportName } from '@/lib/sports';
+import { useCardIdentity } from '@/lib/v2/partage/identity';
+import {
+  CardFoot, CardFrame, CardTop, Ground, Mini, Panel, PlateRow, RankTag, Stamp,
+  figureFor, fmtDuration, paletteOf, toVariant,
+} from '@/components/yoroi/v2/partage/cardKit';
+import type { CardPalette } from '@/components/yoroi/v2/partage/cardKit';
 
-const GOLD_COLOR = '#D4AF37';
-const WIN_COLOR = '#22C55E';
-const LOSS_COLOR = '#EF4444';
-const DRAW_COLOR = '#9CA3AF';
-
-// Mapping ID soumission → nom d'affichage
+// Nom d'affichage des soumissions
 const SUBMISSION_NAME_MAP: Record<string, string> = {
-  rnc: 'RNC', bowarrow: 'Bow & Arrow', bodytri: 'Body Triangle', reartri: 'Triangle arrière',
+  rnc: 'RNC', bowarrow: 'Bow and Arrow', bodytri: 'Body Triangle', reartri: 'Triangle arrière',
   crucifix: 'Crucifix', triangle: 'Triangle', triangleinv: 'Triangle inversé', montedtri: 'Triangle monté',
   guillotine: 'Guillotine', guillarmin: 'Arm-in Guillotine', marcelo: 'Guillotine haute',
   hipbumpguil: 'Hip Bump Guillotine', darce: "D'Arce", anaconda: 'Anaconda', armtri: 'Arm Triangle',
@@ -41,12 +42,19 @@ const SUBMISSION_NAME_MAP: Record<string, string> = {
   heelint: 'Heel Hook int.', heelext: 'Heel Hook ext.', crossheel: 'Cross Heel Hook',
   kneebar: 'Clé de genou', anklelock: 'Clé de cheville', anklerot: 'Ankle Lock rotatif',
   toehold: 'Clé de pied', calfslicer: 'Calf Slicer', estima: 'Estima Lock',
-  electricchair: 'Electric Chair', bananasplit: 'Banana Split', saddle: 'Saddle / Sankaku',
+  electricchair: 'Electric Chair', bananasplit: 'Banana Split', saddle: 'Saddle, Sankaku',
   straightfoot: 'Straight Foot Lock', suloev: 'Suloev Stretch', aokilock: 'Aoki Lock',
   revheelhook: 'Reverse Heel Hook', fig4ankle: 'Figure 4 Ankle', texasclover: 'Texas Cloverleaf',
 };
+const subName = (id: string): string => SUBMISSION_NAME_MAP[id] ?? id;
 
-const getSubName = (id: string): string => SUBMISSION_NAME_MAP[id] ?? id;
+/** Vague 47 : taille du titre pour que le mot le plus long tienne sur une ligne (pas de mot coupe) */
+function titleSize(title: string, width: number): number {
+  const base = Math.round(width * 0.105);
+  const longest = Math.max(1, ...String(title).split(/\s+/).map((w) => w.length));
+  const room = width * 0.56;
+  return Math.max(18, Math.min(base, Math.floor(room / (longest * 0.64))));
+}
 
 export interface CombatRoundData {
   number: number;
@@ -58,24 +66,21 @@ export interface CombatRoundData {
   usedTechniques?: { label: string; count?: number; pts?: number }[];
   roundIntensity?: string;
   partner?: string;
-  partnerRating?: number; // Note adversaire 1-5
-  duration?: number; // durée en minutes (par round, si dispo)
+  partnerRating?: number;
+  duration?: number;
 }
 
-// Constantes de layout · utiliser flex comme les autres cartes V2 (proportions exactes)
-const PHOTO_SECTION_FLEX = 6.5;   // 65%
-const STATS_SECTION_FLEX = 2.3;   // 23%
-const FOOTER_SECTION_FLEX = 1.2;  // 12%
-const MAX_OPTIONS_IN_CARD = 22;   // Limite dure : max 22 lignes (2-3 rounds BJJ complets)
-const PROFILE_SIZE = 50;
-const AVATAR_SIZE = 50;
-const CLUB_LOGO_SIZE = 18;
+type CardOption = {
+  label: string; icon?: string; color?: string; weight?: string; reps?: string; sets?: string;
+  distance?: string; duration?: string; speed?: string; pente?: string; calories?: string;
+  watts?: string; resistance?: string; stairs?: string; pace?: string; sport?: string; sportName?: string;
+};
 
 interface SessionCardProps {
   training: Partial<Training>;
   backgroundImage?: string | null;
   backgroundType?: 'photo' | 'black' | 'white';
-  keepPhotoClear?: boolean; // Ne pas assombrir la photo de fond
+  keepPhotoClear?: boolean;
   customLocation?: string;
   isLandscape?: boolean;
   width?: number;
@@ -100,1314 +105,287 @@ interface SessionCardProps {
   sessionsPerWeek?: number;
   disableInternalScroll?: boolean;
   combatRounds?: CombatRoundData[];
-  options?: {
-    label: string,
-    icon?: string,
-    color?: string,
-    weight?: string,
-    reps?: string,
-    sets?: string,
-    distance?: string,
-    duration?: string,
-    speed?: string,
-    pente?: string,
-    calories?: string,
-    watts?: string,
-    resistance?: string,
-    stairs?: string,
-    pace?: string,
-    sport?: string,
-    sportName?: string
-  }[];
+  options?: CardOption[];
+}
+
+const num = (v?: string) => parseFloat((v || '0').replace(',', '.'));
+const fr = (v: number | string, d = 1) => {
+  const n = typeof v === 'string' ? num(v) : v;
+  return Number.isInteger(n) ? String(n) : n.toFixed(d).replace('.', ',');
+};
+
+function paceFromSpeed(speed?: string): string | null {
+  const s = num(speed);
+  if (s <= 0) return null;
+  const p = 60 / s;
+  const m = Math.floor(p);
+  const sec = Math.round((p - m) * 60);
+  return `${m}'${String(sec).padStart(2, '0')}"`;
+}
+
+function optionValue(o: CardOption, unite: UnitePoids = 'kg'): string {
+  const parts: string[] = [];
+  // 18 octobre 2026 : charge stockee en kilos, affichee dans l'unite du reglage
+  if (o.weight) parts.push(unite === 'kg' ? `${fr(o.weight)} kg` : chargeTexte(num(o.weight), unite, 1));
+  if (o.reps) parts.push(`${o.reps} reps`);
+  if (o.sets && parseInt(o.sets, 10) > 1) parts.push(`${o.sets} séries`);
+  if (o.distance) parts.push(`${fr(o.distance, 2)} km`);
+  if (o.duration) parts.push(`${o.duration} min`);
+  if (o.watts) parts.push(`${o.watts} W`);
+  if (o.resistance) parts.push(`niveau ${o.resistance}`);
+  if (o.speed) parts.push(`${fr(o.speed)} km/h`);
+  const pace = paceFromSpeed(o.speed);
+  if (pace) parts.push(`${pace} au km`);
+  else if (o.pace) parts.push(o.pace);
+  if (o.pente) parts.push(`${fr(o.pente)} %`);
+  if (o.stairs) parts.push(`${o.stairs} étages`);
+  if (o.calories) parts.push(`${o.calories} kcal`);
+  return parts.join(', ');
 }
 
 export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
   ({
-    training, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width: widthProp,
-    userAvatar, profilePhoto, userName, rank, userLevel, options, combatRounds,
-    showYearlyCount = true,
-    showDate = true,
-    showClub = true,
-    showLieu = true,
-    showExercises = true,
-    showStats = true,
-    yearlyCount = 0, yearlyObjective = 365,
-    showGoalProgress = true,
-    disableInternalScroll = false
+    training, backgroundImage, backgroundType = 'black', width: widthProp, userName, options, combatRounds,
+    customLocation, showYearlyCount = true, showDate = true, showClub = true, showLieu = true,
+    showExercises = true, showStats = true, yearlyCount = 0, yearlyObjective = 365,
   }, ref) => {
-    const { width: screenWidth } = useWindowDimensions();
-    const width = widthProp ?? (screenWidth - 40);
-    const CARD_HEIGHT = width * (16 / 9);
-    const dateObj = training.date ? new Date(training.date) : new Date();
-    const formattedDate = dateObj.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }).toUpperCase();
+    const { width: sw } = useWindowDimensions();
+    const id = useCardIdentity();
+    const unite = useUnitePoids();
+    const width = widthProp ?? (sw - 40);
+    const height = Math.round(width * (16 / 9));
+    const variant = toVariant(backgroundType, !!backgroundImage);
+    const isPhoto = variant === 'photo';
+    const p = paletteOf(variant);
+    const pad = Math.round(width * 0.055);
 
-    const sportNameStr = training.sport
-      ? training.sport.split(',').filter(Boolean).map(s => getSportName(s.trim()) ?? s.trim()).join(' + ')
-      : 'SÉANCE';
-    const clubLogoSource = training.club_logo ? getClubLogoSource(training.club_logo) : null;
-    
-    // Calcul Progression sur l'Objectif Personnel
-    const safeObjective = yearlyObjective && yearlyObjective > 0 ? yearlyObjective : 365;
-    const progressPercent = Math.min(100, (yearlyCount / safeObjective) * 100);
+    const date = training.date ? new Date(training.date) : new Date();
+    const dateLabel = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    const sports = (training.sport ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    const sportName = sports.length ? sports.map((s) => getSportName(s) ?? s).join(' et ') : 'Séance';
+    const clubLogo = training.club_logo ? getClubLogoSource(training.club_logo) : null;
+    const place = customLocation || training.location_name || '';
+    const duration = training.duration_minutes || 0;
+    const objective = yearlyObjective && yearlyObjective > 0 ? yearlyObjective : 365;
 
-    const isWhite = backgroundType === 'white';
-    const bg = isWhite ? '#FFFFFF' : '#000000';
-    const txt = isWhite ? '#000000' : '#FFFFFF';
-    const subTxt = isWhite ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
-    const borderColor = isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
-
-    // Helper Allure
-    const getPace = (speedStr?: string) => {
-      const s = parseFloat((speedStr || '0').replace(',', '.'));
-      if (s > 0) {
-        const paceDecimal = 60 / s;
-        const mins = Math.floor(paceDecimal);
-        const secs = Math.round((paceDecimal - mins) * 60);
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    const rawTypes: string[] = useMemo(() => {
+      if (training.session_types) {
+        try {
+          const v = JSON.parse(training.session_types as string);
+          return Array.isArray(v) ? v : [String(v)];
+        } catch {
+          return [String(training.session_types)];
+        }
       }
-      return null;
-    };
+      return training.session_type ? [String(training.session_type)] : [];
+    }, [training.session_types, training.session_type]);
+    const typeLabels = Array.from(new Set(rawTypes.map((t) => getSessionTypeLabel(String(t ?? ''))).filter(Boolean))).slice(0, 3);
 
-    // Memoized styles
-    const cardStyle = useMemo(() => ({ width, height: CARD_HEIGHT, backgroundColor: bg }), [width, CARD_HEIGHT, bg]);
-    const gradientFlexStyle = useMemo(() => ({ flex: 1 }), []);
-    const dateTopContainerStyle = useMemo(() => ({ position: 'absolute' as const, top: 8, left: 0, right: 0, alignItems: 'center' as const, zIndex: 10 }), []);
-    const dateBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }), []);
-    const dateColorStyle = useMemo(() => ({ color: GOLD_COLOR }), []);
-    const objectifRowStyle = useMemo(() => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 }), []);
-    const objectifParenthesesStyle = useMemo(() => ({ color: subTxt }), [subTxt]);
-    const progressSlashStyle = useMemo(() => ({ color: txt, fontSize: 18, fontWeight: '800' as const }), [txt]);
-    const progressGoalNumberStyle = useMemo(() => ({ fontSize: 24 }), []);
-    const progressDaysTextStyle = useMemo(() => ({ color: txt, fontSize: 16, fontWeight: '800' as const }), [txt]);
-    const progressContainerMarginStyle = useMemo(() => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, marginTop: 4 }), []);
-    const progressBarBgStyle = useMemo(() => ({
-      width: 120, height: 8,
-      backgroundColor: isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
-      borderRadius: 4, overflow: 'hidden' as const, position: 'relative' as const
-    }), [isWhite]);
-    const progressBarGraduationsStyle = useMemo(() => ({ position: 'absolute' as const, top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' as const }), []);
-    const progressBarGraduationLineStyle = (mark: number) => ({
-      position: 'absolute' as const, left: `${mark}%` as `${number}%`, width: 1, height: '100%' as `${number}%`,
-      backgroundColor: isWhite ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)'
-    });
-    const progressBarFillStyle = useMemo(() => ({ height: '100%' as `${number}%`, width: `${progressPercent}%` as `${number}%` }), [progressPercent]);
-    const progressPercentTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' as const }), []);
-    const durationBadgeStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4, alignSelf: 'flex-end' as const }), []);
-    const durationTextStyle = useMemo(() => ({ color: '#000', fontWeight: '900' as const, fontSize: 13 }), []);
-    const yearDaysSlashStyle = { color: txt, fontSize: 13, fontWeight: '900' as const };
-    const yearDaysNumberStyle = useMemo(() => ({ fontSize: 14 }), []);
-    const detailsDividerGoldStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR }), []);
-
-    // Tronquer les options à MAX_OPTIONS_IN_CARD pour éviter tout débordement
-    const truncatedOptions = useMemo(() => {
-      if (!options || options.length <= MAX_OPTIONS_IN_CARD) return options;
-      return options.slice(0, MAX_OPTIONS_IN_CARD);
-    }, [options]);
-    const hiddenCount = options ? Math.max(0, options.length - MAX_OPTIONS_IN_CARD) : 0;
-
-
-    const scrollMaxHeightStyle = useMemo(() => ({}), []);
-
-    // Calcul du volume total (tonnage) pour la muscu
-    const totalTonnage = useMemo(() => {
-      if (!options || options.length === 0) return 0;
-      return options.reduce((sum, opt) => {
-        const w = parseFloat((opt.weight || '0').replace(',', '.'));
-        const r = parseInt(opt.reps || '0');
-        const s = parseInt(opt.sets || '1');
-        if (w > 0 && r > 0) return sum + w * r * s;
-        return sum;
+    // regle unique du tonnage (lib/v2/trainingWeek) quand la seance a ses exercices, sinon les options saisies
+    const tonnage = useMemo(() => {
+      const fromTraining = Array.isArray(training.exercises) || typeof training.exercises === 'string' ? trainingTonnage(training as Training) : 0;
+      if (fromTraining > 0) return fromTraining;
+      return (options ?? []).reduce((sum, o) => {
+        const w = num(o.weight);
+        const r = parseInt(o.reps || '0', 10);
+        const s = parseInt(o.sets || '1', 10) || 1;
+        return w > 0 && r > 0 ? sum + w * r * s : sum;
       }, 0);
-    }, [options]);
-    const sportSeparatorMarginStyle = (i: number) => ({ marginTop: i > 0 ? 8 : 0, marginBottom: 6 });
-    const sportSeparatorTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, letterSpacing: 0.5 }), []);
-    const exerciseRowBorderStyle = useMemo(() => ({ borderBottomColor: borderColor }), [borderColor]);
-    const exerciseLabelStyle = useMemo(() => ({ color: txt }), [txt]);
-    const statSeparatorStyle = useMemo(() => ({ color: txt }), [txt]);
-    const paceTextStyle = useMemo(() => ({ color: subTxt }), [subTxt]);
-    const emptyNotesStyle = useMemo(() => ({ color: subTxt }), [subTxt]);
-    const footerBorderStyle = useMemo(() => ({ borderTopColor: borderColor }), [borderColor]);
-    const styledStatContainerStyle = useMemo(() => ({ flexDirection: 'row' as const, alignItems: 'baseline' as const }), []);
-    const styledStatCommaStyle = useMemo(() => ({ color: txt, fontSize: 11, fontWeight: '900' as const }), [txt]);
-    const styledStatPartStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 11, fontWeight: '900' as const }), []);
-    const styledStatUnitStyle = useMemo(() => ({ color: txt, fontSize: 7, fontWeight: '800' as const, marginLeft: 1 }), [txt]);
+    }, [options, training]);
 
-    const renderStyledStat = (value: string | number, unit: string) => {
-      const valStr = value.toString().replace('.', ',');
+    const combat = useMemo(() => {
+      if (!combatRounds || combatRounds.length === 0) return null;
+      const wins = combatRounds.filter((r) => r.result === 'win').length;
+      const losses = combatRounds.filter((r) => r.result === 'loss').length;
+      const draws = combatRounds.filter((r) => r.result === 'draw').length;
+      const pf = combatRounds.reduce((a, r) => a + (r.pointsFor ?? 0), 0);
+      const pa = combatRounds.reduce((a, r) => a + (r.pointsAgainst ?? 0), 0);
+      const given = Array.from(new Set(combatRounds.flatMap((r) => r.methodsGiven ?? [])));
+      const taken = Array.from(new Set(combatRounds.flatMap((r) => r.methodsTaken ?? [])));
+      const techCount: Record<string, number> = {};
+      combatRounds.forEach((r) => (r.usedTechniques ?? []).forEach((t) => { techCount[t.label] = (techCount[t.label] ?? 0) + (t.count ?? 1); }));
+      const techs = Object.entries(techCount).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([l]) => l);
+      return { wins, losses, draws, pf, pa, given, taken, techs };
+    }, [combatRounds]);
+
+    // Metriques globales quand il n'y a pas d'exercices detailles
+    const metrics: { value: string; label: string }[] = [];
+    if ((training.distance || 0) > 0) metrics.push({ value: `${fr(training.distance || 0, 2)} km`, label: 'Distance' });
+    if ((training.distance || 0) > 0 && duration > 0) {
+      const sec = Math.round((duration * 60) / (training.distance || 1));
+      metrics.push({ value: `${Math.floor(sec / 60)}'${String(sec % 60).padStart(2, '0')}"`, label: 'Allure au km' });
+    } else if ((training.speed || 0) > 0) {
+      const pc = paceFromSpeed(String(training.speed));
+      if (pc) metrics.push({ value: pc, label: 'Allure au km' });
+    }
+    if ((training.speed || 0) > 0) metrics.push({ value: `${fr(training.speed || 0)} km/h`, label: 'Vitesse' });
+    if ((training.heart_rate || 0) > 0) metrics.push({ value: `${training.heart_rate}`, label: 'Cœur moyen' });
+    if ((training.max_heart_rate || 0) > 0) metrics.push({ value: `${training.max_heart_rate}`, label: 'Cœur max' });
+    if ((training.calories || 0) > 0) metrics.push({ value: `${Math.round(training.calories || 0)}`, label: 'Kcal' });
+    if ((training.watts || 0) > 0) metrics.push({ value: `${Math.round(training.watts || 0)} W`, label: 'Puissance' });
+    if ((training.cadence || 0) > 0) metrics.push({ value: `${Math.round(training.cadence || 0)}`, label: 'Cadence' });
+    if ((training.pente || 0) > 0) metrics.push({ value: `${fr(training.pente || 0)} %`, label: 'Pente' });
+    if ((training.resistance || 0) > 0) metrics.push({ value: `${training.resistance}`, label: 'Résistance' });
+    if ((training.rounds || 0) > 0) metrics.push({ value: `${training.rounds}${training.round_duration ? ` x ${training.round_duration} min` : ''}`, label: 'Rounds' });
+    if ((training.intensity || 0) > 0) metrics.push({ value: `${training.intensity}/10`, label: 'Intensité' });
+
+    const maxLines = Math.max(4, Math.floor((height - 470) / 22));
+    const opts = options ?? [];
+    const shown = opts.slice(0, maxLines);
+    const hidden = Math.max(0, opts.length - shown.length);
+
+    const figure = figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre, sport: training.sport });
+    const figW = Math.round(width * 0.46);
+    const name = userName && userName !== 'Champion' ? userName : id.name;
+
+    const renderCombat = (pp: CardPalette) => {
+      if (!combat || !combatRounds) return null;
+      const rounds = combatRounds.slice(0, 4);
       return (
-        <View style={styledStatContainerStyle}>
-          {valStr.split(',').map((part, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <Text style={styledStatCommaStyle}>,</Text>}
-              <Text style={styledStatPartStyle}>{part}</Text>
-            </React.Fragment>
-          ))}
-          <Text style={styledStatUnitStyle}>{unit}</Text>
-        </View>
+        <Panel p={pp} style={{ gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
+            <Score pp={pp} value={combat.wins} label="Victoires" color={pp.accent} />
+            <Score pp={pp} value={combat.draws} label="Nuls" color={pp.panelInk2} />
+            <Score pp={pp} value={combat.losses} label="Défaites" color={pp.panelInk} />
+            <View style={{ flex: 1 }} />
+            {combat.pf > 0 || combat.pa > 0 ? <Ink size={13} weight="black" color={pp.panelInk}>{`${combat.pf} à ${combat.pa} pts`}</Ink> : null}
+          </View>
+          {rounds.map((r, i) => {
+            const res = r.result === 'win' ? 'Victoire' : r.result === 'loss' ? 'Défaite' : r.result === 'draw' ? 'Nul' : '';
+            const subs = [...(r.methodsGiven ?? []).map((m) => subName(m)), ...(r.methodsTaken ?? []).map((m) => `subi : ${subName(m)}`)].slice(0, 2).join(', ');
+            return (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: r.result === 'win' ? pp.accent : r.result === 'loss' ? pp.panelInk : pp.gold }} />
+                <View style={{ flex: 1 }}>
+                  <Ink size={12} weight="extraBold" color={pp.panelInk} numberOfLines={1}>{`Round ${r.number}${r.partner ? ` contre ${r.partner}` : ''}`}</Ink>
+                  {subs ? <Ink size={10} weight="bold" color={pp.panelInk2} numberOfLines={1}>{subs}</Ink> : null}
+                </View>
+                {res ? <Ink size={11} weight="black" color={r.result === 'win' ? pp.accent : pp.panelInk}>{res}</Ink> : null}
+              </View>
+            );
+          })}
+          {combatRounds.length > rounds.length ? <Ink size={10} weight="bold" color={pp.panelInk2}>{`et ${combatRounds.length - rounds.length} autres rounds`}</Ink> : null}
+          {combat.techs.length > 0 ? <Ink size={10} weight="bold" color={pp.panelInk2} numberOfLines={1}>{combat.techs.join(', ')}</Ink> : null}
+        </Panel>
       );
     };
 
-    // ── Données combat calculées ──
-    const combatStats = useMemo(() => {
-      if (!combatRounds || combatRounds.length === 0) return null;
-      const wins = combatRounds.filter(r => r.result === 'win').length;
-      const losses = combatRounds.filter(r => r.result === 'loss').length;
-      const draws = combatRounds.filter(r => r.result === 'draw').length;
-      const totalFor = combatRounds.reduce((a, r) => a + (r.pointsFor ?? 0), 0);
-      const totalAgainst = combatRounds.reduce((a, r) => a + (r.pointsAgainst ?? 0), 0);
-      // Dédupliquer les soumissions (unique, garder l'ordre de première occurrence)
-      const givenSeen = new Set<string>();
-      const allGiven = combatRounds.flatMap(r => r.methodsGiven ?? []).filter(m => {
-        if (givenSeen.has(m)) return false; givenSeen.add(m); return true;
-      });
-      const takenSeen = new Set<string>();
-      const allTaken = combatRounds.flatMap(r => r.methodsTaken ?? []).filter(m => {
-        if (takenSeen.has(m)) return false; takenSeen.add(m); return true;
-      });
-      // Techniques dédupliquées, triées par fréquence
-      const techCount: Record<string, number> = {};
-      combatRounds.forEach(r => {
-        (r.usedTechniques ?? []).forEach(t => {
-          techCount[t.label] = (techCount[t.label] ?? 0) + (t.count ?? 1);
-        });
-      });
-      const topTechs = Object.entries(techCount).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label]) => label);
-      return { wins, losses, draws, totalFor, totalAgainst, allGiven, allTaken, topTechs };
-    }, [combatRounds]);
-
-    // Quand disableInternalScroll=true, on utilise View au lieu de ScrollView
-    // pour éviter que le ScrollView interne bloque le scroll du parent sur iOS
-    const ExercisesWrapper = (disableInternalScroll ? View : ScrollView) as typeof ScrollView;
+    const renderDetails = (pp: CardPalette) => {
+      if (shown.length > 0) {
+        let prevSport: string | undefined;
+        return (
+          <Panel p={pp} style={{ gap: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Ink size={12} weight="black" color={pp.panelInk} style={{ flex: 1 }}>Le détail</Ink>
+              {tonnage > 0 ? <Ink size={12} weight="black" color={pp.accent}>{`${formatTonnage(tonnage, unite)} ${accordSouleve(tonnage, unite)}`}</Ink> : null}
+            </View>
+            {shown.map((o, i) => {
+              const sep = o.sport && o.sport !== prevSport && o.sportName ? o.sportName : null;
+              prevSport = o.sport;
+              const value = optionValue(o, unite);
+              return (
+                <React.Fragment key={i}>
+                  {sep ? <Ink size={10} weight="black" color={pp.gold} style={{ marginTop: i > 0 ? 4 : 0 }}>{sep}</Ink> : null}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 20 }}>
+                    <Ink size={12} weight={o.label ? 'bold' : 'medium'} color={pp.panelInk} numberOfLines={1} style={{ flex: 1 }}>{o.label ? o.label.trim() : ''}</Ink>
+                    {value ? <Ink size={12} weight="black" color={pp.panelInk} numberOfLines={1}>{value}</Ink> : null}
+                  </View>
+                </React.Fragment>
+              );
+            })}
+            {hidden > 0 ? <Ink size={10} weight="bold" color={pp.panelInk2}>{`et ${hidden} autre${hidden > 1 ? 's' : ''}`}</Ink> : null}
+          </Panel>
+        );
+      }
+      if (metrics.length > 0) {
+        const rows = [metrics.slice(0, 3), metrics.slice(3, 6)].filter((r) => r.length);
+        return (
+          <Panel p={pp} style={{ gap: 10 }}>
+            {rows.map((row, i) => (
+              <View key={i} style={{ flexDirection: 'row', gap: 10 }}>
+                {row.map((m) => <Mini key={m.label} p={pp} onPanel value={m.value} label={m.label} />)}
+                {row.length < 3 ? Array.from({ length: 3 - row.length }).map((_, k) => <View key={k} style={{ flex: 1 }} />) : null}
+              </View>
+            ))}
+          </Panel>
+        );
+      }
+      return (
+        <Panel p={pp}>
+          <Ink size={13} weight="bold" color={pp.panelInk} numberOfLines={3}>{training.notes?.trim() || 'Séance validée, un jour de plus dans ton année.'}</Ink>
+        </Panel>
+      );
+    };
 
     return (
-      <View ref={ref} style={[styles.card, cardStyle]} collapsable={false}>
+      <CardFrame ref={ref} variant={variant} width={width} height={height} photo={backgroundImage}>
+        <View style={{ flex: 1, paddingTop: pad, paddingBottom: pad * 0.8, paddingLeft: pad + 4, paddingRight: pad, gap: 12 }}>
+          <CardTop p={p} label={showDate ? dateLabel : undefined} />
 
-        {/* 1. SECTION PHOTO · prend tout l'espace restant */}
-        <View style={[styles.photoSection, { flex: 1, minHeight: Math.round(CARD_HEIGHT * 0.28) }]}>
-          {backgroundImage ? (
-            <Image key={backgroundImage} source={{ uri: backgroundImage }} style={styles.photoImage} resizeMode="cover" />
-          ) : (
-            <LinearGradient colors={['#1a1a1a', '#000']} style={gradientFlexStyle} />
-          )}
-
-          <LinearGradient
-            colors={keepPhotoClear
-              ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)']
-              : ['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
-            style={styles.photoGradient}
-            pointerEvents="none"
-          >
-            {/* DATE EN HAUT AU MILIEU */}
-            {showDate && (
-              <View style={dateTopContainerStyle}>
-                {keepPhotoClear ? (
-                  <View style={dateBackdropStyle}>
-                    <Text style={[styles.dateText, dateColorStyle]}>{formattedDate}</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.dateText}>{formattedDate}</Text>
-                )}
+          <View style={{ flex: 1, justifyContent: isPhoto ? 'flex-end' : 'flex-start' }}>
+            {!isPhoto ? (
+              <View pointerEvents="none" style={{ position: 'absolute', right: -pad * 0.4, top: 0, bottom: 0, width: figW, alignItems: 'center', justifyContent: 'flex-end' }}>
+                <Image source={figure} style={{ width: figW, height: '100%', maxHeight: figW * 1.33 }} resizeMode="contain" />
+                <View style={{ marginTop: -10 }}><Ground width={figW * 0.8} color={variant === 'papier' ? '#D9D5CB' : 'rgba(255,255,255,0.18)'} /></View>
               </View>
-            )}
-
-          </LinearGradient>
-
-          {/* INFOS BAS DE PHOTO */}
-          <View style={styles.photoBottomInfo}>
-            {showClub && (
-              <View style={styles.clubRow}>
-                {clubLogoSource && (
-                  <View style={styles.clubLogoBox}>
-                    <Image source={clubLogoSource} style={styles.clubLogo} resizeMode="contain" />
-                  </View>
-                )}
-                <Text style={styles.clubName}>{training.club_name?.toUpperCase() || 'SÉANCE INDIVIDUELLE'}</Text>
-              </View>
-            )}
-            {showLieu && training.location_name ? (
-              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, fontWeight: '700', letterSpacing: 1, marginTop: 1 }}>
-                {training.location_name.toUpperCase()}
-              </Text>
             ) : null}
-            <Text style={styles.sportName}>{sportNameStr.toUpperCase()}</Text>
+            <View style={{ gap: 4, maxWidth: isPhoto ? '100%' : width * 0.56, paddingTop: isPhoto ? 0 : 8 }}>
+              <Ink size={14} weight="bold" color={p.ink2} numberOfLines={1}>{name ? `La séance de ${name}` : 'Séance du jour'}</Ink>
+              <Ink size={titleSize(sportName, width)} weight="black" tight color={p.ink} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>{sportName}</Ink>
+              {typeLabels.length > 0 ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  {typeLabels.map((t) => (
+                    <View key={t} style={{ borderWidth: 1.5, borderColor: p.gold, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 2 }}>
+                      <Ink size={11} weight="extraBold" color={p.gold}>{t}</Ink>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              {showClub ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                  {clubLogo ? <Image source={clubLogo} style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: '#FFFFFF' }} resizeMode="contain" /> : null}
+                  <Ink size={13} weight="bold" color={p.ink} numberOfLines={1}>{training.club_name || 'Séance en solo'}</Ink>
+                </View>
+              ) : null}
+              {showLieu && place ? <Ink size={12} weight="bold" color={p.muted} numberOfLines={1}>{place}</Ink> : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+                {duration > 0 ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
+                    <Ink size={Math.round(width * (combat ? 0.12 : 0.15))} weight="black" tight color={p.ink} numberOfLines={1} style={{ lineHeight: Math.round(width * (combat ? 0.13 : 0.16)) }}>{fmtDuration(duration).replace(' min', '')}</Ink>
+                    {duration < 60 ? <Ink size={16} weight="black" color={p.accent} style={{ marginBottom: 8 }}>min</Ink> : null}
+                  </View>
+                ) : null}
+              </View>
+            </View>
+            {combat && combat.wins > 0 && combat.losses === 0 && combatRounds && combatRounds.length >= 3 ? (
+              <View style={{ position: 'absolute', right: 2, top: 4 }}><Stamp p={p} size={48} /></View>
+            ) : null}
           </View>
-        </View>
 
-        {/* 2. SECTION STATS & EXERCICES · taille naturelle du contenu */}
-        <View style={styles.statsSection}>
+          {showExercises ? (combat ? renderCombat(p) : renderDetails(p)) : null}
 
-          {/* HEADER : Combat (si combat) ou Objectif annuel (autres sports) */}
-          {combatStats ? (() => {
-            // Calcul des types de séance
-            const SESSION_TYPE_LABELS: Record<string, string> = {
-              cours: 'COURS', sparring: 'SPARRING', drilling: 'DRILLING',
-              openmat: 'OPEN MAT', technique: 'TECHNIQUE',
-              competition: 'COMPÉTITION', entrainement: 'ENTRAÎNEMENT', guerre: 'GUERRE',
-            };
-            const rawTypes = training.session_types
-              ? (() => { try { return JSON.parse(training.session_types as string); } catch { return [training.session_types]; } })()
-              : training.session_type ? [training.session_type] : [];
-            const sessionLabels = (rawTypes as string[])
-              .map(t => SESSION_TYPE_LABELS[t?.toLowerCase()] ?? t?.toUpperCase())
-              .filter(Boolean).slice(0, 3);
-
-            return (
-            <View style={{ paddingHorizontal: 10, paddingTop: 8, paddingBottom: 6 }}>
-
-              {/* ── Ligne 1 : type de séance à gauche + durée à droite ── */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                {/* Type de séance · pill doré */}
-                {sessionLabels.length > 0 ? (
-                  <View style={{ flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
-                    {sessionLabels.map((lbl, idx) => (
-                      <View key={idx} style={{ borderWidth: 1.5, borderColor: GOLD_COLOR, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
-                        <Text style={{ color: GOLD_COLOR, fontSize: 11, fontWeight: '900', letterSpacing: 1.2 }}>{lbl}</Text>
-                      </View>
-                    ))}
-                  </View>
-                ) : <View />}
-                {/* Durée */}
-                {(training.duration_minutes || 0) > 0 && (
-                  <View style={durationBadgeStyle}>
-                    {(() => { const h = Math.floor((training.duration_minutes || 0) / 60); const m = (training.duration_minutes || 0) % 60; return <Text style={durationTextStyle}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m}MIN`}</Text>; })()}
-                  </View>
-                )}
-              </View>
-
-              {/* ── Ligne 2 : chips résumé soum/subies/pts ── */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 12 }}>
-                {combatStats.allGiven.length > 0 && (
-                  <View style={styles.combatSubSummaryChip}>
-                    <Text style={styles.combatSubSummaryText}>✓ {combatStats.allGiven.length} soum.</Text>
-                  </View>
-                )}
-                {combatStats.allTaken.length > 0 && (
-                  <View style={[styles.combatSubSummaryChip, styles.combatSubSummaryChipRed]}>
-                    <Text style={[styles.combatSubSummaryText, { color: LOSS_COLOR }]}>✗ {combatStats.allTaken.length} subie{combatStats.allTaken.length > 1 ? 's' : ''}</Text>
-                  </View>
-                )}
-                {(combatStats.totalFor > 0 || combatStats.totalAgainst > 0) && (
-                  <Text style={styles.combatPts}>{combatStats.totalFor}–{combatStats.totalAgainst} pts</Text>
-                )}
-              </View>
-
-              {/* ── Objectif annuel compact (sous le score combat) ── */}
-              {showYearlyCount && yearlyCount > 0 && (
-                <View style={{ marginTop: 8, paddingTop: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 7.5, fontWeight: '900', letterSpacing: 1.2 }}>OBJECTIF ANNUEL</Text>
-                    <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 7.5, fontWeight: '700' }}>
-                      <Text style={{ color: GOLD_COLOR, fontWeight: '900' }}>{yearlyCount}</Text>
-                      {' / '}{safeObjective} séances · {Math.round(progressPercent)}%
-                    </Text>
-                  </View>
-                  <View style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 2, overflow: 'hidden' }}>
-                    <LinearGradient
-                      colors={[GOLD_COLOR, '#F59E0B']}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={{ width: `${progressPercent}%`, height: '100%', borderRadius: 2 }}
-                    />
-                  </View>
-                </View>
-              )}
-
+          {showStats && showYearlyCount && yearlyCount > 0 ? (
+            <View style={{ gap: 6 }}>
+              <PlateRow p={p} progress={yearlyCount / objective} count={12} w={Math.floor((width - 70) / 12) - 2} />
+              <Ink size={11} weight="bold" color={p.ink2}>{`${yearlyCount} séance${yearlyCount > 1 ? 's' : ''} cette année, objectif ${objective}`}</Ink>
             </View>
-            );
-          })() : showStats && showYearlyCount && (
-            <View style={styles.progressContainer}>
-              <View style={styles.progressRow}>
-                <View style={styles.progressLeft}>
-                  <View style={objectifRowStyle}>
-                    <Text style={styles.chronoLabel}>OBJECTIF ANNUEL</Text>
-                    <Text style={[styles.chronoLabel, objectifParenthesesStyle]}>(ENTRAÎNEMENT)</Text>
-                  </View>
-                  <View style={styles.progressNumbers}>
-                    <Text style={styles.goldLargeNumber}>{yearlyCount}</Text>
-                    <Text style={progressSlashStyle}> / </Text>
-                    <Text style={[styles.goldLargeNumber, progressGoalNumberStyle]}>{safeObjective}</Text>
-                    <Text style={progressDaysTextStyle}> JOURS</Text>
-                  </View>
-                  <View style={progressContainerMarginStyle}>
-                    <View style={progressBarBgStyle}>
-                      <View style={progressBarGraduationsStyle}>
-                        {[25, 50, 75].map(mark => (
-                          <View key={mark} style={progressBarGraduationLineStyle(mark)} />
-                        ))}
-                      </View>
-                      <LinearGradient colors={[GOLD_COLOR, '#F59E0B']} start={{x:0, y:0}} end={{x:1, y:0}} style={progressBarFillStyle} />
-                    </View>
-                    <Text style={progressPercentTextStyle}>{Math.round(progressPercent)}%</Text>
-                  </View>
-                </View>
-                <View style={styles.progressRight}>
-                  <View style={durationBadgeStyle}>
-                    {(() => { const h = Math.floor((training.duration_minutes || 0) / 60); const m = (training.duration_minutes || 0) % 60; return <Text style={durationTextStyle}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m} MIN`}</Text>; })()}
-                  </View>
-                  <View style={styles.yearProgressText}>
-                    <Text style={[styles.smallGoldText, yearDaysNumberStyle]}>{yearlyCount}</Text>
-                    <Text style={yearDaysSlashStyle}> / </Text>
-                    <Text style={[styles.smallGoldText, yearDaysNumberStyle]}>365 JOURS</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
+          ) : null}
 
-          {showExercises && <View style={styles.detailsSection}>
-            <View style={styles.detailsHeader}>
-              <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
-              <Text style={styles.detailsLabel}>
-                {combatStats ? 'ROUNDS' : 'DÉTAILS DE LA SÉANCE'}
-              </Text>
-              {!combatStats && totalTonnage > 0 && (
-                <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginLeft: 4 }}>
-                  <Text style={{ color: '#000', fontSize: 7, fontWeight: '900' }}>
-                    {totalTonnage >= 1000
-                      ? `${(totalTonnage / 1000).toFixed(1).replace('.', ',')}T`
-                      : `${Math.round(totalTonnage)}KG`} VOL.
-                  </Text>
-                </View>
-              )}
-              <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
-            </View>
-
-            {/* ──── AFFICHAGE VISUEL COMBAT ──── */}
-            {combatStats && combatRounds ? (
-              <View style={styles.combatContainer}>
-
-                {/* Détail par round avec bordure colorée */}
-                <View style={styles.combatRoundsList}>
-                  {combatRounds.map((r, i) => {
-                    const resultColor = r.result === 'win' ? WIN_COLOR : r.result === 'loss' ? LOSS_COLOR : DRAW_COLOR;
-                    const resultBg = r.result === 'win' ? 'rgba(34,197,94,0.07)' : r.result === 'loss' ? 'rgba(239,68,68,0.07)' : 'rgba(156,163,175,0.07)';
-                    const resultLabel = r.result === 'win' ? 'VICTOIRE' : r.result === 'loss' ? 'DÉFAITE' : r.result === 'draw' ? 'NUL' : '';
-                    const subsGiven = r.methodsGiven ?? [];
-                    const subsTaken = r.methodsTaken ?? [];
-                    const hasScore = (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0;
-                    const roundMin = r.duration ?? (training.round_duration as number | undefined);
-                    const techs = (r.usedTechniques ?? []).slice(0, 4).map(t => t.label);
-                    const intensityLabels: Record<string, string> = { guerre: 'GUERRE', technique: 'TECH', detendu: 'ZEN' };
-                    const intensityLabel = r.roundIntensity ? intensityLabels[r.roundIntensity] ?? r.roundIntensity.toUpperCase() : '';
-                    const hasDetails = roundMin || techs.length > 0 || subsTaken.length > 0 || hasScore || subsGiven.length > 0 || intensityLabel;
-                    return (
-                      <View key={i} style={[styles.combatRoundBlock, { borderLeftColor: resultColor, backgroundColor: resultBg }]}>
-
-                        {/* ── Ligne 1 : ROUND X · Xmin  VS Partenaire  [RÉSULTAT] ── */}
-                        <View style={styles.combatRoundLine}>
-                          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-                            <Text style={[styles.combatRoundLineNum, { color: resultColor, fontSize: 9, fontWeight: '900' }]}>
-                              ROUND {r.number}
-                            </Text>
-                            {roundMin ? (
-                              <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontWeight: '700' }}>· {roundMin}min</Text>
-                            ) : null}
-                            {r.partner ? (
-                              <>
-                                <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontWeight: '700' }}>VS</Text>
-                                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }} numberOfLines={1}>
-                                  {r.partner.toUpperCase()}
-                                </Text>
-                              </>
-                            ) : null}
-                            {intensityLabel ? (
-                              <View style={[styles.combatDetailChip, { backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 5, paddingVertical: 1 }]}>
-                                <Text style={[styles.combatDetailChipText, { fontSize: 7 }]}>{intensityLabel}</Text>
-                              </View>
-                            ) : null}
-                          </View>
-                          {resultLabel ? (
-                            <View style={[styles.combatResultBadge, { backgroundColor: resultColor }]}>
-                              <Text style={styles.combatResultBadgeText}>{resultLabel}</Text>
-                            </View>
-                          ) : null}
-                        </View>
-
-                        {/* ── Ligne 2 : Score de points ── */}
-                        {hasScore && (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
-                            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 7.5, fontWeight: '700', letterSpacing: 0.5 }}>POINTS</Text>
-                            <Text style={{ color: WIN_COLOR, fontSize: 8.5, fontWeight: '900' }}>{r.pointsFor ?? 0}</Text>
-                            <Text style={{ color: 'rgba(255,255,255,0.30)', fontSize: 8, fontWeight: '600' }}>–</Text>
-                            <Text style={{ color: LOSS_COLOR, fontSize: 8.5, fontWeight: '900' }}>{r.pointsAgainst ?? 0}</Text>
-                          </View>
-                        )}
-
-                        {/* ── Ligne 3 : soumissions données (vert, max 4) ── */}
-                        {subsGiven.length > 0 && (
-                          <View style={[styles.combatRoundSubRow, { marginTop: 4 }]}>
-                            <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 7, fontWeight: '700', marginRight: 3 }}>DONNÉ</Text>
-                            {subsGiven.slice(0, 4).map((s, si) => (
-                              <View key={`g${si}`} style={[styles.combatDetailChip, styles.combatDetailChipGold]}>
-                                <Text style={[styles.combatDetailChipText, styles.combatDetailChipTextGold]}>✓ {getSubName(s)}</Text>
-                              </View>
-                            ))}
-                            {subsGiven.length > 4 && (
-                              <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 7.5, fontWeight: '700' }}>+{subsGiven.length - 4}</Text>
-                            )}
-                          </View>
-                        )}
-
-                        {/* ── Ligne 4 : soumissions subies (rouge, max 4) ── */}
-                        {subsTaken.length > 0 && (
-                          <View style={[styles.combatRoundSubRow, { marginTop: 3 }]}>
-                            <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 7, fontWeight: '700', marginRight: 3 }}>SUBI</Text>
-                            {subsTaken.slice(0, 4).map((s, si) => (
-                              <View key={`t${si}`} style={[styles.combatDetailChip, styles.combatDetailChipRed]}>
-                                <Text style={[styles.combatDetailChipText, styles.combatDetailChipTextRed]}>✗ {getSubName(s)}</Text>
-                              </View>
-                            ))}
-                            {subsTaken.length > 4 && (
-                              <Text style={{ color: 'rgba(255,255,255,0.40)', fontSize: 7.5, fontWeight: '700' }}>+{subsTaken.length - 4}</Text>
-                            )}
-                          </View>
-                        )}
-
-                        {/* ── Ligne 5 : techniques utilisées ── */}
-                        {techs.length > 0 && (
-                          <View style={[styles.combatRoundDetails, { marginTop: 3 }]}>
-                            <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 7, fontWeight: '700', marginRight: 2 }}>TECH</Text>
-                            {techs.map((t, ti) => (
-                              <View key={ti} style={[styles.combatDetailChip, { backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }]}>
-                                <Text style={[styles.combatDetailChipText, { color: 'rgba(255,255,255,0.75)' }]}>{t}</Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-
-                      </View>
-                    );
-                  })}
-                </View>
-
-                {/* Chips techniques CFJJB */}
-                {combatStats.topTechs.length > 0 && (
-                  <View style={styles.combatTechRow}>
-                    <Text style={styles.combatTechSectionLabel}>TECHNIQUES · </Text>
-                    {combatStats.topTechs.map((tech, i) => (
-                      <View key={i} style={styles.combatTechChip}>
-                        <Text style={styles.combatTechLabel}>{tech.toUpperCase()}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            ) : (
-
-            <ExercisesWrapper
-              style={scrollMaxHeightStyle}
-              showsVerticalScrollIndicator={false}
-              nestedScrollEnabled={true}
-            >
-              <View style={styles.exercisesList}>
-                {truncatedOptions && truncatedOptions.length > 0 ? (
-                  <>
-                  {truncatedOptions.map((opt, i) => {
-                    // pace calculé depuis speed → afficher avec "/km"
-                    // pace manuel (BJJ résultats etc.) → afficher sans "/km"
-                    const computedPace = getPace(opt.speed);
-                    const manualPace = opt.speed ? undefined : opt.pace; // pace sans unité si pas de speed
-                    const paceWithUnit = computedPace; // uniquement le pace calculé depuis speed
-                    // Vérifier si on change de sport (pour afficher un séparateur)
-                    const prevSport = i > 0 ? truncatedOptions[i - 1].sport : null;
-                    const showSportSeparator = opt.sport && opt.sport !== prevSport && opt.sportName;
-
-                    return (
-                      <React.Fragment key={i}>
-                        {showSportSeparator && opt.sportName && (
-                          <View style={sportSeparatorMarginStyle(i)}>
-                            <Text style={sportSeparatorTextStyle}>
-                              {opt.sportName.toUpperCase()}
-                            </Text>
-                          </View>
-                        )}
-                        <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                          <Text style={[styles.exerciseLabel, exerciseLabelStyle]} numberOfLines={1}>{(opt.label ?? '').toUpperCase()}</Text>
-                          <View style={styles.exerciseStats}>
-                            {opt.weight && renderStyledStat(opt.weight, 'KG')}
-                            {opt.reps && (
-                              <View style={styles.statValue}>
-                                <Text style={[styles.statSeparator, statSeparatorStyle]}> × </Text>
-                                <Text style={styles.statReps}>{opt.reps}</Text>
-                              </View>
-                            )}
-                            {opt.sets && parseInt(opt.sets) > 1 && (
-                              <View style={styles.statValue}>
-                                <Text style={[styles.statSeparator, statSeparatorStyle]}> × </Text>
-                                <Text style={[styles.paceText, paceTextStyle]}>{opt.sets}s</Text>
-                              </View>
-                            )}
-                            {!!opt.distance && renderStyledStat(opt.distance, 'KM')}
-                            {!!opt.duration && renderStyledStat(opt.duration, 'MIN')}
-                            {!!opt.watts && renderStyledStat(opt.watts, 'W')}
-                            {opt.resistance && renderStyledStat(opt.resistance, 'NV')}
-                            {!!opt.speed && renderStyledStat(opt.speed, 'KM/H')}
-                            {manualPace && <Text style={[styles.paceText, paceTextStyle]}>({manualPace})</Text>}
-                            {paceWithUnit && <Text style={[styles.paceText, paceTextStyle]}>({paceWithUnit}/km)</Text>}
-                            {opt.pente && renderStyledStat(opt.pente, '%')}
-                            {opt.stairs && renderStyledStat(opt.stairs, 'ÉT.')}
-                            {!!opt.calories && renderStyledStat(opt.calories, 'KCAL')}
-                          </View>
-                        </View>
-                      </React.Fragment>
-                    );
-                  })}
-                  {hiddenCount > 0 && (
-                    <View style={styles.hiddenCountRow}>
-                      <Text style={styles.hiddenCountText}>+ {hiddenCount} ÉLÉMENT{hiddenCount > 1 ? 'S' : ''}</Text>
-                    </View>
-                  )}
-                  </>
-                ) : (
-                  <View>
-                    {/* Metriques globales de la séance style Strava */}
-                    {((training.duration_minutes || 0) > 0 || (training.distance || 0) > 0 || (training.heart_rate || 0) > 0 || (training.calories || 0) > 0 || (training.watts || 0) > 0 || (training.speed || 0) > 0 || (training.cadence || 0) > 0 || (training.resistance || 0) > 0 || (training.pente || 0) > 0 || (training.rounds || 0) > 0 || (training.intensity || 0) > 0 || (training.max_heart_rate || 0) > 0) ? (
-                      <View style={styles.globalMetricsGrid}>
-                        {(training.duration_minutes || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>DURÉE</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(
-                                Math.floor((training.duration_minutes || 0) / 60) > 0
-                                  ? `${Math.floor((training.duration_minutes || 0) / 60)}h${((training.duration_minutes || 0) % 60).toString().padStart(2, '0')}`
-                                  : `${training.duration_minutes || 0}`,
-                                Math.floor((training.duration_minutes || 0) / 60) > 0 ? '' : 'MIN'
-                              )}
-                            </View>
-                          </View>
-                        )}
-                        {(training.distance || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>DISTANCE</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat((training.distance || 0).toFixed(2), 'KM')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.distance || 0) > 0 && (training.duration_minutes || 0) > 0 && (() => {
-                          const paceTotal = Math.round(((training.duration_minutes || 0) * 60) / (training.distance || 1));
-                          const pm = Math.floor(paceTotal / 60);
-                          const ps = paceTotal % 60;
-                          return (
-                            <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                              <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>ALLURE MOY.</Text>
-                              <View style={styles.exerciseStats}>
-                                {renderStyledStat(`${pm}'${ps.toString().padStart(2, '0')}"`, '/KM')}
-                              </View>
-                            </View>
-                          );
-                        })()}
-                        {(training.speed || 0) > 0 && !((training.distance || 0) > 0 && (training.duration_minutes || 0) > 0) && (() => {
-                          const pace = getPace((training.speed || 0).toString());
-                          return pace ? (
-                            <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                              <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>ALLURE MOY.</Text>
-                              <View style={styles.exerciseStats}>
-                                {renderStyledStat(pace, '/KM')}
-                              </View>
-                            </View>
-                          ) : null;
-                        })()}
-                        {(training.speed || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>VITESSE MOY.</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat((training.speed || 0).toFixed(1), 'KM/H')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.watts || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>PUISSANCE</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(Math.round(training.watts || 0), 'W')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.cadence || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>CADENCE</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(Math.round(training.cadence || 0), 'RPM')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.resistance || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>RÉSISTANCE</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(training.resistance || 0, 'NV')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.pente || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>PENTE</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat((training.pente || 0).toFixed(1), '%')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.rounds || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>ROUNDS</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(training.rounds || 0, training.round_duration ? `× ${training.round_duration}MIN` : '')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.heart_rate || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>FC MOY.</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(training.heart_rate || 0, 'BPM')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.max_heart_rate || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>FC MAX.</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(training.max_heart_rate || 0, 'BPM')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.intensity || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>INTENSITÉ (RPE)</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(training.intensity || 0, '/ 10')}
-                            </View>
-                          </View>
-                        )}
-                        {(training.calories || 0) > 0 && (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>CALORIES</Text>
-                            <View style={styles.exerciseStats}>
-                              {renderStyledStat(Math.round(training.calories || 0), 'KCAL')}
-                            </View>
-                          </View>
-                        )}
-                        {training.location_name ? (
-                          <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
-                            <Text style={[styles.exerciseLabel, exerciseLabelStyle]}>LIEU</Text>
-                            <Text style={[styles.paceText, paceTextStyle]} numberOfLines={1}>{training.location_name.toUpperCase()}</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                    ) : (
-                      <Text style={[styles.emptyNotesText, emptyNotesStyle]}>{training.notes || 'SÉANCE VALIDÉE'}</Text>
-                    )}
-                  </View>
-                )}
-              </View>
-            </ExercisesWrapper>
-            )}
-          </View>}
+          <CardFoot p={p} />
         </View>
-
-        {/* 3. FOOTER · hauteur fixe proportionnelle */}
-        <View style={[styles.footerSection, footerBorderStyle, { height: Math.round(CARD_HEIGHT * 0.12) }]}>
-          <SocialCardFooter variant={isWhite ? "light" : "dark"} />
-        </View>
-      </View>
+      </CardFrame>
     );
-  }
+  },
 ));
+SessionCard.displayName = 'SessionCard';
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 32,
-    overflow: 'hidden',
-  },
-  photoSection: {
-    width: '100%',
-    backgroundColor: '#111',
-  },
-  photoImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  photoGradient: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  photoHeader: {
-    paddingHorizontal: 6,
-    paddingTop: 32,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  profileContainer: {
-    width: PROFILE_SIZE,
-    height: PROFILE_SIZE,
-    borderRadius: PROFILE_SIZE / 2,
-    borderWidth: 2,
-    borderColor: '#000000',
-    overflow: 'hidden',
-    backgroundColor: '#FFF',
-  },
-  profilePlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF',
-  },
-  avatarContainer: {
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 4,
-  },
-  avatarCircle: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-    borderWidth: 2,
-    borderColor: '#000000',
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rankBadge: {
-    backgroundColor: GOLD_COLOR,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  rankText: {
-    color: '#000',
-    fontSize: 7,
-    fontWeight: '900',
-  },
-  photoBottomInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingLeft: 12,
-    paddingRight: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
-  },
-  dateText: {
-    color: GOLD_COLOR,
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 2,
-  },
-  clubRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 2,
-  },
-  clubLogoBox: {
-    padding: 2,
-    backgroundColor: '#FFF',
-    borderRadius: 4,
-  },
-  clubLogo: {
-    width: CLUB_LOGO_SIZE,
-    height: CLUB_LOGO_SIZE,
-  },
-  clubName: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  sportName: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: '900',
-    marginTop: 2,
-  },
-  durationBadge: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: GOLD_COLOR,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  durationText: {
-    color: '#000',
-    fontWeight: '900',
-    fontSize: 13,
-  },
-  statsSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    gap: 10,
-    overflow: 'hidden',
-  },
-  progressContainer: {
-    marginBottom: 4,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 4,
-  },
-  progressLeft: {
-    flex: 1,
-  },
-  progressRight: {
-    alignItems: 'flex-end',
-  },
-  chronoLabel: {
-    color: GOLD_COLOR,
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-  progressNumbers: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-  },
-  goldLargeNumber: {
-    color: GOLD_COLOR,
-    fontSize: 32,
-    fontWeight: '900',
-  },
-  percentContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  percentLarge: {
-    color: GOLD_COLOR,
-    fontSize: 36,
-    fontWeight: '900',
-  },
-  yearProgressText: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  smallGoldText: {
-    color: GOLD_COLOR,
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  progressBar: {
-    width: '100%',
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  detailsSection: {
-    gap: 4,
-  },
-  detailsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 2,
-  },
-  detailsDivider: {
-    height: 1,
-    flex: 1,
-    opacity: 0.3,
-  },
-  detailsLabel: {
-    color: GOLD_COLOR,
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 2,
-  },
-  exercisesList: {
-    gap: 2,
-  },
-  exerciseRow: {
-    borderBottomWidth: 0.5,
-    paddingBottom: 1,
-    paddingTop: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  exerciseLabel: {
-    fontSize: 8,
-    fontWeight: '800',
-    flex: 1,
-  },
-  exerciseStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  statNumber: {
-    color: GOLD_COLOR,
-    fontSize: 13,
-    fontWeight: '900',
-  },
-  statUnit: {
-    fontSize: 8,
-    fontWeight: '800',
-    marginLeft: 1,
-  },
-  statSeparator: {
-    fontSize: 7,
-  },
-  statReps: {
-    color: GOLD_COLOR,
-    fontSize: 10,
-    fontWeight: '900',
-  },
-  paceText: {
-    fontSize: 7,
-  },
-  emptyNotesText: {
-    fontSize: 11,
-    fontStyle: 'italic',
-    textAlign: 'center',
-  },
-  globalMetricsGrid: {
-    gap: 0,
-  },
-  hiddenCountRow: {
-    paddingTop: 2,
-    alignItems: 'center',
-  },
-  hiddenCountText: {
-    color: GOLD_COLOR,
-    fontSize: 7,
-    fontWeight: '900',
-    letterSpacing: 1,
-    opacity: 0.7,
-  },
-  // ─── Styles Combat ───
-  combatHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 4,
-  },
-  combatHeaderLeft: {
-    flex: 1,
-    gap: 4,
-  },
-  combatHeaderMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  combatSubSummaryChip: {
-    backgroundColor: 'rgba(34,197,94,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(34,197,94,0.35)',
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-  },
-  combatSubSummaryChipRed: {
-    backgroundColor: 'rgba(239,68,68,0.12)',
-    borderColor: 'rgba(239,68,68,0.35)',
-  },
-  combatSubSummaryText: {
-    color: WIN_COLOR,
-    fontSize: 8,
-    fontWeight: '800',
-  },
-  combatScoreLine: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  combatScoreNum: {
-    fontSize: 26,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  combatScoreUnit: {
-    fontSize: 13,
-    fontWeight: '900',
-  },
-  combatScoreDot: {
-    color: 'rgba(255,255,255,0.25)',
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  combatImbattuInline: {
-    color: GOLD_COLOR,
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  combatHeaderBubbles: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  combatContainer: {
-    gap: 4,
-  },
-  combatRoundsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 5,
-  },
-  combatRoundBubbleWrap: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  combatRoundBubble: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  combatRoundBubbleGold: {
-    borderWidth: 1.5,
-    borderColor: GOLD_COLOR,
-  },
-  combatRoundLetter: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: '900',
-  },
-  combatRoundNum: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 7,
-    fontWeight: '800',
-  },
-  combatRoundFinish: {
-    fontSize: 6,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  combatBilanBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    marginLeft: 4,
-  },
-  combatBilanW: {
-    fontSize: 9,
-    fontWeight: '900',
-  },
-  combatImbattu: {
-    color: GOLD_COLOR,
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  combatBilanSep: {
-    color: 'rgba(255,255,255,0.3)',
-    fontSize: 8,
-    fontWeight: '400',
-  },
-  combatPts: {
-    color: 'rgba(255,255,255,0.45)',
-    fontSize: 8,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-  combatSubRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  combatSubBadge: {
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-  },
-  combatSubBadgeText: {
-    color: '#FFF',
-    fontSize: 7,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  combatSubTextWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    flex: 1,
-    gap: 2,
-  },
-  combatSubText: {
-    color: '#FFF',
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  combatSubTextMuted: {
-    color: 'rgba(255,255,255,0.65)',
-  },
-  combatRoundsList: {
-    gap: 0,
-  },
-  combatRoundBlock: {
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    gap: 4,
-    borderLeftWidth: 3,
-    marginBottom: 4,
-    borderRadius: 6,
-  },
-  combatRoundLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  combatRoundNumPill: {
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-  },
-  combatRoundSubRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 4,
-    paddingLeft: 4,
-  },
-  combatRoundLineBorder: {
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-  },
-  combatRoundLineNum: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  combatRoundLinePartner: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '800',
-    flex: 1,
-    letterSpacing: 0.3,
-  },
-  combatRoundLineScore: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 7,
-    fontWeight: '600',
-  },
-  combatRoundLineRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  combatRoundLineResult: {
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  combatRoundLineSubBadge: {
-    backgroundColor: 'rgba(212,175,55,0.18)',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.4)',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-  },
-  combatRoundLineSubText: {
-    color: GOLD_COLOR,
-    fontSize: 7,
-    fontWeight: '900',
-  },
-  combatRoundDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 4,
-    paddingLeft: 4,
-  },
-  combatDetailChip: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  combatDetailChipRed: {
-    backgroundColor: 'rgba(239,68,68,0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.45)',
-  },
-  combatDetailChipGold: {
-    backgroundColor: 'rgba(212,175,55,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.45)',
-  },
-  combatDetailChipText: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 8,
-    fontWeight: '700',
-  },
-  combatDetailChipTextRed: {
-    color: LOSS_COLOR,
-    fontSize: 8,
-    fontWeight: '800',
-  },
-  combatDetailChipTextGold: {
-    color: GOLD_COLOR,
-    fontSize: 8,
-    fontWeight: '800',
-  },
-  combatDetailTech: {
-    color: 'rgba(255,255,255,0.45)',
-    fontSize: 8,
-    fontWeight: '600',
-  },
-  combatTechRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 2,
-  },
-  combatTechChip: {
-    backgroundColor: 'rgba(212,175,55,0.12)',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.35)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  combatResultBadge: {
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  combatResultBadgeText: {
-    color: '#FFF',
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  combatTechSectionLabel: {
-    color: 'rgba(255,255,255,0.3)',
-    fontSize: 7,
-    fontWeight: '700',
-  },
-  combatTechLabel: {
-    color: GOLD_COLOR,
-    fontSize: 7,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  footerSection: {
-    flexShrink: 0,
-    borderTopWidth: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-});
+function Score({ pp, value, label, color }: { pp: CardPalette; value: number; label: string; color: string }) {
+  return (
+    <View>
+      <Ink size={30} weight="black" tight color={color} style={{ lineHeight: 32 }}>{value}</Ink>
+      <Ink size={10} weight="bold" color={pp.panelInk2}>{label}</Ink>
+    </View>
+  );
+}
+
+export default SessionCard;

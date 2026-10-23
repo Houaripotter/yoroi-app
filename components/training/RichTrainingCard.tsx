@@ -159,12 +159,12 @@ const RichTrainingCardInner: React.FC<RichTrainingCardProps> = ({ training, pres
           <Text style={[styles.sportTitle, { color: colors.textPrimary }]} numberOfLines={1}>
             {sportName}
             {(training as any).club_name ? (
-              <Text style={[styles.clubLabel, { color: sportColor }]}> · {(training as any).club_name}</Text>
+              <Text style={[styles.clubLabel, { color: sportColor }]}>, {(training as any).club_name}</Text>
             ) : null}
           </Text>
           <View style={styles.dateRow}>
             <Text style={[styles.dateText, { color: colors.textSecondary }]}>{dateStr}</Text>
-            {timeStr ? <Text style={[styles.timeText, { color: colors.textMuted }]}> · {timeStr}</Text> : null}
+            {timeStr ? <Text style={[styles.timeText, { color: colors.textMuted }]}>, {timeStr}</Text> : null}
           </View>
         </View>
         <SourceBadge source={training.source} />

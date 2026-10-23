@@ -1,3 +1,4 @@
+import { track } from '@/utils/telemetry';
 import { printToFileAsync, printAsync } from 'expo-print';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { format } from 'date-fns';
@@ -338,6 +339,7 @@ const generateMeasurementRow = (label: string, first?: number, last?: number): s
 // Fonction principale d'export
 export const generateProgressPDF = async (period: ExportPeriod = '30j'): Promise<void> => {
   try {
+    track('sauvegarde_exportee', { type: 'pdf' });
     // Generer le HTML
     const html = await generatePDFHTML(period);
 

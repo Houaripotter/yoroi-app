@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER INSIGHTS BANNER · affiche les 3 insights dominants
+// PARTNER INSIGHTS BANNER : affiche les 3 insights dominants
 // ============================================
 
 import React, { useEffect, useState } from 'react';

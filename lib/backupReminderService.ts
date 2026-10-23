@@ -1,5 +1,5 @@
 // ============================================================
-// YOROI — Service de rappel de sauvegarde
+// YOROI : Service de rappel de sauvegarde
 // ============================================================
 // Propose à l'utilisateur de sauvegarder après N entrées
 // ou si ça fait trop longtemps sans backup.

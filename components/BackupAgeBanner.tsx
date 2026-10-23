@@ -16,7 +16,7 @@ import logger from '@/lib/security/logger';
 
 const WARNING_DAYS = 7;
 const CRITICAL_DAYS = 14;
-// Masquer le banner les 48 premières heures après installation · évite le stress
+// Masquer le banner les 48 premières heures après installation, évite le stress
 // "Aucune sauvegarde" pour un nouvel user qui n'a même pas encore de données.
 const GRACE_PERIOD_HOURS = 48;
 const INSTALL_DATE_KEY = '@yoroi_install_date';

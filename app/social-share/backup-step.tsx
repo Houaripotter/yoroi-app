@@ -1,42 +1,30 @@
-// ============================================
-// ÉTAPE 4 : SAUVEGARDE iCLOUD
-// ============================================
-
+/**
+ * Derniere etape du parcours de seance (refonte v2) : proteger ses donnees avec une sauvegarde.
+ * YOROI fonctionne sans serveur, les donnees ne vivent que sur ce telephone.
+ */
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ScrollView,
-  Modal,
-} from 'react-native';
+import { Modal, View } from 'react-native';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Cloud,
-  FolderPlus,
-  Download,
-  Shield,
-  ArrowRight,
-  CheckCircle,
-  ShieldCheck,
-} from 'lucide-react-native';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { successHaptic } from '@/lib/haptics';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import ratingService from '@/lib/ratingService';
 import { RatingPopup } from '@/components/RatingPopup';
 import { logger } from '@/lib/security/logger';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { BigButton, Card, Glass, P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { Icon as EIcon } from '@/components/yoroi/v2/espace/ui';
+import type { IconName } from '@/components/yoroi/v2/espace/ui';
+import { Stamp, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+
+const STEPS: { icon: IconName; title: string; text: string }[] = [
+  { icon: 'archive', title: 'Crée un dossier', text: 'Appelle-le Yoroi_Backup dans ton cloud.' },
+  { icon: 'download', title: 'Génère ta sauvegarde', text: 'Un seul fichier avec tout ton historique.' },
+  { icon: 'upload', title: 'Range-la dans ton cloud', text: 'Tu ne perdras plus rien, même en changeant de téléphone.' },
+];
 
 export default function BackupStepScreen() {
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
-  const insets = useSafeAreaInsets();
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showRatingPopup, setShowRatingPopup] = useState(false);
@@ -46,35 +34,23 @@ export default function BackupStepScreen() {
     try {
       await exportDataToJSON();
       successHaptic();
-      // Afficher le modal de succès
       setShowSuccessModal(true);
     } catch (error) {
       logger.error('Erreur export:', error);
-      Alert.alert(
-        t('backupStep.errorTitle'),
-        t('backupStep.errorMsg'),
-        [
-          { text: t('backupStep.cancel'), style: 'cancel' },
-          { text: t('backupStep.retry'), onPress: handleExport },
-        ]
-      );
+      appAlert('Sauvegarde impossible', 'Tes données n’ont pas pu être exportées. Vérifie les autorisations et réessaie.', [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Réessayer', onPress: handleExport },
+      ]);
     } finally {
       setIsExporting(false);
     }
   };
 
   const handleFinish = async () => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-
-    // Vérifier si l'utilisateur a déjà noté l'app
+    tap('medium');
     const hasRated = await ratingService.hasRated();
-
-    // Naviguer vers l'accueil avec paramètre pour afficher la popup
-    if (!hasRated) {
-      router.replace('/(tabs)?showRating=true');
-    } else {
-      router.replace('/(tabs)');
-    }
+    if (!hasRated) router.replace('/(tabs)?showRating=true' as any);
+    else router.replace('/(tabs)');
   };
 
   const handleRatingClose = () => {
@@ -90,342 +66,61 @@ export default function BackupStepScreen() {
   };
 
   return (
-    <ScreenWrapper noPadding noContainer>
-      {/* HEADER ÉTAPE 4 - SOMMET ABSOLU */}
-      <View style={{
-        backgroundColor: colors.background,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        zIndex: 999
-      }}>
-        <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>{t('backupStep.stepTitle')}</Text>
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
-            {/* Etapes Passées (Gold) */}
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
-            <View style={{ width: 30, height: 2, backgroundColor: colors.accent }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
-            <View style={{ width: 30, height: 2, backgroundColor: colors.accent }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
-            <View style={{ width: 30, height: 2, backgroundColor: colors.accent }} />
-
-            {/* Etape 4 (Actuelle - Big Gold) */}
-            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 5 }} />
+    <View style={{ flex: 1, backgroundColor: P.paper }}>
+      <DetailScreen
+        title="Sauvegarde tes données"
+        subtitle="Tes données vivent sur ce téléphone, nulle part ailleurs"
+        footer={
+          <View style={{ gap: 10 }}>
+            <BigButton label={isExporting ? 'Génération en cours' : 'Générer ma sauvegarde'} icon="shield" onPress={handleExport} disabled={isExporting} />
+            <BigButton label="Terminer" tone="light" onPress={handleFinish} />
           </View>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginTop: 4, letterSpacing: 1 }}>{t('backupStep.stepName')}</Text>
-        </View>
-      </View>
+        }
+      >
+        <Glass style={{ alignItems: 'center', gap: 12, paddingVertical: 26, backgroundColor: 'rgba(255,255,255,0.92)' }}>
+          <View style={{ width: 92, height: 92, borderRadius: 46, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <EIcon name="shield" size={32} color="#FFFFFF" stroke={2.4} />
+            </View>
+          </View>
+          <Ink size={15} weight="bold" color={P.ink2} style={{ textAlign: 'center', paddingHorizontal: 10 }}>
+            YOROI fonctionne sans serveur pour respecter ta vie privée. Une sauvegarde te protège en cas de perte ou de vol.
+          </Ink>
+        </Glass>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 100 }]} showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.background }}>
-        
-        {/* LOGO SYNC */}
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-          {/* Cercle externe pulsant */}
-          <View style={{
-            width: 130, height: 130, borderRadius: 65,
-            backgroundColor: colors.accent + '12',
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            {/* Cercle intermédiaire */}
-            <View style={{
-              width: 100, height: 100, borderRadius: 50,
-              backgroundColor: colors.accent + '22',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              {/* Cercle central */}
-              <View style={{
-                width: 72, height: 72, borderRadius: 36,
-                backgroundColor: colors.accent,
-                alignItems: 'center', justifyContent: 'center',
-                shadowColor: colors.accent,
-                shadowOpacity: 0.5,
-                shadowRadius: 16,
-                shadowOffset: { width: 0, height: 6 },
-                elevation: 12,
-              }}>
-                <ShieldCheck size={36} color={colors.textOnAccent} strokeWidth={2} />
+        <Card style={{ gap: 14 }}>
+          {STEPS.map((s, i) => (
+            <View key={s.title} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: P.indigoSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <EIcon name={s.icon} size={20} color={P.indigo} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Ink size={15} weight="extraBold">{`${i + 1}. ${s.title}`}</Ink>
+                <Ink size={13} color={P.ink2}>{s.text}</Ink>
               </View>
             </View>
-          </View>
-        </View>
+          ))}
+        </Card>
+        <View style={{ height: 120 }} />
+      </DetailScreen>
 
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {t('backupStep.title')}
-        </Text>
-
-        <View style={[styles.warningBox, { backgroundColor: colors.error + '20', borderColor: colors.error }]}>
-          <Text style={[styles.warningText, { color: colors.error }]}>
-            {t('backupStep.warning')}
-          </Text>
-        </View>
-
-        <View style={[styles.instructionCard, { backgroundColor: colors.backgroundCard, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }]}>
-          <Text style={[styles.instructionTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('backupStep.instructionTitle')}</Text>
-
-          <View style={styles.stepRow}>
-            <FolderPlus size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t('backupStep.step1')}</Text>
-          </View>
-
-          <View style={styles.stepRow}>
-            <Download size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t('backupStep.step2')}</Text>
-          </View>
-
-          <View style={styles.stepRow}>
-            <Cloud size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t('backupStep.step3')}</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.exportBtn, { backgroundColor: colors.accent }]}
-          onPress={handleExport}
-          disabled={isExporting}
-        >
-          <Download size={24} color={colors.textOnAccent} />
-          <Text style={[styles.exportBtnText, { color: colors.textOnAccent }]}>
-            {isExporting ? t('backupStep.generating') : t('backupStep.generate')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.finishBtn}
-          onPress={handleFinish}
-        >
-          <Text style={[styles.finishBtnText, { color: '#6B7280' }]}>{t('backupStep.finish')}</Text>
-          <ArrowRight size={18} color="#6B7280" />
-        </TouchableOpacity>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
-
-      {/* Modal de succès après sauvegarde */}
-      <Modal
-        visible={showSuccessModal}
-        transparent
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.backgroundCard }]}>
-            <View style={[styles.successIconContainer, { backgroundColor: '#10B98120' }]}>
-              <CheckCircle size={60} color="#10B981" strokeWidth={3} />
-            </View>
-
-            <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
-              {t('backupStep.successTitle')}
-            </Text>
-
-            <Text style={[styles.successMessage, { color: colors.textSecondary }]}>
-              {t('backupStep.successMsg')}
-            </Text>
-
-            <View style={[styles.protectionBox, { backgroundColor: colors.accent + '15', borderColor: colors.accent }]}>
-              <Shield size={20} color={colors.accent} />
-              <Text style={[styles.protectionText, { color: colors.textPrimary }]}>
-                {t('backupStep.protectionMsg')}
-              </Text>
-            </View>
-
-            <Text style={[styles.reminderText, { color: colors.textMuted }]}>
-              {t('backupStep.reminderMsg')}
-            </Text>
-
-            <TouchableOpacity
-              style={[styles.okButton, { backgroundColor: colors.accent }]}
-              onPress={() => {
-                setShowSuccessModal(false);
-                successHaptic();
-              }}
-            >
-              <Text style={[styles.okButtonText, { color: colors.textOnAccent }]}>
-                {t('backupStep.ok')}
-              </Text>
-            </TouchableOpacity>
+      <Modal visible={showSuccessModal} transparent animationType="fade" onRequestClose={() => setShowSuccessModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <View style={{ width: '100%', maxWidth: 380, backgroundColor: P.paper, borderRadius: 28, padding: 22, gap: 14, alignItems: 'center' }}>
+            <Stamp p={paletteOf('papier')} size={64} />
+            <Ink size={26} weight="black" tight style={{ textAlign: 'center' }}>Sauvegarde prête</Ink>
+            <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>Tes données sont protégées en cas de perte, de vol ou de changement de téléphone.</Ink>
+            <Ink size={13} weight="bold" color={P.muted} style={{ textAlign: 'center' }}>Range le fichier dans ton cloud préféré : iCloud, Google Drive ou Dropbox.</Ink>
+            <Press onPress={() => { setShowSuccessModal(false); successHaptic(); }} accessibilityRole="button" accessibilityLabel="Parfait" style={{ alignSelf: 'stretch' }}>
+              <View style={{ height: 56, borderRadius: 18, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
+                <Ink size={16} weight="extraBold" color="#FFFFFF">Parfait</Ink>
+              </View>
+            </Press>
           </View>
         </View>
       </Modal>
 
-      {/* Popup de notation */}
-      <RatingPopup
-        visible={showRatingPopup}
-        onClose={handleRatingClose}
-        onRated={handleRated}
-        actionType="session"
-      />
-    </ScreenWrapper>
+      <RatingPopup visible={showRatingPopup} onClose={handleRatingClose} onRated={handleRated} actionType="session" />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    padding: 24,
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  shieldOverlay: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 2,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  warningBox: {
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 24,
-  },
-  warningText: {
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  instructionCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    width: '100%',
-    padding: 20,
-    borderRadius: 24,
-    gap: 16,
-    marginBottom: 32,
-  },
-  instructionTitle: {
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  stepText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    lineHeight: 20,
-    flex: 1,
-  },
-  exportBtn: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 18,
-    borderRadius: 20,
-    shadowColor: '#D4AF37',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
-  },
-  exportBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  successMsg: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 16,
-  },
-  finishBtn: {
-    marginTop: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-  },
-  finishBtnText: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  successIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  successMessage: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 24,
-  },
-  protectionBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 20,
-  },
-  protectionText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-  reminderText: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 18,
-  },
-  okButton: {
-    width: '100%',
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  okButtonText: {
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-});

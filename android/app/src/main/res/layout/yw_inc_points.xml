@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 7 points du lundi au dimanche -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
+    <ImageView android:id="@+id/yw_j0" android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/yw_point_vide" android:importantForAccessibility="no" />
+    <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="10sp" android:text="@string/yw_lundi" />
+  </LinearLayout>
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
+    <ImageView android:id="@+id/yw_j1" android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/yw_point_vide" android:importantForAccessibility="no" />
+    <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="10sp" android:text="@string/yw_mardi" />
+  </LinearLayout>
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
+    <ImageView android:id="@+id/yw_j2" android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/yw_point_vide" android:importantForAccessibility="no" />
+    <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="10sp" android:text="@string/yw_mercredi" />
+  </LinearLayout>
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
+    <ImageView android:id="@+id/yw_j3" android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/yw_point_vide" android:importantForAccessibility="no" />
+    <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="10sp" android:text="@string/yw_jeudi" />
+  </LinearLayout>
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
+    <ImageView android:id="@+id/yw_j4" android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/yw_point_vide" android:importantForAccessibility="no" />
+    <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="10sp" android:text="@string/yw_vendredi" />
+  </LinearLayout>
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
+    <ImageView android:id="@+id/yw_j5" android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/yw_point_vide" android:importantForAccessibility="no" />
+    <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="10sp" android:text="@string/yw_samedi" />
+  </LinearLayout>
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
+    <ImageView android:id="@+id/yw_j6" android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/yw_point_vide" android:importantForAccessibility="no" />
+    <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="10sp" android:text="@string/yw_dimanche" />
+  </LinearLayout>
+</LinearLayout>

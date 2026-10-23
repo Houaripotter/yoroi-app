@@ -242,7 +242,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       onClose();
     } catch (error) {
       logger.error('Erreur sauvegarde club:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder le club', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', 'Le club n’a pas pu être enregistré.', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSubmitting(false);
     }
@@ -255,7 +255,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       if (source === 'camera') {
         const permission = await requestCameraPermissionsAsync();
         if (!permission.granted) {
-          showPopup('Permission requise', 'Autorise l\'acces a la camera', [{ text: 'OK', style: 'primary' }]);
+          showPopup('Accès à la caméra', 'Autorise la caméra dans les réglages du téléphone.', [{ text: 'OK', style: 'primary' }]);
           return;
         }
         result = await launchCameraAsync({
@@ -266,7 +266,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       } else {
         const permission = await requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-          showPopup('Permission requise', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);
+          showPopup('Accès à la galerie', 'Autorise l’accès à ta galerie dans les réglages du téléphone.', [{ text: 'OK', style: 'primary' }]);
           return;
         }
         result = await launchImageLibraryAsync({

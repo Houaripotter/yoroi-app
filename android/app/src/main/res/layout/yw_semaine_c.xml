@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Genere pour le style C (Armure laquee), depuis yw_semaine.xml (scratchpad/widgets_code/gen_android.py) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/yw_c_fond" android:clipToOutline="true"><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_margin="5dp" android:background="@drawable/yw_c_filet" android:importantForAccessibility="no" /><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_margin="8dp" android:background="@drawable/yw_c_filet2" android:importantForAccessibility="no" /><LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="@dimen/yw_marge">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:id="@+id/yw_titre" style="@style/YwTitre" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/yw_nom_semaine" android:textColor="@color/yw_c_titre" android:textStyle="bold" android:drawableStart="@drawable/yw_c_losange" android:drawablePadding="6dp" android:textAllCaps="true" android:letterSpacing="0.12" android:textSize="11sp" />
+    <TextView android:id="@+id/yw_valeur" style="@style/YwChiffre" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="20sp" android:textColor="@color/yw_c_encre" />
+  </LinearLayout>
+  <TextView android:id="@+id/yw_sem_texte" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:gravity="end" android:textColor="@color/yw_c_discret" />
+  <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+    <include layout="@layout/yw_inc_points_c" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center_vertical" />
+  </FrameLayout>
+  <TextView android:id="@+id/yw_bouton_seance" style="@style/YwBouton" android:layout_width="match_parent" android:layout_height="@dimen/yw_bouton_h" android:text="@string/yw_seance_faite" android:textColor="@color/yw_c_sur_indigo" android:background="@drawable/yw_c_bouton" />
+</LinearLayout></FrameLayout>

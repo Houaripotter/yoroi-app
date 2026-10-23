@@ -1,10 +1,17 @@
 // ============================================
-// PARTNER MEDIA GALLERY · Photos + liens video par partenaire
+// PARTNER MEDIA GALLERY : Photos + liens video par partenaire
 // ============================================
 
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, TextInput, Alert,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { Camera, Video, Plus, X, ExternalLink } from 'lucide-react-native';
 import { launchImageLibraryAsync, requestMediaLibraryPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
@@ -12,6 +19,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { lightHaptic, successHaptic } from '@/lib/haptics';
 import { safeOpenURL } from '@/lib/security/validators';
 import type { PartnerMedia } from '@/lib/partnerModel';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 const makeId = () => `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
@@ -30,7 +38,7 @@ export const PartnerMediaGallery: React.FC<Props> = ({ media, onChange }) => {
     lightHaptic().catch(() => {});
     const perm = await requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permission refusee', 'Accorde l\'acces aux photos pour importer.');
+      appAlert('Accès aux photos', 'Autorise l’accès à tes photos pour les importer.');
       return;
     }
     const res = await launchImageLibraryAsync({
@@ -54,7 +62,7 @@ export const PartnerMediaGallery: React.FC<Props> = ({ media, onChange }) => {
     if (!u) return;
     // Validation : YouTube / Vimeo / lien http
     if (!/^https?:\/\//i.test(u)) {
-      Alert.alert('Lien invalide', 'Le lien doit commencer par https://');
+      appAlert('Lien invalide', 'Colle un lien complet, qui commence par https://');
       return;
     }
     const newItem: PartnerMedia = {

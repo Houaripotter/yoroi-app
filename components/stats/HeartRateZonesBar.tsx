@@ -7,6 +7,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { intensite } from '@/lib/v2/intensite';
 
 export interface HRZone {
   zone: number;
@@ -23,12 +24,13 @@ interface HeartRateZonesBarProps {
 }
 
 // Couleurs Apple Health exactes
+// Vague 32 : echelle d'intensite commune (lib/v2/intensite.ts), du bleu calme a la braise, sans rouge
 const APPLE_ZONE_COLORS: Record<number, string> = {
-  1: '#3B82F6', // Bleu
-  2: '#22C55E', // Vert
-  3: '#EAB308', // Jaune
-  4: '#F97316', // Orange
-  5: '#EF4444', // Rouge
+  1: intensite(1).fill,
+  2: intensite(2).fill,
+  3: intensite(3).fill,
+  4: intensite(4).fill,
+  5: intensite(5).fill,
 };
 
 const formatDuration = (seconds: number): string => {
@@ -68,7 +70,7 @@ export const HeartRateZonesBar: React.FC<HeartRateZonesBarProps> = ({
         return (
           <View key={zone.zone} style={styles.zoneRow}>
             {/* Zone label + color bar */}
-            <Text style={[styles.zoneLabel, { color: zoneColor }]}>
+            <Text style={[styles.zoneLabel, { color: intensite(zone.zone).text }]}>
               Zone {zone.zone}
             </Text>
 

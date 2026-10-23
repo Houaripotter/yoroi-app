@@ -50,34 +50,34 @@ export class HealthInsightsGenerator {
     if (change > 10) {
       insights.push({
         type: 'success',
-        title: 'Récupération Excellente',
+        title: 'Récupération excellente',
         message:
-          'Ton HRV est en forte hausse ! Ta récupération est optimale. Ton corps est prêt pour des entraînements intenses.',
+          'Ta variabilité cardiaque monte nettement. Tu récupères bien, ton corps est prêt pour une séance intense.',
         metric: `${recentAvg.toFixed(0)} ms`,
         change,
       });
     } else if (change < -10) {
       insights.push({
         type: 'warning',
-        title: 'Attention à la Récupération',
+        title: 'Récupération en baisse',
         message:
-          'Ton HRV a baissé significativement. Ton corps pourrait avoir besoin de plus de repos. Considère une séance légère ou un jour de repos.',
+          'Ta variabilité cardiaque a nettement baissé. Ton corps a peut-être besoin de repos : séance légère ou jour off.',
         metric: `${recentAvg.toFixed(0)} ms`,
         change,
       });
     } else if (recentAvg > 60) {
       insights.push({
         type: 'success',
-        title: 'HRV Excellente',
-        message: 'Ton HRV est dans la zone excellente. Continue comme ça !',
+        title: 'Variabilité cardiaque haute',
+        message: 'Ta variabilité cardiaque est haute cette semaine, signe d\'une bonne récupération.',
         metric: `${recentAvg.toFixed(0)} ms`,
       });
     } else if (recentAvg < 30) {
       insights.push({
         type: 'danger',
-        title: 'HRV Faible',
+        title: 'Variabilité cardiaque basse',
         message:
-          'Ton HRV est basse. Augmente ton temps de récupération et surveille ton sommeil.',
+          'Ta variabilité cardiaque est basse. Laisse plus de temps à la récupération et soigne ton sommeil.',
         metric: `${recentAvg.toFixed(0)} ms`,
       });
     }
@@ -106,18 +106,18 @@ export class HealthInsightsGenerator {
     if (change < -5) {
       insights.push({
         type: 'success',
-        title: 'Forme Cardiovasculaire Améliorée',
+        title: 'Ton cœur se renforce',
         message:
-          'Ta fréquence cardiaque au repos diminue, signe d\'une meilleure condition physique !',
+          'Ta fréquence cardiaque au repos baisse, signe d\'une meilleure condition physique.',
         metric: `${recentAvg.toFixed(0)} BPM`,
         change,
       });
     } else if (change > 10) {
       insights.push({
         type: 'warning',
-        title: 'FC au Repos Élevée',
+        title: 'Fréquence au repos en hausse',
         message:
-          'Ta FC au repos a augmenté. Cela peut indiquer fatigue, stress ou surentraînement. Prends du repos.',
+          'Ta fréquence cardiaque au repos a augmenté. Ça peut venir de la fatigue, du stress ou d\'un excès d\'entraînement.',
         metric: `${recentAvg.toFixed(0)} BPM`,
         change,
       });
@@ -146,14 +146,14 @@ export class HealthInsightsGenerator {
       // >= 8h
       insights.push({
         type: 'success',
-        title: 'Sommeil Optimal',
-        message: `Tu dors en moyenne ${formatDurationHM(avgTotal)} par nuit. Excellent pour la récupération !`,
+        title: 'Bonnes nuits',
+        message: `Tu dors en moyenne ${formatDurationHM(avgTotal)} par nuit. Idéal pour récupérer.`,
       });
     } else if (avgTotal < 360) {
       // < 6h
       insights.push({
         type: 'danger',
-        title: 'Manque de Sommeil',
+        title: 'Nuits trop courtes',
         message: `Tu ne dors que ${formatDurationHM(avgTotal)} en moyenne. Augmente ton temps de sommeil pour optimiser ta récupération.`,
       });
     }
@@ -163,14 +163,14 @@ export class HealthInsightsGenerator {
     if (deepPercent >= 20) {
       insights.push({
         type: 'success',
-        title: 'Sommeil Profond Excellent',
-        message: `${deepPercent.toFixed(0)}% de sommeil profond. Idéal pour la récupération musculaire !`,
+        title: 'Beaucoup de sommeil profond',
+        message: `${deepPercent.toFixed(0)}\u00a0% de sommeil profond. Idéal pour la récupération musculaire.`,
       });
     } else if (deepPercent < 13) {
       insights.push({
         type: 'warning',
-        title: 'Peu de Sommeil Profond',
-        message: `Seulement ${deepPercent.toFixed(0)}% de sommeil profond. Améliore ton hygiène de sommeil (température, obscurité, régularité).`,
+        title: 'Peu de sommeil profond',
+        message: `Seulement ${deepPercent.toFixed(0)}\u00a0% de sommeil profond. Améliore ton hygiène de sommeil (température, obscurité, régularité).`,
       });
     }
 
@@ -179,8 +179,8 @@ export class HealthInsightsGenerator {
     if (remPercent < 15) {
       insights.push({
         type: 'info',
-        title: 'REM Limité',
-        message: `${remPercent.toFixed(0)}% de REM. Le sommeil REM est crucial pour la mémoire et la récupération mentale.`,
+        title: 'Peu de sommeil paradoxal',
+        message: `${remPercent.toFixed(0)}\u00a0% de sommeil paradoxal. Il compte pour la mémoire et la récupération mentale.`,
       });
     }
 
@@ -188,7 +188,7 @@ export class HealthInsightsGenerator {
     if (avgAwake > 60) {
       insights.push({
         type: 'warning',
-        title: 'Sommeil Fragmenté',
+        title: 'Nuits agitées',
         message: `Tu passes ${avgAwake.toFixed(0)} minutes éveillé en moyenne. Réduis la caféine et les écrans avant de dormir.`,
       });
     }
@@ -211,13 +211,13 @@ export class HealthInsightsGenerator {
     if (avgActive > 600) {
       insights.push({
         type: 'success',
-        title: 'Activité Élevée',
-        message: `Tu brûles ${avgActive.toFixed(0)} kcal actives en moyenne par jour. Excellent niveau d'activité !`,
+        title: 'Grosse activité',
+        message: `Tu brûles ${avgActive.toFixed(0)} kcal actives en moyenne par jour. Très bon niveau d'activité.`,
       });
     } else if (avgActive < 300) {
       insights.push({
         type: 'info',
-        title: 'Activité Modérée',
+        title: 'Activité modérée',
         message: `${avgActive.toFixed(0)} kcal actives en moyenne. Augmente ton activité quotidienne pour améliorer ta condition physique.`,
       });
     }
@@ -227,8 +227,8 @@ export class HealthInsightsGenerator {
     if (stdDev < 100) {
       insights.push({
         type: 'success',
-        title: 'Régularité Parfaite',
-        message: 'Ton niveau d\'activité est très régulier d\'un jour à l\'autre. Continue comme ça !',
+        title: 'Activité régulière',
+        message: 'Ton niveau d\'activité est très régulier d\'un jour à l\'autre.',
       });
     }
 
@@ -257,21 +257,21 @@ export class HealthInsightsGenerator {
       if (remaining <= 0) {
         insights.push({
           type: 'success',
-          title: 'Objectif Atteint ! 🎉',
-          message: `Félicitations ! Tu as atteint ton objectif de ${goal}kg. Tu es à ${current}kg !`,
+          title: 'Objectif atteint',
+          message: `Bravo, tu as atteint ton objectif de ${goal} kg. Tu es à ${current} kg.`,
         });
       } else if (change < -0.5) {
         const weeksToGoal = Math.ceil(remaining / Math.abs(change));
         insights.push({
           type: 'success',
-          title: 'Progression Excellente',
-          message: `Tu perds ${Math.abs(change).toFixed(1)}kg par semaine. À ce rythme, tu atteindras ton objectif dans environ ${weeksToGoal} semaines !`,
+          title: 'Belle progression',
+          message: `Tu perds ${Math.abs(change).toFixed(1).replace('.', ',')} kg par semaine. À ce rythme, ton objectif est dans environ ${weeksToGoal} semaines.`,
         });
       } else if (change > 0.5) {
         insights.push({
           type: 'warning',
-          title: 'Prise de Poids',
-          message: `Tu as pris ${change.toFixed(1)}kg cette semaine. Vérifie ton alimentation et ton niveau d'activité.`,
+          title: 'Poids en hausse',
+          message: `Tu as pris ${change.toFixed(1).replace('.', ',')} kg cette semaine. Vérifie ton alimentation et ton niveau d'activité.`,
         });
       }
     }
@@ -284,7 +284,7 @@ export class HealthInsightsGenerator {
       if (Math.abs(twoWeekChange) < 0.3) {
         insights.push({
           type: 'info',
-          title: 'Poids Stable',
+          title: 'Poids stable',
           message: 'Ton poids est stable depuis 2 semaines. Ajuste ton plan si tu veux continuer à progresser.',
         });
       }

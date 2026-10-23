@@ -10,7 +10,7 @@ const SCREENSHOT_MODE_KEY = '@yoroi_screenshot_mode';
 const FAKE_STATUS_BAR_KEY = '@yoroi_screenshot_fake_statusbar';
 
 interface ScreenshotModeContextType {
-  /** Mode screenshot actif — masque DevMode badges, toasts, debug elements */
+  /** Mode screenshot actif, masque DevMode badges, toasts, debug elements */
   isScreenshotMode: boolean;
   /** Status bar faux : 09:41, batterie 100%, signal plein (look App Store) */
   useFakeStatusBar: boolean;

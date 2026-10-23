@@ -197,16 +197,16 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
   shoulder: {
     type: 'number',
     min: 40,
-    max: 100,
+    max: 180,
     required: false,
-    errorMessage: 'Épaules entre 40 et 100 cm'
+    errorMessage: 'Tour d’épaules entre 40 et 180 cm'
   },
   shoulders: {
     type: 'number',
     min: 40,
-    max: 100,
+    max: 180,
     required: false,
-    errorMessage: 'Épaules entre 40 et 100 cm'
+    errorMessage: 'Tour d’épaules entre 40 et 180 cm'
   },
   left_arm: {
     type: 'number',

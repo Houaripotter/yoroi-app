@@ -334,7 +334,7 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
               ))}
               {/* Label unité axe Y */}
               {(leftUnit || unit) ? <SvgText x={PAD_LEFT - 8} y={PAD_TOP - 6} fontSize={8} fontWeight="600" fill={textMuted} textAnchor="end">{leftUnit || unit}</SvgText> : null}
-              {/* Label axe X — décalé à gauche sous le label min Y pour éviter le chevauchement avec les années */}
+              {/* Label axe X : décalé à gauche sous le label min Y pour éviter le chevauchement avec les années */}
               <SvgText x={PAD_LEFT - 8} y={chartData.chartHeight - PAD_BOTTOM + 14} fontSize={8} fontWeight="600" fill={textMuted} textAnchor="end">Date</SvgText>
               {chartData.xLabels.map((xl, i) => {
                 if (chartData.xLabels.length > chartData.maxXLabels) {
@@ -420,7 +420,7 @@ const DualComparisonCardInner: React.FC<DualComparisonCardProps> = ({
           </View>
           {chartData?.activeIsScrollable && (
             <View style={styles.hintBar}>
-              <Text style={[styles.hintText, { color: colors.textMuted }]}>Defiler pour voir plus · Recent a gauche</Text>
+              <Text style={[styles.hintText, { color: colors.textMuted }]}>Fais défiler pour voir plus, le plus récent à gauche</Text>
             </View>
           )}
         </View>

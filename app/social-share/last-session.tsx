@@ -1,107 +1,59 @@
-// ============================================
-// YOROI - LAST SESSION SHARE (Format Story 9:16)
-// ============================================
-// Partage de la dernière séance d'entraînement
-// Style identique aux cartes hebdo/mensuel/annuel
-
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  useWindowDimensions,
-  ScrollView,
-} from 'react-native';
+/**
+ * Partage de la séance (refonte v2) : carte « Ma séance » en 9:16, habillage papier, laque ou photo,
+ * choix de ce qui s'affiche, partage en image. La lecture des données reste celle d'origine.
+ */
+import React, { useEffect, useState } from 'react';
+import { View, useWindowDimensions } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Share2,
-  Camera,
-  Dumbbell,
-  Moon,
-  Sun,
-  ArrowRight,
-  Calendar,
-  MapPin,
-  BarChart2,
-  Building2,
-  Target,
-} from 'lucide-react-native';
-import { shareAsync, isAvailableAsync } from 'expo-sharing';
-import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as ImageManipulator from 'expo-image-manipulator';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { getMethodDisplayName } from '@/components/BJJBodyMap';
-import { captureRef } from 'react-native-view-shot';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training, getClubs, getProfile, calculateStreak } from '@/lib/database';
 import { useAvatar } from '@/lib/AvatarContext';
-import { getCurrentRank, rankToLevel } from '@/lib/ranks';
+import { RANKS as RANGS_ANCIENS, getCurrentRank, rankToLevel } from '@/lib/ranks';
+import { rangNom } from '@/lib/v2/dojo/univers';
 import { getUnifiedPoints } from '@/lib/gamification';
 import logger from '@/lib/security/logger';
-import { useCustomPopup } from '@/components/CustomPopup';
 import { SessionCard, CombatRoundData } from '@/components/social-cards/SessionCard';
 import { parseExercisesFromNotes } from '@/lib/exerciseParser';
-import { useI18n } from '@/lib/I18nContext';
-import { Celebration } from '@/components/Celebration';
-
-const GOLD_COLOR = '#D4AF37';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Card, P, Pill, tap } from '@/components/yoroi/v2/accueil/kit';
+import { ShareStudio } from '@/components/yoroi/v2/partage/ShareStudio';
+import { Stamp, cardWidthFor, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
+import { useStudio } from '@/lib/v2/partage/useStudio';
 
 export default function LastSessionScreen() {
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
   const { avatarImage: contextAvatar } = useAvatar();
-  const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const CARD_WIDTH = Math.min(SCREEN_WIDTH - 40, 400); // limite iPad
-  const CARD_HEIGHT_PORTRAIT = CARD_WIDTH * (16 / 9);
-  const CARD_HEIGHT_LANDSCAPE = CARD_WIDTH * (9 / 16);
-  const styles = useMemo(() => createStyles(CARD_WIDTH), [CARD_WIDTH]);
+  const CARD_WIDTH = cardWidthFor(SCREEN_WIDTH);
   const params = useLocalSearchParams<{ id?: string }>();
-  const cardRef = useRef<View>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const photoSectionRef = useRef<View>(null);
-  const { showPopup, PopupComponent } = useCustomPopup();
+  const studio = useStudio({ dialogTitle: 'Partager ma séance', source: 'derniere_seance' });
 
-  const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('black');
-  const [isLandscapeImage, setIsLandscapeImage] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  // Pont avec la lecture d'origine : la photo de profil devient le fond par defaut
+  const setBackgroundImage = (uri?: string) => { if (uri) studio.setPhoto(uri); };
+  const setBackgroundType = (t: 'photo' | 'black' | 'white') => { studio.setStyleRaw(t === 'photo' ? 'photo' : t === 'white' ? 'papier' : 'laque'); };
+
   const [lastTraining, setLastTraining] = useState<Training | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [customLocation, setCustomLocation] = useState<string>('');
+  const [customLocation] = useState<string>('');
   const [userName, setUserName] = useState<string>('Champion');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<any>(null);
-  const [userRank, setUserRank] = useState<string>('Ashigaru');
+  const [userRank, setUserRank] = useState<string>(() => rangNom(0));
   const [userLevel, setUserLevel] = useState<number>(1);
   const [optionDetails, setOptionDetails] = useState<any[]>([]);
   const [combatRoundsData, setCombatRoundsData] = useState<CombatRoundData[] | undefined>(undefined);
-  const [combatCelebration, setCombatCelebration] = useState<{ visible: boolean; title: string; subtitle: string; icon: string } | null>(null);
+  const [combatCelebration, setCombatCelebration] = useState<{ visible: boolean; title: string; subtitle: string } | null>(null);
 
-  // Toggles
+  // Ce qui s'affiche sur la carte
   const [showDate, setShowDate] = useState(true);
   const [showYearlyCount, setShowYearlyCount] = useState(true);
-  const [showMonthlyCount, setShowMonthlyCount] = useState(true);
-  const [showWeeklyCount, setShowWeeklyCount] = useState(true);
   const [showClub, setShowClub] = useState(true);
   const [showLieu, setShowLieu] = useState(true);
   const [showExercises, setShowExercises] = useState(true);
-  const [showGoalProgress, setShowGoalProgress] = useState(true);
   const [showStats, setShowStats] = useState(true);
   const [yearlyCount, setYearlyCount] = useState(0);
-  const [monthlyCount, setMonthlyCount] = useState(0);
-  const [weeklyCount, setWeeklyCount] = useState(0);
+  const [monthlyCount] = useState(0);
+  const [weeklyCount] = useState(0);
   const [yearlyObjective, setYearlyObjective] = useState(0);
-
-  // Note: parseExercisesFromNotes est maintenant importé depuis lib/exerciseParser.ts
 
   useEffect(() => {
     const loadData = async () => {
@@ -131,7 +83,8 @@ export default function LastSessionScreen() {
         // Charger le rang (base sur les XP totaux)
         const totalPoints = await getUnifiedPoints();
         const rank = getCurrentRank(totalPoints);
-        setUserRank(rank.name);
+        // Vague 45 : nom du rang dans l'univers choisi
+        setUserRank(rangNom(Math.max(0, RANGS_ANCIENS.findIndex((r) => r.id === rank.id))));
         setUserLevel(rankToLevel(rank));
 
         let currentTraining: Training | null = null;
@@ -146,7 +99,7 @@ export default function LastSessionScreen() {
           if (currentTraining) {
             let parsedOptions: any[] = [];
 
-            // 1. Exercices structurés de la DB (priorité · données complètes avec séries)
+            // 1. Exercices structurés de la DB (priorité : données complètes avec séries)
             if (currentTraining.exercises && currentTraining.exercises.length > 0) {
               parsedOptions = currentTraining.exercises.flatMap((ex: any) => {
                 // Si on a les séries détaillées, afficher chaque série
@@ -200,28 +153,28 @@ export default function LastSessionScreen() {
                       const scorePart = (r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0
                         ? `${r.pointsFor ?? 0}-${r.pointsAgainst ?? 0}pts` : '';
                       const givenSub = Array.isArray(r.methodsGiven) && r.methodsGiven.length > 0
-                        ? `↗${getMethodDisplayName(r.methodsGiven[0])}` : '';
+                        ? `donné ${getMethodDisplayName(r.methodsGiven[0])}` : '';
                       const takenSub = Array.isArray(r.methodsTaken) && r.methodsTaken.length > 0
-                        ? `↘${getMethodDisplayName(r.methodsTaken[0])}` : '';
+                        ? `subi ${getMethodDisplayName(r.methodsTaken[0])}` : '';
                       const rightParts = [resultEmoji ? `${resultEmoji}${resultLabel}` : '', scorePart, givenSub, takenSub].filter(Boolean);
                       rows.push({ label: `R${r.number}${partner}`, pace: rightParts.join(' ') || undefined });
                       // Techniques utilisées (condensé)
                       const techLabels: string[] = [];
                       if (Array.isArray(r.usedTechniques) && r.usedTechniques.length > 0) {
-                        r.usedTechniques.slice(0, 3).forEach((t: any) => techLabels.push(`· ${t.label}`));
+                        r.usedTechniques.slice(0, 3).forEach((t: any) => techLabels.push(`${t.label}`));
                         if (r.usedTechniques.length > 3) techLabels.push(`+${r.usedTechniques.length - 3}`);
                       }
                       if (techLabels.length > 0) {
-                        rows.push({ label: `  ${techLabels.join('  ')}` });
+                        rows.push({ label: `  ${techLabels.join(', ')}` });
                       }
                     } else {
                       // ── Mode full / medium ──
-                      const label = r.partner ? `Round ${r.number}  vs ${r.partner}` : `Round ${r.number}`;
+                      const label = r.partner ? `Round ${r.number} contre ${r.partner}` : `Round ${r.number}`;
                       rows.push({ label, pace: resultEmoji ? `${resultEmoji} ${r.result === 'win' ? 'Victoire' : r.result === 'loss' ? 'Défaite' : 'Nul'}` : undefined });
 
                       if (r.partnerRating) {
                         const ratingLabel = r.partnerRating <= 2 ? 'Débutant' : r.partnerRating <= 4 ? 'Intermédiaire' : r.partnerRating <= 6 ? 'Bon niveau' : r.partnerRating <= 8 ? 'Avancé' : r.partnerRating === 9 ? 'Expert' : 'Élite';
-                        rows.push({ label: `  Niveau adv.`, pace: `★ ${r.partnerRating}/10 · ${ratingLabel}` });
+                        rows.push({ label: `  Niveau adverse`, pace: `${r.partnerRating}/10, ${ratingLabel}` });
                       }
 
                       if (r.roundIntensity) {
@@ -230,19 +183,19 @@ export default function LastSessionScreen() {
                       }
 
                       if ((r.pointsFor ?? 0) > 0 || (r.pointsAgainst ?? 0) > 0) {
-                        rows.push({ label: `  Score`, pace: `${r.pointsFor ?? 0} – ${r.pointsAgainst ?? 0} pts` });
+                        rows.push({ label: `  Score`, pace: `${r.pointsFor ?? 0} à ${r.pointsAgainst ?? 0} pts` });
                       }
 
                       if (Array.isArray(r.methodsGiven) && r.methodsGiven.length > 0) {
-                        r.methodsGiven.forEach((m: string) => rows.push({ label: `  ↗ ${m}`, pace: 'donné' }));
+                        r.methodsGiven.forEach((m: string) => rows.push({ label: `  ${m}`, pace: 'donné' }));
                       }
                       if (Array.isArray(r.methodsTaken) && r.methodsTaken.length > 0) {
-                        r.methodsTaken.forEach((m: string) => rows.push({ label: `  ↘ ${m}`, pace: 'subi' }));
+                        r.methodsTaken.forEach((m: string) => rows.push({ label: `  ${m}`, pace: 'subi' }));
                       }
 
                       if (Array.isArray(r.usedTechniques) && r.usedTechniques.length > 0) {
                         r.usedTechniques.forEach((t: any) => {
-                          rows.push({ label: `  · ${t.label}`, reps: t.count > 1 ? `×${t.count}` : undefined });
+                          rows.push({ label: `  ${t.label}`, reps: t.count > 1 ? `x${t.count}` : undefined });
                         });
                       }
 
@@ -265,8 +218,8 @@ export default function LastSessionScreen() {
                   if (nb > 1 && (hasResults || hasPoints)) {
                     const bilanParts: string[] = [];
                     if (hasResults) bilanParts.push(`${wins}V ${losses}D ${draws}N`);
-                    if (hasPoints) bilanParts.push(`${totalFor} – ${totalAgainst} pts`);
-                    rows.push({ label: `BILAN`, pace: bilanParts.join('  ·  ') });
+                    if (hasPoints) bilanParts.push(`${totalFor} à ${totalAgainst} pts`);
+                    rows.push({ label: `Bilan`, pace: bilanParts.join(', ') });
                   }
 
                   parsedOptions = rows;
@@ -283,32 +236,29 @@ export default function LastSessionScreen() {
                   if (bestWin?.partnerRating >= 9) {
                     setCombatCelebration({
                       visible: true,
-                      icon: '🏆',
-                      title: bestWin.partnerRating === 10 ? 'Élite battu !' : 'Expert dominé !',
+                      title: bestWin.partnerRating === 10 ? 'Élite battu !' : 'Expert dominé !',
                       subtitle: bestWin.partner
-                        ? `Tu as battu ${bestWin.partner} noté ${bestWin.partnerRating}/10\nLes champions se révèlent dans l'adversité !`
+                        ? `Tu as battu ${bestWin.partner} noté ${bestWin.partnerRating}/10\nLes champions se révèlent dans l'adversité !`
                         : `Victoire contre un adversaire ${getRatingLabel(bestWin.partnerRating)} (${bestWin.partnerRating}/10) !`,
                     });
                   } else if (bestWin?.partnerRating >= 7) {
                     setCombatCelebration({
                       visible: true,
-                      icon: '🔥',
-                      title: 'Adversaire fort battu !',
+                      title: 'Adversaire fort battu !',
                       subtitle: bestWin.partner
-                        ? `Victoire sur ${bestWin.partner} noté ${bestWin.partnerRating}/10\nTu progresses à grande vitesse !`
+                        ? `Victoire sur ${bestWin.partner} noté ${bestWin.partnerRating}/10\nTu progresses à grande vitesse !`
                         : `Victoire contre un adversaire ${getRatingLabel(bestWin.partnerRating)} (${bestWin.partnerRating}/10) !`,
                     });
                   } else if (totalWins > 0 && totalRounds >= 3 && totalWins === totalRounds) {
                     setCombatCelebration({
                       visible: true,
-                      icon: '⚔️',
-                      title: 'Séance parfaite !',
-                      subtitle: `${totalWins} victoires sur ${totalRounds} rounds\nAucune défaite · domination totale !`,
+                      title: 'Séance parfaite !',
+                      subtitle: `${totalWins} victoires sur ${totalRounds} rounds\nAucune défaite, domination totale !`,
                     });
                   }
                 }
               } catch {
-                // combat_rounds malformé · ignorer
+                // combat_rounds malformé : ignorer
                 setCombatRoundsData(undefined);
               }
             } else {
@@ -364,757 +314,86 @@ export default function LastSessionScreen() {
     loadData();
   }, [params.id]);
 
-  // ============================================
-  // PHOTO PICKER
-  // ============================================
+  const toggles: { label: string; on: boolean; set: (v: boolean) => void }[] = [
+    { label: 'Date', on: showDate, set: setShowDate },
+    { label: 'Club', on: showClub, set: setShowClub },
+    { label: 'Lieu', on: showLieu, set: setShowLieu },
+    { label: 'Objectif', on: showYearlyCount, set: setShowYearlyCount },
+    { label: 'Détail', on: showExercises, set: setShowExercises },
+    { label: 'Stats', on: showStats, set: setShowStats },
+  ];
 
-  const takePhoto = async () => {
-    try {
-      const { status } = await requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      const result = await launchCameraAsync({
-        allowsEditing: true,
-        quality: 0.9,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        impactAsync(ImpactFeedbackStyle.Light);
-        const resized = await resizeForCard(asset.uri);
-        setBackgroundImage(resized);
-        setBackgroundType('photo');
-        const isLandscape = (asset.width || 0) > (asset.height || 0);
-        setIsLandscapeImage(isLandscape);
-      }
-    } catch (error) {
-      logger.error('Erreur photo:', error);
-      showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
-    }
-  };
-
-  // Réduit toute image à 1200px max · résout le bug d'affichage des photos 12MP+ iPhone
-  const resizeForCard = async (uri: string): Promise<string> => {
-    try {
-      const result = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 1200 } }],
-        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
-      );
-      return result.uri;
-    } catch {
-      return uri; // fallback sur l'original si le resize échoue
-    }
-  };
-
-  const pickImage = async () => {
-    try {
-      const { status } = await requestMediaLibraryPermissionsAsync();
-      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
-        showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      const result = await launchImageLibraryAsync({
-        allowsEditing: false,
-        quality: 1,
-        selectionLimit: 1,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        impactAsync(ImpactFeedbackStyle.Light);
-        const resized = await resizeForCard(asset.uri);
-        setBackgroundImage(resized);
-        setBackgroundType('photo');
-        const isLandscape = (asset.width || 0) > (asset.height || 0);
-        setIsLandscapeImage(isLandscape);
-      }
-    } catch (error) {
-      logger.error('Erreur galerie:', error);
-      showPopup('Erreur', 'Impossible de choisir l\'image', [{ text: 'OK', style: 'primary' }]);
-    }
-  };
-
-  // ============================================
-  // SHARE & SAVE
-  // ============================================
-
-  const shareCard = async () => {
-    if (!cardRef.current) return;
-
-    setIsLoading(true);
-    impactAsync(ImpactFeedbackStyle.Medium);
-
-    try {
-      const uri = await captureRef(cardRef.current, {
-        format: 'png',
-        quality: 1,
-      });
-
-      const available = await isAvailableAsync();
-      if (available) {
-        await shareAsync(uri, {
-          mimeType: 'image/png',
-          dialogTitle: `${t('socialShare.share')} ma séance`,
-        });
-      } else {
-        // Sharing not available · save to gallery instead
-        const { status } = await requestPermissionsAsync();
-        if (status === 'granted') {
-          await saveToLibraryAsync(uri);
-          notificationAsync(NotificationFeedbackType.Success);
-          showPopup('Image sauvegardée !', 'Le partage n\'est pas disponible. La carte a été sauvegardée dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
-        } else {
-          showPopup('Partage indisponible', 'Le partage n\'est pas disponible sur cet appareil.', [{ text: 'OK', style: 'primary' }]);
-        }
-      }
-    } catch (error) {
-      logger.error('Error sharing:', error);
-      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const saveToGallery = async () => {
-    if (!cardRef.current) return;
-
-    setIsLoading(true);
-    impactAsync(ImpactFeedbackStyle.Medium);
-
-    try {
-      const { status } = await requestPermissionsAsync();
-      if ((status as string) !== 'granted' && (status as string) !== 'limited') {
-        showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
-        setIsLoading(false);
-        return;
-      }
-
-      const uri = await captureRef(cardRef.current, {
-        format: 'png',
-        quality: 1,
-      });
-
-      await saveToLibraryAsync(uri);
-      notificationAsync(NotificationFeedbackType.Success);
-      showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
-    } catch (error) {
-      logger.error('Error saving:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ============================================
-  // RENDER
-  // ============================================
-
-  if (isLoadingData) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            {t('socialShare.loading')}
-          </Text>
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
-  if (!lastTraining) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.emptyContainer}>
-          <Dumbbell size={48} color={colors.textMuted} />
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            {t('socialShare.noSessionTitle')}
-          </Text>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('socialShare.noSession')}
-          </Text>
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: colors.accent }]}
-            onPress={() => router.push('/add-training')}
-          >
-            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>{t('socialShare.addSession')}</Text>
-          </TouchableOpacity>
-        </View>
-      </ScreenWrapper>
-    );
-  }
+  const pp = paletteOf('papier');
 
   return (
-    <ScreenWrapper noPadding noContainer>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        
-        {/* HEADER ÉTAPE 3 */}
-        <View style={{
-          backgroundColor: '#F2F2F7',
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        }}>
-          <View style={{ paddingBottom: 10, paddingTop: 5 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
-              {/* BOUTON RETOUR */}
-              <TouchableOpacity 
-                style={{ position: 'absolute', left: 16, padding: 8 }}
-                onPress={() => router.back()}
-              >
-                <MaterialCommunityIcons name="arrow-left" size={28} color="#000000" />
-              </TouchableOpacity>
-
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 3 SUR 4</Text>
-                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
-                  {/* Etape 1 & 2 (Passées - Gold) */}
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
-                  <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
-                  <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-                  
-                  {/* Etape 3 (Actuelle - Big Gold) */}
-                  <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
-                  
-                  {/* Futur (Noir & Blanc Cassé) */}
-                  <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
-                </View>
+    <ShareStudio
+      title="Ma séance"
+      subtitle="Montre le travail du jour"
+      loading={isLoadingData}
+      empty={!isLoadingData && !lastTraining ? { title: 'Aucune séance à partager', text: 'Enregistre ta première séance, ta carte sera prête juste après.', action: 'Lancer une séance', onAction: () => router.push('/seance' as any) } : null}
+      style={studio.style}
+      onStyle={studio.setStyle}
+      hasPhoto={studio.hasPhoto}
+      onPickPhoto={studio.pick}
+      onShare={studio.share}
+      onSave={studio.save}
+      busy={studio.busy}
+      secondary={{ label: 'Étape suivante : sauvegarder mes données', onPress: () => router.push('/social-share/backup-step' as any) }}
+      extras={
+        <View style={{ gap: 14 }}>
+          {combatCelebration?.visible ? (
+            <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <Stamp p={pp} size={48} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Ink size={17} weight="black" tight>{combatCelebration.title}</Ink>
+                <Ink size={13} weight="medium" color={P.ink2}>{combatCelebration.subtitle}</Ink>
               </View>
+            </Card>
+          ) : null}
+          <View style={{ gap: 10 }}>
+            <Ink size={15} weight="black" style={{ paddingHorizontal: 4 }}>Sur la carte</Ink>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {toggles.map((t) => (
+                <Pill key={t.label} label={t.label} active={t.on} onPress={() => { tap(); t.set(!t.on); }} />
+              ))}
             </View>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: '#000000', letterSpacing: 1, textAlign: 'center' }}>PARTAGE & PERSONNALISATION</Text>
           </View>
         </View>
-
-        <ScrollView 
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: 20, paddingBottom: 150 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* 1. SÉLECTEUR DE FOND - DESIGN PREMIUM PILL */}
-          <View style={{ marginBottom: 30, paddingHorizontal: 4 }}>
-            <View style={{ 
-              flexDirection: 'row', 
-              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', 
-              borderRadius: 20, 
-              padding: 4,
-              gap: 4
-            }}>
-              {[
-                { key: 'photo', label: 'PHOTO', icon: Camera },
-                { key: 'black', label: 'SOMBRE', icon: Moon },
-                { key: 'white', label: 'CLAIR', icon: Sun },
-              ].map((style) => {
-                const isActive = backgroundType === style.key;
-                return (
-                  <TouchableOpacity
-                    key={style.key}
-                    style={{
-                      flex: 1,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      paddingVertical: 12,
-                      borderRadius: 16,
-                      gap: 8,
-                      backgroundColor: isActive ? colors.accent : 'transparent',
-                      shadowColor: isActive ? colors.accent : 'transparent',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isActive ? 0.3 : 0,
-                      shadowRadius: 8,
-                      elevation: isActive ? 4 : 0
-                    }}
-                    onPress={() => {
-                      impactAsync(ImpactFeedbackStyle.Light);
-                      setBackgroundType(style.key as any);
-                      if (style.key === 'photo') pickImage();
-                      else setBackgroundImage(undefined);
-                    }}
-                  >
-                    <style.icon size={16} color={isActive ? colors.textOnAccent : colors.textPrimary} />
-                    <Text style={{ 
-                      fontSize: 12, 
-                      fontWeight: '800', 
-                      color: isActive ? colors.textOnAccent : colors.textSecondary,
-                      letterSpacing: 0.5
-                    }}>
-                      {style.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* 2. PERSONNALISATION · Toggles d'affichage */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 10 }}>
-              PERSONNALISER
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {([
-                { key: 'showDate',         label: 'Date',      Icon: Calendar  },
-                { key: 'showClub',         label: 'Club',      Icon: Building2 },
-                { key: 'showLieu',         label: 'Lieu',      Icon: MapPin    },
-                { key: 'showYearlyCount',  label: 'Objectif',  Icon: Target    },
-                { key: 'showExercises',    label: 'Exercices', Icon: Dumbbell  },
-                { key: 'showStats',        label: 'Stats',     Icon: BarChart2 },
-              ] as { key: string; label: string; Icon: any }[]).map(({ key, label, Icon }) => {
-                const isOn = {
-                  showDate: showDate,
-                  showClub: showClub,
-                  showLieu: showLieu,
-                  showYearlyCount: showYearlyCount,
-                  showExercises: showExercises,
-                  showStats: showStats,
-                }[key] ?? true;
-                const toggle = {
-                  showDate: () => setShowDate(v => !v),
-                  showClub: () => setShowClub(v => !v),
-                  showLieu: () => setShowLieu(v => !v),
-                  showYearlyCount: () => setShowYearlyCount(v => !v),
-                  showExercises: () => setShowExercises(v => !v),
-                  showStats: () => setShowStats(v => !v),
-                }[key];
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    onPress={() => { impactAsync(ImpactFeedbackStyle.Light); toggle?.(); }}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                      borderRadius: 20,
-                      backgroundColor: isOn ? colors.accent : colors.backgroundElevated,
-                      borderWidth: 1,
-                      borderColor: isOn ? colors.accent : colors.border,
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Icon size={13} color={isOn ? colors.textOnAccent : colors.textMuted} strokeWidth={2.5} />
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: isOn ? colors.textOnAccent : colors.textSecondary }}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* 3. APERÇU DE LA CARTE (Format Story 9:16) */}
-          <View style={styles.cardContainer}>
-            <SessionCard
-              ref={cardRef}
-              training={lastTraining}
-              backgroundImage={backgroundImage}
-              backgroundType={backgroundType}
-              keepPhotoClear={!!backgroundImage}
-              customLocation={customLocation}
-              isLandscape={isLandscapeImage}
-              userAvatar={userAvatar}
-              profilePhoto={userPhoto}
-              userName={userName}
-              rank={userRank}
-              userLevel={userLevel}
-              options={optionDetails}
-              combatRounds={combatRoundsData ?? undefined}
-              yearlyCount={yearlyCount}
-              monthlyCount={monthlyCount}
-              weeklyCount={weeklyCount}
-              yearlyObjective={yearlyObjective}
-              showDate={showDate}
-              showYearlyCount={showYearlyCount}
-              showMonthlyCount={showMonthlyCount}
-              showWeeklyCount={showWeeklyCount}
-              showGoalProgress={showGoalProgress}
-              showClub={showClub}
-              showLieu={showLieu}
-              showExercises={showExercises}
-              showStats={showStats}
-              width={CARD_WIDTH}
-              disableInternalScroll
-            />
-          </View>
-
-          {/* 3. ACTIONS FINALES */}
-          <View style={{ gap: 15, marginTop: 20 }}>
-            <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.accent, paddingVertical: 20 }]} onPress={shareCard}>
-              <Share2 size={24} color={colors.textOnAccent} />
-              <Text style={[styles.shareBtnText, { fontSize: 18, color: colors.textOnAccent }]}>{t('socialShare.shareTitle')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.shareBtn, { backgroundColor: colors.backgroundElevated, paddingVertical: 18, borderWidth: 1, borderColor: colors.border }]} 
-              onPress={() => router.push('/social-share/backup-step')}
-            >
-              <Text style={[styles.shareBtnText, { color: colors.textPrimary }]}>{t('socialShare.nextStep')}</Text>
-              <ArrowRight size={20} color={colors.textPrimary} />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-      <PopupComponent />
-      {combatCelebration && (
-        <Celebration
-          visible={combatCelebration.visible}
-          type="challenge_complete"
-          title={combatCelebration.title}
-          subtitle={combatCelebration.subtitle}
-          icon={combatCelebration.icon}
-          onClose={() => setCombatCelebration(null)}
-          autoClose={false}
+      }
+    >
+      {lastTraining ? (
+        <SessionCard
+          ref={studio.cardRef}
+          training={lastTraining}
+          backgroundImage={studio.style === 'photo' ? studio.photo : undefined}
+          backgroundType={studio.legacyBg}
+          keepPhotoClear={!!studio.photo}
+          customLocation={customLocation}
+          isLandscape={studio.landscape}
+          userAvatar={userAvatar}
+          profilePhoto={userPhoto}
+          userName={userName}
+          rank={userRank}
+          userLevel={userLevel}
+          options={optionDetails}
+          combatRounds={combatRoundsData ?? undefined}
+          yearlyCount={yearlyCount}
+          monthlyCount={monthlyCount}
+          weeklyCount={weeklyCount}
+          yearlyObjective={yearlyObjective}
+          showDate={showDate}
+          showYearlyCount={showYearlyCount}
+          showMonthlyCount
+          showWeeklyCount
+          showGoalProgress
+          showClub={showClub}
+          showLieu={showLieu}
+          showExercises={showExercises}
+          showStats={showStats}
+          width={CARD_WIDTH}
+          disableInternalScroll
         />
-      )}
-    </ScreenWrapper>
+      ) : null}
+    </ShareStudio>
   );
 }
-
-// ============================================
-// STYLES
-// ============================================
-
-const createStyles = (CARD_WIDTH: number) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 8,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  bottomSpacer: {
-    height: 40,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-    gap: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  addButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  addButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-
-  // Card
-  cardContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  card: {
-    width: CARD_WIDTH,
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  defaultBackground: {
-    flex: 1,
-  },
-  backgroundImageContain: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  topContent: {
-    paddingTop: 24,
-    alignItems: 'center',
-  },
-  titleSection: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  titleText: {
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 3,
-  },
-  titleDateText: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginTop: 4,
-  },
-  sportIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  clubLogo: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-  },
-  sportName: {
-    fontSize: 28,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
-  centerSpace: {
-    flex: 3, // Augmenté pour pousser le contenu vers le bas
-    minHeight: 60,
-  },
-  bottomContent: {
-    gap: 12, // Légèrement réduit pour être plus compact en bas
-    paddingBottom: 0,
-  },
-  durationSection: {
-    alignItems: 'center',
-  },
-  durationNumber: {
-    fontSize: 72,
-    fontWeight: '900',
-    letterSpacing: -2,
-  },
-  durationLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 4,
-    marginTop: -8,
-  },
-  proStatsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  proStatBlock: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  proStatValue: {
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  proStatLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1,
-    marginTop: 2,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  statDivider: {
-    width: 1,
-    height: '80%',
-    alignSelf: 'center',
-  },
-  notesContainer: {
-    paddingHorizontal: 24,
-  },
-  notesText: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-
-  // Style Selector
-  styleSection: {
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  styleRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  styleBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-  },
-  styleBtnIcon: {
-    fontSize: 16,
-  },
-  styleBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-
-  // Photo Section
-  photoSection: {
-    gap: 10,
-    marginBottom: 16,
-  },
-  photoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 10,
-  },
-  photoBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  // Location Section
-  locationSection: {
-    marginBottom: 16,
-  },
-  locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  locationInput: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-
-  // Action Buttons
-  actionSection: {
-    gap: 10,
-  },
-  shareBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 14,
-    gap: 10,
-  },
-  shareBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-  },
-  saveBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  skipBtn: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-});

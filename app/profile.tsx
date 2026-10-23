@@ -1,1566 +1,507 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StatusBar,
-  Pressable,
-  Keyboard,
-  DeviceEventEmitter,
-  Platform,
-  Linking,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
+/**
+ * Ton profil (sous-page de Reglages) : prenom, photo, naissance, taille,
+ * poids de depart et objectif, ceinture et club pour les sports de combat.
+ * En bas, tes preferences : unites, langue, zones cardiaques.
+ * Une photo ajoutee passe le rond de profil de l'accueil sur la photo, tout de suite.
+ * Tout s'edite sur place, le bouton Enregistrer apparait des qu'un champ change.
+ * Vague 18 : ta scene en bandeau derriere ta photo, ton chemin vers un torii, ta ceinture dessinee,
+ * ton sport illustre et des ornements discrets entre les sections. Barre du haut fixe sous l'heure.
+ */
+import { track } from '@/utils/telemetry';
+import { bmiOf } from '@/lib/v2/progres/biomarkers';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, Keyboard, Linking, TextInput, View } from 'react-native';
+import type { TextInputProps } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import { launchCameraAsync, launchImageLibraryAsync, requestCameraPermissionsAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
-import {
-  ChevronLeft,
-  Target,
-  Scale,
-  Ruler,
-  Calendar,
-  Edit3,
-  TrendingDown,
-  TrendingUp,
-  Minus,
-  Award,
-  X,
-  Check,
-  Trophy,
-  Zap,
-  Activity,
-  Camera,
-  ChevronRight,
-  Sparkles,
-  Flame,
-  Globe,
-} from 'lucide-react-native';
-import {
-  getProfile,
-  saveProfile,
-  getWeightProgress,
-  calculateStreak,
-  Profile,
- getWeights, getTrainings } from '@/lib/database';
-import { getCurrentRank } from '@/lib/ranks';
-import { calculateAndStoreUnifiedPoints } from '@/lib/gamification';
-import { getUnlockedBadges } from '@/lib/badges';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
-// 🔒 SÉCURITÉ: Protection contre les screenshots
-import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
-import { FramedProfilePhoto } from '@/components/FramedProfilePhoto';
-import { BlurView } from 'expo-blur';
-import logger from '@/lib/security/logger';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Button, Card, Icon, Row, SectionTitle, Segmented } from '@/components/yoroi/v2/espace/ui';
+import { ProfilEcran, ProfilHero } from '@/components/yoroi/v2/profil/ProfilEcran';
+import { CheminPoids } from '@/components/yoroi/v2/profil/CheminPoids';
+import { TapisCard } from '@/components/yoroi/v2/profil/Tapis';
+import { Ornement } from '@/components/yoroi/v2/profil/Ornement';
+import { personnageImage } from '@/components/yoroi/v2/espace/assets';
+import { ChoiceSheet } from '@/components/yoroi/v2/espace/reglages/parts';
+import { DatePickerSheet, isoLocalDay } from '@/components/yoroi/v2/DateChips';
+import { avantChangementDebut, debutPropose, nouveauDebut } from '@/lib/v2/pesee/debutObjectif';
+import { jourCourt } from '@/lib/v2/pesee/ligneDirectrice';
+import { useUnits } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { onPhotoChanged } from '@/components/yoroi/v2/espace/identite';
+import { SUPPORTED_LANGUAGES, useI18n } from '@/lib/I18nContext';
+import { useCustomPopup } from '@/components/CustomPopup';
+import { addClub, getClubs, getProfile, getWeightProgress, getWeights, saveProfile, updateClub } from '@/lib/database';
+import { departDuChemin, goalProgress } from '@/lib/v2/accueil/projection';
+import type { Club, Profile } from '@/lib/database';
+import { getUserBelt, setUserBelt } from '@/lib/fighterModeService';
+import { getSportCategory, getSportName } from '@/lib/sports';
+import { useEspace } from '@/lib/v2/espace/useEspace';
+import { useIdentite } from '@/lib/v2/espace/useIdentite';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { logger } from '@/lib/security/logger';
 
-// ============================================
-// PROFIL - DESIGN V5 VIBRANT & ADDICTIVE
-// ============================================
+type Goal = 'lose' | 'maintain' | 'gain';
 
-// Stat Badge Component
-const StatBadge = ({
-  icon: Icon,
-  value,
-  unit,
-  label,
-  color,
-  bgColor,
-  textColor,
-  cardBgColor,
-  borderColor
-}: {
-  icon: any;
-  value: string;
-  unit?: string;
-  label: string;
-  color: string;
-  bgColor: string;
-  textColor: string;
-  cardBgColor?: string;
-  borderColor?: string;
-}) => (
-  <View style={[styles.statBadge, cardBgColor && { backgroundColor: cardBgColor }, borderColor && { borderColor }]}>
-    <View style={[styles.statBadgeIcon, { backgroundColor: bgColor }]}>
-      <Icon size={22} color={color} strokeWidth={2.5} />
-    </View>
-    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-      <Text style={[styles.statBadgeValue, { color: textColor }]}>{value}</Text>
-      {unit && <Text style={[styles.statBadgeUnit, { color: textColor }]}>{unit}</Text>}
-    </View>
-    <Text style={[styles.statBadgeLabel, { color: textColor, opacity: 0.7 }]}>{label}</Text>
-  </View>
-);
+const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
-// Progress Card Component
-const ProgressCard = ({ weightProgress, t, colors }: { weightProgress: any; t: (key: string) => string; colors: any }) => {
-  if (!weightProgress?.target) return null;
+function num(s: string): number | undefined {
+  const n = parseFloat(s.replace(',', '.'));
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
 
-  const progress = Math.min(weightProgress.progress || 0, 100);
+function fmt(n: number | null | undefined): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return '';
+  return String(Math.round(n * 10) / 10).replace('.', ',');
+}
 
-  return (
-    <View style={[styles.progressCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }]}>
-      <View style={styles.progressHeader}>
-        <View style={styles.progressTitleRow}>
-          <Target size={18} color={colors?.accent ?? '#0ABAB5'} />
-          <Text style={[styles.progressTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.goal')}</Text>
-        </View>
-        <View style={[styles.progressPercentBadge, { backgroundColor: colors?.accentMuted ?? 'rgba(10,186,181,0.1)' }]}>
-          <Text style={[styles.progressPercent, { color: colors?.accent ?? '#0ABAB5' }]}>{progress.toFixed(0)}%</Text>
-        </View>
-      </View>
+/** Poids affiche : toujours une decimale, virgule francaise (80,9 kg, 76,0 kg), comme l'accueil */
+function fmtKg1(n: number | null | undefined): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return '';
+  return n.toFixed(1).replace('.', ',');
+}
 
-      {/* Progress Bar */}
-      <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBarBg, { backgroundColor: colors?.backgroundElevated ?? '#242429' }]}>
-          <LinearGradient
-            colors={[colors?.accent ?? '#0ABAB5', colors?.accentDark || colors?.accent || '#089490']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.progressBarFill, { width: `${progress}%` }]}
-          />
-        </View>
-      </View>
+/** JJ/MM/AAAA ou AAAA-MM-JJ vers AAAA-MM-JJ, null si invalide */
+function normalizeBirth(str: string): string | null {
+  const s = str.trim();
+  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  let y: number;
+  let m: number;
+  let d: number;
+  if (fr) { d = +fr[1]; m = +fr[2]; y = +fr[3]; } else if (iso) { y = +iso[1]; m = +iso[2]; d = +iso[3]; } else return null;
+  const dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  const a = ageOf(dt);
+  if (a === null) return null;
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
 
-      {/* Labels */}
-      <View style={styles.progressLabels}>
-        <View style={styles.progressLabelItem}>
-          <Text style={[styles.progressLabelValue, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{weightProgress.start}</Text>
-          <Text style={[styles.progressLabelText, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.start')}</Text>
-        </View>
-        <View style={[styles.progressLabelItem, { alignItems: 'center' }]}>
-          <Text style={[styles.progressLabelValue, { color: colors?.accent ?? '#0ABAB5', fontSize: TYPOGRAPHY.size.xl }]}>
-            {weightProgress.current}
-          </Text>
-          <Text style={[styles.progressLabelText, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.current')}</Text>
-        </View>
-        <View style={[styles.progressLabelItem, { alignItems: 'flex-end' }]}>
-          <Text style={[styles.progressLabelValue, { color: colors?.success ?? '#10B981' }]}>{weightProgress.target}</Text>
-          <Text style={[styles.progressLabelText, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.goal')}</Text>
-        </View>
-      </View>
-    </View>
-  );
-};
+function ageOf(dt: Date): number | null {
+  const t = new Date();
+  let a = t.getFullYear() - dt.getFullYear();
+  const md = t.getMonth() - dt.getMonth();
+  if (md < 0 || (md === 0 && t.getDate() < dt.getDate())) a--;
+  return a > 0 && a < 120 ? a : null;
+}
 
-// Info Row Component
-const InfoRow = ({
-  icon: Icon,
-  label,
-  value,
-  color,
-  bgColor,
-  textColor,
-  textSecondaryColor,
-  successColor
-}: {
-  icon: any;
-  label: string;
-  value: string;
-  color: string;
-  bgColor: string;
-  textColor: string;
-  textSecondaryColor: string;
-  successColor: string;
-}) => (
-  <View style={styles.infoRow}>
-    <View style={[styles.infoIcon, { backgroundColor: bgColor }]}>
-      <Icon size={18} color={color} strokeWidth={2.5} />
-    </View>
-    <Text style={[styles.infoLabel, { color: textSecondaryColor }]}>{label}</Text>
-    <Text style={[styles.infoValue, { color: textColor }, value.includes('kg') && parseFloat(value) < 80 ? { color: successColor } : {}]}>
-      {value}
-    </Text>
-  </View>
-);
+function isoToFr(iso?: string): string {
+  if (!iso) return '';
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
 
-// Main Component
-export default function ProfileScreen() {
+/** Ajoute les barres pendant la saisie : 15061995 devient 15/06/1995 */
+function maskDate(v: string): string {
+  const d = v.replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
+export default function TonProfil() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const { t, language, setLanguage } = useI18n();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const { showPopup, PopupComponent } = useCustomPopup();
+  const { espace } = useEspace();
+  const { armure } = useIdentite();
 
-  // 🔒 SÉCURITÉ: Protection contre les screenshots (désactivée sur le profil ·
-  // l'utilisateur doit pouvoir prendre un screenshot de sa page profil)
-  const { isBlurred, screenshotDetected } = useSensitiveScreen(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [current, setCurrent] = useState<number | null>(null);
+  // pesees : depart par defaut (regle unique departDuChemin, lib/v2/accueil/projection.ts)
+  const [pesees, setPesees] = useState<{ date: string; value: number }[]>([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [savedBelt, setSavedBelt] = useState<string | null>(null);
 
-  // Force l'autorisation des captures d'écran sur cette page (au cas où
-  // une autre page sensible aurait activé la protection sans la désactiver).
-  useEffect(() => {
+  const [name, setName] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [birth, setBirth] = useState('');
+  const [height, setHeight] = useState('');
+  const [startW, setStartW] = useState('');
+  // courbe v2 : « Début de mon objectif » (start_date), au calendrier
+  const [debut, setDebut] = useState('');
+  const [choixDebut, setChoixDebut] = useState(false);
+  const [targetW, setTargetW] = useState('');
+  const [goal, setGoal] = useState<Goal>('maintain');
+  const [belt, setBelt] = useState<string | null>(null);
+  const [club, setClub] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [pref, setPref] = useState<null | 'poids' | 'mesures' | 'langue'>(null);
+  const { weightUnit, measurementUnit, setWeightUnit, setMeasurementUnit } = useUnits();
+  const { language, setLanguage } = useI18n();
+  const langLabel = SUPPORTED_LANGUAGES.find((l) => l.code === language)?.nativeName ?? 'Français';
+
+  const load = useCallback(async () => {
     try {
+      const [p, wp, cl, b] = await Promise.all([getProfile(), getWeightProgress(), getClubs().catch(() => [] as Club[]), getUserBelt().catch(() => null)]);
+      setProfile(p);
+      setCurrent(wp.current);
+      getWeights()
+        .then((ws) => setPesees((ws ?? []).filter((w) => w && w.weight > 0 && w.date).map((w) => ({ date: w.date.slice(0, 10), value: w.weight }))))
+        .catch(() => setPesees([]));
+      setClubs(cl);
+      setSavedBelt(b);
+      setName(p?.name ?? '');
+      setPhoto(p?.profile_photo ?? null);
+      setBirth(isoToFr(p?.birth_date));
+      setHeight(p?.height_cm ? String(p.height_cm) : '');
+      setStartW(fmt(p?.start_weight));
+      setDebut(p?.start_date && /^\d{4}-\d{2}-\d{2}/.test(p.start_date) ? p.start_date.slice(0, 10) : '');
+      setTargetW(fmt(p?.target_weight));
+      setGoal((p?.weight_goal as Goal) || 'maintain');
+      setBelt(b);
+      setClub(cl[0]?.name ?? '');
+    } catch (err) {
+      logger.error('[Profil] chargement', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ScreenCapture = require('expo-screen-capture');
       ScreenCapture.allowScreenCaptureAsync?.().catch(() => {});
-    } catch {}
-  }, []);
-
-  // Custom popup
-  const { showPopup, PopupComponent } = useCustomPopup();
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [weightProgress, setWeightProgress] = useState<any>(null);
-  const [totalPoints, setTotalPoints] = useState(0);
-  const [unlockedBadgesCount, setUnlockedBadgesCount] = useState(0);
-
-  // Form state
-  const [name, setName] = useState('');
-  const [heightCm, setHeightCm] = useState('');
-  const [targetWeight, setTargetWeight] = useState('');
-  const [startWeight, setStartWeight] = useState('');
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const [birthDate, setBirthDate] = useState('');
-  const [weightGoal, setWeightGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
-
-  // Protection anti-spam
-  const [isSaving, setIsSaving] = useState(false);
-  const [isPickingPhoto, setIsPickingPhoto] = useState(false);
-
-  // Redimensionne une photo à max 800x800 et la copie en zone PERMANENTE
-  const resizePhoto = async (uri: string): Promise<string> => {
-    const fileName = `profile_photo_${Date.now()}.jpg`;
-    const permanentUri = `${FileSystem.documentDirectory}${fileName}`;
-    try {
-      const result = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
-      );
-      // Copier dans documentDirectory pour que la photo survive aux sauvegardes
-      await FileSystem.copyAsync({ from: result.uri, to: permanentUri });
-      return permanentUri;
     } catch {
-      // Si ImageManipulator échoue (ex: photo HEIC très lourde),
-      // on copie quand même l'original en zone permanente pour éviter
-      // de sauvegarder un chemin temporaire qui deviendra invalide.
-      try {
-        await FileSystem.copyAsync({ from: uri, to: permanentUri });
-        return permanentUri;
-      } catch {
-        return uri; // dernier recours
-      }
+      // module absent
     }
-  };
+  }, [load]);
 
-  // Calcul automatique de l'âge à partir de la date de naissance
-  const calculateAge = (dateStr: string): number | null => {
-    if (!dateStr) return null;
-    // Format attendu: DD/MM/YYYY ou YYYY-MM-DD
-    let birthDateObj: Date;
-    if (dateStr.includes('/')) {
-      const parts = dateStr.split('/');
-      if (parts.length !== 3) return null;
-      birthDateObj = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-    } else if (dateStr.includes('-')) {
-      birthDateObj = new Date(dateStr);
-    } else {
-      return null;
-    }
-    if (isNaN(birthDateObj.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birthDateObj.getFullYear();
-    const monthDiff = today.getMonth() - birthDateObj.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
-      age--;
-    }
-    return age > 0 && age < 120 ? age : null;
-  };
+  const dirty = useMemo(() => {
+    if (!profile && !name.trim()) return false;
+    return (
+      name.trim() !== (profile?.name ?? '') ||
+      birth !== isoToFr(profile?.birth_date) ||
+      height !== (profile?.height_cm ? String(profile.height_cm) : '') ||
+      startW !== fmt(profile?.start_weight) ||
+      debut !== (profile?.start_date?.slice(0, 10) ?? '') ||
+      targetW !== fmt(profile?.target_weight) ||
+      goal !== ((profile?.weight_goal as Goal) || 'maintain') ||
+      belt !== savedBelt ||
+      club.trim() !== (clubs[0]?.name ?? '')
+    );
+  }, [profile, name, birth, height, startW, targetW, goal, belt, savedBelt, club, clubs, debut]);
 
-  const calculatedAge = calculateAge(birthDate);
+  const birthIso = normalizeBirth(birth);
+  const age = birthIso ? ageOf(new Date(birthIso + 'T12:00:00')) : null;
+  const isCombat = espace.sportsFavoris.some((id) => getSportCategory(id).startsWith('combat'));
+  const combatSport = espace.sportsFavoris.find((id) => getSportCategory(id).startsWith('combat'));
+  const showCombat = isCombat || !!savedBelt || clubs.length > 0;
+  const rankIndex = armure?.rank.index ?? 0;
+  const genre: 'h' | 'f' = espace.personnage === 'guerrier_f' ? 'f' : espace.personnage === 'guerrier_h' ? 'h' : profile?.avatar_gender === 'femme' ? 'f' : 'h';
 
-  // Normalise JJ/MM/AAAA ou yyyy-MM-dd en yyyy-MM-dd (null si invalide)
-  const normalizeBirthDate = (dateStr: string): string | null => {
-    const str = dateStr.trim();
-    let y: number, m: number, d: number;
-    const fr = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    const iso = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (fr) { d = +fr[1]; m = +fr[2]; y = +fr[3]; }
-    else if (iso) { y = +iso[1]; m = +iso[2]; d = +iso[3]; }
-    else return null;
-    const dt = new Date(y, m - 1, d);
-    // Rejette les dates inexistantes (ex: 31/02)
-    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-    const normalized = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    return calculateAge(`${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`) ? normalized : null;
-  };
-
-  const loadData = useCallback(async () => {
-    try {
-      const profileData = await getProfile();
-      setProfile(profileData);
-
-      if (profileData) {
-        setName(profileData.name || '');
-        setHeightCm(profileData.height_cm?.toString() || '');
-        setTargetWeight(profileData.target_weight?.toString() || '');
-        setStartWeight(profileData.start_weight?.toString() || '');
-        setProfilePhoto(profileData.profile_photo || null);
-        setBirthDate(profileData.birth_date || '');
-        setWeightGoal(profileData.weight_goal || 'lose');
-      }
-
-      const streakDays = await calculateStreak();
-      setStreak(streakDays);
-
-      const progress = await getWeightProgress();
-      setWeightProgress(progress);
-
-      // Charger les données de gamification
-      const [weightsHistory, allTrainings, badges] = await Promise.all([
-        getWeights(),
-        getTrainings(),
-        getUnlockedBadges(),
-      ]);
-
-      // Points unifies (inclut quetes, challenges, bonus santé)
-      const points = await calculateAndStoreUnifiedPoints(weightsHistory?.length || 0, allTrainings?.length || 0, streakDays);
-      setTotalPoints(points);
-      setUnlockedBadgesCount(badges?.length || 0);
-    } catch (error) {
-      logger.error('Error loading profile:', error);
-    }
-  }, []);
-
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadData(); }, []);
-
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
-    return () => sub.remove();
-  }, [loadData]);
-
-  const rank = getCurrentRank(totalPoints);
-
+  // Progression vers l'objectif
+  // Meme regle que l'accueil (lib/v2/accueil/projection.ts) : depart du profil, sinon ta premiere pesee du plan
+  const s = num(startW) ?? departDuChemin(profile, pesees) ?? undefined;
+  const t = num(targetW);
+  const progress = s && t && current && Math.abs(s - t) >= 0.05 ? goalProgress(s, t, current).pct : null;
 
   const handleSave = async () => {
     Keyboard.dismiss();
-    // Protection anti-spam
-    if (isSaving) return;
-
+    if (saving) return;
     if (!name.trim()) {
-      showPopup('Erreur', 'Le nom est requis');
+      showPopup('Ton prénom', 'Indique ton prénom pour enregistrer ton profil.');
       return;
     }
-
-    // Date de naissance : valider et normaliser
-    let normalizedBirthDate: string | undefined;
-    if (birthDate.trim()) {
-      const n = normalizeBirthDate(birthDate);
-      if (!n) {
-        showPopup('Erreur', 'Date de naissance invalide. Format attendu : JJ/MM/AAAA');
-        return;
-      }
-      normalizedBirthDate = n;
+    if (birth.trim() && !birthIso) {
+      showPopup('Date de naissance', 'Écris-la comme ceci : 15/06/1995.');
+      return;
     }
-
-    setIsSaving(true);
+    const h = height ? parseInt(height, 10) : undefined;
+    if (h !== undefined && (h < 100 || h > 250)) {
+      showPopup('Taille', 'Indique ta taille en centimètres, entre 100 et 250.');
+      return;
+    }
+    const sw = num(startW);
+    const tw = num(targetW);
+    if ((sw !== undefined && (sw < 20 || sw > 350)) || (tw !== undefined && (tw < 20 || tw > 350))) {
+      showPopup('Poids', 'Indique un poids en kilos, entre 20 et 350.');
+      return;
+    }
+    setSaving(true);
     try {
+      const today = new Date();
+      const p = (n: number) => String(n).padStart(2, '0');
       await saveProfile({
         name: name.trim(),
-        height_cm: heightCm ? parseInt(heightCm, 10) : undefined,
-        target_weight: targetWeight ? parseFloat(targetWeight) : undefined,
-        start_weight: startWeight ? parseFloat(startWeight) : undefined,
-        start_date: profile?.start_date || format(new Date(), 'yyyy-MM-dd'),
-        avatar_gender: profile?.avatar_gender || 'homme',
-        profile_photo: profilePhoto,
-        birth_date: normalizedBirthDate,
-        weight_goal: weightGoal,
-        age: calculatedAge || undefined,
+        height_cm: h,
+        target_weight: tw,
+        start_weight: sw,
+        start_date: debut || profile?.start_date || `${today.getFullYear()}-${p(today.getMonth() + 1)}-${p(today.getDate())}`,
+        avatar_gender: genre === 'f' ? 'femme' : 'homme',
+        profile_photo: photo,
+        birth_date: birthIso ?? undefined,
+        weight_goal: goal,
+        age: age ?? undefined,
       });
-
-      await loadData();
-      setIsEditing(false);
-      showPopup('Profil mis a jour', 'Tes informations ont ete sauvegardees.');
-    } catch (error) {
-      logger.error('Save error:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder');
+      if (tw && fmt(tw) !== fmt(profile?.target_weight)) track('objectif_defini', { type: 'poids' });
+      if (belt !== savedBelt && belt) await setUserBelt(belt);
+      const clubName = club.trim();
+      if (clubName !== (clubs[0]?.name ?? '')) {
+        if (clubs[0]?.id && clubName) await updateClub(clubs[0].id, { name: clubName });
+        else if (clubName) await addClub({ name: clubName, sport: combatSport ?? 'jjb' });
+      }
+      DeviceEventEmitter.emit('YOROI_PROFILE_CHANGED');
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+      await load();
+    } catch (err) {
+      logger.error('[Profil] enregistrement', err);
+      showPopup('Oups', 'Ton profil n’a pas pu être enregistré.');
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  const _savePhotoToProfile = async (uri: string) => {
-    const resized = await resizePhoto(uri);
-    setProfilePhoto(resized);
-    const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-    await saveProfile({
-      name: safeName,
-      height_cm: profile?.height_cm,
-      target_weight: profile?.target_weight,
-      start_weight: profile?.start_weight,
-      start_date: profile?.start_date,
-      avatar_gender: profile?.avatar_gender || 'homme',
-      profile_photo: resized,
-    });
-    DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-    // Pas de popup succès · la photo s'affiche instantanément, c'est suffisant
+  // ============================================
+  // PHOTO
+  // ============================================
+
+  const keepPhoto = async (uri: string): Promise<string> => {
+    const target = `${FileSystem.documentDirectory}profile_photo_${Date.now()}.jpg`;
+    try {
+      const r = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 800 } }], { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG });
+      await FileSystem.copyAsync({ from: r.uri, to: target });
+      return target;
+    } catch {
+      try {
+        await FileSystem.copyAsync({ from: uri, to: target });
+        return target;
+      } catch {
+        return uri;
+      }
+    }
   };
 
-  const takeProfilePhoto = async () => {
-    if (isPickingPhoto) return;
-    setIsPickingPhoto(true);
+  const savePhoto = async (uri: string) => {
+    const kept = await keepPhoto(uri);
+    setPhoto(kept);
+    const base = profile ?? (await getProfile());
+    await saveProfile({
+      ...(base ?? {}),
+      name: base?.name?.trim() || name.trim() || 'Guerrier',
+      avatar_gender: base?.avatar_gender || (genre === 'f' ? 'femme' : 'homme'),
+      profile_photo: kept,
+    });
+    // le rond de profil de l'accueil et de Reglages montre la photo tout de suite
+    await onPhotoChanged(kept).catch(() => {});
+    DeviceEventEmitter.emit('YOROI_PROFILE_CHANGED');
+    DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    const fresh = await getProfile();
+    setProfile(fresh);
+  };
+
+  const takePhoto = async () => {
+    if (picking) return;
+    setPicking(true);
     try {
       const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission refusée', 'Accès à la caméra requis pour prendre une photo.');
+        showPopup('Caméra', 'Autorise la caméra dans les réglages du téléphone pour prendre une photo.', [
+          { text: 'Ouvrir les réglages', style: 'primary', onPress: () => Linking.openSettings() },
+          { text: 'Annuler', style: 'cancel' },
+        ]);
         return;
       }
-      const result = await launchCameraAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.85,
-      });
-      if (!result.canceled && result.assets?.[0]) {
-        await _savePhotoToProfile(result.assets[0].uri);
-      }
-    } catch (error) {
-      logger.error('[Profile] Erreur prise de photo:', error);
-      if (error && error.toString().includes('Camera not available')) {
-        showPopup('Caméra non disponible', 'Utilise la galerie pour choisir une photo.',
-          [{ text: 'Galerie', style: 'primary', onPress: () => pickProfilePhoto() }]);
-      } else {
-        showPopup('Erreur', 'Impossible de prendre une photo. Réessaye plus tard.');
-      }
+      const r = await launchCameraAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85 });
+      if (!r.canceled && r.assets?.[0]) await savePhoto(r.assets[0].uri);
+    } catch (err) {
+      logger.error('[Profil] caméra', err);
+      showPopup('Caméra indisponible', 'Choisis plutôt une photo dans ta galerie.', [{ text: 'Galerie', style: 'primary', onPress: () => setTimeout(pickPhoto, 500) }]);
     } finally {
-      setIsPickingPhoto(false);
+      setPicking(false);
     }
   };
 
-  const pickProfilePhoto = async () => {
-    if (isPickingPhoto) return;
-    setIsPickingPhoto(true);
+  const pickPhoto = async () => {
+    if (picking) return;
+    setPicking(true);
     try {
       const { status } = await requestMediaLibraryPermissionsAsync();
-      // 'limited' = accès accordé mais restreint à certaines photos seulement
-      // On accepte 'granted' ET 'limited' pour pouvoir ouvrir la galerie
       if (status !== 'granted' && (status as string) !== 'limited') {
-        showPopup(
-          'Permission refusée',
-          'Pour choisir une photo depuis ta galerie, autorise l\'accès dans Réglages > Confidentialité > Photos > Yoroi.',
-          [
-            {
-              text: 'Ouvrir les Réglages',
-              style: 'primary',
-              onPress: () => Linking.openSettings()
-            },
-            { text: 'Annuler', style: 'cancel' }
-          ]
-        );
+        showPopup('Photos', 'Autorise l’accès aux photos dans les réglages du téléphone.', [
+          { text: 'Ouvrir les réglages', style: 'primary', onPress: () => Linking.openSettings() },
+          { text: 'Annuler', style: 'cancel' },
+        ]);
         return;
       }
-      const result = await launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.85,
-        selectionLimit: 1,
-      });
-      if (!result.canceled && result.assets?.[0]) {
-        await _savePhotoToProfile(result.assets[0].uri);
-      }
-    } catch (error) {
-      logger.error('[Profile] Erreur sélection photo:', error);
-      showPopup('Erreur', 'Impossible de charger la photo. Réessaye plus tard.');
+      const r = await launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85, selectionLimit: 1 });
+      if (!r.canceled && r.assets?.[0]) await savePhoto(r.assets[0].uri);
+    } catch (err) {
+      logger.error('[Profil] galerie', err);
+      showPopup('Oups', 'La photo n’a pas pu être chargée.');
     } finally {
-      setIsPickingPhoto(false);
+      setPicking(false);
     }
   };
 
-  const handleChangePhoto = () => {
-    showPopup(
-      t('profile.profilePhoto') || 'Photo de profil',
-      t('profile.howToAddPhoto') || 'Choisis comment ajouter ta photo',
-      [
-        {
-          text: t('profile.takePhoto') || 'Prendre une photo',
-          style: 'primary',
-          onPress: () => { setTimeout(takeProfilePhoto, 600); }
-        },
-        {
-          text: t('profile.chooseFromGallery') || 'Choisir depuis la galerie',
-          style: 'default',
-          onPress: () => { setTimeout(pickProfilePhoto, 600); }
-        },
-        { text: t('common.cancel') || 'Annuler', style: 'cancel' },
-      ]
-    );
+  const changePhoto = () => {
+    showPopup('Ta photo', 'Comment veux-tu l’ajouter ?', [
+      { text: 'Prendre une photo', style: 'primary', onPress: () => setTimeout(takePhoto, 500) },
+      { text: 'Choisir dans la galerie', style: 'default', onPress: () => setTimeout(pickPhoto, 500) },
+      ...(photo
+        ? [{ text: 'Retirer la photo', style: 'destructive' as const, onPress: async () => {
+            setPhoto(null);
+            if (profile) {
+              await saveProfile({ ...profile, profile_photo: null });
+              await onPhotoChanged(null).catch(() => {});
+              DeviceEventEmitter.emit('YOROI_PROFILE_CHANGED');
+              setProfile(await getProfile());
+            }
+          } }]
+        : []),
+      { text: 'Annuler', style: 'cancel' },
+    ]);
   };
 
-  const calculateBMI = () => {
-    if (!weightProgress?.current || !profile?.height_cm) return null;
-    const heightM = profile.height_cm / 100;
-    return (weightProgress.current / (heightM * heightM)).toFixed(1);
-  };
+  const since = profile?.start_date ? (() => {
+    const d = new Date(profile.start_date + 'T12:00:00');
+    return Number.isNaN(d.getTime()) ? null : `Membre depuis ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  })() : null;
 
-  const bmi = calculateBMI();
-
-  const getBMIStatus = () => {
-    if (!bmi) return { text: '-', color: colors?.textMuted ?? '#6B7280' };
-    const value = parseFloat(bmi);
-    if (value < 18.5) return { text: 'Insuffisant', color: colors?.warning ?? '#F59E0B' };
-    if (value < 25) return { text: 'Normal', color: colors?.success ?? '#10B981' };
-    if (value < 30) return { text: 'Surpoids', color: colors?.warning ?? '#F59E0B' };
-    return { text: 'Obésité', color: colors?.error ?? '#EF4444' };
-  };
+  // IMC : source unique (lib/v2/progres/biomarkers), derniere pesee et taille, une decimale
+  const bmi = (current && profile?.height_cm ? bmiOf(current, profile.height_cm) : undefined) ?? null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors?.background ?? '#000000' }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors?.background ?? '#000000'} />
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets?.top ?? 0 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }]}
-            onPress={() => router.back()}
-          >
-            <ChevronLeft size={22} color={colors?.textPrimary ?? '#FFFFFF'} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.title')}</Text>
-          <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }, isEditing && { borderColor: colors?.error ?? '#FF0000', backgroundColor: colors?.errorMuted ?? 'rgba(255,0,0,0.1)' }]}
-            onPress={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? (
-              <X size={18} color={colors?.error ?? '#FF0000'} />
-            ) : (
-              <Edit3 size={18} color={colors?.accent ?? '#0ABAB5'} />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* 🔒 SÉCURITÉ: Avertissement screenshot détecté */}
-        {screenshotDetected && (
-          <View style={styles.screenshotWarning}>
-            <Text style={styles.screenshotWarningText}>
-              Screenshot détecté - Tes données sont sensibles
-            </Text>
-          </View>
-        )}
-
-        {/* Profile Hero Card - Photo centrée avec nom */}
-        <View style={[styles.heroCard, { borderColor: colors?.border ?? '#333333' }]}>
-          <LinearGradient
-            colors={[colors?.card ?? '#1A1A1A', colors?.background ?? '#000000']}
-            style={styles.heroGradient}
-          >
-            {/* Nom au-dessus */}
-            {isEditing ? (
-              <TextInput
-                style={[styles.nameInput, { color: colors?.textPrimary ?? '#FFFFFF', marginBottom: 16, borderBottomColor: colors?.accent ?? '#0ABAB5' }]}
-                value={name}
-                onChangeText={setName}
-                placeholder="Ton nom"
-                placeholderTextColor={colors?.textMuted ?? '#6B7280'}
-                textAlign="center"
-                maxLength={50}
-              />
-            ) : (
-              <Text style={[styles.profileName, { color: colors?.textPrimary ?? '#FFFFFF', marginTop: 0, marginBottom: 16 }]}>
-                {profile?.name || 'Guerrier'}
-              </Text>
-            )}
-
-            {/* Photo de profil centrée */}
-            <Pressable
-              onPress={handleChangePhoto}
-              delayLongPress={0}
-              style={({ pressed }) => [{ alignItems: 'center', opacity: pressed ? 0.7 : 1 }]}
-            >
-              <View style={{ position: 'relative' }}>
-                <FramedProfilePhoto
-                  uri={profilePhoto ?? undefined}
-                  size={120}
-                  borderColor={colors?.accent ?? '#0ABAB5'}
-                  borderWidth={4}
-                />
-                <View style={[styles.cameraButton, { bottom: 4, right: 4, backgroundColor: colors?.accent ?? '#0ABAB5', zIndex: 10 }]}>
-                  <Camera size={16} color={colors?.textOnAccent ?? '#FFFFFF'} />
-                </View>
-              </View>
-            </Pressable>
-
-            {/* Bouton personnaliser cadre */}
-            <TouchableOpacity
-              onPress={() => router.push('/frame-selection' as any)}
-              activeOpacity={0.75}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 5,
-                marginTop: 10,
-                paddingHorizontal: 14,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              }}
-            >
-              <Sparkles size={13} color={colors?.accent ?? '#0ABAB5'} />
-              <Text style={{ fontSize: 12, fontWeight: '600', color: colors?.accent ?? '#0ABAB5' }}>
-                Personnaliser
-              </Text>
-            </TouchableOpacity>
-
-            {/* Date d'inscription */}
-            {profile?.start_date && (
-              <Text style={[styles.memberSince, { color: colors?.textMuted ?? '#6B7280' }]}>
-                {t('profile.memberSince')} {format(new Date(profile.start_date), 'MMMM yyyy', { locale: fr })}
-              </Text>
-            )}
-          </LinearGradient>
-        </View>
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <StatBadge
-            icon={weightGoal === 'gain' ? TrendingUp : TrendingDown}
-            value={weightProgress?.lost > 0 ? (weightGoal === 'gain' ? `+${weightProgress.lost.toFixed(1)}` : `-${weightProgress.lost.toFixed(1)}`) : '0'}
-            unit=" kg"
-            label={weightGoal === 'gain' ? t('profile.gained') : t('profile.lost')}
-            color={weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.success ?? '#10B981'}
-            bgColor={weightGoal === 'gain' ? colors?.warningMuted ?? 'rgba(245,158,11,0.1)' : colors?.successMuted ?? 'rgba(16,185,129,0.1)'}
-            textColor={colors?.textPrimary ?? '#FFFFFF'}
-            cardBgColor={colors?.card ?? '#1A1A1A'}
-            borderColor={colors?.border ?? '#333333'}
-          />
-          <StatBadge
-            icon={Target}
-            value={weightProgress?.target ? `${weightProgress.target}` : '-'}
-            unit=" kg"
-            label={t('profile.target')}
-            color={colors?.accent ?? '#0ABAB5'}
-            bgColor={colors?.accentMuted ?? 'rgba(10,186,181,0.1)'}
-            textColor={colors?.textPrimary ?? '#FFFFFF'}
-            cardBgColor={colors?.card ?? '#1A1A1A'}
-            borderColor={colors?.border ?? '#333333'}
-          />
-          <StatBadge
-            icon={Activity}
-            value={weightProgress?.remaining > 0 ? weightProgress.remaining.toFixed(1) : '0'}
-            unit=" kg"
-            label={weightGoal === 'gain' ? t('profile.toGain') : weightGoal === 'maintain' ? t('profile.maintenance') : t('profile.toLoose')}
-            color={weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.success ?? '#10B981'}
-            bgColor={weightGoal === 'gain' ? colors?.warningMuted ?? 'rgba(245,158,11,0.1)' : weightGoal === 'maintain' ? colors?.infoMuted ?? 'rgba(59,130,246,0.1)' : colors?.successMuted ?? 'rgba(16,185,129,0.1)'}
-            textColor={colors?.textPrimary ?? '#FFFFFF'}
-            cardBgColor={colors?.card ?? '#1A1A1A'}
-            borderColor={colors?.border ?? '#333333'}
-          />
-        </View>
-
-        {/* Section Dojo - XP, Niveau, Badges */}
-        <TouchableOpacity
-          style={[styles.dojoCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: (colors?.gold ?? '#0ABAB5') + '40' }]}
-          onPress={() => router.push('/gamification')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.dojoHeader}>
-            <View style={[styles.dojoIconContainer, { backgroundColor: (colors?.gold ?? '#0ABAB5') + '20' }]}>
-              <Sparkles size={20} color={colors?.gold ?? '#0ABAB5'} strokeWidth={2.5} />
-            </View>
-            <Text style={[styles.dojoTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('gamification.title')}</Text>
-            <ChevronRight size={20} color={colors?.textMuted ?? '#6B7280'} />
-          </View>
-
-          <View style={styles.dojoStats}>
-            {/* XP */}
-            <View style={styles.dojoStatItem}>
-              <Zap size={18} color={colors?.accent ?? '#0ABAB5'} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: colors?.accent ?? '#0ABAB5' }]}>{totalPoints}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>XP</Text>
-            </View>
-
-            {/* Streak */}
-            <View style={styles.dojoStatItem}>
-              <Flame size={18} color="#F97316" strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: '#F97316' }]}>{streak}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('home.streak')}</Text>
-            </View>
-
-            {/* Rang */}
-            <View style={styles.dojoStatItem}>
-              <Trophy size={18} color={rank?.color || colors?.gold || '#0ABAB5'} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: rank?.color || colors?.gold || '#0ABAB5' }]}>{rank?.name?.split(' ')[0] || '-'}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('gamification.rank')}</Text>
-            </View>
-
-            {/* Badges */}
-            <View style={styles.dojoStatItem}>
-              <Award size={18} color={colors?.success ?? '#10B981'} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: colors?.success ?? '#10B981' }]}>{unlockedBadgesCount}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('gamification.badges')}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {/* Progress to Goal */}
-        <ProgressCard weightProgress={weightProgress} t={t} colors={colors} />
-
-        {/* Personal Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }]}>
-          <Text style={[styles.sectionTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.informations')}</Text>
-
-          {isEditing ? (
-            <View style={styles.editForm}>
-              <View style={styles.inputRow}>
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.height')} (cm)</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
-                    value={heightCm}
-                    onChangeText={(text) => setHeightCm(text.replace(',', '.'))}
-                    placeholder="175"
-                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
-                    keyboardType="decimal-pad"
-                    maxLength={3}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.birthDate')}</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
-                    value={birthDate}
-                    onChangeText={setBirthDate}
-                    placeholder="15/06/1995"
-                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
-                    keyboardType="default"
-                    maxLength={10}
-                  />
-                  {calculatedAge && (
-                    <Text style={{ fontSize: 11, color: colors?.textMuted ?? '#6B7280', marginTop: 4 }}>
-                      → {t('profile.yearsOld', { age: calculatedAge })}
-                    </Text>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.inputRow}>
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.startingWeight')} (kg)</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
-                    value={startWeight}
-                    onChangeText={(text) => setStartWeight(text.replace(',', '.'))}
-                    placeholder="85.0"
-                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
-                    keyboardType="decimal-pad"
-                    maxLength={6}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.target')} (kg)</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
-                    value={targetWeight}
-                    onChangeText={(text) => setTargetWeight(text.replace(',', '.'))}
-                    placeholder="75.0"
-                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
-                    keyboardType="decimal-pad"
-                    maxLength={6}
-                  />
-                </View>
-              </View>
-
-              {/* Weight Goal Selector */}
-              <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.myGoal')}</Text>
-              <View style={styles.goalSelector}>
-                <TouchableOpacity
-                  style={[
-                    styles.goalOption,
-                    { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.border ?? '#333333' },
-                    weightGoal === 'lose' && { borderWidth: 2 }
-                  ]}
-                  onPress={() => setWeightGoal('lose')}
-                >
-                  <TrendingDown size={20} color={weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.textMuted ?? '#6B7280'} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.lose')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.goalOption,
-                    { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.border ?? '#333333' },
-                    weightGoal === 'maintain' && { borderWidth: 2 }
-                  ]}
-                  onPress={() => setWeightGoal('maintain')}
-                >
-                  <Minus size={20} color={weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.textMuted ?? '#6B7280'} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.maintain')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.goalOption,
-                    { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.border ?? '#333333' },
-                    weightGoal === 'gain' && { borderWidth: 2 }
-                  ]}
-                  onPress={() => setWeightGoal('gain')}
-                >
-                  <TrendingUp size={20} color={weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.textMuted ?? '#6B7280'} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.gain')}</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                <LinearGradient
-                  colors={[colors?.accent ?? '#0ABAB5', colors?.accentDark ?? colors?.accent ?? '#089490']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.saveButtonGradient}
-                >
-                  <Check size={20} color="#FFFFFF" />
-                  <Text style={styles.saveButtonText}>{t('common.save')}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.infoList}>
-              <InfoRow
-                icon={Ruler}
-                label={t('profile.height')}
-                value={profile?.height_cm ? `${profile.height_cm} cm` : '-'}
-                color={colors?.info ?? '#3B82F6'}
-                bgColor={colors?.infoMuted ?? 'rgba(59,130,246,0.1)'}
-                textColor={colors?.textPrimary ?? '#FFFFFF'}
-                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
-                successColor={colors?.success ?? '#10B981'}
-              />
-              <InfoRow
-                icon={Calendar}
-                label={t('profile.age')}
-                value={calculatedAge ? `${calculatedAge} ans` : (profile?.age ? `${profile.age} ans` : '-')}
-                color={colors?.accent ?? '#0ABAB5'}
-                bgColor={colors?.accentMuted ?? 'rgba(10,186,181,0.1)'}
-                textColor={colors?.textPrimary ?? '#FFFFFF'}
-                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
-                successColor={colors?.success ?? '#10B981'}
-              />
-              <InfoRow
-                icon={Scale}
-                label={t('profile.startingWeight')}
-                value={weightProgress?.start ? `${weightProgress.start} kg` : '-'}
-                color={colors?.warning ?? '#F59E0B'}
-                bgColor={colors?.warningMuted ?? 'rgba(245,158,11,0.1)'}
-                textColor={colors?.textPrimary ?? '#FFFFFF'}
-                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
-                successColor={colors?.success ?? '#10B981'}
-              />
-              <InfoRow
-                icon={Target}
-                label={t('profile.target')}
-                value={weightProgress?.target ? `${weightProgress.target} kg` : '-'}
-                color={colors?.success ?? '#10B981'}
-                bgColor={colors?.successMuted ?? 'rgba(16,185,129,0.1)'}
-                textColor={colors?.textPrimary ?? '#FFFFFF'}
-                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
-                successColor={colors?.success ?? '#10B981'}
-              />
-              <InfoRow
-                icon={profile?.weight_goal === 'lose' ? TrendingDown : profile?.weight_goal === 'gain' ? TrendingUp : Minus}
-                label={t('profile.goalType')}
-                value={profile?.weight_goal === 'lose' ? t('profile.weightLoss') : profile?.weight_goal === 'gain' ? t('profile.massGain') : t('profile.maintenance')}
-                color={profile?.weight_goal === 'lose' ? colors?.success ?? '#10B981' : profile?.weight_goal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.info ?? '#3B82F6'}
-                bgColor={profile?.weight_goal === 'lose' ? colors?.successMuted ?? 'rgba(16,185,129,0.1)' : profile?.weight_goal === 'gain' ? colors?.warningMuted ?? 'rgba(245,158,11,0.1)' : colors?.infoMuted ?? 'rgba(59,130,246,0.1)'}
-                textColor={colors?.textPrimary ?? '#FFFFFF'}
-                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
-                successColor={colors?.success ?? '#10B981'}
-              />
-            </View>
-          )}
-        </View>
-
-
-        {/* Language Selector Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333', marginBottom: 16 }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 }}>
-            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors?.accentMuted ?? 'rgba(10,186,181,0.1)', alignItems: 'center', justifyContent: 'center' }}>
-              <Globe size={18} color={colors?.accent ?? '#0ABAB5'} strokeWidth={2.5} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.sectionTitle, { color: colors?.textPrimary ?? '#FFFFFF', marginBottom: 2 }]}>{t('settings.language')}</Text>
-              <Text style={{ fontSize: 12, color: colors?.textMuted ?? '#6B7280' }}>{t('settings.languageDescription')}</Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            {SUPPORTED_LANGUAGES.map((lang) => {
-              const isSelected = language === lang.code;
-              return (
-                <TouchableOpacity
-                  key={lang.code}
-                  onPress={async () => {
-                    await setLanguage(lang.code);
-                    const langKeyMap: Record<string, string> = { fr: 'settings.french', en: 'settings.english', ja: 'settings.japanese' };
-                    const langName = t(langKeyMap[lang.code] ?? 'settings.french');
-                    showPopup(t('settings.languageChanged'), t('settings.languageChangedMessage', { language: langName }));
-                  }}
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    borderWidth: isSelected ? 2 : 1,
-                    borderColor: isSelected ? (colors?.accent ?? '#0ABAB5') : (colors?.border ?? '#333333'),
-                    backgroundColor: isSelected ? (colors?.accentMuted ?? 'rgba(10,186,181,0.1)') : (colors?.backgroundElevated ?? '#242429'),
-                  }}
-                >
-                  <Text style={{ fontSize: 20 }}>{lang.flag}</Text>
-                  <Text style={{
-                    fontSize: 15,
-                    fontWeight: isSelected ? '700' : '500',
-                    color: isSelected ? (colors?.accent ?? '#0ABAB5') : (colors?.textPrimary ?? '#FFFFFF'),
-                  }}>
-                    {lang.nativeName}
-                  </Text>
-                  {isSelected && (
-                    <Check size={16} color={colors?.accent ?? '#0ABAB5'} strokeWidth={2.5} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Motivational Quote */}
-        <View style={[styles.quoteCard, { borderColor: colors?.accentMuted ?? 'rgba(10,186,181,0.1)' }]}>
-          <LinearGradient
-            colors={isDark ? ['rgba(0, 214, 143, 0.15)', 'rgba(0, 214, 143, 0.08)'] : [colors?.accentMuted ?? 'rgba(10,186,181,0.1)', colors?.background ?? '#000000']}
-            style={styles.quoteGradient}
-          >
-            <Trophy size={24} color={colors?.accentText ?? '#0ABAB5'} />
-            <Text style={[styles.quoteText, { color: colors?.textPrimary ?? '#FFFFFF' }]}>
-              "La victoire appartient au plus persévérant"
-            </Text>
-            <Text style={[styles.quoteAuthor, { color: colors?.textPrimary ?? '#FFFFFF', fontWeight: '600' }]}>Napoléon Bonaparte</Text>
-          </LinearGradient>
-        </View>
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isBlurred && Platform.OS === 'ios' && (
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          intensity={100}
-          tint={isDark ? 'dark' : 'light'}
+    <ProfilEcran
+      footer={dirty ? <Button tone="accent" label="Enregistrer" loading={saving} onPress={handleSave} /> : undefined}
+      hero={(top) => (
+        <ProfilHero
+          top={top}
+          scene={espace.scene}
+          photo={photo}
+          personnage={personnageImage(espace.personnage, rankIndex, genre)}
+          onPhoto={changePhoto}
+          name={name}
+          onName={setName}
+          since={since}
         />
       )}
+    >
+      {/* Ton chemin vers l'objectif */}
+      <CheminPoids start={s} current={current} target={t} progress={progress} fmt={fmtKg1} />
+
+      <Ornement id="sakura" />
+      <SectionTitle title="Toi" />
+      <Card>
+        <Field first inputMin={124} icon="cake" label="Date de naissance" hint={age ? `${age} ans` : 'facultatif'} value={birth} onChangeText={(v) => setBirth(maskDate(v))} placeholder="15/06/1995" keyboardType="number-pad" maxLength={10} />
+        <Field icon="ruler" label="Taille" unit="cm" value={height} onChangeText={(v) => setHeight(v.replace(/\D/g, ''))} placeholder="175" keyboardType="number-pad" maxLength={3} />
+        {bmi ? <Row icon="info" label="Indice de masse corporelle" value={bmi.toFixed(1).replace('.', ',')} /> : null}
+      </Card>
+
+      <Ornement id="eventail" />
+      <SectionTitle title="Ton objectif" />
+      <Card style={{ padding: 14, gap: 4 }}>
+        <Segmented
+          options={[{ key: 'lose', label: 'Perdre' }, { key: 'maintain', label: 'Maintenir' }, { key: 'gain', label: 'Prendre' }]}
+          value={goal}
+          onChange={(v) => setGoal(v as Goal)}
+        />
+      </Card>
+      <Card>
+        {/* courbe v2 : le jour ou commence ta perte, ta prise ou ton maintien ; le poids de depart suit ta pesee de ce jour */}
+        <Row
+          first
+          icon="calendar"
+          label="Début de mon objectif"
+          sub="Ta ligne et ton torii partent de ce jour"
+          value={debut ? jourCourt(debut) : 'à choisir'}
+          onPress={() => setChoixDebut(true)}
+        />
+        <Field icon="scale" label="Poids de départ" unit="kg" value={startW} onChangeText={setStartW} placeholder={current ? fmt(current) : '85'} keyboardType="decimal-pad" maxLength={5} />
+        <Field icon="target" label="Poids visé" unit="kg" value={targetW} onChangeText={setTargetW} placeholder="75" keyboardType="decimal-pad" maxLength={5} />
+      </Card>
+
+      <DatePickerSheet
+        visible={choixDebut}
+        value={debut || debutPropose(profile, [...pesees].sort((a, b) => (a.date < b.date ? -1 : 1)), isoLocalDay(new Date()))}
+        title="Début de mon objectif"
+        onClose={() => setChoixDebut(false)}
+        onPick={(iso) => {
+          avantChangementDebut().catch(() => {});
+          setDebut(iso);
+          const n = nouveauDebut(iso, pesees, num(startW));
+          if (n.start_weight) setStartW(fmt(n.start_weight));
+        }}
+      />
+      <Ornement id="katanas" />
+      {showCombat ? (
+        <>
+          <SectionTitle title="Sur le tapis" sub={combatSport ? getSportName(combatSport) : 'Sport de combat'} />
+          <TapisCard sport={combatSport} femme={genre === 'f'} belt={belt} onBelt={setBelt} />
+          <Card>
+            <Field first icon="home" label="Ton club" value={club} onChangeText={setClub} placeholder="Nom du club" maxLength={40} wide />
+          </Card>
+        </>
+      ) : (
+        <Card>
+          <Row first icon="swords" label="Tu fais un sport de combat ?" sub="Ajoute-le à tes sports pour noter ta ceinture et ton club" onPress={() => router.push('/espace/sports' as any)} />
+        </Card>
+      )}
+
+      <Ornement id="lanterne" />
+      <SectionTitle title="Tes préférences" />
+      <Card>
+        <Row first icon="scale" label="Unité des charges" value={weightUnit === 'kg' ? 'kg' : 'livres'} onPress={() => setPref('poids')} />
+        <Row icon="ruler" label="Mensurations" value={measurementUnit === 'cm' ? 'cm' : 'pouces'} onPress={() => setPref('mesures')} />
+        <Row icon="globe" label="Langue" value={langLabel} onPress={() => setPref('langue')} />
+        <Row icon="heart" label="Zones cardiaques" sub="Tes seuils de fréquence cardiaque" onPress={() => router.push('/heart-zones-settings' as any)} />
+      </Card>
+
+      <ChoiceSheet
+        visible={pref === 'poids'}
+        onClose={() => setPref(null)}
+        title="Unité des charges"
+        options={[{ key: 'kg', label: 'Kilos', sub: 'Exemple : 100 kg au squat' }, { key: 'lbs', label: 'Livres', sub: 'Exemple : 220 lb au squat. Ton poids de corps reste en kilos' }]}
+        value={weightUnit}
+        onChange={(v) => setWeightUnit(v as 'kg' | 'lbs')}
+      />
+      <ChoiceSheet
+        visible={pref === 'mesures'}
+        onClose={() => setPref(null)}
+        title="Mensurations"
+        options={[{ key: 'cm', label: 'Centimètres', sub: 'Exemple : 84 cm' }, { key: 'in', label: 'Pouces', sub: 'Exemple : 33 in' }]}
+        value={measurementUnit}
+        onChange={(v) => setMeasurementUnit(v as 'cm' | 'in')}
+      />
+      <ChoiceSheet
+        visible={pref === 'langue'}
+        onClose={() => setPref(null)}
+        title="Langue"
+        options={SUPPORTED_LANGUAGES.map((l) => ({ key: l.code as string, label: l.nativeName }))}
+        value={language as string}
+        onChange={(v) => { setLanguage(v as any).catch(() => {}); }}
+      />
 
       <PopupComponent />
-    </View>
+    </ProfilEcran>
   );
 }
 
-// ============================================
-// STYLES - V5 VIBRANT
-// ============================================
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: SPACING.lg,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-  },
-  editButton: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editButtonActive: {
-    borderColor: COLORS.error,
-    backgroundColor: COLORS.errorMuted,
-  },
-
-  // Hero Card
-  heroCard: {
-    borderRadius: RADIUS.xxl,
-    overflow: 'hidden',
-    marginBottom: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-  },
-  heroGradient: {
-    paddingVertical: SPACING.xxl,
-    paddingHorizontal: SPACING.xl,
-    alignItems: 'center',
-  },
-  profileName: {
-    fontSize: TYPOGRAPHY.size.xxl,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
-  },
-  nameInput: {
-    fontSize: TYPOGRAPHY.size.xxl,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.accent,
-    paddingBottom: SPACING.xs,
-    minWidth: 150,
-  },
-  rankBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.accentMuted,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    marginBottom: SPACING.md,
-  },
-  rankName: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-    color: COLORS.accent,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  streakValue: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.warning,
-  },
-  streakLabel: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textMuted,
-    marginLeft: 2,
-  },
-
-  // Next Rank Card
-  nextRankCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  nextRankHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  nextRankLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  nextRankTitle: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.medium,
-    color: COLORS.textSecondary,
-  },
-  nextRankRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  nextRankIcon: {
-    fontSize: 14,
-  },
-  nextRankName: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-    color: COLORS.gold,
-  },
-  nextRankBarBg: {
-    height: 6,
-    backgroundColor: COLORS.surfaceLight,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: SPACING.sm,
-  },
-  nextRankBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  nextRankDays: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textMuted,
-    textAlign: 'right',
-  },
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
-  statBadge: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xxl,
-    borderWidth: 1.5,
-    borderColor: COLORS.surfaceBorder,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  statBadgeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  statBadgeValue: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: '900',
-    color: COLORS.text,
-    letterSpacing: -0.5,
-  },
-  statBadgeUnit: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '700',
-  },
-  statBadgeLabel: {
-    marginTop: SPACING.xs,
-    fontSize: TYPOGRAPHY.size.xs,
-    fontWeight: '700',
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
-  // Dojo Card
-  dojoCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xxl,
-    borderWidth: 1.5,
-    borderColor: COLORS.goldMuted,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  dojoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  dojoIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-  },
-  dojoTitle: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: '800',
-    color: COLORS.text,
-    letterSpacing: -0.3,
-  },
-  dojoStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  dojoStatItem: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  dojoStatValue: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  dojoStatLabel: {
-    fontSize: TYPOGRAPHY.size.xs,
-    fontWeight: '600',
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-
-  // Progress Card
-  progressCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  progressTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  progressTitle: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-    color: COLORS.text,
-  },
-  progressPercentBadge: {
-    backgroundColor: COLORS.accentMuted,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-  },
-  progressPercent: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.accent,
-  },
-  progressBarContainer: {
-    marginBottom: SPACING.lg,
-  },
-  progressBarBg: {
-    height: 12,
-    backgroundColor: COLORS.surfaceLight,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  progressLabelItem: {},
-  progressLabelValue: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-    marginBottom: 2,
-  },
-  progressLabelText: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textMuted,
-  },
-
-  // Info Card
-  infoCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xxl,
-    borderWidth: 1.5,
-    borderColor: COLORS.surfaceBorder,
-    padding: SPACING.xl,
-    marginBottom: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: '900',
-    color: COLORS.text,
-    marginBottom: SPACING.lg,
-    letterSpacing: -0.3,
-  },
-  infoList: {
-    gap: SPACING.lg,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    paddingVertical: SPACING.xs,
-  },
-  infoIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoLabel: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  infoValue: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: '800',
-    color: COLORS.text,
-    letterSpacing: -0.3,
-  },
-
-  // Edit Form
-  editForm: {
-    gap: SPACING.lg,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  inputGroup: {
-    flex: 1,
-    gap: SPACING.sm,
-  },
-  inputLabel: {
-    fontSize: TYPOGRAPHY.size.xs,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  input: {
-    backgroundColor: COLORS.surfaceLight,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    padding: SPACING.md,
-    fontSize: TYPOGRAPHY.size.md,
-    color: COLORS.text,
-  },
-  saveButton: {
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-    marginTop: SPACING.sm,
-  },
-  saveButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.lg,
-  },
-  saveButtonText: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: '#FFFFFF',
-  },
-
-  // Quote Card
-  quoteCard: {
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.accentMuted,
-  },
-  quoteGradient: {
-    padding: SPACING.xl,
-    alignItems: 'center',
-  },
-  quoteEmoji: {
-    fontSize: 32,
-    marginBottom: SPACING.md,
-  },
-  quoteText: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontStyle: 'italic',
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
-    lineHeight: 24,
-  },
-  quoteAuthor: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.accent,
-    fontWeight: TYPOGRAPHY.weight.medium,
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: COLORS.accent,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.surface,
-  },
-
-  // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot
-  screenshotWarning: {
-    backgroundColor: 'rgba(255, 149, 0, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  screenshotWarningText: {
-    color: '#FF9500',
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  // Hero Top Row - Avatar Left, Photo Right
-  heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: SPACING.lg,
-  },
-  heroAvatarContainer: {
-    position: 'relative',
-  },
-  rankMini: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.surface,
-  },
-  heroCenterContent: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-  },
-  heroPhotoContainer: {
-    position: 'relative',
-  },
-  photoPlaceholder: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoPlaceholderLarge: {
-    width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', borderWidth: 4,
-  },
-  memberSince: {
-    fontSize: TYPOGRAPHY.size.sm,
-    marginTop: SPACING.lg,
-    textAlign: 'center',
-  },
-
-  // Goal Selector
-  goalSelector: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginBottom: SPACING.lg,
-  },
-  goalOption: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-  },
-  goalOptionText: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-  },
-
-  // Competition Section
-  competitionCard: {
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  competitionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-  },
-  competitionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: SPACING.md,
-  },
-  competitionContent: {
-    flex: 1,
-  },
-  competitionLabel: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-    marginBottom: 2,
-  },
-  competitionSublabel: {
-    fontSize: TYPOGRAPHY.size.sm,
-  },
-  starButton: { padding: 4 },
-  starsContainer: { flexDirection: 'row', gap: 12, justifyContent: 'center', marginVertical: 12 },
-  starsLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20 },
-  starLabel: { fontSize: 12, fontWeight: '600' },
-});
+function Field({ icon, label, unit, hint, first, wide, inputMin = 80, ...input }: TextInputProps & { icon: Parameters<typeof Icon>[0]['name']; label: string; unit?: string; hint?: string; first?: boolean; wide?: boolean; inputMin?: number }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View style={{ minHeight: 60, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: first ? 0 : 1, borderColor: c.divider }}>
+      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={icon} size={19} />
+      </View>
+      <View style={{ flex: wide ? 0 : 1, gap: 1 }}>
+        <Ink size={15} weight="bold">{label}</Ink>
+        {hint ? <Ink size={12} color={c.textMuted}>{hint}</Ink> : null}
+      </View>
+      <TextInput
+        {...input}
+        accessibilityLabel={label}
+        placeholderTextColor={c.textMuted}
+        style={{ flex: wide ? 1 : 0, minWidth: inputMin, height: 48, textAlign: 'right', fontSize: 17, fontWeight: '800', color: c.ink }}
+      />
+      {unit ? <Ink size={14} weight="bold" color={c.textMuted}>{unit}</Ink> : null}
+    </View>
+  );
+}

@@ -1,490 +1,164 @@
-// ============================================
-// YOROI - MESURES DÉTAILLÉES
-// ============================================
-// Graphiques de mensurations corporelles (tour de taille, bras, etc.)
-
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-  Platform,
-} from 'react-native';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Ruler, TrendingDown, TrendingUp, Minus } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
-import { parseISO } from 'date-fns';
-
-// Parse date sûr : 'yyyy-MM-dd' en local (évite le jour précédent à l'ouest d'UTC)
-const toLocalDate = (v: any): Date =>
-  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? parseISO(v) : new Date(v);
-import { getMeasurements, Measurement } from '@/lib/database';
-// 🔒 SÉCURITÉ: Protection contre les screenshots
-import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
+/**
+ * Evolution des mensurations v2, ouverte d'un appui sur une mensuration dans Progres :
+ * le choix de la mesure en tuiles, grand graphique au doigt, periode, moyenne, plus fin,
+ * plus large, evolution, explication et historique des prises. Parametre optionnel : field.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import logger from '@/lib/security/logger';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { PremiumGate } from '@/components/premium/PremiumGate';
-
-type Period = '30d' | '90d' | '6m' | 'all';
-type MeasurementType = 'waist' | 'chest' | 'arms' | 'thighs' | 'hips';
-
-const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
-  waist: 'Tour de taille',
-  chest: 'Tour de poitrine',
-  arms: 'Tour de bras',
-  thighs: 'Tour de cuisses',
-  hips: 'Tour de hanches',
-};
-
-const MEASUREMENT_COLORS: Record<MeasurementType, string> = {
-  waist: '#EF4444',
-  chest: '#3B82F6',
-  arms: '#F59E0B',
-  thighs: '#10B981',
-  hips: '#8B5CF6',
-};
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { GLASS, GUTTER, tapSelect } from '@/components/yoroi/v2/progres/ui';
+import { MetricDetail } from '@/components/yoroi/v2/progres/MetricDetail';
+import type { DetailPoint, MetricSpec } from '@/components/yoroi/v2/progres/MetricDetail';
+import { MEASURE_EXPLAIN, MEASURE_TIP } from '@/components/yoroi/v2/progres/explain';
+import { CHART_COLORS } from '@/components/yoroi/v2/charts/core';
+import { cmDelta } from '@/components/yoroi/v2/progres/CorpsSection';
+import { useMeasuresData } from '@/lib/v2/progres/useProgresData';
+import { deleteMeasuresOfDay, VIEW_FIELDS, viewSeries, viewValue } from '@/lib/v2/progres/measures';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { formatLongDate } from '@/lib/v2/weightStats';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { logger } from '@/lib/security/logger';
+import type { ViewKey } from '@/lib/v2/progres/measures';
+import { num } from '@/lib/v2/progres/format';
+import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
+import { P, blancA } from '@/components/yoroi/livePalette';
 
 export default function MeasurementsDetailScreen() {
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const { locale } = useI18n();
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
-
-  // 🔒 SÉCURITÉ: Protection contre les screenshots
-  const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
-
-  const [period, setPeriod] = useState<Period>('90d');
-  const [measurements, setMeasurements] = useState<Measurement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const params = useLocalSearchParams<{ field?: string }>();
+  const { isBlurred, screenshotDetected } = useSensitiveScreen();
+  const { points, loading, reload } = useMeasuresData();
+  const asKey = (v?: string): ViewKey | null => (v && VIEW_FIELDS.some((f) => f.key === v) ? (v as ViewKey) : null);
+  const [sel, setSel] = useState<ViewKey | null>(asKey(params.field));
 
   useEffect(() => {
-    loadData();
-  }, []);
+    const k = asKey(params.field);
+    if (k) setSel(k);
+  }, [params.field]);
 
-  const loadData = async () => {
-    try {
-      const data = await getMeasurements();
-      setMeasurements(data);
-    } catch (error) {
-      logger.error('Erreur chargement mesures:', error);
-    } finally {
-      setLoading(false);
-    }
+  const fields = useMemo(() => VIEW_FIELDS.map((f) => ({ ...f, all: viewSeries(points, f.key) })).filter((f) => f.all.length > 0), [points]);
+  const active = fields.find((f) => f.key === sel) ?? fields.find((f) => f.key === 'waist') ?? fields[0];
+
+  const series: DetailPoint[] = useMemo(() => {
+    if (!active) return [];
+    return active.all.map((p) => {
+      const day = points.find((q) => q.date === p.date);
+      const others = day
+        ? VIEW_FIELDS.filter((f) => f.key !== active.key)
+            .map((f) => {
+              const v = viewValue(day, f.key);
+              return v ? `${f.label.toLowerCase()} ${num(v, 1)}` : null;
+            })
+            .filter(Boolean)
+        : [];
+      return { ...p, caption: others.length ? `aussi : ${others.join(', ')}` : undefined };
+    });
+  }, [active, points]);
+
+  // 18 octobre 2026 : une prise fausse se supprime d'un appui, apres confirmation (meme fenetre que les pesees)
+  const onHistoryPress = (pt: DetailPoint) => {
+    appAlert('Supprimer cette prise ?', `Toutes tes mensurations du ${formatLongDate(pt.date)} partent pour de bon.`, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteMeasuresOfDay(pt.date);
+            DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+            reload();
+          } catch (err) {
+            logger.error('Suppression des mensurations impossible', err);
+            appAlert('Oups', 'Cette prise n’a pas pu être supprimée. Réessaie.');
+          }
+        },
+      },
+    ]);
   };
 
-  // Filtrer par période
-  const getFilteredData = () => {
-    const now = new Date();
-    const daysMap = { '30d': 30, '90d': 90, '6m': 180, 'all': 365 * 10 };
-    const days = daysMap[period];
-    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const spec: MetricSpec = { label: active?.long ?? 'Tes mensurations', unit: 'cm', digits: 1, good: active?.good ?? 'none', eps: 0.25, minSpan: 2 };
 
-    return measurements
-      .filter(m => toLocalDate(m.date) >= cutoff)
-      .sort((a, b) => toLocalDate(a.date).getTime() - toLocalDate(b.date).getTime());
-  };
-
-  const filteredMeasurements = getFilteredData();
-
-  // Préparer les données pour chaque type de mesure
-  const getMeasurementData = (type: MeasurementType) => {
-    return filteredMeasurements
-      .filter(m => m[type] != null)
-      .map(m => ({
-        // Le graphique lit `label` (pas `date`)
-        label: toLocalDate(m.date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
-        value: m[type] as number,
-      }));
-  };
-
-  // Calculer les stats
-  const getStats = (type: MeasurementType) => {
-    const data = getMeasurementData(type);
-    if (data.length === 0) return { current: 0, min: 0, max: 0, trend: 0 };
-
-    const values = data.map(d => d.value);
-    const current = values[values.length - 1];
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const first = values[0];
-    const trend = current - first;
-
-    return { current, min, max, trend };
-  };
-
-  const waistStats = getStats('waist');
-  const chestStats = getStats('chest');
-  const armsStats = getStats('arms');
-  const thighsStats = getStats('thighs');
-  const hipsStats = getStats('hips');
+  const picker = (
+    <View style={{ paddingHorizontal: GUTTER, marginTop: 12, gap: 10 }}>
+      {screenshotDetected ? (
+        <View style={{ padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
+          <Ink size={13} weight="bold">
+            Capture d’écran repérée. Tes mesures sont personnelles.
+          </Ink>
+        </View>
+      ) : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {fields.map((f) => {
+          const on = f.key === active?.key;
+          const l = f.all[f.all.length - 1];
+          const d = f.all.length > 1 ? l.value - f.all[0].value : null;
+          return (
+            <Pressable
+              key={f.key}
+              onPress={() => {
+                tapSelect();
+                setSel(f.key);
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${f.long}, ${num(l.value, 1)} centimètres`}
+              style={{ width: '31.5%', minHeight: 84, padding: 10, borderRadius: 18, backgroundColor: on ? c.ink : blancA(0.78), borderWidth: 1, borderColor: on ? c.ink : c.divider, gap: 2 }}
+            >
+              <Ink size={12} weight="bold" color={on ? c.onDarkSecondary : c.textSecondary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                {f.label}
+              </Ink>
+              <Ink size={19} weight="black" tight color={on ? P.paper : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                {num(l.value, 1)}
+                <Ink size={12} weight="bold" color={on ? c.onDarkSecondary : c.textSecondary}>
+                  {' cm'}
+                </Ink>
+              </Ink>
+              <Ink size={11} weight="bold" color={on ? c.onDarkSecondary : c.textSecondary} numberOfLines={2}>
+                {d === null ? 'une prise' : cmDelta(d)}
+              </Ink>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
 
   return (
-    <PremiumGate featureTitle="Courbes des mensurations">
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mensurations</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      {/* 🔒 SÉCURITÉ: Avertissement screenshot détecté */}
-      {screenshotDetected && (
-        <View style={styles.screenshotWarning}>
-          <Text style={styles.screenshotWarningText}>
-            Screenshot détecté - Tes données sont sensibles
-          </Text>
-        </View>
-      )}
-
-      {/* Filtres de période */}
-      <View style={styles.periodFilters}>
-        {(['30d', '90d', '6m', 'all'] as Period[]).map((p) => (
-          <TouchableOpacity
-            key={p}
-            style={[
-              styles.periodBtn,
-              { backgroundColor: period === p ? colors.accent : colors.backgroundCard },
-            ]}
-            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPeriod(p); }}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.periodText,
-                { color: period === p ? '#FFFFFF' : colors.textPrimary },
-              ]}
-            >
-              {p === 'all' ? 'Tout' : p === '6m' ? '6 mois' : p}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Stats résumées */}
-        <View style={styles.statsGrid}>
-          {(Object.keys(MEASUREMENT_LABELS) as MeasurementType[]).map((type) => {
-            const stats = getStats(type);
-            const TrendIcon = stats.trend < -0.5 ? TrendingDown : stats.trend > 0.5 ? TrendingUp : Minus;
-            const trendColor = stats.trend < -0.5 ? '#10B981' : stats.trend > 0.5 ? '#EF4444' : colors.textMuted;
-
-            return (
-              <View key={type} style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-                <Ruler size={16} color={MEASUREMENT_COLORS[type]} />
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  {MEASUREMENT_LABELS[type]}
-                </Text>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {stats.current > 0 ? `${stats.current.toFixed(1)} cm` : '-'}
-                </Text>
-                {stats.current > 0 && (
-                  <View style={styles.trendRow}>
-                    <TrendIcon size={12} color={trendColor} />
-                    <Text style={[styles.trendText, { color: trendColor }]}>
-                      {stats.trend > 0 ? '+' : ''}{stats.trend.toFixed(1)} cm
-                    </Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-
-        {/* Graphique tour de taille */}
-        {getMeasurementData('waist').length > 0 && (
-          <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.chartHeader}>
-              <View style={styles.chartTitleRow}>
-                <Ruler size={20} color={MEASUREMENT_COLORS.waist} />
-                <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                  {MEASUREMENT_LABELS.waist}
-                </Text>
-              </View>
-              <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                Évolution en centimètres
-              </Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={getMeasurementData('waist')}
-                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('waist').length * 50)}
-                height={200}
-                color={MEASUREMENT_COLORS.waist}
-                showGrid
-                showDots
-                animated
-              />
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Graphique tour de poitrine */}
-        {getMeasurementData('chest').length > 0 && (
-          <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.chartHeader}>
-              <View style={styles.chartTitleRow}>
-                <Ruler size={20} color={MEASUREMENT_COLORS.chest} />
-                <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                  {MEASUREMENT_LABELS.chest}
-                </Text>
-              </View>
-              <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                Évolution en centimètres
-              </Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={getMeasurementData('chest')}
-                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('chest').length * 50)}
-                height={200}
-                color={MEASUREMENT_COLORS.chest}
-                showGrid
-                showDots
-                animated
-              />
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Graphique tour de bras */}
-        {getMeasurementData('arms').length > 0 && (
-          <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.chartHeader}>
-              <View style={styles.chartTitleRow}>
-                <Ruler size={20} color={MEASUREMENT_COLORS.arms} />
-                <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                  {MEASUREMENT_LABELS.arms}
-                </Text>
-              </View>
-              <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                Évolution en centimètres
-              </Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={getMeasurementData('arms')}
-                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('arms').length * 50)}
-                height={200}
-                color={MEASUREMENT_COLORS.arms}
-                showGrid
-                showDots
-                animated
-              />
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Graphique tour de cuisses */}
-        {getMeasurementData('thighs').length > 0 && (
-          <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.chartHeader}>
-              <View style={styles.chartTitleRow}>
-                <Ruler size={20} color={MEASUREMENT_COLORS.thighs} />
-                <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                  {MEASUREMENT_LABELS.thighs}
-                </Text>
-              </View>
-              <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                Évolution en centimètres
-              </Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={getMeasurementData('thighs')}
-                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('thighs').length * 50)}
-                height={200}
-                color={MEASUREMENT_COLORS.thighs}
-                showGrid
-                showDots
-                animated
-              />
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Graphique tour de hanches */}
-        {getMeasurementData('hips').length > 0 && (
-          <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.chartHeader}>
-              <View style={styles.chartTitleRow}>
-                <Ruler size={20} color={MEASUREMENT_COLORS.hips} />
-                <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                  {MEASUREMENT_LABELS.hips}
-                </Text>
-              </View>
-              <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-                Évolution en centimètres
-              </Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={getMeasurementData('hips')}
-                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('hips').length * 50)}
-                height={200}
-                color={MEASUREMENT_COLORS.hips}
-                showGrid
-                showDots
-                animated
-              />
-            </ScrollView>
-          </View>
-        )}
-
-        {filteredMeasurements.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Aucune mesure enregistrée pour cette période
-            </Text>
-          </View>
-        )}
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
-
-      {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isBlurred && Platform.OS === 'ios' && (
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          intensity={100}
-          tint={isDark ? 'dark' : 'light'}
-        />
-      )}
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <MetricDetail
+        key={active?.key ?? 'vide'}
+        title="Tes mensurations"
+        sub="Une prise par mois suffit pour voir ton corps changer."
+        picker={fields.length ? picker : null}
+        spec={spec}
+        points={series}
+        color={CHART_COLORS.blue}
+        explain={{ text: active ? MEASURE_EXPLAIN[active.key].text : 'Le mètre ruban voit ce que la balance ne voit pas, surtout quand tu prends du muscle.', tip: (active && MEASURE_EXPLAIN[active.key].tip) || MEASURE_TIP }}
+        loading={loading}
+        defaultPeriod={180}
+        markBest={active?.good !== 'none'}
+        historyNoun={['prise', 'prises']}
+        onHistoryPress={onHistoryPress}
+        historyHint="Une prise fausse ? Appuie dessus pour la supprimer."
+        bestLabel={active?.good === 'down' ? 'le plus fin' : 'le plus large'}
+        scrubLine={(p) => {
+          const last = series[series.length - 1];
+          if (!last) return ' ';
+          const d = last.value - p.value;
+          return Math.abs(d) < 0.25 ? 'pareil qu’aujourd’hui' : `${cmDelta(d)} aujourd’hui`;
+        }}
+        empty={{
+          title: 'Aucune mesure pour l’instant',
+          text: 'Prends tes mesures une fois par mois, le matin. Tes courbes apparaîtront ici dès la deuxième prise.',
+          plusHint: 'Prends tes mesures avec le bouton + de la barre d’onglets',
+        }}
+      />
+      {isBlurred && Platform.OS === 'ios' ? <BlurView style={StyleSheet.absoluteFill} intensity={100} tint="light" /> : null}
     </View>
-    </PremiumGate>
   );
 }
-
-const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  periodFilters: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 16,
-  },
-  periodBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  periodText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
-  },
-  statCard: {
-    width: (SCREEN_WIDTH - 48) / 2,
-    padding: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    gap: 6,
-  },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  trendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  trendText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  chartCard: {
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-  chartHeader: {
-    marginBottom: 16,
-  },
-  chartTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  chartSubtitle: {
-    fontSize: 12,
-    marginLeft: 28,
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-
-  // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot
-  screenshotWarning: {
-    backgroundColor: 'rgba(255, 149, 0, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
-    borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 16,
-    marginBottom: 12,
-  },
-  screenshotWarningText: {
-    color: '#FF9500',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});

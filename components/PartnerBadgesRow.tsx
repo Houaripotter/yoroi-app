@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER BADGES ROW · Affiche les badges deverrouilles
+// PARTNER BADGES ROW : Affiche les badges deverrouilles
 // ============================================
 
 import React from 'react';

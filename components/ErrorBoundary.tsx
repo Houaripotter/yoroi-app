@@ -1,11 +1,19 @@
 /**
- * Error Boundary Component
- * Catches errors in React component tree and displays fallback UI
+ * Error Boundary (refonte v2)
+ * Attrape les erreurs de l'arbre React et affiche un ecran papier clair :
+ * une phrase simple, Reessayer (bouton principal) et Retour a l'accueil.
+ * Vague 16 : le torii a l'aube en fond plein ecran, floute et voile ; le texte est pose sur une carte claire.
+ * Le detail technique n'apparait qu'en developpement (__DEV__).
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { AlertTriangle, RefreshCw } from 'lucide-react-native';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { FondEpoque } from '@/components/yoroi/v2/fonds/FondEpoque';
+import { Pressable, ScrollView, View } from 'react-native';
+import { router } from 'expo-router';
+import { RefreshCw, House } from 'lucide-react-native';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 
 interface Props {
   children: ReactNode;
@@ -15,6 +23,55 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+}
+
+function ErrorScreen({ error, onRetry, onHome }: { error: Error | null; onRetry: () => void; onHome: () => void }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View style={{ flex: 1, backgroundColor: c.background, justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 48 }}>
+      <FondEpoque fond="aube" voile="leger" flou={18} />
+      <View style={{ width: '100%', maxWidth: 420, alignSelf: 'center', gap: 14, borderRadius: 28, padding: 22, backgroundColor: 'rgba(255,255,255,0.92)', borderWidth: 1, borderColor: '#FFFFFF', shadowColor: '#1D2029', shadowOpacity: 0.12, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 4 }}>
+        <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 6 }}>
+          <Glyph kind="sakura" size={38} color={c.accent} />
+        </View>
+        <Ink size={28} weight="black" tight style={{ textAlign: 'center' }}>
+          Cet écran a eu un souci
+        </Ink>
+        <Ink size={15} color={c.textSecondary} style={{ textAlign: 'center', paddingHorizontal: 8 }}>
+          Tes données restent sur ton téléphone. Réessaie, ou reviens à l’accueil.
+        </Ink>
+
+        {__DEV__ && error ? (
+          <ScrollView style={{ maxHeight: 200, backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.border, marginTop: 4 }} contentContainerStyle={{ padding: 12, gap: 6 }}>
+            <Ink size={13} weight="bold" color={c.danger}>{error.toString()}</Ink>
+            {error.stack ? <Ink size={11} color={c.textMuted}>{error.stack}</Ink> : null}
+          </ScrollView>
+        ) : null}
+
+        <View style={{ gap: 10, marginTop: 10 }}>
+          <Pressable
+            onPress={onRetry}
+            accessibilityRole="button"
+            accessibilityLabel="Réessayer"
+            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.accentPressed : c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}
+          >
+            <RefreshCw size={20} color="#FFFFFF" strokeWidth={2.4} />
+            <Ink size={16} weight="extraBold" color="#FFFFFF">Réessayer</Ink>
+          </Pressable>
+          <Pressable
+            onPress={onHome}
+            accessibilityRole="button"
+            accessibilityLabel="Retour à l’accueil"
+            style={({ pressed }) => ({ height: 56, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 })}
+          >
+            <House size={20} color={c.ink} strokeWidth={2.2} />
+            <Ink size={16} weight="extraBold">Retour à l’accueil</Ink>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -35,103 +92,36 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ hasError: false, error: null });
   };
 
+  goHome = () => {
+    // La navigation n'est disponible qu'une fois le navigateur remonte : on essaie quelques fois
+    let tries = 0;
+    const attempt = () => {
+      tries += 1;
+      try {
+        router.replace('/(tabs)' as any);
+      } catch {
+        if (tries < 10) setTimeout(attempt, 60);
+      }
+    };
+    try {
+      router.replace('/(tabs)' as any);
+      this.resetError();
+      return;
+    } catch {
+      // navigateur demonte pendant l'erreur
+    }
+    this.resetError();
+    setTimeout(attempt, 0);
+  };
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback && this.state.error) {
         return this.props.fallback(this.state.error, this.resetError);
       }
-
-      return (
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <AlertTriangle size={64} color="#EF4444" />
-            <Text style={styles.title}>Oups ! Une erreur est survenue</Text>
-            <Text style={styles.subtitle}>
-              L'application a rencontré un problème. Veuillez réessayer.
-            </Text>
-
-            {__DEV__ && this.state.error && (
-              <ScrollView style={styles.errorDetails}>
-                <Text style={styles.errorText}>{this.state.error.toString()}</Text>
-                <Text style={styles.errorStack}>{this.state.error.stack}</Text>
-              </ScrollView>
-            )}
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={this.resetError}
-              activeOpacity={0.8}
-            >
-              <RefreshCw size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Réessayer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
+      return <ErrorScreen error={this.state.error} onRetry={this.resetError} onHome={this.goHome} />;
     }
 
     return this.props.children;
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  content: {
-    maxWidth: 400,
-    alignItems: 'center',
-    gap: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#F1F5F9',
-    textAlign: 'center',
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#94A3B8',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  errorDetails: {
-    maxHeight: 200,
-    width: '100%',
-    backgroundColor: '#1E293B',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 16,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  errorStack: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontFamily: 'monospace',
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#8B5CF6',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginTop: 24,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

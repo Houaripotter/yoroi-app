@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER LOSS HEATMAP · zones d'attaque subies
+// PARTNER LOSS HEATMAP : zones d'attaque subies
 // ============================================
 // Silhouette corporelle simplifiee avec zones colorees selon
 // la frequence des techniques subies.

@@ -1,10 +1,14 @@
+import { track } from '@/utils/telemetry';
+import type { ZonesMeta } from './v2/seances/appleZonesSync';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { getDocumentAsync } from 'expo-document-picker';
-import { Alert, Platform } from 'react-native';
+import { DeviceEventEmitter, Platform } from 'react-native';
 import logger from './security/logger';
 import secureStorage from './security/secureStorage';
+import { rebaseLocalUri } from './v2/sauvegarde/chemins';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 // ThemeName supprimé - utilise maintenant string pour compatibilité avec le nouveau système de thèmes
 
 // ============================================
@@ -78,7 +82,7 @@ const STORAGE_KEYS = {
 // LOGOS PREMIUM - Personnalisation
 // ============================================
 
-export type LogoVariant = 'default' | 'logo_new' | 'logo1' | 'logo2' | 'logo3' | 'logo4' | 'logo5' | 'logo6';
+export type LogoVariant = 'default' | 'bleu_nuit' | 'indigo' | 'papier' | 'ardoise' | 'foret' | 'bordeaux' | 'crepuscule';
 
 export interface LogoOption {
   id: LogoVariant;
@@ -86,26 +90,37 @@ export interface LogoOption {
   description: string;
   isPremium: boolean;
   image: any; // require() pour l'image
+  /** couleur du fond de l'icone, pour la pastille de l'ecran de choix */
+  color: string;
+  /** nom de l'icone native (appiconset iOS, activity-alias Android), null pour l'icone par defaut */
+  nativeName: string | null;
 }
 
+// Le logo v7 n.8 decline sur plusieurs fonds (16 octobre 2026). Les anciens choix
+// (logo_new, logo1 a logo6) n'existent plus : getSelectedLogo les ramene a 'default'.
 export const LOGO_OPTIONS: LogoOption[] = [
-  { id: 'default', name: 'Classique', description: 'Logo officiel', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo2.png') },
-  { id: 'logo_new', name: 'Logo 1', description: 'Design principal', isPremium: false, image: require('@/assets/logo d\'app/logo1.png') },
-  { id: 'logo1', name: 'Yoroi 1', description: 'Variante 1', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo1.png') },
-  { id: 'logo2', name: 'Yoroi 2', description: 'Variante 2', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo2.png') },
-  { id: 'logo3', name: 'Yoroi 3', description: 'Variante 3', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo3.png') },
-  { id: 'logo4', name: 'Yoroi 4', description: 'Variante 4', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo4.png') },
-  { id: 'logo5', name: 'Yoroi 5', description: 'Variante 5', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo5.png') },
-  { id: 'logo6', name: 'Yoroi 6', description: 'Variante 6', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo6.png') },
+  { id: 'default', name: 'Noir', description: 'Logo officiel', isPremium: false, color: '#17151A', nativeName: null, image: require('@/assets/images/logos_couleurs/logo_default.png') },
+  { id: 'bleu_nuit', name: 'Bleu nuit', description: 'Fond bleu nuit', isPremium: false, color: '#1D2340', nativeName: 'BleuNuit', image: require('@/assets/images/logos_couleurs/logo_bleu_nuit.png') },
+  { id: 'indigo', name: 'Indigo', description: 'Fond indigo', isPremium: false, color: '#2C4A84', nativeName: 'Indigo', image: require('@/assets/images/logos_couleurs/logo_indigo.png') },
+  { id: 'papier', name: 'Papier', description: 'Fond clair', isPremium: false, color: '#F2F1EC', nativeName: 'Papier', image: require('@/assets/images/logos_couleurs/logo_papier.png') },
+  { id: 'ardoise', name: 'Ardoise', description: 'Fond ardoise', isPremium: true, color: '#3A3F4A', nativeName: 'Ardoise', image: require('@/assets/images/logos_couleurs/logo_ardoise.png') },
+  { id: 'foret', name: 'Forêt', description: 'Fond vert forêt', isPremium: true, color: '#1F3A2E', nativeName: 'Foret', image: require('@/assets/images/logos_couleurs/logo_foret.png') },
+  { id: 'bordeaux', name: 'Bordeaux', description: 'Fond bordeaux', isPremium: true, color: '#4A1E2A', nativeName: 'Bordeaux', image: require('@/assets/images/logos_couleurs/logo_bordeaux.png') },
+  { id: 'crepuscule', name: 'Crépuscule', description: 'Dégradé indigo vers nuit', isPremium: true, color: '#2C4A84', nativeName: 'Crepuscule', image: require('@/assets/images/logos_couleurs/logo_crepuscule.png') },
 ];
+
+/** ramene toute valeur inconnue (anciens logos, valeur corrompue) au logo par defaut */
+export const normalizeLogoVariant = (value: string | null | undefined): LogoVariant =>
+  LOGO_OPTIONS.some((o) => o.id === value) ? (value as LogoVariant) : 'default';
+
+/** nom de l'icone native a appliquer pour un choix, null pour l'icone par defaut */
+export const nativeIconNameFor = (value: string | null | undefined): string | null =>
+  LOGO_OPTIONS.find((o) => o.id === normalizeLogoVariant(value))?.nativeName ?? null;
 
 export const getSelectedLogo = async (): Promise<LogoVariant> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_LOGO);
-    if (data) {
-      return data as LogoVariant;
-    }
-    return 'default';
+    return normalizeLogoVariant(data);
   } catch (error) {
     logger.error('Erreur chargement logo:', error);
     return 'default';
@@ -253,6 +268,8 @@ export interface Photo {
   file_uri: string;
   weight?: number;
   notes?: string;
+  /** pose de la photo (vague 39) : face, profil ou dos */
+  pose?: 'face' | 'profil' | 'dos';
   created_at: string;
 }
 
@@ -310,6 +327,9 @@ export interface UserSettings {
     z4max: number; // seuil Z4/Z5
     z5min?: number;
   };
+  // 14 octobre 2026 (ios27) : d'ou viennent tes zones (Apple Sante, saisie a la main, estimation), quand
+  // elles ont ete ecrites, derniere lecture d'Apple, message « Tes zones viennent d'Apple Santé » deja vu
+  heartRateZonesMeta?: ZonesMeta;
 }
 
 export interface UserBadge {
@@ -504,43 +524,81 @@ const saveSecureMeasurements = async (data: Measurement[]): Promise<boolean> => 
 // Clé AsyncStorage v2 (sans limite de taille, contrairement à SecureStore 2KB)
 const PHOTOS_ASYNC_KEY = '@yoroi_photos_v2';
 
+// Les anciennes listes (coffre SecureStore de la 2.x, puis ancienne cle AsyncStorage) sont reprises une fois
+// pour toutes dans la cle v2, en AJOUTANT ce qui manque (jamais en remplacant). Le drapeau n'est pose
+// qu'apres une lecture reussie du coffre : un coffre verrouille (reveil en arriere-plan) ne fait rien perdre,
+// la reprise est simplement retentee au prochain acces. Les anciennes copies ne sont pas effacees.
+const PHOTOS_LEGACY_DONE_KEY = '@yoroi_photos_v2_legacy_done';
+
+const parsePhotoList = (raw: unknown): Photo[] => {
+  if (Array.isArray(raw)) return raw as Photo[];
+  if (typeof raw === 'string') {
+    try {
+      const p = JSON.parse(raw);
+      return Array.isArray(p) ? p : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const stripBase64 = (list: Photo[]): Photo[] => list.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
+
+/** Reprend les photos des anciennes versions dans la liste v2. Renvoie la liste a jour. */
+const mergeLegacyPhotos = async (current: Photo[]): Promise<Photo[]> => {
+  // Le drapeau est relu a chaque fois (une lecture rapide) : il fait foi, pas la memoire du lancement
+  if ((await AsyncStorage.getItem(PHOTOS_LEGACY_DONE_KEY)) === '1') {
+    photosMigrationDone = true;
+    return current;
+  }
+  // Lecture stricte : si le coffre ne repond pas, on n'efface rien et on ne pose pas le drapeau
+  const fromSecure = parsePhotoList(await secureStorage.getItemStrict(STORAGE_KEYS.PHOTOS));
+  const fromOldAsync = parsePhotoList(await AsyncStorage.getItem(STORAGE_KEYS.PHOTOS));
+  const keyOf = (p: Photo) => String(p.id || p.file_uri || '');
+  const ids = new Set(current.map(keyOf));
+  const extra = stripBase64([...fromSecure, ...fromOldAsync]).filter((p) => {
+    if (!p || typeof p !== 'object') return false;
+    const k = keyOf(p);
+    if (!k || ids.has(k)) return false;
+    ids.add(k);
+    return true;
+  });
+  const merged = extra.length ? [...current, ...extra] : current;
+  if (extra.length) {
+    await AsyncStorage.setItem(PHOTOS_ASYNC_KEY, JSON.stringify(merged));
+    // Verification : la liste relue doit contenir toutes les photos reprises
+    const check = parsePhotoList(await AsyncStorage.getItem(PHOTOS_ASYNC_KEY));
+    if (check.length < merged.length) throw new Error('verification des photos reprises echouee');
+    logger.info(`[Storage] ${extra.length} photo(s) des anciennes versions reprise(s)`);
+  }
+  await AsyncStorage.setItem(PHOTOS_LEGACY_DONE_KEY, '1');
+  photosMigrationDone = true;
+  return merged;
+};
+
 /**
- * Récupère les photos : AsyncStorage v2 en priorité, puis récupère depuis SecureStore (ancienne migration)
+ * Récupère les photos : liste v2 (AsyncStorage, sans limite de taille) + reprise unique des anciennes listes.
+ * Les chemins sont recollés sur le dossier actuel de l'app (il peut changer à la mise à jour sur iPhone).
  */
+const readPhotosRaw = async (): Promise<Photo[]> => {
+  const v2 = parsePhotoList(await AsyncStorage.getItem(PHOTOS_ASYNC_KEY));
+  try {
+    return await mergeLegacyPhotos(v2);
+  } catch (error) {
+    logger.warn('[Storage] Reprise des anciennes photos remise a plus tard:', error);
+    return v2;
+  }
+};
+
+/** Lecture STRICTE avant une écriture : une lecture ratée lance une erreur au lieu de renvoyer [] (sinon on écrasait la liste) */
+const getSecurePhotosForWrite = async (): Promise<Photo[]> =>
+  (await readPhotosRaw()).map((p) => (p && p.file_uri ? { ...p, file_uri: rebaseLocalUri(p.file_uri) } : p));
+
 const getSecurePhotos = async (): Promise<Photo[]> => {
   try {
-    // 1. Lire depuis AsyncStorage (pas de limite de taille)
-    const asyncRaw = await AsyncStorage.getItem(PHOTOS_ASYNC_KEY);
-    if (asyncRaw) {
-      const parsed = JSON.parse(asyncRaw);
-      if (Array.isArray(parsed)) return parsed;
-    }
-
-    // 2. Fallback : récupérer depuis SecureStore (ancienne version) et migrer
-    if (!photosMigrationDone) {
-      photosMigrationDone = true;
-      const secureData = await secureStorage.getItem(STORAGE_KEYS.PHOTOS);
-      if (Array.isArray(secureData) && secureData.length > 0) {
-        const clean = secureData.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
-        await AsyncStorage.setItem(PHOTOS_ASYNC_KEY, JSON.stringify(clean));
-        await secureStorage.removeItem(STORAGE_KEYS.PHOTOS);
-        logger.info('[Storage] Photos migrées SecureStore → AsyncStorage');
-        return clean;
-      }
-      // Essayer aussi l'ancienne clé AsyncStorage
-      const oldRaw = await AsyncStorage.getItem(STORAGE_KEYS.PHOTOS);
-      if (oldRaw) {
-        const parsed = JSON.parse(oldRaw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const clean = parsed.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
-          await AsyncStorage.setItem(PHOTOS_ASYNC_KEY, JSON.stringify(clean));
-          await AsyncStorage.removeItem(STORAGE_KEYS.PHOTOS);
-          return clean;
-        }
-      }
-    }
-
-    return [];
+    const list = await readPhotosRaw();
+    return list.map((p) => (p && p.file_uri ? { ...p, file_uri: rebaseLocalUri(p.file_uri) } : p));
   } catch (error) {
     logger.error('Erreur lecture photos:', error);
     return [];
@@ -679,7 +737,8 @@ export const savePhotoToStorage = async (
   sourceUri: string,
   date: string,
   weight?: number,
-  notes?: string
+  notes?: string,
+  pose?: Photo['pose']
 ): Promise<Photo | null> => {
   try {
     const id = generateId();
@@ -706,28 +765,42 @@ export const savePhotoToStorage = async (
       file_uri: finalUri,
       weight,
       notes,
+      ...(pose ? { pose } : {}),
       created_at: new Date().toISOString(),
     };
 
-    const photos = await getSecurePhotos();
+    const photos = await getSecurePhotosForWrite();
     photos.push(newPhoto);
     await saveSecurePhotos(photos);
 
     return newPhoto;
   } catch (error: unknown) {
     logger.error('Erreur sauvegarde photo:', error);
-    Alert.alert('Erreur', 'Impossible de sauvegarder la photo. Réessaie.');
+    appAlert('Oups', 'La photo n’a pas pu être enregistrée. Réessaie.');
     return null;
   }
 };
+
+/** Lecture stricte des photos (avant de réécrire la liste, ex : restauration d'une sauvegarde) */
+export const getPhotosStrict = async (): Promise<Photo[]> => getSecurePhotosForWrite();
 
 export const getPhotosFromStorage = async (): Promise<Photo[]> => {
   const photos = await getSecurePhotos();
   return photos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 };
 
+/** Met a jour une photo du coffre (pose, poids, note) sans toucher au fichier */
+export const updatePhotoInStorage = async (id: string, updates: Partial<Pick<Photo, 'pose' | 'weight' | 'notes'>>): Promise<boolean> => {
+  const photos = await getSecurePhotosForWrite();
+  const i = photos.findIndex(p => p.id === id);
+  if (i === -1) return false;
+  photos[i] = { ...photos[i], ...updates };
+  await saveSecurePhotos(photos);
+  return true;
+};
+
 export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
-  const photos = await getSecurePhotos();
+  const photos = await getSecurePhotosForWrite();
   const photoToDelete = photos.find(p => p.id === id);
 
   if (!photoToDelete) {
@@ -752,7 +825,7 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
 };
 
 export const deleteAllPhotos = async (): Promise<boolean> => {
-  const photos = await getSecurePhotos();
+  const photos = await getSecurePhotosForWrite();
 
   // Supprimer les fichiers physiques
   if (Platform.OS !== 'web') {
@@ -780,7 +853,7 @@ export const deleteAllPhotos = async (): Promise<boolean> => {
  */
 export const migratePhotosRemoveBase64 = async (): Promise<void> => {
   try {
-    const photos = await getSecurePhotos();
+    const photos = await getSecurePhotosForWrite();
     if (photos.length > 0) {
       // Supprimer le champ base64 de chaque photo
       const cleanedPhotos = photos.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
@@ -941,7 +1014,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Kimono Blanc',
-        brand: 'Gracie Barra',
+        brand: 'Mon kimono',
         type: 'kimono',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -949,7 +1022,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Chaussures Running',
-        brand: 'Nike',
+        brand: 'Mes chaussures',
         type: 'chaussure',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -957,7 +1030,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
       {
         id: generateId(),
         name: 'Gants de Boxe',
-        brand: 'Everlast',
+        brand: 'Mes gants',
         type: 'gants',
         photoUri: null,
         created_at: new Date().toISOString(),
@@ -1140,7 +1213,7 @@ export const exportData = async (): Promise<boolean> => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      Alert.alert('Succès', 'Fichier de sauvegarde téléchargé !');
+      appAlert('Sauvegarde prête', 'Le fichier de sauvegarde est téléchargé.');
       return true;
     }
 
@@ -1151,9 +1224,9 @@ export const exportData = async (): Promise<boolean> => {
 
     if (!baseDirectory) {
       // Fallback : copier dans le presse-papier ou afficher les données
-      Alert.alert(
+      appAlert(
         'Export alternatif',
-        `Données exportées :\n- ${stats.measurements} mesures\n- ${stats.workouts} entraînements\n- ${stats.photos} photos\n\nLe système de fichiers n'est pas disponible sur ce simulateur.`,
+        `Données exportées :\n- ${stats.measurements} mesures\n- ${stats.workouts} entraînements\n- ${stats.photos} photos\n\nL’enregistrement de fichiers n’est pas disponible sur cet appareil.`,
         [{ text: 'OK' }]
       );
       return true;
@@ -1173,13 +1246,13 @@ export const exportData = async (): Promise<boolean> => {
         dialogTitle: 'Sauvegarder tes données Yoroi',
       });
     } else {
-      Alert.alert('Succès', `Fichier créé : ${filename}`);
+      appAlert('Sauvegarde prête', `Fichier créé : ${filename}`);
     }
     
     return true;
   } catch (error: unknown) {
     logger.error('Erreur export:', error);
-    Alert.alert('Erreur', `Impossible d'exporter : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
     return false;
   }
 };
@@ -1198,7 +1271,7 @@ export const importData = async (): Promise<boolean> => {
     const uri = result.assets ? result.assets[0].uri : null;
 
     if (!uri) {
-      Alert.alert('Erreur', 'Aucun fichier sélectionné.');
+      appAlert('Aucun fichier', 'Choisis un fichier de sauvegarde.');
       return false;
     }
 
@@ -1217,26 +1290,26 @@ export const importData = async (): Promise<boolean> => {
       backup = JSON.parse(fileContent);
     } catch (parseError) {
       logger.error('JSON parse error in importData:', parseError);
-      Alert.alert('Erreur', 'Le fichier de sauvegarde contient des données JSON invalides.');
+      appAlert('Fichier illisible', 'Ce fichier de sauvegarde ne peut pas être lu.');
       return false;
     }
 
     if (!backup || backup.version !== 1) {
-      Alert.alert('Erreur', 'Le fichier de sauvegarde est invalide ou corrompu.');
+      appAlert('Fichier illisible', 'Ce fichier de sauvegarde est abîmé ou incomplet.');
       return false;
     }
 
     // Validate array contents
     if (!Array.isArray(backup.measurements) || !Array.isArray(backup.workouts) ||
         !Array.isArray(backup.photos) || !Array.isArray(backup.badges)) {
-      Alert.alert('Erreur', 'Le fichier de sauvegarde contient des données invalides.');
+      appAlert('Fichier illisible', 'Ce fichier contient des données que YOROI ne reconnaît pas.');
       return false;
     }
 
     const confirm = await new Promise<boolean>((resolve) => {
-      Alert.alert(
-        'Attention',
-        `Ceci va écraser TOUTES tes données actuelles.\n\nLe fichier contient :\n- ${backup.stats.measurements} mesures\n- ${backup.stats.workouts} entraînements\n- ${backup.stats.photos} photos\n\nContinuer ?`,
+      appAlert(
+        'Remplacer tes données ?',
+        `Toutes tes données actuelles seront remplacées.\n\nLe fichier contient :\n- ${backup.stats.measurements} mesures\n- ${backup.stats.workouts} entraînements\n- ${backup.stats.photos} photos\n\nContinuer ?`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Confirmer', style: 'destructive', onPress: () => resolve(true) },
@@ -1255,150 +1328,199 @@ export const importData = async (): Promise<boolean> => {
     await secureStorage.setItem(STORAGE_KEYS.USER_SETTINGS, backup.settings || {});
     await saveData(STORAGE_KEYS.USER_BADGES, backup.badges || []);
 
-    Alert.alert('Succès', 'Données restaurées avec succès !');
+    appAlert('Restauration réussie', 'Tes données sont revenues.');
     return true;
   } catch (error: unknown) {
     logger.error('Erreur importation:', error);
-    Alert.alert('Erreur', `Impossible d'importer : ${error instanceof Error ? error.message : 'fichier invalide'}`);
+    appAlert('Oups', 'L’import n’a pas abouti. Vérifie le fichier et réessaie.');
     return false;
   }
 };
 
-const RESET_SECURE_KEYS = [
-  '@yoroi_measurements', '@yoroi_mood_log', '@yoroi_fasting_history', '@yoroi_body_composition',
-  '@yoroi_user_settings', '@yoroi_user_body_status', '@yoroi_hydration_settings',
-  '@yoroi_current_weight', '@yoroi_target_weight', '@yoroi_water_intake',
-];
+// ============================================
+// TOUT EFFACER (droit a l'effacement, RGPD)
+// ============================================
 
-export const resetAllData = async (): Promise<boolean> => {
-  try {
-    // Supprimer d'abord les photos physiques
-    await deleteAllPhotos();
+export interface ResultatEffacement {
+  /** true si chaque etape a abouti */
+  ok: boolean;
+  /** Etapes qui ont echoue (les autres ont quand meme ete faites) */
+  echecs: string[];
+}
 
-    // IMPORTANT: Supprimer aussi les données SQLite
+/** Vide le contenu d'un dossier de l'app sans supprimer le dossier lui-meme */
+const viderDossier = async (dir: string, filtre: (noms: string[]) => string[] = (n) => n): Promise<void> => {
+  const noms = await FileSystem.readDirectoryAsync(dir);
+  const aEffacer = filtre(noms);
+  const erreurs: unknown[] = [];
+  for (const nom of aEffacer) {
     try {
-      const { resetDatabase } = await import('./database');
-      await resetDatabase();
-    } catch (dbError) {
-      logger.warn('Erreur reset SQLite (peut être normal si non initialisé):', dbError);
+      await FileSystem.deleteAsync(`${dir}${nom}`, { idempotent: true });
+    } catch (e) {
+      erreurs.push(e);
     }
-
-    // Récupérer TOUTES les clés AsyncStorage
-    const allKeys = await AsyncStorage.getAllKeys();
-
-    // Filtrer les clés YOROI (toutes les clés de l'app)
-    const yoroiKeys = allKeys.filter(key =>
-      key.startsWith('@yoroi') ||
-      key.startsWith('yoroi_') ||
-      key.includes('weight') ||
-      key.includes('training') ||
-      key.includes('hydration') ||
-      key.includes('composition') ||
-      key.includes('measurements') ||
-      key.includes('streak') ||
-      key.includes('xp') ||
-      key.includes('rank') ||
-      key.includes('badges') ||
-      key.includes('quests') ||
-      key.includes('avatar') ||
-      key.includes('theme') ||
-      key.includes('settings') ||
-      key.includes('profile') ||
-      key.includes('photos') ||
-      key.includes('clubs') ||
-      key.includes('gear') ||
-      key.includes('body') ||
-      key.includes('mood') ||
-      key.includes('home') ||
-      key.includes('onboarding') ||
-      key.includes('fasting') ||
-      key.includes('gamification') ||
-      key.includes('level') ||
-      key.includes('points')
-    );
-
-    // Supprimer toutes les clés trouvées
-    if (yoroiKeys.length > 0) {
-      await AsyncStorage.multiRemove(yoroiKeys);
-    }
-
-    // Données chiffrées (SecureStore) : elles survivaient à la réinitialisation
-    // et réapparaissaient ensuite (mesures, humeur, jeûne, réglages...)
-    await Promise.all(RESET_SECURE_KEYS.map(k => secureStorage.removeItem(k).catch(() => false)));
-
-
-    return true;
-  } catch (error) {
-    logger.error('Erreur réinitialisation:', error);
-    return false;
   }
+  if (erreurs.length) throw new Error(`${erreurs.length} élément(s) non supprimé(s) dans ${dir}`);
 };
 
-// Reset des données uniquement (conserve les photos)
-export const resetDataOnly = async (): Promise<boolean> => {
-  try {
-    // Reset SQLite sans toucher a la table photos
+/**
+ * Efface TOUT ce que YOROI garde sur ce telephone, l'app repart comme neuve (onboarding compris).
+ * Utilise par « Tout effacer », « Tout supprimer » et « Désinstallation propre ».
+ *
+ * Efface :
+ * 1. les notifications programmees et affichees, la pastille et l'historique des notifications ;
+ * 2. les appareils appaires pour la synchro ;
+ * 3. toutes les tables SQLite (sauf le catalogue public des competitions, voir lib/effacementPlan.ts),
+ *    les copies du mode demo (demo_bak_*), puis compacte la base pour ne rien laisser dans le fichier ;
+ * 4. tous les fichiers de l'app dans Documents (photos, videos, sauvegardes JSON, exports PDF et CSV)
+ *    et tout le cache ;
+ * 5. les cles du trousseau (SecureStore), sauf le cache d'abonnement et le jeton du mode createur ;
+ * 6. toutes les cles AsyncStorage, sans exception ;
+ * 7. remet a zero les widgets, l'activite en direct et la montre.
+ *
+ * Ne peut pas effacer (et n'y touche pas) : ce qui a ete ecrit dans Apple Sante ou Health Connect,
+ * les sauvegardes copiees dans le dossier cloud choisi, les images enregistrees dans la galerie.
+ *
+ * Chaque etape est tentee meme si une precedente echoue.
+ */
+/* eslint-disable @typescript-eslint/no-require-imports */
+// require plutot que import() : Jest ne sait pas executer import() ici, et Metro resout les deux pareil
+export const effacerToutesMesDonnees = async (): Promise<ResultatEffacement> => {
+  // mesure : envoye AVANT l'effacement (apres, le choix de consentement est lui aussi efface)
+  track('donnees_effacees');
+  const echecs: string[] = [];
+  const etape = async (nom: string, fn: () => Promise<unknown>): Promise<void> => {
     try {
-      const { resetDatabaseKeepPhotos } = await import('./database');
-      await resetDatabaseKeepPhotos();
-    } catch (dbError) {
-      logger.warn('Erreur reset SQLite (peut être normal si non initialisé):', dbError);
+      await fn();
+    } catch (e) {
+      echecs.push(nom);
+      logger.error(`[Effacement] ${nom}`, e);
     }
+  };
+  const plan = (require('./effacementPlan') as typeof import('./effacementPlan'));
 
-    // Récupérer TOUTES les clés AsyncStorage
-    const allKeys = await AsyncStorage.getAllKeys();
-
-    // Filtrer les clés YOROI SAUF celles liées aux photos
-    const yoroiKeys = allKeys.filter(key => {
-      // Exclure les clés photos
-      if (key === '@yoroi_photos' || key === '@yoroi_photos_v2' || key === '@yoroi_photo_history' || key === 'photos') {
-        return false;
-      }
-      return (
-        key.startsWith('@yoroi') ||
-        key.startsWith('yoroi_') ||
-        key.includes('weight') ||
-        key.includes('training') ||
-        key.includes('hydration') ||
-        key.includes('composition') ||
-        key.includes('measurements') ||
-        key.includes('streak') ||
-        key.includes('xp') ||
-        key.includes('rank') ||
-        key.includes('badges') ||
-        key.includes('quests') ||
-        key.includes('avatar') ||
-        key.includes('theme') ||
-        key.includes('settings') ||
-        key.includes('profile') ||
-        key.includes('clubs') ||
-        key.includes('gear') ||
-        key.includes('body') ||
-        key.includes('mood') ||
-        key.includes('home') ||
-        key.includes('onboarding') ||
-        key.includes('fasting') ||
-        key.includes('gamification') ||
-        key.includes('level') ||
-        key.includes('points')
-      );
+  // 1. Notifications : plus rien ne doit se declencher apres l'effacement
+  if (Platform.OS !== 'web') {
+    await etape('notifications', async () => {
+      const Notifications = (require('expo-notifications') as typeof import('expo-notifications'));
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await Notifications.dismissAllNotificationsAsync();
+      await Notifications.setBadgeCountAsync(0).catch(() => false);
     });
-
-    // Supprimer toutes les clés trouvées
-    if (yoroiKeys.length > 0) {
-      await AsyncStorage.multiRemove(yoroiKeys);
-    }
-
-    // Données chiffrées (SecureStore) : elles survivaient à la réinitialisation
-    // et réapparaissaient ensuite (mesures, humeur, jeûne, réglages...)
-    await Promise.all(RESET_SECURE_KEYS.map(k => secureStorage.removeItem(k).catch(() => false)));
-
-    return true;
-  } catch (error) {
-    logger.error('Erreur réinitialisation (données uniquement):', error);
-    return false;
   }
+  await etape('historique des notifications', async () => {
+    const { clearAll } = (require('./notificationHistoryService') as typeof import('./notificationHistoryService'));
+    await clearAll();
+  });
+
+  // 2. Appareils appaires (cle de chiffrement de la synchro comprise)
+  if (Platform.OS !== 'web') {
+    await etape('appareils appairés', async () => {
+      const { oublierTousLesAppareils } = (require('./peerSyncService') as typeof import('./peerSyncService'));
+      await oublierTousLesAppareils();
+    });
+  }
+
+  // 3. Base SQLite
+  await etape('base de données', async () => {
+    const { openDatabase } = (require('./database') as typeof import('./database'));
+    const db = await openDatabase();
+    if (!db) return; // web : pas de SQLite
+    const lignes = await db.getAllAsync<{ name: string }>(
+      'SELECT name FROM sqlite_master WHERE type = ?',
+      ['table'],
+    );
+    const { aVider, aSupprimer } = plan.planDesTables(lignes.map((l) => l.name));
+    // Les cles etrangeres sont coupees le temps de vider (l'ordre des tables n'importe plus),
+    // ce reglage ne peut pas changer a l'interieur d'une transaction
+    const fk = await db.getFirstAsync<{ foreign_keys: number }>('PRAGMA foreign_keys');
+    const fkActives = Number(fk?.foreign_keys ?? 0) === 1;
+    if (fkActives) await db.execAsync('PRAGMA foreign_keys = OFF;');
+    try {
+      await db.withTransactionAsync(async () => {
+        // Un nom de table ne peut pas etre passe en parametre « ? » : chaque nom vient de
+        // sqlite_master et a ete valide par nomDeTableSur (lettres, chiffres, _ seulement)
+        for (const t of aSupprimer) await db.execAsync(`DROP TABLE IF EXISTS "${t}";`);
+        for (const t of aVider) await db.execAsync(`DELETE FROM "${t}";`);
+        // Compteurs d'identifiants remis a zero (la table n'existe que si AUTOINCREMENT est utilise)
+        const seq = await db.getFirstAsync<{ name: string }>(
+          'SELECT name FROM sqlite_master WHERE type = ? AND name = ?',
+          ['table', 'sqlite_sequence'],
+        );
+        if (seq) await db.execAsync('DELETE FROM sqlite_sequence;');
+      });
+    } finally {
+      if (fkActives) await db.execAsync('PRAGMA foreign_keys = ON;');
+    }
+    // Les lignes effacees restent lisibles dans les pages libres du fichier tant qu'elles ne sont
+    // pas reecrites : VACUUM reecrit le fichier, le checkpoint vide le journal WAL
+    try {
+      await db.execAsync('VACUUM;');
+      await db.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+    } catch (e) {
+      logger.warn('[Effacement] compactage de la base non fait', e);
+    }
+    logger.info(`[Effacement] ${aVider.length} tables vidées, ${aSupprimer.length} copies de démo supprimées`);
+  });
+
+  // 4. Fichiers : Documents (sauf le dossier de la base ouverte) et cache
+  if (isFileSystemAvailable()) {
+    const docs = getDocumentDirectory();
+    const cache = getCacheDirectory();
+    if (docs) await etape('fichiers', () => viderDossier(docs, plan.fichiersDocumentsAEffacer));
+    if (cache) await etape('cache', () => viderDossier(cache));
+  }
+
+  // 5 et 6. Trousseau puis AsyncStorage (la liste des cles AsyncStorage sert aussi au trousseau)
+  let clesAsync: string[] = [];
+  try {
+    clesAsync = [...(await AsyncStorage.getAllKeys())];
+  } catch (e) {
+    logger.warn('[Effacement] liste des clés AsyncStorage illisible', e);
+  }
+  await etape('trousseau', async () => {
+    let cleCreateur: readonly string[] = [];
+    try {
+      cleCreateur = (require('./v2/creator/creatorStore') as typeof import('./v2/creator/creatorStore')).CREATOR_SECURE_KEYS;
+    } catch {
+      // Valeurs de lib/v2/creator/creatorStore.ts si le module ne se charge pas
+      cleCreateur = ['yoroi_creator_token_v1', 'yoroi_creator_attempts_v1'];
+    }
+    const cles = plan.clesSecureAEffacer(clesAsync, cleCreateur);
+    const resultats = await Promise.all(cles.map((k) => secureStorage.removeItem(k).catch(() => false)));
+    const ratees = resultats.filter((r) => !r).length;
+    if (ratees) throw new Error(`${ratees} clé(s) du trousseau non effacée(s)`);
+  });
+  await etape('réglages', async () => {
+    await AsyncStorage.clear();
+  });
+
+  // 7. Widgets, activite en direct et montre : reecrits avec une app vide
+  if (Platform.OS !== 'web') {
+    await etape('widgets', async () => {
+      const natif = (require('./v2/widgets/natif') as typeof import('./v2/widgets/natif'));
+      try { natif.arreterActiviteNatif(); } catch { /* aucune activite en cours */ }
+      const { ecrireWidgets } = (require('./v2/widgets/synchro') as typeof import('./v2/widgets/synchro'));
+      await ecrireWidgets(true);
+      const { syncWidget } = (require('./widgetSync') as typeof import('./widgetSync'));
+      await syncWidget();
+    });
+    await etape('montre', async () => {
+      const { envoyerContexteMontre } = (require('./v2/montre/synchro') as typeof import('./v2/montre/synchro'));
+      await envoyerContexteMontre(true);
+    });
+  }
+
+  // Les ecrans ouverts rechargent leurs listes (vides)
+  for (const ev of ['YOROI_DATA_CHANGED', 'YOROI_PROFILE_CHANGED', 'YOROI_CLUBS_CHANGED', 'YOROI_PARTNERS_CHANGED']) {
+    DeviceEventEmitter.emit(ev);
+  }
+
+  if (echecs.length) logger.warn(`[Effacement] terminé avec ${echecs.length} échec(s) : ${echecs.join(', ')}`);
+  else logger.info('[Effacement] tout est effacé');
+  return { ok: echecs.length === 0, echecs };
 };
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 // ============================================
 // NETTOYAGE PAR RÉTENTION DE DONNÉES (RGPD)
@@ -1424,7 +1546,15 @@ const RETAINABLE_SECURE_KEYS = [
  * Supprime les entrées plus anciennes que la durée configurée.
  * Appelé au démarrage de l'app.
  */
+/**
+ * 18 octobre 2026 (3.0.0) : purge en pause. Le reglage Conservation est masque (app/privacy-data.tsx),
+ * on ne peut donc plus le changer ni le couper : une duree choisie avant continuerait d'effacer l'eau,
+ * le sommeil et les blessures a chaque lancement sans que tu le voies. Rien n'est efface tant que c'est false.
+ */
+const RETENTION_ACTIVE = false;
+
 export const applyDataRetention = async (): Promise<void> => {
+  if (!RETENTION_ACTIVE) return;
   try {
     const retentionStr = await AsyncStorage.getItem(DATA_RETENTION_KEY);
     const retentionDays = retentionStr ? parseInt(retentionStr, 10) : 0;

@@ -1,5 +1,5 @@
 // ============================================================
-// YOROI — Service de migration de backup
+// YOROI : Service de migration de backup
 // ============================================================
 // Branché dans importDataFromJSON() de exportService.ts.
 // Prend n'importe quelle version de backup (v1.0, v2.0, ..., v5.3)
@@ -13,7 +13,7 @@
 
 import logger from '@/lib/security/logger';
 
-export const CURRENT_VERSION = '5.5';
+export const CURRENT_VERSION = '6.0';
 
 // ─────────────────────────────────────────────
 // UTILITAIRES
@@ -285,6 +285,16 @@ function migrate_54_to_55(backup: any): any {
   };
 }
 
+/**
+ * v5.5 → v6.0
+ * La 6.0 ajoute allTables, allStorage et allSecure (sauvegarde complète). Une sauvegarde plus ancienne
+ * ne les a pas : rien à inventer, la restauration utilise les sections classiques.
+ */
+function migrate_55_to_60(backup: any): any {
+  logger.info('[Migration] v5.5 → v6.0');
+  return { ...backup, version: '6.0' };
+}
+
 const MIGRATIONS: MigrationStep[] = [
   { from: '1.0', fn: migrate_1_to_2 },
   { from: '2.0', fn: migrate_2_to_3 },
@@ -294,8 +304,9 @@ const MIGRATIONS: MigrationStep[] = [
   { from: '5.2', fn: migrate_52_to_53 },
   { from: '5.3', fn: migrate_53_to_54 },
   { from: '5.4', fn: migrate_54_to_55 },
+  { from: '5.5', fn: migrate_55_to_60 },
   // Prochaine version → ajouter ici :
-  // { from: '5.5', fn: migrate_55_to_6 },
+  // { from: '6.0', fn: migrate_60_to_61 },
 ];
 
 // ─────────────────────────────────────────────
@@ -330,7 +341,7 @@ export function validateBackup(backup: any): ValidationResult {
   }
 
   if (!backup.appName || backup.appName !== 'Yoroi') {
-    errors.push('Ce fichier ne semble pas être un backup Yoroi.');
+    errors.push('Ce fichier ne semble pas être une sauvegarde YOROI.');
   }
 
   if (!backup.version) {
@@ -338,12 +349,12 @@ export function validateBackup(backup: any): ValidationResult {
   }
 
   if (!backup.profile) {
-    errors.push("Section 'profile' manquante.");
+    errors.push('Ton profil manque dans ce fichier.');
   }
 
-  // weights peut être absent sur très vieilles versions — on ne bloque pas
+  // weights peut être absent sur très vieilles versions, on ne bloque pas
   if (backup.weights !== undefined && !Array.isArray(backup.weights)) {
-    errors.push("Section 'weights' corrompue.");
+    errors.push('Les pesées de ce fichier sont abîmées.');
   }
 
   return {

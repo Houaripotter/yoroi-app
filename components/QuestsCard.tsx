@@ -262,13 +262,13 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     // IMPORTANT: Ne mettre une route QUE si la page permet de valider automatiquement le défi
     const routes: Record<string, string> = {
       // Daily (15) - Routes triées par XP
-      'daily_weigh': '/add-measurement',
+      'daily_weigh': '/pesee',
       // daily_breakfast = MANUEL (page nutrition = juste lecture)
       // daily_read_article = MANUEL (page savoir = juste lecture)
       'daily_sleep': '/sleep-input',
       'daily_hydration': '/hydration',
       // daily_protein = MANUEL (page nutrition = juste lecture)
-      'daily_photo': '/more/photos',
+      'daily_photo': '/photos',
       'daily_steps': '/health-metrics',
       'daily_cardio': '/add-training',
       'daily_training': '/add-training',
@@ -278,21 +278,21 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       // weekly_visit_dojo = MANUEL (visite gamification = juste lecture)
       // weekly_check_stats = MANUEL (page stats = juste lecture)
       // weekly_share_progress = MANUEL (partage = action externe)
-      'weekly_photo': '/more/photos',
+      'weekly_photo': '/photos',
       // weekly_read_articles = MANUEL (page savoir = juste lecture)
-      'weekly_5_weighs': '/add-measurement',
+      'weekly_5_weighs': '/pesee',
       'weekly_measurements': '/measurements',
       'weekly_cardio_3': '/add-training',
       'weekly_4_trainings': '/add-training',
       // weekly_rest_day, weekly_try_new, weekly_meal_prep, weekly_no_sugar, weekly_hydration_streak, weekly_7_streak = manuelles
 
       // Monthly (15) - Routes triées par XP
-      'monthly_25_weighs': '/add-measurement',
+      'monthly_25_weighs': '/pesee',
       'monthly_body_scan': '/body-composition',
-      'monthly_transformation': '/more/photos',
+      'monthly_transformation': '/photos',
       'monthly_20_trainings': '/add-training',
       'monthly_new_pr': '/records',
-      'monthly_lose_2kg': '/add-measurement',
+      'monthly_lose_2kg': '/pesee',
       // monthly_invite_friend, monthly_sleep_quality, monthly_hydration_master, monthly_all_daily, monthly_consistency, monthly_perfect_week, monthly_30_streak, monthly_level_up, monthly_best_version = manuelles
     };
     return routes[questId] || null;

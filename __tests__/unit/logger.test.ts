@@ -137,14 +137,14 @@ describe('logger', () => {
     it('info logs with [INFO] prefix', () => {
       const spy = jest.spyOn(console, 'log').mockImplementation();
       logger.info('test message');
-      expect(spy).toHaveBeenCalledWith('[INFO] test message', '');
+      expect(spy).toHaveBeenCalledWith('[INFO] test message');
       spy.mockRestore();
     });
 
     it('warn logs with [WARN] prefix', () => {
       const spy = jest.spyOn(console, 'warn').mockImplementation();
       logger.warn('warning message');
-      expect(spy).toHaveBeenCalledWith('[WARN] warning message', '');
+      expect(spy).toHaveBeenCalledWith('[WARN] warning message');
       spy.mockRestore();
     });
 

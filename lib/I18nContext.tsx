@@ -8,8 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import { logger } from './security/logger';
 import frTranslations from './i18n/fr.json';
-import enTranslations from './i18n/en.json';
-import jaTranslations from './i18n/ja.json';
+// 18 octobre 2026 : lancement en français seul. Les anciens en.json et ja.json ne sont plus chargés.
+// Les nouvelles langues seront rebranchées ici.
+const FORCED_LANGUAGE = 'fr' as const;
 
 const LANGUAGE_STORAGE_KEY = '@yoroi_language';
 
@@ -22,17 +23,15 @@ export const LOCALE_MAP: Record<string, string> = {
 
 // Langues supportées
 export const SUPPORTED_LANGUAGES = [
-  { code: 'fr', name: 'Français', nativeName: 'Français', flag: '🇫🇷' },
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
+  { code: 'fr', name: 'Français', nativeName: 'Français', flag: '' },
 ] as const;
 
 type LanguageCode = 'fr' | 'en' | 'ja';
 
 const translationsMap: Record<LanguageCode, any> = {
   fr: frTranslations,
-  en: enTranslations,
-  ja: jaTranslations,
+  en: frTranslations,
+  ja: frTranslations,
 };
 
 // Cache par langue
@@ -46,7 +45,12 @@ const translationCaches: Record<LanguageCode, Map<string, string>> = {
 // Détecte la langue du téléphone et la mappe
 // sur une des 3 langues supportées
 // ============================================
-const detectDeviceLanguage = (): LanguageCode => {
+// Lancement en français seul : la langue du téléphone est ignorée pour l'instant.
+const detectDeviceLanguage = (): LanguageCode => FORCED_LANGUAGE;
+
+// Détection d'origine, gardée pour le retour des autres langues.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const detectPhoneLanguage = (): LanguageCode => {
   try {
     const locales = getLocales();
     if (!locales || locales.length === 0) return 'fr';
@@ -137,7 +141,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       try {
         const saved = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
 
-        if (saved && (saved === 'fr' || saved === 'en' || saved === 'ja')) {
+        if (saved && saved === FORCED_LANGUAGE) {
           // L'utilisateur a déjà choisi une langue → on la respecte
           setLanguageState(saved as LanguageCode);
         } else {
@@ -159,7 +163,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   }, []);
 
   const setLanguage = useCallback(async (lang: string): Promise<void> => {
-    const validLang = (lang === 'fr' || lang === 'en' || lang === 'ja') ? lang as LanguageCode : 'fr';
+    const validLang: LanguageCode = FORCED_LANGUAGE;
     // Mettre à jour l'état immédiatement pour garantir le re-render
     setLanguageState(validLang);
     try {

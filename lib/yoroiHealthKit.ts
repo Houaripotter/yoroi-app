@@ -39,7 +39,7 @@ export interface NativeDiagnosticResult {
   predicateError?: string;
   predicateFrom?: number;      // unix seconds
   predicateTo?: number;        // unix seconds
-  externalTest?: {             // TEST D — séances hors-Yoroi (Apple Watch, Fitness...)
+  externalTest?: {             // TEST D : séances hors-Yoroi (Apple Watch, Fitness...)
     found: boolean;
     count: number;
     sourceName?: string;
@@ -86,7 +86,7 @@ export async function requestWorkoutReadAuthNative(): Promise<string> {
   logger.info('[YoroiHK-JS] requestWorkoutReadAuthNative appelé');
 
   if (!YoroiHealthKitModule?.requestWorkoutReadAuth) {
-    logger.warn('[YoroiHK-JS] requestWorkoutReadAuth non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] requestWorkoutReadAuth non disponible, rebuild requis');
     return 'error:module absent';
   }
 
@@ -110,7 +110,7 @@ export async function requestAllHealthPermissionsNative(): Promise<string> {
   logger.info('[YoroiHK-JS] requestAllHealthPermissionsNative appelé');
 
   if (!YoroiHealthKitModule?.requestAllHealthPermissions) {
-    logger.warn('[YoroiHK-JS] requestAllHealthPermissions non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] requestAllHealthPermissions non disponible, rebuild requis');
     return 'error:module absent';
   }
 
@@ -121,6 +121,34 @@ export async function requestAllHealthPermissionsNative(): Promise<string> {
   } catch (e: any) {
     logger.warn('[YoroiHK-JS] ERREUR requestAllHealthPermissions:', e?.message);
     return `error:${e?.message}`;
+  }
+}
+
+/**
+ * Demande une liste précise de types (14 octobre 2026, SANTÉ CONNEXION). La liste vient de
+ * lib/v2/sante/typesSante.ts. Retourne "ok:<lecture>:<écriture>", "error:module absent" (ancien build) ou "error:<msg>".
+ */
+export async function requestHealthPermissionsForNative(read: string[], share: string[]): Promise<string> {
+  if (Platform.OS !== 'ios') return 'error:not iOS';
+  if (!YoroiHealthKitModule?.requestHealthPermissionsFor) return 'error:module absent';
+  try {
+    const result: string = await YoroiHealthKitModule.requestHealthPermissionsFor(read, share);
+    logger.info('[YoroiHK-JS] requestHealthPermissionsFor résultat:', result);
+    return result;
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] ERREUR requestHealthPermissionsFor:', e?.message);
+    return `error:${e?.message}`;
+  }
+}
+
+/** "shouldRequest" | "unnecessary" | "unknown" ("unknown" aussi sur un ancien build) */
+export async function getRequestStatusForNative(read: string[], share: string[]): Promise<'shouldRequest' | 'unnecessary' | 'unknown'> {
+  if (Platform.OS !== 'ios' || !YoroiHealthKitModule?.getRequestStatusFor) return 'unknown';
+  try {
+    const r: string = await YoroiHealthKitModule.getRequestStatusFor(read, share);
+    return r === 'shouldRequest' || r === 'unnecessary' ? r : 'unknown';
+  } catch {
+    return 'unknown';
   }
 }
 
@@ -136,7 +164,7 @@ export async function getTodayActivityRingsNative(): Promise<{
   if (Platform.OS !== 'ios') return null;
 
   if (!YoroiHealthKitModule?.getTodayActivityRings) {
-    logger.warn('[YoroiHK-JS] getTodayActivityRings non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] getTodayActivityRings non disponible, rebuild requis');
     return null;
   }
 
@@ -162,16 +190,44 @@ export async function saveDietaryWaterNative(amountMl: number): Promise<boolean>
   if (Platform.OS !== 'ios') return false;
 
   if (!YoroiHealthKitModule?.saveDietaryWater) {
-    logger.warn('[YoroiHK-JS] saveDietaryWater non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] saveDietaryWater non disponible, rebuild requis');
     return false;
   }
 
   try {
     await YoroiHealthKitModule.saveDietaryWater(amountMl);
-    logger.info(`[YoroiHK-JS] saveDietaryWater OK — ${amountMl} ml`);
+    logger.info(`[YoroiHK-JS] saveDietaryWater OK : ${amountMl} ml`);
     return true;
   } catch (e: any) {
     logger.warn('[YoroiHK-JS] ERREUR saveDietaryWater:', e?.message);
+    return false;
+  }
+}
+
+/**
+ * Un verre dans Apple Health avec son id (HKMetadataKeyExternalUUID) : jamais deux fois le meme id.
+ * Renvoie null si la methode native manque (binaire sans rebuild) ou hors iOS.
+ */
+export async function saveDietaryWaterAvecIdNative(amountMl: number, externalId: string, date: Date): Promise<boolean | null> {
+  if (Platform.OS !== 'ios' || !YoroiHealthKitModule?.saveDietaryWaterWithId) return null;
+  try {
+    return (await YoroiHealthKitModule.saveDietaryWaterWithId(amountMl, externalId, date.getTime())) === true;
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] ERREUR saveDietaryWaterWithId:', e?.message);
+    return false;
+  }
+}
+
+/**
+ * Retire un verre ecrit par YOROI dans Apple Health le jour de date.
+ * true : retire ; false : rien a retirer ou refuse ; null : methode native absente ou hors iOS.
+ */
+export async function retirerEauNative(amountMl: number, date: Date): Promise<boolean | null> {
+  if (Platform.OS !== 'ios' || !YoroiHealthKitModule?.removeDietaryWater) return null;
+  try {
+    return (await YoroiHealthKitModule.removeDietaryWater(amountMl, date.getTime())) === true;
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] ERREUR removeDietaryWater:', e?.message);
     return false;
   }
 }
@@ -188,7 +244,7 @@ export async function getHeartZonesDataNative(): Promise<{
   if (Platform.OS !== 'ios') return null;
 
   if (!YoroiHealthKitModule?.getHeartZonesData) {
-    logger.warn('[YoroiHK-JS] getHeartZonesData non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] getHeartZonesData non disponible, rebuild requis');
     return null;
   }
 
@@ -211,7 +267,7 @@ export async function getWorkoutEffortScoreNative(workoutUUID: string): Promise<
   if (Platform.OS !== 'ios') return -1;
 
   if (!YoroiHealthKitModule?.getWorkoutEffortScore) {
-    logger.warn('[YoroiHK-JS] getWorkoutEffortScore non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] getWorkoutEffortScore non disponible, rebuild requis');
     return -1;
   }
 
@@ -235,14 +291,14 @@ export interface NativeSleepSample {
 
 /**
  * Récupère les échantillons de sommeil via Swift natif (bypass Nitro v13).
- * Même pattern que getNativeWorkouts — Nitro échoue silencieusement sur iOS 26.
+ * Même pattern que getNativeWorkouts, Nitro échoue silencieusement sur iOS 26.
  * @param days - Nombre de jours d'historique (0 = tout l'historique)
  */
 export async function getNativeSleepSamples(days: number = 0): Promise<NativeSleepSample[] | null> {
   if (Platform.OS !== 'ios') return null;
 
   if (!YoroiHealthKitModule?.getSleepSamplesAsJSON) {
-    logger.warn('[YoroiHK-JS] getSleepSamplesAsJSON non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] getSleepSamplesAsJSON non disponible, rebuild requis');
     return null; // null = module absent, l'appelant peut fallback sur Nitro
   }
 
@@ -271,7 +327,7 @@ export async function getNativeSteps(days: number = 1): Promise<NativeStepsDay[]
   if (Platform.OS !== 'ios') return null;
 
   if (!YoroiHealthKitModule?.getStepsAsJSON) {
-    logger.warn('[YoroiHK-JS] getStepsAsJSON non disponible — rebuild requis');
+    logger.warn('[YoroiHK-JS] getStepsAsJSON non disponible, rebuild requis');
     return null;
   }
 
@@ -288,9 +344,9 @@ export async function getNativeSteps(days: number = 1): Promise<NativeStepsDay[]
 
 /**
  * Lance le diagnostic approfondi Swift (3 tests Gemini) :
- * - TEST A : HKSourceQuery — quelles apps ont des workouts ?
- * - TEST B : Requête nucléaire (predicate nil, limit 1) — OS bloque-t-il tout ?
- * - TEST C : Requête avec prédicat 365j — bug timestamps ?
+ * - TEST A : HKSourceQuery, quelles apps ont des workouts ?
+ * - TEST B : Requête nucléaire (predicate nil, limit 1), OS bloque-t-il tout ?
+ * - TEST C : Requête avec prédicat 365j, bug timestamps ?
  */
 export async function runNativeDiagnostic(): Promise<NativeDiagnosticResult | null> {
   if (Platform.OS !== 'ios') return null;
@@ -310,5 +366,57 @@ export async function runNativeDiagnostic(): Promise<NativeDiagnosticResult | nu
   } catch (e: any) {
     logger.warn('[YoroiHK-JS] ERREUR runDiagnosticAsJSON:', e?.message);
     return null;
+  }
+}
+
+// ============================================
+// 14 octobre 2026 (zones_apple) : zones et effort tels qu'Apple les calcule
+// ============================================
+
+export interface AppleWorkoutExtras {
+  found: boolean;
+  /** true si l'app tourne sur iOS 27 et a ete compilee avec Xcode 27 */
+  ios27: boolean;
+  heartRateZones?: { source?: string; zones?: { index: number; min?: number; max?: number; seconds?: number }[] };
+  /** 14 octobre 2026 (ios27) : zones de puissance velo d'Apple, en watts (iOS 27) */
+  cyclingPowerZones?: { source?: string; zones?: { index: number; min?: number; max?: number; seconds?: number }[] };
+  effort?: { user?: number; estimated?: number };
+  error?: string;
+  /** module natif absent : l'app installee date d'avant cette version */
+  missing?: boolean;
+}
+
+/** Zones d'Apple (iOS 27) et effort (iOS 18) d'une seance, par son UUID HealthKit. */
+export async function getAppleWorkoutExtrasNative(workoutUUID: string): Promise<AppleWorkoutExtras> {
+  if (Platform.OS !== 'ios') return { found: false, ios27: false, missing: true };
+  if (!YoroiHealthKitModule?.getAppleWorkoutExtrasAsJSON) return { found: false, ios27: false, missing: true };
+  try {
+    const json: string = await YoroiHealthKitModule.getAppleWorkoutExtrasAsJSON(workoutUUID);
+    return { found: false, ios27: false, ...(JSON.parse(json) as Partial<AppleWorkoutExtras>) };
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] getAppleWorkoutExtrasAsJSON:', e?.message);
+    return { found: false, ios27: false, error: String(e?.message ?? e) };
+  }
+}
+
+export interface ApplePreferredZones {
+  ios27: boolean;
+  source?: string;
+  zones?: { index: number; min?: number; max?: number }[];
+  empty?: boolean;
+  error?: string;
+  missing?: boolean;
+}
+
+/** Tes zones de Reglages Sante (iOS 27) : manuelles si tu en as saisi, sinon celles du systeme. */
+export async function getApplePreferredHeartRateZonesNative(): Promise<ApplePreferredZones> {
+  if (Platform.OS !== 'ios') return { ios27: false, missing: true };
+  if (!YoroiHealthKitModule?.getApplePreferredHeartRateZonesAsJSON) return { ios27: false, missing: true };
+  try {
+    const json: string = await YoroiHealthKitModule.getApplePreferredHeartRateZonesAsJSON();
+    return { ios27: false, ...(JSON.parse(json) as Partial<ApplePreferredZones>) };
+  } catch (e: any) {
+    logger.warn('[YoroiHK-JS] getApplePreferredHeartRateZonesAsJSON:', e?.message);
+    return { ios27: false, error: String(e?.message ?? e) };
   }
 }

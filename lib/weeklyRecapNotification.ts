@@ -27,19 +27,19 @@ const buildRecapContent = async (): Promise<{ title: string; body: string } | nu
 
     if (sessions.length === 0) {
       return {
-        title: '🌱 Semaine off',
-        body: 'Pas de séance cette semaine. Une nouvelle commence — fixe-toi un petit objectif !',
+        title: 'Semaine sans séance',
+        body: 'Une semaine calme. La suivante commence : fixe-toi un petit objectif.',
       };
     }
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;
     const durStr = h > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${m}min`;
     const msg = sessions.length >= 5
-      ? `${sessions.length} séances · ${durStr} · t'es une machine 🔥`
+      ? `${sessions.length} séances, ${durStr}. Quelle semaine.`
       : sessions.length >= 3
-        ? `${sessions.length} séances · ${durStr} · belle régularité 💪`
-        : `${sessions.length} séance${sessions.length > 1 ? 's' : ''} · ${durStr} · cap pour la suite ?`;
-    return { title: '📊 Récap de ta semaine', body: msg };
+        ? `${sessions.length} séances, ${durStr}. Belle régularité.`
+        : `${sessions.length} séance${sessions.length > 1 ? 's' : ''}, ${durStr}. On continue la semaine prochaine ?`;
+    return { title: 'Récap de ta semaine', body: msg };
   } catch (e) {
     logger.warn('[WeeklyRecap] Erreur build content:', e);
     return null;
@@ -60,7 +60,7 @@ export const scheduleWeeklyRecap = async (): Promise<void> => {
     // Vérifier permission
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') {
-      logger.info('[WeeklyRecap] Permission non accordée — skip schedule');
+      logger.info('[WeeklyRecap] Permission non accordée, skip schedule');
       return;
     }
 
@@ -69,8 +69,8 @@ export const scheduleWeeklyRecap = async (): Promise<void> => {
     // expo-notifications attend `weekday` 1-7 (dimanche = 1)
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: '📊 Récap de ta semaine',
-        body: 'Découvre ton bilan sportif des 7 derniers jours dans Yoroi',
+        title: 'Récap de ta semaine',
+        body: 'Ton bilan des sept derniers jours t’attend dans YOROI.',
         sound: 'default',
         data: { type: 'weekly_recap', tab: 'stats' },
       },

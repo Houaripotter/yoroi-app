@@ -1,5 +1,5 @@
 // ============================================
-// DATA PRIVACY CARD · Rassurer l'user sur le stockage local
+// DATA PRIVACY CARD : Rassurer l'user sur le stockage local
 // ============================================
 // Explique clairement :
 //  - Les donnees sont chez lui (local-first)
@@ -8,13 +8,14 @@
 // ============================================
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Shield, Cloud, Download, Upload, HardDrive } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { lightHaptic, successHaptic, errorHaptic } from '@/lib/haptics';
 import { exportDataToJSON, importDataFromJSON } from '@/lib/exportService';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
@@ -76,9 +77,9 @@ export const DataPrivacyCard: React.FC = () => {
 
   const handleImport = async () => {
     lightHaptic().catch(() => {});
-    Alert.alert(
-      'Restaurer mes donnees',
-      'Cette operation va remplacer tes donnees actuelles par celles du fichier. A utiliser seulement pour une restauration complete.',
+    appAlert(
+      'Restaurer mes données ?',
+      'Tes données actuelles seront remplacées par celles du fichier. À faire seulement pour une restauration complète.',
       [
         { text: 'Annuler', style: 'cancel' },
         {

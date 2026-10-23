@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER FIGHTER PROFILE · Carte Combattant visuelle
+// PARTNER FIGHTER PROFILE : Carte Combattant visuelle
 // ============================================
 // Remplace le simple formulaire par une carte premium :
 //  - Identite (archetype + niveau) en gradient
@@ -191,7 +191,7 @@ export const PartnerFighterProfile: React.FC<Props> = ({
   return (
     <View>
       {/* ═══════════════════════════════════════════
-          IDENTITE · Gradient hero
+          IDENTITE : Gradient hero
           ═══════════════════════════════════════════ */}
       <TouchableOpacity
         onPress={() => setShowArchPicker(true)}
@@ -245,7 +245,7 @@ export const PartnerFighterProfile: React.FC<Props> = ({
       </View>
 
       {/* ═══════════════════════════════════════════
-          RADAR DE STYLE · SVG pentagon
+          RADAR DE STYLE : SVG pentagon
           ═══════════════════════════════════════════ */}
       <View style={[styles.section, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>ADN de jeu</Text>
@@ -358,7 +358,7 @@ export const PartnerFighterProfile: React.FC<Props> = ({
       </View>
 
       {/* ═══════════════════════════════════════════
-          NICKNAME · surnom fun
+          NICKNAME : surnom fun
           ═══════════════════════════════════════════ */}
       <View style={[styles.section, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Nickname</Text>
@@ -381,7 +381,7 @@ export const PartnerFighterProfile: React.FC<Props> = ({
       </View>
 
       {/* ═══════════════════════════════════════════
-          GARDE PREFEREE · chips multi-select
+          GARDE PREFEREE : chips multi-select
           ═══════════════════════════════════════════ */}
       <View style={[styles.section, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Gardes / positions preferees</Text>
@@ -527,7 +527,7 @@ export const PartnerFighterProfile: React.FC<Props> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Style de combat · {partnerName}</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Style de combat de {partnerName}</Text>
               <TouchableOpacity onPress={() => setShowArchPicker(false)}><X size={22} color={colors.text} /></TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ gap: 8 }}>
@@ -604,7 +604,7 @@ export const PartnerFighterProfile: React.FC<Props> = ({
 };
 
 // ============================================
-// SOUS-COMPOSANT · BARRE PHYSIQUE
+// SOUS-COMPOSANT, BARRE PHYSIQUE
 // ============================================
 interface PhysicalBarProps {
   label: string;

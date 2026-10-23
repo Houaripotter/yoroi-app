@@ -1,59 +1,39 @@
 // ============================================
-// STATS INSIGHT BANNER
-// Affiche 1-2 insights contextuels en tête d'un onglet Stats.
-// Les phrases sont générées par generateInsights() depuis les data.
+// STATS INSIGHT BANNER (refonte v2)
+// Affiche 1 ou 2 constats en tete d'un onglet de statistiques.
+// Les phrases viennent de generateInsights(). API inchangee.
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
-import { TrendingUp, TrendingDown, AlertCircle, Moon, Flame, Sparkles } from 'lucide-react-native';
+import Svg, { Path } from 'react-native-svg';
 import type { Insight } from '@/lib/statsInsights';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
 
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  'trending-up': TrendingUp,
-  'trending-down': TrendingDown,
-  'alert-circle': AlertCircle,
-  'moon': Moon,
-  'fire': Flame,
+const ICON_PATHS: Record<string, string> = {
+  'trending-up': 'M4 16l5-5 4 4 7-7M15 8h5v5',
+  'trending-down': 'M4 8l5 5 4-4 7 7M15 16h5v-5',
+  'alert-circle': 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 8v5M12 16.5v.01',
+  moon: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
+  fire: 'M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.8.3 1.6 1 2.6 2 3 0-3 .3-5.6.8-8.2z',
+  sparkle: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z',
 };
 
-interface ToneStyle {
-  bg: string;
-  border: string;
-  iconBg: string;
-  iconColor: string;
-  textColor: string;
-}
-
-const buildToneStyle = (tone: Insight['tone'], _isDark: boolean): ToneStyle => {
-  const palette = {
-    celebration: { color: '#10B981', label: 'green' },
-    positive:    { color: '#3B82F6', label: 'blue' },
-    warning:     { color: '#F59E0B', label: 'amber' },
-    neutral:     { color: '#8B5CF6', label: 'purple' },
-  };
-  const c = palette[tone].color;
-  // Fond blanc forcé : sur le thème sombre, les fonds translucides deviennent illisibles.
-  return {
-    bg:        '#FFFFFF',
-    border:    c + '55',
-    iconBg:    c + '1F',
-    iconColor: c,
-    textColor: '#0F172A',
-  };
-};
-
-interface InsightCardProps {
-  insight: Insight;
-}
-
-const InsightCard: React.FC<InsightCardProps> = React.memo(({ insight }) => {
-  const { isDark } = useTheme();
-  const tone = buildToneStyle(insight.tone, isDark);
-  const Icon = (insight.icon && ICON_MAP[insight.icon]) || Sparkles;
+const InsightCard: React.FC<{ insight: Insight }> = React.memo(({ insight }) => {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const tone =
+    insight.tone === 'celebration'
+      ? { color: c.successText, tint: c.successTint }
+      : insight.tone === 'positive'
+        ? { color: c.indigo, tint: c.indigoTint }
+        : insight.tone === 'warning'
+          ? { color: c.goldDeep, tint: c.goldTint }
+          : { color: c.ink, tint: c.fillSoft };
+  const d = (insight.icon && ICON_PATHS[insight.icon]) || ICON_PATHS.sparkle;
 
   const handlePress = () => {
     if (!insight.href) return;
@@ -61,23 +41,43 @@ const InsightCard: React.FC<InsightCardProps> = React.memo(({ insight }) => {
     router.push(insight.href as any);
   };
 
-  const Wrapper: any = insight.href ? TouchableOpacity : View;
-
-  return (
-    <Wrapper
-      style={[styles.card, { backgroundColor: tone.bg, borderColor: tone.border }]}
-      activeOpacity={insight.href ? 0.8 : 1}
-      onPress={insight.href ? handlePress : undefined}
-      accessibilityRole={insight.href ? 'button' : undefined}
-      accessibilityLabel={insight.text}
-    >
-      <View style={[styles.iconCircle, { backgroundColor: tone.iconBg }]}>
-        <Icon size={18} color={tone.iconColor} strokeWidth={2.5} />
+  const body = (
+    <>
+      <View style={[styles.lace, { backgroundColor: tone.color }]} />
+      <View style={[styles.iconTile, { backgroundColor: tone.tint }]}>
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path d={d} stroke={tone.color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
       </View>
-      <Text style={[styles.text, { color: tone.textColor }]} numberOfLines={2}>
+      <Ink size={14} weight="bold" style={styles.text} numberOfLines={2}>
         {insight.text}
-      </Text>
-    </Wrapper>
+      </Ink>
+      {insight.href ? (
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+          <Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      ) : null}
+    </>
+  );
+
+  const cardStyle = [styles.card, { backgroundColor: c.surface, borderColor: c.divider }];
+
+  if (insight.href) {
+    return (
+      <Pressable
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel={insight.text}
+        style={({ pressed }) => [...cardStyle, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+      >
+        {body}
+      </Pressable>
+    );
+  }
+  return (
+    <View style={cardStyle} accessible accessibilityLabel={insight.text}>
+      {body}
+    </View>
   );
 });
 
@@ -89,7 +89,7 @@ const StatsInsightBannerInner: React.FC<StatsInsightBannerProps> = ({ insights }
   if (!insights || insights.length === 0) return null;
   return (
     <View style={styles.container}>
-      {insights.map(i => (
+      {insights.map((i) => (
         <InsightCard key={i.id} insight={i} />
       ))}
     </View>
@@ -109,23 +109,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    minHeight: 60,
     paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
+    paddingLeft: 16,
+    paddingRight: 14,
+    borderRadius: 20,
     borderWidth: 1,
+    overflow: 'hidden',
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  lace: {
+    position: 'absolute',
+    left: 0,
+    top: 14,
+    bottom: 14,
+    width: 4,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  iconTile: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
   },
   text: {
     flex: 1,
-    fontSize: 13.5,
-    fontWeight: '700',
-    letterSpacing: -0.1,
-    lineHeight: 18,
+    lineHeight: 19,
   },
 });

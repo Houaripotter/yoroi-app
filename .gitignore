@@ -80,3 +80,22 @@ assets/avatars/collection_detoure/
 # scripts de debug locaux
 test-gfs.js
 test-metro-resolver.js
+
+# Cles et jetons du Studio createur : ne quittent jamais cette machine
+_private/
+_sauvegarde_avant_mesure/
+
+# Ajouté le 23 octobre 2026 : brouillons, vidéos lourdes et config Firebase hors GitHub
+/_archive_*/
+/_propositions/
+/_verif/
+/.relecture1_scope.txt
+/package-lock 2.json
+google-services.json
+GoogleService-Info.plist
+*.mp4
+*.tgz
+
+# Copies en double créées par iCloud
+* 2.*
+* 2

@@ -1,55 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-  <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>$(DEVELOPMENT_LANGUAGE)</string>
-    <key>CFBundleDisplayName</key>
-    <string>Yoroi</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>YoroiWatch</string>
-    <key>CFBundlePackageType</key>
-    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-    <key>CFBundleShortVersionString</key>
-    <string>2.4.2</string>
-    <key>CFBundleVersion</key>
-    <string>24</string>
-    <key>CLKComplicationFamilies</key>
-    <array>
-      <string>CLKComplicationFamilyGraphicCircular</string>
-      <string>CLKComplicationFamilyGraphicCorner</string>
-      <string>CLKComplicationFamilyGraphicRectangular</string>
-      <string>CLKComplicationFamilyUtilitarianSmall</string>
-      <string>CLKComplicationFamilyModularSmall</string>
-    </array>
-    <key>CLKComplicationPrincipalClass</key>
-    <string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
-    <key>NSHealthShareUsageDescription</key>
-    <string>Yoroi utilise vos donnees de sante (frequence cardiaque, SpO2, frequence respiratoire, FC au repos, pas, calories, distance, sommeil) pour afficher des donnees en temps reel sur le cadran de votre Apple Watch.</string>
-    <key>NSHealthUpdateUsageDescription</key>
-    <string>Yoroi enregistre vos entrainements dans Apple Sante.</string>
-    <key>NSUserNotificationUsageDescription</key>
-    <string>Yoroi utilise les notifications pour sonner quand ton timer est terminé, même en veille.</string>
-    <key>RCTNewArchEnabled</key>
-    <true/>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-      <string>UIInterfaceOrientationPortrait</string>
-      <string>UIInterfaceOrientationPortraitUpsideDown</string>
-    </array>
-    <key>WKApplication</key>
-    <true/>
-    <key>WKBackgroundModes</key>
-    <array>
-      <string>self-care</string>
-    </array>
-    <key>WKCompanionAppBundleIdentifier</key>
-    <string>com.houari.yoroi</string>
-  </dict>
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>fr</string>
+	<key>CFBundleDisplayName</key>
+	<string>Yoroi</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>YoroiWatch</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>3.0.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.houari.yoroi.watchkitapp</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>yoroimontre</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>38</string>
+	<key>CLKComplicationPrincipalClass</key>
+	<string>NettoyageComplications</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>YOROI lit dans Apple Santé ta fréquence cardiaque, ta saturation en oxygène, ta FC au repos, ta variabilité cardiaque, ta fréquence respiratoire, tes calories, ton poids et ta date de naissance (pour tes zones cardiaques), pour t'afficher ta FC en direct, ton bilan de séance et tes complications Cœur, Oxygène, Repos et Respiration.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>YOROI enregistre dans Apple Santé tes séances, avec leur fréquence cardiaque et leurs calories, tes pesées et tes verres d'eau, pour que tout reste au même endroit.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>YOROI te prévient à chaque fin de round et à la fin de tes minuteurs quand l'écran est éteint.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
+	<key>WKApplication</key>
+	<true/>
+	<key>WKBackgroundModes</key>
+	<array>
+		<string>workout-processing</string>
+		<string>alarm</string>
+	</array>
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>com.houari.yoroi</string>
+</dict>
 </plist>

@@ -1,7 +1,7 @@
 // ============================================
-// YOROI — Bibliothèque de game plans
+// YOROI : Bibliothèque de game plans
 // Inspirée des pratiques JJB/IBJJF modernes
-// (aucun nom mentionné — juste les plans)
+// (aucun nom mentionné, juste les plans)
 // ============================================
 
 export interface PlaybookEntry {
@@ -25,14 +25,14 @@ export interface PlaybookCategory {
 
 export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   // ════════════════════════════════════════
-  // 🎬 PETITES PHASES — à assembler (tap → tap → tap)
+  // 🎬 PETITES PHASES : à assembler (tap → tap → tap)
   // Exemple : "Tire la garde" + "Lasso" + "Sweep" + "Mount" + "Étranglement"
   // ════════════════════════════════════════
 
   {
     id: 'phase-start',
-    label: '🎬 Ouvertures',
-    emoji: '🎬',
+    label: 'Ouvertures',
+    emoji: '',
     entries: [
       { id: 'o-pull-closed', text: 'Tire la garde fermée', sports: ['jjb', 'grappling'] },
       { id: 'o-pull-open', text: 'Tire en garde ouverte', sports: ['jjb', 'grappling'] },
@@ -57,8 +57,8 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
 
   {
     id: 'phase-guard',
-    label: '🛡️ Gardes / positions',
-    emoji: '🛡️',
+    label: 'Gardes / positions',
+    emoji: '',
     entries: [
       { id: 'gp-closed', text: 'Garde fermée', sports: ['jjb', 'grappling'] },
       { id: 'gp-open', text: 'Garde ouverte', sports: ['jjb', 'grappling'] },
@@ -86,8 +86,8 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
 
   {
     id: 'phase-action',
-    label: '🚪 Actions / transitions',
-    emoji: '🚪',
+    label: 'Actions / transitions',
+    emoji: '',
     entries: [
       { id: 'a-sweep', text: 'Sweep', sports: ['jjb', 'grappling'] },
       { id: 'a-scissor', text: 'Scissor sweep', sports: ['jjb', 'grappling'] },
@@ -119,8 +119,8 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
 
   {
     id: 'phase-position-top',
-    label: '📍 Positions top',
-    emoji: '📍',
+    label: 'Positions top',
+    emoji: '',
     entries: [
       { id: 'pt-mount', text: 'Mount', sports: ['jjb', 'grappling', 'mma'] },
       { id: 'pt-highmount', text: 'High mount', sports: ['jjb', 'grappling', 'mma'] },
@@ -136,8 +136,8 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
 
   {
     id: 'phase-finish',
-    label: '🏆 Finitions',
-    emoji: '🏆',
+    label: 'Finitions',
+    emoji: '',
     entries: [
       { id: 'f-cross', text: 'Cross collar choke', sports: ['jjb'] },
       { id: 'f-ezequiel', text: 'Ezekiel choke', sports: ['jjb'] },
@@ -174,8 +174,8 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
 
   {
     id: 'phase-strike',
-    label: '👊 Striking (petites phases)',
-    emoji: '👊',
+    label: 'Striking (petites phases)',
+    emoji: '',
     entries: [
       { id: 'ps-jab', text: 'Jab', sports: ['boxe', 'mma', 'kickboxing'] },
       { id: 'ps-cross', text: 'Cross', sports: ['boxe', 'mma', 'kickboxing'] },
@@ -204,7 +204,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'jjb-classic',
     label: 'JJB Gi classique',
-    emoji: '🥋',
+    emoji: '',
     entries: [
       { id: 'g-closed-cross', text: 'Garde fermée → casser la posture → cross collar choke', sports: ['jjb'] },
       { id: 'g-closed-tri', text: 'Garde fermée → setup triangle', sports: ['jjb', 'grappling'] },
@@ -228,7 +228,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'jjb-modern-gi',
     label: 'JJB Gi moderne (IBJJF)',
-    emoji: '⚡',
+    emoji: '',
     entries: [
       { id: 'g-dlr-bm', text: 'De la Riva → berimbolo → prendre le dos', sports: ['jjb'] },
       { id: 'g-dlr-kd', text: 'De la Riva → kiss-of-the-dragon → back take', sports: ['jjb'] },
@@ -255,7 +255,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'passing',
     label: 'Passages de garde',
-    emoji: '🚪',
+    emoji: '',
     entries: [
       { id: 'p-kc', text: 'Knee cut pass → side control → mount', sports: ['jjb', 'grappling'] },
       { id: 'p-ou', text: 'Over-under pass → mount pressure', sports: ['jjb', 'grappling'] },
@@ -275,7 +275,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'jjb-nogi',
     label: 'Grappling No-Gi',
-    emoji: '💪',
+    emoji: '',
     entries: [
       { id: 'ng-butterfly', text: 'Butterfly guard → elevator sweep', sports: ['jjb', 'grappling'] },
       { id: 'ng-butterfly-h', text: 'Butterfly → hook sweep → top', sports: ['jjb', 'grappling'] },
@@ -296,7 +296,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'leg-locks',
     label: 'Leg lock game',
-    emoji: '🦵',
+    emoji: '',
     entries: [
       { id: 'll-ashi', text: 'Ashi garami → straight ankle lock', sports: ['grappling'] },
       { id: 'll-heel', text: 'Ashi → heel hook (inside ou outside)', sports: ['grappling'] },
@@ -313,7 +313,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'takedowns',
     label: 'Takedowns / entrées',
-    emoji: '🤼',
+    emoji: '',
     entries: [
       { id: 't-single', text: 'Single leg → finition à la cheville', sports: ['jjb', 'grappling', 'mma'] },
       { id: 't-double', text: 'Double leg → top control', sports: ['jjb', 'grappling', 'mma'] },
@@ -333,7 +333,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'mma',
     label: 'MMA',
-    emoji: '🥊',
+    emoji: '',
     entries: [
       { id: 'm-td-pressure', text: 'Takedown pressure → top control → ground and pound → RNC', sports: ['mma'] },
       { id: 'm-setup-td', text: 'Jab setup → takedown timing → top control', sports: ['mma'] },
@@ -355,7 +355,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'boxe',
     label: 'Boxe anglaise',
-    emoji: '🥊',
+    emoji: '',
     entries: [
       { id: 'b-jab', text: 'Jab dominance → cross straight', sports: ['boxe', 'mma'] },
       { id: 'b-12', text: 'Combinaison 1-2 (jab-cross)', sports: ['boxe', 'mma'] },
@@ -377,7 +377,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'striking',
     label: 'Kickboxing / Muay Thai',
-    emoji: '🦵',
+    emoji: '',
     entries: [
       { id: 's-lowkick', text: 'Low kicks sur la jambe arrière', sports: ['kickboxing', 'muaythai', 'mma'] },
       { id: 's-teep', text: 'Teep pour casser l\'avancée', sports: ['muaythai', 'mma'] },
@@ -397,7 +397,7 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
   {
     id: 'tactics',
     label: 'Tactiques génériques',
-    emoji: '🎯',
+    emoji: '',
     entries: [
       { id: 't-wait', text: 'Attendre l\'attaque → counter', sports: ['jjb', 'mma', 'boxe', 'kickboxing', 'muaythai', 'grappling'] },
       { id: 't-pressure', text: 'Pression constante, couper l\'espace', sports: ['jjb', 'mma', 'boxe', 'kickboxing', 'muaythai', 'grappling'] },
@@ -416,14 +416,14 @@ export const PLAYBOOK_GAMEPLAN: PlaybookCategory[] = [
 ];
 
 // ============================================
-// ✅ CE QUI A MARCHÉ — petites phases à assembler
+// ✅ CE QUI A MARCHÉ : petites phases à assembler
 // ============================================
 
 export const PLAYBOOK_WORKED: PlaybookCategory[] = [
   {
     id: 'w-phases-jjb',
     label: 'Phases JJB',
-    emoji: '✅',
+    emoji: '',
     entries: [
       { id: 'w-pull', text: 'Tirage de garde', sports: ['jjb', 'grappling'] },
       { id: 'w-closed', text: 'Garde fermée', sports: ['jjb', 'grappling'] },
@@ -453,7 +453,7 @@ export const PLAYBOOK_WORKED: PlaybookCategory[] = [
   {
     id: 'w-finish',
     label: 'Finitions',
-    emoji: '🏆',
+    emoji: '',
     entries: [
       { id: 'w-cross', text: 'Cross collar choke', sports: ['jjb'] },
       { id: 'w-bow', text: 'Bow and arrow', sports: ['jjb'] },
@@ -473,7 +473,7 @@ export const PLAYBOOK_WORKED: PlaybookCategory[] = [
   {
     id: 'w-strike',
     label: 'Striking',
-    emoji: '👊',
+    emoji: '',
     entries: [
       { id: 'w-jab', text: 'Jab', sports: ['boxe', 'mma', 'kickboxing'] },
       { id: 'w-cross-strike', text: 'Cross', sports: ['boxe', 'mma', 'kickboxing'] },
@@ -493,7 +493,7 @@ export const PLAYBOOK_WORKED: PlaybookCategory[] = [
   {
     id: 'w-general',
     label: 'Général',
-    emoji: '💪',
+    emoji: '',
     entries: [
       { id: 'w-timing', text: 'Bon timing', sports: ['jjb', 'mma', 'boxe', 'kickboxing', 'muaythai', 'grappling'] },
       { id: 'w-distance', text: 'Gestion distance', sports: ['mma', 'boxe', 'kickboxing', 'muaythai'] },
@@ -509,14 +509,14 @@ export const PLAYBOOK_WORKED: PlaybookCategory[] = [
 ];
 
 // ============================================
-// ❌ CE QUI N'A PAS MARCHÉ — petites phases
+// ❌ CE QUI N'A PAS MARCHÉ : petites phases
 // ============================================
 
 export const PLAYBOOK_DIDNT_WORK: PlaybookCategory[] = [
   {
     id: 'dw-phases',
     label: 'Phases qui ont raté',
-    emoji: '❌',
+    emoji: '',
     entries: [
       { id: 'dw-pull', text: 'Tirage de garde raté', sports: ['jjb', 'grappling'] },
       { id: 'dw-closed', text: 'Garde fermée pas tenue', sports: ['jjb', 'grappling'] },
@@ -540,7 +540,7 @@ export const PLAYBOOK_DIDNT_WORK: PlaybookCategory[] = [
   {
     id: 'dw-finish',
     label: 'Finitions ratées',
-    emoji: '🚫',
+    emoji: '',
     entries: [
       { id: 'dw-tri', text: 'Triangle raté', sports: ['jjb', 'grappling', 'mma'] },
       { id: 'dw-armbar', text: 'Armbar raté', sports: ['jjb', 'grappling', 'mma'] },
@@ -562,7 +562,7 @@ export const PLAYBOOK_DIDNT_WORK: PlaybookCategory[] = [
   {
     id: 'dw-strike',
     label: 'Striking raté',
-    emoji: '👊',
+    emoji: '',
     entries: [
       { id: 'dw-jab', text: 'Jab prévisible', sports: ['boxe', 'mma', 'kickboxing'] },
       { id: 'dw-cross-strike', text: 'Cross raté', sports: ['boxe', 'mma', 'kickboxing'] },
@@ -571,14 +571,14 @@ export const PLAYBOOK_DIDNT_WORK: PlaybookCategory[] = [
       { id: 'dw-teep', text: 'Teep bloqué', sports: ['muaythai', 'mma'] },
       { id: 'dw-combo', text: 'Combo trop courte', sports: ['boxe', 'mma', 'kickboxing'] },
       { id: 'dw-setup', text: 'Setup trop direct', sports: ['mma', 'boxe', 'kickboxing', 'muaythai'] },
-      { id: 'dw-angle2', text: "Pas d'angle — face à face", sports: ['boxe', 'mma', 'kickboxing'] },
+      { id: 'dw-angle2', text: "Pas d'angle, face à face", sports: ['boxe', 'mma', 'kickboxing'] },
       { id: 'dw-head', text: 'Pas de head movement', sports: ['boxe', 'mma', 'kickboxing'] },
     ],
   },
   {
     id: 'dw-mental',
     label: 'Mental / rythme',
-    emoji: '🧠',
+    emoji: '',
     entries: [
       { id: 'dw-hesit', text: 'Trop d\'hésitation', sports: ['jjb', 'mma', 'boxe', 'kickboxing', 'muaythai', 'grappling'] },
       { id: 'dw-panic', text: 'Panique sous pression', sports: ['jjb', 'mma', 'boxe', 'kickboxing', 'muaythai', 'grappling'] },
@@ -592,14 +592,14 @@ export const PLAYBOOK_DIDNT_WORK: PlaybookCategory[] = [
 ];
 
 // ============================================
-// ⚠️ CONTRÉ PAR — petites phases
+// ⚠️ CONTRÉ PAR : petites phases
 // ============================================
 
 export const PLAYBOOK_COUNTERED: PlaybookCategory[] = [
   {
     id: 'c-grap',
     label: 'Grappling',
-    emoji: '🛡️',
+    emoji: '',
     entries: [
       { id: 'c-sprawl', text: 'Sprawl sur mon takedown', sports: ['jjb', 'grappling', 'mma'] },
       { id: 'c-under', text: 'Underhook qui a tué mon passage', sports: ['jjb', 'grappling'] },
@@ -623,7 +623,7 @@ export const PLAYBOOK_COUNTERED: PlaybookCategory[] = [
   {
     id: 'c-strike',
     label: 'Striking',
-    emoji: '👊',
+    emoji: '',
     entries: [
       { id: 'c-str', text: 'Counter straight sur mon jab', sports: ['boxe', 'mma', 'kickboxing'] },
       { id: 'c-check', text: 'Check kick sur mon low kick', sports: ['kickboxing', 'muaythai', 'mma'] },
@@ -639,14 +639,14 @@ export const PLAYBOOK_COUNTERED: PlaybookCategory[] = [
 ];
 
 // ============================================
-// 🚀 OBJECTIF PROCHAIN ROUND — petites phases
+// 🚀 OBJECTIF PROCHAIN ROUND : petites phases
 // ============================================
 
 export const PLAYBOOK_IMPROVEMENT: PlaybookCategory[] = [
   {
     id: 'i-drill',
     label: 'Travailler',
-    emoji: '⚔️',
+    emoji: '',
     entries: [
       { id: 'i-pull', text: 'Travailler mon tirage de garde', sports: ['jjb', 'grappling'] },
       { id: 'i-lasso', text: 'Travailler le lasso', sports: ['jjb'] },
@@ -678,7 +678,7 @@ export const PLAYBOOK_IMPROVEMENT: PlaybookCategory[] = [
   {
     id: 'i-defense',
     label: 'À défendre',
-    emoji: '🛡️',
+    emoji: '',
     entries: [
       { id: 'i-def-tri', text: 'Défendre le triangle', sports: ['jjb', 'mma', 'grappling'] },
       { id: 'i-def-rnc', text: 'Défendre le RNC', sports: ['jjb', 'mma', 'grappling'] },
@@ -698,7 +698,7 @@ export const PLAYBOOK_IMPROVEMENT: PlaybookCategory[] = [
   {
     id: 'i-general',
     label: 'Général',
-    emoji: '🎯',
+    emoji: '',
     entries: [
       { id: 'i-calm', text: 'Rester calme', sports: ['jjb', 'mma', 'boxe', 'kickboxing', 'muaythai', 'grappling'] },
       { id: 'i-cardio', text: 'Bosser le cardio', sports: ['jjb', 'mma', 'boxe', 'kickboxing', 'muaythai', 'grappling'] },
@@ -737,11 +737,11 @@ export const PLAYBOOK_BY_FIELD: Record<string, PlaybookCategory[]> = {
 };
 
 export const FIELD_LABELS: Record<string, { title: string; emoji: string; color: string }> = {
-  gamePlan: { title: 'Game plans', emoji: '🎯', color: '#3B82F6' },
-  whatWorked: { title: 'Ce qui a marché', emoji: '✅', color: '#22C55E' },
-  whatDidntWork: { title: "Ce qui n'a pas marché", emoji: '❌', color: '#EF4444' },
-  counteredBy: { title: 'Contré par', emoji: '⚠️', color: '#F59E0B' },
-  improvement: { title: 'Objectif prochain', emoji: '🚀', color: '#8B5CF6' },
+  gamePlan: { title: 'Game plans', emoji: '', color: '#3B82F6' },
+  whatWorked: { title: 'Ce qui a marché', emoji: '', color: '#22C55E' },
+  whatDidntWork: { title: "Ce qui n'a pas marché", emoji: '', color: '#EF4444' },
+  counteredBy: { title: 'Contré par', emoji: '', color: '#F59E0B' },
+  improvement: { title: 'Objectif prochain', emoji: '', color: '#8B5CF6' },
 };
 
 // ============================================

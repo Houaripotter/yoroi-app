@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER GAME PLAN CARD · Rappel tactique eclair
+// PARTNER GAME PLAN CARD : Rappel tactique eclair
 // ============================================
 // Auto-genere depuis whatWorks + historique recent + weaknesses
 // ============================================
@@ -27,7 +27,7 @@ export const PartnerGamePlanCard: React.FC<Props> = ({
   if (!hasContent) return null;
 
   const gamePlan: string[] = [];
-  whatWorks.slice(0, 3).forEach(w => gamePlan.push(`✓ ${w}`));
+  whatWorks.slice(0, 3).forEach(w => gamePlan.push(`${w}`));
   weaknesses.slice(0, 2).forEach(w => gamePlan.push(`→ Cible : ${w}`));
 
   return (
@@ -41,7 +41,7 @@ export const PartnerGamePlanCard: React.FC<Props> = ({
           <Target size={18} color="#D4AF37" strokeWidth={2.4} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.label, { color: '#D4AF37' }]}>GAME PLAN · {partnerName.toUpperCase()}</Text>
+          <Text style={[styles.label, { color: '#D4AF37' }]}>GAME PLAN : {partnerName.toUpperCase()}</Text>
           <Text style={[styles.title, { color: colors.text }]}>Avant de monter sur le tapis</Text>
         </View>
       </View>
@@ -63,7 +63,7 @@ export const PartnerGamePlanCard: React.FC<Props> = ({
             color: lastResult === 'V' ? '#10B981' : lastResult === 'D' ? '#EF4444' : '#F59E0B',
           }]}>
             {lastResult === 'V' ? 'Victoire' : lastResult === 'D' ? 'Defaite' : 'Nul'}
-            {lastNote ? ` · ${lastNote}` : ''}
+            {lastNote ? `, ${lastNote}` : ''}
           </Text>
         </View>
       )}

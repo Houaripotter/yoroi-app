@@ -1,3 +1,4 @@
+import { getSportName } from '@/lib/sports';
 // ============================================
 // YOROI - CATÉGORIES DE POIDS PAR SPORT
 // ============================================
@@ -136,7 +137,7 @@ const LUTTE_FEMALE_CATEGORIES: WeightCategory[] = [
 export const WEIGHT_CATEGORIES_BY_SPORT: { [sportId: string]: SportWeightCategories } = {
   jjb: {
     sportId: 'jjb',
-    sportName: 'Jiu-Jitsu Brésilien',
+    sportName: getSportName('jjb'),
     categories: [...JJB_MALE_CATEGORIES, ...JJB_FEMALE_CATEGORIES],
   },
   boxe: {

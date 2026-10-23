@@ -37,7 +37,7 @@ export function SportPackProvider({ children }: { children: ReactNode }) {
 
         // Active le pack choisi par l'user s'il y a un override, sinon l'auto
         const saved = await AsyncStorage.getItem(ACTIVE_PACK_KEY);
-        if (saved && ['combat', 'endurance', 'force', 'nature', 'all'].includes(saved)) {
+        if (saved && ['combat', 'endurance', 'force', 'musculation', 'nature', 'all'].includes(saved)) {
           setActivePackState(saved as SportPack);
         } else {
           setActivePackState(auto);

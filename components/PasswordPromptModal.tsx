@@ -1,6 +1,6 @@
 // ============================================
 // PASSWORD PROMPT MODAL
-// Remplacement cross-platform de Alert.prompt (qui est iOS only).
+// Ancienne fenetre de mot de passe ; usePasswordPrompt passe desormais par appPassword.
 // Utilisé pour demander un mot de passe en saisie sécurisée.
 // ============================================
 
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Lock, X } from 'lucide-react-native';
+import { appPassword } from '@/components/yoroi/v2/fenetre/api';
 
 interface Props {
   visible: boolean;
@@ -133,34 +134,9 @@ export const PasswordPromptModal: React.FC<Props> = ({
  *   if (pwd === null) return; // annulé
  */
 export function usePasswordPrompt() {
-  const [state, setState] = useState<{
-    visible: boolean;
-    title: string;
-    message?: string;
-    confirmLabel?: string;
-    minLength?: number;
-    resolver?: (value: string | null) => void;
-  }>({ visible: false, title: '' });
-
-  const prompt = (opts: { title: string; message?: string; confirmLabel?: string; minLength?: number }): Promise<string | null> => {
-    return new Promise((resolve) => {
-      setState({ ...opts, visible: true, resolver: resolve });
-    });
-  };
-
-  const element = (
-    <PasswordPromptModal
-      visible={state.visible}
-      title={state.title}
-      message={state.message}
-      confirmLabel={state.confirmLabel}
-      minLength={state.minLength}
-      onSubmit={(v) => { state.resolver?.(v); setState((s) => ({ ...s, visible: false, resolver: undefined })); }}
-      onCancel={() => { state.resolver?.(null); setState((s) => ({ ...s, visible: false, resolver: undefined })); }}
-    />
-  );
-
-  return { prompt, PromptElement: element };
+  // Delegue a la fenetre maison YOROI (saisie masquee) montee dans app/_layout.tsx
+  const prompt = (opts: { title: string; message?: string; confirmLabel?: string; minLength?: number }): Promise<string | null> => appPassword(opts);
+  return { prompt, PromptElement: null as React.ReactNode };
 }
 
 const styles = StyleSheet.create({

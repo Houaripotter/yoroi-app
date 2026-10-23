@@ -9,11 +9,19 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
-import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings, getSlotOccurrences } from '@/lib/database';
+import { calculateStreak, getWeeklyPlan, getProfile, getTrainings, getSlotOccurrences } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
 import { getUnifiedPoints } from '@/lib/gamification';
 import { getSportName } from '@/lib/sports';
 import { saveNotification } from '@/lib/notificationHistoryService';
+import { contenuSansSante } from '@/lib/v2/notifications/texte';
+import { noter } from '@/lib/v2/notifications/mesure';
+import { datesRappelSeance, messageSeance } from '@/lib/v2/notifications/discipline';
+import { getEspace, objectifVise } from '@/lib/v2/espace';
+
+// Règle : aucune valeur de santé (poids, kcal, FC, ml, mensurations...) dans
+// le titre ou le corps d'une notification, car elle s'affiche sur l'écran
+// verrouillé. Garde : contenuSansSante() de lib/v2/notifications/texte.ts.
 
 // ============================================
 // TYPES
@@ -151,91 +159,141 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 
 // Messages motivants (UNIVERSELS - pas spécifiques aux sports de combat)
 const TRAINING_MESSAGES = [
-  { title: 'C\'est l\'heure !', body: 'Ton entraînement t\'attend. Donne tout !' },
-  { title: 'C\'est parti !', body: 'Bouge ton corps. Vas-y !' },
-  { title: 'Entraînement !', body: 'Chaque séance compte. Fais-la maintenant !' },
-  { title: 'On y va ?', body: 'Ton corps est prêt. Ne le fais pas attendre !' },
-  { title: 'Objectif du jour', body: 'Une séance de plus vers ton but !' },
+  { title: 'C’est l’heure de ta séance', body: 'Ton créneau est arrivé. Même une séance courte compte.' },
+  { title: 'Ta séance t’attend', body: 'Un échauffement, et le reste suivra.' },
+  { title: 'On y va ?', body: 'C’est le moment que tu avais prévu pour t’entraîner.' },
+  { title: 'Ton créneau du jour', body: 'Une séance de plus sur ton chemin.' },
+  { title: 'Prêt pour ta séance ?', body: 'Prends ton sac, ta séance est prévue maintenant.' },
 ];
 
 const HYDRATION_MESSAGES = [
-  { title: 'Hydratation', body: 'N\'oublie pas de boire de l\'eau !' },
-  { title: 'Pause eau', body: 'Ton corps a besoin d\'eau. Bois un verre !' },
-  { title: 'Rappel hydratation', body: 'Reste hydraté pour performer !' },
+  { title: 'Un verre d’eau ?', body: 'Une petite pause pour boire.' },
+  { title: 'Pause eau', body: 'Quelques gorgées maintenant, et ton corps te remercie.' },
+  { title: 'Pense à boire', body: 'Garde ta bouteille à portée de main.' },
 ];
 
 const WEIGHING_MESSAGES = [
-  { title: 'Pesée du jour', body: 'Monte sur la balance pour suivre ta progression !' },
-  { title: 'Suivi poids', body: 'Une pesée régulière = meilleur suivi !' },
+  { title: 'Ta pesée du jour', body: 'Au réveil, avant le petit déjeuner : c’est le bon moment.' },
+  { title: 'Petit passage sur la balance', body: 'Une pesée régulière rend ta courbe plus juste.' },
 ];
 
 const STREAK_MESSAGES = [
-  { title: 'Attention !', body: 'Tu n\'as pas encore entraîné aujourd\'hui. Ton streak est en danger !' },
-  { title: 'Streak en péril', body: 'N\'oublie pas de t\'entraîner pour garder ton streak !' },
-  { title: 'Ne casse pas ta série !', body: 'Même une séance légère compte. Go !' },
+  { title: 'Ta série t’attend', body: 'Pas encore de séance notée aujourd’hui. Même une séance légère compte.' },
+  { title: 'Encore un jour à ajouter', body: 'Note ta séance du jour pour prolonger ta série.' },
+  { title: 'Il reste du temps', body: 'Une séance courte suffit à garder ta série.' },
 ];
 
 const SLEEP_MESSAGES = [
-  { title: 'Il est temps de dormir', body: 'Ton corps a besoin de repos. Direction le lit !' },
-  { title: 'Bonne nuit !', body: 'Un bon sommeil = meilleures performances demain !' },
-  { title: 'Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t\'attend !' },
-  { title: 'Repos bien mérité', body: 'La récupération est essentielle. Dors bien !' },
+  { title: 'Bientôt l’heure de dormir', body: 'Pose l’écran, ton corps récupère pendant la nuit.' },
+  { title: 'Bonne nuit', body: 'Un bon sommeil, c’est déjà une partie de l’entraînement.' },
+  { title: 'L’heure du coucher approche', body: 'Tu avais choisi cette heure pour dormir. On s’y tient ?' },
+  { title: 'Place au repos', body: 'La récupération fait partie du progrès. Dors bien.' },
 ];
 
 const WEEKLY_CARD_MESSAGES = [
-  { title: 'Ta semaine en image !', body: 'Ta carte hebdo est prête. Partage tes progrès sur les réseaux !' },
-  { title: 'Bilan de la semaine', body: 'Montre ta progression ! Ta carte sociale t\'attend.' },
-  { title: 'Semaine terminée !', body: 'Partage ta carte de la semaine et inspire les autres !' },
-  { title: 'Stats de la semaine', body: 'Ta carte est prête à être partagée. Fais voir tes résultats !' },
+  { title: 'Ta semaine est prête', body: 'Ta carte de la semaine t’attend dans YOROI.' },
+  { title: 'Le bilan de ta semaine', body: 'Un coup d’œil sur tes sept derniers jours ?' },
+  { title: 'Semaine bouclée', body: 'Ta carte de la semaine est prête, à garder ou à partager.' },
 ];
 
 const MONTHLY_CARD_MESSAGES = [
-  { title: 'Nouveau mois, nouvelle carte !', body: 'Ta carte du mois est disponible. Partage ta progression !' },
-  { title: 'Bilan mensuel', body: 'Un mois de plus dans ta transformation ! Partage ta carte.' },
-  { title: 'Carte du mois prête !', body: 'Montre à tous tes progrès du mois dernier !' },
-  { title: 'Résumé mensuel', body: 'Ta carte mensuelle t\'attend. Partage-la sur tes réseaux !' },
+  { title: 'Ton mois en une carte', body: 'Ta carte du mois est prête dans YOROI.' },
+  { title: 'Le bilan de ton mois', body: 'Un mois de plus sur ton chemin. Viens le voir.' },
+  { title: 'Nouveau mois', body: 'Ta carte du mois dernier t’attend, à garder ou à partager.' },
 ];
 
 // Salutations selon l'heure
 const BRIEFING_GREETINGS = [
-  'Ohayo !',
-  'Bonjour Athlète !',
-  'Salut !',
-  'Réveil de warrior !',
-  'Hajime !',
+  'Bonjour',
+  'Ohayō',
+  'Belle journée à toi',
+  'Un nouveau jour commence',
 ];
 
 // Messages motivants du matin (UNIVERSELS)
 const BRIEFING_MOTIVATIONS = [
-  'Chaque jour est une nouvelle victoire.',
-  'La discipline fait la différence.',
   'Un pas de plus vers ton objectif.',
-  'Ton entraînement t\'attend.',
-  'Aujourd\'hui tu deviens plus fort·e.',
-  'Le chemin continue.',
-  'Ta transformation se construit jour après jour.',
+  'La régularité fait la différence.',
+  'Ta séance du jour t’attend.',
+  'Tu construis ta forme jour après jour.',
+  'Fais simple aujourd’hui, mais fais-le.',
 ];
 
 // Messages pour rappels intelligents (UNIVERSELS)
 const SMART_MISSED_TRAINING_MESSAGES = [
-  { title: 'Jour d\'entraînement habituel', body: 'Tu t\'entraînes souvent le {day}. Pas de session aujourd\'hui ?' },
-  { title: 'C\'est {day} !', body: 'D\'habitude tu t\'entraînes ce jour-là. On y va ?' },
-  { title: '{day} = Entraînement ?', body: 'Ton corps s\'attend à bouger. Ne le déçois pas !' },
+  { title: 'C’est {day}', body: 'D’habitude tu t’entraînes ce jour-là. Une séance aujourd’hui ?' },
+  { title: 'Ton jour d’entraînement', body: 'Tu t’entraînes souvent le {day}. Toujours partant ?' },
+  { title: 'Une séance ce {day} ?', body: 'C’est souvent ton jour. Même une séance courte compte.' },
 ];
 
 const SMART_REST_SUGGESTION_MESSAGES = [
-  { title: 'Repos mérité ?', body: 'Tu t\'es entraîné {days} jours d\'affilée. Le repos fait partie du progrès !' },
-  { title: 'Récupération', body: '{days} jours consécutifs d\'entraînement ! Pense à récupérer.' },
-  { title: 'Recharge tes batteries', body: 'Après {days} jours, une pause peut booster tes performances.' },
+  { title: 'Et si tu soufflais ?', body: '{days} jours d’entraînement d’affilée. Le repos fait aussi progresser.' },
+  { title: 'Pense à récupérer', body: '{days} jours de suite : une journée calme peut te faire du bien.' },
+  { title: 'Recharge les batteries', body: 'Après {days} jours d’affilée, une pause aide à revenir plus fort.' },
 ];
 
 const SMART_FREQUENCY_ALERT_MESSAGES = [
-  { title: 'Rythme en baisse', body: 'Tu faisais {usual} séances/semaine, seulement {current} cette semaine. Besoin de motivation ?' },
-  { title: 'Rappel amical', body: 'Ta fréquence d\'entraînement a diminué. Tout va bien ?' },
-  { title: 'On en parle ?', body: 'Moins actif que d\'habitude. N\'oublie pas tes objectifs !' },
+  { title: 'Une semaine plus calme', body: 'Tu fais d’habitude {usual} séances par semaine, {current} cette semaine. Tout va bien ?' },
+  { title: 'Petit coup de pouce', body: 'Ton rythme a un peu baissé. Une séance courte pour reprendre ?' },
+  { title: 'On reprend ?', body: 'Moins de séances que d’habitude cette semaine. Ton objectif t’attend.' },
 ];
 
 const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+
+// ============================================
+// ANNULATION CIBLEE
+// ============================================
+// Ce service n'annule jamais toutes les notifications programmees : seulement les siennes.
+// Les rappels de competition, de fin d'essai, du chrono, du recap hebdo, du weight cut
+// ou du sparring appartiennent a d'autres services et doivent survivre.
+
+/** Types (data.type) des notifications programmees par ce service */
+const OWN_TYPES = new Set([
+  'training', 'hydration', 'weighing', 'streak', 'sleep',
+  'social_card_weekly', 'social_card_monthly', 'briefing', 'smart_check',
+]);
+
+/** Type des rappels programmes par scheduleNotifications (ancien ecran ReminderSettings) */
+const REMINDER_SETTINGS_TYPE = 'reminder_settings';
+
+/** Titres des anciens rappels ReminderSettings, programmes sans data avant la marque */
+const LEGACY_REMINDER_TITLES = new Set(['\u2696\ufe0f Pes\u00e9e YOROI', 'Pes\u00e9e YOROI', 'Entra\u00eenement YOROI', 'YOROI']);
+
+/** Notifications d'autres services qu'on ne touche jamais, meme sans marque reconnue */
+export function isProtectedNotification(n: Notifications.NotificationRequest): boolean {
+  const id = String(n.identifier ?? '');
+  const type = String((n.content?.data as any)?.type ?? '');
+  return (
+    id.startsWith('yoroi-competition-') ||
+    type === 'competition' ||
+    type === 'trial_reminder' ||
+    type === 'timer_finished'
+  );
+}
+
+/** Annule les notifications programmees qui repondent au filtre, jamais celles qui sont protegees */
+async function cancelScheduledWhere(match: (n: Notifications.NotificationRequest) => boolean): Promise<void> {
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled
+        .filter((n) => !isProtectedNotification(n) && match(n))
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+    );
+  } catch (e) {
+    logger.warn('Annulation ciblée des notifications impossible:', e);
+  }
+}
+
+const isOwnNotification = (n: Notifications.NotificationRequest) => OWN_TYPES.has((n.content?.data as any)?.type);
+
+const isReminderSettingsNotification = (n: Notifications.NotificationRequest) => {
+  const data = n.content?.data as Record<string, unknown> | undefined;
+  if (data?.type === REMINDER_SETTINGS_TYPE) return true;
+  // Anciens rappels sans marque : aucune donnee et un titre de l'ancien ecran
+  const empty = !data || Object.keys(data).length === 0;
+  return empty && LEGACY_REMINDER_TITLES.has(String(n.content?.title ?? ''));
+};
 
 // ============================================
 // CONFIGURATION
@@ -258,6 +316,32 @@ Notifications.setNotificationHandler({
 class NotificationService {
   private settings: NotificationSettings = DEFAULT_SETTINGS;
   private isInitialized = false;
+  /** true quand les reglages enregistres ont ete lus (ou qu'il n'y en avait aucun) */
+  private settingsLoaded = false;
+
+  /**
+   * Lit les reglages enregistres sans rien programmer ni rien ecrire.
+   * Indispensable avant toute modification : sans ca, un ecran qui modifie un reglage
+   * avant l'initialisation du service ecrirait les valeurs par defaut par-dessus les tiennes.
+   */
+  async loadSettings(): Promise<NotificationSettings> {
+    if (this.settingsLoaded) return { ...this.settings };
+    try {
+      const saved = await AsyncStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          this.settings = { ...DEFAULT_SETTINGS, ...parsed };
+        }
+      }
+      this.settingsLoaded = true;
+    } catch (error) {
+      // Lecture impossible : on ne marque pas comme lu, pour ne jamais ecraser
+      logger.warn('Lecture des réglages de notifications impossible:', error);
+      throw error;
+    }
+    return { ...this.settings };
+  }
 
   // ============================================
   // INITIALISATION
@@ -278,6 +362,7 @@ class NotificationService {
         this.settings = { ...DEFAULT_SETTINGS };
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
       }
+      this.settingsLoaded = true;
 
       // Reprogrammer les notifications selon les settings sauvegardés
       await this.scheduleAllNotifications();
@@ -302,12 +387,16 @@ class NotificationService {
     }
 
     try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+      const existing = await Notifications.getPermissionsAsync();
+      let finalStatus = existing.status;
 
-      if (existingStatus !== 'granted') {
+      // Demande faite depuis les réglages des rappels, sur une action de la personne.
+      // Jamais redemandée après un refus du système (la fenêtre ne s'afficherait plus).
+      if (existing.status !== 'granted' && existing.status !== 'denied' && existing.canAskAgain !== false) {
+        noter('notif_permission_demandee', { ecran: 'reglages' });
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
+        noter(status === 'granted' ? 'notif_permission_acceptee' : 'notif_permission_refusee', { ecran: 'reglages' });
       }
 
       if (finalStatus !== 'granted') {
@@ -320,7 +409,7 @@ class NotificationService {
           name: 'YOROI',
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#D4AF37',
+          lightColor: '#2C4A84',
         });
       }
 
@@ -338,21 +427,8 @@ class NotificationService {
   async scheduleAllNotifications(): Promise<void> {
     // Annuler UNIQUEMENT les notifications gérées par ce service.
     // Avant, cancelAll effaçait aussi le récap hebdo, les rappels de weight cut,
-    // de sparring et du timer à chaque lancement de l'app.
-    const OWN_TYPES = new Set([
-      'training', 'hydration', 'weighing', 'streak', 'sleep',
-      'social_card_weekly', 'social_card_monthly', 'briefing', 'smart_check',
-    ]);
-    try {
-      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      await Promise.all(
-        scheduled
-          .filter(n => OWN_TYPES.has((n.content?.data as any)?.type))
-          .map(n => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
-      );
-    } catch (e) {
-      logger.warn('Annulation ciblée des notifications impossible:', e);
-    }
+    // de sparring, de compétition, de fin d'essai et du chrono.
+    await cancelScheduledWhere(isOwnNotification);
 
     if (!this.settings.enabled) return;
 
@@ -385,17 +461,35 @@ class NotificationService {
     logger.info('Notifications programmées');
   }
 
+  /**
+   * 14 octobre 2026 (rappels de discipline) : des rappels dates sur deux semaines au lieu de rappels hebdomadaires,
+   * pour ne jamais rappeler une seance deja notee ni une semaine dont l'objectif est atteint
+   * (lib/v2/notifications/discipline.ts, datesRappelSeance). Reprogrammes par replanifierSeances
+   * au lancement, au retour dans l'app et apres chaque seance (app/_layout.tsx).
+   */
   private async scheduleTrainingNotifications(): Promise<void> {
     const { time } = this.settings.training;
     // Si aucun jour configuré, utiliser lundi-vendredi par défaut
     const days = this.settings.training.days.length > 0
       ? this.settings.training.days
       : [1, 2, 3, 4, 5];
-    const [hours, minutes] = time.split(':').map(Number);
+    const trainings = await getTrainings(21).catch(() => []);
+    let objectif = 0;
+    try {
+      objectif = objectifVise(await getEspace());
+    } catch {
+      // sans objectif lisible : les rappels suivent seulement tes jours
+    }
+    const dates = datesRappelSeance({
+      jours: days,
+      heure: time,
+      faites: (trainings ?? []).map((t: any) => String(t?.date ?? '')),
+      objectifSemaine: objectif,
+      now: new Date(),
+    });
 
-    for (const day of days) {
-      const message = TRAINING_MESSAGES[Math.floor(Math.random() * TRAINING_MESSAGES.length)];
-      
+    for (const date of dates) {
+      const message = messageSeance(date);
       await Notifications.scheduleNotificationAsync({
         content: {
           title: message.title,
@@ -404,12 +498,26 @@ class NotificationService {
           sound: true,
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-          weekday: day === 0 ? 1 : day + 1, // Expo utilise 1-7 (dimanche = 1)
-          hour: hours,
-          minute: minutes,
-        },
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date,
+        } as Notifications.DateTriggerInput,
       });
+    }
+  }
+
+  /** Reprogramme seulement les rappels de seance (jamais les autres), sans rien demander. Ne jette jamais. */
+  async replanifierSeances(): Promise<void> {
+    if (Platform.OS === 'web') return;
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') return;
+      await this.loadSettings();
+      // les anciens rappels de l'ecran ReminderSettings (supprime) feraient doublon
+      await cancelScheduledWhere(isReminderSettingsNotification);
+      await cancelScheduledWhere((n) => (n.content?.data as any)?.type === 'training');
+      if (this.settings.enabled && this.settings.training.enabled) await this.scheduleTrainingNotifications();
+    } catch (e) {
+      logger.warn('[NotificationService] rappels de seance non reprogrammes', e);
     }
   }
 
@@ -433,8 +541,8 @@ class NotificationService {
         await Notifications.scheduleNotificationAsync({
           content: {
             title: message.title,
-            body: `${message.body} (${slot.amount}ml recommandés)`,
-            data: { type: 'hydration', screen: 'hydration', slot: name, amount: slot.amount },
+            body: message.body,
+            data: { type: 'hydration', screen: 'hydration', slot: name },
             sound: true,
           },
           trigger: {
@@ -633,7 +741,6 @@ class NotificationService {
     try {
       // Récupérer les données utilisateur
       const streak = await calculateStreak();
-      const latestWeight = await getLatestWeight();
       const profile = await getProfile();
       const weeklyPlan = await getWeeklyPlan();
       const totalPoints = await getUnifiedPoints();
@@ -660,20 +767,10 @@ class NotificationService {
         parts.push(`${rank.name}`);
       }
 
-      // Poids et objectif
-      const currentWeight = latestWeight?.weight;
-      const targetWeight = profile?.target_weight;
-      if (currentWeight && targetWeight) {
-        const diff = Math.abs(currentWeight - targetWeight);
-        if (diff < 0.5) {
-          parts.push(`⚖️ Objectif atteint !`);
-        } else if (currentWeight > targetWeight) {
-          parts.push(`⚖️ -${diff.toFixed(1)}kg`);
-        } else {
-          parts.push(`⚖️ +${diff.toFixed(1)}kg`);
-        }
-      } else if (currentWeight) {
-        parts.push(`⚖️ ${currentWeight.toFixed(1)}kg`);
+      // Poids : jamais de valeur ni d'écart sur l'écran verrouillé.
+      // On rappelle seulement la pesée si un objectif de poids existe.
+      if (profile?.target_weight) {
+        parts.push('Pense à ta pesée');
       }
 
       // Creneaux prevus aujourd'hui (avec details)
@@ -701,9 +798,9 @@ class NotificationService {
           .join(', ');
 
         if (pendingCount > 0) {
-          parts.push(`${pendingCount} creneau(x) : ${slotsDesc}`);
+          parts.push(`${pendingCount > 1 ? `${pendingCount} créneaux` : '1 créneau'} : ${slotsDesc}`);
         } else {
-          parts.push(`Creneaux valides !`);
+          parts.push('Tes créneaux du jour sont faits');
         }
       }
 
@@ -711,15 +808,15 @@ class NotificationService {
       const motivation = BRIEFING_MOTIVATIONS[Math.floor(Math.random() * BRIEFING_MOTIVATIONS.length)];
 
       // Construire le body final
-      let body = parts.length > 0 ? parts.join(' • ') : motivation;
+      let body = parts.length > 0 ? parts.join(', ') : motivation;
       if (parts.length > 0) {
         body += `\n${motivation}`;
       }
 
-      return {
+      return contenuSansSante({
         title: `${greeting}`,
         body,
-      };
+      });
     } catch (error) {
       logger.error('[NotificationService] Erreur génération briefing:', error);
       // Fallback en cas d'erreur
@@ -743,8 +840,8 @@ class NotificationService {
     for (let day = 0; day < 7; day++) {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Vérification intelligente',
-          body: 'Analyse de tes habitudes...',
+          title: 'Ta journée en un coup d’œil',
+          body: 'Ouvre YOROI pour voir où tu en es.',
           data: { type: 'smart_check', silent: true },
           sound: false, // Silencieux - déclenchera une analyse
         },
@@ -937,10 +1034,13 @@ class NotificationService {
       return;
     }
 
+    // Filet de sécurité : aucune valeur de santé sur l'écran verrouillé
+    const propre = contenuSansSante({ title, body });
+
     await Notifications.scheduleNotificationAsync({
       content: {
-        title,
-        body,
+        title: propre.title,
+        body: propre.body,
         data: data || {},
         sound: true,
       },
@@ -949,7 +1049,7 @@ class NotificationService {
 
     // Logger dans l'historique
     const notifType = data?.type || 'general';
-    saveNotification(title, body, notifType, data).catch(() => {});
+    saveNotification(propre.title, propre.body, notifType, data).catch(() => {});
   }
 
   // Ces fonctions sont UNIQUEMENT pour les boutons "Tester" dans les paramètres
@@ -994,12 +1094,12 @@ class NotificationService {
   /**
    * Notification apres fin de séance - propose de partager sur les reseaux
    */
-  async sendWorkoutCompletedNotification(sport: string, durationMin: number, calories?: number, workoutId?: number): Promise<void> {
+  async sendWorkoutCompletedNotification(sport: string, _durationMin: number, _calories?: number, workoutId?: number): Promise<void> {
     const messages = [
-      { title: 'Séance terminee !', body: `${sport} - ${durationMin} min${calories ? ` - ${calories} kcal` : ''}. Partage ta perf !` },
-      { title: 'Bravo, guerrier !', body: `${sport} dans la poche. Montre ca a tes followers !` },
-      { title: `${sport} termine !`, body: `${durationMin} min d'effort. Cree ta carte de partage !` },
-      { title: 'Warrior mode', body: `Tu viens de finir ${durationMin} min de ${sport}. Partage le sur tes reseaux !` },
+      // Aucune durée ni calorie : seulement le sport et un encouragement
+      { title: 'Séance notée', body: `${sport} : c’est fait. Ta carte de séance est prête si tu veux la partager.` },
+      { title: 'Beau travail', body: `Ta séance de ${sport} est dans ton carnet.` },
+      { title: `${sport}, c’est fait`, body: 'Bel effort. Ta carte de séance t’attend.' },
     ];
     const msg = messages[Math.floor(Math.random() * messages.length)];
     await this.sendInstantNotification(
@@ -1061,6 +1161,8 @@ class NotificationService {
   }
 
   async updateSettings(newSettings: Partial<NotificationSettings>): Promise<void> {
+    // Toujours partir des reglages enregistres, jamais des valeurs par defaut en memoire
+    await this.loadSettings();
     this.settings = { ...this.settings, ...newSettings };
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
     
@@ -1074,7 +1176,7 @@ class NotificationService {
 
   async disableNotifications(): Promise<void> {
     await this.updateSettings({ enabled: false });
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    await cancelScheduledWhere((n) => isOwnNotification(n) || isReminderSettingsNotification(n));
   }
 
   // ============================================
@@ -1085,8 +1187,9 @@ class NotificationService {
     return await Notifications.getAllScheduledNotificationsAsync();
   }
 
+  /** Annule toutes les notifications de ce service (jamais celles des competitions, de l'essai ou du chrono) */
   async cancelAll(): Promise<void> {
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    await cancelScheduledWhere((n) => isOwnNotification(n) || isReminderSettingsNotification(n));
   }
 }
 
@@ -1115,14 +1218,16 @@ export async function checkNotificationPermissions(): Promise<boolean> {
   }
 }
 
-export async function scheduleNotifications(settings: ReminderSettings): Promise<void> {
-  if (!settings.enabled) {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    return;
-  }
+/** Annule les anciens rappels de l'ecran ReminderSettings (supprime) : sans ecran pour les regler, ils feraient doublon */
+export async function cancelLegacyReminderSettings(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  await cancelScheduledWhere(isReminderSettingsNotification);
+}
 
-  // Annuler les notifications existantes
-  await Notifications.cancelAllScheduledNotificationsAsync();
+export async function scheduleNotifications(settings: ReminderSettings): Promise<void> {
+  // Annuler seulement les rappels de cet ecran (marques, ou anciens sans marque)
+  await cancelScheduledWhere(isReminderSettingsNotification);
+  if (!settings.enabled) return;
 
   const [hours, minutes] = settings.time.split(':').map(Number);
 
@@ -1145,7 +1250,7 @@ export async function scheduleNotifications(settings: ReminderSettings): Promise
     let body = 'C\'est l\'heure !';
 
     if (settings.type === 'weight') {
-      title = '⚖️ Pesée YOROI';
+      title = 'Pesée YOROI';
       body = 'Monte sur la balance pour suivre ta progression !';
     } else if (settings.type === 'workout') {
       title = 'Entraînement YOROI';
@@ -1161,6 +1266,7 @@ export async function scheduleNotifications(settings: ReminderSettings): Promise
         body,
         sound: true,
         priority: Notifications.AndroidNotificationPriority.HIGH,
+        data: { type: REMINDER_SETTINGS_TYPE, source: 'notificationService' },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
@@ -1178,7 +1284,7 @@ export async function testNotification(type: ReminderType): Promise<void> {
   let body = 'Notification de test !';
 
   if (type === 'weight') {
-    title = '⚖️ Pesée YOROI';
+    title = 'Pesée YOROI';
     body = 'Monte sur la balance pour suivre ta progression !';
   } else if (type === 'workout') {
     title = 'Entraînement YOROI';

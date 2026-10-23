@@ -1,5 +1,5 @@
 // ============================================
-// COMBAT SHARE CARD · Premium fight report card
+// COMBAT SHARE CARD : Premium fight report card
 // ============================================
 // Design sombre premium, données combat, partage réseaux sociaux
 // Format 9:16 (Story)
@@ -174,7 +174,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
             )}
             {stats.losses > 0 && (
               <>
-                <Text style={[styles.statDivider, { color: 'rgba(255,255,255,0.15)', fontSize: 32 * s }]}>·</Text>
+                <Text style={[styles.statDivider, { color: 'rgba(255,255,255,0.15)', fontSize: 32 * s }]}> </Text>
                 <View style={styles.statUnit}>
                   <Text style={[styles.statBigNum, { color: LOSS_C, fontSize: 46 * s }]}>{stats.losses}</Text>
                   <Text style={[styles.statUnitLabel, { color: LOSS_C, fontSize: 11 * s }]}>D</Text>
@@ -183,7 +183,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
             )}
             {stats.draws > 0 && (
               <>
-                <Text style={[styles.statDivider, { color: 'rgba(255,255,255,0.15)', fontSize: 32 * s }]}>·</Text>
+                <Text style={[styles.statDivider, { color: 'rgba(255,255,255,0.15)', fontSize: 32 * s }]}> </Text>
                 <View style={styles.statUnit}>
                   <Text style={[styles.statBigNum, { color: DRAW_C, fontSize: 46 * s }]}>{stats.draws}</Text>
                   <Text style={[styles.statUnitLabel, { color: DRAW_C, fontSize: 11 * s }]}>N</Text>
@@ -261,7 +261,7 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
                   {r.partnerRating ? (
                     <View style={{ backgroundColor: r.partnerRating <= 3 ? '#22C55E30' : r.partnerRating <= 6 ? '#F59E0B30' : r.partnerRating <= 8 ? '#EF444430' : '#9333EA30', borderRadius: 4 * s, paddingHorizontal: 4 * s, paddingVertical: 1 * s }}>
                       <Text style={{ fontSize: 7.5 * s, fontWeight: '800', color: r.partnerRating <= 3 ? '#22C55E' : r.partnerRating <= 6 ? '#F59E0B' : r.partnerRating <= 8 ? '#EF4444' : '#C084FC' }}>
-                        ★ {r.partnerRating}/10
+                        {r.partnerRating}/10
                       </Text>
                     </View>
                   ) : null}
@@ -291,14 +291,14 @@ export const CombatShareCard = React.memo(React.forwardRef<View, CombatShareCard
                       </View>
                     )}
                     {techs.map((t, ti) => (
-                      <Text key={ti} style={[styles.techDot, { color: 'rgba(255,255,255,0.4)', fontSize: 7.5 * s }]}>· {t}</Text>
+                      <Text key={ti} style={[styles.techDot, { color: 'rgba(255,255,255,0.4)', fontSize: 7.5 * s }]}>{t}</Text>
                     ))}
                   </View>
                 )}
                 {/* Mode compact : tout sur 1 ligne */}
                 {ROUND_COMPACT && (hasScore || subsGiven.length > 0 || techs.length > 0) && (
                   <Text style={[styles.roundCompactLine, { color: 'rgba(255,255,255,0.4)', fontSize: 7.5 * s, marginTop: 2 * s }]} numberOfLines={1}>
-                    {[hasScore ? `${r.pointsFor ?? 0}–${r.pointsAgainst ?? 0}pts` : '', ...subsGiven.map(s => `↗${s}`), ...techs.map(t => `· ${t}`)].filter(Boolean).join('  ')}
+                    {[hasScore ? `${r.pointsFor ?? 0}–${r.pointsAgainst ?? 0}pts` : '', ...subsGiven.map(s => `↗${s}`), ...techs].filter(Boolean).join('  ')}
                   </Text>
                 )}
               </View>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Combat : J moins X, categorie, kg restant ; sans competition prevue, une invitation a en ajouter une -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/yw_fond"
+    android:clipToOutline="true"
+    android:orientation="vertical"
+    android:padding="@dimen/yw_marge">
+  <TextView android:id="@+id/yw_titre" style="@style/YwTitre"
+      android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:text="@string/yw_nom_combat" />
+  <LinearLayout android:id="@+id/yw_c_avec" android:layout_width="match_parent" android:layout_height="0dp"
+      android:layout_weight="1" android:orientation="vertical">
+    <TextView android:id="@+id/yw_c_j" style="@style/YwChiffre"
+        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:gravity="center_vertical|start"
+        android:autoSizeTextType="uniform" android:autoSizeMinTextSize="20sp"
+        android:autoSizeMaxTextSize="44sp" android:autoSizeStepGranularity="1sp" />
+    <TextView android:id="@+id/yw_c_date" style="@style/YwPetit"
+        android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <TextView android:id="@+id/yw_c_cat" style="@style/YwStatut"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="5dp" android:textColor="@color/yw_encre" />
+    <TextView android:id="@+id/yw_c_reste" style="@style/YwStatut"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="2dp" android:textColor="@color/yw_indigo" />
+  </LinearLayout>
+  <LinearLayout android:id="@+id/yw_c_sans" android:layout_width="match_parent" android:layout_height="0dp"
+      android:layout_weight="1" android:orientation="vertical" android:visibility="gone">
+    <TextView style="@style/YwTexte"
+        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:gravity="center_vertical" android:textSize="14sp" android:textColor="@color/yw_encre"
+        android:text="@string/yw_aucune_compet" />
+    <TextView android:id="@+id/yw_c_ajouter" style="@style/YwBouton"
+        android:layout_width="match_parent" android:layout_height="@dimen/yw_bouton_h"
+        android:text="@string/yw_ajouter_compet" />
+  </LinearLayout>
+</LinearLayout>

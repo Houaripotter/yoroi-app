@@ -1,12 +1,12 @@
 // ============================================
-// PARTNER FACEOFF SHARE · Carte face-a-face shareable
+// PARTNER FACEOFF SHARE : Carte face-a-face shareable
 // ============================================
 // Compose une carte split screen MOI vs LUI, capture via react-native-view-shot
 // et partage (Instagram Story / WhatsApp / Messages).
 // ============================================
 
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Dimensions, Share, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Dimensions, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Share2, X, User, Swords } from 'lucide-react-native';
 import ViewShot, { captureRef } from 'react-native-view-shot';
@@ -15,6 +15,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { lightHaptic, successHaptic, errorHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
 import { ARCHETYPE_META, type Archetype } from '@/lib/partnerModel';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = Math.min(SCREEN_W - 32, 420);
@@ -70,7 +71,7 @@ export const PartnerFaceoffShare: React.FC<Props> = ({
     } catch (e) {
       logger.warn('[Faceoff] erreur capture', e);
       errorHaptic().catch(() => {});
-      Alert.alert('Erreur', 'Impossible de generer l\'image.');
+      appAlert('Oups', 'L’image n’a pas pu être créée.');
     } finally {
       setExporting(false);
     }

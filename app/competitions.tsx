@@ -1,709 +1,273 @@
-// ============================================
-// YOROI - MES COMPÉTITIONS
-// ============================================
+/**
+ * Competitions (vague 18) : ta prochaine competition en compte a rebours avec l'ecart a ta categorie,
+ * un seul bouton pour en ajouter une, les resultats a noter apres une competition, tes competitions
+ * a venir, annulees et passees, et les calendriers officiels a ouvrir pour trouver la prochaine.
+ * L'ancien import IBJJF et CFJJB est retire : sa liste ecrite dans le code s'arretait en juin 2026.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, Image, ImageBackground, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as WebBrowser from 'expo-web-browser';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { deleteCompetition, getCombats, getCompetitions } from '@/lib/fighterModeService';
+import { calculateDaysUntil } from '@/lib/fighterMode';
+import type { Competition, Sport } from '@/lib/fighterMode';
+import { IMPORTED_COMPETITION_NAMES } from '@/lib/importCompetitionsService';
+import { getSportName } from '@/lib/sports';
+import { logger } from '@/lib/security/logger';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { formatKg } from '@/lib/v2/weightStats';
+import { isoOf, longDate } from '@/lib/v2/seances/sessionData';
+import { sportArt } from '@/lib/v2/seances/illustrations';
+import { mainSportOf } from '@/lib/v2/seances/bannerSport';
+import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
+import { useAthlete } from '@/lib/v2/competition/athlete';
+import { getAllExtras, removeExtra } from '@/lib/v2/competition/extras';
+import type { CompetitionExtra } from '@/lib/v2/competition/extras';
+import { cancelCompetitionReminders, syncCompetitionReminders } from '@/lib/v2/competition/reminders';
+import { calendarsFor, OFFICIAL_CALENDARS_CHECKED } from '@/lib/v2/competition/officialCalendars';
+import { MedalIcon } from '@/components/yoroi/v2/competition/Medal';
+import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import { BackButton, BigButton, SectionTitle, tap } from '@/components/yoroi/v2/seances/ui';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { P, blancA } from '@/components/yoroi/livePalette';
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  DeviceEventEmitter,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Calendar, MapPin, Plus, Trophy, Clock, ChevronRight, Download } from 'lucide-react-native';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { getCompetitions, getUpcomingCompetitions } from '@/lib/fighterModeService';
-import { Competition, calculateDaysUntil, SPORT_ICONS } from '@/lib/fighterMode';
-import { SPACING, RADIUS } from '@/constants/appTheme';
-import { importAllCompetitions, getAvailableCompetitionsCount } from '@/lib/importCompetitionsService';
-import { useCustomPopup } from '@/components/CustomPopup';
-import logger from '@/lib/security/logger';
-
-// Parse 'yyyy-MM-dd' en date locale (évite le décalage UTC)
-const parseLocalDate = (d: string): Date => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
-  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(d);
-};
+const SCENE = require('@/assets/avatars/app/monde/scenes/bataille.webp');
 
 export default function CompetitionsScreen() {
-  const { colors } = useTheme();
-  const { locale, t } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [upcomingCompetitions, setUpcomingCompetitions] = useState<Competition[]>([]);
-  const [pastCompetitions, setPastCompetitions] = useState<Competition[]>([]);
-  const [cancelledCompetitions, setCancelledCompetitions] = useState<Competition[]>([]);
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { trainings } = useSeancesData();
+  const { gender, lastWeight } = useAthlete();
+  const [all, setAll] = useState<Competition[]>([]);
+  const [extras, setExtras] = useState<Record<string, CompetitionExtra>>({});
+  const [withCombats, setWithCombats] = useState<Set<number>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
-  const [importing, setImporting] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
-  const loadCompetitions = async () => {
+  const load = useCallback(async () => {
     try {
-      const [all, upcoming] = await Promise.all([
-        getCompetitions(),
-        getUpcomingCompetitions(),
-      ]);
-
-      setCompetitions(all);
-      setUpcomingCompetitions(upcoming);
-
-      // Date locale (toISOString = UTC)
-      const n = new Date();
-      const today = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
-      // Toutes les compétitions passées (quel que soit le statut) + terminées futures
-      const past = all.filter(c => c.date < today || c.statut === 'terminee');
-      // Compétitions annulées non encore passées (dates futures annulées)
-      const cancelled = all.filter(c => c.statut === 'annulee' && c.date >= today);
-      setPastCompetitions(past);
-      setCancelledCompetitions(cancelled);
+      const [list, ex, combats] = await Promise.all([getCompetitions(), getAllExtras(), getCombats().catch(() => [])]);
+      setAll(list ?? []);
+      setExtras(ex);
+      setWithCombats(new Set((combats ?? []).map((k) => k.competition_id).filter((v): v is number => typeof v === 'number')));
+      syncCompetitionReminders(list ?? []).catch(() => {});
     } catch (error) {
       logger.error('Error loading competitions:', error);
+    } finally {
+      setLoaded(true);
     }
-  };
-
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadCompetitions(); }, []);
-
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadCompetitions);
-    return () => sub.remove();
   }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadCompetitions();
-    setRefreshing(false);
+  useEffect(() => {
+    load();
+    const sub = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, load);
+    return () => sub.remove();
+  }, [load]);
+
+  const today = isoOf(new Date());
+  // Les competitions de l'ancien import, passees, sans combat ni resultat : on les masque
+  const isOldImport = useCallback((x: Competition) => IMPORTED_COMPETITION_NAMES.has(x.nom) && x.date.slice(0, 10) < today && !withCombats.has(x.id) && !extras[String(x.id)]?.medaille, [today, withCombats, extras]);
+  const oldImports = useMemo(() => all.filter(isOldImport), [all, isOldImport]);
+  const mine = useMemo(() => all.filter((x) => !isOldImport(x)), [all, isOldImport]);
+
+  const upcoming = mine.filter((x) => x.date.slice(0, 10) >= today && x.statut === 'a_venir').sort((a, b) => (a.date < b.date ? -1 : 1));
+  const cancelled = mine.filter((x) => x.statut === 'annulee' && x.date.slice(0, 10) >= today);
+  const past = mine.filter((x) => x.date.slice(0, 10) < today || x.statut === 'terminee').filter((x) => x.statut !== 'annulee' || x.date.slice(0, 10) < today).sort((a, b) => (a.date < b.date ? 1 : -1));
+  // Resultats a noter : competitions passees depuis moins de 60 jours, sans medaille notee
+  const toNote = past.filter((x) => x.statut !== 'annulee' && !extras[String(x.id)]?.medaille && calculateDaysUntil(x.date) >= -60 && calculateDaysUntil(x.date) <= 0).slice(0, 2);
+  const next = upcoming[0];
+  const sport = next?.sport || mainSportOf(trainings) || past[0]?.sport || 'jjb';
+  const nextDays = next ? calculateDaysUntil(next.date) : 0;
+  const gap = next?.poids_max && next.poids_max < 900 && lastWeight ? lastWeight.weight - next.poids_max : null;
+
+  const go = (x: Competition) => {
+    tap();
+    router.push(`/competition-detail?id=${x.id}` as any);
   };
 
-  const handleImportCompetitions = async () => {
-    try {
-      const available = getAvailableCompetitionsCount();
-
-      showPopup(
-        t('competitions.importTitle'),
-        t('competitions.importMessage', {
-          total: available.total,
-          ibjjf: available.ibjjf,
-          cfjjb: available.cfjjb
-        }),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('competitions.import'),
-            style: 'primary',
-            onPress: async () => {
-              setImporting(true);
-              impactAsync(ImpactFeedbackStyle.Medium);
-
-              try {
-                const result = await importAllCompetitions();
-
-                await loadCompetitions();
-
-                showPopup(
-                  t('competitions.importComplete'),
-                  t('competitions.importResults', {
-                    total: result.total,
-                    ibjjfImported: result.ibjjf.imported,
-                    ibjjfSkipped: result.ibjjf.skipped,
-                    cfjjbImported: result.cfjjb.imported,
-                    cfjjbSkipped: result.cfjjb.skipped
-                  }),
-                  [{ text: t('common.ok'), style: 'primary' }]
-                );
-              } catch (error) {
-                showPopup(t('common.error'), t('competitions.importError'), [{ text: t('common.ok'), style: 'primary' }]);
-              } finally {
-                setImporting(false);
-              }
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      showPopup(t('common.error'), t('competitions.errorOccurred'), [{ text: t('common.ok'), style: 'primary' }]);
-    }
+  const clearOldImports = () => {
+    appAlert('Effacer l’ancien calendrier', `${oldImports.length} compétitions passées venaient de l’ancien import, sans combat ni résultat. Tu veux les effacer ?`, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Effacer',
+        style: 'destructive',
+        onPress: async () => {
+          for (const x of oldImports) {
+            try {
+              await deleteCompetition(x.id);
+              await cancelCompetitionReminders(x.id);
+              await removeExtra(x.id);
+            } catch (e) {
+              logger.warn('Suppression d’une compétition importée impossible', e);
+            }
+          }
+          DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+        },
+      },
+    ]);
   };
 
-  const handleAddCompetition = () => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    router.push('/add-competition');
-  };
-
-  const handleCompetitionPress = (competition: Competition) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    router.push(`/competition-detail?id=${competition.id}`);
-  };
-
-  const renderCompetitionCard = (competition: Competition) => {
-    const daysUntil = calculateDaysUntil(competition.date);
-    const isUpcoming = daysUntil >= 0 && competition.statut === 'a_venir';
-    const isPast = competition.statut === 'terminee';
-
+  const Row = ({ x, dim }: { x: Competition; dim?: boolean }) => {
+    const n = calculateDaysUntil(x.date);
+    const medal = extras[String(x.id)]?.medaille;
     return (
-      <TouchableOpacity
-        key={competition.id}
-        style={[
-          styles.competitionCard,
-          { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-        ]}
-        onPress={() => handleCompetitionPress(competition)}
-        activeOpacity={0.7}
+      <Pressable
+        onPress={() => go(x)}
+        accessibilityRole="button"
+        accessibilityLabel={x.nom}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: pressed ? P.white : blancA(0.86), borderWidth: 1, borderColor: c.divider, opacity: dim && !medal ? 0.8 : 1 })}
       >
-        {/* Header */}
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderLeft}>
-            <View
-              style={[
-                styles.sportIcon,
-                {
-                  backgroundColor: isUpcoming
-                    ? `${colors.accent}20`
-                    : `${colors.textMuted}20`,
-                },
-              ]}
-            >
-              <Text style={styles.sportEmoji}>
-                {SPORT_ICONS[competition.sport as keyof typeof SPORT_ICONS] || ''}
-              </Text>
-            </View>
-            <View style={styles.cardHeaderInfo}>
-              <Text style={[styles.competitionName, { color: colors.textPrimary }]}>
-                {competition.nom}
-              </Text>
-              {competition.lieu && (
-                <View style={styles.locationRow}>
-                  <MapPin size={12} color={colors.textMuted} />
-                  <Text style={[styles.locationText, { color: colors.textMuted }]}>
-                    {competition.lieu}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {isUpcoming && daysUntil <= 30 && (
-            <View style={[styles.urgentBadge, { backgroundColor: colors.accent }]}>
-              <Clock size={12} color={colors.textOnGold} />
-              <Text style={[styles.urgentText, { color: colors.textOnGold }]}>J-{daysUntil}</Text>
-            </View>
+        <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: dim ? c.fillSubtle : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+          {medal ? (
+            <MedalIcon kind={medal} size={40} />
+          ) : n >= 0 && !dim ? (
+            <>
+              <Ink size={17} weight="black" color={c.accent} style={{ lineHeight: 19 }}>{n === 0 ? 'J' : String(n)}</Ink>
+              <Ink size={9} weight="bold" color={c.textSecondary} style={{ lineHeight: 11 }}>{n > 1 ? 'jours' : 'jour'}</Ink>
+            </>
+          ) : (
+            <Icon name="trophy" size={22} color={c.textMuted} />
           )}
         </View>
-
-        {/* Date */}
-        <View style={styles.cardDate}>
-          <Calendar size={16} color={colors.accent} />
-          <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-            {parseLocalDate(competition.date).toLocaleDateString(locale, {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Ink size={15} weight="extraBold" numberOfLines={2}>{x.nom}</Ink>
+          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[longDate(x.date.slice(0, 10), true), x.lieu].filter(Boolean).join(', ')}</Ink>
+          {x.categorie_poids ? <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{`${x.categorie_poids}${x.poids_max && x.poids_max < 900 ? `, ${formatKg(x.poids_max)} kg max` : ''}`}</Ink> : null}
         </View>
-
-        {/* Category */}
-        {competition.categorie_poids && (
-          <View style={styles.categoryRow}>
-            <Text style={[styles.categoryLabel, { color: colors.textMuted }]}>
-              {t('competitions.category')}
-            </Text>
-            <Text style={[styles.categoryValue, { color: colors.textPrimary }]}>
-              {competition.categorie_poids}
-              {competition.poids_max && ` (-${competition.poids_max}kg)`}
-            </Text>
-          </View>
-        )}
-
-        {/* Footer */}
-        <View style={styles.cardFooter}>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor: isPast
-                  ? `${colors.textMuted}20`
-                  : `${colors.accent}20`,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.statusText,
-                { color: isPast ? colors.textMuted : colors.accent },
-              ]}
-            >
-              {competition.statut === 'a_venir'
-                ? daysUntil === 0
-                  ? t('competitions.today')
-                  : daysUntil > 0
-                  ? t(daysUntil === 1 ? 'competitions.inDay' : 'competitions.inDays', { days: daysUntil })
-                  : t('competitions.upcoming')
-                : competition.statut === 'terminee'
-                ? t('competitions.completed')
-                : t('competitions.cancelled')}
-            </Text>
-          </View>
-
-          <ChevronRight size={20} color={colors.textMuted} />
-        </View>
-      </TouchableOpacity>
+        <Icon name="chevron" size={18} color={c.textMuted} />
+      </Pressable>
     );
   };
 
   return (
-    <ScreenWrapper>
-      <Header title={t('competitions.title')} showBack />
-
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} colors={[c.accent]} />}
       >
-        {/* Stats Header */}
-        <View style={styles.statsContainer}>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Trophy size={24} color={colors.accent} />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {competitions.length}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-              {t('competitions.total')}
-            </Text>
+        {/* Scene de champ de bataille a l'aube : le personnage reste sur la scene, jamais derriere une carte */}
+        <ImageBackground source={SCENE} resizeMode="cover" style={{ height: 228 + insets.top, overflow: 'hidden' }}>
+          <LinearGradient colors={['rgba(242,241,236,0)', 'rgba(242,241,236,0)', c.background]} locations={[0, 0.55, 1]} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+          <Image source={sportArt(sport, gender, 2)} style={{ position: 'absolute', right: -4, bottom: -34, width: 150, height: 200 }} resizeMode="contain" />
+          <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 16 }}>
+            <BackButton />
           </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Calendar size={24} color="#0ABAB5" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {upcomingCompetitions.length}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-              {t('competitions.upcoming')}
-            </Text>
+          <View style={{ position: 'absolute', left: 16, bottom: 14, maxWidth: '60%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: P.white }}>
+            <Ink size={28} weight="black" tight accessibilityRole="header" numberOfLines={1}>Compétitions</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>Tes rendez-vous sur le tapis</Ink>
           </View>
+        </ImageBackground>
 
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Clock size={24} color={colors.textMuted} />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {pastCompetitions.length}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-              {t('competitions.past')}
-            </Text>
-          </View>
-        </View>
-
-        {/* ── PROCHAINE COMPÉTITION HIGHLIGHT (countdown) ── */}
-        {upcomingCompetitions.length > 0 && (() => {
-          const next = [...upcomingCompetitions].sort((a, b) => a.date.localeCompare(b.date))[0];
-          const daysUntil = calculateDaysUntil(next.date);
-          // Couleur urgence selon jours restants
-          const urgencyColor = daysUntil <= 7 ? '#EF4444' : daysUntil <= 30 ? '#F59E0B' : '#22C55E';
-          const urgencyLabel = daysUntil === 0 ? "C'EST AUJOURD'HUI" : daysUntil <= 7 ? 'URGENT' : daysUntil <= 30 ? 'BIENTÔT' : 'DANS LONGTEMPS';
-          return (
-            <View style={{
-              marginHorizontal: 16, marginBottom: 12,
-              borderRadius: 18, padding: 16,
-              backgroundColor: colors.backgroundCard,
-              borderLeftWidth: 5, borderLeftColor: urgencyColor,
-              shadowColor: urgencyColor,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
-            }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Trophy size={14} color={urgencyColor} />
-                  <Text style={{ fontSize: 11, fontWeight: '900', color: urgencyColor, letterSpacing: 0.5 }}>
-                    PROCHAINE COMPÉTITION
-                  </Text>
-                </View>
-                <View style={{ backgroundColor: urgencyColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-                  <Text style={{ fontSize: 9, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5 }}>{urgencyLabel}</Text>
-                </View>
-              </View>
-
-              {/* Nom + date countdown */}
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                <View style={{
-                  width: 72, height: 72, borderRadius: 16,
-                  backgroundColor: urgencyColor + '20',
-                  alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 2, borderColor: urgencyColor,
-                }}>
-                  <Text style={{ fontSize: 28, fontWeight: '900', color: urgencyColor, letterSpacing: -1 }}>
-                    {daysUntil >= 0 ? daysUntil : '·'}
-                  </Text>
-                  <Text style={{ fontSize: 9, fontWeight: '800', color: urgencyColor, letterSpacing: 0.4 }}>
-                    {daysUntil > 1 ? 'JOURS' : 'JOUR'}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: colors.textPrimary, letterSpacing: -0.3 }} numberOfLines={2}>
-                    {next.nom}
-                  </Text>
-                  {next.lieu && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                      <MapPin size={11} color={colors.textMuted} />
-                      <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }} numberOfLines={1}>
-                        {next.lieu}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
-                    <Calendar size={11} color={colors.textMuted} />
-                    <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
-                      {(() => {
-                        try {
-                          return parseLocalDate(next.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                        } catch { return next.date; }
-                      })()}
-                    </Text>
+        <View style={{ paddingHorizontal: 22, marginTop: 14, gap: 12 }}>
+          <Pressable
+            onPress={() => (next ? go(next) : router.push('/add-competition' as any))}
+            accessibilityRole="button"
+            accessibilityLabel={next ? `Ta prochaine compétition : ${next.nom}` : 'Ajouter ta prochaine compétition'}
+            style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 18, gap: 6, shadowColor: c.ink, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 }}
+          >
+            <Ink size={13} weight="bold" color={c.textSecondary}>{next ? 'Ta prochaine compétition' : 'Aucune compétition prévue'}</Ink>
+            {next ? (
+              <>
+                <Ink size={48} weight="black" tight style={{ lineHeight: 52 }}>
+                  {nextDays === 0 ? 'Jour J' : String(nextDays)}
+                  {nextDays > 0 ? <Ink size={18} weight="bold" color={c.textSecondary}>{nextDays > 1 ? ' jours' : ' jour'}</Ink> : null}
+                </Ink>
+                <Ink size={18} weight="extraBold" numberOfLines={2}>{next.nom}</Ink>
+                <Ink size={13} color={c.textSecondary}>{[longDate(next.date.slice(0, 10), true), next.lieu, getSportName(next.sport)].filter(Boolean).join(', ')}</Ink>
+                {gap !== null ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: gap <= 0 ? c.successTint : c.dangerTint }}>
+                    <Icon name="scale" size={16} color={gap <= 0 ? c.successText : c.danger} />
+                    <Ink size={13} weight="extraBold" color={gap <= 0 ? c.successText : c.danger} style={{ flexShrink: 1 }}>
+                      {gap <= 0 ? `Dans ta catégorie, ${formatKg(-gap)} kg de marge` : `${formatKg(gap)} kg au-dessus de ta catégorie`}
+                    </Ink>
                   </View>
-                  {next.categorie_poids && (
-                    <View style={{ marginTop: 6, alignSelf: 'flex-start', backgroundColor: colors.accent + '18', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: colors.accent }}>
-                        Catégorie {next.categorie_poids}
-                      </Text>
-                    </View>
-                  )}
+                ) : null}
+              </>
+            ) : (
+              <>
+                <Ink size={22} weight="black" tight>Prépare ta prochaine échéance</Ink>
+                <Ink size={13} color={c.textSecondary}>Ajoute-la en quelques secondes : compte à rebours, rappels et suivi de ta catégorie de poids.</Ink>
+              </>
+            )}
+          </Pressable>
+
+          <BigButton label="Ajouter une compétition" icon="plus" onPress={() => router.push('/add-competition' as any)} />
+
+          {toNote.length ? (
+            <>
+              <SectionTitle title="Ton résultat à noter" />
+              {toNote.map((x) => (
+                <Pressable key={x.id} onPress={() => go(x)} accessibilityRole="button" accessibilityLabel={`Noter ton résultat de ${x.nom}`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: pressed ? c.accentTint : P.white, borderWidth: 1.5, borderColor: c.accent })}>
+                  <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="trophy" size={22} color={c.accent} />
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Ink size={15} weight="extraBold" numberOfLines={2}>{`Comment s’est passée ${x.nom} ?`}</Ink>
+                    <Ink size={12} weight="bold" color={c.textSecondary}>Ta médaille et tes combats rejoignent ton palmarès</Ink>
+                  </View>
+                  <Icon name="chevron" size={18} color={c.accent} />
+                </Pressable>
+              ))}
+            </>
+          ) : null}
+
+          {upcoming.length > 1 ? (
+            <>
+              <SectionTitle title="À venir" sub={`${upcoming.length} compétitions`} />
+              {upcoming.slice(1).map((x) => <Row key={x.id} x={x} />)}
+            </>
+          ) : null}
+          {cancelled.length ? (
+            <>
+              <SectionTitle title="Annulées" />
+              {cancelled.map((x) => <Row key={x.id} x={x} dim />)}
+            </>
+          ) : null}
+          {past.length ? (
+            <>
+              <SectionTitle title="Passées" action="Palmarès" onAction={() => router.push('/palmares' as any)} />
+              {past.map((x) => <Row key={x.id} x={x} dim />)}
+            </>
+          ) : null}
+          {loaded && oldImports.length ? (
+            <Pressable onPress={clearOldImports} accessibilityRole="button" accessibilityLabel="Effacer l’ancien calendrier importé" style={{ paddingVertical: 10, paddingHorizontal: 4, minHeight: 44, justifyContent: 'center' }}>
+              <Ink size={13} weight="bold" color={c.textSecondary}>
+                {`${oldImports.length} compétitions passées de l’ancien calendrier importé sont masquées. `}
+                <Ink size={13} weight="extraBold" color={c.danger}>Les effacer</Ink>
+              </Ink>
+            </Pressable>
+          ) : null}
+
+          <SectionTitle title="Trouver une compétition" />
+          <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: -4 }}>Repère ta compétition sur le calendrier officiel, puis ajoute-la ici.</Ink>
+          <View style={{ borderRadius: 22, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
+            {calendarsFor(sport as Sport).map((cal, i) => (
+              <Pressable
+                key={cal.id}
+                onPress={() => { tap(); WebBrowser.openBrowserAsync(cal.url).catch(() => appAlert('Site indisponible', 'Le site ne s’ouvre pas pour l’instant. Réessaie plus tard.')); }}
+                accessibilityRole="link"
+                accessibilityLabel={`Ouvrir le calendrier ${cal.name}`}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 60, paddingVertical: 10, backgroundColor: pressed ? P.white : 'transparent', borderTopWidth: i ? 1 : 0, borderTopColor: c.divider })}
+              >
+                <Icon name="calendar" size={20} color={c.accent} />
+                <View style={{ flex: 1, gap: 1 }}>
+                  <Ink size={15} weight="extraBold">{cal.name}</Ink>
+                  <Ink size={12} color={c.textSecondary}>{cal.sub}</Ink>
                 </View>
-              </View>
-
-              {/* Conseil contextuel selon urgence */}
-              {daysUntil <= 7 && daysUntil > 0 && (
-                <View style={{ marginTop: 12, padding: 10, borderRadius: 10, backgroundColor: '#EF444415', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontSize: 16 }}>⚡</Text>
-                  <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#EF4444' }}>
-                    Coupe de poids et revue technique en cours · bonne chance !
-                  </Text>
-                </View>
-              )}
-              {daysUntil > 7 && daysUntil <= 30 && (
-                <View style={{ marginTop: 12, padding: 10, borderRadius: 10, backgroundColor: '#F59E0B15', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontSize: 16 }}>🔥</Text>
-                  <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#F59E0B' }}>
-                    Phase d'intensification : drill technique + sparring sélectifs.
-                  </Text>
-                </View>
-              )}
-            </View>
-          );
-        })()}
-
-        {/* Import Button */}
-        <TouchableOpacity
-          style={[
-            styles.importCard,
-            { backgroundColor: colors.backgroundCard, borderColor: colors.accent }
-          ]}
-          onPress={handleImportCompetitions}
-          disabled={importing}
-          activeOpacity={0.7}
-        >
-          <View style={styles.importIcon}>
-            <Download size={24} color={importing ? colors.textMuted : colors.accent} />
+                <Icon name="chevron" size={18} color={c.textMuted} />
+              </Pressable>
+            ))}
           </View>
-          <View style={styles.importContent}>
-            <Text style={[styles.importTitle, { color: colors.textPrimary }]}>
-              {importing ? t('competitions.importing') : t('competitions.importButtonText')}
-            </Text>
-            <Text style={[styles.importSubtitle, { color: colors.textMuted }]}>
-              {t('competitions.availableCompetitions', { count: getAvailableCompetitionsCount().total })}
-            </Text>
-          </View>
-          {!importing && <ChevronRight size={20} color={colors.textMuted} />}
-        </TouchableOpacity>
-
-        {/* Upcoming Competitions */}
-        {upcomingCompetitions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('competitions.upcoming')}
-            </Text>
-            {upcomingCompetitions.map((comp) => renderCompetitionCard(comp))}
-          </View>
-        )}
-
-        {/* Past Competitions */}
-        {pastCompetitions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('competitions.history')}
-            </Text>
-            {pastCompetitions.map((comp) => renderCompetitionCard(comp))}
-          </View>
-        )}
-
-        {/* Cancelled Competitions */}
-        {cancelledCompetitions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              {t('competitions.cancelled')}
-            </Text>
-            {cancelledCompetitions.map((comp) => renderCompetitionCard(comp))}
-          </View>
-        )}
-
-        {/* Empty State */}
-        {competitions.length === 0 && (
-          <View style={styles.emptyState}>
-            <View style={[styles.emptyIconCircle, { backgroundColor: colors.accent + '22' }]}>
-              <Trophy size={56} color={colors.accent} />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              {t('competitions.noCompetitions')}
-            </Text>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              {t('competitions.emptyMessage')}
-            </Text>
-            <TouchableOpacity
-              style={[styles.emptyCTA, { backgroundColor: colors.accent }]}
-              onPress={handleAddCompetition}
-              activeOpacity={0.8}
-            >
-              <Plus size={18} color={colors.textOnGold} />
-              <Text style={[styles.emptyCTAText, { color: colors.textOnGold }]}>
-                {t('competitions.addFirst') || 'Ajouter ma première compétition'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <View style={{ height: 100 }} />
+          <Ink size={11} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{`Liens vérifiés le ${OFFICIAL_CALENDARS_CHECKED}.`}</Ink>
+        </View>
       </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.accent }]}
-        onPress={handleAddCompetition}
-        activeOpacity={0.8}
-      >
-        <Plus size={24} color={colors.textOnGold} />
-      </TouchableOpacity>
-      <PopupComponent />
-    </ScreenWrapper>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginBottom: SPACING.xl,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  section: {
-    marginBottom: SPACING.xl,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: SPACING.md,
-  },
-  competitionCard: {
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.md,
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    flex: 1,
-  },
-  sportIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sportEmoji: {
-    fontSize: 24,
-  },
-  cardHeaderInfo: {
-    flex: 1,
-  },
-  competitionName: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: SPACING.xs,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  locationText: {
-    fontSize: 12,
-  },
-  urgentBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
-  },
-  urgentText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  cardDate: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  },
-  dateText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
-  },
-  categoryLabel: {
-    fontSize: 13,
-  },
-  categoryValue: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: SPACING.sm,
-  },
-  statusBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xl * 3,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: SPACING.lg,
-  },
-  emptyIconCircle: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyCTA: {
-    marginTop: SPACING.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.full,
-  },
-  emptyCTAText: {
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  importCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.lg,
-    borderRadius: RADIUS.lg,
-    marginBottom: SPACING.xl,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    gap: SPACING.md,
-  },
-  importIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  importContent: {
-    flex: 1,
-  },
-  importTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  importSubtitle: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: SPACING.xl * 2,
-    right: SPACING.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});

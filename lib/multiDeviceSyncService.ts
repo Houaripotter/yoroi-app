@@ -22,6 +22,7 @@ import * as Notifications from 'expo-notifications';
 import logger from './security/logger';
 import { getSavedCloudFolder, listCloudBackups, readCloudBackupFile } from './cloudFolderService';
 import { importDataFromBackupObject } from './exportService';
+import { vitrineActive } from './v2/visite/vitrine';
 
 // Clé pour tracker le dernier backup cloud déjà connu (éviter double-prompt)
 const LAST_KNOWN_CLOUD_BACKUP_KEY = '@yoroi_last_known_cloud_backup';
@@ -54,6 +55,8 @@ export interface CloudSyncPrompt {
  */
 export async function checkForCloudSync(): Promise<void> {
   if (isChecking) return;
+  // 18 octobre 2026 : pendant la visite guidee avec l'exemple, pas de comparaison avec le cloud (l'exemple n'est pas tes donnees)
+  if (vitrineActive()) return;
   isChecking = true;
   try {
     const cloud = await getSavedCloudFolder();
@@ -135,8 +138,8 @@ export async function checkForCloudSync(): Promise<void> {
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: '✨ Nouveau contenu depuis ton autre appareil',
-          body: 'Une sauvegarde plus récente est disponible. Ouvre Yoroi pour synchroniser.',
+          title: 'Nouveau contenu depuis ton autre appareil',
+          body: 'Une copie plus récente t’attend. Ouvre YOROI pour la récupérer.',
           data: { type: 'cloud_sync_available', backupName: latest.name },
           sound: 'default',
         },

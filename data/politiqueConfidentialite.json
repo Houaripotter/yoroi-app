@@ -1,0 +1,246 @@
+{
+  "miseAJour": {
+    "fr": "13 octobre 2026",
+    "en": "October 13, 2026"
+  },
+  "fr": [
+    {
+      "titre": "Qui édite YOROI",
+      "icone": "shield",
+      "lignes": [
+        "YOROI est une application de suivi du poids, du corps et des séances de sport. Elle est éditée par KABUTO, SASU au capital de 1 000 euros, SIREN 109 094 649, RCS Marseille, 55 rue Grignan, 13006 Marseille, France.",
+        "Contact pour toute question sur tes données : yoroiapp@hotmail.com",
+        "Le principe : tes données de santé restent sur ton téléphone. YOROI n'a aucun serveur qui les reçoit."
+      ]
+    },
+    {
+      "titre": "Ce que YOROI garde sur ton téléphone",
+      "icone": "save",
+      "lignes": [
+        "Seulement sur ton téléphone, dans la mémoire de l'app :",
+        "• Poids, composition corporelle, mensurations, taille, objectifs",
+        "• Séances, exercices, charges, records, chrono, compétitions, combats",
+        "• Sommeil, hydratation, forme du jour, jeûne, nutrition, blessures",
+        "• Photos de progression et vidéos, si tu en ajoutes",
+        "• Partenaires d'entraînement que tu enregistres : nom, notes, notes vocales, photo",
+        "• Lieu d'une séance, seulement si tu touches « Ma position » : le nom du lieu et ses coordonnées sont gardés avec la séance",
+        "• Prénom, genre et réponses de l'accueil, réglages, personnage et thème",
+        "Ces données restent jusqu'à ce que tu les effaces. Elles sont protégées par le chiffrement de ton téléphone."
+      ]
+    },
+    {
+      "titre": "Ce qui peut quitter ton téléphone",
+      "icone": "upload",
+      "lignes": [
+        "Rien ne part vers un serveur de YOROI, il n'y en a pas. Voici tout ce qui peut sortir, et quand :",
+        "• Apple Santé (iPhone) ou Health Connect (Android) : seulement si tu l'autorises. YOROI y lit tes données (poids, pas, fréquence cardiaque, sommeil, séances) et y écrit tes pesées, séances, hydratation et sommeil. Ces données sont ensuite gérées par Apple ou Google.",
+        "• Ta montre (Apple Watch, Wear OS) : si tu l'utilises, YOROI lui envoie ce qu'elle affiche.",
+        "• Les widgets : ce que tu choisis d'afficher sur ton écran d'accueil reste visible sur ton téléphone.",
+        "• Le nom d'un lieu : quand tu touches « Ma position », ton téléphone demande à son service de cartes (Apple ou Google) le nom de l'endroit.",
+        "• La qualité de l'air : pour une séance en extérieur importée d'Apple Santé, YOROI envoie à Open-Meteo (open-meteo.com) la position de départ arrondie à environ 1 km et la date. Aucun identifiant n'est envoyé.",
+        "• L'abonnement : géré par RevenueCat (revenuecat.com), qui reçoit un identifiant anonyme, la version de l'app, la plateforme et le statut d'achat. Le paiement est fait par l'App Store ou Google Play, YOROI ne voit aucune donnée bancaire.",
+        "• Tes sauvegardes, tes exports et tes partages : seulement quand tu le décides (voir plus bas).",
+        "Aucune donnée de santé n'est jamais vendue, ni utilisée pour de la publicité."
+      ]
+    },
+    {
+      "titre": "Mesure d'audience et rapports de plantage",
+      "icone": "eye",
+      "siMesure": true,
+      "lignes": [
+        "Pour savoir quels écrans servent et corriger les plantages, YOROI utilise Google Analytics pour Firebase et Sentry. C'est activé par défaut, et tu peux le couper à tout moment dans Réglages, Confidentialité. Couper arrête tout envoi immédiatement, plantages compris.",
+        "Ce qui est envoyé : des faits d'usage, sans valeur. Par exemple « une pesée a été saisie », « une séance de musculation a été enregistrée », « l'écran Progrès a été ouvert », l'objectif choisi à l'accueil (perdre, prendre, combat, maintenir), le genre déclaré, la famille de sport, le statut gratuit ou abonné.",
+        "Ce qui n'est JAMAIS envoyé : aucun poids, aucune mensuration, aucune calorie, aucune fréquence cardiaque, aucune durée ni charge de séance, aucune donnée d'Apple Santé ou de Health Connect, aucun texte que tu écris, aucun nom, aucun lieu, aucune photo.",
+        "Google Analytics attribue à l'app un identifiant d'installation aléatoire et peut déduire le pays approximatif de la connexion. L'identifiant publicitaire n'est pas collecté. Sentry reçoit le rapport technique d'un plantage, sans adresse IP ni identifiant d'appareil.",
+        "Durée : 14 mois au plus pour la mesure d'audience, 90 jours au plus pour les plantages.",
+        "Un compteur local, visible dans Réglages, Confidentialité, te montre combien d'événements ont été notés. Il ne quitte pas ton téléphone."
+      ]
+    },
+    {
+      "titre": "Sauvegardes et synchronisation",
+      "icone": "archive",
+      "lignes": [
+        "• Sauvegarde automatique : chaque jour, YOROI enregistre une copie de tes données sur ton téléphone. Tu peux la couper.",
+        "• Dossier cloud : si tu choisis un dossier (iCloud Drive, Google Drive, Dropbox, OneDrive), chaque sauvegarde y est aussi copiée. Elle est alors stockée par ce service, selon ses propres règles. Par défaut elle n'est pas chiffrée : active le chiffrement par mot de passe dans les réglages de sauvegarde si tu veux qu'elle soit illisible sans lui.",
+        "• Entre tes appareils par le cloud : un autre appareil qui lit le même dossier peut te proposer de récupérer la sauvegarde la plus récente.",
+        "• Entre ton iPhone et ton iPad à proximité : seulement avec un appareil que tu as appairé par un code à 6 chiffres, et seulement pendant que l'écran de synchronisation est ouvert. Les échanges passent par Bluetooth ou wifi direct, sans internet, et sont chiffrés avec une clé propre à tes appareils. Un téléphone inconnu ne reçoit rien.",
+        "• Exports et partages : un export (fichier, PDF, tableur) ou une image partagée part seulement quand tu touches le bouton, et tu vois ce qui sera envoyé avant."
+      ]
+    },
+    {
+      "titre": "Permissions demandées",
+      "icone": "lock",
+      "lignes": [
+        "Chaque permission est facultative et demandée au moment où elle sert :",
+        "• Apple Santé ou Health Connect : lire et écrire tes données de santé",
+        "• Notifications : tes rappels. Aucun chiffre de santé n'apparaît sur l'écran verrouillé",
+        "• Localisation : seulement quand tu touches « Ma position » sur une séance",
+        "• Caméra et photos : photos de profil et de progression, enregistrement de tes cartes",
+        "• Micro : notes vocales sur un partenaire",
+        "• Calendrier : ajouter une compétition à ton calendrier, après ta validation",
+        "• Face ID : verrouiller l'app si tu l'actives",
+        "• Réseau local : la synchronisation avec ton iPad appairé"
+      ]
+    },
+    {
+      "titre": "Effacer tes données",
+      "icone": "trash",
+      "lignes": [
+        "• Réglages, Mes données, Tout effacer : efface tout ce que YOROI garde sur ce téléphone, pesées, mensurations, séances, photos, sauvegardes, réglages et rappels compris. L'app repart comme neuve.",
+        "• Restent en dehors de YOROI, et tu peux les supprimer toi-même : ce qui a été écrit dans Apple Santé ou Health Connect, les sauvegardes copiées dans ton dossier cloud, et les images enregistrées dans ta galerie.",
+        "• Tu peux aussi supprimer une seule catégorie de données dans Réglages, Mes données, Confidentialité, et exporter toutes tes données avant.",
+        "• Désinstaller l'app efface la plupart de ses données, mais iOS peut garder quelques réglages dans son trousseau sécurisé, et rien n'est effacé dans Apple Santé, Health Connect ou ton dossier cloud. Pour tout effacer, utilise Tout effacer avant de désinstaller.",
+        "• Mesure d'audience : couper l'interrupteur arrête l'envoi. Pour faire supprimer ce qui a déjà été envoyé, écris à yoroiapp@hotmail.com."
+      ]
+    },
+    {
+      "titre": "Tes droits",
+      "icone": "shield",
+      "lignes": [
+        "Tu as un droit d'accès, de rectification, d'effacement, d'opposition et de portabilité sur tes données. Comme elles sont sur ton téléphone, tu les exerces directement dans l'app. Pour le reste, écris à yoroiapp@hotmail.com.",
+        "Tu peux aussi saisir la CNIL (cnil.fr)."
+      ]
+    },
+    {
+      "titre": "Âge minimum",
+      "icone": "shield",
+      "lignes": [
+        "YOROI est destiné aux personnes de 15 ans et plus."
+      ]
+    },
+    {
+      "titre": "Transferts hors de l'Union européenne",
+      "icone": "archive",
+      "lignes": [
+        "Apple, Google, RevenueCat et Sentry peuvent traiter des données aux États-Unis, selon leurs propres politiques et les garanties prévues par le RGPD. Aucune donnée de santé ne leur est envoyée par YOROI."
+      ]
+    },
+    {
+      "titre": "Modifications",
+      "icone": "eye",
+      "lignes": [
+        "Cette politique peut changer. La date en haut est mise à jour, et un changement important est signalé dans l'app."
+      ]
+    }
+  ],
+  "en": [
+    {
+      "titre": "Who publishes YOROI",
+      "icone": "shield",
+      "lignes": [
+        "YOROI is an app to track your weight, body and workouts. It is published by KABUTO, a French SASU with a share capital of 1,000 euros, SIREN 109 094 649, RCS Marseille, 55 rue Grignan, 13006 Marseille, France.",
+        "Contact for any question about your data: yoroiapp@hotmail.com",
+        "The principle: your health data stays on your phone. YOROI has no server that receives it."
+      ]
+    },
+    {
+      "titre": "What YOROI keeps on your phone",
+      "icone": "save",
+      "lignes": [
+        "Only on your phone, in the app's storage:",
+        "• Weight, body composition, measurements, height, goals",
+        "• Workouts, exercises, loads, records, timer, competitions, fights",
+        "• Sleep, hydration, daily readiness, fasting, nutrition, injuries",
+        "• Progress photos and videos, if you add them",
+        "• Training partners you save: name, notes, voice notes, photo",
+        "• Workout location, only if you tap \"My location\": the place name and its coordinates are kept with the workout",
+        "• First name, gender and onboarding answers, settings, character and theme",
+        "This data stays until you delete it. It is protected by your phone's encryption."
+      ]
+    },
+    {
+      "titre": "What can leave your phone",
+      "icone": "upload",
+      "lignes": [
+        "Nothing goes to a YOROI server, there is none. Here is everything that can leave, and when:",
+        "• Apple Health (iPhone) or Health Connect (Android): only if you allow it. YOROI reads your data (weight, steps, heart rate, sleep, workouts) and writes your weigh-ins, workouts, hydration and sleep. That data is then managed by Apple or Google.",
+        "• Your watch (Apple Watch, Wear OS): if you use it, YOROI sends it what it displays.",
+        "• Widgets: what you choose to show on your home screen stays visible on your phone.",
+        "• A place name: when you tap \"My location\", your phone asks its map service (Apple or Google) for the name of the place.",
+        "• Air quality: for an outdoor workout imported from Apple Health, YOROI sends Open-Meteo (open-meteo.com) the starting position rounded to about 1 km and the date. No identifier is sent.",
+        "• Subscription: handled by RevenueCat (revenuecat.com), which receives an anonymous identifier, the app version, the platform and the purchase status. Payment is made through the App Store or Google Play, YOROI never sees any banking data.",
+        "• Your backups, exports and shares: only when you decide (see below).",
+        "No health data is ever sold or used for advertising."
+      ]
+    },
+    {
+      "titre": "Usage analytics and crash reports",
+      "icone": "eye",
+      "siMesure": true,
+      "lignes": [
+        "To know which screens are useful and to fix crashes, YOROI uses Google Analytics for Firebase and Sentry. It is on by default, and you can turn it off at any time in Settings, Privacy. Turning it off stops all sending immediately, crash reports included.",
+        "What is sent: usage facts, without values. For example \"a weigh-in was entered\", \"a strength workout was saved\", \"the Progress screen was opened\", the goal chosen during onboarding (lose, gain, fight, maintain), the declared gender, the sport family, free or subscribed status.",
+        "What is NEVER sent: no weight, no measurement, no calorie, no heart rate, no workout duration or load, no Apple Health or Health Connect data, no text you write, no name, no place, no photo.",
+        "Google Analytics gives the app a random installation identifier and may infer the approximate country of the connection. The advertising identifier is not collected. Sentry receives the technical report of a crash, without IP address or device identifier.",
+        "Retention: 14 months at most for analytics, 90 days at most for crash reports.",
+        "A local counter, visible in Settings, Privacy, shows how many events were recorded. It never leaves your phone."
+      ]
+    },
+    {
+      "titre": "Backups and sync",
+      "icone": "archive",
+      "lignes": [
+        "• Automatic backup: every day, YOROI saves a copy of your data on your phone. You can turn it off.",
+        "• Cloud folder: if you choose a folder (iCloud Drive, Google Drive, Dropbox, OneDrive), each backup is also copied there. It is then stored by that service, under its own rules. By default it is not encrypted: turn on password encryption in the backup settings if you want it unreadable without it.",
+        "• Between your devices through the cloud: another device reading the same folder can offer to restore the most recent backup.",
+        "• Between your nearby iPhone and iPad: only with a device you paired with a 6-digit code, and only while the sync screen is open. Exchanges go through Bluetooth or direct wifi, without internet, and are encrypted with a key unique to your devices. An unknown phone receives nothing.",
+        "• Exports and shares: an export (file, PDF, spreadsheet) or a shared image leaves only when you tap the button, and you see what will be sent first."
+      ]
+    },
+    {
+      "titre": "Permissions requested",
+      "icone": "lock",
+      "lignes": [
+        "Every permission is optional and requested when it is needed:",
+        "• Apple Health or Health Connect: read and write your health data",
+        "• Notifications: your reminders. No health figure ever appears on the lock screen",
+        "• Location: only when you tap \"My location\" on a workout",
+        "• Camera and photos: profile and progress photos, saving your cards",
+        "• Microphone: voice notes about a partner",
+        "• Calendar: add a competition to your calendar, after you confirm",
+        "• Face ID: lock the app if you turn it on",
+        "• Local network: sync with your paired iPad"
+      ]
+    },
+    {
+      "titre": "Deleting your data",
+      "icone": "trash",
+      "lignes": [
+        "• Settings, My data, Erase everything: erases everything YOROI keeps on this phone, including weigh-ins, measurements, workouts, photos, backups, settings and reminders. The app starts fresh.",
+        "• Outside YOROI, and you can delete them yourself: what was written to Apple Health or Health Connect, backups copied to your cloud folder, and images saved to your photo library.",
+        "• You can also delete a single category of data in Settings, My data, Privacy, and export all your data first.",
+        "• Uninstalling the app erases most of its data, but iOS may keep a few settings in its secure keychain, and nothing is erased in Apple Health, Health Connect or your cloud folder. To erase everything, use Erase everything before uninstalling.",
+        "• Analytics: turning the switch off stops sending. To have data already sent deleted, write to yoroiapp@hotmail.com."
+      ]
+    },
+    {
+      "titre": "Your rights",
+      "icone": "shield",
+      "lignes": [
+        "You have the right to access, correct, erase, object to and port your data. Since it is on your phone, you exercise these rights directly in the app. For anything else, write to yoroiapp@hotmail.com.",
+        "You can also contact the French data protection authority, the CNIL (cnil.fr)."
+      ]
+    },
+    {
+      "titre": "Minimum age",
+      "icone": "shield",
+      "lignes": [
+        "YOROI is intended for people aged 15 and over."
+      ]
+    },
+    {
+      "titre": "Transfers outside the European Union",
+      "icone": "archive",
+      "lignes": [
+        "Apple, Google, RevenueCat and Sentry may process data in the United States, under their own policies and the safeguards provided by the GDPR. YOROI never sends them any health data."
+      ]
+    },
+    {
+      "titre": "Changes",
+      "icone": "eye",
+      "lignes": [
+        "This policy may change. The date at the top is updated, and any important change is announced in the app."
+      ]
+    }
+  ]
+}

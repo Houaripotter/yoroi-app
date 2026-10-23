@@ -30,7 +30,7 @@ export const LogoViewer: React.FC<LogoViewerProps> = memo(({ visible, onClose })
         </TouchableOpacity>
 
         <Image
-          source={require('../assets/logo d\'app/logo1.png')}
+          source={require('../assets/logo d\'app/yoroi-logo2.png')}
           style={styles.fullImage}
           resizeMode="contain"
         />

@@ -1,6 +1,14 @@
 <resources>
-  <color name="splashscreen_background">#000000</color>
-  <color name="iconBackground">#ffffff</color>
+  <color name="splashscreen_background">#F2F1EC</color>
+  <color name="iconBackground">#17151A</color>
+  <color name="iconBackgroundBleuNuit">#1D2340</color>
+  <color name="iconBackgroundIndigo">#2C4A84</color>
+  <color name="iconBackgroundPapier">#F2F1EC</color>
+  <color name="iconBackgroundArdoise">#3A3F4A</color>
+  <color name="iconBackgroundForet">#1F3A2E</color>
+  <color name="iconBackgroundBordeaux">#4A1E2A</color>
+  <color name="iconBackgroundCrepuscule">#14161F</color>
   <color name="colorPrimary">#023c69</color>
   <color name="colorPrimaryDark">#000000</color>
+  <color name="notification_icon_color">#2C4A84</color>
 </resources>

@@ -7,6 +7,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
+import { contenuSansSante } from '@/lib/v2/notifications/texte';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,7 +45,7 @@ const ensureAndroidChannel = async (): Promise<void> => {
       name: 'Rappels sparring',
       importance: Notifications.AndroidImportance.DEFAULT,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#E53935',
+      lightColor: '#2C4A84',
     });
   } catch (err) {
     logger.error('sparringNotifications: impossible de créer le canal Android', err);
@@ -53,24 +54,26 @@ const ensureAndroidChannel = async (): Promise<void> => {
 
 // ─── Permissions ──────────────────────────────────────────────────────────────
 
+/**
+ * Permission sans surprise : déjà accordée, on prépare le canal Android ; sinon on ne
+ * demande rien ici. La demande passe par la fenêtre maison (lib/v2/notifications/permission.ts),
+ * seulement quand un objectif de sparring en a besoin, et jamais après un refus du système.
+ */
 export const requestNotificationPermissions = async (): Promise<boolean> => {
   try {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    if (existingStatus === 'granted') return true;
-
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      logger.warn('sparringNotifications: permissions refusées par l\'utilisateur');
-      return false;
-    }
-
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') return false;
     await ensureAndroidChannel();
     return true;
   } catch (err) {
-    logger.error('sparringNotifications: erreur lors de la demande de permissions', err);
+    logger.error('sparringNotifications: erreur lors de la lecture des permissions', err);
     return false;
   }
 };
+
+/** Vrai si au moins un partenaire a un objectif actif : seul cas où les rappels servent */
+export const aBesoinDeRappels = (partners: { activeGoal?: { text: string } | null }[]): boolean =>
+  partners.some((p) => !!p.activeGoal?.text);
 
 // ─── Utilitaires ─────────────────────────────────────────────────────────────
 
@@ -102,19 +105,19 @@ const scheduleOrReplace = async (
   try {
     await Notifications.cancelScheduledNotificationAsync(identifier);
   } catch {
-    // L'identifiant n'existait pas — pas d'erreur à traiter
+    // L'identifiant n'existait pas, pas d'erreur à traiter
   }
 
   try {
     await Notifications.scheduleNotificationAsync({
       identifier,
       content: {
-        ...content,
+        ...contenuSansSante(content),
         ...(Platform.OS === 'android' ? { channelId: NOTIFICATION_CHANNEL_ID } : {}),
       },
       trigger,
     });
-    logger.info(`sparringNotifications: notification planifiée — ${identifier}`);
+    logger.info(`sparringNotifications: notification planifiée, ${identifier}`);
   } catch (err) {
     logger.error(`sparringNotifications: impossible de planifier ${identifier}`, err);
   }
@@ -128,7 +131,7 @@ export const scheduleSparringReminders = async (
   try {
     const granted = await requestNotificationPermissions();
     if (!granted) {
-      logger.warn('sparringNotifications: permissions non accordées — abandon de la planification');
+      logger.warn('sparringNotifications: permissions non accordées, abandon de la planification');
       return;
     }
 
@@ -146,8 +149,8 @@ export const scheduleSparringReminders = async (
         await scheduleOrReplace(
           `sparring-inactive-${id}`,
           {
-            title: 'Objectif en attente 🥊',
-            body: `Ton objectif contre ${name} : "${goal}" — ça fait ${days} jours sans sparring`,
+            title: 'Objectif en attente',
+            body: `Ton objectif contre ${name} : "${goal}", ça fait ${days} jours sans sparring`,
           },
           {
             seconds: 5,

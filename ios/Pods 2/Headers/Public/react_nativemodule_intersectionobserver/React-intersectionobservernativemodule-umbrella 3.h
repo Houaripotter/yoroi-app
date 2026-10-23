@@ -1,1 +1,0 @@
-../../../Target Support Files/React-intersectionobservernativemodule/React-intersectionobservernativemodule-umbrella.h

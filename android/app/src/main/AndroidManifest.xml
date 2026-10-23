@@ -27,8 +27,18 @@
   <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE"/>
   <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE"/>
   <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
-<uses-permission android:name="android.permission.health.READ_HEIGHT"/>
+  <uses-permission android:name="android.permission.health.READ_HEIGHT"/>
   <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED"/>
+  <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE"/>
+  <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE"/>
+  <uses-permission android:name="android.permission.health.READ_NUTRITION"/>
+  <uses-permission android:name="android.permission.health.READ_SPEED"/>
+  <uses-permission android:name="android.permission.health.READ_POWER"/>
+  <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED"/>
+  <uses-permission android:name="android.permission.health.READ_BODY_WATER_MASS"/>
+  <uses-permission android:name="android.permission.health.READ_BONE_MASS"/>
+  <uses-permission android:name="android.permission.health.READ_WHEELCHAIR_PUSHES"/>
+  <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY"/>
   <uses-permission android:name="android.permission.health.WRITE_WEIGHT"/>
   <uses-permission android:name="android.permission.health.WRITE_BODY_FAT"/>
   <uses-permission android:name="android.permission.health.WRITE_HYDRATION"/>
@@ -40,8 +50,23 @@
       <category android:name="android.intent.category.BROWSABLE"/>
       <data android:scheme="https"/>
     </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW"/>
+      <data android:scheme="market"/>
+    </intent>
+    <!-- Health Connect (application Google) : necessaire pour la detecter et ouvrir ses reglages -->
+    <package android:name="com.google.android.apps.healthdata"/>
   </queries>
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:allowBackup="false" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false" android:fullBackupContent="@xml/secure_store_backup_rules" android:dataExtractionRules="@xml/secure_store_data_extraction_rules">
+  <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
+  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false" android:fullBackupContent="@xml/yoroi_backup_rules" android:dataExtractionRules="@xml/yoroi_data_extraction_rules">
+    <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" tools:replace="android:value"/>
+    <meta-data android:name="google_analytics_automatic_screen_reporting_enabled" android:value="false" tools:replace="android:value"/>
+    <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" tools:replace="android:value"/>
+    <meta-data android:name="google_analytics_default_allow_ad_storage" android:value="false" tools:replace="android:value"/>
+    <meta-data android:name="google_analytics_default_allow_ad_user_data" android:value="false" tools:replace="android:value"/>
+    <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" tools:replace="android:value"/>
+    <meta-data android:name="expo.modules.notifications.default_notification_icon" android:resource="@drawable/notification_icon"/>
+    <meta-data android:name="expo.modules.notifications.default_notification_color" android:resource="@color/notification_icon_color"/>
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
@@ -61,40 +86,249 @@
         <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
       </intent-filter>
     </activity>
-    <!-- Widget Dashboard -->
+    <!-- Health Connect, Android 14 et plus : ecran de justification des permissions (renvoie vers MainActivity) -->
+    <activity-alias
+        android:name="ViewPermissionUsageActivity"
+        android:exported="true"
+        android:targetActivity=".MainActivity"
+        android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+        <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+      </intent-filter>
+    </activity-alias>
+    <!-- Icones au choix (Reglages, Logo de l'app) : une entree par couleur, activee par expo-alternate-app-icons -->
+    <activity-alias
+        android:name=".MainActivityBleuNuit"
+        android:enabled="false"
+        android:exported="true"
+        android:icon="@mipmap/ic_launcher_bleu_nuit"
+        android:targetActivity=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="yoroi"/>
+        <data android:scheme="exp+yoroi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity-alias>
+    <activity-alias
+        android:name=".MainActivityIndigo"
+        android:enabled="false"
+        android:exported="true"
+        android:icon="@mipmap/ic_launcher_indigo"
+        android:targetActivity=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="yoroi"/>
+        <data android:scheme="exp+yoroi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity-alias>
+    <activity-alias
+        android:name=".MainActivityPapier"
+        android:enabled="false"
+        android:exported="true"
+        android:icon="@mipmap/ic_launcher_papier"
+        android:targetActivity=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="yoroi"/>
+        <data android:scheme="exp+yoroi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity-alias>
+    <activity-alias
+        android:name=".MainActivityArdoise"
+        android:enabled="false"
+        android:exported="true"
+        android:icon="@mipmap/ic_launcher_ardoise"
+        android:targetActivity=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="yoroi"/>
+        <data android:scheme="exp+yoroi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity-alias>
+    <activity-alias
+        android:name=".MainActivityForet"
+        android:enabled="false"
+        android:exported="true"
+        android:icon="@mipmap/ic_launcher_foret"
+        android:targetActivity=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="yoroi"/>
+        <data android:scheme="exp+yoroi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity-alias>
+    <activity-alias
+        android:name=".MainActivityBordeaux"
+        android:enabled="false"
+        android:exported="true"
+        android:icon="@mipmap/ic_launcher_bordeaux"
+        android:targetActivity=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="yoroi"/>
+        <data android:scheme="exp+yoroi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity-alias>
+    <activity-alias
+        android:name=".MainActivityCrepuscule"
+        android:enabled="false"
+        android:exported="true"
+        android:icon="@mipmap/ic_launcher_crepuscule"
+        android:targetActivity=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="yoroi"/>
+        <data android:scheme="exp+yoroi"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity-alias>
+    <!-- Widgets Yoroi (refonte du 13 octobre 2026) : les boutons eau verifient un jeton propre a l'installation -->
+    <!-- Widget Poids -->
     <receiver
-        android:name=".widget.YoroiDashboardWidget"
+        android:name=".widget.YoroiPoidsWidget"
+        android:label="@string/yw_nom_poids"
         android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="com.houari.yoroi.widget.EAU_PLUS" />
+        <action android:name="com.houari.yoroi.widget.EAU_MOINS" />
       </intent-filter>
       <meta-data
           android:name="android.appwidget.provider"
-          android:resource="@xml/widget_dashboard_info" />
+          android:resource="@xml/yw_info_poids" />
     </receiver>
-
-    <!-- Widget Hydratation -->
-    <receiver
-        android:name=".widget.YoroiHydrationWidget"
-        android:exported="true">
-      <intent-filter>
-        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-      </intent-filter>
-      <meta-data
-          android:name="android.appwidget.provider"
-          android:resource="@xml/widget_hydration_info" />
-    </receiver>
-
-    <!-- Widget Streak -->
+    <!-- Widget Ta semaine (ancien nom de classe garde pour les widgets deja poses) -->
     <receiver
         android:name=".widget.YoroiStreakWidget"
+        android:label="@string/yw_nom_semaine"
         android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="com.houari.yoroi.widget.EAU_PLUS" />
+        <action android:name="com.houari.yoroi.widget.EAU_MOINS" />
       </intent-filter>
       <meta-data
           android:name="android.appwidget.provider"
-          android:resource="@xml/widget_streak_info" />
+          android:resource="@xml/yw_info_semaine" />
+    </receiver>
+    <!-- Widget Eau (ancien nom de classe garde) -->
+    <receiver
+        android:name=".widget.YoroiHydrationWidget"
+        android:label="@string/yw_nom_eau"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="com.houari.yoroi.widget.EAU_PLUS" />
+        <action android:name="com.houari.yoroi.widget.EAU_MOINS" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/yw_info_eau" />
+    </receiver>
+    <!-- Widget Combat -->
+    <receiver
+        android:name=".widget.YoroiCombatWidget"
+        android:label="@string/yw_nom_combat"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="com.houari.yoroi.widget.EAU_PLUS" />
+        <action android:name="com.houari.yoroi.widget.EAU_MOINS" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/yw_info_combat" />
+    </receiver>
+    <!-- Widget Chrono rounds -->
+    <receiver
+        android:name=".widget.YoroiChronoWidget"
+        android:label="@string/yw_nom_chrono"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="com.houari.yoroi.widget.EAU_PLUS" />
+        <action android:name="com.houari.yoroi.widget.EAU_MOINS" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/yw_info_chrono" />
+    </receiver>
+    <!-- Widget Tableau du jour (ancien nom de classe garde) -->
+    <receiver
+        android:name=".widget.YoroiDashboardWidget"
+        android:label="@string/yw_nom_tableau"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="com.houari.yoroi.widget.EAU_PLUS" />
+        <action android:name="com.houari.yoroi.widget.EAU_MOINS" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/yw_info_tableau" />
     </receiver>
   </application>
 </manifest>

@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER MISSIONS · Objectifs mensuels par partenaire
+// PARTNER MISSIONS : Objectifs mensuels par partenaire
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';

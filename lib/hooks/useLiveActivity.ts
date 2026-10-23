@@ -53,8 +53,12 @@ export function useLiveActivity(): UseLiveActivityReturn {
   }, []);
 
   const checkAvailability = async () => {
-    const available = await liveActivityManager.checkAvailability();
-    setIsAvailable(available);
+    try {
+      const available = await liveActivityManager.checkAvailability();
+      setIsAvailable(available);
+    } catch {
+      setIsAvailable(false);
+    }
   };
 
   /**
@@ -76,10 +80,7 @@ export function useLiveActivity(): UseLiveActivityReturn {
         isRunning: true,
       });
 
-      if (!result.success) {
-        logger.error('Échec démarrage Live Activity:', result.error);
-        return false;
-      }
+      if (!result.success) return false; // pas d'ilot dynamique ici (Expo Go, simulateur)
 
       // Démarrer le timer local
       setElapsedSeconds(0);
@@ -122,10 +123,7 @@ export function useLiveActivity(): UseLiveActivityReturn {
       // Arrêter la Live Activity
       const result = await liveActivityManager.stop();
 
-      if (!result.success) {
-        logger.error('Échec arrêt Live Activity:', result.error);
-        return false;
-      }
+      if (!result.success) return false;
 
       setIsRunning(false);
       logger.info('Live Activity arrêtée avec succès');
@@ -184,8 +182,12 @@ export function useLiveActivityManual() {
   }, []);
 
   const checkAvailability = async () => {
-    const available = await liveActivityManager.checkAvailability();
-    setIsAvailable(available);
+    try {
+      const available = await liveActivityManager.checkAvailability();
+      setIsAvailable(available);
+    } catch {
+      setIsAvailable(false);
+    }
   };
 
   const start = useCallback(async (data: LiveActivityData) => {

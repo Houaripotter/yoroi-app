@@ -1,4 +1,4 @@
-// flashService.ts — contrôle du flash iPhone depuis JavaScript
+// flashService.ts : contrôle du flash iPhone depuis JavaScript
 import { NativeModules, Platform } from 'react-native';
 
 const { TorchModule } = NativeModules;

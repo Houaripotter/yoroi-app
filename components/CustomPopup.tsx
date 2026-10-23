@@ -1,21 +1,16 @@
 // ============================================
-// YOROI - CUSTOM POPUP COMPONENT
+// YOROI, fenetre de dialogue (refonte v2, l'armure vivante)
 // ============================================
-// Popup personnalisee pour remplacer Alert.alert
+// Passe par la fenetre maison (appAlert). API inchangee : CustomPopup, useCustomPopup, PopupButton.
 
-import React, { memo, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  useWindowDimensions,
-  Platform,
-} from 'react-native';
+import React, { memo } from 'react';
+import { View, StyleSheet, Modal, Pressable, useWindowDimensions, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useTheme } from '@/lib/ThemeContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { appAlert, closeAppAlert } from '@/components/yoroi/v2/fenetre/api';
 
 export interface PopupButton {
   text: string;
@@ -32,6 +27,14 @@ export interface CustomPopupProps {
   icon?: React.ReactNode;
 }
 
+function safeImpact(style: ImpactFeedbackStyle) {
+  try {
+    impactAsync(style);
+  } catch {
+    // retour haptique indisponible
+  }
+}
+
 export const CustomPopup: React.FC<CustomPopupProps> = memo(({
   visible,
   title,
@@ -40,16 +43,14 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
   onClose,
   icon,
 }) => {
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
-  const { colors, isDark } = useTheme();
+  const { width } = useWindowDimensions();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
 
   const handleButtonPress = (button: PopupButton) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    // Fermer d'abord le popup actuel
+    safeImpact(ImpactFeedbackStyle.Light);
+    // Fermer d'abord, puis executer l'action (permet d'enchainer une autre fenetre)
     onClose();
-    // Puis executer l'action apres un court delai pour permettre
-    // l'affichage d'un nouveau popup si necessaire
     if (button.onPress) {
       setTimeout(() => {
         button.onPress?.();
@@ -57,88 +58,83 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
     }
   };
 
-  const getButtonStyle = (style?: string) => {
+  const tone = (style?: PopupButton['style']) => {
     switch (style) {
       case 'destructive':
-        return { backgroundColor: '#EF4444', textColor: '#FFFFFF' };
-      case 'cancel':
-        return { backgroundColor: colors.backgroundElevated, textColor: colors.textPrimary };
+        return { bg: c.accentTint, fg: c.accent, border: c.accent, weight: 'extraBold' as const };
       case 'primary':
-        return { backgroundColor: colors.accent, textColor: colors.textOnAccent };
+        return { bg: c.accent, fg: c.onAccent, border: c.accent, weight: 'extraBold' as const };
+      case 'cancel':
+        return { bg: c.surface, fg: c.textSecondary, border: c.border, weight: 'bold' as const };
       default:
-        return { backgroundColor: colors.backgroundElevated, textColor: colors.textPrimary };
+        return { bg: c.fillSoft, fg: c.ink, border: c.fillSoft, weight: 'bold' as const };
     }
   };
 
+  const vertical = buttons.length > 2;
+  const hasDestructive = buttons.some((b) => b.style === 'destructive');
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        {Platform.OS === 'ios' && (
-          <BlurView
-            intensity={isDark ? 40 : 20}
-            tint={isDark ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-        <View style={styles.centeredView}>
-          <View style={[styles.popupContainer, { backgroundColor: colors.card }]}>
-            {/* Accent bar */}
-            <View style={[styles.accentBar, { backgroundColor: colors.accent }]} />
-
-            {/* Content */}
-            <View style={styles.content}>
-              {icon && <View style={styles.iconContainer}>{icon}</View>}
-
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {title}
-              </Text>
-
-              {message && (
-                <Text style={[styles.message, { color: colors.textSecondary }]}>
-                  {message}
-                </Text>
-              )}
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={[styles.overlay, { backgroundColor: 'rgba(29,32,41,0.42)' }]}>
+        {Platform.OS === 'ios' ? <BlurView intensity={18} tint="light" style={StyleSheet.absoluteFill} /> : null}
+        {visible ? (
+          <Animated.View
+            entering={ZoomIn.springify().damping(18).stiffness(220)}
+            style={[
+              styles.card,
+              {
+                width: Math.min(width - 40, 360),
+                backgroundColor: c.surface,
+                borderColor: c.divider,
+                shadowColor: c.shadow,
+              },
+            ]}
+          >
+            {/* Lacet de soie en tete de plaque */}
+            <View style={[styles.lace, { backgroundColor: hasDestructive ? c.accent : c.ink }]}>
+              <View style={[styles.laceDot, { backgroundColor: c.gold, left: 22 }]} />
+              <View style={[styles.laceDot, { backgroundColor: c.gold, right: 22 }]} />
             </View>
 
-            {/* Buttons */}
-            <View style={[
-              styles.buttonsContainer,
-              buttons.length > 2 && styles.buttonsVertical,
-            ]}>
+            <Animated.View entering={FadeIn.delay(80).duration(260)} style={styles.content}>
+              {icon ? (
+                <View style={[styles.iconWrap, { backgroundColor: c.background, borderColor: c.divider }]}>{icon}</View>
+              ) : null}
+              <Ink size={21} weight="black" tight style={styles.center}>
+                {title}
+              </Ink>
+              {message ? (
+                <Ink size={15} weight="medium" color={c.textSecondary} style={[styles.center, styles.message]}>
+                  {message}
+                </Ink>
+              ) : null}
+            </Animated.View>
+
+            <View style={[styles.buttons, vertical && styles.buttonsVertical]}>
               {buttons.map((button, index) => {
-                const buttonStyle = getButtonStyle(button.style);
+                const t = tone(button.style);
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={index}
-                    style={[
-                      styles.button,
-                      buttons.length <= 2 && styles.buttonHorizontal,
-                      buttons.length > 2 && styles.buttonFullWidth,
-                      { backgroundColor: buttonStyle.backgroundColor },
-                    ]}
                     onPress={() => handleButtonPress(button)}
-                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={button.text}
+                    style={({ pressed }) => [
+                      styles.button,
+                      !vertical && styles.buttonHorizontal,
+                      { backgroundColor: t.bg, borderColor: t.border, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+                    ]}
                   >
-                    <Text
-                      style={[
-                        styles.buttonText,
-                        { color: buttonStyle.textColor },
-                        button.style === 'primary' && styles.buttonTextBold,
-                      ]}
-                    >
+                    <Ink size={15} weight={t.weight} color={t.fg} numberOfLines={2} style={styles.center}>
                       {button.text}
-                    </Text>
-                  </TouchableOpacity>
+                    </Ink>
+                  </Pressable>
                 );
               })}
             </View>
-          </View>
-        </View>
+          </Animated.View>
+        ) : null}
       </View>
     </Modal>
   );
@@ -148,15 +144,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = memo(({
 // HOOK POUR UTILISER LA POPUP
 // ============================================
 
-interface PopupState {
-  visible: boolean;
-  title: string;
-  message?: string;
-  buttons?: PopupButton[];
-  icon?: React.ReactNode;
-}
-
-// Type pour le format objet
+// Format objet
 interface ShowPopupOptions {
   title: string;
   message?: string;
@@ -166,145 +154,96 @@ interface ShowPopupOptions {
 }
 
 export const useCustomPopup = () => {
-  const [popupState, setPopupState] = React.useState<PopupState>({
-    visible: false,
-    title: '',
-    message: '',
-    buttons: [],
-  });
-
-  // Supporte les deux formats: positional et object
-  const showPopup = (
-    titleOrOptions: string | ShowPopupOptions,
-    message?: string,
-    buttons?: PopupButton[],
-    icon?: React.ReactNode
-  ) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-
-    // Format objet
-    if (typeof titleOrOptions === 'object') {
-      setPopupState({
-        visible: true,
-        title: titleOrOptions.title,
-        message: titleOrOptions.message,
-        buttons: titleOrOptions.buttons || [{ text: 'OK', style: 'primary' }],
-        icon: titleOrOptions.icon,
-      });
-    } else {
-      // Format positionnel
-      setPopupState({
-        visible: true,
-        title: titleOrOptions,
-        message,
-        buttons: buttons || [{ text: 'OK', style: 'primary' }],
-        icon,
-      });
-    }
-  };
+  // Delegue a la fenetre maison unique (components/yoroi/v2/fenetre), montee une fois dans app/_layout.tsx :
+  // meme style partout et affichage garanti au-dessus des ecrans modaux.
+  const showPopup = React.useCallback(
+    (titleOrOptions: string | ShowPopupOptions, message?: string, buttons?: PopupButton[], icon?: React.ReactNode) => {
+      if (typeof titleOrOptions === 'object') {
+        appAlert(titleOrOptions.title, titleOrOptions.message, titleOrOptions.buttons, titleOrOptions.icon ? { icon: titleOrOptions.icon } : undefined);
+      } else {
+        appAlert(titleOrOptions, message, buttons, icon ? { icon } : undefined);
+      }
+    },
+    [],
+  );
 
   const hidePopup = React.useCallback(() => {
-    setPopupState((prev) => ({ ...prev, visible: false }));
+    closeAppAlert();
   }, []);
 
-  // Ref vers l'état courant, mise à jour à chaque rendu de l'écran hôte
-  const popupStateRef = React.useRef(popupState);
-  popupStateRef.current = popupState;
-
-  // Type de composant STABLE : la Modal n'est plus démontée à chaque re-render de l'hôte.
-  // Non mémoïsé (pas de React.memo) → se re-rend avec l'hôte et lit l'état à jour via la ref.
-  const PopupComponent = React.useCallback(() => {
-    const state = popupStateRef.current;
-    return (
-      <CustomPopup
-        visible={state.visible}
-        title={state.title}
-        message={state.message}
-        buttons={state.buttons}
-        onClose={hidePopup}
-        icon={state.icon}
-      />
-    );
-  }, [hidePopup]);
+  // Garde pour compatibilite : les ecrans l'affichent encore, la fenetre vit dans l'hote global.
+  const PopupComponent = React.useCallback(() => null, []);
 
   return { showPopup, hidePopup, PopupComponent };
 };
 
-// ============================================
-// STYLES
-// ============================================
-
-const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
+const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  centeredView: {
-    width: SCREEN_WIDTH - 48,
-    maxWidth: 340,
-  },
-  popupContainer: {
-    borderRadius: 20,
+  card: {
+    borderRadius: 30,
+    borderWidth: 1,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 20,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.18,
+    shadowRadius: 30,
+    elevation: 16,
   },
-  accentBar: {
-    height: 4,
+  lace: {
+    height: 6,
     width: '100%',
   },
+  laceDot: {
+    position: 'absolute',
+    top: 1,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
   content: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 26,
     paddingBottom: 20,
     alignItems: 'center',
+    gap: 8,
   },
-  iconContainer: {
-    marginBottom: 16,
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
+  center: {
     textAlign: 'center',
-    marginBottom: 8,
   },
   message: {
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
+    lineHeight: 21,
   },
-  buttonsContainer: {
+  buttons: {
     flexDirection: 'row',
-    padding: 16,
-    paddingTop: 0,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     gap: 10,
   },
   buttonsVertical: {
     flexDirection: 'column',
   },
   button: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    minHeight: 52,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonHorizontal: {
     flex: 1,
-  },
-  buttonFullWidth: {
-    width: '100%',
-  },
-  buttonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  buttonTextBold: {
-    fontWeight: '700',
   },
 });
 

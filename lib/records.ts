@@ -231,7 +231,7 @@ export const calculateAllRecords = async (): Promise<{
         newValue: maxWeeklyLoss,
         date: maxWeeklyLossDate,
         message: `Record ! -${maxWeeklyLoss.toFixed(1)} kg cette semaine`,
-        emoji: '⚖️',
+        emoji: '',
       });
     }
   }
@@ -361,7 +361,7 @@ export const calculateAllRecords = async (): Promise<{
         newValue: sortedWaist[0].waist!,
         date: sortedWaist[0].date,
         message: `Record tour de taille ! ${sortedWaist[0].waist} cm`,
-        emoji: '📏',
+        emoji: '',
       });
     }
   }
@@ -598,7 +598,7 @@ export const generateRecordShareText = (type: RecordType, value: number): string
     maxWeeklyLoss: `J'ai battu mon record ! -${value.toFixed(1)} kg cette semaine`,
     maxMonthlyLoss: `Record du mois ! -${value.toFixed(1)} kg de perdus`,
     longestStreak: `Nouveau record de streak ! ${value} jours consecutifs`,
-    lowestWaist: `Record tour de taille ! ${value} cm atteints 📏`,
+    lowestWaist: `Record tour de taille ! ${value} cm atteints`,
     maxWeeklyWorkouts: `${value} entraînements cette semaine ! Nouveau record`,
     bestMonthRegularity: `${value}% de régularité ce mois-ci !`,
     bestEnergyStreak: `${value} jours d'énergie au top !`,

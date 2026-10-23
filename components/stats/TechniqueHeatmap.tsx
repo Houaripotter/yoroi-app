@@ -62,7 +62,7 @@ const TechniqueHeatmapInner: React.FC<TechniqueHeatmapProps> = ({
     >
       <View style={styles.titleRow}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Techniques · données vs reçues
+          Techniques, données vs reçues
         </Text>
       </View>
 

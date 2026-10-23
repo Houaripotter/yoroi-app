@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Genere pour le style A (Nuit de lanternes), depuis yw_eau.xml (scratchpad/widgets_code/gen_android.py) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/yw_a_fond" android:clipToOutline="true"><ImageView android:id="@+id/yw_fond_img" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:src="@drawable/yw_a_fond_eau" android:importantForAccessibility="no" /><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/yw_a_voile_e" android:importantForAccessibility="no" /><LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="@dimen/yw_marge">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:id="@+id/yw_titre" style="@style/YwTitre" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/yw_nom_eau" android:textColor="@color/yw_a_titre" android:textStyle="bold" android:drawableStart="@drawable/yw_a_lanterne" android:drawablePadding="5dp" />
+    <TextView android:id="@+id/yw_eau_valeur_ligne" style="@style/YwChiffre" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="15sp" android:visibility="gone" android:textColor="@color/yw_a_encre" />
+  </LinearLayout>
+  <FrameLayout android:id="@+id/yw_anneau" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:layout_marginBottom="6dp">
+    <ImageView android:id="@+id/yw_anneau_piste" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_a_piste" android:importantForAccessibility="no" />
+    <ImageView android:id="@+id/yw_anneau_arc" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_a_eau" android:importantForAccessibility="no" />
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center_horizontal">
+      <TextView android:id="@+id/yw_eau_valeur" style="@style/YwChiffre" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="15sp" android:textColor="@color/yw_a_encre" />
+      <TextView android:id="@+id/yw_eau_objectif" style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:textSize="10sp" android:textColor="@color/yw_a_discret" />
+    </LinearLayout>
+  </FrameLayout>
+  <LinearLayout android:layout_width="match_parent" android:layout_height="@dimen/yw_bouton_h" android:orientation="horizontal">
+    <ImageView android:id="@+id/yw_eau_moins" android:layout_width="@dimen/yw_bouton_h" android:layout_height="match_parent" android:background="@drawable/yw_a_bouton_doux" android:src="@drawable/yw_ic_moins" android:scaleType="center" android:contentDescription="@string/yw_retirer_verre" android:tint="@color/yw_a_encre" />
+    <TextView android:id="@+id/yw_eau_plus" style="@style/YwBouton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:layout_marginLeft="6dp" android:paddingLeft="6dp" android:paddingRight="6dp" android:text="@string/yw_plus_verre" android:textColor="@color/yw_a_sur_indigo" android:background="@drawable/yw_a_bouton" />
+  </LinearLayout>
+</LinearLayout></FrameLayout>

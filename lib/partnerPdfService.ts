@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER PDF EXPORT · Fiche partenaire a envoyer au coach
+// PARTNER PDF EXPORT : Fiche partenaire a envoyer au coach
 // ============================================
 
 import * as Print from 'expo-print';
@@ -79,7 +79,7 @@ function buildPartnerHTML(p: any, stats: {
         <div class="avatar">${escapeHtml(p.name.slice(0, 1).toUpperCase())}</div>
         <div>
           <h1>${escapeHtml(p.name)}</h1>
-          <div class="meta">${physical.join(' · ') || 'Informations physiques non renseignees'}</div>
+          <div class="meta">${physical.join(', ') || 'Informations physiques non renseignees'}</div>
           <div class="tags">
             ${archMeta ? `<span class="tag" style="background:${archMeta.color}25;color:${archMeta.color}">${escapeHtml(archMeta.label)}</span>` : ''}
             ${lvlMeta ? `<span class="tag" style="background:${lvlMeta.color}25;color:${lvlMeta.color}">${escapeHtml(lvlMeta.label)}</span>` : ''}
@@ -92,7 +92,7 @@ function buildPartnerHTML(p: any, stats: {
         <div class="kpi"><div class="num">${stats.wins}</div><div class="lbl">Victoires</div></div>
         <div class="kpi"><div class="num">${stats.losses}</div><div class="lbl">Defaites</div></div>
         <div class="kpi"><div class="num">${stats.total}</div><div class="lbl">Rounds</div></div>
-        <div class="kpi"><div class="num">${stats.winrate != null ? stats.winrate + '%' : '—'}</div><div class="lbl">Winrate</div></div>
+        <div class="kpi"><div class="num">${stats.winrate != null ? stats.winrate + '%' : 'Aucun'}</div><div class="lbl">Winrate</div></div>
       </div>
 
       ${badges ? `<h2>Badges</h2><div>${badges}</div>` : ''}
@@ -109,7 +109,7 @@ function buildPartnerHTML(p: any, stats: {
       <h2>Notes tactiques</h2>
       ${notes}
 
-      <div class="footer">Fiche generee par Yoroi · ${generatedAt}</div>
+      <div class="footer">Fiche générée par Yoroi le ${generatedAt}</div>
     </body>
     </html>
   `;

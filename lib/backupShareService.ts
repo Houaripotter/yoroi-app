@@ -7,8 +7,8 @@
 
 import * as FileSystem from 'expo-file-system/legacy';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
-import { Alert } from 'react-native';
 import logger from './security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 /**
  * Retourne le chemin du dernier backup local disponible, ou null si aucun.
@@ -38,13 +38,13 @@ export async function shareLatestBackup(): Promise<boolean> {
   try {
     const path = await getLatestLocalBackupPath();
     if (!path) {
-      Alert.alert('Aucune sauvegarde', 'Crée d\'abord une sauvegarde avant de la partager.');
+      appAlert('Aucune sauvegarde', 'Crée d\'abord une sauvegarde avant de la partager.');
       return false;
     }
 
     const canShare = await isAvailableAsync();
     if (!canShare) {
-      Alert.alert('Partage indisponible', "Le partage n'est pas disponible sur ce device.");
+      appAlert('Partage indisponible', "Le partage n’est pas disponible sur ce téléphone.");
       return false;
     }
 
@@ -57,7 +57,7 @@ export async function shareLatestBackup(): Promise<boolean> {
     return true;
   } catch (e) {
     logger.error('[BackupShare] Erreur partage:', e);
-    Alert.alert('Erreur', 'Impossible de partager la sauvegarde.');
+    appAlert('Oups', 'La sauvegarde n’a pas pu être partagée.');
     return false;
   }
 }
@@ -69,7 +69,7 @@ export async function shareBackupFile(path: string): Promise<boolean> {
   try {
     const canShare = await isAvailableAsync();
     if (!canShare) {
-      Alert.alert('Partage indisponible', "Le partage n'est pas disponible sur ce device.");
+      appAlert('Partage indisponible', "Le partage n’est pas disponible sur ce téléphone.");
       return false;
     }
     await shareAsync(path, {

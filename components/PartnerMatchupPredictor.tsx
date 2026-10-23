@@ -99,7 +99,7 @@ export const PartnerMatchupPredictor: React.FC<Props> = ({
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.header}>
-        <Text style={[styles.label, { color: barColor }]}>PREDICTEUR · AVANT DE ROULER</Text>
+        <Text style={[styles.label, { color: barColor }]}>PREDICTEUR : AVANT DE ROULER</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
           <TrendIcon size={14} color={trendColor} />
           <Text style={[styles.trendText, { color: trendColor }]}>

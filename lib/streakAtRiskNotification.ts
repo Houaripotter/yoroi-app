@@ -1,5 +1,5 @@
 // ============================================
-// STREAK AT RISK · Notification proactive
+// STREAK AT RISK : Notification proactive
 // ============================================
 // Quand un user a une streak d'entraînements consécutifs,
 // on le notifie le soir (20h) s'il n'a pas encore enregistré
@@ -95,17 +95,17 @@ export async function checkAndNotifyStreakAtRisk(): Promise<void> {
     // 6. Streak ≥ 3 + pas de séance aujourd'hui → notifier
     const messages = streak >= 20
       ? {
-          title: `🔥 Ton streak de ${streak} jours est en danger !`,
-          body: `T'as pas encore logué de séance aujourd'hui. Même 15min sauvent ta série.`,
+          title: `Ta série de ${streak} jours t’attend`,
+          body: `Pas encore de séance notée aujourd’hui. Quinze minutes suffisent pour la garder.`,
         }
       : streak >= 10
       ? {
-          title: `🔥 Ne casse pas ton streak de ${streak} jours`,
-          body: `Encore 2h pour logger une séance aujourd'hui et garder ta série.`,
+          title: `${streak} jours d’affilée`,
+          body: `Il te reste deux heures pour noter ta séance du jour.`,
         }
       : {
-          title: `⚡ ${streak} jours d'affilée, continue !`,
-          body: `Ta séance d'aujourd'hui préserve ta série. T'as le temps.`,
+          title: `${streak} jours d’affilée`,
+          body: `Ta séance du jour prolonge ta série. Tu as encore le temps.`,
         };
 
     // Pas de demande d'autorisation surprise : on n'envoie que si déjà autorisé

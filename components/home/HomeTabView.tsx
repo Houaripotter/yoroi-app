@@ -133,7 +133,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   const tabScrollRef = useRef<ScrollView>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Create default pages with translations — mémoïsé pour éviter de recréer à chaque render
+  // Create default pages with translations, mémoïsé pour éviter de recréer à chaque render
   const getDefaultPages = useCallback((): PageItem[] => [
     { id: 'home', title: t('home.title'), icon: '', description: t('home.dashboard') },
   ], [t]);

@@ -9,6 +9,7 @@ import { getClubLogoSource } from '@/lib/sports';
 import type { Training } from '@/lib/database';
 import logger from '@/lib/security/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { seancesEntre } from './compteurSeances';
 
 // ============================================
 // TYPES
@@ -90,9 +91,20 @@ function getWeekNumber(date: Date): number {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
-// Formater la date pour comparaison
+// Formater la date pour comparaison, en date LOCALE
+// 18 octobre (audit) : toISOString donnait la date UTC, la nuit (entre minuit et 2 h en France)
+// la semaine et chaque jour du calendrier etaient decales d'un jour.
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
+}
+
+// Jour d'une seance ou d'une pesee : AAAA-MM-JJ tel quel ; un horodatage avec fuseau (Z, +02:00) est lu en heure locale
+function dayOf(raw: string): string {
+  const s = String(raw ?? '');
+  if (/^\d{4}-\d{2}-\d{2}/.test(s) && !/(Z|[+-]\d{2}:?\d{2})$/.test(s)) return s.slice(0, 10);
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? s.slice(0, 10) : formatDate(d);
 }
 
 // Noms des jours en français
@@ -157,9 +169,8 @@ export function useWeekStats(targetDate?: Date) {
           percentage: 71.4,
           calendar,
           clubs: [
-            { clubName: 'Basic-Fit', count: 3 },
-            { clubName: 'MMA Factory', count: 2 },
-            { clubName: 'Yoroi Dojo', count: 1 },
+            { clubName: 'Basic-Fit Prado', count: 4 },
+            { clubName: 'First Jiu-Jitsu Academy', count: 3 },
           ],
           evolution: {
             weight: { start: 78.5, end: 76.8, change: -1.7 }
@@ -176,15 +187,13 @@ export function useWeekStats(targetDate?: Date) {
 
       // Récupérer les trainings de la semaine
       const allTrainings = await getTrainings();
-      const weekTrainings = allTrainings.filter(t => {
-        const tDate = formatDate(new Date(t.date));
-        return tDate >= startStr && tDate <= endStr;
-      });
+      // 18 octobre 2026 : meme compteur de seances que l'accueil et l'onglet Seances (sans doublon montre plus saisie)
+      const weekTrainings = seancesEntre(allTrainings, startStr, endStr);
 
       // Récupérer les poids de la semaine
       const allWeights = await getWeights();
       const weekWeights = allWeights.filter(w => {
-        const wDate = formatDate(new Date(w.date));
+        const wDate = dayOf(w.date);
         return wDate >= startStr && wDate <= endStr;
       }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -193,7 +202,7 @@ export function useWeekStats(targetDate?: Date) {
       const trainingsByDate = new Map<string, Training[]>();
 
       weekTrainings.forEach(t => {
-        const dateStr = formatDate(new Date(t.date));
+        const dateStr = String(t.date).slice(0, 10);
         activeDatesSet.add(dateStr);
 
         if (!trainingsByDate.has(dateStr)) {
@@ -345,7 +354,7 @@ function getEmojiForSport(sport: string): string {
     'vélo': '',
     'cyclisme': '',
     'natation': '',
-    'rameur': '🚣',
+    'rameur': '',
 
     // Sports collectifs
     'football': '',
@@ -357,8 +366,8 @@ function getEmojiForSport(sport: string): string {
     // Autres
     'yoga': '',
     'escalade': '',
-    'danse': '💃',
-    'marche': '🚶',
+    'danse': '',
+    'marche': '',
   };
 
   // Chercher une correspondance

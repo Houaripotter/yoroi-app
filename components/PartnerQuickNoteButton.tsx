@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER QUICK NOTE BUTTON · Note rapide via dictee iOS
+// PARTNER QUICK NOTE BUTTON : Note rapide via dictee iOS
 // ============================================
 // Ouvre un textarea plein ecran avec clavier + dictee iOS activable
 // par l'utilisateur via l'icone micro du clavier.
@@ -53,7 +53,7 @@ export const PartnerQuickNoteButton: React.FC<Props> = ({ partnerName, onSave })
         >
           <View style={[styles.box, { backgroundColor: colors.card }]}>
             <View style={styles.header}>
-              <Text style={[styles.title, { color: colors.text }]}>Note rapide · {partnerName}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Note rapide pour {partnerName}</Text>
               <TouchableOpacity onPress={() => setOpen(false)}>
                 <X size={22} color={colors.text} />
               </TouchableOpacity>

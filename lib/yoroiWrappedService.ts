@@ -1,5 +1,5 @@
 // ============================================
-// YOROI WRAPPED · Bilan annuel style Spotify
+// YOROI WRAPPED : Bilan annuel style Spotify
 // ============================================
 // Calcule les stats marquantes de l'annee ecoulee.
 // ============================================
@@ -111,8 +111,12 @@ export async function generateWrappedStats(year?: number): Promise<WrappedStats>
     const bestMonth = { name: MONTH_NAMES[bestIdx], sessions: byMonth[bestIdx] };
 
     // Avg per week
-    const weeks = Math.max(1, Math.ceil(uniqueDays > 0 ? (sortedDays.length / 7) : 0));
-    const avgPerWeek = yearTrainings.length / Math.max(1, weeks);
+    // 18 octobre (audit) : semaines ecoulees de ta premiere seance de l'annee a aujourd'hui (ou au 31 decembre),
+    // et non plus le nombre de jours actifs divise par 7 (100 seances sur 100 jours donnaient 6,7 par semaine)
+    const firstDay = sortedDays.length ? new Date(sortedDays[0]).getTime() : yearStart;
+    const endDay = Math.min(Date.now(), yearEnd);
+    const weeks = Math.max(1, Math.ceil((endDay - firstDay) / (7 * 86400000)));
+    const avgPerWeek = yearTrainings.length / weeks;
 
     // Weight evolution
     const yearWeights = weights

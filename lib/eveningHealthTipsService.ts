@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - SERVICE "DORMIR MOINS BÊTE"
+// YOROI - SERVICE CONSEILS DU SOIR
 // ============================================
 // Notifications du soir avec des conseils santé/poids
 // À 22h chaque soir pour apprendre quelque chose avant de dormir
@@ -20,7 +20,7 @@ export interface HealthTipSettings {
   days: number[]; // 0-6 (0 = dimanche)
 }
 
-interface HealthTip {
+export interface HealthTip {
   id: string;
   title: string;
   content: string;
@@ -28,229 +28,229 @@ interface HealthTip {
 }
 
 // ============================================
-// CONSEILS SANTÉ (100+ conseils)
+// CONSEILS DU SOIR (35 conseils, tutoiement, sans promesse médicale)
 // ============================================
 
-const HEALTH_TIPS: HealthTip[] = [
+export const HEALTH_TIPS: HealthTip[] = [
   // === POIDS ===
   {
-    id: 'w1',
-    title: '📊 Métabolisme',
-    content: 'Le muscle brûle 3x plus de calories que la graisse au repos. Plus tu as de masse musculaire, plus tu brûles de calories même en dormant.',
+    id: "w1",
+    title: "Le muscle dépense",
+    content: "Le muscle consomme plus d'énergie que la graisse, même au repos. Entretenir ta masse musculaire aide à garder une bonne dépense.",
     category: 'weight',
   },
   {
-    id: 'w2',
-    title: '⚖️ Fluctuations',
-    content: 'Ton poids peut varier de 1 à 2 kg dans une journée. C\'est normal ! L\'eau, les repas et le sel influencent ces variations.',
+    id: "w2",
+    title: "Poids qui bouge",
+    content: "Ton poids peut varier d'un ou deux kilos dans la journée. L'eau, le sel et les repas jouent. Regarde la tendance sur plusieurs jours.",
     category: 'weight',
   },
   {
-    id: 'w3',
-    title: '🎯 Perte de poids',
-    content: 'Une perte de poids saine est de 0,5 à 1 kg par semaine. Plus rapide = perte de muscle + effet yoyo.',
+    id: "w3",
+    title: "Rythme de perte",
+    content: "Perdre trop vite fait souvent perdre du muscle. Un rythme de 0,5 à 1 kg par semaine se tient mieux.",
     category: 'weight',
   },
   {
-    id: 'w4',
-    title: '🔥 Calories',
-    content: 'Pour perdre 1 kg de graisse, il faut un déficit de ~7700 calories. C\'est environ 1100 cal/jour pendant 1 semaine.',
+    id: "w4",
+    title: "Petit écart chaque jour",
+    content: "Un kilo de graisse représente environ 7 700 kcal. Un petit écart tenu chaque jour suffit, inutile de te priver d'un coup.",
     category: 'weight',
   },
   {
-    id: 'w5',
-    title: '💪 Muscle vs Graisse',
-    content: 'Le muscle est plus dense que la graisse. Tu peux peser pareil mais être plus mince si tu remplaces la graisse par du muscle.',
+    id: "w5",
+    title: "Même poids, autre silhouette",
+    content: "Le muscle prend moins de place que la graisse. À poids égal, ta silhouette peut changer. Ton tour de taille le montre mieux que la balance.",
     category: 'weight',
   },
   {
-    id: 'w6',
-    title: '📈 Plateau',
-    content: 'Les plateaux de poids sont normaux. Ton corps s\'adapte. Change ton entraînement ou tes calories pour relancer la progression.',
+    id: "w6",
+    title: "Plateau",
+    content: "Un plateau est normal, ton corps s'adapte. Laisse passer deux ou trois semaines avant de changer tes repas ou ton entraînement.",
     category: 'weight',
   },
   {
-    id: 'w7',
-    title: '⏰ Horaire de pesée',
-    content: 'Pèse-toi toujours au même moment (idéalement le matin, à jeun, après être allé aux toilettes) pour des données fiables.',
+    id: "w7",
+    title: "Bien te peser",
+    content: "Pèse-toi toujours dans les mêmes conditions : le matin, à jeun, après être passé aux toilettes.",
     category: 'weight',
   },
 
   // === NUTRITION ===
   {
-    id: 'n1',
-    title: '🥗 Protéines',
-    content: 'Les protéines augmentent la satiété et boostent le métabolisme de 20-30% pendant la digestion (effet thermique).',
+    id: "n1",
+    title: "Protéines",
+    content: "Les protéines calent bien et protègent ton muscle quand tu surveilles ton poids. Mets-en une source à chaque repas.",
     category: 'nutrition',
   },
   {
-    id: 'n2',
-    title: '🍽️ Taille des portions',
-    content: 'Utilise des assiettes plus petites. Notre cerveau se sent satisfait quand l\'assiette est pleine, peu importe sa taille.',
+    id: "n2",
+    title: "Taille des portions",
+    content: "Une assiette plus petite aide à te servir moins sans te sentir frustré. L'œil compte autant que l'estomac.",
     category: 'nutrition',
   },
   {
-    id: 'n3',
-    title: '🥜 Bonnes graisses',
-    content: 'Les graisses ne font pas grossir ! Les bonnes graisses (avocat, noix, huile d\'olive) sont essentielles pour les hormones.',
+    id: "n3",
+    title: "Bonnes graisses",
+    content: "Les graisses ne sont pas l'ennemi. Avocat, noix, huile d'olive : ton corps en a besoin, en quantité raisonnable.",
     category: 'nutrition',
   },
   {
-    id: 'n4',
-    title: '🍚 Glucides',
-    content: 'Les glucides ne sont pas l\'ennemi. Privilégie les glucides complexes (riz complet, patate douce) pour une énergie stable.',
+    id: "n4",
+    title: "Glucides",
+    content: "Les glucides sont ton carburant pour l'entraînement. Riz complet, patate douce, flocons d'avoine donnent une énergie plus stable.",
     category: 'nutrition',
   },
   {
-    id: 'n5',
-    title: '🕐 Jeûne intermittent',
-    content: 'Le jeûne 16/8 peut aider à perdre du poids mais n\'est pas magique. C\'est juste une façon de réduire les calories.',
+    id: "n5",
+    title: "Jeûne intermittent",
+    content: "Le jeûne 16/8 n'a rien de magique : il aide surtout à manger moins. S'il ne te convient pas, tu ne rates rien.",
     category: 'nutrition',
   },
   {
-    id: 'n6',
-    title: '🍫 Aliments plaisir',
-    content: 'Se priver à 100% mène souvent à craquer. Accorde-toi 10-20% de plaisir pour tenir sur le long terme.',
+    id: "n6",
+    title: "Petits plaisirs",
+    content: "Tout t'interdire mène souvent au craquage. Garde une petite place pour le plaisir, c'est ce qui permet de tenir.",
     category: 'nutrition',
   },
   {
-    id: 'n7',
-    title: '🥦 Fibres',
-    content: 'Les fibres augmentent la satiété et régulent la glycémie. Vise 25-35g par jour (légumes, fruits, céréales complètes).',
+    id: "n7",
+    title: "Fibres",
+    content: "Légumes, fruits, légumineuses, céréales complètes : les fibres calent et aident la digestion. Vise environ 25 à 30 g par jour.",
     category: 'nutrition',
   },
   {
-    id: 'n8',
-    title: '🧂 Sel',
-    content: 'L\'excès de sel cause de la rétention d\'eau (jusqu\'à 2 kg !). Réduis le sel transformé pour dégonfler.',
+    id: "n8",
+    title: "Sel",
+    content: "Trop de sel fait retenir de l'eau et gonfle le chiffre de la balance. Les plats préparés en contiennent beaucoup.",
     category: 'nutrition',
   },
 
   // === SOMMEIL ===
   {
-    id: 's1',
-    title: '😴 Sommeil et poids',
-    content: 'Dormir moins de 7h augmente la ghréline (hormone de la faim) et réduit la leptine (satiété). Tu manges plus sans t\'en rendre compte.',
+    id: "s1",
+    title: "Sommeil et faim",
+    content: "Après une mauvaise nuit, la faim est souvent plus forte. Bien dormir aide aussi à mieux manger.",
     category: 'sleep',
   },
   {
-    id: 's2',
-    title: '🌙 Récupération',
-    content: 'Tes muscles se réparent pendant le sommeil. Sans bon sommeil, tes entraînements sont moins efficaces.',
+    id: "s2",
+    title: "Récupérer en dormant",
+    content: "C'est pendant le sommeil que ton corps récupère de l'entraînement. Mal dormir, c'est moins profiter de tes séances.",
     category: 'sleep',
   },
   {
-    id: 's3',
-    title: '📱 Écrans',
-    content: 'La lumière bleue des écrans bloque la mélatonine. Arrête les écrans 1h avant de dormir pour mieux récupérer.',
+    id: "s3",
+    title: "Écrans",
+    content: "La lumière des écrans retarde l'endormissement. Essaie de les poser une heure avant de te coucher.",
     category: 'sleep',
   },
   {
-    id: 's4',
-    title: '🛏️ Routine',
-    content: 'Une routine de coucher régulière améliore la qualité du sommeil. Couche-toi à la même heure, même le week-end.',
+    id: "s4",
+    title: "Heures fixes",
+    content: "Te coucher et te lever à heures fixes aide ton sommeil, week-end compris.",
     category: 'sleep',
   },
   {
-    id: 's5',
-    title: '❄️ Température',
-    content: 'Une chambre fraîche (18-19°C) favorise l\'endormissement. Le corps doit baisser sa température pour dormir.',
+    id: "s5",
+    title: "Chambre fraîche",
+    content: "Une chambre autour de 18 °C aide à t'endormir. Ton corps baisse sa température pour trouver le sommeil.",
     category: 'sleep',
   },
 
   // === EXERCICE ===
   {
-    id: 'e1',
-    title: '🏋️ Musculation',
-    content: 'La musculation augmente ton métabolisme de base pendant 24-48h après l\'entraînement (effet EPOC).',
+    id: "e1",
+    title: "Musculation",
+    content: "La musculation entretient ton muscle et ta force. Elle reste utile quand ton objectif est de perdre du poids.",
     category: 'exercise',
   },
   {
-    id: 'e2',
-    title: '🚶 NEAT',
-    content: 'Les petits mouvements quotidiens (marche, escaliers, fidgeting) peuvent brûler 300-500 calories par jour.',
+    id: "e2",
+    title: "Bouger hors du sport",
+    content: "Marcher, prendre les escaliers, rester moins assis : ces petits gestes pèsent lourd dans ta dépense de la journée.",
     category: 'exercise',
   },
   {
-    id: 'e3',
-    title: '❤️ Cardio',
-    content: 'Le HIIT brûle autant de calories que le cardio classique en moitié moins de temps, et boost le métabolisme après.',
+    id: "e3",
+    title: "Fractionné",
+    content: "Le fractionné intense donne beaucoup en peu de temps. Garde-le pour une ou deux séances par semaine, il fatigue vite.",
     category: 'exercise',
   },
   {
-    id: 'e4',
-    title: '🔄 Récupération',
-    content: 'Le muscle se construit pendant le repos, pas pendant l\'entraînement. Prévois 48h de récup entre les mêmes groupes musculaires.',
+    id: "e4",
+    title: "Repos",
+    content: "Ton muscle se renforce pendant le repos. Laisse environ 48 h avant de retravailler à fond les mêmes muscles.",
     category: 'exercise',
   },
   {
-    id: 'e5',
-    title: '📅 Régularité',
-    content: '3 entraînements par semaine réguliers > 6 entraînements une semaine puis 0 la semaine suivante.',
+    id: "e5",
+    title: "Régularité",
+    content: "Trois séances chaque semaine valent mieux que six une semaine puis rien la suivante.",
     category: 'exercise',
   },
   {
-    id: 'e6',
-    title: '🎯 Progression',
-    content: 'Ajoute progressivement du poids ou des répétitions. Sans progression, pas de résultats (surcharge progressive).',
+    id: "e6",
+    title: "Progression",
+    content: "Ajoute petit à petit une répétition ou un peu de charge. C'est ce qui fait progresser sur la durée.",
     category: 'exercise',
   },
 
   // === HYDRATATION ===
   {
-    id: 'h1',
-    title: '💧 Eau et faim',
-    content: 'On confond souvent faim et soif. Bois un verre d\'eau avant de manger, tu mangeras peut-être moins.',
+    id: "h1",
+    title: "Faim ou soif",
+    content: "On confond parfois faim et soif. Bois un verre d'eau et attends un peu avant de grignoter.",
     category: 'hydration',
   },
   {
-    id: 'h2',
-    title: '🚰 Métabolisme',
-    content: 'Boire 500ml d\'eau froide peut augmenter ton métabolisme de 30% pendant 1h (thermogénèse).',
+    id: "h2",
+    title: "Boire tout au long du jour",
+    content: "Garde une bouteille à portée de main. Boire un peu toute la journée est plus simple que tout d'un coup le soir.",
     category: 'hydration',
   },
   {
-    id: 'h3',
-    title: '💦 Performances',
-    content: 'Une déshydratation de seulement 2% réduit tes performances sportives de 10-20%.',
+    id: "h3",
+    title: "Eau et entraînement",
+    content: "Même un léger manque d'eau peut te rendre moins efficace à l'entraînement. Bois avant, pendant et après.",
     category: 'hydration',
   },
   {
-    id: 'h4',
-    title: '🎨 Urine',
-    content: 'Urine jaune clair = bien hydraté. Jaune foncé = bois plus d\'eau !',
+    id: "h4",
+    title: "Repère d'hydratation",
+    content: "Des urines jaune clair indiquent en général que tu bois assez. Plus foncées, pense à boire.",
     category: 'hydration',
   },
 
   // === MENTAL ===
   {
-    id: 'm1',
-    title: '🧠 Stress',
-    content: 'Le stress chronique augmente le cortisol, qui favorise le stockage des graisses abdominales.',
+    id: "m1",
+    title: "Stress",
+    content: "Le stress qui dure pèse sur ton sommeil et ton appétit. Une marche ou quelques respirations lentes aident à redescendre.",
     category: 'mental',
   },
   {
-    id: 'm2',
-    title: '📝 Suivi',
-    content: 'Les personnes qui trackent leur alimentation et leur poids perdent 2x plus de poids en moyenne.',
+    id: "m2",
+    title: "Suivi",
+    content: "Noter ton poids et tes repas t'aide à voir ce qui marche vraiment. Le suivi rend tes progrès visibles.",
     category: 'mental',
   },
   {
-    id: 'm3',
-    title: '🎯 Objectifs',
-    content: 'Des objectifs SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporels) augmentent tes chances de succès de 40%.',
+    id: "m3",
+    title: "Objectifs",
+    content: "Un objectif précis et daté se tient mieux qu'un vague souhait. Par exemple : trois séances par semaine pendant un mois.",
     category: 'mental',
   },
   {
-    id: 'm4',
-    title: '🏆 Habitudes',
-    content: 'Il faut en moyenne 66 jours pour créer une habitude. Sois patient, ça devient automatique après.',
+    id: "m4",
+    title: "Habitudes",
+    content: "Une habitude met souvent plusieurs semaines à s'installer. Sois patient, elle finit par devenir naturelle.",
     category: 'mental',
   },
   {
-    id: 'm5',
-    title: '💪 Motivation',
-    content: 'La motivation fluctue, les habitudes restent. Construis des routines plutôt que de compter sur la motivation.',
+    id: "m5",
+    title: "Motivation",
+    content: "La motivation va et vient, les habitudes restent. Mise sur une routine simple plutôt que sur l'envie du moment.",
     category: 'mental',
   },
 ];
@@ -353,7 +353,7 @@ export const scheduleHealthTipNotifications = async (): Promise<boolean> => {
     // Créer le canal Android
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-        name: 'Dormir Moins Bête',
+        name: 'Conseils du soir',
         importance: Notifications.AndroidImportance.DEFAULT,
         description: 'Conseils santé du soir',
       });
@@ -386,7 +386,7 @@ export const scheduleHealthTipNotifications = async (): Promise<boolean> => {
 
       const notifId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: `🌙 ${tip.title}`,
+          title: `${tip.title}`,
           body: tip.content,
           data: { 
             type: 'health_tip', 

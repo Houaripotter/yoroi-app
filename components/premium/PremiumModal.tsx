@@ -1,120 +1,106 @@
 /**
- * PremiumModal — Yoroi Freemium
+ * PremiumModal, Yoroi Freemium (refonte v2)
  *
- * Popup bottom-sheet réutilisable pour présenter une fonctionnalité premium.
- * S'affiche à chaque visite de la section concernée, dismissable via X.
+ * Feuille du bas reutilisable pour presenter une fonctionnalite premium.
+ * Fermable par la croix. API inchangee (gradientColors conserve, non utilise).
  */
 
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { X, Star, ArrowRight, Check } from 'lucide-react-native';
+import { Modal, View, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
+import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
 import type { LucideIcon } from 'lucide-react-native';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { CheckMark, GoldVein, PerkIcon, PremiumBadge, PremiumButton, PremiumSeal } from './premiumKit';
 
 interface PremiumModalProps {
   visible: boolean;
   onClose: () => void;
-  /** Icône lucide affichée dans le header */
+  /** Icone affichee dans l'en-tete */
   Icon: LucideIcon;
-  /** Couleurs du dégradé header [haut, milieu, bas] */
+  /** Conserve pour compatibilite (le design v2 utilise l'or) */
   gradientColors: [string, string, string];
   title: string;
   description: string;
-  /** Liste de 3-4 avantages concrets */
+  /** Liste de 3 ou 4 avantages concrets */
   features: string[];
 }
 
-export function PremiumModal({
-  visible,
-  onClose,
-  Icon,
-  gradientColors,
-  title,
-  description,
-  features,
-}: PremiumModalProps) {
+export function PremiumModal({ visible, onClose, Icon, title, description, features }: PremiumModalProps) {
+  const insets = useSafeAreaInsets();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Fermer" />
+        <View style={[styles.sheet, { backgroundColor: c.background, paddingBottom: insets.bottom + 16 }]}>
+          <View style={[styles.grabber, { backgroundColor: c.border }]} />
 
-          {/* ── Header gradient */}
-          <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.header}
-          >
-            {/* Bouton fermer */}
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
-              <X size={16} color="#FFFFFF" strokeWidth={2.5} />
-            </TouchableOpacity>
-
-            {/* Badge */}
-            <View style={styles.badge}>
-              <Star size={10} color="#FBBF24" fill="#FBBF24" strokeWidth={0} />
-              <Text style={styles.badgeText}>PREMIUM</Text>
-            </View>
-
-            {/* Icône centrale */}
-            <View style={styles.iconCircle}>
-              <Icon size={28} color="#FFFFFF" strokeWidth={1.8} />
-            </View>
-
-            <Text style={styles.headerTitle}>{title}</Text>
-            <Text style={styles.headerDesc}>{description}</Text>
-          </LinearGradient>
-
-          {/* ── Avantages */}
-          <View style={styles.body}>
-            <Text style={styles.bodyLabel}>Ce que tu débloque</Text>
-            {features.map((feat, i) => (
-              <View key={i} style={styles.featureRow}>
-                <View style={styles.checkCircle}>
-                  <Check size={11} color="#F59E0B" strokeWidth={3} />
-                </View>
-                <Text style={styles.featureText}>{feat}</Text>
-              </View>
-            ))}
+          <View style={styles.topRow}>
+            <PremiumBadge />
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer"
+              hitSlop={6}
+              style={({ pressed }) => [styles.close, { backgroundColor: c.surface, borderColor: c.divider, transform: [{ scale: pressed ? 0.94 : 1 }] }]}
+            >
+              <PerkIcon name="close" color={c.ink} size={18} />
+            </Pressable>
           </View>
 
-          {/* ── CTA */}
-          <View style={styles.ctaWrapper}>
-            <TouchableOpacity
-              activeOpacity={0.85}
+          <Animated.View entering={ENTREE} style={[styles.hero, { backgroundColor: c.surface, borderColor: c.goldLight }]}>
+            <View style={styles.heroHead}>
+              <View style={[styles.iconTile, { backgroundColor: c.ink }]}>
+                <Icon size={26} color={c.goldLight} strokeWidth={2} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Ink size={24} weight="black" tight>
+                  {title}
+                </Ink>
+              </View>
+              <PremiumSeal size={50} />
+            </View>
+            <Ink size={15} weight="medium" color={c.textSecondary} style={{ marginTop: 12, lineHeight: 21 }}>
+              {description}
+            </Ink>
+            <GoldVein style={{ marginVertical: 12 }} />
+            <Ink size={14} weight="extraBold" color={c.textSecondary} style={{ marginBottom: 8 }}>
+              Ce que tu débloques
+            </Ink>
+            <View style={{ gap: 10 }}>
+              {features.map((feat, i) => (
+                <View key={i} style={styles.featureRow}>
+                  <View style={[styles.check, { backgroundColor: c.goldTint }]}>
+                    <CheckMark color={c.goldDeep} size={14} />
+                  </View>
+                  <Ink size={14} weight="bold" style={{ flex: 1 }}>
+                    {feat}
+                  </Ink>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
+          <View style={styles.cta}>
+            <PremiumButton
+              label="Passer Premium"
               onPress={() => {
                 onClose();
                 router.push('/paywall' as never);
               }}
-              style={styles.ctaTouchable}
-            >
-              <LinearGradient
-                colors={['#F59E0B', '#EF4444']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.cta}
-              >
-                <Star size={15} color="#FFF" fill="#FFF" strokeWidth={0} />
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={styles.ctaText}>Passer Premium</Text>
-                  <Text style={styles.ctaSubtext}>Essai gratuit disponible</Text>
-                </View>
-                <ArrowRight size={15} color="#FFF" strokeWidth={2.5} />
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
-              <Text style={styles.skipText}>Non merci, continuer gratuitement</Text>
-            </TouchableOpacity>
+            />
+            <Pressable onPress={onClose} accessibilityRole="button" style={styles.skip} hitSlop={8}>
+              <Ink size={14} weight="bold" color={c.textMuted}>
+                Non merci, continuer gratuitement
+              </Ink>
+            </Pressable>
           </View>
-
         </View>
       </View>
     </Modal>
@@ -124,152 +110,72 @@ export function PremiumModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.60)',
+    backgroundColor: 'rgba(29,32,41,0.45)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    overflow: 'hidden',
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
-  header: {
-    paddingTop: 28,
-    paddingBottom: 26,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    gap: 10,
+  grabber: {
+    alignSelf: 'center',
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    marginBottom: 10,
   },
-  closeBtn: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badge: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  close: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.28)',
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 1.2,
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.28)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    letterSpacing: -0.4,
-    lineHeight: 28,
+  hero: {
+    borderRadius: 28,
+    borderWidth: 1,
+    padding: 18,
   },
-  headerDesc: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.75)',
-    textAlign: 'center',
-    lineHeight: 18,
-    maxWidth: 290,
+  heroHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  body: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 14,
-    gap: 10,
-  },
-  bodyLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#9CA3AF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 4,
+  iconTile: {
+    width: 52,
+    height: 52,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  checkCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(245,158,11,0.12)',
+  check: {
+    width: 26,
+    height: 26,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
-  },
-  featureText: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#374151',
-    flex: 1,
-  },
-  ctaWrapper: {
-    paddingHorizontal: 16,
-    paddingBottom: 36,
-    paddingTop: 4,
-    gap: 10,
-    alignItems: 'center',
-  },
-  ctaTouchable: {
-    width: '100%',
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.40,
-    shadowRadius: 12,
-    elevation: 7,
   },
   cta: {
-    flexDirection: 'row',
+    marginTop: 16,
+    gap: 6,
+  },
+  skip: {
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 24,
-  },
-  ctaText: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.3,
-  },
-  ctaSubtext: {
-    fontSize: 10.5,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.85)',
-    marginTop: 1,
-  },
-  skipText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#9CA3AF',
-    textDecorationLine: 'underline',
-    textAlign: 'center',
   },
 });

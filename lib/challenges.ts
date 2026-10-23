@@ -98,7 +98,7 @@ export const CHALLENGES: Record<ChallengeType, Challenge> = {
     description: 'Prendre une photo transformation',
     target: 1,
     xpReward: 50,
-    icon: '📸',
+    icon: '',
     color: '#8B5CF6',
   },
 };

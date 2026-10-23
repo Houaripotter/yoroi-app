@@ -150,7 +150,7 @@ index abc1234..def5678 100644
  const fs = require('fs');
 -const glob = require('glob');
  const path = require('path');
-@@ -57,7 +56,7 @@
+@@ -57,2 +56,2 @@
    codegenLog('Searching for podspec in the project dependencies.', true);
 -  const podspecs = glob.sync('*.podspec', {cwd: dependencyPath});
 +  const podspecs = fs.readdirSync(dependencyPath).filter(f => f.endsWith('.podspec'));

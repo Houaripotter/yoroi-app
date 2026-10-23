@@ -1,46 +1,94 @@
-// ============================================
-// YOROI - CONFIGURATION ZONES CARDIAQUES
-// ============================================
-// Chaque zone affichée avec ses deux bornes min-max (style Apple Santé).
-// L'utilisateur saisit le MAX de chaque zone.
-// Le MIN de chaque zone = MAX de la zone précédente (automatique).
-
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Heart, ChevronLeft, Check, Calculator, BookOpen, Download } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
+/**
+ * Zones cardiaques (refonte v2) : tes 5 zones avec bornes min et max modifiables,
+ * import de ta FC max depuis Apple Sante, calcul depuis ta FC max (63, 71, 79, 90 %),
+ * bande coloree qui montre les zones, guides par marque. Enregistrement dans tes reglages.
+ * Vague 14 : reprend l'ancien ecran /heart-zones (redirige ici avec ?mode=repos) : methode
+ * « Avec mon cœur au repos » (formule de Karvonen), age et frequence au repos pre-remplis.
+ */
+import React, { useEffect, useState } from 'react';
+import { KeyboardAvoidingView, Platform, TextInput, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Accordion, ActionRow, CardBox, GlassBox, Label, Notice, PeriodSegments, S, SmallButton } from '@/components/yoroi/v2/sante/ui';
 import { getUserSettings, saveUserSettings } from '@/lib/storage';
+import { markAppleZonesNoticeShown } from '@/lib/appleZonesSync';
+import { originOnSave, shouldShowAppleNotice } from '@/lib/v2/seances/appleZonesSync';
+import type { ZonesMeta } from '@/lib/v2/seances/appleZonesSync';
+import type { LowerBounds } from '@/lib/v2/seances/workoutMath';
 import { getEffectiveHRZones, calcZonesFromMaxHR } from '@/lib/hrZones';
-import { getHeartZonesDataNative } from '@/lib/yoroiHealthKit';
+import { lowerBounds, zonesFromLowers } from '@/lib/v2/seances/workoutMath';
+import { getApplePreferredHeartRateZonesNative, getHeartZonesDataNative } from '@/lib/yoroiHealthKit';
+import { parseAppleZones, roundedLowers } from '@/lib/v2/seances/appleExtras';
+import { isRunningInExpoGo } from '@/lib/healthKit.wrapper';
+import { getLatestHealthData, getProfile } from '@/lib/database';
+import { daysDiff, todayIso } from '@/lib/v2/progres/format';
+import { INTENSITES } from '@/lib/v2/intensite';
 
-const ZONE_COLORS = ['#3B82F6', '#22C55E', '#EAB308', '#F97316', '#EF4444'] as const;
-const ZONE_NAMES  = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'] as const;
+// Vague 32 : echelle d'intensite commune (lib/v2/intensite.ts)
+const ZONE_COLORS = [INTENSITES[0].fill, INTENSITES[1].fill, INTENSITES[2].fill, INTENSITES[3].fill, INTENSITES[4].fill] as const;
+const ZONE_NAMES = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'] as const;
 const ZONE_LABELS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Max'] as const;
+const ZONE_HINTS = ['Footing très léger, retour au calme', 'Long, facile, tu peux parler', 'Soutenu, phrases courtes', 'Dur, quelques mots seulement', 'Sprint, à fond'] as const;
 
-type CalcMode = 'manual' | 'fcmax';
+type CalcMode = 'manual' | 'fcmax' | 'repos';
+
+/** Bornes de Karvonen : repos + (max moins repos) x intensite, de 50 a 90 % */
+const KARVONEN = [50, 60, 70, 80, 90] as const;
+
+function BoundInput({ value, onChange, color, label }: { value: string; onChange: (s: string) => void; color: string; label: string }) {
+  return (
+    <TextInput
+      value={value}
+      onChangeText={(t) => onChange(t.replace(/[^0-9]/g, ''))}
+      keyboardType="number-pad"
+      maxLength={3}
+      placeholder="0"
+      placeholderTextColor={S.muted}
+      accessibilityLabel={label}
+      style={{ width: 64, height: 48, borderRadius: 14, backgroundColor: '#F7F5F0', borderWidth: 1.5, borderColor: color, textAlign: 'center', fontSize: 18, fontWeight: '800', color: S.ink }}
+    />
+  );
+}
+
+/** Bande des 5 zones, a l'echelle des bpm */
+function ZoneBand({ bounds }: { bounds: { min: number; max: number }[] }) {
+  // Échelle de gauche (zone basse) à droite (zone haute), même sans valeur saisie.
+  const mins = bounds.map((b) => b.min).filter((v) => v > 0);
+  const maxs = bounds.map((b) => b.max).filter((v) => Number.isFinite(v) && v > 0);
+  const lo = mins.length ? Math.max(40, Math.min(...mins) - 10) : 90;
+  let hi = maxs.length ? Math.max(...maxs) + 15 : 200;
+  if (hi < lo + 30) hi = lo + 60;
+  const span = hi - lo || 1;
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', height: 26, borderRadius: 13, overflow: 'hidden', gap: 2 }}>
+        {bounds.map((b, i) => {
+          const from = Math.max(lo, b.min || lo);
+          const to = i === 4 ? hi : Math.max(from, b.max);
+          return <View key={i} style={{ flex: Math.max(0.5, (to - from) / span), backgroundColor: ZONE_COLORS[i], alignItems: 'center', justifyContent: 'center' }}><Ink size={11} weight="black" color={INTENSITES[i].onFill}>{`Z${i + 1}`}</Ink></View>;
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Ink size={11} weight="bold" color={S.muted}>
+          {`${lo} bpm`}
+        </Ink>
+        <Ink size={11} weight="bold" color={S.muted}>
+          {`${hi} bpm`}
+        </Ink>
+      </View>
+    </View>
+  );
+}
 
 export default function HeartZonesSettingsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-
-  // Bornes max (seuils entre zones)
+  const params = useLocalSearchParams<{ mode?: string }>();
   const [z1max, setZ1max] = useState('');
   const [z2max, setZ2max] = useState('');
   const [z3max, setZ3max] = useState('');
   const [z4max, setZ4max] = useState('');
-  // Bornes min indépendantes (modifiables librement)
   const [z1min, setZ1min] = useState('0');
   const [z2min, setZ2min] = useState('');
   const [z3min, setZ3min] = useState('');
@@ -49,598 +97,386 @@ export default function HeartZonesSettingsScreen() {
   const [saved, setSaved] = useState(false);
   const [effectiveSource, setEffectiveSource] = useState<'custom' | 'age' | 'default'>('default');
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<string | null>(null);
-
-  // Mode de calcul
-  const [calcMode, setCalcMode] = useState<CalcMode>('manual');
-
-  // Calcul depuis FCmax (formule Apple : 63/71/79/90%)
+  const [importResult, setImportResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [calcMode, setCalcMode] = useState<CalcMode>(params.mode === 'repos' ? 'repos' : 'manual');
   const [fcmax, setFcmax] = useState('');
+  const [restHr, setRestHr] = useState('');
+  const [karvMax, setKarvMax] = useState('');
+  const [karvSources, setKarvSources] = useState<{ age: boolean; rest: boolean }>({ age: false, rest: false });
+  // 14 octobre 2026 (ios27) : origine de tes zones (Apple Sante automatiques, a la main, estimees)
+  const [meta, setMeta] = useState<ZonesMeta | null>(null);
+  const [loadedLowers, setLoadedLowers] = useState<LowerBounds | null>(null);
+  const [appleNotice, setAppleNotice] = useState(false);
 
   useEffect(() => {
-    getEffectiveHRZones().then(effective => {
-      setZ1max(String(effective.z1max));
-      setZ2max(String(effective.z2max));
-      setZ3max(String(effective.z3max));
-      setZ4max(String(effective.z4max));
-      // Mins : valeurs sauvegardées ou dérivées de la cascade (rétrocompat)
-      setZ1min(String(effective.z1min ?? 0));
-      setZ2min(String(effective.z2min ?? effective.z1max));
-      setZ3min(String(effective.z3min ?? effective.z2max));
-      setZ4min(String(effective.z4min ?? effective.z3max));
-      setZ5min(String(effective.z5min ?? effective.z4max));
-      setEffectiveSource(effective.source);
+    getUserSettings()
+      .then((st) => {
+        const m = st.heartRateZonesMeta ?? null;
+        setMeta(m);
+        if (shouldShowAppleNotice(m)) {
+          setAppleNotice(true);
+          markAppleZonesNoticeShown();
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Pre-remplissage de la methode « cœur au repos » : age du profil et frequence au repos de la montre
+  useEffect(() => {
+    (async () => {
+      try {
+        const [profile, hr] = await Promise.all([getProfile(), getLatestHealthData('heart_rate_resting').catch(() => null)]);
+        const a = profile?.birth_date ? Math.floor(daysDiff(profile.birth_date.slice(0, 10), todayIso()) / 365.25) : profile?.age;
+        const ageOk = !!(a && a > 10 && a < 100);
+        const restOk = !!(hr && hr.value > 30 && hr.value < 120);
+        setKarvMax(String(ageOk ? 220 - (a as number) : 190));
+        setRestHr(String(restOk ? Math.round((hr as { value: number }).value) : 60));
+        setKarvSources({ age: ageOk, rest: restOk });
+      } catch {
+        setKarvMax('190');
+        setRestHr('60');
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    getEffectiveHRZones().then((e) => {
+      // Affichage comme Apple : chaque zone finit un battement sous la suivante (bornes basses inchangees)
+      const z = zonesFromLowers(lowerBounds(e), e.z1min ?? 0);
+      setZ1max(String(z.z1max));
+      setZ2max(String(z.z2max));
+      setZ3max(String(z.z3max));
+      setZ4max(String(z.z4max));
+      setZ1min(String(z.z1min));
+      setZ2min(String(z.z2min));
+      setZ3min(String(z.z3min));
+      setZ4min(String(z.z4min));
+      setZ5min(String(z.z5min));
+      setEffectiveSource(e.source);
+      setLoadedLowers(lowerBounds(e));
     });
   }, []);
 
-  // Calcul depuis FCmax : formule Apple Fitness (63/71/79/90% de FCmax)
-  const handleFcmaxCalc = () => {
-    const max = parseInt(fcmax);
-    if (!max || max < 100 || max > 230) return;
-    const zones = calcZonesFromMaxHR(max);
-    setZ1min('0');
-    setZ1max(String(zones.z1max));
-    setZ2min(String(zones.z1max));
-    setZ2max(String(zones.z2max));
-    setZ3min(String(zones.z2max));
-    setZ3max(String(zones.z3max));
-    setZ4min(String(zones.z3max));
-    setZ4max(String(zones.z4max));
-    setZ5min(String(zones.z4max));
+  // 14 octobre 2026 : bornes ecrites comme Apple, sans chevauchement (zone suivante = un battement plus haut)
+  const applyLowers = (lb: [number, number, number, number], z1Min = 0) => {
+    const z = zonesFromLowers(lb, z1Min);
+    setZ1min(String(z.z1min));
+    setZ1max(String(z.z1max));
+    setZ2min(String(z.z2min));
+    setZ2max(String(z.z2max));
+    setZ3min(String(z.z3min));
+    setZ3max(String(z.z3max));
+    setZ4min(String(z.z4min));
+    setZ4max(String(z.z4max));
+    setZ5min(String(z.z5min));
     setCalcMode('manual');
   };
 
-  const fcmaxReady = parseInt(fcmax) >= 100 && parseInt(fcmax) <= 230;
+  const applyMax = (max: number, restMin?: number) => {
+    const z = calcZonesFromMaxHR(max);
+    applyLowers([z.z1max, z.z2max, z.z3max, z.z4max], restMin ?? 0);
+  };
 
-  // Importer FC repos + FC max depuis Apple Santé → calculer zones identiques
+  const restN = parseInt(restHr, 10);
+  const karvMaxN = parseInt(karvMax, 10);
+  const karvReady = restN >= 30 && restN <= 110 && karvMaxN >= 120 && karvMaxN <= 230 && karvMaxN > restN;
+  const karv = (p: number) => Math.round(restN + (karvMaxN - restN) * (p / 100));
+
+  const handleKarvonen = () => {
+    if (!karvReady) return;
+    tap('medium');
+    const [a, b, c2, d, e] = KARVONEN.map(karv);
+    applyLowers([b, c2, d, e], a);
+  };
+
+  const fcmaxN = parseInt(fcmax, 10);
+  const fcmaxReady = fcmaxN >= 100 && fcmaxN <= 230;
+
+  const handleFcmaxCalc = () => {
+    if (!fcmaxReady) return;
+    tap('medium');
+    applyMax(fcmaxN);
+  };
+
+  // 14 octobre 2026 (zones_apple) : l'import ecrit et ENREGISTRE les zones (avant, il remplissait seulement
+  // les cases sans enregistrer ; avec une FC max de 190, les cases ne bougeaient meme pas : rien ne se voyait).
+  const saveLowers = async (lb: [number, number, number, number], z1Min: number, m: ZonesMeta) => {
+    const z = zonesFromLowers(lb, z1Min);
+    applyLowers(lb, z1Min);
+    await saveUserSettings({ heartRateZones: { ...z }, heartRateZonesMeta: m });
+    setMeta(m);
+    setLoadedLowers(lowerBounds(z));
+    setEffectiveSource('custom');
+  };
+
   const handleImportFromApple = async () => {
     setImporting(true);
     setImportResult(null);
     try {
-      const data = await getHeartZonesDataNative();
-      if (!data || (data.restingHR === 0 && data.maxHR === 0)) {
-        setImportResult('Aucune donnée FC trouvée dans Apple Santé.');
+      // 1. iOS 27 : les zones exactes de Sante (manuelles si tu en as saisi, sinon automatiques)
+      const pref = await getApplePreferredHeartRateZonesNative();
+      const az = parseAppleZones(pref);
+      if (pref.ios27 && az) {
+        const lb = roundedLowers(az.lowers);
+        const at = new Date().toISOString();
+        await saveLowers(lb, 0, { origin: 'apple', updatedAt: at, appleSource: az.source, appleCheckedAt: at, noticeShown: true });
+        tap('success');
+        setImportResult({ ok: true, text: `Zones d’Apple importées et enregistrées : zone 2 dès ${lb[0]}, zone 3 dès ${lb[1]}, zone 4 dès ${lb[2]}, zone 5 dès ${lb[3]} bpm (${az.source === 'user' ? 'tes zones manuelles' : 'zones automatiques'} de Santé).` });
         return;
       }
-      const fcr  = data.restingHR > 0 ? data.restingHR : 60;
+      // 2. Avant iOS 27 : FC max lue dans Sante, zones estimees
+      const data = await getHeartZonesDataNative();
+      if (!data) {
+        setImportResult({ ok: false, text: isRunningInExpoGo ? "Dans Expo Go, Apple Santé n'est pas lisible. Essaie dans l'app installée." : 'Lecture d’Apple Santé impossible dans cette version de l’app. Installe la dernière version, puis réessaie.' });
+        return;
+      }
       const fmax = data.maxHR > 0 ? data.maxHR : 0;
       if (fmax < 100) {
-        setImportResult('FC max introuvable. Entre ta FC max manuellement via "Depuis ma FC max".');
+        setImportResult({ ok: false, text: 'Apple Santé ne me donne aucune fréquence cardiaque. Vérifie l’accès : Réglages de l’iPhone, Santé, Accès aux données et appareils, Yoroi, active Fréquence cardiaque. Sinon, entre ta FC max avec « Ma FC max ».' });
         return;
       }
-      const zones = calcZonesFromMaxHR(fmax);
-      setZ1min(String(fcr));
-      setZ1max(String(zones.z1max));
-      setZ2min(String(zones.z1max));
-      setZ2max(String(zones.z2max));
-      setZ3min(String(zones.z2max));
-      setZ3max(String(zones.z3max));
-      setZ4min(String(zones.z3max));
-      setZ4max(String(zones.z4max));
-      setZ5min(String(zones.z4max));
-      setImportResult(`FC max ${fmax} bpm importée · zones identiques à Apple Watch. Ajuste si tu as personnalisé tes zones.`);
-      setCalcMode('manual');
-    } catch {
-      setImportResult('Erreur lors de la lecture Apple Santé.');
+      const fcr = data.restingHR > 0 ? data.restingHR : 0;
+      const z = calcZonesFromMaxHR(fmax);
+      const lb: [number, number, number, number] = [z.z1max, z.z2max, z.z3max, z.z4max];
+      // Estimation : les zones exactes d'Apple la remplaceront d'elles memes des qu'elles seront lisibles (iOS 27)
+      await saveLowers(lb, fcr, { origin: 'estimee', updatedAt: new Date().toISOString() });
+      tap('success');
+      const why = pref.missing ? 'Installe la dernière version de l’app pour lire les zones exactes d’Apple.' : pref.ios27 ? 'Santé ne m’a pas donné tes zones.' : 'Les zones exactes d’Apple ne sont lisibles qu’à partir d’iOS 27.';
+      setImportResult({ ok: true, text: `FC max de ${fmax} bpm lue dans Santé (ton record des 6 derniers mois). Zones estimées et enregistrées : zone 2 dès ${lb[0]}, zone 3 dès ${lb[1]}, zone 4 dès ${lb[2]}, zone 5 dès ${lb[3]} bpm. ${why}` });
+    } catch (e) {
+      setImportResult({ ok: false, text: `Erreur pendant la lecture d’Apple Santé : ${String((e as Error)?.message ?? e)}` });
     } finally {
       setImporting(false);
     }
   };
 
-  const v1min = parseInt(z1min) || 0;
-  const v1 = parseInt(z1max) || 0;
-  const v2min = parseInt(z2min) || 0;
-  const v2 = parseInt(z2max) || 0;
-  const v3min = parseInt(z3min) || 0;
-  const v3 = parseInt(z3max) || 0;
-  const v4min = parseInt(z4min) || 0;
-  const v4 = parseInt(z4max) || 0;
-  const v5min = parseInt(z5min) || 0;
+  const v1min = parseInt(z1min, 10) || 0;
+  const v1 = parseInt(z1max, 10) || 0;
+  const v2min = parseInt(z2min, 10) || 0;
+  const v2 = parseInt(z2max, 10) || 0;
+  const v3min = parseInt(z3min, 10) || 0;
+  const v3 = parseInt(z3max, 10) || 0;
+  const v4min = parseInt(z4min, 10) || 0;
+  const v4 = parseInt(z4max, 10) || 0;
+  const v5min = parseInt(z5min, 10) || 0;
 
-  // Chaque zone doit avoir min < max, et toutes les zones doivent être définies
-  const isValid = v1 > 40 && v2 > 40 && v3 > 40 && v4 > 40
-    && v1min < v1 && v2min < v2 && v3min < v3 && v4min < v4
-    && v5min < 230 && v4 < 230;
+  const isValid = v1 > 40 && v2 > 40 && v3 > 40 && v4 > 40 && v1min < v1 && v2min < v2 && v3min < v3 && v4min < v4 && v5min < 230 && v4 < 230;
 
-  // Les 5 zones entièrement éditables (min ET max)
   const zones = [
-    { idx: 0, name: ZONE_NAMES[0], label: ZONE_LABELS[0], color: ZONE_COLORS[0],
-      minVal: z1min, maxVal: z1max, setMin: setZ1min, setMax: setZ1max, isLastZone: false },
-    { idx: 1, name: ZONE_NAMES[1], label: ZONE_LABELS[1], color: ZONE_COLORS[1],
-      minVal: z2min, maxVal: z2max, setMin: setZ2min, setMax: setZ2max, isLastZone: false },
-    { idx: 2, name: ZONE_NAMES[2], label: ZONE_LABELS[2], color: ZONE_COLORS[2],
-      minVal: z3min, maxVal: z3max, setMin: setZ3min, setMax: setZ3max, isLastZone: false },
-    { idx: 3, name: ZONE_NAMES[3], label: ZONE_LABELS[3], color: ZONE_COLORS[3],
-      minVal: z4min, maxVal: z4max, setMin: setZ4min, setMax: setZ4max, isLastZone: false },
-    { idx: 4, name: ZONE_NAMES[4], label: ZONE_LABELS[4], color: ZONE_COLORS[4],
-      minVal: z5min, maxVal: '∞', setMin: setZ5min, setMax: null, isLastZone: true },
+    { minVal: z1min, maxVal: z1max, setMin: setZ1min, setMax: setZ1max as ((s: string) => void) | null },
+    { minVal: z2min, maxVal: z2max, setMin: setZ2min, setMax: setZ2max },
+    { minVal: z3min, maxVal: z3max, setMin: setZ3min, setMax: setZ3max },
+    { minVal: z4min, maxVal: z4max, setMin: setZ4min, setMax: setZ4max },
+    { minVal: z5min, maxVal: '', setMin: setZ5min, setMax: null },
+  ];
+  const bounds = [
+    { min: v1min, max: v1 },
+    { min: v2min, max: v2 },
+    { min: v3min, max: v3 },
+    { min: v4min, max: v4 },
+    { min: v5min, max: Infinity },
   ];
 
   const handleSave = async () => {
     if (!isValid) return;
-    await saveUserSettings({
-      heartRateZones: {
-        z1min: v1min, z1max: v1,
-        z2min: v2min, z2max: v2,
-        z3min: v3min, z3max: v3,
-        z4min: v4min, z4max: v4,
-        z5min: v5min,
-      },
-    });
+    const hz = { z1min: v1min, z1max: v1, z2min: v2min, z2max: v2, z3min: v3min, z3max: v3, z4min: v4min, z4max: v4, z5min: v5min };
+    // 14 octobre 2026 (ios27) : tes valeurs a toi ne seront plus jamais remplacees par Apple ; si tu
+    // enregistres les zones d'Apple sans les changer, elles restent « Zones Apple Santé »
+    const origin = originOnSave(lowerBounds(hz), meta, loadedLowers);
+    const m: ZonesMeta = meta && origin === meta.origin ? meta : { origin, updatedAt: new Date().toISOString(), noticeShown: meta?.noticeShown };
+    await saveUserSettings({ heartRateZones: hz, heartRateZonesMeta: m });
+    tap('success');
     setSaved(true);
-    setTimeout(() => router.back(), 900);
+    // navigation directe : le retour se fait tout de suite, la vibration de reussite suffit
+    router.back();
   };
-
-  const bg = isDark ? '#000000' : '#F2F2F7';
-  const cardBg = isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF';
-  const divider = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-  const inputBg = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)';
-  const inputBorder = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.10)';
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={[styles.container, { backgroundColor: bg }]}>
+      <DetailScreen
+        title="Zones cardiaques"
+        subtitle="Tes 5 zones en battements par minute"
+        footer={<SmallButton label={saved ? 'Enregistré' : 'Enregistrer mes zones'} tone="red" icon="check" disabled={!isValid || saved} onPress={handleSave} />}
+      >
+        <GlassBox style={{ gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: effectiveSource === 'custom' ? S.moss : S.gold }} />
+            <Ink size={13} weight="extraBold" color={S.ink2} style={{ flex: 1 }}>
+              {effectiveSource === 'custom' && meta?.origin === 'apple' ? `Zones Apple Santé actives (${meta.appleSource === 'user' ? 'tes zones manuelles de Santé' : 'automatiques'}), mises à jour toutes seules` : effectiveSource === 'custom' && meta?.origin === 'estimee' ? 'Zones estimées depuis ta FC max Apple Santé' : effectiveSource === 'custom' ? 'Tes zones personnalisées sont actives' : effectiveSource === 'age' ? 'Zones calculées depuis ta FC max. Personnalise-les ci-dessous.' : 'Zones par défaut. Personnalise-les ci-dessous.'}
+            </Ink>
+          </View>
+          <ZoneBand bounds={bounds} />
+          {appleNotice ? <Ink size={12} weight="bold" color={S.ink2}>Tes zones viennent d’Apple Santé.</Ink> : null}
+        </GlassBox>
 
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: bg }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-            <ChevronLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Zones cardiaques</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        {Platform.OS === 'ios' ? (
+          <>
+            <CardBox>
+              <ActionRow first icon="download" title={importing ? 'Lecture en cours' : 'Importer mes zones depuis Apple Santé'} sub="Les zones exactes de Santé avec iOS 27, sinon une estimation depuis ta FC max. Enregistré tout de suite" onPress={handleImportFromApple} busy={importing} color="#7B3B63" tint="#F0E1EA" />
+            </CardBox>
+            {importResult ? <Notice tone={importResult.ok ? 'good' : 'bad'} text={importResult.text} /> : null}
+          </>
+        ) : null}
 
-        <ScrollView
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Bandeau source */}
-          {effectiveSource !== 'custom' ? (
-            <View style={[styles.banner, { backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.28)' }]}>
-              <Heart size={15} color="#F59E0B" />
-              <Text style={[styles.bannerText, { color: colors.textMuted }]}>
-                {effectiveSource === 'age'
-                  ? 'Zones calculées depuis ta FC max (formule Apple). '
-                  : 'Zones par défaut. '}
-                <Text style={{ fontWeight: '700', color: colors.text }}>Personnalise ci-dessous.</Text>
-              </Text>
+        <Label>Méthode</Label>
+        <PeriodSegments
+          items={[
+            { key: 'manual' as CalcMode, label: 'Mes valeurs' },
+            { key: 'fcmax' as CalcMode, label: 'Ma FC max' },
+            { key: 'repos' as CalcMode, label: 'Au repos' },
+          ]}
+          value={calcMode}
+          onChange={setCalcMode}
+          accent={S.accent}
+        />
+
+        {calcMode === 'fcmax' ? (
+          <CardBox style={{ paddingVertical: 14, gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Ink size={15} weight="extraBold">
+                  FC max
+                </Ink>
+                <Ink size={12} weight="bold" color={S.ink2}>
+                  Ton maximum absolu en bpm
+                </Ink>
+              </View>
+              <BoundInput value={fcmax} onChange={setFcmax} color={S.accent} label="Fréquence cardiaque maximale" />
             </View>
-          ) : (
-            <View style={[styles.banner, { backgroundColor: isDark ? 'rgba(34,197,94,0.10)' : 'rgba(34,197,94,0.07)', borderColor: 'rgba(34,197,94,0.22)' }]}>
-              <Check size={15} color="#22C55E" />
-              <Text style={[styles.bannerText, { color: '#22C55E', fontWeight: '700' }]}>Tes zones personnalisées sont actives</Text>
-            </View>
-          )}
-
-          {/* Bouton import Apple Santé (iOS uniquement) */}
-          {Platform.OS === 'ios' && (
-            <>
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>IMPORT AUTOMATIQUE</Text>
-              <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: isDark ? 'rgba(255,45,85,0.12)' : 'rgba(255,45,85,0.08)', borderColor: 'rgba(255,45,85,0.30)' }]}
-                onPress={handleImportFromApple}
-                disabled={importing}
-                activeOpacity={0.8}
-              >
-                {importing ? (
-                  <Heart size={18} color="#FF2D55" />
-                ) : (
-                  <Download size={18} color="#FF2D55" />
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#FF2D55' }}>
-                    {importing ? 'Lecture en cours...' : 'Importer ma FC max depuis Apple Santé'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>
-                    Lit ta FC max réelle · calcule les zones comme Apple Watch
-                  </Text>
+            {fcmaxReady ? (
+              <View style={{ gap: 6, borderRadius: 16, backgroundColor: '#F7F5F0', padding: 12 }}>
+                <Ink size={12} weight="bold" color={S.muted}>
+                  {`Estimation depuis ta FC max de ${fcmaxN} bpm`}
+                </Ink>
+                {[0.63, 0.71, 0.79, 0.9].map((pct, i) => {
+                  const prev = i === 0 ? 0 : Math.round(fcmaxN * [0.63, 0.71, 0.79][i - 1]);
+                  const hi = Math.round(fcmaxN * pct) - 1;
+                  return (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: ZONE_COLORS[i] }} />
+                      <Ink size={13} weight="bold" style={{ flex: 1 }}>{`Z${i + 1} ${ZONE_LABELS[i]}`}</Ink>
+                      <Ink size={13} weight="extraBold">{`${prev} à ${hi} bpm`}</Ink>
+                    </View>
+                  );
+                })}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: ZONE_COLORS[4] }} />
+                  <Ink size={13} weight="bold" style={{ flex: 1 }}>Z5 Max</Ink>
+                  <Ink size={13} weight="extraBold">{`${Math.round(fcmaxN * 0.9)} bpm et plus`}</Ink>
                 </View>
-              </TouchableOpacity>
+              </View>
+            ) : null}
+            <Ink size={12} weight="medium" color={S.ink2}>
+              Où la trouver : app Watch, Ma montre, Exercice, Zones de fréquence cardiaque, la FC max est en haut. Ou dans Apple Santé, Parcourir, Cœur, Fréquence cardiaque : cherche ton record pendant un effort intense.
+            </Ink>
+            <SmallButton label="Appliquer ces zones" icon="check" disabled={!fcmaxReady} onPress={handleFcmaxCalc} />
+          </CardBox>
+        ) : null}
 
-              {importResult && (
-                <View style={[styles.importResult, {
-                  backgroundColor: importResult.includes('bpm')
-                    ? (isDark ? 'rgba(34,197,94,0.10)' : 'rgba(34,197,94,0.07)')
-                    : (isDark ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.07)'),
-                  borderColor: importResult.includes('bpm') ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)',
-                }]}>
-                  <Text style={{ fontSize: 12, color: importResult.includes('bpm') ? '#22C55E' : '#EF4444', fontWeight: '600' }}>
-                    {importResult}
-                  </Text>
+        {calcMode === 'repos' ? (
+          <CardBox style={{ paddingVertical: 14, gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Ink size={15} weight="extraBold">
+                  FC au repos
+                </Ink>
+                <Ink size={12} weight="bold" color={S.ink2}>
+                  {karvSources.rest ? 'Reprise de ta montre' : 'Mesure-la au réveil, allongé'}
+                </Ink>
+              </View>
+              <BoundInput value={restHr} onChange={setRestHr} color={S.indigo} label="Fréquence cardiaque au repos" />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Ink size={15} weight="extraBold">
+                  FC max
+                </Ink>
+                <Ink size={12} weight="bold" color={S.ink2}>
+                  {karvSources.age ? '220 moins ton âge. Change-la si tu la connais.' : 'Règle-la : 220 moins ton âge'}
+                </Ink>
+              </View>
+              <BoundInput value={karvMax} onChange={setKarvMax} color={S.accent} label="Fréquence cardiaque maximale" />
+            </View>
+            {karvReady ? (
+              <View style={{ gap: 6, borderRadius: 16, backgroundColor: '#F7F5F0', padding: 12 }}>
+                <Ink size={12} weight="bold" color={S.muted}>
+                  {`Réserve de ${karvMaxN - restN} battements`}
+                </Ink>
+                {KARVONEN.map((p, i) => (
+                  <View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: ZONE_COLORS[i] }} />
+                    <Ink size={13} weight="bold" style={{ flex: 1 }}>{`Z${i + 1} ${ZONE_LABELS[i]}`}</Ink>
+                    <Ink size={13} weight="extraBold">{i < 4 ? `${karv(p)} à ${karv(KARVONEN[i + 1]) - 1} bpm` : `${karv(p)} bpm et plus`}</Ink>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <Ink size={12} weight="medium" color={S.ink2}>
+              La formule de Karvonen : fréquence cible = repos + (maximum moins repos) × intensité. Plus juste que le simple pourcentage du maximum, parce qu’elle part de ton cœur au repos.
+            </Ink>
+            <SmallButton label="Appliquer ces zones" icon="check" disabled={!karvReady} onPress={handleKarvonen} />
+          </CardBox>
+        ) : null}
+
+        <Label>Tes 5 zones</Label>
+        <CardBox>
+          {zones.map((z, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: S.line2 }}>
+              <View style={{ width: 6, alignSelf: 'stretch', borderRadius: 3, backgroundColor: ZONE_COLORS[i] }} />
+              <View style={{ flex: 1 }}>
+                <Ink size={15} weight="black" tight>
+                  {`${ZONE_NAMES[i]}, ${ZONE_LABELS[i]}`}
+                </Ink>
+                <Ink size={11} weight="bold" color={S.ink2} numberOfLines={2}>
+                  {ZONE_HINTS[i]}
+                </Ink>
+              </View>
+              <BoundInput value={z.minVal} onChange={z.setMin} color={ZONE_COLORS[i]} label={`${ZONE_NAMES[i]}, minimum`} />
+              <Ink size={14} weight="bold" color={S.muted}>
+                à
+              </Ink>
+              {z.setMax ? (
+                <BoundInput value={z.maxVal} onChange={z.setMax} color={ZONE_COLORS[i]} label={`${ZONE_NAMES[i]}, maximum`} />
+              ) : (
+                <View style={{ width: 64, height: 48, borderRadius: 14, backgroundColor: '#ECE9E2', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ink size={18} weight="black" color={S.muted}>
+                    ∞
+                  </Ink>
                 </View>
               )}
-            </>
-          )}
-
-          {/* Sélecteur de méthode */}
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>MÉTHODE DE CALCUL</Text>
-          <View style={[styles.modeRow, { backgroundColor: cardBg }]}>
-            {(['manual', 'fcmax'] as CalcMode[]).map(mode => (
-              <TouchableOpacity
-                key={mode}
-                style={[styles.modeBtn, calcMode === mode && { backgroundColor: mode === 'manual' ? '#EF4444' : '#3B82F6' }]}
-                onPress={() => setCalcMode(mode)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.modeBtnText, { color: calcMode === mode ? '#FFF' : colors.textMuted }]}>
-                  {mode === 'manual' ? 'Mes valeurs' : 'Depuis ma FC max'}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Calcul depuis FCmax */}
-          {calcMode === 'fcmax' && (
-            <>
-              <View style={[styles.card, { backgroundColor: cardBg }]}>
-                <View style={[styles.row]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.rowLabel, { color: colors.text }]}>FC max</Text>
-                    <Text style={[styles.rowHint, { color: colors.textMuted }]}>ton maximum absolu en BPM</Text>
-                  </View>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: inputBg, color: colors.text, borderColor: inputBorder }]}
-                    value={fcmax}
-                    onChangeText={setFcmax}
-                    keyboardType="number-pad"
-                    placeholder="190"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={3}
-                  />
-                  <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
-                </View>
-              </View>
-
-              {/* Aperçu des zones (formule Apple) */}
-              {fcmaxReady && (
-                <View style={[styles.karvonenPreview, { backgroundColor: isDark ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }]}>
-                  <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 6 }}>
-                    Formule Apple Watch · FC max : {parseInt(fcmax)} bpm
-                  </Text>
-                  {[
-                    { pct: 0.63, label: 'Z1 Récupération' },
-                    { pct: 0.71, label: 'Z2 Endurance' },
-                    { pct: 0.79, label: 'Z3 Tempo' },
-                    { pct: 0.90, label: 'Z4 Seuil' },
-                  ].map(({ pct, label }, i) => {
-                    const prev = i === 0 ? 0 : Math.round(parseInt(fcmax) * [0.63, 0.71, 0.79][i - 1]);
-                    const val = Math.round(parseInt(fcmax) * pct);
-                    return (
-                      <Text key={i} style={{ fontSize: 12, color: ZONE_COLORS[i], fontWeight: '600' }}>
-                        {label} : {prev} – {val} BPM
-                      </Text>
-                    );
-                  })}
-                  <Text style={{ fontSize: 12, color: ZONE_COLORS[4], fontWeight: '600' }}>
-                    Z5 Max : {Math.round(parseInt(fcmax) * 0.90)}+ BPM
-                  </Text>
-                </View>
-              )}
-
-              <View style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(59,130,246,0.06)' : 'rgba(59,130,246,0.04)', borderColor: 'rgba(59,130,246,0.16)', marginTop: 0 }]}>
-                <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
-                  <Text style={{ fontWeight: '700', color: colors.text }}>Où trouver ta FC max ?{'\n'}</Text>
-                  App <Text style={{ fontWeight: '700', color: colors.text }}>Watch</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Ma montre</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Exercice</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Zones de FC</Text> → la valeur FC max affichée en haut.{'\n\n'}
-                  Ou dans <Text style={{ fontWeight: '700', color: colors.text }}>Apple Santé</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Parcourir</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Cœur</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Fréquence cardiaque</Text> → cherche ton record de FC pendant un effort intense.
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.calcBtn, { backgroundColor: fcmaxReady ? '#3B82F6' : inputBg }]}
-                onPress={handleFcmaxCalc}
-                disabled={!fcmaxReady}
-                activeOpacity={0.8}
-              >
-                <Calculator size={18} color={fcmaxReady ? '#FFF' : colors.textMuted} />
-                <Text style={{ fontSize: 15, fontWeight: '700', color: fcmaxReady ? '#FFF' : colors.textMuted }}>
-                  Appliquer ces zones
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {/* Zones avec bornes min-max style Apple Santé */}
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>TES 5 ZONES (en BPM)</Text>
-          <View style={[styles.card, { backgroundColor: cardBg }]}>
-            {zones.map((z, i) => (
-              <View
-                key={i}
-                style={[styles.zoneRow, i < 4 && { borderBottomWidth: 1, borderBottomColor: divider }]}
-              >
-                {/* Barre couleur */}
-                <View style={[styles.zoneBar, { backgroundColor: z.color }]} />
-
-                {/* Nom + label */}
-                <View style={styles.zoneInfo}>
-                  <Text style={[styles.zoneName, { color: z.color }]}>{z.name}</Text>
-                  <Text style={[styles.zoneLabel, { color: colors.textMuted }]}>{z.label}</Text>
-                </View>
-
-                {/* Borne min (éditable) */}
-                <TextInput
-                  style={[styles.boundInput, { backgroundColor: inputBg, color: z.color, borderColor: z.color + '60' }]}
-                  value={z.minVal}
-                  onChangeText={z.setMin!}
-                  keyboardType="number-pad"
-                  placeholder="·"
-                  placeholderTextColor={colors.textMuted}
-                  maxLength={3}
-                />
-
-                <Text style={[styles.dash, { color: colors.textMuted }]}>–</Text>
-
-                {/* Borne max (éditable sauf zone 5) */}
-                {z.isLastZone ? (
-                  <View style={[styles.boundBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderColor: divider }]}>
-                    <Text style={[styles.boundValue, { color: colors.textMuted }]}>∞</Text>
-                  </View>
-                ) : (
-                  <TextInput
-                    style={[styles.boundInput, { backgroundColor: inputBg, color: z.color, borderColor: z.color + '60' }]}
-                    value={z.maxVal}
-                    onChangeText={z.setMax!}
-                    keyboardType="number-pad"
-                    placeholder="·"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={3}
-                  />
-                )}
-
-                <Text style={[styles.bpmLabel, { color: colors.textMuted }]}>bpm</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Info selon plateforme */}
-          <View style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.05)', borderColor: 'rgba(59,130,246,0.20)' }]}>
-            <View style={styles.infoHeader}>
-              <BookOpen size={14} color="#3B82F6" />
-              <Text style={[styles.infoTitle, { color: '#3B82F6' }]}>Où trouver tes zones ?</Text>
             </View>
+          ))}
+        </CardBox>
 
-            {/* iPhone / Apple Watch */}
-            <Text style={[styles.infoSection, { color: colors.text }]}>iPhone · Apple Watch</Text>
-            <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              1. Ouvre <Text style={{ fontWeight: '700', color: colors.text }}>l'app Watch</Text> sur ton iPhone{'\n'}
-              2. Onglet <Text style={{ fontWeight: '700', color: colors.text }}>Ma montre</Text> (en bas à gauche){'\n'}
-              3. Fais défiler jusqu'à <Text style={{ fontWeight: '700', color: colors.text }}>Exercice</Text>{'\n'}
-              4. Tout en bas : <Text style={{ fontWeight: '700', color: colors.text }}>Zones de fréquence cardiaque</Text>{'\n'}
-              5. Sélectionne <Text style={{ fontWeight: '700', color: colors.text }}>Manuelle</Text>{'\n'}
-              6. Note les valeurs de chaque zone (ex : Zone 1 {'<'}119, Zone 2 : 120–135…){'\n'}
-              7. Reviens ici et entre ces valeurs dans "Mes valeurs"
-            </Text>
+        {!isValid && (v1 > 0 || v2 > 0 || v3 > 0 || v4 > 0) ? <Notice tone="bad" text="Chaque zone doit avoir un minimum plus petit que son maximum, et les valeurs doivent rester entre 40 et 229 bpm." /> : null}
 
-            <View style={[styles.infoDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
-
-            {/* Garmin */}
-            <Text style={[styles.infoSection, { color: colors.text }]}>Garmin Connect</Text>
-            <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              <Text style={{ fontWeight: '700', color: colors.text }}>Plus</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Appareils Garmin</Text> → ton appareil → <Text style={{ fontWeight: '700', color: colors.text }}>Paramètres utilisateur</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Zones de fréquence cardiaque</Text> → saisis tes valeurs en BPM.
-            </Text>
-
-            <View style={[styles.infoDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
-
-            {/* Samsung */}
-            <Text style={[styles.infoSection, { color: colors.text }]}>Samsung Health · Galaxy Watch</Text>
-            <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              <Text style={{ fontWeight: '700', color: colors.text }}>Exercice</Text> → choisis une activité → <Text style={{ fontWeight: '700', color: colors.text }}>Paramètres (⋮)</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Zones de fréquence cardiaque</Text> → passe en personnalisé.
-            </Text>
-
-            <View style={[styles.infoDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
-
-            {/* Fitbit */}
-            <Text style={[styles.infoSection, { color: colors.text }]}>Fitbit</Text>
-            <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              Profil → <Text style={{ fontWeight: '700', color: colors.text }}>Paramètres activité</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Zones de fréquence cardiaque</Text> → <Text style={{ fontWeight: '700', color: colors.text }}>Zone personnalisée</Text> → entre tes valeurs limites.
-            </Text>
-
-            <View style={[styles.infoDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
-
-            {/* Google Fit / Health Connect */}
-            <Text style={[styles.infoSection, { color: colors.text }]}>Google Fit · Health Connect</Text>
-            <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              Ces plateformes sont des <Text style={{ fontWeight: '700', color: colors.text }}>agrégateurs</Text> · elles affichent les données de ton capteur. Configure tes zones directement dans l'app du fabricant de ta montre (Garmin Connect, Samsung Health, etc.).
-            </Text>
-          </View>
-
-          {/* Erreur validation */}
-          {!isValid && (v1 > 0 || v2 > 0 || v3 > 0 || v4 > 0) && (
-            <Text style={styles.errorText}>
-              Chaque zone doit avoir un min inférieur à son max, et les valeurs doivent être entre 40 et 229 bpm.
-            </Text>
-          )}
-
-          {/* Bouton sauvegarder */}
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: isValid ? '#EF4444' : inputBg }]}
-            onPress={handleSave}
-            disabled={!isValid || saved}
-            activeOpacity={0.8}
-          >
-            {saved ? (
-              <Check size={22} color="#FFF" />
-            ) : (
-              <Text style={[styles.saveBtnText, { color: isValid ? '#FFF' : colors.textMuted }]}>
-                Sauvegarder mes zones
-              </Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+        <Label>Où trouver tes zones</Label>
+        <Accordion title="iPhone et Apple Watch" sub="App Watch, Exercice">
+          <Ink size={13} weight="medium" color={S.ink2}>
+            {"1. Ouvre l'app Watch sur ton iPhone\n2. Onglet Ma montre\n3. Descends jusqu'à Exercice\n4. Tout en bas : Zones de fréquence cardiaque\n5. Choisis Manuelle\n6. Note les valeurs de chaque zone\n7. Reviens ici et entre-les dans Mes valeurs"}
+          </Ink>
+        </Accordion>
+        <Accordion title="Garmin Connect">
+          <Ink size={13} weight="medium" color={S.ink2}>
+            Plus, Appareils Garmin, ton appareil, Paramètres utilisateur, Zones de fréquence cardiaque, puis saisis tes valeurs en bpm.
+          </Ink>
+        </Accordion>
+        <Accordion title="Samsung Health et Galaxy Watch">
+          <Ink size={13} weight="medium" color={S.ink2}>
+            Exercice, choisis une activité, Paramètres, Zones de fréquence cardiaque, puis passe en personnalisé.
+          </Ink>
+        </Accordion>
+        <Accordion title="Fitbit">
+          <Ink size={13} weight="medium" color={S.ink2}>
+            Profil, Paramètres activité, Zones de fréquence cardiaque, Zone personnalisée, puis entre tes limites.
+          </Ink>
+        </Accordion>
+        <Accordion title="Health Connect">
+          <Ink size={13} weight="medium" color={S.ink2}>
+            Health Connect rassemble les données de ton capteur mais ne règle pas les zones. Configure-les dans l'app de ta montre (Garmin Connect, Samsung Health), puis reporte-les ici.
+          </Ink>
+        </Accordion>
+      </DetailScreen>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
-  content: { paddingHorizontal: 16, paddingTop: 10, gap: 12 },
-
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 9,
-    padding: 13,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  bannerText: { flex: 1, fontSize: 13, lineHeight: 18 },
-
-  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, marginTop: 4 },
-
-  card: { borderRadius: 16, overflow: 'hidden' },
-
-  modeRow: {
-    flexDirection: 'row',
-    borderRadius: 14,
-    padding: 4,
-    gap: 4,
-  },
-  modeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modeBtnText: { fontSize: 13, fontWeight: '700' },
-
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 10,
-  },
-  rowLabel: { fontSize: 14, fontWeight: '600' },
-  rowHint: { fontSize: 11, marginTop: 1 },
-
-  input: {
-    width: 64,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 1,
-    textAlign: 'center',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  unit: { fontSize: 12, fontWeight: '500', width: 30 },
-
-  karvonenPreview: {
-    padding: 13,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 3,
-  },
-  calcBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 50,
-    borderRadius: 14,
-  },
-
-  // Zone row · style Apple Santé
-  zoneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    gap: 8,
-  },
-  zoneBar: { width: 4, height: 38, borderRadius: 2 },
-  zoneInfo: { flex: 1, minWidth: 70 },
-  zoneName: { fontSize: 13, fontWeight: '800' },
-  zoneLabel: { fontSize: 11, marginTop: 1 },
-
-  // Bornes min/max
-  boundBox: {
-    width: 48,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  boundValue: { fontSize: 14, fontWeight: '600' },
-  boundInput: {
-    width: 52,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    textAlign: 'center',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  dash: { fontSize: 16, fontWeight: '300' },
-  bpmLabel: { fontSize: 10, fontWeight: '500', width: 24 },
-
-  errorText: {
-    color: '#EF4444',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  infoCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    gap: 8,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    marginBottom: 2,
-  },
-  infoTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  infoSection: {
-    fontSize: 12,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  infoText: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  infoDivider: {
-    height: 1,
-    borderRadius: 0.5,
-    marginVertical: 2,
-  },
-  saveBtn: {
-    marginTop: 4,
-    height: 52,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveBtnText: { fontSize: 16, fontWeight: '700' },
-  importBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  importResult: {
-    padding: 11,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginTop: -4,
-  },
-});

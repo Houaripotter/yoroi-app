@@ -12,8 +12,9 @@
 //
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DeviceEventEmitter, AppState, AppStateStatus } from 'react-native';
+import { DeviceEventEmitter, AppState, AppStateStatus, Platform } from 'react-native';
 import logger from './security/logger';
+import { vitrineActive } from './v2/visite/vitrine';
 import { exportDataToJSON } from './exportService';
 import { logSyncEvent } from './syncHistoryService';
 
@@ -21,17 +22,44 @@ import { logSyncEvent } from './syncHistoryService';
 const LAST_AUTO_BACKUP_KEY = '@yoroi_last_auto_backup'; // ISO date du dernier auto-backup
 const AUTO_BACKUP_ENABLED_KEY = '@yoroi_auto_backup_enabled'; // 'true' | 'false'
 const AUTO_BACKUP_INTERVAL_KEY = '@yoroi_auto_backup_interval'; // heures entre backups
+const LAST_AUTO_BACKUP_ATTEMPT_KEY = '@yoroi_last_auto_backup_attempt'; // ISO date de la dernière tentative (réussie ou non)
 
 // ─── Config par défaut ─────────────────────────────────────────────────────
 const DEFAULT_INTERVAL_HOURS = 24;  // Backup auto toutes les 24h
 const ACTIVE_USER_INTERVAL = 48;    // Si user très actif (>3 entrées récentes), 48h suffit
 const STARTUP_DELAY_MS = 8000;      // Attendre 8s après startup pour ne pas ralentir l'app
+// Délai minimal entre deux tentatives, même après un échec : évite de relancer
+// une sauvegarde à chaque retour dans l'app quand l'export échoue.
+const MIN_RETRY_DELAY_MS = 30 * 60 * 1000;
 
 // ─── État interne ──────────────────────────────────────────────────────────
 let autoBackupTimer: ReturnType<typeof setTimeout> | null = null;
 // Promise-based lock (évite la race condition du simple boolean flag) :
 // si un backup est déjà en cours, toute nouvelle requête attend le même résultat.
 let runningPromise: Promise<boolean> | null = null;
+// Dernière tentative connue en mémoire (en plus de la valeur stockée).
+let lastAttemptAt = 0;
+
+async function getLastAttemptTime(): Promise<number> {
+  if (lastAttemptAt) return lastAttemptAt;
+  try {
+    const raw = await AsyncStorage.getItem(LAST_AUTO_BACKUP_ATTEMPT_KEY);
+    const t = raw ? new Date(raw).getTime() : 0;
+    lastAttemptAt = Number.isFinite(t) ? t : 0;
+  } catch {
+    // pas grave
+  }
+  return lastAttemptAt;
+}
+
+async function markAttempt(): Promise<void> {
+  lastAttemptAt = Date.now();
+  try {
+    await AsyncStorage.setItem(LAST_AUTO_BACKUP_ATTEMPT_KEY, new Date(lastAttemptAt).toISOString());
+  } catch {
+    // pas grave
+  }
+}
 
 /**
  * Retourne la date ISO du dernier backup auto, ou null si jamais.
@@ -111,8 +139,14 @@ export async function setAutoBackupIntervalHours(hours: number): Promise<void> {
  * Indique si un auto-backup est dû (délai dépassé).
  */
 export async function isAutoBackupDue(): Promise<boolean> {
+  // Sur le web, l'écriture de fichier n'existe pas : pas de sauvegarde automatique.
+  if (Platform.OS === 'web') return false;
   const enabled = await isAutoBackupEnabled();
   if (!enabled) return false;
+
+  // Une tentative récente (même ratée) : on attend avant de réessayer.
+  const lastAttempt = await getLastAttemptTime();
+  if (lastAttempt && Date.now() - lastAttempt < MIN_RETRY_DELAY_MS) return false;
 
   const last = await getLastAutoBackupDate();
   if (!last) return true; // jamais fait → faire tout de suite
@@ -129,6 +163,8 @@ export async function isAutoBackupDue(): Promise<boolean> {
  * la même promise (évite les doubles créations).
  */
 export async function runAutoBackupIfDue(): Promise<boolean> {
+  // 18 octobre 2026 : pendant la visite guidee avec l'exemple, aucune sauvegarde (l'exemple n'est pas tes donnees)
+  if (vitrineActive()) return false;
   // Si un backup est déjà en cours, on partage son résultat au lieu d'en lancer un autre.
   if (runningPromise) {
     logger.info('[AutoBackup] Déjà en cours, attente du résultat partagé');
@@ -143,6 +179,7 @@ export async function runAutoBackupIfDue(): Promise<boolean> {
 
   runningPromise = (async (): Promise<boolean> => {
     try {
+      await markAttempt();
       logger.info('[AutoBackup] Déclenchement backup automatique silent');
       const ok = await exportDataToJSON({ silent: true });
       if (ok) {

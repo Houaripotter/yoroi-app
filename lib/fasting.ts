@@ -18,7 +18,7 @@ import secureStorage from '@/lib/security/secureStorage';
 // ============================================
 
 // ============================================
-// SECURE STORAGE — migration one-shot pour FASTING_HISTORY
+// SECURE STORAGE : migration one-shot pour FASTING_HISTORY
 // ============================================
 
 let fastingMigrationDone = false;

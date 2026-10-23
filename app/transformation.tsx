@@ -1,847 +1,386 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  useWindowDimensions,
-  DeviceEventEmitter,
-} from 'react-native';
-import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { router } from 'expo-router';
-import { Camera, ChevronRight, RefreshCw, ArrowRight, TrendingDown, TrendingUp, Calendar, Zap, Target, Award } from 'lucide-react-native';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { Photo, getPhotosFromStorage } from '@/lib/storage';
-import logger from '@/lib/security/logger';
-import { PremiumGate } from '@/components/premium/PremiumGate';
+/**
+ * Transformation v2 (vague 39) : le comparateur avant et apres.
+ * Trois modes (glisser, cote a cote, fondu), zoom a deux doigts synchronise,
+ * par defaut la plus ancienne et la plus recente de la meme pose, bandeau de vignettes pour changer,
+ * ecart de poids et duree en clair, carte a partager dessinee sur le telephone.
+ * NUIT 14 : chaque photo a son propre cadrage (bouton Ajuster : pincer, glisser, double toucher, grille),
+ * enregistre par paire dans AsyncStorage (lib/v2/photos/cadrage.ts) et repris sur la carte a partager.
+ * 17 octobre 2026 : bouton « Créer ma carte avant après » vers l'atelier des cartes, avec la paire choisie ici.
+ */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image, Pressable, Share, View, useWindowDimensions } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import { captureRef } from 'react-native-view-shot';
+import { isAvailableAsync, shareAsync } from 'expo-sharing';
+import { requestPermissionsAsync, saveToLibraryAsync } from 'expo-media-library';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { DetailHeader, EmptyInvite, GhostButton, GUTTER, IconButton, Pills, PrimaryButton, StatStrip, tapLight } from '@/components/yoroi/v2/progres/ui';
+import { ComparateurCadre, useImageSize } from '@/components/yoroi/v2/photos/ComparateurCadre';
+import type { Cote, ModeComparaison as CompareMode } from '@/components/yoroi/v2/photos/ComparateurCadre';
+import { alignerPareil, cadreFor, clampCadre, CADRAGE_KEY, defaultCadre, emptyStore, parseStore, serializeStore, withCadre } from '@/lib/v2/photos/cadrage';
+import type { Cadre, CadrageStore, Dims } from '@/lib/v2/photos/cadrage';
+import { CarteAvantApres } from '@/components/yoroi/v2/photos/CarteAvantApres';
+import { signaturePartage } from '@/constants/partage';
+import { noterPartage } from '@/lib/v2/partage/mesure';
+import { Sheet } from '@/components/yoroi/v2/progres/Sheet';
+import { usePhotosData } from '@/lib/v2/progres/useProgresData';
+import type { Photo } from '@/lib/storage';
+import { daysDiff } from '@/lib/v2/progres/format';
+import { dateCourte, dureeTexte, ecartLibelle, ecartTexte, kg, paireParDefaut, poseOf, POSES, trierAnciennesDabord } from '@/lib/v2/photos/outils';
+import type { Pose } from '@/lib/v2/photos/outils';
+import { logger } from '@/lib/security/logger';
+import { carteAvantApresDirecte } from '@/lib/v2/nav/direct';
+import { P } from '@/components/yoroi/livePalette';
 
-// ============================================
-// MA TRANSFORMATION - COMPARAISON AVANT/APRES
-// ============================================
-// Ecran dedie pour visualiser sa progression
+type Filtre = Pose | 'toutes';
+type Cible = 'avant' | 'apres';
+
+const MODES: { value: CompareMode; label: string }[] = [
+  { value: 'glisser', label: 'Curseur' },
+  { value: 'cote', label: 'Côte à côte' },
+  { value: 'fondu', label: 'Fondu' },
+];
+
+const CONSIGNE: Record<CompareMode, string> = {
+  glisser: 'Glisse le curseur de gauche à droite.',
+  cote: 'Tes deux photos, l’une à côté de l’autre.',
+  fondu: 'Glisse vers la droite : l’après apparaît sur l’avant.',
+};
 
 export default function TransformationScreen() {
-  const { colors } = useTheme();
-  const { locale, t } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedBefore, setSelectedBefore] = useState<Photo | null>(null);
-  const [selectedAfter, setSelectedAfter] = useState<Photo | null>(null);
-  const [step, setStep] = useState<'select_before' | 'select_after' | 'compare'>('select_before');
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { photos, loading } = usePhotosData();
+  const asc = useMemo(() => trierAnciennesDabord(photos ?? []), [photos]);
+  const [filtre, setFiltre] = useState<Filtre>('toutes');
+  const [mode, setMode] = useState<CompareMode>('glisser');
+  const [ids, setIds] = useState<{ avant: string; apres: string } | null>(null);
+  const [cible, setCible] = useState<Cible>('avant');
+  const [shareOpen, setShareOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const cardRef = useRef<View>(null);
+  const [reglage, setReglage] = useState<Cote | null>(null);
+  const [transparence, setTransparence] = useState(false);
+  const [store, setStore] = useState<CadrageStore>(emptyStore);
+  const storeRef = useRef<CadrageStore>(store);
 
-  // Charger les photos
-  const loadPhotos = useCallback(async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    AsyncStorage.getItem(CADRAGE_KEY)
+      .then((raw) => {
+        const s = parseStore(raw);
+        storeRef.current = s;
+        setStore(s);
+      })
+      .catch(() => {});
+  }, []);
+  const saveStore = useCallback((s: CadrageStore) => {
+    storeRef.current = s;
+    setStore(s);
+    AsyncStorage.setItem(CADRAGE_KEY, serializeStore(s)).catch((err) => logger.error('Enregistrement du cadrage impossible', err));
+  }, []);
+
+  const pa0 = ids ? asc.find((p) => p.id === ids.avant) : undefined;
+  const pb0 = ids ? asc.find((p) => p.id === ids.apres) : undefined;
+  const ordered = pa0 && pb0 && (pa0.date < pb0.date || (pa0.date === pb0.date && pa0.created_at <= pb0.created_at)) ? [pa0, pb0] : [pb0, pa0];
+  const sizeA = useImageSize(ordered[0]?.file_uri);
+  const sizeB = useImageSize(ordered[1]?.file_uri);
+
+  const counts = useMemo(() => {
+    const m: Record<Pose, number> = { face: 0, profil: 0, dos: 0 };
+    asc.forEach((p) => {
+      const k = poseOf(p);
+      if (k) m[k] += 1;
+    });
+    return m;
+  }, [asc]);
+  const pool = useMemo(() => (filtre === 'toutes' ? asc : asc.filter((p) => poseOf(p) === filtre)), [asc, filtre]);
+
+  // paire par defaut (et apres un changement de filtre) : la plus ancienne et la plus recente de la meme pose
+  useEffect(() => {
+    const valid = ids && pool.some((p) => p.id === ids.avant) && pool.some((p) => p.id === ids.apres);
+    if (valid) return;
+    const pair = paireParDefaut(asc, filtre === 'toutes' ? null : filtre);
+    setIds(pair ? { avant: pair[0].id, apres: pair[1].id } : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asc, filtre]);
+
+  if (!loading && asc.length < 2) {
+    return (
+      <View style={{ flex: 1, backgroundColor: c.background }}>
+        <DetailHeader title="Ta transformation" />
+        <EmptyInvite
+          style={{ margin: GUTTER }}
+          title="Il faut deux photos"
+          text={asc.length === 1 ? 'Ta première photo est dans le coffre. Reprends-en une dans quelques semaines, même cadrage, et compare ici.' : 'Prends une photo aujourd’hui, puis une autre dans quelques semaines. Tu les verras ici côte à côte, au doigt.'}
+          cta="Ouvrir mes photos"
+          onPress={() => router.push('/photos' as any)}
+        />
+      </View>
+    );
+  }
+  const pa = ids ? asc.find((p) => p.id === ids.avant) : undefined;
+  const pb = ids ? asc.find((p) => p.id === ids.apres) : undefined;
+  if (!pa || !pb) return <View style={{ flex: 1, backgroundColor: c.background }} />;
+
+  // l'avant est toujours la plus ancienne des deux
+  const [a, b] = pa.date < pb.date || (pa.date === pb.date && pa.created_at <= pb.created_at) ? [pa, pb] : [pb, pa];
+  const weightDiff = a.weight && b.weight ? b.weight - a.weight : null;
+  const days = Math.abs(daysDiff(a.date.slice(0, 10), b.date.slice(0, 10)));
+  const frameW = width - GUTTER * 2;
+  const h = Math.round(frameW * 1.3);
+  const dimsA: Dims = { w: frameW, h, iw: sizeA.iw, ih: sizeA.ih };
+  const dimsB: Dims = { w: frameW, h, iw: sizeB.iw, ih: sizeB.ih };
+  const cadres = {
+    avant: clampCadre(cadreFor(store, a.id, b.id, a.id) ?? defaultCadre(dimsA), dimsA),
+    apres: clampCadre(cadreFor(store, a.id, b.id, b.id) ?? defaultCadre(dimsB), dimsB),
+  };
+  const onCadre = (cote: Cote, cd: Cadre) => {
+    const p = cote === 'avant' ? a : b;
+    saveStore(withCadre(storeRef.current, a.id, b.id, p.id, clampCadre(cd, cote === 'avant' ? dimsA : dimsB)));
+  };
+  const alignerAutre = () => {
+    tapLight();
+    const from: Cote = reglage ?? 'avant';
+    const to: Cote = from === 'avant' ? 'apres' : 'avant';
+    const next = alignerPareil(cadres[from], from === 'avant' ? dimsA : dimsB, to === 'avant' ? dimsA : dimsB);
+    saveStore(withCadre(storeRef.current, a.id, b.id, (to === 'avant' ? a : b).id, next));
+  };
+  const shotA = { uri: a.file_uri, date: a.date, weight: a.weight };
+  const shotB = { uri: b.file_uri, date: b.date, weight: b.weight };
+  const poseA = poseOf(a);
+  const poseB = poseOf(b);
+  const posesDiff = !!poseA && !!poseB && poseA !== poseB;
+
+  const pick = (p: Photo) => {
+    tapLight();
+    if (!ids) return;
+    const other = cible === 'avant' ? b : a;
+    if (p.id === other.id) {
+      // meme photo que l'autre : on echange
+      setIds({ avant: b.id, apres: a.id });
+      return;
+    }
+    const next = cible === 'avant' ? { avant: p.id, apres: b.id } : { avant: a.id, apres: p.id };
+    setIds(next);
+  };
+
+  const doShare = async () => {
+    noterPartage('avant_apres');
     try {
-      const fetchedPhotos = await getPhotosFromStorage();
-
-      setPhotos(fetchedPhotos);
-
-      // Auto-selectionner si assez de photos
-      if (fetchedPhotos.length >= 2) {
-        // Trier par date croissante pour avoir la plus ancienne en premier
-        const sortedByDate = [...fetchedPhotos].sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-        setSelectedBefore(sortedByDate[0]); // Plus ancienne
-        setSelectedAfter(sortedByDate[sortedByDate.length - 1]); // Plus recente
-        setStep('compare');
+      if (!cardRef.current) return;
+      const uri = await captureRef(cardRef, { format: 'jpg', quality: 0.92, width: 1080 });
+      setShareOpen(false);
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+      if (await isAvailableAsync()) await shareAsync(uri, { mimeType: 'image/jpeg', dialogTitle: 'Ton avant et après' });
+      else {
+        const res = await Share.share({ url: uri, message: signaturePartage() });
+        if (res.action === Share.sharedAction) noterPartage('avant_apres', true);
       }
-    } catch (error) {
-      logger.error('Erreur chargement photos:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      await loadPhotos();
-      if (!mounted) return;
-    };
-    load();
-    return () => { mounted = false; };
-  }, []);
-
-  // Listener pour les changements de données YOROI
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadPhotos);
-    return () => sub.remove();
-  }, []);
-
-  // Formater la date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  const formatDateShort = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(locale, {
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  // Calculer les stats
-  const weightDifference = selectedBefore?.weight && selectedAfter?.weight
-    ? selectedAfter.weight - selectedBefore.weight
-    : null;
-
-  const daysDifference = selectedBefore && selectedAfter
-    ? Math.abs(
-        Math.floor(
-          (new Date(selectedAfter.date).getTime() - new Date(selectedBefore.date).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      )
-    : null;
-
-  // Gestion de la selection
-  const handleSelectPhoto = (photo: Photo) => {
-    if (step === 'select_before') {
-      setSelectedBefore(photo);
-      setStep('select_after');
-    } else if (step === 'select_after') {
-      if (photo.id !== selectedBefore?.id) {
-        setSelectedAfter(photo);
-        setStep('compare');
-      } else {
-        showPopup(t('transformation.identicalPhoto'), t('transformation.chooseAnotherPhoto'), [{ text: t('common.ok'), style: 'primary' }]);
-      }
+    } catch (err) {
+      logger.error('Partage de la comparaison impossible', err);
+      setShareOpen(false);
+      setNotice('L’image n’a pas pu être créée, réessaie.');
     }
   };
 
-  const resetSelection = () => {
-    setSelectedBefore(null);
-    setSelectedAfter(null);
-    setStep('select_before');
+  const doSave = async () => {
+    try {
+      if (!cardRef.current) return;
+      const uri = await captureRef(cardRef, { format: 'jpg', quality: 0.92, width: 1080 });
+      setShareOpen(false);
+      const { status } = await requestPermissionsAsync();
+      if (status === 'granted') {
+        await saveToLibraryAsync(uri);
+        notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+        setNotice('Image enregistrée dans ta galerie.');
+      } else setNotice('Autorise l’accès à ta galerie dans les réglages pour enregistrer l’image.');
+    } catch (err) {
+      logger.error('Enregistrement dans la galerie impossible', err);
+      setShareOpen(false);
+      setNotice('Enregistrement impossible, réessaie.');
+    }
   };
 
-  // Pas assez de photos - Empty State amélioré
-  if (!isLoading && photos.length < 2) {
-    return (
-      <ScreenWrapper>
-        <Header title={t('transformation.title')} showBack />
-        <View style={styles.emptyContainer}>
-          <View style={[styles.emptyIconContainer, { backgroundColor: `${colors.accent}15` }]}>
-            <Camera size={48} color={colors.accent} strokeWidth={2} />
-          </View>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            {t('transformation.startYourTransformation')}
-          </Text>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('transformation.emptyMessage')}
-          </Text>
-
-          {/* Bénéfices */}
-          <View style={styles.benefitsContainer}>
-            <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: `${colors.gold}20` }]}>
-                <Zap size={20} color={colors.gold} />
-              </View>
-              <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
-                {t('transformation.compareBeforeAfter')}
-              </Text>
-            </View>
-            <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: `${colors.success}20` }]}>
-                <Target size={20} color={colors.success} />
-              </View>
-              <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
-                {t('transformation.trackProgress')}
-              </Text>
-            </View>
-            <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: `${colors.accent}20` }]}>
-                <Award size={20} color={colors.accent} />
-              </View>
-              <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
-                {t('transformation.shareResults')}
-              </Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.emptyButton, { backgroundColor: colors.accent }]}
-            onPress={() => router.push('/photos')}
-            activeOpacity={0.8}
-          >
-            <Camera size={20} color={colors.textOnGold} />
-            <Text style={[styles.emptyButtonText, { color: colors.textOnGold }]}>
-              {t('transformation.addPhotos')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
-  // Chargement
-  if (isLoading) {
-    return (
-      <ScreenWrapper>
-        <Header title={t('transformation.title')} showBack />
-        <View style={{ padding: 16, gap: 12 }}>
-          <SkeletonCard height={320} width="100%" />
-          <SkeletonCard height={100} width="100%" />
-          <SkeletonCard height={100} width="100%" />
-          <SkeletonMessage />
-        </View>
-      </ScreenWrapper>
-    );
-  }
+  const filterItems: { value: Filtre; label: string }[] = [
+    { value: 'toutes', label: 'Toutes' },
+    ...POSES.filter((p) => counts[p.value] >= 1).map((p) => ({ value: p.value as Filtre, label: p.label })),
+  ];
+  const thumbW = 66;
+  const cardW = Math.min(width - 48 - 16, 340);
 
   return (
-    <PremiumGate featureTitle="Transformation photos">
-    <ScreenWrapper noPadding>
-      <Header
-        title={t('transformation.title')}
-        showBack
-        rightElement={
-          step === 'compare' ? (
-            <TouchableOpacity
-              style={styles.resetButton}
-              onPress={resetSelection}
-              activeOpacity={0.7}
-            >
-              <RefreshCw size={20} color={colors.gold} />
-            </TouchableOpacity>
-          ) : undefined
-        }
-      />
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView scrollEnabled={!reglage} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
+        <DetailHeader
+          title="Ta transformation"
+          sub={reglage ? 'Règle chaque photo : pince pour zoomer, glisse pour la placer.' : CONSIGNE[mode]}
+          right={
+            <IconButton label="Partager la comparaison" onPress={() => setShareOpen(true)}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path d="M12 15V4M8 8l4-4 4 4M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" stroke={c.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </IconButton>
+          }
+        />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* MODE COMPARAISON */}
-        {step === 'compare' && selectedBefore && selectedAfter && (
-          <>
-            {/* Slider */}
-            <BeforeAfterSlider
-              before={{
-                uri: selectedBefore.file_uri,
-                date: selectedBefore.date,
-                weight: selectedBefore.weight,
-              }}
-              after={{
-                uri: selectedAfter.file_uri,
-                date: selectedAfter.date,
-                weight: selectedAfter.weight,
-              }}
-              height={450}
-              showStats={true}
-              showShareButton={true}
+        {reglage ? (
+          <View style={{ paddingHorizontal: GUTTER, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Pills
+              items={[
+                { value: 'avant' as Cote, label: 'Avant' },
+                { value: 'apres' as Cote, label: 'Après' },
+              ]}
+              value={reglage}
+              onChange={(v) => setReglage(v)}
             />
-
-            {/* Stats detaillees */}
-            <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
-              <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>
-                {t('transformation.progression')}
-              </Text>
-
-              <View style={styles.statsGrid}>
-                {/* Difference de poids */}
-                {weightDifference !== null && (
-                  <View style={[styles.statBox, { backgroundColor: colors.surface }]}>
-                    <View style={styles.statIconRow}>
-                      {weightDifference <= 0 ? (
-                        <TrendingDown size={20} color={colors.success} />
-                      ) : (
-                        <TrendingUp size={20} color={colors.danger} />
-                      )}
-                      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        {t('transformation.weight')}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.statValue,
-                        { color: weightDifference <= 0 ? colors.success : colors.danger },
-                      ]}
-                    >
-                      {weightDifference > 0 ? '+' : ''}{weightDifference.toFixed(1)} kg
-                    </Text>
-                    {weightDifference < 0 && (
-                      <Text style={styles.statEmoji}>{t('transformation.excellent')}</Text>
-                    )}
-                  </View>
-                )}
-
-                {/* Durée */}
-                {daysDifference !== null && (
-                  <View style={[styles.statBox, { backgroundColor: colors.surface }]}>
-                    <View style={styles.statIconRow}>
-                      <Calendar size={20} color={colors.gold} />
-                      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                        {t('transformation.duration')}
-                      </Text>
-                    </View>
-                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                      {t('transformation.daysPeriod', { days: daysDifference })}
-                    </Text>
-                    <Text style={[styles.statSub, { color: colors.textMuted }]}>
-                      {t('transformation.weeksCount', { weeks: Math.floor(daysDifference / 7) })}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Message de motivation */}
-              {weightDifference !== null && weightDifference < 0 && (
-                <View style={[styles.motivationBanner, { backgroundColor: colors.successMuted }]}>
-                  <Text style={[styles.motivationText, { color: colors.success }]}>
-                    {t('transformation.motivationMessage', { loss: Math.abs(weightDifference).toFixed(1), days: daysDifference })}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Selection rapide */}
-            <View style={styles.quickSelectSection}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('transformation.changePhotos')}
-              </Text>
-              <View style={styles.quickSelectRow}>
-                {/* Avant */}
-                <TouchableOpacity
-                  style={[styles.quickSelectCard, { backgroundColor: colors.card }]}
-                  onPress={() => {
-                    setStep('select_before');
-                    setSelectedBefore(null);
-                    setSelectedAfter(null);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Image
-                    source={{ uri: selectedBefore.file_uri }}
-                    style={styles.quickSelectImage}
-                    resizeMode="cover"
-                  />
-                  <View style={[styles.quickSelectBadge, { backgroundColor: colors.danger }]}>
-                    <Text style={styles.quickSelectBadgeText}>{t('transformation.before')}</Text>
-                  </View>
-                  <Text style={[styles.quickSelectDate, { color: colors.textSecondary }]}>
-                    {formatDateShort(selectedBefore.date)}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Arrow */}
-                <View style={styles.quickSelectArrow}>
-                  <ArrowRight size={24} color={colors.gold} />
-                </View>
-
-                {/* Apres */}
-                <TouchableOpacity
-                  style={[styles.quickSelectCard, { backgroundColor: colors.card }]}
-                  onPress={() => {
-                    setStep('select_after');
-                    setSelectedAfter(null);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Image
-                    source={{ uri: selectedAfter.file_uri }}
-                    style={styles.quickSelectImage}
-                    resizeMode="cover"
-                  />
-                  <View style={[styles.quickSelectBadge, { backgroundColor: colors.success }]}>
-                    <Text style={styles.quickSelectBadgeText}>{t('transformation.after')}</Text>
-                  </View>
-                  <Text style={[styles.quickSelectDate, { color: colors.textSecondary }]}>
-                    {formatDateShort(selectedAfter.date)}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </>
-        )}
-
-        {/* MODE SELECTION AVANT */}
-        {step === 'select_before' && (
-          <View style={styles.selectionSection}>
-            <View style={styles.selectionHeader}>
-              <View style={[styles.selectionBadge, { backgroundColor: '#EF444420' }]}>
-                <Text style={[styles.selectionBadgeText, { color: '#EF4444' }]}>{t('transformation.step1')}</Text>
-              </View>
-            </View>
-            <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              {t('transformation.selectPhotoBefore')}
-            </Text>
-            <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
-              {t('transformation.selectStartPhoto')}
-            </Text>
-
-            <View style={styles.photoGrid}>
-              {photos.map((photo) => (
-                <TouchableOpacity
-                  key={photo.id}
-                  style={[styles.photoCard, { backgroundColor: colors.card }]}
-                  onPress={() => handleSelectPhoto(photo)}
-                  activeOpacity={0.8}
-                >
-                  <Image
-                    source={{ uri: photo.file_uri }}
-                    style={styles.photoImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.photoInfo}>
-                    <Text style={[styles.photoDate, { color: colors.textSecondary }]}>
-                      {formatDate(photo.date)}
-                    </Text>
-                    {photo.weight && (
-                      <Text style={[styles.photoWeight, { color: colors.gold }]}>
-                        {photo.weight.toFixed(1)} kg
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.selectIndicator}>
-                    <ChevronRight size={20} color={colors.textMuted} />
-                  </View>
-                </TouchableOpacity>
-              ))}
+            <View style={{ flex: 1 }} />
+            <PrimaryButton label="Terminé" onPress={() => { tapLight(); setReglage(null); setTransparence(false); }} style={{ height: 44, paddingHorizontal: 18 }} />
+          </View>
+        ) : (
+          <View style={{ paddingHorizontal: GUTTER, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <Pills items={MODES} value={mode} onChange={(v) => setMode(v)} />
             </View>
           </View>
         )}
 
-        {/* MODE SELECTION APRES */}
-        {step === 'select_after' && selectedBefore && (
-          <View style={styles.selectionSection}>
-            {/* Preview de la selection avant */}
-            <View style={[styles.selectedPreview, { backgroundColor: colors.card }]}>
-              <Image
-                source={{ uri: selectedBefore.file_uri }}
-                style={styles.selectedPreviewImage}
-                resizeMode="cover"
-              />
-              <View style={styles.selectedPreviewInfo}>
-                <View style={[styles.selectedBadge, { backgroundColor: colors.danger }]}>
-                  <Text style={styles.selectedBadgeText}>{t('transformation.before')}</Text>
-                </View>
-                <Text style={[styles.selectedDate, { color: colors.textSecondary }]}>
-                  {formatDate(selectedBefore.date)}
-                </Text>
-                {selectedBefore.weight && (
-                  <Text style={[styles.selectedWeight, { color: colors.textPrimary }]}>
-                    {selectedBefore.weight.toFixed(1)} kg
-                  </Text>
-                )}
+        <View style={{ paddingHorizontal: GUTTER, marginTop: 12 }}>
+          <ComparateurCadre before={shotA} after={shotB} width={frameW} height={h} mode={mode} sizes={{ avant: sizeA, apres: sizeB }} cadres={cadres} reglage={reglage} transparence={transparence} onCadre={onCadre} />
+          {reglage ? (
+            <>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                <GhostButton label={transparence ? 'Sans transparence' : 'Transparence'} onPress={() => setTransparence((t) => !t)} style={{ flex: 1 }} />
+                <GhostButton label="Aligner pareil" onPress={alignerAutre} style={{ flex: 1 }} />
               </View>
-              <TouchableOpacity
-                style={styles.changeButton}
-                onPress={() => {
-                  setStep('select_before');
-                  setSelectedBefore(null);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.changeButtonText, { color: colors.gold }]}>
-                  {t('transformation.change')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+              <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>
+                {`Les lignes t’aident à mettre épaules, nombril et hanches à la même hauteur. Touche deux fois pour revenir. « Aligner pareil » donne le même cadrage à la photo ${reglage === 'avant' ? 'après' : 'avant'}.`}
+              </Ink>
+            </>
+          ) : (
+            <>
+              <GhostButton label="Ajuster le cadrage de chaque photo" onPress={() => { tapLight(); setReglage('avant'); }} style={{ marginTop: 10 }} />
+              <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>Une photo en pied, l’autre en buste ? Ajuste : zoome et place chaque photo pour qu’elles se répondent. Le réglage est gardé.</Ink>
+            </>
+          )}
+        </View>
 
-            <View style={styles.selectionHeader}>
-              <View style={[styles.selectionBadge, { backgroundColor: '#10B98120' }]}>
-                <Text style={[styles.selectionBadgeText, { color: '#10B981' }]}>{t('transformation.step2')}</Text>
-              </View>
-            </View>
-            <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              {t('transformation.selectPhotoAfter')}
-            </Text>
-            <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
-              {t('transformation.selectLatestPhoto')}
-            </Text>
-
-            <View style={styles.photoGrid}>
-              {photos
-                .filter((p) => p.id !== selectedBefore.id)
-                .map((photo) => (
-                  <TouchableOpacity
-                    key={photo.id}
-                    style={[styles.photoCard, { backgroundColor: colors.card }]}
-                    onPress={() => handleSelectPhoto(photo)}
-                    activeOpacity={0.8}
-                  >
-                    <Image
-                      source={{ uri: photo.file_uri }}
-                      style={styles.photoImage}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.photoInfo}>
-                      <Text style={[styles.photoDate, { color: colors.textSecondary }]}>
-                        {formatDate(photo.date)}
-                      </Text>
-                      {photo.weight && (
-                        <Text style={[styles.photoWeight, { color: colors.gold }]}>
-                          {photo.weight.toFixed(1)} kg
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.selectIndicator}>
-                      <ChevronRight size={20} color={colors.textMuted} />
-                    </View>
-                  </TouchableOpacity>
-                ))}
-            </View>
+        {days === 0 ? (
+          <View style={{ marginHorizontal: GUTTER, marginTop: 18, padding: 16, borderRadius: 20, backgroundColor: c.accentTint, gap: 4 }}>
+            <Ink size={15} weight="extraBold">Ces deux photos sont du même jour</Ink>
+            <Ink size={13} color={c.textSecondary}>
+              {asc.length > 2 && daysDiff(asc[0].date.slice(0, 10), asc[asc.length - 1].date.slice(0, 10)) > 0
+                ? 'Choisis une photo plus ancienne dans le bandeau ci-dessous pour voir ton chemin.'
+                : 'Reprends une photo dans 3 ou 4 semaines, même lumière et même cadrage : c’est là que la différence se verra.'}
+            </Ink>
           </View>
+        ) : (
+          <StatStrip
+            style={{ marginHorizontal: GUTTER, marginTop: 18 }}
+            items={[
+              weightDiff === null ? { value: 'Sans poids', label: 'pas de poids sur ces photos' } : { value: ecartTexte(weightDiff), label: ecartLibelle(weightDiff) },
+              { value: dureeTexte(days), label: `entre les deux photos${days >= 21 ? `, ${days} jours` : ''}` },
+            ]}
+          />
         )}
+        {posesDiff ? (
+          <Ink size={12} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 8 }}>
+            Attention : ces deux photos n’ont pas la même pose.
+          </Ink>
+        ) : null}
 
-        <View style={{ height: 100 }} />
+        <Ink size={17} weight="black" tight style={{ paddingHorizontal: GUTTER, marginTop: 26 }}>Choisir les photos</Ink>
+        {filterItems.length > 1 ? (
+          <View style={{ paddingHorizontal: GUTTER, marginTop: 10 }}>
+            <Pills items={filterItems} value={filtre} onChange={(v) => setFiltre(v)} />
+          </View>
+        ) : null}
+
+        <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 12 }}>
+          {([
+            { k: 'avant' as Cible, p: a, word: 'Avant' },
+            { k: 'apres' as Cible, p: b, word: 'Après' },
+          ]).map((o) => {
+            const on = cible === o.k;
+            return (
+              <Pressable key={o.k} onPress={() => { tapLight(); setCible(o.k); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Changer la photo ${o.word.toLowerCase()}`} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: 18, backgroundColor: on ? c.accentTint : P.carte, borderWidth: 2, borderColor: on ? c.accent : c.divider }}>
+                <Image source={{ uri: o.p.file_uri }} style={{ width: 40, height: 54, borderRadius: 9 }} resizeMode="cover" />
+                <View style={{ flex: 1 }}>
+                  <Ink size={14} weight="extraBold" color={on ? c.accent : c.ink}>{o.word}</Ink>
+                  <Ink size={12} color={c.textSecondary} numberOfLines={1}>{dateCourte(o.p.date.slice(0, 10))}</Ink>
+                  {o.p.weight ? <Ink size={12} color={c.textSecondary} numberOfLines={1}>{kg(o.p.weight)}</Ink> : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 8 }}>
+          {`Touche une vignette pour la mettre en ${cible === 'avant' ? 'avant' : 'après'}.`}
+        </Ink>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER, gap: 8 }} style={{ marginTop: 10 }}>
+          {pool.map((p) => {
+            const isA = p.id === a.id;
+            const isB = p.id === b.id;
+            return (
+              <Pressable key={p.id} onPress={() => pick(p)} accessibilityRole="button" accessibilityLabel={`Photo du ${dateCourte(p.date.slice(0, 10))}${isA ? ', en avant' : isB ? ', en après' : ''}`} style={{ width: thumbW, gap: 4 }}>
+                <View>
+                  <Image source={{ uri: p.file_uri }} style={{ width: thumbW, height: thumbW * 1.33, borderRadius: 12, borderWidth: isA || isB ? 3 : 0, borderColor: c.accent, opacity: isA || isB ? 1 : 0.85 }} resizeMode="cover" />
+                  {isA || isB ? (
+                    <View style={{ position: 'absolute', left: 4, bottom: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 7, backgroundColor: c.accent }}>
+                      <Ink size={10} weight="extraBold" color={c.onAccent}>{isA ? 'Avant' : 'Après'}</Ink>
+                    </View>
+                  ) : null}
+                </View>
+                <Ink size={11} weight="bold" color={c.textSecondary} numberOfLines={1}>{dateCourte(p.date.slice(0, 10))}</Ink>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 18 }}>
+          <GhostButton
+            label="Tout le chemin"
+            onPress={() => {
+              tapLight();
+              const pair = paireParDefaut(asc, filtre === 'toutes' ? null : filtre);
+              if (pair) setIds({ avant: pair[0].id, apres: pair[1].id });
+            }}
+            style={{ flex: 1 }}
+          />
+          <PrimaryButton label="Partager" onPress={() => setShareOpen(true)} style={{ flex: 1, height: 54 }} />
+        </View>
+        {asc.length >= 2 ? (
+          <GhostButton label="Créer ma carte avant après" onPress={() => { tapLight(); router.push(carteAvantApresDirecte(ids) as never); }} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
+        ) : null}
+        <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 14 }}>
+          Même lumière, même cadrage, même heure : c’est ce qui rend la comparaison juste.
+        </Ink>
       </ScrollView>
-      <PopupComponent />
-    </ScreenWrapper>
-    </PremiumGate>
-  );
-}
 
-const createStyles = (SCREEN_WIDTH: number) => {
-  const photoCardWidth = (SCREEN_WIDTH - 60) / 2;
-  return StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  // Loading
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 16,
-  },
-  // Empty State - Amélioré
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-    gap: 20,
-  },
-  emptyIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  emptyTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: -0.5,
-  },
-  emptyText: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 320,
-  },
-  benefitsContainer: {
-    width: '100%',
-    gap: 12,
-    marginTop: 8,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-  },
-  benefitIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  benefitText: {
-    fontSize: 15,
-    fontWeight: '600',
-    flex: 1,
-  },
-  emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    marginTop: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  emptyButtonText: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  // Header
-  resetButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Stats Card - Amélioré
-  statsCard: {
-    borderRadius: 24,
-    padding: 24,
-    marginTop: 20,
-    gap: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  statsTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: -0.5,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 14,
-  },
-  statBox: {
-    flex: 1,
-    borderRadius: 18,
-    padding: 18,
-    alignItems: 'center',
-    gap: 10,
-  },
-  statIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  statValue: {
-    fontSize: 26,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  statEmoji: {
-    fontSize: 16,
-    color: '#10B981',
-    fontWeight: '700',
-  },
-  statSub: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  motivationBanner: {
-    borderRadius: 16,
-    padding: 18,
-    alignItems: 'center',
-  },
-  motivationText: {
-    fontSize: 16,
-    fontWeight: '800',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  // Quick Select - Amélioré
-  quickSelectSection: {
-    marginTop: 28,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 16,
-  },
-  quickSelectRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  quickSelectCard: {
-    flex: 1,
-    borderRadius: 18,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  quickSelectImage: {
-    width: '100%',
-    height: 120,
-  },
-  quickSelectBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  quickSelectBadgeText: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 0.8,
-  },
-  quickSelectDate: {
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
-    paddingVertical: 12,
-  },
-  quickSelectArrow: {
-    paddingHorizontal: 8,
-  },
-  // Selection Section
-  selectionSection: {
-    gap: 12,
-  },
-  selectionHeader: {
-    marginBottom: 4,
-  },
-  selectionBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  selectionBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  selectionTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  selectionSubtitle: {
-    fontSize: 15,
-    marginBottom: 8,
-    lineHeight: 22,
-  },
-  photoGrid: {
-    gap: 14,
-  },
-  photoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 18,
-    overflow: 'hidden',
-    padding: 10,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  photoImage: {
-    width: 90,
-    height: 110,
-    borderRadius: 14,
-  },
-  photoInfo: {
-    flex: 1,
-    gap: 6,
-  },
-  photoDate: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  photoWeight: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  selectIndicator: {
-    paddingRight: 8,
-    backgroundColor: 'transparent',
-  },
-  // Selected Preview - Amélioré
-  selectedPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 24,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  selectedPreviewImage: {
-    width: 70,
-    height: 90,
-    borderRadius: 12,
-  },
-  selectedPreviewInfo: {
-    flex: 1,
-    gap: 6,
-  },
-  selectedBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  selectedBadgeText: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 0.8,
-  },
-  selectedDate: {
-    fontSize: 13,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  selectedWeight: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  changeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  changeButtonText: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-});
+      <Sheet
+        visible={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title="Ton avant et après"
+        text="L’image est créée sur ton téléphone. Elle ne le quitte que si tu la partages."
+        actions={[
+          { label: 'Partager', tone: 'accent', onPress: doShare },
+          { label: 'Enregistrer dans ma galerie', tone: 'ink', onPress: doSave },
+          { label: 'Annuler', onPress: () => setShareOpen(false) },
+        ]}
+      >
+        <View style={{ alignItems: 'center' }}>
+          <CarteAvantApres ref={cardRef} before={shotA} after={shotB} width={cardW} cadres={cadres} sizes={{ avant: sizeA, apres: sizeB }} />
+        </View>
+      </Sheet>
+      <Sheet visible={!!notice} onClose={() => setNotice(null)} title={notice ?? ''} actions={[{ label: 'D’accord', tone: 'ink', onPress: () => setNotice(null) }]} />
+    </View>
+  );
 }

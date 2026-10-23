@@ -343,7 +343,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
 
     await setStringAsync(code);
     notificationAsync(NotificationFeedbackType.Success);
-    showPopup('Copie !', `${activeZones.length} zones copiees dans le presse-papier`, [{ text: 'OK', style: 'primary' }]);
+    showPopup('Copié', `${activeZones.length} zones copiées.`, [{ text: 'OK', style: 'primary' }]);
   };
 
   const copySelectedZone = async () => {
@@ -351,7 +351,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
     const code = `{ id: '${selectedZone.id}', label: '${selectedZone.label}', x: ${selectedZone.x}, y: ${selectedZone.y}, w: ${selectedZone.w}, h: ${selectedZone.h} }`;
     await setStringAsync(code);
     notificationAsync(NotificationFeedbackType.Success);
-    showPopup('Copie !', `Zone "${selectedZone.label}" copiee`, [{ text: 'OK', style: 'primary' }]);
+    showPopup('Copié', `Zone « ${selectedZone.label} » copiée.`, [{ text: 'OK', style: 'primary' }]);
   };
 
   return (
@@ -465,7 +465,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         </View>
       )}
 
-      {/* ZONE IMAGE · wrappé dans GestureDetector pour pinch + pan zoom */}
+      {/* ZONE IMAGE : wrappé dans GestureDetector pour pinch + pan zoom */}
       <View style={styles.mainArea}>
         <GestureDetector gesture={composedGesture}>
           <View style={[styles.imageFrame, { aspectRatio: FORCED_ASPECT_RATIO, overflow: 'hidden' }]}>

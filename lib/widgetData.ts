@@ -1,5 +1,5 @@
 // ============================================================
-// YOROI — Service de mise à jour des widgets iOS & Android
+// YOROI : Service de mise à jour des widgets iOS & Android
 // ============================================================
 // Appelle le module natif pour passer les données clés
 // aux widgets d'écran d'accueil.
@@ -13,7 +13,8 @@ import logger from '@/lib/security/logger';
 
 const { WidgetDataModule } = NativeModules;
 
-const isSupported = Platform.OS !== 'web' && !!WidgetDataModule;
+// Ancien format de widgets, remplacé par lib/v2/widgets (octobre 2026) : désactivé.
+const isSupported = false && Platform.OS !== 'web' && !!WidgetDataModule;
 
 export interface WidgetData {
   weight?:           number;

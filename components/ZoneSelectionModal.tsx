@@ -1,37 +1,15 @@
 // ============================================
-// YOROI - MODAL DE SÉLECTION DE ZONES MULTIPLES
+// YOROI, choix d'une zone parmi plusieurs (refonte v2)
 // ============================================
-// Permet de choisir entre plusieurs zones qui se chevauchent
+// Permet de choisir entre plusieurs zones qui se chevauchent. API inchangee.
 
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-  Animated,
-  Easing,
-  useWindowDimensions,
-} from 'react-native';
-import {
-  X,
-  ChevronRight,
-  Hand,
-  Footprints,
-  Brain,
-  Bone,
-  Dumbbell,
-  Target,
-  ArrowLeft,
-  Zap,
-  Heart,
-  Circle,
-} from 'lucide-react-native';
+import { View, StyleSheet, Pressable, Modal, ScrollView, Animated, Easing, useWindowDimensions } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
 
 export interface Zone {
   id: string;
@@ -45,113 +23,88 @@ interface ZoneSelectionModalProps {
   onClose: () => void;
 }
 
-// Mapping des zones vers les icônes
-const getZoneIconComponent = (zoneName: string) => {
-  const name = zoneName.toLowerCase();
-  if (name.includes('main') || name.includes('doigt') || name.includes('pouce') || name.includes('poignet')) return Hand;
-  if (name.includes('pied') || name.includes('orteil') || name.includes('cheville')) return Footprints;
-  if (name.includes('tête') || name.includes('visage') || name.includes('front')) return Brain;
-  if (name.includes('cou') || name.includes('gorge') || name.includes('hanche') || name.includes('côte')) return Bone;
-  if (name.includes('épaule') || name.includes('coude') || name.includes('bras') || name.includes('pec') || name.includes('poitrine')) return Dumbbell;
-  if (name.includes('genou') || name.includes('jambe') || name.includes('cuisse') || name.includes('mollet')) return Zap;
-  if (name.includes('dos') || name.includes('lombaire')) return ArrowLeft;
-  if (name.includes('abdos') || name.includes('ventre') || name.includes('sternum')) return Target;
-  if (name.includes('coeur') || name.includes('thorax')) return Heart;
-  return Circle;
+// Position du point rouge sur la petite silhouette (repere 24 x 44)
+const zonePoint = (zoneName: string): [number, number] => {
+  const n = zoneName.toLowerCase();
+  if (n.includes('main') || n.includes('doigt') || n.includes('pouce') || n.includes('poignet')) return [3.5, 25];
+  if (n.includes('pied') || n.includes('orteil') || n.includes('cheville')) return [9, 41];
+  if (n.includes('tête') || n.includes('visage') || n.includes('front')) return [12, 4.5];
+  if (n.includes('cou') || n.includes('gorge')) return [12, 10];
+  if (n.includes('épaule')) return [6.5, 12.5];
+  if (n.includes('coude') || n.includes('bras')) return [4.8, 18.5];
+  if (n.includes('pec') || n.includes('poitrine') || n.includes('sternum') || n.includes('thorax') || n.includes('coeur')) return [12, 15];
+  if (n.includes('côte')) return [15, 18];
+  if (n.includes('hanche')) return [8.5, 25];
+  if (n.includes('genou')) return [9, 33];
+  if (n.includes('jambe') || n.includes('cuisse') || n.includes('mollet')) return [9, 29.5];
+  if (n.includes('dos') || n.includes('lombaire') || n.includes('abdos') || n.includes('ventre')) return [12, 21];
+  return [12, 20];
 };
 
-const getZoneColor = (zoneName: string) => {
-  const name = zoneName.toLowerCase();
-  if (name.includes('main') || name.includes('doigt') || name.includes('pouce')) return '#F59E0B';
-  if (name.includes('pied') || name.includes('orteil') || name.includes('cheville')) return '#10B981';
-  if (name.includes('tête') || name.includes('visage')) return '#8B5CF6';
-  if (name.includes('cou') || name.includes('épaule')) return '#0EA5E9';
-  if (name.includes('genou') || name.includes('jambe')) return '#EF4444';
-  if (name.includes('dos') || name.includes('lombaire')) return '#EC4899';
-  if (name.includes('abdos') || name.includes('ventre') || name.includes('côte')) return '#6366F1';
-  if (name.includes('pec') || name.includes('poitrine') || name.includes('sternum')) return '#14B8A6';
-  return '#6B7280';
-};
+const BODY =
+  'M12 1.5a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM8 10h8l3.5 2.5 1.5 9-1.8.5-1.7-7.5V24l-1 18h-2.6l-.9-14h-1l-.9 14H8.5l-1-18V15l-1.7 7.5-1.8-.5 1.5-9z';
 
-export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
-  visible,
-  zones,
-  onSelect,
-  onClose,
-}) => {
+function ZoneGlyph({ name }: { name: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const [x, y] = zonePoint(name);
+  return (
+    <Svg width={26} height={46} viewBox="0 0 24 44">
+      <Path d={BODY} fill={c.fillSubtle} />
+      <Circle cx={x} cy={y} r={3.4} fill={c.accent} opacity={0.22} />
+      <Circle cx={x} cy={y} r={2} fill={c.accent} />
+    </Svg>
+  );
+}
+
+export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({ visible, zones, onSelect, onClose }) => {
   const { height: SCREEN_HEIGHT } = useWindowDimensions();
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
 
-  // Animations
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const scaleAnim = useRef(new Animated.Value(0.96)).current;
 
   useEffect(() => {
     if (visible) {
-      // Animation d'ouverture
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          damping: 20,
-          stiffness: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          damping: 15,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 260, useNativeDriver: true }),
+        Animated.spring(slideAnim, { toValue: 0, damping: 22, stiffness: 280, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, damping: 16, useNativeDriver: true }),
       ]).start();
     } else {
-      // Reset
       slideAnim.setValue(SCREEN_HEIGHT);
       fadeAnim.setValue(0);
-      scaleAnim.setValue(0.9);
+      scaleAnim.setValue(0.96);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const handleClose = () => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    
-    // Animation de fermeture
+    try {
+      impactAsync(ImpactFeedbackStyle.Light);
+    } catch {
+      // sans importance
+    }
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: SCREEN_HEIGHT,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 240, easing: Easing.in(Easing.ease), useNativeDriver: true }),
     ]).start(() => {
       onClose();
     });
   };
 
   const handleSelect = (zone: Zone) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    
-    // Animation de sélection
+    try {
+      impactAsync(ImpactFeedbackStyle.Medium);
+    } catch {
+      // sans importance
+    }
     Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
+      Animated.timing(scaleAnim, { toValue: 0.97, duration: 90, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 90, useNativeDriver: true }),
     ]).start(() => {
       onSelect(zone);
       onClose();
@@ -159,108 +112,70 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-        <TouchableOpacity 
-          style={styles.overlayTouchable} 
-          activeOpacity={1} 
-          onPress={handleClose}
-        />
-        
-        <Animated.View 
+        <Pressable style={styles.overlayTouchable} onPress={handleClose} accessibilityRole="button" accessibilityLabel="Fermer" />
+
+        <Animated.View
           style={[
-            styles.modalContent, 
-            { 
-              backgroundColor: colors.background,
-              transform: [
-                { translateY: slideAnim },
-                { scale: scaleAnim },
-              ],
-            }
+            styles.sheet,
+            { backgroundColor: c.background, paddingBottom: insets.bottom + 16, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] },
           ]}
         >
-          {/* Poignée de glissement */}
-          <View style={styles.handleContainer}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
-          </View>
+          <View style={[styles.grabber, { backgroundColor: c.border }]} />
 
-          {/* Header avec icône croix rouge */}
           <View style={styles.header}>
-            <View style={styles.headerIcon}>
-              <View style={styles.redCross}>
-                <View style={[styles.crossVertical, { backgroundColor: '#EF4444' }]} />
-                <View style={[styles.crossHorizontal, { backgroundColor: '#EF4444' }]} />
-              </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Ink size={26} weight="black" tight>
+                Quelle zone ?
+              </Ink>
+              <Ink size={14} weight="medium" color={c.textSecondary}>
+                Plusieurs zones se touchent ici. Choisis la bonne.
+              </Ink>
             </View>
-            <View style={styles.headerText}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Zone à préciser
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Plusieurs zones détectées à cet endroit
-              </Text>
-            </View>
-            <TouchableOpacity
+            <Pressable
               onPress={handleClose}
-              style={[styles.closeButton, { backgroundColor: colors.backgroundCard }]}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer"
+              hitSlop={6}
+              style={[styles.closeButton, { backgroundColor: c.surface, borderColor: c.divider }]}
             >
-              <X size={20} color={colors.textPrimary} />
-            </TouchableOpacity>
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Path d="M6 6l12 12M18 6L6 18" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" />
+              </Svg>
+            </Pressable>
           </View>
 
-          {/* Message d'aide */}
-          <View style={[styles.helpBanner, { backgroundColor: '#F59E0B15' }]}>
-            <Text style={[styles.helpText, { color: '#F59E0B' }]}>
-              Sélectionne la zone exacte concernée
-            </Text>
-          </View>
-
-          {/* Liste des zones avec icônes */}
-          <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-            {zones.map((zone, index) => {
-              const IconComponent = getZoneIconComponent(zone.name);
-              const iconColor = getZoneColor(zone.name);
-              
-              return (
-                <TouchableOpacity
-                  key={zone.id}
-                  style={[
-                    styles.zoneItem,
-                    { backgroundColor: colors.backgroundCard },
-                  ]}
-                  onPress={() => handleSelect(zone)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.zoneIconContainer, { backgroundColor: iconColor + '20' }]}>
-                    <IconComponent size={22} color={iconColor} />
-                  </View>
-                  <View style={styles.zoneInfo}>
-                    <Text style={[styles.zoneName, { color: colors.textPrimary }]}>
-                      {zone.name}
-                    </Text>
-                  </View>
-                  <View style={[styles.selectButton, { backgroundColor: colors.accent + '20' }]}>
-                    <ChevronRight size={18} color={colors.accentText} />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+          <ScrollView style={styles.list} showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {zones.map((zone) => (
+              <Pressable
+                key={zone.id}
+                onPress={() => handleSelect(zone)}
+                accessibilityRole="button"
+                accessibilityLabel={zone.name}
+                style={({ pressed }) => [
+                  styles.zoneItem,
+                  { backgroundColor: c.surface, borderColor: pressed ? c.accent : c.divider, transform: [{ scale: pressed ? 0.98 : 1 }] },
+                ]}
+              >
+                <View style={[styles.glyph, { backgroundColor: c.background }]}>
+                  <ZoneGlyph name={zone.name} />
+                </View>
+                <Ink size={17} weight="extraBold" style={{ flex: 1 }}>
+                  {zone.name}
+                </Ink>
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                  <Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              </Pressable>
+            ))}
           </ScrollView>
 
-          {/* Bouton annuler */}
-          <TouchableOpacity
-            style={[styles.cancelButton, { backgroundColor: colors.backgroundCard }]}
-            onPress={handleClose}
-          >
-            <Text style={[styles.cancelText, { color: colors.textMuted }]}>
+          <Pressable onPress={handleClose} accessibilityRole="button" style={[styles.cancelButton, { borderColor: c.border, backgroundColor: c.surface }]}>
+            <Ink size={16} weight="bold" color={c.textSecondary}>
               Annuler
-            </Text>
-          </TouchableOpacity>
+            </Ink>
+          </Pressable>
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -270,131 +185,67 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(29,32,41,0.45)',
     justifyContent: 'flex-end',
   },
   overlayTouchable: {
     flex: 1,
   },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-    maxHeight: '70%',
+  sheet: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    maxHeight: '75%',
   },
-  handleContainer: {
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
+  grabber: {
+    alignSelf: 'center',
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    marginBottom: 14,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    gap: SPACING.md,
-  },
-  headerIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#EF444420',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  redCross: {
-    width: 24,
-    height: 24,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  crossVertical: {
-    position: 'absolute',
-    width: 8,
-    height: 24,
-    borderRadius: 2,
-  },
-  crossHorizontal: {
-    position: 'absolute',
-    width: 24,
-    height: 8,
-    borderRadius: 2,
-  },
-  headerText: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: 13,
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  helpBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.lg,
-  },
-  helpText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
   list: {
-    maxHeight: 300,
+    maxHeight: 340,
   },
   zoneItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    marginBottom: SPACING.sm,
-    gap: SPACING.md,
-  },
-  zoneIconContainer: {
-    width: 44,
-    height: 44,
+    minHeight: 68,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    gap: 12,
   },
-  zoneInfo: {
-    flex: 1,
-  },
-  zoneName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  selectButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  glyph: {
+    width: 50,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButton: {
-    marginTop: SPACING.lg,
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
+    marginTop: 14,
+    minHeight: 52,
+    borderRadius: 18,
+    borderWidth: 1,
     alignItems: 'center',
-  },
-  cancelText: {
-    fontSize: 16,
-    fontWeight: '600',
+    justifyContent: 'center',
   },
 });

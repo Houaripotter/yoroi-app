@@ -1,0 +1,247 @@
+/**
+ * Studio, rubrique Diagnostic : infos de l'appareil a copier, stockage local (recherche et
+ * suppression cle par cle, avec confirmation), compteurs d'usage locaux, Sentry (desactive, explique),
+ * les 50 derniers messages du journal local (en memoire, rien n'est envoye), et « tout effacer »
+ * comme une installation neuve (deux confirmations, refuse pendant une demo pour proteger
+ * la sauvegarde de tes vraies donnees).
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Clipboard from 'expo-clipboard';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Button, Card, Row } from '@/components/yoroi/v2/espace/ui';
+import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
+import { appInfoText, formatDate, getAppInfo } from '@/lib/v2/creator/deviceInfo';
+import { DemoActiveError, wipeEverything } from '@/lib/v2/creator/wipe';
+import { DEMO_PROTECTED_KEYS } from '@/lib/demoDataService';
+import { clearRecentLogs, getRecentLogs, type LocalLogEntry } from '@/lib/security/logger';
+import { KV, Note, SearchField, SmallAction, StudioSection, SubTitle, confirm, confirmTwice, useStudio } from './parts';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+
+const FIRST = 15;
+
+const COUNTERS: { key: string; label: string }[] = [
+  { key: 'yoroi_review_count', label: 'Demandes d’avis montrées' },
+  { key: '@yoroi_review_prompts_count', label: 'Demandes d’avis sur la période' },
+  { key: '@yoroi_rating_action_count', label: 'Actions comptées pour l’avis' },
+  { key: '@yoroi_rating_dismissed_count', label: 'Demandes d’avis refusées' },
+  { key: '@yoroi_review_last_prompt', label: 'Dernière demande d’avis' },
+  { key: '@yoroi_last_auto_backup', label: 'Dernière sauvegarde automatique' },
+  { key: '@yoroi_first_use_date', label: 'Premier lancement' },
+];
+
+type KeyRow = { key: string; size: number };
+
+function sizeText(n: number): string {
+  if (n < 1024) return `${n} caractères`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1).replace('.', ',')} ko`;
+  return `${(n / 1024 / 1024).toFixed(1).replace('.', ',')} Mo`;
+}
+
+function counterText(v: string | null): string {
+  if (v === null || v === undefined || v === '') return '0';
+  if (/^\d{4}-\d{2}-\d{2}T/.test(v)) return new Date(v).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+  if (/^\d{12,}$/.test(v)) return new Date(Number(v)).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+  return v.length > 24 ? `${v.slice(0, 24)}...` : v;
+}
+
+const isProtected = (k: string) => DEMO_PROTECTED_KEYS.includes(k);
+
+export function Diagnostic() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const { demoActive } = useStudio();
+  const { expiresAt, label, lock } = useCreatorMode();
+  const [keys, setKeys] = useState<KeyRow[] | null>(null);
+  const [counters, setCounters] = useState<Record<string, string | null>>({});
+  const [logs, setLogs] = useState<LocalLogEntry[]>([]);
+  const [q, setQ] = useState('');
+  const [all, setAll] = useState(false);
+  const [wiping, setWiping] = useState(false);
+  const info = getAppInfo();
+
+  const load = useCallback(async () => {
+    try {
+      const names = [...(await AsyncStorage.getAllKeys())].sort((a, b) => a.localeCompare(b));
+      const rows: KeyRow[] = [];
+      for (let i = 0; i < names.length; i += 40) {
+        const part = await AsyncStorage.multiGet(names.slice(i, i + 40));
+        part.forEach(([k, v]) => rows.push({ key: k, size: v?.length ?? 0 }));
+      }
+      setKeys(rows);
+      const cs = await AsyncStorage.multiGet(COUNTERS.map((x) => x.key));
+      setCounters(Object.fromEntries(cs));
+    } catch {
+      setKeys([]);
+    }
+    setLogs(getRecentLogs());
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    if (!keys) return [];
+    const f = q.trim().toLowerCase();
+    return f ? keys.filter((k) => k.key.toLowerCase().includes(f)) : keys;
+  }, [keys, q]);
+  const shown = q.trim() || all ? filtered : filtered.slice(0, FIRST);
+  const total = keys?.reduce((s, k) => s + k.size, 0) ?? 0;
+
+  const copyInfo = async () => {
+    const extra: Record<string, string> = { Données: demoActive ? 'Heny chargée' : 'vraies données' };
+    if (expiresAt) extra['Mode créateur'] = `${label ?? 'sans étiquette'}, jusqu’au ${formatDate(expiresAt)}`;
+    try {
+      await Clipboard.setStringAsync(appInfoText(extra));
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+      appAlert('Copié', 'Les infos de l’appareil sont dans le presse-papiers.');
+    } catch {
+      appAlert('Oups', 'Le presse-papiers est indisponible.');
+    }
+  };
+
+  const copyLogs = async () => {
+    const text = logs.map((l) => `${new Date(l.at).toLocaleTimeString('fr-FR')} ${l.level} ${l.message}`).join('\n');
+    try {
+      await Clipboard.setStringAsync(text || 'Journal vide');
+      appAlert('Copié', 'Le journal est dans le presse-papiers. Rien n’a été envoyé.');
+    } catch {
+      appAlert('Oups', 'Le presse-papiers est indisponible.');
+    }
+  };
+
+  const removeKey = (k: string) => {
+    if (isProtected(k)) {
+      appAlert('Clé protégée', 'Elle garde tes vraies données pendant une démo. Reviens à tes données depuis Démo et captures, elle partira toute seule.');
+      return;
+    }
+    confirm('Effacer cette clé ?', `${k}\n\nL’écran qui l’utilise repartira de zéro sur ce point.`, 'Effacer', () => {
+      AsyncStorage.removeItem(k)
+        .then(load)
+        .catch(() => appAlert('Oups', 'La clé n’a pas pu être effacée.'));
+    }, true);
+  };
+
+  const wipe = () => {
+    if (demoActive) {
+      appAlert('Heny est chargée', 'Reviens d’abord à tes données : sinon leur sauvegarde serait perdue avec le reste.');
+      return;
+    }
+    confirmTwice(
+      { title: 'Tout effacer ?', message: 'Séances, pesées, réglages, sauvegardes locales et jeton créateur : le téléphone revient comme une installation neuve. Fais une sauvegarde avant si tu veux garder tes données.', ok: 'Continuer' },
+      { title: 'Vraiment tout ?', message: 'Rien ne pourra être récupéré sur ce téléphone. Tu devras recoller ton jeton pour rouvrir le Studio.', ok: 'Tout effacer' },
+      () => {
+        setWiping(true);
+        wipeEverything()
+          .then(async () => {
+            await lock().catch(() => undefined);
+            router.replace('/onboarding' as never);
+          })
+          .catch((e) => {
+            setWiping(false);
+            appAlert('Oups', e instanceof DemoActiveError ? e.message : 'L’effacement s’est arrêté en route. Ferme et rouvre l’app, puis recommence.');
+          });
+      },
+    );
+  };
+
+  return (
+    <StudioSection id="diag" icon="info" title="Diagnostic" sub="Appareil, stockage, compteurs, journal, tout effacer" keywords="diagnostic appareil telephone version build stockage cle asyncstorage compteurs usage sentry journal log effacer installation neuve">
+      <Card>
+        <KV first label="Version" value={`${info.version} (build ${info.build})`} />
+        <KV label="Téléphone" value={info.model} />
+        <KV label="Système" value={info.os} />
+        <KV label="Environnement" value={info.env} />
+        <KV label="Expo SDK" value={info.sdk} />
+      </Card>
+      <Button tone="ghost" small icon="doc" label="Copier les infos de l’appareil" onPress={() => void copyInfo()} />
+
+      <SubTitle>Compteurs d’usage de ce téléphone</SubTitle>
+      <Card>
+        {COUNTERS.map((x, i) => (
+          <KV key={x.key} first={i === 0} label={x.label} value={counterText(counters[x.key] ?? null)} />
+        ))}
+      </Card>
+      <Note>YOROI n’a aucun outil de mesure d’audience : rien d’autre n’est compté, rien n’est envoyé.</Note>
+
+      <Card>
+        <Row first icon="pulse" label="Erreur test Sentry" sub="Désactivée : Sentry n’est pas installé, rien n’est envoyé" chevron={false} />
+      </Card>
+
+      <SubTitle>{`Journal local, ${logs.length} derniers messages`}</SubTitle>
+      <Card>
+        {logs.length === 0 ? (
+          <View style={{ padding: 14 }}>
+            <Ink size={13} color={c.textSecondary}>Rien pour l’instant. Le journal garde en mémoire les 50 derniers messages depuis l’ouverture de l’app, jamais les données.</Ink>
+          </View>
+        ) : (
+          logs.map((l, i) => (
+            <View key={`${l.at}-${i}`} style={{ paddingHorizontal: 14, paddingVertical: 8, gap: 2, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.divider }}>
+              <Ink size={11} weight="extraBold" color={l.level === 'error' ? c.danger : l.level === 'warn' ? c.goldDeep : c.textMuted}>
+                {`${new Date(l.at).toLocaleTimeString('fr-FR')}, ${l.level === 'error' ? 'erreur' : l.level === 'warn' ? 'alerte' : 'info'}`}
+              </Ink>
+              <Ink size={12} color={c.ink} selectable>{l.message}</Ink>
+            </View>
+          ))
+        )}
+      </Card>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Button tone="ghost" small label="Relire" onPress={() => setLogs(getRecentLogs())} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button tone="ghost" small label="Copier" onPress={() => void copyLogs()} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button
+            tone="ghost"
+            small
+            label="Vider"
+            onPress={() => {
+              clearRecentLogs();
+              setLogs([]);
+            }}
+          />
+        </View>
+      </View>
+
+      <SubTitle>Stockage local</SubTitle>
+      <SearchField value={q} onChange={setQ} placeholder="Chercher une clé" label="Chercher une clé du stockage local" />
+      <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
+        {keys === null ? 'Lecture du stockage' : `${keys.length} clés, ${sizeText(total)} au total`}
+      </Ink>
+      <Card>
+        {shown.length === 0 ? (
+          <View style={{ padding: 16 }}>
+            <Ink size={14} color={c.textSecondary}>{keys === null ? 'Un instant' : 'Aucune clé ne correspond.'}</Ink>
+          </View>
+        ) : (
+          shown.map((k, i) => (
+            <Row
+              key={k.key}
+              first={i === 0}
+              label={k.key}
+              sub={isProtected(k.key) ? `${sizeText(k.size)}, protégée` : sizeText(k.size)}
+              chevron={false}
+              right={<SmallAction label="Effacer" danger onPress={() => removeKey(k.key)} disabled={isProtected(k.key)} />}
+            />
+          ))
+        )}
+      </Card>
+      {!q.trim() && !all && filtered.length > FIRST ? <Button tone="ghost" label={`Voir les ${filtered.length} clés`} onPress={() => setAll(true)} small /> : null}
+
+      <View style={{ gap: 6, marginTop: 6 }}>
+        <Button tone="danger" icon="trash" label="Tout effacer" onPress={wipe} loading={wiping} disabled={wiping} />
+        <Note>Comme une installation neuve : base de données, stockage local et clés sécurisées de YOROI, puis l’onboarding. Deux confirmations. Refusé tant que Heny est chargée, pour garder la sauvegarde de tes vraies données.</Note>
+      </View>
+    </StudioSection>
+  );
+}
+
+export default Diagnostic;

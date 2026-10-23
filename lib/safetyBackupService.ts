@@ -45,7 +45,7 @@ export async function runSafetyBackup(label: string): Promise<boolean> {
         await rotateSafetyBackups().catch((e) => logger.warn('[SafetyBackup] Rotation échouée:', e));
         logger.info(`[SafetyBackup] ✅ (${label}) Backup de sécurité créé`);
       } else {
-        logger.warn(`[SafetyBackup] ⚠️ (${label}) Backup de sécurité échoué ou timeout — on continue quand même`);
+        logger.warn(`[SafetyBackup] ⚠️ (${label}) Backup de sécurité échoué ou timeout, on continue quand même`);
       }
       return ok;
     } catch (e) {

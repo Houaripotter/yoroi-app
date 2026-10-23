@@ -211,9 +211,6 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = memo(({
         <View style={styles.challengeDetails}>
           <Text style={[styles.challengeName, { color: colors.textPrimary }]}>
             {challengeData.name}
-            <Text style={[styles.challengeNameJp, { color: colors.textSecondary }]}>
-              {' '}{challengeData.nameJp}
-            </Text>
           </Text>
           <Text style={[styles.challengeDesc, { color: colors.textSecondary }]}>
             {challengeData.description}

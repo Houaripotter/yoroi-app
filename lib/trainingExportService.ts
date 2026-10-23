@@ -3,11 +3,12 @@
 // Export en CSV, JSON et génération de rapports
 // ============================================
 
+import { track } from '@/utils/telemetry';
 import { getProgressionItems, getPracticeLogsByItemId, PracticeLog, ProgressionItem } from './trainingJournalService';
 import * as FS from 'expo-file-system/legacy';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
-import { Alert } from 'react-native';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 // Type assertion pour expo-file-system
 const FileSystem = FS as typeof FS & {
@@ -48,15 +49,16 @@ export const exportTrainingToJSON = async (): Promise<string | null> => {
     await FileSystem.writeAsStringAsync(fileUri, jsonString);
 
     if (await isAvailableAsync()) {
+      track('sauvegarde_exportee', { type: 'json' });
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');
+      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
       return null;
     }
   } catch (error) {
     logger.error('Erreur export JSON:', error);
-    Alert.alert('Erreur', 'Impossible d\'exporter les données');
+    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
     return null;
   }
 };
@@ -99,15 +101,16 @@ export const exportTrainingToCSV = async (sport?: string): Promise<string | null
     await FileSystem.writeAsStringAsync(fileUri, csvContent);
 
     if (await isAvailableAsync()) {
+      track('sauvegarde_exportee', { type: 'csv' });
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');
+      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
       return null;
     }
   } catch (error) {
     logger.error('Erreur export CSV:', error);
-    Alert.alert('Erreur', 'Impossible d\'exporter les données');
+    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
     return null;
   }
 };
@@ -194,15 +197,16 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
     await FileSystem.writeAsStringAsync(fileUri, report);
 
     if (await isAvailableAsync()) {
+      track('sauvegarde_exportee', { type: 'csv' });
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');
+      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
       return null;
     }
   } catch (error) {
     logger.error('Erreur génération rapport:', error);
-    Alert.alert('Erreur', 'Impossible de générer le rapport');
+    appAlert('Oups', 'Le rapport n’a pas pu être créé.');
     return null;
   }
 };
@@ -239,15 +243,16 @@ export const exportExerciseHistory = async (exerciseId: number, exerciseName: st
     await FileSystem.writeAsStringAsync(fileUri, content);
 
     if (await isAvailableAsync()) {
+      track('sauvegarde_exportee', { type: 'csv' });
       await shareAsync(fileUri);
       return fileUri;
     } else {
-      Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');
+      appAlert('Partage indisponible', 'Le partage de fichiers n’est pas disponible sur ce téléphone.');
       return null;
     }
   } catch (error) {
     logger.error('Erreur export exercice:', error);
-    Alert.alert('Erreur', 'Impossible d\'exporter l\'historique');
+    appAlert('Oups', 'L’historique n’a pas pu être exporté.');
     return null;
   }
 };

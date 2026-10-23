@@ -14,6 +14,10 @@
 
 import { getUserSettings } from './storage';
 import { getProfile } from './database';
+import { INTENSITES } from './v2/intensite';
+import { lowerBounds, zoneOf, zoneTimes } from './v2/seances/workoutMath';
+import type { Interval } from './v2/seances/workoutMath';
+import type { ZonesOrigin } from './v2/seances/appleZonesSync';
 
 export interface HRZoneThresholds {
   z1max: number; // seuil Z1/Z2
@@ -21,6 +25,8 @@ export interface HRZoneThresholds {
   z3max: number; // seuil Z3/Z4
   z4max: number; // seuil Z4/Z5
   source: 'custom' | 'age' | 'default';
+  /** 14 octobre 2026 (ios27) : pour source custom, d'ou viennent tes zones (Apple Sante, a la main, estimees). */
+  origin?: ZonesOrigin;
   // Bornes min indépendantes (optionnelles, rétrocompat)
   z1min?: number;
   z2min?: number;
@@ -39,7 +45,8 @@ export interface HRZone {
   pct?: number;      // pourcentage de la FC de réserve (Karvonen)
 }
 
-export const ZONE_COLORS = ['#3B82F6', '#22C55E', '#EAB308', '#F97316', '#EF4444'] as const;
+// Vague 32 : couleurs de l'echelle d'intensite commune (lib/v2/intensite.ts), plus de rouge.
+export const ZONE_COLORS = [INTENSITES[0].fill, INTENSITES[1].fill, INTENSITES[2].fill, INTENSITES[3].fill, INTENSITES[4].fill] as const;
 export const ZONE_NAMES  = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'] as const;
 export const ZONE_LABELS = ['Récupération', 'Endurance', 'Tempo', 'Seuil', 'Max'] as const;
 
@@ -82,7 +89,7 @@ export async function getEffectiveHRZones(): Promise<HRZoneThresholds> {
 
     // 1. Zones personnalisées (configurées manuellement dans l'app)
     if (settings.heartRateZones) {
-      return { ...settings.heartRateZones, source: 'custom' };
+      return { ...settings.heartRateZones, source: 'custom', origin: settings.heartRateZonesMeta?.origin ?? 'manual' };
     }
   } catch {
     // getUserSettings échoué, continuer
@@ -144,11 +151,8 @@ export function thresholdsToZones(t: HRZoneThresholds): HRZone[] {
  */
 export function getZoneForBpm(bpm: number, thresholds: HRZoneThresholds): number {
   if (bpm <= 0) return 0;
-  const zones = thresholdsToZones(thresholds);
-  for (const z of zones) {
-    if (bpm >= z.minBpm && bpm < z.maxBpm) return z.zone;
-  }
-  return 5;
+  // 14 octobre 2026 : bornes basses inclusives comme Apple (151 a 169 en zone 4, 170 en zone 5)
+  return zoneOf(bpm, lowerBounds(thresholds));
 }
 
 /**
@@ -160,35 +164,15 @@ export function calcZoneDurations(
   thresholds: HRZoneThresholds,
   workoutStartISO?: string,
   workoutEndISO?: string,
+  pauses?: Interval[],
 ): (HRZone & { durationSeconds: number })[] {
+  // 14 octobre 2026 : methode commune lib/v2/seances/workoutMath (chaque mesure compte jusqu'a la
+  // suivante, plafonnee, limitee a la seance, pauses exclues, bornes basses inclusives comme Apple).
+  // L'ancien calcul perdait les valeurs egales a la borne haute saisie (169 avec « 151 a 169 »).
   const zones = thresholdsToZones(thresholds).map(z => ({ ...z, durationSeconds: 0 }));
-
   if (!hrSamples || hrSamples.length < 1) return zones;
-
-  const addToZone = (bpm: number, seconds: number) => {
-    if (seconds <= 0 || seconds > 300) return;
-    for (const z of zones) {
-      if (bpm >= z.minBpm && bpm < z.maxBpm) { z.durationSeconds += seconds; break; }
-    }
-  };
-
-  // Gap du début de séance au 1er sample
-  if (workoutStartISO) {
-    const startGap = (new Date(hrSamples[0].timestamp).getTime() - new Date(workoutStartISO).getTime()) / 1000;
-    addToZone(hrSamples[0].bpm, startGap);
-  }
-
-  // Gaps entre samples consécutifs
-  for (let i = 0; i < hrSamples.length - 1; i++) {
-    const gap = (new Date(hrSamples[i + 1].timestamp).getTime() - new Date(hrSamples[i].timestamp).getTime()) / 1000;
-    addToZone(hrSamples[i].bpm, gap);
-  }
-
-  // Gap du dernier sample à la fin de séance
-  if (workoutEndISO) {
-    const endGap = (new Date(workoutEndISO).getTime() - new Date(hrSamples[hrSamples.length - 1].timestamp).getTime()) / 1000;
-    addToZone(hrSamples[hrSamples.length - 1].bpm, endGap);
-  }
-
+  // 14 octobre 2026 (zones_apple) : de la premiere a la derniere mesure, comme Forme (voir workoutMath edges)
+  const t = zoneTimes(hrSamples, lowerBounds(thresholds), { start: workoutStartISO, end: workoutEndISO, pauses, edges: 'mesures' });
+  t.forEach((sec, i) => { zones[i].durationSeconds = sec; });
   return zones;
 }

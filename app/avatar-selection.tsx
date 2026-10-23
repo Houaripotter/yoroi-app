@@ -1,927 +1,165 @@
 /**
- * avatar-selection.tsx
- * Galerie d'avatars YOROI V3
- *
- * Interface pour sélectionner son avatar parmi les 16 packs d'avatars
- * Chaque pack de personnage a 5 états, chaque pack de collection a 5 personnages
+ * Ton personnage (sous-page de Reglages) : guerrier ou guerriere, les personnages du monde
+ * samourai et l'acces aux packs. Vague 13 : plus de rang ni d'XP ici, l'evolution de l'armure
+ * se regarde dans le Dojo (/dojo/rangs).
+ * Vague 45 : trois univers. Japon (le Guerrier, la Guerriere), Classique (le Sportif, la Sportive, gratuits
+ * comme le Guerrier) et Sans personnage. Chaque choix passe par choisirUnivers : le Guerrier remet l'univers
+ * Japon, le Sportif met l'univers Classique (scene et personnage suivent, l'XP et le rang ne bougent pas).
  */
+import React from 'react';
+import { Image, Pressable, ScrollView, View } from 'react-native';
+import { selectionAsync } from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { EspaceScreen, Icon, LockBadge, SectionTitle } from '@/components/yoroi/v2/espace/ui';
+import { GuerrierPicker } from '@/components/yoroi/v2/espace/Pickers';
+import { PACKS, packLevel, sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { useEspace } from '@/lib/v2/espace/useEspace';
+import { useIdentite } from '@/lib/v2/espace/useIdentite';
+import { choisirPersonnage } from '@/lib/v2/espace/personnage';
+import { usePremium } from '@/context/PremiumContext';
+import { MONDE_PERSONNAGES, classiqueImage, isPackUnlocked, packDisplayName, packImage, parsePersonnage, personnageKey } from '@/lib/v2/dojo/personnages';
+import { UNIVERS_CHOIX } from '@/lib/v2/dojo/univers';
+import { choisirUnivers, genreDuPersonnage, type ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Modal,
-  useWindowDimensions,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+const phraseUnivers = (id: ChoixUnivers) => UNIVERS_CHOIX.find((u) => u.id === id)?.phrase;
 
-import {
-  getAvatarConfig,
-  setFullAvatarConfig,
-  getUnlockedLevel,
-  getLevelProgress,
-  getAvatarImage,
-  getAllPacksWithUnlockStatus,
-  getPackType,
-  getCollectionCharacters,
-  type AvatarPack,
-  type AvatarGender,
-  type AvatarLevel,
-  type AvatarState,
-  type LevelProgress,
-  type CollectionCharacter,
-} from '@/lib/avatarSystem';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import logger from '@/lib/security/logger';
+export default function TonPersonnage() {
+  const router = useRouter();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const { espace } = useEspace();
+  const { profile, armure } = useIdentite();
+  const rankIndex = armure?.rank.index ?? 0;
+  // vague 45 : genre de la cle (Guerrier ou Sportif), sinon celui du profil (garde aussi sans personnage)
+  const genre: 'h' | 'f' = genreDuPersonnage(espace.personnage, profile?.avatar_gender);
+  const { isPremium } = usePremium();
+  const kind = parsePersonnage(espace.personnage).kind;
+  const estGuerrier = espace.personnage === 'guerrier_h' || espace.personnage === 'guerrier_f';
 
-// Test direct image import pour debug
-const TEST_IMAGE = require('@/assets/avatars/samurai/samurai_neutral.png');
-
-// Les 5 états pour les packs de personnages
-const AVATAR_STATES: AvatarState[] = ['down', 'tired', 'neutral', 'strong', 'legendary'];
-
-// Labels français pour les états (correspondant aux niveaux de rang)
-const STATE_LABELS: Record<AvatarState, string> = {
-  down: 'Niveau 1',      // Ashigaru
-  tired: 'Niveau 2',     // Bushi
-  neutral: 'Niveau 3',   // Samurai
-  strong: 'Niveau 4',    // Ronin
-  legendary: 'Niveau 5', // Shogun
-};
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface PackWithStatus {
-  id: AvatarPack;
-  name: string;
-  type: 'character' | 'collection';
-  requiredRankLevel: number;
-  category: 'male' | 'female' | 'collection';
-  isUnlocked: boolean;
-  collectionCharacters?: CollectionCharacter[];
-}
-
-// ============================================================================
-// COMPOSANT PRINCIPAL
-// ============================================================================
-
-export default function AvatarSelectionScreen() {
-  const { t } = useI18n();
-  const { width } = useWindowDimensions();
-  const AVATAR_SIZE = (width - 80) / 5;
-  const { colors, isDark } = useTheme();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const [selectedGender, setSelectedGender] = useState<AvatarGender>('male');
-  const [currentPack, setCurrentPack] = useState<AvatarPack>('samurai');
-  const [currentGender, setCurrentGender] = useState<AvatarGender>('male');
-  const [currentCollectionCharacter, setCurrentCollectionCharacter] = useState<CollectionCharacter | undefined>();
-  const [unlockedLevel, setUnlockedLevel] = useState<AvatarLevel>(1);
-  const [packs, setPacks] = useState<PackWithStatus[]>([]);
-  const [progress, setProgress] = useState<LevelProgress | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [creatorModeActive, setCreatorModeActive] = useState(false);
-
-  // Modal de prévisualisation
-  const [previewModalVisible, setPreviewModalVisible] = useState(false);
-  const [previewImage, setPreviewImage] = useState<any>(null);
-  const [previewPack, setPreviewPack] = useState<AvatarPack | null>(null);
-  const [previewPackInfo, setPreviewPackInfo] = useState<PackWithStatus | null>(null);
-  const [previewState, setPreviewState] = useState<AvatarState | null>(null);
-  const [previewCharacter, setPreviewCharacter] = useState<CollectionCharacter | null>(null);
-
-  // Charger les données
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-
-      // Vérifier si Mode Créateur actif
-      const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
-      const isCreator = creatorMode === 'true';
-      setCreatorModeActive(isCreator);
-
-      // Config actuelle
-      const config = await getAvatarConfig();
-      setCurrentPack(config.pack);
-      setCurrentGender(config.gender);
-      setSelectedGender(config.gender);
-      setCurrentCollectionCharacter(config.collectionCharacter);
-
-      // Niveau débloqué - Mode Créateur = tous débloqués (niveau 5)
-      if (isCreator) {
-        setUnlockedLevel(5 as AvatarLevel);
-      } else {
-        const level = await getUnlockedLevel();
-        setUnlockedLevel(level);
-      }
-
-      // Liste des packs avec statuts de déblocage
-      const allPacks = await getAllPacksWithUnlockStatus();
-      setPacks(allPacks);
-
-      // Progression
-      const prog = await getLevelProgress();
-      setProgress(prog);
-
-      setIsLoading(false);
-    } catch (error) {
-      logger.error('[AvatarSelection] Erreur chargement:', error);
-      setIsLoading(false);
-    }
+  // le Guerrier remet l'univers Japon (choisirUnivers garde aussi le genre du profil)
+  const pick = async (p: 'guerrier_h' | 'guerrier_f') => {
+    await choisirUnivers('japon', p === 'guerrier_f' ? 'f' : 'h');
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+  };
+  // le Sportif ou la Sportive met l'univers Classique ; « Sans personnage » aussi, sans figure
+  const pickClassique = async (g: 'h' | 'f') => {
+    await choisirUnivers('classique', g);
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+  };
+  const pickAucun = async () => {
+    await choisirUnivers('aucun', genre);
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
   };
 
-  // Toggle genre
-  const handleGenderToggle = (gender: AvatarGender) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    setSelectedGender(gender);
-  };
-
-  // Helper: nom du rang pour un niveau
-  const levelToRankName = (level: AvatarLevel): string => {
-    const names = ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'];
-    return `${names[level - 1] || 'Ashigaru'}`;
-  };
-
-  // Ouvrir la prévisualisation d'un avatar (pack de personnage)
-  const openPreviewCharacter = (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
-    if (!packInfo.isUnlocked) {
-      showPopup(
-        t('avatarSelection.packLocked'),
-        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
-      );
-      return;
-    }
-
-    const image = getAvatarImage(pack, state, undefined, selectedGender);
-    setPreviewImage(image);
-    setPreviewPack(pack);
-    setPreviewPackInfo(packInfo);
-    setPreviewState(state);
-    setPreviewCharacter(null);
-    setPreviewModalVisible(true);
-    impactAsync(ImpactFeedbackStyle.Light);
-  };
-
-  // Ouvrir la prévisualisation d'un personnage de collection
-  const openPreviewCollection = (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
-    if (!packInfo.isUnlocked) {
-      showPopup(
-        t('avatarSelection.packLocked'),
-        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
-      );
-      return;
-    }
-
-    const image = getAvatarImage(pack, undefined, character, selectedGender);
-    setPreviewImage(image);
-    setPreviewPack(pack);
-    setPreviewPackInfo(packInfo);
-    setPreviewState(null);
-    setPreviewCharacter(character);
-    setPreviewModalVisible(true);
-    impactAsync(ImpactFeedbackStyle.Light);
-  };
-
-  // Confirmer la sélection depuis la prévisualisation
-  const confirmSelection = async () => {
-    if (!previewPack || !previewPackInfo) return;
-
-    try {
-      impactAsync(ImpactFeedbackStyle.Medium);
-
-      const success = previewCharacter
-        ? await setFullAvatarConfig(previewPack, selectedGender, previewCharacter)
-        : await setFullAvatarConfig(previewPack, selectedGender);
-
-      if (!success) {
-        showPopup(t('common.error'), t('avatarSelection.cannotSave'));
-        return;
-      }
-
-      notificationAsync(NotificationFeedbackType.Success);
-      setPreviewModalVisible(false);
-
-      const label = previewState ? STATE_LABELS[previewState] : previewCharacter;
-      showPopup(
-        t('avatarSelection.avatarEquipped'),
-        `${t('avatarSelection.youEquipped')} ${previewPackInfo.name} ${label} !`
-      );
-
-      await loadData();
-    } catch (error) {
-      logger.error('[AvatarSelection] Erreur confirmation:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
-    }
-  };
-
-  // Sélection d'un état d'avatar (pack de personnage)
-  const handleSelectCharacterState = async (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
-    if (!packInfo.isUnlocked) {
-      showPopup(
-        t('avatarSelection.packLocked'),
-        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
-      );
-      return;
-    }
-
-    try {
-      impactAsync(ImpactFeedbackStyle.Medium);
-
-      const success = await setFullAvatarConfig(pack, selectedGender);
-
-      if (!success) {
-        showPopup(t('common.error'), t('avatarSelection.cannotSave'));
-        return;
-      }
-
-      notificationAsync(NotificationFeedbackType.Success);
-      showPopup(
-        t('avatarSelection.avatarEquipped'),
-        `${t('avatarSelection.youAreNow')} ${packInfo.name} ${STATE_LABELS[state]} !`
-      );
-
-      // Recharger les données
-      await loadData();
-    } catch (error) {
-      logger.error('[AvatarSelection] Erreur sélection:', error);
-      showPopup(t('common.error'), t('avatarSelection.cannotSave'));
-    }
-  };
-
-  // Sélection d'un personnage de collection
-  const handleSelectCollectionCharacter = async (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
-    if (!packInfo.isUnlocked) {
-      showPopup(
-        t('avatarSelection.packLocked'),
-        `${t('avatarSelection.packLockedDesc')} ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. ${t('avatarSelection.keepTraining')}`
-      );
-      return;
-    }
-
-    try {
-      impactAsync(ImpactFeedbackStyle.Medium);
-
-      const success = await setFullAvatarConfig(pack, selectedGender, character);
-
-      if (!success) {
-        showPopup(t('common.error'), t('avatarSelection.cannotSave'));
-        return;
-      }
-
-      notificationAsync(NotificationFeedbackType.Success);
-      showPopup(
-        t('avatarSelection.avatarEquipped'),
-        `${t('avatarSelection.youEquipped')} ${character} !`
-      );
-
-      await loadData();
-    } catch (error) {
-      logger.error('[AvatarSelection] Erreur sélection:', error);
-      showPopup(t('common.error'), t('avatarSelection.cannotSave'));
-    }
-  };
-
-  // Rendu d'un état d'avatar (pour pack de personnage)
-  const renderAvatarState = (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
-    const isUnlocked = packInfo.isUnlocked;
-    const isCurrent = pack === currentPack && selectedGender === currentGender;
-
-    const image = getAvatarImage(pack, state, undefined, selectedGender);
-
+  const carteClassique = (g: 'h' | 'f', label: string) => {
+    const on = espace.personnage === `classique_${g}`;
     return (
-      <TouchableOpacity
-        key={`${pack}-${state}`}
-        onPress={() => openPreviewCharacter(pack, packInfo, state)}
-        style={[
-          styles.avatarContainer,
-          {
-            width: AVATAR_SIZE,
-            height: AVATAR_SIZE + 30,
-          },
-        ]}
+      <Pressable
+        key={g}
+        onPress={() => { selectionAsync().catch(() => {}); void pickClassique(g); }}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ selected: on }}
+        style={{ flex: 1, height: 250, borderRadius: 22, overflow: 'hidden', borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, backgroundColor: on ? c.accentTint : c.fillSoft, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 }}
       >
-        <View
-          style={[
-            styles.avatarCircle,
-            {
-              width: AVATAR_SIZE,
-              height: AVATAR_SIZE,
-              opacity: isUnlocked ? 1 : 0.4,
-              borderColor: isCurrent ? '#FFD700' : (isDark ? '#FFFFFF' : '#000000'),
-              borderWidth: isCurrent ? 3 : 2,
-              backgroundColor: '#FFFFFF', // Toujours blanc
-            },
-          ]}
-        >
-          <Image
-            source={image || TEST_IMAGE}
-            style={{
-              width: AVATAR_SIZE - 8,
-              height: AVATAR_SIZE - 8,
-            }}
-            resizeMode="contain"
-            onError={(e) => logger.warn(`[AvatarSelection] Image error for ${pack}/${state}: ${e.nativeEvent.error}`)}
-          />
-
-          {/* Cadenas si verrouillé */}
-          {!isUnlocked && (
-            <View style={styles.lockOverlayCircle}>
-              <Ionicons name="lock-closed" size={18} color="#9CA3AF" />
-            </View>
-          )}
-
-          {/* Badge actuel */}
-          {isCurrent && (
-            <View style={styles.currentBadgeCircle}>
-              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-            </View>
-          )}
+        <Image source={classiqueImage(g, rankIndex)} style={{ position: 'absolute', top: 6, width: '100%', height: 206 }} resizeMode="contain" />
+        <View style={{ backgroundColor: on ? c.accent : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
+          <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink}>{label}</Ink>
         </View>
-
-        {/* Nom de l'état */}
-        <Text
-          style={[
-            styles.stateText,
-            {
-              color: isUnlocked ? colors.text : colors.textSecondary,
-            },
-          ]}
-          numberOfLines={1}
-        >
-          {STATE_LABELS[state]}
-        </Text>
-      </TouchableOpacity>
+        {on ? <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={14} color="#FFFFFF" stroke={3} /></View> : null}
+      </Pressable>
     );
   };
-
-  // Rendu d'un personnage de collection
-  const renderCollectionCharacter = (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
-    const isUnlocked = packInfo.isUnlocked;
-    const isCurrent = pack === currentPack && character === currentCollectionCharacter && selectedGender === currentGender;
-
-    const image = getAvatarImage(pack, undefined, character, selectedGender);
-
-    return (
-      <TouchableOpacity
-        key={`${pack}-${character}`}
-        onPress={() => openPreviewCollection(pack, packInfo, character)}
-        style={[
-          styles.avatarContainer,
-          {
-            width: AVATAR_SIZE,
-            height: AVATAR_SIZE + 30,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.avatarCircle,
-            {
-              width: AVATAR_SIZE,
-              height: AVATAR_SIZE,
-              opacity: isUnlocked ? 1 : 0.4,
-              borderColor: isCurrent ? '#FFD700' : (isDark ? '#FFFFFF' : '#000000'),
-              borderWidth: isCurrent ? 3 : 2,
-              backgroundColor: '#FFFFFF', // Toujours blanc
-            },
-          ]}
-        >
-          <Image
-            source={image || TEST_IMAGE}
-            style={{
-              width: AVATAR_SIZE - 8,
-              height: AVATAR_SIZE - 8,
-            }}
-            resizeMode="contain"
-            onError={(e) => logger.warn(`[AvatarSelection] Collection image error for ${pack}/${character}: ${e.nativeEvent.error}`)}
-          />
-
-          {/* Cadenas si verrouillé */}
-          {!isUnlocked && (
-            <View style={styles.lockOverlayCircle}>
-              <Ionicons name="lock-closed" size={18} color="#9CA3AF" />
-            </View>
-          )}
-
-          {/* Badge actuel */}
-          {isCurrent && (
-            <View style={styles.currentBadgeCircle}>
-              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-            </View>
-          )}
-        </View>
-
-        {/* Nom du personnage */}
-        <Text
-          style={[
-            styles.stateText,
-            {
-              color: isUnlocked ? colors.text : colors.textSecondary,
-            },
-          ]}
-          numberOfLines={1}
-        >
-          {character}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
-  // Rendu d'une section de pack
-  const renderPackSection = (packInfo: PackWithStatus) => {
-    const packType = getPackType(packInfo.id);
-
-    return (
-      <View key={packInfo.id} style={styles.packSection}>
-        {/* Header du pack */}
-        <View style={styles.packHeader}>
-          <Text style={[styles.packTitle, { color: colors.text }]}>{packInfo.name}</Text>
-
-          {!packInfo.isUnlocked && (
-            <Ionicons name="lock-closed" size={20} color={colors.textSecondary} />
-          )}
-        </View>
-
-        {/* Grille d'avatars */}
-        <View style={styles.avatarGrid}>
-          {packType === 'character' ? (
-            // Afficher les 5 états
-            AVATAR_STATES.map((state) => renderAvatarState(packInfo.id, packInfo, state))
-          ) : (
-            // Afficher les 5 personnages de collection
-            getCollectionCharacters(packInfo.id).map((character) =>
-              renderCollectionCharacter(packInfo.id, packInfo, character)
-            )
-          )}
-        </View>
-      </View>
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ title: t('avatarSelection.screenTitle') }} />
-        <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: colors.text }]}>
-            {t('common.loading')}
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const aucunOn = kind === 'aucun';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Stack.Screen
-        options={{
-          title: t('avatarSelection.screenTitle'),
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{ marginLeft: 10 }}
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+    <EspaceScreen title="Ton personnage" subtitle="Il décore ton accueil et ton rond de profil.">
+      <SectionTitle title="Japon" sub={phraseUnivers('japon')} />
+      <GuerrierPicker value={espace.personnage} rankIndex={rankIndex} onPick={pick} height={290} />
+      {kind === 'pack' || (kind === 'guerrier' && !estGuerrier) ? (
+        <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Ton personnage actuel vient d’un pack ou du monde samouraï. Choisis le guerrier ou la guerrière pour y revenir.</Ink>
+      ) : null}
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Toggle Homme/Femme */}
-        <View style={styles.genderToggleContainer}>
-          <TouchableOpacity
-            style={[
-              styles.genderButton,
-              selectedGender === 'male' && styles.genderButtonActive,
-              { backgroundColor: selectedGender === 'male' ? '#3B82F6' : colors.border },
-            ]}
-            onPress={() => handleGenderToggle('male')}
-          >
-            <Ionicons
-              name="male"
-              size={24}
-              color={selectedGender === 'male' ? '#FFFFFF' : colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.genderButtonText,
-                { color: selectedGender === 'male' ? '#FFFFFF' : colors.textSecondary },
-              ]}
-            >
-              Homme
-            </Text>
-          </TouchableOpacity>
+      {/* vague 45 : l'univers Classique, gratuit comme le Guerrier */}
+      <SectionTitle title="Classique" sub={phraseUnivers('classique')} />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        {carteClassique('h', 'Sportif')}
+        {carteClassique('f', 'Sportive')}
+      </View>
 
-          <TouchableOpacity
-            style={[
-              styles.genderButton,
-              selectedGender === 'female' && styles.genderButtonActive,
-              { backgroundColor: selectedGender === 'female' ? '#EC4899' : colors.border },
-            ]}
-            onPress={() => handleGenderToggle('female')}
-          >
-            <Ionicons
-              name="female"
-              size={24}
-              color={selectedGender === 'female' ? '#FFFFFF' : colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.genderButtonText,
-                { color: selectedGender === 'female' ? '#FFFFFF' : colors.textSecondary },
-              ]}
-            >
-              Femme
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Progression actuelle */}
-        {progress && (
-          <View style={[styles.progressCard, { backgroundColor: colors.card }]}>
-            <View style={styles.progressHeader}>
-              <Text style={[styles.progressTitle, { color: colors.text }]}>
-                Niveau actuel
-              </Text>
-              <Text style={[styles.progressLevel, { color: '#FFD700' }]}>
-                {levelToRankName(progress.currentLevel)} ({progress.currentLevel}/5)
-              </Text>
-            </View>
-
-            {progress.nextLevel && (
-              <>
-                <View style={styles.progressBarContainer}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${progress.percentage}%`,
-                        backgroundColor: '#3B82F6',
-                      },
-                    ]}
-                  />
-                </View>
-
-                <Text style={[styles.progressInfo, { color: colors.textSecondary }]}>
-                  {progress.daysToNext} jour{progress.daysToNext > 1 ? 's' : ''} restant{progress.daysToNext > 1 ? 's' : ''} pour atteindre{' '}
-                  {levelToRankName(progress.nextLevel)}
-                </Text>
-              </>
-            )}
-
-            {!progress.nextLevel && (
-              <Text style={[styles.progressInfo, { color: '#10B981' }]}>
-                Rang maximum atteint !
-              </Text>
-            )}
+      {/* vague 45 : sans personnage, la scene seule */}
+      <Pressable
+        onPress={() => { selectionAsync().catch(() => {}); void pickAucun(); }}
+        accessibilityRole="button"
+        accessibilityLabel={`Sans personnage. ${phraseUnivers('aucun') ?? ''}`}
+        accessibilityState={{ selected: aucunOn }}
+        style={{ height: 120, borderRadius: 22, overflow: 'hidden', borderWidth: aucunOn ? 3 : 1, borderColor: aucunOn ? c.accent : c.border, backgroundColor: c.fillSoft }}
+      >
+        <Image source={sceneMeta('classique_salle_jour').image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+        <View style={{ position: 'absolute', left: 12, bottom: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ backgroundColor: aucunOn ? c.accent : c.surface, borderWidth: aucunOn ? 0 : 1, borderColor: c.border, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}>
+            <Ink size={14} weight="extraBold" color={aucunOn ? '#FFFFFF' : c.ink}>Sans personnage</Ink>
           </View>
-        )}
-
-        {/* Tous les packs - filtrés par genre */}
-        {packs
-          .filter((packInfo) => {
-            // Si Femme est sélectionné, montrer UNIQUEMENT les packs féminins
-            if (selectedGender === 'female') {
-              return packInfo.category === 'female';
-            }
-            // Si Homme est sélectionné, montrer les packs masculins et de collection mixte
-            return packInfo.category === 'male' || packInfo.category === 'collection';
-          })
-          .map((packInfo) => renderPackSection(packInfo))}
-
-        {/* Info déblocage */}
-        <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
-          <Ionicons name="information-circle" size={24} color={colors.primary} />
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            {creatorModeActive
-              ? 'Mode Créateur actif - Tous les avatars sont débloqués !'
-              : 'Les avatars se débloquent en montant de rang dans le Dojo. Utilise le toggle Homme/Femme en haut pour voir les avatars correspondants. Chaque pack contient 5 variations de niveau !'}
-          </Text>
         </View>
+        {aucunOn ? <View style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={14} color="#FFFFFF" stroke={3} /></View> : null}
+      </Pressable>
+      <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: 4, marginTop: -4 }}>{phraseUnivers('aucun')}</Ink>
+
+      <SectionTitle title="Le monde samouraï" sub={isPremium ? 'Six figures du Japon féodal, toutes à toi avec Premium' : 'Six figures du Japon féodal, à débloquer dans le Dojo'} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 10 }}>
+        {MONDE_PERSONNAGES.map((p) => {
+          const key = personnageKey(p, genre);
+          const on = espace.personnage === key;
+          const unlocked = isPackUnlocked(p, [], rankIndex, isPremium);
+          const name = packDisplayName(p, genre);
+          return (
+            <Pressable
+              key={p.id}
+              onPress={() => {
+                if (unlocked) {
+                  void choisirPersonnage(key).then(() => notificationAsync(NotificationFeedbackType.Success).catch(() => {}));
+                } else {
+                  router.push({ pathname: '/dojo/pack', params: { id: p.id } } as any);
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${name}, ${on ? 'ton personnage' : unlocked ? 'touche pour le choisir' : 'à débloquer dans le Dojo'}`}
+              style={{ width: 160, borderRadius: 22, backgroundColor: p.fond, borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, padding: 10, gap: 4 }}
+            >
+              <Image source={packImage(p, genre)} style={{ width: '100%', height: 200 }} resizeMode="contain" />
+              {!unlocked ? <View style={{ position: 'absolute', top: 8, right: 8 }}><LockBadge size={24} /></View> : null}
+              <Ink size={14} weight="extraBold" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Ink>
+              <Ink size={12} weight="bold" color={on ? c.accent : unlocked ? c.successText : c.textMuted}>{on ? 'Ton personnage' : unlocked ? 'Choisir' : 'À débloquer'}</Ink>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
-      {/* Modal de prévisualisation */}
-      <Modal
-        visible={previewModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPreviewModalVisible(false)}
-      >
-        <View style={styles.previewOverlay}>
-          <View style={[styles.previewContent, { backgroundColor: colors.card }]}>
-            {/* Fermer */}
-            <TouchableOpacity
-              style={styles.previewCloseButton}
-              onPress={() => setPreviewModalVisible(false)}
+      <SectionTitle title="Les légendes" sub="Des personnages en trois niveaux, dans la boutique du dojo" />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 10 }}>
+        {PACKS.map((p) => {
+          const on = espace.personnage === p.id;
+          return (
+            <Pressable
+              key={p.id}
+              onPress={() => router.push('/dojo/boutique' as any)}
+              accessibilityRole="button"
+              accessibilityLabel={`${p.nom}, voir dans la boutique`}
+              style={{ width: 150, borderRadius: 22, backgroundColor: c.surface, borderWidth: on ? 3 : 1, borderColor: on ? c.accent : c.border, padding: 12, gap: 6 }}
             >
-              <Ionicons name="close" size={28} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            {/* Carte avatar agrandi */}
-            <View style={styles.previewCircle}>
-              <Image
-                source={previewImage || TEST_IMAGE}
-                style={styles.previewImage}
-                resizeMode="contain"
-                onError={(e) => logger.warn(`[AvatarSelection] Preview image error: ${e.nativeEvent.error}`)}
-              />
-            </View>
-
-            {/* Nom du pack et niveau */}
-            <Text style={[styles.previewTitle, { color: colors.text }]}>
-              {previewPackInfo?.name}
-            </Text>
-            <Text style={[styles.previewSubtitle, { color: colors.textSecondary }]}>
-              {previewState ? STATE_LABELS[previewState] : previewCharacter}
-            </Text>
-
-            {/* Bouton de validation */}
-            <TouchableOpacity
-              style={styles.previewValidateButton}
-              onPress={confirmSelection}
-            >
-              <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
-              <Text style={styles.previewValidateText}>{t('avatarSelection.equipAvatar')}</Text>
-            </TouchableOpacity>
-
-            {/* Bouton annuler */}
-            <TouchableOpacity
-              style={[styles.previewCancelButton, { borderColor: colors.border }]}
-              onPress={() => setPreviewModalVisible(false)}
-            >
-              <Text style={[styles.previewCancelText, { color: colors.textSecondary }]}>
-                {t('avatarSelection.cancel')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <PopupComponent />
-    </SafeAreaView>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <Ink size={14} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{p.nom}</Ink>
+              </View>
+              <Image source={p.images[on ? packLevel(rankIndex) - 1 : 0]} style={{ width: '100%', height: 150 }} resizeMode="contain" />
+              <Ink size={12} weight="bold" color={on ? c.accent : c.textMuted}>{on ? 'Ton personnage' : 'Voir le pack'}</Ink>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </EspaceScreen>
   );
 }
-
-// ============================================================================
-// STYLES
-// ============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  genderToggleContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  genderButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  genderButtonActive: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  genderButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  progressCard: {
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 24,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  progressTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  progressLevel: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  progressInfo: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  packSection: {
-    marginBottom: 32,
-  },
-  packHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  packTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    flex: 1,
-  },
-  levelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  levelBadgeText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'flex-start',
-  },
-  avatarContainer: {
-    alignItems: 'center',
-  },
-  avatarCircle: {
-    borderRadius: 999,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  lockOverlayCircle: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 999,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  currentBadgeCircle: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 999,
-    padding: 2,
-  },
-  stateText: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 16,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  // Modal de prévisualisation
-  previewOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  previewContent: {
-    width: '100%',
-    maxWidth: 340,
-    borderRadius: 24,
-    padding: 24,
-    alignItems: 'center',
-  },
-  previewCloseButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    padding: 8,
-    zIndex: 10,
-  },
-  previewCircle: {
-    width: 240,
-    height: 280,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  previewImage: {
-    width: 220,
-    height: 260,
-  },
-  previewTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  previewSubtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  previewValidateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#10B981',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    width: '100%',
-    marginBottom: 12,
-  },
-  previewValidateText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  previewCancelButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    borderWidth: 1,
-    width: '100%',
-    alignItems: 'center',
-  },
-  previewCancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

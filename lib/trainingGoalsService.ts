@@ -5,6 +5,7 @@
 // avec calcul automatique semaine -> mois -> annee
 
 import * as SQLite from 'expo-sqlite';
+import { vitrineDb } from '@/lib/v2/visite/vitrine';
 import { Sport, SPORTS } from './sports';
 
 // Database locale (evite dependance circulaire)
@@ -12,6 +13,21 @@ let db: SQLite.SQLiteDatabase | null = null;
 let tableCreated = false;
 
 const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+  // 18 octobre 2026 : pendant la visite guidee avec l'exemple, la base de la vitrine (lib/v2/visite/vitrine.ts)
+  const vitrine = vitrineDb();
+  if (vitrine) {
+    await vitrine.execAsync(`
+      CREATE TABLE IF NOT EXISTS training_goals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sport_id TEXT NOT NULL UNIQUE,
+        weekly_target INTEGER NOT NULL DEFAULT 1,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    return vitrine;
+  }
   if (db) {
     // S'assurer que la table existe
     if (!tableCreated) {

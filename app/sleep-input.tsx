@@ -1,644 +1,174 @@
 /**
- * sleep-input.tsx
- * Écran de saisie manuelle du sommeil (modal)
- * Permet d'enregistrer manuellement les heures de coucher/réveil
- * Sauvegarde localement + sync optionnelle avec Apple Health
+ * Noter ta nuit : heures pre-remplies avec ta derniere nuit, qualite en un appui.
  */
-
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-  DeviceEventEmitter,
-} from 'react-native';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Moon, Sun, ChevronLeft, Check, Clock, Calendar } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { LinearGradient } from 'expo-linear-gradient';
-import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { addSleepEntry } from '@/lib/sleepService';
+import { track } from '@/utils/telemetry';
+import React, { useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { DateChips } from '@/components/yoroi/v2/DateChips';
+import { addSleepEntry, getSleepEntries, getSleepGoal } from '@/lib/sleepService';
 import { healthConnect } from '@/lib/healthConnect';
-import { useCustomPopup } from '@/components/CustomPopup';
 import { logger } from '@/lib/security/logger';
-import { format, Locale } from 'date-fns';
-import { fr, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
+import { localISO } from '@/lib/v2/accueil/hydration';
+import { BigButton, Card, Enter, Icon, P, Pill, Press, tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { QUALITY_LABELS, Stars, Stepper, clock, dayLabel, hm, shiftTime } from '@/components/yoroi/v2/accueil/sleepKit';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { doitEcrireNuitSante, nuitDejaEcriteSante, retenirNuitEcriteSante } from '@/lib/v2/sante/sommeilSante';
 
-
-
-// Défauts intelligents : hier 23:00 → aujourd'hui 07:00
-function getDefaultBedtime(): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  d.setHours(23, 0, 0, 0);
-  return d;
+function toMin(t: string): number {
+  const [h, m] = t.split(':').map((x) => parseInt(x, 10) || 0);
+  return h * 60 + m;
 }
 
-function getDefaultWakeTime(): Date {
-  const d = new Date();
-  d.setHours(7, 0, 0, 0);
-  return d;
+function addDays(iso: string, n: number): string {
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return localISO(d);
 }
 
-// Qualité labels
-const QUALITY_LABELS: Record<number, { label: string; color: string }> = {
-  1: { label: 'Terrible', color: '#EF4444' },
-  2: { label: 'Mauvais', color: '#F97316' },
-  3: { label: 'Correct', color: '#F59E0B' },
-  4: { label: 'Bon', color: '#10B981' },
-  5: { label: 'Excellent', color: '#8B5CF6' },
-};
-
-export default function SleepInputScreen() {
-  const { colors } = useTheme();
-  const { t, language } = useI18n();
-  const insets = useSafeAreaInsets();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const dateLocale = fr;
-
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [bedtime, setBedtime] = useState(getDefaultBedtime);
-  const [wakeTime, setWakeTime] = useState(getDefaultWakeTime);
-  const [activePicker, setActivePicker] = useState<'date' | 'bedtime' | 'wake' | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+export default function NoterMaNuit() {
+  const router = useRouter();
+  const today = localISO();
+  const [date, setDate] = useState(today);
+  const [bed, setBed] = useState('23:00');
+  const [wake, setWake] = useState('07:00');
   const [quality, setQuality] = useState(3);
+  const [goal, setGoal] = useState(480);
+  const [saving, setSaving] = useState(false);
+  const [entries, setEntries] = useState<{ date: string; bedTime: string; wakeTime: string; quality: number; id: string }[]>([]);
 
-  // Calculer la durée du sommeil
-  const calculateDuration = (): number => {
-    const diffMs = wakeTime.getTime() - bedtime.getTime();
-    return diffMs / (1000 * 60 * 60);
-  };
-
-  const duration = calculateDuration();
-
-  // Format durée en heures et minutes
-  const formatDuration = (hours: number): string => {
-    if (hours <= 0) return '0h 00min';
-    const h = Math.floor(hours);
-    const min = Math.round((hours - h) * 60);
-    return `${h}h ${min.toString().padStart(2, '0')}min`;
-  };
-
-  // Sauvegarder le sommeil
-  const handleSave = async () => {
-    if (isSaving) return;
-
-    // Validation
-    if (duration <= 0) {
-      showPopup(
-        t('common.error'),
-        t('sleepInput.wakeAfterBed'),
-        [{ text: 'OK', style: 'primary' }]
-      );
-      return;
-    }
-
-    if (duration > 16) {
-      showPopup(
-        t('common.error'),
-        t('sleepInput.maxDuration'),
-        [{ text: 'OK', style: 'primary' }]
-      );
-      return;
-    }
-
-    setIsSaving(true);
-    impactAsync(ImpactFeedbackStyle.Medium);
-
-    try {
-      // Sauvegarder localement via sleepService
-      const bedTimeStr = format(bedtime, 'HH:mm');
-      const wakeTimeStr = format(wakeTime, 'HH:mm');
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      await addSleepEntry(bedTimeStr, wakeTimeStr, quality, '', dateStr);
-      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-
-      // Aussi écrire dans Apple Health (en arrière-plan, non bloquant)
+  useEffect(() => {
+    (async () => {
       try {
-        await healthConnect.writeSleepData({
-          startDate: bedtime,
-          endDate: wakeTime,
-        });
-      } catch {
-        // Pas grave si Apple Health échoue
-      }
-
-      notificationAsync(NotificationFeedbackType.Success);
-
-      // Verifier si un défi est nouvellement complete
-      let challengeMsg = '';
-      try {
-        const { syncAndGetNewlyCompleted } = await import('@/lib/challengesService');
-        const newChallenges = await syncAndGetNewlyCompleted();
-        if (newChallenges.length > 0) {
-          challengeMsg = '\n\n' + newChallenges.map(c => `Défi valide : "${c.title}" (+${c.xp} XP) !`).join('\n');
+        const [entries, g] = await Promise.all([getSleepEntries(), getSleepGoal()]);
+        setGoal(g || 480);
+        setEntries((entries ?? []).filter((e) => e.bedTime && e.wakeTime && !e.id.startsWith('hk_')));
+        const last = [...(entries ?? [])].filter((e) => e.bedTime && e.wakeTime && !e.id.startsWith('hk_')).sort((a, b) => b.date.localeCompare(a.date))[0];
+        if (last) {
+          setBed(last.bedTime);
+          setWake(last.wakeTime);
+          if (last.quality > 0) setQuality(last.quality);
         }
-      } catch { /* non bloquant */ }
-
-      showPopup(
-        t('sleepInput.sleepSaved'),
-        `${formatDuration(duration)} - ${format(selectedDate, 'EEEE d MMMM', { locale: dateLocale })}${challengeMsg}`,
-        [{
-          text: challengeMsg ? 'Super !' : 'OK',
-          style: 'primary',
-          onPress: () => router.back(),
-        }]
-      );
-    } catch (error) {
-      logger.error('Error saving sleep:', error);
-      notificationAsync(NotificationFeedbackType.Error);
-      showPopup(
-        t('common.error'),
-        t('sleepInput.saveError'),
-        [{ text: 'OK', style: 'primary' }]
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handler DateTimePicker
-  const handleDateChange = (type: 'date' | 'bedtime' | 'wake') => (event: DateTimePickerEvent, selectedDateValue?: Date) => {
-    if (Platform.OS === 'android') {
-      setActivePicker(null);
-    }
-    if (selectedDateValue) {
-      if (type === 'date') {
-        setSelectedDate(selectedDateValue);
-      } else if (type === 'bedtime') {
-        setBedtime(selectedDateValue);
-      } else {
-        setWakeTime(selectedDateValue);
+      } catch {
+        // valeurs par defaut
       }
+    })();
+  }, []);
+
+  // Une nuit deja notee ce jour-la : on la reprend pour la corriger
+  useEffect(() => {
+    const same = entries.find((e) => e.date.slice(0, 10) === date);
+    if (same) {
+      setBed(same.bedTime);
+      setWake(same.wakeTime);
+      if (same.quality > 0) setQuality(same.quality);
+    }
+  }, [date, entries]);
+
+  const duration = useMemo(() => {
+    let d = toMin(wake) - toMin(bed);
+    if (d <= 0) d += 1440;
+    return d;
+  }, [bed, wake]);
+  const valid = duration >= 60 && duration <= 960;
+
+  const save = async () => {
+    if (saving) return;
+    if (!valid) {
+      appAlert('Horaires à vérifier', 'Une nuit doit durer entre 1 h et 16 h.');
+      return;
+    }
+    setSaving(true);
+    tap('medium');
+    try {
+      // audit 18 octobre : une nuit deja notee ce jour-la est une correction, elle ne repart pas vers Santé
+      const dejaNoteeDansYoroi = entries.some((e) => e.date.slice(0, 10) === date);
+      await addSleepEntry(bed, wake, quality, '', date);
+      track('sommeil_saisi');
+      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+      try {
+        // writeSleepData ne sait ni modifier ni remplacer une nuit : une seule ecriture par nuit, jamais de doublon
+        if (doitEcrireNuitSante({ dejaNoteeDansYoroi, dejaEcriteDansSante: await nuitDejaEcriteSante(date) })) {
+          const end = new Date(date + 'T00:00:00');
+          end.setHours(Math.floor(toMin(wake) / 60), toMin(wake) % 60, 0, 0);
+          const start = new Date(end.getTime() - duration * 60000);
+          if (await healthConnect.writeSleepData({ startDate: start, endDate: end })) await retenirNuitEcriteSante(date);
+        }
+      } catch (e) {
+        // Sante indisponible : la nuit reste enregistree dans YOROI, l'erreur est notee sans bloquer la saisie
+        logger.warn('[Sommeil] nuit non écrite dans Santé ou Health Connect', e);
+      }
+      tap('success');
+      router.back();
+    } catch (err) {
+      logger.error('Enregistrement de la nuit impossible', err);
+      appAlert('Oups', 'Ta nuit n’a pas pu être enregistrée. Vérifie les horaires et réessaie.');
+    } finally {
+      setSaving(false);
     }
   };
-
-  // Status color based on duration
-  const getStatusColor = (): string => {
-    if (duration <= 0) return '#6B7280';
-    if (duration < 5) return '#DC2626';
-    if (duration < 7) return '#F59E0B';
-    if (duration <= 9) return '#10B981';
-    return '#3B82F6';
-  };
-
-  const getStatusLabel = (): string => {
-    if (duration <= 0) return '\u2014';
-    if (duration < 5) return t('sleepInput.insufficient');
-    if (duration < 7) return t('sleepInput.average');
-    if (duration <= 9) return t('sleepInput.optimal');
-    return t('sleepInput.high');
-  };
-
-  const qualityInfo = QUALITY_LABELS[quality];
 
   return (
-    <View style={[styles.container, { backgroundColor: '#0B1120' }]}>
-      {/* Header */}
-      <LinearGradient
-        colors={['#0F1A33', '#1A1145']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + 16 }]}
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-        >
-          <ChevronLeft size={28} color="#FFFFFF" strokeWidth={2.5} />
-        </TouchableOpacity>
+    <DetailScreen
+      title="Ta nuit"
+      subtitle={dayLabel(date, true)}
+      footer={<BigButton label={saving ? 'Enregistrement' : 'Enregistrer ma nuit'} icon="check" onPress={save} disabled={saving || !valid} />}
+    >
+      <Enter i={0}>
+        <DateChips value={date} onChange={setDate} todayLabel="Cette nuit" yesterdayLabel="La veille" activeColor={P.indigo} />
+      </Enter>
 
-        <View style={styles.headerContent}>
-          <Moon size={32} color="#FFFFFF" strokeWidth={2.5} />
-          <Text style={styles.headerTitle}>{t('sleepInput.title')}</Text>
-          <Text style={styles.headerSubtitle}>{t('sleepInput.subtitle')}</Text>
+      <Enter i={1}>
+        <View style={{ borderRadius: 26, backgroundColor: P.indigo, padding: 22, alignItems: 'center', gap: 4 }}>
+          <Ink size={13} weight="bold" color="#C9D3EA">
+            Tu as dormi
+          </Ink>
+          <Ink size={64} weight="black" tight color={P.white}>
+            {hm(duration)}
+          </Ink>
+          <Ink size={14} weight="bold" color={valid ? (duration >= goal ? P.goldLight : '#E4E9F3') : '#F3C9C5'}>
+            {!valid ? 'Horaires à vérifier' : duration >= goal ? 'Objectif atteint' : `${hm(goal - duration)} sous ton objectif`}
+          </Ink>
         </View>
-      </LinearGradient>
+      </Enter>
 
-      {/* Contenu */}
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Sélecteur de date */}
-        <TouchableOpacity
-          style={[styles.dateSection, { backgroundColor: '#131D36' }]}
-          onPress={() => setActivePicker(activePicker === 'date' ? null : 'date')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.timeSectionHeader}>
-            <View style={[styles.timeIconContainer, { backgroundColor: '#8B5CF620' }]}>
-              <Calendar size={20} color="#8B5CF6" strokeWidth={2.5} />
+      <Enter i={2}>
+        <Card style={{ gap: 16 }}>
+          <View style={{ gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Icon name="moon" size={18} color={P.indigo} />
+              <Ink size={15} weight="extraBold">
+                Couché à
+              </Ink>
             </View>
-            <View style={styles.timeSectionText}>
-              <Text style={[styles.timeSectionTitle, { color: '#7B8DB5' }]}>
-                {t('sleepInput.nightOf')}
-              </Text>
-              <Text style={[styles.timeValue, { color: '#E8ECF4' }]}>
-                {format(selectedDate, 'EEEE d MMMM yyyy', { locale: dateLocale })}
-              </Text>
+            <Stepper value={clock(bed)} label="Heure du coucher" onMinus={() => setBed(shiftTime(bed, -15))} onPlus={() => setBed(shiftTime(bed, 15))} />
+          </View>
+          <View style={{ height: 1, backgroundColor: P.line2 }} />
+          <View style={{ gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Icon name="sun" size={18} color={P.gold} />
+              <Ink size={15} weight="extraBold">
+                Réveillé à
+              </Ink>
             </View>
+            <Stepper value={clock(wake)} label="Heure du réveil" onMinus={() => setWake(shiftTime(wake, -15))} onPlus={() => setWake(shiftTime(wake, 15))} />
           </View>
-        </TouchableOpacity>
+        </Card>
+      </Enter>
 
-        {/* Picker date inline (iOS) */}
-        {activePicker === 'date' && Platform.OS === 'ios' && (
-          <View style={[styles.pickerContainer, { backgroundColor: '#131D36' }]}>
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display="spinner"
-              onChange={handleDateChange('date')}
-              locale={language}
-              maximumDate={new Date()}
-            />
-            <TouchableOpacity
-              style={[styles.pickerDoneButton, { backgroundColor: '#8B5CF6' }]}
-              onPress={() => setActivePicker(null)}
-            >
-              <Text style={styles.pickerDoneText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Carte Durée */}
-        <View style={[styles.durationCard, { backgroundColor: '#131D36' }]}>
-          <Text style={[styles.durationLabel, { color: '#7B8DB5' }]}>
-            {t('sleepInput.sleepDuration')}
-          </Text>
-          <Text style={[styles.durationValue, { color: getStatusColor() }]}>
-            {formatDuration(duration)}
-          </Text>
-          {duration > 0 && (
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
-              <Text style={[styles.statusLabel, { color: getStatusColor() }]}>
-                {getStatusLabel()}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Heure de coucher */}
-        <TouchableOpacity
-          style={[styles.timeSection, { backgroundColor: '#131D36' }]}
-          onPress={() => setActivePicker(activePicker === 'bedtime' ? null : 'bedtime')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.timeSectionHeader}>
-            <View style={[styles.timeIconContainer, { backgroundColor: '#6366F120' }]}>
-              <Moon size={20} color="#6366F1" strokeWidth={2.5} />
-            </View>
-            <View style={styles.timeSectionText}>
-              <Text style={[styles.timeSectionTitle, { color: '#7B8DB5' }]}>
-                {t('sleepInput.bedtime')}
-              </Text>
-              <Text style={[styles.timeValue, { color: '#E8ECF4' }]}>
-                {format(bedtime, 'HH:mm')} - {format(bedtime, 'dd MMM', { locale: dateLocale })}
-              </Text>
-            </View>
-            <Clock size={20} color="#7B8DB5" strokeWidth={2} />
-          </View>
-        </TouchableOpacity>
-
-        {/* Picker coucher inline (iOS) */}
-        {activePicker === 'bedtime' && Platform.OS === 'ios' && (
-          <View style={[styles.pickerContainer, { backgroundColor: '#131D36' }]}>
-            <DateTimePicker
-              value={bedtime}
-              mode="datetime"
-              is24Hour={true}
-              display="spinner"
-              onChange={handleDateChange('bedtime')}
-              locale={language}
-            />
-            <TouchableOpacity
-              style={[styles.pickerDoneButton, { backgroundColor: '#6366F1' }]}
-              onPress={() => setActivePicker(null)}
-            >
-              <Text style={styles.pickerDoneText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Heure de réveil */}
-        <TouchableOpacity
-          style={[styles.timeSection, { backgroundColor: '#131D36' }]}
-          onPress={() => setActivePicker(activePicker === 'wake' ? null : 'wake')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.timeSectionHeader}>
-            <View style={[styles.timeIconContainer, { backgroundColor: '#F59E0B20' }]}>
-              <Sun size={20} color="#F59E0B" strokeWidth={2.5} />
-            </View>
-            <View style={styles.timeSectionText}>
-              <Text style={[styles.timeSectionTitle, { color: '#7B8DB5' }]}>
-                {t('sleepInput.wakeTime')}
-              </Text>
-              <Text style={[styles.timeValue, { color: '#E8ECF4' }]}>
-                {format(wakeTime, 'HH:mm')} - {format(wakeTime, 'dd MMM', { locale: dateLocale })}
-              </Text>
-            </View>
-            <Clock size={20} color="#7B8DB5" strokeWidth={2} />
-          </View>
-        </TouchableOpacity>
-
-        {/* Picker réveil inline (iOS) */}
-        {activePicker === 'wake' && Platform.OS === 'ios' && (
-          <View style={[styles.pickerContainer, { backgroundColor: '#131D36' }]}>
-            <DateTimePicker
-              value={wakeTime}
-              mode="datetime"
-              is24Hour={true}
-              display="spinner"
-              onChange={handleDateChange('wake')}
-              locale={language}
-            />
-            <TouchableOpacity
-              style={[styles.pickerDoneButton, { backgroundColor: '#F59E0B' }]}
-              onPress={() => setActivePicker(null)}
-            >
-              <Text style={styles.pickerDoneText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Qualité */}
-        <View style={[styles.qualitySection, { backgroundColor: '#131D36' }]}>
-          <Text style={[styles.qualityTitle, { color: '#7B8DB5' }]}>
-            {t('sleep.sleepQuality')}
-          </Text>
-          <View style={styles.qualityRow}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <TouchableOpacity
-                key={i}
-                onPress={() => { setQuality(i); impactAsync(ImpactFeedbackStyle.Light); }}
-                style={[styles.qualityStar, {
-                  backgroundColor: i <= quality ? qualityInfo.color + '20' : 'transparent',
-                  borderColor: i <= quality ? qualityInfo.color : '#1E2D4D',
-                }]}
-              >
-                <Text style={{ fontSize: 24 }}>{i <= quality ? '\u2B50' : '\u2606'}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={[styles.qualityBadge, { backgroundColor: qualityInfo.color + '15' }]}>
-            <Text style={[styles.qualityBadgeText, { color: qualityInfo.color }]}>
-              {quality}/5 - {qualityInfo.label}
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Bouton Enregistrer */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16, backgroundColor: '#0B1120' }]}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            { opacity: isSaving || duration <= 0 ? 0.5 : 1 },
-          ]}
-          onPress={handleSave}
-          disabled={isSaving || duration <= 0}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#6366F1', '#8B5CF6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.saveButtonGradient}
-          >
-            <Check size={20} color="#FFFFFF" strokeWidth={2.5} />
-            <Text style={styles.saveButtonText}>
-              {isSaving ? t('sleepInput.saving') : t('common.save')}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-
-      {/* Android pickers (modal style) */}
-      {activePicker === 'date' && Platform.OS === 'android' && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display="default"
-          onChange={handleDateChange('date')}
-          maximumDate={new Date()}
-        />
-      )}
-      {activePicker === 'bedtime' && Platform.OS === 'android' && (
-        <DateTimePicker
-          value={bedtime}
-          mode="time"
-          is24Hour={true}
-          display="default"
-          onChange={handleDateChange('bedtime')}
-        />
-      )}
-      {activePicker === 'wake' && Platform.OS === 'android' && (
-        <DateTimePicker
-          value={wakeTime}
-          mode="time"
-          is24Hour={true}
-          display="default"
-          onChange={handleDateChange('wake')}
-        />
-      )}
-
-      <PopupComponent />
-    </View>
+      <Enter i={3}>
+        <Card style={{ alignItems: 'center', gap: 6 }}>
+          <Ink size={15} weight="extraBold">
+            Comment as-tu dormi ?
+          </Ink>
+          <Stars value={quality} size={30} onChange={setQuality} />
+          <Ink size={14} weight="bold" color={quality >= 4 ? P.mossText : quality === 3 ? P.ink2 : P.goldDark}>
+            {QUALITY_LABELS[quality]}
+          </Ink>
+        </Card>
+      </Enter>
+    </DetailScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingBottom: 24,
-    paddingHorizontal: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  headerContent: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 16,
-    gap: 12,
-  },
-  dateSection: {
-    borderRadius: 16,
-    padding: 16,
-  },
-  durationCard: {
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  durationLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  durationValue: {
-    fontSize: 42,
-    fontWeight: '900',
-    letterSpacing: -1,
-    marginBottom: 8,
-  },
-  statusBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  timeSection: {
-    borderRadius: 16,
-    padding: 16,
-  },
-  timeSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  timeIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeSectionText: {
-    flex: 1,
-  },
-  timeSectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  timeValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  pickerContainer: {
-    borderRadius: 16,
-    padding: 12,
-    alignItems: 'center',
-    marginTop: -4,
-  },
-  pickerDoneButton: {
-    paddingHorizontal: 32,
-    paddingVertical: 10,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  pickerDoneText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  qualitySection: {
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-  },
-  qualityTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  qualityRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  qualityStar: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qualityBadge: {
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  qualityBadgeText: {
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-  },
-  saveButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  saveButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-  },
-  saveButtonText: {
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-    color: '#FFFFFF',
-  },
-});

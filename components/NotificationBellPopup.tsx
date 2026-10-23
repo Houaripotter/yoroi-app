@@ -330,7 +330,12 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
     }
     if (item.data?.screen) {
       closePopup();
-      setTimeout(() => router.push(`/${item.data!.screen}` as any), 200);
+      const screen = String(item.data.screen);
+      const id = String(item.data.id ?? '');
+      // Rappel de competition : son detail (id en chiffres seulement), sinon la liste
+      // 'home' (briefing du matin) : l'accueil est /(tabs), il n'y a pas d'ecran /home
+      const href = screen === 'home' ? '/(tabs)' : screen === 'competition-detail' ? (/^\d{1,12}$/.test(id) ? `/competition-detail?id=${id}` : '/competitions') : `/${screen}`;
+      setTimeout(() => router.push(href as any), 200);
     }
   }, [closePopup, onCountChange]);
 

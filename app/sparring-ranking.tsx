@@ -1,575 +1,167 @@
-// ============================================
-// YOROI - CLASSEMENT SPARRING
-// ============================================
-// Classement de tous les partenaires de sparring
-// triés par taux de victoire, rounds ou progression
-// ============================================
-
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+/**
+ * Classement sparring v2 : tes partenaires hisses en bannieres nobori.
+ * Podium des trois premiers, puis une banniere par partenaire.
+ * Tri par taux de victoire, nombre de rounds ou progression recente.
+ */
+import React, { useMemo, useState } from 'react';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/lib/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import {
-  ChevronLeft,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Trophy,
-  Award,
-  Users,
-} from 'lucide-react-native';
-import { getTrainingsByPartnerName, Training, CombatRound } from '@/lib/database';
-import logger from '@/lib/security/logger';
+import { Ink } from '@/components/yoroi/v2/Ink';
 import { PremiumGate } from '@/components/premium/PremiumGate';
-import { SkeletonGrid } from '@/components/stats/SkeletonCard';
+import { useCombatData } from '@/lib/v2/combat/useCombatData';
+import { allStats, effectiveStats } from '@/lib/v2/combat/partners';
+import type { LiveStats, Partner } from '@/lib/v2/combat/partners';
+import { beltOf, plural } from '@/lib/v2/combat/rounds';
+import { BeltBar, Card, Chip, ChipScroll, CIcon, D, DetailScreen, EmptyState, Enter, N, Nobori, P, Press, Seal, sportLabel, V, WdlRow } from '@/components/yoroi/v2/combat/ui';
 
-// ============================================
-// TYPES
-// ============================================
+type Sort = 'winrate' | 'rounds' | 'progression';
+const SORTS: { k: Sort; l: string }[] = [
+  { k: 'winrate', l: 'Taux de victoire' },
+  { k: 'rounds', l: 'Rounds' },
+  { k: 'progression', l: 'Progression' },
+];
+const PODIUM = ['#C59D45', '#8B8D96', '#9C5B33'];
 
-interface Partner {
-  id: string;
-  name: string;
-  belt?: string;
-  weight?: string;
-  sport?: string;
-  strengths: string[];
-  weaknesses: string[];
-  whatWorks: string[];
-  notes: any[];
-  matchCount: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  createdAt: string;
-  activeGoal?: { text: string; createdAt: string };
+function valueOf(s: LiveStats, sort: Sort): string {
+  if (sort === 'rounds') return String(s.total);
+  if (sort === 'progression') return `${s.progressionScore}\u00A0%`;
+  return `${s.winRate ?? 0}\u00A0%`;
 }
 
-type SortMode = 'winrate' | 'rounds' | 'progression';
-
-interface RankedPartner {
-  partner: Partner;
-  winRate: number;
-  totalRounds: number;
-  totalSessions: number;
-  realWins: number;
-  realLosses: number;
-  realDraws: number;
-  trend: 'up' | 'down' | 'stable';
-  progressionScore: number;
+function TrendMark({ t }: { t: LiveStats['trend'] }) {
+  return <CIcon name={t === 'up' ? 'up' : t === 'down' ? 'down' : 'flat'} size={18} color={t === 'up' ? '#4F6B28' : t === 'down' ? D : P.muted} />;
 }
-
-// ============================================
-// CONSTANTES
-// ============================================
-
-const STORAGE_KEY = '@yoroi_sparring_partners';
-
-const BELT_COLORS: Record<string, string> = {
-  'blanche': '#ffffff',
-  'bleue': '#3B82F6',
-  'violette': '#8B5CF6',
-  'marron': '#92400E',
-  'noire': '#111827',
-  'grise': '#6B7280',
-  'jaune': '#F59E0B',
-  'orange': '#F97316',
-  'verte': '#22C55E',
-  'rouge': '#EF4444',
-};
-
-const WIN_COLOR = '#22C55E';
-const LOSS_COLOR = '#EF4444';
-const DRAW_COLOR = '#F59E0B';
-const ACCENT_COLOR = '#EF4444';
-
-const RANK_COLORS: Record<number, { bg: string; text: string; border: string }> = {
-  1: { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B' },
-  2: { bg: '#F3F4F6', text: '#374151', border: '#9CA3AF' },
-  3: { bg: '#FEF2F2', text: '#7C2D12', border: '#F97316' },
-};
-
-// ============================================
-// HELPERS
-// ============================================
-
-const computeWinRateFromRounds = (rounds: CombatRound[]): { wins: number; losses: number; draws: number } => {
-  let wins = 0;
-  let losses = 0;
-  let draws = 0;
-  for (const r of rounds) {
-    if (r.result === 'win') wins++;
-    else if (r.result === 'loss') losses++;
-    else if (r.result === 'draw') draws++;
-  }
-  return { wins, losses, draws };
-};
-
-const computeTrend = (trainings: Training[], partnerName: string): { trend: 'up' | 'down' | 'stable'; progressionScore: number } => {
-  // Trier par date ASC
-  const sorted = [...trainings].sort((a, b) => a.date.localeCompare(b.date));
-
-  const sessionWinRates: number[] = [];
-  for (const t of sorted) {
-    const rounds = (t.combat_rounds || []).filter(r =>
-      r.partner && r.partner.toLowerCase().includes(partnerName.toLowerCase().trim())
-    );
-    if (rounds.length === 0) continue;
-    const { wins, losses, draws } = computeWinRateFromRounds(rounds);
-    const total = wins + losses + draws;
-    if (total === 0) continue;
-    sessionWinRates.push(wins / total);
-  }
-
-  if (sessionWinRates.length < 2) {
-    return { trend: 'stable', progressionScore: Math.round((sessionWinRates[0] ?? 0) * 100) }; // échelle 0-100
-  }
-
-  const recent = sessionWinRates.slice(-3);
-  const older = sessionWinRates.slice(-6, -3);
-
-  const avgRecent = recent.reduce((a, b) => a + b, 0) / recent.length;
-  const avgOlder = older.length > 0
-    ? older.reduce((a, b) => a + b, 0) / older.length
-    : sessionWinRates.slice(0, recent.length).reduce((a, b) => a + b, 0) / recent.length;
-
-  const diff = avgRecent - avgOlder;
-  const trend: 'up' | 'down' | 'stable' = diff > 0.05 ? 'up' : diff < -0.05 ? 'down' : 'stable';
-
-  // Score de progression : taux moyen récent * 100
-  const progressionScore = Math.round(avgRecent * 100);
-
-  return { trend, progressionScore };
-};
-
-// ============================================
-// COMPOSANT PRINCIPAL
-// ============================================
 
 export default function SparringRankingScreen() {
-  const { colors, isDark } = useTheme();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { trainings, partners, loaded } = useCombatData();
+  const [sort, setSort] = useState<Sort>('winrate');
+  const stats = useMemo(() => allStats(partners, trainings), [partners, trainings]);
+  const ranked = useMemo(() => {
+    const rows = partners.map((p) => ({ p, s: effectiveStats(p, stats[p.id]?.live) }));
+    return rows.sort((a, b) => {
+      if (sort === 'rounds') return b.s.total - a.s.total;
+      if (sort === 'progression') return b.s.progressionScore - a.s.progressionScore;
+      return (b.s.winRate ?? 0) - (a.s.winRate ?? 0);
+    });
+  }, [partners, stats, sort]);
 
-  const [loading, setLoading] = useState(true);
-  const [ranked, setRanked] = useState<RankedPartner[]>([]);
-  const [sortMode, setSortMode] = useState<SortMode>('winrate');
-
-  // ============================================
-  // CHARGEMENT
-  // ============================================
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const load = async () => {
-    try {
-      setLoading(true);
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      const partners: Partner[] = raw ? JSON.parse(raw) : [];
-
-      const results: RankedPartner[] = [];
-
-      for (const partner of partners) {
-        try {
-          const trainings = await getTrainingsByPartnerName(partner.name);
-
-          let totalRounds = 0;
-          let realWins = 0;
-          let realLosses = 0;
-          let realDraws = 0;
-
-          for (const t of trainings) {
-            const rounds = (t.combat_rounds || []).filter(r =>
-              r.partner && r.partner.toLowerCase().includes(partner.name.toLowerCase().trim())
-            );
-            totalRounds += rounds.length;
-            const { wins, losses, draws } = computeWinRateFromRounds(rounds);
-            realWins += wins;
-            realLosses += losses;
-            realDraws += draws;
-          }
-
-          // Fallback sur les stats stockées si pas de rounds en DB
-          const effectiveWins = totalRounds > 0 ? realWins : partner.wins;
-          const effectiveLosses = totalRounds > 0 ? realLosses : partner.losses;
-          const effectiveDraws = totalRounds > 0 ? realDraws : partner.draws;
-          const totalResults = effectiveWins + effectiveLosses + effectiveDraws;
-          const winRate = totalResults > 0 ? Math.round((effectiveWins / totalResults) * 100) : 0;
-
-          const { trend, progressionScore } = computeTrend(trainings, partner.name);
-
-          results.push({
-            partner,
-            winRate,
-            totalRounds: totalRounds > 0 ? totalRounds : partner.matchCount,
-            totalSessions: trainings.length,
-            realWins: effectiveWins,
-            realLosses: effectiveLosses,
-            realDraws: effectiveDraws,
-            trend,
-            progressionScore,
-          });
-        } catch (err) {
-          logger.warn('SparringRanking: erreur calcul stats pour ' + partner.name, err);
-        }
-      }
-
-      setRanked(results);
-    } catch (err) {
-      logger.error('SparringRanking: erreur chargement partenaires', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ============================================
-  // TRI
-  // ============================================
-
-  const sorted = [...ranked].sort((a, b) => {
-    if (sortMode === 'winrate') return b.winRate - a.winRate;
-    if (sortMode === 'rounds') return b.totalRounds - a.totalRounds;
-    if (sortMode === 'progression') return b.progressionScore - a.progressionScore;
-    return 0;
-  });
-
-  // ============================================
-  // NAVIGATION
-  // ============================================
-
-  const handleBack = async () => {
-    await impactAsync(ImpactFeedbackStyle.Light);
-    router.back();
-  };
-
-  const handlePartnerPress = async (name: string) => {
-    await impactAsync(ImpactFeedbackStyle.Light);
-    router.push(`/sparring-partners?partnerName=${encodeURIComponent(name)}`);
-  };
-
-  const handleSortChange = async (mode: SortMode) => {
-    await impactAsync(ImpactFeedbackStyle.Light);
-    setSortMode(mode);
-  };
-
-  // ============================================
-  // RENDER HELPERS
-  // ============================================
-
-  const getBeltColor = (belt?: string): string => {
-    if (!belt) return '#6B7280';
-    const key = belt.toLowerCase();
-    return BELT_COLORS[key] ?? '#6B7280';
-  };
-
-  const RankBadge = ({ rank }: { rank: number }) => {
-    if (rank <= 3) {
-      const style = RANK_COLORS[rank];
-      const icons: Record<number, React.ReactNode> = {
-        1: <Trophy size={14} color="#92400E" />,
-        2: <Award size={14} color="#374151" />,
-        3: <Award size={14} color="#7C2D12" />,
-      };
-      return (
-        <View style={{
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: style.bg,
-          borderWidth: 2,
-          borderColor: style.border,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          {icons[rank]}
-        </View>
-      );
-    }
-    return (
-      <View style={{
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: isDark ? '#1F2937' : '#F3F4F6',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>
-          {rank}
-        </Text>
-      </View>
-    );
-  };
-
-  const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
-    if (trend === 'up') return <TrendingUp size={16} color={WIN_COLOR} />;
-    if (trend === 'down') return <TrendingDown size={16} color={LOSS_COLOR} />;
-    return <Minus size={16} color={colors.textSecondary} />;
-  };
-
-  const SortTab = ({ mode, label }: { mode: SortMode; label: string }) => (
-    <TouchableOpacity
-      onPress={() => handleSortChange(mode)}
-      style={{
-        flex: 1,
-        paddingVertical: 8,
-        alignItems: 'center',
-        borderBottomWidth: 2,
-        borderBottomColor: sortMode === mode ? ACCENT_COLOR : 'transparent',
-      }}
-    >
-      <Text style={{
-        fontSize: 13,
-        fontWeight: sortMode === mode ? '700' : '500',
-        color: sortMode === mode ? ACCENT_COLOR : colors.textSecondary,
-      }}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  // ============================================
-  // RENDER
-  // ============================================
+  const open = (p: Partner) => router.push(`/sparring-partners?partnerName=${encodeURIComponent(p.name)}` as any);
+  const top = ranked.slice(0, 3);
+  const podiumOrder = top.length === 3 ? [top[1], top[0], top[2]] : top;
+  const podiumRank = top.length === 3 ? [1, 0, 2] : top.map((_, i) => i);
 
   return (
-    <PremiumGate featureTitle="Classement sparring">
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <PremiumGate source="partenaires" featureTitle="Classement sparring" perks={['Tes partenaires classés par taux de victoire', 'Tes rounds et ta progression face à chacun', 'Qui monte, qui stagne, qui baisse']}>
+      <DetailScreen title="Classement" subtitle={loaded ? plural(ranked.length, 'partenaire') : 'Lecture de tes rounds'}>
+        <ChipScroll>
+          {SORTS.map((s) => (
+            <Chip key={s.k} label={s.l} on={sort === s.k} onPress={() => setSort(s.k)} />
+          ))}
+        </ChipScroll>
 
-      {/* Header */}
-      <View style={{
-        paddingTop: insets.top + 8,
-        paddingBottom: 12,
-        paddingHorizontal: 16,
-        backgroundColor: colors.background,
-        borderBottomWidth: 1,
-        borderBottomColor: isDark ? '#1F2937' : '#F3F4F6',
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}>
-        <TouchableOpacity
-          onPress={handleBack}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: isDark ? '#1F2937' : '#F3F4F6',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: 12,
-          }}
-        >
-          <ChevronLeft size={20} color={colors.text} />
-        </TouchableOpacity>
+        {loaded && ranked.length === 0 ? (
+          <EmptyState title="Personne à classer" text="Ajoute tes partenaires de sparring et note tes rounds : ils seront hissés ici selon ta domination." action="Ajouter un partenaire" onAction={() => router.push('/sparring-partners' as any)} />
+        ) : null}
 
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>
-            Classement Sparring
-          </Text>
-          {!loading && (
-            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 1 }}>
-              {sorted.length} partenaire{sorted.length !== 1 ? 's' : ''}
-            </Text>
-          )}
-        </View>
+        {top.length > 0 ? (
+          <Enter i={0}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 10, paddingTop: 6 }}>
+              {podiumOrder.map((row, i) => {
+                const rank = podiumRank[i];
+                const h = rank === 0 ? 250 : rank === 1 ? 214 : 190;
+                const color = rank === 0 ? P.goldDark : rank === 1 ? P.indigo : P.lacquer;
+                return (
+                  <Press key={row.p.id} onPress={() => open(row.p)} accessibilityRole="button" accessibilityLabel={`${rank + 1}, ${row.p.name}, ${valueOf(row.s, sort)}`}>
+                    <Nobori width={106} height={h} color={color}>
+                      <View style={{ alignItems: 'center', gap: 6 }}>
+                        <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: PODIUM[rank], alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: P.white }}>
+                          <Ink size={14} weight="black" color={P.white}>
+                            {String(rank + 1)}
+                          </Ink>
+                        </View>
+                        <Seal name={row.p.name} photoUri={row.p.photoUri} belt={row.p.belt} size={rank === 0 ? 58 : 50} tone={P.ink} rotate={0} />
+                        <Ink size={13} weight="black" color={P.white} numberOfLines={2} style={{ maxWidth: 94, textAlign: 'center', lineHeight: 16 }}>
+                          {row.p.name}
+                        </Ink>
+                        <Ink size={rank === 0 ? 26 : 22} weight="black" tight color={P.white}>
+                          {valueOf(row.s, sort)}
+                        </Ink>
+                      </View>
+                    </Nobori>
+                  </Press>
+                );
+              })}
+            </View>
+          </Enter>
+        ) : null}
 
-        <View style={{
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: isDark ? '#7C1D1D' : '#FEE2E2',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Trophy size={18} color={ACCENT_COLOR} />
-        </View>
-      </View>
-
-      {/* Sort Tabs */}
-      <View style={{
-        flexDirection: 'row',
-        backgroundColor: colors.background,
-        borderBottomWidth: 1,
-        borderBottomColor: isDark ? '#1F2937' : '#F3F4F6',
-        paddingHorizontal: 8,
-      }}>
-        <SortTab mode="winrate" label="Taux victoire" />
-        <SortTab mode="rounds" label="Rounds" />
-        <SortTab mode="progression" label="Progression" />
-      </View>
-
-      {/* Content */}
-      {loading ? (
-        <View style={{ flex: 1, padding: 16 }}>
-          <SkeletonGrid count={5} cardHeight={120} />
-        </View>
-      ) : sorted.length === 0 ? (
-        /* Empty State */
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <View style={{
-            width: 72,
-            height: 72,
-            borderRadius: 36,
-            backgroundColor: isDark ? '#1F2937' : '#F3F4F6',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 16,
-          }}>
-            <Users size={32} color={colors.textSecondary} />
-          </View>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
-            Aucun partenaire
-          </Text>
-          <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 }}>
-            Ajoute des partenaires de sparring pour voir leur classement ici.
-          </Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {sorted.map((item, index) => {
-            const rank = index + 1;
-            const beltColor = getBeltColor(item.partner.belt);
-            const totalResults = item.realWins + item.realLosses + item.realDraws;
-
-            return (
-              <TouchableOpacity
-                key={item.partner.id}
-                onPress={() => handlePartnerPress(item.partner.name)}
-                activeOpacity={0.7}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: isDark ? '#111827' : '#FFFFFF',
-                  borderRadius: 14,
-                  marginBottom: 10,
-                  padding: 14,
-                  borderWidth: rank <= 3 ? 1.5 : 1,
-                  borderColor: rank <= 3
-                    ? RANK_COLORS[rank].border
-                    : (isDark ? '#1F2937' : '#E5E7EB'),
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: rank <= 3 ? 2 : 1 },
-                  shadowOpacity: rank <= 3 ? 0.12 : 0.06,
-                  shadowRadius: rank <= 3 ? 6 : 3,
-                  elevation: rank <= 3 ? 4 : 2,
-                }}
-              >
-                {/* Badge de rang */}
-                <RankBadge rank={rank} />
-
-                {/* Barre de ceinture */}
-                <View style={{
-                  width: 4,
-                  height: 44,
-                  borderRadius: 2,
-                  backgroundColor: beltColor,
-                  marginHorizontal: 10,
-                  borderWidth: item.partner.belt?.toLowerCase() === 'blanche' ? 1 : 0,
-                  borderColor: '#E5E7EB',
-                }} />
-
-                {/* Infos principales */}
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                    <Text style={{
-                      fontSize: 15,
-                      fontWeight: '700',
-                      color: colors.text,
-                      flex: 1,
-                    }} numberOfLines={1}>
-                      {item.partner.name}
-                    </Text>
-                    <TrendIcon trend={item.trend} />
+        {ranked.map((row, i) => {
+          const b = beltOf(row.p.belt);
+          const isTop = i < 3;
+          return (
+            <Enter key={row.p.id} i={Math.min(i + 1, 8)}>
+              <Press onPress={() => open(row.p)} accessibilityRole="button" accessibilityLabel={`${i + 1}, ${row.p.name}`}>
+                <Card style={{ padding: 0, overflow: 'hidden', flexDirection: 'row', borderColor: isTop ? `${PODIUM[i]}88` : P.line2 }}>
+                  <View style={{ width: 56, alignItems: 'center', justifyContent: 'center', backgroundColor: isTop ? PODIUM[i] : P.ink }}>
+                    <Ink size={22} weight="black" color={P.white}>
+                      {String(i + 1)}
+                    </Ink>
+                    <View style={{ position: 'absolute', right: -9, top: '50%', marginTop: -9, width: 18, height: 18, transform: [{ rotate: '45deg' }], backgroundColor: P.white }} />
                   </View>
-
-                  {/* Record V/L/N */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: WIN_COLOR }}>
-                      {item.realWins}V
-                    </Text>
-                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>·</Text>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: LOSS_COLOR }}>
-                      {item.realLosses}L
-                    </Text>
-                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>·</Text>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: DRAW_COLOR }}>
-                      {item.realDraws}N
-                    </Text>
-                    <Text style={{ fontSize: 12, color: colors.textSecondary, marginLeft: 4 }}>
-                      · {item.totalRounds} round{item.totalRounds !== 1 ? 's' : ''}
-                    </Text>
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, paddingLeft: 16 }}>
+                    <Seal name={row.p.name} photoUri={row.p.photoUri} belt={row.p.belt} size={46} />
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ink size={16} weight="black" numberOfLines={2} style={{ flexShrink: 1 }}>
+                          {row.p.name}
+                        </Ink>
+                        <TrendMark t={row.s.trend} />
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                        <WdlRow wins={row.s.wins} losses={row.s.losses} draws={row.s.draws} size={12} />
+                      </View>
+                      {b || row.p.sport || row.s.total > 0 ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <BeltBar belt={row.p.belt} width={48} height={8} />
+                          <Ink size={12} weight="bold" color={P.muted} style={{ flex: 1 }}>
+                            {[sportLabel(row.p.sport), plural(row.s.total, 'round')].filter(Boolean).join(', ')}
+                          </Ink>
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={{ alignItems: 'flex-end', minWidth: 54 }}>
+                      <Ink size={22} weight="black" tight color={(row.s.winRate ?? 0) >= 60 ? V : (row.s.winRate ?? 0) >= 40 ? N : D}>
+                        {valueOf(row.s, sort)}
+                      </Ink>
+                      <Ink size={11} weight="bold" color={P.ink2}>
+                        {sort === 'rounds' ? 'rounds' : sort === 'progression' ? 'récent' : 'victoires'}
+                      </Ink>
+                    </View>
                   </View>
+                </Card>
+              </Press>
+            </Enter>
+          );
+        })}
 
-                  {/* Sport / ceinture */}
-                  {(item.partner.sport || item.partner.belt) && (
-                    <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
-                      {[item.partner.sport, item.partner.belt ? `Ceinture ${item.partner.belt}` : undefined]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </Text>
-                  )}
-                </View>
-
-                {/* Taux de victoire */}
-                <View style={{ alignItems: 'center', marginLeft: 10, minWidth: 48 }}>
-                  <Text style={{
-                    fontSize: 20,
-                    fontWeight: '800',
-                    color: item.winRate >= 60
-                      ? WIN_COLOR
-                      : item.winRate >= 40
-                        ? DRAW_COLOR
-                        : LOSS_COLOR,
-                  }}>
-                    {item.winRate}%
-                  </Text>
-                  <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 1 }}>
-                    victoires
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-
-          {/* Légende */}
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 16,
-            marginTop: 8,
-            paddingTop: 8,
-            borderTopWidth: 1,
-            borderTopColor: isDark ? '#1F2937' : '#F3F4F6',
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <TrendingUp size={12} color={WIN_COLOR} />
-              <Text style={{ fontSize: 11, color: colors.textSecondary }}>En progression</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Minus size={12} color={colors.textSecondary} />
-              <Text style={{ fontSize: 11, color: colors.textSecondary }}>Stable</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <TrendingDown size={12} color={LOSS_COLOR} />
-              <Text style={{ fontSize: 11, color: colors.textSecondary }}>En baisse</Text>
-            </View>
+        {ranked.length > 0 ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, paddingTop: 4, flexWrap: 'wrap' }}>
+            {[
+              { t: 'up' as const, l: 'En progression' },
+              { t: 'stable' as const, l: 'Stable' },
+              { t: 'down' as const, l: 'En baisse' },
+            ].map((x) => (
+              <View key={x.l} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <TrendMark t={x.t} />
+                <Ink size={12} weight="bold" color={P.ink2}>
+                  {x.l}
+                </Ink>
+              </View>
+            ))}
           </View>
-        </ScrollView>
-      )}
-    </View>
+        ) : null}
+      </DetailScreen>
     </PremiumGate>
   );
 }

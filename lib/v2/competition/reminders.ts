@@ -1,0 +1,129 @@
+/**
+ * Rappels locaux d'une competition (expo-notifications, rien ne passe par un serveur) :
+ * un mois avant, une semaine avant, la veille au soir, le matin de la pesee,
+ * et le lendemain pour noter ton resultat. Chaque rappel a un identifiant fixe :
+ * on peut tout reprogrammer sans doublon, meme si un autre reglage a tout annule.
+ */
+import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { getCompetitions } from '@/lib/fighterModeService';
+import type { Competition } from '@/lib/fighterMode';
+import { contenuSansSante } from '@/lib/v2/notifications/texte';
+import { addDays, parseLocalDate } from './dates';
+import { getAllExtras } from './extras';
+import type { CompetitionExtra } from './extras';
+import logger from '@/lib/security/logger';
+
+const PREFIX = 'yoroi-competition-';
+const CHANNEL = 'competitions';
+
+type Planned = { kind: string; at: Date; title: string; body: string };
+
+function at(day: Date, h: number, m = 0): Date {
+  const d = new Date(day);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+/** Les rappels prevus pour une competition, dans l'ordre */
+export function plannedReminders(comp: Competition, extra: CompetitionExtra): Planned[] {
+  const day = parseLocalDate(comp.date);
+  if (isNaN(day.getTime())) return [];
+  // Aucune catégorie de poids ni limite en kg : la notification s'affiche
+  // sur l'écran verrouillé. Le détail reste dans la fiche compétition.
+  const cat = Boolean(comp.categorie_poids);
+  const list: Planned[] = [
+    { kind: 'j30', at: at(addDays(day, -30), 9), title: `Dans 30 jours : ${comp.nom}`, body: cat ? 'Un mois pour te préparer. Vérifie ton inscription et ta catégorie.' : 'Un mois pour te préparer. Pense à vérifier ton inscription.' },
+    { kind: 'j7', at: at(addDays(day, -7), 9), title: `Dans 7 jours : ${comp.nom}`, body: cat ? 'Dernière semaine. Garde un œil sur ta pesée.' : 'Dernière semaine. Prépare ton sac et ton trajet.' },
+    { kind: 'veille', at: at(addDays(day, -1), 19), title: `Demain : ${comp.nom}`, body: comp.lieu ? `Rendez-vous à ${comp.lieu}. Prépare ton sac et couche-toi tôt.` : 'Prépare ton sac et couche-toi tôt.' },
+  ];
+  if (extra.pesee) {
+    const weighDay = extra.pesee === 'veille' ? addDays(day, -1) : day;
+    list.push({ kind: 'pesee', at: at(weighDay, extra.pesee === 'veille' ? 8 : 7), title: `Jour de pesée : ${comp.nom}`, body: 'Pèse-toi ce matin pour savoir où tu en es.' });
+  }
+  list.push({ kind: 'resultat', at: at(addDays(day, 1), 10), title: `Comment s’est passée ta compétition ?`, body: `Note ton résultat de ${comp.nom} : il rejoint ton palmarès.` });
+  return list.sort((a, b) => a.at.getTime() - b.at.getTime());
+}
+
+async function ensureChannel() {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync(CHANNEL, { name: 'Compétitions', importance: Notifications.AndroidImportance.HIGH }).catch(() => {});
+}
+
+async function cancelFor(id?: number) {
+  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => [] as Notifications.NotificationRequest[]);
+  const start = id === undefined ? PREFIX : `${PREFIX}${id}-`;
+  await Promise.all(all.filter((n) => n.identifier.startsWith(start)).map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {})));
+}
+
+async function scheduleFor(comp: Competition, extra: CompetitionExtra): Promise<number> {
+  const now = Date.now() + 60000;
+  let n = 0;
+  for (const p of plannedReminders(comp, extra)) {
+    if (p.at.getTime() <= now) continue;
+    await Notifications.scheduleNotificationAsync({
+      identifier: `${PREFIX}${comp.id}-${p.kind}`,
+      content: { ...contenuSansSante({ title: p.title, body: p.body }), data: { type: 'competition', source: 'competitionReminders', screen: 'competition-detail', id: String(comp.id) } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: p.at, ...(Platform.OS === 'android' ? { channelId: CHANNEL } : {}) } as Notifications.NotificationTriggerInput,
+    });
+    n++;
+  }
+  return n;
+}
+
+/** Autorisation deja donnee ? (ne la demande jamais) */
+export async function remindersAllowed(): Promise<boolean> {
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+/** Demande l'autorisation, au moment ou tu actives les rappels */
+export async function askReminders(): Promise<boolean> {
+  try {
+    if (await remindersAllowed()) return true;
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+/** Reprogramme les rappels de toutes tes competitions a venir dont les rappels sont actives */
+export async function syncCompetitionReminders(list?: Competition[]): Promise<void> {
+  try {
+    if (Platform.OS === 'web' || !(await remindersAllowed())) return;
+    const [comps, extras] = await Promise.all([list ? Promise.resolve(list) : getCompetitions(), getAllExtras()]);
+    await ensureChannel();
+    await cancelFor();
+    for (const c of comps ?? []) {
+      const e = extras[String(c.id)];
+      if (!e?.rappels || c.statut === 'annulee') continue;
+      await scheduleFor(c, e);
+    }
+  } catch (e) {
+    logger.warn('Rappels de competition non reprogrammes', e);
+  }
+}
+
+/** Active ou coupe les rappels d'une competition. Renvoie le nombre de rappels programmes, ou -1 sans autorisation */
+export async function applyReminders(comp: Competition, extra: CompetitionExtra): Promise<number> {
+  try {
+    if (Platform.OS === 'web') return 0;
+    await cancelFor(comp.id);
+    if (!extra.rappels || comp.statut === 'annulee') return 0;
+    if (!(await askReminders())) return -1;
+    await ensureChannel();
+    return await scheduleFor(comp, extra);
+  } catch (e) {
+    logger.warn('Rappels de competition impossibles', e);
+    return 0;
+  }
+}
+
+export async function cancelCompetitionReminders(id: number): Promise<void> {
+  await cancelFor(id).catch(() => {});
+}

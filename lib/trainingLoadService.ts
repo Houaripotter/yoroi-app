@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, subDays } from 'date-fns';
 import logger from '@/lib/security/logger';
+import { INTENSITES } from './v2/intensite';
 
 // ============================================
 // TYPES
@@ -58,16 +59,16 @@ const LOAD_THRESHOLDS = {
 
 // Descriptions RPE (échelle de Borg modifiée)
 export const RPE_SCALE = [
-  { value: 1, label: 'Très facile', emoji: '😌', description: 'Effort minimal' },
-  { value: 2, label: 'Facile', emoji: '🙂', description: 'Récupération active' },
-  { value: 3, label: 'Modéré', emoji: '😊', description: 'Conversation possible' },
-  { value: 4, label: 'Assez dur', emoji: '😤', description: 'Respiration accélérée' },
+  { value: 1, label: 'Très facile', emoji: '', description: 'Effort minimal' },
+  { value: 2, label: 'Facile', emoji: '', description: 'Récupération active' },
+  { value: 3, label: 'Modéré', emoji: '', description: 'Conversation possible' },
+  { value: 4, label: 'Assez dur', emoji: '', description: 'Respiration accélérée' },
   { value: 5, label: 'Dur', emoji: '', description: 'Effort soutenu' },
   { value: 6, label: 'Très dur', emoji: '', description: 'Limite aérobie' },
-  { value: 7, label: 'Intense', emoji: '😰', description: 'Parler difficile' },
-  { value: 8, label: 'Très intense', emoji: '🥵', description: 'Effort maximal soutenu' },
-  { value: 9, label: 'Extrême', emoji: '💀', description: 'À la limite' },
-  { value: 10, label: 'Maximum', emoji: '☠️', description: 'Effort total, épuisement' },
+  { value: 7, label: 'Intense', emoji: '', description: 'Parler difficile' },
+  { value: 8, label: 'Très intense', emoji: '', description: 'Effort maximal soutenu' },
+  { value: 9, label: 'Extrême', emoji: '', description: 'À la limite' },
+  { value: 10, label: 'Maximum', emoji: '', description: 'Effort total, épuisement' },
 ];
 
 // ============================================
@@ -198,13 +199,13 @@ export const getWeeklyLoadStats = async (): Promise<WeeklyLoadStats> => {
     
     if (totalLoad > LOAD_THRESHOLDS.DANGER) {
       riskLevel = 'danger';
-      advice = '🚨 ATTENTION ! Charge critique, risque de blessure élevé. Repos obligatoire !';
+      advice = 'ATTENTION ! Charge critique, risque de blessure élevé. Repos obligatoire !';
     } else if (totalLoad > LOAD_THRESHOLDS.HIGH) {
       riskLevel = 'high';
       advice = 'Charge élevée. Prévois une séance légère ou un jour de repos.';
     } else if (totalLoad > LOAD_THRESHOLDS.MODERATE) {
       riskLevel = 'moderate';
-      advice = '👍 Bonne charge. Attention à ne pas trop en rajouter.';
+      advice = 'Bonne charge. Attention à ne pas trop en rajouter.';
     }
     
     return {
@@ -237,10 +238,11 @@ export const getWeeklyLoadStats = async (): Promise<WeeklyLoadStats> => {
  */
 export const getRiskColor = (riskLevel: string): string => {
   switch (riskLevel) {
-    case 'safe': return '#10B981';
-    case 'moderate': return '#F59E0B';
-    case 'high': return '#F97316';
-    case 'danger': return '#EF4444';
+    // Vague 32 : echelle d'intensite commune (lib/v2/intensite.ts), sans rouge
+    case 'safe': return INTENSITES[1].fill;
+    case 'moderate': return INTENSITES[2].fill;
+    case 'high': return INTENSITES[3].fill;
+    case 'danger': return INTENSITES[4].fill;
     default: return '#6B7280';
   }
 };
@@ -293,11 +295,12 @@ export const checkOvertrainingAlert = async (): Promise<void> => {
     const Notifications = await import('expo-notifications');
 
     const title = stats.riskLevel === 'danger'
-      ? 'Surmenage détecté !'
+      ? 'Ton corps demande du repos'
       : 'Charge élevée cette semaine';
+    // Aucun chiffre de charge : la notification s'affiche sur l'écran verrouillé
     const body = stats.riskLevel === 'danger'
-      ? `Charge de ${Math.round(stats.totalLoad)} pts — risque de blessure élevé. Prends un jour de repos.`
-      : `Charge de ${Math.round(stats.totalLoad)} pts — envisage une séance légère ou un repos.`;
+      ? 'Ta charge d’entraînement est haute cette semaine. Une vraie journée de récupération te fera du bien.'
+      : 'Ta charge d’entraînement monte. Une séance légère ou un repos, à toi de voir.';
 
     await Notifications.default.scheduleNotificationAsync({
       content: { title, body, sound: true },

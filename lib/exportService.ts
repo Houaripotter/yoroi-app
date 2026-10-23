@@ -1,13 +1,15 @@
+import { track } from '@/utils/telemetry';
 import * as FileSystem from 'expo-file-system/legacy';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { getDocumentAsync } from 'expo-document-picker';
 import { captureRef } from 'react-native-view-shot';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import secureStorage from './security/secureStorage';
 import { digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import { isBackupEncryptionEnabled, getStoredEncryptionPassword, encryptBackup, isEncryptedBackup, decryptBackup, DecryptionError } from './backupEncryption';
 import { requestPassword } from './passwordPromptController';
+import { entreesDeSauvegarde, reprendrePeseesDuCoffre } from './databaseReprisePesees';
 import {
   getAllMeasurements,
   getUserSettings,
@@ -22,15 +24,43 @@ import {
   saveHydrationSettings,
   getMoods,
   saveMood,
+  getPhotosStrict,
 } from './storage';
 import { getSleepEntries, getSleepGoal } from './sleepService';
-import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, saveProfile, getInjuries, addInjury, getCompetitions, addCompetition, getWeeklyPlan, addWeeklyPlanItem, openDatabase, getMeasurements as getSqlMeasurements } from './database';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, saveProfile, getInjuries, addInjury, getCompetitions, addCompetition, getWeeklyPlan, addWeeklyPlanItem, openDatabase, getMeasurements as getSqlMeasurements, WEIGHT_SCALE_COLUMNS, updateWeightScaleJson } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 import { getUnlockedBadges, unlockBadge } from './badges';
 import { getAllGoals, setGoal } from './trainingGoalsService';
 import logger from '@/lib/security/logger';
 import { validate, VALIDATION_RULES } from './validation';
-import { migrateBackup, validateBackup } from './backupMigrationService';
+import { migrateBackup, validateBackup, CURRENT_VERSION as CURRENT_BACKUP_VERSION } from './backupMigrationService';
+import {
+  collectAllStorage, collectAllTables, collectSecure, isNewerBackupVersion, mergeStoredValue,
+  restoreAllStorage, restoreSecure, restoreTables,
+} from '@/lib/v2/sauvegarde/fusion';
+import type { IdMaps } from '@/lib/v2/sauvegarde/fusion';
+import { rebaseLocalUri } from '@/lib/v2/sauvegarde/chemins';
+import { isFreshPhone } from '@/lib/v2/sauvegarde/telephoneNeuf';
+import { isSafetyFile, restoreSafetyFile, safetyReportText } from '@/lib/v2/sauvegarde/copiesSecurite';
+import { ARMURE_STORAGE_KEYS, requestArmureCatchup, restoreArmureFromStorage } from '@/lib/v2/armure';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { illustrer } from '@/components/yoroi/v2/messages/illustrer';
+
+/**
+ * Restauration : remet la date d'enregistrement d'origine sur la ligne insérée (même principe
+ * que importData dans lib/database.native.ts). Sans elle, tout l'historique restauré passe
+ * pour antidaté et ne rapporte plus rien dans le Dojo.
+ */
+const keepCreatedAt = async (table: 'weights' | 'trainings' | 'measurements', id: number, createdAt: unknown): Promise<void> => {
+  if (!id || typeof createdAt !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(createdAt)) return;
+  try {
+    const database: any = await openDatabase();
+    if (!database) return;
+    await database.runAsync(`UPDATE ${table} SET created_at = ? WHERE id = ?`, [createdAt.replace('T', ' ').slice(0, 19), id]);
+  } catch {
+    // non bloquant : la reprise de l'armure rattrape les lignes anciennes
+  }
+};
 
 // ============================================
 // HELPERS IMPORT SÉCURISÉ
@@ -61,6 +91,10 @@ function sanitizeImportRecord<T extends Record<string, any>>(record: T): T {
     // Notes trop longues : on tronque plutôt que de tout effacer
     if (!result.valid && typeof value === 'string' && (key === 'notes' || key === 'note')) {
       sanitized[key] = value.slice(0, 1000);
+    } else if (!result.valid && typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+      // Restauration : un nombre que l'app avait enregistre n'est jamais jete (ex : tour d'epaules de 120 cm,
+      // refuse a tort par une ancienne limite a 100). On garde la valeur telle quelle.
+      sanitized[key] = value;
     } else {
       sanitized[key] = result.valid ? result.value : null;
     }
@@ -72,7 +106,7 @@ function sanitizeImportRecord<T extends Record<string, any>>(record: T): T {
 // CONFIGURATION
 // ============================================
 
-const EXPORT_VERSION = '5.5'; // v5.5 : Training Journal, Carnet, débriefs séance, records, training loads
+const EXPORT_VERSION = '6.0'; // v6.0 : sauvegarde complète (toutes les tables, toutes les clés de l'app, coffre) ; v5.5 : Training Journal, Carnet, débriefs séance, records, training loads
 
 // ============================================
 // UTILITAIRES IMAGES
@@ -81,8 +115,10 @@ const EXPORT_VERSION = '5.5'; // v5.5 : Training Journal, Carnet, débriefs séa
 /**
  * Convertit une image URI en base64
  */
-const imageToBase64 = async (uri: string | undefined | null): Promise<string | null> => {
-  if (!uri) return null;
+const imageToBase64 = async (input: string | undefined | null): Promise<string | null> => {
+  if (!input) return null;
+  // Ancien chemin d'iPhone (dossier de l'app change a la mise a jour) : recolle sur le dossier actuel
+  const uri = rebaseLocalUri(input);
   try {
     // Vérifier si le fichier existe
     const fileInfo = await FileSystem.getInfoAsync(uri);
@@ -131,6 +167,7 @@ const base64ToImage = async (base64: string, fileName: string): Promise<string |
 export const exportDataToJSON = async (options?: { silent?: boolean; includePhotos?: boolean }): Promise<boolean> => {
   const silent = options?.silent === true;
   const includePhotos = options?.includePhotos !== false; // par défaut : inclure les photos
+  if (!silent) track('sauvegarde_exportee', { type: 'json' });
   try {
     // ─── Check espace disque libre avant de commencer ─────────────────
     // Un backup complet avec photos peut faire 50-100 MB. On vérifie qu'on a
@@ -142,9 +179,9 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       if (freeDiskBytes < minRequired) {
         logger.warn(`[Backup] Espace disque insuffisant : ${Math.round(freeDiskBytes / 1024 / 1024)} MB libre`);
         if (!silent) {
-          Alert.alert(
-            '💾 Espace disque insuffisant',
-            `Il te reste ${Math.round(freeDiskBytes / 1024 / 1024)} MB sur cet appareil. Un backup ${includePhotos ? 'complet' : 'léger'} a besoin d'au moins ${Math.round(minRequired / 1024 / 1024)} MB.\n\nLibère de l'espace (supprime des apps ou photos) puis réessaie.`
+          appAlert(
+            'Plus assez de place',
+            `Il te reste ${Math.round(freeDiskBytes / 1024 / 1024)} Mo sur ce téléphone. Une sauvegarde ${includePhotos ? 'complète' : 'légère'} a besoin d’au moins ${Math.round(minRequired / 1024 / 1024)} Mo.\n\nLibère de l'espace (supprime des apps ou photos) puis réessaie.`
           );
         }
         return false;
@@ -220,8 +257,8 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       AsyncStorage.getItem('@yoroi_belt').catch(() => null),
     ]);
 
-    // ─── v5.3 — Combat Lab : sparring, game plan, drills ────────────────────
-    // ─── v5.4 — Photo history (frames) ───────────────────────────────────
+    // ─── v5.3 : Combat Lab : sparring, game plan, drills ────────────────────
+    // ─── v5.4 : Photo history (frames) ───────────────────────────────────
     const [
       sparringPartners,
       playbookGamePlan,
@@ -250,14 +287,14 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       AsyncStorage.getItem('@yoroi_photo_history').catch(() => null),
     ]);
 
-    // ─── v5.5 — Training Journal (SQLite) + Carnet + Records + Loads ────────
+    // ─── v5.5 : Training Journal (SQLite) + Carnet + Records + Loads ────────
     let progressionItems: any[] = [];
     let practiceLogs: any[] = [];
     try {
       const db = await openDatabase();
       progressionItems = await db.getAllAsync<any>('SELECT * FROM progression_items').catch(() => []);
       practiceLogs = await db.getAllAsync<any>('SELECT * FROM practice_logs').catch(() => []);
-    } catch { /* tables peut-être pas encore créées — OK */ }
+    } catch { /* tables peut-être pas encore créées, OK */ }
 
     const [
       benchmarksRaw,
@@ -269,15 +306,42 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       healthBonusHistoryRaw,
       sourceFreshnessRaw,
     ] = await Promise.all([
-      AsyncStorage.getItem('@yoroi_benchmarks_v2').catch(() => null),
-      AsyncStorage.getItem('@yoroi_skills_v2').catch(() => null),
-      AsyncStorage.getItem('@yoroi_trash_benchmarks_v2').catch(() => null),
-      AsyncStorage.getItem('@yoroi_trash_skills_v2').catch(() => null),
+      // Le carnet est range sous 'yoroi_benchmarks_v2' (sans @) : l'ancienne lecture avec @ ne trouvait rien,
+      // le carnet n'etait donc jamais dans les sauvegardes
+      AsyncStorage.getItem('yoroi_benchmarks_v2').then((v) => v ?? AsyncStorage.getItem('@yoroi_benchmarks_v2')).catch(() => null),
+      AsyncStorage.getItem('yoroi_skills_v2').then((v) => v ?? AsyncStorage.getItem('@yoroi_skills_v2')).catch(() => null),
+      AsyncStorage.getItem('yoroi_trash_benchmarks_v2').then((v) => v ?? AsyncStorage.getItem('@yoroi_trash_benchmarks_v2')).catch(() => null),
+      AsyncStorage.getItem('yoroi_trash_skills_v2').then((v) => v ?? AsyncStorage.getItem('@yoroi_trash_skills_v2')).catch(() => null),
       AsyncStorage.getItem('@yoroi_personal_records').catch(() => null),
       AsyncStorage.getItem('@yoroi_training_loads').catch(() => null),
       AsyncStorage.getItem('@yoroi_health_bonus_history').catch(() => null),
       AsyncStorage.getItem('@yoroi_source_freshness').catch(() => null),
     ]);
+
+    // ─── v6.0 : TOUT le reste (Dojo, scènes, personnage, style, minuteurs, objectifs, combats, eau...) ─
+    let allTables: Record<string, Record<string, unknown>[]> = {};
+    let allStorage: Record<string, string> = {};
+    let allSecure: Record<string, string> = {};
+    try {
+      const db = await openDatabase();
+      if (db) allTables = await collectAllTables(db, ['profile', 'weights', 'trainings', 'clubs', 'measurements', 'competitions', 'weekly_plan', 'injuries', 'progression_items', 'practice_logs', 'training_goals']);
+    } catch (e) { logger.warn('[Backup] Tables complémentaires non lues:', e); }
+    try { allStorage = await collectAllStorage(); } catch (e) { logger.warn('[Backup] Clés de l’app non lues:', e); }
+    try { allSecure = await collectSecure(); } catch (e) { logger.warn('[Backup] Coffre non lu:', e); }
+
+    // Une sauvegarde automatique VIDE ne remplace jamais une bonne : si la précédente avait des pesées
+    // ou des séances et que celle-ci n'en a aucune (lecture ratée, base pas prête), on n'écrit rien.
+    const counts = { weights: (weights || []).length, trainings: (trainings || []).length, photos: (photos || []).length };
+    if (silent) {
+      try {
+        const prev = JSON.parse((await AsyncStorage.getItem('@yoroi_backup_last_counts')) ?? 'null');
+        const prevTotal = Number(prev?.weights ?? 0) + Number(prev?.trainings ?? 0);
+        if (prevTotal > 0 && counts.weights + counts.trainings === 0) {
+          logger.warn('[Backup] Sauvegarde automatique vide refusée (la précédente contenait des données)');
+          return false;
+        }
+      } catch { /* pas de compte précédent */ }
+    }
 
     // === CONVERTIR LES IMAGES EN BASE64 (sauf si includePhotos=false) ===
 
@@ -345,7 +409,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       }
     }
 
-    // 5. Historique photo (frames) — array d'URIs stocké dans @yoroi_photo_history
+    // 5. Historique photo (frames), array d'URIs stocké dans @yoroi_photo_history
     let photoHistoryWithBase64: Array<{ uri: string; base64: string | null }> = [];
     if (includePhotos && photoHistoryRaw) {
       try {
@@ -422,7 +486,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
       sleepEntries,
       sleepGoal,
       moodEntries,
-      // v5.2 — données manquantes
+      // v5.2 : données manquantes
       injuries,
       competitions,
       weeklyPlan,
@@ -438,7 +502,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
         fighterModeCategory,
         fighterModeBelt,
       },
-      // v5.3 — Combat Lab (sparring, game plan, drills, favoris)
+      // v5.3 : Combat Lab (sparring, game plan, drills, favoris)
       combatLab: {
         sparringPartners: sparringPartnersWithPhotos,  // Fiche tactique complète (photos en base64, forces, faiblesses, notes, objectifs)
         playbookCustom: {        // Templates perso de la bibliothèque de game plans
@@ -454,14 +518,14 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
         bjjFavSubmissions,       // Favoris soumissions BJJ BodyMap
         toolFavorites: sparringTool_favorites, // Outils favoris (more tab)
       },
-      // v5.4 — Toutes les photos/médias complémentaires
+      // v5.4 : Toutes les photos/médias complémentaires
       mediaAssets: {
         photoHistory: photoHistoryWithBase64,     // Historique des photos avec frames (5 dernières)
         avatarBase64,                              // Avatar custom (image perso)
         routineImageBase64,                        // Image de routine hebdomadaire
         customClubLogosBase64,                     // Logos custom des clubs (map nom → base64)
       },
-      // v5.5 — Training Journal (objectifs + logs de pratique) et Carnet (benchmarks + skills)
+      // v5.5 : Training Journal (objectifs + logs de pratique) et Carnet (benchmarks + skills)
       trainingJournal: {
         items: progressionItems,                   // Objectifs d'entraînement détaillés
         logs: practiceLogs,                        // Logs de pratiques / sessions
@@ -480,6 +544,10 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
         healthBonusHistory: healthBonusHistoryRaw, // Historique bonus santé (gamification)
         sourceFreshness: sourceFreshnessRaw,       // Fraîcheur des sources
       },
+      // v6.0 : tout le reste, pour qu'une restauration ne perde rien
+      allTables,
+      allStorage,
+      allSecure,
     };
 
     // Créer le fichier JSON avec date ET heure pour éviter les écrasements
@@ -516,7 +584,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
           finalPayload = encryptBackup(exportData, password);
           logger.info('[Backup] Chiffrement AES-256 appliqué');
         } else {
-          logger.warn('[Backup] Chiffrement activé mais aucun mot de passe stocké — backup non chiffré');
+          logger.warn('[Backup] Chiffrement activé mais aucun mot de passe stocké, backup non chiffré');
         }
       }
     } catch (encErr) {
@@ -538,6 +606,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
     await FileSystem.moveAsync({ from: tmpUri, to: fileUri });
 
     logger.info('Fichier JSON créé (atomique):', fileName);
+    await AsyncStorage.setItem('@yoroi_backup_last_counts', JSON.stringify(counts)).catch(() => undefined);
 
     // Auto-nettoyage : conserver seulement les 10 dernières sauvegardes locales
     try {
@@ -571,29 +640,65 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
     }
 
     // Sync automatique vers le dossier cloud connecté (bloquant mais avec timeout, pour
-    // savoir si le push cloud a réellement réussi — important pour les banners UI).
+    // savoir si le push cloud a réellement réussi, important pour les banners UI).
     try {
       const { getSavedCloudFolder, copyToCloudFolder } = await import('@/lib/cloudFolderService');
       const cloudFolder = await getSavedCloudFolder();
       if (cloudFolder) {
-        const cleanPath = fileUri.startsWith('file://') ? decodeURIComponent(fileUri.slice(7)) : fileUri;
+        // 18 octobre 2026 : la copie automatique du jour tourne sur 3 noms fixes (yoroi_backup_auto_1 a 3),
+        // ecrases a tour de role : le dossier cloud garde les 3 derniers jours au lieu d'une copie de plus
+        // chaque jour (avec les photos, des centaines de Mo par mois finissaient par remplir iCloud Drive).
+        // Les copies faites a la main gardent leur nom date.
+        let source = fileUri;
+        let temporaire: string | null = null;
+        if (silent && FileSystem.cacheDirectory) {
+          const n = (Math.floor(Date.now() / 86400000) % 3) + 1;
+          temporaire = `${FileSystem.cacheDirectory}yoroi_backup_auto_${n}.json`;
+          await FileSystem.deleteAsync(temporaire, { idempotent: true }).catch(() => {});
+          await FileSystem.copyAsync({ from: fileUri, to: temporaire });
+          source = temporaire;
+        }
+        const cleanPath = source.startsWith('file://') ? decodeURIComponent(source.slice(7)) : source;
         const cloudOk = await Promise.race<boolean>([
           copyToCloudFolder(cleanPath),
-          new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15000)),
+          new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 60000)),
         ]);
+        if (temporaire) await FileSystem.deleteAsync(temporaire, { idempotent: true }).catch(() => {});
         if (cloudOk) {
-          // Track le succès réel du push cloud — lu par BackupStatusHeader et multi-device sync
+          // Track le succès réel du push cloud, lu par BackupStatusHeader et multi-device sync
           await AsyncStorage.setItem('@yoroi_last_cloud_sync_success', new Date().toISOString());
           logger.info('[Backup] ✅ Push cloud réussi:', cloudFolder.displayName);
         } else {
           // Marquer l'échec pour que l'UI puisse avertir l'user
           await AsyncStorage.setItem('@yoroi_last_cloud_sync_failure', new Date().toISOString());
-          logger.warn('[Backup] ⚠️ Push cloud échoué ou timeout — backup local seulement');
+          logger.warn('[Backup] ⚠️ Push cloud échoué ou timeout, backup local seulement');
         }
       }
     } catch (cloudError) {
       await AsyncStorage.setItem('@yoroi_last_cloud_sync_failure', new Date().toISOString()).catch(() => {});
       logger.warn('[Backup] Erreur sync cloud:', cloudError);
+    }
+
+    // 18 octobre 2026 : iPhone, la copie automatique du jour part aussi dans le coffre iCloud de l'app
+    // (dossier « YOROI » du iCloud Drive, sans rien choisir ; lib/v2/sauvegarde/coffreICloud.ts),
+    // 3 fichiers a tour de role. Rien si l'utilisateur n'est pas connecte a iCloud.
+    if (silent && Platform.OS === 'ios' && FileSystem.cacheDirectory) {
+      try {
+        const icloud = await import('@/lib/v2/sauvegarde/coffreICloud');
+        if (await icloud.icloudDisponible()) {
+          const copie = `${FileSystem.cacheDirectory}${icloud.nomCopieICloud()}`;
+          await FileSystem.deleteAsync(copie, { idempotent: true }).catch(() => {});
+          await FileSystem.copyAsync({ from: fileUri, to: copie });
+          const ok = await Promise.race<boolean>([
+            icloud.copierDansICloud(copie),
+            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 60000)),
+          ]);
+          await FileSystem.deleteAsync(copie, { idempotent: true }).catch(() => {});
+          logger.info(ok ? '[Backup] Copie iCloud faite' : '[Backup] Copie iCloud non faite');
+        }
+      } catch (icloudError) {
+        logger.warn('[Backup] Copie iCloud impossible:', icloudError);
+      }
     }
 
     // Partager le fichier JSON (sauf en mode silent pour backups auto)
@@ -605,8 +710,11 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
           dialogTitle: 'Sauvegarder dans ton Cloud',
           UTI: 'public.json',
         });
+        // Copie proposee hors du telephone (Fichiers, iCloud Drive, Google Drive...). Le systeme ne dit pas
+        // ou elle a ete rangee : c'est la date de la derniere copie PROPOSEE, affichee dans les Reglages.
+        await AsyncStorage.setItem('@yoroi_last_manual_export', new Date().toISOString()).catch(() => undefined);
       } else {
-        Alert.alert('Succès', `Données exportées vers ${fileUri}`);
+        appAlert('Export terminé', 'Tes données sont exportées.');
       }
     }
 
@@ -614,7 +722,7 @@ export const exportDataToJSON = async (options?: { silent?: boolean; includePhot
   } catch (error) {
     logger.error('Erreur export JSON:', error);
     if (!silent) {
-      Alert.alert('Erreur', 'Impossible d\'exporter les données');
+      appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
     }
     return false;
   }
@@ -628,7 +736,7 @@ export const exportDataToCSV = async (): Promise<boolean> => {
     const weights = await getWeights();
 
     if (weights.length === 0) {
-      Alert.alert('Info', 'Aucune donnée à exporter');
+      appAlert('Rien à exporter', 'Tu n’as pas encore de données à exporter.');
       return false;
     }
 
@@ -658,13 +766,13 @@ export const exportDataToCSV = async (): Promise<boolean> => {
         UTI: 'public.comma-separated-values-text',
       });
     } else {
-      Alert.alert('Succès', `Données exportées vers ${fileUri}`);
+      appAlert('Export terminé', 'Tes données sont exportées.');
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur export CSV:', error);
-    Alert.alert('Erreur', 'Impossible d\'exporter les données');
+    appAlert('Oups', 'L’export n’a pas abouti. Réessaie.');
     return false;
   }
 };
@@ -672,20 +780,24 @@ export const exportDataToCSV = async (): Promise<boolean> => {
 /**
  * Importe les données depuis un fichier JSON (avec restauration des images)
  */
-export const importDataFromJSON = async (): Promise<boolean> => {
+export const importDataFromJSON = async (fichierDonne?: string): Promise<boolean> => {
   try {
-    // Sélectionner un fichier
-    const result = await getDocumentAsync({
-      type: 'application/json',
-      copyToCacheDirectory: true,
-    });
+    // 18 octobre 2026 : un fichier deja choisi (la sauvegarde trouvee dans le coffre iCloud), sinon le selecteur
+    let uri = fichierDonne ?? null;
+    if (!uri) {
+      const result = await getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
 
-    if (result.canceled) {
-      return false;
+      if (result.canceled) {
+        return false;
+      }
+      uri = result.assets[0].uri;
     }
 
     // Lire le fichier
-    const fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+    const fileContent = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
@@ -693,17 +805,17 @@ export const importDataFromJSON = async (): Promise<boolean> => {
     try {
       importedData = JSON.parse(fileContent);
     } catch (parseError) {
-      Alert.alert('Erreur', 'Le fichier est corrompu ou invalide (JSON malformé)');
+      appAlert('Fichier illisible', 'Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.');
       return false;
     }
 
     // ─── Détection & déchiffrement si backup chiffré ──────────────────
     if (isEncryptedBackup(importedData)) {
-      // Cross-platform : modal custom via controller global (plus de Alert.prompt iOS-only)
+      // Saisie du mot de passe : fenetre maison YOROI
       const password = await requestPassword({
-        title: '🔒 Sauvegarde chiffrée',
-        message: 'Ce backup est protégé par un mot de passe. Entre-le pour continuer.',
-        confirmLabel: 'Déchiffrer',
+        title: 'Sauvegarde protégée',
+        message: 'Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.',
+        confirmLabel: 'Ouvrir',
       });
       if (!password) return false;
 
@@ -721,34 +833,58 @@ export const importDataFromJSON = async (): Promise<boolean> => {
               msg = "Vérifie ton mot de passe. Si le fichier a été modifié pendant le transfert, il peut aussi être corrompu.";
               break;
             case 'TAMPERED':
-              title = '⚠️ Fichier altéré';
+              title = 'Fichier altéré';
               msg = "Le fichier a été modifié après chiffrement. La restauration est refusée pour protéger tes données.";
               break;
             case 'JSON_INVALID':
-              title = '⚠️ Données corrompues';
+              title = 'Données corrompues';
               msg = "Le déchiffrement a réussi mais les données internes sont corrompues.";
               break;
             case 'INVALID_FORMAT':
               title = 'Format invalide';
-              msg = "Ce fichier n'est pas un backup Yoroi chiffré valide.";
+              msg = "Ce fichier n’est pas une sauvegarde YOROI protégée valide.";
               break;
           }
         }
-        Alert.alert(title, msg);
+        appAlert(title, msg);
         return false;
       }
+    }
+
+    // Copie de securite automatique partagee depuis les Reglages : remise par fusion, comme une sauvegarde
+    if (isSafetyFile(importedData)) {
+      const when = typeof importedData.journal?.at === 'string' ? new Date(importedData.journal.at).toLocaleDateString('fr-FR') : null;
+      const goOn = await new Promise<boolean>((resolve) => {
+        appAlert(
+          'Remettre cette copie ?',
+          `C’est une copie de sécurité automatique${when ? ` du ${when}` : ''}. Ce qui manque sur ce téléphone est ajouté. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.`,
+          [
+            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Remettre', onPress: () => resolve(true) },
+          ]
+        );
+      });
+      if (!goOn) return false;
+      const rep = await restoreSafetyFile(importedData);
+      if (!rep) {
+        appAlert('Oups', 'La copie n’a pas pu être remise. Rien n’a été effacé sur ce téléphone.');
+        return false;
+      }
+      const illustration = await illustrer('copieFaite');
+      appAlert('Copie remise', safetyReportText(rep), undefined, illustration ? { illustration } : undefined);
+      return true;
     }
 
     // Valider que c'est bien un fichier Yoroi
     const validation = validateBackup(importedData);
     if (!validation.valid) {
-      Alert.alert('Fichier invalide', validation.errors.join('\n'));
+      appAlert('Fichier invalide', validation.errors.join('\n'));
       return false;
     }
 
     // ─── Vérification du checksum d'intégrité (v5.5+) ──────────────────
     // Si le backup contient un bloc `integrity`, on recalcule le hash et on
-    // vérifie qu'il correspond — détecte les fichiers corrompus/tronqués.
+    // vérifie qu'il correspond, détecte les fichiers corrompus/tronqués.
     if (importedData.integrity?.checksum && importedData.integrity.algorithm === 'SHA-256') {
       try {
         // On recalcule sur les mêmes données (sans le bloc integrity lui-même)
@@ -759,9 +895,9 @@ export const importDataFromJSON = async (): Promise<boolean> => {
         );
         if (recomputed !== integrity.checksum) {
           const confirmed = await new Promise<boolean>((resolve) => {
-            Alert.alert(
-              '⚠️ Fichier possiblement corrompu',
-              "Le checksum d'intégrité ne correspond pas. Le fichier a peut-être été modifié ou tronqué pendant un transfert.\n\nVeux-tu quand même tenter la restauration ? (risque de données incomplètes)",
+            appAlert(
+              'Fichier peut-être abîmé',
+              'Ce fichier a peut-être été modifié ou coupé pendant un transfert.\n\nTu veux quand même essayer de le restaurer ? Certaines données pourraient manquer.',
               [
                 { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
                 { text: 'Tenter quand même', style: 'destructive', onPress: () => resolve(true) },
@@ -770,7 +906,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           });
           if (!confirmed) return false;
         } else {
-          logger.info('[Import] Checksum vérifié — fichier intègre');
+          logger.info('[Import] Checksum vérifié, fichier intègre');
         }
       } catch (e) {
         // Si la vérification échoue pour une raison technique, on continue
@@ -784,8 +920,23 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       logger.info(`[Import] Backup migré vers v${importedData.version}`);
     } catch (migrationError) {
       logger.error('[Import] Erreur lors de la migration du backup:', migrationError);
-      Alert.alert('Erreur', 'Impossible de lire ce fichier de sauvegarde.');
+      appAlert('Fichier illisible', 'Ce fichier de sauvegarde ne peut pas être lu.');
       return false;
+    }
+
+    // Sauvegarde d'une version plus récente de YOROI : on prévient, on importe ce que cette version connaît
+    if (isNewerBackupVersion(importedData.version, CURRENT_BACKUP_VERSION)) {
+      const goOn = await new Promise<boolean>((resolve) => {
+        appAlert(
+          'Sauvegarde plus récente',
+          'Cette sauvegarde vient d’une version plus récente de YOROI. Ce que cette version connaît sera ajouté, le reste sera ignoré. Mets l’app à jour pour tout récupérer.',
+          [
+            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Importer quand même', onPress: () => resolve(true) },
+          ]
+        );
+      });
+      if (!goOn) return false;
     }
 
     // Compter les images à restaurer
@@ -796,24 +947,21 @@ export const importDataFromJSON = async (): Promise<boolean> => {
     // Demander confirmation
     const confirmed = await new Promise<boolean>((resolve) => {
       const summary = [
-        `• ${importedData.weights?.length || 0} mesures de poids`,
-        `• ${importedData.trainings?.length || 0} entraînements`,
-        `• ${importedData.bodyCompositions?.length || 0} compositions corporelles`,
-        `• ${importedData.clubs?.length || 0} clubs${clubsWithLogos.length > 0 ? ` (${clubsWithLogos.length} logos)` : ''}`,
+        `• ${importedData.weights?.length || 0} pesées`,
+        `• ${importedData.trainings?.length || 0} séances`,
         `• ${importedData.measurements?.length || 0} mensurations`,
-        `• ${importedData.unlockedBadges?.length || 0} badges débloqués`,
         `• ${importedData.photos?.length || 0} photos${photosWithImages.length > 0 ? ` (${photosWithImages.length} images)` : ''}`,
+        importedData.clubs?.length ? `• ${importedData.clubs.length} clubs${clubsWithLogos.length > 0 ? ` (${clubsWithLogos.length} logos)` : ''}` : null,
+        importedData.competitions?.length ? `• ${importedData.competitions.length} compétitions` : null,
         importedData.sleepEntries?.length > 0 ? `• ${importedData.sleepEntries.length} nuits de sommeil` : null,
-        importedData.moodEntries?.length > 0 ? `• ${importedData.moodEntries.length} entrées d'humeur` : null,
-        importedData.hydrationEntries?.length > 0 ? `• ${importedData.hydrationEntries.length} entrées d'hydratation` : null,
+        importedData.hydrationEntries?.length > 0 ? `• ${importedData.hydrationEntries.length} prises d’eau` : null,
         hasProfilePhoto ? '• Photo de profil' : null,
-        importedData.userSettings ? '• Paramètres utilisateur' : null,
-        importedData.homeLayout ? '• Layout de l\'accueil' : null,
+        importedData.allStorage ? '• Dojo, carnet, réglages et le reste de l’app' : null,
       ].filter(Boolean).join('\n');
 
-      Alert.alert(
-        'Importer les données ?',
-        `Tu vas importer :\n${summary}\n\nCela va AJOUTER ces données aux données existantes (pas de remplacement).`,
+      appAlert(
+        'Importer cette sauvegarde ?',
+        `Elle contient :\n${summary}\n\nTout est ajouté à ce qui est déjà sur ce téléphone. Rien n’est effacé, rien n’est remplacé, et ce qui est déjà là n’est pas recopié deux fois.`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Importer', onPress: () => resolve(true) },
@@ -826,503 +974,33 @@ export const importDataFromJSON = async (): Promise<boolean> => {
     }
 
     // ─── SAFETY BACKUP avant restauration ─────────────────────────
-    // On sauvegarde l'état ACTUEL avant d'importer le backup — si l'user
-    // regrette ou si l'import foire en cours, il pourra revenir en arrière.
+    // On sauvegarde l'état ACTUEL avant d'importer le backup : si l'import foire en cours,
+    // on peut revenir en arrière.
     try {
       const { runSafetyBackup } = await import('./safetyBackupService');
       await runSafetyBackup('pre-restore');
     } catch { /* non bloquant */ }
 
     logger.info('Début import données...');
-    let importedCount = 0;
-    let imagesRestored = 0;
-
-    // === RESTAURER LE PROFIL AVEC PHOTO ===
-    if (importedData.profile) {
-      try {
-        const profileData = { ...importedData.profile };
-
-        // Restaurer la photo de profil si présente
-        if (profileData.profile_photo_base64) {
-          const photoUri = await base64ToImage(
-            profileData.profile_photo_base64,
-            `profile_photo_${Date.now()}.jpg`
-          );
-          if (photoUri) {
-            profileData.profile_photo = photoUri;
-            imagesRestored++;
-            logger.info('Photo de profil restaurée');
-          }
-        }
-        delete profileData.profile_photo_base64;
-
-        await saveProfile(profileData);
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import profil:', error);
-      }
+    const done = await importDataFromBackupObject(importedData, { alreadyChecked: true });
+    const rep = getLastImportReport();
+    if (!done || !rep) {
+      appAlert('Oups', 'L’import n’a pas abouti. Rien n’a été effacé sur ce téléphone. Réessaie.');
+      return false;
     }
-
-    // Importer les poids
-    if (importedData.weights && Array.isArray(importedData.weights)) {
-      // Anti-doublon : une restauration (ou une synchro entre appareils) ne doit pas
-      // dupliquer les pesées déjà présentes
-      const weightKey = (w: any) => `${String(w.date).slice(0, 10)}|${Number(w.weight).toFixed(2)}|${w.source || 'manual'}`;
-      const seenWeights = new Set((await getWeights().catch(() => [])).map(weightKey));
-      for (const raw of importedData.weights) {
-        if (raw && seenWeights.has(weightKey(raw))) continue;
-        try {
-          const weight = sanitizeImportRecord(raw);
-          // weight.weight est requis — si null après sanitize, on saute le record
-          if (weight.weight == null || isNaN(Number(weight.weight))) {
-            logger.warn('Import poids ignoré (valeur invalide):', raw.weight);
-            continue;
-          }
-          await addWeight({
-            weight: weight.weight,
-            date: weight.date,
-            fat_percent: weight.fat_percent,
-            muscle_percent: weight.muscle_percent,
-            water_percent: weight.water_percent,
-            bone_mass: weight.bone_mass,
-            visceral_fat: weight.visceral_fat,
-            metabolic_age: weight.metabolic_age,
-            bmr: weight.bmr,
-          });
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import poids:', error);
-        }
-      }
-    }
-
-    // Importer les entraînements (COMPLET avec tous les champs)
-    if (importedData.trainings && Array.isArray(importedData.trainings)) {
-      // Anti-doublon séances (l'identifiant Santé est aussi contrôlé dans addTraining)
-      const trainingKey = (t: any) => t.healthkit_uuid
-        ? `uuid|${t.healthkit_uuid}`
-        : `${String(t.date).slice(0, 10)}|${t.start_time ?? ''}|${t.sport ?? t.discipline ?? ''}|${t.duration_minutes ?? ''}`;
-      const seenTrainings = new Set((await getTrainings().catch(() => [])).map(trainingKey));
-      for (const raw of importedData.trainings) {
-        if (raw && seenTrainings.has(trainingKey(raw))) continue;
-        const training = sanitizeImportRecord(raw);
-        try {
-          await addTraining({
-            club_id: training.club_id,
-            sport: training.sport || training.discipline || 'Sport',
-            date: training.date,
-            session_type: training.session_type || training.type,
-            session_types: training.session_types,
-            notes: training.notes,
-            duration_minutes: training.duration_minutes,
-            start_time: training.start_time,
-            muscles: training.muscles,
-            technical_theme: training.technical_theme,
-            distance: training.distance,
-            calories: training.calories,
-            intensity: training.intensity,
-            rounds: training.rounds,
-            round_duration: training.round_duration,
-            is_outdoor: training.is_outdoor,
-            pente: training.pente,
-            speed: training.speed,
-            resistance: training.resistance,
-            watts: training.watts,
-            cadence: training.cadence,
-            technique_rating: training.technique_rating,
-            // Champs restaurés depuis v5.1+
-            heart_rate: training.heart_rate,
-            min_heart_rate: training.min_heart_rate,
-            max_heart_rate: training.max_heart_rate,
-            source: training.source,
-            healthkit_uuid: training.healthkit_uuid,
-            location_lat: training.location_lat,
-            location_lon: training.location_lon,
-            location_name: training.location_name,
-            exercises: training.exercises,
-            combat_rounds: training.combat_rounds,
-            workout_details_json: training.workout_details_json,
-          });
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import training:', error);
-        }
-      }
-    }
-
-    // Importer les compositions corporelles
-    if (importedData.bodyCompositions && Array.isArray(importedData.bodyCompositions)) {
-      for (const raw of importedData.bodyCompositions) {
-        try {
-          await addBodyComposition(sanitizeImportRecord(raw));
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import composition:', error);
-        }
-      }
-    }
-
-    // === IMPORTER LES CLUBS AVEC LOGOS ===
-    if (importedData.clubs && Array.isArray(importedData.clubs)) {
-      // Charger les clubs existants pour éviter les doublons (même nom + sport)
-      const existingClubs = await getClubs();
-      const existingClubKeys = new Set(
-        existingClubs.map((c: any) => `${c.name}|${c.sport}`)
-      );
-
-      for (const club of importedData.clubs) {
-        const key = `${club.name}|${club.sport}`;
-        if (existingClubKeys.has(key)) continue; // doublon, on saute
-
-        try {
-          const clubData = { ...club };
-
-          // Restaurer le logo si présent en base64
-          if (clubData.logo_base64) {
-            const logoUri = await base64ToImage(
-              clubData.logo_base64,
-              `club_logo_${clubData.name?.replace(/\s/g, '_') || Date.now()}.png`
-            );
-            if (logoUri) {
-              clubData.logo_uri = logoUri;
-              imagesRestored++;
-              logger.info(`Logo restauré pour club: ${clubData.name}`);
-            }
-          }
-          delete clubData.logo_base64;
-
-          await addClub(clubData);
-          existingClubKeys.add(key); // évite doublon si le même backup liste 2x le même club
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import club:', error);
-        }
-      }
-    }
-
-    // Importer les mensurations
-    if (importedData.measurements && Array.isArray(importedData.measurements)) {
-      // Anti-doublon : ne pas réinsérer une mensuration déjà présente en base
-      const MEAS_FIELDS = ['chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'shoulders', 'neck'];
-      const measKey = (m: any) => `${String(m?.date).slice(0, 10)}|${MEAS_FIELDS.map(f => (m?.[f] == null ? '' : Number(m[f]))).join('|')}`;
-      const seenMeasurements = new Set((await getSqlMeasurements().catch(() => [])).map(measKey));
-      for (const raw of importedData.measurements) {
-        if (raw && seenMeasurements.has(measKey(raw))) continue;
-        try {
-          const m = sanitizeImportRecord(raw);
-          await addMeasurementRecord({
-            chest: m.chest,
-            waist: m.waist,
-            navel: m.navel,
-            hips: m.hips,
-            left_arm: m.left_arm,
-            right_arm: m.right_arm,
-            left_thigh: m.left_thigh,
-            right_thigh: m.right_thigh,
-            left_calf: m.left_calf,
-            right_calf: m.right_calf,
-            shoulders: m.shoulders,
-            neck: m.neck,
-            date: m.date,
-          });
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import measurement:', error);
-        }
-      }
-    }
-
-    // Importer les badges débloqués
-    if (importedData.unlockedBadges && Array.isArray(importedData.unlockedBadges)) {
-      for (const badgeId of importedData.unlockedBadges) {
-        try {
-          await unlockBadge(badgeId);
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import badge:', error);
-        }
-      }
-    }
-
-    // Importer les paramètres utilisateur
-    if (importedData.userSettings) {
-      try {
-        await saveUserSettings(importedData.userSettings);
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import settings:', error);
-      }
-    }
-
-    // Importer le layout home
-    if (importedData.homeLayout && Array.isArray(importedData.homeLayout)) {
-      try {
-        await saveHomeLayout(importedData.homeLayout);
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import home layout:', error);
-      }
-    }
-
-    // Importer le logo sélectionné
-    if (importedData.selectedLogo) {
-      try {
-        await saveSelectedLogo(importedData.selectedLogo);
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import logo:', error);
-      }
-    }
-
-    // Importer les entrées de sommeil
-    if (importedData.sleepEntries && Array.isArray(importedData.sleepEntries)) {
-      try {
-        // Le sommeil est stocké dans AsyncStorage (SecureStore n'est plus lu après migration)
-        const _sleepRaw = await AsyncStorage.getItem('@yoroi_sleep_entries');
-        const existingEntries: any[] = _sleepRaw ? JSON.parse(_sleepRaw) : [];
-        const existingIds = new Set(existingEntries.map((e: any) => e.id));
-        const newEntries = importedData.sleepEntries.filter((e: any) => !existingIds.has(e.id));
-        if (newEntries.length > 0) {
-          const merged = [...existingEntries, ...newEntries];
-          await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(merged));
-          importedCount += newEntries.length;
-        }
-      } catch (error) {
-        logger.error('Erreur import sommeil:', error);
-      }
-    }
-
-    // Importer l'objectif de sommeil
-    if (importedData.sleepGoal && typeof importedData.sleepGoal === 'number') {
-      try {
-        await AsyncStorage.setItem('@yoroi_sleep_goal', String(importedData.sleepGoal));
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import objectif sommeil:', error);
-      }
-    }
-
-    // Importer les entrées d'humeur
-    if (importedData.moodEntries && Array.isArray(importedData.moodEntries)) {
-      try {
-        const existingMoods = await getMoods();
-        const existingDates = new Set(existingMoods.map((m: any) => m.date));
-        const newMoods = importedData.moodEntries.filter((m: any) => !existingDates.has(m.date));
-        for (const mood of newMoods) {
-          await saveMood(mood);
-        }
-        importedCount += newMoods.length;
-      } catch (error) {
-        logger.error('Erreur import humeur:', error);
-      }
-    }
-
-    // Importer les entrées d'hydratation
-    if (importedData.hydrationEntries && Array.isArray(importedData.hydrationEntries)) {
-      try {
-        const existingEntries = await getAllHydrationEntries();
-        const existingIds = new Set(existingEntries.map((e: any) => e.id));
-        const newEntries = importedData.hydrationEntries.filter((e: any) => !existingIds.has(e.id));
-        if (newEntries.length > 0) {
-          const merged = [...existingEntries, ...newEntries];
-          await AsyncStorage.setItem('@yoroi_hydration_log', JSON.stringify(merged));
-          importedCount += newEntries.length;
-        }
-      } catch (error) {
-        logger.error('Erreur import hydratation:', error);
-      }
-    }
-
-    // Importer les paramètres d'hydratation
-    if (importedData.hydrationSettings) {
-      try {
-        await saveHydrationSettings(importedData.hydrationSettings);
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import paramètres hydratation:', error);
-      }
-    }
-
-    // Importer les photos de transformation
-    if (importedData.photos && Array.isArray(importedData.photos)) {
-      try {
-        const existingPhotos = await getPhotosFromStorage();
-        const existingIds = new Set(existingPhotos.map((p: any) => p.id));
-        const restoredPhotos: any[] = [...existingPhotos];
-
-        for (const photo of importedData.photos) {
-          if (existingIds.has(photo.id)) continue;
-
-          const photoData = { ...photo };
-          delete photoData.image_base64;
-
-          // Restaurer l'image base64 vers un fichier local
-          if (photo.image_base64) {
-            const ext = (photo.file_uri || photo.uri || 'photo.jpg').split('.').pop() || 'jpg';
-            const photoUri = await base64ToImage(
-              photo.image_base64,
-              `photo_${photo.id || Date.now()}.${ext}`
-            );
-            if (photoUri) {
-              // Champ officiel : file_uri (cf. Photo dans lib/storage.ts)
-              photoData.file_uri = photoUri;
-              delete photoData.uri;
-              imagesRestored++;
-            }
-          }
-
-          restoredPhotos.push(photoData);
-        }
-
-        // La clé lue par l'app est @yoroi_photos_v2 (AsyncStorage) : SecureStore n'était plus lu
-        await AsyncStorage.setItem('@yoroi_photos_v2', JSON.stringify(restoredPhotos));
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import photos:', error);
-      }
-    }
-
-    // === IMPORTER LES BLESSURES (INFIRMERIE) ===
-    if (importedData.injuries && Array.isArray(importedData.injuries)) {
-      for (const injury of importedData.injuries) {
-        try {
-          await addInjury(sanitizeImportRecord(injury));
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import blessure:', error);
-        }
-      }
-    }
-
-    // === IMPORTER LES COMPÉTITIONS ===
-    if (importedData.competitions && Array.isArray(importedData.competitions)) {
-      const existingComps = await getCompetitions().catch(() => []);
-      const existingKeys = new Set(existingComps.map((c: any) => `${c.name}|${c.date}`));
-      for (const comp of importedData.competitions) {
-        const key = `${comp.name}|${comp.date}`;
-        if (existingKeys.has(key)) continue;
-        try {
-          const { id, created_at, ...compData } = comp;
-          await addCompetition(sanitizeImportRecord(compData));
-          existingKeys.add(key);
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import compétition:', error);
-        }
-      }
-    }
-
-    // === IMPORTER LE PLANNING HEBDOMADAIRE ===
-    if (importedData.weeklyPlan && Array.isArray(importedData.weeklyPlan)) {
-      for (const slot of importedData.weeklyPlan) {
-        try {
-          const { id, ...slotData } = slot;
-          await addWeeklyPlanItem(sanitizeImportRecord(slotData));
-          importedCount++;
-        } catch (error) {
-          logger.error('Erreur import planning:', error);
-        }
-      }
-    }
-
-    // === IMPORTER LES OBJECTIFS D'ENTRAÎNEMENT ===
-    if (importedData.trainingGoals && Array.isArray(importedData.trainingGoals)) {
-      for (const goal of importedData.trainingGoals) {
-        try {
-          if (goal.sport_id && goal.weekly_target) {
-            await setGoal(goal.sport_id, goal.weekly_target);
-            importedCount++;
-          }
-        } catch (error) {
-          logger.error('Erreur import objectif:', error);
-        }
-      }
-    }
-
-    // === RESTAURER L'APPARENCE (THÈME, LANGUE, ONGLETS, AVATAR) ===
-    if (importedData.appearance) {
-      const a = importedData.appearance;
-      try {
-        const tasks: Promise<any>[] = [];
-        if (a.themeColor)        tasks.push(AsyncStorage.setItem('yoroi_theme_color_v5', a.themeColor));
-        if (a.themeMode)         tasks.push(AsyncStorage.setItem('yoroi_theme_mode_v5', a.themeMode));
-        if (a.language)          tasks.push(AsyncStorage.setItem('@yoroi_language', a.language));
-        if (a.tabOrder)          tasks.push(AsyncStorage.setItem('@yoroi_tab_order', a.tabOrder));
-        if (a.avatarSelection)   tasks.push(AsyncStorage.setItem('@yoroi_avatar_config', a.avatarSelection));
-        if (a.userGear)          tasks.push(AsyncStorage.setItem('@yoroi_user_gear', a.userGear));
-        if (a.fighterModeSport)  tasks.push(AsyncStorage.setItem('@yoroi_user_mode', a.fighterModeSport));
-        if (a.fighterModeCategory) tasks.push(AsyncStorage.setItem('@yoroi_weight_category', a.fighterModeCategory));
-        if (a.fighterModeBelt)   tasks.push(AsyncStorage.setItem('@yoroi_belt', a.fighterModeBelt));
-        await Promise.all(tasks);
-        importedCount++;
-      } catch (error) {
-        logger.error('Erreur import apparence:', error);
-      }
-    }
-
-    // === v5.3 — RESTAURER LE COMBAT LAB (sparring, playbook, drills) ===
-    if (importedData.combatLab) {
-      const c = importedData.combatLab;
-      try {
-        const tasks: Promise<any>[] = [];
-        // Restaurer les photos des partenaires sparring (base64 → fichiers locaux)
-        if (c.sparringPartners) {
-          try {
-            const partners: any[] = JSON.parse(c.sparringPartners);
-            let sparringPhotosRestored = 0;
-            const restoredPartners = await Promise.all(
-              partners.map(async (partner: any) => {
-                if (partner.photoBase64) {
-                  const fileName = `sparring_partner_${partner.id || Date.now()}.jpg`;
-                  const newUri = await base64ToImage(partner.photoBase64, fileName);
-                  if (newUri) {
-                    sparringPhotosRestored++;
-                    return { ...partner, photoUri: newUri };
-                  }
-                }
-                return partner;
-              })
-            );
-            tasks.push(AsyncStorage.setItem('@yoroi_sparring_partners', JSON.stringify(restoredPartners)));
-            imagesRestored += sparringPhotosRestored;
-            if (sparringPhotosRestored > 0) logger.info(`${sparringPhotosRestored} photos de partenaires sparring restaurées`);
-          } catch {
-            // Fallback : sauvegarder tel quel si le parsing échoue
-            tasks.push(AsyncStorage.setItem('@yoroi_sparring_partners', c.sparringPartners));
-          }
-        }
-        if (c.playbookCustom) {
-          const p = c.playbookCustom;
-          if (p.gamePlan)         tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_gamePlan', p.gamePlan));
-          if (p.whatWorked)       tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_whatWorked', p.whatWorked));
-          if (p.whatDidntWork)    tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_whatDidntWork', p.whatDidntWork));
-          if (p.counteredBy)      tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_counteredBy', p.counteredBy));
-          if (p.improvement)      tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_improvement', p.improvement));
-        }
-        if (c.gameplanChecked)    tasks.push(AsyncStorage.setItem('@yoroi_gameplan_checked', c.gameplanChecked));
-        if (c.drillTracker)       tasks.push(AsyncStorage.setItem('@yoroi_drill_tracker', c.drillTracker));
-        if (c.sparringWeeklyGoal) tasks.push(AsyncStorage.setItem('@sparring_weekly_goal', c.sparringWeeklyGoal));
-        if (c.bjjFavSubmissions)  tasks.push(AsyncStorage.setItem('bjj_fav_submissions_v2', c.bjjFavSubmissions));
-        if (c.toolFavorites)      tasks.push(AsyncStorage.setItem('@yoroi_tool_favorites', typeof c.toolFavorites === 'string' ? c.toolFavorites : JSON.stringify(c.toolFavorites)));
-        await Promise.all(tasks);
-        importedCount++;
-        logger.info('Combat Lab restauré : partenaires, playbook, drills, favoris');
-      } catch (error) {
-        logger.error('Erreur import Combat Lab:', error);
-      }
-    }
-
-    const imageMsg = imagesRestored > 0 ? `\n\n${imagesRestored} image(s) restaurée(s) (photo de profil, logos de clubs, photos de transformation, photos de partenaires sparring)` : '';
-
-    Alert.alert(
-      'Import réussi !',
-      `${importedCount} éléments ont été importés avec succès.${imageMsg}\n\nTes paramètres, clubs, badges et toutes tes données ont été restaurés !`
-    );
+    const lines = [
+      rep.imported > 0 ? `${rep.imported} élément(s) ajouté(s).` : 'Rien de nouveau : tout était déjà sur ce téléphone.',
+      rep.skippedDuplicates > 0 ? `${rep.skippedDuplicates} déjà présent(s), pas recopié(s).` : null,
+      rep.kept > 0 ? `${rep.kept} réglage(s) différent(s) gardé(s) tel(s) que sur ce téléphone.` : null,
+      rep.images > 0 ? `${rep.images} image(s) remise(s).` : null,
+      rep.failed > 0 ? `${rep.failed} élément(s) n’ont pas pu être lus.` : null,
+    ].filter(Boolean).join('\n');
+    appAlert('Import terminé', lines);
 
     return true;
   } catch (error) {
     logger.error('Erreur import JSON:', error);
-    Alert.alert('Erreur', 'Impossible d\'importer les données');
+    appAlert('Oups', 'L’import n’a pas abouti. Réessaie.');
     return false;
   }
 };
@@ -1348,12 +1026,12 @@ export const shareImage = async (viewRef: any, fileName: string = 'yoroi_card'):
       });
       return true;
     } else {
-      Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+      appAlert('Partage indisponible', 'Le partage n’est pas disponible sur ce téléphone.');
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage image:', error);
-    Alert.alert('Erreur', 'Impossible de partager l\'image');
+    appAlert('Oups', 'L’image n’a pas pu être partagée.');
     return false;
   }
 };
@@ -1412,12 +1090,12 @@ export const shareProgress = async (): Promise<boolean> => {
       }
       return true;
     } else {
-      Alert.alert('Ma progression', text);
+      appAlert('Ma progression', text);
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage progression:', error);
-    Alert.alert('Erreur', 'Impossible de partager la progression');
+    appAlert('Oups', 'Ta progression n’a pas pu être partagée.');
     return false;
   }
 };
@@ -1445,12 +1123,12 @@ export const shareStoryCard = async (viewRef: any, platform: 'instagram' | 'snap
       });
       return true;
     } else {
-      Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+      appAlert('Partage indisponible', 'Le partage n’est pas disponible sur ce téléphone.');
       return false;
     }
   } catch (error) {
     logger.error('Erreur partage story:', error);
-    Alert.alert('Erreur', 'Impossible de partager la story');
+    appAlert('Oups', 'La story n’a pas pu être partagée.');
     return false;
   }
 };
@@ -1466,7 +1144,7 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
     // Demander la permission
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission requise', 'Autorise l\'accès à la galerie pour sauvegarder l\'image');
+      appAlert('Accès à la galerie', 'Autorise l’accès à ta galerie pour enregistrer l’image.');
       return false;
     }
 
@@ -1479,11 +1157,11 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
 
     // Sauvegarder dans la galerie
     await MediaLibrary.saveToLibraryAsync(uri);
-    Alert.alert('Succès', 'Image sauvegardée dans ton galerie');
+    appAlert('Image enregistrée', 'Elle est dans ta galerie.');
     return true;
   } catch (error) {
     logger.error('Erreur sauvegarde galerie:', error);
-    Alert.alert('Erreur', 'Impossible de sauvegarder l\'image');
+    appAlert('Oups', 'L’image n’a pas pu être enregistrée.');
     return false;
   }
 };
@@ -1501,80 +1179,180 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
  * Ne montre PAS de popup de confirmation (l'appelant s'en charge).
  * Ne fait PAS de sélection de fichier.
  */
-export const importDataFromBackupObject = async (importedData: any): Promise<boolean> => {
+/** Compte rendu de la derniere restauration (pour le message affiche et les tests) */
+export type ImportReport = {
+  imported: number;
+  images: number;
+  /** valeurs deja presentes et differentes, gardees telles quelles */
+  kept: number;
+  /** lignes deja presentes, pas recopiees */
+  skippedDuplicates: number;
+  failed: number;
+  freshPhone: boolean;
+};
+let lastImportReport: ImportReport | null = null;
+export const getLastImportReport = (): ImportReport | null => lastImportReport;
+
+/** Cles ecrites par les etapes dediees ci-dessous (la reprise generique ne les touche pas) */
+const HANDLED_STORAGE_KEYS = new Set<string>([
+  '@yoroi_photos_v2', '@yoroi_photo_history', '@yoroi_sparring_partners', '@yoroi_sleep_entries', '@yoroi_sleep_goal',
+  '@yoroi_hydration_log', 'yoroi_benchmarks_v2', 'yoroi_skills_v2', 'yoroi_trash_benchmarks_v2', 'yoroi_trash_skills_v2',
+  '@yoroi_benchmarks_v2', '@yoroi_skills_v2', '@yoroi_trash_benchmarks_v2', '@yoroi_trash_skills_v2',
+  '@yoroi_personal_records', '@yoroi_training_loads', '@yoroi_health_bonus_history', '@yoroi_source_freshness',
+  '@yoroi_home_layout', '@yoroi_selected_logo',
+]);
+const HANDLED_SECURE_KEYS = new Set<string>([
+  '@yoroi_user_settings', '@yoroi_measurements', '@yoroi_photos', '@yoroi_body_composition', '@yoroi_hydration_settings', '@yoroi_mood_log',
+]);
+/** Tables restaurees par les etapes dediees (la reprise generique ne les touche pas) */
+const HANDLED_TABLES = ['profile', 'weights', 'trainings', 'clubs', 'measurements', 'competitions', 'weekly_plan', 'injuries', 'progression_items', 'practice_logs', 'training_goals'];
+
+const isEmptyValue = (v: unknown) => v == null || v === '' || (Array.isArray(v) && v.length === 0);
+
+/** Fusion d'une valeur texte de la sauvegarde dans une cle : ajoute ce qui manque, garde ce qui existe */
+async function mergeKey(key: string, incoming: unknown, report: ImportReport, preferIncoming: boolean): Promise<void> {
+  if (incoming == null) return;
+  const raw = typeof incoming === 'string' ? incoming : JSON.stringify(incoming);
+  const m = mergeStoredValue(await AsyncStorage.getItem(key), raw, preferIncoming);
+  if (m.value != null) {
+    await AsyncStorage.setItem(key, m.value);
+    report.imported += m.added;
+  }
+  if (m.kept) report.kept++;
+}
+
+/**
+ * Restaure une sauvegarde (objet deja lu) en FUSIONNANT avec ce qui est sur le telephone :
+ * rien n'est efface, rien n'est remplace sans le dire, aucun doublon.
+ * Sur un telephone neuf (aucune donnee de l'utilisateur, voir telephoneNeuf.ts), les reglages de la sauvegarde passent avant ceux par defaut.
+ * @param opts.alreadyChecked l'appelant a deja verifie le fichier et fait la copie de securite
+ */
+export const importDataFromBackupObject = async (importedData: any, opts?: { alreadyChecked?: boolean }): Promise<boolean> => {
+  const report: ImportReport = { imported: 0, images: 0, kept: 0, skippedDuplicates: 0, failed: 0, freshPhone: false };
+  lastImportReport = report;
   try {
     logger.info('[importDataFromBackupObject] Début restauration depuis objet backup...');
+    if (!importedData || typeof importedData !== 'object') return false;
 
-    // ─── Vérification du checksum d'intégrité (v5.5+) ──────────────────
-    // Appelée aussi par CloudSyncPrompt → on doit vérifier ici aussi, pas juste
-    // dans importDataFromJSON. Refuse la restauration si le backup est altéré.
-    if (importedData.integrity?.checksum && importedData.integrity.algorithm === 'SHA-256') {
-      try {
-        const { integrity, ...dataWithoutIntegrity } = importedData;
-        const recomputed = await digestStringAsync(
-          CryptoDigestAlgorithm.SHA256,
-          JSON.stringify(dataWithoutIntegrity)
-        );
-        if (recomputed !== integrity.checksum) {
-          logger.warn('[importDataFromBackupObject] Checksum invalide, restauration refusée');
-          Alert.alert(
-            '⚠️ Fichier altéré',
-            "Le checksum d'intégrité ne correspond pas. La restauration est refusée pour protéger tes données."
-          );
-          return false;
+    if (!opts?.alreadyChecked) {
+      // ─── Vérification du checksum d'intégrité (v5.5+) ──────────────────
+      // Appelée aussi par la synchro cloud : un fichier altéré n'est pas restauré.
+      if (importedData.integrity?.checksum && importedData.integrity.algorithm === 'SHA-256') {
+        try {
+          const { integrity, ...dataWithoutIntegrity } = importedData;
+          const recomputed = await digestStringAsync(CryptoDigestAlgorithm.SHA256, JSON.stringify(dataWithoutIntegrity));
+          if (recomputed !== integrity.checksum) {
+            logger.warn('[importDataFromBackupObject] Checksum invalide, restauration refusée');
+            appAlert('Fichier abîmé', 'Ce fichier a été modifié. La restauration est bloquée pour protéger tes données.');
+            return false;
+          }
+        } catch (e) {
+          logger.warn('[importDataFromBackupObject] Vérif checksum impossible, on continue:', e);
         }
-        logger.info('[importDataFromBackupObject] Checksum vérifié — OK');
-      } catch (e) {
-        logger.warn('[importDataFromBackupObject] Vérif checksum impossible, on continue:', e);
       }
+      // ─── Copie de l'état actuel avant d'écrire ─────────────────────────
+      try {
+        const { runSafetyBackup } = await import('./safetyBackupService');
+        await runSafetyBackup('pre-import-object');
+      } catch { /* non bloquant */ }
     }
 
-    // ─── SAFETY BACKUP avant restauration ─────────────────────────────
-    // Cette fonction est aussi appelée par CloudSyncPrompt (sync multi-device)
-    // et par d'autres flows. Dans tous les cas, on sauvegarde l'état actuel
-    // avant d'écrire — l'user peut revenir en arrière en cas de problème.
+    // Format actuel (après la vérification de l'empreinte, qui porte sur le fichier d'origine)
+    // Sauvegarde d'avant la 3.0 : pas de copie complete des tables (allTables arrive avec le format 6.0 de la 3.0).
+    // importDataFromJSON a pu deja la passer au format 6.0 : la version seule ne suffit pas.
+    const avant30 = !importedData.allTables;
     try {
-      const { runSafetyBackup } = await import('./safetyBackupService');
-      await runSafetyBackup('pre-import-object');
-    } catch { /* non bloquant */ }
+      importedData = migrateBackup(importedData);
+    } catch (e) {
+      logger.error('[importDataFromBackupObject] Sauvegarde illisible:', e);
+      return false;
+    }
 
-    let importedCount = 0;
-    let imagesRestored = 0;
+    const ok = (n = 1) => { report.imported += n; };
+    const fail = (what: string, e: unknown) => { report.failed++; logger.error(`[Import] ${what}:`, e); };
 
-    // === RESTAURER LE PROFIL AVEC PHOTO ===
-    if (importedData.profile) {
+    // Telephone neuf ? Seulement si AUCUNE donnee de l'utilisateur (pesees, seances, photos, sommeil, eau,
+    // mensurations, carnet, records, objectifs, competitions, profil avec un nom). Sinon le profil et les
+    // reglages deja la sont gardes, seules les cases vides sont remplies.
+    const localWeights = await getWeights().catch(() => [] as any[]);
+    const localTrainings = await getTrainings().catch(() => [] as any[]);
+    const fresh = localWeights.length === 0 && localTrainings.length === 0
+      && await isFreshPhone(await openDatabase().catch(() => null));
+    report.freshPhone = fresh;
+
+    const maps: IdMaps = { clubs: new Map(), trainings: new Map(), competitions: new Map(), weekly_plan: new Map(), injuries: new Map() };
+    const remap = (table: string, v: unknown): number | null => {
+      if (v == null || v === '') return null;
+      const m = maps[table]?.get(Number(v));
+      return m != null ? m : null;
+    };
+
+    // === PROFIL (photo comprise) : rempli seulement là où le téléphone n'a rien ===
+    if (importedData.profile && typeof importedData.profile === 'object') {
       try {
-        const profileData = { ...importedData.profile };
-        if (profileData.profile_photo_base64) {
-          const photoUri = await base64ToImage(
-            profileData.profile_photo_base64,
-            `profile_photo_${Date.now()}.jpg`
-          );
-          if (photoUri) {
-            profileData.profile_photo = photoUri;
-            imagesRestored++;
-          }
+        const local = await getProfile().catch(() => null);
+        const profileData: any = { ...importedData.profile };
+        if (profileData.profile_photo_base64 && (fresh || !local?.profile_photo)) {
+          const photoUri = await base64ToImage(profileData.profile_photo_base64, `profile_photo_${Date.now()}.jpg`);
+          if (photoUri) { profileData.profile_photo = photoUri; report.images++; }
         }
         delete profileData.profile_photo_base64;
-        await saveProfile(profileData);
-        importedCount++;
-      } catch (error) {
-        logger.error('[importDataFromBackupObject] Erreur import profil:', error);
-      }
+        delete profileData.id;
+        if (!local || fresh) {
+          if (profileData.name) { await saveProfile({ ...(local ?? {}), ...profileData }); ok(); }
+        } else {
+          const merged: any = { ...local };
+          let changed = false;
+          for (const [k, v] of Object.entries(profileData)) {
+            if (isEmptyValue((local as any)[k]) && !isEmptyValue(v)) { merged[k] = v; changed = true; }
+            else if (!isEmptyValue(v) && (local as any)[k] !== v && k !== 'created_at' && k !== 'updated_at') report.kept++;
+          }
+          if (changed) { await saveProfile(merged); ok(); }
+        }
+      } catch (error) { fail('profil', error); }
     }
 
-    // Importer les poids
-    if (importedData.weights && Array.isArray(importedData.weights)) {
-      // Anti-doublon : une restauration (ou une synchro entre appareils) ne doit pas
-      // dupliquer les pesées déjà présentes
+    // === CLUBS (avant les séances et le planning, pour garder les liens) ===
+    if (Array.isArray(importedData.clubs)) {
+      try {
+        const existingClubs = await getClubs();
+        const byKey = new Map(existingClubs.map((c: any) => [`${c.name}|${c.sport}`, Number(c.id)]));
+        for (const club of importedData.clubs) {
+          if (!club) continue;
+          const key = `${club.name}|${club.sport}`;
+          const found = byKey.get(key);
+          if (found != null) { if (club.id != null) maps.clubs.set(Number(club.id), found); report.skippedDuplicates++; continue; }
+          try {
+            const clubData = { ...club };
+            if (clubData.logo_base64) {
+              const logoUri = await base64ToImage(clubData.logo_base64, `club_logo_${clubData.name?.replace(/[^a-zA-Z0-9_-]/g, '_') || Date.now()}.png`);
+              if (logoUri) { clubData.logo_uri = logoUri; report.images++; }
+            }
+            delete clubData.logo_base64;
+            const oldId = clubData.id;
+            delete clubData.id;
+            const newId = await addClub(clubData);
+            byKey.set(key, newId);
+            if (oldId != null) maps.clubs.set(Number(oldId), newId);
+            ok();
+          } catch (error) { fail('club', error); }
+        }
+      } catch (error) { fail('clubs', error); }
+    }
+
+    // === PESÉES (toutes les mesures, segments et autres mesures de la balance compris) ===
+    if (Array.isArray(importedData.weights)) {
       const weightKey = (w: any) => `${String(w.date).slice(0, 10)}|${Number(w.weight).toFixed(2)}|${w.source || 'manual'}`;
-      const seenWeights = new Set((await getWeights().catch(() => [])).map(weightKey));
+      const seenWeights = new Set(localWeights.map(weightKey));
       for (const raw of importedData.weights) {
-        if (raw && seenWeights.has(weightKey(raw))) continue;
+        if (!raw) continue;
+        if (seenWeights.has(weightKey(raw))) { report.skippedDuplicates++; continue; }
         try {
           const weight = sanitizeImportRecord(raw);
           if (weight.weight == null || isNaN(Number(weight.weight))) continue;
-          await addWeight({
+          const scale: any = {};
+          for (const col of WEIGHT_SCALE_COLUMNS) if (typeof raw[col] === 'number') scale[col] = raw[col];
+          const newId = await addWeight({
             weight: weight.weight,
             date: weight.date,
             fat_percent: weight.fat_percent,
@@ -1584,27 +1362,36 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
             visceral_fat: weight.visceral_fat,
             metabolic_age: weight.metabolic_age,
             bmr: weight.bmr,
+            note: weight.note ?? weight.notes,
+            source: raw.source,
+            ...scale,
           });
-          importedCount++;
-        } catch (error) {
-          logger.error('[importDataFromBackupObject] Erreur import poids:', error);
-        }
+          if (newId && typeof raw.scale_extras === 'string' && raw.scale_extras) {
+            await updateWeightScaleJson(newId, raw.scale_extras).catch(() => undefined);
+          }
+          await keepCreatedAt('weights', newId, raw?.created_at);
+          seenWeights.add(weightKey(raw));
+          ok();
+        } catch (error) { fail('pesée', error); }
       }
     }
 
-    // Importer les entraînements
-    if (importedData.trainings && Array.isArray(importedData.trainings)) {
-      // Anti-doublon séances (l'identifiant Santé est aussi contrôlé dans addTraining)
+    // === SÉANCES (débriefs, lieu, ressenti, types compris) ===
+    if (Array.isArray(importedData.trainings)) {
       const trainingKey = (t: any) => t.healthkit_uuid
         ? `uuid|${t.healthkit_uuid}`
         : `${String(t.date).slice(0, 10)}|${t.start_time ?? ''}|${t.sport ?? t.discipline ?? ''}|${t.duration_minutes ?? ''}`;
-      const seenTrainings = new Set((await getTrainings().catch(() => [])).map(trainingKey));
+      const seen = new Map(localTrainings.map((t: any) => [trainingKey(t), Number(t.id)]));
       for (const raw of importedData.trainings) {
-        if (raw && seenTrainings.has(trainingKey(raw))) continue;
+        if (!raw) continue;
+        const key = trainingKey(raw);
+        const existing = seen.get(key);
+        if (existing != null) { if (raw.id != null) maps.trainings.set(Number(raw.id), existing); report.skippedDuplicates++; continue; }
         const training = sanitizeImportRecord(raw);
         try {
-          await addTraining({
-            club_id: training.club_id,
+          const clubId = training.club_id != null ? (remap('clubs', training.club_id) ?? (maps.clubs.size ? null : training.club_id)) : null;
+          const newId = await addTraining({
+            club_id: clubId ?? undefined,
             sport: training.sport || training.discipline || 'Sport',
             date: training.date,
             session_type: training.session_type || training.type,
@@ -1620,6 +1407,9 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
             rounds: training.rounds,
             round_duration: training.round_duration,
             is_outdoor: training.is_outdoor,
+            score_for: training.score_for,
+            score_against: training.score_against,
+            lieu_type: training.lieu_type,
             pente: training.pente,
             speed: training.speed,
             resistance: training.resistance,
@@ -1637,377 +1427,329 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
             exercises: training.exercises,
             combat_rounds: training.combat_rounds,
             workout_details_json: training.workout_details_json,
-            // v5.5 — Débriefs de séance (au niveau séance, pas juste rounds)
             game_plan: training.game_plan,
             what_worked: training.what_worked,
             what_didnt_work: training.what_didnt_work,
             session_rating: training.session_rating,
             session_mood: training.session_mood,
-          });
-          importedCount++;
-        } catch (error) {
-          logger.error('[importDataFromBackupObject] Erreur import training:', error);
-        }
-      }
-    }
-
-    // Importer les compositions corporelles
-    if (importedData.bodyCompositions && Array.isArray(importedData.bodyCompositions)) {
-      for (const raw of importedData.bodyCompositions) {
-        try {
-          await addBodyComposition(sanitizeImportRecord(raw));
-          importedCount++;
-        } catch (error) {
-          logger.error('[importDataFromBackupObject] Erreur import composition:', error);
-        }
-      }
-    }
-
-    // Importer les clubs avec logos
-    if (importedData.clubs && Array.isArray(importedData.clubs)) {
-      const existingClubs = await getClubs();
-      const existingClubKeys = new Set(existingClubs.map((c: any) => `${c.name}|${c.sport}`));
-      for (const club of importedData.clubs) {
-        const key = `${club.name}|${club.sport}`;
-        if (existingClubKeys.has(key)) continue;
-        try {
-          const clubData = { ...club };
-          if (clubData.logo_base64) {
-            const logoUri = await base64ToImage(
-              clubData.logo_base64,
-              `club_logo_${clubData.name?.replace(/\s/g, '_') || Date.now()}.png`
-            );
-            if (logoUri) {
-              clubData.logo_uri = logoUri;
-              imagesRestored++;
-            }
+          } as any);
+          await keepCreatedAt('trainings', newId, raw?.created_at);
+          if (newId) {
+            seen.set(key, newId);
+            if (raw.id != null) maps.trainings.set(Number(raw.id), newId);
+            ok();
           }
-          delete clubData.logo_base64;
-          await addClub(clubData);
-          existingClubKeys.add(key);
-          importedCount++;
-        } catch (error) {
-          logger.error('[importDataFromBackupObject] Erreur import club:', error);
-        }
+        } catch (error) { fail('séance', error); }
       }
     }
 
-    // Importer les mensurations
-    if (importedData.measurements && Array.isArray(importedData.measurements)) {
-      // Anti-doublon : ne pas réinsérer une mensuration déjà présente en base
+    // === COMPOSITIONS CORPORELLES (sans doublon) ===
+    if (Array.isArray(importedData.bodyCompositions)) {
+      try {
+        const bcKey = (b: any) => `${String(b?.date).slice(0, 10)}|${b?.weight ?? ''}|${b?.bodyFat ?? ''}`;
+        const seenBc = new Set((await getAllBodyCompositions().catch(() => [] as any[])).map(bcKey));
+        for (const raw of importedData.bodyCompositions) {
+          if (!raw) continue;
+          if (seenBc.has(bcKey(raw))) { report.skippedDuplicates++; continue; }
+          try { const { id, ...rest } = raw; await addBodyComposition(sanitizeImportRecord(rest)); seenBc.add(bcKey(raw)); ok(); } catch (error) { fail('composition', error); }
+        }
+      } catch (error) { fail('compositions', error); }
+    }
+
+    // === MENSURATIONS (sans doublon) ===
+    if (Array.isArray(importedData.measurements)) {
       const MEAS_FIELDS = ['chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'shoulders', 'neck'];
       const measKey = (m: any) => `${String(m?.date).slice(0, 10)}|${MEAS_FIELDS.map(f => (m?.[f] == null ? '' : Number(m[f]))).join('|')}`;
       const seenMeasurements = new Set((await getSqlMeasurements().catch(() => [])).map(measKey));
+      // Ancienne liste (2.x) : elle reste aussi dans le coffre, reprise plus bas sans doublon
       for (const raw of importedData.measurements) {
-        if (raw && seenMeasurements.has(measKey(raw))) continue;
+        if (!raw || !MEAS_FIELDS.some((f) => raw[f] != null)) continue;
+        // Identifiant texte = mesure rapide de la liste du coffre : remise dans sa liste plus bas, pas dans la table
+        if (typeof raw.id === 'string') continue;
+        if (seenMeasurements.has(measKey(raw))) { report.skippedDuplicates++; continue; }
         try {
           const m = sanitizeImportRecord(raw);
-          await addMeasurementRecord({
+          const newId = await addMeasurementRecord({
             chest: m.chest, waist: m.waist, navel: m.navel, hips: m.hips,
             left_arm: m.left_arm, right_arm: m.right_arm,
             left_thigh: m.left_thigh, right_thigh: m.right_thigh,
             left_calf: m.left_calf, right_calf: m.right_calf,
             shoulders: m.shoulders, neck: m.neck, date: m.date,
           });
-          importedCount++;
-        } catch (error) {
-          logger.error('[importDataFromBackupObject] Erreur import mensuration:', error);
-        }
+          await keepCreatedAt('measurements', newId, raw?.created_at);
+          seenMeasurements.add(measKey(raw));
+          ok();
+        } catch (error) { fail('mensuration', error); }
       }
-    }
-
-    // Importer les badges
-    if (importedData.unlockedBadges && Array.isArray(importedData.unlockedBadges)) {
-      for (const badgeId of importedData.unlockedBadges) {
-        try { await unlockBadge(badgeId); importedCount++; } catch { /* ignore */ }
-      }
-    }
-
-    // Importer les paramètres utilisateur
-    if (importedData.userSettings) {
-      try { await saveUserSettings(importedData.userSettings); importedCount++; } catch { /* ignore */ }
-    }
-
-    if (importedData.homeLayout && Array.isArray(importedData.homeLayout)) {
-      try { await saveHomeLayout(importedData.homeLayout); importedCount++; } catch { /* ignore */ }
-    }
-
-    if (importedData.selectedLogo) {
-      try { await saveSelectedLogo(importedData.selectedLogo); importedCount++; } catch { /* ignore */ }
-    }
-
-    // Importer les entrées de sommeil
-    if (importedData.sleepEntries && Array.isArray(importedData.sleepEntries)) {
+      // Liste historique (mesures rapides de la 2.x, dans le coffre) : ajoutées si absentes
       try {
-        // Le sommeil est stocké dans AsyncStorage (SecureStore n'est plus lu après migration)
+        const listed = importedData.measurements.filter((x: any) => x && x.id != null && typeof x.id === 'string');
+        if (listed.length) {
+          const current = await secureStorage.getItemStrict('@yoroi_measurements').catch(() => undefined);
+          if (current !== undefined) {
+            const m = mergeStoredValue(current == null ? null : JSON.stringify(current), JSON.stringify(listed));
+            if (m.value != null) { await secureStorage.setItem('@yoroi_measurements', JSON.parse(m.value)); ok(m.added); }
+          }
+        }
+      } catch (error) { fail('mesures rapides', error); }
+    }
+
+    // === BADGES ===
+    if (Array.isArray(importedData.unlockedBadges)) {
+      for (const badgeId of importedData.unlockedBadges) {
+        // 19 octobre 2026 : un badge deja la n'est pas compte comme importe (le bilan d'import disait 2 au second import)
+        try { if (await unlockBadge(badgeId)) ok(); else report.skippedDuplicates++; } catch { /* ignore */ }
+      }
+    }
+
+    // === RÉGLAGES : téléphone neuf → ceux de la sauvegarde ; sinon seulement ce qui manque ===
+    if (importedData.userSettings && typeof importedData.userSettings === 'object') {
+      try {
+        if (fresh) { await saveUserSettings(importedData.userSettings); ok(); }
+        else {
+          const local: any = await getUserSettings().catch(() => ({}));
+          const add: any = {};
+          for (const [k, v] of Object.entries(importedData.userSettings)) {
+            if (isEmptyValue(local?.[k]) && !isEmptyValue(v)) add[k] = v;
+            else if (!isEmptyValue(v) && JSON.stringify(local?.[k]) !== JSON.stringify(v)) report.kept++;
+          }
+          if (Object.keys(add).length) { await saveUserSettings(add); ok(); }
+        }
+      } catch (error) { fail('réglages', error); }
+    }
+    if (Array.isArray(importedData.homeLayout)) {
+      try { await mergeKey('@yoroi_home_layout', JSON.stringify(importedData.homeLayout), report, fresh); } catch { /* ignore */ }
+    }
+    if (importedData.selectedLogo && (fresh || !(await AsyncStorage.getItem('@yoroi_selected_logo')))) {
+      try { await saveSelectedLogo(importedData.selectedLogo); ok(); } catch { /* ignore */ }
+    }
+
+    // === SOMMEIL, HUMEUR, EAU (fusion par identifiant ou par date) ===
+    if (Array.isArray(importedData.sleepEntries)) {
+      try {
         const _sleepRaw = await AsyncStorage.getItem('@yoroi_sleep_entries');
         const existingEntries: any[] = _sleepRaw ? JSON.parse(_sleepRaw) : [];
         const existingIds = new Set(existingEntries.map((e: any) => e.id));
-        const newEntries = importedData.sleepEntries.filter((e: any) => !existingIds.has(e.id));
-        if (newEntries.length > 0) {
-          await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify([...existingEntries, ...newEntries]));
-          importedCount += newEntries.length;
-        }
-      } catch { /* ignore */ }
+        const newEntries = importedData.sleepEntries.filter((e: any) => e && !existingIds.has(e.id));
+        if (newEntries.length > 0) { await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify([...existingEntries, ...newEntries])); ok(newEntries.length); }
+      } catch (error) { fail('sommeil', error); }
     }
-
-    if (importedData.sleepGoal && typeof importedData.sleepGoal === 'number') {
-      try { await AsyncStorage.setItem('@yoroi_sleep_goal', String(importedData.sleepGoal)); importedCount++; } catch { /* ignore */ }
+    if (typeof importedData.sleepGoal === 'number' && (fresh || !(await AsyncStorage.getItem('@yoroi_sleep_goal')))) {
+      try { await AsyncStorage.setItem('@yoroi_sleep_goal', String(importedData.sleepGoal)); ok(); } catch { /* ignore */ }
     }
-
-    // Importer les humeurs
-    if (importedData.moodEntries && Array.isArray(importedData.moodEntries)) {
+    if (Array.isArray(importedData.moodEntries)) {
       try {
-        const existingMoods = await getMoods();
-        const existingDates = new Set(existingMoods.map((m: any) => m.date));
-        for (const mood of importedData.moodEntries.filter((m: any) => !existingDates.has(m.date))) {
-          await saveMood(mood);
-        }
-        importedCount++;
-      } catch { /* ignore */ }
+        const existingDates = new Set((await getMoods()).map((m: any) => m.date));
+        for (const mood of importedData.moodEntries.filter((m: any) => m && !existingDates.has(m.date))) { await saveMood(mood); ok(); }
+      } catch (error) { fail('humeur', error); }
     }
-
-    // Importer l'hydratation
-    if (importedData.hydrationEntries && Array.isArray(importedData.hydrationEntries)) {
+    if (Array.isArray(importedData.hydrationEntries)) {
       try {
         const existingEntries = await getAllHydrationEntries();
         const existingIds = new Set(existingEntries.map((e: any) => e.id));
-        const newEntries = importedData.hydrationEntries.filter((e: any) => !existingIds.has(e.id));
-        if (newEntries.length > 0) {
-          await AsyncStorage.setItem('@yoroi_hydration_log', JSON.stringify([...existingEntries, ...newEntries]));
-          importedCount += newEntries.length;
-        }
-      } catch { /* ignore */ }
+        const newEntries = importedData.hydrationEntries.filter((e: any) => e && !existingIds.has(e.id));
+        if (newEntries.length > 0) { await AsyncStorage.setItem('@yoroi_hydration_log', JSON.stringify([...existingEntries, ...newEntries])); ok(newEntries.length); }
+      } catch (error) { fail('eau', error); }
+    }
+    if (importedData.hydrationSettings && (fresh || (await secureStorage.getItemStrict('@yoroi_hydration_settings').catch(() => 'illisible')) == null)) {
+      try { await saveHydrationSettings(importedData.hydrationSettings); ok(); } catch { /* ignore */ }
     }
 
-    if (importedData.hydrationSettings) {
-      try { await saveHydrationSettings(importedData.hydrationSettings); importedCount++; } catch { /* ignore */ }
-    }
-
-    // Importer les photos de transformation
-    //    Le champ officiel est `file_uri` (cf. lib/storage.ts Photo interface).
-    //    On écrit sur `file_uri` pour que l'app retrouve bien les photos restaurées.
-    if (importedData.photos && Array.isArray(importedData.photos)) {
+    // === PHOTOS DE PROGRÈS (ajoutées, jamais remplacées) ===
+    if (Array.isArray(importedData.photos)) {
       try {
-        const existingPhotos = await getPhotosFromStorage();
+        const existingPhotos = await getPhotosStrict();
         const existingIds = new Set(existingPhotos.map((p: any) => p.id));
         const restoredPhotos: any[] = [...existingPhotos];
+        let added = 0;
         for (const photo of importedData.photos) {
-          if (existingIds.has(photo.id)) continue;
+          if (!photo || existingIds.has(photo.id)) { if (photo) report.skippedDuplicates++; continue; }
           const photoData = { ...photo };
           delete photoData.image_base64;
           if (photo.image_base64) {
             const originalUri: string = photo.file_uri || photo.uri || 'photo.jpg';
-            const ext = originalUri.split('.').pop() || 'jpg';
-            const newUri = await base64ToImage(photo.image_base64, `photo_${photo.id || Date.now()}.${ext}`);
-            if (newUri) {
-              photoData.file_uri = newUri;
-              // Ne pas laisser l'ancien `uri` obsolète écraser la valeur
-              delete photoData.uri;
-              imagesRestored++;
-            }
+            const ext = (originalUri.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '').slice(0, 5) || 'jpg';
+            const newUri = await base64ToImage(photo.image_base64, `photo_${String(photo.id || Date.now()).replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`);
+            if (newUri) { photoData.file_uri = newUri; delete photoData.uri; report.images++; }
           }
+          existingIds.add(photo.id);
           restoredPhotos.push(photoData);
+          added++;
         }
-        // La clé lue par l'app est @yoroi_photos_v2 (AsyncStorage) : SecureStore n'était plus lu
-        await AsyncStorage.setItem('@yoroi_photos_v2', JSON.stringify(restoredPhotos));
-        importedCount++;
-      } catch { /* ignore */ }
+        if (added) { await AsyncStorage.setItem('@yoroi_photos_v2', JSON.stringify(restoredPhotos)); ok(added); }
+      } catch (error) { fail('photos', error); }
     }
 
-    // Importer les blessures
-    if (importedData.injuries && Array.isArray(importedData.injuries)) {
-      for (const injury of importedData.injuries) {
-        try { await addInjury(sanitizeImportRecord(injury)); importedCount++; } catch { /* ignore */ }
-      }
-    }
-
-    // Importer les compétitions
-    if (importedData.competitions && Array.isArray(importedData.competitions)) {
-      const existingComps = await getCompetitions().catch(() => []);
-      const existingKeys = new Set(existingComps.map((c: any) => `${c.name}|${c.date}`));
-      for (const comp of importedData.competitions) {
-        const key = `${comp.name}|${comp.date}`;
-        if (existingKeys.has(key)) continue;
-        try {
-          const { id, created_at, ...compData } = comp;
-          await addCompetition(sanitizeImportRecord(compData));
-          existingKeys.add(key);
-          importedCount++;
-        } catch { /* ignore */ }
-      }
-    }
-
-    // Importer le planning hebdomadaire
-    if (importedData.weeklyPlan && Array.isArray(importedData.weeklyPlan)) {
-      for (const slot of importedData.weeklyPlan) {
-        try {
-          const { id, ...slotData } = slot;
-          await addWeeklyPlanItem(sanitizeImportRecord(slotData));
-          importedCount++;
-        } catch { /* ignore */ }
-      }
-    }
-
-    // Importer les objectifs d'entraînement
-    if (importedData.trainingGoals && Array.isArray(importedData.trainingGoals)) {
-      for (const goal of importedData.trainingGoals) {
-        try {
-          if (goal.sport_id && goal.weekly_target) {
-            await setGoal(goal.sport_id, goal.weekly_target);
-            importedCount++;
-          }
-        } catch { /* ignore */ }
-      }
-    }
-
-    // Restaurer l'apparence
-    if (importedData.appearance) {
-      const a = importedData.appearance;
+    // === BLESSURES (sans doublon, les suivis suivent) ===
+    if (Array.isArray(importedData.injuries)) {
       try {
-        const tasks: Promise<any>[] = [];
-        if (a.themeColor)          tasks.push(AsyncStorage.setItem('yoroi_theme_color_v5', a.themeColor));
-        if (a.themeMode)           tasks.push(AsyncStorage.setItem('yoroi_theme_mode_v5', a.themeMode));
-        if (a.language)            tasks.push(AsyncStorage.setItem('@yoroi_language', a.language));
-        if (a.tabOrder)            tasks.push(AsyncStorage.setItem('@yoroi_tab_order', a.tabOrder));
-        if (a.avatarSelection)     tasks.push(AsyncStorage.setItem('@yoroi_avatar_config', a.avatarSelection));
-        if (a.userGear)            tasks.push(AsyncStorage.setItem('@yoroi_user_gear', a.userGear));
-        if (a.fighterModeSport)    tasks.push(AsyncStorage.setItem('@yoroi_user_mode', a.fighterModeSport));
-        if (a.fighterModeCategory) tasks.push(AsyncStorage.setItem('@yoroi_weight_category', a.fighterModeCategory));
-        if (a.fighterModeBelt)     tasks.push(AsyncStorage.setItem('@yoroi_belt', a.fighterModeBelt));
-        await Promise.all(tasks);
-        importedCount++;
-      } catch { /* ignore */ }
+        const injKey = (i: any) => `${String(i?.date).slice(0, 10)}|${i?.zone_id ?? ''}|${i?.pain_type ?? ''}|${i?.cause ?? ''}`;
+        const byKey = new Map((await getInjuries().catch(() => [] as any[])).map((i: any) => [injKey(i), Number(i.id)]));
+        for (const injury of importedData.injuries) {
+          if (!injury) continue;
+          const found = byKey.get(injKey(injury));
+          if (found != null) { if (injury.id != null) maps.injuries.set(Number(injury.id), found); report.skippedDuplicates++; continue; }
+          try {
+            const { id, ...rest } = injury;
+            const newId = await addInjury(sanitizeImportRecord(rest));
+            byKey.set(injKey(injury), newId);
+            if (id != null && newId) maps.injuries.set(Number(id), newId);
+            ok();
+          } catch (error) { fail('blessure', error); }
+        }
+      } catch (error) { fail('blessures', error); }
     }
 
-    // Restaurer le Combat Lab
-    if (importedData.combatLab) {
+    // === COMPÉTITIONS (sans doublon) ===
+    if (Array.isArray(importedData.competitions)) {
+      try {
+        const compKey = (c: any) => `${c?.nom ?? c?.name ?? ''}|${String(c?.date ?? '').slice(0, 10)}`;
+        const byKey = new Map((await getCompetitions().catch(() => [] as any[])).map((c: any) => [compKey(c), Number(c.id)]));
+        for (const comp of importedData.competitions) {
+          if (!comp) continue;
+          const found = byKey.get(compKey(comp));
+          if (found != null) { if (comp.id != null) maps.competitions.set(Number(comp.id), found); report.skippedDuplicates++; continue; }
+          try {
+            const { id, created_at, ...compData } = comp;
+            const newId = await addCompetition(sanitizeImportRecord(compData));
+            byKey.set(compKey(comp), newId);
+            if (id != null && newId) maps.competitions.set(Number(id), newId);
+            ok();
+          } catch (error) { fail('compétition', error); }
+        }
+      } catch (error) { fail('compétitions', error); }
+    }
+
+    // === PLANNING DE LA SEMAINE (sans doublon) ===
+    if (Array.isArray(importedData.weeklyPlan)) {
+      try {
+        const wpKey = (w: any) => `${w?.day_of_week}|${w?.time ?? ''}|${w?.sport ?? ''}|${w?.label ?? ''}|${w?.is_rest_day ? 1 : 0}`;
+        const byKey = new Map((await getWeeklyPlan().catch(() => [] as any[])).map((w: any) => [wpKey(w), Number(w.id)]));
+        for (const slot of importedData.weeklyPlan) {
+          if (!slot) continue;
+          const found = byKey.get(wpKey(slot));
+          if (found != null) { if (slot.id != null) maps.weekly_plan.set(Number(slot.id), found); report.skippedDuplicates++; continue; }
+          try {
+            const { id, club_name, club_logo, club_color, ...slotData } = slot;
+            if (slotData.club_id != null) slotData.club_id = remap('clubs', slotData.club_id) ?? (maps.clubs.size ? null : slotData.club_id);
+            const newId = await addWeeklyPlanItem(sanitizeImportRecord(slotData));
+            byKey.set(wpKey(slot), newId);
+            if (id != null && newId) maps.weekly_plan.set(Number(id), newId);
+            ok();
+          } catch (error) { fail('planning', error); }
+        }
+      } catch (error) { fail('planning', error); }
+    }
+
+    // === OBJECTIFS PAR SPORT : seulement ceux qui n'existent pas ===
+    if (Array.isArray(importedData.trainingGoals)) {
+      try {
+        const existing = new Set((await getAllGoals().catch(() => [] as any[])).map((g: any) => g.sport_id));
+        for (const goal of importedData.trainingGoals) {
+          if (goal?.sport_id && goal.weekly_target && !existing.has(goal.sport_id)) { await setGoal(goal.sport_id, goal.weekly_target); ok(); }
+        }
+      } catch (error) { fail('objectifs par sport', error); }
+    }
+
+    // === APPARENCE : téléphone neuf → celle de la sauvegarde ; sinon seulement si absente ===
+    if (importedData.appearance && typeof importedData.appearance === 'object') {
+      const a = importedData.appearance;
+      const pairs: [string, unknown][] = [
+        ['yoroi_theme_color_v5', a.themeColor], ['yoroi_theme_mode_v5', a.themeMode], ['@yoroi_language', a.language],
+        ['@yoroi_tab_order', a.tabOrder], ['@yoroi_avatar_config', a.avatarSelection], ['@yoroi_user_gear', a.userGear],
+        ['@yoroi_user_mode', a.fighterModeSport], ['@yoroi_weight_category', a.fighterModeCategory], ['@yoroi_belt', a.fighterModeBelt],
+      ];
+      for (const [k, v] of pairs) {
+        if (typeof v !== 'string' || !v) continue;
+        try { await mergeKey(k, v, report, fresh); } catch { /* ignore */ }
+      }
+    }
+
+    // === COMBAT : partenaires (photos comprises), plans de jeu, exercices ===
+    if (importedData.combatLab && typeof importedData.combatLab === 'object') {
       const c = importedData.combatLab;
       try {
-        const tasks: Promise<any>[] = [];
         if (c.sparringPartners) {
-          try {
-            const partners: any[] = JSON.parse(c.sparringPartners);
-            const restoredPartners = await Promise.all(
-              partners.map(async (partner: any) => {
-                if (partner.photoBase64) {
-                  const newUri = await base64ToImage(partner.photoBase64, `sparring_partner_${partner.id || Date.now()}.jpg`);
-                  if (newUri) { imagesRestored++; return { ...partner, photoUri: newUri }; }
-                }
-                return partner;
-              })
-            );
-            tasks.push(AsyncStorage.setItem('@yoroi_sparring_partners', JSON.stringify(restoredPartners)));
-          } catch {
-            tasks.push(AsyncStorage.setItem('@yoroi_sparring_partners', c.sparringPartners));
+          let partners: any[] = [];
+          try { partners = JSON.parse(c.sparringPartners); } catch { partners = []; }
+          if (Array.isArray(partners) && partners.length) {
+            const localRaw = await AsyncStorage.getItem('@yoroi_sparring_partners');
+            let local: any[] = [];
+            try { local = localRaw ? JSON.parse(localRaw) : []; } catch { local = []; }
+            const ids = new Set(local.map((p: any) => String(p?.id)));
+            const extra: any[] = [];
+            for (const partner of partners) {
+              if (!partner || ids.has(String(partner.id))) continue;
+              let p = { ...partner };
+              if (partner.photoBase64) {
+                const newUri = await base64ToImage(partner.photoBase64, `sparring_partner_${String(partner.id || Date.now()).replace(/[^a-zA-Z0-9_-]/g, '_')}.jpg`);
+                if (newUri) { p = { ...p, photoUri: newUri }; report.images++; }
+              }
+              delete p.photoBase64;
+              extra.push(p);
+            }
+            if (extra.length) { await AsyncStorage.setItem('@yoroi_sparring_partners', JSON.stringify([...local, ...extra])); ok(extra.length); }
           }
         }
         if (c.playbookCustom) {
           const p = c.playbookCustom;
-          if (p.gamePlan)      tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_gamePlan', p.gamePlan));
-          if (p.whatWorked)    tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_whatWorked', p.whatWorked));
-          if (p.whatDidntWork) tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_whatDidntWork', p.whatDidntWork));
-          if (p.counteredBy)   tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_counteredBy', p.counteredBy));
-          if (p.improvement)   tasks.push(AsyncStorage.setItem('@yoroi_playbook_custom_improvement', p.improvement));
+          await mergeKey('@yoroi_playbook_custom_gamePlan', p.gamePlan, report, fresh);
+          await mergeKey('@yoroi_playbook_custom_whatWorked', p.whatWorked, report, fresh);
+          await mergeKey('@yoroi_playbook_custom_whatDidntWork', p.whatDidntWork, report, fresh);
+          await mergeKey('@yoroi_playbook_custom_counteredBy', p.counteredBy, report, fresh);
+          await mergeKey('@yoroi_playbook_custom_improvement', p.improvement, report, fresh);
         }
-        if (c.gameplanChecked)    tasks.push(AsyncStorage.setItem('@yoroi_gameplan_checked', c.gameplanChecked));
-        if (c.drillTracker)       tasks.push(AsyncStorage.setItem('@yoroi_drill_tracker', c.drillTracker));
-        if (c.sparringWeeklyGoal) tasks.push(AsyncStorage.setItem('@sparring_weekly_goal', c.sparringWeeklyGoal));
-        if (c.bjjFavSubmissions)  tasks.push(AsyncStorage.setItem('bjj_fav_submissions_v2', c.bjjFavSubmissions));
-        if (c.toolFavorites)      tasks.push(AsyncStorage.setItem('@yoroi_tool_favorites', typeof c.toolFavorites === 'string' ? c.toolFavorites : JSON.stringify(c.toolFavorites)));
-        await Promise.all(tasks);
-        importedCount++;
-      } catch { /* ignore */ }
+        await mergeKey('@yoroi_gameplan_checked', c.gameplanChecked, report, fresh);
+        await mergeKey('@yoroi_drill_tracker', c.drillTracker, report, fresh);
+        await mergeKey('@sparring_weekly_goal', c.sparringWeeklyGoal, report, fresh);
+        await mergeKey('bjj_fav_submissions_v2', c.bjjFavSubmissions, report, fresh);
+        await mergeKey('@yoroi_tool_favorites', c.toolFavorites, report, fresh);
+      } catch (error) { fail('combat', error); }
     }
 
-    // v5.5 — Restaurer Training Journal (SQLite)
+    // === CARNET D'ENTRAÎNEMENT (SQLite, numéros gardés) ===
     if (importedData.trainingJournal) {
       try {
         const db = await openDatabase();
-        // Items : on skip les doublons via l'id original s'il existe
-        const items = Array.isArray(importedData.trainingJournal.items) ? importedData.trainingJournal.items : [];
-        for (const it of items) {
-          try {
-            const exists = await db.getFirstAsync<{ id: number }>(
-              'SELECT id FROM progression_items WHERE id = ?',
-              [it.id]
-            ).catch(() => null);
-            if (exists) continue;
-            const columns = Object.keys(it).filter(k => it[k] !== undefined);
-            const placeholders = columns.map(() => '?').join(',');
-            const values = columns.map(k => it[k]);
-            await db.runAsync(
-              `INSERT INTO progression_items (${columns.join(',')}) VALUES (${placeholders})`,
-              values
-            );
-            importedCount++;
-          } catch (e) { /* skip item individuel invalide */ }
+        for (const [table, list] of [['progression_items', importedData.trainingJournal.items], ['practice_logs', importedData.trainingJournal.logs]] as const) {
+          for (const it of Array.isArray(list) ? list : []) {
+            try {
+              const exists = await db.getFirstAsync<{ id: number }>(`SELECT id FROM ${table} WHERE id = ?`, [it.id]).catch(() => null);
+              if (exists) { report.skippedDuplicates++; continue; }
+              const columns = Object.keys(it).filter(k => it[k] !== undefined && /^[a-z_0-9]+$/i.test(k));
+              await db.runAsync(`INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`, columns.map(k => it[k]));
+              ok();
+            } catch { /* ligne invalide ignorée */ }
+          }
         }
-        const logs = Array.isArray(importedData.trainingJournal.logs) ? importedData.trainingJournal.logs : [];
-        for (const log of logs) {
-          try {
-            const exists = await db.getFirstAsync<{ id: number }>(
-              'SELECT id FROM practice_logs WHERE id = ?',
-              [log.id]
-            ).catch(() => null);
-            if (exists) continue;
-            const columns = Object.keys(log).filter(k => log[k] !== undefined);
-            const placeholders = columns.map(() => '?').join(',');
-            const values = columns.map(k => log[k]);
-            await db.runAsync(
-              `INSERT INTO practice_logs (${columns.join(',')}) VALUES (${placeholders})`,
-              values
-            );
-            importedCount++;
-          } catch (e) { /* skip log individuel invalide */ }
-        }
-      } catch (e) {
-        logger.warn('[importDataFromBackupObject] Erreur restauration Training Journal:', e);
-      }
+      } catch (e) { fail('carnet SQLite', e); }
     }
 
-    // v5.5 — Restaurer Carnet (benchmarks + skills)
+    // === CARNET (records de force, techniques), RECORDS, CHARGES : fusion par identifiant ===
     if (importedData.carnet) {
+      const c = importedData.carnet;
       try {
-        const c = importedData.carnet;
-        const tasks: Promise<any>[] = [];
-        if (c.benchmarks)       tasks.push(AsyncStorage.setItem('@yoroi_benchmarks_v2', c.benchmarks));
-        if (c.skills)           tasks.push(AsyncStorage.setItem('@yoroi_skills_v2', c.skills));
-        if (c.trashBenchmarks)  tasks.push(AsyncStorage.setItem('@yoroi_trash_benchmarks_v2', c.trashBenchmarks));
-        if (c.trashSkills)      tasks.push(AsyncStorage.setItem('@yoroi_trash_skills_v2', c.trashSkills));
-        await Promise.all(tasks);
-        if (tasks.length > 0) importedCount++;
-      } catch (e) {
-        logger.warn('[importDataFromBackupObject] Erreur restauration Carnet:', e);
-      }
+        await mergeKey('yoroi_benchmarks_v2', c.benchmarks, report, false);
+        await mergeKey('yoroi_skills_v2', c.skills, report, false);
+        await mergeKey('yoroi_trash_benchmarks_v2', c.trashBenchmarks, report, false);
+        await mergeKey('yoroi_trash_skills_v2', c.trashSkills, report, false);
+        if (c.benchmarks || c.skills) await AsyncStorage.setItem('yoroi_carnet_initialized_v2', 'true').catch(() => undefined);
+      } catch (e) { fail('carnet', e); }
     }
-
-    // v5.5 — Restaurer Records personnels
     if (importedData.records?.personalRecords) {
-      try {
-        await AsyncStorage.setItem('@yoroi_personal_records', importedData.records.personalRecords);
-        importedCount++;
-      } catch (e) { /* ignore */ }
+      try { await mergeKey('@yoroi_personal_records', importedData.records.personalRecords, report, false); } catch (e) { fail('records', e); }
     }
-
-    // v5.5 — Restaurer Loads (training loads, health bonus history, source freshness)
     if (importedData.loads) {
       try {
-        const l = importedData.loads;
-        const tasks: Promise<any>[] = [];
-        if (l.trainingLoads)       tasks.push(AsyncStorage.setItem('@yoroi_training_loads', l.trainingLoads));
-        if (l.healthBonusHistory)  tasks.push(AsyncStorage.setItem('@yoroi_health_bonus_history', l.healthBonusHistory));
-        if (l.sourceFreshness)     tasks.push(AsyncStorage.setItem('@yoroi_source_freshness', l.sourceFreshness));
-        await Promise.all(tasks);
-        if (tasks.length > 0) importedCount++;
-      } catch (e) { /* ignore */ }
+        await mergeKey('@yoroi_training_loads', importedData.loads.trainingLoads, report, false);
+        await mergeKey('@yoroi_health_bonus_history', importedData.loads.healthBonusHistory, report, false);
+        await mergeKey('@yoroi_source_freshness', importedData.loads.sourceFreshness, report, fresh);
+      } catch (e) { fail('charges', e); }
     }
 
-    // v5.4 — Restaurer les médias complémentaires (photo history, avatar, routine, custom club logos)
+    // === MÉDIAS COMPLÉMENTAIRES (cadres photo, avatar, image de routine, logos) : ajoutés si absents ===
     if (importedData.mediaAssets) {
       const m = importedData.mediaAssets;
-
-      // 1. Photo history (frames)
       if (Array.isArray(m.photoHistory) && m.photoHistory.length > 0) {
         try {
           const restoredUris: string[] = [];
@@ -2015,74 +1757,76 @@ export const importDataFromBackupObject = async (importedData: any): Promise<boo
             if (entry?.base64) {
               const ext = (entry.uri || 'photo.jpg').split('.').pop() || 'jpg';
               const newUri = await base64ToImage(entry.base64, `frame_${Date.now()}_${restoredUris.length}.${ext}`);
-              if (newUri) {
-                restoredUris.push(newUri);
-                imagesRestored++;
-              }
+              if (newUri) { restoredUris.push(newUri); report.images++; }
             }
           }
-          if (restoredUris.length > 0) {
-            await AsyncStorage.setItem('@yoroi_photo_history', JSON.stringify(restoredUris));
-            importedCount++;
-          }
-        } catch (e) {
-          logger.warn('[importDataFromBackupObject] Erreur restauration photoHistory:', e);
-        }
+          if (restoredUris.length > 0) await mergeKey('@yoroi_photo_history', JSON.stringify(restoredUris), report, false);
+        } catch (e) { fail('cadres photo', e); }
       }
-
-      // 2. Avatar custom
-      if (m.avatarBase64) {
+      const settings: any = await getUserSettings().catch(() => ({}));
+      if (m.avatarBase64 && (fresh || !settings?.avatarUri)) {
         try {
           const newUri = await base64ToImage(m.avatarBase64, `avatar_custom_${Date.now()}.jpg`);
-          if (newUri) {
-            await saveUserSettings({ avatarUri: newUri } as any);
-            imagesRestored++;
-            importedCount++;
-          }
-        } catch (e) {
-          logger.warn('[importDataFromBackupObject] Erreur restauration avatar:', e);
-        }
+          if (newUri) { await saveUserSettings({ avatarUri: newUri } as any); report.images++; ok(); }
+        } catch (e) { fail('avatar', e); }
       }
-
-      // 3. Routine image
-      if (m.routineImageBase64) {
+      if (m.routineImageBase64 && (fresh || !settings?.routine_image_uri)) {
         try {
           const newUri = await base64ToImage(m.routineImageBase64, `routine_${Date.now()}.jpg`);
-          if (newUri) {
-            await saveUserSettings({ routine_image_uri: newUri } as any);
-            imagesRestored++;
-            importedCount++;
-          }
-        } catch (e) {
-          logger.warn('[importDataFromBackupObject] Erreur restauration routine image:', e);
-        }
+          if (newUri) { await saveUserSettings({ routine_image_uri: newUri } as any); report.images++; ok(); }
+        } catch (e) { fail('image de routine', e); }
       }
-
-      // 4. Custom club logos
       if (m.customClubLogosBase64 && typeof m.customClubLogosBase64 === 'object') {
         try {
-          const restoredLogos: { [key: string]: string } = {};
+          const current: Record<string, string> = { ...((settings?.custom_club_logos as Record<string, string>) ?? {}) };
+          let added = 0;
           for (const [name, base64] of Object.entries(m.customClubLogosBase64)) {
-            if (typeof base64 === 'string' && base64.length > 0) {
-              const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '_');
-              const newUri = await base64ToImage(base64 as string, `club_custom_${safeName}_${Date.now()}.png`);
-              if (newUri) {
-                restoredLogos[name] = newUri;
-                imagesRestored++;
-              }
-            }
+            if (current[name] || typeof base64 !== 'string' || !base64.length) continue;
+            const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const newUri = await base64ToImage(base64 as string, `club_custom_${safeName}_${Date.now()}.png`);
+            if (newUri) { current[name] = newUri; added++; report.images++; }
           }
-          if (Object.keys(restoredLogos).length > 0) {
-            await saveUserSettings({ custom_club_logos: restoredLogos } as any);
-            importedCount++;
-          }
-        } catch (e) {
-          logger.warn('[importDataFromBackupObject] Erreur restauration custom club logos:', e);
-        }
+          if (added) { await saveUserSettings({ custom_club_logos: current } as any); ok(); }
+        } catch (e) { fail('logos de clubs', e); }
       }
     }
 
-    logger.info(`[importDataFromBackupObject] ✅ Terminé : ${importedCount} éléments restaurés, ${imagesRestored} image(s).`);
+    // === TOUT LE RESTE (version 6.0 et suivantes) : tables, clés de l'app, coffre ===
+    if (importedData.allTables) {
+      try {
+        const db = await openDatabase();
+        const r = await restoreTables(db, importedData.allTables, maps, new Set(HANDLED_TABLES));
+        report.imported += r.added; report.skippedDuplicates += r.same; report.failed += r.failed;
+      } catch (e) { fail('tables', e); }
+    }
+    if (importedData.allSecure) {
+      try {
+        const r = await restoreSecure(importedData.allSecure, HANDLED_SECURE_KEYS, fresh);
+        report.imported += r.added; report.kept += r.kept;
+      } catch (e) { fail('coffre', e); }
+    }
+    if (importedData.allStorage) {
+      try {
+        // les cles du Dojo sont reprises plus bas, sans fusion (journal d'XP et date de depart)
+        const r = await restoreAllStorage(importedData.allStorage, new Set([...HANDLED_STORAGE_KEYS, ...ARMURE_STORAGE_KEYS]), fresh);
+        report.imported += r.added; report.kept += r.kept;
+      } catch (e) { fail('réglages et données de l’app', e); }
+    }
+
+    // 19 octobre 2026 : sauvegarde d'avant la 3.0 (formats 1.0 a 5.5) : ses pesees de l'ancien ecran et ses compositions,
+    // rangees dans les listes du coffre, deviennent des pesees de la base (deja comptees plus haut dans leur liste)
+    if (avant30) {
+      try {
+        await reprendrePeseesDuCoffre(await openDatabase(), { entrees: entreesDeSauvegarde(importedData) });
+      } catch (e) { fail('pesées de l’ancien écran', e); }
+    }
+
+    // Dojo (vague 46) : le journal de la sauvegarde est repris tel quel, rien n'est recredite.
+    // Ancienne sauvegarde sans journal : l'historique restauré compte de nouveau (une seule fois
+    // par jour, semaine ou record)
+    const dojoRepris = await restoreArmureFromStorage(importedData.allStorage).catch(() => false);
+    if (!dojoRepris) await requestArmureCatchup().catch(() => undefined);
+    logger.info(`[importDataFromBackupObject] Terminé : ${report.imported} ajoutés, ${report.skippedDuplicates} déjà présents, ${report.kept} gardés, ${report.failed} échecs, ${report.images} image(s).`);
     return true;
   } catch (error) {
     logger.error('[importDataFromBackupObject] Erreur critique:', error);
@@ -2112,22 +1856,23 @@ export const importAllData = async (
     try {
       data = JSON.parse(content);
     } catch {
-      Alert.alert('Erreur', 'Le fichier est corrompu ou invalide (JSON malformé)');
+      appAlert('Fichier illisible', 'Ce fichier est abîmé ou n’est pas une sauvegarde YOROI.');
       return false;
     }
 
     // Validation basique
     if (!data.version || !data.exportDate) {
-      Alert.alert('Erreur', 'Format de fichier invalide. Utilise un export Yoroi.');
+      appAlert('Fichier non reconnu', 'Choisis un fichier exporté depuis YOROI.');
       return false;
     }
 
     await importData(data);
-    Alert.alert('Importé', 'Tes données ont été restaurées avec succès !');
+    const illustration = await illustrer('copieFaite');
+    appAlert('Tout est revenu', 'Tes séances, tes pesées et ton carnet sont de retour sur ce téléphone.', undefined, illustration ? { illustration } : undefined);
     return true;
   } catch (error) {
     logger.error('Erreur import:', error);
-    Alert.alert('Erreur', "Impossible d'importer les données. Vérifie le format du fichier.");
+    appAlert('Oups', 'L’import n’a pas abouti. Vérifie le fichier et réessaie.');
     return false;
   }
 };
@@ -2163,7 +1908,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
     const clubs = await getClubs();
 
     if (trainings.length === 0) {
-      Alert.alert('Aucune donnée', 'Tu n\'as pas encore de séances à exporter');
+      appAlert('Aucune séance', 'Tu n’as pas encore de séance à exporter.');
       return false;
     }
 
@@ -2253,23 +1998,23 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
       });
 
       logger.info('Export séances CSV terminé avec succès');
-      Alert.alert(
+      appAlert(
         'Export réussi',
-        `${trainings.length} séance(s) exportée(s) en CSV`
+        `${trainings.length} séance${trainings.length > 1 ? 's' : ''} exportée${trainings.length > 1 ? 's' : ''}.`
       );
     } else {
-      Alert.alert(
+      appAlert(
         'Export terminé',
-        `Le fichier a été créé : ${fileName}\nEmplacement: ${fileUri}`
+        `Le fichier ${fileName} est prêt.`
       );
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur export séances CSV:', error);
-    Alert.alert(
-      'Erreur',
-      "Impossible d'exporter les séances en CSV. Essaie à nouveau."
+    appAlert(
+      'Oups',
+      'L’export des séances n’a pas abouti. Réessaie.'
     );
     return false;
   }
@@ -2289,7 +2034,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
     const clubs = await getClubs();
 
     if (trainings.length === 0) {
-      Alert.alert('Aucune donnée', 'Tu n\'as pas encore de séances à exporter');
+      appAlert('Aucune séance', 'Tu n’as pas encore de séance à exporter.');
       return false;
     }
 
@@ -2366,23 +2111,23 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
       });
 
       logger.info('Export Excel CSV terminé avec succès');
-      Alert.alert(
+      appAlert(
         'Export réussi',
-        `${trainings.length} séance(s) exportée(s) en format Excel`
+        `${trainings.length} séance${trainings.length > 1 ? 's' : ''} exportée${trainings.length > 1 ? 's' : ''} pour Excel.`
       );
     } else {
-      Alert.alert(
+      appAlert(
         'Export terminé',
-        `Le fichier a été créé : ${fileName}\nEmplacement: ${fileUri}`
+        `Le fichier ${fileName} est prêt.`
       );
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur export Excel CSV:', error);
-    Alert.alert(
-      'Erreur',
-      "Impossible d'exporter les séances en Excel CSV. Essaie à nouveau."
+    appAlert(
+      'Oups',
+      'L’export pour Excel n’a pas abouti. Réessaie.'
     );
     return false;
   }
@@ -2513,16 +2258,16 @@ export const exportEditableCSV = async (): Promise<boolean> => {
         UTI: 'public.json',
       });
 
-      Alert.alert(
+      appAlert(
         'Export réussi',
-        `Fichier éditable créé avec :\n• ${weights?.length || 0} pesées\n• ${trainings?.length || 0} séances\n• ${measurements?.length || 0} mensurations\n• ${clubs?.length || 0} clubs\n\nOuvre ce fichier sur ton ordinateur pour modifier tes données !`
+        `Fichier éditable créé avec :\n• ${weights?.length || 0} pesées\n• ${trainings?.length || 0} séances\n• ${measurements?.length || 0} mensurations\n• ${clubs?.length || 0} clubs\n\nOuvre ce fichier sur ton ordinateur pour modifier tes données.`
       );
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur export éditable:', error);
-    Alert.alert('Erreur', "Impossible d'exporter les données éditables");
+    appAlert('Oups', 'Le fichier modifiable n’a pas pu être créé.');
     return false;
   }
 };
@@ -2591,7 +2336,7 @@ export const importEditableCSV = async (): Promise<boolean> => {
 
     // Vérifier que c'est un fichier éditable Yoroi
     if (!data.metadata?.appName || data.metadata.appName !== 'Yoroi') {
-      Alert.alert('Erreur', 'Ce fichier n\'est pas un export éditable Yoroi valide');
+      appAlert('Fichier non reconnu', 'Ce fichier n’est pas un export modifiable de YOROI.');
       return false;
     }
 
@@ -2697,15 +2442,15 @@ export const importEditableCSV = async (): Promise<boolean> => {
 
     const errorMsg = errors.length > 0 ? `\n\n${errors.length} erreur(s) ignorée(s)` : '';
 
-    Alert.alert(
-      'Import réussi !',
-      `${importedCount} éléments importés depuis le fichier éditable.${errorMsg}`
+    appAlert(
+      'Import réussi',
+      `${importedCount} éléments importés.${errorMsg}`
     );
 
     return true;
   } catch (error) {
     logger.error('Erreur import éditable:', error);
-    Alert.alert('Erreur', "Impossible d'importer le fichier éditable");
+    appAlert('Oups', 'Ce fichier n’a pas pu être importé.');
     return false;
   }
 };
@@ -2786,16 +2531,16 @@ nom;sport;couleur;adresse
         UTI: 'public.json',
       });
 
-      Alert.alert(
-        'Template créé',
-        'Ouvre ce fichier sur ton ordinateur, remplis-le avec tes données, puis réimporte-le dans Yoroi !'
+      appAlert(
+        'Modèle créé',
+        'Ouvre ce fichier sur ton ordinateur, remplis-le, puis importe-le dans YOROI.'
       );
     }
 
     return true;
   } catch (error) {
     logger.error('Erreur création template:', error);
-    Alert.alert('Erreur', "Impossible de créer le template");
+    appAlert('Oups', 'Le modèle n’a pas pu être créé.');
     return false;
   }
 };

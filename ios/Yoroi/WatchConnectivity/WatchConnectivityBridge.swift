@@ -13,7 +13,50 @@ class WatchConnectivityBridge: RCTEventEmitter, WCSessionDelegate {
     if WCSession.isSupported() {
       session = WCSession.default
       session?.delegate = self
+      // active la session des la creation du module : les transferUserInfo en attente de la montre arrivent tout de suite
+      session?.activate()
     }
+  }
+
+  // MARK: - Charges "yoroi" de la montre (contrat v1)
+  // Chaque charge recue (transferUserInfo ou sendMessage) est gardee dans UserDefaults jusqu'a ce que le JS
+  // l'ait appliquee (getPendingPayloads puis clearPendingPayloads) : rien ne se perd si l'app JS n'ecoute pas encore.
+
+  private static let pendingKey = "yoroi_montre_en_attente_v1"
+  private let pendingQueue = DispatchQueue(label: "com.houari.yoroi.montre.attente")
+
+  private func readPending() -> [String] {
+    return UserDefaults.standard.stringArray(forKey: WatchConnectivityBridge.pendingKey) ?? []
+  }
+
+  private func keepYoroiPayload(_ dict: [String: Any]) {
+    guard let charge = dict["yoroi"] as? String, !charge.isEmpty else { return }
+    pendingQueue.sync {
+      var list = readPending()
+      list.append(charge)
+      if list.count > 500 { list.removeFirst(list.count - 500) }
+      UserDefaults.standard.set(list, forKey: WatchConnectivityBridge.pendingKey)
+    }
+    if hasListeners {
+      sendEvent(withName: "onYoroiPayload", body: ["yoroi": charge])
+    }
+  }
+
+  @objc
+  func getPendingPayloads(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    let list = pendingQueue.sync { readPending() }
+    resolve(list)
+  }
+
+  @objc
+  func clearPendingPayloads(_ count: NSNumber, resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    pendingQueue.sync {
+      var list = readPending()
+      let n = min(max(0, count.intValue), list.count)
+      if n > 0 { list.removeFirst(n) }
+      UserDefaults.standard.set(list, forKey: WatchConnectivityBridge.pendingKey)
+    }
+    resolve(true)
   }
 
   // MARK: - RCTEventEmitter
@@ -24,7 +67,8 @@ class WatchConnectivityBridge: RCTEventEmitter, WCSessionDelegate {
       "onWatchDataReceived",
       "onWatchMessageReceived",
       "onWatchActivationCompleted",
-      "onWatchError"
+      "onWatchError",
+      "onYoroiPayload"
     ]
   }
 
@@ -205,11 +249,19 @@ class WatchConnectivityBridge: RCTEventEmitter, WCSessionDelegate {
   }
 
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+    keepYoroiPayload(message)
     guard hasListeners else { return }
     sendEvent(withName: "onWatchMessageReceived", body: ["message": message])
   }
 
   func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+    keepYoroiPayload(message)
+    if message["yoroi"] != nil {
+      // la charge est gardee : la montre peut retirer l'action de sa file
+      replyHandler(["status": "received", "timestamp": Date().timeIntervalSince1970 * 1000])
+      if hasListeners { sendEvent(withName: "onWatchMessageReceived", body: ["message": message]) }
+      return
+    }
     guard hasListeners else {
       replyHandler(["status": "no_listeners"])
       return
@@ -228,6 +280,7 @@ class WatchConnectivityBridge: RCTEventEmitter, WCSessionDelegate {
   }
 
   func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+    keepYoroiPayload(userInfo)
     guard hasListeners else { return }
     sendEvent(withName: "onWatchDataReceived", body: [
       "type": "userInfo",

@@ -1,668 +1,130 @@
-// ============================================
-// YOROI - MODIFIER UNE COMPÉTITION
-// ============================================
-
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { router, useLocalSearchParams } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { Calendar, MapPin, Trophy, Save, Target } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import {
-  Sport,
-  getWeightCategories,
-  WeightCategory,
-  SPORT_LABELS,
-  SPORT_ICONS,
-} from '@/lib/fighterMode';
-import { updateCompetition, getCompetitionById } from '@/lib/fighterModeService';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+/**
+ * Modifier une competition (vague 18) : memes champs que l'ajout, sport modifiable.
+ * Les rappels sont reprogrammes avec la nouvelle date. Parametre : id.
+ */
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, DeviceEventEmitter, Keyboard, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { BigButton, P } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen, EmptyState } from '@/components/yoroi/v2/ornements/screens';
+import { beltsFor, CompetitionForm, selectedCategory } from '@/components/yoroi/v2/competition/CompetitionForm';
+import type { CompetitionDraft } from '@/components/yoroi/v2/competition/CompetitionForm';
+import { getCompetitionById, updateCompetition } from '@/lib/fighterModeService';
+import { getWeightCategories } from '@/lib/fighterMode';
+import { normalizeIbjjfName } from '@/lib/v2/competition/ibjjf';
+import { isoLocal, parseLocalDate, startOfToday } from '@/lib/v2/competition/dates';
+import { useAthlete } from '@/lib/v2/competition/athlete';
+import { cleanUrl, getExtra, setExtra } from '@/lib/v2/competition/extras';
+import { applyReminders } from '@/lib/v2/competition/reminders';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 export default function EditCompetitionScreen() {
-  const { colors, isDark } = useTheme();
-  const { locale } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
+  const router = useRouter();
   const params = useLocalSearchParams<{ id?: string }>();
-
-  // Safe parameter extraction with validation
-  const competitionId = params.id || '';
-
-  // Early return if no valid id
-  if (!competitionId) {
-    return (
-      <ScreenWrapper>
-        <Header title="Erreur" showBack />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 16, textAlign: 'center' }}>
-            Compétition non trouvée. Veuillez réessayer.
-          </Text>
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
+  const id = parseInt(params.id ?? '', 10);
+  const { gender, lastWeight } = useAthlete();
+  const [draft, setDraft] = useState<CompetitionDraft | null>(null);
   const [loading, setLoading] = useState(true);
-  const [nom, setNom] = useState('');
-  const [lieu, setLieu] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  // Date avant ouverture du picker (restaurée sur Annuler iOS)
-  const dateBeforePickerRef = useRef<Date | null>(null);
-  const [sport, setSport] = useState<Sport>('jjb');
-  const [typeEvenement, setTypeEvenement] = useState('');
-  const [showSportPicker, setShowSportPicker] = useState(false);
-  const [categoriePoidsId, setCategoriePoidsId] = useState('');
-  const [weightCategories, setWeightCategories] = useState<WeightCategory[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-
-  // Suggestions pour le type d'événement
-  const typeSuggestions = ['Combat', 'Match', 'Course', 'Compétition', 'Tournoi', 'Championnat'];
+  const [missing, setMissing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const loadComp = async () => {
-      try {
-        const comp = await getCompetitionById(parseInt(competitionId));
-        if (cancelled) return;
-        if (!comp) {
-        showPopup('Erreur', 'Compétition introuvable', [
-          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } }
-        ]);
+    (async () => {
+      if (isNaN(id)) {
+        setMissing(true);
+        setLoading(false);
         return;
       }
-
-      setNom(comp.nom);
-      setLieu(comp.lieu || '');
-      // Date seule : midi local pour éviter le décalage UTC
-      setDate(/^\d{4}-\d{2}-\d{2}$/.test(comp.date) ? new Date(`${comp.date}T12:00:00`) : new Date(comp.date));
-      setSport(comp.sport);
-      setTypeEvenement(comp.type_evenement || '');
-
-      // Trouver la catégorie de poids
-      if (comp.categorie_poids) {
-        const categories = getWeightCategories(comp.sport);
-        const category = categories.find(c => c.name === comp.categorie_poids);
-        if (category) {
-          setCategoriePoidsId(category.id);
+      try {
+        const comp = await getCompetitionById(id);
+        if (cancelled) return;
+        if (!comp) {
+          setMissing(true);
+          return;
         }
+        // Lecture tolerante : un ancien nom anglais (Rooster...) retrouve sa categorie portugaise (Galo...)
+        const savedName = comp.sport === 'jjb' ? normalizeIbjjfName(comp.categorie_poids) : comp.categorie_poids;
+        const cat = savedName ? getWeightCategories(comp.sport, gender).find((c) => c.name === savedName) : undefined;
+        const d = parseLocalDate(comp.date);
+        const ex = await getExtra(id);
+        if (cancelled) return;
+        setDraft({ nom: comp.nom, lieu: comp.lieu || '', typeEvenement: comp.type_evenement || '', date: isNaN(d.getTime()) ? startOfToday() : d, sport: comp.sport, categorieId: cat?.id ?? '', ceinture: ex.ceinture ?? '', url: ex.url ?? '', pesee: ex.pesee ?? '', rappels: !!ex.rappels });
+      } catch (error) {
+        logger.error('Error loading competition:', error);
+        setMissing(true);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    } catch (error) {
-      logger.error('Error loading competition:', error);
-      showPopup('Erreur', 'Impossible de charger la compétition', [
-        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-    loadComp();
-    return () => { cancelled = true; };
-  }, []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
-  useEffect(() => {
-    setWeightCategories(getWeightCategories(sport));
-  }, [sport]);
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-
-    if (Platform.OS === 'android' && event.type === 'dismissed') {
-      setShowDatePicker(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!nom.trim()) {
-      showPopup('Erreur', 'Saisis un nom de compétition', [
-        { text: 'OK', style: 'primary' }
-      ]);
+  const save = async () => {
+    if (!draft) return;
+    Keyboard.dismiss();
+    if (!draft.nom.trim()) {
+      appAlert('Il manque le nom', 'Donne un nom à ta compétition.');
       return;
     }
-
-    setIsSaving(true);
-    notificationAsync(NotificationFeedbackType.Success);
-
+    const url = cleanUrl(draft.url);
+    if (draft.url.trim() && !url) {
+      appAlert('Adresse du site', 'Vérifie l’adresse du site, par exemple cfjjb.com.');
+      return;
+    }
+    setSaving(true);
     try {
-      const selectedCategory = weightCategories.find(c => c.id === categoriePoidsId);
-
-      await updateCompetition(parseInt(competitionId), {
-        nom: nom.trim(),
-        lieu: lieu.trim() || undefined,
-        // Date locale (toISOString décalerait d'un jour selon le fuseau)
-        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
-        sport,
-        type_evenement: typeEvenement.trim() || undefined,
-        categorie_poids: selectedCategory?.name,
-        poids_max: selectedCategory?.maxWeight,
+      const cat = selectedCategory(draft, gender);
+      await updateCompetition(id, {
+        nom: draft.nom.trim(),
+        lieu: draft.lieu.trim() || undefined,
+        date: isoLocal(draft.date),
+        sport: draft.sport,
+        type_evenement: draft.typeEvenement.trim() || undefined,
+        categorie_poids: cat?.name,
+        poids_max: cat?.maxWeight,
       });
-
-      if (!isNavigating) { setIsNavigating(true); router.back(); }
+      const ceinture = beltsFor(draft.sport).some((b) => b.key === draft.ceinture) ? draft.ceinture : undefined;
+      const extra = await setExtra(id, { url, ceinture, pesee: draft.pesee || undefined, rappels: draft.rappels });
+      const comp = await getCompetitionById(id);
+      if (comp) {
+        const n = await applyReminders(comp, extra);
+        if (n < 0) appAlert('Rappels désactivés', 'Autorise les notifications de YOROI dans les réglages du téléphone pour recevoir tes rappels.');
+      }
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      router.back();
     } catch (error) {
       logger.error('Error updating competition:', error);
-      showPopup('Erreur', 'Impossible de mettre à jour la compétition', [
-        { text: 'OK', style: 'primary' }
-      ]);
-      setIsSaving(false);
+      appAlert('Mise à jour impossible', 'Réessaie dans un instant.');
+      setSaving(false);
     }
   };
-
-  // Liste de tous les sports
-  const allSports: Sport[] = [
-    'jjb',
-    'mma',
-    'boxe',
-    'muay_thai',
-    'judo',
-    'karate',
-    'tennis',
-    'football',
-    'basket',
-    'handball',
-    'trail',
-    'running',
-    'cyclisme',
-    'natation',
-    'rugby',
-    'volleyball',
-    'escalade',
-    'crossfit',
-    'musculation',
-    'autre',
-  ];
 
   if (loading) {
     return (
-      <ScreenWrapper>
-        <Header title="Modifier la compétition" showBack />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
+      <DetailScreen title="Modifier">
+        <View style={{ paddingTop: 60, alignItems: 'center' }}>
+          <ActivityIndicator color={P.accent} />
         </View>
-      </ScreenWrapper>
+      </DetailScreen>
     );
   }
-
+  if (missing || !draft) {
+    return (
+      <DetailScreen title="Modifier">
+        <EmptyState title="Compétition introuvable" text="Elle a peut-être été supprimée. Reviens à tes compétitions." action="Mes compétitions" onAction={() => router.replace('/competitions' as any)} />
+      </DetailScreen>
+    );
+  }
   return (
-    <ScreenWrapper>
-      <Header title="Modifier la compétition" showBack />
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-          contentInsetAdjustmentBehavior="automatic"
-      >
-        {/* Nom */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>
-            Nom de la compétition *
-          </Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}>
-            <Trophy size={20} color={colors.textMuted} />
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Ex: Open de Paris 2025"
-              placeholderTextColor={colors.textMuted}
-              value={nom}
-              onChangeText={setNom}
-            />
-          </View>
-        </View>
-
-        {/* Lieu */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>
-            Lieu
-          </Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}>
-            <MapPin size={20} color={colors.textMuted} />
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Ex: Paris, France"
-              placeholderTextColor={colors.textMuted}
-              value={lieu}
-              onChangeText={setLieu}
-            />
-          </View>
-        </View>
-
-        {/* Type d'événement */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>
-            Type d'événement
-          </Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}>
-            <Trophy size={20} color={colors.textMuted} />
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Ex: Combat, Match, Course..."
-              placeholderTextColor={colors.textMuted}
-              value={typeEvenement}
-              onChangeText={setTypeEvenement}
-            />
-          </View>
-          {/* Suggestions */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.suggestionsRow}
-          >
-            {typeSuggestions.map((suggestion) => (
-              <TouchableOpacity
-                key={suggestion}
-                style={[
-                  styles.suggestionChip,
-                  {
-                    backgroundColor: typeEvenement === suggestion
-                      ? `${colors.accent}20`
-                      : colors.backgroundCard,
-                    borderColor: typeEvenement === suggestion ? colors.accent : colors.border,
-                  },
-                ]}
-                onPress={() => {
-                  setTypeEvenement(suggestion);
-                  impactAsync(ImpactFeedbackStyle.Light);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.suggestionText,
-                    { color: typeEvenement === suggestion ? colors.accent : colors.textMuted },
-                  ]}
-                >
-                  {suggestion}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Date */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>
-            Date *
-          </Text>
-          <TouchableOpacity
-            style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => { dateBeforePickerRef.current = date; setShowDatePicker(true); }}
-            activeOpacity={0.7}
-          >
-            <Calendar size={20} color={colors.textMuted} />
-            <Text style={[styles.inputText, { color: colors.textPrimary }]}>
-              {date.toLocaleDateString(locale, {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {showDatePicker && Platform.OS === 'ios' && (
-          <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard }]}>
-            <View style={[styles.datePickerHeader, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity
-                onPress={() => {
-                  if (dateBeforePickerRef.current) setDate(dateBeforePickerRef.current);
-                  setShowDatePicker(false);
-                }}
-                style={styles.datePickerButton}
-              >
-                <Text style={[styles.datePickerButtonText, { color: colors.textMuted }]}>
-                  Annuler
-                </Text>
-              </TouchableOpacity>
-              <Text style={[styles.datePickerTitle, { color: colors.textPrimary }]}>
-                Sélectionner la date
-              </Text>
-              <TouchableOpacity
-                onPress={() => setShowDatePicker(false)}
-                style={styles.datePickerButton}
-              >
-                <Text style={[styles.datePickerButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                  OK
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="spinner"
-              onChange={handleDateChange}
-              textColor={colors.textPrimary}
-              style={styles.datePicker}
-            />
-          </View>
-        )}
-
-        {showDatePicker && Platform.OS === 'android' && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
-        )}
-
-        {/* Sport - Modifiable */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>
-            Sport *
-          </Text>
-          <TouchableOpacity
-            style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => setShowSportPicker(!showSportPicker)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.sportEmoji}>
-              {SPORT_ICONS[sport]}
-            </Text>
-            <Text style={[styles.inputText, { color: colors.textPrimary }]}>
-              {SPORT_LABELS[sport]}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Sport Picker */}
-          {showSportPicker && (
-            <View style={[styles.sportPicker, { backgroundColor: colors.backgroundCard }]}>
-              <ScrollView style={styles.sportList} showsVerticalScrollIndicator={false}>
-                {allSports.map((s) => (
-                  <TouchableOpacity
-                    key={s}
-                    style={[
-                      styles.sportItem,
-                      { borderBottomColor: colors.border },
-                      sport === s && { backgroundColor: `${colors.accent}20` },
-                    ]}
-                    onPress={() => {
-                      setSport(s);
-                      setShowSportPicker(false);
-                      setCategoriePoidsId(''); // Reset catégorie
-                      impactAsync(ImpactFeedbackStyle.Light);
-                    }}
-                  >
-                    <Text style={styles.sportItemEmoji}>{SPORT_ICONS[s]}</Text>
-                    <Text
-                      style={[
-                        styles.sportItemText,
-                        { color: sport === s ? colors.accent : colors.textPrimary },
-                      ]}
-                    >
-                      {SPORT_LABELS[s]}
-                    </Text>
-                    {sport === s && (
-                      <Target size={18} color={colors.accent} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-
-        {/* Catégorie de poids */}
-        {weightCategories.length > 0 && (
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>
-              Catégorie de poids
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoriesRow}
-            >
-              {weightCategories.map((category) => {
-                const isSelected = categoriePoidsId === category.id;
-                return (
-                  <TouchableOpacity
-                    key={category.id}
-                    style={[
-                      styles.categoryChip,
-                      {
-                        backgroundColor: isSelected
-                          ? colors.accent
-                          : colors.backgroundCard,
-                        borderColor: isSelected ? colors.accent : colors.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      impactAsync(ImpactFeedbackStyle.Light);
-                      setCategoriePoidsId(category.id);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryName,
-                        { color: isSelected ? colors.textOnAccent : colors.textPrimary },
-                      ]}
-                    >
-                      {category.name}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.categoryWeight,
-                        {
-                          color: isSelected
-                            ? colors.textOnAccent + 'B3'
-                            : colors.textMuted,
-                        },
-                      ]}
-                    >
-                      -{category.maxWeight}kg
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        )}
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      {/* Save Button */}
-      <View style={[styles.bottomContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            { backgroundColor: colors.accent, opacity: isSaving ? 0.5 : 1 },
-          ]}
-          onPress={handleSave}
-          disabled={isSaving}
-          activeOpacity={0.8}
-        >
-          <Save size={20} color={colors.textOnAccent} />
-          <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>
-            {isSaving ? 'Mise à jour...' : 'Mettre à jour'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <PopupComponent />
-    </ScreenWrapper>
+    <DetailScreen title="Modifier" subtitle={draft.nom || 'Ta compétition'} footer={<BigButton label={saving ? 'Mise à jour' : 'Mettre à jour'} icon="check" onPress={save} disabled={saving} />}>
+      <CompetitionForm draft={draft} onChange={setDraft} gender={gender} lastWeight={lastWeight?.weight} />
+    </DetailScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  field: {
-    marginBottom: SPACING.xl,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: SPACING.sm,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.lg,
-    minHeight: 52,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  inputText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  sportEmoji: {
-    fontSize: 24,
-  },
-  sportPicker: {
-    marginTop: SPACING.md,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-    maxHeight: 300,
-  },
-  sportList: {
-    maxHeight: 300,
-  },
-  sportItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-  },
-  sportItemEmoji: {
-    fontSize: 24,
-  },
-  sportItemText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  suggestionsRow: {
-    gap: SPACING.sm,
-    paddingTop: SPACING.sm,
-  },
-  suggestionChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-  },
-  suggestionText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  categoriesRow: {
-    gap: SPACING.sm,
-    paddingRight: SPACING.lg,
-  },
-  categoryChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.lg,
-    borderWidth: 2,
-    minWidth: 100,
-  },
-  categoryName: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  categoryWeight: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  bottomContainer: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xl,
-  },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  datePickerContainer: {
-    marginTop: SPACING.md,
-    marginBottom: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  datePickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-  },
-  datePickerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  datePickerButton: {
-    padding: SPACING.sm,
-  },
-  datePickerButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  datePicker: {
-    height: 200,
-  },
-});

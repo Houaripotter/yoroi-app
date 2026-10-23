@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  YOROI, 18 octobre 2026 : sauvegarde automatique de Google (Android 12 et plus).
+  Pas de compte YOROI : Google copie les donnees de l'app avec le reste du telephone et les remet sur un nouveau
+  telephone. Inclus : la base de l'app (SQLite, dossier files/SQLite), les reglages (AsyncStorage, base RKStorage)
+  et les preferences. Exclus : le coffre SecureStore (sa cle ne quitte pas le telephone, illisible ailleurs).
+  Les photos et les fichiers de sauvegarde ne sont pas inclus (limite de 25 Mo par app chez Google) :
+  la copie automatique dans Google Drive les garde.
+-->
+<data-extraction-rules>
+  <cloud-backup>
+    <include domain="database" path="." />
+    <include domain="file" path="SQLite/" />
+    <include domain="sharedpref" path="." />
+    <exclude domain="sharedpref" path="SecureStore" />
+  </cloud-backup>
+  <device-transfer>
+    <include domain="database" path="." />
+    <include domain="file" path="SQLite/" />
+    <include domain="sharedpref" path="." />
+    <exclude domain="sharedpref" path="SecureStore" />
+  </device-transfer>
+</data-extraction-rules>

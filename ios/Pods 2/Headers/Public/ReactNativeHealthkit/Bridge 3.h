@@ -1,1 +1,0 @@
-../../../../../node_modules/@kingstinct/react-native-healthkit/ios/Bridge.h

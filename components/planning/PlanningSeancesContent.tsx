@@ -820,11 +820,11 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
               <View style={styles.headerInfo}>
                 <Text style={[styles.sportTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                   {sportName}
-                  {club ? <Text style={[styles.clubLabel, { color: sportColor }]}> · {club.name}</Text> : null}
+                  {club ? <Text style={[styles.clubLabel, { color: sportColor }]}>, {club.name}</Text> : null}
                 </Text>
                 <View style={styles.dateRow}>
                   <Text style={[styles.dateText, { color: colors.textSecondary }]}>{dateStr}</Text>
-                  {timeStr ? <Text style={[styles.timeText, { color: colors.textMuted }]}> · {timeStr}</Text> : null}
+                  {timeStr ? <Text style={[styles.timeText, { color: colors.textMuted }]}>, {timeStr}</Text> : null}
                 </View>
               </View>
               <SourceBadge source={training.source} colors={colors} isDark={isDark} />
@@ -1019,7 +1019,7 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
             {muscleGroups.length > 0 && (
               <View style={[styles.musclesRow, { borderTopColor: dividerColor }]}>
                 <MaterialCommunityIcons name="dumbbell" size={12} color={colors.textMuted} />
-                <Text style={[styles.musclesText, { color: colors.textMuted }]}>{muscleGroups.join(' · ')}</Text>
+                <Text style={[styles.musclesText, { color: colors.textMuted }]}>{muscleGroups.join(', ')}</Text>
               </View>
             )}
 
@@ -1042,8 +1042,8 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                   <View style={styles.weatherItem}>
                     <MaterialCommunityIcons name="thermometer" size={13} color={colors.textMuted} />
                     <Text style={[styles.weatherText, { color: colors.textMuted }]}>
-                      {Math.round(weather)}°C{humidity != null ? ` · ${Math.round(humidity)}%` : ''}
-                      {weatherCond ? ` · ${weatherCond}` : ''}
+                      {Math.round(weather)}°C{humidity != null ? `, ${Math.round(humidity)}%` : ''}
+                      {weatherCond ? `, ${weatherCond}` : ''}
                     </Text>
                   </View>
                 )}
@@ -1075,8 +1075,8 @@ export const PlanningSeancesContent: React.FC<PlanningSeancesContentProps> = ({ 
                 >
                   <MaterialCommunityIcons name="crosshairs-gps" size={15} color={expandedGPS.has(training.id!) ? sportColor : colors.textSecondary} />
                   <Text style={[styles.gpsToggleText, { color: expandedGPS.has(training.id!) ? sportColor : colors.textSecondary }]}>
-                    Parcours GPS · {det.routePoints.length} points
-                    {det.splits ? ` · ${det.splits.length} km` : ''}
+                    Parcours GPS : {det.routePoints.length} points
+                    {det.splits ? `, ${det.splits.length} km` : ''}
                   </Text>
                   {expandedGPS.has(training.id!) ? (
                     <ChevronUp size={15} color={expandedGPS.has(training.id!) ? sportColor : colors.textSecondary} />

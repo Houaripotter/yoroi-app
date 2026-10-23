@@ -5,7 +5,7 @@ import android.content.res.Configuration
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
-import com.houari.yoroi.widget.WidgetDataPackage
+import com.houari.yoroi.widget.YoroiWidgetsPackage
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
@@ -22,7 +22,7 @@ class MainApplication : Application(), ReactApplication {
   private val appPackages: List<ReactPackage> by lazy {
     PackageList(this).packages.apply {
       add(WearSyncPackage())
-      add(WidgetDataPackage())
+      add(YoroiWidgetsPackage())
       add(YoroiCloudPackage())
     }
   }

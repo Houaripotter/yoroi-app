@@ -1,5 +1,5 @@
 // ============================================
-// COACH OF THE DAY CARD · Affiche la suggestion du jour
+// COACH OF THE DAY CARD : Affiche la suggestion du jour
 // ============================================
 
 import React, { useEffect, useState } from 'react';

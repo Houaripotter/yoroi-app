@@ -12,6 +12,7 @@
 //  - BOM UTF-8 géré
 // ============================================
 
+import { track } from '@/utils/telemetry';
 import { getWeights, getMeasurements, addWeight, addMeasurementRecord, openDatabase, getTrainings } from '@/lib/database';
 import { getAllBodyCompositions } from '@/lib/bodyComposition';
 import {
@@ -169,7 +170,7 @@ const HEADER_MAP: Record<string, string> = {
   'BMR': 'bmr',
   'BMR (kcal)': 'bmr',
 
-  // Mensurations — poitrine
+  // Mensurations, poitrine
   'Poitrine (cm)': 'chest',
   'Poitrine': 'chest',
   'chest': 'chest',
@@ -178,7 +179,7 @@ const HEADER_MAP: Record<string, string> = {
   // Tour de taille (waist)
   'Tour de taille (cm)': 'waist',
   'Tour de taille': 'waist',
-  'Taille (cm)': 'waist',   // v1 — ambigu mais accepté
+  'Taille (cm)': 'waist',   // v1 : ambigu mais accepté
   'Taille': 'waist',
   'waist': 'waist',
   'Waist (cm)': 'waist',
@@ -366,7 +367,7 @@ function parseCSVLine(line: string, sep: string): string[] {
 export function normalizeDate(raw: string): string | null {
   const s = raw.trim().replace(/\s+/g, '');
 
-  // AAAA-MM-JJ (ISO) — format natif, déjà bon
+  // AAAA-MM-JJ (ISO), format natif, déjà bon
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
 
   // AAAA/MM/JJ ou AAAA.MM.JJ
@@ -385,7 +386,7 @@ export function normalizeDate(raw: string): string | null {
     }
   }
 
-  // MM/DD/YYYY (format américain — ambigu, on détecte si premier > 12)
+  // MM/DD/YYYY (format américain, ambigu, on détecte si premier > 12)
   const us = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (us) {
     const first  = parseInt(us[1]);
@@ -419,7 +420,7 @@ export function generateUnifiedTemplate(): string {
   // Ligne d'en-tete
   const header = UNIFIED_HEADERS_V3.join(SEP);
 
-  // Exemples — colonne Note indique clairement "SUPPRIMER CETTE LIGNE"
+  // Exemples, colonne Note indique clairement "SUPPRIMER CETTE LIGNE"
   const ex1 = ['15/01/2025','82.5','18.2','42.1','55.3','3.2','8','35','1850','102','78','82','97','36','37','58','59','38','39','120','38','EXEMPLE - supprimer cette ligne'].join(SEP);
   const ex2 = ['20/01/2025','81.8','','','','','','','','','','','','','','','','','','','','EXEMPLE - supprimer cette ligne'].join(SEP);
   const ex3 = ['25/01/2025','80.0','17.5','44.0','56.0','3.3','7','34','1870','100','77','81','96','35','36','57','58','37','38','','','EXEMPLE - supprimer cette ligne'].join(SEP);
@@ -431,7 +432,7 @@ export function generateUnifiedTemplate(): string {
 }
 
 // ============================================
-// PARSE CSV — Multi-format, rétro-compatible
+// PARSE CSV : Multi-format, rétro-compatible
 // ============================================
 
 export function parseUnifiedCSV(content: string): SimpleParseResult {
@@ -508,7 +509,7 @@ export function parseUnifiedCSV(content: string): SimpleParseResult {
       data,
       valid: validation.valid,
       error: validation.error,
-      preview: parts.join(' — '),
+      preview: parts.join(', '),
       hasWeight: weight !== undefined,
       hasMeasurements: hasMeas,
       hasComposition: hasComp,
@@ -629,7 +630,7 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
       const date = row.data['date'];
       const weight = getOptionalFloat(row.data, 'weight');
 
-      // 1. Poids — UPDATE si la date existe déjà, INSERT sinon
+      // 1. Poids, UPDATE si la date existe déjà, INSERT sinon
       if (weight !== undefined) {
         const existingId = weightIdByDate.get(date);
         if (existingId !== undefined) {
@@ -652,7 +653,7 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
             ]
           );
         } else {
-          // Nouvelle date — insertion
+          // Nouvelle date, insertion
           const newId = await addWeight({
             date,
             weight,
@@ -671,7 +672,7 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
         weightCount++;
       }
 
-      // 2. Mensurations — UPDATE si la date existe, INSERT sinon
+      // 2. Mensurations, UPDATE si la date existe, INSERT sinon
       if (row.hasMeasurements) {
         const existingMId = measIdByDate.get(date);
         const vals = [
@@ -709,7 +710,7 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
         measurementCount++;
       }
 
-      // 3. Composition corporelle — UPDATE en mémoire si date existe, INSERT sinon
+      // 3. Composition corporelle, UPDATE en mémoire si date existe, INSERT sinon
       if (row.hasComposition) {
         const fat = getOptionalFloat(row.data, 'fat_percent')!;
         const muscle = getOptionalFloat(row.data, 'muscle_percent')!;
@@ -817,7 +818,7 @@ export async function exportUnifiedCSV(): Promise<string> {
   const lines: string[] = [
     `# YOROI - Export de données`,
     `# Date d'export : ${now}`,
-    `# Format : ${dates.length} entree(s) — separateur ";" — decimales "."`,
+    `# Format : ${dates.length} entree(s), separateur ";", decimales "."`,
     `# Compatible : Excel, Google Sheets, Numbers`,
     `# Pour reimporter : Import CSV dans Yoroi (accepte ce format directement)`,
     '#',
@@ -886,9 +887,11 @@ export async function shareTemplate(): Promise<boolean> {
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) { logger.warn('Sharing not available'); return false; }
 
+    track('sauvegarde_exportee', { type: 'csv' });
+
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',
-      dialogTitle: 'Modele CSV Yoroi — ouvre dans Excel ou Google Sheets',
+      dialogTitle: 'Modele CSV Yoroi : ouvre dans Excel ou Google Sheets',
       UTI: 'public.comma-separated-values-text',
     });
     return true;
@@ -909,9 +912,11 @@ export async function shareExportCSV(): Promise<boolean> {
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) { logger.warn('Sharing not available'); return false; }
 
+    track('sauvegarde_exportee', { type: 'csv' });
+
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',
-      dialogTitle: 'Export Yoroi — Sauvegarde de tes données',
+      dialogTitle: 'Export Yoroi : sauvegarde de tes données',
       UTI: 'public.comma-separated-values-text',
     });
     return true;
@@ -984,6 +989,8 @@ export async function shareFilteredTrainingsCSV(filters: TrainingExportFilters =
 
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) { logger.warn('Sharing not available'); return false; }
+
+    track('sauvegarde_exportee', { type: 'csv' });
 
     await Sharing.shareAsync(path, {
       mimeType: 'text/csv',

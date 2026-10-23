@@ -9,9 +9,16 @@ import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { secureStorage } from '@/lib/security/secureStorage';
 import logger from '@/lib/security/logger';
+import { demoActive } from '@/lib/v2/demo/garde';
 import { addTraining, updateTrainingDetails, getProfile, saveHealthDataBatch } from './database';
+import { completerLieuImport } from '@/lib/v2/seances/importLieu';
 import type { Training, HealthDataRecord } from './database';
-import { saveNotification } from './notificationHistoryService';
+import { signalerSeanceTerminee } from './v2/notifications/seanceTerminee';
+// 14 octobre 2026 (SANTÉ CONNEXION) : source unique des permissions demandées
+import { ANDROID_ECRITURE, ANDROID_LECTURE, ANDROID_LECTURE_AVANCE, clePermission } from './v2/sante/typesSante';
+import type { StatutDemande } from './v2/sante/connexion';
+import { enregistrementSommeilHC } from './v2/sante/sommeilHC';
+import type { NuitAEcrire } from './v2/sante/sommeilHC';
 
 // ============================================
 // HEALTH CONNECT SDK (Android)
@@ -31,6 +38,13 @@ const getHealthConnect = () => {
     return null;
   }
 };
+
+// Drapeau « permissions complémentaires déjà proposées ». v2 (10 octobre 2026) : nouvelles rubriques, on repropose une fois.
+const EXTENDED_ASKED_KEY = '@yoroi_health_extended_asked_v2';
+
+// Date locale AAAA-MM-JJ (toISOString donne la date UTC : décalage d'un jour la nuit ou hors d'Europe)
+const localDateKey = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 // ============================================
 // TYPES
@@ -265,8 +279,9 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   'Samsung Health': 'samsung', 'com.sec.android.app.shealth': 'samsung',
   // Fitbit
   'Fitbit': 'fitbit', 'com.fitbit.FitbitMobile': 'fitbit',
+  'Google Health': 'fitbit', 'Fitbit Air': 'fitbit', 'Pixel Watch': 'fitbit',
   // Xiaomi
-  'Mi Fitness': 'xiaomi', 'Mi Fit': 'xiaomi',
+  'Mi Fitness': 'xiaomi', 'Mi Fit': 'xiaomi', 'Zepp Life': 'xiaomi', // Zepp Life = ex Mi Fit (bracelets et balances Xiaomi)
   'com.xiaomi.wearable': 'xiaomi', 'com.xiaomi.hm.health': 'xiaomi',
   // Renpho / Eufy / Omron
   'Renpho': 'renpho', 'RENPHO': 'renpho', 'com.qingniu.renpho': 'renpho',
@@ -280,7 +295,7 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   'COROS': 'coros', 'com.coros.coros': 'coros', 'COROS PACE': 'coros',
   'COROS VERTIX': 'coros', 'COROS APEX': 'coros',
   // Amazfit / Zepp
-  'Amazfit': 'amazfit', 'Zepp': 'amazfit', 'Zepp Life': 'amazfit',
+  'Amazfit': 'amazfit', 'Zepp': 'amazfit',
   'com.huami.watch.hmwatchmanager': 'amazfit', 'Zepp App': 'amazfit',
   // Huawei
   'Huawei Health': 'huawei', 'com.huawei.health': 'huawei', 'HUAWEI Health': 'huawei',
@@ -372,6 +387,7 @@ const EXERCISE_TYPE_MAP: { [key: string]: number } = {
   'Boxing': 11, 'Boxe': 11,
   'MMA': 44, 'JJB': 44, 'Judo': 44, 'Karate': 44, 'Taekwondo': 44,
   'Muay Thai': 11, 'Kickboxing': 11,
+  'Muay-thaï': 11, 'Boxe anglaise': 11, 'Karaté': 44, 'Jiu-jitsu brésilien': 44, 'Vélo': 8,
   // Equipe
   'Football': 64, 'Soccer': 64, 'FootballUS': 28, 'FootballAustralien': 29,
   'Basketball': 5, 'Tennis': 76, 'Badminton': 2,
@@ -544,6 +560,25 @@ const extractAndroidSourceName = (record: any): string => {
     || 'health_connect';
 };
 
+// Identifiants de YOROI (app.json) : ce que YOROI écrit dans Health Connect ne doit pas revenir comme une autre source
+const YOROI_PACKAGES = ['com.houari24.yoroi', 'com.houari.yoroi'];
+
+/** true si l'enregistrement a été écrit par YOROI lui-même */
+export const isYoroiSample = (record: any): boolean => {
+  const origin = String(record?.metadata?.dataOrigin?.packageName ?? record?.metadata?.dataOrigin ?? '').toLowerCase();
+  if (origin && YOROI_PACKAGES.some((p) => origin === p || origin.startsWith(`${p}.`))) return true;
+  return /yoroi/i.test(origin);
+};
+
+/** Instant à donner à un enregistrement écrit pour le jour AAAA-MM-JJ : maintenant si c'est aujourd'hui, midi sinon */
+const instantForDay = (day?: string): Date => {
+  const now = new Date();
+  if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day) || day === localDateKey(now)) return now;
+  const [y, m, dd] = day.split('-').map(Number);
+  const at = new Date(y, m - 1, dd, 12, 0, 0, 0);
+  return at.getTime() > now.getTime() ? now : at;
+};
+
 // ============================================
 // SERVICE ANDROID
 // ============================================
@@ -668,54 +703,33 @@ class HealthConnectService {
     }
 
     try {
-      // Permissions à lire
-      const readPermissions = [
-        { accessType: 'read', recordType: 'Weight' },
-        { accessType: 'read', recordType: 'BodyFat' },
-        { accessType: 'read', recordType: 'LeanBodyMass' },
-        { accessType: 'read', recordType: 'Steps' },
-        { accessType: 'read', recordType: 'SleepSession' },
-        { accessType: 'read', recordType: 'Hydration' },
-        { accessType: 'read', recordType: 'HeartRate' },
-        { accessType: 'read', recordType: 'HeartRateVariabilityRmssd' },
-        { accessType: 'read', recordType: 'RestingHeartRate' },
-        { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
-        { accessType: 'read', recordType: 'BasalMetabolicRate' },
-        { accessType: 'read', recordType: 'TotalCaloriesBurned' },
-        { accessType: 'read', recordType: 'Distance' },
-        { accessType: 'read', recordType: 'Vo2Max' },
-        { accessType: 'read', recordType: 'OxygenSaturation' },
-        { accessType: 'read', recordType: 'RespiratoryRate' },
-        { accessType: 'read', recordType: 'BodyTemperature' },
-        { accessType: 'read', recordType: 'ExerciseSession' },
-        { accessType: 'read', recordType: 'Height' },
-        { accessType: 'read', recordType: 'FloorsClimbed' },
-      ];
-
-      // Permissions à écrire
-      const writePermissions = [
-        { accessType: 'write', recordType: 'Weight' },
-        { accessType: 'write', recordType: 'BodyFat' },
-        { accessType: 'write', recordType: 'Hydration' },
-        { accessType: 'write', recordType: 'SleepSession' },
-        { accessType: 'write', recordType: 'ExerciseSession' },
-      ];
+      // 14 octobre 2026 (SANTÉ CONNEXION) : seulement ce que YOROI lit ou écrit (lib/v2/sante/typesSante.ts).
+      // Retirés : StepsCadence et CyclingPedalingCadence (jamais déclarées dans app.json, donc jamais accordées).
+      // Glycémie et fauteuil passent dans les mesures avancées (sur appui).
+      const readPermissions = [...ANDROID_LECTURE];
+      const writePermissions = [...ANDROID_ECRITURE];
 
       const allPermissions = [...readPermissions, ...writePermissions];
 
       // Vérifier d'abord les permissions déjà accordées (si l'utilisateur a déjà tout autorisé)
       let existingGranted = await HC.getGrantedPermissions().catch(() => []);
-      const existingTypes = new Set(existingGranted.map((p: any) => p.recordType));
+      // 14 octobre 2026 : lecture et écriture d'un même type sont deux permissions. Avant, une lecture du poids
+      // accordée empêchait de demander l'écriture du poids.
+      const existingKeys = new Set((existingGranted ?? []).map((p: any) => clePermission(p)));
 
       // Filtrer pour ne demander que les permissions pas encore accordées
-      const toRequest = allPermissions.filter((p: any) => !existingTypes.has(p.recordType));
+      const toRequest = allPermissions.filter((p: any) => !existingKeys.has(clePermission(p)));
 
       // En mode silencieux (reconnexion au lancement) : pas de fenêtre de permission
       if (toRequest.length > 0 && !silent) {
         // requestPermission peut planter si Health Connect n'est pas à jour ou permission non déclarée
-        await HC.requestPermission(toRequest as any).catch((e: any) => {
-          logger.warn('[HealthConnect Android] requestPermission erreur (certaines permissions ignorées):', e);
+        // Délai de sécurité : si la fenêtre de Health Connect ne revient jamais, on revérifie quand même
+        await this.withTimeout(Promise.resolve(HC.requestPermission(toRequest as any)), 180000).catch((e: any) => {
+          logger.warn('[HealthConnect Android] requestPermission erreur ou délai (certaines permissions ignorées):', e);
         });
+        try {
+          await AsyncStorage.setItem(EXTENDED_ASKED_KEY, new Date().toISOString());
+        } catch {}
       }
 
       // Re-vérifier les permissions réellement accordées après la demande
@@ -738,8 +752,8 @@ class HealthConnectService {
         bodyTemperature: grantedTypes.has('BodyTemperature'),
         bodyComposition: grantedTypes.has('BodyFat') || grantedTypes.has('LeanBodyMass'),
         workouts: grantedTypes.has('ExerciseSession'),
-        bloodPressure: false,
-        bloodGlucose: false,
+        bloodPressure: grantedTypes.has('BloodPressure'),
+        bloodGlucose: grantedTypes.has('BloodGlucose'),
         height: grantedTypes.has('Height'),
         floorsClimbed: grantedTypes.has('FloorsClimbed'),
         mindfulMinutes: false, // Android Health Connect n'a pas d'équivalent aux sessions de pleine conscience Apple
@@ -784,7 +798,47 @@ class HealthConnectService {
   // CONNEXION
   // ============================================
 
-  async connect(opts?: { silent?: boolean }): Promise<boolean> {
+  /** 14 octobre 2026 (SANTÉ CONNEXION) : une seule connexion à la fois */
+  private connectEnCours: Promise<boolean> | null = null;
+
+  async connect(opts?: { silent?: boolean; sansSync?: boolean }): Promise<boolean> {
+    if (this.connectEnCours) return this.connectEnCours;
+    this.connectEnCours = this.connectUneFois(opts).finally(() => {
+      this.connectEnCours = null;
+    });
+    return this.connectEnCours;
+  }
+
+  /** 'repondu' si au moins une lecture est accordée, sinon 'inconnu' (Health Connect ne distingue pas refus et abandon) */
+  async statutDemande(): Promise<StatutDemande> {
+    const HC = getHealthConnect();
+    if (!HC) return 'inconnu';
+    try {
+      const granted: any[] = (await this.withTimeout(Promise.resolve(HC.getGrantedPermissions()), 8000)) ?? [];
+      return granted.some((p: any) => p?.accessType === 'read') ? 'repondu' : 'inconnu';
+    } catch {
+      return 'inconnu';
+    }
+  }
+
+  /** Essai de lecture réel sur 60 jours : vrai seulement si une donnée revient */
+  async lectureReelle(): Promise<boolean> {
+    const HC = getHealthConnect();
+    if (!HC) return false;
+    const fin = new Date();
+    const debut = new Date(fin.getTime() - 60 * 24 * 60 * 60 * 1000);
+    for (const type of ['Steps', 'Weight', 'HeartRate', 'ExerciseSession', 'SleepSession', 'ActiveCaloriesBurned']) {
+      try {
+        const r: any = await this.withTimeout(Promise.resolve(HC.readRecords(type as any, { timeRangeFilter: this.createTimeRangeFilter(debut, fin), pageSize: 1 } as any)), 5000);
+        if ((r?.records ?? []).length > 0) return true;
+      } catch {
+        /* permission absente ou vide */
+      }
+    }
+    return false;
+  }
+
+  private async connectUneFois(opts?: { silent?: boolean; sansSync?: boolean }): Promise<boolean> {
     try {
       // Vérifier si Health Connect est installé
       const installed = await this.isHealthConnectInstalled();
@@ -825,7 +879,8 @@ class HealthConnectService {
       logger.info('[HealthConnect Android] Connexion réussie');
 
       // Lancer une première synchronisation (pas au lancement silencieux : l'import planifié s'en charge)
-      if (!opts?.silent) await this.syncWithRetry();
+      // 14 octobre 2026 : sansSync, l'écran n'attend pas la synchro (l'import est lancé à part)
+      if (!opts?.silent && !opts?.sansSync) await this.syncWithRetry();
 
       return true;
     } catch (error) {
@@ -925,9 +980,10 @@ class HealthConnectService {
         timeRangeFilter: this.createTimeRangeFilter(startTime, endTime),
       });
 
-      if (records?.records && records.records.length > 0) {
-        // Prendre le plus récent
-        const sorted = [...records.records].sort((a: any, b: any) =>
+      const own = (records?.records ?? []).filter((r: any) => !isYoroiSample(r));
+      if (own.length > 0) {
+        // Prendre le plus récent, hors pesées recopiées par YOROI
+        const sorted = [...own].sort((a: any, b: any) =>
           new Date(b.time).getTime() - new Date(a.time).getTime()
         );
         const latest = sorted[0] as any;
@@ -1426,7 +1482,7 @@ class HealthConnectService {
       const d = new Date();
       d.setDate(d.getDate() - i);
       days.push({
-        date: d.toISOString().split('T')[0],
+        date: localDateKey(d),
         calories: 0,
         exerciseMin: 0,
         standH: 0,
@@ -1453,24 +1509,30 @@ class HealthConnectService {
         }).catch(() => ({ records: [] })),
       ]);
 
-      const bodyFatPercentage = fatRecords?.records && fatRecords.records.length > 0
-        ? Math.round((fatRecords.records[fatRecords.records.length - 1] as any).percentage * 100)
+      // Le plus récent de chaque type, toutes sources sauf YOROI
+      const newest = (rows: any[] | undefined): any => [...(rows ?? [])]
+        .filter((r: any) => !isYoroiSample(r) && r?.time)
+        .sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime())[0];
+      const fat = newest(fatRecords?.records as any[]);
+      const lean = newest(leanRecords?.records as any[]);
+
+      // Health Connect donne un pourcentage (18,4) : arrondi au dixième
+      const fatValue = Number(fat?.percentage);
+      const bodyFatPercentage = fat && Number.isFinite(fatValue)
+        ? Math.round((fatValue <= 1 ? fatValue * 100 : fatValue) * 10) / 10
         : undefined;
 
-      const leanBodyMass = leanRecords?.records && leanRecords.records.length > 0
-        ? Math.round((leanRecords.records[leanRecords.records.length - 1] as any).mass?.inKilograms * 10) / 10
+      const leanBodyMass = lean && Number.isFinite(Number(lean.mass?.inKilograms))
+        ? Math.round(Number(lean.mass.inKilograms) * 10) / 10
         : undefined;
 
       if (bodyFatPercentage !== undefined || leanBodyMass !== undefined) {
-        const sourceSample = (fatRecords?.records && fatRecords.records.length > 0)
-          ? fatRecords.records[fatRecords.records.length - 1]
-          : (leanRecords?.records && leanRecords.records.length > 0)
-            ? leanRecords.records[leanRecords.records.length - 1]
-            : null;
+        const sourceSample = fat ?? lean ?? null;
+        const sampleDate = sourceSample?.time ? new Date(sourceSample.time) : null;
         return {
           bodyFatPercentage,
           leanBodyMass,
-          date: new Date().toISOString(),
+          date: sampleDate && !isNaN(sampleDate.getTime()) ? sampleDate.toISOString() : new Date().toISOString(),
           source: sourceSample ? normalizeSourceName(extractAndroidSourceName(sourceSample)) : undefined,
         };
       }
@@ -1624,19 +1686,25 @@ class HealthConnectService {
   // LECTURE: WORKOUTS
   // ============================================
 
-  private async getAndroidWorkouts(): Promise<HealthData['workouts'] | null> {
+  private async getAndroidWorkouts(days?: number): Promise<HealthData['workouts'] | null> {
     return this.queryHealthConnect(async () => {
       const HC = getHealthConnect()!;
-      const fromDate = new Date(Date.now() - 1825 * 24 * 60 * 60 * 1000);
+      // 16 octobre 2026 (SEANCES AVATAR) : une periode choisie (« Importer mes seances ») lit toutes les pages ;
+      // sans periode, comme avant : 5 ans, une page
+      const fromDate = new Date(Date.now() - (days && days > 0 ? days : 1825) * 24 * 60 * 60 * 1000);
 
-      const records = await HC.readRecords('ExerciseSession', {
-        timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
-      });
+      const records = days
+        ? { records: await this.readAllPagesRaw('ExerciseSession', fromDate, new Date()) }
+        : await HC.readRecords('ExerciseSession', {
+            timeRangeFilter: this.createTimeRangeFilter(fromDate, new Date()),
+          });
 
       if (records?.records && records.records.length > 0) {
         const workouts: NonNullable<HealthData['workouts']> = [];
 
         for (const session of records.records) {
+          // Séance écrite par YOROI lui-même : déjà dans YOROI, ne pas la réimporter en doublon
+          if (isYoroiSample(session)) continue;
           const workoutFingerprint = `${session.startTime}_${session.endTime}_${session.exerciseType || 'unknown'}`;
           const deterministicId = session.metadata?.id || `workout_${this.simpleHash(workoutFingerprint)}`;
 
@@ -1744,6 +1812,56 @@ class HealthConnectService {
     return this.getAndroidWorkouts();
   }
 
+  /**
+   * 16 octobre 2026 (SEANCES AVATAR) : seances de Health Connect sur une periode, pour « Importer mes seances ».
+   * days absent ou 0 : tout ce que Health Connect garde (20 ans au plus). Les seances ecrites par YOROI sont deja
+   * ecartees (isYoroiSample). Pas de garde sur permissions.workouts : on essaie la lecture, null si rien ne revient.
+   */
+  async lireSeancesPourImport(days?: number | null): Promise<Array<{ training: Training; empreinte: string; debutIso: string }> | null> {
+    let workouts: HealthData['workouts'] | null = null;
+    try {
+      workouts = await this.withTimeout(this.getAndroidWorkouts(days && days > 0 ? days : 7300) as Promise<HealthData['workouts'] | null>, 300000);
+    } catch (e) {
+      logger.warn('[HealthConnect Android] lireSeancesPourImport', e);
+      return null;
+    }
+    if (!workouts || workouts.length === 0) return null;
+    return workouts.map((workout) => {
+      const sportKey = workout.activityType;
+      const sportLabel = ANDROID_SPORT_LABELS[sportKey] || sportKey;
+      const d = new Date(workout.startDate);
+      const noteParts: string[] = [];
+      if (workout.duration > 0) noteParts.push(`${Math.round(workout.duration)} min`);
+      if (workout.distance && workout.distance > 0) noteParts.push(`${workout.distance.toFixed(2)} km`);
+      if (workout.calories && workout.calories > 0) noteParts.push(`${Math.round(workout.calories)} kcal`);
+      if (workout.averageHeartRate && workout.averageHeartRate > 0) noteParts.push(`${Math.round(workout.averageHeartRate)} bpm`);
+      return {
+        empreinte: `${workout.startDate}_${workout.activityType}_${workout.duration}`,
+        debutIso: workout.startDate,
+        training: {
+          sport: sportKey,
+          session_type: sportLabel,
+          date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+          start_time: d.toTimeString().slice(0, 5),
+          duration_minutes: workout.duration,
+          distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
+          calories: workout.calories,
+          heart_rate: workout.averageHeartRate,
+          max_heart_rate: workout.maxHeartRate,
+          source: workout.source || 'health_connect',
+          notes: noteParts.length > 0 ? `${sportLabel} (${noteParts.join(', ')})` : sportLabel,
+          healthkit_uuid: workout.id,
+        },
+      };
+    });
+  }
+
+  /** 16 octobre 2026 (SEANCES AVATAR) : details (FC, trace) d'une seance que tu viens d'importer */
+  async enrichirSeanceImportee(id: string, trainingId: number): Promise<void> {
+    if (!id || !trainingId) return;
+    await this.fetchAndStoreWorkoutDetails(id, trainingId, 1);
+  }
+
   async canReadWorkouts(): Promise<{ accessible: boolean; count: number }> {
     if (!this.syncStatus.permissions.workouts) return { accessible: false, count: 0 };
     try {
@@ -1779,8 +1897,8 @@ class HealthConnectService {
       });
 
       if (records?.records && records.records.length > 0) {
-        return records.records.map((r: any) => ({
-          date: new Date(r.time).toISOString().split('T')[0],
+        return records.records.filter((r: any) => !isYoroiSample(r)).map((r: any) => ({
+          date: localDateKey(new Date(r.time)),
           value: Math.round(r.weight.inKilograms * 10) / 10,
           source: r.metadata?.dataOrigin || 'Unknown',
         }));
@@ -1817,7 +1935,7 @@ class HealthConnectService {
         const sleepByDate: { [key: string]: { deep: number; rem: number; core: number; awake: number; total: number } } = {};
 
         for (const session of records.records as any[]) {
-          const date = new Date(session.endTime).toISOString().split('T')[0];
+          const date = localDateKey(new Date(session.endTime));
           const totalMinutes = (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / 60000;
 
           if (!sleepByDate[date]) {
@@ -1875,7 +1993,7 @@ class HealthConnectService {
         const stepsByDate: { [key: string]: number } = {};
 
         for (const record of records.records as any[]) {
-          const date = new Date(record.startTime).toISOString().split('T')[0];
+          const date = localDateKey(new Date(record.startTime));
           if (!stepsByDate[date]) stepsByDate[date] = 0;
           stepsByDate[date] += record.count || 0;
         }
@@ -1908,7 +2026,7 @@ class HealthConnectService {
         const hrvByDate: { [key: string]: number[] } = {};
 
         for (const record of records.records as any[]) {
-          const date = new Date(record.time).toISOString().split('T')[0];
+          const date = localDateKey(new Date(record.time));
           if (!hrvByDate[date]) hrvByDate[date] = [];
           hrvByDate[date].push(record.heartRateVariabilityMillis || 0);
         }
@@ -1941,7 +2059,7 @@ class HealthConnectService {
         const hrByDate: { [key: string]: number[] } = {};
 
         for (const record of records.records as any[]) {
-          const date = new Date(record.startTime).toISOString().split('T')[0];
+          const date = localDateKey(new Date(record.startTime));
           if (!hrByDate[date]) hrByDate[date] = [];
 
           if (record.samples) {
@@ -1980,7 +2098,7 @@ class HealthConnectService {
 
       if (records?.records && records.records.length > 0) {
         return records.records.map((r: any) => ({
-          date: new Date(r.time).toISOString().split('T')[0],
+          date: localDateKey(new Date(r.time)),
           value: Math.round(r.beatsPerMinute),
         })).sort((a: any, b: any) => a.date.localeCompare(b.date));
       }
@@ -2012,7 +2130,7 @@ class HealthConnectService {
         const caloriesByDate: { [key: string]: number } = {};
 
         for (const record of records.records as any[]) {
-          const date = new Date(record.startTime).toISOString().split('T')[0];
+          const date = localDateKey(new Date(record.startTime));
           if (!caloriesByDate[date]) caloriesByDate[date] = 0;
           caloriesByDate[date] += record.energy?.inKilocalories || 0;
         }
@@ -2047,7 +2165,7 @@ class HealthConnectService {
 
       if (records?.records && records.records.length > 0) {
         return records.records.map((r: any) => ({
-          date: new Date(r.time).toISOString().split('T')[0],
+          date: localDateKey(new Date(r.time)),
           value: Math.round(r.vo2MillilitersPerMinuteKilogram * 10) / 10,
         })).sort((a: any, b: any) => a.date.localeCompare(b.date));
       }
@@ -2072,7 +2190,7 @@ class HealthConnectService {
 
       if (records?.records && records.records.length > 0) {
         return records.records.map((r: any) => ({
-          date: new Date(r.time).toISOString().split('T')[0],
+          date: localDateKey(new Date(r.time)),
           value: Math.round(r.percentage * 100),
         })).sort((a: any, b: any) => a.date.localeCompare(b.date));
       }
@@ -2097,7 +2215,7 @@ class HealthConnectService {
 
       if (records?.records && records.records.length > 0) {
         return records.records.map((r: any) => ({
-          date: new Date(r.time).toISOString().split('T')[0],
+          date: localDateKey(new Date(r.time)),
           value: parseFloat((r.temperature?.inCelsius || 0).toFixed(1)),
         })).sort((a: any, b: any) => a.date.localeCompare(b.date));
       }
@@ -2120,7 +2238,7 @@ class HealthConnectService {
       if (records?.records && records.records.length > 0) {
         const byDate: { [key: string]: number } = {};
         for (const r of records.records as any[]) {
-          const date = new Date(r.startTime).toISOString().split('T')[0];
+          const date = localDateKey(new Date(r.startTime));
           if (!byDate[date]) byDate[date] = 0;
           byDate[date] += r.distance?.inMeters || 0;
         }
@@ -2145,7 +2263,7 @@ class HealthConnectService {
       if (records?.records && records.records.length > 0) {
         const byDate: { [key: string]: number } = {};
         for (const r of records.records as any[]) {
-          const date = new Date(r.startTime).toISOString().split('T')[0];
+          const date = localDateKey(new Date(r.startTime));
           if (!byDate[date]) byDate[date] = 0;
           const durationMs = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
           byDate[date] += durationMs / 60000;
@@ -2167,17 +2285,32 @@ class HealthConnectService {
   // ÉCRITURE: POIDS
   // ============================================
 
-  async writeWeight(weight: number, unit: 'kg' | 'lbs' = 'kg'): Promise<boolean> {
+  /** Autorisations d'écriture déjà accordées (aucune fenêtre n'est ouverte ici) */
+  async canWriteBodyMeasures(): Promise<{ weight: boolean; bodyFat: boolean }> {
+    const out = { weight: false, bodyFat: false };
+    const HC = getHealthConnect();
+    if (!HC) return out;
+    try {
+      const granted: any[] = await HC.getGrantedPermissions().catch(() => []);
+      const can = (t: string) => granted.some((p: any) => p?.accessType === 'write' && p?.recordType === t);
+      out.weight = can('Weight');
+      out.bodyFat = can('BodyFat');
+    } catch {}
+    return out;
+  }
+
+  async writeWeight(weight: number, unit: 'kg' | 'lbs' = 'kg', day?: string): Promise<boolean> {
     const HC = getHealthConnect();
     if (!HC) {
       throw new Error('Health Connect module not available');
     }
 
     const weightInKg = unit === 'lbs' ? weight * 0.453592 : weight;
+    const at = instantForDay(day);
 
     try {
       // Vérifier les doublons
-      const today = new Date();
+      const today = new Date(at);
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -2199,7 +2332,7 @@ class HealthConnectService {
       await HC.insertRecords([
         {
           recordType: 'Weight',
-          time: new Date().toISOString(),
+          time: at.toISOString(),
           weight: {
             value: weightInKg,
             unit: 'kilograms',
@@ -2252,15 +2385,16 @@ class HealthConnectService {
   // ÉCRITURE: BODY FAT
   // ============================================
 
-  async writeBodyFat(percentage: number): Promise<boolean> {
+  async writeBodyFat(percentage: number, day?: string): Promise<boolean> {
     const HC = getHealthConnect();
     if (!HC) {
       throw new Error('Health Connect module not available');
     }
+    const at = instantForDay(day);
 
     try {
       // Vérifier les doublons
-      const today = new Date();
+      const today = new Date(at);
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -2282,7 +2416,7 @@ class HealthConnectService {
       await HC.insertRecords([
         {
           recordType: 'BodyFat',
-          time: new Date().toISOString(),
+          time: at.toISOString(),
           percentage: percentage / 100, // Convertir en ratio
         },
       ]);
@@ -2321,40 +2455,15 @@ class HealthConnectService {
         exerciseType,
       };
 
-      // Note: Health Connect n'accepte pas directement distance/calories sur ExerciseSession
-      // Il faut créer des records séparés (Distance, ActiveCaloriesBurned) si nécessaire
+      // 18 octobre 2026 (sortie 3.0.0) : seule la séance (ExerciseSession) est écrite sur Android.
+      // La distance et les calories actives ne sont PAS écrites : WRITE_DISTANCE et WRITE_ACTIVE_CALORIES_BURNED
+      // ne sont ni dans app.json ni dans AndroidManifest.xml, ni déclarées dans la Play Console.
+      // Les écrire échouerait (SecurityException) après la séance. Pour les rétablir : ajouter les deux droits
+      // aux deux fichiers, à ANDROID_ECRITURE (lib/v2/sante/typesSante.ts) et à la déclaration Play.
+      void workout.distance;
+      void workout.calories;
 
       await HC.insertRecords([record]);
-
-      // Si distance fournie, créer un record Distance
-      if (workout.distance) {
-        await HC.insertRecords([
-          {
-            recordType: 'Distance',
-            startTime: new Date(workout.startDate).toISOString(),
-            endTime: new Date(workout.endDate).toISOString(),
-            distance: {
-              value: workout.distance * 1000, // km -> m
-              unit: 'meters',
-            },
-          },
-        ]);
-      }
-
-      // Si calories fournies, créer un record ActiveCaloriesBurned
-      if (workout.calories) {
-        await HC.insertRecords([
-          {
-            recordType: 'ActiveCaloriesBurned',
-            startTime: new Date(workout.startDate).toISOString(),
-            endTime: new Date(workout.endDate).toISOString(),
-            energy: {
-              value: workout.calories,
-              unit: 'kilocalories',
-            },
-          },
-        ]);
-      }
 
       logger.info('[HealthConnect Android] Workout enregistré:', workout.activityType);
       return true;
@@ -2368,44 +2477,21 @@ class HealthConnectService {
   // ÉCRITURE: SLEEP
   // ============================================
 
-  async writeSleepData(sleepData: {
-    startTime: Date;
-    endTime: Date;
-    stages?: {
-      stage: 'awake' | 'light' | 'deep' | 'rem';
-      startTime: Date;
-      endTime: Date;
-    }[];
-  }): Promise<boolean> {
+  async writeSleepData(sleepData: NuitAEcrire): Promise<boolean> {
     const HC = getHealthConnect();
     if (!HC) {
       throw new Error('Health Connect module not available');
     }
 
     try {
-      // Mapper les stages Yoroi vers Health Connect
-      const stageMap: { [key: string]: number } = {
-        'awake': 1, // AWAKE
-        'light': 4, // LIGHT
-        'deep': 5,  // DEEP
-        'rem': 6,   // REM
-      };
-
-      const record: any = {
-        recordType: 'SleepSession',
-        startTime: new Date(sleepData.startTime).toISOString(),
-        endTime: new Date(sleepData.endTime).toISOString(),
-      };
-
-      if (sleepData.stages && sleepData.stages.length > 0) {
-        record.stages = sleepData.stages.map(s => ({
-          startTime: new Date(s.startTime).toISOString(),
-          endTime: new Date(s.endTime).toISOString(),
-          stage: stageMap[s.stage] || 2, // 2 = SLEEPING default
-        }));
+      // audit 18 octobre 2026 : accepte { startDate, endDate } (appel commun avec iOS) et { startTime, endTime }
+      const record = enregistrementSommeilHC(sleepData);
+      if (!record) {
+        logger.warn('[HealthConnect Android] Nuit non écrite : dates invalides');
+        return false;
       }
 
-      await HC.insertRecords([record]);
+      await HC.insertRecords([record as any]);
 
       logger.info('[HealthConnect Android] Sommeil enregistré');
       return true;
@@ -2925,7 +3011,245 @@ class HealthConnectService {
     return null;
   }
 
+  // ============================================
+  // LECTURE ÉTENDUE (refonte Santé du 9 octobre 2026)
+  // Types que react-native-health-connect sait déjà lire mais que l'app n'exploitait pas.
+  // ============================================
+
+  /** Permissions de lecture ajoutées (à déclarer aussi dans app.json) */
+  // 14 octobre 2026 (SANTÉ CONNEXION) : mesures avancées, demandées seulement sur appui (lib/v2/sante/typesSante.ts).
+  // Tension, nutrition, vitesse, puissance, dénivelé, eau corporelle, masse osseuse et historique sont dans la demande principale.
+  private static readonly EXTRA_READ_PERMISSIONS = [...ANDROID_LECTURE_AVANCE];
+
+  private static readonly EXT_RECORDS: Record<
+    string,
+    { type: string; agg: 'sum' | 'avg'; pick: (r: any) => number[]; time: 'time' | 'startTime'; v2?: (r: any) => number }
+  > = {
+    tension: { type: 'BloodPressure', agg: 'avg', time: 'time', pick: (r) => [Number(r?.systolic?.inMillimetersOfMercury)], v2: (r) => Number(r?.diastolic?.inMillimetersOfMercury) },
+    glycemie: { type: 'BloodGlucose', agg: 'avg', time: 'time', pick: (r) => [Number(r?.level?.inMillimolesPerLiter)] },
+    respiration: { type: 'RespiratoryRate', agg: 'avg', time: 'time', pick: (r) => [Number(r?.rate)] },
+    'masse-grasse': {
+      type: 'BodyFat',
+      agg: 'avg',
+      time: 'time',
+      pick: (r) => {
+        const raw = typeof r?.percentage === 'number' ? r.percentage : Number(r?.percentage?.value);
+        return [raw > 0 && raw <= 1 ? raw * 100 : raw];
+      },
+    },
+    'masse-maigre': { type: 'LeanBodyMass', agg: 'avg', time: 'time', pick: (r) => [Number(r?.mass?.inKilograms)] },
+    'masse-osseuse': { type: 'BoneMass', agg: 'avg', time: 'time', pick: (r) => [Number(r?.mass?.inKilograms)] },
+    'eau-corporelle': { type: 'BodyWaterMass', agg: 'avg', time: 'time', pick: (r) => [Number(r?.mass?.inKilograms)] },
+    etages: { type: 'FloorsClimbed', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.floors)] },
+    denivele: { type: 'ElevationGained', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.elevation?.inMeters)] },
+    puissance: { type: 'Power', agg: 'avg', time: 'startTime', pick: (r) => (r?.samples ?? []).map((s: any) => Number(s?.power?.inWatts)) },
+    vitesse: { type: 'Speed', agg: 'avg', time: 'startTime', pick: (r) => (r?.samples ?? []).map((s: any) => Number(s?.speed?.inKilometersPerHour)) },
+    'cadence-pas': { type: 'StepsCadence', agg: 'avg', time: 'startTime', pick: (r) => (r?.samples ?? []).map((s: any) => Number(s?.rate)) },
+    'cadence-velo': { type: 'CyclingPedalingCadence', agg: 'avg', time: 'startTime', pick: (r) => (r?.samples ?? []).map((s: any) => Number(s?.revolutionsPerMinute)) },
+    eau: { type: 'Hydration', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.volume?.inMilliliters)] },
+    'calories-mangees': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.energy?.inKilocalories)] },
+    proteines: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.protein?.inGrams)] },
+    glucides: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.totalCarbohydrate?.inGrams)] },
+    lipides: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.totalFat?.inGrams)] },
+    cafeine: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.caffeine?.inMilligrams ?? (r?.caffeine?.inGrams ?? 0) * 1000)] },
+    // Ajouts du 10 octobre 2026 (vague 12) : fauteuil et tous les nutriments du repas
+    'poussees-fauteuil': { type: 'WheelchairPushes', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.count)] },
+    fibres: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.dietaryFiber?.inGrams)] },
+    sucres: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.sugar?.inGrams)] },
+    'graisses-saturees': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.saturatedFat?.inGrams)] },
+    'graisses-mono': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.monounsaturatedFat?.inGrams)] },
+    'graisses-poly': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.polyunsaturatedFat?.inGrams)] },
+    cholesterol: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.cholesterol?.inMilligrams)] },
+    sodium: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.sodium?.inMilligrams)] },
+    potassium: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.potassium?.inMilligrams)] },
+    calcium: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.calcium?.inMilligrams)] },
+    magnesium: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.magnesium?.inMilligrams)] },
+    fer: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.iron?.inMilligrams)] },
+    zinc: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.zinc?.inMilligrams)] },
+    phosphore: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.phosphorus?.inMilligrams)] },
+    iode: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.iodine?.inMicrograms)] },
+    selenium: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.selenium?.inMicrograms)] },
+    cuivre: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.copper?.inMilligrams)] },
+    manganese: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.manganese?.inMilligrams)] },
+    chrome: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.chromium?.inMicrograms)] },
+    molybdene: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.molybdenum?.inMicrograms)] },
+    chlorure: { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.chloride?.inMilligrams)] },
+    'vitamine-a': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.vitaminA?.inMicrograms)] },
+    'vitamine-b1': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.thiamin?.inMilligrams)] },
+    'vitamine-b2': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.riboflavin?.inMilligrams)] },
+    'vitamine-b3': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.niacin?.inMilligrams)] },
+    'vitamine-b5': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.pantothenicAcid?.inMilligrams)] },
+    'vitamine-b6': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.vitaminB6?.inMilligrams)] },
+    'vitamine-b8': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.biotin?.inMicrograms)] },
+    'vitamine-b9': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.folate?.inMicrograms)] },
+    'vitamine-b12': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.vitaminB12?.inMicrograms)] },
+    'vitamine-c': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.vitaminC?.inMilligrams)] },
+    'vitamine-d': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.vitaminD?.inMicrograms)] },
+    'vitamine-e': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.vitaminE?.inMilligrams)] },
+    'vitamine-k': { type: 'Nutrition', agg: 'sum', time: 'startTime', pick: (r) => [Number(r?.vitaminK?.inMicrograms)] },
+  };
+
+  /** Mesures lisibles par getExtendedHistory sur Android */
+  getExtendedKeys(): string[] {
+    return Object.keys(HealthConnectService.EXT_RECORDS);
+  }
+
+  /** Demande les permissions ajoutées. Sans effet si Health Connect est absent. Ne lève jamais d'erreur. */
+  async requestExtendedPermissions(): Promise<boolean> {
+    const HC = getHealthConnect();
+    if (!HC) return false;
+    try {
+      await AsyncStorage.setItem(EXTENDED_ASKED_KEY, new Date().toISOString());
+    } catch {}
+    try {
+      await this.withTimeout(Promise.resolve(HC.requestPermission(HealthConnectService.EXTRA_READ_PERMISSIONS as any)), 180000);
+      try {
+        await AsyncStorage.setItem(EXTENDED_ASKED_KEY, new Date().toISOString());
+      } catch {}
+      const granted = await HC.getGrantedPermissions().catch(() => []);
+      const types = new Set((granted ?? []).map((p: any) => p.recordType));
+      this.syncStatus.permissions.bloodPressure = types.has('BloodPressure');
+      this.syncStatus.permissions.bloodGlucose = types.has('BloodGlucose');
+      await this.saveSyncStatus();
+      return true;
+    } catch (e) {
+      logger.warn('[HealthConnect Android] Permissions complémentaires impossibles:', e);
+      return false;
+    }
+  }
+
+  async hasAskedExtendedPermissions(): Promise<boolean> {
+    try {
+      return !!(await AsyncStorage.getItem(EXTENDED_ASKED_KEY));
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Mémoire courte des lectures : la nutrition alimente plus de trente rubriques (10 octobre 2026).
+   * Une même lecture (type, jour de début) est partagée pendant une minute pour ménager les quotas de Health Connect.
+   */
+  private readCache = new Map<string, { at: number; p: Promise<any[]> }>();
+
+  /** Lit toutes les pages d'un type sur une période */
+  private readAllPages(recordType: string, from: Date, to: Date): Promise<any[]> {
+    const k = `${recordType}|${localDateKey(from)}|${Math.floor(to.getTime() / 60000)}`;
+    const hit = this.readCache.get(k);
+    if (hit && Date.now() - hit.at < 60000) return hit.p;
+    const p = this.readAllPagesRaw(recordType, from, to);
+    this.readCache.set(k, { at: Date.now(), p });
+    p.catch(() => this.readCache.delete(k));
+    if (this.readCache.size > 200) this.readCache.clear();
+    return p;
+  }
+
+  private async readAllPagesRaw(recordType: string, from: Date, to: Date): Promise<any[]> {
+    const HC = getHealthConnect();
+    if (!HC) return [];
+    const out: any[] = [];
+    let pageToken: string | undefined;
+    for (let page = 0; page < 10; page++) {
+      const res: any = await this.withTimeout(
+        HC.readRecords(recordType as any, {
+          timeRangeFilter: this.createTimeRangeFilter(from, to),
+          ...(pageToken ? { pageToken } : {}),
+        }) as Promise<any>,
+        15000,
+      );
+      out.push(...(res?.records ?? []));
+      pageToken = res?.pageToken || undefined;
+      if (!pageToken) break;
+    }
+    return out;
+  }
+
+  /** Historique jour par jour (heure locale) d'une mesure étendue. v2 : chiffre bas de la tension. */
+  async getExtendedHistory(
+    key: string,
+    days: number = 30,
+    opts: { excludeOwn?: boolean; latest?: boolean } = {},
+  ): Promise<Array<{ date: string; value: number; v2?: number }>> {
+    const spec = HealthConnectService.EXT_RECORDS[key];
+    if (!spec || !getHealthConnect()) return [];
+    try {
+      const from = new Date();
+      from.setDate(from.getDate() - (Math.max(1, Math.min(days, 3650)) - 1));
+      from.setHours(0, 0, 0, 0);
+      const raw = await this.readAllPages(spec.type, from, new Date());
+      const timeOf = (r: any) => new Date(r?.[spec.time] ?? r?.time ?? r?.startTime ?? 0).getTime();
+      const rows = (opts.excludeOwn ? raw.filter((r) => !isYoroiSample(r)) : raw).sort((a, b) => timeOf(a) - timeOf(b));
+      const g: Record<string, { v: number[]; v2: number[] }> = {};
+      for (const r of rows) {
+        const t = r?.[spec.time] ?? r?.time ?? r?.startTime;
+        if (!t) continue;
+        const day = localDateKey(new Date(t));
+        const vals = spec.pick(r).filter((x) => Number.isFinite(x) && x > 0);
+        if (vals.length === 0) continue;
+        const bucket = (g[day] = g[day] ?? { v: [], v2: [] });
+        bucket.v.push(...vals);
+        if (spec.v2) {
+          const d2 = spec.v2(r);
+          if (Number.isFinite(d2) && d2 > 0) bucket.v2.push(d2);
+        }
+      }
+      const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+      return Object.keys(g)
+        .map((day) => ({
+          date: day,
+          value: opts.latest
+            ? g[day].v[g[day].v.length - 1]
+            : spec.agg === 'sum' ? g[day].v.reduce((x, y) => x + y, 0) : avg(g[day].v),
+          v2: g[day].v2.length ? avg(g[day].v2) : undefined,
+        }))
+        .filter((p) => p.value > 0)
+        .sort((a, b) => a.date.localeCompare(b.date));
+    } catch (e) {
+      logger.warn(`[HealthConnect Android] getExtendedHistory ${key}:`, e);
+      return [];
+    }
+  }
+
+  /** Historique de la respiration (utilisé par l'écran Santé) */
+  async getRespiratoryRateHistory(days: number = 30): Promise<{ date: string; value: number }[]> {
+    return this.getExtendedHistory('respiration', days);
+  }
+
+  /** Historique de la glycémie en mmol/L */
+  async getBloodGlucoseHistory(days: number = 30): Promise<Array<{ date: string; value: number; unit: string }>> {
+    const rows = await this.getExtendedHistory('glycemie', days);
+    return rows.map((r) => ({ date: r.date, value: Math.round(r.value * 100) / 100, unit: 'mmol/L' }));
+  }
+
+  /** Garde en base les 3 derniers jours des mesures étendues (type « x_<clé> ») */
+  private async storeExtendedRecent(days: number = 3): Promise<number> {
+    if (!getHealthConnect()) return 0;
+    const keys = this.getExtendedKeys().filter((k) => k !== 'respiration' && k !== 'glycemie' && k !== 'etages' && k !== 'masse-grasse' && k !== 'masse-maigre');
+    const results = await Promise.allSettled(keys.map((k) => this.getExtendedHistory(k, days)));
+    const records: HealthDataRecord[] = [];
+    results.forEach((r, i) => {
+      if (r.status !== 'fulfilled') return;
+      for (const p of r.value) {
+        records.push({
+          date: p.date,
+          type: `x_${keys[i]}` as HealthDataRecord['type'],
+          value: Math.round(p.value * 100) / 100,
+          value2: p.v2,
+          source: 'health_connect',
+        });
+      }
+    });
+    if (records.length === 0) return 0;
+    try {
+      return await saveHealthDataBatch(records);
+    } catch (e) {
+      logger.warn('[HealthConnect Android] mesures étendues non enregistrées:', e);
+      return 0;
+    }
+  }
+
   async syncAll(): Promise<HealthData | null> {
+    if (await demoActive()) { logger.info('[Sante] mode démo : rien n’est lu ni importé'); return null; }
     if (!this.syncStatus.isConnected) {
       const available = await this.isAvailable();
       if (!available) {
@@ -2954,7 +3278,7 @@ class HealthConnectService {
       }
 
       // ══════ DONNÉES DE SANTÉ → SQLite (health_data) ══════
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateKey(new Date());
       const records: HealthDataRecord[] = [];
 
       // ══════ PRESSION ARTÉRIELLE → SQLite ══════
@@ -3004,6 +3328,25 @@ class HealthConnectService {
           source: data.floorsClimbed.source || 'health_connect',
         });
         logger.info(`[HealthConnect Android] Étages montés: ${data.floorsClimbed.count}`);
+      }
+
+      // ══════ MESURES DU JOUR → SQLite (ajout du 9 octobre 2026, comme sur iPhone) ══════
+      const src = (x?: string) => x || 'health_connect';
+      if (data.steps && data.steps.count > 0) records.push({ date: today, type: 'steps', value: data.steps.count, unit: 'count', source: src((data.steps as any).source) });
+      if (data.calories && data.calories.active > 0) records.push({ date: today, type: 'calories_active', value: Math.round(data.calories.active), unit: 'kcal', source: src((data.calories as any).source) });
+      if (data.calories && data.calories.basal > 0) records.push({ date: today, type: 'calories_basal', value: Math.round(data.calories.basal), unit: 'kcal', source: src((data.calories as any).source) });
+      if (data.heartRate && data.heartRate.average > 0) records.push({ date: today, type: 'heart_rate', value: Math.round(data.heartRate.average), unit: 'bpm', source: src((data.heartRate as any).source) });
+      if (data.heartRate && data.heartRate.resting > 0) records.push({ date: today, type: 'heart_rate_resting', value: Math.round(data.heartRate.resting), unit: 'bpm', source: src((data.heartRate as any).source) });
+      if (data.heartRateVariability && data.heartRateVariability.value > 0) records.push({ date: today, type: 'hrv', value: Math.round(data.heartRateVariability.value), unit: 'ms', source: src((data.heartRateVariability as any).source) });
+      if (data.distance && data.distance.total > 0) records.push({ date: today, type: 'distance', value: Math.round(data.distance.total * 100) / 100, unit: 'km', source: src((data.distance as any).source) });
+      if (data.vo2Max && data.vo2Max.value > 0) records.push({ date: today, type: 'vo2max', value: Math.round(data.vo2Max.value * 10) / 10, unit: 'ml/kg/min', source: src((data.vo2Max as any).source) });
+      if (data.oxygenSaturation && data.oxygenSaturation.value > 0) records.push({ date: today, type: 'spo2', value: Math.round(data.oxygenSaturation.value * 10) / 10, unit: '%', source: src((data.oxygenSaturation as any).source) });
+      if (data.respiratoryRate && data.respiratoryRate.value > 0) records.push({ date: data.respiratoryRate.date ? localDateKey(new Date(data.respiratoryRate.date)) : today, type: 'respiratory_rate', value: Math.round(data.respiratoryRate.value * 10) / 10, unit: 'resp/min', source: src((data.respiratoryRate as any).source) });
+      if (data.bodyTemperature && data.bodyTemperature.value > 0) records.push({ date: data.bodyTemperature.date ? localDateKey(new Date(data.bodyTemperature.date)) : today, type: 'body_temp', value: Math.round(data.bodyTemperature.value * 10) / 10, unit: '°C', source: src((data.bodyTemperature as any).source) });
+      try {
+        await this.storeExtendedRecent(3);
+      } catch (e) {
+        logger.warn('[HealthConnect Android] Mesures étendues ignorées:', e);
       }
 
       if (records.length > 0) {
@@ -3059,18 +3402,16 @@ class HealthConnectService {
               healthkit_uuid: workout.id, // Health Connect record ID pour lazy-load details
             };
 
-            const trainingId = await addTraining(training);
+            const trainingId = await addTraining(await completerLieuImport(training));
             importedFingerprints.add(fingerprint);
             workoutsSaved++;
 
             // Queue pour fetch details en arriere-plan
             detailsQueue.push({ workoutId: workout.id, trainingId });
 
-            // Notification Strava-like pour les workouts recents (< 30 min)
-            const workoutAge = Date.now() - new Date(workout.endDate).getTime();
-            if (workoutAge < 30 * 60 * 1000) {
-              await this.sendWorkoutNotification(workout, sportLabel);
-            }
+            // 18 octobre 2026 : une seule notification par séance, seulement si elle vient de finir
+            // (lib/v2/notifications/seanceTerminee.ts : mémoire durable, regroupement, réglages)
+            if (trainingId > 0) this.sendWorkoutNotification(workout, sportLabel, trainingId);
           } catch (e) {
             logger.warn('[HealthConnect Android] Erreur sauvegarde workout:', e);
           }
@@ -3115,19 +3456,12 @@ class HealthConnectService {
   /**
    * Notification Strava-like apres un workout (Android)
    */
-  private async sendWorkoutNotification(
+  private sendWorkoutNotification(
     workout: NonNullable<HealthData['workouts']>[0],
-    sportLabel: string
-  ): Promise<void> {
+    sportLabel: string,
+    trainingId: number
+  ): void {
     try {
-      const Notif = await import('expo-notifications');
-
-      const durationH = Math.floor(workout.duration / 60);
-      const durationM = Math.round(workout.duration % 60);
-      const durationStr = durationH > 0
-        ? `${durationH}h${durationM > 0 ? `${String(durationM).padStart(2, '0')}` : ''}`
-        : `${durationM} min`;
-
       const sourceLabel = workout.source === 'garmin' ? 'Garmin'
         : workout.source === 'samsung' ? 'Samsung Health'
         : workout.source === 'fitbit' ? 'Fitbit'
@@ -3138,31 +3472,16 @@ class HealthConnectService {
 
       const title = `Bravo pour ta séance de ${sportLabel.toLowerCase()} !`;
 
-      const lines: string[] = [durationStr];
-      if (workout.distance && workout.distance > 0) lines[0] += ` | ${workout.distance.toFixed(2)} km`;
-      if (workout.calories && workout.calories > 0) lines.push(`${Math.round(workout.calories)} kcal`);
-      if (workout.averageHeartRate && workout.averageHeartRate > 0) {
-        let hrStr = `FC moy ${Math.round(workout.averageHeartRate)} bpm`;
-        if (workout.maxHeartRate && workout.maxHeartRate > 0) hrStr += ` (max ${Math.round(workout.maxHeartRate)})`;
-        lines.push(hrStr);
-      }
-      if (sourceLabel) lines.push(`Via ${sourceLabel}`);
-      lines.push('Tape pour partager ta séance !');
-
-      await Notif.scheduleNotificationAsync({
-        content: {
-          title,
-          body: lines.join('\n'),
-          subtitle: sourceLabel || undefined,
-          data: { type: 'workout_complete' },
-          sound: 'default',
-        },
-        trigger: null,
+      signalerSeanceTerminee({
+        trainingId,
+        titre: title,
+        debutIso: workout.startDate,
+        finIso: workout.endDate,
+        dureeMin: workout.duration,
+        uuid: workout.id || undefined,
+        source: sourceLabel || undefined,
+        sport: workout.activityType,
       });
-
-      // Sauvegarder dans l'historique
-      saveNotification(title, lines.join('\n'), 'workout_complete', { type: 'workout_complete' }).catch(() => {});
-
       logger.info(`[HealthConnect Android] Notification envoyee: ${title}`);
     } catch (e) {
       logger.warn('[HealthConnect Android] Erreur notification:', e);
@@ -3231,6 +3550,7 @@ class HealthConnectService {
 
   async setupWorkoutObserver(): Promise<void> {
     if (this.workoutPollingInterval) return; // Deja en cours
+    if (await demoActive()) return;
 
     logger.info('[HealthConnect Android] Demarrage workout observer (polling 2 min)');
 
@@ -3317,31 +3637,21 @@ class HealthConnectService {
           healthkit_uuid: s.metadata?.id,
         };
 
-        const trainingId = await addTraining(training);
+        const trainingId = await addTraining(await completerLieuImport(training));
         importedFingerprints.add(fingerprint);
         newWorkouts++;
 
-        // Notification pour workout recent
-        const workoutAge = Date.now() - endTime.getTime();
-        if (workoutAge < 30 * 60 * 1000) {
-          try {
-            const Notif = await import('expo-notifications');
-            await Notif.scheduleNotificationAsync({
-              content: {
-                title: `Séance terminee !`,
-                body: `${sportLabel} - ${durationMin} min. Partage ta perf !`,
-                data: {
-                  type: 'workout_completed',
-                  workoutId: trainingId?.toString(),
-                  screen: 'social-share/last-session',
-                },
-                sound: 'default',
-              },
-              trigger: null,
-            });
-            // Sauvegarder dans l'historique
-            saveNotification('Séance terminee !', `${sportLabel} - ${durationMin} min. Partage ta perf !`, 'workout_complete', { type: 'workout_completed', workoutId: trainingId?.toString(), screen: 'social-share/last-session' }).catch(() => {});
-          } catch {}
+        // 18 octobre 2026 : même notification que la synchro, une seule fois par séance et seulement si elle vient de finir
+        if (trainingId > 0) {
+          signalerSeanceTerminee({
+            trainingId,
+            titre: `Bravo pour ta séance de ${sportLabel.toLowerCase()} !`,
+            debutIso: startTime.toISOString(),
+            finIso: endTime.toISOString(),
+            dureeMin: durationMin,
+            uuid: s.metadata?.id || undefined,
+            sport: sportKey,
+          });
         }
 
         // Enrichir les details en arriere-plan

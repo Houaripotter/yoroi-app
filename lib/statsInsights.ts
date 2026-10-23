@@ -52,7 +52,7 @@ const weightDelta = (weights: WeightLike[]): Insight | null => {
   if (delta < 0) {
     return {
       id: 'weight-loss',
-      text: `Tu as perdu ${fmtKg(delta)} kg récemment 🎉`,
+      text: `Tu as perdu ${fmtKg(delta)} kg récemment`,
       tone: 'celebration',
       icon: 'trending-down',
     };
@@ -77,7 +77,7 @@ const trainingsWeekly = (trainings: TrainingLike[]): Insight | null => {
   if (last7 >= 5) {
     return {
       id: 'trainings-streak',
-      text: `${last7} séances cette semaine, t'es en feu 🔥`,
+      text: `${last7} séances cette semaine, t'es en feu`,
       tone: 'celebration',
       icon: 'fire',
     };

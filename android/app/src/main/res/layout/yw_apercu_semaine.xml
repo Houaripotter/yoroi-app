@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/yw_fond"
+    android:clipToOutline="true"
+    android:orientation="vertical"
+    android:padding="@dimen/yw_marge">
+  <TextView style="@style/YwTitre" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:text="@string/yw_nom_semaine" />
+  <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+    <include layout="@layout/yw_inc_points" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical" />
+  </FrameLayout>
+  <TextView style="@style/YwBouton" android:layout_width="match_parent" android:layout_height="@dimen/yw_bouton_h"
+      android:text="@string/yw_seance_faite" />
+</LinearLayout>

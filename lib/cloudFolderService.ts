@@ -1,5 +1,5 @@
 // ============================================================
-// YOROI — Service de connexion au dossier cloud natif
+// YOROI : Service de connexion au dossier cloud natif
 // ============================================================
 // Wraps YoroiCloudModule (Swift sur iOS, Kotlin sur Android)
 // pour accéder à un dossier sélectionné par l'utilisateur.

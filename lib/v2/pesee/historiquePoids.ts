@@ -1,0 +1,40 @@
+/**
+ * NUIT 14 : la ligne d'historique d'une pesee (ecran du poids).
+ * Le grand chiffre est le poids mesure de la pesee montree ce jour-la (la plus recente, comme la courbe).
+ * La legende dit d'ou elle vient (la source de CETTE pesee, plus celle d'une autre du meme jour),
+ * puis la tendance en petit, puis les autres pesees du meme jour avec leur poids : rien n'est cache.
+ */
+import type { Weight } from '@/lib/database';
+import { formatKg } from '@/lib/v2/weightStats';
+
+export const WEIGHT_SOURCES: Record<string, string> = {
+  manual: 'saisie à la main',
+  withings: 'balance Withings',
+  garmin: 'Garmin',
+  apple_health: 'Apple Santé',
+  healthkit: 'Apple Santé',
+  health_connect: 'Health Connect',
+  xiaomi: 'balance Xiaomi',
+  balance_photo: 'balance (photo)',
+  yoroi_montre: 'Apple Watch',
+};
+
+export const sourceLabel = (s?: string | null): string => WEIGHT_SOURCES[s ?? 'manual'] ?? 'importée';
+
+/** Les pesees d'un jour, la plus recente d'abord (celle que montrent la courbe et l'accueil) */
+export function weighInsOfDay(raw: Weight[], day: string): Weight[] {
+  return raw
+    .filter((w) => String(w.date).slice(0, 10) === day && Number(w.weight) > 0)
+    .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+}
+
+/** « balance (photo), tendance 91,3 kg, autre pesée ce jour-là : 91,8 kg (saisie à la main) » */
+export function historyCaption(p: { id?: number; date: string; trend: number }, raw: Weight[]): string {
+  const day = weighInsOfDay(raw, p.date);
+  const shown = day.find((w) => w.id === p.id) ?? day[0];
+  const parts = [shown ? sourceLabel(shown.source) : '', `tendance ${formatKg(p.trend)} kg`].filter(Boolean);
+  const others = day.filter((w) => w !== shown);
+  if (others.length === 1) parts.push(`autre pesée ce jour-là : ${formatKg(Number(others[0].weight))} kg (${sourceLabel(others[0].source)})`);
+  else if (others.length > 1) parts.push(`${others.length} autres pesées ce jour-là : ${others.map((w) => `${formatKg(Number(w.weight))} kg`).join(', ')}`);
+  return parts.join(', ');
+}

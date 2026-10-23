@@ -1,5 +1,5 @@
 // ============================================
-// YOROI — Font Scale Manager
+// YOROI : Font Scale Manager
 //
 // 1. Stocke le multiplicateur global (_currentScale)
 // 2. Patche React.createElement + react/jsx-runtime
@@ -87,7 +87,7 @@ function _installPatch(): void {
     };
   } catch (_) {}
 
-  // 2. react/jsx-runtime — utilisé par babel-preset-expo (JSX automatique)
+  // 2. react/jsx-runtime, utilisé par babel-preset-expo (JSX automatique)
   //    Metro compile <Text style={...}> en _jsxRuntime.jsx(Text, {...})
   //    → la propriété est accédée à CHAQUE appel, donc le patch s'applique.
   try {

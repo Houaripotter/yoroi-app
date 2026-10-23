@@ -21,26 +21,50 @@ export interface LiveActivityResult {
   error?: string;
 }
 
-// Module natif
-const { YoroiLiveActivityManager } = NativeModules;
+// Module natif : absent dans Expo Go et parfois sur le simulateur.
+// Dans ce cas NativeModules peut renvoyer undefined, null ou un objet sans methodes :
+// on verifie chaque methode avant de l'appeler, sans jamais lever d'erreur.
+type NativeLA = Record<string, unknown> | null | undefined;
+function nativeModule(): NativeLA {
+  try {
+    return (NativeModules as Record<string, NativeLA>).YoroiLiveActivityManager;
+  } catch {
+    return undefined;
+  }
+}
+function hasMethod(name: string): boolean {
+  const m = nativeModule();
+  return Platform.OS === 'ios' && !!m && typeof m[name] === 'function';
+}
+const YoroiLiveActivityManager = {
+  call: async (name: string, ...args: unknown[]): Promise<any> => {
+    const m = nativeModule();
+    if (!m || typeof m[name] !== 'function') throw new Error('module natif absent');
+    return (m[name] as (...a: unknown[]) => Promise<any>)(...args);
+  },
+  areActivitiesEnabled: () => YoroiLiveActivityManager.call('areActivitiesEnabled'),
+  startActivity: (data: unknown) => YoroiLiveActivityManager.call('startActivity', data),
+  updateActivity: (data: unknown) => YoroiLiveActivityManager.call('updateActivity', data),
+  stopActivity: () => YoroiLiveActivityManager.call('stopActivity'),
+  isActivityRunning: () => YoroiLiveActivityManager.call('isActivityRunning'),
+};
 
 class LiveActivityService {
-  private isAvailable = Platform.OS === 'ios' && YoroiLiveActivityManager !== undefined;
+  private get isAvailable(): boolean {
+    return hasMethod('areActivitiesEnabled') && hasMethod('startActivity');
+  }
 
   /**
    * Vérifier si les Live Activities sont disponibles sur cet appareil
    */
   async checkAvailability(): Promise<boolean> {
-    if (!this.isAvailable) {
-      logger.info('Live Activities non disponibles (iOS 16.1+ requis)');
-      return false;
-    }
+    // Expo Go, simulateur ou iOS trop ancien : pas d'ilot dynamique, en silence
+    if (!this.isAvailable) return false;
 
     try {
       const result = await YoroiLiveActivityManager.areActivitiesEnabled();
-      return result.enabled;
-    } catch (error) {
-      logger.error('Erreur vérification Live Activities:', error);
+      return !!result?.enabled;
+    } catch {
       return false;
     }
   }
@@ -59,13 +83,12 @@ class LiveActivityService {
 
     try {
       const result = await YoroiLiveActivityManager.startActivity(data);
-      logger.info('Live Activity démarrée:', result);
       return {
         success: true,
-        activityId: result.activityId,
+        activityId: result?.activityId,
       };
     } catch (error: unknown) {
-      logger.error('Erreur démarrage Live Activity:', error);
+      logger.warn('Live Activity non démarrée:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -91,7 +114,6 @@ class LiveActivityService {
         success: true,
       };
     } catch (error: unknown) {
-      logger.error('Erreur mise à jour Live Activity:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -112,12 +134,10 @@ class LiveActivityService {
 
     try {
       await YoroiLiveActivityManager.stopActivity();
-      logger.info('Live Activity arrêtée');
       return {
         success: true,
       };
     } catch (error: unknown) {
-      logger.error('Erreur arrêt Live Activity:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -135,9 +155,8 @@ class LiveActivityService {
 
     try {
       const result = await YoroiLiveActivityManager.isActivityRunning();
-      return result.isRunning;
-    } catch (error) {
-      logger.error('Erreur vérification Live Activity:', error);
+      return !!result?.isRunning;
+    } catch {
       return false;
     }
   }

@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER STREAKS · Calcul des streaks victoires / no-tap
+// PARTNER STREAKS : Calcul des streaks victoires / no-tap
 // ============================================
 
 export interface PartnerStreakData {

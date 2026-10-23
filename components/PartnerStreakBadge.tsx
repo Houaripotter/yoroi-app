@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER STREAK BADGE · Affiche la streak actuelle
+// PARTNER STREAK BADGE : Affiche la streak actuelle
 // ============================================
 
 import React from 'react';

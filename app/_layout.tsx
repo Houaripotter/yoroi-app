@@ -1,3 +1,4 @@
+import { MesureApp } from '@/components/MesureApp';
 import { useEffect, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -8,8 +9,11 @@ import { SamuraiSplash } from '@/components/SamuraiLoader';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { vitrineActive } from '@/lib/v2/visite/vitrine';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
+import { ThemeProvider } from '@/lib/ThemeContext';
+import { useFonts } from 'expo-font';
+import { YoroiThemeProvider, useYoroiTheme, yoroiFonts } from '@/components/yoroi';
 import { BadgeProvider } from '@/lib/BadgeContext';
 import { I18nProvider } from '@/lib/I18nContext';
 import { DevModeProvider } from '@/lib/DevModeContext';
@@ -17,38 +21,47 @@ import { PremiumProvider } from '@/context/PremiumContext';
 import { ScreenshotModeProvider } from '@/lib/ScreenshotModeContext';
 import { SportPackProvider } from '@/lib/SportPackContext';
 import FakeStatusBar from '@/components/FakeStatusBar';
-import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
+import { SynchroMontre } from '@/lib/v2/montre/SynchroMontre';
+import { LiensWidgets } from '@/lib/v2/widgets/LiensWidgets';
 import { AvatarProvider } from '@/lib/AvatarContext';
-import DevCodeModal from '@/components/DevCodeModal';
+import { CreatorGuard } from '@/components/yoroi/v2/studio/CreatorGuard';
+import { FinPremiumGuard } from '@/components/yoroi/v2/premium/FinPremiumGuard';
 import { initDatabase } from '@/lib/database';
-import { applyDataRetention, getSelectedLogo } from '@/lib/storage';
+import { runDedupeMigrationOnce } from '@/lib/v2/seances/dedupeMigration';
+import { applyDataRetention, getSelectedLogo, nativeIconNameFor } from '@/lib/storage';
 import { importEventsFromJSON } from '@/lib/eventsService';
-import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { notificationService } from '@/lib/notificationService';
 import { saveNotification } from '@/lib/notificationHistoryService';
 import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { setupNotificationHandler } from '@/lib/eveningHealthTipsService';
-import { initPeerSync, stopPeerSync } from '@/lib/peerSyncService';
+import { stopPeerSync } from '@/lib/peerSyncService';
 import { scheduleAutoBackupOnStartup } from '@/lib/autoBackupService';
 import { scheduleCloudSyncCheckOnStartup } from '@/lib/multiDeviceSyncService';
 import { initAutoWatchSync, syncAllWatchesEnriched } from '@/lib/unifiedWatchSyncService';
 import { GlobalPasswordPromptMount } from '@/components/GlobalPasswordPromptMount';
+import { FenetreHost } from '@/components/yoroi/v2/fenetre/FenetreHost';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/security/logger';
-import { appleWatchService } from '@/lib/appleWatchService';
 import { healthConnect } from '@/lib/healthConnect';
 import * as Notifications from 'expo-notifications';
+import { cibleDeNotification, cleReponse, deposerCible } from '@/lib/v2/notifications/toucher';
+import { OuvertureNotifications } from '@/lib/v2/notifications/OuvertureNotifications';
+import { lancerImportDiscret } from '@/lib/v2/sante/importDiscret';
 
 // ============================================
 // SECURITY: Notification Data Validation
 // ============================================
-const validateNotificationData = (data: any): { workoutId?: string; screen?: string; autoShare?: boolean } => {
+// Seuls ces ecrans recoivent un parametre id depuis une notification (toujours un nombre)
+const SCREENS_WITH_ID = new Set(['competition-detail']);
+const COMPETITION_NOTIF_ID = /^yoroi-competition-(\d{1,12})-/;
+
+const validateNotificationData = (data: any, identifier?: string): { workoutId?: string; screen?: string; id?: string } => {
   if (!data || typeof data !== 'object') {
     return {};
   }
 
-  const result: { workoutId?: string; screen?: string; autoShare?: boolean } = {};
+  const result: { workoutId?: string; screen?: string; id?: string } = {};
 
   // Validate workoutId: must be a non-empty string, alphanumeric with hyphens/underscores
   if (typeof data.workoutId === 'string' && /^[a-zA-Z0-9_-]+$/.test(data.workoutId) && data.workoutId.length > 0) {
@@ -60,47 +73,56 @@ const validateNotificationData = (data: any): { workoutId?: string; screen?: str
     result.screen = data.screen;
   }
 
-  // Validate autoShare: boolean flag to auto-trigger share dialog on arrival
-  if (data.autoShare === true) {
-    result.autoShare = true;
+  // autoShare est ignore volontairement : un partage ne part jamais sans geste de la personne.
+  // Les anciennes notifications qui portent encore autoShare ouvrent simplement l'ecran.
+
+  // Rappel de competition : ouvre le detail de cette competition.
+  // Les rappels programmes avant la vague 19 n'ont pas d'id dans data : on le lit dans leur identifiant fixe.
+  if (data.type === 'competition') {
+    const fromData = typeof data.id === 'string' || typeof data.id === 'number' ? String(data.id) : '';
+    const fromIdentifier = typeof identifier === 'string' ? COMPETITION_NOTIF_ID.exec(identifier)?.[1] ?? '' : '';
+    const compId = /^\d{1,12}$/.test(fromData) ? fromData : fromIdentifier;
+    if (compId) {
+      result.screen = 'competition-detail';
+      result.id = compId;
+    }
+  }
+
+  // Le parametre id n'est accepte que pour les ecrans prevus, et seulement en chiffres
+  if (result.id && (!result.screen || !SCREENS_WITH_ID.has(result.screen) || !/^\d{1,12}$/.test(result.id))) {
+    delete result.id;
   }
 
   return result;
 };
 
 // Restaurer l'icône native sélectionnée (expo-alternate-app-icons)
-let _setAlternateAppIcon: ((name: string) => Promise<void>) | null = null;
-let _resetAppIcon: (() => Promise<void>) | null = null;
+// Les anciens choix (Logo1, Yoroi1 a Yoroi6) n'existent plus : nativeIconNameFor les ramene a l'icone par defaut.
+let _setAlternateAppIcon: ((name: string | null) => Promise<string | null>) | null = null;
+let _getAppIconName: (() => string | null) | null = null;
 let _supportsAlternateIcons = false;
-const ICON_NAME_MAP: Record<string, string | null> = {
-  default: null,
-  logo_new: 'Logo1',
-  logo1: 'Yoroi1',
-  logo2: 'Yoroi2',
-  logo3: 'Yoroi3',
-  logo4: 'Yoroi4',
-  logo5: 'Yoroi5',
-  logo6: 'Yoroi6',
-};
 try {
   const mod = require('expo-alternate-app-icons');
   _setAlternateAppIcon = mod.setAlternateAppIcon;
-  _resetAppIcon = mod.resetAppIcon;
+  _getAppIconName = mod.getAppIconName ?? null;
   _supportsAlternateIcons = mod.supportsAlternateIcons ?? false;
 } catch {
   // Module natif indisponible (Expo Go)
 }
 
 async function restoreAppIcon() {
-  if (!_supportsAlternateIcons || !_setAlternateAppIcon || !_resetAppIcon) return;
+  if (!_supportsAlternateIcons || !_setAlternateAppIcon) return;
   try {
-    const logoId = await getSelectedLogo();
-    const iconName = ICON_NAME_MAP[logoId];
-    if (iconName === null || iconName === undefined) {
-      await _resetAppIcon();
-    } else {
-      await _setAlternateAppIcon(iconName);
+    const target = nativeIconNameFor(await getSelectedLogo());
+    let current: string | null | undefined;
+    try {
+      current = _getAppIconName ? _getAppIconName() : undefined;
+    } catch {
+      current = undefined;
     }
+    // iOS affiche une alerte a chaque changement : on ne touche a rien si l'icone est deja la bonne
+    if (current !== undefined && (current ?? null) === target) return;
+    await _setAlternateAppIcon(target);
   } catch (err) {
     logger.error('[Layout] Erreur restauration icône:', err);
   }
@@ -128,13 +150,15 @@ LogBox.ignoreLogs([
 
 // Couleurs pour le loading screen (avant que ThemeProvider soit monte)
 const LOADING_COLORS = {
-  background: '#0D0D0F',
+  background: '#F2F1EC',
   gold: '#D4AF37',
   textSecondary: '#8E8E93',
 };
 
 function RootLayoutContent() {
-  const { isDark, colors } = useTheme();
+  // vague 35 : la barre d'etat et le fond suivent le mode clair, sombre ou auto de YOROI
+  const { theme: yoroiTheme, isDark } = useYoroiTheme();
+  const colors = yoroiTheme.colors;
   const router = useRouter();
 
   // Celebration globale : badge debloque / challenge complete / milestone
@@ -150,7 +174,7 @@ function RootLayoutContent() {
       setCelebration({
         type: 'badge_unlocked',
         title: 'BADGE DÉBLOQUÉ',
-        subtitle: payload?.name ? `${payload.name}${payload.description ? ` · ${payload.description}` : ''}` : undefined,
+        subtitle: payload?.name ? `${payload.name}${payload.description ? `, ${payload.description}` : ''}` : undefined,
         xpGained: payload?.xpReward,
       });
     });
@@ -190,7 +214,7 @@ function RootLayoutContent() {
     return () => { cancelled = true; sub?.remove(); };
   }, []);
 
-  // Notification hebdo récap (dimanche 19h) · s'assure qu'elle est planifiée
+  // Notification hebdo récap (dimanche 19h) : s'assure qu'elle est planifiée
   useEffect(() => {
     import('@/lib/weeklyRecapNotification')
       .then(({ ensureWeeklyRecapScheduled }) => ensureWeeklyRecapScheduled())
@@ -214,17 +238,40 @@ function RootLayoutContent() {
     return () => sub.remove();
   }, []);
 
+  // Vague 27 : rappel doux de la pesee habituelle (jamais de demande d'autorisation ici),
+  // reprogramme au lancement, au retour dans l'app et apres chaque pesee
+  useEffect(() => {
+    const replan = () => {
+      // 18 octobre 2026 : pas pendant la visite guidee avec l'exemple (les rappels suivent tes donnees, refaits a la fin)
+      if (vitrineActive()) return;
+      import('@/lib/v2/pesee/rappelHabitude')
+        .then(({ planifierRappelPesee }) => planifierRappelPesee())
+        .catch(() => {});
+      // 14 octobre 2026 : rappels de seance dates, sans les jours deja faits (lib/v2/notifications/discipline.ts)
+      import('@/lib/notificationService')
+        .then(({ notificationService }) => notificationService.replanifierSeances())
+        .catch(() => {});
+    };
+    replan();
+    const app = AppState.addEventListener('change', (state) => {
+      if (state === 'active') replan();
+    });
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const data = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(replan, 1500);
+    });
+    return () => {
+      app.remove();
+      data.remove();
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
   // Init crash reporter (no-op tant que Sentry n'est pas installé + DSN configuré)
   useEffect(() => {
     import('@/lib/crashReporter')
       .then(({ initCrashReporter }) => initCrashReporter())
-      .catch(() => {});
-  }, []);
-
-  // Init flag Premium
-  useEffect(() => {
-    import('@/lib/premiumService')
-      .then(({ initPremium }) => initPremium())
       .catch(() => {});
   }, []);
 
@@ -245,22 +292,16 @@ function RootLayoutContent() {
     // Handler commun : sauvegarde dans la cloche + navigation deep link
     const handleNotificationTap = (response: Notifications.NotificationResponse) => {
       const { title, body, data } = response.notification.request.content;
-      const validatedData = validateNotificationData(data);
+      const validatedData = validateNotificationData(data, response.notification.request.identifier);
 
       if (title) {
         const type = (data?.type as string) ?? 'general';
         saveNotification(title, body ?? '', type, data as Record<string, any> | undefined).catch(() => {});
       }
 
-      // Timeout plus long (1500ms) pour couvrir cold-start où le router n'est pas encore prêt
-      if (validatedData.workoutId) {
-        setTimeout(() => router.push(`/social-share/last-session?id=${validatedData.workoutId}` as any), 1500);
-      } else if (validatedData.screen) {
-        // 'home' n'est pas une route : l'accueil est /(tabs)
-        const base = validatedData.screen === 'home' ? '/(tabs)' : `/${validatedData.screen}`;
-        const url = validatedData.autoShare ? `${base}?autoShare=1` : base;
-        setTimeout(() => router.push(url as any), 1500);
-      }
+      // 18 octobre 2026 : la cible attend que la navigation soit prete (demarrage a froid compris) et
+      // une seance ouvre sa carte de partage (lib/v2/notifications/toucher.ts, OuvertureNotifications.tsx)
+      deposerCible(cibleDeNotification(data as Record<string, unknown> | undefined, validatedData), cleReponse(response));
     };
 
     // Deep link: quand l'utilisateur tape sur une notification (app ouvert/background)
@@ -324,7 +365,6 @@ function RootLayoutContent() {
       foregroundNotifSubscription?.remove?.();
       workoutNotifSubscription?.remove?.();
       appStateSubscription?.remove?.();
-      appleWatchService.cleanup();
       stopPeerSync().catch(() => {});
     };
   }, []);
@@ -336,11 +376,17 @@ function RootLayoutContent() {
           headerShown: false,
           gestureEnabled: true,
           fullScreenGestureEnabled: true,
-          animation: 'slide_from_right',
+          // vague 21 : fondu court entre les pages, plus de glissement depuis la droite
+          animation: 'fade',
+          animationDuration: 180,
         }}
       >
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="ajouter" options={{ presentation: 'transparentModal', animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="pesee" options={{ presentation: 'modal', animation: 'default' }} />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
+        {/* 14 octobre 2026 : mini onboarding de la 3.0 (mise a jour) et « Revoir la presentation » */}
+        <Stack.Screen name="nouveautes" options={{ gestureEnabled: false, animation: 'fade' }} />
 
         {/* Écrans standard */}
         <Stack.Screen name="profile" options={{ presentation: 'card' }} />
@@ -359,6 +405,7 @@ function RootLayoutContent() {
         <Stack.Screen name="history" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-composition" options={{ presentation: 'card' }} />
+        <Stack.Screen name="balance-photo" options={{ presentation: 'card' }} />
         <Stack.Screen name="weight-manager" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-history" options={{ presentation: 'card' }} />
 
@@ -389,6 +436,8 @@ function RootLayoutContent() {
         <Stack.Screen name="activity-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="activity-history" options={{ presentation: 'card' }} />
         <Stack.Screen name="composition-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="poids-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="force-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="measurements" options={{ presentation: 'card' }} />
         <Stack.Screen name="measurements-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="performance-detail" options={{ presentation: 'card' }} />
@@ -438,16 +487,24 @@ function RootLayoutContent() {
         <Stack.Screen name="wrapped" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="competition-countdown" options={{ presentation: 'card' }} />
         <Stack.Screen name="matchup-matrix" options={{ presentation: 'card' }} />
-        <Stack.Screen name="partner-insights" options={{ presentation: 'card' }} />
-        <Stack.Screen name="partner-export" options={{ presentation: 'card' }} />
         <Stack.Screen name="partners-tier-list" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
-      <DevCodeModal />
-      {/* Modal global pour demander un mot de passe (cross-platform, remplace Alert.prompt) */}
+      {/* Liens des widgets et du Centre de controle : ouvre l'ecran vise une fois l'app prete */}
+      <LiensWidgets />
+      {/* Notification touchee : ouvre son ecran (carte de la seance...) une fois l'app prete */}
+      <OuvertureNotifications />
+      {/* Studio : coupe les modes de test quand le mode createur n'est pas actif */}
+      <CreatorGuard />
+      {/* Vague 47 : sans Premium, les scenes et personnages Premium sont mis de cote, puis reviennent avec Premium */}
+      <FinPremiumGuard />
+      <MesureApp />
+      {/* Ancien hote du mot de passe (les demandes passent desormais par la fenetre maison) */}
       <GlobalPasswordPromptMount />
-      {/* Biometric lock (FaceID / TouchID) · tout en haut pour masquer l'UI */}
+      {/* Fenetre maison unique (appAlert, appChoices, appPrompt), au-dessus de tout, y compris des ecrans modaux */}
+      <FenetreHost />
+      {/* Biometric lock (FaceID / TouchID), tout en haut pour masquer l'UI */}
       <BiometricLockOverlay />
       {/* Celebration globale (badge / challenge / milestone) */}
       {celebration && (
@@ -482,12 +539,18 @@ export default function RootLayout() {
         try {
           await initDatabase();
           logger.info('Base de données initialisee');
+          // Nettoyage unique des seances importees en double (avant la synchro entre appareils)
+          await runDedupeMigrationOnce().catch(err => logger.error('Erreur nettoyage des doublons:', err));
+          // Vague 45 : une demo (Heny) chargee par une ancienne version ne garde rien apres aujourd'hui (vraies donnees jamais touchees)
+          import('@/lib/demoDataService').then((m) => m.trimDemoFuture()).catch(err => logger.error('Erreur nettoyage de la démo:', err));
           // Importer les événements sportifs en arrière-plan (ne bloque pas le reste)
           importEventsFromJSON().catch(err => logger.error('Erreur import événements:', err));
           // Rafraîchir les widgets avec les données actuelles
           import('@/lib/widgetData').then(({ refreshWidgetsFromDB }) => refreshWidgetsFromDB()).catch(() => {});
         } catch (err) {
           logger.error('Erreur init database ou import événements:', err);
+          // Message honnete : rien n'est efface, une copie de securite a ete faite juste avant
+          import('@/lib/v2/sauvegarde/echec').then((m) => m.annoncerEchecMiseAJour(err)).catch(() => {});
         }
 
         // Restaurer l'icône native (doit correspondre au logo sélectionné par l'utilisateur)
@@ -495,42 +558,40 @@ export default function RootLayout() {
 
         // Services indépendants en parallèle (DB déjà prête)
         await Promise.allSettled([
-          appleWatchService.init()
-            .then(() => logger.info('Apple Watch Service initialisé'))
-            .catch(err => logger.error('Erreur Apple Watch Service:', err)),
-
           migrateAvatarSystem()
             .then(() => logger.info('Migration avatars effectuee'))
             .catch(err => logger.error('Erreur migration avatars:', err)),
 
-          autoImportCompetitionsOnFirstLaunch()
-            .then(() => logger.info('Auto-import compétitions terminé'))
-            .catch(err => logger.error('Erreur auto-import compétitions:', err)),
-
-          notificationService.initialize()
-            .then(success => {
-              if (success) {
-                logger.info('Service notifications initialisé');
-                return initCitationNotifications();
+          // Aucune demande d'autorisation au demarrage : on ne programme que si elle est deja accordee
+          Notifications.getPermissionsAsync()
+            .then(({ status }) => {
+              if (status !== 'granted') {
+                logger.info('Notifications non autorisées : programmation en attente');
+                return;
               }
+              return notificationService.initialize()
+                .then(success => {
+                  if (success) {
+                    logger.info('Service notifications initialisé');
+                    return initCitationNotifications().then(() => logger.info('Citation du jour initialisée'));
+                  }
+                });
             })
-            .then(() => logger.info('Citation du jour initialisée'))
             .catch(err => logger.error('Erreur notifications:', err)),
 
           applyDataRetention()
             .then(() => logger.info('Data retention policy applied'))
             .catch(err => logger.error('Erreur data retention:', err)),
 
-          initPeerSync()
-            .then(() => logger.info('PeerSync iPhone<->iPad démarré'))
-            .catch(err => logger.error('Erreur PeerSync:', err)),
+          // Synchro iPhone et iPad : ne demarre plus au lancement (13 octobre 2026).
+          // Elle demarre seulement depuis l'ecran de synchro, avec un appareil appaire par code.
         ]);
 
-        // Auto-backup silent quotidien (ne ralentit pas le démarrage · delay 8s)
+        // Auto-backup silent quotidien (ne ralentit pas le démarrage, delay 8s)
         scheduleAutoBackupOnStartup();
         // Multi-device sync : check si un backup cloud plus récent existe (delay 12s)
         scheduleCloudSyncCheckOnStartup();
-        // Watch sync enrichi (Apple Watch + Wear OS) · débounced 3s après chaque modif
+        // Wear OS (Android) : sync enrichie, débounced 3s après chaque modif. L'Apple Watch passe par <SynchroMontre />.
         initAutoWatchSync();
         // Première sync au démarrage (delay 10s)
         setTimeout(() => syncAllWatchesEnriched().catch(() => {}), 10000);
@@ -557,7 +618,8 @@ export default function RootLayout() {
                 const last = lastStr ? parseInt(lastStr, 10) : 0;
                 const now = Date.now();
                 if (!last || now - last > 24 * 3600 * 1000) {
-                  healthConnect.importFullHistory()
+                  // 16 octobre 2026 : filet de securite en discret, sans l'ancien bandeau « Import santé » (lib/v2/sante/importDiscret.ts)
+                  lancerImportDiscret(() => healthConnect.importFullHistory())
                     .then(() => AsyncStorage.setItem(LAST_IMPORT_KEY, String(now)))
                     .catch(err => logger.error('Erreur import historique:', err));
                 } else {
@@ -596,7 +658,8 @@ export default function RootLayout() {
                 const lastA = lastStrA ? parseInt(lastStrA, 10) : 0;
                 const nowA = Date.now();
                 if (!lastA || nowA - lastA > 24 * 3600 * 1000) {
-                  healthConnect.importFullHistory()
+                  // 16 octobre 2026 : en discret, sans bandeau (meme raison que iOS)
+                  lancerImportDiscret(() => healthConnect.importFullHistory())
                     .then(() => AsyncStorage.setItem(LAST_IMPORT_KEY_ANDROID, String(nowA)))
                     .catch(err => logger.error('Erreur import historique Android:', err));
                 }
@@ -615,10 +678,13 @@ export default function RootLayout() {
     init();
   }, []);
 
-  if (!isReady) {
+  const [yoroiFontsLoaded, yoroiFontsError] = useFonts(yoroiFonts);
+
+  if (!isReady || (!yoroiFontsLoaded && !yoroiFontsError)) {
     return (
       <View style={{ flex: 1, backgroundColor: LOADING_COLORS.background }}>
-        <SamuraiSplash isDark={true} message="Chargement de Yoroi..." size={260} />
+        {/* meme fond et meme embleme que le splash natif : le passage se fait sans saut */}
+        <SamuraiSplash />
       </View>
     );
   }
@@ -629,21 +695,22 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <I18nProvider>
           <ThemeProvider>
+            <YoroiThemeProvider initialTheme="dojo" locked>
             <DevModeProvider>
               <PremiumProvider>
               <ScreenshotModeProvider>
                 <SportPackProvider>
                   <AvatarProvider>
                     <BadgeProvider>
-                      <WatchConnectivityProvider>
-                        <RootLayoutContent />
-                      </WatchConnectivityProvider>
+                      <SynchroMontre />
+                      <RootLayoutContent />
                     </BadgeProvider>
                   </AvatarProvider>
                 </SportPackProvider>
               </ScreenshotModeProvider>
               </PremiumProvider>
             </DevModeProvider>
+            </YoroiThemeProvider>
           </ThemeProvider>
         </I18nProvider>
       </SafeAreaProvider>

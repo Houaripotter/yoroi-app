@@ -226,7 +226,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
       if (!viewShotRef.current) return;
       const uri = await viewShotRef.current.capture?.();
       if (!uri) {
-        showPopup('Erreur', 'Impossible de capturer l\'image', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Oups', 'L’image n’a pas pu être capturée.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -254,9 +254,9 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
               const { status } = await requestPermissionsAsync();
               if (status === 'granted') {
                 await saveToLibraryAsync(uri);
-                showPopup('Sauvegarde', 'Image enregistree dans ta galerie', [{ text: 'OK', style: 'primary' }]);
+                showPopup('Image enregistrée', 'Elle est dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
               } else {
-                showPopup('Permission refusee', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);
+                showPopup('Accès à la galerie', 'Autorise l’accès à ta galerie dans les réglages du téléphone.', [{ text: 'OK', style: 'primary' }]);
               }
             },
           },
@@ -265,7 +265,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
       );
     } catch (error) {
       logger.error('Erreur capture:', error);
-      showPopup('Erreur', 'Impossible de creer l\'image', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', 'L’image n’a pas pu être créée.', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -482,7 +482,6 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                   {/* Branding */}
                   <View style={[styles.exportBranding, { backgroundColor: colors.background }]}>
                     <Text style={[styles.brandingText, { color: colors.gold }]}>YOROI</Text>
-                    <Text style={[styles.brandingSubtext, { color: colors.textMuted }]}>鎧</Text>
                   </View>
                 </ViewShot>
               )}
@@ -571,7 +570,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                         {weightDifference > 0 ? '+' : ''}{weightDifference.toFixed(1)} kg
                       </Text>
                     ) : (
-                      <Text style={[styles.statValue, { color: colors.textMuted }]}>·</Text>
+                      <Text style={[styles.statValue, { color: colors.textMuted }]}>Aucune</Text>
                     )}
                   </View>
 
@@ -585,7 +584,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                         {daysDifference === 0 ? 'Aujourd\'hui' : `${daysDifference} j`}
                       </Text>
                     ) : (
-                      <Text style={[styles.statValue, { color: colors.textMuted }]}>·</Text>
+                      <Text style={[styles.statValue, { color: colors.textMuted }]}>Aucune</Text>
                     )}
                   </View>
                 </View>

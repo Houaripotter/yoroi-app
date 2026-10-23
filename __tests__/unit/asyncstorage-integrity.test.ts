@@ -86,6 +86,13 @@ jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(() => Promise.resolve(false)),
 }));
 
+// Services appeles par « Tout effacer » (effets natifs, sans objet ici)
+jest.mock('@/lib/peerSyncService', () => ({ oublierTousLesAppareils: jest.fn(() => Promise.resolve()) }));
+jest.mock('@/lib/v2/widgets/natif', () => ({ arreterActiviteNatif: jest.fn() }));
+jest.mock('@/lib/v2/widgets/synchro', () => ({ ecrireWidgets: jest.fn(() => Promise.resolve(true)) }));
+jest.mock('@/lib/widgetSync', () => ({ syncWidget: jest.fn(() => Promise.resolve()) }));
+jest.mock('@/lib/v2/montre/synchro', () => ({ envoyerContexteMontre: jest.fn(() => Promise.resolve(true)) }));
+
 jest.mock('expo-document-picker', () => ({
   getDocumentAsync: jest.fn(() => Promise.resolve({ canceled: true })),
 }));
@@ -890,21 +897,18 @@ describe('8. TAILLE & LIMITES', () => {
 describe('9. ATOMICITÉ & MULTI-OPÉRATIONS', () => {
   beforeEach(clearStore);
 
-  test('9.1 - resetAllData efface toutes les clés Yoroi', async () => {
-    // Set up various keys
+  test('9.1 - effacerToutesMesDonnees efface toutes les clés, sans exception', async () => {
     mockStore['@yoroi_workouts'] = JSON.stringify([]);
     mockStore['@yoroi_user_mode'] = 'fighter';
     mockStore['@yoroi_hydration_log'] = JSON.stringify([]);
-    mockStore['some_other_app_key'] = 'preserved';
+    mockStore['yoroi_onboarding_done'] = 'true';
+    mockStore['une_cle_sans_prefixe'] = 'x';
 
-    const { resetAllData } = require('@/lib/storage');
-    await resetAllData();
+    const { effacerToutesMesDonnees } = require('@/lib/storage');
+    await effacerToutesMesDonnees();
 
-    // Yoroi keys should be removed
-    expect(mockStore['@yoroi_workouts']).toBeUndefined();
-    expect(mockStore['@yoroi_hydration_log']).toBeUndefined();
-    // Non-Yoroi keys should be preserved
-    expect(mockStore['some_other_app_key']).toBe('preserved');
+    // « Tout effacer » vide AsyncStorage entierement : l'app repart comme neuve, onboarding compris
+    expect(Object.keys(mockStore)).toEqual([]);
   });
 
   test('9.2 - resetAllData ne manque pas les clés non-prefixées', () => {

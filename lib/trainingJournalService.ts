@@ -3,6 +3,8 @@
 // ============================================
 
 import { Platform } from 'react-native';
+import { baseOuVitrine } from '@/lib/v2/visite/vitrine';
+import { getSportName } from '@/lib/sports';
 import { logger } from '@/lib/security/logger';
 
 // Platform-specific: SQLite only available on native
@@ -12,7 +14,8 @@ let db: any = null;
 
 if (isNativePlatform) {
   SQLite = require('expo-sqlite');
-  db = SQLite.openDatabaseSync('yoroi.db');
+  // 18 octobre 2026 : pendant la visite guidee avec l'exemple, la meme poignee lit la base de la vitrine (lib/v2/visite/vitrine.ts)
+  db = baseOuVitrine(SQLite.openDatabaseSync('yoroi.db'));
 }
 
 // ============================================
@@ -131,7 +134,7 @@ export const initTrainingJournalDB = () => {
       // Si le PRAGMA n'a rien retourné, la table doit pas exister ou pas encore créée.
       // On skip pour éviter les tentatives d'ALTER qui feraient du bruit.
       if (existing.size === 0) {
-        logger.info('[TRAINING_JOURNAL] progression_items absent ou vide — skip migrations');
+        logger.info('[TRAINING_JOURNAL] progression_items absent ou vide, skip migrations');
         return;
       }
 
@@ -498,15 +501,15 @@ export const getJournalStats = () => {
 // ============================================
 
 export const SPORT_LABELS: Record<Sport, string> = {
-  jjb: 'Jiu-Jitsu Brésilien',
+  jjb: getSportName('jjb'),
   mma: 'MMA',
   boxe: 'Boxe',
-  muay_thai: 'Muay Thaï',
+  muay_thai: getSportName('muay_thai'),
   judo: 'Judo',
   karate: 'Karaté',
   musculation: 'Musculation',
   crossfit: 'CrossFit',
-  running: 'Running',
+  running: getSportName('running'),
   trail: 'Trail',
   autre: 'Autre',
 };

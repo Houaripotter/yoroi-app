@@ -1,5 +1,5 @@
 // ============================================
-// SPORT PACKS · mapping des sports vers des packs d'onglets
+// SPORT PACKS : mapping des sports vers des packs d'onglets
 // ============================================
 
 export type SportPack = 'combat' | 'endurance' | 'force' | 'musculation' | 'nature' | 'all';
@@ -61,47 +61,47 @@ export const PACK_META: Record<SportPack, PackMeta> = {
   combat: {
     key: 'combat',
     label: 'Combat',
-    emoji: '⚔️',
-    description: 'JJB · MMA · Boxe · Grappling',
+    emoji: '',
+    description: 'JJB, MMA, Boxe, Grappling',
     color: '#DC2626',
     primarySport: 'jjb',
   },
   endurance: {
     key: 'endurance',
     label: 'Endurance',
-    emoji: '🏃',
-    description: 'Running · Marathon · Trail · Triathlon',
+    emoji: '',
+    description: 'Running, Marathon, Trail, Triathlon',
     color: '#10B981',
     primarySport: 'running',
   },
   force: {
     key: 'force',
     label: 'Force',
-    emoji: '⚡',
-    description: 'Hyrox · CrossFit · Powerlifting · Strongman',
+    emoji: '',
+    description: 'Hyrox, CrossFit, Powerlifting, Strongman',
     color: '#F59E0B',
     primarySport: 'hyrox',
   },
   musculation: {
     key: 'musculation',
     label: 'Muscu',
-    emoji: '💪',
-    description: 'Musculation · Bodybuilding · Fitness',
+    emoji: '',
+    description: 'Musculation, Bodybuilding, Fitness',
     color: '#EC4899',
     primarySport: 'musculation',
   },
   nature: {
     key: 'nature',
     label: 'Nature',
-    emoji: '⛰️',
-    description: 'Escalade · Ski · Plein air',
+    emoji: '',
+    description: 'Escalade, ski, extérieur',
     color: '#8B5CF6',
     primarySport: 'climbing',
   },
   all: {
     key: 'all',
     label: 'Tous',
-    emoji: '🎯',
+    emoji: '',
     description: 'Tous sports mélangés',
     color: '#6B7280',
     primarySport: '',

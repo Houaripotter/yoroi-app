@@ -1,580 +1,252 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { router } from 'expo-router';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { useTheme } from '@/lib/ThemeContext';
-import { Trophy, User, Weight, Award, ChevronRight, Check } from 'lucide-react-native';
+/**
+ * Profil competiteur (refonte v2) : genre, poids actuel, categorie IBJJF, ceinture de jiu-jitsu.
+ * Chaque choix est enregistre tout de suite (meme stockage que l'ancien ecran).
+ */
+import React, { useEffect, useState } from 'react';
+import { Image, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { BigButton, Card, Enter, Glass, Icon, P, Press, SectionTitle, tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen, Hanko } from '@/components/yoroi/v2/ornements/screens';
+import { Chip, ChipScroll, Field } from '@/components/yoroi/v2/competition/ui';
+import { BeltSwatch } from '@/components/yoroi/v2/dojo/parts';
+import { useAthlete } from '@/lib/v2/competition/athlete';
+import { sportArt } from '@/lib/v2/seances/illustrations';
+import { formatKg } from '@/lib/v2/weightStats';
+import { ibjjfAdvised, ibjjfCategories, ibjjfWeightLabel, normalizeIbjjfId } from '@/lib/v2/competition/ibjjf';
+import type { IbjjfCategory } from '@/lib/v2/competition/ibjjf';
 import logger from '@/lib/security/logger';
-import { useI18n } from '@/lib/I18nContext';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 const COMPETITOR_PROFILE_KEY = '@yoroi_competitor_profile';
 
-// Catégories IBJJF Hommes (poids en kg)
-const IBJJF_CATEGORIES_MEN = [
-  { id: 'rooster', name: 'Rooster', weight: '57.5 kg', maxWeight: 57.5 },
-  { id: 'light-feather', name: 'Light Feather', weight: '64 kg', maxWeight: 64 },
-  { id: 'feather', name: 'Feather', weight: '70 kg', maxWeight: 70 },
-  { id: 'light', name: 'Light', weight: '76 kg', maxWeight: 76 },
-  { id: 'middle', name: 'Middle', weight: '82.3 kg', maxWeight: 82.3 },
-  { id: 'medium-heavy', name: 'Medium Heavy', weight: '88.3 kg', maxWeight: 88.3 },
-  { id: 'heavy', name: 'Heavy', weight: '94.3 kg', maxWeight: 94.3 },
-  { id: 'super-heavy', name: 'Super Heavy', weight: '100.5 kg', maxWeight: 100.5 },
-  { id: 'ultra-heavy', name: 'Ultra Heavy', weight: '+100.5 kg', maxWeight: 999 },
-];
-
-// Catégories IBJJF Femmes (poids en kg)
-const IBJJF_CATEGORIES_WOMEN = [
-  { id: 'rooster', name: 'Rooster', weight: '48.5 kg', maxWeight: 48.5 },
-  { id: 'light-feather', name: 'Light Feather', weight: '53.5 kg', maxWeight: 53.5 },
-  { id: 'feather', name: 'Feather', weight: '58.5 kg', maxWeight: 58.5 },
-  { id: 'light', name: 'Light', weight: '64 kg', maxWeight: 64 },
-  { id: 'middle', name: 'Middle', weight: '69 kg', maxWeight: 69 },
-  { id: 'medium-heavy', name: 'Medium Heavy', weight: '74 kg', maxWeight: 74 },
-  { id: 'heavy', name: 'Heavy', weight: '79.3 kg', maxWeight: 79.3 },
-  { id: 'super-heavy', name: 'Super Heavy', weight: '+79.3 kg', maxWeight: 999 },
-];
-
-// Ceintures BJJ
+type Cat = { id: string; name: string; weight: string; maxWeight: number };
+/** Liste commune de l'app (noms officiels portugais), voir lib/v2/competition/ibjjf.ts */
+const toCat = (c: IbjjfCategory): Cat => ({ id: c.id, name: c.name, weight: ibjjfWeightLabel(c), maxWeight: c.maxWeight });
 const BJJ_BELTS = [
-  { id: 'white', nameKey: 'beltWhite', color: '#FFFFFF', borderColor: '#E5E7EB' },
-  { id: 'blue', nameKey: 'beltBlue', color: '#3B82F6', borderColor: '#3B82F6' },
-  { id: 'purple', nameKey: 'beltPurple', color: '#8B5CF6', borderColor: '#8B5CF6' },
-  { id: 'brown', nameKey: 'beltBrown', color: '#78350F', borderColor: '#78350F' },
-  { id: 'black', nameKey: 'beltBlack', color: '#1F2937', borderColor: '#1F2937' },
+  { id: 'white', name: 'Blanche', color: '#FFFFFF', edge: '#CFCAC0' },
+  { id: 'blue', name: 'Bleue', color: '#2C4A84', edge: '#2C4A84' },
+  { id: 'purple', name: 'Violette', color: '#5B3F86', edge: '#5B3F86' },
+  { id: 'brown', name: 'Marron', color: '#6B4226', edge: '#6B4226' },
+  { id: 'black', name: 'Noire', color: '#1D2029', edge: '#1D2029' },
 ];
 
-interface CompetitorProfile {
-  gender: 'male' | 'female' | null;
-  category: string | null;
-  belt: string | null;
-  currentWeight: number | null;
-}
+type CompetitorProfile = { gender: 'male' | 'female' | null; category: string | null; belt: string | null; currentWeight: number | null };
 
 export default function CompetitorProfileScreen() {
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const [profile, setProfile] = useState<CompetitorProfile>({
-    gender: null,
-    category: null,
-    belt: null,
-    currentWeight: null,
-  });
+  const router = useRouter();
+  const { lastWeight, gender: athleteGender, loaded: athleteLoaded } = useAthlete();
+  const [storedLoaded, setStoredLoaded] = useState(false);
+  const [genderFromProfile, setGenderFromProfile] = useState(false);
+  const [profile, setProfile] = useState<CompetitorProfile>({ gender: null, category: null, belt: null, currentWeight: null });
   const [weightInput, setWeightInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   useEffect(() => {
-    loadProfile();
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(COMPETITOR_PROFILE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            // Migration douce : les anciens identifiants anglais (rooster...) deviennent portugais (galo...)
+            const migrated = parsed.category ? normalizeIbjjfId(parsed.category) : null;
+            if (parsed.category && migrated && migrated !== parsed.category) {
+              parsed.category = migrated;
+              AsyncStorage.setItem(COMPETITOR_PROFILE_KEY, JSON.stringify(parsed)).catch(() => {});
+            }
+            setProfile(parsed);
+            if (parsed.currentWeight) setWeightInput(String(parsed.currentWeight).replace('.', ','));
+          }
+        }
+      } catch (error) {
+        logger.error('Erreur chargement profil compétiteur:', error);
+      }
+      setStoredLoaded(true);
+    })();
   }, []);
 
-  const loadProfile = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(COMPETITOR_PROFILE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
-        setProfile(parsed);
-        if (parsed.currentWeight) {
-          setWeightInput(parsed.currentWeight.toString());
-        }
-      }
-    } catch (error) {
-      logger.error('Erreur chargement profil compétiteur:', error);
-    }
-  };
+  // Genre pre-rempli depuis ton profil quand la fiche n'en a pas encore
+  useEffect(() => {
+    if (!storedLoaded || !athleteLoaded || profile.gender) return;
+    setGenderFromProfile(true);
+    setProfile((p) => (p.gender ? p : { ...p, gender: athleteGender === 'femme' ? 'female' : 'male' }));
+  }, [storedLoaded, athleteLoaded, athleteGender, profile.gender]);
 
-  const saveProfile = async (updatedProfile: CompetitorProfile) => {
+  const save = async (p: CompetitorProfile) => {
+    setProfile(p);
     try {
-      await AsyncStorage.setItem(COMPETITOR_PROFILE_KEY, JSON.stringify(updatedProfile));
-      setProfile(updatedProfile);
+      await AsyncStorage.setItem(COMPETITOR_PROFILE_KEY, JSON.stringify(p));
     } catch (error) {
       logger.error('Erreur sauvegarde profil compétiteur:', error);
     }
   };
 
-  const handleGenderSelect = (gender: 'male' | 'female') => {
-    const updated = { ...profile, gender, category: null };
-    saveProfile(updated);
-  };
+  const cats = ibjjfCategories(profile.gender).map(toCat);
+  const advisedCat = profile.currentWeight && profile.gender ? ibjjfAdvised(profile.gender, profile.currentWeight) : undefined;
+  const recommended = advisedCat ? toCat(advisedCat) : undefined;
+  const belt = BJJ_BELTS.find((b) => b.id === profile.belt);
+  const category = cats.find((c) => c.id === (normalizeIbjjfId(profile.category) ?? profile.category));
+  const complete = !!(profile.gender && profile.category && profile.belt);
 
-  const handleCategorySelect = (categoryId: string) => {
-    const updated = { ...profile, category: categoryId };
-    saveProfile(updated);
-  };
-
-  const handleBeltSelect = (beltId: string) => {
-    const updated = { ...profile, belt: beltId };
-    saveProfile(updated);
-  };
-
-  const handleWeightSave = () => {
-    const weight = parseFloat(weightInput);
-    if (isNaN(weight) || weight <= 0) {
-      showPopup(t('competitorProfile.errorTitle'), t('competitorProfile.invalidWeight'), [
-        { text: 'OK', style: 'primary' }
-      ]);
+  const saveWeight = (raw = weightInput) => {
+    const w = parseFloat(raw.replace(',', '.'));
+    if (isNaN(w) || w <= 0 || w > 400) {
+      appAlert('Poids invalide', 'Entre un poids en kilos, par exemple 75,5.');
       return;
     }
-    const updated = { ...profile, currentWeight: weight };
-    saveProfile(updated);
-    showPopup(t('competitorProfile.successTitle'), t('competitorProfile.weightSaved'), [
-      { text: 'OK', style: 'primary' }
-    ]);
+    save({ ...profile, currentWeight: w });
+    tap('success');
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 1800);
   };
-
-  const getCurrentCategories = () => {
-    return profile.gender === 'female' ? IBJJF_CATEGORIES_WOMEN : IBJJF_CATEGORIES_MEN;
-  };
-
-  const getRecommendedCategory = () => {
-    if (!profile.currentWeight || !profile.gender) return null;
-    const categories = getCurrentCategories();
-    return categories.find(cat => profile.currentWeight! <= cat.maxWeight);
-  };
-
-  const recommendedCategory = getRecommendedCategory();
 
   return (
-    <ScreenWrapper>
-      {/* Bouton retour */}
-      <Header showBack />
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
-          <Trophy size={32} color="#F59E0B" />
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {t('competitorProfile.title')}
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {t('competitorProfile.subtitle')}
-          </Text>
-        </View>
-
-        {/* Section 1: Genre */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <User size={20} color={colors.accentText} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('competitorProfile.section1')}
-            </Text>
-          </View>
-
-          <View style={styles.optionsRow}>
-            <TouchableOpacity
-              style={[
-                styles.genderButton,
-                {
-                  backgroundColor: profile.gender === 'male' ? colors.accent + '20' : colors.backgroundCard,
-                  borderColor: profile.gender === 'male' ? colors.accent : colors.border,
-                },
-              ]}
-              onPress={() => handleGenderSelect('male')}
-            >
-              {profile.gender === 'male' && (
-                <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                  <Check size={12} color={colors.textOnGold} />
+    <DetailScreen title="Profil compétiteur" subtitle="Ta fiche pour les compétitions">
+      <Enter i={0} style={{ gap: 10 }}>
+        <SectionTitle>Genre</SectionTitle>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {(['male', 'female'] as const).map((g) => {
+            const on = profile.gender === g;
+            return (
+              <Press key={g} style={{ flex: 1 }} onPress={() => { setGenderFromProfile(false); save({ ...profile, gender: g, category: g === profile.gender ? profile.category : null }); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={g === 'male' ? 'Homme' : 'Femme'}>
+                <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: on ? P.ink : P.white, borderWidth: on ? 0 : 1, borderColor: P.line2 }}>
+                  <View style={{ minHeight: 48, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Ink size={18} weight="black" tight color={on ? P.white : P.ink}>
+                      {g === 'male' ? 'Homme' : 'Femme'}
+                    </Ink>
+                    {on ? <Icon name="check" size={22} color={P.goldLight} width={3} /> : null}
+                  </View>
+                  <View style={{ height: 112, marginHorizontal: 8, marginBottom: 8, borderRadius: 18, backgroundColor: on ? 'rgba(242,241,236,0.12)' : '#E9E4D8', overflow: 'hidden', alignItems: 'center' }}>
+                    <Image source={sportArt('jjb', g === 'male' ? 'homme' : 'femme', 2)} style={{ position: 'absolute', top: 4, width: 110, height: 148 }} resizeMode="contain" />
+                  </View>
                 </View>
-              )}
-              <Text style={[styles.genderText, { color: profile.gender === 'male' ? colors.accent : colors.textPrimary }]}>
-                {t('competitorProfile.male')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.genderButton,
-                {
-                  backgroundColor: profile.gender === 'female' ? colors.accent + '20' : colors.backgroundCard,
-                  borderColor: profile.gender === 'female' ? colors.accent : colors.border,
-                },
-              ]}
-              onPress={() => handleGenderSelect('female')}
-            >
-              {profile.gender === 'female' && (
-                <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                  <Check size={12} color={colors.textOnGold} />
-                </View>
-              )}
-              <Text style={[styles.genderText, { color: profile.gender === 'female' ? colors.accent : colors.textPrimary }]}>
-                {t('competitorProfile.female')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+              </Press>
+            );
+          })}
         </View>
+        {genderFromProfile ? <Ink size={12} weight="bold" color={P.muted} style={{ paddingHorizontal: 4 }}>Repris de ton profil, touche l’autre carte pour changer.</Ink> : null}
+      </Enter>
 
-        {/* Section 2: Poids actuel */}
-        {profile.gender && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Weight size={20} color={colors.accentText} />
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('competitorProfile.section2')}
-              </Text>
+      {profile.gender ? (
+        <>
+          <Enter i={1} style={{ gap: 10 }}>
+            <SectionTitle>Poids actuel</SectionTitle>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <Field value={weightInput} onChangeText={setWeightInput} placeholder="Ex : 75,5" keyboardType="decimal-pad" suffix="kg" icon="scale" onSubmit={() => saveWeight()} />
+              </View>
+              <Press onPress={() => saveWeight()} accessibilityRole="button" accessibilityLabel="Enregistrer le poids">
+                <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: savedFlash ? P.moss : P.accent, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="check" size={24} color={P.white} width={3} />
+                </View>
+              </Press>
             </View>
-
-            <View style={styles.weightInputContainer}>
-              <TextInput
-                style={[styles.weightInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                placeholder="Ex: 75.5"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="decimal-pad"
-                value={weightInput}
-                onChangeText={(text) => setWeightInput(text.replace(',', '.'))}
-              />
-              <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
-              <TouchableOpacity
-                style={[styles.saveButton, { backgroundColor: colors.accent }]}
-                onPress={handleWeightSave}
+            {lastWeight && String(profile.currentWeight) !== String(lastWeight.weight) ? (
+              <Press
+                onPress={() => {
+                  const v = formatKg(lastWeight.weight);
+                  setWeightInput(v);
+                  saveWeight(v);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Utiliser ma dernière pesée"
               >
-                <Check size={20} color={colors.textOnGold} />
-              </TouchableOpacity>
-            </View>
+                <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
+                  <Icon name="refresh" size={16} color={P.indigo} />
+                  <Ink size={13} weight="extraBold" color={P.indigo}>
+                    {`Utiliser ma dernière pesée, ${formatKg(lastWeight.weight)} kg`}
+                  </Ink>
+                </View>
+              </Press>
+            ) : null}
+            {recommended ? (
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, backgroundColor: P.mossSoft, borderColor: '#D3DEC0' }}>
+                <Icon name="star" size={20} color={P.mossText} />
+                <Ink size={14} weight="extraBold" color={P.mossText} style={{ flex: 1 }}>
+                  {`Catégorie conseillée : ${recommended.name} (${recommended.weight})`}
+                </Ink>
+              </Card>
+            ) : null}
+          </Enter>
 
-            {recommendedCategory && (
-              <View style={[styles.recommendationBadge, { backgroundColor: colors.success + '15' }]}>
-                <Text style={[styles.recommendationText, { color: colors.success }]}>
-                  {t('competitorProfile.recommendedCategory').replace('{{name}}', recommendedCategory.name).replace('{{weight}}', recommendedCategory.weight)}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Section 3: Catégorie de poids IBJJF */}
-        {profile.gender && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Trophy size={20} color={colors.accentText} />
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('competitorProfile.section3')}
-              </Text>
-            </View>
-
-            <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-              {t('competitorProfile.section3Desc')}
-            </Text>
-
-            <View style={styles.categoriesGrid}>
-              {getCurrentCategories().map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryCard,
-                    {
-                      backgroundColor: profile.category === category.id ? colors.accent + '20' : colors.backgroundCard,
-                      borderColor: profile.category === category.id ? colors.accent : colors.border,
-                    },
-                  ]}
-                  onPress={() => handleCategorySelect(category.id)}
-                >
-                  {profile.category === category.id && (
-                    <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                      <Check size={12} color={colors.textOnGold} />
-                    </View>
-                  )}
-                  <Text style={[styles.categoryName, { color: profile.category === category.id ? colors.accent : colors.textPrimary }]}>
-                    {category.name}
-                  </Text>
-                  <Text style={[styles.categoryWeight, { color: colors.textMuted }]}>
-                    {category.weight}
-                  </Text>
-                </TouchableOpacity>
+          <Enter i={2} style={{ gap: 10 }}>
+            <SectionTitle>Catégorie IBJJF</SectionTitle>
+            <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4, marginTop: -4 }}>
+              Ta catégorie de poids officielle, avec le kimono.
+            </Ink>
+            <ChipScroll>
+              {cats.map((c) => (
+                <Chip key={c.id} label={c.name} sub={c.weight} accent={P.accent} active={profile.category === c.id} onPress={() => save({ ...profile, category: c.id })} />
               ))}
-            </View>
-          </View>
-        )}
+            </ChipScroll>
+          </Enter>
 
-        {/* Section 4: Ceinture */}
-        {profile.gender && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Award size={20} color={colors.accentText} />
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('competitorProfile.section4')}
-              </Text>
-            </View>
-
-            <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-              {t('competitorProfile.section4Desc')}
-            </Text>
-
-            <View style={styles.beltsGrid}>
-              {BJJ_BELTS.map((belt) => (
-                <TouchableOpacity
-                  key={belt.id}
-                  style={[
-                    styles.beltCard,
-                    {
-                      backgroundColor: profile.belt === belt.id ? belt.color + (belt.id === 'white' ? '' : '20') : colors.backgroundCard,
-                      borderColor: profile.belt === belt.id ? belt.borderColor : colors.border,
-                      borderWidth: 2,
-                    },
-                  ]}
-                  onPress={() => handleBeltSelect(belt.id)}
-                >
-                  {profile.belt === belt.id && (
-                    <View style={[styles.checkBadge, { backgroundColor: belt.id === 'white' ? colors.accent : belt.color }]}>
-                      <Check size={12} color={belt.id === 'white' ? colors.textOnGold : '#FFFFFF'} />
+          <Enter i={3} style={{ gap: 10 }}>
+            <SectionTitle>Ceinture de jiu-jitsu</SectionTitle>
+            <Card style={{ padding: 8, gap: 0 }}>
+              {BJJ_BELTS.map((b, i) => {
+                const on = profile.belt === b.id;
+                return (
+                  <Press key={b.id} onPress={() => save({ ...profile, belt: b.id })} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Ceinture ${b.name}`}>
+                    <View style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2, backgroundColor: on ? P.paper : 'transparent', borderRadius: 14 }}>
+                      <BeltSwatch color={b.color} edge={b.edge} width={58} height={14} />
+                      <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
+                        {b.name}
+                      </Ink>
+                      {on ? <Icon name="check" size={22} color={P.accent} width={3} /> : null}
                     </View>
-                  )}
-                  <View style={[styles.beltVisual, { backgroundColor: belt.color, borderColor: belt.borderColor }]} />
-                  <Text style={[styles.beltName, { color: profile.belt === belt.id && belt.id !== 'white' ? belt.color : colors.textPrimary }]}>
-                    {t(`competitorProfile.${belt.nameKey}`)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
+                  </Press>
+                );
+              })}
+            </Card>
+          </Enter>
+        </>
+      ) : (
+        <Card style={{ alignItems: 'center', gap: 6, paddingVertical: 22 }}>
+          <Ink size={15} weight="extraBold">
+            Commence par ton genre
+          </Ink>
+          <Ink size={13} weight="medium" color={P.ink2} style={{ textAlign: 'center' }}>
+            Les catégories de poids en dépendent.
+          </Ink>
+        </Card>
+      )}
 
-        {/* Résumé du profil */}
-        {profile.gender && profile.category && profile.belt && (
-          <View style={[styles.summaryCard, { backgroundColor: colors.accent + '10', borderColor: colors.accent }]}>
-            <View style={styles.summaryHeader}>
-              <Trophy size={24} color={colors.accent} />
-              <Text style={[styles.summaryTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                {t('competitorProfile.summaryTitle')}
-              </Text>
-            </View>
-
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryGender')}</Text>
-              <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                {profile.gender === 'male' ? t('competitorProfile.male') : t('competitorProfile.female')}
-              </Text>
-            </View>
-
-            {profile.currentWeight && (
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryWeight')}</Text>
-                <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                  {profile.currentWeight} kg
-                </Text>
+      {complete ? (
+        <Enter i={4}>
+          <Glass style={{ gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Ink size={12} weight="bold" color={P.muted}>
+                  Ta fiche de combattant
+                </Ink>
+                <Ink size={22} weight="black" tight>
+                  {category?.name ?? ''}
+                </Ink>
               </View>
-            )}
-
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryCategory')}</Text>
-              <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                {getCurrentCategories().find(c => c.id === profile.category)?.name}
-              </Text>
+              <Hanko size={48} />
             </View>
-
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('competitorProfile.summaryBelt')}</Text>
-              <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                {(() => { const belt = BJJ_BELTS.find(b => b.id === profile.belt); return belt ? t(`competitorProfile.${belt.nameKey}`) : ''; })()}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.goToCompetitionsButton, { backgroundColor: colors.accent }]}
-              onPress={() => router.push('/competitions')}
-            >
-              <Text style={[styles.goToCompetitionsText, { color: colors.textOnGold }]}>{t('competitorProfile.viewCompetitions')}</Text>
-              <ChevronRight size={20} color={colors.textOnGold} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
-      <PopupComponent />
-    </ScreenWrapper>
+            {[
+              ['Genre', profile.gender === 'male' ? 'Homme' : 'Femme'],
+              ['Poids actuel', profile.currentWeight ? `${formatKg(profile.currentWeight)} kg` : 'Non renseigné'],
+              ['Catégorie', category ? `${category.name}, ${category.weight}` : ''],
+              ['Ceinture', belt?.name ?? ''],
+            ].map(([k, v]) => (
+              <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Ink size={14} weight="bold" color={P.ink2}>
+                  {k}
+                </Ink>
+                <Ink size={14} weight="extraBold">
+                  {v}
+                </Ink>
+              </View>
+            ))}
+            <BigButton label="Voir mes compétitions" onPress={() => router.push('/competitions' as any)} />
+          </Glass>
+        </Enter>
+      ) : null}
+    </DetailScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 24,
-    alignItems: 'center',
-    borderRadius: 16,
-    margin: 16,
-    gap: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '900',
-    marginTop: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  section: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  sectionDescription: {
-    fontSize: 13,
-    marginBottom: 12,
-    marginLeft: 28,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  genderButton: {
-    flex: 1,
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  checkBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  genderText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  weightInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  weightInput: {
-    flex: 1,
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 2,
-    paddingHorizontal: 16,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  weightUnit: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  saveButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  recommendationBadge: {
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 10,
-  },
-  recommendationText: {
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  categoriesGrid: {
-    gap: 10,
-  },
-  categoryCard: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    position: 'relative',
-  },
-  categoryName: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  categoryWeight: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  beltsGrid: {
-    gap: 10,
-  },
-  beltCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
-    position: 'relative',
-  },
-  beltVisual: {
-    width: 40,
-    height: 8,
-    borderRadius: 2,
-    borderWidth: 1,
-  },
-  beltName: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  summaryCard: {
-    marginHorizontal: 16,
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 2,
-    gap: 12,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  summaryValue: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  goToCompetitionsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  goToCompetitionsText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-});

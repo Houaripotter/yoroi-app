@@ -10,6 +10,7 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnable
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 import expo.modules.ReactActivityDelegateWrapper
+import dev.matinzd.healthconnect.permissions.HealthConnectPermissionDelegate
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,6 +22,8 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
+    // Health Connect : sans ce delegue, la demande de permissions ne peut pas s'afficher ni revenir
+    HealthConnectPermissionDelegate.setPermissionDelegate(this)
   }
 
   /**

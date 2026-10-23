@@ -19,7 +19,28 @@ RCT_EXTERN_METHOD(getTodayActivityRings:(RCTPromiseResolveBlock)resolve
 RCT_EXTERN_METHOD(requestAllHealthPermissions:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(requestHealthPermissionsFor:(NSArray *)readIds
+                  share:(NSArray *)shareIds
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(getRequestStatusFor:(NSArray *)readIds
+                  share:(NSArray *)shareIds
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(saveDietaryWater:(double)amountMl
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(saveDietaryWaterWithId:(double)amountMl
+                  externalId:(NSString *)externalId
+                  dateMs:(double)dateMs
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(removeDietaryWater:(double)amountMl
+                  dateMs:(double)dateMs
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
@@ -36,6 +57,13 @@ RCT_EXTERN_METHOD(getSleepSamplesAsJSON:(double)days
 
 RCT_EXTERN_METHOD(getStepsAsJSON:(double)days
                   resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(getAppleWorkoutExtrasAsJSON:(NSString *)workoutUUID
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(getApplePreferredHeartRateZonesAsJSON:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 @end

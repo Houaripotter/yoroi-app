@@ -15,13 +15,26 @@ import {
   ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronDown, Calendar, Check, Lock } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
+import Svg, { Path } from 'react-native-svg';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { fontStyle } from '@/components/yoroi/fonts';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { usePremium } from '@/context/PremiumContext';
-import { router } from 'expo-router';
+import { ouvrirPaywall } from '@/lib/v2/premium/sources';
+
+function Glyph({ d, size, color }: { d: string; size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d={d} stroke={color} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+const CalendarIcon = (p: { size: number; color: string }) => <Glyph {...p} d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM4 10h16M8 3v4M16 3v4" />;
+const ChevronDownIcon = (p: { size: number; color: string }) => <Glyph {...p} d="M6 9l6 6 6-6" />;
+const CheckIcon = (p: { size: number; color: string }) => <Glyph {...p} d="M5 12.5l4.5 4.5L19 7.5" />;
+const LockIcon = (p: { size: number; color: string }) => <Glyph {...p} d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z" />;
 
 // Périodes accessibles sans premium
 const FREE_PERIODS: Period[] = ['7j', '14j'];
@@ -67,7 +80,9 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
   customEnd,
   onCustomRangeChange,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { theme } = useYoroiTheme();
+  const t = theme.colors;
+  const colors = { accent: t.accent, textPrimary: t.ink, textSecondary: t.textSecondary, textMuted: t.textMuted };
   const { isPremium } = usePremium();
   const [modalOpen, setModalOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
@@ -83,7 +98,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
     if (selected === 'custom' && customStart && customEnd) {
       const s = format(parseISO(customStart), 'd MMM yy', { locale: fr });
       const e = format(parseISO(customEnd), 'd MMM yy', { locale: fr });
-      return `${s} → ${e}`;
+      return `du ${s} au ${e}`;
     }
     return PRESETS.find(p => p.value === selected)?.label ?? 'Période';
   }, [selected, customStart, customEnd]);
@@ -96,7 +111,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
     haptic();
     if (!isPremium && !FREE_PERIODS.includes(value)) {
       setModalOpen(false);
-      router.push('/paywall' as never);
+      ouvrirPaywall('periode');
       return;
     }
     onChange(value);
@@ -107,7 +122,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
     haptic();
     if (!isPremium) {
       setModalOpen(false);
-      router.push('/paywall' as never);
+      ouvrirPaywall('periode');
       return;
     }
     setModalOpen(false);
@@ -123,8 +138,9 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
     setCustomOpen(false);
   }, [draftStart, draftEnd, onChange, onCustomRangeChange, haptic]);
 
-  const bg = isDark ? colors.backgroundCard : '#FFFFFF';
-  const border = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const bg = t.surface;
+  const sheetBg = t.background;
+  const border = t.border;
 
   return (
     <>
@@ -132,16 +148,18 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() => { haptic(); setModalOpen(true); }}
+        accessibilityRole="button"
+        accessibilityLabel={`Période : ${currentLabel}`}
         style={[
           styles.triggerButton,
-          { backgroundColor: bg, borderColor: border },
+          { backgroundColor: bg, borderColor: t.divider },
         ]}
       >
-        <Calendar size={16} color={colors.accent} />
+        <CalendarIcon size={18} color={colors.accent} />
         <Text style={[styles.triggerText, { color: colors.textPrimary }]} numberOfLines={1}>
           {currentLabel}
         </Text>
-        <ChevronDown size={18} color={colors.textMuted} />
+        <ChevronDownIcon size={18} color={colors.textMuted} />
       </TouchableOpacity>
 
       {/* Modal liste des presets */}
@@ -153,7 +171,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
       >
         <Pressable style={styles.backdrop} onPress={() => setModalOpen(false)}>
           <Pressable
-            style={[styles.sheet, { backgroundColor: bg }]}
+            style={[styles.sheet, { backgroundColor: sheetBg }]}
             onPress={() => { /* absorb */ }}
           >
             <View style={styles.sheetHandle} />
@@ -172,21 +190,21 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                     onPress={() => handleSelectPreset(p.value)}
                     style={[
                       styles.row,
-                      isActive && { backgroundColor: colors.accent + '18' },
-                      isLocked && { opacity: 0.55 },
+                      isActive && { backgroundColor: t.accentTint },
+                      isLocked && { opacity: 0.7 },
                     ]}
                   >
                     <Text style={[
                       styles.rowLabel,
                       { color: isActive ? colors.accent : colors.textPrimary },
-                      isActive && { fontWeight: '800' },
+                      
                     ]}>
                       {p.label}
                     </Text>
                     {isLocked ? (
-                      <Lock size={14} color={colors.textMuted} />
+                      <LockIcon size={16} color={t.goldDeep} />
                     ) : isActive ? (
-                      <Check size={18} color={colors.accent} />
+                      <CheckIcon size={18} color={colors.accent} />
                     ) : null}
                   </TouchableOpacity>
                 );
@@ -199,24 +217,24 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                 onPress={handleOpenCustom}
                 style={[
                   styles.row,
-                  selected === 'custom' && { backgroundColor: colors.accent + '18' },
-                  !isPremium && { opacity: 0.55 },
+                  selected === 'custom' && { backgroundColor: t.accentTint },
+                  !isPremium && { opacity: 0.7 },
                 ]}
               >
                 <View style={styles.customLabelRow}>
-                  <Calendar size={16} color={selected === 'custom' ? colors.accent : colors.textSecondary} />
+                  <CalendarIcon size={16} color={selected === 'custom' ? colors.accent : colors.textSecondary} />
                   <Text style={[
                     styles.rowLabel,
                     { color: selected === 'custom' ? colors.accent : colors.textPrimary },
-                    selected === 'custom' && { fontWeight: '800' },
+                    
                   ]}>
                     Période personnalisée
                   </Text>
                 </View>
                 {!isPremium ? (
-                  <Lock size={14} color={colors.textMuted} />
+                  <LockIcon size={16} color={t.goldDeep} />
                 ) : selected === 'custom' ? (
-                  <Check size={18} color={colors.accent} />
+                  <CheckIcon size={18} color={colors.accent} />
                 ) : null}
               </TouchableOpacity>
             </ScrollView>
@@ -233,7 +251,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
       >
         <Pressable style={styles.backdrop} onPress={() => setCustomOpen(false)}>
           <Pressable
-            style={[styles.sheet, { backgroundColor: bg }]}
+            style={[styles.sheet, { backgroundColor: sheetBg }]}
             onPress={() => { /* absorb */ }}
           >
             <View style={styles.sheetHandle} />
@@ -242,7 +260,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
             </Text>
 
             <TouchableOpacity
-              style={[styles.dateField, { borderColor: border }]}
+              style={[styles.dateField, { borderColor: t.divider, backgroundColor: bg }]}
               onPress={() => { haptic(); setPickerMode('start'); }}
               activeOpacity={0.7}
             >
@@ -253,7 +271,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.dateField, { borderColor: border }]}
+              style={[styles.dateField, { borderColor: t.divider, backgroundColor: bg }]}
               onPress={() => { haptic(); setPickerMode('end'); }}
               activeOpacity={0.7}
             >
@@ -286,7 +304,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
 
             <View style={styles.actionsRow}>
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: border }]}
+                style={[styles.actionBtn, { backgroundColor: bg, borderWidth: 1, borderColor: border }]}
                 onPress={() => setCustomOpen(false)}
                 activeOpacity={0.7}
               >
@@ -297,7 +315,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = React.memo(({
                 onPress={handleConfirmCustom}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.actionBtnText, { color: '#FFFFFF', fontWeight: '800' }]}>
+                <Text style={[styles.actionBtnText, { color: '#FFFFFF' }]}>
                   Appliquer
                 </Text>
               </TouchableOpacity>
@@ -316,24 +334,23 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    minHeight: 48,
+    borderRadius: 18,
+    borderWidth: 1,
+    minHeight: 52,
   },
   triggerText: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    ...fontStyle('extraBold'),
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(29,32,41,0.45)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingTop: 10,
     paddingHorizontal: 16,
     paddingBottom: 32,
@@ -348,28 +365,29 @@ const styles = StyleSheet.create({
     width: 44,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(128,128,128,0.35)',
+    backgroundColor: '#E2DFD8',
     marginBottom: 12,
   },
   sheetTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    textAlign: 'center',
+    fontSize: 24,
+    ...fontStyle('black'),
     marginBottom: 12,
-    letterSpacing: -0.3,
+    marginLeft: 6,
+    letterSpacing: -1,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
+    minHeight: 50,
+    paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 2,
   },
   rowLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    ...fontStyle('bold'),
   },
   customLabelRow: {
     flexDirection: 'row',
@@ -387,19 +405,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1.5,
+    minHeight: 56,
+    borderRadius: 18,
+    borderWidth: 1,
     marginBottom: 10,
   },
   dateFieldLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontSize: 14,
+    ...fontStyle('bold'),
   },
   dateFieldValue: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    ...fontStyle('extraBold'),
   },
   actionsRow: {
     flexDirection: 'row',
@@ -408,12 +425,13 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
+    minHeight: 54,
+    borderRadius: 18,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   actionBtnText: {
     fontSize: 15,
-    fontWeight: '700',
+    ...fontStyle('extraBold'),
   },
 });

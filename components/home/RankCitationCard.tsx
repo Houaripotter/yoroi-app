@@ -174,8 +174,6 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
                   )}
                 </View>
 
-                <Text style={[styles.rankJp, { color: colors.textMuted }]}>{rank.nameJp}</Text>
-
                 <View style={styles.progressRow}>
                   <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
                     <Animated.View style={[styles.progressFill, { width: barWidth }]}>
@@ -276,7 +274,6 @@ const RankCitationCard: React.FC<RankCitationCardProps> = memo(({ streak, totalP
                     <Trophy size={22} color={nextRank.color} />
                   </View>
                   <Text style={[styles.bigRankName, { color: nextRank.color }]}>{nextRank.name}</Text>
-                  <Text style={[styles.rankJpSmall, { color: colors.textMuted }]}>{nextRank.nameJp}</Text>
                   <View style={[styles.daysChip, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
                     <Text style={[styles.daysChipText, { color: colors.textSecondary }]}>
                       Encore <Text style={{ fontWeight: '800', color: nextRank.color }}>{pointsToNext} XP</Text>

@@ -10,7 +10,7 @@ import * as path from 'path';
 
 const APP_DIR = path.resolve(__dirname, '../../app');
 const COMPONENTS_DIR = path.resolve(__dirname, '../../components');
-const I18N_DIR = path.resolve(__dirname, '../../i18n');
+const I18N_DIR = path.resolve(__dirname, '../../lib/i18n');
 
 // ============================================
 // HELPERS
@@ -77,20 +77,25 @@ describe('1. Navigation - Structure des routes', () => {
     const requiredRoutes = [
       // Entry & onboarding
       'index.tsx',
-      'legal.tsx',
       'onboarding.tsx',
-
-      'sport-selection.tsx',
-      'setup.tsx',
-      // Tabs
+      'settings/legal.tsx',
+      // Onglets du design v2 (Accueil, Seances, Progres, Dojo) et le bouton + (ajouter)
       '(tabs)/_layout.tsx',
       '(tabs)/index.tsx',
-      '(tabs)/stats.tsx',
-      '(tabs)/add.tsx',
-      '(tabs)/planning.tsx',
-      // More tab
-      '(tabs)/more/_layout.tsx',
-      '(tabs)/more/index.tsx',
+      '(tabs)/seances.tsx',
+      '(tabs)/progres.tsx',
+      '(tabs)/dojo.tsx',
+      'ajouter.tsx',
+      // Saisies et reglages du design v2
+      'seance/index.tsx',
+      'pesee.tsx',
+      'balance-photo.tsx',
+      'settings/index.tsx',
+      'settings/widgets.tsx',
+      'settings/copies-securite.tsx',
+      // Liens venus du systeme (widgets, Centre de controle, raccourcis)
+      '+native-intent.tsx',
+      'w/[...cible].tsx',
       // Core screens
       'profile.tsx',
       'sleep.tsx',
@@ -145,40 +150,43 @@ describe('1. Navigation - Structure des routes', () => {
     });
   });
 
-  describe('1.3 Tab layout - 5 onglets', () => {
+  describe('1.3 Tab layout - 4 onglets et le bouton +', () => {
     const tabLayout = readFile(path.join(APP_DIR, '(tabs)', '_layout.tsx'));
+    const tabBar = readFile(path.join(COMPONENTS_DIR, 'yoroi', 'v2', 'InkTabBar.tsx'));
 
-    test('définit 5 onglets (index, stats, add, planning, more)', () => {
+    test('définit 4 onglets (index, seances, progres, dojo)', () => {
       expect(tabLayout).toContain('name="index"');
-      expect(tabLayout).toContain('name="stats"');
-      expect(tabLayout).toContain('name="add"');
-      expect(tabLayout).toContain('name="planning"');
-      expect(tabLayout).toContain('name="more"');
+      expect(tabLayout).toContain('name="seances"');
+      expect(tabLayout).toContain('name="progres"');
+      expect(tabLayout).toContain('name="dojo"');
+      expect((tabLayout.match(/<Tabs\.Screen\b/g) || []).length).toBe(4);
     });
 
-    test('utilise les traductions i18n pour les titres des tabs', () => {
-      expect(tabLayout).toContain("t('tabs.home')");
-      expect(tabLayout).toContain("t('tabs.stats')");
-      expect(tabLayout).toContain("t('tabs.planning')");
-      expect(tabLayout).toContain("t('tabs.menu')");
+    test('les titres des onglets sont en français', () => {
+      expect(tabBar).toContain("label: 'Accueil'");
+      expect(tabBar).toContain("label: 'Séances'");
+      expect(tabBar).toContain("label: 'Progrès'");
+      expect(tabBar).toContain("label: 'Dojo'");
     });
 
-    test('le bouton central "add" est un buzzer custom', () => {
-      expect(tabLayout).toContain('CentralBuzzerButton');
-      expect(tabLayout).toContain("title: ''");
+    test('le bouton central + ouvre la saisie (ajouter)', () => {
+      expect(tabLayout).toContain('<InkTabBar');
+      expect(tabLayout).toContain("router.push('/ajouter'");
+      expect(tabBar).toContain('onPressAdd()');
+      expect(tabBar).toContain('accessibilityLabel="Enregistrer');
     });
 
-    test('les tab icons sont des composants lucide', () => {
-      expect(tabLayout).toContain('Home');
-      expect(tabLayout).toContain('BarChart2');
-      expect(tabLayout).toContain('Calendar');
-      expect(tabLayout).toContain('Menu');
-      expect(tabLayout).toContain('Plus');
+    test('les icônes des onglets sont dessinées en SVG', () => {
+      expect(tabBar).toContain('<Svg');
+      expect(tabBar).toContain('<Path');
+      for (const name of ['index', 'seances', 'progres', 'dojo']) {
+        expect(tabBar).toMatch(new RegExp(`\\b${name}: \\{ label: '`));
+      }
     });
 
     test('feedback haptique au changement de tab', () => {
-      expect(tabLayout).toContain('tabPress');
-      expect(tabLayout).toContain('triggerHaptic');
+      expect(tabBar).toContain('tabPress');
+      expect(tabBar).toContain('selectionAsync');
     });
   });
 
@@ -200,8 +208,9 @@ describe('1. Navigation - Structure des routes', () => {
       expect(onboardingLine || layoutContent).toContain('gestureEnabled: false');
     });
 
-    test('animation par défaut slide_from_right', () => {
-      expect(layoutContent).toContain("animation: 'slide_from_right'");
+    test('animation par défaut : fondu court (design v2)', () => {
+      expect(layoutContent).toMatch(/screenOptions=\{\{[\s\S]*?animation: 'fade',\s*animationDuration: (1\d\d|2[0-4]\d),/);
+      expect(layoutContent).not.toContain("animation: 'slide_from_right'");
     });
   });
 
@@ -225,13 +234,30 @@ describe('1. Navigation - Structure des routes', () => {
           content.includes('router.replace') ||
           content.includes('<ArrowLeft') ||
           content.includes('<ChevronLeft') ||
-          content.includes('Redirect')
+          content.includes('Redirect') ||
+          // design v2 : coquilles d'ecran avec bouton Retour (verifiees plus bas), ou simple reexport
+          /<(DetailScreen|EspaceScreen|BackHeader|CorpsHeader|GalerieScreen|GalerieHeader)\b/.test(content) ||
+          /export \{ default \} from/.test(content)
         ) {
           withBack++;
         }
       }
       const ratio = withBack / screensNeedingBack.length;
       expect(ratio).toBeGreaterThanOrEqual(0.75);
+    });
+
+    test('les coquilles d\'écran du design v2 ont bien un bouton Retour', () => {
+      const shells = [
+        'yoroi/v2/accueil/kit.tsx',
+        'yoroi/v2/espace/ui.tsx',
+        'yoroi/v2/dojo/parts.tsx',
+        'yoroi/v2/seance/corps/ui.tsx',
+        'yoroi/v2/studio/galeries/kit.tsx',
+      ];
+      for (const shell of shells) {
+        const content = readFile(path.join(COMPONENTS_DIR, shell));
+        expect(content).toMatch(/router\.back\(\)|navigation\.goBack\(\)/);
+      }
     });
   });
 
@@ -245,24 +271,52 @@ describe('1. Navigation - Structure des routes', () => {
   });
 
   describe('1.7 Pas de liens morts (routes hardcodées vers fichiers inexistants)', () => {
+    // Toutes les routes ecrites en dur dans app/, components/ et lib/ (router.push, replace, navigate,
+    // href, pathname) doivent tomber sur un fichier de app/ (groupes entre parentheses et segments
+    // dynamiques [id] ou [...reste] compris).
+    const LIB_DIR = path.resolve(__dirname, '../../lib');
+    const routes = allAppFiles
+      .filter(f => f.endsWith('.tsx') && !path.basename(f).startsWith('_') && !path.basename(f).startsWith('+'))
+      .map(f => {
+        const segs = path.relative(APP_DIR, f).replace(/\.tsx$/, '').split(path.sep).filter(x => !/^\(.*\)$/.test(x));
+        if (segs[segs.length - 1] === 'index') segs.pop();
+        return segs;
+      });
+    const routeExiste = (href: string): boolean => {
+      const segs = href.split(/[?#]/)[0].replace(/\/$/, '').split('/').filter(Boolean).filter(x => !/^\(.*\)$/.test(x));
+      return routes.some(r => {
+        for (let i = 0; i < Math.max(r.length, segs.length); i++) {
+          const a = r[i];
+          if (a === undefined) return false;
+          if (/^\[\.\.\./.test(a)) return true;
+          if (segs[i] === undefined) return false;
+          if (/^\[/.test(a)) continue;
+          if (a !== segs[i]) return false;
+        }
+        return r.length === segs.length;
+      });
+    };
+
+    test('la vérification reconnaît les routes du design v2', () => {
+      expect(routeExiste('/(tabs)/seances')).toBe(true);
+      expect(routeExiste('/settings/widgets')).toBe(true);
+      expect(routeExiste('/w/timer?mode=combat')).toBe(true);
+      expect(routeExiste('/route-qui-n-existe-pas')).toBe(false);
+    });
+
     test('les push vers des routes correspondent à des fichiers existants', () => {
       const deadLinks: string[] = [];
-      // Vérifier un sous-ensemble critique
-      const routesToCheck = [
-        '/add-training', '/sleep', '/competitions', '/photos', '/badges',
-        '/fasting', '/infirmary', '/nutrition-plan', '/training-journal',
-        '/profile', '/clubs', '/palmares', '/hydration', '/energy',
-        '/timer', '/calculators', '/appearance', '/share-hub',
-      ];
-
-      for (const route of routesToCheck) {
-        const fileName = route.replace('/', '') + '.tsx';
-        const fullPath = path.join(APP_DIR, fileName);
-        if (!fs.existsSync(fullPath)) {
-          deadLinks.push(route);
+      const re = /(?:router\.(?:push|replace|navigate)\(\s*|href=\{?\s*|pathname:\s*|href:\s*)[`'"](\/[A-Za-z0-9_\-\/().\[\]]*)/g;
+      let checked = 0;
+      for (const file of [...allAppFiles, ...allComponentFiles, ...getAllTsxFiles(LIB_DIR)]) {
+        const content = readFile(file);
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(content))) {
+          checked++;
+          if (!routeExiste(m[1])) deadLinks.push(`${m[1]} (${path.relative(APP_DIR, file)})`);
         }
       }
-
+      expect(checked).toBeGreaterThan(200);
       expect(deadLinks).toEqual([]);
     });
   });
@@ -301,7 +355,9 @@ describe('2. États d\'affichage', () => {
             content.includes('loading') ||
             content.includes('Loading') ||
             content.includes('ActivityIndicator') ||
-            content.includes('refreshing')
+            content.includes('refreshing') ||
+            // design v2 : etats nommes en francais ou ready/loaded
+            /\b(chargement|Chargement|pret|ready|loaded)\b/.test(content)
           )
         ) {
           withLoading++;
@@ -476,7 +532,8 @@ describe('3. Responsive & Accessibilité', () => {
     test('les écrans utilisent useTheme pour les couleurs', () => {
       let withTheme = 0;
       for (const file of screenFiles) {
-        if (fileContains(file, /useTheme/)) {
+        // useTheme (ancien), useYoroiTheme ou briques du kit yoroi qui lisent le theme, ou simple reexport
+        if (fileContains(file, /useTheme|useYoroiTheme|from '@\/components\/yoroi(\/v2\/[^']*)?'|export \{ default \} from/)) {
           withTheme++;
         }
       }
@@ -517,14 +574,16 @@ describe('4. Interactions', () => {
 
   describe('4.1 Double-tap prevention sur les boutons critiques', () => {
     // Écrans avec des actions de sauvegarde qui DOIVENT avoir disabled
+    // add-training et add-combat redirigent vers la saisie de seance du design v2
     const saveScreens = [
-      'add-training.tsx', 'add-competition.tsx', 'add-combat.tsx',
-      'sleep-input.tsx', 'edit-competition.tsx',
+      'seance/muscu.tsx', 'seance/combat.tsx', 'seance/cardio.tsx', 'seance/match.tsx',
+      'seance/deja-faite.tsx', 'pesee.tsx', 'balance-photo.tsx', 'measurements.tsx',
+      'add-competition.tsx', 'sleep-input.tsx', 'edit-competition.tsx',
     ];
 
     test.each(saveScreens)('%s a une protection double-tap', (screenName) => {
       const filePath = path.join(APP_DIR, screenName);
-      if (!fs.existsSync(filePath)) return; // Skip si absent
+      expect(fs.existsSync(filePath)).toBe(true);
       const content = readFile(filePath);
       expect(
         content.includes('disabled={') ||
@@ -549,8 +608,9 @@ describe('4. Interactions', () => {
     });
 
     test('le tab bar a du feedback haptique', () => {
-      const tabLayout = readFile(path.join(APP_DIR, '(tabs)', '_layout.tsx'));
-      expect(tabLayout).toContain('impactAsync');
+      const tabBar = readFile(path.join(COMPONENTS_DIR, 'yoroi', 'v2', 'InkTabBar.tsx'));
+      expect(tabBar).toContain('impactAsync');
+      expect(tabBar).toContain('selectionAsync');
     });
   });
 
@@ -617,7 +677,8 @@ describe('4. Interactions', () => {
       let filesWithAlert = 0;
       const allFiles = [...allAppFiles, ...allComponentFiles];
       for (const file of allFiles) {
-        if (fileContains(file, /Alert\.alert/)) {
+        // design v2 : appAlert et showPopup (popup maison) remplacent Alert.alert
+        if (fileContains(file, /Alert\.alert|appAlert\(|showPopup\(/)) {
           filesWithAlert++;
         }
       }
@@ -650,9 +711,9 @@ describe('5. Texte & Localisation', () => {
       const translations = JSON.parse(readFile(frPath));
 
       const requiredSections = [
-        'common', 'time', 'settings', 'profile', 'training',
-        'timer', 'stats', 'badges', 'health', 'navigation',
-        'errors', 'messages',
+        'common', 'dates', 'settings', 'profile', 'addTraining',
+        'timer', 'stats', 'badges', 'healthMetrics', 'tabs',
+        'errors', 'onboarding',
       ];
 
       for (const section of requiredSections) {
@@ -664,13 +725,10 @@ describe('5. Texte & Localisation', () => {
       const frPath = path.join(I18N_DIR, 'fr.json');
       const translations = JSON.parse(readFile(frPath));
 
-      // Le tab layout utilise t('tabs.home') etc, vérifions que les clés existent
-      // Note: les tabs peuvent être dans 'navigation' ou 'tabs'
-      const nav = translations.navigation;
+      // Les libelles des onglets v2 sont ecrits dans InkTabBar ; la section tabs reste pour les anciens ecrans
+      const nav = translations.tabs;
       expect(nav).toBeDefined();
-      expect(nav.home).toBeDefined();
-      expect(nav.planning).toBeDefined();
-      expect(nav.stats).toBeDefined();
+      expect(nav.home).toBe('Accueil');
     });
   });
 
@@ -681,7 +739,7 @@ describe('5. Texte & Localisation', () => {
 
       for (const file of screenFiles) {
         const content = readFile(file);
-        const alerts = content.match(/Alert\.alert\(\s*['"][^'"]+['"]/g) || [];
+        const alerts = content.match(/(?:Alert\.alert|appAlert|showPopup)\(\s*['"][^'"]+['"]/g) || [];
         for (const alert of alerts) {
           if (/Erreur|Succès|Attention|Confirmer|Supprimer|Enregistré|Impossible/.test(alert)) {
             frenchAlerts++;
@@ -739,7 +797,16 @@ describe('5. Texte & Localisation', () => {
 
       for (const file of weightScreens) {
         const content = readFile(file);
-        expect(content.includes('kg')).toBe(true);
+        // Les anciens ecrans devenus de simples redirections n'affichent rien
+        if (/<Redirect\b/.test(content)) continue;
+        // Ecran mince du design v2 : l'unite est dans les composants v2 qu'il importe
+        const v2 = [...content.matchAll(/from '@\/components\/yoroi\/v2\/([^']+)'/g)]
+          .map(m => path.join(COMPONENTS_DIR, 'yoroi', 'v2', m[1]))
+          .map(p => (fs.existsSync(p + '.tsx') ? p + '.tsx' : fs.existsSync(p + '.ts') ? p + '.ts' : ''))
+          .filter(Boolean)
+          .map(readFile)
+          .join('\n');
+        expect(`${content}\n${v2}`.includes('kg')).toBe(true);
       }
     });
   });
@@ -923,7 +990,7 @@ describe('7. Rapport global - Métriques', () => {
 
     for (const file of screenFiles) {
       const content = readFile(file);
-      if (content.includes('useTheme')) metrics.withTheme++;
+      if (/useTheme|useYoroiTheme|from '@\/components\/yoroi(\/v2\/[^']*)?'|export \{ default \} from/.test(content)) metrics.withTheme++;
       if (content.includes('useSafeAreaInsets') || content.includes('SafeAreaView')) metrics.withSafeArea++;
       if (content.includes('impactAsync') || content.includes('notificationAsync')) metrics.withHaptics++;
       if (content.includes('isLoading') || content.includes('loading') || content.includes('ActivityIndicator')) metrics.withLoading++;

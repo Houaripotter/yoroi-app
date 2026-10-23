@@ -1,0 +1,5 @@
+<resources>
+  <!-- Android 12 et plus : les coins des widgets suivent ceux du systeme -->
+  <dimen name="yw_rayon">@android:dimen/system_app_widget_background_radius</dimen>
+  <dimen name="yw_rayon_interne">@android:dimen/system_app_widget_inner_radius</dimen>
+</resources>

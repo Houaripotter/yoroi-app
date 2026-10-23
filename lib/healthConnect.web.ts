@@ -159,7 +159,7 @@ class HealthConnectServiceStub {
 export const healthConnect = new HealthConnectServiceStub();
 
 export const getProviderIcon = (): string => {
-  return '🌐';
+  return '';
 };
 
 export const getConnectionInstructions = (): string[] => {

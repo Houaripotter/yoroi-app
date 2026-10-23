@@ -1,32 +1,27 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  Easing,
-  TouchableOpacity,
-  Modal,
-  useWindowDimensions,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated, Easing, Pressable, Modal, useWindowDimensions } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { useTheme } from '@/lib/ThemeContext';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import logger from '@/lib/security/logger';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import type { GlyphKind } from '@/components/yoroi/v2/ornements/Glyph';
 
 // ============================================
-// CELEBRATION - ANIMATIONS DE VICTOIRE
+// CELEBRATION (refonte v2) : le tampon hanko s'imprime, l'XP tombe en plaques.
+// API inchangee.
 // ============================================
 
 export type CelebrationType =
-  | 'goal_reached'      // Objectif de poids atteint
-  | 'rank_up'           // Montée de rang
-  | 'challenge_complete' // Défi hebdomadaire complété
-  | 'streak_record'     // Nouveau record de streak
-  | 'milestone'         // Milestone (100ème pesée, etc.)
-  | 'new_pr'            // Nouveau record personnel (PR) sur un benchmark
-  | 'badge_unlocked';   // Badge débloqué
+  | 'goal_reached' // Objectif de poids atteint
+  | 'rank_up' // Montee de rang
+  | 'challenge_complete' // Defi hebdomadaire complete
+  | 'streak_record' // Nouveau record de serie
+  | 'milestone' // Etape (100e pesee, etc.)
+  | 'new_pr' // Nouveau record personnel
+  | 'badge_unlocked'; // Badge debloque
 
 interface CelebrationProps {
   visible: boolean;
@@ -40,56 +35,17 @@ interface CelebrationProps {
   autoCloseDelay?: number;
 }
 
-// Configuration par type de célébration
-const CELEBRATION_CONFIG: Record<CelebrationType, {
-  icon: string;
-  colors: readonly [string, string];
-  confettiColors: string[];
-  sound: 'victory' | 'level_up';
-}> = {
-  goal_reached: {
-    icon: '',
-    colors: ['#FFD700', '#FFA500'] as const,
-    confettiColors: ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4'],
-    sound: 'victory',
-  },
-  rank_up: {
-    icon: '',
-    colors: ['#D4AF37', '#B8860B'] as const,
-    confettiColors: ['#D4AF37', '#FFD700', '#FFFFFF', '#C0C0C0'],
-    sound: 'level_up',
-  },
-  challenge_complete: {
-    icon: '',
-    colors: ['#4ECDC4', '#44A08D'] as const,
-    confettiColors: ['#4ECDC4', '#44A08D', '#FFD700', '#FFFFFF'],
-    sound: 'victory',
-  },
-  streak_record: {
-    icon: '',
-    colors: ['#FF6B6B', '#FF8E53'] as const,
-    confettiColors: ['#FF6B6B', '#FF8E53', '#FFD700', '#FFA500'],
-    sound: 'victory',
-  },
-  milestone: {
-    icon: '',
-    colors: ['#9B59B6', '#8E44AD'] as const,
-    confettiColors: ['#9B59B6', '#E74C3C', '#FFD700', '#3498DB'],
-    sound: 'level_up',
-  },
-  new_pr: {
-    icon: '',
-    colors: ['#FF3B30', '#FF9500'] as const,
-    confettiColors: ['#FF3B30', '#FF9500', '#FFD700', '#FFFFFF'],
-    sound: 'victory',
-  },
-  badge_unlocked: {
-    icon: '',
-    colors: ['#34C759', '#30B24A'] as const,
-    confettiColors: ['#34C759', '#FFD700', '#FFFFFF', '#4ECDC4'],
-    sound: 'level_up',
-  },
+// Pictogramme du tampon et ton par type
+const CELEBRATION_CONFIG: Record<CelebrationType, { glyph: GlyphKind; tone: 'red' | 'gold' | 'indigo' | 'moss' | 'record'; label: string }> = {
+  goal_reached: { glyph: 'laurier', tone: 'gold', label: 'Objectif atteint' },
+  rank_up: { glyph: 'laurier', tone: 'gold', label: 'Nouveau rang' },
+  challenge_complete: { glyph: 'etoile', tone: 'red', label: 'Défi relevé' },
+  streak_record: { glyph: 'etoile', tone: 'red', label: 'Nouvelle série record' },
+  milestone: { glyph: 'eventail', tone: 'indigo', label: 'Étape franchie' },
+  new_pr: { glyph: 'laurier', tone: 'record', label: 'Nouveau record' },
+  badge_unlocked: { glyph: 'sakura', tone: 'moss', label: 'Sceau gagné' },
 };
+
 
 export const Celebration: React.FC<CelebrationProps> = ({
   visible,
@@ -103,315 +59,164 @@ export const Celebration: React.FC<CelebrationProps> = ({
   autoCloseDelay = 4000,
 }) => {
   const { width: screenWidth } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(screenWidth), [screenWidth]);
-  const { colors } = useTheme();
-  const config = CELEBRATION_CONFIG[type];
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const config = CELEBRATION_CONFIG[type] ?? CELEBRATION_CONFIG.milestone;
+  const toneColor = config.tone === 'gold' ? c.goldDeep : config.tone === 'indigo' ? c.indigo : config.tone === 'moss' ? c.successText : config.tone === 'record' ? c.record : c.accent;
+  void icon; // l'ancienne icone (kanji ou emoji) n'est plus affichee
   const confettiRef = useRef<any>(null);
-  const [sound, setSound] = useState<any>(null);
+  const closingRef = useRef(false);
 
-  // Animations
   const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const cardScale = useRef(new Animated.Value(0.5)).current;
+  const cardScale = useRef(new Animated.Value(0.85)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
-  const iconScale = useRef(new Animated.Value(0)).current;
-  const iconRotate = useRef(new Animated.Value(0)).current;
-  const xpOpacity = useRef(new Animated.Value(0)).current;
-  const xpTranslateY = useRef(new Animated.Value(20)).current;
-  const xpScale = useRef(new Animated.Value(0.5)).current;
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const stamp = useRef(new Animated.Value(0)).current;
+  const xp = useRef(new Animated.Value(0)).current;
 
-  // Son désactivé (expo-av non installé)
-  const playSound = async () => {};
-
-  // Nettoyer le son
-  useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
-
-  // Animations d'entrée
-  useEffect(() => {
-    if (visible) {
-      // Reset animations
-      overlayOpacity.setValue(0);
-      cardScale.setValue(0.5);
-      cardOpacity.setValue(0);
-      iconScale.setValue(0);
-      iconRotate.setValue(0);
-      xpOpacity.setValue(0);
-      xpTranslateY.setValue(20);
-      xpScale.setValue(0.5);
-
-      // Haptic feedback
-      notificationAsync(NotificationFeedbackType.Success);
-
-      // Jouer le son
-      playSound();
-
-      // Lancer le confetti
-      setTimeout(() => {
-        confettiRef.current?.start();
-      }, 200);
-
-      // Séquence d'animations
-      Animated.sequence([
-        // Overlay fade in
-        Animated.timing(overlayOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        // Card apparaît
-        Animated.parallel([
-          Animated.spring(cardScale, {
-            toValue: 1,
-            tension: 50,
-            friction: 7,
-            useNativeDriver: true,
-          }),
-          Animated.timing(cardOpacity, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]),
-        // Icône avec rotation
-        Animated.parallel([
-          Animated.spring(iconScale, {
-            toValue: 1,
-            tension: 100,
-            friction: 5,
-            useNativeDriver: true,
-          }),
-          Animated.timing(iconRotate, {
-            toValue: 1,
-            duration: 500,
-            easing: Easing.out(Easing.back(1.5)),
-            useNativeDriver: true,
-          }),
-        ]),
-        // XP animation (si présent)
-        ...(xpGained ? [
-          Animated.parallel([
-            Animated.timing(xpOpacity, {
-              toValue: 1,
-              duration: 300,
-              useNativeDriver: true,
-            }),
-            Animated.spring(xpTranslateY, {
-              toValue: 0,
-              tension: 50,
-              friction: 7,
-              useNativeDriver: true,
-            }),
-            Animated.spring(xpScale, {
-              toValue: 1,
-              tension: 50,
-              friction: 7,
-              useNativeDriver: true,
-            }),
-          ]),
-        ] : []),
-      ]).start();
-
-      // Animation shimmer continue
-      Animated.loop(
-        Animated.timing(shimmerAnim, {
-          toValue: 1,
-          duration: 2000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      ).start();
-
-      // Auto-close
-      if (autoClose) {
-        const timer = setTimeout(() => {
-          handleClose();
-        }, autoCloseDelay);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [visible]);
-
-  // Animation de sortie
   const handleClose = () => {
+    if (closingRef.current) return;
+    closingRef.current = true;
     Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(cardScale, {
-        toValue: 0.5,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(cardOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
+      Animated.timing(overlayOpacity, { toValue: 0, duration: 260, useNativeDriver: true }),
+      Animated.timing(cardScale, { toValue: 0.9, duration: 260, useNativeDriver: true }),
+      Animated.timing(cardOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
     ]).start(() => {
       onClose();
     });
   };
 
-  // Rotation de l'icône
-  const iconRotation = iconRotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  useEffect(() => {
+    if (!visible) return;
+    closingRef.current = false;
+    overlayOpacity.setValue(0);
+    cardScale.setValue(0.85);
+    cardOpacity.setValue(0);
+    stamp.setValue(0);
+    xp.setValue(0);
 
-  // Shimmer position
-  const shimmerTranslate = shimmerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-200, 200],
-  });
+    try {
+      void Promise.resolve(notificationAsync(NotificationFeedbackType.Success)).catch(() => undefined);
+    } catch {
+      // sans importance
+    }
+
+    const confettiTimer = setTimeout(() => confettiRef.current?.start(), 380);
+
+    Animated.sequence([
+      Animated.timing(overlayOpacity, { toValue: 1, duration: 240, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.spring(cardScale, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }),
+        Animated.timing(cardOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      ]),
+      // Le tampon tombe et s'imprime
+      Animated.timing(stamp, { toValue: 1, duration: 360, easing: Easing.out(Easing.back(2.2)), useNativeDriver: true }),
+      ...(xpGained ? [Animated.spring(xp, { toValue: 1, tension: 60, friction: 7, useNativeDriver: true })] : []),
+    ]).start();
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (autoClose) {
+      timer = setTimeout(() => handleClose(), autoCloseDelay);
+    }
+    return () => {
+      clearTimeout(confettiTimer);
+      if (timer) clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   if (!visible) return null;
 
+  const stampScale = stamp.interpolate({ inputRange: [0, 1], outputRange: [2.2, 1] });
+  const stampOpacity = stamp.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1] });
+  const xpY = xp.interpolate({ inputRange: [0, 1], outputRange: [16, 0] });
+
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="none"
-      statusBarTranslucent
-    >
+    <Modal transparent visible={visible} animationType="none" statusBarTranslucent onRequestClose={handleClose}>
       <View style={styles.container}>
-        {/* Overlay sombre */}
-        <Animated.View
-          style={[
-            styles.overlay,
-            { opacity: overlayOpacity },
-          ]}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={handleClose}
-          />
+        <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} accessibilityRole="button" accessibilityLabel="Fermer" />
         </Animated.View>
 
-        {/* Confetti */}
         <ConfettiCannon
           ref={confettiRef}
-          count={100}
+          count={90}
           origin={{ x: screenWidth / 2, y: -20 }}
           fadeOut
-          colors={config.confettiColors}
+          colors={[c.accent, c.gold, c.goldLight, c.indigo, '#FFFFFF']}
           explosionSpeed={350}
           fallSpeed={3000}
           autoStart={false}
         />
 
-        {/* Carte de célébration */}
         <Animated.View
           style={[
             styles.card,
             {
-              backgroundColor: colors.card,
+              width: Math.min(screenWidth - 40, 360),
+              backgroundColor: c.background,
+              borderColor: '#FFFFFF',
+              shadowColor: c.shadow,
               transform: [{ scale: cardScale }],
               opacity: cardOpacity,
             },
           ]}
         >
-          {/* Gradient border top */}
-          <LinearGradient
-            colors={config.colors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.gradientBorder}
-          />
+          <View pointerEvents="none" style={styles.watermark}>
+            <Glyph kind="sakura" size={200} color={c.fillSoft} />
+          </View>
 
-          {/* Shimmer effect */}
-          <Animated.View
-            style={[
-              styles.shimmer,
-              {
-                transform: [{ translateX: shimmerTranslate }],
-              },
-            ]}
-          >
-            <LinearGradient
-              colors={['transparent', 'rgba(255,255,255,0.1)', 'transparent']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFill}
-            />
+          <Ink size={14} weight="extraBold" color={toneColor} style={styles.center}>
+            {config.label}
+          </Ink>
+
+          <Animated.View style={[styles.stamp, { opacity: stampOpacity, transform: [{ scale: stampScale }] }]}>
+            <View style={[styles.stampBg, { backgroundColor: c.surface, shadowColor: toneColor }]}>
+              <Hanko glyph={config.glyph} color={toneColor} size={104} rotate={-7} />
+            </View>
           </Animated.View>
 
-          {/* Icône animée */}
-          <Animated.View
-            style={[
-              styles.iconContainer,
-              {
-                backgroundColor: config.colors[0] + '20',
-                transform: [
-                  { scale: iconScale },
-                  { rotate: iconRotation },
-                ],
-              },
-            ]}
-          >
-            <Text style={styles.icon}>{icon || config.icon}</Text>
-          </Animated.View>
-
-          {/* Titre */}
-          <Text style={[styles.title, { color: config.colors[0] }]}>
+          <Ink size={28} weight="black" tight style={styles.center}>
             {title}
-          </Text>
+          </Ink>
 
-          {/* Sous-titre */}
-          {subtitle && (
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          {subtitle ? (
+            <Ink size={15} weight="medium" color={c.textSecondary} style={[styles.center, styles.subtitle]}>
               {subtitle}
-            </Text>
-          )}
+            </Ink>
+          ) : null}
 
-          {/* XP Gained */}
-          {xpGained && xpGained > 0 && (
-            <Animated.View
-              style={[
-                styles.xpContainer,
-                {
-                  opacity: xpOpacity,
-                  transform: [
-                    { translateY: xpTranslateY },
-                    { scale: xpScale },
-                  ],
-                },
-              ]}
-            >
-              <LinearGradient
-                colors={['#FFD700', '#FFA500']}
-                style={styles.xpBadge}
-              >
-                <Text style={styles.xpText}>+{xpGained} XP</Text>
-              </LinearGradient>
+          {xpGained && xpGained > 0 ? (
+            <Animated.View style={[styles.xp, { backgroundColor: c.ink, opacity: xp, transform: [{ translateY: xpY }, { scale: xp.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }] }]}>
+              <Svg width={16} height={20} viewBox="0 0 52 66">
+                <Path d="M5 12 Q5 4 13 4 H39 Q47 4 47 12 V62 H5 Z" fill={c.goldLight} />
+                <Rect x={0} y={30} width={52} height={5} fill={c.accent} />
+                <Rect x={0} y={46} width={52} height={5} fill={c.accent} />
+                <Circle cx={16} cy={20} r={2.4} fill={c.ink} />
+                <Circle cx={36} cy={20} r={2.4} fill={c.ink} />
+              </Svg>
+              <Ink size={22} weight="black" tight color={c.goldLight}>
+                {`+${xpGained} XP`}
+              </Ink>
             </Animated.View>
-          )}
+          ) : null}
 
-          {/* Bouton continuer */}
-          <TouchableOpacity
-            style={[styles.continueButton, { borderColor: colors.border }]}
+          <Pressable
             onPress={handleClose}
-            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Continuer"
+            style={({ pressed }) => [styles.continueButton, { backgroundColor: pressed ? c.accentPressed : c.accent }]}
           >
-            <Text style={[styles.continueText, { color: colors.textSecondary }]}>
+            <Ink size={16} weight="extraBold" color={c.onAccent}>
               Continuer
-            </Text>
-          </TouchableOpacity>
+            </Ink>
+          </Pressable>
         </Animated.View>
       </View>
     </Modal>
   );
 };
 
-const createStyles = (screenWidth: number) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -419,81 +224,63 @@ const createStyles = (screenWidth: number) => StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(29,32,41,0.55)',
   },
   card: {
-    width: screenWidth * 0.85,
-    maxWidth: 340,
-    borderRadius: 24,
-    padding: 32,
+    borderRadius: 32,
+    borderWidth: 1,
+    paddingTop: 26,
+    paddingBottom: 18,
+    paddingHorizontal: 20,
     alignItems: 'center',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.22,
+    shadowRadius: 30,
+    elevation: 16,
   },
-  gradientBorder: {
+  watermark: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
+    right: -40,
+    top: -30,
   },
-  shimmer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 100,
+  center: {
+    textAlign: 'center',
   },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  stamp: {
+    marginVertical: 18,
+  },
+  stampBg: {
+    width: 132,
+    height: 132,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
-  },
-  icon: {
-    fontSize: 56,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: 1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 6,
   },
   subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
+    marginTop: 8,
+    lineHeight: 21,
   },
-  xpContainer: {
-    marginBottom: 24,
-  },
-  xpBadge: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 30,
-  },
-  xpText: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#000000',
-    letterSpacing: 1,
+  xp: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 18,
   },
   continueButton: {
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  continueText: {
-    fontSize: 14,
-    fontWeight: '600',
+    alignSelf: 'stretch',
+    marginTop: 22,
+    minHeight: 56,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

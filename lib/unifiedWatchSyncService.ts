@@ -8,7 +8,6 @@
 import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './security/logger';
-import { appleWatchService } from './appleWatchService';
 import WearSyncService from './wearSyncService';
 
 export interface EnrichedWatchPayload {
@@ -78,22 +77,14 @@ export async function pushEnrichedToWatches(payload: EnrichedWatchPayload): Prom
   const ts = Date.now();
   logger.info('[UnifiedWatchSync] Push vers montres:', Object.keys(payload).join(', '));
 
-  // Apple Watch (iOS)
-  if (Platform.OS === 'ios') {
-    try {
-      // appleWatchService.syncToWatch() lit depuis AsyncStorage, donc on persiste
-      // les nouveaux champs avant de déclencher une sync complète.
-      await persistWatchCache(payload);
-      await appleWatchService.syncToWatch();
-    } catch (e) {
-      logger.warn('[UnifiedWatchSync] Erreur Apple Watch:', e);
-    }
-  }
+  // Apple Watch (iOS) : depuis le 13 octobre 2026, lib/v2/montre (contrat v1) s'en charge seul.
+  // Ce service ne sert plus qu'a Wear OS.
+  if (Platform.OS === 'ios') return;
 
   // Android Wear (Android)
   if (Platform.OS === 'android') {
     try {
-      // Le module WearSyncModule accepte un dict flat — on envoie tout d'un coup
+      // Le module WearSyncModule accepte un dict flat, on envoie tout d'un coup
       const flatData: Record<string, string | number | boolean> = { type: 'enriched', ts };
       for (const [key, value] of Object.entries(payload)) {
         if (value !== undefined && value !== null) {
@@ -130,21 +121,25 @@ export async function syncAllWatchesEnriched(): Promise<void> {
   try {
     const [
       { getProfile, getTrainings, getWeights, getLatestWeight },
-      { getUnifiedPoints },
-      { getCurrentRank },
+      { refreshWatchIdentity },
+      { getEspace },
     ] = await Promise.all([
       import('./database'),
-      import('./gamification'),
-      import('./ranks'),
+      import('./v2/watchIdentity'),
+      import('./v2/espace'),
     ]);
 
-    const [profile, trainings, weights, latestWeight, totalPoints] = await Promise.all([
+    // Rang d'armure actuel (v2) et personnage choisi ; recrit aussi les anciennes cles lues par la montre
+    const [profile, trainings, weights, latestWeight, armure, espace] = await Promise.all([
       getProfile().catch(() => null),
       getTrainings().catch(() => []),
       getWeights().catch(() => []),
       getLatestWeight().catch(() => null),
-      getUnifiedPoints().catch(() => 0),
+      refreshWatchIdentity().catch(() => null),
+      getEspace().catch(() => null),
     ]);
+    // niveau 1 a 5, un par rang d'armure (meme valeur que @yoroi_level)
+    const watchLevel = (armure?.rank.index ?? 0) + 1;
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -159,7 +154,7 @@ export async function syncAllWatchesEnriched(): Promise<void> {
     const trainingsThisYear = trainings.filter(t => new Date(t.date).getFullYear() === currentYear).length;
 
     const lastTraining = trainings[0]; // trié DESC
-    const rank = getCurrentRank(totalPoints);
+    const rank = { name: armure?.rank.name ?? 'Ashigaru' };
 
     // Streak : nombre de jours consécutifs avec une activité
     const streakDays = computeStreak(trainings.map(t => t.date));
@@ -255,8 +250,9 @@ export async function syncAllWatchesEnriched(): Promise<void> {
 
     const payload: EnrichedWatchPayload = {
       userName: profile?.name,
-      level: totalPoints,
+      level: watchLevel,
       rank: rank.name,
+      avatarId: espace?.personnage,
       streakDays,
       trainingsThisWeek,
       trainingsThisMonth,
@@ -264,7 +260,11 @@ export async function syncAllWatchesEnriched(): Promise<void> {
       yearlyGoal,
       lastTrainingDate: lastTraining?.date,
       lastTrainingSport: lastTraining?.sport,
-      lastTrainingRating: (lastTraining as any)?.session_rating,
+      // la note se saisit maintenant sur 5, la montre l'affiche sur 10
+      lastTrainingRating: (() => {
+        const r = Number((lastTraining as any)?.session_rating);
+        return Number.isFinite(r) && r > 0 ? (r <= 5 ? r * 2 : r) : undefined;
+      })(),
       lastTrainingMood: (lastTraining as any)?.session_mood,
       currentWeight: latestWeight?.weight,
       targetWeight: profile?.target_weight,

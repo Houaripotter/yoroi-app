@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Genere pour le style B (Rouleau et encre), depuis yw_inc_graphe.xml (scratchpad/widgets_code/gen_android.py) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/yw_graphe" android:layout_width="match_parent" android:layout_height="match_parent">
+  <ImageView android:id="@+id/yw_g_ligne" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_b_tirets" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_courbe" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_b_indigo" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_allure" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_b_torii" android:visibility="gone" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_dessus" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_b_torii" android:visibility="gone" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_vite" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_b_torii" android:visibility="gone" android:importantForAccessibility="no" />
+  <ImageView android:id="@+id/yw_g_pt_aucun" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:tint="@color/yw_b_torii" android:visibility="gone" android:importantForAccessibility="no" />
+</FrameLayout>

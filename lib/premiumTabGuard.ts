@@ -1,5 +1,5 @@
 /**
- * premiumTabGuard — Yoroi Freemium
+ * premiumTabGuard, Yoroi Freemium
  *
  * Gère l'affichage de la PremiumModal sur les points d'entrée protégés.
  * Règle : une seule fois par jour et par point d'entrée pour les utilisateurs gratuits.
@@ -38,7 +38,10 @@ export async function markPremiumShown(id: string): Promise<void> {
 export const shouldShowPremiumTabModal = shouldShowPremiumOnce;
 export const markPremiumTabModalShown = markPremiumShown;
 
-/** Retourne le nombre d'entrées poids dans le mois courant */
+/**
+ * Nombre d'entrées poids dans le mois courant.
+ * Information seulement : les pesées sont gratuites et sans limite, ce compteur ne bloque plus rien.
+ */
 export async function getWeightCountThisMonth(): Promise<number> {
   const val = await AsyncStorage.getItem('PREMIUM_WEIGHT_COUNT_MONTH');
   if (!val) return 0;

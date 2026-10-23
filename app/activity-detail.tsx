@@ -1,446 +1,161 @@
-// ============================================
-// YOROI - ACTIVITÉ DÉTAILLÉE
-// ============================================
-// Graphiques d'activité (volume, fréquence, types d'entraînements)
-
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-  ActivityIndicator,
-} from 'react-native';
-import { router } from 'expo-router';
+/**
+ * Ton activite v2 : volume, frequence et intensite de tes entrainements par semaine,
+ * sur 7 jours, 30 jours, 90 jours ou depuis le debut.
+ * Vague 14 : reprend aussi l'ancien ecran Performance (/performance-detail, redirige ici) :
+ * charge par semaine (effort ressenti x heures) et nombre de seances dures.
+ */
+import React, { useCallback, useMemo, useState } from 'react';
+import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
+import { CHART_COLORS } from '@/components/yoroi/v2/charts/core';
+import { DeviceEventEmitter, ScrollView, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Activity, Calendar, Clock, Dumbbell, TrendingUp } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { formatHoursHM } from '@/lib/formatDuration';
-import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
-import { getTrainings, Training } from '@/lib/database';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import logger from '@/lib/security/logger';
-import { useI18n } from '@/lib/I18nContext';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { getTrainings } from '@/lib/database';
+import type { Training } from '@/lib/database';
+import { getSessionTypeLabel } from '@/lib/sports';
+import { logger } from '@/lib/security/logger';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { durationOf } from '@/lib/v2/trainingWeek';
+import { hoursText, weekBuckets, weekLabels } from '@/lib/v2/progres/weekly';
+import { InkBarChart } from '@/components/yoroi/v2/progres/InkBarChart';
+import { PeriodSwitch } from '@/components/yoroi/v2/charts/PeriodSwitch';
+import { addDaysISO, isoOf, sportLabel } from '@/lib/v2/seances/sessionData';
+import { BackButton, EmptyState, Glass } from '@/components/yoroi/v2/seances/ui';
+import { blancA } from '@/components/yoroi/livePalette';
 
-type Period = '7d' | '30d' | '90d' | 'all';
+const PERIODS = [
+  { value: 7, label: '7 jours' },
+  { value: 30, label: '1 mois' },
+  { value: 90, label: '3 mois' },
+  { value: 0, label: 'Tout' },
+];
 
-export default function ActivityDetailScreen() {
-  const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(SCREEN_WIDTH), [SCREEN_WIDTH]);
-  const [period, setPeriod] = useState<Period>('all');
-  const [trainings, setTrainings] = useState<Training[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const loadData = async () => {
-      try {
-        const data = await getTrainings();
-        setTrainings(data);
-      } catch (error) {
-        logger.error('Erreur chargement trainings:', error);
-      } finally {
-        timer = setTimeout(() => setLoading(false), 400);
-      }
-    };
-
-    loadData();
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
-
-  // Filtrer par période
-  const getFilteredData = () => {
-    if (!trainings || !Array.isArray(trainings)) return [];
-    const now = new Date();
-    const daysMap = { '7d': 7, '30d': 30, '90d': 90, 'all': 365 * 10 };
-    const days = daysMap[period] || 30;
-    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-
-    return trainings
-      .filter(t => t && t.date && new Date(t.date) >= cutoff)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
-
-  const filteredTrainings = getFilteredData();
-
-  // Volume d'entraînement par semaine
-  const volumeData = (() => {
-    const weeks = new Map<string, number>();
-
-    filteredTrainings.forEach(t => {
-      const weekKey = getWeekKey(new Date(t.date));
-      const current = weeks.get(weekKey) || 0;
-      weeks.set(weekKey, current + ((t.duration || 60) / 60));
-    });
-
-    return Array.from(weeks.entries()).map(([week, hours]) => ({
-      date: week,
-      value: hours,
-    }));
-  })();
-
-  // Fréquence (nombre de séances par semaine)
-  const frequencyData = (() => {
-    const weeks = new Map<string, number>();
-
-    filteredTrainings.forEach(t => {
-      const weekKey = getWeekKey(new Date(t.date));
-      const current = weeks.get(weekKey) || 0;
-      weeks.set(weekKey, current + 1);
-    });
-
-    return Array.from(weeks.entries()).map(([week, count]) => ({
-      date: week,
-      value: count,
-    }));
-  })();
-
-  // Intensité moyenne par semaine
-  const intensityData = (() => {
-    const weeks = new Map<string, { total: number; count: number }>();
-
-    filteredTrainings.forEach(t => {
-      const weekKey = getWeekKey(new Date(t.date));
-      const current = weeks.get(weekKey) || { total: 0, count: 0 };
-      weeks.set(weekKey, {
-        total: current.total + (t.intensity || 5),
-        count: current.count + 1,
-      });
-    });
-
-    return Array.from(weeks.entries()).map(([week, data]) => ({
-      date: week,
-      value: data.count > 0 ? data.total / data.count : 0,
-    }));
-  })();
-
-  // Stats résumées
-  const totalSessions = filteredTrainings.length;
-  const totalHours = filteredTrainings.reduce((sum, t) => sum + ((t.duration || 60) / 60), 0);
-
-  // Calculer sessions par semaine
-  const daysInPeriod = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 365;
-  const weeksInPeriod = daysInPeriod / 7;
-  const avgSessionsPerWeek = totalSessions / weeksInPeriod;
-
-  // Type d'entraînement le plus fréquent
-  const typeCount = new Map<string, number>();
-  filteredTrainings.forEach(t => {
-    const type = t.category || 'Entraînement';
-    typeCount.set(type, (typeCount.get(type) || 0) + 1);
-  });
-
-  const mostFrequentType = Array.from(typeCount.entries())
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
-
-  if (loading) {
-    return (
-      <View style={[styles.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('activityDetail.loading')}</Text>
-      </View>
-    );
-  }
-
+function Tile({ value, unit, label }: { value: string; unit?: string; label: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      {/* Filtres de période */}
-      <View style={styles.periodFilters}>
-        {(['7d', '30d', '90d', 'all'] as Period[]).map((p) => (
-          <TouchableOpacity
-            key={p}
-            style={[
-              styles.periodBtn,
-              { backgroundColor: period === p ? colors.accent : colors.backgroundCard },
-            ]}
-            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPeriod(p); }}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.periodText,
-                { color: period === p ? '#FFFFFF' : colors.textPrimary },
-              ]}
-            >
-              {p === 'all' ? t('activityDetail.all') : p}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Stats résumées */}
-        <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Activity size={20} color="#3B82F6" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{totalSessions}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.sessions')}</Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Clock size={20} color="#10B981" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatHoursHM(totalHours || 0)}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.totalVolume')}</Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Calendar size={20} color="#F59E0B" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{(avgSessionsPerWeek || 0).toFixed(1)}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.sessionsPerWeek')}</Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Dumbbell size={20} color="#8B5CF6" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
-              {mostFrequentType}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('activityDetail.mainType')}</Text>
-          </View>
-        </View>
-
-        {/* Graphique volume d'entraînement */}
-        <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.chartHeader}>
-            <View style={styles.chartTitleRow}>
-              <Clock size={20} color="#10B981" />
-              <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                {t('activityDetail.trainingVolume')}
-              </Text>
-            </View>
-            <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-              {t('activityDetail.hoursPerWeek')}
-            </Text>
-          </View>
-          {volumeData.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={volumeData}
-                width={Math.max(SCREEN_WIDTH - 72, volumeData.length * 50)}
-                height={200}
-                color="#10B981"
-                showGrid
-                showDots
-                animated
-              />
-            </ScrollView>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                {t('activityDetail.noData')}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Graphique fréquence */}
-        <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.chartHeader}>
-            <View style={styles.chartTitleRow}>
-              <Calendar size={20} color="#F59E0B" />
-              <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                {t('activityDetail.trainingFrequency')}
-              </Text>
-            </View>
-            <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-              {t('activityDetail.sessionsPerWeekFull')}
-            </Text>
-          </View>
-          {frequencyData.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={frequencyData}
-                width={Math.max(SCREEN_WIDTH - 72, frequencyData.length * 50)}
-                height={200}
-                color="#F59E0B"
-                showGrid
-                showDots
-                animated
-              />
-            </ScrollView>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                {t('activityDetail.noData')}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Graphique intensité moyenne */}
-        <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.chartHeader}>
-            <View style={styles.chartTitleRow}>
-              <TrendingUp size={20} color="#EF4444" />
-              <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                {t('activityDetail.averageIntensity')}
-              </Text>
-            </View>
-            <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-              {t('activityDetail.rpePerWeek')}
-            </Text>
-          </View>
-          {intensityData.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <SmoothLineChart
-                data={intensityData}
-                width={Math.max(SCREEN_WIDTH - 72, intensityData.length * 50)}
-                height={200}
-                color="#EF4444"
-                showGrid
-                showDots
-                animated
-                maxValue={10}
-              />
-            </ScrollView>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                {t('activityDetail.noData')}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {filteredTrainings.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              {t('activityDetail.noTraining')}
-            </Text>
-          </View>
-        )}
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+    <View style={{ flexGrow: 1, flexBasis: '30%', minWidth: 96, padding: 14, borderRadius: 18, backgroundColor: blancA(0.8), borderWidth: 1, borderColor: c.divider, gap: 2 }}>
+      <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{label}</Ink>
+      <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+        {value}
+        {unit ? <Ink size={13} weight="bold" color={c.textSecondary}>{` ${unit}`}</Ink> : null}
+      </Ink>
     </View>
   );
 }
 
-// Helper: obtenir la clé de semaine (format: "S01")
-function getWeekKey(date: Date): string {
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-  return `S${weekNumber.toString().padStart(2, '0')}`;
-}
+export default function ActivityDetailScreen() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [period, setPeriod] = useState<number>(30);
+  const [trainings, setTrainings] = useState<Training[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
-const createStyles = (SCREEN_WIDTH: number) => StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  periodFilters: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 16,
-  },
-  periodBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  periodText: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
-  },
-  statCard: {
-    width: (SCREEN_WIDTH - 48) / 2,
-    padding: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    gap: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  chartCard: {
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-  chartHeader: {
-    marginBottom: 16,
-  },
-  chartTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  chartSubtitle: {
-    fontSize: 12,
-    marginLeft: 28,
-  },
-  emptyState: {
-    height: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-  },
-});
+  const load = useCallback(async () => {
+    try {
+      setTrainings((await getTrainings()) ?? []);
+    } catch (error) {
+      logger.error('Erreur chargement trainings:', error);
+    } finally {
+      setLoaded(true);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+      const sub = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, load);
+      return () => sub.remove();
+    }, [load]),
+  );
+
+  const filtered = useMemo(() => {
+    const cutoff = period ? addDaysISO(isoOf(new Date()), -period + 1) : '0000-00-00';
+    return trainings.filter((t) => t?.date && t.date.slice(0, 10) >= cutoff).sort((a, b) => (a.date < b.date ? -1 : 1));
+  }, [trainings, period]);
+
+  // Toutes les semaines de la periode, meme vides : 4 a 5 barres sur un mois
+  const weeks = useMemo(() => weekBuckets(filtered, period || null, durationOf, (t) => (t.intensity && t.intensity > 0 ? t.intensity : null)), [filtered, period]);
+  const labels = useMemo(() => weekLabels(weeks.map((w) => w.week)), [weeks]);
+
+  const totalMin = filtered.reduce((s, t) => s + durationOf(t), 0);
+  const perWeek = filtered.length / Math.max(1, weeks.length);
+  const mainType = useMemo(() => {
+    const m = new Map<string, number>();
+    filtered.forEach((t) => {
+      const k = t.session_type ? getSessionTypeLabel(t.session_type) : sportLabel(t.sport);
+      m.set(k, (m.get(k) ?? 0) + 1);
+    });
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+  }, [filtered]);
+
+  const thisWeek = weeks.length - 1;
+  const volume = weeks.map((w, i) => ({ label: labels[i], value: Math.round((w.minutes / 60) * 10) / 10 }));
+  const freq = weeks.map((w, i) => ({ label: labels[i], value: w.count }));
+  const rpe = weeks.map((w, i) => ({ label: labels[i], value: w.rpeN > 0 ? Math.round((w.rpeSum / w.rpeN) * 10) / 10 : 0 }));
+  const hasRpe = weeks.some((w) => w.rpeN > 0);
+  const loadBars = weeks.map((w, i) => ({ label: labels[i], value: Math.round(w.load) }));
+  const hard = filtered.filter((t) => (t.intensity ?? 0) >= 8).length;
+  const avgOf = (list: { value: number }[]) => (list.length > 1 ? list.reduce((s, b) => s + b.value, 0) / list.length : null);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
+        <EnTete titre="Ton activité" sousTitre="Volume, fréquence et effort, semaine par semaine" repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+
+        <PeriodSwitch value={period} onChange={setPeriod} options={PERIODS} />
+
+        {loaded && filtered.length === 0 ? (
+          <EmptyState title="Rien sur cette période" text="Enregistre une séance et ton activité prend forme ici, semaine après semaine." action="Commencer une séance" onAction={() => router.push('/seance' as any)} />
+        ) : null}
+
+        {filtered.length > 0 ? (
+          <>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Tile value={String(filtered.length)} label="Séances" />
+              <Tile value={hoursText(totalMin)} label="Temps total" />
+              <Tile value={perWeek.toFixed(1).replace('.', ',')} label="Par semaine" />
+              {mainType ? <Tile value={mainType} label="Le plus fréquent" /> : null}
+            </View>
+
+            <Glass style={{ gap: 8 }}>
+              <Ink size={17} weight="black" tight>Volume</Ink>
+              <Ink size={13} color={c.textSecondary}>Heures d’entraînement par semaine</Ink>
+              <InkBarChart bars={volume} color="#3D5D9E" highlight={thisWeek} average={avgOf(volume)} format={(v) => hoursText(v * 60)} showValues="highlight" sparseLabels label="Heures d’entraînement par semaine" />
+            </Glass>
+
+            <Glass style={{ gap: 8 }}>
+              <Ink size={17} weight="black" tight>Fréquence</Ink>
+              <Ink size={13} color={c.textSecondary}>Séances par semaine</Ink>
+              <InkBarChart bars={freq} color={CHART_COLORS.gold} highlight={thisWeek} average={avgOf(freq)} format={(v) => `${Math.round(v)}`} showValues={weeks.length <= 6 ? 'all' : 'highlight'} sparseLabels label="Séances par semaine" />
+            </Glass>
+
+            <Glass style={{ gap: 8 }}>
+              <Ink size={17} weight="black" tight>Effort moyen</Ink>
+              <Ink size={13} color={c.textSecondary}>Effort ressenti sur 10, quand tu l’as noté</Ink>
+              {hasRpe ? (
+                <InkBarChart bars={rpe} color={c.accent} highlight={thisWeek} format={(v) => v.toFixed(1).replace('.', ',').replace(',0', '')} showValues={weeks.length <= 6 ? 'all' : 'highlight'} sparseLabels label="Effort moyen par semaine" />
+              ) : (
+                <Ink size={14} color={c.textSecondary}>Note ton effort à la fin de tes séances pour voir ces barres.</Ink>
+              )}
+            </Glass>
+
+            {hasRpe ? (
+              <Glass style={{ gap: 8 }}>
+                <Ink size={17} weight="black" tight>Charge</Ink>
+                <Ink size={13} color={c.textSecondary}>Effort ressenti multiplié par les heures. Une semaine bien plus haute que ta moyenne demande de la récupération.</Ink>
+                <InkBarChart bars={loadBars} color={c.indigo} highlight={thisWeek} average={avgOf(loadBars)} format={(v) => String(Math.round(v))} showValues="highlight" sparseLabels label="Charge par semaine" />
+                {hard > 0 ? <Ink size={13} weight="bold" color={c.textSecondary}>{`${hard} séance${hard > 1 ? 's' : ''} dure${hard > 1 ? 's' : ''} sur la période, effort de 8 ou plus.`}</Ink> : null}
+              </Glass>
+            ) : null}
+            <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Barre rouge : la semaine en cours. Pointillés : ta moyenne. Touche une barre pour la lire.</Ink>
+          </>
+        ) : null}
+      </ScrollView>
+    </View>
+  );
+}

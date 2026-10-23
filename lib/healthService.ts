@@ -6,11 +6,12 @@
 // Android → Health Connect via healthConnect.android.ts
 // ============================================
 
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { healthConnect } from './healthConnect';
 import { addMeasurement, getAllMeasurements } from './storage';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 // Réexporter les types pour que les consommateurs n'aient plus à deviner le bon import
 export type { HealthData, SyncStatus, HealthPermissions } from './healthConnect';
@@ -119,7 +120,7 @@ const importWeightHistory = async (days: number = 365): Promise<number> => {
         const settingsHint = Platform.OS === 'ios'
           ? 'Réglages > Confidentialité > Santé > Yoroi'
           : 'Réglages > Applications > Health Connect > Yoroi';
-        Alert.alert('Erreur', `Impossible d'accéder à ${providerName}. Vérifiez les permissions dans ${settingsHint}`);
+        appAlert('Accès impossible', `YOROI n’a pas accès à ${providerName}. Vérifie les autorisations dans ${settingsHint}.`);
         return 0;
       }
     }
@@ -127,7 +128,7 @@ const importWeightHistory = async (days: number = 365): Promise<number> => {
     const weightHistory = await healthConnect.getWeightHistory(days);
 
     if (!weightHistory || weightHistory.length === 0) {
-      Alert.alert('Information', `Aucune donnée de poids trouvée dans ${getProviderName()}.`);
+      appAlert('Rien à importer', `Aucune donnée de poids trouvée dans ${getProviderName()}.`);
       return 0;
     }
 
@@ -158,14 +159,14 @@ const importWeightHistory = async (days: number = 365): Promise<number> => {
 
     if (importedCount > 0) {
       logger.info(`${importedCount} nouvelles mesures importées`);
-      Alert.alert('Succès', `${importedCount} mesure(s) importée(s) depuis ${getProviderName()}`);
+      appAlert('Import terminé', `${importedCount} mesure${importedCount > 1 ? 's' : ''} importée${importedCount > 1 ? 's' : ''} depuis ${getProviderName()}.`);
     } else {
-      Alert.alert('Information', 'Toutes les données sont déjà importées ou aucune nouvelle donnée disponible.');
+      appAlert('Déjà à jour', 'Il n’y a pas de nouvelle donnée à importer.');
     }
     return importedCount;
   } catch (error) {
     logger.error('[HealthService] Exception lors de l\'import:', error);
-    Alert.alert('Erreur', 'Une erreur est survenue lors de l\'import.');
+    appAlert('Oups', 'L’import n’a pas abouti. Réessaie.');
     return 0;
   }
 };

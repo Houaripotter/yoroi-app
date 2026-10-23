@@ -189,7 +189,7 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     status: 'unfit',
     color: '#F44336',
     backgroundColor: '#FFEBEE',
-    icon: '🚫',
+    icon: '',
     title: 'ATTENTION',
     subtitle: 'Douleur importante',
     advice: 'Douleur intense enregistrée - consulter un professionnel de santé',

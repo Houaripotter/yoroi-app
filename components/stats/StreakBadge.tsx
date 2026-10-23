@@ -2,7 +2,7 @@
 // STREAK BADGE
 // Compteur de jours consécutifs avec au moins 1 séance.
 // Style "🔥 12 jours d'affilée" avec animation pulse subtile.
-// Inspiré Duolingo / Snapchat · addictif et motivant.
+// Inspiré Duolingo / Snapchat, addictif et motivant.
 // ============================================
 
 import React, { useEffect, useMemo, useRef } from 'react';

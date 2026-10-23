@@ -107,7 +107,7 @@ export default function VictoryShareModal({
   const pickImage = async () => {
     const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Accès aux photos', 'Autorise l’accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -127,7 +127,7 @@ export default function VictoryShareModal({
   const takePhoto = async () => {
     const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Accès à la caméra', 'Autorise la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -159,7 +159,7 @@ export default function VictoryShareModal({
       }
     } catch (error) {
       logger.error('Error sharing:', error);
-      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', 'La carte n’a pas pu être partagée.', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +184,7 @@ export default function VictoryShareModal({
       }
     } catch (error) {
       logger.error('Error saving:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', 'La carte n’a pas pu être enregistrée.', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }

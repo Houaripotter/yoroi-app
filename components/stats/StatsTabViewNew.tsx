@@ -23,7 +23,7 @@ const SignesVitauxPage = React.memo((props: any) => <VitalitePage {...props} for
 import { ScrollProvider } from '@/lib/ScrollContext';
 import { StatsErrorBoundary } from './StatsErrorBoundary';
 
-// Memoized page wrapper · isolation par onglet via StatsErrorBoundary : si un
+// Memoized page wrapper, isolation par onglet via StatsErrorBoundary : si un
 // onglet crash, l'utilisateur peut retry sans relancer toute l'app.
 const PageWrapper = memo(({ pageId, component: PageComponent, onNavigateToTab }: {
   pageId: string;

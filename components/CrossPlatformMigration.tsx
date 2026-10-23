@@ -11,11 +11,12 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Modal } from 'react-native';
 import { Smartphone, ArrowRight, CheckCircle2, Info, X } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 interface Props {
   visible: boolean;
@@ -55,13 +56,13 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
     try {
       const ok = await exportDataToJSON({ silent: false, includePhotos: type === 'full' });
       if (ok) {
-        Alert.alert(
-          '✅ Backup créé',
+        appAlert(
+          'Sauvegarde créée',
           `Le fichier est prêt. Envoie-le à toi-même via le partage (email, WhatsApp, Drive…) puis ouvre-le sur ton autre appareil pour l'importer automatiquement.`
         );
       }
     } catch (e) {
-      Alert.alert('Erreur', 'Impossible de créer le backup.');
+      appAlert('Oups', 'La sauvegarde n’a pas pu être créée.');
     } finally {
       setCreating(null);
     }
@@ -154,7 +155,7 @@ export const CrossPlatformMigration: React.FC<Props> = ({ visible, onClose }) =>
           </View>
 
           <Text style={[styles.warn, { color: colors.textMuted ?? '#666' }]}>
-            💡 Le backup est chiffré avec AES-256 si tu as activé le chiffrement. Sinon il est en clair.
+            Le backup est chiffré avec AES-256 si tu as activé le chiffrement. Sinon il est en clair.
           </Text>
         </ScrollView>
       </View>

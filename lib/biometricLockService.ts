@@ -1,5 +1,5 @@
 // ============================================
-// BIOMETRIC LOCK · FaceID / TouchID au lancement
+// BIOMETRIC LOCK : FaceID / TouchID au lancement
 // ============================================
 // Verrouille l'app si activee par l'utilisateur.
 // Prompt au lancement ou quand l'app revient au premier plan apres > 5 min.

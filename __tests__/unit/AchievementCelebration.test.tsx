@@ -41,12 +41,13 @@ describe('AchievementCelebration', () => {
     expect(getByText('初めての戦い')).toBeTruthy();
   });
 
-  it('displays reward text with allowed 🎁 emoji', () => {
-    const { getByText } = renderWithProviders(
+  it('displays reward text with a Gift icon (no emoji)', () => {
+    const { getByText, toJSON } = renderWithProviders(
       <AchievementCelebration {...defaultProps} />
     );
-    // The reward text includes 🎁 which is an allowed emoji
-    expect(getByText('🎁 +100 XP')).toBeTruthy();
+    // La recompense s'affiche telle quelle, l'emoji cadeau est remplace par l'icone Gift (SVG)
+    expect(getByText('+100 XP')).toBeTruthy();
+    expect(JSON.stringify(toJSON())).not.toContain('🎁');
   });
 
   it('sparklesRow contains SVG icons (not ⭐ emoji)', () => {

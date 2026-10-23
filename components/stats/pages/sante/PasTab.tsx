@@ -73,7 +73,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
 
   const hasData = steps > 0 || calories > 0 || distance > 0 || exerciseMinutes > 0 || standHours > 0 || floors > 0 || safeStepsHistory.length > 0;
 
-  // Historique horizontal · pas (30 derniers jours, plus récent à gauche)
+  // Historique horizontal, pas (30 derniers jours, plus récent à gauche)
   const sortedHistory = useMemo(() =>
     [...safeStepsHistory]
       .filter(item => item?.date)
@@ -116,7 +116,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
 
   return (
     <View style={{ backgroundColor: sectionBg, borderRadius: 16, paddingTop: 8, paddingBottom: 8 }}>
-      {/* ── Ring des pas (JSX inliné · pas de composant interne) */}
+      {/* ── Ring des pas (JSX inliné, pas de composant interne) */}
       <StatsSection>
         <TouchableOpacity
           style={[styles.ringCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
@@ -134,7 +134,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
                   strokeWidth={ringStroke}
                   fill="none"
                 />
-                {/* Progress · rotation via origin SVG transform */}
+                {/* Progress, rotation via origin SVG transform */}
                 <SvgCircle
                   cx={ringCx} cy={ringCy} r={ringR}
                   stroke={stepsColor}
@@ -211,7 +211,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
         </TouchableOpacity>
       </StatsSection>
 
-      {/* ── Pas / Distance / Calories · MultiLine */}
+      {/* ── Pas / Distance / Calories, MultiLine */}
       {(safeStepsHistory.length > 0 || safeCaloriesHistory.length > 0 || safeDistanceHistory.length > 0) && (
         <StatsSection>
           <MultiLineComparisonCard
@@ -247,7 +247,7 @@ export const PasTab: React.FC<PasTabProps> = React.memo(({
         </StatsSection>
       )}
 
-      {/* ── Exercise + Debout · DualComparison */}
+      {/* ── Exercise + Debout, DualComparison */}
       {(safeExerciseHistory.length > 0 || safeStandHistory.length > 0) && (
         <StatsSection>
           <DualComparisonCard

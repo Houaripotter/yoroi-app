@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Genere pour le style A (Nuit de lanternes), depuis yw_poids_grand.xml (scratchpad/widgets_code/gen_android.py) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/yw_a_fond" android:clipToOutline="true"><ImageView android:id="@+id/yw_fond_img" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:src="@drawable/yw_a_fond_grand" android:importantForAccessibility="no" /><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/yw_a_voile_v" android:importantForAccessibility="no" /><LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="@dimen/yw_marge">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="bottom">
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+      <TextView android:id="@+id/yw_titre" style="@style/YwTitre" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/yw_nom_poids" android:textColor="@color/yw_a_titre" android:textStyle="bold" android:drawableStart="@drawable/yw_a_lanterne" android:drawablePadding="5dp" />
+      <TextView android:id="@+id/yw_valeur" style="@style/YwChiffre" android:layout_width="match_parent" android:layout_height="44dp" android:gravity="center_vertical|start" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="18sp" android:autoSizeMaxTextSize="38sp" android:autoSizeStepGranularity="1sp" android:textColor="@color/yw_a_encre" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="end">
+      <include layout="@layout/yw_inc_statut_a" android:layout_width="match_parent" android:layout_height="wrap_content" />
+      <TextView android:id="@+id/yw_date" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textColor="@color/yw_a_discret" />
+    </LinearLayout>
+  </LinearLayout>
+  <TextView android:id="@+id/yw_phrase" style="@style/YwTexte" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:visibility="gone" android:textColor="@color/yw_a_encre2" />
+  <include layout="@layout/yw_inc_graphe_a" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+  <include layout="@layout/yw_inc_arrivee_a" android:layout_width="match_parent" android:layout_height="wrap_content" />
+  <LinearLayout android:id="@+id/yw_bas" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <LinearLayout android:id="@+id/yw_bloc_semaine" android:layout_width="0dp" android:layout_weight="3" android:layout_height="wrap_content" android:orientation="vertical">
+      <TextView android:id="@+id/yw_sem_texte" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="5dp" android:textColor="@color/yw_a_encre2" />
+      <include layout="@layout/yw_inc_points_a" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/yw_bloc_eau" android:layout_width="0dp" android:layout_weight="2" android:layout_height="wrap_content" android:layout_marginLeft="12dp" android:orientation="vertical">
+      <TextView style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/yw_nom_eau" android:textColor="@color/yw_a_encre2" />
+      <TextView android:id="@+id/yw_eau_valeur" style="@style/YwChiffre" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="17sp" android:textColor="@color/yw_a_encre" />
+      <TextView android:id="@+id/yw_eau_objectif" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textColor="@color/yw_a_discret" />
+    </LinearLayout>
+  </LinearLayout>
+</LinearLayout></FrameLayout>

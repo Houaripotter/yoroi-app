@@ -1,281 +1,273 @@
-// ============================================
-// YOROI - ÉCRAN DÉTAILLÉ READINESS
-// ============================================
+/**
+ * Ta recuperation (score unique, lib/v2/accueil/forme.ts) : recuperation du jour, energie de la semaine et etat du corps.
+ * Remplace aussi les anciens ecrans Energie et Etat du corps.
+ * Vague 14 : la rangee Sommeil, Eau, Seance (doublon du bouton + et des facteurs) est retiree.
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import { Ornement } from '@/components/yoroi/v2/ornements/Ornement';
+import { DeviceEventEmitter, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { getSleepStats } from '@/lib/sleepService';
+import type { SleepStats } from '@/lib/sleepService';
+import { getTrainings } from '@/lib/database';
+import type { Training } from '@/lib/database';
+import { getSportName } from '@/lib/sports';
+import { safeComputeForme, formatMinutes } from '@/lib/v2/accueil/forme';
+import type { FactorKey, FormeResult } from '@/lib/v2/accueil/forme';
+import { relativeDay } from '@/lib/v2/accueil/home';
+import { BigButton, BrushRing, Card, Enter, Icon, P, Press, SectionTitle, Stat } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { BodyZones } from '@/components/yoroi/v2/accueil/BodyZones';
+import { intensite } from '@/lib/v2/intensite';
+import { RECUP_METHOD, messageScoreIncomplet, scoreRecupFiable } from '@/lib/v2/recuperation';
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { Header } from '@/components/ui/Header';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { calculateReadinessScore, ReadinessScore } from '@/lib/readinessService';
-import { Moon, Zap, Droplets, Flame, Heart, Activity } from 'lucide-react-native';
-import { useI18n } from '@/lib/I18nContext';
-import Svg, { Circle } from 'react-native-svg';
-
-// ============================================
-// SOUS-COMPOSANTS
-// ============================================
-
-const ReadinessRing: React.FC<{ score: number; level: string }> = ({ score, level }) => {
-  const { isDark } = useTheme();
-  const size = 160;
-  const strokeWidth = 14;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (Math.min(score, 100) / 100) * circumference;
-
-  const levelColors: Record<string, string> = {
-    optimal: '#22C55E',
-    good: '#4ADE80',
-    moderate: '#F59E0B',
-    poor: '#F97316',
-    critical: '#EF4444',
-  };
-  const color = levelColors[level] ?? '#8B5CF6';
-
-  return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size}>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </Svg>
-      <View style={{ position: 'absolute', alignItems: 'center' }}>
-        <Text style={{ fontSize: 38, fontWeight: '900', color }}>{Math.round(score)}</Text>
-        <Text style={{ fontSize: 12, color, fontWeight: '700', marginTop: -4 }}>/100</Text>
-      </View>
-    </View>
-  );
+const FACTOR_ICON: Record<FactorKey, 'moon' | 'bolt' | 'drop' | 'body' | 'heart'> = {
+  sommeil: 'moon',
+  charge: 'bolt',
+  hydratation: 'drop',
+  corps: 'body',
+  coeur: 'heart',
+  vfc: 'heart',
 };
 
-interface FactorRowProps {
-  label: string;
-  score: number;
-  impact: 'positive' | 'neutral' | 'negative';
-  icon: React.ReactNode;
-  color: string;
+const MISSING: Partial<Record<FactorKey, { label: string; text: string; href?: string }>> = {
+  sommeil: { label: 'Sommeil', text: 'Note ta nuit', href: '/sleep-input' },
+  charge: { label: 'Charge d’entraînement', text: 'Ajoute une séance', href: '/ajouter' },
+  hydratation: { label: 'Hydratation', text: 'Note ton eau', href: '/hydration' },
+  corps: { label: 'État du corps', text: 'Indique une gêne plus bas' },
+};
+
+function colorFor(score: number) {
+  // Vague 32 : echelle d'intensite commune, lue a l'envers pour la forme (vert, or, orange)
+  return intensite(score >= 65 ? 2 : score >= 45 ? 3 : 4).text;
 }
-const FactorRow: React.FC<FactorRowProps> = ({ label, score, impact, icon, color }) => {
-  const { t } = useI18n();
-  const { colors, isDark } = useTheme();
-  const impactColors = { positive: '#22C55E', neutral: '#F59E0B', negative: '#EF4444' };
-  const impactLabels = { positive: t('readiness.positive'), neutral: t('readiness.neutral'), negative: t('readiness.negative') };
-  const impactColor = impactColors[impact];
-  const pct = Math.min(100, Math.round(score));
 
-  return (
-    <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ width: 32, height: 32, borderRadius: 9, backgroundColor: `${color}18`, justifyContent: 'center', alignItems: 'center' }}>
-            {icon}
-          </View>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{label}</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', color }}>{pct}</Text>
-          <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: `${impactColor}18` }}>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: impactColor }}>{impactLabels[impact]}</Text>
-          </View>
-        </View>
-      </View>
-      {/* Barre */}
-      <View style={{ height: 7, borderRadius: 4, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-        <View style={{ width: `${pct}%` as any, height: '100%', backgroundColor: color, borderRadius: 4 }} />
-      </View>
-    </View>
-  );
-};
+export default function TaForme() {
+  const router = useRouter();
+  const [forme, setForme] = useState<FormeResult | null>(null);
+  const [sleep, setSleep] = useState<SleepStats | null>(null);
+  const [recent, setRecent] = useState<Training[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
-// ============================================
-// ÉCRAN PRINCIPAL
-// ============================================
-
-const LEVEL_COLORS: Record<string, string> = {
-  optimal: '#22C55E',
-  good: '#4ADE80',
-  moderate: '#F59E0B',
-  poor: '#F97316',
-  critical: '#EF4444',
-};
-
-// LEVEL_LABELS sera calculé dans le composant avec t()
-
-const RECO_COLORS: Record<string, string> = {
-  go: '#22C55E',
-  caution: '#F59E0B',
-  rest: '#EF4444',
-};
-// RECO_LABELS sera calculé dans le composant avec t()
-
-export default function ReadinessDetailScreen() {
-  const { t } = useI18n();
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-
-  const LEVEL_LABELS: Record<string, string> = {
-    optimal: t('readiness.levelOptimal'),
-    good: t('readiness.levelGood'),
-    moderate: t('readiness.levelModerate'),
-    poor: t('readiness.levelPoor'),
-    critical: t('readiness.levelCritical'),
-  };
-
-  const RECO_LABELS: Record<string, string> = {
-    go: t('readiness.recoGo'),
-    caution: t('readiness.recoCaution'),
-    rest: t('readiness.recoRest'),
-  };
-
-  const [readiness, setReadiness] = useState<ReadinessScore | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    calculateReadinessScore()
-      .then(setReadiness)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    const [f, s, t] = await Promise.all([safeComputeForme(), getSleepStats().catch(() => null), getTrainings(30).catch(() => [] as Training[])]);
+    setForme(f);
+    setSleep(s);
+    setRecent([...(t ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4));
+    setLoaded(true);
   }, []);
 
-  const cardStyle = {
-    backgroundColor: isDark ? (colors.backgroundCard ?? colors.card) : '#fff',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-    padding: 18,
-  };
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', load);
+    return () => sub.remove();
+  }, [load]);
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-        <Header title={t('readiness.screenTitle')} showBack />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
-        </View>
-      </View>
-    );
-  }
-
-  if (!readiness) {
-    return (
-      <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-        <Header title={t('readiness.screenTitle')} showBack />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-          <Text style={{ color: colors.textMuted, textAlign: 'center', fontSize: 15 }}>
-            {t('readiness.cannotCalculate')}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  const levelColor = LEVEL_COLORS[readiness.level] ?? '#8B5CF6';
-  const recoColor = RECO_COLORS[readiness.recommendation] ?? '#8B5CF6';
-
-  const factors: Array<{
-    key: keyof ReadinessScore['factors'];
-    label: string;
-    icon: React.ReactNode;
-    color: string;
-  }> = [
-    { key: 'sleep', label: 'Sommeil', icon: <Moon size={16} color="#6366F1" />, color: '#6366F1' },
-    { key: 'charge', label: 'Charge d\'entraînement', icon: <Zap size={16} color="#F59E0B" />, color: '#F59E0B' },
-    { key: 'hydration', label: 'Hydratation', icon: <Droplets size={16} color="#06B6D4" />, color: '#06B6D4' },
-    { key: 'streak', label: 'Régularité', icon: <Flame size={16} color="#EF4444" />, color: '#EF4444' },
-    { key: 'heartRate', label: 'Fréquence cardiaque', icon: <Heart size={16} color="#EC4899" />, color: '#EC4899' },
-    { key: 'hrv', label: 'Variabilité cardiaque (HRV)', icon: <Activity size={16} color="#22C55E" />, color: '#22C55E' },
-  ];
+  const score = forme?.score ?? null;
+  const level = forme?.level ?? null;
+  // un score sur 100 n'a de sens qu'a partir de deux elements mesures
+  const factorCount = forme?.factors.length ?? 0;
+  // meme regle que l'accueil (lib/v2/recuperation.ts, scoreRecupFiable)
+  const reliable = level !== null && scoreRecupFiable(score, factorCount);
+  const missingNight = !!forme?.missing.includes('sommeil');
 
   return (
-    <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-      <Header title="Score de Forme" showBack />
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32, gap: 16 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Score global */}
-        <View style={[cardStyle, { alignItems: 'center', gap: 12 }]}>
-          <ReadinessRing score={readiness.score} level={readiness.level} />
-          <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, backgroundColor: `${levelColor}18` }}>
-            <Text style={{ fontSize: 14, fontWeight: '800', color: levelColor }}>
-              {LEVEL_LABELS[readiness.level] ?? readiness.level}
-            </Text>
+    <DetailScreen title="Ta récupération" subtitle={reliable && level ? level.label : 'Ton score du jour, sur 100'}>
+      {/* Score */}
+      <Enter i={0}>
+        {score !== null && level && !reliable ? (
+          <Card style={{ gap: 12, paddingVertical: 22 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center' }}>
+                <BrushRing value={0} size={64} stroke={8} color={P.line} />
+                <View style={{ position: 'absolute' }}>
+                  <Icon name={missingNight ? 'moon' : 'heart'} size={24} color={P.indigo} />
+                </View>
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Ink size={20} weight="black" tight>
+                  {messageScoreIncomplet(missingNight)}
+                </Ink>
+                <Ink size={13} weight="medium" color={P.ink2}>
+                  {`Pour l’instant, seul ${forme?.factors[0]?.label.toLowerCase() ?? 'un élément'} est mesuré. Le détail est juste en dessous.`}
+                </Ink>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: P.paper }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: level.color }} />
+              <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>
+                {`Indication de ce seul élément\u00A0: ${level.label.toLowerCase()}. ${level.advice}`}
+              </Ink>
+            </View>
+            {missingNight ? <BigButton label="Noter ma nuit" icon="moon" onPress={() => router.push('/sleep-input' as any)} /> : null}
+          </Card>
+        ) : score !== null && level ? (
+          <Card style={{ alignItems: 'center', gap: 12, paddingVertical: 24 }}>
+            <View style={{ width: 176, height: 176, alignItems: 'center', justifyContent: 'center' }}>
+              <BrushRing value={score / 100} size={176} stroke={16} color={level.color} />
+              <View style={{ position: 'absolute', alignItems: 'center' }}>
+                <Ink size={58} weight="black" tight color={level.color}>
+                  {String(score)}
+                </Ink>
+                <Ink size={13} weight="bold" color={P.muted} style={{ marginTop: -4 }}>
+                  sur 100
+                </Ink>
+              </View>
+            </View>
+            <Ink size={22} weight="black" tight>
+              {level.label}
+            </Ink>
+            <Ink size={15} weight="medium" color={P.ink2} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
+              {level.advice}
+            </Ink>
+            <Ink size={12} weight="bold" color={P.muted}>
+              {`Calculé sur ${forme?.factors.length ?? 0} élément${(forme?.factors.length ?? 0) > 1 ? 's' : ''} mesuré${(forme?.factors.length ?? 0) > 1 ? 's' : ''}`}
+            </Ink>
+          </Card>
+        ) : (
+          <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 26 }}>
+            <Ornement name="koi" size={88} />
+            <Ink size={20} weight="black" tight style={{ textAlign: 'center' }}>
+              {loaded ? 'Pas encore assez de données' : 'On écoute ton corps'}
+            </Ink>
+            <Ink size={14} weight="medium" color={P.ink2} style={{ textAlign: 'center', paddingHorizontal: 8 }}>
+              Note ta nuit ou ta prochaine séance. On ne te donne un score que s’il repose sur du vrai.
+            </Ink>
+            <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 6 }}>
+              <View style={{ flex: 1 }}>
+                <BigButton label="Ma nuit" icon="moon" tone="light" compact onPress={() => router.push('/sleep-input' as any)} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <BigButton label="Une séance" icon="plus" compact onPress={() => router.push('/ajouter' as any)} />
+              </View>
+            </View>
+          </Card>
+        )}
+      </Enter>
+
+      {/* Facteurs */}
+      {forme && (forme.factors.length > 0 || forme.missing.length > 0) ? (
+        <Enter i={1} style={{ gap: 10 }}>
+          <SectionTitle>Ce qui compte aujourd’hui</SectionTitle>
+          <Card style={{ gap: 16 }}>
+            {forme.factors.map((f) => (
+              <View key={f.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={FACTOR_ICON[f.key]} size={20} color={colorFor(f.score)} />
+                </View>
+                <View style={{ flex: 1, gap: 5 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <Ink size={15} weight="extraBold">
+                      {f.label}
+                    </Ink>
+                    <Ink size={15} weight="black" color={colorFor(f.score)}>
+                      {String(f.score)}
+                    </Ink>
+                  </View>
+                  <View style={{ height: 8, borderRadius: 4, backgroundColor: P.line2, overflow: 'hidden' }}>
+                    <View style={{ width: `${Math.max(4, f.score)}%`, height: 8, borderRadius: 4, backgroundColor: colorFor(f.score) }} />
+                  </View>
+                  <Ink size={12} weight="bold" color={P.ink2}>
+                    {f.detail}
+                  </Ink>
+                </View>
+              </View>
+            ))}
+            {forme.missing.map((k) => {
+              const m = MISSING[k];
+              if (!m) return null;
+              return (
+                <Press key={k} onPress={() => (m.href ? router.push(m.href as any) : undefined)} haptic={m.href ? 'light' : 'none'} accessibilityRole="button" accessibilityLabel={`${m.label} : ${m.text}`}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 13, borderWidth: 1.5, borderStyle: 'dashed', borderColor: P.dashed, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name={FACTOR_ICON[k]} size={18} color={P.muted} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Ink size={15} weight="extraBold" color={P.ink2}>
+                        {m.label}
+                      </Ink>
+                      <Ink size={12} weight="bold" color={m.href ? P.accent : P.muted}>
+                        {m.text}
+                      </Ink>
+                    </View>
+                    {m.href ? <Icon name="chevron" size={18} color={P.muted} /> : null}
+                  </View>
+                </Press>
+              );
+            })}
+          </Card>
+        </Enter>
+      ) : null}
+
+      {/* Energie de la semaine */}
+      <Enter i={2} style={{ gap: 10 }}>
+        <SectionTitle>Ton énergie</SectionTitle>
+        <Card style={{ gap: 16 }}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Stat value={String(forme?.sessions7 ?? 0)} label="séances en 7 jours" />
+            <Stat value={forme && forme.minutes7 > 0 ? formatMinutes(forme.minutes7) : '0'} label="d’entraînement" />
           </View>
-          <Text style={{ fontSize: 14, color: colors.textMuted ?? '#888', textAlign: 'center', lineHeight: 20 }}>
-            {readiness.message}
-          </Text>
-
-          {/* Recommandation */}
-          <View style={{ width: '100%', backgroundColor: `${recoColor}12`, borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: recoColor }} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: recoColor }}>
-              {RECO_LABELS[readiness.recommendation] ?? readiness.recommendation}
-            </Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Stat value={forme?.sleepAvg7 ? formatMinutes(forme.sleepAvg7) : 'pas noté'} label="de sommeil par nuit, 7 nuits" color={P.indigo} />
+            <Stat
+              value={forme?.daysSinceLast === null || forme?.daysSinceLast === undefined ? 'aucune' : forme.daysSinceLast === 0 ? 'aujourd’hui' : forme.daysSinceLast === 1 ? 'hier' : `${forme.daysSinceLast} jours`}
+              label="dernière séance"
+            />
           </View>
-        </View>
+          {sleep && sleep.sleepDebtHours > 0 ? (
+            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: P.indigoSoft, borderRadius: 16, padding: 12 }}>
+              <Icon name="moon" size={18} color={P.indigo} />
+              <Ink size={13} weight="bold" color={P.indigo} style={{ flex: 1 }}>
+                {`Il te manque ${String(sleep.sleepDebtHours).replace('.', ',')} h de sommeil sur 7 jours. Couche-toi un peu plus tôt ce soir.`}
+              </Ink>
+            </View>
+          ) : null}
+        </Card>
+        {recent.length > 0 ? (
+          <Card style={{ gap: 4, paddingVertical: 10 }}>
+            {recent.map((t, i) => (
+              <Press key={`${t.id ?? i}`} onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={getSportName(t.sport)}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2 }}>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: P.accent }} />
+                  <Ink size={15} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>
+                    {getSportName(t.sport)}
+                  </Ink>
+                  <Ink size={13} weight="bold" color={P.ink2}>
+                    {`${relativeDay(t.date)}${(t.duration_minutes ?? t.duration) ? `, ${formatMinutes(t.duration_minutes ?? t.duration ?? 0)}` : ''}`}
+                  </Ink>
+                </View>
+              </Press>
+            ))}
+          </Card>
+        ) : null}
+      </Enter>
 
-        {/* Détail des facteurs */}
-        <View style={[cardStyle, { gap: 18 }]}>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, marginBottom: 4 }}>
-            Facteurs détaillés
-          </Text>
-          {factors.map(({ key, label, icon, color }) => {
-            const factor = readiness.factors[key];
-            if (!factor) return null;
-            return (
-              <FactorRow
-                key={key}
-                label={label}
-                score={factor.score}
-                impact={factor.impact}
-                icon={icon}
-                color={color}
-              />
-            );
-          })}
-        </View>
+      {/* Etat du corps */}
+      <Enter i={3} style={{ gap: 10 }}>
+        <SectionTitle>Ton corps</SectionTitle>
+        <Ink size={14} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
+          Touche une zone pour signaler une gêne ou une blessure. Ta récupération en tient compte.
+        </Ink>
+        <BodyZones body={forme?.body ?? {}} onChange={() => load()} />
+      </Enter>
 
-        {/* Info pédagogique */}
-        <View style={{ backgroundColor: isDark ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.07)', borderRadius: 14, padding: 14, borderLeftWidth: 3, borderLeftColor: '#8B5CF6' }}>
-          <Text style={{ fontSize: 12, color: colors.textMuted ?? '#888', lineHeight: 18 }}>
-            Le score Readiness combine ton sommeil, ta charge d'entraînement hebdomadaire, ton hydratation et ta régularité. Un score supérieur à 70 indique que tu es dans de bonnes conditions pour t'entraîner intensément.
-          </Text>
-        </View>
-      </ScrollView>
-    </View>
+      <Enter i={4}>
+        <Card style={{ backgroundColor: P.goldSoft, borderColor: P.goldSoft, gap: 6 }}>
+          <Ink size={15} weight="extraBold" color={P.goldDark}>
+            Comment on calcule
+          </Ink>
+          {RECUP_METHOD.map((l) => (
+            <Ink key={l} size={13} weight="medium" color={P.ink2} style={{ lineHeight: 19 }}>
+              {l}
+            </Ink>
+          ))}
+        </Card>
+      </Enter>
+    </DetailScreen>
   );
 }
-
-// ============================================
-// STYLES
-// ============================================
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-});

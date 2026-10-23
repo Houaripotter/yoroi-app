@@ -78,7 +78,7 @@ const DEFAULT_GRID_ITEMS: ActionGridItem[] = [
   {
     id: 'calculateurs',
     icon: 'Calculator',
-    route: '/(tabs)/more/calculators',
+    route: '/calculators',
     label: 'Calculateurs',
     description: 'IMC, BMR...',
     color: '#3B82F6',
@@ -94,7 +94,7 @@ const DEFAULT_GRID_ITEMS: ActionGridItem[] = [
   {
     id: 'clubs',
     icon: 'Users',
-    route: '/(tabs)/planning',
+    route: '/planning',
     label: 'Clubs',
     description: 'Coachs & partenaires',
     color: '#6366F1',
@@ -110,7 +110,7 @@ const DEFAULT_GRID_ITEMS: ActionGridItem[] = [
   {
     id: 'themes',
     icon: 'Palette',
-    route: '/(tabs)/settings/appearance',
+    route: '/settings/appearance',
     label: 'Thèmes',
     description: 'Personnalisation',
     color: '#8B5CF6',
@@ -118,7 +118,7 @@ const DEFAULT_GRID_ITEMS: ActionGridItem[] = [
   {
     id: 'savoir',
     icon: 'BookMarked',
-    route: '/(tabs)/more/savoir',
+    route: '/savoir',
     label: 'Savoir',
     description: 'Culture générale',
     color: '#F97316',
@@ -134,7 +134,7 @@ const DEFAULT_GRID_ITEMS: ActionGridItem[] = [
   {
     id: 'notifications',
     icon: 'Bell',
-    route: '/(tabs)/settings',
+    route: '/settings',
     label: 'Notifications',
     description: 'Rappels et alertes',
     color: '#F59E0B',

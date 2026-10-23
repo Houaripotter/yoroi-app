@@ -1,5 +1,5 @@
 // ============================================
-// BIOMETRIC LOCK OVERLAY · Affiche pendant l'auth
+// BIOMETRIC LOCK OVERLAY : Affiche pendant l'auth
 // ============================================
 
 import React, { useEffect, useState } from 'react';

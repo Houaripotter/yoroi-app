@@ -6,11 +6,12 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image as ImageIcon, FileText, Download } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 const BackupTypeSelectorInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -25,7 +26,7 @@ const BackupTypeSelectorInner: React.FC = () => {
         includePhotos: type === 'full',
       });
       if (!ok) {
-        Alert.alert('Erreur', 'Impossible de créer le backup.');
+        appAlert('Oups', 'La sauvegarde n’a pas pu être créée.');
       }
     } finally {
       setExporting(null);

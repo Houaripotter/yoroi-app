@@ -7,52 +7,120 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		083FE764C17EB8ADF82DB7E3 /* WeightPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D767F6BF1B2714353253616C /* WeightPage.swift */; };
+		00A6B99C455BB1D06253D41B /* WidgetsMontre.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E91B0B643B54DA579C42B71 /* WidgetsMontre.swift */; };
+		015172BEE0B2625A9E2C1E91 /* Torii.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B6E7DF6580D4B85E290D /* Torii.swift */; };
+		01656AA0615034951FC44E37 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462F9D7DB5D35352153A07B8 /* Intents.swift */; };
+		024E7E55695B9FED192D5A09 /* TableauDuJour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2925456CC40465672F0E6288 /* TableauDuJour.swift */; };
+		0398D0A6C6CEB0A01E06AC06 /* Formats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CAC604479EDEAC5F77E822 /* Formats.swift */; };
+		043D80D6B9A5E7F68376EC1E /* YoroiWidgetsModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 165F1D4D5A0BD5A303CB5187 /* YoroiWidgetsModule.m */; };
+		045D6884D9F56F7D41C7B1E4 /* gong.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 38006C5E22014945D8819F7B /* gong.mp3 */; };
+		05235A3478E8E8421DB57F91 /* CardioVues.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB5DC14D48CD4B60481611A /* CardioVues.swift */; };
+		0971CBF1D4B40475358195BC /* Morceaux.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D888D71FB27D7D8233B8A52 /* Morceaux.swift */; };
 		0A5D19028469480DB02D69A3 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */; };
+		0A8839B8393C04FE6744C84F /* YoroiWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CCF01F9A3B1ABD6E12C06034 /* YoroiWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		185037165B8BE12AC32DB6AC /* WidgetsAccueil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C9882FEB89031FD0827934 /* WidgetsAccueil.swift */; };
+		24460A3F5A510E9664FED651 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = 723297A86426D224C7BB50F9 /* AppShortcuts.strings */; };
+		260098392D0BD6E1AA549129 /* EntrainementVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DBE6A78F54DAE5319777641 /* EntrainementVue.swift */; };
+		28ACF6DEF4C506E395AF66E9 /* NoterSeanceVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7668619A1ACAC5C2723B06A7 /* NoterSeanceVue.swift */; };
+		2CF01094991CD5DCE0C79A07 /* GroupeYoroi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */; };
+		2D4D3641AB831AE14CF3C9E7 /* Partage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CF327CBF06800D97DD3975 /* Partage.swift */; };
+		2E44273FBE52F49B338FF7AE /* ChronoAttributs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436806CE4BF29115EE395172 /* ChronoAttributs.swift */; };
+		2E6DA36B8BB65641FBA32466 /* ActiviteChrono.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300438CD96AE54ABB379D2C1 /* ActiviteChrono.swift */; };
+		2F3289A7578D7850653B3F03 /* WidgetsSante.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308F2E773F96B438565D2FEC /* WidgetsSante.swift */; };
+		2F648FC4B0C727348C12EE4F /* CourbeJour.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C10B574A9C12B088E573FF /* CourbeJour.swift */; };
+		330F6A0DEC9419C3B8A4E38B /* Routeur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA75AA62B5C5ECB4BAC097A /* Routeur.swift */; };
+		3539651F41D14F4068DCC590 /* Torii.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C1B6E7DF6580D4B85E290D /* Torii.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		48ACA1152E90E2DCBDFE9432 /* TimerPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D7686F63187236058925E1 /* TimerPage.swift */; };
+		41E039F55B473EF6FE7375DD /* Partage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CF327CBF06800D97DD3975 /* Partage.swift */; };
+		465DEE5DE0F78C77E049E0D8 /* DelegueApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F689FE14E7AC9B872C52D8 /* DelegueApp.swift */; };
 		4AA75C1F9F342509E6901E98 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E925914387B2F6992FA479C6 /* Foundation.framework */; };
-		588C926EB067802579C4A7B1 /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 409942CB85F87764254BDAA8 /* libPods-Yoroi.a */; };
-		5BA41E06B49FCA34D60842E5 /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F8EC010D7BFA66D009900F /* WatchSessionManager.swift */; };
+		4B5006562FFF576BA83CF75B /* Controles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9464D8D56AF3432D8E08415 /* Controles.swift */; };
+		52C183E35DFB5AF718AA0ECB /* GrosChiffre.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1269D07525C35A37A6760CD /* GrosChiffre.swift */; };
+		53B217A4D61DC99EC0A0FE2D /* Optimiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2541359F7F2B305E00132CB9 /* Optimiste.swift */; };
+		561F17FC0B45CD6B44CFE666 /* RacineVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D6EC3FAE348547B23CEA8B6 /* RacineVue.swift */; };
+		578AC0049B5D8EAB5F1D3E64 /* YoroiWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8FBAF5ECD9FB4802BB7675C /* YoroiWidgetsBundle.swift */; };
+		592BAE5B1FE80FFA68CF27D9 /* PeserVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29B3E1944AB228CFFFC405D /* PeserVue.swift */; };
+		5A986FD808314601D9FDDF95 /* ChronoMoteur.swift in Sources */ = {isa = PBXBuildFile; fileRef = E157A6876AF2646702D8E894 /* ChronoMoteur.swift */; };
+		5D90391DD57B781984AE7FBD /* RondMinuteur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C258586859459E9087B7E10 /* RondMinuteur.swift */; };
+		5E008EDEF46680A35795910A /* Cardio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA5BDAEE55D7634D89E66B /* Cardio.swift */; };
+		5E65AB11F5AE7A77E6DCA690 /* WidgetsMinuteurs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BD3D7F81BFD1ADA4A41FE0A /* WidgetsMinuteurs.swift */; };
+		61B08D90ABAC9E1D02FB771E /* Modele.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82331BEDF28006229DD45AE /* Modele.swift */; };
+		6218438379814EAAC13B7BA8 /* SanteCardio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F958FCA6E5C08ACB7EC691 /* SanteCardio.swift */; };
+		6282E622B36BEEA305ADEB25 /* Contexte.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDED621D76C2AD75D25F688 /* Contexte.swift */; };
+		67044FA9D09B32F131B12473 /* SemaineVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF382597EC20B8FD8B826009 /* SemaineVue.swift */; };
+		6891340605A7266D0002DF00 /* Minuteurs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078CE234D4B58CBF4D2DBD39 /* Minuteurs.swift */; };
+		6AC0650561F14E83E678FB71 /* YoroiWidgetsModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA817FCE7D7155610B2192C /* YoroiWidgetsModule.swift */; };
+		6B0CF0C45B227915A538676D /* Seance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9DE26B3DA6190001ED3B65 /* Seance.swift */; };
+		6E54E0A41FC93400962AF9EE /* ChronoAttributs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436806CE4BF29115EE395172 /* ChronoAttributs.swift */; };
+		6E86FA7DF33F7A7FA3D13D92 /* YoroiWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CCFADDF1E37C72A41C3D37F8 /* YoroiWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		730EA67E87BC7BBA1E7CC115 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */; };
+		73C08B70CBC953166D68CA6B /* Anneau.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90455C30ED9D4410CA07BBF /* Anneau.swift */; };
 		74AF98F55BC435F00568F69F /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C60C9F16AACE99230853813A /* WatchConnectivity.framework */; };
+		77745D15484DD64B0F3F12FE /* ChronoVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E007A2E754BB42E8AF40B21 /* ChronoVue.swift */; };
+		77A438EDC2FFC5361978FC69 /* MinuteurMoteur.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADC3B5DB6E61379CDD407921 /* MinuteurMoteur.swift */; };
+		77F194E7D2CB50436977EDCA /* MinuteursVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 038F431919BE3C918AB41B55 /* MinuteursVue.swift */; };
+		7FE040897B2545940599A6F1 /* EauVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCA87B86EA9028A114428FB6 /* EauVue.swift */; };
+		82313E06355EE02F14F31892 /* Dessins.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C1590A6820A7E2593602E15 /* Dessins.swift */; };
+		83F1B34CEC544B10160AA95F /* BilanVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD32D828C554D2D0D4C4A522 /* BilanVue.swift */; };
+		8A55A6309BD3728396EAE545 /* ReglagesVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC42769F72C1700F3955DDF /* ReglagesVue.swift */; };
 		927D6FC93B28CD31C24811AF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */; };
-		95B176C8EA047BC42D7A75A0 /* HydrationPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031A522046805E96B3836C90 /* HydrationPage.swift */; };
+		96E71974713307EB78574186 /* Fournisseur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12713373F39BA5E5B72F4AF9 /* Fournisseur.swift */; };
 		9866B757A0EBA38AAC1A36BC /* YoroiWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 6865ED75B31A3E0530F4354A /* YoroiWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A1B2C3D400000001 /* TimerAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000010 /* TimerAttributes.swift */; };
 		A1B2C3D400000002 /* YoroiLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000020 /* YoroiLiveActivityManager.swift */; };
 		A1B2C3D400000003 /* YoroiLiveActivityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000030 /* YoroiLiveActivityManager.m */; };
+		A23B7780C2A6DF02288920CD /* Optimiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2541359F7F2B305E00132CB9 /* Optimiste.swift */; };
+		A684703D1034EF3C9BF9D162 /* Couleurs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EC94D8EB256E32C30B13E9 /* Couleurs.swift */; };
+		A6C10211C6F45EDE6A23B348 /* CombatVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A53B2878F518999766C0647 /* CombatVue.swift */; };
+		AA39C8AA95AE2FF9B7428E17 /* Contexte.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDED621D76C2AD75D25F688 /* Contexte.swift */; };
+		AA6656A2A10A3E2EA16F098B /* Haptique.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD3E5D0F6D7BE9B21987DB09 /* Haptique.swift */; };
+		AB290530F71460AD1566460F /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99F6965DE6A5EAD7C7133D4 /* Action.swift */; };
+		AE385C4F20322F9411F4948E /* CourbeJour.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C10B574A9C12B088E573FF /* CourbeJour.swift */; };
+		AFA621F67C5FE8A997A186E9 /* Pods_Yoroi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0AAA535F1854991A7C0DC7A /* Pods_Yoroi.framework */; };
+		BA307D34802237D26257FC9B /* Minuteurs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078CE234D4B58CBF4D2DBD39 /* Minuteurs.swift */; };
+		BAC82B5FD8299E2961D8A11B /* Formats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CAC604479EDEAC5F77E822 /* Formats.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		BE4FCFA00E27EE311B2FDB45 /* Raccourcis.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70FAF6A9BAD6FDFD563CF1E /* Raccourcis.swift */; };
+		BF317DC371549B5D9D2DC355 /* MiniCourbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA1B0AE2D3E112E413F86DC /* MiniCourbe.swift */; };
 		BGTASK01OBJBUILDF000001 /* BackgroundTaskModule.m in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */; };
 		BGTASK01SWFBUILDF000001 /* BackgroundTaskModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */; };
-		CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARNETPAGE001FILEREF0001 /* CarnetPage.swift */; };
-		COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */; };
-		COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */; };
+		C040F0C2F6CDC8F42EFCA2A6 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = 985BB6ABDBB5BC1DCB36574D /* Style.swift */; };
+		C0A6A38CA8250C09CA21B6FF /* Cardio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA5BDAEE55D7634D89E66B /* Cardio.swift */; };
+		C24C20663BD1C3E8D0A5AD13 /* Synchro.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B0436A76E94D71DE3A993D /* Synchro.swift */; };
+		C2A789C021E2421101FD882B /* Couleurs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EC94D8EB256E32C30B13E9 /* Couleurs.swift */; };
+		C39BF25558D66246F5ABD6E2 /* SeanceLibreVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = F80284710979EC3D96E7B3E2 /* SeanceLibreVue.swift */; };
+		C593415EFC485B8233C768B1 /* ConfigStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB3B17EE4644F3524380151 /* ConfigStyle.swift */; };
+		C6DB9295EC1548EEB09B8D0A /* Sante.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71BEF472964C56D14673D035 /* Sante.swift */; };
+		CFFA037F0403DD3FF693DDB0 /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99F6965DE6A5EAD7C7133D4 /* Action.swift */; };
+		D1F75278C1033B284CFAB151 /* Habillage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBE3DA3360E54EAF789FEA2 /* Habillage.swift */; };
 		D33204A0A2246F4E1F69529F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BDA7F51DE3199FA753FF4521 /* Assets.xcassets */; };
 		D6D98440C02A34740C0F71DA /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */; };
+		D76A83A0A5F29E001480B2F4 /* DessinsStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B642C29C1D0044E196CAB8 /* DessinsStyles.swift */; };
+		DA23309D5F1F98A7E8C3ADA0 /* GroupeYoroi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */; };
+		DCFA33643A6240F399B65987 /* VuesWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542CBEA178AA763195A50E87 /* VuesWidgets.swift */; };
+		DD52134B024D5105CE51DBF6 /* FournisseurYoroi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BE5C0F22F2AC1504234A92 /* FournisseurYoroi.swift */; };
+		DE360AE1C5AF656F2A7E9DA6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C043AD6DB5E790CFF9E9697 /* Assets.xcassets */; };
+		E0F8A66B56727644AD4F8DB0 /* AujourdhuiVue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178CFA9B07B066AFF0F9ABCD /* AujourdhuiVue.swift */; };
 		E11C770F9EC353BDED32219F /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */; };
 		E12B3E704553F83455514DC7 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000A32CBCA9E77D5A32EDFCD /* WatchConnectivity.framework */; };
-		E96EBC2B8285DFB53554E9F5 /* SleepPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354ADA1C37DEB571464D64E1 /* SleepPage.swift */; };
+		E420100CA0F89E25A4E53304 /* MiniCourbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA1B0AE2D3E112E413F86DC /* MiniCourbe.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F1A2B3C4D5E6F70800SETTINGS /* SettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */; };
-		F744193774A505F6D079732E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */; };
+		F1REBA5E0000000000000002 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F1REBA5E0000000000000001 /* GoogleService-Info.plist */; };
+		F7005E12E2911959273ECC79 /* clap10.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0676449BCA0B6F0BA07D2B45 /* clap10.mp3 */; };
 		FD7C9F57DFFF6CF797EF939D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */; };
 		FF32897EE0BEC2AECA52ABBF /* YoroiWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */; };
 		MULTIPEER01BUILDF00001 /* MultipeerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */; };
 		MULTIPEER02BUILDF00001 /* MultipeerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = MULTIPEER02FILEREF00001 /* MultipeerBridge.m */; };
 		SCENEDELEG01BUILDF000001 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCENEDELEG01FILEREF000001 /* SceneDelegate.swift */; };
-		TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */; };
 		TORCH001OBJBUILDF000001 /* TorchModule.m in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001OBJFILEREF000001 /* TorchModule.m */; };
 		TORCH001SWFBUILDF000001 /* TorchModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = TORCH001SWFFILEREF00001 /* TorchModule.swift */; };
-		WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = WATCHUTILS001FILEREF00001 /* WatchUtils.swift */; };
 		WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */; };
 		WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */; };
 		WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */; };
 		WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */; };
 		WIZZM4IN0001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */; };
 		WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */; };
-		WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */; };
 		YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */; };
 		YOROIHK01SWFBUILDF000001 /* YoroiHealthKitModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */; };
 /* End PBXBuildFile section */
@@ -64,6 +132,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = F147DC6C7AC4E0D7FE4AA024;
 			remoteInfo = YoroiWatch;
+		};
+		4A977E9C01DED2CAD3A353BE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 797EC30DA702F39EE7735313;
+			remoteInfo = YoroiWidgets;
+		};
+		D6460C07C105199D47594934 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A5805C6F938B1A80546D02A0;
+			remoteInfo = YoroiWatchWidgets;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -79,30 +161,97 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		81DF486749250CAACCF60989 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0A8839B8393C04FE6744C84F /* YoroiWatchWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A339B15CCE948465E320C1D7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				6E86FA7DF33F7A7FA3D13D92 /* YoroiWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		000A32CBCA9E77D5A32EDFCD /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
-		031A522046805E96B3836C90 /* HydrationPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HydrationPage.swift; sourceTree = "<group>"; };
-		0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		02C9882FEB89031FD0827934 /* WidgetsAccueil.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetsAccueil.swift; sourceTree = "<group>"; };
+		038F431919BE3C918AB41B55 /* MinuteursVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MinuteursVue.swift; sourceTree = "<group>"; };
+		0676449BCA0B6F0BA07D2B45 /* clap10.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; path = clap10.mp3; sourceTree = "<group>"; };
+		078CE234D4B58CBF4D2DBD39 /* Minuteurs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Minuteurs.swift; sourceTree = "<group>"; };
+		0AAA5BDAEE55D7634D89E66B /* Cardio.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Cardio.swift; sourceTree = "<group>"; };
+		10C1B6E7DF6580D4B85E290D /* Torii.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Torii.swift; sourceTree = "<group>"; };
+		12713373F39BA5E5B72F4AF9 /* Fournisseur.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Fournisseur.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Yoroi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yoroi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Yoroi/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Yoroi/Info.plist; sourceTree = "<group>"; };
 		14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		165F1D4D5A0BD5A303CB5187 /* YoroiWidgetsModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = YoroiWidgetsModule.m; sourceTree = "<group>"; };
+		178CFA9B07B066AFF0F9ABCD /* AujourdhuiVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AujourdhuiVue.swift; sourceTree = "<group>"; };
+		1AA75AA62B5C5ECB4BAC097A /* Routeur.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Routeur.swift; sourceTree = "<group>"; };
+		20CAC604479EDEAC5F77E822 /* Formats.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Formats.swift; sourceTree = "<group>"; };
 		2271CA4C6402AF138B83E3A4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		2541359F7F2B305E00132CB9 /* Optimiste.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Optimiste.swift; sourceTree = "<group>"; };
+		2925456CC40465672F0E6288 /* TableauDuJour.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TableauDuJour.swift; sourceTree = "<group>"; };
+		2C0E7DBF14CDDA8917E9800C /* YoroiWatchWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = YoroiWatchWidgets.entitlements; sourceTree = "<group>"; };
+		2C258586859459E9087B7E10 /* RondMinuteur.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RondMinuteur.swift; sourceTree = "<group>"; };
 		2E203A1B50BFCFBBD381190F /* Pods-Yoroi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.debug.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.debug.xcconfig"; sourceTree = "<group>"; };
-		354ADA1C37DEB571464D64E1 /* SleepPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SleepPage.swift; sourceTree = "<group>"; };
+		300438CD96AE54ABB379D2C1 /* ActiviteChrono.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActiviteChrono.swift; sourceTree = "<group>"; };
+		308F2E773F96B438565D2FEC /* WidgetsSante.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetsSante.swift; sourceTree = "<group>"; };
+		38006C5E22014945D8819F7B /* gong.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; path = gong.mp3; sourceTree = "<group>"; };
 		38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
-		409942CB85F87764254BDAA8 /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4212EFECB655ED54B895DA96 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		436806CE4BF29115EE395172 /* ChronoAttributs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChronoAttributs.swift; sourceTree = "<group>"; };
+		462F9D7DB5D35352153A07B8 /* Intents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/HealthKit.framework; sourceTree = DEVELOPER_DIR; };
+		4A9DE26B3DA6190001ED3B65 /* Seance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Seance.swift; sourceTree = "<group>"; };
+		4BBE3DA3360E54EAF789FEA2 /* Habillage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Habillage.swift; sourceTree = "<group>"; };
+		542CBEA178AA763195A50E87 /* VuesWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VuesWidgets.swift; sourceTree = "<group>"; };
+		5A53B2878F518999766C0647 /* CombatVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CombatVue.swift; sourceTree = "<group>"; };
+		5D888D71FB27D7D8233B8A52 /* Morceaux.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Morceaux.swift; sourceTree = "<group>"; };
+		65F689FE14E7AC9B872C52D8 /* DelegueApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DelegueApp.swift; sourceTree = "<group>"; };
+		66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GroupeYoroi.swift; sourceTree = "<group>"; };
 		6865ED75B31A3E0530F4354A /* YoroiWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YoroiWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		86D7686F63187236058925E1 /* TimerPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerPage.swift; sourceTree = "<group>"; };
+		6E91B0B643B54DA579C42B71 /* WidgetsMontre.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetsMontre.swift; sourceTree = "<group>"; };
+		71BEF472964C56D14673D035 /* Sante.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Sante.swift; sourceTree = "<group>"; };
+		7668619A1ACAC5C2723B06A7 /* NoterSeanceVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoterSeanceVue.swift; sourceTree = "<group>"; };
+		7BD3D7F81BFD1ADA4A41FE0A /* WidgetsMinuteurs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetsMinuteurs.swift; sourceTree = "<group>"; };
+		7C1590A6820A7E2593602E15 /* Dessins.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Dessins.swift; sourceTree = "<group>"; };
+		7F120D6C60857B0DA85F81A6 /* fr */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		8C043AD6DB5E790CFF9E9697 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8E007A2E754BB42E8AF40B21 /* ChronoVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChronoVue.swift; sourceTree = "<group>"; };
+		96B0436A76E94D71DE3A993D /* Synchro.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Synchro.swift; sourceTree = "<group>"; };
+		97CF327CBF06800D97DD3975 /* Partage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Partage.swift; sourceTree = "<group>"; };
+		985BB6ABDBB5BC1DCB36574D /* Style.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Style.swift; sourceTree = "<group>"; };
+		98F958FCA6E5C08ACB7EC691 /* SanteCardio.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SanteCardio.swift; sourceTree = "<group>"; };
+		9D6EC3FAE348547B23CEA8B6 /* RacineVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RacineVue.swift; sourceTree = "<group>"; };
+		9DBE6A78F54DAE5319777641 /* EntrainementVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EntrainementVue.swift; sourceTree = "<group>"; };
 		A1B2C3D400000010 /* TimerAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimerAttributes.swift; path = Yoroi/LiveActivity/TimerAttributes.swift; sourceTree = "<group>"; };
 		A1B2C3D400000020 /* YoroiLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiLiveActivityManager.swift; path = Yoroi/LiveActivity/YoroiLiveActivityManager.swift; sourceTree = "<group>"; };
 		A1B2C3D400000030 /* YoroiLiveActivityManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiLiveActivityManager.m; path = Yoroi/LiveActivity/YoroiLiveActivityManager.m; sourceTree = "<group>"; };
-		A2F8EC010D7BFA66D009900F /* WatchSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
+		A6BE5C0F22F2AC1504234A92 /* FournisseurYoroi.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FournisseurYoroi.swift; sourceTree = "<group>"; };
+		A70FAF6A9BAD6FDFD563CF1E /* Raccourcis.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Raccourcis.swift; sourceTree = "<group>"; };
+		A9464D8D56AF3432D8E08415 /* Controles.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Controles.swift; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Yoroi/SplashScreen.storyboard; sourceTree = "<group>"; };
+		ACDED621D76C2AD75D25F688 /* Contexte.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Contexte.swift; sourceTree = "<group>"; };
+		AD3E5D0F6D7BE9B21987DB09 /* Haptique.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Haptique.swift; sourceTree = "<group>"; };
+		ADA1B0AE2D3E112E413F86DC /* MiniCourbe.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MiniCourbe.swift; sourceTree = "<group>"; };
+		ADA817FCE7D7155610B2192C /* YoroiWidgetsModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YoroiWidgetsModule.swift; sourceTree = "<group>"; };
+		ADC3B5DB6E61379CDD407921 /* MinuteurMoteur.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MinuteurMoteur.swift; sourceTree = "<group>"; };
+		AF382597EC20B8FD8B826009 /* SemaineVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SemaineVue.swift; sourceTree = "<group>"; };
+		AFB3B17EE4644F3524380151 /* ConfigStyle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigStyle.swift; sourceTree = "<group>"; };
 		BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YoroiWatchApp.swift; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		BC4AF5DFF2E9557678D34D77 /* Pods-Yoroi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.release.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.release.xcconfig"; sourceTree = "<group>"; };
@@ -110,31 +259,45 @@
 		BGTASK01OBJFILEREF000001 /* BackgroundTaskModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BackgroundTaskModule.m; path = Yoroi/BackgroundTaskModule.m; sourceTree = "<group>"; };
 		BGTASK01SWFFILEREF000001 /* BackgroundTaskModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BackgroundTaskModule.swift; path = Yoroi/BackgroundTaskModule.swift; sourceTree = "<group>"; };
 		C60C9F16AACE99230853813A /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WatchConnectivity.framework; sourceTree = DEVELOPER_DIR; };
-		CARNETPAGE001FILEREF0001 /* CarnetPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarnetPage.swift; sourceTree = "<group>"; };
-		COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompetitionPage.swift; sourceTree = "<group>"; };
-		COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ComplicationController.swift; sourceTree = "<group>"; };
-		D767F6BF1B2714353253616C /* WeightPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeightPage.swift; sourceTree = "<group>"; };
+		CCF01F9A3B1ABD6E12C06034 /* YoroiWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YoroiWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CCFADDF1E37C72A41C3D37F8 /* YoroiWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YoroiWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0AAA535F1854991A7C0DC7A /* Pods_Yoroi.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Yoroi.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D6C10B574A9C12B088E573FF /* CourbeJour.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CourbeJour.swift; sourceTree = "<group>"; };
+		D88DCB73344FC056633ABE01 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D8FBAF5ECD9FB4802BB7675C /* YoroiWidgetsBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YoroiWidgetsBundle.swift; sourceTree = "<group>"; };
+		D9EC94D8EB256E32C30B13E9 /* Couleurs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Couleurs.swift; sourceTree = "<group>"; };
+		E1269D07525C35A37A6760CD /* GrosChiffre.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GrosChiffre.swift; sourceTree = "<group>"; };
+		E157A6876AF2646702D8E894 /* ChronoMoteur.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChronoMoteur.swift; sourceTree = "<group>"; };
+		E1B642C29C1D0044E196CAB8 /* DessinsStyles.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DessinsStyles.swift; sourceTree = "<group>"; };
 		E49616A4A5F9C00ECDA0DD06 /* WatchConnectivityBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchConnectivityBridge.swift; sourceTree = "<group>"; };
+		E82331BEDF28006229DD45AE /* Modele.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Modele.swift; sourceTree = "<group>"; };
 		E925914387B2F6992FA479C6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EF1B0ED08669DBC9420AA571 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Yoroi/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
-		F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
+		F1REBA5E0000000000000001 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Yoroi/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		F29B3E1944AB228CFFFC405D /* PeserVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PeserVue.swift; sourceTree = "<group>"; };
+		F80284710979EC3D96E7B3E2 /* SeanceLibreVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeanceLibreVue.swift; sourceTree = "<group>"; };
+		F90455C30ED9D4410CA07BBF /* Anneau.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Anneau.swift; sourceTree = "<group>"; };
+		F99F6965DE6A5EAD7C7133D4 /* Action.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Action.swift; sourceTree = "<group>"; };
+		FAC42769F72C1700F3955DDF /* ReglagesVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReglagesVue.swift; sourceTree = "<group>"; };
+		FCA87B86EA9028A114428FB6 /* EauVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EauVue.swift; sourceTree = "<group>"; };
+		FCB5DC14D48CD4B60481611A /* CardioVues.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CardioVues.swift; sourceTree = "<group>"; };
+		FD32D828C554D2D0D4C4A522 /* BilanVue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BilanVue.swift; sourceTree = "<group>"; };
+		FE7B1F7EDE713C6EC4B2FCCF /* YoroiWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = YoroiWidgets.entitlements; sourceTree = "<group>"; };
 		MULTIPEER01FILEREF00001 /* MultipeerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MultipeerBridge.swift; sourceTree = "<group>"; };
 		MULTIPEER02FILEREF00001 /* MultipeerBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MultipeerBridge.m; sourceTree = "<group>"; };
 		RCTPKGCNSTUB0FILEREF0001 /* RCTPackagerConnectionStub.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = RCTPackagerConnectionStub.m; sourceTree = SOURCE_ROOT; };
 		SCENEDELEG01FILEREF000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = Yoroi/SceneDelegate.swift; sourceTree = "<group>"; };
-		TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerAlarmNotificationView.swift; sourceTree = "<group>"; };
 		TORCH001OBJFILEREF000001 /* TorchModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = TorchModule.m; path = Yoroi/TorchModule.m; sourceTree = "<group>"; };
 		TORCH001SWFFILEREF00001 /* TorchModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TorchModule.swift; path = Yoroi/TorchModule.swift; sourceTree = "<group>"; };
-		WATCHUTILS001FILEREF00001 /* WatchUtils.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchUtils.swift; sourceTree = "<group>"; };
 		WGTDATAOBJ001F1LEREF0001 /* WidgetDataModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = WidgetDataModule.m; path = Yoroi/WidgetDataModule.m; sourceTree = "<group>"; };
 		WGTDATASWF001F1LEREF0001 /* WidgetDataModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WidgetDataModule.swift; path = Yoroi/WidgetDataModule.swift; sourceTree = "<group>"; };
 		WIDGETKIT001FRAMFILEREF001 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "wizz-made-with-Voicemod.mp3"; sourceTree = "<group>"; };
 		WIZZM4IN0001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = wizz.mp3; path = Yoroi/wizz.mp3; sourceTree = "<group>"; };
 		WIZZW4TCH001F1LEREF0001 /* wizz.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = wizz.mp3; path = YoroiWatch/wizz.mp3; sourceTree = "<group>"; };
-		WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutPage.swift; sourceTree = "<group>"; };
 		YOROIHK01OBJFILEREF000001 /* YoroiHealthKitModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = YoroiHealthKitModule.m; path = Yoroi/YoroiHealthKitModule.m; sourceTree = "<group>"; };
 		YOROIHK01SWFFILEREF000001 /* YoroiHealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = YoroiHealthKitModule.swift; path = Yoroi/YoroiHealthKitModule.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -146,7 +309,21 @@
 			files = (
 				74AF98F55BC435F00568F69F /* WatchConnectivity.framework in Frameworks */,
 				WIDGETKIT001FRAMBUILDF001 /* WidgetKit.framework in Frameworks */,
-				588C926EB067802579C4A7B1 /* libPods-Yoroi.a in Frameworks */,
+				AFA621F67C5FE8A997A186E9 /* Pods_Yoroi.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		459E99CC91110BCC0927C25B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B30CDFA9A79D1E45550F334A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -192,10 +369,34 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				14F08D3C04354160B9E8F92A /* PrivacyInfo.xcprivacy */,
+				F1REBA5E0000000000000001 /* GoogleService-Info.plist */,
 				2013024F5B40FDE60BB3341A /* WatchConnectivity */,
 				MULTIPEER0GROUP0000001 /* Multipeer */,
+				1F1F3A609D3C46C1A6BEC2B9 /* Widgets */,
 			);
 			name = Yoroi;
+			sourceTree = "<group>";
+		};
+		1EE704CC8460A384495033B2 /* Modele */ = {
+			isa = PBXGroup;
+			children = (
+				ACDED621D76C2AD75D25F688 /* Contexte.swift */,
+				F99F6965DE6A5EAD7C7133D4 /* Action.swift */,
+				2541359F7F2B305E00132CB9 /* Optimiste.swift */,
+				078CE234D4B58CBF4D2DBD39 /* Minuteurs.swift */,
+				0AAA5BDAEE55D7634D89E66B /* Cardio.swift */,
+			);
+			path = Modele;
+			sourceTree = "<group>";
+		};
+		1F1F3A609D3C46C1A6BEC2B9 /* Widgets */ = {
+			isa = PBXGroup;
+			children = (
+				ADA817FCE7D7155610B2192C /* YoroiWidgetsModule.swift */,
+				165F1D4D5A0BD5A303CB5187 /* YoroiWidgetsModule.m */,
+			);
+			name = Widgets;
+			path = Yoroi/Widgets;
 			sourceTree = "<group>";
 		};
 		2013024F5B40FDE60BB3341A /* WatchConnectivity */ = {
@@ -223,7 +424,7 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				DF0F3F808BF09B27127E0E65 /* watchOS */,
 				4A7AA71225D0F986E1A28135 /* iOS */,
-				409942CB85F87764254BDAA8 /* libPods-Yoroi.a */,
+				D0AAA535F1854991A7C0DC7A /* Pods_Yoroi.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -239,33 +440,28 @@
 		4FE4F2E74120D82686D88DAD /* YoroiWatch */ = {
 			isa = PBXGroup;
 			children = (
-				645BB2E80BF535B2FA7219CF /* Views */,
 				A73150D781D16EF168B0A900 /* Services */,
 				BDA7F51DE3199FA753FF4521 /* Assets.xcassets */,
 				4212EFECB655ED54B895DA96 /* Info.plist */,
 				BA0F210D88915A040CE036D6 /* YoroiWatchApp.swift */,
-				0F56E12FDA5FBF6C2FE9088F /* ContentView.swift */,
-				COMPLICCNTRL01FILEREF0001 /* ComplicationController.swift */,
-				WATCHUTILS001FILEREF00001 /* WatchUtils.swift */,
 				WIZZ50UND0001F1LEREF0002 /* wizz-made-with-Voicemod.mp3 */,
+				1EE704CC8460A384495033B2 /* Modele */,
+				8C5DB0589519ABCCFC1BC9B8 /* Composants */,
+				98EFC56125211130D817D5D4 /* Vues */,
+				549272E4B9B8D7FBABE2A782 /* Intents */,
+				38006C5E22014945D8819F7B /* gong.mp3 */,
+				0676449BCA0B6F0BA07D2B45 /* clap10.mp3 */,
+				723297A86426D224C7BB50F9 /* AppShortcuts.strings */,
 			);
 			path = YoroiWatch;
 			sourceTree = SOURCE_ROOT;
 		};
-		645BB2E80BF535B2FA7219CF /* Views */ = {
+		549272E4B9B8D7FBABE2A782 /* Intents */ = {
 			isa = PBXGroup;
 			children = (
-				86D7686F63187236058925E1 /* TimerPage.swift */,
-				D767F6BF1B2714353253616C /* WeightPage.swift */,
-				031A522046805E96B3836C90 /* HydrationPage.swift */,
-				354ADA1C37DEB571464D64E1 /* SleepPage.swift */,
-				F1A2B3C4D5E6F70900SETTINGS /* SettingsPage.swift */,
-				CARNETPAGE001FILEREF0001 /* CarnetPage.swift */,
-				COMPETPAGE01FILEREF000001 /* CompetitionPage.swift */,
-				WORKOUTPAG01FILEREF000001 /* WorkoutPage.swift */,
-				TIMERALRMVW1FILEREF000001 /* TimerAlarmNotificationView.swift */,
+				A70FAF6A9BAD6FDFD563CF1E /* Raccourcis.swift */,
 			);
-			path = Views;
+			path = Intents;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -286,6 +482,8 @@
 				4FE4F2E74120D82686D88DAD /* YoroiWatch */,
 				0F9D029879076AFF1316972A /* Pods */,
 				9799841B2F812CD0008F5652 /* Recovered References */,
+				8A692B9C6ED6284A4395960B /* YoroiWatchWidgets */,
+				E80764186CA08167F81B13B0 /* YoroiWidgets */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -297,8 +495,39 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* Yoroi.app */,
 				6865ED75B31A3E0530F4354A /* YoroiWatch.app */,
+				CCF01F9A3B1ABD6E12C06034 /* YoroiWatchWidgets.appex */,
+				CCFADDF1E37C72A41C3D37F8 /* YoroiWidgets.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8A692B9C6ED6284A4395960B /* YoroiWatchWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				6E91B0B643B54DA579C42B71 /* WidgetsMontre.swift */,
+				A6BE5C0F22F2AC1504234A92 /* FournisseurYoroi.swift */,
+				542CBEA178AA763195A50E87 /* VuesWidgets.swift */,
+				D88DCB73344FC056633ABE01 /* Info.plist */,
+				2C0E7DBF14CDDA8917E9800C /* YoroiWatchWidgets.entitlements */,
+				7BD3D7F81BFD1ADA4A41FE0A /* WidgetsMinuteurs.swift */,
+				308F2E773F96B438565D2FEC /* WidgetsSante.swift */,
+			);
+			path = YoroiWatchWidgets;
+			sourceTree = SOURCE_ROOT;
+		};
+		8C5DB0589519ABCCFC1BC9B8 /* Composants */ = {
+			isa = PBXGroup;
+			children = (
+				20CAC604479EDEAC5F77E822 /* Formats.swift */,
+				D9EC94D8EB256E32C30B13E9 /* Couleurs.swift */,
+				10C1B6E7DF6580D4B85E290D /* Torii.swift */,
+				ADA1B0AE2D3E112E413F86DC /* MiniCourbe.swift */,
+				F90455C30ED9D4410CA07BBF /* Anneau.swift */,
+				E1269D07525C35A37A6760CD /* GrosChiffre.swift */,
+				2C258586859459E9087B7E10 /* RondMinuteur.swift */,
+				D6C10B574A9C12B088E573FF /* CourbeJour.swift */,
+			);
+			path = Composants;
 			sourceTree = "<group>";
 		};
 		9799841B2F812CD0008F5652 /* Recovered References */ = {
@@ -313,10 +542,40 @@
 			name = "Recovered References";
 			sourceTree = "<group>";
 		};
+		98EFC56125211130D817D5D4 /* Vues */ = {
+			isa = PBXGroup;
+			children = (
+				9D6EC3FAE348547B23CEA8B6 /* RacineVue.swift */,
+				178CFA9B07B066AFF0F9ABCD /* AujourdhuiVue.swift */,
+				F29B3E1944AB228CFFFC405D /* PeserVue.swift */,
+				9DBE6A78F54DAE5319777641 /* EntrainementVue.swift */,
+				8E007A2E754BB42E8AF40B21 /* ChronoVue.swift */,
+				FD32D828C554D2D0D4C4A522 /* BilanVue.swift */,
+				F80284710979EC3D96E7B3E2 /* SeanceLibreVue.swift */,
+				7668619A1ACAC5C2723B06A7 /* NoterSeanceVue.swift */,
+				AF382597EC20B8FD8B826009 /* SemaineVue.swift */,
+				FCA87B86EA9028A114428FB6 /* EauVue.swift */,
+				5A53B2878F518999766C0647 /* CombatVue.swift */,
+				FAC42769F72C1700F3955DDF /* ReglagesVue.swift */,
+				038F431919BE3C918AB41B55 /* MinuteursVue.swift */,
+				FCB5DC14D48CD4B60481611A /* CardioVues.swift */,
+			);
+			path = Vues;
+			sourceTree = "<group>";
+		};
 		A73150D781D16EF168B0A900 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				A2F8EC010D7BFA66D009900F /* WatchSessionManager.swift */,
+				97CF327CBF06800D97DD3975 /* Partage.swift */,
+				96B0436A76E94D71DE3A993D /* Synchro.swift */,
+				71BEF472964C56D14673D035 /* Sante.swift */,
+				4A9DE26B3DA6190001ED3B65 /* Seance.swift */,
+				E157A6876AF2646702D8E894 /* ChronoMoteur.swift */,
+				AD3E5D0F6D7BE9B21987DB09 /* Haptique.swift */,
+				1AA75AA62B5C5ECB4BAC097A /* Routeur.swift */,
+				ADC3B5DB6E61379CDD407921 /* MinuteurMoteur.swift */,
+				98F958FCA6E5C08ACB7EC691 /* SanteCardio.swift */,
+				65F689FE14E7AC9B872C52D8 /* DelegueApp.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -348,6 +607,40 @@
 			name = watchOS;
 			sourceTree = "<group>";
 		};
+		E80764186CA08167F81B13B0 /* YoroiWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				FAE5043FC082A6F46F12738F /* Partage */,
+				D8FBAF5ECD9FB4802BB7675C /* YoroiWidgetsBundle.swift */,
+				E82331BEDF28006229DD45AE /* Modele.swift */,
+				985BB6ABDBB5BC1DCB36574D /* Style.swift */,
+				7C1590A6820A7E2593602E15 /* Dessins.swift */,
+				5D888D71FB27D7D8233B8A52 /* Morceaux.swift */,
+				12713373F39BA5E5B72F4AF9 /* Fournisseur.swift */,
+				462F9D7DB5D35352153A07B8 /* Intents.swift */,
+				02C9882FEB89031FD0827934 /* WidgetsAccueil.swift */,
+				2925456CC40465672F0E6288 /* TableauDuJour.swift */,
+				300438CD96AE54ABB379D2C1 /* ActiviteChrono.swift */,
+				A9464D8D56AF3432D8E08415 /* Controles.swift */,
+				EF1B0ED08669DBC9420AA571 /* Info.plist */,
+				FE7B1F7EDE713C6EC4B2FCCF /* YoroiWidgets.entitlements */,
+				4BBE3DA3360E54EAF789FEA2 /* Habillage.swift */,
+				E1B642C29C1D0044E196CAB8 /* DessinsStyles.swift */,
+				AFB3B17EE4644F3524380151 /* ConfigStyle.swift */,
+				8C043AD6DB5E790CFF9E9697 /* Assets.xcassets */,
+			);
+			path = YoroiWidgets;
+			sourceTree = SOURCE_ROOT;
+		};
+		FAE5043FC082A6F46F12738F /* Partage */ = {
+			isa = PBXGroup;
+			children = (
+				66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */,
+				436806CE4BF29115EE395172 /* ChronoAttributs.swift */,
+			);
+			path = Partage;
+			sourceTree = "<group>";
+		};
 		MULTIPEER0GROUP0000001 /* Multipeer */ = {
 			isa = PBXGroup;
 			children = (
@@ -370,20 +663,58 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				A339B15CCE948465E320C1D7 /* Embed Foundation Extensions */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				0D31F959E986F8C0DD1E35BC /* Embed Watch Content */,
 				300E85A8364C81C693D8DC93 /* [CP] Embed Pods Frameworks */,
 				1212D35803328910EC598085 /* [CP] Copy Pods Resources */,
+				EE522B3A4A32B73B29CB94AA /* [CP-User] [RNFB] Core Configuration */,
+				F6B47A41ED7F492DA1C48022 /* [Expo Dev Launcher] Strip Local Network Keys for Release */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				CB2DE57E87CF08349BE97F1D /* PBXTargetDependency */,
+				04E01A38BFECC2E053F53022 /* PBXTargetDependency */,
 			);
 			name = Yoroi;
 			productName = Yoroi;
 			productReference = 13B07F961A680F5B00A75B9A /* Yoroi.app */;
 			productType = "com.apple.product-type.application";
+		};
+		797EC30DA702F39EE7735313 /* YoroiWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A53B87E549194623348C9B30 /* Build configuration list for PBXNativeTarget "YoroiWidgets" */;
+			buildPhases = (
+				0266E5D7D61AFE0E29101694 /* Sources */,
+				459E99CC91110BCC0927C25B /* Frameworks */,
+				158782848A5A5636F2980FA5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = YoroiWidgets;
+			productName = YoroiWidgets;
+			productReference = CCFADDF1E37C72A41C3D37F8 /* YoroiWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A5805C6F938B1A80546D02A0 /* YoroiWatchWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 36A6DCFF33BD8E77095ED011 /* Build configuration list for PBXNativeTarget "YoroiWatchWidgets" */;
+			buildPhases = (
+				D9D0BEF51DFB602A87340B30 /* Sources */,
+				B30CDFA9A79D1E45550F334A /* Frameworks */,
+				7743DD768CEDD80538DB0CB0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = YoroiWatchWidgets;
+			productName = YoroiWatchWidgets;
+			productReference = CCF01F9A3B1ABD6E12C06034 /* YoroiWatchWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		F147DC6C7AC4E0D7FE4AA024 /* YoroiWatch */ = {
 			isa = PBXNativeTarget;
@@ -392,10 +723,12 @@
 				BDEC9A1658084D14AF992816 /* Sources */,
 				E7609FBF1BB8134BA6456C99 /* Frameworks */,
 				49FB9344FA3521CF45B66E14 /* Resources */,
+				81DF486749250CAACCF60989 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				39BDEB171DB2F42BBA648C11 /* PBXTargetDependency */,
 			);
 			name = YoroiWatch;
 			productName = YoroiWatch;
@@ -409,7 +742,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
@@ -426,6 +759,16 @@
 							};
 						};
 					};
+					797EC30DA702F39EE7735313 = {
+						CreatedOnToolsVersion = 15.0;
+						DevelopmentTeam = LTMAN6D7GZ;
+						ProvisioningStyle = Automatic;
+					};
+					A5805C6F938B1A80546D02A0 = {
+						CreatedOnToolsVersion = 15.0;
+						DevelopmentTeam = LTMAN6D7GZ;
+						ProvisioningStyle = Automatic;
+					};
 					F147DC6C7AC4E0D7FE4AA024 = {
 						DevelopmentTeam = VATB5W22UD;
 						ProvisioningStyle = Automatic;
@@ -439,6 +782,7 @@
 			knownRegions = (
 				en,
 				Base,
+				fr,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
@@ -447,6 +791,8 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* Yoroi */,
 				F147DC6C7AC4E0D7FE4AA024 /* YoroiWatch */,
+				A5805C6F938B1A80546D02A0 /* YoroiWatchWidgets */,
+				797EC30DA702F39EE7735313 /* YoroiWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -460,7 +806,16 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				0A5D19028469480DB02D69A3 /* PrivacyInfo.xcprivacy in Resources */,
+				F1REBA5E0000000000000002 /* GoogleService-Info.plist in Resources */,
 				WIZZM4IN0001BUILDF000001 /* wizz.mp3 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		158782848A5A5636F2980FA5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE360AE1C5AF656F2A7E9DA6 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,6 +827,16 @@
 				927D6FC93B28CD31C24811AF /* PrivacyInfo.xcprivacy in Resources */,
 				WIZZ50UND0001F1LEREF0001 /* wizz-made-with-Voicemod.mp3 in Resources */,
 				WIZZW4TCH001BUILDF000001 /* wizz.mp3 in Resources */,
+				045D6884D9F56F7D41C7B1E4 /* gong.mp3 in Resources */,
+				F7005E12E2911959273ECC79 /* clap10.mp3 in Resources */,
+				24460A3F5A510E9664FED651 /* AppShortcuts.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7743DD768CEDD80538DB0CB0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -511,6 +876,11 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoMediaLibrary/ExpoMediaLibrary_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoNotifications/ExpoNotifications_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCore/FirebaseCore_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreInternal/FirebaseCoreInternal_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseInstallations/FirebaseInstallations_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities/GoogleUtilities_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC/FBLPromises_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/PurchasesHybridCommon/PurchasesHybridCommon.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
@@ -518,10 +888,12 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RevenueCat/RevenueCat.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/Sentry/Sentry.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/lottie-ios/LottiePrivacyInfo.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/lottie-react-native/Lottie_React_Native_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/nanopb/nanopb_Privacy.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -534,6 +906,11 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoMediaLibrary_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FirebaseCore_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FirebaseCoreInternal_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FirebaseInstallations_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleUtilities_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FBLPromises_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/PurchasesHybridCommon.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
@@ -541,10 +918,12 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RevenueCat.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Sentry.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/LottiePrivacyInfo.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Lottie_React_Native_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/nanopb_Privacy.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -597,6 +976,21 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Yoroi/expo-configure-project.sh\"\n";
 		};
+		EE522B3A4A32B73B29CB94AA /* [CP-User] [RNFB] Core Configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "[CP-User] [RNFB] Core Configuration";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/usr/bin/env bash\n#\n# Copyright (c) 2016-present Invertase Limited & Contributors\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this library except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\n\n##########################################################################\n##########################################################################\n#\n#  NOTE THAT IF YOU CHANGE THIS FILE YOU MUST RUN pod install AFTERWARDS\n#\n#  This file is installed as an Xcode build script in the project file\n#  by cocoapods, and you will not see your changes until you pod install\n#\n##########################################################################\n##########################################################################\n\nset -e\n\n_MAX_LOOKUPS=2;\n_SEARCH_RESULT=''\n_RN_ROOT_EXISTS=''\n_CURRENT_LOOKUPS=1\n_JSON_ROOT=\"'react-native'\"\n_JSON_FILE_NAME='firebase.json'\n_JSON_OUTPUT_BASE64='e30=' # { }\n_CURRENT_SEARCH_DIR=${PROJECT_DIR}\n_PLIST_BUDDY=/usr/libexec/PlistBuddy\n_TARGET_PLIST=\"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n_DSYM_PLIST=\"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist\"\n\n# plist arrays\n_PLIST_ENTRY_KEYS=()\n_PLIST_ENTRY_TYPES=()\n_PLIST_ENTRY_VALUES=()\n\nfunction setPlistValue {\n  echo \"note:      setting plist entry '$1' of type '$2' in file '$4'\"\n  ${_PLIST_BUDDY} -c \"Add :$1 $2 '$3'\" $4 || echo \"note:      '$1' already exists\"\n}\n\nfunction getFirebaseJsonKeyValue () {\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    ruby -Ku -e \"require 'rubygems';require 'json'; output=JSON.parse('$1'); puts output[$_JSON_ROOT]['$2']\"\n  else\n    echo \"\"\n  fi;\n}\n\nfunction jsonBoolToYesNo () {\n  if [[ $1 == \"false\" ]]; then\n    echo \"NO\"\n  elif [[ $1 == \"true\" ]]; then\n    echo \"YES\"\n  else echo \"NO\"\n  fi\n}\n\necho \"note: -> RNFB build script started\"\necho \"note: 1) Locating ${_JSON_FILE_NAME} file:\"\n\nif [[ -z ${_CURRENT_SEARCH_DIR} ]]; then\n  _CURRENT_SEARCH_DIR=$(pwd)\nfi;\n\nwhile true; do\n  _CURRENT_SEARCH_DIR=$(dirname \"$_CURRENT_SEARCH_DIR\")\n  if [[ \"$_CURRENT_SEARCH_DIR\" == \"/\" ]] || [[ ${_CURRENT_LOOKUPS} -gt ${_MAX_LOOKUPS} ]]; then break; fi;\n  echo \"note:      ($_CURRENT_LOOKUPS of $_MAX_LOOKUPS) Searching in '$_CURRENT_SEARCH_DIR' for a ${_JSON_FILE_NAME} file.\"\n  _SEARCH_RESULT=$(find \"$_CURRENT_SEARCH_DIR\" -maxdepth 2 -name ${_JSON_FILE_NAME} -print | /usr/bin/head -n 1)\n  if [[ ${_SEARCH_RESULT} ]]; then\n    echo \"note:      ${_JSON_FILE_NAME} found at $_SEARCH_RESULT\"\n    break;\n  fi;\n  _CURRENT_LOOKUPS=$((_CURRENT_LOOKUPS+1))\ndone\n\nif [[ ${_SEARCH_RESULT} ]]; then\n  _JSON_OUTPUT_RAW=$(cat \"${_SEARCH_RESULT}\")\n  if ! _RN_ROOT_EXISTS=$(ruby -Ku -e \"require 'json'; output=JSON.parse('$_JSON_OUTPUT_RAW'); puts output[$_JSON_ROOT]\"); then\n    echo \"error: Failed to parse firebase.json, check for syntax errors.\"\n    exit 1\n  fi\n\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    if ! python3 --version >/dev/null 2>&1; then echo \"error: python3 not found, firebase.json file processing error.\" && exit 1; fi\n    _JSON_OUTPUT_BASE64=$(python3 -c 'import json,sys,base64;print(base64.b64encode(bytes(json.dumps(json.loads(open('\"'${_SEARCH_RESULT}'\"', '\"'rb'\"').read())['${_JSON_ROOT}']), '\"'utf-8'\"')).decode())' || echo \"e30=\")\n  fi\n\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n\n  # config.app_data_collection_default_enabled\n  _APP_DATA_COLLECTION_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_data_collection_default_enabled\")\n  if [[ $_APP_DATA_COLLECTION_ENABLED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseDataCollectionDefaultEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_DATA_COLLECTION_ENABLED\")\")\n  fi\n\n  # config.analytics_auto_collection_enabled\n  _ANALYTICS_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_auto_collection_enabled\")\n  if [[ $_ANALYTICS_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_COLLECTION\")\")\n  fi\n\n  # config.analytics_collection_deactivated\n  _ANALYTICS_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_collection_deactivated\")\n  if [[ $_ANALYTICS_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_DEACTIVATED\")\")\n  fi\n\n  # config.analytics_idfv_collection_enabled\n  _ANALYTICS_IDFV_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_idfv_collection_enabled\")\n  if [[ $_ANALYTICS_IDFV_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_IDFV_COLLECTION\")\")\n  fi\n\n  # config.analytics_default_allow_analytics_storage\n  _ANALYTICS_STORAGE=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_analytics_storage\")\n  if [[ $_ANALYTICS_STORAGE ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_STORAGE\")\")\n  fi\n\n  # config.analytics_default_allow_ad_storage\n  _ANALYTICS_AD_STORAGE=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_storage\")\n  if [[ $_ANALYTICS_AD_STORAGE ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AD_STORAGE\")\")\n  fi\n\n  # config.analytics_default_allow_ad_user_data\n  _ANALYTICS_AD_USER_DATA=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_user_data\")\n  if [[ $_ANALYTICS_AD_USER_DATA ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AD_USER_DATA\")\")\n  fi\n\n  # config.analytics_default_allow_ad_personalization_signals\n  _ANALYTICS_PERSONALIZATION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_personalization_signals\")\n  if [[ $_ANALYTICS_PERSONALIZATION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_PERSONALIZATION\")\")\n  fi\n\n  # config.analytics_registration_with_ad_network_enabled\n  _ANALYTICS_REGISTRATION_WITH_AD_NETWORK=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_registration_with_ad_network_enabled\")\n  if [[ $_ANALYTICS_REGISTRATION_WITH_AD_NETWORK ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_REGISTRATION_WITH_AD_NETWORK_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_REGISTRATION_WITH_AD_NETWORK\")\")\n  fi\n\n  # config.google_analytics_automatic_screen_reporting_enabled\n  _ANALYTICS_AUTO_SCREEN_REPORTING=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_automatic_screen_reporting_enabled\")\n  if [[ $_ANALYTICS_AUTO_SCREEN_REPORTING ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAutomaticScreenReportingEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_SCREEN_REPORTING\")\")\n  fi\n\n  # config.perf_auto_collection_enabled\n  _PERF_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_auto_collection_enabled\")\n  if [[ $_PERF_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_enabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_AUTO_COLLECTION\")\")\n  fi\n\n  # config.perf_collection_deactivated\n  _PERF_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_collection_deactivated\")\n  if [[ $_PERF_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_deactivated\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_DEACTIVATED\")\")\n  fi\n\n  # config.messaging_auto_init_enabled\n  _MESSAGING_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"messaging_auto_init_enabled\")\n  if [[ $_MESSAGING_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseMessagingAutoInitEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_MESSAGING_AUTO_INIT\")\")\n  fi\n\n  # config.in_app_messaging_auto_colllection_enabled\n  _FIAM_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"in_app_messaging_auto_collection_enabled\")\n  if [[ $_FIAM_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseInAppMessagingAutomaticDataCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_FIAM_AUTO_INIT\")\")\n  fi\n\n  # config.app_check_token_auto_refresh\n  _APP_CHECK_TOKEN_AUTO_REFRESH=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_check_token_auto_refresh\")\n  if [[ $_APP_CHECK_TOKEN_AUTO_REFRESH ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAppCheckTokenAutoRefreshEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_CHECK_TOKEN_AUTO_REFRESH\")\")\n  fi\n\n  # config.crashlytics_disable_auto_disabler - undocumented for now - mainly for debugging, document if becomes useful\n  _CRASHLYTICS_AUTO_DISABLE_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"crashlytics_disable_auto_disabler\")\n  if [[ $_CRASHLYTICS_AUTO_DISABLE_ENABLED == \"true\" ]]; then\n    echo \"Disabled Crashlytics auto disabler.\" # do nothing\n  else\n    _PLIST_ENTRY_KEYS+=(\"FirebaseCrashlyticsCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"NO\")\n  fi\nelse\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n  echo \"warning:   A firebase.json file was not found, whilst this file is optional it is recommended to include it to configure firebase services in React Native Firebase.\"\nfi;\n\necho \"note: 2) Injecting Info.plist entries: \"\n\n# Log out the keys we're adding\nfor i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n  echo \"    ->  $i) ${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\"\ndone\n\nfor plist in \"${_TARGET_PLIST}\" \"${_DSYM_PLIST}\" ; do\n  if [[ -f \"${plist}\" ]]; then\n\n    # paths with spaces break the call to setPlistValue. temporarily modify\n    # the shell internal field separator variable (IFS), which normally\n    # includes spaces, to consist only of line breaks\n    oldifs=$IFS\n    IFS=\"\n\"\n\n    for i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n      setPlistValue \"${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\" \"${plist}\"\n    done\n\n    # restore the original internal field separator value\n    IFS=$oldifs\n  else\n    echo \"warning:   A Info.plist build output file was not found (${plist})\"\n  fi\ndone\n\necho \"note: <- RNFB build script finished\"\n";
+		};
 		F61F4437A9D3DF6378F2183E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -619,9 +1013,46 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		F6B47A41ED7F492DA1C48022 /* [Expo Dev Launcher] Strip Local Network Keys for Release */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo Dev Launcher] Strip Local Network Keys for Release";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Strip dev-launcher-specific local network permission keys from non-Debug builds\n# This only removes _expo._tcp Bonjour services and the dev-launcher usage description.\n# Other Bonjour services and custom descriptions are preserved for production use.\n\nif [ \"$CONFIGURATION\" != \"Debug\" ]; then\n  PLIST_PATH=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n  if [ -f \"$PLIST_PATH\" ]; then\n    # Check if NSBonjourServices exists\n    if /usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" >/dev/null 2>&1; then\n      # Get the count of services\n      COUNT=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null | grep \"^    \" | wc -l | tr -d ' ')\n\n      # Remove _expo._tcp\n      for ((i=COUNT-1; i>=0; i--)); do\n        SERVICE=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices:$i\" \"$PLIST_PATH\" 2>/dev/null || echo \"\")\n        if echo \"$SERVICE\" | grep -q \"_expo._tcp\"; then\n          /usr/libexec/PlistBuddy -c \"Delete :NSBonjourServices:$i\" \"$PLIST_PATH\" 2>/dev/null || true\n        fi\n      done\n\n      # If the array is now empty, remove it entirely\n      REMAINING=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null | grep \"^    \" | wc -l | tr -d ' ')\n      if [ \"$REMAINING\" -eq \"0\" ]; then\n        /usr/libexec/PlistBuddy -c \"Delete :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null || true\n      fi\n    fi\n\n    # Only delete the description if it matches the dev-launcher default text\n    DESC=$(/usr/libexec/PlistBuddy -c \"Print :NSLocalNetworkUsageDescription\" \"$PLIST_PATH\" 2>/dev/null || echo \"\")\n    if echo \"$DESC\" | grep -q \"Expo Dev Launcher\"; then\n      /usr/libexec/PlistBuddy -c \"Delete :NSLocalNetworkUsageDescription\" \"$PLIST_PATH\" 2>/dev/null || true\n    fi\n  fi\nfi\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0266E5D7D61AFE0E29101694 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				578AC0049B5D8EAB5F1D3E64 /* YoroiWidgetsBundle.swift in Sources */,
+				61B08D90ABAC9E1D02FB771E /* Modele.swift in Sources */,
+				C040F0C2F6CDC8F42EFCA2A6 /* Style.swift in Sources */,
+				82313E06355EE02F14F31892 /* Dessins.swift in Sources */,
+				0971CBF1D4B40475358195BC /* Morceaux.swift in Sources */,
+				96E71974713307EB78574186 /* Fournisseur.swift in Sources */,
+				01656AA0615034951FC44E37 /* Intents.swift in Sources */,
+				185037165B8BE12AC32DB6AC /* WidgetsAccueil.swift in Sources */,
+				024E7E55695B9FED192D5A09 /* TableauDuJour.swift in Sources */,
+				2E6DA36B8BB65641FBA32466 /* ActiviteChrono.swift in Sources */,
+				4B5006562FFF576BA83CF75B /* Controles.swift in Sources */,
+				2CF01094991CD5DCE0C79A07 /* GroupeYoroi.swift in Sources */,
+				6E54E0A41FC93400962AF9EE /* ChronoAttributs.swift in Sources */,
+				D1F75278C1033B284CFAB151 /* Habillage.swift in Sources */,
+				D76A83A0A5F29E001480B2F4 /* DessinsStyles.swift in Sources */,
+				C593415EFC485B8233C768B1 /* ConfigStyle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F871A680F5B00A75B9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -644,6 +1075,10 @@
 				YOROIHK01OBJBUILDF000001 /* YoroiHealthKitModule.m in Sources */,
 				WGTDATASWF001BUILDF00001 /* WidgetDataModule.swift in Sources */,
 				WGTDATAOBJ001BUILDF00001 /* WidgetDataModule.m in Sources */,
+				6AC0650561F14E83E678FB71 /* YoroiWidgetsModule.swift in Sources */,
+				043D80D6B9A5E7F68376EC1E /* YoroiWidgetsModule.m in Sources */,
+				DA23309D5F1F98A7E8C3ADA0 /* GroupeYoroi.swift in Sources */,
+				2E44273FBE52F49B338FF7AE /* ChronoAttributs.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -652,25 +1087,85 @@
 			buildActionMask = 2147483647;
 			files = (
 				FF32897EE0BEC2AECA52ABBF /* YoroiWatchApp.swift in Sources */,
-				F744193774A505F6D079732E /* ContentView.swift in Sources */,
-				48ACA1152E90E2DCBDFE9432 /* TimerPage.swift in Sources */,
-				083FE764C17EB8ADF82DB7E3 /* WeightPage.swift in Sources */,
-				95B176C8EA047BC42D7A75A0 /* HydrationPage.swift in Sources */,
-				E96EBC2B8285DFB53554E9F5 /* SleepPage.swift in Sources */,
-				F1A2B3C4D5E6F70800SETTINGS /* SettingsPage.swift in Sources */,
-				5BA41E06B49FCA34D60842E5 /* WatchSessionManager.swift in Sources */,
-				CARNETPAGE001BUILDF00001 /* CarnetPage.swift in Sources */,
-				COMPETPAGE01BUILDF000001 /* CompetitionPage.swift in Sources */,
-				WORKOUTPAG01BUILDF000001 /* WorkoutPage.swift in Sources */,
-				TIMERALRMVW1BUILDF000001 /* TimerAlarmNotificationView.swift in Sources */,
-				COMPLICCNTRL01BUILDF0001 /* ComplicationController.swift in Sources */,
-				WATCHUTILS001BUILDF00001 /* WatchUtils.swift in Sources */,
+				AA39C8AA95AE2FF9B7428E17 /* Contexte.swift in Sources */,
+				CFFA037F0403DD3FF693DDB0 /* Action.swift in Sources */,
+				53B217A4D61DC99EC0A0FE2D /* Optimiste.swift in Sources */,
+				2D4D3641AB831AE14CF3C9E7 /* Partage.swift in Sources */,
+				C24C20663BD1C3E8D0A5AD13 /* Synchro.swift in Sources */,
+				C6DB9295EC1548EEB09B8D0A /* Sante.swift in Sources */,
+				6B0CF0C45B227915A538676D /* Seance.swift in Sources */,
+				5A986FD808314601D9FDDF95 /* ChronoMoteur.swift in Sources */,
+				AA6656A2A10A3E2EA16F098B /* Haptique.swift in Sources */,
+				330F6A0DEC9419C3B8A4E38B /* Routeur.swift in Sources */,
+				0398D0A6C6CEB0A01E06AC06 /* Formats.swift in Sources */,
+				C2A789C021E2421101FD882B /* Couleurs.swift in Sources */,
+				3539651F41D14F4068DCC590 /* Torii.swift in Sources */,
+				E420100CA0F89E25A4E53304 /* MiniCourbe.swift in Sources */,
+				73C08B70CBC953166D68CA6B /* Anneau.swift in Sources */,
+				52C183E35DFB5AF718AA0ECB /* GrosChiffre.swift in Sources */,
+				561F17FC0B45CD6B44CFE666 /* RacineVue.swift in Sources */,
+				E0F8A66B56727644AD4F8DB0 /* AujourdhuiVue.swift in Sources */,
+				592BAE5B1FE80FFA68CF27D9 /* PeserVue.swift in Sources */,
+				260098392D0BD6E1AA549129 /* EntrainementVue.swift in Sources */,
+				77745D15484DD64B0F3F12FE /* ChronoVue.swift in Sources */,
+				83F1B34CEC544B10160AA95F /* BilanVue.swift in Sources */,
+				C39BF25558D66246F5ABD6E2 /* SeanceLibreVue.swift in Sources */,
+				28ACF6DEF4C506E395AF66E9 /* NoterSeanceVue.swift in Sources */,
+				67044FA9D09B32F131B12473 /* SemaineVue.swift in Sources */,
+				7FE040897B2545940599A6F1 /* EauVue.swift in Sources */,
+				A6C10211C6F45EDE6A23B348 /* CombatVue.swift in Sources */,
+				8A55A6309BD3728396EAE545 /* ReglagesVue.swift in Sources */,
+				BE4FCFA00E27EE311B2FDB45 /* Raccourcis.swift in Sources */,
+				77A438EDC2FFC5361978FC69 /* MinuteurMoteur.swift in Sources */,
+				6218438379814EAAC13B7BA8 /* SanteCardio.swift in Sources */,
+				465DEE5DE0F78C77E049E0D8 /* DelegueApp.swift in Sources */,
+				77F194E7D2CB50436977EDCA /* MinuteursVue.swift in Sources */,
+				05235A3478E8E8421DB57F91 /* CardioVues.swift in Sources */,
+				5D90391DD57B781984AE7FBD /* RondMinuteur.swift in Sources */,
+				BA307D34802237D26257FC9B /* Minuteurs.swift in Sources */,
+				C0A6A38CA8250C09CA21B6FF /* Cardio.swift in Sources */,
+				2F648FC4B0C727348C12EE4F /* CourbeJour.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D9D0BEF51DFB602A87340B30 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00A6B99C455BB1D06253D41B /* WidgetsMontre.swift in Sources */,
+				DD52134B024D5105CE51DBF6 /* FournisseurYoroi.swift in Sources */,
+				DCFA33643A6240F399B65987 /* VuesWidgets.swift in Sources */,
+				6282E622B36BEEA305ADEB25 /* Contexte.swift in Sources */,
+				AB290530F71460AD1566460F /* Action.swift in Sources */,
+				A23B7780C2A6DF02288920CD /* Optimiste.swift in Sources */,
+				41E039F55B473EF6FE7375DD /* Partage.swift in Sources */,
+				BAC82B5FD8299E2961D8A11B /* Formats.swift in Sources */,
+				A684703D1034EF3C9BF9D162 /* Couleurs.swift in Sources */,
+				015172BEE0B2625A9E2C1E91 /* Torii.swift in Sources */,
+				BF317DC371549B5D9D2DC355 /* MiniCourbe.swift in Sources */,
+				6891340605A7266D0002DF00 /* Minuteurs.swift in Sources */,
+				5E008EDEF46680A35795910A /* Cardio.swift in Sources */,
+				AE385C4F20322F9411F4948E /* CourbeJour.swift in Sources */,
+				5E65AB11F5AE7A77E6DCA690 /* WidgetsMinuteurs.swift in Sources */,
+				2F3289A7578D7850653B3F03 /* WidgetsSante.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		04E01A38BFECC2E053F53022 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = YoroiWidgets;
+			target = 797EC30DA702F39EE7735313 /* YoroiWidgets */;
+			targetProxy = 4A977E9C01DED2CAD3A353BE /* PBXContainerItemProxy */;
+		};
+		39BDEB171DB2F42BBA648C11 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = YoroiWatchWidgets;
+			target = A5805C6F938B1A80546D02A0 /* YoroiWatchWidgets */;
+			targetProxy = D6460C07C105199D47594934 /* PBXContainerItemProxy */;
+		};
 		CB2DE57E87CF08349BE97F1D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = YoroiWatch;
@@ -679,18 +1174,29 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		723297A86426D224C7BB50F9 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7F120D6C60857B0DA85F81A6 /* fr */,
+			);
+			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 2E203A1B50BFCFBBD381190F /* Pods-Yoroi.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "Logo1 Yoroi1 Yoroi2 Yoroi3 Yoroi4 Yoroi5 Yoroi6";
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 36;
+				CURRENT_PROJECT_VERSION = 38;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
@@ -699,12 +1205,12 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = Yoroi/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.4.0;
+				MARKETING_VERSION = 3.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -725,22 +1231,22 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BC4AF5DFF2E9557678D34D77 /* Pods-Yoroi.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "Logo1 Yoroi1 Yoroi2 Yoroi3 Yoroi4 Yoroi5 Yoroi6";
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 36;
+				CURRENT_PROJECT_VERSION = 38;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				INFOPLIST_FILE = Yoroi/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.4.0;
+				MARKETING_VERSION = 3.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -756,19 +1262,54 @@
 			};
 			name = Release;
 		};
+		1E3972E00A01D642E9F629D8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = YoroiWidgets/YoroiWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 38;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YoroiWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 3.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		1F829AED29C408FC9CC93136 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 36;
+				CURRENT_PROJECT_VERSION = 38;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
-				MARKETING_VERSION = 2.4.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				MARKETING_VERSION = 3.0.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -785,7 +1326,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
@@ -794,16 +1335,18 @@
 		2745046A66A974514F4A65EF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = YoroiWatch/YoroiWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 36;
+				CURRENT_PROJECT_VERSION = 38;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YoroiWatch/Info.plist;
-				MARKETING_VERSION = 2.4.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				MARKETING_VERSION = 3.0.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -820,8 +1363,40 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		82993F38990570419663DBE8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = YoroiWidgets/YoroiWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 38;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YoroiWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 3.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -829,7 +1404,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "Logo1 Yoroi1 Yoroi2 Yoroi3 Yoroi4 Yoroi5 Yoroi6";
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -876,6 +1451,19 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PODS_ROOT}/ReactCommon",
+					"${PODS_ROOT}/ReactCommon/react/nativemodule/core",
+					"${PODS_ROOT}/React-runtimeexecutor",
+					"${PODS_ROOT}/React-runtimeexecutor/platform/ios",
+					"${PODS_ROOT}/ReactCommon-Samples",
+					"${PODS_ROOT}/ReactCommon-Samples/platform/ios",
+					"${PODS_ROOT}/React-Fabric/react/renderer/components/view/platform/cxx",
+					"${PODS_ROOT}/React-NativeModulesApple",
+					"${PODS_ROOT}/React-graphics",
+					"${PODS_ROOT}/React-graphics/react/renderer/graphics/platform/ios",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
@@ -899,7 +1487,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "Logo1 Yoroi1 Yoroi2 Yoroi3 Yoroi4 Yoroi5 Yoroi6";
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -939,6 +1527,19 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PODS_ROOT}/ReactCommon",
+					"${PODS_ROOT}/ReactCommon/react/nativemodule/core",
+					"${PODS_ROOT}/React-runtimeexecutor",
+					"${PODS_ROOT}/React-runtimeexecutor/platform/ios",
+					"${PODS_ROOT}/ReactCommon-Samples",
+					"${PODS_ROOT}/ReactCommon-Samples/platform/ios",
+					"${PODS_ROOT}/React-Fabric/react/renderer/components/view/platform/cxx",
+					"${PODS_ROOT}/React-NativeModulesApple",
+					"${PODS_ROOT}/React-graphics",
+					"${PODS_ROOT}/React-graphics/react/renderer/graphics/platform/ios",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
@@ -958,6 +1559,73 @@
 			};
 			name = Release;
 		};
+		9F750AA8DDBCF6098E8830A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
+				CODE_SIGN_ENTITLEMENTS = YoroiWatchWidgets/YoroiWatchWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 38;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YoroiWatchWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 3.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		BDB4D7246ED8CD11BFA36CF2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "BleuNuit Indigo Papier Ardoise Foret Bordeaux Crepuscule";
+				CODE_SIGN_ENTITLEMENTS = YoroiWatchWidgets/YoroiWatchWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 38;
+				DEVELOPMENT_TEAM = LTMAN6D7GZ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YoroiWatchWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 3.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -970,11 +1638,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		36A6DCFF33BD8E77095ED011 /* Build configuration list for PBXNativeTarget "YoroiWatchWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9F750AA8DDBCF6098E8830A7 /* Release */,
+				BDB4D7246ED8CD11BFA36CF2 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Yoroi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A53B87E549194623348C9B30 /* Build configuration list for PBXNativeTarget "YoroiWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E3972E00A01D642E9F629D8 /* Release */,
+				82993F38990570419663DBE8 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

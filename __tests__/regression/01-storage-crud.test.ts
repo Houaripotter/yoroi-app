@@ -412,12 +412,12 @@ describe('REGRESSION: Storage CRUD Operations', () => {
     });
 
     it('saves and returns selected logo', async () => {
-      await saveSelectedLogo('logo2');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith('@yoroi_selected_logo', 'logo2');
+      await saveSelectedLogo('bleu_nuit');
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith('@yoroi_selected_logo', 'bleu_nuit');
 
-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('logo2');
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('bleu_nuit');
       const logo = await getSelectedLogo();
-      expect(logo).toBe('logo2');
+      expect(logo).toBe('bleu_nuit');
     });
   });
 

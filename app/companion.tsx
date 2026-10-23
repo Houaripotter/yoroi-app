@@ -1,956 +1,360 @@
-// ============================================
-// COMPANION - Gestionnaire de données corps
-// Tableau + Graphiques + Import/Export CSV
-// ============================================
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  Modal,
-  TextInput,
-  Alert,
-  useWindowDimensions,
-} from 'react-native';
-import { router } from 'expo-router';
+/**
+ * Tableau du corps (v2) : toutes tes pesees, ta composition et tes mensurations, une ligne par jour.
+ * Ajouter une ligne, supprimer un jour, courbes du poids et de la masse grasse,
+ * export CSV (partage) et import CSV. Ancien ecran archive dans _archive_ancien_design_2026-10-09/app/.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { ActivityIndicator, DeviceEventEmitter, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ChevronLeft,
-  Download,
-  Upload,
-  Plus,
-  Trash2,
-  BarChart2,
-  Table,
-  TrendingDown,
-  TrendingUp,
-  Minus,
-} from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { getAllWeights, getMeasurements, deleteWeight, deleteMeasurementRecord, addWeight, addMeasurementRecord, Weight, Measurement } from '@/lib/database';
-import { getAllBodyCompositions, deleteBodyComposition, BodyComposition } from '@/lib/bodyComposition';
+import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { fontStyle } from '@/components/yoroi/fonts';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { InkLineChart } from '@/components/yoroi/v2/progres/InkLineChart';
+import { CorpsHeader, RoundBtn } from '@/components/yoroi/v2/seance/corps/ui';
+import { Sheet } from '@/components/yoroi/v2/seance/Sheet';
+import { deleteBodyComposition } from '@/lib/bodyComposition';
+import type { BodyComposition } from '@/lib/bodyComposition';
 import { shareExportCSV } from '@/lib/csvTemplates';
-import { useCustomPopup } from '@/components/CustomPopup';
-import logger from '@/lib/security/logger';
-import { LineChart } from 'react-native-gifted-charts';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { addMeasurementRecord, addWeight, deleteMeasurementRecord, deleteWeight } from '@/lib/database';
+import type { Measurement, Weight } from '@/lib/database';
+import { logger } from '@/lib/security/logger';
+import { fmtValue, frDay, loadBodyData, parseDay } from '@/lib/v2/seance/corps';
+import { isoDay } from '@/lib/v2/seance/format';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { P, blancA } from '@/components/yoroi/livePalette';
 
-// ============================================
-// TYPES
-// ============================================
+type Row = { date: string; weight?: Weight; measurement?: Measurement; composition?: BodyComposition };
 
-interface MergedRow {
-  date: string;
-  weight?: Weight;
-  measurement?: Measurement;
-  composition?: BodyComposition;
-}
-
-// ============================================
-// HELPERS
-// ============================================
-
-function getVal(row: MergedRow, key: string): string {
-  const w = row.weight;
-  const m = row.measurement;
-  const c = row.composition;
-
-  switch (key) {
-    case 'weight':   return fmt(w?.weight ?? c?.weight);
-    case 'fat':      return fmt(w?.fat_percent ?? c?.bodyFatPercent);
-    case 'muscle':   return fmt(w?.muscle_percent ?? c?.muscleMass);
-    case 'water':    return fmt(w?.water_percent ?? c?.waterPercent);
-    case 'chest':    return fmt(m?.chest);
-    case 'waist':    return fmt(m?.waist);
-    case 'hips':     return fmt(m?.hips);
-    case 'left_arm': return fmt(m?.left_arm);
-    case 'right_arm':return fmt(m?.right_arm);
-    default:         return '';
-  }
-}
-
-function fmt(v?: number | null): string {
-  if (v === undefined || v === null) return '·';
-  return String(v);
-}
-
-function displayDate(iso: string): string {
-  try {
-    const d = new Date(iso + 'T12:00:00');
-    return format(d, 'dd MMM yy', { locale: fr });
-  } catch {
-    return iso;
-  }
-}
-
-function isoToFr(iso: string): string {
-  const d = iso.split('-');
-  return d.length === 3 ? `${d[2]}/${d[1]}/${d[0]}` : iso;
-}
-
-// ============================================
-// COLONNES DU TABLEAU
-// ============================================
-
-const COLUMNS = [
-  { key: 'weight',    labelKey: 'colWeight',    unit: 'kg',  width: 72 },
-  { key: 'fat',       labelKey: 'colFat',       unit: '%',   width: 64 },
-  { key: 'muscle',    labelKey: 'colMuscle',    unit: '%',   width: 64 },
-  { key: 'water',     labelKey: 'colWater',     unit: '%',   width: 60 },
-  { key: 'chest',     labelKey: 'colChest',     unit: 'cm',  width: 80 },
-  { key: 'waist',     labelKey: 'colWaist',     unit: 'cm',  width: 72 },
-  { key: 'hips',      labelKey: 'colHips',      unit: 'cm',  width: 80 },
-  { key: 'left_arm',  labelKey: 'colLeftArm',   unit: 'cm',  width: 72 },
-  { key: 'right_arm', labelKey: 'colRightArm',  unit: 'cm',  width: 72 },
+const COLUMNS: { key: string; label: string; unit: string; width: number }[] = [
+  { key: 'weight', label: 'Poids', unit: 'kg', width: 74 },
+  { key: 'fat', label: 'Graisse', unit: '%', width: 78 },
+  { key: 'muscle', label: 'Muscle', unit: '%', width: 76 },
+  { key: 'water', label: 'Eau', unit: '%', width: 70 },
+  { key: 'chest', label: 'Poitrine', unit: 'cm', width: 84 },
+  { key: 'waist', label: 'Taille', unit: 'cm', width: 74 },
+  { key: 'hips', label: 'Hanches', unit: 'cm', width: 86 },
+  { key: 'left_arm', label: 'Bras G', unit: 'cm', width: 74 },
+  { key: 'right_arm', label: 'Bras D', unit: 'cm', width: 74 },
 ];
 
-const DATE_COL_WIDTH = 88;
+/** Colonnes de la pesee (visibles d'emblee) : un jour de mensurations seules y affiche une mention au lieu d'une ligne vide */
+const COMPO_COLS = COLUMNS.slice(0, 4);
+const COMPO_W = COMPO_COLS.reduce((a, col) => a + col.width, 0);
 
-// ============================================
-// ADD ROW MODAL
-// ============================================
+const DATE_W = 92;
+const HEAD_H = 48;
+const ROW_H = 46;
 
-interface AddModalProps {
-  visible: boolean;
-  colors: any;
-  onClose: () => void;
-  onSave: (date: string, fields: Record<string, string>) => void;
+function val(r: Row, key: string): number | undefined {
+  const w = r.weight;
+  const m = r.measurement;
+  const c = r.composition;
+  const pos = (v?: number | null) => (v && v > 0 ? v : undefined);
+  switch (key) {
+    case 'weight': return pos(w?.weight) ?? pos(c?.weight);
+    case 'fat': return pos(w?.fat_percent) ?? pos(c?.bodyFatPercent);
+    case 'muscle': return pos(w?.muscle_percent) ?? (c?.muscleMass && c.weight ? Math.round((c.muscleMass / c.weight) * 1000) / 10 : undefined);
+    case 'water': return pos(w?.water_percent) ?? pos(c?.waterPercent);
+    case 'chest': return pos(m?.chest);
+    case 'waist': return pos(m?.waist);
+    case 'hips': return pos(m?.hips);
+    case 'left_arm': return pos(m?.left_arm);
+    case 'right_arm': return pos(m?.right_arm);
+    default: return undefined;
+  }
 }
 
-function AddModal({ visible, colors, onClose, onSave }: AddModalProps) {
-  const { t } = useI18n();
-  const today = new Date().toLocaleDateString('fr-FR');
-  const [date, setDate] = useState(today);
-  const fields = COLUMNS.map(c => c.key);
-  const [vals, setVals] = useState<Record<string, string>>({});
+function shortDay(iso: string): string {
+  const d = new Date(iso + 'T12:00:00');
+  const M = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  return `${d.getDate()} ${M[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+}
 
-  const handleSave = () => {
-    onSave(date, vals);
-    setVals({});
-    setDate(today);
-    onClose();
+export default function TableauCorps() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [rows, setRows] = useState<Row[] | null>(null);
+  const [tab, setTab] = useState<'table' | 'charts'>('table');
+  const [adding, setAdding] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const d = await loadBodyData();
+      const by: Record<string, Row> = {};
+      const at = (day: string) => (by[day] ??= { date: day });
+      for (const w of d.weights) if (w.date) at(w.date.slice(0, 10)).weight = w;
+      for (const m of d.measurements) if (m.date) at(m.date.slice(0, 10)).measurement = m;
+      for (const comp of d.comps) {
+        const day = (comp.date ?? '').slice(0, 10);
+        if (day) at(day).composition = comp;
+      }
+      // un jour sans aucune valeur dans les colonnes affichees ne fait qu'une ligne vide : on le laisse de cote
+      setRows(Object.values(by).filter((r) => COLUMNS.some((col) => val(r, col.key) !== undefined)).sort((a, b) => b.date.localeCompare(a.date)));
+    } catch (err) {
+      logger.error('Lecture du tableau impossible', err);
+      setRows([]);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, load);
+    return () => sub.remove();
+  }, [load]);
+
+  const changed = () => {
+    notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+    load();
   };
 
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalBox, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('companion.newEntry')}</Text>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('companion.dateLabel')}</Text>
-            <TextInput
-              style={[styles.fieldInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.background }]}
-              value={date}
-              onChangeText={setDate}
-              placeholder="01/01/2026"
-              placeholderTextColor={colors.textMuted}
-            />
-
-            {COLUMNS.map(col => (
-              <View key={col.key}>
-                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-                  {t(`companion.${col.labelKey}`)} ({col.unit})
-                </Text>
-                <TextInput
-                  style={[styles.fieldInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.background }]}
-                  value={vals[col.key] || ''}
-                  onChangeText={v => setVals(prev => ({ ...prev, [col.key]: v }))}
-                  placeholder="·"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                />
-              </View>
-            ))}
-          </ScrollView>
-
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={[styles.modalBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
-              onPress={onClose}
-            >
-              <Text style={[styles.modalBtnText, { color: colors.textMuted }]}>{t('companion.cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalBtn, { backgroundColor: colors.accent }]}
-              onPress={handleSave}
-            >
-              <Text style={[styles.modalBtnText, { color: colors.textOnAccent }]}>{t('companion.save')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-// ============================================
-// ÉCRAN PRINCIPAL
-// ============================================
-
-type TabType = 'table' | 'charts';
-
-export default function CompanionScreen() {
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
-  const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const { showPopup, PopupComponent } = useCustomPopup();
-
-  const [rows, setRows] = useState<MergedRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<TabType>('table');
-  const [exporting, setExporting] = useState(false);
-  const [showAdd, setShowAdd] = useState(false);
-
-  // ----------------------------------------
-  // Chargement des données
-  // ----------------------------------------
-
-  const loadData = useCallback(async () => {
-    try {
-      const [weights, measurements, compositions] = await Promise.all([
-        getAllWeights(),
-        getMeasurements(),
-        getAllBodyCompositions(),
-      ]);
-
-      const byDate: Record<string, MergedRow> = {};
-
-      for (const w of weights) {
-        if (!byDate[w.date]) byDate[w.date] = { date: w.date };
-        byDate[w.date].weight = w;
-      }
-      for (const m of measurements) {
-        if (!byDate[m.date]) byDate[m.date] = { date: m.date };
-        byDate[m.date].measurement = m;
-      }
-      for (const c of compositions) {
-        const dateKey = c.date?.split('T')[0] ?? '';
-        if (!dateKey) continue;
-        if (!byDate[dateKey]) byDate[dateKey] = { date: dateKey };
-        byDate[dateKey].composition = c;
-      }
-
-      const sorted = Object.values(byDate).sort((a, b) => b.date.localeCompare(a.date));
-      setRows(sorted);
-    } catch (err) {
-      logger.error('[Companion] Erreur chargement:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      await loadData();
-      if (!mounted) return;
-    };
-    load();
-    return () => { mounted = false; };
-  }, []);
-
-  // Masquer le loader après 2 secondes maximum
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(t);
-  }, []);
-
-  // ----------------------------------------
-  // Suppression d'une ligne
-  // ----------------------------------------
-
-  const handleDelete = useCallback((row: MergedRow) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    showPopup(
-      t('companion.deleteTitle'),
-      t('companion.deleteMsg').replace('{{date}}', isoToFr(row.date)),
-      [
-        { text: t('companion.cancelBtn'), style: 'cancel' },
-        {
-          text: t('companion.deleteBtn'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const promises: Promise<any>[] = [];
-              if (row.weight?.id) promises.push(deleteWeight(row.weight.id));
-              if (row.measurement?.id) promises.push(deleteMeasurementRecord(row.measurement.id));
-              if (row.composition?.id) promises.push(deleteBodyComposition(row.composition.id));
-              await Promise.all(promises);
-              notificationAsync(NotificationFeedbackType.Success);
-              await loadData();
-            } catch (err) {
-              logger.error('[Companion] Erreur suppression:', err);
-              showPopup(t('companion.errorTitle'), t('companion.errorDelete'), [{ text: 'OK', style: 'primary' }]);
-            }
-          },
+  const removeRow = (r: Row) => {
+    impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+    appAlert('Supprimer ce jour ?', `Tout ce qui est noté le ${frDay(r.date)} sera supprimé : pesée, composition et mensurations.`, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const jobs: Promise<unknown>[] = [];
+            if (r.weight?.id) jobs.push(deleteWeight(r.weight.id));
+            if (r.measurement?.id) jobs.push(deleteMeasurementRecord(r.measurement.id));
+            if (r.composition?.id) jobs.push(deleteBodyComposition(r.composition.id));
+            await Promise.all(jobs);
+            changed();
+          } catch (err) {
+            logger.error('Suppression impossible', err);
+            appAlert('Oups', 'La suppression n’a pas pu se faire.');
+          }
         },
-      ]
-    );
-  }, [loadData, showPopup]);
+      },
+    ]);
+  };
 
-  // ----------------------------------------
-  // Ajout d'une ligne
-  // ----------------------------------------
-
-  const handleAdd = useCallback(async (dateStr: string, fields: Record<string, string>) => {
+  const addRow = async (day: string, f: Record<string, number | undefined>) => {
+    setAdding(false);
     try {
-      // Convertir date JJ/MM/AAAA → AAAA-MM-JJ
-      let isoDate = dateStr.trim();
-      const frMatch = isoDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (frMatch) isoDate = `${frMatch[3]}-${frMatch[2].padStart(2, '0')}-${frMatch[1].padStart(2, '0')}`;
-
-      const p = (k: string) => {
-        const v = fields[k]?.replace(',', '.').trim();
-        return v ? parseFloat(v) : undefined;
-      };
-
-      const weight = p('weight');
-      const fat = p('fat');
-      const muscle = p('muscle');
-      const water = p('water');
-      const chest = p('chest');
-      const waist = p('waist');
-      const hips = p('hips');
-      const leftArm = p('left_arm');
-      const rightArm = p('right_arm');
-
-      if (weight !== undefined) {
-        await addWeight({
-          weight,
-          fat_percent: fat,
-          muscle_percent: muscle,
-          water_percent: water,
-          date: isoDate,
-          source: 'manual',
-        });
+      if (f.weight !== undefined) {
+        await addWeight({ weight: f.weight, fat_percent: f.fat, muscle_percent: f.muscle, water_percent: f.water, date: day, source: 'manual' });
       }
-
-      const hasMeasurement = [chest, waist, hips, leftArm, rightArm].some(v => v !== undefined);
-      if (hasMeasurement) {
-        await addMeasurementRecord({
-          chest,
-          waist,
-          hips,
-          left_arm: leftArm,
-          right_arm: rightArm,
-          date: isoDate,
-        });
+      if ([f.chest, f.waist, f.hips, f.left_arm, f.right_arm].some((v) => v !== undefined)) {
+        await addMeasurementRecord({ date: day, chest: f.chest, waist: f.waist, hips: f.hips, left_arm: f.left_arm, right_arm: f.right_arm });
       }
-
-      notificationAsync(NotificationFeedbackType.Success);
-      await loadData();
+      changed();
     } catch (err) {
-      logger.error('[Companion] Erreur ajout:', err);
-      showPopup(t('companion.errorTitle'), t('companion.errorSave'), [{ text: 'OK', style: 'primary' }]);
+      logger.error('Ajout impossible', err);
+      appAlert('Oups', 'La ligne n’a pas pu être ajoutée.');
     }
-  }, [loadData, showPopup]);
+  };
 
-  // ----------------------------------------
-  // Export CSV
-  // ----------------------------------------
-
-  const handleExport = async () => {
+  const exportCsv = async () => {
     setExporting(true);
-    impactAsync(ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     try {
       const ok = await shareExportCSV();
-      if (ok) notificationAsync(NotificationFeedbackType.Success);
+      if (ok) notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {
-      logger.error('[Companion] Erreur export:', err);
-      showPopup(t('companion.errorTitle'), t('companion.errorExport'), [{ text: 'OK', style: 'primary' }]);
+      logger.error('Export impossible', err);
+      appAlert('Oups', 'L’export n’a pas pu se faire.');
     } finally {
       setExporting(false);
     }
   };
 
-  // ----------------------------------------
-  // Stats
-  // ----------------------------------------
-
-  const lastWeight = rows.find(r => r.weight?.weight)?.weight?.weight;
-  const firstWeight = [...rows].reverse().find(r => r.weight?.weight)?.weight?.weight;
-  const weightDiff = lastWeight !== undefined && firstWeight !== undefined ? lastWeight - firstWeight : null;
-
-  // ----------------------------------------
-  // Données pour les graphiques
-  // ----------------------------------------
-
-  const chartRows = [...rows].reverse().filter(r => r.weight?.weight || r.composition?.weight);
-  const weightData = chartRows
-    .map(r => ({ value: r.weight?.weight ?? r.composition?.weight ?? 0, label: displayDate(r.date).split(' ').slice(0, 2).join('\n') }))
-    .filter(d => d.value > 0)
-    .slice(-20);
-
-  const fatData = chartRows
-    .map(r => ({ value: r.weight?.fat_percent ?? r.composition?.bodyFatPercent ?? 0, label: displayDate(r.date).split(' ').slice(0, 2).join('\n') }))
-    .filter(d => d.value > 0)
-    .slice(-20);
-
-  const muscleData = chartRows
-    .map(r => ({ value: r.weight?.muscle_percent ?? r.composition?.muscleMass ?? 0, label: '' }))
-    .filter(d => d.value > 0)
-    .slice(-20);
-
-  // ----------------------------------------
-  // Rendu tableau
-  // ----------------------------------------
-
-  const renderTableHeader = () => (
-    <View style={[styles.tableRow, { backgroundColor: colors.backgroundCard, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-      <View style={[styles.dateCell, styles.headerCell]}>
-        <Text style={[styles.headerText, { color: colors.textMuted }]}>{t('companion.dateCol')}</Text>
-      </View>
-      {COLUMNS.map(col => (
-        <View key={col.key} style={[styles.dataCell, styles.headerCell, { width: col.width }]}>
-          <Text style={[styles.headerText, { color: colors.textMuted }]}>{t(`companion.${col.labelKey}`)}</Text>
-          <Text style={[styles.headerUnit, { color: colors.textMuted + '80' }]}>{col.unit}</Text>
-        </View>
-      ))}
-      <View style={[styles.actionCell, styles.headerCell]} />
-    </View>
-  );
-
-  const renderDataRow = (item: MergedRow, index: number) => {
-    const isEven = index % 2 === 0;
-    const bg = isEven ? colors.background : `${colors.backgroundCard}CC`;
-
-    return (
-      <View key={item.date} style={[styles.tableRow, { backgroundColor: bg }]}>
-        <View style={[styles.dateCell, { borderBottomColor: colors.border + '30' }]}>
-          <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-            {displayDate(item.date)}
-          </Text>
-        </View>
-        {COLUMNS.map(col => {
-          const val = getVal(item, col.key);
-          const isEmpty = val === '·';
-          return (
-            <View key={col.key} style={[styles.dataCell, { width: col.width, borderBottomColor: colors.border + '30' }]}>
-              <Text style={[styles.dataText, { color: isEmpty ? colors.textMuted + '40' : colors.textPrimary }]}>
-                {val}
-              </Text>
-            </View>
-          );
-        })}
-        <TouchableOpacity
-          style={[styles.actionCell, { borderBottomColor: colors.border + '30' }]}
-          onPress={() => handleDelete(item)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Trash2 size={15} color={colors.textMuted + '80'} strokeWidth={2} />
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  // ----------------------------------------
-  // Rendu graphiques
-  // ----------------------------------------
-
-  const CHART_COLOR = '#4F8EF7';
-  const FAT_COLOR = '#F97316';
-  const MUSCLE_COLOR = '#10B981';
-  const chartWidth = SCREEN_WIDTH - 32;
-
-  const renderCharts = () => {
-    if (weightData.length < 2) {
-      return (
-        <View style={styles.emptyCharts}>
-          <BarChart2 size={40} color={colors.textMuted + '40'} />
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            {t('companion.minEntries')}
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* Graphique poids */}
-        <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>{t('companion.weightEvolution')}</Text>
-          <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-            {weightData.length > 1 ? t('companion.measuresPlural').replace('{{n}}', String(weightData.length)) : t('companion.measures').replace('{{n}}', String(weightData.length))}
-          </Text>
-          <LineChart
-            data={weightData}
-            width={chartWidth - 32}
-            height={160}
-            color={CHART_COLOR}
-            thickness={2.5}
-            startFillColor={CHART_COLOR + '40'}
-            endFillColor={CHART_COLOR + '05'}
-            areaChart
-            curved
-            hideDataPoints={weightData.length > 15}
-            dataPointsColor={CHART_COLOR}
-            dataPointsRadius={4}
-            yAxisTextStyle={{ color: colors.textMuted, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 9 }}
-            rulesColor={colors.border + '40'}
-            yAxisColor={colors.border}
-            xAxisColor={colors.border}
-            noOfSections={4}
-          />
-        </View>
-
-        {/* Graphique MG/MM */}
-        {fatData.length >= 2 && (
-          <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
-            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>{t('companion.bodyComposition')}</Text>
-            <View style={styles.chartLegend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: FAT_COLOR }]} />
-                <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('companion.fatPercent')}</Text>
-              </View>
-              {muscleData.length >= 2 && (
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: MUSCLE_COLOR }]} />
-                  <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('companion.musclePercent')}</Text>
-                </View>
-              )}
-            </View>
-            <LineChart
-              data={fatData}
-              data2={muscleData.length >= 2 ? muscleData : undefined}
-              width={chartWidth - 32}
-              height={160}
-              color={FAT_COLOR}
-              color2={MUSCLE_COLOR}
-              thickness={2.5}
-              thickness2={2.5}
-              startFillColor={FAT_COLOR + '30'}
-              endFillColor={FAT_COLOR + '05'}
-              areaChart
-              curved
-              hideDataPoints={fatData.length > 15}
-              dataPointsColor={FAT_COLOR}
-              dataPointsColor2={MUSCLE_COLOR}
-              dataPointsRadius={4}
-              yAxisTextStyle={{ color: colors.textMuted, fontSize: 10 }}
-              xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 9 }}
-              rulesColor={colors.border + '40'}
-              yAxisColor={colors.border}
-              xAxisColor={colors.border}
-              noOfSections={4}
-            />
-          </View>
-        )}
-      </ScrollView>
-    );
-  };
-
-  // ----------------------------------------
-  // RENDU
-  // ----------------------------------------
+  const weightPts = useMemo(() => (rows ?? []).filter((r) => val(r, 'weight')).map((r) => ({ date: r.date, value: val(r, 'weight') as number })).reverse(), [rows]);
+  const fatPts = useMemo(() => (rows ?? []).filter((r) => val(r, 'fat')).map((r) => ({ date: r.date, value: val(r, 'fat') as number })).reverse(), [rows]);
+  const lastW = weightPts[weightPts.length - 1]?.value;
+  const firstW = weightPts[0]?.value;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.back(); }}
-          style={styles.headerBtn}
-        >
-          <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 110 }} showsVerticalScrollIndicator={false}>
+        <CorpsHeader
+          title="Tableau du corps"
+          sub="Une ligne par jour, tout au même endroit"
+          right={<RoundBtn icon="plus" label="Ajouter une ligne" tone="accent" onPress={() => setAdding(true)} />}
+        />
 
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('companion.myData')}</Text>
-
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/import-csv' as any); }}
-          >
-            <Upload size={20} color={colors.textPrimary} strokeWidth={2} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={handleExport}
-            disabled={exporting}
-          >
-            {exporting
-              ? <ActivityIndicator size="small" color={colors.accent} />
-              : <Download size={20} color={colors.textPrimary} strokeWidth={2} />
-            }
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Stats */}
-      {rows.length > 0 && (
-        <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderBottomColor: colors.border }]}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{rows.length}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('companion.statEntries')}</Text>
+        <View style={{ paddingHorizontal: 22, paddingTop: 16, gap: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={() => router.push('/import-csv' as any)} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.8), borderWidth: 1, borderColor: c.border })}>
+              <Ink size={14} weight="extraBold">Importer un CSV</Ink>
+            </Pressable>
+            <Pressable onPress={exportCsv} disabled={exporting} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : blancA(0.8), borderWidth: 1, borderColor: c.border, opacity: exporting ? 0.6 : 1 })}>
+              {exporting ? <ActivityIndicator size="small" color={c.ink} /> : null}
+              <Ink size={14} weight="extraBold">Exporter en CSV</Ink>
+            </Pressable>
           </View>
-          {lastWeight !== undefined && (
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{lastWeight} kg</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('companion.statLastWeight')}</Text>
+
+          {rows && rows.length > 0 ? (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Tile value={String(rows.length)} label="jours notés" />
+              {lastW ? <Tile value={`${fmtValue(lastW, 1)} kg`} label="dernier poids" /> : null}
+              {lastW && firstW && weightPts.length > 1 ? <Tile value={`${lastW - firstW > 0 ? '+' : lastW - firstW < 0 ? '−' : ''}${fmtValue(Math.abs(lastW - firstW), 1)} kg`} label="depuis le début" /> : null}
             </View>
-          )}
-          {weightDiff !== null && Math.abs(weightDiff) > 0.1 && (
-            <View style={styles.statItem}>
-              <View style={styles.statDiffRow}>
-                {weightDiff < 0
-                  ? <TrendingDown size={14} color="#10B981" strokeWidth={2} />
-                  : <TrendingUp size={14} color="#F97316" strokeWidth={2} />
-                }
-                <Text style={[styles.statValue, { color: weightDiff < 0 ? '#10B981' : '#F97316' }]}>
-                  {weightDiff > 0 ? '+' : ''}{weightDiff.toFixed(1)} kg
-                </Text>
+          ) : null}
+
+          <View style={{ flexDirection: 'row', padding: 4, borderRadius: 16, backgroundColor: c.fillSubtle }}>
+            {(['table', 'charts'] as const).map((t) => {
+              const on = tab === t;
+              return (
+                <Pressable key={t} onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setTab(t); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.surface : 'transparent' }}>
+                  <Ink size={14} weight={on ? 'extraBold' : 'bold'} color={on ? c.ink : c.textSecondary}>{t === 'table' ? 'Tableau' : 'Courbes'}</Ink>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {rows === null ? (
+            <ChargementBloc style={{ marginTop: 10 }} />
+          ) : rows.length === 0 ? (
+            <View style={{ padding: 22, borderRadius: 26, backgroundColor: blancA(0.8), borderWidth: 1, borderColor: P.white, gap: 8 }}>
+              <Glyph kind="sakura" size={44} color={c.indigo} />
+              <Ink size={22} weight="black" tight>Ton tableau est vide</Ink>
+              <Ink size={14} color={c.textSecondary}>Ajoute une ligne à la main, ou importe ton historique depuis un fichier CSV.</Ink>
+              <Pressable onPress={() => setAdding(true)} accessibilityRole="button" style={({ pressed }) => ({ marginTop: 6, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
+                <Ink size={15} weight="extraBold" color={c.onAccent}>Ajouter une ligne</Ink>
+              </Pressable>
+            </View>
+          ) : tab === 'table' ? (
+            <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden', flexDirection: 'row' }}>
+              {/* colonne du jour, fixe */}
+              <View style={{ width: DATE_W, borderRightWidth: 1, borderColor: c.divider }}>
+                <View style={{ height: HEAD_H, justifyContent: 'center', backgroundColor: c.fillSoft, paddingLeft: 14 }}>
+                  <Ink size={12} weight="extraBold" color={c.textSecondary}>Jour</Ink>
+                </View>
+                {rows.map((r, i) => (
+                  <Pressable key={r.date} onPress={() => removeRow(r)} accessibilityRole="button" accessibilityLabel={`${frDay(r.date)}, toucher pour supprimer ce jour`} style={({ pressed }) => ({ height: ROW_H, justifyContent: 'center', paddingLeft: 14, backgroundColor: pressed ? c.dangerTint : i % 2 ? 'rgba(242,241,236,0.5)' : 'transparent' })}>
+                    <Ink size={13} weight="bold" numberOfLines={1}>{shortDay(r.date)}</Ink>
+                  </Pressable>
+                ))}
               </View>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('companion.statTotal')}</Text>
+              {/* valeurs, qui defilent sur le cote */}
+              <ScrollView horizontal showsHorizontalScrollIndicator style={{ flex: 1 }} contentContainerStyle={{ paddingRight: 6 }}>
+                <View>
+                  <View style={{ flexDirection: 'row', height: HEAD_H, alignItems: 'center', backgroundColor: c.fillSoft }}>
+                    {COLUMNS.map((col) => (
+                      <View key={col.key} style={{ width: col.width, alignItems: 'flex-end', paddingRight: 12 }}>
+                        <Ink size={12} weight="extraBold" color={c.textSecondary} numberOfLines={1}>{col.label}</Ink>
+                        <Ink size={10} color={c.textMuted}>{col.unit}</Ink>
+                      </View>
+                    ))}
+                  </View>
+                  {rows.map((r, i) => (
+                    <Pressable key={r.date} onPress={() => removeRow(r)} accessibilityRole="button" accessibilityLabel={`${frDay(r.date)}, toucher pour supprimer ce jour`} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', height: ROW_H, backgroundColor: pressed ? c.dangerTint : i % 2 ? 'rgba(242,241,236,0.5)' : 'transparent' })}>
+                      {COMPO_COLS.every((col) => val(r, col.key) === undefined) ? (
+                        <View style={{ width: COMPO_W, paddingLeft: 14, paddingRight: 12, justifyContent: 'center' }}>
+                          <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>Mensurations du jour, fais glisser →</Ink>
+                        </View>
+                      ) : null}
+                      {(COMPO_COLS.every((col) => val(r, col.key) === undefined) ? COLUMNS.slice(COMPO_COLS.length) : COLUMNS).map((col) => {
+                        const v = val(r, col.key);
+                        return (
+                          <Ink key={col.key} size={14} weight={v !== undefined ? 'black' : 'medium'} color={v !== undefined ? c.ink : c.border} numberOfLines={1} style={{ width: col.width, textAlign: 'right', paddingRight: 12, fontVariant: ['tabular-nums'] }}>
+                            {v !== undefined ? fmtValue(v, 1) : ''}
+                          </Ink>
+                        );
+                      })}
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          ) : (
+            <View style={{ gap: 12 }}>
+              {weightPts.length > 1 ? (
+                <View style={{ padding: 16, borderRadius: 24, backgroundColor: blancA(0.85), borderWidth: 1, borderColor: P.white, gap: 8 }}>
+                  <Ink size={16} weight="black">Poids</Ink>
+                  <InkLineChart points={weightPts} color="#3D5D9E" height={190} digits={1} label="Courbe du poids" />
+                </View>
+              ) : null}
+              {fatPts.length > 1 ? (
+                <View style={{ padding: 16, borderRadius: 24, backgroundColor: blancA(0.85), borderWidth: 1, borderColor: P.white, gap: 8 }}>
+                  <Ink size={16} weight="black">Masse grasse, en %</Ink>
+                  <InkLineChart points={fatPts} color="#A8832F" height={170} digits={1} label="Courbe de la masse grasse" />
+                </View>
+              ) : null}
+              {weightPts.length < 2 && fatPts.length < 2 ? (
+                <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Il faut au moins deux jours notés pour tracer une courbe.</Ink>
+              ) : null}
             </View>
           )}
+          {tab === 'table' && rows && rows.length > 0 ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>Fais glisser les colonnes sur le côté, le jour reste en place. Touche un jour pour le supprimer.</Ink> : null}
         </View>
-      )}
+      </ScrollView>
 
-      {/* Tabs */}
-      <View style={[styles.tabs, { backgroundColor: colors.backgroundCard, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'table' && { borderBottomColor: colors.accent, borderBottomWidth: 2 }]}
-          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setTab('table'); }}
-        >
-          <Table size={16} color={tab === 'table' ? colors.accent : colors.textMuted} strokeWidth={2} />
-          <Text style={[styles.tabText, { color: tab === 'table' ? colors.accent : colors.textMuted }]}>
-            {t('companion.tableTab')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'charts' && { borderBottomColor: colors.accent, borderBottomWidth: 2 }]}
-          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setTab('charts'); }}
-        >
-          <BarChart2 size={16} color={tab === 'charts' ? colors.accent : colors.textMuted} strokeWidth={2} />
-          <Text style={[styles.tabText, { color: tab === 'charts' ? colors.accent : colors.textMuted }]}>
-            {t('companion.chartsTab')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Contenu */}
-      {loading ? (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-      ) : rows.length === 0 ? (
-        <View style={styles.empty}>
-          <Table size={48} color={colors.textMuted + '40'} strokeWidth={1.5} />
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('companion.noData')}</Text>
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            {t('companion.noDataMsg')}
-          </Text>
-        </View>
-      ) : tab === 'table' ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} bounces={false}>
-          <View>
-            {renderTableHeader()}
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              nestedScrollEnabled
-              contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
-            >
-              {rows.map((item, index) => renderDataRow(item, index))}
-            </ScrollView>
-          </View>
-        </ScrollView>
-      ) : (
-        <View style={[styles.chartsContainer, { paddingHorizontal: 16 }]}>
-          {renderCharts()}
-        </View>
-      )}
-
-      {/* FAB Ajouter */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.accent, bottom: insets.bottom + 20 }]}
-        onPress={() => { impactAsync(ImpactFeedbackStyle.Medium); setShowAdd(true); }}
-      >
-        <Plus size={24} color={colors.textOnAccent} strokeWidth={2.5} />
-      </TouchableOpacity>
-
-      {/* Modal ajout */}
-      <AddModal
-        visible={showAdd}
-        colors={colors}
-        onClose={() => setShowAdd(false)}
-        onSave={handleAdd}
-      />
-
-      <PopupComponent />
+      <AddRowSheet visible={adding} onClose={() => setAdding(false)} onSave={addRow} />
     </View>
   );
 }
 
-// ============================================
-// STYLES
-// ============================================
+function AddRowSheet({ visible, onClose, onSave }: { visible: boolean; onClose: () => void; onSave: (day: string, f: Record<string, number | undefined>) => void }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const [date, setDate] = useState('');
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const [error, setError] = useState('');
 
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
+  useEffect(() => {
+    if (!visible) return;
+    setDate(frDay(isoDay(new Date())));
+    setVals({});
+    setError('');
+  }, [visible]);
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
+  const submit = () => {
+    const day = parseDay(date);
+    if (!day) return setError('Écris le jour comme ceci : 12/03/2026.');
+    const f: Record<string, number | undefined> = {};
+    for (const col of COLUMNS) {
+      const n = parseFloat((vals[col.key] ?? '').replace(',', '.'));
+      f[col.key] = Number.isFinite(n) && n > 0 ? n : undefined;
+    }
+    if (Object.values(f).every((v) => v === undefined)) return setError('Remplis au moins une valeur.');
+    if (f.weight === undefined && [f.fat, f.muscle, f.water].some((v) => v !== undefined)) return setError('La graisse, le muscle et l’eau se notent avec le poids du jour.');
+    onSave(day, f);
+  };
 
-  // Stats
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  statItem: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  statDiffRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
+  const field = [fontStyle('bold'), { height: 48, fontSize: 16, color: c.ink, paddingHorizontal: 12, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }];
 
-  // Tabs
-  tabs: {
-    flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  return (
+    <Sheet visible={visible} onClose={onClose} title="Nouvelle ligne" scroll>
+      <View style={{ gap: 6 }}>
+        <Ink size={13} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Jour</Ink>
+        <TextInput value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" placeholder="12/03/2026" placeholderTextColor={c.textMuted} accessibilityLabel="Jour" style={field} />
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {COLUMNS.map((col) => (
+          <View key={col.key} style={{ width: '31%', flexGrow: 1, gap: 4 }}>
+            <Ink size={12} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{col.label}, {col.unit}</Ink>
+            <TextInput value={vals[col.key] ?? ''} onChangeText={(v) => setVals((p) => ({ ...p, [col.key]: v }))} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={c.textMuted} accessibilityLabel={`${col.label} en ${col.unit}`} style={field} />
+          </View>
+        ))}
+      </View>
+      {error ? <Ink size={13} weight="bold" color={c.danger} style={{ paddingHorizontal: 4 }}>{error}</Ink> : null}
+      <Pressable onPress={submit} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentPressed : c.accent })}>
+        <Ink size={16} weight="extraBold" color={c.onAccent}>Ajouter</Ink>
+      </Pressable>
+    </Sheet>
+  );
+}
 
-  // Tableau
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  dateCell: {
-    width: DATE_COL_WIDTH,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    justifyContent: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  headerCell: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  scrollRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  dataCell: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  actionCell: {
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 8,
-  },
-  headerText: {
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  headerUnit: {
-    fontSize: 9,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  dateText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  dataText: {
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-
-  // Charts
-  chartsContainer: { flex: 1 },
-  chartCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 12,
-  },
-  chartTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  chartSubtitle: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 12,
-  },
-  chartLegend: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 12,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-
-  // États vides
-  loader: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-    gap: 12,
-  },
-  emptyCharts: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-    gap: 12,
-    paddingTop: 60,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  emptyText: {
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-
-  // FAB
-  fab: {
-    position: 'absolute',
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-
-  // Modal ajout
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalBox: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: '85%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
-    marginTop: 10,
-  },
-  fieldInput: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  modalBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  modalBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-});
+function Tile({ value, label }: { value: string; label: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View style={{ flex: 1, padding: 12, borderRadius: 18, backgroundColor: blancA(0.85), borderWidth: 1, borderColor: P.white }}>
+      <Ink size={19} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{value}</Ink>
+      <Ink size={12} color={c.textMuted} numberOfLines={1}>{label}</Ink>
+    </View>
+  );
+}

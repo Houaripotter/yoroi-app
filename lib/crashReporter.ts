@@ -34,7 +34,7 @@ export const initCrashReporter = (): void => {
   initialized = true;
 
   if (!SENTRY_DSN) {
-    logger.info('[CrashReporter] Aucun DSN Sentry configuré — mode dev only');
+    logger.info('[CrashReporter] Aucun DSN Sentry configuré, mode dev only');
     return;
   }
 

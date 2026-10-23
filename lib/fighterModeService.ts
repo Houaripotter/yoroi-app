@@ -3,6 +3,7 @@
 // ============================================
 
 import { Platform } from 'react-native';
+import { baseOuVitrine } from '@/lib/v2/visite/vitrine';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   UserMode,
@@ -27,7 +28,8 @@ let db: any = null;
 
 if (isNativePlatform) {
   SQLite = require('expo-sqlite');
-  db = SQLite.openDatabaseSync('yoroi.db');
+  // 18 octobre 2026 : pendant la visite guidee avec l'exemple, la meme poignee lit la base de la vitrine (lib/v2/visite/vitrine.ts)
+  db = baseOuVitrine(SQLite.openDatabaseSync('yoroi.db'));
 }
 
 // ============================================

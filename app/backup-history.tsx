@@ -1,52 +1,20 @@
-// ============================================================
-// YOROI · Mes sauvegardes · Bibliothèque (v4)
-// ============================================================
-
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-  Modal,
-  Animated,
-  Dimensions,
-} from 'react-native';
-import { router } from 'expo-router';
+/**
+ * Mes sauvegardes (refonte v2) : creer une sauvegarde, voir son contenu, la restaurer,
+ * la partager, la copier dans un dossier cloud, la supprimer. Les outils avances
+ * (type, chiffrement, migration, test, retour arriere, questions) restent disponibles.
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { ActivityIndicator, Modal, Platform, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as FileSystem from 'expo-file-system/legacy';
 import { shareAsync } from 'expo-sharing';
-import {
-  Trash2,
-  Download,
-  RotateCcw,
-  ChevronLeft,
-  Shield,
-  FileText,
-  Cloud,
-  Plus,
-  Eye,
-  FolderOpen,
-  Link2Off,
-  Link,
-  X,
-  Scale,
-  Dumbbell,
-  Camera,
-  Moon,
-  Droplets,
-  Trophy,
-  Heart,
-  User,
-  CheckCircle2,
-} from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
+import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Button, Card, EspaceHeader, Icon, RoundButton, SectionTitle } from '@/components/yoroi/v2/espace/ui';
+import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { BackupStatusHeader } from '@/components/BackupStatusHeader';
 import { BackupEncryptionToggle } from '@/components/BackupEncryptionToggle';
@@ -56,25 +24,19 @@ import { CrossPlatformMigrationButton } from '@/components/CrossPlatformMigratio
 import { TestRestoreButton } from '@/components/TestRestoreButton';
 import { BackupFaqAccordion } from '@/components/BackupFaqAccordion';
 import { exportDataToJSON } from '@/lib/exportService';
-import { notificationAsync, impactAsync, NotificationFeedbackType, ImpactFeedbackStyle } from 'expo-haptics';
-import logger from '@/lib/security/logger';
+import { isEncryptedBackup } from '@/lib/backupEncryption';
+import { logger } from '@/lib/security/logger';
 import {
-  pickCloudFolder,
-  getSavedCloudFolder,
-  listCloudBackups,
-  readCloudBackupFile,
   copyToCloudFolder,
   disconnectCloudFolder,
-  type CloudFolder,
+  getSavedCloudFolder,
+  listCloudBackups,
+  pickCloudFolder,
+  readCloudBackupFile,
   type CloudBackupFile,
+  type CloudFolder,
 } from '@/lib/cloudFolderService';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CARD_GAP = 12;
-
-// ─────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────
+import { ChargementBloc } from '@/components/yoroi/v2/chargement/Chargement';
 
 interface BackupFile {
   name: string;
@@ -91,851 +53,499 @@ interface BackupFile {
   injuriesCount: number;
   competitionsCount: number;
   clubsCount: number;
+  /** 18 octobre 2026 : sauvegarde chiffree, son contenu ne se lit qu'avec le mot de passe */
+  protegee?: boolean;
 }
 
-// ─────────────────────────────────────────────
-// UTILITAIRES
-// ─────────────────────────────────────────────
+const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo`;
 }
-
-function formatDateShort(ts: number): string {
+function formatDay(ts: number): string {
   const d = new Date(ts);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
-
-function formatDateLong(ts: number): string {
+function formatLong(ts: number): string {
   const d = new Date(ts);
-  const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  const day = DAYS[d.getDay()];
+  return `${day.charAt(0).toUpperCase()}${day.slice(1)} ${formatDay(ts)}`;
 }
-
 function formatTime(ts: number): string {
   const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 }
-
 function dateFromFileName(name: string): number {
   try {
-    const match = name.match(/yoroi_backup_(\d{4}-\d{2}-\d{2})_(\d{2})h(\d{2})/);
-    if (match) return new Date(`${match[1]}T${match[2]}:${match[3]}:00`).getTime();
-    const matchOld = name.match(/yoroi_backup_(\d{4}-\d{2}-\d{2})/);
-    if (matchOld) return new Date(matchOld[1]).getTime();
-  } catch { }
+    const m = name.match(/yoroi_backup_(\d{4}-\d{2}-\d{2})_(\d{2})h(\d{2})/);
+    if (m) return new Date(`${m[1]}T${m[2]}:${m[3]}:00`).getTime();
+    const old = name.match(/yoroi_backup_(\d{4}-\d{2}-\d{2})/);
+    if (old) return new Date(old[1]).getTime();
+  } catch {
+    // nom inattendu
+  }
   return 0;
 }
 
-// ─────────────────────────────────────────────
-// FICHE DE PRÉVISUALISATION (bottom sheet)
-// ─────────────────────────────────────────────
-
-interface PreviewSheetProps {
-  backup: BackupFile | null;
-  visible: boolean;
-  onClose: () => void;
-  onRestore: (b: BackupFile) => void;
-  onDownload: (b: BackupFile) => void;
-  onDelete: (b: BackupFile) => void;
-  isDark: boolean;
-  colors: any;
-}
-
-function PreviewSheet({ backup, visible, onClose, onRestore, onDownload, onDelete, isDark, colors }: PreviewSheetProps) {
-  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const opacity    = useRef(new Animated.Value(0)).current;
-  const insets     = useSafeAreaInsets();
-
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.spring(translateY, { toValue: 0, useNativeDriver: true, damping: 20, stiffness: 200 }),
-        Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(translateY, { toValue: SCREEN_HEIGHT, duration: 250, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-      ]).start();
-    }
-  }, [visible]);
-
-  if (!backup) return null;
-
-  const sheetBg = isDark ? '#1C1C1E' : '#FFFFFF';
-  const muted   = colors.textMuted;
-
-  const stats = [
-    { icon: Scale,    label: 'Pesées',       value: backup.weightsCount,     color: '#14B8A6' },
-    { icon: Dumbbell, label: 'Séances',       value: backup.trainingsCount,   color: '#8B5CF6' },
-    { icon: Camera,   label: 'Photos',        value: backup.photosCount,      color: '#F59E0B' },
-    { icon: Moon,     label: 'Sommeil',       value: backup.sleepCount,       color: '#3B82F6' },
-    { icon: Droplets, label: 'Hydratation',   value: backup.hydrationCount,   color: '#06B6D4' },
-    { icon: Heart,    label: 'Blessures',     value: backup.injuriesCount,    color: '#EF4444' },
-    { icon: Trophy,   label: 'Compétitions',  value: backup.competitionsCount,color: '#EAB308' },
-    { icon: User,     label: 'Clubs',         value: backup.clubsCount,       color: '#EC4899' },
-  ];
-
-  return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
-      {/* Fond sombre */}
-      <Animated.View style={[styles.sheetOverlay, { opacity }]}>
-        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
-      </Animated.View>
-
-      {/* Panneau */}
-      <Animated.View style={[styles.sheet, { backgroundColor: sheetBg, paddingBottom: insets.bottom + 16, transform: [{ translateY }] }]}>
-        {/* Handle */}
-        <View style={styles.sheetHandle} />
-
-        {/* En-tête */}
-        <View style={styles.sheetHeader}>
-          <View style={styles.sheetFileIcon}>
-            <LinearGradient colors={['#0EA5E9', '#14B8A6']} style={styles.sheetFileIconGradient}>
-              <FileText size={28} color="#FFFFFF" strokeWidth={1.5} />
-            </LinearGradient>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>
-              {formatDateLong(backup.modifiedAt)}
-            </Text>
-            <Text style={[styles.sheetSubtitle, { color: muted }]}>
-              {formatTime(backup.modifiedAt)} · {formatSize(backup.size)} · v{backup.version}
-            </Text>
-            {backup.userName !== '?' && (
-              <Text style={[styles.sheetUser, { color: '#0EA5E9' }]}>👤 {backup.userName}</Text>
-            )}
-          </View>
-          <TouchableOpacity style={[styles.sheetCloseBtn, { backgroundColor: isDark ? '#FFFFFF15' : '#F1F5F9' }]} onPress={onClose}>
-            <X size={18} color={muted} strokeWidth={2} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Grille des stats */}
-        <Text style={[styles.sheetSectionLabel, { color: muted }]}>CONTENU DE CE BACKUP</Text>
-        <View style={styles.sheetStatsGrid}>
-          {stats.map(({ icon: Icon, label, value, color }) => (
-            <View key={label} style={[styles.sheetStatCell, { backgroundColor: isDark ? '#FFFFFF08' : '#F8FAFC' }]}>
-              <View style={[styles.sheetStatIcon, { backgroundColor: `${color}20` }]}>
-                <Icon size={16} color={color} strokeWidth={2} />
-              </View>
-              <Text style={[styles.sheetStatValue, { color: colors.textPrimary }]}>{value}</Text>
-              <Text style={[styles.sheetStatLabel, { color: muted }]}>{label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Actions */}
-        <View style={styles.sheetActions}>
-          <TouchableOpacity
-            style={[styles.sheetActionPrimary, { backgroundColor: '#14B8A6' }]}
-            onPress={() => { onClose(); setTimeout(() => onRestore(backup), 300); }}
-            activeOpacity={0.85}
-          >
-            <RotateCcw size={18} color="#FFF" strokeWidth={2} />
-            <Text style={styles.sheetActionPrimaryText}>Restaurer</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sheetActionSecondary, { backgroundColor: isDark ? '#FFFFFF12' : '#EFF6FF', borderColor: isDark ? '#FFFFFF20' : '#BFDBFE' }]}
-            onPress={() => { onClose(); setTimeout(() => onDownload(backup), 300); }}
-            activeOpacity={0.85}
-          >
-            <Download size={18} color="#0EA5E9" strokeWidth={2} />
-            <Text style={[styles.sheetActionSecondaryText, { color: '#0EA5E9' }]}>Télécharger</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.sheetDeleteBtn, { borderColor: isDark ? '#EF444430' : '#FECACA', backgroundColor: isDark ? '#EF444410' : '#FEF2F2' }]}
-          onPress={() => { onClose(); setTimeout(() => onDelete(backup), 300); }}
-          activeOpacity={0.85}
-        >
-          <Trash2 size={16} color="#EF4444" strokeWidth={2} />
-          <Text style={styles.sheetDeleteText}>Supprimer ce backup</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </Modal>
-  );
-}
-
-// ─────────────────────────────────────────────
-// CARTE DE BACKUP (grille 2 colonnes)
-// ─────────────────────────────────────────────
-
-interface BackupCardProps {
-  backup: BackupFile;
-  isLatest: boolean;
-  isRestoring: boolean;
-  isSyncing: boolean;
-  hasCloud: boolean;
-  isDark: boolean;
-  colors: any;
-  cardWidth: number;
-  onPreview: () => void;
-  onDownload: () => void;
-  onRestore: () => void;
-  onCopyCloud: () => void;
-  onDelete: () => void;
-}
-
-function BackupCard({ backup, isLatest, isRestoring, isSyncing, hasCloud, isDark, colors, cardWidth, onPreview, onDownload, onRestore, onCopyCloud, onDelete }: BackupCardProps) {
-  const cardBg  = isDark ? colors.card : '#FFFFFF';
-  const muted   = colors.textMuted;
-  const accentColor = isLatest ? '#14B8A6' : '#0EA5E9';
-
-  return (
-    <TouchableOpacity
-      style={[styles.card, { width: cardWidth, backgroundColor: cardBg }]}
-      onPress={onPreview}
-      activeOpacity={0.92}
-    >
-      {/* Bandeau couleur haut */}
-      <LinearGradient
-        colors={isLatest ? ['#14B8A6', '#0EA5E9'] : ['#0EA5E930', '#14B8A620']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-        style={styles.cardBanner}
-      >
-        <FileText size={26} color={isLatest ? '#FFFFFF' : accentColor} strokeWidth={1.5} />
-        {isLatest && (
-          <View style={styles.cardRecentBadge}>
-            <CheckCircle2 size={10} color="#FFFFFF" strokeWidth={2.5} />
-            <Text style={styles.cardRecentText}>RÉCENT</Text>
-          </View>
-        )}
-      </LinearGradient>
-
-      {/* Corps */}
-      <View style={styles.cardBody}>
-        <Text style={[styles.cardDate, { color: colors.textPrimary }]}>
-          {formatDateShort(backup.modifiedAt)}
-        </Text>
-        <Text style={[styles.cardTime, { color: muted }]}>
-          {formatTime(backup.modifiedAt)}
-        </Text>
-        <Text style={[styles.cardMeta, { color: muted }]}>
-          {formatSize(backup.size)} · v{backup.version}
-        </Text>
-
-        {/* Mini stats */}
-        <View style={[styles.cardMiniStats, { borderTopColor: isDark ? '#FFFFFF10' : '#F1F5F9' }]}>
-          <Text style={[styles.cardMiniStat, { color: colors.textSecondary }]}>
-            <Text style={{ fontWeight: '700', color: accentColor }}>{backup.weightsCount}</Text> pesées
-          </Text>
-          <Text style={[styles.cardMiniStat, { color: colors.textSecondary }]}>
-            <Text style={{ fontWeight: '700', color: accentColor }}>{backup.trainingsCount}</Text> séances
-          </Text>
-        </View>
-      </View>
-
-      {/* Barre d'actions icon-only */}
-      <View style={[styles.cardActions, { borderTopColor: isDark ? '#FFFFFF10' : '#F1F5F9' }]}>
-        {/* Aperçu */}
-        <TouchableOpacity style={styles.cardActionBtn} onPress={onPreview} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Eye size={16} color={accentColor} strokeWidth={2} />
-        </TouchableOpacity>
-
-        {/* Télécharger / Cloud */}
-        <TouchableOpacity style={styles.cardActionBtn} onPress={hasCloud ? onCopyCloud : onDownload} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          {isSyncing
-            ? <ActivityIndicator size="small" color={accentColor} />
-            : hasCloud
-              ? <Cloud size={16} color={accentColor} strokeWidth={2} />
-              : <Download size={16} color={accentColor} strokeWidth={2} />}
-        </TouchableOpacity>
-
-        {/* Restaurer */}
-        <TouchableOpacity style={styles.cardActionBtn} onPress={onRestore} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          {isRestoring
-            ? <ActivityIndicator size="small" color={accentColor} />
-            : <RotateCcw size={16} color={accentColor} strokeWidth={2} />}
-        </TouchableOpacity>
-
-        {/* Supprimer */}
-        <TouchableOpacity style={styles.cardActionBtn} onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Trash2 size={16} color="#EF4444" strokeWidth={2} />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// ─────────────────────────────────────────────
-// COMPOSANT PRINCIPAL
-// ─────────────────────────────────────────────
-
 export default function BackupHistoryScreen() {
-  const { colors, isDark } = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [backups, setBackups]           = useState<BackupFile[]>([]);
-  const [isLoading, setIsLoading]       = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [backups, setBackups] = useState<BackupFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [restoringUri, setRestoringUri] = useState<string | null>(null);
-  const [isCreating, setIsCreating]     = useState(false);
-  const [syncingUri, setSyncingUri]     = useState<string | null>(null);
-
-  // Preview sheet
-  const [previewBackup, setPreviewBackup] = useState<BackupFile | null>(null);
-  const [sheetVisible, setSheetVisible]   = useState(false);
-
-  // Cloud
-  const [cloudFolder, setCloudFolder]   = useState<CloudFolder | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [syncingUri, setSyncingUri] = useState<string | null>(null);
+  const [preview, setPreview] = useState<BackupFile | null>(null);
+  const [cloudFolder, setCloudFolder] = useState<CloudFolder | null>(null);
   const [cloudBackups, setCloudBackups] = useState<CloudBackupFile[]>([]);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [restoringCloud, setRestoringCloud] = useState<string | null>(null);
-
-  // Largeur des cartes
-  const cardWidth = (Dimensions.get('window').width - 16 * 2 - CARD_GAP) / 2;
-
-  // ── Chargement ───────────────────────────────────────────
+  const [showTools, setShowTools] = useState(false);
 
   const loadBackups = useCallback(async () => {
     try {
       const dir = FileSystem.documentDirectory!;
       const files = await FileSystem.readDirectoryAsync(dir);
-      const backupFiles = files.filter(f => f.startsWith('yoroi_backup_') && f.endsWith('.json'));
-      const detailed: BackupFile[] = [];
-
-      for (const name of backupFiles) {
+      const list: BackupFile[] = [];
+      for (const name of files.filter((f) => f.startsWith('yoroi_backup_') && f.endsWith('.json'))) {
         const uri = `${dir}${name}`;
         try {
-          // `size: true` était une option déprécié · getInfoAsync retourne size par défaut
-          const info = await FileSystem.getInfoAsync(uri) as any;
+          const info = (await FileSystem.getInfoAsync(uri)) as any;
           if (!info.exists) continue;
-          let version = '?', userName = '?';
-          let weightsCount = 0, trainingsCount = 0, photosCount = 0;
-          let sleepCount = 0, hydrationCount = 0, injuriesCount = 0;
-          let competitionsCount = 0, clubsCount = 0;
-          try {
-            const raw = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
-            const parsed = JSON.parse(raw);
-            version          = parsed.version || '?';
-            userName         = parsed.profile?.name || '?';
-            weightsCount     = Array.isArray(parsed.weights)      ? parsed.weights.length      : 0;
-            trainingsCount   = Array.isArray(parsed.trainings)    ? parsed.trainings.length    : 0;
-            photosCount      = Array.isArray(parsed.photos)       ? parsed.photos.length       : 0;
-            sleepCount       = Array.isArray(parsed.sleep)        ? parsed.sleep.length        : 0;
-            hydrationCount   = Array.isArray(parsed.hydration)    ? parsed.hydration.length    : 0;
-            injuriesCount    = Array.isArray(parsed.injuries)     ? parsed.injuries.length     : 0;
-            competitionsCount= Array.isArray(parsed.competitions) ? parsed.competitions.length : 0;
-            clubsCount       = Array.isArray(parsed.clubs)        ? parsed.clubs.length        : 0;
-          } catch { }
-
-          detailed.push({
-            name, uri,
-            size: info.size || 0,
+          const b: BackupFile = {
+            name, uri, size: info.size || 0,
             modifiedAt: dateFromFileName(name) || (info.modificationTime ? info.modificationTime * 1000 : Date.now()),
-            version, userName,
-            weightsCount, trainingsCount, photosCount, sleepCount,
-            hydrationCount, injuriesCount, competitionsCount, clubsCount,
-          });
-        } catch { }
+            version: '?', userName: '?', weightsCount: 0, trainingsCount: 0, photosCount: 0, sleepCount: 0,
+            hydrationCount: 0, injuriesCount: 0, competitionsCount: 0, clubsCount: 0,
+          };
+          try {
+            const p = JSON.parse(await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 }));
+            const n = (x: unknown) => (Array.isArray(x) ? x.length : 0);
+            b.protegee = isEncryptedBackup(p);
+            b.version = p.version || '?';
+            b.userName = p.profile?.name || '?';
+            b.weightsCount = n(p.weights);
+            b.trainingsCount = n(p.trainings);
+            b.photosCount = n(p.photos);
+            b.sleepCount = n(p.sleep);
+            b.hydrationCount = n(p.hydration);
+            b.injuriesCount = n(p.injuries);
+            b.competitionsCount = n(p.competitions);
+            b.clubsCount = n(p.clubs);
+          } catch {
+            // fichier chiffre ou illisible : on garde les infos de base
+          }
+          list.push(b);
+        } catch {
+          // ignore
+        }
       }
-      detailed.sort((a, b) => b.modifiedAt - a.modifiedAt);
-      setBackups(detailed);
+      list.sort((a, b) => b.modifiedAt - a.modifiedAt);
+      setBackups(list);
     } catch (error) {
       logger.error('[BackupHistory] Erreur chargement:', error);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
-  const loadCloudData = useCallback(async () => {
+  const loadCloud = useCallback(async () => {
     const folder = await getSavedCloudFolder().catch(() => null);
     setCloudFolder(folder);
-    if (folder) {
-      const files = await listCloudBackups().catch(() => []);
-      setCloudBackups(files);
-    } else {
-      setCloudBackups([]);
-    }
+    setCloudBackups(folder ? await listCloudBackups().catch(() => []) : []);
   }, []);
 
-  useEffect(() => { loadBackups(); loadCloudData(); }, []);
+  useEffect(() => { loadBackups(); loadCloud(); }, [loadBackups, loadCloud]);
 
-  const onRefresh = useCallback(() => {
-    setIsRefreshing(true);
-    loadBackups();
-    loadCloudData();
-  }, [loadBackups, loadCloudData]);
+  const onRefresh = () => { setRefreshing(true); loadBackups(); loadCloud(); };
 
-  // ── Actions locales ───────────────────────────────────────
-
-  const handleNewBackup = useCallback(async () => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    setIsCreating(true);
+  const newBackup = async () => {
+    impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+    setCreating(true);
     try {
       await exportDataToJSON();
       await loadBackups();
-      if (cloudFolder) await loadCloudData();
+      if (cloudFolder) await loadCloud();
     } finally {
-      setIsCreating(false);
+      setCreating(false);
     }
-  }, [loadBackups, loadCloudData, cloudFolder]);
+  };
 
-  const openPreview = useCallback((backup: BackupFile) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    setPreviewBackup(backup);
-    setSheetVisible(true);
-  }, []);
-
-  const closePreview = useCallback(() => {
-    setSheetVisible(false);
-    setTimeout(() => setPreviewBackup(null), 300);
-  }, []);
-
-  const handleDownload = useCallback(async (backup: BackupFile) => {
+  const download = async (b: BackupFile) => {
     try {
-      impactAsync(ImpactFeedbackStyle.Light);
-      await shareAsync(backup.uri, { mimeType: 'application/json', dialogTitle: 'Télécharger / partager ce backup', UTI: 'public.json' });
-    } catch (error) {
-      logger.error('[BackupHistory] Erreur téléchargement:', error);
+      await shareAsync(b.uri, { mimeType: 'application/json', dialogTitle: 'Partager cette sauvegarde', UTI: 'public.json' });
+    } catch (e) {
+      logger.error('[BackupHistory] Erreur téléchargement:', e);
     }
-  }, []);
+  };
 
-  const handleCopyToCloud = useCallback(async (backup: BackupFile) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    setSyncingUri(backup.uri);
+  const copyCloud = async (b: BackupFile) => {
+    setSyncingUri(b.uri);
     try {
-      const cleanPath = backup.uri.startsWith('file://') ? decodeURIComponent(backup.uri.slice(7)) : backup.uri;
-      const success = await copyToCloudFolder(cleanPath);
-      if (success) {
-        notificationAsync(NotificationFeedbackType.Success);
-        await loadCloudData();
+      const clean = b.uri.startsWith('file://') ? decodeURIComponent(b.uri.slice(7)) : b.uri;
+      if (await copyToCloudFolder(clean)) {
+        notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+        await loadCloud();
       }
-    } catch (error) {
-      logger.error('[BackupHistory] Erreur copie cloud:', error);
+    } catch (e) {
+      logger.error('[BackupHistory] Erreur copie cloud:', e);
     } finally {
       setSyncingUri(null);
     }
-  }, [loadCloudData]);
+  };
 
-  const handleRestore = useCallback((backup: BackupFile) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    showPopup(
-      'Restaurer cette sauvegarde ?',
-      `${formatDateShort(backup.modifiedAt)} · ${backup.weightsCount} pesées · ${backup.trainingsCount} séances\n\nCela va ajouter ces données à tes données actuelles.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Restaurer',
-          style: 'primary',
-          onPress: async () => {
-            setRestoringUri(backup.uri);
-            try {
-              const content = await FileSystem.readAsStringAsync(backup.uri, { encoding: FileSystem.EncodingType.UTF8 });
-              const raw = JSON.parse(content);
-              const { migrateBackup, validateBackup } = await import('@/lib/backupMigrationService');
-              const validation = validateBackup(raw);
-              if (!validation.valid) {
-                showPopup('Fichier invalide', validation.errors.join('\n'), [{ text: 'OK', style: 'primary' }]);
-                return;
-              }
-              const migrated = migrateBackup(raw);
-              const { importDataFromBackupObject } = await import('@/lib/exportService');
-              const success = await importDataFromBackupObject(migrated);
-              if (success) {
-                notificationAsync(NotificationFeedbackType.Success);
-                showPopup('✅ Restauration réussie', 'Tes données ont été restaurées avec succès.', [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)') }]);
-              }
-            } catch (error) {
-              logger.error('[BackupHistory] Erreur restauration:', error);
-              showPopup('Erreur', 'Impossible de restaurer cette sauvegarde.', [{ text: 'OK', style: 'primary' }]);
-            } finally {
-              setRestoringUri(null);
+  const restoreRaw = async (content: string): Promise<boolean> => {
+    let raw = JSON.parse(content);
+    // 18 octobre 2026 : une sauvegarde protegee (chiffrement actif) s'ouvre d'abord, avec le mot de passe
+    // garde sur ce telephone, sinon celui que tu tapes. Avant, elle etait refusee comme « Fichier invalide ».
+    const enc = await import('@/lib/backupEncryption');
+    if (enc.isEncryptedBackup(raw)) {
+      let opened: unknown = null;
+      const stored = await enc.getStoredEncryptionPassword().catch(() => null);
+      if (stored) {
+        try { opened = enc.decryptBackup(raw, stored); } catch { opened = null; }
+      }
+      if (!opened) {
+        const { requestPassword } = await import('@/lib/passwordPromptController');
+        const pwd = await requestPassword({ title: 'Sauvegarde protégée', message: 'Cette sauvegarde est protégée par un mot de passe. Tape-le pour continuer.', confirmLabel: 'Ouvrir' });
+        if (!pwd) return false;
+        try {
+          opened = enc.decryptBackup(raw, pwd);
+        } catch {
+          showPopup('Mot de passe incorrect', 'Vérifie ton mot de passe, puis réessaie.');
+          return false;
+        }
+      }
+      raw = opened;
+    }
+    const { validateBackup } = await import('@/lib/backupMigrationService');
+    const v = validateBackup(raw);
+    if (!v.valid) {
+      showPopup('Fichier invalide', v.errors.join('\n'));
+      return false;
+    }
+    const { importDataFromBackupObject } = await import('@/lib/exportService');
+    // Le fichier est passe tel quel : l'empreinte est verifiee sur l'original, puis il est mis au format actuel
+    return !!(await importDataFromBackupObject(raw));
+  };
+
+  const restore = (b: BackupFile) => {
+    impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
+    showPopup('Restaurer cette sauvegarde ?', `${formatDay(b.modifiedAt)}, ${b.protegee ? 'sauvegarde protégée par un mot de passe' : `${b.weightsCount} pesées et ${b.trainingsCount} séances`}.\n\nCes données s’ajoutent à tes données actuelles.`, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Restaurer',
+        style: 'primary',
+        onPress: async () => {
+          setRestoringUri(b.uri);
+          try {
+            const ok = await restoreRaw(await FileSystem.readAsStringAsync(b.uri, { encoding: FileSystem.EncodingType.UTF8 }));
+            if (ok) {
+              notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+              showPopup('Restauration réussie', 'Tes données sont revenues.', [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)' as any) }]);
             }
-          },
+          } catch (e) {
+            logger.error('[BackupHistory] Erreur restauration:', e);
+            showPopup('Oups', 'Cette sauvegarde n’a pas pu être restaurée.');
+          } finally {
+            setRestoringUri(null);
+          }
         },
-      ]
-    );
-  }, [showPopup]);
+      },
+    ]);
+  };
 
-  const handleDelete = useCallback((backup: BackupFile) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    showPopup(
-      'Supprimer ce backup ?',
-      `${formatDateShort(backup.modifiedAt)} · ${formatSize(backup.size)}\n\nAction irréversible.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'primary',
-          onPress: async () => {
-            try {
-              await FileSystem.deleteAsync(backup.uri, { idempotent: true });
-              notificationAsync(NotificationFeedbackType.Success);
-              setBackups(prev => prev.filter(b => b.uri !== backup.uri));
-            } catch {
-              showPopup('Erreur', 'Impossible de supprimer ce fichier.', [{ text: 'OK', style: 'primary' }]);
-            }
-          },
+  const remove = (b: BackupFile) => {
+    showPopup('Supprimer cette sauvegarde ?', `${formatDay(b.modifiedAt)}, ${formatSize(b.size)}. C’est définitif.`, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await FileSystem.deleteAsync(b.uri, { idempotent: true });
+            notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+            setBackups((p) => p.filter((x) => x.uri !== b.uri));
+          } catch {
+            showPopup('Oups', 'Ce fichier n’a pas pu être supprimé.');
+          }
         },
-      ]
-    );
-  }, [showPopup]);
+      },
+    ]);
+  };
 
-  // ── Actions cloud ─────────────────────────────────────────
-
-  const handleConnectCloud = useCallback(async () => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    setIsConnecting(true);
+  const connectCloud = async () => {
+    setConnecting(true);
     try {
       const folder = await pickCloudFolder();
       if (folder) {
         setCloudFolder(folder);
-        const files = await listCloudBackups().catch(() => []);
-        setCloudBackups(files);
-        notificationAsync(NotificationFeedbackType.Success);
+        setCloudBackups(await listCloudBackups().catch(() => []));
+        notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       }
-    } catch (error) {
-      showPopup('Erreur', 'Impossible de connecter le dossier.', [{ text: 'OK', style: 'primary' }]);
+    } catch {
+      showPopup('Oups', 'Le dossier n’a pas pu être connecté.');
     } finally {
-      setIsConnecting(false);
+      setConnecting(false);
     }
-  }, [showPopup]);
+  };
 
-  const handleDisconnectCloud = useCallback(() => {
-    showPopup(
-      'Déconnecter le dossier ?',
-      `"${cloudFolder?.displayName}" sera déconnecté. Tes backups locaux restent intacts.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Déconnecter', style: 'primary', onPress: async () => {
-          await disconnectCloudFolder();
-          setCloudFolder(null);
-          setCloudBackups([]);
-        }},
-      ]
-    );
-  }, [showPopup, cloudFolder]);
+  const disconnectCloud = () => {
+    showPopup('Déconnecter le dossier ?', `« ${cloudFolder?.displayName} » sera déconnecté. Tes sauvegardes locales restent intactes.`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Déconnecter', style: 'primary', onPress: async () => { await disconnectCloudFolder(); setCloudFolder(null); setCloudBackups([]); } },
+    ]);
+  };
 
-  const handleRestoreFromCloud = useCallback((file: CloudBackupFile) => {
-    showPopup(
-      'Restaurer depuis le cloud ?',
-      `${formatDateShort(file.modifiedAt)} · ${formatSize(file.size)}\n\nCela va ajouter ces données à tes données actuelles.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Restaurer',
-          style: 'primary',
-          onPress: async () => {
-            setRestoringCloud(file.name);
-            try {
-              const content = await readCloudBackupFile(file.name);
-              if (!content) { showPopup('Erreur', 'Impossible de lire le fichier cloud.', [{ text: 'OK', style: 'primary' }]); return; }
-              const raw = JSON.parse(content);
-              const { migrateBackup, validateBackup } = await import('@/lib/backupMigrationService');
-              const validation = validateBackup(raw);
-              if (!validation.valid) { showPopup('Fichier invalide', validation.errors.join('\n'), [{ text: 'OK', style: 'primary' }]); return; }
-              const migrated = migrateBackup(raw);
-              const { importDataFromBackupObject } = await import('@/lib/exportService');
-              const success = await importDataFromBackupObject(migrated);
-              if (success) {
-                notificationAsync(NotificationFeedbackType.Success);
-                showPopup('✅ Restauration réussie', 'Tes données ont été restaurées.', [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)') }]);
-              }
-            } catch (error) {
-              showPopup('Erreur', 'Impossible de restaurer ce backup cloud.', [{ text: 'OK', style: 'primary' }]);
-            } finally {
-              setRestoringCloud(null);
+  const restoreCloud = (f: CloudBackupFile) => {
+    showPopup('Restaurer depuis le cloud ?', `${formatDay(f.modifiedAt)}, ${formatSize(f.size)}.\n\nCes données s’ajoutent à tes données actuelles.`, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Restaurer',
+        style: 'primary',
+        onPress: async () => {
+          setRestoringCloud(f.name);
+          try {
+            const content = await readCloudBackupFile(f.name);
+            if (!content) { showPopup('Oups', 'Le fichier cloud est illisible.'); return; }
+            if (await restoreRaw(content)) {
+              notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+              showPopup('Restauration réussie', 'Tes données sont revenues.', [{ text: 'OK', style: 'primary', onPress: () => router.replace('/(tabs)' as any) }]);
             }
-          },
+          } catch {
+            showPopup('Oups', 'Cette sauvegarde cloud n’a pas pu être restaurée.');
+          } finally {
+            setRestoringCloud(null);
+          }
         },
-      ]
-    );
-  }, [showPopup]);
+      },
+    ]);
+  };
 
-  // ─────────────────────────────────────────────
-  // RENDU
-  // ─────────────────────────────────────────────
-
-  const bgColor = isDark ? colors.background : '#F1F5F9';
-  const cardBg  = isDark ? colors.card : '#FFFFFF';
-  const muted   = colors.textMuted;
+  const latest = backups[0];
+  const ageDays = latest ? Math.floor((Date.now() - latest.modifiedAt) / 86400000) : null;
 
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
-
-      {/* ── HEADER GRADIENT ── */}
-      <LinearGradient
-        colors={['#0EA5E9', '#14B8A6']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 16 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
       >
-        <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ChevronLeft size={26} color="#FFF" strokeWidth={2.5} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Bibliothèque</Text>
-            <Text style={styles.headerSub}>
-              {isLoading ? '…' : `${backups.length} sauvegarde${backups.length > 1 ? 's' : ''} locale${backups.length > 1 ? 's' : ''}`}
-            </Text>
+        <EspaceHeader title="Mes sauvegardes" />
+
+        <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 18, gap: 14, overflow: 'hidden' }}>
+          <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
+          <View style={{ gap: 4 }}>
+            <Ink size={44} weight="black" tight color={c.onDark}>{loading ? ' ' : String(backups.length)}</Ink>
+            <Ink size={14} color={c.onDarkSecondary}>
+              {loading ? 'Recherche de tes sauvegardes' : latest ? `sauvegarde${backups.length > 1 ? 's' : ''} sur ce téléphone, la dernière ${ageDays === 0 ? 'aujourd’hui' : ageDays === 1 ? 'hier' : `il y a ${ageDays} jours`}` : 'Aucune sauvegarde pour l’instant'}
+            </Ink>
           </View>
-          <View style={styles.headerIconBox}>
-            <Shield size={20} color="#FFF" strokeWidth={2} />
-          </View>
+          <Button tone="gold" icon="plus" label={creating ? 'Création' : 'Nouvelle sauvegarde'} loading={creating} onPress={newBackup} />
         </View>
 
-        <TouchableOpacity style={styles.newBackupBtn} onPress={handleNewBackup} disabled={isCreating} activeOpacity={0.85}>
-          {isCreating ? <ActivityIndicator size="small" color="#0EA5E9" /> : <Plus size={18} color="#0EA5E9" strokeWidth={2.5} />}
-          <Text style={styles.newBackupText}>{isCreating ? 'Création…' : 'Nouvelle sauvegarde'}</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#14B8A6" colors={['#14B8A6']} />}
-      >
-
-        {/* ── STATUT RASSURANT EN HAUT ── */}
-        <BackupStatusHeader />
-
-        {/* ── Choix du type de backup (complet / léger) ── */}
-        <BackupTypeSelector />
-
-        {/* ── Migration cross-platform (iPhone ↔ Android) ── */}
-        <CrossPlatformMigrationButton />
-
-        {/* ── Test d'un backup sans modifier les données ── */}
-        <TestRestoreButton />
-
-        {/* ── FAQ in-app ── */}
-        <BackupFaqAccordion />
-
-        {/* ── Revenir à l'état précédent (si safety backups dispos) ── */}
-        <SafetyBackupRestoreButton />
-
-        {/* ── Toggle chiffrement AES-256 ── */}
-        <BackupEncryptionToggle />
-
-        {/* ── SECTION CLOUD ── */}
-        {Platform.OS === 'ios' && (
-          <View style={[styles.cloudCard, { backgroundColor: cardBg }]}>
-            {cloudFolder ? (
-              <>
-                <View style={styles.cloudConnectedRow}>
-                  <View style={[styles.cloudIconBox, { backgroundColor: '#0EA5E915' }]}>
-                    <FolderOpen size={20} color="#0EA5E9" strokeWidth={2} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.cloudFolderName, { color: colors.textPrimary }]} numberOfLines={1}>{cloudFolder.displayName}</Text>
-                    <Text style={[styles.cloudFolderSub, { color: muted }]}>
-                      {cloudBackups.length === 0 ? 'Aucun backup cloud' : `${cloudBackups.length} backup${cloudBackups.length > 1 ? 's' : ''}`}
-                    </Text>
-                  </View>
-                  <TouchableOpacity style={[styles.disconnectBtn, { borderColor: isDark ? '#FFFFFF20' : '#E2E8F0' }]} onPress={handleDisconnectCloud}>
-                    <Link2Off size={14} color={muted} strokeWidth={2} />
-                  </TouchableOpacity>
-                </View>
-
-                {cloudBackups.length > 0 && (
-                  <View style={[styles.cloudList, { borderTopColor: isDark ? '#FFFFFF10' : '#F1F5F9' }]}>
-                    {cloudBackups.map((file, i) => (
-                      <View key={file.name} style={[styles.cloudItem, i < cloudBackups.length - 1 && { borderBottomWidth: 1, borderBottomColor: isDark ? '#FFFFFF08' : '#F1F5F9' }]}>
-                        <Cloud size={13} color={i === 0 ? '#0EA5E9' : muted} strokeWidth={2} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.cloudItemDate, { color: colors.textPrimary }]}>{formatDateShort(file.modifiedAt)} · {formatTime(file.modifiedAt)}</Text>
-                          <Text style={[styles.cloudItemSize, { color: muted }]}>{formatSize(file.size)}</Text>
-                        </View>
-                        <TouchableOpacity
-                          style={[styles.cloudRestoreBtn, { backgroundColor: isDark ? '#0EA5E920' : '#EFF6FF' }]}
-                          onPress={() => handleRestoreFromCloud(file)}
-                          disabled={restoringCloud === file.name}
-                        >
-                          {restoringCloud === file.name
-                            ? <ActivityIndicator size="small" color="#0EA5E9" />
-                            : <RotateCcw size={13} color="#0EA5E9" strokeWidth={2} />}
-                          <Text style={styles.cloudRestoreText}>Restaurer</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </>
-            ) : (
-              <TouchableOpacity style={styles.connectRow} onPress={handleConnectCloud} disabled={isConnecting} activeOpacity={0.85}>
-                <View style={[styles.cloudIconBox, { backgroundColor: '#0EA5E915' }]}>
-                  {isConnecting ? <ActivityIndicator size="small" color="#0EA5E9" /> : <Link size={20} color="#0EA5E9" strokeWidth={2} />}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.cloudFolderName, { color: colors.textPrimary }]}>Connecter un dossier cloud</Text>
-                  <Text style={[styles.cloudFolderSub, { color: muted }]}>iCloud Drive, Google Drive, Dropbox…</Text>
-                </View>
-                <ChevronLeft size={16} color={muted} strokeWidth={2} style={{ transform: [{ rotate: '180deg' }] }} />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
-        {/* ── GRILLE ── */}
-        {isLoading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#14B8A6" />
-            <Text style={[styles.loadingText, { color: muted }]}>Chargement…</Text>
-          </View>
+        {loading ? (
+          <ChargementBloc />
         ) : backups.length === 0 ? (
-          <View style={styles.emptyState}>
-            <LinearGradient colors={['#0EA5E930', '#14B8A620']} style={styles.emptyIcon}>
-              <FileText size={44} color="#0EA5E9" strokeWidth={1.5} />
-            </LinearGradient>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Bibliothèque vide</Text>
-            <Text style={[styles.emptyBody, { color: muted }]}>Appuie sur "Nouvelle sauvegarde" pour créer ton premier backup.</Text>
-          </View>
+          <Card style={{ padding: 18, gap: 6, alignItems: 'center' }}>
+            <Icon name="archive" size={34} color={c.textMuted} />
+            <Ink size={16} weight="extraBold">Ta bibliothèque est vide</Ink>
+            <Ink size={14} color={c.textSecondary} style={{ textAlign: 'center' }}>Crée ta première sauvegarde. Elle garde ton historique si tu changes de téléphone.</Ink>
+          </Card>
         ) : (
           <>
-            <Text style={[styles.sectionLabel, { color: muted }]}>SAUVEGARDES LOCALES</Text>
-            <View style={styles.grid}>
-              {backups.map((backup, index) => (
-                <BackupCard
-                  key={backup.uri}
-                  backup={backup}
-                  isLatest={index === 0}
-                  isRestoring={restoringUri === backup.uri}
-                  isSyncing={syncingUri === backup.uri}
-                  hasCloud={!!cloudFolder}
-                  isDark={isDark}
-                  colors={colors}
-                  cardWidth={cardWidth}
-                  onPreview={() => openPreview(backup)}
-                  onDownload={() => handleDownload(backup)}
-                  onRestore={() => handleRestore(backup)}
-                  onCopyCloud={() => handleCopyToCloud(backup)}
-                  onDelete={() => handleDelete(backup)}
-                />
-              ))}
-            </View>
+            <SectionTitle title="Sur ce téléphone" />
+            {backups.map((b, i) => (
+              <Pressable key={b.uri} onPress={() => setPreview(b)} accessibilityRole="button" accessibilityLabel={`Sauvegarde du ${formatDay(b.modifiedAt)}`}>
+                <Card style={{ padding: 14, gap: 12, borderColor: i === 0 ? c.ink : c.border, borderWidth: i === 0 ? 2 : 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: i === 0 ? c.ink : c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="archive" size={20} color={i === 0 ? c.goldLight : c.ink} />
+                    </View>
+                    <View style={{ flex: 1, gap: 1 }}>
+                      <Ink size={16} weight="extraBold">{formatDay(b.modifiedAt)}</Ink>
+                      <Ink size={12} color={c.textMuted}>{b.protegee ? `${formatTime(b.modifiedAt)}, ${formatSize(b.size)}` : `${formatTime(b.modifiedAt)}, ${formatSize(b.size)}, version ${b.version}`}</Ink>
+                    </View>
+                    {i === 0 ? (
+                      <View style={{ backgroundColor: c.successTint, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Ink size={11} weight="extraBold" color={c.successText}>La plus récente</Ink>
+                      </View>
+                    ) : null}
+                  </View>
+                  {b.protegee ? (
+                    <Protegee />
+                  ) : (
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <Stat n={b.weightsCount} label="pesées" />
+                      <Stat n={b.trainingsCount} label="séances" />
+                      <Stat n={b.photosCount} label="photos" />
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <Action icon="restore" label="Restaurer" busy={restoringUri === b.uri} onPress={() => restore(b)} />
+                    <Action icon={cloudFolder ? 'upload' : 'share'} label={cloudFolder ? 'Vers le cloud' : 'Partager'} busy={syncingUri === b.uri} onPress={() => (cloudFolder ? copyCloud(b) : download(b))} />
+                    <Action icon="trash" label="Supprimer" danger onPress={() => remove(b)} />
+                  </View>
+                </Card>
+              </Pressable>
+            ))}
           </>
         )}
+
+        {Platform.OS === 'ios' ? (
+          <>
+            <SectionTitle title="Dossier cloud" sub="iCloud Drive, Google Drive, Dropbox" />
+            <Card>
+              {cloudFolder ? (
+                <>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+                    <Icon name="archive" size={20} color={c.indigo} />
+                    <View style={{ flex: 1 }}>
+                      <Ink size={15} weight="extraBold" numberOfLines={1}>{cloudFolder.displayName}</Ink>
+                      <Ink size={12} color={c.textMuted}>{cloudBackups.length ? `${cloudBackups.length} sauvegarde${cloudBackups.length > 1 ? 's' : ''}` : 'Aucune sauvegarde dans ce dossier'}</Ink>
+                    </View>
+                    <RoundButton icon="close" label="Déconnecter le dossier" onPress={disconnectCloud} />
+                  </View>
+                  {cloudBackups.map((f) => (
+                    <View key={f.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderColor: c.divider }}>
+                      <View style={{ flex: 1 }}>
+                        <Ink size={14} weight="bold">{`${formatDay(f.modifiedAt)}, ${formatTime(f.modifiedAt)}`}</Ink>
+                        <Ink size={12} color={c.textMuted}>{formatSize(f.size)}</Ink>
+                      </View>
+                      <Button small tone="ghost" label="Restaurer" loading={restoringCloud === f.name} onPress={() => restoreCloud(f)} />
+                    </View>
+                  ))}
+                </>
+              ) : (
+                <Pressable onPress={connectCloud} disabled={connecting} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, minHeight: 60 }}>
+                  {connecting ? <ActivityIndicator color={c.accent} /> : <Icon name="plus" size={20} color={c.accent} />}
+                  <View style={{ flex: 1 }}>
+                    <Ink size={15} weight="extraBold">Connecter un dossier cloud</Ink>
+                    <Ink size={12} color={c.textMuted}>Une copie de chaque sauvegarde, hors du téléphone</Ink>
+                  </View>
+                  <Icon name="chevron" size={16} color={c.textMuted} />
+                </Pressable>
+              )}
+            </Card>
+          </>
+        ) : null}
+
+        <Pressable onPress={() => setShowTools((v) => !v)} accessibilityRole="button" style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
+          <Ink size={19} weight="black" tight style={{ flex: 1 }}>Outils avancés</Ink>
+          <Icon name={showTools ? 'up' : 'down'} size={18} />
+        </Pressable>
+        {showTools ? (
+          <View style={{ gap: 12 }}>
+            <BackupStatusHeader />
+            <BackupTypeSelector />
+            <CrossPlatformMigrationButton />
+            <TestRestoreButton />
+            <SafetyBackupRestoreButton />
+            <BackupEncryptionToggle />
+            <BackupFaqAccordion />
+          </View>
+        ) : null}
       </ScrollView>
 
-      {/* ── FICHE APERÇU ── */}
-      <PreviewSheet
-        backup={previewBackup}
-        visible={sheetVisible}
-        onClose={closePreview}
-        onRestore={handleRestore}
-        onDownload={handleDownload}
-        onDelete={handleDelete}
-        isDark={isDark}
-        colors={colors}
-      />
+      <Modal visible={!!preview} transparent animationType="slide" onRequestClose={() => setPreview(null)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(29,32,41,0.45)' }}>
+          <Pressable style={{ flex: 1 }} onPress={() => setPreview(null)} accessibilityLabel="Fermer" />
+          {preview ? (
+            <View style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 22, paddingTop: 10, paddingBottom: insets.bottom + 22, gap: 14 }}>
+              <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Ink size={22} weight="black" tight>{formatLong(preview.modifiedAt)}</Ink>
+                  <Ink size={13} color={c.textMuted}>{preview.protegee ? `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}` : `${formatTime(preview.modifiedAt)}, ${formatSize(preview.size)}, version ${preview.version}`}</Ink>
+                  {preview.userName !== '?' ? <Ink size={13} weight="bold" color={c.indigo}>{`Profil de ${preview.userName}`}</Ink> : null}
+                </View>
+                <RoundButton icon="close" label="Fermer" onPress={() => setPreview(null)} />
+              </View>
+              {preview.protegee ? <Protegee /> : null}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, display: preview.protegee ? 'none' : 'flex' }}>
+                {([
+                  ['scale', 'Pesées', preview.weightsCount],
+                  ['dumbbell', 'Séances', preview.trainingsCount],
+                  ['camera', 'Photos', preview.photosCount],
+                  ['moon', 'Sommeil', preview.sleepCount],
+                  ['drop', 'Hydratation', preview.hydrationCount],
+                  ['heart', 'Blessures', preview.injuriesCount],
+                  ['trophy', 'Compétitions', preview.competitionsCount],
+                  ['home', 'Clubs', preview.clubsCount],
+                ] as [IconName, string, number][]).map(([icon, label, n]) => (
+                  <View key={label} style={{ width: '23%', flexGrow: 1, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 10, gap: 4, alignItems: 'center' }}>
+                    <Icon name={icon} size={16} color={c.accent} />
+                    <Ink size={18} weight="black" tight>{String(n)}</Ink>
+                    <Ink size={11} color={c.textMuted} numberOfLines={1}>{label}</Ink>
+                  </View>
+                ))}
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flex: 1 }}><Button tone="ink" icon="restore" label="Restaurer" onPress={() => { const b = preview; setPreview(null); setTimeout(() => restore(b), 300); }} /></View>
+                <View style={{ flex: 1 }}><Button tone="ghost" icon="share" label="Partager" onPress={() => { const b = preview; setPreview(null); setTimeout(() => download(b), 300); }} /></View>
+              </View>
+              <Pressable onPress={() => { const b = preview; setPreview(null); setTimeout(() => remove(b), 300); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+                <Ink size={14} weight="extraBold" color={c.danger}>Supprimer cette sauvegarde</Ink>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      </Modal>
 
       <PopupComponent />
     </View>
   );
 }
 
-// ─────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────
+/** 18 octobre 2026 : a la place de faux zeros, une sauvegarde chiffree le dit */
+function Protegee() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, backgroundColor: c.fillSoft, paddingVertical: 10, paddingHorizontal: 12 }}>
+      <Icon name="lock" size={16} color={c.indigo} />
+      <View style={{ flex: 1, gap: 1 }}>
+        <Ink size={14} weight="extraBold">Sauvegarde protégée</Ink>
+        <Ink size={11} color={c.textMuted}>Son contenu s’affiche avec ton mot de passe, au moment de la restaurer.</Ink>
+      </View>
+    </View>
+  );
+}
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
+function Stat({ n, label }: { n: number; label: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View style={{ flex: 1, borderRadius: 12, backgroundColor: c.fillSoft, paddingVertical: 8, alignItems: 'center' }}>
+      <Ink size={17} weight="black" tight>{String(n)}</Ink>
+      <Ink size={11} color={c.textMuted}>{label}</Ink>
+    </View>
+  );
+}
 
-  // Header
-  headerGradient: { paddingHorizontal: 16, paddingBottom: 20 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#FFF', letterSpacing: -0.5 },
-  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
-  headerIconBox: { width: 42, height: 42, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  newBackupBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FFF', borderRadius: 16, paddingVertical: 14 },
-  newBackupText: { fontSize: 15, fontWeight: '700', color: '#0EA5E9' },
-
-  // Scroll
-  content: { padding: 16, paddingTop: 14 },
-
-  // Cloud card
-  cloudCard: {
-    borderRadius: 18, marginBottom: 18, overflow: 'hidden',
-    ...Platform.select({ ios: { shadowColor: '#0EA5E9', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10 }, android: { elevation: 3 } }),
-  },
-  connectRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  cloudConnectedRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  cloudIconBox: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  cloudFolderName: { fontSize: 15, fontWeight: '700' },
-  cloudFolderSub: { fontSize: 12, marginTop: 2 },
-  disconnectBtn: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  cloudList: { borderTopWidth: 1, paddingHorizontal: 14 },
-  cloudItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
-  cloudItemDate: { fontSize: 13, fontWeight: '600' },
-  cloudItemSize: { fontSize: 11, marginTop: 1 },
-  cloudRestoreBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 9 },
-  cloudRestoreText: { fontSize: 12, fontWeight: '600', color: '#0EA5E9' },
-
-  // Etat vide
-  centered: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 12 },
-  loadingText: { fontSize: 14 },
-  emptyState: { alignItems: 'center', paddingVertical: 40, gap: 14 },
-  emptyIcon: { width: 90, height: 90, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  emptyTitle: { fontSize: 20, fontWeight: '800' },
-  emptyBody: { fontSize: 14, textAlign: 'center', lineHeight: 21, maxWidth: 270 },
-
-  // Section label
-  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 12, marginLeft: 2 },
-
-  // Grille
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP },
-
-  // Carte
-  card: {
-    borderRadius: 16, overflow: 'hidden',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 },
-      android: { elevation: 3 },
-    }),
-  },
-  cardBanner: { height: 80, alignItems: 'center', justifyContent: 'center' },
-  cardRecentBadge: { position: 'absolute', top: 8, right: 8, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
-  cardRecentText: { fontSize: 8, fontWeight: '800', color: '#FFF', letterSpacing: 0.5 },
-  cardBody: { padding: 12 },
-  cardDate: { fontSize: 15, fontWeight: '800' },
-  cardTime: { fontSize: 12, marginTop: 1 },
-  cardMeta: { fontSize: 11, marginTop: 4 },
-  cardMiniStats: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, gap: 3 },
-  cardMiniStat: { fontSize: 11 },
-
-  // Actions carte
-  cardActions: { flexDirection: 'row', borderTopWidth: 1, paddingVertical: 10, paddingHorizontal: 8, justifyContent: 'space-around' },
-  cardActionBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-
-  // Bottom sheet
-  sheetOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    paddingTop: 12, paddingHorizontal: 20,
-    ...Platform.select({ ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 20 }, android: { elevation: 20 } }),
-  },
-  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', alignSelf: 'center', marginBottom: 20 },
-  sheetHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 24 },
-  sheetFileIcon: { width: 60, height: 60 },
-  sheetFileIconGradient: { width: 60, height: 60, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  sheetTitle: { fontSize: 17, fontWeight: '800', lineHeight: 22 },
-  sheetSubtitle: { fontSize: 13, marginTop: 3 },
-  sheetUser: { fontSize: 13, fontWeight: '600', marginTop: 4 },
-  sheetCloseBtn: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  sheetSectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 12 },
-  sheetStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
-  sheetStatCell: { width: '22%', flexGrow: 1, borderRadius: 12, padding: 10, alignItems: 'center', gap: 6 },
-  sheetStatIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  sheetStatValue: { fontSize: 18, fontWeight: '800' },
-  sheetStatLabel: { fontSize: 10, fontWeight: '500', textAlign: 'center' },
-  sheetActions: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  sheetActionPrimary: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
-  sheetActionPrimaryText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
-  sheetActionSecondary: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1 },
-  sheetActionSecondaryText: { fontSize: 15, fontWeight: '600' },
-  sheetDeleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14, borderWidth: 1 },
-  sheetDeleteText: { fontSize: 14, fontWeight: '600', color: '#EF4444' },
-});
+function Action({ icon, label, onPress, busy, danger }: { icon: IconName; label: string; onPress: () => void; busy?: boolean; danger?: boolean }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={busy}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 14, backgroundColor: danger ? c.dangerTint : c.fillSoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.7 : 1 })}
+    >
+      {busy ? <ActivityIndicator color={c.ink} size="small" /> : <Icon name={icon} size={15} color={danger ? c.danger : c.ink} stroke={2.4} />}
+      <Ink size={12} weight="extraBold" color={danger ? c.danger : c.ink} numberOfLines={1}>{label}</Ink>
+    </Pressable>
+  );
+}

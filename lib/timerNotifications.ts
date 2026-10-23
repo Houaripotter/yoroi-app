@@ -8,6 +8,23 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { saveNotification } from '@/lib/notificationHistoryService';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+
+/**
+ * Son de la notification de fin. wizz.mp3 n'existe que dans l'app compilee
+ * (declare dans app.json, plugin expo-notifications). Dans Expo Go il n'est pas
+ * dans l'app native : on prend le son par defaut pour eviter l'erreur
+ * « Custom sound not found ».
+ */
+function timerSound(): string {
+  if (Platform.OS !== 'ios') return 'default';
+  try {
+    if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return 'default';
+  } catch {
+    return 'default';
+  }
+  return 'wizz.mp3';
+}
 
 const TIMER_NOTIF_SETTINGS_KEY = '@yoroi_timer_notification_settings';
 
@@ -23,7 +40,7 @@ const DEFAULT_SETTINGS: TimerNotifSettings = {
   workoutFinished: true,
 };
 
-// Configuration des notifications — priorité max, affichage même en premier plan
+// Configuration des notifications, priorité max, affichage même en premier plan
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -43,7 +60,7 @@ if (Platform.OS === 'android') {
     bypassDnd: true,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     enableLights: true,
-    lightColor: '#EF4444',
+    lightColor: '#2C4A84',
   });
 }
 
@@ -90,31 +107,46 @@ class TimerNotificationsService {
   }
 
   /**
-   * Demander la permission pour les notifications — résultat mis en cache
+   * Permission déjà accordée ? Ne demande jamais rien (la planification se fait
+   * quand l'app passe en arrière-plan : une fenêtre du système n'y apparaîtrait pas).
+   * Seul un oui est mis en cache : un refus peut être levé dans les réglages du téléphone.
    */
   async requestPermissions(): Promise<boolean> {
     if (Platform.OS === 'web') return false;
-    // Cache : évite le délai async après le premier appel
-    if (this.permissionGranted !== null) return this.permissionGranted;
+    if (this.permissionGranted) return true;
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      this.permissionGranted = status === 'granted';
+    } catch {
+      this.permissionGranted = false;
+    }
+    return this.permissionGranted;
+  }
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync({
-        ios: {
-          allowAlert: true,
-          allowBadge: true,
-          allowSound: true,
-          allowCriticalAlerts: true,
-          provideAppNotificationSettings: false,
+  /**
+   * Au lancement du chrono, le seul moment où l'alerte de fin en a vraiment besoin :
+   * fenêtre maison qui explique, puis fenêtre du système. Rien si l'alerte est coupée
+   * dans les réglages du chrono, si c'est déjà autorisé ou déjà refusé par le système,
+   * ou si « Plus tard » a été touché il y a moins de 7 jours (lib/v2/notifications/permission.ts).
+   */
+  async proposerAuLancement(mode: string): Promise<void> {
+    if (Platform.OS === 'web') return;
+    try {
+      if (!this.settingsLoaded) await this.loadSettings();
+      const utile = mode === 'musculation' ? this.settings.restFinished : this.settings.roundFinished;
+      if (!utile) return;
+      if (await this.requestPermissions()) return;
+      const { proposerNotifications } = await import('@/lib/v2/notifications/permission');
+      await proposerNotifications('timer', {
+        titre: 'Une alerte à la fin du round',
+        texte: 'Pour te prévenir à la fin du round ou du repos, même téléphone verrouillé. Jamais de chiffre de santé sur l’écran verrouillé.',
+        onAccepte: () => {
+          this.permissionGranted = true;
         },
       });
-      finalStatus = status;
+    } catch (error) {
+      logger.warn('[TimerNotifications] Proposition impossible:', error);
     }
-
-    this.permissionGranted = finalStatus === 'granted';
-    return this.permissionGranted;
   }
 
   /**
@@ -137,21 +169,20 @@ class TimerNotificationsService {
     try {
       await this.cancelNotification();
 
-      // Délai calculé ICI — après les await — pour être précis à la seconde près
+      // Délai calculé ICI : après les await, pour être précis à la seconde près
       const delaySeconds = Math.max(1, Math.ceil((targetTimestampMs - Date.now()) / 1000));
 
       this.notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
-          sound: Platform.OS === 'ios' ? 'wizz.mp3' : 'default',
+          sound: timerSound(),
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 400, 200, 400, 200, 400],
           data: { type: 'timer_finished' },
           ...(Platform.OS === 'ios' && {
             // timeSensitive : passe à travers tous les modes Focus (pas besoin d'approbation Apple)
             interruptionLevel: 'timeSensitive' as any,
-            sound: 'wizz.mp3',
           }),
           ...(Platform.OS === 'android' && {
             channelId: 'timer_alarm',
@@ -202,62 +233,62 @@ class TimerNotificationsService {
 
   /**
    * Planifier notification de fin de timer (appelé depuis timer.tsx)
-   * @param targetTimestampMs Timestamp absolu (Date.now() + durée * 1000) — jamais une durée brute
+   * @param targetTimestampMs Timestamp absolu (Date.now() + durée * 1000), jamais une durée brute
    */
   async scheduleTimerEndNotification(mode: string, targetTimestampMs: number): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
 
     if (mode === 'musculation') {
       if (!this.settings.restFinished) return;
-      await this.scheduleTimerFinishedNotification('Repos terminé !', 'Go go go ! Prochaine série !', targetTimestampMs);
+      await this.scheduleTimerFinishedNotification('Repos terminé', 'À toi pour la série suivante.', targetTimestampMs);
     } else {
       if (!this.settings.roundFinished) return;
-      await this.scheduleTimerFinishedNotification('Timer terminé !', 'Excellent travail !', targetTimestampMs);
+      await this.scheduleTimerFinishedNotification('Minuteur terminé', 'Beau travail.', targetTimestampMs);
     }
   }
 
   /**
-   * Notification immédiate — repos muscu terminé
+   * Notification immédiate, repos muscu terminé
    */
   async notifyRestFinished(): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
     if (!this.settings.restFinished) return;
-    await this.scheduleTimerFinishedNotification('Repos terminé !', 'Go go go ! Prochaine série !', Date.now() + 1000);
+    await this.scheduleTimerFinishedNotification('Repos terminé', 'À toi pour la série suivante.', Date.now() + 1000);
   }
 
   /**
-   * Notification immédiate — round combat terminé
+   * Notification immédiate, round combat terminé
    */
   async notifyRoundFinished(roundNumber: number, totalRounds: number): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
     if (!this.settings.roundFinished) return;
 
     const message = roundNumber < totalRounds
-      ? `Round ${roundNumber}/${totalRounds} terminé ! Repos.`
-      : 'Dernier round terminé ! Bravo !';
+      ? `Round ${roundNumber} sur ${totalRounds} terminé. Souffle un peu.`
+      : 'Dernier round terminé. Beau travail.';
 
     await this.scheduleTimerFinishedNotification('Round terminé', message, Date.now() + 1000);
   }
 
   /**
-   * Notification immédiate — entraînement terminé
+   * Notification immédiate, entraînement terminé
    */
   async notifyWorkoutFinished(mode: string): Promise<void> {
     if (!this.settingsLoaded) await this.loadSettings();
     if (!this.settings.workoutFinished) return;
 
     const titles: Record<string, string> = {
-      musculation: 'Entraînement terminé !',
-      combat: 'Combat terminé !',
-      tabata: 'Tabata terminé !',
-      emom: 'EMOM terminé !',
-      amrap: 'AMRAP terminé !',
-      fortime: 'For Time terminé !',
+      musculation: 'Entraînement terminé',
+      combat: 'Combat terminé',
+      tabata: 'Tabata terminé',
+      emom: 'EMOM terminé',
+      amrap: 'AMRAP terminé',
+      fortime: 'For Time terminé',
     };
 
     await this.scheduleTimerFinishedNotification(
-      titles[mode] || 'Entraînement terminé !',
-      'Excellent travail !',
+      titles[mode] || 'Entraînement terminé',
+      'Beau travail. Pense à boire et à t’étirer.',
       Date.now() + 1000
     );
   }

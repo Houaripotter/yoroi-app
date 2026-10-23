@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Genere pour le style A (Nuit de lanternes), depuis yw_semaine.xml (scratchpad/widgets_code/gen_android.py) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/yw_a_fond" android:clipToOutline="true"><ImageView android:id="@+id/yw_fond_img" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:src="@drawable/yw_a_fond_petit" android:importantForAccessibility="no" /><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/yw_a_voile_v" android:importantForAccessibility="no" /><LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="@dimen/yw_marge">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:id="@+id/yw_titre" style="@style/YwTitre" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/yw_nom_semaine" android:textColor="@color/yw_a_titre" android:textStyle="bold" android:drawableStart="@drawable/yw_a_lanterne" android:drawablePadding="5dp" />
+    <TextView android:id="@+id/yw_valeur" style="@style/YwChiffre" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="20sp" android:textColor="@color/yw_a_encre" />
+  </LinearLayout>
+  <TextView android:id="@+id/yw_sem_texte" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:gravity="end" android:textColor="@color/yw_a_discret" />
+  <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+    <include layout="@layout/yw_inc_points_a" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center_vertical" />
+  </FrameLayout>
+  <TextView android:id="@+id/yw_bouton_seance" style="@style/YwBouton" android:layout_width="match_parent" android:layout_height="@dimen/yw_bouton_h" android:text="@string/yw_seance_faite" android:textColor="@color/yw_a_sur_indigo" android:background="@drawable/yw_a_bouton" />
+</LinearLayout></FrameLayout>

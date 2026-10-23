@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER MODEL · Types etendus pour les partenaires tactiques
+// PARTNER MODEL : Types etendus pour les partenaires tactiques
 // ============================================
 
 export type Archetype =

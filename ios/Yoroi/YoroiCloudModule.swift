@@ -313,4 +313,142 @@ class YoroiCloudModule: NSObject, UIDocumentPickerDelegate {
     UserDefaults.standard.removeObject(forKey: BOOKMARK_KEY)
     resolve(true)
   }
+
+  // ──────────────────────────────────────────
+  // 7. Coffre iCloud de l'app (18 octobre 2026)
+  // ──────────────────────────────────────────
+  // Sans rien choisir : le dossier « YOROI » du iCloud Drive de l'utilisateur (conteneur iCloud de l'app,
+  // iCloud.com.houari.yoroi, visible dans l'app Fichiers). La copie du jour y part toute seule et revient
+  // toute seule sur un nouvel iPhone connecté au même compte Apple.
+  // Il faut : la capacité iCloud (Documents iCloud) sur l'App ID, et l'utilisateur connecté à iCloud
+  // avec iCloud Drive activé. Sinon icloudDisponible renvoie false et l'app propose le dossier à choisir.
+
+  private func dossierICloud() -> URL? {
+    guard let base = FileManager.default.url(forUbiquityContainerIdentifier: nil) else { return nil }
+    let docs = base.appendingPathComponent("Documents", isDirectory: true)
+    if !FileManager.default.fileExists(atPath: docs.path) {
+      try? FileManager.default.createDirectory(at: docs, withIntermediateDirectories: true)
+    }
+    return docs
+  }
+
+  @objc func icloudDisponible(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.global(qos: .utility).async { [weak self] in
+      guard FileManager.default.ubiquityIdentityToken != nil, let self = self else { resolve(false); return }
+      resolve(self.dossierICloud() != nil)
+    }
+  }
+
+  @objc func copyToICloud(
+    _ filePath: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.global(qos: .utility).async { [weak self] in
+      guard let self = self, let dossier = self.dossierICloud() else {
+        reject("NO_ICLOUD", "iCloud indisponible", nil)
+        return
+      }
+      let source = URL(fileURLWithPath: filePath)
+      let dest = dossier.appendingPathComponent(source.lastPathComponent)
+      var erreurCoord: NSError?
+      var erreurCopie: Error?
+      NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: dest, options: .forReplacing, error: &erreurCoord) { url in
+        do {
+          if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
+          try FileManager.default.copyItem(at: source, to: url)
+        } catch {
+          erreurCopie = error
+        }
+      }
+      if let e = erreurCoord ?? (erreurCopie as NSError?) {
+        reject("COPY_ERROR", e.localizedDescription, nil)
+      } else {
+        resolve(true)
+      }
+    }
+  }
+
+  /// Les sauvegardes du dossier iCloud, y compris celles pas encore téléchargées sur ce téléphone
+  /// (fichiers « .nom.icloud » sur un nouvel iPhone).
+  @objc func listICloudBackups(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      guard let self = self, let dossier = self.dossierICloud() else { resolve([]); return }
+      let keys: [URLResourceKey] = [.fileSizeKey, .contentModificationDateKey]
+      guard let contenu = try? FileManager.default.contentsOfDirectory(at: dossier, includingPropertiesForKeys: keys, options: []) else {
+        resolve([])
+        return
+      }
+      var result: [[String: Any]] = []
+      for url in contenu {
+        var nom = url.lastPathComponent
+        var telecharge = true
+        if nom.hasPrefix(".") && nom.hasSuffix(".icloud") {
+          nom = String(nom.dropFirst().dropLast(".icloud".count))
+          telecharge = false
+        }
+        guard nom.hasPrefix("yoroi_backup_") && nom.hasSuffix(".json") else { continue }
+        let attrs = try? url.resourceValues(forKeys: Set(keys))
+        result.append([
+          "name": nom,
+          "size": attrs?.fileSize ?? 0,
+          "modifiedAt": (attrs?.contentModificationDate?.timeIntervalSince1970 ?? 0) * 1000,
+          "telecharge": telecharge,
+          "source": "icloud",
+        ])
+      }
+      result.sort { ($0["modifiedAt"] as? Double ?? 0) > ($1["modifiedAt"] as? Double ?? 0) }
+      resolve(result)
+    }
+  }
+
+  /// Télécharge si besoin une sauvegarde du dossier iCloud (jusqu'à 90 s) et la copie dans le cache de l'app.
+  /// Renvoie le chemin local, prêt pour l'import habituel.
+  @objc func prepareICloudBackup(
+    _ fileName: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      guard let self = self, let dossier = self.dossierICloud() else {
+        reject("NO_ICLOUD", "iCloud indisponible", nil)
+        return
+      }
+      let url = dossier.appendingPathComponent(fileName)
+      if !FileManager.default.fileExists(atPath: url.path) {
+        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+        var attente = 0.0
+        while !FileManager.default.fileExists(atPath: url.path) && attente < 90 {
+          Thread.sleep(forTimeInterval: 0.5)
+          attente += 0.5
+        }
+      }
+      guard FileManager.default.fileExists(atPath: url.path) else {
+        reject("NOT_DOWNLOADED", "La sauvegarde iCloud n'a pas pu être téléchargée", nil)
+        return
+      }
+      let cache = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+      var erreurCoord: NSError?
+      var erreurCopie: Error?
+      NSFileCoordinator(filePresenter: nil).coordinate(readingItemAt: url, options: [], error: &erreurCoord) { lu in
+        do {
+          if FileManager.default.fileExists(atPath: cache.path) { try FileManager.default.removeItem(at: cache) }
+          try FileManager.default.copyItem(at: lu, to: cache)
+        } catch {
+          erreurCopie = error
+        }
+      }
+      if let e = erreurCoord ?? (erreurCopie as NSError?) {
+        reject("READ_ERROR", e.localizedDescription, nil)
+      } else {
+        resolve(cache.path)
+      }
+    }
+  }
 }

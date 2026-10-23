@@ -156,9 +156,8 @@ export const useMonthStats = (
           percentage: 72.5,
           calendar,
           clubTrainings: [
-            { clubName: 'Basic-Fit', sport: 'musculation', count: 12, clubColor: '#FF6B00' },
-            { clubName: 'MMA Factory', sport: 'mma', count: 8, clubColor: '#EF4444' },
-            { clubName: 'Yoroi Dojo', sport: 'jjb', count: 6, clubColor: '#3B82F6' },
+            { clubName: 'Basic-Fit Prado', sport: 'musculation', count: 16, clubColor: '#2C4A84' },
+            { clubName: 'First Jiu-Jitsu Academy', sport: 'jjb', count: 12, clubColor: '#1D2029' },
           ],
           evolution: {
             weight: { start: 82.5, end: 76.8, change: -5.7 }

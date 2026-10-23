@@ -1,12 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SPACING, TYPOGRAPHY } from '@/constants/design';
+import Svg, { Path } from 'react-native-svg';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
 
 // ============================================
-// HEADER - DESIGN SIMPLE ET PROPRE
+// En-tete d'ecran (refonte v2) : bouton rond, grand titre a gauche.
+// API inchangee.
 // ============================================
 
 interface HeaderProps {
@@ -16,7 +19,35 @@ interface HeaderProps {
   onBack?: () => void;
   onClose?: () => void;
   rightElement?: React.ReactNode;
-  transparent?: boolean; // Kept for compatibility, not used
+  transparent?: boolean; // conserve pour compatibilite
+}
+
+function RoundIcon({ d, onPress, label }: { d: string; onPress: () => void; label: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <Pressable
+      onPress={() => {
+        try {
+          impactAsync(ImpactFeedbackStyle.Light);
+        } catch {
+          // sans importance
+        }
+        onPress();
+      }}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        styles.round,
+        { backgroundColor: 'rgba(255,255,255,0.92)', borderColor: c.divider, shadowColor: c.shadow, transform: [{ scale: pressed ? 0.94 : 1 }] },
+      ]}
+    >
+      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+        <Path d={d} stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    </Pressable>
+  );
 }
 
 export function Header({
@@ -50,45 +81,24 @@ export function Header({
     }
   };
 
+  const hasButtons = showBack || showClose || !!rightElement;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
-      {/* Left Button */}
-      <View style={styles.leftContainer}>
-        {showBack && (
-          <TouchableOpacity
-            onPress={handleBack}
-            style={styles.backButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
-          >
-            <ChevronLeft size={24} color={COLORS.text} strokeWidth={2} />
-          </TouchableOpacity>
-        )}
-        {showClose && (
-          <TouchableOpacity
-            onPress={handleClose}
-            style={styles.closeButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
-          >
-            <X size={22} color={COLORS.text} strokeWidth={2} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        {title && (
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-        )}
-      </View>
-
-      {/* Right Element */}
-      <View style={styles.rightContainer}>
-        {rightElement}
-      </View>
+      {hasButtons ? (
+        <View style={styles.row}>
+          <View style={styles.left}>
+            {showBack ? <RoundIcon d="M15 5l-7 7 7 7" onPress={handleBack} label="Retour" /> : null}
+            {showClose ? <RoundIcon d="M6 6l12 12M18 6L6 18" onPress={handleClose} label="Fermer" /> : null}
+          </View>
+          <View style={styles.right}>{rightElement}</View>
+        </View>
+      ) : null}
+      {title ? (
+        <Ink size={30} weight="black" tight numberOfLines={2} style={styles.title}>
+          {title}
+        </Ink>
+      ) : null}
     </View>
   );
 }
@@ -96,49 +106,39 @@ export function Header({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
     minHeight: 44,
   },
-  leftContainer: {
+  left: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  right: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  round: {
     width: 44,
-    alignItems: 'flex-start',
-  },
-  titleContainer: {
-    flex: 1,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
     alignItems: 'center',
-    paddingHorizontal: SPACING.sm,
-  },
-  rightContainer: {
-    width: 44,
-    alignItems: 'flex-end',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.surface,
     justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.sm,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.sm,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   title: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-    textAlign: 'center',
+    paddingHorizontal: 4,
   },
 });
 

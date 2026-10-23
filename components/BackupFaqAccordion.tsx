@@ -30,7 +30,7 @@ const FAQ: FaqItem[] = [
   },
   {
     q: "Où sont stockés mes backups ?",
-    a: "• Localement sur ton téléphone (10 derniers gardés)\n• Dans ton iCloud Drive ou Google Drive si configuré\n• Jamais sur des serveurs externes · tes données restent à toi.",
+    a: "• Localement sur ton téléphone (10 derniers gardés)\n• Dans ton iCloud Drive ou Google Drive si configuré\n• Jamais sur des serveurs externes, tes données restent à toi.",
   },
   {
     q: "Mes photos sont-elles vraiment dans le backup ?",

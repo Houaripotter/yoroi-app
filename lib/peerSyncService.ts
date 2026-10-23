@@ -36,8 +36,33 @@
 //      ne peuvent pas être appliquées chez lui. Rien n'est écrasé.
 // ============================================
 
+// SECURITE (13 octobre 2026) : la v3 d'origine acceptait n'importe quel appareil YOROI a proximite et lui
+// envoyait toutes les donnees. Desormais :
+//   . la synchro ne demarre plus au lancement, seulement depuis l'ecran de synchro (app/sync-devices.tsx) ;
+//   . on n'echange qu'avec un appareil appaire par code a 6 chiffres (lib/v2/sync/appairage.ts) ;
+//   . chaque message est chiffre et authentifie avec la cle de la paire : le module natif diffuse a tous
+//     les appareils connectes, un appareil non appaire ne recoit que des octets illisibles ;
+//   . les appareils encore en v2 (sans chiffrement) ne recoivent plus rien.
+// ============================================
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { getRandomBytes } from 'expo-crypto';
 import { DeviceEventEmitter } from 'react-native';
+import {
+  DUREE_CODE_MS,
+  codeValide,
+  creerAcceptation,
+  creerDemande,
+  demandeValide,
+  genererCode,
+  lireAcceptation,
+  ouvrir,
+  sceller,
+  type AcceptationAppairage,
+  type DemandeAppairage,
+  type Enveloppe,
+} from './v2/sync/appairage';
 import MultipeerBridge, { PeerChangedEvent, DataReceivedEvent } from './multipeerBridge';
 import { openDatabase } from './database';
 import logger from './security/logger';
@@ -51,7 +76,9 @@ const LAST_SYNC_KEY = '@yoroi_peer_last_sync';          // affichage (dernière 
 const SINCE_MAP_KEY = '@yoroi_peer_since_v3';           // { deviceId: ts (horloge du pair) }
 const DEVICE_ID_KEY = '@yoroi_peer_device_id';          // identifiant unique de cet appareil
 const HAD_V2_KEY = '@yoroi_peer_had_v2';                // a déjà synchronisé avec l'ancienne version
-const CHUNK_MAX_BYTES = 200 * 1024;                     // taille max d'un message
+const CHUNK_MAX_BYTES = 150 * 1024;                     // taille max d'un message avant chiffrement (base64 : +33 %)
+const PAIRS_KEY = 'yoroi_peer_pairs_v1';                // SecureStore : appareils appaires et leur cle
+const ESSAIS_MAX_APPAIRAGE = 5;                         // demandes invalides tolerees avant d'annuler l'appairage
 const MASS_DELETE_MIN = 10;                             // garde-fou suppressions massives
 const MASS_DELETE_RATIO = 0.5;
 
@@ -163,8 +190,26 @@ interface SyncMessage {
 // ÉTAT DU SERVICE
 // ============================================
 
+/** Appairage en cours : affiche un code, ou en a tape un */
+export interface AppairageEnCours {
+  role: 'affiche' | 'saisit';
+  code: string;
+  expireA: number;
+}
+
+export interface AppareilAppaire {
+  id: string;
+  nom: string;
+}
+
 export interface SyncStatus {
+  /** Appareils APPAIRES actuellement relies (authentifies), jamais les inconnus a proximite */
   connectedPeers: string[];
+  /** Appareils appaires, relies ou non */
+  paires: AppareilAppaire[];
+  appairage: AppairageEnCours | null;
+  /** Message du dernier appairage : reussi, expire, refuse */
+  appairageResultat?: 'reussi' | 'expire' | 'annule' | null;
   isSyncing: boolean;
   lastSyncTs: string | null;
   lastSyncDevice: string | null;
@@ -181,6 +226,9 @@ let schemaReady = false;
 
 let status: SyncStatus = {
   connectedPeers: [],
+  paires: [],
+  appairage: null,
+  appairageResultat: null,
   isSyncing: false,
   lastSyncTs: null,
   lastSyncDevice: null,
@@ -205,6 +253,16 @@ const enqueue = <T>(label: string, fn: () => Promise<T>): Promise<T | undefined>
   return run;
 };
 
+// Pendant une demo du Studio, la base contient le profil Heny : rien ne part vers un autre
+// appareil et rien n'est applique ici. La synchro reprend quand les vraies donnees reviennent.
+const demoBlocksSync = async (): Promise<boolean> => {
+  try {
+    return (await AsyncStorage.getItem('@yoroi_demo_data_active')) === 'true';
+  } catch {
+    return false;
+  }
+};
+
 let scanTimer: ReturnType<typeof setTimeout> | null = null;
 const scheduleBackgroundScan = () => {
   if (scanTimer) clearTimeout(scanTimer);
@@ -213,10 +271,155 @@ const scheduleBackgroundScan = () => {
     scanTimer = null;
     if (status.isSyncing) return;
     enqueue('détection des changements', async () => {
+      if (await demoBlocksSync()) return;
       const db = await openDatabase();
       await scanAll(db);
     });
   }, 15000);
+};
+
+// ============================================
+// APPAIRAGE ET CHIFFREMENT
+// ============================================
+
+const aleatoire = (n: number) => getRandomBytes(n);
+
+type Paires = Record<string, { nom: string; cle: string }>;
+let paires: Paires = {};
+/** Appareils appaires authentifies dans cette session : id -> nom */
+const relies = new Map<string, string>();
+
+let appairage: (AppairageEnCours & { demande?: DemandeAppairage; essaisInvalides: number }) | null = null;
+let appairageTimer: ReturnType<typeof setInterval> | null = null;
+
+const publierPaires = () => {
+  setStatus({
+    paires: Object.entries(paires).map(([id, p]) => ({ id, nom: p.nom })),
+    connectedPeers: Array.from(relies.values()),
+  });
+};
+
+const chargerPaires = async () => {
+  try {
+    const raw = await SecureStore.getItemAsync(PAIRS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    paires = parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    paires = {};
+  }
+  publierPaires();
+};
+
+const enregistrerPaires = async () => {
+  try {
+    await SecureStore.setItemAsync(PAIRS_KEY, JSON.stringify(paires));
+  } catch (err) {
+    logger.error('[PeerSync] Enregistrement de la paire impossible:', err);
+  }
+  publierPaires();
+};
+
+const finirAppairage = (resultat: 'reussi' | 'expire' | 'annule') => {
+  if (appairageTimer) { clearInterval(appairageTimer); appairageTimer = null; }
+  appairage = null;
+  setStatus({ appairage: null, appairageResultat: resultat });
+};
+
+const publierAppairage = () => {
+  setStatus({ appairage: appairage ? { role: appairage.role, code: appairage.code, expireA: appairage.expireA } : null, appairageResultat: null });
+};
+
+/** Envoie un message chiffre pour un appareil appaire precis. Rien ne part sans paire. */
+const envoyerA = async (to: string, msg: SyncMessage): Promise<boolean> => {
+  const p = paires[to];
+  if (!p) return false;
+  const env = sceller(p.cle, myDeviceId, to, JSON.stringify(msg), aleatoire);
+  return MultipeerBridge.sendData(env);
+};
+
+const renvoyerDemande = async () => {
+  if (!appairage || appairage.role !== 'saisit' || !appairage.demande) return;
+  if (Date.now() > appairage.expireA) { finirAppairage('expire'); return; }
+  await MultipeerBridge.sendData(appairage.demande);
+};
+
+const recevoirDemande = async (d: DemandeAppairage) => {
+  if (!appairage || appairage.role !== 'affiche') return;
+  if (Date.now() > appairage.expireA) { finirAppairage('expire'); return; }
+  if (!demandeValide(appairage.code, d)) {
+    appairage.essaisInvalides += 1;
+    if (appairage.essaisInvalides >= ESSAIS_MAX_APPAIRAGE) finirAppairage('annule');
+    return;
+  }
+  const { message, cle } = creerAcceptation(appairage.code, d, myDeviceId, myDeviceName, aleatoire);
+  paires[d.from] = { nom: String(d.device || 'Appareil').slice(0, 60), cle };
+  await enregistrerPaires();
+  await MultipeerBridge.sendData(message);
+  finirAppairage('reussi');
+  await sendHandshake();
+};
+
+const recevoirAcceptation = async (a: AcceptationAppairage) => {
+  if (!appairage || appairage.role !== 'saisit' || !appairage.demande) return;
+  if (a.to !== myDeviceId) return;
+  const cle = lireAcceptation(appairage.code, appairage.demande, a);
+  if (!cle) return;
+  paires[a.from] = { nom: String(a.device || 'Appareil').slice(0, 60), cle };
+  await enregistrerPaires();
+  finirAppairage('reussi');
+  await sendHandshake();
+};
+
+/** Cet appareil affiche un code a taper sur l'autre. Renvoie le code. */
+export const commencerAppairageAffiche = async (): Promise<string> => {
+  await initPeerSync();
+  const code = genererCode(aleatoire);
+  if (appairageTimer) clearInterval(appairageTimer);
+  appairage = { role: 'affiche', code, expireA: Date.now() + DUREE_CODE_MS, essaisInvalides: 0 };
+  appairageTimer = setInterval(() => {
+    if (appairage && Date.now() > appairage.expireA) finirAppairage('expire');
+  }, 2000);
+  publierAppairage();
+  return code;
+};
+
+/** Cet appareil a tape le code affiche sur l'autre. Faux si le code n'a pas 6 chiffres. */
+export const commencerAppairageSaisi = async (code: string): Promise<boolean> => {
+  const propre = code.replace(/\D/g, '');
+  if (!codeValide(propre)) return false;
+  await initPeerSync();
+  if (appairageTimer) clearInterval(appairageTimer);
+  appairage = {
+    role: 'saisit',
+    code: propre,
+    expireA: Date.now() + DUREE_CODE_MS,
+    essaisInvalides: 0,
+    demande: creerDemande(propre, myDeviceId, myDeviceName, aleatoire),
+  };
+  publierAppairage();
+  // l'autre appareil peut se relier quelques secondes plus tard : on redemande regulierement
+  await renvoyerDemande();
+  appairageTimer = setInterval(() => { void renvoyerDemande(); }, 3000);
+  return true;
+};
+
+export const annulerAppairage = () => {
+  if (appairage) finirAppairage('annule');
+};
+
+/** Oublie un appareil : plus aucun echange avec lui, il faudra l'appairer de nouveau */
+export const oublierAppareil = async (id: string): Promise<void> => {
+  delete paires[id];
+  relies.delete(id);
+  await enregistrerPaires();
+};
+
+/** Oublie tous les appareils (utilise par Tout effacer) */
+export const oublierTousLesAppareils = async (): Promise<void> => {
+  paires = {};
+  relies.clear();
+  try { await SecureStore.deleteItemAsync(PAIRS_KEY); } catch { /* ignore */ }
+  publierPaires();
 };
 
 // Réassemblage des paquets reçus (par synchro)
@@ -233,6 +436,7 @@ export const initPeerSync = async (): Promise<void> => {
   try {
     myDeviceName = await MultipeerBridge.getDeviceName();
     myDeviceId = await getOrCreateDeviceId();
+    await chargerPaires();
 
     const raw = await AsyncStorage.getItem(LAST_SYNC_KEY);
     if (raw) {
@@ -270,6 +474,9 @@ export const stopPeerSync = async (): Promise<void> => {
   subscriptions.forEach(s => s.remove());
   subscriptions = [];
   pendingIncoming.clear();
+  if (appairage) finirAppairage('annule');
+  relies.clear();
+  setStatus({ connectedPeers: [] });
   await MultipeerBridge.stopDiscovery();
   isRunning = false;
 };
@@ -291,10 +498,10 @@ export const getSyncStatus = (): SyncStatus => ({ ...status });
 export const forceSync = async (): Promise<number> => {
   if (!MultipeerBridge.isAvailable) return 0;
   const peers = await MultipeerBridge.getConnectedPeers();
-  if (peers.length === 0) return 0;
+  if (peers.length === 0 || Object.keys(paires).length === 0) return 0;
   try {
     await sendHandshake();
-    return peers.length;
+    return relies.size;
   } catch (err) {
     logger.error('[PeerSync] Erreur forceSync:', err);
     return 0;
@@ -316,12 +523,16 @@ const onPeerChanged = async (event: PeerChangedEvent) => {
   logger.info(`[PeerSync] ${peer} -> ${state}`);
 
   const peers = await MultipeerBridge.getConnectedPeers();
-  setStatus({ connectedPeers: peers });
 
   if (state === 'connected') {
     await sendHandshake();
+    await renvoyerDemande();
   } else if (state === 'disconnected') {
+    // on ne sait pas quel appareil appaire est parti (le natif ne donne que le nom affiche) : on revalide
+    relies.clear();
+    publierPaires();
     if (peers.length === 0) setStatus({ isSyncing: false, outdatedPeer: null });
+    else await sendHandshake();
   }
 };
 
@@ -331,14 +542,17 @@ const sendHandshake = async () => {
   let lastSyncTs = '1970-01-01 00:00:00';
   try { if (legacyRaw) lastSyncTs = JSON.parse(legacyRaw).legacyTs ?? lastSyncTs; } catch { /* ignore */ }
 
-  await MultipeerBridge.sendData({
-    type: 'HANDSHAKE',
-    v: PROTOCOL_VERSION,
-    device: myDeviceName,
-    from: myDeviceId,
-    since,
-    lastSyncTs, // lu par les appareils encore en v2
-  } satisfies SyncMessage);
+  for (const to of Object.keys(paires)) {
+    await envoyerA(to, {
+      type: 'HANDSHAKE',
+      v: PROTOCOL_VERSION,
+      device: myDeviceName,
+      from: myDeviceId,
+      to,
+      since,
+      lastSyncTs,
+    } satisfies SyncMessage);
+  }
 };
 
 // ============================================
@@ -346,37 +560,44 @@ const sendHandshake = async () => {
 // ============================================
 
 const onDataReceived = async (event: DataReceivedEvent) => {
-  let msg: SyncMessage;
+  let brut: any;
   try {
-    msg = JSON.parse(event.data) as SyncMessage;
+    brut = JSON.parse(event.data);
   } catch (err) {
     logger.error('[PeerSync] Message illisible:', err);
     return;
   }
 
-  // Message v3 adressé à un autre appareil : ignorer
-  if (msg.v === PROTOCOL_VERSION && msg.to && msg.to !== myDeviceId) return;
-
   try {
+    // Appairage : seuls messages acceptes en clair, et seulement pendant un appairage en cours
+    if (brut?.type === 'PAIR_REQUEST') { await recevoirDemande(brut as DemandeAppairage); return; }
+    if (brut?.type === 'PAIR_ACCEPT') { await recevoirAcceptation(brut as AcceptationAppairage); return; }
+
+    // Tout le reste doit etre une enveloppe chiffree, pour nous, d'un appareil appaire
+    if (brut?.type !== 'SEALED') return; // ancienne version ou inconnu : rien n'est lu, rien n'est renvoye
+    const env = brut as Enveloppe;
+    if (env.to !== myDeviceId) return;
+    const paire = paires[env.from];
+    if (!paire) return;
+    const clair = ouvrir(paire.cle, env);
+    if (!clair) return;
+    const msg = JSON.parse(clair) as SyncMessage;
+    if (msg.from !== env.from || msg.v !== PROTOCOL_VERSION) return;
+
+    if (!relies.has(env.from)) {
+      relies.set(env.from, paire.nom);
+      publierPaires();
+    }
+
     switch (msg.type) {
       case 'HANDSHAKE':
-        if (msg.v === PROTOCOL_VERSION) {
-          enqueue('envoi delta', () => sendDeltaTo(msg));
-        } else {
-          setStatus({ outdatedPeer: msg.device || event.peer });
-          enqueue('envoi réglages v2', () => sendLegacyKV(msg));
-        }
+        enqueue('envoi delta', () => sendDeltaTo(msg));
         break;
       case 'SYNC_DATA':
-        if (msg.v === PROTOCOL_VERSION) {
-          enqueue('import', () => handleSyncData(msg));
-        } else {
-          setStatus({ outdatedPeer: msg.device || event.peer });
-          enqueue('import réglages v2', () => handleLegacySyncData(event.peer, msg));
-        }
+        enqueue('import', () => handleSyncData(msg));
         break;
       case 'SYNC_ACK':
-        if (msg.v === PROTOCOL_VERSION) await handleAck(msg);
+        await handleAck(msg);
         break;
     }
   } catch (err) {
@@ -391,6 +612,7 @@ const onDataReceived = async (event: DataReceivedEvent) => {
 const sendDeltaTo = async (hs: SyncMessage) => {
   const peerId = hs.from;
   if (!peerId) return;
+  if (await demoBlocksSync()) return;
   const sinceMs = Number(hs.since?.[myDeviceId] ?? 0) || 0;
 
   setStatus({ isSyncing: true });
@@ -411,7 +633,7 @@ const sendDeltaTo = async (hs: SyncMessage) => {
     let totalRows = 0;
 
     const flush = async (last: boolean, kv3?: KVDelta) => {
-      await MultipeerBridge.sendData({
+      await envoyerA(peerId, {
         type: 'SYNC_DATA',
         v: PROTOCOL_VERSION,
         device: myDeviceName,
@@ -497,6 +719,7 @@ let suppressBackgroundScanUntil = 0;
 const handleSyncData = async (msg: SyncMessage) => {
   const from = msg.from;
   if (!from || !msg.syncId) return;
+  if (await demoBlocksSync()) return;
 
   setStatus({ isSyncing: true });
   try {
@@ -585,7 +808,7 @@ const handleSyncData = async (msg: SyncMessage) => {
         logger.warn(`[PeerSync] ${pending.failures} élément(s) non appliqué(s) : la synchro avec ${msg.device} sera reprise`);
       }
 
-      await MultipeerBridge.sendData({
+      await envoyerA(from, {
         type: 'SYNC_ACK',
         v: PROTOCOL_VERSION,
         device: myDeviceName,
@@ -1183,38 +1406,7 @@ async function tableColumns(db: any, table: string): Promise<Set<string>> {
 // COMPATIBILITÉ AVEC LES APPAREILS EN v2
 // ============================================
 
-/** Un appareil v2 ne reçoit que les réglages (format v2) : ses tables ne sont jamais touchées */
-const sendLegacyKV = async (hs: SyncMessage) => {
-  const kv = await collectKVDelta(hs.lastSyncTs ?? '1970-01-01 00:00:00');
-  await MultipeerBridge.sendData({
-    type: 'SYNC_DATA',
-    v: '2',
-    device: myDeviceName,
-    kv,
-    ts: formatKvTs(Date.now()),
-  } satisfies SyncMessage);
-};
-
-/** Données reçues d'un appareil v2 : on applique uniquement les réglages, jamais les tables */
-const handleLegacySyncData = async (peer: string, msg: SyncMessage) => {
-  if (msg.tables) {
-    logger.warn(`[PeerSync] ${msg.device || peer} utilise une ancienne version : données SQL ignorées (mettre à jour Yoroi sur cet appareil)`);
-  }
-  if (msg.kv) {
-    const n = await applyKVDelta(msg.kv);
-    if (n > 0) {
-      DeviceEventEmitter.emit('YOROI_PARTNERS_CHANGED');
-      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-    }
-  }
-  const ackTs = typeof msg.ts === 'string' ? msg.ts : formatKvTs(Date.now());
-  await MultipeerBridge.sendData({ type: 'SYNC_ACK', v: '2', device: myDeviceName, ackTs } satisfies SyncMessage);
-  // Pour les prochains échanges v2 : jusqu'où on a reçu
-  const raw = await AsyncStorage.getItem(LAST_SYNC_KEY);
-  let saved: any = {};
-  try { saved = raw ? JSON.parse(raw) : {}; } catch { /* ignore */ }
-  await AsyncStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ ...saved, legacyTs: ackTs }));
-};
+// Les appareils en v2 (sans chiffrement) ne recoivent plus rien depuis le 13 octobre 2026 : voir l'en-tete.
 
 // ============================================
 // RÉGLAGES (AsyncStorage)

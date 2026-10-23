@@ -1,11 +1,12 @@
 // ============================================
-// TRAINING TEMPLATES · Modeles de seance rapides
+// TRAINING TEMPLATES : Modeles de seance rapides
 // ============================================
 // Templates pre-remplis que l'utilisateur peut appliquer en 1 tap.
 // Stockes en AsyncStorage, editables.
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSportName } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 
 export interface TrainingTemplate {
@@ -26,10 +27,10 @@ export const DEFAULT_TEMPLATES: TrainingTemplate[] = [
   {
     id: 'bjj_classic',
     name: 'JJB classique',
-    type: 'Jiu-Jitsu Brésilien',
+    type: getSportName('jjb'),
     duration: 90,
     rpe: 7,
-    description: 'Echauffement · technique · sparring 5x5min · etirements.',
+    description: 'Echauffement, technique, sparring 5x5min, etirements.',
     icon: 'Swords',
     color: '#3B82F6',
     isBuiltIn: true,
@@ -51,7 +52,7 @@ export const DEFAULT_TEMPLATES: TrainingTemplate[] = [
     type: 'Musculation',
     duration: 60,
     rpe: 8,
-    description: 'Squat · Bench · Rowing · Core. 4x8.',
+    description: 'Squat, Bench, Rowing, Core. 4x8.',
     icon: 'Dumbbell',
     color: '#D4AF37',
     isBuiltIn: true,
@@ -62,7 +63,7 @@ export const DEFAULT_TEMPLATES: TrainingTemplate[] = [
     type: 'Musculation',
     duration: 60,
     rpe: 8,
-    description: 'Bench · Dev militaire · Dips · Extensions.',
+    description: 'Bench, Dev militaire, Dips, Extensions.',
     icon: 'Dumbbell',
     color: '#D4AF37',
     isBuiltIn: true,
@@ -73,7 +74,7 @@ export const DEFAULT_TEMPLATES: TrainingTemplate[] = [
     type: 'Musculation',
     duration: 60,
     rpe: 8,
-    description: 'Tractions · Rowing · Curls · Face pull.',
+    description: 'Tractions, Rowing, Curls, Face pull.',
     icon: 'Dumbbell',
     color: '#D4AF37',
     isBuiltIn: true,
@@ -84,7 +85,7 @@ export const DEFAULT_TEMPLATES: TrainingTemplate[] = [
     type: 'Musculation',
     duration: 60,
     rpe: 9,
-    description: 'Squat · RDL · Split · Mollets.',
+    description: 'Squat, RDL, Split, Mollets.',
     icon: 'Dumbbell',
     color: '#D4AF37',
     isBuiltIn: true,
@@ -106,7 +107,7 @@ export const DEFAULT_TEMPLATES: TrainingTemplate[] = [
     type: 'Course',
     duration: 30,
     rpe: 9,
-    description: '10x (30s allure 5k · 30s trot).',
+    description: '10x (30s allure 5k, 30s trot).',
     icon: 'Wind',
     color: '#EF4444',
     isBuiltIn: true,

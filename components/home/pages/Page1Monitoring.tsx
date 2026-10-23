@@ -388,7 +388,7 @@ interface Page1MonitoringProps {
   profilePhoto?: string | null;
   dailyQuote?: string | null;
   steps?: number;
-  calories?: number; // ✅ FIX: Calories depuis Apple Health
+  calories?: number; // FIX: Calories depuis Apple Health
   streak?: number;
   totalPoints?: number;
   level?: number;
@@ -682,7 +682,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
         </Animated.View>
       )}
 
-      {/* FlatList-style scroll natif · ultra-fluide iOS */}
+      {/* FlatList-style scroll natif, ultra-fluide iOS */}
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -904,7 +904,7 @@ const HydrationGridCard = memo(({ hydration, hydrationGoal, onAddWater, colors, 
 
       </ScrollView>
 
-      {/* Dot indicators · ronds noirs comme la carte Poids */}
+      {/* Dot indicators, ronds noirs comme la carte Poids */}
       <View style={hStyles.dots}>
         {[0, 1, 2].map(i => (
           <TouchableOpacity
@@ -1019,7 +1019,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   profilePhoto,
   dailyQuote,
   steps = 0,
-  calories = 0, // ✅ FIX: Calories depuis Apple Health
+  calories = 0, // FIX: Calories depuis Apple Health
   streak = 0,
   totalPoints = 0,
   level = 1,
@@ -1053,7 +1053,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const { s: rs, sv, isCompact } = useResponsive();
   const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
-  // La largeur des cards reste identique · on ne touche PAS aux marges horizontales.
+  // La largeur des cards reste identique, on ne touche PAS aux marges horizontales.
   // En mode compact, seul le gap vertical entre les rangées est réduit.
   const H_CARD_W = (SCREEN_WIDTH - CARD_PADDING * 2 - 12) / 2;
   const H_CARD_PAGE_W = H_CARD_W - CARD_BORDER_W * 2;
@@ -1408,10 +1408,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   }, [onRefresh]);
 
   const navToProfile = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/profile'); }, []);
-  const navToSettings = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/settings'); }, []);
+  const navToSettings = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/settings'); }, []);
   const navToStatsWeight = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/body-history', params: { metric: 'weight' } } as any); }, []);
-  const navToStatsBody = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/(tabs)/stats?tab=corps' as any); }, []);
-  const navToStatsSante = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé' } } as any); }, []);
+  const navToStatsBody = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/stats?tab=corps' as any); }, []);
+  const navToStatsSante = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé' } } as any); }, []);
   const navToBodyComposition = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/body-history', params: { metric: 'fat_percent' } } as any); }, []);
   const navToSleepInput = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/sleep-input'); }, []);
   const navToGoals = useCallback(() => { impactAsync(ImpactFeedbackStyle.Light); router.push('/goals'); }, []);
@@ -1589,7 +1589,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               </View>
             </View>
 
-            {/* ScrollView horizontal · scroll natif ultra-fluide */}
+            {/* ScrollView horizontal, scroll natif ultra-fluide */}
             <ScrollView
               horizontal
               pagingEnabled
@@ -2023,7 +2023,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={(e) => { setSommeilPage(Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width)); }} scrollEventThrottle={16}>
 
               {/* ── Page 1: Ciel nuit bleu marine + Valeur ── */}
-              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé' } } as any); }} style={{ width: CARD_W, paddingBottom: 6 }}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé' } } as any); }} style={{ width: CARD_W, paddingBottom: 6 }}>
                 <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', position: 'relative', marginTop: 2 }}>
                   {/* Fond ciel bleu marine - pleine largeur */}
                   <LinearGradient colors={[NIGHT_DEEP, NIGHT, '#1E3A5F']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 10, borderRadius: 0 }} />
@@ -2187,42 +2187,42 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               {/* ── Page 1: Données Santé (Pas, FC, SpO2, Resp, Kcal, Distance) ── */}
               <View style={{ width: CARD_W, paddingHorizontal: 12, paddingVertical: 4, justifyContent: 'center' }}>
                 <View style={{ gap: 6 }}>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Footprints size={16} color="#3B82F6" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#3B82F6' }}>{steps > 0 ? steps.toLocaleString('fr-FR') : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.steps')}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Heart size={16} color="#EC4899" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#EC4899' }}>{healthData.heartRate ? `${Math.round(healthData.heartRate.min)}-${Math.round(healthData.heartRate.max)}` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.bpm')}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Droplet size={16} color="#0EA5E9" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#0EA5E9' }}>{healthData.oxygen != null ? `${healthData.oxygen}%` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.spo2')}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Wind size={16} color="#8B5CF6" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#8B5CF6' }}>{healthData.respiratory != null ? `${Math.round(healthData.respiratory)}` : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.respPerMin')}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'calories' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'calories' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Flame size={16} color="#F97316" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#F97316' }}>{calories > 0 ? (calories % 1 === 0 ? calories.toString() : calories.toFixed(1)) : '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.kcal')}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <MaterialCommunityIcons name="map-marker-distance" size={16} color="#06B6D4" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#06B6D4' }}>{healthData.distance != null ? `${healthData.distance.toFixed(2)}` : '--'}</Text>
@@ -2235,7 +2235,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               {/* ── Page 2: Suite données (Exercice, Debout, FC repos, Sommeil) ── */}
               <View style={{ width: CARD_W, paddingHorizontal: 12, paddingVertical: 4, justifyContent: 'center' }}>
                 <View style={{ gap: 8 }}>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Activity size={16} color="#10B981" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#10B981' }}>
@@ -2250,7 +2250,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                       </Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'pas' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <MaterialCommunityIcons name="human-greeting-variant" size={16} color="#0A84FF" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#0A84FF' }}>
@@ -2263,14 +2263,14 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.standing')}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'signesVitaux' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Heart size={16} color="#EF4444" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#EF4444' }}>{healthData.heartRate?.resting ?? '--'}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{t('common.restingBpm')}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/(tabs)/stats', params: { tab: 'santé', section: 'sommeil' } } as any); }}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.push({ pathname: '/stats', params: { tab: 'santé', section: 'sommeil' } } as any); }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Moon size={16} color="#6366F1" />
                       <Text style={{ fontSize: 16, fontWeight: '800', color: '#6366F1' }}>{sleepHours > 0 ? `${Math.floor(sleepHours)}h${Math.round((sleepHours % 1) * 60) > 0 ? Math.round((sleepHours % 1) * 60).toString().padStart(2, '0') : ''}` : '--'}</Text>

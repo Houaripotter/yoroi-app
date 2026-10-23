@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER MONTHLY MISSION · Objectif du mois auto-genere
+// PARTNER MONTHLY MISSION : Objectif du mois auto-genere
 // ============================================
 
 import React, { useEffect, useState } from 'react';
@@ -57,7 +57,7 @@ export const PartnerMonthlyMissionCard: React.FC<Props> = ({ partnerId }) => {
         <View style={[styles.progressFill, { width: `${progressPct}%`, backgroundColor: color }]} />
       </View>
       <Text style={[styles.progressText, { color: colors.textMuted }]}>
-        {mission.progress} / {mission.targetValue}{done ? ' · Accompli' : ''}
+        {mission.progress} / {mission.targetValue}{done ? ', Accompli' : ''}
       </Text>
     </View>
   );

@@ -105,7 +105,7 @@ export function BadgeProvider({ children }: BadgeProviderProps) {
           title="Badge débloqué !"
           subtitle={`${celebratingBadge.name}\n${celebratingBadge.description}`}
           xpGained={celebratingBadge.xpReward}
-          icon="🏆"
+          icon=""
           onClose={closeCelebration}
           autoClose={true}
           autoCloseDelay={5000}

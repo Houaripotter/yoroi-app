@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER EXTENDED EDITOR · Archétype, Niveau, Écart physique
+// PARTNER EXTENDED EDITOR : Archétype, Niveau, Écart physique
 // ============================================
 // Composant que l'on peut inserer dans la fiche partenaire pour editer
 // les nouveaux champs etendus.

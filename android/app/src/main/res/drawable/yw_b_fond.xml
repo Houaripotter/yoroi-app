@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item>
+    <shape android:shape="rectangle">
+      <solid android:color="@color/yw_b_fond" />
+      <corners android:radius="@dimen/yw_rayon" />
+    </shape>
+  </item>
+  <item>
+    <bitmap android:src="@drawable/yw_b_washi" android:tileMode="repeat" />
+  </item>
+  <item>
+    <shape android:shape="rectangle">
+      <gradient android:type="radial" android:gradientRadius="75%p" android:centerX="0.5" android:centerY="0.5"
+          android:startColor="@color/yw_b_bord" android:endColor="@color/yw_b_bord_fin" />
+      <corners android:radius="@dimen/yw_rayon" />
+    </shape>
+  </item>
+</layer-list>

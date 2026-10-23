@@ -26,7 +26,7 @@ export const DEFAULT_TAB_ORDER: TabItem[] = [
   { id: 'carnet',   label: 'Carnet',    icon: 'BookOpen', order: 2, side: 'left',  enabled: true },
   { id: 'planning', label: 'Planning',  icon: 'Calendar', order: 0, side: 'right', enabled: true },
   { id: 'more',     label: 'Outils',    icon: 'Wrench',   order: 1, side: 'right', enabled: true },
-  // { id: 'profile' } — supprimé : onglet inexistant dans la navigation
+  // { id: 'profile' }, supprimé : onglet inexistant dans la navigation
   { id: 'settings', label: 'Réglages',  icon: 'Settings', order: 2, side: 'right', enabled: true },
 ];
 

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { getSportName } from '@/lib/sports';
 import {
   Modal,
   View,
@@ -27,15 +28,15 @@ interface ExercisePickerModalProps {
 const CATEGORY_LABELS: Record<string, string> = {
   musculation: 'Musculation',
   cardio: 'Cardio',
-  jjb: 'JJB',
+  jjb: getSportName('jjb'),
   mma: 'MMA',
   boxe: 'Boxe',
   judo: 'Judo',
-  muay_thai: 'Muay Thai',
+  muay_thai: getSportName('muay_thai'),
   karate: 'Karaté',
   lutte: 'Lutte',
   crossfit: 'CrossFit',
-  running: 'Running',
+  running: getSportName('running'),
   natation: 'Natation',
   velo: 'Vélo',
   yoga: 'Yoga',

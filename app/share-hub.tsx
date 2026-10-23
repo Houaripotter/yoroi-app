@@ -1,399 +1,117 @@
-// ============================================
-// YOROI - HUB DE PARTAGE (Style Yoroi)
-// Templates avec photo utilisateur mise en avant
-// ============================================
-
+/**
+ * Hub de partage (refonte v2) : choisis la carte a partager. Chaque tuile montre un apercu
+ * illustre de la carte (plaques, guerrier, gros chiffre).
+ */
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { Image, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  ChevronLeft,
-  Trophy,
-  Calendar,
-  TrendingUp,
-  Share2,
-  Camera,
-  Lightbulb,
-  Swords,
-} from 'lucide-react-native';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { Enter, Glass, P, Press } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { Plate, figureFor, paletteOf } from '@/components/yoroi/v2/partage/cardKit';
+import { useCardIdentity } from '@/lib/v2/partage/identity';
 
-// ============================================
-// TEMPLATES DISPONIBLES
-// ============================================
+const papier = paletteOf('papier');
+const laque = paletteOf('laque');
 
-interface ShareTemplate {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  icon: React.ElementType;
-  route: string;
-  gradient: readonly [string, string];
-  badge?: string;
-}
+type Tile = { id: string; title: string; text: string; route: string; dark?: boolean; visual: 'plates7' | 'month' | 'year' | 'session' | 'fighter' | 'wrapped' | 'duel' };
 
-const SHARE_TEMPLATES: ShareTemplate[] = [
-  {
-    id: 'year-counter',
-    title: 'Compteur Annuel',
-    subtitle: 'Le fameux X/365',
-    description: 'Affiche ton compteur annuel avec ta photo. Le plus viral ! 11/208 jours + tes clubs.',
-    icon: Trophy,
-    route: '/social-share/year-counter-v2',
-    gradient: ['#F59E0B', '#FBBF24'],
-    badge: 'VIRAL',
-  },
-  {
-    id: 'weekly-recap',
-    title: 'Récap Hebdo',
-    subtitle: 'Ta semaine d\'entraînement',
-    description: 'Calendrier visuel de ta semaine avec ta photo. Parfait pour Stories Instagram.',
-    icon: Calendar,
-    route: '/social-share/weekly-recap-v2',
-    gradient: ['#10B981', '#34D399'],
-    badge: 'POPULAIRE',
-  },
-  {
-    id: 'monthly-recap',
-    title: 'Récap Mensuel',
-    subtitle: 'Ton mois de warrior',
-    description: 'Vue d\'ensemble de ton mois avec toutes tes stats et ta photo.',
-    icon: TrendingUp,
-    route: '/social-share/monthly-recap-v2',
-    gradient: ['#3B82F6', '#60A5FA'],
-  },
-  {
-    id: 'duel-card',
-    title: 'Carte de Duel',
-    subtitle: 'Toi VS ton partenaire',
-    description: 'Ton bilan face à un partenaire de sparring : V-D-N, win rate, techniques. Choisis ton adversaire.',
-    icon: Swords,
-    route: '/sparring-partners',
-    gradient: ['#EF4444', '#EC4899'],
-    badge: 'NOUVEAU',
-  },
+const TILES: Tile[] = [
+  { id: 'session', title: 'Ma séance', text: 'La dernière, en grand', route: '/social-share/last-session', visual: 'session' },
+  { id: 'week', title: 'Ma semaine', text: 'Un rond par jour', route: '/social-share/weekly-recap-v2', visual: 'plates7', dark: true },
+  { id: 'month', title: 'Mon mois', text: 'Tes jours en un regard', route: '/social-share/monthly-recap-v2', visual: 'month', dark: true },
+  { id: 'year', title: 'Mon année', text: 'Ton compteur de jours', route: '/social-share/year-counter-v2', visual: 'year' },
+  { id: 'fighter', title: 'Carte de combattant', text: 'Tes chiffres de combattant', route: '/fighter-card', visual: 'fighter' },
+  { id: 'wrapped', title: 'Bilan de l’année', text: 'L’histoire de ton année', route: '/wrapped', visual: 'wrapped', dark: true },
+  { id: 'duel', title: 'Carte de duel', text: 'Toi contre ton partenaire', route: '/sparring-partners', visual: 'duel' },
 ];
 
-// ============================================
-// COMPOSANT PRINCIPAL
-// ============================================
-
 export default function ShareHubScreen() {
-  const { t } = useI18n();
-  const { colors, isDark } = useTheme();
+  const { width } = useWindowDimensions();
+  const id = useCardIdentity();
+  const tileW = Math.floor((width - 44 - 12) / 2);
+  const fig = figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre });
 
-  const renderTemplate = (template: ShareTemplate) => {
-    return (
-      <TouchableOpacity
-        key={template.id}
-        style={[styles.templateCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-        onPress={() => router.push(template.route as any)}
-        activeOpacity={0.85}
-      >
-        {/* Badge */}
-        {template.badge && (
-          <View style={[styles.badge, { backgroundColor: template.gradient[0] }]}>
-            <Text style={styles.badgeText}>{template.badge}</Text>
+  const visual = (t: Tile) => {
+    const p = t.dark ? laque : papier;
+    switch (t.visual) {
+      case 'plates7':
+        return (
+          <View style={{ flexDirection: 'row', gap: 3 }}>
+            {[1, 1, 0, 1, 1, 0, 0].map((on, i) => <Plate key={i} p={p} on={!!on} w={Math.floor((tileW - 44) / 7) - 2} />)}
           </View>
-        )}
-
-        <View style={styles.templateContent}>
-          {/* Icône */}
-          <LinearGradient
-            colors={[...template.gradient]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.iconGradient}
-          >
-            <template.icon size={32} color="#FFFFFF" strokeWidth={2.5} />
-          </LinearGradient>
-
-          {/* Textes */}
-          <View style={styles.textContainer}>
-            <Text style={[styles.templateTitle, { color: colors.textPrimary }]}>
-              {template.title}
-            </Text>
-            <Text style={[styles.templateSubtitle, { color: colors.textSecondary }]}>
-              {template.subtitle}
-            </Text>
-            <Text style={[styles.templateDescription, { color: colors.textMuted }]} numberOfLines={2}>
-              {template.description}
-            </Text>
+        );
+      case 'month':
+        return (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, width: tileW - 32 }}>
+            {Array.from({ length: 21 }).map((_, i) => (
+              <View key={i} style={{ width: Math.floor((tileW - 32 - 18) / 7), height: 14, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: [0, 2, 3, 6, 8, 9, 11, 13, 15, 16, 18, 20].includes(i) ? p.plate : 'transparent', borderWidth: [0, 2, 3, 6, 8, 9, 11, 13, 15, 16, 18, 20].includes(i) ? 0 : 1, borderStyle: 'dashed', borderColor: p.plateEmpty }} />
+              </View>
+            ))}
           </View>
-
-          {/* Icône Camera */}
-          <View style={[styles.cameraIcon, { backgroundColor: `${template.gradient[0]}15` }]}>
-            <Camera size={18} color={template.gradient[0]} strokeWidth={2.5} />
+        );
+      case 'year':
+        return (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, width: tileW - 40, justifyContent: 'center' }}>
+            {Array.from({ length: 12 }).map((_, i) => <Plate key={i} p={p} on={i < 7} partial={i === 7} w={Math.floor((tileW - 40) / 6) - 4} />)}
           </View>
-        </View>
-      </TouchableOpacity>
-    );
+        );
+      case 'wrapped':
+        return <Glyph kind="laurier" size={60} color={p.gold} />;
+      case 'duel':
+        return (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Image source={fig} style={{ width: tileW * 0.3, height: tileW * 0.42 }} resizeMode="contain" />
+            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={11} weight="black" color={P.white}>VS</Ink>
+            </View>
+            <Image source={fig} style={{ width: tileW * 0.3, height: tileW * 0.42, transform: [{ scaleX: -1 }], opacity: 0.55 }} resizeMode="contain" />
+          </View>
+        );
+      default:
+        return <Image source={fig} style={{ width: tileW * 0.6, height: tileW * 0.62 }} resizeMode="contain" />;
+    }
   };
 
   return (
-    <ScreenWrapper>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.card }]}
-          onPress={() => router.back()}
-        >
-          <ChevronLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            {t('shareHub.title')}
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            {t('shareHub.subtitle')}
-          </Text>
-        </View>
-
-        <View style={{ width: 44 }} />
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Hero Banner */}
-        <LinearGradient
-          colors={[colors.accent, colors.accentDark || colors.accent]}
-          style={[styles.heroBanner, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
-        >
-          <Share2 size={40} color={colors.textOnAccent} strokeWidth={2.5} />
-          <Text style={[styles.heroTitle, { color: colors.textOnAccent }]}>
-            {t('shareHub.heroTitle')}
-          </Text>
-          <Text style={[styles.heroText, { color: colors.textOnAccent, opacity: 0.8 }]}>
-            {t('shareHub.heroText')}
-          </Text>
-        </LinearGradient>
-
-        {/* Section Title */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {t('shareHub.templatesSection')}
-          </Text>
-          <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-            {SHARE_TEMPLATES.length}
-          </Text>
-        </View>
-
-        {/* Templates List */}
-        <View style={styles.templatesList}>
-          {SHARE_TEMPLATES.map(template => renderTemplate(template))}
-        </View>
-
-        {/* Tips */}
-        <View style={[styles.tipCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <View style={styles.tipTitleRow}>
-            <Lightbulb size={18} color={isDark ? colors.accent : '#1A1A1A'} />
-            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>
-              {t('shareHub.proTip')}
-            </Text>
+    <DetailScreen title="Partager" subtitle="Des cartes faites pour tes stories">
+      <Enter i={0}>
+        <Press onPress={() => router.push('/mes-cartes' as any)} accessibilityRole="button" accessibilityLabel="Mes cartes">
+        <View style={{ borderRadius: 26, overflow: 'hidden', height: 220 }}>
+          <Image source={sceneMeta('dojo').image} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" />
+          <Image source={fig} style={{ position: 'absolute', right: -6, bottom: 0, width: 170, height: 214 }} resizeMode="contain" />
+          <View style={{ flex: 1, justifyContent: 'flex-end', padding: 14 }}>
+            <Glass style={{ maxWidth: '64%', padding: 14, gap: 4 }}>
+              <Ink size={20} weight="black" tight>Mes cartes</Ink>
+              <Ink size={13} weight="medium" color={P.ink2}>Tes séances, tes pesées et tes semaines, prêtes à poster</Ink>
+            </Glass>
           </View>
-          <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-            {t('shareHub.proTipText')}
-          </Text>
         </View>
+        </Press>
+      </Enter>
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </ScreenWrapper>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        {TILES.map((t, i) => {
+          const p = t.dark ? laque : papier;
+          return (
+            <Enter key={t.id} i={i + 1}>
+              <Press onPress={() => router.push(t.route as any)} accessibilityRole="button" accessibilityLabel={t.title}>
+                <View style={{ width: tileW, height: tileW * 1.2, borderRadius: 22, overflow: 'hidden', backgroundColor: t.dark ? '#1D2029' : P.white, borderWidth: 1, borderColor: t.dark ? '#1D2029' : P.line2, padding: 14, justifyContent: 'space-between' }}>
+                  <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: P.accent }} />
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>{visual(t)}</View>
+                  <View style={{ gap: 1 }}>
+                    <Ink size={15} weight="black" tight color={p.ink} numberOfLines={2}>{t.title}</Ink>
+                    <Ink size={12} weight="medium" color={p.muted} numberOfLines={2}>{t.text}</Ink>
+                  </View>
+                </View>
+              </Press>
+            </Enter>
+          );
+        })}
+      </View>
+    </DetailScreen>
   );
 }
-
-// ============================================
-// STYLES
-// ============================================
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-
-  // Hero Banner
-  heroBanner: {
-    padding: 28,
-    borderRadius: 24,
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 32,
-    borderWidth: 1,
-  },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginTop: 4,
-  },
-  heroText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 320,
-  },
-
-  // Section Header
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-  },
-  sectionCount: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  // Templates List
-  templatesList: {
-    gap: 16,
-  },
-  templateCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 18,
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  badge: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-  },
-  templateContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  iconGradient: {
-    width: 72,
-    height: 72,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  textContainer: {
-    flex: 1,
-    gap: 4,
-  },
-  templateTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  templateSubtitle: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  templateDescription: {
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  cameraIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Tips
-  tipCard: {
-    marginTop: 24,
-    padding: 18,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  tipTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  tipTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  tipText: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
-});

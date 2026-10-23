@@ -3,6 +3,7 @@
 // ============================================
 
 import { Platform } from 'react-native';
+import { baseOuVitrine } from '@/lib/v2/visite/vitrine';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import {
@@ -28,7 +29,8 @@ let tablesInitialized = false;
 
 if (isNativePlatform) {
   SQLite = require('expo-sqlite');
-  db = SQLite.openDatabaseSync('yoroi.db');
+  // 18 octobre 2026 : pendant la visite guidee avec l'exemple, la meme poignee lit la base de la vitrine (lib/v2/visite/vitrine.ts)
+  db = baseOuVitrine(SQLite.openDatabaseSync('yoroi.db'));
 }
 
 // ✅ FIX: S'assurer que la table competitions existe
@@ -156,7 +158,7 @@ export const getUserProfile = async (): Promise<UserProfile> => {
 
 export const getCompetitions = async (): Promise<Competition[]> => {
   try {
-    ensureCompetitionsTable(); // ✅ FIX: S'assurer que la table existe
+    ensureCompetitionsTable(); // FIX: S'assurer que la table existe
     const result = db.getAllSync(
       'SELECT * FROM competitions ORDER BY date ASC'
     );
@@ -290,7 +292,7 @@ export const getCompetitionById = async (id: number): Promise<Competition | null
 
 export const addCompetition = async (competition: Omit<Competition, 'id' | 'created_at'>): Promise<number> => {
   try {
-    ensureCompetitionsTable(); // ✅ FIX: S'assurer que la table existe
+    ensureCompetitionsTable(); // FIX: S'assurer que la table existe
     const result = db.runSync(
       `INSERT INTO competitions (nom, date, lieu, sport, categorie_poids, poids_max, statut)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,

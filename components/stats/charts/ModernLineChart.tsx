@@ -90,7 +90,7 @@ export const ModernLineChart: React.FC<ModernLineChartProps> = React.memo(({
         </Text>
       )}
 
-      {/* Graphique scrollable · utilise la version échantillonnée pour rester fluide */}
+      {/* Graphique scrollable, utilise la version échantillonnée pour rester fluide */}
       <ScrollableLineChart
         data={sampledData}
         color={color}

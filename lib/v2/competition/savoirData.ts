@@ -1,0 +1,746 @@
+/**
+ * Contenu de l'ecran Savoir : fiches scientifiques et protocoles d'entrainement.
+ * Repris tel quel de l'ancien ecran (memes identifiants, pour garder la progression de lecture).
+ */
+export interface ScienceCard {
+  id: string;
+  title: string;
+  icon: string;
+  category: string;
+  content: {
+    what: string;
+    why: string;
+    how: string;
+    sourceName: string;
+    sourceUrl: string;
+  };
+}
+
+export interface ProtocolCard {
+  id: string;
+  title: string;
+  icon: string;
+  category: string;
+  difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé';
+  content: {
+    objective: string;
+    duration: string;
+    protocol: string[];
+    frequency: string;
+    notes: string;
+  };
+}
+
+export const scienceData: ScienceCard[] = [
+  {
+    id: '1',
+    title: "La Marche Inclinée (LISS)",
+    icon: "slope-uphill",
+    category: "Cardio",
+    content: {
+      what: "Marcher sur un tapis avec une inclinaison (12-15%) à vitesse modérée (4-5 km/h).",
+      why: "L'inclinaison augmente la dépense énergétique de +50% vs le plat sans l'impact articulaire de la course. Une étude prouve qu'elle recrute massivement la chaîne postérieure (fessiers/ischios) et élève le métabolisme post-effort.",
+      how: "Protocole '12-3-30' ou variante : 12% de pente, 5 km/h, 30 min. Idéal en fin de séance musculation.",
+      sourceName: "Étude : Ehlen et al. (2011), J Strength Cond Res",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21904245/"
+    }
+  },
+  {
+    id: '2',
+    title: "Déficit Calorique : La Loi Physique",
+    icon: "scale-balance",
+    category: "Nutrition",
+    content: {
+      what: "Consommer moins d'énergie que ton corps n'en dépense. C'est la seule condition physiologique obligatoire pour perdre du gras.",
+      why: "C'est la Première Loi de la Thermodynamique. Peu importe le régime (Keto, Jeûne, Paleo), s'il n'y a pas de déficit, il n'y a pas de perte de gras. Kevin Hall (NIH) a prouvé que c'est le bilan énergétique qui pilote le poids, pas l'insuline seule.",
+      how: "Calcule ton maintien (TDEE) et retire 300 à 500 kcal. Ne descends jamais sous ton métabolisme de base (BMR).",
+      sourceName: "Étude : Hall et al. (2017), NIH / Am J Clin Nutr",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/28765272/"
+    }
+  },
+  {
+    id: '3',
+    title: "La Zone 2 : Usine à Mitochondries",
+    icon: "heart-pulse",
+    category: "Endurance",
+    content: {
+      what: "L'intensité où le lactate reste stable (< 2 mmol/L). Tu peux tenir une conversation.",
+      why: "C'est la seule zone qui améliore la 'flexibilité métabolique' : la capacité de tes cellules à utiliser le gras comme carburant principal. San Millán a prouvé que c'est le marqueur #1 de la santé métabolique.",
+      how: "45-60 min en continu, 1 à 2 fois/semaine. Reste strict : si tu es essoufflé, tu perds les bénéfices mitochondriaux.",
+      sourceName: "Étude : San Millán & Brooks (2018), Cell Metab",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/29283004/"
+    }
+  },
+  {
+    id: '4',
+    title: "Protéines & TEF",
+    icon: "food-steak",
+    category: "Nutrition",
+    content: {
+      what: "Le macronutriment bâtisseur.",
+      why: "L'Effet Thermique (TEF) des protéines est de 20-30%. Pour 100kcal ingérées, 25 sont brûlées par la digestion (contre 3% pour le gras). De plus, elles sont les plus rassasiantes via la sécrétion de l'hormone PYY.",
+      how: "Vise 1.6g à 2.2g par kg de poids. Une source à chaque repas.",
+      sourceName: "Consensus : ISSN Position Stand (2017)",
+      sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8"
+    }
+  },
+  {
+    id: '5',
+    title: "Fibres : L'Ozempic Naturel",
+    icon: "barley",
+    category: "Nutrition",
+    content: {
+      what: "Glucides non digestibles présents dans les végétaux.",
+      why: "Les fibres solubles gonflent dans l'estomac et déclenchent la libération de GLP-1 (l'hormone de satiété imitée par les médicaments). Elles nourrissent aussi le microbiote qui régule le poids.",
+      how: "Mange 30g de fibres par jour (Légumes verts, avoine, graines de chia, pommes). Mange tes légumes en premier dans le repas.",
+      sourceName: "Recherche : Slavin (2005), Nutrition",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15797686/"
+    }
+  },
+  {
+    id: '6',
+    title: "Sommeil & Risque de Blessure",
+    icon: "bed-clock",
+    category: "Récupération",
+    content: {
+      what: "Le pilier oublié de la performance.",
+      why: "Dormir < 8h augmente le risque de blessure de 1.7x. Le manque de sommeil élève le cortisol (catabolique) et bloque l'hormone de croissance. C'est pendant la nuit que le gras s'oxyde et le muscle se répare.",
+      how: "Chambre fraîche (18°C). Pas d'écrans 1h avant (lumière bleue bloque la mélatonine).",
+      sourceName: "Étude : Milewski et al. (2014), J Pediatr Orthop",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/25028798/"
+    }
+  },
+  {
+    id: '7',
+    title: "Hydratation & Thermogenèse",
+    icon: "water",
+    category: "Métabolisme",
+    content: {
+      what: "L'impact de l'eau sur la dépense énergétique.",
+      why: "Boire 500ml d'eau augmente le métabolisme de 30% pendant l'heure qui suit (thermogenèse induite par l'eau). Une déshydratation de 2% baisse les performances de 10-20%.",
+      how: "Bois 500ml d'eau dès le réveil. Bois 1 verre avant chaque repas.",
+      sourceName: "Étude : Boschmann et al. (2003), JCEM",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/14671205/"
+    }
+  },
+  {
+    id: '8',
+    title: "NEAT : L'Activité Invisible",
+    icon: "walk",
+    category: "Activité",
+    content: {
+      what: "Non-Exercise Activity Thermogenesis (Activité hors sport).",
+      why: "Le Dr Levine a prouvé que la différence entre une personne mince et en surpoids réside souvent dans ces 2h de mouvement inconscient par jour. C'est 500 à 800 kcal 'gratuites'.",
+      how: "Téléphone debout. Gare-toi loin. Prends les escaliers. Vise 8000 pas hors séance.",
+      sourceName: "Recherche : Levine (2002), Science",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/12468415/"
+    }
+  },
+  {
+    id: '9',
+    title: "Entraînement en Force & Longévité",
+    icon: "dumbbell",
+    category: "Force",
+    content: {
+      what: "La musculation 2-3 fois par semaine augmente l'espérance de vie.",
+      why: "Une méta-analyse de 2022 montre que l'entraînement en force réduit la mortalité toutes causes de 15%. Il préserve la masse musculaire (sarcopénie) et améliore la sensibilité à l'insuline.",
+      how: "2 séances minimum par semaine. Travaille tous les groupes musculaires. 3 séries de 8-12 répétitions.",
+      sourceName: "Méta-analyse : Momma et al. (2022), Br J Sports Med",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/35228201/"
+    }
+  },
+  {
+    id: '10',
+    title: "Créatine : Le Supplément #1",
+    icon: "supplement",
+    category: "Supplémentation",
+    content: {
+      what: "Composé naturel présent dans la viande, améliore la production d'ATP.",
+      why: "C'est le supplément le plus étudié et efficace. +5-15% de force, +2kg de muscle en 8 semaines, améliore la cognition. Plus de 1000 études confirment son efficacité et sa sécurité.",
+      how: "5g par jour, tous les jours. Monohydrate (la forme la moins chère est la meilleure). Pas besoin de phase de charge.",
+      sourceName: "Position Stand : ISSN (2017), J Int Soc Sports Nutr",
+      sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0173-z"
+    }
+  },
+  {
+    id: '11',
+    title: "Repos Inter-Séries : La Durée Compte",
+    icon: "clock",
+    category: "Force",
+    content: {
+      what: "Le temps de repos entre les séries influence l'hypertrophie.",
+      why: "Schoenfeld a démontré que 3 minutes de repos = +20% de gains musculaires vs 1 minute. Le repos permet la restauration des phosphocréatines et maintient l'intensité.",
+      how: "Force (1-5 reps) : 3-5 min. Hypertrophie (8-12 reps) : 2-3 min. Endurance (15+ reps) : 1-2 min.",
+      sourceName: "Étude : Schoenfeld et al. (2016), J Strength Cond Res",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/26605807/"
+    }
+  },
+  {
+    id: '12',
+    title: "Timing Protéines : Le Mythe de la Fenêtre",
+    icon: "food-steak",
+    category: "Nutrition",
+    content: {
+      what: "La 'fenêtre anabolique' post-training est surestimée.",
+      why: "Aragon & Schoenfeld montrent que le TOTAL protéique quotidien compte plus que le timing. La fenêtre est en réalité de 4-6h, pas 30 minutes.",
+      how: "Assure ton quota journalier (1.6-2.2g/kg). Répartis sur 3-4 repas. Le shake post-training n'est pas obligatoire.",
+      sourceName: "Review : Aragon & Schoenfeld (2013), J Int Soc Sports Nutr",
+      sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/1550-2783-10-5"
+    }
+  },
+  {
+    id: '13',
+    title: "Récupération Active vs Passive",
+    icon: "activity",
+    category: "Récupération",
+    content: {
+      what: "Bouger légèrement entre les séances accélère la récupération.",
+      why: "La récupération active (marche, vélo léger) augmente le flux sanguin et élimine le lactate 2x plus vite que rester assis. Réduit les courbatures (DOMS) de 30%.",
+      how: "Jour de repos = 20-30 min de marche ou vélo très léger (Zone 1). Évite le repos total complet.",
+      sourceName: "Étude : Menzies et al. (2010), Sports Med",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20199122/"
+    }
+  },
+  {
+    id: '14',
+    title: "Étirements : Quand et Comment",
+    icon: "stretch",
+    category: "Mobilité",
+    content: {
+      what: "Les étirements statiques avant l'effort réduisent la force.",
+      why: "Behm a prouvé que s'étirer avant diminue la production de force de 5-8%. Par contre, après l'effort, ils améliorent la récupération et la flexibilité.",
+      how: "Avant : échauffement dynamique. Après : étirements statiques (30s par muscle). Ou session dédiée mobilité.",
+      sourceName: "Review : Behm & Blazevich (2011), Scand J Med Sci Sports",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21410544/"
+    }
+  },
+  {
+    id: '15',
+    title: "Masse Musculaire & Métabolisme au Repos",
+    icon: "muscle",
+    category: "Force",
+    content: {
+      what: "Le muscle brûle des calories même au repos.",
+      why: "1 kg de muscle brûle ~13 kcal/jour vs 4 kcal pour la graisse. Gagner 5kg de muscle = +65 kcal/jour soit 24 000 kcal/an (3kg de gras potentiels).",
+      how: "Programme force 3x/semaine. Surplus calorique modéré (+200-300 kcal). Patience : 0.5-1kg muscle/mois max.",
+      sourceName: "Recherche : Wang et al. (2010), Am J Clin Nutr",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20200263/"
+    }
+  },
+  {
+    id: '16',
+    title: "Café & Performance",
+    icon: "coffee",
+    category: "Performance",
+    content: {
+      what: "La caféine est l'ergogène légal le plus puissant.",
+      why: "3-6 mg/kg de caféine augmente la performance de 3-7% (endurance, force, sprint). Bloque l'adénosine = moins de fatigue perçue.",
+      how: "200-400mg (2-4 expressos) 45-60 min avant l'effort. Évite si sensible ou entraînement soir.",
+      sourceName: "Position Stand : ISSN (2021), J Int Soc Sports Nutr",
+      sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-020-00383-4"
+    }
+  },
+  {
+    id: '17',
+    title: "Progression : Surcharge Progressive",
+    icon: "trending-up",
+    category: "Force",
+    content: {
+      what: "Le principe fondamental de tous les gains en force et masse.",
+      why: "Sans augmentation du stimulus (poids, reps, volume), le muscle s'adapte et stagne. La surcharge est LA loi de l'adaptation musculaire.",
+      how: "Chaque semaine : ajoute 1-2 reps OU +2.5kg OU 1 série supplémentaire. Tiens un carnet d'entraînement.",
+      sourceName: "Principe : Kraemer & Ratamess (2004), Med Sci Sports Exerc",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15064596/"
+    }
+  },
+  {
+    id: '18',
+    title: "Cortisol & Stress Chronique",
+    icon: "stress",
+    category: "Récupération",
+    content: {
+      what: "L'hormone du stress détruit le muscle si elle reste élevée.",
+      why: "Le cortisol chroniquement élevé bloque la testostérone, augmente le stockage abdominal et freine la récupération. C'est l'ennemi #1 de la composition corporelle.",
+      how: "Dors 8h. Médite 10 min/jour. Limite le cardio excessif. Prends des jours OFF complets.",
+      sourceName: "Étude : Epel et al. (2000), Psychosom Med",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/11020090/"
+    }
+  },
+  {
+    id: '19',
+    title: "La Règle des 66 Jours",
+    icon: "brain",
+    category: "Mental",
+    content: {
+      what: "Le temps moyen nécessaire pour qu'un nouveau comportement devienne automatique. Ce n'est PAS 21 jours (mythe populaire sans fondement scientifique).",
+      why: "Lally et al. (2010) ont suivi 96 personnes pendant 12 semaines. Résultat : en moyenne 66 jours pour atteindre l'automaticité. La fourchette va de 18 à 254 jours selon la complexité de l'habitude.",
+      how: "Commence petit (2 min d'exercice suffit). Attache la nouvelle habitude à une existante (après le café du matin). Ne casse jamais la chaîne 2 jours de suite. Sois patient : les 3 premières semaines sont les plus difficiles.",
+      sourceName: "Étude : Lally et al. (2010), Eur J Soc Psychol",
+      sourceUrl: "https://onlinelibrary.wiley.com/doi/abs/10.1002/ejsp.674"
+    }
+  },
+  {
+    id: '20',
+    title: "Dormir Moins Bête : Le Sommeil Profond",
+    icon: "bed-clock",
+    category: "Récupération",
+    content: {
+      what: "Le sommeil profond (stades N3) est la phase où ton corps se répare physiquement. C'est pendant cette phase que l'hormone de croissance est sécrétée (80% de la production quotidienne).",
+      why: "Walker (2017) a démontré que le sommeil profond consolide la mémoire procédurale (mouvements techniques). Sans lui, tu oublies 40% de ce que tu as appris. Il nettoie aussi les toxines cérébrales (système glymphatique).",
+      how: "Évite l'alcool (réduit le sommeil profond de 20-40%). Fais du sport mais pas tard (augmente le sommeil profond de 75%). Maintiens une routine horaire. La température idéale est 18-19°C.",
+      sourceName: "Livre : Matthew Walker, Why We Sleep (2017)",
+      sourceUrl: "https://www.sleepdiplomat.com/"
+    }
+  },
+  {
+    id: '21',
+    title: "Dormir Moins Bête : Le REM et la Performance",
+    icon: "brain",
+    category: "Récupération",
+    content: {
+      what: "Le sommeil REM (paradoxal) est la phase des rêves. C'est là que ton cerveau intègre les stratégies et résout les problèmes complexes.",
+      why: "Une étude de Harvard montre que les athlètes privés de REM perdent 30% de leur capacité à prendre des décisions tactiques. Le REM représente 25% d'une nuit normale, chaque cycle de 90 min en contient plus en fin de nuit.",
+      how: "Dors 7-9h pour avoir suffisamment de REM (les cycles tardifs en contiennent plus). La mélatonine naturelle aide, pas les somnifères qui suppriment le REM.",
+      sourceName: "Étude : Mah et al. (2011), Sleep",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21731144/"
+    }
+  },
+
+  // ══════════════════════════════════════════════
+  // RÈGLES COMBAT, JJB / GRAPPLING (CFJJB)
+  // ══════════════════════════════════════════════
+  {
+    id: 'c1',
+    title: "Le Barème CFJJB : Vue d'ensemble",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "Tableau officiel des points CFJJB. +2 pts : amenée au sol, renversement, genou sur l'estomac. +3 pts : passage de garde. +4 pts : montée, montée arrière, contrôle du dos. Soumission = victoire immédiate quelle que soit la différence de points.",
+      why: "La hiérarchie des positions dicte ta stratégie de match. Une montée (4 pts) vaut deux takedowns. En fin de match serré, les avantages (tiebreaker) décident avant les pénalités.",
+      how: "Priorité stratégique : cherche les 4 pts (montée, dos) depuis le passage de garde (3 pts). En cas d'égalité, cumule les avantages. Ne sois jamais passif, les pénalités s'accumulent contre toi.",
+      sourceName: "Règlement Officiel CFJJB, Guide Général de Compétition",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c2',
+    title: "Amenée au Sol & Renversement (+2 pts)",
+    icon: "swords",
+    category: "Combat",
+    content: {
+      what: "2 points pour deux actions distinctes. Amenée au sol : projeter/emmener l'adversaire au sol depuis debout en gardant une position de contrôle. Renversement : renverser l'adversaire depuis sa garde (sweep) pour finir dessus en position dominante.",
+      why: "Ce sont les actions de transition debout → sol. Maîtriser l'amenée au sol donne 2 pts + position avantageuse immédiatement. Depuis la garde adverse, un renversement retourne entièrement le rapport de force.",
+      how: "Amenée au sol : single leg, double leg, arm drag, projections judo. Renversement : butterfly sweep, tripod, scissor sweep, hip bump, berimbolo. Condition obligatoire : contrôle maintenu pendant 3 secondes minimum.",
+      sourceName: "CFJJB Art. 4.1 & 4.2",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c3',
+    title: "Genou sur l'Estomac (+2 pts)",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "2 points pour placer son genou sur l'estomac/ventre de l'adversaire en position de contrôle. L'adversaire est au sol, tu es en appui avec ton genou posé sur son abdomen et ton autre pied au sol. Position maintenue 3 secondes minimum.",
+      why: "Position de transition stratégique entre side control et montée. Elle force l'adversaire à réagir, créant des opportunités de finition ou de progression vers les 4 pts. Très efficace en no-gi pour dicter le rythme.",
+      how: "Chaîne classique : side control → genou sur l'estomac (2 pts) → montée (4 pts). Contrôle la ceinture + col/nuque pour maintenir la pression. Attention : le genou doit être SUR l'estomac, s'il glisse sur le côté, les points ne sont pas accordés.",
+      sourceName: "CFJJB Art. 4.3",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c4',
+    title: "Passage de Garde (+3 pts)",
+    icon: "swords",
+    category: "Combat",
+    content: {
+      what: "3 points pour dépasser la garde de l'adversaire et stabiliser une position de contrôle latéral (side control, north-south) pendant 3 secondes. L'adversaire ne doit plus être capable d'utiliser ses jambes pour protéger ou attaquer.",
+      why: "Action la plus fréquente en compétition, porte d'entrée vers les positions dominantes 4 pts. 3 pts vs 2 pts = avantage potentiellement décisif. En bas niveau, beaucoup de matchs se gagnent uniquement sur les passages de garde.",
+      how: "Techniques clés : toreando, leg drag, knee cut, smash pass, over-under, stack pass, bull fighter, headquarters. Clé : stabiliser 3 secondes complètes SANS que l'adversaire récupère sa garde, sinon les points sont refusés.",
+      sourceName: "CFJJB Art. 4.5",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c5',
+    title: "Montée & Contrôle du Dos (+4 pts)",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "4 points, valeur maximale, pour deux positions distinctes. Montée : être assis sur le torse adverse, cuisses de chaque côté, face à sa tête. Contrôle du dos : être dans le dos de l'adversaire avec au minimum un crochet (hook) de jambe inséré. Montée arrière (4 pts aussi) : adversaire face sol, tu montes dans son dos.",
+      why: "Positions les plus haut cotées car elles offrent les meilleures opportunités de soumission. Une montée réussie oblige l'adversaire à dépenser énormément d'énergie pour défendre, même sans finition, c'est un avantage tactique massif.",
+      how: "Montée : depuis side control ou KoS → montée. Contrôle du dos : prise de dos depuis turtle, berimbolo, ou basculement depuis la montée. Minimum un crochet pour valider. Body triangle = variation du contrôle dos (4 pts identiques).",
+      sourceName: "CFJJB Art. 4.4",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c6',
+    title: "Les Avantages CFJJB",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "L'avantage est un tiebreaker, il ne s'additionne PAS au score principal. Accordé pour quasi-actions non finalisées : quasi-soumission, quasi-renversement, quasi-passage de garde, quasi-takedown. Si égalité de points en fin de match, le joueur avec le plus d'avantages gagne.",
+      why: "Décisifs en compétition, beaucoup de matchs haut niveau se terminent à égalité de points. Un avantage obtenu à la 1ère minute peut décider du résultat à la dernière seconde. Ne jamais les négliger.",
+      how: "Obtenir un avantage : tenter une soumission (même ratée), menacer une passe de garde sans finaliser, quasi-sweep. Rappel : 2ème pénalité adversaire = +1 avantage pour toi. Stratégie fin de match : si tu as 1 avantage d'avance sur égalité, joue la montre légalement.",
+      sourceName: "CFJJB Art. 4.6, Avantages",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c7',
+    title: "Les Pénalités CFJJB",
+    icon: "swords",
+    category: "Combat",
+    content: {
+      what: "Système progressif en 4 niveaux. 1ère pénalité : avertissement simple (aucun point accordé). 2ème pénalité : +1 avantage accordé à l'adversaire. 3ème pénalité : +2 points accordés à l'adversaire. 4ème pénalité : disqualification (DQ) immédiate.",
+      why: "Conçues pour punir la passivité, la fuite, les prises dangereuses ou déloyales. Un compétiteur qui accumule 3 pénalités offre 2 pts à l'adversaire, ce qui peut inverser un match jusque-là gagné.",
+      how: "Éviter : passivité prolongée, fuir hors du tapis, retarder intentionnellement, techniques interdites à son grade. Surveiller les pénalités adversaire : à sa 2ème, tu gagnes un avantage, à sa 3ème, tu gagnes 2 pts. Adapte ta stratégie en conséquence.",
+      sourceName: "CFJJB Art. 6, Pénalités",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+  {
+    id: 'c8',
+    title: "Soumissions Autorisées par Grade (CFJJB)",
+    icon: "shield",
+    category: "Combat",
+    content: {
+      what: "Les techniques autorisées varient selon le grade. Blanche : étranglements + locks de bras uniquement (armbar, kimura, americana, omoplata). Bleue/Violette : + locks de genoux sans rotation (kneebar, toehold, ankle lock droit). Marron/Noire : + heel hooks (intérieur et extérieur, reaping autorisé).",
+      why: "Appliquer une technique interdite à son grade = disqualification immédiate, même si c'est involontaire. En plus, certaines soumissions peuvent blesser un partenaire non préparé à les défendre.",
+      how: "Règle pratique : en blanc, reste bras + étranglements. Bleu+, les genoux sans rotation sont disponibles. Jamais de heel hook rotatif avant marron/noir. En no-gi les règles sont souvent différentes, vérifie toujours le règlement du tournoi avant de t'inscrire.",
+      sourceName: "CFJJB Annexe, Techniques autorisées par grade",
+      sourceUrl: "https://cfjjb.com"
+    }
+  },
+];
+
+export const protocolData: ProtocolCard[] = [
+  {
+    id: 'p1',
+    title: "Tabata HIIT (4 minutes)",
+    icon: "activity",
+    category: "Cardio",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Brûler un maximum de calories en 4 minutes et booster le métabolisme pour 24h.",
+      duration: "4 minutes",
+      protocol: [
+        "Choisis un exercice (burpees, sprints, vélo, rameur)",
+        "20 secondes ALL-OUT (intensité maximale)",
+        "10 secondes de repos",
+        "Répète 8 fois (= 4 minutes)",
+        "Retour au calme : 2-3 min de marche"
+      ],
+      frequency: "2-3x par semaine (pas de jours consécutifs)",
+      notes: "Nécessite une bonne condition physique. Échauffement obligatoire 5-10 min."
+    }
+  },
+  {
+    id: 'p2',
+    title: "5×5 Stronglifts (Force)",
+    icon: "dumbbell",
+    category: "Force",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Gagner en force pure avec un programme simple et progressif.",
+      duration: "45-60 minutes",
+      protocol: [
+        "Séance A : Squat 5×5, Bench Press 5×5, Rowing Barre 5×5",
+        "Séance B : Squat 5×5, Overhead Press 5×5, Deadlift 1×5",
+        "Alterner A/B/A puis B/A/B chaque semaine",
+        "Repos 3-5 min entre les séries",
+        "Ajoute +2.5kg chaque séance réussie"
+      ],
+      frequency: "3x par semaine (Lun/Mer/Ven)",
+      notes: "Parfait pour débutants. Focus sur la technique avant de charger lourd."
+    }
+  },
+  {
+    id: 'p3',
+    title: "12-3-30 Marche Inclinée",
+    icon: "slope-uphill",
+    category: "Cardio",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Cardio faible impact pour brûler du gras sans détruire les articulations.",
+      duration: "30 minutes",
+      protocol: [
+        "Tapis de course : 12% d'inclinaison",
+        "Vitesse : 5 km/h (3 mph)",
+        "Durée : 30 minutes en continu",
+        "Garde le dos droit, ne te tiens pas à la barre",
+        "Tu dois pouvoir tenir une conversation"
+      ],
+      frequency: "4-5x par semaine (ou après musculation)",
+      notes: "Populaire sur TikTok. Très efficace pour sécher sans perdre de muscle."
+    }
+  },
+  {
+    id: 'p4',
+    title: "PPL (Push/Pull/Legs)",
+    icon: "muscle",
+    category: "Force",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Programme complet pour hypertrophie musculaire équilibrée.",
+      duration: "60-75 minutes",
+      protocol: [
+        "PUSH : Pectoraux, Épaules, Triceps (8-12 reps)",
+        "PULL : Dos, Trapèzes, Biceps (8-12 reps)",
+        "LEGS : Quadriceps, Ischio, Mollets, Abdos (8-15 reps)",
+        "3-4 exercices par groupe musculaire",
+        "3-4 séries par exercice, 2-3 min de repos"
+      ],
+      frequency: "6x par semaine (PPL/PPL) ou 3x (P/P/L)",
+      notes: "Excellent pour gagner du volume. Nécessite une bonne récupération."
+    }
+  },
+  {
+    id: 'p5',
+    title: "Zone 2 Cardio (Mitochondries)",
+    icon: "heart-pulse",
+    category: "Endurance",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Améliorer la capacité à brûler les graisses et la santé métabolique.",
+      duration: "45-60 minutes",
+      protocol: [
+        "Trouve ton seuil : tu peux parler en phrases complètes",
+        "Fréquence cardiaque : 60-70% de ta FC max",
+        "Reste STRICT sur l'intensité (pas plus haut)",
+        "Course, vélo, rameur, natation",
+        "Respiration nasale uniquement (test)"
+      ],
+      frequency: "1-2x par semaine",
+      notes: "C'est l'entraînement préféré des athlètes d'endurance pour la base aérobie."
+    }
+  },
+  {
+    id: 'p6',
+    title: "Récupération Active",
+    icon: "walk",
+    category: "Récupération",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Accélérer la récupération musculaire entre les séances intenses.",
+      duration: "20-30 minutes",
+      protocol: [
+        "Marche tranquille ou vélo très léger",
+        "Intensité : Zone 1 (50-60% FC max)",
+        "Ajoute des étirements dynamiques (5-10 min)",
+        "Foam roller sur les zones tendues",
+        "Mobilité articulaire (hanches, épaules)"
+      ],
+      frequency: "Jours de repos entre les séances",
+      notes: "Ne sous-estime pas l'importance du repos actif pour les gains à long terme."
+    }
+  },
+  {
+    id: 'p7',
+    title: "Échauffement Dynamique Complet",
+    icon: "stretch",
+    category: "Mobilité",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Préparer le corps à l'effort et réduire le risque de blessure.",
+      duration: "10-15 minutes",
+      protocol: [
+        "Cardio léger : 3-5 min (vélo, rameur, corde à sauter)",
+        "Mobilité articulaire : cercles bras/jambes (2 min)",
+        "Étirements dynamiques : fentes marchées, leg swings (3 min)",
+        "Activation musculaire : bandes élastiques (2 min)",
+        "Sets d'approche : 50% puis 70% du poids de travail"
+      ],
+      frequency: "AVANT chaque séance",
+      notes: "PAS d'étirements statiques avant l'effort (diminue la force de 5-8%)."
+    }
+  },
+  {
+    id: 'p8',
+    title: "Étirements Post-Training",
+    icon: "stretch",
+    category: "Mobilité",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Améliorer la flexibilité et accélérer la récupération musculaire.",
+      duration: "10-15 minutes",
+      protocol: [
+        "Attends 5-10 min après la fin de la séance",
+        "Étirements statiques : 30-60 secondes par muscle",
+        "Cible les groupes travaillés dans la séance",
+        "Respire profondément, ne force pas",
+        "Focus : ischios, fléchisseurs hanches, pectoraux, dorsaux"
+      ],
+      frequency: "APRÈS chaque séance",
+      notes: "Les étirements post-effort réduisent les courbatures de ~30%."
+    }
+  },
+  {
+    id: 'p9',
+    title: "Jeûne Intermittent 16/8",
+    icon: "clock",
+    category: "Nutrition",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Simplifier l'alimentation et créer un déficit calorique naturel.",
+      duration: "Continu",
+      protocol: [
+        "Fenêtre de jeûne : 16 heures (ex: 20h, 12h)",
+        "Fenêtre alimentaire : 8 heures (ex: 12h, 20h)",
+        "Première semaine : commence par 14h de jeûne",
+        "Pendant le jeûne : eau, thé, café noir (sans sucre)",
+        "Casse le jeûne avec des protéines + légumes"
+      ],
+      frequency: "5-7 jours par semaine",
+      notes: "Consulte un médecin si tu as des problèmes de santé. Hydrate-toi bien."
+    }
+  },
+  {
+    id: 'p10',
+    title: "Hydratation Pré/Per/Post Training",
+    icon: "water",
+    category: "Performance",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Optimiser la performance et la récupération par une hydratation stratégique.",
+      duration: "Toute la journée",
+      protocol: [
+        "PRÉ-TRAINING : 500ml d'eau 2h avant + 250ml juste avant",
+        "PER-TRAINING : 150-250ml toutes les 15-20 min",
+        "POST-TRAINING : 1.5L par kg de poids perdu",
+        "Ajoute une pincée de sel si séance > 60 min",
+        "Urine claire = bien hydraté, jaune foncé = déshydraté"
+      ],
+      frequency: "À chaque séance",
+      notes: "2% de déshydratation = -10 à 20% de performance. Ne sous-estime pas l'eau."
+    }
+  },
+  {
+    id: 'p11',
+    title: "EMOM (Every Minute On the Minute)",
+    icon: "clock",
+    category: "Force",
+    difficulty: 'Avancé',
+    content: {
+      objective: "Développer force, puissance et capacité de travail sous fatigue.",
+      duration: "10-20 minutes",
+      protocol: [
+        "Choisis 1-3 exercices (ex: thrusters, pull-ups, box jumps)",
+        "Définis un nombre de reps (ex: 10 thrusters)",
+        "Démarre le chrono : fais tes reps en début de minute",
+        "Repose-toi le temps restant",
+        "Chaque nouvelle minute = nouvelle série",
+        "Continue pendant 10-20 min"
+      ],
+      frequency: "1-2x par semaine",
+      notes: "Si tu ne peux plus finir dans la minute, arrête-toi. Très intense."
+    }
+  },
+  {
+    id: 'p12',
+    title: "Pyramid Training (Hypertrophie)",
+    icon: "trending-up",
+    category: "Force",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Maximiser l'hypertrophie en combinant force et volume.",
+      duration: "Par exercice",
+      protocol: [
+        "Série 1 : 12 reps à 60% 1RM",
+        "Série 2 : 10 reps à 70% 1RM",
+        "Série 3 : 8 reps à 80% 1RM",
+        "Série 4 : 6 reps à 85% 1RM",
+        "Redescends : 8 reps → 10 reps → 12 reps",
+        "Repos : 2-3 min entre séries"
+      ],
+      frequency: "1 exercice majeur par séance",
+      notes: "Excellent pour casser la routine et choquer le muscle."
+    }
+  },
+  {
+    id: 'p13',
+    title: "Protocole Pré-Sommeil",
+    icon: "bed-clock",
+    category: "Récupération",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Optimiser la qualité du sommeil et la récupération nocturne.",
+      duration: "60-90 min avant coucher",
+      protocol: [
+        "Température chambre entre 16-19°C",
+        "Arrêt des écrans 60 min avant coucher (lumière bleue)",
+        "Dernière prise de caféine > 6h avant",
+        "Dîner terminé > 2-3h avant coucher",
+        "Éviter l'alcool (perturbe le sommeil profond)",
+        "5-10 min de respiration diaphragmatique ou méditation"
+      ],
+      frequency: "Tous les soirs",
+      notes: "Dormir < 8h = risque de blessure x1.7 (Milewski et al., 2014)"
+    }
+  },
+  {
+    id: 'p14',
+    title: "Protocole Jour de Compétition",
+    icon: "activity",
+    category: "Performance",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Préparer le corps et l'esprit pour une performance optimale le jour J.",
+      duration: "Les 4h avant compétition",
+      protocol: [
+        "Dernier repas solide 3-4h avant la compétition",
+        "Hydratation : 5-7ml/kg dans les 4h précédentes",
+        "Échauffement progressif 15-20 min (aérobie léger)",
+        "Activation musculaire spécifique au sport",
+        "Routine de visualisation mentale 5 min",
+        "Dernière prise de glucides 30-60 min avant (si endurance)"
+      ],
+      frequency: "Chaque jour de compétition",
+      notes: "Sources : Thomas et al. (2016), ACSM Position Stand (2007)"
+    }
+  },
+  {
+    id: 'p15',
+    title: "Protocole Récupération Post-Séance",
+    icon: "activity",
+    category: "Récupération",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Maximiser la récupération après un entraînement intense.",
+      duration: "2h post-training",
+      protocol: [
+        "Réhydratation : 1.5L par kg de poids perdu",
+        "Protéines : 20-40g dans les 2h post-effort",
+        "Glucides : uniquement si re-compétition < 24h",
+        "Étirements légers ou mobilité 5-10 min",
+        "Bain froid/contraste (si entraînement intense)",
+        "Coucher avant 23h pour maximiser GH nocturne"
+      ],
+      frequency: "Après chaque séance intense",
+      notes: "Sources : Shirreffs et al. (2004), Morton et al. (2018)"
+    }
+  },
+  {
+    id: 'p16',
+    title: "Protocole Semaine de Décharge (Deload)",
+    icon: "trending-up",
+    category: "Force",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Permettre la récupération complète et prévenir le surentraînement.",
+      duration: "1 semaine",
+      protocol: [
+        "Réduire le volume total de 40-60% (séries × répétitions)",
+        "Maintenir l'intensité (charges) à 70-80% du max",
+        "Fréquence : 2-3 séances max dans la semaine",
+        "Focus sur la technique et la connexion neuromusculaire",
+        "Privilégier le sommeil (objectif 8-9h)",
+        "Planifier tous les 4-8 semaines selon fatigue"
+      ],
+      frequency: "Toutes les 4-8 semaines",
+      notes: "Sources : Zourdos et al. (2016), Pritchard et al. (2015)"
+    }
+  }
+];
+

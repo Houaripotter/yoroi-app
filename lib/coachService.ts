@@ -1,5 +1,5 @@
 // ============================================
-// COACH DU JOUR · Recommandation personnalisee quotidienne
+// COACH DU JOUR : Recommandation personnalisee quotidienne
 // ============================================
 // Analyse l'historique et genere 1 suggestion du jour sur le dashboard.
 // Pure TS, pas de reseau, rapide.

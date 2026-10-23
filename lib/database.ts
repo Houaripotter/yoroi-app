@@ -1,6 +1,9 @@
 import * as SQLite from 'expo-sqlite';
+import { vitrineDb } from '@/lib/v2/visite/vitrine';
 import { initTrainingJournalDB } from './trainingJournalService';
 import { logger } from '@/lib/security/logger';
+import { getDismissedImportIds } from '@/lib/v2/seances/dismissedImports';
+import { reprendrePeseesDuCoffre } from './databaseReprisePesees';
 
 // ============================================
 // YOROI DATABASE - STOCKAGE LOCAL SQLite
@@ -67,10 +70,31 @@ let db: SQLite.SQLiteDatabase | null = null;
 let _initPromise: Promise<void> | null = null;
 
 // Ouverture interne (sans attendre l'init - utilisé par initDatabase)
-const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
+const _openReal = async (): Promise<SQLite.SQLiteDatabase> => {
   if (db) return db;
   db = await SQLite.openDatabaseAsync('yoroi.db');
   return db;
+};
+
+// 18 octobre 2026 : pendant la visite guidee avec l'exemple, toute l'app lit et ecrit dans la base de la vitrine
+// (en memoire, lib/v2/visite/vitrine.ts), jamais dans yoroi.db. Hors visite : la vraie base, comme avant.
+const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
+  const vitrine = vitrineDb();
+  if (vitrine) return vitrine;
+  return _openReal();
+};
+
+/** La vraie base, jamais la vitrine (la visite y lit seulement le schema) */
+export const openRealDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+  await initDatabase();
+  return _openReal();
+};
+
+/** Visite guidee : cree les tables dans la base de la vitrine (memes migrations, aucune donnee, aucune copie de securite) */
+export const prepareVitrineDatabase = async (vitrine: SQLite.SQLiteDatabase): Promise<void> => {
+  // ici les migrations sont dans _performInit : le schema de la vitrine est recopie de la vraie base (lib/v2/visite/demoVisite.ts)
+  _invalidateColumnsCache();
+  void vitrine;
 };
 
 // Ouvrir la base de données (attend que l'init soit terminée)
@@ -91,7 +115,7 @@ export const initDatabase = async () => {
 };
 
 const _performInit = async () => {
-  const database = await _openDB();
+  const database = await _openReal();
 
   // Table Profil Utilisateur
   await database.execAsync(`
@@ -105,7 +129,7 @@ const _performInit = async () => {
       avatar_gender TEXT DEFAULT 'homme',
       profile_photo TEXT,
       birth_date TEXT,
-      weight_goal TEXT DEFAULT 'lose',
+      weight_goal TEXT DEFAULT 'maintain',
       age INTEGER,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -115,7 +139,7 @@ const _performInit = async () => {
   const profileMigrations = [
     'ALTER TABLE profile ADD COLUMN profile_photo TEXT;',
     'ALTER TABLE profile ADD COLUMN birth_date TEXT;',
-    "ALTER TABLE profile ADD COLUMN weight_goal TEXT DEFAULT 'lose';",
+    "ALTER TABLE profile ADD COLUMN weight_goal TEXT DEFAULT 'maintain';",
     'ALTER TABLE profile ADD COLUMN age INTEGER;',
   ];
   for (const migration of profileMigrations) {
@@ -219,6 +243,11 @@ const _performInit = async () => {
   await safeAddColumn(database, 'trainings', 'round_duration', 'INTEGER');
 
   await safeAddColumn(database, 'trainings', 'is_outdoor', 'INTEGER DEFAULT 0');
+
+  // 17 octobre 2026 : score des sports de match et cadre de la seance (salle, exterieur, maison)
+  await safeAddColumn(database, 'trainings', 'score_for', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'score_against', 'INTEGER');
+  await safeAddColumn(database, 'trainings', 'lieu_type', 'TEXT');
 
   await safeAddColumn(database, 'trainings', 'pente', 'REAL');
 
@@ -573,6 +602,10 @@ const _performInit = async () => {
   // Index essentiels pour les écrans Stats (filtres par date fréquents).
   // Sans ces index, chaque SELECT ... WHERE date >= ? faisait un full-scan.
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_weights_date ON weights(date);`);
+  // BALANCE_PHOTO : tout ce que donne une balance a impedance (Tanita BC-545N : segments, morphologie, muscle en kg)
+  for (const col of WEIGHT_SCALE_COLUMNS) await safeAddColumn(database, 'weights', col, 'REAL');
+  // BALANCE 2 : toutes les autres mesures de la balance, en JSON (migration sure, ADD COLUMN seulement)
+  await safeAddColumn(database, 'weights', 'scale_extras', 'TEXT');
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_measurements_date ON measurements(date);`);
 
   // Migration: Ajouter label sur weekly_plan
@@ -605,6 +638,8 @@ const _performInit = async () => {
   // Initialiser le carnet d'entraînement
   await initTrainingJournalDB();
 
+  // 19 octobre 2026 : pesees de l'ancien ecran (coffre seulement dans la 2.4.2) reprises dans la table, une fois
+  await reprendrePeseesDuCoffre(database).catch(() => 0);
 };
 
 // ============================================
@@ -639,6 +674,23 @@ export interface Weight {
   note?: string;
   source?: string;  // 'manual', 'body_composition', 'withings', 'garmin', etc.
   date: string;
+  // BALANCE_PHOTO : composition detaillee d'une balance (import photo), colonnes optionnelles
+  muscle_kg?: number;
+  fat_kg?: number;
+  bmi_scale?: number;
+  physique_rating?: number;
+  fat_arm_right?: number;
+  fat_arm_left?: number;
+  fat_trunk?: number;
+  fat_leg_right?: number;
+  fat_leg_left?: number;
+  muscle_arm_right?: number;
+  muscle_arm_left?: number;
+  muscle_trunk?: number;
+  muscle_leg_right?: number;
+  muscle_leg_left?: number;
+  /** BALANCE 2 : autres mesures de la balance, JSON (lib/v2/balance/format.ts, ScaleJson) */
+  scale_extras?: string | null;
   created_at?: string;
   // Body measurements (optional, can be saved with weight)
   waist?: number;
@@ -763,7 +815,10 @@ export interface Training {
   cadence?: number; // RPM
   exercises?: Exercise[]; // For musculation workouts
   technique_rating?: number | null; // 1-5 stars rating
-  is_outdoor?: boolean; // true si entraînement en plein air
+  is_outdoor?: boolean; // true si entraînement en extérieur
+  score_for?: number | null; // score des sports de match, pour toi
+  score_against?: number | null; // score en face
+  lieu_type?: 'salle' | 'exterieur' | 'maison' | null; // cadre choisi a la saisie
   created_at?: string;
   combat_rounds?: CombatRound[];
   // Apple Health enriched data
@@ -952,6 +1007,40 @@ export const saveProfile = async (profile: Profile): Promise<void> => {
 // FONCTIONS CRUD - POIDS
 // ============================================
 
+// BALANCE_PHOTO : colonnes ajoutees a weights (migration sure, ALTER TABLE ADD COLUMN seulement)
+export const WEIGHT_SCALE_COLUMNS = [
+  'muscle_kg', 'fat_kg', 'bmi_scale', 'physique_rating',
+  'fat_arm_right', 'fat_arm_left', 'fat_trunk', 'fat_leg_right', 'fat_leg_left',
+  'muscle_arm_right', 'muscle_arm_left', 'muscle_trunk', 'muscle_leg_right', 'muscle_leg_left',
+] as const;
+export type WeightScaleExtras = Partial<Record<(typeof WEIGHT_SCALE_COLUMNS)[number], number>>;
+
+const hasScaleExtras = (data: WeightScaleExtras): boolean =>
+  WEIGHT_SCALE_COLUMNS.some((k) => typeof data[k] === 'number' && Number.isFinite(data[k] as number) && (data[k] as number) > 0);
+
+/** Ecrit les mesures detaillees d'une pesee (seulement celles fournies, les autres restent) */
+export const updateWeightScaleExtras = async (id: number, data: WeightScaleExtras): Promise<void> => {
+  const sets: string[] = [];
+  const values: (number | string)[] = [];
+  for (const k of WEIGHT_SCALE_COLUMNS) {
+    const v = data[k];
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
+      sets.push(`${k} = ?`);
+      values.push(v);
+    }
+  }
+  if (!sets.length) return;
+  const database = await openDatabase();
+  values.push(id);
+  await database.runAsync(`UPDATE weights SET ${sets.join(', ')} WHERE id = ?`, values);
+};
+
+/** BALANCE 2 : ecrit la colonne JSON scale_extras d'une pesee (texte deja fusionne avec l'ancien) */
+export const updateWeightScaleJson = async (id: number, json: string | null): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('UPDATE weights SET scale_extras = ? WHERE id = ?', [json, id]);
+};
+
 export const addWeight = async (data: Weight): Promise<number> => {
   const database = await openDatabase();
   const result = await database.runAsync(
@@ -963,6 +1052,8 @@ export const addWeight = async (data: Weight): Promise<number> => {
      data.metabolic_age || null, data.bmr || null, data.note || null,
      data.source || 'manual', data.date]
   );
+  // BALANCE_PHOTO : segments et morphologie si la pesee les porte
+  if (result?.lastInsertRowId && hasScaleExtras(data)) await updateWeightScaleExtras(result.lastInsertRowId, data);
 
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert weight record');
@@ -1220,12 +1311,46 @@ export const getTrainingById = async (id: number): Promise<Training | null> => {
   return { ...result, exercises, is_outdoor: result.is_outdoor === 1 };
 };
 
+// 14 octobre 2026 (ios27) : relie une seance de la montre YOROI a son entrainement Apple Sante (HKWorkout),
+// pour lire ensuite sa courbe de FC et ses zones d'Apple. Ne remplace jamais un lien existant.
+export const linkTrainingHealthKitUUID = async (id: number, uuid: string): Promise<boolean> => {
+  const database = await openDatabase();
+  const r = await database.runAsync(
+    `UPDATE trainings SET healthkit_uuid = ? WHERE id = ? AND (healthkit_uuid IS NULL OR healthkit_uuid = '')`,
+    [uuid, id]
+  );
+  return (r?.changes ?? 0) > 0;
+};
+
+/**
+ * 17 octobre 2026 (audit des seances) : score des sports de match et cadre de la seance (salle, exterieur, maison),
+ * dans leurs colonnes. Ecrits seulement s'ils sont fournis : une autre mise a jour ne les efface jamais.
+ */
+const writeScoreEtCadre = async (database: any, id: number, data: Partial<Training>): Promise<void> => {
+  const sets: string[] = [];
+  const vals: (number | string | null)[] = [];
+  if ('score_for' in data) { sets.push('score_for = ?'); vals.push(data.score_for ?? null); }
+  if ('score_against' in data) { sets.push('score_against = ?'); vals.push(data.score_against ?? null); }
+  if ('lieu_type' in data) { sets.push('lieu_type = ?'); vals.push(data.lieu_type ?? null); }
+  if (!sets.length || !id) return;
+  await database.runAsync(`UPDATE trainings SET ${sets.join(', ')} WHERE id = ?`, [...vals, id]);
+};
+
 export const updateTrainingDetails = async (id: number, detailsJson: string): Promise<void> => {
   const database = await openDatabase();
   await database.runAsync(
     `UPDATE trainings SET workout_details_json = ? WHERE id = ?`,
     [detailsJson, id]
   );
+  // 17 octobre 2026 : une seance importee avec un trace GPS a eu lieu dehors
+  try {
+    const d = JSON.parse(detailsJson);
+    if (Array.isArray(d?.routePoints) && d.routePoints.length > 1) {
+      await database.runAsync(`UPDATE trainings SET is_outdoor = 1 WHERE id = ? AND healthkit_uuid IS NOT NULL AND (is_outdoor IS NULL OR is_outdoor = 0)`, [id]);
+    }
+  } catch {
+    // details illisibles : rien a deduire
+  }
 };
 
 export const updateTraining = async (id: number, data: Partial<Training>): Promise<void> => {
@@ -1246,15 +1371,34 @@ export const updateTraining = async (id: number, data: Partial<Training>): Promi
      data.game_plan || null, data.what_worked || null, data.what_didnt_work || null,
      data.session_rating ?? null, data.session_mood || null, id]
   );
+  await writeScoreEtCadre(database, id, data);
+  // Theme technique et types de seance : ecrits seulement s'ils sont fournis (pas d'effacement involontaire)
+  if ('technical_theme' in data) {
+    await database.runAsync('UPDATE trainings SET technical_theme = ? WHERE id = ?', [data.technical_theme || null, id]);
+  }
+  if ('session_types' in data) {
+    await database.runAsync('UPDATE trainings SET session_types = ? WHERE id = ?', [toSessionTypesColumn(data.session_types), id]);
+  }
+};
+
+/** Types de seance : stockes en texte JSON (accepte un tableau ou un texte deja serialise) */
+const toSessionTypesColumn = (v: unknown): string | null => {
+  if (v == null || v === '') return null;
+  if (Array.isArray(v)) return v.length ? JSON.stringify(v) : null;
+  return typeof v === 'string' ? v : null;
 };
 
 export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
+  // Doublon d'une seance YOROI deja efface : la meme seance importee n'est pas remise en base
+  if (data.healthkit_uuid && (await getDismissedImportIds().catch(() => new Set<string>())).has(data.healthkit_uuid)) {
+    return 0;
+  }
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const combatRoundsJson = data.combat_rounds ? JSON.stringify(data.combat_rounds) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, min_heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name, game_plan, what_worked, what_didnt_work, session_rating, session_mood)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence, healthkit_uuid, workout_details_json, heart_rate, min_heart_rate, max_heart_rate, source, combat_rounds, weekly_plan_id, location_lat, location_lon, location_name, game_plan, what_worked, what_didnt_work, session_rating, session_mood, technical_theme, session_types)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
@@ -1265,11 +1409,13 @@ export const addTraining = async (data: Training): Promise<number> => {
      data.min_heart_rate || null, data.max_heart_rate || null, data.source || null, combatRoundsJson, data.weekly_plan_id || null,
      data.location_lat || null, data.location_lon || null, data.location_name || null,
      data.game_plan || null, data.what_worked || null, data.what_didnt_work || null,
-     data.session_rating ?? null, data.session_mood || null]
+     data.session_rating ?? null, data.session_mood || null,
+     data.technical_theme || null, toSessionTypesColumn(data.session_types)]
   );
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert training record');
   }
+  await writeScoreEtCadre(database, result.lastInsertRowId, data);
   return result.lastInsertRowId;
 };
 
@@ -1334,7 +1480,9 @@ export const getExistingHealthkitUUIDs = async (): Promise<Set<string>> => {
   const rows = await database.getAllAsync<{ healthkit_uuid: string }>(
     `SELECT healthkit_uuid FROM trainings WHERE healthkit_uuid IS NOT NULL`
   );
-  return new Set(rows.map(r => r.healthkit_uuid));
+  // Plus les doublons deja effaces (voir lib/v2/seances/dedupeMigration.ts) : ils ne reviennent pas
+  const dismissed = await getDismissedImportIds().catch(() => new Set<string>());
+  return new Set([...rows.map(r => r.healthkit_uuid), ...dismissed]);
 };
 
 /**
@@ -1503,6 +1651,14 @@ export const deleteTraining = async (id: number): Promise<void> => {
 
   // Supprimer de trainings (après la mise en corbeille)
   await database.runAsync('DELETE FROM trainings WHERE id = ?', [id]);
+
+  // Audit du 18/10/2026 : le créneau du planning validé par cette séance redevient à faire
+  // (sans clés étrangères actives, il restait « validé » sans séance derrière)
+  try {
+    await database.runAsync("UPDATE slot_occurrences SET status = 'pending', training_id = NULL WHERE training_id = ? AND status = 'validated'", [id]);
+  } catch (e) {
+    logger.warn('Créneau non remis à faire après suppression', e);
+  }
 };
 
 // ============================================
@@ -1625,7 +1781,33 @@ export const updateClub = async (id: number, data: Partial<Club>): Promise<void>
 
 export const deleteClub = async (id: number): Promise<void> => {
   const database = await openDatabase();
+  // Audit du 18/10/2026 : aucune séance n'est supprimée ; celles du club gardent son nom comme lieu (en salle),
+  // et séances comme créneaux ne pointent plus vers un club qui n'existe plus
+  try {
+    const club = await database.getFirstAsync<{ name?: string | null }>('SELECT name FROM clubs WHERE id = ?', [id]);
+    const nom = (club?.name ?? '').trim();
+    if (nom) {
+      await database.runAsync(
+        "UPDATE trainings SET location_name = ?, lieu_type = COALESCE(lieu_type, 'salle') WHERE club_id = ? AND (location_name IS NULL OR trim(location_name) = '') AND (is_outdoor IS NULL OR is_outdoor = 0)",
+        [nom, id]
+      );
+    }
+  } catch (e) {
+    logger.warn('Lieu des séances du club non repris', e);
+  }
   await database.runAsync('DELETE FROM clubs WHERE id = ?', [id]);
+  await nettoyerClubsOrphelins();
+};
+
+/** Séances et créneaux rattachés à un club supprimé : le lien mort est retiré (rien n'est supprimé) */
+export const nettoyerClubsOrphelins = async (): Promise<void> => {
+  try {
+    const database = await openDatabase();
+    await database.runAsync('UPDATE trainings SET club_id = NULL WHERE club_id IS NOT NULL AND club_id NOT IN (SELECT id FROM clubs)');
+    await database.runAsync('UPDATE weekly_plan SET club_id = NULL WHERE club_id IS NOT NULL AND club_id NOT IN (SELECT id FROM clubs)');
+  } catch (e) {
+    logger.warn('Nettoyage des clubs supprimés impossible', e);
+  }
 };
 
 // ============================================
@@ -1845,7 +2027,8 @@ export const ensureCurrentWeekOccurrences = async (): Promise<void> => {
   const diff = day === 0 ? -6 : 1 - day;
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
-  const weekStart = monday.toISOString().split('T')[0];
+  const pad2 = (n: number) => String(n).padStart(2, '0');
+  const weekStart = `${monday.getFullYear()}-${pad2(monday.getMonth() + 1)}-${pad2(monday.getDate())}`;
 
   const slots = await database.getAllAsync<WeeklyPlan>(
     `SELECT * FROM weekly_plan WHERE is_rest_day = 0`
@@ -2447,6 +2630,10 @@ export const getNextCompetition = async (): Promise<Competition | null> => {
 // RESET COMPLET DE LA BASE DE DONNÉES
 // ============================================
 
+/**
+ * Vide une liste fixe de tables. Sert seulement au retour d'une ancienne demo (lib/demoDataService.ts).
+ * Ce n'est PAS « Tout effacer » : pour effacer vraiment tout, utiliser effacerToutesMesDonnees() de lib/storage.ts.
+ */
 export const resetDatabase = async (): Promise<void> => {
   try {
     const database = await openDatabase();
@@ -2483,40 +2670,6 @@ export const resetDatabase = async (): Promise<void> => {
   }
 };
 
-// Reset toutes les tables SAUF photos
-export const resetDatabaseKeepPhotos = async (): Promise<void> => {
-  try {
-    const database = await openDatabase();
-
-    // Tables principales (sans photos)
-    try { await database.execAsync('DELETE FROM weights;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM profile;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-
-    // Tables YOROI MEDIC
-    try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM injury_treatments;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM injury_eva_history;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM injuries;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-
-    // Tables Carnet d'Entraînement
-    try { await database.execAsync('DELETE FROM benchmark_entries;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-    try { await database.execAsync('DELETE FROM skills;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-
-    // Table Données de santé
-    try { await database.execAsync('DELETE FROM health_data;'); } catch (e) { if (!String((e as any)?.message ?? e).includes('no such table')) logger.warn('DB reset error:', e); }
-
-  } catch (error) {
-    logger.error('Erreur reset database (keep photos):', error);
-    throw error;
-  }
-};
 
 // ============================================
 // FONCTIONS CRUD - DONNÉES DE SANTÉ
@@ -2689,5 +2842,4 @@ export default {
   initDatabase,
   openDatabase,
   resetDatabase,
-  resetDatabaseKeepPhotos,
 };

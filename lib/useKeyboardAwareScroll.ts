@@ -1,5 +1,5 @@
 // ============================================
-// YOROI — Hook utility pour ScrollView keyboard-aware
+// YOROI : Hook utility pour ScrollView keyboard-aware
 // Évite que le clavier cache les champs de saisie
 // + les suggestions qui apparaissent en dessous
 // ============================================

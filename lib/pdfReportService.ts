@@ -1,5 +1,5 @@
 // ============================================
-// PDF REPORT · Bilan mensuel / annuel exportable
+// PDF REPORT : Bilan mensuel / annuel exportable
 // ============================================
 // Utilise expo-print + expo-sharing pour generer un PDF propre.
 // ============================================
@@ -121,7 +121,7 @@ function buildHTML(data: ReportData): string {
     weightEvolutionHTML = `
       <div class="card">
         <h3>Evolution poids</h3>
-        <p>Debut : <strong>${first.toFixed(1)} ${unit}</strong> · Fin : <strong>${last.toFixed(1)} ${unit}</strong></p>
+        <p>Debut : <strong>${first.toFixed(1)} ${unit}</strong>, Fin : <strong>${last.toFixed(1)} ${unit}</strong></p>
         <p style="font-size:18px;color:${delta <= 0 ? '#10B981' : '#EF4444'};margin:0;">${sign}${delta.toFixed(1)} ${unit}</p>
       </div>
     `;
@@ -149,7 +149,7 @@ function buildHTML(data: ReportData): string {
     <html>
     <head>
       <meta charset="utf-8" />
-      <title>Yoroi · Rapport</title>
+      <title>Yoroi, rapport</title>
       <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, Helvetica, sans-serif; color: #111; margin: 0; padding: 32px; }
@@ -169,8 +169,8 @@ function buildHTML(data: ReportData): string {
       </style>
     </head>
     <body>
-      <h1>YOROI · ${escapeHtml(periodLabel)}</h1>
-      <div class="subtitle">Rapport pour ${profileName} · Genere le ${generatedAt}</div>
+      <h1>YOROI : ${escapeHtml(periodLabel)}</h1>
+      <div class="subtitle">Rapport pour ${profileName}, généré le ${generatedAt}</div>
 
       <h2>Chiffres cles</h2>
       <div class="kpis">
@@ -202,7 +202,7 @@ function buildHTML(data: ReportData): string {
         </table>
       ` : ''}
 
-      <div class="footer">Genere par Yoroi · Ce rapport est prive et vous appartient.</div>
+      <div class="footer">Généré par Yoroi. Ce rapport est privé et t’appartient.</div>
     </body>
     </html>
   `;

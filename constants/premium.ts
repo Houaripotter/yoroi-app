@@ -1,7 +1,9 @@
 /**
  * PREMIUM - YOROI
  *
- * Configuration du freemium : cles RevenueCat, produits et prix de secours.
+ * Configuration du freemium : cles RevenueCat et produits. Aucun prix ici : les prix viennent
+ * toujours du store (lib/v2/premium/offer.ts). Les prix d'exemple du Studio sont dans
+ * lib/v2/creator/paywallVariant.ts, marques « Aperçu, prix d'exemple ».
  */
 
 import { Platform } from 'react-native';
@@ -21,7 +23,3 @@ export const PREMIUM_ENTITLEMENT_ID = 'premium';
 // Identifiants produits (App Store Connect / Play Console)
 export const PRODUCT_MONTHLY = 'yoroi_premium_monthly';
 export const PRODUCT_ANNUAL = 'yoroi_premium_annual';
-
-// Prix affiches en secours si les offres RevenueCat ne sont pas chargees
-export const FALLBACK_PRICE_MONTHLY = '3,99 €/mois';
-export const FALLBACK_PRICE_ANNUAL = '29,99 €/an';

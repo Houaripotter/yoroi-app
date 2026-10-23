@@ -9,17 +9,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Wifi, Check, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { onSyncStatusChange, SyncStatus } from '@/lib/peerSyncService';
+import { getSyncStatus, onSyncStatusChange, SyncStatus } from '@/lib/peerSyncService';
 
 export const PeerSyncBanner: React.FC = () => {
   const { colors } = useTheme();
 
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    connectedPeers: [],
-    isSyncing: false,
-    lastSyncTs: null,
-    lastSyncDevice: null,
-  });
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(getSyncStatus());
   const [showSuccess, setShowSuccess] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;

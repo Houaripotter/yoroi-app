@@ -5,8 +5,8 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { WatchConnectivity } from './watchConnectivity.ios';
 import { logger } from '@/lib/security/logger';
+import { intensite, niveauRpe } from './v2/intensite';
 
 // ============================================
 // TYPES
@@ -669,13 +669,8 @@ export const getRPELabel = (rpe: number): string => {
   return 'Max';
 };
 
-export const getRPEColor = (rpe: number): string => {
-  if (rpe <= 3) return '#10B981';
-  if (rpe <= 5) return '#3B82F6';
-  if (rpe <= 7) return '#F59E0B';
-  if (rpe <= 9) return '#EF4444';
-  return '#DC2626';
-};
+// Vague 32 : echelle d'intensite commune (lib/v2/intensite.ts), sans rouge
+export const getRPEColor = (rpe: number): string => intensite(niveauRpe(rpe)).fill;
 
 // ============================================
 // INITIALIZATION
@@ -1423,50 +1418,8 @@ export const getOrCreateBenchmarkFromWatch = async (
 };
 
 /**
- * Helper interne pour synchroniser le carnet vers la montre
+ * Ancienne synchro du carnet vers la montre : debranchee le 13 octobre 2026.
+ * La nouvelle app Apple Watch ne lit plus le carnet, et son updateApplicationContext ecrasait le contexte
+ * de lib/v2/montre (contrat v1). Gardee vide pour les appels existants.
  */
-export const syncCarnetToWatch = async () => {
-  try {
-    const data = await AsyncStorage.getItem('yoroi_benchmarks_v2');
-    if (!data) return;
-    const benchmarks: Benchmark[] = JSON.parse(data);
-
-    // Format attendu par WatchSessionManager.applyData() : clé "benchmarks"
-    const watchBenchmarks = benchmarks.slice(0, 50).map((b) => {
-      const pr = getBenchmarkPR(b);
-      const last = getBenchmarkLast(b);
-      return {
-        id: b.id,
-        name: b.name,
-        category: b.category || 'Force',
-        sport: (b as any).sport || b.muscleGroup || '',
-        unit: b.unit || 'kg',
-        pr: pr?.value || 0,
-        prReps: pr?.reps || 0,
-        prDate: pr?.date || '',
-        lastValue: last?.value || 0,
-        entryCount: b.entries?.length || 0,
-      };
-    });
-
-    // Méthode 1: updateApplicationContext (sync immédiate si Watch à portée)
-    await WatchConnectivity.updateApplicationContext({
-      benchmarks: watchBenchmarks,
-      benchmarksTimestamp: Date.now(),
-    });
-
-    // Méthode 2: transferUserInfo (garantie de livraison, même si Watch hors portée)
-    try {
-      await WatchConnectivity.transferUserInfo({
-        benchmarks: watchBenchmarks,
-        benchmarksTimestamp: Date.now(),
-      });
-    } catch (transferError) {
-      logger.info('transferUserInfo error (non-blocking):', transferError);
-    }
-
-    logger.info(`Carnet synchronise vers Apple Watch (${watchBenchmarks.length} benchmarks)`);
-  } catch (e) {
-    logger.warn('Echec sync carnet vers Watch:', e);
-  }
-};
+export const syncCarnetToWatch = async (): Promise<void> => undefined;

@@ -1,7 +1,7 @@
 // ============================================
 // GLOBAL PASSWORD PROMPT CONTROLLER
 // Permet de demander un mot de passe depuis n'importe quelle fonction async
-// (pas seulement depuis un composant React). Remplace Alert.prompt iOS-only.
+// (pas seulement depuis un composant React). Passe par la fenetre maison YOROI (appPassword).
 //
 // Usage :
 //   import { requestPassword } from '@/lib/passwordPromptController';
@@ -13,6 +13,7 @@
 // ============================================
 
 import { DeviceEventEmitter } from 'react-native';
+import { appPassword } from '@/components/yoroi/v2/fenetre/api';
 
 export interface PasswordPromptRequest {
   id: string;
@@ -25,8 +26,6 @@ export interface PasswordPromptRequest {
 const REQUEST_EVENT = 'YOROI_PWD_PROMPT_REQUEST';
 const RESPONSE_EVENT = 'YOROI_PWD_PROMPT_RESPONSE';
 
-let seq = 0;
-
 /**
  * Demande un mot de passe en affichant un modal global.
  * Résout avec le mot de passe saisi, ou null si annulé.
@@ -37,15 +36,8 @@ export function requestPassword(opts: {
   confirmLabel?: string;
   minLength?: number;
 }): Promise<string | null> {
-  const id = `pwd_${Date.now()}_${++seq}`;
-  return new Promise<string | null>((resolve) => {
-    const sub = DeviceEventEmitter.addListener(RESPONSE_EVENT, (payload: { id: string; value: string | null }) => {
-      if (payload.id !== id) return;
-      sub.remove();
-      resolve(payload.value);
-    });
-    DeviceEventEmitter.emit(REQUEST_EVENT, { id, ...opts });
-  });
+  // Fenetre maison YOROI (saisie masquee), au-dessus de tout
+  return appPassword(opts);
 }
 
 /**

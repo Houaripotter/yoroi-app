@@ -165,15 +165,11 @@ jest.mock('react-native-svg', () => {
 });
 
 // --- @/lib/security/logger ---
-jest.mock('@/lib/security/logger', () => ({
-  __esModule: true,
-  default: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
+// export par défaut et export nommé { logger } : les deux formes sont importées dans lib/
+jest.mock('@/lib/security/logger', () => {
+  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
+  return { __esModule: true, default: logger, logger, getRecentLogs: () => [], clearRecentLogs: () => {} };
+});
 
 // --- @/lib/DevModeContext ---
 jest.mock('@/lib/DevModeContext', () => ({

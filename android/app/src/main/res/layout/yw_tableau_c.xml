@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Genere pour le style C (Armure laquee), depuis yw_tableau.xml (scratchpad/widgets_code/gen_android.py) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/yw_c_fond" android:clipToOutline="true"><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_margin="5dp" android:background="@drawable/yw_c_filet" android:importantForAccessibility="no" /><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_margin="8dp" android:background="@drawable/yw_c_filet2" android:importantForAccessibility="no" /><LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+  <FrameLayout android:id="@+id/yw_banniere" android:layout_width="match_parent" android:layout_height="84dp" android:layout_marginLeft="10dp" android:layout_marginRight="10dp" android:layout_marginTop="10dp" android:background="@drawable/yw_c_banniere" android:clipToOutline="true">
+    <ImageView android:id="@+id/yw_scene" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:visibility="gone" android:importantForAccessibility="no" />
+    <ImageView android:id="@+id/yw_voile" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/yw_c_voile" android:importantForAccessibility="no" android:visibility="gone" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:orientation="vertical" android:paddingLeft="@dimen/yw_marge" android:paddingRight="@dimen/yw_marge" android:paddingBottom="4dp">
+      <TextView android:id="@+id/yw_t_titre" style="@style/YwTitre" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/yw_c_ban_texte" android:textSize="18sp" android:text="@string/yw_aujourdhui" android:textStyle="bold" />
+      <TextView android:id="@+id/yw_t_date" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textColor="@color/yw_c_ban_or" android:textAllCaps="true" android:letterSpacing="0.12" />
+    </LinearLayout>
+  <ImageView android:id="@+id/yw_perso" android:layout_width="62dp" android:layout_height="match_parent" android:layout_gravity="end" android:layout_marginRight="4dp" android:scaleType="fitEnd" android:src="@drawable/yw_c_guerrier" android:importantForAccessibility="no" /></FrameLayout>
+  <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" android:paddingLeft="@dimen/yw_marge" android:paddingRight="@dimen/yw_marge" android:paddingTop="8dp" android:paddingBottom="@dimen/yw_marge">
+    
+    <LinearLayout android:id="@+id/yw_bloc_poids" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+      <LinearLayout android:layout_width="0dp" android:layout_weight="4" android:layout_height="match_parent" android:orientation="vertical">
+        <TextView android:id="@+id/yw_titre" style="@style/YwTitre" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/yw_nom_poids" android:textColor="@color/yw_c_titre" android:textStyle="bold" android:drawableStart="@drawable/yw_c_losange" android:drawablePadding="6dp" android:textAllCaps="true" android:letterSpacing="0.12" android:textSize="11sp" />
+        <TextView android:id="@+id/yw_valeur" style="@style/YwChiffre" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical|start" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="16sp" android:autoSizeMaxTextSize="30sp" android:autoSizeStepGranularity="1sp" android:textColor="@color/yw_c_encre" />
+        <include layout="@layout/yw_inc_statut_c" android:layout_width="match_parent" android:layout_height="wrap_content" />
+      </LinearLayout>
+      <LinearLayout android:layout_width="0dp" android:layout_weight="6" android:layout_height="match_parent" android:layout_marginLeft="10dp" android:orientation="vertical">
+        <include layout="@layout/yw_inc_graphe_c" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+        <include layout="@layout/yw_inc_arrivee_c" android:layout_width="match_parent" android:layout_height="wrap_content" />
+      </LinearLayout>
+    </LinearLayout>
+    
+    <LinearLayout android:id="@+id/yw_bloc_semaine" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="vertical">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="5dp">
+        <TextView style="@style/YwPetit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/yw_c_encre2" android:text="@string/yw_semaine_court" />
+        <TextView android:id="@+id/yw_sem_texte" style="@style/YwPetit" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:gravity="end" android:textColor="@color/yw_c_discret" />
+      </LinearLayout>
+      <include layout="@layout/yw_inc_points_c" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+    
+    <LinearLayout android:id="@+id/yw_bas" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="horizontal" android:gravity="center_vertical">
+      <LinearLayout android:id="@+id/yw_bloc_eau" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+          <TextView style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/yw_c_encre2" android:text="@string/yw_nom_eau" />
+          <TextView android:id="@+id/yw_eau_valeur" style="@style/YwChiffre" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="16sp" android:textColor="@color/yw_c_encre" />
+          <TextView android:id="@+id/yw_eau_objectif" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textColor="@color/yw_c_discret" />
+        </LinearLayout>
+        <TextView android:id="@+id/yw_eau_plus" style="@style/YwBouton" android:layout_width="wrap_content" android:layout_height="32dp" android:layout_marginLeft="6dp" android:paddingLeft="10dp" android:paddingRight="10dp" android:textSize="12sp" android:text="@string/yw_plus_verre" android:textColor="@color/yw_c_sur_indigo" android:background="@drawable/yw_c_bouton" />
+      </LinearLayout>
+      <LinearLayout android:id="@+id/yw_bloc_combat" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginLeft="14dp" android:orientation="vertical">
+        <TextView style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/yw_c_encre2" android:text="@string/yw_nom_combat" />
+        <TextView android:id="@+id/yw_c_j" style="@style/YwChiffre" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textSize="16sp" android:textColor="@color/yw_c_encre" />
+        <TextView android:id="@+id/yw_c_cat" style="@style/YwPetit" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textColor="@color/yw_c_discret" />
+      </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+</LinearLayout></FrameLayout>

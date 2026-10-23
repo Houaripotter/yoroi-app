@@ -1,0 +1,7 @@
+<resources>
+  <!-- Widgets Yoroi : coins arrondis (repli avant Android 12, voir values-v31) et marges -->
+  <dimen name="yw_rayon">20dp</dimen>
+  <dimen name="yw_rayon_interne">12dp</dimen>
+  <dimen name="yw_marge">14dp</dimen>
+  <dimen name="yw_bouton_h">34dp</dimen>
+</resources>

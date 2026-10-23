@@ -1,768 +1,532 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Share,
-  ActivityIndicator,
-  RefreshControl,
-  DeviceEventEmitter,
-} from 'react-native';
-import { router } from 'expo-router';
-import {
-  Trophy,
-  Scale,
-  Flame,
-  Ruler,
-  Dumbbell,
-  Calendar,
-  Zap,
-  Share2,
-  RefreshCw,
-  Award,
-  Star,
-} from 'lucide-react-native';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { Card } from '@/components/ui/Card';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import {
-  PersonalRecords,
-  NewRecordEvent,
-  calculateAllRecords,
-  formatRecordDate,
-  getSportName,
-  generateRecordShareText,
-  RecordType,
-} from '@/lib/records';
+/**
+ * Records v2 (maquettes S5 et G3) : des records utiles par sport.
+ * Force : charge max et max estime par exercice, une seance par point sur la courbe.
+ * Course et cardio : plus longue distance, meilleure allure.
+ * Combat : victoires, soumissions par technique, seances les plus longues.
+ * Regularite : meilleure semaine, semaines d'affilee, volume total.
+ * Parametre optionnel : focus (cle d'un record a afficher en premier).
+ */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
+import { DeviceEventEmitter, Pressable, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { calculateAllRecords, generateRecordShareText } from '@/lib/records';
+import { partagerTexte } from '@/lib/v2/partage/texte';
+import type { NewRecordEvent, PersonalRecords, RecordType } from '@/lib/records';
+import { getCombats } from '@/lib/fighterModeService';
 import { successHaptic } from '@/lib/haptics';
 import { playSuccessSound } from '@/lib/soundManager';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import logger from '@/lib/security/logger';
-import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
-import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
-
+import { logger } from '@/lib/security/logger';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { todayISO } from '@/lib/v2/weightStats';
+import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
+import { chartSeries, combatSummary, formatRecordValue, regularity } from '@/lib/v2/seances/records';
+import type { RecordLine } from '@/lib/v2/seances/records';
+import { formatHours, mainSport } from '@/lib/v2/seances/weekSummary';
+import { MONTHS, familyOf, isoOf, longDate, relativeDay } from '@/lib/v2/seances/sessionData';
+import { BrushChart } from '@/components/yoroi/v2/seances/BrushChart';
+import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import { BackButton, BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, SectionTitle, Segments, tap } from '@/components/yoroi/v2/seances/ui';
+import { blancA } from '@/components/yoroi/livePalette';
+import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import { libelleUnite, versUnitePoids } from '@/lib/v2/unitePoids';
 
 const RECORDS_CACHE_KEY = '@yoroi_records_cache_v1';
-const RECORDS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const RECORDS_CACHE_TTL = 10 * 60 * 1000;
 
-// ============================================
-// PAGE MES RECORDS PERSONNELS
-// ============================================
+type Group = 'force' | 'endurance' | 'combat' | 'regularite';
+const GROUP_LABEL: Record<Group, string> = { force: 'Muscu', endurance: 'Cardio', combat: 'Combat', regularite: 'Régularité' };
+const ORDER: Group[] = ['force', 'endurance', 'combat', 'regularite'];
+
+function groupOf(l: RecordLine): Group {
+  if (l.kind === 'force' || l.kind === 'reps') return 'force';
+  if (l.kind === 'distance' || l.kind === 'allure') return 'endurance';
+  const f = familyOf(l.sport);
+  if (l.kind === 'rounds' || f === 'combat_sol' || f === 'combat_pied') return 'combat';
+  return 'regularite';
+}
+
+function groupOfSport(sport: string): Group {
+  const f = familyOf(sport);
+  if (f === 'combat_sol' || f === 'combat_pied') return 'combat';
+  if (f === 'cardio') return 'endurance';
+  if (f === 'muscu') return 'force';
+  return 'regularite';
+}
+
+function fmt1(v: number): string {
+  return (Math.round(v * 10) / 10).toString().replace('.', ',');
+}
+
+function weekLabel(monday: string): string {
+  const d = new Date(monday + 'T12:00:00');
+  return `semaine du ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+type CompCombat = { resultat?: string; methode?: string; technique?: string };
 
 export default function RecordsScreen() {
-  const { colors } = useTheme();
-  const { t } = useI18n();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const params = useLocalSearchParams<{ focus?: string }>();
+  const { records, loaded, trainings, favoris } = useSeancesData();
+  // 18 octobre 2026 : charges stockees en kilos, affichees dans l'unite du reglage (kg ou lb) ; le poids du corps reste en kilos
+  const unite = useUnitePoids();
+  const uL = libelleUnite(unite);
+  const cv = (kg: number) => versUnitePoids(kg, unite);
+  const scrollRef = useRef<ScrollView>(null);
 
-  const [records, setRecords] = useState<PersonalRecords | null>(null);
+  const [group, setGroup] = useState<Group | null>(null);
+  const [selected, setSelected] = useState<string | null>(params.focus ?? null);
+  const [general, setGeneral] = useState<PersonalRecords | null>(null);
   const [newRecords, setNewRecords] = useState<NewRecordEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [combats, setCombats] = useState<CompCombat[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Charger les records
-  const loadRecords = useCallback(async (showCelebration = false, bypassCache = false) => {
+  // Records generaux (poids, series) : meme calcul et meme cache que l'ancien ecran
+  const loadGeneral = useCallback(async (celebrate = false, bypassCache = false) => {
     try {
-      // Cache instantané : afficher les données précédentes pendant le recalcul
       if (!bypassCache) {
         try {
           const cached = await AsyncStorage.getItem(RECORDS_CACHE_KEY);
           if (cached) {
             const { ts, data } = JSON.parse(cached);
             if (Date.now() - ts < RECORDS_CACHE_TTL) {
-              setRecords(data.records);
+              setGeneral(data.records);
               setNewRecords(data.newRecords || []);
-              setIsLoading(false);
             }
           }
-        } catch { /* cache corrompu */ }
+        } catch {
+          // cache illisible
+        }
       }
-
       const result = await calculateAllRecords();
-      setRecords(result.records);
+      setGeneral(result.records);
       setNewRecords(result.newRecords);
-
-      // Sauvegarder en cache
       try {
-        await AsyncStorage.setItem(RECORDS_CACHE_KEY, JSON.stringify({
-          ts: Date.now(),
-          data: { records: result.records, newRecords: result.newRecords },
-        }));
-      } catch { /* non-bloquant */ }
-
-      // Celebrer les nouveaux records
-      if (showCelebration && result.newRecords.length > 0) {
+        await AsyncStorage.setItem(RECORDS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: { records: result.records, newRecords: result.newRecords } }));
+      } catch {
+        // non bloquant
+      }
+      if (celebrate && result.newRecords.length > 0) {
         successHaptic();
         playSuccessSound();
       }
     } catch (error) {
       logger.error('Erreur chargement records:', error);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      setRefreshing(false);
+    }
+    try {
+      const list = await getCombats();
+      setCombats(list ?? []);
+    } catch {
+      setCombats([]);
     }
   }, []);
 
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadRecords(true); }, []);
-
-  // Masquer le loader après 2 secondes maximum
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Listener DeviceEventEmitter pour rafraîchissement des données (bypass cache)
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', () => {
+    loadGeneral(true);
+    const sub = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, () => {
       AsyncStorage.removeItem(RECORDS_CACHE_KEY).catch(() => {});
-      loadRecords(false, true);
+      loadGeneral(false, true);
     });
     return () => sub.remove();
-  }, []);
+  }, [loadGeneral]);
 
-  // Rafraichir manuellement (bypass cache)
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
+  const onRefresh = async () => {
+    setRefreshing(true);
     await AsyncStorage.removeItem(RECORDS_CACHE_KEY).catch(() => {});
-    await loadRecords(true, true);
+    await loadGeneral(true, true);
   };
 
-  // Partager un record
-  const handleShare = async (type: RecordType, value: number) => {
-    try {
-      const text = generateRecordShareText(type, value);
-      await Share.share({
-        message: text,
-      });
-    } catch (error) {
-      logger.error('Erreur partage:', error);
+  // Le texte peut contenir le poids ou le tour de taille : la personne voit d'abord le texte exact
+  const share = (type: RecordType, value: number) => {
+    partagerTexte({ source: 'record', message: generateRecordShareText(type, value), apercu: true });
+  };
+
+  const today = todayISO();
+  const freshLimit = isoOf(new Date(Date.now() - 14 * 86400000));
+  const combat = useMemo(() => combatSummary(trainings, combats), [trainings, combats]);
+  const reg = useMemo(() => regularity(trainings, today), [trainings, today]);
+  const hasCombat = useMemo(() => trainings.some((t) => groupOfSport(t.sport) === 'combat') || combats.length > 0, [trainings, combats]);
+
+  const groups = useMemo(() => {
+    const present = new Set(records.lines.map(groupOf));
+    if (hasCombat) present.add('combat');
+    if (trainings.length > 0) present.add('regularite');
+    const main = groupOfSport(mainSport(favoris, trainings));
+    const list = ORDER.filter((g) => present.has(g));
+    // le sport principal passe en premier
+    return list.includes(main) ? [main, ...list.filter((g) => g !== main)] : list;
+  }, [records.lines, hasCombat, trainings, favoris]);
+
+  useEffect(() => {
+    if (params.focus) {
+      const l = records.lines.find((x) => x.key === params.focus);
+      if (l) {
+        setGroup(groupOf(l));
+        setSelected(l.key);
+        return;
+      }
     }
+    if (groups.length && (!group || !groups.includes(group))) setGroup(groups[0]);
+  }, [groups, params.focus, records.lines]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const g0: Group = group ?? groups[0] ?? 'regularite';
+  const lines = useMemo(() => records.lines.filter((l) => groupOf(l) === g0), [records.lines, g0]);
+  const chartable = useMemo(
+    () => lines.filter((l) => !l.minor && (g0 === 'force' || g0 === 'endurance')).sort((a, b) => b.history.length - a.history.length),
+    [lines, g0],
+  );
+  const current: RecordLine | undefined = chartable.find((l) => l.key === selected) ?? chartable[0];
+
+  const chartPoints = useMemo(() => {
+    if (!current) return [];
+    return chartSeries(current).map((p) => ({
+      date: p.date,
+      value: p.value,
+      seal: p.isRecord,
+      label: current.kind === 'force' ? `${Math.round(cv(p.value))} ${uL}` : formatRecordValue(current, p.value).main,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, unite]);
+
+  const progress = useMemo(() => {
+    if (!current || current.history.length < 2) return null;
+    const first = current.history[0];
+    const diff = current.kind === 'allure' ? first.value - current.best : current.best - first.value;
+    if (Math.abs(diff) < 0.05) return null;
+    const m = MONTHS[new Date(first.date.slice(0, 10) + 'T12:00:00').getMonth()];
+    if (current.kind === 'force') return `${fmt1(Math.abs(cv(diff)))} ${uL} de ${diff > 0 ? 'plus' : 'moins'} depuis ${m}`;
+    if (current.kind === 'allure') return `${Math.round(Math.abs(diff))} secondes au km ${diff > 0 ? 'gagnées' : 'perdues'} depuis ${m}`;
+    if (current.kind === 'distance') return `${fmt1(Math.abs(diff))} km de ${diff > 0 ? 'plus' : 'moins'} depuis ${m}`;
+    return `${fmt1(Math.abs(diff))} de ${diff > 0 ? 'plus' : 'moins'} depuis ${m}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, unite]);
+
+  const lastStamp = current ? [...current.history].reverse().find((p) => p.isRecord) : undefined;
+
+  // Autres records : poids et mesures, sans la serie du jour quand elle est a zero
+  const g = general;
+  const otherRows: { label: string; value: string; date?: string; share?: { type: RecordType; value: number } }[] = [];
+  if (g) {
+    if (g.lowestWeight) otherRows.push({ label: 'Poids le plus bas', value: `${fmt1(g.lowestWeight.value)} kg`, date: g.lowestWeight.date, share: { type: 'lowestWeight', value: g.lowestWeight.value } });
+    if (g.startingWeight) otherRows.push({ label: 'Poids de départ', value: `${fmt1(g.startingWeight.value)} kg`, date: g.startingWeight.date });
+    if (g.lowestWaist) otherRows.push({ label: 'Tour de taille le plus bas', value: `${g.lowestWaist.value} cm`, date: g.lowestWaist.date, share: { type: 'lowestWaist', value: g.lowestWaist.value } });
+    if (g.longestStreak && g.longestStreak.value > 1) otherRows.push({ label: 'Plus longue série de jours', value: `${g.longestStreak.value} jours`, date: g.longestStreak.date, share: { type: 'longestStreak', value: g.longestStreak.value } });
+    if (g.bestMonthRegularity) otherRows.push({ label: 'Ton mois le plus régulier', value: `${g.bestMonthRegularity.value} %`, date: g.bestMonthRegularity.label, share: { type: 'bestMonthRegularity', value: g.bestMonthRegularity.value } });
+    if (g.totalMeasurements > 0) otherRows.push({ label: 'Pesées au total', value: String(g.totalMeasurements) });
+  }
+  const dateText = (d?: string) => (!d ? '' : /^\d{4}-\d{2}-\d{2}/.test(d) ? longDate(d.slice(0, 10)) : d);
+  const openTraining = (id?: number) => {
+    if (id != null) router.push({ pathname: '/workout-detail', params: { id: String(id) } } as any);
   };
 
-  // Composant carte de record
-  const RecordCard = ({
-    icon: Icon,
-    iconColor,
-    iconBg,
-    title,
-    children,
-  }: {
-    icon: any;
-    iconColor: string;
-    iconBg: string;
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <Card style={styles.recordCard}>
-      <View style={styles.recordCardHeader}>
-        <View style={[styles.recordCardIcon, { backgroundColor: iconBg }]}>
-          <Icon size={20} color={iconColor} strokeWidth={2} />
-        </View>
-        <Text style={[styles.recordCardTitle, { color: colors.textPrimary }]}>
-          {title}
-        </Text>
-      </View>
-      <View style={styles.recordCardContent}>{children}</View>
-    </Card>
-  );
+  const card = { borderRadius: 22, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, paddingHorizontal: 14 } as const;
 
-  // Composant ligne de record
-  const RecordRow = ({
-    icon: RowIcon,
-    label,
-    value,
-    date,
-    isRecord = false,
-    shareType,
-    shareValue,
-  }: {
-    icon?: React.ComponentType<{ size: number; color: string }>;
-    label: string;
-    value: string;
-    date?: string;
-    isRecord?: boolean;
-    shareType?: RecordType;
-    shareValue?: number;
-  }) => (
-    <View style={[styles.recordRow, { borderBottomColor: colors.border }]}>
-      <View style={styles.recordRowLeft}>
-        {RowIcon ? <RowIcon size={18} color={colors.textMuted} /> : <View style={{ width: 18 }} />}
-        <View style={styles.recordRowInfo}>
-          <View style={styles.recordRowLabelContainer}>
-            <Text style={[styles.recordLabel, { color: colors.textSecondary }]}>
-              {label}
-            </Text>
-            {isRecord && (
-              <View style={[styles.recordBadge, { backgroundColor: colors.goldMuted }]}>
-                <Trophy size={10} color={colors.gold} strokeWidth={2} />
-                <Text style={[styles.recordBadgeText, { color: colors.gold }]}>
-                  Record
-                </Text>
-              </View>
-            )}
-          </View>
-          {date && (
-            <Text style={[styles.recordDate, { color: colors.textMuted }]}>
-              {date}
-            </Text>
-          )}
-        </View>
-      </View>
-      <View style={styles.recordRowRight}>
-        <Text style={[styles.recordValue, { color: colors.textPrimary }]}>
-          {value}
-        </Text>
-        {shareType && shareValue && (
-          <TouchableOpacity
-            style={[styles.shareButton, { backgroundColor: colors.cardHover }]}
-            onPress={() => handleShare(shareType, shareValue)}
-          >
-            <Share2 size={14} color={colors.textSecondary} strokeWidth={2} />
-          </TouchableOpacity>
-        )}
-      </View>
+  const Tile = ({ label, value, unit, sub }: { label: string; value: string; unit?: string; sub?: string }) => (
+    <View style={{ flexGrow: 1, flexBasis: '44%', padding: 14, borderRadius: 18, backgroundColor: blancA(0.84), borderWidth: 1, borderColor: c.divider, gap: 2 }}>
+      <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{label}</Ink>
+      <Ink size={26} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+        {value}
+        {unit ? <Ink size={13} weight="bold" color={c.textSecondary}>{` ${unit}`}</Ink> : null}
+      </Ink>
+      {sub ? <Ink size={12} color={c.textMuted} numberOfLines={2}>{sub}</Ink> : null}
     </View>
   );
 
-  // Empty state: aucune donnée
-  if (!isLoading && (!records || (
-    !records.lowestWeight &&
-    !records.longestStreak &&
-    records.totalWorkouts === 0
-  ))) {
+  const LineRow = ({ l, i, onPress, short }: { l: RecordLine; i: number; onPress?: () => void; short?: boolean }) => {
+    const v = formatRecordValue(l, undefined, unite);
+    const fresh = l.date >= freshLimit && l.stamps > 0;
+    const on = current?.key === l.key;
+    const shortName = short && l.kind !== 'force' && l.kind !== 'reps' ? l.name.split(', ').slice(1).join(', ') || l.name : l.name;
     return (
-      <ScreenWrapper noPadding>
-        <Header title={t('screens.records.title')} showBack />
-
-        <ScrollView
-          contentContainerStyle={styles.emptyContainer}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.accent} colors={[colors.accent]} />
-          }
-        >
-          <View style={styles.emptyContent}>
-            <Trophy size={80} color={colors.textMuted} />
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Pas encore de records
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              Enregistre tes entraînements pour suivre tes records personnels,
-              tes meilleures performances et ta progression !
-            </Text>
-
-            <TouchableOpacity
-              style={[styles.emptyButton, { backgroundColor: colors.accent }]}
-              onPress={() => router.push('/add-training' as any)}
-            >
-              <Dumbbell size={20} color={colors.textOnAccent || '#FFFFFF'} />
-              <Text style={[styles.emptyButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
-                Ajouter mon premier entraînement
-              </Text>
-            </TouchableOpacity>
+      <Pressable
+        onPress={() => { tap(); onPress ? onPress() : openTraining(l.trainingId); }}
+        accessibilityRole="button"
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, backgroundColor: on ? blancA(0.6) : 'transparent' }}
+      >
+        {l.minor ? (
+          <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="glove" size={18} color={c.textSecondary} />
           </View>
-        </ScrollView>
-      </ScreenWrapper>
+        ) : (
+          <Hanko size={26} color={fresh ? c.record : '#B9B6AE'} rotate={-7} />
+        )}
+        <View style={{ flex: 1, gap: 2 }}>
+          <Ink size={15} weight="extraBold" numberOfLines={2}>{shortName.charAt(0).toUpperCase() + shortName.slice(1)}</Ink>
+          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{`${relativeDay(l.date, today)}${l.stamps > 0 ? `, battu ${l.stamps} fois` : ''}`}</Ink>
+        </View>
+        <View style={{ alignItems: 'flex-end', gap: 1, maxWidth: '44%' }}>
+          <Ink size={17} weight="black" tight numberOfLines={1}>{v.main}</Ink>
+          <Ink size={11} color={c.textMuted} numberOfLines={2}>{v.sub}</Ink>
+        </View>
+      </Pressable>
     );
-  }
+  };
+
+  /** Lignes groupees par sport (titre du sport au-dessus) */
+  const bySport = (ls: RecordLine[]) => {
+    const map = new Map<string, RecordLine[]>();
+    ls.forEach((l) => {
+      const k = l.name.split(', ')[0];
+      map.set(k, [...(map.get(k) ?? []), l]);
+    });
+    return Array.from(map.entries());
+  };
+
+  const combatDuree = lines.filter((l) => l.kind === 'duree');
+  const combatRounds = lines.filter((l) => l.kind === 'rounds');
+  const maxSub = combat.submissions[0]?.count ?? 1;
 
   return (
-    <ScreenWrapper noPadding>
-      <Header title={t('screens.records.title')} showBack />
-
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        ref={scrollRef}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.accent} colors={[colors.accent]} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} />}
       >
-        {/* Skeleton chargement initial */}
-        {isLoading && (
-          <>
-            <SkeletonCard height={120} width="100%" marginBottom={16} />
-            <SkeletonCard height={120} width="100%" marginBottom={16} />
-            <SkeletonCard height={120} width="100%" marginBottom={16} />
-            <SkeletonCard height={120} width="100%" marginBottom={16} />
-            <SkeletonMessage />
-          </>
-        )}
+        <EnTete
+          titre="Records"
+          sousTitre={records.totalStamps > 0 ? `${records.totalStamps} record${records.totalStamps > 1 ? 's' : ''} battu${records.totalStamps > 1 ? 's' : ''} depuis le début` : 'tes meilleures marques, sport par sport'}
+          repli="/(tabs)/seances"
+          style={{ marginHorizontal: -22, marginTop: -8 }}
+        />
 
-        {/* HEADER */}
-        <View style={styles.header}>
-          <View style={[styles.trophyContainer, { backgroundColor: colors.goldMuted }]}>
-            <Trophy size={40} color={colors.gold} strokeWidth={2} />
-          </View>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {t('screens.records.subtitle')}
-          </Text>
-
-          {/* Bouton refresh */}
-          <TouchableOpacity
-            style={[styles.refreshButton, { backgroundColor: colors.card }]}
-            onPress={handleRefresh}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? (
-              <ActivityIndicator size="small" color={colors.gold} />
-            ) : (
-              <RefreshCw size={18} color={colors.textSecondary} strokeWidth={2} />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* NOUVEAUX RECORDS */}
-        {newRecords.length > 0 && (
-          <View style={[styles.newRecordsCard, { backgroundColor: colors.goldMuted, borderColor: colors.gold }]}>
-            <View style={styles.newRecordsHeader}>
-              <Star size={20} color={colors.gold} strokeWidth={2} />
-              <Text style={[styles.newRecordsTitle, { color: colors.gold }]}>
-                {t('screens.records.newRecords')}
-              </Text>
+        {newRecords.length > 0 ? (
+          <Glass style={{ gap: 8, borderColor: c.accentTint }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Hanko size={30} filled />
+              <Ink size={16} weight="black" tight>Nouveaux records</Ink>
             </View>
             {newRecords.map((nr, i) => (
-              <View key={i} style={styles.newRecordItem}>
-                <Text style={styles.newRecordEmoji}>{nr.emoji}</Text>
-                <Text style={[styles.newRecordText, { color: colors.textPrimary }]}>
-                  {nr.message}
-                </Text>
-              </View>
+              <Ink key={i} size={14} color={c.textSecondary}>{nr.message.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim()}</Ink>
             ))}
-          </View>
-        )}
+          </Glass>
+        ) : null}
 
-        {/* SECTION POIDS */}
-        <RecordCard
-          icon={Scale}
-          iconColor={colors.gold}
-          iconBg={colors.goldMuted}
-          title={t('screens.records.sections.weight')}
-        >
-          {records?.lowestWeight && (
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.lowestWeight')}
-              value={`${records.lowestWeight.value.toFixed(1)} kg`}
-              date={formatRecordDate(records.lowestWeight.date)}
-              isRecord
-              shareType="lowestWeight"
-              shareValue={records.lowestWeight.value}
-            />
-          )}
-          {records?.startingWeight && (
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.startingWeight')}
-              value={`${records.startingWeight.value.toFixed(1)} kg`}
-              date={formatRecordDate(records.startingWeight.date)}
-            />
-          )}
-          {records?.maxWeeklyLoss && records.maxWeeklyLoss.value > 0 && (
-            <RecordRow
-              icon={Scale}
-              label={t('screens.records.maxWeeklyLoss')}
-              value={`-${records.maxWeeklyLoss.value.toFixed(1)} kg`}
-              date={formatRecordDate(records.maxWeeklyLoss.date)}
-              isRecord
-              shareType="maxWeeklyLoss"
-              shareValue={records.maxWeeklyLoss.value}
-            />
-          )}
-          {records?.maxMonthlyLoss && records.maxMonthlyLoss.value > 0 && (
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.maxMonthlyLoss')}
-              value={`-${records.maxMonthlyLoss.value.toFixed(1)} kg`}
-              date={records.maxMonthlyLoss.label}
-              isRecord
-              shareType="maxMonthlyLoss"
-              shareValue={records.maxMonthlyLoss.value}
-            />
-          )}
-          {records && records.totalWeightLoss > 0 && (
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.totalLoss')}
-              value={`-${records.totalWeightLoss.toFixed(1)} kg`}
-            />
-          )}
-        </RecordCard>
-
-        {/* SECTION STREAK */}
-        <RecordCard
-          icon={Flame}
-          iconColor="#F59E0B"
-          iconBg="#FEF3C7"
-          title={t('screens.records.sections.streak')}
-        >
-          {records?.longestStreak && (
-            <RecordRow
-              icon={undefined}
-              label={t('screens.records.longestStreak')}
-              value={`${records.longestStreak.value} ${t('screens.records.days')}`}
-              date={formatRecordDate(records.longestStreak.date)}
-              isRecord
-              shareType="longestStreak"
-              shareValue={records.longestStreak.value}
-            />
-          )}
-          <RecordRow
-            icon={Calendar}
-            label={t('screens.records.currentStreak')}
-            value={`${records?.currentStreak || 0} ${t('screens.records.days')}`}
+        {loaded && trainings.length === 0 ? (
+          <EmptyState
+            title="Pas encore de record"
+            text="Enregistre tes séances avec tes charges, tes distances ou tes rounds. Dès que tu bats une marque, elle s’affiche ici."
+            action="Commencer une séance"
+            onAction={() => router.push('/seance' as any)}
           />
-        </RecordCard>
+        ) : null}
 
-        {/* SECTIONS MENSURATIONS, ENTRAÎNEMENT, RÉGULARITÉ, ÉNERGIE */}
-        <View style={{ position: 'relative' }}>
-          <View>
-            {/* SECTION MENSURATIONS */}
-            {(records?.lowestWaist || records?.totalWaistLoss) && (
-              <RecordCard
-                icon={Ruler}
-                iconColor="#A855F7"
-                iconBg="#F3E8FF"
-                title={t('screens.records.sections.measurements')}
-              >
-                {records?.lowestWaist && (
-                  <RecordRow
-                    icon={Ruler}
-                    label={t('screens.records.lowestWaist')}
-                    value={`${records.lowestWaist.value} cm`}
-                    date={formatRecordDate(records.lowestWaist.date)}
-                    isRecord
-                    shareType="lowestWaist"
-                    shareValue={records.lowestWaist.value}
-                  />
-                )}
-                {records && records.totalWaistLoss > 0 && (
-                  <RecordRow
-                    icon={Ruler}
-                    label={t('screens.records.totalWaistLoss')}
-                    value={`-${records.totalWaistLoss.toFixed(0)} cm`}
-                  />
-                )}
-              </RecordCard>
-            )}
+        {groups.length > 1 ? (
+          <Segments items={groups.map((k) => ({ key: k, label: GROUP_LABEL[k] }))} value={g0} onChange={(k) => { setGroup(k); setSelected(null); }} />
+        ) : null}
 
-            {/* SECTION ENTRAÎNEMENT */}
-            {records && records.totalWorkouts && records.totalWorkouts > 0 && (
-              <RecordCard
-                icon={Dumbbell}
-                iconColor="#22C55E"
-                iconBg="#DCFCE7"
-                title={t('screens.records.sections.training')}
-              >
-                {records?.maxWeeklyWorkouts && (
-                  <RecordRow
-                    icon={undefined}
-                    label={t('screens.records.maxWeeklyWorkouts')}
-                    value={`${records.maxWeeklyWorkouts.value} ${t('screens.records.sessions')}`}
-                    date={formatRecordDate(records.maxWeeklyWorkouts.date)}
-                    isRecord
-                    shareType="maxWeeklyWorkouts"
-                    shareValue={records.maxWeeklyWorkouts.value}
+        {/* Force et endurance : un record choisi, sa courbe, puis la liste */}
+        {(g0 === 'force' || g0 === 'endurance') && current ? (
+          <>
+            {chartable.length > 1 ? (
+              <ChipRow>
+                {chartable.slice(0, 14).map((l) => (
+                  <Chip key={l.key} label={l.kind === 'force' || l.kind === 'reps' ? l.name : l.name.replace(', plus longue distance', ', distance').replace(', meilleure allure', ', allure')} on={l.key === current.key} onPress={() => setSelected(l.key)} />
+                ))}
+              </ChipRow>
+            ) : null}
+            <View style={{ gap: 4, paddingHorizontal: 4 }}>
+              <Ink size={15} weight="extraBold" numberOfLines={2}>{current.name}</Ink>
+              {current.kind === 'force' ? (
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+                  <Tile
+                    label="Charge max"
+                    value={current.maxLoad ? `${fmt1(cv(current.maxLoad.weight))}` : '0'}
+                    unit={current.maxLoad ? `${uL} × ${current.maxLoad.reps}` : uL}
                   />
-                )}
-                <RecordRow
-                  icon={undefined}
-                  label={t('screens.records.totalSessions')}
-                  value={`${records.totalWorkouts}`}
-                />
-                {records?.favoriteSport && (
-                  <RecordRow
-                    icon={undefined}
-                    label={t('screens.records.favoriteSport')}
-                    value={`${getSportName(records.favoriteSport.type)} (${records.favoriteSport.count})`}
-                  />
-                )}
-              </RecordCard>
-            )}
-
-            {/* SECTION RÉGULARITÉ */}
-            <RecordCard
-              icon={Calendar}
-              iconColor="#3B82F6"
-              iconBg="#DBEAFE"
-              title={t('screens.records.sections.regularity')}
-            >
-              {records?.bestMonthRegularity && (
-                <RecordRow
-                  icon={undefined}
-                  label={t('screens.records.bestMonth')}
-                  value={`${records.bestMonthRegularity.value}%`}
-                  date={records.bestMonthRegularity.label}
-                  isRecord
-                  shareType="bestMonthRegularity"
-                  shareValue={records.bestMonthRegularity.value}
-                />
+                  <Tile label="Max estimé sur 1 répétition" value={String(Math.round(cv(current.best)))} unit={uL} />
+                </View>
+              ) : (
+                <Ink size={48} weight="black" tight style={{ lineHeight: 54 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                  {current.kind === 'allure' ? formatRecordValue(current).main : current.kind === 'reps' ? String(Math.round(current.best)) : fmt1(current.best)}
+                  <Ink size={18} weight="bold" color={c.textSecondary}>{current.kind === 'allure' ? ' min par km' : current.kind === 'reps' ? ' répétitions' : ' km'}</Ink>
+                </Ink>
               )}
-              <RecordRow
-                icon={Scale}
-                label={t('screens.records.totalWeighings')}
-                value={`${records?.totalMeasurements || 0}`}
-              />
-            </RecordCard>
-
-            {/* SECTION ÉNERGIE */}
-            {records?.bestEnergyStreak && (
-              <RecordCard
-                icon={Zap}
-                iconColor="#F59E0B"
-                iconBg="#FEF3C7"
-                title={t('screens.records.sections.energy')}
-              >
-                <RecordRow
-                  icon={undefined}
-                  label={t('screens.records.bestEnergyStreak')}
-                  value={`${records.bestEnergyStreak.value} ${t('screens.records.days')}`}
-                  date={formatRecordDate(records.bestEnergyStreak.date)}
-                  isRecord
-                  shareType="bestEnergyStreak"
-                  shareValue={records.bestEnergyStreak.value}
+              {progress ? <Ink size={14} weight="bold" color={c.indigo}>{progress}</Ink> : null}
+            </View>
+            {chartPoints.length >= 2 ? (
+              <View style={{ gap: 6 }}>
+                <Ink size={12} weight="bold" color={c.textMuted} style={{ paddingHorizontal: 4 }}>
+                  {current.kind === 'force' ? 'Ton max estimé, une séance par point' : current.kind === 'reps' ? 'Tes répétitions, une séance par point' : 'Évolution de ton record'}
+                </Ink>
+                <BrushChart
+                  points={chartPoints}
+                  width={width - 44}
+                  color="#3D5D9E"
+                  invert={current.kind === 'allure'}
+                  format={(v) => (current.kind === 'allure' ? formatRecordValue(current, v).main : String(Math.round(current.kind === 'force' ? cv(v) : v)))}
                 />
-              </RecordCard>
+              </View>
+            ) : (
+              <Glass>
+                <Ink size={14} color={c.textSecondary}>Encore une séance avec cet exercice et ta courbe de progression apparaît ici.</Ink>
+              </Glass>
             )}
-          </View>
+            <Glass onPress={current.trainingId != null ? () => openTraining(current.trainingId) : undefined} label="Voir la séance du record" style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <Hanko size={28} rotate={-6} color={lastStamp ? c.record : '#B9B6AE'} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Ink size={15} weight="extraBold">{lastStamp ? `Dernier record, ${longDate(lastStamp.date)}` : `Ta meilleure marque, ${longDate(current.date)}`}</Ink>
+                <Ink size={13} color={c.textSecondary}>
+                  {current.kind === 'force' && current.bestSet ? `${fmt1(cv(current.bestSet.weight))} ${uL} pour ${current.bestSet.reps} répétition${current.bestSet.reps > 1 ? 's' : ''}` : formatRecordValue(current).main}
+                </Ink>
+              </View>
+              {current.trainingId != null ? <Icon name="chevron" size={18} color={c.textMuted} /> : null}
+            </Glass>
 
-        </View>
+            <SectionTitle title={g0 === 'force' ? 'Tous tes exercices' : 'Tous tes records'} sub={g0 === 'force' ? 'charge max et max estimé' : undefined} />
+            {g0 === 'force' ? (
+              <View style={card}>
+                {lines.map((l, i) => (
+                  <Pressable
+                    key={l.key}
+                    onPress={() => { tap(); setSelected(l.key); scrollRef.current?.scrollTo({ y: 0, animated: true }); }}
+                    onLongPress={() => openTraining(l.trainingId)}
+                    accessibilityRole="button"
+                    accessibilityHint="Appui long pour ouvrir la séance"
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}
+                  >
+                    <Hanko size={24} color={l.date >= freshLimit && l.stamps > 0 ? c.record : '#B9B6AE'} rotate={-7} />
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Ink size={15} weight="extraBold" numberOfLines={2}>{l.name}</Ink>
+                      <Ink size={12} color={c.textSecondary}>{relativeDay(l.date, today)}</Ink>
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 1 }}>
+                      <Ink size={16} weight="black" tight>{l.kind === 'reps' ? `${Math.round(l.best)} rép.` : l.maxLoad ? `${fmt1(cv(l.maxLoad.weight))} ${uL} × ${l.maxLoad.reps}` : `${Math.round(cv(l.best))} ${uL}`}</Ink>
+                      <Ink size={11} color={c.textMuted}>{l.kind === 'reps' ? 'au poids du corps' : `max estimé ${Math.round(cv(l.best))} ${uL}`}</Ink>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            ) : (
+              bySport(lines).map(([sportName, ls]) => (
+                <View key={sportName} style={{ gap: 6 }}>
+                  <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{sportName}</Ink>
+                  <View style={card}>
+                    {ls.map((l, i) => (
+                      <LineRow key={l.key} l={l} i={i} short onPress={() => { setSelected(l.key); scrollRef.current?.scrollTo({ y: 0, animated: true }); }} />
+                    ))}
+                  </View>
+                </View>
+              ))
+            )}
+          </>
+        ) : null}
 
-        {/* MESSAGE MOTIVATION */}
-        <View style={[styles.motivationCard, { backgroundColor: colors.card }]}>
-          <Award size={24} color={colors.gold} strokeWidth={2} />
-          <Text style={[styles.motivationText, { color: colors.textSecondary }]}>
-            {t('screens.records.motivationText')}
-          </Text>
-        </View>
+        {/* Combat : victoires, soumissions par technique, seances les plus longues */}
+        {g0 === 'combat' ? (
+          <>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              <Tile label="Victoires en sparring" value={String(combat.wins)} sub={combat.roundsTotal ? `sur ${combat.roundsTotal} rounds notés` : 'note tes rounds pour les compter'} />
+              <Tile label="Soumissions placées" value={String(combat.submissionsTotal)} sub={combat.submissions[0] ? `Surtout : ${combat.submissions[0].technique.trim().charAt(0).toUpperCase()}${combat.submissions[0].technique.trim().slice(1)}` : undefined} />
+              {combat.compTotal > 0 ? <Tile label="Victoires en compétition" value={String(combat.compWins)} sub={`sur ${combat.compTotal} combat${combat.compTotal > 1 ? 's' : ''}`} /> : null}
+            </View>
 
-        <View style={{ height: 100 }} />
-        <PremiumTeaser variant="detail" title="Évolution de tes records" />
+            {combat.submissions.length > 0 ? (
+              <>
+                <SectionTitle title="Soumissions par technique" />
+                <View style={[card, { paddingVertical: 8 }]}>
+                  {combat.submissions.slice(0, 8).map((s) => (
+                    <View key={s.technique} style={{ paddingVertical: 8, gap: 6 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                        <Ink size={14} weight="bold" style={{ flex: 1 }} numberOfLines={2}>{s.technique}</Ink>
+                        <Ink size={14} weight="black">{String(s.count)}</Ink>
+                      </View>
+                      <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle, overflow: 'hidden' }}>
+                        <View style={{ width: `${Math.max(6, (s.count / maxSub) * 100)}%`, height: 8, borderRadius: 4, backgroundColor: '#A8832F' }} />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {combatDuree.length > 0 ? (
+              <>
+                <SectionTitle title="Tes séances les plus longues" />
+                <View style={card}>
+                  {combatDuree.map((l, i) => <LineRow key={l.key} l={l} i={i} />)}
+                </View>
+              </>
+            ) : null}
+
+            {combatRounds.length > 0 ? (
+              <>
+                <SectionTitle title="Le plus de rounds" sub="un repère de volume, pas un record" />
+                <View style={card}>
+                  {combatRounds.map((l, i) => <LineRow key={l.key} l={l} i={i} />)}
+                </View>
+              </>
+            ) : null}
+
+            {combat.roundsTotal === 0 && combat.compTotal === 0 ? (
+              <Glass style={{ gap: 10 }}>
+                <Ink size={15} weight="extraBold">Note tes rounds de sparring</Ink>
+                <Ink size={13} color={c.textSecondary}>Résultat et soumission de chaque round : tes victoires et tes techniques favorites s’affichent ici.</Ink>
+                <BigButton label="Commencer une séance" onPress={() => router.push('/seance' as any)} />
+              </Glass>
+            ) : null}
+          </>
+        ) : null}
+
+        {/* Regularite */}
+        {g0 === 'regularite' ? (
+          <>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {reg.bestWeek ? <Tile label="Ta meilleure semaine" value={String(reg.bestWeek.count)} unit={`séance${reg.bestWeek.count > 1 ? 's' : ''}`} sub={weekLabel(reg.bestWeek.monday)} /> : null}
+              {reg.longestWeekStreak > 0 ? <Tile label="Semaines d’affilée" value={String(reg.longestWeekStreak)} unit="sem." sub={reg.currentWeekStreak > 1 ? `en cours : ${reg.currentWeekStreak} semaines` : 'ton record'} /> : null}
+              <Tile label="Séances au total" value={String(reg.totalSessions)} />
+              <Tile label="Temps d’entraînement" value={formatHours(reg.totalMinutes).value} unit={formatHours(reg.totalMinutes).unit || undefined} />
+            </View>
+            {lines.filter((l) => l.kind === 'duree').length > 0 ? (
+              <>
+                <SectionTitle title="Tes séances les plus longues" />
+                <View style={card}>
+                  {lines.filter((l) => l.kind === 'duree').map((l, i) => <LineRow key={l.key} l={l} i={i} />)}
+                </View>
+              </>
+            ) : null}
+          </>
+        ) : null}
+
+        {otherRows.length > 0 ? (
+          <>
+            <SectionTitle title="Poids et mesures" sub="tes repères hors séance" />
+            <View style={card}>
+              {otherRows.map((r, i) => (
+                <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider }}>
+                  <View style={{ flex: 1, gap: 1, paddingVertical: 8 }}>
+                    <Ink size={14} weight="bold">{r.label}</Ink>
+                    {r.date ? <Ink size={12} color={c.textMuted}>{dateText(r.date)}</Ink> : null}
+                  </View>
+                  <Ink size={16} weight="black">{r.value}</Ink>
+                  {r.share ? (
+                    <Pressable onPress={() => { tap(); share(r.share!.type, r.share!.value); }} accessibilityRole="button" accessibilityLabel={`Partager : ${r.label}`} hitSlop={6} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="share" size={18} color={c.textSecondary} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
+        {g0 === 'force' && trainings.length > 0 ? (
+          <Ink size={12} color={c.textMuted} style={{ textAlign: 'center', paddingHorizontal: 20 }}>
+            Le max estimé vient de tes séries (formule d’Epley). Ta première séance sur un exercice sert de point de départ.
+          </Ink>
+        ) : null}
       </ScrollView>
-    </ScreenWrapper>
+    </View>
   );
 }
-
-const RADIUS = { sm: 8, md: 12, lg: 16 };
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-
-  // Empty state
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyContent: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 15,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  emptyButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-
-  // Header
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  trophyContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 15,
-    textAlign: 'center',
-  },
-  refreshButton: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // New records
-  newRecordsCard: {
-    borderRadius: RADIUS.lg,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-  },
-  newRecordsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  newRecordsTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  newRecordItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
-  },
-  newRecordEmoji: {
-    fontSize: 16,
-  },
-  newRecordText: {
-    fontSize: 14,
-    fontWeight: '500',
-    flex: 1,
-  },
-
-  // Record card
-  recordCard: {
-    marginBottom: 16,
-  },
-  recordCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 12,
-  },
-  recordCardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recordCardTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  recordCardContent: {},
-
-  // Record row
-  recordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  recordRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  recordEmoji: {
-    fontSize: 18,
-    width: 28,
-  },
-  recordRowInfo: {
-    flex: 1,
-  },
-  recordRowLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  recordLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  recordBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  recordBadgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  recordDate: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  recordRowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  recordValue: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  shareButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Motivation
-  motivationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: RADIUS.lg,
-    marginTop: 8,
-  },
-  motivationText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: '500',
-  },
-});

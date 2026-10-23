@@ -1,9 +1,9 @@
 // ============================================
-// PARTNER AUDIO NOTES · enregistrement vocal 30s
+// PARTNER AUDIO NOTES : enregistrement vocal 30s
 // ============================================
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Mic, Square, Play, Pause, Trash2 } from 'lucide-react-native';
 import {
   useAudioRecorder,
@@ -17,6 +17,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { lightHaptic, successHaptic, errorHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 interface AudioNote {
   id: string;
@@ -58,9 +59,9 @@ export const PartnerAudioNotes: React.FC<Props> = ({ notes, onChange }) => {
       const current = await getRecordingPermissionsAsync();
       if (current.granted) return true;
       if (!current.canAskAgain) {
-        Alert.alert(
-          'Microphone bloque',
-          'Active le micro pour YOROI dans Reglages > Confidentialite > Microphone.'
+        appAlert(
+          'Micro bloqué',
+          'Autorise le micro pour YOROI dans les réglages de ton téléphone.'
         );
         return false;
       }
@@ -103,7 +104,7 @@ export const PartnerAudioNotes: React.FC<Props> = ({ notes, onChange }) => {
     } catch (e) {
       logger.warn('[AudioNote] start error', e);
       errorHaptic().catch(() => {});
-      Alert.alert('Erreur', 'Impossible de demarrer l\'enregistrement. Verifie les permissions micro.');
+      appAlert('Enregistrement impossible', 'Vérifie que le micro est autorisé.');
       setIsRecording(false);
     }
   };
@@ -184,14 +185,14 @@ export const PartnerAudioNotes: React.FC<Props> = ({ notes, onChange }) => {
     <View style={[styles.wrap, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Notes audio</Text>
-        <Text style={[styles.sub, { color: colors.textMuted }]}>Max 30s · utile juste apres le sparring</Text>
+        <Text style={[styles.sub, { color: colors.textMuted }]}>Max 30s, utile juste apres le sparring</Text>
       </View>
 
       {/* Bouton enregistrement */}
       {isRecording ? (
         <TouchableOpacity onPress={stopRecording} style={[styles.recBtn, { backgroundColor: '#EF4444' }]}>
           <Square size={18} color="#fff" fill="#fff" />
-          <Text style={styles.recBtnText}>Arreter · {(elapsed / 1000).toFixed(1)}s</Text>
+          <Text style={styles.recBtnText}>Arreter, {(elapsed / 1000).toFixed(1)}s</Text>
         </TouchableOpacity>
       ) : (
         <TouchableOpacity onPress={startRecording} style={[styles.recBtn, { backgroundColor: '#D4AF37' }]}>

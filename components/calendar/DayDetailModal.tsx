@@ -75,8 +75,8 @@ export function DayDetailModal({
   const handleDelete = (session: Training) => {
     const club = getClub(session.club_id);
     showPopup(
-      'Supprimer la séance',
-      `Supprimer ${club?.name || session.sport}${session.start_time ? ` a ${session.start_time}` : ''} ?\n\nLa séance sera deplacee dans la corbeille.`,
+      'Supprimer la séance ?',
+      `${club?.name || session.sport}${session.start_time ? ` à ${session.start_time}` : ''} ira dans la corbeille.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -250,7 +250,7 @@ export function DayDetailModal({
                           <View style={styles.sessionMeta}>
                             <Clock size={12} color={colors.textMuted} />
                             <Text style={[styles.sessionMetaText, { color: colors.textSecondary }]}>
-                              {session.start_time || '·'}
+                              {session.start_time || ''}
                               {endTime ? ` - ${endTime}` : ''}
                               {' • '}
                               {formatDuration(session.duration_minutes)}

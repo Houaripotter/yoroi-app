@@ -188,7 +188,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
             );
           })}
 
-          {/* X-axis labels — Règle 4 : deux lignes si label contient \n */}
+          {/* X-axis labels, Règle 4 : deux lignes si label contient \n */}
           {data.length > 1 && (
             <>
               {(data[0].label || '').split('\n').map((part, idx) => (

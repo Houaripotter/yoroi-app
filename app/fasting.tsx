@@ -1,1078 +1,575 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  DeviceEventEmitter,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { useI18n } from '@/lib/I18nContext';
-import { PremiumGate } from '@/components/premium/PremiumGate';
-
-import {
-  Clock,
-  Square,
-  Settings,
-  Flame,
-  AlertTriangle,
-  ChevronRight,
-  X,
-  MapPin,
-  Moon,
-  Star,
-  Cross,
-  Swords,
-  Utensils,
-  RefreshCw,
-  Droplets,
-  Sun,
-} from 'lucide-react-native';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { Card } from '@/components/ui/Card';
-import { useTheme } from '@/lib/ThemeContext';
-import { successHaptic, errorHaptic } from '@/lib/haptics';
+/**
+ * Jeune (refonte v2) : anneau au pinceau avec les phases, chrono, choix du protocole,
+ * jeune personnalise et Ramadan, statistiques. Avertissement medical avant chaque depart.
+ */
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { DeviceEventEmitter, KeyboardAvoidingView, Platform, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { BigButton, Card, Enter, Press } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen, Hanko } from '@/components/yoroi/v2/ornements/screens';
+import { BottomSheet, Badge, Chip, H2, HRow, IconDot, LinkCard, NIcon, Notice, P, TextField, tap } from '@/components/yoroi/v2/nutrition/ui';
+import type { NIconName } from '@/components/yoroi/v2/nutrition/ui';
+import { FastPhases, FastRing } from '@/components/yoroi/v2/nutrition/FastRing';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { durationBetween, FAST_MARKERS, hhmmValid } from '@/lib/v2/nutrition/formulas';
 import { playSuccessSound } from '@/lib/soundManager';
-import logger from '@/lib/security/logger';
+import { logger } from '@/lib/security/logger';
 import {
   FASTING_MODES,
-  FastingMode,
-  FastingState,
-  FastingStats,
-  CustomFastingSettings,
-  RamadanSettings,
+  completeFasting,
+  formatCountdown,
+  formatDate,
+  formatTime,
+  getCustomFastingSettings,
+  getFastingMode,
   getFastingState,
+  getFastingStats,
+  getProgressPercentage,
+  getRamadanSettings,
+  getTimeRemaining,
+  saveCustomFastingSettings,
+  saveRamadanSettings,
   startFasting,
   stopFasting,
-  completeFasting,
-  getFastingStats,
-  getFastingMode,
-  getCustomFastingSettings,
-  saveCustomFastingSettings,
-  getRamadanSettings,
-  saveRamadanSettings,
-  getTimeRemaining,
-  getProgressPercentage,
-  formatCountdown,
-  formatTime,
-  formatDate,
 } from '@/lib/fasting';
+import type { CustomFastingSettings, FastingMode, FastingState, FastingStats, RamadanSettings } from '@/lib/fasting';
+import { ProgressBar } from '@/components/yoroi/v2/espace/ProgressBar';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
-// ============================================
-// HELPER - ICON MAPPER
-// ============================================
-
-const getIconComponent = (iconName: string, size: number = 24, color: string = '#000') => {
-  const iconMap: Record<string, React.ElementType> = {
-    Clock,
-    Moon,
-    Star,
-    Cross,
-    Swords,
-    Utensils,
-    RefreshCw,
-    Droplets,
-    Settings,
-    Sun,
-  };
-
-  const IconComponent = iconMap[iconName] || Clock;
-  return <IconComponent size={size} color={color} strokeWidth={2.5} />;
+const ICONS: Record<string, NIconName> = {
+  Clock: 'clock',
+  Moon: 'moon',
+  Star: 'star',
+  Cross: 'plus',
+  Swords: 'swords',
+  Utensils: 'fork',
+  RefreshCw: 'refresh',
+  Droplets: 'drop',
+  Settings: 'edit',
+  Sun: 'sun',
 };
 
-// ============================================
-// ECRAN PRINCIPAL JEUNE
-// ============================================
+const DAYS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+/** Noms et textes affiches, en francais soigne (la bibliotheque garde ses identifiants) */
+const MODE_TEXT: Record<string, { name: string; description: string }> = {
+  '12_12': { name: 'Intermittent 12:12', description: 'Pour débuter. 12 h de jeûne, 12 h pour manger.' },
+  '14_10': { name: 'Intermittent 14:10', description: 'Progression douce. 14 h de jeûne, 10 h pour manger.' },
+  '16_8': { name: 'Intermittent 16:8', description: 'Le plus courant. 16 h de jeûne, 8 h pour manger.' },
+  '18_6': { name: 'Intermittent 18:6', description: 'Plus exigeant. 18 h de jeûne, 6 h pour manger.' },
+  '20_4': { name: 'Intermittent 20:4', description: 'Très exigeant. 20 h de jeûne, 4 h pour manger.' },
+  omad: { name: 'Un repas par jour', description: 'Un seul repas dans la journée. Réservé aux habitués.' },
+  ramadan: { name: 'Ramadan', description: 'Jeûne de l’aube au coucher du soleil.' },
+  yom_kippur: { name: 'Yom Kippour', description: 'Le Grand Pardon. Jeûne de 25 h.' },
+  careme: { name: 'Carême', description: '40 jours avant Pâques. Abstinence ou jeûne partiel.' },
+  eat_stop_eat: { name: 'Jeûne de 24 h', description: '24 h sans manger, une à deux fois par semaine.' },
+  prolonged_36: { name: 'Jeûne de 36 h', description: '36 h de jeûne. Pour les habitués.' },
+  prolonged_48: { name: 'Jeûne de 48 h', description: '48 h de jeûne. Uniquement pour les expérimentés.' },
+  prolonged_72: { name: 'Jeûne de 72 h', description: '72 h de jeûne. Suivi médical recommandé.' },
+  custom: { name: 'Personnalisé', description: 'Tes propres horaires.' },
+};
+const modeName = (m?: FastingMode) => (m ? MODE_TEXT[m.id]?.name ?? m.name : 'Jeûne');
+const modeDesc = (m: FastingMode) => MODE_TEXT[m.id]?.description ?? m.description;
+const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+
+const HEALTH_WARNING =
+  'Consulte un médecin avant de jeûner si tu as un problème de santé, un traitement, un diabète, si tu es enceinte ou si tu allaites. Arrête si tu as des vertiges, des malaises ou des palpitations.';
+const PROLONGED_WARNING =
+  'Un jeûne prolongé peut être dangereux. Parles-en à un médecin avant de commencer et reste bien hydraté. Arrête immédiatement en cas de malaise.';
 
 export default function FastingScreen() {
-  const { colors, themeColor } = useTheme();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const { t } = useI18n();
-
-  // Etats
-  const [fastingState, setFastingState] = useState<FastingState | null>(null);
+  const [state, setState] = useState<FastingState | null>(null);
   const [stats, setStats] = useState<FastingStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const completing = useRef(false);
 
-  // Timer
-  const [timeRemaining, setTimeRemaining] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Modals
-  const [showModeSelector, setShowModeSelector] = useState(false);
-  const [showCustomModal, setShowCustomModal] = useState(false);
-  const [showRamadanModal, setShowRamadanModal] = useState(false);
-
-  // Custom settings
-  const [customStartTime, setCustomStartTime] = useState('20:00');
+  const [customOpen, setCustomOpen] = useState(false);
+  const [ramadanOpen, setRamadanOpen] = useState(false);
+  const [customStart, setCustomStart] = useState('20:00');
   const [customDuration, setCustomDuration] = useState('16');
-  const [customDays, setCustomDays] = useState([1, 2, 3, 4, 5]); // Lun-Ven
+  const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [city, setCity] = useState('Paris');
+  const [fajr, setFajr] = useState('05:30');
+  const [maghrib, setMaghrib] = useState('18:45');
 
-  // Ramadan settings
-  const [ramadanCity, setRamadanCity] = useState('Paris');
-  const [ramadanFajr, setRamadanFajr] = useState('05:30');
-  const [ramadanMaghrib, setRamadanMaghrib] = useState('18:45');
-
-  // Charger les données
-  const loadData = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      const [state, fastingStats] = await Promise.all([
-        getFastingState(),
-        getFastingStats(),
-      ]);
-      setFastingState(state);
-      setStats(fastingStats);
-
-      // Charger les parametres personnalises
-      const customSettings = await getCustomFastingSettings();
-      if (customSettings) {
-        setCustomStartTime(customSettings.startTime);
-        setCustomDuration(customSettings.durationHours.toString());
-        setCustomDays(customSettings.activeDays);
+      const [s, st, custom, ramadan] = await Promise.all([getFastingState(), getFastingStats(), getCustomFastingSettings(), getRamadanSettings()]);
+      setState(s);
+      setStats(st);
+      if (custom) {
+        setCustomStart(custom.startTime);
+        setCustomDuration(String(custom.durationHours));
+        setCustomDays(custom.activeDays);
       }
-
-      // Charger les parametres Ramadan
-      const ramadanSettings = await getRamadanSettings();
-      if (ramadanSettings) {
-        setRamadanCity(ramadanSettings.city);
-        setRamadanFajr(ramadanSettings.fajrTime);
-        setRamadanMaghrib(ramadanSettings.maghribTime);
+      if (ramadan) {
+        setCity(ramadan.city);
+        setFajr(ramadan.fajrTime);
+        setMaghrib(ramadan.maghribTime);
       }
-    } catch (error) {
-      logger.error('Erreur chargement fasting:', error);
+    } catch (err) {
+      logger.error('Chargement du jeûne impossible', err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadData(); }, []);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
-  // Masquer le loader après 2 secondes maximum
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Listener pour les changements de données YOROI
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
+    const sub = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, load);
     return () => sub.remove();
-  }, []);
+  }, [load]);
 
-  // Timer update
+  // Chrono : une mise a jour par seconde seulement pendant un jeune
   useEffect(() => {
-    if (fastingState?.isActive && fastingState.targetEndTime) {
-      const updateTimer = () => {
-        const remaining = getTimeRemaining(fastingState.targetEndTime!);
-        setTimeRemaining(remaining);
+    if (!state?.isActive) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [state?.isActive]);
 
-        const progressVal = getProgressPercentage(
-          fastingState.startTime!,
-          fastingState.targetEndTime!
-        );
-        setProgress(progressVal);
+  const remaining = state?.isActive && state.targetEndTime ? getTimeRemaining(state.targetEndTime) : 0;
+  const progress = state?.isActive && state.startTime && state.targetEndTime ? getProgressPercentage(state.startTime, state.targetEndTime) / 100 : 0;
+  const elapsedHours = state?.isActive && state.startTime ? Math.max(0, (now - new Date(state.startTime).getTime()) / 3600000) : 0;
+  const activeMode = state?.modeId ? getFastingMode(state.modeId) : undefined;
 
-        // Verifier si complete
-        if (remaining <= 0 && fastingState.phase === 'fasting') {
-          handleFastingComplete();
-        }
-      };
-
-      updateTimer();
-      timerRef.current = setInterval(updateTimer, 1000);
-
-      return () => {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-        }
-      };
+  const onComplete = useCallback(async () => {
+    if (completing.current) return;
+    completing.current = true;
+    try {
+      tap('success');
+      playSuccessSound();
+      await completeFasting();
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      await load();
+      appAlert('Jeûne tenu', 'Bravo, tu as tenu ton jeûne jusqu’au bout. Romps-le en douceur et bois de l’eau.');
+    } catch (err) {
+      logger.error('Fin du jeûne impossible', err);
+    } finally {
+      completing.current = false;
     }
-  }, [fastingState]);
+  }, [load]);
 
-  // Gestion de la completion
-  const handleFastingComplete = async () => {
-    successHaptic();
-    playSuccessSound();
-    await completeFasting();
-    await loadData();
+  useEffect(() => {
+    if (state?.isActive && state.phase === 'fasting' && state.targetEndTime && remaining <= 0) onComplete();
+  }, [remaining, state, onComplete]);
 
-    showPopup(
-      t('fasting.congratulations'),
-      t('fasting.completedSuccess'),
-      [{ text: 'Super !', style: 'primary' }]
-    );
-  };
-
-  // Demarrer un jeune
-  const handleStartFasting = async (mode: FastingMode) => {
-    // Avertissement médical pour tous les jeûnes
-    const warningMessage = mode.warning
-      ? t('fasting.prolongedFastingWarning')
-      : t('fasting.healthWarning');
-
-    showPopup(
-      t('fasting.medicalWarning'),
-      warningMessage,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('fasting.iUnderstand'),
-          style: 'primary',
-          onPress: () => {
-            if (mode.id === 'ramadan') {
-              setShowRamadanModal(true);
-              setShowModeSelector(false);
-            } else if (mode.id === 'custom') {
-              setShowCustomModal(true);
-              setShowModeSelector(false);
-            } else {
-              proceedWithFasting(mode);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const proceedWithFasting = async (mode: FastingMode) => {
-    const success = await startFasting(mode.id);
-    if (success) {
-      successHaptic();
-      setShowModeSelector(false);
-      await loadData();
+  const proceed = async (mode: FastingMode) => {
+    const ok = await startFasting(mode.id);
+    if (ok) {
+      tap('success');
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      await load();
     } else {
-      errorHaptic();
-      showPopup(t('common.error'), t('fasting.startFastingError'));
+      appAlert('Le jeûne n’a pas démarré', 'Un souci est survenu. Réessaie.');
     }
   };
 
-  // Arreter le jeûne
-  const handleStopFasting = () => {
-    showPopup(
-      t('fasting.stopFastingQuestion'),
-      t('fasting.confirmStopFasting'),
-      [
-        { text: t('fasting.continueFasting'), style: 'cancel' },
-        {
-          text: t('fasting.stopFasting'),
-          style: 'destructive',
-          onPress: async () => {
-            await stopFasting(false);
-            await loadData();
-          },
+  const askStart = (mode: FastingMode) => {
+    appAlert('Avant de commencer', mode.warning ? PROLONGED_WARNING : HEALTH_WARNING, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'J’ai compris',
+        onPress: () => {
+          if (mode.id === 'ramadan') setRamadanOpen(true);
+          else if (mode.id === 'custom') setCustomOpen(true);
+          else proceed(mode);
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  // Sauvegarder les parametres personnalises
-  const handleSaveCustomSettings = async () => {
-    if (isSaving) return;
-    setIsSaving(true);
+  const askStop = () => {
+    appAlert('Arrêter le jeûne ?', 'Tu peux t’arrêter à tout moment. Ce jeûne ne sera pas compté comme terminé.', [
+      { text: 'Continuer', style: 'cancel' },
+      {
+        text: 'Arrêter',
+        style: 'destructive',
+        onPress: async () => {
+          await stopFasting(false);
+          tap('medium');
+          DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+          await load();
+        },
+      },
+    ]);
+  };
+
+  const saveCustom = async () => {
+    if (saving) return;
+    const hours = parseInt(customDuration, 10);
+    if (!hhmmValid(customStart)) {
+      appAlert('Heure à vérifier', 'Écris l’heure de début sous la forme 20:00.');
+      return;
+    }
+    if (isNaN(hours) || hours < 1 || hours > 72) {
+      appAlert('Durée à vérifier', 'Choisis une durée entre 1 et 72 heures.');
+      return;
+    }
+    setSaving(true);
     try {
-      const hours = parseInt(customDuration, 10);
-      if (isNaN(hours) || hours < 1) {
-        setIsSaving(false);
-        return;
-      }
-      const settings: CustomFastingSettings = {
-        startTime: customStartTime,
-        durationHours: hours,
-        activeDays: customDays,
-      };
+      const settings: CustomFastingSettings = { startTime: customStart, durationHours: hours, activeDays: customDays };
       await saveCustomFastingSettings(settings);
-      setShowCustomModal(false);
-
-      // Demarrer le jeûne
-      const success = await startFasting('custom');
-      if (success) {
-        successHaptic();
-        await loadData();
+      setCustomOpen(false);
+      if (await startFasting('custom')) {
+        tap('success');
+        DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+        await load();
       }
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  // Sauvegarder les parametres Ramadan
-  const handleSaveRamadanSettings = async () => {
-    if (isSaving) return;
-    setIsSaving(true);
+  const saveRamadan = async () => {
+    if (saving) return;
+    if (!hhmmValid(fajr) || !hhmmValid(maghrib)) {
+      appAlert('Heures à vérifier', 'Écris les heures sous la forme 05:30.');
+      return;
+    }
+    setSaving(true);
     try {
-      const settings: RamadanSettings = {
-        city: ramadanCity,
-        country: 'France',
-        fajrTime: ramadanFajr,
-        maghribTime: ramadanMaghrib,
-        useManualTimes: true,
-      };
+      const settings: RamadanSettings = { city: city.trim() || 'Paris', country: 'France', fajrTime: fajr, maghribTime: maghrib, useManualTimes: true };
       await saveRamadanSettings(settings);
-      setShowRamadanModal(false);
-
-      // Demarrer le jeûne
-      const success = await startFasting('ramadan');
-      if (success) {
-        successHaptic();
-        await loadData();
+      setRamadanOpen(false);
+      if (await startFasting('ramadan')) {
+        tap('success');
+        DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+        await load();
       }
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  // Toggle jour personnalise
-  const toggleCustomDay = (day: number) => {
-    setCustomDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
-  };
-
-  // Mode actif
-  const activeMode = fastingState?.modeId ? getFastingMode(fastingState.modeId) : null;
-
-  if (isLoading) {
-    return (
-      <ScreenWrapper noPadding>
-        <Header title={t('fasting.title')} showBack />
-        <View style={{ padding: 16, gap: 12 }}>
-          <SkeletonCard height={220} width="100%" />
-          <SkeletonCard height={120} width="100%" />
-          <SkeletonCard height={100} width="100%" />
-          <SkeletonCard height={100} width="100%" />
-          <SkeletonMessage />
-        </View>
-      </ScreenWrapper>
-    );
-  }
+  const isFasting = state?.phase !== 'eating';
+  const ringColor = isFasting ? P.accent : P.moss;
+  const intermittent = FASTING_MODES.filter((m) => m.category === 'intermittent');
+  const religious = FASTING_MODES.filter((m) => m.category === 'religious');
+  const advanced = FASTING_MODES.filter((m) => m.category === 'advanced');
+  const customMode = FASTING_MODES.find((m) => m.id === 'custom');
+  const monthPct = stats && stats.thisMonthTarget > 0 ? Math.min(1, stats.thisMonthCompleted / stats.thisMonthTarget) : 0;
 
   return (
-    <PremiumGate featureTitle="Jeune intermittent">
-    <ScreenWrapper noPadding>
-      <Header title={t('fasting.title')} showBack />
+    <>
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <DetailScreen title="Jeûne" subtitle={state?.isActive ? (isFasting ? 'Tu es en plein jeûne' : 'Ta fenêtre pour manger est ouverte') : 'Choisis ton rythme et lance le chrono'}>
+          {loading ? (
+            <Card style={{ height: 320, alignItems: 'center', justifyContent: 'center' }}>
+              <Ink size={14} weight="bold" color={P.ink2}>
+                Préparation de ton jeûne
+              </Ink>
+            </Card>
+          ) : null}
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-          contentInsetAdjustmentBehavior="automatic"
-        keyboardDismissMode="on-drag"
-      >
-        {/* TIMER ACTIF */}
-        {fastingState?.isActive && activeMode && (
-          <Card style={{ ...styles.timerCard, borderColor: colors.gold }}>
-            <View style={styles.timerHeader}>
-              {getIconComponent(activeMode.icon, 28, colors.gold)}
-              <Text style={[styles.timerModeName, { color: colors.textPrimary }]}>
-                {activeMode.name}
-              </Text>
-            </View>
-
-            {/* Phase indicator */}
-            <View style={[
-              styles.phaseIndicator,
-              {
-                backgroundColor: fastingState.phase === 'fasting'
-                  ? colors.goldMuted
-                  : colors.successMuted,
-              }
-            ]}>
-              <Text style={[
-                styles.phaseText,
-                {
-                  color: fastingState.phase === 'fasting'
-                    ? colors.gold
-                    : colors.success,
-                }
-              ]}>
-                {fastingState.phase === 'fasting' ? t('fasting.fasting') : t('fasting.eatingWindow')}
-              </Text>
-            </View>
-
-            {/* Progress bar */}
-            <View style={[styles.progressContainer, { backgroundColor: colors.cardHover }]}>
-              <View
-                style={[
-                  styles.progressBar,
-                  {
-                    backgroundColor: fastingState.phase === 'fasting'
-                      ? colors.gold
-                      : colors.success,
-                    width: `${progress}%`,
-                  },
-                ]}
-              />
-            </View>
-
-            {/* Time remaining */}
-            <Text style={[styles.timerCountdown, { color: colors.textPrimary }]}>
-              {formatCountdown(timeRemaining)}
-            </Text>
-            <Text style={[styles.timerLabel, { color: colors.textSecondary }]}>
-              {fastingState.phase === 'fasting'
-                ? t('fasting.remainingOnFasting', { hours: activeMode.fastingHours || '--' })
-                : t('fasting.remainingToEat')}
-            </Text>
-
-            {/* Times */}
-            <View style={styles.timesRow}>
-              <View style={styles.timeItem}>
-                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{t('fasting.start')}</Text>
-                <Text style={[styles.timeValue, { color: colors.textSecondary }]}>
-                  {formatTime(fastingState.startTime!)} ({formatDate(fastingState.startTime!)})
-                </Text>
-              </View>
-              <View style={styles.timeItem}>
-                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{t('fasting.end')}</Text>
-                <Text style={[styles.timeValue, { color: colors.textSecondary }]}>
-                  {formatTime(fastingState.targetEndTime!)} ({formatDate(fastingState.targetEndTime!)})
-                </Text>
-              </View>
-            </View>
-
-            {/* Streak */}
-            {stats && stats.currentStreak > 0 && (
-              <View style={[styles.streakBadge, { backgroundColor: colors.cardHover }]}>
-                <Flame size={16} color="#F59E0B" strokeWidth={2} />
-                <Text style={[styles.streakText, { color: colors.textPrimary }]}>
-                  {t('fasting.fastingStreak', { days: stats.currentStreak })}
-                </Text>
-              </View>
-            )}
-
-            {/* Stop button */}
-            <TouchableOpacity
-              style={[styles.stopButton, { backgroundColor: colors.dangerMuted }]}
-              onPress={handleStopFasting}
-            >
-              <Square size={18} color={colors.danger} strokeWidth={2} />
-              <Text style={[styles.stopButtonText, { color: colors.danger }]}>
-                {t('fasting.stopButton')}
-              </Text>
-            </TouchableOpacity>
-          </Card>
-        )}
-
-        {/* SELECTION MODE */}
-        {!fastingState?.isActive && (
-          <>
-            <View style={styles.header}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Utensils size={22} color={colors.textPrimary} />
-                <Text style={[styles.title, { color: colors.textPrimary }]}>{t('fasting.title')}</Text>
-              </View>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                {t('fasting.chooseYourFastingType')}
-              </Text>
-            </View>
-
-            {/* JEUNE INTERMITTENT */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              {t('fasting.intermittentFasting')}
-            </Text>
-            <View style={styles.modesGrid}>
-              {FASTING_MODES.filter(m => m.category === 'intermittent').map(mode => (
-                <TouchableOpacity
-                  key={mode.id}
-                  style={[styles.modeCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => handleStartFasting(mode)}
-                >
-                  {getIconComponent(mode.icon, 32, colors.accent)}
-                  <Text style={[styles.modeName, { color: colors.textPrimary }]}>
-                    {mode.id === 'omad' ? 'OMAD' : `${mode.fastingHours}:${mode.eatingHours}`}
-                  </Text>
-                  <Text style={[styles.modeDesc, { color: colors.textMuted }]} numberOfLines={2}>
-                    {mode.description}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* JEUNE RELIGIEUX */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              {t('fasting.religiousFasting')}
-            </Text>
-            <View style={styles.modesRow}>
-              {FASTING_MODES.filter(m => m.category === 'religious').map(mode => {
-                // Colors for each religious fasting
-                const religiousColors: Record<string, { bg: string; border: string; icon: string }> = {
-                  ramadan: { bg: '#1a1f3a', border: '#4a5bff', icon: '#7d8fff' },
-                  yom_kippur: { bg: '#1a1f2e', border: '#6eb5ff', icon: '#90c7ff' },
-                  careme: { bg: '#2a1a1f', border: '#d97706', icon: '#fbbf24' },
-                };
-                const colorScheme = religiousColors[mode.id] || { bg: colors.card, border: colors.border, icon: colors.accent };
-
-                return (
-                  <TouchableOpacity
-                    key={mode.id}
-                    style={[
-                      styles.religiousCard,
-                      {
-                        backgroundColor: colorScheme.bg,
-                        borderColor: colorScheme.border,
-                      }
-                    ]}
-                    onPress={() => handleStartFasting(mode)}
-                  >
-                    <View style={[styles.religiousIconContainer, { backgroundColor: `${colorScheme.border}30` }]}>
-                      {getIconComponent(mode.icon, 28, colorScheme.icon)}
-                    </View>
-                    <View style={styles.modeTextContainer}>
-                      <Text style={[styles.religiousModeTitle, { color: themeColor === 'blanc' ? colors.textPrimary : '#FFFFFF' }]}>
-                        {mode.name}
-                      </Text>
-                      <Text style={[styles.religiousModeDesc, { color: '#9ca3af' }]} numberOfLines={1}>
-                        {mode.description}
-                      </Text>
-                    </View>
-                    <ChevronRight size={22} color={colorScheme.icon} strokeWidth={2} />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* JEUNE AVANCE */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              {t('fasting.advancedFasting')}
-            </Text>
-            <View style={styles.modesRow}>
-              {FASTING_MODES.filter(m => m.category === 'advanced').map(mode => (
-                <TouchableOpacity
-                  key={mode.id}
-                  style={[
-                    styles.modeCardWide,
-                    {
-                      backgroundColor: mode.warning ? colors.dangerMuted : colors.card,
-                      borderColor: mode.warning ? colors.danger : colors.border,
-                    }
-                  ]}
-                  onPress={() => handleStartFasting(mode)}
-                >
-                  {getIconComponent(mode.icon, 36, mode.warning ? colors.danger : colors.accent)}
-                  <View style={styles.modeTextContainer}>
-                    <View style={styles.modeNameRow}>
-                      <Text style={[styles.modeName, { color: colors.textPrimary }]}>
-                        {mode.name}
-                      </Text>
-                      {mode.warning && (
-                        <AlertTriangle size={14} color={colors.danger} strokeWidth={2} />
-                      )}
-                    </View>
-                    <Text style={[styles.modeDesc, { color: colors.textMuted }]} numberOfLines={1}>
-                      {mode.description}
-                    </Text>
+          {/* JEUNE EN COURS */}
+          {!loading && state?.isActive ? (
+            <>
+              <Enter i={0}>
+                <Card style={{ alignItems: 'center', gap: 14, paddingVertical: 22 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <NIcon name={ICONS[activeMode?.icon ?? 'Clock'] ?? 'clock'} size={18} color={ringColor} />
+                    <Ink size={15} weight="extraBold">
+                      {modeName(activeMode)}
+                    </Ink>
                   </View>
-                  <ChevronRight size={20} color={colors.textMuted} />
-                </TouchableOpacity>
-              ))}
-            </View>
+                  <FastRing
+                    progress={progress}
+                    totalHours={activeMode?.fastingHours ?? null}
+                    markers={FAST_MARKERS}
+                    color={ringColor}
+                    center={
+                      <>
+                        <Badge label={isFasting ? 'Jeûne' : 'Fenêtre repas'} tone={isFasting ? 'red' : 'moss'} />
+                        <Ink size={40} weight="black" tight style={{ marginTop: 8, lineHeight: 44 }} accessibilityLabel={`Temps restant ${formatCountdown(remaining)}`}>
+                          {formatCountdown(remaining)}
+                        </Ink>
+                        <Ink size={13} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
+                          {isFasting ? (activeMode?.fastingHours ? `restant sur ${activeMode.fastingHours} h` : 'restant') : 'restant pour manger'}
+                        </Ink>
+                        <Ink size={13} weight="extraBold" color={ringColor} style={{ marginTop: 4 }}>
+                          {`${Math.round(progress * 100)} %`}
+                        </Ink>
+                      </>
+                    }
+                  />
+                  <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch' }}>
+                    <View style={{ flex: 1, padding: 12, borderRadius: 18, backgroundColor: P.paper, gap: 2 }}>
+                      <Ink size={12} weight="bold" color={P.ink2}>
+                        Début
+                      </Ink>
+                      <Ink size={18} weight="black" tight>
+                        {state.startTime ? formatTime(state.startTime) : ''}
+                      </Ink>
+                      <Ink size={12} weight="bold" color={P.ink2}>
+                        {state.startTime ? formatDate(state.startTime) : ''}
+                      </Ink>
+                    </View>
+                    <View style={{ flex: 1, padding: 12, borderRadius: 18, backgroundColor: P.paper, gap: 2 }}>
+                      <Ink size={12} weight="bold" color={P.ink2}>
+                        Fin prévue
+                      </Ink>
+                      <Ink size={18} weight="black" tight>
+                        {state.targetEndTime ? formatTime(state.targetEndTime) : ''}
+                      </Ink>
+                      <Ink size={12} weight="bold" color={P.ink2}>
+                        {state.targetEndTime ? formatDate(state.targetEndTime) : ''}
+                      </Ink>
+                    </View>
+                  </View>
+                  {stats && stats.currentStreak > 0 ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, backgroundColor: P.goldSoft }}>
+                      <NIcon name="flame" size={16} color={P.goldDark} />
+                      <Ink size={13} weight="extraBold" color={P.goldDark}>
+                        {`Série de ${stats.currentStreak} jour${stats.currentStreak > 1 ? 's' : ''}`}
+                      </Ink>
+                    </View>
+                  ) : null}
+                </Card>
+              </Enter>
 
-            {/* PERSONNALISE */}
-            <TouchableOpacity
-              style={[styles.customButton, { backgroundColor: colors.goldMuted, borderColor: colors.gold }]}
-              onPress={() => setShowCustomModal(true)}
-            >
-              <Settings size={24} color={colors.gold} strokeWidth={2} />
-              <View style={styles.customButtonText}>
-                <Text style={[styles.customButtonTitle, { color: colors.gold }]}>
-                  {t('fasting.customFasting')}
-                </Text>
-                <Text style={[styles.customButtonDesc, { color: colors.textSecondary }]}>
-                  {t('fasting.defineYourOwnSchedule')}
-                </Text>
-              </View>
-              <ChevronRight size={20} color={colors.gold} />
-            </TouchableOpacity>
-          </>
-        )}
+              {isFasting ? (
+                <Enter i={1}>
+                  <H2 sub="Repères approximatifs, chacun réagit différemment">Où tu en es</H2>
+                  <Card style={{ marginTop: 10, paddingBottom: 6 }}>
+                    <FastPhases elapsedHours={elapsedHours} markers={FAST_MARKERS} color={ringColor} />
+                  </Card>
+                </Enter>
+              ) : null}
 
-        {/* STATISTIQUES */}
-        {stats && stats.totalCompleted > 0 && (
-          <Card style={styles.statsCard}>
-            <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>
-              {t('fasting.yourStatistics')}
-            </Text>
+              <Enter i={2}>
+                <Notice tone="gold" title="Écoute ton corps" text="Bois de l’eau régulièrement. Vertiges, malaise ou palpitations : arrête le jeûne et mange." icon="drop" />
+              </Enter>
 
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.gold }]}>
-                  {stats.totalCompleted}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  {t('fasting.fastsCompleted')}
-                </Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {stats.totalHoursFasted}h
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  {t('fasting.totalTime')}
-                </Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: '#F59E0B' }]}>
-                  {stats.longestStreak}j
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  {t('fasting.recordStreak')}
-                </Text>
-              </View>
-            </View>
+              <Enter i={3}>
+                <BigButton label="Arrêter le jeûne" tone="light" icon="close" onPress={askStop} />
+              </Enter>
+            </>
+          ) : null}
 
-            <View style={[styles.monthProgress, { backgroundColor: colors.cardHover }]}>
-              <View style={styles.monthProgressHeader}>
-                <Text style={[styles.monthProgressTitle, { color: colors.textSecondary }]}>
-                  {t('fasting.thisMonth')}
-                </Text>
-                <Text style={[styles.monthProgressValue, { color: colors.textPrimary }]}>
-                  {stats.thisMonthCompleted} / {stats.thisMonthTarget}
-                </Text>
-              </View>
-              <View style={[styles.monthProgressBar, { backgroundColor: colors.border }]}>
-                <View
-                  style={[
-                    styles.monthProgressFill,
-                    {
-                      backgroundColor: colors.gold,
-                      width: `${stats.thisMonthTarget > 0 ? Math.min(100, (stats.thisMonthCompleted / stats.thisMonthTarget) * 100) : 0}%`,
-                    },
-                  ]}
+          {/* CHOIX DU JEUNE */}
+          {!loading && !state?.isActive ? (
+            <>
+              <Enter i={0}>
+                <Notice tone="danger" title="Ta santé d’abord" text={HEALTH_WARNING} icon="shield" />
+              </Enter>
+
+              <Enter i={1}>
+                <H2 sub="Heures de jeûne et heures pour manger">Jeûne intermittent</H2>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
+                  {intermittent.map((m) => (
+                    <View key={m.id} style={{ width: '48.4%' }}>
+                      <ModeTile mode={m} onPress={() => askStart(m)} />
+                    </View>
+                  ))}
+                </View>
+              </Enter>
+
+              <Enter i={2}>
+                <H2>Jeûne religieux</H2>
+                <View style={{ gap: 8, marginTop: 10 }}>
+                  {religious.map((m) => (
+                    <LinkCard key={m.id} icon={ICONS[m.icon] ?? 'moon'} tone="indigo" title={modeName(m)} sub={modeDesc(m)} onPress={() => askStart(m)} />
+                  ))}
+                </View>
+              </Enter>
+
+              <Enter i={3}>
+                <H2 sub="Réservé aux pratiquants expérimentés">Jeûne avancé</H2>
+                <View style={{ gap: 8, marginTop: 10 }}>
+                  {advanced.map((m) => (
+                    <LinkCard
+                      key={m.id}
+                      icon={ICONS[m.icon] ?? 'clock'}
+                      tone={m.warning ? 'red' : 'ink'}
+                      title={modeName(m)}
+                      sub={modeDesc(m)}
+                      onPress={() => askStart(m)}
+                      right={m.warning ? <Badge label="Avis médical" tone="danger" /> : undefined}
+                    />
+                  ))}
+                </View>
+              </Enter>
+
+              <Enter i={4}>
+                <LinkCard
+                  icon="edit"
+                  tone="gold"
+                  title="Jeûne personnalisé"
+                  sub="Tes heures, ta durée, tes jours"
+                  onPress={() => {
+                    if (customMode) askStart(customMode);
+                    else setCustomOpen(true);
+                  }}
                 />
-              </View>
-            </View>
-          </Card>
-        )}
+              </Enter>
+            </>
+          ) : null}
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          {/* STATISTIQUES */}
+          {!loading && stats && stats.totalCompleted > 0 ? (
+            <Enter i={5}>
+              <H2>Ta régularité</H2>
+              <Card style={{ marginTop: 10, gap: 16 }}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <StatBox value={String(stats.totalCompleted)} label="Jeûnes tenus" color={P.accent} />
+                  <StatBox value={`${stats.totalHoursFasted}`} unit="h" label="Au total" />
+                  <StatBox value={`${stats.longestStreak}`} unit="j" label="Série record" color={P.goldDark} />
+                </View>
+                {stats.longestStreak > 0 && stats.currentStreak >= stats.longestStreak ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Hanko size={36} />
+                    <Ink size={13} weight="extraBold" color={P.accent} style={{ flex: 1 }}>
+                      Tu égales ta meilleure série
+                    </Ink>
+                  </View>
+                ) : null}
+                <View style={{ gap: 8 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Ink size={13} weight="bold" color={P.ink2}>
+                      Ce mois-ci
+                    </Ink>
+                    <Ink size={13} weight="black">
+                      {`${stats.thisMonthCompleted} sur ${stats.thisMonthTarget}`}
+                    </Ink>
+                  </View>
+                  <ProgressBar progress={monthPct} accessibilityLabel="Ton mois de jeûne" />
+                </View>
+              </Card>
+            </Enter>
+          ) : null}
+
+          {!loading && stats && stats.totalCompleted === 0 && !state?.isActive ? (
+            <Enter i={5}>
+              <Card style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                <IconDot name="clock" tone="gold" />
+                <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>
+                  Aucun jeûne terminé pour l’instant. Commence doux, le 12:12 est parfait pour débuter.
+                </Ink>
+              </Card>
+            </Enter>
+          ) : null}
+        </DetailScreen>
       </KeyboardAvoidingView>
 
-      {/* MODAL PERSONNALISE */}
-      <Modal visible={showCustomModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <View style={styles.modalHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Settings size={18} color={colors.textPrimary} />
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('fasting.customFastingTitle')}</Text>
-              </View>
-              <TouchableOpacity onPress={() => setShowCustomModal(false)}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalBody}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                {t('fasting.startTimeLabel')}
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
-                value={customStartTime}
-                onChangeText={setCustomStartTime}
-                placeholder="20:00"
-                placeholderTextColor={colors.textMuted}
+      {/* JEUNE PERSONNALISE */}
+      <BottomSheet
+        visible={customOpen}
+        onClose={() => setCustomOpen(false)}
+        title="Jeûne personnalisé"
+        subtitle="Règle tes heures en deux appuis"
+        footer={<BigButton label={saving ? 'Démarrage' : 'Lancer le jeûne'} onPress={saveCustom} disabled={saving} icon="play" />}
+      >
+        <Ink size={13} weight="bold" color={P.ink2}>
+          Heure de début
+        </Ink>
+        <HRow>
+          {['18:00', '19:00', '20:00', '21:00', '22:00'].map((h) => (
+            <Chip key={h} label={h} active={customStart === h} onPress={() => setCustomStart(h)} />
+          ))}
+        </HRow>
+        <TextField value={customStart} onChange={setCustomStart} placeholder="20:00" />
+        <Ink size={13} weight="bold" color={P.ink2}>
+          Durée du jeûne
+        </Ink>
+        <HRow>
+          {['12', '14', '16', '18', '20', '24'].map((h) => (
+            <Chip key={h} label={`${h} h`} active={customDuration === h} onPress={() => setCustomDuration(h)} />
+          ))}
+        </HRow>
+        <TextField value={customDuration} onChange={(v) => setCustomDuration(v.replace(/[^0-9]/g, ''))} placeholder="16" />
+        <Ink size={13} weight="bold" color={P.ink2}>
+          Jours actifs
+        </Ink>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          {DAYS.map((d, i) => {
+            const on = customDays.includes(i);
+            return (
+              <Chip
+                key={i}
+                label={d}
+                active={on}
+                accent={P.accent}
+                onPress={() => setCustomDays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]))}
               />
+            );
+          })}
+        </View>
+        <Ink size={12} weight="medium" color={P.ink2}>
+          {customDays.length ? `Actif le ${customDays.slice().sort().map((i) => DAY_NAMES[i]).join(', ')}` : 'Aucun jour choisi'}
+        </Ink>
+      </BottomSheet>
 
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                {t('fasting.durationLabel')}
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
-                value={customDuration}
-                onChangeText={setCustomDuration}
-                placeholder="16"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="number-pad"
-              />
-
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                {t('fasting.activeDaysLabel')}
-              </Text>
-              <View style={styles.daysRow}>
-                {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[
-                      styles.dayButton,
-                      {
-                        backgroundColor: customDays.includes(i) ? colors.gold : colors.cardHover,
-                        borderColor: customDays.includes(i) ? colors.gold : colors.border,
-                      }
-                    ]}
-                    onPress={() => toggleCustomDay(i)}
-                  >
-                    <Text style={[
-                      styles.dayButtonText,
-                      { color: customDays.includes(i) ? colors.textOnGold : colors.textSecondary }
-                    ]}>
-                      {day}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TouchableOpacity
-                style={[styles.saveButton, { backgroundColor: colors.gold }]}
-                onPress={handleSaveCustomSettings}
-                disabled={isSaving}
-              >
-                <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
-                  {t('fasting.startFastingButton')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+      {/* RAMADAN */}
+      <BottomSheet
+        visible={ramadanOpen}
+        onClose={() => setRamadanOpen(false)}
+        title="Ramadan"
+        subtitle="Entre les heures de prière de ta ville"
+        footer={<BigButton label={saving ? 'Démarrage' : 'Commencer le jeûne'} onPress={saveRamadan} disabled={saving} icon="moon" />}
+      >
+        <TextField label="Ville" value={city} onChange={setCity} placeholder="Paris" />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <TextField label="Fajr (aube)" value={fajr} onChange={setFajr} placeholder="05:30" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <TextField label="Maghrib (coucher)" value={maghrib} onChange={setMaghrib} placeholder="18:45" />
           </View>
         </View>
-      </Modal>
-
-      {/* MODAL RAMADAN */}
-      <Modal visible={showRamadanModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                {t('fasting.ramadanTitle')}
-              </Text>
-              <TouchableOpacity onPress={() => setShowRamadanModal(false)}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalBody}>
-              <View style={styles.ramadanInfo}>
-                <MapPin size={18} color={colors.textSecondary} />
-                <Text style={[styles.ramadanInfoText, { color: colors.textSecondary }]}>
-                  {t('fasting.ramadanInfo')}
-                </Text>
-              </View>
-
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                {t('fasting.cityLabel')}
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
-                value={ramadanCity}
-                onChangeText={setRamadanCity}
-                placeholder="Paris"
-                placeholderTextColor={colors.textMuted}
-              />
-
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                {t('fasting.fajrLabel')}
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
-                value={ramadanFajr}
-                onChangeText={setRamadanFajr}
-                placeholder="05:30"
-                placeholderTextColor={colors.textMuted}
-              />
-
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                {t('fasting.maghribLabel')}
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
-                value={ramadanMaghrib}
-                onChangeText={setRamadanMaghrib}
-                placeholder="18:45"
-                placeholderTextColor={colors.textMuted}
-              />
-
-              <View style={[styles.ramadanDuration, { backgroundColor: colors.goldMuted }]}>
-                <Clock size={16} color={colors.gold} />
-                <Text style={[styles.ramadanDurationText, { color: colors.gold }]}>
-                  {t('fasting.fastingDuration', { duration: calculateDuration(ramadanFajr, ramadanMaghrib) })}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.saveButton, { backgroundColor: colors.gold }]}
-                onPress={handleSaveRamadanSettings}
-                disabled={isSaving}
-              >
-                <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
-                  {t('fasting.startRamadanButton')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      <PopupComponent />
-    </ScreenWrapper>
-    </PremiumGate>
+        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: P.goldSoft, borderColor: P.goldSoft }}>
+          <NIcon name="clock" size={20} color={P.goldDark} />
+          <Ink size={15} weight="extraBold" color={P.goldDark}>
+            {`Jeûne de ${durationBetween(fajr, maghrib)}`}
+          </Ink>
+        </Card>
+        <Notice tone="indigo" text="Vérifie les heures exactes auprès de ta mosquée ou d’un calendrier local." />
+      </BottomSheet>
+    </>
   );
 }
 
-// Helper pour calculer la durée entre deux heures
-const calculateDuration = (start: string, end: string): string => {
-  try {
-    const [startH, startM] = start.split(':').map(Number);
-    const [endH, endM] = end.split(':').map(Number);
-    let duration = (endH * 60 + endM) - (startH * 60 + startM);
-    if (duration < 0) duration += 24 * 60;
-    const hours = Math.floor(duration / 60);
-    const mins = duration % 60;
-    return `${hours}h${mins > 0 ? mins.toString().padStart(2, '0') : ''}`;
-  } catch {
-    return '--';
-  }
-};
+function ModeTile({ mode, onPress }: { mode: FastingMode; onPress: () => void }) {
+  const big = mode.id === 'omad' ? '1 repas' : `${mode.fastingHours}:${mode.eatingHours}`;
+  const pct = mode.fastingHours ? Math.min(1, mode.fastingHours / 24) : 1;
+  return (
+    <Press onPress={onPress} accessibilityRole="button" accessibilityLabel={`${modeName(mode)}. ${modeDesc(mode)}`}>
+      <Card style={{ padding: 14, gap: 8, minHeight: 132 }}>
+        <Ink size={30} weight="black" tight>
+          {big}
+        </Ink>
+        <View style={{ height: 8, borderRadius: 4, backgroundColor: P.mossSoft, overflow: 'hidden', flexDirection: 'row' }}>
+          <View style={{ width: `${pct * 100}%`, backgroundColor: P.ink, borderRadius: 4 }} />
+        </View>
+        <Ink size={12} weight="medium" color={P.ink2} numberOfLines={3}>
+          {modeDesc(mode)}
+        </Ink>
+      </Card>
+    </Press>
+  );
+}
 
-const RADIUS = { sm: 8, md: 12, lg: 16 };
-
-const styles = StyleSheet.create({
-  scrollView: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 20 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-  // Header
-  header: { marginBottom: 24 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  subtitle: { fontSize: 15 },
-
-  // Sections
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 12,
-    marginTop: 8,
-  },
-
-  // Modes grid
-  modesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 20,
-  },
-  modeCard: {
-    width: '47%',
-    padding: 16,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  modeIcon: { fontSize: 32, marginBottom: 8 },
-  modeName: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  modeDesc: { fontSize: 11, textAlign: 'center', lineHeight: 15 },
-
-  // Modes row
-  modesRow: { gap: 10, marginBottom: 20 },
-  modeCardWide: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    gap: 12,
-  },
-  modeIconLarge: { fontSize: 28 },
-  modeTextContainer: { flex: 1 },
-  modeNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-
-  // Religious fasting cards
-  religiousCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 18,
-    borderRadius: RADIUS.lg,
-    borderWidth: 2,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  religiousIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  religiousModeTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  religiousModeDesc: {
-    fontSize: 12,
-    marginTop: 3,
-  },
-
-  // Custom button
-  customButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: RADIUS.lg,
-    borderWidth: 2,
-    gap: 12,
-    marginBottom: 24,
-  },
-  customButtonText: { flex: 1 },
-  customButtonTitle: { fontSize: 16, fontWeight: '700' },
-  customButtonDesc: { fontSize: 12, marginTop: 2 },
-
-  // Timer card
-  timerCard: {
-    marginBottom: 24,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  timerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  timerModeIcon: { fontSize: 24 },
-  timerModeName: { fontSize: 18, fontWeight: '700' },
-  phaseIndicator: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginBottom: 20,
-  },
-  phaseText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  progressContainer: {
-    width: '100%',
-    height: 12,
-    borderRadius: 6,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  progressBar: { height: '100%', borderRadius: 6 },
-  timerCountdown: { fontSize: 48, fontWeight: '800', letterSpacing: 2 },
-  timerLabel: { fontSize: 14, marginTop: 4, marginBottom: 20 },
-  timesRow: {
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-around',
-    marginBottom: 16,
-  },
-  timeItem: { alignItems: 'center' },
-  timeLabel: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
-  timeValue: { fontSize: 13, fontWeight: '500' },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginBottom: 16,
-  },
-  streakText: { fontSize: 14, fontWeight: '600' },
-  stopButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: RADIUS.md,
-  },
-  stopButtonText: { fontSize: 14, fontWeight: '600' },
-
-  // Stats card
-  statsCard: { marginBottom: 20 },
-  statsTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
-  statsGrid: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 },
-  statItem: { alignItems: 'center' },
-  statValue: { fontSize: 24, fontWeight: '700' },
-  statLabel: { fontSize: 11, marginTop: 4 },
-  monthProgress: { padding: 12, borderRadius: RADIUS.md },
-  monthProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  monthProgressTitle: { fontSize: 13, fontWeight: '500' },
-  monthProgressValue: { fontSize: 13, fontWeight: '700' },
-  monthProgressBar: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  monthProgressFill: { height: '100%', borderRadius: 3 },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  modalTitle: { fontSize: 20, fontWeight: '700' },
-  modalBody: { paddingHorizontal: 20 },
-  inputLabel: { fontSize: 13, fontWeight: '600', marginBottom: 8, marginTop: 16 },
-  input: {
-    borderRadius: RADIUS.md,
-    padding: 14,
-    fontSize: 16,
-    borderWidth: 1,
-  },
-  daysRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  dayButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  dayButtonText: { fontSize: 14, fontWeight: '600' },
-  saveButton: {
-    marginTop: 24,
-    padding: 16,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-  },
-  saveButtonText: { fontSize: 16, fontWeight: '700' },
-
-  // Ramadan
-  ramadanInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  ramadanInfoText: { fontSize: 13 },
-  ramadanDuration: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: RADIUS.md,
-    marginTop: 16,
-  },
-  ramadanDurationText: { fontSize: 14, fontWeight: '600' },
-});
+function StatBox({ value, unit, label, color = P.ink }: { value: string; unit?: string; label: string; color?: string }) {
+  return (
+    <View style={{ flex: 1, padding: 12, borderRadius: 18, backgroundColor: P.paper, gap: 2 }}>
+      <Ink size={26} weight="black" tight color={color} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+        {value}
+        {unit ? (
+          <Ink size={13} weight="bold" color={P.ink2}>
+            {` ${unit}`}
+          </Ink>
+        ) : null}
+      </Ink>
+      <Ink size={12} weight="bold" color={P.ink2}>
+        {label}
+      </Ink>
+    </View>
+  );
+}

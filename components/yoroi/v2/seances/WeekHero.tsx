@@ -1,0 +1,174 @@
+/**
+ * La semaine en un coup d'oeil (onglet Seances) : seances et jours entraines, pastilles du lundi au dimanche,
+ * duree, volume, charge et jours, chacun compare a la semaine passee au meme jour.
+ * Appui sur la charge : ecran Charge d'entrainement.
+ */
+import React from 'react';
+import { Image, Pressable, View } from 'react-native';
+import type { ImageSourcePropType } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import type { PeriodStats, WeekCompare } from '@/lib/v2/seances/weekCompare';
+import { formatPoints, fr1 } from '@/lib/v2/seances/weekCompare';
+import { tonnageParts } from '@/lib/v2/trainingWeek';
+import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
+import type { UnitePoids } from '@/lib/v2/unitePoids';
+import { WeekPlates } from './WeekPlates';
+import type { DayPlate } from './WeekPlates';
+import { Icon } from './Icon';
+import { tap } from './ui';
+import { P } from '@/components/yoroi/livePalette';
+
+const NB = ' ';
+
+function fmtMin(min: number): string {
+  const m = Math.round(Math.abs(min));
+  if (m < 60) return `${m}${NB}min`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h}${NB}h${NB}${String(r).padStart(2, '0')}` : `${h}${NB}h`;
+}
+
+function fmtKg(kg: number, unite: UnitePoids = 'kg'): string {
+  // format unique du tonnage (lib/v2/trainingWeek), dans l'unite du reglage (18 octobre 2026)
+  const p = tonnageParts(Math.abs(kg), unite);
+  return `${p.value}${NB}${p.unit}`;
+}
+
+type Volume = { label: string; value: string; delta: number; fmt: (n: number) => string };
+
+/** Volume adapte a ta pratique : tonnage en musculation, sinon rounds, sinon distance, sinon series */
+function volumeOf(cur: PeriodStats, prev: PeriodStats, unite: UnitePoids = 'kg'): Volume {
+  if (cur.tonnageKg > 0 || prev.tonnageKg > 0) return { label: 'tonnage', value: fmtKg(cur.tonnageKg, unite), delta: cur.tonnageKg - prev.tonnageKg, fmt: (n) => fmtKg(n, unite) };
+  if (cur.rounds > 0 || prev.rounds > 0) return { label: 'rounds', value: String(cur.rounds), delta: cur.rounds - prev.rounds, fmt: (n) => String(Math.abs(Math.round(n))) };
+  if (cur.distanceKm > 0 || prev.distanceKm > 0) return { label: 'distance', value: `${fr1(cur.distanceKm)}${NB}km`, delta: cur.distanceKm - prev.distanceKm, fmt: (n) => `${fr1(Math.abs(n))}${NB}km` };
+  return { label: 'séries', value: String(cur.sets), delta: cur.sets - prev.sets, fmt: (n) => String(Math.abs(Math.round(n))) };
+}
+
+function Trend({ delta, text, hasPrev }: { delta: number; text: string; hasPrev: boolean }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  if (!hasPrev && delta <= 0) return <Ink size={12} weight="bold" color={c.textMuted}>rien la semaine passée</Ink>;
+  if (Math.abs(delta) < 0.5) return <Ink size={12} weight="bold" color={c.textMuted}>comme la semaine passée</Ink>;
+  const up = delta > 0;
+  const color = up ? c.successText : c.textSecondary;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+      <Svg width={12} height={12} viewBox="0 0 24 24">
+        <Path d={up ? 'M12 19V5M6 11l6-6 6 6' : 'M12 5v14M6 13l6 6 6-6'} stroke={color} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+      <Ink size={12} weight="extraBold" color={color} numberOfLines={1} style={{ flexShrink: 1 }}>{text}</Ink>
+    </View>
+  );
+}
+
+function Tile({ label, value, children, onPress, a11y }: { label: string; value: string; children: React.ReactNode; onPress?: () => void; a11y?: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const body = (
+    <>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+        <Ink size={12} weight="bold" color={c.textSecondary}>{label}</Ink>
+        {onPress ? <Icon name="chevron" size={14} color={c.textMuted} strokeWidth={2.6} /> : null}
+      </View>
+      <Ink size={22} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{value}</Ink>
+      {children}
+    </>
+  );
+  const style = { flexBasis: '47%' as const, flexGrow: 1, padding: 12, borderRadius: 16, backgroundColor: c.fillSoft, gap: 2, minHeight: 84 };
+  if (!onPress) return <View style={style}>{body}</View>;
+  return (
+    <Pressable onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y ?? label} style={({ pressed }) => [style, pressed ? { backgroundColor: c.fillSubtle } : null]}>
+      {body}
+    </Pressable>
+  );
+}
+
+export function WeekHero({
+  week,
+  plates,
+  weeklyGoal,
+  art,
+  tint,
+  onOpenCharge,
+  onChooseGoal,
+}: {
+  week: WeekCompare;
+  plates: DayPlate[];
+  /** 0 : pas d'objectif choisi, seul le nombre de seances s'affiche */
+  weeklyGoal: number;
+  art: ImageSourcePropType | null;
+  tint: string;
+  onOpenCharge: () => void;
+  onChooseGoal?: () => void;
+}) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const cur = week.current;
+  const prev = week.previousSoFar;
+  const hasPrev = prev.sessions > 0;
+  const unite = useUnitePoids();
+  const vol = volumeOf(cur, prev, unite);
+  const loadPct = prev.load > 0 ? Math.round(((cur.load - prev.load) / prev.load) * 100) : 0;
+  const goalReached = weeklyGoal > 0 && cur.sessions >= weeklyGoal;
+  const full = week.previousFull;
+
+  return (
+    <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 16, gap: 14, shadowColor: c.ink, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 }}>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Ink size={13} weight="bold" color={c.textSecondary}>{`Cette semaine, ${week.range}`}</Ink>
+          <Ink size={44} weight="black" tight style={{ lineHeight: 48 }}>
+            {String(cur.sessions)}
+            <Ink size={16} weight="bold" color={c.textSecondary}>{` séance${cur.sessions > 1 ? 's' : ''}${weeklyGoal > 0 ? ` sur ${weeklyGoal}` : ''}`}</Ink>
+          </Ink>
+          {goalReached ? (
+            <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: c.successTint, marginTop: 2 }}>
+              <Ink size={12} weight="extraBold" color={c.successText}>Objectif tenu</Ink>
+            </View>
+          ) : weeklyGoal > 0 ? (
+            <Ink size={13} color={c.textSecondary}>
+              {cur.sessions === 0 ? 'ta semaine commence ici' : `encore ${weeklyGoal - cur.sessions} pour ton objectif`}
+            </Ink>
+          ) : (
+            <View style={{ gap: 2 }}>
+              {cur.sessions === 0 ? <Ink size={13} color={c.textSecondary}>ta semaine commence ici</Ink> : null}
+              {onChooseGoal ? (
+                <Pressable onPress={onChooseGoal} accessibilityRole="button" accessibilityLabel="Choisir un objectif de séances" hitSlop={8} style={{ alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' }}>
+                  <Ink size={13} weight="extraBold" color={c.accent}>Choisir un objectif, si tu veux</Ink>
+                </Pressable>
+              ) : null}
+            </View>
+          )}
+        </View>
+        <View style={{ width: 84, height: 96, borderRadius: 18, backgroundColor: tint, overflow: 'hidden', alignItems: 'center' }}>
+          {art ? <Image source={art} style={{ position: 'absolute', top: 2, width: 96, height: 128 }} resizeMode="contain" /> : null}
+        </View>
+      </View>
+
+      <WeekPlates plates={plates} />
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Tile label="durée" value={cur.minutes ? fmtMin(cur.minutes) : `0${NB}min`}>
+          <Trend delta={cur.minutes - prev.minutes} text={fmtMin(cur.minutes - prev.minutes)} hasPrev={hasPrev} />
+        </Tile>
+        <Tile label={vol.label} value={vol.value}>
+          <Trend delta={vol.delta} text={vol.fmt(vol.delta)} hasPrev={hasPrev} />
+        </Tile>
+        <Tile label="charge" value={`${formatPoints(cur.load)}${NB}pts`} onPress={onOpenCharge} a11y="Ta charge d’entraînement, voir le détail">
+          <Trend delta={prev.load > 0 ? loadPct : cur.load} text={prev.load > 0 ? `${Math.abs(loadPct)}${NB}%` : `${formatPoints(cur.load)}${NB}pts`} hasPrev={hasPrev} />
+        </Tile>
+        <Tile label="jours entraînés" value={`${cur.days} sur 7`}>
+          <Trend delta={cur.days - prev.days} text={`${Math.abs(cur.days - prev.days)} jour${Math.abs(cur.days - prev.days) > 1 ? 's' : ''}`} hasPrev={hasPrev} />
+        </Tile>
+      </View>
+
+      <Ink size={12} color={c.textMuted}>
+        {full.sessions > 0
+          ? `Comparé à la semaine passée au même jour. Semaine passée entière : ${full.sessions} séance${full.sessions > 1 ? 's' : ''}${full.minutes ? `, ${fmtMin(full.minutes)}` : ''}.`
+          : 'Comparé à la semaine passée au même jour.'}
+      </Ink>
+    </View>
+  );
+}

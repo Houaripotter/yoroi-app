@@ -497,7 +497,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           title="Démarre ton suivi corporel"
           description="Enregistre ta première pesée pour voir l'évolution de ton poids, ta composition corporelle et tes mensurations."
           ctaLabel="Ajouter ma première pesée"
-          ctaHref="/add-weight"
+          ctaHref="/pesee"
           accentColor="#3B82F6"
         />
       )}
@@ -515,7 +515,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[corpsBannerStyle.title, { color: colors.textPrimary }]}>Historique corporel complet</Text>
-          <Text style={[corpsBannerStyle.sub, { color: colors.textMuted }]}>Poids · Muscle · Graisse · Mensurations · supprimer / modifier</Text>
+          <Text style={[corpsBannerStyle.sub, { color: colors.textMuted }]}>Poids, Muscle, Graisse, Mensurations, supprimer / modifier</Text>
         </View>
         <Text style={{ color: '#3B82F6', fontSize: 18 }}>›</Text>
       </TouchableOpacity>
@@ -533,7 +533,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
           onPressTarget={() => setSelectedMetric({ key: 'target', label: t('statsPages.weight.target'), color: '#10B981', unit: 'kg', icon: <Target size={18} color="#10B981" strokeWidth={2.5} />, source: 'weight' })}
         />
 
-        {/* Historique récent · horizontal, le plus récent à GAUCHE · fusionné sous le graphique */}
+        {/* Historique récent, horizontal, le plus récent à GAUCHE : fusionné sous le graphique */}
         {allWeightsData.length > 0 && (
           <View>
             <View style={styles.historyTitleRow}>
@@ -660,7 +660,7 @@ export const CorpsTabPage: React.FC = React.memo(() => {
         </StatsSection>
       )}
 
-      {/* ========== COMPOSITION CORPORELLE · tous les métriques, cliquables ========== */}
+      {/* ========== COMPOSITION CORPORELLE : tous les métriques, cliquables ========== */}
       <View style={styles.sectionDivider} />
 
       {/* Graisse / Muscle / Eau */}

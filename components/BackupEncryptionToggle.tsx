@@ -5,7 +5,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
 import { Lock, Unlock, Key } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import {
@@ -18,6 +18,7 @@ import {
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import { usePasswordPrompt } from './PasswordPromptModal';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 const BackupEncryptionToggleInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -38,11 +39,11 @@ const BackupEncryptionToggleInner: React.FC = () => {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Cross-platform (iOS + Android) via modal custom au lieu de Alert.prompt (iOS only)
+  // Saisie du mot de passe : fenetre maison YOROI (appPassword)
   const askPassword = (mode: 'activate' | 'change'): Promise<string | null> => {
     return promptPassword({
-      title: mode === 'activate' ? '🔒 Active le chiffrement' : '🔑 Nouveau mot de passe',
-      message: "Choisis un mot de passe fort (minimum 8 caractères).\n\n⚠️ Si tu l'oublies, tes futurs backups seront impossibles à restaurer.",
+      title: mode === 'activate' ? 'Active le chiffrement' : 'Nouveau mot de passe',
+      message: 'Choisis un mot de passe solide, 8 caractères au moins.\n\nSi tu l’oublies, tes prochaines sauvegardes ne pourront pas être restaurées.',
       confirmLabel: 'Valider',
       minLength: 8,
     });
@@ -56,7 +57,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
       const pwd = await askPassword('activate');
       if (!pwd) return;
       if (pwd.length < 8) {
-        Alert.alert('Mot de passe trop court', 'Minimum 8 caractères requis.');
+        appAlert('Mot de passe trop court', 'Il faut au moins 8 caractères.');
         return;
       }
 
@@ -69,7 +70,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
       });
       if (!confirm) return;
       if (confirm !== pwd) {
-        Alert.alert('Mots de passe différents', 'Réessaie.');
+        appAlert('Mots de passe différents', 'Réessaie.');
         return;
       }
 
@@ -78,20 +79,20 @@ const BackupEncryptionToggleInner: React.FC = () => {
         await setBackupEncryptionEnabled(true);
         setEnabled(true);
         setHasPassword(true);
-        Alert.alert(
-          '✅ Chiffrement activé',
-          'Tes prochains backups seront chiffrés avec AES-256. Garde ton mot de passe en lieu sûr · il sera demandé à la restauration.'
+        appAlert(
+          'Chiffrement activé',
+          'Tes prochaines sauvegardes seront protégées par ce mot de passe. Garde-le en lieu sûr, il te sera demandé pour les restaurer.'
         );
       } catch (e) {
         logger.error('[BackupEncryption] Erreur activation:', e);
-        Alert.alert('Erreur', "Impossible d'activer le chiffrement.");
+        appAlert('Oups', 'Le chiffrement n’a pas pu être activé.');
       }
     } else {
       // Désactivation : confirmation
       const confirmed = await new Promise<boolean>((resolve) => {
-        Alert.alert(
+        appAlert(
           'Désactiver le chiffrement ?',
-          'Tes prochains backups seront en clair. Les anciens backups chiffrés resteront chiffrés (et tu auras toujours besoin du mot de passe pour les restaurer).',
+          'Tes prochaines sauvegardes ne seront plus protégées. Les anciennes restent protégées : garde le mot de passe pour les restaurer.',
           [
             { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
             { text: 'Désactiver', style: 'destructive', onPress: () => resolve(true) },
@@ -111,13 +112,13 @@ const BackupEncryptionToggleInner: React.FC = () => {
     const pwd = await askPassword('change');
     if (!pwd) return;
     if (pwd.length < 8) {
-      Alert.alert('Mot de passe trop court', 'Minimum 8 caractères requis.');
+      appAlert('Mot de passe trop court', 'Il faut au moins 8 caractères.');
       return;
     }
     await setStoredEncryptionPassword(pwd);
-    Alert.alert(
-      '✅ Mot de passe changé',
-      'Les backups créés à partir de maintenant utiliseront ce nouveau mot de passe.'
+    appAlert(
+      'Mot de passe changé',
+      'Tes prochaines sauvegardes utiliseront ce nouveau mot de passe.'
     );
   };
 
@@ -136,7 +137,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
             {enabled
               ? 'Tes backups sont protégés par mot de passe'
-              : 'Backups en clair · quiconque peut les ouvrir'}
+              : 'Backups en clair, quiconque peut les ouvrir'}
           </Text>
         </View>
         <Switch
@@ -158,7 +159,7 @@ const BackupEncryptionToggleInner: React.FC = () => {
           <Text style={[styles.changeBtnText, { color: accent }]}>Changer le mot de passe</Text>
         </TouchableOpacity>
       )}
-      {/* Modal custom cross-platform (remplace Alert.prompt iOS-only) */}
+      {/* Saisie du mot de passe : fenetre maison YOROI */}
       {PromptElement}
     </View>
   );

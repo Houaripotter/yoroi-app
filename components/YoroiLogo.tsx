@@ -4,6 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, memo } from 'react';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { SHADOWS } from '@/constants/appTheme';
@@ -76,7 +77,7 @@ export const YoroiLogo: React.FC<YoroiLogoProps> = memo(({
               />
             </View>
           ) : (
-            // Afficher le kanji par défaut
+            // Afficher la fleur de cerisier par defaut
             <View
               style={[
                 styles.kanjiContainer,
@@ -90,17 +91,7 @@ export const YoroiLogo: React.FC<YoroiLogoProps> = memo(({
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.kanji,
-                  {
-                    fontSize: sizeConfig.kanji,
-                    color: colors.textOnAccent || '#FFFFFF',
-                  },
-                ]}
-              >
-                {theme.kanji || '鎧'}
-              </Text>
+              <Glyph kind="sakura" size={sizeConfig.kanji} color={colors.textOnAccent || '#FFFFFF'} />
             </View>
           )}
         </>

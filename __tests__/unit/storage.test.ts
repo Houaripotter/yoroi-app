@@ -479,17 +479,23 @@ describe('storage', () => {
     });
 
     it('saves selected logo', async () => {
-      await saveSelectedLogo('logo1');
+      await saveSelectedLogo('indigo');
       expect(AsyncStorage.setItem).toHaveBeenCalledWith(
         '@yoroi_selected_logo',
-        'logo1'
+        'indigo'
       );
     });
 
     it('returns saved logo', async () => {
+      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('papier');
+      const logo = await getSelectedLogo();
+      expect(logo).toBe('papier');
+    });
+
+    it('ramene un ancien logo retire au logo par defaut', async () => {
       (AsyncStorage.getItem as jest.Mock).mockResolvedValue('logo3');
       const logo = await getSelectedLogo();
-      expect(logo).toBe('logo3');
+      expect(logo).toBe('default');
     });
   });
 

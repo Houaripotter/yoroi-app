@@ -5,7 +5,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Shield, RotateCcw } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { listSafetyBackups } from '@/lib/safetyBackupService';
@@ -14,6 +14,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { formatRelative } from '@/lib/utils/formatDate';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 interface SafetyBackup {
   name: string;
@@ -42,9 +43,9 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
 
     const latest = safeties[0];
     const confirmed = await new Promise<boolean>((resolve) => {
-      Alert.alert(
-        '🛡️ Restaurer l\'état précédent ?',
-        `Tu vas revenir à l'état de tes données avant la dernière action risquée (${latest.label} · ${formatRelative(latest.date)}).\n\nLes modifications faites depuis seront remplacées.\n\nUne nouvelle sauvegarde de sécurité est créée avant la restauration · tu peux toujours revenir en arrière.`,
+      appAlert(
+        'Restaurer l’état précédent ?',
+        `Tu vas revenir à l'état de tes données avant la dernière action risquée (${latest.label}, ${formatRelative(latest.date)}).\n\nLes modifications faites depuis seront remplacées.\n\nUne nouvelle sauvegarde de sécurité est créée avant la restauration, tu peux toujours revenir en arrière.`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Restaurer', style: 'destructive', onPress: () => resolve(true) },
@@ -62,14 +63,14 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
       const ok = await importDataFromBackupObject(data);
       if (ok) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-        Alert.alert('✅ Restauration réussie', 'Ton état précédent a été restauré.');
+        appAlert('Restauration réussie', 'Ton état précédent a été restauré.');
         await refresh();
       } else {
-        Alert.alert('Erreur', 'Impossible de restaurer l\'état précédent.');
+        appAlert('Oups', 'L’état précédent n’a pas pu être restauré.');
       }
     } catch (e) {
       logger.error('[SafetyBackupRestore] Erreur:', e);
-      Alert.alert('Erreur', 'Impossible de restaurer. Fichier peut-être corrompu.');
+      appAlert('Restauration impossible', 'Le fichier est peut-être abîmé.');
     } finally {
       setRestoring(false);
     }
@@ -88,7 +89,7 @@ const SafetyBackupRestoreButtonInner: React.FC = () => {
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: colors.text }]}>Revenir à un état précédent</Text>
           <Text style={[styles.sub, { color: colors.textMuted ?? '#888' }]}>
-            {safeties.length} sauvegarde{safeties.length > 1 ? 's' : ''} de sécurité · Dernière {formatRelative(latest.date)}
+            {safeties.length} sauvegarde{safeties.length > 1 ? 's' : ''} de sécurité, dernière {formatRelative(latest.date)}
           </Text>
         </View>
       </View>

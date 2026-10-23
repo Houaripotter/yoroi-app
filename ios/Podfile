@@ -1,3 +1,8 @@
+# react-native-firebase : Firebase par CocoaPods (et non SPM), obligatoire avec les frameworks statiques
+$RNFirebaseDisableSPM = true
+# Pas d identifiant publicitaire (IDFA) : pas de suivi publicitaire, pas de fenetre App Tracking Transparency
+$RNFirebaseAnalyticsWithoutAdIdSupport = true
+
 # Set by expo-router. This enables Fabric-only features from react-native-screens
 ENV['RNS_GAMMA_ENABLED'] ||= '1'
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
@@ -61,6 +66,13 @@ target 'Yoroi' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Fix Xcode recent : la verification des modules echoue sur SDWebImageSVGCoder
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
+      end
+    end
 
     # Fix deployment target : forcer 15.0 minimum sur tous les pods
     installer.pods_project.targets.each do |target|

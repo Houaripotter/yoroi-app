@@ -1,5 +1,5 @@
 // ============================================
-// YOROI — Hook pour connaître la hauteur du clavier
+// YOROI : Hook pour connaître la hauteur du clavier
 // Permet d'ajuster dynamiquement les paddings
 // pour que rien ne soit caché
 // ============================================

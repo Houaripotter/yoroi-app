@@ -1,37 +1,39 @@
-// ============================================
-// EVENT DETAIL · page d'un événement du catalogue
-// Reçoit les params depuis le planning (catalogue externe)
-// ============================================
-
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  DeviceEventEmitter, Image, Alert,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+/**
+ * Detail d'un evenement sportif du calendrier (refonte v2) : date, lieu, federation,
+ * inscription en ligne et ajout a tes rendez-vous. Parametres : ceux de l'evenement.
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import { DeviceEventEmitter, Image, ImageBackground, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ChevronLeft, MapPin, Calendar, ExternalLink, BookmarkPlus, BookmarkCheck, Trophy, Building2 } from 'lucide-react-native';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { BigButton, Card, Enter, Glass, P, Press, tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { InfoRow, RoundAction, XIcon } from '@/components/yoroi/v2/competition/ui';
+import { CountdownPlates } from '@/components/yoroi/v2/competition/CountdownPlates';
 import { safeOpenURL } from '@/lib/security/validators';
-import { SportEvent } from '@/lib/eventsService';
+import type { SportEvent } from '@/lib/eventsService';
+import { capitalize, daysUntil, longDate, parseLocalDate } from '@/lib/v2/competition/dates';
+import { useAthlete } from '@/lib/v2/competition/athlete';
+import { sportArt } from '@/lib/v2/seances/illustrations';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { blancA } from '@/components/yoroi/livePalette';
 
 const SAVED_EVENTS_KEY = 'my_saved_events';
+const SCENE = require('@/assets/avatars/app/themes/theme_matcha.webp');
 
 const CATEGORY_META: Record<string, { label: string; color: string }> = {
-  combat:    { label: 'Combat',    color: '#EF4444' },
-  endurance: { label: 'Endurance', color: '#10B981' },
-  force:     { label: 'Force',     color: '#F59E0B' },
-  nature:    { label: 'Nature',    color: '#8B5CF6' },
-  autre:     { label: 'Autre',     color: '#6B7280' },
+  combat: { label: 'Combat', color: P.accent },
+  endurance: { label: 'Endurance', color: P.mossText },
+  force: { label: 'Force', color: P.goldDark },
+  nature: { label: 'Nature', color: '#8C6A3F' },
+  autre: { label: 'Autre', color: P.ink2 },
 };
 
 export default function EventDetailScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { gender } = useAthlete();
   const params = useLocalSearchParams<{
     id: string;
     title: string;
@@ -45,309 +47,137 @@ export default function EventDetailScreen() {
     federation?: string;
     image_logo_url?: string;
   }>();
-
   const [isSaved, setIsSaved] = useState(false);
+  const meta = CATEGORY_META[params.category || 'autre'] ?? CATEGORY_META.autre;
+  const eventDate = params.date_start ? parseLocalDate(params.date_start) : null;
+  const days = eventDate && !isNaN(eventDate.getTime()) ? daysUntil(eventDate) : null;
 
-  const categoryMeta = CATEGORY_META[params.category || 'autre'] ?? CATEGORY_META.autre;
-  const eventDate = params.date_start ? new Date(params.date_start) : null;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const daysLeft = eventDate ? Math.ceil((eventDate.getTime() - today.getTime()) / 86400000) : null;
-
-  // Vérifier si l'événement est déjà sauvegardé
   const checkSaved = useCallback(async () => {
     try {
       const raw = await AsyncStorage.getItem(SAVED_EVENTS_KEY);
-      if (!raw) { setIsSaved(false); return; }
+      if (!raw) {
+        setIsSaved(false);
+        return;
+      }
       const saved: SportEvent[] = JSON.parse(raw);
-      setIsSaved(saved.some(e => e.id === params.id));
+      setIsSaved(saved.some((e) => e.id === params.id));
     } catch (e) {
       logger.warn('[EventDetail] check saved error', e);
     }
   }, [params.id]);
 
-  useEffect(() => { checkSaved(); }, [checkSaved]);
+  useEffect(() => {
+    checkSaved();
+  }, [checkSaved]);
 
   const toggleSaved = async () => {
     try {
-      impactAsync(ImpactFeedbackStyle.Medium);
+      tap('medium');
       const raw = await AsyncStorage.getItem(SAVED_EVENTS_KEY);
       const saved: SportEvent[] = raw ? JSON.parse(raw) : [];
       let next: SportEvent[];
-
       if (isSaved) {
-        next = saved.filter(e => e.id !== params.id);
+        next = saved.filter((e) => e.id !== params.id);
         setIsSaved(false);
       } else {
-        const newEvent: SportEvent = {
+        const ev: SportEvent = {
           id: params.id,
           title: params.title,
           date_start: params.date_start,
-          location: {
-            city: params.city || '',
-            country: params.country || '',
-            full_address: params.full_address || '',
-          } as any,
+          location: { city: params.city || '', country: params.country || '', full_address: params.full_address || '' } as any,
           category: (params.category as any) || 'autre',
           sport_tag: (params.sport_tag as any) || 'jjb',
           registration_link: params.registration_link || '',
           federation: params.federation || null,
           image_logo_url: params.image_logo_url || null,
-        };
-        next = [...saved, newEvent];
+        } as SportEvent;
+        next = [...saved, ev];
         setIsSaved(true);
+        tap('success');
       }
-
       await AsyncStorage.setItem(SAVED_EVENTS_KEY, JSON.stringify(next));
-      DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
     } catch (e) {
       logger.error('[EventDetail] toggle saved error', e);
-      Alert.alert('Erreur', 'Impossible de sauvegarder cet événement.');
+      appAlert('Enregistrement impossible', "Cet événement n'a pas pu être ajouté.");
     }
   };
 
   const openRegistration = async () => {
     if (!params.registration_link) return;
-    impactAsync(ImpactFeedbackStyle.Medium);
     const ok = await safeOpenURL(params.registration_link);
-    if (!ok) {
-      Alert.alert('Lien invalide', "Ce lien d'inscription n'a pas pu être ouvert.");
-    }
+    if (!ok) appAlert('Lien invalide', "Ce lien d'inscription n'a pas pu être ouvert.");
   };
 
-  const formattedDate = eventDate
-    ? eventDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-    : '';
+  const place = [params.city, params.country].filter(Boolean).join(', ');
+  const rows: { icon: 'calendar' | 'flag' | 'shield'; label: string; value: string }[] = [];
+  if (eventDate && !isNaN(eventDate.getTime())) rows.push({ icon: 'calendar', label: 'Date', value: capitalize(longDate(eventDate)) });
+  if (place) rows.push({ icon: 'flag', label: 'Lieu', value: place });
+  if (params.full_address) rows.push({ icon: 'flag', label: 'Adresse', value: params.full_address });
+  if (params.federation) rows.push({ icon: 'shield', label: 'Fédération', value: params.federation });
 
   return (
-    <View style={[styles.wrap, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => { impactAsync(ImpactFeedbackStyle.Light); router.back(); }}
-          style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}
-        >
-          <ChevronLeft size={22} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Événement</Text>
-        <TouchableOpacity
-          onPress={toggleSaved}
-          style={[styles.iconBtn, { backgroundColor: isSaved ? categoryMeta.color + '22' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)') }]}
-        >
-          {isSaved ? (
-            <BookmarkCheck size={20} color={categoryMeta.color} />
-          ) : (
-            <BookmarkPlus size={20} color={colors.text} />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
-        {/* Hero */}
-        <View style={[styles.hero, { backgroundColor: categoryMeta.color }]}>
-          <View style={[styles.heroOverlay, { backgroundColor: categoryMeta.color }]} />
+    <DetailScreen
+      title="Événement"
+      subtitle={meta.label}
+      right={<RoundAction icon="bookmark" label={isSaved ? 'Retirer de mes rendez-vous' : 'Ajouter à mes rendez-vous'} tint={isSaved ? P.accent : P.ink} onPress={toggleSaved} />}
+      footer={params.registration_link ? <BigButton label="S'inscrire en ligne" icon="share" onPress={openRegistration} /> : undefined}
+    >
+      <Enter i={0}>
+        <ImageBackground source={SCENE} style={{ borderRadius: 28, overflow: 'hidden', minHeight: 230 }} resizeMode="cover">
           {params.image_logo_url ? (
-            <Image source={{ uri: params.image_logo_url }} style={styles.heroImage} resizeMode="contain" />
+            <View style={{ position: 'absolute', right: 16, top: 16, width: 104, height: 104, borderRadius: 26, backgroundColor: blancA(0.92), alignItems: 'center', justifyContent: 'center', padding: 10 }}>
+              <Image source={{ uri: params.image_logo_url }} style={{ width: 84, height: 84 }} resizeMode="contain" />
+            </View>
           ) : (
-            <View style={styles.heroIconWrap}>
-              <Trophy size={64} color="#FFFFFF" />
-            </View>
+            <Image source={sportArt(params.sport_tag || 'jjb', gender, 2)} style={{ position: 'absolute', right: -20, bottom: -40, width: 190, height: 270 }} resizeMode="contain" />
           )}
-          {daysLeft !== null && daysLeft >= 0 && (
-            <View style={styles.countdownBadge}>
-              <Text style={styles.countdownText}>
-                {daysLeft === 0 ? "AUJOURD'HUI" : `J-${daysLeft}`}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Contenu */}
-        <View style={styles.content}>
-          <View style={[styles.categoryPill, { backgroundColor: categoryMeta.color + '18' }]}>
-            <Text style={[styles.categoryText, { color: categoryMeta.color }]}>{categoryMeta.label.toUpperCase()}</Text>
+          <View style={{ padding: 14, flex: 1, justifyContent: 'flex-end' }}>
+            <Glass style={{ alignSelf: 'flex-start', maxWidth: params.image_logo_url ? '100%' : '56%', padding: 16, gap: 6 }}>
+              <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, height: 26, borderRadius: 9, backgroundColor: meta.color, justifyContent: 'center' }}>
+                <Ink size={12} weight="extraBold" color={P.white}>
+                  {days !== null && days >= 0 ? (days === 0 ? "Aujourd'hui" : `Dans ${days} jour${days > 1 ? 's' : ''}`) : meta.label}
+                </Ink>
+              </View>
+              <Ink size={22} weight="black" tight>
+                {params.title}
+              </Ink>
+            </Glass>
           </View>
+        </ImageBackground>
+      </Enter>
 
-          <Text style={[styles.title, { color: colors.text }]}>{params.title}</Text>
+      {rows.length ? (
+        <Enter i={1}>
+          <Card style={{ paddingVertical: 4 }}>
+            {rows.map((r, i) => (
+              <InfoRow key={r.label} icon={r.icon} label={r.label} value={r.value} color={meta.color} last={i === rows.length - 1} />
+            ))}
+          </Card>
+        </Enter>
+      ) : null}
 
-          {/* Infos */}
-          <View style={{ gap: 10, marginTop: 16 }}>
-            {formattedDate !== '' && (
-              <InfoRow
-                icon={<Calendar size={18} color={categoryMeta.color} />}
-                label="Date"
-                value={formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}
-                colors={colors}
-                isDark={isDark}
-              />
-            )}
+      {days !== null && days > 0 && days <= 60 ? (
+        <Enter i={2}>
+          <Card style={{ gap: 10 }}>
+            <Ink size={15} weight="black" tight>
+              Une plaque par jour jusqu'au départ
+            </Ink>
+            <CountdownPlates daysLeft={days} max={35} plate={22} />
+          </Card>
+        </Enter>
+      ) : null}
 
-            {(params.city || params.country) && (
-              <InfoRow
-                icon={<MapPin size={18} color={categoryMeta.color} />}
-                label="Lieu"
-                value={[params.city, params.country].filter(Boolean).join(', ')}
-                colors={colors}
-                isDark={isDark}
-              />
-            )}
-
-            {params.full_address ? (
-              <InfoRow
-                icon={<MapPin size={18} color={categoryMeta.color} />}
-                label="Adresse"
-                value={params.full_address}
-                colors={colors}
-                isDark={isDark}
-              />
-            ) : null}
-
-            {params.federation ? (
-              <InfoRow
-                icon={<Building2 size={18} color={categoryMeta.color} />}
-                label="Fédération"
-                value={params.federation}
-                colors={colors}
-                isDark={isDark}
-              />
-            ) : null}
+      <Enter i={3}>
+        <Press onPress={toggleSaved} accessibilityRole="button" accessibilityLabel={isSaved ? 'Retirer de mes rendez-vous' : 'Ajouter à mes rendez-vous'}>
+          <View style={{ minHeight: 60, borderRadius: 20, backgroundColor: isSaved ? P.accentSoft : P.white, borderWidth: 1, borderColor: isSaved ? P.accent : P.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <XIcon name="bookmark" size={20} color={isSaved ? P.accent : P.ink} />
+            <Ink size={16} weight="extraBold" color={isSaved ? P.accent : P.ink}>
+              {isSaved ? 'Dans mes rendez-vous' : 'Ajouter à mes rendez-vous'}
+            </Ink>
           </View>
-
-          {/* Actions */}
-          <View style={{ gap: 10, marginTop: 24 }}>
-            {params.registration_link ? (
-              <TouchableOpacity
-                onPress={openRegistration}
-                activeOpacity={0.85}
-                style={[styles.primaryBtn, { backgroundColor: categoryMeta.color }]}
-              >
-                <ExternalLink size={18} color="#FFFFFF" />
-                <Text style={styles.primaryBtnText}>S'inscrire en ligne</Text>
-              </TouchableOpacity>
-            ) : null}
-
-            <TouchableOpacity
-              onPress={toggleSaved}
-              activeOpacity={0.85}
-              style={[styles.secondaryBtn, {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                borderColor: isSaved ? categoryMeta.color : 'transparent',
-                borderWidth: isSaved ? 1.5 : 0,
-              }]}
-            >
-              {isSaved ? (
-                <>
-                  <BookmarkCheck size={18} color={categoryMeta.color} />
-                  <Text style={[styles.secondaryBtnText, { color: categoryMeta.color }]}>
-                    Dans mes RDV
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <BookmarkPlus size={18} color={colors.text} />
-                  <Text style={[styles.secondaryBtnText, { color: colors.text }]}>
-                    Ajouter à mes RDV
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </View>
+        </Press>
+      </Enter>
+    </DetailScreen>
   );
 }
-
-function InfoRow({
-  icon, label, value, colors, isDark,
-}: { icon: React.ReactNode; label: string; value: string; colors: any; isDark: boolean }) {
-  return (
-    <View style={[styles.infoRow, {
-      backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
-    }]}>
-      <View style={styles.infoIcon}>{icon}</View>
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{label}</Text>
-        <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  wrap: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  iconBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '800' },
-  hero: {
-    height: 180,
-    marginHorizontal: 16,
-    marginTop: 4,
-    borderRadius: 20,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.2 },
-  heroIconWrap: {
-    width: 90, height: 90, borderRadius: 45,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  heroImage: { width: '70%', height: '70%' },
-  countdownBadge: {
-    position: 'absolute',
-    top: 12, right: 12,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 999,
-  },
-  countdownText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
-  content: { paddingHorizontal: 16, paddingTop: 20 },
-  categoryPill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  categoryText: { fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
-  title: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5, lineHeight: 30 },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderRadius: 12,
-  },
-  infoIcon: {
-    width: 36, height: 36, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.03)',
-  },
-  infoLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3, marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '700' },
-  primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  primaryBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.3 },
-  secondaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  secondaryBtnText: { fontSize: 15, fontWeight: '800' },
-});

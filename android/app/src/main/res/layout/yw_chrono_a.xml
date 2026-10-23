@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chrono, style A (Nuit de lanternes) : un grand visuel, le nom de ton dernier reglage et ses rounds en gros. Un appui ouvre le chrono. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/yw_a_fond"
+    android:clipToOutline="true">
+  <ImageView android:id="@+id/yw_fond_img" android:layout_width="match_parent" android:layout_height="match_parent"
+      android:scaleType="centerCrop" android:src="@drawable/yw_a_fond_chrono" android:importantForAccessibility="no" />
+  <ImageView android:layout_width="match_parent" android:layout_height="match_parent"
+      android:scaleType="fitXY" android:src="@drawable/yw_a_voile_v" android:importantForAccessibility="no" />
+  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+      android:orientation="vertical" android:padding="@dimen/yw_marge">
+    <LinearLayout android:id="@+id/yw_chrono_haut" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal">
+      <ImageView android:layout_width="56dp" android:layout_height="68dp" android:scaleType="fitCenter"
+          android:src="@drawable/yw_a_chrono" android:importantForAccessibility="no" />
+      <FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+      <ImageView android:layout_width="32dp" android:layout_height="32dp"
+          android:src="@drawable/yw_lecture_vermillon" android:contentDescription="@string/yw_lancer" />
+    </LinearLayout>
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+    <TextView android:id="@+id/yw_chrono_nom" style="@style/YwChiffre"
+        android:layout_width="match_parent" android:layout_height="40dp"
+        android:gravity="bottom|start" android:textColor="@color/yw_a_encre"
+        android:autoSizeTextType="uniform" android:autoSizeMinTextSize="16sp"
+        android:autoSizeMaxTextSize="34sp" android:autoSizeStepGranularity="1sp"
+        android:text="@string/yw_nom_chrono" />
+    <TextView android:id="@+id/yw_chrono_detail" style="@style/YwChiffre"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="2dp" android:textSize="19sp" android:ellipsize="end"
+        android:textColor="@color/yw_a_titre" />
+  </LinearLayout>
+</FrameLayout>

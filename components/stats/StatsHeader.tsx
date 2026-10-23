@@ -1,25 +1,15 @@
 // ============================================
-// STATS HEADER - Titre + Description + Period Selector
-// Utilisé en haut de chaque section Stats
+// STATS HEADER (refonte v2) : grand titre, description, choix de periode
+// Utilise en haut de chaque section de statistiques. API inchangee.
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '@/lib/ThemeContext';
+import { View, StyleSheet } from 'react-native';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
 import { PeriodSelector } from './PeriodSelector';
 
-export type Period =
-  | '7j'
-  | '14j'
-  | '30j'
-  | '60j'
-  | '90j'
-  | '6m'
-  | '9m'
-  | '1a'
-  | '2a'
-  | 'tout'
-  | 'custom';
+export type Period = '7j' | '14j' | '30j' | '60j' | '90j' | '6m' | '9m' | '1a' | '2a' | 'tout' | 'custom';
 
 interface StatsHeaderProps {
   title: string;
@@ -44,76 +34,61 @@ export const StatsHeader: React.FC<StatsHeaderProps> = React.memo(({
   customEnd,
   onCustomRangeChange,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-        {/* Titre + Icône */}
-        <View style={styles.titleRow}>
-          {icon && <View style={styles.iconContainer}>{icon}</View>}
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {title}
-          </Text>
-        </View>
-
-        {/* Description */}
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          {description}
-        </Text>
-
-        {/* Sélecteur de période */}
-        {showPeriodSelector && (
-          <View style={styles.periodContainer}>
-            <PeriodSelector
-              selected={selectedPeriod}
-              onChange={onPeriodChange}
-              customStart={customStart}
-              customEnd={customEnd}
-              onCustomRangeChange={onCustomRangeChange}
-            />
-          </View>
-        )}
+      <View style={styles.titleRow}>
+        {icon ? <View style={[styles.iconTile, { backgroundColor: c.surface, borderColor: c.divider }]}>{icon}</View> : null}
+        <Ink size={32} weight="black" tight style={{ flex: 1 }}>
+          {title}
+        </Ink>
       </View>
+      {description ? (
+        <Ink size={15} weight="medium" color={c.textSecondary} style={styles.description}>
+          {description}
+        </Ink>
+      ) : null}
+      {showPeriodSelector ? (
+        <View style={styles.periodContainer}>
+          <PeriodSelector
+            selected={selectedPeriod}
+            onChange={onPeriodChange}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomRangeChange={onCustomRangeChange}
+          />
+        </View>
+      ) : null}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    gap: 12,
   },
-  iconContainer: {
-    marginRight: 12,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -1,
+  iconTile: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   description: {
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 20,
-    marginBottom: 14,
+    lineHeight: 21,
+    marginTop: 6,
   },
   periodContainer: {
-    marginTop: 4,
+    marginTop: 14,
   },
 });

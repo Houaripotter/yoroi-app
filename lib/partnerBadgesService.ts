@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER BADGES · Badges auto-debloques par partenaire
+// PARTNER BADGES : Badges auto-debloques par partenaire
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -155,7 +155,7 @@ export async function checkAndUnlockPartnerBadges(
       newlyUnlocked.forEach(b => {
         DeviceEventEmitter.emit('YOROI_BADGE_UNLOCKED', {
           badgeId: `partner_${b.id}_${partnerId}`,
-          name: `${b.name} · ${partner.name}`,
+          name: `${b.name}, ${partner.name}`,
           description: b.description,
         });
       });

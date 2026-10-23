@@ -1,693 +1,240 @@
-// ============================================
-// YOROI MEDIC - ÉVALUATION BLESSURE
-// ============================================
+/**
+ * Evaluation d'une blessure (refonte v2) : carte du corps avec la zone touchee,
+ * echelle de douleur de 0 a 10, type de douleur, cause, notes et duree de recuperation.
+ * Sert a la creation et a la modification (parametre injuryId).
+ */
+import React, { useEffect, useState } from 'react';
+import { DeviceEventEmitter, KeyboardAvoidingView, Platform, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { BigButton, Card, Enter, Press, tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { Bullet, Chip, H2, NIcon, Notice, P, Stepper, TextField } from '@/components/yoroi/v2/nutrition/ui';
+import type { NIconName } from '@/components/yoroi/v2/nutrition/ui';
+import { BodyMap, PainScale, sentenceCase } from '@/components/yoroi/v2/nutrition/BodyMap';
+import { INJURY_CAUSES, PAIN_TYPES } from '@/constants/bodyZones';
+import type { InjuryCause, PainType } from '@/constants/bodyZones';
+import { checkZoneRecurrence, createInjury } from '@/lib/infirmaryService';
+import { getInjuryById, updateInjury } from '@/lib/database';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { RED_FLAGS, painColor, painWord, suggestedRecoveryDays } from '@/lib/v2/nutrition/formulas';
+import { logger } from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  DeviceEventEmitter,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { router, useLocalSearchParams } from 'expo-router';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import {
-  ArrowLeft,
-  AlertCircle,
-  Save,
-  Zap,
-  Waves,
-  Flame,
-  Sparkles,
-  Lock,
-  Dumbbell,
-  Swords,
-  AlertTriangle,
-  RotateCcw,
-  HelpCircle,
-  Info,
-} from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { SPACING, RADIUS } from '@/constants/appTheme';
-import {
-  PAIN_TYPES,
-  INJURY_CAUSES,
-  PainType,
-  InjuryCause,
-} from '@/constants/bodyZones';
-import {
-  createInjury,
-  checkZoneRecurrence,
-  getEVAColor,
-  getEVAEmoji,
-} from '@/lib/infirmaryService';
-import { updateInjury } from '@/lib/database';
-import logger from '@/lib/security/logger';
-
-// Mapping des noms d'icônes vers les composants Lucide
-const iconMap: Record<string, React.ComponentType<any>> = {
-  Zap,
-  Waves,
-  Flame,
-  Sparkles,
-  Lock,
-  AlertCircle,
-  Dumbbell,
-  Swords,
-  AlertTriangle,
-  RotateCcw,
-  HelpCircle,
-};
-
-const renderIcon = (iconName: string, color: string, size: number = 24) => {
-  const IconComponent = iconMap[iconName];
-  if (!IconComponent) return null;
-  return <IconComponent size={size} color={color} strokeWidth={2} />;
-};
+const PAIN_ICONS: Record<string, NIconName> = { Zap: 'bolt', Waves: 'waves', Flame: 'flame', Sparkles: 'spark', Lock: 'lock', AlertCircle: 'alert' };
+const CAUSE_ICONS: Record<string, NIconName> = { Dumbbell: 'dumbbell', Swords: 'swords', AlertTriangle: 'alert', RotateCcw: 'repeat', HelpCircle: 'question' };
 
 export default function InjuryEvaluationScreen() {
-  const { colors, isDark } = useTheme();
-  const params = useLocalSearchParams<{
-    zoneId?: string;
-    zoneView?: string;
-    zoneName?: string;
-    injuryId?: string;
-    existingEva?: string;
-    existingDuration?: string;
-  }>();
-  const { showPopup, PopupComponent } = useCustomPopup();
-
-  // Safe parameter extraction with validation
+  const router = useRouter();
+  const params = useLocalSearchParams<{ zoneId?: string; zoneView?: string; zoneName?: string; injuryId?: string; existingEva?: string; existingDuration?: string }>();
   const zoneId = params.zoneId || 'unknown';
-  const zoneView = (params.zoneView === 'front' || params.zoneView === 'back') ? params.zoneView : 'front';
-  const zoneName = params.zoneName ? decodeURIComponent(params.zoneName) : 'Zone inconnue';
-
-  // Mode édition si injuryId est présent
+  const zoneView: 'front' | 'back' = params.zoneView === 'back' ? 'back' : 'front';
+  const zoneName = params.zoneName ? sentenceCase(safeDecode(params.zoneName)) : 'Touche la zone sur la carte de l’infirmerie';
   const injuryId = params.injuryId ? parseInt(params.injuryId, 10) : null;
-  const isEditMode = injuryId !== null;
+  const isEdit = injuryId !== null && !isNaN(injuryId);
 
   const [painType, setPainType] = useState<PainType | null>(null);
   const [cause, setCause] = useState<InjuryCause | null>(null);
-  const [evaScore, setEvaScore] = useState(
-    params.existingEva ? parseInt(params.existingEva, 10) : 5
-  );
-  const [estimatedRecoveryDays, setEstimatedRecoveryDays] = useState(
-    params.existingDuration ? parseInt(params.existingDuration, 10) : 7
-  );
+  const [eva, setEva] = useState(params.existingEva ? parseInt(params.existingEva, 10) || 0 : 5);
+  const [days, setDays] = useState(params.existingDuration ? parseInt(params.existingDuration, 10) || 7 : 7);
   const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [mapZone, setMapZone] = useState({ id: zoneId, view: zoneView });
 
-  // Suggestion simple basée sur l'EVA (juste une aide, pas un avis médical)
-  const getSuggestedDays = (eva: number): number => {
-    if (eva <= 3) return 7;
-    if (eva <= 6) return 14;
-    return 21;
+  // En modification : on reprend ce qui est deja enregistre
+  useEffect(() => {
+    if (!isEdit || injuryId === null) return;
+    getInjuryById(injuryId)
+      .then((inj) => {
+        if (!inj) return;
+        if (PAIN_TYPES.some((p) => p.id === inj.pain_type)) setPainType(inj.pain_type as PainType);
+        if (INJURY_CAUSES.some((c) => c.id === inj.cause)) setCause(inj.cause as InjuryCause);
+        if (inj.notes) setNotes(inj.notes);
+        if (!params.existingEva) setEva(inj.eva_score);
+        if (!params.existingDuration && inj.estimated_recovery_days) setDays(inj.estimated_recovery_days);
+        setMapZone({ id: inj.zone_id, view: inj.zone_view });
+      })
+      .catch((err) => logger.error('Lecture de la blessure impossible', err));
+  }, [isEdit, injuryId]);
+
+  const suggested = suggestedRecoveryDays(eva);
+
+  const leave = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/infirmary' as any);
   };
-  const suggestedDays = getSuggestedDays(evaScore);
 
-  const handleSubmit = async () => {
-    if (!isEditMode && (!painType || !cause)) {
-      showPopup('Champs requis', 'Sélectionne le type de douleur et la cause', [
-        { text: 'OK', style: 'primary' },
-      ]);
+  const submit = async () => {
+    if (saving) return;
+    if (!isEdit && (!painType || !cause)) {
+      appAlert('Il manque une info', 'Choisis le type de douleur et la cause.');
       return;
     }
-
-    setIsSubmitting(true);
-
+    setSaving(true);
     try {
-      if (isEditMode) {
-        // Mode édition - mettre à jour la blessure existante
+      if (isEdit && injuryId !== null) {
         await updateInjury(injuryId, {
-          eva_score: evaScore,
-          estimated_recovery_days: estimatedRecoveryDays,
-          notes: notes || undefined,
+          eva_score: eva,
+          estimated_recovery_days: days,
+          notes: notes.trim() || undefined,
+          ...(painType ? { pain_type: painType } : {}),
+          ...(cause ? { cause } : {}),
         });
-
-        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-        notificationAsync(NotificationFeedbackType.Success);
-        showPopup('Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
-          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } },
-        ]);
+        DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+        tap('success');
+        appAlert('Blessure mise à jour', 'Tes modifications sont enregistrées.', [{ text: 'D’accord', onPress: leave }]);
       } else {
-        // Mode création - créer une nouvelle blessure
-        const newInjuryId = await createInjury({
-          zone_id: zoneId,
-          zone_view: zoneView,
-          pain_type: painType!,
-          cause: cause!,
-          eva_score: evaScore,
-          estimated_recovery_days: estimatedRecoveryDays,
-          notes: notes || undefined,
-        });
-
-        DeviceEventEmitter.emit('YOROI_DATA_CHANGED');
-        notificationAsync(NotificationFeedbackType.Success);
-
-        // Vérifier récurrence
-        const recurrence = await checkZoneRecurrence(zoneId, zoneView);
-        if (recurrence.isRecurring) {
-          showPopup(
-            'Récurrence détectée',
-            `Cette zone a été blessée ${recurrence.count} fois dans les 30 derniers jours.`,
-            [{ text: 'OK', style: 'primary' }]
-          );
+        await createInjury({ zone_id: zoneId, zone_view: zoneView, pain_type: painType!, cause: cause!, eva_score: eva, estimated_recovery_days: days, notes: notes.trim() || undefined });
+        DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+        tap('success');
+        const rec = await checkZoneRecurrence(zoneId, zoneView);
+        if (rec.isRecurring) {
+          appAlert('Zone déjà touchée', `Cette zone a été blessée ${rec.count} fois ces 30 derniers jours. Un avis médical serait utile.`, [{ text: 'D’accord', onPress: leave }]);
+        } else {
+          leave();
         }
-
-        if (!isNavigating) { setIsNavigating(true); router.back(); }
       }
-    } catch (error) {
-      logger.error('[InjuryEvaluation] Erreur:', error);
-      showPopup('Erreur', `Impossible d'${isEditMode ? 'mettre à jour' : 'enregistrer'} la blessure`, [
-        { text: 'OK', style: 'primary' },
-      ]);
+    } catch (err) {
+      logger.error('Enregistrement de la blessure impossible', err);
+      appAlert(isEdit ? 'Mise à jour impossible' : 'Enregistrement impossible', 'Un souci est survenu. Réessaie.');
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
   return (
-    <ScreenWrapper>
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <DetailScreen
+        title={isEdit ? 'Modifier la blessure' : 'Nouvelle blessure'}
+        subtitle={zoneName}
+        footer={<BigButton label={saving ? 'Enregistrement' : isEdit ? 'Enregistrer les changements' : 'Enregistrer la blessure'} onPress={submit} disabled={saving} icon="check" />}
       >
-        {/* Header */}
-        <View style={styles.topSection}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              if (!isNavigating) { setIsNavigating(true); router.back(); }
-            }}
-            activeOpacity={0.7}
-          >
-            <ArrowLeft size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-
-          <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
-              <AlertCircle size={24} color={colors.accent} />
+        {/* CARTE ET DOULEUR */}
+        <Enter i={0}>
+          <Card style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+            <BodyMap zoneId={mapZone.id} view={mapZone.view} color={painColor(eva)} height={220} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Ink size={13} weight="extraBold" color={P.ink2}>
+                Douleur
+              </Ink>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <Ink size={72} weight="black" tight color={painColor(eva)} style={{ lineHeight: 76 }}>
+                  {String(eva)}
+                </Ink>
+                <Ink size={18} weight="extraBold" color={P.ink2}>
+                  sur 10
+                </Ink>
+              </View>
+              <Ink size={15} weight="black" color={painColor(eva)}>
+                {painWord(eva)}
+              </Ink>
             </View>
-            <View style={styles.headerText}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {isEditMode ? 'Modifier blessure' : 'Nouvelle blessure'}
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {zoneName}
-              </Text>
+          </Card>
+        </Enter>
+
+        <Enter i={1}>
+          <H2 sub="De 0, aucune douleur, à 10, la pire imaginable">Échelle de douleur</H2>
+          <Card style={{ marginTop: 10 }}>
+            <PainScale value={eva} onChange={setEva} />
+          </Card>
+        </Enter>
+
+        {eva >= 7 ? (
+          <Enter i={2}>
+            <Notice tone="red" title="Douleur forte" text="Mets la zone au repos. Si la douleur ne baisse pas ou si l’un des signes ci-dessous apparaît, consulte rapidement." />
+          </Enter>
+        ) : null}
+
+        {/* TYPE DE DOULEUR */}
+        <Enter i={3}>
+          <H2 sub={isEdit ? undefined : 'Obligatoire'}>Type de douleur</H2>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+            {PAIN_TYPES.map((t) => (
+              <OptionTile key={t.id} icon={PAIN_ICONS[t.icon] ?? 'circle'} label={t.label} active={painType === t.id} onPress={() => setPainType(t.id)} />
+            ))}
+          </View>
+        </Enter>
+
+        {/* CAUSE */}
+        <Enter i={4}>
+          <H2 sub={isEdit ? undefined : 'Obligatoire'}>Cause</H2>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+            {INJURY_CAUSES.map((c) => (
+              <OptionTile key={c.id} icon={CAUSE_ICONS[c.icon] ?? 'circle'} label={c.label} active={cause === c.id} onPress={() => setCause(c.id)} />
+            ))}
+          </View>
+        </Enter>
+
+        {/* NOTES */}
+        <Enter i={5}>
+          <TextField label="Notes (facultatif)" value={notes} onChange={setNotes} placeholder="Comment c’est arrivé ? Ce que tu ressens, ce qu’a dit le médecin" multiline />
+        </Enter>
+
+        {/* RECUPERATION */}
+        <Enter i={6}>
+          <H2 sub="Une estimation, modifiable plus tard">Durée de récupération</H2>
+          <Card style={{ marginTop: 10, gap: 14 }}>
+            <Press onPress={() => setDays(suggested)} accessibilityRole="button" accessibilityLabel={`Prendre la suggestion : ${suggested} jours`}>
+              <View style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 16, backgroundColor: days === suggested ? P.mossSoft : P.paper }}>
+                <NIcon name={days === suggested ? 'check' : 'info'} size={18} color={days === suggested ? P.mossText : P.ink2} />
+                <Ink size={14} weight="extraBold" color={days === suggested ? P.mossText : P.ink} style={{ flex: 1 }}>
+                  {`Suggestion : ${suggested} jours pour une douleur à ${eva}`}
+                </Ink>
+              </View>
+            </Press>
+            <Stepper value={days} onChange={setDays} unit="jours" min={1} max={365} />
+            <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'space-between' }}>
+              {[3, 7, 14, 21, 30].map((d) => (
+                <Chip key={d} label={`${d} j`} active={days === d} onPress={() => setDays(d)} />
+              ))}
             </View>
-          </View>
-        </View>
+            <Ink size={12} weight="medium" color={P.ink2}>
+              Simple repère selon la douleur, ce n’est pas un avis médical.
+            </Ink>
+          </Card>
+        </Enter>
 
-        {/* Échelle EVA */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Échelle de douleur (EVA)
-          </Text>
-          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            De 0 (aucune douleur) à 10 (douleur maximale)
-          </Text>
-
-          {/* Score actuel */}
-          <View style={styles.evaScoreDisplay}>
-            <Text style={styles.evaEmoji}>{getEVAEmoji(evaScore)}</Text>
-            <Text
-              style={[
-                styles.evaScoreText,
-                { color: getEVAColor(evaScore) },
-              ]}
-            >
-              {evaScore}/10
-            </Text>
-          </View>
-
-          {/* Slider EVA */}
-          <View style={styles.evaSlider}>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-              <TouchableOpacity
-                key={value}
-                style={[
-                  styles.evaButton,
-                  {
-                    backgroundColor:
-                      evaScore === value ? getEVAColor(value) : colors.backgroundElevated,
-                  },
-                ]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  setEvaScore(value);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.evaButtonText,
-                    {
-                      color: evaScore === value ? '#FFFFFF' : colors.textSecondary,
-                      fontWeight: evaScore === value ? '700' : '600',
-                    },
-                  ]}
-                >
-                  {value}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Gradient bar */}
-          <View style={styles.evaGradient}>
-            <View style={[styles.gradientSection, { backgroundColor: '#4CAF50' }]} />
-            <View style={[styles.gradientSection, { backgroundColor: '#8BC34A' }]} />
-            <View style={[styles.gradientSection, { backgroundColor: '#FFEB3B' }]} />
-            <View style={[styles.gradientSection, { backgroundColor: '#FF9800' }]} />
-            <View style={[styles.gradientSection, { backgroundColor: '#F44336' }]} />
-          </View>
-        </View>
-
-        {/* Type de douleur */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Type de douleur *
-          </Text>
-          <View style={styles.optionsGrid}>
-            {PAIN_TYPES.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={[
-                  styles.optionButton,
-                  { backgroundColor: colors.backgroundElevated },
-                  painType === type.id && { backgroundColor: colors.accent },
-                ]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  setPainType(type.id);
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.optionIconContainer}>
-                  {renderIcon(type.icon, painType === type.id ? colors.textOnAccent : colors.textPrimary, 22)}
-                </View>
-                <Text
-                  style={[
-                    styles.optionLabel,
-                    { color: painType === type.id ? colors.textOnAccent : colors.textPrimary },
-                  ]}
-                >
-                  {type.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Cause */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Cause de la blessure *
-          </Text>
-          <View style={styles.optionsGrid}>
-            {INJURY_CAUSES.map((causeItem) => (
-              <TouchableOpacity
-                key={causeItem.id}
-                style={[
-                  styles.optionButton,
-                  { backgroundColor: colors.backgroundElevated },
-                  cause === causeItem.id && { backgroundColor: colors.accent },
-                ]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  setCause(causeItem.id);
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.optionIconContainer}>
-                  {renderIcon(causeItem.icon, cause === causeItem.id ? colors.textOnAccent : colors.textPrimary, 22)}
-                </View>
-                <Text
-                  style={[
-                    styles.optionLabel,
-                    { color: cause === causeItem.id ? colors.textOnAccent : colors.textPrimary },
-                  ]}
-                >
-                  {causeItem.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Notes */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Notes (optionnel)
-          </Text>
-          <TextInput
-            style={[
-              styles.notesInput,
-              { backgroundColor: colors.backgroundElevated, color: colors.textPrimary },
-            ]}
-            placeholder="Comment c'est arrivé ? Que ressens-tu ?"
-            placeholderTextColor={colors.textMuted}
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
-
-        {/* Durée de récupération estimée */}
-        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Durée de récupération estimée
-          </Text>
-          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            Modifiable plus tard si besoin
-          </Text>
-
-          {/* Suggestion cliquable basée sur EVA */}
-          <TouchableOpacity
-            style={[
-              styles.suggestionButton,
-              {
-                backgroundColor: estimatedRecoveryDays === suggestedDays ? '#10B98120' : colors.backgroundElevated,
-                borderColor: estimatedRecoveryDays === suggestedDays ? '#10B981' : colors.border,
-              },
-            ]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              setEstimatedRecoveryDays(suggestedDays);
-            }}
-            activeOpacity={0.7}
-          >
-            <Info size={18} color={estimatedRecoveryDays === suggestedDays ? '#10B981' : colors.textMuted} />
-            <Text style={[styles.suggestionText, { color: estimatedRecoveryDays === suggestedDays ? '#10B981' : colors.textPrimary }]}>
-              Suggestion : {suggestedDays} jours (EVA {evaScore}/10)
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.durationContainer}>
-            <TouchableOpacity
-              style={[styles.durationButton, { backgroundColor: colors.backgroundElevated }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                setEstimatedRecoveryDays(Math.max(1, estimatedRecoveryDays - 1));
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.durationButtonText, { color: colors.textPrimary }]}>-</Text>
-            </TouchableOpacity>
-
-            <View style={[styles.durationDisplay, { backgroundColor: colors.backgroundElevated }]}>
-              <Text style={[styles.durationValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                {estimatedRecoveryDays}
-              </Text>
-              <Text style={[styles.durationLabel, { color: colors.textSecondary }]}>
-                jours
-              </Text>
+        {/* SIGNES D'ALERTE */}
+        <Enter i={7}>
+          <Card style={{ gap: 8, backgroundColor: P.dangerSoft, borderColor: P.dangerSoft }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <NIcon name="alert" size={18} color={P.danger} />
+              <Ink size={15} weight="black" color={P.danger}>
+                Consulte sans attendre si
+              </Ink>
             </View>
-
-            <TouchableOpacity
-              style={[styles.durationButton, { backgroundColor: colors.backgroundElevated }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                setEstimatedRecoveryDays(estimatedRecoveryDays + 1);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.durationButtonText, { color: colors.textPrimary }]}>+</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Boutons de raccourci */}
-          <View style={styles.durationPresets}>
-            {[3, 7, 14, 21, 30].map((days) => (
-              <TouchableOpacity
-                key={days}
-                style={[
-                  styles.presetButton,
-                  { backgroundColor: colors.backgroundElevated },
-                  estimatedRecoveryDays === days && { backgroundColor: colors.accent },
-                ]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  setEstimatedRecoveryDays(days);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.presetButtonText,
-                    {
-                      color: estimatedRecoveryDays === days ? colors.textOnAccent : colors.textSecondary,
-                    },
-                  ]}
-                >
-                  {days}j
-                </Text>
-              </TouchableOpacity>
+            {RED_FLAGS.map((f) => (
+              <Bullet key={f}>{f}</Bullet>
             ))}
-          </View>
-        </View>
-
-        {/* Bouton enregistrer */}
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            { backgroundColor: colors.accent },
-            isSubmitting && { opacity: 0.5 },
-          ]}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-          activeOpacity={0.7}
-        >
-          <Save size={20} color={colors.textOnAccent} />
-          <Text style={[styles.submitButtonText, { color: colors.textOnAccent }]}>
-            {isSubmitting
-              ? isEditMode
-                ? 'Modification...'
-                : 'Enregistrement...'
-              : isEditMode
-              ? 'Modifier la blessure'
-              : 'Enregistrer la blessure'}
-          </Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 40 }} />
-        <PopupComponent />
-      </ScrollView>
-    </ScreenWrapper>
+            <Ink size={12} weight="bold" color={P.danger}>
+              En cas d’urgence, appelle le 15 ou le 112.
+            </Ink>
+          </Card>
+        </Enter>
+      </DetailScreen>
+    </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  topSection: {
-    marginBottom: SPACING.lg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: SPACING.md,
-  },
-  headerText: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-  },
-  // Sections
-  section: {
-    padding: SPACING.lg,
-    borderRadius: RADIUS.lg,
-    marginBottom: SPACING.md,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    marginBottom: SPACING.md,
-  },
-  // EVA Scale
-  evaScoreDisplay: {
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  evaEmoji: {
-    fontSize: 64,
-    marginBottom: SPACING.sm,
-  },
-  evaScoreText: {
-    fontSize: 36,
-    fontWeight: '800',
-  },
-  evaSlider: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
-  },
-  evaButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  evaButtonText: {
-    fontSize: 12,
-  },
-  evaGradient: {
-    flexDirection: 'row',
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  gradientSection: {
-    flex: 1,
-  },
-  // Options
-  optionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: RADIUS.md,
-    gap: SPACING.xs,
-  },
-  optionIconContainer: {
-    marginBottom: SPACING.xs,
-  },
-  optionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // Notes
-  notesInput: {
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    fontSize: 15,
-    minHeight: 100,
-  },
-  // Duration
-  durationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  durationButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  durationButtonText: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  durationDisplay: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    minWidth: 120,
-  },
-  durationValue: {
-    fontSize: 32,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  durationLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  durationPresets: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-  },
-  presetButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: RADIUS.md,
-  },
-  presetButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  // Suggestion Button
-  suggestionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
-    gap: SPACING.sm,
-  },
-  suggestionText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // Submit Button
-  submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: 16,
-    borderRadius: RADIUS.md,
-    marginTop: SPACING.lg,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-});
+function OptionTile({ icon, label, active, onPress }: { icon: NIconName; label: string; active: boolean; onPress: () => void }) {
+  return (
+    <View style={{ width: '31%' }}>
+      <Press onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={label}>
+        <View style={{ minHeight: 84, borderRadius: 20, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: active ? P.ink : P.white, borderWidth: 1, borderColor: active ? P.ink : P.line2 }}>
+          <NIcon name={icon} size={22} color={active ? P.white : P.ink} />
+          <Ink size={12} weight="extraBold" color={active ? P.white : P.ink} style={{ textAlign: 'center' }} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+            {label}
+          </Ink>
+        </View>
+      </Press>
+    </View>
+  );
+}
+
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}

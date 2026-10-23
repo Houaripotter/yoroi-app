@@ -1,521 +1,177 @@
-// ============================================
-// YOROI - ECRAN SELECTION LOGO PREMIUM
-// ============================================
+/**
+ * Logo de l'app (refonte v2, 16 octobre 2026) : le logo v7 n.8 sur plusieurs couleurs de fond.
+ * Le choix est garde (getSelectedLogo, saveSelectedLogo) et applique a l'icone native
+ * avec expo-alternate-app-icons quand le telephone le permet (build installe, pas Expo Go).
+ * Les noms natifs (appiconset iOS, activity-alias Android) sont dans LOGO_OPTIONS.nativeName.
+ */
+import React, { useEffect, useState } from 'react';
+import { Image, View, useWindowDimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Card, Press, BigButton, Icon, Enter, P, useAccent, tap } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { usePremium } from '@/context/PremiumContext';
+import { getSelectedLogo, saveSelectedLogo, nativeIconNameFor, LOGO_OPTIONS, LogoVariant } from '@/lib/storage';
+import { logger } from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  StatusBar,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Check, Crown, Sparkles } from 'lucide-react-native';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
-import { useDevMode } from '@/lib/DevModeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
-import {
-  getSelectedLogo,
-  saveSelectedLogo,
-  LOGO_OPTIONS,
-  LogoVariant
-} from '@/lib/storage';
-import { YoroiLogo } from '@/components/YoroiLogo';
-import logger from '@/lib/security/logger';
-
-// Import conditionnel - expo-alternate-app-icons necessite un build natif
-let setAlternateAppIcon: ((name: string) => Promise<void>) | null = null;
-let resetAppIcon: (() => Promise<void>) | null = null;
+// Module natif : absent dans Expo Go, d'ou le chargement protege
+let setAlternateAppIcon: ((name: string | null) => Promise<string | null>) | null = null;
 let supportsAlternateIcons = false;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mod = require('expo-alternate-app-icons');
   setAlternateAppIcon = mod.setAlternateAppIcon;
-  resetAppIcon = mod.resetAppIcon;
-  supportsAlternateIcons = mod.supportsAlternateIcons ?? false;
+  supportsAlternateIcons = !!mod.supportsAlternateIcons;
 } catch {
-  // Module natif indisponible (Expo Go)
+  supportsAlternateIcons = false;
 }
 
-// Mapping entre les IDs internes et les noms d'icones iOS
-const ICON_NAME_MAP: Record<string, string | null> = {
-  'default': null,
-  'logo_new': 'Logo1',
-  'logo1': 'Yoroi1',
-  'logo2': 'Yoroi2',
-  'logo3': 'Yoroi3',
-  'logo4': 'Yoroi4',
-  'logo5': 'Yoroi5',
-  'logo6': 'Yoroi6',
-};
+const COLS = 4;
+const GAP = 8;
 
 export default function LogoSelectionScreen() {
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const { isPro } = useDevMode();
-  const { t } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
-
-  const [currentLogo, setCurrentLogo] = useState<LogoVariant>('default');
-  const [selectedLogo, setSelectedLogo] = useState<LogoVariant>('default');
-  const [isSaving, setIsSaving] = useState(false);
+  const router = useRouter();
+  const { accent } = useAccent();
+  const { isPremium } = usePremium();
+  const [current, setCurrent] = useState<LogoVariant>('default');
+  const [selected, setSelected] = useState<LogoVariant>('default');
+  const [saving, setSaving] = useState(false);
+  const { width } = useWindowDimensions();
+  // 4 colonnes regulieres dans la marge de 22 points
+  const tileW = Math.floor((width - 44 - GAP * (COLS - 1)) / COLS);
+  const icon = Math.min(60, tileW - 14);
 
   useEffect(() => {
-    loadCurrentLogo();
+    getSelectedLogo().then((l) => {
+      setCurrent(l);
+      setSelected(l);
+    });
   }, []);
 
-  const loadCurrentLogo = async () => {
-    const logo = await getSelectedLogo();
-    setCurrentLogo(logo);
-    setSelectedLogo(logo);
-  };
-
-  const handleSelectLogo = (logoId: LogoVariant) => {
-    const logoOption = LOGO_OPTIONS.find(opt => opt.id === logoId);
-    const isUnlocked = isPro || !logoOption?.isPremium;
-
-    if (!isUnlocked) {
-      notificationAsync(NotificationFeedbackType.Warning);
-      showPopup(
-        t('logoSelection.premiumTitle'),
-        t('logoSelection.premiumMsg'),
-        [{ text: t('logoSelection.ok'), style: 'primary' }]
-      );
+  const choose = (id: LogoVariant, locked: boolean) => {
+    if (locked) {
+      tap('medium');
+      appAlert('Logo Premium', 'Cette couleur fait partie de Premium. Passe à Premium pour la débloquer.', [
+        { text: 'Plus tard', style: 'cancel' },
+        { text: 'Voir Premium', onPress: () => ouvrirPaywall('logos') },
+      ]);
       return;
     }
-
-    impactAsync(ImpactFeedbackStyle.Light);
-    setSelectedLogo(logoId);
+    setSelected(id);
   };
 
-  const handleSave = async () => {
-    if (selectedLogo === currentLogo) {
+  const apply = async () => {
+    if (selected === current) {
       router.back();
       return;
     }
-
-    setIsSaving(true);
-    impactAsync(ImpactFeedbackStyle.Medium);
-
+    setSaving(true);
     try {
-      await saveSelectedLogo(selectedLogo);
-
-      // Changer l'icone native de l'app sur l'ecran d'accueil (build natif uniquement)
-      if (supportsAlternateIcons && setAlternateAppIcon && resetAppIcon) {
-        const iconName = ICON_NAME_MAP[selectedLogo];
-        if (iconName === null) {
-          await resetAppIcon();
-        } else if (iconName) {
-          await setAlternateAppIcon(iconName);
+      await saveSelectedLogo(selected);
+      let applied = false;
+      if (supportsAlternateIcons && setAlternateAppIcon) {
+        try {
+          await setAlternateAppIcon(nativeIconNameFor(selected));
+          applied = true;
+        } catch (e) {
+          // le choix reste enregistre meme si l'icone native refuse de changer
+          logger.warn('Icone native non changee:', e);
         }
       }
-
-      notificationAsync(NotificationFeedbackType.Success);
-      setCurrentLogo(selectedLogo);
-      showPopup(
-        t('logoSelection.updated'),
-        supportsAlternateIcons
-          ? t('logoSelection.updatedActiveMsg')
-          : t('logoSelection.updatedNativeMsg'),
-        [{ text: t('logoSelection.superBtn'), style: 'primary', onPress: () => router.back() }]
+      tap('success');
+      setCurrent(selected);
+      appAlert(
+        'Logo changé',
+        applied ? 'Ton nouveau logo est sur l’écran d’accueil de ton téléphone.' : 'Ton choix est enregistré. Il s’appliquera à l’icône du téléphone dans la version installée depuis l’App Store.',
+        [{ text: 'Super', onPress: () => router.back() }],
       );
-    } catch (error) {
-      logger.error('Erreur sauvegarde logo:', error);
-      showPopup(t('logoSelection.errorTitle'), t('logoSelection.errorMsg'), [{ text: t('logoSelection.ok'), style: 'primary' }]);
+    } catch (e) {
+      logger.error('Erreur changement de logo:', e);
+      appAlert('Oups', 'Le logo n’a pas pu être changé. Réessaie dans un instant.');
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  const hasChanges = selectedLogo !== currentLogo;
+  const sel = LOGO_OPTIONS.find((o) => o.id === selected) ?? LOGO_OPTIONS[0];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
-          onPress={() => router.back()}
-        >
-          <ChevronLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            {t('logoSelection.title')}
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-            {t('logoSelection.subtitle')}
-          </Text>
-        </View>
-        <View style={{ width: 44 }} />
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Preview du logo selectionne */}
-        <View style={[styles.previewCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <Text style={[styles.previewLabel, { color: colors.textMuted }]}>{t('logoSelection.preview')}</Text>
-          <View style={styles.previewContent}>
-            <YoroiLogo size="large" forceLogoId={selectedLogo} />
+    <DetailScreen
+      title="Logo de l’app"
+      subtitle="Choisis la couleur de fond de ton icône."
+      footer={selected !== current ? <BigButton label={saving ? 'Un instant' : 'Appliquer ce logo'} icon="check" onPress={apply} disabled={saving} /> : undefined}
+    >
+      <Enter i={0}>
+        <Card style={{ alignItems: 'center', paddingVertical: 26, gap: 14 }}>
+          <View style={{ width: 120, height: 120, borderRadius: 120 * 0.225, overflow: 'hidden', backgroundColor: sel.color, borderWidth: 1, borderColor: P.line2, shadowColor: P.ink, shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
+            <Image source={sel.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
           </View>
-          {selectedLogo !== 'default' && (
-            <View style={[styles.premiumBadge, { backgroundColor: colors.accent }]}>
-              <Crown size={12} color={colors.textOnAccent} />
-              <Text style={[styles.premiumBadgeText, { color: colors.textOnAccent }]}>Premium</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Section Premium */}
-        <View style={[styles.premiumBanner, { backgroundColor: `${colors.accent}15`, borderColor: colors.accent }]}>
-          <Sparkles size={20} color={colors.accent} />
-          <View style={styles.premiumBannerText}>
-            <Text style={[styles.premiumBannerTitle, { color: colors.textPrimary }]}>
-              {t('logoSelection.premiumLogos')}
-            </Text>
-            <Text style={[styles.premiumBannerDesc, { color: colors.textSecondary }]}>
-              {t('logoSelection.premiumDesc')}
-            </Text>
+          <View style={{ alignItems: 'center', gap: 2 }}>
+            <Ink size={20} weight="black" tight>
+              {sel.name}
+            </Ink>
+            <Ink size={14} weight="medium" color={P.ink2}>
+              {selected === current ? 'Logo actuel' : 'Aperçu de ton choix'}
+            </Ink>
           </View>
-        </View>
+        </Card>
+      </Enter>
 
-        {/* Grille des logos */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('logoSelection.availableLogos')}</Text>
-        
-        <View style={styles.logosGrid}>
-          {LOGO_OPTIONS.map((option) => {
-            const isSelected = selectedLogo === option.id;
-            const isCurrent = currentLogo === option.id;
-            const isUnlocked = isPro || !option.isPremium;
-
+      <Enter i={1}>
+        {/* Grille de 4 colonnes : icone arrondie facon iOS, nom de la couleur, coche sur le choix */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: GAP, rowGap: GAP }}>
+          {LOGO_OPTIONS.map((o) => {
+            const locked = o.isPremium && !isPremium;
+            const on = o.id === selected;
+            const tag = locked ? 'Premium' : o.id === current ? 'Actuel' : null;
             return (
-              <TouchableOpacity
-                key={option.id}
-                style={[
-                  styles.logoCard,
-                  {
-                    backgroundColor: colors.backgroundCard,
-                    borderColor: isSelected ? colors.accent : colors.border,
-                    borderWidth: isSelected ? 2 : 1,
-                    opacity: isUnlocked ? 1 : 0.6,
-                  },
-                ]}
-                onPress={() => handleSelectLogo(option.id)}
-                activeOpacity={0.7}
+              <Press
+                key={o.id}
+                onPress={() => choose(o.id, locked)}
+                accessibilityRole="button"
+                accessibilityLabel={`Fond ${o.name}${locked ? ', Premium' : ''}${o.id === current ? ', logo actuel' : ''}`}
+                accessibilityState={{ selected: on }}
+                style={{ width: tileW }}
               >
-                {/* Logo preview */}
-                <View style={[styles.logoPreview, { backgroundColor: isDark ? '#1A1A1A' : '#F5F5F5' }]}>
-                  {option.id === 'default' ? (
-                    <View style={[styles.kanjiPreview, { backgroundColor: colors.accent }]}>
-                      <Text style={[styles.kanjiText, { color: colors.textOnAccent }]}>鎧</Text>
+                <View style={{ width: tileW, borderRadius: 18, backgroundColor: on ? P.white : 'transparent', borderWidth: 2, borderColor: on ? accent : 'transparent', paddingTop: 10, paddingBottom: 8, alignItems: 'center', gap: 6 }}>
+                  <View style={{ width: icon, height: icon }}>
+                    <View style={{ width: icon, height: icon, borderRadius: icon * 0.225, overflow: 'hidden', backgroundColor: o.color, borderWidth: 1, borderColor: P.line2, opacity: locked ? 0.6 : 1 }}>
+                      <Image source={o.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
                     </View>
-                  ) : option.image ? (
-                    <Image
-                      source={option.image}
-                      style={styles.logoImage}
-                      resizeMode="contain"
-                    />
-                  ) : null}
+                    {on ? (
+                      <View style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: accent, borderWidth: 2, borderColor: P.white, alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="check" size={12} color={P.white} width={3} />
+                      </View>
+                    ) : null}
+                  </View>
+                  <Ink size={12} weight={on ? 'extraBold' : 'bold'} color={P.ink} numberOfLines={1} style={{ textAlign: 'center' }}>
+                    {o.name}
+                  </Ink>
+                  <View style={{ height: 18, justifyContent: 'center' }}>
+                    {tag ? (
+                      <View style={{ paddingHorizontal: 6, height: 18, borderRadius: 9, backgroundColor: locked ? P.goldSoft : P.mossSoft, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ink size={10} weight="extraBold" color={locked ? P.goldDark : P.mossText}>
+                          {tag}
+                        </Ink>
+                      </View>
+                    ) : null}
+                  </View>
                 </View>
-
-                {/* Info */}
-                <Text style={[styles.logoName, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {option.name}
-                </Text>
-                <Text style={[styles.logoDesc, { color: colors.textMuted }]} numberOfLines={1}>
-                  {option.description}
-                </Text>
-
-                {/* Badges */}
-                {option.isPremium && (
-                  <View style={[styles.premiumTag, { backgroundColor: `${colors.accent}20` }]}>
-                    <Crown size={10} color={colors.accent} />
-                    <Text style={[styles.premiumTagText, { color: isDark ? colors.accent : colors.textPrimary }]}>Premium</Text>
-                  </View>
-                )}
-
-                {/* Selection indicator */}
-                {isSelected && (
-                  <View style={[styles.selectedIndicator, { backgroundColor: colors.accent }]}>
-                    <Check size={14} color={colors.textOnAccent} />
-                  </View>
-                )}
-
-                {/* Current indicator */}
-                {isCurrent && !isSelected && (
-                  <View style={[styles.currentIndicator, { backgroundColor: colors.success }]}>
-                    <Text style={styles.currentText}>{t('logoSelection.current')}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              </Press>
             );
           })}
         </View>
+      </Enter>
 
-        {/* Info */}
-        <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>
-            {t('logoSelection.howToUnlock')}
-          </Text>
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            {t('logoSelection.howToUnlockText')}
-          </Text>
-        </View>
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      {/* Bouton Sauvegarder */}
-      {hasChanges && (
-        <View style={[styles.saveContainer, { paddingBottom: insets.bottom + SPACING.md, backgroundColor: colors.background }]}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.accent, opacity: isSaving ? 0.7 : 1 }]}
-            onPress={handleSave}
-            disabled={isSaving}
-          >
-            <Check size={20} color={colors.textOnAccent} />
-            <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>
-              {isSaving ? t('logoSelection.saving') : t('logoSelection.applyLogo')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      <PopupComponent />
-    </View>
+      {!supportsAlternateIcons ? (
+        <Enter i={2}>
+          <Ink size={13} weight="medium" color={P.muted} style={{ textAlign: 'center', paddingHorizontal: 12 }}>
+            Le changement d’icône se fait dans la version installée depuis l’App Store. Ton choix est gardé.
+          </Ink>
+        </Enter>
+      ) : null}
+    </DetailScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: FONT.size.xl,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    fontSize: FONT.size.sm,
-    marginTop: 2,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: SPACING.lg,
-  },
-
-  // Preview
-  previewCard: {
-    borderRadius: RADIUS.xxl,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    borderWidth: 1,
-  },
-  previewLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginBottom: SPACING.md,
-  },
-  previewContent: {
-    paddingVertical: SPACING.lg,
-  },
-  premiumBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
-    marginTop: SPACING.sm,
-  },
-  premiumBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-
-  // Premium Banner
-  premiumBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    padding: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    marginBottom: SPACING.xl,
-  },
-  premiumBannerText: {
-    flex: 1,
-  },
-  premiumBannerTitle: {
-    fontSize: FONT.size.md,
-    fontWeight: '700',
-  },
-  premiumBannerDesc: {
-    fontSize: FONT.size.sm,
-    marginTop: 2,
-  },
-
-  // Section
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
-    marginBottom: SPACING.md,
-  },
-
-  // Logos Grid
-  logosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-  },
-  logoCard: {
-    width: '47%',
-    borderRadius: RADIUS.xl,
-    padding: SPACING.md,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  logoPreview: {
-    width: 70,
-    height: 70,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.sm,
-    overflow: 'hidden',
-  },
-  kanjiPreview: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  kanjiText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  logoImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-  },
-  logoName: {
-    fontSize: FONT.size.sm,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  logoDesc: {
-    fontSize: FONT.size.xs,
-    textAlign: 'center',
-  },
-  premiumTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    marginTop: SPACING.sm,
-  },
-  premiumTagText: {
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  selectedIndicator: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  currentIndicator: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-  },
-  currentText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '700',
-  },
-
-  // Info Card
-  infoCard: {
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginTop: SPACING.xl,
-    borderWidth: 1,
-  },
-  infoTitle: {
-    fontSize: FONT.size.md,
-    fontWeight: '700',
-    marginBottom: SPACING.sm,
-  },
-  infoText: {
-    fontSize: FONT.size.sm,
-    lineHeight: 20,
-  },
-
-  // Save Button
-  saveContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-  },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.lg,
-    borderRadius: RADIUS.xl,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: FONT.size.md,
-    fontWeight: '700',
-  },
-});

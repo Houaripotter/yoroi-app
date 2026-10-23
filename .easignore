@@ -60,3 +60,14 @@ node_modules.corrupt*
 *\ 2/
 *\ 3/
 ios/bundle_test
+
+# Cles et jetons du Studio createur : jamais dans un build
+_private
+
+# Sauvegardes et dossiers de travail : jamais envoyes aux serveurs EAS
+# (_propositions reste inclus : app.json y prend les icones alternatives)
+yoroi_backup_*.json
+_archive*
+_verif
+_sauvegarde_avant_mesure
+yoroi-videos

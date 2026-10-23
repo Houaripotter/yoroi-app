@@ -11,6 +11,7 @@ import { Platform } from 'react-native';
 import { getAllMeasurements, getAllWorkouts, Measurement } from './storage';
 import logger from '@/lib/security/logger';
 import { saveNotification } from '@/lib/notificationHistoryService';
+import { contenuSansSante } from '@/lib/v2/notifications/texte';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -44,6 +45,10 @@ export interface DetectedHabits {
   currentStreak: number;
   lastAnalysis: string;
 }
+
+/** Marque des notifications programmees par ce service */
+const SMART_REMINDER_SOURCE = 'smartReminders';
+const SMART_REMINDER_TYPE = 'smart_reminder';
 
 export interface ReminderMessage {
   type: 'weight' | 'training' | 'hydration' | 'measurements' | 'streak';
@@ -322,17 +327,17 @@ export const generateWeightReminderMessage = (habits: DetectedHabits): ReminderM
   if (habits.avgWeighTime) {
     return {
       type: 'weight',
-      title: 'Pesee du matin',
-      body: `Tu te peses habituellement vers ${habits.avgWeighTime}. Il est ${currentTime}, c'est le moment !`,
-      emoji: '⚖️',
+      title: 'Pesée du matin',
+      body: `Tu te pèses d’habitude vers ${habits.avgWeighTime}. C’est le bon moment.`,
+      emoji: '',
     };
   }
 
   return {
     type: 'weight',
-    title: 'Pesee du matin',
-    body: 'N\'oublie pas ta pesee quotidienne !',
-    emoji: '⚖️',
+    title: 'Pesée du matin',
+    body: 'Au réveil, avant le petit déjeuner : c’est le bon moment.',
+    emoji: '',
   };
 };
 
@@ -348,7 +353,7 @@ export const generateTrainingReminderMessage = (habits: DetectedHabits): Reminde
     return {
       type: 'training',
       title: 'Entraînement',
-      body: `Tu t'entraines souvent le ${dayName}. C'est l'heure de se bouger !`,
+      body: `Tu t’entraînes souvent le ${dayName}. Une séance aujourd’hui ?`,
       emoji: '',
     };
   }
@@ -356,7 +361,7 @@ export const generateTrainingReminderMessage = (habits: DetectedHabits): Reminde
   return {
     type: 'training',
     title: 'Entraînement',
-    body: 'C\'est le moment de s\'entrainer !',
+    body: 'C’est le moment que tu avais prévu pour t’entraîner.',
     emoji: '',
   };
 };
@@ -364,12 +369,14 @@ export const generateTrainingReminderMessage = (habits: DetectedHabits): Reminde
 /**
  * Generer un message de rappel hydratation
  */
-export const generateHydrationReminderMessage = (hoursSinceLastDrink: number = 2): ReminderMessage => {
+// Le nombre d'heures reste accepté pour ne pas casser les appels, mais il n'est
+// plus affiché : aucune valeur de santé sur l'écran verrouillé.
+export const generateHydrationReminderMessage = (_hoursSinceLastDrink: number = 2): ReminderMessage => {
   return {
     type: 'hydration',
     title: 'Hydratation',
-    body: `Tu n'as rien bu depuis ${hoursSinceLastDrink}h. Une petite gorgee ?`,
-    emoji: '💧',
+    body: 'Une petite pause pour boire ?',
+    emoji: '',
   };
 };
 
@@ -389,16 +396,16 @@ export const generateMeasurementsReminderMessage = (habits: DetectedHabits): Rem
     return {
       type: 'measurements',
       title: 'Mensurations',
-      body: `Ca fait ${daysSinceLast} jours que tu n'as pas mesure ton tour de taille.`,
-      emoji: '📏',
+      body: 'Ça fait un moment. Un mètre ruban et deux minutes suffisent.',
+      emoji: '',
     };
   }
 
   return {
     type: 'measurements',
     title: 'Mensurations',
-    body: 'Pense a prendre tes mensurations cette semaine !',
-    emoji: '📏',
+    body: 'Pense à prendre tes mensurations cette semaine.',
+    emoji: '',
   };
 };
 
@@ -408,8 +415,8 @@ export const generateMeasurementsReminderMessage = (habits: DetectedHabits): Rem
 export const generateStreakProtectionMessage = (habits: DetectedHabits): ReminderMessage => {
   return {
     type: 'streak',
-    title: 'Streak en danger !',
-    body: `Attention ! Tu n'as pas ouvert Yoroi aujourd'hui. Ton streak de ${habits.currentStreak} jours est en danger !`,
+    title: 'Ta série t’attend',
+    body: `${habits.currentStreak} jours d’affilée. Passe noter ta journée pour la prolonger.`,
     emoji: '',
   };
 };
@@ -517,11 +524,16 @@ export const scheduleSmartNotification = async (
     const now = new Date();
     const seconds = Math.max(1, Math.floor((triggerDate.getTime() - now.getTime()) / 1000));
 
+    // Filet de sécurité : aucune valeur de santé sur l'écran verrouillé
+    const propre = contenuSansSante({ title: message.title, body: message.body });
+
     const identifier = await Notifications.scheduleNotificationAsync({
       content: {
-        title: message.title,
-        body: message.body,
+        title: propre.title,
+        body: propre.body,
         sound: true,
+        // Marque du service : permet d'annuler seulement ces rappels
+        data: { type: SMART_REMINDER_TYPE, source: SMART_REMINDER_SOURCE, kind: message.type },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -531,7 +543,7 @@ export const scheduleSmartNotification = async (
     });
 
     // Sauvegarder dans la cloche de notifications
-    saveNotification(message.title, message.body, message.type, { identifier }).catch(() => {});
+    saveNotification(propre.title, propre.body, message.type, { identifier }).catch(() => {});
 
     return identifier;
   } catch (error) {
@@ -541,12 +553,22 @@ export const scheduleSmartNotification = async (
 };
 
 /**
- * Annuler toutes les notifications programmees
+ * Annuler les rappels programmes par ce service, et seulement eux :
+ * les rappels de competition, de fin d'essai, du chrono et des autres services restent.
+ * Les anciens rappels sans marque etaient ponctuels (une seule fois) : ils partent d'eux-memes.
  */
 export const cancelAllSmartNotifications = async (): Promise<void> => {
   try {
     if (Platform.OS === 'web') return;
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled
+        .filter((n) => {
+          const data = n.content?.data as Record<string, unknown> | undefined;
+          return data?.source === SMART_REMINDER_SOURCE || data?.type === SMART_REMINDER_TYPE;
+        })
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+    );
   } catch (error) {
     logger.error('Erreur annulation notifications:', error);
   }

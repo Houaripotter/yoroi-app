@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chrono rounds : 2 x 2 comme sur iPhone (grand visuel, nom du reglage et rounds en gros), reductible a une ligne -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="3600000"
+    android:initialLayout="@layout/yw_apercu_chrono"
+    android:previewLayout="@layout/yw_apercu_chrono"
+    android:description="@string/yw_desc_chrono"
+    android:widgetCategory="home_screen" />

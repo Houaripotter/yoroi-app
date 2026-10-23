@@ -11,6 +11,17 @@ import logger from '@/lib/security/logger';
 
 const COMPETITIONS_IMPORTED_KEY = '@yoroi_competitions_auto_imported';
 
+// Vague 18 : les listes IBJJF et CFJJB ecrites dans le code s'arretent en juin 2026.
+// On n'importe plus jamais une competition deja passee : elle encombrait l'ecran Competitions.
+const todayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const isUpcoming = (c: { date: string }) => (c.date ?? '').slice(0, 10) >= todayIso();
+
+/** Noms des competitions des anciennes listes, pour reconnaitre celles qui ont ete importees */
+export const IMPORTED_COMPETITION_NAMES = new Set<string>([...ALL_IBJJF_COMPETITIONS, ...ALL_CFJJB_COMPETITIONS].map((c) => c.nom));
+
 /**
  * Importe toutes les compétitions IBJJF dans la base de données
  */
@@ -31,8 +42,8 @@ export const importIBJJFCompetitions = async (): Promise<{
 
     for (const competition of ALL_IBJJF_COMPETITIONS) {
       try {
-        // Vérifier si la compétition existe déjà
-        if (existingNames.has(competition.nom)) {
+        // Vérifier si la compétition existe déjà, ou si elle est déjà passée
+        if (existingNames.has(competition.nom) || !isUpcoming(competition)) {
           skipped++;
           continue;
         }
@@ -83,8 +94,8 @@ export const importCFJJBCompetitions = async (): Promise<{
 
     for (const competition of ALL_CFJJB_COMPETITIONS) {
       try {
-        // Vérifier si la compétition existe déjà
-        if (existingNames.has(competition.nom)) {
+        // Vérifier si la compétition existe déjà, ou si elle est déjà passée
+        if (existingNames.has(competition.nom) || !isUpcoming(competition)) {
           skipped++;
           continue;
         }
@@ -161,9 +172,9 @@ export const getAvailableCompetitionsCount = (): {
   total: number;
 } => {
   return {
-    ibjjf: ALL_IBJJF_COMPETITIONS.length,
-    cfjjb: ALL_CFJJB_COMPETITIONS.length,
-    total: ALL_IBJJF_COMPETITIONS.length + ALL_CFJJB_COMPETITIONS.length,
+    ibjjf: ALL_IBJJF_COMPETITIONS.filter(isUpcoming).length,
+    cfjjb: ALL_CFJJB_COMPETITIONS.filter(isUpcoming).length,
+    total: ALL_IBJJF_COMPETITIONS.filter(isUpcoming).length + ALL_CFJJB_COMPETITIONS.filter(isUpcoming).length,
   };
 };
 

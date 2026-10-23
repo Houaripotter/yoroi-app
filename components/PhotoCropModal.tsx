@@ -306,7 +306,7 @@ export const PhotoCropModal: React.FC<Props> = ({
 
         {/* Texte d'aide en haut */}
         <View style={styles.topBar} pointerEvents="none">
-          <Text style={styles.helpText}>Pincer pour zoomer · Glisser pour repositionner</Text>
+          <Text style={styles.helpText}>Pince pour zoomer, glisse pour repositionner</Text>
         </View>
 
         {/* Boutons zoom + reset flottants (côté droit) */}

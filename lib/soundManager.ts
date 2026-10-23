@@ -16,6 +16,8 @@ const SOUND_FILES: { [key: string]: any } = {
   'ring': require('../assets/sounds/ring.mp3'),
   'beep': require('../assets/sounds/beep.mp3'),
   'gong': require('../assets/sounds/gong.mp3'),
+  'clap': require('../assets/sounds/clap10.mp3'),
+  'bell': require('../assets/sounds/bell_end.mp3'),
 };
 
 /**
@@ -26,6 +28,8 @@ export const initSoundManager = async () => {
     await setAudioModeAsync({
       playsInSilentMode: true,
       shouldPlayInBackground: false,
+      // se melange a la musique sans la couper
+      interruptionMode: 'mixWithOthers',
     });
     logger.info('SoundManager initialisé');
   } catch (error) {
@@ -60,7 +64,7 @@ const loadSound = (soundName: string): AudioPlayer | null => {
 /**
  * Joue un son
  */
-export const playSound = async (soundName: 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong', volume: number = 0.7) => {
+export const playSound = async (soundName: 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong' | 'clap' | 'bell', volume: number = 0.7) => {
   try {
     const player = loadSound(soundName);
     if (!player) {
@@ -114,6 +118,20 @@ export const playBeepSound = async () => {
 };
 
 /**
+ * Claquettes de bois : il reste 10 secondes dans le round
+ */
+export const playClapSound = async () => {
+  await playSound('clap', 1.0);
+};
+
+/**
+ * Cloche de ring : fin du round
+ */
+export const playBellSound = async () => {
+  await playSound('bell', 1.0);
+};
+
+/**
  * Libère les ressources audio
  */
 export const cleanupSounds = () => {
@@ -140,6 +158,8 @@ export const prepareSounds = async () => {
     loadSound('ring');
     loadSound('gong');
     loadSound('beep');
+    loadSound('clap');
+    loadSound('bell');
   } catch (error) {
     logger.error('Erreur préparation sons:', error);
   }

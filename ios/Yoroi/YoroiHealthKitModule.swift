@@ -650,6 +650,14 @@ class YoroiHealthKitModule: NSObject {
       }
     }
 
+    // 14 octobre 2026 (ios27) : effort de la seance (saisi et estime par la montre, iOS 18), lu par
+    // getAppleWorkoutExtrasAsJSON. Les zones d'Apple (iOS 27) n'ont besoin que des seances, de la FC et de
+    // la puissance velo, deja demandees ci-dessus.
+    if #available(iOS 18.0, *) {
+      readTypes.insert(HKQuantityType(.workoutEffortScore))
+      readTypes.insert(HKQuantityType(.estimatedWorkoutEffortScore))
+    }
+
     NSLog("[YoroiHK] requestAllHealthPermissions — \(readTypes.count) types à demander")
 
     let shareTypes: Set<HKSampleType> = [
@@ -666,6 +674,92 @@ class YoroiHealthKitModule: NSObject {
       }
       NSLog("[YoroiHK] requestAllHealthPermissions OK — success=\(success), types=\(readTypes.count)")
       resolve("ok:\(readTypes.count)")
+    }
+  }
+
+  // ============================================================
+  // MÉTHODE 4 bis — Demander une liste précise de types (14 octobre 2026, SANTÉ CONNEXION)
+  // ============================================================
+  // La liste vient de lib/v2/sante/typesSante.ts (source unique, testée) : seulement ce que YOROI lit
+  // ou écrit vraiment. Un identifiant inconnu de cette version d'iOS est ignoré, il ne fait pas échouer
+  // la demande. Retourne "ok:<lecture>:<écriture>" ou "error:<msg>".
+  private func yoroiObjectType(_ id: String) -> HKObjectType? {
+    switch id {
+    case "HKWorkoutTypeIdentifier": return HKObjectType.workoutType()
+    case "HKWorkoutRouteTypeIdentifier": return HKSeriesType.workoutRoute()
+    case "HKActivitySummaryTypeIdentifier": return HKObjectType.activitySummaryType()
+    case "HKElectrocardiogramType": return HKObjectType.electrocardiogramType()
+    case "HKStateOfMindTypeIdentifier":
+      if #available(iOS 18.0, *) { return HKObjectType.stateOfMindType() }
+      return nil
+    default: break
+    }
+    if id.hasPrefix("HKQuantityTypeIdentifier") {
+      return HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier(rawValue: id))
+    }
+    if id.hasPrefix("HKCategoryTypeIdentifier") {
+      return HKObjectType.categoryType(forIdentifier: HKCategoryTypeIdentifier(rawValue: id))
+    }
+    if id.hasPrefix("HKCharacteristicTypeIdentifier") {
+      return HKObjectType.characteristicType(forIdentifier: HKCharacteristicTypeIdentifier(rawValue: id))
+    }
+    return nil
+  }
+
+  @objc func requestHealthPermissionsFor(
+    _ readIds: [String],
+    share shareIds: [String],
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      resolve("error:HealthKit non disponible")
+      return
+    }
+    var readTypes = Set<HKObjectType>()
+    for id in readIds {
+      if let t = yoroiObjectType(id) { readTypes.insert(t) }
+    }
+    var shareTypes = Set<HKSampleType>()
+    for id in shareIds {
+      if let t = yoroiObjectType(id) as? HKSampleType { shareTypes.insert(t) }
+    }
+    NSLog("[YoroiHK] requestHealthPermissionsFor — \(readTypes.count) en lecture, \(shareTypes.count) en écriture")
+    healthStore.requestAuthorization(toShare: shareTypes, read: readTypes) { success, error in
+      if let error = error {
+        NSLog("[YoroiHK] requestHealthPermissionsFor ERREUR: \(error.localizedDescription)")
+        resolve("error:\(error.localizedDescription)")
+        return
+      }
+      resolve("ok:\(readTypes.count):\(shareTypes.count)")
+    }
+  }
+
+  /// "shouldRequest" | "unnecessary" | "unknown" : la fenêtre a-t-elle déjà été répondue pour ces types
+  @objc func getRequestStatusFor(
+    _ readIds: [String],
+    share shareIds: [String],
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      resolve("unknown")
+      return
+    }
+    var readTypes = Set<HKObjectType>()
+    for id in readIds {
+      if let t = yoroiObjectType(id) { readTypes.insert(t) }
+    }
+    var shareTypes = Set<HKSampleType>()
+    for id in shareIds {
+      if let t = yoroiObjectType(id) as? HKSampleType { shareTypes.insert(t) }
+    }
+    healthStore.getRequestStatusForAuthorization(toShare: shareTypes, read: readTypes) { status, _ in
+      switch status {
+      case .shouldRequest: resolve("shouldRequest")
+      case .unnecessary: resolve("unnecessary")
+      default: resolve("unknown")
+      }
     }
   }
 
@@ -696,6 +790,110 @@ class YoroiHealthKitModule: NSObject {
         resolve("ok")
       }
     }
+  }
+
+  // ============================================================
+  // MÉTHODE 5 bis — Un verre avec son id, une seule fois dans Apple Health
+  // ============================================================
+  // externalId va dans HKMetadataKeyExternalUUID (id de l'action montre ou widget, comme pour le poids) :
+  // si un verre porte deja cet id, rien n'est reecrit. Resout true si le verre est dans Apple Health.
+  @objc func saveDietaryWaterWithId(
+    _ amountMl: Double,
+    externalId: String,
+    dateMs: Double,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard HKHealthStore.isHealthDataAvailable(), amountMl > 0, !externalId.isEmpty,
+          let waterType = HKObjectType.quantityType(forIdentifier: .dietaryWater) else {
+      resolve(false)
+      return
+    }
+    let store = healthStore
+    let date = dateMs > 0 ? Date(timeIntervalSince1970: dateMs / 1000) : Date()
+    let memeId = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyExternalUUID, allowedValues: [externalId])
+    let query = HKSampleQuery(sampleType: waterType, predicate: memeId, limit: 1, sortDescriptors: nil) { _, results, _ in
+      if let deja = results, !deja.isEmpty {
+        resolve(true)
+        return
+      }
+      let sample = HKQuantitySample(
+        type: waterType,
+        quantity: HKQuantity(unit: HKUnit.literUnit(with: .milli), doubleValue: amountMl),
+        start: date,
+        end: date,
+        metadata: [
+          HKMetadataKeyExternalUUID: externalId,
+          HKMetadataKeyWasUserEntered: NSNumber(value: true),
+        ]
+      )
+      store.save(sample) { ok, error in
+        if let error = error {
+          NSLog("[YoroiHK] saveDietaryWaterWithId ERREUR: \(error.localizedDescription)")
+        }
+        resolve(ok)
+      }
+    }
+    store.execute(query)
+  }
+
+  // ============================================================
+  // MÉTHODE 5 ter — Retirer un verre d'Apple Health
+  // ============================================================
+  // Une app ne peut supprimer que ce qu'elle a ecrit : on cherche, le jour de dateMs, le plus recent
+  // verre ecrit par YOROI de ce volume (sinon le plus recent plus gros, ecrit par une ancienne version,
+  // qui est remplace par le reste). Resout false si rien ne correspond ou si la suppression est refusee.
+  @objc func removeDietaryWater(
+    _ amountMl: Double,
+    dateMs: Double,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard HKHealthStore.isHealthDataAvailable(), amountMl > 0,
+          let waterType = HKObjectType.quantityType(forIdentifier: .dietaryWater) else {
+      resolve(false)
+      return
+    }
+    let store = healthStore
+    let cal = Calendar.current
+    let debut = cal.startOfDay(for: dateMs > 0 ? Date(timeIntervalSince1970: dateMs / 1000) : Date())
+    guard let fin = cal.date(byAdding: .day, value: 1, to: debut) else {
+      resolve(false)
+      return
+    }
+    let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+      HKQuery.predicateForObjects(from: HKSource.default()),
+      HKQuery.predicateForSamples(withStart: debut, end: fin, options: .strictStartDate),
+    ])
+    let tri = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+    let ml = HKUnit.literUnit(with: .milli)
+    let query = HKSampleQuery(sampleType: waterType, predicate: predicate, limit: 200, sortDescriptors: [tri]) { _, results, _ in
+      let verres = (results as? [HKQuantitySample]) ?? []
+      let exact = verres.first { abs($0.quantity.doubleValue(for: ml) - amountMl) < 0.5 }
+      guard let cible = exact ?? verres.first(where: { $0.quantity.doubleValue(for: ml) > amountMl + 0.5 }) else {
+        resolve(false)
+        return
+      }
+      let reste = cible.quantity.doubleValue(for: ml) - amountMl
+      store.delete(cible) { ok, error in
+        if let error = error {
+          NSLog("[YoroiHK] removeDietaryWater ERREUR: \(error.localizedDescription)")
+        }
+        guard ok, reste > 0.5 else {
+          resolve(ok)
+          return
+        }
+        let remplacant = HKQuantitySample(
+          type: waterType,
+          quantity: HKQuantity(unit: ml, doubleValue: reste),
+          start: cible.startDate,
+          end: cible.endDate,
+          metadata: [HKMetadataKeyWasUserEntered: NSNumber(value: true)]
+        )
+        store.save(remplacant) { _, _ in resolve(true) }
+      }
+    }
+    store.execute(query)
   }
 
   // ============================================================
@@ -821,7 +1019,12 @@ class YoroiHealthKitModule: NSObject {
           sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
         ) { _, effortSamples, _ in
           if let s = effortSamples?.first as? HKQuantitySample {
-            let v = Int(s.quantity.doubleValue(for: HKUnit.count()))
+            // 14 octobre 2026 : l'effort est dans l'unite appleEffortScore (iOS 18). Lire un HKQuantity
+            // dans une unite incompatible leve une exception Objective-C : on verifie avant.
+            var unit = HKUnit.count()
+            if #available(iOS 18.0, *) { unit = HKUnit.appleEffortScore() }
+            guard s.quantity.is(compatibleWith: unit) else { resolve(-1); return }
+            let v = Int(s.quantity.doubleValue(for: unit).rounded())
             resolve(v >= 1 && v <= 10 ? v : -1)
           } else {
             resolve(-1)
@@ -995,4 +1198,199 @@ class YoroiHealthKitModule: NSObject {
 
     healthStore.execute(query)
   }
+}
+
+// ============================================================
+// 14 octobre 2026 (agent zones_apple) : zones et effort tels qu'Apple les calcule
+// ============================================================
+// getAppleWorkoutExtrasAsJSON(uuid)
+//   { found, ios27, heartRateZones?: { source, zones: [{ index, min?, max?, seconds }] },
+//     cyclingPowerZones?: { source, zones: [{ index, min?, max?, seconds }] } (watts, iOS 27),
+//     effort?: { user?, estimated? }, error? }
+//   Zones : HKWorkout.zoneGroupsByType (iOS 27, HealthKit), temps par zone calcule par Apple.
+//   Effort : HKQuery.predicateForWorkoutEffortSamplesRelated (iOS 18), saisi (workoutEffortScore)
+//   et estime par la montre (estimatedWorkoutEffortScore), unite appleEffortScore.
+// getApplePreferredHeartRateZonesAsJSON()
+//   { ios27, source?, zones?: [{ index, min?, max? }], empty?, error? }
+//   HKHealthStore.preferredWorkoutZoneConfiguration(for:) (iOS 27) : tes zones de Reglages Sante,
+//   manuelles si tu en as saisi, sinon celles calculees par le systeme.
+// Le code iOS 27 n'est compile qu'avec Xcode 27 (Swift 6.4) : avec un Xcode plus ancien, ces fonctions
+// repondent ios27 false et l'app garde son calcul estime.
+private final class YoroiBoite {
+  var valeurs: [String: Any] = [:]
+  let verrou = NSLock()
+  func poser(_ cle: String, _ v: Any) {
+    verrou.lock()
+    valeurs[cle] = v
+    verrou.unlock()
+  }
+}
+
+extension YoroiHealthKitModule {
+
+  static func yoroiJSON(_ obj: [String: Any]) -> String {
+    guard JSONSerialization.isValidJSONObject(obj),
+          let data = try? JSONSerialization.data(withJSONObject: obj, options: []),
+          let texte = String(data: data, encoding: .utf8) else { return "{}" }
+    return texte
+  }
+
+  @objc func getAppleWorkoutExtrasAsJSON(
+    _ workoutUUID: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      resolve(YoroiHealthKitModule.yoroiJSON(["found": false, "ios27": false, "error": "sante_indisponible"]))
+      return
+    }
+    guard let uuid = UUID(uuidString: workoutUUID) else {
+      resolve(YoroiHealthKitModule.yoroiJSON(["found": false, "ios27": false, "error": "uuid_invalide"]))
+      return
+    }
+    let query = HKSampleQuery(
+      sampleType: HKObjectType.workoutType(),
+      predicate: HKQuery.predicateForObject(with: uuid),
+      limit: 1,
+      sortDescriptors: nil
+    ) { [weak self] _, samples, error in
+      guard let self = self else { resolve("{}"); return }
+      guard let workout = samples?.first as? HKWorkout else {
+        resolve(YoroiHealthKitModule.yoroiJSON(["found": false, "ios27": false, "error": error?.localizedDescription ?? "introuvable"]))
+        return
+      }
+      let boite = YoroiBoite()
+      boite.poser("found", true)
+      boite.poser("ios27", false)
+      #if compiler(>=6.4)
+      if #available(iOS 27.0, *) {
+        boite.poser("ios27", true)
+        if let zones = YoroiHealthKitModule.yoroiHeartRateZones(of: workout) {
+          boite.poser("heartRateZones", zones)
+        }
+        // 14 octobre 2026 (ios27) : zones de puissance velo (seul autre type de zones d'iOS 27, pas de puissance de course)
+        if let watts = YoroiHealthKitModule.yoroiZoneGroup(of: workout, identifier: HKQuantityTypeIdentifier.cyclingPower.rawValue, unit: HKUnit.watt()) {
+          boite.poser("cyclingPowerZones", watts)
+        }
+      }
+      #endif
+      self.yoroiEffort(for: workout) { effort in
+        if let effort = effort { boite.poser("effort", effort) }
+        boite.verrou.lock()
+        let copie = boite.valeurs
+        boite.verrou.unlock()
+        resolve(YoroiHealthKitModule.yoroiJSON(copie))
+      }
+    }
+    healthStore.execute(query)
+  }
+
+  @objc func getApplePreferredHeartRateZonesAsJSON(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    #if compiler(>=6.4)
+    if #available(iOS 27.0, *) {
+      let store = healthStore
+      Task {
+        do {
+          if let configuration = try await store.preferredWorkoutZoneConfiguration(for: HKQuantityType(.heartRate)) {
+            resolve(YoroiHealthKitModule.yoroiJSON([
+              "ios27": true,
+              "source": YoroiHealthKitModule.yoroiSource(configuration.source),
+              "zones": YoroiHealthKitModule.yoroiZones(configuration.zones),
+            ]))
+          } else {
+            resolve(YoroiHealthKitModule.yoroiJSON(["ios27": true, "empty": true]))
+          }
+        } catch {
+          resolve(YoroiHealthKitModule.yoroiJSON(["ios27": true, "error": error.localizedDescription]))
+        }
+      }
+      return
+    }
+    #endif
+    resolve(YoroiHealthKitModule.yoroiJSON(["ios27": false]))
+  }
+
+  // Effort lie a la seance (iOS 18) : celui que tu as saisi, et l'estimation de la montre.
+  private func yoroiEffort(for workout: HKWorkout, completion: @escaping ([String: Any]?) -> Void) {
+    guard #available(iOS 18.0, *) else {
+      completion(nil)
+      return
+    }
+    let predicate = HKQuery.predicateForWorkoutEffortSamplesRelated(workout: workout, activity: nil)
+    let unit = HKUnit.appleEffortScore()
+    let types: [(String, HKQuantityType)] = [
+      ("user", HKQuantityType(.workoutEffortScore)),
+      ("estimated", HKQuantityType(.estimatedWorkoutEffortScore)),
+    ]
+    let boite = YoroiBoite()
+    let group = DispatchGroup()
+    for (cle, type) in types {
+      group.enter()
+      let q = HKSampleQuery(
+        sampleType: type,
+        predicate: predicate,
+        limit: 1,
+        sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
+      ) { _, samples, _ in
+        if let s = samples?.first as? HKQuantitySample, s.quantity.is(compatibleWith: unit) {
+          boite.poser(cle, s.quantity.doubleValue(for: unit))
+        }
+        group.leave()
+      }
+      healthStore.execute(q)
+    }
+    group.notify(queue: DispatchQueue.global(qos: .userInitiated)) {
+      boite.verrou.lock()
+      let copie = boite.valeurs
+      boite.verrou.unlock()
+      completion(copie.isEmpty ? nil : copie)
+    }
+  }
+
+  #if compiler(>=6.4)
+  @available(iOS 27.0, *)
+  private static func yoroiHeartRateZones(of workout: HKWorkout) -> [String: Any]? {
+    return yoroiZoneGroup(of: workout, identifier: HKQuantityTypeIdentifier.heartRate.rawValue, unit: HKUnit.count().unitDivided(by: HKUnit.minute()))
+  }
+
+  // zoneGroupsByType : [HKQuantityType : HKWorkoutZoneGroup]? ; zoneDurations ordonnees de la zone basse a la haute,
+  // HKWorkoutZone.index commence a 0 (documentation Apple, HKWorkoutZone).
+  @available(iOS 27.0, *)
+  private static func yoroiZoneGroup(of workout: HKWorkout, identifier: String, unit: HKUnit) -> [String: Any]? {
+    guard let groups = workout.zoneGroupsByType else { return nil }
+    for (type, group) in groups where type.identifier == identifier {
+      var zones = yoroiZones(group.configuration.zones, unit: unit)
+      for (i, z) in zones.enumerated() {
+        guard let index = z["index"] as? Int else { continue }
+        let total = group.zoneDurations.filter { $0.zone.index == index }.reduce(0.0) { $0 + $1.duration }
+        zones[i]["seconds"] = total
+      }
+      return ["source": yoroiSource(group.configuration.source), "zones": zones]
+    }
+    return nil
+  }
+
+  @available(iOS 27.0, *)
+  private static func yoroiZones(_ zones: [HKWorkoutZone], unit: HKUnit = HKUnit.count().unitDivided(by: HKUnit.minute())) -> [[String: Any]] {
+    return zones.map { zone in
+      var z: [String: Any] = ["index": zone.index]
+      if let mn = zone.minimum, mn.is(compatibleWith: unit) { z["min"] = mn.doubleValue(for: unit) }
+      if let mx = zone.maximum, mx.is(compatibleWith: unit) { z["max"] = mx.doubleValue(for: unit) }
+      return z
+    }
+  }
+
+  @available(iOS 27.0, *)
+  private static func yoroiSource(_ source: HKWorkoutZoneConfiguration.Source) -> String {
+    switch source {
+    case .system: return "system"
+    case .user: return "user"
+    case .app: return "app"
+    @unknown default: return "autre"
+    }
+  }
+  #endif
 }

@@ -25,4 +25,19 @@ RCT_EXTERN_METHOD(copyToCloudFolder:(NSString *)filePath
 RCT_EXTERN_METHOD(disconnectFolder:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+// 18 octobre 2026 : le coffre iCloud de l'app (dossier « YOROI » du iCloud Drive, sans rien choisir)
+RCT_EXTERN_METHOD(icloudDisponible:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(copyToICloud:(NSString *)filePath
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(listICloudBackups:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(prepareICloudBackup:(NSString *)fileName
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 @end

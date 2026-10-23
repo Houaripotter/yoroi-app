@@ -1,5 +1,5 @@
 // ============================================
-// WEAR SYNC SERVICE — Synchronisation Android → Wear OS
+// WEAR SYNC SERVICE : Synchronisation Android → Wear OS
 // ============================================
 // Service JS qui appelle le module natif WearSyncModule
 // pour envoyer les données de l'app vers la montre Wear OS.

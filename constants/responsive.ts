@@ -71,7 +71,7 @@ export const scaleVertical = (size: number): number => {
 };
 
 /**
- * Scale modéré — mélange entre la taille originale et le scale complet.
+ * Scale modéré, mélange entre la taille originale et le scale complet.
  * Idéal pour les polices (évite les extrêmes).
  * factor=0 → pas de scale, factor=1 → scale complet
  */
@@ -167,11 +167,11 @@ export const responsive = {
 };
 
 // ===================================================
-// HOOK DYNAMIQUE — s'adapte à l'orientation en temps réel
+// HOOK DYNAMIQUE : s'adapte à l'orientation en temps réel
 // ===================================================
 
 /**
- * useResponsive — hook React qui recalcule tout dynamiquement
+ * useResponsive : hook React qui recalcule tout dynamiquement
  * lors de rotations d'écran ou de changements de fenêtre (iPad multitâche).
  *
  * Usage:
@@ -204,7 +204,7 @@ export function useResponsive() {
     return Math.round(size * deviceFactor * compactFactor);
   };
 
-  // Font size dynamique (device-only — le patch jsx-runtime gère S/M/L/XL)
+  // Font size dynamique (device-only, le patch jsx-runtime gère S/M/L/XL)
   const fs = (size: number): number => {
     const deviceFactor = pad
       ? clamp(width / REF_WIDTH, 1.0, 2.0)

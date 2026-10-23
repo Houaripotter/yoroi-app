@@ -7,6 +7,7 @@ import {
   WeeklyPlan,
   SlotOccurrence,
 } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 export interface WeeklySlotWithStatus extends WeeklyPlan {
   occurrence?: SlotOccurrence;
@@ -57,7 +58,7 @@ export const useWeeklySlots = () => {
       }
       setAttendanceRates(rates);
     } catch (error) {
-      console.error('Erreur chargement slots:', error);
+      logger.error('Erreur chargement slots:', error);
     } finally {
       setLoading(false);
     }

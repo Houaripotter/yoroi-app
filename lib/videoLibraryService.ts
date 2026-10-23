@@ -8,8 +8,8 @@ export interface ExerciseVideo {
   title: string;
   uri: string;           // URI fichier local OU lien URL (YouTube, etc.)
   isUrl: boolean;        // true = lien web, false = fichier local
-  muscleGroup?: string;  // ex: 'Pectoraux', 'Dos' — vidéos du groupe musculaire
-  sport?: string;        // ex: 'boxe', 'jjb' — vidéos par sport
+  muscleGroup?: string;  // ex: 'Pectoraux', 'Dos', vidéos du groupe musculaire
+  sport?: string;        // ex: 'boxe', 'jjb', vidéos par sport
   sportLabel?: string;   // ex: 'Boxe Anglaise'
   sportColor?: string;   // couleur du sport
   benchmarkId?: string;  // vidéos liées à un exercice précis

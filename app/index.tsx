@@ -1,33 +1,15 @@
 import { useEffect, useState } from "react";
+import { EcranChargement } from '@/components/yoroi/v2/chargement/Chargement';
 import { Redirect } from "expo-router";
 import { AppState, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserSettingsStrict, saveUserSettings } from "@/lib/storage";
-import { getProfile, getTrainingsCount } from "@/lib/database";
+import { getLatestWeight, getProfile, getTrainingsCount } from "@/lib/database";
 import logger from '@/lib/security/logger';
+import { NOUVEAUTES_30_KEY, choisirParcours, type Parcours } from '@/lib/v2/onboarding/parcours';
+import { TOUR_DONE_KEY, etatUtilisateur as etatOuverture } from '@/lib/v2/onboarding/etatOuverture';
 
-// Marqueur durable "onboarding terminé" (posé par l'onboarding et la restauration de sauvegarde)
-const ONBOARDING_DONE_KEY = 'yoroi_onboarding_done';
-
-type Destination = 'onboarding' | 'tabs';
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Exécute une lecture avec 3 tentatives espacées de 500 ms.
- * Renvoie { ok: false } si toutes les tentatives échouent (au lieu de lancer).
- */
-async function readWithRetry<T>(label: string, fn: () => Promise<T>): Promise<{ ok: true; value: T } | { ok: false }> {
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      return { ok: true, value: await fn() };
-    } catch (error) {
-      logger.warn(`[Index] Lecture ${label} échouée (tentative ${attempt}/3):`, error);
-      if (attempt < 3) await sleep(500);
-    }
-  }
-  return { ok: false };
-}
+type Destination = Parcours;
 
 /**
  * Attend que l'app soit réellement au premier plan.
@@ -46,82 +28,24 @@ function waitForActive(): Promise<void> {
   });
 }
 
-async function markOnboardingDone() {
-  try {
-    await AsyncStorage.setItem(ONBOARDING_DONE_KEY, 'true');
-  } catch {}
-}
-
 /**
- * Décide si l'utilisateur doit voir l'onboarding.
- * Règle d'or : l'onboarding ne s'affiche QUE si toutes les lectures ont RÉUSSI
- * et qu'aucune trace d'utilisateur existant n'a été trouvée.
+ * Décide si l'utilisateur doit voir l'onboarding (lib/v2/onboarding/etatOuverture.ts, testé).
+ * 18 octobre 2026 (INSTALLATION) : le trousseau iOS survit à la suppression de l'app ; un profil qui n'est
+ * QUE dans le trousseau, sans aucune trace locale, est une réinstallation : onboarding complet et paywall.
  * Au moindre doute (lecture impossible), on ouvre l'app normalement.
  */
-async function isExistingUserOrUnknown(): Promise<boolean> {
-  // 1. Marqueur durable
-  const flag = await readWithRetry('flag onboarding', () => AsyncStorage.getItem(ONBOARDING_DONE_KEY));
-  if (flag.ok && flag.value === 'true') {
-    logger.info('[Index] Utilisateur existant (flag onboarding)');
-    return true;
-  }
-
-  let anyReadFailed = !flag.ok;
-
-  // 2. Réglages (trousseau sécurisé), lecture stricte
-  const settings = await readWithRetry('settings', () => getUserSettingsStrict());
-  if (settings.ok) {
-    if (settings.value.username && settings.value.gender) {
-      logger.info('[Index] Utilisateur existant (settings)');
-      await markOnboardingDone();
-      return true;
-    }
-  } else {
-    anyReadFailed = true;
-  }
-
-  // 3. Profil SQLite
-  const profile = await readWithRetry('profil SQLite', () => getProfile());
-  if (profile.ok) {
-    const p = profile.value;
-    if (p && p.name) {
-      logger.info('[Index] Utilisateur existant (profil SQLite), resynchronisation des settings');
-      try {
-        await saveUserSettings({
-          username: p.name,
-          gender: p.avatar_gender === 'femme' ? 'female' : 'male',
-          height: p.height_cm,
-          targetWeight: p.target_weight,
-          onboardingCompleted: true,
-        });
-      } catch {}
-      await markOnboardingDone();
-      return true;
-    }
-  } else {
-    anyReadFailed = true;
-  }
-
-  // 4. Données existantes (séances)
-  const trainings = await readWithRetry('séances', () => getTrainingsCount());
-  if (trainings.ok) {
-    if (trainings.value.total > 0) {
-      logger.info('[Index] Utilisateur existant (séances en base)');
-      await markOnboardingDone();
-      return true;
-    }
-  } else {
-    anyReadFailed = true;
-  }
-
-  if (anyReadFailed) {
-    logger.warn('[Index] Lecture impossible, on ouvre l\'app SANS onboarding par sécurité');
-    return true;
-  }
-
-  logger.info('[Index] Aucun utilisateur trouvé : nouvel utilisateur, onboarding');
-  return false;
-}
+const etatUtilisateur = () =>
+  etatOuverture({
+    getItem: (k) => AsyncStorage.getItem(k),
+    setItem: (k, v) => AsyncStorage.setItem(k, v),
+    removeItem: (k) => AsyncStorage.removeItem(k),
+    getSettings: () => getUserSettingsStrict(),
+    saveSettings: (x) => saveUserSettings(x),
+    getProfile: () => getProfile(),
+    getTrainingsCount: () => getTrainingsCount(),
+    getLatestWeight: () => getLatestWeight(),
+    log: { info: (m, ...r) => logger.info(String(m), ...r), warn: (m, ...r) => logger.warn(String(m), ...r) },
+  });
 
 export default function Index() {
   const [destination, setDestination] = useState<Destination | null>(null);
@@ -136,16 +60,33 @@ export default function Index() {
 
       let dest: Destination = 'tabs';
       try {
-        const existing = await isExistingUserOrUnknown();
-        if (!existing) {
-          dest = 'onboarding';
-        } else {
+        const etat = await etatUtilisateur();
+        // 14 octobre 2026 : un utilisateur qui met a jour voit les « Nouveautes de la 3.0 » (une fois),
+        // un nouvel utilisateur l'onboarding complet, et au moindre doute les onglets (lib/v2/onboarding/parcours.ts)
+        let nouveautesVues: boolean | undefined;
+        try {
+          nouveautesVues = (await AsyncStorage.getItem(NOUVEAUTES_30_KEY)) === 'true';
+        } catch {
+          nouveautesVues = undefined;
+        }
+        let demo = false;
+        if (etat.existant && nouveautesVues === false) {
+          try {
+            demo = await (await import('@/lib/demoDataService')).isDemoDataActive();
+          } catch {
+            demo = false;
+          }
+        }
+        dest = choisirParcours({ existant: etat.existant, lectureRatee: etat.lectureRatee, nouveautesVues, demo });
+        logger.info(`[Index] Ouverture : ${etat.raison}, parcours ${dest}`);
+        // 18 octobre 2026 : seulement pour un utilisateur existant reconnu (une lecture ratee ne pose aucune trace)
+        if (dest !== 'onboarding' && etat.existant) {
           // Le tour de découverte est réservé aux NOUVEAUX utilisateurs : il est lancé
           // à la fin de l'onboarding. Un utilisateur existant ne le voit jamais
           // (on le marque comme vu pour qu'il n'apparaisse pas après une mise à jour).
           try {
-            const tourDone = await AsyncStorage.getItem('@yoroi_onboarding_tour_done');
-            if (tourDone !== 'true') await AsyncStorage.setItem('@yoroi_onboarding_tour_done', 'true');
+            const tourDone = await AsyncStorage.getItem(TOUR_DONE_KEY);
+            if (tourDone !== 'true') await AsyncStorage.setItem(TOUR_DONE_KEY, 'true');
           } catch {}
         }
       } catch (error) {
@@ -163,11 +104,20 @@ export default function Index() {
   }, []);
 
   if (!destination) {
-    return <View style={{ flex: 1, backgroundColor: "#0D0D0F" }} />;
+    // Attente : le meme ecran de chargement que la racine (il reprend sans rejouer l'introduction)
+    return (
+      <View style={{ flex: 1, backgroundColor: "#F2F1EC" }}>
+        <EcranChargement />
+      </View>
+    );
   }
 
   if (destination === 'onboarding') {
     return <Redirect href="/onboarding" />;
+  }
+
+  if (destination === 'nouveautes') {
+    return <Redirect href={'/nouveautes' as never} />;
   }
 
 

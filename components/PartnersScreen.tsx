@@ -41,9 +41,7 @@ const partnersData: PartnerData[] = [
     name: "Fouad - Coach MMA & Prépa",
     role: "Expert Performance & International",
     description: "Ancien combattant Pro, Coach MMA et Personal Trainer avec une expérience internationale. Une double expertise rare : diplômé par le diplôme et par le terrain. N'hésitez pas à visiter son Instagram pour découvrir son travail.",
-    images: [
-      require('@/assets/partenaires/coachs/fouad_action.jpg')
-    ],
+    images: [],
     location: "Marseille Fight Club (MFC)",
     instagram: 'fouad_loko'
   },
@@ -52,9 +50,7 @@ const partnersData: PartnerData[] = [
     name: "Sander (Bodygator)",
     role: "Personal Trainer & YouTuber",
     description: "Coach sportif connu sous le nom de Bodygator. Retrouvez ses vidéos sur YouTube (Captain Sander) pour des conseils d'entraînement et de coaching.",
-    images: [
-      require('@/assets/partenaires/coachs/bodygator.jpg')
-    ],
+    images: [],
     location: "International",
     instagram: 'bodygator'
   },
@@ -63,9 +59,7 @@ const partnersData: PartnerData[] = [
     name: "Gracie Barra Les Olives",
     role: "Académie & Famille - JJB",
     description: "Une académie, une famille. Dirigée par Venino Jr (Black Belt, multiple champion) et Mélissa (multiple championne). Le club dispose d'une section féminine dynamique. La porte est grande ouverte à tout le monde : n'hésitez pas à venir faire un cours d'essai !",
-    images: [
-      require('@/assets/partenaires/clubs/gracie-barra-olives.jpg')
-    ],
+    images: [],
     location: "52 Av. Frédéric Mistral, Marseille",
     instagram: ['veninjr', 'melissa_lcomb']
   },
@@ -74,9 +68,7 @@ const partnersData: PartnerData[] = [
     name: "Marseille Fight Club (MFC)",
     role: "Club de MMA",
     description: "Le club de référence à Marseille pour le MMA et le Striking. Une structure d'élite pour progresser.",
-    images: [
-      require('@/assets/partenaires/clubs/marseille-fight-club.jpg')
-    ],
+    images: [],
     location: "Marseille",
     instagram: 'fouad_loko' // MFC utilise le même Instagram que Fouad
   },
@@ -85,9 +77,7 @@ const partnersData: PartnerData[] = [
     name: "Team Sorel",
     role: "Club Multi-Disciplines",
     description: "Club emblématique de Marseille dirigé par Yvan Sorel. Une équipe soudée qui pratique le JJB, le Grappling et le MMA. Un esprit de famille et une ambiance de guerriers.",
-    images: [
-      require('@/assets/partenaires/clubs/teamsorel.jpg')
-    ],
+    images: [],
     location: "Marseille",
     instagram: 'teamsorel'
   },
@@ -96,9 +86,7 @@ const partnersData: PartnerData[] = [
     name: "Younes - Kiné & Hijama",
     role: "Expert Médical & Pratiquant JJB",
     description: "Expert dans le domaine Kiné du Sport et Cupping (Hijama). Il connait les besoins des combattants car il est lui-même pratiquant de JJB. Le partenaire idéal pour la récupération.",
-    images: [
-      require('@/assets/partenaires/kines/younes.jpg')
-    ],
+    images: [],
     location: "Cabinet Kiné Santé Sport",
     instagram: 'kinesantesport16'
   }

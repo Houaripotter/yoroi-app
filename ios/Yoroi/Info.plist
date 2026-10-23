@@ -1,131 +1,159 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-  <dict>
-    <key>CADisableMinimumFrameDurationOnPhone</key>
-    <true/>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>$(DEVELOPMENT_LANGUAGE)</string>
-    <key>CFBundleDisplayName</key>
-    <string>Yoroi</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>Yoroi</string>
-    <key>CFBundlePackageType</key>
-    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-    <key>CFBundleShortVersionString</key>
-    <string>2.4.2</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleURLTypes</key>
-    <array>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>yoroi</string>
-          <string>com.houari.yoroi</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>exp+yoroi</string>
-        </array>
-      </dict>
-    </array>
-    <key>CFBundleVersion</key>
-    <string>24</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>12.0</string>
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-      <key>NSAllowsArbitraryLoads</key>
-      <false/>
-      <key>NSAllowsLocalNetworking</key>
-      <true/>
-    </dict>
-    <key>NSBonjourServices</key>
-    <array>
-      <string>_yoroi-sync._tcp</string>
-      <string>_yoroi-sync._udp</string>
-      <string>_expo._tcp</string>
-    </array>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>YOROI accède à votre calendrier pour vous rappeler vos séances d'entraînement planifiées.</string>
-    <key>NSCalendarsUsageDescription</key>
-    <string>YOROI accède à votre calendrier pour vous rappeler vos séances d'entraînement planifiées.</string>
-    <key>NSCameraUsageDescription</key>
-    <string>YOROI a besoin d'accéder à la caméra pour prendre une photo de profil.</string>
-    <key>NSFaceIDUsageDescription</key>
-    <string>YOROI utilise Face ID pour sécuriser l'accès à votre profil et vos données personnelles.</string>
-    <key>NSHealthShareUsageDescription</key>
-    <string>YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.</string>
-    <key>NSHealthUpdateUsageDescription</key>
-    <string>YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.</string>
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>YOROI utilise le réseau local pour synchroniser vos données entre votre iPhone et votre iPad à proximité.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>YOROI utilise votre position GPS pour enregistrer le tracé et la distance de vos séances de course, vélo et activités en plein air.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>YOROI peut utiliser le microphone pour enregistrer des notes vocales liées à vos séances d'entraînement.</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>YOROI enregistre vos photos de progression et vos cartes de partage social dans votre photothèque.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.</string>
-    <key>NSRemindersFullAccessUsageDescription</key>
-    <string>YOROI crée des rappels pour vos séances d'entraînement planifiées et vos objectifs fitness.</string>
-    <key>NSRemindersUsageDescription</key>
-    <string>YOROI utilise les rappels pour vos objectifs fitness.</string>
-    <key>NSSupportsLiveActivities</key>
-    <true/>
-    <key>NSUserActivityTypes</key>
-    <array>
-      <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
-    </array>
-    <key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
-    <false/>
-    <key>RCTNewArchEnabled</key>
-    <true/>
-    <key>UIBackgroundModes</key>
-    <array>
-      <string>audio</string>
-    </array>
-    <key>UILaunchStoryboardName</key>
-    <string>SplashScreen</string>
-    <key>UIRequiredDeviceCapabilities</key>
-    <array>
-      <string>arm64</string>
-    </array>
-    <key>UIRequiresFullScreen</key>
-    <false/>
-    <key>UIStatusBarStyle</key>
-    <string>UIStatusBarStyleDefault</string>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-      <string>UIInterfaceOrientationPortrait</string>
-      <string>UIInterfaceOrientationPortraitUpsideDown</string>
-    </array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
-    <array>
-      <string>UIInterfaceOrientationPortrait</string>
-      <string>UIInterfaceOrientationPortraitUpsideDown</string>
-      <string>UIInterfaceOrientationLandscapeLeft</string>
-      <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UIUserInterfaceStyle</key>
-    <string>Automatic</string>
-    <key>UIViewControllerBasedStatusBarAppearance</key>
-    <false/>
-  </dict>
+<dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Yoroi</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Yoroi</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>3.0.0</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>yoroi</string>
+				<string>com.houari.yoroi</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>exp+yoroi</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>38</string>
+	<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+	<false/>
+	<key>FirebaseAutomaticScreenReportingEnabled</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_ADID_COLLECTION_ENABLED</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>x-apple-health</string>
+	</array>
+	<key>LSMinimumSystemVersion</key>
+	<string>12.0</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_yoroi-sync._tcp</string>
+		<string>_yoroi-sync._udp</string>
+		<string>_expo._tcp</string>
+	</array>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>YOROI ajoute une compétition à ton calendrier quand tu le demandes, par exemple ton prochain tournoi avec un rappel la veille. Tu valides toi-même l'événement avant qu'il soit enregistré.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>YOROI ajoute une compétition à ton calendrier quand tu le demandes, par exemple ton prochain tournoi avec un rappel la veille. Tu valides toi-même l'événement avant qu'il soit enregistré.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>YOROI utilise la caméra seulement quand tu le choisis : ta photo de profil, tes photos de progression, la photo d'une carte de partage, le logo de ton club ou une vidéo de technique pour ton journal. Par exemple, une photo de face chaque mois pour voir ta forme évoluer. Rien n'est envoyé à un serveur de YOROI.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>YOROI utilise Face ID seulement si tu actives le verrouillage de l'app, pour que personne d'autre n'ouvre ton journal et tes pesées.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>YOROI lit dans Apple Santé ton poids et ta composition corporelle, ton activité, ton cœur, ton sommeil, tes séances (tracés, effort, foulée, puissance, zones) et ce que tu bois et manges, pour afficher tes progrès et ta préparation du jour. Les mesures avancées (marche, alertes du cœur, sons, nutriments) seulement si tu les actives. Rien n'est envoyé à un serveur de YOROI.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>YOROI enregistre dans Apple Santé tes pesées et ta masse grasse, les séances que tu notes, ton eau et le sommeil que tu saisis à la main. Rien n'est envoyé à un serveur de YOROI.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>YOROI utilise le réseau local pour synchroniser tes données avec ton iPad appairé par code, seulement quand l'écran de synchronisation est ouvert.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>YOROI utilise ta position seulement quand tu la demandes dans une séance, pour y inscrire le nom du lieu, par exemple ta salle et ta ville. Jamais en arrière-plan, et rien n'est envoyé à un serveur de YOROI.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>YOROI utilise le micro pour le son des vidéos que tu filmes dans ton journal d'entraînement et pour les notes vocales de la fiche d'un partenaire de sparring. Par exemple, filmer une technique avec les explications de ton coach. Rien n'est envoyé à un serveur de YOROI.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>YOROI enregistre dans ta photothèque les cartes de partage que tu crées, seulement quand tu le demandes. Par exemple, ta carte de record ou ta comparaison avant et après. Rien n'est envoyé à un serveur de YOROI.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>YOROI ouvre ta photothèque seulement quand tu choisis une image ou une vidéo : ta photo de profil, tes photos de progression, les photos de ta balance, une vidéo pour ton journal, les photos d'un partenaire ou le logo de ton club. Par exemple, importer la vidéo de ton dernier sparring. Rien n'est envoyé à un serveur de YOROI.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>YOROI ne lit pas et ne crée pas de rappels dans ton app Rappels, et ne te demande pas cet accès. Tes rappels, par exemple celui du coucher, arrivent en notifications YOROI.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>YOROI ne lit pas et ne crée pas de rappels dans ton app Rappels, et ne te demande pas cet accès. Tes rappels, par exemple celui du coucher, arrivent en notifications YOROI.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.com.houari.yoroi</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerName</key>
+			<string>YOROI</string>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>None</string>
+		</dict>
+	</dict>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
+	</array>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<false/>
+	<key>RCTNewArchEnabled</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>SplashScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UIRequiresFullScreen</key>
+	<false/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDefault</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Automatic</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+</dict>
 </plist>

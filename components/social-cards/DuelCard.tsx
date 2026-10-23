@@ -1,35 +1,25 @@
-// ============================================
-// DUEL CARD · Carte de duel sparring (Format carré 375×375)
-// ============================================
-// Carte partageable Instagram montrant le bilan H2H
-// entre l'utilisateur et un adversaire spécifique
-
+/**
+ * Carte de duel (refonte v2) : toi face a ton partenaire de sparring.
+ * Format carre, bilan victoires, nuls, defaites en gros chiffres, dernieres seances en plaques kozane,
+ * techniques favorites, ceintures, logo YOROI.
+ */
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { SocialCardFooterCompact } from './SocialCardBranding';
-
-// ── Constantes couleurs ──
-const GOLD = '#D4AF37';
-const WIN_COLOR = '#22C55E';
-const LOSS_COLOR = '#EF4444';
-const DRAW_COLOR = '#9CA3AF';
-const DARK_BG = '#0a0a0a';
-const LIGHT_BG = '#f8f8f8';
+import { Image, View, useWindowDimensions } from 'react-native';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { getSportName } from '@/lib/sports';
+import { useCardIdentity } from '@/lib/v2/partage/identity';
+import { CardFoot, CardFrame, CardTop, Panel, Plate, Stamp, figureFor, paletteOf, toVariant } from '@/components/yoroi/v2/partage/cardKit';
 
 const BELT_COLORS: Record<string, string> = {
-  blanche: '#ffffff',
-  bleue: '#3B82F6',
-  violette: '#8B5CF6',
-  marron: '#92400E',
-  noire: '#111827',
-  grise: '#6B7280',
-  jaune: '#F59E0B',
-  orange: '#F97316',
-  verte: '#22C55E',
-  rouge: '#EF4444',
+  blanche: '#FFFFFF', bleue: '#2C4A84', violette: '#6B3FA0', marron: '#7A4A22', noire: '#1D2029',
+  grise: '#8B8D96', jaune: '#E3C47B', orange: '#D9822B', verte: '#6E8C3A', rouge: '#B0282E',
 };
 
-// ── Types ──
+function beltColor(belt?: string): string | null {
+  if (!belt) return null;
+  return BELT_COLORS[belt.toLowerCase().trim()] ?? null;
+}
+
 export interface DuelCardProps {
   myName: string;
   myBelt?: string;
@@ -45,445 +35,105 @@ export interface DuelCardProps {
   backgroundType: 'dark' | 'light' | 'photo';
   backgroundImage?: string;
   sport?: string;
+  width?: number;
 }
 
-// ── Helpers ──
-function getBeltColor(belt?: string): string {
-  if (!belt) return BELT_COLORS.noire;
-  const key = belt.toLowerCase().trim();
-  return BELT_COLORS[key] ?? BELT_COLORS.noire;
-}
-
-function getResultColor(r: 'win' | 'loss' | 'draw'): string {
-  if (r === 'win') return WIN_COLOR;
-  if (r === 'loss') return LOSS_COLOR;
-  return DRAW_COLOR;
-}
-
-// ── Composant principal ──
 export const DuelCard = React.memo(
   React.forwardRef<View, DuelCardProps>(
-    (
-      {
-        myName,
-        myBelt,
-        opponentName,
-        opponentBelt,
-        wins,
-        losses,
-        draws,
-        totalRounds,
-        topMethodGiven,
-        topMethodTaken,
-        lastSessions,
-        backgroundType,
-        backgroundImage,
-        sport,
-      },
-      ref
-    ) => {
-      const isLight = backgroundType === 'light';
-      const isPhoto = backgroundType === 'photo';
-
-      // Couleurs selon thème
-      const bg = isLight ? LIGHT_BG : DARK_BG;
-      const textPrimary = isLight ? '#111111' : '#FFFFFF';
-      const textSecondary = isLight ? '#555555' : 'rgba(255,255,255,0.6)';
-      const cardBorder = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
-      const dividerColor = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)';
-
-      // Stats
+    ({ myName, myBelt, opponentName, opponentBelt, wins, losses, draws, totalRounds, topMethodGiven, topMethodTaken, lastSessions, backgroundType, backgroundImage, sport, width: widthProp }, ref) => {
+      const { width: sw } = useWindowDimensions();
+      const id = useCardIdentity();
+      const width = widthProp ?? Math.min(sw - 40, 375);
+      const variant = toVariant(backgroundType, !!backgroundImage);
+      const p = paletteOf(variant);
       const total = wins + losses + draws;
       const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
       const last8 = lastSessions.slice(0, 8);
+      const pad = Math.round(width * 0.055);
+      const sportLabel = sport ? (getSportName(sport) ?? sport) : 'Sparring';
+      const figure = figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre, sport });
+      const ahead = wins > losses;
 
-      // Ceintures
-      const myBeltColor = getBeltColor(myBelt);
-      const oppBeltColor = getBeltColor(opponentBelt);
+      const side = (name: string, belt: string | undefined, align: 'flex-start' | 'flex-end') => {
+        const bc = beltColor(belt);
+        return (
+          <View style={{ flex: 1, alignItems: align, gap: 4 }}>
+            <Ink size={17} weight="black" tight color={p.ink} numberOfLines={1} style={{ textAlign: align === 'flex-end' ? 'right' : 'left' }}>{name}</Ink>
+            {bc ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ width: 34, height: 8, borderRadius: 2, backgroundColor: bc, borderWidth: bc === '#FFFFFF' ? 1 : 0, borderColor: p.line }}>
+                  <View style={{ position: 'absolute', right: 5, top: 0, bottom: 0, width: 7, backgroundColor: bc === '#1D2029' ? p.accent : '#1D2029' }} />
+                </View>
+                <Ink size={10} weight="bold" color={p.muted}>{`Ceinture ${belt}`}</Ink>
+              </View>
+            ) : null}
+          </View>
+        );
+      };
 
       return (
-        <View
-          ref={ref}
-          style={[styles.card, { backgroundColor: isPhoto ? DARK_BG : bg }]}
-          collapsable={false}
-        >
-          {/* ── Fond photo ── */}
-          {isPhoto && backgroundImage ? (
-            <Image
-              source={{ uri: backgroundImage }}
-              style={StyleSheet.absoluteFillObject}
-              resizeMode="cover"
-            />
-          ) : null}
+        <CardFrame ref={ref} variant={variant} width={width} height={width} photo={backgroundImage} radius={26}>
+          <View style={{ flex: 1, paddingTop: pad, paddingBottom: pad * 0.8, paddingLeft: pad + 4, paddingRight: pad, gap: 10 }}>
+            <CardTop p={p} label={sportLabel} size={0.9} />
 
-          {/* ── Overlay sombre sur photo ── */}
-          {isPhoto ? (
-            <View style={styles.photoOverlay} />
-          ) : null}
-
-          {/* ── Contenu ── */}
-          <View style={styles.content}>
-
-            {/* TOP: Badge sport */}
-            <View style={styles.topRow}>
-              {sport ? (
-                <View style={[styles.sportBadge, { borderColor: GOLD }]}>
-                  <Text style={[styles.sportBadgeText, { color: GOLD }]}>
-                    {sport.toUpperCase()}
-                  </Text>
-                </View>
-              ) : (
-                <View style={[styles.sportBadge, { borderColor: GOLD }]}>
-                  <Text style={[styles.sportBadgeText, { color: GOLD }]}>SPARRING</Text>
-                </View>
-              )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {side(myName || id.name || 'Moi', myBelt, 'flex-start')}
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: p.accent, alignItems: 'center', justifyContent: 'center' }}>
+                <Ink size={12} weight="black" color="#FFFFFF">VS</Ink>
+              </View>
+              {side(opponentName, opponentBelt, 'flex-end')}
             </View>
 
-            {/* FIGHTERS ROW */}
-            <View style={styles.fightersRow}>
-              {/* ── MOI (gauche, vert) ── */}
-              <View style={styles.fighterSide}>
-                <View style={[styles.beltBar, { backgroundColor: myBeltColor }]} />
-                <Text
-                  style={[styles.fighterName, { color: WIN_COLOR }]}
-                  numberOfLines={2}
-                  adjustsFontSizeToFit
-                >
-                  {myName}
-                </Text>
-                {myBelt ? (
-                  <Text style={[styles.beltLabel, { color: textSecondary }]}>
-                    Ceinture {myBelt}
-                  </Text>
-                ) : null}
-                <View style={styles.fighterStatBox}>
-                  <Text style={[styles.fighterStatValue, { color: WIN_COLOR }]}>{wins}</Text>
-                  <Text style={[styles.fighterStatLabel, { color: textSecondary }]}>Victoires</Text>
-                </View>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
+                <Count value={wins} label="Victoires" color={p.accent} muted={p.muted} />
+                <Count value={draws} label="Nuls" color={p.ink2} muted={p.muted} />
+                <Count value={losses} label="Défaites" color={p.ink} muted={p.muted} />
               </View>
-
-              {/* ── VS CENTER ── */}
-              <View style={styles.vsCenter}>
-                <Text style={styles.vsText}>VS</Text>
-                <View style={[styles.vsDividerV, { backgroundColor: dividerColor }]} />
-              </View>
-
-              {/* ── ADVERSAIRE (droite, rouge) ── */}
-              <View style={[styles.fighterSide, styles.fighterSideRight]}>
-                <View style={[styles.beltBar, { backgroundColor: oppBeltColor }]} />
-                <Text
-                  style={[styles.fighterName, { color: LOSS_COLOR }]}
-                  numberOfLines={2}
-                  adjustsFontSizeToFit
-                >
-                  {opponentName}
-                </Text>
-                {opponentBelt ? (
-                  <Text style={[styles.beltLabel, { color: textSecondary }]}>
-                    Ceinture {opponentBelt}
-                  </Text>
-                ) : null}
-                <View style={styles.fighterStatBox}>
-                  <Text style={[styles.fighterStatValue, { color: LOSS_COLOR }]}>{losses}</Text>
-                  <Text style={[styles.fighterStatLabel, { color: textSecondary }]}>Défaites</Text>
-                </View>
-              </View>
+              {variant !== 'photo' ? <Image source={figure} style={{ width: width * 0.26, height: width * 0.32 }} resizeMode="contain" /> : null}
+              {ahead && total >= 3 ? <View style={{ position: 'absolute', right: width * 0.2, top: -4 }}><Stamp p={p} size={40} /></View> : null}
             </View>
 
-            {/* BILAN W-L-D */}
-            <View style={[styles.recordRow, { borderColor: cardBorder }]}>
-              <View style={styles.recordCell}>
-                <Text style={[styles.recordValue, { color: WIN_COLOR }]}>{wins}</Text>
-                <Text style={[styles.recordLabel, { color: textSecondary }]}>V</Text>
-              </View>
-              <View style={[styles.recordDivider, { backgroundColor: dividerColor }]} />
-              <View style={styles.recordCell}>
-                <Text style={[styles.recordValue, { color: LOSS_COLOR }]}>{losses}</Text>
-                <Text style={[styles.recordLabel, { color: textSecondary }]}>D</Text>
-              </View>
-              <View style={[styles.recordDivider, { backgroundColor: dividerColor }]} />
-              <View style={styles.recordCell}>
-                <Text style={[styles.recordValue, { color: DRAW_COLOR }]}>{draws}</Text>
-                <Text style={[styles.recordLabel, { color: textSecondary }]}>N</Text>
-              </View>
-              <View style={[styles.recordDivider, { backgroundColor: dividerColor }]} />
-              <View style={styles.recordCell}>
-                <Text style={[styles.recordValue, { color: GOLD }]}>{winRate}%</Text>
-                <Text style={[styles.recordLabel, { color: textSecondary }]}>Win</Text>
-              </View>
-            </View>
-
-            {/* MÉTHODES */}
-            {(topMethodGiven || topMethodTaken) ? (
-              <View style={styles.methodsRow}>
-                {topMethodGiven ? (
-                  <View style={[styles.methodBadge, { backgroundColor: 'rgba(34,197,94,0.15)', borderColor: 'rgba(34,197,94,0.3)' }]}>
-                    <Text style={[styles.methodLabel, { color: textSecondary }]}>↗ Donné</Text>
-                    <Text style={[styles.methodValue, { color: WIN_COLOR }]} numberOfLines={1}>
-                      {topMethodGiven}
-                    </Text>
-                  </View>
-                ) : null}
-                {topMethodTaken ? (
-                  <View style={[styles.methodBadge, { backgroundColor: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.3)' }]}>
-                    <Text style={[styles.methodLabel, { color: textSecondary }]}>↘ Subi</Text>
-                    <Text style={[styles.methodValue, { color: LOSS_COLOR }]} numberOfLines={1}>
-                      {topMethodTaken}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
-
-            {/* HISTORIQUE · 8 dernières séances */}
             {last8.length > 0 ? (
-              <View style={styles.historyRow}>
-                <Text style={[styles.historyLabel, { color: textSecondary }]}>
-                  8 DERNIÈRES SÉANCES
-                </Text>
-                <View style={styles.dotsRow}>
+              <View style={{ gap: 4 }}>
+                <View style={{ flexDirection: 'row', gap: 4 }}>
                   {last8.map((r, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.dot,
-                        { backgroundColor: getResultColor(r) },
-                      ]}
-                    />
-                  ))}
-                  {/* Pastilles vides si moins de 8 */}
-                  {Array.from({ length: Math.max(0, 8 - last8.length) }).map((_, i) => (
-                    <View
-                      key={`empty-${i}`}
-                      style={[
-                        styles.dot,
-                        styles.dotEmpty,
-                        { borderColor: dividerColor },
-                      ]}
-                    />
+                    r === 'win' ? <Plate key={i} p={p} on w={20} /> : r === 'draw' ? <Plate key={i} p={p} on={false} partial w={20} /> : <Plate key={i} p={p} on={false} w={20} />
                   ))}
                 </View>
+                <Ink size={10} weight="bold" color={p.muted}>Dernières séances, de la plus récente à la plus ancienne</Ink>
               </View>
             ) : null}
 
-            {/* TOTAL ROUNDS */}
-            {totalRounds > 0 ? (
-              <Text style={[styles.totalRoundsText, { color: textSecondary }]}>
-                {totalRounds} round{totalRounds > 1 ? 's' : ''} au total
-              </Text>
-            ) : null}
+            <Panel p={p} style={{ flexDirection: 'row', gap: 10, paddingVertical: 9 }}>
+              <View style={{ flex: 1 }}>
+                <Ink size={18} weight="black" color={p.panelInk}>{`${winRate} %`}</Ink>
+                <Ink size={10} weight="bold" color={p.panelInk2}>{`de victoires sur ${totalRounds} rounds`}</Ink>
+              </View>
+              {topMethodGiven || topMethodTaken ? (
+                <View style={{ flex: 1.3, gap: 2 }}>
+                  {topMethodGiven ? <Ink size={11} weight="extraBold" color={p.panelInk} numberOfLines={1}>{`Arme : ${topMethodGiven}`}</Ink> : null}
+                  {topMethodTaken ? <Ink size={11} weight="bold" color={p.panelInk2} numberOfLines={1}>{`À surveiller : ${topMethodTaken}`}</Ink> : null}
+                </View>
+              ) : null}
+            </Panel>
 
-            {/* FOOTER */}
-            <View style={styles.footer}>
-              <SocialCardFooterCompact variant={isLight ? 'light' : 'dark'} />
-            </View>
+            <CardFoot p={p} compact />
           </View>
-        </View>
+        </CardFrame>
       );
     }
   )
 );
+DuelCard.displayName = 'DuelCard';
 
-// ── Styles ──
-const CARD_SIZE = 375;
-
-const styles = StyleSheet.create({
-  card: {
-    width: CARD_SIZE,
-    height: CARD_SIZE,
-    overflow: 'hidden',
-    borderRadius: 16,
-  },
-  photoOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.72)',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 0,
-    justifyContent: 'space-between',
-  },
-
-  // Top badge sport
-  topRow: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  sportBadge: {
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-  },
-  sportBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-
-  // Fighters
-  fightersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginBottom: 6,
-  },
-  fighterSide: {
-    flex: 1,
-    alignItems: 'flex-start',
-    gap: 4,
-  },
-  fighterSideRight: {
-    alignItems: 'flex-end',
-  },
-  beltBar: {
-    width: 28,
-    height: 4,
-    borderRadius: 2,
-  },
-  fighterName: {
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    lineHeight: 20,
-  },
-  beltLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'capitalize',
-  },
-  fighterStatBox: {
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  fighterStatValue: {
-    fontSize: 28,
-    fontWeight: '900',
-    lineHeight: 32,
-  },
-  fighterStatLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-
-  // VS Center
-  vsCenter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    gap: 6,
-  },
-  vsText: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#D4AF37',
-    letterSpacing: 3,
-  },
-  vsDividerV: {
-    width: 1,
-    height: 50,
-  },
-
-  // Record row W-L-D
-  recordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
-  recordCell: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  recordValue: {
-    fontSize: 22,
-    fontWeight: '900',
-    lineHeight: 26,
-  },
-  recordLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    marginTop: 2,
-  },
-  recordDivider: {
-    width: 1,
-    height: 28,
-  },
-
-  // Méthodes
-  methodsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
-  },
-  methodBadge: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    alignItems: 'center',
-  },
-  methodLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  methodValue: {
-    fontSize: 11,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-
-  // Historique
-  historyRow: {
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  historyLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 26,
-    height: 10,
-    borderRadius: 5,
-  },
-  dotEmpty: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-  },
-
-  // Total rounds
-  totalRoundsText: {
-    fontSize: 9,
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-
-  // Footer
-  footer: {
-    marginTop: 2,
-  },
-});
+function Count({ value, label, color, muted }: { value: number; label: string; color: string; muted: string }) {
+  return (
+    <View>
+      <Ink size={44} weight="black" tight color={color} style={{ lineHeight: 46 }}>{value}</Ink>
+      <Ink size={10} weight="bold" color={muted}>{label}</Ink>
+    </View>
+  );
+}
 
 export default DuelCard;

@@ -1,820 +1,271 @@
-// ============================================
-// YOROI - PALMARÈS / HISTORIQUE COMBATS
-// ============================================
-
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  DeviceEventEmitter,
-} from 'react-native';
-import { router } from 'expo-router';
-import {
-  Trophy,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Plus,
-  Calendar,
-  Flame,
-  Target,
-  Award,
-} from 'lucide-react-native';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { getCombats } from '@/lib/fighterModeService';
-import { Combat, calculateRecord } from '@/lib/fighterMode';
-import { SPACING, RADIUS, SHADOWS } from '@/constants/appTheme';
-import logger from '@/lib/security/logger';
-import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
-import { usePremium } from '@/context/PremiumContext';
+/**
+ * Palmares (vague 18) : ton bilan victoires, defaites, nuls, tes medailles de competition
+ * (notees sur chaque competition), ta serie, ton dernier combat, tes finitions preferees,
+ * tes methodes de victoire et la liste de tes combats.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, Image, ImageBackground, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router as expRouter } from 'expo-router';
-import { SkeletonGrid } from '@/components/stats/SkeletonCard';
+import { getAllExtras } from '@/lib/v2/competition/extras';
+import type { CompetitionExtra, Medaille } from '@/lib/v2/competition/extras';
+import { MedalIcon } from '@/components/yoroi/v2/competition/Medal';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { getCombats } from '@/lib/fighterModeService';
+import { calculateRecord } from '@/lib/fighterMode';
+import type { Combat } from '@/lib/fighterMode';
+import { logger } from '@/lib/security/logger';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { isoOf, longDate, relativeDay } from '@/lib/v2/seances/sessionData';
+import { sportArt } from '@/lib/v2/seances/illustrations';
+import { mainSportOf } from '@/lib/v2/seances/bannerSport';
+import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
+import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import { BackButton, BigButton, Chip, ChipRow, EmptyState, Glass, Hanko, SectionTitle, tap } from '@/components/yoroi/v2/seances/ui';
+import { P, blancA } from '@/components/yoroi/livePalette';
 
-const FREE_COMBATS_LIMIT = 3;
+const SCENE = require('@/assets/avatars/app/monde/scenes/remparts.webp');
 
-type FilterType = 'all' | 'victoire' | 'defaite' | 'nul';
+type Filter = 'all' | 'victoire' | 'defaite' | 'nul';
+const METHOD_LABEL: Record<string, string> = { soumission: 'Soumission', points: 'Points', decision: 'Décision', ko: 'KO', tko: 'KO technique', abandon: 'Abandon', forfait: 'Forfait', dq: 'Disqualification' };
+const METHOD_INK = ['#2C4A84', '#A8832F', '#6E8C3A', '#8C6A3F', '#3D5D9E', '#8B8D96', '#1D2029'];
 
 export default function PalmaresScreen() {
-  const { colors } = useTheme();
-  const { isPremium } = usePremium();
-  const { locale, t } = useI18n();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { gender, trainings, competitions } = useSeancesData();
   const [combats, setCombats] = useState<Combat[]>([]);
-  const [filteredCombats, setFilteredCombats] = useState<Combat[]>([]);
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [extras, setExtras] = useState<Record<string, CompetitionExtra>>({});
+  const [filter, setFilter] = useState<Filter>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
 
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadCombats(); }, []);
-
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadCombats);
-    return () => sub.remove();
-  }, []);
-
-  const loadCombats = async () => {
+  const load = useCallback(async () => {
     try {
-      const allCombats = await getCombats();
-      setCombats(allCombats);
-      applyFilter(allCombats, filter);
+      const [list, ex] = await Promise.all([getCombats(), getAllExtras()]);
+      setCombats(list ?? []);
+      setExtras(ex);
     } catch (error) {
       logger.error('Error loading combats:', error);
     } finally {
-      setLoading(false);
+      setLoaded(true);
     }
-  };
+  }, []);
 
-  const applyFilter = (combatsList: Combat[], filterType: FilterType) => {
-    if (filterType === 'all') {
-      setFilteredCombats(combatsList);
-    } else {
-      setFilteredCombats(combatsList.filter((c) => c.resultat === filterType));
-    }
-  };
+  useEffect(() => {
+    load();
+    const sub = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, load);
+    return () => sub.remove();
+  }, [load]);
 
-  const handleFilterChange = (newFilter: FilterType) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    setFilter(newFilter);
-    applyFilter(combats, newFilter);
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadCombats();
-    setRefreshing(false);
-  };
-
-  const handleAddCombat = () => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    if (!isPremium && combats.length >= FREE_COMBATS_LIMIT) {
-      router.push('/paywall' as never);
-      return;
-    }
-    router.push('/add-combat');
-  };
-
-  const handleCombatPress = (combat: Combat) => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    router.push(`/combat-detail?id=${combat.id}`);
+  const add = () => {
+    router.push('/seance/match' as any);
   };
 
   const record = calculateRecord(combats);
-  const totalFights = combats.length;
-  const winRate = totalFights > 0 ? (record.victoires / totalFights) * 100 : 0;
-
-  // ── Streak actuel (depuis le combat le plus récent) ──
-  const sortedByDate = [...combats].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const currentStreak = (() => {
-    if (sortedByDate.length === 0) return null;
-    const first = sortedByDate[0].resultat;
-    if (first === 'nul') return null;
-    let count = 0;
-    for (const c of sortedByDate) {
-      if (c.resultat === first) count++;
+  const total = combats.length;
+  const winRate = total > 0 ? (record.victoires / total) * 100 : 0;
+  const sorted = useMemo(() => [...combats].sort((a, b) => (a.date < b.date ? 1 : -1)), [combats]);
+  const streak = useMemo(() => {
+    if (!sorted.length || sorted[0].resultat === 'nul') return null;
+    let n = 0;
+    for (const x of sorted) {
+      if (x.resultat === sorted[0].resultat) n++;
       else break;
     }
-    return { type: first, count };
-  })();
-  const lastCombat = sortedByDate[0] || null;
-
-  // ── Top techniques de finition (sur victoires uniquement) ──
-  const topTechniques = (() => {
-    const freq: Record<string, number> = {};
-    for (const c of combats) {
-      if (c.resultat === 'victoire' && c.technique) {
-        freq[c.technique] = (freq[c.technique] || 0) + 1;
+    return { type: sorted[0].resultat, n };
+  }, [sorted]);
+  const last = sorted[0];
+  const topTech = useMemo(() => {
+    const f: Record<string, number> = {};
+    combats.forEach((x) => {
+      if (x.resultat === 'victoire' && x.technique) f[x.technique] = (f[x.technique] || 0) + 1;
+    });
+    return Object.entries(f).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [combats]);
+  const methods = useMemo(() => {
+    const cnt: Record<string, number> = {};
+    let wins = 0;
+    combats.forEach((x) => {
+      if (x.resultat === 'victoire' && x.methode) {
+        cnt[x.methode] = (cnt[x.methode] || 0) + 1;
+        wins++;
       }
-    }
-    return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  })();
-
-  // ── Méthodes de victoire (soumission/points/decision/ko/abandon) ──
-  const methodsBreakdown = (() => {
-    const labels: Record<string, string> = {
-      soumission: 'Soumission',
-      points: 'Points',
-      decision: 'Décision',
-      ko: 'KO',
-      tko: 'TKO',
-      abandon: 'Abandon',
-      forfait: 'Forfait',
-    };
-    const counts: Record<string, number> = {};
-    let totalWins = 0;
-    for (const c of combats) {
-      if (c.resultat === 'victoire' && c.methode) {
-        counts[c.methode] = (counts[c.methode] || 0) + 1;
-        totalWins++;
-      }
-    }
-    return Object.entries(counts)
-      .map(([key, count]) => ({
-        key,
-        label: labels[key] || key,
-        count,
-        pct: totalWins > 0 ? Math.round((count / totalWins) * 100) : 0,
-      }))
-      .sort((a, b) => b.count - a.count);
-  })();
-
-  if (loading) {
-    return (
-      <ScreenWrapper>
-        <Header title={t('palmares.title')} showBack />
-        <View style={{ flex: 1, padding: 16 }}>
-          <SkeletonGrid count={4} cardHeight={140} />
-        </View>
-      </ScreenWrapper>
-    );
-  }
+    });
+    return Object.entries(cnt).map(([k, n]) => ({ k, label: METHOD_LABEL[k] ?? k, n, pct: wins ? Math.round((n / wins) * 100) : 0 })).sort((a, b) => b.n - a.n);
+  }, [combats]);
+  // Medailles notees sur tes competitions, de la plus recente a la plus ancienne
+  const medalled = useMemo(
+    () =>
+      competitions
+        .map((k) => ({ k, m: extras[String(k.id)]?.medaille as Medaille | undefined }))
+        .filter((x): x is { k: typeof competitions[number]; m: Medaille } => !!x.m && x.m !== 'aucune')
+        .sort((a, b) => (a.k.date < b.k.date ? 1 : -1)),
+    [competitions, extras],
+  );
+  const medalCount = (m: Medaille) => medalled.filter((x) => x.m === m).length;
+  const list = filter === 'all' ? sorted : sorted.filter((x) => x.resultat === filter);
+  const today = isoOf(new Date());
+  // L'illustration suit le sport de ton dernier combat en competition, sinon ton sport principal
+  const lastCompSport = sorted.map((x) => competitions.find((k) => k.id === x.competition_id)?.sport).find(Boolean);
+  const bannerSport = lastCompSport || mainSportOf(trainings) || 'jjb';
 
   return (
-    <ScreenWrapper>
-      <Header title={t('palmares.title')} showBack />
-
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} colors={[c.accent]} />}
       >
-        {/* Record Card */}
-        <View style={[styles.recordCard, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.recordHeader}>
-            <Trophy size={32} color={colors.accentText} />
-            <Text style={[styles.recordTitle, { color: colors.textPrimary }]}>
-              {t('palmares.recordTitle')}
-            </Text>
+        {/* Scene des remparts sous la neige : le personnage reste sur la scene, jamais derriere une carte */}
+        <ImageBackground source={SCENE} resizeMode="cover" style={{ height: 228 + insets.top, overflow: 'hidden' }}>
+          <LinearGradient colors={['rgba(242,241,236,0)', 'rgba(242,241,236,0)', c.background]} locations={[0, 0.55, 1]} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+          <Image source={sportArt(bannerSport, gender, 3)} style={{ position: 'absolute', right: -4, bottom: -34, width: 150, height: 200 }} resizeMode="contain" />
+          <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 16 }}>
+            <BackButton />
+          </View>
+          <View style={{ position: 'absolute', left: 16, bottom: 14, maxWidth: '60%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, backgroundColor: blancA(0.86), borderWidth: 1, borderColor: P.white }}>
+            <Ink size={28} weight="black" tight accessibilityRole="header">Palmarès</Ink>
+            <Ink size={13} weight="bold" color={c.textSecondary}>Tes médailles et tes combats</Ink>
+          </View>
+        </ImageBackground>
+
+        <View style={{ paddingHorizontal: 22, marginTop: 14, gap: 12 }}>
+          <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 18, gap: 12, shadowColor: c.ink, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 }}>
+            <Ink size={13} weight="bold" color={c.textSecondary}>Ton palmarès</Ink>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {[{ v: record.victoires, l: 'victoires', col: c.ink }, { v: record.defaites, l: 'défaites', col: c.accent }, { v: record.nuls, l: 'nuls', col: c.textSecondary }].map((x) => (
+                <View key={x.l} style={{ flex: 1 }}>
+                  <Ink size={44} weight="black" tight color={x.col} style={{ lineHeight: 48 }}>{String(x.v)}</Ink>
+                  <Ink size={12} weight="bold" color={c.textMuted}>{x.l}</Ink>
+                </View>
+              ))}
+            </View>
+            {total > 0 ? (
+              <View style={{ gap: 6 }}>
+                <View style={{ height: 10, borderRadius: 5, backgroundColor: c.fillSubtle, overflow: 'hidden', flexDirection: 'row' }}>
+                  <View style={{ width: `${winRate}%`, backgroundColor: c.gold }} />
+                </View>
+                <Ink size={13} weight="bold" color={c.textSecondary}>{`${Math.round(winRate)} % de victoires sur ${total} combat${total > 1 ? 's' : ''}`}</Ink>
+              </View>
+            ) : null}
           </View>
 
-          <View style={styles.recordStats}>
-            {/* Victoires */}
-            <View style={styles.statColumn}>
-              <View style={[styles.statIcon, { backgroundColor: '#4CAF5020' }]}>
-                <TrendingUp size={24} color="#4CAF50" />
+          {medalled.length ? (
+            <Glass style={{ gap: 12 }}>
+              <Ink size={17} weight="black" tight>Tes médailles</Ink>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                {(['or', 'argent', 'bronze'] as Medaille[]).map((m) => (
+                  <View key={m} style={{ alignItems: 'center', gap: 2 }}>
+                    <MedalIcon kind={m} size={46} />
+                    <Ink size={26} weight="black" tight>{String(medalCount(m))}</Ink>
+                    <Ink size={12} weight="bold" color={c.textMuted}>{m === 'or' ? 'or' : m === 'argent' ? 'argent' : 'bronze'}</Ink>
+                  </View>
+                ))}
               </View>
-              <Text style={[styles.statValue, { color: '#4CAF50' }]}>
-                {record.victoires}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {t('palmares.stats.victories')}
-              </Text>
-            </View>
-
-            {/* Défaites */}
-            <View style={styles.statColumn}>
-              <View style={[styles.statIcon, { backgroundColor: '#F4433620' }]}>
-                <TrendingDown size={24} color="#F44336" />
-              </View>
-              <Text style={[styles.statValue, { color: '#F44336' }]}>
-                {record.defaites}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {t('palmares.stats.defeats')}
-              </Text>
-            </View>
-
-            {/* Nuls */}
-            <View style={styles.statColumn}>
-              <View
-                style={[
-                  styles.statIcon,
-                  { backgroundColor: `${colors.textMuted}20` },
-                ]}
-              >
-                <Minus size={24} color={colors.textMuted} />
-              </View>
-              <Text style={[styles.statValue, { color: colors.textMuted }]}>
-                {record.nuls}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {t('palmares.stats.draws')}
-              </Text>
-            </View>
-          </View>
-
-          {/* Win Rate */}
-          {totalFights > 0 && (
-            <View style={styles.winRateContainer}>
-              <View style={styles.winRateBar}>
-                <View
-                  style={[
-                    styles.winRateFill,
-                    { width: `${winRate}%`, backgroundColor: colors.accent },
-                  ]}
-                />
-              </View>
-              <Text style={[styles.winRateText, { color: colors.textMuted }]}>
-                {t('palmares.winRate', { rate: winRate.toFixed(1) })}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* ── STREAK + DERNIER COMBAT ── */}
-        {totalFights > 0 && (
-          <View style={{
-            backgroundColor: colors.backgroundCard,
-            borderRadius: 16, padding: 14, marginHorizontal: 16, marginBottom: 12,
-            borderLeftWidth: 4,
-            borderLeftColor: currentStreak?.type === 'victoire' ? '#22C55E' : currentStreak?.type === 'defaite' ? '#EF4444' : colors.accent,
-          }}>
-            {currentStreak && currentStreak.count >= 2 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <Text style={{ fontSize: 18 }}>{currentStreak.type === 'victoire' ? '🔥' : '⚠️'}</Text>
-                <Text style={{
-                  fontSize: 14, fontWeight: '900',
-                  color: currentStreak.type === 'victoire' ? '#22C55E' : '#EF4444',
-                  letterSpacing: -0.2,
-                }}>
-                  {currentStreak.count} {currentStreak.type === 'victoire' ? 'victoires' : 'défaites'} d'affilée
-                </Text>
-              </View>
-            )}
-            {lastCombat && (
-              <View>
-                <Text style={{ fontSize: 9, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.4, marginBottom: 4 }}>
-                  DERNIER COMBAT
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              {medalled.slice(0, 5).map(({ k, m }) => (
+                <Pressable key={k.id} onPress={() => { tap(); router.push(`/competition-detail?id=${k.id}` as any); }} accessibilityRole="button" accessibilityLabel={k.nom} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
+                  <MedalIcon kind={m} size={30} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }} numberOfLines={1}>
-                      {lastCombat.resultat === 'victoire' ? '✓' : lastCombat.resultat === 'defaite' ? '✗' : '='} {lastCombat.adversaire_nom || 'Adversaire inconnu'}
-                    </Text>
-                    {lastCombat.adversaire_club && (
-                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, fontWeight: '600' }} numberOfLines={1}>
-                        {lastCombat.adversaire_club}
-                      </Text>
-                    )}
-                    {(lastCombat.methode || lastCombat.technique) && (
-                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' }} numberOfLines={1}>
-                        {lastCombat.methode}{lastCombat.technique ? ` · ${lastCombat.technique}` : ''}{lastCombat.temps ? ` · ${lastCombat.temps}` : ''}
-                      </Text>
-                    )}
+                    <Ink size={14} weight="extraBold" numberOfLines={2}>{k.nom}</Ink>
+                    <Ink size={12} color={c.textSecondary}>{longDate(k.date.slice(0, 10), true)}</Ink>
                   </View>
-                  <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
-                    {(() => {
-                      try {
-                        const days = Math.floor((Date.now() - new Date(lastCombat.date).getTime()) / 86400000);
-                        if (days === 0) return "aujourd'hui";
-                        if (days === 1) return 'hier';
-                        if (days < 7) return `il y a ${days}j`;
-                        if (days < 30) return `il y a ${Math.floor(days / 7)}sem`;
-                        return `il y a ${Math.floor(days / 30)} mois`;
-                      } catch { return ''; }
-                    })()}
-                  </Text>
+                  <Icon name="chevron" size={16} color={c.textMuted} />
+                </Pressable>
+              ))}
+            </Glass>
+          ) : null}
+
+          {loaded && total === 0 ? (
+            <EmptyState title="Ton premier combat t’attend" text="Note tes combats de compétition : résultat, méthode, adversaire. Ton palmarès se construit ici." action="Ajouter un combat" onAction={add} />
+          ) : null}
+
+          {streak && streak.n >= 2 ? (
+            <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {streak.type === 'victoire' ? <Hanko size={36} color={c.gold} /> : <Icon name="flame" size={28} color={c.accent} />}
+              <Ink size={16} weight="black" tight style={{ flex: 1 }}>{`${streak.n} ${streak.type === 'victoire' ? 'victoires' : 'défaites'} d’affilée`}</Ink>
+            </Glass>
+          ) : null}
+
+          {last ? (
+            <Glass onPress={() => router.push(`/combat-detail?id=${last.id}` as any)} label="Ton dernier combat" style={{ gap: 4 }}>
+              <Ink size={12} weight="bold" color={c.textSecondary}>{`Ton dernier combat, ${relativeDay(last.date.slice(0, 10), today)}`}</Ink>
+              <Ink size={18} weight="black" tight>{`${last.resultat === 'victoire' ? 'Victoire' : last.resultat === 'defaite' ? 'Défaite' : 'Nul'} contre ${last.adversaire_nom || 'un adversaire'}`}</Ink>
+              <Ink size={13} color={c.textSecondary}>{[last.adversaire_club, last.methode ? METHOD_LABEL[last.methode] ?? last.methode : '', last.technique, last.temps].filter(Boolean).join(', ')}</Ink>
+            </Glass>
+          ) : null}
+
+          {topTech.length ? (
+            <Glass style={{ gap: 10 }}>
+              <Ink size={17} weight="black" tight>Tes finitions préférées</Ink>
+              {topTech.map(([tech, n], i) => (
+                <View key={tech} style={{ gap: 4 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Ink size={14} weight={i === 0 ? 'extraBold' : 'bold'}>{tech}</Ink>
+                    <Ink size={14} weight="black">{String(n)}</Ink>
+                  </View>
+                  <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fillSubtle }}>
+                    <View style={{ width: `${(n / topTech[0][1]) * 100}%`, height: '100%', borderRadius: 4, backgroundColor: i === 0 ? c.accent : '#3D5D9E' }} />
+                  </View>
                 </View>
+              ))}
+            </Glass>
+          ) : null}
+
+          {methods.length ? (
+            <Glass style={{ gap: 10 }}>
+              <Ink size={17} weight="black" tight>Comment tu gagnes</Ink>
+              <View style={{ height: 14, borderRadius: 7, overflow: 'hidden', flexDirection: 'row' }}>
+                {methods.map((m, i) => (
+                  <View key={m.k} style={{ width: `${m.pct}%`, backgroundColor: METHOD_INK[i % METHOD_INK.length] }} />
+                ))}
               </View>
-            )}
-          </View>
-        )}
-
-        {/* ── TOP TECHNIQUES DE FINITION ── */}
-        {topTechniques.length > 0 && (
-          <View style={{
-            backgroundColor: colors.backgroundCard,
-            borderRadius: 16, padding: 14, marginHorizontal: 16, marginBottom: 12,
-            borderWidth: 1, borderColor: colors.border,
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-              <Award size={16} color="#F59E0B" />
-              <Text style={{ fontSize: 13, fontWeight: '900', color: colors.textPrimary, letterSpacing: 0.3 }}>
-                TES FINITIONS PRÉFÉRÉES
-              </Text>
-            </View>
-            {topTechniques.map(([tech, count], i) => {
-              const maxCount = topTechniques[0][1];
-              const pct = (count / maxCount) * 100;
-              const colorTint = ['#F59E0B', '#3B82F6', '#22C55E', '#A855F7', '#EC4899'][i] || '#64748B';
-              return (
-                <View key={tech} style={{ marginBottom: i < topTechniques.length - 1 ? 8 : 0 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
-                      {i === 0 ? '🏆 ' : ''}{tech}
-                    </Text>
-                    <Text style={{ fontSize: 12, fontWeight: '900', color: colorTint }}>×{count}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                {methods.map((m, i) => (
+                  <View key={m.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: METHOD_INK[i % METHOD_INK.length] }} />
+                    <Ink size={13} weight="bold">{methods.length > 1 ? `${m.label} ${m.pct}\u00A0%` : `${m.label}, ${m.n} sur ${m.n}`}</Ink>
                   </View>
-                  <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' }}>
-                    <View style={{ width: `${pct}%`, height: '100%', backgroundColor: colorTint, borderRadius: 3 }} />
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
+                ))}
+              </View>
+            </Glass>
+          ) : null}
 
-        {/* ── MÉTHODES DE VICTOIRE (distribution) ── */}
-        {methodsBreakdown.length > 0 && (
-          <View style={{
-            backgroundColor: colors.backgroundCard,
-            borderRadius: 16, padding: 14, marginHorizontal: 16, marginBottom: 12,
-            borderWidth: 1, borderColor: colors.border,
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-              <Target size={16} color="#A855F7" />
-              <Text style={{ fontSize: 13, fontWeight: '900', color: colors.textPrimary, letterSpacing: 0.3 }}>
-                MÉTHODES DE VICTOIRE
-              </Text>
-            </View>
-            {/* Barre stacked */}
-            <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', marginBottom: 10, backgroundColor: colors.border }}>
-              {methodsBreakdown.map((m, i) => {
-                const c = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#06B6D4', '#EF4444'][i] || '#64748B';
-                return <View key={m.key} style={{ width: `${m.pct}%`, backgroundColor: c }} />;
-              })}
-            </View>
-            {/* Légende */}
-            <View style={{ gap: 6 }}>
-              {methodsBreakdown.map((m, i) => {
-                const c = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#06B6D4', '#EF4444'][i] || '#64748B';
+          {total > 0 ? (
+            <>
+              <SectionTitle title="Tes combats" />
+              <ChipRow>
+                <Chip label={`Tous ${total}`} on={filter === 'all'} onPress={() => setFilter('all')} />
+                <Chip label={`Victoires ${record.victoires}`} on={filter === 'victoire'} onPress={() => setFilter('victoire')} />
+                <Chip label={`Défaites ${record.defaites}`} on={filter === 'defaite'} onPress={() => setFilter('defaite')} />
+                <Chip label={`Nuls ${record.nuls}`} on={filter === 'nul'} onPress={() => setFilter('nul')} />
+              </ChipRow>
+              {list.length === 0 ? <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>Aucun combat dans ce filtre.</Ink> : null}
+              {list.map((x) => {
+                const win = x.resultat === 'victoire';
+                const loss = x.resultat === 'defaite';
                 return (
-                  <View key={m.key} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c }} />
-                      <Text style={{ fontSize: 13, color: colors.textPrimary, fontWeight: '600' }}>{m.label}</Text>
+                  <Pressable key={x.id} onPress={() => { tap(); router.push(`/combat-detail?id=${x.id}` as any); }} accessibilityRole="button" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: pressed ? P.white : blancA(0.8), borderWidth: 1, borderColor: c.divider })}>
+                    <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: win ? c.goldTint : loss ? c.accentTint : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ink size={19} weight="black" color={win ? c.goldDeep : loss ? c.accent : c.textSecondary} allowFontScaling={false}>{win ? 'V' : loss ? 'D' : 'N'}</Ink>
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                      <Text style={{ fontSize: 12, fontWeight: '900', color: c }}>{m.pct}%</Text>
-                      <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>({m.count})</Text>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Ink size={15} weight="extraBold" numberOfLines={1}>{x.adversaire_nom || 'Adversaire'}</Ink>
+                      <Ink size={12} color={c.textSecondary} numberOfLines={1}>{[longDate(x.date.slice(0, 10), true), x.methode ? METHOD_LABEL[x.methode] ?? x.methode : '', x.round && x.temps ? `round ${x.round}, ${x.temps}` : ''].filter(Boolean).join(', ')}</Ink>
                     </View>
-                  </View>
+                    <Icon name="chevron" size={18} color={c.textMuted} />
+                  </Pressable>
                 );
               })}
-            </View>
-          </View>
-        )}
-
-        {/* Filters */}
-        <View style={styles.filtersContainer}>
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              {
-                backgroundColor:
-                  filter === 'all' ? colors.accent : colors.backgroundCard,
-                borderColor: filter === 'all' ? colors.accent : colors.border,
-              },
-            ]}
-            onPress={() => handleFilterChange('all')}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                { color: filter === 'all' ? colors.textOnAccent : colors.textPrimary },
-              ]}
-            >
-              {t('palmares.filter.all', { count: combats.length })}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              {
-                backgroundColor:
-                  filter === 'victoire' ? '#4CAF50' : colors.backgroundCard,
-                borderColor: filter === 'victoire' ? '#4CAF50' : colors.border,
-              },
-            ]}
-            onPress={() => handleFilterChange('victoire')}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                { color: filter === 'victoire' ? '#FFFFFF' : colors.textPrimary },
-              ]}
-            >
-              {t('palmares.filter.victories', { count: record.victoires })}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              {
-                backgroundColor:
-                  filter === 'defaite' ? '#F44336' : colors.backgroundCard,
-                borderColor: filter === 'defaite' ? '#F44336' : colors.border,
-              },
-            ]}
-            onPress={() => handleFilterChange('defaite')}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                { color: filter === 'defaite' ? '#FFFFFF' : colors.textPrimary },
-              ]}
-            >
-              {t('palmares.filter.defeats', { count: record.defaites })}
-            </Text>
-          </TouchableOpacity>
+              <BigButton label="Ajouter un combat" icon="plus" onPress={add} style={{ marginTop: 6 }} />
+            </>
+          ) : null}
         </View>
-
-        {/* Fights List */}
-        <View style={styles.fightsList}>
-          {filteredCombats.length > 0 ? (
-            filteredCombats.map((combat, index) => (
-              <TouchableOpacity
-                key={combat.id}
-                style={[
-                  styles.fightCard,
-                  {
-                    backgroundColor: colors.backgroundCard,
-                    borderLeftColor:
-                      combat.resultat === 'victoire'
-                        ? '#4CAF50'
-                        : combat.resultat === 'defaite'
-                        ? '#F44336'
-                        : colors.textMuted,
-                  },
-                ]}
-                onPress={() => handleCombatPress(combat)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.fightHeader}>
-                  <View style={styles.fightHeaderLeft}>
-                    <Text style={[styles.fightNumber, { color: colors.textMuted }]}>
-                      {t('palmares.fight.number', { num: filteredCombats.length - index })}
-                    </Text>
-                    <View style={styles.fightDate}>
-                      <Calendar size={14} color={colors.textMuted} />
-                      <Text style={[styles.dateText, { color: colors.textMuted }]}>
-                        {new Date(combat.date).toLocaleDateString(locale, {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.resultBadge,
-                      {
-                        backgroundColor:
-                          combat.resultat === 'victoire'
-                            ? '#4CAF5020'
-                            : combat.resultat === 'defaite'
-                            ? '#F4433620'
-                            : `${colors.textMuted}20`,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.resultText,
-                        {
-                          color:
-                            combat.resultat === 'victoire'
-                              ? '#4CAF50'
-                              : combat.resultat === 'defaite'
-                              ? '#F44336'
-                              : colors.textMuted,
-                        },
-                      ]}
-                    >
-                      {combat.resultat === 'victoire'
-                        ? t('palmares.result.victory')
-                        : combat.resultat === 'defaite'
-                        ? t('palmares.result.defeat')
-                        : t('palmares.result.draw')}
-                    </Text>
-                  </View>
-                </View>
-
-                {combat.adversaire_nom && (
-                  <Text style={[styles.opponent, { color: colors.textPrimary }]}>
-                    vs {combat.adversaire_nom}
-                  </Text>
-                )}
-
-                {combat.methode && (
-                  <View style={styles.methodRow}>
-                    <Text style={[styles.method, { color: colors.textMuted }]}>
-                      {combat.methode.toUpperCase()}
-                    </Text>
-                    {combat.technique && (
-                      <>
-                        <Text style={[styles.separator, { color: colors.textMuted }]}>
-                          •
-                        </Text>
-                        <Text style={[styles.technique, { color: colors.textMuted }]}>
-                          {combat.technique}
-                        </Text>
-                      </>
-                    )}
-                  </View>
-                )}
-
-                {combat.round && combat.temps && (
-                  <Text style={[styles.timing, { color: colors.textMuted }]}>
-                    Round {combat.round} - {combat.temps}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Trophy size={64} color={colors.textMuted} />
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                {filter === 'all'
-                  ? t('palmares.empty.title.all')
-                  : filter === 'victoire'
-                  ? t('palmares.empty.title.victories')
-                  : filter === 'defaite'
-                  ? t('palmares.empty.title.defeats')
-                  : t('palmares.empty.title.draws')}
-              </Text>
-              <Text style={[styles.emptyText, { color: colors.textMuted, marginBottom: SPACING.xl }]}>
-                {filter === 'all'
-                  ? t('palmares.empty.description.all')
-                  : t('palmares.empty.description.filtered')}
-              </Text>
-              {filter === 'all' && (
-                <TouchableOpacity
-                  style={[styles.emptyStateButton, { backgroundColor: colors.accent }]}
-                  onPress={handleAddCombat}
-                  accessibilityLabel="Ajouter un combat"
-                  accessibilityRole="button"
-                >
-                  <Plus size={20} color={colors.textOnAccent} />
-                  <Text style={[styles.emptyStateButtonText, { color: colors.textOnAccent }]}>{t('palmares.empty.button')}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        </View>
-
-        <View style={{ height: 100 }} />
-        <PremiumTeaser variant="detail" title="Palmarès complet" />
       </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.accent }]}
-        onPress={handleAddCombat}
-        activeOpacity={0.8}
-        accessibilityLabel="Ajouter un combat"
-        accessibilityRole="button"
-      >
-        <Plus size={24} color={colors.textOnAccent} />
-      </TouchableOpacity>
-    </ScreenWrapper>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-
-  // Record Card
-  recordCard: {
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xl,
-    marginBottom: SPACING.lg,
-  },
-  recordHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
-  recordTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  recordStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: SPACING.lg,
-  },
-  statColumn: {
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  statIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statValue: {
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  winRateContainer: {
-    gap: SPACING.sm,
-  },
-  winRateBar: {
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  winRateFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  winRateText: {
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  // Filters
-  filtersContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginBottom: SPACING.lg,
-  },
-  filterChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    borderWidth: 2,
-  },
-  filterText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-
-  // Fights List
-  fightsList: {
-    gap: SPACING.md,
-  },
-  fightCard: {
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderLeftWidth: 4,
-  },
-  fightHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.sm,
-  },
-  fightHeaderLeft: {
-    flex: 1,
-    gap: SPACING.xs,
-  },
-  fightNumber: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  fightDate: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  dateText: {
-    fontSize: 11,
-    textTransform: 'capitalize',
-  },
-  resultBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
-  },
-  resultText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  opponent: {
-    fontSize: 17,
-    fontWeight: '800',
-    marginBottom: SPACING.xs,
-  },
-  methodRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.xs,
-  },
-  method: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  separator: {
-    fontSize: 13,
-  },
-  technique: {
-    fontSize: 13,
-  },
-  timing: {
-    fontSize: 12,
-  },
-
-  // Empty State
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xl * 3,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  emptyStateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: RADIUS.lg,
-    ...SHADOWS.md,
-  },
-  emptyStateButtonText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-
-  // FAB
-  fab: {
-    position: 'absolute',
-    bottom: SPACING.xl * 2,
-    right: SPACING.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});

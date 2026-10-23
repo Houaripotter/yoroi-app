@@ -284,7 +284,7 @@ export const TimetableView: React.FC<TimetableViewProps> = memo(({
                               // Si c'est un repos de journée complète, informer l'utilisateur
                               showPopup(
                                 'Jour de repos complet',
-                                `${day.label} est marqué en repos pour toute la journée. Cliquez sur la lune en haut pour retirer le repos.`,
+                                `${day.label} est marqué en repos pour toute la journée. Appuie sur la lune en haut pour retirer le repos.`,
                                 [{ text: 'OK', style: 'primary' }]
                               );
                             } else {

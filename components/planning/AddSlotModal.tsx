@@ -138,7 +138,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
       onSave();
       onClose();
     } catch (error) {
-      showPopup('Erreur', 'Impossible de sauvegarder le creneau.', [
+      showPopup('Oups', 'Le créneau n’a pas pu être enregistré.', [
         { text: 'OK', style: 'primary' },
       ]);
     } finally {
@@ -148,7 +148,7 @@ export const AddSlotModal: React.FC<AddSlotModalProps> = ({
 
   const handleDelete = () => {
     if (!editingSlot?.id) return;
-    showPopup('Supprimer', 'Supprimer ce creneau regulier ?', [
+    showPopup('Supprimer ce créneau ?', 'Il ne reviendra plus chaque semaine.', [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer',

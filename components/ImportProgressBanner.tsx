@@ -1,133 +1,154 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, DeviceEventEmitter } from 'react-native';
+/**
+ * Bandeau de progression pendant l'import des donnees (sauvegarde, Apple Sante).
+ * Extrait de l'ancienne barre d'onglets lors de la refonte.
+ */
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, DeviceEventEmitter, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Activity } from 'lucide-react-native';
+import { useI18n } from '@/lib/I18nContext';
+// 14 octobre 2026 (SANTÉ CONNEXION) : « Import en cours : 120 pesées, 45 séances », même si l'écran s'ouvre en cours d'import
+import { lireEtatSante } from '@/lib/v2/sante/importEtat';
+import { texteCompte, texteImport } from '@/lib/v2/sante/connexion';
+import type { CompteImport } from '@/lib/v2/sante/connexion';
+// 16 octobre 2026 : l'import de lancement (filet de securite toutes les 24 h) se fait en discret, sans ce bandeau
+import { importDiscretEnCours } from '@/lib/v2/sante/importDiscret';
 
-export const ImportProgressBanner: React.FC = () => {
-  const { colors } = useTheme();
+// ============================================
+// IMPORT PROGRESS BANNER
+// ============================================
+/** 18 octobre 2026 : bandeau coupe a la demande de Houari (mettre true pour le remettre) */
+const AFFICHER_BANDEAU = false;
+
+export function ImportProgressBanner() {
   const [visible, setVisible] = useState(false);
-  const [step, setStep] = useState('');
+  const [stepLabel, setStepLabel] = useState('');
   const [current, setCurrent] = useState(0);
   const [total, setTotal] = useState(7);
-  const opacity = useRef(new Animated.Value(0)).current;
-  const progress = useRef(new Animated.Value(0)).current;
+  const [compte, setCompte] = useState<CompteImport | null>(null);
+  const [fini, setFini] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-60)).current;
+  const { colors } = useTheme();
+  const { t } = useI18n();
+
+  const show = useCallback(() => {
+    setVisible(true);
+    Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
+  }, [slideAnim]);
+
+  const hide = useCallback(() => {
+    Animated.timing(slideAnim, { toValue: -60, duration: 300, useNativeDriver: true }).start(() => {
+      setVisible(false);
+      setCurrent(0);
+      setStepLabel('');
+    });
+  }, [slideAnim]);
+
+  // Import déjà commencé avant l'ouverture de l'écran (fin de l'onboarding)
+  useEffect(() => {
+    const e = lireEtatSante();
+    if (e.import === 'en_cours' && !importDiscretEnCours()) {
+      setStepLabel(e.etapeImport || t('import.starting'));
+      setCompte(e.compte);
+      show();
+    }
+  }, [show]);
 
   useEffect(() => {
-    const onStart = DeviceEventEmitter.addListener('YOROI_IMPORT_START', () => {
-      setStep('Démarrage...');
-      setCurrent(0);
-      setVisible(true);
-      Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-      Animated.timing(progress, { toValue: 0, duration: 0, useNativeDriver: false }).start();
-    });
+    const subs = [
+      DeviceEventEmitter.addListener('YOROI_IMPORT_START', () => {
+        if (importDiscretEnCours()) return;
+        setCurrent(0); setStepLabel(t('import.starting')); setTotal(7); setCompte(null); setFini(false);
+        show();
+      }),
+      DeviceEventEmitter.addListener('YOROI_IMPORT_PROGRESS', (data: { step: string; current: number; total: number; compte?: CompteImport }) => {
+        if (importDiscretEnCours()) return;
+        setStepLabel(data.step); setCurrent(data.current); setTotal(data.total);
+        if (data.compte) setCompte(data.compte);
+      }),
+      DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', (r?: CompteImport) => {
+        if (importDiscretEnCours()) return;
+        setStepLabel(t('import.importDoneFull')); setCurrent(7); setFini(true);
+        if (r && typeof r === 'object') setCompte(r);
+        show();
+        setTimeout(hide, 3200);
+      }),
+    ];
+    return () => subs.forEach(s => s.remove());
+  }, [show, hide]);
 
-    const onProgress = DeviceEventEmitter.addListener('YOROI_IMPORT_PROGRESS', (data: { step: string; current: number; total: number }) => {
-      setStep(data.step);
-      setCurrent(data.current);
-      setTotal(data.total);
-      Animated.timing(progress, {
-        toValue: data.current / data.total,
-        duration: 400,
-        useNativeDriver: false,
-      }).start();
-    });
+  // 18 octobre 2026, Houari : le bandeau d'import en haut de l'ecran au demarrage est supprime.
+  // L'import continue en arriere-plan comme avant, seul le bandeau ne s'affiche plus.
+  if (!AFFICHER_BANDEAU || !visible) return null;
 
-    const onDone = DeviceEventEmitter.addListener('YOROI_IMPORT_DONE', () => {
-      setStep('Import terminé !');
-      Animated.timing(progress, { toValue: 1, duration: 300, useNativeDriver: false }).start(() => {
-        setTimeout(() => {
-          Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }).start(() => {
-            setVisible(false);
-          });
-        }, 1500);
-      });
-    });
-
-    return () => {
-      onStart.remove();
-      onProgress.remove();
-      onDone.remove();
-    };
-  }, []);
-
-  if (!visible) return null;
-
-  const progressWidth = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
+  const progress = total > 0 ? current / total : 0;
 
   return (
-    <Animated.View style={[styles.banner, { backgroundColor: colors.backgroundCard, opacity }]}>
-      <View style={styles.row}>
-        <View style={[styles.iconCircle, { backgroundColor: '#10B98120' }]}>
-          <Activity size={14} color="#10B981" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Import Apple Santé en cours...
+    <Animated.View style={[bannerStyles.wrap, { transform: [{ translateY: slideAnim }] }]}>
+      <View style={[bannerStyles.bar, { backgroundColor: colors.backgroundCard || '#1A1A2E' }]}>
+        <View style={bannerStyles.row}>
+          <View style={bannerStyles.dot} />
+          <Text style={bannerStyles.label} numberOfLines={1}>
+            {texteCompte(compte) ? texteImport(!fini, compte) : fini ? stepLabel : t('tabLayout.importLabel').replace('{{step}}', stepLabel)}
           </Text>
-          <Text style={[styles.sub, { color: colors.textMuted }]}>
-            {step}{current > 0 ? ` (${current}/${total})` : ''}
-          </Text>
+          <Text style={bannerStyles.counter}>{current}/{total}</Text>
         </View>
-        <Text style={[styles.percent, { color: '#10B981' }]}>
-          {total > 0 ? Math.round((current / total) * 100) : 0}%
-        </Text>
-      </View>
-
-      <View style={[styles.track, { backgroundColor: colors.border }]}>
-        <Animated.View style={[styles.fill, { width: progressWidth }]} />
+        <View style={bannerStyles.trackBg}>
+          <Animated.View style={[bannerStyles.trackFill, { width: `${Math.round(progress * 100)}%` }]} />
+        </View>
       </View>
     </Animated.View>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  banner: {
-    marginHorizontal: 16,
-    marginBottom: 12,
+const bannerStyles = StyleSheet.create({
+  wrap: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    zIndex: 999,
+    paddingHorizontal: 12,
+    paddingTop: 52,
+  },
+  bar: {
     borderRadius: 14,
-    padding: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  iconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+  dot: {
+    width: 7, height: 7, borderRadius: 4,
+    backgroundColor: '#3B82F6',
+    marginRight: 8,
   },
-  title: {
+  label: {
+    flex: 1,
     fontSize: 13,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  counter: {
+    fontSize: 12,
     fontWeight: '700',
+    color: 'rgba(59,130,246,0.6)',
   },
-  sub: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  percent: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  track: {
+  trackBg: {
     height: 4,
     borderRadius: 2,
+    backgroundColor: 'rgba(59,130,246,0.15)',
     overflow: 'hidden',
   },
-  fill: {
+  trackFill: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#10B981',
+    backgroundColor: '#3B82F6',
   },
 });
+

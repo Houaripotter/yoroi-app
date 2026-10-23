@@ -14,7 +14,6 @@ export const CLUBS_DATA: Partner[] = [
     type: 'club',
     name: 'Team Sorel',
     sport: 'JJB / MMA',
-    photo: require('@/assets/partenaires/clubs/teamsorel.jpg'),
     bio: '', // À remplir
     address: '', // À remplir
     color: '#EF4444',
@@ -28,7 +27,6 @@ export const CLUBS_DATA: Partner[] = [
     type: 'club',
     name: 'Gracie Barra Olives',
     sport: 'JJB',
-    photo: require('@/assets/partenaires/clubs/gracie-barra-olives.jpg'),
     bio: '', // À remplir
     address: '', // À remplir
     color: '#EF4444',
@@ -39,7 +37,6 @@ export const CLUBS_DATA: Partner[] = [
     type: 'club',
     name: 'Marseille Fight Club',
     sport: 'MMA / Boxe',
-    photo: require('@/assets/partenaires/clubs/marseille-fight-club.jpg'),
     bio: '', // À remplir
     address: '', // À remplir
     color: '#F59E0B',
@@ -56,7 +53,6 @@ export const COACHS_DATA: Partner[] = [
     type: 'coach',
     name: 'Bodygator',
     specialty: 'Préparation Physique',
-    photo: require('@/assets/partenaires/coachs/bodygator.jpg'),
     bio: '', // À remplir
     color: '#10B981',
     links: [
@@ -69,7 +65,6 @@ export const COACHS_DATA: Partner[] = [
     type: 'coach',
     name: 'Fouad',
     specialty: 'Coach Sportif',
-    photo: require('@/assets/partenaires/coachs/fouad_action.jpg'),
     bio: '', // À remplir
     color: '#0EA5E9',
     links: [],
@@ -85,7 +80,6 @@ export const KINES_DATA: Partner[] = [
     type: 'kine',
     name: 'Younes',
     specialty: 'Kinésithérapeute du Sport',
-    photo: require('@/assets/partenaires/kines/younes.jpg'),
     bio: '', // À remplir
     color: '#8B5CF6',
     links: [

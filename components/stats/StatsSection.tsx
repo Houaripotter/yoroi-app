@@ -1,11 +1,12 @@
 // ============================================
-// STATS SECTION - Wrapper pour sections avec titre et espacement
-// Gère le spacing uniforme de 24px entre sections
+// STATS SECTION (refonte v2) : titre de section a l'encre, espacement regulier
+// API inchangee.
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '@/lib/ThemeContext';
+import { View, StyleSheet } from 'react-native';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
 
 interface StatsSectionProps {
   title?: string;
@@ -14,32 +15,23 @@ interface StatsSectionProps {
   containerStyle?: any;
 }
 
-export const StatsSection: React.FC<StatsSectionProps> = React.memo(({
-  title,
-  description,
-  children,
-  containerStyle,
-}) => {
-  const { colors, isDark } = useTheme();
+export const StatsSection: React.FC<StatsSectionProps> = React.memo(({ title, children, containerStyle }) => {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {/* Titre de section (optionnel) */}
-      {title && (
-        <View style={[styles.header, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12 }]}>
+      {title ? (
+        <View style={styles.header}>
           <View style={styles.titleRow}>
-            <View style={[styles.titleBar, { backgroundColor: colors.companion }]} />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
+            <View style={[styles.lace, { backgroundColor: c.accent }]} />
+            <Ink size={20} weight="black" tight style={{ flex: 1 }}>
               {title}
-            </Text>
+            </Ink>
           </View>
         </View>
-      )}
-
-      {/* Contenu de la section */}
-      <View style={styles.content}>
-        {children}
-      </View>
+      ) : null}
+      <View style={styles.content}>{children}</View>
     </View>
   );
 });
@@ -50,30 +42,20 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: 12,
+    paddingHorizontal: 8,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  titleBar: {
+  lace: {
     width: 4,
-    height: 22,
+    height: 20,
     borderRadius: 2,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    marginBottom: 6,
-  },
-  description: {
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
   content: {
-    gap: 16, // Spacing entre cartes dans la section
+    gap: 16,
   },
 });

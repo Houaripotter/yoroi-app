@@ -121,13 +121,13 @@ describe('REGRESSION: Inter-Module Interactions', () => {
       const points = await calculateTotalPoints(0, 0, 0, streakDays, 0);
       expect(points).toBe(POINTS_ACTIONS.streak_30);
 
-      // Rank progression
-      const rank = getCurrentRank(streakDays);
-      expect(rank.id).toBe('samurai'); // 30 days = Samouraï
+      // Le rang se calcule sur les points (lib/ranks.ts : seuils 0, 500, 2000, 5000, 10000), plus sur les jours
+      const rank = getCurrentRank(points);
+      expect(points).toBeGreaterThanOrEqual(rank.minPoints);
 
-      // Next rank
-      const next = getNextRank(streakDays);
-      expect(next?.id).toBe('ronin');
+      // Rang suivant : seuil au-dessus des points
+      const next = getNextRank(points);
+      if (next) expect(next.minPoints).toBeGreaterThan(points);
     });
 
     it('combined activities produce coherent progression', async () => {
@@ -140,11 +140,14 @@ describe('REGRESSION: Inter-Module Interactions', () => {
 
       const totalPoints = await calculateTotalPoints(weights, workouts, photos, streak, hydration);
       const level = getLevel(totalPoints);
-      const rank = getCurrentRank(streak);
+      const rank = getCurrentRank(totalPoints);
 
       expect(totalPoints).toBeGreaterThan(0);
       expect(level).toBeDefined();
-      expect(rank.id).toBe('samurai'); // 60 days > 30
+      // Rang coherent avec les points : le plus haut seuil atteint
+      expect(totalPoints).toBeGreaterThanOrEqual(rank.minPoints);
+      const next = getNextRank(totalPoints);
+      if (next) expect(next.minPoints).toBeGreaterThan(totalPoints);
     });
   });
 

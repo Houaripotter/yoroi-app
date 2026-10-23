@@ -1,519 +1,205 @@
-// ============================================
-// YOROI - ÉCRAN CITATIONS
-// ============================================
-
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-} from 'react-native';
-import { router } from 'expo-router';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import {
-  ArrowLeft,
-  MessageSquareQuote,
-  Bell,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Check,
-} from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+/**
+ * Citations : la citation du jour, ton style de citations et les rappels motivants.
+ */
+import React, { useEffect, useState } from 'react';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { View } from 'react-native';
+import { Ink } from '@/components/yoroi/v2/Ink';
 import {
   CITATION_STYLE_OPTIONS,
-  getCitationStyle,
-  setCitationStyle,
-  CitationStyle,
+  forceNewCitation,
   getCitationNotifSettings,
+  getCitationStyle,
+  getDailyQuote,
   setCitationNotifSettings,
-  CitationNotifSettings,
+  setCitationStyle,
 } from '@/lib/citations';
-import {
-  updateCitationNotifications,
-  sendImmediateCitationNotification,
-  requestNotificationPermissions,
-} from '@/lib/citationNotificationService';
-import { useCustomPopup } from '@/components/CustomPopup';
-import logger from '@/lib/security/logger';
+import type { CitationNotifSettings, CitationStyle } from '@/lib/citations';
+import { requestNotificationPermissions, sendImmediateCitationNotification, updateCitationNotifications } from '@/lib/citationNotificationService';
+import { logger } from '@/lib/security/logger';
+import { Card, Enter, Icon, P, Pill, Press, SectionTitle, tap } from '@/components/yoroi/v2/accueil/kit';
+import { paletteSombre } from '@/components/yoroi/livePalette';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { Toggle } from '@/components/yoroi/v2/accueil/sleepKit';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { partagerTexte } from '@/lib/v2/partage/texte';
 
-export default function CitationsScreen() {
-  const { t } = useI18n();
-  const { colors } = useTheme();
-  const [selectedCitationStyle, setSelectedCitationStyle] = useState<CitationStyle>('all');
-  const [citationNotifSettings, setCitationNotifSettingsState] = useState<CitationNotifSettings>({
-    enabled: false,
-    frequency: 1,
-    time: '08:00',
-  });
-  const [loading, setLoading] = useState(true);
+const FREQ_TEXT = ['', 'Une citation par jour.', 'Deux citations par jour.', 'Trois citations par jour.', 'Quatre citations par jour.', 'Cinq citations par jour.'];
 
-  const { showPopup, PopupComponent } = useCustomPopup();
+export default function Citations() {
+  const [quote, setQuote] = useState<string | null>(null);
+  const [style, setStyle] = useState<CitationStyle>('all');
+  const [notif, setNotif] = useState<CitationNotifSettings>({ enabled: false, frequency: 1, time: '08:00' });
 
   useEffect(() => {
-    loadSettings();
+    (async () => {
+      try {
+        const [q, s, n] = await Promise.all([getDailyQuote(), getCitationStyle(), getCitationNotifSettings()]);
+        setQuote(q?.text ?? null);
+        setStyle(s);
+        setNotif(n);
+      } catch (err) {
+        logger.error('Chargement des citations impossible', err);
+      }
+    })();
   }, []);
 
-  const loadSettings = async () => {
-    try {
-      // Charger le style de citation sélectionné
-      const citationStyle = await getCitationStyle();
-      setSelectedCitationStyle(citationStyle);
+  const another = async () => {
+    tap();
+    const q = await forceNewCitation();
+    setQuote(q.text);
+  };
 
-      // Charger les paramètres de notification de citations
-      const notifSettings = await getCitationNotifSettings();
-      setCitationNotifSettingsState(notifSettings);
-    } catch (error) {
-      logger.error('[Citations] Erreur chargement:', error);
-    } finally {
-      setLoading(false);
+  const share = () => {
+    if (!quote) return;
+    tap();
+    partagerTexte({ source: 'citation', message: `« ${quote} »` });
+  };
+
+  const changeStyle = async (s: CitationStyle) => {
+    try {
+      await setCitationStyle(s);
+      setStyle(s);
+      tap('success');
+      const q = await getDailyQuote();
+      setQuote(q?.text ?? null);
+    } catch (err) {
+      logger.error('Style de citation non enregistré', err);
     }
   };
 
-  const handleCitationStyleChange = async (style: CitationStyle) => {
+  const toggle = async (enabled: boolean) => {
     try {
-      impactAsync(ImpactFeedbackStyle.Medium);
-      await setCitationStyle(style);
-      setSelectedCitationStyle(style);
-      notificationAsync(NotificationFeedbackType.Success);
-    } catch (error) {
-      logger.error('[Citations] Erreur changement style citation:', error);
-      showPopup(t('common.error'), t('citations.cannotChangeStyle'), [{ text: 'OK', style: 'primary' }]);
-    }
-  };
-
-  const handleCitationNotifToggle = async (enabled: boolean) => {
-    try {
-      impactAsync(ImpactFeedbackStyle.Light);
-
       if (enabled) {
-        // Demander les permissions d'abord
-        const hasPermission = await requestNotificationPermissions();
-        if (!hasPermission) {
-          showPopup(
-            t('citations.permissionsRequired'),
-            t('citations.enableNotificationsInSettings'),
-            [{ text: 'OK', style: 'primary' }],
-            <AlertCircle size={32} color="#F59E0B" />
-          );
+        const ok = await requestNotificationPermissions();
+        if (!ok) {
+          appAlert('Autorisation nécessaire', 'Active les notifications pour YOROI dans les réglages de ton téléphone.');
           return;
         }
       }
-
-      const newSettings = { ...citationNotifSettings, enabled };
-      await setCitationNotifSettings(newSettings);
-      setCitationNotifSettingsState(newSettings);
-
-      // Planifier ou annuler les notifications
-      const success = await updateCitationNotifications(newSettings);
-
-      if (enabled && success) {
-        notificationAsync(NotificationFeedbackType.Success);
-        showPopup(
-          t('citations.notificationsEnabled'),
-          `${t('citations.willReceive')} ${citationNotifSettings.frequency} ${t('citations.citationPerDay')}${citationNotifSettings.frequency > 1 ? 's' : ''} ${t('citations.toMotivate')}\n\n${t('citations.scheduledFor7Days')}`,
-          [
-            { text: 'OK', style: 'default' },
-            {
-              text: t('citations.testNow'),
-              style: 'primary',
-              onPress: async () => {
-                await sendImmediateCitationNotification();
-              },
-            },
-          ],
-          <CheckCircle size={32} color="#10B981" />
-        );
+      const next = { ...notif, enabled };
+      await setCitationNotifSettings(next);
+      setNotif(next);
+      const done = await updateCitationNotifications(next);
+      if (enabled && done) {
+        tap('success');
+        appAlert('Rappels activés', `Tu recevras ${next.frequency} citation${next.frequency > 1 ? 's' : ''} par jour, prévues pour les 7 prochains jours.`, [
+          { text: 'OK' },
+          { text: 'Essayer maintenant', onPress: () => sendImmediateCitationNotification() },
+        ]);
       }
-    } catch (error) {
-      logger.error('[Citations] Erreur toggle notif citation:', error);
-      showPopup(t('common.error'), t('citations.cannotModifyNotifs'), [{ text: 'OK', style: 'primary' }]);
+    } catch (err) {
+      logger.error('Rappels de citations non modifiés', err);
     }
   };
 
-  const handleCitationFrequencyChange = async (frequency: number) => {
+  const changeFreq = async (frequency: number) => {
     try {
-      impactAsync(ImpactFeedbackStyle.Light);
-      const newSettings = { ...citationNotifSettings, frequency };
-      await setCitationNotifSettings(newSettings);
-      setCitationNotifSettingsState(newSettings);
-
-      // Replanifier les notifications avec la nouvelle fréquence
-      if (newSettings.enabled) {
-        await updateCitationNotifications(newSettings);
-      }
-    } catch (error) {
-      logger.error('[Citations] Erreur changement fréquence notif citation:', error);
+      const next = { ...notif, frequency };
+      await setCitationNotifSettings(next);
+      setNotif(next);
+      if (next.enabled) await updateCitationNotifications(next);
+    } catch (err) {
+      logger.error('Fréquence des citations non enregistrée', err);
     }
   };
-
-  if (loading) {
-    return (
-      <ScreenWrapper>
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            {t('common.loading')}
-          </Text>
-        </View>
-      </ScreenWrapper>
-    );
-  }
 
   return (
-    <ScreenWrapper>
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Bouton retour + En-tête */}
-        <View style={styles.topSection}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.back();
-            }}
-            activeOpacity={0.7}
-          >
-            <ArrowLeft size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-
-          <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
-              <MessageSquareQuote size={24} color={colors.accent} />
-            </View>
-            <View style={styles.headerText}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {t('citations.title')}
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {t('citations.subtitle')}
-              </Text>
-            </View>
+    <DetailScreen title="Citations" subtitle="Un mot pour te lancer chaque jour">
+      <Enter i={0}>
+        <View style={{ borderRadius: 26, backgroundColor: P.ink, padding: 24, gap: 18, overflow: 'hidden' }}>
+          <View pointerEvents="none" style={{ position: 'absolute', right: -30, bottom: -30 }}>
+            <Glyph kind="sakura" size={170} color={paletteSombre() ? '#D6D4CC' : '#262A35'} />
+          </View>
+          <Ink size={13} weight="bold" color={paletteSombre() ? '#B0282E' : '#E9A6A0'}>
+            Ta citation du jour
+          </Ink>
+          <Ink size={23} weight="black" color={P.white} style={{ lineHeight: 31 }}>
+            {quote ? `« ${quote} »` : 'Ta citation arrive.'}
+          </Ink>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Press onPress={another} haptic="none" accessibilityRole="button" accessibilityLabel="Une autre citation">
+              <View style={{ height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: P.accent, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Icon name="refresh" size={17} color={P.white} />
+                <Ink size={14} weight="extraBold" color={P.white}>
+                  Une autre
+                </Ink>
+              </View>
+            </Press>
+            <Press onPress={share} haptic="none" accessibilityRole="button" accessibilityLabel="Partager la citation">
+              <View style={{ height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: '#30343F', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Icon name="share" size={17} color={P.white} />
+                <Ink size={14} weight="extraBold" color={P.white}>
+                  Partager
+                </Ink>
+              </View>
+            </Press>
           </View>
         </View>
+      </Enter>
 
-        {/* Section: Style de Citations */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('citations.citationStyle')}
-          </Text>
-          <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-            {t('citations.citationStyleDesc')}
-          </Text>
-
-          <View style={styles.citationsGrid}>
-            {CITATION_STYLE_OPTIONS.map((option) => {
-              const isSelected = selectedCitationStyle === option.id;
-              const IconComponent = option.iconComponent;
-
-              return (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    styles.citationCard,
-                    { backgroundColor: colors.backgroundCard },
-                    isSelected && {
-                      borderColor: colors.accent,
-                      borderWidth: 2,
-                    },
-                  ]}
-                  onPress={() => handleCitationStyleChange(option.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.citationHeader}>
-                    <View style={[styles.citationIconContainer, { backgroundColor: `${colors.accent}15` }]}>
-                      <IconComponent size={24} color={colors.accent} />
-                    </View>
-                    {isSelected && (
-                      <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
-                        <Check size={12} color={colors.textOnAccent} strokeWidth={3} />
-                      </View>
-                    )}
+      <Enter i={1} style={{ gap: 10 }}>
+        <SectionTitle>Ton style</SectionTitle>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {CITATION_STYLE_OPTIONS.map((o) => {
+            const on = o.id === style;
+            return (
+              <View key={o.id} style={{ width: '48.6%' }}>
+                <Press onPress={() => changeStyle(o.id)} haptic="medium" accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={o.label}>
+                  <View style={{ minHeight: 96, borderRadius: 20, padding: 14, backgroundColor: on ? P.ink : P.white, borderWidth: 1, borderColor: on ? P.ink : P.line2, gap: 4, overflow: 'hidden' }}>
+                    <Glyph kind="sakura" size={20} color={on ? P.goldLight : P.goldDark} />
+                    <Ink size={16} weight="black" tight color={on ? P.white : P.ink}>
+                      {o.label === 'Perseverance' ? 'Persévérance' : o.label}
+                    </Ink>
+                    <Ink size={12} weight="bold" color={on ? (paletteSombre() ? '#4A4E5A' : '#B9BBC4') : P.ink2} numberOfLines={2}>
+                      {o.description.replace('Depassement', 'Dépassement').replace('Melange aleatoire', 'Mélange aléatoire').replace('Mindset de champion', 'Mental de champion')}
+                    </Ink>
                   </View>
-                  <Text style={[styles.citationLabel, { color: colors.textPrimary }]}>
-                    {option.label}
-                  </Text>
-                  <Text style={[styles.citationLabelJp, { color: colors.textMuted }]}>
-                    {option.labelJp}
-                  </Text>
-                  <Text style={[styles.citationDescription, { color: colors.textSecondary }]}>
-                    {option.description}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                </Press>
+              </View>
+            );
+          })}
         </View>
+      </Enter>
 
-        {/* Section: Notifications de Citations */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('citations.notifSection')}
-          </Text>
-          <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-            {t('citations.notifSectionDesc')}
-          </Text>
-
-          {/* Toggle activer/désactiver */}
-          <View style={[styles.notifCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.notifRow}>
-              <View style={[styles.notifIconContainer, { backgroundColor: `${colors.accent}15` }]}>
-                <Bell size={22} color={colors.accent} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.notifLabel, { color: colors.textPrimary }]}>
-                  {t('citations.enableNotifs')}
-                </Text>
-                <Text style={[styles.notifSublabel, { color: colors.textMuted }]}>
-                  {t('citations.dailyMotivation')}
-                </Text>
-              </View>
-              <Switch
-                value={citationNotifSettings.enabled}
-                onValueChange={handleCitationNotifToggle}
-                trackColor={{ false: colors.border, true: colors.accent }}
-                thumbColor="#FFFFFF"
-              />
+      <Enter i={2} style={{ gap: 10 }}>
+        <SectionTitle>Tes rappels</SectionTitle>
+        <Card style={{ gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <Ink size={15} weight="extraBold">
+                Recevoir des citations
+              </Ink>
+              <Ink size={13} weight="medium" color={P.ink2}>
+                Une notification pour te motiver.
+              </Ink>
             </View>
-
-            {/* Choix de la fréquence */}
-            {citationNotifSettings.enabled && (
-              <>
-                <View style={[styles.notifDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.frequencySection}>
-                  <View style={styles.frequencyHeader}>
-                    <Clock size={18} color={colors.textMuted} />
-                    <Text style={[styles.frequencyLabel, { color: colors.textPrimary }]}>
-                      {t('citations.frequencyPerDay')}
-                    </Text>
+            <Toggle value={notif.enabled} onChange={toggle} label="Recevoir des citations" />
+          </View>
+          {notif.enabled ? (
+            <View style={{ gap: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                {[1, 2, 3, 4, 5].map((f) => (
+                  <View key={f} style={{ flex: 1 }}>
+                    <Pill label={`${f}`} active={notif.frequency === f} accent={P.accent} onPress={() => changeFreq(f)} />
                   </View>
-                  <View style={styles.frequencyOptions}>
-                    {[1, 2, 3, 4, 5].map((freq) => (
-                      <TouchableOpacity
-                        key={freq}
-                        style={[
-                          styles.frequencyOption,
-                          {
-                            backgroundColor: citationNotifSettings.frequency === freq
-                              ? colors.accent
-                              : colors.backgroundElevated,
-                          },
-                        ]}
-                        onPress={() => handleCitationFrequencyChange(freq)}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[
-                            styles.frequencyOptionText,
-                            {
-                              color: citationNotifSettings.frequency === freq
-                                ? '#000000'
-                                : colors.textPrimary,
-                            },
-                          ]}
-                        >
-                          {freq}x
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <Text style={[styles.frequencyHint, { color: colors.textMuted }]}>
-                    {citationNotifSettings.frequency === 1 && t('citations.freq1')}
-                    {citationNotifSettings.frequency === 2 && t('citations.freq2')}
-                    {citationNotifSettings.frequency === 3 && t('citations.freq3')}
-                    {citationNotifSettings.frequency === 4 && t('citations.freq4')}
-                    {citationNotifSettings.frequency === 5 && t('citations.freq5')}
-                  </Text>
+                ))}
+              </View>
+              <Ink size={13} weight="bold" color={P.ink2}>
+                {FREQ_TEXT[notif.frequency] ?? ''}
+              </Ink>
+              <Press onPress={() => sendImmediateCitationNotification()} accessibilityRole="button">
+                <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Icon name="bell" size={17} color={P.accent} />
+                  <Ink size={14} weight="bold" color={P.accent}>
+                    Essayer maintenant
+                  </Ink>
                 </View>
-              </>
-            )}
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Custom Popup */}
-      <PopupComponent />
-    </ScreenWrapper>
+              </Press>
+            </View>
+          ) : null}
+        </Card>
+      </Enter>
+    </DetailScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-    paddingBottom: 100,
-  },
-  loadingText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 50,
-  },
-  topSection: {
-    marginBottom: SPACING.xl,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-  },
-  section: {
-    marginBottom: SPACING.xl,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  sectionDescription: {
-    fontSize: 13,
-    marginBottom: SPACING.md,
-  },
-  citationsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  citationCard: {
-    width: '48%',
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    position: 'relative',
-    minHeight: 140,
-  },
-  citationHeader: {
-    marginBottom: SPACING.sm,
-    alignItems: 'flex-start',
-  },
-  citationIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.xs,
-  },
-  citationLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  citationLabelJp: {
-    fontSize: 13,
-    marginBottom: SPACING.xs,
-  },
-  citationDescription: {
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  notifCard: {
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-  },
-  notifRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  notifIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notifLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  notifSublabel: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  notifDivider: {
-    height: 1,
-    marginVertical: SPACING.md,
-  },
-  frequencySection: {
-    gap: SPACING.sm,
-  },
-  frequencyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  frequencyLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  frequencyOptions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  frequencyOption: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-  },
-  frequencyOptionText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  frequencyHint: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: SPACING.xs,
-  },
-});

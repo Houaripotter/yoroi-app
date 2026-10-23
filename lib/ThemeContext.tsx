@@ -165,14 +165,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // Déterminer le mode réel (résolution de auto)
   // Exception : le thème "Blanc" est toujours forcé en light pour rester clair
-  const actualMode: 'dark' | 'light' = themeColor === 'blanc'
-    ? 'light'
-    : (themeMode === 'auto'
-      ? (systemColorScheme === 'light' ? 'light' : 'dark')
-      : themeMode);
+  // Refonte 2026 : tous les anciens ecrans passent sur le theme clair papier de riz,
+  // en attendant d'etre redessines. Les anciens choix de theme ne s'appliquent plus.
+  void systemColorScheme;
+  const actualMode = 'light' as 'dark' | 'light';
 
   // Obtenir le thème actuel (MÉMOÏSÉ pour éviter re-calcul)
-  const theme = useMemo(() => getTheme(themeColor, actualMode), [themeColor, actualMode]);
+  const theme = useMemo(() => getTheme('blanc', actualMode), [actualMode]);
   const colors = useMemo(() => theme.colors, [theme]);
 
   // Charger les préférences au démarrage
@@ -296,8 +295,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const contextValue = useMemo(() => ({
     theme,
     colors,
-    themeColor,
-    themeMode,
+    themeColor: 'blanc' as ThemeColor,
+    themeMode: 'light' as ThemeMode,
     actualMode,
     mode: actualMode,
     isDark: actualMode === 'dark',

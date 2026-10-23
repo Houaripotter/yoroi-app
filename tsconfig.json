@@ -2,11 +2,21 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "types": ["jest", "node"],
+    "types": [
+      "jest",
+      "node"
+    ],
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowJs": false
   },
+  "exclude": [
+    "node_modules",
+    "_archive_ancien_design_2026-10-09"
+  ],
   "include": [
     "**/*.ts",
     "**/*.tsx",

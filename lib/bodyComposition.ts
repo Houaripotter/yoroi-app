@@ -228,7 +228,14 @@ export const getLatestBodyComposition = async (): Promise<BodyComposition | null
 };
 
 // ✅ FIX: Écrire aussi dans Apple Health
-export const addBodyComposition = async (data: Omit<BodyComposition, 'id'>): Promise<BodyComposition> => {
+/**
+ * opts.skipHealthWrite : ne pas recopier la masse grasse dans Apple Santé ou Health Connect
+ * (la pesée v2 s'en charge elle-même, une seule écriture par pesée).
+ */
+export const addBodyComposition = async (
+  data: Omit<BodyComposition, 'id'>,
+  opts: { skipHealthWrite?: boolean } = {},
+): Promise<BodyComposition> => {
   try {
     const all = await getAllBodyCompositions();
     const newEntry: BodyComposition = {
@@ -239,9 +246,9 @@ export const addBodyComposition = async (data: Omit<BodyComposition, 'id'>): Pro
     await secureStorage.setItem(BODY_COMP_KEY, all);
 
     // ✅ NOUVEAU: Écrire dans Apple Health
-    if (data.bodyFatPercent && data.bodyFatPercent > 0) {
+    if (!opts.skipHealthWrite && data.bodyFatPercent && data.bodyFatPercent > 0) {
       try {
-        await healthConnect.writeBodyFat(data.bodyFatPercent);
+        await healthConnect.writeBodyFat(data.bodyFatPercent, String(data.date ?? '').slice(0, 10) || undefined);
         logger.info(`[BodyComposition] Body fat ${data.bodyFatPercent}% écrit dans Apple Health`);
       } catch (healthKitError) {
         logger.info('[BodyComposition] Écriture Apple Health échouée (permissions?)');

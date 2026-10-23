@@ -9,12 +9,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { secureStorage } from '@/lib/security/secureStorage';
 // Demo data removed - DEMO_MODE is disabled for production
 import logger from '@/lib/security/logger';
-import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, getTodayActivityRingsNative, getWorkoutEffortScoreNative, getNativeSleepSamples, getNativeSteps } from './yoroiHealthKit';
-import { saveHealthDataBatch, saveHealthData, addWeight, addTraining, updateTrainingDetails, getExistingHealthkitUUIDs, getTrainingsCount } from './database';
+import { demoActive } from '@/lib/v2/demo/garde';
+import { vientDeLaMontre } from '@/lib/v2/montre/idsRecus';
+import { getNativeWorkouts, runNativeDiagnostic, NativeDiagnosticResult, requestAllHealthPermissionsNative, requestHealthPermissionsForNative, getRequestStatusForNative, getTodayActivityRingsNative, getWorkoutEffortScoreNative, getNativeSleepSamples, getNativeSteps, getAppleWorkoutExtrasNative, getApplePreferredHeartRateZonesNative } from './yoroiHealthKit';
+import { appleHumidity, appleTemperature, parseAppleZones, recoveryFromSamples, splitsFromDistance, trunc1 } from './v2/seances/appleExtras';
+import type { AppleZones } from './v2/seances/appleExtras';
+import { saveHealthDataBatch, saveHealthData, addWeight, getWeights, addTraining, updateTrainingDetails, getExistingHealthkitUUIDs, getTrainingsCount } from './database';
+import { completerLieuImport } from '@/lib/v2/seances/importLieu';
 import type { HealthDataRecord, Training } from './database';
-import { addSleepEntryFromHealthKit } from './sleepService';
-import { saveNotification } from './notificationHistoryService';
-import { getEffectiveHRZones, calcZoneDurations } from './hrZones';
+import { addSleepEntryFromHealthKit, purgerNuitsHealthKit } from './sleepService';
+import { calculerNuits, cleNuit, mesuresPendantNuit, nuitPourJour } from './v2/sante/nuit';
+import type { EchantillonSommeil, MesureNuit, NuitCalculee } from './v2/sante/nuit';
+import { signalerSeanceTerminee } from './v2/notifications/seanceTerminee';
+import { getEffectiveHRZones, calcZoneDurations, ZONE_COLORS } from './hrZones';
+import { syncAppleZones, backfillAppleZones } from './appleZonesSync';
+import { mergeAppleZones, parseZoneTimes } from './v2/seances/appleZonesSync';
+import type { AppleZoneTimes } from './v2/seances/appleZonesSync';
+import { appleInt, appleKm, applePaceSec, hrStats, pausesFromEvents, simplifyRoute } from './v2/seances/workoutMath';
 
 // ============================================
 // MODE DÉMO - Active les fausses données
@@ -26,6 +37,11 @@ const DEMO_MODE = false;
 
 // Apple HealthKit (iOS) - Safe wrapper with Expo Go fallback
 import HealthKit, { isHealthKitAvailable, isRunningInExpoGo, healthKitDiagnostic, isMockMode } from './healthKit.wrapper';
+// Type seulement : vérifie à la compilation que chaque identifiant demandé existe dans le module
+import type { ObjectTypeIdentifier } from '@kingstinct/react-native-healthkit';
+// 14 octobre 2026 (SANTÉ CONNEXION) : source unique des types demandés
+import { IOS_ECRITURE_IPHONE, IOS_LECTURE_AVANCE, IOS_LECTURE_ESSENTIEL, ids } from './v2/sante/typesSante';
+import type { StatutDemande } from './v2/sante/connexion';
 
 // CRITIQUE: Ne pas importer directement depuis kingstinct au top-level pour éviter NitroModules error dans Expo Go
 let WorkoutActivityType: any = {};
@@ -37,6 +53,10 @@ if (!isRunningInExpoGo && isHealthKitAvailable) {
     logger.warn('Failed to load WorkoutActivityType dynamically');
   }
 }
+
+// Drapeau « rubriques complémentaires déjà proposées ». v2 (10 octobre 2026) : la liste a grandi,
+// on la repropose une fois. iOS n'affiche que les rubriques jamais proposées.
+const EXTENDED_ASKED_KEY = '@yoroi_health_extended_asked_v2';
 
 // ============================================
 // TYPES
@@ -86,7 +106,21 @@ export interface WorkoutDetails {
     durationSeconds: number;
     elevationGain: number;
     avgHeartRate?: number;
+    avgPowerWatts?: number;   // 14 octobre 2026 : puissance moyenne du kilomètre (course)
   }>;
+  // 14 octobre 2026 (zones_apple) : zones lues chez Apple (iOS 27), à la seconde près
+  appleZones?: AppleZones;
+  // 14 octobre 2026 (ios27) : zones de puissance velo d'Apple (iOS 27), en watts
+  applePowerZones?: AppleZoneTimes;
+  // Effort estimé par la montre (pas saisi par toi)
+  effortEstimated?: boolean;
+  // Mesures de course, moyenne et plage comme Forme
+  groundContactMs?: { avg: number; min?: number; max?: number };
+  strideLengthM?: { avg: number; min?: number; max?: number };
+  verticalOscCm?: { avg: number; min?: number; max?: number };
+  // Météo brute (°C non arrondis, humidité telle que lue) pour vérifier l'affichage
+  weatherTempRawC?: number;
+  weatherHumidityRaw?: number;
   // Météo
   weatherTemp?: number;       // Celsius
   weatherHumidity?: number;   // 0-100%
@@ -114,10 +148,17 @@ export interface WorkoutDetails {
   avgSpeedKmh?: number;
   // Puissance moyenne en watts (vélo, rameur)
   avgPowerWatts?: number;
-  // VO2 Max (ml/kg/min) — mesuré par Apple Watch lors des séances de course
+  // VO2 Max (ml/kg/min), mesuré par Apple Watch lors des séances de course
   vo2Max?: number;
   // Nombre de pas pendant la séance (marche, course, randonnée)
   stepsCount?: number;
+  // 14 octobre 2026 : valeurs exactes de l'entraînement Apple, pour afficher comme Forme
+  workoutStart?: string;       // ISO, début exact
+  workoutEnd?: string;         // ISO, fin exacte
+  durationSeconds?: number;    // durée d'entraînement Apple (HKWorkout.duration, pauses exclues)
+  distanceMeters?: number;     // distance brute en mètres
+  pauses?: Array<{ start: string; end: string }>; // pauses (HKWorkoutEvent pause et reprise)
+  city?: string;               // ville du départ, si le téléphone sait la nommer
 }
 
 export interface HealthData {
@@ -297,8 +338,9 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   'Samsung Health': 'samsung', 'com.sec.android.app.shealth': 'samsung',
   // Fitbit
   'Fitbit': 'fitbit', 'com.fitbit.FitbitMobile': 'fitbit',
+  'Google Health': 'fitbit', 'Fitbit Air': 'fitbit', 'Pixel Watch': 'fitbit',
   // Xiaomi
-  'Mi Fitness': 'xiaomi', 'Mi Fit': 'xiaomi',
+  'Mi Fitness': 'xiaomi', 'Mi Fit': 'xiaomi', 'Zepp Life': 'xiaomi', // Zepp Life = ex Mi Fit (bracelets et balances Xiaomi)
   'com.xiaomi.wearable': 'xiaomi', 'com.xiaomi.hm.health': 'xiaomi',
   // Renpho / Eufy / Omron
   'Renpho': 'renpho', 'RENPHO': 'renpho',
@@ -312,7 +354,7 @@ export const SOURCE_NAME_MAP: Record<string, string> = {
   'COROS': 'coros', 'com.coros.coros': 'coros', 'COROS PACE': 'coros',
   'COROS VERTIX': 'coros', 'COROS APEX': 'coros',
   // Amazfit / Zepp
-  'Amazfit': 'amazfit', 'Zepp': 'amazfit', 'Zepp Life': 'amazfit',
+  'Amazfit': 'amazfit', 'Zepp': 'amazfit',
   'com.huami.watch.hmwatchmanager': 'amazfit', 'Zepp App': 'amazfit',
   // Huawei
   'Huawei Health': 'huawei', 'com.huawei.health': 'huawei', 'HUAWEI Health': 'huawei',
@@ -375,6 +417,20 @@ const extractIOSSourceName = (sample: any): string => {
   return sample?.sourceRevision?.source?.name
     || sample?.device?.name
     || 'apple_health';
+};
+
+// Identifiants de YOROI (app.json : iOS com.houari.yoroi, Android com.houari24.yoroi).
+// Ce que YOROI écrit dans Apple Santé ne doit jamais revenir comme une pesée d'une autre source.
+const YOROI_BUNDLE_IDS = ['com.houari.yoroi', 'com.houari24.yoroi'];
+
+/** true si l'échantillon a été écrit par YOROI lui-même */
+export const isYoroiSample = (sample: any): boolean => {
+  // l'app Apple Watch YOROI (bundle ou identifiant externe d'une action deja recue) : deja dans YOROI
+  if (vientDeLaMontre(sample)) return true;
+  const bundle = String(sample?.sourceRevision?.source?.bundleIdentifier ?? sample?.sourceBundleId ?? '').toLowerCase();
+  if (bundle && YOROI_BUNDLE_IDS.some((b) => bundle === b || bundle.startsWith(`${b}.`))) return true;
+  const name = String(sample?.sourceRevision?.source?.name ?? sample?.sourceName ?? '');
+  return /yoroi/i.test(name);
 };
 
 // ============================================
@@ -748,6 +804,31 @@ const getWorkoutLabel = (activityType: string): string => {
 const localDateKey = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+/** Jour local d'un échantillon, ou le repli donné si la date manque ou est invalide */
+const sampleDay = (d: string | Date | undefined | null, fallback: string): string => {
+  if (!d) return fallback;
+  const x = new Date(d);
+  return isNaN(x.getTime()) ? fallback : localDateKey(x);
+};
+
+/** Instant à donner à un échantillon écrit pour le jour AAAA-MM-JJ : maintenant si c'est aujourd'hui, midi sinon */
+const instantForDay = (day?: string): Date => {
+  const now = new Date();
+  if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day) || day === localDateKey(now)) return now;
+  const [y, m, dd] = day.split('-').map(Number);
+  const at = new Date(y, m - 1, dd, 12, 0, 0, 0);
+  return at.getTime() > now.getTime() ? now : at;
+};
+
+
+/** Interieur ou dehors d'apres les metadonnees Apple (HKIndoorWorkout), sinon inconnu */
+function indoorDe(workout: any): boolean | undefined {
+  const raw = workout?.metadataIndoorWorkout ?? workout?.metadata?.HKIndoorWorkout ?? workout?.metadata?.HKMetadataKeyIndoorWorkout;
+  if (raw === true || raw === 1 || raw === '1') return true;
+  if (raw === false || raw === 0 || raw === '0') return false;
+  return undefined;
+}
+
 class HealthConnectService {
   private isInitialized = false;
   private syncStatus: SyncStatus = {
@@ -931,52 +1012,9 @@ class HealthConnectService {
   private async requestIOSPermissionsSimple(): Promise<void> {
     if (!HealthKit) throw new Error('HealthKit module not available');
 
-    const toRead = [
-      'HKQuantityTypeIdentifierBodyMass',
-      'HKQuantityTypeIdentifierBodyFatPercentage',
-      'HKQuantityTypeIdentifierLeanBodyMass',
-      'HKQuantityTypeIdentifierStepCount',
-      'HKQuantityTypeIdentifierDistanceWalkingRunning',
-      'HKQuantityTypeIdentifierDistanceCycling',
-      'HKQuantityTypeIdentifierDistanceSwimming',
-      'HKQuantityTypeIdentifierDistanceDownhillSnowSports',
-      'HKQuantityTypeIdentifierAppleExerciseTime',
-      'HKQuantityTypeIdentifierAppleStandTime',
-      'HKCategoryTypeIdentifierAppleStandHour',
-      'HKCategoryTypeIdentifierSleepAnalysis',
-      'HKQuantityTypeIdentifierDietaryWater',
-      'HKQuantityTypeIdentifierHeartRate',
-      'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
-      'HKQuantityTypeIdentifierRestingHeartRate',
-      'HKQuantityTypeIdentifierActiveEnergyBurned',
-      'HKQuantityTypeIdentifierBasalEnergyBurned',
-      'HKQuantityTypeIdentifierVO2Max',
-      'HKQuantityTypeIdentifierOxygenSaturation',
-      'HKQuantityTypeIdentifierRespiratoryRate',
-      'HKQuantityTypeIdentifierBodyTemperature',
-      'HKWorkoutTypeIdentifier',
-      // Route GPS des séances (indispensable pour la carte du parcours)
-      'HKSeriesTypeWorkoutRoute',
-      'HKQuantityTypeIdentifierBloodPressureSystolic',
-      'HKQuantityTypeIdentifierBloodPressureDiastolic',
-      'HKQuantityTypeIdentifierBloodGlucose',
-      'HKQuantityTypeIdentifierHeight',
-      'HKQuantityTypeIdentifierFlightsClimbed',
-      'HKCategoryTypeIdentifierMindfulSession',
-      // Température poignet sommeil (Apple Watch Series 8+)
-      'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
-      // Cadence course (pas/min, iOS 16+) et vélo (tours/min, iOS 17+)
-      'HKQuantityTypeIdentifierRunningCadence',
-      'HKQuantityTypeIdentifierCyclingCadence',
-      'HKQuantityTypeIdentifierCyclingSpeed',
-      'HKQuantityTypeIdentifierCyclingPower',
-    ];
-
-    const toShare = [
-      'HKQuantityTypeIdentifierBodyMass',
-      'HKQuantityTypeIdentifierDietaryWater',
-      'HKWorkoutTypeIdentifier',
-    ];
+    // 14 octobre 2026 (SANTÉ CONNEXION) : mêmes listes que la demande native (lib/v2/sante/typesSante.ts)
+    const toRead = ids(IOS_LECTURE_ESSENTIEL) as ObjectTypeIdentifier[];
+    const toShare = ids(IOS_ECRITURE_IPHONE) as any[];
 
     await HealthKit.requestAuthorization({ toRead, toShare });
   }
@@ -989,60 +1027,9 @@ class HealthConnectService {
         throw new Error('HealthKit module not available');
       }
 
-      const toRead = [
-        // Poids et composition corporelle
-        'HKQuantityTypeIdentifierBodyMass',
-        'HKQuantityTypeIdentifierBodyFatPercentage',
-        'HKQuantityTypeIdentifierLeanBodyMass',
-        // Activité
-        'HKQuantityTypeIdentifierStepCount',
-        'HKQuantityTypeIdentifierDistanceWalkingRunning',
-        'HKQuantityTypeIdentifierDistanceCycling',
-        'HKQuantityTypeIdentifierDistanceSwimming',
-        'HKQuantityTypeIdentifierDistanceDownhillSnowSports',
-        'HKQuantityTypeIdentifierAppleExerciseTime',
-        'HKQuantityTypeIdentifierAppleStandTime',
-        'HKCategoryTypeIdentifierAppleStandHour',
-        // Sommeil
-        'HKCategoryTypeIdentifierSleepAnalysis',
-        // Hydratation
-        'HKQuantityTypeIdentifierDietaryWater',
-        // Fréquence cardiaque
-        'HKQuantityTypeIdentifierHeartRate',
-        'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
-        'HKQuantityTypeIdentifierRestingHeartRate',
-        // Calories
-        'HKQuantityTypeIdentifierActiveEnergyBurned',
-        'HKQuantityTypeIdentifierBasalEnergyBurned',
-        // Métriques avancées
-        'HKQuantityTypeIdentifierVO2Max',
-        'HKQuantityTypeIdentifierOxygenSaturation',
-        'HKQuantityTypeIdentifierRespiratoryRate',
-        'HKQuantityTypeIdentifierBodyTemperature',
-        // Entraînements
-        'HKWorkoutTypeIdentifier',
-        // Routes GPS des séances (indispensable pour la carte du parcours)
-        'HKSeriesTypeWorkoutRoute',
-        // Pression artérielle
-        'HKQuantityTypeIdentifierBloodPressureSystolic',
-        'HKQuantityTypeIdentifierBloodPressureDiastolic',
-        // Glycémie
-        'HKQuantityTypeIdentifierBloodGlucose',
-        // Taille
-        'HKQuantityTypeIdentifierHeight',
-        // Étages montés
-        'HKQuantityTypeIdentifierFlightsClimbed',
-        // Pleine conscience
-        'HKCategoryTypeIdentifierMindfulSession',
-        // Température poignet sommeil (Apple Watch Series 8+)
-        'HKQuantityTypeIdentifierAppleSleepingWristTemperature',
-      ];
-
-      const toShare = [
-        'HKQuantityTypeIdentifierBodyMass',
-        'HKQuantityTypeIdentifierDietaryWater',
-        'HKWorkoutTypeIdentifier', // Permettre l'écriture des workouts
-      ];
+      // 14 octobre 2026 (SANTÉ CONNEXION) : mêmes listes que la demande native
+      const toRead = ids(IOS_LECTURE_ESSENTIEL) as ObjectTypeIdentifier[];
+      const toShare = ids(IOS_ECRITURE_IPHONE) as any[];
 
       // L'API HealthKit attend un objet { toRead, toShare }
       await HealthKit.requestAuthorization({ toRead, toShare });
@@ -1153,7 +1140,39 @@ class HealthConnectService {
     }
   }
 
-  async connect(): Promise<boolean> {
+  /**
+   * 14 octobre 2026 (SANTÉ CONNEXION) : une seule connexion à la fois. Le lancement, l'onboarding et les
+   * Réglages ne demandent plus en parallèle (deux fenêtres, deux synchros, roue qui tourne sans fin).
+   */
+  private connectEnCours: Promise<boolean> | null = null;
+  /** Zones d'Apple lues pendant la connexion, attendues par l'import (les séances les utilisent) */
+  private zonesAvantImport: Promise<unknown> | null = null;
+
+  /**
+   * sansSync : la connexion rend la main dès la fenêtre répondue (écrans avec une roue). L'import est
+   * lancé à part (lib/v2/sante/connecter.ts). Sans option : comportement d'avant (lancement de l'app).
+   */
+  async connect(opts?: { sansSync?: boolean }): Promise<boolean> {
+    // Une connexion du lancement est en cours (avec sa synchro) : un écran avec une roue n'attend que la fenêtre
+    if (this.connectEnCours) return opts?.sansSync && this.demandeEnCours ? this.demandeEnCours : this.connectEnCours;
+    let signal: (v: boolean) => void = () => {};
+    this.demandeEnCours = new Promise<boolean>((res) => (signal = res));
+    this.connectEnCours = this.connectUneFois(opts, (v) => signal(v))
+      .then((v) => {
+        signal(v);
+        return v;
+      })
+      .finally(() => {
+        this.connectEnCours = null;
+        this.demandeEnCours = null;
+      });
+    return this.connectEnCours;
+  }
+
+  /** Se résout dès la fenêtre répondue, sans attendre la synchro */
+  private demandeEnCours: Promise<boolean> | null = null;
+
+  private async connectUneFois(opts?: { sansSync?: boolean }, demandeFaite?: (v: boolean) => void): Promise<boolean> {
     // Mode démo : simuler une connexion réussie
     if (DEMO_MODE && __DEV__) {
       this.syncStatus.isConnected = true;
@@ -1163,6 +1182,8 @@ class HealthConnectService {
       return true;
     }
 
+    // 14 octobre 2026 (ios27) : premiere connexion (onboarding, reglage Sante) ou simple reconnexion au lancement
+    const wasConnected = this.syncStatus.isConnected === true;
     try {
       // Vérifier d'abord si le module natif est chargé
       if (!isHealthKitAvailable) {
@@ -1182,31 +1203,49 @@ class HealthConnectService {
         return false;
       }
 
-      // Demander les permissions via Swift natif (bypass Nitro v13 qui échoue sur iOS 26)
-      // requestAllHealthPermissionsNative() demande TOUS les types santé directement via HKHealthStore
-      const nativePermResult = await requestAllHealthPermissionsNative().catch(() => 'error:native failed');
-      logger.info('[HealthConnect] requestAllHealthPermissionsNative:', nativePermResult);
-
-      // Fallback Nitro si le module natif n'est pas encore disponible (premier build sans rebuild)
+      // Demande native (bypass Nitro v13 qui échoue sur iOS 26) avec la liste exacte de lib/v2/sante/typesSante.ts :
+      // seulement ce que YOROI lit ou écrit. Les mesures avancées sont demandées à part, sur appui.
+      let nativePermResult = await requestHealthPermissionsForNative(ids(IOS_LECTURE_ESSENTIEL), ids(IOS_ECRITURE_IPHONE)).catch(() => 'error:native failed');
+      logger.info('[HealthConnect] requestHealthPermissionsForNative:', nativePermResult);
       if (nativePermResult.startsWith('error:module absent')) {
-        try {
-          await this.requestIOSPermissionsSimple();
-          logger.info('[HealthConnect] requestAuthorization Nitro réussi (fallback)');
-        } catch (permError) {
-          logger.warn('[HealthConnect] requestAuthorization Nitro a échoué (fallback):', permError);
+        // Build natif plus ancien : ancienne demande native, puis Nitro
+        nativePermResult = await requestAllHealthPermissionsNative().catch(() => 'error:native failed');
+        if (nativePermResult.startsWith('error:module absent')) {
+          try {
+            await this.requestIOSPermissionsSimple();
+            logger.info('[HealthConnect] requestAuthorization Nitro réussi (fallback)');
+          } catch (permError) {
+            logger.warn('[HealthConnect] requestAuthorization Nitro a échoué (fallback):', permError);
+          }
         }
       }
 
       logger.info('[HealthConnect] Marquage comme connecté');
 
+      // iOS ne dit jamais si la lecture est refusée : « connecté » veut dire « fenêtre répondue ».
+      // L'écran vérifie ensuite par une vraie lecture (lectureReelle) avant d'afficher que c'est relié.
       this.syncStatus.isConnected = true;
       this.syncStatus.lastSync = new Date().toISOString();
       delete this.syncStatus.failureReason;
 
       await this.saveSyncStatus();
+      demandeFaite?.(true);
 
       logger.info('[HealthConnect] Connexion HealthKit réussie');
 
+      // 14 octobre 2026 (ios27) : sur iOS 27, tes zones d'Apple Sante deviennent tes zones actives, sans rien
+      // toucher (jamais si tu as saisi les tiennes). Avant l'import, pour que les seances les utilisent.
+      const zones = syncAppleZones({ force: !wasConnected })
+        .then((r) => logger.info('[HealthConnect] Zones Apple:', r))
+        .catch((zErr) => logger.warn('[HealthConnect] Zones Apple ignorées:', zErr));
+
+      if (opts?.sansSync) {
+        // L'écran n'attend ni les zones ni la synchro : l'import les attend (importFullHistory)
+        this.zonesAvantImport = zones;
+        return true;
+      }
+
+      await zones;
       // Lancer une première synchronisation avec retry automatique
       // IMPORTANT: on wrappe dans try/catch pour ne PAS annuler isConnected si syncWithRetry plante
       logger.info('[HealthConnect] Lancement de la synchronisation initiale...');
@@ -1233,6 +1272,56 @@ class HealthConnectService {
       await this.saveSyncStatus();
       return false;
     }
+  }
+
+  /**
+   * 14 octobre 2026 (SANTÉ CONNEXION) : la fenêtre d'Apple a-t-elle été répondue pour les types essentiels ?
+   * 'a_demander' : jamais répondue (quittée, ou nouveaux types). 'repondu' : répondue (Apple ne dit pas oui ou non).
+   */
+  async statutDemande(): Promise<StatutDemande> {
+    if (!isHealthKitAvailable || isRunningInExpoGo) return 'inconnu';
+    const read = ids(IOS_LECTURE_ESSENTIEL);
+    const share = ids(IOS_ECRITURE_IPHONE);
+    let r = await getRequestStatusForNative(read, share).catch(() => 'unknown' as const);
+    if (r === 'unknown' && HealthKit && typeof (HealthKit as any).getRequestStatusForAuthorization === 'function') {
+      try {
+        // @kingstinct v13 : 0 inconnu, 1 à demander, 2 inutile
+        const n = Number(await (HealthKit as any).getRequestStatusForAuthorization({ toRead: read, toShare: share }));
+        r = n === 1 ? 'shouldRequest' : n === 2 ? 'unnecessary' : 'unknown';
+      } catch {
+        r = 'unknown';
+      }
+    }
+    return r === 'shouldRequest' ? 'a_demander' : r === 'unnecessary' ? 'repondu' : 'inconnu';
+  }
+
+  /**
+   * 14 octobre 2026 (SANTÉ CONNEXION) : essai de lecture réel sur 60 jours (poids, pas, FC, séances, sommeil).
+   * Vrai seulement si au moins une donnée revient : c'est la seule preuve que l'accès est ouvert sur iOS.
+   */
+  async lectureReelle(): Promise<boolean> {
+    if (!HealthKit || !isHealthKitAvailable || isRunningInExpoGo) return false;
+    const fin = new Date();
+    const debut = new Date(fin.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const opts = this.createQueryOptions(debut, fin, { limit: 1 });
+    if (!opts) return false;
+    const essais: Array<() => Promise<unknown[] | null | undefined>> = [
+      () => HealthKit!.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', opts),
+      () => HealthKit!.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', opts),
+      () => HealthKit!.queryQuantitySamples('HKQuantityTypeIdentifierHeartRate', opts),
+      () => HealthKit!.queryQuantitySamples('HKQuantityTypeIdentifierActiveEnergyBurned', opts),
+      () => HealthKit!.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', opts),
+      () => HealthKit!.queryWorkoutSamples({ filter: { date: { startDate: debut, endDate: fin } }, limit: 1 } as any),
+    ];
+    for (const essai of essais) {
+      try {
+        const r = await this.withTimeout(Promise.resolve(essai()), 4000);
+        if (Array.isArray(r) && r.length > 0) return true;
+      } catch {
+        /* type refusé ou vide : on essaie le suivant */
+      }
+    }
+    return false;
   }
 
   // Vérifier si on peut réellement lire des données
@@ -1364,8 +1453,9 @@ class HealthConnectService {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+      // Plusieurs échantillons : on saute ceux écrits par YOROI (pesée manuelle recopiée)
       const queryOptions = this.createQueryOptions(fromDate, new Date(), {
-        limit: 1,
+        limit: 30,
         ascending: false,
         unit: 'kg',
       });
@@ -1374,9 +1464,9 @@ class HealthConnectService {
       }
 
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', queryOptions);
+      const latest = (samples ?? []).find((x: any) => !isYoroiSample(x));
 
-      if (samples && samples.length > 0) {
-        const latest = samples[0];
+      if (latest) {
         return {
           value: Math.round(latest.quantity * 10) / 10,
           unit: 'kg',
@@ -1395,7 +1485,7 @@ class HealthConnectService {
 
       try {
         // 1. Chemin natif Swift en PRIORITÉ (HKStatisticsCollectionQuery, dédoublonné,
-        //    fiable sur iOS 26 — même pattern que getNativeWorkouts)
+        //    fiable sur iOS 26, même pattern que getNativeWorkouts)
         const nativeSteps = await getNativeSteps(1).catch(() => null);
         if (nativeSteps !== null && nativeSteps.length > 0) {
           const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -1500,7 +1590,7 @@ class HealthConnectService {
    * Retourne les samples au format Nitro pour compatibilité avec le code existant.
    */
   private async querySleepSamplesUnified(fromDate: Date, toDate: Date, limit: number = 5000): Promise<any[] | null> {
-    // 1. Chemin natif Swift — même pattern que getNativeWorkouts (bypass Nitro v13)
+    // 1. Chemin natif Swift, même pattern que getNativeWorkouts (bypass Nitro v13)
     const daysSpan = Math.max(1, Math.ceil((Date.now() - fromDate.getTime()) / 86400000));
     const native = await getNativeSleepSamples(daysSpan).catch(() => null);
     if (native !== null) {
@@ -1519,7 +1609,7 @@ class HealthConnectService {
       return mapped;
     }
 
-    // 2. Fallback Nitro (ancien chemin — peut échouer silencieusement sur iOS 26)
+    // 2. Fallback Nitro (ancien chemin, peut échouer silencieusement sur iOS 26)
     logger.warn('[HealthKit] Module natif sommeil absent, fallback Nitro');
     if (!HealthKit) return null;
     const options = this.createQueryOptions(fromDate, toDate, { limit });
@@ -1533,148 +1623,112 @@ class HealthConnectService {
     }
   }
 
+  /** Echantillons de sommeil (format Nitro ou natif) vers le format du calcul de nuit */
+  private versEchantillonsSommeil(samples: any[]): EchantillonSommeil[] {
+    const VAL: Record<string, number> = { inBed: 0, InBed: 0, asleep: 1, Asleep: 1, asleepUnspecified: 1, awake: 2, Awake: 2, core: 3, Core: 3, asleepCore: 3, deep: 4, Deep: 4, asleepDeep: 4, rem: 5, REM: 5, asleepREM: 5 };
+    const out: EchantillonSommeil[] = [];
+    for (const s of samples || []) {
+      const debut = new Date(s.startDate).getTime();
+      const fin = new Date(s.endDate).getTime();
+      const valeur = typeof s.value === 'number' ? s.value : VAL[String(s.value)];
+      if (!Number.isFinite(debut) || !Number.isFinite(fin) || valeur === undefined) continue;
+      out.push({
+        debut,
+        fin,
+        valeur,
+        source: s.sourceRevision?.source?.name || s.sourceName || '',
+        bundle: s.sourceRevision?.source?.bundleIdentifier || '',
+        appareil: s.device?.name || s.device?.model || '',
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Derniere nuit, calculee comme l'app Sante (lib/v2/sante/nuit.ts, 16 octobre 2026) :
+   * une seule source (montre d'abord), chevauchements comptes une fois, eveils entre le premier et le dernier sommeil,
+   * somme en millisecondes et arrondi une seule fois.
+   */
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
     return this.queryHealthKit(async () => {
       const now = new Date();
-      // FIX: Regarder 48h en arrière au lieu de 24h pour capturer le sommeil de la nuit précédente
       const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-
-      logger.info('[HealthKit] Requête sommeil: de', twoDaysAgo.toISOString(), 'à', now.toISOString());
-
       const samples = await this.querySleepSamplesUnified(twoDaysAgo, now, 500);
-
       logger.info('[HealthKit] Échantillons sommeil bruts:', samples?.length || 0);
-
-      if (samples && samples.length > 0) {
-        // FIX: Filtrer les estimations automatiques iPhone, garder Apple Watch + apps tierces
-        const filteredSamples = samples.filter((s: any) => {
-          const sourceName = (s.sourceRevision?.source?.name || '').toLowerCase();
-          const deviceName = (s.device?.name || '').toLowerCase();
-          const bundleId = s.sourceRevision?.source?.bundleIdentifier || '';
-
-          // TOUJOURS rejeter les estimations automatiques iPhone
-          if (bundleId.includes('sleep-analysis-time')) return false;
-
-          // Si c'est une app tierce (pas apple), toujours accepter
-          if (!bundleId.includes('com.apple.health')) return true;
-
-          // Pour com.apple.health: accepter si source OU device contient "watch"
-          const isFromWatch = sourceName.includes('watch') || deviceName.includes('watch');
-          return isFromWatch;
-        });
-
-        logger.info('[HealthKit] Echantillons sommeil: bruts=', samples.length, ', filtres=', filteredSamples.length);
-
-        // Si pas de vraies données, utiliser TOUTES les données
-        const samplesToUse = filteredSamples.length > 0 ? filteredSamples : samples;
-
-        let totalMinutes = 0;
-        let awakeMinutes = 0;
-        let remMinutes = 0;
-        let coreMinutes = 0;
-        let deepMinutes = 0;
-        let inBedMinutes = 0;
-
-        // Trier les échantillons par date de début
-        const sortedSamples = [...samplesToUse].sort((a: any, b: any) =>
-          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-        );
-
-        // FIX: Grouper par nuit (prendre la nuit la plus récente)
-        const lastNightStart = new Date(now);
-        lastNightStart.setHours(18, 0, 0, 0); // 18h hier = début de la "nuit"
-        lastNightStart.setDate(lastNightStart.getDate() - 1);
-
-        const lastNightSamples = sortedSamples.filter((s: any) => {
-          const sampleStart = new Date(s.startDate).getTime();
-          return sampleStart >= lastNightStart.getTime();
-        });
-
-        const finalSamples = lastNightSamples.length > 0 ? lastNightSamples : sortedSamples;
-
-        if (finalSamples.length === 0) {
-          logger.info('[HealthKit] Aucun échantillon de sommeil pour la nuit dernière');
-          return null;
-        }
-
-        // Pour l'heure de coucher : ignorer les échantillons "InBed" (value=0)
-        // et "Awake" (value=2) pour trouver quand l'utilisateur s'est vraiment endormi
-        const firstAsleepSample = finalSamples.find((s: any) => s.value !== 0 && s.value !== 2);
-        const startTime = firstAsleepSample ? firstAsleepSample.startDate : finalSamples[0].startDate;
-        // Pour l'heure de réveil : dernier échantillon endormi (pas InBed)
-        const lastAsleepSample = [...finalSamples].reverse().find((s: any) => s.value !== 0 && s.value !== 2);
-        const endTime = lastAsleepSample ? lastAsleepSample.endDate : finalSamples[finalSamples.length - 1].endDate;
-
-        // Detecter si on a des phases detaillees (value=3,4,5) pour eviter le double comptage
-        // Apple Health envoie soit value=1 (Asleep = total), soit value=3+4+5 (phases detaillees)
-        // Si les deux existent, value=1 est un duplicat qu'il faut ignorer
-        const hasDetailedPhases = finalSamples.some((s: any) => s.value === 3 || s.value === 4 || s.value === 5);
-
-        finalSamples.forEach((s: any) => {
-          const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
-          if (duration <= 0) return;
-
-          // HKCategoryValueSleepAnalysis: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
-          switch (s.value) {
-            case 0:
-              inBedMinutes += duration;
-              break;
-            case 1: // Asleep (total global - ignorer si on a les phases detaillees)
-              if (!hasDetailedPhases) {
-                totalMinutes += duration;
-              }
-              break;
-            case 3: // Core
-              coreMinutes += duration;
-              totalMinutes += duration;
-              break;
-            case 4: // Deep
-              deepMinutes += duration;
-              totalMinutes += duration;
-              break;
-            case 5: // REM
-              remMinutes += duration;
-              totalMinutes += duration;
-              break;
-            case 2: // Awake
-              awakeMinutes += duration;
-              break;
-          }
-        });
-
-        logger.info('[HealthKit] Sommeil calculé:', {
-          total: Math.round(totalMinutes),
-          deep: Math.round(deepMinutes),
-          rem: Math.round(remMinutes),
-          core: Math.round(coreMinutes),
-          awake: Math.round(awakeMinutes),
-        });
-
-        // Limite de securite : entre 30min (sieste) et 16h
-        if (totalMinutes < 30 || totalMinutes > 960) {
-          logger.info('[HealthKit] Sommeil rejete (durée invalide):', totalMinutes, 'minutes');
-          return null;
-        }
-
-        const result: HealthData['sleep'] = {
-          startTime: new Date(startTime).toISOString(),
-          endTime: new Date(endTime).toISOString(),
-          duration: Math.round(totalMinutes),
-          quality: this.getSleepQuality(totalMinutes),
-          phases: {
-            deep: Math.round(deepMinutes),
-            rem: Math.round(remMinutes),
-            core: Math.round(coreMinutes),
-            awake: Math.round(awakeMinutes),
-            inBed: Math.round(inBedMinutes),
-          },
-        };
-        return result;
+      if (!samples || samples.length === 0) {
+        logger.info('[HealthKit] Aucune donnée de sommeil trouvée');
+        return null;
       }
-
-      logger.info('[HealthKit] Aucune donnée de sommeil trouvée');
-      return null;
+      const nuits = calculerNuits(this.versEchantillonsSommeil(samples)).filter((n) => n.totalMinutes >= 30 && n.totalMinutes <= 960);
+      const n = nuits[nuits.length - 1];
+      if (!n) return null;
+      logger.info('[HealthKit] Sommeil calculé:', { cle: n.cle, total: n.totalMinutes, minutes: n.minutes, source: n.source });
+      return {
+        startTime: new Date(n.debut).toISOString(),
+        endTime: new Date(n.fin).toISOString(),
+        duration: n.totalMinutes,
+        quality: this.getSleepQuality(n.totalMinutes),
+        source: n.source,
+        phases: {
+          deep: n.minutes.profond,
+          rem: n.minutes.paradoxal,
+          core: n.minutes.leger + n.minutes.endormi,
+          awake: n.minutes.eveil,
+          inBed: n.auLitMinutes,
+        },
+      };
     }, 'sleep');
+  }
+
+  /**
+   * Une nuit en detail pour l'ecran « Ta nuit » : phases a la seconde, et pendant le sommeil
+   * le coeur, la respiration et la temperature du poignet (du premier au dernier echantillon de sommeil).
+   * jour : AAAA-MM-JJ du reveil ; coucher : HH:MM note, pour retrouver une nuit rangee sous l'ancienne cle.
+   */
+  async getSleepNight(jour: string, coucher?: string): Promise<{ nuit: NuitCalculee; coeur: MesureNuit | null; respiration: MesureNuit | null; temperature: MesureNuit | null } | null> {
+    try {
+      const base = new Date(jour.slice(0, 10) + 'T12:00:00');
+      if (isNaN(base.getTime())) return null;
+      const from = new Date(base);
+      from.setDate(from.getDate() - 2);
+      from.setHours(18, 0, 0, 0);
+      const to = new Date(base);
+      to.setDate(to.getDate() + 1);
+      to.setHours(18, 0, 0, 0);
+      const now = new Date();
+      const raw = await this.querySleepSamplesUnified(from, to > now ? now : to, 5000);
+      if (!raw || raw.length === 0) return null;
+      const nuit = nuitPourJour(calculerNuits(this.versEchantillonsSommeil(raw)), jour.slice(0, 10), coucher);
+      if (!nuit) return null;
+      const [coeur, respiration, temperature] = await Promise.all([
+        this.mesuresDeLaNuit('HKQuantityTypeIdentifierHeartRate', 'count/min', nuit, { min: 25, max: 230 }),
+        this.mesuresDeLaNuit('HKQuantityTypeIdentifierRespiratoryRate', 'count/min', nuit, { min: 4, max: 60, decimales: 1 }),
+        this.mesuresDeLaNuit('HKQuantityTypeIdentifierAppleSleepingWristTemperature', 'degC', nuit, { min: 25, max: 45, decimales: 1 }),
+      ]);
+      return { nuit, coeur, respiration, temperature };
+    } catch (e) {
+      logger.warn('[HealthKit] getSleepNight impossible:', e);
+      return null;
+    }
+  }
+
+  private async mesuresDeLaNuit(id: string, unit: string, nuit: NuitCalculee, opts: { min: number; max: number; decimales?: number }): Promise<MesureNuit | null> {
+    if (!HealthKit) return null;
+    try {
+      const o = this.createQueryOptions(new Date(nuit.debut), new Date(nuit.fin), { limit: 0, ascending: true, unit });
+      if (!o) return null;
+      const r: any[] = (await HealthKit.queryQuantitySamples(id as any, o)) || [];
+      const ech = r.map((x: any) => ({
+        debut: new Date(x.startDate).getTime(),
+        valeur: Number(x.quantity),
+        source: x.sourceRevision?.source?.name || '',
+        bundle: x.sourceRevision?.source?.bundleIdentifier || '',
+        appareil: x.device?.name || x.device?.model || '',
+      }));
+      return mesuresPendantNuit(ech, nuit.debut, nuit.fin, opts);
+    } catch {
+      return null;
+    }
   }
 
   async getLatestWeight(): Promise<HealthData['weight'] | null> {
@@ -2048,7 +2102,7 @@ class HealthConnectService {
       d.setDate(d.getDate() - i);
       const end = new Date(d);
       end.setHours(23, 59, 59, 999);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = localDateKey(d);
       days.push({ date: dateStr, calories: 0, exerciseMin: 0, standH: 0 });
     }
 
@@ -2069,21 +2123,21 @@ class HealthConnectService {
 
       if (calRes.status === 'fulfilled' && calRes.value) {
         for (const s of calRes.value) {
-          const d = (s.startDate || '').slice(0, 10);
+          const d = s.startDate ? localDateKey(new Date(s.startDate)) : '';
           const entry = days.find(x => x.date === d);
           if (entry) entry.calories += Math.round(s.quantity || 0);
         }
       }
       if (exRes.status === 'fulfilled' && exRes.value) {
         for (const s of exRes.value) {
-          const d = (s.startDate || '').slice(0, 10);
+          const d = s.startDate ? localDateKey(new Date(s.startDate)) : '';
           const entry = days.find(x => x.date === d);
           if (entry) entry.exerciseMin += Math.round(s.quantity || 0);
         }
       }
       if (stRes.status === 'fulfilled' && stRes.value) {
         for (const s of stRes.value) {
-          const d = (s.startDate || '').slice(0, 10);
+          const d = s.startDate ? localDateKey(new Date(s.startDate)) : '';
           const entry = days.find(x => x.date === d);
           if (entry) entry.standH += 1; // chaque sample = 1h debout
         }
@@ -2224,39 +2278,48 @@ class HealthConnectService {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+      // Toutes les sources (Withings, Health Mate, autres balances), sauf ce que YOROI a écrit
       const queryOptions = this.createQueryOptions(fromDate, new Date(), {
-        limit: 1,
+        limit: 30,
         ascending: false,
       });
       if (!queryOptions) {
         return null;
       }
+      const leanOptions = this.createQueryOptions(fromDate, new Date(), {
+        limit: 30,
+        ascending: false,
+        unit: 'kg',
+      });
 
       // UTILISER Promise.allSettled POUR NE PAS BLOQUER SI 1 ÉCHOUE
       const results = await Promise.allSettled([
         HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyFatPercentage', queryOptions),
-        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierLeanBodyMass', queryOptions),
+        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierLeanBodyMass', leanOptions ?? queryOptions),
       ]);
 
-      const fatSamples = results[0].status === 'fulfilled' ? results[0].value : [];
-      const leanSamples = results[1].status === 'fulfilled' ? results[1].value : [];
+      const fatSamples: any[] = results[0].status === 'fulfilled' ? (results[0].value as any[]) ?? [] : [];
+      const leanSamples: any[] = results[1].status === 'fulfilled' ? (results[1].value as any[]) ?? [] : [];
+      const fat = fatSamples.find((x: any) => !isYoroiSample(x));
+      const lean = leanSamples.find((x: any) => !isYoroiSample(x));
 
-      const bodyFatPercentage = fatSamples && fatSamples.length > 0
-        ? Math.round(fatSamples[0].quantity * 100) // Converti en %
+      // Apple Santé donne un ratio (0,184) : 18,4 % au dixième près
+      const bodyFatPercentage = fat && Number.isFinite(Number(fat.quantity))
+        ? Math.round(Number(fat.quantity) * 1000) / 10
         : undefined;
 
-      const leanBodyMass = leanSamples && leanSamples.length > 0
-        ? Math.round(leanSamples[0].quantity * 10) / 10
+      const leanBodyMass = lean && Number.isFinite(Number(lean.quantity))
+        ? Math.round(Number(lean.quantity) * 10) / 10
         : undefined;
 
       if (bodyFatPercentage !== undefined || leanBodyMass !== undefined) {
-        // Source: prefer fat sample, then lean sample
-        const sourceSample = (fatSamples && fatSamples.length > 0) ? fatSamples[0]
-          : (leanSamples && leanSamples.length > 0) ? leanSamples[0] : null;
+        // Source et date : celles de l'échantillon de masse grasse, sinon de masse maigre
+        const sourceSample = fat ?? lean ?? null;
+        const sampleDate = sourceSample?.startDate ? new Date(sourceSample.startDate) : null;
         return {
           bodyFatPercentage,
           leanBodyMass,
-          date: new Date().toISOString(),
+          date: sampleDate && !isNaN(sampleDate.getTime()) ? sampleDate.toISOString() : new Date().toISOString(),
           source: sourceSample ? normalizeSourceName(extractIOSSourceName(sourceSample)) : undefined,
         };
       }
@@ -2343,7 +2406,7 @@ class HealthConnectService {
       // Grouper par jour, moyenne par jour
       const byDay: { [key: string]: number[] } = {};
       samples.forEach((s: any) => {
-        const date = new Date(s.startDate).toISOString().split('T')[0];
+        const date = localDateKey(new Date(s.startDate));
         if (!byDay[date]) byDay[date] = [];
         // HealthKit retourne mmol/L, convertir en mg/dL (* 18.0182)
         byDay[date].push(s.quantity * 18.0182);
@@ -2480,6 +2543,9 @@ class HealthConnectService {
     const mapped: any[] = [];
     for (const workout of rawWorkouts) {
       try {
+        // Les séances que YOROI a lui-même écrites dans Apple Santé sont déjà dans YOROI :
+        // les réimporter créait un doublon dans ton historique (même séance, autre identifiant)
+        if (isYoroiSample(workout)) continue;
         const startRaw = workout.startDate;
         const endRaw = workout.endDate;
         const startDate = startRaw instanceof Date ? startRaw : new Date(String(startRaw));
@@ -2509,7 +2575,8 @@ class HealthConnectService {
         let hrMax: number | undefined;
         try {
           if (typeof workout.getStatistic === 'function') {
-            const hrStat = await workout.getStatistic('heartRate', 'count/min');
+            // Identifiant complet : « heartRate » seul n'existe pas en v13 et faisait échouer l'appel (FC jamais importée)
+            const hrStat = await workout.getStatistic('HKQuantityTypeIdentifierHeartRate', 'count/min');
             if (hrStat) {
               const avg = this.extractQuantityValue(hrStat.averageQuantity);
               const max = this.extractQuantityValue(hrStat.maximumQuantity);
@@ -2528,11 +2595,13 @@ class HealthConnectService {
           startDate: startStr,
           endDate: endStr,
           duration: durationMin,
-          distance: distanceMeters != null ? Math.round(distanceMeters / 1000 * 10) / 10 : undefined,
-          calories: caloriesKcal != null ? Math.round(caloriesKcal) : undefined,
+          distance: distanceMeters != null ? appleKm(distanceMeters) : undefined,
+          calories: caloriesKcal != null ? appleInt(caloriesKcal) : undefined,
           averageHeartRate: hrAvg,
           maxHeartRate: hrMax,
           source: workout.sourceRevision?.source?.name || undefined,
+          // 17 octobre 2026 : seance en interieur ou dehors selon Apple (absent : inconnu)
+          indoor: indoorDe(workout),
         });
       } catch (mapErr) {
         logger.warn('[HealthKit] Erreur mapping workout individuel:', mapErr);
@@ -2594,7 +2663,7 @@ class HealthConnectService {
               workoutActivityType: w.workoutActivityType,
               totalDistance: w.totalDistance > 0 ? { quantity: w.totalDistance, unit: 'm' } : undefined,
               totalEnergyBurned: w.totalEnergyBurned > 0 ? { quantity: w.totalEnergyBurned, unit: 'kcal' } : undefined,
-              sourceRevision: { source: { name: w.sourceName } },
+              sourceRevision: { source: { name: w.sourceName, bundleIdentifier: (w as any).sourceBundleId } },
             }));
           }
         } catch (e: any) {
@@ -2615,6 +2684,63 @@ class HealthConnectService {
 
   async getWorkouts(): Promise<HealthData['workouts'] | null> {
     return this.getIOSWorkouts();
+  }
+
+  /**
+   * 16 octobre 2026 (SEANCES AVATAR) : seances d'Apple Sante sur une periode, pour « Importer mes seances »
+   * de l'onglet Seances. Memes champs que l'import complet ; les seances ecrites par YOROI ou sa montre sont
+   * deja ecartees par mapRawWorkouts (isYoroiSample). null si rien n'est lisible (acces coupe ou vide).
+   * Le choix de ce qui est ajoute (doublons, identifiants deja connus) est dans lib/v2/seances/importPlan.ts.
+   */
+  async lireSeancesPourImport(days?: number | null): Promise<Array<{ training: Training; empreinte: string; debutIso: string }> | null> {
+    let workouts: HealthData['workouts'] | null = null;
+    try {
+      workouts = await this.withTimeout(this.getIOSWorkouts(days && days > 0 ? days : undefined), 300000);
+    } catch (e) {
+      logger.warn('[lireSeancesPourImport] lecture impossible', e);
+      return null;
+    }
+    if (!workouts || workouts.length === 0) return null;
+    const out: Array<{ training: Training; empreinte: string; debutIso: string }> = [];
+    for (const workout of workouts) {
+      try {
+        const uuid = (workout as any).hkUUID || workout.id;
+        const workoutLabel = getWorkoutLabel(workout.activityType);
+        const noteParts: string[] = [];
+        if (workout.duration > 0) noteParts.push(`${Math.round(workout.duration)} min`);
+        if (workout.distance && workout.distance > 0) noteParts.push(`${workout.distance.toFixed(2)} km`);
+        if (workout.calories && workout.calories > 0) noteParts.push(`${Math.round(workout.calories)} kcal`);
+        if (workout.averageHeartRate && workout.averageHeartRate > 0) noteParts.push(`${Math.round(workout.averageHeartRate)} bpm`);
+        out.push({
+          empreinte: `${workout.startDate}_${workout.activityType}_${workout.duration}`,
+          debutIso: workout.startDate,
+          training: {
+            sport: mapWorkoutType(workout.activityType),
+            session_type: workoutLabel,
+            date: localDateKey(new Date(workout.startDate)),
+            start_time: new Date(workout.startDate).toTimeString().slice(0, 5),
+            duration_minutes: workout.duration,
+            distance: workout.distance ? parseFloat(workout.distance.toFixed(2)) : undefined,
+            calories: workout.calories,
+            heart_rate: workout.averageHeartRate,
+            max_heart_rate: workout.maxHeartRate,
+            source: workout.source ? normalizeSourceName(workout.source) : undefined,
+            notes: noteParts.length > 0 ? `${workoutLabel} (${noteParts.join(', ')})` : workoutLabel,
+            healthkit_uuid: uuid || undefined,
+            is_outdoor: (workout as any).indoor === false || undefined,
+          },
+        });
+      } catch (e) {
+        logger.warn('[lireSeancesPourImport] seance ignoree', e);
+      }
+    }
+    return out;
+  }
+
+  /** 16 octobre 2026 (SEANCES AVATAR) : details (FC, zones, trace) d'une seance que tu viens d'importer */
+  async enrichirSeanceImportee(uuid: string, trainingId: number, debutIso?: string, dureeMin?: number): Promise<void> {
+    if (!uuid || !trainingId) return;
+    await this.fetchAndStoreWorkoutDetails(uuid, trainingId, 1, debutIso, dureeMin);
   }
 
   /**
@@ -2918,7 +3044,7 @@ class HealthConnectService {
 
       const details: WorkoutDetails = {};
 
-      // Events du workout (laps, pauses, etc.) — accessible globalement pour les splits
+      // Events du workout (laps, pauses, etc.), accessible globalement pour les splits
       const workoutEvents = (workout.events || []) as any[];
 
       // LOG DEBUG: dump brut du workout pour voir toutes les données Apple disponibles
@@ -2938,36 +3064,45 @@ class HealthConnectService {
         }
       }
 
-      // Duration
+      // Durée : celle de l'entraînement Apple (HKWorkout.duration, pauses exclues), au lieu de fin moins début
       const durationMs = new Date(workout.endDate).getTime() - new Date(workout.startDate).getTime();
-      // Garder les secondes (ex: 32.933 min = 32 min 56 sec) pour afficher "0:32:56" comme Apple
-      details.durationMinutes = durationMs / 60000;
+      details.workoutStart = new Date(workout.startDate).toISOString();
+      details.workoutEnd = new Date(workout.endDate).toISOString();
+      details.pauses = pausesFromEvents(workoutEvents, details.workoutEnd);
+      const pausedMs = details.pauses.reduce((a, p) => a + (new Date(p.end).getTime() - new Date(p.start).getTime()), 0);
+      const hkDurationSec = this.extractQuantityValue(workout.duration);
+      details.durationSeconds = hkDurationSec != null && hkDurationSec > 0 ? hkDurationSec : Math.max(0, (durationMs - pausedMs) / 1000);
+      details.durationMinutes = details.durationSeconds / 60;
 
       // Indoor
-      details.isIndoor = workout.metadataIndoorWorkout ?? false;
+      // 17 octobre 2026 : sans l'info d'Apple, inconnu (ni dedans ni dehors), jamais « dedans » par defaut
+      details.isIndoor = typeof workout.metadataIndoorWorkout === 'boolean' ? workout.metadataIndoorWorkout : undefined;
 
-      // Elevation — plusieurs noms possibles selon la version du SDK react-native-health
+      // Elevation, plusieurs noms possibles selon la version du SDK react-native-health
       const elevAscRaw = workout.metadataElevationAscended
         ?? workout.metadata?.HKElevationAscended
         ?? workout.metadata?.['HKMetadataKeyElevationAscended'];
       if (elevAscRaw != null) {
         const val = typeof elevAscRaw === 'object' ? elevAscRaw.quantity : Number(elevAscRaw);
-        if (!isNaN(val) && val > 0) details.elevationAscended = Math.round(val);
+        if (!isNaN(val) && val > 0) details.elevationAscended = appleInt(val); // Forme tronque : 12,9 m affiche 12 m
       }
       const elevDescRaw = workout.metadataElevationDescended
         ?? workout.metadata?.HKElevationDescended
         ?? workout.metadata?.['HKMetadataKeyElevationDescended'];
       if (elevDescRaw != null) {
         const val = typeof elevDescRaw === 'object' ? elevDescRaw.quantity : Number(elevDescRaw);
-        if (!isNaN(val) && val > 0) details.elevationDescended = Math.round(val);
+        if (!isNaN(val) && val > 0) details.elevationDescended = appleInt(val);
       }
 
       // Météo (directement sur le sample HealthKit)
-      if (workout.metadataWeatherTemperature) {
-        details.weatherTemp = Math.round(workout.metadataWeatherTemperature.quantity * 10) / 10;
+      // 14 octobre 2026 : degrés et humidité tronqués comme Forme (28,6 °C affiche 28, plus 29)
+      if (workout.metadataWeatherTemperature && Number.isFinite(workout.metadataWeatherTemperature.quantity)) {
+        details.weatherTempRawC = workout.metadataWeatherTemperature.quantity;
+        details.weatherTemp = appleTemperature(workout.metadataWeatherTemperature.quantity);
       }
-      if (workout.metadataWeatherHumidity) {
-        details.weatherHumidity = Math.round(workout.metadataWeatherHumidity.quantity);
+      if (workout.metadataWeatherHumidity && Number.isFinite(workout.metadataWeatherHumidity.quantity)) {
+        details.weatherHumidityRaw = workout.metadataWeatherHumidity.quantity;
+        details.weatherHumidity = appleHumidity(workout.metadataWeatherHumidity.quantity);
       }
       if (workout.metadataWeatherCondition) {
         details.weatherCondition = String(workout.metadataWeatherCondition);
@@ -3007,85 +3142,111 @@ class HealthConnectService {
         }
       }
 
-      // Stats (distance, calories) via getAllStatistics()
+      // Statistiques de l'entraînement, une par une avec leur unité (14 octobre 2026).
+      // Avant : getAllStatistics() sans unité. Le module demande alors l'unité préférée de CHAQUE type
+      // présent dans la séance (foulée, oscillation, effort...) et, si un seul type n'est pas autorisé,
+      // tout l'appel échoue : plus de FC moyenne (« 0 bpm en moyenne »), ni distance, ni calories exactes.
+      const stat = async (id: string, unit: string): Promise<any | undefined> => {
+        try {
+          if (typeof workout.getStatistic !== 'function') return undefined;
+          return (await workout.getStatistic(id, unit)) ?? undefined;
+        } catch {
+          return undefined;
+        }
+      };
+      const val = (q: any) => this.extractQuantityValue(q);
       try {
-        if (typeof workout.getAllStatistics === 'function') {
-          const stats = await workout.getAllStatistics();
+        // Distance, couvre course/marche, vélo, natation, ski/snowboard
+        let meters: number | undefined;
+        for (const id of ['HKQuantityTypeIdentifierDistanceWalkingRunning', 'HKQuantityTypeIdentifierDistanceCycling', 'HKQuantityTypeIdentifierDistanceSwimming', 'HKQuantityTypeIdentifierDistanceDownhillSnowSports']) {
+          const v = val((await stat(id, 'm'))?.sumQuantity);
+          if (v != null && v > 0) { meters = v; break; }
+        }
+        // Repli : totalDistance de l'entraînement (tapis, intérieur)
+        if (!meters) {
+          const raw = val(workout.totalDistance ?? workout.distance);
+          if (raw != null && raw > 0) meters = raw > 100 ? raw : raw * 1000;
+        }
+        if (meters && meters > 0) {
+          details.distanceMeters = meters;
+          details.distanceKm = appleKm(meters); // Forme tronque : 2 261 m affiche 2,26 km
+        }
 
-          // Distance — couvre course/marche, vélo, natation, ski/snowboard
-          const distStat = stats['HKQuantityTypeIdentifierDistanceWalkingRunning']
-            || stats['HKQuantityTypeIdentifierDistanceCycling']
-            || stats['HKQuantityTypeIdentifierDistanceSwimming']
-            || stats['HKQuantityTypeIdentifierDistanceDownhillSnowSports'];
-          if (distStat?.sumQuantity) {
-            details.distanceKm = Math.round(distStat.sumQuantity.quantity / 1000 * 100) / 100;
-          }
-          // Fallback: lire totalDistance directement sur le workout (tapis, indoor)
-          if (!details.distanceKm || details.distanceKm <= 0) {
-            const rawDist = this.extractQuantityValue(workout.totalDistance ?? workout.distance);
-            if (rawDist != null && rawDist > 0) {
-              details.distanceKm = rawDist > 100
-                ? Math.round(rawDist / 1000 * 100) / 100 // en mètres → km
-                : Math.round(rawDist * 100) / 100;        // déjà en km
-            }
-          }
+        // Calories actives, puis repli totalEnergyBurned
+        let active = val((await stat('HKQuantityTypeIdentifierActiveEnergyBurned', 'kcal'))?.sumQuantity);
+        if (!(active != null && active > 0)) active = val(workout.totalEnergyBurned);
+        if (active != null && active > 0) details.activeCalories = appleInt(active);
+        const basal = val((await stat('HKQuantityTypeIdentifierBasalEnergyBurned', 'kcal'))?.sumQuantity) ?? 0;
+        if (active != null && active > 0) details.totalCalories = appleInt(active + basal);
 
-          // Calories actives
-          const calStat = stats['HKQuantityTypeIdentifierActiveEnergyBurned'];
-          if (calStat?.sumQuantity) {
-            details.activeCalories = Math.round(calStat.sumQuantity.quantity);
-          }
-
-          // Calories totales (active + basal pendant le workout)
-          const basalStat = stats['HKQuantityTypeIdentifierBasalEnergyBurned'];
-          details.totalCalories = (details.activeCalories || 0) + Math.round(basalStat?.sumQuantity?.quantity || 0);
-
-          // FC moy/min/max
-          const hrStat = stats['HKQuantityTypeIdentifierHeartRate'];
-          if (hrStat) {
-            if (hrStat.averageQuantity) details.avgHeartRate = Math.round(hrStat.averageQuantity.quantity);
-            if (hrStat.minimumQuantity) details.minHeartRate = Math.round(hrStat.minimumQuantity.quantity);
-            if (hrStat.maximumQuantity) details.maxHeartRate = Math.round(hrStat.maximumQuantity.quantity);
-          }
-
-          // Cadence (course/marche : pas/min — vélo : tours/min)
-          const cadenceStat = stats['HKQuantityTypeIdentifierRunningCadence']
-            || stats['HKQuantityTypeIdentifierCyclingCadence'];
-          if (cadenceStat?.averageQuantity) {
-            const raw = cadenceStat.averageQuantity.quantity;
-            if (raw > 0) details.cadence = Math.round(raw);
-          }
-
-          // Vitesse moyenne (vélo, natation, etc.)
-          const speedStat = stats['HKQuantityTypeIdentifierCyclingSpeed']
-            || stats['HKQuantityTypeIdentifierRunningSpeed'];
-          if (speedStat?.averageQuantity) {
-            // Apple stocke en m/s → convertir en km/h
-            const ms = speedStat.averageQuantity.quantity;
-            if (ms > 0) details.avgSpeedKmh = Math.round(ms * 3.6 * 10) / 10;
-          }
-
-          // Puissance moyenne (vélo / rameur — watts)
-          const powerStat = stats['HKQuantityTypeIdentifierCyclingPower'];
-          if (powerStat?.averageQuantity) {
-            const watts = powerStat.averageQuantity.quantity;
-            if (watts > 0) details.avgPowerWatts = Math.round(watts);
-          }
-
-          // Nombre de pas (marche, course, randonnée)
-          const stepsStat = stats['HKQuantityTypeIdentifierStepCount'];
-          if (stepsStat?.sumQuantity) {
-            const steps = Math.round(stepsStat.sumQuantity.quantity);
-            if (steps > 0) details.stepsCount = steps;
+        // FC moyenne, min et max : la statistique de l'entraînement, comme Forme
+        const hr = await stat('HKQuantityTypeIdentifierHeartRate', 'count/min');
+        const hrAvg = val(hr?.averageQuantity);
+        const hrMin = val(hr?.minimumQuantity);
+        const hrMax = val(hr?.maximumQuantity);
+        if (hrAvg != null && hrAvg > 0) details.avgHeartRate = Math.round(hrAvg);
+        if (hrMin != null && hrMin > 0) details.minHeartRate = Math.round(hrMin);
+        if (hrMax != null && hrMax > 0) details.maxHeartRate = Math.round(hrMax);
+        // Repli : HKStatistics sur l'intervalle de la séance
+        if (!details.avgHeartRate && typeof HealthKit.queryStatisticsForQuantity === 'function') {
+          try {
+            const st = await HealthKit.queryStatisticsForQuantity(
+              'HKQuantityTypeIdentifierHeartRate',
+              ['discreteAverage', 'discreteMin', 'discreteMax'],
+              { filter: { date: { startDate: new Date(workout.startDate), endDate: new Date(workout.endDate) } }, unit: 'count/min' },
+            );
+            const a2 = val(st?.averageQuantity);
+            if (a2 != null && a2 > 0) details.avgHeartRate = Math.round(a2);
+            const n2 = val(st?.minimumQuantity);
+            if (n2 != null && n2 > 0 && !details.minHeartRate) details.minHeartRate = Math.round(n2);
+            const x2 = val(st?.maximumQuantity);
+            if (x2 != null && x2 > 0 && !details.maxHeartRate) details.maxHeartRate = Math.round(x2);
+          } catch (e) {
+            logger.warn('[HealthKit] Statistique FC sur l\'intervalle impossible:', e);
           }
         }
+
+        // Nombre de pas, et cadence de course (pas par minute sur la durée d'entraînement, comme Forme)
+        const steps = val((await stat('HKQuantityTypeIdentifierStepCount', 'count'))?.sumQuantity);
+        if (steps != null && steps > 0) details.stepsCount = Math.round(steps);
+        const cyc = val((await stat('HKQuantityTypeIdentifierCyclingCadence', 'count/min'))?.averageQuantity);
+        if (cyc != null && cyc > 0) details.cadence = Math.round(cyc);
+        else if (steps && steps > 0 && details.durationSeconds && details.durationSeconds > 60 && meters && meters > 0) {
+          details.cadence = Math.round(steps / (details.durationSeconds / 60));
+        }
+
+        // Vitesse moyenne (m/s vers km/h)
+        for (const id of ['HKQuantityTypeIdentifierCyclingSpeed', 'HKQuantityTypeIdentifierRunningSpeed']) {
+          const v = val((await stat(id, 'm/s'))?.averageQuantity);
+          if (v != null && v > 0) { details.avgSpeedKmh = Math.round(v * 3.6 * 10) / 10; break; }
+        }
+
+        // Puissance moyenne : course (Apple Watch, iOS 16 et plus) ou vélo
+        for (const id of ['HKQuantityTypeIdentifierRunningPower', 'HKQuantityTypeIdentifierCyclingPower']) {
+          const v = val((await stat(id, 'W'))?.averageQuantity);
+          if (v != null && v > 0) { details.avgPowerWatts = Math.round(v); break; }
+        }
+
+        // 14 octobre 2026 : mesures de course de la montre, comme Forme (moyenne et plage, valeurs tronquées)
+        const dyn = async (id: string, unit: string, f: (x: number) => number) => {
+          const st = await stat(id, unit);
+          const avg = val(st?.averageQuantity);
+          if (avg == null || !(avg > 0)) return undefined;
+          const mn = val(st?.minimumQuantity);
+          const mx = val(st?.maximumQuantity);
+          return { avg: f(avg), min: mn != null && mn > 0 ? f(mn) : undefined, max: mx != null && mx > 0 ? f(mx) : undefined };
+        };
+        details.groundContactMs = await dyn('HKQuantityTypeIdentifierRunningGroundContactTime', 'ms', appleInt);
+        details.strideLengthM = await dyn('HKQuantityTypeIdentifierRunningStrideLength', 'm', trunc1);
+        details.verticalOscCm = await dyn('HKQuantityTypeIdentifierRunningVerticalOscillation', 'cm', trunc1);
       } catch (statsErr) {
-        logger.warn('[HealthKit] Erreur getAllStatistics:', statsErr);
+        logger.warn('[HealthKit] Erreur statistiques de séance:', statsErr);
       }
 
       // Allure moyenne + vitesse calculée si pas dans les stats
       if (details.distanceKm && details.distanceKm > 0 && details.durationMinutes) {
-        details.avgPaceSecondsPerKm = Math.round((details.durationMinutes * 60) / details.distanceKm);
+        // Allure sur la durée d'entraînement et la distance brute, tronquée à la seconde comme Forme
+        details.avgPaceSecondsPerKm = applePaceSec(details.durationSeconds ?? details.durationMinutes * 60, details.distanceMeters ?? details.distanceKm * 1000);
         if (!details.avgSpeedKmh) {
           details.avgSpeedKmh = Math.round(details.distanceKm / (details.durationMinutes / 60) * 10) / 10;
         }
@@ -3100,13 +3261,21 @@ class HealthConnectService {
             const allLocations = routes.flatMap((r: any) => r.locations || []);
             allGpsLocations = allLocations;
             if (allLocations.length > 0) {
-              details.routePoints = allLocations.map((loc: any) => ({
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-                altitude: loc.altitude,
-                speed: loc.speed,
-                timestamp: loc.date ? new Date(loc.date).toISOString() : undefined,
-              }));
+              // Trace simplifiée (Douglas Peucker, 3 m, 600 points au plus) : la forme du parcours
+              // est gardée, la séance reste légère à stocker (14 octobre 2026)
+              details.routePoints = simplifyRoute(
+                allLocations
+                  .filter((loc: any) => Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude))
+                  .map((loc: any) => ({
+                    latitude: loc.latitude,
+                    longitude: loc.longitude,
+                    altitude: loc.altitude,
+                    speed: loc.speed,
+                    timestamp: loc.date ? new Date(loc.date).toISOString() : undefined,
+                  })),
+                3,
+                600,
+              );
 
               // Bounding box
               const lats = allLocations.map((l: any) => l.latitude);
@@ -3121,6 +3290,21 @@ class HealthConnectService {
               // Point de départ GPS (pour afficher la localisation même sans route complète)
               details.startLatitude = allLocations[0].latitude;
               details.startLongitude = allLocations[0].longitude;
+              // Ville du départ (géocodage inverse du téléphone, sans service tiers)
+              try {
+                const Location = require('expo-location');
+                if (Location?.reverseGeocodeAsync) {
+                  const places = await Promise.race([
+                    Location.reverseGeocodeAsync({ latitude: details.startLatitude, longitude: details.startLongitude }),
+                    new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000)),
+                  ]);
+                  const pl = Array.isArray(places) ? places[0] : null;
+                  const city = pl?.city || pl?.subregion || pl?.region;
+                  if (city) details.city = String(city);
+                }
+              } catch {
+                // pas de ville : la carte s'affiche quand même
+              }
 
               // Splits seront calcules apres HR (pour inclure avgHeartRate par split)
               if (details.distanceKm && details.distanceKm > 0.5) {
@@ -3186,44 +3370,29 @@ class HealthConnectService {
               logger.warn('[HealthKit] Impossible de lire maxHR:', e);
             }
 
-            // Seuils zones Apple Fitness (identiques a Apple Sante/Forme):
-            // Z1<63%  Z2:63-71%  Z3:71-79%  Z4:79-90%  Z5>90% de FCmax
-            // Valide pour FCmax=190 → 120 / 135 / 150 / 171 BPM (= ce qu'Apple affiche)
-            const z1Max = Math.round(maxHR * 0.63);
-            const z2Max = Math.round(maxHR * 0.71);
-            const z3Max = Math.round(maxHR * 0.79);
-            const z4Max = Math.round(maxHR * 0.90);
-
-            const zones = [
-              { zone: 1, name: 'Z1 Recup', minBpm: 0, maxBpm: z1Max, durationSeconds: 0, color: '#94A3B8' },
-              { zone: 2, name: 'Z2 Endurance', minBpm: z1Max, maxBpm: z2Max, durationSeconds: 0, color: '#22C55E' },
-              { zone: 3, name: 'Z3 Tempo', minBpm: z2Max, maxBpm: z3Max, durationSeconds: 0, color: '#EAB308' },
-              { zone: 4, name: 'Z4 Seuil', minBpm: z3Max, maxBpm: z4Max, durationSeconds: 0, color: '#F97316' },
-              { zone: 5, name: 'Z5 Max', minBpm: z4Max, maxBpm: 250, durationSeconds: 0, color: '#EF4444' },
-            ];
-
-            // Durée dans chaque zone — couvre toute la séance (début→fin)
-            const addToZoneInline = (bpm: number, seconds: number) => {
-              if (seconds <= 0 || seconds > 300) return;
-              for (const zone of zones) {
-                if (bpm >= zone.minBpm && bpm < zone.maxBpm) { zone.durationSeconds += seconds; break; }
-              }
-            };
-            // Gap début séance → 1er sample
-            const startGap = (new Date(hrSamples[0].startDate).getTime() - new Date(workout.startDate).getTime()) / 1000;
-            addToZoneInline(hrSamples[0].quantity, startGap);
-            // Gaps entre samples consécutifs
-            for (let i = 0; i < hrSamples.length - 1; i++) {
-              const bpm = hrSamples[i].quantity;
-              const gap = (new Date(hrSamples[i + 1].startDate).getTime() - new Date(hrSamples[i].startDate).getTime()) / 1000;
-              addToZoneInline(bpm, gap);
+            // Zones : méthode commune (lib/v2/seances/workoutMath), sur l'intervalle exact de la séance,
+            // pauses exclues, avec tes zones (perso, sinon depuis ta FC max)
+            let zones: NonNullable<WorkoutDetails['heartRateZones']> = [];
+            try {
+              const eff = await getEffectiveHRZones();
+              zones = calcZoneDurations(details.heartRateSamples!, eff, details.workoutStart, details.workoutEnd, details.pauses)
+                .map((z) => ({ zone: z.zone, name: z.name, minBpm: z.minBpm, maxBpm: z.maxBpm, durationSeconds: z.durationSeconds, color: z.color }));
+            } catch {
+              zones = [];
             }
-            // Gap dernier sample → fin séance
-            const endGap = (new Date(workout.endDate).getTime() - new Date(hrSamples[hrSamples.length - 1].startDate).getTime()) / 1000;
-            addToZoneInline(hrSamples[hrSamples.length - 1].quantity, endGap);
+            void maxHR;
 
             details.heartRateZones = zones;
-            details.cacheVersion = 8; // v8: step count depuis HKQuantityTypeIdentifierStepCount
+
+            // Dernier repli si aucune statistique n'a répondu : moyenne pondérée par le temps des mesures
+            if (!details.avgHeartRate || !details.minHeartRate || !details.maxHeartRate) {
+              const st = hrStats(details.heartRateSamples!, { start: details.workoutStart, end: details.workoutEnd, pauses: details.pauses });
+              if (st) {
+                if (!details.avgHeartRate) details.avgHeartRate = Math.round(st.avg);
+                if (!details.minHeartRate) details.minHeartRate = Math.round(st.min);
+                if (!details.maxHeartRate) details.maxHeartRate = Math.round(st.max);
+              }
+            }
 
             // Splits depuis GPS si disponibles
             if (allGpsLocations.length > 0 && details.distanceKm && details.distanceKm > 0.5) {
@@ -3233,7 +3402,7 @@ class HealthConnectService {
             // Splits depuis les laps Apple Watch (type 1) si pas de GPS
             if (!details.splits?.length) {
               try {
-                const lapEvents = workoutEvents.filter((e: any) => e.type === 1);
+                const lapEvents = workoutEvents.filter((e: any) => e.type === 3); // 3 = tour (1 = pause)
                 if (lapEvents.length > 0) {
                   const validLaps = lapEvents.filter((lap: any) => {
                     const s = new Date(lap.dateInterval?.startDate ?? lap.startDate ?? workout.startDate).getTime();
@@ -3276,6 +3445,28 @@ class HealthConnectService {
         logger.warn('[HealthKit] Erreur FC detaillee:', hrErr);
       }
 
+      // 14 octobre 2026 : intermédiaires comme Forme, depuis les échantillons de distance de la montre
+      // (durée, allure, FC et puissance par kilomètre). Repli : l'ancien calcul GPS ou les tours.
+      try {
+        if (details.distanceMeters && details.distanceMeters > 500 && details.workoutStart && details.workoutEnd) {
+          const qs = async (id: string, unit: string) => {
+            const o = this.createQueryOptions(new Date(workout.startDate), new Date(workout.endDate), { limit: 0, ascending: true, unit });
+            if (!o) return [];
+            const r = (await HealthKit.queryQuantitySamples(id as any, o)) || [];
+            return r.map((x: any) => ({ start: new Date(x.startDate).toISOString(), end: new Date(x.endDate ?? x.startDate).toISOString(), value: Number(x.quantity) }));
+          };
+          const dist = await qs('HKQuantityTypeIdentifierDistanceWalkingRunning', 'm');
+          if (dist.length > 1) {
+            let power: { start: string; end: string; value: number }[] = [];
+            try { power = await qs('HKQuantityTypeIdentifierRunningPower', 'W'); } catch { power = []; }
+            const km = splitsFromDistance(dist, { start: details.workoutStart, pauses: details.pauses, hr: details.heartRateSamples, power });
+            if (km.length) details.splits = km;
+          }
+        }
+      } catch (splitErr) {
+        logger.warn('[HealthKit] Intermédiaires depuis la distance impossibles:', splitErr);
+      }
+
       // Recovery HR: querier les HR samples dans les 3 min apres la fin du workout
       try {
         if (rawHrSamples.length > 0) {
@@ -3311,6 +3502,14 @@ class HealthConnectService {
                 after1Min: after1MinSample ? Math.round(after1MinSample.quantity) : undefined,
                 after2Min: after2MinSample ? Math.round(after2MinSample.quantity) : undefined,
               };
+              // 14 octobre 2026 : comme sous le graphique de Forme (première mesure à la fin,
+              // puis la mesure la plus proche de 1 min et 2 min), à confirmer avec le fichier de diagnostic
+              const rec = recoveryFromSamples(
+                rawHrSamples.map((x: any) => ({ timestamp: new Date(x.startDate).toISOString(), bpm: Number(x.quantity) })),
+                recoverySamples.map((x: any) => ({ timestamp: new Date(x.startDate).toISOString(), bpm: Number(x.quantity) })),
+                new Date(workout.endDate).toISOString(),
+              );
+              if (rec) details.recoveryHR = rec;
             }
           }
         }
@@ -3318,7 +3517,7 @@ class HealthConnectService {
         logger.warn('[HealthKit] Erreur Recovery HR:', recoveryErr);
       }
 
-      // VO2 Max — mesuré par Apple Watch lors des séances de course (valeur dans les 7j autour du workout)
+      // VO2 Max, mesuré par Apple Watch lors des séances de course (valeur dans les 7j autour du workout)
       try {
         const workoutEnd = new Date(workout.endDate);
         const vo2Options = this.createQueryOptions(
@@ -3339,7 +3538,7 @@ class HealthConnectService {
         logger.warn('[HealthKit] Erreur VO2Max:', vo2Err);
       }
 
-      // Effort perçu — fallback natif Swift si metadata n'a pas retourné de valeur
+      // Effort perçu, fallback natif Swift si metadata n'a pas retourné de valeur
       if (!details.effortScore && workout.uuid) {
         try {
           const nativeScore = await getWorkoutEffortScoreNative(workout.uuid);
@@ -3351,15 +3550,42 @@ class HealthConnectService {
         }
       }
 
+      // 14 octobre 2026 (zones_apple) : zones calculées par Apple (iOS 27) et effort lié à la séance (iOS 18)
+      if (workout.uuid) {
+        try {
+          const ex = await getAppleWorkoutExtrasNative(String(workout.uuid));
+          const az = parseAppleZones(ex.heartRateZones);
+          if (az) details.appleZones = az;
+          // 14 octobre 2026 (ios27) : temps d'Apple aussi dans heartRateZones (carte, planning, statistiques)
+          // et marque de cache versionnee, pour que la tache de fond ne relise pas cette seance
+          if (ex.found && ex.ios27) Object.assign(details, mergeAppleZones(details, az, new Date(), ZONE_COLORS));
+          const pz = parseZoneTimes(ex.cyclingPowerZones);
+          if (pz) details.applePowerZones = pz;
+          const user = ex.effort?.user;
+          const est = ex.effort?.estimated;
+          if (user != null && user >= 1 && user <= 10) {
+            details.effortScore = Math.round(user);
+            details.effortEstimated = false;
+          } else if (!details.effortScore && est != null && est >= 1 && est <= 10) {
+            details.effortScore = Math.round(est);
+            details.effortEstimated = true;
+          }
+        } catch (exErr) {
+          logger.warn('[HealthKit] Zones et effort Apple illisibles:', exErr);
+        }
+      }
+
       // Qualité de l'air via Open-Meteo (gratuit, sans clé) si pas dans metadata HK
       // Nécessite une localisation GPS (outdoor uniquement)
       if (details.airQualityIndex == null && details.startLatitude != null && details.startLongitude != null) {
         try {
           const workoutDate = new Date(workout.startDate);
-          const dateStr = workoutDate.toISOString().split('T')[0];
+          const dateStr = localDateKey(workoutDate); // jour local (timezone=auto côté Open-Meteo)
           const hour = workoutDate.getHours();
-          const lat = details.startLatitude.toFixed(4);
-          const lon = details.startLongitude.toFixed(4);
+          // Position arrondie a 2 decimales (environ 1 km) : assez pour la qualite de l'air,
+          // sans envoyer a Open-Meteo l'endroit exact de la seance (13 octobre 2026)
+          const lat = details.startLatitude.toFixed(2);
+          const lon = details.startLongitude.toFixed(2);
           const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`;
           const aqiRes = await Promise.race([
             fetch(aqiUrl),
@@ -3384,6 +3610,11 @@ class HealthConnectService {
         }
       }
 
+      // v9 (14 octobre 2026) : statistiques une par une, durée Apple, pauses, trace simplifiée, ville
+      // v10 (14 octobre 2026, zones_apple) : zones Apple iOS 27, météo tronquée, intermédiaires par la distance,
+      // mesures de course, effort lié, récupération comme Forme
+      details.cacheVersion = 10;
+
       logger.info('[HealthKit] WorkoutDetails charge:', {
         hasRoute: !!details.routePoints?.length,
         hasHR: !!details.heartRateSamples?.length,
@@ -3398,6 +3629,76 @@ class HealthConnectService {
       logger.error('[HealthKit] Erreur getWorkoutDetailsByUUID:', error);
       return null;
     }
+  }
+
+  /**
+   * 14 octobre 2026 (zones_apple) : fichier de diagnostic des séances Apple des derniers jours.
+   * Données brutes (mesures cardiaques avec début et fin, événements, métadonnées, distance, puissance),
+   * zones et temps calculés par Yoroi, zones d'Apple si iOS 27, pour caler le calcul sur Forme.
+   * Pas de trace GPS. Renvoie le chemin du fichier JSON, ou null.
+   */
+  async exportRawWorkoutsForDiagnostic(days: number = 30): Promise<{ path: string; count: number } | null> {
+    if (!HealthKit || isRunningInExpoGo) return null;
+    const FileSystem = require('expo-file-system/legacy');
+    const now = new Date();
+    const from = new Date(now.getTime() - days * 24 * 3600 * 1000);
+    const list: any[] = (await HealthKit.queryWorkoutSamples({ filter: { date: { startDate: from, endDate: now } }, limit: 200 })) || [];
+    const eff = await getEffectiveHRZones().catch(() => null);
+    const preferred = await getApplePreferredHeartRateZonesNative().catch((e: any) => ({ ios27: false, error: String(e) }));
+    const raw = async (id: string, a: Date, b: Date, unit: string) => {
+      try {
+        const o = this.createQueryOptions(a, b, { limit: 0, ascending: true, unit });
+        if (!o) return [];
+        const r = (await HealthKit.queryQuantitySamples(id as any, o)) || [];
+        return r.map((x: any) => [new Date(x.startDate).toISOString(), new Date(x.endDate ?? x.startDate).toISOString(), Number(x.quantity)]);
+      } catch (e) {
+        return [['erreur', String(e), 0]];
+      }
+    };
+    const out: any[] = [];
+    for (const w of list) {
+      try {
+        const a = new Date(w.startDate);
+        const b = new Date(w.endDate);
+        const hr = await raw('HKQuantityTypeIdentifierHeartRate', a, b, 'count/min');
+        const hrAfter = await raw('HKQuantityTypeIdentifierHeartRate', b, new Date(b.getTime() + 3 * 60000), 'count/min');
+        const events = ((w.events || []) as any[]).map((e: any) => ({ type: e.type, start: e.startDate ? new Date(e.startDate).toISOString() : e.dateInterval?.startDate, end: e.endDate ? new Date(e.endDate).toISOString() : e.dateInterval?.endDate }));
+        const pauses = pausesFromEvents(w.events || [], b.toISOString());
+        const samples = (hr as any[]).filter((x) => x[0] !== 'erreur').map((x) => ({ timestamp: x[0], bpm: Math.round(x[2]) }));
+        const appZones = eff && samples.length ? calcZoneDurations(samples, eff, a.toISOString(), b.toISOString(), pauses).map((z) => ({ zone: z.zone, min: z.minBpm, seconds: z.durationSeconds })) : null;
+        let hrStat: any = null;
+        try {
+          const st = typeof w.getStatistic === 'function' ? await w.getStatistic('HKQuantityTypeIdentifierHeartRate', 'count/min') : null;
+          hrStat = st ? { avg: this.extractQuantityValue(st.averageQuantity), min: this.extractQuantityValue(st.minimumQuantity), max: this.extractQuantityValue(st.maximumQuantity) } : null;
+        } catch { hrStat = null; }
+        out.push({
+          uuid: w.uuid,
+          activityType: w.workoutActivityType,
+          start: a.toISOString(),
+          end: b.toISOString(),
+          startLocal: a.toString(),
+          durationSec: this.extractQuantityValue(w.duration),
+          source: w.sourceRevision?.source?.name ?? w.sourceRevision?.source?.bundleIdentifier ?? null,
+          metadata: w.metadata ?? null,
+          weather: { temperatureC: w.metadataWeatherTemperature ?? null, humidity: w.metadataWeatherHumidity ?? null },
+          events,
+          pauses,
+          heartRateStat: hrStat,
+          heartRate: hr,
+          heartRateAfter: hrAfter,
+          distance: await raw('HKQuantityTypeIdentifierDistanceWalkingRunning', a, b, 'm'),
+          runningPower: await raw('HKQuantityTypeIdentifierRunningPower', a, b, 'W'),
+          appleExtras: w.uuid ? await getAppleWorkoutExtrasNative(String(w.uuid)) : null,
+          yoroiZones: appZones,
+        });
+      } catch (e) {
+        out.push({ uuid: w?.uuid, erreur: String(e) });
+      }
+    }
+    const payload = { kind: 'yoroi_diagnostic_seances', version: 1, exportedAt: now.toISOString(), timezoneOffsetMin: now.getTimezoneOffset(), days, yoroiSettingsZones: eff, applePreferredZones: preferred, workouts: out };
+    const path = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory}yoroi_diagnostic_seances_${now.toISOString().slice(0, 10)}.json`;
+    await FileSystem.writeAsStringAsync(path, JSON.stringify(payload));
+    return { path, count: out.length };
   }
 
   /**
@@ -3472,12 +3773,12 @@ class HealthConnectService {
         if (details) {
           // Limiter la taille du JSON (pas stocker des milliers de points GPS)
           const toStore = { ...details };
-          if (toStore.routePoints && toStore.routePoints.length > 500) {
-            const step = Math.ceil(toStore.routePoints.length / 500);
+          if (toStore.routePoints && toStore.routePoints.length > 800) {
+            const step = Math.ceil(toStore.routePoints.length / 800);
             toStore.routePoints = toStore.routePoints.filter((_, i) => i % step === 0);
           }
-          if (toStore.heartRateSamples && toStore.heartRateSamples.length > 500) {
-            const step = Math.ceil(toStore.heartRateSamples.length / 500);
+          if (toStore.heartRateSamples && toStore.heartRateSamples.length > 3000) {
+            const step = Math.ceil(toStore.heartRateSamples.length / 3000);
             toStore.heartRateSamples = toStore.heartRateSamples.filter((_, i) => i % step === 0);
           }
 
@@ -3487,8 +3788,8 @@ class HealthConnectService {
               const effectiveZones = await getEffectiveHRZones();
               // Utilise startDate/endDate du training (params de la fonction) car
               // `workout` n'existe pas dans ce scope. Fallback sur les samples HR.
-              const wStart = startDate || (toStore.heartRateSamples?.[0]?.timestamp);
-              const wEnd = wStart && durationMin
+              const wStart = toStore.workoutStart || startDate || (toStore.heartRateSamples?.[0]?.timestamp);
+              const wEnd = toStore.workoutEnd ? toStore.workoutEnd : wStart && durationMin
                 ? new Date(new Date(wStart).getTime() + durationMin * 60000).toISOString()
                 : (toStore.heartRateSamples?.[toStore.heartRateSamples.length - 1]?.timestamp);
               const computedZones = calcZoneDurations(
@@ -3496,6 +3797,7 @@ class HealthConnectService {
                 effectiveZones,
                 wStart,
                 wEnd,
+                toStore.pauses,
               );
               toStore.heartRateZones = computedZones;
             } catch {
@@ -3554,7 +3856,7 @@ class HealthConnectService {
         const groupedByDay: { [key: string]: number[] } = {};
 
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!groupedByDay[date]) {
             groupedByDay[date] = [];
           }
@@ -3601,7 +3903,7 @@ class HealthConnectService {
         const groupedByDay: { [key: string]: number[] } = {};
 
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!groupedByDay[date]) {
             groupedByDay[date] = [];
           }
@@ -3648,7 +3950,7 @@ class HealthConnectService {
         const groupedByDay: { [key: string]: number[] } = {};
 
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!groupedByDay[date]) {
             groupedByDay[date] = [];
           }
@@ -3692,7 +3994,7 @@ class HealthConnectService {
         const groupedByDay: { [key: string]: number[] } = {};
 
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!groupedByDay[date]) {
             groupedByDay[date] = [];
           }
@@ -3723,7 +4025,7 @@ class HealthConnectService {
       if (samples && samples.length > 0) {
         const groupedByDay: { [key: string]: number[] } = {};
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!groupedByDay[date]) groupedByDay[date] = [];
           groupedByDay[date].push(s.quantity);
         });
@@ -3761,7 +4063,7 @@ class HealthConnectService {
         const groupedByDay: { [key: string]: number[] } = {};
 
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!groupedByDay[date]) {
             groupedByDay[date] = [];
           }
@@ -3803,8 +4105,9 @@ class HealthConnectService {
       logger.info('[HealthKit] getWeightHistory: Échantillons reçus:', samples?.length || 0);
 
       if (samples && samples.length > 0) {
-        const result = samples.map((s: any) => ({
-          date: new Date(s.startDate).toISOString().split('T')[0],
+        // Les pesées recopiées par YOROI dans Apple Santé sont déjà dans YOROI : on les ignore
+        const result = samples.filter((s: any) => !isYoroiSample(s)).map((s: any) => ({
+          date: localDateKey(new Date(s.startDate)),
           value: Math.round(s.quantity * 10) / 10,
           source: s.sourceRevision?.source?.name || s.device?.name || 'Unknown',
         }));
@@ -3827,8 +4130,8 @@ class HealthConnectService {
     total: number;
     duration?: number;
     source?: string; // NOUVEAU: Ajouter la source pour debug
-    startTime?: string; // ISO string — heure de coucher
-    endTime?: string;   // ISO string — heure de réveil
+    startTime?: string; // ISO string, heure de coucher
+    endTime?: string;   // ISO string, heure de réveil
   }>> {
     // Demo mode disabled
 
@@ -3846,157 +4149,23 @@ class HealthConnectService {
       logger.info('[HealthKit] getSleepHistory: Échantillons bruts reçus:', samples?.length || 0);
 
       if (samples && samples.length > 0) {
-        // Filtrer uniquement les apps tierces connues pour donner des mauvaises données
-        // Garder tout le reste (Apple Watch, iPhone auto-estimates, apps tierces valides)
-        const filteredSamples = samples.filter((s: any) => {
-          const bundleId = s.sourceRevision?.source?.bundleIdentifier || '';
-          if (bundleId.includes('sleep-analysis-time')) return false;
-          return true;
-        });
-
-        logger.info('[HealthKit] getSleepHistory: bruts=', samples.length, ', filtres=', filteredSamples.length);
-
-        // ── ÉTAPE 1 : grouper par (date, source) pour éviter le double-comptage ──
-        // Problème : Apple Watch + iPhone peuvent tous deux enregistrer Core/Deep/REM
-        // pour la MÊME fenêtre temporelle. Si on somme tout, les chiffres doublent.
-        // Apple Santé résout ça en n'affichant qu'une source. On fait pareil.
-        type SourceBucket = {
-          deep: number; rem: number; core: number; awake: number;
-          hasDetailedPhases: boolean; asleepMinutes: number;
-          startTime: string; endTime: string;
-        };
-        const byDateAndSource: { [date: string]: { [source: string]: SourceBucket } } = {};
-
-        const isAppleWatch = (s: any): boolean => {
-          const deviceName = (s.device?.name || '').toLowerCase();
-          const bundleId = (s.sourceRevision?.source?.bundleIdentifier || '').toLowerCase();
-          const sourceName = (s.sourceRevision?.source?.name || '').toLowerCase();
-          return deviceName.includes('apple watch') ||
-                 bundleId.includes('com.apple.health') && (sourceName.includes('watch') || deviceName.includes('watch')) ||
-                 sourceName === 'apple watch';
-        };
-
-        filteredSamples.forEach((s: any) => {
-          if (s.value === 0) return; // Ignorer InBed
-          const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
-          if (duration <= 0) return;
-
-          // Groupement par nuit : -12h pour regrouper les phases traversant minuit
-          const endLocal = new Date(new Date(s.endDate).getTime() - 12 * 60 * 60 * 1000);
-          const date = `${endLocal.getFullYear()}-${String(endLocal.getMonth() + 1).padStart(2, '0')}-${String(endLocal.getDate()).padStart(2, '0')}`;
-
-          // Clé source : favoriser "Apple Watch" comme source canonique
-          const sourceKey = isAppleWatch(s)
-            ? '__apple_watch__'
-            : (s.sourceRevision?.source?.bundleIdentifier || s.sourceRevision?.source?.name || 'unknown');
-
-          if (!byDateAndSource[date]) byDateAndSource[date] = {};
-          if (!byDateAndSource[date][sourceKey]) {
-            byDateAndSource[date][sourceKey] = {
-              deep: 0, rem: 0, core: 0, awake: 0,
-              hasDetailedPhases: false, asleepMinutes: 0,
-              startTime: s.startDate, endTime: s.endDate,
-            };
-          }
-          const bucket = byDateAndSource[date][sourceKey];
-
-          if (new Date(s.startDate) < new Date(bucket.startTime)) bucket.startTime = s.startDate;
-          if (new Date(s.endDate) > new Date(bucket.endTime)) bucket.endTime = s.endDate;
-
-          switch (s.value) {
-            case 1: bucket.asleepMinutes += duration; break;
-            case 2: bucket.awake += duration; break;
-            case 3: bucket.core += duration; bucket.hasDetailedPhases = true; break;
-            case 4: bucket.deep += duration; bucket.hasDetailedPhases = true; break;
-            case 5: bucket.rem += duration; bucket.hasDetailedPhases = true; break;
-          }
-        });
-
-        // ── ÉTAPE 2 : pour chaque nuit, choisir la MEILLEURE source unique ──
-        // Priorité : Apple Watch > source avec le plus de phases détaillées > asleepMinutes
-        const sleepByDate: { [key: string]: {
-          deep: number; rem: number; core: number; awake: number; total: number;
-          hasDetailedPhases: boolean; asleepMinutes: number;
-          startTime: string; endTime: string;
-          sources: Set<string>;
-        } } = {};
-
-        for (const date of Object.keys(byDateAndSource)) {
-          const sourcesMap = byDateAndSource[date];
-          const sourceKeys = Object.keys(sourcesMap);
-
-          // Choisir la meilleure source
-          let bestKey = sourceKeys[0];
-          if (sourceKeys.includes('__apple_watch__')) {
-            // Apple Watch en priorité absolue
-            bestKey = '__apple_watch__';
-          } else {
-            // Sinon : la source avec le plus de phases détaillées (core+deep+rem total)
-            let bestPhases = -1;
-            for (const k of sourceKeys) {
-              const b = sourcesMap[k];
-              const phases = b.core + b.deep + b.rem;
-              if (b.hasDetailedPhases && phases > bestPhases) {
-                bestPhases = phases;
-                bestKey = k;
-              }
-            }
-            // Si aucune source n'a de phases détaillées, prendre celle avec le plus d'asleepMinutes
-            if (bestPhases === -1) {
-              let bestAsleep = -1;
-              for (const k of sourceKeys) {
-                if (sourcesMap[k].asleepMinutes > bestAsleep) {
-                  bestAsleep = sourcesMap[k].asleepMinutes;
-                  bestKey = k;
-                }
-              }
-            }
-          }
-
-          const best = sourcesMap[bestKey];
-          sleepByDate[date] = {
-            deep: best.deep,
-            rem: best.rem,
-            core: best.core,
-            awake: best.awake,
-            total: 0,
-            hasDetailedPhases: best.hasDetailedPhases,
-            asleepMinutes: best.asleepMinutes,
-            startTime: best.startTime,
-            endTime: best.endTime,
-            sources: new Set([bestKey]),
-          };
-
-          logger.info(`[HealthKit] Sommeil ${date}: source choisie="${bestKey}", phases=${best.hasDetailedPhases}, core=${Math.round(best.core)}m, deep=${Math.round(best.deep)}m, rem=${Math.round(best.rem)}m`);
-        }
-
-        // Calculer le total en evitant le double comptage
-        Object.values(sleepByDate).forEach(day => {
-          if (day.hasDetailedPhases) {
-            // Si on a les phases detaillees, le total = somme des phases
-            day.total = day.core + day.deep + day.rem;
-          } else {
-            // Sinon utiliser value=1 (Asleep)
-            day.total = day.asleepMinutes;
-          }
-        });
-
-        const result = Object.keys(sleepByDate)
-          .filter(date => sleepByDate[date].total > 0)
-          .map(date => ({
-            date,
-            deep: Math.round(sleepByDate[date].deep),
-            rem: Math.round(sleepByDate[date].rem),
-            core: Math.round(sleepByDate[date].core),
-            awake: Math.round(sleepByDate[date].awake),
-            total: Math.round(sleepByDate[date].total),
-            duration: Math.round(sleepByDate[date].total),
-            startTime: new Date(sleepByDate[date].startTime).toISOString(),
-            endTime: new Date(sleepByDate[date].endTime).toISOString(),
-            source: Array.from(sleepByDate[date].sources).join(', '),
-          }))
-          .sort((a, b) => a.date.localeCompare(b.date));
-
+        // 16 octobre : meme calcul que l'app Sante (lib/v2/sante/nuit.ts). Une nuit par jour de reveil,
+        // une seule source (montre d'abord), secondes gardees, arrondi une seule fois.
+        const nuits = calculerNuits(this.versEchantillonsSommeil(samples));
+        const result = nuits
+          .filter((n) => n.totalMinutes > 0)
+          .map((n) => ({
+            date: n.cle,
+            deep: n.minutes.profond,
+            rem: n.minutes.paradoxal,
+            core: n.minutes.leger + n.minutes.endormi,
+            awake: n.minutes.eveil,
+            total: n.totalMinutes,
+            duration: n.totalMinutes,
+            startTime: new Date(n.debut).toISOString(),
+            endTime: new Date(n.fin).toISOString(),
+            source: n.source,
+          }));
         logger.info('[HealthKit] getSleepHistory: Résultat final:', result.length, 'jours de données');
         return result;
       }
@@ -4060,8 +4229,8 @@ class HealthConnectService {
                 const d = new Date(s.startDate);
                 // Si heure >= 22h, c'est la nuit du lendemain → date = demain
                 const date = d.getHours() >= 22
-                  ? new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString().split('T')[0]
-                  : d.toISOString().split('T')[0];
+                  ? localDateKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1))
+                  : localDateKey(d);
                 if (!byDate[date]) byDate[date] = [];
                 byDate[date].push(bpm);
               }
@@ -4094,7 +4263,7 @@ class HealthConnectService {
               const rr = s.quantity || 0;
               if (rr < 5 || rr > 50) continue;
               const d = new Date(s.startDate);
-              const date = d.toISOString().split('T')[0];
+              const date = localDateKey(d);
               if (!byDateRR[date]) byDateRR[date] = [];
               byDateRR[date].push(rr);
             }
@@ -4161,7 +4330,7 @@ class HealthConnectService {
       const caloriesByDate: { [key: string]: { active: number; basal: number }} = {};
 
       activeSamples?.forEach((s: any) => {
-        const date = new Date(s.startDate).toISOString().split('T')[0];
+        const date = localDateKey(new Date(s.startDate));
         if (!caloriesByDate[date]) {
           caloriesByDate[date] = { active: 0, basal: 0 };
         }
@@ -4169,7 +4338,7 @@ class HealthConnectService {
       });
 
       basalSamples?.forEach((s: any) => {
-        const date = new Date(s.startDate).toISOString().split('T')[0];
+        const date = localDateKey(new Date(s.startDate));
         if (!caloriesByDate[date]) {
           caloriesByDate[date] = { active: 0, basal: 0 };
         }
@@ -4209,7 +4378,7 @@ class HealthConnectService {
 
       if (samples && samples.length > 0) {
         return samples.map((s: any) => ({
-          date: new Date(s.startDate).toISOString().split('T')[0],
+          date: localDateKey(new Date(s.startDate)),
           value: Math.round(s.quantity * 10) / 10,
         }));
       }
@@ -4253,7 +4422,7 @@ class HealthConnectService {
               const total = stats?.sumQuantity?.quantity ?? 0;
               if (total > 0) {
                 results.push({
-                  date: dayStart.toISOString().split('T')[0],
+                  date: localDateKey(dayStart),
                   value: Math.round(total),
                 });
               }
@@ -4281,7 +4450,7 @@ class HealthConnectService {
         const stepsByDate: { [key: string]: number } = {};
 
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!stepsByDate[date]) stepsByDate[date] = 0;
           stepsByDate[date] += s.quantity || 0;
         });
@@ -4319,7 +4488,7 @@ class HealthConnectService {
               );
               const total = stats?.sumQuantity?.quantity ?? 0;
               if (total > 0) {
-                results.push({ date: dayStart.toISOString().split('T')[0], value: Math.round(total * 100) / 100 });
+                results.push({ date: localDateKey(dayStart), value: Math.round(total * 100) / 100 });
               }
             }
             if (results.length > 0) return results.sort((a, b) => a.date.localeCompare(b.date));
@@ -4335,7 +4504,7 @@ class HealthConnectService {
       if (samples && samples.length > 0) {
         const byDate: { [key: string]: number } = {};
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!byDate[date]) byDate[date] = 0;
           byDate[date] += s.quantity || 0;
         });
@@ -4369,7 +4538,7 @@ class HealthConnectService {
               );
               const total = stats?.sumQuantity?.quantity ?? 0;
               if (total > 0) {
-                results.push({ date: dayStart.toISOString().split('T')[0], value: Math.round(total) });
+                results.push({ date: localDateKey(dayStart), value: Math.round(total) });
               }
             }
             if (results.length > 0) return results.sort((a, b) => a.date.localeCompare(b.date));
@@ -4385,7 +4554,7 @@ class HealthConnectService {
       if (samples && samples.length > 0) {
         const byDate: { [key: string]: number } = {};
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!byDate[date]) byDate[date] = 0;
           byDate[date] += s.quantity || 0;
         });
@@ -4409,7 +4578,7 @@ class HealthConnectService {
       if (samples && samples.length > 0) {
         const byDate: { [key: string]: number } = {};
         samples.forEach((s: any) => {
-          const date = new Date(s.startDate).toISOString().split('T')[0];
+          const date = localDateKey(new Date(s.startDate));
           if (!byDate[date]) byDate[date] = 0;
           // value 0 = stood, value 1 = idle
           if (s.value === 0) byDate[date] += 1;
@@ -4467,7 +4636,7 @@ class HealthConnectService {
         this.withTimeout(this.getRespiratoryRate(), TIMEOUT_MS),        // 10
         this.withTimeout(this.getBodyTemperature(), TIMEOUT_MS),        // 11
         this.withTimeout(this.getBodyComposition(), TIMEOUT_MS),        // 12
-        this.withTimeout(this.getWorkouts(), 120000),                   // 13 — 2 min pour les grandes bibliothèques
+        this.withTimeout(this.getWorkouts(), 120000),                   // 13, 2 min pour les grandes bibliothèques
         this.withTimeout(this.getBloodPressure(), TIMEOUT_MS),          // 14
         this.withTimeout(this.getBloodGlucose(), TIMEOUT_MS),           // 15
         this.withTimeout(this.getHeight(), TIMEOUT_MS),                 // 16
@@ -4522,7 +4691,39 @@ class HealthConnectService {
     }
   }
 
-  async writeWeight(weight: number, unit: 'kg' | 'lbs' = 'kg'): Promise<boolean> {
+  /**
+   * Range une pesée lue dans Apple Santé, sauf si YOROI a déjà ce poids ce jour-là (quelle que soit la source).
+   * known : pesées déjà connues, complétée au fil de l'import pour éviter de relire la base à chaque ligne.
+   */
+  private async saveImportedWeight(
+    date: string,
+    value: number,
+    source: string,
+    known?: Array<{ date: string; weight: number }>,
+  ): Promise<boolean> {
+    if (!date || !(value > 20 && value < 400)) return false;
+    const rows: Array<{ date: string; weight: number }> = known ?? (await getWeights(400).catch(() => []));
+    if (rows.some((w) => String(w.date).slice(0, 10) === date && Math.abs(Number(w.weight) - value) < 0.05)) return false;
+    await addWeight({ weight: value, source, date });
+    known?.push({ date, weight: value });
+    return true;
+  }
+
+  /** Autorisations d'écriture déjà accordées (aucune fenêtre iOS n'est ouverte ici) */
+  async canWriteBodyMeasures(): Promise<{ weight: boolean; bodyFat: boolean }> {
+    const out = { weight: false, bodyFat: false };
+    if (!HealthKit || isRunningInExpoGo || !isHealthKitAvailable) return out;
+    const SHARING_AUTHORIZED = 2;
+    try {
+      out.weight = Number(await HealthKit.authorizationStatusFor('HKQuantityTypeIdentifierBodyMass')) === SHARING_AUTHORIZED;
+    } catch {}
+    try {
+      out.bodyFat = Number(await HealthKit.authorizationStatusFor('HKQuantityTypeIdentifierBodyFatPercentage')) === SHARING_AUTHORIZED;
+    } catch {}
+    return out;
+  }
+
+  async writeWeight(weight: number, unit: 'kg' | 'lbs' = 'kg', day?: string): Promise<boolean> {
     // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.error('[HealthKit] Module not loaded - cannot write weight');
@@ -4530,10 +4731,11 @@ class HealthConnectService {
     }
 
     const weightInKg = unit === 'lbs' ? weight * 0.453592 : weight;
+    const at = instantForDay(day);
 
     try {
       // CHECK FOR DUPLICATES: Prevent writing same weight twice on same day
-      const today = new Date();
+      const today = new Date(at);
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -4555,7 +4757,7 @@ class HealthConnectService {
       }
 
       // Save the weight
-      await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierBodyMass', 'kg', weightInKg, new Date(), new Date());
+      await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierBodyMass', 'kg', weightInKg, at, at);
       return true;
     } catch (error) {
       logger.error('Erreur écriture poids:', error);
@@ -4582,7 +4784,7 @@ class HealthConnectService {
     }
   }
 
-  async writeBodyFat(percentage: number): Promise<boolean> {
+  async writeBodyFat(percentage: number, day?: string): Promise<boolean> {
     // VÉRIFIER QUE HealthKit EST CHARGÉ
     if (!HealthKit) {
       logger.error('[HealthKit] Module not loaded - cannot write body fat');
@@ -4592,9 +4794,10 @@ class HealthConnectService {
     try {
       // Apple Health attend un ratio (0-1), on convertit depuis le pourcentage
       const ratio = percentage / 100;
+      const at = instantForDay(day);
 
       // CHECK FOR DUPLICATES: Prevent writing same body fat twice on same day
-      const today = new Date();
+      const today = new Date(at);
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -4616,7 +4819,7 @@ class HealthConnectService {
       }
 
       // Save the body fat
-      await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierBodyFatPercentage', '%', ratio, new Date(), new Date());
+      await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierBodyFatPercentage', '%', ratio, at, at);
       return true;
     } catch (error) {
       logger.error('Erreur écriture body fat:', error);
@@ -4658,6 +4861,9 @@ class HealthConnectService {
         'Karate': WorkoutActivityType.martialArts,
         'Karaté': WorkoutActivityType.martialArts,
         'Muay Thai': WorkoutActivityType.kickboxing,
+        'Muay-thaï': WorkoutActivityType.kickboxing,
+        'Boxe anglaise': WorkoutActivityType.boxing,
+        'Jiu-jitsu brésilien': WorkoutActivityType.martialArts,
       };
 
       // Fallback sur 'Other' si non trouvé
@@ -4737,7 +4943,486 @@ class HealthConnectService {
     return null;
   }
 
+  // ============================================
+  // LECTURE ÉTENDUE (refonte Santé du 9 octobre 2026)
+  // Types que le module HealthKit sait déjà lire mais que l'app n'exploitait pas.
+  // Chaque appel est protégé : en cas d'échec on renvoie une liste vide.
+  // ============================================
+
+  /**
+   * Types demandés en complément de la demande native (identifiants connus de @kingstinct v13).
+   * Typés ObjectTypeIdentifier : un identifiant inconnu du module ferait échouer toute la demande,
+   * le compilateur le refuse donc. Santé reproductive et activité sexuelle volontairement absentes.
+   */
+  // 14 octobre 2026 (SANTÉ CONNEXION) : mesures avancées, facultatives, demandées seulement sur appui
+  // (Santé, Ta montre : « Autoriser les mesures avancées »). Liste dans lib/v2/sante/typesSante.ts.
+  private static readonly EXTRA_READ_TYPES: ObjectTypeIdentifier[] = ids(IOS_LECTURE_AVANCE) as ObjectTypeIdentifier[];
+
+  /** Types d'événements (catégories) : une liste datée plutôt qu'une courbe */
+  private static readonly EXT_EVENTS: Record<string, { id: string; title: (value: number) => string }> = {
+    'fc-haute': { id: 'HKCategoryTypeIdentifierHighHeartRateEvent', title: () => 'Fréquence élevée au repos' },
+    'fc-basse': { id: 'HKCategoryTypeIdentifierLowHeartRateEvent', title: () => 'Fréquence basse' },
+    'rythme-irregulier': { id: 'HKCategoryTypeIdentifierIrregularHeartRhythmEvent', title: () => 'Rythme irrégulier détecté' },
+    'cardio-faible': { id: 'HKCategoryTypeIdentifierLowCardioFitnessEvent', title: () => 'Cardio faible pour ton âge' },
+    apnees: { id: 'HKCategoryTypeIdentifierSleepApneaEvent', title: () => 'Respiration souvent perturbée la nuit' },
+    'alerte-stabilite': {
+      id: 'HKCategoryTypeIdentifierAppleWalkingSteadinessEvent',
+      title: (v) => (v === 2 ? 'Stabilité très basse' : v === 3 ? 'Stabilité toujours basse' : v === 4 ? 'Stabilité toujours très basse' : 'Stabilité basse'),
+    },
+    'alerte-son-casque': { id: 'HKCategoryTypeIdentifierHeadphoneAudioExposureEvent', title: () => 'Dose de son au casque dépassée sur 7 jours' },
+    'alerte-son-ambiant': { id: 'HKCategoryTypeIdentifierEnvironmentalAudioExposureEvent', title: () => 'Bruit ambiant trop fort' },
+  };
+
+  /** Clé YOROI vers type HealthKit, manière de cumuler la journée, unité demandée et facteur */
+  private static readonly EXT_QUANTITY: Record<string, { id: string; agg: 'sum' | 'avg' | 'max'; unit?: string; scale?: number }> = {
+    'temperature-poignet': { id: 'HKQuantityTypeIdentifierAppleSleepingWristTemperature', agg: 'avg', unit: 'degC' },
+    'lumiere-du-jour': { id: 'HKQuantityTypeIdentifierTimeInDaylight', agg: 'sum', unit: 'min' },
+    'fc-marche': { id: 'HKQuantityTypeIdentifierWalkingHeartRateAverage', agg: 'avg', unit: 'count/min' },
+    'recuperation-cardiaque': { id: 'HKQuantityTypeIdentifierHeartRateRecoveryOneMinute', agg: 'avg', unit: 'count/min' },
+    'perturbations-respiratoires': { id: 'HKQuantityTypeIdentifierAppleSleepingBreathingDisturbances', agg: 'avg', unit: 'count' },
+    electrodermale: { id: 'HKQuantityTypeIdentifierElectrodermalActivity', agg: 'avg', unit: 'mcS' },
+    effort: { id: 'HKQuantityTypeIdentifierPhysicalEffort', agg: 'max' },
+    'distance-velo': { id: 'HKQuantityTypeIdentifierDistanceCycling', agg: 'sum', unit: 'km' },
+    'distance-nage': { id: 'HKQuantityTypeIdentifierDistanceSwimming', agg: 'sum', unit: 'm' },
+    puissance: { id: 'HKQuantityTypeIdentifierCyclingPower', agg: 'avg', unit: 'W' },
+    'cadence-velo': { id: 'HKQuantityTypeIdentifierCyclingCadence', agg: 'avg', unit: 'count/min' },
+    'puissance-course': { id: 'HKQuantityTypeIdentifierRunningPower', agg: 'avg', unit: 'W' },
+    vitesse: { id: 'HKQuantityTypeIdentifierRunningSpeed', agg: 'avg', unit: 'm/s', scale: 3.6 },
+    eau: { id: 'HKQuantityTypeIdentifierDietaryWater', agg: 'sum', unit: 'mL' },
+    'calories-mangees': { id: 'HKQuantityTypeIdentifierDietaryEnergyConsumed', agg: 'sum', unit: 'kcal' },
+    proteines: { id: 'HKQuantityTypeIdentifierDietaryProtein', agg: 'sum', unit: 'g' },
+    glucides: { id: 'HKQuantityTypeIdentifierDietaryCarbohydrates', agg: 'sum', unit: 'g' },
+    lipides: { id: 'HKQuantityTypeIdentifierDietaryFatTotal', agg: 'sum', unit: 'g' },
+    cafeine: { id: 'HKQuantityTypeIdentifierDietaryCaffeine', agg: 'sum', unit: 'mg' },
+    'tour-de-taille': { id: 'HKQuantityTypeIdentifierWaistCircumference', agg: 'avg', unit: 'cm' },
+    imc: { id: 'HKQuantityTypeIdentifierBodyMassIndex', agg: 'avg', unit: 'count' },
+    etages: { id: 'HKQuantityTypeIdentifierFlightsClimbed', agg: 'sum', unit: 'count' },
+    'masse-grasse': { id: 'HKQuantityTypeIdentifierBodyFatPercentage', agg: 'avg', unit: '%', scale: 100 },
+    'masse-maigre': { id: 'HKQuantityTypeIdentifierLeanBodyMass', agg: 'avg', unit: 'kg' },
+    // Ajouts du 10 octobre 2026 (vague 12)
+    'temps-mouvement': { id: 'HKQuantityTypeIdentifierAppleMoveTime', agg: 'sum', unit: 'min' },
+    'vitesse-velo': { id: 'HKQuantityTypeIdentifierCyclingSpeed', agg: 'avg', unit: 'm/s', scale: 3.6 },
+    ftp: { id: 'HKQuantityTypeIdentifierCyclingFunctionalThresholdPower', agg: 'avg', unit: 'W' },
+    foulee: { id: 'HKQuantityTypeIdentifierRunningStrideLength', agg: 'avg', unit: 'm' },
+    oscillation: { id: 'HKQuantityTypeIdentifierRunningVerticalOscillation', agg: 'avg', unit: 'cm' },
+    'contact-sol': { id: 'HKQuantityTypeIdentifierRunningGroundContactTime', agg: 'avg', unit: 'ms' },
+    'mouvements-nage': { id: 'HKQuantityTypeIdentifierSwimmingStrokeCount', agg: 'sum', unit: 'count' },
+    profondeur: { id: 'HKQuantityTypeIdentifierUnderwaterDepth', agg: 'max', unit: 'm' },
+    'temperature-eau': { id: 'HKQuantityTypeIdentifierWaterTemperature', agg: 'avg', unit: 'degC' },
+    'distance-rame': { id: 'HKQuantityTypeIdentifierDistanceRowing', agg: 'sum', unit: 'm' },
+    'vitesse-rame': { id: 'HKQuantityTypeIdentifierRowingSpeed', agg: 'avg', unit: 'm/s', scale: 3.6 },
+    'distance-pagaie': { id: 'HKQuantityTypeIdentifierDistancePaddleSports', agg: 'sum', unit: 'km' },
+    'vitesse-pagaie': { id: 'HKQuantityTypeIdentifierPaddleSportsSpeed', agg: 'avg', unit: 'm/s', scale: 3.6 },
+    'distance-ski': { id: 'HKQuantityTypeIdentifierDistanceDownhillSnowSports', agg: 'sum', unit: 'km' },
+    'distance-ski-fond': { id: 'HKQuantityTypeIdentifierDistanceCrossCountrySkiing', agg: 'sum', unit: 'km' },
+    'vitesse-ski-fond': { id: 'HKQuantityTypeIdentifierCrossCountrySkiingSpeed', agg: 'avg', unit: 'm/s', scale: 3.6 },
+    'distance-glisse': { id: 'HKQuantityTypeIdentifierDistanceSkatingSports', agg: 'sum', unit: 'km' },
+    'poussees-fauteuil': { id: 'HKQuantityTypeIdentifierPushCount', agg: 'sum', unit: 'count' },
+    'distance-fauteuil': { id: 'HKQuantityTypeIdentifierDistanceWheelchair', agg: 'sum', unit: 'km' },
+    'effort-seance': { id: 'HKQuantityTypeIdentifierWorkoutEffortScore', agg: 'max' },
+    'effort-estime': { id: 'HKQuantityTypeIdentifierEstimatedWorkoutEffortScore', agg: 'max' },
+    'vitesse-marche': { id: 'HKQuantityTypeIdentifierWalkingSpeed', agg: 'avg', unit: 'm/s', scale: 3.6 },
+    'longueur-pas': { id: 'HKQuantityTypeIdentifierWalkingStepLength', agg: 'avg', unit: 'cm' },
+    'asymetrie-marche': { id: 'HKQuantityTypeIdentifierWalkingAsymmetryPercentage', agg: 'avg', unit: '%', scale: 100 },
+    'double-appui': { id: 'HKQuantityTypeIdentifierWalkingDoubleSupportPercentage', agg: 'avg', unit: '%', scale: 100 },
+    'stabilite-marche': { id: 'HKQuantityTypeIdentifierAppleWalkingSteadiness', agg: 'avg', unit: '%', scale: 100 },
+    'vitesse-montee': { id: 'HKQuantityTypeIdentifierStairAscentSpeed', agg: 'avg', unit: 'm/s' },
+    'vitesse-descente': { id: 'HKQuantityTypeIdentifierStairDescentSpeed', agg: 'avg', unit: 'm/s' },
+    'marche-6-min': { id: 'HKQuantityTypeIdentifierSixMinuteWalkTestDistance', agg: 'avg', unit: 'm' },
+    chutes: { id: 'HKQuantityTypeIdentifierNumberOfTimesFallen', agg: 'sum', unit: 'count' },
+    fibrillation: { id: 'HKQuantityTypeIdentifierAtrialFibrillationBurden', agg: 'avg', unit: '%', scale: 100 },
+    perfusion: { id: 'HKQuantityTypeIdentifierPeripheralPerfusionIndex', agg: 'avg', unit: '%', scale: 100 },
+    'capacite-vitale': { id: 'HKQuantityTypeIdentifierForcedVitalCapacity', agg: 'avg', unit: 'L' },
+    'debit-expiratoire': { id: 'HKQuantityTypeIdentifierPeakExpiratoryFlowRate', agg: 'avg', unit: 'L/min' },
+    'son-casque': { id: 'HKQuantityTypeIdentifierHeadphoneAudioExposure', agg: 'avg', unit: 'dBASPL' },
+    'son-ambiant': { id: 'HKQuantityTypeIdentifierEnvironmentalAudioExposure', agg: 'avg', unit: 'dBASPL' },
+    uv: { id: 'HKQuantityTypeIdentifierUVExposure', agg: 'max', unit: 'count' },
+    // fraction de sang (0,0005) vers grammes par litre (0,5 g/L)
+    'alcool-sang': { id: 'HKQuantityTypeIdentifierBloodAlcoholContent', agg: 'avg', unit: '%', scale: 1000 },
+    insuline: { id: 'HKQuantityTypeIdentifierInsulinDelivery', agg: 'sum', unit: 'IU' },
+    'boissons-alcool': { id: 'HKQuantityTypeIdentifierNumberOfAlcoholicBeverages', agg: 'sum', unit: 'count' },
+    fibres: { id: 'HKQuantityTypeIdentifierDietaryFiber', agg: 'sum', unit: 'g' },
+    sucres: { id: 'HKQuantityTypeIdentifierDietarySugar', agg: 'sum', unit: 'g' },
+    'graisses-saturees': { id: 'HKQuantityTypeIdentifierDietaryFatSaturated', agg: 'sum', unit: 'g' },
+    'graisses-mono': { id: 'HKQuantityTypeIdentifierDietaryFatMonounsaturated', agg: 'sum', unit: 'g' },
+    'graisses-poly': { id: 'HKQuantityTypeIdentifierDietaryFatPolyunsaturated', agg: 'sum', unit: 'g' },
+    cholesterol: { id: 'HKQuantityTypeIdentifierDietaryCholesterol', agg: 'sum', unit: 'mg' },
+    sodium: { id: 'HKQuantityTypeIdentifierDietarySodium', agg: 'sum', unit: 'mg' },
+    potassium: { id: 'HKQuantityTypeIdentifierDietaryPotassium', agg: 'sum', unit: 'mg' },
+    calcium: { id: 'HKQuantityTypeIdentifierDietaryCalcium', agg: 'sum', unit: 'mg' },
+    magnesium: { id: 'HKQuantityTypeIdentifierDietaryMagnesium', agg: 'sum', unit: 'mg' },
+    fer: { id: 'HKQuantityTypeIdentifierDietaryIron', agg: 'sum', unit: 'mg' },
+    zinc: { id: 'HKQuantityTypeIdentifierDietaryZinc', agg: 'sum', unit: 'mg' },
+    phosphore: { id: 'HKQuantityTypeIdentifierDietaryPhosphorus', agg: 'sum', unit: 'mg' },
+    iode: { id: 'HKQuantityTypeIdentifierDietaryIodine', agg: 'sum', unit: 'mcg' },
+    selenium: { id: 'HKQuantityTypeIdentifierDietarySelenium', agg: 'sum', unit: 'mcg' },
+    cuivre: { id: 'HKQuantityTypeIdentifierDietaryCopper', agg: 'sum', unit: 'mg' },
+    manganese: { id: 'HKQuantityTypeIdentifierDietaryManganese', agg: 'sum', unit: 'mg' },
+    chrome: { id: 'HKQuantityTypeIdentifierDietaryChromium', agg: 'sum', unit: 'mcg' },
+    molybdene: { id: 'HKQuantityTypeIdentifierDietaryMolybdenum', agg: 'sum', unit: 'mcg' },
+    chlorure: { id: 'HKQuantityTypeIdentifierDietaryChloride', agg: 'sum', unit: 'mg' },
+    'vitamine-a': { id: 'HKQuantityTypeIdentifierDietaryVitaminA', agg: 'sum', unit: 'mcg' },
+    'vitamine-b1': { id: 'HKQuantityTypeIdentifierDietaryThiamin', agg: 'sum', unit: 'mg' },
+    'vitamine-b2': { id: 'HKQuantityTypeIdentifierDietaryRiboflavin', agg: 'sum', unit: 'mg' },
+    'vitamine-b3': { id: 'HKQuantityTypeIdentifierDietaryNiacin', agg: 'sum', unit: 'mg' },
+    'vitamine-b5': { id: 'HKQuantityTypeIdentifierDietaryPantothenicAcid', agg: 'sum', unit: 'mg' },
+    'vitamine-b8': { id: 'HKQuantityTypeIdentifierDietaryBiotin', agg: 'sum', unit: 'mcg' },
+    'vitamine-b9': { id: 'HKQuantityTypeIdentifierDietaryFolate', agg: 'sum', unit: 'mcg' },
+    'vitamine-c': { id: 'HKQuantityTypeIdentifierDietaryVitaminC', agg: 'sum', unit: 'mg' },
+    'vitamine-d': { id: 'HKQuantityTypeIdentifierDietaryVitaminD', agg: 'sum', unit: 'mcg' },
+    'vitamine-e': { id: 'HKQuantityTypeIdentifierDietaryVitaminE', agg: 'sum', unit: 'mg' },
+    'vitamine-k': { id: 'HKQuantityTypeIdentifierDietaryVitaminK', agg: 'sum', unit: 'mcg' },
+  };
+
+  /** Mesures lisibles par getExtendedHistory sur iPhone */
+  getExtendedKeys(): string[] {
+    return [...Object.keys(HealthConnectService.EXT_QUANTITY), 'tension', 'pleine-conscience', ...Object.keys(HealthConnectService.EXT_EVENTS), 'ecg', 'humeur'];
+  }
+
+  /**
+   * Demande la lecture des types ajoutés (une seule fenêtre iOS, qui ne liste que les types jamais proposés).
+   * Sans effet dans Expo Go. Ne lève jamais d'erreur.
+   */
+  async requestExtendedPermissions(): Promise<boolean> {
+    if (!HealthKit || isRunningInExpoGo || !isHealthKitAvailable) return false;
+    // Une seule proposition : même si iOS refuse la demande, on ne la repropose pas en boucle
+    try {
+      await AsyncStorage.setItem(EXTENDED_ASKED_KEY, new Date().toISOString());
+    } catch {}
+    try {
+      // Demande native d'abord (Nitro v13 échoue sur iOS 26), Nitro en secours sur un ancien build.
+      // Délai large : la fenêtre liste beaucoup de types, il faut le temps de la lire.
+      const natif = await this.withTimeout(requestHealthPermissionsForNative(HealthConnectService.EXTRA_READ_TYPES as string[], []), 180000);
+      if (natif.startsWith('error:module absent')) {
+        await this.withTimeout(
+          Promise.resolve(HealthKit.requestAuthorization({ toRead: HealthConnectService.EXTRA_READ_TYPES, toShare: [] })),
+          180000,
+        );
+      }
+      try {
+        await AsyncStorage.setItem(EXTENDED_ASKED_KEY, new Date().toISOString());
+      } catch {}
+      return true;
+    } catch (e) {
+      logger.warn('[HealthKit] Autorisation complémentaire impossible:', e);
+      return false;
+    }
+  }
+
+  /** true si la demande complémentaire a déjà été faite */
+  async hasAskedExtendedPermissions(): Promise<boolean> {
+    try {
+      return !!(await AsyncStorage.getItem(EXTENDED_ASKED_KEY));
+    } catch {
+      return false;
+    }
+  }
+
+  /** Une valeur par jour local pour un type de quantité */
+  private async getQuantityDaily(
+    id: string,
+    agg: 'sum' | 'avg' | 'max',
+    days: number,
+    unit?: string,
+    scale = 1,
+    opts: { excludeOwn?: boolean; latest?: boolean } = {},
+  ): Promise<Array<{ date: string; value: number }>> {
+    if (!HealthKit || isRunningInExpoGo) return [];
+    // Sans les écritures de YOROI ou avec la dernière valeur du jour : il faut les échantillons
+    const needSamples = !!(opts.excludeOwn || opts.latest);
+    const safeDays = Math.max(1, Math.min(Math.floor(days || 1), 3650));
+    const from = new Date();
+    from.setDate(from.getDate() - (safeDays - 1));
+    from.setHours(0, 0, 0, 0);
+    const to = new Date();
+
+    // 1. Statistiques par jour calculées par Apple (dédoublonnées entre iPhone et montre)
+    try {
+      const HK = require('@kingstinct/react-native-healthkit');
+      if (!needSamples && typeof HK.queryStatisticsCollectionForQuantity === 'function') {
+        const opts: any = { filter: { date: { startDate: from, endDate: to } } };
+        if (unit) opts.unit = unit;
+        const stat = agg === 'sum' ? 'cumulativeSum' : agg === 'max' ? 'discreteMax' : 'discreteAverage';
+        const rows: any[] = await this.withTimeout(
+          Promise.resolve(HK.queryStatisticsCollectionForQuantity(id, [stat], from, { day: 1 }, opts)),
+          15000,
+        );
+        const out: Array<{ date: string; value: number }> = [];
+        for (const r of rows ?? []) {
+          const q = agg === 'sum' ? r?.sumQuantity : agg === 'max' ? r?.maximumQuantity : r?.averageQuantity;
+          const v = Number(q?.quantity);
+          if (r?.startDate && Number.isFinite(v) && v > 0) {
+            out.push({ date: localDateKey(new Date(r.startDate)), value: v * scale });
+          }
+        }
+        if (out.length > 0) return out.sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (e) {
+      logger.info(`[HealthKit] statistiques ${id} indisponibles, lecture des échantillons`);
+    }
+
+    // 2. Repli : échantillons bruts regroupés par jour local
+    try {
+      const options = this.createQueryOptions(from, to, { limit: 0, ascending: true, unit });
+      if (!options) return [];
+      const samples: any[] = await this.withTimeout(Promise.resolve(HealthKit.queryQuantitySamples(id, options)), 15000);
+      const groups: Record<string, number[]> = {};
+      const sorted = [...(samples ?? [])].sort((a, b) => new Date(a?.startDate).getTime() - new Date(b?.startDate).getTime());
+      for (const s of sorted) {
+        const v = Number(s?.quantity);
+        if (!s?.startDate || !Number.isFinite(v)) continue;
+        if (opts.excludeOwn && isYoroiSample(s)) continue;
+        const d = localDateKey(new Date(s.startDate));
+        (groups[d] = groups[d] ?? []).push(v * scale);
+      }
+      return Object.keys(groups)
+        .map((d) => {
+          const vals = groups[d];
+          if (opts.latest) return { date: d, value: vals[vals.length - 1] };
+          const value = agg === 'sum' ? vals.reduce((a, b) => a + b, 0) : agg === 'max' ? Math.max(...vals) : vals.reduce((a, b) => a + b, 0) / vals.length;
+          return { date: d, value };
+        })
+        .filter((p) => p.value > 0)
+        .sort((a, b) => a.date.localeCompare(b.date));
+    } catch (e) {
+      logger.warn(`[HealthKit] lecture ${id} impossible:`, e);
+      return [];
+    }
+  }
+
+  /** Historique jour par jour d'une mesure étendue (clé YOROI). v2 : chiffre bas de la tension. */
+  async getExtendedHistory(
+    key: string,
+    days: number = 30,
+    opts: { excludeOwn?: boolean; latest?: boolean } = {},
+  ): Promise<Array<{ date: string; value: number; v2?: number }>> {
+    if (!HealthKit || isRunningInExpoGo) return [];
+    try {
+      const spec = HealthConnectService.EXT_QUANTITY[key];
+      if (spec) return await this.getQuantityDaily(spec.id, spec.agg, days, spec.unit, spec.scale ?? 1, opts);
+
+      const from = new Date();
+      from.setDate(from.getDate() - (Math.max(1, days) - 1));
+      from.setHours(0, 0, 0, 0);
+
+      if (key === 'tension') {
+        const options = this.createQueryOptions(from, new Date(), { limit: 0, ascending: true, unit: 'mmHg' });
+        if (!options) return [];
+        const [sys, dia] = await Promise.allSettled([
+          HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBloodPressureSystolic', options),
+          HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBloodPressureDiastolic', options),
+        ]);
+        const g: Record<string, { s: number[]; d: number[] }> = {};
+        const add = (rows: any[], k: 's' | 'd') => {
+          for (const r of rows ?? []) {
+            const v = Number(r?.quantity);
+            if (!r?.startDate || !(v > 0)) continue;
+            const day = localDateKey(new Date(r.startDate));
+            (g[day] = g[day] ?? { s: [], d: [] })[k].push(v);
+          }
+        };
+        if (sys.status === 'fulfilled') add(sys.value as any[], 's');
+        if (dia.status === 'fulfilled') add(dia.value as any[], 'd');
+        const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+        return Object.keys(g)
+          .map((day) => ({ date: day, value: Math.round(avg(g[day].s)), v2: Math.round(avg(g[day].d)) || undefined }))
+          .filter((p) => p.value > 0)
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+
+      if (key === 'pleine-conscience') {
+        const options = this.createQueryOptions(from, new Date(), { limit: 0, ascending: true });
+        if (!options) return [];
+        const rows: any[] = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierMindfulSession', options);
+        const g: Record<string, number> = {};
+        for (const r of rows ?? []) {
+          if (!r?.startDate || !r?.endDate) continue;
+          const min = (new Date(r.endDate).getTime() - new Date(r.startDate).getTime()) / 60000;
+          if (!(min > 0) || min > 600) continue;
+          const day = localDateKey(new Date(r.startDate));
+          g[day] = (g[day] ?? 0) + min;
+        }
+        return Object.keys(g)
+          .map((day) => ({ date: day, value: Math.round(g[day]) }))
+          .filter((p) => p.value > 0)
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+
+      // Événements (alertes, ECG, humeur) : un compte par jour, ou la moyenne de l'humeur
+      if (HealthConnectService.EXT_EVENTS[key] || key === 'ecg' || key === 'humeur') {
+        const events = await this.getEventSamples(key, days);
+        const g: Record<string, number[]> = {};
+        for (const ev of events) {
+          const day = localDateKey(new Date(ev.date));
+          (g[day] = g[day] ?? []).push(ev.value ?? 1);
+        }
+        return Object.keys(g)
+          .map((day) => ({
+            date: day,
+            value: key === 'humeur' ? g[day].reduce((a, b) => a + b, 0) / g[day].length : g[day].length,
+          }))
+          .filter((p) => p.value > 0)
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } catch (e) {
+      logger.warn(`[HealthKit] getExtendedHistory ${key}:`, e);
+    }
+    return [];
+  }
+
+  /**
+   * Liste datée des événements d'une mesure (chutes, alertes du cœur, ECG, humeur...), du plus récent au plus ancien.
+   * value : nombre de chutes, fréquence moyenne de l'ECG, humeur de 1 à 7. Ne lève jamais d'erreur.
+   */
+  async getEventSamples(
+    key: string,
+    days: number = 90,
+  ): Promise<Array<{ date: string; end?: string; title: string; detail?: string; value?: number }>> {
+    if (!HealthKit || isRunningInExpoGo) return [];
+    const from = new Date();
+    from.setDate(from.getDate() - (Math.max(1, Math.min(days, 3650)) - 1));
+    from.setHours(0, 0, 0, 0);
+    const to = new Date();
+    const iso = (d: unknown) => {
+      const t = new Date(d as any);
+      return Number.isFinite(t.getTime()) ? t.toISOString() : '';
+    };
+    const minutes = (a: unknown, b: unknown) => {
+      const m = (new Date(b as any).getTime() - new Date(a as any).getTime()) / 60000;
+      return Number.isFinite(m) && m >= 1 ? Math.round(m) : 0;
+    };
+    try {
+      const HK = require('@kingstinct/react-native-healthkit');
+      const options = this.createQueryOptions(from, to, { limit: 200, ascending: false });
+      if (!options) return [];
+
+      const cat = HealthConnectService.EXT_EVENTS[key];
+      if (cat) {
+        const rows: any[] = await this.withTimeout(Promise.resolve(HealthKit.queryCategorySamples(cat.id, options)), 15000);
+        return (rows ?? [])
+          .filter((r) => r?.startDate)
+          .map((r) => {
+            const md = r?.metadata ?? {};
+            const th = md?.HKHeartRateEventThreshold;
+            const threshold = typeof th === 'number' ? th : Number(th?.quantity);
+            const bits: string[] = [];
+            if ((key === 'fc-haute' || key === 'fc-basse') && Number.isFinite(threshold) && threshold > 0) bits.push(`seuil ${Math.round(threshold)} bpm`);
+            const dur = minutes(r.startDate, r.endDate);
+            if (dur > 0 && key !== 'apnees' && key !== 'cardio-faible' && key !== 'alerte-stabilite') bits.push(`${dur} min`);
+            return { date: iso(r.startDate), end: iso(r.endDate) || undefined, title: cat.title(Number(r?.value)), detail: bits.join(', ') || undefined };
+          })
+          .filter((e) => !!e.date);
+      }
+
+      if (key === 'chutes') {
+        const rows: any[] = await this.withTimeout(
+          Promise.resolve(HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierNumberOfTimesFallen', { ...options, unit: 'count' })),
+          15000,
+        );
+        return (rows ?? [])
+          .filter((r) => r?.startDate && Number(r?.quantity) > 0)
+          .map((r) => {
+            const n = Math.round(Number(r.quantity));
+            return { date: iso(r.startDate), title: n > 1 ? `${n} chutes détectées` : 'Chute détectée', value: n };
+          })
+          .filter((e) => !!e.date);
+      }
+
+      if (key === 'ecg' && typeof HK.queryElectrocardiogramSamples === 'function') {
+        const rows: any[] = await this.withTimeout(Promise.resolve(HK.queryElectrocardiogramSamples({ ...options, includeVoltages: false })), 15000);
+        const LABEL: Record<string, string> = {
+          sinusRhythm: 'Rythme sinusal',
+          atrialFibrillation: 'Signes de fibrillation auriculaire',
+          inconclusiveLowHeartRate: 'Non concluant, fréquence basse',
+          inconclusiveHighHeartRate: 'Non concluant, fréquence élevée',
+          inconclusivePoorReading: 'Non concluant, enregistrement de mauvaise qualité',
+          inconclusiveOther: 'Non concluant',
+          notSet: 'Résultat non renseigné',
+        };
+        return (rows ?? [])
+          .filter((r) => r?.startDate)
+          .map((r) => {
+            const bpm = Number(r?.averageHeartRateBpm);
+            const bits: string[] = [];
+            if (Number.isFinite(bpm) && bpm > 0) bits.push(`${Math.round(bpm)} bpm en moyenne`);
+            if (r?.symptomsStatus === 'present') bits.push('symptômes notés');
+            return { date: iso(r.startDate), title: LABEL[String(r?.classification)] ?? 'Électrocardiogramme', detail: bits.join(', ') || undefined, value: 1 };
+          })
+          .filter((e) => !!e.date);
+      }
+
+      if (key === 'humeur' && typeof HK.queryStateOfMindSamples === 'function') {
+        const rows: any[] = await this.withTimeout(Promise.resolve(HK.queryStateOfMindSamples(options)), 15000);
+        const VALENCE = ['', 'Très désagréable', 'Désagréable', 'Un peu désagréable', 'Neutre', 'Un peu agréable', 'Agréable', 'Très agréable'];
+        const LABELS: Record<number, string> = {
+          1: 'émerveillé', 2: 'amusé', 3: 'en colère', 4: 'anxieux', 5: 'honteux', 6: 'courageux', 7: 'calme', 8: 'content',
+          9: 'déçu', 10: 'découragé', 11: 'dégoûté', 12: 'gêné', 13: 'enthousiaste', 14: 'frustré', 15: 'reconnaissant',
+          16: 'coupable', 17: 'heureux', 18: 'désespéré', 19: 'irrité', 20: 'jaloux', 21: 'joyeux', 22: 'seul', 23: 'passionné',
+          24: 'serein', 25: 'fier', 26: 'soulagé', 27: 'triste', 28: 'effrayé', 29: 'stressé', 30: 'surpris', 31: 'inquiet',
+          32: 'agacé', 33: 'confiant', 34: 'épuisé', 35: 'plein d’espoir', 36: 'indifférent', 37: 'débordé', 38: 'satisfait',
+        };
+        return (rows ?? [])
+          .filter((r) => r?.startDate && Number(r?.valenceClassification) >= 1)
+          .map((r) => {
+            const v = Math.max(1, Math.min(7, Math.round(Number(r.valenceClassification))));
+            const words = (Array.isArray(r?.labels) ? r.labels : []).map((l: number) => LABELS[Number(l)]).filter(Boolean).slice(0, 3);
+            const kind = Number(r?.kind) === 2 ? 'Humeur de la journée' : 'Émotion du moment';
+            return { date: iso(r.startDate), title: VALENCE[v], detail: [kind, ...words].join(', '), value: v };
+          })
+          .filter((e) => !!e.date);
+      }
+    } catch (e) {
+      logger.warn(`[HealthKit] getEventSamples ${key}:`, e);
+    }
+    return [];
+  }
+
+  /**
+   * Garde en base les derniers jours des mesures étendues (type « x_<clé> »),
+   * pour que l'écran Santé les montre même hors connexion ou dans Expo Go.
+   */
+  private async storeExtendedRecent(days: number = 3): Promise<number> {
+    if (!HealthKit || isRunningInExpoGo) return 0;
+    const keys = this.getExtendedKeys().filter((k) => k !== 'masse-grasse' && k !== 'masse-maigre' && k !== 'etages');
+    // Six lectures à la fois : plus de cent rubriques depuis le 10 octobre 2026, Santé ne doit pas saturer
+    const results: PromiseSettledResult<Array<{ date: string; value: number; v2?: number }>>[] = new Array(keys.length);
+    let next = 0;
+    const worker = async () => {
+      while (next < keys.length) {
+        const i = next++;
+        try {
+          results[i] = { status: 'fulfilled', value: await this.withTimeout(this.getExtendedHistory(keys[i], days), 20000) };
+        } catch (reason) {
+          results[i] = { status: 'rejected', reason };
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: 6 }, worker));
+    const records: HealthDataRecord[] = [];
+    results.forEach((r, i) => {
+      if (r.status !== 'fulfilled') return;
+      for (const p of r.value) {
+        if (!(p.value > 0)) continue;
+        records.push({
+          date: p.date,
+          type: `x_${keys[i]}` as HealthDataRecord['type'],
+          value: Math.round(p.value * 100) / 100,
+          value2: p.v2,
+          source: 'apple_health',
+        });
+      }
+    });
+    if (records.length === 0) return 0;
+    try {
+      return await saveHealthDataBatch(records);
+    } catch (e) {
+      logger.warn('[syncAll] mesures étendues non enregistrées:', e);
+      return 0;
+    }
+  }
+
   async syncAll(): Promise<HealthData | null> {
+    if (await demoActive()) { logger.info('[Sante] mode démo : rien n’est lu ni importé'); return null; }
     if (!this.syncStatus.isConnected) {
       // Verifier si HealthKit est quand meme disponible (permissions accordees via Reglages iOS)
       const available = await this.isAvailable();
@@ -4748,23 +5433,28 @@ class HealthConnectService {
       logger.info('[syncAll] Non connecté mais HealthKit disponible, on continue');
     }
 
+    // 14 octobre 2026 (ios27) : zones d'Apple relues au plus une fois par jour
+    await syncAppleZones().catch(() => 'indisponible');
+
     try {
       logger.info('[syncAll] Synchronisation iOS en cours...');
       const data = await this.getAllHealthData();
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateKey(new Date());
+      const dayOf = (x: unknown) => sampleDay((x as { date?: string | Date } | null | undefined)?.date, today);
       const records: HealthDataRecord[] = [];
       let savedCount = 0;
 
       // ══════ POIDS → SQLite (table weights) ══════
       if (data.weight) {
         try {
-          await addWeight({
-            weight: data.weight.value,
-            source: data.weight.source || 'apple_health',
-            date: data.weight.date.split('T')[0],
-          });
-          savedCount++;
-          logger.info(`[syncAll] Poids sauvegardé: ${data.weight.value} kg (source: ${data.weight.source})`);
+          // Date locale de la pesée (une pesée à 7 h en France est à 5 h UTC : split('T') pouvait la ranger la veille)
+          const added = await this.saveImportedWeight(
+            sampleDay(data.weight.date, today),
+            data.weight.value,
+            data.weight.source || 'apple_health',
+          );
+          if (added) savedCount++;
+          logger.info(`[syncAll] Poids ${added ? 'sauvegardé' : 'déjà présent'}: ${data.weight.value} kg (source: ${data.weight.source})`);
         } catch (e) {
           // Doublon ou erreur, on continue
           logger.warn('[syncAll] Poids déjà existant ou erreur:', e);
@@ -4836,7 +5526,7 @@ class HealthConnectService {
       // ══════ HRV → SQLite ══════
       if (data.heartRateVariability && data.heartRateVariability.value > 0) {
         records.push({
-          date: today,
+          date: dayOf(data.heartRateVariability),
           type: 'hrv',
           value: Math.round(data.heartRateVariability.value),
           unit: 'ms',
@@ -4865,8 +5555,9 @@ class HealthConnectService {
 
         // Bridge: ecrire aussi dans sleepService pour que sleep.tsx affiche les données
         try {
-          const sleepDate = data.sleep.startTime
-            ? new Date(data.sleep.startTime).toISOString().split('T')[0]
+          // 16 octobre : jour du reveil, comme Sante et comme la saisie manuelle (avant : jour du coucher)
+          const sleepDate = data.sleep.endTime
+            ? cleNuit(new Date(data.sleep.endTime).getTime())
             : today;
           const bedTime = data.sleep.startTime
             ? new Date(data.sleep.startTime).toTimeString().slice(0, 5)
@@ -4911,7 +5602,7 @@ class HealthConnectService {
       // ══════ VO2 MAX → SQLite ══════
       if (data.vo2Max && data.vo2Max.value > 0) {
         records.push({
-          date: today,
+          date: dayOf(data.vo2Max),
           type: 'vo2max',
           value: Math.round(data.vo2Max.value * 10) / 10,
           unit: 'ml/kg/min',
@@ -4922,7 +5613,7 @@ class HealthConnectService {
       // ══════ SpO2 → SQLite ══════
       if (data.oxygenSaturation && data.oxygenSaturation.value > 0) {
         records.push({
-          date: today,
+          date: dayOf(data.oxygenSaturation),
           type: 'spo2',
           value: Math.round(data.oxygenSaturation.value * 10) / 10,
           unit: '%',
@@ -4933,9 +5624,11 @@ class HealthConnectService {
       // ══════ COMPOSITION CORPORELLE → SQLite ══════
       if (data.bodyComposition) {
         const compSource = data.bodyComposition.source || 'apple_health';
+        // Jour de la mesure de la balance, pas celui de la synchronisation
+        const compDay = dayOf(data.bodyComposition);
         if (data.bodyComposition.bodyFatPercentage && data.bodyComposition.bodyFatPercentage > 0) {
           records.push({
-            date: today,
+            date: compDay,
             type: 'body_fat',
             value: Math.round(data.bodyComposition.bodyFatPercentage * 10) / 10,
             unit: '%',
@@ -4944,7 +5637,7 @@ class HealthConnectService {
         }
         if (data.bodyComposition.leanBodyMass && data.bodyComposition.leanBodyMass > 0) {
           records.push({
-            date: today,
+            date: compDay,
             type: 'lean_mass',
             value: Math.round(data.bodyComposition.leanBodyMass * 10) / 10,
             unit: 'kg',
@@ -4956,7 +5649,7 @@ class HealthConnectService {
       // ══════ PRESSION ARTÉRIELLE → SQLite ══════
       if (data.bloodPressure && data.bloodPressure.systolic > 0) {
         records.push({
-          date: today,
+          date: dayOf(data.bloodPressure),
           type: 'blood_pressure_systolic',
           value: data.bloodPressure.systolic,
           value2: data.bloodPressure.diastolic,
@@ -4969,7 +5662,7 @@ class HealthConnectService {
       // ══════ GLYCÉMIE → SQLite ══════
       if (data.bloodGlucose && data.bloodGlucose.value > 0) {
         records.push({
-          date: today,
+          date: dayOf(data.bloodGlucose),
           type: 'blood_glucose',
           value: data.bloodGlucose.value,
           unit: data.bloodGlucose.unit,
@@ -4981,7 +5674,7 @@ class HealthConnectService {
       // ══════ TAILLE → SQLite ══════
       if (data.height && data.height.value > 0) {
         records.push({
-          date: today,
+          date: dayOf(data.height),
           type: 'height',
           value: data.height.value,
           unit: 'cm',
@@ -5014,6 +5707,34 @@ class HealthConnectService {
         logger.info(`[syncAll] Pleine conscience: ${data.mindfulMinutes.minutes} min`);
       }
 
+      // ══════ RESPIRATION ET TEMPÉRATURE → SQLite (lues mais jamais gardées avant le 9 octobre 2026) ══════
+      if (data.respiratoryRate && data.respiratoryRate.value > 0) {
+        records.push({
+          date: data.respiratoryRate.date ? localDateKey(new Date(data.respiratoryRate.date)) : today,
+          type: 'respiratory_rate',
+          value: Math.round(data.respiratoryRate.value * 10) / 10,
+          unit: 'resp/min',
+          source: data.respiratoryRate.source || 'apple_health',
+        });
+      }
+      if (data.bodyTemperature && data.bodyTemperature.value > 0) {
+        records.push({
+          date: data.bodyTemperature.date ? localDateKey(new Date(data.bodyTemperature.date)) : today,
+          type: 'body_temp',
+          value: Math.round(data.bodyTemperature.value * 10) / 10,
+          unit: '°C',
+          source: data.bodyTemperature.source || 'apple_health',
+        });
+      }
+
+      // ══════ MESURES ÉTENDUES → SQLite (3 derniers jours, best effort) ══════
+      try {
+        const extSaved = await this.storeExtendedRecent(3);
+        if (extSaved > 0) logger.info(`[syncAll] Mesures étendues: ${extSaved}`);
+      } catch (e) {
+        logger.warn('[syncAll] Mesures étendues ignorées:', e);
+      }
+
       // ══════ WORKOUTS → SQLite (table trainings) ══════
       if (data.workouts && data.workouts.length > 0) {
         // Charger les fingerprints ET les UUID déjà en base pour dédup fiable
@@ -5022,7 +5743,7 @@ class HealthConnectService {
           const saved = await AsyncStorage.getItem('@yoroi_imported_workouts');
           if (saved) importedFingerprints = new Set(JSON.parse(saved));
         } catch {}
-        // UUID en base (source de vérité — résiste au vidage d'AsyncStorage)
+        // UUID en base (source de vérité, résiste au vidage d'AsyncStorage)
         let existingUUIDs: Set<string> = new Set();
         try { existingUUIDs = await getExistingHealthkitUUIDs(); } catch {}
 
@@ -5063,9 +5784,10 @@ class HealthConnectService {
               source: workout.source ? normalizeSourceName(workout.source) : undefined,
               notes: noteText,
               healthkit_uuid: (workout as any).hkUUID || workout.id || undefined,
+              is_outdoor: (workout as any).indoor === false || undefined,
             };
 
-            const trainingId = await addTraining(training);
+            const trainingId = await addTraining(await completerLieuImport(training));
             importedFingerprints.add(fingerprint);
             if (uuid) existingUUIDs.add(uuid); // Mettre à jour le cache local
             workoutsSaved++;
@@ -5134,7 +5856,7 @@ class HealthConnectService {
 
       // ══════ IMPORT HISTORIQUE SOMMEIL ══════
       // v2 : déduplication par source (Apple Watch prioritaire) pour éviter double-comptage
-      const SLEEP_SYNC_VERSION = 'v2';
+      const SLEEP_SYNC_VERSION = 'v3'; // v3 (16 octobre) : calcul comme Sante, nuit rangee au jour du reveil
       try {
         const hasSyncedSleepHistory = await AsyncStorage.getItem('@yoroi_sleep_history_synced');
         if (!hasSyncedSleepHistory || hasSyncedSleepHistory !== SLEEP_SYNC_VERSION) {
@@ -5166,7 +5888,7 @@ class HealthConnectService {
       if (data.hydration) {
         await AsyncStorage.setItem(STORAGE_KEYS.LAST_HYDRATION, JSON.stringify(data.hydration));
         // Synchroniser aussi vers la clé utilisée par readinessService (@yoroi_hydration_YYYY-MM-DD)
-        const todayKey = `@yoroi_hydration_${new Date().toISOString().split('T')[0]}`;
+        const todayKey = `@yoroi_hydration_${localDateKey(new Date())}`;
         await AsyncStorage.setItem(todayKey, String(data.hydration.amount));
       }
       if (data.heartRate && data.heartRate.resting > 0) {
@@ -5206,6 +5928,8 @@ class HealthConnectService {
       }
 
       logger.info(`[syncAll] Synchronisation terminée: ${savedCount} données sauvegardées dans SQLite`);
+      // 14 octobre 2026 (ios27) : seances deja importees completees avec les temps par zone d'Apple, en fond
+      backfillAppleZones().catch(() => 0);
       return data;
     } catch (error) {
       logger.error('[syncAll] Erreur synchronisation:', error);
@@ -5215,7 +5939,7 @@ class HealthConnectService {
 
   // ============================================
   // IMPORT COMPLET DE TOUT L'HISTORIQUE APPLE SANTÉ
-  // Séances, poids, sommeil, pas, calories, FC, distance — sans limite de date
+  // Séances, poids, sommeil, pas, calories, FC, distance, sans limite de date
   // ============================================
 
   async importFullHistory(
@@ -5223,34 +5947,47 @@ class HealthConnectService {
   ): Promise<{ weights: number; sleep: number; steps: number; calories: number; heartRate: number; distance: number; workouts: number; healthkitFound: number; insertErrors: number }> {
 
     const result = { weights: 0, sleep: 0, steps: 0, calories: 0, heartRate: 0, distance: 0, workouts: 0, healthkitFound: 0, insertErrors: 0 };
+    // 17 octobre : rien n'est importe pendant la demo (profil Heny)
+    if (await demoActive()) return result;
     const TOTAL_STEPS = 7;
     let stepIndex = 0;
 
     const progress = (label: string) => {
       stepIndex++;
       onProgress?.(label, stepIndex, TOTAL_STEPS);
-      DeviceEventEmitter.emit('YOROI_IMPORT_PROGRESS', { step: label, current: stepIndex, total: TOTAL_STEPS });
+      // 14 octobre 2026 (SANTÉ CONNEXION) : les comptes déjà importés, pour « Import en cours : 120 pesées, 45 séances »
+      DeviceEventEmitter.emit('YOROI_IMPORT_PROGRESS', { step: label, current: stepIndex, total: TOTAL_STEPS, compte: { ...result } });
       logger.info(`[importFullHistory] ${label} (${stepIndex}/${TOTAL_STEPS})`);
     };
 
     DeviceEventEmitter.emit('YOROI_IMPORT_START');
 
+    // Zones d'Apple lues pendant la connexion : les séances importées les utilisent (au plus 15 s d'attente)
+    if (this.zonesAvantImport) {
+      try {
+        await this.withTimeout(this.zonesAvantImport, 15000);
+      } catch {}
+      this.zonesAvantImport = null;
+    }
+
     try {
 
-      // ══════ 1. POIDS — toutes les pesées depuis l'an 2000 ══════
+      // ══════ 1. POIDS, toutes les pesées depuis l'an 2000 ══════
       progress('Poids');
       try {
-        const weights = await this.getWeightHistory(); // days=0 = illimité
+        const weights = await this.getWeightHistory(); // days=0 = illimité, sans les écritures de YOROI
+        // Pesées déjà en base (toutes sources) : ni doublon avec la synchro, ni avec une saisie manuelle
+        const known = await getWeights().catch(() => []);
         for (const w of weights) {
           try {
-            await addWeight({ weight: w.value, source: w.source || 'apple_health', date: w.date });
-            result.weights++;
+            const added = await this.saveImportedWeight(w.date, w.value, normalizeSourceName(w.source || 'apple_health'), known);
+            if (added) result.weights++;
           } catch { /* doublon ou contrainte, on ignore */ }
         }
         logger.info(`[importFullHistory] Poids importés: ${result.weights}/${weights.length}`);
       } catch (e) { logger.warn('[importFullHistory] Erreur poids:', e); }
 
-      // ══════ 2. SOMMEIL — toutes les nuits depuis l'an 2000 ══════
+      // ══════ 2. SOMMEIL, toutes les nuits depuis l'an 2000 ══════
       progress('Sommeil');
       try {
         const sleepHistory = await this.getSleepHistory(); // illimité
@@ -5277,7 +6014,7 @@ class HealthConnectService {
         logger.info(`[importFullHistory] Nuits importées: ${result.sleep}/${sleepHistory.length}`);
       } catch (e) { logger.warn('[importFullHistory] Erreur sommeil:', e); }
 
-      // ══════ 3. PAS — tous les jours depuis l'an 2000 ══════
+      // ══════ 3. PAS, tous les jours depuis l'an 2000 ══════
       progress('Pas');
       try {
         const stepsHistory = await this.getStepsHistory(); // illimité
@@ -5288,7 +6025,7 @@ class HealthConnectService {
         logger.info(`[importFullHistory] Jours de pas importés: ${result.steps}`);
       } catch (e) { logger.warn('[importFullHistory] Erreur pas:', e); }
 
-      // ══════ 4. CALORIES — tous les jours depuis l'an 2000 ══════
+      // ══════ 4. CALORIES, tous les jours depuis l'an 2000 ══════
       progress('Calories');
       try {
         const calHistory = await this.getCaloriesHistory(); // illimité
@@ -5301,7 +6038,7 @@ class HealthConnectService {
         logger.info(`[importFullHistory] Jours de calories importés: ${calHistory.length}`);
       } catch (e) { logger.warn('[importFullHistory] Erreur calories:', e); }
 
-      // ══════ 5. FRÉQUENCE CARDIAQUE — tous les jours depuis l'an 2000 ══════
+      // ══════ 5. FRÉQUENCE CARDIAQUE, tous les jours depuis l'an 2000 ══════
       progress('Fréquence cardiaque');
       try {
         const hrHistory = await this.getHeartRateHistory(); // illimité
@@ -5312,7 +6049,7 @@ class HealthConnectService {
         logger.info(`[importFullHistory] Jours de FC importés: ${result.heartRate}`);
       } catch (e) { logger.warn('[importFullHistory] Erreur FC:', e); }
 
-      // ══════ 6. DISTANCE — tous les jours depuis l'an 2000 ══════
+      // ══════ 6. DISTANCE, tous les jours depuis l'an 2000 ══════
       progress('Distance');
       try {
         const distHistory = await this.getDistanceHistory(); // illimité
@@ -5323,7 +6060,7 @@ class HealthConnectService {
         logger.info(`[importFullHistory] Jours de distance importés: ${result.distance}`);
       } catch (e) { logger.warn('[importFullHistory] Erreur distance:', e); }
 
-      // ══════ 7. SÉANCES — toutes depuis l'an 2000 ══════
+      // ══════ 7. SÉANCES, toutes depuis l'an 2000 ══════
       progress('Séances');
       let workoutsReturned = false;
       try {
@@ -5378,12 +6115,16 @@ class HealthConnectService {
                 source: workout.source ? normalizeSourceName(workout.source) : undefined,
                 notes: noteText,
                 healthkit_uuid: uuid || undefined,
+                is_outdoor: (workout as any).indoor === false || undefined,
               };
 
-              await addTraining(training);
+              await addTraining(await completerLieuImport(training));
               importedFingerprints.add(fingerprint);
               if (uuid) existingUUIDs.add(uuid);
               result.workouts++;
+              if (result.workouts % 10 === 0) {
+                DeviceEventEmitter.emit('YOROI_IMPORT_PROGRESS', { step: 'Séances', current: stepIndex, total: TOTAL_STEPS, compte: { ...result } });
+              }
             } catch (insertErr) {
               result.insertErrors++;
               logger.warn('[importFullHistory] Erreur insertion séance:', insertErr);
@@ -5496,9 +6237,10 @@ class HealthConnectService {
       source: workout.source ? normalizeSourceName(workout.source) : undefined,
       notes: noteText,
       healthkit_uuid: (workout as any).hkUUID || workout.id || undefined,
+      is_outdoor: (workout as any).indoor === false || undefined,
     };
 
-    const trainingId = await addTraining(training);
+    const trainingId = await addTraining(await completerLieuImport(training));
     importedFingerprints.add(fingerprint);
 
     // Sauvegarder les fingerprints (garder les 5000 derniers)
@@ -5526,6 +6268,7 @@ class HealthConnectService {
    * Fallback: polling toutes les 5 minutes si subscribeToChanges non disponible
    */
   async setupWorkoutObserver(): Promise<void> {
+    if (await demoActive()) return;
     if (!HealthKit) {
       logger.warn('[WorkoutObserver] HealthKit module not loaded');
       return;
@@ -5619,15 +6362,10 @@ class HealthConnectService {
       // Traiter les workouts recents (pas seulement le dernier, pour rattraper ceux manques)
       for (const workout of recentWorkouts.slice(0, 5)) {
         const result = await this.processNewWorkout(workout, importedFingerprints);
-        if (result) {
-          // Cooldown de 30s par workout pour éviter les notifications dupliquées
-          const notifKey = result.fingerprint || result.trainingId?.toString() || '';
-          const lastTime = this._lastWorkoutNotifTime[notifKey] || 0;
-          if (Date.now() - lastTime > 30000) {
-            this._lastWorkoutNotifTime[notifKey] = Date.now();
-            // Envoyer notification Strava-like
-            await this.sendWorkoutCompletionNotification(workout, result.trainingId);
-          }
+        // 18 octobre 2026 : la notification ne part que pour une séance qui vient de finir, une seule fois par séance
+        // (mémoire durable, regroupement) : lib/v2/notifications/seanceTerminee.ts. Une séance écartée (id 0) n'en a pas.
+        if (result && result.trainingId && result.trainingId > 0) {
+          await this.sendWorkoutCompletionNotification(workout, result.trainingId);
         }
       }
     } catch (e) {
@@ -5669,17 +6407,11 @@ class HealthConnectService {
     trainingId?: number
   ): Promise<void> {
     try {
-      const Notif = await import('expo-notifications');
-
+      if (!trainingId || trainingId <= 0) return;
       // S'assurer que la categorie est enregistree
       await this.registerNotificationCategory();
 
       const sportLabel = getWorkoutLabel(workout.activityType);
-      const durationH = Math.floor(workout.duration / 60);
-      const durationM = Math.round(workout.duration % 60);
-      const durationStr = durationH > 0
-        ? `${durationH}h${durationM > 0 ? `${String(durationM).padStart(2, '0')}` : ''}`
-        : `${durationM} min`;
 
       // Source device
       const source = workout.source ? normalizeSourceName(workout.source) : '';
@@ -5694,92 +6426,48 @@ class HealthConnectService {
 
       // Titre personnalise selon le sport
       const titres: Record<string, string> = {
-        'Course': 'Belle course !',
-        'Trail': 'Beau trail !',
-        'Marche': 'Belle marche !',
-        'Musculation': 'Belle séance de muscu !',
-        'HYROX': 'Séance HYROX terminee !',
-        'JJB': 'Beau roulage !',
-        'Boxe': 'Belle séance de boxe !',
-        'Velo': 'Belle sortie velo !',
-        'Natation': 'Belle nage !',
-        'Yoga': 'Namaste ! Belle séance.',
-        'Football': 'Beau match de foot !',
-        'Basketball': 'Beau match de basket !',
-        'Tennis': 'Belle partie de tennis !',
-        'Cardio': 'Belle séance de cardio !',
-        'Danse': 'Belle séance de danse !',
-        'CrossFit': 'WOD termine !',
-        'Pilates': 'Belle séance de Pilates !',
-        'Escalade': 'Belle grimpe !',
-        'Ski': 'Belle descente !',
-        'Ski de fond': 'Belle session de fond !',
-        'Rugby': 'Beau match de rugby !',
-        'Handball': 'Beau match de hand !',
-        'Golf': 'Belle partie de golf !',
-        'Surf': 'Belle session de surf !',
-        'Aviron': 'Belle rame !',
+        'Course': 'Belle course',
+        'Trail': 'Beau trail',
+        'Marche': 'Belle marche',
+        'Musculation': 'Belle séance de muscu',
+        'HYROX': 'Séance HYROX terminée',
+        'JJB': 'Beau roulage',
+        'Boxe': 'Belle séance de boxe',
+        'Velo': 'Belle sortie à vélo',
+        'Natation': 'Belle nage',
+        'Yoga': 'Belle séance de yoga',
+        'Football': 'Beau match de foot',
+        'Basketball': 'Beau match de basket',
+        'Tennis': 'Belle partie de tennis',
+        'Cardio': 'Belle séance de cardio',
+        'Danse': 'Belle séance de danse',
+        'CrossFit': 'WOD terminé',
+        'Pilates': 'Belle séance de Pilates',
+        'Escalade': 'Belle grimpe',
+        'Ski': 'Belle descente',
+        'Ski de fond': 'Belle session de fond',
+        'Rugby': 'Beau match de rugby',
+        'Handball': 'Beau match de hand',
+        'Golf': 'Belle partie de golf',
+        'Surf': 'Belle session de surf',
+        'Aviron': 'Belle sortie d’aviron',
       };
 
-      const title = titres[sportLabel] || `Bravo pour ta séance de ${sportLabel.toLowerCase()} !`;
+      const title = titres[sportLabel] || `Belle séance de ${sportLabel.toLowerCase()}`;
 
-      // Corps enrichi style Strava
-      const lines: string[] = [];
-
-      // Ligne 1: durée + distance
-      const mainStats: string[] = [durationStr];
-      if (workout.distance && workout.distance > 0) {
-        const distKm = workout.distance > 100 ? workout.distance / 1000 : workout.distance;
-        mainStats.push(`${distKm.toFixed(2)} km`);
-      }
-      lines.push(mainStats.join(' | '));
-
-      // Ligne 2: calories + FC
-      const secondaryStats: string[] = [];
-      if (workout.calories && workout.calories > 0) secondaryStats.push(`${Math.round(workout.calories)} kcal`);
-      if (workout.averageHeartRate && workout.averageHeartRate > 0) {
-        let hrStr = `FC moy ${Math.round(workout.averageHeartRate)} bpm`;
-        if (workout.maxHeartRate && workout.maxHeartRate > 0) {
-          hrStr += ` (max ${Math.round(workout.maxHeartRate)})`;
-        }
-        secondaryStats.push(hrStr);
-      }
-      if (secondaryStats.length > 0) lines.push(secondaryStats.join(' | '));
-
-      // Ligne 3: source device
-      if (sourceLabel) lines.push(`Via ${sourceLabel}`);
-
-      // Ligne 4: CTA
-      lines.push('Tape pour partager ta séance !');
-
-      const body = lines.join('\n');
-
-      await Notif.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          subtitle: sourceLabel || undefined,
-          categoryIdentifier: 'workout_complete',
-          data: {
-            type: 'workout_complete',
-            workoutId: trainingId?.toString() || workout.id,
-            sport: mapWorkoutType(workout.activityType),
-            duration: workout.duration,
-            distance: workout.distance,
-            calories: workout.calories,
-          },
-          sound: 'default',
-        },
-        trigger: null, // Immediate
-      });
-
-      // Sauvegarder dans l'historique
-      saveNotification(title, body, 'workout_complete', {
-        workoutId: trainingId?.toString() || workout.id,
+      // Envoi, regroupement, mémoire et réglages : lib/v2/notifications/seanceTerminee.ts (le corps y est construit,
+      // sans valeur de santé, et les données portent l'id de la séance pour ouvrir sa carte)
+      signalerSeanceTerminee({
+        trainingId,
+        titre: title,
+        debutIso: workout.startDate,
+        finIso: (workout as any).endDate,
+        dureeMin: workout.duration,
+        uuid: (workout as any).hkUUID || workout.id || undefined,
+        source: sourceLabel || undefined,
         sport: mapWorkoutType(workout.activityType),
-      }).catch(() => {});
-
-      logger.info(`[WorkoutObserver] Notification Strava-like envoyee: ${title}`);
+      });
+      logger.info(`[WorkoutObserver] Séance signalée pour notification: ${title}`);
     } catch (e) {
       logger.warn('[WorkoutObserver] Erreur notification:', e);
     }
@@ -5831,6 +6519,13 @@ class HealthConnectService {
         if (result) imported++;
       }
 
+      // Les nuits HealthKit rangees sous l'ancienne cle (jour du coucher) disparaissent : sinon une nuit compterait deux fois
+      try {
+        const debut = history.reduce((m, n) => (n.date < m ? n.date : m), history[0].date);
+        await purgerNuitsHealthKit(new Set(history.filter((n) => n.total >= 30).map((n) => n.date)), debut);
+      } catch (e) {
+        logger.warn('[syncSleepHistory] purge des anciennes cles impossible:', e);
+      }
       logger.info(`[syncSleepHistory] ${imported}/${history.length} nuits importees`);
       return imported;
     } catch (error) {

@@ -103,7 +103,11 @@ describe('No emoji leak in migrated files', () => {
 
       filesChecked++;
       const source = fs.readFileSync(fullPath, 'utf-8');
-      if (source.includes('lucide-react-native')) {
+      // Les ecrans du design v2 passent par les icones du kit (Icon, NIcon, IconDot), dessinees en SVG
+      if (
+        source.includes('lucide-react-native') ||
+        /import \{[^}]*\b(Icon|NIcon|IconDot)\b[^}]*\} from '@\/components\/yoroi\/v2\//.test(source)
+      ) {
         filesWithLucide++;
       }
     });

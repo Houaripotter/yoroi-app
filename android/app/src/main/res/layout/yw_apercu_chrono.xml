@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chrono rounds : un appui ouvre le chrono avec ton dernier reglage -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/yw_fond"
+    android:clipToOutline="true"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingLeft="@dimen/yw_marge"
+    android:paddingRight="@dimen/yw_marge"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+  <ImageView android:layout_width="40dp" android:layout_height="40dp"
+      android:src="@drawable/yw_ic_lecture" android:contentDescription="@string/yw_lancer" />
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+      android:layout_marginLeft="12dp" android:orientation="vertical">
+    <TextView android:id="@+id/yw_titre" style="@style/YwTitre"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="@color/yw_encre" android:textSize="15sp"
+        android:text="@string/yw_nom_chrono" />
+    <TextView android:id="@+id/yw_chrono_detail" style="@style/YwTexte"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="3dp" android:visibility="gone" />
+  </LinearLayout>
+</LinearLayout>

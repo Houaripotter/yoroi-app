@@ -1,521 +1,72 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Linking,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
+/**
+ * Boite a idees (refonte v2, ecran minimal) : une idee, un souci ou un mot,
+ * envoye par mail a l'equipe YOROI.
+ */
+import React, { useEffect, useState } from 'react';
+import { KeyboardAvoidingView, Linking, Platform, TextInput, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { APP_CONFIG } from '@/lib/appConfig';
 import { safeOpenURL } from '@/lib/security/validators';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
-import {
-  ChevronLeft,
-  Lightbulb,
-  Send,
-  Bug,
-  Palette,
-  Sparkles,
-  HelpCircle,
-  Mail,
-  Check,
-  Instagram,
-  Inbox,
-  ArrowDown,
-} from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { COLORS, SPACING, RADIUS, FONT, SHADOWS, TIFFANY } from '@/constants/appTheme';
-import { MotiView, AnimatePresence } from 'moti';
-
-// ============================================
-// BOÎTE À IDÉES (HURNE)
-// ============================================ 
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { BigButton, Card, P, Pill } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 type IdeaCategory = 'feature' | 'design' | 'bug' | 'other';
 
-const CATEGORIES = [
-  { id: 'feature' as IdeaCategory, labelKey: 'catFeature', icon: Sparkles, color: TIFFANY.accent },
-  { id: 'design' as IdeaCategory, labelKey: 'catDesign', icon: Palette, color: '#8B5CF6' },
-  { id: 'bug' as IdeaCategory, labelKey: 'catBug', icon: Bug, color: '#EF4444' },
-  { id: 'other' as IdeaCategory, labelKey: 'catOther', icon: HelpCircle, color: '#6B7280' },
+const CATEGORIES: { id: IdeaCategory; label: string }[] = [
+  { id: 'feature', label: 'Une idée' },
+  { id: 'design', label: 'Le design' },
+  { id: 'bug', label: 'Un souci' },
+  { id: 'other', label: 'Autre chose' },
 ];
 
 export default function IdeasScreen() {
-  const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const params = useLocalSearchParams();
-
-  const [ideaText, setIdeaText] = useState('');
+  const params = useLocalSearchParams<{ category?: string }>();
   const [category, setCategory] = useState<IdeaCategory>('feature');
-  const [isSending, setIsSending] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
-  const [isSent, setIsSent] = useState(false);
+  const [text, setText] = useState('');
 
-  // Initialisation via params
   useEffect(() => {
-    if (params.category && CATEGORIES.some(c => c.id === params.category)) {
-      setCategory(params.category as IdeaCategory);
-    }
+    if (params.category && CATEGORIES.some((c) => c.id === params.category)) setCategory(params.category as IdeaCategory);
   }, [params.category]);
 
-  const triggerHaptic = (type: 'light' | 'medium' | 'success' = 'medium') => {
-    if (Platform.OS !== 'web') {
-      if (type === 'success') {
-        notificationAsync(NotificationFeedbackType.Success);
-      } else if (type === 'light') {
-        impactAsync(ImpactFeedbackStyle.Light);
-      } else {
-        impactAsync(ImpactFeedbackStyle.Medium);
-      }
-    }
-  };
-
-  const sendIdea = async () => {
-    if (!ideaText.trim()) {
-      showPopup(t('ideas.emptyError'), t('ideas.emptyMsg'), [{ text: t('ideas.ok'), style: 'primary' }]);
-      return;
-    }
-
-    triggerHaptic('light');
-    setIsSending(true);
-
-    // Démarrer l'animation de l'enveloppe
-    setTimeout(() => {
-      setShowAnimation(true);
-      triggerHaptic('medium');
-
-      // Simuler la fin de l\'envoi
-      setTimeout(() => {
-        setIsSending(false);
-        setIsSent(true);
-        triggerHaptic('success');
-        
-        // Reset après un délai
-        setTimeout(() => {
-          setShowAnimation(false);
-          setIsSent(false);
-          setIdeaText('');
-          // Optionnel: retour arrière ou rester sur la page
-        }, 3000);
-      }, 1500);
-    }, 200);
-  };
-
-  const sendByEmail = async () => {
+  const send = async () => {
+    const label = CATEGORIES.find((c) => c.id === category)?.label ?? 'Autre chose';
+    const subject = encodeURIComponent(`[Yoroi] ${label}`);
+    const body = encodeURIComponent(`${text.trim()}\n\nEnvoyé depuis l’app Yoroi`);
+    const mailto = `mailto:${APP_CONFIG.supportEmail}?subject=${subject}&body=${body}`;
     try {
-      const catEntry = CATEGORIES.find(c => c.id === category);
-      const categoryLabel = catEntry ? t(`ideas.${catEntry.labelKey}`) : t('ideas.catOther');
-      const subject = encodeURIComponent(`[Yoroi] ${categoryLabel}: Suggestion`);
-      const body = encodeURIComponent(`Catégorie: ${categoryLabel}\n\n${ideaText}\n\n---\nEnvoyé depuis l'app Yoroi`);
-      const mailto = `mailto:yoroiapp@hotmail.com?subject=${subject}&body=${body}`;
-
-      const canOpen = await Linking.canOpenURL(mailto);
-      if (canOpen) {
-        await safeOpenURL(mailto);
-      } else {
-        showPopup(
-          t('ideas.emailNotConfigured'),
-          t('ideas.emailNotConfiguredMsg'),
-          [{ text: t('ideas.ok'), style: 'primary' }]
-        );
-      }
-    } catch (error) {
-      showPopup(t('ideas.errorTitle'), t('ideas.errorMail'), [{ text: t('ideas.ok'), style: 'primary' }]);
+      const can = await Linking.canOpenURL(mailto);
+      if (can) await safeOpenURL(mailto);
+      else appAlert('Pas d’app mail', `Écris-nous à ${APP_CONFIG.supportEmail}`);
+    } catch {
+      appAlert('Pas d’app mail', `Écris-nous à ${APP_CONFIG.supportEmail}`);
     }
-  };
-
-  const sendByInstagram = () => {
-    const instagramUrl = 'instagram://user?username=yoroiapp';
-    const webUrl = 'https://www.instagram.com/yoroiapp';
-
-    Linking.canOpenURL(instagramUrl).then(supported => {
-      if (supported) {
-        safeOpenURL(instagramUrl);
-      } else {
-        safeOpenURL(webUrl);
-      }
-    }).catch(() => {
-      showPopup(t('ideas.errorTitle'), t('ideas.errorInstagram'), [{ text: t('ideas.ok'), style: 'primary' }]);
-    });
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.card }]}>
-            <ChevronLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('ideas.title')}</Text>
-          <View style={{ width: 40 }} />
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: P.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <DetailScreen title="Boîte à idées" subtitle="On lit tout, vraiment">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {CATEGORIES.map((c) => (
+            <Pill key={c.id} label={c.label} active={category === c.id} onPress={() => setCategory(c.id)} accent={P.accent} />
+          ))}
         </View>
-
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Visual Hurne Section */}
-          <View style={styles.hurneContainer}>
-            <MotiView
-              from={{ opacity: 0, scale: 0.5, translateY: 20 }}
-              animate={{ opacity: 1, scale: 1, translateY: 0 }}
-              transition={{ type: 'spring', damping: 15 }}
-              style={[styles.hurneBase, { backgroundColor: colors.card, borderColor: TIFFANY.accent }]}
-            >
-              <View style={[styles.hurneSlot, { backgroundColor: colors.background }]} />
-              <Inbox size={48} color={TIFFANY.accent} strokeWidth={1.5} />
-              
-              {/* Animation de l\'enveloppe */}
-              <AnimatePresence>
-                {showAnimation && !isSent && (
-                  <MotiView
-                    from={{ opacity: 0, translateY: 100, scale: 1, rotate: '0deg' }}
-                    animate={{ opacity: 1, translateY: -20, scale: 0.2, rotate: '15deg' }}
-                    exit={{ opacity: 0, scale: 0 }}
-                    transition={{ type: 'timing', duration: 1000 }}
-                    style={styles.envelopeAnimation}
-                  >
-                    <View style={[styles.envelopeInner, { backgroundColor: TIFFANY.accent }]}>
-                      <Mail size={40} color="#FFF" />
-                    </View>
-                  </MotiView>
-                )}
-              </AnimatePresence>
-
-              {/* Message de succès */}
-              <AnimatePresence>
-                {isSent && (
-                  <MotiView
-                    from={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    style={styles.successMessage}
-                  >
-                    <View style={styles.successIcon}>
-                      <Check size={32} color={COLORS.success} />
-                    </View>
-                    <Text style={[styles.successText, { color: colors.text }]}>{t('ideas.receivedMsg')}</Text>
-                  </MotiView>
-                )}
-              </AnimatePresence>
-            </MotiView>
-            
-            {!showAnimation && !isSent && (
-              <MotiView
-                from={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={styles.hurneHint}
-              >
-                <ArrowDown size={16} color={colors.textMuted} />
-                <Text style={[styles.hurneHintText, { color: colors.textMuted }]}>
-                  {t('ideas.hintText')}
-                </Text>
-              </MotiView>
-            )}
-          </View>
-
-          {/* Category Selection */}
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('ideas.messageType')}</Text>
-          <View style={styles.categoriesRow}>
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              const isSelected = category === cat.id;
-              return (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.categoryBtn,
-                    {
-                      backgroundColor: isSelected ? `${cat.color}20` : colors.card,
-                      borderColor: isSelected ? cat.color : colors.border,
-                      borderWidth: 1.5,
-                    },
-                  ]}
-                  onPress={() => {
-                    triggerHaptic('light');
-                    setCategory(cat.id);
-                  }}
-                >
-                  <Icon size={18} color={isSelected ? cat.color : colors.textMuted} />
-                  <Text style={[styles.categoryText, { color: isSelected ? colors.text : colors.textSecondary }]}>
-                    {t(`ideas.${cat.labelKey}`)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Idea Input */}
-          <View style={[styles.inputContainer, { marginTop: SPACING.xl }]}>
-            <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
-              <TextInput
-                style={[styles.textInput, { color: colors.text }]}
-                placeholder={t('ideas.placeholder')}
-                placeholderTextColor={colors.textMuted}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                value={ideaText}
-                onChangeText={setIdeaText}
-                maxLength={1000}
-                editable={!isSending && !isSent}
-              />
-              <View style={styles.inputFooter}>
-                <Lightbulb size={14} color={colors.textMuted} />
-                <Text style={[styles.charCount, { color: colors.textMuted }]}>{ideaText.length}/1000</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Send Button */}
-          <TouchableOpacity
-            style={[
-              styles.sendBtn,
-              { backgroundColor: isSent ? COLORS.success : TIFFANY.accent },
-              (!ideaText.trim() || isSending || isSent) && styles.sendBtnDisabled,
-            ]}
-            onPress={sendIdea}
-            disabled={!ideaText.trim() || isSending || isSent}
-          >
-            {isSending ? (
-              <Text style={styles.sendBtnText}>{t('ideas.sending')}</Text>
-            ) : isSent ? (
-              <>
-                <Check size={22} color="#FFF" />
-                <Text style={styles.sendBtnText}>{t('ideas.sent')}</Text>
-              </>
-            ) : (
-              <>
-                <Send size={20} color="#FFF" />
-                <Text style={[styles.sendBtnText, { color: '#FFF' }]}>
-                  {t('ideas.sendBtn')}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          {/* Alternative: Instagram */}
-          <View style={styles.alternativeButtons}>
-            <TouchableOpacity style={styles.emailBtn} onPress={sendByInstagram}>
-              <Instagram size={18} color={colors.textSecondary} />
-              <Text style={[styles.emailBtnText, { color: colors.textSecondary }]}>{t('ideas.instagram')}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.emailBtn} onPress={sendByEmail}>
-              <Mail size={16} color={colors.textMuted} />
-              <Text style={[styles.emailBtnText, { color: colors.textMuted, fontSize: 12 }]}>{t('ideas.support')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={{ height: 100 }} />
-        </ScrollView>
-        <PopupComponent />
-      </View>
+        <Card style={{ padding: 14 }}>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Dis-nous ce que tu as en tête"
+            placeholderTextColor={P.muted}
+            multiline
+            maxLength={2000}
+            style={{ minHeight: 140, fontSize: 16, color: P.ink, textAlignVertical: 'top' }}
+            accessibilityLabel="Ton message"
+          />
+        </Card>
+        <BigButton label="Envoyer par mail" icon="share" onPress={send} disabled={!text.trim()} />
+        <Ink size={13} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>{APP_CONFIG.supportEmail}</Ink>
+      </DetailScreen>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.sm,
-  },
-  headerTitle: {
-    fontSize: FONT.size.xl,
-    fontWeight: '700',
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: SPACING.xl,
-  },
-
-  // Hurne Visual
-  hurneContainer: {
-    alignItems: 'center',
-    marginVertical: SPACING.xl,
-    paddingVertical: SPACING.md,
-  },
-  hurneBase: {
-    width: 120,
-    height: 120,
-    borderRadius: RADIUS.xl,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.glowSubtle,
-    position: 'relative',
-    overflow: 'visible',
-  },
-  hurneSlot: {
-    position: 'absolute',
-    top: 20,
-    width: 60,
-    height: 8,
-    borderRadius: 4,
-    opacity: 0.5,
-  },
-  hurneHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: SPACING.md,
-  },
-  hurneHintText: {
-    fontSize: FONT.size.xs,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  envelopeAnimation: {
-    position: 'absolute',
-    bottom: -100,
-    zIndex: 10,
-  },
-  envelopeInner: {
-    width: 80,
-    height: 60,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.md,
-  },
-  successMessage: {
-    position: 'absolute',
-    top: -40,
-    alignItems: 'center',
-    width: 200,
-  },
-  successIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.success + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  successText: {
-    fontSize: FONT.size.md,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-
-  // Categories
-  sectionTitle: {
-    fontSize: FONT.size.xs,
-    fontWeight: '800',
-    letterSpacing: 2,
-    marginBottom: SPACING.md,
-  },
-  categoriesRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  categoryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.lg,
-  },
-  categoryText: {
-    fontSize: FONT.size.sm,
-    fontWeight: '700',
-  },
-
-  // Input
-  inputContainer: {
-    width: '100%',
-  },
-  inputCard: {
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    ...SHADOWS.card,
-  },
-  textInput: {
-    fontSize: FONT.size.md,
-    minHeight: 120,
-    lineHeight: 22,
-  },
-  inputFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: SPACING.md,
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
-  },
-  charCount: {
-    fontSize: FONT.size.xs,
-    fontWeight: '600',
-  },
-
-  // Buttons
-  sendBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.lg,
-    borderRadius: RADIUS.xxl,
-    marginTop: SPACING.xxl,
-    ...SHADOWS.button,
-  },
-  sendBtnDisabled: {
-    opacity: 0.6,
-  },
-  sendBtnText: {
-    fontSize: FONT.size.lg,
-    fontWeight: '800',
-    color: '#FFF',
-  },
-  alternativeButtons: {
-    marginTop: SPACING.xl,
-    gap: SPACING.xs,
-    alignItems: 'center',
-  },
-  emailBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    width: '100%',
-  },
-  emailBtnText: {
-    fontSize: FONT.size.sm,
-    fontWeight: '600',
-  },
-});

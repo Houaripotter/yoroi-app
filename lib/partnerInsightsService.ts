@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER INSIGHTS · Auto-analyse patterns vs partenaires
+// PARTNER INSIGHTS : Auto-analyse patterns vs partenaires
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -54,7 +54,7 @@ export function computeGlobalInsights(stats: PartnerStats[]): GlobalInsight[] {
       id: 'worst_matchups',
       type: 'worst_matchups',
       title: 'Tes adversaires les plus difficiles',
-      text: bad.map(b => `${b.name} (${b.winrate}%)`).join(' · '),
+      text: bad.map(b => `${b.name} (${b.winrate}%)`).join(', '),
       color: '#EF4444',
       partnerIds: bad.map(b => b.id),
     });

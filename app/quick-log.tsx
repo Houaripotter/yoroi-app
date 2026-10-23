@@ -1,433 +1,1029 @@
-// ============================================
-// YOROI - LOG RAPIDE POST-SÉANCE
-// ============================================
-// Dicte ou tape 2 phrases · l'app parse les infos
-// et pré-remplit le formulaire d'ajout de séance.
-// Utilise la dictée vocale native iOS (micro clavier).
-// ============================================
-
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
+/**
+ * Dicte ta seance (vague 39, refaite la nuit du 14 octobre) : une phrase, dite au micro du clavier ou
+ * tapee, puis un ecran de verification. Lecture de la phrase : lib/v2/seance/dictee.ts (code pur,
+ * rien ne quitte le telephone).
+ * La phrase est surlignee la ou quelque chose a ete compris ; chaque champ montre le morceau de phrase
+ * d'ou il vient, ce qui est vide se complete d'un geste. Le sparring s'affiche en cartes par
+ * partenaire (rounds, resultat, finitions). La phrase entiere reste dans la note : rien n'est perdu.
+ * « Plus de details » ouvre la saisie complete du sport (mode seance faite) avec ce qui a ete compris.
+ * Nuit du 14 : en haut, « A confirmer » : l'exercice devine (« Tu as fait des ecartes a la poulie,
+ * c'est ca ? » Oui ou un autre choix, un geste) et la seance deja dans Apple Sante ce jour-la (la relier
+ * plutot que d'en creer une seconde). Techniques apprises, grade, club, foot a 5 entre amis.
+ */
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/lib/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { X, Mic, ChevronRight, RotateCcw, Check, Dumbbell, Clock, RefreshCw, Zap, ClipboardList } from 'lucide-react-native';
-import { SPORTS } from '@/lib/sports';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { fontStyle } from '@/components/yoroi/fonts';
+import { SPORTS, getSportName } from '@/lib/sports';
+import { BigButton, Card, Enter, Icon, P, Press, SectionTitle, tap, useAccent } from '@/components/yoroi/v2/accueil/kit';
+import { DetailScreen } from '@/components/yoroi/v2/ornements/screens';
+import { ChoiceRow } from '@/components/yoroi/v2/seance/Sheet';
+import { Stepper } from '@/components/yoroi/v2/seance/Stepper';
+import { DayNav } from '@/components/yoroi/v2/DateChips';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { getTrainings } from '@/lib/database';
+import type { Training } from '@/lib/database';
+import { logger } from '@/lib/security/logger';
+import { getEspace } from '@/lib/v2/espace';
+import { CHARGE_LABEL, QUICK_TECHNIQUES, TEAM_SPORTS, cardsToRounds, contextLine, fold, fmtPace, learnedLine, parseDictee, roundsText, teamLine, techniqueText } from '@/lib/v2/seance/dictee';
+import type { DicteeExercise, DicteeGuess, DicteeLearned, DicteeRound, DicteeTeam, DicteeTechnique, RoundResult, SessionMood, Span } from '@/lib/v2/seance/dictee';
+import { findHealthTwin } from '@/lib/v2/seance/dicteeLien';
+import { MachineFinder, MachineFinderButton } from '@/components/yoroi/v2/seance/MachineFinder';
+import { fmtMinutes, isoDay, longDay, pad2 } from '@/lib/v2/seance/format';
+import { saveSeance } from '@/lib/v2/seance/save';
+import { RESULTS, SESSION_TYPES } from '@/lib/v2/seance/combat';
+import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
 
-// ============================================
-// PARSING INTELLIGENT DU TEXTE
-// ============================================
+const EXAMPLES = [
+  'JJB ce soir, 5 rounds de 6 minutes, 2 contre Paul gagnés par triangle, les 3 autres avec Marc',
+  'Muscu hier à 18 h, 4 séries de 10 au développé couché à 80 kg, squat 5 fois 5 à 100',
+  'Footing ce matin, 8 km en 45 minutes, facile',
+  'Open mat, on a appris le juji gatame et l’omoplata',
+  'Match de foot, 90 minutes, 2 buts, une passe décisive, au poste d’ailier',
+];
 
-interface ParsedSession {
-  sport?: string;
-  sportName?: string;
-  duration?: number;
-  rounds?: number;
-  intensity?: number;
-  sessionType?: string;
-  notes?: string;
-  confidence: number; // 0-100
-  detectedFields: string[];
+const RPE = [
+  { value: 3, label: 'Facile' },
+  { value: 5, label: 'Correct' },
+  { value: 7, label: 'Dur' },
+  { value: 9, label: 'À bloc' },
+];
+
+/** ressenti (memes valeurs que l'ecran de fin), avec la note de seance sur 5 qui va avec */
+const MOODS: { value: SessionMood; label: string; rating: number }[] = [
+  { value: 'fire', label: 'En feu', rating: 5 },
+  { value: 'solid', label: 'Solide', rating: 4 },
+  { value: 'ok', label: 'Correct', rating: 3 },
+  { value: 'hard', label: 'Difficile', rating: 2 },
+  { value: 'crushed', label: 'Écrasé', rating: 2 },
+];
+
+const toMin = (t?: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null);
+const fmtNum = (v: number) => String(Math.round(v * 100) / 100).replace('.', ',');
+
+type CardForm = { key: string; name: string; role?: string; rounds: number[]; result: RoundResult | null; given: DicteeTechnique[]; taken: DicteeTechnique[]; src: Span[] };
+
+type Form = {
+  sport: string | null;
+  date: string;
+  dateSaid: boolean;
+  moment?: string;
+  start: number | null;
+  duration: number | null;
+  durationFrom?: string;
+  durationSec?: number;
+  intensity: number | null;
+  mood: SessionMood | null;
+  rating: number | null;
+  rounds: number | null;
+  roundMin?: number;
+  distance: number | null;
+  paceSaid?: number;
+  paceUnit?: 'km' | '100m';
+  speed: number | null;
+  heartRate: number | null;
+  maxHeartRate?: number;
+  calories: number | null;
+  outdoor: boolean;
+  type: string | null;
+  theme: string;
+  exercises: DicteeExercise[];
+  cards: CardForm[];
+  /** rounds de l'analyse, gardes tant que les cartes ne sont pas touchees */
+  parsedRounds: DicteeRound[] | null;
+  team: DicteeTeam | null;
+  extraNotes: string[];
+  notes: string;
+  spans: Record<string, Span[]>;
+  guesses: DicteeGuess[];
+  learned: DicteeLearned[];
+  sessionLabel?: string;
+  grade: string;
+  gradeEvent: boolean;
+  club: string;
+  coach: string;
+  /** seance de Sante reliee (id), refusee (null) ou pas encore decidee (undefined) */
+  linkId?: number | null;
+};
+
+const HEALTH = Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé';
+const LEARN_HEAD: Record<DicteeLearned['mode'], string> = { appris: 'Appris', drill: 'En drill', travaille: 'Travaillé', reussi: 'Réussi en combat' };
+const FORMATS = ['Foot à 5', 'Foot à 7', 'Foot à 11', 'Futsal'].map((v) => ({ value: v, label: v.replace('Foot à ', 'À ') }));
+const CADRES = ['Entre amis', 'Club', 'Compétition'].map((v) => ({ value: v, label: v }));
+
+function exLine(e: DicteeExercise): string {
+  if (e.distance) return `${e.sets} x ${fmtNum(e.distance * 1000)} m`;
+  if (e.duration) return `${e.sets} x ${e.duration >= 1 ? `${fmtNum(e.duration)} min` : `${Math.round(e.duration * 60)} s`}`;
+  return `${e.sets} x ${e.max ? 'max' : e.reps}${e.weight ? `, ${fmtNum(e.weight)} kg` : ''}`;
 }
 
-const SPORT_KEYWORDS: Record<string, string[]> = {
-  jjb: ['jjb', 'jiu jitsu', 'jiu-jitsu', 'bjj', 'brésilien', 'bresilien', 'grappling'],
-  mma: ['mma', 'mixed martial'],
-  boxe: ['boxe', 'boxing', 'box'],
-  muay_thai: ['muay thai', 'muaythai', 'thai', 'kickboxing', 'kick boxing'],
-  lutte: ['lutte', 'wrestling', 'catch'],
-  judo: ['judo'],
-  course: ['course', 'running', 'run', 'jogging', 'footing'],
-  velo: ['vélo', 'velo', 'cycling', 'cyclisme'],
-  natation: ['natation', 'nage', 'swimming'],
-  musculation: ['muscu', 'musculation', 'gym', 'poids', 'haltères'],
-  yoga: ['yoga'],
-  crossfit: ['crossfit', 'cross fit', 'wod'],
-};
-
-const SESSION_TYPE_KEYWORDS: Record<string, string[]> = {
-  sparring: ['sparring', 'spar', 'combat', 'roulé', 'roule', 'rolling', 'roll'],
-  drilling: ['drilling', 'drill', 'technique', 'répétition', 'repetition', 'exercice'],
-  cours: ['cours', 'course', 'classe', 'class', 'entraînement', 'entrainement'],
-  competition: ['compét', 'compet', 'tournoi', 'competition', 'match', 'combat officiel'],
-};
-
-const INTENSITY_KEYWORDS: Record<number, string[]> = {
-  3: ['léger', 'leger', 'détendu', 'cool', 'relax', 'facile', 'easy'],
-  5: ['modéré', 'modere', 'moyen', 'medium'],
-  7: ['intense', 'dur', 'hard', 'difficile', 'corsé', 'corse'],
-  9: ['très dur', 'tres dur', 'max', 'maximum', 'à fond', 'a fond', 'brutal', 'mortel'],
-};
-
-function parseQuickLog(text: string): ParsedSession {
-  const lower = text.toLowerCase();
-  const result: ParsedSession = { confidence: 0, detectedFields: [], notes: text.trim() };
-
-  // ── Détection sport ──
-  for (const [sportId, keywords] of Object.entries(SPORT_KEYWORDS)) {
-    if (keywords.some(k => lower.includes(k))) {
-      result.sport = sportId;
-      result.sportName = SPORTS.find(s => s.id === sportId)?.name ?? sportId;
-      result.detectedFields.push('sport');
-      break;
-    }
+/** la phrase decoupee en morceaux compris (surlignes) et le reste */
+function pieces(text: string, spans: Record<string, Span[]>): { t: string; on: boolean }[] {
+  const all = Object.values(spans).flat().filter((s) => s.end > s.start).sort((a, b) => a.start - b.start);
+  const merged: Span[] = [];
+  for (const s of all) {
+    const last = merged[merged.length - 1];
+    if (last && s.start <= last.end + 1) last.end = Math.max(last.end, s.end);
+    else merged.push({ ...s });
   }
-
-  // ── Détection durée ──
-  // "1h30", "90 minutes", "2h", "45min"
-  const durationMatch =
-    lower.match(/(\d+)\s*h\s*(\d+)/) ||
-    lower.match(/(\d+)\s*h(?:eure)?s?/) ||
-    lower.match(/(\d+)\s*min(?:ute)?s?/);
-  if (durationMatch) {
-    if (lower.match(/(\d+)\s*h\s*(\d+)/)) {
-      const m = lower.match(/(\d+)\s*h\s*(\d+)/)!;
-      result.duration = parseInt(m[1]) * 60 + parseInt(m[2]);
-    } else if (lower.match(/(\d+)\s*h(?:eure)?s?/)) {
-      const m = lower.match(/(\d+)\s*h(?:eure)?s?/)!;
-      result.duration = parseInt(m[1]) * 60;
-    } else {
-      const m = lower.match(/(\d+)\s*min(?:ute)?s?/)!;
-      result.duration = parseInt(m[1]);
-    }
-    result.detectedFields.push('durée');
+  const out: { t: string; on: boolean }[] = [];
+  let at = 0;
+  for (const s of merged) {
+    if (s.start > at) out.push({ t: text.slice(at, s.start), on: false });
+    out.push({ t: text.slice(s.start, s.end), on: true });
+    at = s.end;
   }
-
-  // ── Détection rounds ──
-  const roundMatch = lower.match(/(\d+)\s*(?:round|ronde|roll|roule)/);
-  if (roundMatch) {
-    result.rounds = parseInt(roundMatch[1]);
-    result.detectedFields.push('rounds');
-  }
-
-  // ── Détection intensité ──
-  for (const [rpe, keywords] of Object.entries(INTENSITY_KEYWORDS)) {
-    if (keywords.some(k => lower.includes(k))) {
-      result.intensity = parseInt(rpe);
-      result.detectedFields.push('intensité');
-      break;
-    }
-  }
-
-  // ── Détection type de séance ──
-  for (const [type, keywords] of Object.entries(SESSION_TYPE_KEYWORDS)) {
-    if (keywords.some(k => lower.includes(k))) {
-      result.sessionType = type;
-      result.detectedFields.push('type');
-      break;
-    }
-  }
-
-  // ── Calcul confiance ──
-  result.confidence = Math.min(100, result.detectedFields.length * 25);
-
-  return result;
+  if (at < text.length) out.push({ t: text.slice(at), on: false });
+  return out;
 }
 
-// ============================================
-// COMPOSANT
-// ============================================
-
-export default function QuickLogScreen() {
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
+export default function DicteSeance() {
   const router = useRouter();
-
+  const { accent } = useAccent();
   const [text, setText] = useState('');
-  const [parsed, setParsed] = useState<ParsedSession | null>(null);
-  const [parsing, setParsing] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const [said, setSaid] = useState('');
+  const [form, setForm] = useState<Form | null>(null);
+  const [favs, setFavs] = useState<string[]>(DEFAULT_SPORTS.slice(0, 6));
+  const [saving, setSaving] = useState(false);
+  const [machines, setMachines] = useState(false);
+  const [history, setHistory] = useState<Training[]>([]);
+  const input = useRef<TextInput>(null);
+  const today = isoDay(new Date());
 
   useEffect(() => {
-    // Auto-focus pour que le clavier (avec micro) s'ouvre immédiatement
-    const timer = setTimeout(() => inputRef.current?.focus(), 300);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => input.current?.focus(), 300);
+    (async () => {
+      try {
+        const [espace, list] = await Promise.all([getEspace(), getTrainings(120).catch(() => [] as Training[])]);
+        setHistory(list ?? []);
+        const counts = new Map<string, number>();
+        (list ?? []).forEach((x) => counts.set(x.sport, (counts.get(x.sport) ?? 0) + 1));
+        const practiced = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).map(([s]) => s);
+        const ordered: string[] = [];
+        for (const s of [...espace.sportsFavoris, ...practiced, ...DEFAULT_SPORTS]) if (!ordered.includes(s) && SPORTS.some((x) => x.id === s)) ordered.push(s);
+        setFavs(ordered.slice(0, 6));
+      } catch {
+        // les sports par defaut suffisent
+      }
+    })();
+    return () => clearTimeout(t);
   }, []);
 
-  const handleAnalyze = () => {
-    if (!text.trim()) return;
-    setParsing(true);
-    impactAsync(ImpactFeedbackStyle.Medium);
-    setTimeout(() => {
-      setParsed(parseQuickLog(text));
-      setParsing(false);
-    }, 300);
+  const analyze = () => {
+    const phrase = text.trim();
+    if (!phrase) return;
+    tap('medium');
+    const r = parseDictee(text);
+    setSaid(text);
+    setForm({
+      sport: r.sport ?? null,
+      date: r.date ?? today,
+      dateSaid: !!r.date,
+      moment: r.moment,
+      start: toMin(r.time),
+      duration: r.duration ?? null,
+      durationFrom: r.durationFrom,
+      durationSec: r.durationSec,
+      intensity: r.intensity ?? null,
+      mood: r.mood ?? null,
+      rating: r.rating ?? (r.mood ? MOODS.find((m) => m.value === r.mood)?.rating ?? null : null),
+      rounds: r.rounds ?? null,
+      roundMin: r.roundMin,
+      distance: r.distance ?? null,
+      paceSaid: r.paceSaid ? r.paceSec : undefined,
+      paceUnit: r.paceUnit,
+      speed: r.speed ?? null,
+      heartRate: r.heartRate ?? null,
+      maxHeartRate: r.maxHeartRate,
+      calories: r.calories ?? null,
+      outdoor: !!r.outdoor,
+      type: r.sessionType ?? null,
+      theme: r.technicalTheme ?? '',
+      exercises: r.exercises,
+      cards: r.partners.map((p, i) => ({ key: `c${i}`, name: p.name, role: p.role, rounds: p.rounds, result: p.result ?? null, given: p.given, taken: p.taken, src: p.src })),
+      parsedRounds: r.combatRounds.length ? r.combatRounds : null,
+      team: r.team ?? (r.sport && TEAM_SPORTS.has(r.sport) ? {} : null),
+      extraNotes: r.extraNotes,
+      notes: phrase,
+      spans: r.spans,
+      guesses: r.guesses,
+      learned: r.learned,
+      sessionLabel: r.sessionLabel,
+      grade: r.grade ?? '',
+      gradeEvent: !!r.gradeEvent,
+      club: r.club ?? '',
+      coach: r.coach ?? '',
+      linkId: undefined,
+    });
   };
 
-  const handleConfirm = () => {
-    if (!parsed) return;
-    impactAsync(ImpactFeedbackStyle.Heavy);
+  const set = (patch: Partial<Form>) => setForm((f) => (f ? { ...f, ...patch } : f));
+  const kind = form?.sport ? seanceKindFor(form.sport) : null;
+  const team = !!form?.sport && TEAM_SPORTS.has(form.sport);
+  const sportChips = useMemo(() => {
+    const list = form?.sport && !favs.includes(form.sport) ? [form.sport, ...favs] : favs;
+    return list.slice(0, 7);
+  }, [favs, form?.sport]);
+  const understood = form ? Object.keys(form.spans).length : 0;
+  // la meme seance deja ecrite par la montre dans Sante, ce jour-la
+  const twin = useMemo(
+    () => (form?.sport ? findHealthTwin(history, form.sport, form.date, form.start, form.distance) : null),
+    [history, form?.sport, form?.date, form?.start, form?.distance],
+  );
+  const linked = !!twin && form?.linkId === twin.id;
 
-    const params: Record<string, string> = {};
-    if (parsed.sport) params.sport = parsed.sport;
-    if (parsed.duration) params.duration = String(parsed.duration);
-    if (parsed.rounds) params.rounds = String(parsed.rounds);
-    if (parsed.intensity) params.intensity = String(parsed.intensity);
-    if (parsed.sessionType) params.sessionType = parsed.sessionType;
-    if (parsed.notes) params.notes = parsed.notes;
-
-    const query = Object.entries(params)
-      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
-      .join('&');
-
-    router.replace((`/add-training${query ? '?' + query : ''}`) as any);
+  const answerGuess = (g: DicteeGuess, name: string | null) => {
+    if (!form) return;
+    tap();
+    set({
+      guesses: form.guesses.filter((x) => x !== g),
+      exercises: name ? form.exercises.map((e, k) => (k === g.index ? { ...e, name } : e)) : form.exercises,
+    });
   };
 
-  const confidenceColor = parsed
-    ? parsed.confidence >= 75 ? '#22C55E'
-    : parsed.confidence >= 50 ? '#F59E0B'
-    : '#EF4444'
-    : '#94A3B8';
+  const src = (...keys: string[]): string[] => {
+    if (!form) return [];
+    const out: string[] = [];
+    for (const k of keys) for (const s of form.spans[k] ?? []) out.push(said.slice(s.start, s.end));
+    return out.filter((q, i) => out.findIndex((x) => fold(x) === fold(q)) === i);
+  };
+  const exSrc = (i: number) => src(`exercice:${i}`);
+
+  // cartes de sparring : une modification renumerote les rounds dans l'ordre des cartes
+  const setCards = (cards: CardForm[], renumber = false) => {
+    if (!form) return;
+    let next = cards;
+    if (renumber) {
+      let n = 1;
+      next = cards.map((c) => {
+        const k = Math.max(1, c.rounds.length);
+        const rounds = Array.from({ length: k }, (_, i) => n + i);
+        n += k;
+        return { ...c, rounds };
+      });
+    }
+    const maxRound = Math.max(0, ...next.flatMap((c) => c.rounds));
+    set({ cards: next, parsedRounds: null, rounds: Math.max(form.rounds ?? 0, maxRound) || null });
+  };
+  const updateCard = (key: string, patch: Partial<CardForm>, renumber = false) => {
+    if (!form) return;
+    setCards(form.cards.map((c) => (c.key === key ? { ...c, ...patch } : c)), renumber);
+  };
+
+  const pace = (() => {
+    if (!form || !form.distance) return null;
+    if (form.paceSaid && form.paceUnit === 'km') return `${fmtPace(form.paceSaid)} /km`;
+    const sec = form.durationSec && form.duration === Math.round(form.durationSec / 60) ? form.durationSec : form.duration ? form.duration * 60 : 0;
+    if (!sec) return null;
+    if (kind === 'cardio' && form.sport && ['velo', 'vtt', 'cycling', 'velo_route', 'spinning', 'gravel', 'velo_electrique'].includes(form.sport)) return `${fmtNum(Math.round((form.distance / (sec / 3600)) * 10) / 10)} km/h`;
+    if (form.paceUnit === '100m') return `${fmtPace(sec / (form.distance * 10))} /100 m`;
+    return `${fmtPace(sec / form.distance)} /km`;
+  })();
+
+  // 17 octobre : a l'enregistrement, le score va dans score_for et score_against, plus dans la note
+  // (sansScore) ; vers la saisie complete, la ligne entiere reste pour ne rien perdre
+  const noteLines = (f: Form, sansScore = false): string[] => {
+    const lines = [...f.extraNotes];
+    const tl = f.team ? teamLine(sansScore ? { ...f.team, scoreFor: undefined, scoreAgainst: undefined } : f.team) : '';
+    if (tl) lines.push(tl);
+    const combat = !!f.sport && seanceKindFor(f.sport) === 'combat';
+    if (combat && f.sessionLabel) lines.push(`Type : ${f.sessionLabel.toLowerCase()}`);
+    const ll = combat ? learnedLine(f.learned) : '';
+    if (ll) lines.push(ll);
+    const cl = combat ? contextLine({ grade: f.grade.trim(), gradeEvent: f.gradeEvent, club: f.club.trim(), coach: f.coach.trim() }) : '';
+    if (cl) lines.push(cl);
+    return lines;
+  };
+  const themeOf = (f: Form) => f.theme.trim() || f.learned.filter((l) => l.mode !== 'reussi').map((l) => l.label).join(', ');
+
+  const save = async () => {
+    if (!form?.sport || saving) return;
+    setSaving(true);
+    tap('medium');
+    try {
+      const combat = kind === 'combat';
+      const cardsUsed = form.cards.length > 0;
+      const rounds: DicteeRound[] | undefined = combat && form.rounds
+        ? form.parsedRounds && cardsUsed
+          ? Array.from({ length: Math.max(form.rounds, form.parsedRounds.length) }, (_, i) => form.parsedRounds?.[i] ?? { number: i + 1 })
+          : cardsToRounds(form.rounds, form.cards)
+        : undefined;
+      const notes = [...noteLines(form, true), form.notes.trim()].filter(Boolean).join('\n');
+      const theme = combat ? themeOf(form) : '';
+      const score = form.team?.scoreFor !== undefined && form.team?.scoreAgainst !== undefined ? { score_for: form.team.scoreFor, score_against: form.team.scoreAgainst } : {};
+      const exercises = form.exercises.length
+        ? form.exercises.map((e) => ({ name: e.name, sets: Math.max(1, e.sets), reps: e.reps, weight: e.weight, ...(e.distance ? { distance: e.distance } : {}), ...(e.duration ? { duration: e.duration } : {}), ...(e.max || e.load ? { notes: [e.max ? 'Au max' : '', e.load ? CHARGE_LABEL[e.load] : ''].filter(Boolean).join(', ') } : {}) }))
+        : undefined;
+      if (twin && linked && twin.id) {
+        // reliee a la seance de Sante : ses donnees (duree, distance, coeur) restent, on ajoute les tiennes
+        const patch: Record<string, unknown> = {
+          sport: twin.sport,
+          date: twin.date,
+          intensity: form.intensity ?? undefined,
+          session_mood: form.mood ?? undefined,
+          session_rating: form.rating ?? undefined,
+          notes: [twin.notes, notes].filter(Boolean).join('\n') || undefined,
+          ...score,
+          exercises,
+          combat_rounds: rounds,
+          rounds: twin.rounds ? undefined : form.rounds ?? undefined,
+          distance: twin.distance ? undefined : form.distance ?? undefined,
+          duration_minutes: twin.duration_minutes ? undefined : form.duration ?? undefined,
+          start_time: twin.start_time ? undefined : form.start !== null ? `${pad2(Math.floor(form.start / 60))}:${pad2(form.start % 60)}` : undefined,
+        };
+        for (const k of Object.keys(patch)) if (patch[k] === undefined) delete patch[k];
+        const res = await saveSeance(patch as unknown as Training, { editId: twin.id, title: getSportName(twin.sport), sessionTypes: combat && form.type ? [form.type] : undefined, technicalTheme: theme || undefined, methode: 'dictee' });
+        router.replace({ pathname: '/seance/fin' as any, params: { id: String(res.id) } });
+        return;
+      }
+      const result = await saveSeance(
+        {
+          sport: form.sport,
+          date: form.date,
+          start_time: form.start !== null ? `${pad2(Math.floor(form.start / 60))}:${pad2(form.start % 60)}` : undefined,
+          duration_minutes: form.duration ?? undefined,
+          intensity: form.intensity ?? undefined,
+          session_mood: form.mood ?? undefined,
+          session_rating: form.rating ?? undefined,
+          rounds: form.rounds ?? undefined,
+          round_duration: form.rounds && form.roundMin ? form.roundMin : undefined,
+          combat_rounds: rounds,
+          session_type: combat && form.type ? form.type : undefined,
+          distance: form.distance ?? undefined,
+          speed: form.speed ?? undefined,
+          heart_rate: form.heartRate ?? undefined,
+          max_heart_rate: form.maxHeartRate ?? undefined,
+          calories: form.calories ?? undefined,
+          is_outdoor: form.outdoor || undefined,
+          exercises,
+          notes: notes || undefined,
+          ...score,
+          source: 'manual',
+        },
+        { title: getSportName(form.sport), sessionTypes: combat && form.type ? [form.type] : undefined, technicalTheme: theme || undefined, methode: 'dictee' },
+      );
+      router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
+    } catch (err) {
+      logger.error('Enregistrement de la séance dictée impossible', err);
+      appAlert('Oups', 'La séance n’a pas pu être enregistrée. Réessaie.');
+      setSaving(false);
+    }
+  };
+
+  // la saisie complete du sport, en mode seance faite, avec ce qui a ete compris
+  const details = () => {
+    if (!form?.sport) return;
+    tap();
+    const params: Record<string, string> = { sport: form.sport, form: '1', date: form.date };
+    if (form.start !== null) params.time = `${pad2(Math.floor(form.start / 60))}:${pad2(form.start % 60)}`;
+    if (form.duration) params.duration = String(form.duration);
+    if (form.rounds) params.rounds = String(form.rounds);
+    if (form.intensity) params.intensity = String(form.intensity);
+    if (form.type) params.type = form.type;
+    const notes = [...noteLines(form), form.notes.trim()].filter(Boolean).join('\n');
+    if (notes) params.notes = notes;
+    router.replace({ pathname: seanceRoute(form.sport) as any, params });
+  };
+
+  const dayText = form ? (form.date === today ? 'Aujourd’hui' : longDay(form.date).charAt(0).toUpperCase() + longDay(form.date).slice(1)) : '';
+  const momentStart: Record<string, number> = { matin: 8 * 60, midi: 12 * 60, 'apres-midi': 15 * 60, soir: 19 * 60 };
+  const momentText: Record<string, string> = { matin: 'le matin', midi: 'le midi', 'apres-midi': 'l’après-midi', soir: 'le soir' };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 48 : 0}
-    >
-      <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={[styles.headerBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
-          >
-            <X size={20} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Log rapide</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 280 }}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Instruction */}
-          <View style={[styles.tipBox, { backgroundColor: isDark ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.07)', borderColor: '#8B5CF640' }]}>
-            <Mic size={18} color="#8B5CF6" />
-            <Text style={[styles.tipText, { color: colors.textMuted ?? '#888' }]}>
-              <Text style={{ fontWeight: '700', color: '#8B5CF6' }}>Astuce :</Text> tape le micro{' '}
-              <Mic size={14} color="#8B5CF6" /> sur ton clavier pour dicter.{'\n'}
-              Ex : <Text style={{ fontStyle: 'italic' }}>"JJB 1h30, 4 rounds de sparring, très dur"</Text>
-            </Text>
-          </View>
-
-          {/* Zone de saisie */}
-          <View style={[styles.inputCard, {
-            backgroundColor: isDark ? (colors.card ?? '#1a1a1a') : '#fff',
-            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-          }]}>
-            <TextInput
-              ref={inputRef}
-              style={[styles.textInput, { color: colors.text }]}
-              value={text}
-              onChangeText={setText}
-              placeholder="Décris ta séance en 2-3 phrases..."
-              placeholderTextColor={colors.textMuted ?? '#888'}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              returnKeyType="done"
-              onSubmitEditing={handleAnalyze}
-            />
-            {text.length > 0 && (
-              <TouchableOpacity
-                onPress={() => { setText(''); setParsed(null); inputRef.current?.focus(); }}
-                style={styles.clearBtn}
-              >
-                <RotateCcw size={16} color={colors.textMuted ?? '#888'} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Exemples */}
-          {!text && (
-            <View style={{ gap: 8, marginTop: 12 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted ?? '#888', letterSpacing: 0.5 }}>EXEMPLES</Text>
-              {[
-                'JJB 1h, 5 rounds de sparring, modéré',
-                'MMA 2h, technique sur les takedowns, léger',
-                'Boxe 45 minutes, très intense, sparring',
-                'Musculation 1h30, entraînement du haut du corps',
-              ].map(ex => (
-                <TouchableOpacity
-                  key={ex}
-                  onPress={() => { setText(ex); impactAsync(ImpactFeedbackStyle.Light); }}
-                  style={[styles.examplePill, {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)',
-                  }]}
-                >
-                  <Text style={{ fontSize: 13, color: colors.textMuted ?? '#888' }}>{ex}</Text>
-                  <ChevronRight size={14} color={colors.textMuted ?? '#888'} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* Bouton analyser */}
-          {text.length > 5 && !parsed && (
-            <TouchableOpacity
-              style={[styles.analyzeBtn, { backgroundColor: '#8B5CF6' }]}
-              onPress={handleAnalyze}
-              activeOpacity={0.8}
-            >
-              {parsing ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <>
-                  <Mic size={18} color="#fff" />
-                  <Text style={styles.analyzeBtnText}>Analyser la séance</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-
-          {/* Résultat du parsing */}
-          {parsed && (
-            <View style={{ marginTop: 16, gap: 12 }}>
-              {/* Score de confiance */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-                  <View style={{ width: `${parsed.confidence}%` as any, height: '100%', backgroundColor: confidenceColor, borderRadius: 3 }} />
-                </View>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: confidenceColor }}>
-                  {parsed.confidence}% détecté
-                </Text>
-              </View>
-
-              {/* Champs détectés */}
-              <View style={[styles.parsedCard, {
-                backgroundColor: isDark ? (colors.card ?? '#1a1a1a') : '#fff',
-                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-              }]}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
-                  Séance détectée
-                </Text>
-
-                {[
-                  { label: 'Sport', value: parsed.sportName, icon: Dumbbell },
-                  { label: 'Durée', value: parsed.duration ? `${Math.floor(parsed.duration / 60)}h${parsed.duration % 60 > 0 ? (parsed.duration % 60) + 'min' : ''}` : undefined, icon: Clock },
-                  { label: 'Rounds', value: parsed.rounds ? `${parsed.rounds} rounds` : undefined, icon: RefreshCw },
-                  { label: 'Intensité', value: parsed.intensity ? `RPE ${parsed.intensity}/10` : undefined, icon: Zap },
-                  { label: 'Type', value: parsed.sessionType, icon: ClipboardList },
-                ].filter(f => f.value).map(field => {
-                  const FieldIcon = field.icon;
-                  return (
-                  <View key={field.label} style={[styles.fieldRow, { borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
-                    <FieldIcon size={14} color={colors.textMuted ?? '#888'} />
-                    <Text style={{ fontSize: 13, color: colors.textMuted ?? '#888', width: 70 }}>{field.label}</Text>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text, flex: 1 }}>{field.value}</Text>
-                    <Check size={14} color="#22C55E" />
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <DetailScreen
+        title="Dicte ta séance"
+        subtitle={form ? 'Vérifie, corrige si besoin, enregistre' : 'Une phrase suffit, on remplit pour toi'}
+        footer={
+          form ? (
+            <BigButton label={saving ? 'Enregistrement...' : !form.sport ? 'Choisis le sport' : linked ? `Ajouter à la séance ${HEALTH}` : 'Enregistrer la séance'} icon="check" onPress={save} disabled={!form.sport || saving} />
+          ) : (
+            <BigButton label="Vérifier" icon="check" onPress={analyze} disabled={!text.trim()} />
+          )
+        }
+      >
+        {!form ? (
+          <>
+            <Enter i={0}>
+              <Card style={{ gap: 12, padding: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: accent, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="mic" size={22} color={P.white} />
                   </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Ink size={15} weight="extraBold">Touche le micro du clavier</Ink>
+                    <Ink size={13} weight="medium" color={P.ink2}>et raconte ta séance comme à un pote.</Ink>
+                  </View>
+                </View>
+                <TextInput
+                  ref={input}
+                  value={text}
+                  onChangeText={setText}
+                  placeholder="JJB ce soir, 5 rounds de 6 minutes contre Paul, gagné par triangle"
+                  placeholderTextColor={P.muted}
+                  multiline
+                  textAlignVertical="top"
+                  style={[fontStyle('bold'), { minHeight: 120, fontSize: 18, lineHeight: 25, color: P.ink, padding: 12, borderRadius: 14, backgroundColor: P.paper }]}
+                  accessibilityLabel="Ta séance en une phrase"
+                />
+                {text.length > 0 ? (
+                  <Pressable onPress={() => { setText(''); input.current?.focus(); }} accessibilityRole="button" accessibilityLabel="Effacer la phrase" style={{ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' }}>
+                    <Ink size={13} weight="bold" color={P.ink2}>Effacer</Ink>
+                  </Pressable>
+                ) : null}
+              </Card>
+            </Enter>
+            <Enter i={1} style={{ gap: 8 }}>
+              <SectionTitle>Par exemple</SectionTitle>
+              {EXAMPLES.map((ex) => (
+                <Press key={ex} onPress={() => setText(ex)} accessibilityRole="button" accessibilityLabel={`Exemple : ${ex}`}>
+                  <View style={{ minHeight: 52, borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Ink size={14} weight="bold" color={P.ink2} style={{ flex: 1 }}>{ex}</Ink>
+                    <Icon name="chevron" size={16} color={P.muted} />
+                  </View>
+                </Press>
+              ))}
+              <Ink size={13} weight="medium" color={P.muted} style={{ paddingHorizontal: 4 }}>
+                Je comprends le sport, le jour, l’heure, la durée, ton ressenti, les rounds avec tes partenaires, les finitions, les techniques apprises, ton grade, la distance et l’allure, les exercices avec séries et charges, même décrits avec tes mots, et pour le foot le format, les buts et ton poste. Quand je devine, je te demande. Tout reste sur ton téléphone.
+              </Ink>
+            </Enter>
+          </>
+        ) : (
+          <>
+            <Enter i={0}>
+              <Press onPress={() => { setText(said); setForm(null); }} accessibilityRole="button" accessibilityLabel="Modifier la phrase">
+                <View style={{ borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, padding: 14, gap: 8 }}>
+                  <Ink size={12} weight="bold" color={P.muted}>Tu as dit</Ink>
+                  <Text style={[fontStyle('bold'), { fontSize: 16, lineHeight: 24, color: P.ink2 }]}>
+                    {pieces(said, form.spans).map((p, i) => (
+                      <Text key={i} style={p.on ? [fontStyle('extraBold'), { color: P.ink, backgroundColor: P.accentSoft }] : undefined}>{p.t}</Text>
+                    ))}
+                  </Text>
+                  <Ink size={13} weight="extraBold" color={accent}>Modifier la phrase</Ink>
+                </View>
+              </Press>
+            </Enter>
+            <Ink size={13} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4 }}>
+              {understood === 0 ? 'Je n’ai rien reconnu. Remplis les champs ou reformule, par exemple : boxe 1 h, intense.' : 'Surligné : ce que j’ai compris. Ce qui est vide, complète-le ou laisse-le vide. Ta phrase reste dans la note.'}
+            </Ink>
+
+            {form.guesses.length || (twin && form.linkId === undefined) || linked ? (
+              <View style={{ gap: 10 }}>
+                {form.guesses.length || (twin && form.linkId === undefined) ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
+                    <Icon name="flag" size={16} color={accent} />
+                    <Ink size={15} weight="extraBold">{`À confirmer${form.guesses.length + (twin && form.linkId === undefined ? 1 : 0) > 1 ? ` (${form.guesses.length + (twin && form.linkId === undefined ? 1 : 0)})` : ''}`}</Ink>
+                  </View>
+                ) : null}
+                {form.guesses.map((g) => (
+                  <GuessCard key={`${g.index}${g.said}`} g={g} onAnswer={(name) => answerGuess(g, name)} />
+                ))}
+                {twin ? (
+                  <TwinCard
+                    twin={twin}
+                    linked={linked}
+                    open={form.linkId === undefined}
+                    onLink={() => { tap('medium'); set({ linkId: twin.id ?? null }); }}
+                    onNew={() => { tap(); set({ linkId: null }); }}
+                    onUndo={() => { tap(); set({ linkId: undefined }); }}
+                  />
+                ) : null}
+              </View>
+            ) : null}
+
+            <Field label="Sport" src={src('sport')} empty={!form.sport ? 'pas reconnu, choisis-le' : undefined}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {sportChips.map((s) => {
+                  const on = s === form.sport;
+                  return (
+                    <Pressable key={s} onPress={() => { tap(); set({ sport: s }); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? P.ink : sportTint(s) }}>
+                      <Ink size={14} weight="extraBold" color={on ? P.paper : '#1D2029'}>{sportShortName(s)}</Ink>
+                    </Pressable>
                   );
                 })}
-
-                {parsed.detectedFields.length === 0 && (
-                  <Text style={{ color: colors.textMuted ?? '#888', fontSize: 13 }}>
-                    Aucun champ reconnu. Reformule ou remplis manuellement.
-                  </Text>
-                )}
               </View>
+            </Field>
 
-              {/* Actions */}
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <TouchableOpacity
-                  onPress={() => setParsed(null)}
-                  style={[styles.actionBtn, {
-                    flex: 1,
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                  }]}
+            <Field label="Jour" src={src('jour')} empty={!form.dateSaid ? 'pas dit, aujourd’hui par défaut' : undefined}>
+              <DayNav value={form.date} onChange={(d) => set({ date: d, dateSaid: true })} label={dayText} size={18} />
+            </Field>
+
+            <Field
+              label="Début"
+              src={src('debut')}
+              empty={form.start === null ? (form.moment ? `pas d’heure, tu as dit ${momentText[form.moment] ?? form.moment}` : 'pas dit') : undefined}
+              onAdd={form.start === null ? () => set({ start: form.moment && momentStart[form.moment] !== undefined ? momentStart[form.moment] : Math.max(0, Math.floor((new Date().getHours() * 60 - (form.duration ?? 60)) / 15) * 15) }) : undefined}
+              onClear={form.start !== null ? () => set({ start: null }) : undefined}
+            >
+              {form.start !== null ? <Stepper value={form.start} step={15} min={0} max={23 * 60 + 45} unit="minutes" size={22} button={34} format={(v) => `${pad2(Math.floor(v / 60))}:${pad2(v % 60)}`} onChange={(v) => set({ start: v })} /> : null}
+            </Field>
+
+            <Field
+              label="Durée"
+              src={src('duree')}
+              note={form.duration !== null && form.durationFrom ? `pas dite, déduite : ${form.durationFrom}` : undefined}
+              empty={form.duration === null ? 'pas dite' : undefined}
+              onAdd={form.duration === null ? () => set({ duration: 60 }) : undefined}
+              onClear={form.duration !== null ? () => set({ duration: null, durationFrom: undefined }) : undefined}
+            >
+              {form.duration !== null ? <Stepper value={form.duration} step={5} min={5} max={600} unit="minutes" size={22} button={34} format={(v) => fmtMinutes(v)} onChange={(v) => set({ duration: v, durationFrom: undefined, durationSec: undefined })} /> : null}
+            </Field>
+
+            <Field label="Ressenti" src={src('ressenti')} empty={form.mood === null ? 'pas dit' : undefined}>
+              <ChoiceRow options={MOODS.map((m) => ({ value: m.value, label: m.label }))} value={form.mood} onChange={(v) => set({ mood: v, rating: v ? MOODS.find((m) => m.value === v)?.rating ?? null : null })} />
+            </Field>
+
+            <Field label="Intensité" src={src('intensite')} empty={form.intensity === null ? 'pas dite' : undefined}>
+              <ChoiceRow options={RPE} value={form.intensity} onChange={(v) => set({ intensity: v })} columns={4} />
+            </Field>
+
+            {kind === 'combat' ? (
+              <Field label="Techniques" src={src('appris')} empty={form.learned.length === 0 ? 'aucune citée' : undefined} note={form.learned.length ? 'ce que tu as appris ou travaillé, pas les finitions de sparring' : undefined}>
+                {(['appris', 'drill', 'travaille', 'reussi'] as const).map((mode) => {
+                  const list = form.learned.filter((l) => l.mode === mode);
+                  if (!list.length) return null;
+                  return (
+                    <View key={mode} style={{ gap: 6 }}>
+                      <Ink size={13} weight="bold" color={P.ink2}>{LEARN_HEAD[mode]}</Ink>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {list.map((l) => (
+                          <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 36, borderRadius: 12, paddingLeft: 12, backgroundColor: mode === 'reussi' ? P.mossSoft : P.accentSoft }}>
+                            <Ink size={13} weight="extraBold" color={mode === 'reussi' ? P.mossText : P.ink}>{l.note ? `${l.label} (${l.note})` : l.label}</Ink>
+                            <Pressable onPress={() => { tap(); set({ learned: form.learned.filter((x) => x !== l) }); }} accessibilityRole="button" accessibilityLabel={`Retirer ${l.label}`} hitSlop={4} style={{ width: 32, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+                              <Icon name="close" size={13} color={P.muted} />
+                            </Pressable>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })}
+              </Field>
+            ) : null}
+
+            {kind === 'combat' && (form.grade || form.gradeEvent || form.club || form.coach) ? (
+              <Field label="Contexte" src={src('grade', 'club', 'prof')} note={form.gradeEvent ? 'passage de grade, bravo' : undefined}>
+                <View style={{ gap: 8 }}>
+                  {([['grade', 'Grade', 'Ceinture bleue...'], ['coach', 'Professeur', 'Nom du prof'], ['club', 'Club', 'Nom du club']] as const).map(([k, label, ph]) =>
+                    form[k] || (k === 'grade' && form.gradeEvent) ? (
+                      <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Ink size={13} weight="bold" color={P.ink2} style={{ width: 78 }}>{label}</Ink>
+                        <TextInput
+                          value={form[k]}
+                          onChangeText={(t) => set({ [k]: t } as Partial<Form>)}
+                          placeholder={ph}
+                          placeholderTextColor={P.muted}
+                          accessibilityLabel={label}
+                          style={[fontStyle('bold'), { flex: 1, minHeight: 40, fontSize: 15, color: P.ink, paddingHorizontal: 12, borderRadius: 12, backgroundColor: P.paper }]}
+                        />
+                      </View>
+                    ) : null,
+                  )}
+                </View>
+              </Field>
+            ) : null}
+
+            {kind === 'combat' || form.rounds !== null ? (
+              <Field
+                label="Rounds"
+                src={src('rounds', 'blocs')}
+                empty={form.rounds === null ? 'pas dits' : form.roundMin ? `de ${form.roundMin} min` : undefined}
+                onAdd={form.rounds === null ? () => set({ rounds: 5 }) : undefined}
+                onClear={form.rounds !== null ? () => set({ rounds: null, roundMin: undefined }) : undefined}
+              >
+                {form.rounds !== null ? <Stepper value={form.rounds} step={1} min={1} max={40} unit="rounds" size={22} button={34} onChange={(v) => set({ rounds: v, parsedRounds: form.parsedRounds && v >= form.parsedRounds.length ? form.parsedRounds : null })} /> : null}
+              </Field>
+            ) : null}
+
+            {kind === 'combat' ? (
+              <View style={{ gap: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, gap: 8 }}>
+                  <Ink size={15} weight="extraBold" style={{ flex: 1 }}>Sparring</Ink>
+                  {form.cards.length === 0 ? <Ink size={13} weight="medium" color={P.muted}>personne de cité</Ink> : null}
+                </View>
+                {form.cards.map((c) => (
+                  <PartnerCard
+                    key={c.key}
+                    card={c}
+                    src={c.src.map((s) => said.slice(s.start, s.end))}
+                    onChange={(patch, renumber) => updateCard(c.key, patch, renumber)}
+                    onRemove={() => setCards(form.cards.filter((x) => x.key !== c.key), true)}
+                  />
+                ))}
+                <Pressable
+                  onPress={() => {
+                    tap();
+                    const next = Math.max(0, ...form.cards.flatMap((x) => x.rounds)) + 1;
+                    setCards([...form.cards, { key: `c${Date.now()}`, name: '', rounds: [next], result: null, given: [], taken: [], src: [] }]);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ajouter un partenaire"
+                  style={{ minHeight: 48, borderRadius: 16, borderWidth: 1, borderColor: P.line2, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                 >
-                  <RotateCcw size={16} color={colors.text} />
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>Modifier</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleConfirm}
-                  style={[styles.actionBtn, { flex: 2, backgroundColor: '#8B5CF6' }]}
-                >
-                  <ChevronRight size={16} color="#fff" />
-                  <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>Continuer dans le formulaire</Text>
-                </TouchableOpacity>
+                  <Icon name="plus" size={16} color={accent} />
+                  <Ink size={14} weight="extraBold" color={accent}>Ajouter un partenaire</Ink>
+                </Pressable>
               </View>
-            </View>
-          )}
-        </ScrollView>
-      </View>
+            ) : null}
+
+            {kind === 'combat' ? (
+              <Field label="Type de séance" src={src('type')} empty={form.type === null ? 'pas dit' : undefined} note={form.sessionLabel ? `tu as dit : ${form.sessionLabel.toLowerCase()}, noté dans la note` : undefined}>
+                <ChoiceRow options={SESSION_TYPES} value={form.type as never} onChange={(v) => set({ type: v })} />
+              </Field>
+            ) : null}
+
+            {kind === 'combat' ? (
+              <Field label="Thème technique" src={src('theme')} empty={!form.theme ? (form.learned.length ? 'pas dit, tes techniques serviront de thème' : 'pas dit') : undefined}>
+                <TextInput
+                  value={form.theme}
+                  onChangeText={(t) => set({ theme: t })}
+                  placeholder="Passage de garde, défense de dos..."
+                  placeholderTextColor={P.muted}
+                  accessibilityLabel="Thème technique"
+                  style={[fontStyle('bold'), { minHeight: 44, fontSize: 15, color: P.ink, paddingHorizontal: 12, borderRadius: 12, backgroundColor: P.paper }]}
+                />
+              </Field>
+            ) : null}
+
+            {(kind === 'cardio' && !team) || form.distance !== null ? (
+              <Field
+                label="Distance"
+                src={src('distance')}
+                note={pace ? `allure ${form.paceSaid ? '' : 'calculée '}${pace}` : undefined}
+                empty={form.distance === null ? 'pas dite' : undefined}
+                onAdd={form.distance === null ? () => set({ distance: 5 }) : undefined}
+                onClear={form.distance !== null ? () => set({ distance: null }) : undefined}
+              >
+                {form.distance !== null ? <Stepper value={form.distance} step={0.5} min={0.1} max={400} decimals unit="kilomètres" size={22} button={34} format={(v) => `${fmtNum(v)} km`} onChange={(v) => set({ distance: v })} /> : null}
+              </Field>
+            ) : null}
+
+            {form.heartRate !== null || form.calories !== null ? (
+              <Field label="Cardio" src={src('fc', 'calories')}>
+                <View style={{ gap: 10 }}>
+                  {form.heartRate !== null ? <Stepper value={form.heartRate} step={1} min={40} max={230} unit="battements par minute" size={20} button={32} format={(v) => `${v} bpm de moyenne`} onChange={(v) => set({ heartRate: v })} /> : null}
+                  {form.calories !== null ? <Stepper value={form.calories} step={10} min={0} max={6000} unit="calories" size={20} button={32} format={(v) => `${v} kcal`} onChange={(v) => set({ calories: v })} /> : null}
+                </View>
+              </Field>
+            ) : null}
+
+            {kind === 'muscu' || form.exercises.length > 0 ? (
+              <Field label="Exercices" empty={form.exercises.length === 0 ? 'aucun compris, ajoute-les avec Plus de détails' : undefined}>
+                {form.exercises.map((e, i) => (
+                  <ExerciseRow
+                    key={`${e.name}${i}`}
+                    ex={e}
+                    first={i === 0}
+                    src={exSrc(i)}
+                    onChange={(patch) => set({ exercises: form.exercises.map((x, k) => (k === i ? { ...x, ...patch } : x)) })}
+                    onRemove={() => set({ exercises: form.exercises.filter((_, k) => k !== i) })}
+                  />
+                ))}
+                {kind === 'muscu' ? (
+                  <View style={{ paddingTop: form.exercises.length ? 10 : 0 }}>
+                    <MachineFinderButton onPress={() => setMachines(true)} />
+                    <MachineFinder
+                      visible={machines}
+                      onClose={() => setMachines(false)}
+                      onPick={(name) => set({ exercises: [...form.exercises, { name, sets: 0, reps: 0, weight: 0, missing: ['sets', 'reps', 'weight'] }] })}
+                    />
+                  </View>
+                ) : null}
+              </Field>
+            ) : null}
+
+            {team || form.team ? (
+              <Field label={form.team?.match ? 'Match' : 'Ton match'} src={src('format', 'cadre', 'buts', 'passes', 'poste', 'score', 'points', 'essais')} note="score enregistré à part, le reste dans la note de la séance">
+                <View style={{ gap: 12 }}>
+                  {form.sport === 'football' || form.sport === 'futsal' ? (
+                    <View style={{ gap: 6 }}>
+                      <Ink size={13} weight="bold" color={P.ink2}>Format</Ink>
+                      <ChoiceRow options={FORMATS} value={form.team?.format ?? null} onChange={(v) => set({ team: { ...(form.team ?? {}), format: v ?? undefined } })} columns={4} />
+                    </View>
+                  ) : null}
+                  <View style={{ gap: 6 }}>
+                    <Ink size={13} weight="bold" color={P.ink2}>Avec qui</Ink>
+                    <ChoiceRow options={CADRES} value={form.team?.cadre ?? null} onChange={(v) => set({ team: { ...(form.team ?? {}), cadre: v ?? undefined } })} columns={3} />
+                  </View>
+                  <TeamStepper label="Buts" value={form.team?.goals} onChange={(v) => set({ team: { ...(form.team ?? {}), goals: v } })} />
+                  <TeamStepper label="Passes décisives" value={form.team?.assists} onChange={(v) => set({ team: { ...(form.team ?? {}), assists: v } })} />
+                  {form.team?.scoreFor !== undefined && form.team?.scoreAgainst !== undefined ? (
+                    <Ink size={14} weight="bold">{`Score : ${form.team.scoreFor} à ${form.team.scoreAgainst}${form.team.result === 'win' ? ', victoire' : form.team.result === 'loss' ? ', défaite' : ', nul'}`}</Ink>
+                  ) : null}
+                  <View style={{ gap: 6 }}>
+                    <Ink size={13} weight="bold" color={P.ink2}>Poste</Ink>
+                    <TextInput
+                      value={form.team?.position ?? ''}
+                      onChangeText={(t) => set({ team: { ...(form.team ?? {}), position: t || undefined } })}
+                      placeholder="Ailier, milieu, gardien..."
+                      placeholderTextColor={P.muted}
+                      accessibilityLabel="Poste"
+                      style={[fontStyle('bold'), { minHeight: 44, fontSize: 15, color: P.ink, paddingHorizontal: 12, borderRadius: 12, backgroundColor: P.paper }]}
+                    />
+                  </View>
+                </View>
+              </Field>
+            ) : null}
+
+            <Field label="Note" note={noteLines(form).length ? `ajouté en tête : ${noteLines(form).join(' ; ')}` : undefined}>
+              <TextInput
+                value={form.notes}
+                onChangeText={(t) => set({ notes: t })}
+                multiline
+                placeholder="Ce que tu as travaillé, avec qui"
+                placeholderTextColor={P.muted}
+                accessibilityLabel="Note sur la séance"
+                style={[fontStyle('medium'), { minHeight: 64, fontSize: 15, color: P.ink, textAlignVertical: 'top', paddingVertical: 4 }]}
+              />
+            </Field>
+
+            {form.sport ? (
+              <Press onPress={details} accessibilityRole="button" accessibilityLabel="Plus de détails, ouvrir la saisie complète">
+                <View style={{ minHeight: 52, borderRadius: 18, borderWidth: 1, borderColor: P.line2, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <Ink size={15} weight="extraBold">Plus de détails</Ink>
+                    <Ink size={12} weight="medium" color={P.ink2}>{kind === 'muscu' ? 'séries une par une, charges' : kind === 'combat' ? 'saisie complète des rounds et du bilan' : 'cardio, fréquence, lieu'}</Ink>
+                  </View>
+                  <Icon name="chevron" size={16} color={P.muted} />
+                </View>
+              </Press>
+            ) : null}
+          </>
+        )}
+      </DetailScreen>
     </KeyboardAvoidingView>
   );
 }
 
-// ============================================
-// STYLES
-// ============================================
+function Field({ label, empty, note, src, children, onAdd, onClear }: { label: string; empty?: string; note?: string; src?: string[]; children?: React.ReactNode; onAdd?: () => void; onClear?: () => void }) {
+  const { accent } = useAccent();
+  const quote = (src ?? []).filter(Boolean);
+  return (
+    <View style={{ borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: empty && !quote.length ? P.line2 : P.line, padding: 14, gap: 10 }}>
+      <View style={{ gap: 3 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 24 }}>
+          <Ink size={14} weight="extraBold" style={{ flexShrink: 0 }}>{label}</Ink>
+          {empty ? <Ink size={13} weight="medium" color={P.muted} style={{ flex: 1 }} numberOfLines={2}>{empty}</Ink> : <View style={{ flex: 1 }} />}
+          {onAdd ? (
+            <Pressable onPress={() => { tap(); onAdd(); }} accessibilityRole="button" accessibilityLabel={`Ajouter : ${label}`} hitSlop={6} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
+              <Icon name="plus" size={14} color={accent} />
+              <Ink size={13} weight="extraBold" color={accent}>Ajouter</Ink>
+            </Pressable>
+          ) : null}
+          {onClear ? (
+            <Pressable onPress={() => { tap(); onClear(); }} accessibilityRole="button" accessibilityLabel={`Vider : ${label}`} hitSlop={6} style={{ minHeight: 36, paddingHorizontal: 10, justifyContent: 'center' }}>
+              <Ink size={13} weight="bold" color={P.muted}>Vider</Ink>
+            </Pressable>
+          ) : null}
+        </View>
+        {quote.length ? (
+          <Ink size={12} weight="bold" color={P.accent} numberOfLines={2}>{quote.map((q) => `« ${q} »`).join('  ')}</Ink>
+        ) : null}
+        {note ? <Ink size={12} weight="medium" color={P.ink2}>{note}</Ink> : null}
+      </View>
+      {children}
+    </View>
+  );
+}
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 17, fontWeight: '800',
-  },
-  tipBox: {
-    flexDirection: 'row', gap: 10, alignItems: 'flex-start',
-    padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 14,
-  },
-  tipText: { flex: 1, fontSize: 13, lineHeight: 19 },
-  inputCard: {
-    borderRadius: 16, borderWidth: 1, padding: 14,
-    minHeight: 110, position: 'relative',
-  },
-  textInput: {
-    fontSize: 15, lineHeight: 22,
-    minHeight: 80,
-  },
-  clearBtn: {
-    position: 'absolute', top: 10, right: 10,
-    padding: 4,
-  },
-  examplePill: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 14, paddingVertical: 11,
-    borderRadius: 12, borderWidth: 1,
-  },
-  analyzeBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, borderRadius: 14, paddingVertical: 14, marginTop: 12,
-  },
-  analyzeBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  parsedCard: {
-    borderRadius: 16, borderWidth: 1, padding: 14, gap: 4,
-  },
-  fieldRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  actionBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, borderRadius: 12, paddingVertical: 13,
-  },
-});
+function TeamStepper({ label, value, onChange }: { label: string; value?: number; onChange: (v: number | undefined) => void }) {
+  const { accent } = useAccent();
+  if (value === undefined) {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 40 }}>
+        <Ink size={14} weight="bold" style={{ flex: 1 }}>{label}</Ink>
+        <Ink size={13} weight="medium" color={P.muted} style={{ marginRight: 8 }}>pas dit</Ink>
+        <Pressable onPress={() => { tap(); onChange(0); }} accessibilityRole="button" accessibilityLabel={`Ajouter : ${label}`} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
+          <Icon name="plus" size={14} color={accent} />
+          <Ink size={13} weight="extraBold" color={accent}>Ajouter</Ink>
+        </Pressable>
+      </View>
+    );
+  }
+  return (
+    <View style={{ gap: 4 }}>
+      <Ink size={13} weight="bold" color={P.ink2}>{label}</Ink>
+      <Stepper value={value} step={1} min={0} max={50} unit={label.toLowerCase()} size={20} button={32} onChange={(v) => onChange(v)} />
+    </View>
+  );
+}
+
+function NumBox({ value, label, onChange, decimals, missing }: { value: number; label: string; onChange: (v: number) => void; decimals?: boolean; missing?: boolean }) {
+  const [draft, setDraft] = useState(value ? fmtNum(value) : '');
+  useEffect(() => setDraft(value ? fmtNum(value) : ''), [value]);
+  return (
+    <View style={{ alignItems: 'center', gap: 2 }}>
+      <TextInput
+        value={draft}
+        onChangeText={(t) => {
+          setDraft(t);
+          const v = Number(t.replace(',', '.'));
+          if (Number.isFinite(v) && v >= 0) onChange(decimals ? v : Math.round(v));
+        }}
+        keyboardType={decimals ? 'decimal-pad' : 'number-pad'}
+        accessibilityLabel={label}
+        placeholder={missing ? '?' : '0'}
+        placeholderTextColor={missing ? P.accent : P.muted}
+        style={[fontStyle('extraBold'), { width: 58, minHeight: 40, borderRadius: 10, backgroundColor: P.paper, textAlign: 'center', fontSize: 16, color: P.ink, borderWidth: missing && !draft ? 1 : 0, borderColor: P.accent, borderStyle: 'dashed' }]}
+      />
+      <Ink size={11} weight="medium" color={missing && !draft ? P.accent : P.muted}>{label}</Ink>
+    </View>
+  );
+}
+
+function ExerciseRow({ ex, first, src, onChange, onRemove }: { ex: DicteeExercise; first: boolean; src: string[]; onChange: (p: Partial<DicteeExercise>) => void; onRemove: () => void }) {
+  const cardio = !!ex.distance || !!ex.duration;
+  return (
+    <View style={{ paddingTop: first ? 0 : 10, borderTopWidth: first ? 0 : 1, borderTopColor: P.line2, gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Ink size={15} weight="extraBold" numberOfLines={2}>{ex.name}</Ink>
+          {src.length ? <Ink size={12} weight="bold" color={P.accent} numberOfLines={2}>{src.map((q) => `« ${q} »`).join('  ')}</Ink> : null}
+          {cardio ? <Ink size={13} weight="medium" color={P.ink2}>{exLine(ex)}</Ink> : null}
+          {ex.load || ex.missing?.length ? (
+            <Ink size={12} weight="medium" color={P.ink2}>
+              {[ex.load ? CHARGE_LABEL[ex.load] : '', ex.missing?.length ? `à compléter : ${ex.missing.map((m) => (m === 'sets' ? 'séries' : m === 'reps' ? 'répétitions' : 'charge')).join(', ')}` : ''].filter(Boolean).join(', ')}
+            </Ink>
+          ) : null}
+        </View>
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Retirer ${ex.name}`} hitSlop={6} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="close" size={18} color={P.muted} />
+        </Pressable>
+      </View>
+      {!cardio ? (
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <NumBox value={ex.sets} label="séries" missing={ex.missing?.includes('sets')} onChange={(v) => onChange({ sets: Math.max(1, v), missing: dropMissing(ex, 'sets') })} />
+          <NumBox value={ex.max ? 0 : ex.reps} label={ex.max ? 'reps (max)' : 'reps'} missing={ex.missing?.includes('reps')} onChange={(v) => onChange({ reps: v, max: v ? undefined : ex.max, missing: v ? dropMissing(ex, 'reps') : ex.missing })} />
+          <NumBox value={ex.weight} label={ex.load === 'pdc' ? 'lest kg' : 'kg'} decimals missing={ex.missing?.includes('weight')} onChange={(v) => onChange({ weight: v, missing: v ? dropMissing(ex, 'weight') : ex.missing })} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function PartnerCard({ card, src, onChange, onRemove }: { card: CardForm; src: string[]; onChange: (p: Partial<CardForm>, renumber?: boolean) => void; onRemove: () => void }) {
+  const { accent } = useAccent();
+  const [adding, setAdding] = useState<'given' | 'taken' | null>(null);
+  const bump = (list: 'given' | 'taken', t: DicteeTechnique) => {
+    tap();
+    const cur = card[list];
+    const found = cur.find((x) => x.id === t.id);
+    const next = found ? cur.map((x) => (x.id === t.id ? { ...x, count: (x.count ?? 1) + 1 } : x)) : [...cur, { ...t, count: 1 }];
+    onChange({ [list]: next } as Partial<CardForm>);
+  };
+  const remove = (list: 'given' | 'taken', id: string) => {
+    tap();
+    onChange({ [list]: card[list].filter((x) => x.id !== id) } as Partial<CardForm>);
+  };
+  const chips = (list: 'given' | 'taken') => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      {card[list].map((t) => (
+        <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 36, borderRadius: 12, paddingLeft: 12, backgroundColor: list === 'given' ? P.mossSoft : P.goldSoft }}>
+          <Pressable onPress={() => bump(list, t)} accessibilityRole="button" accessibilityLabel={`${techniqueText(t)}, toucher pour en ajouter une`} style={{ minHeight: 36, justifyContent: 'center' }}>
+            <Ink size={13} weight="extraBold" color={list === 'given' ? P.mossText : P.goldDark}>{techniqueText(t)}</Ink>
+          </Pressable>
+          <Pressable onPress={() => remove(list, t.id)} accessibilityRole="button" accessibilityLabel={`Retirer ${t.label}`} hitSlop={4} style={{ width: 32, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="close" size={13} color={P.muted} />
+          </Pressable>
+        </View>
+      ))}
+      <Pressable onPress={() => { tap(); setAdding(adding === list ? null : list); }} accessibilityRole="button" accessibilityLabel={list === 'given' ? 'Ajouter une finition donnée' : 'Ajouter une finition subie'} style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.paper }}>
+        <Icon name="plus" size={13} color={accent} />
+        <Ink size={13} weight="extraBold" color={accent}>{card[list].length ? 'Autre' : 'Ajouter'}</Ink>
+      </Pressable>
+    </View>
+  );
+  const count = card.rounds.length;
+  return (
+    <View style={{ borderRadius: 18, backgroundColor: P.white, borderWidth: 1, borderColor: P.line, padding: 14, gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+          <Ink size={16} weight="black" color={P.accent}>{(card.name.trim()[0] ?? '?').toUpperCase()}</Ink>
+        </View>
+        <View style={{ flex: 1 }}>
+          <TextInput
+            value={card.name}
+            onChangeText={(t) => onChange({ name: t })}
+            placeholder="Nom du partenaire"
+            placeholderTextColor={P.muted}
+            accessibilityLabel="Nom du partenaire"
+            style={[fontStyle('extraBold'), { fontSize: 16, color: P.ink, minHeight: 32, padding: 0 }]}
+          />
+          <Ink size={12} weight="medium" color={P.ink2}>{`${card.role ? `${card.role.charAt(0).toUpperCase()}${card.role.slice(1)}, ` : ''}${roundsText(card.rounds)}`}</Ink>
+        </View>
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Retirer ${card.name || 'ce partenaire'}`} hitSlop={6} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="close" size={18} color={P.muted} />
+        </Pressable>
+      </View>
+      {src.length ? <Ink size={12} weight="bold" color={P.accent} numberOfLines={3}>{src.map((q) => `« ${q} »`).join('  ')}</Ink> : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>{count > 1 ? `${count} rounds` : '1 round'}</Ink>
+        <Pressable disabled={count <= 1} onPress={() => { tap(); onChange({ rounds: card.rounds.slice(0, -1) }, true); }} accessibilityRole="button" accessibilityLabel="Un round de moins" style={{ width: 40, height: 36, borderRadius: 12, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center', opacity: count <= 1 ? 0.4 : 1 }}>
+          <Icon name="minus" size={16} color={P.ink} />
+        </Pressable>
+        <Pressable onPress={() => { tap(); onChange({ rounds: [...card.rounds, (card.rounds[card.rounds.length - 1] ?? 0) + 1] }, true); }} accessibilityRole="button" accessibilityLabel="Un round de plus" style={{ width: 40, height: 36, borderRadius: 12, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="plus" size={16} color={P.ink} />
+        </Pressable>
+      </View>
+      <ChoiceRow options={RESULTS} value={card.result} onChange={(v) => { tap(); onChange({ result: v }); }} columns={3} />
+      <View style={{ gap: 6 }}>
+        <Ink size={13} weight="bold" color={P.ink2}>Tes finitions</Ink>
+        {chips('given')}
+      </View>
+      {card.taken.length || adding === 'taken' ? (
+        <View style={{ gap: 6 }}>
+          <Ink size={13} weight="bold" color={P.ink2}>Ses finitions sur toi</Ink>
+          {chips('taken')}
+        </View>
+      ) : (
+        <Pressable onPress={() => { tap(); setAdding('taken'); }} accessibilityRole="button" accessibilityLabel="Il t’a soumis" style={{ minHeight: 36, justifyContent: 'center', alignSelf: 'flex-start' }}>
+          <Ink size={13} weight="bold" color={accent}>Il t’a soumis ?</Ink>
+        </Pressable>
+      )}
+      {adding ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingTop: 2 }}>
+          {QUICK_TECHNIQUES.map((t) => (
+            <Pressable key={t.id} onPress={() => { bump(adding, t); setAdding(null); }} accessibilityRole="button" accessibilityLabel={`${adding === 'given' ? 'Ajouter' : 'Ajouter subie'} : ${t.label}`} style={{ minHeight: 36, borderRadius: 12, paddingHorizontal: 12, justifyContent: 'center', borderWidth: 1, borderColor: P.line2 }}>
+              <Ink size={13} weight="bold">{t.label}</Ink>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function dropMissing(ex: DicteeExercise, k: 'sets' | 'reps' | 'weight'): DicteeExercise['missing'] {
+  const next = (ex.missing ?? []).filter((x) => x !== k);
+  return next.length ? next : undefined;
+}
+
+/** « Tu as fait des ecartes a la poulie (vis-a-vis), c'est ca ? » : Oui ou un autre choix, un geste */
+function GuessCard({ g, onAnswer }: { g: DicteeGuess; onAnswer: (name: string | null) => void }) {
+  const { accent } = useAccent();
+  return (
+    <View style={{ borderRadius: 18, backgroundColor: P.white, borderWidth: 1.5, borderColor: accent, padding: 14, gap: 10 }}>
+      <View style={{ gap: 4 }}>
+        <Ink size={16} weight="extraBold">{g.question}</Ink>
+        <Ink size={12} weight="bold" color={P.accent} numberOfLines={2}>{`« ${g.said} »`}</Ink>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {g.guess ? (
+          <Pressable onPress={() => onAnswer(null)} accessibilityRole="button" accessibilityLabel={`Oui, ${g.guess}`} style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="check" size={16} color={P.white} />
+            <Ink size={14} weight="extraBold" color={P.white}>Oui</Ink>
+          </Pressable>
+        ) : null}
+        {g.options.map((o) => (
+          <Pressable key={o} onPress={() => onAnswer(o)} accessibilityRole="button" accessibilityLabel={g.guess ? `Non, ${o}` : o} style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center', flexShrink: 1 }}>
+            <Ink size={14} weight="bold">{o}</Ink>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** la meme seance deja dans Apple Sante : la relier plutot que d'en creer une seconde */
+function TwinCard({ twin, linked, open, onLink, onNew, onUndo }: { twin: Training; linked: boolean; open: boolean; onLink: () => void; onNew: () => void; onUndo: () => void }) {
+  const { accent } = useAccent();
+  const bits = [
+    twin.distance ? `${fmtNum(Math.round(twin.distance * 100) / 100)} km` : '',
+    twin.duration_minutes ? fmtMinutes(twin.duration_minutes) : '',
+    twin.start_time ? `à ${String(twin.start_time).slice(0, 5)}` : '',
+  ].filter(Boolean);
+  const what = getSportName(twin.sport).toLowerCase();
+  if (!open && !linked) return null;
+  return (
+    <View style={{ borderRadius: 18, backgroundColor: P.white, borderWidth: 1.5, borderColor: linked ? P.line : accent, padding: 14, gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: linked ? P.mossSoft : P.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={linked ? 'check' : 'heart'} size={18} color={linked ? P.mossText : accent} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Ink size={16} weight="extraBold">{linked ? `Reliée à ta séance ${HEALTH}` : `Déjà dans ${HEALTH} ce jour-là`}</Ink>
+          <Ink size={13} weight="medium" color={P.ink2}>{`${what.charAt(0).toUpperCase()}${what.slice(1)}${bits.length ? `, ${bits.join(', ')}` : ''}`}</Ink>
+        </View>
+      </View>
+      <Ink size={13} weight="medium" color={P.ink2}>
+        {linked ? 'Les données de la montre restent, ta note et ton ressenti s’ajoutent. Pas de seconde séance.' : 'La relier plutôt que d’en créer une seconde ? Ses données restent, ta phrase s’ajoute.'}
+      </Ink>
+      {linked ? (
+        <Pressable onPress={onUndo} accessibilityRole="button" accessibilityLabel="Annuler le lien" style={{ alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center' }}>
+          <Ink size={13} weight="extraBold" color={accent}>Annuler</Ink>
+        </Pressable>
+      ) : (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <Pressable onPress={onLink} accessibilityRole="button" accessibilityLabel="Relier à cette séance" style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, backgroundColor: accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="check" size={16} color={P.white} />
+            <Ink size={14} weight="extraBold" color={P.white}>Relier</Ink>
+          </Pressable>
+          <Pressable onPress={onNew} accessibilityRole="button" accessibilityLabel="Créer une autre séance" style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: P.line2, backgroundColor: P.paper, justifyContent: 'center' }}>
+            <Ink size={14} weight="bold">C’est une autre séance</Ink>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  );
+}

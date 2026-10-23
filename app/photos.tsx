@@ -1,1303 +1,541 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Platform,
-  ActivityIndicator,
-  RefreshControl,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  useWindowDimensions,
-  DeviceEventEmitter,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { useWatch } from '@/lib/WatchConnectivityProvider';
-import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
-import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { Camera, Image as ImageIcon, GitCompare, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { BeforeAfterComparison } from '@/components/BeforeAfterComparison';
-import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage } from '@/lib/storage';
-import { getLatestWeight, addWeight } from '@/lib/database';
+/**
+ * Photos de forme v2 (vague 39) : un coffre 100 % local, range par mois.
+ * Camera avec la derniere photo de la meme pose en transparence et un minuteur,
+ * pose de chaque photo (face, profil, dos) et filtre, date complete et poids sous chaque photo,
+ * visionneuse plein ecran ou l'on glisse d'une photo a l'autre, suppression confirmee dans l'app.
+ * NUIT 14 : a l'ajout, la date est celle de la prise de vue (EXIF, sinon galerie, sinon aujourd'hui),
+ * proposee et modifiable (lib/v2/photos/datePhoto.ts). Une photo de l'appareil de l'app prend la date du moment.
+ * 17 octobre 2026 : bouton « Créer ma carte avant après » (au moins 2 photos), vers l'atelier des cartes.
+ */
+import { track } from '@/utils/telemetry';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, Image, Linking, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
-// 🔒 SÉCURITÉ: Protection contre les screenshots
+import { launchImageLibraryAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
+import { getAssetInfoAsync, getPermissionsAsync as getLibraryPermissionsAsync } from 'expo-media-library';
+import { DatePickerSheet } from '@/components/yoroi/v2/DateChips';
+import { cameraDay, photoDay } from '@/lib/v2/photos/datePhoto';
+import type { PhotoDay } from '@/lib/v2/photos/datePhoto';
+import { notificationAsync, NotificationFeedbackType, selectionAsync } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { DetailHeader, GhostButton, GLASS, GUTTER, IconButton, Pills, PrimaryButton, StatStrip, tapLight } from '@/components/yoroi/v2/progres/ui';
+import { Sheet } from '@/components/yoroi/v2/progres/Sheet';
+import { CameraFantome } from '@/components/yoroi/v2/photos/CameraFantome';
+import { VisionneusePhotos } from '@/components/yoroi/v2/photos/VisionneusePhotos';
+import { deletePhotoFromStorage, getPhotosFromStorage, savePhotoToStorage, updatePhotoInStorage } from '@/lib/storage';
+import type { Photo } from '@/lib/storage';
+import { addWeight, getLatestWeight } from '@/lib/database';
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
-import logger from '@/lib/security/logger';
+import { logger } from '@/lib/security/logger';
+import { carteAvantApresDirecte } from '@/lib/v2/nav/direct';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { capitalize, daysDiff, monthLong, num, parseInput, todayIso } from '@/lib/v2/progres/format';
+import { dateComplete, dateCourte, dureeTexte, ecartTexte, kg, poseLabel, poseOf, POSES, trierAnciennesDabord } from '@/lib/v2/photos/outils';
+import type { Pose } from '@/lib/v2/photos/outils';
+import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
+import { usePremium } from '@/context/PremiumContext';
+import { canAddMore } from '@/lib/v2/premium/limits';
+import { LimitNotice } from '@/components/yoroi/v2/premium/LimitNotice';
+import { P, blancA } from '@/components/yoroi/livePalette';
 
 const PRIVACY_CHALLENGE_KEY = '@yoroi_privacy_challenge_shown';
+const LAST_POSE_KEY = '@yoroi_photos_derniere_pose';
+
+function Eye({ color, off }: { color: string; off?: boolean }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" stroke={color} strokeWidth={2} strokeLinejoin="round" />
+      <Circle cx={12} cy={12} r={3} stroke={color} strokeWidth={2} />
+      {off ? <Path d="M4 4l16 16" stroke={color} strokeWidth={2} strokeLinecap="round" /> : null}
+    </Svg>
+  );
+}
+
+function Lock({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Rect x={5} y={10} width={14} height={10} rx={3} stroke={color} strokeWidth={2} />
+      <Path d="M8 10V7a4 4 0 0 1 8 0v3" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+type Filtre = Pose | 'toutes';
 
 export default function PhotosScreen() {
-  const { width: screenWidth } = useWindowDimensions();
-  const photoSize = (screenWidth - 64) / 3;
-  const styles = useMemo(() => createStyles(photoSize), [photoSize]);
-  const { colors: themeColors, isDark } = useTheme();
-  const { locale, t } = useI18n();
-
-  // 🔒 SÉCURITÉ: Protection contre les screenshots
-  const { isProtected, isBlurred: isScreenshotBlurred, screenshotDetected } = useSensitiveScreen();
-
-  // Custom popup
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const { syncWeight: syncWeightToWatch, isWatchAvailable } = useWatch();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { isBlurred: appBlurred, screenshotDetected } = useSensitiveScreen();
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [comparisonVisible, setComparisonVisible] = useState(false);
-  const [isBlurred, setIsBlurred] = useState(false); // Option flouter la galerie
-  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
-
-  // Modal pour entrer le poids
-  const [weightModalVisible, setWeightModalVisible] = useState(false);
-  const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
+  const [veiled, setVeiled] = useState(false);
+  const [privacyVisible, setPrivacyVisible] = useState(false);
+  const [pendingUri, setPendingUri] = useState<string | null>(null);
+  const [pendingPose, setPendingPose] = useState<Pose | null>(null);
+  const [pendingDay, setPendingDay] = useState<PhotoDay | null>(null);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [lastPose, setLastPose] = useState<Pose | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [useCurrent, setUseCurrent] = useState(true);
+  const [currentWeight, setCurrentWeight] = useState<number | null>(null);
   const [weightInput, setWeightInput] = useState('');
-  const [useCurrentWeight, setUseCurrentWeight] = useState(true); // Par defaut utilise le poids actuel
+  const [note, setNote] = useState('');
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<Photo | null>(null);
+  const [filtre, setFiltre] = useState<Filtre>('toutes');
+  const [message, setMessage] = useState<{ title: string; text: string; reglages?: boolean } | null>(null);
+  const { isPremium } = usePremium();
+  // Version gratuite : un nombre limite de photos (lib/v2/premium/limits.ts). Toutes les photos deja
+  // enregistrees restent visibles et comparables ; seul l'ajout d'une nouvelle est bloque.
+  const full = !loading && !canAddMore(isPremium, 'progressPhotos', photos.length);
 
   const fetchPhotos = useCallback(async () => {
     try {
-      const fetchedPhotos = await getPhotosFromStorage();
-      setPhotos(fetchedPhotos || []);
-    } catch (error) {
-      logger.error('❌ Erreur lors de la récupération des photos:', error);
+      setPhotos((await getPhotosFromStorage()) ?? []);
+    } catch (err) {
+      logger.error('Lecture des photos impossible', err);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, []);
 
-  const doDeletePhoto = useCallback(async (id: string) => {
-    const success = await deletePhotoFromStorage(id);
-    if (success) {
-      fetchPhotos();
-      if (Platform.OS !== 'web') {
-        notificationAsync(NotificationFeedbackType.Success);
-      }
-    } else {
-      showPopup('Erreur', 'Impossible de supprimer la photo.');
-      if (Platform.OS !== 'web') {
-        notificationAsync(NotificationFeedbackType.Error);
-      }
-    }
-  }, [fetchPhotos, showPopup]);
-
-  const handleDeletePhoto = useCallback((id: string) => {
-    showPopup(
-      t('photos.deletePhotoTitle'),
-      t('photos.deletePhotoConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.delete'), style: 'destructive', onPress: () => doDeletePhoto(id) },
-      ]
-    );
-  }, [showPopup, doDeletePhoto, t]);
-
-  // Vérifier si le Privacy Challenge a déjà été montré
   const checkPrivacyChallenge = useCallback(async () => {
     try {
-      const hasSeenChallenge = await AsyncStorage.getItem(PRIVACY_CHALLENGE_KEY);
-      if (!hasSeenChallenge) {
-        setPrivacyModalVisible(true);
+      const seen = await AsyncStorage.getItem(PRIVACY_CHALLENGE_KEY);
+      if (!seen) {
+        setPrivacyVisible(true);
         await AsyncStorage.setItem(PRIVACY_CHALLENGE_KEY, 'true');
-        return false; // Ne pas continuer, attendre la confirmation
+        return false;
       }
-      return true; // Déjà montré, continuer
-    } catch (error) {
-      logger.error('Erreur vérification Privacy Challenge:', error);
-      return true; // En cas d'erreur, continuer
+      return true;
+    } catch (err) {
+      logger.error('Lecture du test de confiance impossible', err);
+      return true;
     }
   }, []);
 
-  // Charger une seule fois au montage (pas à chaque focus)
   useEffect(() => {
     fetchPhotos();
     checkPrivacyChallenge();
-  }, []);
-
-  // Masquer le loader après 2 secondes maximum
-  useEffect(() => {
+    AsyncStorage.getItem(LAST_POSE_KEY)
+      .then((v) => {
+        if (v === 'face' || v === 'profil' || v === 'dos') setLastPose(v);
+      })
+      .catch(() => {});
     const t = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(t);
+    const sub = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, fetchPhotos);
+    return () => {
+      clearTimeout(t);
+      sub.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Listener pour les changements de données YOROI
-  useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', fetchPhotos);
-    return () => sub.remove();
-  }, []);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchPhotos();
-  }, [fetchPhotos]);
-
-  const requestPermissions = async () => {
-    const cameraStatus = await requestCameraPermissionsAsync();
-    const mediaStatus = await requestMediaLibraryPermissionsAsync();
-
-    if (cameraStatus.status !== 'granted' || mediaStatus.status !== 'granted') {
-      showPopup(
-        t('photos.permissionsRequired'),
-        t('photos.permissionsMessage')
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const savePhotoWithWeight = async () => {
-    if (!pendingPhotoUri) return;
-
-    const weight = weightInput ? parseFloat(weightInput) : undefined;
-    const today = new Date().toISOString().split('T')[0];
-
-    setWeightModalVisible(false);
-    setUploading(true);
-
-    // Sauvegarder la photo avec le poids
-    await savePhotoToStorage(pendingPhotoUri, today, weight);
-
-    // Si un poids a été entré, l'enregistrer aussi dans la base de données
-    // pour qu'il soit utilisé comme poids actuel pour les prochaines photos
-    if (weight) {
-      try {
-        await addWeight({
-          weight,
-          date: today,
-          source: 'manual',
-        });
-        logger.info(`Poids enregistré dans la base: ${weight} kg`);
-        if (isWatchAvailable) {
-          syncWeightToWatch(weight).catch(() => {}); // Non bloquant
-        }
-      } catch (error) {
-        logger.error('❌ Erreur lors de l\'enregistrement du poids:', error);
-      }
-    }
-
-    setUploading(false);
-    setPendingPhotoUri(null);
-    setWeightInput('');
-    fetchPhotos();
-  };
-
-  const takePhoto = async () => {
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
-
+  const openWeightSheet = async (uri: string, pose: Pose | null, day: PhotoDay) => {
+    setPendingUri(uri);
+    setPendingPose(pose);
+    setPendingDay(day);
+    setDateOpen(false);
+    setNote('');
     try {
-      const result = await launchCameraAsync({
-        mediaTypes: 'images',
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets?.[0]) {
-        // Ouvrir le modal pour entrer le poids
-        setPendingPhotoUri(result.assets?.[0]?.uri);
-        const latestWeight = await getLatestWeight();
-
-        logger.info('Dernier poids trouvé:', latestWeight?.weight);
-
-        setWeightInput(latestWeight?.weight?.toString() || '');
-        setWeightModalVisible(true);
-      }
-    } catch (error) {
-      logger.error('❌ Erreur caméra:', error);
-      setUploading(false);
+      const latest = await getLatestWeight();
+      setCurrentWeight(latest?.weight ?? null);
+      setWeightInput(latest?.weight ? num(latest.weight, 1, false) : '');
+      setUseCurrent(!!latest?.weight);
+    } catch {
+      setCurrentWeight(null);
+      setUseCurrent(false);
     }
   };
 
   const pickImage = async () => {
-    // Vérifier si on doit afficher le Privacy Challenge
-    const canContinue = await checkPrivacyChallenge();
-    if (!canContinue) return; // Le modal va s'afficher, l'utilisateur pourra réessayer après
-
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
-
+    if (full) return;
+    if (!(await checkPrivacyChallenge())) return;
     try {
-      const result = await launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: false,
-        quality: 0.8,
-        selectionLimit: 1,
-      });
-
-      if (!result.canceled && result.assets?.[0]) {
-        // Ouvrir le modal pour entrer le poids
-        setPendingPhotoUri(result.assets?.[0]?.uri);
-        const latestWeight = await getLatestWeight();
-
-        logger.info('Dernier poids trouvé:', latestWeight?.weight);
-
-        setWeightInput(latestWeight?.weight?.toString() || '');
-        setWeightModalVisible(true);
+      const lib = await requestMediaLibraryPermissionsAsync();
+      if (lib.status !== 'granted') {
+        setMessage({ title: 'Autorisation nécessaire', text: 'YOROI a besoin de ta galerie pour ajouter une photo. Tu peux l’autoriser dans les réglages de ton téléphone.', reglages: true });
+        return;
       }
-    } catch (error) {
-      logger.error('❌ Erreur galerie:', error);
-      setUploading(false);
+      const r = await launchImageLibraryAsync({ mediaTypes: 'images', allowsEditing: false, quality: 0.8, selectionLimit: 1, exif: true });
+      const asset = !r.canceled ? r.assets?.[0] : undefined;
+      if (asset?.uri) {
+        // la date de prise de vue : EXIF d'abord, sinon la date de la galerie (si l'acces est deja donne)
+        let creationTime: number | undefined;
+        if (Platform.OS !== 'web' && asset.assetId) {
+          try {
+            if ((await getLibraryPermissionsAsync()).granted) creationTime = (await getAssetInfoAsync(asset.assetId)).creationTime || undefined;
+          } catch {
+            // pas grave : l'EXIF suffit souvent
+          }
+        }
+        openWeightSheet(asset.uri, filtre !== 'toutes' ? filtre : lastPose, photoDay({ exif: asset.exif, fileName: asset.fileName, creationTime }));
+      }
+    } catch (err) {
+      logger.error('Galerie indisponible', err);
     }
   };
 
-  const showPhotoOptions = () => {
-    showPopup(
-      t('photos.addPhotoTitle'),
-      t('photos.chooseOption'),
-      [
-        { text: t('photos.camera'), style: 'primary', onPress: takePhoto },
-        { text: t('photos.gallery'), style: 'default', onPress: pickImage },
-        { text: t('common.cancel'), style: 'cancel' },
-      ]
-    );
-  };
-
-  const openComparison = () => {
-    if (photos.length < 2) {
-      showPopup(t('photos.notEnoughPhotos'), t('photos.need2Photos'));
+  const takePhoto = () => {
+    if (full) return;
+    // la camera ne tourne pas dans le navigateur : on passe par la galerie
+    if (Platform.OS === 'web') {
+      pickImage();
       return;
     }
-    setComparisonVisible(true);
+    setCameraOpen(true);
   };
 
-  if (loading) {
-    return (
-      <ScreenWrapper noPadding>
-        <Header title={t('photos.title')} showBack />
-        <View style={{ flex: 1, padding: 16 }}>
-          <SkeletonCard height={48} width="100%" marginBottom={16} />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <SkeletonCard height={120} width="30%" marginBottom={8} />
-            <SkeletonCard height={120} width="30%" marginBottom={8} />
-            <SkeletonCard height={120} width="30%" marginBottom={8} />
-            <SkeletonCard height={120} width="30%" marginBottom={8} />
-            <SkeletonCard height={120} width="30%" marginBottom={8} />
-            <SkeletonCard height={120} width="30%" marginBottom={8} />
-          </View>
-          <SkeletonMessage />
-        </View>
-      </ScreenWrapper>
-    );
-  }
+  const savePending = async () => {
+    if (!pendingUri) return;
+    const weight = useCurrent ? currentWeight ?? undefined : parseInput(weightInput, 20, 400);
+    const uri = pendingUri;
+    const pose = pendingPose;
+    setPendingUri(null);
+    setUploading(true);
+    const today = pendingDay?.date && pendingDay.date <= todayIso() ? pendingDay.date : todayIso();
+    try {
+      await savePhotoToStorage(uri, today, weight, note.trim() || undefined, pose ?? undefined);
+      track('photo_ajoutee');
+      if (pose) {
+        setLastPose(pose);
+        AsyncStorage.setItem(LAST_POSE_KEY, pose).catch(() => {});
+      }
+      // Un poids saisi a la main devient aussi une pesee
+      if (weight && !useCurrent) {
+        try {
+          await addWeight({ weight, date: today, source: 'manual' });
+        } catch (err) {
+          logger.error('Enregistrement du poids de la photo impossible', err);
+        }
+      }
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+    } catch (err) {
+      logger.error('Enregistrement de la photo impossible', err);
+      setMessage({ title: 'Photo non enregistrée', text: 'Un souci est survenu, réessaie.' });
+    } finally {
+      setUploading(false);
+      fetchPhotos();
+    }
+  };
+
+  const doDelete = async (p: Photo) => {
+    setToDelete(null);
+    const ok = await deletePhotoFromStorage(p.id);
+    if (ok) {
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      const left = photos.filter((x) => x.id !== p.id);
+      setPhotos(left);
+      if (viewerId === p.id) {
+        const i = shown.findIndex((x) => x.id === p.id);
+        const next = shown.filter((x) => x.id !== p.id);
+        setViewerId(next.length ? next[Math.min(i, next.length - 1)].id : null);
+      }
+      fetchPhotos();
+    } else {
+      notificationAsync(NotificationFeedbackType.Error).catch(() => {});
+      setMessage({ title: 'Suppression impossible', text: 'La photo n’a pas pu être supprimée.' });
+    }
+  };
+
+  const setPose = async (p: Photo, pose: Pose | null) => {
+    setPhotos((l) => l.map((x) => (x.id === p.id ? { ...x, pose: pose ?? undefined } : x)));
+    const ok = await updatePhotoInStorage(p.id, { pose: pose ?? undefined });
+    if (ok) DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+  };
+
+  // du plus recent au plus ancien
+  const sorted = useMemo(() => trierAnciennesDabord(photos).reverse(), [photos]);
+  const counts = useMemo(() => {
+    const m: Record<Pose, number> = { face: 0, profil: 0, dos: 0 };
+    sorted.forEach((p) => {
+      const k = poseOf(p);
+      if (k) m[k] += 1;
+    });
+    return m;
+  }, [sorted]);
+  const anyPose = counts.face + counts.profil + counts.dos > 0;
+  const shown = useMemo(() => (filtre === 'toutes' ? sorted : sorted.filter((p) => poseOf(p) === filtre)), [sorted, filtre]);
+  useEffect(() => {
+    if (filtre !== 'toutes' && counts[filtre] === 0) setFiltre('toutes');
+  }, [counts, filtre]);
+
+  const groups = useMemo(() => {
+    const g: { key: string; title: string; items: Photo[] }[] = [];
+    shown.forEach((p) => {
+      const k = p.date.slice(0, 7);
+      if (!g.length || g[g.length - 1].key !== k) g.push({ key: k, title: `${capitalize(monthLong(p.date.slice(0, 10)))} ${p.date.slice(0, 4)}`, items: [] });
+      g[g.length - 1].items.push(p);
+    });
+    return g;
+  }, [shown]);
+
+  // Les chiffres du coffre : combien de photos, depuis quand, et l'ecart de poids entre la premiere et la derniere
+  const first = sorted[sorted.length - 1];
+  const last = sorted[0];
+  const span = first && last ? Math.abs(daysDiff(first.date.slice(0, 10), last.date.slice(0, 10))) : 0;
+  const sinceToday = first ? Math.abs(daysDiff(first.date.slice(0, 10), todayIso())) : 0;
+  const withWeight = sorted.filter((p) => p.weight);
+  const weightDiff = withWeight.length >= 2 && span > 0 ? withWeight[0].weight! - withWeight[withWeight.length - 1].weight! : null;
+  const cell = (width - GUTTER * 2 - 16) / 3;
+
+  const statItems = first
+    ? [
+        { value: String(sorted.length), label: sorted.length > 1 ? 'photos dans ton coffre' : 'photo dans ton coffre' },
+        sinceToday === 0
+          ? { value: 'Aujourd’hui', label: 'ta première photo' }
+          : { value: dateCourte(first.date.slice(0, 10)), label: `ta première photo, il y a ${dureeTexte(sinceToday)}` },
+        ...(weightDiff !== null
+          ? [{ value: ecartTexte(weightDiff), label: `en ${dureeTexte(span)}, de la première à la dernière` }]
+          : span > 0
+            ? [{ value: capitalize(dureeTexte(span)), label: 'entre la première et la dernière' }]
+            : []),
+      ]
+    : [];
+
+  const filterItems: { value: Filtre; label: string }[] = [
+    { value: 'toutes', label: `Toutes, ${sorted.length}` },
+    ...POSES.filter((p) => counts[p.value] > 0).map((p) => ({ value: p.value as Filtre, label: `${p.label}, ${counts[p.value]}` })),
+  ];
 
   return (
-    <ScreenWrapper noPadding>
-      <Header
-        title={t('photos.title')}
-        showBack
-        rightElement={
-          photos.length >= 2 ? (
-            <TouchableOpacity
-              style={[styles.compareButton, { backgroundColor: themeColors.gold }]}
-              onPress={openComparison}
-              activeOpacity={0.8}
-            >
-              <GitCompare size={18} color={themeColors.background} strokeWidth={2.5} />
-              <Text style={[styles.compareButtonText, { color: themeColors.background }]}>
-                {t('photos.compare')}
-              </Text>
-            </TouchableOpacity>
-          ) : null
-        }
-      />
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
+        <DetailHeader
+          title="Tes photos"
+          sub="Ton coffre de progression, rangé par mois."
+          right={
+            sorted.length ? (
+              <IconButton label={veiled ? 'Afficher les photos' : 'Flouter les photos'} onPress={() => setVeiled((v) => !v)}>
+                <Eye color={c.ink} off={veiled} />
+              </IconButton>
+            ) : undefined
+          }
+        />
 
-      {/* 🔒 SÉCURITÉ: Avertissement screenshot détecté */}
-      {screenshotDetected && (
-        <View style={styles.screenshotWarning}>
-          <Text style={styles.screenshotWarningText}>
-            {t('photos.screenshotDetected')}
-          </Text>
-        </View>
-      )}
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={themeColors.gold}
-            colors={[themeColors.gold]}
-          />
-        }
-      >
-        {/* Message de sécurité */}
-        <View style={[styles.securityCard, { backgroundColor: isDark ? '#1A4D2E' : '#E8F8F5' }]}>
-          <View style={[styles.securityIconContainer, { backgroundColor: isDark ? '#27AE6030' : '#27AE6020' }]}>
-            <Shield size={28} color="#27AE60" strokeWidth={2.5} />
+        {screenshotDetected ? (
+          <View style={{ marginHorizontal: GUTTER, marginTop: 8, padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
+            <Ink size={13} weight="bold">Capture d’écran repérée. Tes photos sont sensibles.</Ink>
           </View>
-          <View style={styles.securityTextContainer}>
-            <Text style={[styles.securityTitle, { color: isDark ? '#4ADE80' : '#27AE60' }]}>
-              {t('photos.secureVault')}
-            </Text>
-            <Text style={[styles.securityText, { color: isDark ? '#86EFAC' : '#1E8449' }]}>
-              {t('photos.secureVaultDesc')}
-            </Text>
+        ) : null}
+
+        <View style={{ marginHorizontal: GUTTER, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: c.successTint }}>
+          <Lock color={c.successText} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Ink size={15} weight="extraBold" color={c.successText}>Coffre 100 % local</Ink>
+            <Ink size={13} color={c.textSecondary}>Tes photos restent sur ton téléphone. Elles ne partent jamais en ligne.</Ink>
           </View>
         </View>
 
-        {/* Stats Summary Card - only show when photos exist */}
-        {photos.length > 0 && (
-          <View style={[styles.statsCard, { backgroundColor: themeColors.card }]}>
-            <View style={styles.statsHeader}>
-              <Text style={[styles.statsTitle, { color: themeColors.textPrimary }]}>{t('photos.progression')}</Text>
-              <View style={[styles.photoCountBadge, { backgroundColor: themeColors.gold + '20' }]}>
-                <Text style={[styles.photoCountBadgeText, { color: themeColors.gold }]}>
-                  {photos.length} {t('photos.photo', { count: photos.length })}
-                </Text>
-              </View>
-            </View>
+        {statItems.length ? <StatStrip style={{ marginHorizontal: GUTTER, marginTop: 18 }} items={statItems} /> : null}
 
-            <View style={styles.statsGrid}>
-              {/* Timeline */}
-              <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: themeColors.accent + '20' }]}>
-                  <Calendar size={20} color={themeColors.accent} strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
-                  {(() => {
-                    const firstDate = new Date(photos[photos.length - 1].date);
-                    const lastDate = new Date(photos[0].date);
-                    const diffTime = Math.abs(lastDate.getTime() - firstDate.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays === 0) return t('common.today');
-                    if (diffDays < 7) return `${diffDays} ${t('photos.days')}`;
-                    if (diffDays < 30) return `${Math.floor(diffDays / 7)} ${t('photos.weeks')}`;
-                    return `${Math.floor(diffDays / 30)} ${t('photos.months')}`;
-                  })()}
-                </Text>
-                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.tracking')}</Text>
-              </View>
-
-              {/* Weight Progress */}
-              {(() => {
-                const photosWithWeight = photos.filter(p => p.weight);
-                if (photosWithWeight.length >= 2) {
-                  const firstWeight = photosWithWeight[photosWithWeight.length - 1].weight!;
-                  const lastWeight = photosWithWeight[0].weight!;
-                  const weightDiff = lastWeight - firstWeight;
-                  return (
-                    <View style={styles.statItem}>
-                      <View style={[styles.statIconContainer, { backgroundColor: weightDiff <= 0 ? '#10B98120' : '#EF444420' }]}>
-                        <TrendingDown
-                          size={20}
-                          color={weightDiff <= 0 ? '#10B981' : '#EF4444'}
-                          strokeWidth={2.5}
-                          style={weightDiff > 0 ? { transform: [{ rotate: '180deg' }] } : {}}
-                        />
-                      </View>
-                      <Text style={[styles.statValue, { color: weightDiff <= 0 ? '#10B981' : '#EF4444' }]}>
-                        {weightDiff > 0 ? '+' : ''}{weightDiff.toFixed(1)} kg
-                      </Text>
-                      <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.evolution')}</Text>
-                    </View>
-                  );
-                }
-                return (
-                  <View style={styles.statItem}>
-                    <View style={[styles.statIconContainer, { backgroundColor: themeColors.primary + '20' }]}>
-                      <ImageIcon size={20} color={themeColors.primary} strokeWidth={2.5} />
-                    </View>
-                    <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
-                      {photosWithWeight.length}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.withWeight')}</Text>
-                  </View>
-                );
-              })()}
-
-              {/* Achievement/Milestone */}
-              <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: themeColors.gold + '20' }]}>
-                  <Award size={20} color={themeColors.gold} strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
-                  {(() => {
-                    if (photos.length >= 50) return t('photos.legend');
-                    if (photos.length >= 25) return t('photos.expert');
-                    if (photos.length >= 10) return t('photos.motivated');
-                    return t('photos.beginner');
-                  })()}
-                </Text>
-                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>{t('photos.level')}</Text>
-              </View>
-            </View>
+        {full ? (
+          <LimitNotice limit="progressPhotos" count={photos.length} style={{ marginHorizontal: GUTTER, marginTop: 18 }} />
+        ) : (
+          <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: GUTTER, marginTop: 18 }}>
+            <PrimaryButton label={uploading ? 'Enregistrement en cours' : 'Prendre une photo'} onPress={takePhoto} disabled={uploading} style={{ flex: 1 }} />
+            <GhostButton label="Galerie" onPress={pickImage} style={{ width: 120, height: 56 }} />
           </View>
         )}
+        {sorted.length >= 2 ? (
+          <>
+            <GhostButton label="Comparer avant et après" onPress={() => router.push('/transformation' as any)} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
+            <GhostButton label="Créer ma carte avant après" onPress={() => router.push(carteAvantApresDirecte() as never)} style={{ marginHorizontal: GUTTER, marginTop: 10 }} />
+          </>
+        ) : null}
 
-        {/* Boutons d'ajout - Caméra et Galerie */}
-        <View style={styles.addButtonsContainer}>
-          {/* Bouton Caméra */}
-          <TouchableOpacity
-            style={[styles.actionButton, styles.cameraButton]}
-            onPress={takePhoto}
-            activeOpacity={0.8}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <Camera size={28} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.actionButtonText}>{t('photos.camera')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          {/* Bouton Galerie */}
-          <TouchableOpacity
-            style={[styles.actionButton, styles.galleryButton]}
-            onPress={pickImage}
-            activeOpacity={0.8}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <ImageIcon size={28} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.actionButtonText}>{t('photos.gallery')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Bouton Flouter */}
-        {photos.length > 0 && (
-          <TouchableOpacity
-            style={[styles.blurButton, isBlurred && styles.blurButtonActive]}
-            onPress={() => setIsBlurred(!isBlurred)}
-            activeOpacity={0.8}
-          >
-            {isBlurred ? (
-              <>
-                <Eye size={20} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.blurButtonText}>{t('photos.show')}</Text>
-              </>
-            ) : (
-              <>
-                <EyeOff size={20} color={themeColors.textSecondary} strokeWidth={2.5} />
-                <Text style={[styles.blurButtonText, { color: themeColors.textSecondary }]}>{t('photos.blur')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {/* Grille de photos */}
-        {photos.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={[styles.emptyIconContainer, { backgroundColor: themeColors.accent + '15' }]}>
-              <Camera size={56} color={themeColors.accent} strokeWidth={2.5} />
-            </View>
-            <Text style={[styles.emptyStateTitle, { color: themeColors.textPrimary }]}>
-              {t('photos.startJourney')}
-            </Text>
-            <Text style={[styles.emptyStateSubtitle, { color: themeColors.textSecondary }]}>
-              {t('photos.captureTransformation')}
-            </Text>
-
-            {/* Benefits Grid */}
-            <View style={styles.benefitsGrid}>
-              <View style={styles.benefitItem}>
-                <View style={[styles.benefitIconContainer, { backgroundColor: '#10B98115' }]}>
-                  <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />
+        {loading ? (
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <ChargementPetit />
+          </View>
+        ) : sorted.length === 0 ? (
+          <View style={{ marginHorizontal: GUTTER, marginTop: 22, padding: 18, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, gap: 10 }}>
+            <Ink size={20} weight="black" tight>Commence ta transformation</Ink>
+            <Ink size={14} color={c.textSecondary}>Une photo par mois suffit. Même lumière, même tenue, même cadrage : face, profil et dos. La prochaine fois, la caméra te montre ta dernière photo en transparence pour te replacer au même endroit.</Ink>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+              {POSES.map((v) => (
+                <View key={v.value} style={{ flex: 1, height: 120, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ink size={13} weight="bold" color={c.textSecondary}>{v.label}</Ink>
                 </View>
-                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  {t('photos.weightTracking')}
-                </Text>
-                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  {t('photos.visualizeEvolution')}
-                </Text>
-              </View>
-
-              <View style={styles.benefitItem}>
-                <View style={[styles.benefitIconContainer, { backgroundColor: themeColors.accent + '15' }]}>
-                  <Calendar size={24} color={themeColors.accent} strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  {t('photos.timeline')}
-                </Text>
-                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  {t('photos.completeTimeline')}
-                </Text>
-              </View>
-
-              <View style={styles.benefitItem}>
-                <View style={[styles.benefitIconContainer, { backgroundColor: themeColors.gold + '15' }]}>
-                  <Award size={24} color={themeColors.gold} strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  {t('photos.achievements')}
-                </Text>
-                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  {t('photos.unlockMilestones')}
-                </Text>
-              </View>
-
-              <View style={styles.benefitItem}>
-                <View style={[styles.benefitIconContainer, { backgroundColor: '#27AE6015' }]}>
-                  <Shield size={24} color="#27AE60" strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
-                  {t('photos.private')}
-                </Text>
-                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
-                  {t('photos.neverLeaveDevice')}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.emptyStateCTA}>
-              <Text style={[styles.emptyStateCTAText, { color: themeColors.textMuted }]}>
-                {t('photos.pressButtonsBelow')}
-              </Text>
+              ))}
             </View>
           </View>
         ) : (
-          <View style={styles.photoGrid}>
-            {photos.map((photo) => (
-              <TouchableOpacity
-                key={photo.id}
-                style={[
-                  styles.photoCard,
-                  { backgroundColor: themeColors.card }
-                ]}
-                onPress={() => isBlurred && setIsBlurred(false)}
-                activeOpacity={isBlurred ? 0.9 : 1}
-              >
-                <View style={styles.photoImageContainer}>
-                  <Image
-                    source={{ uri: photo.file_uri }}
-                    style={[styles.photoImage, isBlurred && styles.photoImageBlurred]}
-                    resizeMode="cover"
-                    blurRadius={isBlurred ? 25 : 0}
-                  />
-                  {isBlurred && (
-                    <View style={styles.blurOverlay}>
-                      <EyeOff size={24} color="rgba(255,255,255,0.7)" />
-                    </View>
-                  )}
-                  {/* Weight indicator badge */}
-                  {!isBlurred && photo.weight && (
-                    <View style={styles.weightBadge}>
-                      <TrendingDown size={12} color="#FFFFFF" strokeWidth={3} />
-                    </View>
-                  )}
+          <>
+            {anyPose ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER }} style={{ marginTop: 22 }}>
+                <Pills scroll items={filterItems} value={filtre} onChange={(v) => setFiltre(v)} />
+              </ScrollView>
+            ) : (
+              <Ink size={13} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 20 }}>
+                Donne une pose à tes photos (face, profil, dos) en les ouvrant : la comparaison se fera à cadrage égal.
+              </Ink>
+            )}
+            {groups.map((g) => (
+              <View key={g.key} style={{ marginTop: 22, paddingHorizontal: GUTTER }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <Ink size={17} weight="black" tight>{g.title}</Ink>
+                  <Ink size={12} weight="bold" color={c.textMuted}>{`${g.items.length} photo${g.items.length > 1 ? 's' : ''}`}</Ink>
                 </View>
-                {!isBlurred && (
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDeletePhoto(photo.id)}
-                    activeOpacity={0.7}
-                  >
-                    <X size={18} color="#FFFFFF" strokeWidth={2.5} />
-                  </TouchableOpacity>
-                )}
-                <View style={[styles.photoInfo, { backgroundColor: themeColors.card }]}>
-                  <Text style={[styles.photoDate, { color: themeColors.textSecondary }]}>
-                    {new Date(photo.date).toLocaleDateString(locale, {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </Text>
-                  {!isBlurred && (
-                    <>
-                      {photo.weight && (
-                        <Text style={[styles.photoWeight, { color: themeColors.textPrimary }]}>
-                          {photo.weight.toFixed(1)} kg
-                        </Text>
-                      )}
-                      {photo.notes && (
-                        <Text style={[styles.photoNotes, { color: themeColors.textSecondary }]} numberOfLines={1}>
-                          {photo.notes}
-                        </Text>
-                      )}
-                    </>
-                  )}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                  {g.items.map((p) => {
+                    const pose = poseOf(p);
+                    return (
+                      <Pressable
+                        key={p.id}
+                        onPress={() => {
+                          tapLight();
+                          if (veiled) setVeiled(false);
+                          else setViewerId(p.id);
+                        }}
+                        onLongPress={() => {
+                          selectionAsync().catch(() => {});
+                          setToDelete(p);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Photo du ${dateComplete(p.date.slice(0, 10))}${p.weight ? `, ${num(p.weight, 1)} kilos` : ''}${pose ? `, ${poseLabel(pose)}` : ''}`}
+                        accessibilityHint="Appui long pour supprimer"
+                        style={{ width: cell, gap: 5 }}
+                      >
+                        <View>
+                          <Image source={{ uri: p.file_uri }} blurRadius={veiled ? 25 : 0} style={{ width: cell, height: cell * 1.33, borderRadius: 16, backgroundColor: c.fillSubtle }} resizeMode="cover" />
+                          {pose && !veiled ? (
+                            <View style={{ position: 'absolute', left: 6, top: 6, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: 'rgba(14,15,19,0.6)' }}>
+                              <Ink size={11} weight="extraBold" color="#FFFFFF">{poseLabel(pose)}</Ink>
+                            </View>
+                          ) : null}
+                        </View>
+                        <View>
+                          <Ink size={12} weight="extraBold" numberOfLines={1}>{dateComplete(p.date.slice(0, 10))}</Ink>
+                          <Ink size={12} color={c.textSecondary} numberOfLines={1}>{p.weight && !veiled ? kg(p.weight) : 'Sans poids'}</Ink>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
                 </View>
-              </TouchableOpacity>
+              </View>
             ))}
-          </View>
+            <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 16 }}>Touche une photo pour la voir en grand et glisser vers les autres. Appui long pour la supprimer.</Ink>
+          </>
         )}
       </ScrollView>
 
-      {/* Modal de comparaison */}
-      <BeforeAfterComparison
-        visible={comparisonVisible}
-        onClose={() => setComparisonVisible(false)}
+      <VisionneusePhotos photos={shown} startId={viewerId} onClose={() => setViewerId(null)} onDelete={doDelete} onPose={setPose} />
+
+      <CameraFantome
+        visible={cameraOpen}
         photos={photos}
+        initialPose={filtre !== 'toutes' ? filtre : lastPose}
+        onClose={() => setCameraOpen(false)}
+        onTaken={(uri, pose) => {
+          setCameraOpen(false);
+          openWeightSheet(uri, pose, cameraDay());
+        }}
       />
 
-      {/* Modal Privacy Challenge */}
-      <Modal
-        visible={privacyModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPrivacyModalVisible(false)}
+      <Sheet
+        visible={!!toDelete && !viewerId}
+        onClose={() => setToDelete(null)}
+        title="Supprimer cette photo ?"
+        text={toDelete ? `La photo du ${dateComplete(toDelete.date.slice(0, 10))} sera effacée de ton coffre. Ce n’est pas réversible.` : undefined}
+        actions={[
+          { label: 'Supprimer', tone: 'danger', onPress: () => toDelete && doDelete(toDelete) },
+          { label: 'Garder', onPress: () => setToDelete(null) },
+        ]}
+      />
+
+      <Sheet
+        visible={!!pendingUri}
+        onClose={() => setPendingUri(null)}
+        title="Range cette photo"
+        text="La pose et le poids servent à comparer des photos qui se ressemblent."
+        actions={[
+          { label: 'Enregistrer la photo', tone: 'ink', onPress: savePending },
+          { label: 'Annuler', onPress: () => setPendingUri(null) },
+        ]}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: themeColors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Shield size={32} color="#27AE60" strokeWidth={2.5} />
-              <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>{t('photos.trustTest')}</Text>
-            </View>
-            <Text style={[styles.modalText, { color: themeColors.textSecondary }]}>
-              {t('photos.trustTestDesc')}
-            </Text>
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: themeColors.primary }]}
-              onPress={() => setPrivacyModalVisible(false)}
-              activeOpacity={0.8}
+        {pendingUri && !dateOpen ? <Image source={{ uri: pendingUri }} style={{ width: 84, height: 112, borderRadius: 14, alignSelf: 'center' }} resizeMode="cover" /> : null}
+        {pendingDay ? (
+          <View style={{ gap: 6 }}>
+            <Ink size={12} weight="bold" color={c.textSecondary}>{pendingDay.label}</Ink>
+            <Pressable
+              onPress={() => { selectionAsync().catch(() => {}); setDateOpen((o) => !o); }}
+              accessibilityRole="button"
+              accessibilityLabel={`Date de la photo, ${dateComplete(pendingDay.date)}. Toucher pour changer.`}
+              style={{ minHeight: 48, borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1.5, borderColor: c.border }}
             >
-              <Text style={styles.modalButtonText}>{t('photos.understood')}</Text>
-            </TouchableOpacity>
+              <Ink size={15} weight="extraBold">{dateComplete(pendingDay.date)}</Ink>
+              <Ink size={13} weight="bold" color={c.accent}>{dateOpen ? 'Fermer' : 'Changer'}</Ink>
+            </Pressable>
+            <DatePickerSheet
+              inline
+              visible={dateOpen}
+              value={pendingDay.date}
+              onClose={() => setDateOpen(false)}
+              onPick={(iso) => setPendingDay({ date: iso, found: true, label: 'Date choisie' })}
+            />
+          </View>
+        ) : null}
+        {/* le calendrier ouvert prend la place : le reste revient quand la date est choisie */}
+        {!dateOpen ? (
+        <>
+        <View style={{ gap: 6 }}>
+          <Ink size={12} weight="bold" color={c.textSecondary}>Pose</Ink>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {POSES.map((o) => {
+              const on = pendingPose === o.value;
+              return (
+                <Pressable key={o.value} onPress={() => { selectionAsync().catch(() => {}); setPendingPose(on ? null : o.value); }} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : c.border }}>
+                  <Ink size={14} weight="extraBold" color={on ? P.paper : c.textSecondary}>{o.label}</Ink>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
-      </Modal>
-
-      {/* Modal pour entrer le poids */}
-      <Modal
-        visible={weightModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setWeightModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={[styles.modalContent, { backgroundColor: themeColors.card }]}>
-            <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>
-              {t('photos.photoWeight')}
-            </Text>
-
-            {/* Toggle selection */}
-            <View style={styles.weightToggleContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.weightToggleOption,
-                  { borderColor: useCurrentWeight ? themeColors.primary : themeColors.border },
-                  useCurrentWeight && { backgroundColor: themeColors.primary + '15' }
-                ]}
-                onPress={async () => {
-                  setUseCurrentWeight(true);
-                  const latestWeight = await getLatestWeight();
-                  if (latestWeight?.weight) {
-                    setWeightInput(latestWeight.weight.toString());
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.weightToggleRadio,
-                  { borderColor: useCurrentWeight ? themeColors.primary : themeColors.border }
-                ]}>
-                  {useCurrentWeight && <View style={[styles.weightToggleRadioInner, { backgroundColor: themeColors.primary }]} />}
-                </View>
-                <Text style={[styles.weightToggleText, { color: useCurrentWeight ? themeColors.primary : themeColors.textSecondary }]}>
-                  {t('photos.useCurrentWeight')}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.weightToggleOption,
-                  { borderColor: !useCurrentWeight ? themeColors.primary : themeColors.border },
-                  !useCurrentWeight && { backgroundColor: themeColors.primary + '15' }
-                ]}
-                onPress={() => {
-                  setUseCurrentWeight(false);
-                  setWeightInput('');
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.weightToggleRadio,
-                  { borderColor: !useCurrentWeight ? themeColors.primary : themeColors.border }
-                ]}>
-                  {!useCurrentWeight && <View style={[styles.weightToggleRadioInner, { backgroundColor: themeColors.primary }]} />}
-                </View>
-                <Text style={[styles.weightToggleText, { color: !useCurrentWeight ? themeColors.primary : themeColors.textSecondary }]}>
-                  {t('photos.enterManually')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Input poids - affiche seulement si mode manuel */}
-            <TextInput
-              style={[styles.weightInput, {
-                backgroundColor: themeColors.background,
-                color: themeColors.textPrimary,
-                borderColor: weightInput ? themeColors.gold : themeColors.border,
-                opacity: useCurrentWeight ? 0.5 : 1,
-              }]}
-              placeholder={useCurrentWeight ? `${t('photos.currentWeight')}: ${weightInput || '--'} kg` : "Ex: 75.5"}
-              placeholderTextColor={themeColors.textMuted}
-              value={weightInput}
-              onChangeText={(text) => {
-                setWeightInput(text.replace(',', '.'));
-                if (!useCurrentWeight) setUseCurrentWeight(false);
-              }}
-              keyboardType="decimal-pad"
-              editable={!useCurrentWeight}
-              selectTextOnFocus
-              maxLength={6}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary, { borderColor: themeColors.border }]}
-                onPress={() => {
-                  setWeightModalVisible(false);
-                  setPendingPhotoUri(null);
-                  setWeightInput('');
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.modalButtonTextSecondary, { color: themeColors.textSecondary }]}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: themeColors.gold }]}
-                onPress={savePhotoWithWeight}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.modalButtonText, { color: themeColors.background }]}>
-                  {t('common.save')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+        <View style={{ gap: 6 }}>
+          <Ink size={12} weight="bold" color={c.textSecondary}>Poids</Ink>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {[
+              { on: useCurrent, label: currentWeight ? `Mon poids, ${kg(currentWeight)}` : 'Pas de pesée', disabled: !currentWeight, press: () => setUseCurrent(true) },
+              { on: !useCurrent, label: 'Saisir un poids', disabled: false, press: () => setUseCurrent(false) },
+            ].map((o) => (
+              <Pressable key={o.label} disabled={o.disabled} onPress={() => { selectionAsync().catch(() => {}); o.press(); }} accessibilityRole="button" accessibilityState={{ selected: o.on }} style={{ flex: 1, minHeight: 46, borderRadius: 14, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: o.on ? c.ink : 'transparent', borderWidth: 1.5, borderColor: o.on ? c.ink : c.border, opacity: o.disabled ? 0.45 : 1 }}>
+                <Ink size={13} weight="extraBold" color={o.on ? P.paper : c.textSecondary} numberOfLines={1}>{o.label}</Ink>
+              </Pressable>
+            ))}
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        </View>
+        {!useCurrent ? (
+          <TextInput value={weightInput} onChangeText={setWeightInput} keyboardType="decimal-pad" placeholder="Poids en kilos, facultatif" placeholderTextColor={c.textMuted} maxLength={6} style={{ height: 52, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 18, color: c.ink }} />
+        ) : null}
+        <TextInput value={note} onChangeText={setNote} placeholder="Une note, facultatif" placeholderTextColor={c.textMuted} maxLength={80} style={{ height: 48, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 14, fontSize: 15, color: c.ink }} />
+        </>
+        ) : null}
+      </Sheet>
 
-      {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isScreenshotBlurred && Platform.OS === 'ios' && (
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          intensity={100}
-          tint={isDark ? 'dark' : 'light'}
-        />
-      )}
+      <Sheet
+        visible={privacyVisible}
+        onClose={() => setPrivacyVisible(false)}
+        title="Test de confiance"
+        text="Passe en mode avion et ajoute une photo : ça marche, parce que tout reste sur ton téléphone. Rien ne part en ligne."
+        actions={[{ label: 'Compris', tone: 'ink', onPress: () => setPrivacyVisible(false) }]}
+      />
 
-      <PopupComponent />
-    </ScreenWrapper>
+      <Sheet visible={!!message} onClose={() => setMessage(null)} title={message?.title ?? ''} text={message?.text} actions={message?.reglages ? [{ label: 'Ouvrir les réglages', tone: 'ink', onPress: () => { setMessage(null); Linking.openSettings().catch(() => {}); } }, { label: 'Plus tard', tone: 'ghost', onPress: () => setMessage(null) }] : [{ label: 'D’accord', tone: 'ink', onPress: () => setMessage(null) }]} />
+
+      {appBlurred && Platform.OS === 'ios' ? <BlurView style={StyleSheet.absoluteFill} intensity={100} tint="light" /> : null}
+    </View>
   );
 }
-
-// Constantes non-thématiques
-const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 };
-const RADIUS = { md: 12, lg: 16, xl: 20, xxl: 24, full: 9999 };
-const FONT_SIZE = { xs: 10, sm: 12, md: 14, lg: 16, xl: 18, xxl: 22, display: 28 };
-
-const createStyles = (photoSize: number) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  loadingText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: SPACING.xl,
-    paddingBottom: SPACING.lg,
-  },
-  title: {
-    fontSize: FONT_SIZE.display,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  compareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
-    minWidth: 100,
-  },
-  compareButtonText: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: SPACING.xl,
-    paddingBottom: SPACING.xxl,
-    gap: SPACING.lg,
-  },
-  securityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: RADIUS.xxl,
-    padding: SPACING.lg,
-    gap: SPACING.md,
-    borderWidth: 1.5,
-    borderColor: '#27AE6030',
-  },
-  securityIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  securityTextContainer: {
-    flex: 1,
-  },
-  securityTitle: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '800',
-    marginBottom: SPACING.xs,
-  },
-  securityText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-    lineHeight: FONT_SIZE.md * 1.5,
-  },
-  // Stats Summary Card
-  statsCard: {
-    borderRadius: RADIUS.xxl,
-    padding: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  statsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  statsTitle: {
-    fontSize: FONT_SIZE.xxl,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  photoCountBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
-  },
-  photoCountBadgeText: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.xs,
-  },
-  statValue: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  statLabel: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  // Nouveaux boutons Caméra et Galerie
-  addButtonsContainer: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  cameraButton: {
-    backgroundColor: '#8B5CF6', // Violet/Purple
-  },
-  galleryButton: {
-    backgroundColor: '#10B981', // Vert/Green
-  },
-  actionButtonText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  blurButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    borderWidth: 2,
-    borderColor: '#636E72',
-  },
-  blurButtonActive: {
-    backgroundColor: '#636E72',
-    borderColor: '#636E72',
-  },
-  blurButtonText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.xxxl,
-    gap: SPACING.lg,
-  },
-  emptyIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: RADIUS.xxl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.sm,
-  },
-  emptyStateSubtitle: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: FONT_SIZE.md * 1.5,
-    paddingHorizontal: SPACING.xl,
-    marginBottom: SPACING.lg,
-  },
-  benefitsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    marginTop: SPACING.lg,
-    rowGap: SPACING.lg,
-  },
-  benefitItem: {
-    width: '48%',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-  },
-  benefitIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.xs,
-  },
-  benefitTitle: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '800',
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  benefitText: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: FONT_SIZE.sm * 1.4,
-    paddingHorizontal: SPACING.xs,
-  },
-  emptyStateCTA: {
-    marginTop: SPACING.xxl,
-    paddingHorizontal: SPACING.xl,
-  },
-  emptyStateCTAText: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
-    gap: 16,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  modalText: {
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  modalButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  emptyStateTitle: {
-    fontSize: FONT_SIZE.xxl,
-    fontWeight: '900',
-    textAlign: 'center',
-  },
-  emptyStateText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: FONT_SIZE.md * 1.5,
-    paddingHorizontal: SPACING.xl,
-  },
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  photoCard: {
-    width: photoSize,
-    borderRadius: RADIUS.xxl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  photoImageContainer: {
-    position: 'relative',
-    width: '100%',
-    height: photoSize * 1.35,
-  },
-  photoImage: {
-    width: '100%',
-    height: '100%',
-  },
-  photoImageBlurred: {
-    opacity: 0.8,
-  },
-  blurOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weightBadge: {
-    position: 'absolute',
-    top: SPACING.sm,
-    left: SPACING.sm,
-    backgroundColor: '#10B981',
-    borderRadius: RADIUS.md,
-    padding: SPACING.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: SPACING.sm,
-    right: SPACING.sm,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: RADIUS.full,
-    padding: SPACING.xs,
-    zIndex: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  photoInfo: {
-    padding: SPACING.md,
-    gap: SPACING.xs,
-  },
-  photoDate: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-  photoWeight: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  photoNotes: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: '500',
-    opacity: 0.7,
-    marginTop: SPACING.xs,
-  },
-  // Modal poids
-  weightInfoContainer: {
-    alignItems: 'center',
-    gap: 4,
-    marginVertical: 8,
-  },
-  modalTextSmall: {
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  weightInput: {
-    width: '100%',
-    padding: 16,
-    fontSize: 18,
-    fontWeight: '600',
-    borderRadius: 12,
-    borderWidth: 2,
-    textAlign: 'center',
-    marginVertical: 16,
-  },
-  useCurrentWeightButton: {
-    width: '100%',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  useCurrentWeightButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  weightToggleContainer: {
-    width: '100%',
-    gap: SPACING.sm,
-    marginVertical: SPACING.md,
-  },
-  weightToggleOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    borderWidth: 2,
-    gap: SPACING.sm,
-  },
-  weightToggleRadio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weightToggleRadioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  weightToggleText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '600',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-  },
-  modalButtonSecondary: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-  },
-  modalButtonTextSecondary: {
-    fontWeight: '700',
-  },
-
-  // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot
-  screenshotWarning: {
-    backgroundColor: 'rgba(255, 149, 0, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    marginHorizontal: SPACING.xl,
-    marginBottom: SPACING.md,
-  },
-  screenshotWarningText: {
-    color: '#FF9500',
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-});

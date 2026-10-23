@@ -1,31 +1,56 @@
-// ============================================
-// PAGE : HISTORIQUE DE SYNC
-// Log transparent de toutes les opérations backup/sync
-// pour que l'user voie que tout fonctionne.
-// ============================================
-
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, Alert, DeviceEventEmitter,
-} from 'react-native';
-import { router } from 'expo-router';
+/**
+ * Journal de synchronisation (refonte v2) : chaque sauvegarde, envoi et synchro,
+ * reussie ou non, pour voir que tout fonctionne. Effacement du journal seulement.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
+import { Ornement } from '@/components/yoroi/v2/ornements/Ornement';
+import { DeviceEventEmitter, RefreshControl, ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Trash2, Activity } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
-import { getSyncHistory, clearSyncHistory, SyncEvent, SYNC_EVENT_LABELS } from '@/lib/syncHistoryService';
-import { formatRelative, formatSize } from '@/lib/utils/formatDate';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { RoundButton } from '@/components/yoroi/v2/accueil/kit';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { SanteIcon } from '@/components/yoroi/v2/sante/SanteIcon';
+import type { SanteIconName } from '@/components/yoroi/v2/sante/SanteIcon';
+import { GlassBox, S } from '@/components/yoroi/v2/sante/ui';
+import { getSyncHistory, clearSyncHistory, SYNC_EVENT_LABELS } from '@/lib/syncHistoryService';
+import type { SyncEvent } from '@/lib/syncHistoryService';
+import { formatRelative, formatSize } from '@/lib/utils/formatDate';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { P } from '@/components/yoroi/livePalette';
+
+const EVENT_LOOK: Record<string, { icon: SanteIconName; color: string; tint: string; label: string }> = {
+  auto_backup: { icon: 'sync', color: S.indigo, tint: S.indigoSoft, label: 'Sauvegarde automatique' },
+  manual_backup: { icon: 'save', color: S.indigo, tint: S.indigoSoft, label: 'Sauvegarde manuelle' },
+  safety_backup: { icon: 'shield', color: S.gold, tint: S.goldSoft, label: 'Sauvegarde de sécurité' },
+  cloud_push: { icon: 'upload', color: S.mossText, tint: S.mossSoft, label: 'Envoi vers le cloud' },
+  cloud_pull: { icon: 'cloud', color: S.mossText, tint: S.mossSoft, label: 'Récupération depuis le cloud' },
+  peer_sync: { icon: 'tablet', color: S.accent, tint: S.accentSoft, label: 'Synchro iPhone et iPad' },
+  import_file: { icon: 'download', color: S.ink2, tint: '#ECE9E2', label: 'Import de fichier' },
+  restore_safety: { icon: 'restore', color: S.gold, tint: S.goldSoft, label: 'Retour à un état précédent' },
+  watch_sync: { icon: 'watch', color: S.accent, tint: S.accentSoft, label: 'Synchro de la montre' },
+  export_share: { icon: 'external', color: S.ink2, tint: '#ECE9E2', label: 'Partage' },
+};
+
+function dayKey(ts: string): string {
+  const d = new Date(ts);
+  const today = new Date();
+  const y = new Date();
+  y.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Aujourd'hui";
+  if (d.toDateString() === y.toDateString()) return 'Hier';
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
 
 export default function SyncHistoryScreen() {
-  const { colors, isDark } = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<SyncEvent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const refresh = useCallback(async () => {
-    const list = await getSyncHistory();
-    setHistory(list);
+    setHistory(await getSyncHistory());
   }, []);
 
   useEffect(() => {
@@ -42,134 +67,131 @@ export default function SyncHistoryScreen() {
 
   const handleClear = () => {
     impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-    Alert.alert(
-      'Effacer l\'historique ?',
-      "Seul l'historique des opérations sera supprimé. Tes données et tes sauvegardes restent intactes.",
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Effacer', style: 'destructive', onPress: async () => { await clearSyncHistory(); } },
-      ]
-    );
+    appAlert("Effacer le journal ?", "Seul le journal des opérations est supprimé. Tes données et tes sauvegardes restent intactes.", [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Effacer',
+        style: 'destructive',
+        onPress: async () => {
+          await clearSyncHistory();
+          await refresh();
+        },
+      },
+    ]);
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={22} color={colors.text} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Historique de synchronisation</Text>
-          <Text style={[styles.headerSub, { color: colors.textMuted ?? '#888' }]}>
-            {history.length} opération{history.length > 1 ? 's' : ''} récente{history.length > 1 ? 's' : ''}
-          </Text>
-        </View>
-        {history.length > 0 && (
-          <TouchableOpacity onPress={handleClear} style={styles.clearBtn} accessibilityLabel="Effacer l'historique">
-            <Trash2 size={18} color={colors.textMuted ?? '#888'} />
-          </TouchableOpacity>
-        )}
-      </View>
+  const ok = history.filter((e) => e.success).length;
+  const fails = history.length - ok;
+  const groups = useMemo(() => {
+    const out: { day: string; items: SyncEvent[] }[] = [];
+    history.forEach((e) => {
+      const k = dayKey(e.timestamp);
+      const last = out[out.length - 1];
+      if (last && last.day === k) last.items.push(e);
+      else out.push({ day: k, items: [e] });
+    });
+    return out;
+  }, [history]);
 
-      {history.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Activity size={48} color={colors.textMuted ?? '#888'} strokeWidth={1.5} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune activité récente</Text>
-          <Text style={[styles.emptyText, { color: colors.textMuted ?? '#888' }]}>
-            Dès qu'une sauvegarde ou sync est faite, elle apparaît ici.
-          </Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-          {history.map((event, i) => {
-            const meta = SYNC_EVENT_LABELS[event.type] ?? { label: event.type, emoji: '•', color: '#888' };
-            return (
-              <View
-                key={`${event.timestamp}_${i}`}
-                style={[
-                  styles.card,
-                  {
-                    backgroundColor: isDark ? '#1E1E22' : '#fff',
-                    borderColor: event.success ? `${meta.color}30` : '#EF444440',
-                  },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <Text style={{ fontSize: 16 }}>{meta.emoji}</Text>
-                  <Text style={[styles.cardTitle, { color: meta.color }]}>{meta.label}</Text>
-                  <View style={[styles.statusPill, { backgroundColor: event.success ? '#10B98120' : '#EF444420' }]}>
-                    <Text style={[styles.statusText, { color: event.success ? '#10B981' : '#EF4444' }]}>
-                      {event.success ? 'OK' : 'Échec'}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.cardBody}>
-                  <Text style={[styles.cardTime, { color: colors.textMuted ?? '#888' }]}>
-                    {formatRelative(new Date(event.timestamp))}
-                  </Text>
-                  {event.device && (
-                    <Text style={[styles.cardDetail, { color: colors.textMuted ?? '#888' }]}>
-                      📱 {event.device}
-                    </Text>
-                  )}
-                  {event.itemsCount !== undefined && (
-                    <Text style={[styles.cardDetail, { color: colors.textMuted ?? '#888' }]}>
-                      {event.itemsCount} élément{event.itemsCount > 1 ? 's' : ''}
-                    </Text>
-                  )}
-                  {event.sizeBytes !== undefined && (
-                    <Text style={[styles.cardDetail, { color: colors.textMuted ?? '#888' }]}>
-                      {formatSize(event.sizeBytes)}
-                    </Text>
-                  )}
-                  {event.details && (
-                    <Text style={[styles.cardDetail, { color: colors.textMuted ?? '#888' }]} numberOfLines={2}>
-                      {event.details}
-                    </Text>
-                  )}
-                  {event.error && !event.success && (
-                    <Text style={[styles.cardError, { color: '#EF4444' }]} numberOfLines={2}>
-                      ⚠️ {event.error}
-                    </Text>
-                  )}
+  return (
+    <View style={{ flex: 1, backgroundColor: S.paper }}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40, gap: 14 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={S.accent} />}
+        showsVerticalScrollIndicator={false}
+      >
+        <EnTete
+          titre="Journal de synchro"
+          sousTitre={history.length === 0 ? 'Rien pour le moment' : `${history.length} opération${history.length > 1 ? 's' : ''} récente${history.length > 1 ? 's' : ''}`}
+          droite={history.length > 0 ? <RoundButton icon="trash" label="Effacer le journal" onPress={handleClear} /> : null}
+          onRetour={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+          style={{ marginHorizontal: -16, marginTop: -8 }}
+        />
+
+        {history.length === 0 ? (
+          <GlassBox style={{ alignItems: 'center', gap: 10, paddingVertical: 28 }}>
+            <Ornement name="torii" size={84} />
+            <Ink size={19} weight="black" tight style={{ textAlign: 'center' }}>
+              Aucune activité récente
+            </Ink>
+            <Ink size={14} weight="medium" color={S.ink2} style={{ textAlign: 'center' }}>
+              Dès qu'une sauvegarde ou une synchro a lieu, elle s'inscrit ici.
+            </Ink>
+          </GlassBox>
+        ) : (
+          <>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1, borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, padding: 14 }}>
+                <Ink size={28} weight="black" tight>
+                  {String(ok)}
+                </Ink>
+                <Ink size={12} weight="bold" color={S.ink2}>
+                  réussie{ok > 1 ? 's' : ''}
+                </Ink>
+              </View>
+              <View style={{ flex: 1, borderRadius: 22, backgroundColor: fails ? S.dangerSoft : P.white, borderWidth: 1, borderColor: fails ? S.dangerSoft : S.line2, padding: 14 }}>
+                <Ink size={28} weight="black" tight color={fails ? S.danger : S.ink}>
+                  {String(fails)}
+                </Ink>
+                <Ink size={12} weight="bold" color={S.ink2}>
+                  en échec
+                </Ink>
+              </View>
+            </View>
+            {groups.map((g) => (
+              <View key={g.day} style={{ gap: 8 }}>
+                <Ink size={16} weight="black" tight style={{ paddingHorizontal: 4, marginTop: 6 }}>
+                  {g.day.charAt(0).toUpperCase() + g.day.slice(1)}
+                </Ink>
+                <View style={{ borderRadius: 24, backgroundColor: P.white, borderWidth: 1, borderColor: S.line2, paddingHorizontal: 14 }}>
+                  {g.items.map((event, i) => {
+                    const look = EVENT_LOOK[event.type] ?? { icon: 'info' as SanteIconName, color: S.ink2, tint: '#ECE9E2', label: SYNC_EVENT_LABELS[event.type]?.label ?? event.type };
+                    const details: string[] = [formatRelative(new Date(event.timestamp))];
+                    if (event.device) details.push(event.device);
+                    if (event.itemsCount !== undefined) details.push(`${event.itemsCount} élément${event.itemsCount > 1 ? 's' : ''}`);
+                    if (event.sizeBytes !== undefined) details.push(formatSize(event.sizeBytes));
+                    return (
+                      <View key={`${event.timestamp}_${i}`} style={{ flexDirection: 'row', gap: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: S.line2 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: look.tint, alignItems: 'center', justifyContent: 'center' }}>
+                          <SanteIcon name={look.icon} size={20} color={look.color} />
+                        </View>
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={1}>
+                              {look.label}
+                            </Ink>
+                            <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: event.success ? S.mossSoft : S.dangerSoft, justifyContent: 'center' }}>
+                              <Ink size={11} weight="extraBold" color={event.success ? S.mossText : S.danger}>
+                                {event.success ? 'Réussi' : 'Échec'}
+                              </Ink>
+                            </View>
+                          </View>
+                          <Ink size={12} weight="bold" color={S.ink2}>
+                            {details.join(', ')}
+                          </Ink>
+                          {event.details ? (
+                            <Ink size={12} weight="medium" color={S.muted} numberOfLines={2}>
+                              {event.details}
+                            </Ink>
+                          ) : null}
+                          {event.error && !event.success ? (
+                            <View style={{ flexDirection: 'row', gap: 4, alignItems: 'flex-start' }}>
+                              <SanteIcon name="info" size={13} color={S.danger} />
+                              <Ink size={12} weight="bold" color={S.danger} numberOfLines={2} style={{ flex: 1 }}>
+                                {event.error}
+                              </Ink>
+                            </View>
+                          ) : null}
+                        </View>
+                      </View>
+                    );
+                  })}
                 </View>
               </View>
-            );
-          })}
-        </ScrollView>
-      )}
+            ))}
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 16, paddingBottom: 12,
-  },
-  backBtn: { padding: 6 },
-  clearBtn: { padding: 8 },
-  headerTitle: { fontSize: 18, fontWeight: '800' },
-  headerSub: { fontSize: 12, fontWeight: '500', marginTop: 2 },
-  emptyState: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 10,
-  },
-  emptyTitle: { fontSize: 16, fontWeight: '800' },
-  emptyText: { fontSize: 13, textAlign: 'center', lineHeight: 19 },
-  card: {
-    padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 8,
-  },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { flex: 1, fontSize: 13, fontWeight: '800' },
-  statusPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  statusText: { fontSize: 10, fontWeight: '900' },
-  cardBody: { marginTop: 6, gap: 3, paddingLeft: 24 },
-  cardTime: { fontSize: 11, fontWeight: '600' },
-  cardDetail: { fontSize: 11 },
-  cardError: { fontSize: 11, fontWeight: '600' },
-});

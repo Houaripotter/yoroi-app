@@ -3,6 +3,7 @@ import { getTrainings } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
 import { getGlobalGoalStats } from '@/lib/trainingGoalsService';
 import logger from '@/lib/security/logger';
+import { compterSeances } from './compteurSeances';
 
 // ============================================
 // TYPES
@@ -11,6 +12,8 @@ import logger from '@/lib/security/logger';
 export interface YearStats {
   year: number;
   totalDays: number;              // Jours UNIQUES avec training
+  /** 18 octobre 2026 : seances de l'annee, meme compteur que l'accueil et l'onglet Seances (sans doublon) */
+  totalSessions?: number;
   totalDaysInYear: number;        // 365 ou 366
   percentage: number;             // Progression %
   weeklyGoal: number;             // Objectif hebdo total de l'utilisateur
@@ -193,6 +196,9 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
       });
 
       const totalDays = uniqueDatesSet.size;
+      const p2 = (n: number) => String(n).padStart(2, '0');
+      const finIso = `${endDate.getFullYear()}-${p2(endDate.getMonth() + 1)}-${p2(endDate.getDate())}`;
+      const totalSessions = compterSeances(allTrainings, `${targetYear}-01-01`, finIso);
       const totalDaysInYear = getDaysInYear(targetYear);
       const percentage = totalDaysInYear > 0 ? (totalDays / totalDaysInYear) * 100 : 0;
 
@@ -253,14 +259,14 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
       }
 
       // 6. RÉCUPÉRER L'OBJECTIF HEBDOMADAIRE TOTAL
-      let weeklyGoal = 4; // Valeur par défaut
+      let weeklyGoal = 0; // pas d'objectif impose : 0 tant que l'utilisateur n'en a pas fixe
       try {
         const goalStats = await getGlobalGoalStats();
         if (goalStats.totalWeeklyTarget > 0) {
           weeklyGoal = goalStats.totalWeeklyTarget;
         }
       } catch (e) {
-        // Si pas d'objectifs définis, utiliser la valeur par défaut
+        // pas d'objectifs definis : pas d'objectif
       }
       const yearlyGoal = weeklyGoal * 52;
 
@@ -268,6 +274,7 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
       const yearStats: YearStats = {
         year: targetYear,
         totalDays,
+        totalSessions,
         totalDaysInYear,
         percentage: Math.round(percentage * 10) / 10, // 1 décimale
         weeklyGoal,

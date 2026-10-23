@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/yw_fond"
+    android:clipToOutline="true"
+    android:orientation="vertical"
+    android:padding="@dimen/yw_marge">
+  <TextView style="@style/YwTitre" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:textColor="@color/yw_encre" android:textSize="16sp" android:text="@string/yw_nom_tableau" />
+  <ImageView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+      android:layout_marginTop="10dp" android:layout_marginBottom="10dp"
+      android:src="@drawable/yw_courbe_apercu" android:scaleType="fitCenter" android:importantForAccessibility="no" />
+  <include layout="@layout/yw_inc_points" android:layout_width="match_parent" android:layout_height="wrap_content" />
+  <TextView style="@style/YwBouton" android:layout_width="wrap_content" android:layout_height="32dp"
+      android:layout_marginTop="10dp" android:text="@string/yw_plus_verre" />
+</LinearLayout>

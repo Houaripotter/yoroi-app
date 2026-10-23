@@ -1,817 +1,318 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StatusBar,
-  useWindowDimensions,
-  Keyboard,
-  RefreshControl,
-  DeviceEventEmitter,
-  Platform,
-  KeyboardAvoidingView,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
+/**
+ * Mensurations v2 : saisie rapide sur la silhouette.
+ * Chaque zone est pre-remplie avec ta derniere mesure, + et - par demi-centimetre,
+ * « pareil » pour confirmer sans changer. Seules les zones touchees sont enregistrees.
+ */
+import { track } from '@/utils/telemetry';
+import React, { useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
-import {
-  ChevronLeft,
-  Save,
-  TrendingDown,
-  TrendingUp,
-  Minus,
-} from 'lucide-react-native';
-import { format } from 'date-fns';
-import {
-  BodyMeasurement,
-  addMeasurement,
-  getAllMeasurements as getAllBodyMeasurements,
-  getLatestMeasurement,
-} from '@/lib/bodyComposition';
-import { successHaptic } from '@/lib/haptics';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, MEASUREMENT_COLORS } from '@/constants/design';
-import { useTheme } from '@/lib/ThemeContext';
-// 🔒 SÉCURITÉ: Protection contre les screenshots
-import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
-import logger from '@/lib/security/logger';
-import { useI18n } from '@/lib/I18nContext';
-import { PremiumTeaser } from '@/components/premium/PremiumTeaser';
-import { usePremium } from '@/context/PremiumContext';
-import { SkeletonCard, SkeletonMessage } from '@/components/stats/SkeletonCard';
+import { notificationAsync, NotificationFeedbackType, selectionAsync } from 'expo-haptics';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { DetailHeader, GLASS, GUTTER, IconButton, StampButton } from '@/components/yoroi/v2/progres/ui';
+import { DateChips } from '@/components/yoroi/v2/DateChips';
+import { fontStyle } from '@/components/yoroi/fonts';
+import { Silhouette } from '@/components/yoroi/v2/progres/Silhouette';
+import type { SilhouetteItem } from '@/components/yoroi/v2/progres/Silhouette';
+import { cmDelta } from '@/components/yoroi/v2/progres/CorpsSection';
+import { lastKnown, loadMeasures, MEASURE_FIELDS, saveMeasures, VIEW_FIELDS } from '@/lib/v2/progres/measures';
+import type { MeasureKey, MeasurePoint, ViewKey } from '@/lib/v2/progres/measures';
+import { num, parseInput, todayIso } from '@/lib/v2/progres/format';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { apresMesure } from '@/lib/v2/bilan/reglage';
+import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
+import { logger } from '@/lib/security/logger';
+import Svg, { Path } from 'react-native-svg';
+import { P, blancA } from '@/components/yoroi/livePalette';
 
-const FREE_MEASUREMENTS_LIMIT = 3;
 
-const CHART_HEIGHT = 120;
+/** Champs de saisie derriere chaque zone de la silhouette */
+const ZONE_FIELDS: Record<ViewKey, MeasureKey[]> = {
+  neck: ['neck'],
+  shoulders: ['shoulders'],
+  chest: ['chest'],
+  arm: ['armR', 'armL'],
+  waist: ['waist'],
+  navel: ['navel'],
+  hips: ['hips'],
+  thigh: ['thighR', 'thighL'],
+  calf: ['calfR', 'calfL'],
+};
 
-// ============================================
-// MEASUREMENTS SCREEN
-// ============================================
+const DEFAULTS: Record<MeasureKey, number> = {
+  neck: 38, shoulders: 115, chest: 100, waist: 84, navel: 86, hips: 98, armR: 34, armL: 34, thighR: 56, thighL: 56, calfR: 38, calfL: 38,
+};
 
-// Mini Line Chart Component
-const MiniChart = ({
-  data,
-  color,
-  width,
-  height = CHART_HEIGHT,
-}: {
-  data: number[];
-  color: string;
-  width?: number;
-  height?: number;
-}) => {
-  const { width: screenWidth } = useWindowDimensions();
-  const resolvedWidth = width ?? (screenWidth - 80);
-  if (data.length < 2) return null;
+const labelOf = (k: MeasureKey) => MEASURE_FIELDS.find((f) => f.key === k)?.label ?? k;
 
-  const padding = 10;
-  const chartWidth = resolvedWidth - padding * 2;
-  const chartHeight = height - padding * 2;
-
-  const minValue = Math.min(...data) * 0.95;
-  const maxValue = Math.max(...data) * 1.05;
-  const range = maxValue - minValue || 1;
-
-  const points = data.map((value, index) => {
-    const x = padding + (index / (data.length - 1)) * chartWidth;
-    const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
-    return { x, y };
-  });
-
-  const pathD = points.reduce((acc, point, i) => {
-    if (i === 0) return `M ${point.x} ${point.y}`;
-    const prev = points[i - 1];
-    const cp1x = prev.x + (point.x - prev.x) / 3;
-    const cp1y = prev.y;
-    const cp2x = prev.x + (2 * (point.x - prev.x)) / 3;
-    const cp2y = point.y;
-    return `${acc} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${point.x} ${point.y}`;
-  }, '');
-
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${padding} ${height - padding} Z`;
-
+function MinusPlus({ kind, color }: { kind: 'minus' | 'plus'; color: string }) {
   return (
-    <Svg width={resolvedWidth} height={height}>
-      <Defs>
-        <SvgGradient id={`gradient-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <Stop offset="0%" stopColor={color} stopOpacity={0.3} />
-          <Stop offset="100%" stopColor={color} stopOpacity={0} />
-        </SvgGradient>
-      </Defs>
-      <Path d={areaD} fill={`url(#gradient-${color})`} />
-      <Path d={pathD} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" />
-      {points.length > 0 && (
-        <Circle
-          cx={points[points.length - 1].x}
-          cy={points[points.length - 1].y}
-          r={4}
-          fill={color}
-        />
-      )}
+    <Svg width={22} height={22} viewBox="0 0 24 24">
+      <Path d={kind === 'minus' ? 'M5 12h14' : 'M12 5v14M5 12h14'} stroke={color} strokeWidth={2.8} strokeLinecap="round" />
     </Svg>
   );
-};
-
-// Measurement Input Component
-const MeasurementInput = ({
-  label,
-  value,
-  onChangeText,
-  color,
-  lastValue,
-  chartData,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  color: string;
-  lastValue?: number;
-  chartData?: number[];
-}) => {
-  const currentNum = value ? parseFloat(value.replace(',', '.')) : null;
-  const diff = currentNum && lastValue ? currentNum - lastValue : null;
-
-  return (
-    <View style={styles.measurementCard}>
-      <View style={styles.measurementHeader}>
-        <View style={[styles.colorDot, { backgroundColor: color }]} />
-        <Text style={styles.measurementLabel}>{label}</Text>
-        {diff !== null && diff !== 0 && (
-          <View style={[
-            styles.diffBadge,
-            { backgroundColor: diff < 0 ? COLORS.successMuted : COLORS.errorMuted }
-          ]}>
-            {diff < 0 ? (
-              <TrendingDown size={12} color={COLORS.success} />
-            ) : (
-              <TrendingUp size={12} color={COLORS.error} />
-            )}
-            <Text style={[
-              styles.diffText,
-              { color: diff < 0 ? COLORS.success : COLORS.error }
-            ]}>
-              {diff > 0 ? '+' : ''}{diff.toFixed(1)}
-            </Text>
-          </View>
-        )}
-        {diff === 0 && (
-          <View style={[styles.diffBadge, { backgroundColor: COLORS.surfaceLight }]}>
-            <Minus size={12} color={COLORS.textMuted} />
-            <Text style={[styles.diffText, { color: COLORS.textMuted }]}>0</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.measurementInputRow}>
-        <TextInput
-          style={styles.measurementInput}
-          value={value}
-          onChangeText={(text) => onChangeText(text.replace(',', '.'))}
-          placeholder={lastValue ? lastValue.toFixed(1) : '0.0'}
-          placeholderTextColor={COLORS.textDim}
-          keyboardType="decimal-pad"
-        />
-        <Text style={styles.measurementUnit}>cm</Text>
-      </View>
-
-      {/* Mini Chart */}
-      {chartData && chartData.length > 1 && (
-        <View style={styles.chartContainer}>
-          <MiniChart data={chartData} color={color} />
-        </View>
-      )}
-
-      {lastValue && (
-        <Text style={styles.lastMeasurement}>
-          Dernière: {lastValue.toFixed(1)} cm
-        </Text>
-      )}
-    </View>
-  );
-};
-
-// Body Illustration Component
-const BodyIllustration = ({ measurements }: { measurements: any }) => {
-  return (
-    <View style={styles.bodyCard}>
-      <LinearGradient
-        colors={[COLORS.surface, COLORS.surfaceLight]}
-        style={styles.bodyGradient}
-      >
-        <Text style={styles.bodyTitle}>Vue d'ensemble</Text>
-
-        <View style={styles.bodyStats}>
-          <View style={styles.bodyStat}>
-            <View style={[styles.bodyStatIcon, { backgroundColor: `${MEASUREMENT_COLORS.chest}20` }]}>
-              <View style={[styles.colorDotSmall, { backgroundColor: MEASUREMENT_COLORS.chest }]} />
-            </View>
-            <Text style={styles.bodyStatLabel}>Poitrine</Text>
-            <Text style={styles.bodyStatValue}>
-              {measurements.chest || '-'} cm
-            </Text>
-          </View>
-
-          <View style={styles.bodyStat}>
-            <View style={[styles.bodyStatIcon, { backgroundColor: `${MEASUREMENT_COLORS.waist}20` }]}>
-              <View style={[styles.colorDotSmall, { backgroundColor: MEASUREMENT_COLORS.waist }]} />
-            </View>
-            <Text style={styles.bodyStatLabel}>Taille</Text>
-            <Text style={styles.bodyStatValue}>
-              {measurements.waist || '-'} cm
-            </Text>
-          </View>
-
-          <View style={styles.bodyStat}>
-            <View style={[styles.bodyStatIcon, { backgroundColor: `${MEASUREMENT_COLORS.hips}20` }]}>
-              <View style={[styles.colorDotSmall, { backgroundColor: MEASUREMENT_COLORS.hips }]} />
-            </View>
-            <Text style={styles.bodyStatLabel}>Hanches</Text>
-            <Text style={styles.bodyStatValue}>
-              {measurements.hips || '-'} cm
-            </Text>
-          </View>
-        </View>
-
-        {/* Waist to Hip Ratio */}
-        {measurements.waist && measurements.hips && (
-          <View style={styles.ratioContainer}>
-            <Text style={styles.ratioLabel}>Ratio taille/hanches</Text>
-            <Text style={styles.ratioValue}>
-              {parseFloat(measurements.hips) > 0
-                ? (parseFloat(measurements.waist) / parseFloat(measurements.hips)).toFixed(2)
-                : 'N/A'}
-            </Text>
-          </View>
-        )}
-      </LinearGradient>
-    </View>
-  );
-};
+}
 
 export default function MeasurementsScreen() {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
-  const { showPopup, PopupComponent } = useCustomPopup();
-  const { isPremium } = usePremium();
+  const { isBlurred, screenshotDetected } = useSensitiveScreen();
 
-  // 🔒 SÉCURITÉ: Protection contre les screenshots
-  const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
+  const [history, setHistory] = useState<MeasurePoint[]>([]);
+  const [ready, setReady] = useState(false);
+  const [values, setValues] = useState<Partial<Record<MeasureKey, number>>>({});
+  const [touched, setTouched] = useState<Partial<Record<MeasureKey, boolean>>>({});
+  const [zone, setZone] = useState<ViewKey>('waist');
+  const [date, setDate] = useState(todayIso());
+  const [typing, setTyping] = useState<MeasureKey | null>(null);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [hint, setHint] = useState(false);
 
-  // Form state
-  const [chest, setChest] = useState('');
-  const [waist, setWaist] = useState('');
-  const [hips, setHips] = useState('');
-  const [rightArm, setRightArm] = useState('');
-  const [leftArm, setLeftArm] = useState('');
-  const [rightThigh, setRightThigh] = useState('');
-  const [leftThigh, setLeftThigh] = useState('');
-  const [neck, setNeck] = useState('');
-  const [shoulders, setShouders] = useState('');
-
-  const [lastMeasurement, setLastMeasurement] = useState<BodyMeasurement | null>(null);
-  const [allMeasurements, setAllMeasurements] = useState<BodyMeasurement[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadData = useCallback(async () => {
-    try {
-      const last = await getLatestMeasurement();
-      setLastMeasurement(last);
-
-      const all = await getAllBodyMeasurements();
-      setAllMeasurements(all);
-    } catch (error) {
-      logger.error('Error loading data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  }, [loadData]);
-
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadData(); }, []);
-
-  // Listener DeviceEventEmitter pour rafraîchissement des données
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('YOROI_DATA_CHANGED', loadData);
-    return () => sub.remove();
+    (async () => {
+      try {
+        const pts = await loadMeasures();
+        setHistory(pts);
+      } catch (err) {
+        logger.error('Lecture des mensurations impossible', err);
+      } finally {
+        setReady(true);
+      }
+    })();
   }, []);
 
-  // Get chart data for a specific measurement
-  const getChartData = (key: keyof BodyMeasurement): number[] => {
-    const limit = isPremium ? 10 : 3;
-    return allMeasurements
-      .filter(m => m[key] !== undefined)
-      .map(m => m[key] as number)
-      .slice(0, limit)
-      .reverse();
+  const previous = useMemo(() => lastKnown(history.filter((p) => p.date < date)), [history, date]);
+  // Pre-saisie : suit le jour choisi (la mesure de ce jour-la si elle existe, sinon la derniere avant)
+  const prefill = useMemo(() => lastKnown(history.filter((p) => p.date <= date)), [history, date]);
+  const touchedCount = Object.values(touched).filter(Boolean).length;
+
+  const valueOf = (k: MeasureKey) => values[k] ?? prefill[k] ?? previous[k] ?? DEFAULTS[k];
+
+  const setField = (k: MeasureKey, v: number) => {
+    const clamped = Math.min(Math.max(Math.round(v * 2) / 2, 10), 250);
+    setValues((s) => ({ ...s, [k]: clamped }));
+    setTouched((s) => ({ ...s, [k]: true }));
   };
 
-  const handleSave = async () => {
-    Keyboard.dismiss();
-    // Check if at least one measurement is provided
-    if (!chest && !waist && !hips && !rightArm && !leftArm && !rightThigh && !leftThigh && !neck && !shoulders) {
-      showPopup('Erreur', 'Entre au moins une mesure', [
-        { text: 'OK', style: 'primary' },
-      ]);
-      return;
+  const step = (k: MeasureKey, delta: number) => {
+    selectionAsync().catch(() => {});
+    setField(k, valueOf(k) + delta);
+  };
+
+  const commitTyping = () => {
+    if (!typing) return;
+    const v = parseInput(draft, 5, 300);
+    if (v) {
+      setValues((s) => ({ ...s, [typing]: Math.round(v * 10) / 10 }));
+      setTouched((s) => ({ ...s, [typing]: true }));
     }
+    setTyping(null);
+  };
 
-    if (!isPremium && allMeasurements.length >= FREE_MEASUREMENTS_LIMIT) {
-      router.push('/paywall' as never);
-      return;
-    }
+  const items: SilhouetteItem[] = VIEW_FIELDS.map((f) => {
+    const keys = ZONE_FIELDS[f.key];
+    const done = keys.some((k) => touched[k]);
+    const known = keys.map((k) => values[k] ?? prefill[k] ?? previous[k]).filter((v): v is number => !!v);
+    const avg = known.length ? known.reduce((s, v) => s + v, 0) / known.length : null;
+    const prevKnown = keys.map((k) => previous[k]).filter((v): v is number => !!v);
+    const prevAvg = prevKnown.length ? prevKnown.reduce((s, v) => s + v, 0) / prevKnown.length : null;
+    return {
+      key: f.key,
+      label: f.label,
+      value: avg ? `${num(avg, 1)} cm` : 'à mesurer',
+      delta: done && prevAvg && avg ? avg - prevAvg : null,
+    };
+  });
 
-    setIsSubmitting(true);
-
+  const save = async () => {
+    if (saving || touchedCount === 0) return;
+    setSaving(true);
     try {
-      const data: Omit<BodyMeasurement, 'id'> = {
-        date: format(new Date(), 'yyyy-MM-dd'),
-        chest: chest ? parseFloat(chest.replace(',', '.')) : undefined,
-        waist: waist ? parseFloat(waist.replace(',', '.')) : undefined,
-        hips: hips ? parseFloat(hips.replace(',', '.')) : undefined,
-        rightArm: rightArm ? parseFloat(rightArm.replace(',', '.')) : undefined,
-        leftArm: leftArm ? parseFloat(leftArm.replace(',', '.')) : undefined,
-        rightThigh: rightThigh ? parseFloat(rightThigh.replace(',', '.')) : undefined,
-        leftThigh: leftThigh ? parseFloat(leftThigh.replace(',', '.')) : undefined,
-        neck: neck ? parseFloat(neck.replace(',', '.')) : undefined,
-        shoulders: shoulders ? parseFloat(shoulders.replace(',', '.')) : undefined,
-      };
-
-      await addMeasurement(data);
-      successHaptic();
-
-      showPopup('Enregistré !', 'Tes mensurations ont été sauvegardées.', [
-        { text: 'OK', style: 'primary', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      logger.error('Error saving:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder', [
-        { text: 'OK', style: 'primary' },
-      ]);
-    } finally {
-      setIsSubmitting(false);
+      const out: Partial<Record<MeasureKey, number>> = {};
+      (Object.keys(touched) as MeasureKey[]).forEach((k) => {
+        if (touched[k] && values[k]) out[k] = values[k];
+      });
+      await saveMeasures(date, out);
+      track('mensuration_ajoutee');
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+      // 16 octobre : la page de bilan (ce qui a bouge), ou retour direct si le bilan est coupe
+      void apresMesure(router as never, { type: 'corps', date, origine: 'mensurations' });
+    } catch (err) {
+      logger.error('Enregistrement des mensurations impossible', err);
+      notificationAsync(NotificationFeedbackType.Error).catch(() => {});
+      setSaving(false);
     }
   };
+
+  const zoneMeta = VIEW_FIELDS.find((f) => f.key === zone)!;
+  const zoneKeys = ZONE_FIELDS[zone];
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <DetailHeader
+          title="Tes mensurations"
+          sub="Pré-remplies avec ta dernière mesure. Touche une zone, ajuste, enregistre."
+          right={
+            <IconButton label="Voir l’évolution" onPress={() => router.push('/measurements-detail' as any)}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path d="M3 17l6-6 4 3 8-8M15 6h6v6" stroke={c.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </IconButton>
+          }
+        />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-          contentInsetAdjustmentBehavior="automatic"
-        keyboardDismissMode="on-drag"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
-        }
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => router.back()}>
-            <ChevronLeft size={22} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Mensurations</Text>
-          <View style={{ width: 44 }} />
+        {screenshotDetected ? (
+          <View style={{ marginHorizontal: GUTTER, marginTop: 8, padding: 12, borderRadius: 14, backgroundColor: c.accentTint }}>
+            <Ink size={13} weight="bold">Capture d’écran repérée. Tes mesures sont personnelles, garde-les pour toi.</Ink>
+          </View>
+        ) : null}
+
+        <DateChips value={date} onChange={setDate} style={{ paddingHorizontal: GUTTER, marginTop: 14 }} />
+
+        <View style={{ paddingHorizontal: GUTTER, marginTop: 18 }}>
+          {ready ? (
+            <Silhouette
+              items={items}
+              active={zone}
+              height={330}
+              onPressItem={(k) => {
+                selectionAsync().catch(() => {});
+                setZone(k);
+                setTyping(null);
+              }}
+            />
+          ) : (
+            <View style={{ height: 330 }} />
+          )}
         </View>
 
-        {/* 🔒 SÉCURITÉ: Avertissement screenshot détecté */}
-        {screenshotDetected && (
-          <View style={styles.screenshotWarning}>
-            <Text style={styles.screenshotWarningText}>
-              Screenshot détecté - Tes données sont sensibles
-            </Text>
+        <View style={{ marginHorizontal: GUTTER, marginTop: 18, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, padding: 16, gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
+            <Ink size={19} weight="black" tight>{zoneMeta.long}</Ink>
+            <Ink size={12} color={c.textSecondary} style={{ flexShrink: 1, textAlign: 'right' }}>{zone === 'waist' ? 'au plus fin, après une expiration' : zone === 'navel' ? 'à hauteur du nombril' : zone === 'arm' ? 'bras contracté, au plus large' : 'ruban à plat, sans serrer'}</Ink>
           </View>
-        )}
-
-        {/* Skeleton pendant le chargement initial */}
-        {isLoading && (
-          <View style={{ gap: 12, paddingVertical: 8 }}>
-            <SkeletonCard height={260} width="100%" />
-            <SkeletonCard height={140} width="100%" />
-            <SkeletonCard height={120} width="100%" />
-            <SkeletonMessage />
-          </View>
-        )}
-        {!isLoading && (
-        <>
-        {/* Body Illustration */}
-        <BodyIllustration
-          measurements={{
-            chest,
-            waist,
-            hips,
-          }}
-        />
-
-        {/* Main Measurements */}
-        <Text style={styles.sectionTitle}>Tronc</Text>
-
-        <MeasurementInput
-          label="Poitrine"
-          value={chest}
-          onChangeText={setChest}
-          color={MEASUREMENT_COLORS.chest}
-          lastValue={lastMeasurement?.chest}
-          chartData={getChartData('chest')}
-        />
-
-        <MeasurementInput
-          label="Tour de taille"
-          value={waist}
-          onChangeText={setWaist}
-          color={MEASUREMENT_COLORS.waist}
-          lastValue={lastMeasurement?.waist}
-          chartData={getChartData('waist')}
-        />
-
-        <MeasurementInput
-          label="Hanches"
-          value={hips}
-          onChangeText={setHips}
-          color={MEASUREMENT_COLORS.hips}
-          lastValue={lastMeasurement?.hips}
-          chartData={getChartData('hips')}
-        />
-
-        <MeasurementInput
-          label="Épaules"
-          value={shoulders}
-          onChangeText={setShouders}
-          color={MEASUREMENT_COLORS.shoulders}
-          lastValue={lastMeasurement?.shoulders}
-          chartData={getChartData('shoulders')}
-        />
-
-        <MeasurementInput
-          label="Cou"
-          value={neck}
-          onChangeText={setNeck}
-          color={MEASUREMENT_COLORS.neck}
-          lastValue={lastMeasurement?.neck}
-          chartData={getChartData('neck')}
-        />
-
-        {/* Arms */}
-        <Text style={styles.sectionTitle}>Bras</Text>
-
-        <View style={styles.rowInputs}>
-          <View style={styles.halfInput}>
-            <MeasurementInput
-              label="Bras droit"
-              value={rightArm}
-              onChangeText={setRightArm}
-              color={MEASUREMENT_COLORS.arms}
-              lastValue={lastMeasurement?.rightArm}
-            />
-          </View>
-          <View style={styles.halfInput}>
-            <MeasurementInput
-              label="Bras gauche"
-              value={leftArm}
-              onChangeText={setLeftArm}
-              color={MEASUREMENT_COLORS.arms}
-              lastValue={lastMeasurement?.leftArm}
-            />
-          </View>
+          {zoneKeys.map((k) => {
+            const v = valueOf(k);
+            const prev = previous[k];
+            const isTyping = typing === k;
+            return (
+              <View key={k} style={{ gap: 8 }}>
+                {zoneKeys.length > 1 ? <Ink size={14} weight="bold" color={c.textSecondary}>{labelOf(k)}</Ink> : null}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Pressable onPress={() => step(k, -0.5)} accessibilityRole="button" accessibilityLabel={`${labelOf(k)}, moins un demi-centimètre`} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
+                    <MinusPlus kind="minus" color={c.ink} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setTyping(k);
+                      setDraft(num(v, 1));
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${labelOf(k)}, ${num(v, 1)} centimètres, toucher pour saisir`}
+                    style={{ flex: 1, alignItems: 'center' }}
+                  >
+                    {isTyping ? (
+                      <TextInput
+                        value={draft}
+                        onChangeText={setDraft}
+                        onBlur={commitTyping}
+                        onSubmitEditing={commitTyping}
+                        autoFocus
+                        selectTextOnFocus
+                        keyboardType="decimal-pad"
+                        returnKeyType="done"
+                        maxLength={6}
+                        accessibilityLabel={`${labelOf(k)} en centimètres`}
+                        style={[fontStyle('black'), { fontSize: 40, height: 54, color: c.ink, textAlign: 'center', minWidth: 140, padding: 0, includeFontPadding: false }]}
+                      />
+                    ) : (
+                      <Ink size={44} weight="black" tight color={touched[k] ? c.ink : c.textSecondary} style={{ fontVariant: ['tabular-nums'] }}>
+                        {num(v, 1, false)}
+                      </Ink>
+                    )}
+                    <Ink size={12} weight="bold" color={c.textSecondary}>
+                      {touched[k] ? (prev ? `${cmDelta(v - prev)} que la dernière fois` : 'centimètres, nouvelle mesure') : prev ? 'centimètres, la dernière fois' : 'centimètres, à mesurer'}
+                    </Ink>
+                  </Pressable>
+                  <Pressable onPress={() => step(k, 0.5)} accessibilityRole="button" accessibilityLabel={`${labelOf(k)}, plus un demi-centimètre`} style={({ pressed }) => [styles.round, { backgroundColor: pressed ? c.fillSoft : c.fillSubtle }]}>
+                    <MinusPlus kind="plus" color={c.ink} />
+                  </Pressable>
+                </View>
+                {!touched[k] && prev ? (
+                  <Pressable
+                    onPress={() => {
+                      selectionAsync().catch(() => {});
+                      setField(k, prev);
+                    }}
+                    accessibilityRole="button"
+                    style={{ alignSelf: 'center', minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1.5, borderColor: '#D5D2CA', justifyContent: 'center' }}
+                  >
+                    <Ink size={14} weight="bold" color={c.textSecondary}>Pareil que la dernière fois</Ink>
+                  </Pressable>
+                ) : null}
+              </View>
+            );
+          })}
         </View>
 
-        {/* Legs */}
-        <Text style={styles.sectionTitle}>Jambes</Text>
-
-        <View style={styles.rowInputs}>
-          <View style={styles.halfInput}>
-            <MeasurementInput
-              label="Cuisse droite"
-              value={rightThigh}
-              onChangeText={setRightThigh}
-              color={MEASUREMENT_COLORS.thighs}
-              lastValue={lastMeasurement?.rightThigh}
-            />
-          </View>
-          <View style={styles.halfInput}>
-            <MeasurementInput
-              label="Cuisse gauche"
-              value={leftThigh}
-              onChangeText={setLeftThigh}
-              color={MEASUREMENT_COLORS.thighs}
-              lastValue={lastMeasurement?.leftThigh}
-            />
-          </View>
-        </View>
-
-        {/* Bannière limite freemium */}
-        {!isPremium && allMeasurements.length >= FREE_MEASUREMENTS_LIMIT && (
-          <View style={{ borderRadius: 16, overflow: 'hidden', marginTop: 24, marginBottom: 8 }}>
-            <LinearGradient
-              colors={['#EF4444', '#B91C1C']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ padding: 16, alignItems: 'center', gap: 8 }}
-            >
-              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
-                Limite atteinte ({FREE_MEASUREMENTS_LIMIT}/{FREE_MEASUREMENTS_LIMIT} sessions)
-              </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, textAlign: 'center' }}>
-                Passe à Premium pour enregistrer des mensurations illimitées et voir l'évolution complète.
-              </Text>
-              <TouchableOpacity
-                onPress={() => router.push('/paywall' as never)}
-                style={{ backgroundColor: '#FFFFFF', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 24, marginTop: 4 }}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: GUTTER, marginTop: 16 }}>
+          {VIEW_FIELDS.map((f) => {
+            const done = ZONE_FIELDS[f.key].some((k) => touched[k]);
+            const on = f.key === zone;
+            return (
+              <Pressable
+                key={f.key}
+                onPress={() => {
+                  selectionAsync().catch(() => {});
+                  setZone(f.key);
+                  setTyping(null);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                style={{ minHeight: 44, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? c.ink : done ? c.successTint : 'transparent', borderWidth: 1.5, borderColor: on ? c.ink : done ? c.successTint : '#D5D2CA' }}
               >
-                <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>Débloquer Premium</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        )}
+                <Ink size={13} weight="bold" color={on ? P.paper : done ? c.successText : c.textSecondary}>{f.label}</Ink>
+              </Pressable>
+            );
+          })}
+        </View>
 
-        {/* Save Button */}
-        <TouchableOpacity
-          style={[styles.saveButton, (isSubmitting || (!isPremium && allMeasurements.length >= FREE_MEASUREMENTS_LIMIT)) && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={isSubmitting}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={GRADIENTS.accent}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.saveButtonGradient}
-          >
-            <Save size={20} color="#fff" />
-            <Text style={styles.saveButtonText}>
-              {isSubmitting ? 'Enregistrement...' : 'Enregistrer les mensurations'}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <View style={{ height: 100 }} />
-        <PremiumTeaser variant="history" title="Évolution mesures complète" />
-        </>
-        )}
       </ScrollView>
 
-      {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
-      {isBlurred && Platform.OS === 'ios' && (
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          intensity={100}
-          tint={isDark ? 'dark' : 'light'}
+      <View style={{ position: 'absolute', left: GUTTER, right: GUTTER, bottom: insets.bottom + 18 }}>
+        {hint ? (
+          <View style={{ alignSelf: 'center', marginBottom: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, backgroundColor: c.ink }}>
+            <Ink size={13} weight="bold" color={c.background}>Ajuste au moins une zone avec + ou −, ou touche « Pareil ».</Ink>
+          </View>
+        ) : null}
+        <StampButton
+          label={saving ? 'Enregistrement en cours' : touchedCount === 0 ? 'Enregistrer' : `Enregistrer ${touchedCount} mesure${touchedCount > 1 ? 's' : ''}`}
+          onPress={() => {
+            if (touchedCount === 0) {
+              selectionAsync().catch(() => {});
+              setHint(true);
+              setTimeout(() => setHint(false), 2600);
+              return;
+            }
+            save();
+          }}
+          disabled={saving}
         />
-      )}
+      </View>
 
-      <PopupComponent />
-    </View>
+      {isBlurred && Platform.OS === 'ios' ? <BlurView style={StyleSheet.absoluteFill} intensity={100} tint="light" /> : null}
     </KeyboardAvoidingView>
   );
 }
 
-// ============================================
-// STYLES
-// ============================================
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: SPACING.lg,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.lg,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-  },
-
-  // Body Card
-  bodyCard: {
-    borderRadius: RADIUS.xxl,
-    overflow: 'hidden',
-    marginBottom: SPACING.xl,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-  },
-  bodyGradient: {
-    padding: SPACING.xl,
-  },
-  bodyTitle: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-    marginBottom: SPACING.lg,
-  },
-  bodyStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  bodyStat: {
-    alignItems: 'center',
-  },
-  bodyStatIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.sm,
-  },
-  colorDotSmall: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  bodyStatLabel: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textMuted,
-    marginBottom: 2,
-  },
-  bodyStatValue: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-  },
-  ratioContainer: {
-    marginTop: SPACING.lg,
-    paddingTop: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorder,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  ratioLabel: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textSecondary,
-  },
-  ratioValue: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.accent,
-  },
-
-  // Section Title
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: SPACING.md,
-    marginTop: SPACING.md,
-  },
-
-  // Measurement Card
-  measurementCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
-  measurementHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  colorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: SPACING.sm,
-  },
-  measurementLabel: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.medium,
-    color: COLORS.text,
-  },
-  diffBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
-  },
-  diffText: {
-    fontSize: TYPOGRAPHY.size.xs,
-    fontWeight: TYPOGRAPHY.weight.bold,
-  },
-  measurementInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  measurementInput: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.size.xxl,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.text,
-    padding: 0,
-  },
-  measurementUnit: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.medium,
-    color: COLORS.textMuted,
-    marginLeft: SPACING.sm,
-  },
-  chartContainer: {
-    marginTop: SPACING.md,
-    marginHorizontal: -SPACING.md,
-  },
-  lastMeasurement: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textMuted,
-    marginTop: SPACING.sm,
-  },
-
-  // Row Inputs
-  rowInputs: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  halfInput: {
-    flex: 1,
-  },
-
-  // Save Button
-  saveButton: {
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    marginTop: SPACING.xl,
-    ...SHADOWS.glowAccent,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.lg,
-    gap: SPACING.md,
-  },
-  saveButtonText: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: '#fff',
-  },
-
-  // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot
-  screenshotWarning: {
-    backgroundColor: 'rgba(255, 149, 0, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.3)',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  screenshotWarningText: {
-    color: '#FF9500',
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-    textAlign: 'center',
-  },
+  round: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
 });

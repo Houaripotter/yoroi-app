@@ -547,7 +547,7 @@ export const syncAllChallenges = async (): Promise<string[]> => {
     const monthTrainings = trainings.filter(t => t.date >= monthStart);
     syncChallenge('monthly_20_trainings', monthTrainings.length, 20);
 
-    // Objectif de poids — lu depuis le profil (profile.target_weight)
+    // Objectif de poids, lu depuis le profil (profile.target_weight)
     try {
       const profile = await getProfile();
       const goal = profile?.target_weight;

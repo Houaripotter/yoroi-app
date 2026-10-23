@@ -1,3 +1,5 @@
+import { getSportName } from '@/lib/sports';
+import { IBJJF_MEN, ibjjfAdvised, ibjjfCategories } from '@/lib/v2/competition/ibjjf';
 // ============================================
 // YOROI - MODE COMPÉTITEUR / FIGHTER
 // ============================================
@@ -58,20 +60,12 @@ export interface WeightCategory {
   name: string;
   maxWeight: number; // en kg
   minWeight?: number;
+  /** Categorie ouverte (Absoluto) : jamais conseillee d'apres le poids */
+  open?: boolean;
 }
 
-// JJB (Gi) - IBJJF
-export const JJB_WEIGHT_CATEGORIES: WeightCategory[] = [
-  { id: 'galo', name: 'Galo', maxWeight: 58.5 },
-  { id: 'pluma', name: 'Pluma', maxWeight: 64 },
-  { id: 'pena', name: 'Pena', maxWeight: 70 },
-  { id: 'leve', name: 'Leve', maxWeight: 76 },
-  { id: 'medio', name: 'Médio', maxWeight: 82.3 },
-  { id: 'meio_pesado', name: 'Meio-Pesado', maxWeight: 88.3 },
-  { id: 'pesado', name: 'Pesado', maxWeight: 94.3 },
-  { id: 'super_pesado', name: 'Super-Pesado', maxWeight: 100.5 },
-  { id: 'pesadissimo', name: 'Pesadíssimo', maxWeight: 999, minWeight: 100.5 },
-];
+// JJB (Gi) - IBJJF : la liste commune de l'app (noms portugais), voir lib/v2/competition/ibjjf.ts
+export const JJB_WEIGHT_CATEGORIES: WeightCategory[] = IBJJF_MEN;
 
 // MMA (UFC)
 export const MMA_WEIGHT_CATEGORIES: WeightCategory[] = [
@@ -155,10 +149,11 @@ export const KARATE_WEIGHT_CATEGORIES: WeightCategory[] = [
   { id: 'lourd', name: '+84 kg', maxWeight: 999, minWeight: 84 },
 ];
 
-export function getWeightCategories(sport: Sport): WeightCategory[] {
+/** Categories de poids du sport. Pour le JJB, le genre choisit la liste IBJJF hommes ou femmes */
+export function getWeightCategories(sport: Sport, gender?: string | null): WeightCategory[] {
   switch (sport) {
     case 'jjb':
-      return JJB_WEIGHT_CATEGORIES;
+      return ibjjfCategories(gender);
     case 'mma':
       return MMA_WEIGHT_CATEGORIES;
     case 'boxe':
@@ -176,8 +171,9 @@ export function getWeightCategories(sport: Sport): WeightCategory[] {
   }
 }
 
-export function findWeightCategory(sport: Sport, weight: number): WeightCategory | null {
-  const categories = getWeightCategories(sport);
+export function findWeightCategory(sport: Sport, weight: number, gender?: string | null): WeightCategory | null {
+  if (sport === 'jjb') return ibjjfAdvised(gender, weight) ?? null;
+  const categories = getWeightCategories(sport).filter(cat => !cat.open);
   return categories.find(cat => {
     if (cat.minWeight) {
       return weight >= cat.minWeight;
@@ -293,14 +289,14 @@ export function calculateWeightToLose(currentWeight: number, targetWeight: numbe
 // ============================================
 
 export const SPORT_LABELS: Record<Sport, string> = {
-  jjb: 'Jiu-Jitsu Brésilien',
+  jjb: getSportName('jjb'),
   mma: 'MMA',
   boxe: 'Boxe',
-  muay_thai: 'Muay Thaï',
+  muay_thai: getSportName('muay_thai'),
   judo: 'Judo',
   karate: 'Karaté',
   taekwondo: 'Taekwondo',
-  krav_maga: 'Krav Maga',
+  krav_maga: getSportName('krav_maga'),
   tennis: 'Tennis',
   padel: 'Padel',
   badminton: 'Badminton',
@@ -316,7 +312,7 @@ export const SPORT_LABELS: Record<Sport, string> = {
   cyclisme: 'Cyclisme',
   natation: 'Natation',
   triathlon: 'Triathlon',
-  marche_nordique: 'Marche Nordique',
+  marche_nordique: 'Marche nordique',
   randonnee: 'Randonnée',
   escalade: 'Escalade',
   crossfit: 'CrossFit',
@@ -325,7 +321,7 @@ export const SPORT_LABELS: Record<Sport, string> = {
   yoga: 'Yoga',
   pilates: 'Pilates',
   hiit: 'HIIT',
-  calisthenics: 'Calisthenics',
+  calisthenics: getSportName('calisthenics'),
   surf: 'Surf',
   ski: 'Ski',
   snowboard: 'Snowboard',
@@ -360,8 +356,8 @@ export const SPORT_ICONS: Record<Sport, string> = {
   cyclisme: '',
   natation: '',
   triathlon: '',
-  marche_nordique: '🚶',
-  randonnee: '🥾',
+  marche_nordique: '',
+  randonnee: '',
   escalade: '',
   crossfit: '',
   hyrox: '',
@@ -372,11 +368,11 @@ export const SPORT_ICONS: Record<Sport, string> = {
   calisthenics: '',
   surf: '',
   ski: '',
-  snowboard: '🏂',
-  skate: '🛹',
-  golf: '⛳',
-  equitation: '🏇',
-  danse: '💃',
+  snowboard: '',
+  skate: '',
+  golf: '',
+  equitation: '',
+  danse: '',
   autre: '',
 };
 

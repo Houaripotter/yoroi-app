@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
 import {
   View,
   Text,
@@ -137,7 +138,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
 
       const uri = await viewShotRef.current.capture?.();
       if (!uri) {
-        showPopup('Erreur', 'Impossible de capturer l\'image', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Oups', 'L’image n’a pas pu être capturée.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -165,9 +166,9 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
               const { status } = await requestPermissionsAsync();
               if (status === 'granted') {
                 await saveToLibraryAsync(uri);
-                showPopup('Sauvegardé !', 'Image enregistrée dans ta galerie', [{ text: 'OK', style: 'primary' }]);
+                showPopup('Image enregistrée', 'Elle est dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
               } else {
-                showPopup('Permission refusée', 'Autorise l\'accès à la galerie', [{ text: 'OK', style: 'primary' }]);
+                showPopup('Accès à la galerie', 'Autorise l’accès à ta galerie dans les réglages du téléphone.', [{ text: 'OK', style: 'primary' }]);
               }
             },
           },
@@ -176,7 +177,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       );
     } catch (error) {
       logger.error('Erreur capture:', error);
-      showPopup('Erreur', 'Impossible de créer l\'image', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', 'L’image n’a pas pu être créée.', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -310,7 +311,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
         {/* Branding pour export */}
         <View style={[styles.exportBranding, { backgroundColor: colors.background }]}>
           <Text style={[styles.brandingText, { color: colors.gold }]}>YOROI</Text>
-          <Text style={[styles.brandingSubtext, { color: colors.textMuted }]}>鎧</Text>
+          <Glyph kind="sakura" size={14} color={colors.textMuted} />
         </View>
       </ViewShot>
 

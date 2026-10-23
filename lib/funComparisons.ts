@@ -57,7 +57,7 @@ const distanceComparison = (km: number): FunComparison | null => {
       return {
         id: 'dist-equiv',
         text: `${fmtNum(km, 0)} km parcourus = environ ${r.label}`,
-        emoji: '🌍',
+        emoji: '',
         color: '#22C55E',
       };
     }
@@ -66,7 +66,7 @@ const distanceComparison = (km: number): FunComparison | null => {
         id: 'dist-multi',
         text: `${fmtNum(km, 0)} km = ${ratio.toFixed(1)}× la distance ${r.label}`,
         hint: `Soit ${Math.round(ratio)} fois cette distance`,
-        emoji: '🚀',
+        emoji: '',
         color: '#22C55E',
       };
     }
@@ -74,7 +74,7 @@ const distanceComparison = (km: number): FunComparison | null => {
   return {
     id: 'dist-base',
     text: `${fmtNum(km, 0)} km parcourus au total`,
-    emoji: '🏃',
+    emoji: '',
     color: '#22C55E',
   };
 };
@@ -92,9 +92,9 @@ const kcalComparison = (kcal: number): FunComparison | null => {
     const fatKg = kcal / 7700; // 1 kg de gras = 7700 kcal
     return {
       id: 'kcal-fat',
-      text: `${fmtNum(kcal / 1000, 0)}k kcal brûlées = ${fatKg.toFixed(1)} kg de gras pur 🔥`,
+      text: `${fmtNum(kcal / 1000, 0)}k kcal brûlées = ${fatKg.toFixed(1)} kg de gras pur`,
       hint: 'Théorique : 1 kg de gras = 7700 kcal',
-      emoji: '🔥',
+      emoji: '',
       color: '#F97316',
     };
   }
@@ -102,14 +102,14 @@ const kcalComparison = (kcal: number): FunComparison | null => {
     return {
       id: 'kcal-pizza',
       text: `${fmtNum(kcal, 0)} kcal brûlées = ${pizzas.toFixed(0)} pizzas entières`,
-      emoji: '🍕',
+      emoji: '',
       color: '#F97316',
     };
   }
   return {
     id: 'kcal-burger',
     text: `${fmtNum(kcal, 0)} kcal = ${burgers.toFixed(0)} Big Mac`,
-    emoji: '🍔',
+    emoji: '',
     color: '#F97316',
   };
 };
@@ -123,8 +123,8 @@ const durationComparison = (minutes: number): FunComparison | null => {
   if (hours >= 1000) {
     return {
       id: 'time-days',
-      text: `${fmtNum(hours, 0)} h d'entraînement = ${days.toFixed(0)} jours non-stop 💪`,
-      emoji: '⏱️',
+      text: `${fmtNum(hours, 0)} h d'entraînement = ${days.toFixed(0)} jours non-stop`,
+      emoji: '',
       color: '#3B82F6',
     };
   }
@@ -133,14 +133,14 @@ const durationComparison = (minutes: number): FunComparison | null => {
     return {
       id: 'time-movies',
       text: `${fmtNum(hours, 0)} h d'effort = ${movies.toFixed(0)} films de 1h30`,
-      emoji: '🎬',
+      emoji: '',
       color: '#3B82F6',
     };
   }
   return {
     id: 'time-base',
     text: `${fmtNum(hours, 0)} h d'entraînement au total`,
-    emoji: '⏱️',
+    emoji: '',
     color: '#3B82F6',
   };
 };
@@ -152,8 +152,8 @@ const sessionsComparison = (n: number): FunComparison | null => {
   if (n >= 365) {
     return {
       id: 'sess-pro',
-      text: `${fmtNum(n)} séances : niveau pro, chapeau 🥋`,
-      emoji: '🏆',
+      text: `${fmtNum(n)} séances : niveau pro, chapeau`,
+      emoji: '',
       color: '#A855F7',
     };
   }
@@ -161,14 +161,14 @@ const sessionsComparison = (n: number): FunComparison | null => {
     return {
       id: 'sess-100',
       text: `${fmtNum(n)} séances enregistrées : tu es une machine`,
-      emoji: '🤖',
+      emoji: '',
       color: '#A855F7',
     };
   }
   return {
     id: 'sess-base',
     text: `${fmtNum(n)} séances : la régularité paie`,
-    emoji: '✨',
+    emoji: '',
     color: '#A855F7',
   };
 };
@@ -189,8 +189,8 @@ const liftedComparison = (tons: number): FunComparison | null => {
       const mul = tons / refs[i].t;
       return {
         id: 'lift-equiv',
-        text: `Tu as soulevé ${tons.toFixed(1)} tonnes = ${mul >= 1.5 ? `${mul.toFixed(1)}× ` : ''}${refs[i].label} 🏋️`,
-        emoji: '🏋️',
+        text: `Tu as soulevé ${tons.toFixed(1)} tonnes = ${mul >= 1.5 ? `${mul.toFixed(1)}× ` : ''}${refs[i].label}`,
+        emoji: '',
         color: '#EF4444',
       };
     }

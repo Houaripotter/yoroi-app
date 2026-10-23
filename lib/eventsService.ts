@@ -245,8 +245,8 @@ async function _doInitialize(): Promise<void> {
     );
 
     if (!tableExists || tableExists.count === 0) {
-      // Table manquante — la créer nous-mêmes pour ne pas dépendre du timing de initDatabase
-      logger.warn('Table events_catalog manquante — création à la volée');
+      // Table manquante, la créer nous-mêmes pour ne pas dépendre du timing de initDatabase
+      logger.warn('Table events_catalog manquante, création à la volée');
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS events_catalog (
           id TEXT PRIMARY KEY,
@@ -661,20 +661,20 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
  */
 export function getSportTagEmoji(sportTag: string): string {
   const emojis: Record<string, string> = {
-    jjb: '🥋',
-    grappling: '🤼',
-    hyrox: '⚙️',
-    marathon: '🏁',
-    running: '🏃',
-    trail: '⛰️',
-    climbing: '🧗',
-    fitness: '💪',
-    powerlifting: '🏋️',
-    crossfit: '🔥',
-    triathlon: '🏊',
-    obstacle: '🏅',
-    judo: '🥋',
-    cycling: '🚴',
+    jjb: '',
+    grappling: '',
+    hyrox: '',
+    marathon: '',
+    running: '',
+    trail: '',
+    climbing: '',
+    fitness: '',
+    powerlifting: '',
+    crossfit: '',
+    triathlon: '',
+    obstacle: '',
+    judo: '',
+    cycling: '',
   };
 
   return emojis[sportTag] || '';

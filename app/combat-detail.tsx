@@ -1,474 +1,202 @@
-// ============================================
-// YOROI - DÉTAIL COMBAT
-// ============================================
-
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { useCustomPopup } from '@/components/CustomPopup';
-import { router, useLocalSearchParams } from 'expo-router';
-import {
-  Calendar,
-  Trophy,
-  Trash2,
-  User,
-  Building2,
-  Scale,
-  Clock,
-  FileText,
-  Target,
-  Zap,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-} from 'lucide-react-native';
+/**
+ * Detail d'un combat de competition v2 : resultat, methode, adversaire, round et temps,
+ * pesee, notes, lien vers la competition, suppression avec confirmation.
+ * Parametre : id (combat).
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Header } from '@/components/ui/Header';
-import {
-  getCombatById,
-  deleteCombat,
-  getCompetitionById,
-} from '@/lib/fighterModeService';
-import { Combat, Competition } from '@/lib/fighterMode';
-import { SPACING, RADIUS } from '@/constants/appTheme';
-import logger from '@/lib/security/logger';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { deleteCombat, getCombatById, getCompetitionById } from '@/lib/fighterModeService';
+import type { Combat, Competition } from '@/lib/fighterMode';
+import { logger } from '@/lib/security/logger';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { formatKg } from '@/lib/v2/weightStats';
+import { longDate } from '@/lib/v2/seances/sessionData';
+import { sportArt } from '@/lib/v2/seances/illustrations';
+import { mainSport } from '@/lib/v2/seances/weekSummary';
+import { useSeancesData } from '@/lib/v2/seances/useSeancesData';
+import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import { BackButton, BigButton, EmptyState, Glass, Hanko, RoundIcon, Stat, tap } from '@/components/yoroi/v2/seances/ui';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { P } from '@/components/yoroi/livePalette';
+
+const METHODE: Record<string, string> = {
+  soumission: 'par soumission',
+  ko: 'par KO',
+  tko: 'par KO technique',
+  points: 'aux points',
+  decision: 'par décision',
+  dq: 'par disqualification',
+};
 
 export default function CombatDetailScreen() {
-  const { colors } = useTheme();
-  const { locale } = useI18n();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
-  const combatId = params.id ?? '';
-  const { showPopup, PopupComponent } = useCustomPopup();
-
+  const { gender, favoris, trainings } = useSeancesData();
+  const combatId = parseInt(params.id ?? '', 10);
   const [combat, setCombat] = useState<Combat | null>(null);
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    loadCombatData();
-  }, [combatId]);
-
-  const loadCombatData = async () => {
-    // Validation du paramètre
-    if (!combatId || isNaN(parseInt(combatId))) {
-      showPopup('Erreur', 'Combat non trouvé', [{ text: 'OK', style: 'primary', onPress: () => router.back() }]);
+  const load = useCallback(async () => {
+    if (!combatId || isNaN(combatId)) {
       setLoading(false);
       return;
     }
-
     try {
-      const fightData = await getCombatById(parseInt(combatId));
-      setCombat(fightData);
-      // Combat supprimé / introuvable
-      if (!fightData) {
-        showPopup('Erreur', 'Combat non trouvé', [{ text: 'OK', style: 'primary', onPress: () => router.back() }]);
-      }
-
-      if (fightData?.competition_id) {
-        const compData = await getCompetitionById(fightData.competition_id);
-        setCompetition(compData);
-      }
+      const fight = await getCombatById(combatId);
+      setCombat(fight);
+      if (fight?.competition_id) setCompetition(await getCompetitionById(fight.competition_id));
     } catch (error) {
       logger.error('Error loading combat:', error);
-      showPopup('Erreur', 'Impossible de charger le combat', [{ text: 'OK', style: 'primary', onPress: () => router.back() }]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [combatId]);
 
-  const handleDelete = () => {
-    if (isDeleting) return;
+  useEffect(() => {
+    load();
+  }, [load]);
 
-    showPopup(
-      'Supprimer le combat',
-      'Es-tu sur de vouloir supprimer ce combat ? Cette action est irreversible.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            if (isDeleting) return;
-            setIsDeleting(true);
-            try {
-              await deleteCombat(parseInt(combatId));
-              notificationAsync(NotificationFeedbackType.Success);
-              router.back();
-            } catch (error) {
-              logger.error('Error deleting combat:', error);
-              showPopup('Erreur', 'Impossible de supprimer le combat', [{ text: 'OK', style: 'primary' }]);
-            } finally {
-              setIsDeleting(false);
-            }
-          },
+  const onDelete = () => {
+    if (deleting || !combat) return;
+    appAlert('Supprimer ce combat ?', 'Il sera retiré de ton palmarès. Cette action est définitive.', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: async () => {
+          setDeleting(true);
+          try {
+            await deleteCombat(combatId);
+            notificationAsync(NotificationFeedbackType.Success).catch(() => {});
+            DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+            router.back();
+          } catch (error) {
+            logger.error('Error deleting combat:', error);
+            appAlert('Oups', 'Le combat n’a pas pu être supprimé. Réessaie.');
+          } finally {
+            setDeleting(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   if (loading || !combat) {
     return (
-      <ScreenWrapper>
-        <Header title={loading ? 'Chargement...' : 'Combat introuvable'} showBack />
-        <PopupComponent />
-      </ScreenWrapper>
+      <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 8, paddingHorizontal: 22, gap: 16 }}>
+        <BackButton />
+        {loading ? (
+          <View style={{ height: 220, borderRadius: 24, backgroundColor: c.fillSubtle, opacity: 0.6 }} />
+        ) : (
+          <EmptyState title="Combat introuvable" text="Il a peut-être été supprimé. Retrouve tes combats dans ton palmarès." action="Voir mon palmarès" onAction={() => router.replace('/palmares' as any)} />
+        )}
+      </View>
     );
   }
 
-  const resultColor =
-    combat.resultat === 'victoire'
-      ? '#4CAF50'
-      : combat.resultat === 'defaite'
-      ? '#F44336'
-      : colors.textMuted;
-
-  const ResultIcon =
-    combat.resultat === 'victoire'
-      ? TrendingUp
-      : combat.resultat === 'defaite'
-      ? TrendingDown
-      : Minus;
+  const win = combat.resultat === 'victoire';
+  const loss = combat.resultat === 'defaite';
+  const title = win ? 'Victoire' : loss ? 'Défaite' : 'Match nul';
+  const tint = win ? c.goldTint : loss ? '#EEE1DF' : c.fillSubtle;
+  const diff = combat.poids_jour_j && combat.poids_pesee ? combat.poids_jour_j - combat.poids_pesee : null;
 
   return (
-    <ScreenWrapper>
-      <Header
-        title="Détail Combat"
-        showBack
-        rightElement={
-          <TouchableOpacity onPress={handleDelete} style={styles.headerButton}>
-            <Trash2 size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        }
-      />
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Result Header */}
-        <View
-          style={[styles.resultHeader, { backgroundColor: `${resultColor}20` }]}
-        >
-          <View style={[styles.resultIconContainer, { backgroundColor: resultColor }]}>
-            <ResultIcon size={40} color="#FFFFFF" />
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
+        {/* Bandeau illustre selon le sport du combat : le personnage reste dans son cadre */}
+        <View style={{ height: 150 + insets.top, backgroundColor: tint, overflow: 'hidden' }}>
+          <Glyph kind="sakura" size={170} color="rgba(255,255,255,0.45)" style={{ position: 'absolute', left: 60, top: insets.top + 4 }} />
+          <Image source={sportArt(competition?.sport || mainSport(favoris, trainings), gender, 3)} style={{ position: 'absolute', right: 60, bottom: -36, width: 130, height: 174 }} resizeMode="contain" />
+          <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
+            <BackButton />
+            <RoundIcon name="trash" label="Supprimer le combat" onPress={onDelete} color={c.danger} />
           </View>
-          <Text style={[styles.resultTitle, { color: resultColor }]}>
-            {combat.resultat === 'victoire'
-              ? 'Victoire'
-              : combat.resultat === 'defaite'
-              ? 'Défaite'
-              : 'Match Nul'}
-          </Text>
-          {combat.methode && (
-            <Text style={[styles.methodeLabel, { color: resultColor }]}>
-              par {combat.methode.toUpperCase()}
-            </Text>
-          )}
         </View>
 
-        {/* Competition Link */}
-        {competition && (
-          <TouchableOpacity
-            style={[styles.card, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => router.push(`/competition-detail?id=${competition.id}`)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.cardHeader}>
-              <Trophy size={20} color={colors.accent} />
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                Compétition
-              </Text>
+        <View style={{ paddingHorizontal: 22, marginTop: 14, gap: 12 }}>
+          <View style={{ borderRadius: 22, backgroundColor: P.white, borderWidth: 1, borderColor: c.divider, padding: 18, gap: 8, shadowColor: c.ink, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Ink size={36} weight="black" tight color={win ? c.ink : loss ? c.accent : c.ink}>{title}</Ink>
+                {combat.methode ? <Ink size={16} weight="extraBold" color={c.textSecondary}>{METHODE[combat.methode] ?? combat.methode}</Ink> : null}
+              </View>
+              {win ? <Hanko size={46} color={c.gold} rotate={-8} /> : null}
             </View>
-            <Text style={[styles.competitionName, { color: colors.textPrimary }]}>
-              {competition.nom}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Date */}
-        <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.cardHeader}>
-            <Calendar size={20} color={colors.accent} />
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-              Date
-            </Text>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{longDate(combat.date.slice(0, 10), true)}</Ink>
           </View>
-          <Text style={[styles.cardValue, { color: colors.textPrimary }]}>
-            {new Date(combat.date).toLocaleDateString(locale, {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </Text>
+
+          {competition ? (
+            <Glass onPress={() => router.push(`/competition-detail?id=${competition.id}` as any)} label={`Compétition ${competition.nom}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c.goldTint, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="trophy" size={22} color={c.goldDeep} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Ink size={12} weight="bold" color={c.textSecondary}>Compétition</Ink>
+                <Ink size={16} weight="extraBold" numberOfLines={2}>{competition.nom}</Ink>
+              </View>
+              <Icon name="chevron" size={18} color={c.textMuted} />
+            </Glass>
+          ) : null}
+
+          <Glass style={{ gap: 4 }}>
+            <Ink size={12} weight="bold" color={c.textSecondary}>Adversaire</Ink>
+            <Ink size={20} weight="black" tight>{combat.adversaire_nom || 'Non renseigné'}</Ink>
+            {combat.adversaire_club ? <Ink size={14} color={c.textSecondary}>{combat.adversaire_club}</Ink> : null}
+          </Glass>
+
+          {combat.technique ? (
+            <Glass style={{ gap: 4 }}>
+              <Ink size={12} weight="bold" color={c.textSecondary}>Technique</Ink>
+              <Ink size={18} weight="extraBold">{combat.technique}</Ink>
+            </Glass>
+          ) : null}
+
+          {combat.round || combat.temps ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {combat.round ? <Stat value={String(combat.round)} label="Round" /> : null}
+              {combat.temps ? <Stat value={combat.temps} label="Temps dans le round" /> : null}
+            </View>
+          ) : null}
+
+          {combat.poids_pesee || combat.poids_jour_j ? (
+            <Glass style={{ gap: 10 }}>
+              <Ink size={17} weight="black" tight>Ton poids</Ink>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {combat.poids_pesee ? <Stat value={formatKg(combat.poids_pesee)} unit="kg" label="À la pesée" /> : null}
+                {combat.poids_jour_j ? <Stat value={formatKg(combat.poids_jour_j)} unit="kg" label="Le jour du combat" /> : null}
+              </View>
+              {diff != null ? (
+                <Ink size={13} weight="bold" color={c.textSecondary}>
+                  {Math.abs(diff) < 0.05 ? 'Même poids qu’à la pesée.' : diff > 0 ? `${formatKg(diff)} kg repris entre la pesée et le combat.` : `${formatKg(Math.abs(diff))} kg de moins qu’à la pesée.`}
+                </Ink>
+              ) : null}
+            </Glass>
+          ) : null}
+
+          {combat.notes ? (
+            <Glass style={{ gap: 4 }}>
+              <Ink size={17} weight="black" tight>Notes</Ink>
+              <Ink size={15} color={c.textSecondary}>{combat.notes}</Ink>
+            </Glass>
+          ) : null}
+
+          <Pressable onPress={() => { tap(); router.push('/palmares' as any); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+            <Ink size={14} weight="extraBold" color={c.accent}>Voir tout ton palmarès</Ink>
+          </Pressable>
+          <BigButton label="Supprimer ce combat" icon="trash" tone="danger" onPress={onDelete} />
         </View>
-
-        {/* Opponent */}
-        <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.cardHeader}>
-            <User size={20} color={colors.accent} />
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-              Adversaire
-            </Text>
-          </View>
-          <Text style={[styles.opponentName, { color: colors.textPrimary }]}>
-            {combat.adversaire_nom || 'Non renseigné'}
-          </Text>
-          {combat.adversaire_club && (
-            <View style={styles.clubRow}>
-              <Building2 size={16} color={colors.textMuted} />
-              <Text style={[styles.clubText, { color: colors.textMuted }]}>
-                {combat.adversaire_club}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Method & Technique */}
-        {combat.technique && (
-          <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.cardHeader}>
-              <Zap size={20} color={colors.accent} />
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                Technique
-              </Text>
-            </View>
-            <Text style={[styles.techniqueValue, { color: colors.textPrimary }]}>
-              {combat.technique}
-            </Text>
-          </View>
-        )}
-
-        {/* Round & Time */}
-        {(combat.round || combat.temps) && (
-          <View style={styles.row}>
-            {combat.round && (
-              <View
-                style={[
-                  styles.card,
-                  { flex: 1, backgroundColor: colors.backgroundCard },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <Target size={20} color={colors.accent} />
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                    Round
-                  </Text>
-                </View>
-                <Text style={[styles.cardValue, { color: colors.textPrimary }]}>
-                  {combat.round}
-                </Text>
-              </View>
-            )}
-
-            {combat.temps && (
-              <View
-                style={[
-                  styles.card,
-                  { flex: 1, backgroundColor: colors.backgroundCard },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <Clock size={20} color={colors.accent} />
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                    Temps
-                  </Text>
-                </View>
-                <Text style={[styles.cardValue, { color: colors.textPrimary }]}>
-                  {combat.temps}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Weights */}
-        {(combat.poids_pesee || combat.poids_jour_j) && (
-          <View style={styles.row}>
-            {combat.poids_pesee && (
-              <View
-                style={[
-                  styles.card,
-                  { flex: 1, backgroundColor: colors.backgroundCard },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <Scale size={20} color={colors.accent} />
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                    Pesée
-                  </Text>
-                </View>
-                <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
-                  {combat.poids_pesee} kg
-                </Text>
-              </View>
-            )}
-
-            {combat.poids_jour_j && (
-              <View
-                style={[
-                  styles.card,
-                  { flex: 1, backgroundColor: colors.backgroundCard },
-                ]}
-              >
-                <View style={styles.cardHeader}>
-                  <Scale size={20} color={colors.accent} />
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                    Jour J
-                  </Text>
-                </View>
-                <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
-                  {combat.poids_jour_j} kg
-                </Text>
-                {combat.poids_pesee && (
-                  <Text style={[styles.weightDiff, { color: colors.textMuted }]}>
-                    {combat.poids_jour_j > combat.poids_pesee ? '+' : ''}
-                    {(combat.poids_jour_j - combat.poids_pesee).toFixed(1)} kg
-                  </Text>
-                )}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Notes */}
-        {combat.notes && (
-          <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.cardHeader}>
-              <FileText size={20} color={colors.accent} />
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                Notes
-              </Text>
-            </View>
-            <Text style={[styles.notesText, { color: colors.textMuted }]}>
-              {combat.notes}
-            </Text>
-          </View>
-        )}
-
-        <View style={{ height: 40 }} />
       </ScrollView>
-      <PopupComponent />
-    </ScreenWrapper>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  headerButton: {
-    padding: SPACING.xs,
-  },
-
-  // Result Header
-  resultHeader: {
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  resultIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
-  },
-  resultTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: SPACING.xs,
-  },
-  methodeLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-
-  // Cards
-  card: {
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  cardValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-
-  // Competition
-  competitionName: {
-    fontSize: 17,
-    fontWeight: '800',
-  },
-
-  // Opponent
-  opponentName: {
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: SPACING.xs,
-  },
-  clubRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  clubText: {
-    fontSize: 14,
-  },
-
-  // Technique
-  techniqueValue: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-
-  // Weights
-  weightValue: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  weightDiff: {
-    fontSize: 13,
-    marginTop: SPACING.xs,
-  },
-
-  // Notes
-  notesText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-
-  // Row
-  row: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-});

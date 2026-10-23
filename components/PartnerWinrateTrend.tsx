@@ -1,5 +1,5 @@
 // ============================================
-// PARTNER WINRATE TREND · courbe sur 12 mois
+// PARTNER WINRATE TREND : courbe sur 12 mois
 // ============================================
 
 import React, { useMemo } from 'react';

@@ -1,11 +1,13 @@
 // ============================================
-// ANIMATED COUNTER
+// ANIMATED COUNTER (refonte v2 : gros chiffres Archivo Black, chasse fixe)
 // Animation count-up (smooth ease-out) sur les KPI numériques.
 // Effet "wow" instantané quand l'écran apparaît.
 // ============================================
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Text, StyleProp, TextStyle, AccessibilityInfo, Platform } from 'react-native';
+import { Text, StyleProp, TextStyle, AccessibilityInfo, StyleSheet } from 'react-native';
+import { fontStyle } from '@/components/yoroi/fonts';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 
 interface AnimatedCounterProps {
   /** Valeur cible */
@@ -54,6 +56,7 @@ const AnimatedCounterInner: React.FC<AnimatedCounterProps> = ({
   formatThousands,
   compact = false,
 }) => {
+  const { theme } = useYoroiTheme();
   const [displayed, setDisplayed] = useState(value);
   const previousRef = useRef<number>(value);
   const reduceMotionRef = useRef<boolean>(false);
@@ -95,10 +98,23 @@ const AnimatedCounterInner: React.FC<AnimatedCounterProps> = ({
   const formatted = formatNumber(displayed, decimals, useThousands, compact);
 
   return (
-    <Text style={style} accessibilityLabel={`${prefix}${formatted}${suffix}`}>
+    <Text style={[fontStyle('black'), styles.base, { color: theme.colors.ink, letterSpacing: letterSpacingFor(style) }, style]} accessibilityLabel={`${prefix}${formatted}${suffix}`}>
       {prefix}{formatted}{suffix}
     </Text>
   );
 };
+
+// Chasse legerement resserree, proportionnelle a la taille (signature v2)
+function letterSpacingFor(style: StyleProp<TextStyle>): number {
+  const flat = StyleSheet.flatten(style) as TextStyle | undefined;
+  const size = typeof flat?.fontSize === 'number' ? flat.fontSize : 24;
+  return -Math.round(size * 0.04 * 10) / 10;
+}
+
+const styles = StyleSheet.create({
+  base: {
+    fontVariant: ['tabular-nums'],
+  },
+});
 
 export const AnimatedCounter = React.memo(AnimatedCounterInner);

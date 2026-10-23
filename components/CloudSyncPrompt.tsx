@@ -5,7 +5,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, DeviceEventEmitter, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, DeviceEventEmitter, ActivityIndicator } from 'react-native';
 import { Cloud, CloudDownload, X, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { acceptCloudSync, dismissCloudSync } from '@/lib/multiDeviceSyncService';
@@ -15,6 +15,7 @@ import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedba
 import logger from '@/lib/security/logger';
 
 import { formatRelative, formatSize } from '@/lib/utils/formatDate';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 interface PromptData {
   cloudBackupName: string;
@@ -59,10 +60,10 @@ const CloudSyncPromptInner: React.FC = () => {
 
     // Confirmation explicite AVEC le diff calculé
     const confirmed = await new Promise<boolean>((resolve) => {
-      Alert.alert(
-        '✨ Synchroniser depuis ton autre appareil',
+      appAlert(
+        'Synchroniser avec ton autre appareil ?',
         (diffMessage ? `${diffMessage}\n\n` : '') +
-        "• Tes données existantes ne sont PAS supprimées\n" +
+        "• Tes données actuelles ne sont pas supprimées\n" +
         "• En cas de doublons, les plus récentes sont gardées\n" +
         "• Une sauvegarde de sécurité est créée juste avant\n\n" +
         "Continuer ?",
@@ -79,17 +80,17 @@ const CloudSyncPromptInner: React.FC = () => {
       const ok = await acceptCloudSync(data.cloudBackupName);
       if (ok) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
-        Alert.alert(
-          '✨ Synchronisation réussie',
-          'Tes données depuis ton autre appareil sont maintenant sur celui-ci.\n\nSi tu constates un problème, une sauvegarde de sécurité a été créée juste avant la synchro · tu peux revenir en arrière depuis Mes sauvegardes.'
+        appAlert(
+          'Synchronisation réussie',
+          'Tes données depuis ton autre appareil sont maintenant sur celui-ci.\n\nSi tu constates un problème, une sauvegarde de sécurité a été créée juste avant, tu peux revenir en arrière depuis Mes sauvegardes.'
         );
         setData(null);
       } else {
-        Alert.alert('Erreur', 'Impossible de synchroniser. Réessaie plus tard.');
+        appAlert('Synchronisation impossible', 'Réessaie plus tard.');
       }
     } catch (e) {
       logger.error('[CloudSyncPrompt] Erreur:', e);
-      Alert.alert('Erreur', 'Impossible de synchroniser.');
+      appAlert('Synchronisation impossible', 'Réessaie dans un instant.');
     } finally {
       setSyncing(false);
     }
@@ -118,7 +119,7 @@ const CloudSyncPromptInner: React.FC = () => {
             Nouveau contenu depuis un autre appareil
           </Text>
           <Text style={[styles.sub, { color: colors.text }]}>
-            Backup créé {formatRelative(data.cloudBackupDate)} · {formatSize(data.cloudBackupSize)}
+            Backup créé {formatRelative(data.cloudBackupDate)}, {formatSize(data.cloudBackupSize)}
           </Text>
         </View>
         <TouchableOpacity onPress={handleDismiss} style={styles.closeBtn} disabled={syncing}>

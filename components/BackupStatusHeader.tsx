@@ -126,7 +126,7 @@ const BackupStatusHeaderInner: React.FC = () => {
             {triggering ? 'Sauvegarde…' : 'Sauvegarder'}
           </Text>
         </TouchableOpacity>
-        {/* Partage (email/WhatsApp/Drive) · fallback pour users sans cloud configuré */}
+        {/* Partage (email/WhatsApp/Drive), fallback pour users sans cloud configuré */}
         {lastBackup && (
           <TouchableOpacity
             onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); shareLatestBackup(); }}

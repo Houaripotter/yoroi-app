@@ -64,7 +64,7 @@ const STORAGE_KEYS = {
 const DEFAULT_SLEEP_GOAL = 480; // 8h par defaut
 
 // ============================================
-// ASYNC STORAGE — les entrées de sommeil ne sont pas des données sensibles
+// ASYNC STORAGE : les entrées de sommeil ne sont pas des données sensibles
 // (expo-secure-store a une limite de 2048 octets par valeur, insuffisant pour
 //  stocker un historique de nuits)
 // Migration inverse : si des données sont coincées dans SecureStore, on les récupère
@@ -456,7 +456,7 @@ export const getSleepAdvice = (debtHours: number): { message: string; severity: 
     };
   } else {
     return {
-      message: `🚨 Dette critique : ${debtHours}h ! Repos obligatoire.`,
+      message: `Dette critique : ${debtHours}h ! Repos obligatoire.`,
       severity: 'danger',
     };
   }
@@ -506,7 +506,7 @@ export const generateSleepShareText = async (): Promise<string> => {
       text += `Record : ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}\n`;
     }
 
-    text += `\n⏱️ Moyenne : ${formatSleepDuration(stats.averageDuration)}\n`;
+    text += `\nMoyenne : ${formatSleepDuration(stats.averageDuration)}\n`;
     text += `Qualité : ${stats.averageQuality}/5\n`;
 
     if (goal > 0) {
@@ -586,6 +586,23 @@ export const addSleepEntryFromHealthKit = async (entry: {
   } catch (error) {
     logger.error('Erreur ajout sommeil HealthKit:', error);
     return null;
+  }
+};
+
+/**
+ * Retire les nuits venues de HealthKit (id hk_) a partir de la date donnee qui ne sont plus dans la liste a garder.
+ * Sert quand une nuit change de jour (16 octobre : jour du reveil au lieu du jour du coucher). Les nuits notees a la main restent.
+ */
+export const purgerNuitsHealthKit = async (garder: Set<string>, depuis: string): Promise<number> => {
+  try {
+    const entries = await getSleepEntries();
+    const reste = entries.filter((e) => !(e.id.startsWith('hk_') && e.date >= depuis && !garder.has(e.date)));
+    const n = entries.length - reste.length;
+    if (n > 0) await saveSecureSleepEntries(reste);
+    return n;
+  } catch (error) {
+    logger.error('Erreur purge sommeil HealthKit:', error);
+    return 0;
   }
 };
 

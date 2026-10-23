@@ -1,23 +1,26 @@
 // ============================================
-// SHARE STATS BUTTON
-// Tap → ouvre un MODAL PREVIEW avec la carte affichée en grand.
+// SHARE STATS BUTTON (refonte v2)
+// Appui : ouvre un apercu de la carte en grand.
 // L'utilisateur voit ce qu'il va partager AVANT de confirmer.
-// Boutons : Partager (partage réel) / Fermer.
+// API inchangee.
 // ============================================
 
 import React, { useRef, useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator,
-  Modal, Pressable, useWindowDimensions,
-} from 'react-native';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { View, Text, StyleSheet, Platform, ActivityIndicator, Modal, Pressable, Share, useWindowDimensions } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
-import { Share2, X } from 'lucide-react-native';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
 import { logger } from '@/lib/security/logger';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { fontStyle } from '@/components/yoroi/fonts';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { SignatureCarte } from '@/components/yoroi/v2/partage/SignatureCarte';
+import { signaturePartage } from '@/constants/partage';
+import { noterPartage } from '@/lib/v2/partage/mesure';
 
 interface ShareStat {
   label: string;
@@ -34,142 +37,125 @@ interface ShareStatsButtonProps {
 
 export type ShareFormat = '1:1' | '9:16';
 
-// Card contenu · extrait pour réutilisation dans preview + hidden capture
+// Couleurs fixes de la carte partagee (image exportee, independante du theme)
+const CARD = {
+  paper: '#F2F1EC',
+  ink: '#1D2029',
+  ink2: '#4A4E5A',
+  muted: '#8B8D96',
+  line: '#E2DFD8',
+  red: '#B0282E',
+  gold: '#C59D45',
+  goldLight: '#E3C47B',
+  white: '#FFFFFF',
+};
+const STAT_COLORS = [CARD.ink, '#2C4A84', '#6E8C3A', '#A8832F'];
+
+function ShareIcon({ color, size = 18 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function Plate({ size }: { size: number }) {
+  // vague 47 : pastille ronde cochee a la place de la plaque kozane
+  return (
+    <Svg width={size} height={size} viewBox="0 0 26 26">
+      <Circle cx={13} cy={13} r={12} fill={CARD.ink} />
+      <Path d="M7.6 13.4 L11.3 17 L18.4 9.6" stroke={CARD.goldLight} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
+}
+
+// Contenu de la carte, reutilise pour l'apercu et la capture cachee
 const ShareCard: React.FC<{
   title: string;
   stats: ShareStat[];
   tagline?: string;
   accent: string;
   dateStr: string;
-  fullSize?: boolean;       // true pour la version HD (1080×1080 ou 1080×1920), false pour preview
-  scale?: number;            // pour scaling proportionnel (preview uniquement)
-  format?: ShareFormat;      // '1:1' (1080×1080) ou '9:16' (1080×1920)
-}> = ({ title, stats, tagline, accent, dateStr, fullSize = false, scale = 1, format = '1:1' }) => {
+  fullSize?: boolean;
+  scale?: number;
+  format?: ShareFormat;
+}> = ({ title, stats, tagline, dateStr, fullSize = false, scale = 1, format = '1:1' }) => {
   const isVertical = format === '9:16';
-  const baseWidthFull = 1080;
-  const baseHeightFull = isVertical ? 1920 : 1080;
   const previewWidth = 320 * scale;
-  const previewHeight = isVertical ? (320 * 16 / 9) * scale : previewWidth;
+  const previewHeight = isVertical ? ((320 * 16) / 9) * scale : previewWidth;
+  const width = fullSize ? 1080 : previewWidth;
+  const height = fullSize ? (isVertical ? 1920 : 1080) : previewHeight;
+  const k = width / 320; // facteur d'echelle unique
 
-  const width = fullSize ? baseWidthFull : previewWidth;
-  const height = fullSize ? baseHeightFull : previewHeight;
-
-  const padding = fullSize ? (isVertical ? 72 : 80) : 24;
-  const logoSize = fullSize ? 64 : 40;
-  const titleSize = fullSize ? (isVertical ? 38 : 32) : 18;
-  const dateSize = fullSize ? 18 : 11;
-  const statValueSize = fullSize ? (isVertical ? 72 : 64) : 30;
-  const statLabelSize = fullSize ? 22 : 11;
-  const taglineSize = fullSize ? (isVertical ? 32 : 26) : 14;
-  const footerSize = fullSize ? 18 : 10;
-  const gridGap = fullSize ? (isVertical ? 20 : 24) : 10;
+  const black = fontStyle('black');
+  const bold = fontStyle('bold');
 
   return (
-    <View
-      style={{
-        width,
-        height,
-        padding,
-        backgroundColor: '#0F172A',
-        justifyContent: 'space-between',
-      }}
-    >
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: fullSize ? 20 : 10 }}>
-        <View style={{
-          width: logoSize, height: logoSize, borderRadius: logoSize / 3.5,
-          backgroundColor: accent, justifyContent: 'center', alignItems: 'center',
-        }}>
-          <Text style={{ color: '#FFFFFF', fontSize: logoSize * 0.56, fontWeight: '900' }}>Y</Text>
-        </View>
-        <View>
-          <Text style={{ color: '#FFFFFF', fontSize: titleSize, fontWeight: '900', letterSpacing: -0.5 }}>
+    <View style={{ width, height, padding: 22 * k, backgroundColor: CARD.paper, justifyContent: 'space-between', overflow: 'hidden' }}>
+      {/* Filigrane */}
+      <Glyph kind="sakura" size={180 * k} color="#E6E3DA" style={{ position: 'absolute', right: -30 * k, top: -24 * k }} />
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 * k }}>
+        <Plate size={22 * k} />
+        <View style={{ flex: 1 }}>
+          <Text style={[black, { color: CARD.ink, fontSize: 20 * k, letterSpacing: -0.9 * k }]} numberOfLines={2}>
             {title}
           </Text>
-          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: dateSize, fontWeight: '600', marginTop: 2 }}>
-            {dateStr}
-          </Text>
+          <Text style={[bold, { color: CARD.ink2, fontSize: 11 * k, marginTop: 2 * k }]}>{dateStr}</Text>
         </View>
       </View>
 
-      {/* Grid 2×2 */}
-      <View style={{
-        flexDirection: 'row', flexWrap: 'wrap', gap: gridGap,
-        marginVertical: fullSize ? 40 : 14, justifyContent: 'space-between',
-      }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 * k, marginVertical: 12 * k }}>
         {stats.slice(0, 4).map((s, i) => (
           <View
             key={i}
             style={{
-              width: '47%',
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              padding: fullSize ? 32 : 14,
-              borderRadius: fullSize ? 24 : 14,
-              minHeight: fullSize ? 200 : 92,
+              width: '48%',
+              backgroundColor: 'rgba(255,255,255,0.88)',
+              borderWidth: 1,
+              borderColor: CARD.white,
+              padding: 14 * k,
+              borderRadius: 18 * k,
+              minHeight: (isVertical ? 120 : 88) * k,
               justifyContent: 'center',
             }}
           >
-            <Text style={{
-              color: s.color, fontSize: statValueSize, fontWeight: '900',
-              letterSpacing: -2, marginBottom: fullSize ? 8 : 3,
-            }}>
+            <Text style={[black, { color: STAT_COLORS[i % STAT_COLORS.length], fontSize: 30 * k, letterSpacing: -1.4 * k }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {s.value}
             </Text>
-            <Text style={{
-              color: 'rgba(255,255,255,0.7)', fontSize: statLabelSize, fontWeight: '700',
-              textTransform: 'uppercase', letterSpacing: 1,
-            }}>
+            <Text style={[bold, { color: CARD.ink2, fontSize: 11 * k, marginTop: 3 * k }]} numberOfLines={2}>
               {s.label}
             </Text>
           </View>
         ))}
       </View>
 
-      {/* Tagline + branding */}
       <View>
         {tagline ? (
-          <Text style={{
-            color: 'rgba(255,255,255,0.85)', fontSize: taglineSize, fontWeight: '700',
-            letterSpacing: -0.3, textAlign: 'center',
-            marginBottom: fullSize ? 20 : 10,
-          }}>
-            {tagline}
-          </Text>
+          <Text style={[black, { color: CARD.ink, fontSize: 15 * k, letterSpacing: -0.5 * k, textAlign: 'center', marginBottom: 10 * k }]}>{tagline}</Text>
         ) : null}
-        <View style={{
-          alignItems: 'center', paddingTop: fullSize ? 12 : 8,
-          borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)',
-        }}>
-          <Text style={{
-            color: 'rgba(255,255,255,0.4)', fontSize: footerSize, fontWeight: '700',
-            letterSpacing: 1,
-          }}>
-            YOROI · Suivi sport personnel
-          </Text>
-        </View>
+        <View style={{ height: 3 * k, backgroundColor: CARD.goldLight, borderRadius: 2 * k, marginHorizontal: 40 * k, marginBottom: 8 * k }} />
+        <SignatureCarte size={10 * k} color={CARD.muted} align="center" />
       </View>
     </View>
   );
 };
 
-const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
-  title = 'Mes stats Yoroi',
-  stats,
-  tagline,
-  accentColor,
-}) => {
-  const { colors } = useTheme();
+const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({ title = 'Mes stats Yoroi', stats, tagline, accentColor }) => {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const viewShotSquareRef = useRef<ViewShot>(null);
   const viewShotStoryRef = useRef<ViewShot>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareFormat, setShareFormat] = useState<ShareFormat>('1:1');
-  const accent = accentColor || colors.accent || '#3B82F6';
+  const accent = accentColor || c.accent;
   const dateStr = format(new Date(), 'd MMMM yyyy', { locale: fr });
 
-  // La preview affiche la carte scalée pour tenir à l'écran (max 340px de large)
-  const PREVIEW_WIDTH = Math.min(340, SCREEN_WIDTH - 48);
+  // L'apercu tient a l'ecran ; en story on limite la hauteur
+  const maxW = Math.min(340, SCREEN_WIDTH - 72);
+  const PREVIEW_WIDTH = shareFormat === '9:16' ? Math.min(maxW, 230) : maxW;
   const PREVIEW_SCALE = PREVIEW_WIDTH / 320;
   const PREVIEW_HEIGHT = shareFormat === '9:16' ? (PREVIEW_WIDTH * 16) / 9 : PREVIEW_WIDTH;
 
@@ -180,6 +166,7 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
 
   const handleShare = async () => {
     if (sharing) return;
+    noterPartage('stats_seances');
     setSharing(true);
     if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     try {
@@ -188,7 +175,8 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
       if (!uri) throw new Error('Capture failed');
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
-        logger.warn('[ShareStats] Sharing not available');
+        const res = await Share.share({ url: uri, message: signaturePartage() });
+        if (res.action === Share.sharedAction) noterPartage('stats_seances', true);
         return;
       }
       await Sharing.shareAsync(uri, {
@@ -205,164 +193,115 @@ const ShareStatsButtonInner: React.FC<ShareStatsButtonProps> = ({
 
   return (
     <>
-      {/* Bouton visible */}
-      <TouchableOpacity
+      <Pressable
         onPress={handleOpenPreview}
-        activeOpacity={0.85}
-        style={[styles.button, { backgroundColor: accent }]}
+        style={({ pressed }) => [styles.button, { backgroundColor: c.surface, borderColor: c.divider, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
         accessibilityRole="button"
         accessibilityLabel="Voir et partager mes stats"
       >
-        <Share2 size={18} color="#FFFFFF" strokeWidth={2.5} />
-        <Text style={styles.buttonText}>Voir et partager mes stats</Text>
-      </TouchableOpacity>
+        <View style={[styles.buttonIcon, { backgroundColor: accent }]}>
+          <ShareIcon color="#FFFFFF" size={18} />
+        </View>
+        <Ink size={16} weight="extraBold" style={{ flex: 1 }}>
+          Voir et partager mes stats
+        </Ink>
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+          <Path d="M9 5l7 7-7 7" stroke={c.textMuted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      </Pressable>
 
-      {/* Modal PREVIEW · l'utilisateur voit la carte avant de partager */}
-      <Modal
-        visible={previewOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPreviewOpen(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setPreviewOpen(false)}
-        >
-          <Pressable
-            style={[styles.modalSheet, { backgroundColor: '#1F2937' }]}
-            onPress={() => { /* absorbe */ }}
-          >
+      <Modal visible={previewOpen} transparent animationType="fade" onRequestClose={() => setPreviewOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setPreviewOpen(false)}>
+          <Pressable style={[styles.modalSheet, { backgroundColor: c.background, borderColor: '#FFFFFF' }]} onPress={() => {}}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Aperçu de ta carte</Text>
-              <TouchableOpacity
+              <Ink size={22} weight="black" tight>
+                Aperçu de ta carte
+              </Ink>
+              <Pressable
                 onPress={() => setPreviewOpen(false)}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer"
+                style={[styles.close, { backgroundColor: c.surface, borderColor: c.divider }]}
               >
-                <X size={22} color="rgba(255,255,255,0.7)" />
-              </TouchableOpacity>
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                  <Path d="M6 6l12 12M18 6L6 18" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" />
+                </Svg>
+              </Pressable>
             </View>
 
-            {/* Format selector */}
-            <View style={styles.formatSelector}>
-              {(['1:1', '9:16'] as ShareFormat[]).map(f => {
+            <View style={[styles.segment, { backgroundColor: c.fillSoft }]}>
+              {(['1:1', '9:16'] as ShareFormat[]).map((f) => {
                 const active = shareFormat === f;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={f}
                     onPress={() => {
                       if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
                       setShareFormat(f);
                     }}
-                    activeOpacity={0.85}
-                    style={[
-                      styles.formatChip,
-                      { backgroundColor: active ? accent : 'rgba(255,255,255,0.08)' },
-                    ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    style={[styles.segmentItem, active && { backgroundColor: c.surface, shadowColor: c.shadow }]}
                   >
-                    <Text style={{
-                      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.7)',
-                      fontSize: 12,
-                      fontWeight: '900',
-                      letterSpacing: 0.5,
-                    }}>
-                      {f === '1:1' ? 'CARRÉ 1:1' : 'STORY 9:16'}
-                    </Text>
-                  </TouchableOpacity>
+                    <Ink size={14} weight={active ? 'extraBold' : 'bold'} color={active ? c.ink : c.textSecondary}>
+                      {f === '1:1' ? 'Carré' : 'Story'}
+                    </Ink>
+                  </Pressable>
                 );
               })}
             </View>
 
-            {/* Preview scalée */}
             <View style={styles.previewWrap}>
-              <View
-                style={{
-                  width: PREVIEW_WIDTH,
-                  height: PREVIEW_HEIGHT,
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                }}
-              >
-                <ShareCard
-                  title={title}
-                  stats={stats}
-                  tagline={tagline}
-                  accent={accent}
-                  dateStr={dateStr}
-                  fullSize={false}
-                  scale={PREVIEW_SCALE}
-                  format={shareFormat}
-                />
+              <View style={{ width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: c.border }}>
+                <ShareCard title={title} stats={stats} tagline={tagline} accent={accent} dateStr={dateStr} fullSize={false} scale={PREVIEW_SCALE} format={shareFormat} />
               </View>
             </View>
 
-            <Text style={styles.modalHint}>
-              {shareFormat === '1:1'
-                ? 'Carte 1080×1080 · parfaite pour Instagram, WhatsApp, Feed'
-                : 'Carte 1080×1920 · parfaite pour Stories, Reels, TikTok'}
-            </Text>
+            <Ink size={13} weight="bold" color={c.textMuted} style={styles.modalHint}>
+              {shareFormat === '1:1' ? 'Format carré, idéal pour Instagram et WhatsApp' : 'Format vertical, idéal pour les stories'}
+            </Ink>
 
-            {/* Boutons action */}
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
-                onPress={() => setPreviewOpen(false)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.actionBtnText, { color: '#FFFFFF' }]}>Fermer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: accent }]}
+              <Pressable onPress={() => setPreviewOpen(false)} accessibilityRole="button" style={[styles.actionBtn, { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1 }]}>
+                <Ink size={15} weight="bold" color={c.textSecondary}>
+                  Fermer
+                </Ink>
+              </Pressable>
+              <Pressable
                 onPress={handleShare}
                 disabled={sharing}
-                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Partager"
+                style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? c.accentPressed : c.accent }]}
               >
                 {sharing ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <>
-                    <Share2 size={16} color="#FFFFFF" strokeWidth={2.5} />
-                    <Text style={[styles.actionBtnText, { color: '#FFFFFF' }]}>Partager</Text>
+                    <ShareIcon color="#FFFFFF" size={17} />
+                    <Ink size={15} weight="extraBold" color="#FFFFFF">
+                      Partager
+                    </Ink>
                   </>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </Pressable>
         </Pressable>
       </Modal>
 
-      {/* Vue cachée 1080×1080 (carré) */}
+      {/* Vue cachee 1080x1080 (carre) */}
       <View style={styles.hiddenWrap} pointerEvents="none">
-        <ViewShot
-          ref={viewShotSquareRef}
-          options={{ format: 'png', quality: 1, result: 'tmpfile' }}
-        >
-          <ShareCard
-            title={title}
-            stats={stats}
-            tagline={tagline}
-            accent={accent}
-            dateStr={dateStr}
-            fullSize
-            format="1:1"
-          />
+        <ViewShot ref={viewShotSquareRef} options={{ format: 'png', quality: 1, result: 'tmpfile' }}>
+          <ShareCard title={title} stats={stats} tagline={tagline} accent={accent} dateStr={dateStr} fullSize format="1:1" />
         </ViewShot>
       </View>
 
-      {/* Vue cachée 1080×1920 (story) */}
+      {/* Vue cachee 1080x1920 (story) */}
       <View style={styles.hiddenWrap} pointerEvents="none">
-        <ViewShot
-          ref={viewShotStoryRef}
-          options={{ format: 'png', quality: 1, result: 'tmpfile' }}
-        >
-          <ShareCard
-            title={title}
-            stats={stats}
-            tagline={tagline}
-            accent={accent}
-            dateStr={dateStr}
-            fullSize
-            format="9:16"
-          />
+        <ViewShot ref={viewShotStoryRef} options={{ format: 'png', quality: 1, result: 'tmpfile' }}>
+          <ShareCard title={title} stats={stats} tagline={tagline} accent={accent} dateStr={dateStr} fullSize format="9:16" />
         </ViewShot>
       </View>
     </>
@@ -375,30 +314,25 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 14,
+    gap: 12,
+    minHeight: 64,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 22,
+    borderWidth: 1,
     marginHorizontal: 16,
     marginVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 4,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.2,
+  buttonIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  // Modal preview
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: 'rgba(29,32,41,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -406,13 +340,14 @@ const styles = StyleSheet.create({
   modalSheet: {
     width: '100%',
     maxWidth: 400,
-    borderRadius: 24,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 20,
+    borderRadius: 30,
+    borderWidth: 1,
+    padding: 18,
+    shadowColor: '#1D2029',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.2,
+    shadowRadius: 28,
+    elevation: 16,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -420,35 +355,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  modalTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.3,
+  close: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segment: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  segmentItem: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
   previewWrap: {
     alignItems: 'center',
-    marginVertical: 8,
-  },
-  formatSelector: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 10,
-  },
-  formatChip: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
+    marginVertical: 6,
   },
   modalHint: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
-    fontWeight: '600',
     textAlign: 'center',
-    marginTop: 14,
-    marginBottom: 8,
-    fontStyle: 'italic',
+    marginTop: 12,
+    marginBottom: 4,
   },
   modalActions: {
     flexDirection: 'row',
@@ -461,15 +399,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
+    minHeight: 54,
+    borderRadius: 18,
   },
-  actionBtnText: {
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-
   hiddenWrap: {
     position: 'absolute',
     top: -10000,

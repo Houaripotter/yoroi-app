@@ -103,7 +103,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
                   Rangs Samouraï
                 </Text>
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                  武士道 - La Voie du Guerrier
+                  La voie du guerrier
                 </Text>
               </View>
               <Sword size={22} color={colors.textMuted} style={{ transform: [{ rotate: '45deg' }] }} />
@@ -122,9 +122,6 @@ export const RanksModal: React.FC<RanksModalProps> = ({
               <View style={styles.streakInfo}>
                 <Text style={[styles.currentRankName, { color: currentRank.color }]}>
                   {getRankName(currentRank)}
-                </Text>
-                <Text style={[styles.currentRankJp, { color: colors.textMuted }]}>
-                  {currentRank.nameJp}
                 </Text>
               </View>
             </View>
@@ -230,9 +227,6 @@ export const RanksModal: React.FC<RanksModalProps> = ({
                         </View>
                       )}
                     </View>
-                    <Text style={[styles.rankNameJp, { color: colors.textMuted }]}>
-                      {rank.nameJp}
-                    </Text>
                     <Text style={[styles.rankDescription, { color: colors.textSecondary }]} numberOfLines={1}>
                       {getRankDescription(rank)}
                     </Text>
@@ -264,7 +258,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
                 "La discipline est le pont entre les objectifs et l'accomplissement."
               </Text>
               <Text style={[styles.motivationAuthor, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>
-                · Proverbe japonais
+                Proverbe japonais
               </Text>
             </View>
           </ScrollView>

@@ -40,4 +40,11 @@ RCT_EXTERN_METHOD(getStepsAsJSON:(double)days
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(getAppleWorkoutExtrasAsJSON:(NSString *)workoutUUID
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(getApplePreferredHeartRateZonesAsJSON:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 @end

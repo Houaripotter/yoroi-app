@@ -4,7 +4,7 @@ const { YoroiLiveActivityManager } = NativeModules;
 
 export interface LiveActivityTimerData {
   activityName?: string;
-  endTime?: number;        // Unix timestamp (secondes) — fin de la phase en cours
+  endTime?: number;        // Unix timestamp (secondes), fin de la phase en cours
   timeRemaining: number;   // Secondes restantes (pour affichage en pause)
   isRunning: boolean;
   mode: string;            // combat | tabata | emom | amrap | repos | custom

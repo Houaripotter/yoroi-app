@@ -71,7 +71,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
       setUnlockedBadges(badges);
     } catch (error) {
       logger.error('Error loading badges:', error);
-      showPopup(t('common.error'), t('badges.loadError'), [{ text: 'OK', style: 'primary' }]);
+      showPopup('Oups', 'Tes badges n’ont pas pu être chargés.', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setLoading(false);
       setRefreshing(false);

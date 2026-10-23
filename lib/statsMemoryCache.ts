@@ -78,7 +78,7 @@ export const clearAllCache = (): void => {
 };
 
 /**
- * Stats de cache — utile pour debug en dev.
+ * Stats de cache, utile pour debug en dev.
  */
 export const getCacheStats = () => {
   const now = Date.now();

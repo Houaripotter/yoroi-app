@@ -111,12 +111,12 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
     }
   }, [selectedMetric, safeHRHistory, safeHRVHistory, safeSpo2History, safeRespHistory, safeVo2maxHistory]);
 
-  // ── Gauge FC (demi-cercle identique IMC) ·
+  // ── Gauge FC (demi-cercle identique IMC), 
   const displayHR = restingHR > 0 ? restingHR : currentHR;
   const hrStatusLabel = displayHR === 0 ? '' : displayHR < 50 ? 'Athlète' : displayHR < 60 ? 'Excellent' : displayHR < 70 ? 'Bon' : displayHR < 80 ? 'Normal' : displayHR < 90 ? 'Élevé' : 'Très élevé';
   const hrStatusColor = displayHR === 0 ? colors.textMuted : displayHR < 60 ? '#22C55E' : displayHR < 70 ? '#3B82F6' : displayHR < 80 ? '#F59E0B' : '#EF4444';
 
-  // ── Gauge FC · variables précalculées (pas de composant interne)
+  // ── Gauge FC : variables précalculées (pas de composant interne)
   const hrGaugeGW = 200, hrGaugeGH = 120;
   const hrGaugeGcx = hrGaugeGW / 2, hrGaugeGcy = hrGaugeGH - 2;
   const hrGaugeGr = 65, hrGaugeGsw = 16;
@@ -143,7 +143,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
     return { v, x: hrGaugeGcx + lr * Math.cos(a), y: hrGaugeGcy - lr * Math.sin(a) };
   });
 
-  // VO2Max · badge de niveau
+  // VO2Max, badge de niveau
   const getVo2maxLevel = (v: number) => {
     if (v >= 55) return { label: 'Excellent', color: '#22C55E' };
     if (v >= 45) return { label: 'Bon', color: '#3B82F6' };
@@ -165,7 +165,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
 
   return (
     <View style={{ backgroundColor: sectionBg, borderRadius: 16, paddingTop: 8, paddingBottom: 8 }}>
-      {/* ── Jauge FC · JSX inline (pas de composant interne) */}
+      {/* ── Jauge FC : JSX inline (pas de composant interne) */}
       {displayHR > 0 && (
         <StatsSection>
           <TouchableOpacity
@@ -232,7 +232,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
         </StatsSection>
       )}
 
-      {/* ── FC + VRC · MultiLine si historiques */}
+      {/* ── FC + VRC : MultiLine si historiques */}
       {(safeHRHistory.length > 0 || safeHRVHistory.length > 0) && (
         <StatsSection>
           <MultiLineComparisonCard
@@ -290,7 +290,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
         </StatsSection>
       )}
 
-      {/* ── SpO2 + Fréq. Respiratoire · DualComparison */}
+      {/* ── SpO2 + Fréq. Respiratoire, DualComparison */}
       {(spO2Value > 0 || respRate > 0) && (
         <StatsSection>
           {(spO2Value > 0 && respRate > 0) ? (
@@ -382,7 +382,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
         </StatsSection>
       )}
 
-      {/* ── Température + Glycémie · DualComparison */}
+      {/* ── Température + Glycémie, DualComparison */}
       {(bodyTempValue > 0 || bloodGlucoseValue > 0) && (
         <StatsSection>
           {bodyTempValue > 0 && bloodGlucoseValue > 0 ? (
@@ -425,7 +425,7 @@ export const SignesVitauxTab: React.FC<SignesVitauxTabProps> = React.memo(({
                 <Text style={[styles.heroUnit, { color: colors.textMuted }]}> {bloodGlucoseUnit}</Text>
               </View>
               <Text style={[styles.statusBadge, { color: bloodGlucoseValue >= 4.0 && bloodGlucoseValue <= 5.9 ? '#22C55E' : bloodGlucoseValue >= 7.0 ? '#EF4444' : '#F59E0B' }]}>
-                {bloodGlucoseValue >= 7.0 ? 'Élevée · consulter un médecin' : bloodGlucoseValue >= 6.0 ? 'Légèrement élevée' : bloodGlucoseValue < 4.0 ? 'Basse · hypoglycémie possible' : 'Normale à jeun'}
+                {bloodGlucoseValue >= 7.0 ? 'Élevée, consulter un médecin' : bloodGlucoseValue >= 6.0 ? 'Légèrement élevée' : bloodGlucoseValue < 4.0 ? 'Basse, hypoglycémie possible' : 'Normale à jeun'}
               </Text>
             </View>
           )}

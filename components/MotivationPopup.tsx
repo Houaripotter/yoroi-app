@@ -16,7 +16,7 @@ const MOTIVATIONS = [
   "Sois plus fort que tes excuses.",
   "Le succès commence par la décision d'essayer.",
   "Ta seule limite, c'est toi.",
-  "L'armure se forge dans l'effort. 鎧",
+  "L'armure se forge dans l'effort.",
   "Deviens la meilleure version de toi-même.",
   "Chaque jour est une chance de progresser.",
   "Le champion se construit jour après jour.",

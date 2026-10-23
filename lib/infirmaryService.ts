@@ -220,28 +220,28 @@ export const getRICEProtocol = () => {
       title: 'Repos',
       description: 'Arrêter l\'activité immédiatement',
       duration: '48-72h minimum',
-      icon: '🛌',
+      icon: '',
     },
     {
       letter: 'I',
       title: 'Ice (Glace)',
       description: 'Appliquer de la glace',
       duration: '15-20 min toutes les 2-3h',
-      icon: '🧊',
+      icon: '',
     },
     {
       letter: 'C',
       title: 'Compression',
       description: 'Bander la zone affectée',
       duration: 'Pendant 48-72h',
-      icon: '🩹',
+      icon: '',
     },
     {
       letter: 'E',
       title: 'Élévation',
       description: 'Surélever la zone blessée',
       duration: 'Le plus souvent possible',
-      icon: '⬆️',
+      icon: '',
     },
   ];
 };
@@ -316,7 +316,7 @@ export const getTreatmentsWithLabels = async (
     return {
       ...treatment,
       label: treatmentType?.label || treatment.treatment_type,
-      icon: treatmentType?.icon || '💊',
+      icon: treatmentType?.icon || '',
     };
   });
 };
@@ -473,12 +473,12 @@ export const getEVAColor = (evaScore: number): string => {
  * Retourne l'emoji en fonction du score EVA
  */
 export const getEVAEmoji = (evaScore: number): string => {
-  if (evaScore === 0) return '😊';
-  if (evaScore <= 2) return '🙂';
-  if (evaScore <= 4) return '😐';
-  if (evaScore <= 6) return '😣';
-  if (evaScore <= 8) return '😖';
-  return '😵';
+  if (evaScore === 0) return '';
+  if (evaScore <= 2) return '';
+  if (evaScore <= 4) return '';
+  if (evaScore <= 6) return '';
+  if (evaScore <= 8) return '';
+  return '';
 };
 
 /**

@@ -1,5 +1,5 @@
 // ============================================
-// HAPTIC TOUCHABLE · Drop-in TouchableOpacity + haptic auto
+// HAPTIC TOUCHABLE : Drop-in TouchableOpacity + haptic auto
 // ============================================
 // Usage :
 //   <HapticTouchable onPress={...}>...</HapticTouchable>

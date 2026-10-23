@@ -1,0 +1,52 @@
+<resources>
+  <!-- Widgets Yoroi : styles de texte communs -->
+  <style name="YwTitre">
+    <item name="android:textSize">13sp</item>
+    <item name="android:textColor">@color/yw_encre2</item>
+    <item name="android:fontFamily">sans-serif-medium</item>
+    <item name="android:maxLines">1</item>
+    <item name="android:ellipsize">end</item>
+    <item name="android:includeFontPadding">false</item>
+  </style>
+  <style name="YwPetit">
+    <item name="android:textSize">11sp</item>
+    <item name="android:textColor">@color/yw_discret</item>
+    <item name="android:maxLines">1</item>
+    <item name="android:ellipsize">end</item>
+    <item name="android:includeFontPadding">false</item>
+  </style>
+  <style name="YwTexte">
+    <item name="android:textSize">12sp</item>
+    <item name="android:textColor">@color/yw_encre2</item>
+    <item name="android:maxLines">2</item>
+    <item name="android:ellipsize">end</item>
+    <item name="android:includeFontPadding">false</item>
+  </style>
+  <style name="YwChiffre">
+    <item name="android:textColor">@color/yw_encre</item>
+    <item name="android:fontFamily">sans-serif</item>
+    <item name="android:textStyle">bold</item>
+    <item name="android:fontFeatureSettings">tnum</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:maxLines">1</item>
+  </style>
+  <style name="YwStatut">
+    <item name="android:textSize">13sp</item>
+    <item name="android:fontFamily">sans-serif-medium</item>
+    <item name="android:fontFeatureSettings">tnum</item>
+    <item name="android:maxLines">1</item>
+    <item name="android:ellipsize">end</item>
+    <item name="android:includeFontPadding">false</item>
+  </style>
+  <style name="YwBouton">
+    <item name="android:background">@drawable/yw_bouton</item>
+    <item name="android:textColor">@color/yw_sur_indigo</item>
+    <item name="android:textSize">13sp</item>
+    <item name="android:fontFamily">sans-serif-medium</item>
+    <item name="android:gravity">center</item>
+    <item name="android:paddingLeft">14dp</item>
+    <item name="android:paddingRight">14dp</item>
+    <item name="android:maxLines">1</item>
+    <item name="android:includeFontPadding">false</item>
+  </style>
+</resources>

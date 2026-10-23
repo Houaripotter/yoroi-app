@@ -269,7 +269,6 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Tuck Front Lever', category: 'street_workout', muscle: 'STATIQUE', unit: 'time' },
   { name: 'Back Lever (Hold)', category: 'street_workout', muscle: 'STATIQUE', unit: 'time' },
   { name: 'Human Flag (Drapeau)', category: 'street_workout', muscle: 'STATIQUE', unit: 'time' },
-  { name: 'L-Sit', category: 'street_workout', muscle: 'STATIQUE', unit: 'time' },
   { name: 'V-Sit', category: 'street_workout', muscle: 'STATIQUE', unit: 'time' },
   { name: 'Manna', category: 'street_workout', muscle: 'STATIQUE', unit: 'time' },
   { name: 'Handstand (ATR)', category: 'street_workout', muscle: 'STATIQUE', unit: 'time' },
@@ -434,12 +433,8 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Single Leg Takedown', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
   { name: 'Double Leg Takedown', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
   { name: 'Arm Drag to Back', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
-  { name: 'Snapdown', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
   { name: 'Collar Drag', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
-  { name: 'Ankle Pick', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
   { name: 'Guard Pull', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
-  { name: 'Tomoe Nage', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
-  { name: 'Uchi Mata', category: 'jjb', muscle: 'LUTTE', unit: 'reps' },
 
   // DRILLS & ENTRAÎNEMENT
   { name: 'Drilling Passage de Garde', category: 'jjb', muscle: 'DRILL', unit: 'reps' },
@@ -701,7 +696,6 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Box Jumps', category: 'crossfit', muscle: 'EXPLOSIVITÉ', unit: 'reps' },
   { name: 'Wall Balls', category: 'crossfit', muscle: 'CORPS ENTIER', unit: 'reps' },
   { name: 'Double Unders', category: 'crossfit', muscle: 'COORDINATION', unit: 'reps' },
-  { name: 'Toes to Bar', category: 'crossfit', muscle: 'ABDOS', unit: 'reps' },
   { name: 'Clean & Jerk', category: 'crossfit', muscle: 'PUISSANCE', unit: 'reps' },
   { name: 'Snatch', category: 'crossfit', muscle: 'TECHNIQUE', unit: 'reps' },
   { name: 'Power Clean', category: 'crossfit', muscle: 'PUISSANCE', unit: 'reps' },
@@ -711,7 +705,6 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Overhead Squat', category: 'crossfit', muscle: 'MOBILITÉ', unit: 'reps' },
   { name: 'Front Squat (CrossFit)', category: 'crossfit', muscle: 'JAMBES', unit: 'reps' },
   { name: 'Thruster', category: 'crossfit', muscle: 'CORPS ENTIER', unit: 'reps' },
-  { name: 'Push Press', category: 'crossfit', muscle: 'ÉPAULES', unit: 'reps' },
   { name: 'Push Jerk', category: 'crossfit', muscle: 'ÉPAULES', unit: 'reps' },
   { name: 'Split Jerk', category: 'crossfit', muscle: 'ÉPAULES', unit: 'reps' },
   { name: 'Burpees', category: 'crossfit', muscle: 'CARDIO', unit: 'reps' },
@@ -1053,7 +1046,6 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Plan B Sweep', category: 'jjb', muscle: 'SWEEPS', unit: 'reps' },
   { name: 'Dummy Sweep', category: 'jjb', muscle: 'SWEEPS', unit: 'reps' },
   { name: 'Technical Stand Up', category: 'jjb', muscle: 'ESCAPES', unit: 'reps' },
-  { name: 'Granby Roll', category: 'jjb', muscle: 'ESCAPES', unit: 'reps' },
   { name: 'Sit Out (Escape)', category: 'jjb', muscle: 'ESCAPES', unit: 'reps' },
   { name: 'Running Man Escape', category: 'jjb', muscle: 'ESCAPES', unit: 'reps' },
   { name: 'Buggy Choke', category: 'jjb', muscle: 'SOUMISSIONS', unit: 'reps' },
@@ -1249,3 +1241,20 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
 
 // Fonction utilitaire pour compter les exercices
 export const getExerciseCount = () => EXERCISE_LIBRARY.length;
+
+/**
+ * Anciens noms d'exercices retirés de la bibliothèque (doublons), vers le nom gardé.
+ * Une séance ou un exercice du carnet enregistré avec l'ancien nom reste reconnu à la lecture.
+ */
+export const EXERCISE_ALIASES: Record<string, string> = {
+  'Snapdown': 'Snap Down',
+  'Tomoe Nage': 'Tomoe-nage',
+  'Uchi Mata': 'Uchi-mata',
+};
+
+const aliasKey = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const ALIAS_BY_KEY = new Map(Object.entries(EXERCISE_ALIASES).map(([from, to]) => [aliasKey(from), to]));
+
+/** Nom actuel d'un exercice, en suivant les anciens noms des doublons retirés */
+export const canonicalExerciseName = (name: string): string => ALIAS_BY_KEY.get(aliasKey(name)) ?? name;
+

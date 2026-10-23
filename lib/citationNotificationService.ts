@@ -65,7 +65,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
         name: 'Citations Motivantes',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FFD700',
+        lightColor: '#2C4A84',
         description: 'Notifications de citations motivantes quotidiennes',
       });
     }
@@ -279,7 +279,7 @@ export const initCitationNotifications = async (): Promise<void> => {
     // cancelAllScheduledNotificationsAsync() avant cet appel, ce qui annule toutes
     // les citations. Il faut donc toujours les remettre en place.
     // Le spam d'historique est évité car saveNotification() n'est plus appelé
-    // lors de la planification — seulement à la RÉCEPTION via le listener dans _layout.tsx.
+    // lors de la planification, seulement à la RÉCEPTION via le listener dans _layout.tsx.
     await scheduleCitationNotifications();
     await AsyncStorage.setItem('@yoroi_citation_last_scheduled', Date.now().toString());
   } catch (error) {

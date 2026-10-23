@@ -5,9 +5,10 @@
 // ============================================
 
 import { useEffect, useState } from 'react';
-import { Platform, Alert, Linking } from 'react-native';
+import { Platform, Linking } from 'react-native';
 import healthConnect from '@/lib/healthConnect.ios';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 interface UseHealthKitReturn {
   isInitialized: boolean;
@@ -77,18 +78,18 @@ export function useHealthKit(): UseHealthKitReturn {
   const connectToHealthKit = async (): Promise<boolean> => {
     try {
       if (!isAvailable) {
-        Alert.alert(
-          'L\'app Santé non disponible',
-          'HealthKit n\'est pas disponible sur cet appareil.'
+        appAlert(
+          'Santé indisponible',
+          'L’app Santé n’est pas disponible sur cet appareil.'
         );
         return false;
       }
 
       // Afficher une explication avant de demander les permissions
       return new Promise((resolve) => {
-        Alert.alert(
+        appAlert(
           'Connexion à l\'app Santé',
-          'YOROI va demander l\'accès à tes données de santé pour un suivi complet de ta forme physique.\n\nDonnées demandées :\n• Poids et composition corporelle\n• Activité (pas, distance)\n• Sommeil\n• Fréquence cardiaque et HRV\n• VO2 Max\n• Entraînements',
+          'YOROI va demander l\'accès à tes données de santé pour un suivi complet de ta forme physique.\n\nDonnées demandées :\n• Poids et composition corporelle\n• Activité (pas, distance)\n• Sommeil\n• Fréquence cardiaque et variabilité\n• VO2 max\n• Entraînements',
           [
             {
               text: 'Annuler',
@@ -104,7 +105,7 @@ export function useHealthKit(): UseHealthKitReturn {
                   setIsConnected(connected);
 
                   if (connected) {
-                    Alert.alert(
+                    appAlert(
                       'Connexion réussie',
                       'YOROI est maintenant connecté à l\'app Santé.',
                       [{ text: 'OK' }]
@@ -112,13 +113,13 @@ export function useHealthKit(): UseHealthKitReturn {
                     // Première synchronisation
                     await healthConnect.syncAll();
                   } else {
-                    Alert.alert(
-                      'Permissions requises',
-                      'Pour utiliser cette fonctionnalité, autorise l\'accès dans Réglages > Santé > Partage de données > YOROI',
+                    appAlert(
+                      'Accès à autoriser',
+                      'Autorise YOROI dans les réglages du téléphone : Santé, Partage de données, YOROI.',
                       [
                         { text: 'Annuler', style: 'cancel' },
                         {
-                          text: 'Ouvrir Réglages',
+                          text: 'Ouvrir les réglages',
                           onPress: () => {
                             Linking.openSettings();
                           },
@@ -130,9 +131,9 @@ export function useHealthKit(): UseHealthKitReturn {
                   resolve(connected);
                 } catch (error) {
                   logger.error('Erreur connexion HealthKit:', error);
-                  Alert.alert(
-                    'Erreur',
-                    'Impossible de se connecter à l\'app Santé.'
+                  appAlert(
+                    'Connexion impossible',
+                    'YOROI n’a pas pu se relier à l’app Santé. Réessaie.'
                   );
                   resolve(false);
                 }

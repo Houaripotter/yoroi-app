@@ -1,30 +1,33 @@
 // ============================================
-// STATS EMPTY STATE
-// Composant unifié pour quand un onglet Stats n'a aucune donnée.
-// Au lieu d'un écran vide ou d'un spinner mystère, on guide l'utilisateur
-// vers l'action concrète à faire (saisir une pesée, ajouter une séance, etc.).
+// Etat vide des statistiques (refonte v2)
+// Guide l'utilisateur vers l'action concrete a faire.
+// API inchangee.
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTheme } from '@/lib/ThemeContext';
+import Animated from 'react-native-reanimated';
+import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
+import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
+import { Ink } from '@/components/yoroi/v2/Ink';
 
 interface StatsEmptyStateProps {
-  /** Icône en tête (composant Lucide ou autre · passé en JSX) */
+  /** Icone en tete (passee en JSX) */
   icon: React.ReactNode;
   /** Titre court et motivant */
   title: string;
-  /** Sous-texte qui explique pourquoi c'est vide + ce qu'on gagne en remplissant */
+  /** Sous-texte : pourquoi c'est vide et ce qu'on gagne en remplissant */
   description: string;
-  /** Texte du bouton CTA */
+  /** Texte du bouton */
   ctaLabel: string;
-  /** Route à pousser au tap. Optionnel si onCtaPress fourni. */
+  /** Route a ouvrir a l'appui. Optionnel si onCtaPress fourni. */
   ctaHref?: string;
-  /** Callback custom à la place du push */
+  /** Action personnalisee a la place de la navigation */
   onCtaPress?: () => void;
-  /** Couleur d'accent (icône + bouton) */
+  /** Couleur d'accent (liseré de l'icone) */
   accentColor?: string;
 }
 
@@ -35,9 +38,10 @@ const StatsEmptyStateInner: React.FC<StatsEmptyStateProps> = ({
   ctaLabel,
   ctaHref,
   onCtaPress,
-  accentColor = '#3B82F6',
+  accentColor,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
 
   const handlePress = () => {
     if (Platform.OS !== 'web') impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
@@ -49,24 +53,37 @@ const StatsEmptyStateInner: React.FC<StatsEmptyStateProps> = ({
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
-      <View style={[styles.iconCircle, { backgroundColor: accentColor + '15' }]}>
-        {icon}
+    <Animated.View
+      entering={ENTREE}
+      style={[styles.card, { backgroundColor: c.surface, borderColor: c.divider, shadowColor: c.shadow }]}
+    >
+      <View pointerEvents="none" style={styles.kanjiWrap}>
+        <Glyph kind="sakura" size={140} color={c.fillSoft} />
       </View>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>
+      <View style={[styles.iconTile, { backgroundColor: c.background, borderColor: c.divider }]}>
+        {icon}
+        <View style={[styles.iconLace, { backgroundColor: accentColor ?? c.accent }]} />
+      </View>
+      <Ink size={21} weight="black" tight style={styles.title}>
         {title}
-      </Text>
-      <Text style={[styles.description, { color: colors.textSecondary }]}>
+      </Ink>
+      <Ink size={14} weight="medium" color={c.textSecondary} style={styles.description}>
         {description}
-      </Text>
-      <TouchableOpacity
-        style={[styles.cta, { backgroundColor: accentColor }]}
+      </Ink>
+      <Pressable
         onPress={handlePress}
-        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={ctaLabel}
+        style={({ pressed }) => [
+          styles.cta,
+          { backgroundColor: pressed ? c.accentPressed : c.accent, shadowColor: c.accent, transform: [{ scale: pressed ? 0.98 : 1 }] },
+        ]}
       >
-        <Text style={styles.ctaText}>{ctaLabel}</Text>
-      </TouchableOpacity>
-    </View>
+        <Ink size={16} weight="extraBold" color={c.onAccent}>
+          {ctaLabel}
+        </Ink>
+      </Pressable>
+    </Animated.View>
   );
 };
 
@@ -76,56 +93,65 @@ const styles = StyleSheet.create({
   card: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 28,
+    paddingTop: 34,
+    paddingBottom: 22,
+    paddingHorizontal: 22,
     marginHorizontal: 16,
     marginVertical: 12,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    borderRadius: 28,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 22,
+    elevation: 3,
   },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  kanjiWrap: {
+    position: 'absolute',
+    right: -18,
+    top: -24,
+  },
+  kanji: {
+    lineHeight: 170,
+  },
+  iconTile: {
+    width: 76,
+    height: 76,
+    borderRadius: 24,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
+    overflow: 'hidden',
+  },
+  iconLace: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    height: 3,
+    opacity: 0.85,
   },
   title: {
-    fontSize: 19,
-    fontWeight: '900',
     textAlign: 'center',
     marginBottom: 8,
-    letterSpacing: -0.4,
   },
   description: {
-    fontSize: 14,
-    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 24,
+    marginBottom: 22,
     maxWidth: 320,
   },
   cta: {
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 14,
-    minWidth: 200,
+    alignSelf: 'stretch',
+    minHeight: 54,
+    borderRadius: 18,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
     elevation: 4,
-  },
-  ctaText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.2,
   },
 });

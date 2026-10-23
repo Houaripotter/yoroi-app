@@ -88,7 +88,7 @@ const WeightChartCardInner: React.FC<WeightChartCardProps> = ({
   const [activeMetric, setActiveMetric] = useState<MetricKey>('current');
   const scrollRef = useRef<ScrollView>(null);
 
-  // Échantillonnage stable via useMemo · évite de re-sampler à chaque render
+  // Échantillonnage stable via useMemo, évite de re-sampler à chaque render
   const data = useMemo(() => sampleData(rawData), [rawData]);
 
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
@@ -403,7 +403,7 @@ const WeightChartCardInner: React.FC<WeightChartCardProps> = ({
                 );
               })}
 
-              {/* Étiquette valeur sur le point sélectionné · clampée pour rester dans le chart */}
+              {/* Étiquette valeur sur le point sélectionné, clampée pour rester dans le chart */}
               {highlightIdx >= 0 && chartData.pts[highlightIdx] && (() => {
                 const pt = chartData.pts[highlightIdx];
                 const label = `${smartFmt(pt.value)}${unit}`;
@@ -423,7 +423,7 @@ const WeightChartCardInner: React.FC<WeightChartCardProps> = ({
                 );
               })()}
 
-              {/* Étiquette du point le plus récent si pas déjà sélectionné · clampée aussi */}
+              {/* Étiquette du point le plus récent si pas déjà sélectionné, clampée aussi */}
               {(() => {
                 const recentIdx = newestFirst ? 0 : chartData.pts.length - 1;
                 if (highlightIdx === recentIdx || chartData.pts.length === 0) return null;
@@ -448,7 +448,7 @@ const WeightChartCardInner: React.FC<WeightChartCardProps> = ({
           {isScrollable && (
             <View style={styles.hintBar}>
               <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                {newestFirst ? 'Defiler pour voir plus · Recent a gauche' : 'Defiler pour voir plus · Recent a droite'}
+                {newestFirst ? 'Fais défiler pour voir plus, le plus récent à gauche' : 'Fais défiler pour voir plus, le plus récent à droite'}
               </Text>
             </View>
           )}

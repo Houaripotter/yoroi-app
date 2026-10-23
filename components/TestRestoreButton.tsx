@@ -5,7 +5,7 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { ClipboardCheck, CheckCircle2, XCircle } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { getDocumentAsync } from 'expo-document-picker';
@@ -17,6 +17,7 @@ import { computeBackupDiff, formatDiffMessage } from '@/lib/backupDiffService';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { formatSize } from '@/lib/utils/formatDate';
 import logger from '@/lib/security/logger';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 
 const TestRestoreButtonInner: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -46,11 +47,11 @@ const TestRestoreButtonInner: React.FC = () => {
 
       // Détection chiffré
       if (isEncryptedBackup(parsed)) {
-        showResult(true, '🔒 Backup chiffré détecté',
+        showResult(true, 'Backup chiffré détecté',
           'Le fichier est un backup chiffré valide.\n\n' +
           `Taille : ${formatSize(size)}\n` +
           `Algorithme : ${parsed.yoroi_encrypted === '2.0' ? 'AES-256 + HMAC' : 'AES-256 (legacy)'}\n\n` +
-          'Pour voir le contenu, il faudrait le mot de passe · mais le chiffrement est valide et le fichier n\'a pas été altéré.', size);
+          'Pour voir le contenu, il faudrait le mot de passe, mais le chiffrement est valide et le fichier n\'a pas été altéré.', size);
         return;
       }
 
@@ -67,9 +68,9 @@ const TestRestoreButtonInner: React.FC = () => {
         try {
           const { integrity, ...without } = parsed;
           const recomputed = await digestStringAsync(CryptoDigestAlgorithm.SHA256, JSON.stringify(without));
-          checksumStatus = recomputed === integrity.checksum ? '✅ Valide (intégrité OK)' : '❌ Invalide (fichier altéré !)';
+          checksumStatus = recomputed === integrity.checksum ? 'Valide (intégrité OK)' : 'Invalide (fichier altéré !)';
           if (recomputed !== integrity.checksum) {
-            showResult(false, '⚠️ Fichier altéré',
+            showResult(false, 'Fichier altéré',
               'Le checksum ne correspond pas. Le fichier a été modifié ou corrompu.', size);
             return;
           }
@@ -79,15 +80,15 @@ const TestRestoreButtonInner: React.FC = () => {
       // Compute diff
       const diff = await computeBackupDiff(parsed);
 
-      showResult(true, '✅ Backup valide et lisible',
+      showResult(true, 'Backup valide et lisible',
         `Taille : ${formatSize(size)}\n` +
         `Version : ${parsed.version ?? 'inconnue'}\n` +
         `Checksum : ${checksumStatus}\n\n` +
         `Si tu le restaures maintenant :\n${formatDiffMessage(diff)}\n\n` +
-        `Aucune donnée modifiée · c'était juste un test.`, size);
+        `Aucune donnée modifiée, c'était juste un test.`, size);
     } catch (e) {
       logger.error('[TestRestore] Erreur:', e);
-      Alert.alert('Erreur', 'Impossible de tester ce fichier.');
+      appAlert('Oups', 'Ce fichier n’a pas pu être vérifié.');
     } finally {
       setTesting(false);
     }
@@ -96,7 +97,7 @@ const TestRestoreButtonInner: React.FC = () => {
   const showResult = (ok: boolean, title: string, msg: string, _size: number) => {
     if (ok) notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     else notificationAsync(NotificationFeedbackType.Warning).catch(() => {});
-    Alert.alert(title, msg, [{ text: 'OK' }]);
+    appAlert(title, msg, [{ text: 'OK' }]);
   };
 
   return (

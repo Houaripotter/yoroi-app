@@ -3,8 +3,35 @@
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
   <string name="expo_system_ui_user_interface_style" translatable="false">automatic</string>
-  <!-- Widgets -->
-  <string name="widget_dashboard_desc">Tes stats clés en un coup d\'oeil</string>
-  <string name="widget_hydration_desc">Suis ta consommation d\'eau quotidienne</string>
-  <string name="widget_streak_desc">Ta série d\'entraînements consécutifs</string>
+  <!-- Widgets : noms et descriptions dans le selecteur de widgets -->
+  <string name="yw_nom_poids">Poids</string>
+  <string name="yw_desc_poids">Ton poids, ton écart au rythme prévu et ta courbe sur 30 jours</string>
+  <string name="yw_nom_semaine">Ta semaine</string>
+  <string name="yw_desc_semaine">Tes séances de la semaine face à ton objectif</string>
+  <string name="yw_nom_eau">Eau</string>
+  <string name="yw_desc_eau">Ajoute un verre d\'un appui, sans ouvrir l\'app</string>
+  <string name="yw_nom_combat">Combat</string>
+  <string name="yw_desc_combat">Le compte à rebours de ta prochaine compétition</string>
+  <string name="yw_nom_chrono">Chrono rounds</string>
+  <string name="yw_desc_chrono">Lance ton chrono de rounds en un appui</string>
+  <string name="yw_nom_tableau">Tableau du jour</string>
+  <string name="yw_desc_tableau">Poids, semaine, eau et prochain combat sur ta scène</string>
+  <!-- Widgets : textes affiches -->
+  <string name="yw_vide">Ouvre Yoroi pour commencer</string>
+  <string name="yw_plus_verre">+ 1 verre</string>
+  <string name="yw_retirer_verre">Retirer un verre</string>
+  <string name="yw_seance_faite">Séance faite</string>
+  <string name="yw_lancer">Lancer</string>
+  <string name="yw_courbe_30">Ta courbe sur 30 jours</string>
+  <string name="yw_ajouter_compet">Ajouter</string>
+  <string name="yw_aucune_compet">Aucune compétition prévue</string>
+  <string name="yw_aujourdhui">Aujourd\'hui</string>
+  <string name="yw_semaine_court">Semaine</string>
+  <string name="yw_lundi">L</string>
+  <string name="yw_mardi">M</string>
+  <string name="yw_mercredi">M</string>
+  <string name="yw_jeudi">J</string>
+  <string name="yw_vendredi">V</string>
+  <string name="yw_samedi">S</string>
+  <string name="yw_dimanche">D</string>
 </resources>

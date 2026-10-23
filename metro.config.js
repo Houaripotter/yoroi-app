@@ -46,6 +46,8 @@ const blockListEntries = [
   // doublent les listeners DeviceEventEmitter → banner "Import santé" qui
   // clignote + boucle YOROI_DATA_CHANGED toutes les 10s.
   /.*\s\d+\.(ts|tsx|js|jsx)$/,
+  // Cles et jetons du Studio createur : jamais dans le bundle
+  /[\/\\]_private[\/\\].*/,
 ];
 
 const existing = config.resolver.blockList;

@@ -1,474 +1,400 @@
-// ============================================
-// YOROI - MATCH TRACKER EN DIRECT
-// ============================================
-// Saisie rapide pendant/après un match de tournoi
-// Boutons 1 main · timeline reconstructible
-// ============================================
-
-import React, { useState, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-} from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useI18n } from '@/lib/I18nContext';
-import { useTheme } from '@/lib/ThemeContext';
+/**
+ * Suivi de match v2 : saisie a une main pendant ou apres un match de tournoi.
+ * Chrono, score en direct, actions en plaques, annulation du dernier geste,
+ * chronologie complete, resultat tamponne et historique des matchs.
+ */
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
+import { Glyph } from '@/components/yoroi/v2/ornements/Glyph';
+import { DeviceEventEmitter, ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { ChevronLeft, Plus, Minus, RotateCcw, Share2, Check, Trophy, Handshake } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import logger from '@/lib/security/logger';
+import { Ink } from '@/components/yoroi/v2/Ink';
+import { logger } from '@/lib/security/logger';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { plural, shortDate } from '@/lib/v2/combat/rounds';
+import { Hanko as SealOr } from '@/components/yoroi/v2/seance/Hanko';
+import { BigButton, BrushRing, Card, CIcon, D, Enter, Field, Glass, IconBtn, N, P, Press, Section, tap, V } from '@/components/yoroi/v2/combat/ui';
+import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { useAlignedNow } from '@/lib/v2/carnet/useAlignedNow';
 
-// ============================================
-// TYPES
-// ============================================
-
+type EventType = 'takedown' | 'guard_pass' | 'sweep' | 'mount' | 'back_control' | 'sub_attempt' | 'tap' | 'advantage' | 'penalty' | 'points_custom';
 interface MatchEvent {
   id: string;
-  timestamp: number; // ms depuis début du match
+  timestamp: number;
   type: EventType;
   label: string;
   side: 'me' | 'opponent';
   points?: number;
 }
-
-type EventType =
-  | 'takedown' | 'guard_pass' | 'sweep' | 'mount' | 'back_control'
-  | 'sub_attempt' | 'tap' | 'advantage' | 'penalty' | 'points_custom';
-
 interface MatchResult {
   winner: 'me' | 'opponent' | null;
   method: 'submission' | 'points' | 'decision' | 'disqualification' | null;
   myScore: number;
   oppScore: number;
   events: MatchEvent[];
-  duration: number; // secondes
+  duration: number;
   notes: string;
+  date?: string;
 }
-
-// ============================================
-// CONFIG DES BOUTONS
-// ============================================
-
-interface ActionButton {
+interface Action {
   type: EventType;
   label: string;
-  shortLabel: string;
+  short: string;
   points: number;
-  color: string;
   side: 'me' | 'opponent';
 }
 
-const MY_ACTIONS: ActionButton[] = [
-  { type: 'takedown', label: 'Takedown', shortLabel: 'TD', points: 2, color: '#3B82F6', side: 'me' },
-  { type: 'guard_pass', label: 'Passage garde', shortLabel: 'Pass', points: 3, color: '#8B5CF6', side: 'me' },
-  { type: 'sweep', label: 'Sweep', shortLabel: 'Sweep', points: 2, color: '#06B6D4', side: 'me' },
-  { type: 'mount', label: 'Montée', shortLabel: 'Mount', points: 4, color: '#F59E0B', side: 'me' },
-  { type: 'back_control', label: 'Contrôle dos', shortLabel: 'Dos', points: 4, color: '#F97316', side: 'me' },
-  { type: 'sub_attempt', label: 'Tentative sub', shortLabel: 'Sub?', points: 0, color: '#EF4444', side: 'me' },
-  { type: 'tap', label: 'TAP ennemi', shortLabel: 'TAP', points: 0, color: '#22C55E', side: 'me' },
-  { type: 'advantage', label: 'Avantage', shortLabel: 'Avt', points: 1, color: '#94A3B8', side: 'me' },
+const MY: Action[] = [
+  { type: 'takedown', label: 'Amenée au sol', short: 'Amenée', points: 2, side: 'me' },
+  { type: 'guard_pass', label: 'Passage de garde', short: 'Passage', points: 3, side: 'me' },
+  { type: 'sweep', label: 'Renversement', short: 'Renvers.', points: 2, side: 'me' },
+  { type: 'mount', label: 'Montée', short: 'Montée', points: 4, side: 'me' },
+  { type: 'back_control', label: 'Prise du dos', short: 'Dos', points: 4, side: 'me' },
+  { type: 'advantage', label: 'Avantage', short: 'Avantage', points: 1, side: 'me' },
+  { type: 'sub_attempt', label: 'Tentative de soumission', short: 'Tentative', points: 0, side: 'me' },
+  { type: 'tap', label: 'Il tape', short: 'Il tape', points: 0, side: 'me' },
 ];
-
-const OPP_ACTIONS: ActionButton[] = [
-  { type: 'takedown', label: 'TD adverse', shortLabel: 'TD', points: 2, color: '#3B82F6', side: 'opponent' },
-  { type: 'guard_pass', label: 'Pass adverse', shortLabel: 'Pass', points: 3, color: '#8B5CF6', side: 'opponent' },
-  { type: 'sweep', label: 'Sweep adverse', shortLabel: 'Sweep', points: 2, color: '#06B6D4', side: 'opponent' },
-  { type: 'sub_attempt', label: 'Sub? adverse', shortLabel: 'Sub?', points: 0, color: '#EF4444', side: 'opponent' },
-  { type: 'tap', label: 'JE TAPE', shortLabel: 'TAP', points: 0, color: '#EF4444', side: 'opponent' },
-  { type: 'penalty', label: 'Pénalité adv.', shortLabel: 'Pénal', points: 1, color: '#94A3B8', side: 'opponent' },
+const OPP: Action[] = [
+  { type: 'takedown', label: 'Amenée adverse', short: 'Amenée', points: 2, side: 'opponent' },
+  { type: 'guard_pass', label: 'Passage adverse', short: 'Passage', points: 3, side: 'opponent' },
+  { type: 'sweep', label: 'Renversement adverse', short: 'Renvers.', points: 2, side: 'opponent' },
+  { type: 'penalty', label: 'Pénalité adverse', short: 'Pénalité', points: 1, side: 'opponent' },
+  { type: 'sub_attempt', label: 'Tentative adverse', short: 'Tentative', points: 0, side: 'opponent' },
+  { type: 'tap', label: 'Je tape', short: 'Je tape', points: 0, side: 'opponent' },
 ];
-
-const EVENT_LABELS: Record<EventType, string> = {
-  takedown: 'Takedown',
-  guard_pass: 'Passage de garde',
-  sweep: 'Sweep',
-  mount: 'Montée',
-  back_control: 'Contrôle dos',
-  sub_attempt: 'Tentative soumission',
-  tap: 'Tap',
-  advantage: 'Avantage',
-  penalty: 'Pénalité',
-  points_custom: 'Points custom',
-};
-
-// ============================================
-// STORAGE
-// ============================================
 
 const STORAGE_KEY = '@yoroi_match_tracker';
-
-async function saveMatch(match: MatchResult): Promise<void> {
-  const existing = await loadMatches();
-  existing.unshift({ ...match, date: new Date().toISOString() });
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(existing.slice(0, 50)));
-}
-
-async function loadMatches(): Promise<any[]> {
+async function loadMatches(): Promise<MatchResult[]> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+    const v: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(v) ? (v as MatchResult[]) : [];
+  } catch {
+    return [];
+  }
+}
+async function saveMatch(m: MatchResult): Promise<void> {
+  const list = await loadMatches();
+  list.unshift({ ...m, date: new Date().toISOString() });
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 50)));
 }
 
-// ============================================
-// COMPOSANT
-// ============================================
+const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-export default function MatchTrackerScreen() {
-  const { t } = useI18n();
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-
-  const [phase, setPhase] = useState<'setup' | 'live' | 'result'>('setup');
-  const [matchStartTime, setMatchStartTime] = useState<number>(0);
-  const [events, setEvents] = useState<MatchEvent[]>([]);
-  const [myScore, setMyScore] = useState(0);
-  const [oppScore, setOppScore] = useState(0);
-  const [notes, setNotes] = useState('');
-  const [saved, setSaved] = useState(false);
-
-  const elapsed = useRef(0);
-
-  const addEvent = useCallback((action: ActionButton) => {
-    impactAsync(action.side === 'me' ? ImpactFeedbackStyle.Medium : ImpactFeedbackStyle.Heavy);
-    const now = Date.now();
-    const ts = phase === 'live' ? Math.round((now - matchStartTime) / 1000) : 0;
-
-    const event: MatchEvent = {
-      id: `${now}_${Math.random()}`,
-      timestamp: ts,
-      type: action.type,
-      label: action.label,
-      side: action.side,
-      points: action.points,
-    };
-
-    setEvents(prev => [...prev, event]);
-
-    if (action.points > 0) {
-      if (action.side === 'me') setMyScore(s => s + action.points!);
-      else setOppScore(s => s + action.points!);
-    }
-
-    if (action.type === 'tap') {
-      if (action.side === 'me') {
-        // Je tape = opponent wins
-        notificationAsync(NotificationFeedbackType.Warning);
-      } else {
-        // L'ennemi tape = I win
-        notificationAsync(NotificationFeedbackType.Success);
-      }
-    }
-  }, [phase, matchStartTime]);
-
-  const handleStartMatch = () => {
-    setMatchStartTime(Date.now());
-    setPhase('live');
-    impactAsync(ImpactFeedbackStyle.Heavy);
-  };
-
-  const handleEndMatch = () => {
-    elapsed.current = Math.round((Date.now() - matchStartTime) / 1000);
-    setPhase('result');
-  };
-
-  const handleSave = async () => {
-    const winner = myScore > oppScore ? 'me' : oppScore > myScore ? 'opponent' : null;
-    const tapEvent = events.find(e => e.type === 'tap');
-    const method = tapEvent ? 'submission' : winner ? 'points' : 'decision';
-
-    const match: MatchResult = {
-      winner,
-      method,
-      myScore,
-      oppScore,
-      events,
-      duration: elapsed.current,
-      notes,
-    };
-
-    try {
-      await saveMatch(match);
-      setSaved(true);
-      impactAsync(ImpactFeedbackStyle.Heavy);
-      setTimeout(() => router.back(), 1200);
-    } catch (e) {
-      logger.error('[MatchTracker] save error:', e);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const cardBg = isDark ? (colors.card ?? '#1a1a1a') : '#fff';
-  const cardBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-
-  // ── SETUP ──
-  if (phase === 'setup') {
-    return (
-      <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={[styles.headerBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
-            <ChevronLeft size={22} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('matchTracker.title')}</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
-            {t('matchTracker.readyToRecord')}
-          </Text>
-          <Text style={{ fontSize: 13, color: colors.textMuted ?? '#888', textAlign: 'center', lineHeight: 20 }}>
-            {t('matchTracker.tapButtonsHint')}
-          </Text>
-
-          <TouchableOpacity
-            style={{ backgroundColor: '#22C55E', borderRadius: 20, paddingVertical: 18, paddingHorizontal: 48 }}
-            onPress={handleStartMatch}
-          >
-            <Text style={{ fontSize: 18, fontWeight: '900', color: '#fff' }}>{t('matchTracker.startMatch')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{ backgroundColor: '#3B82F6', borderRadius: 16, paddingVertical: 13, paddingHorizontal: 32 }}
-            onPress={() => { setPhase('live'); }}
-          >
-            <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>{t('matchTracker.postMatchLog')}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // ── LIVE / POST-MATCH ──
-  if (phase === 'live') {
-    return (
-      <View style={[styles.root, { backgroundColor: '#0a0a0a' }]}>
-        {/* Score */}
-        <View style={[styles.scoreBar, { paddingTop: insets.top + 4 }]}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '700' }}>{t('matchTracker.me')}</Text>
-            <Text style={{ fontSize: 44, fontWeight: '900', color: '#22C55E' }}>{myScore}</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
-            {matchStartTime > 0 && (
-              <Text style={{ fontSize: 13, color: '#94A3B8', fontWeight: '600' }}>
-                {formatTime(Math.round((Date.now() - matchStartTime) / 1000))}
-              </Text>
-            )}
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#fff' }}>VS</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '700' }}>{t('matchTracker.opponent')}</Text>
-            <Text style={{ fontSize: 44, fontWeight: '900', color: '#EF4444' }}>{oppScore}</Text>
-          </View>
-        </View>
-
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 20 }}>
-          {/* Mes actions */}
-          <Text style={{ fontSize: 10, fontWeight: '700', color: '#22C55E', marginBottom: 8, letterSpacing: 1 }}>{t('matchTracker.myActions')}</Text>
-          <View style={styles.btnGrid}>
-            {MY_ACTIONS.map(action => (
-              <TouchableOpacity
-                key={`${action.type}_${action.side}`}
-                style={[styles.actionBtn, { backgroundColor: `${action.color}22`, borderColor: `${action.color}55` }]}
-                onPress={() => addEvent(action)}
-                activeOpacity={0.7}
-              >
-                <Text style={{ fontSize: 14, fontWeight: '900', color: action.color }}>{action.shortLabel}</Text>
-                {action.points > 0 && (
-                  <View style={{ backgroundColor: action.color, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 }}>
-                    <Text style={{ fontSize: 9, fontWeight: '900', color: '#fff' }}>+{action.points}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Actions adversaire */}
-          <Text style={{ fontSize: 10, fontWeight: '700', color: '#EF4444', marginBottom: 8, marginTop: 14, letterSpacing: 1 }}>{t('matchTracker.opponentActions')}</Text>
-          <View style={styles.btnGrid}>
-            {OPP_ACTIONS.map(action => (
-              <TouchableOpacity
-                key={`${action.type}_${action.side}`}
-                style={[styles.actionBtn, { backgroundColor: 'rgba(239,68,68,0.12)', borderColor: 'rgba(239,68,68,0.3)' }]}
-                onPress={() => addEvent(action)}
-                activeOpacity={0.7}
-              >
-                <Text style={{ fontSize: 13, fontWeight: '900', color: '#EF4444' }}>{action.shortLabel}</Text>
-                {action.points > 0 && (
-                  <View style={{ backgroundColor: '#EF4444', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 }}>
-                    <Text style={{ fontSize: 9, fontWeight: '900', color: '#fff' }}>+{action.points}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Timeline derniers events */}
-          {events.length > 0 && (
-            <View style={{ marginTop: 14, gap: 6 }}>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', letterSpacing: 1 }}>{t('matchTracker.timeline')}</Text>
-              {events.slice(-5).reverse().map(ev => (
-                <View key={ev.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontSize: 11, color: '#64748B', minWidth: 32 }}>
-                    {formatTime(ev.timestamp)}
-                  </Text>
-                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: ev.side === 'me' ? '#22C55E' : '#EF4444' }} />
-                  <Text style={{ fontSize: 12, color: ev.side === 'me' ? '#22C55E' : '#EF4444', fontWeight: '600' }}>
-                    {ev.label}
-                    {ev.points ? ` (+${ev.points}pts)` : ''}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </ScrollView>
-
-        {/* Bouton fin de match */}
-        <View style={{ padding: 16, paddingBottom: insets.bottom + 8 }}>
-          <TouchableOpacity
-            style={{ backgroundColor: '#EF4444', borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}
-            onPress={handleEndMatch}
-          >
-            <Text style={{ fontSize: 16, fontWeight: '900', color: '#fff' }}>{t('matchTracker.endMatch')}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // ── RÉSULTAT ──
-  const myWin = myScore > oppScore || events.some(e => e.type === 'tap' && e.side === 'opponent');
-  const oppWin = oppScore > myScore || events.some(e => e.type === 'tap' && e.side === 'me');
-
+function ActionPlate({ a, onPress }: { a: Action; onPress: () => void }) {
+  const me = a.side === 'me';
+  const tapAction = a.type === 'tap';
+  const bg = tapAction ? (me ? V : D) : P.white;
+  const fg = tapAction ? P.white : me ? V : D;
   return (
-    <View style={[styles.root, { backgroundColor: isDark ? colors.background : '#F2F2F7' }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.headerBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
-          <ChevronLeft size={22} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('matchTracker.matchSummary')}</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32, gap: 14 }}>
-        {/* Résultat */}
-        <View style={{
-          borderRadius: 20, padding: 24, alignItems: 'center', gap: 8,
-          backgroundColor: myWin ? '#22C55E20' : oppWin ? '#EF444420' : cardBg,
-          borderWidth: 2, borderColor: myWin ? '#22C55E' : oppWin ? '#EF4444' : cardBorder,
-        }}>
-          {myWin
-            ? <Trophy size={40} color="#F59E0B" />
-            : oppWin
-            ? <Trophy size={40} color="#6B7280" style={{ transform: [{ scaleX: -1 }] }} />
-            : <Handshake size={40} color="#6366F1" />
-          }
-          <Text style={{ fontSize: 22, fontWeight: '900', color: myWin ? '#22C55E' : oppWin ? '#EF4444' : colors.text }}>
-            {myWin ? t('matchTracker.victory') : oppWin ? t('matchTracker.defeat') : t('matchTracker.draw')}
-          </Text>
-          <Text style={{ fontSize: 32, fontWeight: '900', color: colors.text }}>{myScore} · {oppScore}</Text>
-          {elapsed.current > 0 && (
-            <Text style={{ fontSize: 13, color: colors.textMuted ?? '#888' }}>{t('matchTracker.duration')} {formatTime(elapsed.current)}</Text>
-          )}
-        </View>
-
-        {/* Timeline complète */}
-        {events.length > 0 && (
-          <View style={{ backgroundColor: cardBg, borderRadius: 16, borderWidth: 1, borderColor: cardBorder, padding: 14 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 10 }}>{t('matchTracker.fullTimeline')}</Text>
-            <View style={{ gap: 8 }}>
-              {events.map(ev => (
-                <View key={ev.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Text style={{ fontSize: 12, color: colors.textMuted ?? '#888', minWidth: 36 }}>
-                    {formatTime(ev.timestamp)}
-                  </Text>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ev.side === 'me' ? '#22C55E' : '#EF4444' }} />
-                  <Text style={{ flex: 1, fontSize: 13, color: ev.side === 'me' ? '#22C55E' : '#EF4444', fontWeight: '600' }}>
-                    {ev.label}
-                  </Text>
-                  {ev.points != null && ev.points > 0 && (
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: ev.side === 'me' ? '#22C55E' : '#EF4444' }}>
-                      +{ev.points}
-                    </Text>
-                  )}
-                </View>
-              ))}
-            </View>
+    <Press onPress={onPress} haptic="none" accessibilityRole="button" accessibilityLabel={`${a.label}${a.points ? `, ${a.points} points` : ''}`} style={{ width: '31.5%' }}>
+      <View style={{ height: 78, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: bg, borderWidth: tapAction ? 0 : 1.5, borderColor: `${fg}40`, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <Ink size={15} weight="black" color={fg} numberOfLines={1}>
+          {a.short}
+        </Ink>
+        {a.points > 0 ? (
+          <View style={{ paddingHorizontal: 8, height: 20, borderRadius: 10, justifyContent: 'center', backgroundColor: fg }}>
+            <Ink size={11} weight="black" color={P.white}>
+              {`+${a.points}`}
+            </Ink>
           </View>
+        ) : (
+          <View style={{ position: 'absolute', left: 0, right: 0, bottom: 14, height: 3, backgroundColor: tapAction ? 'rgba(255,255,255,0.35)' : `${fg}30` }} />
         )}
-
-        {/* Notes */}
-        <View style={{ backgroundColor: cardBg, borderRadius: 16, borderWidth: 1, borderColor: cardBorder, padding: 14 }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 8 }}>{t('matchTracker.postMatchNotes')}</Text>
-          <TextInput
-            style={{ color: colors.text, fontSize: 14, lineHeight: 20, minHeight: 60 }}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder={t('matchTracker.notesPlaceholder')}
-            placeholderTextColor={colors.textMuted ?? '#888'}
-            multiline
-            textAlignVertical="top"
-          />
-        </View>
-
-        {/* Sauvegarder */}
-        <TouchableOpacity
-          style={{ backgroundColor: saved ? '#22C55E' : '#3B82F6', borderRadius: 14, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
-          onPress={handleSave}
-          disabled={saved}
-        >
-          {saved ? <Check size={18} color="#fff" /> : <Share2 size={18} color="#fff" />}
-          <Text style={{ fontSize: 15, fontWeight: '800', color: '#fff' }}>
-            {saved ? t('matchTracker.saved') : t('matchTracker.saveMatch')}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+      </View>
+    </Press>
   );
 }
 
-// ============================================
-// STYLES
-// ============================================
+export default function MatchTrackerScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [phase, setPhase] = useState<'setup' | 'live' | 'result'>('setup');
+  const [start, setStart] = useState(0);
+  const [events, setEvents] = useState<MatchEvent[]>([]);
+  const [me, setMe] = useState(0);
+  const [opp, setOpp] = useState(0);
+  const [notes, setNotes] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [history, setHistory] = useState<MatchResult[]>([]);
+  const elapsed = useRef(0);
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingBottom: 10,
-  },
-  headerBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  headerTitle: { fontSize: 17, fontWeight: '800' },
-  scoreBar: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 32, paddingBottom: 12,
-    backgroundColor: '#111',
-  },
-  btnGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 8,
-  },
-  actionBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 11,
-    borderRadius: 12, borderWidth: 1,
-    minWidth: '22%',
-    justifyContent: 'center',
-  },
-});
+  useEffect(() => {
+    loadMatches().then(setHistory);
+  }, []);
+  // horloge calee sur le debut du match : chaque seconde affichee dure une seconde pile
+  const now = useAlignedNow(start || null, phase === 'live' && !!start);
+
+  const add = useCallback(
+    (a: Action) => {
+      tap(a.side === 'me' ? 'medium' : 'light');
+      const t = Date.now();
+      const ev: MatchEvent = { id: `${t}_${Math.random()}`, timestamp: phase === 'live' && start ? Math.round((t - start) / 1000) : 0, type: a.type, label: a.label, side: a.side, points: a.points };
+      setEvents((prev) => [...prev, ev]);
+      if (a.points > 0) {
+        if (a.side === 'me') setMe((s) => s + a.points);
+        else setOpp((s) => s + a.points);
+      }
+      if (a.type === 'tap') tap('success');
+    },
+    [phase, start],
+  );
+
+  const undo = () => {
+    const last = events[events.length - 1];
+    if (!last) return;
+    tap();
+    setEvents((prev) => prev.slice(0, -1));
+    if (last.points) {
+      if (last.side === 'me') setMe((s) => Math.max(0, s - (last.points ?? 0)));
+      else setOpp((s) => Math.max(0, s - (last.points ?? 0)));
+    }
+  };
+
+  const end = () => {
+    elapsed.current = start ? Math.round((Date.now() - start) / 1000) : 0;
+    setPhase('result');
+    tap('medium');
+  };
+
+  const save = async () => {
+    const tapEv = events.find((e) => e.type === 'tap');
+    const winner: MatchResult['winner'] = tapEv ? (tapEv.side === 'me' ? 'me' : 'opponent') : me > opp ? 'me' : opp > me ? 'opponent' : null;
+    const m: MatchResult = { winner, method: tapEv ? 'submission' : winner ? 'points' : 'decision', myScore: me, oppScore: opp, events, duration: elapsed.current, notes };
+    try {
+      await saveMatch(m);
+      setSaved(true);
+      tap('success');
+      DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
+      // navigation directe : retour tout de suite, la vibration de reussite confirme l'enregistrement
+      if (router.canGoBack()) router.back();
+      else router.replace('/' as any);
+    } catch (e) {
+      logger.error('Enregistrement du match impossible', e);
+      appAlert('Enregistrement impossible', 'Réessaie dans un instant.');
+    }
+  };
+
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/' as any));
+  const sec = start ? Math.max(0, Math.floor((now - start) / 1000 + 1e-6)) : 0;
+
+  // ── Preparation ──
+  if (phase === 'setup') {
+    const wins = history.filter((h) => h.winner === 'me').length;
+    return (
+      <View style={{ flex: 1, backgroundColor: P.paper }}>
+        <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }}>
+          <EnTete titre="Suivi de match" sousTitre="Une main, des gros boutons, rien à écrire" onRetour={back} style={{ marginHorizontal: -22, marginTop: -8 }} />
+          <Glass style={{ alignItems: 'center', gap: 14, paddingVertical: 26 }}>
+            <SealOr size={64} rotate={-8} color={P.goldDark} />
+            <Ink size={22} weight="black" tight style={{ textAlign: 'center' }}>
+              Prêt à enregistrer ton match ?
+            </Ink>
+            <Ink size={14} color={P.ink2} style={{ textAlign: 'center' }}>
+              Touche une plaque à chaque action, pour toi ou pour ton adversaire. Le score se calcule tout seul.
+            </Ink>
+            <View style={{ alignSelf: 'stretch', gap: 10, marginTop: 6 }}>
+              <BigButton
+                label="Lancer le chrono"
+                icon="play"
+                onPress={() => {
+                  setStart(Date.now());
+                  setPhase('live');
+                }}
+              />
+              <BigButton label="Noter un match déjà fini" tone="light" icon="list" onPress={() => setPhase('live')} />
+            </View>
+          </Glass>
+          {history.length > 0 ? (
+            <>
+              <Section title="Tes derniers matchs" sub={`${wins} victoires sur ${plural(history.length, 'match', 'matchs')}`} />
+              {history.slice(0, 10).map((h, i) => {
+                const c = h.winner === 'me' ? V : h.winner === 'opponent' ? D : N;
+                return (
+                  <Enter key={`${h.date ?? i}_${i}`} i={Math.min(i, 8)}>
+                    <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <View style={{ width: 8, alignSelf: 'stretch', borderRadius: 4, backgroundColor: c }} />
+                      <View style={{ flex: 1 }}>
+                        <Ink size={16} weight="black" color={c}>
+                          {h.winner === 'me' ? 'Victoire' : h.winner === 'opponent' ? 'Défaite' : 'Égalité'}
+                          <Ink size={13} weight="bold" color={P.ink2}>
+                            {h.method === 'submission' ? ', par soumission' : h.method === 'points' ? ', aux points' : ''}
+                          </Ink>
+                        </Ink>
+                        <Ink size={12} weight="bold" color={P.muted}>
+                          {[h.date ? shortDate(h.date, true) : null, h.duration ? fmt(h.duration) : null].filter(Boolean).join(', ')}
+                        </Ink>
+                      </View>
+                      <Ink size={24} weight="black" tight>
+                        {`${h.myScore} à ${h.oppScore}`}
+                      </Ink>
+                    </Card>
+                  </Enter>
+                );
+              })}
+            </>
+          ) : null}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── En direct ──
+  if (phase === 'live') {
+    const lastEv = events[events.length - 1];
+    return (
+      <View style={{ flex: 1, backgroundColor: P.paper }}>
+        <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <IconBtn icon="close" label="Quitter le match" onPress={() => appAlert('Quitter le match ?', 'Les actions notées seront perdues.', [{ text: 'Rester', style: 'cancel' }, { text: 'Quitter', style: 'destructive', onPress: back }])} />
+          <Press onPress={end} haptic="medium" accessibilityRole="button" accessibilityLabel="Terminer le match">
+            <View style={{ height: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: P.ink, justifyContent: 'center' }}>
+              <Ink size={15} weight="extraBold" color={P.paper}>
+                Terminer
+              </Ink>
+            </View>
+          </Press>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingTop: 8 }}>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Ink size={14} weight="extraBold" color={V}>
+              Moi
+            </Ink>
+            <Ink size={72} weight="black" tight color={V}>
+              {String(me)}
+            </Ink>
+          </View>
+          <View style={{ width: 110, height: 110, alignItems: 'center', justifyContent: 'center' }}>
+            <BrushRing value={start ? (sec % 300) / 300 : 0} size={110} stroke={10} color={P.accent} />
+            <View style={{ position: 'absolute', alignItems: 'center' }}>
+              <Ink size={26} weight="black" tight>
+                {start ? fmt(sec) : 'Après'}
+              </Ink>
+              <Ink size={11} weight="bold" color={P.muted}>
+                {start ? 'chrono' : 'le match'}
+              </Ink>
+            </View>
+          </View>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Ink size={14} weight="extraBold" color={D}>
+              Adversaire
+            </Ink>
+            <Ink size={72} weight="black" tight color={D}>
+              {String(opp)}
+            </Ink>
+          </View>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30, gap: 12 }}>
+          <Ink size={14} weight="extraBold" color={V}>
+            Mes actions
+          </Ink>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {MY.map((a) => (
+              <ActionPlate key={`me_${a.type}`} a={a} onPress={() => add(a)} />
+            ))}
+          </View>
+          <Ink size={14} weight="extraBold" color={D} style={{ marginTop: 6 }}>
+            Actions adverses
+          </Ink>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {OPP.map((a) => (
+              <ActionPlate key={`op_${a.type}`} a={a} onPress={() => add(a)} />
+            ))}
+          </View>
+          {lastEv ? (
+            <Card style={{ gap: 10, marginTop: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Ink size={16} weight="black">
+                  Dernières actions
+                </Ink>
+                <Press onPress={undo} accessibilityRole="button" accessibilityLabel="Annuler la dernière action">
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#E6E4DD' }}>
+                    <CIcon name="undo" size={16} color={P.ink} />
+                    <Ink size={14} weight="extraBold">
+                      Annuler
+                    </Ink>
+                  </View>
+                </Press>
+              </View>
+              {events
+                .slice(-5)
+                .reverse()
+                .map((ev) => (
+                  <View key={ev.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Ink size={12} weight="bold" color={P.muted} style={{ width: 40 }}>
+                      {fmt(ev.timestamp)}
+                    </Ink>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ev.side === 'me' ? V : D }} />
+                    <Ink size={14} weight="bold" color={ev.side === 'me' ? V : D} style={{ flex: 1 }}>
+                      {ev.label}
+                    </Ink>
+                    {ev.points ? (
+                      <Ink size={13} weight="black" color={ev.side === 'me' ? V : D}>
+                        {`+${ev.points}`}
+                      </Ink>
+                    ) : null}
+                  </View>
+                ))}
+            </Card>
+          ) : null}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── Resultat ──
+  // Une soumission decide du match, sinon les points
+  const firstTap = events.find((e) => e.type === 'tap');
+  const myWin = firstTap ? firstTap.side === 'me' : me > opp;
+  const oppWin = firstTap ? firstTap.side === 'opponent' : opp > me;
+  const color = myWin ? V : oppWin ? D : N;
+  return (
+    <View style={{ flex: 1, backgroundColor: P.paper }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 110, gap: 14 }} keyboardShouldPersistTaps="handled">
+        <IconBtn icon="back" label="Revenir au match" onPress={() => setPhase('live')} />
+        <Glass style={{ alignItems: 'center', gap: 8, paddingVertical: 26 }}>
+          {myWin ? <SealOr size={72} rotate={-8} color={P.goldDark} /> : <Glyph kind={oppWin ? 'vague' : 'eventail'} size={60} color={color} />}
+          <Ink size={28} weight="black" tight color={color}>
+            {myWin ? 'Victoire' : oppWin ? 'Défaite' : 'Égalité'}
+          </Ink>
+          <Ink size={56} weight="black" tight>
+            {`${me} à ${opp}`}
+          </Ink>
+          {elapsed.current > 0 ? (
+            <Ink size={14} weight="bold" color={P.ink2}>
+              {`Durée ${fmt(elapsed.current)}`}
+            </Ink>
+          ) : null}
+        </Glass>
+        {events.length > 0 ? (
+          <Card style={{ gap: 10 }}>
+            <Ink size={18} weight="black" tight>
+              Le match en entier
+            </Ink>
+            {events.map((ev) => (
+              <View key={ev.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ink size={12} weight="bold" color={P.muted} style={{ width: 40 }}>
+                  {fmt(ev.timestamp)}
+                </Ink>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ev.side === 'me' ? V : D }} />
+                <Ink size={14} weight="bold" color={ev.side === 'me' ? V : D} style={{ flex: 1 }}>
+                  {ev.label}
+                </Ink>
+                {ev.points ? (
+                  <Ink size={13} weight="black" color={ev.side === 'me' ? V : D}>
+                    {`+${ev.points}`}
+                  </Ink>
+                ) : null}
+              </View>
+            ))}
+          </Card>
+        ) : null}
+        <Field label="Tes notes après le match" value={notes} onChangeText={setNotes} multiline placeholder="Ce qui a marché, ce qui t'a surpris, ce que tu travailles ensuite" />
+      </ScrollView>
+      <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 14 }}>
+        <BigButton label={saved ? 'Match enregistré' : 'Enregistrer le match'} icon="check" tone={saved ? 'ink' : 'red'} onPress={save} disabled={saved} />
+      </View>
+    </View>
+  );
+}
