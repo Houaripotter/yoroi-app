@@ -6,7 +6,6 @@
 // Outils : scripts/i18n (catalogue, contrôle, branchement).
 // ============================================
 
-import { getLocales } from 'expo-localization';
 
 export type Lang = 'fr' | 'en' | 'de' | 'nl' | 'es' | 'pt' | 'it';
 
@@ -66,7 +65,9 @@ function detect(): Lang {
     return choisie;
   }
   try {
-    const locales = getLocales();
+    // chargé ici seulement : les tests qui simulent react-native n'ont pas le module de langue
+    const { getLocales } = require('expo-localization');
+    const locales: { languageCode?: string | null }[] = getLocales();
     for (const l of locales ?? []) {
       const code = (l.languageCode ?? '').toLowerCase() as Lang;
       if (LANGUES_ACTIVES.includes(code)) return code;
