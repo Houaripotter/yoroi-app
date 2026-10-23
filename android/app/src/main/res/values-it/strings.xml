@@ -1,0 +1,6 @@
+<resources>
+  <!-- Widgets -->
+  <string name="widget_dashboard_desc">Le tue statistiche chiave a colpo d\'occhio</string>
+  <string name="widget_hydration_desc">Segui il tuo consumo d\'acqua quotidiano</string>
+  <string name="widget_streak_desc">La tua serie di allenamenti consecutivi</string>
+</resources>

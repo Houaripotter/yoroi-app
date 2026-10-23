@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en pt-BR. */
+"NSHealthShareUsageDescription" = "O YOROI lê no app Saúde a sua frequência cardíaca, a sua saturação de oxigênio, a sua FC em repouso, a sua variabilidade cardíaca, a sua frequência respiratória, as suas calorias, o seu peso e a sua data de nascimento (para as suas zonas cardíacas), para mostrar a sua FC ao vivo, o resumo do seu treino e as suas complicações Coração, Oxigênio, Repouso e Respiração.";
+"NSHealthUpdateUsageDescription" = "O YOROI salva no app Saúde os seus treinos, com a frequência cardíaca e as calorias, as suas pesagens e os seus copos de água, para que tudo fique no mesmo lugar.";
+"NSUserNotificationUsageDescription" = "O YOROI avisa você no fim de cada round e no fim dos seus timers quando a tela está apagada.";
+"CFBundleDisplayName" = "Yoroi";

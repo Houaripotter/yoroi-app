@@ -1,0 +1,5 @@
+/* YOROI montre : textes système en it. */
+"NSHealthShareUsageDescription" = "YOROI legge nell'app Salute la tua frequenza cardiaca, la tua saturazione di ossigeno, la tua FC a riposo, la tua variabilità cardiaca, la tua frequenza respiratoria, le tue calorie, il tuo peso e la tua data di nascita (per le tue zone cardiache), per mostrarti la FC in diretta, il riepilogo della sessione e le tue complicazioni Cuore, Ossigeno, Riposo e Respirazione.";
+"NSHealthUpdateUsageDescription" = "YOROI salva nell'app Salute le tue sessioni, con la loro frequenza cardiaca e le loro calorie, le tue pesate e i tuoi bicchieri d'acqua, così tutto resta nello stesso posto.";
+"NSUserNotificationUsageDescription" = "YOROI ti avvisa alla fine di ogni round e alla fine dei tuoi timer quando lo schermo è spento.";
+"CFBundleDisplayName" = "Yoroi";

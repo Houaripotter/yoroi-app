@@ -135,7 +135,7 @@ export default function TonProfil() {
   const { weightUnit, measurementUnit, setWeightUnit, setMeasurementUnit } = useUnits();
   const { language, setLanguage } = useI18n();
   // La langue suit le réglage du téléphone (ou le réglage de langue de l'app dans les réglages iOS et Android)
-  const langLabel = ({ fr: 'Français', en: 'English', de: 'Deutsch', nl: 'Nederlands' } as const)[LANG];
+  const langLabel = ({ fr: 'Français', en: 'English', de: 'Deutsch', nl: 'Nederlands', es: 'Español', pt: 'Português', it: 'Italiano' } as const)[LANG];
 
   const load = useCallback(async () => {
     try {

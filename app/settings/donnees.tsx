@@ -191,7 +191,7 @@ export default function MesDonnees() {
   // ============================================
 
   const confirmWord = resetText.trim().toUpperCase();
-  const resetOk = ['SUPPRIMER', 'SUPRIMER', 'EFFACER', 'OUI', 'YES', 'DELETE', 'LÖSCHEN', 'LOESCHEN', 'LOSCHEN', 'JA', 'VERWIJDEREN', 'WISSEN'].includes(confirmWord);
+  const resetOk = ['SUPPRIMER', 'SUPRIMER', 'EFFACER', 'OUI', 'YES', 'DELETE', 'LÖSCHEN', 'LOESCHEN', 'LOSCHEN', 'JA', 'VERWIJDEREN', 'WISSEN', 'ELIMINAR', 'BORRAR', 'EXCLUIR', 'APAGAR', 'ELIMINA', 'CANCELLA'].includes(confirmWord);
 
   const handleResetAll = () => {
     showPopup(traduire('Sauvegarde conseillée'), traduire('Avant de tout effacer, garde une copie de tes données.'), [

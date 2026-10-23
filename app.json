@@ -40,7 +40,10 @@
           "fr",
           "en",
           "de",
-          "nl"
+          "nl",
+          "es",
+          "pt-BR",
+          "it"
         ]
       },
       "entitlements": {

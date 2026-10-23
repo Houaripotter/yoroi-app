@@ -8,10 +8,10 @@
 
 import { getLocales } from 'expo-localization';
 
-export type Lang = 'fr' | 'en' | 'de' | 'nl';
+export type Lang = 'fr' | 'en' | 'de' | 'nl' | 'es' | 'pt' | 'it';
 
 /** Langues proposées. Une langue absente de cette liste retombe sur l'anglais. */
-export const LANGUES_ACTIVES: readonly Lang[] = ['fr', 'en', 'de', 'nl'];
+export const LANGUES_ACTIVES: readonly Lang[] = ['fr', 'en', 'de', 'nl', 'es', 'pt', 'it'];
 
 /** Lancement en français seul : mettre à true pour forcer le français partout. */
 const FRANCAIS_FORCE = false;
@@ -43,6 +43,9 @@ function load(): Record<string, string> {
       case 'en': dict = require('./dict/en.json'); break;
       case 'de': dict = require('./dict/de.json'); break;
       case 'nl': dict = require('./dict/nl.json'); break;
+      case 'es': dict = require('./dict/es.json'); break;
+      case 'pt': dict = require('./dict/pt.json'); break;
+      case 'it': dict = require('./dict/it.json'); break;
       default: dict = {};
     }
   } catch {
@@ -80,12 +83,13 @@ export function traduire(fr: string | null | undefined, ...valeurs: unknown[]): 
  * Les autres langues suivent leur règle : singulier pour 1 seulement.
  */
 export function traduirePluriel(n: number, plurielFr: boolean, un: string, plusieurs: string, ...valeurs: unknown[]): string {
-  const pluriel = LANG === 'fr' ? plurielFr : Number(n) !== 1;
+  // Portugais : singulier pour 0 et 1, comme le français. Autres langues : singulier pour 1 seulement.
+  const pluriel = LANG === 'fr' ? plurielFr : LANG === 'pt' ? Math.abs(Number(n)) >= 2 : Number(n) !== 1;
   return traduire(pluriel ? plusieurs : un, ...valeurs);
 }
 
 /** Locale pour les dates et les nombres (toLocaleDateString, Intl). */
-export const LOCALE: string = ({ fr: 'fr-FR', en: 'en-US', de: 'de-DE', nl: 'nl-NL' } as const)[LANG];
+export const LOCALE: string = ({ fr: 'fr-FR', en: 'en-US', de: 'de-DE', nl: 'nl-NL', es: 'es-ES', pt: 'pt-BR', it: 'it-IT' } as const)[LANG];
 
 /** Séparateur décimal de la langue : virgule en français, allemand, néerlandais ; point en anglais. */
 export const DECIMAL: string = LANG === 'en' ? '.' : ',';
