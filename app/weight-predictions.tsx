@@ -122,7 +122,7 @@ export function Predictions() {
 /** « Ton rythme : 0,4 kg en moins par semaine » et ton arrivee comparee au torii */
 function RythmeLigne({ r, u }: { r: Prevision; u: Unite }) {
   const v = r.ajustement.kgSemaine;
-  const rythme = r.sens === 'stable' ? traduire('Ton rythme : stable') : traduire("Ton rythme : {0} {1} par semaine", poidsTexte(Math.abs(v), u), v < 0 ? 'en moins' : 'en plus');
+  const rythme = r.sens === 'stable' ? traduire('Ton rythme : stable') : v < 0 ? traduire("Ton rythme : {0} en moins par semaine", poidsTexte(Math.abs(v), u)) : traduire("Ton rythme : {0} en plus par semaine", poidsTexte(Math.abs(v), u));
   const t = phraseTorii(r);
   return (
     <View style={{ gap: 6 }}>
@@ -170,7 +170,7 @@ function Tableau({ r, u }: { r: Prevision; u: Unite }) {
           <View
             key={d.id}
             accessible
-            accessibilityLabel={traduire("{0}, le {1} : à ton rythme {2}, entre {3} et {4}{5}", torii ? 'Au torii' : d.label, jourCourt(d.date), poidsTexte(d.valeur, u), poidsTexte(d.bas, u), poidsTexte(d.haut, u), d.ligne != null ? `. En suivant ta ligne : ${poidsTexte(d.ligne, u)}` : '')}
+            accessibilityLabel={traduire("{0}, le {1} : à ton rythme {2}, entre {3} et {4}{5}", torii ? traduire('Au torii') : d.label, jourCourt(d.date), poidsTexte(d.valeur, u), poidsTexte(d.bas, u), poidsTexte(d.haut, u), d.ligne != null ? traduire(". En suivant ta ligne : {0}", poidsTexte(d.ligne, u)) : '')}
             style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: P.line2, backgroundColor: torii ? P.goldSoft : 'transparent' }}
           >
             <View style={{ flex: 1, gap: 1, paddingRight: 6 }}>

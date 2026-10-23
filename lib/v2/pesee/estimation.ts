@@ -192,10 +192,10 @@ const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', tradu
 
 const dateDe = (iso: string) => new Date(`${iso}T12:00:00`);
 const jourDe = (d: Date) => (d.getDate() === 1 ? '1er' : String(d.getDate()));
-const partDe = (d: Date) => (d.getDate() <= 10 ? traduire('début') : d.getDate() <= 20 ? 'mi' : 'fin');
+const partDe = (d: Date) => (d.getDate() <= 10 ? traduire('début') : d.getDate() <= 20 ? 'mi' : traduire('fin'));
 const partMois = (d: Date, mois: string[]) => {
   const p = partDe(d);
-  return p === 'mi' ? `mi-${mois[d.getMonth()]}` : `${p} ${mois[d.getMonth()]}`;
+  return p === 'mi' ? traduire("mi-{0}", mois[d.getMonth()]) : `${p} ${mois[d.getMonth()]}`;
 };
 
 /**
@@ -215,7 +215,7 @@ export function fourchetteTexte(earliest: string, latest: string, today: string 
   if (ecart > 42) {
     const pa = partMois(a, MOIS);
     const pb = partMois(b, MOIS);
-    return pa === pb && !debutAn ? `vers ${pb}${finAn}` : traduire("entre {0}{1} et {2}{3}", pa, debutAn, pb, finAn);
+    return pa === pb && !debutAn ? traduire("vers {0}{1}", pb, finAn) : traduire("entre {0}{1} et {2}{3}", pa, debutAn, pb, finAn);
   }
   if (a.getMonth() === b.getMonth() && anA === anB) return traduire("entre le {0} et le {1} {2}{3}", jourDe(a), jourDe(b), MOIS[b.getMonth()], finAn);
   return traduire("entre le {0} {1}{2} et le {3} {4}{5}", jourDe(a), MOIS[a.getMonth()], debutAn, jourDe(b), MOIS[b.getMonth()], finAn);
@@ -279,7 +279,7 @@ const kgTexte = (v: number) => String(Math.round(v * 10) / 10).replace('.', DECI
 export function sansDateTexte(e: Estimation, target: number, today: string = isoDe(new Date())): { titre: string; texte: string; cap: number | null } | null {
   if (e.kind === 'imc_bas') {
     return {
-      titre: e.cap != null ? `Visons d’abord ${kgTexte(e.cap)} kg` : traduire('Pas de date pour ce cap'),
+      titre: e.cap != null ? traduire("Visons d’abord {0} kg", kgTexte(e.cap)) : traduire('Pas de date pour ce cap'),
       texte: e.cap != null && e.capRange
         ? traduire("À {0} kg, ton IMC passerait sous 18,5, sous les repères de santé habituels. On préfère ne pas te donner de date. Un premier cap à {1} kg serait atteignable {2}.", kgTexte(target), kgTexte(e.cap), fourchetteTexte(e.capRange.earliest, e.capRange.latest, today))
         : traduire("À {0} kg, ton IMC passerait sous 18,5, sous les repères de santé habituels. On préfère ne pas te donner de date pour descendre plus bas.", kgTexte(target)),
@@ -288,7 +288,7 @@ export function sansDateTexte(e: Estimation, target: number, today: string = iso
   }
   if (e.kind === 'imc_haut') {
     return {
-      titre: e.cap != null ? `Visons d’abord ${kgTexte(e.cap)} kg` : traduire('Pas de date pour ce cap'),
+      titre: e.cap != null ? traduire("Visons d’abord {0} kg", kgTexte(e.cap)) : traduire('Pas de date pour ce cap'),
       texte: e.cap != null && e.capRange
         ? traduire("Prendre autant de muscle se construit sur des années, et une date serait de la fiction. Un premier cap à {0} kg serait atteignable {1}.", kgTexte(e.cap), fourchetteTexte(e.capRange.earliest, e.capRange.latest, today))
         : traduire('Prendre autant de muscle se construit sur des années, et une date serait de la fiction.'),
@@ -297,8 +297,8 @@ export function sansDateTexte(e: Estimation, target: number, today: string = iso
   }
   if (e.kind === 'trop_loin') {
     return {
-      titre: `Visons d’abord ${kgTexte(e.cap)} kg`,
-      texte: traduire("Ton cap demande plus d’un an à un rythme qui garde ton muscle. Une étape à la fois : {0} kg serait atteignable {1}.", kgTexte(e.cap), e.capRange ? fourchetteTexte(e.capRange.earliest, e.capRange.latest, today) : 'dans quelques mois'),
+      titre: traduire("Visons d’abord {0} kg", kgTexte(e.cap)),
+      texte: traduire("Ton cap demande plus d’un an à un rythme qui garde ton muscle. Une étape à la fois : {0} kg serait atteignable {1}.", kgTexte(e.cap), e.capRange ? fourchetteTexte(e.capRange.earliest, e.capRange.latest, today) : traduire('dans quelques mois')),
       cap: e.cap,
     };
   }

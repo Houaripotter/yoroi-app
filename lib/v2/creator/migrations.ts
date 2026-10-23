@@ -58,13 +58,13 @@ export async function readMigrations(): Promise<MigrationRow[]> {
     id: 'armure',
     label: traduire('Reprise des rangs (armure v3)'),
     done: v >= 3,
-    state: meta ? (v >= 3 ? 'Faite, version 3' : traduire("Version {0}, la reprise v3 se fera au prochain calcul", v)) : traduire('Pas encore lancée'),
+    state: meta ? (v >= 3 ? traduire('Faite, version 3') : traduire("Version {0}, la reprise v3 se fera au prochain calcul", v)) : traduire('Pas encore lancée'),
     detail: meta
       ? [
-          meta.migratedAt ? `première reprise le ${when(meta.migratedAt)}` : null,
-          meta.catchupDone ? `dernier rattrapage le ${when(meta.catchupDone)}` : null,
-          meta.catchupPending ? `rattrapage demandé jusqu’au ${when(meta.catchupPending)}` : null,
-          meta.welcomeSeen ? 'bienvenue des anciens vue' : null,
+          meta.migratedAt ? traduire("première reprise le {0}", when(meta.migratedAt)) : null,
+          meta.catchupDone ? traduire("dernier rattrapage le {0}", when(meta.catchupDone)) : null,
+          meta.catchupPending ? traduire("rattrapage demandé jusqu’au {0}", when(meta.catchupPending)) : null,
+          meta.welcomeSeen ? traduire('bienvenue des anciens vue') : null,
         ]
           .filter(Boolean)
           .join(', ') || undefined

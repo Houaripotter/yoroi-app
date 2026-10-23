@@ -206,10 +206,10 @@ export default function RecordsScreen() {
     const diff = current.kind === 'allure' ? first.value - current.best : current.best - first.value;
     if (Math.abs(diff) < 0.05) return null;
     const m = MONTHS[new Date(first.date.slice(0, 10) + 'T12:00:00').getMonth()];
-    if (current.kind === 'force') return traduire("{0} {1} de {2} depuis {3}", fmt1(Math.abs(cv(diff))), uL, diff > 0 ? 'plus' : 'moins', m);
-    if (current.kind === 'allure') return traduire("{0} secondes au km {1} depuis {2}", Math.round(Math.abs(diff)), diff > 0 ? 'gagnées' : 'perdues', m);
-    if (current.kind === 'distance') return traduire("{0} km de {1} depuis {2}", fmt1(Math.abs(diff)), diff > 0 ? 'plus' : 'moins', m);
-    return traduire("{0} de {1} depuis {2}", fmt1(Math.abs(diff)), diff > 0 ? 'plus' : 'moins', m);
+    if (current.kind === 'force') return diff > 0 ? traduire("{0} {1} de plus depuis {2}", fmt1(Math.abs(cv(diff))), uL, m) : traduire("{0} {1} de moins depuis {2}", fmt1(Math.abs(cv(diff))), uL, m);
+    if (current.kind === 'allure') return diff > 0 ? traduire("{0} secondes au km gagnées depuis {1}", Math.round(Math.abs(diff)), m) : traduire("{0} secondes au km perdues depuis {1}", Math.round(Math.abs(diff)), m);
+    if (current.kind === 'distance') return diff > 0 ? traduire("{0} km de plus depuis {1}", fmt1(Math.abs(diff)), m) : traduire("{0} km de moins depuis {1}", fmt1(Math.abs(diff)), m);
+    return diff > 0 ? traduire("{0} de plus depuis {1}", fmt1(Math.abs(diff)), m) : traduire("{0} de moins depuis {1}", fmt1(Math.abs(diff)), m);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, unite]);
 
@@ -222,7 +222,7 @@ export default function RecordsScreen() {
     if (g.lowestWeight) otherRows.push({ label: traduire('Poids le plus bas'), value: `${fmt1(g.lowestWeight.value)} kg`, date: g.lowestWeight.date, share: { type: 'lowestWeight', value: g.lowestWeight.value } });
     if (g.startingWeight) otherRows.push({ label: traduire('Poids de départ'), value: `${fmt1(g.startingWeight.value)} kg`, date: g.startingWeight.date });
     if (g.lowestWaist) otherRows.push({ label: traduire('Tour de taille le plus bas'), value: `${g.lowestWaist.value} cm`, date: g.lowestWaist.date, share: { type: 'lowestWaist', value: g.lowestWaist.value } });
-    if (g.longestStreak && g.longestStreak.value > 1) otherRows.push({ label: traduire('Plus longue série de jours'), value: `${g.longestStreak.value} jours`, date: g.longestStreak.date, share: { type: 'longestStreak', value: g.longestStreak.value } });
+    if (g.longestStreak && g.longestStreak.value > 1) otherRows.push({ label: traduire('Plus longue série de jours'), value: traduire("{0} jours", g.longestStreak.value), date: g.longestStreak.date, share: { type: 'longestStreak', value: g.longestStreak.value } });
     if (g.bestMonthRegularity) otherRows.push({ label: traduire('Ton mois le plus régulier'), value: `${g.bestMonthRegularity.value} %`, date: g.bestMonthRegularity.label, share: { type: 'bestMonthRegularity', value: g.bestMonthRegularity.value } });
     if (g.totalMeasurements > 0) otherRows.push({ label: traduire('Pesées au total'), value: String(g.totalMeasurements) });
   }
@@ -248,7 +248,7 @@ export default function RecordsScreen() {
     const v = formatRecordValue(l, undefined, unite);
     const fresh = l.date >= freshLimit && l.stamps > 0;
     const on = current?.key === l.key;
-    const shortName = short && l.kind !== 'force' && l.kind !== 'reps' ? l.name.split(', ').slice(1).join(', ') || l.name : l.name;
+    const shortName = short && l.kind !== 'force' && l.kind !== 'reps' ? (l.court ?? l.name.split(', ').slice(1).join(', ')) || l.name : l.name;
     return (
       <Pressable
         onPress={() => { tap(); onPress ? onPress() : openTraining(l.trainingId); }}
@@ -278,7 +278,7 @@ export default function RecordsScreen() {
   const bySport = (ls: RecordLine[]) => {
     const map = new Map<string, RecordLine[]>();
     ls.forEach((l) => {
-      const k = l.name.split(', ')[0];
+      const k = l.sportNom ?? l.name.split(', ')[0];
       map.set(k, [...(map.get(k) ?? []), l]);
     });
     return Array.from(map.entries());
@@ -334,7 +334,7 @@ export default function RecordsScreen() {
             {chartable.length > 1 ? (
               <ChipRow>
                 {chartable.slice(0, 14).map((l) => (
-                  <Chip key={l.key} label={l.kind === 'force' || l.kind === 'reps' ? l.name : l.name.replace(', plus longue distance', ', distance').replace(', meilleure allure', ', allure')} on={l.key === current.key} onPress={() => setSelected(l.key)} />
+                  <Chip key={l.key} label={l.kind === 'force' || l.kind === 'reps' ? l.name : l.sportNom && l.kind === 'distance' ? traduire("{0}, distance", l.sportNom) : l.sportNom && l.kind === 'allure' ? traduire("{0}, allure", l.sportNom) : l.name} on={l.key === current.key} onPress={() => setSelected(l.key)} />
                 ))}
               </ChipRow>
             ) : null}

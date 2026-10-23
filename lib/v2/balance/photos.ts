@@ -158,7 +158,7 @@ export function documentName(sorted: { at?: number }[]): string {
 
 /** « Photo 1 : prise le 3 octobre 2026 à 8 h 12 ; » une ligne par photo, dans l'ordre */
 export function photoListLines(sorted: { at?: number }[]): string[] {
-  return sorted.map((p, i) => `Photo ${i + 1} : ${p.at !== undefined ? traduire("prise le {0}", frenchDateTime(p.at)) : traduire('date de prise inconnue')}`);
+  return sorted.map((p, i) => traduire("Photo {0} : {1}", i + 1, p.at !== undefined ? traduire("prise le {0}", frenchDateTime(p.at)) : traduire('date de prise inconnue')));
 }
 
 /** « 1, 2 et 3 » */
@@ -178,7 +178,7 @@ export function photoSection(sorted: { at?: number }[]): string {
     traduire('Les photos sont numérotées dans cet ordre, de la plus ancienne à la plus récente. Elles peuvent arriver dans un document PDF, une photo par page avec son numéro et sa date en haut de la page, ou en fichiers nommés avec la date et le numéro, par exemple 2026-10-03_08h12_photo-01.jpg.'),
     traduire("Pour la date d'un bloc : si une date est visible sur l'écran, la capture, le ticket ou la note photographiés, elle prime (date_source: ecran ou ticket). Si aucune date n'est visible, utilise la date de prise de la photo donnée dans cette liste. Écris alors date_source: photo."),
     traduire('Photos prises à moins de 30 minutes d’intervalle : c’est la même pesée, un seul bloc.'),
-    ...(groups.length ? [traduire("Même pesée : {0}.", groups.map((g) => `photos ${andList(g.map((i) => i + 1))}`).join(' ; '))] : []),
+    ...(groups.length ? [traduire("Même pesée : {0}.", groups.map((g) => traduire("photos {0}", andList(g.map((i) => i + 1)))).join(' ; '))] : []),
     traduire('Dans chaque bloc, ajoute la ligne photos: avec les numéros des photos lues pour ce bloc, par exemple photos: 1, 2, 3.'),
   ];
   return lines.join('\n');
@@ -290,17 +290,17 @@ export function dateProposal(
 export function proposalLabel(p: DateProposal, yearAdded?: boolean): string {
   switch (p.source) {
     case 'ecran':
-      return yearAdded ? 'écran de la balance, année ajoutée' : traduire('écran de la balance');
+      return yearAdded ? traduire('écran de la balance, année ajoutée') : traduire('écran de la balance');
     case 'ticket':
-      return yearAdded ? 'ticket, année ajoutée' : 'ticket';
+      return yearAdded ? traduire('ticket, année ajoutée') : traduire('ticket');
     case 'photo':
-      return 'date de prise de vue, lue par l’IA';
+      return traduire('date de prise de vue, lue par l’IA');
     case 'lue':
-      return yearAdded ? 'lue sur la photo, année ajoutée' : 'lue sur la photo par l’IA';
+      return yearAdded ? traduire('lue sur la photo, année ajoutée') : traduire('lue sur la photo par l’IA');
     case 'exif':
-      return p.photo?.photo ? `date de prise de la photo ${p.photo.photo}` : 'jour de prise de tes photos';
+      return p.photo?.photo ? traduire("date de prise de la photo {0}", p.photo.photo) : traduire('jour de prise de tes photos');
     case 'aujourdhui':
-      return 'aucune date trouvée, aujourd’hui par défaut';
+      return traduire('aucune date trouvée, aujourd’hui par défaut');
     default:
       return traduire('aucune date trouvée');
   }

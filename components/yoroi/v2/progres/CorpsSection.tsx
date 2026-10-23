@@ -58,16 +58,16 @@ const ROWS: { key: CompoKey; label: string; color: string; unitWord: string }[] 
 ];
 
 export function deltaWords(diff: number, unitOne: string, unitMany: string, eps = 0.05): string {
-  if (Math.abs(diff) < eps) return 'stable';
+  if (Math.abs(diff) < eps) return traduire('stable');
   const abs = Math.abs(diff);
-  return traduire("{0} {1} de {2}", num(abs, 1), abs >= 2 ? unitMany : unitOne, diff < 0 ? 'moins' : 'plus');
+  return diff < 0 ? traduire("{0} {1} de moins", num(abs, 1), abs >= 2 ? unitMany : unitOne) : traduire("{0} {1} de plus", num(abs, 1), abs >= 2 ? unitMany : unitOne);
 }
 
 export function cmDelta(diff: number): string {
   const abs = Math.abs(diff);
-  if (abs < 0.25) return 'stable';
-  if (abs < 1) return traduire("{0} mm de {1}", Math.round(abs * 10), diff < 0 ? 'moins' : 'plus');
-  return traduire("{0} cm de {1}", num(abs, 1), diff < 0 ? 'moins' : 'plus');
+  if (abs < 0.25) return traduire('stable');
+  if (abs < 1) return diff < 0 ? traduire("{0} mm de moins", Math.round(abs * 10)) : traduire("{0} mm de plus", Math.round(abs * 10));
+  return diff < 0 ? traduire("{0} cm de moins", num(abs, 1)) : traduire("{0} cm de plus", num(abs, 1));
 }
 
 /**
@@ -157,7 +157,7 @@ function CompoRow({ label, color, points, unitWord, onPress, first }: { label: s
       first={first}
       onPress={onPress}
       valueText={(v) => `${num(v, 1, false)} %`}
-      deltaText={(d) => deltaWords(d, unitWord, `${unitWord}s`)}
+      deltaText={(d) => deltaWords(d, traduire(unitWord), traduire(`${unitWord}s`))}
     />
   );
 }

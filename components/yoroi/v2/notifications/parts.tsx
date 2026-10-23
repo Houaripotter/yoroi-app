@@ -47,7 +47,7 @@ export function sayDays(days: number[]): string {
   const set = new Set(days);
   if (set.size === 7) return traduire('tous les jours');
   if (set.size === 5 && WEEKDAYS.every((d) => set.has(d))) return traduire('en semaine');
-  if (set.size === 2 && set.has(0) && set.has(6)) return 'le week-end';
+  if (set.size === 2 && set.has(0) && set.has(6)) return traduire('le week-end');
   if (set.size === 1) {
     const d = WEEK_DAYS.find((x) => set.has(x.js));
     return d ? traduire("le {0}", d.name) : '';

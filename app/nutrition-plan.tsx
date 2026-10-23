@@ -176,8 +176,8 @@ export default function NutritionPlanScreen() {
               <KV label={traduire("Activité : {0}", act?.name ?? '')} value={`× ${String(act?.multiplier ?? '').replace('.', DECIMAL)}`} />
               <KV label={traduire("Dépense du jour")} value={`${plan.tdee} kcal`} />
               <KV
-                label={`${plan.deficit > 0 ? traduire('Déficit') : plan.deficit < 0 ? 'Surplus' : 'Ajustement'} (${g?.name ?? ''})`}
-                value={`${plan.deficit > 0 ? traduire('moins ') : plan.deficit < 0 ? 'plus ' : ''}${Math.abs(plan.deficit)} kcal`}
+                label={`${plan.deficit > 0 ? traduire('Déficit') : plan.deficit < 0 ? traduire('Surplus') : traduire('Ajustement')} (${g?.name ?? ''})`}
+                value={`${plan.deficit > 0 ? traduire('moins ') : plan.deficit < 0 ? traduire('plus ') : ''}${Math.abs(plan.deficit)} kcal`}
                               />
               <KV label={traduire("Objectif final")} value={`${plan.goalCalories} kcal`} strong last />
             </Card>

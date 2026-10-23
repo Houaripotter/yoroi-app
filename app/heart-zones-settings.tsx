@@ -222,7 +222,7 @@ export default function HeartZonesSettingsScreen() {
         const at = new Date().toISOString();
         await saveLowers(lb, 0, { origin: 'apple', updatedAt: at, appleSource: az.source, appleCheckedAt: at, noticeShown: true });
         tap('success');
-        setImportResult({ ok: true, text: traduire("Zones d’Apple importées et enregistrées : zone 2 dès {0}, zone 3 dès {1}, zone 4 dès {2}, zone 5 dès {3} bpm ({4} de Santé).", lb[0], lb[1], lb[2], lb[3], az.source === 'user' ? 'tes zones manuelles' : 'zones automatiques') });
+        setImportResult({ ok: true, text: traduire("Zones d’Apple importées et enregistrées : zone 2 dès {0}, zone 3 dès {1}, zone 4 dès {2}, zone 5 dès {3} bpm ({4} de Santé).", lb[0], lb[1], lb[2], lb[3], az.source === 'user' ? traduire('tes zones manuelles') : traduire('zones automatiques')) });
         return;
       }
       // 2. Avant iOS 27 : FC max lue dans Sante, zones estimees
@@ -303,7 +303,7 @@ export default function HeartZonesSettingsScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: effectiveSource === 'custom' ? S.moss : S.gold }} />
             <Ink size={13} weight="extraBold" color={S.ink2} style={{ flex: 1 }}>
-              {effectiveSource === 'custom' && meta?.origin === 'apple' ? traduire("Zones Apple Santé actives ({0}), mises à jour toutes seules", meta.appleSource === 'user' ? 'tes zones manuelles de Santé' : 'automatiques') : effectiveSource === 'custom' && meta?.origin === 'estimee' ? traduire('Zones estimées depuis ta FC max Apple Santé') : effectiveSource === 'custom' ? traduire('Tes zones personnalisées sont actives') : effectiveSource === 'age' ? traduire('Zones calculées depuis ta FC max. Personnalise-les ci-dessous.') : traduire('Zones par défaut. Personnalise-les ci-dessous.')}
+              {effectiveSource === 'custom' && meta?.origin === 'apple' ? traduire("Zones Apple Santé actives ({0}), mises à jour toutes seules", meta.appleSource === 'user' ? traduire('tes zones manuelles de Santé') : traduire('automatiques')) : effectiveSource === 'custom' && meta?.origin === 'estimee' ? traduire('Zones estimées depuis ta FC max Apple Santé') : effectiveSource === 'custom' ? traduire('Tes zones personnalisées sont actives') : effectiveSource === 'age' ? traduire('Zones calculées depuis ta FC max. Personnalise-les ci-dessous.') : traduire('Zones par défaut. Personnalise-les ci-dessous.')}
             </Ink>
           </View>
           <ZoneBand bounds={bounds} />

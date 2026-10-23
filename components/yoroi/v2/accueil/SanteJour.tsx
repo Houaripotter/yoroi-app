@@ -116,7 +116,7 @@ function a11yMesure(m: MesureSanteJour, o: ObjectifsSante | null | undefined): s
   const def = MESURE_SANTE[m.cle];
   const { valeur } = texteMesureSante(m);
   const obj = objectifMesure(m.cle, o);
-  return traduire("{0} : {1} {2}{3}{4}. Voir le détail", def.nom, valeur, def.a11y, m.hier ? ', mesure d’hier' : '', obj ? `, ${obj.texte}` : '');
+  return traduire("{0} : {1} {2}{3}{4}. Voir le détail", def.nom, valeur, def.a11y, m.hier ? traduire(', mesure d’hier') : '', obj ? `, ${obj.texte}` : '');
 }
 
 /** Largeur reelle de la grille (onLayout), estimee d'abord a partir de l'ecran */

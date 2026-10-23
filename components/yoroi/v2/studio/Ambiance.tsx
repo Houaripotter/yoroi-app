@@ -16,7 +16,7 @@ import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { DEV_CLOCK_CHANGED, devNowMs, getDevClockOffset, setDevClockOffset } from '@/lib/v2/creator/devClock';
 import { formatDateTime } from '@/lib/v2/creator/deviceInfo';
 import { Chip, ChipWrap, Note, StudioSection, useStudio } from './parts';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const H = 3600 * 1000;
 const D = 24 * H;
@@ -43,8 +43,8 @@ function offsetText(ms: number): string {
   const abs = Math.abs(ms);
   const days = Math.floor(abs / D);
   const hours = Math.round((abs % D) / H);
-  const parts = [days ? `${days} jour${days > 1 ? 's' : ''}` : '', hours ? `${hours} h` : ''].filter(Boolean);
-  return `${sign} ${parts.join(' et ')}`;
+  const parts = [days ? traduirePluriel(days, days > 1, "{0} jour", "{0} jours", days) : '', hours ? `${hours} h` : ''].filter(Boolean);
+  return `${sign} ${parts.join(traduire(' et '))}`;
 }
 
 export function Ambiance() {

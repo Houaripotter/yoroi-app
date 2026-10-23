@@ -241,7 +241,7 @@ export default function BackupHistoryScreen() {
 
   const restore = (b: BackupFile) => {
     impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
-    showPopup(traduire('Restaurer cette sauvegarde ?'), traduire("{0}, {1}.\n\nCes données s’ajoutent à tes données actuelles.", formatDay(b.modifiedAt), b.protegee ? 'sauvegarde protégée par un mot de passe' : `${b.weightsCount} pesées et ${b.trainingsCount} séances`), [
+    showPopup(traduire('Restaurer cette sauvegarde ?'), traduire("{0}, {1}.\n\nCes données s’ajoutent à tes données actuelles.", formatDay(b.modifiedAt), b.protegee ? traduire('sauvegarde protégée par un mot de passe') : traduire("{0} pesées et {1} séances", b.weightsCount, b.trainingsCount)), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
         text: traduire('Restaurer'),
@@ -349,7 +349,7 @@ export default function BackupHistoryScreen() {
           <View style={{ gap: 4 }}>
             <Ink size={44} weight="black" tight color={c.onDark}>{loading ? ' ' : String(backups.length)}</Ink>
             <Ink size={14} color={c.onDarkSecondary}>
-              {loading ? traduire('Recherche de tes sauvegardes') : latest ? traduirePluriel(backups.length, backups.length > 1, "sauvegarde sur ce téléphone, la dernière {0}", "sauvegardes sur ce téléphone, la dernière {0}", ageDays === 0 ? 'aujourd’hui' : ageDays === 1 ? 'hier' : `il y a ${ageDays} jours`) : traduire('Aucune sauvegarde pour l’instant')}
+              {loading ? traduire('Recherche de tes sauvegardes') : latest ? traduirePluriel(backups.length, backups.length > 1, "sauvegarde sur ce téléphone, la dernière {0}", "sauvegardes sur ce téléphone, la dernière {0}", ageDays === 0 ? traduire('aujourd’hui') : ageDays === 1 ? traduire('hier') : traduire("il y a {0} jours", ageDays)) : traduire('Aucune sauvegarde pour l’instant')}
             </Ink>
           </View>
           <Button tone="gold" icon="plus" label={creating ? traduire('Création') : traduire('Nouvelle sauvegarde')} loading={creating} onPress={newBackup} />

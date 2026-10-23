@@ -24,7 +24,7 @@ export { bmi } from './Taille';
 export function gapText(start: number, target: number): string {
   const d = Math.round((target - start) * 10) / 10;
   if (Math.abs(d) < 0.1) return traduire('Tu es déjà sur ton cap');
-  return traduire("{0} kg à {1}", kg(Math.abs(d)), d < 0 ? 'perdre' : 'prendre');
+  return d < 0 ? traduire("{0} kg à perdre", kg(Math.abs(d))) : traduire("{0} kg à prendre", kg(Math.abs(d)));
 }
 
 /** « 5 kg à perdre, entre le 15 et le 30 décembre » */

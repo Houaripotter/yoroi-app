@@ -40,7 +40,7 @@ export function PlanCurve({ start, target, width, height = 150, startLabel = tra
   const area = `${d} L${x1} ${bottom + 10} L${x0} ${bottom + 10} Z`;
   const weeks = 4;
   return (
-    <View style={{ width, height }} accessible accessibilityLabel={flat ? `Garder ${kg(start)} kilos` : traduire("De {0} kilos aujourd’hui à {1} kilos{2}", kg(start), kg(target as number), endLabel ? ` vers le ${endLabel}` : '')}>
+    <View style={{ width, height }} accessible accessibilityLabel={flat ? traduire("Garder {0} kilos", kg(start)) : endLabel ? traduire("De {0} kilos aujourd’hui à {1} kilos vers le {2}", kg(start), kg(target as number), endLabel) : traduire("De {0} kilos aujourd’hui à {1} kilos", kg(start), kg(target as number))}>
       <Svg width={width} height={height}>
         <Defs>
           {/* le trait s'eclaircit vers l'arrivee : c'est une estimation, pas une promesse */}

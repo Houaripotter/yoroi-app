@@ -15,7 +15,7 @@ import { backupAgeDays, backupWhen, useEspaceStatus } from '@/components/yoroi/v
 import { useCustomPopup } from '@/components/CustomPopup';
 import { exportDataToJSON } from '@/lib/exportService';
 import { logger } from '@/lib/security/logger';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export default function DonneesEtSauvegardes() {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function DonneesEtSauvegardes() {
         {/* les copies faites seules avant chaque mise a jour, a voir, partager et remettre */}
         <ValueRow tint={TUILE.ardoise} icon="archive" label={traduire("Copies de sécurité automatiques")} sub={traduire("Faites avant chaque mise à jour")} onPress={() => go('/settings/copies-securite')} />
         <ValueRow tint={TUILE.indigo} icon="shield" label={traduire("Mes données")} value={traduire("Exporter, effacer")} onPress={() => go('/settings/donnees')} />
-        <ValueRow tint={TUILE.or} icon="camera" label={traduire("Coffre photos")} value={nbPhotos ? `${nbPhotos} photo${nbPhotos > 1 ? 's' : ''}` : undefined} onPress={() => go('/photos')} />
+        <ValueRow tint={TUILE.or} icon="camera" label={traduire("Coffre photos")} value={nbPhotos ? traduirePluriel(nbPhotos, nbPhotos > 1, "{0} photo", "{0} photos", nbPhotos) : undefined} onPress={() => go('/photos')} />
       </Card>
       <PopupComponent />
     </EspaceScreen>

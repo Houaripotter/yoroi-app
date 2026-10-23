@@ -244,7 +244,7 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
     ? n === 0 ? traduire('ta première séance t’attend') : null
     : over ? traduire("objectif de {0} dépassé", goal) : reached ? traduire('objectif tenu') : n === 0 ? traduire('ta première séance t’attend') : traduire("encore {0} pour l’objectif", goal - n);
   const volume = `${formatTonnage(tons, unite)} ${accordSouleve(tons, unite)}`;
-  const facts = [formatDuration(minutes) ? `${formatDuration(minutes)} de sport` : null, tons > 0 ? volume : null, n > 0 ? `${done.size} ${done.size > 1 ? 'jours actifs' : 'jour actif'}` : null].filter(Boolean).join(', ');
+  const facts = [formatDuration(minutes) ? traduire("{0} de sport", formatDuration(minutes)) : null, tons > 0 ? volume : null, n > 0 ? traduirePluriel(done.size, done.size > 1, "{0} jour actif", "{0} jours actifs", done.size) : null].filter(Boolean).join(', ');
   // barre du jour : hauteur selon le temps de sport (minimum visible si une seance est notee sans duree)
   const perDay = DAY_LETTERS.map((_, i) => week.filter((t) => (new Date(t.date.slice(0, 10) + 'T12:00:00').getDay() + 6) % 7 === i).reduce((s, t) => s + Math.max(1, durationOf(t)), 0));
   const maxDay = Math.max(60, ...perDay);
@@ -266,7 +266,7 @@ export function WeekCard({ trainings, goal, femme = false, plannedDays = [], nex
                 {traduire("Ta semaine, depuis lundi")}</Ink>
               <Ink size={36} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {String(n)}
-                <Ink size={16} weight="black" color={P.muted}>{goal > 0 && !over ? ` / ${goal} séances` : n > 1 ? traduire(' séances') : traduire(' séance')}</Ink>
+                <Ink size={16} weight="black" color={P.muted}>{goal > 0 && !over ? traduire(" / {0} séances", goal) : n > 1 ? traduire(' séances') : traduire(' séance')}</Ink>
               </Ink>
               {status ? (
                 <Ink size={13} weight="extraBold" color={reached ? P.mossText : P.ink2} numberOfLines={2}>

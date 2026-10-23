@@ -64,7 +64,7 @@ export default function CompetitorSpaceScreen() {
                       {days === 0 ? traduire("Aujourd'hui") : String(days)}
                       {days > 0 ? (
                         <Ink size={14} weight="extraBold" color={P.ink2}>
-                          {days > 1 ? ' jours' : ' jour'}
+                          {' '}{days > 1 ? traduire('jours') : traduire('jour')}
                         </Ink>
                       ) : null}
                     </Ink>

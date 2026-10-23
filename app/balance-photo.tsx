@@ -48,7 +48,7 @@ import { snapshotBeforeImport } from '@/lib/v2/sauvegarde/avantMiseAJour';
 import { todayIso } from '@/lib/v2/progres/format';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { logger } from '@/lib/security/logger';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const GROUPS: { id: BalanceGroup; title: string }[] = [
   { id: 'principal', title: traduire('Poids et composition') },
@@ -442,11 +442,11 @@ export default function BalancePhotoScreen() {
     const nNew = ok.filter((r) => r === 'new').length;
     const nMerged = ok.filter((r) => r === 'merged').length;
     const nSame = ok.filter((r) => r === 'same').length;
-    const parts = [nNew ? `${nNew} ${nNew > 1 ? 'nouvelles' : 'nouvelle'}` : '', nMerged ? `${nMerged} ${nMerged > 1 ? 'complétées' : 'complétée'}` : '', nSame ? `${nSame} déjà à jour` : ''].filter(Boolean);
+    const parts = [nNew ? traduirePluriel(nNew, nNew > 1, "{0} nouvelle", "{0} nouvelles", nNew) : '', nMerged ? traduirePluriel(nMerged, nMerged > 1, "{0} complétée", "{0} complétées", nMerged) : '', nSame ? traduire("{0} déjà à jour", nSame) : ''].filter(Boolean);
     // NUIT 14 : la confirmation reste a l'ecran (« 89,2 kg enregistré le 13 oct. »), plus de depart automatique
     // vers un autre ecran qui la cachait ; « Voir ma courbe » y mene.
     const one = ok.length === 1 && lastSaved.current;
-    setNotice(one ? traduire("{0} Ta courbe est à jour.", lastSaved.current) : traduire("{0} {1}{2}. Tes courbes sont à jour.", ok.length, ok.length > 1 ? 'pesées enregistrées' : 'pesée enregistrée', parts.length ? ` : ${parts.join(', ')}` : ''));
+    setNotice(one ? traduire("{0} Ta courbe est à jour.", lastSaved.current) : traduirePluriel(ok.length, ok.length > 1, "{0} pesée enregistrée{1}. Tes courbes sont à jour.", "{0} pesées enregistrées{1}. Tes courbes sont à jour.", ok.length, parts.length ? ` : ${parts.join(', ')}` : ''));
     lastSaved.current = null;
     // 16 octobre : une seule pesee lue, la page de bilan s'ouvre ; plusieurs (import en masse), jamais un bilan par pesee,
     // un seul resume sur demande (« Voir mon bilan »)
@@ -505,7 +505,7 @@ export default function BalancePhotoScreen() {
       for (const { i } of todo) results.push(await saveBlock(i));
       finish(results, todo.map(({ s }) => s.date));
       const failed = results.filter((r) => !r).length;
-      if (failed) setError(traduire("{0} {1}, regarde la carte ouverte.", failed, failed > 1 ? 'pesées n’ont pas pu être enregistrées' : 'pesée n’a pas pu être enregistrée'));
+      if (failed) setError(traduirePluriel(failed, failed > 1, "{0} pesée n’a pas pu être enregistrée, regarde la carte ouverte.", "{0} pesées n’ont pas pu être enregistrées, regarde la carte ouverte.", failed));
       else {
         setAllDone(true);
         void cleanupPhotos(photos, prepared?.copies);
@@ -664,7 +664,7 @@ export default function BalancePhotoScreen() {
         <View style={box}>
           <Ink size={14} weight="extraBold">{traduire("Deux dates possibles : laquelle est la bonne ?")}</Ink>
           {choice(p.date, dayTitle(p.date), traduire("lue par l’IA, {0}", label))}
-          {choice(cf.date, dayTitle(cf.date), traduire("{0}, le {1}", cf.photo ? `prise de la photo ${cf.photo}` : 'prise de tes photos', frenchDateTime(cf.at)))}
+          {choice(cf.date, dayTitle(cf.date), cf.photo ? traduire("prise de la photo {0}, le {1}", cf.photo, frenchDateTime(cf.at)) : traduire("prise de tes photos, le {0}", frenchDateTime(cf.at)))}
           <View style={{ flexDirection: 'row' }}>{pill(traduire('Autre jour'), () => setPicker(bi), false, traduire('Choisir un autre jour'))}</View>
         </View>
       );
@@ -751,7 +751,7 @@ export default function BalancePhotoScreen() {
               hitSlop={8}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: st.include }}
-              accessibilityLabel={traduire("Garder la pesée {0}", st.date ? `du ${longDate(st.date)}` : 'sans date')}
+              accessibilityLabel={st.date ? traduire("Garder la pesée du {0}", longDate(st.date)) : traduire("Garder la pesée sans date")}
             >
               <Check on={st.include} />
             </Pressable>
@@ -902,7 +902,7 @@ export default function BalancePhotoScreen() {
                           ? traduire('Tu choisiras le jour après.')
                           : g.length > 1
                             ? traduire("Photos {0} à {1}, une seule pesée", g[0] + 1, g[g.length - 1] + 1)
-                            : `Photo ${g[0] + 1}`}
+                            : traduire("Photo {0}", g[0] + 1)}
                       </Ink>
                     </View>
                   </View>
@@ -1021,9 +1021,9 @@ export default function BalancePhotoScreen() {
         {blocks.length && states.length === blocks.length ? (
           <View onLayout={(e) => (previewY.current = e.nativeEvent.layout.y)} style={{ marginHorizontal: GUTTER, marginTop: 22, gap: 12 }}>
             <View style={{ gap: 4 }}>
-              <Ink size={20} weight="black" tight>{`${blocks.length} ${blocks.length > 1 ? traduire('pesées trouvées') : traduire('pesée trouvée')}`}</Ink>
+              <Ink size={20} weight="black" tight>{traduirePluriel(blocks.length, blocks.length > 1, "{0} pesée trouvée", "{0} pesées trouvées", blocks.length)}</Ink>
               {toChoose ? (
-                <Ink size={13} weight="bold" color={c.danger}>{traduire("{0} {1} avant d’enregistrer.", toChoose, toChoose > 1 ? 'pesées sans date : choisis leur jour' : 'pesée sans date : choisis son jour')}</Ink>
+                <Ink size={13} weight="bold" color={c.danger}>{traduirePluriel(toChoose, toChoose > 1, "{0} pesée sans date : choisis son jour avant d’enregistrer.", "{0} pesées sans date : choisis leur jour avant d’enregistrer.", toChoose)}</Ink>
               ) : null}
               <Ink size={13} color={c.textSecondary}>
                 {multi
@@ -1070,7 +1070,7 @@ export default function BalancePhotoScreen() {
                         : pending === 1
                           ? traduire('Enregistrer la pesée cochée')
                           : traduire('Coche une pesée')
-                      : traduire("Enregistrer {0} {1}", singleCount, singleCount > 1 ? 'valeurs' : 'valeur')
+                      : traduirePluriel(singleCount, singleCount > 1, "Enregistrer {0} valeur", "Enregistrer {0} valeurs", singleCount)
                 }
                 onPress={() => void saveAll()}
                 disabled={saving || (multi ? !pending : !singleCount)}

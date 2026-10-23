@@ -98,7 +98,7 @@ export function Briefing({ visible, onClose, p, ins }: { visible: boolean; onClo
             ) : null}
             {ins.currentStreak && ins.currentStreak.count >= 2 ? (
               <Ink size={14} weight="extraBold" color={ins.currentStreak.type === 'win' ? V : D}>
-                {traduire("{0} {1} d'affilée", ins.currentStreak.count, ins.currentStreak.type === 'win' ? 'victoires' : 'défaites')}
+                {ins.currentStreak.type === 'win' ? traduire("{0} victoires d'affilée", ins.currentStreak.count) : traduire("{0} défaites d'affilée", ins.currentStreak.count)}
               </Ink>
             ) : null}
           </Glass>

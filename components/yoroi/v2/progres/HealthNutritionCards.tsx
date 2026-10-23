@@ -172,7 +172,7 @@ function SanteCard({ steps7 }: { steps7?: number[] }) {
           <Ink size={20} weight="black" tight>
             {traduire("Ta montre")}</Ink>
           <Ink size={13} color={c.textSecondary}>
-            {traduire("Pas, cœur, calories et sommeil arrivent tout seuls depuis {0}.", st.provider || 'ton téléphone')}
+            {traduire("Pas, cœur, calories et sommeil arrivent tout seuls depuis {0}.", st.provider || traduire('ton téléphone'))}
           </Ink>
         </View>
       </View>

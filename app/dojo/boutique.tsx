@@ -318,7 +318,7 @@ export default function Boutique() {
         etat={{ equipe, regarde, verrou, note }}
         onPress={() => essayer(base, opts.pack)}
         onLongPress={opts.pack ? () => ouvrirPack(opts.pack as PackDef) : undefined}
-        label={`${nom}, ${equipe ? traduire('équipé') : verrou ? traduire("{0}, touche pour l’essayer", note ? note.toLowerCase() : 'avec Premium') : traduire('touche pour l’essayer')}`}
+        label={`${nom}, ${equipe ? traduire('équipé') : verrou ? traduire("{0}, touche pour l’essayer", note ? note.toLowerCase() : traduire('avec Premium')) : traduire('touche pour l’essayer')}`}
       />
     );
   };
@@ -349,7 +349,7 @@ export default function Boutique() {
         nom={t.name}
         etat={{ equipe, regarde, verrou, note }}
         onPress={() => essayerScene(t.id)}
-        label={traduire("Scène {0}, {1}", t.name, equipe ? 'choisie' : verrou ? `${(themeCondition(t) ?? 'avec Premium').toLowerCase()}, touche pour l’essayer` : 'touche pour l’essayer')}
+        label={equipe ? traduire("Scène {0}, choisie", t.name) : verrou ? traduire("Scène {0}, {1}, touche pour l’essayer", t.name, (themeCondition(t) ?? traduire('avec Premium')).toLowerCase()) : traduire("Scène {0}, touche pour l’essayer", t.name)}
       />
     );
   };

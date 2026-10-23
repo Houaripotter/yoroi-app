@@ -570,7 +570,7 @@ export default function SeanceMuscu() {
                 <Ink size={14} color={c.textSecondary}>
                   {lastBest && hCurrent ? (
                     <>
-                      La dernière fois, {relativeDay(hCurrent.lastDate)} : <Ink size={14} weight="extraBold">{lastBest.weight > 0 ? traduire("{0} {1} pour {2}", fmtNum(saisieDepuisKg(lastBest.weight, unite)), lb ? 'livres' : 'kilos', lastBest.reps) : traduire("{0} répétitions", lastBest.reps)}</Ink>
+                      {traduire("La dernière fois, {0} : ", relativeDay(hCurrent.lastDate))}<Ink size={14} weight="extraBold">{lastBest.weight > 0 ? (lb ? traduire("{0} livres pour {1}", fmtNum(saisieDepuisKg(lastBest.weight, unite)), lastBest.reps) : traduire("{0} kilos pour {1}", fmtNum(saisieDepuisKg(lastBest.weight, unite)), lastBest.reps)) : traduire("{0} répétitions", lastBest.reps)}</Ink>
                     </>
                   ) : (
                     traduire('Première fois sur cet exercice. Ce que tu fais aujourd’hui devient ta référence.')
@@ -605,7 +605,7 @@ export default function SeanceMuscu() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
-                        <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 5 : 2} fine={lb ? 1 : 0.5} max={lb ? 1100 : 500} decimals unit={lb ? 'livres' : 'kilos'} size={38} button={50} hint={lb ? 'livres' : 'kilos'} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
+                        <Stepper layout="stack" value={saisieDepuisKg(s.weight, unite)} step={lb ? 5 : 2} fine={lb ? 1 : 0.5} max={lb ? 1100 : 500} decimals unit={lb ? traduire('livres') : traduire('kilos')} size={38} button={50} hint={lb ? traduire('livres') : traduire('kilos')} onChange={(v) => setValue(current.id, s.id, { weight: kgDepuisSaisie(v, unite) })} />
                       </View>
                       <View style={{ width: 1, backgroundColor: c.border, marginVertical: 6 }} />
                       <View style={{ flex: 1 }}>

@@ -270,7 +270,9 @@ export default function Pesee() {
       ? traduire('ta première pesée')
       : Math.abs(diff) < 0.05
         ? traduire('pareil que ta dernière pesée')
-        : traduire("{0} de {1} que ta dernière pesée", Math.abs(diff) >= 1 ? `${formatKg(Math.abs(diff))} kg` : `${Math.round(Math.abs(diff) * 1000)} g`, diff < 0 ? 'moins' : 'plus');
+        : diff < 0
+          ? traduire("{0} de moins que ta dernière pesée", Math.abs(diff) >= 1 ? `${formatKg(Math.abs(diff))} kg` : `${Math.round(Math.abs(diff) * 1000)} g`)
+          : traduire("{0} de plus que ta dernière pesée", Math.abs(diff) >= 1 ? `${formatKg(Math.abs(diff))} kg` : `${Math.round(Math.abs(diff) * 1000)} g`);
 
   const provider = health?.provider ?? (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé');
   const live = health?.mode === 'live';
@@ -401,7 +403,7 @@ export default function Pesee() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <HeartDot color={c.indigo} size={18} />
               <Ink size={14} weight="bold" style={{ flex: 1 }}>
-                {traduire("{0} a envoyé {1} kg à {2} le {3}{4}.", pending.sourceLabel ? `Ta ${pending.sourceLabel}` : 'Ta balance', formatKg(pending.weight ?? 0), provider, formatLongDate(pending.date), pending.fat ? `, masse grasse ${fmtValue(pending.fat)} %` : '')}
+                {traduire("{0} a envoyé {1} kg à {2} le {3}{4}.", pending.sourceLabel ? traduire("Ta {0}", pending.sourceLabel) : traduire('Ta balance'), formatKg(pending.weight ?? 0), provider, formatLongDate(pending.date), pending.fat ? traduire(", masse grasse {0} %", fmtValue(pending.fat)) : '')}
               </Ink>
             </View>
             <Pressable

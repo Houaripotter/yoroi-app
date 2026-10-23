@@ -312,7 +312,7 @@ function Bombe({ arme, onFerme }: { arme: React.MutableRefObject<boolean>; onFer
   const c = theme.colors;
   if (arme.current) {
     arme.current = false;
-    throw new Error('Erreur simulée par le Studio (aucune donnée touchée)');
+    throw new Error(traduire('Erreur simulée par le Studio (aucune donnée touchée)'));
   }
   return (
     <View style={{ flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 }}>

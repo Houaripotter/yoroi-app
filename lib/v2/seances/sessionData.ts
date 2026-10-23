@@ -63,7 +63,7 @@ export function firstSport(sport: string | undefined): string {
 export function sportLabel(sport: string | undefined): string {
   const ids = (sport ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   if (ids.length === 0) return traduire('Séance');
-  return ids.map((s) => getSportName(s)).join(' et ');
+  return ids.map((s) => getSportName(s)).join(traduire(' et '));
 }
 
 export type SportFamily = 'muscu' | 'combat_sol' | 'combat_pied' | 'cardio' | 'autre';
@@ -180,7 +180,7 @@ export function sessionMeta(t: Training, unite: UnitePoids = 'kg'): string {
   const tons = tonnage(t);
   if (tons >= 100) parts.push(`${formatTonnage(tons, unite)} ${accordSouleve(tons, unite)}`);
   const rounds = parseRounds(t).length || t.rounds || 0;
-  if (rounds) parts.push(`${rounds} round${rounds > 1 ? 's' : ''}`);
+  if (rounds) parts.push(traduirePluriel(rounds, rounds > 1, "{0} round", "{0} rounds", rounds));
   if (t.distance) parts.push(`${formatKg(t.distance)} km`);
   if (t.club_name) parts.push(t.club_name);
   if (parts.length === 0 && t.intensity) parts.push(traduire("effort {0} sur 10", t.intensity));

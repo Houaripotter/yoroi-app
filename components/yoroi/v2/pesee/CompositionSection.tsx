@@ -12,7 +12,7 @@ import { fontStyle } from '@/components/yoroi/fonts';
 import { COMPO_FIELDS, fmtValue } from '@/lib/v2/pesee/fields';
 import type { CompoField, FieldSpec } from '@/lib/v2/pesee/fields';
 import { blancA } from '@/components/yoroi/livePalette';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export type Origin = 'health' | 'row' | 'last' | 'user' | 'none';
 
@@ -46,7 +46,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
   const summary = filled.length === 0
     ? traduire('masse grasse, muscle, eau, os, viscérale')
     : allRow
-    ? traduire("{0} {1} ce jour-là", filled.length, filled.length > 1 ? 'mesures déjà enregistrées' : 'mesure déjà enregistrée')
+    ? traduirePluriel(filled.length, filled.length > 1, "{0} mesure déjà enregistrée ce jour-là", "{0} mesures déjà enregistrées ce jour-là", filled.length)
     : `${filled.length} ${filled.length > 1 ? traduire('mesures pré-remplies') : traduire('mesure pré-remplie')}${fromHealth ? `, ${healthText ?? traduire("depuis {0}", provider)}` : ''}`;
 
   const subOf = (f: FieldSpec): { t: string; tone: 'health' | 'muted' | 'plain' } => {
@@ -130,7 +130,7 @@ export function CompositionSection({ open, onToggle, text, origin, lastDate, onC
           ) : null}
 
           <Ink size={12} color={c.textSecondary} style={{ marginTop: 12 }}>
-            {traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie-les depuis l’app {1}. Une mesure grisée vient de ta dernière saisie, ajuste-la ou efface-la.", provider, scaleBrand ?? 'de ta balance')}
+            {scaleBrand != null ? traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie-les depuis l’app {1}. Une mesure grisée vient de ta dernière saisie, ajuste-la ou efface-la.", provider, scaleBrand) : traduire("{0} reçoit de ta balance le poids, la masse grasse et la masse maigre. La masse musculaire, l’eau, l’os et la graisse viscérale n’y passent pas : recopie-les depuis l’app de ta balance. Une mesure grisée vient de ta dernière saisie, ajuste-la ou efface-la.", provider)}
           </Ink>
         </View>
       ) : null}

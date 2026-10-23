@@ -147,7 +147,7 @@ export function PlanMonth({ trainings, competitions, plan, restDays, stampedTrai
                   key={k}
                   onPress={() => { tap(); setDay(iso); }}
                   accessibilityRole="button"
-                  accessibilityLabel={traduirePluriel(list.length, list.length > 1, "{0}, {1} séance{2}{3}", "{0}, {1} séances{2}{3}", dnum, list.length, rest ? ', repos' : '', comp ? ', compétition' : '')}
+                  accessibilityLabel={traduirePluriel(list.length, list.length > 1, "{0}, {1} séance{2}{3}", "{0}, {1} séances{2}{3}", dnum, list.length, rest ? traduire(', repos') : '', comp ? traduire(', compétition') : '')}
                   style={{ flex: 1, height: 60, alignItems: 'center', justifyContent: 'center' }}
                 >
                   <View style={{ width: 42, height: 54, borderRadius: 14, alignItems: 'center', paddingTop: 5, gap: 3, backgroundColor: list.length ? c.fillSoft : 'transparent', borderWidth: isToday || comp ? 2 : 0, borderColor: isToday ? c.accent : c.gold }}>

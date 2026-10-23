@@ -265,7 +265,7 @@ export default function CalculatorsScreen() {
             <Formula lines={[traduire('Homme : 1,20 × IMC + 0,23 × âge − 10,8 − 5,4'), traduire('Femme : 1,20 × IMC + 0,23 × âge − 5,4')]} />
             <Card style={{ paddingVertical: 6 }}>
               <Ink size={13} weight="extraBold" color={P.ink2} style={{ paddingTop: 8 }}>
-                {traduire("Plages de référence, {0}", gender === 'male' ? 'homme' : 'femme')}
+                {gender === 'male' ? traduire("Plages de référence, homme") : traduire("Plages de référence, femme")}
               </Ink>
               {IMG_RANGES[gender].map((r, i) => (
                 <KV key={r.range} label={traduire(r.label)} value={r.range} last={i === IMG_RANGES[gender].length - 1} />

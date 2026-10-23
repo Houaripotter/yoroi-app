@@ -195,7 +195,7 @@ export default function CombatTimerScreen() {
     const minutes = Math.max(1, Math.round((end - (startedAtRef.current || end)) / 60000));
     const partner = config.partnerName.trim();
     const detail = roundsHistory.map((r) => `R${r.roundNumber} ${r.result ? RESULT_LABEL[r.result].toLowerCase() : traduire('sans résultat')}${r.notes.trim() ? ` (${r.notes.trim()})` : ''}`).join(', ');
-    const notes = `Sparring${partner ? traduire(" avec {0}", partner) : ''} : ${roundsHistory.length} rounds, ${wins} V, ${losses} D, ${draws} N. ${detail}`;
+    const notes = traduire("Sparring{0} : {1} rounds, {2} V, {3} D, {4} N. {5}", partner ? traduire(" avec {0}", partner) : '', roundsHistory.length, wins, losses, draws, detail);
     router.push({ pathname: '/seance/deja-faite' as any, params: { sport, duration: String(minutes), notes } });
   };
 
@@ -292,7 +292,7 @@ export default function CombatTimerScreen() {
                   <View key={e.roundNumber} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: i === 0 ? 0 : 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: P.line2 }}>
                     <ResultDot result={e.result} size={32} />
                     <View style={{ flex: 1 }}>
-                      <Ink size={15} weight="bold">{`Round ${e.roundNumber}, ${e.result ? RESULT_LABEL[e.result].toLowerCase() : traduire('sans résultat')}`}</Ink>
+                      <Ink size={15} weight="bold">{traduire("Round {0}, {1}", e.roundNumber, e.result ? RESULT_LABEL[e.result].toLowerCase() : traduire('sans résultat'))}</Ink>
                       {e.notes ? <Ink size={13} weight="medium" color={P.ink2} numberOfLines={2}>{e.notes}</Ink> : null}
                     </View>
                   </View>

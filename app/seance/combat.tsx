@@ -458,8 +458,8 @@ export default function SeanceCombat() {
           : traduire('Prêt ?');
   const bigTime = t.phase === 'idle' ? fmtClock(draft.roundSec) : t.phase === 'done' ? `${lastNumber}` : fmtClock(left);
   const subLine =
-    t.phase === 'round' ? (t.index >= draft.totalRounds ? 'dernier round' : draft.restSec > 0 ? traduire("puis {0} de repos", fmtClock(draft.restSec)) : traduire('puis on enchaîne'))
-      : t.phase === 'rest' ? `prochain : round ${t.index + 1}`
+    t.phase === 'round' ? (t.index >= draft.totalRounds ? traduire('dernier round') : draft.restSec > 0 ? traduire("puis {0} de repos", fmtClock(draft.restSec)) : traduire('puis on enchaîne'))
+      : t.phase === 'rest' ? traduire("prochain : round {0}", t.index + 1)
         : t.phase === 'done' ? (lastNumber > 1 ? traduire('rounds au compteur') : traduire('round au compteur'))
           : traduire("{0} rounds, {1} de repos", draft.totalRounds, fmtClock(draft.restSec));
 
@@ -473,7 +473,7 @@ export default function SeanceCombat() {
         </Pressable>
         <Pressable onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("{0}, changer de sport", sportName)} style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>{draft.label || sportName}, {draft.form && draft.details ? (draft.editId ? 'modifier' : dayLabel(draft.details.date).toLocaleLowerCase(LOCALE)) : fmtClock(elapsedSec)}</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1 }}>{draft.label || sportName}, {draft.form && draft.details ? (draft.editId ? traduire('modifier') : dayLabel(draft.details.date).toLocaleLowerCase(LOCALE)) : fmtClock(elapsedSec)}</Ink>
             <Icon name="down" size={14} color={c.textSecondary} />
           </View>
           <Ink size={22} weight="black" tight>{libelleTypeSeance(draft, aliasTypeSeance)}</Ink>
@@ -530,7 +530,7 @@ export default function SeanceCombat() {
             </Svg>
             <Ink size={16} weight="extraBold" color={t.phase === 'rest' ? c.indigo : c.accent}>{topLine}</Ink>
             <Ink size={Math.round(ring * 0.28)} weight="black" style={{ fontVariant: ['tabular-nums'], lineHeight: Math.round(ring * 0.31) }} accessibilityLiveRegion="polite">{bigTime}</Ink>
-            <Ink size={14} color={c.textSecondary}>{t.paused !== null ? 'en pause' : subLine}</Ink>
+            <Ink size={14} color={c.textSecondary}>{t.paused !== null ? traduire('en pause') : subLine}</Ink>
           </View>
         </View>
 
@@ -629,7 +629,7 @@ export default function SeanceCombat() {
             {selectedThemes.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {selectedThemes.map((th) => (
-                  <Pressable key={th} onPress={() => toggleTheme(th)} accessibilityRole="button" accessibilityLabel={`Retirer ${th}`} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.ink }}>
+                  <Pressable key={th} onPress={() => toggleTheme(th)} accessibilityRole="button" accessibilityLabel={traduire("Retirer {0}", th)} style={{ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.ink }}>
                     <Ink size={13} weight="extraBold" color={c.background}>{traduire(th)}</Ink>
                     <Icon name="close" size={12} color={c.background} strokeWidth={3} />
                   </Pressable>
@@ -701,7 +701,7 @@ export default function SeanceCombat() {
       </ScrollView>
 
       {/* Detail d'un round */}
-      <Sheet visible={!!detail} onClose={() => setDetailFor(null)} title={detail ? `Round ${detail.number}` : undefined} scroll>
+      <Sheet visible={!!detail} onClose={() => setDetailFor(null)} title={detail ? traduire("Round {0}", detail.number) : undefined} scroll>
         {detail ? (
           <View style={{ gap: 12 }}>
             <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Partenaire")}</Ink>
@@ -792,7 +792,7 @@ export default function SeanceCombat() {
         <SportRibbon sport={draft.sport} sub={draft.label && draft.label !== getSportName(draft.sport) ? draft.label : undefined} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <MiniStat label={traduire("durée")} value={fmtMinutes(draft.form && draft.details ? draft.details.duration : elapsedSec / 60)} />
-          <MiniStat label={draft.rounds.length > 1 ? 'rounds' : 'round'} value={String(draft.rounds.length)} />
+          <MiniStat label={draft.rounds.length > 1 ? traduire('rounds') : traduire('round')} value={String(draft.rounds.length)} />
           <MiniStat label="type" value={libelleTypeSeance(draft, aliasTypeSeance)} />
         </View>
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Comment c’était ?")}</Ink>
@@ -820,7 +820,7 @@ export default function SeanceCombat() {
                 key={f.key}
                 value={draft[f.key] ?? ''}
                 onChangeText={(v) => update((d) => ({ ...d, [f.key]: v }))}
-                placeholder={`${f.label} : ${f.ph.toLocaleLowerCase(LOCALE)}`}
+                placeholder={traduire("{0} : {1}", traduire(f.label), traduire(f.ph).toLocaleLowerCase(LOCALE))}
                 placeholderTextColor={c.textMuted}
                 multiline
                 accessibilityLabel={traduire(f.label)}

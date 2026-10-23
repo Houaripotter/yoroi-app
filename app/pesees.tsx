@@ -83,7 +83,7 @@ export default function Pesees() {
   const several = useMemo(() => daysWithSeveral(raw), [raw]);
 
   const onRow = (w: Weight) => {
-    appAlert(formatLongDate(w.date.slice(0, 10)), `${formatKg(w.weight)} kilos`, [
+    appAlert(formatLongDate(w.date.slice(0, 10)), traduire("{0} kilos", formatKg(w.weight)), [
       { text: traduire('Voir le bilan'), onPress: () => router.push(lienBilan({ type: 'corps', date: w.date.slice(0, 10), origine: 'detail' }) as never) },
       { text: traduire('Modifier'), onPress: () => router.push({ pathname: '/pesee', params: { id: String(w.id), date: w.date.slice(0, 10), value: String(w.weight) } } as any) },
       {

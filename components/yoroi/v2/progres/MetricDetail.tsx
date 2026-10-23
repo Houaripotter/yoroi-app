@@ -21,7 +21,7 @@ import type { PeriodOption } from '../charts/PeriodSwitch';
 import { BadgeRecord, RECORD_RED, TropheeRecord } from '../charts/core';
 import { capitalize, dayLong, dayShort, daysDiff, num, todayIso } from '@/lib/v2/progres/format';
 import { P } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type DetailPoint = ChartPoint & { caption?: string };
 
@@ -102,17 +102,21 @@ export function fmtValue(spec: MetricSpec, v: number): string {
   return `${num(v, spec.digits, !spec.keepZero)}${spec.unit ? ` ${spec.unit}` : ''}`;
 }
 
-/** « 6,2 points de moins », « 3 mm de plus », « stable » */
+/** « 6,2 points », « 3 mm » : l'ecart sans son sens, pour la phrase et pour la tuile (plus de regex sur un texte traduit) */
+function deltaAmount(spec: MetricSpec, abs: number): string {
+  if (spec.unit === 'cm' && abs < 1) return `${Math.round(abs * 10)} mm`;
+  const one = spec.deltaOne ?? spec.unit;
+  const many = spec.deltaMany ?? spec.unit;
+  const u = one && many ? traduirePluriel(abs, abs >= 2, one, many) : abs >= 2 ? many : one;
+  return `${num(abs, spec.digits === 0 ? 0 : 1, !spec.keepZero)}${u ? ` ${u}` : ''}`;
+}
+
+/** « 6,2 points de moins », « 3 mm de plus », « stable » ('stable' reste un repere compare par le code, traduit a l'affichage) */
 export function deltaPhrase(spec: MetricSpec, d: number): string {
   const eps = spec.eps ?? (spec.digits === 0 ? 0.5 : 0.05);
   const abs = Math.abs(d);
   if (abs < eps) return 'stable';
-  const way = d < 0 ? traduire('moins') : 'plus';
-  if (spec.unit === 'cm' && abs < 1) return traduire("{0} mm de {1}", Math.round(abs * 10), way);
-  const one = spec.deltaOne ?? spec.unit;
-  const many = spec.deltaMany ?? spec.unit;
-  const u = abs >= 2 ? many : one;
-  return traduire("{0}{1} de {2}", num(abs, spec.digits === 0 ? 0 : 1, !spec.keepZero), u ? ` ${u}` : '', way);
+  return d < 0 ? traduire("{0} de moins", deltaAmount(spec, abs)) : traduire("{0} de plus", deltaAmount(spec, abs));
 }
 
 export function MetricDetail(props: Props) {
@@ -178,8 +182,8 @@ export function MetricDetail(props: Props) {
   const head = scrub ?? last ?? allLast;
   const evoWords = diff === null ? null : deltaPhrase(spec, diff);
   // Vague 31 : en kg la tuile dit « 4,6 kg » comme ses voisines (pas « 4,6 kilos »), libelle avec majuscule comme les autres tuiles
-  const evoValue = diff === null ? traduire('Bientôt') : evoWords === 'stable' ? 'Stable' : spec.unit === 'kg' ? fmtValue(spec, Math.abs(diff)) : evoWords!.replace(/ de (moins|plus)$/, '');
-  const evoLabel = diff === null ? traduire('dès la deuxième mesure') : evoWords === 'stable' ? capitalize(periodPhrase(period)) : `En ${diff < 0 ? traduire('moins') : 'plus'} ${periodPhrase(period)}`;
+  const evoValue = diff === null ? traduire('Bientôt') : evoWords === 'stable' ? traduire('Stable') : spec.unit === 'kg' ? fmtValue(spec, Math.abs(diff)) : deltaAmount(spec, Math.abs(diff));
+  const evoLabel = diff === null ? traduire('dès la deuxième mesure') : evoWords === 'stable' ? capitalize(periodPhrase(period)) : diff < 0 ? traduire("En moins {0}", periodPhrase(period)) : traduire("En plus {0}", periodPhrase(period));
 
   const history = [...shown].reverse();
   const histShown = more ? history : history.slice(0, 12);
@@ -201,7 +205,7 @@ export function MetricDetail(props: Props) {
       minSpan={spec.minSpan ?? (spec.unit === 'kcal' ? 40 : spec.digits === 0 ? 2 : 1)}
       target={target}
       onScrub={(p) => setScrub(p as DetailPoint | null)}
-      label={`${spec.label}, ${evoWords ?? traduire('une seule mesure')}`}
+      label={`${spec.label}, ${evoWords === 'stable' ? traduire('stable') : evoWords ?? traduire('une seule mesure')}`}
     />
   );
 
@@ -286,7 +290,7 @@ export function MetricDetail(props: Props) {
           <StatGrid
             style={{ marginHorizontal: GUTTER, marginTop: 20 }}
             items={[
-              { value: fmtValue(spec, avg), label: `Moyenne ${periodPhrase(period)}` },
+              { value: fmtValue(spec, avg), label: traduire("Moyenne {0}", periodPhrase(period)) },
               { value: evoValue, label: evoLabel, tone: goodWay ? c.successText : undefined },
               { value: fmtValue(spec, Math.min(...vals)), label: traduire('Le plus bas') },
               { value: fmtValue(spec, Math.max(...vals)), label: traduire('Le plus haut') },
@@ -300,7 +304,7 @@ export function MetricDetail(props: Props) {
 
         {history.length > 0 ? (
           <View style={{ paddingHorizontal: GUTTER, marginTop: 28 }}>
-            <SectionHead title={traduire("Historique")} aside={`${history.length} ${history.length > 1 ? historyNoun[1] : historyNoun[0]} ${periodPhrase(period)}`} />
+            <SectionHead title={traduire("Historique")} aside={`${history.length} ${traduirePluriel(history.length, history.length > 1, historyNoun[0], historyNoun[1])} ${periodPhrase(period)}`} />
             <View style={{ marginTop: 10, borderRadius: 22, backgroundColor: P.carte, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>
               {histShown.map((p, i) => {
                 const prev = history[i + 1];
@@ -343,7 +347,7 @@ export function MetricDetail(props: Props) {
                       </View>
                       {d !== null ? (
                         <Ink size={12} color={c.textSecondary}>
-                          {deltaPhrase(spec, d)}
+                          {deltaPhrase(spec, d) === 'stable' ? traduire('stable') : deltaPhrase(spec, d)}
                         </Ink>
                       ) : null}
                     </View>

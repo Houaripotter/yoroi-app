@@ -25,7 +25,7 @@ import { arriveeVue, gapText } from './Cap';
 import { PlanCurve } from './PlanCurve';
 import { MainButton, OR_PROFOND, Riche, Shell, kg, marquer, useColors } from './ui';
 import type { Nav } from './types';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export function Resultat({ nav, name, genre, univers = 'japon', rankName, start, target, goal, goals, sessions, days = [], height = null, sports, onNext }: {
   nav: Nav;
@@ -98,7 +98,7 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, start,
       <Animated.View entering={FadeInDown.delay(150).duration(380)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 12 }}>
         <View style={{ gap: 2 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine type")}</Ink>
-          <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={sessions ? traduire("**{0} {1}** par semaine", sessions, sessions > 1 ? 'séances' : 'séance') : traduire('À ton rythme')} />
+          <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={sessions ? traduirePluriel(sessions, sessions > 1, "**{0} séance** par semaine", "**{0} séances** par semaine", sessions) : traduire('À ton rythme')} />
           {days.length ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{joursTexte(days).replace(/^./, (x) => x.toUpperCase())}</Ink> : null}
           {sportNames.length ? <Ink size={13} color={c.textSecondary} numberOfLines={2}>{sportNames.join(', ')}</Ink> : null}
         </View>

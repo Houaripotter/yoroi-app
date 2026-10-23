@@ -261,7 +261,7 @@ export default function HealthConnectScreen() {
         appAlert(traduire('Déjà à jour'), traduirePluriel(r.healthkitFound, (s(r.healthkitFound)) !== '', "{0} a trouvé {1} séance, toutes déjà présentes dans YOROI.", "{0} a trouvé {1} séances, toutes déjà présentes dans YOROI.", provider, r.healthkitFound));
       } else {
         tap('success');
-        appAlert(traduire('Import terminé'), `${r.workouts} séance${s(r.workouts)} importée${s(r.workouts)} depuis ${provider} (${r.healthkitFound} trouvée${s(r.healthkitFound)} au total).`);
+        appAlert(traduire('Import terminé'), traduirePluriel(r.workouts, r.workouts > 1, "{0} séance importée depuis {1}", "{0} séances importées depuis {1}", r.workouts, provider) + ' ' + traduirePluriel(r.healthkitFound, r.healthkitFound > 1, "({0} trouvée au total).", "({0} trouvées au total).", r.healthkitFound));
       }
     } catch {
       setProgress('');

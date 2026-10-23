@@ -236,7 +236,7 @@ export default function Nouveautes() {
           >
             <CarrouselVitrines vitrines={vitrinesNouveautes(genre)} titreRendu={(t) => <TitreVitrine texte={t} />} />
             <Ink size={13} weight="bold" color={c.textSecondary} style={{ lineHeight: 19 }}>
-              {`Ensuite, en une minute : ${[etapes.includes('univers') ? 'ton univers' : null, etapes.includes('sante') ? (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé') : null, 'tes rappels', 'ta scène'].filter(Boolean).join(', ')}, puis la visite guidée.`}
+              {traduire("Ensuite, en une minute : {0}, puis la visite guidée.", [etapes.includes('univers') ? traduire('ton univers') : null, etapes.includes('sante') ? (Platform.OS === 'android' ? 'Health Connect' : traduire('Apple Santé')) : null, traduire('tes rappels'), traduire('ta scène')].filter(Boolean).join(', '))}
             </Ink>
           </Shell>
         );

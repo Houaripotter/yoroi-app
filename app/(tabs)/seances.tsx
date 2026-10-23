@@ -76,7 +76,7 @@ function groupLine(g: HistoryGroup, unite: UnitePoids = 'kg'): string {
   if (g.days !== g.sessions) parts.push(traduirePluriel(g.days, g.days > 1, "{0} jour", "{0} jours", g.days));
   if (g.minutes) parts.push(formatDuration(g.minutes));
   if (g.tonnageKg >= 100) parts.push(tonnageText(g.tonnageKg, unite));
-  if (g.rounds) parts.push(`${g.rounds} round${g.rounds > 1 ? 's' : ''}`);
+  if (g.rounds) parts.push(traduirePluriel(g.rounds, g.rounds > 1, "{0} round", "{0} rounds", g.rounds));
   if (g.distanceKm > 0) parts.push(`${fr1(g.distanceKm)} km`);
   return parts.join(', ');
 }

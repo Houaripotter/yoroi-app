@@ -104,11 +104,11 @@ export function BlocPoids({ series }: { series: DayWeight[] }) {
               <Ink size={44} weight="black" tight>
                 {formatKg(last.value)}
                 <Ink size={16} weight="bold" color={P.ink2}>
-                  {' kilos'}
+                  {' ' + traduire('kilos')}
                 </Ink>
               </Ink>
               <Ink size={13} weight="bold" color={down ? P.mossText : P.ink2}>
-                {delta === null ? traduire("pesée {0}", relativeDay(last.date)) : Math.abs(delta) < 0.05 ? traduire('stable sur un mois') : traduire("{0} kilo de {1} en un mois", formatKg(Math.abs(delta)), delta < 0 ? 'moins' : 'plus')}
+                {delta === null ? traduire("pesée {0}", relativeDay(last.date)) : Math.abs(delta) < 0.05 ? traduire('stable sur un mois') : delta < 0 ? traduire("{0} kilo de moins en un mois", formatKg(Math.abs(delta))) : traduire("{0} kilo de plus en un mois", formatKg(Math.abs(delta)))}
               </Ink>
             </View>
             {month.length > 1 ? <BrushLine values={month.map((p) => p.trend)} width={120} height={56} color={P.ink} stroke={4.5} /> : null}
@@ -422,7 +422,7 @@ export function BlocHydratation({ amount, goal }: { amount: number; goal: number
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {WATER_STEPS.map((w) => (
           <View key={w.label} style={{ flex: 1 }}>
-            <Press onPress={() => save(w.l)} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("Ajouter {0} d’eau", w.l >= 1 ? 'un litre' : `${Math.round(w.l * 1000)} millilitres`)}>
+            <Press onPress={() => save(w.l)} haptic="none" accessibilityRole="button" accessibilityLabel={w.l >= 1 ? traduire("Ajouter un litre d’eau") : traduire("Ajouter {0} millilitres d’eau", Math.round(w.l * 1000))}>
               <View style={{ height: 44, borderRadius: 14, backgroundColor: accentTint, alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={15} weight="black" color={accent} numberOfLines={1}>
                   {traduire(w.label)}

@@ -102,7 +102,7 @@ function Vignettes({ cartes, nouvelles, onPress }: { cartes: CarteData[]; nouvel
       {cartes.map((d) => {
         const neuve = nouvelles.includes(d.cle);
         return (
-          <Pressable key={d.cle} onPress={() => onPress(d)} accessibilityRole="button" accessibilityLabel={traduire("Carte {0}{1}. Voir en grand", nomCourt(d), neuve ? ', nouvelle' : '')} style={({ pressed }) => ({ width: VIGNETTE, gap: 6, opacity: pressed ? 0.85 : 1 })}>
+          <Pressable key={d.cle} onPress={() => onPress(d)} accessibilityRole="button" accessibilityLabel={neuve ? traduire("Carte {0}, nouvelle. Voir en grand", nomCourt(d)) : traduire("Carte {0}. Voir en grand", nomCourt(d))} style={({ pressed }) => ({ width: VIGNETTE, gap: 6, opacity: pressed ? 0.85 : 1 })}>
             <View>
               <CarteApercu largeur={VIGNETTE} data={d} options={{ ...k.options, format: 'story', chiffres: d.moment === 'exploit' ? [] : chiffresParDefaut(d, k.options.masque) }} visuels={k.visuelsPour(d)} />
               {neuve ? (

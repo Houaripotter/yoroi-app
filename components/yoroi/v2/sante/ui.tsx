@@ -106,7 +106,9 @@ export function SourceCard({ source, onConnect, onSync, syncing, connecting }: {
             ? traduire('Tu vois ici ce qui est déjà enregistré dans YOROI. Ouvre l’app sur ton téléphone pour lire tes données de santé en direct.')
             : source.mode === 'web'
             ? traduire('Ouvre YOROI sur ton téléphone pour lire tes données de santé.')
-            : traduire("Installe YOROI depuis {0} pour lire {1} en direct. Ici, tu vois ce qui est déjà enregistré sur ton téléphone.", source.platform === 'android' ? 'le Play Store' : "l'App Store ou TestFlight", p)}
+            : source.platform === 'android'
+            ? traduire("Installe YOROI depuis le Play Store pour lire {0} en direct. Ici, tu vois ce qui est déjà enregistré sur ton téléphone.", p)
+            : traduire("Installe YOROI depuis l'App Store ou TestFlight pour lire {0} en direct. Ici, tu vois ce qui est déjà enregistré sur ton téléphone.", p)}
         </Ink>
       </GlassBox>
     );

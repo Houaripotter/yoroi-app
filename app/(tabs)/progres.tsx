@@ -49,7 +49,7 @@ import { localISO } from '@/lib/v2/accueil/hydration';
 import { dayMonth, projection } from '@/lib/v2/accueil/projection';
 import { usePlanPoids } from '@/lib/v2/pesee/usePlanPoids';
 import { ligneArriveeCap } from '@/lib/v2/pesee/arrivee';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** 80 kg plutot que 80,0 kg, une decimale sinon (comme la carte Poids de l'accueil) */
 const kgShort = (v: number) => (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : formatKg(v));
@@ -297,15 +297,15 @@ function WeightSection() {
         {head ? (
           <>
             <Ink size={15} weight="bold" color={c.textSecondary}>{formatLongDate(head.date)}</Ink>
-            <Ink size={56} weight="black" tight>{formatKg(head.value)} <Ink size={22} weight="black" color={c.textSecondary}>kilos</Ink></Ink>
+            <Ink size={56} weight="black" tight>{formatKg(head.value)} <Ink size={22} weight="black" color={c.textSecondary}>{traduire('kilos')}</Ink></Ink>
             <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("tendance {0} kilos ce jour-là", formatKg(head.trend))}</Ink>
           </>
         ) : (
           emphasize ? (
             <>
-              <Ink size={56} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{`${formatKg(Math.abs(change))} kilo${Math.abs(change) >= 2 ? 's' : ''}`}</Ink>
+              <Ink size={56} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{traduirePluriel(Math.abs(change), Math.abs(change) >= 2, "{0} kilo", "{0} kilos", formatKg(Math.abs(change)))}</Ink>
               <Ink size={17} weight="bold" color={c.textSecondary}>
-                {traduire("de {0} {1}, en tendance", change < 0 ? 'moins' : 'plus', periodPhrase(period))}
+                {change < 0 ? traduire("de moins {0}, en tendance", periodPhrase(period)) : traduire("de plus {0}, en tendance", periodPhrase(period))}
               </Ink>
             </>
           ) : (
@@ -313,8 +313,10 @@ function WeightSection() {
               <Ink size={34} weight="black" tight numberOfLines={2}>{traduire("Ton poids {0}", periodPhrase(period))}</Ink>
               <Ink size={17} weight="bold" color={c.textSecondary}>
                 {Math.abs(change) < 0.05
-                  ? `${formatKg(last.trend)} kg en tendance, stable`
-                  : traduire("{0} kg en tendance, {1} kg de {2}", formatKg(last.trend), formatKg(Math.abs(change)), change < 0 ? 'moins' : 'plus')}
+                  ? traduire("{0} kg en tendance, stable", formatKg(last.trend))
+                  : change < 0
+                    ? traduire("{0} kg en tendance, {1} kg de moins", formatKg(last.trend), formatKg(Math.abs(change)))
+                    : traduire("{0} kg en tendance, {1} kg de plus", formatKg(last.trend), formatKg(Math.abs(change)))}
               </Ink>
             </>
           )
@@ -391,7 +393,7 @@ function PredictionCard({ series, goal }: { series: DayWeight[]; goal: number | 
   const arrivee = goal != null ? ligneArriveeCap(plan, goal, today) : null;
   // sans cap : ta tendance dans un mois (lib/v2/accueil/projection.ts)
   const proj = goal == null ? projection(series, null, today) : null;
-  const line = arrivee ?? (proj === null ? traduire('Pas encore de date fiable') : `${kgShort(proj.value)} kg ${proj.kind === 'goal' ? traduire("vers le {0}", dayMonth(proj.date, today)) : traduire('dans un mois')}`);
+  const line = arrivee ?? (proj === null ? traduire('Pas encore de date fiable') : proj.kind === 'goal' ? traduire("{0} kg vers le {1}", kgShort(proj.value), dayMonth(proj.date, today)) : traduire("{0} kg dans un mois", kgShort(proj.value)));
   const titre = arrivee ? traduire('Ton arrivée prévue') : traduire('À ce rythme');
   return (
     <Pressable
@@ -400,7 +402,7 @@ function PredictionCard({ series, goal }: { series: DayWeight[]; goal: number | 
         router.push('/weight-predictions' as any);
       }}
       accessibilityRole="button"
-      accessibilityLabel={traduire("Prévisions, {0}, {1}{2}", titre.toLowerCase(), line, isPremium ? '' : ', page complète avec Premium')}
+      accessibilityLabel={isPremium ? traduire("Prévisions, {0}, {1}", titre.toLowerCase(), line) : traduire("Prévisions, {0}, {1}, page complète avec Premium", titre.toLowerCase(), line)}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 10, minHeight: 52, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider })}
     >
       <View style={{ flex: 1, gap: 1, minWidth: 0 }}>

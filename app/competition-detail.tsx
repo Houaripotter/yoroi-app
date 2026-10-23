@@ -29,7 +29,7 @@ import { sportArt } from '@/lib/v2/seances/illustrations';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SCENE = require('@/assets/avatars/app/themes/theme_dojo.webp');
 
@@ -204,7 +204,7 @@ export default function CompetitionDetailScreen() {
                   <Ink size={54} weight="black" tight color={P.ink}>
                     {String(days)}
                     <Ink size={16} weight="extraBold" color={P.ink2}>
-                      {days > 1 ? ' jours' : ' jour'}
+                      {traduirePluriel(days, days > 1, ' jour', ' jours')}
                     </Ink>
                   </Ink>
                 )

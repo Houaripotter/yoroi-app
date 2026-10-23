@@ -156,7 +156,7 @@ export default function LastSessionScreen() {
                       const givenSub = Array.isArray(r.methodsGiven) && r.methodsGiven.length > 0
                         ? traduire("donné {0}", getMethodDisplayName(r.methodsGiven[0])) : '';
                       const takenSub = Array.isArray(r.methodsTaken) && r.methodsTaken.length > 0
-                        ? `subi ${getMethodDisplayName(r.methodsTaken[0])}` : '';
+                        ? traduire("subi {0}", getMethodDisplayName(r.methodsTaken[0])) : '';
                       const rightParts = [resultEmoji ? `${resultEmoji}${resultLabel}` : '', scorePart, givenSub, takenSub].filter(Boolean);
                       rows.push({ label: `R${r.number}${partner}`, pace: rightParts.join(' ') || undefined });
                       // Techniques utilisées (condensé)
@@ -170,11 +170,11 @@ export default function LastSessionScreen() {
                       }
                     } else {
                       // ── Mode full / medium ──
-                      const label = r.partner ? `Round ${r.number} contre ${r.partner}` : `Round ${r.number}`;
+                      const label = r.partner ? traduire("Round {0} contre {1}", r.number, r.partner) : traduire("Round {0}", r.number);
                       rows.push({ label, pace: resultEmoji ? `${resultEmoji} ${r.result === 'win' ? traduire('Victoire') : r.result === 'loss' ? traduire('Défaite') : traduire('Nul')}` : undefined });
 
                       if (r.partnerRating) {
-                        const ratingLabel = r.partnerRating <= 2 ? 'Débutant' : r.partnerRating <= 4 ? 'Intermédiaire' : r.partnerRating <= 6 ? traduire('Bon niveau') : r.partnerRating <= 8 ? 'Avancé' : r.partnerRating === 9 ? 'Expert' : traduire('Élite');
+                        const ratingLabel = r.partnerRating <= 2 ? traduire('Débutant') : r.partnerRating <= 4 ? traduire('Intermédiaire') : r.partnerRating <= 6 ? traduire('Bon niveau') : r.partnerRating <= 8 ? traduire('Avancé') : r.partnerRating === 9 ? traduire('Expert') : traduire('Élite');
                         rows.push({ label: traduire(`  Niveau adverse`), pace: `${r.partnerRating}/10, ${ratingLabel}` });
                       }
 

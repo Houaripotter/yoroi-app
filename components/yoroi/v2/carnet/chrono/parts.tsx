@@ -11,7 +11,7 @@ import { P, Press, tap, CIcon, BigButton } from '../ui';
 import { useAccent } from '@/components/yoroi/v2/accueil/kit';
 import { RPE_CHOICES } from '@/lib/v2/carnet/chrono';
 import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** Reglage plus et moins, appui long pour aller vite. Une phase par ligne, pastille de sa couleur. */
 export function SettingRow({ label, value, onMinus, onPlus, hint, accent = P.ink, dot }: { label: string; value: string; onMinus: () => void; onPlus: () => void; hint?: string; accent?: string; dot?: string }) {
@@ -207,7 +207,7 @@ export function SessionTrack({ done, total, color, current }: { done: number; to
           );
         })}
       </View>
-      <Ink size={13} weight="bold" color={P.ink2}>{done === 0 ? traduire("{0} à faire", total) : done >= total ? traduire('Tout est fait') : `${done} fait${done > 1 ? 's' : ''}, ${total - done} restant${total - done > 1 ? 's' : ''}`}</Ink>
+      <Ink size={13} weight="bold" color={P.ink2}>{done === 0 ? traduire("{0} à faire", total) : done >= total ? traduire('Tout est fait') : `${traduirePluriel(done, done > 1, "{0} fait", "{0} faits", done)}, ${traduirePluriel(total - done, total - done > 1, "{0} restant", "{0} restants", total - done)}`}</Ink>
     </View>
   );
 }

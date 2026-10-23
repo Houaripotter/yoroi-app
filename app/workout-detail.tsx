@@ -50,13 +50,13 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { INTENSITES } from '@/lib/v2/intensite';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
-import { traduire, LOCALE, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG, LOCALE, DECIMAL } from '@/lib/i18n/tr';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
 // Vague 32 : zones sur l'echelle d'intensite commune (lib/v2/intensite.ts), plus de rouge
 const ZONE_INK = INTENSITES.map((x) => x.fill);
-const ZONE_LABEL = [traduire('Récupération'), 'Endurance', 'Tempo', 'Seuil', 'Maximum'];
+const ZONE_LABEL = [traduire('Récupération'), traduire('Endurance'), traduire('Tempo'), traduire('Seuil'), traduire('Maximum')];
 
 // Exemple de course, uniquement pour demo=1 (captures d'ecran). 14 octobre 2026 : reprend la course
 // de Houari du 25 septembre a Bamako (valeurs Apple : 15:39, 2,26 km, 179 kcal, 12 m, 154 bpm).
@@ -434,15 +434,15 @@ export default function WorkoutDetailScreen() {
   if (t.score_for != null || t.score_against != null) stats.push({ v: traduire("{0} à {1}", t.score_for ?? 0, t.score_against ?? 0), l: traduire('Score') });
   if (calories && !big.some((b) => b.l === 'dépensées')) stats.push({ v: String(Math.round(calories)), u: 'kcal', l: traduire('Calories actives') });
   if (details?.totalCalories) stats.push({ v: String(Math.round(details.totalCalories)), u: 'kcal', l: traduire('Calories totales') });
-  if (distance && !big.some((b) => b.l === 'distance')) stats.push({ v: formatKg(distance, 2), u: 'km', l: 'Distance' });
+  if (distance && !big.some((b) => b.l === 'distance')) stats.push({ v: formatKg(distance, 2), u: 'km', l: traduire('Distance') });
   if (isSpeed && speed) stats.push({ v: formatKg(speed), u: 'km/h', l: traduire('Vitesse') });
   // 14 octobre 2026 : pas d'allure pour le foot ou le combat (Forme ne l'affiche que pour la course, la marche...)
   if (!isSpeed && pace && fam === 'cardio' && !big.some((b) => b.l === 'allure')) stats.push({ v: applePace(pace), u: '/km', l: traduire('Allure') });
   if (avgHR && !big.some((b) => b.l === 'cœur moyen')) stats.push({ v: String(Math.round(avgHR)), u: 'bpm', l: traduire('Cœur moyen') });
   if (maxHR) stats.push({ v: String(Math.round(maxHR)), u: 'bpm', l: traduire('Cœur max') });
   if (details?.elevationAscended != null && details.elevationAscended > 0) stats.push({ v: String(Math.floor(details.elevationAscended)), u: 'm', l: traduire('Dénivelé') });
-  if (watts) stats.push({ v: String(Math.round(watts)), u: 'W', l: 'Puissance moyenne' });
-  if (cadence) stats.push({ v: String(Math.round(cadence)), u: isSpeed ? 'tr/min' : 'pas/min', l: 'Cadence moyenne' });
+  if (watts) stats.push({ v: String(Math.round(watts)), u: 'W', l: traduire('Puissance moyenne') });
+  if (cadence) stats.push({ v: String(Math.round(cadence)), u: isSpeed ? traduire('tr/min') : traduire('pas/min'), l: traduire('Cadence moyenne') });
   if (details?.stepsCount != null && details.stepsCount > 0) stats.push({ v: details.stepsCount.toLocaleString(LOCALE), l: traduire('Pas') });
   if (t.pente) stats.push({ v: String(t.pente), u: '%', l: traduire('Pente') });
   if (t.resistance) stats.push({ v: String(t.resistance), l: traduire('Résistance') });
@@ -491,7 +491,7 @@ export default function WorkoutDetailScreen() {
                       {b.v}
                       {b.u ? <Ink size={14} weight="bold" color={c.textSecondary}>{` ${b.u}`}</Ink> : null}
                     </Ink>
-                    <Ink size={12} weight="bold" color={c.textMuted}>{b.l}</Ink>
+                    <Ink size={12} weight="bold" color={c.textMuted}>{traduire(b.l)}</Ink>
                   </View>
                 ))}
               </View>
@@ -511,7 +511,7 @@ export default function WorkoutDetailScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Hanko size={30} rotate={-6} />
                 <View style={{ flex: 1 }}>
-                  <Ink size={17} weight="black" tight>{records.length > 1 ? `${records.length} records battus` : 'Record battu'}</Ink>
+                  <Ink size={17} weight="black" tight>{traduirePluriel(records.length, records.length > 1, "Record battu", "{0} records battus", records.length)}</Ink>
                   <Ink size={13} color={c.textSecondary}>{traduire("Tu as battu ta meilleure marque.")}</Ink>
                 </View>
               </View>
@@ -520,7 +520,7 @@ export default function WorkoutDetailScreen() {
                 return (
                   <Pressable key={r.line.key} onPress={() => { tap(); router.push({ pathname: '/records', params: { focus: r.line.key } } as any); }} accessibilityRole="button" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, borderTopWidth: 1, borderColor: c.divider }}>
                     <Ink size={15} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{traduire(r.line.name)}</Ink>
-                    <Ink size={15} weight="black">{r.line.kind === 'force' ? traduire("{0} {1} estimé{2}s", Math.round(cv(r.point.value)), uL, unite === 'lb' ? 'e' : '') : v.main}</Ink>
+                    <Ink size={15} weight="black">{r.line.kind === 'force' ? traduire("{0} {1} estimé{2}s", Math.round(cv(r.point.value)), uL, LANG === 'fr' && unite === 'lb' ? 'e' : '') : v.main}</Ink>
                   </Pressable>
                 );
               })}
@@ -538,7 +538,7 @@ export default function WorkoutDetailScreen() {
           {/* Exercices */}
           {exercises.length > 0 ? (
             <>
-              <SectionTitle title={traduire("Exercices")} sub={[nSets ? `${nSets} série${nSets > 1 ? 's' : ''}` : '', tons >= 100 ? `${tonnageParts(tons, unite).value} ${tonnageParts(tons, unite).unit} ${accordSouleve(tons, unite)}` : ''].filter(Boolean).join(', ')} />
+              <SectionTitle title={traduire("Exercices")} sub={[nSets ? traduirePluriel(nSets, nSets > 1, "{0} série", "{0} séries", nSets) : '', tons >= 100 ? `${tonnageParts(tons, unite).value} ${tonnageParts(tons, unite).unit} ${accordSouleve(tons, unite)}` : ''].filter(Boolean).join(', ')} />
               {exercises.map((ex, idx) => {
                 const sets = ex.setsData && ex.setsData.length > 0 ? ex.setsData : workSets(ex);
                 const vol = sets.filter((s) => s.type !== 'warmup').reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
@@ -574,7 +574,7 @@ export default function WorkoutDetailScreen() {
                     ) : null}
                     {(ex.distance ?? 0) > 0 || (ex.duration ?? 0) > 0 || ex.pace || (ex.calories ?? 0) > 0 || (ex.stairs ?? 0) > 0 ? (
                       <Ink size={14} weight="bold" color={c.textSecondary}>
-                        {[(ex.distance ?? 0) > 0 ? `${formatKg(ex.distance!, 2)} km` : '', (ex.duration ?? 0) > 0 ? formatDuration(ex.duration!) : '', ex.pace ? `allure ${ex.pace}` : '', (ex.calories ?? 0) > 0 ? `${ex.calories} kcal` : '', (ex.stairs ?? 0) > 0 ? `${ex.stairs} étages` : ''].filter(Boolean).join(', ')}
+                        {[(ex.distance ?? 0) > 0 ? `${formatKg(ex.distance!, 2)} km` : '', (ex.duration ?? 0) > 0 ? formatDuration(ex.duration!) : '', ex.pace ? traduire("allure {0}", ex.pace) : '', (ex.calories ?? 0) > 0 ? `${ex.calories} kcal` : '', (ex.stairs ?? 0) > 0 ? traduire("{0} étages", ex.stairs) : ''].filter(Boolean).join(', ')}
                       </Ink>
                     ) : null}
                     {ex.notes ? <Ink size={13} color={c.textSecondary}>{ex.notes}</Ink> : null}
@@ -640,8 +640,8 @@ export default function WorkoutDetailScreen() {
                         <Ink size={15} weight="black" color={c.background}>{String(r.number ?? i + 1)}</Ink>
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Ink size={16} weight="extraBold" numberOfLines={1}>{r.partner ? `Contre ${r.partner}` : `Round ${r.number ?? i + 1}`}</Ink>
-                        {r.roundIntensity ? <Ink size={12} color={c.textMuted}>{r.roundIntensity === 'guerre' ? traduire('à fond') : r.roundIntensity === 'technique' ? 'technique' : traduire('détendu')}</Ink> : null}
+                        <Ink size={16} weight="extraBold" numberOfLines={1}>{r.partner ? traduire("Contre {0}", r.partner) : traduire("Round {0}", r.number ?? i + 1)}</Ink>
+                        {r.roundIntensity ? <Ink size={12} color={c.textMuted}>{r.roundIntensity === 'guerre' ? traduire('à fond') : r.roundIntensity === 'technique' ? traduire('technique') : traduire('détendu')}</Ink> : null}
                       </View>
                       {res ? (
                         <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, backgroundColor: res.bg }}>
@@ -651,7 +651,7 @@ export default function WorkoutDetailScreen() {
                     </View>
                     {(r.submissionsGiven ?? 0) > 0 || (r.submissionsTaken ?? 0) > 0 ? (
                       <Ink size={14} weight="bold" color={c.textSecondary}>
-                        {[(r.submissionsGiven ?? 0) > 0 ? `${r.submissionsGiven} soumission${(r.submissionsGiven ?? 0) > 1 ? 's' : ''} placée${(r.submissionsGiven ?? 0) > 1 ? 's' : ''}` : '', (r.submissionsTaken ?? 0) > 0 ? `${r.submissionsTaken} subie${(r.submissionsTaken ?? 0) > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ')}
+                        {[(r.submissionsGiven ?? 0) > 0 ? traduirePluriel(r.submissionsGiven ?? 0, (r.submissionsGiven ?? 0) > 1, "{0} soumission placée", "{0} soumissions placées", r.submissionsGiven) : '', (r.submissionsTaken ?? 0) > 0 ? traduirePluriel(r.submissionsTaken ?? 0, (r.submissionsTaken ?? 0) > 1, "{0} subie", "{0} subies", r.submissionsTaken) : ''].filter(Boolean).join(', ')}
                       </Ink>
                     ) : null}
                     {r.method && !r.methodsGiven?.length && !r.methodsTaken?.length ? <Ink size={14}>{`Finition : ${getMethodDisplayName(r.method)}`}</Ink> : null}
@@ -677,7 +677,7 @@ export default function WorkoutDetailScreen() {
                     {r.notes ? <Ink size={13} color={c.textSecondary}>{r.notes}</Ink> : null}
                     {analysis.map((a) => (
                       <View key={a.l} style={{ gap: 1 }}>
-                        <Ink size={12} weight="bold" color={c.textMuted}>{a.l}</Ink>
+                        <Ink size={12} weight="bold" color={c.textMuted}>{traduire(a.l)}</Ink>
                         <Ink size={14}>{a.v}</Ink>
                       </View>
                     ))}
@@ -699,7 +699,7 @@ export default function WorkoutDetailScreen() {
               <Ink size={17} weight="black" tight>{traduire("Ton bilan")}</Ink>
               {[{ l: 'Game plan', v: t.game_plan }, { l: 'Ce qui a marché', v: t.what_worked }, { l: 'Ce qui n’a pas marché', v: t.what_didnt_work }].filter((a) => !!a.v).map((a) => (
                 <View key={a.l} style={{ gap: 1 }}>
-                  <Ink size={12} weight="bold" color={c.textMuted}>{a.l}</Ink>
+                  <Ink size={12} weight="bold" color={c.textMuted}>{traduire(a.l)}</Ink>
                   <Ink size={14}>{a.v}</Ink>
                 </View>
               ))}
@@ -748,7 +748,7 @@ export default function WorkoutDetailScreen() {
                 return (
                   <View key={i} style={{ gap: 4 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                      <Ink size={13} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{`Zone ${zi + 1}, ${ZONE_LABEL[zi].toLowerCase()}`}</Ink>
+                      <Ink size={13} weight="bold" style={{ flex: 1 }} numberOfLines={1}>{traduire("Zone {0}, {1}", zi + 1, ZONE_LABEL[zi].toLowerCase())}</Ink>
                       {zoneBounds ? <Ink size={11} weight="bold" color={c.textMuted}>{zoneRangeLabel(zi, zoneBounds)}</Ink> : null}
                       <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ minWidth: 44, textAlign: 'right' }}>{zoneClock(z.durationSeconds || 0)}</Ink>
                     </View>
@@ -759,7 +759,7 @@ export default function WorkoutDetailScreen() {
                 );
               })}
               {appleZones ? (
-                <Ink size={12} color={c.textMuted}>{traduire("Temps calculés par Apple, avec {0} de Santé.", appleZones.source === 'user' ? 'tes zones manuelles' : appleZones.source === 'app' ? 'les zones de l’app de séance' : 'tes zones automatiques')}</Ink>
+                <Ink size={12} color={c.textMuted}>{traduire("Temps calculés par Apple, avec {0} de Santé.", appleZones.source === 'user' ? traduire('tes zones manuelles') : appleZones.source === 'app' ? traduire('les zones de l’app de séance') : traduire('tes zones automatiques'))}</Ink>
               ) : (
                 <Ink size={12} color={c.textMuted}>{userZones?.origin === 'apple' && userZones?.source === 'custom' ? traduire('Temps estimés par Yoroi avec tes zones Apple Santé : Apple n’a pas de temps par zone pour cette séance.') : userZones?.source === 'custom' ? (Platform.OS === 'ios' ? traduire('Temps estimés par Yoroi avec tes zones. Les chiffres exacts d’Apple arrivent avec iOS 27.') : traduire('Temps estimés par Yoroi avec tes zones.')) : traduire('Temps estimés. Règle tes zones comme sur ta montre (app Watch, Ma montre, Exercice, Zones de fréquence cardiaque) pour qu’ils collent au mieux.')}</Ink>
               )}
@@ -796,7 +796,7 @@ export default function WorkoutDetailScreen() {
                   return (
                     <View key={i} style={{ gap: 4 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                        <Ink size={13} weight="bold" style={{ flex: 1 }}>{`Zone ${i + 1}`}</Ink>
+                        <Ink size={13} weight="bold" style={{ flex: 1 }}>{traduire("Zone {0}", i + 1)}</Ink>
                         {range ? <Ink size={11} weight="bold" color={c.textMuted}>{range}</Ink> : null}
                         <Ink size={13} weight="extraBold" color={c.textSecondary} style={{ minWidth: 44, textAlign: 'right' }}>{zoneClock(z.seconds)}</Ink>
                       </View>
@@ -818,7 +818,7 @@ export default function WorkoutDetailScreen() {
                   .filter((x) => x.v != null)
                   .map((x) => (
                     <View key={x.l} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: c.fillSoft }}>
-                      <Ink size={11} weight="bold" color={c.textMuted}>{x.l}</Ink>
+                      <Ink size={11} weight="bold" color={c.textMuted}>{traduire(x.l)}</Ink>
                       <Ink size={18} weight="black">{`${Math.round(x.v!)}`}</Ink>
                       {x.d > 0 ? <Ink size={11} weight="bold" color={c.successText}>{traduire("moins {0}", Math.round(x.d))}</Ink> : null}
                     </View>
@@ -860,7 +860,7 @@ export default function WorkoutDetailScreen() {
                     <Ink size={14} weight="extraBold" style={{ flex: 1, textAlign: 'right' }}>{(s as { avgPowerWatts?: number }).avgPowerWatts ? `${(s as { avgPowerWatts?: number }).avgPowerWatts} W` : ''}</Ink>
                   </View>
                 ))}
-                <Ink size={11} color={c.textMuted} style={{ marginTop: 6 }}>{traduire("Par kilomètre{0}. FC en bpm, ton kilomètre le plus rapide en indigo.", splits[splits.length - 1].distanceKm < 1 ? `, le dernier sur ${formatKg(splits[splits.length - 1].distanceKm, 2)} km` : '')}</Ink>
+                <Ink size={11} color={c.textMuted} style={{ marginTop: 6 }}>{traduire("Par kilomètre{0}. FC en bpm, ton kilomètre le plus rapide en indigo.", splits[splits.length - 1].distanceKm < 1 ? traduire(", le dernier sur {0} km", formatKg(splits[splits.length - 1].distanceKm, 2)) : '')}</Ink>
               </Glass>
             </>
           ) : null}
@@ -876,7 +876,7 @@ export default function WorkoutDetailScreen() {
                   { l: 'Oscillation verticale', m: details.verticalOscCm, u: 'cm', f: (x: number) => formatKg(x, 1) },
                 ].filter((x) => !!x.m).map((x) => (
                   <View key={x.l} style={{ flexGrow: 1, flexBasis: '45%', padding: 10, borderRadius: 14, backgroundColor: c.fillSoft }}>
-                    <Ink size={11} weight="bold" color={c.textMuted}>{x.l}</Ink>
+                    <Ink size={11} weight="bold" color={c.textMuted}>{traduire(x.l)}</Ink>
                     <Ink size={18} weight="black">{x.f(x.m!.avg)}<Ink size={12} weight="bold" color={c.textSecondary}>{` ${x.u}`}</Ink></Ink>
                     {x.m!.min != null && x.m!.max != null ? <Ink size={11} weight="bold" color={c.textMuted}>{traduire("de {0} à {1} {2}", x.f(x.m!.min), x.f(x.m!.max), x.u)}</Ink> : null}
                   </View>
@@ -894,7 +894,7 @@ export default function WorkoutDetailScreen() {
                   <BackButton onPress={() => setMapFull(false)} />
                 </View>
                 <View style={{ position: 'absolute', left: 16, right: 16, bottom: insets.bottom + 16, padding: 12, borderRadius: 16, backgroundColor: 'rgba(20,24,34,0.82)' }}>
-                  <Ink size={13} weight="bold" color="#FFFFFF">{[city, details?.distanceKm ? `${formatKg(details.distanceKm, 2)} km` : '', details?.elevationAscended ? `${Math.floor(details.elevationAscended)} m de montée` : ''].filter(Boolean).join(', ')}</Ink>
+                  <Ink size={13} weight="bold" color="#FFFFFF">{[city, details?.distanceKm ? `${formatKg(details.distanceKm, 2)} km` : '', details?.elevationAscended ? traduire("{0} m de montée", Math.floor(details.elevationAscended)) : ''].filter(Boolean).join(', ')}</Ink>
                   <Ink size={11} color="rgba(255,255,255,0.75)">{traduire("Départ en vert, arrivée en rouge. Jaune quand tu vas moins vite, vert quand tu accélères.")}</Ink>
                 </View>
               </View>
@@ -994,7 +994,7 @@ export default function WorkoutDetailScreen() {
           )}
           {t.source && t.source !== 'manual' ? (
             <Ink size={12} color={c.textMuted} style={{ textAlign: 'center' }}>
-              {traduire("Importée depuis {0}", ({ apple_watch: 'Apple Watch', apple_health: 'Apple Santé', iphone: 'iPhone', strava: 'Strava', garmin: 'Garmin', polar: 'Polar', whoop: 'Whoop', suunto: 'Suunto', coros: 'Coros', wahoo: 'Wahoo', samsung: 'Samsung', fitbit: 'Fitbit', withings: 'Withings', health_connect: 'Health Connect' } as Record<string, string>)[t.source] ?? 'ta montre')}
+              {traduire("Importée depuis {0}", ({ apple_watch: 'Apple Watch', apple_health: traduire('Apple Santé'), iphone: 'iPhone', strava: 'Strava', garmin: 'Garmin', polar: 'Polar', whoop: 'Whoop', suunto: 'Suunto', coros: 'Coros', wahoo: 'Wahoo', samsung: 'Samsung', fitbit: 'Fitbit', withings: 'Withings', health_connect: 'Health Connect' } as Record<string, string>)[t.source] ?? traduire('ta montre'))}
             </Ink>
           ) : null}
           {details?.durationMinutes && !duration ? <Ink size={12} color={c.textMuted}>{formatClock(details.durationMinutes * 60)}</Ink> : null}

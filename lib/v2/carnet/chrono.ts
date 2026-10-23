@@ -135,7 +135,7 @@ export function musculationPhases(rest: number, series: number): ChronoPhase[] {
 export function roundPhases(o: { rounds: number; round: number; rest: number; prepa: number; clap: boolean; hold?: boolean }): ChronoPhase[] {
   const list: ChronoPhase[] = prepa(o.prepa, 'beep');
   for (let r = 1; r <= o.rounds; r++) {
-    list.push({ kind: 'effort', duration: o.round, title: traduire("Round {0} sur {1}", r, o.rounds), short: `Round ${r}`, cue: 'gong', clap: o.clap, hold: o.hold, step: r, steps: o.rounds });
+    list.push({ kind: 'effort', duration: o.round, title: traduire("Round {0} sur {1}", r, o.rounds), short: traduire("Round {0}", r), cue: 'gong', clap: o.clap, hold: o.hold, step: r, steps: o.rounds });
     if (r < o.rounds && o.rest > 0) list.push({ kind: 'repos', duration: o.rest, title: traduire('Repos'), short: traduire("Repos {0}", humanSeconds(o.rest)), cue: 'gong', step: r, steps: o.rounds });
   }
   return list;

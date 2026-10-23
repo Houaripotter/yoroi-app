@@ -27,7 +27,7 @@ export async function diagnoseWorkouts(): Promise<DiagReport> {
 
   lines.push(traduire('Autorisation de lecture'));
   if (String(authResult).startsWith('error:')) {
-    lines.push(`Module natif : ${String(authResult).replace('error:', '')}`);
+    lines.push(traduire("Module natif : {0}", String(authResult).replace('error:', '')));
   } else {
     const parts: Record<string, string> = {};
     String(authResult)
@@ -38,9 +38,9 @@ export async function diagnoseWorkouts(): Promise<DiagReport> {
       });
     const count = parts.count ?? '?';
     const status = parts.authStatus;
-    if (status) lines.push(traduire("Accès système : {0}", status === '2' ? 'autorisé' : status === '1' ? 'refusé' : 'pas encore demandé'));
+    if (status) lines.push(traduire("Accès système : {0}", status === '2' ? traduire('autorisé') : status === '1' ? traduire('refusé') : traduire('pas encore demandé')));
     lines.push(traduire("Séances lisibles : {0}", count));
-    if (parts.sources) lines.push(`Sources visibles : ${parts.sources}`);
+    if (parts.sources) lines.push(traduire("Sources visibles : {0}", parts.sources));
     if (count === '0') lines.push(traduire('Les séances de la montre ne sont pas accessibles, même après la demande.'));
   }
   lines.push('');
@@ -56,7 +56,7 @@ export async function diagnoseWorkouts(): Promise<DiagReport> {
     const authMap: Record<number, string> = { 0: traduire('pas encore demandé'), 1: traduire('refusé'), 2: traduire('autorisé') };
     lines.push(traduire("Accès système (Swift) : {0}", authMap[nd.authStatus] ?? nd.authStatus));
     if (nd.sourceError) lines.push(traduire("Test A, sources : erreur {0}", nd.sourceError));
-    else lines.push(`Test A, sources : ${nd.sources?.length ? nd.sources.join(', ') : 'aucune'}`);
+    else lines.push(traduire("Test A, sources : {0}", nd.sources?.length ? nd.sources.join(', ') : traduire('aucune')));
     if (nd.nuclearError) lines.push(traduire("Test B, sans filtre : erreur {0}", nd.nuclearError));
     else lines.push(traduire("Test B, sans filtre : {0} séance(s){1}", nd.nuclearTest?.count ?? 0, nd.nuclearTest?.found ? `, source ${nd.nuclearTest.sourceName || '?'}` : ''));
     if (nd.predicateError) lines.push(traduire("Test C, 365 jours : erreur {0}", nd.predicateError));
@@ -80,7 +80,7 @@ export async function diagnoseWorkouts(): Promise<DiagReport> {
 
   lines.push(traduire('Lecture Apple Santé'));
   lines.push(`Module : ${diag.moduleLoaded ? traduire('chargé') : traduire('non chargé')}`);
-  lines.push(`Connexion : ${diag.isConnected ? 'oui' : 'non'}`);
+  lines.push(traduire("Connexion : {0}", diag.isConnected ? traduire('oui') : traduire('non')));
   if (diag.authStatus) lines.push(traduire("Autorisation séances : {0}", diag.authStatus));
   if (diag.rawApiTest === -2) lines.push(traduire("Requête simple : erreur {0}", diag.rawApiError));
   else if (diag.rawApiTest >= 0) lines.push(traduire("Requête simple : {0} séance(s)", diag.rawApiTest));

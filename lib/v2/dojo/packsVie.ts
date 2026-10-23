@@ -9,7 +9,7 @@
  * Acces : la regle des personnages et scenes Premium (isPackUnlocked), aucun achat, aucun produit.
  */
 import type { ImageSourcePropType } from 'react-native';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type CategorieVie = 'metiers' | 'sports' | 'epoques';
 
@@ -88,5 +88,5 @@ export function texteCompteurCollection(total: number = PACKS_VIE.length, prets:
   const reste = Math.max(0, total - prets);
   if (prets <= 0) return traduire("{0} packs prévus, homme et femme.", total);
   if (reste <= 0) return traduire("{0} packs, homme et femme : tous déjà dans l’onglet Vie réelle.", total);
-  return traduire("{0} packs prévus, homme et femme : {1} déjà dans l’onglet Vie réelle, {2} {3} bientôt.", total, prets, reste, reste > 1 ? 'arrivent' : 'arrive');
+  return traduirePluriel(reste, reste > 1, "{0} packs prévus, homme et femme : {1} déjà dans l’onglet Vie réelle, {2} arrive bientôt.", "{0} packs prévus, homme et femme : {1} déjà dans l’onglet Vie réelle, {2} arrivent bientôt.", total, prets, reste);
 }

@@ -238,9 +238,9 @@ export async function restoreSafetyFile(data: { sqliteBase64?: string | null; as
 /** Petit texte de compte rendu, tutoiement */
 export function safetyReportText(r: SafetyRestoreReport): string {
   return [
-    r.added > 0 ? `${r.added} élément(s) ajouté(s).` : 'Rien de nouveau : tout était déjà sur ce téléphone.',
-    r.same > 0 ? `${r.same} déjà présent(s), pas recopié(s).` : null,
-    r.kept > 0 ? `${r.kept} valeur(s) différente(s) gardée(s) telle(s) que sur ce téléphone.` : null,
-    r.failed > 0 ? `${r.failed} élément(s) n’ont pas pu être lus.` : null,
+    r.added > 0 ? traduire("{0} élément(s) ajouté(s).", r.added) : traduire('Rien de nouveau : tout était déjà sur ce téléphone.'),
+    r.same > 0 ? traduire("{0} déjà présent(s), pas recopié(s).", r.same) : null,
+    r.kept > 0 ? traduire("{0} valeur(s) différente(s) gardée(s) telle(s) que sur ce téléphone.", r.kept) : null,
+    r.failed > 0 ? traduire("{0} élément(s) n’ont pas pu être lus.", r.failed) : null,
   ].filter(Boolean).join('\n');
 }

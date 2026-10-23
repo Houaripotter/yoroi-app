@@ -76,7 +76,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
       <Pressable
         onPress={() => { selectionAsync().catch(() => {}); onPress(); }}
         accessibilityRole="button"
-        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || 'à compléter')}
+        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || traduire('à compléter'))}
         style={({ pressed }) => ({ flexDirection: 'row', gap: 14, alignItems: 'center', padding: 14, borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, transform: [{ scale: pressed ? 0.99 : 1 }] })}
       >
         {rond}
@@ -102,7 +102,7 @@ export function ProfileHeader({ profile, espace, rankIndex, onPress, onEditPhoto
       <Pressable
         onPress={() => { selectionAsync().catch(() => {}); onPress(); }}
         accessibilityRole="button"
-        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || 'à compléter')}
+        accessibilityLabel={traduire("Ton profil, {0}. Modifier", name || traduire('à compléter'))}
         style={({ pressed }) => ({ flex: 1, flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 14, paddingLeft: 10, paddingRight: 14, alignSelf: 'stretch', transform: [{ scale: pressed ? 0.99 : 1 }] })}
       >
         {texte}

@@ -40,8 +40,8 @@ export function MesureConfidentialite() {
         <View style={{ borderTopWidth: 1, borderTopColor: c.border, paddingTop: 10 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>
             {total == null
-              ? 'Compteur local : lecture en cours'
-              : traduirePluriel(total, total > 1, "Compteur local : {0} événement noté sur ce téléphone{1}", "Compteur local : {0} événements notés sur ce téléphone{1}", total, mesureDisponible() ? '' : ', rien n’est encore envoyé')}
+              ? traduire('Compteur local : lecture en cours')
+              : traduirePluriel(total, total > 1, "Compteur local : {0} événement noté sur ce téléphone{1}", "Compteur local : {0} événements notés sur ce téléphone{1}", total, mesureDisponible() ? '' : traduire(', rien n’est encore envoyé'))}
           </Ink>
         </View>
       </Card>

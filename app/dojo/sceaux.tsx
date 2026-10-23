@@ -150,7 +150,7 @@ export default function Sceaux() {
                 <View style={{ alignSelf: 'stretch', gap: 6, marginTop: 4 }}>
                   <Bar progress={open.current / open.target} color={famColor(open.family)} />
                   <Ink size={14} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>
-                    {traduire("{0}, +{1} XP à la clé", open.target > 1 ? `${open.current} sur ${open.target}` : 'Pas encore', XP_VALUES.sceau)}
+                    {traduire("{0}, +{1} XP à la clé", open.target > 1 ? traduire("{0} sur {1}", open.current, open.target) : traduire('Pas encore'), XP_VALUES.sceau)}
                   </Ink>
                 </View>
               )}

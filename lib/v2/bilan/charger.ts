@@ -151,7 +151,7 @@ const nomSport = (sport: string) =>
     .split(',')
     .map((s) => getSportName(s.trim()))
     .filter(Boolean)
-    .join(' et ');
+    .join(traduire(' et '));
 
 function zonesDe(t: Training): number[] | null {
   if (!t.workout_details_json) return null;

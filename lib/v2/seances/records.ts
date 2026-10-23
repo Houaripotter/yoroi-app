@@ -23,6 +23,9 @@ export type RecordLine = {
   key: string;
   kind: RecordKind;
   name: string;
+  /** endurance, rounds, duree : le nom du sport et le libelle court, deja traduits (sans relire name) */
+  sportNom?: string;
+  court?: string;
   sport: string;
   /** meilleure valeur (kg estimes, repetitions, km, secondes au km, rounds, minutes) */
   best: number;
@@ -117,11 +120,11 @@ export function computeRecords(trainings: Training[]): RecordsResult {
     const dur = durationOf(t);
     if (fam === 'cardio' && dist > 0) {
       const sName = getSportName(sport);
-      push(map, `distance:${sport}`, () => ({ key: `distance:${sport}`, kind: 'distance', name: `${sName}, plus longue distance`, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dist, trainingId: t.id });
+      push(map, `distance:${sport}`, () => ({ key: `distance:${sport}`, kind: 'distance', name: traduire("{0}, plus longue distance", sName), sportNom: sName, court: traduire('plus longue distance'), sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dist, trainingId: t.id });
       if (dist >= 1 && dur > 0) {
         const pace = (dur * 60) / dist;
         if (pace > 120 && pace < 1800) {
-          push(map, `allure:${sport}`, () => ({ key: `allure:${sport}`, kind: 'allure', name: `${sName}, meilleure allure`, sport, best: 0, date, stamps: 0, history: [] }), true, { date, value: pace, trainingId: t.id });
+          push(map, `allure:${sport}`, () => ({ key: `allure:${sport}`, kind: 'allure', name: traduire("{0}, meilleure allure", sName), sportNom: sName, court: traduire('meilleure allure'), sport, best: 0, date, stamps: 0, history: [] }), true, { date, value: pace, trainingId: t.id });
         }
       }
     }
@@ -131,14 +134,14 @@ export function computeRecords(trainings: Training[]): RecordsResult {
       const rounds = parseRounds(t).length || t.rounds || 0;
       if (rounds > 0) {
         const sName = getSportName(sport);
-        push(map, `rounds:${sport}`, () => ({ key: `rounds:${sport}`, kind: 'rounds', name: `${sName}, le plus de rounds`, sport, best: 0, date, stamps: 0, history: [], minor: true }), false, { date, value: rounds, trainingId: t.id });
+        push(map, `rounds:${sport}`, () => ({ key: `rounds:${sport}`, kind: 'rounds', name: traduire("{0}, le plus de rounds", sName), sportNom: sName, court: traduire('le plus de rounds'), sport, best: 0, date, stamps: 0, history: [], minor: true }), false, { date, value: rounds, trainingId: t.id });
       }
     }
 
     // Tous les sports sans distance : la seance la plus longue
     if (dur > 0 && !(fam === 'cardio' && dist > 0)) {
       const sName = getSportName(sport);
-      push(map, `duree:${sport}`, () => ({ key: `duree:${sport}`, kind: 'duree', name: `${sName}, séance la plus longue`, sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dur, trainingId: t.id });
+      push(map, `duree:${sport}`, () => ({ key: `duree:${sport}`, kind: 'duree', name: traduire("{0}, séance la plus longue", sName), sportNom: sName, court: traduire('séance la plus longue'), sport, best: 0, date, stamps: 0, history: [] }), false, { date, value: dur, trainingId: t.id });
     }
   }
 
@@ -333,7 +336,7 @@ export function formatRecordValue(line: RecordLine, value?: number, unite: Unite
       return { main: `${m}:${String(s).padStart(2, '0')}`, sub: traduire('min par km') };
     }
     case 'rounds':
-      return { main: `${Math.round(v)} rounds`, sub: traduire('en une séance') };
+      return { main: traduire("{0} rounds", Math.round(v)), sub: traduire('en une séance') };
     case 'duree': {
       // 18 octobre (audit) : arrondi a la minute d'abord, jamais « 1 h 60 »
       const r = Math.round(v);
@@ -347,22 +350,22 @@ export function formatRecordValue(line: RecordLine, value?: number, unite: Unite
 /** Libelle court d'un record (le sport est montre par la vignette) : Seances, Carnet */
 export function recordShortTitle(l: RecordLine): string {
   if (l.kind === 'force' || l.kind === 'reps') return l.name;
-  const rest = l.name.split(', ').slice(1).join(', ');
+  const rest = l.court ?? l.name.split(', ').slice(1).join(', ');
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : l.name;
 }
 
 export function kindUnit(kind: RecordKind): string {
   switch (kind) {
     case 'force':
-      return 'kilos';
+      return traduire('kilos');
     case 'reps':
       return traduire('répétitions');
     case 'distance':
       return 'km';
     case 'allure':
-      return 'au km';
+      return traduire('au km');
     case 'rounds':
-      return 'rounds';
+      return traduire('rounds');
     case 'duree':
       return traduire('minutes');
   }

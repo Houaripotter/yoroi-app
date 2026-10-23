@@ -190,7 +190,7 @@ export default function SlotsScreen() {
         {impactedPending.length > 0 ? (
           <Glass style={{ gap: 8, borderColor: c.dangerTint }}>
             <Ink size={16} weight="black" tight color={c.danger}>{traduire("Une blessure touche certains créneaux")}</Ink>
-            <Ink size={13} color={c.textSecondary}>{traduirePluriel(impactedPending.length, impactedPending.length > 1, "{0} créneau de cette semaine sollicite{1} la zone blessée.", "{0} créneaux de cette semaine sollicite{1} la zone blessée.", impactedPending.length, impactedPending.length > 1 ? 'nt' : '')}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduirePluriel(impactedPending.length, impactedPending.length > 1, "{0} créneau de cette semaine sollicite la zone blessée.", "{0} créneaux de cette semaine sollicitent la zone blessée.", impactedPending.length)}</Ink>
             <BigButton label={traduire("Les annuler cette semaine")} tone="danger" icon="close" onPress={cancelInjured} />
           </Glass>
         ) : null}
@@ -258,7 +258,7 @@ export default function SlotsScreen() {
               })}
             </View>
 
-            <Ink size={14} weight="bold" color={c.textSecondary}>{`Sport : ${getSportName(draft.sport)}`}</Ink>
+            <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Sport : {0}", getSportName(draft.sport))}</Ink>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {sportChoices.map((id) => (
                 <Chip key={id} label={getSportName(id)} on={id === draft.sport} onPress={() => setDraft({ ...draft, sport: id, type: '' })} />

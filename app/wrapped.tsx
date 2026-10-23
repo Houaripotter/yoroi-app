@@ -76,10 +76,10 @@ export default function WrappedScreen() {
       unit: stats.totalSessions > 1 ? traduire('séances') : traduire('séance'),
       sub: traduire("{0} d’entraînement", hours),
       facts: [
-        { value: sport || 'À trouver', label: traduire('Sport favori') },
+        { value: sport || traduire('À trouver'), label: traduire('Sport favori') },
         { value: month, label: traduire('Mois le plus fort') },
         { value: `${stats.longestStreak}\u00A0j`, label: traduire('Plus longue série'), accent: true },
-        { value: String(stats.personalBests), label: stats.personalBests > 1 ? 'Records battus' : 'Record battu' },
+        { value: String(stats.personalBests), label: stats.personalBests > 1 ? traduire('Records battus') : traduire('Record battu') },
         { value: String(stats.uniqueDays), label: traduire('Jours actifs') },
       ],
       foot: traduire('Touche pour revivre ton année'),
@@ -276,7 +276,7 @@ export default function WrappedScreen() {
                 big={stats.totalSessions}
                 bigUnit={traduire("séances")}
                 caption={traduire("{0} jours actifs", stats.uniqueDays)}
-                subCaption={sport ? `Sport favori : ${sport}` : undefined}
+                subCaption={sport ? traduire("Sport favori : {0}", sport) : undefined}
                 figure={figureFor({ personnage: id.personnage, rankIndex: id.rankIndex, genre: id.genre })}
                 rankKanji={id.rankKanji}
                 rankName={id.rankName}

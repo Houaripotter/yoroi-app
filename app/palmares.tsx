@@ -30,7 +30,7 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 const SCENE = require('@/assets/avatars/app/monde/scenes/remparts.webp');
 
 type Filter = 'all' | 'victoire' | 'defaite' | 'nul';
-const METHOD_LABEL: Record<string, string> = { soumission: traduire('Soumission'), points: traduire('Points'), decision: traduire('Décision'), ko: 'KO', tko: 'KO technique', abandon: 'Abandon', forfait: 'Forfait', dq: traduire('Disqualification') };
+const METHOD_LABEL: Record<string, string> = { soumission: traduire('Soumission'), points: traduire('Points'), decision: traduire('Décision'), ko: 'KO', tko: traduire('KO technique'), abandon: traduire('Abandon'), forfait: traduire('Forfait'), dq: traduire('Disqualification') };
 const METHOD_INK = ['#2C4A84', '#A8832F', '#6E8C3A', '#8C6A3F', '#3D5D9E', '#8B8D96', '#1D2029'];
 
 export default function PalmaresScreen() {
@@ -188,14 +188,14 @@ export default function PalmaresScreen() {
           {streak && streak.n >= 2 ? (
             <Glass style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               {streak.type === 'victoire' ? <Hanko size={36} color={c.gold} /> : <Icon name="flame" size={28} color={c.accent} />}
-              <Ink size={16} weight="black" tight style={{ flex: 1 }}>{traduire("{0} {1} d’affilée", streak.n, streak.type === 'victoire' ? 'victoires' : 'défaites')}</Ink>
+              <Ink size={16} weight="black" tight style={{ flex: 1 }}>{streak.type === 'victoire' ? traduire("{0} victoires d’affilée", streak.n) : traduire("{0} défaites d’affilée", streak.n)}</Ink>
             </Glass>
           ) : null}
 
           {last ? (
             <Glass onPress={() => router.push(`/combat-detail?id=${last.id}` as any)} label={traduire("Ton dernier combat")} style={{ gap: 4 }}>
               <Ink size={12} weight="bold" color={c.textSecondary}>{traduire("Ton dernier combat, {0}", relativeDay(last.date.slice(0, 10), today))}</Ink>
-              <Ink size={18} weight="black" tight>{`${last.resultat === 'victoire' ? traduire('Victoire') : last.resultat === 'defaite' ? traduire('Défaite') : traduire('Nul')} contre ${last.adversaire_nom || traduire('un adversaire')}`}</Ink>
+              <Ink size={18} weight="black" tight>{traduire("{0} contre {1}", last.resultat === 'victoire' ? traduire('Victoire') : last.resultat === 'defaite' ? traduire('Défaite') : traduire('Nul'), last.adversaire_nom || traduire('un adversaire'))}</Ink>
               <Ink size={13} color={c.textSecondary}>{[last.adversaire_club, last.methode ? METHOD_LABEL[last.methode] ?? last.methode : '', last.technique, last.temps].filter(Boolean).join(', ')}</Ink>
             </Glass>
           ) : null}
@@ -229,7 +229,7 @@ export default function PalmaresScreen() {
                 {methods.map((m, i) => (
                   <View key={m.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: METHOD_INK[i % METHOD_INK.length] }} />
-                    <Ink size={13} weight="bold">{methods.length > 1 ? `${m.label} ${m.pct}\u00A0%` : traduire("{0}, {1} sur {2}", m.label, m.n, m.n)}</Ink>
+                    <Ink size={13} weight="bold">{methods.length > 1 ? traduire("{0} {1}\u00A0%", m.label, m.pct) : traduire("{0}, {1} sur {2}", m.label, m.n, m.n)}</Ink>
                   </View>
                 ))}
               </View>
@@ -241,9 +241,9 @@ export default function PalmaresScreen() {
               <SectionTitle title={traduire("Tes combats")} />
               <ChipRow>
                 <Chip label={traduire("Tous {0}", total)} on={filter === 'all'} onPress={() => setFilter('all')} />
-                <Chip label={`Victoires ${record.victoires}`} on={filter === 'victoire'} onPress={() => setFilter('victoire')} />
+                <Chip label={traduire("Victoires {0}", record.victoires)} on={filter === 'victoire'} onPress={() => setFilter('victoire')} />
                 <Chip label={traduire("Défaites {0}", record.defaites)} on={filter === 'defaite'} onPress={() => setFilter('defaite')} />
-                <Chip label={`Nuls ${record.nuls}`} on={filter === 'nul'} onPress={() => setFilter('nul')} />
+                <Chip label={traduire("Nuls {0}", record.nuls)} on={filter === 'nul'} onPress={() => setFilter('nul')} />
               </ChipRow>
               {list.length === 0 ? <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>{traduire("Aucun combat dans ce filtre.")}</Ink> : null}
               {list.map((x) => {
@@ -256,7 +256,7 @@ export default function PalmaresScreen() {
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
                       <Ink size={15} weight="extraBold" numberOfLines={1}>{x.adversaire_nom || traduire('Adversaire')}</Ink>
-                      <Ink size={12} color={c.textSecondary} numberOfLines={1}>{[longDate(x.date.slice(0, 10), true), x.methode ? METHOD_LABEL[x.methode] ?? x.methode : '', x.round && x.temps ? `round ${x.round}, ${x.temps}` : ''].filter(Boolean).join(', ')}</Ink>
+                      <Ink size={12} color={c.textSecondary} numberOfLines={1}>{[longDate(x.date.slice(0, 10), true), x.methode ? METHOD_LABEL[x.methode] ?? x.methode : '', x.round && x.temps ? traduire("round {0}, {1}", x.round, x.temps) : ''].filter(Boolean).join(', ')}</Ink>
                     </View>
                     <Icon name="chevron" size={18} color={c.textMuted} />
                   </Pressable>

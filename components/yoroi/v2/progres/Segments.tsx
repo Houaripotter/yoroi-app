@@ -40,8 +40,8 @@ const PHYSIQUE: Record<number, string> = {
 function gap(what: 'Bras' | 'Jambes', right?: number, left?: number): string | null {
   if (right === undefined || left === undefined) return null;
   const d = Math.round((right - left) * 10) / 10;
-  if (Math.abs(d) < 0.1) return traduire("{0} : autant de muscle à droite qu’à gauche", what);
-  return traduire("{0} : {1} kg de muscle de plus à {2}", what, num(Math.abs(d), 1), d > 0 ? 'droite' : 'gauche');
+  if (Math.abs(d) < 0.1) return traduire("{0} : autant de muscle à droite qu’à gauche", traduire(what));
+  return traduire("{0} : {1} kg de muscle de plus à {2}", traduire(what), num(Math.abs(d), 1), d > 0 ? traduire('droite') : traduire('gauche'));
 }
 
 export function hasSegments(p: CompoPoint | null | undefined): boolean {
@@ -91,7 +91,7 @@ export function SegmentsCard({ point, style }: { point: CompoPoint; style?: Styl
               <View
                 key={r.id}
                 accessible
-                accessibilityLabel={`${r.label}${f !== undefined ? traduire(", graisse {0} pour cent", num(f, 1)) : ''}${m !== undefined ? `, muscle ${num(m, 1)} kilos` : ''}`}
+                accessibilityLabel={`${traduire(r.label)}${f !== undefined ? traduire(", graisse {0} pour cent", num(f, 1)) : ''}${m !== undefined ? traduire(", muscle {0} kilos", num(m, 1)) : ''}`}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, paddingTop: i === 0 ? 0 : 8 }}
               >
                 <Ink size={13} weight="extraBold" numberOfLines={1} style={{ width: 106 }}>{traduire(r.label)}</Ink>
@@ -150,7 +150,7 @@ export function ExtrasCard({ point, style }: { point: CompoPoint; style?: StyleP
     ...known.map((f) => ({
       id: f.key,
       label: f.label,
-      value: `${fmtBalance(mesures[f.key], f.step)}${f.unit && f.unit !== 'points' ? ` ${f.unit}` : f.unit === 'points' ? ' sur 100' : ''}`,
+      value: `${fmtBalance(mesures[f.key], f.step)}${f.unit && f.unit !== 'points' ? ` ${traduire(f.unit)}` : f.unit === 'points' ? traduire(' sur 100') : ''}`,
       dot: f.kind ? CORPS[f.kind] : c.textMuted,
     })),
     ...autres.map((a, i) => ({ id: `autre_${i}`, label: a.nom, value: `${fmtAutre(a.valeur)}${a.unite ? ` ${a.unite}` : ''}`, dot: c.textMuted })),
@@ -163,7 +163,7 @@ export function ExtrasCard({ point, style }: { point: CompoPoint; style?: StyleP
         <View
           key={r.id}
           accessible
-          accessibilityLabel={`${r.label}, ${r.value}`}
+          accessibilityLabel={`${traduire(r.label)}, ${r.value}`}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, paddingTop: i === 0 ? 0 : 6 }}
         >
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: r.dot }} />

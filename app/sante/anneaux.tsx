@@ -184,8 +184,8 @@ export default function TesAnneaux() {
 
   const android = Platform.OS === 'android';
   const sourceTexte = h.direct
-    ? traduire("Pas et calories : {0}. Exercice : {1}{2}.", android ? 'Health Connect' : 'Apple Santé', android ? 'tes séances Health Connect' : 'Apple Santé', seancesDuJour ? ` et ${seancesDuJour > 1 ? `tes ${seancesDuJour} séances notées` : 'ta séance notée'} dans YOROI ce jour-là` : ' et tes séances YOROI')
-    : traduire("Exercice : tes séances notées dans YOROI. Relie {0} pour tes pas et tes calories.", android ? 'Health Connect' : 'Apple Santé');
+    ? traduire("Pas et calories : {0}. Exercice : {1}{2}.", android ? 'Health Connect' : traduire('Apple Santé'), android ? traduire('tes séances Health Connect') : traduire('Apple Santé'), seancesDuJour ? (seancesDuJour > 1 ? traduire(" et tes {0} séances notées dans YOROI ce jour-là", seancesDuJour) : traduire(" et ta séance notée dans YOROI ce jour-là")) : traduire(' et tes séances YOROI'))
+    : traduire("Exercice : tes séances notées dans YOROI. Relie {0} pour tes pas et tes calories.", android ? 'Health Connect' : traduire('Apple Santé'));
 
   return (
     <DetailScreen title={traduire("Tes anneaux")} subtitle={jour === aujourdhui ? traduire('Aujourd’hui') : jourLong(jour, aujourdhui)} scroll={false}>

@@ -76,7 +76,7 @@ export function ExamplePreview({ children, title, text, cta, onPress, plusHint, 
   const c = theme.colors;
   return (
     <View style={style}>
-      <View accessible accessibilityLabel={traduire("{0} : aperçu de ce que tu verras, ce ne sont pas tes données", tag ?? 'Exemple')} style={{ paddingHorizontal: bleed || flush ? 0 : GUTTER }}>
+      <View accessible accessibilityLabel={traduire("{0} : aperçu de ce que tu verras, ce ne sont pas tes données", tag ?? traduire('Exemple'))} style={{ paddingHorizontal: bleed || flush ? 0 : GUTTER }}>
         <View pointerEvents="none" style={{ flexDirection: 'row', paddingHorizontal: bleed ? GUTTER : 0, marginBottom: 10 }}>
           <ExampleTag text={tag} />
         </View>

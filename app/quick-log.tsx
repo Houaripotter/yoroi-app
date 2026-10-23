@@ -706,13 +706,13 @@ export default function DicteSeance() {
                     <Ink size={13} weight="bold" color={P.ink2}>{traduire("Avec qui")}</Ink>
                     <ChoiceRow options={CADRES} value={form.team?.cadre ?? null} onChange={(v) => set({ team: { ...(form.team ?? {}), cadre: v ?? undefined } })} columns={3} />
                   </View>
-                  <TeamStepper label="Buts" value={form.team?.goals} onChange={(v) => set({ team: { ...(form.team ?? {}), goals: v } })} />
+                  <TeamStepper label={traduire("Buts")} value={form.team?.goals} onChange={(v) => set({ team: { ...(form.team ?? {}), goals: v } })} />
                   <TeamStepper label={traduire("Passes décisives")} value={form.team?.assists} onChange={(v) => set({ team: { ...(form.team ?? {}), assists: v } })} />
                   {form.team?.scoreFor !== undefined && form.team?.scoreAgainst !== undefined ? (
-                    <Ink size={14} weight="bold">{traduire("Score : {0} à {1}{2}", form.team.scoreFor, form.team.scoreAgainst, form.team.result === 'win' ? ', victoire' : form.team.result === 'loss' ? ', défaite' : ', nul')}</Ink>
+                    <Ink size={14} weight="bold">{form.team.result === 'win' ? traduire("Score : {0} à {1}, victoire", form.team.scoreFor, form.team.scoreAgainst) : form.team.result === 'loss' ? traduire("Score : {0} à {1}, défaite", form.team.scoreFor, form.team.scoreAgainst) : traduire("Score : {0} à {1}, nul", form.team.scoreFor, form.team.scoreAgainst)}</Ink>
                   ) : null}
                   <View style={{ gap: 6 }}>
-                    <Ink size={13} weight="bold" color={P.ink2}>Poste</Ink>
+                    <Ink size={13} weight="bold" color={P.ink2}>{traduire("Poste")}</Ink>
                     <TextInput
                       value={form.team?.position ?? ''}
                       onChangeText={(t) => set({ team: { ...(form.team ?? {}), position: t || undefined } })}
@@ -912,13 +912,13 @@ function PartnerCard({ card, src, onChange, onRemove }: { card: CardForm; src: s
           />
           <Ink size={12} weight="medium" color={P.ink2}>{`${card.role ? `${card.role.charAt(0).toUpperCase()}${card.role.slice(1)}, ` : ''}${roundsText(card.rounds)}`}</Ink>
         </View>
-        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Retirer ${card.name || traduire('ce partenaire')}`} hitSlop={6} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={traduire("Retirer {0}", card.name || traduire('ce partenaire'))} hitSlop={6} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="close" size={18} color={P.muted} />
         </Pressable>
       </View>
       {src.length ? <Ink size={12} weight="bold" color={P.accent} numberOfLines={3}>{src.map((q) => `« ${q} »`).join('  ')}</Ink> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>{count > 1 ? `${count} rounds` : '1 round'}</Ink>
+        <Ink size={13} weight="bold" color={P.ink2} style={{ flex: 1 }}>{count > 1 ? traduire("{0} rounds", count) : traduire('1 round')}</Ink>
         <Pressable disabled={count <= 1} onPress={() => { tap(); onChange({ rounds: card.rounds.slice(0, -1) }, true); }} accessibilityRole="button" accessibilityLabel={traduire("Un round de moins")} style={{ width: 40, height: 36, borderRadius: 12, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center', opacity: count <= 1 ? 0.4 : 1 }}>
           <Icon name="minus" size={16} color={P.ink} />
         </Pressable>

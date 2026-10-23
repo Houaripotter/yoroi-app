@@ -137,7 +137,7 @@ function BrandSheet({ w }: { w: Watch }) {
         </View>
         <PeriodSegments
           items={[
-            { key: 'ios' as const, label: 'iPhone' },
+            { key: 'ios' as const, label: traduire('iPhone') },
             { key: 'android' as const, label: traduire('Android') },
           ]}
           value={plat}
@@ -146,7 +146,7 @@ function BrandSheet({ w }: { w: Watch }) {
         />
         {!mine ? (
           <Ink size={12} weight="bold" color={S.muted}>
-            {traduire("Tu regardes la version {0}, pas celle de ton téléphone.", plat === 'android' ? 'Android' : 'iPhone')}
+            {traduire("Tu regardes la version {0}, pas celle de ton téléphone.", plat === 'android' ? traduire('Android') : traduire('iPhone'))}
           </Ink>
         ) : null}
       </GlassBox>
@@ -298,7 +298,7 @@ function ReadsCard() {
             <Ink size={20} weight="black" tight>
               {traduire("Ce que YOROI lit")}</Ink>
             <Ink size={13} weight="medium" color={S.ink2}>
-              {traduire("{0} mesures dans {1}, dont {2} alertes et événements datés, plus tes séances{3}.", mine.length, provider, events, ANDROID ? '' : ' et leurs tracés GPS')}
+              {ANDROID ? traduire("{0} mesures dans {1}, dont {2} alertes et événements datés, plus tes séances.", mine.length, provider, events) : traduire("{0} mesures dans {1}, dont {2} alertes et événements datés, plus tes séances et leurs tracés GPS.", mine.length, provider, events)}
             </Ink>
           </View>
         </View>

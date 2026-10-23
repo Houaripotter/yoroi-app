@@ -18,7 +18,7 @@ import type { ChargeReelle } from '@/lib/v2/chargeReelle';
 import { dayShort, parseLocalDate } from '@/lib/v2/competition/dates';
 import logger from '@/lib/security/logger';
 import { intensite, type NiveauIntensite } from '@/lib/v2/intensite';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 const LEVELS = [
   { name: traduire('Récupération'), range: traduire('0 à 500 points'), max: 500, n: 1 as NiveauIntensite, get color() { return intensite(1).text; }, description: traduire("Charge d'entraînement faible."), advice: traduire("Augmente progressivement l'intensité de tes séances.") },
@@ -184,10 +184,10 @@ export default function ChargeScreen() {
 
       {sessions === 0 ? <Note>{traduire("Aucune séance sur les sept derniers jours. Enregistre une séance avec ton effort ressenti : la charge se calcule toute seule.")}</Note> : null}
       {stats && stats.estimatedCount > 0 ? (
-        <Note>{traduire("{0} pas d’effort noté : compté à {1} sur 10. Note ton effort à la fin de la séance pour un calcul juste.", stats.estimatedCount === 1 ? '1 séance n’a' : `${stats.estimatedCount} séances n’ont`, DEFAULT_RPE)}</Note>
+        <Note>{traduirePluriel(stats.estimatedCount, stats.estimatedCount !== 1, "{0} séance n’a pas d’effort noté : compté à {1} sur 10. Note ton effort à la fin de la séance pour un calcul juste.", "{0} séances n’ont pas d’effort noté : compté à {1} sur 10. Note ton effort à la fin de la séance pour un calcul juste.", stats.estimatedCount, DEFAULT_RPE)}</Note>
       ) : null}
       {stats && stats.noDurationCount > 0 ? (
-        <Note>{traduire("{0} pas de durée : {1} sans points.", stats.noDurationCount === 1 ? '1 séance n’a' : `${stats.noDurationCount} séances n’ont`, stats.noDurationCount === 1 ? 'elle compte' : 'elles comptent')}</Note>
+        <Note>{traduirePluriel(stats.noDurationCount, stats.noDurationCount !== 1, "{0} séance n’a pas de durée : elle compte sans points.", "{0} séances n’ont pas de durée : elles comptent sans points.", stats.noDurationCount)}</Note>
       ) : null}
 
       <SectionTitle>{traduire("Comprendre les niveaux")}</SectionTitle>

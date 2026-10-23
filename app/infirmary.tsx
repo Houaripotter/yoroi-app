@@ -228,7 +228,7 @@ function Infirmary() {
                     router.push(`/injury-detail?id=${inj.id}` as any);
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={traduire("{0}, douleur {1} sur 10", inj.zone_name ? sentenceCase(inj.zone_name) : 'Blessure', inj.eva_score)}
+                  accessibilityLabel={traduire("{0}, douleur {1} sur 10", inj.zone_name ? sentenceCase(inj.zone_name) : traduire('Blessure'), inj.eva_score)}
                   style={({ pressed }) => ({ padding: 14, borderRadius: 20, backgroundColor: pressed ? c.fillSoft : blancA(0.78), borderWidth: 1, borderColor: c.divider, flexDirection: 'row', alignItems: 'center', gap: 12 })}
                 >
                   <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: evaColor(inj.eva_score ?? 0), alignItems: 'center', justifyContent: 'center' }}>

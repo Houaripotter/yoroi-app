@@ -199,7 +199,7 @@ export function TableauDuJour({
           <Pressable
             onPress={() => router.push(`/sante/anneaux?jour=${choisi}` as any)}
             accessibilityRole="button"
-            accessibilityLabel={traduire("Tes anneaux, {0}. Ouvrir l’historique", estAujourdhui ? 'aujourd’hui' : jourA11y(choisi))}
+            accessibilityLabel={traduire("Tes anneaux, {0}. Ouvrir l’historique", estAujourdhui ? traduire('aujourd’hui') : jourA11y(choisi))}
             hitSlop={6}
           >
             <AnneauxConcentriques
@@ -323,7 +323,7 @@ function FeuilleMesures({ visible, onFermer, mesures, titre = traduire('Tes autr
                     router.push(`/sante/${m.cle}` as any);
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={traduire("{0} : {1}. {2} {3}{4}. Voir le détail", e.nom, e.phrase, valeur, unite, m.hier ? ', mesure d’hier' : '')}
+                  accessibilityLabel={traduire("{0} : {1}. {2} {3}{4}. Voir le détail", e.nom, e.phrase, valeur, unite, m.hier ? traduire(', mesure d’hier') : '')}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderTopColor: P.line2, opacity: pressed ? 0.6 : 1 })}
                 >
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COULEUR_AUTRE[m.cle] ?? P.ink2 }} />
@@ -386,7 +386,7 @@ function MiniRecup({ forme, passe = false }: { forme: FormeResult | null; passe?
     const manqueNuit = forme.missing.includes('sommeil');
     const message = messageScoreIncomplet(manqueNuit);
     return (
-      <CadreMini onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={traduire("Récupération : {0}. {1}", message, manqueNuit ? 'Note ta nuit' : 'Voir le détail')} titre={traduire("Récupération")} couleur={t.texte}>
+      <CadreMini onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={manqueNuit ? traduire("Récupération : {0}. Note ta nuit", message) : traduire("Récupération : {0}. Voir le détail", message)} titre={traduire("Récupération")} couleur={t.texte}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Ink size={11.5} weight="bold" color={P.ink2} style={{ textAlign: 'center' }}>
             {message}
@@ -446,7 +446,7 @@ function MiniSommeil({ sleep, sleepGoal, jour = null }: { sleep: SleepEntry[]; s
   }
   const heures = nuit.bedTime && nuit.wakeTime ? traduire("{0} à {1}", nuit.bedTime.replace(':', ' h '), nuit.wakeTime.replace(':', ' h ')) : null;
   return (
-    <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : {0}{1}", formatMinutes(nuit.duration), heures ? `, de ${heures}` : '')} titre={traduire("Sommeil")} couleur={t.texte}>
+    <CadreMini onPress={() => router.push('/sleep' as any)} a11y={traduire("Sommeil : {0}{1}", formatMinutes(nuit.duration), heures ? traduire(", de {0}", heures) : '')} titre={traduire("Sommeil")} couleur={t.texte}>
       <ChiffreAnime valeur={nuit.duration} format={(x) => formatMinutes(Math.round(x))} cle={jour ? `mini:sommeil:${jour}` : 'mini:sommeil'} taille={18} />
       <View style={{ alignSelf: 'stretch', paddingHorizontal: 2, marginTop: 2 }}>
         <Barres7 valeurs={nuits} objectif={sleepGoal} couleur={t.plein} douce={t.bord} hauteur={44} cle="mini:sommeil" derniere />
@@ -532,7 +532,7 @@ function MiniEauPassee({ eau, goal }: { eau: { amount: number; goal: number | nu
   const ok = g > 0 && eau.amount >= g;
   return (
     <View style={{ flex: 1, minWidth: 0 }}>
-      <CadreMini onPress={ouvrir} a11y={traduire("Eau : {0} litre{1} ce jour-là. Ouvrir l’eau", formatLiters(eau.amount), g > 0 ? ` sur ${formatLiters(g)}` : '')} titre="Eau" couleur={trait} titreAGauche>
+      <CadreMini onPress={ouvrir} a11y={traduire("Eau : {0} litre{1} ce jour-là. Ouvrir l’eau", formatLiters(eau.amount), g > 0 ? traduire(" sur {0}", formatLiters(g)) : '')} titre={traduire('Eau')} couleur={trait} titreAGauche>
         <Bouteille part={g > 0 ? eau.amount / g : 0} couleur={c.anneau} vague={c.fin} contour={trait} largeur={30} hauteur={56} cle="mini:eau:passee" />
         <Ink size={15} weight="black" color={trait} style={{ textAlign: 'center' }}>
           {`${formatLiters(eau.amount)} L`}
@@ -561,7 +561,7 @@ export function Carrousel({ titre, items }: { titre: string; items: { cle: strin
         {defile ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, paddingBottom: 3 }} accessible={false} importantForAccessibility="no-hide-descendants">
             <Ink size={12} weight="bold" color={P.ink2}>
-              {`${items.length} tuiles`}
+              {traduire("{0} tuiles", items.length)}
             </Ink>
             <Icon name="chevron" size={12} color={P.ink2} width={2.6} />
           </View>

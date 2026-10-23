@@ -67,7 +67,7 @@ function MarketingKitInner() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ gap: 2, flex: 1 }}>
             <Ink size={28} weight="black" tight>{traduire("{0} sur {1}", done.size, STEPS.length)}</Ink>
-            <Ink size={13} weight="bold" color={P.ink2}>{complete ? traduire('Séquence complète') : nextStep ? `Prochaine : ${nextStep.title}` : ''}</Ink>
+            <Ink size={13} weight="bold" color={P.ink2}>{complete ? traduire('Séquence complète') : nextStep ? traduire("Prochaine : {0}", nextStep.title) : ''}</Ink>
           </View>
           {complete ? <Hanko size={48} /> : null}
         </View>

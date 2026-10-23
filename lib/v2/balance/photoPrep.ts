@@ -121,7 +121,7 @@ export async function preparePhotos(sorted: DatedPhoto[], onProgress?: (done: nu
     } catch (err) {
       logger.warn('[Photos datees] copie nommee impossible', err);
     }
-    const caption = traduire("Photo {0} sur {1}, {2}", i + 1, sorted.length, p.at !== undefined ? `prise le ${frenchDateTime(p.at)}` : 'date de prise inconnue');
+    const caption = traduire("Photo {0} sur {1}, {2}", i + 1, sorted.length, p.at !== undefined ? traduire("prise le {0}", frenchDateTime(p.at)) : traduire('date de prise inconnue'));
     pages.push(`<section><h1>${escapeHtml(caption)}</h1><img src="data:image/jpeg;base64,${r.base64 ?? ''}" /></section>`);
     onProgress?.(i + 1, sorted.length);
   }

@@ -130,7 +130,7 @@ export default function CompetitionsScreen() {
           ) : n >= 0 && !dim ? (
             <>
               <Ink size={17} weight="black" color={c.accent} style={{ lineHeight: 19 }}>{n === 0 ? 'J' : String(n)}</Ink>
-              <Ink size={9} weight="bold" color={c.textSecondary} style={{ lineHeight: 11 }}>{n > 1 ? 'jours' : 'jour'}</Ink>
+              <Ink size={9} weight="bold" color={c.textSecondary} style={{ lineHeight: 11 }}>{n > 1 ? traduire('jours') : traduire('jour')}</Ink>
             </>
           ) : (
             <Icon name="trophy" size={22} color={c.textMuted} />
@@ -139,7 +139,7 @@ export default function CompetitionsScreen() {
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="extraBold" numberOfLines={2}>{traduire(x.nom)}</Ink>
           <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[longDate(x.date.slice(0, 10), true), x.lieu].filter(Boolean).join(', ')}</Ink>
-          {x.categorie_poids ? <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{`${x.categorie_poids}${x.poids_max && x.poids_max < 900 ? `, ${formatKg(x.poids_max)} kg max` : ''}`}</Ink> : null}
+          {x.categorie_poids ? <Ink size={11} weight="bold" color={c.textMuted} numberOfLines={1}>{`${x.categorie_poids}${x.poids_max && x.poids_max < 900 ? traduire(", {0} kg max", formatKg(x.poids_max)) : ''}`}</Ink> : null}
         </View>
         <Icon name="chevron" size={18} color={c.textMuted} />
       </Pressable>
@@ -178,7 +178,7 @@ export default function CompetitionsScreen() {
               <>
                 <Ink size={48} weight="black" tight style={{ lineHeight: 52 }}>
                   {nextDays === 0 ? traduire('Jour J') : String(nextDays)}
-                  {nextDays > 0 ? <Ink size={18} weight="bold" color={c.textSecondary}>{nextDays > 1 ? ' jours' : ' jour'}</Ink> : null}
+                  {nextDays > 0 ? <Ink size={18} weight="bold" color={c.textSecondary}>{nextDays > 1 ? ` ${traduire('jours')}` : ` ${traduire('jour')}`}</Ink> : null}
                 </Ink>
                 <Ink size={18} weight="extraBold" numberOfLines={2}>{traduire(next.nom)}</Ink>
                 <Ink size={13} color={c.textSecondary}>{[longDate(next.date.slice(0, 10), true), next.lieu, getSportName(next.sport)].filter(Boolean).join(', ')}</Ink>

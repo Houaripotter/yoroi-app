@@ -21,7 +21,7 @@ import { computeLifts } from '@/lib/v2/progres/strength';
 import { dayLong, num } from '@/lib/v2/progres/format';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG } from '@/lib/i18n/tr';
 
 function reps(n: number): string {
   return traduirePluriel(n, n > 1, "{0} répétition", "{0} répétitions", n);
@@ -44,9 +44,9 @@ export default function ForceDetailScreen() {
   // 18 octobre 2026 : charges stockees en kilos, affichees dans l'unite du reglage (kilos ou livres)
   const unite = useUnitePoids();
   const cv = (kg: number) => versUnitePoids(kg, unite);
-  const mot = unite === 'lb' ? 'livres' : 'kilos';
+  const mot = unite === 'lb' ? traduire('livres') : traduire('kilos');
   const points: DetailPoint[] = useMemo(
-    () => (lift ? lift.points.map((p) => ({ date: p.date, value: versUnitePoids(p.value, unite), record: p.record, caption: traduire("{0} {1} pour {2}", num(versUnitePoids(p.weight, unite), 1), unite === 'lb' ? 'livres' : 'kilos', reps(p.reps)) })) : []),
+    () => (lift ? lift.points.map((p) => ({ date: p.date, value: versUnitePoids(p.value, unite), record: p.record, caption: traduire("{0} {1} pour {2}", num(versUnitePoids(p.weight, unite), 1), unite === 'lb' ? traduire('livres') : traduire('kilos'), reps(p.reps)) })) : []),
     [lift, unite],
   );
   // 16 octobre : l'indigo des seances (accueil) ou la couleur choisie dans Reglages, Tes courbes
@@ -66,7 +66,7 @@ export default function ForceDetailScreen() {
           </ScrollView>
         ) : null
       }
-      spec={{ label: traduire('Maximum estimé'), unit: unite === 'lb' ? 'lb' : 'kg', digits: 1, good: 'up', deltaOne: unite === 'lb' ? 'livre' : 'kilo', deltaMany: mot, eps: 0.5, minSpan: 4 }}
+      spec={{ label: traduire('Maximum estimé'), unit: unite === 'lb' ? 'lb' : 'kg', digits: 1, good: 'up', deltaOne: unite === 'lb' ? traduire('livre') : traduire('kilo'), deltaMany: mot, eps: 0.5, minSpan: 4 }}
       points={points}
       color={trait}
       domaine="seances"
@@ -78,7 +78,7 @@ export default function ForceDetailScreen() {
       legend={
         <>
           <LegendMark kind="line" color={trait} label={traduire("maximum estimé")} />
-          <LegendMark kind="seal" color={RECORD_RED} label="record" />
+          <LegendMark kind="seal" color={RECORD_RED} label={traduire('record')} />
         </>
       }
       after={
@@ -87,8 +87,8 @@ export default function ForceDetailScreen() {
             <GlassCard style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 }}>
               <Hanko size={30} tampon="record_force" />
               <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={15} weight="extraBold">{`Dernier record, ${dayLong(lastRecord.date)}`}</Ink>
-                <Ink size={13} color={c.textSecondary}>{traduire("{0} {1} pour {2}, soit {3} {4} estimé{5}s", num(cv(lastRecord.weight), 1), mot, reps(lastRecord.reps), num(cv(lastRecord.value), cv(lastRecord.value) >= 100 ? 0 : 1), mot, unite === 'lb' ? 'e' : '')}</Ink>
+                <Ink size={15} weight="extraBold">{traduire("Dernier record, {0}", dayLong(lastRecord.date))}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("{0} {1} pour {2}, soit {3} {4} estimé{5}s", num(cv(lastRecord.weight), 1), mot, reps(lastRecord.reps), num(cv(lastRecord.value), cv(lastRecord.value) >= 100 ? 0 : 1), mot, LANG === 'fr' && unite === 'lb' ? 'e' : '')}</Ink>
               </View>
             </GlassCard>
           ) : null}

@@ -738,7 +738,7 @@ export const MORE_METRICS: MetricDef[] = [
     what: traduire('Le volume moyen du son dans ton casque ou tes écouteurs.'),
     norm: {
       text: traduire("Pour un adulte, écouter à 80 dB reste sans risque jusqu'à 40 heures par semaine. Plus fort, la durée sûre baisse vite."),
-      source: 'Organisation mondiale de la santé et Union internationale des télécommunications, norme pour une écoute sans risque, 2019',
+      source: traduire('Organisation mondiale de la santé et Union internationale des télécommunications, norme pour une écoute sans risque, 2019'),
     },
     devices: traduire('iPhone avec AirPods ou casques compatibles'),
   },
@@ -799,7 +799,7 @@ export const MORE_METRICS: MetricDef[] = [
     what: traduire("L'indice UV le plus haut auquel tu as été exposé dans la journée, quand une app ou un capteur l'enregistre."),
     norm: {
       text: traduire("À partir d'un indice UV de 3, une protection est nécessaire : ombre, vêtements, chapeau, crème solaire."),
-      source: 'Organisation mondiale de la santé, indice UV solaire mondial, 2002',
+      source: traduire('Organisation mondiale de la santé, indice UV solaire mondial, 2002'),
     },
     devices: traduire('Capteurs UV et apps météo compatibles Apple Santé'),
   },
@@ -817,7 +817,7 @@ export const MORE_METRICS: MetricDef[] = [
     what: traduire("Le taux d'alcool mesuré par un éthylotest connecté."),
     norm: {
       text: traduire("En France, la conduite est interdite à partir de 0,5 g d'alcool par litre de sang (0,2 g/L en permis probatoire)."),
-      source: 'Code de la route, article R234-1',
+      source: traduire('Code de la route, article R234-1'),
     },
     devices: traduire('Éthylotests connectés'),
   },
@@ -845,7 +845,7 @@ export const MORE_METRICS: MetricDef[] = [
     iosOnly: true,
     norm: {
       text: traduire("Pour limiter les risques : pas plus de 10 verres standard par semaine, pas plus de 2 par jour, et des jours sans alcool."),
-      source: 'Santé publique France et Institut national du cancer, 2017',
+      source: traduire('Santé publique France et Institut national du cancer, 2017'),
     },
   }),
   nutrient({
@@ -854,7 +854,7 @@ export const MORE_METRICS: MetricDef[] = [
     unit: 'g',
     what: traduire('Les fibres mangées dans la journée : légumes, fruits, céréales complètes, légumineuses.'),
     upIsGood: true,
-    norm: { text: traduire("Pour un adulte, un apport de 25 g de fibres par jour suffit à un bon transit."), source: 'Autorité européenne de sécurité des aliments (EFSA), 2010' },
+    norm: { text: traduire("Pour un adulte, un apport de 25 g de fibres par jour suffit à un bon transit."), source: traduire('Autorité européenne de sécurité des aliments (EFSA), 2010') },
   }),
   nutrient({ key: 'sucres', label: traduire('Sucres'), unit: 'g', what: traduire('Les sucres mangés dans la journée, ceux des fruits compris.'), upIsGood: false }),
   nutrient({ key: 'graisses-saturees', label: traduire('Graisses saturées'), unit: 'g', what: traduire('Les graisses saturées de la journée : beurre, fromage, charcuterie, viandes grasses.'), upIsGood: false }),
@@ -867,7 +867,7 @@ export const MORE_METRICS: MetricDef[] = [
     unit: 'mg',
     what: traduire('Le sodium de la journée, surtout apporté par le sel.'),
     upIsGood: false,
-    norm: { text: traduire('Pour un adulte, moins de 2 000 mg de sodium par jour, soit moins de 5 g de sel.'), source: 'Organisation mondiale de la santé, 2012' },
+    norm: { text: traduire('Pour un adulte, moins de 2 000 mg de sodium par jour, soit moins de 5 g de sel.'), source: traduire('Organisation mondiale de la santé, 2012') },
     howToRead: traduire('Après une grosse séance où tu transpires beaucoup, tes besoins augmentent.'),
   }),
   micro('potassium', 'Potassium', 'mg', traduire('Il aide tes muscles à se contracter et ton cœur à battre régulièrement.')),

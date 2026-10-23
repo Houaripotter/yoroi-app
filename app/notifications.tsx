@@ -410,7 +410,7 @@ export default function TesNotifications() {
         icon="bell"
         title={traduire("Pesée oubliée")}
         pitch={traduire("Un seul rappel doux, si ta pesée habituelle manque")}
-        summary={habOn ? traduire("Vers {0} si rien n’est noté, {1}", sayTime(heureRappel(hab)), habJours.length ? sayDays(habJours) : 'les jours où tu te pèses d’habitude') : traduire('Seulement les jours où tu te pèses d’habitude')}
+        summary={habOn ? habJours.length ? traduire("Vers {0} si rien n’est noté, {1}", sayTime(heureRappel(hab)), sayDays(habJours)) : traduire("Vers {0} si rien n’est noté, les jours où tu te pèses d’habitude", sayTime(heureRappel(hab))) : traduire('Seulement les jours où tu te pèses d’habitude')}
         on={habOn}
         onToggle={toggleHab}
         preview={{ title: 'YOROI', body: traduire('Ta pesée du jour t’attend, 10 secondes suffisent.'), when: habOn ? sayTime(heureRappel(hab)) : '' }}

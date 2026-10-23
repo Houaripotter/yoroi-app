@@ -318,9 +318,9 @@ const REPRISE_BADGES_MAX = 300;
 export const XP_RULES: { source: XpSource; label: string; xp: number; limit: string }[] = [
   { source: 'seance', label: traduire('Séance enregistrée'), xp: XP_VALUES.seance, limit: traduire('2 par jour') },
   { source: 'pesee', label: traduire('Pesée'), xp: XP_VALUES.pesee, limit: traduire('1 par jour') },
-  { source: 'mensurations', label: 'Mensurations', xp: XP_VALUES.mensurations, limit: traduire('1 par semaine') },
+  { source: 'mensurations', label: traduire('Mensurations'), xp: XP_VALUES.mensurations, limit: traduire('1 par semaine') },
   { source: 'photo', label: traduire('Photo de progression'), xp: XP_VALUES.photo, limit: traduire('1 par semaine') },
-  { source: 'record', label: 'Record personnel', xp: XP_VALUES.record, limit: traduire('3 par jour, avec un poids et des répétitions') },
+  { source: 'record', label: traduire('Record personnel'), xp: XP_VALUES.record, limit: traduire('3 par jour, avec un poids et des répétitions') },
   { source: 'semaine', label: traduire('Semaine réussie'), xp: XP_VALUES.semaine, limit: traduire('1 par semaine') },
   { source: 'sceau', label: traduire('Sceau débloqué'), xp: XP_VALUES.sceau, limit: traduire('une fois par sceau') },
   { source: 'lune', label: traduire('Lune du mois'), xp: XP_VALUES.lune, limit: traduire('3 semaines réussies dans le mois') },
@@ -337,11 +337,11 @@ export function xpRulesFor(goal: number): { source: XpSource; label: string; xp:
 export const SOURCE_LABELS: Record<XpSource, string> = {
   seance: traduire('Séances'),
   pesee: traduire('Pesées'),
-  mensurations: 'Mensurations',
-  photo: 'Photos',
-  record: 'Records',
+  mensurations: traduire('Mensurations'),
+  photo: traduire('Photos'),
+  record: traduire('Records'),
   semaine: traduire('Semaines réussies'),
-  sceau: 'Sceaux',
+  sceau: traduire('Sceaux'),
   migration: traduire('Reprise de ton ancien rang'),
   lune: traduire('Lunes du mois'),
   geste: traduire('Gestes du jour'),
@@ -957,7 +957,7 @@ async function runSync(): Promise<ArmureSnapshot> {
   for (const mz of measurementsC) {
     const d = dayOf(mz?.date);
     if (!d || d > today) continue;
-    if (eligible(d, mz.created_at, ectx, isImported(mz as { source?: string }))) add(`mensurations:${mondayOf(d)}`, d, 'mensurations', XP_VALUES.mensurations, 'Mensurations');
+    if (eligible(d, mz.created_at, ectx, isImported(mz as { source?: string }))) add(`mensurations:${mondayOf(d)}`, d, 'mensurations', XP_VALUES.mensurations, traduire('Mensurations'));
   }
 
   // 4. Photos de progression : 10 XP, 1 par semaine
@@ -1052,7 +1052,7 @@ async function runSync(): Promise<ArmureSnapshot> {
   const chance = coupDeChance(today, meta.migratedAt ?? stamp);
   const coffreCalc = coffreXp(serieJours, chance);
   if (meta.coffreDemande === today && gesteFait) {
-    add(coffreCle, today, 'coffre', coffreCalc.xp, traduirePluriel(serieJours, serieJours > 1, "{0}, {1} jour d’affilée{2}", "{0}, {1} jours d’affilée{2}", coffreCalc.grand ? 'Grand coffre' : 'Coffre du jour', serieJours, coffreCalc.chance ? ', coup de chance' : ''));
+    add(coffreCle, today, 'coffre', coffreCalc.xp, traduirePluriel(serieJours, serieJours > 1, "{0}, {1} jour d’affilée{2}", "{0}, {1} jours d’affilée{2}", coffreCalc.grand ? traduire('Grand coffre') : traduire('Coffre du jour'), serieJours, coffreCalc.chance ? traduire(', coup de chance') : ''));
   }
   meta.coffreDemande = null;
   const coffreRow = ledger.find((r) => r.k === coffreCle) ?? added.find((r) => r.k === coffreCle);
@@ -1309,8 +1309,8 @@ async function runSync(): Promise<ArmureSnapshot> {
     coffre: {
       etat: coffreRow ? 'ouvert' : gesteFait ? 'pret' : 'verrouille',
       xp: coffreRow ? coffreRow.a : coffreXp(serieDuCoffre, chance).xp,
-      grand: coffreRow ? coffreRow.l.startsWith('Grand') : coffreXp(serieDuCoffre).grand,
-      chance: coffreRow ? coffreRow.l.includes('coup de chance') : false,
+      grand: coffreRow ? coffreRow.l.startsWith('Grand') || coffreRow.l.startsWith(traduire('Grand coffre')) : coffreXp(serieDuCoffre).grand,
+      chance: coffreRow ? coffreRow.l.includes('coup de chance') || coffreRow.l.includes(traduire(', coup de chance').trim()) : false,
       grandDans,
     },
     weekXp: weekXp(weeklyGoal),
@@ -1348,13 +1348,13 @@ function buildNextGoals(a: {
   }
   const left = a.weeklyGoal - a.thisWeekSessions;
   if (!a.paused && left > 0 && a.trainings > 0) {
-    out.push({ kind: 'semaine', title: traduire("Encore {0} pour tenir ta semaine", left > 1 ? `${left} séances` : '1 séance'), detail: traduire("+ {0} XP et ta série continue", weekXp(a.weeklyGoal)), href: '/ajouter' });
+    out.push({ kind: 'semaine', title: left > 1 ? traduire("Encore {0} séances pour tenir ta semaine", left) : traduire("Encore 1 séance pour tenir ta semaine"), detail: traduire("+ {0} XP et ta série continue", weekXp(a.weeklyGoal)), href: '/ajouter' });
   }
   const belt = a.belts.filter((b) => b.next && b.count > 0).sort((x, y) => x.remaining - y.remaining)[0];
   if (belt && belt.next) {
     out.push({
       kind: 'ceinture',
-      title: traduire("Encore {0} pour le niveau {1} en {2}", belt.remaining > 1 ? `${belt.remaining} séances` : '1 séance', belt.next.name, belt.sportName),
+      title: belt.remaining > 1 ? traduire("Encore {0} séances pour le niveau {1} en {2}", belt.remaining, belt.next.name, belt.sportName) : traduire("Encore 1 séance pour le niveau {0} en {1}", belt.next.name, belt.sportName),
       detail: traduirePluriel(belt.count, belt.count > 1, "{0} séance de {1} pour l’instant", "{0} séances de {1} pour l’instant", belt.count, belt.sportName),
       href: '/dojo/ceintures',
     });

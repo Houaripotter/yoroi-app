@@ -61,8 +61,8 @@ function fmtValue(v: number, unit: string, digits: number): string {
 }
 
 function deltaUnit(unit: string, abs: number): string {
-  if (unit === '%' || unit === '') return abs >= 2 ? 'points' : 'point';
-  if (unit === 'ans') return abs >= 2 ? 'ans' : 'an';
+  if (unit === '%' || unit === '') return abs >= 2 ? traduire('points') : traduire('point');
+  if (unit === 'ans') return abs >= 2 ? traduire('ans') : traduire('an');
   return unit;
 }
 
@@ -96,10 +96,10 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
   const tone = goodWay ? c.successText : c.textSecondary;
   const head = scrub ?? (curve.latest && inPeriod ? curve.latest : null) ?? lastAll;
   const abs = diff === null ? 0 : Math.abs(diff);
-  const deltaText = flat ? 'stable' : `${fmtValue(abs, curve.unit, curve.digits)} ${deltaUnit(curve.unit, abs)}`;
+  const deltaText = flat ? traduire('stable') : `${fmtValue(abs, curve.unit, curve.digits)} ${deltaUnit(curve.unit, abs)}`;
   const since = anchor ? traduire("depuis le {0}", dayShort(anchor.date)) : traduire('sur la période');
-  const deltaLong = flat ? `stable ${since}` : traduire("{0} de {1} {2}", deltaText, dir === 'down' ? 'moins' : 'plus', since);
-  const valueText = `${fmtValue(head.value, curve.unit, curve.digits)}${curve.unit ? ` ${curve.unit}` : ''}`;
+  const deltaLong = flat ? traduire("stable {0}", since) : dir === 'down' ? traduire("{0} de moins {1}", deltaText, since) : traduire("{0} de plus {1}", deltaText, since);
+  const valueText = `${fmtValue(head.value, curve.unit, curve.digits)}${curve.unit ? ` ${curve.unit === 'ans' ? traduire('ans') : curve.unit}` : ''}`;
   const open = () => {
     tapLight();
     curve.onPress();
@@ -110,7 +110,7 @@ function MiniCurveCard({ curve, period, today }: { curve: MiniCurve; period: num
       <Pressable
         onPress={open}
         accessibilityRole="button"
-        accessibilityLabel={traduire("{0}, {1}, {2}, voir le détail", curve.label, valueText, inPeriod ? (diff === null ? 'une seule mesure sur la période' : deltaLong) : `dernière mesure le ${dayShort(lastAll.date)}`)}
+        accessibilityLabel={traduire("{0}, {1}, {2}, voir le détail", curve.label, valueText, inPeriod ? (diff === null ? traduire('une seule mesure sur la période') : deltaLong) : traduire("dernière mesure le {0}", dayShort(lastAll.date)))}
         style={({ pressed }) => ({ paddingHorizontal: 12, paddingTop: 11, gap: 1, backgroundColor: pressed ? c.fillSoft : 'transparent' })}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 18 }}>
@@ -251,7 +251,7 @@ type Nav = (href: any) => void;
 /** Couleur fixe de chaque mesure (vague 45 : composition dans lib/v2/progres/couleursCorps.ts, ambre graisse, violet muscle, gris sable os, cyan eau ; bleu et mousse pour le reste) */
 const COMPO_SPEC: { key: BioKey; label: string; unit: string; digits: number; good: 'up' | 'down' | 'none'; color: string }[] = [
   { key: 'visceral', label: traduire('Gras viscéral'), unit: '', digits: 1, good: 'down', get color() { return CORPS.graisse; } },
-  { key: 'bone', label: 'Masse osseuse', unit: 'kg', digits: 1, good: 'none', get color() { return CORPS.os; } },
+  { key: 'bone', label: traduire('Masse osseuse'), unit: 'kg', digits: 1, good: 'none', get color() { return CORPS.os; } },
   { key: 'bmr', label: traduire('Métabolisme'), unit: 'kcal', digits: 0, good: 'none', color: CHART_MOSS },
   { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', digits: 0, good: 'down', color: CHART_COLORS.blue },
   { key: 'muscleKg', label: traduire('Muscle en kg'), unit: 'kg', digits: 1, good: 'up', get color() { return CORPS.muscle; } },
@@ -260,9 +260,9 @@ const COMPO_SPEC: { key: BioKey; label: string; unit: string; digits: number; go
 ];
 
 const BODY_SPEC: { key: BioKey; label: string; unit: string; digits: number; good: 'up' | 'down' | 'none'; color: string }[] = [
-  { key: 'muscle', label: 'Muscle', unit: '%', digits: 1, good: 'up', get color() { return CORPS.muscle; } },
-  { key: 'fat', label: 'Masse grasse', unit: '%', digits: 1, good: 'down', get color() { return CORPS.graisse; } },
-  { key: 'water', label: 'Eau', unit: '%', digits: 1, good: 'none', get color() { return CORPS.eau; } },
+  { key: 'muscle', label: traduire('Muscle'), unit: '%', digits: 1, good: 'up', get color() { return CORPS.muscle; } },
+  { key: 'fat', label: traduire('Masse grasse'), unit: '%', digits: 1, good: 'down', get color() { return CORPS.graisse; } },
+  { key: 'water', label: traduire('Eau'), unit: '%', digits: 1, good: 'none', get color() { return CORPS.eau; } },
 ];
 
 /** Ordre des mensurations : taille et hanches d'abord, comme on les prend */
@@ -274,7 +274,7 @@ export function bodyGroup(weights: DayWeight[], compo: CompoPoint[], ctx: BodyCo
     const lastW = weights[weights.length - 1];
     curves.push({
       key: 'weight',
-      label: 'Poids',
+      label: traduire('Poids'),
       unit: 'kg',
       digits: 1,
       good: 'none',
@@ -324,7 +324,7 @@ export function measuresGroup(measures: MeasurePoint[], nav: Nav): MiniGroup {
     if (!f) return;
     const all = viewSeries(measures, k);
     if (!all.length) return;
-    curves.push({ key: k, label: f.label === 'Taille' ? 'Tour de taille' : f.label, unit: 'cm', digits: 1, good: f.good, color: CHART_COLORS.blue, all, onPress: () => nav({ pathname: '/measurements-detail', params: { field: k } }) });
+    curves.push({ key: k, label: f.label === 'Taille' ? traduire('Tour de taille') : f.label, unit: 'cm', digits: 1, good: f.good, color: CHART_COLORS.blue, all, onPress: () => nav({ pathname: '/measurements-detail', params: { field: k } }) });
   });
   return {
     key: 'mensurations',

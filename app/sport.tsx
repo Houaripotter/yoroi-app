@@ -224,7 +224,7 @@ export default function SportScreen() {
               const b = routine[k] || [];
               const rest = isRestDay(b);
               return (
-                <Press key={k} onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1}. Modifier", DAY_LABELS[i], rest ? 'repos' : b.length ? `${b.length} entraînement` : 'rien de prévu')}>
+                <Press key={k} onPress={() => openDay(k)} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1}. Modifier", DAY_LABELS[i], rest ? traduire('repos') : b.length ? traduirePluriel(b.length, false, "{0} entraînement", "{0} entraînements", b.length) : traduire('rien de prévu'))}>
                   <View style={{ alignItems: 'center', gap: 4, minWidth: 40, minHeight: 44 }}>
                     <View style={{ width: 30, height: 38, borderRadius: 9, backgroundColor: b.length > 0 && !rest ? P.ink : 'transparent', borderWidth: b.length > 0 && !rest ? 0 : 1.5, borderStyle: 'dashed', borderColor: P.dashed }} />
                     <Ink size={12} weight={i === tIdx ? 'black' : 'bold'} color={i === tIdx ? P.accent : P.ink2}>
@@ -236,7 +236,7 @@ export default function SportScreen() {
             })}
           </View>
           <Ink size={13} weight="bold" color={P.ink2}>
-            {`${sessions} entraînement${sessions > 1 ? 's' : ''} par semaine, ${restDays} jour${restDays > 1 ? 's' : ''} de repos`}
+            {`${traduirePluriel(sessions, sessions > 1, "{0} entraînement par semaine", "{0} entraînements par semaine", sessions)}, ${traduirePluriel(restDays, restDays > 1, "{0} jour de repos", "{0} jours de repos", restDays)}`}
           </Ink>
         </Card>
       </Enter>

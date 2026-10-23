@@ -29,7 +29,7 @@ import { accordSouleve, formatTonnage, mondayOf } from '@/lib/v2/trainingWeek';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
 import { dayLong, dayShort, daysDiff, monthLong, num, shiftDays, thousands, todayIso } from '@/lib/v2/progres/format';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, LANG } from '@/lib/i18n/tr';
 
 function kilos(v: number): string {
   return `${num(v, v >= 100 ? 0 : 1)}`;
@@ -48,8 +48,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
   // 18 octobre 2026 : charges stockees en kilos, affichees dans l'unite du reglage (kilos ou livres)
   const unite = useUnitePoids();
   const cv = (kg: number) => versUnitePoids(kg, unite);
-  const mot = unite === 'lb' ? 'livres' : 'kilos';
-  const mot1 = unite === 'lb' ? 'livre' : 'kilo';
+  const mot = unite === 'lb' ? traduire('livres') : traduire('kilos');
   const lifts = useMemo(() => computeLifts(trainings), [trainings]);
   const [liftKey, setLiftKey] = useState<string | null>(null);
   const [period, setPeriod] = useState(180);
@@ -109,7 +108,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
           </View>
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
             <LegendMark kind="line" color={couleurTraitDomaine('seances')} label={traduire("maximum estimé")} />
-            <LegendMark kind="seal" color={RECORD_RED} label="record" />
+            <LegendMark kind="seal" color={RECORD_RED} label={traduire("record")} />
           </View>
         </ExamplePreview>
       </View>
@@ -162,7 +161,13 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
               ? traduire('Encore une séance pour voir ta courbe')
               : Math.abs(gain) < 0.5
                 ? traduire("stable depuis {0}", monthLong(first.date))
-                : traduirePluriel(Math.abs(gain), Math.abs(gain) >= 2, "{0} {1} de {2} depuis {3}", "{0} {1}s de {2} depuis {3}", kilos(Math.abs(gain)), mot1, gain > 0 ? 'plus' : 'moins', monthLong(first.date))}
+                : gain > 0
+                  ? unite === 'lb'
+                    ? traduirePluriel(Math.abs(gain), Math.abs(gain) >= 2, "{0} livre de plus depuis {1}", "{0} livres de plus depuis {1}", kilos(Math.abs(gain)), monthLong(first.date))
+                    : traduirePluriel(Math.abs(gain), Math.abs(gain) >= 2, "{0} kilo de plus depuis {1}", "{0} kilos de plus depuis {1}", kilos(Math.abs(gain)), monthLong(first.date))
+                  : unite === 'lb'
+                    ? traduirePluriel(Math.abs(gain), Math.abs(gain) >= 2, "{0} livre de moins depuis {1}", "{0} livres de moins depuis {1}", kilos(Math.abs(gain)), monthLong(first.date))
+                    : traduirePluriel(Math.abs(gain), Math.abs(gain) >= 2, "{0} kilo de moins depuis {1}", "{0} kilos de moins depuis {1}", kilos(Math.abs(gain)), monthLong(first.date))}
         </Ink>
       </View>
 
@@ -187,7 +192,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
       </View>
       <View style={{ flexDirection: 'row', gap: 14, paddingHorizontal: GUTTER, marginTop: 8, flexWrap: 'wrap' }}>
         <LegendMark kind="line" color={couleurTraitDomaine('seances')} label={traduire("maximum estimé")} />
-        <LegendMark kind="seal" color={RECORD_RED} label="record" />
+        <LegendMark kind="seal" color={RECORD_RED} label={traduire("record")} />
       </View>
       <PeriodSwitch value={period} onChange={setPeriod} style={{ marginHorizontal: GUTTER, marginTop: 14 }} />
       <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 10 }}>
@@ -197,8 +202,8 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
         <GlassCard style={{ marginHorizontal: GUTTER, marginTop: 18, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 }}>
           <Hanko size={30} tampon="record_force" />
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={15} weight="extraBold">{`Dernier record, ${dayLong(lastRecord.date)}`}</Ink>
-            <Ink size={13} color={c.textSecondary}>{traduirePluriel(lastRecord.reps, lastRecord.reps > 1, "{0} {1} pour {2} répétition, soit {3} {4} estimé{5}s", "{0} {1} pour {2} répétitions, soit {3} {4} estimé{5}s", num(cv(lastRecord.weight), 1), mot, lastRecord.reps, kilos(cv(lastRecord.value)), mot, unite === 'lb' ? 'e' : '')}</Ink>
+            <Ink size={15} weight="extraBold">{traduire("Dernier record, {0}", dayLong(lastRecord.date))}</Ink>
+            <Ink size={13} color={c.textSecondary}>{traduirePluriel(lastRecord.reps, lastRecord.reps > 1, "{0} {1} pour {2} répétition, soit {3} {4} estimé{5}s", "{0} {1} pour {2} répétitions, soit {3} {4} estimé{5}s", num(cv(lastRecord.weight), 1), mot, lastRecord.reps, kilos(cv(lastRecord.value)), mot, LANG === 'fr' && unite === 'lb' ? 'e' : '')}</Ink>
           </View>
         </GlassCard>
       ) : null}
@@ -247,7 +252,7 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
       <View style={{ paddingHorizontal: GUTTER, marginTop: 30 }}>
         <SectionHead
           title={traduire("Tonnage par semaine")}
-          aside={tonSel !== null ? traduire("semaine du {0}", dayShort(tonnage[tonSel].monday)) : tonAvg ? `moyenne ${tonnageText(tonAvg, unite)}` : undefined}
+          aside={tonSel !== null ? traduire("semaine du {0}", dayShort(tonnage[tonSel].monday)) : tonAvg ? traduire("moyenne {0}", tonnageText(tonAvg, unite)) : undefined}
         />
         <Ink size={14} color={c.textSecondary} style={{ marginTop: 2 }}>
           {tonSel !== null ? `${tonnageText(tonnage[tonSel].value, unite)} ${accordSouleve(tonnage[tonSel].value, unite)}` : traduire('Charge multipliée par les répétitions, toutes séries confondues')}

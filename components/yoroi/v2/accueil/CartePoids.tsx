@@ -62,7 +62,7 @@ import { FeuilleObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import type { QuoiObjectif } from '@/components/yoroi/v2/pesee/ObjectifPoids';
 import { Card, Icon, P, Press } from './kit';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
 
@@ -231,7 +231,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
     goal === null ? null : plan.ligne ? (plan.ligne.mode === 'perte' || plan.ligne.mode === 'prise' ? plan.ligne.mode : 'maintien') : Math.abs(goal - start) < 0.2 ? 'maintien' : gp?.losing ? 'perte' : 'prise';
   const lossGoal = mode === 'perte' || (mode === null && delta !== null && delta < 0);
   const towardGoal = delta !== null && goal !== null && mode !== 'maintien' && Math.abs(delta) >= 0.05 && ((lossGoal && delta < 0) || (!lossGoal && delta > 0));
-  const deltaText = delta === null ? traduire('ta tendance arrive') : Math.abs(delta) < 0.05 ? `stable ${periodeTxt}` : `${delta < 0 ? '−' : '+'}${formatKg(Math.abs(delta))} kg ${periodeTxt}`;
+  const deltaText = delta === null ? traduire('ta tendance arrive') : Math.abs(delta) < 0.05 ? traduire("stable {0}", periodeTxt) : `${delta < 0 ? '−' : '+'}${formatKg(Math.abs(delta))} kg ${periodeTxt}`;
   // le chiffre cle seul (en couleur), le reste de la ligne en encre secondaire
   const deltaChiffre = delta !== null && Math.abs(delta) >= 0.05 ? `${delta < 0 ? '−' : '+'}${formatKg(Math.abs(delta))} kg` : null;
   const atteint = plan.atteint || (mode !== 'maintien' && etat.atteint);
@@ -286,10 +286,10 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   const eauTxt = tendTxt && etat.ecartTendance != null && Math.abs(etat.ecartTendance) >= ECART_EAU_KG && tendTxt.note ? `${tendTxt.valeur}, ${tendTxt.note}.` : null;
 
   const a11y = [
-    `Ton poids : ${formatKg(last.value)} kilos, ${isToday ? 'pesée du jour' : relativeDay(last.date)}`,
+    traduire("Ton poids : {0} kilos, {1}", formatKg(last.value), isToday ? traduire('pesée du jour') : relativeDay(last.date)),
     deltaText,
     statutDuJour ? statutDuJour.label : null,
-    goal === null ? 'pas encore de cap' : null,
+    goal === null ? traduire('pas encore de cap') : null,
   ]
     .filter(Boolean)
     .join(', ');
@@ -382,7 +382,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
               onScrub={setScrub}
               onPress={() => setLegende((v) => !v)}
               onToriiPress={planOk ? () => setPeriod(PERIODE_PLAN) : undefined}
-              label={traduire("Ta courbe de poids {0}. Touche pour {1} la légende", periode === PERIODE_PLAN ? 'sur ton plan, jusqu’au torii' : periodeTxt.replace('en ', 'sur '), legende ? 'cacher' : 'voir')}
+              label={traduire("Ta courbe de poids {0}. Touche pour {1} la légende", periode === PERIODE_PLAN ? traduire('sur ton plan, jusqu’au torii') : LANG === 'fr' ? periodeTxt.replace('en ', 'sur ') : periodeTxt, legende ? traduire('cacher') : traduire('voir'))}
             />
           </SceneCourbe>
           {/* les periodes en onglets discrets, au centre ; le bouton « Style » a droite */}
@@ -400,11 +400,11 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
 
       {/* le chemin vers le torii en une barre fine (ou de quoi fixer ton cap) */}
       {chemin ? (
-        <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("{0}{1}. Voir le détail de ton poids", atteint ? 'Torii atteint' : `${Math.round(chemin.part * 100)} % du chemin, encore ${formatKg(chemin.reste)} kilos`, arrivee ? `, arrivée prévue ${arrivee}` : '')}>
+        <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("{0}{1}. Voir le détail de ton poids", atteint ? traduire('Torii atteint') : traduire("{0} % du chemin, encore {1} kilos", Math.round(chemin.part * 100), formatKg(chemin.reste)), arrivee ? traduire(", arrivée prévue {0}", arrivee) : '')}>
           <View style={{ marginHorizontal: 18, marginTop: 12, marginBottom: 16, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
               <Ink size={12.5} weight="extraBold" color={P.ink} numberOfLines={1}>
-                {atteint ? 'Torii atteint' : traduire("{0} % du chemin", Math.round(chemin.part * 100))}
+                {atteint ? traduire('Torii atteint') : traduire("{0} % du chemin", Math.round(chemin.part * 100))}
               </Ink>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
                 {!atteint ? (

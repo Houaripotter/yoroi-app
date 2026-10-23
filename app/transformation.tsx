@@ -259,11 +259,11 @@ export default function TransformationScreen() {
           {reglage ? (
             <>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                <GhostButton label={transparence ? traduire('Sans transparence') : 'Transparence'} onPress={() => setTransparence((t) => !t)} style={{ flex: 1 }} />
+                <GhostButton label={transparence ? traduire('Sans transparence') : traduire('Transparence')} onPress={() => setTransparence((t) => !t)} style={{ flex: 1 }} />
                 <GhostButton label={traduire("Aligner pareil")} onPress={alignerAutre} style={{ flex: 1 }} />
               </View>
               <Ink size={12} color={c.textSecondary} style={{ marginTop: 8 }}>
-                {traduire("Les lignes t’aident à mettre épaules, nombril et hanches à la même hauteur. Touche deux fois pour revenir. « Aligner pareil » donne le même cadrage à la photo {0}.", reglage === 'avant' ? 'après' : 'avant')}
+                {reglage === 'avant' ? traduire("Les lignes t’aident à mettre épaules, nombril et hanches à la même hauteur. Touche deux fois pour revenir. « Aligner pareil » donne le même cadrage à la photo après.") : traduire("Les lignes t’aident à mettre épaules, nombril et hanches à la même hauteur. Touche deux fois pour revenir. « Aligner pareil » donne le même cadrage à la photo avant.")}
               </Ink>
             </>
           ) : (
@@ -323,14 +323,14 @@ export default function TransformationScreen() {
           })}
         </View>
         <Ink size={12} color={c.textSecondary} style={{ paddingHorizontal: GUTTER, marginTop: 8 }}>
-          {traduire("Touche une vignette pour la mettre en {0}.", cible === 'avant' ? 'avant' : 'après')}
+          {cible === 'avant' ? traduire("Touche une vignette pour la mettre en avant.") : traduire("Touche une vignette pour la mettre en après.")}
         </Ink>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER, gap: 8 }} style={{ marginTop: 10 }}>
           {pool.map((p) => {
             const isA = p.id === a.id;
             const isB = p.id === b.id;
             return (
-              <Pressable key={p.id} onPress={() => pick(p)} accessibilityRole="button" accessibilityLabel={traduire("Photo du {0}{1}", dateCourte(p.date.slice(0, 10)), isA ? ', en avant' : isB ? ', en après' : '')} style={{ width: thumbW, gap: 4 }}>
+              <Pressable key={p.id} onPress={() => pick(p)} accessibilityRole="button" accessibilityLabel={traduire("Photo du {0}{1}", dateCourte(p.date.slice(0, 10)), isA ? traduire(', en avant') : isB ? traduire(', en après') : '')} style={{ width: thumbW, gap: 4 }}>
                 <View>
                   <Image source={{ uri: p.file_uri }} style={{ width: thumbW, height: thumbW * 1.33, borderRadius: 12, borderWidth: isA || isB ? 3 : 0, borderColor: c.accent, opacity: isA || isB ? 1 : 0.85 }} resizeMode="cover" />
                   {isA || isB ? (

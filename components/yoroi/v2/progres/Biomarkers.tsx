@@ -116,7 +116,7 @@ export function BioRowView({ row, onPress, first }: { row: BioRow; onPress?: () 
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 26 }}>
         <Ink size={13} weight="bold" color={row.deltaGood ? c.successText : c.textSecondary} style={{ flex: 1 }} numberOfLines={2}>
-          {row.delta ? capitalize(row.delta) : traduire('Première mesure')}
+          {row.delta ? capitalize(traduire(row.delta)) : traduire('Première mesure')}
         </Ink>
         {row.status ? <StatusPill status={row.status} /> : null}
       </View>
@@ -309,7 +309,7 @@ export function CompositionCard({ point, trend, onPress, showDate = true, style 
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={traduire("{0}, voir chaque mesure", trend?.title ?? 'Composition')}
+      accessibilityLabel={traduire("{0}, voir chaque mesure", trend?.title ?? traduire('Composition'))}
       style={({ pressed }) => [base, style, pressed ? { backgroundColor: c.fillSoft } : null]}
     >
       {content}

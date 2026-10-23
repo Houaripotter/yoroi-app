@@ -266,7 +266,7 @@ export const ComparateurCadre = forwardRef<View, Props>(function ComparateurCadr
   const frameH = !reglage && mode === 'cote' ? ph : H;
 
   const accessibilityLabel = reglage
-    ? traduire("Réglage de la photo {0}. Pince pour zoomer, glisse pour déplacer, touche deux fois pour revenir.", reglage === 'avant' ? 'avant' : 'après')
+    ? reglage === 'avant' ? traduire("Réglage de la photo avant. Pince pour zoomer, glisse pour déplacer, touche deux fois pour revenir.") : traduire("Réglage de la photo après. Pince pour zoomer, glisse pour déplacer, touche deux fois pour revenir.")
     : mode === 'glisser'
       ? traduire('Avant et après. Glisse ton doigt sur la photo pour déplacer le curseur.')
       : mode === 'fondu'

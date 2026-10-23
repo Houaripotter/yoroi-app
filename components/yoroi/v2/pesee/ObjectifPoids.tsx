@@ -201,7 +201,7 @@ export function FeuilleObjectif({ visible, quoi: quoiInitial, onClose, etat, ser
           <View style={{ alignItems: 'center', gap: 2 }}>
             <Ink size={34} weight="black" tight>{`${kgCourt(cap)} kg`}</Ink>
             <Ink size={13} weight="bold" color={c.textSecondary} style={{ textAlign: 'center' }}>
-              {erreurCap ?? (ecartCap == null || sensCap === 'maintain' ? traduire('Maintien de ton poids') : traduire("{0} de {1} kg depuis ton début", sensCap === 'lose' ? 'Perte' : 'Prise de masse', kgCourt(ecartCap)))}
+              {erreurCap ?? (ecartCap == null || sensCap === 'maintain' ? traduire('Maintien de ton poids') : (sensCap === 'lose' ? traduire("Perte de {0} kg depuis ton début", kgCourt(ecartCap)) : traduire("Prise de masse de {0} kg depuis ton début", kgCourt(ecartCap))))}
             </Ink>
           </View>
           <Ruler value={cap} onChange={(v) => setCap(clamp(v))} hardMin={30} hardMax={250} label={traduire("Règle du poids objectif, fais glisser pour régler")} />

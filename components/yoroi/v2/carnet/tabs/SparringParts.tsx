@@ -61,7 +61,7 @@ export function PartnerRow({ p, top, photo, hasFiche, maxRounds, onOpen, onEdit,
   let diff = 0;
   if (p.ratingHistory && p.ratingHistory.length >= 2) diff = p.ratingHistory[p.ratingHistory.length - 1].rating - p.ratingHistory[0].rating;
   return (
-    <Press onPress={onOpen} onLongPress={onEdit} delayLongPress={450} accessibilityRole="button" accessibilityLabel={`${p.name}, ${p.totalRounds} rounds`} accessibilityHint={traduire("Garde appuyé pour modifier le nom ou la photo")}>
+    <Press onPress={onOpen} onLongPress={onEdit} delayLongPress={450} accessibilityRole="button" accessibilityLabel={traduire("{0}, {1} rounds", p.name, p.totalRounds)} accessibilityHint={traduire("Garde appuyé pour modifier le nom ou la photo")}>
       <View style={{ flexDirection: 'row', gap: 12, padding: 14, borderRadius: 22, backgroundColor: P.white, borderWidth: top ? 1.5 : 1, borderColor: top ? P.gold : P.line2 }}>
         <Press onPress={onPhoto} accessibilityRole="button" accessibilityLabel={traduire("Photo de {0}", p.name)}>
           <Avatar name={p.name} uri={photo} size={50} ring={top ? P.gold : undefined} />
@@ -70,7 +70,7 @@ export function PartnerRow({ p, top, photo, hasFiche, maxRounds, onOpen, onEdit,
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ink size={16} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{traduire(p.name)}</Ink>
             {wr !== null ? <Ink size={14} weight="black" color={winColor(wr)}>{`${wr} %`}</Ink> : null}
-            <Ink size={13} weight="bold" color={P.ink2}>{`${p.totalRounds} round${p.totalRounds > 1 ? 's' : ''}`}</Ink>
+            <Ink size={13} weight="bold" color={P.ink2}>{traduirePluriel(p.totalRounds, p.totalRounds > 1, "{0} round", "{0} rounds", p.totalRounds)}</Ink>
           </View>
           <BrushBar value={p.totalRounds / Math.max(1, maxRounds)} color={P.ink} height={7} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -208,11 +208,11 @@ export function PartnerSheet({ partner, onClose }: { partner: PartnerStats | nul
               <View key={ri} style={{ gap: 4, paddingLeft: 10, borderLeftWidth: 3, borderLeftColor: r.result === 'win' ? P.moss : r.result === 'loss' ? P.danger : P.gold }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <ResultDot result={r.result ?? null} size={22} />
-                  <Ink size={13} weight="bold">{`Round ${r.number ?? ri + 1}`}</Ink>
+                  <Ink size={13} weight="bold">{traduire("Round {0}", r.number ?? ri + 1)}</Ink>
                   {r.partnerRating != null ? <Ink size={12} weight="extraBold" color={levelTone(r.partnerRating)}>{traduire("niveau {0} sur 10", r.partnerRating)}</Ink> : null}
                 </View>
                 {given.length > 0 ? <Ink size={12} weight="bold" color={P.mossText}>{traduire("Données : {0}", given.map((m) => getMethodDisplayName(m)).join(', '))}</Ink> : null}
-                {taken.length > 0 ? <Ink size={12} weight="bold" color={P.danger}>{`Subies : ${taken.map((m) => getMethodDisplayName(m)).join(', ')}`}</Ink> : null}
+                {taken.length > 0 ? <Ink size={12} weight="bold" color={P.danger}>{traduire("Subies : {0}", taken.map((m) => getMethodDisplayName(m)).join(', '))}</Ink> : null}
                 {r.notes?.trim() ? <Ink size={12} weight="medium" color={P.ink2} numberOfLines={3}>{r.notes}</Ink> : null}
               </View>
             );
@@ -271,7 +271,7 @@ export function GoalSheet({ visible, value, onChange, onSave, onClose }: { visib
     <Sheet visible={visible} onClose={onClose} title={traduire("Objectif de la semaine")}>
       <Ink size={14} weight="medium" color={P.ink2}>{traduire("Combien de rounds de sparring veux-tu faire chaque semaine ?")}</Ink>
       <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-        <Stepper value={value} step={1} min={1} max={100} onChange={onChange} unit="rounds" size={44} format={(v) => `${v} rounds`} />
+        <Stepper value={value} step={1} min={1} max={100} onChange={onChange} unit={traduire('rounds')} size={44} format={(v) => traduire("{0} rounds", v)} />
       </View>
       <BigButton label={traduire("Valider")} icon="check" onPress={onSave} />
     </Sheet>

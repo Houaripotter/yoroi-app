@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { freeTrialOf, type FreeTrial } from '@/lib/v2/onboarding/trial';
 import { FREE_LIMITS } from '@/lib/v2/premium/limits';
-import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 // ===== Ce que Premium ajoute (verifie dans le code, ecran par ecran) =====
 
@@ -42,10 +42,10 @@ const FREE_MONTHS = Math.round(FREE_LIMITS.chartDays / 30);
  */
 export const PREMIUM_ROWS: PremiumRow[] = [
   { id: 'courbes', label: traduire('Courbes et historique'), sub: traduire('Poids, mesures, force et santé'), free: traduire("{0} mois", FREE_MONTHS), premium: traduire('Tout'), desc: traduire('Tes courbes sur 6 mois, 1 an et tout ton historique'), icon: 'calendar', perkIcon: 'infinite' },
-  { id: 'analyses', label: traduire('Analyses et prédictions'), sub: traduire('Toutes tes prévisions, radar, bilan PDF'), free: traduire('Une ligne'), premium: 'Incluses', desc: traduire('Ton poids projeté, ton radar de performance et ton bilan en PDF'), icon: 'target', perkIcon: 'chart' },
+  { id: 'analyses', label: traduire('Analyses et prédictions'), sub: traduire('Toutes tes prévisions, radar, bilan PDF'), free: traduire('Une ligne'), premium: traduire('Incluses'), desc: traduire('Ton poids projeté, ton radar de performance et ton bilan en PDF'), icon: 'target', perkIcon: 'chart' },
   { id: 'combat', label: traduire('Combat et compétition'), sub: traduire('Compétitions, rounds, camp, coupe'), free: traduire("{0} à venir", FREE_LIMITS.upcomingCompetitions), premium: traduire('Sans limite'), desc: traduire('Tes rounds analysés, ton camp et ta coupe jusqu’à la pesée'), icon: 'swords', perkIcon: 'trophy' },
-  { id: 'carnet', label: traduire('Vidéos et progression'), sub: traduire('Dans ton carnet, records gratuits'), free: null, premium: 'Incluses', desc: traduire('Tes vidéos et la progression de tes mouvements, dans ton carnet'), icon: 'camera', perkIcon: 'save' },
-  { id: 'photos', label: traduire('Photos de progression'), sub: traduire('Dans ton coffre, sur ton téléphone'), free: `${FREE_LIMITS.progressPhotos} photos`, premium: traduire('Sans limite'), desc: traduire('Autant de photos de progression que tu veux'), icon: 'image', perkIcon: 'save' },
+  { id: 'carnet', label: traduire('Vidéos et progression'), sub: traduire('Dans ton carnet, records gratuits'), free: null, premium: traduire('Incluses'), desc: traduire('Tes vidéos et la progression de tes mouvements, dans ton carnet'), icon: 'camera', perkIcon: 'save' },
+  { id: 'photos', label: traduire('Photos de progression'), sub: traduire('Dans ton coffre, sur ton téléphone'), free: traduire("{0} photos", FREE_LIMITS.progressPhotos), premium: traduire('Sans limite'), desc: traduire('Autant de photos de progression que tu veux'), icon: 'image', perkIcon: 'save' },
   { id: 'monde', label: traduire('Scènes et personnages'), sub: traduire('Tout le monde samouraï'), free: traduire('Une partie'), premium: traduire('Tous'), desc: traduire('Toutes les scènes et tous les personnages du monde samouraï, sans attendre'), icon: 'image', perkIcon: 'save' },
 ];
 
@@ -76,7 +76,7 @@ export function ratingLine(): string | null {
   const moyenne = list.reduce((n, r) => n + r.note * r.notes, 0) / total;
   const note = (Math.floor(moyenne * 10) / 10).toFixed(1).replace('.', DECIMAL);
   const stores = REAL_STORE_RATING.appStore && REAL_STORE_RATING.googlePlay ? traduire('sur l’App Store et Google Play') : REAL_STORE_RATING.appStore ? traduire('sur l’App Store') : traduire('sur Google Play');
-  return traduire("{0} sur 5, {1} {2} {3}", note, total, total > 1 ? 'notes' : 'note', stores);
+  return traduirePluriel(total, total > 1, "{0} sur 5, {1} note {2}", "{0} sur 5, {1} notes {2}", note, total, stores);
 }
 
 /** La note des deux stores reunis, pour la note avec lauriers : « 5,0 », 49, « App Store et Google Play » */
@@ -112,11 +112,11 @@ export function periodPhrase(p: StorePeriod): string {
   const n = p.count;
   switch (p.unit) {
     case 'YEAR':
-      return n === 1 ? traduire('par an') : `tous les ${n} ans`;
+      return n === 1 ? traduire('par an') : traduire("tous les {0} ans", n);
     case 'MONTH':
-      return n === 1 ? traduire('par mois') : `tous les ${n} mois`;
+      return n === 1 ? traduire('par mois') : traduire("tous les {0} mois", n);
     case 'WEEK':
-      return n === 1 ? 'par semaine' : `toutes les ${n} semaines`;
+      return n === 1 ? traduire('par semaine') : traduire("toutes les {0} semaines", n);
     default:
       return n === 1 ? traduire('par jour') : traduire("tous les {0} jours", n);
   }

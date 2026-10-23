@@ -11,7 +11,7 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { traduire } from '@/lib/i18n/tr';
 
 export const JOURS_LETTRES = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-export const JOURS_COURTS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+export const JOURS_COURTS = [traduire('lun.'), traduire('mar.'), traduire('mer.'), traduire('jeu.'), traduire('ven.'), traduire('sam.'), traduire('dim.')];
 export const JOURS_NOMS = [traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi'), traduire('dimanche')];
 
 /** « lundi, mercredi et vendredi », « tous les jours », « du lundi au vendredi » */
@@ -20,7 +20,7 @@ export function joursTexte(jours: number[]): string {
   if (l.length === 0) return '';
   if (l.length === 7) return traduire('tous les jours');
   if (l.length === 5 && l.every((j, i) => j === i)) return traduire('du lundi au vendredi');
-  if (l.length === 2 && l[0] === 5 && l[1] === 6) return 'le week-end';
+  if (l.length === 2 && l[0] === 5 && l[1] === 6) return traduire('le week-end');
   const noms = l.map((j) => JOURS_NOMS[j]);
   return noms.length === 1 ? noms[0] : traduire("{0} et {1}", noms.slice(0, -1).join(', '), noms[noms.length - 1]);
 }

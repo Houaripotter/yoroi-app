@@ -14,7 +14,7 @@ import { aideActivation, ligneMange, mentionSource, milliers } from '@/lib/v2/nu
 import type { JourRepas, ResumeRepas } from '@/lib/v2/nutrition/mange';
 import { Card, Icon, P, Press, useAccent } from './kit';
 import { carteNeutre } from './domaines';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const JOURS_COURTS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
 const jourCourt = (iso: string) => {
@@ -114,7 +114,7 @@ export function FeuilleMange({ visible, onClose, resume }: { visible: boolean; o
   const j = resume.aujourdhui;
   const m = resume.moyenne;
   const notes: string[] = [];
-  if (j?.ecartees.length) notes.push(traduire("{0} {1} aussi écrit aujourd’hui : seul {2} est compté, pour ne pas additionner deux fois les mêmes repas.", j.ecartees.join(', '), j.ecartees.length > 1 ? 'ont' : 'a', j.source ?? 'la dernière app'));
+  if (j?.ecartees.length) notes.push(traduirePluriel(j.ecartees.length, j.ecartees.length > 1, "{0} a aussi écrit aujourd’hui : seul {1} est compté, pour ne pas additionner deux fois les mêmes repas.", "{0} ont aussi écrit aujourd’hui : seul {1} est compté, pour ne pas additionner deux fois les mêmes repas.", j.ecartees.join(', '), j.source ?? traduire('la dernière app')));
   if (j && j.doublons > 0) notes.push(j.doublons === 1 ? traduire('Une entrée écrite deux fois à l’identique n’est comptée qu’une fois.') : traduire("{0} entrées écrites deux fois à l’identique ne sont comptées qu’une fois.", j.doublons));
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -152,7 +152,7 @@ export function FeuilleMange({ visible, onClose, resume }: { visible: boolean; o
               <Barres jours={resume.jours} />
               {m && ligneMange(m) ? (
                 <Ink size={12.5} weight="medium" color={P.ink2} style={{ lineHeight: 18 }}>
-                  {traduire("En moyenne {0} par jour, sur {1} avant aujourd’hui.", ligneMange(m), m.jours === 1 ? '1 jour noté' : `${m.jours} jours notés`)}
+                  {traduire("En moyenne {0} par jour, sur {1} avant aujourd’hui.", ligneMange(m), traduirePluriel(m.jours, m.jours !== 1, "{0} jour noté", "{0} jours notés", m.jours))}
                 </Ink>
               ) : null}
             </View>

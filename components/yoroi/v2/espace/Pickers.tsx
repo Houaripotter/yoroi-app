@@ -51,7 +51,7 @@ export function ScenePicker({ value, preview, isPremium, isAnnual = false, rankI
             key={s.id}
             onPress={() => { selectionAsync().catch(() => {}); onPick(s.id, locked); }}
             accessibilityRole="button"
-            accessibilityLabel={traduire("Scène {0}{1}", s.nom, s.annuel ? ', offerte avec l’abonnement annuel' : locked ? (rankName ? ', se débloque en progressant dans le Dojo, ou avec Premium' : ', avec Premium') : '')}
+            accessibilityLabel={s.annuel ? traduire("Scène {0}, offerte avec l’abonnement annuel", traduire(s.nom)) : locked ? (rankName ? traduire("Scène {0}, se débloque en progressant dans le Dojo, ou avec Premium", traduire(s.nom)) : traduire("Scène {0}, avec Premium", traduire(s.nom))) : traduire("Scène {0}", traduire(s.nom))}
             accessibilityState={{ selected: chosen }}
             style={{ width: 138, gap: 8 }}
           >

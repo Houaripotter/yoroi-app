@@ -97,7 +97,7 @@ export function Diagnostic() {
 
   const copyInfo = async () => {
     const extra: Record<string, string> = { Données: demoActive ? traduire('Heny chargée') : traduire('vraies données') };
-    if (expiresAt) extra['Mode créateur'] = traduire("{0}, jusqu’au {1}", label ?? 'sans étiquette', formatDate(expiresAt));
+    if (expiresAt) extra['Mode créateur'] = traduire("{0}, jusqu’au {1}", label ?? traduire('sans étiquette'), formatDate(expiresAt));
     try {
       await Clipboard.setStringAsync(appInfoText(extra));
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});

@@ -174,7 +174,7 @@ export default function Ajouter() {
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.onAccent }} />
               <View style={{ flex: 1 }}>
                 <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.8 }}>{traduire("Séance en cours, {0}", fmtClock((Date.now() - draft.startedAt) / 1000))}</Ink>
-                <Ink size={17} weight="black" color={c.onAccent} numberOfLines={2}>{`Reprendre : ${draftTitle(draft)}`}</Ink>
+                <Ink size={17} weight="black" color={c.onAccent} numberOfLines={2}>{traduire("Reprendre : {0}", draftTitle(draft))}</Ink>
               </View>
             </Pressable>
           ) : null}
@@ -272,7 +272,7 @@ export default function Ajouter() {
             <QuickRow
               first
               soft
-              label={provider ? traduire("Composition importée {0}{1}", /^[AEIOUH]/.test(provider) ? 'd’' : 'de ', provider) : traduire('Composition, connectée ou à la main')}
+              label={provider ? (/^[AEIOUH]/.test(provider) ? traduire("Composition importée d’{0}", provider) : traduire("Composition importée de {0}", provider)) : traduire('Composition, connectée ou à la main')}
               title={traduire("Balance")}
               onPress={() => open('/body-composition')}
               icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} {...stroke} /><Path d="M12 3a9 9 0 0 1 9 9h-9z" {...stroke} /></Svg>}

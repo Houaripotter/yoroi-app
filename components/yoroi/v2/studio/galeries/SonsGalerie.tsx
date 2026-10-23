@@ -147,7 +147,7 @@ function SequenceFinDeRound({ stopAll }: { stopAll: number }) {
 
   const pas = [
     { k: 'claquettes', label: 'Claquettes', sub: 'clap10.mp3' },
-    { k: 'cloche', label: 'Cloche', sub: `bell_end.mp3, ${delai} s plus tard` },
+    { k: 'cloche', label: 'Cloche', sub: traduire("bell_end.mp3, {0} s plus tard", delai) },
   ] as const;
 
   return (

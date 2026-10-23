@@ -201,7 +201,7 @@ export default function Reglages() {
 
         <Groupe title={traduire("Ton entraînement")} />
         <Card>
-          <ValueRow first tint={TUILE.indigo} icon="dumbbell" label={traduire("Mes sports")} value={nbSports ? `${nbSports} sport${nbSports > 1 ? 's' : ''}` : traduire('À choisir')} valueColor={nbSports ? undefined : c.accent} onPress={() => go('/espace/sports')} />
+          <ValueRow first tint={TUILE.indigo} icon="dumbbell" label={traduire("Mes sports")} value={nbSports ? traduirePluriel(nbSports, nbSports > 1, "{0} sport", "{0} sports", nbSports) : traduire('À choisir')} valueColor={nbSports ? undefined : c.accent} onPress={() => go('/espace/sports')} />
           <ValueRow tint={TUILE.bleu} icon="calendar" label={traduire("Calendrier et clubs")} onPress={() => go('/planning?tab=mois')} />
           <ValueRow tint={TUILE.mousse} icon="target" label={traduire("Objectif de la semaine")} sub={espace.joursSemaine?.length ? joursTexte(espace.joursSemaine).replace(/^./, (x) => x.toUpperCase()) : undefined} value={obj ? traduirePluriel(obj, obj > 1, "{0} séance", "{0} séances", obj) : traduire('À choisir')} valueColor={obj ? undefined : c.accent} onPress={() => setObjectifOpen(true)} />
           <ValueRow tint={TUILE.or} icon="bell" label={traduire("Rappels")} value={remValue} onPress={() => go('/notifications')} />

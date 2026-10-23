@@ -229,7 +229,7 @@ export default function GamePlanScreen() {
                       <ResultPlate result={gp.result ?? null} size={22} />
                       <View style={{ flex: 1 }}>
                         <Ink size={14} weight="black">
-                          {`Round ${gp.roundNum}${gp.partner ? ` contre ${gp.partner}` : ''}`}
+                          {gp.partner ? traduire("Round {0} contre {1}", gp.roundNum, gp.partner) : traduire("Round {0}", gp.roundNum)}
                         </Ink>
                         <Ink size={12} weight="bold" color={P.muted}>
                           {`${shortDate(gp.date, true)}${gp.result ? `, ${RESULT_LABEL[gp.result].toLowerCase()}` : ''}`}

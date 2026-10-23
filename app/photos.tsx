@@ -42,7 +42,7 @@ import { usePremium } from '@/context/PremiumContext';
 import { canAddMore } from '@/lib/v2/premium/limits';
 import { LimitNotice } from '@/components/yoroi/v2/premium/LimitNotice';
 import { P, blancA } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const PRIVACY_CHALLENGE_KEY = '@yoroi_privacy_challenge_shown';
 const LAST_POSE_KEY = '@yoroi_photos_derniere_pose';
@@ -387,7 +387,7 @@ export default function PhotosScreen() {
               <View key={g.key} style={{ marginTop: 22, paddingHorizontal: GUTTER }}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
                   <Ink size={17} weight="black" tight>{traduire(g.title)}</Ink>
-                  <Ink size={12} weight="bold" color={c.textMuted}>{`${g.items.length} photo${g.items.length > 1 ? 's' : ''}`}</Ink>
+                  <Ink size={12} weight="bold" color={c.textMuted}>{traduirePluriel(g.items.length, g.items.length > 1, "{0} photo", "{0} photos", g.items.length)}</Ink>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
                   {g.items.map((p) => {
@@ -405,7 +405,7 @@ export default function PhotosScreen() {
                           setToDelete(p);
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel={traduire("Photo du {0}{1}{2}", dateComplete(p.date.slice(0, 10)), p.weight ? `, ${num(p.weight, 1)} kilos` : '', pose ? `, ${poseLabel(pose)}` : '')}
+                        accessibilityLabel={traduire("Photo du {0}{1}{2}", dateComplete(p.date.slice(0, 10)), p.weight ? traduire(", {0} kilos", num(p.weight, 1)) : '', pose ? `, ${poseLabel(pose)}` : '')}
                         accessibilityHint={traduire("Appui long pour supprimer")}
                         style={{ width: cell, gap: 5 }}
                       >

@@ -78,7 +78,7 @@ export function CompetitionForm({ draft, onChange, lastWeight, gender, minimumDa
 
       <View style={{ gap: 6 }}>
         <Label>{traduire("Sport")}</Label>
-        <Press onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={`Sport : ${competitionSportName(draft.sport)}. Changer`}>
+        <Press onPress={() => setSportOpen(true)} accessibilityRole="button" accessibilityLabel={traduire("Sport : {0}. Changer", competitionSportName(draft.sport))}>
           <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 76, borderRadius: 20, backgroundColor: P.white, borderWidth: 1, borderColor: P.line2, paddingLeft: 8, paddingRight: 16, overflow: 'hidden' }}>
             <Image source={sportArt(draft.sport, gender, 1)} style={{ width: 64, height: 84, marginBottom: -14 }} resizeMode="contain" />
             <View style={{ flex: 1, paddingLeft: 6 }}>

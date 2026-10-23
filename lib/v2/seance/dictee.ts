@@ -2306,7 +2306,7 @@ export function techniqueText(t: DicteeTechnique): string {
 /** les rounds en texte : « round 1 », « rounds 2 à 4 », « rounds 1, 3 et 5 » */
 export function roundsText(list: number[]): string {
   if (!list.length) return '';
-  if (list.length === 1) return `round ${list[0]}`;
+  if (list.length === 1) return traduire("round {0}", list[0]);
   const contiguous = list.every((n, i) => i === 0 || n === list[i - 1] + 1);
   if (contiguous) return traduire("rounds {0} à {1}", list[0], list[list.length - 1]);
   return traduire("rounds {0} et {1}", list.slice(0, -1).join(', '), list[list.length - 1]);

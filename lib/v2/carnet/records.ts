@@ -6,16 +6,16 @@ import { formatTime, getBenchmarkPR } from '@/lib/carnetService';
 import type { Benchmark, BenchmarkEntry } from '@/lib/carnetService';
 import { entryText, sortedEntries } from './journal';
 import type { CarnetIllus } from '@/components/yoroi/v2/carnet/images';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export type RecordFamily = 'muscu' | 'course' | 'cross' | 'cardio' | 'autre';
 
 export const FAMILY_LABEL: Record<RecordFamily, string> = {
-  muscu: 'Musculation',
-  course: 'Course',
-  cross: 'Cross-training',
-  cardio: 'Cardio',
-  autre: 'Autre',
+  muscu: traduire('Musculation'),
+  course: traduire('Course'),
+  cross: traduire('Cross-training'),
+  cardio: traduire('Cardio'),
+  autre: traduire('Autre'),
 };
 
 export const FAMILY_ILLUS: Record<RecordFamily, CarnetIllus> = {
@@ -63,11 +63,11 @@ export function niceName(name: string): string {
 /** Coupe une perf en valeur principale et complement : « 100 kg x 5 reps » donne 100 kg et 5 répétitions */
 export function splitPerf(text: string): { main: string; sub: string | null } {
   const m = text.match(/^(.+?) x (\d+) reps$/);
-  if (m) return { main: m[1], sub: traduire("{0} répétition{1}", m[2], m[2] === '1' ? '' : 's') };
+  if (m) return { main: m[1], sub: traduirePluriel(Number(m[2]), m[2] !== '1', "{0} répétition", "{0} répétitions", m[2]) };
   const r = text.match(/^(\d+(?:[.,]\d+)?) reps$/);
   if (r) return { main: r[1], sub: traduire('répétitions') };
   const k = text.match(/^(.+? km), (.+ \/km)$/);
-  if (k) return { main: k[1], sub: `${k[2]} d’allure` };
+  if (k) return { main: k[1], sub: traduire("{0} d’allure", k[2]) };
   return { main: text.replace('.', DECIMAL), sub: null };
 }
 

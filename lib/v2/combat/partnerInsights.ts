@@ -10,7 +10,7 @@ import { countFreq, countResults, monthShort, parseDate } from './rounds';
 import type { Letter, Result } from './rounds';
 import { matchupsOf } from './partners';
 import type { Partner, SessionEntry, StyleStats } from './partners';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export type Zone = 'neck' | 'arms' | 'torso' | 'legs' | 'back';
 export const ZONE_LABELS: Record<Zone, string> = {
@@ -179,11 +179,11 @@ export function analyzePartner(p: Partner, entries: SessionEntry[]): PartnerInsi
   if (decided === 0) title = { label: traduire('Nouveau'), kanji: '新', color: '#8B8D96', description: traduire('Pas encore de round enregistré') };
   else if (losses >= 3 && wins === 0) title = { label: traduire('Némésis'), kanji: '敵', color: '#B0282E', description: traduire("{0} défaites sans riposte", losses) };
   else if (wins >= 3 && losses === 0) title = { label: traduire('Dominé'), kanji: '勝', color: '#A8832F', description: traduire("{0} victoires sans défaite", wins) };
-  else if (decided >= 10) title = { label: traduire('Légende'), kanji: '伝', color: '#2C4A84', description: `${decided} rounds ensemble` };
+  else if (decided >= 10) title = { label: traduire('Légende'), kanji: '伝', color: '#2C4A84', description: traduire("{0} rounds ensemble", decided) };
   else if (total >= 5 && Math.abs(wins - losses) <= 1) title = { label: traduire('Rival'), kanji: '競', color: '#2C4A84', description: traduire('Score équilibré') };
   else if (winRate != null && winRate >= 60) title = { label: traduire('Favorable'), kanji: '利', color: '#4F6B28', description: traduire("{0} % de victoires", winRate) };
   else if (winRate != null && winRate <= 30) title = { label: traduire('Défi'), kanji: '挑', color: '#A8832F', description: traduire('Opposition difficile') };
-  else title = { label: traduire('Partenaire'), kanji: '友', color: '#3D5D9E', description: `${decided} rounds` };
+  else title = { label: traduire('Partenaire'), kanji: '友', color: '#3D5D9E', description: traduirePluriel(decided, true, "{0} round", "{0} rounds", decided) };
 
   const threat = total === 0 ? 50 : Math.round(((losses / total) * 0.6 + ((avgRating ?? 5) / 10) * 0.4) * 100);
 

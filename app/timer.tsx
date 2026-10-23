@@ -408,7 +408,7 @@ export default function TimerScreen() {
     // vague 45 : garde ce chrono pour « Reprendre » (resume en clair et reglages du mode)
     const resume =
       mode === 'musculation' ? traduire("Repos {0}", humanSeconds(musculationRest))
-      : mode === 'combat' ? `Rounds ${totalRounds} x ${humanSeconds(roundDuration)}`
+      : mode === 'combat' ? traduire("Rounds {0} x {1}", totalRounds, humanSeconds(roundDuration))
       : mode === 'tabata' ? `Tabata ${tabataRounds * tabataSets} x ${tabataWork} s`
       : mode === 'emom' ? traduire("Chaque minute, {0} min", emomDuration)
       : mode === 'amrap' ? traduire("Maximum de tours, {0}", humanSeconds(amrapDuration))
@@ -453,7 +453,7 @@ export default function TimerScreen() {
   const finishLines = (): { label: string; value: string }[] => {
     const lines = [{ label: traduire('Temps total'), value: clock(workoutSeconds()) }];
     if (mode === 'musculation') lines.push({ label: traduire('Séries'), value: String(seriesCount) });
-    if (mode === 'combat') lines.push({ label: traduire('Rounds'), value: roundsFaitsN !== null && roundsFaitsN < totalRounds ? `${roundsFaitsN} sur ${totalRounds}` : String(totalRounds) });
+    if (mode === 'combat') lines.push({ label: traduire('Rounds'), value: roundsFaitsN !== null && roundsFaitsN < totalRounds ? traduire("{0} sur {1}", roundsFaitsN, totalRounds) : String(totalRounds) });
     if (mode === 'tabata') lines.push({ label: traduire('Rounds'), value: `${tabataRounds}${tabataSets > 1 ? ` x ${tabataSets}` : ''}` });
     if (mode === 'emom') lines.push({ label: traduire('Minutes'), value: String(emomDuration) });
     if (mode === 'amrap') lines.push({ label: traduire('Tours faits'), value: String(amrapRoundsCompleted) });
@@ -468,7 +468,7 @@ export default function TimerScreen() {
       return traduire("{0} : {1} séries{2}", m, seriesCount, detail ? ` (${detail})` : '');
     }
     if (mode === 'combat') {
-      const faits = roundsFaitsN !== null && roundsFaitsN < totalRounds ? `, ${roundsFaitsN} fait${roundsFaitsN > 1 ? 's' : ''}` : '';
+      const faits = roundsFaitsN !== null && roundsFaitsN < totalRounds ? traduirePluriel(roundsFaitsN, roundsFaitsN > 1, ", {0} fait", ", {0} faits", roundsFaitsN) : '';
       return `${COMBAT_PRESETS[combatPreset].name} : ${roundsSummary(totalRounds, roundDuration, restDuration)}${faits}`;
     }
     if (mode === 'tabata') return traduire("Tabata : {0} rounds {1} s et {2} s{3}", tabataRounds, tabataWork, tabataRest, tabataSets > 1 ? `, ${tabataSets} sets` : '');
@@ -621,7 +621,7 @@ export default function TimerScreen() {
               </View>
             </Press>
           ) : null}
-          {mode === 'amrap' && finished ? <Ink size={18} weight="black" color={P.ink}>{`${amrapRoundsCompleted} tour${amrapRoundsCompleted > 1 ? 's' : ''} fait${amrapRoundsCompleted > 1 ? 's' : ''}`}</Ink> : null}
+          {mode === 'amrap' && finished ? <Ink size={18} weight="black" color={P.ink}>{traduirePluriel(amrapRoundsCompleted, amrapRoundsCompleted > 1, "{0} tour fait", "{0} tours faits", amrapRoundsCompleted)}</Ink> : null}
           {mode === 'fortime' && status === 'running' && p?.kind === 'effort' ? (
             <Press onPress={() => { engine.finishNow(); haptic('heavy'); }} haptic="medium" accessibilityRole="button" accessibilityLabel={traduire("J'ai fini")}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 24, height: 60, borderRadius: 30, backgroundColor: P.moss }}>
@@ -835,7 +835,7 @@ function SeriesCard({ count, history, onReset }: { count: number; history: Serie
               <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: (paletteSombre() ? P.line2 : '#F0EEE8'), alignItems: 'center', justifyContent: 'center' }}>
                 <Ink size={13} weight="black">{String(s.seriesNumber)}</Ink>
               </View>
-              <Ink size={15} weight="bold" style={{ flex: 1 }}>{s.reps || s.weight ? [s.weight ? `${String(s.weight).replace('.', DECIMAL)} kg` : '', s.reps ? `${s.reps} répétitions` : ''].filter(Boolean).join(', ') : traduire("Série {0}", s.seriesNumber)}</Ink>
+              <Ink size={15} weight="bold" style={{ flex: 1 }}>{s.reps || s.weight ? [s.weight ? `${String(s.weight).replace('.', DECIMAL)} kg` : '', s.reps ? traduire("{0} répétitions", s.reps) : ''].filter(Boolean).join(', ') : traduire("Série {0}", s.seriesNumber)}</Ink>
               <Ink size={12} weight="bold" color={P.muted}>{traduire("repos {0}", clock(s.restDuration))}</Ink>
             </View>
           ))}

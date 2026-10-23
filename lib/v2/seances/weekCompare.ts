@@ -19,8 +19,8 @@ const IMPORT_SOURCES = new Set(['apple', 'apple_health', 'apple_watch', 'healthk
 const SOURCE_LABEL: Record<string, string> = {
   apple: 'Apple Watch',
   apple_watch: 'Apple Watch',
-  apple_health: 'Apple Santé',
-  healthkit: 'Apple Santé',
+  apple_health: traduire('Apple Santé'),
+  healthkit: traduire('Apple Santé'),
   iphone: 'iPhone',
   health_connect: 'Health Connect',
   strava: 'Strava',
@@ -226,7 +226,7 @@ export function keyFacts(t: Training, unite: UnitePoids = 'kg'): KeyFact[] {
     if (sets > 0) out.push({ kind: 'series', text: traduirePluriel(sets, sets > 1, "{0} série", "{0} séries", sets) });
   }
   const r = roundsOf(t);
-  if (r > 0) out.push({ kind: 'rounds', text: `${r} round${r > 1 ? 's' : ''}` });
+  if (r > 0) out.push({ kind: 'rounds', text: traduirePluriel(r, r > 1, "{0} round", "{0} rounds", r) });
   if (t.distance && t.distance > 0) out.push({ kind: 'distance', text: `${fr1(t.distance)} km` });
   if (t.heart_rate && t.heart_rate > 0) out.push({ kind: 'fc', text: `${Math.round(t.heart_rate)} bpm` });
   if (out.length < 4 && t.calories && t.calories > 0) out.push({ kind: 'calories', text: `${Math.round(t.calories)} kcal` });

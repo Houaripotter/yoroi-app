@@ -847,7 +847,7 @@ function TournePack({ titre, on, isPremium, onPress }: { titre: string; on: bool
       onPress={onPress}
       accessibilityRole="switch"
       accessibilityState={{ checked: on }}
-      accessibilityLabel={traduire("Change à chaque ouverture, pack {0}{1}", titre, isPremium ? '' : ', avec Premium')}
+      accessibilityLabel={traduire("Change à chaque ouverture, pack {0}{1}", titre, isPremium ? '' : traduire(', avec Premium'))}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: on ? 2 : 1, borderColor: on ? c.accent : c.border })}
     >
       <Icon name="sync" size={20} color={on ? c.accent : c.textSecondary} stroke={2.4} />

@@ -491,7 +491,7 @@ export function Progression({ ins }: { ins: PartnerInsights }) {
           {traduire("Séance par séance")}</Ink>
         {ins.currentStreak && ins.currentStreak.count >= 2 ? (
           <Ink size={13} weight="extraBold" color={ins.currentStreak.type === 'win' ? V : D}>
-            {traduire("{0} {1} d'affilée", ins.currentStreak.count, ins.currentStreak.type === 'win' ? 'victoires' : 'défaites')}
+            {ins.currentStreak.type === 'win' ? traduire("{0} victoires d'affilée", ins.currentStreak.count) : traduire("{0} défaites d'affilée", ins.currentStreak.count)}
           </Ink>
         ) : null}
       </View>
@@ -812,7 +812,7 @@ function SessionRow({ entry }: { entry: SessionEntry }) {
               <View key={i} style={{ borderLeftWidth: 3, borderLeftColor: rc, paddingLeft: 12, gap: 4 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <Ink size={14} weight="black">
-                    {`Round ${r.number}`}
+                    {traduire("Round {0}", r.number)}
                   </Ink>
                   {r.result ? (
                     <Ink size={13} weight="extraBold" color={rc}>

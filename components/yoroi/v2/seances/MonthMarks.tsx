@@ -17,7 +17,7 @@ import { Icon } from './Icon';
 import type { IconName } from './Icon';
 import { tap } from './ui';
 import { P } from '@/components/yoroi/livePalette';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SMALL_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'l', 'd', 'et', 'club', 'team', 'the']);
 
@@ -126,7 +126,7 @@ export function MonthCard({ trainings, competitions, onOpen }: { trainings: Trai
   const days = new Set(inMonth.map((t) => t.date.slice(0, 10))).size;
   const monthLabel = `${MONTHS[mo].charAt(0).toUpperCase()}${MONTHS[mo].slice(1)}`;
   const summary = inMonth.length
-    ? [`${inMonth.length} séance${inMonth.length > 1 ? 's' : ''}`, days !== inMonth.length ? `${days} jours` : '', minutes ? formatDuration(minutes) : ''].filter(Boolean).join(', ')
+    ? [traduirePluriel(inMonth.length, inMonth.length > 1, "{0} séance", "{0} séances", inMonth.length), days !== inMonth.length ? traduire("{0} jours", days) : '', minutes ? formatDuration(minutes) : ''].filter(Boolean).join(', ')
     : traduire('Pas encore de séance');
 
   return (

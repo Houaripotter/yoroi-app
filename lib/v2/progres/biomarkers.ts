@@ -109,7 +109,7 @@ export function bmiRange(): BioRange {
       { status: 'Normal', from: low, to: high },
       { status: 'Élevé', from: high, to: 35 },
     ],
-    source: 'Repères de l’Organisation mondiale de la santé',
+    source: traduire('Repères de l’Organisation mondiale de la santé'),
   };
 }
 
@@ -142,7 +142,7 @@ export function fatRange(ctx: BodyContext, date: string): BioRange | undefined {
       { status: 'Normal', from: band.low, to: band.high },
       { status: 'Élevé', from: band.high, to: max },
     ],
-    source: `Repères Gallagher 2000, ${ctx.sex === 'female' ? 'femme' : 'homme'} de ${band.upTo === 39 ? '20 à 39' : band.upTo === 59 ? '40 à 59' : '60 à 79'} ans`,
+    source: traduire("Repères Gallagher 2000, {0} de {1} ans", ctx.sex === 'female' ? traduire('femme') : traduire('homme'), band.upTo === 39 ? traduire('20 à 39') : band.upTo === 59 ? traduire('40 à 59') : traduire('60 à 79')),
   };
 }
 
@@ -154,7 +154,7 @@ export function visceralRange(): BioRange {
       { status: 'Normal', from: 1, to: 13 },
       { status: 'Élevé', from: 13, to: 25 },
     ],
-    source: 'Échelle des balances à impédance : sain jusqu’à 12',
+    source: traduire('Échelle des balances à impédance : sain jusqu’à 12'),
   };
 }
 
@@ -171,7 +171,7 @@ export function waterRange(ctx: BodyContext, date: string): BioRange | undefined
       { status: 'Normal', from: low, to: high },
       { status: 'Élevé', from: high, to: high + 8 },
     ],
-    source: `Repères Tanita, ${ctx.sex === 'female' ? 'femme' : 'homme'} adulte`,
+    source: ctx.sex === 'female' ? traduire('Repères Tanita, femme adulte') : traduire('Repères Tanita, homme adulte'),
   };
 }
 
@@ -256,15 +256,15 @@ export function bioSeries(points: CompoPoint[], key: BioKey, ctx: BodyContext): 
 type RowSpec = { key: BioKey; label: string; unit: string; digits: number; good: 'up' | 'down' | 'none'; deltaUnit: [string, string] };
 
 export const BIO_ORDER: RowSpec[] = [
-  { key: 'bmi', label: traduire('IMC'), unit: '', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
-  { key: 'fat', label: 'Masse grasse', unit: '%', digits: 1, good: 'down', deltaUnit: ['point', 'points'] },
+  { key: 'bmi', label: traduire('IMC'), unit: '', digits: 1, good: 'none', deltaUnit: [traduire('point'), traduire('points')] },
+  { key: 'fat', label: 'Masse grasse', unit: '%', digits: 1, good: 'down', deltaUnit: [traduire('point'), traduire('points')] },
   { key: 'muscleKg', label: traduire('Masse musculaire'), unit: 'kg', digits: 1, good: 'up', deltaUnit: ['kg', 'kg'] },
-  { key: 'lean', label: traduire('Masse maigre'), unit: '%', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
-  { key: 'water', label: 'Eau', unit: '%', digits: 1, good: 'none', deltaUnit: ['point', 'points'] },
+  { key: 'lean', label: traduire('Masse maigre'), unit: '%', digits: 1, good: 'none', deltaUnit: [traduire('point'), traduire('points')] },
+  { key: 'water', label: 'Eau', unit: '%', digits: 1, good: 'none', deltaUnit: [traduire('point'), traduire('points')] },
   { key: 'bone', label: 'Masse osseuse', unit: 'kg', digits: 1, good: 'none', deltaUnit: ['kg', 'kg'] },
-  { key: 'visceral', label: 'Graisse viscérale', unit: '', digits: 1, good: 'down', deltaUnit: ['niveau', 'niveaux'] },
+  { key: 'visceral', label: 'Graisse viscérale', unit: '', digits: 1, good: 'down', deltaUnit: [traduire('niveau'), traduire('niveaux')] },
   { key: 'bmr', label: traduire('Métabolisme de base'), unit: 'kcal', digits: 0, good: 'none', deltaUnit: ['kcal', 'kcal'] },
-  { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', digits: 0, good: 'down', deltaUnit: ['an', 'ans'] },
+  { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', digits: 0, good: 'down', deltaUnit: [traduire('an'), traduire('ans')] },
 ];
 
 export function bioLabel(key: BioKey): string {
@@ -280,7 +280,7 @@ function deltaWords(d: number, spec: RowSpec): string {
   const abs = Math.abs(d);
   if (abs < eps) return 'stable';
   const u = abs >= 2 ? spec.deltaUnit[1] : spec.deltaUnit[0];
-  return traduire("{0} {1} de {2}", spec.unit === 'kcal' ? thousands(abs) : num(abs, spec.digits === 0 ? 0 : 1), u, d < 0 ? 'moins' : 'plus');
+  return d < 0 ? traduire("{0} {1} de moins", spec.unit === 'kcal' ? thousands(abs) : num(abs, spec.digits === 0 ? 0 : 1), u) : traduire("{0} {1} de plus", spec.unit === 'kcal' ? thousands(abs) : num(abs, spec.digits === 0 ? 0 : 1), u);
 }
 
 function rangeOf(key: BioKey, ctx: BodyContext, date: string): BioRange | undefined {
@@ -332,7 +332,7 @@ export function buildBiomarkers(points: CompoPoint[], index: number, ctx: BodyCo
     let sub: string | undefined;
     if (spec.key === 'fat') {
       const kg = fatKgOf(p);
-      if (kg) sub = `soit ${num(kg, 1)} kg`;
+      if (kg) sub = traduire("soit {0} kg", num(kg, 1));
     } else if (spec.key === 'muscleKg') {
       const pct = musclePctOf(p);
       if (pct) sub = traduire("soit {0} % du poids", num(pct, 1));
@@ -483,10 +483,10 @@ export function trendOf(points: CompoPoint[], index: number): Trend | null {
     else if (f > 0) title = traduire('Prise de graisse');
     else if (m < 0) title = traduire('Perte de muscle');
     const bits: string[] = [];
-    if (curFat !== undefined) bits.push(Math.abs(df) < 0.05 ? 'graisse stable' : traduire("{0} de graisse en {1}", kgWords(Math.abs(df)), df < 0 ? 'moins' : 'plus'));
-    if (curMus !== undefined) bits.push(Math.abs(dm) < 0.05 ? 'muscle stable' : traduire("{0} de muscle en {1}", kgWords(Math.abs(dm)), dm < 0 ? 'moins' : 'plus'));
+    if (curFat !== undefined) bits.push(Math.abs(df) < 0.05 ? traduire('graisse stable') : df < 0 ? traduire("{0} de graisse en moins", kgWords(Math.abs(df))) : traduire("{0} de graisse en plus", kgWords(Math.abs(df))));
+    if (curMus !== undefined) bits.push(Math.abs(dm) < 0.05 ? traduire('muscle stable') : dm < 0 ? traduire("{0} de muscle en moins", kgWords(Math.abs(dm))) : traduire("{0} de muscle en plus", kgWords(Math.abs(dm))));
     const since = traduire("depuis le {0}", dayShort(ref.date, ref.date.slice(0, 4) !== cur.date.slice(0, 4)));
-    const text = title === 'Stable' ? `Moins de ${num(TREND_KG, 1)} kg d’écart ${since} : ${bits.join(', ')}.`.replace(/\.\.$/, '.') : `${bits.join(', ')} ${since}`.replace(/\.*$/, '') + '.';
+    const text = title === 'Stable' ? traduire("Moins de {0} kg d’écart {1} : {2}.", num(TREND_KG, 1), since, bits.join(', ')).replace(/\.\.$/, '.') : `${bits.join(', ')} ${since}`.replace(/\.*$/, '') + '.';
     return { title, text: text.charAt(0).toUpperCase() + text.slice(1) };
   }
   if (cur.fat !== undefined) {
@@ -495,8 +495,8 @@ export function trendOf(points: CompoPoint[], index: number): Trend | null {
     const ref = points[ri];
     const d = cur.fat - (ref.fat as number);
     const since = traduire("depuis le {0}", dayShort(ref.date));
-    if (Math.abs(d) < TREND_PT) return { title: 'Stable', text: `Masse grasse stable ${since}`.replace(/\.*$/, '') + '.' };
-    return { title: d < 0 ? traduire('Perte de graisse') : traduire('Prise de graisse'), text: `${num(Math.abs(d), 1)} point de masse grasse en ${d < 0 ? 'moins' : 'plus'} ${since}`.replace(/\.*$/, '') + '.' };
+    if (Math.abs(d) < TREND_PT) return { title: 'Stable', text: traduire("Masse grasse stable {0}", since).replace(/\.*$/, '') + '.' };
+    return { title: d < 0 ? traduire('Perte de graisse') : traduire('Prise de graisse'), text: (d < 0 ? traduire("{0} point de masse grasse en moins {1}", num(Math.abs(d), 1), since) : traduire("{0} point de masse grasse en plus {1}", num(Math.abs(d), 1), since)).replace(/\.*$/, '') + '.' };
   }
   return null;
 }

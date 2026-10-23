@@ -4,7 +4,7 @@
 
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 const MONTHS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
-const MONTHS_SHORT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+const MONTHS_SHORT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 const DAYS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 
 export function pad2(n: number): string {
@@ -32,7 +32,7 @@ export function daysDiff(a: string, b: string): number {
 /** 1 décimale, virgule française, sans ,0 inutile si round */
 export function num(v: number, digits = 1, trimZero = true): string {
   const s = v.toFixed(digits).replace('.', DECIMAL);
-  if (trimZero && digits > 0 && /,0+$/.test(s)) return s.replace(/,0+$/, '');
+  if (trimZero && digits > 0 && /[.,]0+$/.test(s)) return s.replace(/[.,]0+$/, '');
   return s;
 }
 
@@ -57,7 +57,7 @@ export function monthShortIdx(i: number): string {
 /** « mardi 7 octobre » */
 export function dayLong(iso: string): string {
   const d = dateOf(iso);
-  return `${DAYS[d.getDay()]} ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${DAYS[d.getDay()]} ${d.getDate() === 1 ? traduire('1er') : d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
 /** « 7 oct. 2026 » */
@@ -70,7 +70,7 @@ export function dayShort(iso: string, withYear = false): string {
 export function sinceText(iso: string): string {
   const d = dateOf(iso);
   const thisYear = new Date().getFullYear();
-  return traduire("depuis le {0} {1}{2}", d.getDate() === 1 ? '1er' : d.getDate(), MONTHS[d.getMonth()], d.getFullYear() !== thisYear ? ` ${d.getFullYear()}` : '');
+  return traduire("depuis le {0} {1}{2}", d.getDate() === 1 ? traduire('1er') : d.getDate(), MONTHS[d.getMonth()], d.getFullYear() !== thisYear ? ` ${d.getFullYear()}` : '');
 }
 
 export function capitalize(s: string): string {

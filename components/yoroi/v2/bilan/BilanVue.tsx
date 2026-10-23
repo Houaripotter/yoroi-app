@@ -230,7 +230,7 @@ function MiniCourbe({ serie }: { serie: PeseeJ[] }) {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: c.indigo }} />
-            <Ink size={11} weight="bold" color={c.textMuted}>tendance</Ink>
+            <Ink size={11} weight="bold" color={c.textMuted}>{traduire('tendance')}</Ink>
           </View>
         </View>
         <Ink size={11} weight="bold" color={c.textMuted}>{dateCourte(last.date)}</Ink>
@@ -282,7 +282,7 @@ function Jauge({ poids, pct, depart, cap, atteint }: { poids: number; pct: numbe
   const len = Math.PI * JR;
   const ang = Math.PI * (1 - pct);
   return (
-    <View style={{ alignItems: 'center' }} accessible accessibilityLabel={`${nb(poids)} kilos, ${atteint ? traduire('objectif atteint') : traduire("{0} pour cent du chemin vers ton objectif", Math.round(pct * 100))}`}>
+    <View style={{ alignItems: 'center' }} accessible accessibilityLabel={traduire("{0} kilos, {1}", nb(poids), atteint ? traduire('objectif atteint') : traduire("{0} pour cent du chemin vers ton objectif", Math.round(pct * 100)))}>
       <View style={{ width: JW, height: cy + 8 }}>
         <Svg width={JW} height={cy + 8}>
           <Path d={arc} stroke={c.fillSubtle} strokeWidth={JS} strokeLinecap="round" fill="none" />
@@ -398,13 +398,13 @@ export function BilanCorpsVue({ b, onDone, onShare, enTete }: { b: BilanCorps; o
 
           {b.mesures && b.mesures.lignes.length ? (
             <Carte gap={0}>
-              <Titre>Tes mensurations</Titre>
+              <Titre>{traduire("Tes mensurations")}</Titre>
               <View style={{ height: 4 }} />
               {b.mesures.lignes.map((l, i) => (
                 <Rangee
                   key={l.key}
                   label={l.label.charAt(0).toUpperCase() + l.label.slice(1)}
-                  sous={l.ecart === null ? traduire('première mesure') : traduire("{0} cm depuis le {1}{2}", signe(l.ecart), dateCourte(l.depuis as string), l.bruit ? ', stable' : '')}
+                  sous={l.ecart === null ? traduire('première mesure') : l.bruit ? traduire("{0} cm depuis le {1}, stable", signe(l.ecart), dateCourte(l.depuis as string)) : traduire("{0} cm depuis le {1}", signe(l.ecart), dateCourte(l.depuis as string))}
                   valeur={`${nb(l.valeur)} cm`}
                   couleur={couleurEcart(c, l.bon, l.bruit)}
                   last={i === b.mesures!.lignes.length - 1}

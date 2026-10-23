@@ -163,7 +163,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     const date = training.date ? new Date(training.date) : new Date();
     const dateLabel = date.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short' });
     const sports = (training.sport ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-    const sportName = sports.length ? sports.map((s) => getSportName(s) ?? s).join(' et ') : traduire('Séance');
+    const sportName = sports.length ? sports.map((s) => getSportName(s) ?? s).join(traduire(' et ')) : traduire('Séance');
     const clubLogo = training.club_logo ? getClubLogoSource(training.club_logo) : null;
     const place = customLocation || training.location_name || '';
     const duration = training.duration_minutes || 0;
@@ -253,12 +253,12 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
           </View>
           {rounds.map((r, i) => {
             const res = r.result === 'win' ? traduire('Victoire') : r.result === 'loss' ? traduire('Défaite') : r.result === 'draw' ? traduire('Nul') : '';
-            const subs = [...(r.methodsGiven ?? []).map((m) => subName(m)), ...(r.methodsTaken ?? []).map((m) => `subi : ${subName(m)}`)].slice(0, 2).join(', ');
+            const subs = [...(r.methodsGiven ?? []).map((m) => subName(m)), ...(r.methodsTaken ?? []).map((m) => traduire("subi : {0}", subName(m)))].slice(0, 2).join(', ');
             return (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: r.result === 'win' ? pp.accent : r.result === 'loss' ? pp.panelInk : pp.gold }} />
                 <View style={{ flex: 1 }}>
-                  <Ink size={12} weight="extraBold" color={pp.panelInk} numberOfLines={1}>{`Round ${r.number}${r.partner ? ` contre ${r.partner}` : ''}`}</Ink>
+                  <Ink size={12} weight="extraBold" color={pp.panelInk} numberOfLines={1}>{r.partner ? traduire("Round {0} contre {1}", r.number, r.partner) : traduire("Round {0}", r.number)}</Ink>
                   {subs ? <Ink size={10} weight="bold" color={pp.panelInk2} numberOfLines={1}>{subs}</Ink> : null}
                 </View>
                 {res ? <Ink size={11} weight="black" color={r.result === 'win' ? pp.accent : pp.panelInk}>{res}</Ink> : null}

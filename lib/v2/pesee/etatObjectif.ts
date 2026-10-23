@@ -262,15 +262,15 @@ export function texteDepuisDebut(e: Pick<EtatObjectif, 'variation'>): string | n
 export function texteChemin(e: Pick<EtatObjectif, 'sens' | 'fait' | 'reste' | 'atteint'>): string | null {
   if (e.fait == null || e.reste == null || (e.sens !== 'perte' && e.sens !== 'prise')) return null;
   const perte = e.sens === 'perte';
-  if (e.atteint) return Math.abs(e.fait) >= 0.05 ? `Cap atteint, ${kg1(e.fait)} kg ${perte ? 'perdus' : traduire('pris')}` : 'Cap atteint';
-  const debut = Math.abs(e.fait) < 0.05 ? traduire('Ton chemin commence') : e.fait > 0 ? `${kg1(e.fait)} kg ${perte ? 'perdus' : traduire('pris')}` : traduire("{0} kg {1} depuis ton début", kg1(e.fait), perte ? 'pris' : 'perdus');
+  if (e.atteint) return Math.abs(e.fait) >= 0.05 ? (perte ? traduire("Cap atteint, {0} kg perdus", kg1(e.fait)) : traduire("Cap atteint, {0} kg pris", kg1(e.fait))) : traduire('Cap atteint');
+  const debut = Math.abs(e.fait) < 0.05 ? traduire('Ton chemin commence') : e.fait > 0 ? (perte ? traduire("{0} kg perdus", kg1(e.fait)) : traduire("{0} kg pris", kg1(e.fait))) : (perte ? traduire("{0} kg pris depuis ton début", kg1(e.fait)) : traduire("{0} kg perdus depuis ton début", kg1(e.fait)));
   return traduire("{0}, plus que {1} kg avant ton cap", debut, kg1(e.reste));
 }
 
 /** « 59 % du chemin » */
 export function textePart(e: Pick<EtatObjectif, 'part' | 'atteint'>): string | null {
   if (e.part == null) return null;
-  return e.atteint ? 'Cap atteint' : traduire("{0} % du chemin", Math.round(e.part * 100));
+  return e.atteint ? traduire('Cap atteint') : traduire("{0} % du chemin", Math.round(e.part * 100));
 }
 
 /**
@@ -291,7 +291,7 @@ export function texteProjection(e: Pick<EtatObjectif, 'projection' | 'cap' | 'da
   const av = p.avanceJours;
   if (av == null || !e.dateCap) return { valeur, note: passe };
   if (Math.abs(av) <= 3) return { valeur, note: traduire("{0}, pile pour ta date du cap", passe) };
-  return { valeur, note: traduire("{0}, {1} {2} ta date du cap ({3})", passe, duree(av), av > 0 ? 'avant' : 'après', jourCourt(e.dateCap)) };
+  return { valeur, note: av > 0 ? traduire("{0}, {1} avant ta date du cap ({2})", passe, duree(av), jourCourt(e.dateCap)) : traduire("{0}, {1} après ta date du cap ({2})", passe, duree(av), jourCourt(e.dateCap)) };
 }
 
 const pct1 = (x: number) => (Math.round(x * 1000) / 10).toFixed(1).replace('.', DECIMAL).replace(',0', '');
@@ -312,7 +312,7 @@ export function texteRythme(e: Pick<EtatObjectif, 'rythme' | 'sens'>): { ton: 'v
   if (r.zone === 'inverse') return { ton: 'bleu', titre, texte: traduire("{0} % de ton poids par semaine, dans l’autre sens que ton cap. Une semaine ne fait pas une tendance : regarde comment elle évolue.", p) };
   if (e.sens === 'maintien' || !r.repere) return { ton: 'bleu', titre, texte: traduire("{0} % de ton poids par semaine.", p) };
   const rep = baisse ? traduire('0,5 à 1 %') : traduire('0,25 à 0,5 %');
-  if (r.zone === 'conseille') return { ton: 'vert', titre, texte: traduire("{0} % de ton poids par semaine : {1}.", p, baisse ? 'le rythme conseillé aux sportifs pour garder leur muscle' : 'le rythme conseillé pour prendre du muscle en limitant le gras') };
+  if (r.zone === 'conseille') return { ton: 'vert', titre, texte: baisse ? traduire("{0} % de ton poids par semaine : le rythme conseillé aux sportifs pour garder leur muscle.", p) : traduire("{0} % de ton poids par semaine : le rythme conseillé pour prendre du muscle en limitant le gras.", p) };
   if (r.zone === 'doux') return { ton: 'vert', titre, texte: traduire("{0} % de ton poids par semaine, un rythme doux. Les repères des études sont de {1} par semaine.", p, rep) };
   // rapide
   if (baisse && r.debutRecent) return { ton: 'bleu', titre, texte: traduire("{0} % de ton poids par semaine. Au début, une bonne partie est de l’eau et du glycogène : ce rythme va ralentir tout seul.", p) };
@@ -329,7 +329,7 @@ export function texteTendance(e: Pick<EtatObjectif, 'tendance' | 'ecartTendance'
   const valeur = traduire("Ta tendance : {0} kg", kg1(e.tendance.poids));
   const d = e.ecartTendance;
   if (d == null || Math.abs(d) < ECART_EAU_KG) return { valeur, note: traduire('ta dernière pesée est dans ta tendance') };
-  if (Math.abs(d) >= 2) return { valeur, note: traduire("ta dernière pesée est {0} kg {1} : vérifie ta balance ou ta saisie", kg1(d), d > 0 ? 'au-dessus' : 'en dessous') };
+  if (Math.abs(d) >= 2) return { valeur, note: d > 0 ? traduire("ta dernière pesée est {0} kg au-dessus : vérifie ta balance ou ta saisie", kg1(d)) : traduire("ta dernière pesée est {0} kg en dessous : vérifie ta balance ou ta saisie", kg1(d)) };
   return d > 0
     ? { valeur, note: traduire("ta dernière pesée est {0} kg au-dessus : sans doute de l’eau (sel, glucides, entraînement, cycle), elle repart en général en quelques jours", kg1(d)) }
     : { valeur, note: traduire("ta dernière pesée est {0} kg en dessous : une partie est sans doute de l’eau, elle peut revenir", kg1(d)) };
@@ -357,9 +357,9 @@ export function texteDebut(e: Pick<EtatObjectif, 'debut'>): string | null {
 /** « 85 kg, perte de 5,8 kg », « 80 kg, prise de masse de 3 kg », « 75 kg, maintien » */
 export function texteObjectif(e: Pick<EtatObjectif, 'cap' | 'debut' | 'sens'>): string | null {
   if (e.cap == null) return null;
-  if (!e.debut || e.sens === 'maintien' || e.sens == null) return `${kgCourt(e.cap)} kg${e.sens === 'maintien' ? ', maintien' : ''}`;
+  if (!e.debut || e.sens === 'maintien' || e.sens == null) return e.sens === 'maintien' ? traduire("{0} kg, maintien", kgCourt(e.cap)) : traduire("{0} kg", kgCourt(e.cap));
   const d = Math.abs(e.cap - e.debut.poids);
-  return traduire("{0} kg, {1} de {2} kg", kgCourt(e.cap), e.sens === 'perte' ? 'perte' : 'prise de masse', kgCourt(d));
+  return e.sens === 'perte' ? traduire("{0} kg, perte de {1} kg", kgCourt(e.cap), kgCourt(d)) : traduire("{0} kg, prise de masse de {1} kg", kgCourt(e.cap), kgCourt(d));
 }
 
 /** « le 8 févr. » */

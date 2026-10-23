@@ -67,7 +67,7 @@ export function BodyMap({ zoneId, view, color = P.accent, height = 300 }: { zone
   const fill = '#E6E3DC';
   const edge = '#CBC7BD';
   return (
-    <View style={{ width, height }} accessible accessibilityLabel={zone ? traduire("Zone touchée : {0}, vue {1}", sentenceCase(zone.name), view === 'back' ? 'de dos' : 'de face') : traduire('Carte du corps')}>
+    <View style={{ width, height }} accessible accessibilityLabel={zone ? view === 'back' ? traduire("Zone touchée : {0}, vue de dos", sentenceCase(zone.name)) : traduire("Zone touchée : {0}, vue de face", sentenceCase(zone.name)) : traduire('Carte du corps')}>
       <Svg width={width} height={drawH} viewBox="0 0 100 160">
         <Path d={BODY} fill={fill} stroke={edge} strokeWidth={0.9} strokeLinejoin="round" />
         <Ellipse cx={50} cy={9.4} rx={6.6} ry={7.8} fill={fill} stroke={edge} strokeWidth={0.9} />

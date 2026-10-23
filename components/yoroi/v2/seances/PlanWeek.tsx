@@ -95,7 +95,7 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
   const range = traduire("du {0} {1}au {2} {3}", md.getDate(), md.getMonth() !== sd.getMonth() ? MONTHS_SHORT[md.getMonth()] + ' ' : '', sd.getDate(), MONTHS_SHORT[sd.getMonth()]);
 
   const statusOf = (s: SlotView): { label: string; tone: string; state: 'done' | 'planned' | 'missed' | 'cancelled' } => {
-    if (s.occ?.status === 'validated') return { label: 'fait', tone: c.successText, state: 'done' };
+    if (s.occ?.status === 'validated') return { label: traduire('fait'), tone: c.successText, state: 'done' };
     if (s.occ?.status === 'cancelled' || s.occ?.status === 'skipped') return { label: s.occ.cancel_reason ? traduire("annulé, {0}", s.occ.cancel_reason.toLowerCase()) : traduire('annulé'), tone: c.textMuted, state: 'cancelled' };
     if (s.iso < today) return { label: traduire('pas validé'), tone: c.accent, state: 'missed' };
     return { label: traduire('prévu'), tone: c.indigo, state: 'planned' };
@@ -239,10 +239,10 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
                     <View style={{ width: 6, alignSelf: 'stretch', borderRadius: 3, backgroundColor: s.club_color || familyInk(s.sport) }} />
                     <View style={{ flex: 1, gap: 1 }}>
                       <Ink size={15} weight="extraBold" numberOfLines={2} style={st.state === 'cancelled' ? { textDecorationLine: 'line-through' } : undefined}>{s.label || sportLabel(s.sport)}</Ink>
-                      <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[s.time ? `${s.time}${s.duration_minutes ? ` à ${endTime(s.time, s.duration_minutes)}` : ''}` : '', !s.time && s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ') || 'horaire libre'}</Ink>
+                      <Ink size={12} color={c.textSecondary} numberOfLines={2}>{[s.time ? (s.duration_minutes ? traduire("{0} à {1}", s.time, endTime(s.time, s.duration_minutes)) : s.time) : '', !s.time && s.duration_minutes ? formatDuration(s.duration_minutes) : '', s.club_name].filter(Boolean).join(', ') || traduire('horaire libre')}</Ink>
                     </View>
                     <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 9, backgroundColor: st.state === 'done' ? c.successTint : st.state === 'missed' ? c.accentTint : c.fillSubtle }}>
-                      <Ink size={11} weight="extraBold" color={st.tone}>{linked && st.state === 'done' ? 'fait' : st.label.split(',')[0]}</Ink>
+                      <Ink size={11} weight="extraBold" color={st.tone}>{linked && st.state === 'done' ? traduire('fait') : st.label.split(',')[0]}</Ink>
                     </View>
                   </Pressable>
                 );
@@ -274,12 +274,12 @@ export function PlanWeek({ plan, trainings, competitions, restDays, stampedTrain
         {slot ? (
           <>
             <Ink size={14} weight="bold" color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
-              {[`${PLAN_DAYS[slot.day_of_week]} ${dateOf(slot.iso).getDate()}`, slot.time ? `${slot.time}${slot.duration_minutes ? ` à ${endTime(slot.time, slot.duration_minutes)}` : ''}` : '', slot.club_name].filter(Boolean).join(', ')}
+              {[`${PLAN_DAYS[slot.day_of_week]} ${dateOf(slot.iso).getDate()}`, slot.time ? (slot.duration_minutes ? traduire("{0} à {1}", slot.time, endTime(slot.time, slot.duration_minutes)) : slot.time) : '', slot.club_name].filter(Boolean).join(', ')}
             </Ink>
             {slotInjury && statusOf(slot).state !== 'done' ? (
               <View style={{ padding: 12, borderRadius: 16, backgroundColor: c.dangerTint, gap: 2 }}>
                 <Ink size={14} weight="extraBold" color={c.danger}>{traduire("Attention à ta blessure")}</Ink>
-                <Ink size={13} color={c.textSecondary}>{traduire("{0} peut être sollicitée dans ce sport. Écoute ton corps.", slotInjury.zone_name ?? 'Une blessure en cours')}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire("{0} peut être sollicitée dans ce sport. Écoute ton corps.", slotInjury.zone_name ?? traduire('Une blessure en cours'))}</Ink>
               </View>
             ) : null}
             {statusOf(slot).state === 'done' ? (

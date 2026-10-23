@@ -385,7 +385,7 @@ export function TuileRecup({ forme }: { forme: FormeResult | null }) {
     const manqueNuit = forme.missing.includes('sommeil');
     const message = messageScoreIncomplet(manqueNuit);
     return (
-      <Cadre domaine="forme" demi onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={traduire("Récupération : {0}. {1}", message, manqueNuit ? 'Note ta nuit' : 'Voir le détail')}>
+      <Cadre domaine="forme" demi onPress={() => router.push((manqueNuit ? '/sleep-input' : '/readiness-detail') as any)} a11y={traduire("Récupération : {0}. {1}", message, manqueNuit ? traduire('Note ta nuit') : traduire('Voir le détail'))}>
         <Entete domaine="forme" icone="bolt" titre={traduire("Récupération")} />
         {manqueNuit ? (
           <Ajouter domaine="forme" aide={message} libelle={traduire("Ma nuit")} />
@@ -678,7 +678,7 @@ export function TuileCompetition({ c }: { c: NextCompetition | null }) {
         onPress={() => router.push((c.id ? { pathname: '/competition-detail', params: { id: String(c.id) } } : '/competitions') as any)}
         haptic="light"
         accessibilityRole="button"
-        accessibilityLabel={traduire("Ta compétition : {0}, le {1}, {2}.{3} Voir le détail", c.name, longDate(c.date), c.days === 0 ? 'c’est aujourd’hui' : `dans ${c.days} jour${c.days > 1 ? 's' : ''}`, origine ? ` ${origine}.` : '')}
+        accessibilityLabel={traduire("Ta compétition : {0}, le {1}, {2}.{3} Voir le détail", c.name, longDate(c.date), c.days === 0 ? traduire('c’est aujourd’hui') : traduirePluriel(c.days, c.days > 1, "dans {0} jour", "dans {0} jours", c.days), origine ? ` ${origine}.` : '')}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, paddingBottom: 10 }}>
           <View style={{ width: 76, height: 76, borderRadius: 18, backgroundColor: t.plein, alignItems: 'center', justifyContent: 'center' }}>
@@ -829,7 +829,7 @@ export function TuileMois({ trainings, plannedDays, competitionDate }: { trainin
   const nJours = new Set(duMois.map((x) => x.date.slice(0, 10))).size;
   const mois = `${MOIS[mo].charAt(0).toUpperCase()}${MOIS[mo].slice(1)}`;
   const resume = duMois.length
-    ? [`${duMois.length} séance${duMois.length > 1 ? 's' : ''}`, nJours !== duMois.length ? `${nJours} jours` : '', minutes ? formatDuration(minutes) : ''].filter(Boolean).join(', ')
+    ? [traduirePluriel(duMois.length, duMois.length > 1, "{0} séance", "{0} séances", duMois.length), nJours !== duMois.length ? traduire("{0} jours", nJours) : '', minutes ? formatDuration(minutes) : ''].filter(Boolean).join(', ')
     : traduire('pas encore de séance');
   const estPrevu = (iso: string) => iso >= today && !(parJour.get(iso) ?? []).length && plannedDays.includes((new Date(iso + 'T12:00:00').getDay() + 6) % 7);
   const unPrevu = cases.some((iso) => !!iso && estPrevu(iso));
@@ -950,9 +950,9 @@ export function TuileActivite({ a }: { a: NonNullable<ReturnType<typeof activite
   const t = teinte('forme');
   // le grand chiffre : tes pas ; sans pas notes aujourd'hui, la premiere valeur qui existe
   const valeurs = [
-    a.pas !== null ? { grand: nb(a.pas), unite: ' pas', petit: `${nb(a.pas)} pas` } : null,
-    a.kcal !== null ? { grand: nb(a.kcal), unite: ' kcal', petit: `${nb(a.kcal)} kcal actives` } : null,
-    a.minutes !== null ? { grand: nb(a.minutes), unite: ' min', petit: `${nb(a.minutes)} min d’exercice` } : null,
+    a.pas !== null ? { grand: nb(a.pas), unite: traduire(' pas'), petit: traduire("{0} pas", nb(a.pas)) } : null,
+    a.kcal !== null ? { grand: nb(a.kcal), unite: ' kcal', petit: traduire("{0} kcal actives", nb(a.kcal)) } : null,
+    a.minutes !== null ? { grand: nb(a.minutes), unite: ' min', petit: traduire("{0} min d’exercice", nb(a.minutes)) } : null,
   ].filter(Boolean) as { grand: string; unite: string; petit: string }[];
   const [tete, ...petits] = valeurs;
   return (
@@ -977,11 +977,11 @@ export function TuileActivite({ a }: { a: NonNullable<ReturnType<typeof activite
 export function TuilePas({ pas }: { pas: { pas: number; kcal: number | null } }) {
   const router = useRouter();
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/sante/pas' as any)} a11y={traduire("Tes pas du jour : {0}{1}. Voir le détail", nb(pas.pas), pas.kcal !== null ? `, ${nb(pas.kcal)} kilocalories actives` : '')}>
+    <Cadre domaine="forme" demi onPress={() => router.push('/sante/pas' as any)} a11y={traduire("Tes pas du jour : {0}{1}. Voir le détail", nb(pas.pas), pas.kcal !== null ? traduire(", {0} kilocalories actives", nb(pas.kcal)) : '')}>
       <Entete domaine="forme" icone="sun" titre={traduire("Pas du jour")} />
       <Bas>
         <GrandChiffre valeur={nb(pas.pas)} />
-        <Explication>{pas.kcal !== null ? `${nb(pas.kcal)} kcal actives` : traduire('aujourd’hui')}</Explication>
+        <Explication>{pas.kcal !== null ? traduire("{0} kcal actives", nb(pas.kcal)) : traduire('aujourd’hui')}</Explication>
       </Bas>
     </Cadre>
   );
@@ -992,7 +992,7 @@ export function TuileCoeur({ coeur }: { coeur: { bpm: number; date: string; moye
   const router = useRouter();
   const quand = relativeDay(coeur.date);
   return (
-    <Cadre domaine="forme" demi onPress={() => router.push('/sante/fc-repos' as any)} a11y={traduire("Ton cœur au repos : {0} battements par minute, {1}{2}. Voir le détail", coeur.bpm, quand, coeur.moyenne !== null ? `, moyenne sur 30 jours ${coeur.moyenne}` : '')}>
+    <Cadre domaine="forme" demi onPress={() => router.push('/sante/fc-repos' as any)} a11y={traduire("Ton cœur au repos : {0} battements par minute, {1}{2}. Voir le détail", coeur.bpm, quand, coeur.moyenne !== null ? traduire(", moyenne sur 30 jours {0}", coeur.moyenne) : '')}>
       <Entete domaine="forme" icone="heart" titre={traduire("Cœur au repos")} />
       <Bas>
         <GrandChiffre valeur={String(coeur.bpm)} unite=" bpm" />
@@ -1035,7 +1035,7 @@ export function TuileSerie({ semaines, goal, recentes }: { semaines: number; goa
     <Cadre domaine="seances" demi onPress={() => router.push('/records' as any)} a11y={traduirePluriel(semaines, semaines > 1, "{0} semaine d’affilée à ton objectif de {1} séances. Voir ta régularité", "{0} semaines d’affilée à ton objectif de {1} séances. Voir ta régularité", semaines, goal)}>
       <Entete domaine="seances" icone="trophy" titre={traduire("Régularité")} />
       <Bas>
-        <ChiffreAnime valeur={semaines} format={(x) => String(Math.round(x))} cle="serie" unite={semaines > 1 ? ' semaines' : ' semaine'} taille={24} />
+        <ChiffreAnime valeur={semaines} format={(x) => String(Math.round(x))} cle="serie" unite={semaines > 1 ? traduire(' semaines') : traduire(' semaine')} taille={24} />
         {recentes && recentes.length ? <RangeeSemaines semaines={recentes} couleur={P.moss} /> : null}
         <Explication couleur={t.texte} lignes={1}>{traduirePluriel(goal, goal > 1, "d’affilée à {0} séance", "d’affilée à {0} séances", goal)}</Explication>
       </Bas>

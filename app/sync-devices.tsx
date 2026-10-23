@@ -121,7 +121,7 @@ export default function SyncDevicesScreen() {
       if (count === 0) setMsg({ tone: 'bad', text: traduire("Aucun appareil appairé à proximité. Ouvre cet écran sur ton autre appareil, à côté de celui-ci, avec le wifi et le réseau local autorisés.") });
       else setMsg({ tone: 'good', text: traduirePluriel(count, count > 1, "Synchronisation envoyée à {0} appareil. Les données se mettent à jour dans quelques secondes.", "Synchronisation envoyée à {0} appareils. Les données se mettent à jour dans quelques secondes.", count) });
     } catch (e: any) {
-      setMsg({ tone: 'bad', text: traduire("Erreur : {0}", e?.message || 'inconnue') });
+      setMsg({ tone: 'bad', text: traduire("Erreur : {0}", e?.message || traduire('inconnue')) });
     } finally {
       setSyncing(false);
     }
@@ -187,7 +187,7 @@ export default function SyncDevicesScreen() {
           })}
         </CardBox>
       ) : (
-        <Notice text={traduire("Aucun appareil appairé. Pour synchroniser, appaire {0} avec un code : YOROI n’échange rien avec un appareil que tu n’as pas appairé.", Platform.OS === 'ios' ? 'ton autre iPhone ou iPad' : 'ton autre téléphone ou ta tablette')} />
+        <Notice text={Platform.OS === 'ios' ? traduire("Aucun appareil appairé. Pour synchroniser, appaire ton autre iPhone ou iPad avec un code : YOROI n’échange rien avec un appareil que tu n’as pas appairé.") : traduire("Aucun appareil appairé. Pour synchroniser, appaire ton autre téléphone ou ta tablette avec un code : YOROI n’échange rien avec un appareil que tu n’as pas appairé.")} />
       )}
 
       <Label>{traduire("Appairer un appareil")}</Label>

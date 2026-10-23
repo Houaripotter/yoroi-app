@@ -207,11 +207,13 @@ export default function QuickNutritionScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             <NeedCard icon="leaf" tone="red" title={traduire("Protéines")} value={traduire("{0} à {1}", needs.protein.min, needs.protein.max)} unit="g" sub={traduire("1,6 à 2,2 g par kg")} />
             <NeedCard icon="bolt" tone="indigo" title={traduire("Glucides")} value={traduire("{0} à {1}", needs.carbs.min, needs.carbs.max)} unit="g" sub={traduire("{0} g par kg, {1}", needs.carbs.perKg, QUICK_ACTIVITY[activity].phrase)} />
-            <NeedCard icon="drop" tone="indigo" title="Eau" value={traduire("{0} à {1}", String(needs.water.min).replace('.', DECIMAL), String(needs.water.max).replace('.', DECIMAL))} unit="L" sub={traduire("30 à 35 ml par kg")} />
+            <NeedCard icon="drop" tone="indigo" title={traduire("Eau")} value={traduire("{0} à {1}", String(needs.water.min).replace('.', DECIMAL), String(needs.water.max).replace('.', DECIMAL))} unit="L" sub={traduire("30 à 35 ml par kg")} />
             <NeedCard icon="flame" tone="gold" title={traduire("Calories")} value={needs.tdee.toLocaleString(LOCALE)} unit="kcal" sub={traduire("Métabolisme de base {0} kcal", needs.bmr)} />
           </View>
           <Ink size={12} weight="medium" color={P.ink2} style={{ marginTop: 8, paddingHorizontal: 4 }}>
-            {traduire("{0}Pour un calcul complet, ouvre le plan nutritionnel.", age ? 'Calories estimées avec la formule Mifflin-St Jeor, version homme, et ton âge. ' : 'Calories estimées avec la formule Mifflin-St Jeor, version homme, pour un âge de 30 ans. ')}</Ink>
+            {age
+              ? traduire("Calories estimées avec la formule Mifflin-St Jeor, version homme, et ton âge. Pour un calcul complet, ouvre le plan nutritionnel.")
+              : traduire("Calories estimées avec la formule Mifflin-St Jeor, version homme, pour un âge de 30 ans. Pour un calcul complet, ouvre le plan nutritionnel.")}</Ink>
         </Enter>
 
         {/* CONSEILS */}

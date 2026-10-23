@@ -64,7 +64,7 @@ export function CarteTonPlan({ name, scene, personnage, lignes, arrivee, compact
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const rowH = compact ? 19 : 21;
-  const a11y = [name ? `${name}, ton plan` : 'Ton plan', ...lignes.map((l) => l.a11y), arrivee ? `arrivée prévue ${arrivee}` : null].filter(Boolean).join(', ');
+  const a11y = [name ? traduire("{0}, ton plan", name) : traduire('Ton plan'), ...lignes.map((l) => l.a11y), arrivee ? traduire("arrivée prévue {0}", arrivee) : null].filter(Boolean).join(', ');
   return (
     <View accessible accessibilityLabel={a11y} style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row' }}>

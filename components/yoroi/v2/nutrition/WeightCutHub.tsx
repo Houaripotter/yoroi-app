@@ -306,8 +306,8 @@ function ActiveCut({ cut, current, weights, daysLeft, onEdit, onStopped }: { cut
           {!reached && risk !== 'safe' ? (
             <Notice
               tone={risk === 'danger' ? 'red' : 'gold'}
-              title={risk === 'danger' ? 'Rythme dangereux' : 'Rythme soutenu'}
-              text={traduire("Il faudrait perdre {0} kg par jour. {1}", fmt(daily, 2), risk === 'danger' ? 'Consulte un médecin et revois ton objectif.' : 'Surveille ton hydratation et ta fatigue.')}
+              title={risk === 'danger' ? traduire('Rythme dangereux') : traduire('Rythme soutenu')}
+              text={risk === 'danger' ? traduire("Il faudrait perdre {0} kg par jour. Consulte un médecin et revois ton objectif.", fmt(daily, 2)) : traduire("Il faudrait perdre {0} kg par jour. Surveille ton hydratation et ta fatigue.", fmt(daily, 2))}
             />
           ) : null}
         </View>
@@ -663,7 +663,7 @@ function Simulator({ defaultCurrent, defaultTarget, defaultDays }: { defaultCurr
                       </Ink>
                     </View>
                     <Ink size={13} weight="bold" color={P.ink2}>
-                      {`${ph.method}, vers ${fmt(ph.targetWeight)} kg`}
+                      {traduire("{0}, vers {1} kg", ph.method, fmt(ph.targetWeight))}
                     </Ink>
                     {ph.tips.map((tip) => (
                       <Bullet key={tip}>{tip}</Bullet>

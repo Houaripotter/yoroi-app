@@ -358,7 +358,7 @@ export default function Dojo() {
             <ScenePlate scene={scene} height={heroH} animation={animationDeScene(espace.scene)}>
               <View style={{ position: 'absolute', left: 14, right: 14, top: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                 <GlassTag style={{ flexShrink: 1, maxWidth: '86%' }}>
-                  <Ink size={12} weight="extraBold" color={c.goldDeep}>{rank.dan ? traduire("Rang {0} sur {1}, {2} dan", RANKS.length, RANKS.length, rank.dan === 1 ? '1er' : `${rank.dan}e`) : traduire("Rang {0} sur {1}", rank.index + 1, RANKS.length)}</Ink>
+                  <Ink size={12} weight="extraBold" color={c.goldDeep}>{rank.dan ? (rank.dan === 1 ? traduire("Rang {0} sur {1}, 1er dan", RANKS.length, RANKS.length) : traduire("Rang {0} sur {1}, {2}e dan", RANKS.length, RANKS.length, rank.dan)) : traduire("Rang {0} sur {1}", rank.index + 1, RANKS.length)}</Ink>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
                     <Ink size={30} weight="black" tight numberOfLines={1} style={{ flexShrink: 1 }}>
                       {rangNom(rank.index, u)}
@@ -409,7 +409,7 @@ export default function Dojo() {
                 <Ink size={20} weight="black" tight numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>{cons.palier}</Ink>
                 <Ink size={14} weight="extraBold" numberOfLines={2}>{traduire(cons.piece.nom)}</Ink>
                 <Ink size={12} color={c.textSecondary} numberOfLines={3}>
-                  {traduire("{0} : étape {1} sur 3, {2}", tenueEvolue ? libelleConstruction(u) : 'Ta récompense se construit', cons.enCours, cons.piece.etapes[cons.faites])}
+                  {traduire("{0} : étape {1} sur 3, {2}", tenueEvolue ? libelleConstruction(u) : traduire('Ta récompense se construit'), cons.enCours, cons.piece.etapes[cons.faites])}
                 </Ink>
               </View>
               <ChevronIcon />
@@ -450,7 +450,7 @@ export default function Dojo() {
                   <MaterialCommunityIcons name={(st?.shields ?? 0) >= 1 ? 'cards-playing' : 'cards-playing-outline'} size={28} color={(st?.shields ?? 0) >= 1 ? c.gold : c.textMuted} />
                   <MaterialCommunityIcons name={(st?.shields ?? 0) >= 2 ? 'cards-playing' : 'cards-playing-outline'} size={28} color={(st?.shields ?? 0) >= 2 ? c.gold : c.textMuted} />
                 </View>
-                <Ink size={11} weight="bold" color={c.textMuted}>{(st?.shields ?? 0) === 0 ? traduire('aucun joker') : `${st?.shields} joker${(st?.shields ?? 0) > 1 ? 's' : ''}`}</Ink>
+                <Ink size={11} weight="bold" color={c.textMuted}>{(st?.shields ?? 0) === 0 ? traduire('aucun joker') : traduirePluriel(st?.shields ?? 0, (st?.shields ?? 0) > 1, "{0} joker", "{0} jokers", st?.shields)}</Ink>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -545,7 +545,7 @@ export default function Dojo() {
               {
                 key: 'rangs',
                 title: libelleChemin(u),
-                value: `${RANKS.length} rangs puis les dan, tu es ${title}`,
+                value: traduire("{0} rangs puis les dan, tu es {1}", RANKS.length, title),
                 fond: '#F3EBDA',
                 image: imageChemin ?? cons.piece.image,
                 onPress: () => go('/dojo/rangs'),

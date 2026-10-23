@@ -53,7 +53,7 @@ export function phraseSentier({ depart, cap, actuel, mode, torii, atteint }: Omi
     const ecart = actuel - cap;
     const marge = cap * MARGE_STABLE;
     if (Math.abs(ecart) <= marge) return { pct: null, parts: [{ t: traduire('Dans ta zone de forme'), k: 'ok' }, { t: traduire(', à ') }, { t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: traduire(" de ton poids de forme de {0} kg.", kg1(cap)) }] };
-    return { pct: null, parts: [{ t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: traduire(" {0} de ton poids de forme de {1} kg, ta zone va de {2} à {3} kg.", ecart > 0 ? 'au-dessus' : 'en dessous', kg1(cap), kg1(cap - marge), kg1(cap + marge)) }] };
+    return { pct: null, parts: [{ t: `${kg1(Math.abs(ecart))} kg`, k: 'kg' }, { t: ecart > 0 ? traduire(" au-dessus de ton poids de forme de {0} kg, ta zone va de {1} à {2} kg.", kg1(cap), kg1(cap - marge), kg1(cap + marge)) : traduire(" en dessous de ton poids de forme de {0} kg, ta zone va de {1} à {2} kg.", kg1(cap), kg1(cap - marge), kg1(cap + marge)) }] };
   }
   const perte = mode === 'perte';
   const span = Math.abs(depart - cap);
@@ -61,15 +61,15 @@ export function phraseSentier({ depart, cap, actuel, mode, torii, atteint }: Omi
   const reste = Math.max(0, perte ? actuel - cap : cap - actuel);
   const pct = atteint ? 1 : span < 0.05 ? 0 : Math.max(0, Math.min(1, fait / span));
   if (atteint) {
-    const parts: Morceau[] = [{ t: torii ? traduire("Cap atteint le {0}", jourCourt(torii)) : 'Cap atteint', k: 'ok' }];
-    if (Math.abs(fait) >= 0.05) parts.push({ t: ', ' }, { t: `${kg1(Math.abs(fait))} kg`, k: 'kg' }, { t: perte ? ' perdus' : traduire(' pris') });
+    const parts: Morceau[] = [{ t: torii ? traduire("Cap atteint le {0}", jourCourt(torii)) : traduire('Cap atteint'), k: 'ok' }];
+    if (Math.abs(fait) >= 0.05) parts.push({ t: ', ' }, { t: `${kg1(Math.abs(fait))} kg`, k: 'kg' }, { t: perte ? traduire(' perdus') : traduire(' pris') });
     parts.push({ t: '.' });
     return { pct, parts };
   }
   const parts: Morceau[] = [];
   if (Math.abs(fait) < 0.05) parts.push({ t: traduire('Ton chemin commence') });
-  else if (fait > 0) parts.push({ t: `${kg1(fait)} kg`, k: 'kg' }, { t: perte ? ' perdus' : traduire(' pris') });
-  else parts.push({ t: `${kg1(-fait)} kg`, k: 'kg' }, { t: traduire("{0} depuis ton départ", perte ? ' pris' : ' perdus') });
+  else if (fait > 0) parts.push({ t: `${kg1(fait)} kg`, k: 'kg' }, { t: perte ? traduire(' perdus') : traduire(' pris') });
+  else parts.push({ t: `${kg1(-fait)} kg`, k: 'kg' }, { t: perte ? traduire(" pris depuis ton départ") : traduire(" perdus depuis ton départ") });
   parts.push({ t: traduire(', plus que ') }, { t: `${kg1(reste)} kg`, k: 'kg' }, { t: traduire(' avant ton cap.') });
   return { pct, parts };
 }

@@ -784,7 +784,7 @@ function RecordVue({ d, o, pal, W, titre, fig, padTop, padBas, u }: Ctx) {
           ) : (
             <T size={story ? 22 : 16} weight="black" color={pal.ink} lines={2} style={pal.shadow}>{traduire(r.texte)}</T>
           )}
-          {r.poids && r.reps && !carre ? <T size={story ? 16 : 13} weight="extraBold" color={pal.ink2} style={pal.shadow}>{traduire("pour {0} {1}", r.reps, r.reps > 1 ? 'répétitions' : 'répétition')}</T> : null}
+          {r.poids && r.reps && !carre ? <T size={story ? 16 : 13} weight="extraBold" color={pal.ink2} style={pal.shadow}>{traduirePluriel(r.reps, r.reps > 1, "pour {0} répétition", "pour {0} répétitions", r.reps)}</T> : null}
           {gain !== null && gain > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, borderTopWidth: 1, borderColor: pal.line, paddingTop: story ? 10 : 6, marginTop: story ? 4 : 2 }}>
               <T size={13} weight="bold" color={pal.muted} style={pal.shadow}>{traduire("Ancien record")}</T>
@@ -867,7 +867,7 @@ function SemaineVue({ d, o, pal, W, stats, titre, fig, padTop, padBas }: Ctx) {
         ) : (
           <View style={{ borderRadius: 18, backgroundColor: panneau, borderWidth: 1, borderColor: pal.line, paddingHorizontal: 12, paddingVertical: story ? 8 : 5 }}>
             {jours.map((x, i) => {
-              const texte = x.sports.join(' et ');
+              const texte = x.sports.join(` ${traduire('et')} `);
               return (
                 <View key={i} style={{ height: rowH, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i ? 1 : 0, borderColor: pal.line }}>
                   <View style={{ width: 52, flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>

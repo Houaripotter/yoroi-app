@@ -309,7 +309,9 @@ export default function SeanceFin() {
             <Hanko size={30} rotate={-6} color={c.record} animate />
             <View style={{ flex: 1, gap: 2 }}>
               <Ink size={16} weight="extraBold">{r.kind === 'charge' ? traduire('Nouveau record de charge') : traduire('Nouveau record')}</Ink>
-              <Ink size={14} color={c.textSecondary}>{traduire("{0}, {1} {2} pour {3} {4}", r.name, fmtNum(versUnitePoids(r.weight, unite), unite === 'lb' ? 1 : 2), unite === 'lb' ? 'livres' : 'kilos', r.reps, r.reps > 1 ? 'répétitions' : 'répétition')}</Ink>
+              <Ink size={14} color={c.textSecondary}>{unite === 'lb'
+                ? traduirePluriel(r.reps, r.reps > 1, "{0}, {1} livres pour {2} répétition", "{0}, {1} livres pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 1), r.reps)
+                : traduirePluriel(r.reps, r.reps > 1, "{0}, {1} kilos pour {2} répétition", "{0}, {1} kilos pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 2), r.reps)}</Ink>
             </View>
           </View>
         ))}

@@ -57,13 +57,13 @@ import { traduire } from '@/lib/i18n/tr';
  * du poids et sa source. Les references completes sont dans app/scientific-sources.tsx (« Poids et projection »).
  */
 const COMMENT_ON_CALCULE: { titre: string; texte: string; source: string }[] = [
-  { titre: traduire('Ta tendance'), texte: traduire('Un filtre suit ton niveau et ta pente, même les jours sans pesée. Une pesée très loin de l’attendu est bornée.'), source: 'Kalman (1960), Journal of Basic Engineering. Principe des tendances lissées : The Hacker’s Diet, MacroFactor.' },
+  { titre: traduire('Ta tendance'), texte: traduire('Un filtre suit ton niveau et ta pente, même les jours sans pesée. Une pesée très loin de l’attendu est bornée.'), source: traduire('Kalman (1960), Journal of Basic Engineering. Principe des tendances lissées : The Hacker’s Diet, MacroFactor.') },
   { titre: traduire('Ton rythme'), texte: traduire('La médiane des pentes entre tes pesées des 4 dernières semaines (6 si tu te pèses peu) : une pesée bizarre ne la tire pas.'), source: 'Sen (1968), Journal of the American Statistical Association.' },
-  { titre: traduire('Le rythme conseillé'), texte: traduire('Perte : 0,5 à 1 % de ton poids par semaine pour garder ton muscle. Prise : 0,25 à 0,5 % pour limiter le gras.'), source: 'Helms et al. (2014), JISSN. Garthe et al. (2011), IJSNEM. Iraki et al. (2019), Sports.' },
-  { titre: traduire('Ta projection'), texte: traduire('Ton rythme réel, jamais plus vite que ces repères, avec une fourchette de dates. Pas de règle des 7 700 kcal par kilo : elle surestime la perte sur la durée.'), source: 'Hall et al. (2011), The Lancet. Thomas et al. (2013), International Journal of Obesity.' },
-  { titre: traduire('Le ralentissement'), texte: traduire('Le poids répond lentement et la perte ralentit avec le temps. Près de ton cap, YOROI ralentit encore ta projection : un choix prudent, pas un chiffre d’étude.'), source: 'Hall et al. (2011), The Lancet ; NIH, Body Weight Planner.' },
-  { titre: traduire('L’eau'), texte: traduire('Sel, glucides, entraînement et cycle font varier l’eau d’un jour à l’autre. Au début d’une perte, une partie est de l’eau et du glycogène.'), source: 'Kreitzman et al. (1992), AJCN. White et al. (2011), Obstetrics and Gynecology International. Turicchi et al. (2020), PLoS ONE.' },
-  { titre: traduire('Sports de combat'), texte: traduire('YOROI suit une perte progressive. Il ne calcule pas de coupe de poids d’avant pesée : elle se prépare avec un encadrement.'), source: 'Ricci et al. (2025), position de l’ISSN. Reale et al. (2017), IJSPP. Barley et al. (2019), Sports.' },
+  { titre: traduire('Le rythme conseillé'), texte: traduire('Perte : 0,5 à 1 % de ton poids par semaine pour garder ton muscle. Prise : 0,25 à 0,5 % pour limiter le gras.'), source: traduire('Helms et al. (2014), JISSN. Garthe et al. (2011), IJSNEM. Iraki et al. (2019), Sports.') },
+  { titre: traduire('Ta projection'), texte: traduire('Ton rythme réel, jamais plus vite que ces repères, avec une fourchette de dates. Pas de règle des 7 700 kcal par kilo : elle surestime la perte sur la durée.'), source: traduire('Hall et al. (2011), The Lancet. Thomas et al. (2013), International Journal of Obesity.') },
+  { titre: traduire('Le ralentissement'), texte: traduire('Le poids répond lentement et la perte ralentit avec le temps. Près de ton cap, YOROI ralentit encore ta projection : un choix prudent, pas un chiffre d’étude.'), source: traduire('Hall et al. (2011), The Lancet ; NIH, Body Weight Planner.') },
+  { titre: traduire('L’eau'), texte: traduire('Sel, glucides, entraînement et cycle font varier l’eau d’un jour à l’autre. Au début d’une perte, une partie est de l’eau et du glycogène.'), source: traduire('Kreitzman et al. (1992), AJCN. White et al. (2011), Obstetrics and Gynecology International. Turicchi et al. (2020), PLoS ONE.') },
+  { titre: traduire('Sports de combat'), texte: traduire('YOROI suit une perte progressive. Il ne calcule pas de coupe de poids d’avant pesée : elle se prépare avec un encadrement.'), source: traduire('Ricci et al. (2025), position de l’ISSN. Reale et al. (2017), IJSPP. Barley et al. (2019), Sports.') },
 ];
 
 const PERIODE_TEXTE: Record<number, string> = { 30: traduire('en 1 mois'), 90: traduire('en 3 mois'), 180: traduire('en 6 mois'), 365: traduire('en 1 an'), [PERIODE_PLAN]: traduire('depuis ton début') };
@@ -161,7 +161,7 @@ export default function PoidsDetailScreen() {
     <Pressable
       onPress={() => router.push('/weight-predictions' as any)}
       accessibilityRole="button"
-      accessibilityLabel={traduire("Où tu en seras : {0}{1}{2}. Voir tes prédictions", ouTuEnSeras.valeur, ouTuEnSeras.note ? `, ${ouTuEnSeras.note}` : '', fourchette ? `, fourchette ${fourchette}` : '')}
+      accessibilityLabel={traduire("Où tu en seras : {0}{1}{2}. Voir tes prédictions", ouTuEnSeras.valeur, ouTuEnSeras.note ? `, ${ouTuEnSeras.note}` : '', fourchette ? traduire(", fourchette {0}", fourchette) : '')}
       style={({ pressed }) => ({ marginHorizontal: GUTTER, marginTop: 12, minHeight: 56, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSoft : c.surface, borderWidth: 1, borderColor: c.border })}
     >
       <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
@@ -182,7 +182,7 @@ export default function PoidsDetailScreen() {
         {/* 18 octobre (etudes) : la fourchette, jamais une date seule */}
         {fourchette ? (
           <Ink size={12.5} weight="bold" color={c.textSecondary} numberOfLines={1}>
-            {`Fourchette : ${fourchette}`}
+            {traduire("Fourchette : {0}", fourchette)}
           </Ink>
         ) : null}
       </View>
@@ -250,7 +250,7 @@ export default function PoidsDetailScreen() {
             {traduire(l.texte)}
           </Ink>
           <Ink size={11.5} weight="bold" color={c.textSecondary}>
-            {`Source : ${l.source}`}
+            {traduire("Source : {0}", l.source)}
           </Ink>
         </View>
       ))}
@@ -271,7 +271,7 @@ export default function PoidsDetailScreen() {
     <MetricDetail
       title={traduire("Ton poids")}
       sub={goal ? traduire("Ton cap : {0} kg", formatKg(goal)) : traduire('Tes pesées et ta vraie tendance.')}
-      spec={{ label: 'Poids', unit: 'kg', digits: 1, good, deltaOne: 'kilo', deltaMany: 'kilos', minSpan: 2, keepZero: true }}
+      spec={{ label: traduire('Poids'), unit: 'kg', digits: 1, good, deltaOne: traduire('kilo'), deltaMany: traduire('kilos'), minSpan: 2, keepZero: true }}
       points={points}
       color={c.ink}
       explain={WEIGHT_EXPLAIN}
@@ -285,7 +285,7 @@ export default function PoidsDetailScreen() {
         const b = byDate.get(shown[shown.length - 1].date);
         return a && b ? b.trend - a.trend : null;
       }}
-      diffNote="en tendance"
+      diffNote={traduire('en tendance')}
       headSide={(scrub) => {
         // vague 35, comme la carte de l'accueil : la pastille de statut a cote de « Poids », elle suit le doigt
         if (!capOn || !plan.ligne) return null;
@@ -318,7 +318,7 @@ export default function PoidsDetailScreen() {
         const vers = diff !== null && Math.abs(diff) >= 0.05 && ((good === 'down' && diff < 0) || (good === 'up' && diff > 0));
         return (
           <Ink size={14} weight="extraBold" color={vers ? POIDS.capText : c.textSecondary} numberOfLines={1}>
-            {diff === null ? traduire('(ta tendance arrive)') : Math.abs(diff) < 0.05 ? `(stable ${txt})` : `(${diff < 0 ? '−' : '+'}${formatKg(Math.abs(diff))} kg ${txt})`}
+            {diff === null ? traduire('(ta tendance arrive)') : Math.abs(diff) < 0.05 ? traduire("(stable {0})", txt) : traduire("({0}{1} kg {2})", diff < 0 ? '−' : '+', formatKg(Math.abs(diff)), txt)}
           </Ink>
         );
       }}

@@ -136,7 +136,7 @@ export function ClubFormContent({ editingClub, onDone, onCancel }: { editingClub
         </View>
 
         <View style={{ gap: 8 }}>
-          <Ink size={14} weight="bold" color={c.textSecondary}>{`Sport : ${getSportName(sport)}`}</Ink>
+          <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Sport : {0}", getSportName(sport))}</Ink>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {Array.from(new Set([sport, ...QUICK])).map((id) => (
               <Chip key={id} label={getSportName(id)} on={id === sport} onPress={() => setSport(id)} />

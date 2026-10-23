@@ -90,7 +90,7 @@ export default function MesDonnees() {
   };
 
   const handleDedupe = () => {
-    showPopup(traduire('Nettoyer les doublons'), traduire("Les séances en double venues {0} seront supprimées. Celles que tu as créées toi-même ne bougent pas.\n\nFais une sauvegarde avant, par sécurité.", Platform.OS === 'android' ? 'de Health Connect' : 'd’Apple Santé'), [
+    showPopup(traduire('Nettoyer les doublons'), traduire("Les séances en double venues {0} seront supprimées. Celles que tu as créées toi-même ne bougent pas.\n\nFais une sauvegarde avant, par sécurité.", Platform.OS === 'android' ? traduire('de Health Connect') : traduire('d’Apple Santé')), [
       { text: traduire('Annuler'), style: 'cancel' },
       {
         text: traduire('Nettoyer'),

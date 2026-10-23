@@ -125,7 +125,7 @@ export const METRICS: MetricDef[] = [
     what: traduire('Le nombre de pas comptés par ton téléphone ou ta montre sur la journée.'),
     norm: {
       text: traduire("Chez l'adulte, le risque de décès baisse au fil des pas jusqu'à environ 8 000 à 10 000 pas par jour avant 60 ans, et 6 000 à 8 000 pas après 60 ans."),
-      source: 'Paluch et al., The Lancet Public Health, 2022',
+      source: traduire('Paluch et al., The Lancet Public Health, 2022'),
     },
     devices: 'iPhone, Apple Watch, Fitbit, Garmin, Samsung, Oura, Polar, COROS',
   },
@@ -154,7 +154,7 @@ export const METRICS: MetricDef[] = [
     what: traduire('Les minutes passées à bouger au moins à allure de marche rapide.'),
     norm: {
       text: traduire("Pour un adulte : 150 à 300 minutes d'activité modérée par semaine, ou 75 à 150 minutes d'activité intense."),
-      source: 'Organisation mondiale de la santé, recommandations 2020',
+      source: traduire('Organisation mondiale de la santé, recommandations 2020'),
     },
     devices: traduire('Apple Watch, séances Health Connect'),
   },
@@ -313,7 +313,7 @@ export const METRICS: MetricDef[] = [
     what: traduire("L'intensité de ton effort estimée par ta montre, en MET. 1 MET, c'est ton corps au repos."),
     norm: {
       text: traduire("Moins de 3 MET : effort léger. De 3 à 6 MET : effort modéré. Plus de 6 MET : effort intense."),
-      source: 'Organisation mondiale de la santé, recommandations 2020',
+      source: traduire('Organisation mondiale de la santé, recommandations 2020'),
     },
     devices: 'Apple Watch',
   },
@@ -402,7 +402,7 @@ export const METRICS: MetricDef[] = [
     what: traduire("De combien de battements ton cœur ralentit dans la minute qui suit la fin d'une séance."),
     norm: {
       text: traduire("Une baisse de 12 battements ou moins en une minute après l'effort est associée à un risque cardiaque plus élevé."),
-      source: 'Cole et al., New England Journal of Medicine, 1999',
+      source: traduire('Cole et al., New England Journal of Medicine, 1999'),
     },
     devices: 'Apple Watch',
   },
@@ -651,7 +651,7 @@ export const METRICS: MetricDef[] = [
     what: traduire('Le tour de ta taille, au niveau du nombril.'),
     norm: {
       text: traduire('Le risque cardiovasculaire augmente au-delà de 94 cm chez l’homme et de 80 cm chez la femme.'),
-      source: 'Organisation mondiale de la santé, 2008',
+      source: traduire('Organisation mondiale de la santé, 2008'),
     },
     devices: traduire('Saisie dans Santé, rubans connectés'),
   },
@@ -668,7 +668,7 @@ export const METRICS: MetricDef[] = [
     what: traduire('Ton poids divisé par ta taille au carré.'),
     norm: {
       text: traduire("Chez l'adulte, un IMC entre 18,5 et 24,9 correspond à un poids normal. Chez un sportif musclé, il surestime souvent la graisse."),
-      source: 'Organisation mondiale de la santé',
+      source: traduire('Organisation mondiale de la santé'),
     },
     devices: traduire('Balances connectées, Santé'),
   },
@@ -701,7 +701,7 @@ export const METRICS: MetricDef[] = [
     what: traduire("L'eau que tu as notée dans une app de nutrition ou d'hydratation."),
     norm: {
       text: traduire("Apport total recommandé, boissons et aliments compris : 2 litres par jour pour une femme, 2,5 litres pour un homme. Plus si tu transpires."),
-      source: 'Autorité européenne de sécurité des aliments (EFSA), 2010',
+      source: traduire('Autorité européenne de sécurité des aliments (EFSA), 2010'),
     },
     devices: traduire('Apps de nutrition, Google Fitbit (Android)'),
   },
@@ -770,7 +770,7 @@ export const METRICS: MetricDef[] = [
     what: traduire('La caféine notée dans une app de nutrition : café, thé, boissons énergisantes.'),
     norm: {
       text: traduire("Jusqu'à 400 mg par jour ne pose pas de problème de sécurité chez l'adulte en bonne santé."),
-      source: 'Autorité européenne de sécurité des aliments (EFSA), 2015',
+      source: traduire('Autorité européenne de sécurité des aliments (EFSA), 2015'),
     },
     devices: traduire('Apps de nutrition'),
   },

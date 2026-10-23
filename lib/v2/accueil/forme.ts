@@ -21,7 +21,7 @@ import type { RecupKey, RecupPoint } from '../recuperation';
 import { getSanteSource, loadSeries } from '../sante/data';
 import { dedupeTrainings } from '../seances/dedupe';
 import { formatDuration } from '../trainingWeek';
-import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL } from '@/lib/i18n/tr';
 
 export type FactorKey = RecupKey;
 
@@ -154,7 +154,7 @@ export async function computeForme(opts?: { series?: FormeSeries }): Promise<For
   const charge = scoreCharge(list.filter((t) => t && t.date).map((t) => ({ date: t.date.slice(0, 10), minutes: durationOf(t) })), today);
   const sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
   const daysSinceLast = sorted[0] ? daysAgo(sorted[0].date) : null;
-  if (charge) factors.push({ key: 'charge', label: traduire('Charge d’entraînement'), score: charge.score, detail: charge.detail, value: `${charge.sessions7} séance${charge.sessions7 > 1 ? 's' : ''} en 7 jours` });
+  if (charge) factors.push({ key: 'charge', label: traduire('Charge d’entraînement'), score: charge.score, detail: charge.detail, value: traduirePluriel(charge.sessions7, charge.sessions7 > 1, "{0} séance en 7 jours", "{0} séances en 7 jours", charge.sessions7) });
   else missing.push('charge');
 
   // Hydratation du jour (seulement si tu as note quelque chose)

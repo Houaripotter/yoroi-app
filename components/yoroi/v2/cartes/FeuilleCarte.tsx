@@ -21,9 +21,9 @@ import { traduire } from '@/lib/i18n/tr';
 export function nomCourt(d: CarteData): string {
   if (d.moment === 'exploit' && d.exploit) {
     const t = d.exploit.type;
-    if (t.startsWith('record_')) return t === 'record_charge' ? `Record ${d.exploit.accroche.toLowerCase()}` : d.exploit.surtitre;
+    if (t.startsWith('record_')) return t === 'record_charge' ? traduire("Record {0}", d.exploit.accroche.toLowerCase()) : d.exploit.surtitre;
     if (t === 'techniques') return traduire('Techniques');
-    if (t === 'compteur') return 'Compteur';
+    if (t === 'compteur') return traduire('Compteur');
     if (t === 'annee_progression') return traduire('Mon année');
     return d.exploit.surtitre;
   }
@@ -59,7 +59,7 @@ export function FeuilleCarte({ data, autres, visible, onClose }: { data: CarteDa
             const on = x === cur;
             const rec = !!x.exploit?.record;
             return (
-              <Pressable key={x.cle} onPress={() => setSel(i)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Carte ${nomCourt(x)}`} style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? c.ink : c.surface, borderWidth: 1, borderColor: on ? c.ink : c.border }}>
+              <Pressable key={x.cle} onPress={() => setSel(i)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire("Carte {0}", nomCourt(x))} style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? c.ink : c.surface, borderWidth: 1, borderColor: on ? c.ink : c.border }}>
                 {rec ? <View style={{ width: 7, height: 7, borderRadius: 1.5, backgroundColor: c.record, transform: [{ rotate: '45deg' }] }} /> : null}
                 <Ink size={14} weight="extraBold" color={on ? c.background : c.ink} numberOfLines={1}>{nomCourt(x)}</Ink>
               </Pressable>

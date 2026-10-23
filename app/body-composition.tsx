@@ -357,7 +357,7 @@ function BodyComposition() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: GUTTER, marginTop: 12 }}>
             <HeartDot color={c.indigo} />
             <Ink size={12} color={c.indigo} style={{ flex: 1 }}>
-              {traduire("{0} {1}. Le reste est à recopier depuis l’app de ta balance.", healthDay.weight && healthDay.fat ? 'Poids et masse grasse' : healthDay.weight ? 'Poids' : 'Masse grasse', sourceText(health?.provider ?? (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé'), healthDay))}
+              {traduire("{0} {1}. Le reste est à recopier depuis l’app de ta balance.", healthDay.weight && healthDay.fat ? traduire('Poids et masse grasse') : healthDay.weight ? traduire('Poids') : traduire('Masse grasse'), sourceText(health?.provider ?? (Platform.OS === 'android' ? 'Health Connect' : 'Apple Santé'), healthDay))}
             </Ink>
           </View>
         ) : null}

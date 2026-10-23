@@ -159,11 +159,11 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
   }, [partners, sortMode]);
 
   const podiumMetric = (p: PartnerStats) => {
-    if (podiumMode === 'wins') return `${p.wins} victoires`;
+    if (podiumMode === 'wins') return traduire("{0} victoires", p.wins);
     if (podiumMode === 'losses') return traduire("{0} défaites", p.losses);
     if (podiumMode === 'winrate') return `${Math.round((p.wins / Math.max(1, p.wins + p.losses)) * 100)} %`;
-    if (podiumMode === 'subsGiven') return `${p.submissionsGiven} soumissions`;
-    return `${p.totalRounds} rounds, ${p.wins} V ${p.losses} D`;
+    if (podiumMode === 'subsGiven') return traduire("{0} soumissions", p.submissionsGiven);
+    return traduire("{0} rounds, {1} V {2} D", p.totalRounds, p.wins, p.losses);
   };
 
   const pickImage = async (): Promise<string | null> => {
@@ -232,7 +232,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
   };
 
   const shareStats = () => {
-    partagerTexte({ source: 'sparring', message: traduire("Mon sparring YOROI : {0} rounds, {1} partenaires, {2}, {3} techniques travaillées.", totals.rounds, totals.partners, totals.winRate !== null ? `${totals.winRate} % de victoires` : 'premiers rounds', totals.techniques) });
+    partagerTexte({ source: 'sparring', message: traduire("Mon sparring YOROI : {0} rounds, {1} partenaires, {2}, {3} techniques travaillées.", totals.rounds, totals.partners, totals.winRate !== null ? traduire("{0} % de victoires", totals.winRate) : traduire('premiers rounds'), totals.techniques) });
   };
 
   if (loading) return <TabLoading />;
@@ -384,7 +384,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
                   <View style={{ flex: 1, gap: 3 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                       <Ink size={15} weight="extraBold" numberOfLines={1} style={{ flex: 1 }}>{getSportName(s.sport)}</Ink>
-                      {s.roundsCount > 0 ? <Ink size={13} weight="bold" color={P.indigo}>{`${s.roundsCount} round${s.roundsCount > 1 ? 's' : ''}`}</Ink> : null}
+                      {s.roundsCount > 0 ? <Ink size={13} weight="bold" color={P.indigo}>{traduirePluriel(s.roundsCount, s.roundsCount > 1, "{0} round", "{0} rounds", s.roundsCount)}</Ink> : null}
                     </View>
                     {s.technicalTheme ? <Ink size={13} weight="bold" color={P.goldDark} numberOfLines={1}>{s.technicalTheme}</Ink> : null}
                     {s.partners.length > 0 ? <Ink size={12} weight="medium" color={P.ink2} numberOfLines={1}>{traduire("Avec {0}", s.partners.join(', '))}</Ink> : null}
@@ -483,7 +483,7 @@ export function SparringView({ refreshKey }: { refreshKey: number }) {
             <>
               <BlockTitle title={traduire("Tes records de sparring")} />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {records.longest ? <RecordTile label={traduire("Plus longue séance")} value={`${records.longest.n} rounds`} sub={shortDate(records.longest.date)} tone="indigo" /> : null}
+                {records.longest ? <RecordTile label={traduire("Plus longue séance")} value={traduire("{0} rounds", records.longest.n)} sub={shortDate(records.longest.date)} tone="indigo" /> : null}
                 {records.mostSubs ? <RecordTile label={traduire("Soumissions en une séance")} value={String(records.mostSubs.n)} sub={shortDate(records.mostSubs.date)} tone="moss" /> : null}
                 {records.best ? <RecordTile label={traduire("Meilleur taux")} value={`${Math.round(records.best.rate)} %`} sub={traduire("{0} sur {1}, {2}", records.best.wins, records.best.total, shortDate(records.best.date))} tone="red" /> : null}
               </View>

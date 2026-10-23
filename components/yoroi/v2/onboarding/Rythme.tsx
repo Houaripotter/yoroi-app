@@ -11,7 +11,7 @@ import { JoursPicker, JOURS_LETTRES, JOURS_NOMS, joursTexte } from '@/components
 import type { Goal } from '@/lib/v2/onboarding/draft';
 import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 /** Ancien repere selon l'objectif : plus propose a l'ecran, garde pour les appelants */
 export function suggestedSessions(goal: Goal | null): number {
@@ -54,10 +54,10 @@ export function Rythme({ nav, days, onToggle, onNext }: { nav: Nav; goal?: Goal 
       sub={traduire("Touche les jours où tu peux t’entraîner. Le nombre de séances suit tout seul.")}
       footer={<MainButton label={traduire("Continuer")} onPress={onNext} disabled={!n} />}
     >
-      <JoursPicker value={days} onToggle={onToggle} label="Entraînement" />
+      <JoursPicker value={days} onToggle={onToggle} label={traduire('Entraînement')} />
       <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 4 }}>
         <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine")}</Ink>
-        <Riche size={26} weight="black" color={c.ink} lineHeight={31} style={{ letterSpacing: -1 }} text={n ? traduire("**{0} {1}** par semaine", n, n > 1 ? 'séances' : 'séance') : traduire('À toi de choisir')} />
+        <Riche size={26} weight="black" color={c.ink} lineHeight={31} style={{ letterSpacing: -1 }} text={n ? traduirePluriel(n, n > 1, "**{0} séance** par semaine", "**{0} séances** par semaine", n) : traduire('À toi de choisir')} />
         <Ink size={14} weight="bold" color={c.textSecondary} style={{ lineHeight: 20 }}>{n ? majuscule(joursTexte(days)) : traduire('Aucun jour imposé : c’est toi qui sais quand tu peux.')}</Ink>
       </View>
       <Animated.View entering={FadeIn.delay(200)} style={{ borderRadius: 18, backgroundColor: c.accentTint, padding: 14 }}>

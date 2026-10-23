@@ -42,7 +42,7 @@ export function limitNotice(key: FreeLimitKey, count: number): { title: string; 
       };
     case 'progressPhotos':
       return {
-        title: `${n} photos en version gratuite`,
+        title: traduire("{0} photos en version gratuite", n),
         text: traduire("Tes {0} photos restent là et tu peux toujours les comparer. Pour en ajouter d’autres, passe à Premium.", count),
       };
     default:

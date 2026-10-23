@@ -95,7 +95,7 @@ export default function TaForme() {
                   {messageScoreIncomplet(missingNight)}
                 </Ink>
                 <Ink size={13} weight="medium" color={P.ink2}>
-                  {traduire("Pour l’instant, seul {0} est mesuré. Le détail est juste en dessous.", forme?.factors[0]?.label.toLowerCase() ?? 'un élément')}
+                  {traduire("Pour l’instant, seul {0} est mesuré. Le détail est juste en dessous.", forme?.factors[0]?.label.toLowerCase() ?? traduire('un élément'))}
                 </Ink>
               </View>
             </View>

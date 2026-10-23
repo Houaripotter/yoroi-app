@@ -87,7 +87,7 @@ export default function CompetitionCountdownScreen() {
               <Ink size={88} weight="black" tight color={P.white} style={{ lineHeight: 92 }}>
                 {String(daysLeft)}
                 <Ink size={20} weight="extraBold" color="rgba(255,255,255,0.7)">
-                  {' jours'}
+                  {' ' + traduire('jours')}
                 </Ink>
               </Ink>
             ) : daysLeft === 1 ? (
