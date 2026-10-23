@@ -574,7 +574,10 @@ export default function RootLayout() {
                 .then(success => {
                   if (success) {
                     logger.info('Service notifications initialisé');
-                    return initCitationNotifications().then(() => logger.info('Citation du jour initialisée'));
+                    return initCitationNotifications()
+                      .then(() => logger.info('Citation du jour initialisée'))
+                      // 23 octobre 2026 : rappels refaits dans la nouvelle langue quand elle a changé
+                      .then(() => import('@/lib/i18n/notifsLangue').then(({ replanifierSiLangueChangee }) => replanifierSiLangueChangee()));
                   }
                 });
             })

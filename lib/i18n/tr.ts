@@ -27,6 +27,19 @@ export const LANGUES_INFO: Record<Lang, { nom: string; drapeau: string; code: st
   it: { nom: 'Italiano', drapeau: '🇮🇹', code: 'IT' },
 };
 
+/** iPhone : la langue de l'app dans les réglages iOS (AppleLanguages), si c'est une langue de YOROI. */
+function langueIOS(): Lang | null {
+  try {
+    const { Platform, Settings } = require('react-native');
+    if (Platform.OS !== 'ios') return null;
+    const v = Settings.get('AppleLanguages');
+    const code = String(Array.isArray(v) ? v[0] ?? '' : '').slice(0, 2).toLowerCase();
+    return (LANGUES_ACTIVES as readonly string[]).includes(code) ? (code as Lang) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Langue choisie dans l'app, gardée dans le trousseau (lecture immédiate au démarrage). */
 const CLE_LANGUE = 'yoroi_langue';
 function langueEnregistree(): Lang | null {
@@ -43,7 +56,15 @@ function detect(): Lang {
   // Tests automatiques : toujours en français, pour vérifier que le texte d'origine est intact
   if (typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID) return 'fr';
   const choisie = langueEnregistree();
-  if (choisie) return choisie;
+  if (choisie) {
+    // iPhone : si la langue a été changée dans Réglages, YOROI, Langue, c'est ce choix là qui compte
+    const ios = langueIOS();
+    if (ios && ios !== choisie) {
+      try { require('expo-secure-store').setItem(CLE_LANGUE, ios); } catch { /* rien */ }
+      return ios;
+    }
+    return choisie;
+  }
   try {
     const locales = getLocales();
     for (const l of locales ?? []) {
@@ -66,6 +87,13 @@ export async function choisirLangue(l: Lang): Promise<void> {
     require('expo-secure-store').setItem(CLE_LANGUE, l);
   } catch {
     return;
+  }
+  // iPhone : la même langue pour les textes du système (autorisations, Siri) au prochain lancement
+  try {
+    const { Platform, Settings } = require('react-native');
+    if (Platform.OS === 'ios') Settings.set({ AppleLanguages: [l === 'pt' ? 'pt-BR' : l] });
+  } catch {
+    // sans effet : seule l'app change de langue
   }
   if (l === LANG) return;
   try {

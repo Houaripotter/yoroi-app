@@ -7,7 +7,7 @@
  * dans __tests__/unit/rechercheExo.test.ts.
  */
 import { EXOS } from './lexique';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, LANG } from '@/lib/i18n/tr';
 
 /* ------------------------------------------------------------------ */
 /* Noms francais des exercices nommes en anglais dans la bibliotheque   */
@@ -393,11 +393,15 @@ function indexer(e: ExoCherchable): Index {
   const hit = indexCache.get(e);
   if (hit) return hit;
   const nomMots = mots(e.name);
-  const autreMots = e.autre ? mots(e.autre) : [];
+  // 23 octobre 2026 : dans les autres langues, le nom et le muscle traduits se cherchent aussi
+  const nomTr = LANG !== 'fr' ? traduire(e.name) : e.name;
+  const autreTxt = [e.autre ?? '', nomTr !== e.name ? nomTr : ''].filter(Boolean).join(' ');
+  const autreMots = autreTxt ? mots(autreTxt) : [];
   const synMots = motsSynonymes(`${e.name} ${e.autre ?? ''}`);
   const muscleTxt = e.muscle ?? '';
-  const muscleMots = Array.from(new Set([...mots(muscleTxt), ...motsSynonymes(muscleTxt)]));
-  const idx = { nom: plier(e.name), autre: e.autre ? plier(e.autre) : '', nomMots, autreMots, synMots, muscleMots };
+  const muscleTr = LANG !== 'fr' && muscleTxt ? traduire(muscleTxt) : '';
+  const muscleMots = Array.from(new Set([...mots(muscleTxt), ...motsSynonymes(muscleTxt), ...(muscleTr && muscleTr !== muscleTxt ? mots(muscleTr) : [])]));
+  const idx = { nom: plier(e.name), autre: e.autre ? plier(e.autre) : nomTr !== e.name ? plier(nomTr) : '', nomMots, autreMots, synMots, muscleMots };
   indexCache.set(e, idx);
   return idx;
 }
