@@ -26,6 +26,7 @@ import { devNow } from '@/lib/v2/creator/devClock';
 import { FeuillePartage } from './FeuillePartage';
 import { P, Press } from './kit';
 import { traduire } from '@/lib/i18n/tr';
+import { ECHELLE_MIN_LIBELLE, LARGEUR_LIBELLE, lignesLibelleOutil, tailleLibelleOutil } from '@/lib/v2/accueil/libelleOutil';
 
 const RECORDS: ImageSourcePropType = require('@/assets/avatars/app/carnet/records.webp');
 const CARTE_A: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_nuit.webp');
@@ -159,8 +160,16 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
               {o.key === 'partager' && pastille ? (
                 <View pointerEvents="none" style={{ position: 'absolute', top: 1, right: 10, width: 15, height: 15, borderRadius: 8, backgroundColor: theme.colors.record, borderWidth: 2.5, borderColor: P.paper }} />
               ) : null}
-              <Ink size={12.5} weight="extraBold" color={theme.colors.ink} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 15 }}>
-                {traduire(o.title)}
+              <Ink
+                size={tailleLibelleOutil(o.title)}
+                weight="extraBold"
+                color={theme.colors.ink}
+                numberOfLines={lignesLibelleOutil(o.title)}
+                adjustsFontSizeToFit
+                minimumFontScale={ECHELLE_MIN_LIBELLE}
+                style={{ width: LARGEUR_LIBELLE, marginHorizontal: (80 - LARGEUR_LIBELLE) / 2, textAlign: 'center', lineHeight: 15 }}
+              >
+                {o.title}
               </Ink>
             </View>
           </Press>

@@ -5,16 +5,21 @@
  *   RangeeSemaine  : la rangee L M M J V S D de la carte « Aujourd'hui » ; chaque jour est une grande zone de
  *                    toucher (au moins 44 x 60 points) autour d'un anneau de 28 points ; le jour choisi a un fond
  *                    indigo pale, aujourd'hui un point sous la lettre, les jours a venir sont grises et inactifs
+ *   CarrouselSemaines (24 octobre 2026, Houari) : la meme rangee, glissable une semaine par page (lundi a dimanche),
+ *                    la semaine en cours par defaut, rien dans le futur ; sur une semaine passee, un repere
+ *                    « 12 au 18 oct. » et un bouton pour revenir a aujourd'hui. Sous chaque anneau, le numero du jour
+ *                    (aujourd'hui sur une pastille indigo) ; les lettres suivent la langue de l'app.
  * Donnees : lib/v2/sante/anneauxJours.ts (rien d'invente, un jour sans donnee garde ses pistes vides).
  */
-import React from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { FlatList, Pressable, View } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { CLES_ANNEAUX, LETTRES_JOURS, aUneDonnee, jourA11y, partsAnneaux } from '@/lib/v2/sante/anneauxJours';
+import { CLES_ANNEAUX, LETTRES_JOURS, aUneDonnee, borneSemaine, jourA11y, libelleSemaine, numeroJour, partsAnneaux } from '@/lib/v2/sante/anneauxJours';
 import type { AnneauxJour } from '@/lib/v2/sante/anneauxJours';
 import type { ObjectifsSante } from '@/lib/v2/accueil/enPlus';
-import { P, tap } from './kit';
+import { Icon, P, tap } from './kit';
 import { couleurActivite } from './Visus';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
 
@@ -76,9 +81,12 @@ export function a11yJourAnneaux(a: AnneauxJour, aujourdhui: string): string {
   return `${nom} : ${pas}, ${ex}, ${kcal}`;
 }
 
-export function RangeeSemaine({ jours, choisi, aujourdhui, objectifs, onChoisir }: { jours: AnneauxJour[]; choisi: string; aujourdhui: string; objectifs: ObjectifsSante | null | undefined; onChoisir: (iso: string) => void }) {
+/** Hauteur d'une rangee : lettre, anneau de 28 points, numero du jour (4 points de plus qu'avant le numero) */
+export const HAUTEUR_RANGEE = 66;
+
+export function RangeeSemaine({ jours, choisi, aujourdhui, objectifs, onChoisir, largeur }: { jours: AnneauxJour[]; choisi: string; aujourdhui: string; objectifs: ObjectifsSante | null | undefined; onChoisir: (iso: string) => void; /** dans le carrousel : la largeur de la page (sans marge negative) */ largeur?: number }) {
   return (
-    <View style={{ flexDirection: 'row', marginHorizontal: -6 }} accessibilityRole="tablist">
+    <View style={largeur ? { flexDirection: 'row', width: largeur } : { flexDirection: 'row', marginHorizontal: -6 }} accessibilityRole="tablist">
       {jours.map((a, i) => {
         const sel = a.date === choisi;
         const auj = a.date === aujourdhui;
@@ -98,12 +106,12 @@ export function RangeeSemaine({ jours, choisi, aujourdhui, objectifs, onChoisir 
             style={({ pressed }) => ({
               flex: 1,
               minWidth: 44,
-              minHeight: 62,
+              minHeight: HAUTEUR_RANGEE,
               marginHorizontal: 1,
               borderRadius: 16,
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 3,
+              gap: 2,
               backgroundColor: sel ? P.accentSoft : pressed ? P.paper : 'transparent',
               opacity: a.futur ? 0.4 : 1,
             })}
@@ -112,11 +120,118 @@ export function RangeeSemaine({ jours, choisi, aujourdhui, objectifs, onChoisir 
               {LETTRES_JOURS[i] ?? ''}
             </Ink>
             <MiniAnneaux parts={partsAnneaux(a, objectifs)} taille={28} futur={a.futur} />
-            {/* aujourd'hui : un point sous l'anneau (reserve aussi pour les autres jours, tout reste aligne) */}
-            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: auj ? P.accent : 'transparent' }} />
+            {/* le numero du jour en tout petit ; aujourd'hui sur une pastille indigo (remplace l'ancien point) */}
+            <View style={{ minWidth: 18, height: 14, paddingHorizontal: 3, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: auj ? P.accent : 'transparent' }}>
+              <Ink size={9.5} weight={auj || sel ? 'black' : 'bold'} color={auj ? '#FFFFFF' : sel ? P.accent : P.ink2} style={{ lineHeight: 12, fontVariant: ['tabular-nums'] }}>
+                {numeroJour(a.date)}
+              </Ink>
+            </View>
           </Pressable>
         );
       })}
+    </View>
+  );
+}
+
+export type SemaineRangee = { lundi: string; jours: AnneauxJour[] };
+
+/**
+ * La rangee glissable : semaines[0] est la semaine en cours (a droite), les suivantes remontent le temps.
+ * Liste horizontale inversee et paginee, comme l'historique de app/sante/anneaux.tsx : balayer vers la droite
+ * montre la semaine d'avant. Seul un glisse horizontal sur la rangee change de semaine (le defilement vertical
+ * de l'accueil passe au-dessus). onSemaine : appele a chaque nouvelle semaine affichee (lecture de l'historique).
+ */
+export function CarrouselSemaines({
+  semaines,
+  choisi,
+  aujourdhui,
+  objectifs,
+  onChoisir,
+  onSemaine,
+  onRetour,
+}: {
+  semaines: SemaineRangee[];
+  choisi: string;
+  aujourdhui: string;
+  objectifs: ObjectifsSante | null | undefined;
+  onChoisir: (iso: string) => void;
+  onSemaine?: (index: number) => void;
+  /** retour a la semaine en cours par le bouton : la carte revient sur aujourd'hui */
+  onRetour?: () => void;
+}) {
+  const [largeur, setLargeur] = useState(0);
+  const [page, setPage] = useState(0);
+  const liste = useRef<FlatList<SemaineRangee>>(null);
+  const n = semaines.length;
+  const p = borneSemaine(page, n);
+
+  const changer = useCallback(
+    (k: number) => {
+      setPage(k);
+      onSemaine?.(k);
+    },
+    [onSemaine],
+  );
+
+  const finDefilement = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!largeur) return;
+    const k = borneSemaine(e.nativeEvent.contentOffset.x / largeur, n);
+    if (k === p) return;
+    tap('light');
+    changer(k);
+  };
+
+  const revenir = () => {
+    tap('light');
+    changer(0);
+    liste.current?.scrollToIndex({ index: 0, animated: true });
+    onRetour?.();
+  };
+
+  if (!n) return null;
+  const vue = semaines[p];
+  return (
+    <View style={{ gap: 6 }}>
+      {p > 0 && vue ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 22 }}>
+          <Ink size={11.5} weight="extraBold" color={P.ink2} numberOfLines={1} style={{ flexShrink: 1 }} accessibilityRole="header">
+            {libelleSemaine(vue.lundi)}
+          </Ink>
+          <Pressable
+            onPress={revenir}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={traduire('Revenir à aujourd’hui')}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 2, height: 22, paddingLeft: 9, paddingRight: 6, borderRadius: 11, backgroundColor: P.accentSoft, opacity: pressed ? 0.6 : 1 })}
+          >
+            <Ink size={11} weight="extraBold" color={P.accent} numberOfLines={1}>
+              {traduire('Aujourd’hui')}
+            </Ink>
+            <Icon name="chevron" size={11} color={P.accent} width={2.6} />
+          </Pressable>
+        </View>
+      ) : null}
+      <View style={{ marginHorizontal: -6, minHeight: HAUTEUR_RANGEE }} onLayout={(e) => setLargeur(Math.floor(e.nativeEvent.layout.width))}>
+        {largeur > 0 ? (
+          <FlatList
+            ref={liste}
+            data={semaines}
+            keyExtractor={(s) => s.lundi}
+            horizontal
+            inverted
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            directionalLockEnabled
+            getItemLayout={(_, i) => ({ length: largeur, offset: largeur * i, index: i })}
+            onMomentumScrollEnd={finDefilement}
+            initialNumToRender={2}
+            windowSize={3}
+            style={{ width: largeur }}
+            extraData={choisi}
+            renderItem={({ item }) => <RangeeSemaine jours={item.jours} choisi={choisi} aujourdhui={aujourdhui} objectifs={objectifs} onChoisir={onChoisir} largeur={largeur} />}
+          />
+        ) : null}
+      </View>
     </View>
   );
 }

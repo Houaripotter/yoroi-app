@@ -28,7 +28,11 @@ export type HistoriqueAnneaux = {
   actualiser: () => Promise<void>;
 };
 
-export function useAnneauxHistorique(jours: number): HistoriqueAnneaux {
+/**
+ * actif (24 octobre 2026) : faux, rien n'est lu (la rangee de l'accueil n'allume la lecture qu'au premier balayage
+ * vers une semaine passee) ; les series deja lues par l'accueil restent disponibles.
+ */
+export function useAnneauxHistorique(jours: number, actif = true): HistoriqueAnneaux {
   const [series, setSeries] = useState<SeriesJour>(() => fusionnerSeries(null, seriesDeLAccueil()));
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [goals, setGoals] = useState<RingGoals>(DEFAULT_GOALS);
@@ -67,6 +71,11 @@ export function useAnneauxHistorique(jours: number): HistoriqueAnneaux {
 
   useEffect(() => {
     vivant.current = true;
+    if (!actif) {
+      return () => {
+        vivant.current = false;
+      };
+    }
     getRingGoals()
       .then((g) => vivant.current && setGoals(g))
       .catch(() => {});
@@ -78,7 +87,7 @@ export function useAnneauxHistorique(jours: number): HistoriqueAnneaux {
       vivant.current = false;
       sub.remove();
     };
-  }, [lire, lireSeances]);
+  }, [lire, lireSeances, actif]);
 
   const actualiser = useCallback(async () => {
     viderCacheAnneaux();

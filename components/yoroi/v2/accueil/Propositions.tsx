@@ -6,7 +6,7 @@
  *   Carrousel       : C, tes tuiles d'entrainement et de corps en defilement horizontal
  * Memes donnees que la grille A, rien d'invente : une mesure absente n'apparait pas.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,9 +27,11 @@ import { MESURE_SANTE } from './SanteJour';
 import { useStyleContour, useStyleValeurs } from '@/lib/v2/accueil/proposition';
 import type { Training } from '@/lib/database';
 import type { HydrationDay } from '@/lib/v2/accueil/hydration';
-import { aUneDonnee, eauDuJour, jourA11y, mesuresDuJour, nuitDuJour, retenirSeriesAccueil, semaineAnneaux, titreJour } from '@/lib/v2/sante/anneauxJours';
+import { SEMAINES_ACCUEIL, aUneDonnee, eauDuJour, fusionnerSeries, jourA11y, joursPourSemaines, lundisSemaines, mesuresDuJour, nuitDuJour, retenirSeriesAccueil, semaineAnneaux, semaineAnneauxDu, titreJour } from '@/lib/v2/sante/anneauxJours';
 import type { SeriesJour } from '@/lib/v2/sante/anneauxJours';
-import { RangeeSemaine } from './AnneauxSemaine';
+import { useAnneauxHistorique } from '@/lib/v2/sante/useAnneauxHistorique';
+import { CarrouselSemaines } from './AnneauxSemaine';
+import type { SemaineRangee } from './AnneauxSemaine';
 import type { StyleValeurs } from '@/lib/v2/accueil/proposition';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
 
@@ -122,10 +124,23 @@ export function TableauDuJour({
   useEffect(() => {
     retenirSeriesAccueil(series);
   }, [series]);
+  // 24 octobre 2026 (Houari) : la rangee se glisse vers les semaines passees ; l'historique (12 semaines, cache de
+  // lib/v2/sante/anneauxJours.ts) n'est lu qu'au premier balayage, les 30 jours de l'accueil suffisent avant
+  const [historique, setHistorique] = useState(false);
+  const h = useAnneauxHistorique(joursPourSemaines(SEMAINES_ACCUEIL), historique);
+  const seriesTout = useMemo(() => (historique ? fusionnerSeries(h.series, series) : series), [historique, h.series, series]);
+  const trainingsTout = historique && h.trainings.length > (trainings?.length ?? 0) ? h.trainings : trainings;
+  const onSemaine = useCallback((i: number) => {
+    if (i > 0) setHistorique(true);
+  }, []);
   const estAujourdhui = choisi === aujourdhui;
-  const mesuresJour = useMemo(() => (estAujourdhui ? mesures : mesuresDuJour(series, trainings, choisi, aujourdhui)), [estAujourdhui, mesures, series, trainings, choisi, aujourdhui]);
+  const mesuresJour = useMemo(() => (estAujourdhui ? mesures : mesuresDuJour(seriesTout, trainingsTout, choisi, aujourdhui)), [estAujourdhui, mesures, seriesTout, trainingsTout, choisi, aujourdhui]);
   const semaine = useMemo(() => (series ? semaineAnneaux(series, trainings, aujourdhui, mesures) : null), [series, trainings, aujourdhui, mesures]);
   const avecSemaine = !!semaine && semaine.some(aUneDonnee);
+  const semaines: SemaineRangee[] = useMemo(() => {
+    if (!semaine) return [];
+    return lundisSemaines(aujourdhui, SEMAINES_ACCUEIL).map((lundi, i) => ({ lundi, jours: i === 0 ? semaine : semaineAnneauxDu(lundi, seriesTout, trainingsTout, aujourdhui) }));
+  }, [semaine, aujourdhui, seriesTout, trainingsTout]);
   const trois = ORDRE_ACTIVITE.map((k) => ({ cle: k, m: mesuresJour.find((x) => x.cle === k) ?? null }));
   const avecAnneaux = avecSemaine || trois.some((x) => x.m);
   const autres = mesuresJour.filter((m) => !['pas', 'energie-active', 'exercice', 'sommeil'].includes(m.cle));
@@ -143,13 +158,13 @@ export function TableauDuJour({
         </Ink>
         <Pressable onPress={() => router.push('/sante' as any)} accessibilityRole="button" accessibilityLabel={traduire("Ouvrir Santé")} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
           <Ink size={12.5} weight="extraBold" color={P.accent}>
-            Santé
+            {traduire('Santé')}
           </Ink>
           <Icon name="chevron" size={13} color={P.accent} width={2.6} />
         </Pressable>
       </View>
 
-      {avecSemaine && semaine ? <RangeeSemaine jours={semaine} choisi={choisi} aujourdhui={aujourdhui} objectifs={objectifs} onChoisir={setChoisi} /> : null}
+      {avecSemaine && semaines.length ? <CarrouselSemaines semaines={semaines} choisi={choisi} aujourdhui={aujourdhui} objectifs={objectifs} onChoisir={setChoisi} onSemaine={onSemaine} onRetour={() => setChoisi(aujourdhui)} /> : null}
 
       {avecAnneaux ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

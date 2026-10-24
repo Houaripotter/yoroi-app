@@ -18,7 +18,7 @@
 import type { Training } from '@/lib/database';
 import { activiteAvecSeances, objectifMesure, santeDuJour } from '@/lib/v2/accueil/enPlus';
 import type { MesureSanteJour, ObjectifsSante } from '@/lib/v2/accueil/enPlus';
-import { traduire } from '@/lib/i18n/tr';
+import { LOCALE, traduire } from '@/lib/i18n/tr';
 
 export type Point = { date: string; value: number };
 export type SeriesJour = Partial<Record<string, Point[] | null | undefined>>;
@@ -27,10 +27,46 @@ export type SeriesJour = Partial<Record<string, Point[] | null | undefined>>;
 export const CLES_ANNEAUX = ['pas', 'exercice', 'energie-active'] as const;
 export type CleAnneau = (typeof CLES_ANNEAUX)[number];
 
-export const LETTRES_JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+/**
+ * 24 octobre 2026 (Houari, iPhone en portugais : « L M M J V S D » restait en francais) : la lettre de chaque jour
+ * vient de la langue de l'app (Intl, jour « narrow »), du lundi au dimanche. Si Intl manque ou rend autre chose
+ * qu'une lettre, la table ci-dessous (memes lettres que le calendrier de chaque langue) prend le relais.
+ */
+const LETTRES_SECOURS: Record<string, string[]> = {
+  fr: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+  en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+  de: ['M', 'D', 'M', 'D', 'F', 'S', 'S'],
+  nl: ['M', 'D', 'W', 'D', 'V', 'Z', 'Z'],
+  es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
+  pt: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
+  it: ['L', 'M', 'M', 'G', 'V', 'S', 'D'],
+};
+
+/** Les 7 lettres des jours (lundi a dimanche) dans la langue d'une locale (« pt-BR » donne S T Q Q S S D) */
+export function lettresJours(locale: string = LOCALE): string[] {
+  const secours = LETTRES_SECOURS[(locale || 'fr').slice(0, 2).toLowerCase()] ?? LETTRES_SECOURS.fr;
+  try {
+    const f = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+    // le 19 octobre 2026 est un lundi ; a midi pour ne jamais glisser au changement d'heure
+    const l = Array.from({ length: 7 }, (_, i) => f.format(new Date(2026, 9, 19 + i, 12)).trim());
+    if (l.every((x) => x.length > 0 && x.length <= 2)) return l.map((x) => x.toLocaleUpperCase(locale));
+  } catch {
+    // Intl absent : la table
+  }
+  return secours;
+}
+
+/** Lettres des jours, lundi en premier, dans la langue de l'app */
+export const LETTRES_JOURS = lettresJours(LOCALE);
+
+/** Numero du jour du mois d'une date AAAA-MM-JJ (« 2026-10-19 » donne « 19 ») */
+export function numeroJour(iso: string): string {
+  return String(Number(iso.slice(8, 10)));
+}
 const NOMS_JOURS = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), traduire('mercredi'), traduire('jeudi'), traduire('vendredi'), traduire('samedi')];
 const MOIS = [traduire('janvier'), traduire('février'), traduire('mars'), traduire('avril'), traduire('mai'), traduire('juin'), traduire('juillet'), traduire('août'), traduire('septembre'), traduire('octobre'), traduire('novembre'), traduire('décembre')];
-const MOIS_COURT = ['janv.', traduire('févr.'), traduire('mars'), 'avr.', traduire('mai'), traduire('juin'), 'juil.', traduire('août'), 'sept.', 'oct.', 'nov.', traduire('déc.')];
+// 24 octobre 2026 : tous les mois passent par traduire (« oct. » restait en francais en portugais)
+const MOIS_COURT = [traduire('janv.'), traduire('févr.'), traduire('mars'), traduire('avr.'), traduire('mai'), traduire('juin'), traduire('juil.'), traduire('août'), traduire('sept.'), traduire('oct.'), traduire('nov.'), traduire('déc.')];
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 const maj = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -141,6 +177,45 @@ export function aUneDonnee(a: AnneauxJour | null | undefined): boolean {
 /** Les 7 jours de la semaine d'un jour (lundi a dimanche) ; aujourdhuiMesures remplace le calcul pour aujourd'hui */
 export function semaineAnneaux(series: SeriesJour | null | undefined, trainings: Training[] | null | undefined, aujourdhui: string, aujourdhuiMesures?: MesureSanteJour[] | null): AnneauxJour[] {
   return semaineDe(aujourdhui).map((iso) => (iso === aujourdhui && aujourdhuiMesures ? anneauxDesMesures(aujourdhuiMesures, iso, aujourdhui) : anneauxDuJour(series, trainings, iso, aujourdhui)));
+}
+
+/* ============ Semaines de la rangee de l'accueil ============ */
+
+/** Semaines que la rangee de l'accueil laisse parcourir (la semaine en cours comprise) */
+export const SEMAINES_ACCUEIL = 12;
+
+/** Jours d'historique a lire pour ces semaines (du lundi le plus ancien a aujourd'hui) */
+export function joursPourSemaines(n: number = SEMAINES_ACCUEIL): number {
+  return Math.min(365, Math.max(1, n) * 7);
+}
+
+/**
+ * Les lundis des semaines a parcourir, de la semaine en cours (index 0) vers le passe. Jamais de semaine future :
+ * la premiere est toujours celle d'aujourd'hui.
+ */
+export function lundisSemaines(aujourdhui: string, n: number = SEMAINES_ACCUEIL): string[] {
+  const l = lundiDe(aujourdhui);
+  return Array.from({ length: Math.max(1, n) }, (_, i) => ajouterJours(l, -7 * i));
+}
+
+/** L'index de semaine borne : 0 (semaine en cours) au plus ancien, jamais en negatif (le futur) */
+export function borneSemaine(i: number, n: number = SEMAINES_ACCUEIL): number {
+  if (!Number.isFinite(i)) return 0;
+  return Math.max(0, Math.min(Math.max(1, n) - 1, Math.round(i)));
+}
+
+/** Les 7 jours d'une semaine passee ou en cours (lundi donne) ; les jours apres aujourd'hui restent « a venir » */
+export function semaineAnneauxDu(lundi: string, series: SeriesJour | null | undefined, trainings: Training[] | null | undefined, aujourdhui: string): AnneauxJour[] {
+  return semaineDe(lundi).map((iso) => anneauxDuJour(series, trainings, iso, aujourdhui));
+}
+
+/** Le repere d'une semaine : « 12 au 18 oct. » */
+export function libelleSemaine(lundi: string): string {
+  const fin = ajouterJours(lundi, 6);
+  const a = midi(lundi);
+  const b = midi(fin);
+  if (a.getMonth() === b.getMonth()) return traduire("{0} au {1} {2}", a.getDate(), b.getDate(), MOIS_COURT[b.getMonth()]);
+  return libellePeriode(lundi, fin);
 }
 
 /** Les cibles des trois anneaux : objectifs de l'app (repere 8 000 pas, 30 min, 500 kcal par defaut) */
