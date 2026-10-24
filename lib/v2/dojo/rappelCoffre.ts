@@ -15,6 +15,7 @@ import { logger } from '@/lib/security/logger';
 import type { ArmureState } from '@/lib/v2/armure';
 import { vitrineActive } from '@/lib/v2/visite/vitrine';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { sourceNotif, srcPluriel } from '@/lib/notificationLangue';
 
 const KEY = '@yoroi_rappel_coffre_v1';
 export const RAPPEL_COFFRE_TYPE = 'coffre_du_jour';
@@ -53,7 +54,7 @@ async function annuler(): Promise<void> {
 }
 
 /** Texte du rappel selon ta journee : jamais culpabilisant */
-export function texteRappel(state: Pick<ArmureState, 'serie' | 'coffre'> | null, pourDemain: boolean): { title: string; body: string } {
+export function texteRappel(state: Pick<ArmureState, 'serie' | 'coffre'> | null, pourDemain: boolean): { title: string; body: string; i18n?: ReturnType<typeof sourceNotif> } {
   const serie = state?.serie?.jours ?? 0;
   if (!pourDemain && state?.coffre?.etat === 'pret') {
     return { title: traduire('Ton coffre est prêt'), body: traduire('Ta récompense du jour t’attend dans le Dojo.') };
@@ -62,7 +63,12 @@ export function texteRappel(state: Pick<ArmureState, 'serie' | 'coffre'> | null,
     return { title: traduire('C’est le jour du grand coffre'), body: traduire('Un geste aujourd’hui et il s’ouvre : une séance, une pesée ou un verre d’eau.') };
   }
   if (!pourDemain && serie > 0) {
-    return { title: traduirePluriel(serie, serie > 1, "{0} jour d’affilée, et demain ?", "{0} jours d’affilée, et demain ?", serie), body: traduire('Un verre d’eau noté suffit pour ouvrir ton coffre du jour.') };
+    return {
+      title: traduirePluriel(serie, serie > 1, "{0} jour d’affilée, et demain ?", "{0} jours d’affilée, et demain ?", serie),
+      body: traduire('Un verre d’eau noté suffit pour ouvrir ton coffre du jour.'),
+      // de quoi réafficher l'historique dans une autre langue
+      i18n: sourceNotif(srcPluriel(serie, serie > 1, "{0} jour d’affilée, et demain ?", "{0} jours d’affilée, et demain ?", serie)),
+    };
   }
   return { title: traduire('Ton coffre du jour t’attend'), body: traduire('Une séance, une pesée ou un verre d’eau, et il s’ouvre.') };
 }
@@ -83,7 +89,7 @@ export async function programmerRappelCoffre(state: ArmureState | null): Promise
     const date = pourDemain ? new Date(aujourdhui.getTime() + 24 * 3600 * 1000) : aujourdhui;
     const t = texteRappel(state, pourDemain);
     await Notifications.scheduleNotificationAsync({
-      content: { title: t.title, body: t.body, data: { type: RAPPEL_COFFRE_TYPE, screen: 'dojo' }, sound: true },
+      content: { title: t.title, body: t.body, data: { type: RAPPEL_COFFRE_TYPE, screen: 'dojo', ...t.i18n }, sound: true },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
     });
   } catch (e) {

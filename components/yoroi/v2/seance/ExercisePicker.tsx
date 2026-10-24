@@ -2,8 +2,11 @@
  * Choix d'un exercice : recherche, recents en premier, filtre par groupe musculaire.
  * 16 octobre : noms francais affiches, recherche dans toutes les categories des la premiere lettre
  * (nom francais, nom anglais, mots de salle, muscle), voir lib/v2/seance/rechercheExo.ts.
+ * 24 octobre 2026 : grand champ de recherche en tete, liste « Tous » rangee par muscle avec un titre par muscle,
+ * « Ajouter « xxx » comme exercice » quand rien ne correspond. Les recherches sans resultat sont gardees en local
+ * (lib/v2/seance/recherchesIntrouvables.ts) pour ajouter les exercices manquants a la prochaine mise a jour.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -18,8 +21,13 @@ import { MachineFinder, MachineFinderButton } from './MachineFinder';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { traduire } from '@/lib/i18n/tr';
+import { noterRecherche } from '@/lib/v2/seance/recherchesIntrouvables';
 
 type Item = { key: string; name: string; autre?: string; muscle: string; history?: ExerciseHistory; count?: number; rang?: number };
+type Ligne = { kind: 'titre'; key: string; muscle: string; n: number } | { kind: 'exo'; key: string; item: Item };
+
+/** temps de pause apres la derniere lettre avant de garder une recherche sans resultat */
+const PAUSE_RECHERCHE_MS = 1200;
 
 type Props = {
   visible: boolean;
@@ -39,6 +47,8 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<string | null>(recent.length > 0 ? 'recents' : null);
   const [machines, setMachines] = useState(false);
+  const [focus, setFocus] = useState(false);
+  const dejaNote = useRef('');
 
   const all = useMemo<Item[]>(() => construireCatalogue(strengthLibrary(), history, normName), [history]);
 
@@ -71,11 +81,54 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
     return [...base].sort((a, b) => (b.history?.count ?? 0) - (a.history?.count ?? 0) || a.name.localeCompare(b.name, 'fr'));
   }, [all, query, group, recent]);
 
+  // « Tous » sans recherche : un titre par muscle, dans l'ordre des muscles
+  const lignes = useMemo<Ligne[]>(() => {
+    const exos = (l: Item[]): Ligne[] => l.map((item) => ({ kind: 'exo', key: item.key, item }));
+    if (query.trim() || group !== null) return exos(list);
+    const parMuscle = new Map<string, Item[]>();
+    for (const i of list) {
+      const arr = parMuscle.get(i.muscle) ?? [];
+      arr.push(i);
+      parMuscle.set(i.muscle, arr);
+    }
+    const out: Ligne[] = [];
+    for (const g of groups) {
+      const arr = parMuscle.get(g);
+      if (!arr?.length) continue;
+      out.push({ kind: 'titre', key: `titre-${g}`, muscle: g, n: arr.length }, ...exos(arr));
+    }
+    return out;
+  }, [list, query, group, groups]);
+
+  // recherche sans resultat : seulement le terme final, apres une pause
+  const nbResultats = list.length;
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 3 || nbResultats > 0) return;
+    const t = setTimeout(() => noter(q), PAUSE_RECHERCHE_MS);
+    return () => clearTimeout(t);
+  }, [query, nbResultats]);
+
+  function noter(q: string) {
+    const k = q.toLowerCase();
+    if (dejaNote.current === k) return;
+    dejaNote.current = k;
+    void noterRecherche(q, 0);
+  }
+
   const exact = query.trim() && all.some((i) => normName(i.name) === normName(query) || (!!i.autre && normName(i.autre) === normName(query)));
 
   const pick = (name: string, muscle?: string) => {
     onPick(name, muscle);
     setQuery('');
+  };
+
+  // exercice cree a la main : c'est aussi un exercice qui manque a la bibliotheque
+  const ajouterPerso = () => {
+    const q = query.trim();
+    if (!q) return;
+    noter(q);
+    pick(q);
   };
 
   const chip = (id: string | null, label: string) => {
@@ -98,41 +151,50 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           </Pressable>
         </View>
 
-        <View style={{ marginHorizontal: 22, marginTop: 14, height: 50, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, gap: 10 }}>
-          <Icon name="search" size={20} color={c.textMuted} />
+        <View style={{ marginHorizontal: 22, marginTop: 16, height: 60, borderRadius: 20, backgroundColor: c.surface, borderWidth: focus ? 2 : 1.5, borderColor: focus ? c.ink : c.border, flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8, gap: 12 }}>
+          <Icon name="search" size={22} color={focus ? c.ink : c.textMuted} strokeWidth={2.4} />
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder={traduire("Développé, squat, tractions...")}
             placeholderTextColor={c.textMuted}
             autoCorrect={false}
+            autoCapitalize="none"
             returnKeyType="search"
+            clearButtonMode="never"
+            onFocus={() => setFocus(true)}
+            onBlur={() => setFocus(false)}
             accessibilityLabel={traduire("Chercher un exercice")}
-            style={[fontStyle('bold'), { flex: 1, fontSize: 16, color: c.ink, paddingVertical: 0 }]}
+            style={[fontStyle('bold'), { flex: 1, fontSize: 18, color: c.ink, paddingVertical: 0 }]}
           />
           {query ? (
-            <Pressable onPress={() => setQuery('')} accessibilityLabel={traduire("Effacer la recherche")} hitSlop={10}>
-              <Icon name="close" size={16} color={c.textMuted} />
+            <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={traduire("Effacer la recherche")} hitSlop={6} style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="close" size={14} color={c.textSecondary} strokeWidth={2.8} />
+              </View>
             </Pressable>
           ) : null}
         </View>
 
-        {/* 16 octobre : retrouver l'exercice par l'image de la machine, ou par une photo */}
-        <View style={{ marginHorizontal: 22, marginTop: 10 }}>
-          <MachineFinderButton onPress={() => setMachines(true)} />
-        </View>
-
-        <View style={{ height: 54 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 22, alignItems: 'center' }}>
+        <View style={{ height: 58 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 6, paddingHorizontal: 22, alignItems: 'center' }}>
             {recent.length > 0 ? chip('recents', traduire('Récents')) : null}
             {chip(null, traduire('Tous'))}
             {groups.map((g) => chip(g, niceGroup(g)))}
           </ScrollView>
         </View>
 
+        {/* 16 octobre : retrouver l'exercice par l'image de la machine, ou par une photo. Cache pendant la recherche. */}
+        {query.trim() ? null : (
+          <View style={{ marginHorizontal: 22, marginBottom: 8 }}>
+            <MachineFinderButton onPress={() => setMachines(true)} />
+          </View>
+        )}
+
         <FlatList
-          data={list}
-          keyExtractor={(i) => i.key}
+          data={lignes}
+          keyExtractor={(l) => l.key}
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 30, gap: 6 }}
           ListEmptyComponent={
@@ -142,9 +204,9 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
                   <Ink size={16} weight="extraBold" style={{ textAlign: 'center' }}>{traduire("Aucun exercice pour « {0} »", query.trim())}</Ink>
                   <Ink size={13} color={c.textSecondary} style={{ textAlign: 'center' }}>{traduire("Essaie un autre mot, en français ou en anglais, ou crée-le tel quel.")}</Ink>
                 </View>
-                <Pressable onPress={() => pick(query.trim())} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.accentPressed : c.accent })}>
+                <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ alignSelf: 'stretch', minHeight: 56, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: pressed ? c.accentPressed : c.accent })}>
                   <Icon name="plus" size={20} color={c.onAccent} strokeWidth={2.8} />
-                  <Ink size={16} weight="extraBold" color={c.onAccent}>{traduire("Créer cet exercice")}</Ink>
+                  <Ink size={16} weight="extraBold" color={c.onAccent} numberOfLines={1} style={{ flexShrink: 1 }}>{traduire("Ajouter « {0} » comme exercice", query.trim())}</Ink>
                 </Pressable>
               </View>
             ) : (
@@ -155,13 +217,22 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
           }
           ListFooterComponent={
             query.trim() && !exact && list.length > 0 ? (
-              <Pressable onPress={() => pick(query.trim())} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent', borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border })}>
+              <Pressable onPress={ajouterPerso} accessibilityRole="button" accessibilityLabel={traduire("Créer l’exercice {0}", query.trim())} style={({ pressed }) => ({ minHeight: 56, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent', borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.border })}>
                 <Icon name="plus" size={18} color={c.textSecondary} strokeWidth={2.6} />
-                <Ink size={15} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{traduire("Pas dans la liste ? Créer « {0} »", query.trim())}</Ink>
+                <Ink size={15} weight="bold" color={c.textSecondary} style={{ flex: 1 }} numberOfLines={1}>{traduire("Pas dans la liste ? Ajouter « {0} » comme exercice", query.trim())}</Ink>
               </Pressable>
             ) : null
           }
-          renderItem={({ item }) => {
+          renderItem={({ item: ligne }) => {
+            if (ligne.kind === 'titre') {
+              return (
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, paddingTop: 14, paddingBottom: 2, paddingHorizontal: 4 }} accessibilityRole="header">
+                  <Ink size={13} weight="black" color={c.textSecondary}>{niceGroup(ligne.muscle)}</Ink>
+                  <Ink size={12} color={c.textMuted}>{ligne.n}</Ink>
+                </View>
+              );
+            }
+            const item = ligne.item;
             const last = item.history ? bestSet(item.history.lastSets) : null;
             const inSession = alreadySet.has(item.key);
             return (

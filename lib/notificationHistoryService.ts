@@ -6,6 +6,8 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import type { Lang } from '@/lib/i18n/tr';
+import { preparerEntree, type SourceTexte } from '@/lib/notificationLangue';
 
 // ============================================
 // TYPES
@@ -19,6 +21,14 @@ export interface NotificationHistoryItem {
   timestamp: number; // Date.now()
   read: boolean;
   data?: Record<string, any>;
+  /** Langue du titre et du texte au moment de la réception (absente sur les anciennes entrées). */
+  lang?: Lang;
+  /**
+   * De quoi retraduire le titre et le texte dans la langue actuelle (facultatif) :
+   * phrase française, valeurs {0}, pluriel. Voir lib/notificationLangue.ts.
+   * Le titre et le texte ci-dessus restent la solution de secours.
+   */
+  src?: { titre?: SourceTexte; texte?: SourceTexte };
 }
 
 // ============================================
@@ -33,7 +43,9 @@ const MAX_NOTIFICATIONS = 100;
 // ============================================
 
 /**
- * Sauvegarde une notification dans l'historique
+ * Sauvegarde une notification dans l'historique.
+ * data.__i18n (voir sourceNotif() dans lib/notificationLangue.ts) permet de la réafficher plus tard
+ * dans une autre langue ; il est rangé dans src et retiré de data.
  */
 export async function saveNotification(
   title: string,
@@ -43,6 +55,7 @@ export async function saveNotification(
 ): Promise<void> {
   try {
     const notifications = await getNotifications();
+    const langue = preparerEntree(title, body, data);
 
     const item: NotificationHistoryItem = {
       id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
@@ -51,7 +64,9 @@ export async function saveNotification(
       body,
       timestamp: Date.now(),
       read: false,
-      data,
+      data: langue.data,
+      lang: langue.lang,
+      ...(langue.src ? { src: langue.src } : {}),
     };
 
     notifications.unshift(item);

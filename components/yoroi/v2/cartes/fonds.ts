@@ -36,6 +36,8 @@ export const FONDS: FondMeta[] = [
 ];
 
 export function fondMeta(id: FondId): FondMeta {
+  // une de tes scenes ('scene:<id>') se comporte comme Ma scène
+  if (typeof id === 'string' && id.startsWith('scene:')) return FONDS.find((f) => f.id === 'scene') ?? FONDS[0];
   return FONDS.find((f) => f.id === id) ?? FONDS[0];
 }
 

@@ -84,11 +84,11 @@ function greeting(): string {
 }
 
 /**
- * Hauteur de la scene : entre 260 et 330 points selon l'encoche (19 octobre : la fenetre, 317 sur un iPhone 15 Pro Max).
+ * Hauteur de la scene : entre 220 et 265 points selon l'encoche (24 octobre, Houari : plus petite, 250 sur un iPhone 15 Pro Max ; 19 octobre : 317).
  * Avant : 226 a 274, avec 64 points caches derriere tes outils.
  */
 export function sceneHeight(top: number): number {
-  return Math.max(260, Math.min(330, top + 258));
+  return Math.max(220, Math.min(265, top + 191));
 }
 
 /** 19 octobre : le calque de la scene ne deborde plus sous tes outils (avant : 64 points) */

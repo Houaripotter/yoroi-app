@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import { logger } from '@/lib/security/logger';
 import { contenuSansSante } from '@/lib/v2/notifications/texte';
 import { traduire } from '@/lib/i18n/tr';
+import { sourceNotif, src } from '@/lib/notificationLangue';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -152,6 +153,8 @@ export const scheduleSparringReminders = async (
           {
             title: traduire('Objectif en attente'),
             body: traduire("Ton objectif contre {0} : \"{1}\", ça fait {2} jours sans sparring", name, goal, days),
+            // de quoi réafficher l'historique dans une autre langue
+            data: sourceNotif(src('Objectif en attente'), src("Ton objectif contre {0} : \"{1}\", ça fait {2} jours sans sparring", name, goal, days)),
           },
           {
             seconds: 5,
@@ -168,6 +171,7 @@ export const scheduleSparringReminders = async (
           {
             title: traduire("Sparring avec {0} ?", name),
             body: traduire("Objectif en cours : {0}", goal),
+            data: sourceNotif(src("Sparring avec {0} ?", name), src("Objectif en cours : {0}", goal)),
           },
           tomorrowAt9am(),
         );

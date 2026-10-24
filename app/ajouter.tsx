@@ -3,7 +3,8 @@
  * 1. Seance : tes sports favoris pour noter une seance faite en quelques touchers (mode seance faite,
  *    pas de chrono), Dicte ta seance mis en valeur, le creneau prevu aujourd'hui, Refaire ta derniere,
  *    Seance passee (date au choix), l'import de la montre quand Apple Sante ou Health Connect est relie,
- *    et le direct avec chrono en second.
+ *    et le direct avec chrono en second. (24 octobre 2026) La seance du programme en cours en tete, sinon
+ *    l'entree Programmes en bas de la carte.
  * 2. Corps : Pesee (poids) et Pesee par photo lue par ton IA (BALANCE 3, cote a cote), Balance connectee (composition, importee d'Apple Sante si relie),
  *    Mensurations, Photo de forme.
  * Le reste a sa vraie place (Sommeil et Eau dans « Ta forme du jour » de l'Accueil, Videos dans le
@@ -37,6 +38,9 @@ import { P } from '@/components/yoroi/livePalette';
 import { TourAnchor } from '@/components/yoroi/v2/tour/TourAnchor';
 import { saisieDirecte } from '@/lib/v2/nav/direct';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { chargerProgrammeActif, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
+import { routeDuJour } from '@/lib/v2/programmes/lancer';
 
 type Other = { key: string; title: string; sub: string; href: string; params?: Record<string, string> };
 
@@ -55,6 +59,8 @@ export default function Ajouter() {
   const [provider, setProvider] = useState<string | null>(null);
   const [sync, setSync] = useState<'idle' | 'busy' | string>('idle');
   const [more, setMore] = useState(false);
+  // 24 octobre 2026 : seance du programme en cours (lib/v2/programmes)
+  const [prog, setProg] = useState<{ route: { pathname: string; params: Record<string, string> }; titre: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -82,6 +88,12 @@ export default function Ajouter() {
         // le menu reste utilisable avec les valeurs par defaut
       }
     })();
+    chargerProgrammeActif()
+      .then((a) => {
+        const s = a ? prochainJour(a) : null;
+        setProg(s ? { route: routeDuJour(s.programme, s.jour, semaineDuProgramme(a!)), titre: traduire('Jour {0}, {1}', s.index + 1, traduire(s.jour.titre)) } : null);
+      })
+      .catch(() => setProg(null));
     // Apple Sante ou Health Connect relie : l'import de la montre et de la balance apparait
     getSanteSource()
       .then((s) => setProvider(s.mode === 'live' ? s.provider : null))
@@ -111,10 +123,14 @@ export default function Ajouter() {
     if (s.club_id) params.prefillClubId = String(s.club_id);
     if (s.time) params.prefillTime = s.time;
     if (s.duration_minutes) params.prefillDuration = String(s.duration_minutes);
-    // le sport est connu : la saisie du sport tout de suite, sans l'ecran relais /seance
-    const d = saisieDirecte(s.sport, params);
-    if (d) open(d.pathname, d.params);
-    else open('/seance', params);
+    // creneau du programme : la prochaine seance du programme (lib/v2/programmes/agenda.ts)
+    void routeDuCreneau(s.id).then((r) => {
+      if (r) return open(r.pathname, { ...params, ...r.params });
+      // le sport est connu : la saisie du sport tout de suite, sans l'ecran relais /seance
+      const d = saisieDirecte(s.sport, params);
+      if (d) open(d.pathname, d.params);
+      else open('/seance', params);
+    });
   };
 
   const repeatLast = () => {
@@ -216,13 +232,18 @@ export default function Ajouter() {
           </Pressable>
 
           <View style={card}>
+            {/* 24 octobre 2026 : pour ceux qui ne savent pas quoi faire a la salle */}
+            <QuickRow first={!prog} label={traduire("Je ne sais pas quoi faire")} title={traduire("Touche tes zones, YOROI fait ta séance")} onPress={() => open('/programmes/zones')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M12 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM8 10h8l-1 5h-1.5l-.5 6h-2l-.5-6H9z" {...accentStroke} /></Svg>} />
+            {prog ? (
+              <QuickRow label={traduire("Ton programme, en direct")} title={prog.titre} onPress={() => open(prog.route.pathname, prog.route.params)} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" {...accentStroke} /></Svg>} />
+            ) : null}
             {slot ? (
-              <QuickRow first label={traduire("Prévu aujourd’hui")} title={`${slotTitle}${slotTime}`} onPress={startSlot} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M7 4.5v15l13-7.5z" fill={c.accent} /></Svg>} />
+              <QuickRow first={!prog} label={traduire("Prévu aujourd’hui")} title={`${slotTitle}${slotTime}`} onPress={startSlot} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M7 4.5v15l13-7.5z" fill={c.accent} /></Svg>} />
             ) : null}
             {last ? (
-              <QuickRow first={!slot} label={traduire("Refaire ta dernière")} title={sessionTitle(last)} onPress={repeatLast} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5" {...accentStroke} /></Svg>} />
+              <QuickRow first={!slot && !prog} label={traduire("Refaire ta dernière")} title={sessionTitle(last)} onPress={repeatLast} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5" {...accentStroke} /></Svg>} />
             ) : null}
-            <QuickRow first={!slot && !last} label={traduire("Séance passée")} title={traduire("Un autre jour, date au choix")} onPress={() => open('/seance/deja-faite')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></Svg>} />
+            <QuickRow first={!slot && !last && !prog} label={traduire("Séance passée")} title={traduire("Un autre jour, date au choix")} onPress={() => open('/seance/deja-faite')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></Svg>} />
             {provider ? (
               <QuickRow
                 label={traduire("Ta montre, via {0}", provider)}
@@ -233,6 +254,9 @@ export default function Ajouter() {
               />
             ) : null}
             <QuickRow label={traduire("En direct")} title={traduire("Démarrer avec le chrono")} onPress={() => open('/seance', { live: '1' })} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>} />
+            {!prog ? (
+              <QuickRow label={traduire("Programmes")} title={traduire("Suivre un programme prêt")} onPress={() => open('/programmes')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" {...accentStroke} /></Svg>} />
+            ) : null}
           </View>
 
           {/* 2. LE CORPS */}

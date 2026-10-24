@@ -62,6 +62,8 @@ export type LiveExercise = {
   notes?: string;
   /** exercice d'origine (modification) : ses autres champs sont conserves */
   orig?: Exercise;
+  /** 24 octobre 2026 : objectif fixe par le programme suivi (lib/v2/programmes) */
+  cible?: { repsMin: number; repsMax: number; reposSec: number; conseil?: string; secondes?: boolean; raison?: 'premiere' | 'monte' | 'garde' | 'poids_du_corps' | 'variante' | 'legere'; nouvelleCharge?: number };
 };
 
 export type MuscuDraft = DraftBase & {
@@ -79,6 +81,10 @@ export type MuscuDraft = DraftBase & {
   /** muscles travailles choisis a la main, sinon deduits des exercices */
   muscles?: string[] | null;
   intensity?: number | null;
+  /** 24 octobre 2026 : seance d'un programme (lib/v2/programmes), le jour suivant avance a l'enregistrement */
+  programme?: { id: string; jourId: string };
+  /** le repos a ete regle a la main pendant la seance : il remplace le repos prevu par le programme */
+  reposManuel?: boolean;
 };
 
 export type RoundIntensity = 'detendu' | 'technique' | 'guerre';
@@ -126,6 +132,9 @@ export type CombatDraft = DraftBase & {
   notes: string;
   timer: CombatTimer;
   rpe?: number | null;
+  /** 24 octobre 2026 : seance d'un programme (rounds de sac), une consigne par round */
+  programme?: { id: string; jourId: string };
+  consignes?: string[];
   hrAvg?: number;
   hrMax?: number;
   gamePlan?: string;
@@ -156,6 +165,8 @@ export type CardioDraft = DraftBase & {
   scoreAgainst?: number;
   /** nom libre quand le sport est "Autre" */
   customName?: string;
+  /** 24 octobre 2026 : seance d'un programme */
+  programme?: { id: string; jourId: string };
 };
 
 export type SeanceDraft = MuscuDraft | CombatDraft | CardioDraft;
@@ -196,6 +207,13 @@ export async function clearDraft(): Promise<void> {
     await AsyncStorage.removeItem(DRAFT_KEY);
   } catch {
     // rien a faire
+  }
+  // 24 octobre 2026 : plus de seance, plus de seance sur l'ecran verrouille (lib/v2/widgets/activiteSeance.ts)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('@/lib/v2/widgets/activiteSeance').terminerActiviteSeance();
+  } catch {
+    // sans module natif : rien a arreter
   }
 }
 

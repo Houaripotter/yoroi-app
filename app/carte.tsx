@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image as ExpoImage } from 'expo-image';
 import Animated, { Easing, Extrapolation, interpolate, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -31,6 +32,10 @@ import { Interrupteur } from '@/components/yoroi/v2/reglages/kit';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { CarteApercu, CARTE_W, explicationModele, HAUTEURS, modeleEffectif, modelesPour } from '@/components/yoroi/v2/cartes/CarteRendu';
 import { FONDS } from '@/components/yoroi/v2/cartes/fonds';
+import { sceneForNow } from '@/components/yoroi/v2/accueil/images';
+import { devNow } from '@/lib/v2/creator/devClock';
+import { ficheScene } from '@/lib/v2/espace/presentation';
+import { fondDeScene } from '@/lib/v2/cartes/scenesFond';
 import { useCarte } from '@/components/yoroi/v2/cartes/useCarte';
 import { chargerExploit, chargerPesee, chargerSeance, chargerSemaine } from '@/lib/v2/cartes/charger';
 import { exploitAvecPoids } from '@/lib/v2/cartes/exploits';
@@ -427,10 +432,12 @@ export default function CarteEditeur() {
                 return (
                   <Pressable
                     key={f.id}
-                    onPress={() => (f.id === 'photo' && !k.photo ? void k.choisirPhoto('gallery') : k.setStyle(f.id === 'photo' ? { fond: 'photo', sansPersonne: false } : { fond: f.id as FondId }))}
+                    // 24 octobre 2026 : « Ta photo » deja choisie, un toucher rouvre la galerie pour en mettre une autre
+                    onPress={() => (f.id === 'photo' && (!k.photo || on) ? void k.choisirPhoto('gallery') : k.setStyle(f.id === 'photo' ? { fond: 'photo', sansPersonne: false } : { fond: f.id as FondId }))}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
                     accessibilityLabel={f.id === 'photo' ? traduire('Fond Ta photo') : `Fond ${f.nom}`}
+                    accessibilityHint={f.id === 'photo' && on ? traduire('Touche pour choisir une autre photo') : undefined}
                     style={{ alignItems: 'center', gap: 5, width: tuile }}
                   >
                     <View style={{ width: tuile, height: tuile, borderRadius: 14, padding: on ? 3 : 0, borderWidth: on ? 2.5 : f.id === 'photo' ? 1.5 : 1, borderColor: on || f.id === 'photo' ? c.accent : c.border, backgroundColor: c.surface }}>
@@ -443,16 +450,66 @@ export default function CarteEditeur() {
                           <Icon name="check" size={11} color={c.onAccent} stroke={3.2} />
                         </View>
                       ) : null}
+                      {/* 24 octobre 2026 : la petite croix rouge enleve ta photo, la carte revient sur ta scene */}
+                      {f.id === 'photo' && k.photo ? (
+                        <Pressable
+                          onPress={k.enleverPhoto}
+                          hitSlop={10}
+                          accessibilityRole="button"
+                          accessibilityLabel={traduire('Enlever ma photo')}
+                          style={{ position: 'absolute', left: -6, top: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: c.danger, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <Icon name="close" size={11} color="#FFFFFF" stroke={3.2} />
+                        </Pressable>
+                      ) : null}
                     </View>
                     <Ink size={11} weight={on || f.id === 'photo' ? 'extraBold' : 'bold'} color={on || f.id === 'photo' ? c.accent : c.textSecondary} numberOfLines={2} style={{ textAlign: 'center', lineHeight: 13 }}>{f.id === 'photo' ? traduire('Ta photo') : f.nom}</Ink>
                   </Pressable>
                 );
               })}
             </View>
-            {o.fond === 'photo' || k.style.fond === 'photo' ? (
+            {/* 24 octobre 2026 : visibles des qu'une photo est chargee, meme si un autre fond est choisi */}
+            {k.photo || o.fond === 'photo' || k.style.fond === 'photo' ? (
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                 <Pastille c={c} on={false} icon="image" label={k.photo ? traduire('Changer de photo') : traduire('Galerie')} onPress={() => void k.choisirPhoto('gallery')} />
                 <Pastille c={c} on={false} icon="camera" label={traduire("Prendre une photo")} onPress={() => void k.choisirPhoto('camera')} />
+                {k.photo ? <Pastille c={c} on={false} icon="close" label={traduire('Enlever ma photo')} onPress={k.enleverPhoto} /> : null}
+              </View>
+            ) : null}
+            {/* 24 octobre 2026 : toutes tes scenes, par univers, en image fixe sur la carte */}
+            {k.tesScenes.length > 0 ? (
+              <View style={{ gap: 10, marginTop: 6 }}>
+                <View style={{ gap: 2 }}>
+                  <Ink size={16} weight="black" tight accessibilityRole="header">{traduire('Tes scènes')}</Ink>
+                  <Ink size={13} color={c.textSecondary}>{traduire('Toutes les scènes que tu as débloquées.')}</Ink>
+                </View>
+                {k.tesScenes.map((g) => (
+                  <View key={g.key} style={{ gap: 6 }}>
+                    <Ink size={12.5} weight="extraBold" color={c.textSecondary}>{g.titre}</Ink>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 22, paddingTop: 6 }} style={{ marginHorizontal: -22 }}>
+                      {g.scenes.map((sid) => {
+                        const fid = fondDeScene(sid);
+                        const on = o.fond === fid;
+                        const nom = traduire(ficheScene(sid).nom);
+                        return (
+                          <Pressable key={sid} onPress={() => k.setStyle({ fond: fid })} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={traduire('Fond {0}', nom)} style={{ alignItems: 'center', gap: 5, width: tuile }}>
+                            <View style={{ width: tuile, height: Math.round(tuile * 1.25), borderRadius: 14, padding: on ? 3 : 0, borderWidth: on ? 2.5 : 1, borderColor: on ? c.accent : c.border, backgroundColor: c.surface }}>
+                              <View style={{ flex: 1, borderRadius: on ? 9 : 13, overflow: 'hidden' }}>
+                                <ExpoImage source={sceneForNow(sid, devNow()) as never} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={0} cachePolicy="memory-disk" recyclingKey={sid} />
+                              </View>
+                              {on ? (
+                                <View style={{ position: 'absolute', right: -6, top: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: c.accent, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
+                                  <Icon name="check" size={11} color={c.onAccent} stroke={3.2} />
+                                </View>
+                              ) : null}
+                            </View>
+                            <Ink size={11} weight={on ? 'extraBold' : 'bold'} color={on ? c.accent : c.textSecondary} numberOfLines={1} style={{ textAlign: 'center', lineHeight: 13 }}>{nom}</Ink>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                ))}
               </View>
             ) : null}
           </>

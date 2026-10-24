@@ -7,6 +7,7 @@
 import { useEffect, useRef } from 'react';
 import type { ChronoEngine } from '@/lib/v2/carnet/useChronoEngine';
 import { activiteChronoDisponible, arreterActiviteNatif, demarrerActiviteNatif, majActiviteNatif } from './natif';
+import { activiteSeanceEnCours } from './activiteSeance';
 
 export function useActiviteChrono(engine: ChronoEngine, titre: string): void {
   const actif = useRef(false);
@@ -16,7 +17,8 @@ export function useActiviteChrono(engine: ChronoEngine, titre: string): void {
   const finS = fin == null ? null : Math.round(fin / 1000);
 
   useEffect(() => {
-    if (!activiteChronoDisponible()) return;
+    // 24 octobre 2026 : une seance en direct occupe deja l'ecran verrouille (meme Live Activity) : le chrono ne la remplace pas
+    if (!activiteChronoDisponible() || activiteSeanceEnCours()) return;
     if (!phase || status === 'idle' || status === 'finished') {
       if (actif.current) {
         actif.current = false;
@@ -50,7 +52,7 @@ export function useActiviteChrono(engine: ChronoEngine, titre: string): void {
 
   useEffect(
     () => () => {
-      if (actif.current) {
+      if (actif.current && !activiteSeanceEnCours()) {
         actif.current = false;
         arreterActiviteNatif();
       }

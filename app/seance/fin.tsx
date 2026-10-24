@@ -1,31 +1,31 @@
 /**
- * Fin de seance, le sport seulement : le bilan (duree, series, tonnage, rounds, distance), puis (16 octobre)
- * le bilan ecrit (lib/v2/bilan : compteurs, comparaison avec la precedente du meme sport, cœur, techniques),
- * ta semaine, les records de la seance (tampon rouge), ta note et ton ressenti.
+ * Fin de seance, le sport seulement. 24 octobre 2026 (refonte « fin qui donne envie de revenir ») :
+ * 1. le moment de la validation : panneau du sport, sceau vert qui se pose, confettis, « Séance bouclée ! »,
+ *    le compteur de la semaine (components/yoroi/v2/seance/fin/Hero) ;
+ * 2. trois grands chiffres qui montent (duree, series, tonnage, ou distance, rounds) ; les records dans leur carte ;
+ * 3. un seul bloc de progression : la semaine, ta serie, ton annee, l'ecart avec la seance precedente
+ *    (remplace le topo ecrit, « Ton compteur » et « Par rapport au... » qui repetaient les memes chiffres) ;
+ * 4. ton cœur et tes techniques quand ils existent ;
+ * 5. « Et maintenant ? » : le prochain jour du programme ou le prochain creneau ;
+ * 6. ta note et ton ressenti, en compact. En bas : Créer ma carte, Terminer.
  * Aucune XP ni sceau ici : la gamification vit dans l'onglet Dojo. Seule exception, le passage
- * de rang, celebre en plein ecran. Une idee de creneau ou un rappel de sauvegarde peut s'afficher
- * en une ligne discrete. Terminer (principal), Partager (secondaire).
+ * de rang, celebre en plein ecran. Animations coupees si le telephone les reduit.
  * Parametre : id de la seance enregistree.
- * 16 octobre soir (agent BILAN COULEURS) : « Créer ma carte » bien visible apres chaque seance (tous sports),
- * barre du bas pleine pour ne plus cacher le contenu, et la demande de note passe par la feuille YOROI
- * 5 secondes apres « Terminer » (lib/v2/bilan/avis.ts) au lieu de la fenetre native lancee sur cet ecran.
+ * La demande de note passe par la feuille YOROI 5 secondes apres « Terminer » (lib/v2/bilan/avis.ts).
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Ornement } from '@/components/yoroi/v2/ornements/Ornement';
-import { Animated, BackHandler, Easing, Pressable, ScrollView, View } from 'react-native';
+import { BackHandler, Pressable, ScrollView, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Hanko } from '@/components/yoroi/v2/seance/Hanko';
-import { Icon } from '@/components/yoroi/v2/seance/Icon';
 import { Celebration } from '@/components/yoroi/v2/dojo/Celebration';
-import { getTrainingById } from '@/lib/database';
+import { getProfile, getTrainingById } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
 import { playWorkoutCompleteSound } from '@/lib/soundManager';
 import { getSportCategory, getSportName } from '@/lib/sports';
-import { FinRessenti } from '@/components/yoroi/v2/seance/FinRessenti';
 import { getPendingCelebration, getSessionReward, markCelebrationSeen } from '@/lib/v2/armure';
 import type { ArmureState, Celebration as CelebrationData } from '@/lib/v2/armure';
 import { THEME_IMAGES, personnageImage } from '@/lib/v2/dojo/personnages';
@@ -34,19 +34,30 @@ import { createSlotFromIdea, loadSessionExtras, slotIdeaText } from '@/lib/v2/se
 import type { SessionExtras } from '@/lib/v2/seance/extras';
 import { fmtMinutes, fmtNum } from '@/lib/v2/seance/format';
 import { getSeanceResult } from '@/lib/v2/seance/save';
+import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { accordSouleve, formatTonnage, setsCount, tonnage } from '@/lib/v2/trainingWeek';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids } from '@/lib/v2/unitePoids';
 import type { SeanceResult } from '@/lib/v2/seance/save';
-import { proposerNotificationsApresReussite, propositionEnCours } from '@/lib/v2/notifications/permission';
-import { BilanSeanceSections, BoutonCarte } from '@/components/yoroi/v2/bilan/BilanVue';
+import { proposerNotificationsApresReussite } from '@/lib/v2/notifications/permission';
+import { BoutonCarte } from '@/components/yoroi/v2/bilan/BilanVue';
 import { programmerAvis } from '@/lib/v2/bilan/avis';
 import { chargerBilanSeance, lienCarteBilan } from '@/lib/v2/bilan/charger';
 import { lireBilanAuto } from '@/lib/v2/bilan/reglage';
+import { dateCourte, ordinal } from '@/lib/v2/bilan/texte';
 import type { BilanSeance } from '@/lib/v2/bilan/texte';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
-
-const PAPER = '#F2F1EC';
+import { FinHero } from '@/components/yoroi/v2/seance/fin/Hero';
+import { TuilesStats } from '@/components/yoroi/v2/seance/fin/TuilesStats';
+import type { TuileVue } from '@/components/yoroi/v2/seance/fin/TuilesStats';
+import { Progression } from '@/components/yoroi/v2/seance/fin/Progression';
+import { RecordsSeance } from '@/components/yoroi/v2/seance/fin/Records';
+import { DetailsSeance } from '@/components/yoroi/v2/seance/fin/Details';
+import { EtMaintenant } from '@/components/yoroi/v2/seance/fin/EtMaintenant';
+import { NoteCompacte } from '@/components/yoroi/v2/seance/fin/NoteCompacte';
+import { useMouvementReduit } from '@/components/yoroi/v2/seance/fin/useMouvementReduit';
+import { choisirTuiles, ligneComparaison } from '@/components/yoroi/v2/seance/fin/logique';
+import type { CleTuile } from '@/components/yoroi/v2/seance/fin/logique';
+import { LANG, traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Reward = { xp: number; records: string[]; weekHeld: boolean; weekXp: number; state: ArmureState };
 type RankParty = { data: CelebrationData; personnage: string };
@@ -74,7 +85,10 @@ export default function SeanceFin() {
   // le bilan de la seance (compteurs, comparaison, cœur, techniques), sauf si le bilan est coupe dans les reglages
   const [bilan, setBilan] = useState<BilanSeance | null>(null);
   const suiteLancee = useRef(false);
-  const rise = useRef(new Animated.Value(0)).current;
+  // 24 octobre : le moment de la validation, sans animation si le telephone les reduit
+  const reduit = useMouvementReduit();
+  const anime = reduit === false;
+  const [femme, setFemme] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -136,8 +150,10 @@ export default function SeanceFin() {
       playWorkoutCompleteSound().catch(() => {});
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
     }
-    Animated.timing(rise, { toValue: 1, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, [id, rise]);
+    getProfile()
+      .then((p) => setFemme(p?.avatar_gender === 'femme'))
+      .catch(() => {});
+  }, [id]);
 
   // Apres la seance, une seule fenetre a la fois et jamais par-dessus la celebration :
   // la proposition de rappels ici ; la demande de note vient 5 s apres « Terminer » (programmerAvis).
@@ -191,7 +207,6 @@ export default function SeanceFin() {
   // 0 : pas d'objectif choisi par l'utilisateur, on montre seulement le nombre de seances
   const goal = state?.goalChosen === false ? 0 : Math.max(1, state?.weeklyGoal ?? 3);
   const sessions = state?.thisWeekSessions ?? 0;
-  const bars = goal > 0 ? Math.min(Math.max(goal, Math.min(sessions, 7)), 7) : Math.max(1, Math.min(sessions, 7));
   const reached = goal > 0 && sessions >= goal;
   const weekLine = goal <= 0
     ? traduire('Tu peux te fixer un objectif de séances dans les réglages, si tu veux.')
@@ -199,20 +214,43 @@ export default function SeanceFin() {
       ? sessions > goal ? traduire("{0} séances cette semaine, au-delà de ton objectif", sessions) : traduire('Objectif de la semaine atteint')
       : traduire("Encore {0} pour ton objectif de la semaine", goal - sessions);
 
-  const stats: { label: string; value: string }[] = [];
-  if (result) {
-    if (result.durationMin) stats.push({ label: traduire('durée'), value: fmtMinutes(result.durationMin) });
-    if (result.sets) stats.push({ label: traduire('séries'), value: String(result.sets) });
-    if (result.tonnage >= 1) stats.push({ label: accordSouleve(result.tonnage, unite), value: formatTonnage(result.tonnage, unite) });
-    if (result.rounds) stats.push({ label: result.rounds > 1 ? 'rounds' : 'round', value: String(result.rounds) });
-    if (result.distance) stats.push({ label: 'distance', value: `${fmtNum(result.distance, 2)} km` });
-  }
-  const recordCount = (result?.records?.length ?? 0) || (reward?.records?.length ?? 0);
-  if (recordCount > 0) stats.push({ label: recordCount > 1 ? 'records' : 'record', value: String(recordCount) });
+  // Les grands chiffres : la duree, puis ce qui compte pour ce sport (au plus trois)
+  const FORMATS: Record<CleTuile, Omit<TuileVue, 'cle' | 'cible'>> = {
+    duree: { label: traduire('durée'), icone: 'clock', format: (v) => fmtMinutes(v) },
+    distance: { label: traduire('distance'), icone: 'route', decimales: 2, format: (v) => `${fmtNum(v, 2)} km` },
+    rounds: { label: traduire((result?.rounds ?? 0) > 1 ? 'rounds' : 'round'), icone: 'bolt', format: (v) => String(Math.round(v)) },
+    series: { label: traduire('séries'), icone: 'check', format: (v) => String(Math.round(v)) },
+    tonnage: { label: accordSouleve(result?.tonnage ?? 0, unite), icone: 'flame', format: (v) => formatTonnage(v, unite) },
+  };
+  const tuiles: TuileVue[] = result ? choisirTuiles(result).map((t) => ({ cle: t.cle, cible: t.cible, ...FORMATS[t.cle] })) : [];
 
   const isCombat = !!result && String(result.sport).split(',').some((sp) => ['combat_grappling', 'combat_striking'].includes(getSportCategory(sp.trim())));
   const localRecords = result?.records ?? [];
-  const otherRecords = localRecords.length === 0 ? reward?.records ?? [] : [];
+  const otherRecords = localRecords.length === 0 ? (reward?.records?.length ? reward.records : bilan?.records ?? []) : [];
+  const records = [
+    ...localRecords.map((r) => ({
+      cle: `${r.name}-${r.weight}-${r.reps}`,
+      titre: r.kind === 'charge' ? traduire('Nouveau record de charge') : traduire('Nouveau record'),
+      detail: unite === 'lb'
+        ? traduirePluriel(r.reps, r.reps > 1, "{0}, {1} livres pour {2} répétition", "{0}, {1} livres pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 1), r.reps)
+        : traduirePluriel(r.reps, r.reps > 1, "{0}, {1} kilos pour {2} répétition", "{0}, {1} kilos pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 2), r.reps),
+    })),
+    ...otherRecords.map((label) => ({ cle: label, titre: label, detail: null })),
+  ];
+
+  // La semaine : le bilan d'abord (meme compteur que l'accueil), sinon l'etat de l'armure
+  const faitSemaine = bilan?.objectifSemaine?.fait ?? sessions;
+  const objectifSemaine = bilan?.objectifSemaine ? bilan.objectifSemaine.total : goal;
+  const ligneSemaine = bilan?.objectifSemaine ? traduire(bilan.objectifSemaine.texte) : weekLine;
+  // « Ta 9e séance de la semaine » : le rang de cette seance dans la semaine (le chiffre seul hors du français)
+  const rangSemaine = parseInt(bilan?.compteurs?.[0]?.value ?? '', 10) || faitSemaine;
+  const compteSemaine = rangSemaine > 0 ? traduire("Ta {0} séance de la semaine", LANG === 'fr' ? ordinal(rangSemaine) : String(rangSemaine)) : null;
+  const ecarts = ligneComparaison(bilan?.comparaison?.lignes);
+  const comparaison = bilan?.comparaison && ecarts ? traduire("Par rapport au {0} : {1}", dateCourte(bilan.comparaison.depuis), ecarts) : null;
+  const sportPrincipal = String(result?.sport ?? '').split(',')[0].trim();
+  const imageSport = sportPrincipal ? sportImage(sportPrincipal, femme, 0) : null;
+
+  const ouvrir = (href: string) => router.push(href as any);
 
   const createSlot = async () => {
     if (!extras?.slotIdea || slotDone !== 'idle') return;
@@ -280,85 +318,70 @@ export default function SeanceFin() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Screen options={{ gestureEnabled: false, animation: 'fade' }} />
 
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 28, paddingBottom: insets.bottom + 136 }} showsVerticalScrollIndicator={false}>
-        {/* Le bilan sportif */}
-        <Animated.View style={{ paddingHorizontal: 22, gap: 4, opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] }}>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.successTint, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-            <Icon name="check" size={24} color={c.successText} />
-          </View>
-          <Ink size={15} weight="bold" color={c.textSecondary} numberOfLines={2}>
-            {result ? result.title : traduire('Ta séance')}
-          </Ink>
-          <Ink size={34} weight="black" tight accessibilityRole="header">{traduire("Séance enregistrée")}</Ink>
-        </Animated.View>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 136 }} showsVerticalScrollIndicator={false}>
+        {/* la seance lue et le reglage des animations connu (quelques millisecondes) : la scene part une seule fois, dans le bon mode */}
+        {reduit === null || !loaded ? null : (
+          <>
+            {/* 1. Le moment de la validation */}
+            <FinHero
+              titre={result ? result.title : traduire('Ta séance')}
+              compteSemaine={compteSemaine}
+              image={imageSport}
+              teinteSport={sportPrincipal ? sportTint(sportPrincipal) : c.successTint}
+              anime={anime}
+              pret
+            />
 
-        {stats.length > 0 ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 18, paddingHorizontal: 22 }}>
-            {stats.map((s) => (
-              <View key={s.label} style={{ flexGrow: 1, flexBasis: '30%', minWidth: 96, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
-                <Ink size={26} weight="black" tight numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.value}</Ink>
-                <Ink size={12} weight="bold" color={c.textMuted}>{traduire(s.label)}</Ink>
+            {/* 2. Les grands chiffres, puis les records de la seance */}
+            <TuilesStats tuiles={tuiles} anime={anime} pret />
+            <RecordsSeance lignes={records} anime={anime} />
+
+            {/* 3. Un seul bloc de progression */}
+            {state || bilan?.objectifSemaine ? (
+              <Progression
+                fait={faitSemaine}
+                objectif={objectifSemaine}
+                ligneSemaine={ligneSemaine}
+                serie={bilan?.regularite ?? null}
+                annee={bilan?.annee ?? null}
+                comparaison={comparaison}
+                anime={anime}
+              />
+            ) : null}
+
+            {/* 4. Ton cœur et tes techniques, quand ils existent */}
+            {bilan ? <DetailsSeance b={bilan} /> : null}
+
+            {/* 5. Une raison de revenir */}
+            <EtMaintenant
+              femme={femme}
+              anime={anime}
+              onOuvrir={ouvrir}
+              idee={extras?.slotIdea
+                ? {
+                    texte: slotDone === 'done' ? traduire('Créneau ajouté à ton planning.') : slotIdeaText(extras.slotIdea),
+                    action: slotDone === 'busy' ? null : slotDone === 'done' ? traduire('Voir mon planning') : traduire('Ajouter au planning'),
+                    onPress: slotDone === 'done' ? () => router.push('/planning' as any) : createSlot,
+                  }
+                : null}
+            />
+
+            {/* 6. Ta note et ton ressenti (lus par le detail, le radar et la montre) */}
+            {result && id ? <NoteCompacte trainingId={id} combat={isCombat} /> : null}
+
+            {/* Le rappel de sauvegarde, en une ligne discrete, seulement quand il sert */}
+            {tip && !extras?.slotIdea ? (
+              <View style={{ marginHorizontal: 22, marginTop: 12, borderRadius: 22, paddingTop: 14, paddingBottom: 4, paddingHorizontal: 16, backgroundColor: c.indigoTint, gap: 2 }}>
+                <Ink size={14} color={c.textSecondary}>{traduire(tip.text)}</Ink>
+                {!tip.done ? (
+                  <Pressable onPress={tip.onPress} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
+                    <Ink size={14} weight="extraBold" color={c.indigo}>{tip.action}</Ink>
+                  </Pressable>
+                ) : <View style={{ height: 10 }} />}
               </View>
-            ))}
-          </View>
-        ) : null}
-
-        {/* Les records de la seance */}
-        {localRecords.map((r) => (
-          <View key={r.name} style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Hanko size={30} rotate={-6} color={c.record} animate />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={16} weight="extraBold">{r.kind === 'charge' ? traduire('Nouveau record de charge') : traduire('Nouveau record')}</Ink>
-              <Ink size={14} color={c.textSecondary}>{unite === 'lb'
-                ? traduirePluriel(r.reps, r.reps > 1, "{0}, {1} livres pour {2} répétition", "{0}, {1} livres pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 1), r.reps)
-                : traduirePluriel(r.reps, r.reps > 1, "{0}, {1} kilos pour {2} répétition", "{0}, {1} kilos pour {2} répétitions", r.name, fmtNum(versUnitePoids(r.weight, unite), 2), r.reps)}</Ink>
-            </View>
-          </View>
-        ))}
-        {otherRecords.map((label) => (
-          <View key={label} style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Hanko size={30} rotate={-6} color={c.record} animate />
-            <Ink size={15} weight="extraBold" style={{ flex: 1 }}>{label}</Ink>
-          </View>
-        ))}
-
-        {/* 16 octobre : le bilan de la seance, ecrit a partir de tes donnees */}
-        {bilan ? (
-          <View style={{ marginHorizontal: 22, marginTop: 10 }}>
-            <BilanSeanceSections b={bilan} />
-          </View>
-        ) : null}
-
-        {/* Ta semaine, en seances (le bilan l'inclut deja quand il est la) */}
-        {state && !bilan ? (
-          <View style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, padding: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 10 }} accessibilityLabel={goal > 0 ? traduire("{0} séances sur {1} cette semaine. {2}", sessions, goal, weekLine) : traduirePluriel(sessions, sessions > 1, "{0} séance cette semaine. {1}", "{0} séances cette semaine. {1}", sessions, weekLine)}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <Ink size={15} weight="extraBold">{traduire("Ta semaine")}</Ink>
-              <Ink size={15} weight="black">{goal > 0 ? traduire("{0} sur {1}", sessions, goal) : traduirePluriel(sessions, sessions > 1, "{0} séance", "{0} séances", sessions)}</Ink>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 4 }}>
-              {Array.from({ length: bars }, (_, i) => (
-                <View key={i} style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: i < sessions ? c.accent : c.fillSubtle }} />
-              ))}
-            </View>
-            <Ink size={13} weight="bold" color={reached ? c.successText : c.textSecondary}>{weekLine}</Ink>
-          </View>
-        ) : null}
-
-        {/* Ta note et ton ressenti (lus par le detail, le radar et la montre) */}
-        {result && id ? <FinRessenti trainingId={id} combat={isCombat} /> : null}
-
-        {/* Une ligne discrete, seulement quand elle sert */}
-        {tip ? (
-          <View style={{ marginHorizontal: 22, marginTop: 10, borderRadius: 22, paddingTop: 14, paddingBottom: 4, paddingHorizontal: 16, backgroundColor: c.indigoTint, gap: 2 }}>
-            <Ink size={14} color={c.textSecondary}>{traduire(tip.text)}</Ink>
-            {!tip.done && slotDone !== 'busy' ? (
-              <Pressable onPress={tip.onPress} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
-                <Ink size={14} weight="extraBold" color={c.indigo}>{tip.action}</Ink>
-              </Pressable>
-            ) : <View style={{ height: 10 }} />}
-          </View>
-        ) : null}
+            ) : null}
+          </>
+        )}
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, paddingTop: 12, paddingBottom: insets.bottom + 16, backgroundColor: c.background, borderTopWidth: 1, borderColor: c.divider, flexDirection: 'row', gap: 10 }}>

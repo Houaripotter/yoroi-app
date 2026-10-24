@@ -262,9 +262,15 @@ function RootLayoutContent() {
       if (timer) clearTimeout(timer);
       timer = setTimeout(replan, 1500);
     });
+    // 24 octobre 2026 : programme demarre, arrete ou jour change, le texte des rappels de seance suit
+    const programme = DeviceEventEmitter.addListener('YOROI_PROGRAMME_CHANGED', () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(replan, 1500);
+    });
     return () => {
       app.remove();
       data.remove();
+      programme.remove();
       if (timer) clearTimeout(timer);
     };
   }, []);

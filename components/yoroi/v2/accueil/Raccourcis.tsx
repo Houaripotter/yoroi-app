@@ -31,12 +31,17 @@ import { ECHELLE_MIN_LIBELLE, LARGEUR_LIBELLE, lignesLibelleOutil, tailleLibelle
 const RECORDS: ImageSourcePropType = require('@/assets/avatars/app/carnet/records.webp');
 const CARTE_A: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_nuit.webp');
 const CARTE_B: ImageSourcePropType = require('@/assets/avatars/app/carnet/partage_sakura.webp');
+// 24 octobre 2026 : illustration Gemini (corps, abdos, bras et cuisses en rouge), même famille que les ornements.
+// Houari : « tu me mets une image de Gemini, je veux vraiment la qualité »
+const CORPS_ZONES: ImageSourcePropType = require('@/assets/avatars/app/ornements/zones_corps.webp');
 
 type Outil = { key: string; title: string; a11y: string; href: string | { pathname: string; params: Record<string, string> } | null; img: ImageSourcePropType | null; tint: string };
 
 /** Tes outils, dans l'ordre demande par Houari, avec Partager en deuxieme */
 export function outilsAccueil(): Outil[] {
   return [
+    // 24 octobre 2026 : « je veux faire une seance mais je ne sais pas quoi faire » : tu touches tes zones (app/programmes/zones.tsx)
+    { key: 'zones', title: traduire('Quoi faire ?'), a11y: traduire('Je ne sais pas quoi faire : je touche mes zones, YOROI me donne ma séance'), href: '/programmes/zones', img: CORPS_ZONES, tint: P.tuileIndigo },
     { key: 'chrono', title: traduire('Chrono'), a11y: traduire('Chrono : repos, rounds, Tabata'), href: '/timer', img: ORNEMENTS.chrono, tint: P.tuileOr },
     { key: 'partager', title: traduire('Partager'), a11y: traduire('Partager une carte : ta séance, ton record, ta semaine'), href: null, img: null, tint: P.tuileIndigo },
     { key: 'objectifs', title: traduire('Objectifs'), a11y: traduire('Objectifs à cocher, par sport'), href: '/training-goals', img: ORNEMENTS.cible, tint: P.tuileMousse },
@@ -155,7 +160,12 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
                   elevation: 4,
                 }}
               >
-                {o.img ? <Image source={o.img} style={{ width: D * 0.7, height: D * 0.7 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <IconePartager />}
+                {o.img ? (
+                  // le corps est haut et fin : un peu plus grand que les autres pour se lire d'un coup d'oeil
+                  <Image source={o.img} style={{ width: D * (o.key === 'zones' ? 0.86 : 0.7), height: D * (o.key === 'zones' ? 0.86 : 0.7) }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                ) : (
+                  <IconePartager />
+                )}
               </View>
               {o.key === 'partager' && pastille ? (
                 <View pointerEvents="none" style={{ position: 'absolute', top: 1, right: 10, width: 15, height: 15, borderRadius: 8, backgroundColor: theme.colors.record, borderWidth: 2.5, borderColor: P.paper }} />

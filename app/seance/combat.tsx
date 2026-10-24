@@ -43,6 +43,8 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { intensite, niveauRpe, type NiveauIntensite } from '@/lib/v2/intensite';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, LOCALE } from '@/lib/i18n/tr';
+import { programmeParId } from '@/lib/v2/programmes/catalogue';
+import { marquerJourFait } from '@/lib/v2/programmes/suivi';
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -55,6 +57,18 @@ const RPE = [
 const ROUND_NIVEAU: Record<RoundIntensity, NiveauIntensite> = { detendu: 1, technique: 3, guerre: 4 };
 
 const SESSION_IDS = SESSION_TYPES.map((s) => s.value);
+
+/** Premier texte d'un parametre de navigation */
+function param1(v: string | string[] | undefined): string | undefined {
+  const x = Array.isArray(v) ? v[0] : v;
+  return typeof x === 'string' && x ? x : undefined;
+}
+
+/** Nombre entier borne d'un parametre de navigation */
+function paramSec(v: string | string[] | undefined, min: number, max: number): number | undefined {
+  const n = parseInt(param1(v) ?? '', 10);
+  return Number.isFinite(n) && n >= min && n <= max ? n : undefined;
+}
 
 export default function SeanceCombat() {
   const { theme } = useYoroiTheme();
@@ -158,6 +172,9 @@ export default function SeanceCombat() {
           90,
         );
         const startRounds = params.rounds ? Math.min(params.rounds, 30) : 0;
+        // 24 octobre 2026 : rounds d'un programme (sac de frappe), duree, repos et consigne de chaque round
+        const prog = programmeParId(param1(raw.programme));
+        const jourProg = prog?.jours.find((j) => j.id === param1(raw.jour) && j.rounds);
         const fresh = (): CombatDraft => ({
           kind: 'combat',
           form,
@@ -167,9 +184,10 @@ export default function SeanceCombat() {
           slotId: params.slotId,
           startedAt: Date.now(),
           sessionType: typeOf(params.sessionType ?? slot?.session_type),
-          roundSec: prefs.roundSec,
-          restSec: prefs.restSec,
+          roundSec: paramSec(raw.roundSec, 10, 1200) ?? prefs.roundSec,
+          restSec: paramSec(raw.restSec, 0, 600) ?? prefs.restSec,
           totalRounds: startRounds || prefs.totalRounds,
+          ...(prog && jourProg?.rounds ? { programme: { id: prog.id, jourId: jourProg.id }, consignes: jourProg.rounds.consignes.map((x) => traduire(x)) } : {}),
           rounds: form ? Array.from({ length: startRounds }, (_, i) => ({ number: i + 1 })) : [],
           theme: '',
           notes: params.notes ?? '',
@@ -287,7 +305,8 @@ export default function SeanceCombat() {
       rounds: ensureRound(d.rounds, n),
       timer: { phase: 'round', index: n, endsAt: Date.now() + d.roundSec * 1000, paused: null },
     }));
-    saveCombatPrefs({ roundSec: draft.roundSec, restSec: draft.restSec, totalRounds: draft.totalRounds });
+    // seance de programme : ses reglages de rounds ne remplacent pas les tiens
+    if (!draft.programme) saveCombatPrefs({ roundSec: draft.roundSec, restSec: draft.restSec, totalRounds: draft.totalRounds });
     playGongSound().catch(() => {});
     Vibration.vibrate(400);
   };
@@ -417,6 +436,7 @@ export default function SeanceCombat() {
         { slotId: draft.slotId, title: draft.editId ? getSportName(draft.sport) : draftTitle(draft), technicalTheme: theme, sessionTypes: [typeAEnregistrer(draft)], editId: draft.editId, methode: 'live' },
       );
       setFinishOpen(false);
+      if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         router.back();
@@ -533,6 +553,19 @@ export default function SeanceCombat() {
             <Ink size={14} color={c.textSecondary}>{t.paused !== null ? traduire('en pause') : subLine}</Ink>
           </View>
         </View>
+
+        {/* 24 octobre 2026 : consigne du round (programme sac de frappe) ; au repos, celle du round suivant */}
+        {draft.consignes && draft.consignes.length > 0 ? (() => {
+          const n = t.phase === 'rest' ? t.index + 1 : Math.max(1, t.index);
+          const txt = draft.consignes[n - 1];
+          if (!txt || t.phase === 'done') return null;
+          return (
+            <View style={{ marginTop: 12, marginHorizontal: 8, padding: 12, borderRadius: 16, backgroundColor: c.accentTint, gap: 2 }}>
+              <Ink size={12} weight="extraBold" color={c.accent}>{t.phase === 'round' ? traduire('ROUND {0}', n) : traduire('PROCHAIN ROUND, {0}', n)}</Ink>
+              <Ink size={15} weight="bold">{txt}</Ink>
+            </View>
+          );
+        })() : null}
 
         {/* Commandes */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 18, marginTop: 18 }}>

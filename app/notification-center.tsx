@@ -16,6 +16,7 @@ import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { Hanko } from '@/components/yoroi/v2/dojo/Hanko';
 import { clearAll, deleteNotification, getNotifications, markAllAsRead, markAsRead } from '@/lib/notificationHistoryService';
 import type { NotificationHistoryItem } from '@/lib/notificationHistoryService';
+import { localiserNotification } from '@/lib/notificationLangue';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { cheminDirect } from '@/lib/v2/nav/direct';
 import { cibleDeNotification, deposerCible } from '@/lib/v2/notifications/toucher';
@@ -151,7 +152,8 @@ export default function CentreNotifications() {
 
   const load = useCallback(async () => {
     const data = await getNotifications().catch(() => []);
-    setItems((data ?? []).slice().sort((a, b) => b.timestamp - a.timestamp));
+    // Titre et texte dans la langue actuelle de l'app, sinon tels qu'ils ont été reçus
+    setItems((data ?? []).map((n) => localiserNotification(n)).sort((a, b) => b.timestamp - a.timestamp));
     setLoaded(true);
   }, []);
 
@@ -344,7 +346,7 @@ export default function CentreNotifications() {
                         <Ink size={12} weight="extraBold" color={t.fg} style={{ flex: 1 }} numberOfLines={1}>{traduire(l.label)}</Ink>
                         <Ink size={12} weight="bold" color={c.textMuted}>{clock(n.timestamp)}</Ink>
                       </View>
-                      <Ink size={15} weight={n.read ? 'bold' : 'black'} numberOfLines={2}>{traduire(n.title)}</Ink>
+                      <Ink size={15} weight={n.read ? 'bold' : 'black'} numberOfLines={2}>{n.title}</Ink>
                       <Ink size={13} color={c.textSecondary} numberOfLines={3}>{n.body}</Ink>
                     </View>
                     <Pressable

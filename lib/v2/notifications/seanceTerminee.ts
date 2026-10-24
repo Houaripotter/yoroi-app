@@ -16,6 +16,7 @@
  */
 
 import { traduire } from '@/lib/i18n/tr';
+import { sourceNotif, src } from '@/lib/notificationLangue';
 export const NOTIFIEES_KEY = '@yoroi_seances_notifiees_v1';
 /** Une séance finie depuis plus longtemps n'est plus « qui vient de finir » */
 export const FENETRE_RECENTE_MS = 3 * 60 * 60 * 1000;
@@ -51,7 +52,7 @@ export type ContenuNotif = {
   body: string;
   subtitle?: string;
   categoryIdentifier?: string;
-  data: Record<string, string>;
+  data: Record<string, any>;
 };
 
 const ms = (iso?: string): number | null => {
@@ -120,13 +121,20 @@ export function contenuPour(choisies: SeanceTerminee[]): ContenuNotif | null {
         type: TYPE_SEANCE,
         workoutId: String(s.trainingId),
         ...(s.sport ? { sport: s.sport } : {}),
+        // de quoi réafficher l'historique dans une autre langue (le nom de l'appli reste tel quel)
+        ...(s.source ? sourceNotif(null, src('{0}\n{1}', `Via ${s.source}`, src('Tape pour partager ta séance !'))) : {}),
       },
     };
   }
   return {
     title: traduire("{0} séances ajoutées", choisies.length),
     body: traduire('Tape pour les voir et choisir celle à partager.'),
-    data: { type: TYPE_SEANCES, workoutIds: choisies.map((s) => String(s.trainingId)).join(',') },
+    data: {
+      type: TYPE_SEANCES,
+      workoutIds: choisies.map((s) => String(s.trainingId)).join(','),
+      // de quoi réafficher l'historique dans une autre langue
+      ...sourceNotif(src("{0} séances ajoutées", choisies.length)),
+    },
   };
 }
 

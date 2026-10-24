@@ -12,6 +12,7 @@
  * 6. (vague 26) apres ta derniere seance, la carte « Ton mois » : le calendrier du mois avec le logo
  *    de tes clubs sur chaque jour (le calendrier aime de l'ancienne app), toujours visible, il ouvre le planning.
  * Tirer vers le bas synchronise Apple Sante (ou Health Connect) puis recharge.
+ * 8. (24 octobre 2026) sous le prochain entrainement, la carte Programmes : ton programme en cours ou l'entree vers /programmes.
  * 7. (16 octobre, SEANCES AVATAR) « Importer mes seances » depuis Apple Sante ou Health Connect : carte en haut tant
  *    que rien n'est importe, bouton dans l'etat vide, et le menu de l'onglet (les trois points). Masque sur le web.
  */
@@ -47,6 +48,7 @@ import type { LastSessionVM } from '@/components/yoroi/v2/seances/LastSession';
 import { MuscleMap, MuscleScale } from '@/components/yoroi/v2/seances/MuscleMap';
 import { WeekHero } from '@/components/yoroi/v2/seances/WeekHero';
 import { NextUp, findNextSlot } from '@/components/yoroi/v2/seances/NextUp';
+import { ProgrammeCard } from '@/components/yoroi/v2/seances/ProgrammeCard';
 import { HistoryCard } from '@/components/yoroi/v2/seances/HistoryCard';
 import { MonthCard } from '@/components/yoroi/v2/seances/MonthMarks';
 import { ExampleFrame } from '@/components/yoroi/v2/seances/Example';
@@ -243,6 +245,9 @@ export default function Seances() {
           onPlanning={() => router.push('/planning' as any)}
           onCreate={() => router.push('/slots' as any)}
         />
+
+        {/* 24 octobre 2026 : programmes d'entrainement, ton programme en cours */}
+        <ProgrammeCard femme={femme} onOpen={() => router.push('/programmes' as any)} />
 
         {/* Derniere seance */}
         {lastVM && last ? (

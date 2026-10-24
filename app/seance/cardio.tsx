@@ -35,6 +35,8 @@ import { useNow } from '@/lib/v2/seance/useNow';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire } from '@/lib/i18n/tr';
+import { programmeParId } from '@/lib/v2/programmes/catalogue';
+import { marquerJourFait } from '@/lib/v2/programmes/suivi';
 
 const RPE = [
   { value: 3, label: traduire('Facile') },
@@ -48,6 +50,12 @@ const SCENE_ENCRE = '#1D2029';
 const SCENE_TEXTE_2 = '#464B58';
 
 const SPEED_SPORTS = new Set(['velo', 'cycling', 'vtt', 'spinning', 'aquabike', 'roller', 'ski', 'ski_de_fond']);
+
+/** Premier texte d'un parametre de navigation */
+function param1(v: string | string[] | undefined): string | undefined {
+  const x = Array.isArray(v) ? v[0] : v;
+  return typeof x === 'string' && x ? x : undefined;
+}
 
 export default function SeanceCardio() {
   const { theme } = useYoroiTheme();
@@ -134,6 +142,12 @@ export default function SeanceCardio() {
           heartRate: '',
           intensity: params.intensity ?? null,
           notes: params.notes ?? '',
+          // 24 octobre 2026 : seance de cardio d'un programme, le jour suivant avance a l'enregistrement
+          ...((): Partial<CardioDraft> => {
+            const prog = programmeParId(param1(raw.programme));
+            const j = prog?.jours.find((x) => x.id === param1(raw.jour) && x.cardio);
+            return prog && j ? { programme: { id: prog.id, jourId: j.id } } : {};
+          })(),
         });
         if (form) {
           setDraft(fresh());
@@ -266,6 +280,7 @@ export default function SeanceCardio() {
         { slotId: draft.slotId, title: draft.label || sportName, editId: draft.editId, methode: 'live' },
       );
       setFinishOpen(false);
+      if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
         router.back();
         return;

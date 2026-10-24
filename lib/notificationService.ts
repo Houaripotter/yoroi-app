@@ -17,8 +17,11 @@ import { saveNotification } from '@/lib/notificationHistoryService';
 import { contenuSansSante } from '@/lib/v2/notifications/texte';
 import { noter } from '@/lib/v2/notifications/mesure';
 import { datesRappelSeance, messageSeance } from '@/lib/v2/notifications/discipline';
+import { chargerProgrammeActif, seancesAVenir, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { messageDuJour } from '@/lib/v2/programmes/lancer';
 import { getEspace, objectifVise } from '@/lib/v2/espace';
 import { traduire } from '@/lib/i18n/tr';
+import { sourceNotif, src } from '@/lib/notificationLangue';
 
 // Règle : aucune valeur de santé (poids, kcal, FC, ml, mensurations...) dans
 // le titre ou le corps d'une notification, car elle s'affiche sur l'écran
@@ -250,7 +253,7 @@ const DAY_NAMES = [traduire('dimanche'), traduire('lundi'), traduire('mardi'), t
 
 /** Types (data.type) des notifications programmees par ce service */
 const OWN_TYPES = new Set([
-  'training', 'hydration', 'weighing', 'streak', 'sleep',
+  'training', 'programme_du_jour', 'hydration', 'weighing', 'streak', 'sleep',
   'social_card_weekly', 'social_card_monthly', 'briefing', 'smart_check',
 ]);
 
@@ -489,13 +492,24 @@ class NotificationService {
       now: new Date(),
     });
 
-    for (const date of dates) {
-      const message = messageSeance(date);
+    // 24 octobre 2026 : avec un programme en cours, le rappel dit la seance du jour (« Aujourd'hui : Pectoraux... »).
+    // Les seances deja faites n'ont pas de rappel, et la liste est reprogrammee apres chaque seance : l'ordre suit le programme.
+    const actif = await chargerProgrammeActif().catch(() => null);
+    const prevues = actif ? seancesAVenir(actif, dates.length) : [];
+
+    for (const [k, date] of dates.entries()) {
+      const prevue = prevues[k];
+      const message = prevue && actif
+        ? (() => {
+            const m = messageDuJour(prevue.programme, prevue.jour, semaineDuProgramme(actif, date));
+            return { title: m.titre, body: m.corps };
+          })()
+        : messageSeance(date);
       await Notifications.scheduleNotificationAsync({
         content: {
           title: message.title,
           body: message.body,
-          data: { type: 'training', screen: 'add-training' },
+          data: prevue ? { type: 'programme_du_jour', screen: 'programmes' } : { type: 'training', screen: 'add-training' },
           sound: true,
         },
         trigger: {
@@ -515,7 +529,7 @@ class NotificationService {
       await this.loadSettings();
       // les anciens rappels de l'ecran ReminderSettings (supprime) feraient doublon
       await cancelScheduledWhere(isReminderSettingsNotification);
-      await cancelScheduledWhere((n) => (n.content?.data as any)?.type === 'training');
+      await cancelScheduledWhere((n) => ['training', 'programme_du_jour'].includes((n.content?.data as any)?.type));
       if (this.settings.enabled && this.settings.training.enabled) await this.scheduleTrainingNotifications();
     } catch (e) {
       logger.warn('[NotificationService] rappels de seance non reprogrammes', e);
@@ -1068,7 +1082,7 @@ class NotificationService {
     await this.sendInstantNotification(
       traduire('Protège ton streak !'),
       traduire("Tu as {0} jours consécutifs. Ne les perds pas aujourd'hui !", currentStreak),
-      { type: 'streak' },
+      { type: 'streak', ...sourceNotif(null, src("Tu as {0} jours consécutifs. Ne les perds pas aujourd'hui !", currentStreak)) },
       true
     );
   }

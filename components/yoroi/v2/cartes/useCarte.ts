@@ -4,10 +4,15 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ImageSourcePropType, View } from 'react-native';
-import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { sceneForNow } from '@/components/yoroi/v2/accueil/images';
+import { devNow } from '@/lib/v2/creator/devClock';
 import { figureFor } from '@/components/yoroi/v2/partage/cardKit';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { getEspace } from '@/lib/v2/espace';
+import type { SceneId } from '@/lib/v2/espace';
+import { usePremium } from '@/context/PremiumContext';
+import { chargerScenesGagnees } from '@/lib/v2/dojo/recompensesScenes';
+import { sceneDuFond, scenesPourCarte } from '@/lib/v2/cartes/scenesFond';
 import { useCardIdentity } from '@/lib/v2/partage/identity';
 import { pickCardPhoto } from '@/lib/v2/partage/capture';
 import { chiffresParDefaut } from '@/lib/v2/cartes/chiffres';
@@ -24,6 +29,10 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const [style, setStyleState] = useState<StyleMemorise>({ ...STYLE_DEFAUT, ...initial });
   const [chiffres, setChiffres] = useState<StatKey[]>(initial?.chiffres ?? []);
   const [scene, setScene] = useState<ImageSourcePropType | null>(null);
+  const [sceneId, setSceneId] = useState<SceneId | null>(null);
+  const { isPremium, isAnnualPremium } = usePremium();
+  // les scenes gagnees dans le Dojo (serie, essai du grand coffre) : lues une fois, puis la liste se recalcule
+  const [gagneesLues, setGagneesLues] = useState(0);
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState<'save' | 'share' | null>(null);
   const [saved, setSaved] = useState(false);
@@ -35,8 +44,17 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
       lireStyle().then((s) => alive && setStyleState(s)).catch(() => {});
     }
     getEspace()
-      .then((e) => alive && setScene(sceneMeta(e.scene).image))
-      .catch(() => alive && setScene(sceneMeta('dojo').image));
+      // 24 octobre 2026 : la vraie scene de l'accueil (voyages, packs, saisons compris), comme Scene.tsx.
+      // sceneMeta ne connaissait que les premieres scenes et retombait sur la premiere pour les autres.
+      .then((e) => {
+        if (!alive) return;
+        setScene(sceneForNow(e.scene, devNow()));
+        setSceneId(e.scene);
+      })
+      .catch(() => alive && setScene(sceneForNow('dojo', devNow())));
+    chargerScenesGagnees()
+      .then(() => alive && setGagneesLues((n) => n + 1))
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -72,8 +90,26 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     }
   }, [setStyle]);
 
-  const options: OptionsCarte = { ...style, fond: style.fond === 'photo' && !photo ? 'scene' : style.fond, chiffres };
-  const visuels: VisuelsCarte = { scene, photo, personnage };
+  /**
+   * 24 octobre 2026 : toutes tes scenes en fond (onglet Fond, « Tes scènes »), les memes que le choix de scene
+   * de l'accueil te laisse prendre. Une scene memorisee qui n'est plus a toi (fin de Premium) retombe sur Ma scène.
+   */
+  const tesScenes = useMemo(
+    () => scenesPourCarte(id.rankIndex, isPremium, isAnnualPremium),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [id.rankIndex, isPremium, isAnnualPremium, gagneesLues],
+  );
+  const sceneChoisie = sceneDuFond(style.fond);
+  const sceneOk = !sceneChoisie || tesScenes.some((g) => g.scenes.includes(sceneChoisie));
+  const fondEffectif = (style.fond === 'photo' && !photo) || !sceneOk ? 'scene' : style.fond;
+  const options: OptionsCarte = { ...style, fond: fondEffectif, chiffres };
+  const visuels: VisuelsCarte = { scene, sceneId, photo, personnage };
+
+  /** Enleve ta photo de fond : la carte revient sur ta scene */
+  const enleverPhoto = useCallback(() => {
+    setPhoto(null);
+    setStyle({ fond: 'scene' });
+  }, [setStyle]);
 
   /**
    * Les visuels d'une autre carte que celle de ce hook (vignettes, 17 octobre 2026) : meme scene, meme photo,
@@ -82,9 +118,9 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   const visuelsPour = useCallback((d: CarteData): VisuelsCarte => {
     if (!personnage) return visuels;
     const fig = figureFor({ personnage: id.personnage!, rankIndex: id.rankIndex, genre: id.genre, sport: d.sport ?? null });
-    return { scene, photo, personnage: fig };
+    return { scene, sceneId, photo, personnage: fig };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene, photo, personnage, id.personnage, id.rankIndex, id.genre]);
+  }, [scene, sceneId, photo, personnage, id.personnage, id.rankIndex, id.genre]);
 
   const enregistrer = useCallback(async (onErreur?: (titre: string, texte: string) => void) => {
     if (busy || !data) return false;
@@ -126,5 +162,5 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     else setStyle({ sansPersonne: false, epure: false, personnage: persoVoulu });
   }, [personne.visible, persoVoulu, setStyle]);
 
-  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, choisirPhoto, enregistrer, partager, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
+  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, choisirPhoto, enleverPhoto, tesScenes, enregistrer, partager, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
 }

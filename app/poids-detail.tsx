@@ -333,6 +333,7 @@ export default function PoidsDetailScreen() {
           onToriiPress={() => setPeriod(PERIODE_PLAN)}
           projection={period === PERIODE_PLAN ? etat.projection?.points ?? null : null}
           legende
+          tendance
           fond
           onScrub={(p) => onScrub(p ? points.find((q) => q.date === p.date) ?? null : null)}
         />

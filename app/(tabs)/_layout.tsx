@@ -6,6 +6,7 @@ import { ImportProgressBanner } from '@/components/ImportProgressBanner';
 import { TourGate } from '@/components/yoroi/v2/tour/TourGate';
 import { PropositionSemaine } from '@/components/yoroi/v2/cartes/PropositionCarte';
 import { BilanAuto } from '@/components/yoroi/v2/bilan/BilanAuto';
+import { SeanceEnCours } from '@/components/yoroi/v2/seance/SeanceEnCours';
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function TabsLayout() {
         <Tabs.Screen name="progres" />
         <Tabs.Screen name="dojo" />
       </Tabs>
+      {/* 24 octobre 2026 : ta seance en cours, visible depuis tous les onglets */}
+      <SeanceEnCours />
       <ImportProgressBanner />
       {/* visite guidee « Le nouveau YOROI » une fois, sinon les nouveautes : jamais les deux */}
       <TourGate />

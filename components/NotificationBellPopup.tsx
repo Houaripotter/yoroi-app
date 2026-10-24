@@ -48,6 +48,7 @@ import {
   getUnreadCount,
   NotificationHistoryItem,
 } from '@/lib/notificationHistoryService';
+import { localiserNotification } from '@/lib/notificationLangue';
 import { getWeeklyPlan } from '@/lib/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -300,7 +301,8 @@ export const NotificationBellPopup: React.FC<NotificationBellPopupProps> = ({
       if ((title.includes('watch') || title.includes('montre')) && (body.includes('synchronis') || body.includes('connect'))) return false;
       return true;
     });
-    setNotifications(filtered.slice(0, 8));
+    // Titre et texte dans la langue actuelle de l'app, sinon tels qu'ils ont été reçus
+    setNotifications(filtered.slice(0, 8).map((n) => localiserNotification(n)));
   }, []);
 
   const openPopup = useCallback(async () => {

@@ -23,12 +23,12 @@ import { PeriodSwitch } from '../charts/PeriodSwitch';
 import { BadgeRecord, CHART_COLORS, RECORD_RED, tint } from '../charts/core';
 import { couleurTraitDomaine } from '../charts/couleurDomaine';
 import { useTrainingsData } from '@/lib/v2/progres/useProgresData';
-import { computeLifts, hasStrengthData, MUSCLE_ORDER, setsByMuscle, weeklyTonnage } from '@/lib/v2/progres/strength';
-import type { LiftPoint } from '@/lib/v2/progres/strength';
+import { computeLifts, essaiPourStagnation, hasStrengthData, MUSCLE_ORDER, setsByMuscle, stagnations, weeklyTonnage } from '@/lib/v2/progres/strength';
+import type { Essai, LiftPoint } from '@/lib/v2/progres/strength';
 import { accordSouleve, formatTonnage, mondayOf } from '@/lib/v2/trainingWeek';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { versUnitePoids, type UnitePoids } from '@/lib/v2/unitePoids';
-import { dayLong, dayShort, daysDiff, monthLong, num, shiftDays, thousands, todayIso } from '@/lib/v2/progres/format';
+import { dayLong, dayShort, daysDiff, monthLong, num, shiftDays, todayIso } from '@/lib/v2/progres/format';
 import { traduire, traduirePluriel, LANG } from '@/lib/i18n/tr';
 
 function kilos(v: number): string {
@@ -40,6 +40,13 @@ export function tonnageText(kg: number, unite: UnitePoids = 'kg'): string {
   return formatTonnage(kg, unite);
 }
 
+const ESSAIS: Record<Essai, string> = {
+  frequence: 'À tester 4 semaines : fais cet exercice 2 fois par semaine au lieu d’une.',
+  volume: 'À tester 4 semaines : ajoute 2 séries par semaine pour ce muscle.',
+  legere: 'À tester : une semaine légère, moitié moins de séries, puis reprends.',
+  reps: 'À tester 4 semaines : change de fourchette, par exemple 4 à 6 répétitions au lieu de 8 à 12.',
+};
+
 export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
@@ -50,6 +57,13 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
   const cv = (kg: number) => versUnitePoids(kg, unite);
   const mot = unite === 'lb' ? traduire('livres') : traduire('kilos');
   const lifts = useMemo(() => computeLifts(trainings), [trainings]);
+  // 24 octobre 2026 : les exercices qui stagnent, et ce que disent les etudes pour relancer
+  const stagnent = useMemo(() => stagnations(lifts, todayIso()), [lifts]);
+  // un essai a tester 4 semaines pour chaque exercice qui stagne (lib/v2/progres/strength.ts)
+  const essaiDe = (key: string): Essai => {
+    const l = lifts.find((x) => x.key === key);
+    return l ? essaiPourStagnation(l, trainings, todayIso()) : 'reps';
+  };
   const [liftKey, setLiftKey] = useState<string | null>(null);
   const [period, setPeriod] = useState(180);
   const [scrub, setScrub] = useState<ChartPoint | null>(null);
@@ -73,7 +87,6 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
   const tonnage = useMemo(() => weeklyTonnage(trainings, today, 10), [trainings, today]);
   const muscleLoads = useMemo(() => weekMuscles(trainings, today), [trainings, today]);
   const showCardio = part !== 'force';
-  const showForce = part !== 'cardio';
   const tonAvg = useMemo(() => {
     const done = tonnage.slice(0, -1).filter((b) => b.value > 0);
     return done.length ? done.reduce((s, b) => s + b.value, 0) / done.length : null;
@@ -205,6 +218,19 @@ export function ForceSection({ part }: { part?: 'force' | 'cardio' } = {}) {
             <Ink size={15} weight="extraBold">{traduire("Dernier record, {0}", dayLong(lastRecord.date))}</Ink>
             <Ink size={13} color={c.textSecondary}>{traduirePluriel(lastRecord.reps, lastRecord.reps > 1, "{0} {1} pour {2} répétition, soit {3} {4} estimé{5}s", "{0} {1} pour {2} répétitions, soit {3} {4} estimé{5}s", num(cv(lastRecord.weight), 1), mot, lastRecord.reps, kilos(cv(lastRecord.value)), mot, LANG === 'fr' && unite === 'lb' ? 'e' : '')}</Ink>
           </View>
+        </GlassCard>
+      ) : null}
+
+      {stagnent.length ? (
+        <GlassCard label={traduire('Ce qui stagne')} onPress={() => { tapLight(); router.push({ pathname: '/programmes/conseil/[id]', params: { id: 'stagner' } } as any); }} style={{ marginHorizontal: GUTTER, marginTop: 18, gap: 6, paddingVertical: 14 }}>
+          <Ink size={15} weight="extraBold">{traduire('Ce qui stagne')}</Ink>
+          {stagnent.map((x) => (
+            <View key={x.key} style={{ gap: 2 }}>
+              <Ink size={13} color={c.textSecondary}>{traduire('{0} : pas de nouveau record depuis {1} semaines', traduire(x.name), x.semaines)}</Ink>
+              <Ink size={13} weight="bold">{traduire(ESSAIS[essaiDe(x.key)])}</Ink>
+            </View>
+          ))}
+          <Ink size={13} weight="bold" color={c.accent}>{traduire('Ce que disent les études pour relancer')}</Ink>
         </GlassCard>
       ) : null}
 

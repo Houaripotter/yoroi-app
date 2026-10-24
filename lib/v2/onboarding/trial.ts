@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { logger } from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
+import { sourceNotif, src } from '@/lib/notificationLangue';
 
 export type FreeTrial = { days: number; end: Date };
 
@@ -77,7 +78,8 @@ export async function scheduleTrialReminder(end: Date): Promise<boolean> {
       content: {
         title: traduire('Ton essai Premium se termine bientôt'),
         body: traduire("Il prend fin le {0}. Pour ne pas être débité, annule-le avant dans les réglages de ton compte {1}.", longDate(end), storeName()),
-        data: { type: 'trial_reminder' },
+        // de quoi réafficher l'historique dans une autre langue (la date reste écrite dans la langue d'origine)
+        data: { type: 'trial_reminder', ...sourceNotif(null, src("Il prend fin le {0}. Pour ne pas être débité, annule-le avant dans les réglages de ton compte {1}.", longDate(end), storeName())) },
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
     });

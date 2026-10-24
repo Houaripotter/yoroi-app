@@ -23,6 +23,8 @@ import { INJURY_CAUSES, PAIN_TYPES, TREATMENT_TYPES } from '@/constants/bodyZone
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { RED_FLAGS, RETURN_PLANS, painColor, painWord, returnFamily } from '@/lib/v2/nutrition/formulas';
 import { logger } from '@/lib/security/logger';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { cleCoches, etapeReprise } from '@/lib/v2/infirmerie/reprise';
 import { isoOf } from '@/lib/v2/progres/format';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
@@ -50,6 +52,20 @@ export default function InjuryDetailScreen() {
   const { isCreator: creator } = useCreatorMode();
   const [surgeonOpen, setSurgeonOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
+  // 24 octobre 2026 : les consignes de l'etape en cours, cochees (gardees sur le telephone, par blessure)
+  const [coches, setCoches] = useState<string[]>([]);
+  useEffect(() => {
+    if (!Number.isFinite(injuryId)) return;
+    AsyncStorage.getItem(cleCoches(injuryId))
+      .then((raw) => setCoches(raw ? (JSON.parse(raw) as string[]) : []))
+      .catch(() => setCoches([]));
+  }, [injuryId]);
+  const cocher = (k: string) =>
+    setCoches((l) => {
+      const n = l.includes(k) ? l.filter((x) => x !== k) : [...l, k];
+      AsyncStorage.setItem(cleCoches(injuryId), JSON.stringify(n)).catch(() => {});
+      return n;
+    });
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -114,6 +130,9 @@ export default function InjuryDetailScreen() {
   const cause = INJURY_CAUSES.find((c) => c.id === injury.cause)?.label ?? injury.cause;
   const color = painColor(injury.eva_score);
   const family = returnFamily(injury.zone_id, zoneName);
+  // 24 octobre 2026 : l'etape du plan suit le calendrier ET ta douleur, la plus prudente des deux (lib/v2/infirmerie/reprise.ts)
+  const reprise = etapeReprise(days, injury.eva_score, RETURN_PLANS[family].length);
+  const etapeActuelle = isHealed ? RETURN_PLANS[family].length + 1 : reprise.etape;
   const recoveryLeft = injury.estimated_recovery_days ? Math.max(0, injury.estimated_recovery_days - days) : null;
 
   const updateEva = async () => {
@@ -400,6 +419,11 @@ export default function InjuryDetailScreen() {
                 <Ink size={12} weight="bold" color={P.ink2}>
                   {family === 'upper' ? traduire('Haut du corps, 5 semaines') : family === 'lower' ? traduire('Bas du corps, 5 semaines') : traduire('Dos et tronc, 5 semaines')}
                 </Ink>
+                {!isHealed ? (
+                  <Ink size={13} weight="extraBold" color={P.mossText}>
+                    {traduire('Tu en es à l’étape {0} : {1}', reprise.etape, traduire(RETURN_PLANS[family][reprise.etape - 1].label))}
+                  </Ink>
+                ) : null}
               </View>
               <NIcon name={returnOpen ? 'minus' : 'plus'} size={20} color={P.ink2} />
             </Card>
@@ -408,8 +432,15 @@ export default function InjuryDetailScreen() {
             <View style={{ gap: 0, marginTop: 10 }}>
               <Ink size={12} weight="medium" color={P.ink2} style={{ paddingHorizontal: 4, marginBottom: 10 }}>
                 {traduire("Protocole estimé. Ajuste selon ton ressenti et l’avis de ton médecin ou de ton kiné.")}</Ink>
+              {!isHealed && reprise.freineeParDouleur ? (
+                <Notice
+                  tone="gold"
+                  text={traduire('Ta douleur est à {0} sur 10 : tu restes à l’étape {1} tant qu’elle ne baisse pas. Note-la chaque jour ; si elle ne baisse pas, demande l’avis d’un professionnel.', injury.eva_score, reprise.etape)}
+                  style={{ marginBottom: 12 }}
+                />
+              ) : null}
               {RETURN_PLANS[family].map((w, i, arr) => (
-                <View key={w.week} style={{ flexDirection: 'row', gap: 12 }}>
+                <View key={w.week} style={{ flexDirection: 'row', gap: 12, opacity: i + 1 < etapeActuelle ? 0.55 : 1 }}>
                   <View style={{ width: 36, alignItems: 'center' }}>
                     <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: WEEK_COLORS[i] ?? P.ink, alignItems: 'center', justifyContent: 'center' }}>
                       <Ink size={12} weight="black" color={P.white}>
@@ -418,15 +449,36 @@ export default function InjuryDetailScreen() {
                     </View>
                     {i < arr.length - 1 ? <View style={{ flex: 1, width: 3, borderRadius: 2, backgroundColor: P.line, marginVertical: 4 }} /> : null}
                   </View>
-                  <View style={{ flex: 1, gap: 4, paddingBottom: 16 }}>
+                  <View style={[{ flex: 1, gap: 4, paddingBottom: 16 }, i + 1 === etapeActuelle ? { padding: 12, marginBottom: 12, borderRadius: 16, borderWidth: 2, borderColor: WEEK_COLORS[i] ?? P.ink, backgroundColor: P.white } : null]}>
+                    {i + 1 === etapeActuelle ? (
+                      <Ink size={11} weight="black" color={WEEK_COLORS[i] ?? P.ink}>{traduire('TU EN ES LÀ')}</Ink>
+                    ) : i + 1 < etapeActuelle ? (
+                      <Ink size={11} weight="black" color={P.ink2}>{traduire('PASSÉE')}</Ink>
+                    ) : null}
                     <Ink size={15} weight="black">
                       {traduire(w.label)}
                     </Ink>
-                    {w.restrictions.map((r) => (
-                      <Bullet key={r} color={WEEK_COLORS[i] ?? P.ink}>
-                        {r}
-                      </Bullet>
-                    ))}
+                    {i + 1 === etapeActuelle
+                      ? w.restrictions.map((r, index) => {
+                          // cle stable : la semaine et la place de la consigne (le texte change avec la langue)
+                          const k = `${w.week}|${index}`;
+                          const fait = coches.includes(k);
+                          return (
+                            <Press key={r} onPress={() => { tap(); cocher(k); }} accessibilityRole="checkbox" accessibilityState={{ checked: fait }} accessibilityLabel={r}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 }}>
+                                <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: WEEK_COLORS[i] ?? P.ink, backgroundColor: fait ? WEEK_COLORS[i] ?? P.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                                  {fait ? <NIcon name="check" size={14} color={P.white} /> : null}
+                                </View>
+                                <Ink size={14} weight="bold" color={fait ? P.ink2 : P.ink} style={{ flex: 1 }}>{r}</Ink>
+                              </View>
+                            </Press>
+                          );
+                        })
+                      : w.restrictions.map((r) => (
+                          <Bullet key={r} color={WEEK_COLORS[i] ?? P.ink}>
+                            {r}
+                          </Bullet>
+                        ))}
                   </View>
                 </View>
               ))}

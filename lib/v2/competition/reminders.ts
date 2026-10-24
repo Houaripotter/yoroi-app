@@ -14,11 +14,12 @@ import { getAllExtras } from './extras';
 import type { CompetitionExtra } from './extras';
 import logger from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
+import { sourceNotif, src, type SourceTexte } from '@/lib/notificationLangue';
 
 const PREFIX = 'yoroi-competition-';
 const CHANNEL = 'competitions';
 
-type Planned = { kind: string; at: Date; title: string; body: string };
+type Planned = { kind: string; at: Date; title: string; body: string; src?: { titre?: SourceTexte; texte?: SourceTexte } };
 
 function at(day: Date, h: number, m = 0): Date {
   const d = new Date(day);
@@ -34,15 +35,15 @@ export function plannedReminders(comp: Competition, extra: CompetitionExtra): Pl
   // sur l'écran verrouillé. Le détail reste dans la fiche compétition.
   const cat = Boolean(comp.categorie_poids);
   const list: Planned[] = [
-    { kind: 'j30', at: at(addDays(day, -30), 9), title: traduire("Dans 30 jours : {0}", comp.nom), body: cat ? traduire('Un mois pour te préparer. Vérifie ton inscription et ta catégorie.') : traduire('Un mois pour te préparer. Pense à vérifier ton inscription.') },
-    { kind: 'j7', at: at(addDays(day, -7), 9), title: traduire("Dans 7 jours : {0}", comp.nom), body: cat ? traduire('Dernière semaine. Garde un œil sur ta pesée.') : traduire('Dernière semaine. Prépare ton sac et ton trajet.') },
-    { kind: 'veille', at: at(addDays(day, -1), 19), title: traduire("Demain : {0}", comp.nom), body: comp.lieu ? traduire("Rendez-vous à {0}. Prépare ton sac et couche-toi tôt.", comp.lieu) : traduire('Prépare ton sac et couche-toi tôt.') },
+    { kind: 'j30', at: at(addDays(day, -30), 9), title: traduire("Dans 30 jours : {0}", comp.nom), body: cat ? traduire('Un mois pour te préparer. Vérifie ton inscription et ta catégorie.') : traduire('Un mois pour te préparer. Pense à vérifier ton inscription.'), src: { titre: src("Dans 30 jours : {0}", comp.nom) } },
+    { kind: 'j7', at: at(addDays(day, -7), 9), title: traduire("Dans 7 jours : {0}", comp.nom), src: { titre: src("Dans 7 jours : {0}", comp.nom) }, body: cat ? traduire('Dernière semaine. Garde un œil sur ta pesée.') : traduire('Dernière semaine. Prépare ton sac et ton trajet.') },
+    { kind: 'veille', at: at(addDays(day, -1), 19), title: traduire("Demain : {0}", comp.nom), body: comp.lieu ? traduire("Rendez-vous à {0}. Prépare ton sac et couche-toi tôt.", comp.lieu) : traduire('Prépare ton sac et couche-toi tôt.'), src: { titre: src("Demain : {0}", comp.nom), ...(comp.lieu ? { texte: src("Rendez-vous à {0}. Prépare ton sac et couche-toi tôt.", comp.lieu) } : {}) } },
   ];
   if (extra.pesee) {
     const weighDay = extra.pesee === 'veille' ? addDays(day, -1) : day;
-    list.push({ kind: 'pesee', at: at(weighDay, extra.pesee === 'veille' ? 8 : 7), title: traduire("Jour de pesée : {0}", comp.nom), body: traduire('Pèse-toi ce matin pour savoir où tu en es.') });
+    list.push({ kind: 'pesee', at: at(weighDay, extra.pesee === 'veille' ? 8 : 7), title: traduire("Jour de pesée : {0}", comp.nom), body: traduire('Pèse-toi ce matin pour savoir où tu en es.'), src: { titre: src("Jour de pesée : {0}", comp.nom) } });
   }
-  list.push({ kind: 'resultat', at: at(addDays(day, 1), 10), title: traduire(`Comment s’est passée ta compétition ?`), body: traduire("Note ton résultat de {0} : il rejoint ton palmarès.", comp.nom) });
+  list.push({ kind: 'resultat', at: at(addDays(day, 1), 10), title: traduire(`Comment s’est passée ta compétition ?`), body: traduire("Note ton résultat de {0} : il rejoint ton palmarès.", comp.nom), src: { texte: src("Note ton résultat de {0} : il rejoint ton palmarès.", comp.nom) } });
   return list.sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 
@@ -64,7 +65,7 @@ async function scheduleFor(comp: Competition, extra: CompetitionExtra): Promise<
     if (p.at.getTime() <= now) continue;
     await Notifications.scheduleNotificationAsync({
       identifier: `${PREFIX}${comp.id}-${p.kind}`,
-      content: { ...contenuSansSante({ title: p.title, body: p.body }), data: { type: 'competition', source: 'competitionReminders', screen: 'competition-detail', id: String(comp.id) } },
+      content: { ...contenuSansSante({ title: p.title, body: p.body }), data: { type: 'competition', source: 'competitionReminders', screen: 'competition-detail', id: String(comp.id), ...sourceNotif(p.src?.titre, p.src?.texte) } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: p.at, ...(Platform.OS === 'android' ? { channelId: CHANNEL } : {}) } as Notifications.NotificationTriggerInput,
     });
     n++;

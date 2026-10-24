@@ -27,6 +27,10 @@ import { exploitVisible } from '@/lib/v2/cartes/exploits';
 import { getClubLogoSource } from '@/lib/sports';
 import type { CarteData, Exploit, FormatId, Grand, ModeleId, OptionsCarte, StatValue } from '@/lib/v2/cartes/types';
 import { BADGES, MENTION_STORES, SLOGANS, fondMeta } from './fonds';
+import { SCENE_FOCUS, sceneForNow } from '@/components/yoroi/v2/accueil/images';
+import { devNow } from '@/lib/v2/creator/devClock';
+import type { SceneId } from '@/lib/v2/espace';
+import { cadrageScene, sceneDuFond, voilesFond } from '@/lib/v2/cartes/scenesFond';
 import { AvantApresVue } from './AvantApresVue';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { chargeGrand, donneesEnUnite, exploitEnUnite, statsEnUnite } from '@/lib/v2/cartes/unite';
@@ -85,6 +89,8 @@ export function paletteDe(sombre: boolean): Palette {
 export type VisuelsCarte = {
   /** image de la scene d'accueil */
   scene?: ImageSourcePropType | null;
+  /** 24 octobre 2026 : l'id de la scene d'accueil, pour cadrer la carte sur son centre d'interet */
+  sceneId?: SceneId | null;
   /** photo personnelle (uri) */
   photo?: string | null;
   /** personnage de l'utilisateur, null si « Sans personnage » */
@@ -114,7 +120,16 @@ function T({ children, size, weight = 'medium', color, style, lines = 1 }: { chi
 /** Le fond est une image (scene, photo, decor) : les voiles du haut et du bas la rendent lisible */
 function fondImage(o: OptionsCarte, v: VisuelsCarte): ImageSourcePropType | null {
   const meta = fondMeta(o.fond);
+  // 24 octobre 2026 : une de tes scenes choisie dans « Tes scènes », en image fixe (jamais la video)
+  const sid = sceneDuFond(o.fond);
+  if (sid) return sceneForNow(sid, devNow());
   return o.fond === 'photo' && v.photo ? { uri: v.photo } : o.fond === 'scene' ? v.scene ?? null : meta.image ?? null;
+}
+
+/** Centre d'interet de la scene du fond (fraction de sa largeur), null si le fond n'est pas une scene */
+function focusDuFond(o: OptionsCarte, v: VisuelsCarte): number | null {
+  const sid = sceneDuFond(o.fond) ?? (o.fond === 'scene' ? v.sceneId ?? null : null);
+  return sid ? SCENE_FOCUS[sid] ?? 0.5 : null;
 }
 
 /** Cle stable d'une image de fond : le numero du require, ou l'adresse de la photo */
@@ -132,16 +147,19 @@ function cleImage(src: ImageSourcePropType): string {
  * l'Image de React Native est remontee a chaque changement de source. Le degrade neutre reste toujours dessous :
  * pendant le chargement, c'est lui qu'on voit.
  */
-function ImageFond({ src }: { src: ImageSourcePropType }) {
+function ImageFond({ src, cadrage }: { src: ImageSourcePropType; cadrage?: { width: number; left: number } | null }) {
   const cle = cleImage(src);
-  const plein = { position: 'absolute' as const, left: 0, top: 0, right: 0, bottom: 0, width: '100%' as const, height: '100%' as const };
+  // une scene paysage dans la carte portrait : elle glisse pour garder son centre d'interet au milieu
+  const plein = cadrage
+    ? { position: 'absolute' as const, left: cadrage.left, top: 0, width: cadrage.width, height: '100%' as const }
+    : { position: 'absolute' as const, left: 0, top: 0, right: 0, bottom: 0, width: '100%' as const, height: '100%' as const };
   if (Platform.OS === 'ios') {
     return <ExpoImage key={cle} recyclingKey={cle} source={src as never} style={plein} contentFit="cover" transition={0} cachePolicy="memory-disk" />;
   }
   return <Image key={cle} source={src} style={plein} resizeMode="cover" />;
 }
 
-function Fond({ o, v, h, fenetre, fort }: { o: OptionsCarte; v: VisuelsCarte; h: number; fenetre?: boolean; fort?: boolean }) {
+function Fond({ o, v, h, w = CARTE_W, fenetre, fort }: { o: OptionsCarte; v: VisuelsCarte; h: number; w?: number; fenetre?: boolean; fort?: boolean }) {
   const meta = fondMeta(o.fond);
   const src = fondImage(o, v);
   const degrade = meta.degrade ?? (o.sombre ? ['#2A2E39', '#121318'] : ['#F6F5F0', '#E2DFD6']);
@@ -150,21 +168,24 @@ function Fond({ o, v, h, fenetre, fort }: { o: OptionsCarte; v: VisuelsCarte; h:
   const contraire = !src && !!meta.degrade && (o.sombre ? !!meta.clair : !meta.clair);
   const photo = o.fond === 'photo';
   // 17 octobre : le milieu reste clair pour voir la photo ou la scene ; le texte vit en haut et en bas, sur ses degrades
-  const general = (o.sombre ? (photo ? 0.14 : 0.04) : photo ? 0.26 : 0.12) + (fort ? (photo ? 0.2 : 0.1) : 0);
+  // 24 octobre : voiles nettement alleges (valeurs et anciennes valeurs dans voilesFond)
+  const vf = voilesFond(o.sombre, photo, fort);
+  const focus = src ? focusDuFond(o, v) : null;
+  const cadrage = focus !== null ? cadrageScene(focus, w, h) : null;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, height: h }}>
       {/* le degrade toujours dessous : fond neutre tant que l'image n'est pas la */}
       <LinearGradient colors={degrade as [string, string]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      {src ? <ImageFond src={src} /> : null}
+      {src ? <ImageFond src={src} cadrage={cadrage} /> : null}
       {contraire ? <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: `rgba(${voile},0.84)` }} /> : null}
       {src && !fenetre ? (
         <>
-          <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: `rgba(${voile},${general})` }} />
-          <LinearGradient colors={[`rgba(${voile},${o.sombre ? 0.66 : 0.84})`, `rgba(${voile},0)`]} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: h * 0.27 }} />
+          {vf.general > 0 ? <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: `rgba(${voile},${vf.general})` }} /> : null}
+          <LinearGradient colors={[`rgba(${voile},${vf.haut})`, `rgba(${voile},0)`]} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: h * vf.hautHauteur }} />
           <LinearGradient
-            colors={[`rgba(${voile},0)`, `rgba(${voile},${o.sombre ? 0.72 : 0.82})`, `rgba(${voile},${o.sombre ? 0.95 : 0.97})`]}
-            locations={[0, 0.34, 1]}
-            style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: h * (fort ? 0.72 : 0.66) }}
+            colors={[`rgba(${voile},0)`, `rgba(${voile},${vf.basMilieu})`, `rgba(${voile},${vf.basFin})`]}
+            locations={[0, vf.basMilieuPos, 1]}
+            style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: h * vf.basHauteur }}
           />
         </>
       ) : null}
@@ -561,9 +582,10 @@ function Cadre(c: Ctx) {
   return (
     <View style={{ flex: 1, backgroundColor: papier }}>
       <View style={{ marginTop: marge, marginHorizontal: marge, height: fenH, borderRadius: 16, overflow: 'hidden' }}>
-        <Fond o={o} v={v} h={fenH} fenetre />
-        {image ? <LinearGradient pointerEvents="none" colors={['rgba(10,11,14,0.62)', 'rgba(10,11,14,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: fenH * 0.42 }} /> : null}
-        {image ? <LinearGradient pointerEvents="none" colors={['rgba(10,11,14,0)', 'rgba(10,11,14,0.6)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: fenH * 0.36 }} /> : null}
+        <Fond o={o} v={v} h={fenH} w={fenW} fenetre />
+        {/* 24 octobre 2026 : voiles alleges (avant 0.62 sur 42 % en haut, 0.6 sur 36 % en bas) */}
+        {image ? <LinearGradient pointerEvents="none" colors={['rgba(10,11,14,0.45)', 'rgba(10,11,14,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: fenH * 0.36 }} /> : null}
+        {image ? <LinearGradient pointerEvents="none" colors={['rgba(10,11,14,0)', 'rgba(10,11,14,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: fenH * 0.32 }} /> : null}
         <Figure src={fig} w={fenH * 0.6} h={fenH * 0.8} style={{ right: 4, bottom: 0 }} />
         {d.moment === 'seance' && aUnExtra(d) && o.format !== 'carre' ? <View style={{ position: 'absolute', left: 14, bottom: 12, right: fig ? fenH * 0.42 : 14 }}><Record data={d} pal={palF} largeur={fenW - 28} /></View> : null}
         <View style={{ position: 'absolute', left: 14, right: 14, top: story ? 16 : 12 }}>

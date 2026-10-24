@@ -35,6 +35,8 @@ const ROUTES_PAR_TYPE: Record<string, string> = {
   weighing: '/pesee',
   citation: '/citations',
   coffre_du_jour: '/(tabs)/dojo',
+  // 24 octobre 2026 : le message du jour d'un programme ouvre tes programmes, la seance du jour en haut
+  programme_du_jour: '/programmes',
 };
 
 /** Écrans de données qui ne sont pas des routes : le Dojo est un onglet */

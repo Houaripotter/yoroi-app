@@ -38,6 +38,7 @@ import { draftRoute, draftTitle } from '@/lib/v2/seance/resume';
 import { slotWeekStart } from '@/lib/v2/seance/save';
 import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportImage, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { useNow } from '@/lib/v2/seance/useNow';
+import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
@@ -111,7 +112,12 @@ export default function OnSentraine() {
           const t = await getTrainingById(params.editId);
           sport = t?.sport;
         } else if (!sport && params.slotId) {
-          const slot = await getWeeklyPlanById(params.slotId);
+          const [slot, r] = await Promise.all([getWeeklyPlanById(params.slotId), routeDuCreneau(params.slotId)]);
+          // creneau cree par « Dans mon planning » : il ouvre la prochaine seance du programme (lib/v2/programmes/agenda.ts)
+          if (r) {
+            router.replace({ pathname: r.pathname as any, params: { ...toQuery(params), ...r.params, slotId: String(params.slotId) } });
+            return;
+          }
           sport = slot?.sport;
         }
         if (sport) {
@@ -167,7 +173,14 @@ export default function OnSentraine() {
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
     // les parametres recus (jour, heure, duree, club...) suivent jusqu'a la saisie
     // vague 37 : sans « En direct », la saisie s'ouvre en mode « seance faite » (form=1), sans chrono
-    router.push({ pathname: seanceRoute(sport) as any, params: { ...toQuery(params), ...extra, ...(direct ? {} : { form: '1' }), sport } });
+    const ouvrir = (pathname: string, p: Record<string, string>) =>
+      router.push({ pathname: pathname as any, params: { ...toQuery(params), ...extra, ...(direct ? {} : { form: '1' }), ...p } });
+    // creneau du programme : la prochaine seance du programme (lib/v2/programmes/agenda.ts)
+    if (extra.slotId) {
+      void routeDuCreneau(Number(extra.slotId)).then((r) => (r ? ouvrir(r.pathname, r.params) : ouvrir(seanceRoute(sport), { sport })));
+      return;
+    }
+    ouvrir(seanceRoute(sport), { sport });
   };
 
   const hero: Hero | null = useMemo(() => {

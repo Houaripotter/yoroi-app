@@ -1013,6 +1013,9 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Side Bend', category: 'musculation', muscle: 'ABDOS', unit: 'reps' },
   { name: 'Weighted Plank', category: 'musculation', muscle: 'ABDOS', unit: 'time' },
   { name: 'Copenhagen Plank', category: 'musculation', muscle: 'ABDOS', unit: 'time' },
+  { name: 'Cou Isométrique (4 directions)', category: 'musculation', muscle: 'COU', unit: 'time' },
+  { name: 'Cou Élastique (4 directions)', category: 'musculation', muscle: 'COU', unit: 'reps' },
+  { name: 'Rotation Externe (Élastique)', category: 'musculation', muscle: 'ÉPAULES', unit: 'reps' },
   { name: 'Long Lever Plank', category: 'musculation', muscle: 'ABDOS', unit: 'time' },
   { name: 'RKC Plank', category: 'musculation', muscle: 'ABDOS', unit: 'time' },
 

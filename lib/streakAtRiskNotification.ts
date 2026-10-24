@@ -12,6 +12,7 @@ import { Platform } from 'react-native';
 import { getTrainings } from './database';
 import logger from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
+import { sourceNotif, src } from '@/lib/notificationLangue';
 
 const LAST_CHECK_KEY = '@yoroi_streak_risk_last_check';
 const LAST_SENT_KEY = '@yoroi_streak_risk_last_sent';
@@ -98,15 +99,19 @@ export async function checkAndNotifyStreakAtRisk(): Promise<void> {
       ? {
           title: traduire("Ta série de {0} jours t’attend", streak),
           body: traduire(`Pas encore de séance notée aujourd’hui. Quinze minutes suffisent pour la garder.`),
+          // de quoi réafficher l'historique dans une autre langue
+          src: sourceNotif(src("Ta série de {0} jours t’attend", streak)),
         }
       : streak >= 10
       ? {
           title: traduire("{0} jours d’affilée", streak),
           body: traduire(`Il te reste deux heures pour noter ta séance du jour.`),
+          src: sourceNotif(src("{0} jours d’affilée", streak)),
         }
       : {
           title: traduire("{0} jours d’affilée", streak),
           body: traduire(`Ta séance du jour prolonge ta série. Tu as encore le temps.`),
+          src: sourceNotif(src("{0} jours d’affilée", streak)),
         };
 
     // Pas de demande d'autorisation surprise : on n'envoie que si déjà autorisé
@@ -119,7 +124,7 @@ export async function checkAndNotifyStreakAtRisk(): Promise<void> {
         body: messages.body,
         sound: 'default',
         categoryIdentifier: 'yoroi.streak.risk',
-        data: { type: 'streak_at_risk', streak },
+        data: { type: 'streak_at_risk', streak, ...messages.src },
       },
       trigger: null, // envoi immédiat
     });

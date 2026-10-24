@@ -226,7 +226,9 @@ export type FondId =
   | 'ardoise'
   | 'brume'
   | 'noir'
-  | 'uni';
+  | 'uni'
+  /** 24 octobre 2026 : une de tes scenes (voir lib/v2/cartes/scenesFond.ts) */
+  | `scene:${string}`;
 
 export type OptionsCarte = {
   modele: ModeleId;

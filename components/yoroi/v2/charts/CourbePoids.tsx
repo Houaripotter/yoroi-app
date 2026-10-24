@@ -43,6 +43,7 @@ import type { Ligne, Statut } from '@/lib/v2/pesee/ligneDirectrice';
 import { TOLERANCE_KG, bornesA, isoDuTemps, jourCourt, jourDe, medianeA, statutLigne, trajectoirePlate } from '@/lib/v2/pesee/ligneDirectrice';
 import { paletteSombre } from '@/components/yoroi/livePalette';
 import { echelleCourbe } from '@/lib/v2/pesee/cadrageCourbe';
+import { MIN_PESEES_TENDANCE, filtrerTendance } from '@/lib/v2/pesee/tendance';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
 
 /**
@@ -309,9 +310,19 @@ type Props = {
    * premiere pesee montree (ton objectif commence juste avant), l'axe part de lui et ta ligne part du bord gauche
    */
   debut?: string | null;
+  /**
+   * 24 octobre 2026 : ton poids reel, sans l'eau du jour (filtre de lib/v2/pesee/tendance.ts, le meme que le texte
+   * « ta tendance »), en pointilles fins sur ta courbe. Seulement la ou on le demande (le detail du poids).
+   */
+  tendance?: boolean;
+  /**
+   * 24 octobre 2026 : la serie complete de tes pesees pour calculer la tendance (le filtre a besoin de tout ton
+   * historique, pas seulement des pesees montrees). Sans elle, la tendance part des points montres.
+   */
+  serieTendance?: { date: string; value: number }[] | null;
 };
 
-export function CourbePoids({ points, style = 1, showCap = true, cap = null, ligne = null, torii = null, atteint = false, periode, today, height = 170, onScrub, onPress, onToriiPress, label = traduire('Ta courbe de poids'), surScene = false, compact = false, legende = false, debut: debutAxe = null, projection = null }: Props) {
+export function CourbePoids({ points, style = 1, showCap = true, cap = null, ligne = null, torii = null, atteint = false, periode, today, height = 170, onScrub, onPress, onToriiPress, label = traduire('Ta courbe de poids'), surScene = false, compact = false, legende = false, debut: debutAxe = null, projection = null, tendance = false, serieTendance = null }: Props) {
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
   // vague 45 : redessine quand la couleur du trait change dans les reglages
@@ -410,6 +421,15 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
     const ys = vals.map((v) => Y(v));
     // point aimante : la vraie valeur, gardee dans le cadre
     const ysVrai = raw.map((v) => Math.min(base - 2, Math.max(top - 6, Y(v))));
+
+    // 24 octobre 2026 : ton poids reel (tendance), du debut de l'axe a ta derniere pesee, dans le cadre
+    let tend: string | null = null;
+    const serieT = serieTendance && serieTendance.length ? serieTendance : points;
+    if (tendance && style !== 3 && serieT.length >= MIN_PESEES_TENDANCE) {
+      const tf = filtrerTendance(serieT, today);
+      const P2 = tf.filter((q) => jourDe(q.date) >= t0 - DAY / 2).map((q) => ({ x: XT(jourDe(q.date)), y: Math.min(base - 2, Math.max(top, Y(q.tendance))) }));
+      if (P2.length > 1) tend = brushPath(displayPoints(P2, 6));
+    }
 
     // trace : lisse et juste (les pesees trop serrees a l'ecran sont moyennees pour le trace seulement)
     const P = displayPoints(pts.map((p, i) => ({ x: xs[i], y: ys[i] })), 6);
@@ -621,8 +641,8 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
       const y = [15, base - 7].find(libre);
       if (y != null) avenirLbl = { x: lx, y };
     }
-    return { W, H, GUT, base, top, xs, ys, ysVrai, line, area, bars, band, mid, midOffset, finLigne, plate, debut, debutHors, ticks, Y, labels, capY, capBelow, toriiDateHaut, toriiX, toriiOn, proj, right, avenir, avenirLbl, pastille, allure };
-  }, [width, height, pts, capOn, cap, toriiDate, ligne, style, planMode, atteint, today, compact, debutAxe, projection]);
+    return { W, H, GUT, base, top, xs, ys, ysVrai, line, area, bars, band, mid, midOffset, finLigne, plate, debut, debutHors, ticks, Y, labels, capY, capBelow, toriiDateHaut, toriiX, toriiOn, proj, right, avenir, avenirLbl, pastille, allure, tend };
+  }, [width, height, pts, capOn, cap, toriiDate, ligne, style, planMode, atteint, today, compact, debutAxe, projection, tendance, points, serieTendance]);
 
   const geoRef = useRef(geo);
   geoRef.current = geo;
@@ -774,9 +794,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
     </View>
   ) : null;
 
-  // vague 49 : le point du jour (ou la pesee touchee) prend la couleur de ton allure
-  const shownP = pts[shownI];
-  const legendeNode = legende && g ? <LegendeCourbe rythme={!!g.mid} allure={!!g.allure} projection={!!g.proj} cap={capOn ? (cap as number) : null} torii={toriiDate} atteint={atteint} /> : null;
+  const legendeNode = legende && g ? <LegendeCourbe rythme={!!g.mid} allure={!!g.allure} projection={!!g.proj} tendance={!!g.tend} cap={capOn ? (cap as number) : null} torii={toriiDate} atteint={atteint} /> : null;
 
   return (
     <View>
@@ -886,6 +904,9 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
 
             {g.proj ? <Path d={g.proj} fill="none" stroke={POIDS.c3} strokeWidth={2.5} strokeDasharray="1 7" strokeLinecap="round" /> : null}
 
+            {/* 24 octobre 2026 : ton poids reel, sans l'eau du jour */}
+            {g.tend ? <Path d={g.tend} fill="none" stroke={sombre ? '#FFFFFF' : '#1B1F2A'} strokeOpacity={0.6} strokeWidth={2} strokeDasharray="5 4" strokeLinecap="round" /> : null}
+
 
             {g.debut ? (
               <G>
@@ -978,7 +999,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
  * ligne sous la courbe. Trait violet « ton poids », tirets verts « ton rythme prévu » (seulement quand la trajectoire
  * est dessinee), petit torii « ton cap, 80 kg le 22 oct. ».
  */
-export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, projection = false }: { rythme: boolean; cap: number | null; torii: string | null; atteint?: boolean; allure?: boolean; projection?: boolean }) {
+export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, projection = false, tendance = false }: { rythme: boolean; cap: number | null; torii: string | null; atteint?: boolean; allure?: boolean; projection?: boolean; tendance?: boolean }) {
   const id = useRef(`ycpleg${++gradSeq}`).current;
   const [w, setW] = useState(0);
   const sombre = paletteSombre();
@@ -1036,6 +1057,15 @@ export function LegendeCourbe({ rythme, cap, torii, atteint, allure = false, pro
           </Svg>
           <Ink size={10.5} weight="bold" color={txt} numberOfLines={1}>
             {traduire("ton allure du jour")}</Ink>
+        </View>
+      ) : null}
+      {tendance ? (
+        <View style={item}>
+          <Svg width={18} height={6}>
+            <Line x1={1} x2={17} y1={3} y2={3} stroke={sombre ? '#FFFFFF' : '#1B1F2A'} strokeOpacity={0.6} strokeWidth={2} strokeDasharray="5 4" strokeLinecap="round" />
+          </Svg>
+          <Ink size={10.5} weight="bold" color={txt} numberOfLines={1}>
+            {traduire('ta tendance, les variations du jour lissées')}</Ink>
         </View>
       ) : null}
       {projection ? (

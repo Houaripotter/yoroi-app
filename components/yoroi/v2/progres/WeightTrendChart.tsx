@@ -43,9 +43,11 @@ type Props = {
   projection?: { date: string; value: number }[] | null;
   /** 18 octobre : la meme legende que la carte de l'accueil, sous la courbe (chaque trait a sa legende) */
   legende?: boolean;
+  /** 24 octobre 2026 : ton poids reel en pointilles (CourbePoids tendance) */
+  tendance?: boolean;
 };
 
-export function WeightTrendChart({ points, goal = null, height = 300, onScrub, onPress, plan, series, periode, onToriiPress, fond = false, debut = null, projection = null, legende = false }: Props) {
+export function WeightTrendChart({ points, goal = null, height = 300, onScrub, onPress, plan, series, periode, onToriiPress, fond = false, debut = null, projection = null, legende = false, tendance = false }: Props) {
   const prefs = usePrefsCourbes();
   const { espace } = useEspace();
   const scene = fond ? sceneDuFond(prefs.fond, espace.scene) : null;
@@ -55,6 +57,7 @@ export function WeightTrendChart({ points, goal = null, height = 300, onScrub, o
   const p = usePlanPoids(all, goal ?? null, { enabled: real, check: false, today });
   const curve = useMemo(() => points.map((q) => ({ date: q.date, value: q.value })), [points]);
   const byDate = useMemo(() => new Map(points.map((q) => [q.date, q])), [points]);
+  const serieT = useMemo(() => (tendance ? all.map((q) => ({ date: q.date, value: q.value })) : null), [tendance, all]);
   const courbe = (
     <CourbePoids
       points={curve}
@@ -69,6 +72,8 @@ export function WeightTrendChart({ points, goal = null, height = 300, onScrub, o
       today={today}
       projection={real ? projection : null}
       legende={legende}
+      tendance={tendance}
+      serieTendance={serieT}
       onToriiPress={real && p.ligne && p.torii ? onToriiPress : undefined}
       height={height - 6}
       onScrub={(s) => {

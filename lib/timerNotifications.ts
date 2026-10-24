@@ -10,6 +10,7 @@ import logger from '@/lib/security/logger';
 import { saveNotification } from '@/lib/notificationHistoryService';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { traduire } from '@/lib/i18n/tr';
+import { sourceNotif, src, type SourceTexte } from '@/lib/notificationLangue';
 
 /**
  * Son de la notification de fin. wizz.mp3 n'existe que dans l'app compilee
@@ -159,8 +160,11 @@ class TimerNotificationsService {
   async scheduleTimerFinishedNotification(
     title: string,
     body: string,
-    targetTimestampMs: number
+    targetTimestampMs: number,
+    /** Phrase française du texte avec ses valeurs, pour l'historique dans une autre langue */
+    bodySrc?: SourceTexte,
   ): Promise<void> {
+    const data = { type: 'timer_finished', ...(bodySrc ? sourceNotif(null, bodySrc) : {}) };
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) {
       logger.info('[TimerNotifications] Permission refusée');
@@ -180,7 +184,7 @@ class TimerNotificationsService {
           sound: timerSound(),
           priority: Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 400, 200, 400, 200, 400],
-          data: { type: 'timer_finished' },
+          data,
           ...(Platform.OS === 'ios' && {
             // timeSensitive : passe à travers tous les modes Focus (pas besoin d'approbation Apple)
             interruptionLevel: 'timeSensitive' as any,
@@ -198,7 +202,7 @@ class TimerNotificationsService {
       });
 
       logger.info(`[TimerNotifications] Notification planifiée dans ${delaySeconds}s`);
-      saveNotification(title, body, 'timer', { type: 'timer_finished' }).catch(() => {});
+      saveNotification(title, body, 'timer', data).catch(() => {});
     } catch (error) {
       logger.error('[TimerNotifications] Erreur planification:', error);
     }
@@ -268,7 +272,8 @@ class TimerNotificationsService {
       ? traduire("Round {0} sur {1} terminé. Souffle un peu.", roundNumber, totalRounds)
       : traduire('Dernier round terminé. Beau travail.');
 
-    await this.scheduleTimerFinishedNotification(traduire('Round terminé'), message, Date.now() + 1000);
+    const messageSrc = roundNumber < totalRounds ? src("Round {0} sur {1} terminé. Souffle un peu.", roundNumber, totalRounds) : undefined;
+    await this.scheduleTimerFinishedNotification(traduire('Round terminé'), message, Date.now() + 1000, messageSrc);
   }
 
   /**

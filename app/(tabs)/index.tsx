@@ -55,7 +55,6 @@ import { CartePoids } from '@/components/yoroi/v2/accueil/CartePoids';
 import { RaccourcisDuJour } from '@/components/yoroi/v2/accueil/Raccourcis';
 import {
   GrilleAccueil,
-  LigneConseil,
   TuileAvantApres,
   TuileCompetition,
   TuileDerniere,
@@ -97,7 +96,7 @@ import { CarteImportSante, useCarteImportSante } from '@/components/yoroi/v2/acc
 import { BlocMange } from '@/components/yoroi/v2/accueil/Mange';
 import { useMange } from '@/lib/v2/nutrition/useMange';
 import { TourAnchor, registerTourScroller } from '@/components/yoroi/v2/tour/TourAnchor';
-import { DecorCarte, DecorOutils, DecorScene } from '@/components/yoroi/v2/saisons/DecorSaison';
+import { DecorCarte, DecorScene } from '@/components/yoroi/v2/saisons/DecorSaison';
 import { useSaison } from '@/lib/v2/saisons/useSaison';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -308,8 +307,7 @@ export default function Accueil() {
           <View style={{ marginHorizontal: -22, paddingHorizontal: 22, marginTop: ECART_SOUS_SCENE }}>
             {/* le fond de la page cache le bas de la scene quand elle suit la page plus lentement (parallaxe) */}
             <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -ECART_SOUS_SCENE, height: 420 + ECART_SOUS_SCENE, backgroundColor: P.paper }} />
-            {/* 18 octobre 2026 v4 : en saison, derriere tes outils et en position absolue (rien ne bouge) : au bout de la ligne de citation, la tombe et son chat (le squelette fait coucou, le zombie marche dessus) ou le kadomatsu et ses cadeaux (le bonhomme de neige fait coucou) */}
-            {saison && blocs.includes('conseil') ? <DecorOutils saison={saison} largeur={largeurEcran} scrollY={scrollY} seuil={hauteurScene + ECART_SOUS_SCENE + 160} /> : null}
+            {/* 24 octobre 2026 : la tombe et le kadomatsu vivaient au bout de la ligne de citation, retiree avec elle */}
             <Enter i={0}>
               <TourAnchor id="accueil.outils">
                 <RaccourcisDuJour />
@@ -317,10 +315,7 @@ export default function Accueil() {
             </Enter>
           </View>
 
-          {/* 16 octobre nuit : le conseil du jour en une ligne de texte, sans carte (masque pour la journee : rien, l'accueil comme avant) */}
-          {blocs.includes('conseil') ? (
-            <LigneConseil trainings={data.trainings} lastWeighIso={series.length ? series[series.length - 1].date : null} goal={goal} freins={espace.freins} semaineVisible={semaineVisible} />
-          ) : null}
+          {/* 24 octobre 2026 (Houari) : plus de citation sur l'accueil, elle reste seulement dans la notification du matin */}
 
           {/* Ton poids, inchange */}
           <Enter i={0}>
