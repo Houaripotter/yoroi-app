@@ -54,7 +54,7 @@ export const ZONES: Zone[] = [
     muscles: ['fessiers'],
     exos: [
       e('Hip Thrust Machine', 'FESSIERS', 10, 15, 'Pousse avec les talons et serre les fesses une seconde en haut.'),
-      e('Abducteurs Machine', 'FESSIERS', 12, 20, 'Écarte les jambes contre la machine, reviens lentement : le haut des fesses travaille.'),
+      e('Goblet Squat', 'JAMBES', 8, 12, 'Un haltère tenu contre la poitrine, descends le plus bas possible en gardant le dos droit : plus tu descends, plus les fessiers travaillent.'),
     ],
   },
   {
@@ -64,7 +64,7 @@ export const ZONES: Zone[] = [
     muscles: ['jambes'],
     exos: [
       e('Leg Curl Assis', 'ISCHIOS', 10, 15, 'Plie les jambes contre le boudin, reviens lentement sans laisser tomber la charge.'),
-      e('Romanian Deadlift (Haltères)', 'ISCHIOS', 10, 12, 'Dos droit, pousse les hanches en arrière jusqu’à sentir l’arrière des cuisses tirer.'),
+      e('Hyperextensions', 'DOS', 10, 15, 'Hanches sur le coussin, descends le buste, puis remonte jusqu’à faire une ligne droite avec les jambes, sans cambrer.'),
     ],
   },
   {
@@ -83,7 +83,7 @@ export const ZONES: Zone[] = [
     role: 'La poitrine : pousser, se relever du sol, un buste plus ferme.',
     muscles: ['pectoraux'],
     exos: [
-      e('Chest Press (Machine)', 'PECTORAUX', 10, 12, 'Pousse les poignées devant toi, reviens lentement jusqu’à sentir la poitrine s’étirer.'),
+      e('Développé Incliné (Haltères)', 'PECTORAUX', 8, 12, 'Banc incliné à environ 30 degrés, descends les haltères sur le haut de la poitrine puis pousse vers le haut.'),
       e('Pompes (Poids du corps)', 'PECTORAUX', 6, 15, 'Trop dur ? Fais les genoux au sol. Le corps reste droit comme une planche.', { poidsDuCorps: true }),
     ],
   },
@@ -93,8 +93,8 @@ export const ZONES: Zone[] = [
     role: 'Les épaules : des bras qui se lèvent sans gêne et une carrure plus marquée.',
     muscles: ['epaules'],
     exos: [
-      e('Développé Haltères Assis', 'ÉPAULES', 10, 12, 'Assis le dos calé, pousse les haltères au dessus de la tête sans cambrer.'),
       e('Élévations Latérales (Haltères)', 'ÉPAULES', 12, 15, 'Monte les bras sur les côtés jusqu’aux épaules, haltères légers, sans élan.'),
+      e('Développé Haltères Assis', 'ÉPAULES', 10, 12, 'Assis le dos calé, pousse les haltères au dessus de la tête sans cambrer.'),
     ],
   },
   {
@@ -103,8 +103,8 @@ export const ZONES: Zone[] = [
     role: 'Biceps devant, triceps derrière : des bras plus fermes et plus forts.',
     muscles: ['biceps', 'triceps'],
     exos: [
-      e('Curl Haltères Alterné', 'BICEPS', 10, 12, 'Coudes collés au corps, monte l’haltère sans balancer le buste.'),
-      e('Extension Triceps Poulie (Corde)', 'TRICEPS', 10, 15, 'Coudes fixes contre le corps, tends les bras vers le bas : l’arrière du bras travaille.'),
+      e('Curl Larry Scott (Pupitre)', 'BICEPS', 10, 12, 'Bras posés sur le pupitre, descends jusqu’aux bras presque tendus et contrôle bien le bas du mouvement.'),
+      e('Overhead Extension Poulie', 'TRICEPS', 10, 15, 'Dos à la poulie, coudes pointés vers le haut, tends les bras au-dessus de la tête puis redescends en étirant bien l’arrière du bras.'),
     ],
   },
   {

@@ -100,7 +100,7 @@ export default function ZonesScreen() {
   const exos = useMemo(() => seanceZones(choisies), [choisies]);
   const minutes = Math.max(10, Math.round((dureeEstimee(exos) + 5) / 5) * 5);
   const titre = titreZones(choisies, traduire);
-  const zoneDe = (muscle: string) => ZONES.find((z) => z.exos.some((x) => x.muscle === muscle && exos.some((y) => y.nom === x.nom)));
+  const zoneDe = (nom: string) => ZONES.find((z) => choisies.includes(z.id) && z.exos.some((x) => x.nom === nom));
 
   const commencer = () => {
     if (!exos.length) return;
@@ -164,7 +164,7 @@ export default function ZonesScreen() {
               <Ink size={13} color="rgba(255,255,255,0.8)">{traduire('Fais-les dans l’ordre : les gros muscles d’abord, les abdos à la fin.')}</Ink>
             </View>
             {exos.map((x, k) => (
-              <CarteExoZone key={x.nom} exo={x} numero={k + 1} total={exos.length} zone={traduire(zoneDe(x.muscle)?.nom ?? '') || undefined} />
+              <CarteExoZone key={x.nom} exo={x} numero={k + 1} total={exos.length} zone={traduire(zoneDe(x.nom)?.nom ?? '') || undefined} />
             ))}
 
             <Glass style={{ gap: 12 }}>

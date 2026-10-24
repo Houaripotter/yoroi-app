@@ -494,6 +494,18 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Lâcher la descente d’un coup.',
     ],
   },
+  'Curl Larry Scott (Pupitre)': {
+    consignes: [
+      'Assis, l’arrière des bras posé à plat sur le pupitre, paumes vers le haut.',
+      'Monte la charge en pliant les coudes, les bras restent collés au pupitre.',
+      'Redescends lentement jusqu’aux bras presque tendus : c’est la partie la plus utile.',
+    ],
+    erreurs: [
+      'Décoller les coudes du pupitre pour monter.',
+      'S’arrêter à mi-chemin en bas du mouvement.',
+    ],
+    securite: 'Ne laisse jamais la charge tomber bras tendus : le coude est en position fragile en bas.',
+  },
   'Curl Incliné (Haltères)': {
     consignes: [
       'Allongé sur un banc incliné, bras tendus vers le sol, paumes vers l’avant.',

@@ -96,6 +96,7 @@ const FICHES: Record<string, Fiche> = {
   // BICEPS
   'Curl Barre EZ': { besoin: [['barre']], remplacants: ['Curl Haltères Alterné', 'Curl Poulie Basse', 'Tractions (Supination)', 'Inverted Row'] },
   'Curl Haltères Alterné': { besoin: [['halteres']], remplacants: ['Curl Barre EZ', 'Curl Poulie Basse', 'Tractions (Supination)', 'Inverted Row'] },
+  'Curl Larry Scott (Pupitre)': { besoin: [['halteres', 'banc'], ['barre', 'banc'], ['machines']], remplacants: ['Curl Haltères Alterné', 'Curl Barre EZ', 'Curl Poulie Basse', 'Tractions (Supination)'] },
   'Curl Incliné (Haltères)': { besoin: [['halteres', 'banc']], remplacants: ['Curl Haltères Alterné', 'Curl Poulie Basse', 'Curl Barre EZ', 'Tractions (Supination)', 'Inverted Row'] },
   'Curl Marteau (Hammer)': { besoin: [['halteres'], ['kettlebell']], remplacants: ['Curl Barre EZ', 'Curl Poulie Basse', 'Tractions Neutres', 'Inverted Row'] },
   'Curl Poulie Basse': { besoin: [['poulie'], ['elastiques']], remplacants: [] },

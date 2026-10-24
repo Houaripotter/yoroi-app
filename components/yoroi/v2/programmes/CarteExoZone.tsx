@@ -15,6 +15,7 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { P } from '@/components/yoroi/livePalette';
 import { demoDe } from '@/lib/v2/programmes/demos';
 import { ficheDe } from '@/lib/v2/programmes/fiches';
+import { preuveDe } from '@/lib/v2/programmes/preuves';
 import { libelleRepos } from '@/lib/v2/programmes/catalogue';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoProgramme } from '@/lib/v2/programmes/types';
@@ -39,6 +40,7 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
   const largeur = Math.max(200, width - marge);
   const animee = !!demoDe(exo.nom);
   const fiche = !!ficheDe(exo.nom);
+  const preuve = preuveDe(exo.nom);
   const reps = `${exo.repsMin} ${traduire('à')} ${exo.repsMax}`;
 
   return (
@@ -80,6 +82,17 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
           </View>
         ) : null}
 
+        {preuve ? (
+          <View style={{ gap: 4, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: c.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Icon name="medal" size={15} color={c.accent} />
+              <Ink size={12} weight="black" color={c.accent}>{traduire('PROUVÉ PAR UNE ÉTUDE')}</Ink>
+            </View>
+            <Ink size={14} color={c.ink}>{traduire(preuve.texte)}</Ink>
+            <Ink size={12} color={c.textMuted}>{traduire('Source : {0}', preuve.source)}</Ink>
+          </View>
+        ) : null}
+
         {fiche ? (
           <View>
             <Pressable
@@ -94,7 +107,7 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
                 <Icon name="chevron" size={15} color={c.textSecondary} />
               </View>
             </Pressable>
-            {ouvert ? <FicheTechnique nom={exo.nom} /> : null}
+            {ouvert ? <FicheTechnique nom={exo.nom} avecPreuve={false} /> : null}
           </View>
         ) : null}
       </View>
