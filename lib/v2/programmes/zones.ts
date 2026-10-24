@@ -114,7 +114,7 @@ export const ZONES: Zone[] = [
     role: 'Les avant-bras : la poigne pour tenir les charges, porter, s’accrocher, saisir au combat.',
     muscles: ['avant_bras'],
     exos: [
-      e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Une charge lourde dans chaque main, bras tendus : marche à petits pas, épaules basses.', { secondes: true }),
+      e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Tu marches en portant lourd : tes mains serrent fort pour ne rien lâcher, c’est ça qui muscle tes avant-bras. Bras tendus, épaules basses, petits pas.', { secondes: true }),
       e('Extension Poignets', 'AVANT-BRAS', 12, 20, 'Avant-bras posés sur les cuisses, monte le dos de la main en pliant seulement le poignet.'),
     ],
   },

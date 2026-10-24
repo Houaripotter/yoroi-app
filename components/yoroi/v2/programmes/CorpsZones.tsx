@@ -9,7 +9,7 @@
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
 import type { GestureResponderEvent } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -55,7 +55,7 @@ export function CorpsZones({
         {choisies
           .filter((z) => carte.calques[z])
           .map((z) => (
-            <Animated.Image key={`${cote}_${z}`} entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)} source={carte.calques[z]} style={plein} resizeMode="contain" />
+            <Animated.Image key={`${cote}_${z}`} entering={FadeIn.duration(160)} source={carte.calques[z]} style={plein} resizeMode="contain" />
           ))}
       </Pressable>
     </View>

@@ -15,6 +15,15 @@ import { traduire, LANG } from '@/lib/i18n/tr';
 
 /** cle : nom exact de constants/exerciseLibrary.ts ; ce qui n'est pas ici garde son nom */
 export const NOMS_FR: Record<string, string> = {
+  // 24 octobre 2026, Houari : « y a des exercices je sais pas c'est quoi » : un nom français clair, le nom de salle entre parenthèses
+  'Farmer Walk': 'Marche du fermier (farmer walk)',
+  'Dead Hang': 'Suspension à la barre (dead hang)',
+  'Leg Extension': 'Extension des jambes (leg extension)',
+  'Face Pull': 'Tirage vers le visage (face pull)',
+  'Goblet Squat': 'Squat gobelet (goblet squat)',
+  'Dead Bug': 'Gainage dos au sol (dead bug)',
+  'Pallof Press': 'Gainage anti-rotation à la poulie (Pallof press)',
+  'Pec Deck (Butterfly)': 'Écartés machine (pec deck)',
   // pectoraux
   'Chest Press (Machine)': 'Développé assis machine (chest press)',
   'Chest Press Incliné (Machine)': 'Développé incliné machine',

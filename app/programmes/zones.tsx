@@ -79,7 +79,10 @@ export default function ZonesScreen() {
       if (Math.abs(e.translationX) > 50 || Math.abs(e.velocityX) > 600) tourner(e.translationX > 0 ? 1 : -1, rot.value);
       else rot.value = withTiming(0, { duration: 180 });
     });
-  const styleTour = useAnimatedStyle(() => ({ transform: [{ perspective: 900 }, { rotateY: `${rot.value}deg` }] }));
+  // pivot sans perspective : la vraie 3D (perspective + rotateY) faisait passer le fond de la carte par-dessus
+  // les boutons sur iPhone (voile gris signalé par Houari le 24 octobre). Le corps se resserre comme une figurine
+  // vue de profil, change de face, puis s'ouvre à nouveau.
+  const styleTour = useAnimatedStyle(() => ({ transform: [{ scaleX: Math.max(0.02, Math.cos((rot.value * Math.PI) / 180)) }] }));
   const choisirCote = (n: 'devant' | 'derriere') => {
     tap();
     if (n !== cote) tourner(n === 'derriere' ? 1 : -1);
