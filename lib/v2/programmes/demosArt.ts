@@ -28,6 +28,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   developpe_incline_halteres: [require('../../../assets/exercices/demos/developpe_incline_halteres_a.webp'), require('../../../assets/exercices/demos/developpe_incline_halteres_b.webp')],
   developpe_militaire_assis: [require('../../../assets/exercices/demos/developpe_militaire_assis_a.webp'), require('../../../assets/exercices/demos/developpe_militaire_assis_b.webp')],
   developpe_militaire_barre: [require('../../../assets/exercices/demos/developpe_militaire_barre_a.webp'), require('../../../assets/exercices/demos/developpe_militaire_barre_b.webp')],
+  dips_banc: [require('../../../assets/exercices/demos/dips_banc_a.webp'), require('../../../assets/exercices/demos/dips_banc_b.webp')],
   dips_focus_pectoraux: [require('../../../assets/exercices/demos/dips_focus_pectoraux_a.webp'), require('../../../assets/exercices/demos/dips_focus_pectoraux_b.webp')],
   ecartes_a_la_poulie_haute: [require('../../../assets/exercices/demos/ecartes_a_la_poulie_haute_a.webp'), require('../../../assets/exercices/demos/ecartes_a_la_poulie_haute_b.webp')],
   ecartes_couche_halteres: [require('../../../assets/exercices/demos/ecartes_couche_halteres_a.webp'), require('../../../assets/exercices/demos/ecartes_couche_halteres_b.webp')],
