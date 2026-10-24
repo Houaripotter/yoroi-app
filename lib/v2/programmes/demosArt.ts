@@ -29,7 +29,6 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   elevations_laterales_halteres: [require('../../../assets/exercices/demos/elevations_laterales_halteres_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_halteres_b.webp')],
   elevations_laterales_poulie: [require('../../../assets/exercices/demos/elevations_laterales_poulie_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_poulie_b.webp')],
   extension_haltere_nuque_2_mains: [require('../../../assets/exercices/demos/extension_haltere_nuque_2_mains_a.webp'), require('../../../assets/exercices/demos/extension_haltere_nuque_2_mains_b.webp')],
-  extension_poignets: [require('../../../assets/exercices/demos/extension_poignets_a.webp'), require('../../../assets/exercices/demos/extension_poignets_b.webp')],
   extension_triceps_poulie_corde: [require('../../../assets/exercices/demos/extension_triceps_poulie_corde_a.webp'), require('../../../assets/exercices/demos/extension_triceps_poulie_corde_b.webp')],
   face_pull: [require('../../../assets/exercices/demos/face_pull_a.webp'), require('../../../assets/exercices/demos/face_pull_b.webp')],
   farmer_walk: [require('../../../assets/exercices/demos/farmer_walk_a.webp'), require('../../../assets/exercices/demos/farmer_walk_b.webp')],

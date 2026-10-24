@@ -115,7 +115,7 @@ export const ZONES: Zone[] = [
     muscles: ['avant_bras'],
     exos: [
       e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Tu marches en portant lourd : tes mains serrent fort pour ne rien lâcher, c’est ça qui muscle tes avant-bras. Bras tendus, épaules basses, petits pas.', { secondes: true }),
-      e('Extension Poignets', 'AVANT-BRAS', 12, 20, 'Avant-bras posés sur les cuisses, monte le dos de la main en pliant seulement le poignet.'),
+      e('Wrist Roller', 'AVANT-BRAS', 3, 5, 'Bras tendus devant toi, enroule la corde en tournant les poignets jusqu’à remonter le poids, puis redescends lentement. Une montée et une descente font une répétition.'),
     ],
   },
   {
