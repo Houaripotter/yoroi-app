@@ -18282,5 +18282,8 @@
 "Objectif de {0} séances pas atteint cette fois": "Goal of {0} workouts not reached this time",
 "Objectif : {0} séances cette semaine": "Goal: {0} workouts this week",
 "Objectif tenu {0} semaines sur {1}": "Goal reached {0} weeks out of {1}",
-"Rendez-vous": "Check-in"
+"Rendez-vous": "Check-in",
+"Séances toutes faites": "Ready-made workouts",
+"Ou choisis tes muscles": "Or pick your muscles",
+"{0} exos, {1} min": "{0} exercises, {1} min"
 }
