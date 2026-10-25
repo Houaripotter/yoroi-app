@@ -73,6 +73,8 @@ export type Programme = {
   objectif: Objectif;
   materiel: Materiel;
   /** sport de lib/sports.ts pour l'image et la seance (football, padel...), sinon deduit de l'objectif */
+  /** ordre des exercices voulu (circuit, superset, pre fatigue) : ne pas regrouper par poste */
+  ordreFixe?: boolean;
   sport?: string;
   joursParSemaine: number;
   /** duree indicative d'une seance, en minutes */

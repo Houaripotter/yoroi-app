@@ -1746,7 +1746,7 @@ const PROGRAMMES_BRUTS: Programme[] = [
  * gros mouvement en premier (lib/v2/programmes/ordre.ts). Les autres sports gardent leur ordre.
  */
 export const PROGRAMMES: Programme[] = PROGRAMMES_BRUTS.map((p) =>
-  sportDuProgramme(p) === 'musculation'
+  sportDuProgramme(p) === 'musculation' && !p.ordreFixe
     ? { ...p, jours: p.jours.map((j) => (j.rounds ? j : { ...j, exos: ordonnerParPoste(j.exos) })) }
     : p,
 );
