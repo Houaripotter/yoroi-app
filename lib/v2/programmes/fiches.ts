@@ -1484,6 +1484,29 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Se laisser retomber d’un coup.',
     ],
   },
+  'Kickback Triceps (Haltère)': {
+    consignes: [
+      'Un genou et une main sur le banc, dos plat parallèle au sol, haltère dans l’autre main.',
+      'Bras collé le long du corps, tends l’avant bras vers l’arrière jusqu’au bras tendu.',
+      'Reviens lentement à 90 degrés sans bouger le haut du bras.',
+    ],
+    erreurs: [
+      'Laisser le coude descendre pendant le mouvement.',
+      'Balancer l’haltère pour finir le geste.',
+    ],
+  },
+  'Box Squat': {
+    consignes: [
+      'Barre sur le haut du dos, une box basse derrière toi, pieds un peu plus larges que les épaules.',
+      'Pousse les hanches en arrière et descends jusqu’à t’asseoir légèrement sur la box.',
+      'Garde le dos plat et pousse dans le sol pour te relever.',
+    ],
+    erreurs: [
+      'Se laisser tomber lourdement sur la box.',
+      'Relâcher le dos une fois assis.',
+    ],
+    securite: 'Règle les barres de sécurité du rack juste sous la hauteur de la box.',
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */

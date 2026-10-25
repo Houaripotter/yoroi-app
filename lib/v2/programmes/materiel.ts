@@ -149,6 +149,8 @@ const FICHES: Record<string, Fiche> = {
   'Mountain Climbers': { besoin: RIEN, remplacants: [] },
   'Donkey Kicks': { besoin: RIEN, remplacants: [] },
   'Sit-ups': { besoin: RIEN, remplacants: [] },
+  'Kickback Triceps (Haltère)': { besoin: [['halteres', 'banc'], ['halteres']], remplacants: ['Extension Haltère Nuque (2 mains)', 'Extension Triceps Poulie (Corde)', 'Dips Banc'] },
+  'Box Squat': { besoin: [['barre']], remplacants: ['Goblet Squat', 'Presse à Cuisses', 'Squat Bulgare'] },
   'Romanian Deadlift (Haltères)': { besoin: [['halteres'], ['kettlebell']], remplacants: ['Deadlift Roumain', 'Nordic Curl'] },
   'Nordic Curl': { besoin: RIEN, remplacants: [] },
   // FESSIERS

@@ -53,6 +53,7 @@ export const ZONES: Zone[] = [
       e('Presse à Cuisses (Pieds Hauts)', 'JAMBES', 10, 12, 'Pieds hauts sur la plateforme, largeur de hanches, dos collé au dossier.'),
       e('Hack Squat', 'JAMBES', 8, 12, 'Descends en pliant les genoux dans l’axe des pieds, jusqu’aux cuisses parallèles au plateau.'),
       e('Front Squat', 'JAMBES', 6, 10, 'Pieds largeur d’épaules, buste droit, descends entre les talons.'),
+      e('Box Squat', 'JAMBES', 6, 10, 'Barre sur le haut du dos, une box basse derrière toi, pieds un peu plus larges que les épaules.'),
     ],
   },
   {
@@ -130,6 +131,7 @@ export const ZONES: Zone[] = [
       e('Développé Incliné (Barre)', 'PECTORAUX', 6, 10, 'Banc à environ 30 degrés, pieds au sol, omoplates serrées et collées.'),
       e('Écartés Incliné (Haltères)', 'PECTORAUX', 10, 15, 'Banc à environ 30 degrés, haltères au dessus de la poitrine, coudes légèrement fléchis.'),
       e('Close Grip Bench Press', 'TRICEPS', 6, 10, 'Allongé sur le banc, mains sur la barre à largeur d’épaules, pieds au sol.'),
+      e('Pompes Déclinées', 'PECTORAUX', 6, 15, 'Pieds sur un banc ou une chaise stable, mains au sol sous les épaules.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -176,6 +178,7 @@ export const ZONES: Zone[] = [
       e('Curl Barre Droite', 'BICEPS', 8, 12, 'Debout, barre en prise supination à largeur d’épaules, coudes collés au corps.'),
       e('Skullcrusher Haltères', 'TRICEPS', 10, 12, 'Allongé sur un banc plat, haltères au dessus de la poitrine, paumes face à face.'),
       e('Pompes Diamant', 'PECTORAUX', 6, 12, 'Mains rapprochées sous la poitrine, pouces et index qui forment un losange.', { poidsDuCorps: true }),
+      e('Kickback Triceps (Haltère)', 'TRICEPS', 10, 15, 'Un genou et une main sur le banc, dos plat parallèle au sol, haltère dans l’autre main.'),
     ],
   },
   {
