@@ -128,6 +128,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   straight_arm_pulldown: [require('../../../assets/exercices/demos/straight_arm_pulldown_a.webp'), require('../../../assets/exercices/demos/straight_arm_pulldown_b.webp')],
   sumo_deadlift: [require('../../../assets/exercices/demos/sumo_deadlift_a.webp'), require('../../../assets/exercices/demos/sumo_deadlift_b.webp')],
   suspension_serviette: [require('../../../assets/exercices/demos/suspension_serviette_a.webp'), require('../../../assets/exercices/demos/suspension_serviette_b.webp')],
+  tenue_trap_bar: [require('../../../assets/exercices/demos/tenue_trap_bar_a.webp'), require('../../../assets/exercices/demos/tenue_trap_bar_b.webp')],
   tirage_horizontal_seated_row: [require('../../../assets/exercices/demos/tirage_horizontal_seated_row_a.webp'), require('../../../assets/exercices/demos/tirage_horizontal_seated_row_b.webp')],
   tirage_horizontal_unilateral: [require('../../../assets/exercices/demos/tirage_horizontal_unilateral_a.webp'), require('../../../assets/exercices/demos/tirage_horizontal_unilateral_b.webp')],
   tirage_menton_upright_row: [require('../../../assets/exercices/demos/tirage_menton_upright_row_a.webp'), require('../../../assets/exercices/demos/tirage_menton_upright_row_b.webp')],
