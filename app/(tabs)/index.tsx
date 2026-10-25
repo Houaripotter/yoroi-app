@@ -53,6 +53,7 @@ import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { ECART_SOUS_SCENE, SceneHero, sceneHeight } from '@/components/yoroi/v2/accueil/Scene';
 import { CartePoids } from '@/components/yoroi/v2/accueil/CartePoids';
 import { RaccourcisDuJour } from '@/components/yoroi/v2/accueil/Raccourcis';
+import { CarteQuoiFaire } from '@/components/yoroi/v2/accueil/CarteQuoiFaire';
 import {
   GrilleAccueil,
   TuileAvantApres,
@@ -316,6 +317,11 @@ export default function Accueil() {
           </View>
 
           {/* 24 octobre 2026 (Houari) : plus de citation sur l'accueil, elle reste seulement dans la notification du matin */}
+
+          {/* 25 octobre 2026 : « Quoi faire aujourd'hui ? », la grande carte de la seance du jour, comme dans les applis de sport */}
+          <Enter i={0}>
+            <CarteQuoiFaire />
+          </Enter>
 
           {/* Ton poids, inchange */}
           <Enter i={0}>

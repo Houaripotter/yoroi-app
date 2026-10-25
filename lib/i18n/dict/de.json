@@ -18285,5 +18285,12 @@
 "Rendez-vous": "Rückblick",
 "Séances toutes faites": "Fertige Trainings",
 "Ou choisis tes muscles": "Oder wähle deine Muskeln",
-"{0} exos, {1} min": "{0} Übungen, {1} Min."
+"{0} exos, {1} min": "{0} Übungen, {1} Min.",
+"Quoi faire aujourd’hui ?": "Was mache ich heute?",
+"Choisis tes muscles, YOROI te donne ta séance avec les bons exercices.": "Wähle deine Muskeln, YOROI gibt dir dein Training mit den richtigen Übungen.",
+"Quoi faire aujourd’hui ? Choisis tes muscles, YOROI te donne ta séance": "Was mache ich heute? Wähle deine Muskeln, YOROI gibt dir dein Training",
+"{0}, environ {1} min": "{0}, etwa {1} Min.",
+"Choisir mes muscles": "Meine Muskeln wählen",
+"Refaire ta dernière séance : {0}": "Letztes Training wiederholen: {0}",
+"Refaire : {0}": "Wiederholen: {0}"
 }

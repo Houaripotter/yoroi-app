@@ -18285,5 +18285,12 @@
 "Rendez-vous": "Check-in",
 "Séances toutes faites": "Ready-made workouts",
 "Ou choisis tes muscles": "Or pick your muscles",
-"{0} exos, {1} min": "{0} exercises, {1} min"
+"{0} exos, {1} min": "{0} exercises, {1} min",
+"Quoi faire aujourd’hui ?": "What to do today?",
+"Choisis tes muscles, YOROI te donne ta séance avec les bons exercices.": "Pick your muscles, YOROI gives you your workout with the right exercises.",
+"Quoi faire aujourd’hui ? Choisis tes muscles, YOROI te donne ta séance": "What to do today? Pick your muscles, YOROI gives you your workout",
+"{0}, environ {1} min": "{0}, about {1} min",
+"Choisir mes muscles": "Pick my muscles",
+"Refaire ta dernière séance : {0}": "Redo your last workout: {0}",
+"Refaire : {0}": "Redo: {0}"
 }

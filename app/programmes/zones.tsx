@@ -13,7 +13,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -44,8 +44,16 @@ export default function ZonesScreen() {
   const [choisies, setChoisies] = useState<ZoneId[]>([]);
   const [derniere, setDerniere] = useState<ZoneId | null>(null);
 
+  // 25 octobre 2026 : une seance toute faite touchee sur l'accueil (CarteQuoiFaire) arrive deja choisie
+  const { preset } = useLocalSearchParams<{ preset?: string }>();
   // tes zones de la derniere fois
   useEffect(() => {
+    const r = RACCOURCIS_ZONES.find((x) => x.id === preset);
+    if (r) {
+      setChoisies(r.zones);
+      AsyncStorage.setItem(CLE, JSON.stringify(r.zones)).catch(() => {});
+      return;
+    }
     AsyncStorage.getItem(CLE)
       .then((raw) => {
         const v = raw ? (JSON.parse(raw) as string[]) : [];
@@ -53,7 +61,7 @@ export default function ZonesScreen() {
         if (ok.length) setChoisies(ok);
       })
       .catch(() => {});
-  }, []);
+  }, [preset]);
 
   const garder = (n: ZoneId[]) => AsyncStorage.setItem(CLE, JSON.stringify(n)).catch(() => {});
 
