@@ -146,6 +146,9 @@ const FICHES: Record<string, Fiche> = {
   'Tirage Menton (Upright Row)': { besoin: [['barre'], ['halteres']], remplacants: ['Élévations Latérales (Haltères)', 'Élévations Latérales (Poulie)', 'Shrugs Haltères (Trapèzes)'] },
   'Straight Arm Pulldown': { besoin: [['poulie']], remplacants: ['Pull Over Poulie Haute', 'Tirage Poitrine (Lat Pulldown)', 'Rowing Haltère (One Arm)'] },
   'Chest Supported Row': { besoin: [['halteres', 'banc']], remplacants: ['Rowing Haltère (One Arm)', 'Tirage Horizontal (Seated Row)', 'Inverted Row'] },
+  'Mountain Climbers': { besoin: RIEN, remplacants: [] },
+  'Donkey Kicks': { besoin: RIEN, remplacants: [] },
+  'Sit-ups': { besoin: RIEN, remplacants: [] },
   'Romanian Deadlift (Haltères)': { besoin: [['halteres'], ['kettlebell']], remplacants: ['Deadlift Roumain', 'Nordic Curl'] },
   'Nordic Curl': { besoin: RIEN, remplacants: [] },
   // FESSIERS

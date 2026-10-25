@@ -52,6 +52,7 @@ export const ZONES: Zone[] = [
       e('Step Up (Haltères)', 'JAMBES', 8, 12, 'Pousse sur la jambe du dessus pour monter, sans t’aider du pied resté au sol.'),
       e('Presse à Cuisses (Pieds Hauts)', 'JAMBES', 10, 12, 'Pieds hauts sur la plateforme, largeur de hanches, dos collé au dossier.'),
       e('Hack Squat', 'JAMBES', 8, 12, 'Descends en pliant les genoux dans l’axe des pieds, jusqu’aux cuisses parallèles au plateau.'),
+      e('Front Squat', 'JAMBES', 6, 10, 'Pieds largeur d’épaules, buste droit, descends entre les talons.'),
     ],
   },
   {
@@ -72,6 +73,7 @@ export const ZONES: Zone[] = [
       e('Reverse Lunges', 'FESSIERS', 8, 12, 'Recule une jambe d’un grand pas et descends le genou arrière près du sol.', { poidsDuCorps: true }),
       e('Kick-back Poulie', 'FESSIERS', 12, 15, 'Pousse la jambe vers l’arrière en serrant le fessier, jambe presque tendue.'),
       e('Sumo Deadlift', 'FESSIERS', 6, 10, 'Pieds très écartés, pointes vers l’extérieur, mains sur la barre entre les genoux.'),
+      e('Donkey Kicks', 'FESSIERS', 12, 15, 'Monte une jambe vers l’arrière, genou plié à 90 degrés, plante du pied vers le plafond.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -173,6 +175,7 @@ export const ZONES: Zone[] = [
       e('Curl Machine', 'BICEPS', 10, 15, 'L’arrière des bras à plat sur le pupitre, monte les poignées vers les épaules.'),
       e('Curl Barre Droite', 'BICEPS', 8, 12, 'Debout, barre en prise supination à largeur d’épaules, coudes collés au corps.'),
       e('Skullcrusher Haltères', 'TRICEPS', 10, 12, 'Allongé sur un banc plat, haltères au dessus de la poitrine, paumes face à face.'),
+      e('Pompes Diamant', 'PECTORAUX', 6, 12, 'Mains rapprochées sous la poitrine, pouces et index qui forment un losange.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -217,6 +220,8 @@ export const ZONES: Zone[] = [
       e('Crunch Abdominal', 'ABDOS', 12, 20, 'Enroule le haut du dos pour décoller les épaules du sol.', { poidsDuCorps: true }),
       e('Hanging Knee Raise', 'ABDOS', 8, 15, 'Monte les genoux jusqu’à hauteur des hanches ou plus haut.', { poidsDuCorps: true }),
       e('Cable Crunch', 'ABDOS', 12, 20, 'À genoux face à la poulie haute, corde tenue de chaque côté de la tête.'),
+      e('Mountain Climbers', 'ABDOS', 20, 30, 'Alterne les jambes à un rythme que tu peux tenir, hanches à hauteur des épaules.', { poidsDuCorps: true }),
+      e('Sit-ups', 'ABDOS', 10, 15, 'Allongé sur le dos, genoux pliés, pieds à plat au sol, bras croisés sur la poitrine.', { poidsDuCorps: true }),
     ],
   },
 ];

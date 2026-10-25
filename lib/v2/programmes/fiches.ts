@@ -1451,6 +1451,39 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Hausser les épaules vers les oreilles.',
     ],
   },
+  'Mountain Climbers': {
+    consignes: [
+      'En planche haute, mains sous les épaules, dos plat.',
+      'Ramène un genou sous la poitrine, puis repousse la jambe en arrière.',
+      'Alterne les jambes à un rythme que tu peux tenir, hanches à hauteur des épaules.',
+    ],
+    erreurs: [
+      'Monter les fesses vers le plafond.',
+      'Laisser les épaules dépasser loin devant les mains.',
+    ],
+  },
+  'Donkey Kicks': {
+    consignes: [
+      'À quatre pattes, mains sous les épaules, genoux sous les hanches.',
+      'Monte une jambe vers l’arrière, genou plié à 90 degrés, plante du pied vers le plafond.',
+      'Serre le fessier en haut, puis redescends sans poser le genou.',
+    ],
+    erreurs: [
+      'Cambrer le bas du dos pour monter la jambe plus haut.',
+      'Ouvrir la hanche sur le côté.',
+    ],
+  },
+  'Sit-ups': {
+    consignes: [
+      'Allongé sur le dos, genoux pliés, pieds à plat au sol, bras croisés sur la poitrine.',
+      'Enroule le buste jusqu’en position assise, pieds toujours au sol.',
+      'Redescends lentement, vertèbre après vertèbre.',
+    ],
+    erreurs: [
+      'Tirer sur la nuque avec les mains.',
+      'Se laisser retomber d’un coup.',
+    ],
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */

@@ -31,6 +31,9 @@ export const MEME_MOUVEMENT: Record<string, string> = {
   cable_crossover: 'ecartes_a_la_poulie_haute',
   ab_rollout: 'roulette_abdos_abs_wheel',
   extension_triceps_poulie_v_bar: 'extension_triceps_poulie_barre',
+  diamond_push_ups: 'pompes_diamant',
+  front_squat_crossfit: 'front_squat',
+  mountain_climbers_hiit: 'mountain_climbers',
 };
 
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
