@@ -29,6 +29,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   curl_halteres_alterne: [require('../../../assets/exercices/demos/curl_halteres_alterne_a.webp'), require('../../../assets/exercices/demos/curl_halteres_alterne_b.webp')],
   curl_halteres_simultane: [require('../../../assets/exercices/demos/curl_halteres_simultane_a.webp'), require('../../../assets/exercices/demos/curl_halteres_simultane_b.webp')],
   curl_incline_halteres: [require('../../../assets/exercices/demos/curl_incline_halteres_a.webp'), require('../../../assets/exercices/demos/curl_incline_halteres_b.webp')],
+  curl_larry_scott_pupitre: [require('../../../assets/exercices/demos/curl_larry_scott_pupitre_a.webp'), require('../../../assets/exercices/demos/curl_larry_scott_pupitre_b.webp')],
   curl_marteau_hammer: [require('../../../assets/exercices/demos/curl_marteau_hammer_a.webp'), require('../../../assets/exercices/demos/curl_marteau_hammer_b.webp')],
   curl_poulie_basse: [require('../../../assets/exercices/demos/curl_poulie_basse_a.webp'), require('../../../assets/exercices/demos/curl_poulie_basse_b.webp')],
   dead_bug: [require('../../../assets/exercices/demos/dead_bug_a.webp'), require('../../../assets/exercices/demos/dead_bug_b.webp')],
