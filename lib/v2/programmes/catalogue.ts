@@ -20,7 +20,7 @@ const ABDOS = 'Les abdos renforcent ton tronc mais ne font pas fondre le ventre 
 export const PROGRAMMES: Programme[] = [
   {
     id: 'debutant-fullbody-3j',
-    titre: 'Débutant, corps entier',
+    titre: 'Full body débutant, corps entier',
     accroche: 'Pour démarrer ou reprendre : tout le corps, trois séances par semaine, deux séances qui alternent.',
     niveau: 'debutant',
     objectif: 'muscle',
@@ -68,8 +68,8 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'ppl-3j',
-    titre: 'Pousser, tirer, jambes',
-    accroche: 'Trois jours par semaine : une séance pour les muscles qui poussent, une pour ceux qui tirent, une pour les jambes.',
+    titre: 'PPL, Push Pull Legs, 3 jours',
+    accroche: 'Le PPL, le programme star des salles. Trois jours par semaine : une séance pour les muscles qui poussent, une pour ceux qui tirent, une pour les jambes.',
     niveau: 'intermediaire',
     objectif: 'muscle',
     materiel: 'salle',
@@ -87,7 +87,7 @@ export const PROGRAMMES: Programme[] = [
     jours: [
       {
         id: 'push',
-        titre: 'Pousser : pectoraux, épaules, triceps',
+        titre: 'Push : pectoraux, épaules, triceps',
         muscles: ['pectoraux', 'epaules', 'triceps'],
         exos: [
           exo('Développé Couché (Barre)', 'PECTORAUX', 4, 6, 10, 180),
@@ -101,7 +101,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'pull',
-        titre: 'Tirer : dos, arrière d’épaule, biceps',
+        titre: 'Pull : dos, arrière d’épaule, biceps',
         muscles: ['dos', 'epaules', 'biceps'],
         exos: [
           exo('Tractions (Pronation)', 'DOS', 4, 6, 10, 150, 'Trop dur ? Fais le tirage poitrine à la place.'),
@@ -114,7 +114,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'legs',
-        titre: 'Jambes et abdos',
+        titre: 'Legs : jambes et abdos',
         muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
         exos: [
           exo('Squat Barre Libre', 'JAMBES', 4, 6, 10, 180),
@@ -129,8 +129,8 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'ppl-6j',
-    titre: 'Pousser, tirer, jambes, 6 jours',
-    accroche: 'Six jours par semaine : un cycle force du lundi au mercredi, un cycle hypertrophie du jeudi au samedi. Chaque muscle travaille deux fois.',
+    titre: 'PPL, Push Pull Legs, 6 jours',
+    accroche: 'Le PPL complet, deux fois par semaine. Un cycle force du lundi au mercredi, un cycle hypertrophie du jeudi au samedi. Chaque muscle travaille deux fois.',
     niveau: 'confirme',
     objectif: 'muscle',
     materiel: 'salle',
@@ -138,7 +138,7 @@ export const PROGRAMMES: Programme[] = [
     dureeMin: 60,
     semaines: 8,
     principes: [
-      'Ordre : pousser A, tirer A, jambes A, puis pousser B, tirer B, jambes B. Le dimanche, repos.',
+      'Ordre : Push A, Pull A, Legs A, puis Push B, Pull B, Legs B. Le dimanche, repos.',
       'Cycle A, force : charges lourdes, 4 à 8 répétitions, longs repos. Cycle B, hypertrophie : 8 à 15 répétitions, plus d’exercices.',
       'Chaque grand muscle reçoit 12 à 16 séries par semaine en deux séances : c’est le volume qui fait grandir le muscle, la fréquence aide surtout la force.',
       'Six jours, c’est exigeant : dors bien et mange assez. Si la fatigue monte ou si tu débutes, passe au programme en 3 jours.',
@@ -150,7 +150,7 @@ export const PROGRAMMES: Programme[] = [
     jours: [
       {
         id: 'push-a',
-        titre: 'Pousser A, force : pectoraux, épaules, triceps',
+        titre: 'Push A, force : pectoraux, épaules, triceps',
         muscles: ['pectoraux', 'epaules', 'triceps'],
         exos: [
           exo('Développé Couché (Barre)', 'PECTORAUX', 4, 4, 6, 180, 'Lourd : garde 1 à 2 répétitions en réserve, pas d’échec sur la barre.'),
@@ -162,7 +162,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'pull-a',
-        titre: 'Tirer A, force : dos, arrière d’épaule, biceps',
+        titre: 'Pull A, force : dos, arrière d’épaule, biceps',
         muscles: ['dos', 'epaules', 'biceps'],
         exos: [
           exo('Tractions (Pronation)', 'DOS', 4, 4, 8, 180, 'Trop facile ? Ajoute du poids. Trop dur ? Fais le tirage poitrine à la place.'),
@@ -174,7 +174,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'legs-a',
-        titre: 'Jambes A, force',
+        titre: 'Legs A, force',
         muscles: ['jambes', 'fessiers', 'mollets'],
         exos: [
           exo('Squat Barre Libre', 'JAMBES', 4, 4, 6, 180),
@@ -186,7 +186,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'push-b',
-        titre: 'Pousser B, hypertrophie',
+        titre: 'Push B, hypertrophie',
         muscles: ['pectoraux', 'epaules', 'triceps'],
         exos: [
           exo('Développé Couché (Haltères)', 'PECTORAUX', 3, 8, 12, 120),
@@ -200,7 +200,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'pull-b',
-        titre: 'Tirer B, hypertrophie',
+        titre: 'Pull B, hypertrophie',
         muscles: ['dos', 'epaules', 'biceps'],
         exos: [
           exo('Tirage Poitrine (Lat Pulldown)', 'DOS', 3, 10, 12, 120),
@@ -213,7 +213,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'legs-b',
-        titre: 'Jambes B, hypertrophie et abdos',
+        titre: 'Legs B, hypertrophie et abdos',
         muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
         exos: [
           exo('Squat Bulgare', 'JAMBES', 3, 8, 12, 120),
@@ -228,7 +228,7 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'haut-bas-4j',
-    titre: 'Haut et bas du corps',
+    titre: 'Upper Lower, haut et bas du corps',
     accroche: 'Quatre jours par semaine : chaque muscle travaillé deux fois, bon pour le muscle et pour la force.',
     niveau: 'intermediaire',
     objectif: 'muscle',
@@ -237,7 +237,7 @@ export const PROGRAMMES: Programme[] = [
     dureeMin: 60,
     semaines: 8,
     principes: [
-      'Ordre conseillé : haut A, bas A, repos, haut B, bas B, deux jours de repos.',
+      'Ordre conseillé : Upper A, Lower A, repos, Upper B, Lower B, deux jours de repos.',
       'Chaque muscle passe deux fois par semaine : à volume égal, c’est autant de muscle qu’une fois, et un peu plus de force.',
       'Garde les mêmes exercices pendant 8 à 12 semaines : c’est comme ça que tu vois tes charges monter. Change un exercice seulement s’il te fait mal ou si tu stagnes plusieurs semaines.',
       PROGRESSION,
@@ -248,7 +248,7 @@ export const PROGRAMMES: Programme[] = [
     jours: [
       {
         id: 'haut-a',
-        titre: 'Haut du corps A',
+        titre: 'Upper A : haut du corps',
         muscles: ['pectoraux', 'dos', 'epaules', 'biceps', 'triceps'],
         exos: [
           exo('Développé Couché (Barre)', 'PECTORAUX', 4, 6, 10, 180),
@@ -263,7 +263,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'bas-a',
-        titre: 'Bas du corps A',
+        titre: 'Lower A : bas du corps',
         muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
         exos: [
           exo('Squat Barre Libre', 'JAMBES', 4, 6, 10, 180),
@@ -276,7 +276,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'haut-b',
-        titre: 'Haut du corps B',
+        titre: 'Upper B : haut du corps',
         muscles: ['pectoraux', 'dos', 'epaules', 'biceps', 'triceps'],
         exos: [
           exo('Développé Incliné (Haltères)', 'PECTORAUX', 4, 8, 12, 150),
@@ -290,7 +290,7 @@ export const PROGRAMMES: Programme[] = [
       },
       {
         id: 'bas-b',
-        titre: 'Bas du corps B',
+        titre: 'Lower B : bas du corps',
         muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
         exos: [
           exo('Presse à Cuisses', 'JAMBES', 4, 8, 12, 150),
@@ -305,7 +305,7 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'split-5j',
-    titre: 'Un muscle par jour, 5 jours',
+    titre: 'Split 5 jours, un muscle par jour',
     accroche: 'Le classique de la salle : pectoraux, dos, épaules, jambes, bras. Beaucoup de séries par muscle, une fois par semaine.',
     niveau: 'intermediaire',
     objectif: 'muscle',
@@ -487,7 +487,7 @@ export const PROGRAMMES: Programme[] = [
   },
   {
     id: 'fullbody-2j',
-    titre: 'Peu de temps, corps entier',
+    titre: 'Full body express, 2 jours',
     accroche: 'Deux séances par semaine pour tout le corps : quand ton planning est chargé, tu progresses quand même.',
     niveau: 'intermediaire',
     objectif: 'muscle',

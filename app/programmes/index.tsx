@@ -16,6 +16,7 @@ import { BigButton, Chip, Glass, SectionTitle, Sheet, tap } from '@/components/y
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
+import { etudesCourtes } from '@/lib/v2/programmes/sources';
 import { PROGRAMMES, programmeParId, libelleNiveau, libelleMateriel, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { OBJECTIFS_CHOIX, conseillerProgramme } from '@/lib/v2/programmes/choix';
 import { GUIDES } from '@/lib/v2/programmes/conseils';
@@ -213,6 +214,7 @@ function CarteProgramme({ p, femme, enCours, onPress }: { p: Programme; femme: b
           <Pastille texte={traduire(libelleNiveau(p.niveau))} />
           <Pastille texte={traduire('{0} j par semaine', p.joursParSemaine)} />
           <Pastille texte={traduire('{0} min', p.dureeMin)} />
+          {p.sources.length ? <Pastille texte={traduirePluriel(p.sources.length, p.sources.length > 1, '{0} étude', '{0} études', p.sources.length)} accent /> : null}
           {p.materiel !== 'salle' ? <Pastille texte={traduire(libelleMateriel(p.materiel))} /> : null}
         </View>
       </View>
@@ -221,12 +223,12 @@ function CarteProgramme({ p, femme, enCours, onPress }: { p: Programme; femme: b
   );
 }
 
-function Pastille({ texte }: { texte: string }) {
+function Pastille({ texte, accent }: { texte: string; accent?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
     <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: c.fillSubtle }}>
-      <Ink size={11} weight="bold" color={c.textSecondary}>{texte}</Ink>
+      <Ink size={11} weight={accent ? 'extraBold' : 'bold'} color={accent ? c.accent : c.textSecondary}>{texte}</Ink>
     </View>
   );
 }

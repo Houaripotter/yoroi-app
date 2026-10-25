@@ -919,3 +919,22 @@ export const SOURCES: Source[] = [
 export function sourceParId(id: string): Source | undefined {
   return SOURCES.find((s) => s.id === id);
 }
+
+/** Nom court d'une etude, pour l'afficher en une ligne : « Schoenfeld 2017 », « ACSM 2009 » */
+export function nomCourtSource(s: Source): string {
+  const org = s.auteurs.match(/\(([^)]+)\)\s*$/);
+  const nom = org ? org[1] : s.auteurs.split(',')[0].replace(/\s+[A-Z]{1,3}$/, '').trim();
+  return `${nom} ${s.annee}`;
+}
+
+/** Les etudes d'un programme en noms courts, sans doublon */
+export function etudesCourtes(ids: string[]): string[] {
+  const out: string[] = [];
+  for (const id of ids) {
+    const s = sourceParId(id);
+    if (!s) continue;
+    const n = nomCourtSource(s);
+    if (!out.includes(n)) out.push(n);
+  }
+  return out;
+}

@@ -23,7 +23,7 @@ import { safeOpenURL } from '@/lib/security/validators';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { libelleMateriel, libelleNiveau, libelleRepos, programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
-import { sourceParId } from '@/lib/v2/programmes/sources';
+import { etudesCourtes, sourceParId } from '@/lib/v2/programmes/sources';
 import { cardioDeLaSemaine, resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { raisonRemplacement } from '@/lib/v2/programmes/materiel';
 import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
@@ -39,7 +39,7 @@ import { messageCoach } from '@/lib/v2/programmes/coach';
 import { ChoixJours } from '@/components/yoroi/v2/programmes/ChoixJours';
 import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export default function ProgrammeDetail() {
   const { theme } = useYoroiTheme();
@@ -167,6 +167,14 @@ export default function ProgrammeDetail() {
           {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: -58, width: 130, height: 180 }} resizeMode="contain" /> : null}
           <Ink size={16} weight="bold" color={c.onDark} style={{ maxWidth: '64%', lineHeight: 22 }}>{traduire(p.accroche)}</Ink>
         </View>
+
+        {p.sources.length ? (
+          <Glass label={traduire('Prouvé par les études')} style={{ gap: 6, padding: 14 }}>
+            <Ink size={12} weight="black" color={c.accent}>{traduirePluriel(p.sources.length, p.sources.length > 1, 'PROUVÉ PAR {0} ÉTUDE', 'PROUVÉ PAR {0} ÉTUDES', p.sources.length)}</Ink>
+            <Ink size={14} weight="extraBold">{etudesCourtes(p.sources).join(', ')}</Ink>
+            <Ink size={12} color={c.textMuted}>{traduire('Le détail de chaque étude est en bas de la page.')}</Ink>
+          </Glass>
+        ) : null}
 
         {enCours && actif ? (
           <CoachProgramme
