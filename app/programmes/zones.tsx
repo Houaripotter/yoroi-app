@@ -153,7 +153,44 @@ export default function ZonesScreen() {
         {/* 1. CHOIX : les seances toutes faites en grosses cartes */}
         {mode === 'choix' ? (
           <>
-            <Ink size={26} weight="black" tight accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Qu’est-ce que tu veux travailler ?')}</Ink>
+            {/* 25 octobre 2026 (Houari : « Trouve ton programme est cache en bas, mets le en haut ») :
+                le meilleur chemin pour progresser, donc en premier, en grande carte */}
+            <Pressable
+              onPress={() => { tap(); router.push('/programmes' as any); }}
+              accessibilityRole="button"
+              accessibilityLabel={traduire('Trouve ton programme')}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 92, paddingVertical: 16, paddingLeft: 18, paddingRight: 14, borderRadius: 24, backgroundColor: c.darkCard, opacity: pressed ? 0.9 : 1 })}
+            >
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="calendar" size={22} color={c.onDark} />
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Ink size={12} weight="black" color="rgba(255,255,255,0.7)" style={{ letterSpacing: 0.6 }}>{traduire('UN PLAN POUR CHAQUE SEMAINE')}</Ink>
+                <Ink size={18} weight="black" tight color={c.onDark}>{traduire('Trouve ton programme')}</Ink>
+                <Ink size={13} weight="bold" color={c.onDark} style={{ opacity: 0.8 }}>{traduire('PPL, Upper Lower, Full body : prouvés par des études')}</Ink>
+              </View>
+              <Icon name="chevron" size={18} color={c.onDark} />
+            </Pressable>
+
+            {/* ta derniere seance, quand elle n'est pas deja une des cartes */}
+            {derniereFois.length && !derniereEstUnPreset ? (
+              <Pressable
+                onPress={() => ouvrirSeance(derniereFois)}
+                accessibilityRole="button"
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : c.accentTint })}
+              >
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="repeat" size={19} color={c.onAccent} />
+                </View>
+                <View style={{ flex: 1, gap: 1 }}>
+                  <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Refaire ta dernière séance')}</Ink>
+                  <Ink size={16} weight="black" numberOfLines={2}>{titreZones(derniereFois, traduire)}</Ink>
+                </View>
+                <Icon name="chevron" size={18} color={c.textMuted} />
+              </Pressable>
+            ) : null}
+
+            <Ink size={22} weight="black" tight accessibilityRole="header" style={{ marginTop: 6 }}>{traduire('Qu’est-ce que tu veux travailler ?')}</Ink>
             {presets.filter((r) => r.id !== 'grip').map((r) => (
               <Pressable
                 key={r.id}
@@ -197,24 +234,8 @@ export default function ZonesScreen() {
               </View>
             ))}
 
-            {/* ta derniere seance, quand elle n'est pas deja une des cartes */}
-            {derniereFois.length && !derniereEstUnPreset ? (
-              <Pressable
-                onPress={() => ouvrirSeance(derniereFois)}
-                accessibilityRole="button"
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : c.accentTint })}
-              >
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="repeat" size={19} color={c.onAccent} />
-                </View>
-                <View style={{ flex: 1, gap: 1 }}>
-                  <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Refaire ta dernière séance')}</Ink>
-                  <Ink size={16} weight="black" numberOfLines={2}>{titreZones(derniereFois, traduire)}</Ink>
-                </View>
-                <Icon name="chevron" size={18} color={c.textMuted} />
-              </Pressable>
-            ) : null}
-
+            {/* ou tu fais ta seance toi meme */}
+            <Ink size={12} weight="black" color={c.textSecondary} style={{ letterSpacing: 0.6, marginTop: 6 }}>{traduire('À TA FAÇON')}</Ink>
             {/* creer sa propre seance : tu choisis tes exercices, tu lui donnes un nom, elle va dans Mes seances */}
             <Pressable
               onPress={() => { tap(); router.push('/mes-seances/modifier' as any); }}
@@ -256,21 +277,6 @@ export default function ZonesScreen() {
               <Icon name="chevron" size={18} color={c.textMuted} />
             </Pressable>
 
-            {/* un programme sur plusieurs semaines */}
-            <Pressable
-              onPress={() => { tap(); router.push('/programmes' as any); }}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
-            >
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="calendar" size={19} color={c.accent} />
-              </View>
-              <View style={{ flex: 1, gap: 1 }}>
-                <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Envie d’un plan pour chaque semaine ?')}</Ink>
-                <Ink size={16} weight="black">{traduire('Trouve ton programme')}</Ink>
-              </View>
-              <Icon name="chevron" size={18} color={c.textMuted} />
-            </Pressable>
           </>
         ) : null}
 
