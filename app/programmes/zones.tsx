@@ -192,7 +192,7 @@ export default function ZonesScreen() {
               </Pressable>
             ) : null}
 
-            {/* choisir soi-meme */}
+            {/* choisir soi-meme : une carte pleine, avec trois muscles en images */}
             <Pressable
               onPress={() => {
                 tap();
@@ -200,19 +200,37 @@ export default function ZonesScreen() {
                 aller('muscles');
               }}
               accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, paddingHorizontal: 16, borderRadius: 22, borderWidth: 2, borderStyle: 'dashed', borderColor: c.accent, backgroundColor: pressed ? c.accentTint : 'transparent' })}
+              accessibilityLabel={traduire('Je choisis mes muscles')}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 92, paddingVertical: 16, paddingLeft: 18, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? c.accentPressed : c.accent, overflow: 'hidden' })}
             >
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="plus" size={22} color={c.accent} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Ink size={18} weight="black" tight color={c.onAccent}>{traduire('Je choisis mes muscles')}</Ink>
+                <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.85 }}>{traduire('Compose ta séance muscle par muscle')}</Ink>
               </View>
-              <View style={{ flex: 1, gap: 1 }}>
-                <Ink size={17} weight="black" color={c.accent}>{traduire('Je choisis mes muscles')}</Ink>
-                <Ink size={13} color={c.textSecondary}>{traduire('épaules, dos, fessiers, mollets...')}</Ink>
+              <View style={{ flexDirection: 'row' }}>
+                {(['epaules', 'abdos', 'fessiers'] as ZoneId[]).map((id, i) => (
+                  <View key={id} style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden', borderWidth: 2, borderColor: c.onAccent, backgroundColor: P.white, marginLeft: i ? -14 : 0 }}>
+                    <Image source={VIGNETTES[id]} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+                  </View>
+                ))}
               </View>
+              <Icon name="chevron" size={18} color={c.onAccent} />
             </Pressable>
 
-            <Pressable onPress={() => { tap(); router.push('/programmes' as any); }} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignItems: 'center' }}>
-              <Ink size={14} weight="extraBold" color={c.accent}>{traduire('Envie d’un plan pour chaque semaine ? Trouve ton programme')}</Ink>
+            {/* un programme sur plusieurs semaines */}
+            <Pressable
+              onPress={() => { tap(); router.push('/programmes' as any); }}
+              accessibilityRole="button"
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="calendar" size={19} color={c.accent} />
+              </View>
+              <View style={{ flex: 1, gap: 1 }}>
+                <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('Envie d’un plan pour chaque semaine ?')}</Ink>
+                <Ink size={16} weight="black">{traduire('Trouve ton programme')}</Ink>
+              </View>
+              <Icon name="chevron" size={18} color={c.textMuted} />
             </Pressable>
           </>
         ) : null}
