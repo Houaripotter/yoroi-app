@@ -1647,7 +1647,7 @@ export const FICHES_EXO: Record<string, FicheExo> = {
     consignes: [
       'Debout, un haltère dans chaque main, tenu par la tête du bout des doigts.',
       'Bras tendus le long du corps, garde tout dans les doigts, pas dans la paume.',
-      'Tiens le temps prévu, puis repose les haltères doucement.',
+      'Marche lentement sur un parcours court, puis repose les haltères en pliant les jambes.',
     ],
     erreurs: [
       'Laisser l’haltère glisser dans le creux de la main.',

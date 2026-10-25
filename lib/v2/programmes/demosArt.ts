@@ -27,6 +27,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   dead_bug: [require('../../../assets/exercices/demos/dead_bug_a.webp'), require('../../../assets/exercices/demos/dead_bug_b.webp')],
   dead_hang: [require('../../../assets/exercices/demos/dead_hang_a.webp'), require('../../../assets/exercices/demos/dead_hang_b.webp')],
   deadlift_roumain: [require('../../../assets/exercices/demos/deadlift_roumain_a.webp'), require('../../../assets/exercices/demos/deadlift_roumain_b.webp')],
+  developpe_couche_barre: [require('../../../assets/exercices/demos/developpe_couche_barre_a.webp'), require('../../../assets/exercices/demos/developpe_couche_barre_b.webp')],
   developpe_couche_halteres: [require('../../../assets/exercices/demos/developpe_couche_halteres_a.webp'), require('../../../assets/exercices/demos/developpe_couche_halteres_b.webp')],
   developpe_halteres_debout: [require('../../../assets/exercices/demos/developpe_halteres_debout_a.webp'), require('../../../assets/exercices/demos/developpe_halteres_debout_b.webp')],
   developpe_incline_barre: [require('../../../assets/exercices/demos/developpe_incline_barre_a.webp'), require('../../../assets/exercices/demos/developpe_incline_barre_b.webp')],
@@ -70,6 +71,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   oiseau_machine_reverse_pec_deck: [require('../../../assets/exercices/demos/oiseau_machine_reverse_pec_deck_a.webp'), require('../../../assets/exercices/demos/oiseau_machine_reverse_pec_deck_b.webp')],
   pec_deck_butterfly: [require('../../../assets/exercices/demos/pec_deck_butterfly_a.webp'), require('../../../assets/exercices/demos/pec_deck_butterfly_b.webp')],
   pike_push_ups: [require('../../../assets/exercices/demos/pike_push_ups_a.webp'), require('../../../assets/exercices/demos/pike_push_ups_b.webp')],
+  pince_haltere_par_la_tete: [require('../../../assets/exercices/demos/pince_haltere_par_la_tete_a.webp'), require('../../../assets/exercices/demos/pince_haltere_par_la_tete_b.webp')],
   pompes_declinees: [require('../../../assets/exercices/demos/pompes_declinees_a.webp'), require('../../../assets/exercices/demos/pompes_declinees_b.webp')],
   pompes_diamant: [require('../../../assets/exercices/demos/pompes_diamant_a.webp'), require('../../../assets/exercices/demos/pompes_diamant_b.webp')],
   pompes_poids_du_corps: [require('../../../assets/exercices/demos/pompes_poids_du_corps_a.webp'), require('../../../assets/exercices/demos/pompes_poids_du_corps_b.webp')],
@@ -102,6 +104,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   tractions_pronation: [require('../../../assets/exercices/demos/tractions_pronation_a.webp'), require('../../../assets/exercices/demos/tractions_pronation_b.webp')],
   tractions_supination: [require('../../../assets/exercices/demos/tractions_supination_a.webp'), require('../../../assets/exercices/demos/tractions_supination_b.webp')],
   trap_bar_deadlift: [require('../../../assets/exercices/demos/trap_bar_deadlift_a.webp'), require('../../../assets/exercices/demos/trap_bar_deadlift_b.webp')],
+  traversee_de_disques_pince: [require('../../../assets/exercices/demos/traversee_de_disques_pince_a.webp'), require('../../../assets/exercices/demos/traversee_de_disques_pince_b.webp')],
   wrist_roller: [require('../../../assets/exercices/demos/wrist_roller_a.webp'), require('../../../assets/exercices/demos/wrist_roller_b.webp')],
   y_raises: [require('../../../assets/exercices/demos/y_raises_a.webp'), require('../../../assets/exercices/demos/y_raises_b.webp')],
 };
