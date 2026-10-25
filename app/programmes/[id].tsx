@@ -24,7 +24,7 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { libelleMateriel, libelleNiveau, libelleRepos, programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { etudesCourtes, sourceParId } from '@/lib/v2/programmes/sources';
-import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
+import { PRECISION_EXO, musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { cardioDeLaSemaine, resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { raisonRemplacement } from '@/lib/v2/programmes/materiel';
 import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
@@ -410,12 +410,14 @@ function LigneMuscles({ nom }: { nom: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const mu = musclesDeExo(nom);
-  if (!mu) return null;
+  const precision = PRECISION_EXO[nom];
+  if (!mu) return precision ? <Ink size={12} weight="bold" color={c.ink}>{traduire(precision)}</Ink> : null;
   const liste = (l: string[]) => l.map((x) => traduire(x)).join(', ');
   return (
     <Ink size={12} color={c.textMuted}>
       <Ink size={12} weight="extraBold" color={c.ink}>{traduire('Travaille : {0}', liste(mu.principaux))}</Ink>
       {mu.aussi.length ? `. ${traduire('Aussi : {0}', liste(mu.aussi))}` : ''}
+      {precision ? `\n${traduire(precision)}` : ''}
     </Ink>
   );
 }

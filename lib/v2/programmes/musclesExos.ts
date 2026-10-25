@@ -203,3 +203,8 @@ export const MUSCLES_EXOS: Record<string, MusclesExo> = {
 export function musclesDeExo(nom: string): MusclesExo | undefined {
   return MUSCLES_EXOS[nom];
 }
+
+/** Precision qui s'affiche toujours avec l'exercice (25 octobre 2026, Houari : « beaucoup vont le faire sur le banc ») */
+export const PRECISION_EXO: Record<string, string> = {
+  'Floor Press (Haltères)': 'Au sol, pas sur un banc : le sol arrête tes coudes à hauteur du buste et protège ton épaule.',
+};

@@ -81,11 +81,12 @@ export const FICHES_EXO: Record<string, FicheExo> = {
   },
   'Floor Press (Haltères)': {
     consignes: [
-      'Allongé au sol, genoux fléchis, pieds à plat.',
+      'Allongé au sol, genoux fléchis, pieds à plat. Pas sur un banc : c’est le sol qui protège l’épaule.',
       'Descends jusqu’à ce que le haut des bras touche le sol, coudes à environ 45 degrés.',
       'Marque un temps au sol, puis pousse les haltères vers le haut.',
     ],
     erreurs: [
+      'Le faire sur un banc : les coudes descendent trop bas et l’épaule force.',
       'Faire rebondir les coudes sur le sol.',
       'Écarter les coudes à hauteur des épaules.',
     ],

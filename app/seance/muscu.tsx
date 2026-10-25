@@ -5,6 +5,7 @@
  * editId (modifier une seance), date, time, duration, clubId (saisie apres coup, aussi sous les anciens noms prefill...),
  * maSeance (une seance de « Mes séances », 25 octobre 2026).
  */
+import { PRECISION_EXO } from '@/lib/v2/programmes/musclesExos';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { accordSouleve, formatTonnage, tonnageOfSets } from '@/lib/v2/trainingWeek';
 import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -232,10 +233,10 @@ export default function SeanceMuscu() {
               const conseil = zone
                 ? e.impossible
                   ? traduire('Tu as signalé une douleur : {0}. Passe cet exercice, et demande l’avis d’un professionnel si elle dure.', traduire(LIBELLE_REGION[zone]))
-                  : traduire('Remplace {0} pour ménager {1}', traduire(nomFr(e.remplace ?? '')), traduire(LIBELLE_REGION[zone]))
+                  : [traduire('Remplace {0} pour ménager {1}', traduire(nomFr(e.remplace ?? '')), traduire(LIBELLE_REGION[zone])), PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : ''].filter(Boolean).join(' ')
                 : e.remplace
-                  ? undefined
-                  : e.conseil;
+                  ? PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : undefined
+                  : e.conseil ?? (PRECISION_EXO[e.nom] ? traduire(PRECISION_EXO[e.nom]) : undefined);
               return { ...ex, cible: { repsMin: e.repsMin, repsMax: e.repsMax, reposSec: e.reposSec, conseil, raison: prop.raison, nouvelleCharge: prop.nouvelleCharge, ...(e.secondes ? { secondes: true } : {}) } };
             });
             if (!label) label = !prog ? jour.titre : express > 0 ? traduire('{0}, express {1} min', traduire(jour.titre), express) : legere ? traduire('{0}, semaine légère', traduire(jour.titre)) : `${traduire(prog.titre)}, ${traduire(jour.titre)}`;
