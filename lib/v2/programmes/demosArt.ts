@@ -133,6 +133,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   tirage_serre_v_bar: [require('../../../assets/exercices/demos/tirage_serre_v_bar_a.webp'), require('../../../assets/exercices/demos/tirage_serre_v_bar_b.webp')],
   tractions_neutres: [require('../../../assets/exercices/demos/tractions_neutres_a.webp'), require('../../../assets/exercices/demos/tractions_neutres_b.webp')],
   tractions_pronation: [require('../../../assets/exercices/demos/tractions_pronation_a.webp'), require('../../../assets/exercices/demos/tractions_pronation_b.webp')],
+  tractions_serviette: [require('../../../assets/exercices/demos/tractions_serviette_a.webp'), require('../../../assets/exercices/demos/tractions_serviette_b.webp')],
   tractions_supination: [require('../../../assets/exercices/demos/tractions_supination_a.webp'), require('../../../assets/exercices/demos/tractions_supination_b.webp')],
   trap_bar_deadlift: [require('../../../assets/exercices/demos/trap_bar_deadlift_a.webp'), require('../../../assets/exercices/demos/trap_bar_deadlift_b.webp')],
   traversee_de_disques_pince: [require('../../../assets/exercices/demos/traversee_de_disques_pince_a.webp'), require('../../../assets/exercices/demos/traversee_de_disques_pince_b.webp')],
