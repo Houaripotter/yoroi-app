@@ -12,6 +12,7 @@ import { Icon } from '@/components/yoroi/v2/seance/Icon';
 import { getWeeklyPlan } from '@/lib/database';
 import { getSportName } from '@/lib/sports';
 import { chargerProgrammeActif, prochainJour } from '@/lib/v2/programmes/suivi';
+import { motApresSeance } from '@/lib/v2/programmes/coach';
 import { sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { sportImage, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { PLAN_DAYS } from '@/lib/v2/seances/sessionData';
@@ -20,7 +21,8 @@ import type { NextSlot } from '@/components/yoroi/v2/seances/NextUp';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LANG, traduire } from '@/lib/i18n/tr';
 
-type Suite = { titre: string; sous: string | null; sport: string; action: string; href: string };
+/** cri : le mot du coach après une séance du programme (lib/v2/programmes/coach.ts) */
+type Suite = { titre: string; sous: string | null; sport: string; action: string; href: string; cri?: string };
 
 function quand(n: NextSlot): string {
   const nom = PLAN_DAYS[n.slot.day_of_week] ?? '';
@@ -65,6 +67,7 @@ export function EtMaintenant({
             sport: sportDuProgramme(p.programme),
             action: traduire('Voir mon programme'),
             href: '/programmes',
+            cri: a ? motApresSeance(a.faits.filter((f) => f.date >= a.debut).length, femme) : undefined,
           };
         }
       } catch {
@@ -88,7 +91,7 @@ export function EtMaintenant({
     return () => {
       vivant = false;
     };
-  }, []);
+  }, [femme]);
 
   if (!lu) return null;
 
@@ -104,6 +107,11 @@ export function EtMaintenant({
     return (
       <Animated.View entering={entree} style={{ marginHorizontal: 22, marginTop: 18, gap: 8 }}>
         {titreBloc}
+        {suite.cri ? (
+          <View style={{ borderRadius: 18, padding: 14, backgroundColor: c.darkCard }}>
+            <Ink size={15} weight="extraBold" color={c.onDark} style={{ lineHeight: 21 }}>{suite.cri}</Ink>
+          </View>
+        ) : null}
         <Pressable
           onPress={() => {
             impactAsync(ImpactFeedbackStyle.Light).catch(() => {});

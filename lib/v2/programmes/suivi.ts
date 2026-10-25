@@ -9,6 +9,7 @@ import { programmeParId } from './catalogue';
 import { TOUT_LE_MATERIEL } from './materiel';
 import type { Equipement } from './materiel';
 import type { JourProgramme, Programme } from './types';
+import { joursValides } from './coach';
 
 const CLE = 'yoroi_programme_actif_v1';
 export const PROGRAMME_CHANGED_EVENT = 'YOROI_PROGRAMME_CHANGED';
@@ -26,6 +27,8 @@ export type ProgrammeActif = {
   legereJusquau?: string;
   /** debuts des semaines legeres deja faites */
   legeres?: string[];
+  /** 25 octobre 2026 : tes jours d'entrainement, 0 = lundi (lib/v2/programmes/coach.ts) ; absents, les jours conseilles */
+  jours?: number[];
 };
 
 function jourLocal(d = new Date()): string {
@@ -64,11 +67,25 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
   prevenir();
 }
 
-export async function demarrerProgramme(id: string): Promise<ProgrammeActif | null> {
+export async function demarrerProgramme(id: string, jours?: number[]): Promise<ProgrammeActif | null> {
   if (!programmeParId(id)) return null;
-  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [] };
+  const choisis = joursValides(jours);
+  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}) };
   await ecrire(a);
   return a;
+}
+
+/** Tes jours d'entrainement changent (0 = lundi) */
+export async function enregistrerJours(jours: number[]): Promise<void> {
+  const a = await chargerProgrammeActif();
+  const choisis = joursValides(jours);
+  if (!a || !choisis) return;
+  await ecrire({ ...a, jours: choisis });
+}
+
+/** Tes jours d'entrainement : ceux que tu as choisis, sinon les jours conseilles du programme */
+export function joursDuProgramme(a: ProgrammeActif | null, p: Programme): number[] {
+  return joursValides(a?.jours) ?? joursConseilles(p.joursParSemaine);
 }
 
 export async function arreterProgramme(): Promise<void> {

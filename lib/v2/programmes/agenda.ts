@@ -14,7 +14,8 @@ import type { Programme } from './types';
 
 const CLE = 'yoroi_programme_creneaux_v1';
 
-export type CreneauxProgramme = { programme: string; ids: number[]; heure: string };
+/** jours : les jours des créneaux créés (0 = lundi), pour les replacer quand tu changes tes jours */
+export type CreneauxProgramme = { programme: string; ids: number[]; heure: string; jours?: number[] };
 
 /**
  * Sport des créneaux : celui de la saisie qui ouvrira la séance (musculation pour un programme d'exercices,
@@ -27,9 +28,9 @@ export function sportDesCreneaux(p: Programme): string {
   return p.jours.some((x) => x.exos.length) ? 'musculation' : sportDuProgramme(p);
 }
 
-/** Les créneaux à créer : jours conseillés (0 = lundi), sport et durée du programme, ton heure */
-export function creneauxACreer(p: Programme, heure: string, titre: string): WeeklyPlan[] {
-  return joursConseilles(p.joursParSemaine).map((d) => ({
+/** Les créneaux à créer : tes jours (0 = lundi), sinon les jours conseillés, sport et durée du programme, ton heure */
+export function creneauxACreer(p: Programme, heure: string, titre: string, jours: number[] = joursConseilles(p.joursParSemaine)): WeeklyPlan[] {
+  return jours.map((d) => ({
     day_of_week: d,
     sport: sportDesCreneaux(p),
     time: heure,

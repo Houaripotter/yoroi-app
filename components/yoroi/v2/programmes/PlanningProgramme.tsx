@@ -13,7 +13,8 @@ import { addWeeklyPlanItem, deleteWeeklyPlanItem, getWeeklyPlan } from '@/lib/da
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { chargerCreneaux, creneauxACreer, creneauxRestants, enregistrerCreneaux } from '@/lib/v2/programmes/agenda';
 import type { CreneauxProgramme } from '@/lib/v2/programmes/agenda';
-import { joursConseilles } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursConseilles, joursDuProgramme } from '@/lib/v2/programmes/suivi';
+import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -28,6 +29,15 @@ export function PlanningProgramme({ programme }: { programme: Programme }) {
   const [creneaux, setCreneaux] = useState<CreneauxProgramme | null>(null);
   const [heure, setHeure] = useState('18:00');
   const [occupe, setOccupe] = useState(false);
+  // 25 octobre 2026 : tes jours d'entraînement choisis (components/yoroi/v2/programmes/ChoixJours.tsx)
+  const [actif, setActif] = useState<ProgrammeActif | null>(null);
+  useEffect(() => {
+    const lireActif = () => chargerProgrammeActif().then(setActif).catch(() => setActif(null));
+    lireActif();
+    const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, lireActif);
+    return () => sub.remove();
+  }, []);
+  const joursChoisis = joursDuProgramme(actif?.id === programme.id ? actif : null, programme);
 
   const lire = useCallback(async () => {
     const cr = await chargerCreneaux();
@@ -63,11 +73,11 @@ export function PlanningProgramme({ programme }: { programme: Programme }) {
       if (creneaux) await retirerIds(creneaux.ids);
       const ids: number[] = [];
       // chaque creneau cree est note tout de suite : meme si la suite echoue, « Retirer » le retrouve
-      for (const s of creneauxACreer(programme, h, traduire(programme.titre))) {
+      for (const s of creneauxACreer(programme, h, traduire(programme.titre), joursChoisis)) {
         ids.push(await addWeeklyPlanItem(s));
-        await enregistrerCreneaux({ programme: programme.id, ids: [...ids], heure: h });
+        await enregistrerCreneaux({ programme: programme.id, ids: [...ids], heure: h, jours: joursChoisis });
       }
-      const net = { programme: programme.id, ids, heure: h };
+      const net = { programme: programme.id, ids, heure: h, jours: joursChoisis };
       setCreneaux(net);
       setHeure(h);
       DeviceEventEmitter.emit(DATA_CHANGED_EVENT);
@@ -93,7 +103,13 @@ export function PlanningProgramme({ programme }: { programme: Programme }) {
   };
 
   const pourCeProgramme = creneaux?.programme === programme.id;
-  const jours = joursConseilles(programme.joursParSemaine).map((d) => traduire(JOURS[d])).join(', ');
+  // tu as changé tes jours : les créneaux déjà posés suivent, à la même heure
+  const cleJours = joursChoisis.join(',');
+  useEffect(() => {
+    if (!pourCeProgramme || !creneaux || occupe || !actif) return;
+    if ((creneaux.jours ?? joursConseilles(programme.joursParSemaine)).join(',') !== cleJours) void planifier(creneaux.heure);
+  }, [cleJours, pourCeProgramme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const jours = joursChoisis.map((d) => traduire(JOURS[d])).join(', ');
 
   return (
     <Glass style={{ gap: 10 }}>

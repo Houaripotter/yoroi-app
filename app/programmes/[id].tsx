@@ -34,7 +34,10 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, chargerMateriel, chargerProgrammeActif, demarrerProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { messageCoach } from '@/lib/v2/programmes/coach';
+import { ChoixJours } from '@/components/yoroi/v2/programmes/ChoixJours';
+import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -56,6 +59,11 @@ export default function ProgrammeDetail() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [mesures, setMesures] = useState<Measurement[]>([]);
   const unite = useUnitePoids();
+  // 25 octobre 2026 : tes jours d'entraînement (0 = lundi), choisis avant de commencer, modifiables ensuite
+  const [jours, setJours] = useState<number[]>(() => joursConseilles(p?.joursParSemaine ?? 3));
+  useEffect(() => {
+    if (p && actif?.id === p.id) setJours(joursDuProgramme(actif, p));
+  }, [p, actif]);
 
   useEffect(() => {
     const charger = () =>
@@ -126,7 +134,7 @@ export default function ProgrammeDetail() {
 
   const commencerProgramme = async () => {
     const go = async () => {
-      await demarrerProgramme(p.id);
+      await demarrerProgramme(p.id, jours);
       lancerJour(p.jours[0].id);
     };
     if (actif && actif.id !== p.id) {
@@ -160,11 +168,27 @@ export default function ProgrammeDetail() {
           <Ink size={16} weight="bold" color={c.onDark} style={{ maxWidth: '64%', lineHeight: 22 }}>{traduire(p.accroche)}</Ink>
         </View>
 
+        {enCours && actif ? (
+          <CoachProgramme
+            message={messageCoach({ programme: p, actif, jours, prochaineSeance: traduire(p.jours[actif.prochain]?.titre ?? ''), femme })}
+            onCommencer={() => faireCeJour(actif.prochain)}
+          />
+        ) : null}
+
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           <Stat value={String(p.joursParSemaine)} label={traduire('Jours par semaine')} />
           <Stat value={String(p.dureeMin)} unit="min" label={traduire('Par séance')} />
           <Stat value={String(p.semaines)} label={traduire('Semaines')} />
         </View>
+
+        <ChoixJours
+          jours={jours}
+          prevus={p.joursParSemaine}
+          onChange={(d) => {
+            setJours(d);
+            if (enCours) void enregistrerJours(d);
+          }}
+        />
 
         {enCours && actif ? (() => {
           const sem = semaineDuProgramme(actif);
