@@ -5,9 +5,9 @@
  * « Partager » vers la carte « Ma semaine » ou « Mon mois ». Ouvert par le rappel du dimanche soir.
  * Paramètres : type=semaine|mois (semaine par défaut). Calculs : lib/v2/bilan/periode.ts.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -61,9 +61,12 @@ export default function BilanPeriodeEcran() {
   const [donnees, setDonnees] = useState<DonneesPeriode | null>(null);
   const aujourdhui = todayLocalIso();
 
-  useEffect(() => {
-    chargerDonneesPeriode().then(setDonnees).catch(() => setDonnees({ trainings: [], pesees: [], mesures: [], parSemaine: 0 }));
-  }, []);
+  // relu a chaque retour sur l'ecran : une seance notee depuis « Noter quelque chose » apparait tout de suite
+  useFocusEffect(
+    useCallback(() => {
+      chargerDonneesPeriode().then(setDonnees).catch(() => setDonnees({ trainings: [], pesees: [], mesures: [], parSemaine: 0 }));
+    }, []),
+  );
 
   // la periode par defaut, puis les fleches pour reculer (jamais au dela de la periode en cours)
   const base = useMemo(() => periodeParDefaut(type, aujourdhui), [type, aujourdhui]);

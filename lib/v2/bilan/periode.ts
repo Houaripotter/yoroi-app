@@ -6,7 +6,7 @@
  * Fonction pure, testée dans __tests__/unit/bilanPeriode.test.ts. Lecture des données : ./chargerPeriode.ts.
  */
 import type { Training } from '@/lib/database';
-import { cleTri, lundiIso, recordsDe, serieSemaines, trier } from '@/lib/v2/cartes/exploits';
+import { lundiIso, recordsDe, serieSemaines, trier } from '@/lib/v2/cartes/exploits';
 import { filtrerTendance } from '@/lib/v2/pesee/tendance';
 import { viewValue } from '@/lib/v2/progres/measures';
 import type { MeasurePoint, ViewKey } from '@/lib/v2/progres/measures';
@@ -114,7 +114,7 @@ export function bilanPeriode(o: {
       let semaines = 0;
       for (let l = lundiIso(p.debut) < p.debut ? plusJours(lundiIso(p.debut), 7) : lundiIso(p.debut); l <= p.fin; l = plusJours(l, 7)) {
         const s = { type: 'semaine' as const, debut: l, fin: plusJours(l, 6) };
-        if (s.fin > o.aujourdhui && !(de(s).length >= o.parSemaine)) continue; // semaine en cours pas encore jouée
+        if (s.fin >= o.aujourdhui && !(de(s).length >= o.parSemaine)) continue; // semaine en cours pas encore jouée (dimanche compris)
         semaines += 1;
         if (de(s).length >= o.parSemaine) tenues += 1;
       }
@@ -122,8 +122,18 @@ export function bilanPeriode(o: {
     }
   }
 
-  const derniere = ici.length ? ici[ici.length - 1] : null;
-  const serie = o.parSemaine > 0 && derniere ? serieSemaines(tries, lundiIso(p.fin > o.aujourdhui ? o.aujourdhui : p.fin), o.parSemaine, cleTri(derniere)) : 0;
+  // serie de semaines a l'objectif, jusqu'a la fin de la periode (relecture du 25 octobre) :
+  // la semaine en cours pas encore tenue ne casse pas la serie (on part de la precedente) ;
+  // pour un mois fini, la derniere semaine entiere du mois (pas celle qui deborde sur le mois suivant)
+  let serie = 0;
+  if (o.parSemaine > 0) {
+    const fin = p.fin > o.aujourdhui ? o.aujourdhui : p.fin;
+    let lundi = lundiIso(fin);
+    const semaine = { type: 'semaine' as const, debut: lundi, fin: plusJours(lundi, 6) };
+    const finie = semaine.fin < o.aujourdhui;
+    if (semaine.fin > p.fin || (!finie && de(semaine).length < o.parSemaine)) lundi = plusJours(lundi, -7);
+    serie = serieSemaines(tries, lundi, o.parSemaine);
+  }
 
   // records : chaque séance de la période comparée à tout ce qui précède
   const records: BilanPeriode['records'] = [];
@@ -141,7 +151,10 @@ export function bilanPeriode(o: {
   const tf = filtrerTendance(serieP, o.aujourdhui);
   const dansP = tf.filter((x) => dans(x.date, p));
   if (dansP.length) {
-    const avantDebut = tf.filter((x) => x.date < p.debut);
+    // le point de depart : ta tendance juste avant la periode, seulement s'il est recent (sinon trois mois
+    // sans pesee compteraient comme l'ecart de la semaine)
+    const limite = plusJours(p.debut, p.type === 'semaine' ? -7 : -31);
+    const avantDebut = tf.filter((x) => x.date < p.debut && x.date >= limite);
     const d0 = avantDebut.length ? avantDebut[avantDebut.length - 1] : dansP[0];
     const d1 = dansP[dansP.length - 1];
     if (dansP.length >= 2 || avantDebut.length) {
@@ -154,7 +167,10 @@ export function bilanPeriode(o: {
   const mensurations: BilanPeriode['mensurations'] = [];
   const cles: ViewKey[] = ['waist', 'navel', 'hips', 'chest', 'shoulders', 'arm', 'thigh', 'calf', 'neck'];
   for (const cle of cles) {
-    const pts = o.mesures.map((m) => ({ date: m.date, v: viewValue(m, cle) })).filter((x): x is { date: string; v: number } => !!x.v);
+    const pts = o.mesures
+      .map((m) => ({ date: String(m.date).slice(0, 10), v: viewValue(m, cle) }))
+      .filter((x): x is { date: string; v: number } => !!x.v)
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
     const ds = pts.filter((x) => dans(x.date, p));
     if (!ds.length) continue;
     const av = pts.filter((x) => x.date < p.debut);

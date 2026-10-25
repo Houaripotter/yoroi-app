@@ -11,10 +11,10 @@
  * 3. SÉANCE : ta séance du jour, les exercices un par un, « Commencer » toujours en bas.
  * Paramètre preset (haut, bas, fessiers_abdos, entier) : la séance toute faite s'ouvre directement.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -70,20 +70,25 @@ export default function ZonesScreen() {
   const [derniereFois, setDerniereFois] = useState<ZoneId[]>([]);
   const defile = useRef<ScrollView>(null);
 
-  // ta derniere seance, et la seance toute faite demandee en parametre
+  // la seance toute faite demandee en parametre
   useEffect(() => {
     const r = RACCOURCIS_ZONES.find((x) => x.id === preset);
     if (r) {
       setChoisies(r.zones);
       setMode('seance');
     }
-    AsyncStorage.getItem(CLE)
-      .then((raw) => {
-        const v = raw ? (JSON.parse(raw) as string[]) : [];
-        setDerniereFois(ZONES.map((z) => z.id).filter((id) => v.includes(id)));
-      })
-      .catch(() => {});
   }, [preset]);
+  // ta derniere seance, relue a chaque retour sur l'ecran (apres une seance, « Refaire » est a jour)
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem(CLE)
+        .then((raw) => {
+          const v = raw ? (JSON.parse(raw) as string[]) : [];
+          setDerniereFois(ZONES.map((z) => z.id).filter((id) => v.includes(id)));
+        })
+        .catch(() => {});
+    }, []),
+  );
 
   const aller = (m: Mode) => {
     setMode(m);
@@ -94,17 +99,20 @@ export default function ZonesScreen() {
     if (mode === 'choix') router.back();
     else aller('choix');
   };
-  // Android : le bouton retour du telephone revient d'abord au choix
+  // Android : le bouton retour du telephone revient d'abord au choix, seulement quand cet ecran est devant
+  // (relecture du 25 octobre : sinon il restait actif pendant la seance et bloquait le retour)
   const retourRef = useRef(retour);
   retourRef.current = retour;
-  useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (mode === 'choix') return false;
-      retourRef.current();
-      return true;
-    });
-    return () => sub.remove();
-  }, [mode]);
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (mode === 'choix') return false;
+        retourRef.current();
+        return true;
+      });
+      return () => sub.remove();
+    }, [mode]),
+  );
 
   const ouvrirSeance = (zones: ZoneId[]) => {
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
