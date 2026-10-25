@@ -82,6 +82,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   nordic_curl: [require('../../../assets/exercices/demos/nordic_curl_a.webp'), require('../../../assets/exercices/demos/nordic_curl_b.webp')],
   oiseau_halteres_rear_delts: [require('../../../assets/exercices/demos/oiseau_halteres_rear_delts_a.webp'), require('../../../assets/exercices/demos/oiseau_halteres_rear_delts_b.webp')],
   oiseau_machine_reverse_pec_deck: [require('../../../assets/exercices/demos/oiseau_machine_reverse_pec_deck_a.webp'), require('../../../assets/exercices/demos/oiseau_machine_reverse_pec_deck_b.webp')],
+  overhead_extension_poulie: [require('../../../assets/exercices/demos/overhead_extension_poulie_a.webp'), require('../../../assets/exercices/demos/overhead_extension_poulie_b.webp')],
   pec_deck_butterfly: [require('../../../assets/exercices/demos/pec_deck_butterfly_a.webp'), require('../../../assets/exercices/demos/pec_deck_butterfly_b.webp')],
   pike_push_ups: [require('../../../assets/exercices/demos/pike_push_ups_a.webp'), require('../../../assets/exercices/demos/pike_push_ups_b.webp')],
   pince_haltere_par_la_tete: [require('../../../assets/exercices/demos/pince_haltere_par_la_tete_a.webp'), require('../../../assets/exercices/demos/pince_haltere_par_la_tete_b.webp')],
