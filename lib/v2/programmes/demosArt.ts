@@ -64,6 +64,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   glute_bridge: [require('../../../assets/exercices/demos/glute_bridge_a.webp'), require('../../../assets/exercices/demos/glute_bridge_b.webp')],
   goblet_squat: [require('../../../assets/exercices/demos/goblet_squat_a.webp'), require('../../../assets/exercices/demos/goblet_squat_b.webp')],
   gripper_hand_grip: [require('../../../assets/exercices/demos/gripper_hand_grip_a.webp'), require('../../../assets/exercices/demos/gripper_hand_grip_b.webp')],
+  hack_squat: [require('../../../assets/exercices/demos/hack_squat_a.webp'), require('../../../assets/exercices/demos/hack_squat_b.webp')],
   hanging_knee_raise: [require('../../../assets/exercices/demos/hanging_knee_raise_a.webp'), require('../../../assets/exercices/demos/hanging_knee_raise_b.webp')],
   hip_thrust_barre: [require('../../../assets/exercices/demos/hip_thrust_barre_a.webp'), require('../../../assets/exercices/demos/hip_thrust_barre_b.webp')],
   hip_thrust_machine: [require('../../../assets/exercices/demos/hip_thrust_machine_a.webp'), require('../../../assets/exercices/demos/hip_thrust_machine_b.webp')],
