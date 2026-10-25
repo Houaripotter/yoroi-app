@@ -18,6 +18,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   chest_supported_row: [require('../../../assets/exercices/demos/chest_supported_row_a.webp'), require('../../../assets/exercices/demos/chest_supported_row_b.webp')],
   clamshells: [require('../../../assets/exercices/demos/clamshells_a.webp'), require('../../../assets/exercices/demos/clamshells_b.webp')],
   close_grip_bench_press: [require('../../../assets/exercices/demos/close_grip_bench_press_a.webp'), require('../../../assets/exercices/demos/close_grip_bench_press_b.webp')],
+  cou_isometrique_4_directions: [require('../../../assets/exercices/demos/cou_isometrique_4_directions_a.webp'), require('../../../assets/exercices/demos/cou_isometrique_4_directions_b.webp')],
   crunch_abdominal: [require('../../../assets/exercices/demos/crunch_abdominal_a.webp'), require('../../../assets/exercices/demos/crunch_abdominal_b.webp')],
   crunch_inverse: [require('../../../assets/exercices/demos/crunch_inverse_a.webp'), require('../../../assets/exercices/demos/crunch_inverse_b.webp')],
   crunch_poulie_haute: [require('../../../assets/exercices/demos/crunch_poulie_haute_a.webp'), require('../../../assets/exercices/demos/crunch_poulie_haute_b.webp')],
