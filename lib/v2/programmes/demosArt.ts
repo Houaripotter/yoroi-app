@@ -12,6 +12,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   bird_dog: [require('../../../assets/exercices/demos/bird_dog_a.webp'), require('../../../assets/exercices/demos/bird_dog_b.webp')],
   box_jumps: [require('../../../assets/exercices/demos/box_jumps_a.webp'), require('../../../assets/exercices/demos/box_jumps_b.webp')],
   box_squat: [require('../../../assets/exercices/demos/box_squat_a.webp'), require('../../../assets/exercices/demos/box_squat_b.webp')],
+  cable_crunch: [require('../../../assets/exercices/demos/cable_crunch_a.webp'), require('../../../assets/exercices/demos/cable_crunch_b.webp')],
   cable_kickback: [require('../../../assets/exercices/demos/cable_kickback_a.webp'), require('../../../assets/exercices/demos/cable_kickback_b.webp')],
   chest_press_machine: [require('../../../assets/exercices/demos/chest_press_machine_a.webp'), require('../../../assets/exercices/demos/chest_press_machine_b.webp')],
   chest_supported_row: [require('../../../assets/exercices/demos/chest_supported_row_a.webp'), require('../../../assets/exercices/demos/chest_supported_row_b.webp')],
