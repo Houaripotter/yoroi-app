@@ -95,6 +95,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   pec_deck_butterfly: [require('../../../assets/exercices/demos/pec_deck_butterfly_a.webp'), require('../../../assets/exercices/demos/pec_deck_butterfly_b.webp')],
   pike_push_ups: [require('../../../assets/exercices/demos/pike_push_ups_a.webp'), require('../../../assets/exercices/demos/pike_push_ups_b.webp')],
   pince_haltere_par_la_tete: [require('../../../assets/exercices/demos/pince_haltere_par_la_tete_a.webp'), require('../../../assets/exercices/demos/pince_haltere_par_la_tete_b.webp')],
+  plate_pinch: [require('../../../assets/exercices/demos/plate_pinch_a.webp'), require('../../../assets/exercices/demos/plate_pinch_b.webp')],
   pompes_declinees: [require('../../../assets/exercices/demos/pompes_declinees_a.webp'), require('../../../assets/exercices/demos/pompes_declinees_b.webp')],
   pompes_diamant: [require('../../../assets/exercices/demos/pompes_diamant_a.webp'), require('../../../assets/exercices/demos/pompes_diamant_b.webp')],
   pompes_poids_du_corps: [require('../../../assets/exercices/demos/pompes_poids_du_corps_a.webp'), require('../../../assets/exercices/demos/pompes_poids_du_corps_b.webp')],
