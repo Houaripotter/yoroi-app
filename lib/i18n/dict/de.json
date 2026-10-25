@@ -18584,5 +18584,18 @@
 "Séance {0} de ton programme. Ne lâche rien, {1} : le corps suit toujours la régularité.": "Training {0} deines Programms. Gib nichts auf, {1}: Der Körper folgt immer der Regelmäßigkeit.",
 "Tes jours d’entraînement": "Deine Trainingstage",
 "Choisis tes jours : chaque jour, YOROI te dit quoi faire.": "Wähle deine Tage: Jeden Tag sagt dir YOROI, was zu tun ist.",
-"Ton coach": "Dein Coach"
+"Ton coach": "Dein Coach",
+"C’est parti, {0}. Première série : concentre-toi et garde 2 répétitions en réserve.": "Los geht’s, {0}. Erster Satz: Konzentrier dich und behalte 2 Wiederholungen in Reserve.",
+"Respire. Prochaine série : {0}, {1} répétitions à {2}.": "Atme durch. Nächster Satz: {0}, {1} Wiederholungen mit {2}.",
+"Respire. Prochaine série : {0}, {1} répétitions.": "Atme durch. Nächster Satz: {0}, {1} Wiederholungen.",
+"Dernière série de la séance. Termine fort, {0}.": "Letzter Satz des Trainings. Stark abschließen, {0}.",
+"Dernière série de {0}. Donne tout, {1}.": "Letzter Satz {0}. Gib alles, {1}.",
+"La moitié est faite. Ne lâche rien, {0}.": "Die Hälfte ist geschafft. Gib nicht nach, {0}.",
+"Concentre-toi sur la technique : chaque répétition propre compte, {0}.": "Konzentrier dich auf die Technik: Jede saubere Wiederholung zählt, {0}.",
+"Contrôle la descente, pousse fort à la montée. Tu gères, {0}.": "Kontrolliert runter, kräftig hoch. Du schaffst das, {0}.",
+"Garde 1 à 2 répétitions en réserve : régulier, c’est comme ça qu’on progresse.": "Behalte 1 bis 2 Wiederholungen in Reserve: Beständigkeit bringt Fortschritt.",
+"Une série à la fois. Tu es là, tu le fais, {0}.": "Ein Satz nach dem anderen. Du bist da, du ziehst es durch, {0}.",
+"Respire, récupère. La prochaine série va être bonne, {0}.": "Atme, erhol dich. Der nächste Satz wird gut, {0}.",
+"Repos. Bois une gorgée, relâche les épaules, et on repart.": "Pause. Trink einen Schluck, lockere die Schultern, und weiter geht’s.",
+"Coach": "Coach"
 }

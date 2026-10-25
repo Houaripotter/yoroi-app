@@ -57,6 +57,7 @@ import { marquerFaite, maSeanceParId, seriesPrevues } from '@/lib/v2/seance/mesS
 import { terminerActiviteSeance, useActiviteSeance } from '@/lib/v2/widgets/activiteSeance';
 import type { EtatSeance } from '@/lib/v2/widgets/activiteSeance';
 import { appliquerActionsIle, ecouterActionsIle, planIle } from '@/lib/v2/seance/actionsIle';
+import { coachSeance } from '@/lib/v2/seance/coachSeance';
 import type { TextesIle } from '@/lib/v2/seance/actionsIle';
 import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
 
@@ -713,6 +714,23 @@ export default function SeanceMuscu() {
           />
         ) : (
           <>
+            {/* 25 octobre 2026 : le coach en direct, une phrase qui change à chaque moment (lib/v2/seance/coachSeance.ts) */}
+            {(() => {
+              const mot = draft.form ? null : coachSeance(draft, {
+                femme,
+                maintenant: now,
+                charge: (kg) => (lb ? traduire('{0} lb', fmtNum(saisieDepuisKg(kg, unite))) : traduire('{0} kg', fmtNum(kg))),
+                nom: (n) => traduire(nomFr(n)),
+              });
+              if (!mot) return null;
+              const fort = mot.moment === 'derniere' || mot.moment === 'fin' || mot.moment === 'moitie';
+              return (
+                <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: fort ? c.darkCard : c.accentTint }}>
+                  <Ink size={11} weight="black" color={fort ? c.onDark : c.accent} style={{ letterSpacing: 0.6, textTransform: 'uppercase' }}>{traduire('Coach')}</Ink>
+                  <Ink size={14} weight="extraBold" color={fort ? c.onDark : c.ink} style={{ flex: 1, lineHeight: 19 }}>{mot.texte}</Ink>
+                </View>
+              );
+            })()}
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 4, marginTop: 4 }}>
               <View style={{ flex: 1, gap: 4 }}>
                 {draft.exercises.length > 1 ? (
