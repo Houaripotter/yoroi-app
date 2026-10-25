@@ -6,7 +6,6 @@ import type { ImageSourcePropType } from 'react-native';
 
 export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> = {
   abducteurs_machine: [require('../../../assets/exercices/demos/abducteurs_machine_a.webp'), require('../../../assets/exercices/demos/abducteurs_machine_b.webp')],
-  adducteurs_machine: [require('../../../assets/exercices/demos/adducteurs_machine_a.webp'), require('../../../assets/exercices/demos/adducteurs_machine_b.webp')],
   arnold_press: [require('../../../assets/exercices/demos/arnold_press_a.webp'), require('../../../assets/exercices/demos/arnold_press_b.webp')],
   banded_walks: [require('../../../assets/exercices/demos/banded_walks_a.webp'), require('../../../assets/exercices/demos/banded_walks_b.webp')],
   barre_au_front_skullcrusher: [require('../../../assets/exercices/demos/barre_au_front_skullcrusher_a.webp'), require('../../../assets/exercices/demos/barre_au_front_skullcrusher_b.webp')],
@@ -81,7 +80,9 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   landmine_rotation: [require('../../../assets/exercices/demos/landmine_rotation_a.webp'), require('../../../assets/exercices/demos/landmine_rotation_b.webp')],
   leg_curl_assis: [require('../../../assets/exercices/demos/leg_curl_assis_a.webp'), require('../../../assets/exercices/demos/leg_curl_assis_b.webp')],
   leg_curl_couche: [require('../../../assets/exercices/demos/leg_curl_couche_a.webp'), require('../../../assets/exercices/demos/leg_curl_couche_b.webp')],
+  leg_curl_debout: [require('../../../assets/exercices/demos/leg_curl_debout_a.webp'), require('../../../assets/exercices/demos/leg_curl_debout_b.webp')],
   leg_extension: [require('../../../assets/exercices/demos/leg_extension_a.webp'), require('../../../assets/exercices/demos/leg_extension_b.webp')],
+  low_row_machine: [require('../../../assets/exercices/demos/low_row_machine_a.webp'), require('../../../assets/exercices/demos/low_row_machine_b.webp')],
   mollets_assis_machine: [require('../../../assets/exercices/demos/mollets_assis_machine_a.webp'), require('../../../assets/exercices/demos/mollets_assis_machine_b.webp')],
   mollets_debout_machine: [require('../../../assets/exercices/demos/mollets_debout_machine_a.webp'), require('../../../assets/exercices/demos/mollets_debout_machine_b.webp')],
   mollets_halteres_debout: [require('../../../assets/exercices/demos/mollets_halteres_debout_a.webp'), require('../../../assets/exercices/demos/mollets_halteres_debout_b.webp')],
@@ -116,6 +117,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   single_leg_hip_thrust: [require('../../../assets/exercices/demos/single_leg_hip_thrust_a.webp'), require('../../../assets/exercices/demos/single_leg_hip_thrust_b.webp')],
   sit_ups: [require('../../../assets/exercices/demos/sit_ups_a.webp'), require('../../../assets/exercices/demos/sit_ups_b.webp')],
   skullcrusher_halteres: [require('../../../assets/exercices/demos/skullcrusher_halteres_a.webp'), require('../../../assets/exercices/demos/skullcrusher_halteres_b.webp')],
+  smith_machine_squat: [require('../../../assets/exercices/demos/smith_machine_squat_a.webp'), require('../../../assets/exercices/demos/smith_machine_squat_b.webp')],
   split_squat: [require('../../../assets/exercices/demos/split_squat_a.webp'), require('../../../assets/exercices/demos/split_squat_b.webp')],
   squat_barre_libre: [require('../../../assets/exercices/demos/squat_barre_libre_a.webp'), require('../../../assets/exercices/demos/squat_barre_libre_b.webp')],
   squat_bulgare: [require('../../../assets/exercices/demos/squat_bulgare_a.webp'), require('../../../assets/exercices/demos/squat_bulgare_b.webp')],

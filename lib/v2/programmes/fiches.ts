@@ -1529,6 +1529,40 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Monter les bras plus haut que les épaules.',
     ],
   },
+  'Smith Machine Squat': {
+    consignes: [
+      'Barre sur le haut du dos, pieds un peu devant la barre, à largeur d’épaules.',
+      'Débloque la barre, puis descends jusqu’aux cuisses parallèles au sol, dos droit.',
+      'Pousse avec tout le pied pour remonter, sans verrouiller les genoux.',
+    ],
+    erreurs: [
+      'Laisser les genoux rentrer vers l’intérieur.',
+      'Décoller les talons en bas.',
+    ],
+    securite: 'Règle les butées de sécurité juste sous ta position la plus basse.',
+  },
+  'Leg Curl Debout': {
+    consignes: [
+      'Debout face à la machine, cuisses contre le coussin, boudin derrière la cheville.',
+      'Plie le genou pour ramener le talon vers la fesse, cuisse immobile.',
+      'Redescends lentement jusqu’à la jambe presque tendue.',
+    ],
+    erreurs: [
+      'Cambrer le dos pour monter le talon.',
+      'Laisser la charge retomber d’un coup.',
+    ],
+  },
+  'Low Row Machine': {
+    consignes: [
+      'Assis, poitrine contre le coussin, pieds sur les appuis, poignées basses en main.',
+      'Tire les poignées vers le bas des côtes en ramenant les coudes en arrière.',
+      'Reviens lentement jusqu’aux bras tendus, poitrine toujours sur le coussin.',
+    ],
+    erreurs: [
+      'Décoller la poitrine du coussin pour tirer.',
+      'Hausser les épaules vers les oreilles.',
+    ],
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */

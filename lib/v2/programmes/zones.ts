@@ -54,6 +54,7 @@ export const ZONES: Zone[] = [
       e('Hack Squat', 'JAMBES', 8, 12, 'Descends en pliant les genoux dans l’axe des pieds, jusqu’aux cuisses parallèles au plateau.'),
       e('Front Squat', 'JAMBES', 6, 10, 'Pieds largeur d’épaules, buste droit, descends entre les talons.'),
       e('Box Squat', 'JAMBES', 6, 10, 'Barre sur le haut du dos, une box basse derrière toi, pieds un peu plus larges que les épaules.'),
+      e('Smith Machine Squat', 'JAMBES', 8, 12, 'Débloque la barre, puis descends jusqu’aux cuisses parallèles au sol, dos droit.'),
     ],
   },
   {
@@ -91,6 +92,7 @@ export const ZONES: Zone[] = [
       e('Single Leg Deadlift', 'ISCHIOS', 8, 12, 'Penche le buste en poussant la hanche en arrière, l’autre jambe monte derrière.'),
       e('Leg Curl Couché', 'ISCHIOS', 10, 15, 'Allongé sur le ventre, genoux juste après le bord du banc, boudin au dessus des talons.'),
       e('Good Morning', 'DOS', 8, 12, 'Barre légère posée sur le haut du dos, pieds à largeur de hanches, genoux souples.'),
+      e('Leg Curl Debout', 'ISCHIOS', 10, 15, 'Debout face à la machine, cuisses contre le coussin, boudin derrière la cheville.'),
     ],
   },
   {
@@ -111,6 +113,7 @@ export const ZONES: Zone[] = [
       e('Rowing T-Bar', 'DOS', 8, 12, 'Debout au dessus de la barre, genoux fléchis, buste penché à 45 degrés, dos plat.'),
       e('Straight Arm Pulldown', 'DOS', 12, 15, 'Face à la poulie haute, barre en main, bras tendus, buste légèrement penché.'),
       e('Chest Supported Row', 'DOS', 10, 12, 'Allongé sur le ventre sur un banc incliné, poitrine sur le dossier, haltères en main.'),
+      e('Low Row Machine', 'DOS', 10, 12, 'Assis, poitrine contre le coussin, pieds sur les appuis, poignées basses en main.'),
     ],
   },
   {
