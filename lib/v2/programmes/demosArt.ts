@@ -26,6 +26,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   curl_barre_droite: [require('../../../assets/exercices/demos/curl_barre_droite_a.webp'), require('../../../assets/exercices/demos/curl_barre_droite_b.webp')],
   curl_barre_ez: [require('../../../assets/exercices/demos/curl_barre_ez_a.webp'), require('../../../assets/exercices/demos/curl_barre_ez_b.webp')],
   curl_concentre: [require('../../../assets/exercices/demos/curl_concentre_a.webp'), require('../../../assets/exercices/demos/curl_concentre_b.webp')],
+  curl_disque: [require('../../../assets/exercices/demos/curl_disque_a.webp'), require('../../../assets/exercices/demos/curl_disque_b.webp')],
   curl_halteres_alterne: [require('../../../assets/exercices/demos/curl_halteres_alterne_a.webp'), require('../../../assets/exercices/demos/curl_halteres_alterne_b.webp')],
   curl_halteres_simultane: [require('../../../assets/exercices/demos/curl_halteres_simultane_a.webp'), require('../../../assets/exercices/demos/curl_halteres_simultane_b.webp')],
   curl_incline_halteres: [require('../../../assets/exercices/demos/curl_incline_halteres_a.webp'), require('../../../assets/exercices/demos/curl_incline_halteres_b.webp')],
