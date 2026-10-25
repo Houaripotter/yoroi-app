@@ -22,6 +22,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   crunch_abdominal: [require('../../../assets/exercices/demos/crunch_abdominal_a.webp'), require('../../../assets/exercices/demos/crunch_abdominal_b.webp')],
   crunch_inverse: [require('../../../assets/exercices/demos/crunch_inverse_a.webp'), require('../../../assets/exercices/demos/crunch_inverse_b.webp')],
   crunch_poulie_haute: [require('../../../assets/exercices/demos/crunch_poulie_haute_a.webp'), require('../../../assets/exercices/demos/crunch_poulie_haute_b.webp')],
+  curl_barre_droite: [require('../../../assets/exercices/demos/curl_barre_droite_a.webp'), require('../../../assets/exercices/demos/curl_barre_droite_b.webp')],
   curl_barre_ez: [require('../../../assets/exercices/demos/curl_barre_ez_a.webp'), require('../../../assets/exercices/demos/curl_barre_ez_b.webp')],
   curl_concentre: [require('../../../assets/exercices/demos/curl_concentre_a.webp'), require('../../../assets/exercices/demos/curl_concentre_b.webp')],
   curl_halteres_alterne: [require('../../../assets/exercices/demos/curl_halteres_alterne_a.webp'), require('../../../assets/exercices/demos/curl_halteres_alterne_b.webp')],
