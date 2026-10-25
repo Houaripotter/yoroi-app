@@ -6,6 +6,7 @@
  * (ACSM 2009, Schoenfeld 2016, Singer 2024) ; une a trois repetitions en reserve (Refalo 2023, Robinson 2024).
  * Noms d'exercices : nom exact de constants/exerciseLibrary.ts (verifie par __tests__/unit/programmes.test.ts).
  */
+import { ordonnerParPoste } from './ordre';
 import type { ExoProgramme, Materiel, Niveau, Programme } from './types';
 
 const exo = (nom: string, muscle: string, series: number, repsMin: number, repsMax: number, reposSec: number, conseil?: string, poidsDuCorps?: boolean, secondes?: boolean): ExoProgramme => ({
@@ -17,7 +18,7 @@ const PROGRESSION = 'Quand tu atteins le haut de la fourchette sur toutes les s�
 const LEGERE = 'Toutes les 4 à 8 semaines, ou si la fatigue s’accumule, fais une semaine plus légère : moitié moins de séries, même charge.';
 const ABDOS = 'Les abdos renforcent ton tronc mais ne font pas fondre le ventre : c’est l’alimentation et la dépense totale qui comptent.';
 
-export const PROGRAMMES: Programme[] = [
+const PROGRAMMES_BRUTS: Programme[] = [
   {
     id: 'debutant-fullbody-3j',
     titre: 'Full body débutant, corps entier',
@@ -1739,6 +1740,16 @@ export const PROGRAMMES: Programme[] = [
     ],
   },
 ];
+
+/**
+ * Tous les programmes de musculation, d'aujourd'hui et futurs : exercices du meme poste a la suite,
+ * gros mouvement en premier (lib/v2/programmes/ordre.ts). Les autres sports gardent leur ordre.
+ */
+export const PROGRAMMES: Programme[] = PROGRAMMES_BRUTS.map((p) =>
+  sportDuProgramme(p) === 'musculation'
+    ? { ...p, jours: p.jours.map((j) => (j.rounds ? j : { ...j, exos: ordonnerParPoste(j.exos) })) }
+    : p,
+);
 
 /** Ordre d'affichage : du plus simple au plus specialise */
 const ORDRE = ['debutant-fullbody-3j', 'fullbody-2j', 'ppl-3j', 'ppl-6j', 'haut-bas-4j', 'split-5j', 'bas-du-corps-4j', 'fessiers-ventre-4j', 'pecs-priorite-4j', 'prise-de-masse-4j', 'perte-poids-4j', 'seche-4j', 'course-5km-8sem', 'course-10km-8sem', 'foot-prevention-2j', 'padel-raquette-2j', 'mobilite-3j', 'force-3j', 'combat-force-2j', 'grip-2j', 'cou-combat-2j', 'sac-debutant-3j', 'sac-cardio-3j', 'sac-mma-3j', 'sac-hiit-4sem', 'halteres-maison-3j', 'maison-3j'];
