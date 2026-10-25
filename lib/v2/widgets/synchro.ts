@@ -21,6 +21,10 @@ import { ESPACE_CHANGED_EVENT, getEspace } from '@/lib/v2/espace';
 import { construireContexte } from '@/lib/v2/montre/contexte';
 import { lireSourcesContexte } from '@/lib/v2/montre/sources';
 import { appliquerCharges } from '@/lib/v2/montre/actions';
+import { appliquerActionsIle, estActionIle, lireActionIle, transmettreActionsIle } from '@/lib/v2/seance/actionsIle';
+import type { ActionIle } from '@/lib/v2/seance/actionsIle';
+import { loadDraft, saveDraft } from '@/lib/v2/seance/model';
+import { annulerMinuteurRepos } from './activiteSeance';
 import { CHRONOS_CHANGED_EVENT } from '@/lib/v2/montre/synchro';
 import { personnageImage, sceneForNow } from '@/components/yoroi/v2/accueil/images';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
@@ -150,6 +154,19 @@ const idDe = (a: unknown): string | null => {
   return typeof id === 'string' && id ? id : null;
 };
 
+/**
+ * Appuis de la Dynamic Island : l'écran de la séance ouvert les prend (il garde la séance en mémoire) ;
+ * fermé, ils vont au brouillon enregistré, que l'écran relit à son ouverture.
+ */
+async function appliquerIle(actions: ActionIle[]): Promise<void> {
+  if (actions.length === 0) return;
+  annulerMinuteurRepos();
+  if (transmettreActionsIle(actions)) return;
+  const d = await loadDraft();
+  if (!d || d.kind !== 'muscu' || d.form || d.editId) return;
+  await saveDraft(appliquerActionsIle(d, actions));
+}
+
 /** Applique les actions faites depuis un widget, vide la file, puis reecrit l'instantane */
 export function recevoirActionsWidgets(): Promise<void> {
   if (!widgetsDisponibles()) return Promise.resolve();
@@ -158,7 +175,15 @@ export function recevoirActionsWidgets(): Promise<void> {
   if (lecture) return lecture;
   lecture = (async () => {
     try {
-      const liste = await actionsEnAttenteNatif();
+      const tout = await actionsEnAttenteNatif();
+      if (tout.length === 0) return;
+      // 25 octobre 2026 : les appuis « Série faite » et « +15 s » de la Dynamic Island vont à la séance en cours
+      const ile = tout.filter(estActionIle);
+      if (ile.length > 0) {
+        await appliquerIle(ile.map(lireActionIle).filter((a): a is ActionIle => !!a));
+        await retirerActionsNatif(ile.map(idDe).filter((x): x is string => !!x));
+      }
+      const liste = tout.filter((a) => !estActionIle(a));
       if (liste.length === 0) return;
       const { appliquees, traitees } = await appliquerCharges(liste);
       const ids = liste.slice(0, traitees).map(idDe).filter((x): x is string => !!x);

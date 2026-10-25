@@ -7,7 +7,9 @@
  * Le compte tourne seul côté iOS : aucun envoi chaque seconde. Sans module natif (Android, Expo Go), rien.
  */
 import { useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
 import { activiteChronoDisponible, arreterActiviteNatif, demarrerActiviteNatif, majActiviteNatif } from './natif';
+import type { PlanIle } from '@/lib/v2/seance/actionsIle';
 
 export type EtatSeance = {
   /** titre de la séance (« Fessiers et ventre plat, Fessiers A ») */
@@ -22,6 +24,11 @@ export type EtatSeance = {
   reposTotalS: number;
   /** ce qui vient après le repos (« Ensuite : série 3 ») */
   ensuite: string;
+  /**
+   * 25 octobre 2026 : le plan de la séance pour les boutons « Série faite » et « +15 s » de la Dynamic Island
+   * (lib/v2/seance/actionsIle.ts). Sans plan, la Live Activity reste en affichage seul.
+   */
+  plan?: PlanIle | null;
 };
 
 /** Le JSON attendu par la Live Activity du chrono (round et rounds à 0 : le libellé s'affiche) */
@@ -40,6 +47,7 @@ export function etatActivite(e: EtatSeance, maintenant: number): string {
           figeS: Math.max(0, Math.round(((e.finReposMs as number) - maintenant) / 1000)),
           enPause: false,
           monte: false,
+          ...(e.plan ? { plan: JSON.stringify(e.plan) } : {}),
         }
       : {
           titre: e.titre,
@@ -53,6 +61,7 @@ export function etatActivite(e: EtatSeance, maintenant: number): string {
           figeS: Math.max(0, Math.round((maintenant - e.debutMs) / 1000)),
           enPause: false,
           monte: true,
+          ...(e.plan ? { plan: JSON.stringify(e.plan) } : {}),
         },
   );
 }
@@ -79,14 +88,17 @@ function envoyer(etat: EtatSeance): void {
   if (etat.finReposMs != null && etat.finReposMs > Date.now()) {
     minuteurRepos = setTimeout(() => {
       minuteurRepos = null;
-      if (seanceEnDirect) majActiviteNatif(etatActivite({ ...etat, finReposMs: null }, Date.now()));
+      // app en arriere plan : l'ile gere seule la fin du repos (SeanceIle.swift), rien a envoyer d'ancien
+      if (seanceEnDirect && AppState.currentState === 'active') majActiviteNatif(etatActivite({ ...etat, finReposMs: null }, Date.now()));
     }, etat.finReposMs - Date.now() + 100);
   }
 }
 
 /** Démarre et met à jour la Live Activity de la séance (etat null : rien). L'arrêt : terminerActiviteSeance. */
 export function useActiviteSeance(etat: EtatSeance | null): void {
-  const cle = etat ? `${etat.titre}|${etat.debutMs}|${etat.libelle}|${etat.finReposMs ?? 0}` : '';
+  // le plan entier : series ajoutees, repos change, rappel autorise, appuis de l'ile
+  const faites = etat?.plan ? JSON.stringify(etat.plan) : '';
+  const cle = etat ? `${etat.titre}|${etat.debutMs}|${etat.libelle}|${etat.finReposMs ?? 0}|${faites}` : '';
   const dernier = useRef('');
   useEffect(() => {
     if (!activiteChronoDisponible() || !etat) return;
@@ -95,6 +107,12 @@ export function useActiviteSeance(etat: EtatSeance | null): void {
     dernier.current = cle;
     envoyer(etat);
   }, [cle]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+/** Appuis de l'île appliqués : l'ancien minuteur de repos ne doit pas renvoyer un état périmé */
+export function annulerMinuteurRepos(): void {
+  if (minuteurRepos) clearTimeout(minuteurRepos);
+  minuteurRepos = null;
 }
 
 /**

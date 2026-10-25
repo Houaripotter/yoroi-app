@@ -33,6 +33,8 @@
 		2CF01094991CD5DCE0C79A07 /* GroupeYoroi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */; };
 		2D4D3641AB831AE14CF3C9E7 /* Partage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CF327CBF06800D97DD3975 /* Partage.swift */; };
 		2E44273FBE52F49B338FF7AE /* ChronoAttributs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436806CE4BF29115EE395172 /* ChronoAttributs.swift */; };
+		DC57ED544B6EB1173ED2391D /* SeanceIle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */; };
+		BB904BC4550F0A08824D53DD /* SeanceIle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */; };
 		2E6DA36B8BB65641FBA32466 /* ActiviteChrono.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300438CD96AE54ABB379D2C1 /* ActiviteChrono.swift */; };
 		2F3289A7578D7850653B3F03 /* WidgetsSante.swift in Sources */ = {isa = PBXBuildFile; fileRef = 308F2E773F96B438565D2FEC /* WidgetsSante.swift */; };
 		2F648FC4B0C727348C12EE4F /* CourbeJour.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C10B574A9C12B088E573FF /* CourbeJour.swift */; };
@@ -276,6 +278,7 @@
 		38DF121D8F7FCBF2DDD2D5B3 /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
 		4212EFECB655ED54B895DA96 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		436806CE4BF29115EE395172 /* ChronoAttributs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChronoAttributs.swift; sourceTree = "<group>"; };
+		28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeanceIle.swift; sourceTree = "<group>"; };
 		462F9D7DB5D35352153A07B8 /* Intents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		49841AC244D54BFE9CC6D2C4 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/HealthKit.framework; sourceTree = DEVELOPER_DIR; };
 		4A9DE26B3DA6190001ED3B65 /* Seance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Seance.swift; sourceTree = "<group>"; };
@@ -706,6 +709,7 @@
 			children = (
 				66C063FD4F78FADF56318B96 /* GroupeYoroi.swift */,
 				436806CE4BF29115EE395172 /* ChronoAttributs.swift */,
+				28703CC4E546F17F9BFD1ACA /* SeanceIle.swift */,
 			);
 			path = Partage;
 			sourceTree = "<group>";
@@ -1126,6 +1130,7 @@
 				4B5006562FFF576BA83CF75B /* Controles.swift in Sources */,
 				2CF01094991CD5DCE0C79A07 /* GroupeYoroi.swift in Sources */,
 				6E54E0A41FC93400962AF9EE /* ChronoAttributs.swift in Sources */,
+				BB904BC4550F0A08824D53DD /* SeanceIle.swift in Sources */,
 				D1F75278C1033B284CFAB151 /* Habillage.swift in Sources */,
 				D76A83A0A5F29E001480B2F4 /* DessinsStyles.swift in Sources */,
 				C593415EFC485B8233C768B1 /* ConfigStyle.swift in Sources */,
@@ -1158,6 +1163,7 @@
 				043D80D6B9A5E7F68376EC1E /* YoroiWidgetsModule.m in Sources */,
 				DA23309D5F1F98A7E8C3ADA0 /* GroupeYoroi.swift in Sources */,
 				2E44273FBE52F49B338FF7AE /* ChronoAttributs.swift in Sources */,
+				DC57ED544B6EB1173ED2391D /* SeanceIle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

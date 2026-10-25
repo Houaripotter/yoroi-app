@@ -39,7 +39,7 @@ import { saveSeance } from '@/lib/v2/seance/save';
 import type { SeanceRecord } from '@/lib/v2/seance/save';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { useNow } from '@/lib/v2/seance/useNow';
-import { useRappelFinRepos } from '@/lib/v2/seance/rappelRepos';
+import { rappelReposAutorise, useRappelFinRepos } from '@/lib/v2/seance/rappelRepos';
 import { useI18n } from '@/lib/I18nContext';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
@@ -56,6 +56,8 @@ import { lireZones, seanceZones, titreZones } from '@/lib/v2/programmes/zones';
 import { marquerFaite, maSeanceParId, seriesPrevues } from '@/lib/v2/seance/mesSeances';
 import { terminerActiviteSeance, useActiviteSeance } from '@/lib/v2/widgets/activiteSeance';
 import type { EtatSeance } from '@/lib/v2/widgets/activiteSeance';
+import { appliquerActionsIle, ecouterActionsIle, planIle } from '@/lib/v2/seance/actionsIle';
+import type { TextesIle } from '@/lib/v2/seance/actionsIle';
 import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
 
 const INTENSITIES = [
@@ -114,6 +116,11 @@ export default function SeanceMuscu() {
   // 18 octobre 2026 : app en arriere plan pendant un repos, une notification annonce sa fin (lib/v2/seance/rappelRepos.ts)
   const { t: tRepos } = useI18n();
   useRappelFinRepos(draft?.restEndsAt ?? null, tRepos('timer.restEnded'));
+  // 25 octobre 2026 : le même rappel, programmé par le natif après un appui dans la Dynamic Island
+  const [rappelIle, setRappelIle] = useState(false);
+  useEffect(() => {
+    rappelReposAutorise().then(setRappelIle, () => setRappelIle(false));
+  }, []);
   const [hist, setHist] = useState<{ map: Map<string, ExerciseHistory>; recent: string[] }>({ map: new Map(), recent: [] });
   // 24 octobre 2026 : toutes tes seances, pour proposer la charge du jour hors programme (proposerLibre)
   const [toutesSeances, setToutesSeances] = useState<Parameters<typeof seancesDeLExo>[0]>([]);
@@ -501,9 +508,34 @@ export default function SeanceMuscu() {
     const libelle = i >= 0 ? traduire('{0}, série {1} sur {2}', nom, i + 1, cur.sets.length) : traduire('{0}, bouclé', nom);
     const suivant = i >= 0 ? null : draft.exercises.find((e) => e.id !== cur.id && e.sets.some((x) => !x.done));
     const ensuite = i >= 0 ? traduire('Ensuite : {0}, série {1}', nom, i + 1) : suivant ? traduire('Ensuite : {0}', traduire(nomFr(suivant.name))) : traduire('Dernier effort, bravo');
-    return { titre, debutMs: draft.startedAt, libelle, finReposMs: draft.restEndsAt ?? null, reposTotalS: draft.restTotal, ensuite };
-  }, [draft]);
+    // 25 octobre 2026 : boutons « Série faite » et « +15 s » dans la Dynamic Island (lib/v2/seance/actionsIle.ts)
+    const textes: TextesIle = {
+      serie: traduire('{0}, série {1} sur {2}'),
+      ensuite: traduire('Ensuite : {0}, série {1}'),
+      ensuiteExo: traduire('Ensuite : {0}'),
+      fini: traduire('Séance bouclée'),
+      bouton: traduire('Série faite'),
+      plus15: traduire('+15 s'),
+      reposFini: tRepos('timer.restEnded'),
+    };
+    const plan = planIle(draft, textes, (e) => traduire(nomFr(e.name)), rappelIle);
+    return { titre, debutMs: draft.startedAt, libelle, finReposMs: draft.restEndsAt ?? null, reposTotalS: draft.restTotal, ensuite, plan };
+  }, [draft, rappelIle]); // eslint-disable-line react-hooks/exhaustive-deps
   useActiviteSeance(etatLive);
+  // les appuis faits dans la Dynamic Island arrivent ici quand l'écran est ouvert (lib/v2/widgets/synchro.ts)
+  const draftIle = useRef(draft);
+  draftIle.current = draft;
+  useEffect(
+    () =>
+      ecouterActionsIle((actions) => {
+        const d = draftIle.current;
+        // séance pas encore chargée ou saisie après coup : les appuis vont au brouillon enregistré
+        if (!d || d.form || d.editId) return false;
+        update((x) => appliquerActionsIle(x, actions));
+        return true;
+      }),
+    [update],
+  );
 
   const autoMuscles = useMemo(
     () => Array.from(new Set((draft?.exercises ?? []).filter((e) => e.sets.some((s) => s.done)).map((e) => muscleId(e.muscle)).filter((m): m is string => !!m && MUSCLES.some((x) => x.id === m)))),

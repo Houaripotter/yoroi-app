@@ -250,6 +250,12 @@ class YoroiWidgetsModule: NSObject {
 
   // MARK: Live Activity du chrono
 
+  /// Vrai si le plan envoye par l'app est plus ancien que le dernier appui fait dans l'ile (champ maj, en ms)
+  private static func plusAncien(_ nouveau: String?, que actuel: String?) -> Bool {
+    guard let n = PlanIle.lire(nouveau), let a = PlanIle.lire(actuel) else { return false }
+    return (n.maj ?? 0) < (a.maj ?? 0)
+  }
+
   /// {titre, phase, libelle, round, rounds, debutMs, finMs, figeS, enPause, monte}
   private struct ChronoJS {
     var titre: String
@@ -262,6 +268,7 @@ class YoroiWidgetsModule: NSObject {
     var figeS: Int
     var enPause: Bool
     var monte: Bool
+    var plan: String?
 
     init?(_ texte: String) {
       guard let data = texte.data(using: .utf8),
@@ -280,11 +287,12 @@ class YoroiWidgetsModule: NSObject {
       figeS = max(0, Int(nombre("figeS") ?? 0))
       enPause = (o["enPause"] as? Bool) ?? false
       monte = (o["monte"] as? Bool) ?? false
+      plan = o["plan"] as? String
     }
 
     @available(iOS 16.1, *)
     var etat: ChronoAttributs.ContentState {
-      ChronoAttributs.ContentState(phase: phase, libelle: libelle, round: round, rounds: rounds, debut: debut, fin: fin, enPause: enPause, figeS: figeS, monte: monte)
+      ChronoAttributs.ContentState(phase: phase, libelle: libelle, round: round, rounds: rounds, debut: debut, fin: fin, enPause: enPause, figeS: figeS, monte: monte, plan: plan)
     }
   }
 
@@ -299,6 +307,10 @@ class YoroiWidgetsModule: NSObject {
       return
     }
     Task {
+      if Self.plusAncien(c.plan, que: Activity<ChronoAttributs>.activities.first?.content.state.plan) {
+        resolve(true)
+        return
+      }
       for a in Activity<ChronoAttributs>.activities {
         await a.end(nil, dismissalPolicy: .immediate)
       }
@@ -329,6 +341,11 @@ class YoroiWidgetsModule: NSObject {
       let liste = Activity<ChronoAttributs>.activities
       guard !liste.isEmpty else {
         resolve(false)
+        return
+      }
+      // 25 octobre 2026 : un appui dans l'ile (SeanceIle.swift) plus recent que cet etat de l'app : on le garde
+      if Self.plusAncien(c.plan, que: liste.first?.content.state.plan) {
+        resolve(true)
         return
       }
       for a in liste {

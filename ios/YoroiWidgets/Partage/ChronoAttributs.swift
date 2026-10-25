@@ -24,6 +24,8 @@ struct ChronoAttributs: ActivityAttributes {
     var figeS: Int
     /// le chrono monte au lieu de descendre
     var monte: Bool
+    /// 25 octobre 2026 : plan de la seance de musculation (JSON, SeanceIle.swift) ; present, l'ile affiche les boutons
+    var plan: String? = nil
   }
 
   /// "Rounds", "Tabata"...

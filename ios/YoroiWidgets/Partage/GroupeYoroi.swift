@@ -88,7 +88,12 @@ enum GroupeYoroi {
     defauts?.set(texte, forKey: cleActions)
   }
 
+  /// la file est lue puis reecrite : un verrou evite qu'un appui de l'ile se perde pendant un retrait par l'app
+  private static let verrou = NSLock()
+
   static func ajouterAction(_ action: [String: Any]) {
+    verrou.lock()
+    defer { verrou.unlock() }
     var liste = lireActions()
     liste.append(action)
     if liste.count > maxActions { liste.removeFirst(liste.count - maxActions) }
@@ -97,6 +102,8 @@ enum GroupeYoroi {
 
   static func retirerActions(_ ids: Set<String>) {
     guard !ids.isEmpty else { return }
+    verrou.lock()
+    defer { verrou.unlock() }
     let reste = lireActions().filter { a in
       guard let id = a["id"] as? String else { return false }
       return !ids.contains(id)

@@ -91,20 +91,36 @@ export function creerRappelRepos(deps: DepsRappelRepos) {
 }
 
 /* eslint-disable @typescript-eslint/no-require-imports */
+/** Le rappel de fin de repos est permis : autorisation donnée, notifications et « Repos terminé » actifs */
+export async function rappelReposAutorise(): Promise<boolean> {
+  const Notif = require('expo-notifications');
+  const perm = await Notif.getPermissionsAsync();
+  if (perm?.status !== 'granted') return false;
+  const { notificationService } = require('@/lib/notificationService');
+  const reglages = await notificationService.loadSettings();
+  if (reglages?.enabled === false) return false;
+  const { timerNotifications } = require('@/lib/timerNotifications');
+  const minuteur = await timerNotifications.loadSettings();
+  return minuteur?.restFinished !== false;
+}
+
+/** 25 octobre 2026 : le rappel programmé par un appui dans la Dynamic Island (ios/YoroiWidgets/Partage/SeanceIle.swift) */
+export const ID_RAPPEL_ILE = 'yoroi.seance.ile.repos';
+
+/** De retour dans l'app, le compte à rebours reprend à l'écran : le rappel de la Dynamic Island n'a plus lieu d'être */
+export async function retirerRappelIle(): Promise<void> {
+  try {
+    const Notif = require('expo-notifications');
+    await Notif.cancelScheduledNotificationAsync(ID_RAPPEL_ILE);
+  } catch {
+    // rien de programme
+  }
+}
+
 function depsApp(titre: () => string): DepsRappelRepos {
   return {
     maintenant: () => Date.now(),
-    autorise: async () => {
-      const Notif = require('expo-notifications');
-      const perm = await Notif.getPermissionsAsync();
-      if (perm?.status !== 'granted') return false;
-      const { notificationService } = require('@/lib/notificationService');
-      const reglages = await notificationService.loadSettings();
-      if (reglages?.enabled === false) return false;
-      const { timerNotifications } = require('@/lib/timerNotifications');
-      const minuteur = await timerNotifications.loadSettings();
-      return minuteur?.restFinished !== false;
-    },
+    autorise: rappelReposAutorise,
     planifier: async (secondes) => {
       const Notif = require('expo-notifications');
       return Notif.scheduleNotificationAsync({
@@ -131,7 +147,10 @@ export function useRappelFinRepos(finMs: number | null | undefined, titre: strin
     const r = rappel.current!;
     const sub = AppState.addEventListener('change', (etat) => {
       if (etat === 'background') void r.arrierePlan();
-      else if (etat === 'active') void r.premierPlan();
+      else if (etat === 'active') {
+        void r.premierPlan();
+        void retirerRappelIle();
+      }
     });
     return () => {
       sub.remove();

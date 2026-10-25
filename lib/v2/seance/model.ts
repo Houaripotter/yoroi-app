@@ -87,6 +87,8 @@ export type MuscuDraft = DraftBase & {
   reposManuel?: boolean;
   /** 25 octobre 2026 : lancee depuis « Mes séances » (lib/v2/seance/mesSeances.ts), marquee faite a l'enregistrement */
   maSeance?: string;
+  /** 25 octobre 2026 : appuis de la Dynamic Island deja appliques (ids) et date du dernier, en ms (lib/v2/seance/actionsIle.ts) */
+  ile?: { maj: number; ids: string[] };
 };
 
 export type RoundIntensity = 'detendu' | 'technique' | 'guerre';

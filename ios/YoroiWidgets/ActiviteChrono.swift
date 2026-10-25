@@ -1,4 +1,5 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -9,12 +10,12 @@ import WidgetKit
 struct ActiviteChrono: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: ChronoAttributs.self) { context in
-      VueChronoVerrou(titre: context.attributes.titre, etat: context.state)
+      VueChronoVerrou(titre: context.attributes.titre, etat: AfficheIle.etat(context.state, perime: context.isStale))
         .activityBackgroundTint(Teinte.fond)
         .activitySystemActionForegroundColor(Teinte.encre)
         .widgetURL(Liens.chronoEnCours)
     } dynamicIsland: { context in
-      let s = context.state
+      let s = AfficheIle.etat(context.state, perime: context.isStale)
       return DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
           VStack(alignment: .leading, spacing: 2) {
@@ -24,6 +25,10 @@ struct ActiviteChrono: Widget {
             if s.rounds > 0 {
               Text("Round \(s.round) sur \(s.rounds)")
                 .font(.chiffre(12, .medium))
+                .foregroundStyle(Color.white.opacity(0.75))
+            } else if let ensuite = ChronoTextes.ensuite(s) {
+              Text(ensuite)
+                .font(.libelle(12, .medium))
                 .foregroundStyle(Color.white.opacity(0.75))
             }
           }
@@ -40,8 +45,11 @@ struct ActiviteChrono: Widget {
             .padding(.trailing, 4)
         }
         DynamicIslandExpandedRegion(.bottom) {
-          BarreChrono(etat: s, couleur: Teinte.phaseIle(s.phase), fondBarre: Color.white.opacity(0.18))
-            .padding(.horizontal, 4)
+          VStack(spacing: 8) {
+            BarreChrono(etat: s, couleur: Teinte.phaseIle(s.phase), fondBarre: Color.white.opacity(0.18))
+            BoutonsSeance(etat: s, couleur: Teinte.phaseIle(s.phase), texteBouton: Color.black, fondSecond: Color.white.opacity(0.18), texteSecond: Color.white)
+          }
+          .padding(.horizontal, 4)
         }
       } compactLeading: {
         HStack(spacing: 3) {
@@ -68,7 +76,51 @@ struct ActiviteChrono: Widget {
   }
 }
 
+/// Seance de musculation (plan present) : « Série faite », et « +15 s » pendant le repos (SeanceIle.swift)
+struct BoutonsSeance: View {
+  var etat: ChronoAttributs.ContentState
+  var couleur: Color
+  var texteBouton: Color
+  var fondSecond: Color
+  var texteSecond: Color
+
+  var body: some View {
+    // l'extension de widgets vise iOS 17 : Button(intent:) toujours disponible ici
+    if let plan = PlanIle.lire(etat.plan), !plan.fini {
+      HStack(spacing: 8) {
+        Button(intent: SerieFaiteIntent()) {
+          Label(plan.t.bouton, systemImage: "checkmark")
+            .font(.libelle(15, .bold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .foregroundStyle(texteBouton)
+            .background(Capsule().fill(couleur))
+        }
+        .buttonStyle(.plain)
+        if etat.phase == "repos" {
+          Button(intent: ReposPlus15Intent()) {
+            Text(plan.t.plus15)
+              .font(.chiffre(15, .bold))
+              .lineLimit(1)
+              .frame(width: 76, height: 40)
+              .foregroundStyle(texteSecond)
+              .background(Capsule().fill(fondSecond))
+          }
+          .buttonStyle(.plain)
+        }
+      }
+    }
+  }
+}
+
 enum ChronoTextes {
+  /// Pendant le repos d'une seance : ce qui vient ensuite (« Ensuite : Squat, série 3 »)
+  static func ensuite(_ s: ChronoAttributs.ContentState) -> String? {
+    guard s.phase == "repos", s.rounds == 0, s.plan != nil, !s.libelle.isEmpty else { return nil }
+    return s.libelle
+  }
+
   /// Nom de la phase en clair
   static func phase(_ s: ChronoAttributs.ContentState) -> String {
     switch s.phase {
@@ -122,6 +174,7 @@ struct VueChronoVerrou: View {
   var etat: ChronoAttributs.ContentState
 
   var body: some View {
+    VStack(spacing: 0) {
     HStack(alignment: .center, spacing: 14) {
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 6) {
@@ -138,6 +191,10 @@ struct VueChronoVerrou: View {
         if etat.rounds > 0 {
           Text("Round \(etat.round) sur \(etat.rounds)")
             .font(.chiffre(15, .semibold))
+            .foregroundStyle(Teinte.encre)
+        } else if let ensuite = ChronoTextes.ensuite(etat) {
+          Text(ensuite)
+            .font(.libelle(14, .semibold))
             .foregroundStyle(Teinte.encre)
         }
       }
@@ -156,6 +213,12 @@ struct VueChronoVerrou: View {
       }
       .frame(maxWidth: 150, alignment: .trailing)
     }
-    .padding(16)
+    .padding(.horizontal, 16)
+    .padding(.top, 16)
+    .padding(.bottom, PlanIle.lire(etat.plan).map { !$0.fini } == true ? 10 : 16)
+    BoutonsSeance(etat: etat, couleur: Teinte.phase(etat.phase), texteBouton: Color.white, fondSecond: Teinte.trait, texteSecond: Teinte.encre)
+      .padding(.horizontal, 16)
+      .padding(.bottom, 14)
+    }
   }
 }
