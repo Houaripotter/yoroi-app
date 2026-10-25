@@ -24,6 +24,7 @@ import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { libelleMateriel, libelleNiveau, libelleRepos, programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { etudesCourtes, sourceParId } from '@/lib/v2/programmes/sources';
+import { musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { cardioDeLaSemaine, resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { raisonRemplacement } from '@/lib/v2/programmes/materiel';
 import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
@@ -384,6 +385,7 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
           <Ink size={13} color={c.textSecondary}>{detail}</Ink>
+          <LigneMuscles nom={e.nom} />
           {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
           <NoteMateriel e={e} raison={raison} />
           {technique}
@@ -395,10 +397,26 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
     <View style={{ paddingTop: 10, borderTopWidth: premier ? 0 : 1, borderColor: c.divider, gap: 2 }}>
       <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
       <Ink size={13} color={c.textSecondary}>{detail}</Ink>
+      <LigneMuscles nom={e.nom} />
       {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
       <NoteMateriel e={e} raison={raison} />
       {technique}
     </View>
+  );
+}
+
+/** « Travaille : Pectoraux. Aussi : Épaules avant, Triceps » */
+function LigneMuscles({ nom }: { nom: string }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const mu = musclesDeExo(nom);
+  if (!mu) return null;
+  const liste = (l: string[]) => l.map((x) => traduire(x)).join(', ');
+  return (
+    <Ink size={12} color={c.textMuted}>
+      <Ink size={12} weight="extraBold" color={c.ink}>{traduire('Travaille : {0}', liste(mu.principaux))}</Ink>
+      {mu.aussi.length ? `. ${traduire('Aussi : {0}', liste(mu.aussi))}` : ''}
+    </Ink>
   );
 }
 
