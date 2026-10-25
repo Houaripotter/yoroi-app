@@ -51,6 +51,7 @@ export const ZONES: Zone[] = [
       e('Squat Bulgare', 'JAMBES', 8, 12, 'Pied arrière sur un banc ou une chaise, pied avant un grand pas devant.'),
       e('Step Up (Haltères)', 'JAMBES', 8, 12, 'Pousse sur la jambe du dessus pour monter, sans t’aider du pied resté au sol.'),
       e('Presse à Cuisses (Pieds Hauts)', 'JAMBES', 10, 12, 'Pieds hauts sur la plateforme, largeur de hanches, dos collé au dossier.'),
+      e('Hack Squat', 'JAMBES', 8, 12, 'Descends en pliant les genoux dans l’axe des pieds, jusqu’aux cuisses parallèles au plateau.'),
     ],
   },
   {
@@ -67,6 +68,7 @@ export const ZONES: Zone[] = [
       e('Abducteurs Machine', 'FESSIERS', 12, 15, 'Assis, dos contre le dossier, coussins contre l’extérieur des genoux.'),
       e('Cable Kickback', 'FESSIERS', 12, 15, 'Sangle à la cheville, face à la poulie basse, mains sur le support.'),
       e('Single Leg Hip Thrust', 'FESSIERS', 8, 12, 'Haut du dos contre un banc, un pied au sol, l’autre jambe en l’air.', { poidsDuCorps: true }),
+      e('Glute Bridge', 'FESSIERS', 12, 20, 'Serre les fessiers en haut une seconde, puis redescends lentement.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -81,6 +83,7 @@ export const ZONES: Zone[] = [
       e('Romanian Deadlift (Haltères)', 'ISCHIOS', 8, 12, 'Descends jusqu’à l’étirement des ischios, puis reviens en poussant les hanches.'),
       e('Nordic Curl', 'ISCHIOS', 4, 8, 'Descends le plus lentement possible, amortis avec les mains, puis repousse pour remonter.', { poidsDuCorps: true }),
       e('Single Leg Deadlift', 'ISCHIOS', 8, 12, 'Penche le buste en poussant la hanche en arrière, l’autre jambe monte derrière.'),
+      e('Leg Curl Couché', 'ISCHIOS', 10, 15, 'Allongé sur le ventre, genoux juste après le bord du banc, boudin au dessus des talons.'),
     ],
   },
   {
@@ -97,6 +100,7 @@ export const ZONES: Zone[] = [
       e('Pull Over Poulie Haute', 'DOS', 10, 15, 'Face à la poulie, buste penché depuis les hanches, dos plat, bras presque tendus.'),
       e('Inverted Row', 'DOS', 6, 12, 'Sous une barre ou une table solide, mains largeur d’épaules, corps tendu.', { poidsDuCorps: true }),
       e('Tractions Neutres', 'DOS', 4, 10, 'Monte jusqu’au menton au dessus des poignées, redescends sous contrôle.', { poidsDuCorps: true }),
+      e('Tractions (Supination)', 'DOS', 4, 10, 'Monte jusqu’au menton au dessus de la barre, redescends bras tendus.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -113,6 +117,8 @@ export const ZONES: Zone[] = [
       e('Pec Deck (Butterfly)', 'PECTORAUX', 10, 15, 'Règle le siège pour que les poignées soient à hauteur de poitrine.'),
       e('Dips (Focus Pectoraux)', 'PECTORAUX', 6, 12, 'Buste penché en avant, descends jusqu’à avoir les épaules au niveau des coudes.', { poidsDuCorps: true }),
       e('Développé Couché (Barre)', 'PECTORAUX', 6, 10, 'Descends la barre sur le bas des pectoraux, puis pousse vers le haut en expirant.'),
+      e('Chest Press (Machine)', 'PECTORAUX', 10, 12, 'Règle le siège pour que les poignées arrivent à hauteur du milieu de la poitrine.'),
+      e('Développé Incliné (Barre)', 'PECTORAUX', 6, 10, 'Banc à environ 30 degrés, pieds au sol, omoplates serrées et collées.'),
     ],
   },
   {
@@ -129,6 +135,8 @@ export const ZONES: Zone[] = [
       e('Développé Militaire Assis', 'ÉPAULES', 8, 12, 'Recule un peu la tête et pousse la barre à la verticale, au dessus de la tête.'),
       e('Face Pull', 'DOS', 12, 15, 'Tire la corde vers ton front en écartant les mains, coudes hauts.'),
       e('Oiseau Haltères (Rear Delts)', 'ÉPAULES', 12, 15, 'Buste penché vers l’avant, dos plat, nuque dans l’alignement, haltères sous les épaules.'),
+      e('Shoulder Press Machine', 'ÉPAULES', 8, 12, 'Dos collé au dossier, pieds à plat, pousse les poignées vers le haut.'),
+      e('Élévations Frontales (Haltères)', 'ÉPAULES', 10, 15, 'Debout, un haltère dans chaque main devant les cuisses, coudes très légèrement fléchis.'),
     ],
   },
   {
@@ -147,6 +155,10 @@ export const ZONES: Zone[] = [
       e('Extension Haltère Nuque (2 mains)', 'TRICEPS', 10, 12, 'Plie les coudes pour descendre l’haltère derrière la nuque, coudes vers le haut.'),
       e('Curl Barre EZ', 'BICEPS', 8, 12, 'Debout, barre EZ en main paumes vers l’avant, coudes le long du corps.'),
       e('Dips Banc', 'TRICEPS', 8, 15, 'Mains sur le bord d’un banc ou d’une chaise stable, doigts vers l’avant.', { poidsDuCorps: true }),
+      e('Curl Poulie Basse', 'BICEPS', 10, 15, 'Face à la poulie basse, barre ou poignée en main, coudes le long du corps.'),
+      e('Extension Triceps Poulie (Barre)', 'TRICEPS', 10, 15, 'Face à la poulie haute, barre en main, coudes collés au corps.'),
+      e('Curl Concentré', 'BICEPS', 10, 12, 'Assis au bout d’un banc, jambes écartées, l’arrière du bras calé contre l’intérieur de la cuisse.'),
+      e('Curl Machine', 'BICEPS', 10, 15, 'L’arrière des bras à plat sur le pupitre, monte les poignées vers les épaules.'),
     ],
   },
   {
@@ -172,6 +184,7 @@ export const ZONES: Zone[] = [
       // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
       e('Mollets Assis (Machine)', 'MOLLETS', 12, 20, 'Monte sur la pointe des pieds, tiens une seconde, redescends lentement.'),
       e('Mollets Unilatéral', 'MOLLETS', 12, 20, 'Monte sur la pointe du pied, tiens une seconde, redescends lentement.', { poidsDuCorps: true }),
+      e('Mollets Haltères (Debout)', 'MOLLETS', 12, 20, 'Monte sur la pointe des pieds, tiens une seconde, redescends lentement.'),
     ],
   },
   {
@@ -187,6 +200,7 @@ export const ZONES: Zone[] = [
       e('Relevé de jambes (Sol)', 'ABDOS', 10, 15, 'Allongé sur le dos, mains sous les fesses ou le long du corps.', { poidsDuCorps: true }),
       e('Gainage Latéral', 'ABDOS', 20, 40, 'Sur le côté, coude sous l’épaule, jambes tendues l’une sur l’autre.', { secondes: true, poidsDuCorps: true }),
       e('Roulette Abdos (Abs Wheel)', 'ABDOS', 6, 12, 'Gaine fort, roule vers l’avant aussi loin que tu gardes le dos plat.', { poidsDuCorps: true }),
+      e('Crunch Abdominal', 'ABDOS', 12, 20, 'Enroule le haut du dos pour décoller les épaules du sol.', { poidsDuCorps: true }),
     ],
   },
 ];

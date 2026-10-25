@@ -122,6 +122,14 @@ const FICHES: Record<string, Fiche> = {
   'Squat Bulgare': { besoin: RIEN, remplacants: [] },
   // ISCHIOS
   'Leg Curl Assis': { besoin: [['machines']], remplacants: ['Romanian Deadlift (Haltères)', 'Deadlift Roumain', 'Nordic Curl'] },
+  // 25 octobre 2026, nuit : les nouveaux exercices animés de « Quoi faire ? »
+  'Leg Curl Couché': { besoin: [['machines']], remplacants: ['Leg Curl Assis', 'Romanian Deadlift (Haltères)', 'Nordic Curl'] },
+  'Hack Squat': { besoin: [['machines']], remplacants: ['Presse à Cuisses', 'Goblet Squat', 'Squat Bulgare'] },
+  'Shoulder Press Machine': { besoin: [['machines']], remplacants: ['Développé Haltères Assis', 'Développé Militaire Assis', 'Pike Push-ups'] },
+  'Élévations Frontales (Haltères)': { besoin: [['halteres']], remplacants: ['Développé Haltères Assis', 'Pike Push-ups'] },
+  'Extension Triceps Poulie (Barre)': { besoin: [['poulie']], remplacants: ['Extension Triceps Poulie (Corde)', 'Extension Haltère Nuque (2 mains)', 'Pompes Diamant'] },
+  'Curl Concentré': { besoin: [['halteres', 'banc'], ['halteres']], remplacants: ['Curl Haltères Alterné', 'Curl Marteau (Hammer)', 'Curl Poulie Basse'] },
+  'Curl Machine': { besoin: [['machines']], remplacants: ['Curl Larry Scott (Pupitre)', 'Curl Haltères Alterné', 'Curl Poulie Basse'] },
   'Romanian Deadlift (Haltères)': { besoin: [['halteres'], ['kettlebell']], remplacants: ['Deadlift Roumain', 'Nordic Curl'] },
   'Nordic Curl': { besoin: RIEN, remplacants: [] },
   // FESSIERS

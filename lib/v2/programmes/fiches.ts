@@ -1189,6 +1189,85 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Prendre un élastique trop dur et tourner le buste.',
     ],
   },
+  // 25 octobre 2026, nuit : les nouveaux exercices animés de « Quoi faire ? »
+  'Shoulder Press Machine': {
+    consignes: [
+      'Règle le siège pour que les poignées soient à hauteur des épaules.',
+      'Dos collé au dossier, pieds à plat, pousse les poignées vers le haut.',
+      'Redescends lentement jusqu’à hauteur des épaules.',
+    ],
+    erreurs: [
+      'Cambrer le bas du dos en poussant.',
+      'Verrouiller les coudes d’un coup en haut.',
+    ],
+  },
+  'Leg Curl Couché': {
+    consignes: [
+      'Allongé sur le ventre, genoux juste après le bord du banc, boudin au dessus des talons.',
+      'Tiens les poignées et garde les hanches collées au banc.',
+      'Ramène les talons vers les fesses, puis redescends lentement.',
+    ],
+    erreurs: [
+      'Décoller les hanches pour aider le mouvement.',
+      'Laisser la charge retomber d’un coup.',
+    ],
+  },
+  'Extension Triceps Poulie (Barre)': {
+    consignes: [
+      'Face à la poulie haute, barre en main, coudes collés au corps.',
+      'Pousse la barre vers le bas jusqu’aux bras tendus.',
+      'Remonte lentement, les coudes restent fixes.',
+    ],
+    erreurs: [
+      'Écarter les coudes ou les avancer en remontant.',
+      'Pencher le buste pour pousser avec le poids du corps.',
+    ],
+  },
+  'Curl Concentré': {
+    consignes: [
+      'Assis au bout d’un banc, jambes écartées, l’arrière du bras calé contre l’intérieur de la cuisse.',
+      'Monte l’haltère vers l’épaule sans bouger le coude.',
+      'Redescends lentement jusqu’au bras presque tendu.',
+    ],
+    erreurs: [
+      'Décoller le coude de la cuisse pour lancer la charge.',
+      'Remonter le buste en même temps que l’haltère.',
+    ],
+  },
+  'Hack Squat': {
+    consignes: [
+      'Dos collé au dossier, épaules sous les boudins, pieds à largeur d’épaules sur le plateau.',
+      'Descends en pliant les genoux dans l’axe des pieds, jusqu’aux cuisses parallèles au plateau.',
+      'Pousse avec tout le pied pour remonter, sans verrouiller les genoux.',
+    ],
+    erreurs: [
+      'Laisser les genoux rentrer vers l’intérieur.',
+      'Décoller les talons ou le bas du dos du dossier.',
+    ],
+    securite: 'Après ta dernière répétition, remets les sécurités avant de lâcher les poignées.',
+  },
+  'Élévations Frontales (Haltères)': {
+    consignes: [
+      'Debout, un haltère dans chaque main devant les cuisses, coudes très légèrement fléchis.',
+      'Monte les bras devant toi jusqu’à hauteur des épaules.',
+      'Redescends lentement, sans balancer le buste.',
+    ],
+    erreurs: [
+      'Se pencher en arrière pour monter la charge.',
+      'Monter les haltères au dessus de la tête.',
+    ],
+  },
+  'Curl Machine': {
+    consignes: [
+      'Règle le siège pour que tes coudes soient alignés avec l’axe de la machine.',
+      'L’arrière des bras à plat sur le pupitre, monte les poignées vers les épaules.',
+      'Redescends lentement jusqu’aux bras presque tendus.',
+    ],
+    erreurs: [
+      'Décoller les bras du pupitre.',
+      'Laisser la charge redescendre d’un coup.',
+    ],
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */
