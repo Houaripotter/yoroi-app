@@ -120,6 +120,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   smith_machine_squat: [require('../../../assets/exercices/demos/smith_machine_squat_a.webp'), require('../../../assets/exercices/demos/smith_machine_squat_b.webp')],
   split_squat: [require('../../../assets/exercices/demos/split_squat_a.webp'), require('../../../assets/exercices/demos/split_squat_b.webp')],
   squat_barre_libre: [require('../../../assets/exercices/demos/squat_barre_libre_a.webp'), require('../../../assets/exercices/demos/squat_barre_libre_b.webp')],
+  squat_bulgare: [require('../../../assets/exercices/demos/squat_bulgare_a.webp'), require('../../../assets/exercices/demos/squat_bulgare_b.webp')],
   step_up_halteres: [require('../../../assets/exercices/demos/step_up_halteres_a.webp'), require('../../../assets/exercices/demos/step_up_halteres_b.webp')],
   straight_arm_pulldown: [require('../../../assets/exercices/demos/straight_arm_pulldown_a.webp'), require('../../../assets/exercices/demos/straight_arm_pulldown_b.webp')],
   sumo_deadlift: [require('../../../assets/exercices/demos/sumo_deadlift_a.webp'), require('../../../assets/exercices/demos/sumo_deadlift_b.webp')],
