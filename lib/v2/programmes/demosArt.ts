@@ -73,6 +73,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   kick_back_poulie: [require('../../../assets/exercices/demos/kick_back_poulie_a.webp'), require('../../../assets/exercices/demos/kick_back_poulie_b.webp')],
   kickback_triceps_haltere: [require('../../../assets/exercices/demos/kickback_triceps_haltere_a.webp'), require('../../../assets/exercices/demos/kickback_triceps_haltere_b.webp')],
   leg_curl_assis: [require('../../../assets/exercices/demos/leg_curl_assis_a.webp'), require('../../../assets/exercices/demos/leg_curl_assis_b.webp')],
+  leg_curl_couche: [require('../../../assets/exercices/demos/leg_curl_couche_a.webp'), require('../../../assets/exercices/demos/leg_curl_couche_b.webp')],
   leg_curl_debout: [require('../../../assets/exercices/demos/leg_curl_debout_a.webp'), require('../../../assets/exercices/demos/leg_curl_debout_b.webp')],
   leg_extension: [require('../../../assets/exercices/demos/leg_extension_a.webp'), require('../../../assets/exercices/demos/leg_extension_b.webp')],
   low_row_machine: [require('../../../assets/exercices/demos/low_row_machine_a.webp'), require('../../../assets/exercices/demos/low_row_machine_b.webp')],
