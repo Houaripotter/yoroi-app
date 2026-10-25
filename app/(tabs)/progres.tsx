@@ -138,6 +138,26 @@ export default function Progres() {
           />
         ) : null}
 
+        {/* 25 octobre 2026 : ta semaine et ton mois, tout reuni (app/bilan-periode.tsx) */}
+        {hasData ? (
+          <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 22, marginTop: 14 }}>
+            {(['semaine', 'mois'] as const).map((t) => (
+              <Pressable
+                key={t}
+                onPress={() => {
+                  selectionAsync().catch(() => {});
+                  router.push({ pathname: '/bilan-periode', params: { type: t } } as any);
+                }}
+                accessibilityRole="button"
+                style={({ pressed }) => ({ flex: 1, minHeight: 64, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
+              >
+                <Ink size={12} weight="bold" color={c.textSecondary}>{t === 'semaine' ? traduire('Bilan') : traduire('Rendez-vous')}</Ink>
+                <Ink size={16} weight="black">{t === 'semaine' ? traduire('Ta semaine') : traduire('Ton mois')}</Ink>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
         {/* Tes records, venus de Seances */}
         {trainings.length ? (
           <View style={{ marginHorizontal: 22, gap: 10 }}>

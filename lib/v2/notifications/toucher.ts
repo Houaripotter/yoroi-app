@@ -28,7 +28,8 @@ export const ROUTE_SEANCES = '/(tabs)/seances';
  * Les rappels de pesée ouvrent la saisie de la pesée (« Ta pesée du jour »), pas la composition corporelle.
  */
 const ROUTES_PAR_TYPE: Record<string, string> = {
-  weekly_recap: '/(tabs)/progres',
+  // 25 octobre 2026 : « Ton bilan des sept derniers jours » ouvre enfin ce bilan (app/bilan-periode.tsx)
+  weekly_recap: '/bilan-periode',
   streak_at_risk: '/seance',
   smart_reminder: '/seance',
   pesee_habitude: '/pesee',
