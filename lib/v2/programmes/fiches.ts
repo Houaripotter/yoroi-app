@@ -1268,6 +1268,189 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Laisser la charge redescendre d’un coup.',
     ],
   },
+  'Arnold Press': {
+    consignes: [
+      'Assis, dos collé au dossier, haltères devant le visage, paumes tournées vers toi.',
+      'Pousse vers le haut en tournant les paumes vers l’avant pendant la montée.',
+      'Redescends lentement en refaisant la rotation inverse jusqu’à la position de départ.',
+    ],
+    erreurs: [
+      'Cambrer le bas du dos pour finir la poussée.',
+      'Descendre trop vite en perdant la rotation.',
+    ],
+  },
+  'Écartés Incliné (Haltères)': {
+    consignes: [
+      'Banc à environ 30 degrés, haltères au dessus de la poitrine, coudes légèrement fléchis.',
+      'Ouvre les bras en arc de cercle jusqu’à sentir l’étirement des pectoraux.',
+      'Referme en gardant le même angle de coude, comme pour serrer un gros arbre.',
+    ],
+    erreurs: [
+      'Plier les coudes en descendant, le mouvement devient un développé.',
+      'Descendre les haltères plus bas que les épaules.',
+    ],
+    securite: 'Prends des haltères légers : en bras ouverts, l’épaule supporte beaucoup de charge.',
+  },
+  'Good Morning': {
+    consignes: [
+      'Barre légère posée sur le haut du dos, pieds à largeur de hanches, genoux souples.',
+      'Pousse les hanches vers l’arrière et penche le buste, dos bien droit.',
+      'Remonte en poussant les hanches vers l’avant, sans arrondir le dos.',
+    ],
+    erreurs: [
+      'Arrondir le dos en bas du mouvement.',
+      'Plier fortement les genoux comme pour un squat.',
+    ],
+    securite: 'Commence avec une barre à vide et descends seulement tant que ton dos reste plat.',
+  },
+  'Reverse Lunges': {
+    consignes: [
+      'Debout, pieds serrés, mains sur les hanches.',
+      'Recule une jambe d’un grand pas et descends le genou arrière près du sol.',
+      'Pousse sur le talon de la jambe avant pour revenir pieds serrés.',
+    ],
+    erreurs: [
+      'Laisser le genou avant dépasser loin devant les orteils.',
+      'Pencher le buste en avant pendant la descente.',
+    ],
+  },
+  'Kick-back Poulie': {
+    consignes: [
+      'Sangle à la cheville, face à la poulie basse, mains sur le montant.',
+      'Pousse la jambe vers l’arrière en serrant le fessier, jambe presque tendue.',
+      'Reviens lentement sans laisser la charge tirer la jambe.',
+    ],
+    erreurs: [
+      'Cambrer le bas du dos pour monter la jambe plus haut.',
+      'Tourner le bassin sur le côté.',
+    ],
+  },
+  'Curl Barre Droite': {
+    consignes: [
+      'Debout, barre en prise supination à largeur d’épaules, coudes collés au corps.',
+      'Monte la barre vers les épaules en pliant seulement les coudes.',
+      'Redescends lentement jusqu’aux bras tendus.',
+    ],
+    erreurs: [
+      'Balancer le buste pour lancer la barre.',
+      'Avancer les coudes en haut du mouvement.',
+    ],
+  },
+  'Skullcrusher Haltères': {
+    consignes: [
+      'Allongé sur un banc plat, haltères au dessus de la poitrine, paumes face à face.',
+      'Plie seulement les coudes pour descendre les haltères de chaque côté de la tête.',
+      'Tends les bras pour remonter, sans écarter les coudes.',
+    ],
+    erreurs: [
+      'Écarter les coudes vers l’extérieur.',
+      'Bouger les épaules au lieu des coudes.',
+    ],
+    securite: 'Commence léger : les haltères passent près de la tête.',
+  },
+  'Hanging Knee Raise': {
+    consignes: [
+      'Suspendu à la barre, bras tendus, corps immobile.',
+      'Monte les genoux jusqu’à hauteur des hanches ou plus haut.',
+      'Redescends lentement les jambes sans te balancer.',
+    ],
+    erreurs: [
+      'Se balancer pour lancer les jambes.',
+      'Laisser retomber les jambes d’un coup.',
+    ],
+  },
+  'Développé Haltères Debout': {
+    consignes: [
+      'Debout, pieds à largeur de hanches, haltères à hauteur des épaules.',
+      'Serre les abdos et les fessiers, puis pousse les haltères au dessus de la tête.',
+      'Redescends lentement jusqu’à hauteur des épaules.',
+    ],
+    erreurs: [
+      'Se pencher en arrière en cambrant le dos.',
+      'Plier les genoux pour aider la poussée.',
+    ],
+  },
+  'Rowing T-Bar': {
+    consignes: [
+      'Debout au dessus de la barre, genoux fléchis, buste penché à 45 degrés, dos plat.',
+      'Tire la poignée vers le bas de la poitrine en ramenant les coudes en arrière.',
+      'Redescends lentement jusqu’aux bras tendus.',
+    ],
+    erreurs: [
+      'Arrondir le dos pendant la traction.',
+      'Se redresser pour tirer la charge.',
+    ],
+    securite: 'Garde le dos plat du début à la fin : si tu ne peux pas, allège la charge.',
+  },
+  'Cable Crunch': {
+    consignes: [
+      'À genoux face à la poulie haute, corde tenue de chaque côté de la tête.',
+      'Enroule le buste vers le bas en rapprochant les coudes des cuisses.',
+      'Remonte lentement, hanches toujours au dessus des genoux.',
+    ],
+    erreurs: [
+      'Tirer avec les bras au lieu d’enrouler le dos.',
+      'Pousser les hanches vers l’arrière pour descendre.',
+    ],
+  },
+  'Close Grip Bench Press': {
+    consignes: [
+      'Allongé sur le banc, mains sur la barre à largeur d’épaules, pieds au sol.',
+      'Descends la barre sur le bas de la poitrine, coudes près du corps.',
+      'Pousse pour tendre les bras, sans écarter les coudes.',
+    ],
+    erreurs: [
+      'Serrer les mains trop près, ce qui fait mal aux poignets.',
+      'Écarter les coudes en descendant.',
+    ],
+    securite: 'Travaille avec un pareur ou des barres de sécurité réglées juste sous la poitrine.',
+  },
+  'Sumo Deadlift': {
+    consignes: [
+      'Pieds très écartés, pointes vers l’extérieur, mains sur la barre entre les genoux.',
+      'Pousse les genoux vers l’extérieur, poitrine haute, dos plat.',
+      'Pousse dans le sol pour te redresser, barre collée au corps.',
+    ],
+    erreurs: [
+      'Arrondir le dos au départ.',
+      'Laisser les genoux rentrer vers l’intérieur.',
+    ],
+    securite: 'Apprends le mouvement avec une barre légère avant de charger.',
+  },
+  'Tirage Menton (Upright Row)': {
+    consignes: [
+      'Debout, barre en prise pronation, mains un peu plus serrées que les épaules.',
+      'Monte la barre près du corps en levant les coudes sur les côtés.',
+      'Arrête quand les coudes arrivent à hauteur des épaules, puis redescends lentement.',
+    ],
+    erreurs: [
+      'Monter les coudes plus haut que les épaules.',
+      'Balancer le buste pour monter la barre.',
+    ],
+    securite: 'Arrête l’exercice s’il te pince dans l’épaule.',
+  },
+  'Straight Arm Pulldown': {
+    consignes: [
+      'Face à la poulie haute, barre en main, bras tendus, buste légèrement penché.',
+      'Ramène la barre vers les cuisses en arc de cercle, bras toujours tendus.',
+      'Remonte lentement jusqu’à hauteur de la tête.',
+    ],
+    erreurs: [
+      'Plier les coudes, le mouvement devient un tirage.',
+      'Se pencher en avant pour descendre la barre.',
+    ],
+  },
+  'Chest Supported Row': {
+    consignes: [
+      'Allongé sur le ventre sur un banc incliné, poitrine sur le dossier, haltères en main.',
+      'Tire les haltères le long des côtes en ramenant les coudes en arrière.',
+      'Redescends lentement jusqu’aux bras tendus.',
+    ],
+    erreurs: [
+      'Décoller la poitrine du banc pour tirer.',
+      'Hausser les épaules vers les oreilles.',
+    ],
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */

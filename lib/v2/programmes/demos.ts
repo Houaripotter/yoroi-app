@@ -14,7 +14,27 @@ export function demoSlug(nom: string): string {
     .replace(/^_+|_+$/g, '');
 }
 
+/**
+ * Le même mouvement sous un autre nom dans la bibliothèque : il reprend l'animation déjà faite
+ * (25 octobre 2026). Uniquement des mouvements identiques, pas des variantes qui se ressemblent.
+ */
+export const MEME_MOUVEMENT: Record<string, string> = {
+  deadlift_sumo: 'sumo_deadlift',
+  tractions_larges: 'tractions_pronation',
+  banc_a_lombaires: 'hyperextensions',
+  standing_calf_raise: 'mollets_debout_machine',
+  seated_calf_raise: 'mollets_assis_machine',
+  single_leg_calf_raise: 'mollets_unilateral',
+  seated_leg_curl: 'leg_curl_assis',
+  cable_curl: 'curl_poulie_basse',
+  cable_overhead_extension: 'overhead_extension_poulie',
+  cable_crossover: 'ecartes_a_la_poulie_haute',
+  ab_rollout: 'roulette_abdos_abs_wheel',
+  extension_triceps_poulie_v_bar: 'extension_triceps_poulie_barre',
+};
+
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
   if (!nom) return null;
-  return DEMOS[demoSlug(nom)] ?? null;
+  const cle = demoSlug(nom);
+  return DEMOS[cle] ?? DEMOS[MEME_MOUVEMENT[cle] ?? ''] ?? null;
 }

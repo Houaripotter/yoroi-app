@@ -69,6 +69,9 @@ export const ZONES: Zone[] = [
       e('Cable Kickback', 'FESSIERS', 12, 15, 'Sangle à la cheville, face à la poulie basse, mains sur le support.'),
       e('Single Leg Hip Thrust', 'FESSIERS', 8, 12, 'Haut du dos contre un banc, un pied au sol, l’autre jambe en l’air.', { poidsDuCorps: true }),
       e('Glute Bridge', 'FESSIERS', 12, 20, 'Serre les fessiers en haut une seconde, puis redescends lentement.', { poidsDuCorps: true }),
+      e('Reverse Lunges', 'FESSIERS', 8, 12, 'Recule une jambe d’un grand pas et descends le genou arrière près du sol.', { poidsDuCorps: true }),
+      e('Kick-back Poulie', 'FESSIERS', 12, 15, 'Pousse la jambe vers l’arrière en serrant le fessier, jambe presque tendue.'),
+      e('Sumo Deadlift', 'FESSIERS', 6, 10, 'Pieds très écartés, pointes vers l’extérieur, mains sur la barre entre les genoux.'),
     ],
   },
   {
@@ -84,6 +87,7 @@ export const ZONES: Zone[] = [
       e('Nordic Curl', 'ISCHIOS', 4, 8, 'Descends le plus lentement possible, amortis avec les mains, puis repousse pour remonter.', { poidsDuCorps: true }),
       e('Single Leg Deadlift', 'ISCHIOS', 8, 12, 'Penche le buste en poussant la hanche en arrière, l’autre jambe monte derrière.'),
       e('Leg Curl Couché', 'ISCHIOS', 10, 15, 'Allongé sur le ventre, genoux juste après le bord du banc, boudin au dessus des talons.'),
+      e('Good Morning', 'DOS', 8, 12, 'Barre légère posée sur le haut du dos, pieds à largeur de hanches, genoux souples.'),
     ],
   },
   {
@@ -101,6 +105,9 @@ export const ZONES: Zone[] = [
       e('Inverted Row', 'DOS', 6, 12, 'Sous une barre ou une table solide, mains largeur d’épaules, corps tendu.', { poidsDuCorps: true }),
       e('Tractions Neutres', 'DOS', 4, 10, 'Monte jusqu’au menton au dessus des poignées, redescends sous contrôle.', { poidsDuCorps: true }),
       e('Tractions (Supination)', 'DOS', 4, 10, 'Monte jusqu’au menton au dessus de la barre, redescends bras tendus.', { poidsDuCorps: true }),
+      e('Rowing T-Bar', 'DOS', 8, 12, 'Debout au dessus de la barre, genoux fléchis, buste penché à 45 degrés, dos plat.'),
+      e('Straight Arm Pulldown', 'DOS', 12, 15, 'Face à la poulie haute, barre en main, bras tendus, buste légèrement penché.'),
+      e('Chest Supported Row', 'DOS', 10, 12, 'Allongé sur le ventre sur un banc incliné, poitrine sur le dossier, haltères en main.'),
     ],
   },
   {
@@ -119,6 +126,8 @@ export const ZONES: Zone[] = [
       e('Développé Couché (Barre)', 'PECTORAUX', 6, 10, 'Descends la barre sur le bas des pectoraux, puis pousse vers le haut en expirant.'),
       e('Chest Press (Machine)', 'PECTORAUX', 10, 12, 'Règle le siège pour que les poignées arrivent à hauteur du milieu de la poitrine.'),
       e('Développé Incliné (Barre)', 'PECTORAUX', 6, 10, 'Banc à environ 30 degrés, pieds au sol, omoplates serrées et collées.'),
+      e('Écartés Incliné (Haltères)', 'PECTORAUX', 10, 15, 'Banc à environ 30 degrés, haltères au dessus de la poitrine, coudes légèrement fléchis.'),
+      e('Close Grip Bench Press', 'TRICEPS', 6, 10, 'Allongé sur le banc, mains sur la barre à largeur d’épaules, pieds au sol.'),
     ],
   },
   {
@@ -137,6 +146,9 @@ export const ZONES: Zone[] = [
       e('Oiseau Haltères (Rear Delts)', 'ÉPAULES', 12, 15, 'Buste penché vers l’avant, dos plat, nuque dans l’alignement, haltères sous les épaules.'),
       e('Shoulder Press Machine', 'ÉPAULES', 8, 12, 'Dos collé au dossier, pieds à plat, pousse les poignées vers le haut.'),
       e('Élévations Frontales (Haltères)', 'ÉPAULES', 10, 15, 'Debout, un haltère dans chaque main devant les cuisses, coudes très légèrement fléchis.'),
+      e('Arnold Press', 'ÉPAULES', 8, 12, 'Redescends lentement en refaisant la rotation inverse jusqu’à la position de départ.'),
+      e('Développé Haltères Debout', 'ÉPAULES', 8, 12, 'Serre les abdos et les fessiers, puis pousse les haltères au dessus de la tête.'),
+      e('Tirage Menton (Upright Row)', 'ÉPAULES', 10, 12, 'Arrête quand les coudes arrivent à hauteur des épaules, puis redescends lentement.'),
     ],
   },
   {
@@ -159,6 +171,8 @@ export const ZONES: Zone[] = [
       e('Extension Triceps Poulie (Barre)', 'TRICEPS', 10, 15, 'Face à la poulie haute, barre en main, coudes collés au corps.'),
       e('Curl Concentré', 'BICEPS', 10, 12, 'Assis au bout d’un banc, jambes écartées, l’arrière du bras calé contre l’intérieur de la cuisse.'),
       e('Curl Machine', 'BICEPS', 10, 15, 'L’arrière des bras à plat sur le pupitre, monte les poignées vers les épaules.'),
+      e('Curl Barre Droite', 'BICEPS', 8, 12, 'Debout, barre en prise supination à largeur d’épaules, coudes collés au corps.'),
+      e('Skullcrusher Haltères', 'TRICEPS', 10, 12, 'Allongé sur un banc plat, haltères au dessus de la poitrine, paumes face à face.'),
     ],
   },
   {
@@ -201,6 +215,8 @@ export const ZONES: Zone[] = [
       e('Gainage Latéral', 'ABDOS', 20, 40, 'Sur le côté, coude sous l’épaule, jambes tendues l’une sur l’autre.', { secondes: true, poidsDuCorps: true }),
       e('Roulette Abdos (Abs Wheel)', 'ABDOS', 6, 12, 'Gaine fort, roule vers l’avant aussi loin que tu gardes le dos plat.', { poidsDuCorps: true }),
       e('Crunch Abdominal', 'ABDOS', 12, 20, 'Enroule le haut du dos pour décoller les épaules du sol.', { poidsDuCorps: true }),
+      e('Hanging Knee Raise', 'ABDOS', 8, 15, 'Monte les genoux jusqu’à hauteur des hanches ou plus haut.', { poidsDuCorps: true }),
+      e('Cable Crunch', 'ABDOS', 12, 20, 'À genoux face à la poulie haute, corde tenue de chaque côté de la tête.'),
     ],
   },
 ];
