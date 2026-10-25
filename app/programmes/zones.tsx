@@ -154,7 +154,7 @@ export default function ZonesScreen() {
         {mode === 'choix' ? (
           <>
             <Ink size={26} weight="black" tight accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Qu’est-ce que tu veux travailler ?')}</Ink>
-            {presets.map((r) => (
+            {presets.filter((r) => r.id !== 'grip').map((r) => (
               <Pressable
                 key={r.id}
                 onPress={() => ouvrirSeance(r.zones)}
@@ -172,6 +172,29 @@ export default function ZonesScreen() {
                 </View>
                 <Icon name="chevron" size={18} color={c.textMuted} />
               </Pressable>
+            ))}
+
+            {/* la section GRIP : la poigne, pour le kimono, la barre et tout ce qu'il faut tenir */}
+            {presets.filter((r) => r.id === 'grip').map((r) => (
+              <View key={r.id} style={{ gap: 8, marginTop: 6 }}>
+                <Ink size={12} weight="black" color={c.textSecondary} style={{ letterSpacing: 0.6 }}>{traduire('GRIP')}</Ink>
+                <Pressable
+                  onPress={() => ouvrirSeance(r.zones)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${traduire('Grip')}, ${traduire('{0} exercices', r.nb)}, ${traduire('environ {0} min', r.minutes)}`}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+                >
+                  <View style={{ width: 84, height: 84, borderRadius: 18, overflow: 'hidden', backgroundColor: c.fillSubtle }}>
+                    <Image source={VIGNETTES.avantbras} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+                  </View>
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Ink size={18} weight="black" tight>{traduire('Renforcer ma poigne')}</Ink>
+                    <Ink size={13} color={c.textSecondary}>{traduire('Pour tenir le kimono, la barre, et ne rien lâcher')}</Ink>
+                    <Ink size={13} weight="bold" color={c.textSecondary}>{traduire('{0} exercices, {1} min', r.nb, r.minutes)}</Ink>
+                  </View>
+                  <Icon name="chevron" size={18} color={c.textMuted} />
+                </Pressable>
+              </View>
             ))}
 
             {/* ta derniere seance, quand elle n'est pas deja une des cartes */}

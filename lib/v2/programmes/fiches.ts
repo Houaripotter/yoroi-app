@@ -1619,6 +1619,100 @@ export const FICHES_EXO: Record<string, FicheExo> = {
     ],
     securite: 'Prends des haltères très légers : ce sont de petits muscles de l’épaule.',
   },
+  'Plate Pinch': {
+    consignes: [
+      'Deux disques lisses face contre face, tenus par la tranche entre le pouce et les doigts.',
+      'Bras tendus le long du corps, serre fort avec les doigts et tiens le temps prévu.',
+      'Repose les disques avant que la prise ne lâche.',
+    ],
+    erreurs: [
+      'Serrer avec la paume au lieu des doigts.',
+      'Prendre des disques trop lourds dès le début.',
+    ],
+    securite: 'Tiens les disques au-dessus du sol, pas au-dessus de tes pieds.',
+  },
+  'Traversée de Disques (Pince)': {
+    consignes: [
+      'Un disque dans chaque main, tenu par le bord du bout des doigts, bras tendus.',
+      'Garde le dos droit, serre les abdos et marche lentement sur un parcours court.',
+      'Pose les disques en pliant les jambes avant que les doigts ne lâchent.',
+    ],
+    erreurs: [
+      'Serrer avec la paume au lieu du bout des doigts.',
+      'Marcher vite et laisser les disques se balancer.',
+    ],
+    securite: 'Commence léger et augmente le poids petit à petit, comme le conseillent les entraîneurs.',
+  },
+  'Pince Haltère (par la tête)': {
+    consignes: [
+      'Debout, un haltère dans chaque main, tenu par la tête du bout des doigts.',
+      'Bras tendus le long du corps, garde tout dans les doigts, pas dans la paume.',
+      'Tiens le temps prévu, puis repose les haltères doucement.',
+    ],
+    erreurs: [
+      'Laisser l’haltère glisser dans le creux de la main.',
+      'Hausser les épaules pendant la tenue.',
+    ],
+    securite: 'Tiens les haltères au-dessus du sol, jamais au-dessus de tes pieds.',
+  },
+  'Suspension Serviette': {
+    consignes: [
+      'Passe une serviette ou une veste de kimono par-dessus la barre de traction.',
+      'Saisis les deux pans à pleines mains et suspends-toi, bras tendus.',
+      'Tiens le temps prévu en respirant calmement, puis redescends en douceur.',
+    ],
+    erreurs: [
+      'Lâcher d’un coup au lieu de reposer les pieds.',
+      'Prendre une serviette trop fine ou qui glisse.',
+    ],
+    securite: 'Vérifie que la serviette est solide et bien posée sur la barre avant de te suspendre.',
+  },
+  'Tractions Serviette': {
+    consignes: [
+      'Serviette ou veste de kimono passée sur la barre, un pan dans chaque main.',
+      'Tire pour monter la poitrine vers la barre, coudes vers le bas.',
+      'Redescends lentement jusqu’aux bras tendus.',
+    ],
+    erreurs: [
+      'Balancer les jambes pour monter.',
+      'Descendre d’un coup en bas.',
+    ],
+    securite: 'Si tu ne fais pas encore de tractions, commence par la suspension à la serviette.',
+  },
+  'Curl Disque': {
+    consignes: [
+      'Debout, un disque tenu par les côtés avec les deux mains, bras le long du corps.',
+      'Plie les coudes pour monter le disque vers les épaules, en le serrant fort.',
+      'Redescends lentement sans laisser le disque glisser.',
+    ],
+    erreurs: [
+      'Balancer le buste pour monter le disque.',
+      'Prendre un disque trop lourd pour la prise.',
+    ],
+  },
+  'Tenue Trap Bar': {
+    consignes: [
+      'Debout au centre de la barre hexagonale, mains au milieu des poignées.',
+      'Soulève la barre dos plat, puis reste debout bras tendus.',
+      'Tiens le temps prévu, puis repose la barre en pliant les jambes.',
+    ],
+    erreurs: [
+      'Arrondir le dos en soulevant ou en posant la barre.',
+      'Hausser les épaules pendant la tenue.',
+    ],
+    securite: 'Soulève et repose la barre dos plat, comme pour un soulevé de terre.',
+  },
+  'Tirage Manches (Kumi Kata)': {
+    consignes: [
+      'Saisis les manches ou les bandes accrochées à l’espalier comme tu saisirais le kimono.',
+      'Tire vers toi en serrant fort, en faisant le geste de ta prise de garde avec beaucoup d’amplitude.',
+      'Reviens lentement en gardant la saisie fermée.',
+    ],
+    erreurs: [
+      'Lâcher la prise entre deux tirages.',
+      'Faire des petits gestes sans amplitude.',
+    ],
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */

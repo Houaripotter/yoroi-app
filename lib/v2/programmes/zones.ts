@@ -197,11 +197,21 @@ export const ZONES: Zone[] = [
     role: 'Les avant-bras : la poigne pour tenir les charges, porter, s’accrocher, saisir au combat.',
     muscles: ['avant_bras'],
     exos: [
+      // 25 octobre 2026, section Grip demandée par Houari. Ordre de la séance Grip (les 5 premiers) :
+      // porter lourd, pincer, se suspendre, d'après Dojo en ligne (traversée de disque, tractions serviette,
+      // manches de kumi kata), Wodandgo (7 exercices de grip) et Jiu Jitsu Legacy (grip pour le JJB).
       e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Tu marches en portant lourd : tes mains serrent fort pour ne rien lâcher, c’est ça qui muscle tes avant-bras. Bras tendus, épaules basses, petits pas.', { secondes: true }),
-      e('Wrist Roller', 'AVANT-BRAS', 3, 5, 'Bras tendus devant toi, enroule la corde en tournant les poignets jusqu’à remonter le poids, puis redescends lentement. Une montée et une descente font une répétition.'),
-      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Traversée de Disques (Pince)', 'AVANT-BRAS', 20, 40, 'Garde le dos droit, serre les abdos et marche lentement sur un parcours court.', { secondes: true }),
       e('Dead Hang', 'AVANT-BRAS', 20, 40, 'Serre la barre et respire calmement pendant toute la tenue.', { secondes: true }),
+      e('Pince Haltère (par la tête)', 'AVANT-BRAS', 15, 30, 'Bras tendus le long du corps, garde tout dans les doigts, pas dans la paume.', { secondes: true }),
       e('Gripper / Hand Grip', 'AVANT-BRAS', 10, 15, 'Place la pince au creux de la main, poignée fixe contre la paume.'),
+      e('Suspension Serviette', 'AVANT-BRAS', 15, 30, 'Passe une serviette ou une veste de kimono par-dessus la barre de traction.', { secondes: true }),
+      e('Wrist Roller', 'AVANT-BRAS', 3, 5, 'Bras tendus devant toi, enroule la corde en tournant les poignets jusqu’à remonter le poids, puis redescends lentement. Une montée et une descente font une répétition.'),
+      e('Plate Pinch', 'AVANT-BRAS', 20, 30, 'Deux disques lisses face contre face, tenus par la tranche entre le pouce et les doigts.', { secondes: true }),
+      e('Curl Disque', 'AVANT-BRAS', 10, 15, 'Debout, un disque tenu par les côtés avec les deux mains, bras le long du corps.'),
+      e('Tractions Serviette', 'AVANT-BRAS', 3, 8, 'Serviette ou veste de kimono passée sur la barre, un pan dans chaque main.', { poidsDuCorps: true }),
+      e('Tenue Trap Bar', 'AVANT-BRAS', 20, 30, 'Debout au centre de la barre hexagonale, mains au milieu des poignées.', { secondes: true }),
+      e('Tirage Manches (Kumi Kata)', 'AVANT-BRAS', 10, 15, 'Tire vers toi en serrant fort, en faisant le geste de ta prise de garde avec beaucoup d’amplitude.'),
     ],
   },
   {
@@ -250,6 +260,8 @@ export const RACCOURCIS_ZONES: { id: string; nom: string; zones: ZoneId[] }[] = 
   { id: 'bas', nom: 'Bas du corps', zones: ['quadriceps', 'fessiers', 'ischios', 'mollets'] },
   { id: 'fessiers_abdos', nom: 'Fessiers et abdos', zones: ['fessiers', 'abdos'] },
   { id: 'entier', nom: 'Corps entier', zones: ['quadriceps', 'dos', 'pectoraux', 'fessiers', 'abdos'] },
+  // 25 octobre 2026 : la section Grip (la poigne : tenir le kimono, la barre, ne rien lâcher)
+  { id: 'grip', nom: 'Grip', zones: ['avantbras'] },
 ];
 
 /** Le raccourci qui correspond exactement aux zones choisies, sinon null */

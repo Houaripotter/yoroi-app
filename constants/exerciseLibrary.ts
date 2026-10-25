@@ -155,6 +155,14 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Gripper / Hand Grip', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'reps' },
   { name: 'Plate Pinch', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'time' },
   { name: 'Wrist Roller', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'reps' },
+  // 25 octobre 2026 : section Grip (sources : Dojo en ligne, Wodandgo, Jiu Jitsu Legacy)
+  { name: 'Traversée de Disques (Pince)', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'time' },
+  { name: 'Pince Haltère (par la tête)', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'time' },
+  { name: 'Suspension Serviette', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'time' },
+  { name: 'Tractions Serviette', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'reps' },
+  { name: 'Curl Disque', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'reps' },
+  { name: 'Tenue Trap Bar', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'time' },
+  { name: 'Tirage Manches (Kumi Kata)', category: 'musculation', muscle: 'AVANT-BRAS', unit: 'reps' },
 
   // ═══════════════════════════════════════════════════════════════
   // MUSCULATION - JAMBES (QUADRICEPS)
