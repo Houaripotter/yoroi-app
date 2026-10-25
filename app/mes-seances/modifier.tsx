@@ -4,6 +4,8 @@
  * avec leur nombre de séries et les répétitions visées, dans l'ordre choisi (flèches haut et bas).
  * Pas de charge à saisir : à la séance, YOROI reprend ta dernière fois sur chaque exercice.
  * Paramètre : id (modifier), rien pour une nouvelle séance.
+ * Paramètre zones (25 octobre 2026) : depuis « Quoi faire ? », la nouvelle séance part des exercices proposés pour
+ * ces muscles, avec leur nom ; tu ajoutes, retires ou changes ce que tu veux, puis tu l'enregistres.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -31,6 +33,8 @@ import type { ExerciseHistory } from '@/lib/v2/seance/history';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { MAX_EXOS, MAX_SERIES, chargerMesSeances, creerMaSeance, exosDepuisSeance, maSeanceParId, modifierMaSeance, nomParDefaut } from '@/lib/v2/seance/mesSeances';
 import type { ExoSeance } from '@/lib/v2/seance/mesSeances';
+import { seanceZones, titreZones, ZONES } from '@/lib/v2/programmes/zones';
+import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { traduire } from '@/lib/i18n/tr';
 
 type Ligne = ExoSeance & { cle: string };
@@ -43,8 +47,10 @@ export default function ModifierMaSeance() {
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; zones?: string }>();
   const id = typeof params.id === 'string' && params.id ? params.id : null;
+  // les muscles choisis dans « Quoi faire ? » (seulement pour une nouvelle seance)
+  const zonesDepart = id || typeof params.zones !== 'string' ? [] : ZONES.map((z) => z.id).filter((z) => params.zones!.split(',').includes(z));
   const [nom, setNom] = useState('');
   const [sport, setSport] = useState('musculation');
   const [lignes, setLignes] = useState<Ligne[]>([]);
@@ -68,6 +74,14 @@ export default function ModifierMaSeance() {
           setNom(s.nom);
           setSport(s.sport);
           setLignes(s.exos.map((e) => ({ ...e, cle: cle() })));
+        } else if (zonesDepart.length) {
+          // les exercices proposes pour ces muscles : series prevues, repetitions au milieu de la fourchette
+          setNom(titreZones(zonesDepart as ZoneId[], traduire).slice(0, 40));
+          setLignes(
+            seanceZones(zonesDepart as ZoneId[])
+              .filter((x) => !x.secondes)
+              .map((x) => ({ nom: x.nom, muscle: x.muscle, series: x.series, reps: Math.round((x.repsMin + x.repsMax) / 2), poids: 0, cle: cle() })),
+          );
         }
       } catch (err) {
         logger.warn('Séance à modifier non lue', err);
@@ -77,6 +91,7 @@ export default function ModifierMaSeance() {
     getTrainings()
       .then((t) => setHist(buildExerciseHistory(t ?? [])))
       .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const marquerModifie = () => {

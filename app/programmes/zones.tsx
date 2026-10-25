@@ -192,20 +192,16 @@ export default function ZonesScreen() {
               </Pressable>
             ) : null}
 
-            {/* choisir soi-meme : une carte pleine, avec trois muscles en images */}
+            {/* creer sa propre seance : tu choisis tes exercices, tu lui donnes un nom, elle va dans Mes seances */}
             <Pressable
-              onPress={() => {
-                tap();
-                setChoisies(derniereFois.length && !derniereEstUnPreset ? derniereFois : []);
-                aller('muscles');
-              }}
+              onPress={() => { tap(); router.push('/mes-seances/modifier' as any); }}
               accessibilityRole="button"
-              accessibilityLabel={traduire('Je choisis mes muscles')}
+              accessibilityLabel={traduire('Je crée ma séance')}
               style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 92, paddingVertical: 16, paddingLeft: 18, paddingRight: 14, borderRadius: 24, backgroundColor: pressed ? c.accentPressed : c.accent, overflow: 'hidden' })}
             >
               <View style={{ flex: 1, gap: 4 }}>
-                <Ink size={18} weight="black" tight color={c.onAccent}>{traduire('Je choisis mes muscles')}</Ink>
-                <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.85 }}>{traduire('Compose ta séance muscle par muscle')}</Ink>
+                <Ink size={18} weight="black" tight color={c.onAccent}>{traduire('Je crée ma séance')}</Ink>
+                <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.85 }}>{traduire('Tu choisis tes exercices, tu lui donnes un nom')}</Ink>
               </View>
               <View style={{ flexDirection: 'row' }}>
                 {(['epaules', 'abdos', 'fessiers'] as ZoneId[]).map((id, i) => (
@@ -215,6 +211,26 @@ export default function ZonesScreen() {
                 ))}
               </View>
               <Icon name="chevron" size={18} color={c.onAccent} />
+            </Pressable>
+
+            {/* ou YOROI propose les exercices pour les muscles choisis */}
+            <Pressable
+              onPress={() => {
+                tap();
+                setChoisies(derniereFois.length && !derniereEstUnPreset ? derniereFois : []);
+                aller('muscles');
+              }}
+              accessibilityRole="button"
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 22, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="body" size={19} color={c.accent} />
+              </View>
+              <View style={{ flex: 1, gap: 1 }}>
+                <Ink size={12} weight="bold" color={c.textSecondary}>{traduire('YOROI te propose les exercices')}</Ink>
+                <Ink size={16} weight="black">{traduire('Je choisis mes muscles')}</Ink>
+              </View>
+              <Icon name="chevron" size={18} color={c.textMuted} />
             </Pressable>
 
             {/* un programme sur plusieurs semaines */}
@@ -305,9 +321,20 @@ export default function ZonesScreen() {
                 ))}
               </View>
               <Ink size={13} color="rgba(255,255,255,0.8)">{traduire('Fais-les dans l’ordre : les gros muscles d’abord, les abdos à la fin.')}</Ink>
-              <Pressable onPress={() => { tap(); aller('muscles'); }} accessibilityRole="button" style={{ alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Pressable onPress={() => { tap(); aller('muscles'); }} accessibilityRole="button" style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' }}>
                 <Ink size={13} weight="extraBold" color="#FFFFFF">{traduire('Changer les muscles')}</Ink>
               </Pressable>
+              {/* la garder : elle s'ouvre dans Mes seances, tu changes les exercices et tu lui donnes un nom */}
+              <Pressable
+                onPress={() => { tap(); router.push({ pathname: '/mes-seances/modifier' as any, params: { zones: choisies.join(',') } }); }}
+                accessibilityRole="button"
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.14)' }}
+              >
+                <Icon name="bookmark" size={15} color="#FFFFFF" />
+                <Ink size={13} weight="extraBold" color="#FFFFFF">{traduire('La modifier et l’enregistrer')}</Ink>
+              </Pressable>
+              </View>
             </View>
             {exos.map((x, k) => (
               <CarteExoZone key={x.nom} exo={x} numero={k + 1} total={exos.length} zone={traduire(zoneDe(x.nom)?.nom ?? '') || undefined} />
