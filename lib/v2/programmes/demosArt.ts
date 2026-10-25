@@ -85,6 +85,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   mollets_assis_machine: [require('../../../assets/exercices/demos/mollets_assis_machine_a.webp'), require('../../../assets/exercices/demos/mollets_assis_machine_b.webp')],
   mollets_debout_machine: [require('../../../assets/exercices/demos/mollets_debout_machine_a.webp'), require('../../../assets/exercices/demos/mollets_debout_machine_b.webp')],
   mollets_halteres_debout: [require('../../../assets/exercices/demos/mollets_halteres_debout_a.webp'), require('../../../assets/exercices/demos/mollets_halteres_debout_b.webp')],
+  mollets_unilateral: [require('../../../assets/exercices/demos/mollets_unilateral_a.webp'), require('../../../assets/exercices/demos/mollets_unilateral_b.webp')],
   mountain_climbers: [require('../../../assets/exercices/demos/mountain_climbers_a.webp'), require('../../../assets/exercices/demos/mountain_climbers_b.webp')],
   nordic_curl: [require('../../../assets/exercices/demos/nordic_curl_a.webp'), require('../../../assets/exercices/demos/nordic_curl_b.webp')],
   oiseau_halteres_rear_delts: [require('../../../assets/exercices/demos/oiseau_halteres_rear_delts_a.webp'), require('../../../assets/exercices/demos/oiseau_halteres_rear_delts_b.webp')],

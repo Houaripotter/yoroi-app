@@ -35,6 +35,7 @@ export const MEME_MOUVEMENT: Record<string, string> = {
   ab_rollout: 'roulette_abdos_abs_wheel',
   cable_overhead_extension: 'overhead_extension_poulie',
   machine_lateral_raise: 'elevations_laterales_machine',
+  single_leg_calf_raise: 'mollets_unilateral',
 };
 
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
