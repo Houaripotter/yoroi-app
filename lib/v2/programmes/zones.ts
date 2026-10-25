@@ -132,6 +132,7 @@ export const ZONES: Zone[] = [
       e('Écartés Incliné (Haltères)', 'PECTORAUX', 10, 15, 'Banc à environ 30 degrés, haltères au dessus de la poitrine, coudes légèrement fléchis.'),
       e('Close Grip Bench Press', 'TRICEPS', 6, 10, 'Allongé sur le banc, mains sur la barre à largeur d’épaules, pieds au sol.'),
       e('Pompes Déclinées', 'PECTORAUX', 6, 15, 'Pieds sur un banc ou une chaise stable, mains au sol sous les épaules.', { poidsDuCorps: true }),
+      e('Pull Over (Haltère)', 'PECTORAUX', 10, 12, 'Va jusqu’à l’étirement confortable, puis ramène l’haltère au dessus de la poitrine.'),
     ],
   },
   {
@@ -153,6 +154,7 @@ export const ZONES: Zone[] = [
       e('Arnold Press', 'ÉPAULES', 8, 12, 'Redescends lentement en refaisant la rotation inverse jusqu’à la position de départ.'),
       e('Développé Haltères Debout', 'ÉPAULES', 8, 12, 'Serre les abdos et les fessiers, puis pousse les haltères au dessus de la tête.'),
       e('Tirage Menton (Upright Row)', 'ÉPAULES', 10, 12, 'Arrête quand les coudes arrivent à hauteur des épaules, puis redescends lentement.'),
+      e('Élévations Latérales (Machine)', 'ÉPAULES', 12, 15, 'L’extérieur des bras contre les coussins, monte les bras sur les côtés jusqu’à hauteur des épaules.'),
     ],
   },
   {

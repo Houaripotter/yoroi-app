@@ -1507,6 +1507,28 @@ export const FICHES_EXO: Record<string, FicheExo> = {
     ],
     securite: 'Règle les barres de sécurité du rack juste sous la hauteur de la box.',
   },
+  'Adducteurs Machine': {
+    consignes: [
+      'Assis, dos contre le dossier, coussins contre l’intérieur des genoux.',
+      'Serre les jambes l’une contre l’autre en contrôlant le mouvement.',
+      'Rouvre lentement sans laisser les plaques retomber.',
+    ],
+    erreurs: [
+      'Ouvrir trop grand au départ, au point de tirer dans l’aine.',
+      'Décoller le bassin du siège.',
+    ],
+  },
+  'Élévations Latérales (Machine)': {
+    consignes: [
+      'Règle le siège pour que tes épaules soient alignées avec l’axe de la machine.',
+      'L’extérieur des bras contre les coussins, monte les bras sur les côtés jusqu’à hauteur des épaules.',
+      'Redescends lentement sans laisser les plaques retomber.',
+    ],
+    erreurs: [
+      'Hausser les épaules vers les oreilles.',
+      'Monter les bras plus haut que les épaules.',
+    ],
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */

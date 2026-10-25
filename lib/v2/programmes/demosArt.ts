@@ -6,6 +6,7 @@ import type { ImageSourcePropType } from 'react-native';
 
 export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> = {
   abducteurs_machine: [require('../../../assets/exercices/demos/abducteurs_machine_a.webp'), require('../../../assets/exercices/demos/abducteurs_machine_b.webp')],
+  adducteurs_machine: [require('../../../assets/exercices/demos/adducteurs_machine_a.webp'), require('../../../assets/exercices/demos/adducteurs_machine_b.webp')],
   arnold_press: [require('../../../assets/exercices/demos/arnold_press_a.webp'), require('../../../assets/exercices/demos/arnold_press_b.webp')],
   banded_walks: [require('../../../assets/exercices/demos/banded_walks_a.webp'), require('../../../assets/exercices/demos/banded_walks_b.webp')],
   barre_au_front_skullcrusher: [require('../../../assets/exercices/demos/barre_au_front_skullcrusher_a.webp'), require('../../../assets/exercices/demos/barre_au_front_skullcrusher_b.webp')],
@@ -49,6 +50,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   ecartes_incline_halteres: [require('../../../assets/exercices/demos/ecartes_incline_halteres_a.webp'), require('../../../assets/exercices/demos/ecartes_incline_halteres_b.webp')],
   elevations_frontales_halteres: [require('../../../assets/exercices/demos/elevations_frontales_halteres_a.webp'), require('../../../assets/exercices/demos/elevations_frontales_halteres_b.webp')],
   elevations_laterales_halteres: [require('../../../assets/exercices/demos/elevations_laterales_halteres_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_halteres_b.webp')],
+  elevations_laterales_machine: [require('../../../assets/exercices/demos/elevations_laterales_machine_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_machine_b.webp')],
   elevations_laterales_poulie: [require('../../../assets/exercices/demos/elevations_laterales_poulie_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_poulie_b.webp')],
   extension_haltere_nuque_2_mains: [require('../../../assets/exercices/demos/extension_haltere_nuque_2_mains_a.webp'), require('../../../assets/exercices/demos/extension_haltere_nuque_2_mains_b.webp')],
   extension_triceps_poulie_barre: [require('../../../assets/exercices/demos/extension_triceps_poulie_barre_a.webp'), require('../../../assets/exercices/demos/extension_triceps_poulie_barre_b.webp')],
@@ -96,6 +98,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   pompes_poids_du_corps: [require('../../../assets/exercices/demos/pompes_poids_du_corps_a.webp'), require('../../../assets/exercices/demos/pompes_poids_du_corps_b.webp')],
   presse_a_cuisses: [require('../../../assets/exercices/demos/presse_a_cuisses_a.webp'), require('../../../assets/exercices/demos/presse_a_cuisses_b.webp')],
   presse_a_cuisses_pieds_hauts: [require('../../../assets/exercices/demos/presse_a_cuisses_pieds_hauts_a.webp'), require('../../../assets/exercices/demos/presse_a_cuisses_pieds_hauts_b.webp')],
+  pull_over_haltere: [require('../../../assets/exercices/demos/pull_over_haltere_a.webp'), require('../../../assets/exercices/demos/pull_over_haltere_b.webp')],
   pull_over_poulie_haute: [require('../../../assets/exercices/demos/pull_over_poulie_haute_a.webp'), require('../../../assets/exercices/demos/pull_over_poulie_haute_b.webp')],
   push_press: [require('../../../assets/exercices/demos/push_press_a.webp'), require('../../../assets/exercices/demos/push_press_b.webp')],
   releve_de_jambes_sol: [require('../../../assets/exercices/demos/releve_de_jambes_sol_a.webp'), require('../../../assets/exercices/demos/releve_de_jambes_sol_b.webp')],
