@@ -50,6 +50,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   ecartes_incline_halteres: [require('../../../assets/exercices/demos/ecartes_incline_halteres_a.webp'), require('../../../assets/exercices/demos/ecartes_incline_halteres_b.webp')],
   elevations_frontales_halteres: [require('../../../assets/exercices/demos/elevations_frontales_halteres_a.webp'), require('../../../assets/exercices/demos/elevations_frontales_halteres_b.webp')],
   elevations_laterales_halteres: [require('../../../assets/exercices/demos/elevations_laterales_halteres_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_halteres_b.webp')],
+  elevations_laterales_machine: [require('../../../assets/exercices/demos/elevations_laterales_machine_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_machine_b.webp')],
   elevations_laterales_poulie: [require('../../../assets/exercices/demos/elevations_laterales_poulie_a.webp'), require('../../../assets/exercices/demos/elevations_laterales_poulie_b.webp')],
   extension_haltere_nuque_2_mains: [require('../../../assets/exercices/demos/extension_haltere_nuque_2_mains_a.webp'), require('../../../assets/exercices/demos/extension_haltere_nuque_2_mains_b.webp')],
   extension_triceps_poulie_barre: [require('../../../assets/exercices/demos/extension_triceps_poulie_barre_a.webp'), require('../../../assets/exercices/demos/extension_triceps_poulie_barre_b.webp')],
