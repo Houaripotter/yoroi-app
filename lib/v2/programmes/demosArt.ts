@@ -97,6 +97,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   reverse_lunges: [require('../../../assets/exercices/demos/reverse_lunges_a.webp'), require('../../../assets/exercices/demos/reverse_lunges_b.webp')],
   romanian_deadlift_halteres: [require('../../../assets/exercices/demos/romanian_deadlift_halteres_a.webp'), require('../../../assets/exercices/demos/romanian_deadlift_halteres_b.webp')],
   rotation_externe_elastique: [require('../../../assets/exercices/demos/rotation_externe_elastique_a.webp'), require('../../../assets/exercices/demos/rotation_externe_elastique_b.webp')],
+  roulette_abdos_abs_wheel: [require('../../../assets/exercices/demos/roulette_abdos_abs_wheel_a.webp'), require('../../../assets/exercices/demos/roulette_abdos_abs_wheel_b.webp')],
   rowing_barre_bent_over: [require('../../../assets/exercices/demos/rowing_barre_bent_over_a.webp'), require('../../../assets/exercices/demos/rowing_barre_bent_over_b.webp')],
   rowing_haltere_one_arm: [require('../../../assets/exercices/demos/rowing_haltere_one_arm_a.webp'), require('../../../assets/exercices/demos/rowing_haltere_one_arm_b.webp')],
   rowing_t_bar: [require('../../../assets/exercices/demos/rowing_t_bar_a.webp'), require('../../../assets/exercices/demos/rowing_t_bar_b.webp')],

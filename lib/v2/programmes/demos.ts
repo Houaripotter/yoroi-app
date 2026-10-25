@@ -32,6 +32,7 @@ export const MEME_MOUVEMENT: Record<string, string> = {
   banc_a_lombaires: 'hyperextensions',
   seated_leg_curl: 'leg_curl_assis',
   seated_calf_raise: 'mollets_assis_machine',
+  ab_rollout: 'roulette_abdos_abs_wheel',
 };
 
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
