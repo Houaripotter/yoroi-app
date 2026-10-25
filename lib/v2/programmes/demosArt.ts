@@ -8,6 +8,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   abducteurs_machine: [require('../../../assets/exercices/demos/abducteurs_machine_a.webp'), require('../../../assets/exercices/demos/abducteurs_machine_b.webp')],
   adducteurs_machine: [require('../../../assets/exercices/demos/adducteurs_machine_a.webp'), require('../../../assets/exercices/demos/adducteurs_machine_b.webp')],
   arnold_press: [require('../../../assets/exercices/demos/arnold_press_a.webp'), require('../../../assets/exercices/demos/arnold_press_b.webp')],
+  banded_walks: [require('../../../assets/exercices/demos/banded_walks_a.webp'), require('../../../assets/exercices/demos/banded_walks_b.webp')],
   barre_au_front_skullcrusher: [require('../../../assets/exercices/demos/barre_au_front_skullcrusher_a.webp'), require('../../../assets/exercices/demos/barre_au_front_skullcrusher_b.webp')],
   bird_dog: [require('../../../assets/exercices/demos/bird_dog_a.webp'), require('../../../assets/exercices/demos/bird_dog_b.webp')],
   box_jumps: [require('../../../assets/exercices/demos/box_jumps_a.webp'), require('../../../assets/exercices/demos/box_jumps_b.webp')],
