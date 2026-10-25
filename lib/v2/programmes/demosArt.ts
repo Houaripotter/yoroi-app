@@ -131,6 +131,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   tenue_trap_bar: [require('../../../assets/exercices/demos/tenue_trap_bar_a.webp'), require('../../../assets/exercices/demos/tenue_trap_bar_b.webp')],
   tirage_horizontal_seated_row: [require('../../../assets/exercices/demos/tirage_horizontal_seated_row_a.webp'), require('../../../assets/exercices/demos/tirage_horizontal_seated_row_b.webp')],
   tirage_horizontal_unilateral: [require('../../../assets/exercices/demos/tirage_horizontal_unilateral_a.webp'), require('../../../assets/exercices/demos/tirage_horizontal_unilateral_b.webp')],
+  tirage_manches_kumi_kata: [require('../../../assets/exercices/demos/tirage_manches_kumi_kata_a.webp'), require('../../../assets/exercices/demos/tirage_manches_kumi_kata_b.webp')],
   tirage_menton_upright_row: [require('../../../assets/exercices/demos/tirage_menton_upright_row_a.webp'), require('../../../assets/exercices/demos/tirage_menton_upright_row_b.webp')],
   tirage_poitrine_lat_pulldown: [require('../../../assets/exercices/demos/tirage_poitrine_lat_pulldown_a.webp'), require('../../../assets/exercices/demos/tirage_poitrine_lat_pulldown_b.webp')],
   tirage_serre_v_bar: [require('../../../assets/exercices/demos/tirage_serre_v_bar_a.webp'), require('../../../assets/exercices/demos/tirage_serre_v_bar_b.webp')],
