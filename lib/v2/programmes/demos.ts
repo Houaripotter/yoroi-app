@@ -28,6 +28,7 @@ export const MEME_MOUVEMENT: Record<string, string> = {
   diamond_push_ups: 'pompes_diamant',
   front_squat_crossfit: 'front_squat',
   mountain_climbers_hiit: 'mountain_climbers',
+  fentes_arriere: 'reverse_lunges',
 };
 
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
