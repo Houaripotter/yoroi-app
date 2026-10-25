@@ -29,6 +29,8 @@ export const MEME_MOUVEMENT: Record<string, string> = {
   front_squat_crossfit: 'front_squat',
   mountain_climbers_hiit: 'mountain_climbers',
   fentes_arriere: 'reverse_lunges',
+  banc_a_lombaires: 'hyperextensions',
+  seated_leg_curl: 'leg_curl_assis',
 };
 
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
