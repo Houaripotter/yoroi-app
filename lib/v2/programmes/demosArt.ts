@@ -63,6 +63,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   gainage_lateral: [require('../../../assets/exercices/demos/gainage_lateral_a.webp'), require('../../../assets/exercices/demos/gainage_lateral_b.webp')],
   glute_bridge: [require('../../../assets/exercices/demos/glute_bridge_a.webp'), require('../../../assets/exercices/demos/glute_bridge_b.webp')],
   goblet_squat: [require('../../../assets/exercices/demos/goblet_squat_a.webp'), require('../../../assets/exercices/demos/goblet_squat_b.webp')],
+  good_morning: [require('../../../assets/exercices/demos/good_morning_a.webp'), require('../../../assets/exercices/demos/good_morning_b.webp')],
   gripper_hand_grip: [require('../../../assets/exercices/demos/gripper_hand_grip_a.webp'), require('../../../assets/exercices/demos/gripper_hand_grip_b.webp')],
   hack_squat: [require('../../../assets/exercices/demos/hack_squat_a.webp'), require('../../../assets/exercices/demos/hack_squat_b.webp')],
   hanging_knee_raise: [require('../../../assets/exercices/demos/hanging_knee_raise_a.webp'), require('../../../assets/exercices/demos/hanging_knee_raise_b.webp')],
