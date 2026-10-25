@@ -28,12 +28,15 @@ import WidgetKit
 final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   static let shared = MinuteurMoteur()
   static let maxActifs = 4
-  /// La sonnerie forte dure 2 min (son et vibrations), puis s'arrete toute seule.
-  static let dureeSonnerieMax: TimeInterval = 120
+  /// La sonnerie forte dure 5 min (son et vibrations), puis s'arrete toute seule.
+  /// 24 octobre 2026 (Houari : « trop timide » face au minuteur d'Apple) : 2 min devient 5 min.
+  static let dureeSonnerieMax: TimeInterval = 300
   /// Ecart entre deux salves quand l'app sonne elle meme (premier plan).
-  static let ecartSonnerie: TimeInterval = 2
+  /// 24 octobre 2026 : 2 s devient 1,2 s, la salve suivante repart presque sans blanc.
+  static let ecartSonnerie: TimeInterval = 1.2
   /// Ecart entre deux vibrations de la session d'alarme (watchOS demande plus de 0 et 60 s au plus).
-  static let ecartVibrationAlarme: TimeInterval = 1.5
+  /// 24 octobre 2026 : 1,5 s devient 0,8 s, les vibrations s'enchainent sans pause.
+  static let ecartVibrationAlarme: TimeInterval = 0.8
   /// La notification de secours tombe 2 s apres la fin : l'alarme la retire avant si elle a sonne.
   static let retardFilet: TimeInterval = 2
 
@@ -46,7 +49,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   private(set) var etat: EtatMinuteurs = .initial
   /// Minuteur termine (ecran Termine), nil sinon.
   private(set) var sonnerie: MinuteurActif?
-  /// Vrai tant que le son et les vibrations se repetent (2 min au plus).
+  /// Vrai tant que le son et les vibrations se repetent (5 min au plus).
   private(set) var sonneEnBoucle = false
   /// Etat de la session d'alarme du dernier minuteur, affiche en mode Modifier pour les essais.
   private(set) var etatAlarme = ""
@@ -400,7 +403,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   // MARK: Session d'alarme
 
   /// Vibration repetee par watchOS lui meme, ecran eteint compris : notification, echec et nouvel
-  /// essai en alternance toutes les 1,5 s pendant 2 min, puis une par minute jusqu'a Arreter ou la fin
+  /// essai en alternance toutes les 0,8 s pendant 5 min, puis une par minute jusqu'a Arreter ou la fin
   /// de la session (watchOS n'accepte pas d'intervalle nul, et une session planifiee ne peut etre
   /// fermee par l'app qu'au premier plan). App pas active : watchOS affiche en plus son alerte d'alarme.
   private func vibrerParSession() {

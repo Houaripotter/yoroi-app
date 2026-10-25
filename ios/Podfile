@@ -67,10 +67,17 @@ target 'Yoroi' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
-    # Fix Xcode recent : la verification des modules echoue sur SDWebImageSVGCoder
+    # Fix Xcode 15+ VerifyModule pour les pods SDWebImage*Coder.
+    # Dans Xcode 15+, ENABLE_MODULE_VERIFIER = NO ne controle plus que la
+    # verification des interfaces Swift (.swiftinterface). La verification ObjC
+    # est controlee par MODULE_VERIFIER_SUPPORTED_LANGUAGES : une liste vide
+    # desactive completement la phase VerifyModule pour ce target.
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
+        if target.name =~ /\ASDWebImage.+Coder\z/
+          config.build_settings['MODULE_VERIFIER_SUPPORTED_LANGUAGES'] = ''
+        end
       end
     end
 

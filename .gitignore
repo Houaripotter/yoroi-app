@@ -99,3 +99,6 @@ GoogleService-Info.plist
 # Copies en double créées par iCloud
 * 2.*
 * 2
+
+# fichiers temporaires des traductions
+scripts/i18n/tmp/

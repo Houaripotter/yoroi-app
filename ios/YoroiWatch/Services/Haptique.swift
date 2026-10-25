@@ -64,12 +64,12 @@ enum Haptique {
   static func decompteMinuteur() { jouer(.click) }
 
   /// Minuteur termine, app au premier plan : les vibrations les plus marquees de watchOS
-  /// (notification, echec, nouvel essai) avec leur son systeme, rejouees toutes les 2 s pendant
-  /// 2 min au plus. Toujours fort, quel que soit le reglage : c'est une alarme.
+  /// (notification, echec, nouvel essai) avec leur son systeme, rejouees toutes les
+  /// 1,2 s pendant 5 min au plus (24 octobre 2026 : plus dense, sans blanc entre deux salves). Toujours fort, quel que soit le reglage : c'est une alarme.
   /// WKInterfaceDevice.play ne joue que app active : ecran eteint, c'est la session d'alarme
   /// (notifyUser) qui vibre.
   static func alarmeMinuteur() {
-    suite([.notification, .failure, .retry], ecart: 0.45)
+    suite([.notification, .failure, .retry], ecart: 0.35)
   }
 
   static func pause() { jouer(.stop) }
