@@ -140,7 +140,7 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
             key={o.key}
             onPress={() => (o.href ? router.push(o.href as any) : ouvrirPartage())}
             accessibilityRole="button"
-            accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.a11y}
+            accessibilityLabel={o.key === 'partager' && pastille ? traduire("{0}. Une nouvelle carte t’attend", o.a11y) : o.key === 'zones' ? traduire('{0}. En bêta', o.a11y) : o.a11y}
           >
             <View style={{ width: 80, alignItems: 'center', gap: 6 }}>
               <View
@@ -167,6 +167,12 @@ export function RaccourcisDuJour(_props: { water?: number; waterGoal?: number } 
                   <IconePartager />
                 )}
               </View>
+              {o.key === 'zones' ? (
+                // 25 octobre 2026 (Houari : « un petit logo beta sur Quoi faire ») : l'outil est encore jeune
+                <View pointerEvents="none" style={{ position: 'absolute', top: -2, right: 2, paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 7, backgroundColor: theme.colors.accent, borderWidth: 2, borderColor: P.paper }}>
+                  <Ink size={9} weight="black" color="#FFFFFF" style={{ letterSpacing: 0.4 }}>{traduire('BÊTA')}</Ink>
+                </View>
+              ) : null}
               {o.key === 'partager' && pastille ? (
                 <View pointerEvents="none" style={{ position: 'absolute', top: 1, right: 10, width: 15, height: 15, borderRadius: 8, backgroundColor: theme.colors.record, borderWidth: 2.5, borderColor: P.paper }} />
               ) : null}
