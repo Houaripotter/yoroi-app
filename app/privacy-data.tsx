@@ -195,7 +195,7 @@ export default function PrivacyDataScreen() {
   return (
     <EspaceScreen title={traduire("Tes données")} subtitle={traduire("Elles t’appartiennent.")}>
       <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
-        <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
+        <Glyph kind="sakura" size={150} color="rgba(255,255,255,0.08)" style={{ position: 'absolute', right: -24, top: -34 }} />
         <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: c.goldLight, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="lock" size={24} color={c.ink} stroke={2.4} />
         </View>

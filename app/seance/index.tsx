@@ -309,8 +309,8 @@ export default function OnSentraine() {
               <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={2}>{traduire(hero.title)}</Ink>
               <Ink size={13} color={c.onDarkSecondary} numberOfLines={1}>{traduire(hero.sub)}</Ink>
             </View>
-            <View style={{ position: 'absolute', left: 18, bottom: 16, minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: c.accent, justifyContent: 'center' }}>
-              <Ink size={15} weight="extraBold" color={c.onAccent}>{hero.cta}</Ink>
+            <View style={{ position: 'absolute', left: 18, bottom: 16, minHeight: 44, paddingHorizontal: 18, borderRadius: 14, backgroundColor: '#FFFFFF', justifyContent: 'center' }}>
+              <Ink size={15} weight="extraBold" color={c.accent}>{hero.cta}</Ink>
             </View>
           </Pressable>
         ) : null}

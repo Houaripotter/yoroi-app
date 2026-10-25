@@ -235,9 +235,9 @@ export default function Reglages() {
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, marginTop: 10, borderRadius: 22, backgroundColor: c.darkCard, overflow: 'hidden', transform: [{ scale: pressed ? 0.99 : 1 }] })}
           >
             <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: -4 }}>
-              <Torii size={84} color="#262A35" />
+              <Torii size={84} color="rgba(255,255,255,0.1)" />
             </View>
-            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#2C303C', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="wand" size={22} color={c.goldLight} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>

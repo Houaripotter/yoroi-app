@@ -80,9 +80,11 @@ const dojo: YoroiColors = {
   success: '#6E8C3A',
   successText: '#4F6B28',
   successTint: '#E4EADB',
-  darkCard: '#1D2029',
-  onDark: '#F2F1EC',
-  onDarkSecondary: '#B9BBC4',
+  // 25 octobre 2026 (Houari : « en noir c'est moche, ca donne pas envie ») : les grandes cartes passent
+  // du noir a l'indigo de l'app, comme « Je cree ma seance ». Texte blanc dessus : contraste 8,6:1
+  darkCard: '#2C4A84',
+  onDark: '#FFFFFF',
+  onDarkSecondary: '#D3DBEC',
   shadow: '#1D2029',
   transparent: 'transparent',
 };

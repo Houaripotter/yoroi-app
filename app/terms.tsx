@@ -136,7 +136,7 @@ export default function TermsScreen() {
   return (
     <EspaceScreen title={traduire("Conditions")}>
       <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 20, gap: 8, overflow: 'hidden' }}>
-        <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
+        <Glyph kind="sakura" size={150} color="rgba(255,255,255,0.08)" style={{ position: 'absolute', right: -24, top: -34 }} />
         <Ink size={26} weight="black" tight color={c.onDark}>{traduire("Conditions d’utilisation (EULA)")}</Ink>
         <Ink size={13} color={c.onDarkSecondary}>{traduire("Dernière mise à jour : {0}", LAST_UPDATE)}</Ink>
         <View style={{ alignSelf: 'flex-start', marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.goldLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>

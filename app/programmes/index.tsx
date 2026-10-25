@@ -95,11 +95,11 @@ export default function ProgrammesScreen() {
               <Ink size={17} weight="extraBold" color={c.onDark} numberOfLines={2}>{traduire('Jour {0}, {1}', suite.index + 1, traduire(suite.jour.titre))}</Ink>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-              <Pressable onPress={commencer} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 16, backgroundColor: pressed ? c.accentPressed : c.accent, flexDirection: 'row', alignItems: 'center', gap: 8 })}>
-                <Icon name="play" size={16} color={c.onAccent} />
-                <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire('Commencer')}</Ink>
+              <Pressable onPress={commencer} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 16, backgroundColor: pressed ? c.accentTint : '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 8 })}>
+                <Icon name="play" size={16} color={c.accent} />
+                <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Commencer')}</Ink>
               </Pressable>
-              <Pressable onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: suite.programme.id } }); }} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 16, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? '#3B3F52' : '#2F3243' })}>
+              <Pressable onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: suite.programme.id } }); }} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 16, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.16)' })}>
                 <Ink size={15} weight="extraBold" color={c.onDark}>{traduire('Voir le programme')}</Ink>
               </Pressable>
             </View>

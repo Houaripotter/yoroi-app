@@ -345,7 +345,7 @@ export default function BackupHistoryScreen() {
         <EspaceHeader title={traduire("Mes sauvegardes")} />
 
         <View style={{ borderRadius: 22, backgroundColor: c.darkCard, padding: 18, gap: 14, overflow: 'hidden' }}>
-          <Glyph kind="sakura" size={150} color="#242833" style={{ position: 'absolute', right: -24, top: -34 }} />
+          <Glyph kind="sakura" size={150} color="rgba(255,255,255,0.08)" style={{ position: 'absolute', right: -24, top: -34 }} />
           <View style={{ gap: 4 }}>
             <Ink size={44} weight="black" tight color={c.onDark}>{loading ? ' ' : String(backups.length)}</Ink>
             <Ink size={14} color={c.onDarkSecondary}>

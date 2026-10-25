@@ -107,7 +107,7 @@ export function SessionToday({ trainings, target, femme }: { trainings: Training
   // l'accueil consulte : il renvoie vers l'onglet Seances, le lancement se fait avec le bouton +
   return (
     <Press onPress={() => router.push('/seances' as any)} accessibilityRole="button" accessibilityLabel={traduire("{0} : {1}. Voir tes séances", target.over, target.title)}>
-      <View style={{ minHeight: 132, borderRadius: 22, backgroundColor: P.ink, overflow: 'hidden', flexDirection: 'row' }}>
+      <View style={{ minHeight: 132, borderRadius: 22, backgroundColor: paletteSombre() ? P.ink : '#2C4A84', overflow: 'hidden', flexDirection: 'row' }}>
         <View style={{ flex: 1, padding: 18, paddingRight: 6, justifyContent: 'center', gap: 4 }}>
           <Ink size={13} weight="extraBold" color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight} numberOfLines={2}>
             {target.over}
@@ -116,7 +116,7 @@ export function SessionToday({ trainings, target, femme }: { trainings: Training
             {traduire(target.title)}
           </Ink>
           {target.sub ? (
-            <Ink size={13} weight="medium" color={paletteSombre() ? '#4A4E5A' : '#B9BBC4'} numberOfLines={2}>
+            <Ink size={13} weight="medium" color={paletteSombre() ? '#4A4E5A' : '#D3DBEC'} numberOfLines={2}>
               {traduire(target.sub)}
             </Ink>
           ) : null}

@@ -108,7 +108,7 @@ export default function RadarPerformanceScreen() {
 
         {insight && reliable ? (
           <Enter i={2}>
-            <Card style={{ flexDirection: 'row', gap: 12, backgroundColor: P.ink, borderColor: P.ink }}>
+            <Card style={{ flexDirection: 'row', gap: 12, backgroundColor: paletteSombre() ? P.ink : '#2C4A84', borderColor: paletteSombre() ? P.ink : '#2C4A84' }}>
               <Icon name="bolt" size={22} color={paletteSombre() ? P_CLAIR.goldDark : P.goldLight} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Ink size={15} weight="bold" color={P.white} style={{ lineHeight: 21 }}>
