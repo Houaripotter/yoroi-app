@@ -2,7 +2,7 @@
  * Bouton + v2 (vague 39) : deux usages, dans cet ordre.
  * 1. Seance : tes sports favoris pour noter une seance faite en quelques touchers (mode seance faite,
  *    pas de chrono), Dicte ta seance mis en valeur, le creneau prevu aujourd'hui, Refaire ta derniere,
- *    Seance passee (date au choix), l'import de la montre quand Apple Sante ou Health Connect est relie,
+ *    (25 octobre 2026) Mes séances, tes seances enregistrees, Seance passee (date au choix), l'import de la montre quand Apple Sante ou Health Connect est relie,
  *    et le direct avec chrono en second. (24 octobre 2026) La seance du programme en cours en tete, sinon
  *    l'entree Programmes en bas de la carte.
  * 2. Corps : Pesee (poids) et Pesee par photo lue par ton IA (BALANCE 3, cote a cote), Balance connectee (composition, importee d'Apple Sante si relie),
@@ -41,6 +41,7 @@ import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { chargerProgrammeActif, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { routeDuJour } from '@/lib/v2/programmes/lancer';
+import { chargerMesSeances } from '@/lib/v2/seance/mesSeances';
 
 type Other = { key: string; title: string; sub: string; href: string; params?: Record<string, string> };
 
@@ -61,6 +62,8 @@ export default function Ajouter() {
   const [more, setMore] = useState(false);
   // 24 octobre 2026 : seance du programme en cours (lib/v2/programmes)
   const [prog, setProg] = useState<{ route: { pathname: string; params: Record<string, string> }; titre: string } | null>(null);
+  // 25 octobre 2026 : tes seances enregistrees (lib/v2/seance/mesSeances.ts)
+  const [mesNoms, setMesNoms] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -94,6 +97,9 @@ export default function Ajouter() {
         setProg(s ? { route: routeDuJour(s.programme, s.jour, semaineDuProgramme(a!)), titre: traduire('Jour {0}, {1}', s.index + 1, traduire(s.jour.titre)) } : null);
       })
       .catch(() => setProg(null));
+    chargerMesSeances()
+      .then((l) => setMesNoms(l.map((s) => s.nom)))
+      .catch(() => setMesNoms([]));
     // Apple Sante ou Health Connect relie : l'import de la montre et de la balance apparait
     getSanteSource()
       .then((s) => setProvider(s.mode === 'live' ? s.provider : null))
@@ -243,7 +249,14 @@ export default function Ajouter() {
             {last ? (
               <QuickRow first={!slot && !prog} label={traduire("Refaire ta dernière")} title={sessionTitle(last)} onPress={repeatLast} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5" {...accentStroke} /></Svg>} />
             ) : null}
-            <QuickRow first={!slot && !last && !prog} label={traduire("Séance passée")} title={traduire("Un autre jour, date au choix")} onPress={() => open('/seance/deja-faite')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></Svg>} />
+            <QuickRow
+              first={!slot && !last && !prog}
+              label={traduire("Mes séances")}
+              title={mesNoms.length === 0 ? traduire("Tes séances à toi, à refaire en un appui") : mesNoms.length <= 2 ? mesNoms.join(', ') : traduire("{0}, {1} et {2} autres", mesNoms[0], mesNoms[1], mesNoms.length - 2)}
+              onPress={() => open('/mes-seances')}
+              icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z" {...accentStroke} /></Svg>}
+            />
+            <QuickRow label={traduire("Séance passée")} title={traduire("Un autre jour, date au choix")} onPress={() => open('/seance/deja-faite')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></Svg>} />
             {provider ? (
               <QuickRow
                 label={traduire("Ta montre, via {0}", provider)}

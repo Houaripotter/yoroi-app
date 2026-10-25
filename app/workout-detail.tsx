@@ -46,6 +46,7 @@ import { RouteHero } from '@/components/yoroi/v2/seances/RouteHero';
 import { appleDuration, applePace, hrStats, lowerBounds } from '@/lib/v2/seances/workoutMath';
 import { appleTemperature, appleHumidity, clockOf, zoneClock, zoneRangeLabel } from '@/lib/v2/seances/appleExtras';
 import { BackButton, BigButton, EmptyState, Glass, Hanko, RoundIcon, SectionTitle, Stat, tap } from '@/components/yoroi/v2/seances/ui';
+import { EnregistrerSeance } from '@/components/yoroi/v2/seance/fin/EnregistrerSeance';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { INTENSITES } from '@/lib/v2/intensite';
 import { P, blancA } from '@/components/yoroi/livePalette';
@@ -981,6 +982,9 @@ export default function WorkoutDetailScreen() {
               </View>
             </Glass>
           ) : null}
+
+          {/* 25 octobre 2026 : garder cette seance dans Mes séances, pour la refaire en un appui */}
+          {params.demo === '1' || !t.id ? null : <EnregistrerSeance trainingId={t.id} marge={0} />}
 
           {params.demo === '1' ? null : (
             <View style={{ gap: 10, marginTop: 8 }}>

@@ -85,6 +85,8 @@ export type MuscuDraft = DraftBase & {
   programme?: { id: string; jourId: string };
   /** le repos a ete regle a la main pendant la seance : il remplace le repos prevu par le programme */
   reposManuel?: boolean;
+  /** 25 octobre 2026 : lancee depuis « Mes séances » (lib/v2/seance/mesSeances.ts), marquee faite a l'enregistrement */
+  maSeance?: string;
 };
 
 export type RoundIntensity = 'detendu' | 'technique' | 'guerre';

@@ -49,6 +49,7 @@ import { MuscleMap, MuscleScale } from '@/components/yoroi/v2/seances/MuscleMap'
 import { WeekHero } from '@/components/yoroi/v2/seances/WeekHero';
 import { NextUp, findNextSlot } from '@/components/yoroi/v2/seances/NextUp';
 import { ProgrammeCard } from '@/components/yoroi/v2/seances/ProgrammeCard';
+import { MesSeancesCarte } from '@/components/yoroi/v2/seances/MesSeancesCarte';
 import { HistoryCard } from '@/components/yoroi/v2/seances/HistoryCard';
 import { MonthCard } from '@/components/yoroi/v2/seances/MonthMarks';
 import { ExampleFrame } from '@/components/yoroi/v2/seances/Example';
@@ -248,6 +249,9 @@ export default function Seances() {
 
         {/* 24 octobre 2026 : programmes d'entrainement, ton programme en cours */}
         <ProgrammeCard femme={femme} onOpen={() => router.push('/programmes' as any)} />
+
+        {/* 25 octobre 2026 : tes seances enregistrees, a refaire en un appui */}
+        <MesSeancesCarte />
 
         {/* Derniere seance */}
         {lastVM && last ? (

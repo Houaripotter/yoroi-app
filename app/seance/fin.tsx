@@ -8,6 +8,7 @@
  * 4. ton cœur et tes techniques quand ils existent ;
  * 5. « Et maintenant ? » : le prochain jour du programme ou le prochain creneau ;
  * 6. ta note et ton ressenti, en compact. En bas : Créer ma carte, Terminer.
+ * (25 octobre 2026) Avant la note : « Enregistrer cette séance » dans Mes séances (EnregistrerSeance).
  * Aucune XP ni sceau ici : la gamification vit dans l'onglet Dojo. Seule exception, le passage
  * de rang, celebre en plein ecran. Animations coupees si le telephone les reduit.
  * Parametre : id de la seance enregistree.
@@ -54,6 +55,7 @@ import { RecordsSeance } from '@/components/yoroi/v2/seance/fin/Records';
 import { DetailsSeance } from '@/components/yoroi/v2/seance/fin/Details';
 import { EtMaintenant } from '@/components/yoroi/v2/seance/fin/EtMaintenant';
 import { NoteCompacte } from '@/components/yoroi/v2/seance/fin/NoteCompacte';
+import { EnregistrerSeance } from '@/components/yoroi/v2/seance/fin/EnregistrerSeance';
 import { useMouvementReduit } from '@/components/yoroi/v2/seance/fin/useMouvementReduit';
 import { choisirTuiles, ligneComparaison } from '@/components/yoroi/v2/seance/fin/logique';
 import type { CleTuile } from '@/components/yoroi/v2/seance/fin/logique';
@@ -67,7 +69,7 @@ export default function SeanceFin() {
   const c = theme.colors;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; maSeance?: string }>();
   // 18 octobre 2026 : charges et tonnage dans l'unite du reglage (kg ou lb), stockage en kilos
   const unite = useUnitePoids();
   const id = Number(params.id);
@@ -365,6 +367,9 @@ export default function SeanceFin() {
                   }
                 : null}
             />
+
+            {/* 25 octobre 2026 : Mes séances, enregistrer cette seance ou mettre a jour celle d'origine */}
+            {result && id ? <EnregistrerSeance trainingId={id} maSeanceId={typeof params.maSeance === 'string' ? params.maSeance : undefined} /> : null}
 
             {/* 6. Ta note et ton ressenti (lus par le detail, le radar et la montre) */}
             {result && id ? <NoteCompacte trainingId={id} combat={isCombat} /> : null}

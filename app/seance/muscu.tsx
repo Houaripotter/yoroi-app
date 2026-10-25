@@ -2,7 +2,8 @@
  * Seance de musculation en direct (maquette S2).
  * Chrono, exercices pre-remplis avec la derniere fois, series en un appui, repos automatique, records tamponnes.
  * Parametres : sport, label, slotId (creneau du planning), repeatId (refaire une seance), resume ('1'),
- * editId (modifier une seance), date, time, duration, clubId (saisie apres coup, aussi sous les anciens noms prefill...).
+ * editId (modifier une seance), date, time, duration, clubId (saisie apres coup, aussi sous les anciens noms prefill...),
+ * maSeance (une seance de « Mes séances », 25 octobre 2026).
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { accordSouleve, formatTonnage, tonnageOfSets } from '@/lib/v2/trainingWeek';
@@ -52,6 +53,7 @@ import { chargerMateriel, chargerProgrammeActif, estSemaineLegere, marquerJourFa
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { seanceExpress } from '@/lib/v2/programmes/express';
 import { lireZones, seanceZones, titreZones } from '@/lib/v2/programmes/zones';
+import { marquerFaite, maSeanceParId, seriesPrevues } from '@/lib/v2/seance/mesSeances';
 import { terminerActiviteSeance, useActiviteSeance } from '@/lib/v2/widgets/activiteSeance';
 import type { EtatSeance } from '@/lib/v2/widgets/activiteSeance';
 import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
@@ -189,6 +191,7 @@ export default function SeanceMuscu() {
           let exercises: LiveExercise[] = [];
           let label = params.label ?? slot?.label ?? undefined;
           let programme: MuscuDraft['programme'];
+          let maSeance: string | undefined;
           // 24 octobre 2026 : seance d'un programme, exercices et charges proposes (lib/v2/programmes/progression.ts)
           const prog = programmeParId(param1(raw.programme));
           const jourIdx = prog ? prog.jours.findIndex((j) => j.id === param1(raw.jour)) : -1;
@@ -230,6 +233,19 @@ export default function SeanceMuscu() {
             if (!label) label = !prog ? jour.titre : express > 0 ? traduire('{0}, express {1} min', traduire(jour.titre), express) : legere ? traduire('{0}, semaine légère', traduire(jour.titre)) : `${traduire(prog.titre)}, ${traduire(jour.titre)}`;
             if (prog) programme = { id: prog.id, jourId: jour.id };
           }
+          // 25 octobre 2026 : une seance de « Mes séances » ; les charges viennent de ta derniere fois sur chaque exercice
+          const maSeanceId = param1(raw.maSeance);
+          if (maSeanceId && exercises.length === 0) {
+            const [m, h] = await Promise.all([maSeanceParId(maSeanceId), histP]);
+            if (m) {
+              exercises = m.exos.map((e) => {
+                const hx = h.map.get(normName(e.nom));
+                return { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets: makeSets(seriesPrevues(e, hx?.lastSets), !!hx) };
+              });
+              if (!label) label = m.nom;
+              maSeance = m.id;
+            }
+          }
           if (params.repeatId) {
             const [t, h] = await Promise.all([getTrainingById(Number(params.repeatId)).catch(() => null), histP]);
             if (t?.exercises) {
@@ -252,6 +268,7 @@ export default function SeanceMuscu() {
             restTotal: 0,
             notes: params.notes ?? '',
             ...(programme ? { programme } : {}),
+            ...(maSeance ? { maSeance } : {}),
             intensity: params.intensity ?? null,
           };
         };
@@ -570,6 +587,7 @@ export default function SeanceMuscu() {
       );
       setFinishOpen(false);
       if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
+      if (draft.maSeance && !draft.editId) await marquerFaite(draft.maSeance, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         router.back();
@@ -577,7 +595,7 @@ export default function SeanceMuscu() {
       }
       if (!draft.form) await clearDraft();
       terminerActiviteSeance();
-      router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
+      router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id), ...(draft.maSeance ? { maSeance: draft.maSeance } : {}) } });
     } catch (err) {
       finished.current = false;
       logger.error('Enregistrement de la seance impossible', err);
