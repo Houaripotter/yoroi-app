@@ -18245,5 +18245,15 @@
 "{0} exercices, {1} séries. Garde-la dans Mes séances, avec un nom à toi.": "{0} exercises, {1} sets. Keep it in My workouts, with your own name.",
 "{0} séries au total": "{0} sets in total",
 "{0}, copie": "{0}, copy",
-"{0}, {1} et {2} autres": "{0}, {1} and {2} more"
+"{0}, {1} et {2} autres": "{0}, {1} and {2} more",
+"{0}, {1} et {2} autre": "{0}, {1} and {2} more",
+"Nouveau : {0}.": "New: {0}.",
+"Pas fait : {0}.": "Not done: {0}.",
+"L’ordre des exercices a changé.": "The order of the exercises changed.",
+"Tu ne sais pas ? Prends une séance toute faite": "Not sure? Pick a ready-made workout",
+"Fessiers et abdos": "Glutes and abs",
+"Ou touche le corps": "Or tap the body",
+"Choisis au moins une zone": "Pick at least one area",
+"sur le corps ou dans la liste": "on the body or in the list",
+"{0} exercice, environ {1} min": "{0} exercise, about {1} min"
 }

@@ -17,6 +17,8 @@ export type ExerciseHistory = {
   bestWeight: number;
   bestE1rm: number;
   count: number;
+  /** 25 octobre 2026 : les series de travail de la derniere fois, sans l'echauffement (Mes séances) */
+  travail?: SetValue[];
 };
 
 export type LibraryItem = { name: string; muscle: string; key: string };
@@ -69,7 +71,8 @@ export function buildExerciseHistory(trainings: Training[]): { map: Map<string, 
       const bestE = Math.max(...sets.map((s) => epley(s.weight, s.reps)));
       const h = map.get(key);
       if (!h) {
-        map.set(key, { name: e.name, muscle: e.muscle_group, lastDate: t.date.slice(0, 10), lastSets: sets, bestWeight: bestW, bestE1rm: bestE, count: 1 });
+        const travail = Array.isArray(e.setsData) ? setsOf({ setsData: e.setsData.filter((s) => (s as { type?: string })?.type !== 'warmup') }).filter((s) => s.weight > 0 || s.reps > 0) : [];
+        map.set(key, { name: e.name, muscle: e.muscle_group, lastDate: t.date.slice(0, 10), lastSets: sets, bestWeight: bestW, bestE1rm: bestE, count: 1, ...(travail.length ? { travail } : {}) });
         recent.push(key);
       } else {
         h.bestWeight = Math.max(h.bestWeight, bestW);

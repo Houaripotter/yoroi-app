@@ -12,7 +12,7 @@ import { DeviceEventEmitter } from 'react-native';
 import type { Exercise } from '@/lib/database';
 import { niceGroup } from './format';
 import { normName } from './history';
-import { traduire } from '@/lib/i18n/tr';
+import { LANG, traduire } from '@/lib/i18n/tr';
 
 const CLE = 'yoroi_mes_seances_v1';
 export const MES_SEANCES_EVENT = 'YOROI_MES_SEANCES_CHANGED';
@@ -89,7 +89,9 @@ export function nomParDefaut(exos: ExoSeance[], dejaPris: string[] = []): string
     if (m) compte.set(m, (compte.get(m) ?? 0) + 1);
   }
   const top = [...compte.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([m]) => traduire(m));
-  const base = top.length === 2 ? traduire('{0} et {1}', top[0], top[1]) : top.length === 1 ? top[0] : traduire('Ma séance');
+  // le second en minuscule (« Pectoraux et triceps »), sauf en allemand où les noms gardent leur majuscule
+  const second = top[1] && LANG !== 'de' ? top[1].toLocaleLowerCase() : top[1];
+  const base = top.length === 2 ? traduire('{0} et {1}', top[0], second) : top.length === 1 ? top[0] : traduire('Ma séance');
   return nomLibre(base, dejaPris);
 }
 
@@ -105,10 +107,28 @@ export function nomLibre(nom: string, dejaPris: string[]): string {
   return base;
 }
 
-/** Mêmes exercices, dans le même ordre, avec le même nombre de séries */
+/**
+ * Mêmes exercices, dans le même ordre. Le nombre de séries ne compte pas : une série sautée un jour de
+ * fatigue ne doit pas proposer de changer ta séance (relecture du 25 octobre 2026).
+ */
 export function memesExos(a: ExoSeance[], b: ExoSeance[]): boolean {
   if (a.length !== b.length) return false;
-  return a.every((x, i) => normName(x.nom) === normName(b[i].nom) && x.series === b[i].series);
+  return a.every((x, i) => normName(x.nom) === normName(b[i].nom));
+}
+
+/** Ce qui a changé entre ta séance enregistrée et celle que tu viens de faire, pour le dire clairement */
+export function differencesExos(avant: ExoSeance[], apres: ExoSeance[]): { ajoutes: string[]; retires: string[] } {
+  const a = new Set(avant.map((e) => normName(e.nom)));
+  const b = new Set(apres.map((e) => normName(e.nom)));
+  return { ajoutes: apres.filter((e) => !a.has(normName(e.nom))).map((e) => e.nom), retires: avant.filter((e) => !b.has(normName(e.nom))).map((e) => e.nom) };
+}
+
+/** La mise à jour : les exercices et l'ordre de la séance faite, sans perdre une série sautée ce jour-là */
+export function fusionnerExos(avant: ExoSeance[], apres: ExoSeance[]): ExoSeance[] {
+  return apres.map((e) => {
+    const v = avant.find((x) => normName(x.nom) === normName(e.nom));
+    return v ? { ...e, series: Math.max(e.series, v.series), reps: v.reps } : e;
+  });
 }
 
 /** Une séance déjà enregistrée avec exactement ces exercices */

@@ -18245,5 +18245,15 @@
 "{0} exercices, {1} séries. Garde-la dans Mes séances, avec un nom à toi.": "{0} Übungen, {1} Sätze. Behalte es in Meine Trainings, mit deinem eigenen Namen.",
 "{0} séries au total": "{0} Sätze insgesamt",
 "{0}, copie": "{0}, Kopie",
-"{0}, {1} et {2} autres": "{0}, {1} und {2} weitere"
+"{0}, {1} et {2} autres": "{0}, {1} und {2} weitere",
+"{0}, {1} et {2} autre": "{0}, {1} und {2} weitere",
+"Nouveau : {0}.": "Neu: {0}.",
+"Pas fait : {0}.": "Nicht gemacht: {0}.",
+"L’ordre des exercices a changé.": "Die Reihenfolge der Übungen hat sich geändert.",
+"Tu ne sais pas ? Prends une séance toute faite": "Unsicher? Nimm ein fertiges Training",
+"Fessiers et abdos": "Po und Bauch",
+"Ou touche le corps": "Oder tippe auf den Körper",
+"Choisis au moins une zone": "Wähle mindestens einen Bereich",
+"sur le corps ou dans la liste": "am Körper oder in der Liste",
+"{0} exercice, environ {1} min": "{0} Übung, etwa {1} Min."
 }

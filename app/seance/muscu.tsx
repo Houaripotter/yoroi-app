@@ -240,7 +240,7 @@ export default function SeanceMuscu() {
             if (m) {
               exercises = m.exos.map((e) => {
                 const hx = h.map.get(normName(e.nom));
-                return { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets: makeSets(seriesPrevues(e, hx?.lastSets), !!hx) };
+                return { id: uid(), name: e.nom, muscle: e.muscle ?? hx?.muscle, sets: makeSets(seriesPrevues(e, hx?.travail ?? hx?.lastSets), !!hx) };
               });
               if (!label) label = m.nom;
               maSeance = m.id;
@@ -587,7 +587,7 @@ export default function SeanceMuscu() {
       );
       setFinishOpen(false);
       if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
-      if (draft.maSeance && !draft.editId) await marquerFaite(draft.maSeance, draft.form && det ? det.date : undefined).catch(() => {});
+      if (draft.maSeance && !draft.editId && exercises.length > 0) await marquerFaite(draft.maSeance, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
         notificationAsync(NotificationFeedbackType.Success).catch(() => {});
         router.back();

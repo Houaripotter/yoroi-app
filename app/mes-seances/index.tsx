@@ -19,7 +19,6 @@ import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { P } from '@/components/yoroi/livePalette';
 import { relativeDay } from '@/lib/v2/seance/format';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
-import { seanceRoute } from '@/lib/v2/seance/sportVisuals';
 import { MES_SEANCES_EVENT, chargerMesSeances, dupliquerMaSeance, modifierMaSeance, supprimerMaSeance, totalSeries } from '@/lib/v2/seance/mesSeances';
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -42,8 +41,12 @@ export default function MesSeances() {
 
   const commencer = (s: MaSeance, faite = false) => {
     tap();
-    setMenu(null);
-    router.push({ pathname: seanceRoute(s.sport) as any, params: { sport: s.sport, maSeance: s.id, ...(faite ? { form: '1' } : {}) } });
+    const ouvrir = () => router.push({ pathname: '/seance/muscu' as any, params: { sport: s.sport, maSeance: s.id, ...(faite ? { form: '1' } : {}) } });
+    // depuis le menu : la feuille se ferme d'abord (deux fenetres a la fois se bloquent sur iPhone)
+    if (menu) {
+      setMenu(null);
+      setTimeout(ouvrir, 380);
+    } else ouvrir();
   };
   const modifier = (s: MaSeance | null) => {
     tap();

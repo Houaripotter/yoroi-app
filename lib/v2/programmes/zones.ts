@@ -140,6 +140,23 @@ export const ZONES: Zone[] = [
 export const zoneParId = (id: string): Zone | undefined => ZONES.find((z) => z.id === id);
 
 /**
+ * Raccourcis (25 octobre 2026, Houari : « tu pourrais vraiment mieux préparer ça ») : pour qui ne sait pas
+ * quoi choisir, les quatre séances que les débutants demandent le plus. Un appui remplace les zones choisies.
+ */
+export const RACCOURCIS_ZONES: { id: string; nom: string; zones: ZoneId[] }[] = [
+  { id: 'haut', nom: 'Haut du corps', zones: ['pectoraux', 'dos', 'epaules', 'bras'] },
+  { id: 'bas', nom: 'Bas du corps', zones: ['quadriceps', 'fessiers', 'ischios', 'mollets'] },
+  { id: 'fessiers_abdos', nom: 'Fessiers et abdos', zones: ['fessiers', 'abdos'] },
+  { id: 'entier', nom: 'Corps entier', zones: ['quadriceps', 'dos', 'pectoraux', 'fessiers', 'abdos'] },
+];
+
+/** Le raccourci qui correspond exactement aux zones choisies, sinon null */
+export function raccourciActif(choisies: readonly string[]): string | null {
+  const r = RACCOURCIS_ZONES.find((x) => x.zones.length === choisies.length && x.zones.every((z) => choisies.includes(z)));
+  return r ? r.id : null;
+}
+
+/**
  * La séance du jour pour les zones choisies : les gros muscles d'abord, les abdos à la fin (l'ordre de ZONES).
  * 1 ou 2 zones : tous leurs exercices ; 3 zones : 2 chacune ; au delà : 1 chacune, plus le 2e des premières
  * zones tant que la séance reste sous 7 exercices (environ 45 minutes avec 3 séries et 90 s de repos).

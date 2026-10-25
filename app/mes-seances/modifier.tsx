@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
@@ -52,6 +52,9 @@ export default function ModifierMaSeance() {
   const [hist, setHist] = useState<{ map: Map<string, ExerciseHistory>; recent: string[] }>({ map: new Map(), recent: [] });
   const [picker, setPicker] = useState(false);
   const [pret, setPret] = useState(!id);
+  // la seance a modifier existe encore (elle a pu etre supprimee entre temps)
+  const [trouvee, setTrouvee] = useState(false);
+  const [modifie, setModifie] = useState(false);
   const change = useRef(false);
   const enCours = useRef(false);
 
@@ -61,6 +64,7 @@ export default function ModifierMaSeance() {
         const [liste, s] = await Promise.all([chargerMesSeances(), id ? maSeanceParId(id) : Promise.resolve(null)]);
         setAutres(liste.filter((x) => x.id !== id).map((x) => x.nom));
         if (s) {
+          setTrouvee(true);
           setNom(s.nom);
           setSport(s.sport);
           setLignes(s.exos.map((e) => ({ ...e, cle: cle() })));
@@ -75,8 +79,12 @@ export default function ModifierMaSeance() {
       .catch(() => {});
   }, [id]);
 
-  const maj = (fn: (l: Ligne[]) => Ligne[]) => {
+  const marquerModifie = () => {
     change.current = true;
+    setModifie(true);
+  };
+  const maj = (fn: (l: Ligne[]) => Ligne[]) => {
+    marquerModifie();
     setLignes(fn);
   };
 
@@ -84,7 +92,7 @@ export default function ModifierMaSeance() {
     setPicker(false);
     // series et repetitions : celles de ta derniere fois sur cet exercice, sinon 3 x 10
     const h = hist.map.get(normName(name));
-    const depuis = h ? exosDepuisSeance([{ name, muscle_group: muscle ?? h.muscle, sets: h.lastSets.length, reps: 0, weight: 0, setsData: h.lastSets }])[0] : null;
+    const depuis = h ? exosDepuisSeance([{ name, muscle_group: muscle ?? h.muscle, sets: (h.travail ?? h.lastSets).length, reps: 0, weight: 0, setsData: h.travail ?? h.lastSets }])[0] : null;
     const e: ExoSeance = depuis ?? { nom: name, ...(muscle ? { muscle } : {}), series: 3, reps: 10, poids: 0 };
     maj((l) => [...l, { ...e, cle: cle() }].slice(0, MAX_EXOS));
     tap();
@@ -105,10 +113,11 @@ export default function ModifierMaSeance() {
     const exos: ExoSeance[] = lignes.map(({ cle: _c, ...e }) => e);
     const nomFinal = nom.trim() || nomParDefaut(exos, autres);
     try {
-      if (id) await modifierMaSeance(id, { nom: nomFinal, exos });
+      if (id && trouvee) await modifierMaSeance(id, { nom: nomFinal, exos });
       else await creerMaSeance(nomFinal, sport, exos);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       change.current = false;
+      setModifie(false);
       router.back();
     } catch (err) {
       enCours.current = false;
@@ -129,15 +138,17 @@ export default function ModifierMaSeance() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
+      {/* avec des changements, le retour passe par la fleche (qui demande confirmation), pas par le glissement */}
+      <Stack.Screen options={{ gestureEnabled: !modifie }} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={id ? traduire('Modifier ta séance') : traduire('Nouvelle séance')} onRetour={retour} repli="/mes-seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={id && trouvee ? traduire('Modifier ta séance') : traduire('Nouvelle séance')} onRetour={retour} repli="/mes-seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         <View style={{ gap: 6 }}>
           <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('NOM')}</Ink>
           <TextInput
             value={nom}
             onChangeText={(t) => {
-              change.current = true;
+              marquerModifie();
               setNom(t.slice(0, 40));
             }}
             placeholder={lignes.length ? nomParDefaut(lignes, autres) : traduire('Push lundi, Jambes, Haut du corps...')}

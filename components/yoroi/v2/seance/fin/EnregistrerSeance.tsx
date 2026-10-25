@@ -7,7 +7,7 @@
  * 4. sinon : « Enregistrer cette séance », avec un nom proposé (les deux muscles les plus travaillés).
  * Rien pour une séance sans exercices (combat, cardio).
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -17,7 +17,8 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { NomSeanceSheet } from '@/components/yoroi/v2/seance/NomSeance';
 import { getTrainingById } from '@/lib/database';
 import { logger } from '@/lib/security/logger';
-import { chargerMesSeances, creerMaSeance, exosDepuisSeance, memesExos, modifierMaSeance, nomParDefaut, seanceIdentique } from '@/lib/v2/seance/mesSeances';
+import { chargerMesSeances, creerMaSeance, differencesExos, exosDepuisSeance, fusionnerExos, memesExos, modifierMaSeance, nomParDefaut, seanceIdentique } from '@/lib/v2/seance/mesSeances';
+import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import type { ExoSeance, MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
@@ -38,6 +39,8 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
   const [sport, setSport] = useState('musculation');
   const [noms, setNoms] = useState<string[]>([]);
   const [nommer, setNommer] = useState(false);
+  // un seul enregistrement, meme avec deux appuis rapproches
+  const enCours = useRef(false);
 
   useEffect(() => {
     let vivant = true;
@@ -64,28 +67,46 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
     };
   }, [trainingId, maSeanceId]);
 
-  if (etat.cas === 'rien') return null;
-
   const voir = () => router.push('/mes-seances' as any);
   const enregistrer = async (nom: string) => {
+    if (enCours.current) return;
+    enCours.current = true;
     setNommer(false);
     try {
       const s = await creerMaSeance(nom, sport, exos);
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       setEtat({ cas: 'enregistree', nom: s.nom });
     } catch (err) {
+      enCours.current = false;
       logger.warn('Séance non enregistrée dans Mes séances', err);
     }
   };
   const mettreAJour = async (s: MaSeance) => {
+    if (enCours.current) return;
+    enCours.current = true;
     try {
-      await modifierMaSeance(s.id, { exos });
+      await modifierMaSeance(s.id, { exos: fusionnerExos(s.exos, exos) });
       notificationAsync(NotificationFeedbackType.Success).catch(() => {});
       setEtat({ cas: 'ajour', nom: s.nom });
     } catch (err) {
+      enCours.current = false;
       logger.warn('Séance non mise à jour', err);
     }
   };
+
+  // la feuille du nom reste montee quoi qu'il arrive : la demonter pendant sa fermeture bloque l'ecran sur iPhone
+  const feuille = (
+    <NomSeanceSheet
+      visible={nommer}
+      titre={traduire('Nomme ta séance')}
+      nomInitial={nomParDefaut(exos, noms)}
+      action={traduire('Enregistrer dans Mes séances')}
+      onClose={() => setNommer(false)}
+      onValider={enregistrer}
+    />
+  );
+
+  if (etat.cas === 'rien') return null;
 
   // les rappels discrets : une ligne, et le lien vers la liste
   if (etat.cas === 'dedans' || etat.cas === 'enregistree' || etat.cas === 'ajour') {
@@ -96,6 +117,7 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
           ? traduire('Enregistrée dans Mes séances : {0}', etat.nom)
           : traduire('{0} est à jour', etat.nom);
     return (
+      <>
       <Pressable
         onPress={voir}
         accessibilityRole="button"
@@ -108,12 +130,25 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
         <Ink size={14} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{texte}</Ink>
         <Ink size={13} weight="extraBold" color={c.accent}>{traduire('Voir')}</Ink>
       </Pressable>
+      {feuille}
+      </>
     );
   }
 
   const changee = etat.cas === 'changee' ? etat.seance : null;
   const nbSeries = exos.reduce((n, e) => n + e.series, 0);
+  // ce qui a change, dit clairement : « Nouveau : Leg Extension. Pas fait : Dips Banc. »
+  const diff = changee ? differencesExos(changee.exos, exos) : null;
+  const lignesDiff = diff
+    ? [
+        diff.ajoutes.length ? traduire('Nouveau : {0}.', diff.ajoutes.map((n) => traduire(nomFr(n))).join(', ')) : '',
+        diff.retires.length ? traduire('Pas fait : {0}.', diff.retires.map((n) => traduire(nomFr(n))).join(', ')) : '',
+        !diff.ajoutes.length && !diff.retires.length ? traduire('L’ordre des exercices a changé.') : '',
+      ].filter(Boolean).join(' ')
+    : '';
+  // meme forme que le rappel (un element, puis la feuille) : la feuille garde sa place et n'est jamais demontee
   return (
+    <>
     <View style={{ marginHorizontal: marge, marginTop: 18, borderRadius: 22, padding: 16, gap: 12, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
@@ -123,7 +158,7 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
           <Ink size={17} weight="black" tight>{changee ? traduire('Tu as changé {0}', changee.nom) : traduire('Refais-la en un appui')}</Ink>
           <Ink size={13} color={c.textSecondary}>
             {changee
-              ? traduire('Garder ces exercices pour la prochaine fois ?')
+              ? `${lignesDiff} ${traduire('Garder ces exercices pour la prochaine fois ?')}`
               : traduirePluriel(exos.length, exos.length > 1, '{0} exercice, {1} séries. Garde-la dans Mes séances, avec un nom à toi.', '{0} exercices, {1} séries. Garde-la dans Mes séances, avec un nom à toi.', exos.length, nbSeries)}
           </Ink>
         </View>
@@ -143,14 +178,8 @@ export function EnregistrerSeance({ trainingId, maSeanceId, marge = 22 }: { trai
           <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire('Enregistrer cette séance')}</Ink>
         </Pressable>
       )}
-      <NomSeanceSheet
-        visible={nommer}
-        titre={traduire('Nomme ta séance')}
-        nomInitial={nomParDefaut(exos, noms)}
-        action={traduire('Enregistrer dans Mes séances')}
-        onClose={() => setNommer(false)}
-        onValider={enregistrer}
-      />
     </View>
+    {feuille}
+    </>
   );
 }

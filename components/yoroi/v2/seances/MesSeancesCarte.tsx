@@ -12,7 +12,6 @@ import { P } from '@/components/yoroi/livePalette';
 import { Icon } from './Icon';
 import { SectionTitle, tap } from './ui';
 import { relativeDay } from '@/lib/v2/seance/format';
-import { seanceRoute } from '@/lib/v2/seance/sportVisuals';
 import { MES_SEANCES_EVENT, chargerMesSeances } from '@/lib/v2/seance/mesSeances';
 import type { MaSeance } from '@/lib/v2/seance/mesSeances';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -72,7 +71,7 @@ export function MesSeancesCarte() {
             <Pressable
               onPress={() => {
                 tap();
-                router.push({ pathname: seanceRoute(s.sport) as any, params: { sport: s.sport, maSeance: s.id } });
+                router.push({ pathname: '/seance/muscu' as any, params: { sport: s.sport, maSeance: s.id } });
               }}
               accessibilityRole="button"
               accessibilityLabel={traduire('Commencer {0}', s.nom)}

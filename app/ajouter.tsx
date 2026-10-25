@@ -252,7 +252,7 @@ export default function Ajouter() {
             <QuickRow
               first={!slot && !last && !prog}
               label={traduire("Mes séances")}
-              title={mesNoms.length === 0 ? traduire("Tes séances à toi, à refaire en un appui") : mesNoms.length <= 2 ? mesNoms.join(', ') : traduire("{0}, {1} et {2} autres", mesNoms[0], mesNoms[1], mesNoms.length - 2)}
+              title={mesNoms.length === 0 ? traduire("Tes séances à toi, à refaire en un appui") : mesNoms.length <= 2 ? mesNoms.join(', ') : traduirePluriel(mesNoms.length - 2, mesNoms.length > 3, "{0}, {1} et {2} autre", "{0}, {1} et {2} autres", mesNoms[0], mesNoms[1], mesNoms.length - 2)}
               onPress={() => open('/mes-seances')}
               icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z" {...accentStroke} /></Svg>}
             />

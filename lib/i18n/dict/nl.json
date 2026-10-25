@@ -18245,5 +18245,15 @@
 "{0} exercices, {1} séries. Garde-la dans Mes séances, avec un nom à toi.": "{0} oefeningen, {1} sets. Bewaar hem in Mijn trainingen, met je eigen naam.",
 "{0} séries au total": "{0} sets in totaal",
 "{0}, copie": "{0}, kopie",
-"{0}, {1} et {2} autres": "{0}, {1} en {2} andere"
+"{0}, {1} et {2} autres": "{0}, {1} en {2} andere",
+"{0}, {1} et {2} autre": "{0}, {1} en {2} andere",
+"Nouveau : {0}.": "Nieuw: {0}.",
+"Pas fait : {0}.": "Niet gedaan: {0}.",
+"L’ordre des exercices a changé.": "De volgorde van de oefeningen is veranderd.",
+"Tu ne sais pas ? Prends une séance toute faite": "Twijfel je? Kies een kant-en-klare training",
+"Fessiers et abdos": "Billen en buikspieren",
+"Ou touche le corps": "Of tik op het lichaam",
+"Choisis au moins une zone": "Kies minstens één zone",
+"sur le corps ou dans la liste": "op het lichaam of in de lijst",
+"{0} exercice, environ {1} min": "{0} oefening, ongeveer {1} min"
 }

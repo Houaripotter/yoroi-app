@@ -18245,5 +18245,15 @@
 "{0} exercices, {1} séries. Garde-la dans Mes séances, avec un nom à toi.": "{0} exercícios, {1} séries. Guarda-o nos Meus treinos, com um nome teu.",
 "{0} séries au total": "{0} séries no total",
 "{0}, copie": "{0}, cópia",
-"{0}, {1} et {2} autres": "{0}, {1} e mais {2}"
+"{0}, {1} et {2} autres": "{0}, {1} e mais {2}",
+"{0}, {1} et {2} autre": "{0}, {1} e mais {2}",
+"Nouveau : {0}.": "Novo: {0}.",
+"Pas fait : {0}.": "Não feito: {0}.",
+"L’ordre des exercices a changé.": "A ordem dos exercícios mudou.",
+"Tu ne sais pas ? Prends une séance toute faite": "Não sabes? Escolhe um treino já feito",
+"Fessiers et abdos": "Glúteos e abdominais",
+"Ou touche le corps": "Ou toca no corpo",
+"Choisis au moins une zone": "Escolhe pelo menos uma zona",
+"sur le corps ou dans la liste": "no corpo ou na lista",
+"{0} exercice, environ {1} min": "{0} exercício, cerca de {1} min"
 }
