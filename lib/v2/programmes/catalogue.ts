@@ -239,6 +239,7 @@ export const PROGRAMMES: Programme[] = [
     principes: [
       'Ordre conseillé : haut A, bas A, repos, haut B, bas B, deux jours de repos.',
       'Chaque muscle passe deux fois par semaine : à volume égal, c’est autant de muscle qu’une fois, et un peu plus de force.',
+      'Garde les mêmes exercices pendant 8 à 12 semaines : c’est comme ça que tu vois tes charges monter. Change un exercice seulement s’il te fait mal ou si tu stagnes plusieurs semaines.',
       PROGRESSION,
       RESERVE,
       LEGERE,
@@ -254,6 +255,7 @@ export const PROGRAMMES: Programme[] = [
           exo('Rowing Barre (Bent Over)', 'DOS', 4, 6, 10, 150),
           exo('Développé Haltères Assis', 'ÉPAULES', 3, 8, 12, 120),
           exo('Tirage Poitrine (Lat Pulldown)', 'DOS', 3, 8, 12, 120),
+          exo('Élévations Latérales (Haltères)', 'ÉPAULES', 3, 12, 15, 90),
           exo('Écartés à la Poulie Haute', 'PECTORAUX', 2, 12, 15, 90),
           exo('Curl Barre EZ', 'BICEPS', 2, 10, 12, 90),
           exo('Barre au front (Skullcrusher)', 'TRICEPS', 2, 10, 12, 90),
@@ -266,6 +268,7 @@ export const PROGRAMMES: Programme[] = [
         exos: [
           exo('Squat Barre Libre', 'JAMBES', 4, 6, 10, 180),
           exo('Deadlift Roumain', 'DOS', 3, 8, 10, 150),
+          exo('Leg Curl Assis', 'ISCHIOS', 3, 10, 12, 90),
           exo('Leg Extension', 'JAMBES', 3, 10, 15, 90),
           exo('Mollets Debout (Machine)', 'MOLLETS', 3, 10, 15, 90),
           exo('Crunch Poulie Haute', 'ABDOS', 3, 10, 15, 90),
@@ -281,7 +284,8 @@ export const PROGRAMMES: Programme[] = [
           exo('Élévations Latérales (Haltères)', 'ÉPAULES', 3, 12, 15, 90),
           exo('Tirage Horizontal (Seated Row)', 'DOS', 3, 10, 12, 120),
           exo('Curl Incliné (Haltères)', 'BICEPS', 2, 10, 12, 90),
-          exo('Extension Triceps Poulie (Corde)', 'TRICEPS', 2, 10, 15, 90),
+          exo('Oiseau Machine (Reverse Pec Deck)', 'ÉPAULES', 2, 12, 15, 90),
+          exo('Overhead Extension Poulie', 'TRICEPS', 2, 10, 15, 90, 'Bras au-dessus de la tête : le triceps travaille étiré, il grossit plus (Maeo 2023).'),
         ],
       },
       {
