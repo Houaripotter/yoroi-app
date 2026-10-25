@@ -1563,6 +1563,50 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Hausser les épaules vers les oreilles.',
     ],
   },
+  'Curl Haltères Simultané': {
+    consignes: [
+      'Debout, un haltère dans chaque main, paumes vers l’avant, coudes collés au corps.',
+      'Monte les deux haltères ensemble vers les épaules en pliant seulement les coudes.',
+      'Redescends lentement jusqu’aux bras tendus.',
+    ],
+    erreurs: [
+      'Balancer le buste pour lancer les haltères.',
+      'Avancer les coudes en haut du mouvement.',
+    ],
+  },
+  'Tirage Horizontal Unilatéral': {
+    consignes: [
+      'Assis face à la poulie basse, pieds sur l’appui, buste droit, une poignée dans une main.',
+      'Tire la poignée vers la hanche en ramenant le coude en arrière.',
+      'Reviens lentement jusqu’au bras tendu, sans tourner le buste.',
+    ],
+    erreurs: [
+      'Tourner le buste pour tirer plus loin.',
+      'Arrondir le dos en allant chercher la poignée.',
+    ],
+  },
+  'Clamshells': {
+    consignes: [
+      'Allongé sur le côté, genoux pliés, pieds l’un sur l’autre, tête posée sur le bras.',
+      'Ouvre le genou du dessus en gardant les pieds collés.',
+      'Referme lentement sans laisser le bassin basculer en arrière.',
+    ],
+    erreurs: [
+      'Rouler le bassin en arrière pour ouvrir plus.',
+      'Décoller les pieds l’un de l’autre.',
+    ],
+  },
+  'Crunch Inversé': {
+    consignes: [
+      'Allongé sur le dos, bras le long du corps, hanches et genoux pliés à 90 degrés.',
+      'Ramène les genoux vers la poitrine en enroulant le bassin, qui se décolle du sol.',
+      'Redescends lentement le bassin, sans poser les pieds.',
+    ],
+    erreurs: [
+      'Lancer les jambes avec de l’élan.',
+      'Pousser fort avec les mains au sol.',
+    ],
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */

@@ -156,6 +156,10 @@ const FICHES: Record<string, Fiche> = {
   'Smith Machine Squat': { besoin: [['machines']], remplacants: ['Squat Barre Libre', 'Goblet Squat', 'Presse à Cuisses'] },
   'Leg Curl Debout': { besoin: [['machines']], remplacants: ['Leg Curl Assis', 'Leg Curl Couché', 'Nordic Curl'] },
   'Low Row Machine': { besoin: [['machines']], remplacants: ['Tirage Horizontal (Seated Row)', 'Rowing Haltère (One Arm)', 'Inverted Row'] },
+  'Curl Haltères Simultané': { besoin: [['halteres']], remplacants: ['Curl Haltères Alterné', 'Curl Marteau (Hammer)', 'Curl Poulie Basse'] },
+  'Tirage Horizontal Unilatéral': { besoin: [['poulie']], remplacants: ['Rowing Haltère (One Arm)', 'Tirage Horizontal (Seated Row)', 'Inverted Row'] },
+  'Clamshells': { besoin: RIEN, remplacants: [] },
+  'Crunch Inversé': { besoin: RIEN, remplacants: [] },
   'Romanian Deadlift (Haltères)': { besoin: [['halteres'], ['kettlebell']], remplacants: ['Deadlift Roumain', 'Nordic Curl'] },
   'Nordic Curl': { besoin: RIEN, remplacants: [] },
   // FESSIERS

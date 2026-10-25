@@ -76,6 +76,7 @@ export const ZONES: Zone[] = [
       e('Kick-back Poulie', 'FESSIERS', 12, 15, 'Pousse la jambe vers l’arrière en serrant le fessier, jambe presque tendue.'),
       e('Sumo Deadlift', 'FESSIERS', 6, 10, 'Pieds très écartés, pointes vers l’extérieur, mains sur la barre entre les genoux.'),
       e('Donkey Kicks', 'FESSIERS', 12, 15, 'Monte une jambe vers l’arrière, genou plié à 90 degrés, plante du pied vers le plafond.', { poidsDuCorps: true }),
+      e('Clamshells', 'FESSIERS', 15, 20, 'Allongé sur le côté, genoux pliés, pieds l’un sur l’autre, tête posée sur le bras.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -114,6 +115,7 @@ export const ZONES: Zone[] = [
       e('Straight Arm Pulldown', 'DOS', 12, 15, 'Face à la poulie haute, barre en main, bras tendus, buste légèrement penché.'),
       e('Chest Supported Row', 'DOS', 10, 12, 'Allongé sur le ventre sur un banc incliné, poitrine sur le dossier, haltères en main.'),
       e('Low Row Machine', 'DOS', 10, 12, 'Assis, poitrine contre le coussin, pieds sur les appuis, poignées basses en main.'),
+      e('Tirage Horizontal Unilatéral', 'DOS', 10, 12, 'Assis face à la poulie basse, pieds sur l’appui, buste droit, une poignée dans une main.'),
     ],
   },
   {
@@ -184,6 +186,7 @@ export const ZONES: Zone[] = [
       e('Skullcrusher Haltères', 'TRICEPS', 10, 12, 'Allongé sur un banc plat, haltères au dessus de la poitrine, paumes face à face.'),
       e('Pompes Diamant', 'PECTORAUX', 6, 12, 'Mains rapprochées sous la poitrine, pouces et index qui forment un losange.', { poidsDuCorps: true }),
       e('Kickback Triceps (Haltère)', 'TRICEPS', 10, 15, 'Un genou et une main sur le banc, dos plat parallèle au sol, haltère dans l’autre main.'),
+      e('Curl Haltères Simultané', 'BICEPS', 10, 12, 'Debout, un haltère dans chaque main, paumes vers l’avant, coudes collés au corps.'),
     ],
   },
   {
@@ -230,6 +233,7 @@ export const ZONES: Zone[] = [
       e('Cable Crunch', 'ABDOS', 12, 20, 'À genoux face à la poulie haute, corde tenue de chaque côté de la tête.'),
       e('Mountain Climbers', 'ABDOS', 20, 30, 'Alterne les jambes à un rythme que tu peux tenir, hanches à hauteur des épaules.', { poidsDuCorps: true }),
       e('Sit-ups', 'ABDOS', 10, 15, 'Allongé sur le dos, genoux pliés, pieds à plat au sol, bras croisés sur la poitrine.', { poidsDuCorps: true }),
+      e('Crunch Inversé', 'ABDOS', 10, 15, 'Ramène les genoux vers la poitrine en enroulant le bassin, qui se décolle du sol.', { poidsDuCorps: true }),
     ],
   },
 ];
