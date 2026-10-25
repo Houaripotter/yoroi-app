@@ -128,6 +128,105 @@ export const PROGRAMMES: Programme[] = [
     ],
   },
   {
+    id: 'ppl-6j',
+    titre: 'Pousser, tirer, jambes, 6 jours',
+    accroche: 'Six jours par semaine : un cycle force du lundi au mercredi, un cycle hypertrophie du jeudi au samedi. Chaque muscle travaille deux fois.',
+    niveau: 'confirme',
+    objectif: 'muscle',
+    materiel: 'salle',
+    joursParSemaine: 6,
+    dureeMin: 60,
+    semaines: 8,
+    principes: [
+      'Ordre : pousser A, tirer A, jambes A, puis pousser B, tirer B, jambes B. Le dimanche, repos.',
+      'Cycle A, force : charges lourdes, 4 à 8 répétitions, longs repos. Cycle B, hypertrophie : 8 à 15 répétitions, plus d’exercices.',
+      'Chaque grand muscle reçoit 12 à 16 séries par semaine en deux séances : c’est le volume qui fait grandir le muscle, la fréquence aide surtout la force.',
+      'Six jours, c’est exigeant : dors bien et mange assez. Si la fatigue monte ou si tu débutes, passe au programme en 3 jours.',
+      PROGRESSION,
+      RESERVE,
+      LEGERE,
+    ],
+    sources: ['schoenfeld2016frequence', 'pelland2026', 'schoenfeld2017volume', 'bazvalle2022', 'schoenfeld2017charges', 'acsm2009', 'refalo2023', 'bell2025'],
+    jours: [
+      {
+        id: 'push-a',
+        titre: 'Pousser A, force : pectoraux, épaules, triceps',
+        muscles: ['pectoraux', 'epaules', 'triceps'],
+        exos: [
+          exo('Développé Couché (Barre)', 'PECTORAUX', 4, 4, 6, 180, 'Lourd : garde 1 à 2 répétitions en réserve, pas d’échec sur la barre.'),
+          exo('Développé Militaire Assis', 'ÉPAULES', 3, 5, 8, 150),
+          exo('Développé Incliné (Haltères)', 'PECTORAUX', 3, 6, 10, 150),
+          exo('Élévations Latérales (Haltères)', 'ÉPAULES', 3, 10, 15, 90),
+          exo('Barre au front (Skullcrusher)', 'TRICEPS', 3, 6, 10, 120),
+        ],
+      },
+      {
+        id: 'pull-a',
+        titre: 'Tirer A, force : dos, arrière d’épaule, biceps',
+        muscles: ['dos', 'epaules', 'biceps'],
+        exos: [
+          exo('Tractions (Pronation)', 'DOS', 4, 4, 8, 180, 'Trop facile ? Ajoute du poids. Trop dur ? Fais le tirage poitrine à la place.'),
+          exo('Rowing Barre (Bent Over)', 'DOS', 4, 5, 8, 150),
+          exo('Tirage Poitrine (Lat Pulldown)', 'DOS', 3, 8, 10, 120),
+          exo('Face Pull', 'DOS', 3, 12, 15, 90),
+          exo('Curl Barre EZ', 'BICEPS', 3, 6, 10, 90),
+        ],
+      },
+      {
+        id: 'legs-a',
+        titre: 'Jambes A, force',
+        muscles: ['jambes', 'fessiers', 'mollets'],
+        exos: [
+          exo('Squat Barre Libre', 'JAMBES', 4, 4, 6, 180),
+          exo('Deadlift Roumain', 'DOS', 3, 6, 8, 180, 'Hanches en arrière, barre contre les cuisses, dos plat.'),
+          exo('Presse à Cuisses', 'JAMBES', 3, 8, 10, 150),
+          exo('Leg Curl Couché', 'ISCHIOS', 3, 8, 12, 90),
+          exo('Mollets Debout (Machine)', 'MOLLETS', 4, 8, 12, 90),
+        ],
+      },
+      {
+        id: 'push-b',
+        titre: 'Pousser B, hypertrophie',
+        muscles: ['pectoraux', 'epaules', 'triceps'],
+        exos: [
+          exo('Développé Couché (Haltères)', 'PECTORAUX', 3, 8, 12, 120),
+          exo('Chest Press (Machine)', 'PECTORAUX', 3, 10, 12, 90),
+          exo('Écartés à la Poulie Haute', 'PECTORAUX', 3, 12, 15, 90),
+          exo('Développé Haltères Assis', 'ÉPAULES', 3, 8, 12, 120),
+          exo('Élévations Latérales (Machine)', 'ÉPAULES', 3, 12, 15, 90),
+          exo('Extension Triceps Poulie (Corde)', 'TRICEPS', 3, 10, 15, 90),
+          exo('Overhead Extension Poulie', 'TRICEPS', 2, 10, 15, 90),
+        ],
+      },
+      {
+        id: 'pull-b',
+        titre: 'Tirer B, hypertrophie',
+        muscles: ['dos', 'epaules', 'biceps'],
+        exos: [
+          exo('Tirage Poitrine (Lat Pulldown)', 'DOS', 3, 10, 12, 120),
+          exo('Tirage Horizontal (Seated Row)', 'DOS', 3, 10, 12, 120),
+          exo('Rowing Haltère (One Arm)', 'DOS', 3, 8, 12, 90),
+          exo('Oiseau Machine (Reverse Pec Deck)', 'ÉPAULES', 3, 12, 15, 90),
+          exo('Curl Marteau (Hammer)', 'BICEPS', 3, 10, 12, 90),
+          exo('Curl Poulie Basse', 'BICEPS', 2, 12, 15, 90),
+        ],
+      },
+      {
+        id: 'legs-b',
+        titre: 'Jambes B, hypertrophie et abdos',
+        muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
+        exos: [
+          exo('Squat Bulgare', 'JAMBES', 3, 8, 12, 120),
+          exo('Hip Thrust Barre', 'FESSIERS', 3, 8, 12, 120),
+          exo('Leg Extension', 'JAMBES', 3, 12, 15, 90),
+          exo('Leg Curl Assis', 'ISCHIOS', 3, 10, 15, 90),
+          exo('Mollets Assis (Machine)', 'MOLLETS', 4, 12, 15, 90),
+          exo('Relevé de jambes Suspendu', 'ABDOS', 3, 10, 15, 90, undefined, true),
+        ],
+      },
+    ],
+  },
+  {
     id: 'haut-bas-4j',
     titre: 'Haut et bas du corps',
     accroche: 'Quatre jours par semaine : chaque muscle travaillé deux fois, bon pour le muscle et pour la force.',
@@ -1638,7 +1737,7 @@ export const PROGRAMMES: Programme[] = [
 ];
 
 /** Ordre d'affichage : du plus simple au plus specialise */
-const ORDRE = ['debutant-fullbody-3j', 'fullbody-2j', 'ppl-3j', 'haut-bas-4j', 'split-5j', 'bas-du-corps-4j', 'fessiers-ventre-4j', 'pecs-priorite-4j', 'prise-de-masse-4j', 'perte-poids-4j', 'seche-4j', 'course-5km-8sem', 'course-10km-8sem', 'foot-prevention-2j', 'padel-raquette-2j', 'mobilite-3j', 'force-3j', 'combat-force-2j', 'grip-2j', 'cou-combat-2j', 'sac-debutant-3j', 'sac-cardio-3j', 'sac-mma-3j', 'sac-hiit-4sem', 'halteres-maison-3j', 'maison-3j'];
+const ORDRE = ['debutant-fullbody-3j', 'fullbody-2j', 'ppl-3j', 'ppl-6j', 'haut-bas-4j', 'split-5j', 'bas-du-corps-4j', 'fessiers-ventre-4j', 'pecs-priorite-4j', 'prise-de-masse-4j', 'perte-poids-4j', 'seche-4j', 'course-5km-8sem', 'course-10km-8sem', 'foot-prevention-2j', 'padel-raquette-2j', 'mobilite-3j', 'force-3j', 'combat-force-2j', 'grip-2j', 'cou-combat-2j', 'sac-debutant-3j', 'sac-cardio-3j', 'sac-mma-3j', 'sac-hiit-4sem', 'halteres-maison-3j', 'maison-3j'];
 PROGRAMMES.sort((a, b) => (ORDRE.indexOf(a.id) + 100) % 100 - (ORDRE.indexOf(b.id) + 100) % 100);
 
 export function programmeParId(id: string | null | undefined): Programme | undefined {

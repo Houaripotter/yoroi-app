@@ -47,7 +47,7 @@ export type Reponses = {
   objectif: ObjectifChoix;
   niveau: Niveau;
   /** jours par semaine que tu peux donner a la muscu */
-  jours: 2 | 3 | 4 | 5;
+  jours: 2 | 3 | 4 | 5 | 6;
   lieu: Materiel;
 };
 
@@ -147,6 +147,9 @@ export function conseillerProgramme(r: Reponses): Conseil {
   }
   if (r.jours === 4) {
     return { id: 'haut-bas-4j', pourquoi: 'Quatre jours : haut et bas du corps, chaque muscle travaillé deux fois par semaine.', autres: ['bas-du-corps-4j', 'split-5j'] };
+  }
+  if (r.jours === 6) {
+    return { id: 'ppl-6j', pourquoi: 'Six jours : pousser, tirer, jambes deux fois, un cycle force et un cycle hypertrophie. Chaque muscle travaille deux fois par semaine.', autres: ['split-5j', 'ppl-3j'] };
   }
   return { id: 'split-5j', pourquoi: 'Cinq jours : un groupe musculaire par jour, avec beaucoup de séries par muscle.', autres: ['haut-bas-4j'] };
 }

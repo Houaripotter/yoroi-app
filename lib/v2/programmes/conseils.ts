@@ -217,7 +217,7 @@ export const GUIDES: Guide[] = [
         ],
       },
     ],
-    programmes: ['split-5j', 'haut-bas-4j', 'ppl-3j', 'bas-du-corps-4j'],
+    programmes: ['split-5j', 'haut-bas-4j', 'ppl-3j', 'ppl-6j', 'bas-du-corps-4j'],
     sources: ['schoenfeld2017volume', 'bazvalle2022', 'pelland2026', 'refalo2023', 'schoenfeld2019frequence', 'schoenfeld2017charges', 'singer2024', 'morton2018', 'jager2017'],
   },
   {

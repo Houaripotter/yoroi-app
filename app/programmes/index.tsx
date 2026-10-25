@@ -236,7 +236,7 @@ const NIVEAUX: { key: Niveau; label: string }[] = [
   { key: 'intermediaire', label: '6 mois à 2 ans' },
   { key: 'confirme', label: 'Plus de 2 ans' },
 ];
-const JOURS: Reponses['jours'][] = [2, 3, 4, 5];
+const JOURS: Reponses['jours'][] = [2, 3, 4, 5, 6];
 
 function Questionnaire({ visible, onClose, onVoir }: { visible: boolean; onClose: () => void; onVoir: (id: string, lieu: Reponses['lieu']) => void }) {
   const { theme } = useYoroiTheme();
