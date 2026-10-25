@@ -45,6 +45,12 @@ export const ZONES: Zone[] = [
     exos: [
       e('Presse à Cuisses', 'JAMBES', 10, 15, 'La machine guide le geste : pieds à plat, pousse avec les talons, sans tendre les genoux à fond.'),
       e('Leg Extension', 'JAMBES', 10, 15, 'Monte les jambes tendues, redescends lentement en 2 à 3 secondes.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Fentes Avant (Haltères)', 'JAMBES', 8, 12, 'Descends jusqu’à ce que le genou arrière frôle le sol, buste droit.'),
+      e('Split Squat', 'JAMBES', 8, 12, 'Un pied devant, un pied derrière, écartés d’un grand pas, les deux au sol.'),
+      e('Squat Bulgare', 'JAMBES', 8, 12, 'Pied arrière sur un banc ou une chaise, pied avant un grand pas devant.'),
+      e('Step Up (Haltères)', 'JAMBES', 8, 12, 'Pousse sur la jambe du dessus pour monter, sans t’aider du pied resté au sol.'),
+      e('Presse à Cuisses (Pieds Hauts)', 'JAMBES', 10, 12, 'Pieds hauts sur la plateforme, largeur de hanches, dos collé au dossier.'),
     ],
   },
   {
@@ -55,6 +61,12 @@ export const ZONES: Zone[] = [
     exos: [
       e('Hip Thrust Machine', 'FESSIERS', 10, 15, 'Pousse avec les talons et serre les fesses une seconde en haut.'),
       e('Goblet Squat', 'JAMBES', 8, 12, 'Un haltère tenu contre la poitrine, descends le plus bas possible en gardant le dos droit : plus tu descends, plus les fessiers travaillent.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Hip Thrust Barre', 'FESSIERS', 8, 12, 'Monte les hanches jusqu’à aligner épaules, hanches et genoux, serre les fessiers.'),
+      e('Fentes Bulgares', 'FESSIERS', 8, 12, 'Pied arrière posé sur un banc, pied avant un grand pas devant.'),
+      e('Abducteurs Machine', 'FESSIERS', 12, 15, 'Assis, dos contre le dossier, coussins contre l’extérieur des genoux.'),
+      e('Cable Kickback', 'FESSIERS', 12, 15, 'Sangle à la cheville, face à la poulie basse, mains sur le support.'),
+      e('Single Leg Hip Thrust', 'FESSIERS', 8, 12, 'Haut du dos contre un banc, un pied au sol, l’autre jambe en l’air.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -65,6 +77,10 @@ export const ZONES: Zone[] = [
     exos: [
       e('Leg Curl Assis', 'ISCHIOS', 10, 15, 'Plie les jambes contre le boudin, reviens lentement sans laisser tomber la charge.'),
       e('Hyperextensions', 'DOS', 10, 15, 'Hanches sur le coussin, descends le buste, puis remonte jusqu’à faire une ligne droite avec les jambes, sans cambrer.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Romanian Deadlift (Haltères)', 'ISCHIOS', 8, 12, 'Descends jusqu’à l’étirement des ischios, puis reviens en poussant les hanches.'),
+      e('Nordic Curl', 'ISCHIOS', 4, 8, 'Descends le plus lentement possible, amortis avec les mains, puis repousse pour remonter.', { poidsDuCorps: true }),
+      e('Single Leg Deadlift', 'ISCHIOS', 8, 12, 'Penche le buste en poussant la hanche en arrière, l’autre jambe monte derrière.'),
     ],
   },
   {
@@ -75,6 +91,12 @@ export const ZONES: Zone[] = [
     exos: [
       e('Tirage Poitrine (Lat Pulldown)', 'DOS', 10, 12, 'Tire la barre vers le haut de la poitrine en pensant à descendre les coudes.'),
       e('Tirage Horizontal (Seated Row)', 'DOS', 10, 12, 'Tire vers le ventre, serre les omoplates, le buste ne bouge pas.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Rowing Haltère (One Arm)', 'DOS', 8, 12, 'Une main et un genou sur le banc, dos plat, l’autre pied au sol.'),
+      e('Tirage Serré (V-Bar)', 'DOS', 8, 12, 'Tire la poignée vers le haut de la poitrine, coudes près du corps.'),
+      e('Pull Over Poulie Haute', 'DOS', 10, 15, 'Face à la poulie, buste penché depuis les hanches, dos plat, bras presque tendus.'),
+      e('Inverted Row', 'DOS', 6, 12, 'Sous une barre ou une table solide, mains largeur d’épaules, corps tendu.', { poidsDuCorps: true }),
+      e('Tractions Neutres', 'DOS', 4, 10, 'Monte jusqu’au menton au dessus des poignées, redescends sous contrôle.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -85,6 +107,12 @@ export const ZONES: Zone[] = [
     exos: [
       e('Développé Incliné (Haltères)', 'PECTORAUX', 8, 12, 'Banc incliné à environ 30 degrés, descends les haltères sur le haut de la poitrine puis pousse vers le haut.'),
       e('Pompes (Poids du corps)', 'PECTORAUX', 6, 15, 'Trop dur ? Fais les genoux au sol. Le corps reste droit comme une planche.', { poidsDuCorps: true }),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Développé Couché (Haltères)', 'PECTORAUX', 8, 12, 'Descends sous contrôle jusqu’à l’étirement, puis pousse les haltères vers le haut.'),
+      e('Écartés à la Poulie Haute', 'PECTORAUX', 10, 15, 'Ramène les mains l’une vers l’autre devant le bas de la poitrine, puis remonte lentement.'),
+      e('Pec Deck (Butterfly)', 'PECTORAUX', 10, 15, 'Règle le siège pour que les poignées soient à hauteur de poitrine.'),
+      e('Dips (Focus Pectoraux)', 'PECTORAUX', 6, 12, 'Buste penché en avant, descends jusqu’à avoir les épaules au niveau des coudes.', { poidsDuCorps: true }),
+      e('Développé Couché (Barre)', 'PECTORAUX', 6, 10, 'Descends la barre sur le bas des pectoraux, puis pousse vers le haut en expirant.'),
     ],
   },
   {
@@ -95,6 +123,12 @@ export const ZONES: Zone[] = [
     exos: [
       e('Élévations Latérales (Haltères)', 'ÉPAULES', 12, 15, 'Monte les bras sur les côtés jusqu’aux épaules, haltères légers, sans élan.'),
       e('Développé Haltères Assis', 'ÉPAULES', 10, 12, 'Assis le dos calé, pousse les haltères au dessus de la tête sans cambrer.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Oiseau Machine (Reverse Pec Deck)', 'ÉPAULES', 12, 15, 'Assis face au dossier, poitrine contre le coussin, poignées à hauteur d’épaules.'),
+      e('Élévations Latérales (Poulie)', 'ÉPAULES', 12, 15, 'Coude légèrement fléchi, monte le bras sur le côté jusqu’à hauteur d’épaule.'),
+      e('Développé Militaire Assis', 'ÉPAULES', 8, 12, 'Recule un peu la tête et pousse la barre à la verticale, au dessus de la tête.'),
+      e('Face Pull', 'DOS', 12, 15, 'Tire la corde vers ton front en écartant les mains, coudes hauts.'),
+      e('Oiseau Haltères (Rear Delts)', 'ÉPAULES', 12, 15, 'Buste penché vers l’avant, dos plat, nuque dans l’alignement, haltères sous les épaules.'),
     ],
   },
   {
@@ -105,6 +139,14 @@ export const ZONES: Zone[] = [
     exos: [
       e('Curl Larry Scott (Pupitre)', 'BICEPS', 10, 12, 'Bras posés sur le pupitre, descends jusqu’aux bras presque tendus et contrôle bien le bas du mouvement.'),
       e('Overhead Extension Poulie', 'TRICEPS', 10, 15, 'Dos à la poulie, coudes pointés vers le haut, tends les bras au-dessus de la tête puis redescends en étirant bien l’arrière du bras.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Extension Triceps Poulie (Corde)', 'TRICEPS', 10, 15, 'Tends les bras vers le bas et écarte la corde en fin de mouvement.'),
+      e('Curl Marteau (Hammer)', 'BICEPS', 10, 12, 'Monte les haltères en gardant les paumes face à face, coudes fixes.'),
+      e('Barre au front (Skullcrusher)', 'TRICEPS', 8, 12, 'Plie seulement les coudes pour descendre la barre vers le front.'),
+      e('Curl Haltères Alterné', 'BICEPS', 10, 12, 'Debout, haltères le long du corps, coudes collés aux côtes.'),
+      e('Extension Haltère Nuque (2 mains)', 'TRICEPS', 10, 12, 'Plie les coudes pour descendre l’haltère derrière la nuque, coudes vers le haut.'),
+      e('Curl Barre EZ', 'BICEPS', 8, 12, 'Debout, barre EZ en main paumes vers l’avant, coudes le long du corps.'),
+      e('Dips Banc', 'TRICEPS', 8, 15, 'Mains sur le bord d’un banc ou d’une chaise stable, doigts vers l’avant.', { poidsDuCorps: true }),
     ],
   },
   {
@@ -116,6 +158,9 @@ export const ZONES: Zone[] = [
     exos: [
       e('Farmer Walk', 'AVANT-BRAS', 30, 45, 'Tu marches en portant lourd : tes mains serrent fort pour ne rien lâcher, c’est ça qui muscle tes avant-bras. Bras tendus, épaules basses, petits pas.', { secondes: true }),
       e('Wrist Roller', 'AVANT-BRAS', 3, 5, 'Bras tendus devant toi, enroule la corde en tournant les poignets jusqu’à remonter le poids, puis redescends lentement. Une montée et une descente font une répétition.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Dead Hang', 'AVANT-BRAS', 20, 40, 'Serre la barre et respire calmement pendant toute la tenue.', { secondes: true }),
+      e('Gripper / Hand Grip', 'AVANT-BRAS', 10, 15, 'Place la pince au creux de la main, poignée fixe contre la paume.'),
     ],
   },
   {
@@ -123,7 +168,11 @@ export const ZONES: Zone[] = [
     nom: 'Mollets',
     role: 'Les mollets : marcher, courir, sauter, monter sur la pointe des pieds.',
     muscles: ['mollets'],
-    exos: [e('Mollets Debout (Machine)', 'MOLLETS', 12, 20, 'Monte sur la pointe des pieds, tiens une seconde, descends le talon lentement.')],
+    exos: [e('Mollets Debout (Machine)', 'MOLLETS', 12, 20, 'Monte sur la pointe des pieds, tiens une seconde, descends le talon lentement.'),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Mollets Assis (Machine)', 'MOLLETS', 12, 20, 'Monte sur la pointe des pieds, tiens une seconde, redescends lentement.'),
+      e('Mollets Unilatéral', 'MOLLETS', 12, 20, 'Monte sur la pointe du pied, tiens une seconde, redescends lentement.', { poidsDuCorps: true }),
+    ],
   },
   {
     id: 'abdos',
@@ -133,6 +182,11 @@ export const ZONES: Zone[] = [
     exos: [
       e('Gainage Planche', 'ABDOS', 20, 40, 'Sur les avant bras, le corps droit, le ventre rentré. Respire normalement.', { secondes: true, poidsDuCorps: true }),
       e('Dead Bug', 'ABDOS', 8, 12, 'Allongé, bas du dos collé au sol, descends un bras et la jambe opposée lentement.', { poidsDuCorps: true }),
+      // 25 octobre 2026 (Houari : « plein d'exercices avec les images ») : tous animés, conseil tiré de la fiche technique
+      e('Crunch Poulie Haute', 'ABDOS', 10, 15, 'À genoux face à la poulie haute, corde tenue près de la tête.'),
+      e('Relevé de jambes (Sol)', 'ABDOS', 10, 15, 'Allongé sur le dos, mains sous les fesses ou le long du corps.', { poidsDuCorps: true }),
+      e('Gainage Latéral', 'ABDOS', 20, 40, 'Sur le côté, coude sous l’épaule, jambes tendues l’une sur l’autre.', { secondes: true, poidsDuCorps: true }),
+      e('Roulette Abdos (Abs Wheel)', 'ABDOS', 6, 12, 'Gaine fort, roule vers l’avant aussi loin que tu gardes le dos plat.', { poidsDuCorps: true }),
     ],
   },
 ];
@@ -165,7 +219,8 @@ export const MAX_EXOS_ZONES = 7;
 export function seanceZones(ids: readonly string[]): ExoProgramme[] {
   const choisies = ZONES.filter((z) => ids.includes(z.id));
   if (!choisies.length) return [];
-  const parZone = choisies.length <= 2 ? 3 : choisies.length === 3 ? 2 : 1;
+  // 25 octobre 2026 : une seule zone, 5 exercices (les zones en ont maintenant 6 a 9)
+  const parZone = choisies.length === 1 ? 5 : choisies.length === 2 ? 3 : choisies.length === 3 ? 2 : 1;
   const out: ExoProgramme[][] = choisies.map((z) => z.exos.slice(0, parZone));
   let total = out.reduce((t, l) => t + l.length, 0);
   for (let i = 0; i < choisies.length && total < MAX_EXOS_ZONES; i++) {
