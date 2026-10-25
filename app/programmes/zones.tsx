@@ -31,6 +31,9 @@ import type { ZoneId } from '@/lib/v2/programmes/zones';
 import { dureeEstimee } from '@/lib/v2/programmes/express';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
+// la carte programme : le torii, le chemin (meme image que le tampon « Quoi faire »)
+const TORII: ImageSourcePropType = require('@/assets/avatars/app/ornements/torii.webp');
+
 /** tes zones de ta derniere seance « Quoi faire ? » */
 const CLE = 'yoroi_zones_choisies_v1';
 
@@ -158,18 +161,22 @@ export default function ZonesScreen() {
             <Pressable
               onPress={() => { tap(); router.push('/programmes' as any); }}
               accessibilityRole="button"
-              accessibilityLabel={traduire('Trouve ton programme')}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 92, paddingVertical: 16, paddingLeft: 18, paddingRight: 14, borderRadius: 24, backgroundColor: c.darkCard, opacity: pressed ? 0.9 : 1 })}
+              accessibilityLabel={`${traduire('Trouve ton programme')}, ${traduire('PPL, Upper Lower, Full body : prouvés par des études')}`}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 112, paddingVertical: 16, paddingLeft: 18, paddingRight: 12, borderRadius: 24, backgroundColor: pressed ? P.white : c.accentTint, borderWidth: 1.5, borderColor: c.accent, overflow: 'hidden' })}
             >
-              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="calendar" size={22} color={c.onDark} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Ink size={11} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{traduire('PROUVÉ PAR DES ÉTUDES')}</Ink>
+                <Ink size={20} weight="black" tight>{traduire('Trouve ton programme')}</Ink>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  {['PPL', 'Upper Lower', 'Full body'].map((t) => (
+                    <View key={t} style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10, backgroundColor: P.white }}>
+                      <Ink size={12} weight="extraBold" color={c.accent}>{t}</Ink>
+                    </View>
+                  ))}
+                </View>
               </View>
-              <View style={{ flex: 1, gap: 4 }}>
-                <Ink size={12} weight="black" color="rgba(255,255,255,0.7)" style={{ letterSpacing: 0.6 }}>{traduire('UN PLAN POUR CHAQUE SEMAINE')}</Ink>
-                <Ink size={18} weight="black" tight color={c.onDark}>{traduire('Trouve ton programme')}</Ink>
-                <Ink size={13} weight="bold" color={c.onDark} style={{ opacity: 0.8 }}>{traduire('PPL, Upper Lower, Full body : prouvés par des études')}</Ink>
-              </View>
-              <Icon name="chevron" size={18} color={c.onDark} />
+              <Image source={TORII} style={{ width: 78, height: 78 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+              <Icon name="chevron" size={18} color={c.accent} />
             </Pressable>
 
             {/* ta derniere seance, quand elle n'est pas deja une des cartes */}
