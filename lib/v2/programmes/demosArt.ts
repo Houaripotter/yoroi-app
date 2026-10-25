@@ -137,4 +137,5 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   tractions_supination: [require('../../../assets/exercices/demos/tractions_supination_a.webp'), require('../../../assets/exercices/demos/tractions_supination_b.webp')],
   trap_bar_deadlift: [require('../../../assets/exercices/demos/trap_bar_deadlift_a.webp'), require('../../../assets/exercices/demos/trap_bar_deadlift_b.webp')],
   wrist_roller: [require('../../../assets/exercices/demos/wrist_roller_a.webp'), require('../../../assets/exercices/demos/wrist_roller_b.webp')],
+  y_raises: [require('../../../assets/exercices/demos/y_raises_a.webp'), require('../../../assets/exercices/demos/y_raises_b.webp')],
 };

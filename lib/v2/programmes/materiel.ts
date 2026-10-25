@@ -160,6 +160,7 @@ const FICHES: Record<string, Fiche> = {
   'Tirage Horizontal Unilatéral': { besoin: [['poulie']], remplacants: ['Rowing Haltère (One Arm)', 'Tirage Horizontal (Seated Row)', 'Inverted Row'] },
   'Clamshells': { besoin: RIEN, remplacants: [] },
   'Crunch Inversé': { besoin: RIEN, remplacants: [] },
+  'Y Raises': { besoin: [['halteres', 'banc'], ['halteres']], remplacants: ['Oiseau Haltères (Rear Delts)', 'Face Pull', 'Élévations Latérales (Haltères)'] },
   'Romanian Deadlift (Haltères)': { besoin: [['halteres'], ['kettlebell']], remplacants: ['Deadlift Roumain', 'Nordic Curl'] },
   'Nordic Curl': { besoin: RIEN, remplacants: [] },
   // FESSIERS

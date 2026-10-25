@@ -160,6 +160,7 @@ export const ZONES: Zone[] = [
       e('Développé Haltères Debout', 'ÉPAULES', 8, 12, 'Serre les abdos et les fessiers, puis pousse les haltères au dessus de la tête.'),
       e('Tirage Menton (Upright Row)', 'ÉPAULES', 10, 12, 'Arrête quand les coudes arrivent à hauteur des épaules, puis redescends lentement.'),
       e('Élévations Latérales (Machine)', 'ÉPAULES', 12, 15, 'L’extérieur des bras contre les coussins, monte les bras sur les côtés jusqu’à hauteur des épaules.'),
+      e('Y Raises', 'ÉPAULES', 10, 15, 'Monte les bras tendus devant toi en Y, pouces vers le haut, jusqu’à l’alignement avec le buste.'),
     ],
   },
   {

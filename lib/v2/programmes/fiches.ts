@@ -1607,6 +1607,18 @@ export const FICHES_EXO: Record<string, FicheExo> = {
       'Pousser fort avec les mains au sol.',
     ],
   },
+  'Y Raises': {
+    consignes: [
+      'Allongé sur le ventre sur un banc incliné, poitrine sur le dossier, haltères légers en main.',
+      'Monte les bras tendus devant toi en Y, pouces vers le haut, jusqu’à l’alignement avec le buste.',
+      'Redescends lentement jusqu’aux bras pendants.',
+    ],
+    erreurs: [
+      'Hausser les épaules vers les oreilles.',
+      'Décoller la poitrine du banc pour monter plus haut.',
+    ],
+    securite: 'Prends des haltères très légers : ce sont de petits muscles de l’épaule.',
+  },
 };
 
 /** La fiche technique d’un exercice, par son nom exact */
