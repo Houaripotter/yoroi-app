@@ -5,6 +5,8 @@
 import type { ImageSourcePropType } from 'react-native';
 
 export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> = {
+  abducteurs_machine: [require('../../../assets/exercices/demos/abducteurs_machine_a.webp'), require('../../../assets/exercices/demos/abducteurs_machine_b.webp')],
+  adducteurs_machine: [require('../../../assets/exercices/demos/adducteurs_machine_a.webp'), require('../../../assets/exercices/demos/adducteurs_machine_b.webp')],
   arnold_press: [require('../../../assets/exercices/demos/arnold_press_a.webp'), require('../../../assets/exercices/demos/arnold_press_b.webp')],
   barre_au_front_skullcrusher: [require('../../../assets/exercices/demos/barre_au_front_skullcrusher_a.webp'), require('../../../assets/exercices/demos/barre_au_front_skullcrusher_b.webp')],
   bird_dog: [require('../../../assets/exercices/demos/bird_dog_a.webp'), require('../../../assets/exercices/demos/bird_dog_b.webp')],
@@ -68,6 +70,7 @@ export const DEMOS: Record<string, [ImageSourcePropType, ImageSourcePropType]> =
   leg_curl_debout: [require('../../../assets/exercices/demos/leg_curl_debout_a.webp'), require('../../../assets/exercices/demos/leg_curl_debout_b.webp')],
   leg_extension: [require('../../../assets/exercices/demos/leg_extension_a.webp'), require('../../../assets/exercices/demos/leg_extension_b.webp')],
   low_row_machine: [require('../../../assets/exercices/demos/low_row_machine_a.webp'), require('../../../assets/exercices/demos/low_row_machine_b.webp')],
+  mollets_assis_machine: [require('../../../assets/exercices/demos/mollets_assis_machine_a.webp'), require('../../../assets/exercices/demos/mollets_assis_machine_b.webp')],
   mollets_debout_machine: [require('../../../assets/exercices/demos/mollets_debout_machine_a.webp'), require('../../../assets/exercices/demos/mollets_debout_machine_b.webp')],
   mollets_halteres_debout: [require('../../../assets/exercices/demos/mollets_halteres_debout_a.webp'), require('../../../assets/exercices/demos/mollets_halteres_debout_b.webp')],
   mountain_climbers: [require('../../../assets/exercices/demos/mountain_climbers_a.webp'), require('../../../assets/exercices/demos/mountain_climbers_b.webp')],
