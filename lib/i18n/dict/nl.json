@@ -19012,5 +19012,13 @@
 "Ton programme, ta séance du jour, tes réponses": "Je programma, je training van vandaag, je antwoorden",
 "Une séance toute faite, un appui et c’est parti": "Een kant en klare training, één tik en je gaat",
 "Voir tous les programmes": "Alle programma’s bekijken",
-"YOROI estime la date d’après tes séances": "YOROI schat de datum op basis van je trainingen"
+"YOROI estime la date d’après tes séances": "YOROI schat de datum op basis van je trainingen",
+"Programme": "Programma",
+"{0} semaine": "{0} week",
+"Lire le conseil": "Lees de tip",
+"Lire les {0} conseils": "Lees alle {0} tips",
+"Adapté": "Aangepast",
+"À passer": "Overslaan",
+"Charge : {0}. Garde {1} répétitions en réserve.": "Gewicht: {0}. Houd {1} herhalingen in reserve.",
+"Garde {0} répétitions en réserve.": "Houd {0} herhalingen in reserve."
 }

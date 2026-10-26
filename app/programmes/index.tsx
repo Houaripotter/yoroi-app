@@ -14,6 +14,8 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { BigButton, Chip, Glass, SectionTitle, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import type { IconName } from '@/components/yoroi/v2/seances/Icon';
+import { BlocReglages, BoutonIllustre, CarteIllustree, LigneReglage, Pastille, RondIcone } from '@/components/yoroi/v2/programmes/Habillage';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { etudesCourtes } from '@/lib/v2/programmes/sources';
@@ -109,36 +111,25 @@ export default function ProgrammesScreen() {
         </Pressable>
 
         {actif && suite ? (
-          <View style={{ borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden', padding: 18, gap: 12 }}>
-            {sportImage(sportDuProgramme(suite.programme), femme, 1) ? (
-              <Image source={sportImage(sportDuProgramme(suite.programme), femme, 1)!} style={{ position: 'absolute', right: -8, bottom: -60, width: 130, height: 180, opacity: 0.95 }} resizeMode="contain" />
-            ) : null}
-            <View style={{ gap: 3, maxWidth: '66%' }}>
-              <Ink size={13} weight="bold" color={c.onDarkSecondary}>{traduire('Ton programme, semaine {0}', semaineDuProgramme(actif))}</Ink>
-              <Ink size={22} weight="black" tight color={c.onDark}>{traduire(suite.programme.titre)}</Ink>
-              <Ink size={13} color={c.onDarkSecondary}>
-                {traduirePluriel(faitsCetteSemaine(actif), faitsCetteSemaine(actif) > 1, '{0} séance sur {1} cette semaine', '{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), suite.programme.joursParSemaine)}
-              </Ink>
-              {remplaces(suite.programme) > 0 ? <Ink size={12} weight="extraBold" color={c.onDark}>{texteSalle(remplaces(suite.programme))}</Ink> : null}
-            </View>
+          <CarteIllustree
+            surtitre={traduire('Ton programme, semaine {0}', semaineDuProgramme(actif))}
+            titre={traduire(suite.programme.titre)}
+            image={sportImage(sportDuProgramme(suite.programme), femme, 1)}
+            puces={[
+              { icone: 'check', t: traduirePluriel(faitsCetteSemaine(actif), faitsCetteSemaine(actif) > 1, '{0} séance sur {1} cette semaine', '{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), suite.programme.joursParSemaine) },
+              ...(remplaces(suite.programme) > 0 ? [{ icone: 'dumbbell' as const, t: texteSalle(remplaces(suite.programme)) }] : []),
+            ]}
+          >
             <View style={{ gap: 2, maxWidth: '66%' }}>
               <Ink size={12} weight="bold" color={c.onDarkSecondary}>{traduire('Prochaine séance')}</Ink>
               <Ink size={17} weight="extraBold" color={c.onDark} numberOfLines={2}>{traduire('Jour {0}, {1}', suite.index + 1, traduire(suite.jour.titre))}</Ink>
             </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-              <Pressable onPress={commencer} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 18, borderRadius: 16, backgroundColor: pressed ? c.accentTint : '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 8 })}>
-                <Icon name="play" size={16} color={c.accent} />
-                <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Commencer')}</Ink>
-              </Pressable>
-              <Pressable onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: suite.programme.id } }); }} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 16, borderRadius: 16, justifyContent: 'center', backgroundColor: pressed ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.16)' })}>
-                <Ink size={15} weight="extraBold" color={c.onDark}>{traduire('Voir le programme')}</Ink>
-              </Pressable>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+              <BoutonIllustre label={traduire('Commencer')} icone="play" onPress={commencer} />
+              <BoutonIllustre label={traduire('Voir le programme')} discret onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: suite.programme.id } }); }} />
             </View>
-          </View>
+          </CarteIllustree>
         ) : null}
-
-        {actif && suite ? <MessageDuJour programme={suite.programme} /> : null}
-        {actif && suite ? <PlanningProgramme programme={suite.programme} /> : null}
 
         {actif && suite && estSemaineLegere(actif) ? (
           <Glass style={{ gap: 8, borderColor: c.accent }}>
@@ -157,21 +148,27 @@ export default function ProgrammesScreen() {
         ) : null}
 
         {!actif || !suite ? (
-          <Glass style={{ gap: 10 }}>
-            <Ink size={18} weight="black" tight>{traduire('Tu ne sais pas lequel choisir ?')}</Ink>
-            <Ink size={14} color={c.textSecondary}>{traduire('Quatre questions et YOROI te conseille le programme qui colle à ton objectif, ton niveau et ton temps.')}</Ink>
-            <BigButton label={traduire('Trouver mon programme')} icon="target" onPress={() => setQuizOpen(true)} />
-          </Glass>
+          <CarteIllustree
+            titre={traduire('Tu ne sais pas lequel choisir ?')}
+            texte={traduire('Quatre questions et YOROI te conseille le programme qui colle à ton objectif, ton niveau et ton temps.')}
+            image={sportImage('musculation', femme, 1)}
+          >
+            <View style={{ flexDirection: 'row' }}>
+              <BoutonIllustre label={traduire('Trouver mon programme')} icone="target" onPress={() => { tap(); setQuizOpen(true); }} />
+            </View>
+          </CarteIllustree>
         ) : null}
 
-        <Glass onPress={() => setMaterielOpen(true)} label={traduire('Ma salle')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="dumbbell" size={22} color={c.ink} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={16} weight="black" tight>{traduire('Ma salle')}</Ink>
-            <Ink size={12} color={c.textSecondary} numberOfLines={2}>
-              {materiel === null
+        {/* 26 octobre 2026 : message du jour, planning et Ma salle rangés dans une seule carte */}
+        <BlocReglages>
+          {actif && suite ? <MessageDuJour programme={suite.programme} nu /> : null}
+          {actif && suite ? <PlanningProgramme programme={suite.programme} nu /> : null}
+          <LigneReglage
+            titre={traduire('Ma salle')}
+            icone="dumbbell"
+            onPress={() => { tap(); setMaterielOpen(true); }}
+            sous={
+              materiel === null
                 ? traduire('Dis ce que tu as : les exercices impossibles seront remplacés tout seuls.')
                 : materiel.length === 0
                   ? traduire('Sans matériel : tout se fait au poids du corps.')
@@ -179,22 +176,31 @@ export default function ProgrammesScreen() {
                     ? traduirePluriel(machines.length, machines.length > 1, '{0} machine cochée, les programmes s’adaptent à ta salle.', '{0} machines cochées, les programmes s’adaptent à ta salle.', machines.length)
                   : materiel.length === TOUT_LE_MATERIEL.length
                     ? traduire('Salle complète : les programmes tels quels.')
-                    : materiel.map((m) => traduire(EQUIPEMENTS.find((e) => e.id === m)?.label ?? m)).join(', ')}
-            </Ink>
-          </View>
-          <Icon name="chevron" size={18} color={c.textMuted} />
-        </Glass>
+                    : materiel.map((m) => traduire(EQUIPEMENTS.find((e) => e.id === m)?.label ?? m)).join(', ')
+            }
+          />
+        </BlocReglages>
 
         <SectionTitle title={traduire('Conseils')} sub={traduire('l’essentiel, appuyé sur des études')} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 10 }}>
-          {GUIDES.map((g) => (
-            <Glass key={g.id} onPress={() => router.push({ pathname: '/programmes/conseil/[id]' as any, params: { id: g.id } })} label={traduire(g.titre)} style={{ width: 210, minHeight: 120, gap: 6, justifyContent: 'space-between' }}>
+          {GUIDES.map((g, i) => (
+            <Pressable
+              key={g.id}
+              onPress={() => { tap(); router.push({ pathname: '/programmes/conseil/[id]' as any, params: { id: g.id } }); }}
+              accessibilityRole="button"
+              accessibilityLabel={`${traduire(g.titre)}. ${traduire(g.accroche)}`}
+              style={({ pressed }) => ({ width: 220, minHeight: 168, borderRadius: 24, padding: 16, gap: 12, justifyContent: 'space-between', backgroundColor: i % 2 === 0 ? c.accentTint : c.surface, borderWidth: i % 2 === 0 ? 0 : 1, borderColor: c.divider, opacity: pressed ? 0.85 : 1 })}
+            >
+              <RondIcone icone={ICONES_CONSEILS[i % ICONES_CONSEILS.length]} plein />
               <View style={{ gap: 4 }}>
                 <Ink size={16} weight="black" tight numberOfLines={2}>{traduire(g.titre)}</Ink>
-                <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire(g.accroche)}</Ink>
+                <Ink size={13} color={c.textSecondary} numberOfLines={2}>{traduire(g.accroche)}</Ink>
               </View>
-              <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Lire')}</Ink>
-            </Glass>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ink size={13} weight="extraBold" color={c.accent}>{traduire('Lire')}</Ink>
+                <Icon name="chevron" size={14} color={c.accent} />
+              </View>
+            </Pressable>
           ))}
         </ScrollView>
 
@@ -236,49 +242,45 @@ function dateCourte(iso: string): string {
   return `${d.getDate()} ${traduire(MOIS[d.getMonth()])}`;
 }
 
+/** Icônes des cartes Conseils, dans l'ordre */
+const ICONES_CONSEILS: IconName[] = ['flame', 'dumbbell', 'moon', 'scale', 'heart', 'target', 'book'];
+
+/** Une carte de programme : le personnage, le nom, une ligne, des puces, l'étoile */
 function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress, remplaces = 0 }: { p: Programme; femme: boolean; enCours: boolean; favori: boolean; onFavori: () => void; onPress: () => void; remplaces?: number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const img = sportImage(sportDuProgramme(p), femme, 0);
   return (
-    <Glass onPress={onPress} label={traduire(p.titre)} style={{ flexDirection: 'row', gap: 12, alignItems: 'center', overflow: 'hidden', borderColor: enCours ? c.accent : c.divider }}>
-      <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: c.fillSubtle, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
-        {img ? <Image source={img} style={{ width: 64, height: 86, marginBottom: -24 }} resizeMode="contain" /> : <Icon name="dumbbell" size={26} color={c.ink} />}
-      </View>
-      <View style={{ flex: 1, gap: 3 }}>
-        {enCours ? <Ink size={11} weight="extraBold" color={c.accent}>{traduire('EN COURS')}</Ink> : null}
-        <Ink size={16} weight="black" tight numberOfLines={2}>{traduire(p.titre)}</Ink>
-        <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire(p.accroche)}</Ink>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 3 }}>
-          <Pastille texte={traduire(libelleNiveau(p.niveau))} />
-          <Pastille texte={traduire('{0} j par semaine', p.joursParSemaine)} />
-          <Pastille texte={traduire('{0} min', p.dureeMin)} />
-          {p.sources.length ? <Pastille texte={traduirePluriel(p.sources.length, p.sources.length > 1, '{0} étude', '{0} études', p.sources.length)} accent /> : null}
-          {p.materiel !== 'salle' ? <Pastille texte={traduire(libelleMateriel(p.materiel))} /> : null}
-          {remplaces > 0 ? <Pastille texte={traduirePluriel(remplaces, remplaces > 1, '{0} adapté à ta salle', '{0} adaptés à ta salle', remplaces)} /> : null}
+    <Glass onPress={onPress} label={traduire(p.titre)} style={{ gap: 12, overflow: 'hidden', padding: 16, borderColor: enCours ? c.accent : c.divider, borderWidth: enCours ? 1.5 : 1 }}>
+      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+        <View style={{ width: 72, height: 72, borderRadius: 22, backgroundColor: c.accentTint, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
+          {img ? <Image source={img} style={{ width: 72, height: 96, marginBottom: -26 }} resizeMode="contain" /> : <Icon name="dumbbell" size={28} color={c.accent} />}
         </View>
+        <View style={{ flex: 1, gap: 4 }}>
+          {enCours ? <Ink size={11} weight="extraBold" color={c.accent} style={{ letterSpacing: 0.4 }}>{traduire('EN COURS')}</Ink> : null}
+          <Ink size={17} weight="black" tight numberOfLines={2}>{traduire(p.titre)}</Ink>
+          <Ink size={13} color={c.textSecondary} numberOfLines={2} style={{ lineHeight: 18 }}>{traduire(p.accroche)}</Ink>
+        </View>
+        <Pressable
+          onPress={() => { tap(); onFavori(); }}
+          accessibilityRole="button"
+          accessibilityState={{ selected: favori }}
+          accessibilityLabel={traduire(favori ? 'Retirer des favoris' : 'Ajouter aux favoris')}
+          hitSlop={6}
+          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -6, alignSelf: 'flex-start' }}
+        >
+          <Icon name="star" size={22} color={favori ? c.accent : c.textMuted} fill={favori ? c.accent : undefined} />
+        </Pressable>
       </View>
-      <Pressable
-        onPress={() => { tap(); onFavori(); }}
-        accessibilityRole="button"
-        accessibilityState={{ selected: favori }}
-        accessibilityLabel={traduire(favori ? 'Retirer des favoris' : 'Ajouter aux favoris')}
-        hitSlop={6}
-        style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -6 }}
-      >
-        <Icon name="star" size={22} color={favori ? c.accent : c.textMuted} fill={favori ? c.accent : undefined} />
-      </Pressable>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        <Pastille icone="gauge" texte={traduire(libelleNiveau(p.niveau))} />
+        <Pastille icone="calendar" texte={traduire('{0} j par semaine', p.joursParSemaine)} />
+        <Pastille icone="clock" texte={traduire('{0} min', p.dureeMin)} />
+        {p.sources.length ? <Pastille icone="book" texte={traduirePluriel(p.sources.length, p.sources.length > 1, '{0} étude', '{0} études', p.sources.length)} accent /> : null}
+        {p.materiel !== 'salle' ? <Pastille texte={traduire(libelleMateriel(p.materiel))} /> : null}
+        {remplaces > 0 ? <Pastille texte={traduirePluriel(remplaces, remplaces > 1, '{0} adapté à ta salle', '{0} adaptés à ta salle', remplaces)} /> : null}
+      </View>
     </Glass>
-  );
-}
-
-function Pastille({ texte, accent }: { texte: string; accent?: boolean }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  return (
-    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: c.fillSubtle }}>
-      <Ink size={11} weight={accent ? 'extraBold' : 'bold'} color={accent ? c.accent : c.textSecondary}>{texte}</Ink>
-    </View>
   );
 }
 

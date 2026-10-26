@@ -8,7 +8,7 @@ import { DeviceEventEmitter, Pressable, View } from 'react-native';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Chip, Glass, tap } from '@/components/yoroi/v2/seances/ui';
-import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import { RondIcone } from '@/components/yoroi/v2/programmes/Habillage';
 import { addWeeklyPlanItem, deleteWeeklyPlanItem, getWeeklyPlan } from '@/lib/database';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { chargerCreneaux, creneauxACreer, creneauxRestants, enregistrerCreneaux } from '@/lib/v2/programmes/agenda';
@@ -23,7 +23,8 @@ const HEURES = ['07:00', '12:00', '18:00', '19:30'];
 /** « 18 h », « 19 h 30 » */
 const libelleHeure = (h: string) => (h.endsWith(':00') ? `${Number(h.slice(0, 2))} h` : `${Number(h.slice(0, 2))} h ${h.slice(3, 5)}`);
 
-export function PlanningProgramme({ programme }: { programme: Programme }) {
+/** nu : sans carte autour, pour se ranger dans le bloc de réglages (BlocReglages, Habillage.tsx) */
+export function PlanningProgramme({ programme, nu }: { programme: Programme; nu?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [creneaux, setCreneaux] = useState<CreneauxProgramme | null>(null);
@@ -111,12 +112,11 @@ export function PlanningProgramme({ programme }: { programme: Programme }) {
   }, [cleJours, pourCeProgramme]); // eslint-disable-line react-hooks/exhaustive-deps
   const jours = joursChoisis.map((d) => traduire(JOURS[d])).join(', ');
 
+  const Cadre = nu ? View : Glass;
   return (
-    <Glass style={{ gap: 10 }}>
+    <Cadre style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="calendar" size={20} color={c.ink} />
-        </View>
+        <RondIcone icone="calendar" />
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="black" tight>{traduire('Dans mon planning')}</Ink>
           <Ink size={12} color={c.textSecondary}>
@@ -136,6 +136,6 @@ export function PlanningProgramme({ programme }: { programme: Programme }) {
           <Ink size={13} weight="extraBold" color={c.textSecondary}>{traduire('Retirer ces créneaux de mon planning')}</Ink>
         </Pressable>
       ) : null}
-    </Glass>
+    </Cadre>
   );
 }

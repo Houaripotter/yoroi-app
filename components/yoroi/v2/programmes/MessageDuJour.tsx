@@ -9,7 +9,7 @@ import { Pressable, View } from 'react-native';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Chip, Glass, tap } from '@/components/yoroi/v2/seances/ui';
-import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import { RondIcone } from '@/components/yoroi/v2/programmes/Habillage';
 import { notificationService } from '@/lib/notificationService';
 import { ouvrirReglagesSysteme, permissionPourRappels, rappelsAutorises } from '@/lib/v2/notifications/rappels';
 import { chargerProgrammeActif, joursDuProgramme } from '@/lib/v2/programmes/suivi';
@@ -23,7 +23,8 @@ const HEURES = [
   { h: '18:00', label: 'Le soir, 18 h' },
 ];
 
-export function MessageDuJour({ programme }: { programme: Programme }) {
+/** nu : sans carte autour, pour se ranger dans le bloc de réglages (BlocReglages, Habillage.tsx) */
+export function MessageDuJour({ programme, nu }: { programme: Programme; nu?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [actif, setActif] = useState(false);
@@ -79,8 +80,9 @@ export function MessageDuJour({ programme }: { programme: Programme }) {
     }
   };
 
+  const Cadre = nu ? View : Glass;
   return (
-    <Glass style={{ gap: 10 }}>
+    <Cadre style={{ gap: 10 }}>
       <Pressable
         onPress={() => { tap(); void appliquer(!actif); }}
         accessibilityRole="switch"
@@ -88,9 +90,7 @@ export function MessageDuJour({ programme }: { programme: Programme }) {
         accessibilityLabel={traduire('Recevoir la séance du jour')}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}
       >
-        <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="clock" size={20} color={c.ink} />
-        </View>
+        <RondIcone icone="clock" />
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="black" tight>{traduire('Le message du jour')}</Ink>
           <Ink size={12} color={c.textSecondary}>
@@ -113,6 +113,6 @@ export function MessageDuJour({ programme }: { programme: Programme }) {
           <Ink size={13} weight="extraBold" color={c.accent}>{traduire('Les notifications sont coupées pour YOROI : ouvre les réglages du téléphone.')}</Ink>
         </Pressable>
       ) : null}
-    </Glass>
+    </Cadre>
   );
 }

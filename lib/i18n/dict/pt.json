@@ -19012,5 +19012,13 @@
 "Ton programme, ta séance du jour, tes réponses": "Seu programa, seu treino do dia, suas respostas",
 "Une séance toute faite, un appui et c’est parti": "Um treino pronto, é só tocar e começar",
 "Voir tous les programmes": "Ver todos os programas",
-"YOROI estime la date d’après tes séances": "O YOROI estima a data com base nos seus treinos"
+"YOROI estime la date d’après tes séances": "O YOROI estima a data com base nos seus treinos",
+"Programme": "Programa",
+"{0} semaine": "{0} semana",
+"Lire le conseil": "Ler a dica",
+"Lire les {0} conseils": "Ler as {0} dicas",
+"Adapté": "Adaptado",
+"À passer": "Pule este",
+"Charge : {0}. Garde {1} répétitions en réserve.": "Carga: {0}. Guarde {1} repetições em reserva.",
+"Garde {0} répétitions en réserve.": "Guarde {0} repetições em reserva."
 }

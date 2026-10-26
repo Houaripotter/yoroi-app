@@ -13,6 +13,7 @@ import { POIDS_DE_DEPART, RESERVE_DEBUTANT, SOURCES_POIDS_DE_DEPART } from '@/li
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
 import { traduire } from '@/lib/i18n/tr';
+import { TuileGuide } from '@/components/yoroi/v2/programmes/Habillage';
 
 export function FeuillePoidsDeDepart({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { theme } = useYoroiTheme();
@@ -54,12 +55,13 @@ export function FeuillePoidsDeDepart({ visible, onClose }: { visible: boolean; o
 }
 
 /** La ligne de la page du programme, a cote de « Comment choisir ta charge » */
-export function CartePoidsDeDepart() {
+export function CartePoidsDeDepart({ tuile }: { tuile?: boolean } = {}) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [ouvert, setOuvert] = useState(false);
   return (
     <>
+      {tuile ? <TuileGuide icone="scale" titre={traduire('Trouver ton poids de départ')} sous={traduire('Tu débutes ? Quelle charge prendre, en quatre étapes.')} onPress={() => setOuvert(true)} /> : (
       <Glass onPress={() => setOuvert(true)} label={traduire('Trouver ton poids de départ')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="scale" size={20} color={c.accent} />
@@ -70,6 +72,7 @@ export function CartePoidsDeDepart() {
         </View>
         <Icon name="chevron" size={18} color={c.textMuted} />
       </Glass>
+      )}
       <FeuillePoidsDeDepart visible={ouvert} onClose={() => setOuvert(false)} />
     </>
   );

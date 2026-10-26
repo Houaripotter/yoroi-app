@@ -21,7 +21,7 @@ import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { P } from '@/components/yoroi/livePalette';
+import { BlocReglages, CarteIllustree, LigneReglage, PuceClaire } from '@/components/yoroi/v2/programmes/Habillage';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { FeuilleFinDeSeance, texteFin } from '@/components/yoroi/v2/programmes/FinDeSeance';
 import { getProfile } from '@/lib/database';
@@ -37,11 +37,7 @@ import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, enregistrerFin, joursDu
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire } from '@/lib/i18n/tr';
 
-// l'indigo des cartes illustrées (même teinte que « Note ta séance » et l'objectif), un peu plus clair la nuit
-const INDIGO = '#2C4A84';
-const INDIGO_SOMBRE = '#3A5BA0';
-const BLANC = '#FFFFFF';
-const BLANC_DOUX = 'rgba(255,255,255,0.82)';
+// 26 octobre 2026 : les couleurs viennent du thème (c.darkCard, c.onDark), comme « Note ta séance » (app/ajouter.tsx)
 // la même illustration que la pastille de l'accueil (corps, zones en rouge)
 const CORPS_ZONES: ImageSourcePropType = require('@/assets/avatars/app/ornements/zones_corps.webp');
 
@@ -85,7 +81,9 @@ export default function CoachScreen() {
     ? messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: traduire(jour.titre), femme })
     : null;
   const finPossible = !!p && (aDesJoursMuscu(p) || aDesJoursMarche(p));
-  const indigo = theme.isDark ? INDIGO_SOMBRE : INDIGO;
+  const indigo = c.darkCard;
+  const BLANC = c.onDark;
+  const BLANC_DOUX = c.onDarkSecondary;
   const img = sportImage(p ? sportDuProgramme(p) : 'musculation', femme, 1);
 
   const ouvrirQuiz = () => {
@@ -125,28 +123,18 @@ export default function CoachScreen() {
 
         {/* 1. LA GRANDE CARTE : sans programme, le questionnaire ; avec, la séance du jour */}
         {!p || !jour || !message ? (
-          <Pressable
+          <CarteIllustree
             onPress={ouvrirQuiz}
-            accessibilityRole="button"
-            accessibilityLabel={`${traduire('Je te trouve ton programme')}, ${traduire('4 questions, même si tu n’y connais rien')}`}
-            style={({ pressed }) => ({ borderRadius: 26, backgroundColor: indigo, overflow: 'hidden', padding: 20, minHeight: 190, justifyContent: 'space-between', opacity: pressed ? 0.92 : 1 })}
-          >
-            {img ? <Image source={img} style={{ position: 'absolute', right: -8, bottom: -50, width: 140, height: 196 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
-            <View style={{ maxWidth: '64%', gap: 6 }}>
-              <Ink size={12} weight="black" color={BLANC_DOUX} style={{ letterSpacing: 0.6 }}>{traduire('PROUVÉ PAR DES ÉTUDES')}</Ink>
-              <Ink size={23} weight="black" tight color={BLANC}>{traduire('Je te trouve ton programme')}</Ink>
-              <Ink size={14} weight="bold" color={BLANC_DOUX}>{traduire('4 questions, même si tu n’y connais rien')}</Ink>
-            </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, maxWidth: '64%', marginTop: 14 }}>
-              {['PPL', 'Upper Lower', 'Full body'].map((t) => (
-                <View key={t} style={{ height: 32, paddingHorizontal: 11, borderRadius: 16, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' }}>
-                  <Ink size={12} weight="extraBold" color={BLANC}>{t}</Ink>
-                </View>
-              ))}
-            </View>
-          </Pressable>
+            label={`${traduire('Je te trouve ton programme')}, ${traduire('4 questions, même si tu n’y connais rien')}`}
+            surtitre={traduire('PROUVÉ PAR DES ÉTUDES')}
+            titre={traduire('Je te trouve ton programme')}
+            texte={traduire('4 questions, même si tu n’y connais rien')}
+            image={img}
+            puces={['PPL', 'Upper Lower', 'Full body'].map((t) => ({ t }))}
+            style={{ minHeight: 190 }}
+          />
         ) : (
-          <View style={{ borderRadius: 26, backgroundColor: indigo, overflow: 'hidden', padding: 20, gap: 12 }}>
+          <View style={{ borderRadius: 26, backgroundColor: indigo, overflow: 'hidden', padding: 20, gap: 14 }}>
             {img ? <Image source={img} style={{ position: 'absolute', right: -8, top: 14, width: 112, height: 150 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
             <View style={{ maxWidth: '64%', gap: 6 }} accessibilityRole="summary">
               <Ink size={12} weight="black" color={BLANC_DOUX} style={{ letterSpacing: 0.6 }}>{traduire(p.titre).toLocaleUpperCase()}</Ink>
@@ -156,19 +144,14 @@ export default function CoachScreen() {
             </View>
             {message.seanceDuJour ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, maxWidth: '64%' }}>
-                {puces.map((x) => (
-                  <View key={x.t} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.16)' }}>
-                    <Icon name={x.icone} size={15} color={BLANC} />
-                    <Ink size={13} weight="extraBold" color={BLANC}>{x.t}</Ink>
-                  </View>
-                ))}
+                {puces.map((x) => <PuceClaire key={x.t} icone={x.icone} texte={x.t} />)}
               </View>
             ) : null}
             <Pressable
               onPress={commencer}
               accessibilityRole="button"
               accessibilityLabel={message.seanceDuJour ? `${traduire('Commencer')}, ${traduire(jour.titre)}` : traduire('Faire la prochaine séance maintenant')}
-              style={({ pressed }) => ({ minHeight: 58, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 16, marginTop: 4, backgroundColor: message.seanceDuJour ? (pressed ? '#E8ECF5' : BLANC) : pressed ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.16)' })}
+              style={({ pressed }) => ({ minHeight: 58, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 16, marginTop: 4, backgroundColor: message.seanceDuJour ? (pressed ? BLANC_DOUX : BLANC) : pressed ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.16)' })}
             >
               <Icon name="play" size={20} color={message.seanceDuJour ? indigo : BLANC} />
               <Ink size={message.seanceDuJour ? 17 : 15} weight="black" color={message.seanceDuJour ? indigo : BLANC}>
@@ -203,7 +186,7 @@ export default function CoachScreen() {
           onPress={() => { tap(); router.push('/programmes/zones' as any); }}
           accessibilityRole="button"
           accessibilityLabel={`${traduire('Pas envie de programme aujourd’hui ?')} ${traduire('Une séance toute faite, un appui et c’est parti')}`}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 112, paddingVertical: 16, paddingLeft: 18, paddingRight: 12, borderRadius: 24, backgroundColor: pressed ? P.white : c.accentTint, borderWidth: 1.5, borderColor: c.accent, overflow: 'hidden' })}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 112, paddingVertical: 16, paddingLeft: 18, paddingRight: 12, borderRadius: 24, backgroundColor: pressed ? c.fillSubtle : c.accentTint, borderWidth: 1.5, borderColor: c.accent, overflow: 'hidden' })}
         >
           <View style={{ flex: 1, gap: 4 }}>
             <Ink size={18} weight="black" tight>{traduire('Pas envie de programme aujourd’hui ?')}</Ink>
@@ -215,24 +198,11 @@ export default function CoachScreen() {
 
         {/* 3. TES QUESTIONS : chaque réponse s'ouvre dans l'app */}
         <Ink size={20} weight="black" tight accessibilityRole="header" style={{ marginTop: 8 }}>{traduire('Tes questions')}</Ink>
-        {questions.map((q) => (
-          <Pressable
-            key={q.cle}
-            onPress={q.action}
-            accessibilityRole="button"
-            accessibilityLabel={`${q.titre} ${q.sous}`}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 76, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 22, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
-          >
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: indigo, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name={q.icone} size={20} color={BLANC} />
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={16} weight="black" tight>{q.titre}</Ink>
-              <Ink size={12} color={c.textSecondary}>{q.sous}</Ink>
-            </View>
-            <Icon name="chevron" size={18} color={c.textMuted} />
-          </Pressable>
-        ))}
+        <BlocReglages>
+          {questions.map((q) => (
+            <LigneReglage key={q.cle} titre={q.titre} sous={q.sous} icone={q.icone} onPress={q.action} plein />
+          ))}
+        </BlocReglages>
       </ScrollView>
 
       <FeuillePoidsDeDepart visible={poidsOuvert} onClose={() => setPoidsOuvert(false)} />

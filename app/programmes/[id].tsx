@@ -3,7 +3,7 @@
  * et les etudes sur lesquelles il repose. Commencer, changer de programme ou l'arreter se fait ici.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
+import { DeviceEventEmitter, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -19,11 +19,9 @@ import { saisieDepuisKg } from '@/lib/v2/unitePoids';
 import { fmtNum } from '@/lib/v2/seance/format';
 import { corpsDepuis, progresDesCharges, regularite } from '@/lib/v2/programmes/progres';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
-import { safeOpenURL } from '@/lib/security/validators';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { libelleMateriel, libelleNiveau, libelleRepos, programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
-import { etudesCourtes, sourceParId } from '@/lib/v2/programmes/sources';
 import { PRECISION_EXO, musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { cardioDeLaSemaine, resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { raisonRemplacement } from '@/lib/v2/programmes/materiel';
@@ -32,6 +30,7 @@ import { jourPourToi } from '@/lib/v2/programmes/perso';
 import type { ExoPerso } from '@/lib/v2/programmes/perso';
 import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
+import { CarteEtudes, CarteIllustree, Pastille, TuilesPrincipes } from '@/components/yoroi/v2/programmes/Habillage';
 import { buildExerciseHistory } from '@/lib/v2/seance/history';
 import type { ExoProtege, Region } from '@/lib/v2/programmes/blessures';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
@@ -236,21 +235,22 @@ export default function ProgrammeDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={traduire(p.titre)} sousTitre={`${traduire(libelleNiveau(p.niveau))}, ${traduire(libelleMateriel(p.materiel)).toLowerCase()}`} repli="/programmes" droite={etoile} style={{ marginHorizontal: -22, marginTop: -8 }} />
+      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 16 }} showsVerticalScrollIndicator={false}>
+        <EnTete titre={traduire('Programme')} repli="/programmes" droite={etoile} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
-        <View style={{ borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden', padding: 18, minHeight: 130, justifyContent: 'center' }}>
-          {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: -58, width: 130, height: 180 }} resizeMode="contain" /> : null}
-          <Ink size={16} weight="bold" color={c.onDark} style={{ maxWidth: '64%', lineHeight: 22 }}>{traduire(p.accroche)}</Ink>
-        </View>
-
-        {p.sources.length ? (
-          <Glass label={traduire('Prouvé par les études')} style={{ gap: 6, padding: 14 }}>
-            <Ink size={12} weight="black" color={c.accent}>{traduirePluriel(p.sources.length, p.sources.length > 1, 'PROUVÉ PAR {0} ÉTUDE', 'PROUVÉ PAR {0} ÉTUDES', p.sources.length)}</Ink>
-            <Ink size={14} weight="extraBold">{etudesCourtes(p.sources).join(', ')}</Ink>
-            <Ink size={12} color={c.textMuted}>{traduire('Le détail de chaque étude est en bas de la page.')}</Ink>
-          </Glass>
-        ) : null}
+        {/* 26 octobre 2026 (Houari : « je veux vraiment un beau design ») : la carte indigo de « Note ta séance » */}
+        <CarteIllustree
+          surtitre={traduire(libelleMateriel(p.materiel))}
+          titre={traduire(p.titre)}
+          texte={traduire(p.accroche)}
+          image={img}
+          puces={[
+            { icone: 'gauge', t: traduire(libelleNiveau(p.niveau)) },
+            { icone: 'calendar', t: traduire('{0} j par semaine', p.joursParSemaine) },
+            { icone: 'clock', t: traduire('{0} min', p.dureeMin) },
+            { icone: 'repeat', t: traduirePluriel(p.semaines, p.semaines > 1, '{0} semaine', '{0} semaines', p.semaines) },
+          ]}
+        />
 
         {enCours && actif ? (
           <CoachProgramme
@@ -258,12 +258,6 @@ export default function ProgrammeDetail() {
             onCommencer={() => faireCeJour(actif.prochain)}
           />
         ) : null}
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <Stat value={String(p.joursParSemaine)} label={traduire('Jours par semaine')} />
-          <Stat value={String(p.dureeMin)} unit="min" label={traduire('Par séance')} />
-          <Stat value={String(p.semaines)} label={traduire('Semaines')} />
-        </View>
 
         <ChoixJours
           jours={jours}
@@ -334,21 +328,16 @@ export default function ProgrammeDetail() {
         })() : null}
 
         <SectionTitle title={traduire('Comment le suivre')} />
-        <Glass style={{ gap: 12 }}>
-          {p.principes.map((t, i) => (
-            <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-                <Ink size={11} weight="black" color={c.accent}>{String(i + 1)}</Ink>
-              </View>
-              <Ink size={14} style={{ flex: 1, lineHeight: 20 }}>{traduire(t)}</Ink>
-            </View>
-          ))}
-        </Glass>
+        <TuilesPrincipes principes={p.principes} />
 
         <SectionTitle title={traduire('Les séances')} sub={traduire('Touche une séance pour voir ses exercices')} action={traduire('Ma salle')} onAction={() => setSalleOpen(true)} />
         {enCours && p.jours.some((x) => x.exos.length) ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>{traduire('Un exercice ne te va pas ? Touche « Changer » pour en choisir un autre.')}</Ink> : null}
-        {p.jours.some((x) => x.exos.length) ? <ChoisirCharge /> : null}
-        {p.jours.some((x) => x.exos.length) ? <CartePoidsDeDepart /> : null}
+        {p.jours.some((x) => x.exos.length) ? (
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <ChoisirCharge tuile />
+            <CartePoidsDeDepart tuile />
+          </View>
+        ) : null}
         {p.jours.map((jBrut, index) => {
           const j = jourPourToi(jBrut, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
           const estProchain = enCours && actif!.prochain === index;
@@ -358,7 +347,7 @@ export default function ProgrammeDetail() {
             return (
               <Glass key={j.id} onPress={() => setFinOuverte('page')} label={traduire(j.titre)} style={{ gap: 2, opacity: 0.6 }}>
                 <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}</Ink>
-                <Ink size={12} color={c.textSecondary}>{traduire('Retirée de ton programme. Touche pour la remettre.')}</Ink>
+                <Ink size={13} color={c.textSecondary}>{traduire('Retirée de ton programme. Touche pour la remettre.')}</Ink>
               </Glass>
             );
           }
@@ -370,12 +359,21 @@ export default function ProgrammeDetail() {
                 if (aMontrer.current === j.id) montrer(j.id);
               }}
             >
-            <Glass style={{ gap: 10, borderColor: estProchain ? c.accent : c.divider }}>
-              <Pressable onPress={() => ouvrirJour(j.id, deplie)} accessibilityRole="button" accessibilityState={{ expanded: deplie }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ flex: 1, gap: 2 }}>
-                  {estProchain ? <Ink size={11} weight="extraBold" color={c.accent}>{traduire('PROCHAINE SÉANCE')}</Ink> : null}
-                  <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}</Ink>
-                  <Ink size={12} color={c.textSecondary}>{resumeDuJour(j, semaine)}</Ink>
+            <Glass style={{ gap: 12, borderColor: estProchain ? c.accent : c.divider, borderWidth: estProchain ? 1.5 : 1 }}>
+              <Pressable
+                onPress={() => ouvrirJour(j.id, deplie)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: deplie }}
+                accessibilityLabel={`${traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}. ${resumeDuJour(j, semaine)}`}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 }}
+              >
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: estProchain ? c.darkCard : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ink size={17} weight="black" color={estProchain ? c.onDark : c.accent}>{String(index + 1)}</Ink>
+                </View>
+                <View style={{ flex: 1, gap: 3 }}>
+                  {estProchain ? <Ink size={11} weight="extraBold" color={c.accent} style={{ letterSpacing: 0.4 }}>{traduire('PROCHAINE SÉANCE')}</Ink> : null}
+                  <Ink size={17} weight="black" tight>{traduire(j.titre)}</Ink>
+                  <Ink size={13} color={c.textSecondary}>{resumeDuJour(j, semaine)}</Ink>
                 </View>
                 <View style={{ transform: [{ rotate: deplie ? '-90deg' : '90deg' }] }}><Icon name="chevron" size={18} color={c.textMuted} /></View>
               </Pressable>
@@ -434,20 +432,9 @@ export default function ProgrammeDetail() {
           );
         })}
 
-        <SectionTitle title={traduire('Les sources')} sub={traduire('Les études sur lesquelles repose ce programme')} />
-        <View style={{ gap: 8 }}>
-          {p.sources.map((sid) => {
-            const s = sourceParId(sid);
-            if (!s) return null;
-            return (
-              <Glass key={sid} onPress={() => void safeOpenURL(s.lien)} label={s.titre} style={{ gap: 4, padding: 14 }}>
-                <Ink size={13} weight="extraBold">{`${s.auteurs}, ${s.annee}`}</Ink>
-                <Ink size={13} color={c.textSecondary}>{traduire(s.apport)}</Ink>
-                <Ink size={11} color={c.textMuted} numberOfLines={2}>{`${s.titre}. ${s.revue}.`}</Ink>
-              </Glass>
-            );
-          })}
-        </View>
+        {/* « Prouvé par N études » : en bas, replié (Houari : « mets ça en bas, ça marche ») */}
+        <SectionTitle title={traduire('Prouvé par les études')} />
+        <CarteEtudes sources={p.sources} />
 
         <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
           {traduire('Si tu as un problème de santé, une douleur ou une blessure, demande l’avis d’un médecin avant de commencer. Le questionnaire PAR-Q+ t’aide à savoir si c’est nécessaire.')}
@@ -497,95 +484,104 @@ export default function ProgrammeDetail() {
   );
 }
 
+/**
+ * Un exercice, une ligne (26 octobre 2026, Houari : « trop de texte, ça rend fou ») :
+ * le nom, « 3 × 8 à 12 », le repos et les muscles en petites puces. La réserve, la consigne,
+ * le remplacement, « Changer » et la technique s'ouvrent d'un toucher sur la ligne.
+ */
 function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege & ExoPerso & ExoFin; premier: boolean; raison: string; onChanger?: () => void; onRevenir?: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const [ouvert, setOuvert] = useState(false);
+  const [deplie, setDeplie] = useState(false);
+  const [technique, setTechnique] = useState(false);
   const aFiche = !!ficheDe(e.nom);
   const reps = e.repsMin === e.repsMax ? `${e.repsMin}` : traduire('{0} à {1}', e.repsMin, e.repsMax);
-  // fiche technique : un tap sur « Voir la technique » deplie consignes, erreurs et securite
-  const technique = aFiche ? (
-    <>
-      <Pressable
-        onPress={() => { tap(); setOuvert((o) => !o); }}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: ouvert }}
-        hitSlop={8}
-        style={{ minHeight: 32, justifyContent: 'center', alignSelf: 'flex-start' }}
-      >
-        <Ink size={12} weight="extraBold" color={c.accent}>{traduire(ouvert ? 'Masquer la technique' : 'Voir la technique')}</Ink>
-      </Pressable>
-      {ouvert ? <FicheTechnique nom={e.nom} /> : null}
-    </>
-  ) : null;
-  // 26 octobre 2026 : « Changer » (programme en cours) et « Remplacé par toi », avec le retour a l'original
-  const perso = onChanger || e.perso || e.fin ? (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 14 }}>
-      {e.fin ? <Ink size={12} weight="bold" color={c.accent}>{traduire('Ajouté en fin de séance')}</Ink> : null}
-      {e.perso ? <Ink size={12} weight="bold" color={c.accent}>{traduire('Remplacé par toi')}</Ink> : null}
-      {onRevenir && e.perso ? (
-        <Pressable onPress={onRevenir} accessibilityRole="button" hitSlop={8} style={{ minHeight: 32, justifyContent: 'center' }}>
-          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Revenir à {0}', traduire(nomFr(e.perso)))}</Ink>
-        </Pressable>
-      ) : null}
-      {onChanger ? (
-        <Pressable onPress={onChanger} accessibilityRole="button" accessibilityLabel={traduire('Changer {0}', traduire(nomFr(e.nom)))} hitSlop={8} style={{ minHeight: 32, justifyContent: 'center' }}>
-          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Changer')}</Ink>
-        </Pressable>
-      ) : null}
-    </View>
-  ) : null;
-  const detail = e.secondes
+  const volume = e.secondes ? `${e.series} × ${reps} s` : `${e.series} × ${reps}`;
+  // la phrase complète reste pour le lecteur d'écran
+  const phrase = e.secondes
     ? traduire('{0} séries de {1} secondes, repos {2}', e.series, reps, libelleRepos(e.reposSec))
     : traduire('{0} séries de {1} répétitions, repos {2}', e.series, reps, libelleRepos(e.reposSec));
-  // 26 octobre 2026 : combien de séries, lourd ou léger, et combien garder en réserve (lib/v2/programmes/charge.ts)
-  const charge = <Ink size={12} weight="extraBold" color={c.accent}>{guideCharge(e).texte}</Ink>;
-  if (demoDe(e.nom)) {
-    // avec animation : l'exercice qui bouge a gauche, le texte a droite
-    return (
-      <View style={{ paddingTop: 10, borderTopWidth: premier ? 0 : 1, borderColor: c.divider, flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <ExoDemo nom={e.nom} taille={72} arrondi={14} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
-          <Ink size={13} color={c.textSecondary}>{detail}</Ink>
-          {charge}
-          <LigneMuscles nom={e.nom} />
-          {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
-          <NoteMateriel e={e} raison={raison} />
-          {perso}
-          {technique}
-        </View>
-      </View>
-    );
-  }
+  const g = guideCharge(e);
+  const mu = musclesDeExo(e.nom);
+  const precision = PRECISION_EXO[e.nom];
+  const liste = (l: string[]) => l.map((x) => traduire(x)).join(', ');
+  // un signe discret sur la ligne quand l'exercice a été changé, ajouté, ou ne se fait pas
+  const signe = e.impossible
+    ? <Pastille texte={traduire('À passer')} danger />
+    : e.perso
+      ? <Pastille texte={traduire('Remplacé par toi')} accent />
+      : e.fin
+        ? <Pastille texte={traduire('Ajouté en fin de séance')} accent />
+        : e.remplace
+          ? <Pastille texte={traduire('Adapté')} accent />
+          : null;
   return (
-    <View style={{ paddingTop: 10, borderTopWidth: premier ? 0 : 1, borderColor: c.divider, gap: 2 }}>
-      <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
-      <Ink size={13} color={c.textSecondary}>{detail}</Ink>
-      {charge}
-      <LigneMuscles nom={e.nom} />
-      {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
-      <NoteMateriel e={e} raison={raison} />
-      {perso}
-      {technique}
+    <View style={{ paddingTop: premier ? 0 : 12, borderTopWidth: premier ? 0 : 1, borderColor: c.divider, gap: 10 }}>
+      <Pressable
+        onPress={() => { tap(); setDeplie((o) => !o); }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: deplie }}
+        accessibilityLabel={`${traduire(nomFr(e.nom))}. ${phrase}`}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, opacity: pressed ? 0.75 : 1 })}
+      >
+        {demoDe(e.nom) ? <ExoDemo nom={e.nom} taille={56} arrondi={14} /> : null}
+        <View style={{ flex: 1, gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
+            <Ink size={15} weight="extraBold" style={{ flex: 1 }} numberOfLines={2}>{traduire(nomFr(e.nom))}</Ink>
+            <Ink size={15} weight="black" color={c.accent}>{volume}</Ink>
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <Pastille icone="timer" texte={libelleRepos(e.reposSec)} />
+            {mu ? mu.principaux.slice(0, 2).map((m) => <Pastille key={m} texte={traduire(m)} />) : null}
+            {signe}
+          </View>
+        </View>
+        <View style={{ transform: [{ rotate: deplie ? '-90deg' : '90deg' }] }}><Icon name="chevron" size={15} color={c.textMuted} /></View>
+      </Pressable>
+      {deplie ? (
+        <View style={{ gap: 8, padding: 14, borderRadius: 16, backgroundColor: c.fillSoft }}>
+          {g.niveau === 'tenu' ? null : (
+            <Ink size={13} weight="bold" style={{ lineHeight: 19 }}>
+              {g.libelle ? traduire('Charge : {0}. Garde {1} répétitions en réserve.', g.libelle, traduire(g.reserve)) : traduire('Garde {0} répétitions en réserve.', traduire(g.reserve))}
+            </Ink>
+          )}
+          {mu && (mu.principaux.length > 2 || mu.aussi.length) ? (
+            <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>
+              {traduire('Travaille : {0}', liste(mu.principaux))}
+              {mu.aussi.length ? `. ${traduire('Aussi : {0}', liste(mu.aussi))}` : ''}
+            </Ink>
+          ) : null}
+          {precision ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(precision)}</Ink> : null}
+          {e.conseil && !e.remplace ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(e.conseil)}</Ink> : null}
+          <NoteMateriel e={e} raison={raison} />
+          {onChanger || (onRevenir && e.perso) || aFiche ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+              {aFiche ? <ActionExo label={traduire(technique ? 'Masquer la technique' : 'Voir la technique')} onPress={() => { tap(); setTechnique((o) => !o); }} etat={technique} /> : null}
+              {onChanger ? <ActionExo label={traduire('Changer')} onPress={onChanger} accessibilityLabel={traduire('Changer {0}', traduire(nomFr(e.nom)))} /> : null}
+              {onRevenir && e.perso ? <ActionExo label={traduire('Revenir à {0}', traduire(nomFr(e.perso)))} onPress={onRevenir} /> : null}
+            </View>
+          ) : null}
+          {technique && aFiche ? <FicheTechnique nom={e.nom} /> : null}
+        </View>
+      ) : null}
     </View>
   );
 }
 
-/** « Travaille : Pectoraux. Aussi : Épaules avant, Triceps » */
-function LigneMuscles({ nom }: { nom: string }) {
+/** Petit bouton d'action sous un exercice déplié */
+function ActionExo({ label, onPress, etat, accessibilityLabel }: { label: string; onPress: () => void; etat?: boolean; accessibilityLabel?: string }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const mu = musclesDeExo(nom);
-  const precision = PRECISION_EXO[nom];
-  if (!mu) return precision ? <Ink size={12} weight="bold" color={c.ink}>{traduire(precision)}</Ink> : null;
-  const liste = (l: string[]) => l.map((x) => traduire(x)).join(', ');
   return (
-    <Ink size={12} color={c.textMuted}>
-      <Ink size={12} weight="extraBold" color={c.ink}>{traduire('Travaille : {0}', liste(mu.principaux))}</Ink>
-      {mu.aussi.length ? `. ${traduire('Aussi : {0}', liste(mu.aussi))}` : ''}
-      {precision ? `\n${traduire(precision)}` : ''}
-    </Ink>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={etat === undefined ? undefined : { expanded: etat }}
+      accessibilityLabel={accessibilityLabel ?? label}
+      style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 14, justifyContent: 'center', backgroundColor: pressed ? c.accentTint : c.surface, borderWidth: 1, borderColor: c.accent })}
+    >
+      <Ink size={13} weight="extraBold" color={c.accent}>{label}</Ink>
+    </Pressable>
   );
 }
 

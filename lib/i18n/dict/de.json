@@ -19012,5 +19012,13 @@
 "Ton programme, ta séance du jour, tes réponses": "Dein Programm, deine Einheit heute, deine Antworten",
 "Une séance toute faite, un appui et c’est parti": "Eine fertige Einheit, ein Tippen und los geht’s",
 "Voir tous les programmes": "Alle Programme ansehen",
-"YOROI estime la date d’après tes séances": "YOROI schätzt das Datum anhand deiner Einheiten"
+"YOROI estime la date d’après tes séances": "YOROI schätzt das Datum anhand deiner Einheiten",
+"Programme": "Programm",
+"{0} semaine": "{0} Woche",
+"Lire le conseil": "Tipp lesen",
+"Lire les {0} conseils": "Alle {0} Tipps lesen",
+"Adapté": "Angepasst",
+"À passer": "Auslassen",
+"Charge : {0}. Garde {1} répétitions en réserve.": "Gewicht: {0}. Behalte {1} Wiederholungen in Reserve.",
+"Garde {0} répétitions en réserve.": "Behalte {0} Wiederholungen in Reserve."
 }

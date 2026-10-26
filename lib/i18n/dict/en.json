@@ -19012,5 +19012,13 @@
 "Ton programme, ta séance du jour, tes réponses": "Your program, today’s session, your answers",
 "Une séance toute faite, un appui et c’est parti": "A ready made session, one tap and you’re off",
 "Voir tous les programmes": "See all programs",
-"YOROI estime la date d’après tes séances": "YOROI estimates the date from your sessions"
+"YOROI estime la date d’après tes séances": "YOROI estimates the date from your sessions",
+"Programme": "Program",
+"{0} semaine": "{0} week",
+"Lire le conseil": "Read the tip",
+"Lire les {0} conseils": "Read all {0} tips",
+"Adapté": "Adapted",
+"À passer": "Skip it",
+"Charge : {0}. Garde {1} répétitions en réserve.": "Load: {0}. Keep {1} reps in reserve.",
+"Garde {0} répétitions en réserve.": "Keep {0} reps in reserve."
 }

@@ -12,13 +12,15 @@ import { COMMENT_CHOISIR, SOURCES_COMMENT_CHOISIR } from '@/lib/v2/programmes/ch
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
 import { traduire } from '@/lib/i18n/tr';
+import { TuileGuide } from '@/components/yoroi/v2/programmes/Habillage';
 
-export function ChoisirCharge() {
+export function ChoisirCharge({ tuile }: { tuile?: boolean } = {}) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [ouvert, setOuvert] = useState(false);
   return (
     <>
+      {tuile ? <TuileGuide icone="dumbbell" titre={traduire('Comment choisir ta charge')} sous={traduire('Lourd, moyen ou léger : ce que ça veut dire pour toi.')} onPress={() => setOuvert(true)} /> : (
       <Glass onPress={() => setOuvert(true)} label={traduire('Comment choisir ta charge')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="dumbbell" size={20} color={c.ink} />
@@ -29,6 +31,7 @@ export function ChoisirCharge() {
         </View>
         <Icon name="chevron" size={18} color={c.textMuted} />
       </Glass>
+      )}
       <Sheet visible={ouvert} onClose={() => setOuvert(false)} title={traduire('Comment choisir ta charge')}>
         <View style={{ gap: 14, paddingHorizontal: 4 }}>
           {COMMENT_CHOISIR.map((x) => (
