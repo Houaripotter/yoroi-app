@@ -105,3 +105,21 @@ export const COMMENT_CHOISIR: { titre: string; texte: string }[] = [
 ];
 
 export const SOURCES_COMMENT_CHOISIR = ['schoenfeld2017charges', 'acsm2026', 'acsm2009'];
+
+/**
+ * « Trouver ton poids de départ » (26 octobre 2026) : pour qui n'y connait rien, en quatre etapes courtes.
+ * Meme regle que les programmes : 2 a 3 repetitions en reserve au debut (debutant-fullbody-3j), puis la
+ * charge monte quand le haut de la fourchette est atteint sur toutes les series (PROGRESSION, catalogue.ts).
+ * Honnete : au debut on juge mal la reserve (steele2017rir, halperin2022).
+ */
+export const POIDS_DE_DEPART: { titre: string; texte: string }[] = [
+  { titre: 'Regarde la fourchette', texte: 'Le programme dit « 8 à 12 répétitions » ? Vise le haut : 12. À ta toute première séance, commence léger pour apprendre le geste.' },
+  { titre: 'Garde 2 à 3 répétitions en réserve', texte: 'Ta bonne charge : tu fais les 12 proprement, et tu sens que tu en ferais encore 2 ou 3. Trop facile ? Ajoute un peu à la série suivante. La technique casse ? Enlève.' },
+  { titre: 'Note et garde cette charge', texte: 'YOROI retient ta charge pour la prochaine séance. Ne monte pas tant que toutes les séries ne sont pas au haut de la fourchette.' },
+  { titre: 'Monte quand tout est fait', texte: 'Haut de la fourchette sur toutes les séries, deux séances de suite : YOROI monte la charge d’environ 5 %. Au poids du corps, comme les tractions, passe à une version plus facile tant que tu n’atteins pas le bas : tirage à la poulie, pompes sur les genoux.' },
+];
+
+/** Bon a savoir, sous les etapes */
+export const RESERVE_DEBUTANT = 'Au début, tu vas mal juger ce qu’il te reste : presque tout le monde pense être plus près de l’échec qu’en réalité. Ça s’améliore souvent avec la pratique, sans jamais être parfait. Pas grave : la progression corrige la charge séance après séance.';
+
+export const SOURCES_POIDS_DE_DEPART = ['steele2017rir', 'halperin2022', 'acsm2009', 'refalo2023'];

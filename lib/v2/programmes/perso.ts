@@ -11,6 +11,8 @@ import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { protegerJour } from './blessures';
 import type { ExoProtege, Region } from './blessures';
 import type { Equipement, MachinesSalle } from './materiel';
+import { avecFinSeance, contexteFinPour } from './finSeance';
+import type { AvecFin, ContexteFin, ExoFin } from './finSeance';
 
 /** Cle d'une case du programme : « jourId|index » (index de l'exercice dans le jour du catalogue) */
 export const cleCase = (jourId: string, index: number): string => `${jourId}|${index}`;
@@ -61,8 +63,10 @@ export function nombreRemplacements(remplacements: Remplacements | undefined | n
 }
 
 /* ------------------------------------------------------------------------------------------------
- * Le jour tel que tu le fais : ton materiel et ta salle, tes douleurs declarees, puis tes choix.
- * Un seul calcul pour la page du programme, la seance en direct et la seance express.
+ * Le jour tel que tu le fais : ta fin de seance (abdos, cardio), ton materiel et ta salle, tes douleurs
+ * declarees, puis tes choix. Un seul calcul pour la page du programme, la seance en direct et la seance express.
+ * `fin` : undefined, la fin de seance du programme actif si le jour en fait partie (finSeance.ts) ;
+ * null, aucune ; sinon celle donnee.
  * ---------------------------------------------------------------------------------------------- */
 
 const muscleBiblio = (nom: string): string | undefined => EXERCISE_LIBRARY.find((e) => e.name === nom)?.muscle;
@@ -73,7 +77,10 @@ export function jourPourToi<J extends JourProgramme>(
   regions: readonly Region[],
   machines?: MachinesSalle,
   remplacements?: Remplacements | null,
-): Omit<J, 'exos'> & { exos: (ExoProtege & ExoPerso)[] } {
-  const protege = protegerJour(jour, dispo, regions, machines) as Omit<J, 'exos'> & { id: string; exos: ExoProtege[] };
-  return appliquerRemplacements(protege, remplacements, muscleBiblio) as Omit<J, 'exos'> & { exos: (ExoProtege & ExoPerso)[] };
+  fin?: ContexteFin | null,
+): Omit<J, 'exos'> & AvecFin & { exos: (ExoProtege & ExoPerso & ExoFin)[] } {
+  // l'abdo ajoute passe ensuite par le materiel et les douleurs, comme les autres exercices
+  const complet = avecFinSeance(jour, fin === undefined ? contexteFinPour(jour) : fin);
+  const protege = protegerJour(complet, dispo, regions, machines) as Omit<J, 'exos'> & AvecFin & { id: string; exos: ExoProtege[] };
+  return appliquerRemplacements(protege, remplacements, muscleBiblio) as Omit<J, 'exos'> & AvecFin & { exos: (ExoProtege & ExoPerso & ExoFin)[] };
 }

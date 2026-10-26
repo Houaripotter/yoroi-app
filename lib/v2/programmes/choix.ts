@@ -5,6 +5,7 @@
 import type { Materiel, Niveau } from './types';
 
 export type ObjectifChoix =
+  | 'debuter'
   | 'muscle'
   | 'masse'
   | 'pecs'
@@ -25,6 +26,8 @@ export type ObjectifChoix =
 
 /** Libellés du quiz, dans l'ordre d'affichage */
 export const OBJECTIFS_CHOIX: { key: ObjectifChoix; label: string }[] = [
+  // 26 octobre 2026 : pour qui n'y connait rien (combien de poids, de series, de repetitions)
+  { key: 'debuter', label: 'Je n’y connais rien' },
   { key: 'perte', label: 'Perdre du poids' },
   { key: 'ventre', label: 'Ventre plat' },
   { key: 'seche', label: 'Être tracé' },
@@ -58,11 +61,28 @@ export type Conseil = {
   pourquoi: string;
   /** autres programmes qui te vont aussi */
   autres: string[];
+  /** 26 octobre 2026 : proposer « Trouver ton poids de départ » (lib/v2/programmes/charge.ts, POIDS_DE_DEPART) */
+  guideDebutant?: boolean;
 };
 
 const DEBUTANT = 'Au début, travailler tout le corps deux à trois fois par semaine est la recommandation de l’ACSM.';
 
 export function conseillerProgramme(r: Reponses): Conseil {
+  // tu n'y connais rien : un programme debutant tout le corps, selon ton lieu, et le guide du poids de depart
+  if (r.objectif === 'debuter') {
+    if (r.lieu === 'maison') {
+      return { id: 'maison-3j', pourquoi: 'Tu pars de zéro, sans matériel : tout le corps au poids du corps, trois fois par semaine. YOROI te dit combien de séries et de répétitions faire.', autres: [], guideDebutant: true };
+    }
+    if (r.lieu === 'halteres') {
+      return { id: 'halteres-maison-3j', pourquoi: 'Tu pars de zéro, avec tes haltères : tout le corps, trois fois par semaine. YOROI te dit combien de séries et de répétitions faire, et quand monter la charge.', autres: ['maison-3j'], guideDebutant: true };
+    }
+    return {
+      id: 'debutant-fullbody-3j',
+      pourquoi: 'Tu pars de zéro : c’est le bon départ. Tout le corps, trois fois par semaine, des exercices simples et guidés. YOROI te dit combien de séries et de répétitions faire, et quand monter la charge.',
+      autres: [],
+      guideDebutant: true,
+    };
+  }
   // objectifs qui ne dependent pas du lieu : la course, et les objectifs dont le programme s'adapte a ton materiel
   if (r.objectif === 'course') {
     return r.niveau === 'debutant'

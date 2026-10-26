@@ -28,6 +28,7 @@ import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { MessageDuJour } from '@/components/yoroi/v2/programmes/MessageDuJour';
 import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
 import { PlanningProgramme } from '@/components/yoroi/v2/programmes/PlanningProgramme';
+import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Niveau, Programme } from '@/lib/v2/programmes/types';
@@ -287,16 +288,33 @@ function Questionnaire({ visible, onClose, onVoir, remplaces }: { visible: boole
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [r, setR] = useState<Partial<Reponses>>({});
+  // 26 octobre 2026 : « Je n'y connais rien » fixe le niveau (debutant) et ouvre le guide du poids de depart
+  const [guide, setGuide] = useState(false);
+  const debuter = r.objectif === 'debuter';
+  const choisirObjectif = (key: Reponses['objectif']) =>
+    setR((x) => ({ ...x, objectif: key, ...(key === 'debuter' ? { niveau: 'debutant' as Niveau } : x.objectif === 'debuter' ? { niveau: undefined } : {}) }));
   const complet = !!(r.objectif && r.niveau && r.jours && r.lieu);
   const conseil: Conseil | null = complet ? conseillerProgramme(r as Reponses) : null;
   const prog = conseil ? programmeParId(conseil.id) : null;
 
   return (
     <Sheet visible={visible} onClose={onClose} title={traduire('Trouver mon programme')}>
+      <Pressable
+        onPress={() => { tap(); choisirObjectif('debuter'); }}
+        accessibilityRole="button"
+        accessibilityState={{ selected: debuter }}
+        style={({ pressed }) => ({ marginHorizontal: 4, borderRadius: 20, padding: 16, gap: 4, flexDirection: 'row', alignItems: 'center', backgroundColor: debuter ? c.darkCard : pressed ? c.fillSubtle : c.accentTint, borderWidth: 1.5, borderColor: debuter ? c.darkCard : c.accent })}
+      >
+        <View style={{ flex: 1, gap: 3 }}>
+          <Ink size={16} weight="black" tight color={debuter ? c.onDark : c.ink}>{traduire('Je n’y connais rien')}</Ink>
+          <Ink size={12} color={debuter ? c.onDarkSecondary : c.textSecondary}>{traduire('Quel poids, combien de séries, de répétitions : YOROI te guide pas à pas.')}</Ink>
+        </View>
+        <Icon name={debuter ? 'check' : 'chevron'} size={18} color={debuter ? c.onDark : c.accent} />
+      </Pressable>
       <Question titre={traduire('Ton objectif')}>
-        {OBJECTIFS_CHOIX.map((o) => <Chip key={o.key} label={traduire(o.label)} on={r.objectif === o.key} onPress={() => setR((x) => ({ ...x, objectif: o.key }))} />)}
+        {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o) => <Chip key={o.key} label={traduire(o.label)} on={r.objectif === o.key} onPress={() => choisirObjectif(o.key)} />)}
       </Question>
-      <Question titre={r.objectif === 'course' ? traduire('Tu cours déjà 30 minutes sans t’arrêter ?') : traduire('Depuis quand tu t’entraînes')}>
+      {debuter ? null : <Question titre={r.objectif === 'course' ? traduire('Tu cours déjà 30 minutes sans t’arrêter ?') : traduire('Depuis quand tu t’entraînes')}>
         {r.objectif === 'course' ? (
           <>
             <Chip label={traduire('Non, pas encore')} on={r.niveau === 'debutant'} onPress={() => setR((x) => ({ ...x, niveau: 'debutant' }))} />
@@ -305,7 +323,7 @@ function Questionnaire({ visible, onClose, onVoir, remplaces }: { visible: boole
         ) : (
           NIVEAUX.map((o) => <Chip key={o.key} label={traduire(o.label)} on={r.niveau === o.key} onPress={() => setR((x) => ({ ...x, niveau: o.key }))} />)
         )}
-      </Question>
+      </Question>}
       <Question titre={traduire('Jours par semaine pour t’entraîner')}>
         {JOURS.map((j) => <Chip key={j} label={j === 5 ? traduire('5 ou plus') : String(j)} on={r.jours === j} onPress={() => setR((x) => ({ ...x, jours: j }))} />)}
       </Question>
@@ -322,6 +340,13 @@ function Questionnaire({ visible, onClose, onVoir, remplaces }: { visible: boole
           <Ink size={14} color={c.textSecondary}>{traduire(conseil.pourquoi)}</Ink>
           {remplaces(prog) > 0 ? <Ink size={13} weight="extraBold" color={c.accent}>{texteSalle(remplaces(prog))}</Ink> : null}
           <BigButton label={traduire('Voir ce programme')} onPress={() => onVoir(prog.id, r.lieu!)} />
+          {conseil.guideDebutant ? (
+            <Pressable onPress={() => { tap(); setGuide(true); }} accessibilityRole="button" style={{ minHeight: 48, borderRadius: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.background }}>
+              <Icon name="scale" size={18} color={c.accent} />
+              <Ink size={14} weight="extraBold" color={c.accent} style={{ flex: 1 }}>{traduire('Trouver ton poids de départ')}</Ink>
+              <Icon name="chevron" size={16} color={c.accent} />
+            </Pressable>
+          ) : null}
           {conseil.autres.map((id) => {
             const a = programmeParId(id);
             return a ? (
@@ -334,6 +359,7 @@ function Questionnaire({ visible, onClose, onVoir, remplaces }: { visible: boole
       ) : (
         <Ink size={13} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire('Réponds aux quatre questions pour voir ton conseil.')}</Ink>
       )}
+      <FeuillePoidsDeDepart visible={guide} onClose={() => setGuide(false)} />
     </Sheet>
   );
 }

@@ -40,12 +40,16 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, remplacerExercice, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, remplacerExercice, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { ChoixJours } from '@/components/yoroi/v2/programmes/ChoixJours';
 import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
 import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
+import { CartePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
+import { CarteFinDeSeance, FeuilleFinDeSeance } from '@/components/yoroi/v2/programmes/FinDeSeance';
+import { aDesJoursMarche, aDesJoursMuscu, joursRetires } from '@/lib/v2/programmes/finSeance';
+import type { ExoFin, FinSeance } from '@/lib/v2/programmes/finSeance';
 import { guideCharge } from '@/lib/v2/programmes/charge';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -74,6 +78,8 @@ export default function ProgrammeDetail() {
   const [mesures, setMesures] = useState<Measurement[]>([]);
   const unite = useUnitePoids();
   const [favoris, setFavoris] = useState<string[]>([]);
+  // 26 octobre 2026 : fin de seance (abdos, cardio). « depart » : demandee une fois au demarrage du programme
+  const [finOuverte, setFinOuverte] = useState<'page' | 'depart' | null>(null);
   // 26 octobre 2026 : toucher « Jour 2 » ouvre le jour 2 et le garde en vue.
   // Avant, le jour ouvert plus haut se repliait, la page raccourcissait sous tes doigts et tu te retrouvais
   // bien plus bas, jusqu'aux sources. On note la position de chaque carte et on y revient apres le depli.
@@ -168,6 +174,10 @@ export default function ProgrammeDetail() {
   );
   // semaine du plan (course) : celle du programme en cours, sinon la premiere
   const semaine = enCours && actif ? semaineDuProgramme(actif) : 1;
+  // fin de seance du programme en cours : abdo et cardio ajoutes, seances de marche retirees
+  const ctxFin = enCours && actif ? { fin: actif.fin, materiel: p.materiel } : null;
+  const retires = enCours && actif ? joursRetires(p, actif.fin) : [];
+  const finPossible = aDesJoursMuscu(p) || aDesJoursMarche(p);
   const img = sportImage(sportDuProgramme(p), femme, 1);
 
   const lancerJour = (jourId: string, express?: number) => {
@@ -182,7 +192,7 @@ export default function ProgrammeDetail() {
   const proposerExpress = (index: number, minutes: number) => {
     const j = p.jours[index];
     // le meme calcul que la seance lancee (app/seance/muscu.tsx) : ton materiel et tes douleurs d'abord, puis l'express
-    const protege = jourPourToi(j, materiel, regions, machines, enCours ? actif?.remplacements : null);
+    const protege = jourPourToi(j, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
     const x = seanceExpress(protege.exos, minutes);
     const garde = x.exos.map((e) => traduire('{0} : {1} séries', traduire(nomFr(e.nom)), e.series)).join('\n');
     const reporte = x.reportes.length ? `\n\n${traduire('À faire une autre fois : {0}.', x.reportes.map((n) => traduire(nomFr(n))).join(', '))}` : '';
@@ -192,10 +202,16 @@ export default function ProgrammeDetail() {
     ]);
   };
 
+  const demarrer = async (fin?: FinSeance) => {
+    const a = await demarrerProgramme(p.id, jours, fin);
+    lancerJour(p.jours[a?.prochain ?? 0].id);
+  };
+
   const commencerProgramme = async () => {
+    // la fin de seance est demandee une fois, avant la premiere seance
     const go = async () => {
-      await demarrerProgramme(p.id, jours);
-      lancerJour(p.jours[0].id);
+      if (finPossible) setFinOuverte('depart');
+      else await demarrer();
     };
     if (actif && actif.id !== p.id) {
       const ancien = programmeParId(actif.id);
@@ -257,6 +273,8 @@ export default function ProgrammeDetail() {
             if (enCours) void enregistrerJours(d);
           }}
         />
+
+        {enCours && actif && finPossible ? <CarteFinDeSeance fin={actif.fin} femme={femme} onPress={() => setFinOuverte('page')} /> : null}
 
         {enCours && actif ? <RappelSeance programme={p} actif={actif} jours={jours} /> : null}
 
@@ -330,10 +348,20 @@ export default function ProgrammeDetail() {
         <SectionTitle title={traduire('Les séances')} sub={traduire('Touche une séance pour voir ses exercices')} action={traduire('Ma salle')} onAction={() => setSalleOpen(true)} />
         {enCours && p.jours.some((x) => x.exos.length) ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>{traduire('Un exercice ne te va pas ? Touche « Changer » pour en choisir un autre.')}</Ink> : null}
         {p.jours.some((x) => x.exos.length) ? <ChoisirCharge /> : null}
+        {p.jours.some((x) => x.exos.length) ? <CartePoidsDeDepart /> : null}
         {p.jours.map((jBrut, index) => {
-          const j = jourPourToi(jBrut, materiel, regions, machines, enCours ? actif?.remplacements : null);
+          const j = jourPourToi(jBrut, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
           const estProchain = enCours && actif!.prochain === index;
           const deplie = ouvert === j.id;
+          if (retires.includes(j.id)) {
+            // seance de marche retiree par ta fin de seance : visible, mais sautee
+            return (
+              <Glass key={j.id} onPress={() => setFinOuverte('page')} label={traduire(j.titre)} style={{ gap: 2, opacity: 0.6 }}>
+                <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}</Ink>
+                <Ink size={12} color={c.textSecondary}>{traduire('Retirée de ton programme. Touche pour la remettre.')}</Ink>
+              </Glass>
+            );
+          }
           return (
             <View
               key={j.id}
@@ -359,10 +387,17 @@ export default function ProgrammeDetail() {
                       e={e}
                       premier={k === 0}
                       raison={e.remplace && materiel && !e.zone ? raisonRemplacement(e.remplace, materiel) : ''}
-                      onChanger={enCours ? () => { tap(); setAChanger({ jourId: j.id, index: k, muscle: jBrut.exos[k]?.muscle ?? e.muscle, original: jBrut.exos[k]?.nom ?? e.nom }); } : undefined}
+                      onChanger={enCours && k < jBrut.exos.length ? () => { tap(); setAChanger({ jourId: j.id, index: k, muscle: jBrut.exos[k]?.muscle ?? e.muscle, original: jBrut.exos[k]?.nom ?? e.nom }); } : undefined}
                       onRevenir={enCours && e.perso ? () => { tap(); void remplacerExercice(j.id, k, null); } : undefined}
                     />
                   ))}
+                  {j.finCardio ? (
+                    <View style={{ paddingTop: 10, borderTopWidth: j.exos.length ? 1 : 0, borderColor: c.divider, gap: 3 }}>
+                      <Ink size={12} weight="extraBold" color={c.accent}>{traduire('PUIS, EN FIN DE SÉANCE')}</Ink>
+                      <Ink size={15} weight="extraBold">{traduire('{0} min de marche inclinée', j.finCardio.minutes)}</Ink>
+                      <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(j.finCardio.consigne)}</Ink>
+                    </View>
+                  ) : null}
                   {j.rounds
                     ? j.rounds.consignes.map((txt, k) => (
                         <View key={k} style={{ paddingTop: 10, borderTopWidth: k === 0 ? 0 : 1, borderColor: c.divider, flexDirection: 'row', gap: 10 }}>
@@ -439,6 +474,19 @@ export default function ProgrammeDetail() {
         titre={traduire('Changer l’exercice')}
       />
       <MaSalle visible={salleOpen} onClose={() => setSalleOpen(false)} />
+      <FeuilleFinDeSeance
+        visible={finOuverte !== null}
+        programme={p}
+        valeur={finOuverte === 'page' && enCours ? actif?.fin : null}
+        bouton={finOuverte === 'depart' ? traduire('Commencer le programme') : traduire('Valider')}
+        onClose={() => setFinOuverte(null)}
+        onValider={(f) => {
+          const mode = finOuverte;
+          setFinOuverte(null);
+          if (mode === 'depart') void demarrer(f);
+          else void enregistrerFin(f);
+        }}
+      />
 
       {!enCours ? (
         <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>
@@ -449,7 +497,7 @@ export default function ProgrammeDetail() {
   );
 }
 
-function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege & ExoPerso; premier: boolean; raison: string; onChanger?: () => void; onRevenir?: () => void }) {
+function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege & ExoPerso & ExoFin; premier: boolean; raison: string; onChanger?: () => void; onRevenir?: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [ouvert, setOuvert] = useState(false);
@@ -471,8 +519,9 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege 
     </>
   ) : null;
   // 26 octobre 2026 : « Changer » (programme en cours) et « Remplacé par toi », avec le retour a l'original
-  const perso = onChanger || e.perso ? (
+  const perso = onChanger || e.perso || e.fin ? (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 14 }}>
+      {e.fin ? <Ink size={12} weight="bold" color={c.accent}>{traduire('Ajouté en fin de séance')}</Ink> : null}
       {e.perso ? <Ink size={12} weight="bold" color={c.accent}>{traduire('Remplacé par toi')}</Ink> : null}
       {onRevenir && e.perso ? (
         <Pressable onPress={onRevenir} accessibilityRole="button" hitSlop={8} style={{ minHeight: 32, justifyContent: 'center' }}>

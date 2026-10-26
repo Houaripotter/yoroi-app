@@ -92,6 +92,8 @@ export default function ForceDetailScreen() {
               </View>
             </GlassCard>
           ) : null}
+          {/* 26 octobre 2026 : estimer quand tu atteindras ton objectif sur cet exercice (app/objectif.tsx) */}
+          <GhostButton label={traduire('Quand j’y arriverai ?')} onPress={() => router.push({ pathname: '/objectif', params: lift ? { exo: lift.name } : {} } as any)} />
           <GhostButton label={traduire("Tous tes records")} onPress={() => router.push('/records' as any)} />
         </View>
       }

@@ -12,6 +12,8 @@ import type { JourProgramme, Programme } from './types';
 import { joursValides } from './coach';
 import { avecRemplacement, cleCase } from './perso';
 import type { Remplacements } from './perso';
+import { joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
+import type { FinSeance } from './finSeance';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 
 const CLE = 'yoroi_programme_actif_v1';
@@ -34,7 +36,25 @@ export type ProgrammeActif = {
   jours?: number[];
   /** 26 octobre 2026 : tes exercices changes a la main, « jourId|index » -> nom (lib/v2/programmes/perso.ts) */
   remplacements?: Remplacements;
+  /** 26 octobre 2026 : fin de seance, abdos et cardio ajoutes aux jours de musculation (lib/v2/programmes/finSeance.ts) */
+  fin?: FinSeance;
 };
+
+/**
+ * Le prochain jour garde a partir de `index` (en tournant) : les seances de marche retirees par ta fin de
+ * seance sont sautees. Jamais tous les jours retires (finSeance.ts, joursRetires).
+ */
+export function indexGarde(p: Programme, a: Pick<ProgrammeActif, 'fin'> | null, index: number): number {
+  const n = p.jours.length;
+  const i0 = ((Math.floor(index) % n) + n) % n;
+  const retires = joursRetires(p, a?.fin);
+  if (!retires.length) return i0;
+  for (let k = 0; k < n; k++) {
+    const i = (i0 + k) % n;
+    if (!retires.includes(p.jours[i].id)) return i;
+  }
+  return i0;
+}
 
 function jourLocal(d = new Date()): string {
   const p = (n: number) => String(n).padStart(2, '0');
@@ -53,16 +73,26 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
   try {
     const raw = await AsyncStorage.getItem(CLE);
     if (!raw) return null;
-    const a = JSON.parse(raw) as ProgrammeActif;
-    const p = a && programmeParId(a.id);
-    if (!p) return null;
-    return { ...a, prochain: Math.min(Math.max(0, a.prochain | 0), p.jours.length - 1), faits: Array.isArray(a.faits) ? a.faits : [] };
+    const brut = JSON.parse(raw) as ProgrammeActif;
+    const p = brut && programmeParId(brut.id);
+    if (!p) {
+      retenirFinActive(null);
+      return null;
+    }
+    // fin de seance : absente dans les anciennes versions, illisible = ignoree
+    const { fin: _f, ...reste } = brut;
+    const fin = lireFinSeance(brut.fin);
+    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    a.prochain = indexGarde(p, a, Math.min(Math.max(0, brut.prochain | 0), p.jours.length - 1));
+    retenirFinActive(a.id, a.fin);
+    return a;
   } catch {
     return null;
   }
 }
 
 async function ecrire(a: ProgrammeActif | null): Promise<void> {
+  retenirFinActive(a ? a.id : null, a?.fin);
   try {
     if (a) await AsyncStorage.setItem(CLE, JSON.stringify(a));
     else await AsyncStorage.removeItem(CLE);
@@ -72,12 +102,26 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
   prevenir();
 }
 
-export async function demarrerProgramme(id: string, jours?: number[]): Promise<ProgrammeActif | null> {
-  if (!programmeParId(id)) return null;
+export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null): Promise<ProgrammeActif | null> {
+  const p = programmeParId(id);
+  if (!p) return null;
   const choisis = joursValides(jours);
-  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}) };
+  const f = lireFinSeance(fin);
+  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f ? { fin: f } : {}) };
+  a.prochain = indexGarde(p, a, 0);
   await ecrire(a);
   return a;
+}
+
+/** Ta fin de seance change (abdos, cardio, seances de marche gardees ou non) */
+export async function enregistrerFin(fin: FinSeance): Promise<void> {
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  const f = lireFinSeance(fin);
+  if (!a || !p || !f) return;
+  const suite: ProgrammeActif = { ...a, fin: f };
+  suite.prochain = indexGarde(p, suite, a.prochain);
+  await ecrire(suite);
 }
 
 /** Tes jours d'entrainement changent (0 = lundi) */
@@ -117,7 +161,7 @@ export async function choisirProchainJour(index: number): Promise<void> {
   const a = await chargerProgrammeActif();
   const p = a && programmeParId(a.id);
   if (!a || !p) return;
-  await ecrire({ ...a, prochain: Math.min(Math.max(0, index), p.jours.length - 1) });
+  await ecrire({ ...a, prochain: indexGarde(p, a, Math.min(Math.max(0, index), p.jours.length - 1)) });
 }
 
 /** Une seance du programme est enregistree : le jour suivant devient le prochain */
@@ -130,7 +174,7 @@ export async function marquerJourFait(programmeId: string, jourId: string, train
   // la date de la seance (saisie apres coup) compte, pas celle de l'enregistrement
   const jour = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : jourLocal();
   const faits = [...a.faits, { date: jour, jourId, ...(trainingId ? { trainingId } : {}) }].slice(-400);
-  await ecrire({ ...a, faits, prochain: (idx + 1) % p.jours.length });
+  await ecrire({ ...a, faits, prochain: indexGarde(p, a, idx + 1) });
 }
 
 /** Semaine du programme (1 la premiere semaine) */
@@ -152,7 +196,7 @@ export function faitsCetteSemaine(a: ProgrammeActif, aujourdhui = new Date()): n
 export function prochainJour(a: ProgrammeActif): { programme: Programme; jour: JourProgramme; index: number } | null {
   const p = programmeParId(a.id);
   if (!p) return null;
-  const index = Math.min(a.prochain, p.jours.length - 1);
+  const index = indexGarde(p, a, Math.min(a.prochain, p.jours.length - 1));
   return { programme: p, jour: p.jours[index], index };
 }
 
@@ -270,7 +314,12 @@ export function seancesAVenir(a: ProgrammeActif, n: number): { programme: Progra
   const p = programmeParId(a.id);
   if (!p) return [];
   const out: { programme: Programme; jour: JourProgramme; semaine: number }[] = [];
-  for (let k = 0; k < n; k++) out.push({ programme: p, jour: p.jours[(a.prochain + k) % p.jours.length], semaine: semaineDuProgramme(a) });
+  // les seances de marche retirees par ta fin de seance ne sont pas annoncees
+  let i = indexGarde(p, a, a.prochain);
+  for (let k = 0; k < n; k++) {
+    out.push({ programme: p, jour: p.jours[i], semaine: semaineDuProgramme(a) });
+    i = indexGarde(p, a, i + 1);
+  }
   return out;
 }
 

@@ -968,6 +968,42 @@ export const SOURCES: Source[] = [
     lien: 'https://doi.org/10.1080/02701367.2022.2070592',
     apport: '14 690 adultes, une séance courte par semaine : environ 30 à 50 % de force en plus la première année, puis une courbe qui s’aplatit vers 1 à 2 ans.',
   },
+  {
+    id: 'steele2017rir',
+    auteurs: 'Steele J, Endres A, Fisher J, Gentil P, Giessing J',
+    annee: 2017,
+    titre: 'Ability to predict repetitions to momentary failure is not perfectly accurate, though improves with resistance training experience',
+    revue: 'PeerJ 5:e4105',
+    lien: 'https://doi.org/10.7717/peerj.4105',
+    apport: '141 pratiquants : la plupart pensent pouvoir faire moins de répétitions qu’en réalité. Les plus expérimentés estiment mieux, sans être parfaits.',
+  },
+  {
+    id: 'halperin2022',
+    auteurs: 'Halperin I, Malleron T, Har-Nir I, Androulakis-Korakakis P, Wolf M, Fisher J, Steele J',
+    annee: 2022,
+    titre: 'Accuracy in Predicting Repetitions to Task Failure in Resistance Exercise: A Scoping Review and Exploratory Meta-analysis',
+    revue: 'Sports Medicine 52:377-390',
+    lien: 'https://doi.org/10.1007/s40279-021-01559-x',
+    apport: 'En moyenne, on pense qu’il reste une répétition de moins qu’en réalité avant l’échec : les répétitions en réserve sont un repère utile, pas une mesure exacte.',
+  },
+  {
+    id: 'latella2020',
+    auteurs: 'Latella C, Teo WP, Spathis J, van den Hoek D',
+    annee: 2020,
+    titre: 'Long-Term Strength Adaptation: A 15-Year Analysis of Powerlifting Athletes',
+    revue: 'Journal of Strength and Conditioning Research 34(9):2412-2418',
+    lien: 'https://doi.org/10.1519/JSC.0000000000003657',
+    apport: '1 897 powerlifters suivis jusqu’à 15 ans : les plus forts progressent plus lentement que les moins forts.',
+  },
+  {
+    id: 'reynolds2006',
+    auteurs: 'Reynolds JM, Gordon TJ, Robergs RA',
+    annee: 2006,
+    titre: 'Prediction of One Repetition Maximum Strength from Multiple Repetition Maximum Testing and Anthropometry',
+    revue: 'Journal of Strength and Conditioning Research 20(3):584-592',
+    lien: 'https://www.unm.edu/~rrobergs/478RMStrengthPrediction.pdf',
+    apport: 'Estimer ton maximum à partir d’une série marche mieux avec peu de répétitions : au delà de 10, la précision baisse.',
+  },
 ];
 
 export function sourceParId(id: string): Source | undefined {
