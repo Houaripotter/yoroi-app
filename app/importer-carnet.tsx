@@ -117,7 +117,7 @@ export default function ImporterCarnet() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} keyboardShouldPersistTaps="handled">
-        <EnTete titre={traduire('Importer mes séances')} sousTitre={traduire('Tes notes du téléphone, ou Hevy')} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={traduire('Importer mes séances')} sousTitre={traduire('Tes notes du téléphone, ou une autre app')} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         {etat === 'fini' && bilan ? (
           <Glass style={{ gap: 8, padding: 18 }}>
@@ -139,10 +139,10 @@ export default function ImporterCarnet() {
                 <Ink size={15} weight="extraBold" color={c.onAccent}>{traduire('Coller mes notes')}</Ink>
               </Pressable>
               <Pressable onPress={() => void fichier()} accessibilityRole="button" style={({ pressed }) => ({ flex: 1, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: c.accent, backgroundColor: pressed ? c.accentTint : 'transparent' })}>
-                <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Fichier Hevy')}</Ink>
+                <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Fichier CSV')}</Ink>
               </Pressable>
             </View>
-            <Ink size={12} color={c.textMuted}>{traduire('Dans Hevy : Profil, Réglages, Exporter et importer, Exporter les séances. Puis choisis le fichier ici.')}</Ink>
+            <Ink size={12} color={c.textMuted}>{traduire('Tu viens d’une autre app de muscu ? Exporte tes séances en fichier CSV depuis ses réglages, puis choisis le fichier ici.')}</Ink>
 
             {source !== 'hevy' ? (
               <TextInput

@@ -13,6 +13,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Image, PanResponder, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import type { ImageSourcePropType } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
@@ -43,6 +44,10 @@ import { routeDuCreneau } from '@/lib/v2/programmes/agenda';
 import { routeDuJour } from '@/lib/v2/programmes/lancer';
 import { chargerMesSeances } from '@/lib/v2/seance/mesSeances';
 
+// 26 octobre 2026 : illustrations des cartes Poids et Mensurations (Gemini) ; le personnage en attendant
+const IMG_PESEE: ImageSourcePropType | null = null;
+const IMG_MESURES: ImageSourcePropType | null = null;
+
 type Other = { key: string; title: string; sub: string; href: string; params?: Record<string, string> };
 
 export default function Ajouter() {
@@ -59,7 +64,6 @@ export default function Ajouter() {
   const [last, setLast] = useState<Training | null>(null);
   const [provider, setProvider] = useState<string | null>(null);
   const [sync, setSync] = useState<'idle' | 'busy' | string>('idle');
-  const [more, setMore] = useState(false);
   // 26 octobre 2026 (Houari : « l'utilisateur se perd ») : trois entrees claires en haut, dans cet ordre,
   // et seulement les choix de celle qui est choisie en dessous
   const [onglet, setOnglet] = useState<'seance' | 'mesures' | 'poids'>('seance');
@@ -140,7 +144,9 @@ export default function Ajouter() {
   // Le retour depuis l'ecran ouvert ramene a l'Accueil, pas a la feuille.
   const open = (href: string, params?: Record<string, string>) => {
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
-    router.replace(params ? { pathname: href as any, params } : (href as any));
+    // 26 octobre 2026 (Houari : « quand j'appuie sur retour, ca quitte le + ») : l'ecran s'ouvre PAR DESSUS
+    // la feuille ; le retour ramene au +, pas a l'Accueil
+    router.push(params ? { pathname: href as any, params } : (href as any));
   };
 
   // une seance faite : la saisie du sport en mode « seance faite » (jour, heure, duree, details), sans chrono
@@ -243,10 +249,10 @@ export default function Ajouter() {
                   accessibilityRole="tab"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={o.t}
-                  style={({ pressed }) => ({ flex: 1, minHeight: 92, borderRadius: 22, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 74, borderRadius: 20, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
                 >
-                  <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: on ? 'rgba(255,255,255,0.18)' : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                    <Svg width={22} height={22} viewBox="0 0 24 24"><Path d={o.d} {...stroke} stroke={on ? c.onAccent : c.accent} /></Svg>
+                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: on ? 'rgba(255,255,255,0.18)' : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                    <Svg width={16} height={16} viewBox="0 0 24 24"><Path d={o.d} {...stroke} stroke={on ? c.onAccent : c.accent} /></Svg>
                   </View>
                   <Ink size={14} weight="black" color={on ? c.onAccent : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{o.t}</Ink>
                 </Pressable>
@@ -280,10 +286,10 @@ export default function Ajouter() {
               onPress={() => open('/quick-log')}
               accessibilityRole="button"
               accessibilityLabel={traduire("Dicte ta séance en une phrase")}
-              style={({ pressed }) => ({ flex: 1, minHeight: 128, borderRadius: 24, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.accentTint })}
+              style={({ pressed }) => ({ flex: 1, minHeight: 112, borderRadius: 22, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.accentTint })}
             >
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" {...stroke} stroke={c.onAccent} /><Path d="M6 11a6 6 0 0 0 12 0M12 17v4" {...stroke} stroke={c.onAccent} /></Svg>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={17} height={17} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" {...stroke} stroke={c.onAccent} /><Path d="M6 11a6 6 0 0 0 12 0M12 17v4" {...stroke} stroke={c.onAccent} /></Svg>
               </View>
               <View style={{ gap: 2 }}>
                 <Ink size={17} weight="black" tight>{traduire("Dicte ta séance")}</Ink>
@@ -294,10 +300,10 @@ export default function Ajouter() {
               onPress={() => open('/seance', { live: '1' })}
               accessibilityRole="button"
               accessibilityLabel={traduire("En direct, démarrer avec le chrono")}
-              style={({ pressed }) => ({ flex: 1, minHeight: 128, borderRadius: 24, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
+              style={({ pressed }) => ({ flex: 1, minHeight: 112, borderRadius: 22, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
             >
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={22} height={22} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={17} height={17} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>
               </View>
               <View style={{ gap: 2 }}>
                 <Ink size={17} weight="black" tight>{traduire("En direct")}</Ink>
@@ -330,7 +336,7 @@ export default function Ajouter() {
               icone={<Path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z" {...accentStroke} />}
             />
             <Tuile titre={traduire("Séance passée")} sous={traduire("un autre jour")} onPress={() => open('/seance/deja-faite')} icone={<><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></>} />
-            <Tuile titre={traduire("Importer")} sous={traduire("tes notes ou Hevy")} onPress={() => open('/importer-carnet')} icone={<Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...accentStroke} />} />
+            <Tuile titre={traduire("Importer")} sous={traduire("tes notes, une autre app")} onPress={() => open('/importer-carnet')} icone={<Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...accentStroke} />} />
             <Tuile titre={traduire("Quoi faire ?")} sous={traduire("YOROI fait ta séance")} onPress={() => open('/programmes/zones')} icone={<Path d="M12 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM8 10h8l-1 5h-1.5l-.5 6h-2l-.5-6H9z" {...accentStroke} />} />
             {!prog ? (
               <Tuile titre={traduire("Programmes")} sous={traduire("PPL, Upper Lower...")} onPress={() => open('/programmes')} icone={<Path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" {...accentStroke} />} />
@@ -347,106 +353,53 @@ export default function Ajouter() {
 
           </>) : null}
 
-          {/* 2. MENSURATIONS : toutes celles d'un sportif, et la photo de forme */}
+          {/* 2. MENSURATIONS (26 octobre 2026 : meme style que « Note ta seance », que Houari adore) */}
           {onglet === 'mesures' ? (
-            <>
-              <Pressable
-                onPress={() => open('/add-measurement')}
-                accessibilityRole="button"
-                accessibilityLabel={traduire('Ajouter mes mensurations')}
-                style={({ pressed }) => ({ minHeight: 112, borderRadius: 24, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: pressed ? c.accentPressed : c.accent })}
-              >
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Ink size={20} weight="black" tight color={c.onAccent}>{traduire('Ajouter mes mensurations')}</Ink>
-                  <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.85 }}>{traduire('Cou, épaules, poitrine, bras, avant-bras, taille, hanches, cuisses, mollets')}</Ink>
-                </View>
-                <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M9 6l6 6-6 6" {...stroke} stroke={c.onAccent} /></Svg>
-              </Pressable>
-              <View style={card}>
-                <QuickRow first soft label={traduire("Ta courbe, mesure par mesure")} title={traduire("Voir l’évolution")} onPress={() => open('/measurements-detail')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M4 18l5-6 4 3 7-9" {...stroke} /></Svg>} />
-                <QuickRow soft label={traduire("Avant, après, même cadrage")} title={traduire("Photo de forme")} onPress={() => open('/photos')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M4 8h3l2-3h6l2 3h3v11H4z" {...stroke} /><Circle cx={12} cy={13} r={3.5} {...stroke} /></Svg>} />
-              </View>
-            </>
-          ) : null}
-
-          {/* 3. POIDS : a la main, par photo de la balance, balance connectee */}
-          {onglet === 'poids' ? (<>
-          {/* BALANCE 3 : la pesee a la main et la pesee par photo lue par ton IA, cote a cote, bien visibles */}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Pressable
-              onPress={() => open('/pesee')}
-              accessibilityRole="button"
-              accessibilityLabel={traduire("Pesée, ton poids du jour")}
-              style={({ pressed }) => ({ flex: 1, minHeight: 112, borderRadius: 22, padding: 14, gap: 10, backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
-            >
-              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSoft, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={24} height={24} viewBox="0 0 24 24"><Path d="M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z" {...stroke} /><Path d="M7.5 10a4.5 4.5 0 0 1 9 0z" {...stroke} /><Path d="M12 10l1.6-2.6" {...stroke} /></Svg>
-              </View>
-              <View style={{ gap: 2 }}>
-                <Ink size={18} weight="black" tight>{traduire("Pesée")}</Ink>
-                <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire("ton poids du jour")}</Ink>
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={() => open('/balance-photo')}
-              accessibilityRole="button"
-              accessibilityLabel={traduire("Pesée par photo, ton IA lit l’écran de ta balance")}
-              style={({ pressed }) => ({ flex: 1, minHeight: 112, borderRadius: 22, padding: 14, gap: 10, backgroundColor: pressed ? c.fillSubtle : c.accentTint, borderWidth: 1, borderColor: c.accent + '33' })}
-            >
-              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={24} height={24} viewBox="0 0 24 24"><Path d="M4 8h3l2-3h6l2 3h3v11H4z" {...stroke} stroke={c.onAccent} /><Circle cx={12} cy={13} r={3.5} {...stroke} stroke={c.onAccent} /></Svg>
-              </View>
-              <View style={{ gap: 2 }}>
-                <Ink size={18} weight="black" tight numberOfLines={1}>{traduire("Par photo")}</Ink>
-                <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire("ton IA lit ta balance")}</Ink>
-              </View>
-            </Pressable>
-          </View>
-          <View style={card}>
-            <QuickRow
-              first
-              soft
-              label={provider ? (/^[AEIOUH]/.test(provider) ? traduire("Composition importée d’{0}", provider) : traduire("Composition importée de {0}", provider)) : traduire('Composition, connectée ou à la main')}
-              title={traduire("Balance")}
-              onPress={() => open('/body-composition')}
-              icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} {...stroke} /><Path d="M12 3a9 9 0 0 1 9 9h-9z" {...stroke} /></Svg>}
+            <Hero
+              titre={traduire('Tes mensurations')}
+              sous={traduire('taille, bras, cuisses, au ruban')}
+              image={IMG_MESURES ?? heroImg}
+              onPress={() => open('/add-measurement')}
+              a11y={traduire('Ajouter mes mensurations')}
+              puces={[
+                { t: traduire('Mesurer'), on: () => open('/add-measurement'), fond: '#E3E9F3' },
+                { t: traduire('Évolution'), on: () => open('/measurements-detail'), fond: '#E9E4D6' },
+                { t: traduire('Photo'), on: () => open('/photos'), fond: '#E2EADB' },
+              ]}
             />
-          </View>
-          </>) : null}
-
-          {/* Le reste a sa vraie place ; ici, replie, pour ne rien perdre */}
-          <Pressable
-            onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setMore((m) => !m); }}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: more }}
-            accessibilityLabel={traduire("Autre chose : sommeil, eau, vidéo, combat, compétition")}
-            style={({ pressed }) => ({ minHeight: 50, marginTop: 4, paddingHorizontal: 4, flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.7 : 1 })}
-          >
-            <View style={{ flex: 1 }}>
-              <Ink size={15} weight="extraBold" color={c.textSecondary}>{traduire("Autre chose")}</Ink>
-              {!more ? <Ink size={12} color={c.textMuted} numberOfLines={1}>{traduire("sommeil, eau, vidéo, combat, compétition")}</Ink> : null}
-            </View>
-            <Svg width={18} height={18} viewBox="0 0 24 24"><Path d={more ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} {...stroke} stroke={c.textSecondary} /></Svg>
-          </Pressable>
-          {more ? (
-            <View style={card}>
-              {others.map((o, i) => (
-                <Pressable
-                  key={o.key}
-                  onPress={() => open(o.href, o.params)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${o.title}, ${o.sub}`}
-                  style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i === 0 ? 0 : 1, borderColor: c.divider, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Ink size={15} weight="extraBold">{traduire(o.title)}</Ink>
-                    <Ink size={12} color={c.textSecondary} numberOfLines={1}>{traduire(o.sub)}</Ink>
-                  </View>
-                  <Svg width={14} height={14} viewBox="0 0 24 24"><Path d="M9 6l6 6-6 6" {...stroke} stroke={c.textMuted} /></Svg>
-                </Pressable>
-              ))}
-            </View>
           ) : null}
+
+          {/* 3. POIDS : a la main, par photo de la balance, composition (meme style que « Note ta seance ») */}
+          {onglet === 'poids' ? (
+            <Hero
+              titre={traduire('Ta pesée')}
+              sous={traduire('ton poids du jour, ta composition')}
+              image={IMG_PESEE ?? heroImg}
+              onPress={() => open('/pesee')}
+              a11y={traduire('Pesée, ton poids du jour')}
+              puces={[
+                { t: traduire('Poids'), on: () => open('/pesee'), fond: '#E3E9F3' },
+                { t: traduire('Par photo'), on: () => open('/balance-photo'), fond: '#E9E4D6' },
+                { t: traduire('Composition'), on: () => open('/body-composition'), fond: '#E2EADB' },
+              ]}
+            />
+          ) : null}
+
+          {/* 26 octobre 2026 (Houari : « Autre chose en bas, c'est moche ») : de petites puces, toujours visibles */}
+          <Label>{traduire("Autre chose")}</Label>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {others.map((o) => (
+              <Pressable
+                key={o.key}
+                onPress={() => open(o.href, o.params)}
+                accessibilityRole="button"
+                accessibilityLabel={`${o.title}, ${o.sub}`}
+                style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
+              >
+                <Ink size={14} weight="bold">{traduire(o.title)}</Ink>
+              </Pressable>
+            ))}
+          </View>
         </ScrollView>
       </Pressable>
       </Animated.View>
@@ -457,6 +410,33 @@ export default function Ajouter() {
 function Label({ children }: { children: string }) {
   const { theme } = useYoroiTheme();
   return <Ink size={13} weight="extraBold" color={theme.colors.textSecondary} style={{ paddingHorizontal: 4, marginTop: 6, letterSpacing: 0.3 }}>{children}</Ink>;
+}
+
+/**
+ * Grande carte illustree, dans le style de « Note ta seance » (Houari : « ca, c'est magnifique, ca donne envie ») :
+ * fond indigo, titre, une ligne, des puces, l'illustration a droite.
+ */
+function Hero({ titre, sous, image, onPress, a11y, puces }: { titre: string; sous: string; image: ImageSourcePropType | null; onPress: () => void; a11y: string; puces: { t: string; on: () => void; fond: string }[] }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <View style={{ height: 150, borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden' }}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} style={({ pressed }) => ({ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: pressed ? 0.9 : 1 })}>
+        {image ? <Image source={image} style={{ position: 'absolute', right: -6, bottom: -40, width: 136, height: 180 }} resizeMode="contain" /> : null}
+        <View style={{ position: 'absolute', left: 18, top: 18, gap: 3, maxWidth: '62%' }}>
+          <Ink size={22} weight="black" tight color={c.onDark}>{titre}</Ink>
+          <Ink size={13} color={c.onDarkSecondary} numberOfLines={1}>{sous}</Ink>
+        </View>
+      </Pressable>
+      <View style={{ position: 'absolute', left: 18, bottom: 14, right: image ? 124 : 18, flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+        {puces.map((p) => (
+          <Pressable key={p.t} onPress={p.on} accessibilityRole="button" hitSlop={4} style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 12, borderRadius: 12, justifyContent: 'center', backgroundColor: pressed ? '#FFFFFF' : p.fond })}>
+            <Ink size={13} weight="extraBold" color={c.ink}>{p.t}</Ink>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
 }
 
 /** Une entree de la grille « Autres facons » : icone, titre, une ligne de detail */
@@ -470,14 +450,14 @@ function Tuile({ titre, sous, onPress, icone }: { titre: string; sous: string; o
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${titre}, ${sous}`}
-      style={({ pressed }) => ({ width: w, minHeight: 108, borderRadius: 22, padding: 14, gap: 10, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
+      style={({ pressed }) => ({ width: w, minHeight: 92, borderRadius: 20, padding: 13, gap: 8, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
     >
-      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width={19} height={19} viewBox="0 0 24 24">{icone}</Svg>
+      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={15} height={15} viewBox="0 0 24 24">{icone}</Svg>
       </View>
       <View style={{ gap: 2 }}>
-        <Ink size={15} weight="black" tight numberOfLines={1}>{titre}</Ink>
-        <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{sous}</Ink>
+        <Ink size={15} weight="extraBold" tight numberOfLines={1}>{titre}</Ink>
+        <Ink size={12} weight="medium" color={c.textSecondary} numberOfLines={1}>{sous}</Ink>
       </View>
     </Pressable>
   );
@@ -501,26 +481,6 @@ function CarteDuJour({ label, titre, onPress }: { label: string; titre: string; 
       <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M8 5v14l11-7z" fill={c.onAccent} /></Svg>
       </View>
-    </Pressable>
-  );
-}
-
-function QuickRow({ first, soft, label, title, onPress, icon, right }: { first?: boolean; soft?: boolean; label: string; title: string; onPress: () => void; icon: React.ReactNode; right?: React.ReactNode }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${label} : ${title}`}
-      style={({ pressed }) => ({ minHeight: 56, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: first ? 0 : 1, borderColor: c.divider, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}
-    >
-      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: soft ? c.fillSoft : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>{icon}</View>
-      <View style={{ flex: 1, gap: 1, flexDirection: soft ? 'column-reverse' : 'column' }}>
-        <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{label}</Ink>
-        <Ink size={15} weight="extraBold" numberOfLines={2}>{title}</Ink>
-      </View>
-      {right}
     </Pressable>
   );
 }
