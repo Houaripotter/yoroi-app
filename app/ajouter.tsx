@@ -11,8 +11,8 @@
  * Carnet, Combat et Competition dans l'outil Combat et competition) et reste joignable ici dans
  * « Autre chose », replie.
  */
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Image, PanResponder, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
@@ -60,6 +60,32 @@ export default function Ajouter() {
   const [provider, setProvider] = useState<string | null>(null);
   const [sync, setSync] = useState<'idle' | 'busy' | string>('idle');
   const [more, setMore] = useState(false);
+  // 26 octobre 2026 (Houari : « l'utilisateur se perd ») : trois entrees claires en haut, dans cet ordre,
+  // et seulement les choix de celle qui est choisie en dessous
+  const [onglet, setOnglet] = useState<'seance' | 'mesures' | 'poids'>('seance');
+  // fermer en glissant vers le bas (feuille en haut de son defilement) ou sur le cote
+  const glisse = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const enHaut = useRef(true);
+  const fermer = () => router.back();
+  const geste = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, g) => (g.dy > 12 && Math.abs(g.dy) > Math.abs(g.dx) * 1.4 && enHaut.current) || (Math.abs(g.dx) > 18 && Math.abs(g.dx) > Math.abs(g.dy) * 1.6),
+      onPanResponderMove: (_e, g) => {
+        if (Math.abs(g.dx) > Math.abs(g.dy)) glisse.setValue({ x: g.dx, y: 0 });
+        else glisse.setValue({ x: 0, y: Math.max(0, g.dy) });
+      },
+      onPanResponderRelease: (_e, g) => {
+        const loin = g.dy > 120 || g.vy > 1.1 || Math.abs(g.dx) > 110 || Math.abs(g.vx) > 1.1;
+        if (loin) {
+          const versX = Math.abs(g.dx) > Math.abs(g.dy);
+          Animated.timing(glisse, { toValue: versX ? { x: g.dx > 0 ? 600 : -600, y: 0 } : { x: 0, y: 900 }, duration: 180, useNativeDriver: true }).start(() => fermer());
+        } else {
+          Animated.spring(glisse, { toValue: { x: 0, y: 0 }, useNativeDriver: true, bounciness: 4 }).start();
+        }
+      },
+      onPanResponderTerminate: () => Animated.spring(glisse, { toValue: { x: 0, y: 0 }, useNativeDriver: true }).start(),
+    }),
+  ).current;
   // 24 octobre 2026 : seance du programme en cours (lib/v2/programmes)
   const [prog, setProg] = useState<{ route: { pathname: string; params: Record<string, string> }; titre: string } | null>(null);
   // 25 octobre 2026 : tes seances enregistrees (lib/v2/seance/mesSeances.ts)
@@ -186,9 +212,10 @@ export default function Ajouter() {
 
   return (
     <Pressable onPress={() => router.back()} style={{ flex: 1, backgroundColor: 'rgba(29,32,41,0.45)', justifyContent: 'flex-end' }} accessibilityLabel={traduire("Fermer")}>
+      <Animated.View {...geste.panHandlers} style={{ transform: [{ translateX: glisse.x }, { translateY: glisse.y }] }}>
       <Pressable onPress={() => {}} style={{ backgroundColor: c.background, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 12, maxHeight: height * 0.92 }}>
-        <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 8 }} />
-        <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 24, gap: 10 }}>
+        <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: c.border, marginBottom: 8 }} accessibilityLabel={traduire('Glisse vers le bas pour fermer')} />
+        <ScrollView bounces={false} showsVerticalScrollIndicator={false} scrollEventThrottle={16} onScroll={(e) => { enHaut.current = e.nativeEvent.contentOffset.y <= 2; }} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 24, gap: 10 }}>
           <Ink size={24} weight="black" tight style={{ paddingHorizontal: 4, marginBottom: 2 }} accessibilityRole="header">{traduire("Enregistrer")}</Ink>
 
           {draft ? (
@@ -201,8 +228,34 @@ export default function Ajouter() {
             </Pressable>
           ) : null}
 
+          {/* 26 octobre 2026 : les trois entrees, dans l'ordre voulu par Houari : seance, mensurations, poids */}
+          <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="tablist">
+            {([
+              { k: 'seance' as const, t: traduire('Séance'), d: 'M6.5 7v10M17.5 7v10M4 9.5v5M20 9.5v5M6.5 12h11' },
+              { k: 'mesures' as const, t: traduire('Mensurations'), d: 'M3 9h18v6H3zM7 9v3M11 9v4M15 9v3M19 9v2' },
+              { k: 'poids' as const, t: traduire('Poids'), d: 'M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM7.5 10a4.5 4.5 0 0 1 9 0z' },
+            ]).map((o) => {
+              const on = onglet === o.k;
+              return (
+                <Pressable
+                  key={o.k}
+                  onPress={() => { impactAsync(ImpactFeedbackStyle.Light).catch(() => {}); setOnglet(o.k); }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={o.t}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 92, borderRadius: 22, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border })}
+                >
+                  <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: on ? 'rgba(255,255,255,0.18)' : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                    <Svg width={22} height={22} viewBox="0 0 24 24"><Path d={o.d} {...stroke} stroke={on ? c.onAccent : c.accent} /></Svg>
+                  </View>
+                  <Ink size={14} weight="black" color={on ? c.onAccent : c.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{o.t}</Ink>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {onglet === 'seance' ? (<>
           {/* 1. LA SEANCE : une seance faite en quelques touchers */}
-          <Label>{traduire("Séance")}</Label>
           <TourAnchor id="ajouter.seance" style={{ height: 132, borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden' }}>
             <Pressable onPress={() => open('/seance')} accessibilityRole="button" accessibilityLabel={traduire("Noter une séance faite, choisir le sport")} style={({ pressed }) => ({ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: pressed ? 0.9 : 1 })}>
               {heroImg ? <Image source={heroImg} style={{ position: 'absolute', right: -6, bottom: -56, width: 130, height: 176 }} resizeMode="contain" /> : null}
@@ -272,8 +325,32 @@ export default function Ajouter() {
             ) : null}
           </View>
 
-          {/* 2. LE CORPS */}
-          <Label>Corps</Label>
+          </>) : null}
+
+          {/* 2. MENSURATIONS : toutes celles d'un sportif, et la photo de forme */}
+          {onglet === 'mesures' ? (
+            <>
+              <Pressable
+                onPress={() => open('/add-measurement')}
+                accessibilityRole="button"
+                accessibilityLabel={traduire('Ajouter mes mensurations')}
+                style={({ pressed }) => ({ minHeight: 112, borderRadius: 24, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: pressed ? c.accentPressed : c.accent })}
+              >
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Ink size={20} weight="black" tight color={c.onAccent}>{traduire('Ajouter mes mensurations')}</Ink>
+                  <Ink size={13} weight="bold" color={c.onAccent} style={{ opacity: 0.85 }}>{traduire('Cou, épaules, poitrine, bras, avant-bras, taille, hanches, cuisses, mollets')}</Ink>
+                </View>
+                <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M9 6l6 6-6 6" {...stroke} stroke={c.onAccent} /></Svg>
+              </Pressable>
+              <View style={card}>
+                <QuickRow first soft label={traduire("Ta courbe, mesure par mesure")} title={traduire("Voir l’évolution")} onPress={() => open('/measurements-detail')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M4 18l5-6 4 3 7-9" {...stroke} /></Svg>} />
+                <QuickRow soft label={traduire("Avant, après, même cadrage")} title={traduire("Photo de forme")} onPress={() => open('/photos')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M4 8h3l2-3h6l2 3h3v11H4z" {...stroke} /><Circle cx={12} cy={13} r={3.5} {...stroke} /></Svg>} />
+              </View>
+            </>
+          ) : null}
+
+          {/* 3. POIDS : a la main, par photo de la balance, balance connectee */}
+          {onglet === 'poids' ? (<>
           {/* BALANCE 3 : la pesee a la main et la pesee par photo lue par ton IA, cote a cote, bien visibles */}
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Pressable
@@ -314,9 +391,8 @@ export default function Ajouter() {
               onPress={() => open('/body-composition')}
               icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} {...stroke} /><Path d="M12 3a9 9 0 0 1 9 9h-9z" {...stroke} /></Svg>}
             />
-            <QuickRow soft label={traduire("Taille, bras, cuisses")} title={traduire("Mensurations")} onPress={() => open('/add-measurement')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={8} {...stroke} /><Path d="M12 4v4M4 12h4M16 12h4M12 16v4" {...stroke} /></Svg>} />
-            <QuickRow soft label={traduire("Avant, après, même cadrage")} title={traduire("Photo de forme")} onPress={() => open('/photos')} icon={<Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M4 8h3l2-3h6l2 3h3v11H4z" {...stroke} /><Circle cx={12} cy={13} r={3.5} {...stroke} /></Svg>} />
           </View>
+          </>) : null}
 
           {/* Le reste a sa vraie place ; ici, replie, pour ne rien perdre */}
           <Pressable
@@ -353,6 +429,7 @@ export default function Ajouter() {
           ) : null}
         </ScrollView>
       </Pressable>
+      </Animated.View>
     </Pressable>
   );
 }
