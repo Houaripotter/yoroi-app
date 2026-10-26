@@ -21,22 +21,17 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { CarteIllustree, EnTeteRond, HeroJour, musclesDuJour, nomCourt, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { EnTeteRond, nomCourt, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { getProfile } from '@/lib/database';
-import { jourPourToi } from '@/lib/v2/programmes/perso';
-import { sportImage } from '@/lib/v2/seance/sportVisuals';
-import { PROGRESSION, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
+import { PROGRESSION } from '@/lib/v2/programmes/catalogue';
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
 import { COMMENT_CHOISIR, POIDS_DE_DEPART, SOURCES_COMMENT_CHOISIR } from '@/lib/v2/programmes/charge';
-import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
-import { messageCoach } from '@/lib/v2/programmes/coach';
-import { infosHero } from '@/lib/v2/programmes/heroJour';
 import { lireDepart } from '@/lib/v2/programmes/depart';
-import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, prochainJour } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire } from '@/lib/i18n/tr';
 
 export default function CoachScreen() {
   const { theme } = useYoroiTheme();
@@ -45,8 +40,8 @@ export default function CoachScreen() {
   const insets = useSafeAreaInsets();
   const pal = usePaletteProgramme();
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
-  const [charge, setCharge] = useState(false);
-  const [femme, setFemme] = useState(false);
+  const [, setCharge] = useState(false);
+  const [, setFemme] = useState(false);
   const [poidsOuvert, setPoidsOuvert] = useState(false);
   const [seriesOuvert, setSeriesOuvert] = useState(false);
   const [monterOuvert, setMonterOuvert] = useState(false);
@@ -83,23 +78,11 @@ export default function CoachScreen() {
   const suite = actif ? prochainJour(actif) : null;
   const p = suite?.programme ?? null;
   const jour = suite?.jour ?? null;
-  const semaine = actif ? semaineDuProgramme(actif) : 1;
-  const jours = actif && p ? joursDuProgramme(actif, p) : [];
-  const message = actif && p && jour ? messageCoach({ programme: p, actif, jours, prochaineSeance: traduire(jour.titre), femme }) : null;
-  const jourVu = actif && jour ? jourPourToi(jour, null, [], null, actif.remplacements) : null;
-  const hero = actif && p && jourVu && message ? infosHero({ programme: p, actif, jour: jourVu, jours, message, semaine }) : null;
-  const img = sportImage(p ? sportDuProgramme(p) : 'musculation', femme, 1);
   const BLANC = c.onDark;
 
   const depart = (chemin?: 'liste') => {
     tap();
     router.push({ pathname: '/coach-depart' as any, params: chemin ? { chemin } : {} });
-  };
-  const commencer = () => {
-    if (!p || !jour) return;
-    tap();
-    const r = routeDuJour(p, jour, semaine);
-    router.push({ pathname: r.pathname as any, params: r.params });
   };
 
   const tuiles: { cle: string; chiffre?: string; icone?: IconName; couleur: string; titre: string; action: () => void }[] = [
@@ -112,67 +95,34 @@ export default function CoachScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: pal.page }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: insets.bottom + 40, gap: 16 }} showsVerticalScrollIndicator={false}>
-        <EnTeteRond salut={traduire('Ton coach')} titre={traduire('Ton objectif ?')} repli="/(tabs)" />
+        <EnTeteRond salut={traduire('Ton coach')} titre={traduire('On fait quoi ?')} repli="/(tabs)" />
 
-        {/* 1. LA SÉANCE DU JOUR, ou « Commençons » */}
-        {p && jour && message && hero ? (
-          <HeroJour
-            pastille={
-              message.etat === 'rattrape'
-                ? traduire('On rattrape aujourd’hui')
-                : message.etat === 'repos'
-                  ? traduire('Jour de repos')
-                  : message.etat === 'fait'
-                    ? traduire('Séance faite')
-                    : traduire('Aujourd’hui')
-            }
-            ligne={hero.ligne}
-            nom={nomCourt(traduire(jour.titre))}
-            muscles={musclesDuJour(traduire(jour.titre), jourVu?.exos ?? jour.exos)}
-            infos={
-              jourVu && jourVu.exos.length && !jourVu.rounds && !jourVu.cardio
-                ? `${traduirePluriel(jourVu.exos.length, jourVu.exos.length > 1, '{0} exercice', '{0} exercices', jourVu.exos.length)} · ${traduire('{0} min', p.dureeMin)}`
-                : resumeDuJour(jour, semaine)
-            }
-            pourquoi={hero.pourquoi}
-            ajouts={hero.ajouts}
-            ensuite={hero.ensuite}
-            image={img}
-            bouton={
-              message.seanceDuJour
-                ? { label: traduire('Commencer'), onPress: commencer, accessibilityLabel: `${traduire('Commencer')}, ${traduire(jour.titre)}` }
-                : { label: traduire('Faire maintenant'), discret: true, onPress: commencer, accessibilityLabel: traduire('Faire la prochaine séance maintenant') }
-            }
-          >
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 18 }}>
-              <LienBlanc label={traduire('Voir mon programme')} couleur={BLANC} onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }} />
-              <LienBlanc label={traduire('Changer de programme')} couleur={BLANC} onPress={() => depart()} />
-            </View>
-          </HeroJour>
-        ) : charge ? (
-          <CarteIllustree
-            onPress={() => depart()}
-            label={`${traduire('Commençons')}, ${traduire('Ton coach te prépare ton programme')}`}
-            titre={traduire('Commençons')}
-            texte={traduire('Ton coach te prépare ton programme')}
-            image={img}
-            style={{ minHeight: 190 }}
-          >
-            <View style={{ alignSelf: 'flex-start', minHeight: 46, paddingHorizontal: 20, borderRadius: 999, backgroundColor: BLANC, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Icon name="play" size={14} color={pal.indigo} fill={pal.indigo} />
-              <Ink size={15} weight="black" color={pal.indigo}>{traduire('C’est parti')}</Ink>
-            </View>
-          </CarteIllustree>
-        ) : null}
-
-        {/* 2. CHANGER DE PROGRAMME, OU CHOISIR */}
-        <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header" style={{ marginTop: 4 }}>
-          {actif ? traduire('Changer de programme') : traduire('Ou choisis')}
-        </Ink>
+        {/* 26 octobre 2026 (Houari : « c'est la première page, elle ne doit pas dire ça ») : d'abord les choix,
+            le programme en cours ensuite, en petit (sa séance du jour est sur la page du programme) */}
         <GrandeLigne icone="list" fond={pal.teinte} encre={pal.indigo} titre={traduire('Je sais ce que je veux')} sous={traduire('PPL, Upper Lower, Push Pull...')} onPress={() => depart('liste')} />
         <GrandeLigne icone="search" fond={pal.orangeTint} encre={pal.orange} titre={traduire('Trouve mon programme')} sous={traduire('Quelques questions, même débutant')} onPress={() => depart()} />
-        {actif ? <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Pas envie de programme ?')}</Ink> : null}
         <GrandeLigne icone="bolt" fond={pal.vertTint} encre={pal.vert} titre={traduire('Juste une séance')} sous={traduire('Sans programme, tout de suite')} onPress={() => { tap(); router.push('/programmes/zones' as any); }} />
+
+        {p && jour ? (
+          <>
+            <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Ton programme en cours')}</Ink>
+            <Pressable
+              onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
+              accessibilityRole="button"
+              accessibilityLabel={`${traduire('Ton programme en cours')}, ${traduire(p.titre)}`}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 76, padding: 14, borderRadius: 24, backgroundColor: pressed ? pal.teinte : pal.carte })}
+            >
+              <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: pal.indigo, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="calendar" size={22} color={BLANC} />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Ink size={16} weight="black" tight color={pal.texte} numberOfLines={1}>{nomCourt(traduire(p.titre))}</Ink>
+                <Ink size={13} weight="bold" color={pal.texte2} numberOfLines={1}>{traduire('Prochaine séance : {0}', nomCourt(traduire(jour.titre)))}</Ink>
+              </View>
+              <Icon name="chevron" size={18} color={pal.texte3} />
+            </Pressable>
+          </>
+        ) : null}
 
         {/* 3. UNE QUESTION ? */}
         <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Une question ?')}</Ink>
@@ -233,15 +183,6 @@ export default function CoachScreen() {
         </View>
       </Sheet>
     </View>
-  );
-}
-
-function LienBlanc({ label, couleur, onPress }: { label: string; couleur: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="link" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <Ink size={14} weight="extraBold" color={couleur}>{label}</Ink>
-      <Icon name="chevron" size={15} color={couleur} />
-    </Pressable>
   );
 }
 
