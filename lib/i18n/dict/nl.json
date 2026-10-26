@@ -18706,5 +18706,16 @@
 "Tous les exercices sont reconnus. Vérifie, puis importe.": "Alle oefeningen zijn herkend. Controleer en importeer dan.",
 "échauffement": "opwarming",
 "note : {0}": "notitie: {0}",
-"Voir les {0} séances plus anciennes": "De {0} oudere trainingen bekijken"
+"Voir les {0} séances plus anciennes": "De {0} oudere trainingen bekijken",
+"ou colle tes notes": "of plak je notities",
+"En direct, démarrer avec le chrono": "Live, starten met de timer",
+"avec le chrono et le repos": "met timer en rust",
+"Autres façons": "Andere manieren",
+"à refaire en un appui": "opnieuw met één tik",
+"un autre jour": "een andere dag",
+"tes notes ou Hevy": "je notities of Hevy",
+"YOROI fait ta séance": "YOROI maakt je training",
+"PPL, Upper Lower...": "PPL, Upper Lower...",
+"récupérer tes séances": "trainingen ophalen",
+"synchro en cours": "bezig met synchroniseren"
 }

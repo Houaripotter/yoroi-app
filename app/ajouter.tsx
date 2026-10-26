@@ -273,57 +273,75 @@ export default function Ajouter() {
             </View>
           </TourAnchor>
 
-          {/* Dicte ta seance : une phrase, un ecran de verification */}
-          <Pressable
-            onPress={() => open('/quick-log')}
-            accessibilityRole="button"
-            accessibilityLabel={traduire("Dicte ta séance en une phrase")}
-            style={({ pressed }) => ({ minHeight: 78, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: pressed ? c.fillSubtle : c.accentTint, borderWidth: 1, borderColor: c.accent + '33' })}
-          >
-            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Svg width={24} height={24} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" {...stroke} stroke={c.onAccent} /><Path d="M6 11a6 6 0 0 0 12 0M12 17v4" {...stroke} stroke={c.onAccent} /></Svg>
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={18} weight="black" tight>{traduire("Dicte ta séance")}</Ink>
-              <Ink size={13} color={c.textSecondary} numberOfLines={2}>{traduire("« JJB 1 h 30 ce soir, intense, 6 rounds »")}</Ink>
-            </View>
-            <Svg width={16} height={16} viewBox="0 0 24 24"><Path d="M9 6l6 6-6 6" {...accentStroke} /></Svg>
-          </Pressable>
+          {/* 26 octobre 2026 (Houari : « revois le design, je veux la qualite ») : deux grandes entrees,
+              ce qui est prevu aujourd'hui, puis les autres facons en grille, aeree */}
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Pressable
+              onPress={() => open('/quick-log')}
+              accessibilityRole="button"
+              accessibilityLabel={traduire("Dicte ta séance en une phrase")}
+              style={({ pressed }) => ({ flex: 1, minHeight: 128, borderRadius: 24, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.accentTint })}
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" {...stroke} stroke={c.onAccent} /><Path d="M6 11a6 6 0 0 0 12 0M12 17v4" {...stroke} stroke={c.onAccent} /></Svg>
+              </View>
+              <View style={{ gap: 2 }}>
+                <Ink size={17} weight="black" tight>{traduire("Dicte ta séance")}</Ink>
+                <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("ou colle tes notes")}</Ink>
+              </View>
+            </Pressable>
+            <Pressable
+              onPress={() => open('/seance', { live: '1' })}
+              accessibilityRole="button"
+              accessibilityLabel={traduire("En direct, démarrer avec le chrono")}
+              style={({ pressed }) => ({ flex: 1, minHeight: 128, borderRadius: 24, padding: 14, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={22} height={22} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>
+              </View>
+              <View style={{ gap: 2 }}>
+                <Ink size={17} weight="black" tight>{traduire("En direct")}</Ink>
+                <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={2}>{traduire("avec le chrono et le repos")}</Ink>
+              </View>
+            </Pressable>
+          </View>
 
-          <View style={card}>
-            {/* 24 octobre 2026 : pour ceux qui ne savent pas quoi faire a la salle */}
-            <QuickRow first={!prog} label={traduire("Je ne sais pas quoi faire")} title={traduire("Touche tes zones, YOROI fait ta séance")} onPress={() => open('/programmes/zones')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M12 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM8 10h8l-1 5h-1.5l-.5 6h-2l-.5-6H9z" {...accentStroke} /></Svg>} />
-            {prog ? (
-              <QuickRow label={traduire("Ton programme, en direct")} title={prog.titre} onPress={() => open(prog.route.pathname, prog.route.params)} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" {...accentStroke} /></Svg>} />
-            ) : null}
-            {slot ? (
-              <QuickRow first={!prog} label={traduire("Prévu aujourd’hui")} title={`${slotTitle}${slotTime}`} onPress={startSlot} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M7 4.5v15l13-7.5z" fill={c.accent} /></Svg>} />
-            ) : null}
+          {prog || slot ? (
+            <>
+              <Label>{traduire("Aujourd’hui")}</Label>
+              {prog ? (
+                <CarteDuJour label={traduire("Ton programme")} titre={prog.titre} onPress={() => open(prog.route.pathname, prog.route.params)} />
+              ) : null}
+              {slot ? (
+                <CarteDuJour label={traduire("Prévu aujourd’hui")} titre={`${slotTitle}${slotTime}`} onPress={startSlot} />
+              ) : null}
+            </>
+          ) : null}
+
+          <Label>{traduire("Autres façons")}</Label>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {last ? (
-              <QuickRow first={!slot && !prog} label={traduire("Refaire ta dernière")} title={sessionTitle(last)} onPress={repeatLast} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5" {...accentStroke} /></Svg>} />
+              <Tuile titre={traduire("Refaire ta dernière")} sous={sessionTitle(last)} onPress={repeatLast} icone={<Path d="M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5" {...accentStroke} />} />
             ) : null}
-            <QuickRow
-              first={!slot && !last && !prog}
-              label={traduire("Mes séances")}
-              title={mesNoms.length === 0 ? traduire("Tes séances à toi, à refaire en un appui") : mesNoms.length <= 2 ? mesNoms.join(', ') : traduirePluriel(mesNoms.length - 2, mesNoms.length > 3, "{0}, {1} et {2} autre", "{0}, {1} et {2} autres", mesNoms[0], mesNoms[1], mesNoms.length - 2)}
+            <Tuile
+              titre={traduire("Mes séances")}
+              sous={mesNoms.length === 0 ? traduire("à refaire en un appui") : mesNoms.slice(0, 2).join(', ')}
               onPress={() => open('/mes-seances')}
-              icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z" {...accentStroke} /></Svg>}
+              icone={<Path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z" {...accentStroke} />}
             />
-            {/* 26 octobre 2026 : des annees de seances notees dans le telephone, ou Hevy */}
-            <QuickRow label={traduire("Tes notes du téléphone, ou Hevy")} title={traduire("Importer mes séances")} onPress={() => open('/importer-carnet')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...accentStroke} /></Svg>} />
-            <QuickRow label={traduire("Séance passée")} title={traduire("Un autre jour, date au choix")} onPress={() => open('/seance/deja-faite')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></Svg>} />
-            {provider ? (
-              <QuickRow
-                label={traduire("Ta montre, via {0}", provider)}
-                title={sync === 'idle' ? traduire('Récupérer tes séances') : sync === 'busy' ? 'Synchro en cours...' : sync}
-                onPress={syncWatch}
-                right={sync === 'busy' ? <ActivityIndicator color={c.accent} /> : undefined}
-                icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={6.5} y={6} width={11} height={12} rx={3} {...accentStroke} /><Path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 10v2.5l1.5 1" {...accentStroke} /></Svg>}
-              />
-            ) : null}
-            <QuickRow label={traduire("En direct")} title={traduire("Démarrer avec le chrono")} onPress={() => open('/seance', { live: '1' })} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Circle cx={12} cy={13} r={8} {...accentStroke} /><Path d="M12 9v4l2.5 1.5M10 2.5h4" {...accentStroke} /></Svg>} />
+            <Tuile titre={traduire("Séance passée")} sous={traduire("un autre jour")} onPress={() => open('/seance/deja-faite')} icone={<><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></>} />
+            <Tuile titre={traduire("Importer")} sous={traduire("tes notes ou Hevy")} onPress={() => open('/importer-carnet')} icone={<Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...accentStroke} />} />
+            <Tuile titre={traduire("Quoi faire ?")} sous={traduire("YOROI fait ta séance")} onPress={() => open('/programmes/zones')} icone={<Path d="M12 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM8 10h8l-1 5h-1.5l-.5 6h-2l-.5-6H9z" {...accentStroke} />} />
             {!prog ? (
-              <QuickRow label={traduire("Programmes")} title={traduire("Suivre un programme prêt")} onPress={() => open('/programmes')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" {...accentStroke} /></Svg>} />
+              <Tuile titre={traduire("Programmes")} sous={traduire("PPL, Upper Lower...")} onPress={() => open('/programmes')} icone={<Path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11" {...accentStroke} />} />
+            ) : null}
+            {provider ? (
+              <Tuile
+                titre={traduire("Ta montre")}
+                sous={sync === 'idle' ? traduire('récupérer tes séances') : sync === 'busy' ? traduire('synchro en cours') : sync}
+                onPress={syncWatch}
+                icone={<><Rect x={6.5} y={6} width={11} height={12} rx={3} {...accentStroke} /><Path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 10v2.5l1.5 1" {...accentStroke} /></>}
+              />
             ) : null}
           </View>
 
@@ -439,6 +457,52 @@ export default function Ajouter() {
 function Label({ children }: { children: string }) {
   const { theme } = useYoroiTheme();
   return <Ink size={13} weight="extraBold" color={theme.colors.textSecondary} style={{ paddingHorizontal: 4, marginTop: 6, letterSpacing: 0.3 }}>{children}</Ink>;
+}
+
+/** Une entree de la grille « Autres facons » : icone, titre, une ligne de detail */
+function Tuile({ titre, sous, onPress, icone }: { titre: string; sous: string; onPress: () => void; icone: React.ReactNode }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  const { width } = useWindowDimensions();
+  const w = (width - 44 - 10) / 2;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${titre}, ${sous}`}
+      style={({ pressed }) => ({ width: w, minHeight: 108, borderRadius: 22, padding: 14, gap: 10, justifyContent: 'space-between', backgroundColor: pressed ? c.fillSubtle : c.surface, borderWidth: 1, borderColor: c.border })}
+    >
+      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={19} height={19} viewBox="0 0 24 24">{icone}</Svg>
+      </View>
+      <View style={{ gap: 2 }}>
+        <Ink size={15} weight="black" tight numberOfLines={1}>{titre}</Ink>
+        <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1}>{sous}</Ink>
+      </View>
+    </Pressable>
+  );
+}
+
+/** Ce qui est prevu aujourd'hui : une grande ligne, un bouton lecture a droite */
+function CarteDuJour({ label, titre, onPress }: { label: string; titre: string; onPress: () => void }) {
+  const { theme } = useYoroiTheme();
+  const c = theme.colors;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label} : ${titre}`}
+      style={({ pressed }) => ({ minHeight: 72, borderRadius: 22, paddingLeft: 16, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : c.accentTint })}
+    >
+      <View style={{ flex: 1, gap: 2 }}>
+        <Ink size={12} weight="black" color={c.accent} style={{ letterSpacing: 0.4 }}>{label.toLocaleUpperCase()}</Ink>
+        <Ink size={17} weight="black" tight numberOfLines={2}>{titre}</Ink>
+      </View>
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M8 5v14l11-7z" fill={c.onAccent} /></Svg>
+      </View>
+    </Pressable>
+  );
 }
 
 function QuickRow({ first, soft, label, title, onPress, icon, right }: { first?: boolean; soft?: boolean; label: string; title: string; onPress: () => void; icon: React.ReactNode; right?: React.ReactNode }) {

@@ -18706,5 +18706,16 @@
 "Tous les exercices sont reconnus. Vérifie, puis importe.": "Alle Übungen wurden erkannt. Prüfe und importiere dann.",
 "échauffement": "Aufwärmen",
 "note : {0}": "Notiz: {0}",
-"Voir les {0} séances plus anciennes": "Die {0} älteren Trainings ansehen"
+"Voir les {0} séances plus anciennes": "Die {0} älteren Trainings ansehen",
+"ou colle tes notes": "oder füge deine Notizen ein",
+"En direct, démarrer avec le chrono": "Live, mit der Stoppuhr starten",
+"avec le chrono et le repos": "mit Stoppuhr und Pause",
+"Autres façons": "Andere Wege",
+"à refaire en un appui": "mit einem Tipp wiederholen",
+"un autre jour": "an einem anderen Tag",
+"tes notes ou Hevy": "deine Notizen oder Hevy",
+"YOROI fait ta séance": "YOROI erstellt dein Training",
+"PPL, Upper Lower...": "PPL, Upper Lower...",
+"récupérer tes séances": "Trainings abrufen",
+"synchro en cours": "Synchronisierung läuft"
 }
