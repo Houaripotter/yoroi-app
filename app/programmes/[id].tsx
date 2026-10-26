@@ -2,7 +2,7 @@
  * Detail d'un programme (24 octobre 2026) : pour qui, comment le suivre, chaque jour avec ses exercices,
  * et les etudes sur lesquelles il repose. Commencer, changer de programme ou l'arreter se fait ici.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,10 +35,13 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { ChoixJours } from '@/components/yoroi/v2/programmes/ChoixJours';
 import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
+import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
+import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
+import { guideCharge } from '@/lib/v2/programmes/charge';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
@@ -60,6 +63,32 @@ export default function ProgrammeDetail() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [mesures, setMesures] = useState<Measurement[]>([]);
   const unite = useUnitePoids();
+  const [favoris, setFavoris] = useState<string[]>([]);
+  // 26 octobre 2026 : toucher « Jour 2 » ouvre le jour 2 et le garde en vue.
+  // Avant, le jour ouvert plus haut se repliait, la page raccourcissait sous tes doigts et tu te retrouvais
+  // bien plus bas, jusqu'aux sources. On note la position de chaque carte et on y revient apres le depli.
+  const defilement = useRef<ScrollView>(null);
+  const positions = useRef<Record<string, number>>({});
+  const aMontrer = useRef<string | null>(null);
+  const montrer = (jourId: string) => {
+    const y = positions.current[jourId];
+    if (y === undefined) return;
+    aMontrer.current = null;
+    defilement.current?.scrollTo({ y: Math.max(0, y - insets.top - 8), animated: true });
+  };
+  const ouvrirJour = (jourId: string, deplie: boolean) => {
+    tap();
+    if (deplie) {
+      setOuvert('');
+      return;
+    }
+    aMontrer.current = jourId;
+    setOuvert(jourId);
+    // filet : si la carte ne bouge pas (aucun onLayout), on defile quand meme apres le rendu
+    setTimeout(() => {
+      if (aMontrer.current === jourId) montrer(jourId);
+    }, 250);
+  };
   // 25 octobre 2026 : tes jours d'entraînement (0 = lundi), choisis avant de commencer, modifiables ensuite
   const [jours, setJours] = useState<number[]>(() => joursConseilles(p?.joursParSemaine ?? 3));
   useEffect(() => {
@@ -85,12 +114,16 @@ export default function ProgrammeDetail() {
       getActiveInjuries().then((b) => setRegions(regionsDesBlessures(b ?? []))).catch(() => setRegions([]));
     };
     lireSeances();
+    const lireFavoris = () => chargerFavoris().then(setFavoris).catch(() => setFavoris([]));
+    lireFavoris();
+    const subFavoris = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, lireFavoris);
     const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, charger);
     const subSeances = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, lireSeances);
     return () => {
       sub.remove();
       subSeances.remove();
       subMateriel.remove();
+      subFavoris.remove();
     };
   }, []);
 
@@ -107,6 +140,19 @@ export default function ProgrammeDetail() {
   }
 
   const enCours = actif?.id === p.id;
+  const favori = favoris.includes(p.id);
+  const etoile = (
+    <Pressable
+      onPress={() => { tap(); setFavoris((l) => (l.includes(p.id) ? l.filter((x) => x !== p.id) : [p.id, ...l])); void basculerFavori(p.id); }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: favori }}
+      accessibilityLabel={traduire(favori ? 'Retirer des favoris' : 'Ajouter aux favoris')}
+      hitSlop={8}
+      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Icon name="star" size={24} color={favori ? c.accent : c.textMuted} fill={favori ? c.accent : undefined} />
+    </Pressable>
+  );
   // semaine du plan (course) : celle du programme en cours, sinon la premiere
   const semaine = enCours && actif ? semaineDuProgramme(actif) : 1;
   const img = sportImage(sportDuProgramme(p), femme, 1);
@@ -161,8 +207,8 @@ export default function ProgrammeDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={traduire(p.titre)} sousTitre={`${traduire(libelleNiveau(p.niveau))}, ${traduire(libelleMateriel(p.materiel)).toLowerCase()}`} repli="/programmes" style={{ marginHorizontal: -22, marginTop: -8 }} />
+      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 14 }} showsVerticalScrollIndicator={false}>
+        <EnTete titre={traduire(p.titre)} sousTitre={`${traduire(libelleNiveau(p.niveau))}, ${traduire(libelleMateriel(p.materiel)).toLowerCase()}`} repli="/programmes" droite={etoile} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         <View style={{ borderRadius: 24, backgroundColor: c.darkCard, overflow: 'hidden', padding: 18, minHeight: 130, justifyContent: 'center' }}>
           {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: -58, width: 130, height: 180 }} resizeMode="contain" /> : null}
@@ -198,6 +244,8 @@ export default function ProgrammeDetail() {
             if (enCours) void enregistrerJours(d);
           }}
         />
+
+        {enCours && actif ? <RappelSeance programme={p} actif={actif} jours={jours} /> : null}
 
         {enCours && actif ? (() => {
           const sem = semaineDuProgramme(actif);
@@ -267,13 +315,21 @@ export default function ProgrammeDetail() {
         </Glass>
 
         <SectionTitle title={traduire('Les séances')} sub={traduire('Touche une séance pour voir ses exercices')} />
+        {p.jours.some((x) => x.exos.length) ? <ChoisirCharge /> : null}
         {p.jours.map((jBrut, index) => {
           const j = protegerJour(jBrut, materiel, regions);
           const estProchain = enCours && actif!.prochain === index;
           const deplie = ouvert === j.id;
           return (
-            <Glass key={j.id} style={{ gap: 10, borderColor: estProchain ? c.accent : c.divider }}>
-              <Pressable onPress={() => { tap(); setOuvert(deplie ? '' : j.id); }} accessibilityRole="button" accessibilityState={{ expanded: deplie }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View
+              key={j.id}
+              onLayout={(ev) => {
+                positions.current[j.id] = ev.nativeEvent.layout.y;
+                if (aMontrer.current === j.id) montrer(j.id);
+              }}
+            >
+            <Glass style={{ gap: 10, borderColor: estProchain ? c.accent : c.divider }}>
+              <Pressable onPress={() => ouvrirJour(j.id, deplie)} accessibilityRole="button" accessibilityState={{ expanded: deplie }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ flex: 1, gap: 2 }}>
                   {estProchain ? <Ink size={11} weight="extraBold" color={c.accent}>{traduire('PROCHAINE SÉANCE')}</Ink> : null}
                   <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}</Ink>
@@ -316,6 +372,7 @@ export default function ProgrammeDetail() {
                 </>
               ) : null}
             </Glass>
+            </View>
           );
         })}
 
@@ -377,6 +434,8 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
   const detail = e.secondes
     ? traduire('{0} séries de {1} secondes, repos {2}', e.series, reps, libelleRepos(e.reposSec))
     : traduire('{0} séries de {1} répétitions, repos {2}', e.series, reps, libelleRepos(e.reposSec));
+  // 26 octobre 2026 : combien de séries, lourd ou léger, et combien garder en réserve (lib/v2/programmes/charge.ts)
+  const charge = <Ink size={12} weight="extraBold" color={c.accent}>{guideCharge(e).texte}</Ink>;
   if (demoDe(e.nom)) {
     // avec animation : l'exercice qui bouge a gauche, le texte a droite
     return (
@@ -385,6 +444,7 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
         <View style={{ flex: 1, gap: 2 }}>
           <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
           <Ink size={13} color={c.textSecondary}>{detail}</Ink>
+          {charge}
           <LigneMuscles nom={e.nom} />
           {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
           <NoteMateriel e={e} raison={raison} />
@@ -397,6 +457,7 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
     <View style={{ paddingTop: 10, borderTopWidth: premier ? 0 : 1, borderColor: c.divider, gap: 2 }}>
       <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
       <Ink size={13} color={c.textSecondary}>{detail}</Ink>
+      {charge}
       <LigneMuscles nom={e.nom} />
       {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
       <NoteMateriel e={e} raison={raison} />

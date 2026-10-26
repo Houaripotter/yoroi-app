@@ -11,9 +11,9 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Chip, Glass, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { notificationService } from '@/lib/notificationService';
-import { lundiVersJs } from '@/lib/v2/notifications/discipline';
 import { ouvrirReglagesSysteme, permissionPourRappels, rappelsAutorises } from '@/lib/v2/notifications/rappels';
-import { joursConseilles } from '@/lib/v2/programmes/suivi';
+import { chargerProgrammeActif, joursDuProgramme } from '@/lib/v2/programmes/suivi';
+import { joursDuRappel } from '@/lib/v2/programmes/rappel';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -62,7 +62,9 @@ export function MessageDuJour({ programme }: { programme: Programme }) {
         }
       }
       const s = await notificationService.loadSettings();
-      const jours = s.training?.days?.length ? s.training.days : joursConseilles(programme.joursParSemaine).map(lundiVersJs);
+      // 26 octobre 2026 : tes jours de programme (ChoixJours), comme la carte « Rappel de séance »
+      const pa = await chargerProgrammeActif().catch(() => null);
+      const jours = joursDuRappel(joursDuProgramme(pa?.id === programme.id ? pa : null, programme));
       await notificationService.updateSettings({
         ...(on ? { enabled: true } : {}),
         training: { ...s.training, enabled: on, time: h, days: jours.slice().sort((a, b) => a - b) },

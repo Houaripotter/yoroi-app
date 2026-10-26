@@ -27,7 +27,7 @@ import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { MessageDuJour } from '@/components/yoroi/v2/programmes/MessageDuJour';
 import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
 import { PlanningProgramme } from '@/components/yoroi/v2/programmes/PlanningProgramme';
-import { PROGRAMME_CHANGED_EVENT, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Niveau, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -42,11 +42,14 @@ export default function ProgrammesScreen() {
   const [quizOpen, setQuizOpen] = useState(false);
   const [materiel, setMateriel] = useState<Equipement[] | null>(null);
   const [materielOpen, setMaterielOpen] = useState(false);
+  // 26 octobre 2026 : tes programmes favoris (étoile), en tête de page
+  const [favoris, setFavoris] = useState<string[]>([]);
 
   useEffect(() => {
     const charger = () => {
       chargerProgrammeActif().then(setActif).catch(() => setActif(null));
       chargerMateriel().then(setMateriel).catch(() => setMateriel(null));
+      chargerFavoris().then(setFavoris).catch(() => setFavoris([]));
     };
     charger();
     getProfile().then((p) => setFemme(p?.avatar_gender === 'femme')).catch(() => {});
@@ -55,6 +58,12 @@ export default function ProgrammesScreen() {
   }, []);
 
   const suite = actif ? prochainJour(actif) : null;
+  const programmesFavoris = favoris.map((id) => programmeParId(id)).filter((x): x is Programme => !!x);
+  const etoile = (id: string) => {
+    setFavoris((l) => (l.includes(id) ? l.filter((x) => x !== id) : [id, ...l]));
+    void basculerFavori(id);
+  };
+  const ouvrirProgramme = (id: string) => router.push({ pathname: '/programmes/[id]' as any, params: { id } });
 
   const commencer = () => {
     if (!suite) return;
@@ -67,6 +76,15 @@ export default function ProgrammesScreen() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
         <EnTete titre={traduire('Programmes')} sousTitre={traduire('des séances prêtes à suivre, basées sur des études')} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+
+        {programmesFavoris.length ? (
+          <>
+            <SectionTitle title={traduire('Tes favoris')} />
+            {programmesFavoris.map((p) => (
+              <CarteProgramme key={`fav-${p.id}`} p={p} femme={femme} enCours={actif?.id === p.id} favori onFavori={() => etoile(p.id)} onPress={() => ouvrirProgramme(p.id)} />
+            ))}
+          </>
+        ) : null}
 
         {/* 24 octobre 2026 : perdu a la salle ? tu touches tes zones, YOROI fait ta seance (app/programmes/zones.tsx) */}
         <Pressable onPress={() => { tap(); router.push('/programmes/zones' as any); }} accessibilityRole="button" style={({ pressed }) => ({ borderRadius: 24, padding: 18, gap: 6, backgroundColor: pressed ? c.fillSubtle : c.accentTint, borderWidth: 1.5, borderColor: c.accent, flexDirection: 'row', alignItems: 'center' })}>
@@ -167,7 +185,7 @@ export default function ProgrammesScreen() {
 
         <SectionTitle title={traduire('Tous les programmes')} action={actif ? traduire('Trouver le mien') : undefined} onAction={() => setQuizOpen(true)} />
         {PROGRAMMES.map((p) => (
-          <CarteProgramme key={p.id} p={p} femme={femme} enCours={actif?.id === p.id} onPress={() => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })} />
+          <CarteProgramme key={p.id} p={p} femme={femme} enCours={actif?.id === p.id} favori={favoris.includes(p.id)} onFavori={() => etoile(p.id)} onPress={() => ouvrirProgramme(p.id)} />
         ))}
 
         <View style={{ paddingHorizontal: 4, gap: 6, marginTop: 4 }}>
@@ -197,7 +215,7 @@ function dateCourte(iso: string): string {
   return `${d.getDate()} ${traduire(MOIS[d.getMonth()])}`;
 }
 
-function CarteProgramme({ p, femme, enCours, onPress }: { p: Programme; femme: boolean; enCours: boolean; onPress: () => void }) {
+function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress }: { p: Programme; femme: boolean; enCours: boolean; favori: boolean; onFavori: () => void; onPress: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const img = sportImage(sportDuProgramme(p), femme, 0);
@@ -218,7 +236,16 @@ function CarteProgramme({ p, femme, enCours, onPress }: { p: Programme; femme: b
           {p.materiel !== 'salle' ? <Pastille texte={traduire(libelleMateriel(p.materiel))} /> : null}
         </View>
       </View>
-      <Icon name="chevron" size={18} color={c.textMuted} />
+      <Pressable
+        onPress={() => { tap(); onFavori(); }}
+        accessibilityRole="button"
+        accessibilityState={{ selected: favori }}
+        accessibilityLabel={traduire(favori ? 'Retirer des favoris' : 'Ajouter aux favoris')}
+        hitSlop={6}
+        style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -6 }}
+      >
+        <Icon name="star" size={22} color={favori ? c.accent : c.textMuted} fill={favori ? c.accent : undefined} />
+      </Pressable>
     </Glass>
   );
 }

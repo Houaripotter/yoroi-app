@@ -229,3 +229,39 @@ export function joursConseilles(joursParSemaine: number): number[] {
   if (joursParSemaine === 4) return [0, 1, 3, 4];
   return [0, 1, 2, 3, 4, 5].slice(0, Math.min(6, joursParSemaine));
 }
+
+/* ------------------------------------------------------------------------------------------------
+ * Tes programmes favoris (26 octobre 2026) : une etoile sur la page du programme et sur sa carte.
+ * Stockes sur le telephone, en tete de la liste des programmes (« Tes favoris »).
+ * ---------------------------------------------------------------------------------------------- */
+const CLE_FAVORIS = 'yoroi_programmes_favoris_v1';
+
+/** Ajoute ou retire un id (calcul pur, le dernier ajoute en premier) */
+export function basculerDansFavoris(liste: string[], id: string): string[] {
+  return liste.includes(id) ? liste.filter((x) => x !== id) : [id, ...liste];
+}
+
+export async function chargerFavoris(): Promise<string[]> {
+  try {
+    const raw = await AsyncStorage.getItem(CLE_FAVORIS);
+    if (!raw) return [];
+    const liste = JSON.parse(raw);
+    if (!Array.isArray(liste)) return [];
+    // un programme retire du catalogue disparait des favoris
+    return Array.from(new Set(liste.filter((x): x is string => typeof x === 'string' && !!programmeParId(x))));
+  } catch {
+    return [];
+  }
+}
+
+/** Etoile touchee : renvoie la nouvelle liste */
+export async function basculerFavori(id: string): Promise<string[]> {
+  const suite = basculerDansFavoris(await chargerFavoris(), id);
+  try {
+    await AsyncStorage.setItem(CLE_FAVORIS, JSON.stringify(suite));
+  } catch {
+    // stockage indisponible : l'etoile revient a son etat au prochain chargement
+  }
+  prevenir();
+  return suite;
+}
