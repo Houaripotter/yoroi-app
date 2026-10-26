@@ -7,7 +7,7 @@
  * Noms d'exercices : nom exact de constants/exerciseLibrary.ts (verifie par __tests__/unit/programmes.test.ts).
  */
 import { ordonnerParPoste } from './ordre';
-import type { ExoProgramme, Materiel, Niveau, Programme } from './types';
+import type { ExoProgramme, JourProgramme, Materiel, Niveau, Programme } from './types';
 
 const exo = (nom: string, muscle: string, series: number, repsMin: number, repsMax: number, reposSec: number, conseil?: string, poidsDuCorps?: boolean, secondes?: boolean): ExoProgramme => ({
   nom, muscle, series, repsMin, repsMax, reposSec, ...(conseil ? { conseil } : {}), ...(poidsDuCorps ? { poidsDuCorps } : {}), ...(secondes ? { secondes } : {}),
@@ -17,6 +17,48 @@ const RESERVE = 'Arrête chaque série quand il te reste 1 à 3 répétitions en
 const PROGRESSION = 'Quand tu atteins le haut de la fourchette sur toutes les séries deux séances de suite, YOROI monte la charge d’environ 5 %.';
 const LEGERE = 'Toutes les 4 à 8 semaines, ou si la fatigue s’accumule, fais une semaine plus légère : moitié moins de séries, même charge.';
 const ABDOS = 'Les abdos renforcent ton tronc mais ne font pas fondre le ventre : c’est l’alimentation et la dépense totale qui comptent.';
+
+/** Jours communs a « PPL + Upper Lower, 5 jours » et « Push Pull + Upper Lower, 4 jours » */
+const PUSH_2X: JourProgramme = {
+  id: 'push',
+  titre: 'Push : pectoraux, épaules, triceps',
+  muscles: ['pectoraux', 'epaules', 'triceps'],
+  exos: [
+    exo('Développé Couché (Barre)', 'PECTORAUX', 4, 6, 10, 180),
+    exo('Développé Incliné (Haltères)', 'PECTORAUX', 3, 8, 12, 150),
+    exo('Développé Militaire Assis', 'ÉPAULES', 3, 6, 10, 150),
+    exo('Élévations Latérales (Haltères)', 'ÉPAULES', 3, 10, 15, 90),
+    exo('Extension Triceps Poulie (Corde)', 'TRICEPS', 3, 10, 15, 90),
+    exo('Overhead Extension Poulie', 'TRICEPS', 2, 10, 15, 90),
+  ],
+};
+const PULL_2X: JourProgramme = {
+  id: 'pull',
+  titre: 'Pull : dos, arrière d’épaule, biceps',
+  muscles: ['dos', 'epaules', 'biceps'],
+  exos: [
+    exo('Tractions (Pronation)', 'DOS', 4, 6, 10, 150, 'Trop dur ? Fais le tirage poitrine à la place.'),
+    exo('Rowing Barre (Bent Over)', 'DOS', 4, 6, 10, 150),
+    exo('Face Pull', 'DOS', 3, 12, 15, 90),
+    exo('Curl Barre EZ', 'BICEPS', 3, 8, 12, 90),
+    exo('Curl Marteau (Hammer)', 'BICEPS', 2, 10, 12, 90),
+  ],
+};
+const UPPER_2X: JourProgramme = {
+  id: 'haut',
+  titre: 'Upper : haut du corps',
+  muscles: ['pectoraux', 'dos', 'epaules', 'biceps', 'triceps'],
+  exos: [
+    exo('Développé Couché (Haltères)', 'PECTORAUX', 3, 8, 12, 120),
+    exo('Tirage Poitrine (Lat Pulldown)', 'DOS', 3, 8, 12, 120),
+    exo('Tirage Horizontal (Seated Row)', 'DOS', 3, 10, 12, 120),
+    exo('Écartés à la Poulie Haute', 'PECTORAUX', 2, 12, 15, 90),
+    exo('Élévations Latérales (Machine)', 'ÉPAULES', 3, 12, 15, 90),
+    exo('Oiseau Machine (Reverse Pec Deck)', 'ÉPAULES', 2, 12, 15, 90),
+    exo('Curl Incliné (Haltères)', 'BICEPS', 2, 10, 12, 90),
+    exo('Barre au front (Skullcrusher)', 'TRICEPS', 2, 10, 12, 90),
+  ],
+};
 
 const PROGRAMMES_BRUTS: Programme[] = [
   {
@@ -223,6 +265,102 @@ const PROGRAMMES_BRUTS: Programme[] = [
           exo('Leg Curl Assis', 'ISCHIOS', 3, 10, 15, 90),
           exo('Mollets Assis (Machine)', 'MOLLETS', 4, 12, 15, 90),
           exo('Relevé de jambes Suspendu', 'ABDOS', 3, 10, 15, 90, undefined, true),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ppl-ul-5j',
+    titre: 'PPL + Upper Lower, 5 jours',
+    accroche: 'Le meilleur des deux : un PPL en début de semaine, un Upper Lower à la fin. Cinq séances, chaque muscle travaillé deux fois.',
+    niveau: 'intermediaire',
+    objectif: 'muscle',
+    materiel: 'salle',
+    joursParSemaine: 5,
+    dureeMin: 60,
+    semaines: 8,
+    principes: [
+      'Ordre : Push, Pull, Legs, un jour de repos, Upper, Lower, puis repos le week end.',
+      'Pourquoi ce mélange : le PPL donne une grosse séance à chaque groupe, l’Upper Lower le refait travailler quelques jours plus tard. Chaque muscle passe deux fois par semaine.',
+      'Deux passages par semaine, c’est ce qui permet de faire 12 à 16 séries par grand muscle sans séances interminables. C’est surtout le volume qui fait grandir le muscle, la fréquence aide un peu plus la force.',
+      'Environ 12 à 16 séries par semaine pour les pectoraux, le dos et les cuisses, la zone conseillée chez les pratiquants entraînés. Les bras ont moins de séries directes : les développés et les tirages les font déjà travailler.',
+      'Le jour de repos sépare Legs et Lower : tes jambes ont au moins deux jours pour récupérer avant de retravailler.',
+      'Tu veux sécher en même temps ? Ajoute une marche inclinée en zone 2 de 30 à 45 minutes un jour de repos : elle dépense sans entamer ta récupération.',
+      PROGRESSION,
+      RESERVE,
+      LEGERE,
+    ],
+    sources: ['schoenfeld2016frequence', 'schoenfeld2019frequence', 'pelland2026', 'schoenfeld2017volume', 'bazvalle2022', 'acsm2026', 'refalo2023', 'bell2025', 'hofmann2014'],
+    jours: [
+      PUSH_2X,
+      PULL_2X,
+      {
+        id: 'legs',
+        titre: 'Legs : jambes et abdos',
+        muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
+        exos: [
+          exo('Squat Barre Libre', 'JAMBES', 4, 6, 10, 180),
+          exo('Deadlift Roumain', 'DOS', 3, 8, 10, 150, 'Hanches en arrière, barre contre les cuisses, dos plat.'),
+          exo('Leg Extension', 'JAMBES', 3, 10, 15, 90),
+          exo('Leg Curl Assis', 'ISCHIOS', 3, 10, 12, 90),
+          exo('Mollets Debout (Machine)', 'MOLLETS', 4, 10, 15, 90),
+          exo('Relevé de jambes Suspendu', 'ABDOS', 3, 10, 15, 90, undefined, true),
+        ],
+      },
+      UPPER_2X,
+      {
+        id: 'bas',
+        titre: 'Lower : bas du corps',
+        muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
+        exos: [
+          exo('Presse à Cuisses', 'JAMBES', 4, 8, 12, 150),
+          exo('Hip Thrust Barre', 'FESSIERS', 3, 8, 12, 120),
+          exo('Squat Bulgare', 'JAMBES', 2, 8, 12, 120, 'Compte les répétitions par jambe.'),
+          exo('Leg Curl Couché', 'ISCHIOS', 3, 8, 12, 90),
+          exo('Mollets Assis (Machine)', 'MOLLETS', 4, 12, 15, 90),
+          exo('Crunch Poulie Haute', 'ABDOS', 3, 10, 15, 90),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pp-ul-4j',
+    titre: 'Push Pull + Upper Lower, 4 jours, jambes une fois',
+    accroche: 'Pour ceux dont les jambes travaillent déjà ailleurs, au foot, en sport de combat ou en course : le haut du corps deux fois par semaine, les jambes une fois.',
+    niveau: 'intermediaire',
+    objectif: 'muscle',
+    materiel: 'salle',
+    joursParSemaine: 4,
+    dureeMin: 60,
+    semaines: 8,
+    principes: [
+      'Ordre : Push, Pull, un jour de repos, Upper, Lower, puis repos.',
+      'Place Lower le plus loin possible de ton match ou de ta séance la plus dure. Avec un match le dimanche : Lower le mardi ou le mercredi, jamais la veille ni l’avant veille. Décale la semaine si besoin.',
+      'Sois honnête avec toi : tes jambes n’ont qu’une séance par semaine, environ 12 séries. À volume égal, une séance donne autant de muscle que deux, mais tu ne monteras pas aussi haut en volume qu’avec deux séances.',
+      'C’est assez quand ton sport fait déjà beaucoup travailler tes jambes. Le but ici : gagner de la force sans arriver au match les jambes lourdes.',
+      'Le foot et la course comptent aussi : ajoutée à la musculation, la course a freiné le muscle et la force, d’autant plus que les séances étaient longues et nombreuses.',
+      'Semaine chargée ou jambes encore lourdes : fais Lower avec une série de moins par exercice plutôt que de la sauter.',
+      'Pectoraux et dos passent deux fois par semaine, avec 12 séries ou plus chacun.',
+      PROGRESSION,
+      RESERVE,
+      LEGERE,
+    ],
+    sources: ['schoenfeld2019frequence', 'schoenfeld2016frequence', 'pelland2026', 'schoenfeld2017volume', 'wilson2012', 'acsm2026', 'refalo2023', 'bell2025'],
+    jours: [
+      PUSH_2X,
+      PULL_2X,
+      UPPER_2X,
+      {
+        id: 'bas',
+        titre: 'Lower : jambes, une fois par semaine',
+        muscles: ['jambes', 'fessiers', 'mollets', 'abdos'],
+        exos: [
+          exo('Squat Barre Libre', 'JAMBES', 4, 6, 10, 180),
+          exo('Deadlift Roumain', 'DOS', 3, 8, 10, 150, 'Hanches en arrière, barre contre les cuisses, dos plat.'),
+          exo('Leg Curl Assis', 'ISCHIOS', 3, 10, 12, 90),
+          exo('Leg Extension', 'JAMBES', 2, 10, 15, 90),
+          exo('Mollets Debout (Machine)', 'MOLLETS', 3, 10, 15, 90),
+          exo('Pallof Press', 'ABDOS', 2, 10, 12, 90, 'Résiste à la rotation : bras tendus, le buste ne tourne pas.'),
         ],
       },
     ],
@@ -1003,10 +1141,11 @@ const PROGRAMMES_BRUTS: Programme[] = [
       'Garde la musculation lourde : c’est elle qui dit à ton corps de garder le muscle pendant le régime.',
       'Mange au moins 1,6 g de protéines par kilo et par jour, et plus en déficit si tu peux.',
       'Fractionné ou cardio tranquille : autant de gras perdu. Le fractionné prend moins de temps, la marche fatigue moins.',
+      'La marche inclinée en zone 2 ajoute de la dépense avec peu de fatigue : tu récupères vite et tes séances de musculation n’en souffrent pas. Mais c’est ton déficit qui fait fondre le gras, pas la marche seule.',
       'Dors tes heures : en régime, dormir 5 h 30 au lieu de 8 h 30 a fait perdre moins de gras et plus de muscle.',
       ABDOS,
     ],
-    sources: ['helms2014', 'garthe2011', 'aragon2017', 'morton2018', 'longland2016', 'wewege2017', 'keating2017', 'nedeltcheva2010', 'vispute2011', 'oms2020'],
+    sources: ['helms2014', 'garthe2011', 'aragon2017', 'morton2018', 'longland2016', 'wewege2017', 'keating2017', 'nedeltcheva2010', 'vispute2011', 'oms2020', 'hofmann2014', 'persinger2004', 'wilson2012'],
     jours: [
       {
         id: 'muscu-a',
@@ -1047,13 +1186,19 @@ const PROGRAMMES_BRUTS: Programme[] = [
       },
       {
         id: 'marche',
-        titre: 'Cardio tranquille',
-        muscles: ['jambes'],
+        titre: 'Marche inclinée en zone 2',
+        muscles: ['jambes', 'fessiers', 'mollets'],
         exos: [],
         cardio: {
           sport: 'marche',
-          minutes: 45,
-          consigne: '45 minutes de marche rapide, de vélo ou d’elliptique, à une allure où tu peux encore parler. Dehors si possible.',
+          minutes: 40,
+          consigne: '40 minutes de marche inclinée. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres : t’y accrocher fait baisser la dépense. Pas de tapis ? Marche vite en côte dehors.',
+          semaines: [
+            { minutes: 30, consigne: '30 minutes de marche inclinée. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres : t’y accrocher fait baisser la dépense. Pas de tapis ? Marche vite en côte dehors.' },
+            { minutes: 35, consigne: '35 minutes de marche inclinée. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres : t’y accrocher fait baisser la dépense. Pas de tapis ? Marche vite en côte dehors.' },
+            { minutes: 40, consigne: '40 minutes de marche inclinée. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres : t’y accrocher fait baisser la dépense. Pas de tapis ? Marche vite en côte dehors.' },
+            { minutes: 45, consigne: '45 minutes de marche inclinée. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres : t’y accrocher fait baisser la dépense. Pas de tapis ? Marche vite en côte dehors.' },
+          ],
         },
       },
     ],
@@ -1124,9 +1269,11 @@ const PROGRAMMES_BRUTS: Programme[] = [
       'Plus de 150 minutes d’activité par semaine aident à perdre, plus de 250 aident à ne pas reprendre : les marches de ce programme comptent, tes pas de la journée aussi.',
       'Mange au moins 1,6 g de protéines par kilo et par jour : c’est ce qui protège ton muscle et te cale.',
       'Ordre conseillé : musculation A, marche, repos, musculation B, marche, deux jours de repos.',
+      'Zone 2 : un effort où tu peux encore parler en phrases complètes, environ 60 à 70 % de ta fréquence cardiaque max. Il dépense sans grosse fatigue, tu récupères vite et tu peux en faire souvent.',
+      'Sur le tapis, monte la pente plutôt que la vitesse, et lâche les barres : t’y accrocher fait baisser la dépense.',
       ABDOS,
     ],
-    sources: ['johns2014', 'swift2014', 'donnelly2009', 'helms2014', 'garthe2011', 'morton2018', 'oms2020', 'paluch2022', 'parq2011'],
+    sources: ['johns2014', 'swift2014', 'donnelly2009', 'helms2014', 'garthe2011', 'morton2018', 'oms2020', 'paluch2022', 'parq2011', 'hofmann2014', 'persinger2004', 'garber2011'],
     jours: [
       {
         id: 'muscu-a',
@@ -1143,17 +1290,17 @@ const PROGRAMMES_BRUTS: Programme[] = [
       },
       {
         id: 'marche-a',
-        titre: 'Marche rapide',
-        muscles: ['jambes'],
+        titre: 'Marche inclinée en zone 2',
+        muscles: ['jambes', 'fessiers', 'mollets'],
         exos: [],
         cardio: {
           sport: 'marche',
           minutes: 40,
-          consigne: '40 minutes de marche rapide : tu peux parler, mais pas chanter. Dehors si possible. Si tu cours déjà, une course facile compte pareil.',
+          consigne: '40 minutes de marche inclinée. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres : t’y accrocher fait baisser la dépense. Pas de tapis ? Marche vite en côte dehors.',
           semaines: [
-            { minutes: 30, consigne: '30 minutes de marche rapide : tu peux parler, mais pas chanter. Dehors si possible.' },
-            { minutes: 35, consigne: '35 minutes de marche rapide : tu peux parler, mais pas chanter.' },
-            { minutes: 40, consigne: '40 minutes de marche rapide : tu peux parler, mais pas chanter. Si tu cours déjà, une course facile compte pareil.' },
+            { minutes: 30, consigne: '30 minutes de marche sur tapis, pente de 5 à 6 %, vers 4,5 km/h. Tu dois pouvoir parler en phrases complètes. Lâche les barres. Pas de tapis ? Marche vite en côte dehors.' },
+            { minutes: 35, consigne: '35 minutes de marche sur tapis, pente de 6 à 8 %, entre 4,5 et 5 km/h. Tu dois pouvoir parler en phrases complètes. Lâche les barres.' },
+            { minutes: 40, consigne: '40 minutes de marche inclinée. Sur tapis, pente de 8 à 12 %, entre 4,5 et 5,5 km/h. Zone 2 : tu peux encore parler en phrases complètes. Lâche les barres : t’y accrocher fait baisser la dépense. Pas de tapis ? Marche vite en côte dehors.' },
           ],
         },
       },
@@ -1488,7 +1635,7 @@ const PROGRAMMES_BRUTS: Programme[] = [
       PROGRESSION,
       RESERVE,
     ],
-    sources: ['plotkin2023', 'kubo2019', 'kassiano2024', 'krauseneto2025', 'roberts2020', 'refalo2025', 'vigotsky2022', 'vispute2011', 'kostek2007', 'vissers2013', 'verheggen2016', 'ismail2012', 'ross2020', 'wewege2017'],
+    sources: ['plotkin2023', 'kubo2019', 'kassiano2024', 'krauseneto2025', 'roberts2020', 'refalo2025', 'vigotsky2022', 'vispute2011', 'kostek2007', 'vissers2013', 'verheggen2016', 'ismail2012', 'ross2020', 'wewege2017', 'hofmann2014'],
     jours: [
       {
         id: 'fessiers-a',
@@ -1510,11 +1657,11 @@ const PROGRAMMES_BRUTS: Programme[] = [
         cardio: {
           sport: 'marche',
           minutes: 40,
-          consigne: '40 minutes de marche rapide en côte, de vélo ou d’elliptique, à une allure où tu peux encore parler.',
+          consigne: '40 minutes de marche inclinée en zone 2, de vélo ou d’elliptique : tu peux encore parler en phrases complètes. Sur tapis, pente de 8 à 12 % et lâche les barres.',
           semaines: [
             { minutes: 30, consigne: '30 minutes de marche rapide, de vélo ou d’elliptique, à une allure où tu peux encore parler.' },
             { minutes: 35, consigne: '35 minutes de marche rapide, de vélo ou d’elliptique, à une allure où tu peux encore parler.' },
-            { minutes: 40, consigne: '40 minutes de marche rapide en côte, de vélo ou d’elliptique, à une allure où tu peux encore parler.' },
+            { minutes: 40, consigne: '40 minutes de marche inclinée en zone 2, de vélo ou d’elliptique : tu peux encore parler en phrases complètes. Sur tapis, pente de 8 à 12 % et lâche les barres.' },
           ],
         },
       },
@@ -1752,7 +1899,7 @@ export const PROGRAMMES: Programme[] = PROGRAMMES_BRUTS.map((p) =>
 );
 
 /** Ordre d'affichage : du plus simple au plus specialise */
-const ORDRE = ['debutant-fullbody-3j', 'fullbody-2j', 'ppl-3j', 'ppl-6j', 'haut-bas-4j', 'split-5j', 'bas-du-corps-4j', 'fessiers-ventre-4j', 'pecs-priorite-4j', 'prise-de-masse-4j', 'perte-poids-4j', 'seche-4j', 'course-5km-8sem', 'course-10km-8sem', 'foot-prevention-2j', 'padel-raquette-2j', 'mobilite-3j', 'force-3j', 'combat-force-2j', 'grip-2j', 'cou-combat-2j', 'sac-debutant-3j', 'sac-cardio-3j', 'sac-mma-3j', 'sac-hiit-4sem', 'halteres-maison-3j', 'maison-3j'];
+const ORDRE = ['debutant-fullbody-3j', 'fullbody-2j', 'ppl-3j', 'ppl-6j', 'ppl-ul-5j', 'pp-ul-4j', 'haut-bas-4j', 'split-5j', 'bas-du-corps-4j', 'fessiers-ventre-4j', 'pecs-priorite-4j', 'prise-de-masse-4j', 'perte-poids-4j', 'seche-4j', 'course-5km-8sem', 'course-10km-8sem', 'foot-prevention-2j', 'padel-raquette-2j', 'mobilite-3j', 'force-3j', 'combat-force-2j', 'grip-2j', 'cou-combat-2j', 'sac-debutant-3j', 'sac-cardio-3j', 'sac-mma-3j', 'sac-hiit-4sem', 'halteres-maison-3j', 'maison-3j'];
 PROGRAMMES.sort((a, b) => (ORDRE.indexOf(a.id) + 100) % 100 - (ORDRE.indexOf(b.id) + 100) % 100);
 
 export function programmeParId(id: string | null | undefined): Programme | undefined {

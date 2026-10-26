@@ -427,6 +427,81 @@ export const GUIDES: Guide[] = [
     programmes: [],
     sources: ['orsama2014', 'ross2020', 'verheggen2016', 'plotkin2022'],
   },
+  {
+    id: 'marche-inclinee',
+    titre: 'Marche inclinée et zone 2',
+    accroche: 'Le cardio qui dépense sans te vider',
+    essentiel: [
+      'Zone 2 : un effort où tu peux encore parler en phrases complètes, environ 60 à 70 % de ta fréquence cardiaque max.',
+      'Sur tapis : 30 à 45 minutes, pente de 8 à 12 %, entre 4,5 et 5,5 km/h, sans tenir les barres.',
+      'Elle ajoute de la dépense, mais c’est le déficit calorique qui fait perdre le gras.',
+    ],
+    sections: [
+      {
+        titre: 'La zone 2',
+        points: [
+          'Le test de la parole : tant que tu parles à l’aise, tu es à peu près sous le premier seuil ventilatoire, là où l’effort reste modéré.',
+          'L’ACSM classe 64 à 76 % de la fréquence cardiaque max comme une intensité modérée. Pas de montre ? Le test de la parole suffit.',
+          'La zone 2 n’a pas de définition unique : les chiffres changent un peu selon les montres et les auteurs.',
+        ],
+      },
+      {
+        titre: 'La pente et les barres',
+        points: [
+          'Monter la pente fait monter la dépense sans courir : marcher à 10 % a coûté nettement plus qu’à 5 %.',
+          'Lâche les barres : en t’y accrochant penché en arrière, la dépense a baissé d’environ un tiers. Tenues bien droit, la baisse n’était pas nette.',
+          'Si tu ne peux plus parler, baisse la pente avant de baisser la durée.',
+        ],
+      },
+      {
+        titre: 'Pourquoi elle aide à perdre du gras',
+        points: [
+          'Elle ajoute des calories dépensées avec peu de fatigue : tu récupères vite et tu peux en faire plusieurs fois par semaine.',
+          'Ajoutée à la musculation, la course a freiné le muscle et la force, le vélo non, et d’autant plus que le cardio était long et fréquent. La marche n’a pas été testée à part : garde des séances modérées.',
+          'Le sport seul fait perdre environ 2 kg. Avec l’alimentation, bien plus : c’est le déficit qui fait le travail.',
+          'Plus de 150 minutes d’activité par semaine aident à perdre, plus de 250 aident à ne pas reprendre.',
+        ],
+      },
+    ],
+    programmes: ['seche-4j', 'perte-poids-4j', 'fessiers-ventre-4j'],
+    sources: ['persinger2004', 'garber2011', 'hofmann2014', 'wilson2012', 'swift2014', 'johns2014', 'donnelly2009'],
+  },
+  {
+    id: 'force-delai',
+    titre: 'En combien de temps tu prends de la force ?',
+    accroche: 'Des chiffres réalistes, semaine après semaine',
+    essentiel: [
+      'Les premières semaines, tu deviens plus fort surtout parce que ton système nerveux apprend à mieux commander tes muscles.',
+      'Débutant : des gains nets dès 4 à 5 semaines, puis le muscle grossit et prend le relais.',
+      'Après 1 à 2 ans, les progrès ralentissent beaucoup : c’est normal, pas un échec.',
+    ],
+    sections: [
+      {
+        titre: 'Les premières semaines',
+        points: [
+          'En 4 semaines d’entraînement, la force a monté d’environ 14 %, surtout parce que les commandes nerveuses vers le muscle sont devenues plus rapides.',
+          'En 35 jours d’exercices lourds pour les cuisses, 3 fois par semaine, la force a monté d’environ 39 %. Le muscle avait déjà un peu grossi au bout de 20 jours.',
+        ],
+      },
+      {
+        titre: 'Les mois et les années',
+        points: [
+          'Avec une seule séance courte par semaine, près de 15 000 adultes ont gagné environ 30 à 50 % de force la première année.',
+          'Ensuite la courbe s’aplatit vers 1 à 2 ans : environ 50 à 60 % gagnés au bout de 6 ans.',
+          'Plus de séries et de séances donnent plus de force, avec des gains qui ralentissent quand le volume monte.',
+        ],
+      },
+      {
+        titre: 'Pour toi',
+        points: [
+          'Sur un cycle de 8 à 12 semaines, tes gros mouvements doivent monter. Regarde « Tes progrès » dans ton programme.',
+          'Si tu t’entraînes depuis des années, quelques pour cent par an, c’est déjà un bon résultat.',
+        ],
+      },
+    ],
+    programmes: ['debutant-fullbody-3j', 'force-3j', 'haut-bas-4j'],
+    sources: ['delvecchio2019', 'seynnes2007', 'steele2022', 'pelland2026'],
+  },
 ];
 
 export function guideParId(id: string | null | undefined): Guide | undefined {

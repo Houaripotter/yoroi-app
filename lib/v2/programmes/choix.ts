@@ -70,7 +70,7 @@ export function conseillerProgramme(r: Reponses): Conseil {
       : { id: 'course-10km-8sem', pourquoi: 'Surtout du facile et un fractionné par semaine : la répartition qui a fait gagner 5 % sur 10 km à des coureurs loisir.', autres: ['course-5km-8sem'] };
   }
   if (r.objectif === 'foot') {
-    return { id: 'foot-prevention-2j', pourquoi: 'Le Nordic curl et le gainage Copenhagen ont fait baisser les blessures des ischios et de l’aine chez les footballeurs, et les sauts font progresser le sprint.', autres: ['fullbody-2j', 'mobilite-3j'] };
+    return { id: 'foot-prevention-2j', pourquoi: 'Le Nordic curl et le gainage Copenhagen ont fait baisser les blessures des ischios et de l’aine chez les footballeurs, et les sauts font progresser le sprint.', autres: ['fullbody-2j', 'pp-ul-4j', 'mobilite-3j'] };
   }
   if (r.objectif === 'raquette') {
     return { id: 'padel-raquette-2j', pourquoi: 'Épaule, coude, bas du dos et jambes : les zones qui souffrent le plus au padel, renforcées en deux séances.', autres: ['fullbody-2j', 'mobilite-3j'] };
@@ -124,7 +124,7 @@ export function conseillerProgramme(r: Reponses): Conseil {
     return {
       id: 'combat-force-2j',
       pourquoi: 'Deux séances de force à côté de ton club : assez pour progresser sans voler l’énergie de tes entraînements.',
-      autres: r.niveau === 'debutant' ? ['debutant-fullbody-3j', 'sac-debutant-3j'] : ['grip-2j', 'cou-combat-2j', 'sac-cardio-3j', 'force-3j'],
+      autres: r.niveau === 'debutant' ? ['debutant-fullbody-3j', 'sac-debutant-3j'] : ['grip-2j', 'cou-combat-2j', 'sac-cardio-3j', 'force-3j', 'pp-ul-4j'],
     };
   }
   if (r.niveau === 'debutant') {
@@ -146,10 +146,10 @@ export function conseillerProgramme(r: Reponses): Conseil {
     return { id: 'ppl-3j', pourquoi: 'Trois jours : pousser, tirer, jambes. Chaque muscle a sa séance complète.', autres: ['debutant-fullbody-3j'] };
   }
   if (r.jours === 4) {
-    return { id: 'haut-bas-4j', pourquoi: 'Quatre jours : haut et bas du corps, chaque muscle travaillé deux fois par semaine.', autres: ['bas-du-corps-4j', 'split-5j'] };
+    return { id: 'haut-bas-4j', pourquoi: 'Quatre jours : haut et bas du corps, chaque muscle travaillé deux fois par semaine.', autres: ['pp-ul-4j', 'bas-du-corps-4j', 'split-5j'] };
   }
   if (r.jours === 6) {
     return { id: 'ppl-6j', pourquoi: 'Six jours : pousser, tirer, jambes deux fois, un cycle force et un cycle hypertrophie. Chaque muscle travaille deux fois par semaine.', autres: ['split-5j', 'ppl-3j'] };
   }
-  return { id: 'split-5j', pourquoi: 'Cinq jours : un groupe musculaire par jour, avec beaucoup de séries par muscle.', autres: ['haut-bas-4j'] };
+  return { id: 'split-5j', pourquoi: 'Cinq jours : un groupe musculaire par jour, avec beaucoup de séries par muscle.', autres: ['ppl-ul-5j', 'haut-bas-4j'] };
 }
