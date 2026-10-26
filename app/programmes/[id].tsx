@@ -2,7 +2,7 @@
  * Detail d'un programme (24 octobre 2026) : pour qui, comment le suivre, chaque jour avec ses exercices,
  * et les etudes sur lesquelles il repose. Commencer, changer de programme ou l'arreter se fait ici.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +27,12 @@ import { etudesCourtes, sourceParId } from '@/lib/v2/programmes/sources';
 import { PRECISION_EXO, musclesDeExo } from '@/lib/v2/programmes/musclesExos';
 import { cardioDeLaSemaine, resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { raisonRemplacement } from '@/lib/v2/programmes/materiel';
-import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
+import { LIBELLE_REGION, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
+import { jourPourToi } from '@/lib/v2/programmes/perso';
+import type { ExoPerso } from '@/lib/v2/programmes/perso';
+import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
+import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
+import { buildExerciseHistory } from '@/lib/v2/seance/history';
 import type { ExoProtege, Region } from '@/lib/v2/programmes/blessures';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
@@ -35,7 +40,7 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, remplacerExercice, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { ChoixJours } from '@/components/yoroi/v2/programmes/ChoixJours';
 import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
@@ -58,6 +63,11 @@ export default function ProgrammeDetail() {
   const [charge, setCharge] = useState(false);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [materiel, setMateriel] = useState<Equipement[] | null>(null);
+  // 26 octobre 2026 : Ma salle (machines precises) et « Changer » un exercice du programme en cours
+  const [machines, setMachines] = useState<string[] | null>(null);
+  const [salleOpen, setSalleOpen] = useState(false);
+  const [aChanger, setAChanger] = useState<{ jourId: string; index: number; muscle: string; original: string } | null>(null);
+  const historique = useMemo(() => buildExerciseHistory(trainings), [trainings]);
   const [pesees, setPesees] = useState<Weight[]>([]);
   // douleurs declarees dans l'infirmerie : les exercices qui chargent la zone sont remplaces ou signales
   const [regions, setRegions] = useState<Region[]>([]);
@@ -102,7 +112,10 @@ export default function ProgrammeDetail() {
         .catch(() => setActif(null))
         .finally(() => setCharge(true));
     charger();
-    const lireMateriel = () => chargerMateriel().then(setMateriel).catch(() => setMateriel(null));
+    const lireMateriel = () => {
+      chargerMateriel().then(setMateriel).catch(() => setMateriel(null));
+      chargerMachines().then(setMachines).catch(() => setMachines(null));
+    };
     lireMateriel();
     const subMateriel = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, lireMateriel);
     getProfile().then((pr) => setFemme(pr?.avatar_gender === 'femme')).catch(() => {});
@@ -169,7 +182,7 @@ export default function ProgrammeDetail() {
   const proposerExpress = (index: number, minutes: number) => {
     const j = p.jours[index];
     // le meme calcul que la seance lancee (app/seance/muscu.tsx) : ton materiel et tes douleurs d'abord, puis l'express
-    const protege = protegerJour(j, materiel, regions);
+    const protege = jourPourToi(j, materiel, regions, machines, enCours ? actif?.remplacements : null);
     const x = seanceExpress(protege.exos, minutes);
     const garde = x.exos.map((e) => traduire('{0} : {1} séries', traduire(nomFr(e.nom)), e.series)).join('\n');
     const reporte = x.reportes.length ? `\n\n${traduire('À faire une autre fois : {0}.', x.reportes.map((n) => traduire(nomFr(n))).join(', '))}` : '';
@@ -314,10 +327,11 @@ export default function ProgrammeDetail() {
           ))}
         </Glass>
 
-        <SectionTitle title={traduire('Les séances')} sub={traduire('Touche une séance pour voir ses exercices')} />
+        <SectionTitle title={traduire('Les séances')} sub={traduire('Touche une séance pour voir ses exercices')} action={traduire('Ma salle')} onAction={() => setSalleOpen(true)} />
+        {enCours && p.jours.some((x) => x.exos.length) ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>{traduire('Un exercice ne te va pas ? Touche « Changer » pour en choisir un autre.')}</Ink> : null}
         {p.jours.some((x) => x.exos.length) ? <ChoisirCharge /> : null}
         {p.jours.map((jBrut, index) => {
-          const j = protegerJour(jBrut, materiel, regions);
+          const j = jourPourToi(jBrut, materiel, regions, machines, enCours ? actif?.remplacements : null);
           const estProchain = enCours && actif!.prochain === index;
           const deplie = ouvert === j.id;
           return (
@@ -339,7 +353,16 @@ export default function ProgrammeDetail() {
               </Pressable>
               {deplie ? (
                 <>
-                  {j.exos.map((e, k) => <LigneExo key={`${e.nom}${k}`} e={e} premier={k === 0} raison={e.remplace && materiel && !e.zone ? raisonRemplacement(e.remplace, materiel) : ''} />)}
+                  {j.exos.map((e, k) => (
+                    <LigneExo
+                      key={`${e.nom}${k}`}
+                      e={e}
+                      premier={k === 0}
+                      raison={e.remplace && materiel && !e.zone ? raisonRemplacement(e.remplace, materiel) : ''}
+                      onChanger={enCours ? () => { tap(); setAChanger({ jourId: j.id, index: k, muscle: jBrut.exos[k]?.muscle ?? e.muscle, original: jBrut.exos[k]?.nom ?? e.nom }); } : undefined}
+                      onRevenir={enCours && e.perso ? () => { tap(); void remplacerExercice(j.id, k, null); } : undefined}
+                    />
+                  ))}
                   {j.rounds
                     ? j.rounds.consignes.map((txt, k) => (
                         <View key={k} style={{ paddingTop: 10, borderTopWidth: k === 0 ? 0 : 1, borderColor: c.divider, flexDirection: 'row', gap: 10 }}>
@@ -401,6 +424,22 @@ export default function ProgrammeDetail() {
         ) : null}
       </ScrollView>
 
+      <ExercisePicker
+        visible={!!aChanger}
+        onClose={() => setAChanger(null)}
+        onPick={(nom) => {
+          const x = aChanger;
+          setAChanger(null);
+          if (x) void remplacerExercice(x.jourId, x.index, nom, x.original);
+        }}
+        history={historique.map}
+        recent={historique.recent}
+        already={[]}
+        muscleDepart={aChanger?.muscle}
+        titre={traduire('Changer l’exercice')}
+      />
+      <MaSalle visible={salleOpen} onClose={() => setSalleOpen(false)} />
+
       {!enCours ? (
         <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>
           <BigButton label={traduire('Commencer ce programme')} icon="play" onPress={() => void commencerProgramme()} />
@@ -410,7 +449,7 @@ export default function ProgrammeDetail() {
   );
 }
 
-function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; raison: string }) {
+function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege & ExoPerso; premier: boolean; raison: string; onChanger?: () => void; onRevenir?: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [ouvert, setOuvert] = useState(false);
@@ -431,6 +470,22 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
       {ouvert ? <FicheTechnique nom={e.nom} /> : null}
     </>
   ) : null;
+  // 26 octobre 2026 : « Changer » (programme en cours) et « Remplacé par toi », avec le retour a l'original
+  const perso = onChanger || e.perso ? (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 14 }}>
+      {e.perso ? <Ink size={12} weight="bold" color={c.accent}>{traduire('Remplacé par toi')}</Ink> : null}
+      {onRevenir && e.perso ? (
+        <Pressable onPress={onRevenir} accessibilityRole="button" hitSlop={8} style={{ minHeight: 32, justifyContent: 'center' }}>
+          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Revenir à {0}', traduire(nomFr(e.perso)))}</Ink>
+        </Pressable>
+      ) : null}
+      {onChanger ? (
+        <Pressable onPress={onChanger} accessibilityRole="button" accessibilityLabel={traduire('Changer {0}', traduire(nomFr(e.nom)))} hitSlop={8} style={{ minHeight: 32, justifyContent: 'center' }}>
+          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('Changer')}</Ink>
+        </Pressable>
+      ) : null}
+    </View>
+  ) : null;
   const detail = e.secondes
     ? traduire('{0} séries de {1} secondes, repos {2}', e.series, reps, libelleRepos(e.reposSec))
     : traduire('{0} séries de {1} répétitions, repos {2}', e.series, reps, libelleRepos(e.reposSec));
@@ -448,6 +503,7 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
           <LigneMuscles nom={e.nom} />
           {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
           <NoteMateriel e={e} raison={raison} />
+          {perso}
           {technique}
         </View>
       </View>
@@ -461,6 +517,7 @@ function LigneExo({ e, premier, raison }: { e: ExoProtege; premier: boolean; rai
       <LigneMuscles nom={e.nom} />
       {e.conseil && !e.remplace ? <Ink size={12} color={c.textMuted}>{traduire(e.conseil)}</Ink> : null}
       <NoteMateriel e={e} raison={raison} />
+      {perso}
       {technique}
     </View>
   );

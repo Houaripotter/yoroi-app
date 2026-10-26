@@ -231,7 +231,15 @@ export const NOMS_FR: Record<string, string> = {
 
 /** nom affiche d'un exercice de la bibliotheque : le francais quand on l'a, sinon le nom tel quel */
 export function nomFr(name: string): string {
-  return NOMS_FR[name] ?? name;
+  const fr = NOMS_FR[name];
+  if (fr) return fr;
+  // 26 octobre 2026 : la prise ajoutee au nom (lib/v2/seance/prise.ts) garde le nom francais de l'exercice
+  const m = / \((prise [^)]+)\)$/.exec(name ?? '');
+  if (m) {
+    const base = name.slice(0, m.index);
+    if (NOMS_FR[base]) return `${NOMS_FR[base]} (${m[1]})`;
+  }
+  return name;
 }
 
 /* ------------------------------------------------------------------ */

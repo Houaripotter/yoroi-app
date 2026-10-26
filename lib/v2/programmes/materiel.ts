@@ -8,6 +8,7 @@
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { traduire } from '@/lib/i18n/tr';
 import type { ExoProgramme, JourProgramme } from './types';
+import { MACHINES } from '@/lib/v2/seance/machines';
 
 export type Equipement =
   | 'halteres'
@@ -218,11 +219,34 @@ export const nomsAvecFiche = (): string[] => Object.keys(FICHES);
 export const remplacantsDe = (nom: string): string[] =>
   (FICHES[nom]?.remplacants ?? []).map((r) => (typeof r === 'string' ? r : r.nom));
 
-/** Faisable avec ce matériel ? Un exercice sans fiche est considéré faisable (on ne retire rien par erreur). */
-export function faisable(nom: string, dispo: readonly Equipement[]): boolean {
+/**
+ * Ma salle (26 octobre 2026) : en plus du matériel, tu peux cocher les machines précises de ta salle
+ * (lib/v2/seance/machines.ts). Ids des machines cochées ; null ou vide : pas de détail, « Machines guidées » suffit.
+ */
+export type MachinesSalle = readonly string[] | null | undefined;
+
+/** Exercice -> ids des machines du catalogue qui le permettent */
+let parExercice: Map<string, string[]> | null = null;
+function machinesPour(nom: string): string[] {
+  if (!parExercice) {
+    parExercice = new Map();
+    for (const m of MACHINES) for (const ex of m.exercices) parExercice.set(ex, [...(parExercice.get(ex) ?? []), m.id]);
+  }
+  return parExercice.get(nom) ?? [];
+}
+
+/**
+ * Faisable avec ce matériel ? Un exercice sans fiche est considéré faisable (on ne retire rien par erreur).
+ * Avec tes machines cochées : un exercice qu'une de tes machines permet est faisable ; un exercice qui demande
+ * une machine précise du catalogue que tu n'as pas cochée ne l'est plus.
+ */
+export function faisable(nom: string, dispo: readonly Equipement[], machines?: MachinesSalle): boolean {
+  const detail = machines && machines.length ? machines : null;
+  const possibles = detail ? machinesPour(nom) : [];
+  if (detail && possibles.some((id) => detail.includes(id))) return true;
   const f = FICHES[nom];
   if (!f) return true;
-  return f.besoin.some((combo) => combo.every((e) => dispo.includes(e)));
+  return f.besoin.some((combo) => combo.every((e) => dispo.includes(e) && !(e === 'machines' && detail && possibles.length)));
 }
 
 const sansMateriel = (nom: string): boolean => (FICHES[nom]?.besoin ?? []).some((c) => c.length === 0);
@@ -260,16 +284,24 @@ export function remplacerPar(exo: ExoProgramme, nom: string): ExoAdapte {
 }
 
 /** L'exercice tel que tu peux le faire avec ce matériel */
-export function adapterExo(exo: ExoProgramme, dispo: readonly Equipement[]): ExoAdapte {
-  if (faisable(exo.nom, dispo)) return exo;
-  const nom = remplacantsDe(exo.nom).find((n) => faisable(n, dispo));
+export function adapterExo(exo: ExoProgramme, dispo: readonly Equipement[], machines?: MachinesSalle): ExoAdapte {
+  if (faisable(exo.nom, dispo, machines)) return exo;
+  const nom = remplacantsDe(exo.nom).find((n) => faisable(n, dispo, machines));
   return nom ? remplacerPar(exo, nom) : { ...exo, impossible: true };
 }
 
 /** Le jour du programme avec ton matériel (null : matériel non renseigné, rien ne change) */
-export function adapterJour<J extends JourProgramme>(jour: J, dispo: readonly Equipement[] | null): Omit<J, 'exos'> & { exos: ExoAdapte[] } {
+export function adapterJour<J extends JourProgramme>(jour: J, dispo: readonly Equipement[] | null, machines?: MachinesSalle): Omit<J, 'exos'> & { exos: ExoAdapte[] } {
   if (!dispo) return jour;
-  return { ...jour, exos: jour.exos.map((e) => adapterExo(e, dispo)) };
+  return { ...jour, exos: jour.exos.map((e) => adapterExo(e, dispo, machines)) };
+}
+
+/** Combien d'exercices d'un programme sont remplacés ou impossibles avec ta salle (null : rien de renseigné) */
+export function remplacesParLaSalle(jours: readonly JourProgramme[], dispo: readonly Equipement[] | null, machines?: MachinesSalle): number {
+  if (!dispo) return 0;
+  let n = 0;
+  for (const j of jours) for (const e of j.exos) if (!faisable(e.nom, dispo, machines)) n += 1;
+  return n;
 }
 
 /** Ce qui manque pour l'exercice prévu, en clair : « Sans banc », « Sans poulie ni élastiques » */

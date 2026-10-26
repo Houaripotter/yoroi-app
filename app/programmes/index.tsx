@@ -22,12 +22,13 @@ import { OBJECTIFS_CHOIX, conseillerProgramme } from '@/lib/v2/programmes/choix'
 import { GUIDES } from '@/lib/v2/programmes/conseils';
 import { routeDuJour } from '@/lib/v2/programmes/lancer';
 import type { Conseil, Reponses } from '@/lib/v2/programmes/choix';
-import { EQUIPEMENTS, TOUT_LE_MATERIEL } from '@/lib/v2/programmes/materiel';
+import { EQUIPEMENTS, TOUT_LE_MATERIEL, remplacesParLaSalle } from '@/lib/v2/programmes/materiel';
+import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { MessageDuJour } from '@/components/yoroi/v2/programmes/MessageDuJour';
 import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
 import { PlanningProgramme } from '@/components/yoroi/v2/programmes/PlanningProgramme';
-import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Niveau, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -42,6 +43,8 @@ export default function ProgrammesScreen() {
   const [quizOpen, setQuizOpen] = useState(false);
   const [materiel, setMateriel] = useState<Equipement[] | null>(null);
   const [materielOpen, setMaterielOpen] = useState(false);
+  // 26 octobre 2026 : Ma salle, les machines precises cochees (null : pas de detail)
+  const [machines, setMachines] = useState<string[] | null>(null);
   // 26 octobre 2026 : tes programmes favoris (étoile), en tête de page
   const [favoris, setFavoris] = useState<string[]>([]);
 
@@ -49,6 +52,7 @@ export default function ProgrammesScreen() {
     const charger = () => {
       chargerProgrammeActif().then(setActif).catch(() => setActif(null));
       chargerMateriel().then(setMateriel).catch(() => setMateriel(null));
+      chargerMachines().then(setMachines).catch(() => setMachines(null));
       chargerFavoris().then(setFavoris).catch(() => setFavoris([]));
     };
     charger();
@@ -58,6 +62,8 @@ export default function ProgrammesScreen() {
   }, []);
 
   const suite = actif ? prochainJour(actif) : null;
+  // combien d'exercices de ce programme ta salle remplace (0 : rien de renseigne ou tout est faisable)
+  const remplaces = (p: Programme) => remplacesParLaSalle(p.jours, materiel, machines);
   const programmesFavoris = favoris.map((id) => programmeParId(id)).filter((x): x is Programme => !!x);
   const etoile = (id: string) => {
     setFavoris((l) => (l.includes(id) ? l.filter((x) => x !== id) : [id, ...l]));
@@ -81,7 +87,7 @@ export default function ProgrammesScreen() {
           <>
             <SectionTitle title={traduire('Tes favoris')} />
             {programmesFavoris.map((p) => (
-              <CarteProgramme key={`fav-${p.id}`} p={p} femme={femme} enCours={actif?.id === p.id} favori onFavori={() => etoile(p.id)} onPress={() => ouvrirProgramme(p.id)} />
+              <CarteProgramme key={`fav-${p.id}`} p={p} femme={femme} enCours={actif?.id === p.id} favori onFavori={() => etoile(p.id)} remplaces={remplaces(p)} onPress={() => ouvrirProgramme(p.id)} />
             ))}
           </>
         ) : null}
@@ -107,6 +113,7 @@ export default function ProgrammesScreen() {
               <Ink size={13} color={c.onDarkSecondary}>
                 {traduirePluriel(faitsCetteSemaine(actif), faitsCetteSemaine(actif) > 1, '{0} séance sur {1} cette semaine', '{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), suite.programme.joursParSemaine)}
               </Ink>
+              {remplaces(suite.programme) > 0 ? <Ink size={12} weight="extraBold" color={c.onDark}>{texteSalle(remplaces(suite.programme))}</Ink> : null}
             </View>
             <View style={{ gap: 2, maxWidth: '66%' }}>
               <Ink size={12} weight="bold" color={c.onDarkSecondary}>{traduire('Prochaine séance')}</Ink>
@@ -151,17 +158,19 @@ export default function ProgrammesScreen() {
           </Glass>
         ) : null}
 
-        <Glass onPress={() => setMaterielOpen(true)} label={traduire('Mon matériel')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Glass onPress={() => setMaterielOpen(true)} label={traduire('Ma salle')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="dumbbell" size={22} color={c.ink} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Ink size={16} weight="black" tight>{traduire('Mon matériel')}</Ink>
+            <Ink size={16} weight="black" tight>{traduire('Ma salle')}</Ink>
             <Ink size={12} color={c.textSecondary} numberOfLines={2}>
               {materiel === null
                 ? traduire('Dis ce que tu as : les exercices impossibles seront remplacés tout seuls.')
                 : materiel.length === 0
                   ? traduire('Sans matériel : tout se fait au poids du corps.')
+                  : machines?.length
+                    ? traduirePluriel(machines.length, machines.length > 1, '{0} machine cochée, les programmes s’adaptent à ta salle.', '{0} machines cochées, les programmes s’adaptent à ta salle.', machines.length)
                   : materiel.length === TOUT_LE_MATERIEL.length
                     ? traduire('Salle complète : les programmes tels quels.')
                     : materiel.map((m) => traduire(EQUIPEMENTS.find((e) => e.id === m)?.label ?? m)).join(', ')}
@@ -185,7 +194,7 @@ export default function ProgrammesScreen() {
 
         <SectionTitle title={traduire('Tous les programmes')} action={actif ? traduire('Trouver le mien') : undefined} onAction={() => setQuizOpen(true)} />
         {PROGRAMMES.map((p) => (
-          <CarteProgramme key={p.id} p={p} femme={femme} enCours={actif?.id === p.id} favori={favoris.includes(p.id)} onFavori={() => etoile(p.id)} onPress={() => ouvrirProgramme(p.id)} />
+          <CarteProgramme key={p.id} p={p} femme={femme} enCours={actif?.id === p.id} favori={favoris.includes(p.id)} onFavori={() => etoile(p.id)} remplaces={remplaces(p)} onPress={() => ouvrirProgramme(p.id)} />
         ))}
 
         <View style={{ paddingHorizontal: 4, gap: 6, marginTop: 4 }}>
@@ -197,6 +206,7 @@ export default function ProgrammesScreen() {
       <Questionnaire
         visible={quizOpen}
         onClose={() => setQuizOpen(false)}
+        remplaces={remplaces}
         onVoir={(id, lieu) => {
           setQuizOpen(false);
           // premier passage : le lieu du questionnaire devient ton matériel (modifiable dans Mon matériel)
@@ -204,9 +214,14 @@ export default function ProgrammesScreen() {
           setTimeout(() => router.push({ pathname: '/programmes/[id]' as any, params: { id } }), 300);
         }}
       />
-      <ChoixMateriel visible={materielOpen} actuel={materiel} onClose={() => setMaterielOpen(false)} onValider={(liste) => { setMaterielOpen(false); void enregistrerMateriel(liste); }} />
+      <MaSalle visible={materielOpen} onClose={() => setMaterielOpen(false)} />
     </View>
   );
+}
+
+/** « Adapté à ta salle : 3 exercices remplacés » */
+function texteSalle(n: number): string {
+  return traduirePluriel(n, n > 1, 'Adapté à ta salle : {0} exercice remplacé', 'Adapté à ta salle : {0} exercices remplacés', n);
 }
 
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -215,7 +230,7 @@ function dateCourte(iso: string): string {
   return `${d.getDate()} ${traduire(MOIS[d.getMonth()])}`;
 }
 
-function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress }: { p: Programme; femme: boolean; enCours: boolean; favori: boolean; onFavori: () => void; onPress: () => void }) {
+function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress, remplaces = 0 }: { p: Programme; femme: boolean; enCours: boolean; favori: boolean; onFavori: () => void; onPress: () => void; remplaces?: number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const img = sportImage(sportDuProgramme(p), femme, 0);
@@ -234,6 +249,7 @@ function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress }: { p: P
           <Pastille texte={traduire('{0} min', p.dureeMin)} />
           {p.sources.length ? <Pastille texte={traduirePluriel(p.sources.length, p.sources.length > 1, '{0} étude', '{0} études', p.sources.length)} accent /> : null}
           {p.materiel !== 'salle' ? <Pastille texte={traduire(libelleMateriel(p.materiel))} /> : null}
+          {remplaces > 0 ? <Pastille texte={traduirePluriel(remplaces, remplaces > 1, '{0} adapté à ta salle', '{0} adaptés à ta salle', remplaces)} /> : null}
         </View>
       </View>
       <Pressable
@@ -267,7 +283,7 @@ const NIVEAUX: { key: Niveau; label: string }[] = [
 ];
 const JOURS: Reponses['jours'][] = [2, 3, 4, 5, 6];
 
-function Questionnaire({ visible, onClose, onVoir }: { visible: boolean; onClose: () => void; onVoir: (id: string, lieu: Reponses['lieu']) => void }) {
+function Questionnaire({ visible, onClose, onVoir, remplaces }: { visible: boolean; onClose: () => void; onVoir: (id: string, lieu: Reponses['lieu']) => void; remplaces: (p: Programme) => number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const [r, setR] = useState<Partial<Reponses>>({});
@@ -304,6 +320,7 @@ function Questionnaire({ visible, onClose, onVoir }: { visible: boolean; onClose
           <Ink size={12} weight="extraBold" color={c.accent}>{traduire('TON PROGRAMME')}</Ink>
           <Ink size={19} weight="black" tight>{traduire(prog.titre)}</Ink>
           <Ink size={14} color={c.textSecondary}>{traduire(conseil.pourquoi)}</Ink>
+          {remplaces(prog) > 0 ? <Ink size={13} weight="extraBold" color={c.accent}>{texteSalle(remplaces(prog))}</Ink> : null}
           <BigButton label={traduire('Voir ce programme')} onPress={() => onVoir(prog.id, r.lieu!)} />
           {conseil.autres.map((id) => {
             const a = programmeParId(id);
@@ -327,52 +344,6 @@ function Question({ titre, children }: { titre: string; children: React.ReactNod
       <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>{titre}</Ink>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 4 }}>{children}</View>
     </View>
-  );
-}
-
-/** Mon matériel : tu coches ce que tu as. Valider sans rien cocher = sans matériel. */
-function ChoixMateriel({ visible, actuel, onClose, onValider }: { visible: boolean; actuel: Equipement[] | null; onClose: () => void; onValider: (liste: Equipement[]) => void }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const [liste, setListe] = useState<Equipement[]>(actuel ?? TOUT_LE_MATERIEL);
-  useEffect(() => {
-    if (visible) setListe(actuel ?? TOUT_LE_MATERIEL);
-  }, [visible, actuel]);
-  const basculer = (id: Equipement) => setListe((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
-  return (
-    <Sheet visible={visible} onClose={onClose} title={traduire('Mon matériel')}>
-      <Ink size={14} color={c.textSecondary} style={{ paddingHorizontal: 4 }}>
-        {traduire('Coche ce que tu as, chez toi ou à ta salle. Chaque exercice que tu ne peux pas faire est remplacé par le plus proche, pour le même muscle.')}
-      </Ink>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 4 }}>
-        <Chip label={traduire('Salle complète')} on={liste.length === TOUT_LE_MATERIEL.length} onPress={() => setListe([...TOUT_LE_MATERIEL])} />
-        <Chip label={traduire('Rien du tout')} on={liste.length === 0} onPress={() => setListe([])} />
-      </View>
-      <View style={{ gap: 6 }}>
-        {EQUIPEMENTS.map((e) => {
-          const on = liste.includes(e.id);
-          return (
-            <Pressable
-              key={e.id}
-              onPress={() => { tap(); basculer(e.id); }}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: on }}
-              accessibilityLabel={traduire(e.label)}
-              style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? c.fillSubtle : on ? c.accentTint : 'transparent', borderWidth: 1, borderColor: on ? c.accent : c.divider })}
-            >
-              <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: on ? c.accent : c.textMuted, backgroundColor: on ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {on ? <Icon name="check" size={14} color={c.onAccent} /> : null}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Ink size={15} weight="extraBold">{traduire(e.label)}</Ink>
-                <Ink size={12} color={c.textSecondary}>{traduire(e.detail)}</Ink>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-      <BigButton label={traduire('Enregistrer')} onPress={() => onValider(liste)} />
-    </Sheet>
   );
 }
 

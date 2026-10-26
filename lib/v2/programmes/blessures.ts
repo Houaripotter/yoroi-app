@@ -6,7 +6,7 @@
  * Donnees pures, testees dans __tests__/unit/blessures.test.ts.
  */
 import { adapterExo, faisable, remplacantsDe, remplacerPar } from './materiel';
-import type { Equipement, ExoAdapte } from './materiel';
+import type { Equipement, ExoAdapte, MachinesSalle } from './materiel';
 import type { ExoProgramme, JourProgramme } from './types';
 
 export type Region = 'epaule' | 'coude' | 'poignet' | 'dos_bas' | 'genou' | 'cheville' | 'ischios' | 'hanche' | 'cou' | 'mollet';
@@ -84,19 +84,19 @@ export type ExoProtege = ExoAdapte & {
 };
 
 /** Materiel puis douleurs : l'exercice tel que tu peux le faire sans charger une zone que tu as declaree */
-export function proteger(exo: ExoProgramme, dispo: readonly Equipement[] | null, regions: readonly Region[]): ExoProtege {
-  const base: ExoAdapte = dispo ? adapterExo(exo, dispo) : exo;
+export function proteger(exo: ExoProgramme, dispo: readonly Equipement[] | null, regions: readonly Region[], machines?: MachinesSalle): ExoProtege {
+  const base: ExoAdapte = dispo ? adapterExo(exo, dispo, machines) : exo;
   if (!regions.length || !touche(base.nom, regions)) return base;
   const zone = regionsDe(base.nom).find((r) => regions.includes(r))!;
-  const ok = (n: string) => (!dispo || faisable(n, dispo)) && !touche(n, regions);
+  const ok = (n: string) => (!dispo || faisable(n, dispo, machines)) && !touche(n, regions);
   const nom = remplacantsDe(exo.nom).find(ok);
   if (nom) return { ...remplacerPar(exo, nom), zone };
   return { ...base, impossible: true, zone };
 }
 
-export function protegerJour<J extends JourProgramme>(jour: J, dispo: readonly Equipement[] | null, regions: readonly Region[]): Omit<J, 'exos'> & { exos: ExoProtege[] } {
+export function protegerJour<J extends JourProgramme>(jour: J, dispo: readonly Equipement[] | null, regions: readonly Region[], machines?: MachinesSalle): Omit<J, 'exos'> & { exos: ExoProtege[] } {
   if (!dispo && !regions.length) return jour;
-  return { ...jour, exos: jour.exos.map((e) => proteger(e, dispo, regions)) };
+  return { ...jour, exos: jour.exos.map((e) => proteger(e, dispo, regions, machines)) };
 }
 
 /** Regions des blessures actives ou en guerison, sans doublon */

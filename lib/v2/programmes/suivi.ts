@@ -10,6 +10,9 @@ import { TOUT_LE_MATERIEL } from './materiel';
 import type { Equipement } from './materiel';
 import type { JourProgramme, Programme } from './types';
 import { joursValides } from './coach';
+import { avecRemplacement, cleCase } from './perso';
+import type { Remplacements } from './perso';
+import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 
 const CLE = 'yoroi_programme_actif_v1';
 export const PROGRAMME_CHANGED_EVENT = 'YOROI_PROGRAMME_CHANGED';
@@ -29,6 +32,8 @@ export type ProgrammeActif = {
   legeres?: string[];
   /** 25 octobre 2026 : tes jours d'entrainement, 0 = lundi (lib/v2/programmes/coach.ts) ; absents, les jours conseilles */
   jours?: number[];
+  /** 26 octobre 2026 : tes exercices changes a la main, « jourId|index » -> nom (lib/v2/programmes/perso.ts) */
+  remplacements?: Remplacements;
 };
 
 function jourLocal(d = new Date()): string {
@@ -86,6 +91,21 @@ export async function enregistrerJours(jours: number[]): Promise<void> {
 /** Tes jours d'entrainement : ceux que tu as choisis, sinon les jours conseilles du programme */
 export function joursDuProgramme(a: ProgrammeActif | null, p: Programme): number[] {
   return joursValides(a?.jours) ?? joursConseilles(p.joursParSemaine);
+}
+
+/**
+ * « Changer » sur la page du programme : l'exercice de la case `index` du jour devient `nom`
+ * (null, ou le nom d'origine : tu reviens a l'exercice du programme). Series, repetitions et repos ne bougent pas.
+ */
+export async function remplacerExercice(jourId: string, index: number, nom: string | null, original?: string): Promise<void> {
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  if (!a || !p) return;
+  const jour = p.jours.find((j) => j.id === jourId);
+  if (!jour || index < 0 || index >= jour.exos.length) return;
+  const remplacements = avecRemplacement(a.remplacements, cleCase(jourId, index), nom, original ?? jour.exos[index].nom);
+  const { remplacements: _ancien, ...reste } = a;
+  await ecrire(Object.keys(remplacements).length ? { ...reste, remplacements } : reste);
 }
 
 export async function arreterProgramme(): Promise<void> {
@@ -198,6 +218,38 @@ export async function enregistrerMateriel(liste: Equipement[] | null): Promise<v
     // stockage indisponible : les programmes restent tels quels
   }
   prevenir();
+}
+
+/**
+ * Ma salle (26 octobre 2026) : les machines precises de ta salle (ids de lib/v2/seance/machines.ts), a cote du
+ * materiel. Cle a part : les anciennes versions lisent toujours la liste du materiel telle quelle.
+ * null : pas de detail, « Machines guidees » vaut pour toutes les machines.
+ */
+const CLE_MACHINES = 'yoroi_salle_machines_v1';
+
+export async function chargerMachines(): Promise<string[] | null> {
+  try {
+    const raw = await AsyncStorage.getItem(CLE_MACHINES);
+    if (!raw) return null;
+    const liste = JSON.parse(raw);
+    if (!Array.isArray(liste)) return null;
+    const ids = liste.filter((x): x is string => typeof x === 'string' && MACHINE_BY_ID.has(x));
+    return ids.length ? ids : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Ton materiel et tes machines, enregistres ensemble (une seule mise a jour des ecrans) */
+export async function enregistrerSalle(liste: Equipement[] | null, machines: string[] | null): Promise<void> {
+  try {
+    const ids = Array.from(new Set((machines ?? []).filter((x) => MACHINE_BY_ID.has(x))));
+    if (ids.length) await AsyncStorage.setItem(CLE_MACHINES, JSON.stringify(ids));
+    else await AsyncStorage.removeItem(CLE_MACHINES);
+  } catch {
+    // stockage indisponible : les programmes restent tels quels
+  }
+  await enregistrerMateriel(liste);
 }
 
 /** Le materiel par defaut selon le lieu du questionnaire */

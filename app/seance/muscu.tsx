@@ -51,7 +51,7 @@ import { programmeParId, libelleRepos } from '@/lib/v2/programmes/catalogue';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
 import { AideBarre } from '@/components/yoroi/v2/seance/AideBarre';
 import { proposer, proposerLegere, proposerLibre, seancesDeLExo } from '@/lib/v2/programmes/progression';
-import { chargerMateriel, chargerProgrammeActif, estSemaineLegere, marquerJourFait, plusJours } from '@/lib/v2/programmes/suivi';
+import { chargerMachines, chargerMateriel, chargerProgrammeActif, estSemaineLegere, marquerJourFait, plusJours } from '@/lib/v2/programmes/suivi';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { seanceExpress } from '@/lib/v2/programmes/express';
 import { lireZones, seanceZones, titreZones } from '@/lib/v2/programmes/zones';
@@ -61,7 +61,10 @@ import type { EtatSeance } from '@/lib/v2/widgets/activiteSeance';
 import { appliquerActionsIle, ecouterActionsIle, planIle } from '@/lib/v2/seance/actionsIle';
 import { coachSeance } from '@/lib/v2/seance/coachSeance';
 import type { TextesIle } from '@/lib/v2/seance/actionsIle';
-import { LIBELLE_REGION, protegerJour, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
+import { LIBELLE_REGION, regionsDesBlessures } from '@/lib/v2/programmes/blessures';
+import { jourPourToi } from '@/lib/v2/programmes/perso';
+import { EXPLICATION_PRISE, PRISES, avecPrise, sansPrise } from '@/lib/v2/seance/prise';
+import type { Prise } from '@/lib/v2/seance/prise';
 
 const INTENSITIES = [
   { value: 3, label: 'Facile' },
@@ -131,6 +134,7 @@ export default function SeanceMuscu() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [noteFor, setNoteFor] = useState<string | null>(null);
+  const [priseFor, setPriseFor] = useState<string | null>(null);
   const [finishOpen, setFinishOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   // garde synchrone : deux appuis rapproches n'enregistrent jamais la seance deux fois
@@ -209,10 +213,11 @@ export default function SeanceMuscu() {
           const zones = prog ? [] : lireZones(param1(raw.zones));
           const jourSource = prog && jourIdx >= 0 ? prog.jours[jourIdx] : zones.length ? { id: 'zones', titre: titreZones(zones, traduire), muscles: [], exos: seanceZones(zones) } : null;
           if (jourSource) {
-            const [trainings, h, actif, materiel, blessures] = await Promise.all([trainingsP, histP, chargerProgrammeActif(), chargerMateriel(), getActiveInjuries().catch(() => [])]);
+            const [trainings, h, actif, materiel, blessures, machines] = await Promise.all([trainingsP, histP, chargerProgrammeActif(), chargerMateriel(), getActiveInjuries().catch(() => []), chargerMachines()]);
             // ton materiel et tes douleurs declarees : chaque exercice impossible ou qui charge une zone douloureuse
             // est remplace par le plus proche (lib/v2/programmes/materiel.ts, blessures.ts)
-            const protege = protegerJour(jourSource, materiel, regionsDesBlessures(blessures ?? []));
+            // puis tes exercices changes a la main sur la page du programme en cours (lib/v2/programmes/perso.ts)
+            const protege = jourPourToi(jourSource, materiel, regionsDesBlessures(blessures ?? []), machines, prog && actif && actif.id === prog.id ? actif.remplacements : null);
             // seance express (15, 20 ou 30 min) : la seance du jour raccourcie (lib/v2/programmes/express.ts)
             const express = Number(param1(raw.express)) || 0;
             const jour = express > 0 ? { ...protege, exos: seanceExpress(protege.exos, express).exos } : protege;
@@ -359,6 +364,27 @@ export default function SeanceMuscu() {
 
   const updateExercise = (id: string, fn: (e: LiveExercise) => LiveExercise) =>
     update((d) => ({ ...d, exercises: d.exercises.map((e) => (e.id === id ? fn(e) : e)) }));
+
+  /**
+   * La prise choisie s'ajoute au nom (« ... (prise neutre) ») : chaque prise a sa propre historique, ses charges
+   * et ses records. Les series pas encore faites reprennent ta derniere fois avec cette prise, s'il y en a une.
+   */
+  const choisirPrise = (ex: LiveExercise, prise: Prise | null) => {
+    setPriseFor(null);
+    const name = avecPrise(ex.name, prise);
+    if (name === ex.name) return;
+    const h = hist.map.get(normName(name));
+    updateExercise(ex.id, (e) => ({
+      ...e,
+      name,
+      sets: e.sets.map((st, i) => {
+        if (st.done) return st;
+        const last = h?.lastSets[Math.min(i, (h?.lastSets.length ?? 1) - 1)];
+        return last ? { ...st, weight: last.weight, reps: last.reps, prevWeight: last.weight, prevReps: last.reps } : { ...st, prevWeight: undefined, prevReps: undefined };
+      }),
+    }));
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
+  };
 
   const current = draft?.exercises.find((e) => e.id === draft.currentId) ?? draft?.exercises[0] ?? null;
   const activeIndex = current ? current.sets.findIndex((s) => !s.done) : -1;
@@ -706,6 +732,7 @@ export default function SeanceMuscu() {
   const nextEx = current ? draft.exercises.find((e, i) => i > draft.exercises.indexOf(current) && seriesRestantes(e) > 0) ?? draft.exercises.find((e) => e.id !== current.id && seriesRestantes(e) > 0) : undefined;
   const menuEx = draft.exercises.find((e) => e.id === menuFor) ?? null;
   const noteEx = draft.exercises.find((e) => e.id === noteFor) ?? null;
+  const priseEx = draft.exercises.find((e) => e.id === priseFor) ?? null;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -814,7 +841,7 @@ export default function SeanceMuscu() {
 
             {/* 24 octobre 2026 : animation de l'exercice, si ses deux images existent */}
             <View style={{ alignItems: 'center' }}>
-              <ExoDemo nom={current.name} taille={150} arrondi={22} />
+              <ExoDemo nom={sansPrise(current.name).base} taille={150} arrondi={22} />
             </View>
 
             {current.cible ? (
@@ -942,7 +969,7 @@ export default function SeanceMuscu() {
             </View>
 
             <AideBarre
-              nom={current.name}
+              nom={sansPrise(current.name).base}
               chargeKg={(current.sets.find((x) => !x.done) ?? current.sets[current.sets.length - 1])?.weight}
               debut={!current.sets.some((x) => x.done)}
               unite={unite}
@@ -975,7 +1002,7 @@ export default function SeanceMuscu() {
                   const all = (doneCount === e.sets.length || (!!e.laisse && doneCount > 0)) && e.sets.length > 0;
                   return (
                     <Pressable key={e.id} onPress={() => update((d) => allerAExercice(d, e.id))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, gap: 12, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border, opacity: all ? 0.6 : 1 })}>
-                      <ExoDemo nom={e.name} taille={52} arrondi={12} />
+                      <ExoDemo nom={sansPrise(e.name).base} taille={52} arrondi={12} />
                       <Ink size={13} weight="extraBold" color={c.textMuted} style={{ width: 18 }}>{i + 1}</Ink>
                       <Ink size={15} weight="bold" color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={1}>{traduire(e.name)}</Ink>
                       <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? (e.laisse ? traduire("{0} faites", doneCount) : traduire('fait')) : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
@@ -1066,7 +1093,32 @@ export default function SeanceMuscu() {
             <MenuRow icon="up" label={traduire("Monter dans la séance")} onPress={() => moveExercise(menuEx.id, -1)} disabled={draft.exercises[0]?.id === menuEx.id} />
             <MenuRow icon="down" label={traduire("Descendre dans la séance")} onPress={() => moveExercise(menuEx.id, 1)} disabled={draft.exercises[draft.exercises.length - 1]?.id === menuEx.id} />
             <MenuRow icon="pencil" label={menuEx.notes ? traduire('Modifier la note') : traduire('Ajouter une note')} onPress={() => { setMenuFor(null); setNoteFor(menuEx.id); }} />
+            <MenuRow icon="swap" label={sansPrise(menuEx.name).prise ? traduire('Prise : {0}', traduire(PRISES.find((x) => x.id === sansPrise(menuEx.name).prise)?.label ?? '')) : traduire('Prise')} onPress={() => { setMenuFor(null); setPriseFor(menuEx.id); }} />
             <MenuRow icon="trash" label={traduire("Supprimer l’exercice")} danger onPress={() => removeExercise(menuEx.id)} />
+          </View>
+        ) : null}
+      </Sheet>
+
+      {/* 26 octobre 2026 : la prise sur la meme machine (lib/v2/seance/prise.ts), suivie comme un exercice a part */}
+      <Sheet visible={!!priseEx} onClose={() => setPriseFor(null)} title={traduire('Prise')}>
+        {priseEx ? (
+          <View style={{ gap: 10 }}>
+            <Ink size={14} color={c.textSecondary}>{traduire(EXPLICATION_PRISE)}</Ink>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {PRISES.map((x) => {
+                const on = sansPrise(priseEx.name).prise === x.id;
+                return (
+                  <Pressable key={x.id} onPress={() => choisirPrise(priseEx, on ? null : x.id)} accessibilityRole="button" accessibilityState={{ selected: on }} style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 14, justifyContent: 'center', backgroundColor: on ? c.ink : pressed ? c.fillSubtle : 'transparent', borderWidth: on ? 0 : 1.5, borderColor: c.border })}>
+                    <Ink size={15} weight="extraBold" color={on ? c.background : c.ink}>{traduire(x.label)}</Ink>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {sansPrise(priseEx.name).prise ? (
+              <Pressable onPress={() => choisirPrise(priseEx, null)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
+                <Ink size={14} weight="extraBold" color={c.accent}>{traduire('Sans prise précise')}</Ink>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </Sheet>
@@ -1241,7 +1293,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MenuRow({ icon, label, onPress, danger, disabled }: { icon: 'up' | 'down' | 'pencil' | 'trash'; label: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
+function MenuRow({ icon, label, onPress, danger, disabled }: { icon: 'up' | 'down' | 'pencil' | 'trash' | 'swap'; label: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const color = disabled ? c.textMuted : danger ? c.danger : c.ink;

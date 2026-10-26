@@ -37,9 +37,13 @@ type Props = {
   recent: string[];
   /** exercices deja dans la seance, signales d'une coche */
   already: string[];
+  /** 26 octobre 2026 : changer un exercice de programme, le muscle de l'exercice remplace s'ouvre en premier */
+  muscleDepart?: string;
+  /** titre du haut, « Ajouter un exercice » par defaut */
+  titre?: string;
 };
 
-export function ExercisePicker({ visible, onClose, onPick, history, recent, already }: Props) {
+export function ExercisePicker({ visible, onClose, onPick, history, recent, already, muscleDepart, titre }: Props) {
   const { theme } = useYoroiTheme();
   const unite = useUnitePoids();
   const c = theme.colors;
@@ -71,6 +75,14 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
     const rest = Array.from(present).filter((g) => !MUSCLE_ORDER.includes(g)).sort();
     return [...ordered, ...rest];
   }, [all]);
+
+  // le muscle de depart s'il existe dans la bibliotheque, a chaque ouverture
+  useEffect(() => {
+    if (visible && muscleDepart && groups.includes(muscleDepart)) {
+      setGroup(muscleDepart);
+      setQuery('');
+    }
+  }, [visible, muscleDepart, groups]);
 
   const alreadySet = useMemo(() => new Set(already.map(normName)), [already]);
 
@@ -148,7 +160,7 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: 18 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22 }}>
-          <Ink size={26} weight="black" tight>{traduire("Ajouter un exercice")}</Ink>
+          <Ink size={26} weight="black" tight>{titre ?? traduire("Ajouter un exercice")}</Ink>
           <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={traduire("Fermer")} style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="close" size={18} strokeWidth={2.6} />
           </Pressable>
