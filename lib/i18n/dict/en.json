@@ -18865,5 +18865,17 @@
 "Nos animations actuelles": "Our current animations",
 "Photos, Free Exercise DB": "Photos, Free Exercise DB",
 "Dessins, Everkinetic": "Drawings, Everkinetic",
-"Illustrations, RepDB": "Illustrations, RepDB"
+"Illustrations, RepDB": "Illustrations, RepDB",
+"Bibliothèques d’exercices": "Exercise libraries",
+"Gratuites, en ligne, visibles seulement en mode créateur": "Free, online, visible only in creator mode",
+"RepDB, Free Exercise DB, Everkinetic, en ligne": "RepDB, Free Exercise DB, Everkinetic, online",
+"Pas de connexion : la bibliothèque se lit en ligne.": "No connection: the library is read online.",
+"Gratuit, même dans une app payante, avec la mention": "Free, even in a paid app, with the credit",
+"Domaine public, aucune mention obligatoire": "Public domain, no credit required",
+"Licence CC BY-SA 4.0, mention obligatoire": "CC BY-SA 4.0 licence, credit required",
+"Chercher : bench, curl, squat...": "Search: bench, curl, squat...",
+"Déjà dans YOROI": "Already in YOROI",
+"{0} exercices affichés": "{0} exercises shown",
+"Aucun exercice trouvé.": "No exercise found.",
+"Dans YOROI : {0}": "In YOROI: {0}"
 }
