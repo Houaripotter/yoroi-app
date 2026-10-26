@@ -81,7 +81,11 @@ export function infosHero(opts: { programme: Programme; actif: ProgrammeActif; j
     : traduirePluriel(faits, faits > 1, '{0} séance sur {1} cette semaine', '{0} séances sur {1} cette semaine', faits, prevus);
   const ligne = `${traduire('{0}, {1} jours', nomDuProgramme(traduire(p.titre)), p.joursParSemaine)} · ${ou}`;
 
-  const pourquoi = message.seanceDuJour ? pourquoiDuJour(jour, opts.semaine) : message.texte;
+  // 26 octobre 2026 (Houari : « pourquoi ça me propose cardio ? ») : un jour de cardio dans un programme de muscu,
+  // on dit d'abord que le programme alterne les deux, puis l'intérêt de la séance
+  const alterne = !!jour.cardio && p.jours.some((x) => estJourMuscu(x));
+  const raison = message.seanceDuJour ? pourquoiDuJour(jour, opts.semaine) : message.texte;
+  const pourquoi = message.seanceDuJour && alterne ? `${traduire('Ton programme alterne muscu et cardio : aujourd’hui, c’est cardio.')} ${raison}` : raison;
 
   let ensuite = '';
   if (!message.seanceDuJour) ensuite = message.ensuite;
