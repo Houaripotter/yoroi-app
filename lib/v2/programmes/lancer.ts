@@ -3,21 +3,31 @@
  * Course a pied : la consigne avance de semaine en semaine (CardioProgramme.semaines).
  * 26 octobre 2026 : fin de seance (finSeance.ts). Un jour de musculation du programme actif recoit l'abdo et
  * le cardio choisis ; le bloc cardio part dans les notes de la seance et dans le resume du jour.
+ * 26 octobre 2026 : modules (modules.ts). Grip, cou et force sont dans les exercices ; le bloc d'etirements
+ * (mobilite) part dans les notes et le resume, apres le cardio.
  */
 import { traduire } from '@/lib/i18n/tr';
-import { avecFinSeance, contexteFinPour } from './finSeance';
-import type { AvecFin } from './finSeance';
+import { contexteFinPour } from './finSeance';
+import { avecModules } from './modules';
+import type { AvecModules } from './modules';
 import type { CardioProgramme, JourProgramme, Programme } from './types';
 
-/** Le jour avec sa fin de seance (deja calcule, ou celle du programme actif) */
-function complet<J extends JourProgramme>(j: J): J & AvecFin {
-  return (j as J & AvecFin).finFaite ? (j as J & AvecFin) : avecFinSeance(j, contexteFinPour(j));
+/** Le jour avec sa fin de seance et ses modules (deja calcules, ou ceux du programme actif) */
+function complet<J extends JourProgramme>(j: J): J & AvecModules {
+  const x = j as J & AvecModules;
+  return x.finFaite || x.modulesFaits ? x : avecModules(j, contexteFinPour(j));
 }
 
-/** « Fin de séance : 30 minutes de marche inclinée... » pour les notes de la seance */
+/** « Fin de séance : 30 minutes de marche inclinée... », puis « Étirements : ... », pour les notes de la seance */
 export function noteFinCardio(j: JourProgramme): string {
-  const c = complet(j).finCardio;
-  return c ? traduire('Fin de séance : {0}', traduire(c.consigne)) : '';
+  const x = complet(j);
+  const c = x.finCardio;
+  const e = x.finEtirements;
+  const notes = [
+    c ? traduire('Fin de séance : {0}', traduire(c.consigne)) : '',
+    e ? traduire('Étirements, {0} min : {1}', e.minutes, traduire(e.consigne)) : '',
+  ].filter(Boolean);
+  return notes.join('\n\n');
 }
 
 /** La sortie de la semaine N du programme (1 la premiere) ; la derniere entree sert ensuite */
@@ -58,7 +68,8 @@ export function resumeDuJour(jour: JourProgramme, semaine = 1): string {
     return traduire('{0} min de cardio', m);
   }
   const base = traduire('{0} exercices, {1} séries', j.exos.length, j.exos.reduce((n, e) => n + e.series, 0));
-  return j.finCardio ? traduire('{0}, puis {1} min de marche', base, j.finCardio.minutes) : base;
+  const avecMarche = j.finCardio ? traduire('{0}, puis {1} min de marche', base, j.finCardio.minutes) : base;
+  return j.finEtirements ? traduire('{0}, puis {1} min d’étirements', avecMarche, j.finEtirements.minutes) : avecMarche;
 }
 
 /**

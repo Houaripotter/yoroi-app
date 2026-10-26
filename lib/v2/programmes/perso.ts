@@ -11,8 +11,10 @@ import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { protegerJour } from './blessures';
 import type { ExoProtege, Region } from './blessures';
 import type { Equipement, MachinesSalle } from './materiel';
-import { avecFinSeance, contexteFinPour } from './finSeance';
-import type { AvecFin, ContexteFin, ExoFin } from './finSeance';
+import { completerContexte, contexteFinPour } from './finSeance';
+import type { ContexteFin } from './finSeance';
+import { avecModules } from './modules';
+import type { AvecModules, ExoModule } from './modules';
 
 /** Cle d'une case du programme : « jourId|index » (index de l'exercice dans le jour du catalogue) */
 export const cleCase = (jourId: string, index: number): string => `${jourId}|${index}`;
@@ -65,8 +67,8 @@ export function nombreRemplacements(remplacements: Remplacements | undefined | n
 /* ------------------------------------------------------------------------------------------------
  * Le jour tel que tu le fais : ta fin de seance (abdos, cardio), ton materiel et ta salle, tes douleurs
  * declarees, puis tes choix. Un seul calcul pour la page du programme, la seance en direct et la seance express.
- * `fin` : undefined, la fin de seance du programme actif si le jour en fait partie (finSeance.ts) ;
- * null, aucune ; sinon celle donnee.
+ * `fin` : undefined, la fin de seance et les modules du programme actif si le jour en fait partie (finSeance.ts) ;
+ * null, aucune ; sinon celle donnee (sans `modules`, ceux du programme actif s'y ajoutent, lib/v2/programmes/modules.ts).
  * ---------------------------------------------------------------------------------------------- */
 
 const muscleBiblio = (nom: string): string | undefined => EXERCISE_LIBRARY.find((e) => e.name === nom)?.muscle;
@@ -78,9 +80,9 @@ export function jourPourToi<J extends JourProgramme>(
   machines?: MachinesSalle,
   remplacements?: Remplacements | null,
   fin?: ContexteFin | null,
-): Omit<J, 'exos'> & AvecFin & { exos: (ExoProtege & ExoPerso & ExoFin)[] } {
-  // l'abdo ajoute passe ensuite par le materiel et les douleurs, comme les autres exercices
-  const complet = avecFinSeance(jour, fin === undefined ? contexteFinPour(jour) : fin);
-  const protege = protegerJour(complet, dispo, regions, machines) as Omit<J, 'exos'> & AvecFin & { id: string; exos: ExoProtege[] };
-  return appliquerRemplacements(protege, remplacements, muscleBiblio) as Omit<J, 'exos'> & AvecFin & { exos: (ExoProtege & ExoPerso & ExoFin)[] };
+): Omit<J, 'exos'> & AvecModules & { exos: (ExoProtege & ExoPerso & ExoModule)[] } {
+  // les exercices ajoutes (abdo, grip, cou) passent ensuite par le materiel et les douleurs, comme les autres
+  const complet = avecModules(jour, fin === undefined ? contexteFinPour(jour) : completerContexte(jour, fin));
+  const protege = protegerJour(complet, dispo, regions, machines) as Omit<J, 'exos'> & AvecModules & { id: string; exos: ExoProtege[] };
+  return appliquerRemplacements(protege, remplacements, muscleBiblio) as Omit<J, 'exos'> & AvecModules & { exos: (ExoProtege & ExoPerso & ExoModule)[] };
 }

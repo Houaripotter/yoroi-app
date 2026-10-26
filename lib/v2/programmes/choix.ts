@@ -1,7 +1,20 @@
 /**
  * Le bon programme pour toi (24 octobre 2026) : quatre questions, des regles simples, aucun calcul cache.
  * Donnees pures, testees dans __tests__/unit/programmes.test.ts.
+ *
+ * 26 octobre 2026 : plusieurs objectifs (ReponsesMulti, testes dans __tests__/unit/modules.test.ts).
+ *  1. Le programme de base vient d'UN objectif : le premier coche dans l'ordre PRIORITE_BASE. Les objectifs de
+ *     musculation passent avant les objectifs specialises, qui deviennent plus facilement des modules
+ *     (« Prendre du muscle » + « Grip » : un programme muscle, plus le module grip). Fessiers et ventre plat coches
+ *     ensemble : le programme « Fessiers et ventre plat ». Le programme est celui de la regle a un objectif.
+ *  2. Chaque objectif coche (base comprise) propose ses modules (MODULES_OBJECTIF), gardes seulement s'ils changent
+ *     quelque chose au programme (modules.ts, moduleUtile) ; pas de cardio en plus si le programme a deja ses seances
+ *     de cardio ; pas de force pour qui debute.
+ *  3. Un objectif qui n'est ni la base ni un module possible (course, sac, foot...) ajoute son programme dans `autres`.
  */
+import { programmeParId } from './catalogue';
+import { moduleUtile } from './modules';
+import type { ModuleId } from './modules';
 import type { Materiel, Niveau } from './types';
 
 export type ObjectifChoix =
@@ -67,7 +80,65 @@ export type Conseil = {
 
 const DEBUTANT = 'Au début, travailler tout le corps deux à trois fois par semaine est la recommandation de l’ACSM.';
 
-export function conseillerProgramme(r: Reponses): Conseil {
+/** Plusieurs objectifs (26 octobre 2026) : l'ordre de la liste ne compte pas, PRIORITE_BASE decide */
+export type ReponsesMulti = Omit<Reponses, 'objectif'> & { objectifs: ObjectifChoix[] };
+
+export type ConseilMulti = Conseil & {
+  /** l'objectif qui a donne le programme de base */
+  objectif: ObjectifChoix;
+  /** modules proposes, deja coches dans le questionnaire */
+  modules: ModuleId[];
+};
+
+/** Quel objectif donne le programme de base, du plus prioritaire au moins prioritaire */
+export const PRIORITE_BASE: ObjectifChoix[] = [
+  'debuter', 'muscle', 'masse', 'pecs', 'fessiers_ventre', 'fessiers', 'force', 'seche', 'perte', 'ventre',
+  'combat', 'sac', 'foot', 'raquette', 'course', 'grip', 'mobilite', 'forme',
+];
+
+/** Les modules qu'un objectif propose quand il n'est pas (ou pas seulement) le programme de base */
+export const MODULES_OBJECTIF: Partial<Record<ObjectifChoix, ModuleId[]>> = {
+  force: ['force'],
+  grip: ['grip'],
+  combat: ['cou'],
+  ventre: ['abdos', 'cardio'],
+  perte: ['cardio'],
+  seche: ['cardio'],
+  mobilite: ['mobilite'],
+};
+
+export function conseillerProgramme(r: Reponses): Conseil;
+export function conseillerProgramme(r: ReponsesMulti): ConseilMulti;
+export function conseillerProgramme(r: Reponses | ReponsesMulti): Conseil | ConseilMulti {
+  return 'objectifs' in r ? conseillerPlusieurs(r) : conseillerUn(r);
+}
+
+function conseillerPlusieurs(r: ReponsesMulti): ConseilMulti {
+  const choisis = new Set<ObjectifChoix>(r.objectifs.length ? r.objectifs : ['forme']);
+  if (choisis.has('fessiers') && choisis.has('ventre')) choisis.add('fessiers_ventre');
+  const objectif = PRIORITE_BASE.find((o) => choisis.has(o)) ?? 'forme';
+  const niveau: Niveau = choisis.has('debuter') ? 'debutant' : r.niveau;
+  const { objectifs: _o, ...reste } = r;
+  const base = conseillerUn({ ...reste, niveau, objectif });
+  const p = programmeParId(base.id);
+  const aDuCardio = !!p?.jours.some((j) => j.cardio);
+  const modules: ModuleId[] = [];
+  const autres: string[] = [];
+  for (const o of PRIORITE_BASE) {
+    if (!choisis.has(o) || o === 'fessiers_ventre') continue;
+    const proposes = (MODULES_OBJECTIF[o] ?? []).filter((m) => p && moduleUtile(p, m) && !(m === 'cardio' && aDuCardio) && !(m === 'force' && niveau === 'debutant'));
+    for (const m of proposes) if (!modules.includes(m)) modules.push(m);
+    // ni la base ni un module : son propre programme te va aussi
+    if (o !== objectif && !proposes.length && !(MODULES_OBJECTIF[o] ?? []).some((m) => modules.includes(m))) {
+      const id = conseillerUn({ ...reste, niveau, objectif: o }).id;
+      if (id !== base.id && !autres.includes(id)) autres.push(id);
+    }
+  }
+  for (const id of base.autres) if (id !== base.id && !autres.includes(id)) autres.push(id);
+  return { ...base, objectif, modules, autres };
+}
+
+function conseillerUn(r: Reponses): Conseil {
   // tu n'y connais rien : un programme debutant tout le corps, selon ton lieu, et le guide du poids de depart
   if (r.objectif === 'debuter') {
     if (r.lieu === 'maison') {

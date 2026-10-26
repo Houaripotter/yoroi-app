@@ -21,6 +21,7 @@
  */
 import { programmeParId } from './catalogue';
 import type { CardioProgramme, ExoProgramme, JourProgramme, Materiel, Programme } from './types';
+import type { ModuleId } from './modules';
 
 export type ChoixFin = 'rien' | 'abdos' | 'cardio' | 'les_deux';
 
@@ -117,7 +118,11 @@ export type ExoFin = { fin?: true };
 /** Le jour avec sa fin de seance : `finCardio` (bloc apres la musculation), `finFaite` (deja calcule) */
 export type AvecFin = { finCardio?: CardioProgramme; finFaite?: true };
 
-export type ContexteFin = { fin: FinSeance | null | undefined; materiel: Materiel };
+/**
+ * `modules` et `programme` : 26 octobre 2026, lib/v2/programmes/modules.ts (force, grip, cou, mobilite).
+ * Absents, seule la fin de seance s'applique.
+ */
+export type ContexteFin = { fin: FinSeance | null | undefined; materiel: Materiel; modules?: readonly ModuleId[]; programme?: Programme };
 
 /**
  * Ajoute l'abdo et le cardio choisis a un jour de musculation. Le jour garde ses exercices dans l'ordre
@@ -138,18 +143,34 @@ export function avecFinSeance<J extends JourProgramme>(jour: J, ctx: ContexteFin
 /* ------------------------------------------------------------------------------------------------
  * Le choix du programme actif, retenu par suivi.ts a chaque lecture et ecriture.
  * ---------------------------------------------------------------------------------------------- */
-let actif: { id: string; fin?: FinSeance } | null = null;
+let actif: { id: string; fin?: FinSeance; modules?: readonly ModuleId[] } | null = null;
 
-export function retenirFinActive(id: string | null, fin?: FinSeance): void {
-  actif = id ? { id, fin } : null;
+/** 26 octobre 2026 : les modules (force, grip, cou, mobilite) du programme actif sont retenus avec la fin de seance */
+export function retenirFinActive(id: string | null, fin?: FinSeance, modules?: readonly ModuleId[]): void {
+  actif = id ? { id, fin, ...(modules?.length ? { modules: [...modules] } : {}) } : null;
 }
 
-/** La fin de seance qui s'applique a ce jour : celle du programme actif, si le jour en fait partie */
+/**
+ * La fin de seance et les modules qui s'appliquent a ce jour : ceux du programme actif, si le jour en fait partie.
+ * Le contexte porte aussi le programme (lib/v2/programmes/modules.ts alterne les seances de grip et de cou).
+ */
 export function contexteFinPour(jour: JourProgramme): ContexteFin | null {
-  if (!actif?.fin || actif.fin.choix === 'rien') return null;
+  const finUtile = !!actif?.fin && actif.fin.choix !== 'rien';
+  if (!actif || (!finUtile && !actif.modules?.length)) return null;
   const p = programmeParId(actif.id);
   if (!p || !p.jours.includes(jour)) return null;
-  return { fin: actif.fin, materiel: p.materiel };
+  return { fin: finUtile ? actif.fin : undefined, materiel: p.materiel, ...(actif.modules?.length ? { modules: actif.modules } : {}), programme: p };
+}
+
+/**
+ * Un contexte donne sans modules (page du programme : { fin, materiel }) recoit les modules du programme actif,
+ * si le jour en fait partie. null reste null : aucune fin, aucun module.
+ */
+export function completerContexte(jour: JourProgramme, ctx: ContexteFin | null): ContexteFin | null {
+  if (!ctx || ctx.modules !== undefined || !actif?.modules?.length) return ctx;
+  const p = programmeParId(actif.id);
+  if (!p || !p.jours.some((j) => j === jour || j.id === jour.id) || (ctx.programme && ctx.programme.id !== p.id)) return ctx;
+  return { ...ctx, modules: actif.modules, programme: ctx.programme ?? p };
 }
 
 /** « abdos, puis 30 min de marche inclinée » : ce que tu as choisi, en clair (texte francais a traduire) */

@@ -12,28 +12,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
-import { BigButton, Chip, Glass, SectionTitle, Sheet, tap } from '@/components/yoroi/v2/seances/ui';
+import { BigButton, Glass, SectionTitle, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { BlocReglages, BoutonIllustre, CarteIllustree, LigneReglage, Pastille, RondIcone } from '@/components/yoroi/v2/programmes/Habillage';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
-import { etudesCourtes } from '@/lib/v2/programmes/sources';
 import { PROGRAMMES, programmeParId, libelleNiveau, libelleMateriel, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
-import { OBJECTIFS_CHOIX, conseillerProgramme } from '@/lib/v2/programmes/choix';
 import { GUIDES } from '@/lib/v2/programmes/conseils';
 import { routeDuJour } from '@/lib/v2/programmes/lancer';
-import type { Conseil, Reponses } from '@/lib/v2/programmes/choix';
 import { EQUIPEMENTS, TOUT_LE_MATERIEL, remplacesParLaSalle } from '@/lib/v2/programmes/materiel';
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { MessageDuJour } from '@/components/yoroi/v2/programmes/MessageDuJour';
 import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
 import { PlanningProgramme } from '@/components/yoroi/v2/programmes/PlanningProgramme';
-import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
-import type { Niveau, Programme } from '@/lib/v2/programmes/types';
+import type { Programme } from '@/lib/v2/programmes/types';
+import { Questionnaire } from '@/components/yoroi/v2/programmes/Questionnaire';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export default function ProgrammesScreen() {
@@ -217,6 +214,7 @@ export default function ProgrammesScreen() {
 
       <Questionnaire
         visible={quizOpen}
+        depart={quiz === '1' ? 'quiz' : 'accueil'}
         onClose={() => setQuizOpen(false)}
         remplaces={remplaces}
         onVoir={(id, lieu) => {
@@ -284,103 +282,6 @@ function CarteProgramme({ p, femme, enCours, favori, onFavori, onPress, remplace
   );
 }
 
-const NIVEAUX: { key: Niveau; label: string }[] = [
-  { key: 'debutant', label: 'Moins de 6 mois' },
-  { key: 'intermediaire', label: '6 mois à 2 ans' },
-  { key: 'confirme', label: 'Plus de 2 ans' },
-];
-const JOURS: Reponses['jours'][] = [2, 3, 4, 5, 6];
-
-function Questionnaire({ visible, onClose, onVoir, remplaces }: { visible: boolean; onClose: () => void; onVoir: (id: string, lieu: Reponses['lieu']) => void; remplaces: (p: Programme) => number }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const [r, setR] = useState<Partial<Reponses>>({});
-  // 26 octobre 2026 : « Je n'y connais rien » fixe le niveau (debutant) et ouvre le guide du poids de depart
-  const [guide, setGuide] = useState(false);
-  const debuter = r.objectif === 'debuter';
-  const choisirObjectif = (key: Reponses['objectif']) =>
-    setR((x) => ({ ...x, objectif: key, ...(key === 'debuter' ? { niveau: 'debutant' as Niveau } : x.objectif === 'debuter' ? { niveau: undefined } : {}) }));
-  const complet = !!(r.objectif && r.niveau && r.jours && r.lieu);
-  const conseil: Conseil | null = complet ? conseillerProgramme(r as Reponses) : null;
-  const prog = conseil ? programmeParId(conseil.id) : null;
-
-  return (
-    <Sheet visible={visible} onClose={onClose} title={traduire('Trouver mon programme')}>
-      <Pressable
-        onPress={() => { tap(); choisirObjectif('debuter'); }}
-        accessibilityRole="button"
-        accessibilityState={{ selected: debuter }}
-        style={({ pressed }) => ({ marginHorizontal: 4, borderRadius: 20, padding: 16, gap: 4, flexDirection: 'row', alignItems: 'center', backgroundColor: debuter ? c.darkCard : pressed ? c.fillSubtle : c.accentTint, borderWidth: 1.5, borderColor: debuter ? c.darkCard : c.accent })}
-      >
-        <View style={{ flex: 1, gap: 3 }}>
-          <Ink size={16} weight="black" tight color={debuter ? c.onDark : c.ink}>{traduire('Je n’y connais rien')}</Ink>
-          <Ink size={12} color={debuter ? c.onDarkSecondary : c.textSecondary}>{traduire('Quel poids, combien de séries, de répétitions : YOROI te guide pas à pas.')}</Ink>
-        </View>
-        <Icon name={debuter ? 'check' : 'chevron'} size={18} color={debuter ? c.onDark : c.accent} />
-      </Pressable>
-      <Question titre={traduire('Ton objectif')}>
-        {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o) => <Chip key={o.key} label={traduire(o.label)} on={r.objectif === o.key} onPress={() => choisirObjectif(o.key)} />)}
-      </Question>
-      {debuter ? null : <Question titre={r.objectif === 'course' ? traduire('Tu cours déjà 30 minutes sans t’arrêter ?') : traduire('Depuis quand tu t’entraînes')}>
-        {r.objectif === 'course' ? (
-          <>
-            <Chip label={traduire('Non, pas encore')} on={r.niveau === 'debutant'} onPress={() => setR((x) => ({ ...x, niveau: 'debutant' }))} />
-            <Chip label={traduire('Oui')} on={r.niveau === 'intermediaire'} onPress={() => setR((x) => ({ ...x, niveau: 'intermediaire' }))} />
-          </>
-        ) : (
-          NIVEAUX.map((o) => <Chip key={o.key} label={traduire(o.label)} on={r.niveau === o.key} onPress={() => setR((x) => ({ ...x, niveau: o.key }))} />)
-        )}
-      </Question>}
-      <Question titre={traduire('Jours par semaine pour t’entraîner')}>
-        {JOURS.map((j) => <Chip key={j} label={j === 5 ? traduire('5 ou plus') : String(j)} on={r.jours === j} onPress={() => setR((x) => ({ ...x, jours: j }))} />)}
-      </Question>
-      <Question titre={traduire('Où tu t’entraînes')}>
-        <Chip label={traduire('En salle')} on={r.lieu === 'salle'} onPress={() => setR((x) => ({ ...x, lieu: 'salle' }))} />
-        <Chip label={traduire('À la maison, avec des haltères')} on={r.lieu === 'halteres'} onPress={() => setR((x) => ({ ...x, lieu: 'halteres' }))} />
-        <Chip label={traduire('À la maison, sans matériel')} on={r.lieu === 'maison'} onPress={() => setR((x) => ({ ...x, lieu: 'maison' }))} />
-      </Question>
-
-      {conseil && prog ? (
-        <View style={{ gap: 10, marginTop: 4, padding: 16, borderRadius: 20, backgroundColor: c.accentTint, borderWidth: 1, borderColor: c.accent + '33' }}>
-          <Ink size={12} weight="extraBold" color={c.accent}>{traduire('TON PROGRAMME')}</Ink>
-          <Ink size={19} weight="black" tight>{traduire(prog.titre)}</Ink>
-          <Ink size={14} color={c.textSecondary}>{traduire(conseil.pourquoi)}</Ink>
-          {remplaces(prog) > 0 ? <Ink size={13} weight="extraBold" color={c.accent}>{texteSalle(remplaces(prog))}</Ink> : null}
-          <BigButton label={traduire('Voir ce programme')} onPress={() => onVoir(prog.id, r.lieu!)} />
-          {conseil.guideDebutant ? (
-            <Pressable onPress={() => { tap(); setGuide(true); }} accessibilityRole="button" style={{ minHeight: 48, borderRadius: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: c.background }}>
-              <Icon name="scale" size={18} color={c.accent} />
-              <Ink size={14} weight="extraBold" color={c.accent} style={{ flex: 1 }}>{traduire('Trouver ton poids de départ')}</Ink>
-              <Icon name="chevron" size={16} color={c.accent} />
-            </Pressable>
-          ) : null}
-          {conseil.autres.map((id) => {
-            const a = programmeParId(id);
-            return a ? (
-              <Pressable key={id} onPress={() => { tap(); onVoir(id, r.lieu!); }} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
-                <Ink size={14} weight="extraBold" color={c.accent}>{traduire('Te va aussi : {0}', traduire(a.titre))}</Ink>
-              </Pressable>
-            ) : null;
-          })}
-        </View>
-      ) : (
-        <Ink size={13} color={c.textMuted} style={{ paddingHorizontal: 4 }}>{traduire('Réponds aux quatre questions pour voir ton conseil.')}</Ink>
-      )}
-      <FeuillePoidsDeDepart visible={guide} onClose={() => setGuide(false)} />
-    </Sheet>
-  );
-}
-
-function Question({ titre, children }: { titre: string; children: React.ReactNode }) {
-  return (
-    <View style={{ gap: 8 }}>
-      <Ink size={15} weight="extraBold" style={{ paddingHorizontal: 4 }}>{titre}</Ink>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 4 }}>{children}</View>
-    </View>
-  );
-}
-
-/** Petit corps de la carte « Je choisis mes zones » : vu de face, abdos, bras et cuisses colores, pour donner l'idee */
 function CorpsMini() {
   return (
     <View pointerEvents="none" style={{ marginLeft: 8 }}>

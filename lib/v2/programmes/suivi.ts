@@ -14,6 +14,8 @@ import { avecRemplacement, cleCase } from './perso';
 import type { Remplacements } from './perso';
 import { joursRetires, lireFinSeance, retenirFinActive } from './finSeance';
 import type { FinSeance } from './finSeance';
+import { extrasDe, finDesModules, lireModules, modulesActifs, normaliserModules } from './modules';
+import type { ModuleId } from './modules';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
 
 const CLE = 'yoroi_programme_actif_v1';
@@ -38,6 +40,11 @@ export type ProgrammeActif = {
   remplacements?: Remplacements;
   /** 26 octobre 2026 : fin de seance, abdos et cardio ajoutes aux jours de musculation (lib/v2/programmes/finSeance.ts) */
   fin?: FinSeance;
+  /**
+   * 26 octobre 2026 : modules ajoutes par dessus le programme, force, grip, cou, mobilite (lib/v2/programmes/modules.ts).
+   * Abdos et cardio restent dans `fin`, lisible par les anciennes versions. modulesActifs(a) rend les deux ensemble.
+   */
+  modules?: ModuleId[];
 };
 
 /**
@@ -80,11 +87,12 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
       return null;
     }
     // fin de seance : absente dans les anciennes versions, illisible = ignoree
-    const { fin: _f, ...reste } = brut;
+    const { fin: _f, modules: _m, ...reste } = brut;
     const fin = lireFinSeance(brut.fin);
-    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
+    const modules = lireModules(brut.modules);
+    const a: ProgrammeActif = { ...reste, ...(fin ? { fin } : {}), ...(modules ? { modules } : {}), faits: Array.isArray(brut.faits) ? brut.faits : [], prochain: 0 };
     a.prochain = indexGarde(p, a, Math.min(Math.max(0, brut.prochain | 0), p.jours.length - 1));
-    retenirFinActive(a.id, a.fin);
+    retenirFinActive(a.id, a.fin, a.modules);
     return a;
   } catch {
     return null;
@@ -92,7 +100,7 @@ export async function chargerProgrammeActif(): Promise<ProgrammeActif | null> {
 }
 
 async function ecrire(a: ProgrammeActif | null): Promise<void> {
-  retenirFinActive(a ? a.id : null, a?.fin);
+  retenirFinActive(a ? a.id : null, a?.fin, a?.modules);
   try {
     if (a) await AsyncStorage.setItem(CLE, JSON.stringify(a));
     else await AsyncStorage.removeItem(CLE);
@@ -102,12 +110,17 @@ async function ecrire(a: ProgrammeActif | null): Promise<void> {
   prevenir();
 }
 
-export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null): Promise<ProgrammeActif | null> {
+/**
+ * `modules` (26 octobre 2026) : la liste complete choisie au depart (Questionnaire.tsx). Donnee, elle decide aussi
+ * des abdos et du cardio ; `fin` garde alors la duree du cardio et les seances de marche.
+ */
+export async function demarrerProgramme(id: string, jours?: number[], fin?: FinSeance | null, modules?: readonly ModuleId[] | null): Promise<ProgrammeActif | null> {
   const p = programmeParId(id);
   if (!p) return null;
   const choisis = joursValides(jours);
-  const f = lireFinSeance(fin);
-  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f ? { fin: f } : {}) };
+  const f = modules ? finDesModules(modules, lireFinSeance(fin)) : lireFinSeance(fin);
+  const extras = extrasDe(modules);
+  const a: ProgrammeActif = { id, debut: jourLocal(), prochain: 0, faits: [], ...(choisis ? { jours: choisis } : {}), ...(f && (modules ? f.choix !== 'rien' || f.sansMarche : true) ? { fin: f } : {}), ...(extras.length ? { modules: extras } : {}) };
   a.prochain = indexGarde(p, a, 0);
   await ecrire(a);
   return a;
@@ -122,6 +135,29 @@ export async function enregistrerFin(fin: FinSeance): Promise<void> {
   const suite: ProgrammeActif = { ...a, fin: f };
   suite.prochain = indexGarde(p, suite, a.prochain);
   await ecrire(suite);
+}
+
+/**
+ * Tes modules changent (liste complete : force, grip, cou, abdos, cardio, mobilite). `minutes` et `sansMarche`
+ * reglent la fin de seance ; absents, ceux du programme en cours restent.
+ */
+export async function enregistrerModules(modules: readonly ModuleId[], options?: { minutes?: number; sansMarche?: boolean }): Promise<void> {
+  const a = await chargerProgrammeActif();
+  const p = a && programmeParId(a.id);
+  if (!a || !p) return;
+  const liste = normaliserModules(modules);
+  const base = { minutes: options?.minutes ?? a.fin?.minutes, sansMarche: options?.sansMarche ?? a.fin?.sansMarche };
+  const fin = finDesModules(liste, base);
+  const extras = extrasDe(liste);
+  const { modules: _m, fin: _f, ...reste } = a;
+  const suite: ProgrammeActif = { ...reste, fin, ...(extras.length ? { modules: extras } : {}) };
+  suite.prochain = indexGarde(p, suite, a.prochain);
+  await ecrire(suite);
+}
+
+/** Tous les modules du programme en cours (ceux de `modules` et ceux de la fin de seance) */
+export function modulesDuProgramme(a: ProgrammeActif | null): ModuleId[] {
+  return modulesActifs(a);
 }
 
 /** Tes jours d'entrainement changent (0 = lundi) */
