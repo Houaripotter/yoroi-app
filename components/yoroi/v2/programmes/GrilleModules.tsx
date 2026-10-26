@@ -2,6 +2,7 @@
  * Les modules d'un programme en grandes tuiles à cocher (26 octobre 2026), partagés par le questionnaire
  * (Questionnaire.tsx) et le départ avec ton coach (app/coach-depart.tsx). Les textes viennent de modules.ts.
  * Deux par ligne, carré d'icône coloré (indigo, orange, vert en boucle) ; cochée : indigo plein, texte blanc, coche.
+ * 26 octobre 2026 : `onPourquoi` ajoute « Pourquoi ? » sous chaque tuile (la science du module, Pourquoi.tsx).
  */
 import React from 'react';
 import { Pressable, View } from 'react-native';
@@ -9,10 +10,11 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import { teinteExo, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { BoutonPourquoi } from '@/components/yoroi/v2/programmes/Pourquoi';
 import type { ModuleId, ModuleInfo } from '@/lib/v2/programmes/modules';
 import { traduire } from '@/lib/i18n/tr';
 
-export function GrilleModules({ possibles, modules, onBasculer }: { possibles: readonly ModuleInfo[]; modules: readonly ModuleId[]; onBasculer: (m: ModuleId) => void }) {
+export function GrilleModules({ possibles, modules, onBasculer, onPourquoi }: { possibles: readonly ModuleInfo[]; modules: readonly ModuleId[]; onBasculer: (m: ModuleId) => void; onPourquoi?: (m: ModuleId) => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const pal = usePaletteProgramme();
@@ -55,6 +57,7 @@ export function GrilleModules({ possibles, modules, onBasculer }: { possibles: r
             </View>
             <Ink size={15} weight="black" tight color={on ? c.onDark : pal.texte} numberOfLines={2}>{traduire(m.label)}</Ink>
             <Ink size={12} weight="bold" color={on ? c.onDarkSecondary : pal.texte2} numberOfLines={2}>{traduire(m.sous)}</Ink>
+            {onPourquoi ? <View style={{ marginTop: 'auto', paddingTop: 2 }}><BoutonPourquoi surIndigo={on} label={traduire(m.label)} onPress={() => onPourquoi(m.id)} /></View> : null}
           </Pressable>
         );
       })}

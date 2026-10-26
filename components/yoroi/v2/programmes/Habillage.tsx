@@ -228,21 +228,65 @@ export function TuilesPrincipes({ principes }: { principes: string[] }) {
   );
 }
 
-/** La liste entière, une idée par bloc, aérée */
+/** Ce qui reste d'un principe après son début (debutDuPrincipe), avec une majuscule ; vide s'il n'y a rien de plus */
+export function suiteDuPrincipe(t: string): string {
+  const court = debutDuPrincipe(t);
+  const reste = t.slice(court.length).replace(/^[\s.:;]+/, '').trim();
+  return reste ? reste.charAt(0).toLocaleUpperCase() + reste.slice(1) : '';
+}
+
+/**
+ * « Comment le suivre » (26 octobre 2026, Houari : « les pages comme ça ne donnent pas envie, n'utilise pas ce design ») :
+ * plus de liste numérotée. La carte indigo du titre, puis une carte par règle : son icône colorée, une ligne courte ;
+ * le détail s'ouvre d'un toucher.
+ */
 export function FeuillePrincipes({ visible, principes, onClose }: { visible: boolean; principes: string[]; onClose: () => void }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const pal = usePaletteProgramme();
+  const [ouvert, setOuvert] = useState<number | null>(null);
   return (
-    <Sheet visible={visible} onClose={onClose} title={traduire('Comment le suivre')}>
-      <View style={{ gap: 16, paddingHorizontal: 4 }}>
-        {principes.map((t, i) => (
-          <View key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.darkCard, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-              <Ink size={13} weight="black" color={c.onDark}>{String(i + 1)}</Ink>
-            </View>
-            <Ink size={15} style={{ flex: 1, lineHeight: 22 }}>{traduire(t)}</Ink>
+    <Sheet visible={visible} onClose={() => { setOuvert(null); onClose(); }}>
+      <View style={{ gap: 10 }}>
+        <View style={{ borderRadius: 24, backgroundColor: pal.indigo, overflow: 'hidden', padding: 18, gap: 8, minHeight: 120, justifyContent: 'flex-end' }}>
+          <Cercles />
+          <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="target" size={23} color="#FFFFFF" />
           </View>
-        ))}
+          <Ink size={24} weight="black" tight color={c.onDark} accessibilityRole="header">{traduire('Comment le suivre')}</Ink>
+          <Ink size={13} weight="bold" color={c.onDarkSecondary}>{traduirePluriel(principes.length, principes.length > 1, '{0} règle simple. Touche pour le détail.', '{0} règles simples. Touche pour le détail.', principes.length)}</Ink>
+        </View>
+        {principes.map((fr, i) => {
+          const tr = traduire(fr);
+          const court = debutDuPrincipe(tr);
+          const suite = suiteDuPrincipe(tr);
+          const t2 = teinteExo(pal, i);
+          const deplie = ouvert === i && !!suite;
+          return (
+            <Pressable
+              key={i}
+              onPress={suite ? () => { tap(); setOuvert((o) => (o === i ? null : i)); } : undefined}
+              disabled={!suite}
+              accessibilityRole={suite ? 'button' : 'text'}
+              accessibilityState={suite ? { expanded: deplie } : undefined}
+              accessibilityLabel={tr}
+              style={({ pressed }) => ({ borderRadius: 22, padding: 14, gap: 10, backgroundColor: pressed ? pal.teinte : pal.carte })}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: t2.fond, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={iconeDuPrincipe(fr)} size={22} color={t2.encre} />
+                </View>
+                <Ink size={15} weight="extraBold" color={pal.texte} style={{ flex: 1, lineHeight: 20 }}>{court}</Ink>
+                {suite ? (
+                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: pal.teinte, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: deplie ? '-90deg' : '90deg' }] }}>
+                    <Icon name="chevron" size={14} color={pal.accent} />
+                  </View>
+                ) : null}
+              </View>
+              {deplie ? <Ink size={14} weight="bold" color={pal.texte2} style={{ lineHeight: 20, paddingLeft: 60 }}>{suite}</Ink> : null}
+            </Pressable>
+          );
+        })}
       </View>
     </Sheet>
   );

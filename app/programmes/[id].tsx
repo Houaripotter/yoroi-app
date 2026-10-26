@@ -1,6 +1,9 @@
 /**
  * Detail d'un programme (24 octobre 2026) : pour qui, comment le suivre, chaque jour avec ses exercices,
  * et les etudes sur lesquelles il repose. Commencer, changer de programme ou l'arreter se fait ici.
+ * 26 octobre 2026 (Houari : « on se perd, il y a deux façons d'afficher les séances ») : une seule façon de parcourir
+ * les séances, des pastilles Upper A, Lower A... au dessus des mêmes cartes d'exercices ; la prochaine séance est
+ * choisie au départ. Les guides (charge, poids de départ) sont regroupés sous le conseil du coach.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DeviceEventEmitter, Pressable, ScrollView, View } from 'react-native';
@@ -66,7 +69,8 @@ export default function ProgrammeDetail() {
   const [nom, setNom] = useState('');
   // 26 octobre 2026, maquette D aux couleurs de E (Habillage.tsx)
   const pal = usePaletteProgramme();
-  const [ouvert, setOuvert] = useState<string | null>(null);
+  // la séance affichée sous les pastilles ; null : la prochaine
+  const [jourVu, setJourVu] = useState<string | null>(null);
   const [charge, setCharge] = useState(false);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [materiel, setMateriel] = useState<Equipement[] | null>(null);
@@ -83,33 +87,9 @@ export default function ProgrammeDetail() {
   const [favoris, setFavoris] = useState<string[]>([]);
   // 26 octobre 2026 : fin de seance (abdos, cardio). « depart » : demandee une fois au demarrage du programme
   const [finOuverte, setFinOuverte] = useState<'page' | 'depart' | null>(null);
-  // 26 octobre 2026 : toucher « Jour 2 » ouvre le jour 2 et le garde en vue.
-  // Avant, le jour ouvert plus haut se repliait, la page raccourcissait sous tes doigts et tu te retrouvais
-  // bien plus bas, jusqu'aux sources. On note la position de chaque carte et on y revient apres le depli.
   const defilement = useRef<ScrollView>(null);
-  const positions = useRef<Record<string, number>>({});
-  const aMontrer = useRef<string | null>(null);
   // la tuile « Charge » descend jusqu'à « Tes progrès »
   const progresY = useRef<number | null>(null);
-  const montrer = (jourId: string) => {
-    const y = positions.current[jourId];
-    if (y === undefined) return;
-    aMontrer.current = null;
-    defilement.current?.scrollTo({ y: Math.max(0, y - insets.top - 8), animated: true });
-  };
-  const ouvrirJour = (jourId: string, deplie: boolean) => {
-    tap();
-    if (deplie) {
-      setOuvert('');
-      return;
-    }
-    aMontrer.current = jourId;
-    setOuvert(jourId);
-    // filet : si la carte ne bouge pas (aucun onLayout), on defile quand meme apres le rendu
-    setTimeout(() => {
-      if (aMontrer.current === jourId) montrer(jourId);
-    }, 250);
-  };
   // 25 octobre 2026 : tes jours d'entraînement (0 = lundi), choisis avant de commencer, modifiables ensuite
   const [jours, setJours] = useState<number[]>(() => joursConseilles(p?.joursParSemaine ?? 3));
   useEffect(() => {
@@ -151,11 +131,6 @@ export default function ProgrammeDetail() {
     };
   }, []);
 
-  // 26 octobre 2026 : la prochaine séance est déjà affichée dans « Au programme », la liste des jours reste repliée
-  useEffect(() => {
-    if (p && charge && ouvert === null) setOuvert('');
-  }, [p, ouvert, charge]);
-
   if (!p) {
     return (
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 8, paddingHorizontal: 22 }}>
@@ -187,6 +162,11 @@ export default function ProgrammeDetail() {
   const jBrutProchain = p.jours[iProchain];
   const jProchain = jourPourToi(jBrutProchain, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
   const titreProchain = traduire(jProchain.titre);
+  // la séance des pastilles : celle que tu as touchée, sinon la prochaine
+  const iVuBrut = jourVu ? p.jours.findIndex((x) => x.id === jourVu) : -1;
+  const iVu = iVuBrut >= 0 ? iVuBrut : iProchain;
+  const jBrutVu = p.jours[iVu];
+  const jVu = iVu === iProchain ? jProchain : jourPourToi(jBrutVu, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
   const message = enCours && actif ? messageCoach({ programme: p, actif, jours, prochaineSeance: titreProchain, femme }) : null;
   // 26 octobre 2026 : la carte dit quel programme, pourquoi cette séance et la suite (lib/v2/programmes/heroJour.ts)
   const hero = enCours && actif && message ? infosHero({ programme: p, actif, jour: jProchain, jours, message, semaine }) : null;
@@ -311,37 +291,106 @@ export default function ProgrammeDetail() {
         {/* 3. TA SEMAINE : fait, prochaine séance, repos */}
         <SemaineRonds ronds={rondsDeLaSemaine(p, enCours ? actif : null, jours)} />
 
-        {/* 4. AU PROGRAMME : les exercices de la prochaine séance, détails d'un toucher */}
-        <TitreSection titre={traduire('Au programme')} action={traduire('Tout voir')} onAction={() => { if (ouvert !== jProchain.id) ouvrirJour(jProchain.id, false); else montrer(jProchain.id); }} />
-        {jProchain.exos.length ? (
+        {/* 4. LES SÉANCES : une pastille par séance, les mêmes cartes d'exercices ; la prochaine au départ */}
+        <TitreSection titre={traduire('Les séances')} action={traduire('Ma salle')} onAction={() => setSalleOpen(true)} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -18, marginTop: -8 }} contentContainerStyle={{ paddingHorizontal: 18, gap: 8 }}>
+          {p.jours.map((jx, index) => {
+            const on = jx.id === jVu.id;
+            const prochaine = jx.id === jBrutProchain.id;
+            const retire = retires.includes(jx.id);
+            return (
+              <Pressable
+                key={jx.id}
+                onPress={() => { tap(); setJourVu(jx.id); }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={`${traduire('Jour {0}, {1}', index + 1, traduire(jx.titre))}${prochaine && enCours ? `, ${traduire('Prochaine séance')}` : ''}`}
+                style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 16, borderRadius: 23, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: on ? pal.indigo : pressed ? pal.teinte : pal.carte, opacity: retire ? 0.55 : 1 })}
+              >
+                {prochaine && enCours ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: on ? '#FFFFFF' : pal.orange }} /> : null}
+                <Ink size={14} weight={on ? 'black' : 'extraBold'} color={on ? c.onDark : pal.texte} numberOfLines={1}>{nomCourt(traduire(jx.titre))}</Ink>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: -6, paddingHorizontal: 4 }}>
+          {jVu.id === jBrutProchain.id && enCours ? <Pastille texte={traduire('Prochaine séance')} accent /> : null}
+          <Ink size={13} weight="bold" color={pal.texte2} style={{ flex: 1 }} numberOfLines={2}>{`${traduire(jVu.titre)} · ${resumeDuJour(jVu, semaine)}`}</Ink>
+        </View>
+        {retires.includes(jVu.id) ? (
+          <Pressable onPress={() => { tap(); setFinOuverte('page'); }} accessibilityRole="button" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? pal.teinte : pal.carte, borderRadius: 22, padding: 14 })}>
+            <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: pal.orangeTint, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="steps" size={24} color={pal.orange} />
+            </View>
+            <Ink size={14} weight="bold" color={pal.texte} style={{ flex: 1 }}>{traduire('Retirée de ton programme. Touche pour la remettre.')}</Ink>
+          </Pressable>
+        ) : (
           <View style={{ gap: 10 }}>
-            {jProchain.exos.map((e, k) => (
+            {enCours && jVu.exos.length ? <Ink size={12} weight="bold" color={pal.texte3} style={{ paddingHorizontal: 4 }}>{traduire('Un exercice ne te va pas ? Touche « Changer » pour en choisir un autre.')}</Ink> : null}
+            {jVu.exos.map((e, k) => (
               <LigneExo
-                key={`prochain${e.nom}${k}`}
+                key={`${jVu.id}${e.nom}${k}`}
                 carte
                 k={k}
                 e={e}
                 premier={k === 0}
                 raison={e.remplace && materiel && !e.zone ? raisonRemplacement(e.remplace, materiel) : ''}
-                onChanger={enCours && k < jBrutProchain.exos.length ? () => { tap(); setAChanger({ jourId: jProchain.id, index: k, muscle: jBrutProchain.exos[k]?.muscle ?? e.muscle, original: jBrutProchain.exos[k]?.nom ?? e.nom }); } : undefined}
-                onRevenir={enCours && e.perso ? () => { tap(); void remplacerExercice(jProchain.id, k, null); } : undefined}
+                onChanger={enCours && k < jBrutVu.exos.length ? () => { tap(); setAChanger({ jourId: jVu.id, index: k, muscle: jBrutVu.exos[k]?.muscle ?? e.muscle, original: jBrutVu.exos[k]?.nom ?? e.nom }); } : undefined}
+                onRevenir={enCours && e.perso ? () => { tap(); void remplacerExercice(jVu.id, k, null); } : undefined}
               />
             ))}
-          </View>
-        ) : (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pal.carte, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14 }}>
-            <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: teinteExo(pal, 0).fond, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name={jProchain.rounds ? 'glove' : 'steps'} size={24} color={teinteExo(pal, 0).encre} />
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Ink size={15} weight="extraBold" color={pal.texte}>{titreProchain}</Ink>
-              <Ink size={12} weight="bold" color={pal.texte2}>{resumeDuJour(jProchain, semaine)}</Ink>
-            </View>
+            {jVu.finCardio ? (
+              <CarteEnPlus icone="steps" k={1} surtitre={traduire('Puis, en fin de séance')} titre={traduire('{0} min de marche inclinée', jVu.finCardio.minutes)} texte={traduire(jVu.finCardio.consigne)} />
+            ) : null}
+            {jVu.rounds ? (
+              <CarteEnPlus icone="glove" k={0} surtitre={traduire('Repos de {0} entre les rounds.', libelleRepos(jVu.rounds.reposSec))} titre={resumeDuJour(jVu, semaine)}>
+                {jVu.rounds.consignes.map((txt, k) => (
+                  <View key={k} style={{ flexDirection: 'row', gap: 10, paddingTop: 8, borderTopWidth: k === 0 ? 0 : 1, borderColor: pal.anneau }}>
+                    <Ink size={13} weight="black" color={pal.accent} style={{ width: 62 }}>{traduire('Round {0}', k + 1)}</Ink>
+                    <Ink size={13} weight="bold" color={pal.texte} style={{ flex: 1 }}>{traduire(txt)}</Ink>
+                  </View>
+                ))}
+              </CarteEnPlus>
+            ) : null}
+            {jVu.cardio ? (
+              <CarteEnPlus
+                icone="steps"
+                k={2}
+                surtitre={jVu.cardio.semaines?.length ? traduire('SEMAINE {0}', Math.min(semaine, jVu.cardio.semaines.length)) : undefined}
+                titre={resumeDuJour(jVu, semaine)}
+                texte={traduire(cardioDeLaSemaine(jVu.cardio, semaine).consigne)}
+                note={jVu.cardio.semaines?.length && !enCours ? traduire('La sortie change chaque semaine : YOROI te donne celle de ta semaine.') : undefined}
+              />
+            ) : null}
+            {enCours ? (
+              <BigButton label={iVu === iProchain ? traduire('Commencer cette séance') : traduire('Faire cette séance maintenant')} icon="play" tone={iVu === iProchain ? 'accent' : 'soft'} onPress={() => faireCeJour(iVu)} />
+            ) : null}
+            {enCours && jVu.exos.length && dureeEstimee(jVu.exos) > DUREES_EXPRESS[0] ? (
+              <View style={{ gap: 6 }}>
+                <Ink size={12} weight="extraBold" color={pal.texte2}>{traduire('Pas le temps ? Séance express :')}</Ink>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  {DUREES_EXPRESS.filter((m) => m < dureeEstimee(jVu.exos)).map((m) => (
+                    <Chip key={m} label={traduire('{0} min', m)} on={false} onPress={() => proposerExpress(iVu, m)} />
+                  ))}
+                </View>
+              </View>
+            ) : null}
           </View>
         )}
 
         {/* 5. LE CONSEIL DU COACH : la règle de progression, « Comment le suivre » en entier d'un toucher */}
         <CarteConseil principes={p.principes} />
+
+        {/* les guides, regroupés : choisir ta charge, ton poids de départ */}
+        {p.jours.some((x) => x.exos.length) ? (
+          <View style={{ gap: 10 }}>
+            <TitreSection titre={traduire('Guides')} />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <ChoisirCharge tuile />
+              <CartePoidsDeDepart tuile />
+            </View>
+          </View>
+        ) : null}
 
         <ChoixJours
           jours={jours}
@@ -412,108 +461,6 @@ export default function ProgrammeDetail() {
             </>
           );
         })() : null}
-
-        <SectionTitle title={traduire('Les séances')} sub={traduire('Touche une séance pour voir ses exercices')} action={traduire('Ma salle')} onAction={() => setSalleOpen(true)} />
-        {enCours && p.jours.some((x) => x.exos.length) ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>{traduire('Un exercice ne te va pas ? Touche « Changer » pour en choisir un autre.')}</Ink> : null}
-        {p.jours.some((x) => x.exos.length) ? (
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <ChoisirCharge tuile />
-            <CartePoidsDeDepart tuile />
-          </View>
-        ) : null}
-        {p.jours.map((jBrut, index) => {
-          const j = jourPourToi(jBrut, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
-          const estProchain = enCours && actif!.prochain === index;
-          const deplie = ouvert === j.id;
-          if (retires.includes(j.id)) {
-            // seance de marche retiree par ta fin de seance : visible, mais sautee
-            return (
-              <Glass key={j.id} onPress={() => setFinOuverte('page')} label={traduire(j.titre)} style={{ gap: 2, opacity: 0.6, backgroundColor: pal.carte, borderColor: 'transparent' }}>
-                <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}</Ink>
-                <Ink size={13} color={c.textSecondary}>{traduire('Retirée de ton programme. Touche pour la remettre.')}</Ink>
-              </Glass>
-            );
-          }
-          return (
-            <View
-              key={j.id}
-              onLayout={(ev) => {
-                positions.current[j.id] = ev.nativeEvent.layout.y;
-                if (aMontrer.current === j.id) montrer(j.id);
-              }}
-            >
-            <Glass style={{ gap: 12, backgroundColor: pal.carte, borderRadius: 22, borderColor: estProchain ? pal.indigo : 'transparent', borderWidth: estProchain ? 1.5 : 1 }}>
-              <Pressable
-                onPress={() => ouvrirJour(j.id, deplie)}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: deplie }}
-                accessibilityLabel={`${traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}. ${resumeDuJour(j, semaine)}`}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 }}
-              >
-                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: estProchain ? pal.indigo : pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ink size={17} weight="black" color={estProchain ? c.onDark : pal.accent}>{String(index + 1)}</Ink>
-                </View>
-                <View style={{ flex: 1, gap: 3 }}>
-                  {estProchain ? <Ink size={11} weight="extraBold" color={c.accent} style={{ letterSpacing: 0.4 }}>{traduire('PROCHAINE SÉANCE')}</Ink> : null}
-                  <Ink size={17} weight="black" tight>{traduire(j.titre)}</Ink>
-                  <Ink size={13} color={c.textSecondary}>{resumeDuJour(j, semaine)}</Ink>
-                </View>
-                <View style={{ transform: [{ rotate: deplie ? '-90deg' : '90deg' }] }}><Icon name="chevron" size={18} color={c.textMuted} /></View>
-              </Pressable>
-              {deplie ? (
-                <>
-                  {j.exos.map((e, k) => (
-                    <LigneExo
-                      key={`${e.nom}${k}`}
-                      e={e}
-                      premier={k === 0}
-                      raison={e.remplace && materiel && !e.zone ? raisonRemplacement(e.remplace, materiel) : ''}
-                      onChanger={enCours && k < jBrut.exos.length ? () => { tap(); setAChanger({ jourId: j.id, index: k, muscle: jBrut.exos[k]?.muscle ?? e.muscle, original: jBrut.exos[k]?.nom ?? e.nom }); } : undefined}
-                      onRevenir={enCours && e.perso ? () => { tap(); void remplacerExercice(j.id, k, null); } : undefined}
-                    />
-                  ))}
-                  {j.finCardio ? (
-                    <View style={{ paddingTop: 10, borderTopWidth: j.exos.length ? 1 : 0, borderColor: c.divider, gap: 3 }}>
-                      <Ink size={12} weight="extraBold" color={c.accent}>{traduire('PUIS, EN FIN DE SÉANCE')}</Ink>
-                      <Ink size={15} weight="extraBold">{traduire('{0} min de marche inclinée', j.finCardio.minutes)}</Ink>
-                      <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(j.finCardio.consigne)}</Ink>
-                    </View>
-                  ) : null}
-                  {j.rounds
-                    ? j.rounds.consignes.map((txt, k) => (
-                        <View key={k} style={{ paddingTop: 10, borderTopWidth: k === 0 ? 0 : 1, borderColor: c.divider, flexDirection: 'row', gap: 10 }}>
-                          <Ink size={13} weight="black" color={c.accent} style={{ width: 62 }}>{traduire('Round {0}', k + 1)}</Ink>
-                          <Ink size={14} style={{ flex: 1 }}>{traduire(txt)}</Ink>
-                        </View>
-                      ))
-                    : null}
-                  {j.rounds ? <Ink size={12} color={c.textMuted}>{traduire('Repos de {0} entre les rounds.', libelleRepos(j.rounds.reposSec))}</Ink> : null}
-                  {j.cardio ? (
-                    <View style={{ gap: 4 }}>
-                      {j.cardio.semaines?.length ? <Ink size={12} weight="extraBold" color={c.accent}>{traduire('SEMAINE {0}', Math.min(semaine, j.cardio.semaines.length))}</Ink> : null}
-                      <Ink size={14} style={{ lineHeight: 20 }}>{traduire(cardioDeLaSemaine(j.cardio, semaine).consigne)}</Ink>
-                      {j.cardio.semaines?.length && !enCours ? <Ink size={12} color={c.textMuted}>{traduire('La sortie change chaque semaine : YOROI te donne celle de ta semaine.')}</Ink> : null}
-                    </View>
-                  ) : null}
-                  {enCours ? (
-                    <BigButton label={estProchain ? traduire('Commencer cette séance') : traduire('Faire cette séance maintenant')} icon="play" tone={estProchain ? 'accent' : 'soft'} onPress={() => faireCeJour(index)} />
-                  ) : null}
-                  {enCours && j.exos.length && dureeEstimee(j.exos) > DUREES_EXPRESS[0] ? (
-                    <View style={{ gap: 6 }}>
-                      <Ink size={12} weight="extraBold" color={c.textSecondary}>{traduire('Pas le temps ? Séance express :')}</Ink>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                        {DUREES_EXPRESS.filter((m) => m < dureeEstimee(j.exos)).map((m) => (
-                          <Chip key={m} label={traduire('{0} min', m)} on={false} onPress={() => proposerExpress(index, m)} />
-                        ))}
-                      </View>
-                    </View>
-                  ) : null}
-                </>
-              ) : null}
-            </Glass>
-            </View>
-          );
-        })}
 
         {/* « Prouvé par N études » : en bas, replié (Houari : « mets ça en bas, ça marche ») */}
         {!enCours ? <BigButton label={traduire('Commencer ce programme')} icon="play" onPress={() => void commencerProgramme()} /> : null}
@@ -677,6 +624,28 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { 
         <View style={{ transform: [{ rotate: deplie ? '-90deg' : '90deg' }] }}><Icon name="chevron" size={15} color={c.textMuted} /></View>
       </Pressable>
       {details}
+    </View>
+  );
+}
+
+/** Ce qui n'est pas un exercice (fin de séance cardio, rounds, sortie), dans le même style de carte */
+function CarteEnPlus({ icone, k, surtitre, titre, texte, note, children }: { icone: 'steps' | 'glove'; k: number; surtitre?: string; titre: string; texte?: string; note?: string; children?: React.ReactNode }) {
+  const pal = usePaletteProgramme();
+  const t = teinteExo(pal, k);
+  return (
+    <View style={{ backgroundColor: pal.carte, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14, gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icone} size={24} color={t.encre} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          {surtitre ? <Ink size={11} weight="extraBold" color={t.encre}>{surtitre}</Ink> : null}
+          <Ink size={15} weight="extraBold" color={pal.texte}>{titre}</Ink>
+        </View>
+      </View>
+      {texte ? <Ink size={13} weight="bold" color={pal.texte2} style={{ lineHeight: 19 }}>{texte}</Ink> : null}
+      {children}
+      {note ? <Ink size={12} color={pal.texte3}>{note}</Ink> : null}
     </View>
   );
 }

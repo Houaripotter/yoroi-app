@@ -11,13 +11,17 @@
  *     objectif, du même matériel et de ton niveau rentre dans ton temps, il le remplace ; sinon YOROI le dit
  *     (dureeTropLongue) et la séance express de la page du programme reste là (express.ts).
  * Tes jours : ceux que tu choisis (0 = lundi) ; aucun : les jours conseillés du programme (suivi.ts, joursConseilles).
+ *
+ * 26 octobre 2026 (Houari : « J'ai choisi cinq objectifs et il me propose un seul programme ») : propositionsDepart
+ * rend 2 ou 3 programmes « Pour toi », chacun avec les objectifs qu'il couvre, par lui même ou par un module.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { programmeParId } from './catalogue';
-import { conseillerProgramme } from './choix';
+import { MODULES_OBJECTIF, PRIORITE_BASE, conseillerProgramme } from './choix';
 import type { ConseilMulti, ObjectifChoix, Reponses } from './choix';
 import { joursValides } from './coach';
-import { moduleUtile } from './modules';
+import { moduleUtile, normaliserModules } from './modules';
+import type { ModuleId } from './modules';
 import { joursConseilles } from './suivi';
 import type { Materiel, Niveau, Programme } from './types';
 
@@ -157,4 +161,129 @@ export function conseilDepart(r: ReponsesDepart): ConseilDepart {
     ...(change ? { change } : {}),
     ...(principeSport ? { principeSport } : {}),
   };
+}
+
+/* ---------------------------------- plusieurs objectifs : 2 ou 3 programmes « Pour toi » ---------------------------------- */
+
+/** Les programmes du catalogue qui sont faits pour un objectif (en plus de celui que donne la règle à un objectif) */
+const FAITS_POUR: Partial<Record<ObjectifChoix, (p: Programme) => boolean>> = {
+  force: (p) => p.id === 'force-3j' || p.id === 'combat-force-2j',
+  seche: (p) => ['seche-4j', 'perte-poids-4j'].includes(p.id),
+  perte: (p) => ['perte-poids-4j', 'seche-4j', 'fessiers-ventre-4j'].includes(p.id),
+  ventre: (p) => ['fessiers-ventre-4j', 'perte-poids-4j', 'seche-4j'].includes(p.id),
+  fessiers: (p) => ['bas-du-corps-4j', 'fessiers-ventre-4j'].includes(p.id),
+  fessiers_ventre: (p) => p.id === 'fessiers-ventre-4j',
+  muscle: (p) => p.objectif === 'muscle',
+  masse: (p) => p.objectif === 'muscle',
+  pecs: (p) => p.id === 'pecs-priorite-4j',
+  combat: (p) => p.objectif === 'combat',
+  sac: (p) => p.id.startsWith('sac-'),
+  grip: (p) => p.id === 'grip-2j',
+  course: (p) => p.objectif === 'course',
+  foot: (p) => p.id === 'foot-prevention-2j',
+  raquette: (p) => p.id === 'padel-raquette-2j',
+  mobilite: (p) => p.id === 'mobilite-3j',
+};
+
+export type Couverture = { objectif: ObjectifChoix; via: 'programme' | 'module'; module?: ModuleId };
+
+export type Proposition = {
+  id: string;
+  /** le programme du conseil (le premier) */
+  conseille: boolean;
+  /** ce que le programme fait pour chacun de tes objectifs */
+  couvre: Couverture[];
+  /** les modules à cocher avec ce programme */
+  modules: ModuleId[];
+  /** pourquoi, en une phrase (la règle pour le premier, l'accroche du programme pour les autres) */
+  pourquoi: string;
+  jours: number[];
+};
+
+/** Le matériel du programme se fait là où tu t'entraînes */
+const materielOk = (p: Programme, lieu: Materiel) => lieu === 'salle' || p.materiel === 'maison' || p.materiel === lieu;
+
+/** Ce que ce programme fait pour tes objectifs, et les modules qui vont avec (mêmes règles que conseillerProgramme) */
+export function couverture(p: Programme, objectifs: readonly ObjectifChoix[], niveau: Niveau, propre: Partial<Record<ObjectifChoix, string>> = {}): { couvre: Couverture[]; modules: ModuleId[] } {
+  const aDuCardio = p.jours.some((j) => !!j.cardio);
+  const couvre: Couverture[] = [];
+  const modules: ModuleId[] = [];
+  for (const o of objectifs) {
+    if (o === 'debuter' || o === 'forme') continue;
+    if (propre[o] === p.id || FAITS_POUR[o]?.(p)) {
+      couvre.push({ objectif: o, via: 'programme' });
+      continue;
+    }
+    const m = (MODULES_OBJECTIF[o] ?? []).find((x) => moduleUtile(p, x) && !(x === 'cardio' && aDuCardio) && !(x === 'force' && niveau === 'debutant'));
+    if (m) {
+      couvre.push({ objectif: o, via: 'module', module: m });
+      if (!modules.includes(m)) modules.push(m);
+    }
+  }
+  return { couvre, modules: normaliserModules(modules) };
+}
+
+/**
+ * 2 ou 3 programmes pour tes objectifs : le conseil d'abord, puis, parmi ceux qui couvrent par eux mêmes au moins un
+ * objectif que les programmes déjà retenus ne couvrent que par un module (ou pas du tout), celui qui couvre le plus
+ * (2 points par objectif couvert par le programme, 1 par un module). Un seul objectif, ou « Je n'y connais rien » :
+ * le conseil seul.
+ */
+export function propositionsDepart(r: ReponsesDepart, conseil: ConseilDepart, max = 3): Proposition[] {
+  const debuter = r.objectifs.includes('debuter');
+  const niveau: Niveau = debuter ? 'debutant' : r.niveau ?? 'debutant';
+  const objectifs = PRIORITE_BASE.filter((o) => objectifsAvecSport(r.objectifs, r.sport).includes(o) && o !== 'debuter' && o !== 'forme');
+  const choisis = joursValides(r.jours);
+  const nJours = joursPourConseil(choisis?.length ?? 0);
+  // le programme que la règle à un objectif donne pour chacun de tes objectifs
+  const propre: Partial<Record<ObjectifChoix, string>> = {};
+  for (const o of objectifs) propre[o] = conseillerProgramme({ objectif: o, niveau, jours: nJours, lieu: r.lieu }).id;
+
+  const p0 = programmeParId(conseil.id);
+  if (!p0) return [];
+  const premier: Proposition = {
+    id: p0.id,
+    conseille: true,
+    couvre: couverture(p0, objectifs, niveau, propre).couvre,
+    modules: conseil.modules,
+    pourquoi: conseil.pourquoi,
+    jours: conseil.jours,
+  };
+  if (debuter || objectifs.length < 2) return [premier];
+
+  const ids: string[] = [];
+  for (const id of [...objectifs.map((o) => propre[o]!), ...conseil.autres]) if (id !== p0.id && !ids.includes(id)) ids.push(id);
+  const candidats = ids
+    .map((id) => programmeParId(id))
+    .filter((p): p is Programme => !!p && materielOk(p, r.lieu) && !(niveau === 'debutant' && p.niveau === 'confirme'))
+    .map((p) => ({ p, ...couverture(p, objectifs, niveau, propre) }));
+
+  const out: Proposition[] = [premier];
+  const parProgramme = new Set(premier.couvre.filter((x) => x.via === 'programme').map((x) => x.objectif));
+  const score = (c: (typeof candidats)[number]) => c.couvre.reduce((s, x) => s + (x.via === 'programme' ? 2 : 1), 0);
+  while (out.length < max) {
+    let meilleur: (typeof candidats)[number] | null = null;
+    let mieux = [0, 0];
+    for (const c of candidats) {
+      if (out.some((x) => x.id === c.p.id)) continue;
+      const neufs = c.couvre.filter((x) => x.via === 'programme' && !parProgramme.has(x.objectif)).length;
+      if (!neufs) continue;
+      const s = score(c);
+      if (s > mieux[1] || (s === mieux[1] && neufs > mieux[0])) {
+        meilleur = c;
+        mieux = [neufs, s];
+      }
+    }
+    if (!meilleur) break;
+    for (const x of meilleur.couvre) if (x.via === 'programme') parProgramme.add(x.objectif);
+    out.push({
+      id: meilleur.p.id,
+      conseille: false,
+      couvre: meilleur.couvre,
+      modules: meilleur.modules,
+      pourquoi: meilleur.p.accroche,
+      jours: choisis ?? joursConseilles(meilleur.p.joursParSemaine),
+    });
+  }
+  return out;
 }

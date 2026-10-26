@@ -13,11 +13,18 @@
  * Pas de question sur les douleurs : l'infirmerie demande la zone, le côté et l'intensité (lib/infirmaryService.ts),
  * une réponse rapide ici ne pourrait pas l'écrire proprement. Tes douleurs déclarées s'appliquent déjà au programme.
  * Paramètres : depuis=onboarding (fin de l'onboarding : un premier écran « Ton coach te prépare ton programme ? »),
- * chemin=liste (ouvre directement la liste).
+ * chemin=liste (ouvre directement la liste), depuis=visite (la carte de l'accueil après la visite guidée : comme
+ * l'onboarding pour les étapes connues, mais la sortie revient en arrière).
  * « Plus tard » note yoroi_coach_depart_v1 = 'plus_tard' (sauf si le départ a déjà été fait), « C'est parti » note 'fait'.
  * 26 octobre 2026 (revue de l'onboarding, Houari : « ne pose pas deux fois la même question ») : tes réponses de
  * l'onboarding (objectifs, jours, sports, lib/v2/programmes/profilCoach.ts) préremplissent le départ. Juste après
  * l'onboarding, les jours et le sport déjà connus sont sautés, et le premier écran rappelle ce que tu as déjà dit.
+ * 26 octobre 2026 (retours de Houari sur le résultat) :
+ *  - plusieurs objectifs : 2 ou 3 programmes « Pour toi » (propositionsDepart, depart.ts), chacun dit quels objectifs
+ *    il couvre, par lui même ou par un module ; tu choisis, ou tu ouvres la liste complète ;
+ *  - « Les conseils du coach » : une carte par objectif (pourquoi.ts), avec son module à ajouter « si tu veux » ;
+ *  - « Pourquoi ? » sur chaque module et chaque conseil : la science en mots simples et les études (Pourquoi.tsx) ;
+ *  - « C'est parti » enregistre le programme et ramène au coach : aucune séance ne se lance ici.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -31,6 +38,9 @@ import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { Cercles, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { GrilleModules } from '@/components/yoroi/v2/programmes/GrilleModules';
+import { CarteConseilObjectif, FeuillePourquoi } from '@/components/yoroi/v2/programmes/Pourquoi';
+import { POURQUOI_MODULE, conseilsDesObjectifs } from '@/lib/v2/programmes/pourquoi';
+import type { Explication } from '@/lib/v2/programmes/pourquoi';
 import { BarresNiveau, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, ICONE_SPORT, PointsSemaine, PucesProgramme, RangeeJours, TuileChoix, TuilesTemps, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { getProfile } from '@/lib/database';
@@ -39,17 +49,17 @@ import { programmeParId, sportDuProgramme } from '@/lib/v2/programmes/catalogue'
 import { DEBUTANT, OBJECTIFS_CHOIX } from '@/lib/v2/programmes/choix';
 import type { ObjectifChoix } from '@/lib/v2/programmes/choix';
 import { conseilJours } from '@/lib/v2/programmes/coach';
-import { AUTRES_SPORTS, TEMPS_SEANCE, conseilDepart, ecrireDepart, lireDepart } from '@/lib/v2/programmes/depart';
+import { AUTRES_SPORTS, TEMPS_SEANCE, conseilDepart, ecrireDepart, lireDepart, objectifsAvecSport, propositionsDepart } from '@/lib/v2/programmes/depart';
 import { etapesConnues, lireProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import type { ProfilCoach } from '@/lib/v2/programmes/profilCoach';
 import { joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
-import type { AutreSport, TempsSeance } from '@/lib/v2/programmes/depart';
+import type { AutreSport, Proposition, TempsSeance } from '@/lib/v2/programmes/depart';
 import { aDesJoursMarche, MINUTES_FIN } from '@/lib/v2/programmes/finSeance';
-import { GROUPES_PROGRAMMES, modulesPossibles, moduleUtile, normaliserModules } from '@/lib/v2/programmes/modules';
+import { GROUPES_PROGRAMMES, moduleParId, modulesPossibles, moduleUtile, normaliserModules } from '@/lib/v2/programmes/modules';
 import type { ModuleId } from '@/lib/v2/programmes/modules';
 import { chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerMateriel, joursConseilles, materielDuLieu } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
-import type { Materiel, Niveau } from '@/lib/v2/programmes/types';
+import type { Materiel, Niveau, Programme } from '@/lib/v2/programmes/types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Etape = 'intro' | 'objectifs' | 'niveau' | 'jours' | 'temps' | 'sport' | 'lieu' | 'liste' | 'resultat';
@@ -73,8 +83,12 @@ export default function CoachDepart() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ depuis?: string; chemin?: string }>();
   const depuisOnboarding = params.depuis === 'onboarding';
+  // depuis=visite : la carte de l'accueil après la visite guidée. Comme l'onboarding (étapes déjà connues sautées,
+  // réponses reprises), mais on revient en arrière en sortant
+  const depuisVisite = params.depuis === 'visite';
+  const commeOnboarding = depuisOnboarding || depuisVisite;
 
-  const [etape, setEtape] = useState<Etape>(depuisOnboarding ? 'intro' : params.chemin === 'liste' ? 'liste' : 'objectifs');
+  const [etape, setEtape] = useState<Etape>(commeOnboarding ? 'intro' : params.chemin === 'liste' ? 'liste' : 'objectifs');
   const [historique, setHistorique] = useState<Etape[]>([]);
   const [chemin, setChemin] = useState<'quiz' | 'liste'>(params.chemin === 'liste' ? 'liste' : 'quiz');
   const [objectifs, setObjectifs] = useState<ObjectifChoix[]>([]);
@@ -94,6 +108,8 @@ export default function CoachDepart() {
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   // ce que l'onboarding sait déjà (objectifs, jours, sport), repris ici sans reposer la question
   const [profil, setProfil] = useState<ProfilCoach | null>(null);
+  // « Pourquoi ? » d'un module ou d'un conseil
+  const [pourquoi, setPourquoi] = useState<Explication | null>(null);
 
   useEffect(() => {
     getProfile().then((pr) => setFemme(pr?.avatar_gender === 'femme')).catch(() => {});
@@ -105,7 +121,7 @@ export default function CoachDepart() {
       if (p.sport) setSport(p.sport);
     });
   }, []);
-  const connues = profil && depuisOnboarding ? etapesConnues(profil) : { jours: false, sport: false };
+  const connues = profil && commeOnboarding ? etapesConnues(profil) : { jours: false, sport: false };
   const prerempli = !!profil?.objectifs.length;
 
   const debuter = objectifs.includes('debuter');
@@ -114,6 +130,13 @@ export default function CoachDepart() {
     () => (objectifs.length ? conseilDepart({ objectifs, niveau: debuter ? undefined : niveau, jours, temps, sport, lieu }) : null),
     [objectifs, niveau, debuter, jours, temps, sport, lieu],
   );
+  // plusieurs objectifs : 2 ou 3 programmes « Pour toi »
+  const propositions = useMemo(
+    () => (conseil ? propositionsDepart({ objectifs, niveau: debuter ? undefined : niveau, jours, temps, sport, lieu }, conseil) : []),
+    [conseil, objectifs, niveau, debuter, jours, temps, sport, lieu],
+  );
+  // les conseils du coach, un par objectif (ton sport compris)
+  const conseils = useMemo(() => conseilsDesObjectifs(objectifsAvecSport(objectifs, sport)), [objectifs, sport]);
   const prog = choisi ? programmeParId(choisi) ?? null : null;
   const possibles = prog ? modulesPossibles(prog) : [];
   const img = sportImage(prog ? sportDuProgramme(prog) : 'musculation', femme, 1);
@@ -152,6 +175,15 @@ export default function CoachDepart() {
     aller('resultat');
   };
 
+  /** « Pour toi » : ce programme devient le résultat, avec ses modules et tes jours */
+  const choisirProposition = (x: Proposition) => {
+    if (x.id === choisi) return;
+    tap();
+    setChoisi(x.id);
+    setModules(normaliserModules(x.modules));
+    setJoursRes(x.jours);
+  };
+
   /** « Te va aussi » : ce programme devient le résultat, avec les modules du conseil qui lui servent */
   const prendreAutre = (id: string) => {
     const p = programmeParId(id);
@@ -163,7 +195,10 @@ export default function CoachDepart() {
   };
 
   const sortir = (vers: 'accueil' | 'coach') => {
-    if (depuisOnboarding) router.replace(vers === 'coach' ? ('/coach' as any) : ('/(tabs)' as any));
+    if (depuisVisite) {
+      if (router.canGoBack()) router.back();
+      else router.replace('/(tabs)' as any);
+    } else if (depuisOnboarding) router.replace(vers === 'coach' ? ('/coach' as any) : ('/(tabs)' as any));
     else if (router.canGoBack()) router.back();
     else router.replace('/coach' as any);
   };
@@ -398,9 +433,42 @@ export default function CoachDepart() {
 
   if (etape === 'resultat' && prog) {
     const duConseil = chemin === 'quiz' && conseil && conseil.id === prog.id;
-    const autres = chemin === 'quiz' && conseil?.autres.length ? [conseil.id, ...conseil.autres].filter((id) => id !== prog.id).slice(0, 2).map((id) => programmeParId(id)).filter((a): a is NonNullable<typeof a> => !!a) : [];
+    const plusieurs = chemin === 'quiz' && propositions.length > 1;
+    const autres = !plusieurs && chemin === 'quiz' && conseil?.autres.length ? [conseil.id, ...conseil.autres].filter((id) => id !== prog.id).slice(0, 2).map((id) => programmeParId(id)).filter((a): a is NonNullable<typeof a> => !!a) : [];
+    const propChoisie = plusieurs ? propositions.find((x) => x.id === prog.id) : chemin === 'quiz' ? propositions[0] : undefined;
     corps = (
       <View style={{ gap: 18 }}>
+        {plusieurs ? (
+          <View style={{ gap: 12 }}>
+            <View style={{ gap: 4 }}>
+              {titreEcran(traduire('Pour toi'), traduire('{0} programmes pour tes objectifs. Choisis le tien.', propositions.length))}
+            </View>
+            {propositions.map((x) => {
+              const px = programmeParId(x.id);
+              if (!px) return null;
+              return x.id === prog.id ? (
+                <View key={x.id} style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 10, minHeight: 230 }}>
+                  <Cercles />
+                  {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: 0, width: 128, height: 176 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+                  <View style={{ maxWidth: img ? '66%' : '100%', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
+                      <Icon name="check" size={13} color="#FFFFFF" strokeWidth={3} />
+                      <Ink size={12} weight="extraBold" color={c.onDark}>{x.conseille ? traduire('Conseillé pour toi') : traduire('Ton choix')}</Ink>
+                    </View>
+                    <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={3} accessibilityRole="header">{traduire(px.titre)}</Ink>
+                    <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={3} style={{ lineHeight: 18 }}>{traduire(x.pourquoi)}</Ink>
+                    <PointsSemaine jours={joursRes} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
+                  </View>
+                  <PucesCouvre couvre={x.couvre} surIndigo />
+                  <View style={{ maxWidth: img ? '68%' : '100%' }}><PucesProgramme p={px} /></View>
+                </View>
+              ) : (
+                <CarteProposition key={x.id} p={px} x={x} onPress={() => choisirProposition(x)} />
+              );
+            })}
+            <CarteChoix icone="list" teinte={1} label={traduire('Voir tous les programmes')} on={false} fleche onPress={() => { tap(); setChemin('liste'); aller('liste'); }} />
+          </View>
+        ) : (
         <View style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 10, minHeight: 230 }}>
           <Cercles />
           {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: 0, width: 136, height: 184 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
@@ -418,6 +486,7 @@ export default function CoachDepart() {
             <PucesProgramme p={prog} />
           </View>
         </View>
+        )}
 
         {duConseil && conseil!.dureeTropLongue ? (
           <Ink size={13} weight="bold" color={pal.texte2}>{traduire('Moins de temps un jour ? La page du programme propose une séance express.')}</Ink>
@@ -440,7 +509,7 @@ export default function CoachDepart() {
         {possibles.length ? (
           <View style={{ gap: 12 }}>
             {titreSection(traduire('Ajoute à ton programme'))}
-            <GrilleModules possibles={possibles} modules={modules} onBasculer={basculerModule} />
+            <GrilleModules possibles={possibles} modules={modules} onBasculer={basculerModule} onPourquoi={(m) => setPourquoi(POURQUOI_MODULE[m])} />
           </View>
         ) : null}
 
@@ -465,6 +534,27 @@ export default function CoachDepart() {
 
         {duConseil && conseil!.guideDebutant ? (
           <CarteChoix icone="scale" teinte={2} label={traduire('Trouver ton poids de départ')} on={false} fleche onPress={() => { tap(); setGuide(true); }} />
+        ) : null}
+
+        {chemin === 'quiz' && conseils.length ? (
+          <View style={{ gap: 10 }}>
+            <View style={{ gap: 2 }}>
+              {titreSection(traduire('Les conseils du coach'))}
+              <Ink size={13} weight="bold" color={pal.texte2}>{traduire('Pour chacun de tes objectifs, ce qui marche vraiment')}</Ink>
+            </View>
+            {conseils.map((x, k) => {
+              const m = x.modules.find((id) => possibles.some((pm) => pm.id === id));
+              const info = m ? moduleParId(m) : undefined;
+              const parLuiMeme = !!propChoisie?.couvre.some((cv) => cv.objectif === x.objectif && cv.via === 'programme');
+              // le programme le fait déjà lui même ; sinon son module, à ajouter si tu veux
+              const ajout = parLuiMeme
+                ? { label: '', etat: 'inclus' as const }
+                : m && info
+                  ? { label: info.label, etat: (modules.includes(m) ? 'ajoute' : 'possible') as 'ajoute' | 'possible', onBasculer: () => setModules((l) => normaliserModules(l.includes(m) ? l.filter((y) => y !== m) : [...l, m])) }
+                  : undefined;
+              return <CarteConseilObjectif key={x.objectif} conseil={x} k={k} onPourquoi={() => setPourquoi(x)} ajout={ajout} />;
+            })}
+          </View>
         ) : null}
 
         {autres.length ? (
@@ -511,6 +601,7 @@ export default function CoachDepart() {
       {bas ? <View style={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: insets.bottom + 14, backgroundColor: pal.page }}>{bas}</View> : null}
 
       <FeuillePoidsDeDepart visible={guide} onClose={() => setGuide(false)} />
+      <FeuillePourquoi explication={pourquoi} onClose={() => setPourquoi(null)} />
     </View>
   );
 }
@@ -532,6 +623,58 @@ function Heros({ image, titre, texte }: { image: ReturnType<typeof sportImage>; 
         {texte ? <Ink size={13} weight="bold" color={c.onDarkSecondary}>{texte}</Ink> : null}
       </View>
     </View>
+  );
+}
+
+/** Les objectifs que couvre un programme : coche s'il le fait lui même, plus s'il passe par un module */
+function PucesCouvre({ couvre, surIndigo }: { couvre: Proposition['couvre']; surIndigo?: boolean }) {
+  const pal = usePaletteProgramme();
+  if (!couvre.length) return null;
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      {couvre.map((x) => {
+        const label = traduire(OBJECTIFS_CHOIX.find((o) => o.key === x.objectif)?.label ?? '');
+        const mod = x.via === 'module' ? moduleParId(x.module!) : undefined;
+        const texte = mod ? traduire('{0}, module {1}', label, traduire(mod.label)) : label;
+        const fond = surIndigo ? 'rgba(255,255,255,0.16)' : x.via === 'programme' ? pal.vertTint : pal.teinte;
+        const encre = surIndigo ? '#FFFFFF' : x.via === 'programme' ? pal.vert : pal.accent;
+        return (
+          <View key={x.objectif} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: fond }}>
+            <Icon name={x.via === 'programme' ? 'check' : 'plus'} size={12} color={encre} strokeWidth={3} />
+            <Ink size={12} weight="extraBold" color={encre}>{texte}</Ink>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Une proposition « Pour toi » non choisie : carte blanche, ses jours, ce qu'elle couvre ; toucher la choisit */
+function CarteProposition({ p, x, onPress }: { p: Programme; x: Proposition; onPress: () => void }) {
+  const pal = usePaletteProgramme();
+  const titre = traduire(p.titre);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: false }}
+      accessibilityLabel={[x.conseille ? traduire('Conseillé pour toi') : '', titre, traduire('{0} jours', p.joursParSemaine), traduire('{0} min', p.dureeMin)].filter(Boolean).join(', ')}
+      style={({ pressed }) => ({ borderRadius: 24, padding: 16, gap: 12, backgroundColor: pressed ? pal.teinte : pal.carte })}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <View style={{ width: 58, height: 58, borderRadius: 19, backgroundColor: pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
+          <Ink size={22} weight="black" tight color={pal.accent}>{String(p.joursParSemaine)}</Ink>
+          <Ink size={10} weight="extraBold" color={pal.accent}>{traduire('jours')}</Ink>
+        </View>
+        <View style={{ flex: 1, gap: 3 }}>
+          {x.conseille ? <Ink size={11} weight="extraBold" color={pal.accent}>{traduire('Conseillé pour toi')}</Ink> : null}
+          <Ink size={16} weight="black" tight color={pal.texte} numberOfLines={2}>{titre}</Ink>
+          <Ink size={12} weight="bold" color={pal.texte2}>{traduire('{0} min', p.dureeMin)}</Ink>
+        </View>
+        <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: pal.anneau }} />
+      </View>
+      <PucesCouvre couvre={x.couvre} />
+    </Pressable>
   );
 }
 
