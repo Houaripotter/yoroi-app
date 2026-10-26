@@ -18697,5 +18697,10 @@
 "Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "O perímetro do antebraço, na parte mais larga, com o punho cerrado e o braço esticado. Se medires os dois antebraços, o YOROI mostra a média.",
 "Avant-bras gauche entre 15 et 50 cm": "Antebraço esquerdo entre 15 e 50 cm",
 "Avant-bras droit entre 15 et 50 cm": "Antebraço direito entre 15 e 50 cm",
-"tour d’avant-bras": "perímetro do antebraço"
+"tour d’avant-bras": "perímetro do antebraço",
+"écrit « {0} »": "escrito «{0}»",
+"nouvel exercice, gardé avec ton nom": "exercício novo, guardado com o teu nome",
+"{0} exercice pas reconnu, il sera créé avec ton nom : {1}": "{0} exercício não reconhecido, será criado com o teu nome: {1}",
+"{0} exercices pas reconnus, ils seront créés avec ton nom : {1}": "{0} exercícios não reconhecidos, serão criados com os teus nomes: {1}",
+"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Parecem as tuas notas de treinos: vou importá-las treino a treino, com cada carga e cada série."
 }

@@ -18697,5 +18697,10 @@
 "Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "De onderarmomtrek, op het breedste punt, vuist gebald en arm gestrekt. Als je beide onderarmen meet, toont YOROI het gemiddelde.",
 "Avant-bras gauche entre 15 et 50 cm": "Linkeronderarm tussen 15 en 50 cm",
 "Avant-bras droit entre 15 et 50 cm": "Rechteronderarm tussen 15 en 50 cm",
-"tour d’avant-bras": "onderarmomtrek"
+"tour d’avant-bras": "onderarmomtrek",
+"écrit « {0} »": "geschreven “{0}”",
+"nouvel exercice, gardé avec ton nom": "nieuwe oefening, bewaard met jouw naam",
+"{0} exercice pas reconnu, il sera créé avec ton nom : {1}": "{0} oefening niet herkend, die wordt aangemaakt met jouw naam: {1}",
+"{0} exercices pas reconnus, ils seront créés avec ton nom : {1}": "{0} oefeningen niet herkend, die worden aangemaakt met jouw namen: {1}",
+"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Dit lijken je trainingsnotities: ik importeer ze training per training, met elk gewicht en elke set."
 }

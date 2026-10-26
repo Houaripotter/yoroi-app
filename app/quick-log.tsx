@@ -32,6 +32,7 @@ import { findHealthTwin } from '@/lib/v2/seance/dicteeLien';
 import { MachineFinder, MachineFinderButton } from '@/components/yoroi/v2/seance/MachineFinder';
 import { fmtMinutes, isoDay, longDay, pad2 } from '@/lib/v2/seance/format';
 import { saveSeance } from '@/lib/v2/seance/save';
+import { deposerTexteCarnet, ressembleCarnet } from '@/lib/v2/import/texteEnAttente';
 import { RESULTS, SESSION_TYPES } from '@/lib/v2/seance/combat';
 import { DEFAULT_SPORTS, seanceKindFor, seanceRoute, sportShortName, sportTint } from '@/lib/v2/seance/sportVisuals';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
@@ -174,6 +175,13 @@ export default function DicteSeance() {
   const analyze = () => {
     const phrase = text.trim();
     if (!phrase) return;
+    // 26 octobre 2026 : un carnet de seances colle (notes du telephone, plusieurs exercices, plusieurs jours)
+    // part dans l'import du carnet, qui comprend chaque charge et chaque serie
+    if (ressembleCarnet(phrase)) {
+      deposerTexteCarnet(phrase);
+      router.replace('/importer-carnet' as any);
+      return;
+    }
     tap('medium');
     const r = parseDictee(text);
     setSaid(text);
@@ -428,6 +436,9 @@ export default function DicteSeance() {
                   style={[fontStyle('bold'), { minHeight: 120, fontSize: 18, lineHeight: 25, color: P.ink, padding: 12, borderRadius: 14, backgroundColor: P.paper }]}
                   accessibilityLabel={traduire("Ta séance en une phrase")}
                 />
+                {ressembleCarnet(text) ? (
+                  <Ink size={13} weight="bold" color={accent}>{traduire('On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.')}</Ink>
+                ) : null}
                 {text.length > 0 ? (
                   <Pressable onPress={() => { setText(''); input.current?.focus(); }} accessibilityRole="button" accessibilityLabel={traduire("Effacer la phrase")} style={{ alignSelf: 'flex-end', minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' }}>
                     <Ink size={13} weight="bold" color={P.ink2}>Effacer</Ink>

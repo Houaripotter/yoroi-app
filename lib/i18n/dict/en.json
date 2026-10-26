@@ -18697,5 +18697,10 @@
 "Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "Forearm circumference, at the widest point, fist clenched and arm straight. If you measure both forearms, YOROI shows their average.",
 "Avant-bras gauche entre 15 et 50 cm": "Left forearm between 15 and 50 cm",
 "Avant-bras droit entre 15 et 50 cm": "Right forearm between 15 and 50 cm",
-"tour d’avant-bras": "forearm circumference"
+"tour d’avant-bras": "forearm circumference",
+"écrit « {0} »": "written “{0}”",
+"nouvel exercice, gardé avec ton nom": "new exercise, kept with your name",
+"{0} exercice pas reconnu, il sera créé avec ton nom : {1}": "{0} exercise not recognised, it will be created with your name: {1}",
+"{0} exercices pas reconnus, ils seront créés avec ton nom : {1}": "{0} exercises not recognised, they will be created with your names: {1}",
+"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Looks like your workout notes: I’ll import them workout by workout, with every load and every set."
 }

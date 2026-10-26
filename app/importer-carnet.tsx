@@ -4,7 +4,7 @@
  * 2. YOROI montre ce qu'il a compris : seances, exercices, series, et les lignes qu'il n'a pas comprises ;
  * 3. un appui enregistre tout, sans doublon (lib/v2/import/enregistrerCarnet.ts).
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,12 +16,22 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { BigButton, Glass } from '@/components/yoroi/v2/seances/ui';
-import { lireCarnet } from '@/lib/v2/import/carnet';
+import { lireCarnet, nommerExos } from '@/lib/v2/import/carnet';
+import { reconnaitreExo } from '@/lib/v2/import/vocabulaire';
+import { prendreTexteCarnet } from '@/lib/v2/import/texteEnAttente';
+import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
+import { nomFr } from '@/lib/v2/seance/rechercheExo';
+import type { ExoCherchable } from '@/lib/v2/seance/rechercheExo';
 import type { ResultatLecture } from '@/lib/v2/import/carnet';
 import { enregistrerCarnet } from '@/lib/v2/import/enregistrerCarnet';
 import type { BilanImport } from '@/lib/v2/import/enregistrerCarnet';
 import { logger } from '@/lib/security/logger';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+
+// la bibliotheque, une fois : nom exact (enregistre) et nom francais (cherche)
+let BIBLIO: ExoCherchable[] | null = null;
+const biblio = (): ExoCherchable[] =>
+  (BIBLIO ??= EXERCISE_LIBRARY.filter((e) => e.category === 'musculation' || e.unit === 'reps').map((e, rang) => ({ name: e.name, autre: nomFr(e.name) !== e.name ? nomFr(e.name) : undefined, muscle: e.muscle, rang })));
 
 const EXEMPLE = '14/10\nHack squat 60kg 2x12 70kg 2x10\nPresse inclinée 160kg 2x12\n\n15/10\nTirage vertical 70kg 2x10';
 
@@ -36,12 +46,21 @@ export default function ImporterCarnet() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [texte, setTexte] = useState('');
+  // 26 octobre 2026 : un carnet colle dans « Dicte ta seance » arrive ici tout seul
+  useEffect(() => {
+    const t = prendreTexteCarnet();
+    if (t) {
+      setTexte(t);
+      setSource('notes');
+    }
+  }, []);
   const [source, setSource] = useState<'notes' | 'hevy' | null>(null);
   const [etat, setEtat] = useState<'saisie' | 'enregistrement' | 'fini'>('saisie');
   const [progres, setProgres] = useState({ fait: 0, total: 0 });
   const [bilan, setBilan] = useState<BilanImport | null>(null);
 
-  const lu: ResultatLecture | null = useMemo(() => (texte.trim() ? lireCarnet(texte) : null), [texte]);
+  const lu: ResultatLecture | null = useMemo(() => (texte.trim() ? nommerExos(lireCarnet(texte), (n) => reconnaitreExo(n, biblio())) : null), [texte]);
+  const inconnus = lu ? [...new Set(lu.seances.flatMap((s) => s.exos.filter((e) => e.inconnu).map((e) => e.nom)))] : [];
   const nbSeries = lu ? lu.seances.reduce((n, s) => n + s.exos.reduce((k, e) => k + e.series.length, 0), 0) : 0;
 
   const coller = async () => {
@@ -131,14 +150,20 @@ export default function ImporterCarnet() {
                   <View key={s.cle} style={{ gap: 2, paddingTop: 6, borderTopWidth: 1, borderColor: c.divider }}>
                     <Ink size={14} weight="extraBold">{s.titre ? `${dateLisible(s.date)}, ${s.titre}` : dateLisible(s.date)}</Ink>
                     {s.exos.slice(0, 6).map((e, i) => (
-                      <Ink key={`${s.cle}-${i}`} size={13} color={c.textSecondary} numberOfLines={1}>
-                        {`${e.nom} : ${e.series.map((x) => (x.weight > 0 ? `${Math.round(x.weight * 10) / 10} kg × ${x.reps}` : `× ${x.reps}`)).join(', ')}`}
-                      </Ink>
+                      <View key={`${s.cle}-${i}`} style={{ gap: 0 }}>
+                        <Ink size={13} weight="bold" color={e.inconnu ? c.ink : c.textSecondary} numberOfLines={1}>
+                          {`${traduire(nomFr(e.nom))} : ${e.series.map((x) => (x.weight > 0 ? `${Math.round(x.weight * 10) / 10} kg × ${x.reps}` : `× ${x.reps}`)).join(', ')}`}
+                        </Ink>
+                        {e.saisi ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{traduire('écrit « {0} »', e.saisi)}</Ink> : e.inconnu ? <Ink size={11} color={c.accent} numberOfLines={1}>{traduire('nouvel exercice, gardé avec ton nom')}</Ink> : null}
+                      </View>
                     ))}
                     {s.exos.length > 6 ? <Ink size={12} color={c.textMuted}>{traduire('et {0} autres exercices', s.exos.length - 6)}</Ink> : null}
                   </View>
                 ))}
                 {lu.seances.length > 4 ? <Ink size={12} color={c.textMuted}>{traduire('Les 4 plus récentes sont affichées.')}</Ink> : null}
+                {inconnus.length ? (
+                  <Ink size={12} color={c.textSecondary}>{traduirePluriel(inconnus.length, inconnus.length > 1, '{0} exercice pas reconnu, il sera créé avec ton nom : {1}', '{0} exercices pas reconnus, ils seront créés avec ton nom : {1}', inconnus.length, inconnus.slice(0, 6).join(', '))}</Ink>
+                ) : null}
                 {lu.incomprises.length ? (
                   <View style={{ gap: 2, paddingTop: 6, borderTopWidth: 1, borderColor: c.divider }}>
                     <Ink size={13} weight="extraBold" color={c.danger}>{traduirePluriel(lu.incomprises.length, lu.incomprises.length > 1, '{0} ligne pas comprise, elle sera ignorée :', '{0} lignes pas comprises, elles seront ignorées :', lu.incomprises.length)}</Ink>

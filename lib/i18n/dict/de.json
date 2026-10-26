@@ -18697,5 +18697,10 @@
 "Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "Der Unterarmumfang, an der breitesten Stelle, Faust geballt und Arm gestreckt. Wenn du beide Unterarme misst, zeigt YOROI ihren Durchschnitt.",
 "Avant-bras gauche entre 15 et 50 cm": "Linker Unterarm zwischen 15 und 50 cm",
 "Avant-bras droit entre 15 et 50 cm": "Rechter Unterarm zwischen 15 und 50 cm",
-"tour d’avant-bras": "Unterarmumfang"
+"tour d’avant-bras": "Unterarmumfang",
+"écrit « {0} »": "geschrieben „{0}“",
+"nouvel exercice, gardé avec ton nom": "neue Übung, mit deinem Namen gespeichert",
+"{0} exercice pas reconnu, il sera créé avec ton nom : {1}": "{0} Übung nicht erkannt, sie wird mit deinem Namen angelegt: {1}",
+"{0} exercices pas reconnus, ils seront créés avec ton nom : {1}": "{0} Übungen nicht erkannt, sie werden mit deinen Namen angelegt: {1}",
+"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Sieht nach deinen Trainingsnotizen aus: Ich importiere sie Training für Training, mit jedem Gewicht und jedem Satz."
 }

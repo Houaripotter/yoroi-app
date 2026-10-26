@@ -13,7 +13,7 @@
  */
 
 export type SerieLue = { weight: number; reps: number; type?: 'normal' | 'warmup' | 'dropset' };
-export type ExoLu = { nom: string; series: SerieLue[]; notes?: string };
+export type ExoLu = { nom: string; series: SerieLue[]; notes?: string; /** le nom tel qu'il etait ecrit, quand l'exercice a ete reconnu sous un autre nom */ saisi?: string; /** nom pas reconnu : garde comme un exercice a toi */ inconnu?: boolean };
 export type SeanceLue = {
   /** AAAA-MM-JJ */
   date: string;
@@ -304,4 +304,19 @@ export function lireCarnet(texte: string, aujourdhui: Date = new Date()): Result
     if (h) return h;
   }
   return lireNotes(texte, aujourdhui);
+}
+
+/** Donne a chaque exercice son nom de la bibliotheque quand il est reconnu (lib/v2/import/vocabulaire.ts) */
+export function nommerExos(r: ResultatLecture, reconnaitre: (nom: string) => { nom: string; sur: boolean }): ResultatLecture {
+  return {
+    ...r,
+    seances: r.seances.map((s) => ({
+      ...s,
+      exos: s.exos.map((e) => {
+        const x = reconnaitre(e.nom);
+        if (!x.sur) return { ...e, inconnu: true };
+        return x.nom === e.nom ? e : { ...e, nom: x.nom, saisi: e.nom };
+      }),
+    })),
+  };
 }
