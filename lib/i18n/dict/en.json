@@ -18647,5 +18647,11 @@
 "À TA FAÇON": "YOUR WAY",
 "PROUVÉ PAR DES ÉTUDES": "BACKED BY STUDIES",
 "Effacer la séance en cours ?": "Delete the workout in progress?",
-"Ses séries ne seront pas gardées. Pour les garder, reprends la et termine la.": "Its sets won’t be kept. To keep them, resume it and finish it."
+"Ses séries ne seront pas gardées. Pour les garder, reprends la et termine la.": "Its sets won’t be kept. To keep them, resume it and finish it.",
+"Ta séance est à l’abri dans ton {0}.": "Your workout is safe in your {0}.",
+"Copie de ta séance dans ton {0}…": "Copying your workout to your {0}…",
+"La copie n’a pas pu partir. Ta séance reste bien sur ton téléphone, réessaie.": "The copy couldn’t be sent. Your workout is still on your phone, try again.",
+"Ta copie automatique ne passe plus. Relie de nouveau ton {0} pour ne rien perdre.": "Your automatic copy has stopped working. Link your {0} again so you lose nothing.",
+"Mets tes séances à l’abri : une copie dans ton {0}, chaque jour, sans rien faire.": "Keep your workouts safe: a copy in your {0}, every day, with nothing to do.",
+"Relier mon {0}": "Link my {0}"
 }

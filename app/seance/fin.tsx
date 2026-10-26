@@ -54,6 +54,7 @@ import { Progression } from '@/components/yoroi/v2/seance/fin/Progression';
 import { RecordsSeance } from '@/components/yoroi/v2/seance/fin/Records';
 import { DetailsSeance } from '@/components/yoroi/v2/seance/fin/Details';
 import { EtMaintenant } from '@/components/yoroi/v2/seance/fin/EtMaintenant';
+import { CopieCloud } from '@/components/yoroi/v2/seance/fin/CopieCloud';
 import { NoteCompacte } from '@/components/yoroi/v2/seance/fin/NoteCompacte';
 import { EnregistrerSeance } from '@/components/yoroi/v2/seance/fin/EnregistrerSeance';
 import { useMouvementReduit } from '@/components/yoroi/v2/seance/fin/useMouvementReduit';
@@ -77,7 +78,6 @@ export default function SeanceFin() {
   const [reward, setReward] = useState<Reward | null>(null);
   const [extras, setExtras] = useState<SessionExtras | null>(null);
   const [slotDone, setSlotDone] = useState<'idle' | 'busy' | 'done'>('idle');
-  const [backupDone, setBackupDone] = useState(false);
   const [party, setParty] = useState<RankParty | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [rangVerifie, setRangVerifie] = useState(false);
@@ -267,33 +267,6 @@ export default function SeanceFin() {
     }
   };
 
-  const backup = async () => {
-    try {
-      const { exportDataToJSON } = await import('@/lib/exportService');
-      const ok = await exportDataToJSON();
-      if (ok) setBackupDone(true);
-    } catch (err) {
-      logger.warn('Sauvegarde impossible', err);
-    }
-  };
-
-  // Une seule ligne de conseil au plus : l'idee de creneau d'abord, sinon le rappel de sauvegarde
-  const tip: { text: string; action: string; onPress: () => void; done: string | null } | null = extras?.slotIdea
-    ? {
-        text: slotDone === 'done' ? traduire('Créneau ajouté à ton planning.') : slotIdeaText(extras.slotIdea),
-        action: slotDone === 'done' ? traduire('Voir mon planning') : traduire('Ajouter au planning'),
-        onPress: slotDone === 'done' ? () => router.push('/planning' as any) : createSlot,
-        done: null,
-      }
-    : extras?.backup
-      ? {
-          text: backupDone ? traduire('Sauvegarde faite, rien ne se perd.') : traduire('Tes séances restent sur ton téléphone. Une copie de temps en temps et rien ne se perd.'),
-          action: traduire('Sauvegarder mes données'),
-          onPress: backup,
-          done: backupDone ? 'ok' : null,
-        }
-      : null;
-
   if (loaded && !result && !reward) {
     return (
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top + 60, paddingBottom: insets.bottom + 24, paddingHorizontal: 24, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
@@ -374,17 +347,8 @@ export default function SeanceFin() {
             {/* 6. Ta note et ton ressenti (lus par le detail, le radar et la montre) */}
             {result && id ? <NoteCompacte trainingId={id} combat={isCombat} /> : null}
 
-            {/* Le rappel de sauvegarde, en une ligne discrete, seulement quand il sert */}
-            {tip && !extras?.slotIdea ? (
-              <View style={{ marginHorizontal: 22, marginTop: 12, borderRadius: 22, paddingTop: 14, paddingBottom: 4, paddingHorizontal: 16, backgroundColor: c.indigoTint, gap: 2 }}>
-                <Ink size={14} color={c.textSecondary}>{traduire(tip.text)}</Ink>
-                {!tip.done ? (
-                  <Pressable onPress={tip.onPress} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
-                    <Ink size={14} weight="extraBold" color={c.indigo}>{tip.action}</Ink>
-                  </Pressable>
-                ) : <View style={{ height: 10 }} />}
-              </View>
-            ) : null}
+            {/* 26 octobre 2026 : ta seance mise a l'abri dans ton cloud, a chaque fin de seance */}
+            {result && id ? <CopieCloud /> : null}
           </>
         )}
       </ScrollView>

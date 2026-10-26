@@ -18647,5 +18647,11 @@
 "À TA FAÇON": "AUF DEINE ART",
 "PROUVÉ PAR DES ÉTUDES": "DURCH STUDIEN BELEGT",
 "Effacer la séance en cours ?": "Laufendes Training löschen?",
-"Ses séries ne seront pas gardées. Pour les garder, reprends la et termine la.": "Die Sätze werden nicht gespeichert. Um sie zu behalten, setze das Training fort und beende es."
+"Ses séries ne seront pas gardées. Pour les garder, reprends la et termine la.": "Die Sätze werden nicht gespeichert. Um sie zu behalten, setze das Training fort und beende es.",
+"Ta séance est à l’abri dans ton {0}.": "Dein Training ist sicher in deinem {0}.",
+"Copie de ta séance dans ton {0}…": "Dein Training wird in dein {0} kopiert…",
+"La copie n’a pas pu partir. Ta séance reste bien sur ton téléphone, réessaie.": "Die Kopie konnte nicht gesendet werden. Dein Training bleibt auf deinem Handy, versuch es noch einmal.",
+"Ta copie automatique ne passe plus. Relie de nouveau ton {0} pour ne rien perdre.": "Deine automatische Kopie funktioniert nicht mehr. Verbinde dein {0} erneut, damit nichts verloren geht.",
+"Mets tes séances à l’abri : une copie dans ton {0}, chaque jour, sans rien faire.": "Sichere deine Trainings: jeden Tag eine Kopie in deinem {0}, ganz automatisch.",
+"Relier mon {0}": "Mein {0} verbinden"
 }
