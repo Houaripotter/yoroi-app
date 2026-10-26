@@ -32,7 +32,8 @@ import {
 } from '@/lib/v2/seance/combat';
 import type { TimerEvent } from '@/lib/v2/seance/combat';
 import { fmtClock, fmtMinutes, hhmm, isoDay } from '@/lib/v2/seance/format';
-import { clearDraft, loadCombatPrefs, loadDraft, saveCombatPrefs, saveDraft } from '@/lib/v2/seance/model';
+import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
+import { clearDraft, loadCombatPrefs, loadDraft, saveCombatPrefs } from '@/lib/v2/seance/model';
 import type { CombatDraft, CombatSessionType, LiveRound, RoundIntensity, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
 import { aliasTypeSeance, initialDetails, readParams, timeOf, wantsForm } from '@/lib/v2/seance/params';
@@ -228,13 +229,8 @@ export default function SeanceCombat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!draft || finished.current) return;
-    const t = setTimeout(() => {
-      if (!finished.current) saveDraft(draft);
-    }, 400);
-    return () => clearTimeout(t);
-  }, [draft]);
+  // 26 octobre 2026 : le brouillon est ecrit tout de suite, et encore au passage en arriere plan (lib/v2/seance/useSauvegardeBrouillon.ts)
+  useSauvegardeBrouillon(draft, finished);
 
   // L'ecran reste allume pendant les rounds
   useEffect(() => {

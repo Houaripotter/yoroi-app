@@ -87,7 +87,6 @@ export const FICHES_EXO: Record<string, FicheExo> = {
     ],
     erreurs: [
       'Le faire sur un banc : les coudes descendent trop bas et l’épaule force.',
-      'Faire rebondir les coudes sur le sol.',
       'Écarter les coudes à hauteur des épaules.',
     ],
   },

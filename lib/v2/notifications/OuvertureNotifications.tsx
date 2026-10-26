@@ -5,7 +5,8 @@
  * avec un mot doux. Monté dans app/_layout.tsx, à côté de LiensWidgets.
  */
 import { useEffect, useRef, useState } from 'react';
-import { useRootNavigationState, useRouter, useSegments } from 'expo-router';
+import { usePathname, useRootNavigationState, useRouter, useSegments } from 'expo-router';
+import { repriseSeance } from '@/lib/v2/seance/reprendre';
 import { logger } from '@/lib/security/logger';
 import { navigationPrete } from '@/lib/v2/widgets/liens';
 import { delaiRestant } from '@/lib/v2/nav/direct';
@@ -32,6 +33,9 @@ export function OuvertureNotifications() {
   const router = useRouter();
   const segments = useSegments() as string[];
   const etatNav = useRootNavigationState();
+  const pathname = usePathname();
+  const ici = useRef(pathname);
+  ici.current = pathname;
   const [tic, setTic] = useState(0);
 
   const pret = navigationPrete(segments, etatNav?.key);
@@ -48,6 +52,11 @@ export function OuvertureNotifications() {
       if (!cible) return;
       (async () => {
         try {
+          if (cible.type === 'seanceEnCours') {
+            const r = await repriseSeance(ici.current);
+            if (r) router.navigate(r as never);
+            return;
+          }
           if (cible.type === 'route') {
             router.push(cible.href as never);
             return;

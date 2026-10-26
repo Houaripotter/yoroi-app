@@ -206,7 +206,30 @@ export async function saveDraft(d: SeanceDraft): Promise<void> {
   }
 }
 
+/**
+ * Ecriture du brouillon dans l'ordre (26 octobre 2026) : une seule ecriture a la fois, la derniere version gagne,
+ * et rien ne peut etre ecrit apres clearDraft (sinon une seance finie reapparaitrait « en cours »).
+ */
+let fileEcriture: Promise<void> = Promise.resolve();
+let aEcrire: SeanceDraft | null = null;
+let generation = 0;
+
+export function ecrireBrouillon(d: SeanceDraft): Promise<void> {
+  aEcrire = d;
+  const gen = generation;
+  fileEcriture = fileEcriture.then(async () => {
+    const a = aEcrire;
+    aEcrire = null;
+    if (a && gen === generation) await saveDraft(a);
+  });
+  return fileEcriture;
+}
+
 export async function clearDraft(): Promise<void> {
+  // les ecritures en attente sont annulees, celle en cours se termine avant l'effacement
+  generation++;
+  aEcrire = null;
+  await fileEcriture.catch(() => {});
   try {
     await AsyncStorage.removeItem(DRAFT_KEY);
   } catch {

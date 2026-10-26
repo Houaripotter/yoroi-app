@@ -23,7 +23,7 @@ import { lireSourcesContexte } from '@/lib/v2/montre/sources';
 import { appliquerCharges } from '@/lib/v2/montre/actions';
 import { appliquerActionsIle, estActionIle, lireActionIle, transmettreActionsIle } from '@/lib/v2/seance/actionsIle';
 import type { ActionIle } from '@/lib/v2/seance/actionsIle';
-import { loadDraft, saveDraft } from '@/lib/v2/seance/model';
+import { ecrireBrouillon, loadDraft } from '@/lib/v2/seance/model';
 import { annulerMinuteurRepos } from './activiteSeance';
 import { CHRONOS_CHANGED_EVENT } from '@/lib/v2/montre/synchro';
 import { personnageImage, sceneForNow } from '@/components/yoroi/v2/accueil/images';
@@ -164,7 +164,7 @@ async function appliquerIle(actions: ActionIle[]): Promise<void> {
   if (transmettreActionsIle(actions)) return;
   const d = await loadDraft();
   if (!d || d.kind !== 'muscu' || d.form || d.editId) return;
-  await saveDraft(appliquerActionsIle(d, actions));
+  await ecrireBrouillon(appliquerActionsIle(d, actions));
 }
 
 /** Applique les actions faites depuis un widget, vide la file, puis reecrit l'instantane */

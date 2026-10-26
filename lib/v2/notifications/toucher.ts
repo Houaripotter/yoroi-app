@@ -15,7 +15,9 @@ import { cheminDirect } from '@/lib/v2/nav/direct';
 export type CibleNotif =
   | { type: 'seance'; ref: string }
   | { type: 'seances' }
-  | { type: 'route'; href: string };
+  | { type: 'route'; href: string }
+  // 26 octobre 2026 : fin du repos, on rouvre la seance en cours (lib/v2/seance/reprendre.ts)
+  | { type: 'seanceEnCours' };
 
 /** Types de notification de fin de séance (anciens et nouveaux) */
 const TYPES_SEANCE = new Set(['workout_complete', 'workout_completed']);
@@ -53,6 +55,7 @@ export function cibleDeNotification(
   valide: { workoutId?: string; screen?: string; id?: string },
 ): CibleNotif | null {
   const type = typeof data?.type === 'string' ? data.type : '';
+  if (type === 'rest_finished') return { type: 'seanceEnCours' };
   if (TYPES_SEANCES.has(type)) return { type: 'seances' };
   if (valide.workoutId) return { type: 'seance', ref: valide.workoutId };
   // fin de séance sans identifiant (anciennes notifications Health Connect) : tes séances

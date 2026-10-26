@@ -31,7 +31,8 @@ import { bestSet, buildExerciseHistory, epley, normName, setLabel } from '@/lib/
 import type { ExerciseHistory, SetValue } from '@/lib/v2/seance/history';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { kgDepuisSaisie, saisieDepuisKg } from '@/lib/v2/unitePoids';
-import { clearDraft, loadDraft, loadRestPref, saveDraft, saveRestPref, uid } from '@/lib/v2/seance/model';
+import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
+import { clearDraft, loadDraft, loadRestPref, saveRestPref, uid } from '@/lib/v2/seance/model';
 import type { LiveExercise, LiveSet, MuscuDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
 import { initialDetails, readParams, timeOf, wantsForm } from '@/lib/v2/seance/params';
@@ -300,14 +301,30 @@ export default function SeanceMuscu() {
               {
                 text: traduire('Nouvelle séance'),
                 style: 'destructive',
-                onPress: async () => {
-                  await clearDraft();
-                  terminerActiviteSeance();
-                  setDraft(await fresh());
-                },
+                // 26 octobre 2026 : on ne jette plus une seance en cours sur un seul toucher
+                onPress: () =>
+                  appAlert(traduire('Effacer la séance en cours ?'), traduire('Ses séries ne seront pas gardées. Pour les garder, reprends la et termine la.'), [
+                    {
+                      text: traduire('Reprendre'),
+                      style: 'cancel',
+                      onPress: () => {
+                        if (existing.kind === 'muscu') setDraft(tidy(existing));
+                        else router.replace({ pathname: draftRoute(existing) as any, params: { resume: '1' } });
+                      },
+                    },
+                    {
+                      text: traduire('Effacer'),
+                      style: 'destructive',
+                      onPress: async () => {
+                        await clearDraft();
+                        terminerActiviteSeance();
+                        setDraft(await fresh());
+                      },
+                    },
+                  ], { cancelable: false }),
               },
               {
-                text: 'Reprendre',
+                text: traduire('Reprendre'),
                 onPress: () => {
                   if (existing.kind === 'muscu') setDraft(tidy(existing));
                   else router.replace({ pathname: draftRoute(existing) as any, params: { resume: '1' } });
@@ -326,14 +343,8 @@ export default function SeanceMuscu() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Le brouillon est ecrit a chaque changement
-  useEffect(() => {
-    if (!draft || finished.current) return;
-    const t = setTimeout(() => {
-      if (!finished.current) saveDraft(draft);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [draft]);
+  // 26 octobre 2026 : le brouillon est ecrit tout de suite, et encore au passage en arriere plan (lib/v2/seance/useSauvegardeBrouillon.ts)
+  useSauvegardeBrouillon(draft, finished);
 
   const update = useCallback((fn: (d: MuscuDraft) => MuscuDraft) => setDraft((d) => (d ? fn(d) : d)), []);
 
