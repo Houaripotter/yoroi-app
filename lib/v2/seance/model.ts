@@ -64,7 +64,32 @@ export type LiveExercise = {
   orig?: Exercise;
   /** 24 octobre 2026 : objectif fixe par le programme suivi (lib/v2/programmes) */
   cible?: { repsMin: number; repsMax: number; reposSec: number; conseil?: string; secondes?: boolean; raison?: 'premiere' | 'monte' | 'garde' | 'poids_du_corps' | 'variante' | 'legere'; nouvelleCharge?: number };
+  /**
+   * 26 octobre 2026 : tu es passe a un autre exercice apres au moins une serie (un test de max a 1 serie,
+   * par exemple). Ses series prevues non faites ne comptent plus : l'app ne te le repropose pas.
+   * Rien n'est efface : tu peux y revenir, elles sont encore la.
+   */
+  laisse?: boolean;
 };
+
+/** Changer d'exercice : celui qu'on quitte avec au moins une serie faite est « laisse » (plus repropose) */
+export function allerAExercice<D extends { exercises: LiveExercise[]; currentId: string | null }>(d: D, id: string | null): D {
+  if (!id || id === d.currentId) return d;
+  return {
+    ...d,
+    currentId: id,
+    exercises: d.exercises.map((e) => {
+      if (e.id === id) return e.laisse ? { ...e, laisse: false } : e;
+      if (e.id === d.currentId && e.sets.some((s) => s.done) && e.sets.some((s) => !s.done)) return { ...e, laisse: true };
+      return e;
+    }),
+  };
+}
+
+/** Series encore a faire d'un exercice (zero s'il a ete laisse) */
+export function seriesRestantes(e: LiveExercise): number {
+  return e.laisse ? 0 : e.sets.filter((s) => !s.done).length;
+}
 
 export type MuscuDraft = DraftBase & {
   kind: 'muscu';

@@ -49,6 +49,9 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
   const [machines, setMachines] = useState(false);
   const [focus, setFocus] = useState(false);
   const dejaNote = useRef('');
+  // 26 octobre 2026 : « Creer mon exercice » visible tout de suite, pas seulement apres une recherche vide
+  const champ = useRef<TextInput>(null);
+  const [creation, setCreation] = useState(false);
 
   const all = useMemo<Item[]>(() => construireCatalogue(strengthLibrary(), history, normName), [history]);
 
@@ -154,9 +157,10 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
         <View style={{ marginHorizontal: 22, marginTop: 16, height: 60, borderRadius: 20, backgroundColor: c.surface, borderWidth: focus ? 2 : 1.5, borderColor: focus ? c.ink : c.border, flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8, gap: 12 }}>
           <Icon name="search" size={22} color={focus ? c.ink : c.textMuted} strokeWidth={2.4} />
           <TextInput
+            ref={champ}
             value={query}
             onChangeText={setQuery}
-            placeholder={traduire("Développé, squat, tractions...")}
+            placeholder={creation ? traduire("Nom de ton exercice") : traduire("Développé, squat, tractions...")}
             placeholderTextColor={c.textMuted}
             autoCorrect={false}
             autoCapitalize="none"
@@ -213,6 +217,17 @@ export function ExercisePicker({ visible, onClose, onPick, history, recent, alre
               <View style={{ paddingVertical: 40, alignItems: 'center' }}>
                 <Ink size={15} color={c.textSecondary}>{traduire("Aucun exercice ici pour l’instant.")}</Ink>
               </View>
+            )
+          }
+          ListHeaderComponent={
+            query.trim() ? null : (
+              <Pressable onPress={() => { setCreation(true); champ.current?.focus(); }} accessibilityRole="button" accessibilityLabel={traduire('Créer mon exercice')} style={({ pressed }) => ({ minHeight: 54, borderRadius: 18, paddingHorizontal: 16, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pressed ? c.fillSubtle : 'transparent', borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.accent })}>
+                <Icon name="plus" size={18} color={c.accent} strokeWidth={2.6} />
+                <View style={{ flex: 1 }}>
+                  <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Créer mon exercice')}</Ink>
+                  <Ink size={12} color={c.textSecondary}>{creation ? traduire('Tape son nom en haut, puis touche Ajouter') : traduire('Il n’est pas dans la liste ? Ajoute le tien')}</Ink>
+                </View>
+              </Pressable>
             )
           }
           ListFooterComponent={

@@ -32,7 +32,7 @@ import type { ExerciseHistory, SetValue } from '@/lib/v2/seance/history';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { kgDepuisSaisie, saisieDepuisKg } from '@/lib/v2/unitePoids';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, saveRestPref, uid } from '@/lib/v2/seance/model';
+import { allerAExercice, seriesRestantes, chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, saveRestPref, uid } from '@/lib/v2/seance/model';
 import type { LiveExercise, LiveSet, MuscuDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
 import { initialDetails, readParams, timeOf, wantsForm } from '@/lib/v2/seance/params';
@@ -46,7 +46,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { blancA } from '@/components/yoroi/livePalette';
 import { intensite, niveauRpe } from '@/lib/v2/intensite';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { programmeParId, libelleRepos } from '@/lib/v2/programmes/catalogue';
 import { ExoDemo } from '@/components/yoroi/v2/seance/ExoDemo';
 import { AideBarre } from '@/components/yoroi/v2/seance/AideBarre';
@@ -366,7 +366,7 @@ export default function SeanceMuscu() {
   const addExercise = (name: string, muscle?: string) => {
     setPickerOpen(false);
     const ex = exerciseFrom(name, muscle, hist.map.get(normName(name)));
-    update((d) => ({ ...d, exercises: [...d.exercises, ex], currentId: ex.id }));
+    update((d) => allerAExercice({ ...d, exercises: [...d.exercises, ex] }, ex.id));
     impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
   };
 
@@ -394,9 +394,9 @@ export default function SeanceMuscu() {
     update((d) => ({
       ...d,
       exercises: d.exercises.map((e) => (e.id === ex.id ? { ...e, sets } : e)),
-      // seance de programme : le repos prevu pour cet exercice
-      restEndsAt: d.form ? null : Date.now() + (d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec) * 1000,
-      restTotal: d.form ? 0 : d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec,
+      // seance de programme : le repos prevu pour cet exercice ; drop set suivi d'un autre drop set : pas de repos
+      restEndsAt: d.form || ex.sets[index + 1]?.type === 'dropset' ? null : Date.now() + (d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec) * 1000,
+      restTotal: d.form || ex.sets[index + 1]?.type === 'dropset' ? 0 : d.reposManuel ? d.restSec : ex.cible?.reposSec ?? d.restSec,
     }));
     if (record) {
       setFreshRecord(set.id);
@@ -404,6 +404,28 @@ export default function SeanceMuscu() {
     } else {
       impactAsync(ImpactFeedbackStyle.Medium).catch(() => {});
     }
+  };
+
+  /**
+   * Drop set (26 octobre 2026, retour utilisateur : goupille, changement de charge instantane) : une serie
+   * juste apres la derniere faite, charge baissee d'environ 20 %, sans temps de repos quand tu la valides.
+   */
+  const addDropSet = (ex: LiveExercise) => {
+    const faites = ex.sets.filter((x) => x.done);
+    const ref = faites[faites.length - 1] ?? ex.sets[0];
+    if (!ref) return;
+    const pas = unite === 'lb' ? 2.268 : 2.5;
+    const charge = ref.weight > 0 ? Math.max(pas, Math.round((ref.weight * 0.8) / pas) * pas) : 0;
+    const s: LiveSet = { id: uid(), weight: Math.round(charge * 100) / 100, reps: ref.reps, done: false, type: 'dropset' };
+    updateExercise(ex.id, (e) => {
+      const i = e.sets.findIndex((x) => !x.done);
+      const sets = [...e.sets];
+      sets.splice(i < 0 ? sets.length : i, 0, s);
+      return { ...e, sets, laisse: false };
+    });
+    // le repos en cours s'arrete : on enchaine tout de suite
+    update((d) => ({ ...d, restEndsAt: null }));
+    impactAsync(ImpactFeedbackStyle.Light).catch(() => {});
   };
 
   const addSet = (ex: LiveExercise) => {
@@ -422,6 +444,8 @@ export default function SeanceMuscu() {
     update((d) => ({
       ...d,
       exercises: d.exercises.map((ex) => {
+        // exercice laisse : ses series prevues non faites ne sont pas validees
+        if (ex.laisse) return ex;
         const h = hist.map.get(normName(ex.name));
         const sets: LiveSet[] = [];
         for (const s of ex.sets) {
@@ -448,8 +472,8 @@ export default function SeanceMuscu() {
 
   /** Ferme la feuille de fin sur le premier exercice qui a une serie a valider */
   const showPending = () => {
-    const ex = draft?.exercises.find((e) => e.sets.some((s) => !s.done));
-    if (ex) update((d) => ({ ...d, currentId: ex.id }));
+    const ex = draft?.exercises.find((e) => seriesRestantes(e) > 0);
+    if (ex) update((d) => allerAExercice(d, ex.id));
     setFinishOpen(false);
   };
 
@@ -504,9 +528,9 @@ export default function SeanceMuscu() {
   // Resume pour la feuille de fin
   const summary = useMemo(() => {
     const done = (draft?.exercises ?? []).flatMap((e) => e.sets.filter((s) => s.done));
-    const pending = (draft?.exercises ?? []).reduce((n, e) => n + e.sets.filter((s) => !s.done).length, 0);
+    const pending = (draft?.exercises ?? []).reduce((n, e) => n + seriesRestantes(e), 0);
     // series restantes qui ont des repetitions : les seules que « Tout valider » peut valider
-    const pendingValid = (draft?.exercises ?? []).reduce((n, e) => n + e.sets.filter((s) => !s.done && s.reps > 0).length, 0);
+    const pendingValid = (draft?.exercises ?? []).reduce((n, e) => n + (e.laisse ? 0 : e.sets.filter((s) => !s.done && s.reps > 0).length), 0);
     return {
       sets: done.length,
       pending,
@@ -678,7 +702,8 @@ export default function SeanceMuscu() {
   const hCurrent = current ? hist.map.get(normName(current.name)) : undefined;
   const lastBest = hCurrent ? bestSet(hCurrent.lastSets) : null;
   const currentDone = current ? current.sets.length > 0 && current.sets.every((s) => s.done) : false;
-  const nextEx = current ? draft.exercises.find((e, i) => i > draft.exercises.indexOf(current) && e.sets.some((s) => !s.done)) ?? draft.exercises.find((e) => e.id !== current.id && e.sets.some((s) => !s.done)) : undefined;
+  // 26 octobre 2026 : un exercice laisse (passe apres au moins une serie) n'est plus repropose
+  const nextEx = current ? draft.exercises.find((e, i) => i > draft.exercises.indexOf(current) && seriesRestantes(e) > 0) ?? draft.exercises.find((e) => e.id !== current.id && seriesRestantes(e) > 0) : undefined;
   const menuEx = draft.exercises.find((e) => e.id === menuFor) ?? null;
   const noteEx = draft.exercises.find((e) => e.id === noteFor) ?? null;
 
@@ -720,7 +745,7 @@ export default function SeanceMuscu() {
             const isCur = e.id === current?.id;
             const all = e.sets.length > 0 && e.sets.every((s) => s.done);
             return (
-              <Pressable key={e.id} onPress={() => update((d) => ({ ...d, currentId: e.id }))} accessibilityLabel={traduire("Aller à {0}", e.name)} style={{ flex: 1, paddingVertical: 8 }}>
+              <Pressable key={e.id} onPress={() => update((d) => allerAExercice(d, e.id))} accessibilityLabel={traduire("Aller à {0}", e.name)} style={{ flex: 1, paddingVertical: 8 }}>
                 <View style={{ height: 5, borderRadius: 3, backgroundColor: isCur ? c.accent : all ? c.ink : '#D5D2CA' }} />
               </Pressable>
             );
@@ -836,7 +861,7 @@ export default function SeanceMuscu() {
                 return (
                   <View key={s.id} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 2, borderColor: c.ink, padding: 12, gap: 10, shadowColor: c.shadow, shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
-                      <Ink size={16} weight="black" style={{ flex: 1 }}>{traduire("Série {0}", i + 1)}</Ink>
+                      <Ink size={16} weight="black" style={{ flex: 1 }}>{s.type === 'dropset' ? traduire('Drop set, charge baissée') : traduire("Série {0}", i + 1)}</Ink>
                       {s.prevWeight !== undefined ? <Ink size={12} weight="bold" color={c.textMuted} numberOfLines={1}>{traduire("la dernière fois {0}", setLabel({ weight: s.prevWeight, reps: s.prevReps ?? 0 }, unite))}</Ink> : null}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -865,6 +890,9 @@ export default function SeanceMuscu() {
                 );
               }
               const pending = !s.done;
+              // 26 octobre 2026 (retour utilisateur : « serie 2, serie 4, ca fait mal aux yeux ») : les series
+              // prevues apres celle en cours ne s'affichent plus en lignes ; une phrase les compte, sous la carte
+              if (pending && !draft.form) return null;
               return (
                 <Pressable
                   key={s.id}
@@ -894,6 +922,25 @@ export default function SeanceMuscu() {
               );
             })}
 
+            {!draft.form && activeIndex >= 0 && current.sets.length - activeIndex - 1 > 0 ? (
+              <Ink size={13} weight="bold" color={c.textMuted} style={{ textAlign: 'center' }}>
+                {traduirePluriel(current.sets.length - activeIndex - 1, current.sets.length - activeIndex - 1 > 1, 'Puis encore {0} série prévue', 'Puis encore {0} séries prévues', current.sets.length - activeIndex - 1)}
+              </Ink>
+            ) : null}
+
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable onPress={() => addSet(current)} accessibilityRole="button" accessibilityLabel={traduire("Ajouter une série")} style={({ pressed }) => ({ flex: 1, minHeight: 50, borderRadius: 16, flexDirection: 'row', gap: 8, borderWidth: 1.5, borderColor: c.accent, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : 'transparent' })}>
+                <Icon name="plus" size={18} color={c.accent} strokeWidth={2.6} />
+                <Ink size={15} weight="extraBold" color={c.accent}>{traduire("Ajouter une série")}</Ink>
+              </Pressable>
+              {!draft.form && current.sets.some((x) => x.done) ? (
+                <Pressable onPress={() => addDropSet(current)} accessibilityRole="button" accessibilityLabel={traduire('Drop set : une série tout de suite, charge baissée')} style={({ pressed }) => ({ minHeight: 50, paddingHorizontal: 16, borderRadius: 16, flexDirection: 'row', gap: 6, borderWidth: 1.5, borderColor: c.accent, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.accentTint : 'transparent' })}>
+                  <Icon name="down" size={16} color={c.accent} strokeWidth={2.6} />
+                  <Ink size={15} weight="extraBold" color={c.accent}>{traduire('Drop set')}</Ink>
+                </Pressable>
+              ) : null}
+            </View>
+
             <AideBarre
               nom={current.name}
               chargeKg={(current.sets.find((x) => !x.done) ?? current.sets[current.sets.length - 1])?.weight}
@@ -901,15 +948,12 @@ export default function SeanceMuscu() {
               unite={unite}
             />
 
-            <Pressable onPress={() => addSet(current)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 46, borderRadius: 14, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#B9B6AE', alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.fillSoft : 'transparent' })}>
-              <Ink size={14} weight="bold" color={c.textSecondary}>{traduire("Ajouter une série")}</Ink>
-            </Pressable>
 
             {currentDone ? (
               <View style={{ marginTop: 6, padding: 16, borderRadius: 22, backgroundColor: c.successTint, gap: 10 }}>
                 <Ink size={17} weight="black" color={c.successText}>{traduire("Exercice bouclé.")}</Ink>
                 {nextEx ? (
-                  <Pressable onPress={() => update((d) => ({ ...d, currentId: nextEx.id }))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}>
+                  <Pressable onPress={() => update((d) => allerAExercice(d, nextEx.id))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 16, backgroundColor: pressed ? c.textSecondary : c.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 })}>
                     <Ink size={15} weight="extraBold" color={c.background} numberOfLines={1}>{traduire("Suivant : {0}", nextEx.name)}</Ink>
                     <Icon name="chevron" size={18} color={c.background} />
                   </Pressable>
@@ -928,13 +972,13 @@ export default function SeanceMuscu() {
                 {draft.exercises.map((e, i) => {
                   if (e.id === current.id) return null;
                   const doneCount = e.sets.filter((s) => s.done).length;
-                  const all = doneCount === e.sets.length && e.sets.length > 0;
+                  const all = (doneCount === e.sets.length || (!!e.laisse && doneCount > 0)) && e.sets.length > 0;
                   return (
-                    <Pressable key={e.id} onPress={() => update((d) => ({ ...d, currentId: e.id }))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, gap: 12, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border, opacity: all ? 0.6 : 1 })}>
+                    <Pressable key={e.id} onPress={() => update((d) => allerAExercice(d, e.id))} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, gap: 12, borderRadius: 18, backgroundColor: pressed ? c.fillSubtle : blancA(0.7), borderWidth: 1, borderColor: c.border, opacity: all ? 0.6 : 1 })}>
                       <ExoDemo nom={e.name} taille={52} arrondi={12} />
                       <Ink size={13} weight="extraBold" color={c.textMuted} style={{ width: 18 }}>{i + 1}</Ink>
                       <Ink size={15} weight="bold" color={all ? c.textMuted : c.ink} style={{ flex: 1 }} numberOfLines={1}>{traduire(e.name)}</Ink>
-                      <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? 'fait' : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
+                      <Ink size={13} weight="bold" color={all ? c.successText : c.textMuted}>{all ? (e.laisse ? traduire("{0} faites", doneCount) : traduire('fait')) : doneCount > 0 ? traduire("{0} sur {1}", doneCount, e.sets.length) : traduire("{0} séries", e.sets.length)}</Ink>
                     </Pressable>
                   );
                 })}
@@ -989,7 +1033,7 @@ export default function SeanceMuscu() {
           }
           aSuivre={activeIndex >= 0 && nextEx ? traduire(nomFr(nextEx.name)) : null}
           onValider={() => current && activeIndex >= 0 && validate(current, activeIndex)}
-          onSuivant={() => nextEx && update((d) => ({ ...d, currentId: nextEx.id }))}
+          onSuivant={() => nextEx && update((d) => allerAExercice(d, nextEx.id))}
           onTerminer={() => setFinishOpen(true)}
           onAjouter={() => setPickerOpen(true)}
         />

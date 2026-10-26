@@ -18656,5 +18656,15 @@
 "Relier mon {0}": "Ligar o meu {0}",
 "Reprendre ta saisie ?": "Retomar o teu registo?",
 "Tu avais commencé à noter une séance. Tu la reprends ?": "Tinhas começado a registar um treino. Retomas?",
-"Nouvelle saisie": "Novo registo"
+"Nouvelle saisie": "Novo registo",
+"Puis encore {0} série prévue": "Depois mais {0} série prevista",
+"Puis encore {0} séries prévues": "Depois mais {0} séries previstas",
+"Drop set, charge baissée": "Drop set, carga reduzida",
+"Drop set : une série tout de suite, charge baissée": "Drop set: uma série logo a seguir, carga reduzida",
+"Drop set": "Drop set",
+"{0} faites": "{0} feitas",
+"Nom de ton exercice": "Nome do teu exercício",
+"Créer mon exercice": "Criar o meu exercício",
+"Tape son nom en haut, puis touche Ajouter": "Escreve o nome em cima e toca em Adicionar",
+"Il n’est pas dans la liste ? Ajoute le tien": "Não está na lista? Adiciona o teu"
 }

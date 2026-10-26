@@ -82,7 +82,7 @@ export function lireActionIle(x: unknown): ActionIle | null {
 function suivant(exos: LiveExercise[], i: number): LiveExercise | null {
   for (let k = 1; k <= exos.length; k++) {
     const e = exos[(i + k) % exos.length];
-    if (e && e.sets.some((s) => !s.done)) return e;
+    if (e && !e.laisse && e.sets.some((s) => !s.done)) return e;
   }
   return null;
 }

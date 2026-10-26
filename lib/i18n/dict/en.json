@@ -18656,5 +18656,15 @@
 "Relier mon {0}": "Link my {0}",
 "Reprendre ta saisie ?": "Resume your entry?",
 "Tu avais commencé à noter une séance. Tu la reprends ?": "You had started logging a workout. Pick it up again?",
-"Nouvelle saisie": "New entry"
+"Nouvelle saisie": "New entry",
+"Puis encore {0} série prévue": "Then {0} more planned set",
+"Puis encore {0} séries prévues": "Then {0} more planned sets",
+"Drop set, charge baissée": "Drop set, lighter load",
+"Drop set : une série tout de suite, charge baissée": "Drop set: one more set right away, lighter load",
+"Drop set": "Drop set",
+"{0} faites": "{0} done",
+"Nom de ton exercice": "Your exercise name",
+"Créer mon exercice": "Create my exercise",
+"Tape son nom en haut, puis touche Ajouter": "Type its name at the top, then tap Add",
+"Il n’est pas dans la liste ? Ajoute le tien": "Not in the list? Add your own"
 }

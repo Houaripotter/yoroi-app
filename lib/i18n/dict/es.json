@@ -18656,5 +18656,15 @@
 "Relier mon {0}": "Vincular mi {0}",
 "Reprendre ta saisie ?": "¿Retomar tu registro?",
 "Tu avais commencé à noter une séance. Tu la reprends ?": "Habías empezado a anotar una sesión. ¿La retomas?",
-"Nouvelle saisie": "Nuevo registro"
+"Nouvelle saisie": "Nuevo registro",
+"Puis encore {0} série prévue": "Luego {0} serie prevista más",
+"Puis encore {0} séries prévues": "Luego {0} series previstas más",
+"Drop set, charge baissée": "Drop set, menos carga",
+"Drop set : une série tout de suite, charge baissée": "Drop set: una serie enseguida, con menos carga",
+"Drop set": "Drop set",
+"{0} faites": "{0} hechas",
+"Nom de ton exercice": "Nombre de tu ejercicio",
+"Créer mon exercice": "Crear mi ejercicio",
+"Tape son nom en haut, puis touche Ajouter": "Escribe su nombre arriba y toca Añadir",
+"Il n’est pas dans la liste ? Ajoute le tien": "¿No está en la lista? Añade el tuyo"
 }

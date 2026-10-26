@@ -18656,5 +18656,15 @@
 "Relier mon {0}": "Mein {0} verbinden",
 "Reprendre ta saisie ?": "Eingabe fortsetzen?",
 "Tu avais commencé à noter une séance. Tu la reprends ?": "Du hattest angefangen, ein Training einzutragen. Weitermachen?",
-"Nouvelle saisie": "Neue Eingabe"
+"Nouvelle saisie": "Neue Eingabe",
+"Puis encore {0} série prévue": "Danach noch {0} geplanter Satz",
+"Puis encore {0} séries prévues": "Danach noch {0} geplante Sätze",
+"Drop set, charge baissée": "Drop-Satz, leichteres Gewicht",
+"Drop set : une série tout de suite, charge baissée": "Drop-Satz: sofort ein weiterer Satz mit weniger Gewicht",
+"Drop set": "Drop-Satz",
+"{0} faites": "{0} erledigt",
+"Nom de ton exercice": "Name deiner Übung",
+"Créer mon exercice": "Meine Übung erstellen",
+"Tape son nom en haut, puis touche Ajouter": "Gib oben den Namen ein und tippe dann auf Hinzufügen",
+"Il n’est pas dans la liste ? Ajoute le tien": "Nicht in der Liste? Füge deine eigene hinzu"
 }

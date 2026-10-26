@@ -18656,5 +18656,15 @@
 "Relier mon {0}": "Mijn {0} koppelen",
 "Reprendre ta saisie ?": "Je invoer hervatten?",
 "Tu avais commencé à noter une séance. Tu la reprends ?": "Je was begonnen een training te noteren. Ga je verder?",
-"Nouvelle saisie": "Nieuwe invoer"
+"Nouvelle saisie": "Nieuwe invoer",
+"Puis encore {0} série prévue": "Daarna nog {0} geplande set",
+"Puis encore {0} séries prévues": "Daarna nog {0} geplande sets",
+"Drop set, charge baissée": "Dropset, lichter gewicht",
+"Drop set : une série tout de suite, charge baissée": "Dropset: meteen nog een set, lichter gewicht",
+"Drop set": "Dropset",
+"{0} faites": "{0} gedaan",
+"Nom de ton exercice": "Naam van je oefening",
+"Créer mon exercice": "Mijn oefening maken",
+"Tape son nom en haut, puis touche Ajouter": "Typ bovenaan de naam en tik dan op Toevoegen",
+"Il n’est pas dans la liste ? Ajoute le tien": "Staat hij er niet bij? Voeg je eigen toe"
 }
