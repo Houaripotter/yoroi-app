@@ -3,6 +3,7 @@
  */
 import type { ImageSourcePropType } from 'react-native';
 import { DEMOS } from './demosArt';
+import { DEMOS_CACHEES } from './demosCachees';
 
 /** « Développé Couché (Barre) » -> « developpe_couche_barre » */
 export function demoSlug(nom: string): string {
@@ -42,5 +43,8 @@ export const MEME_MOUVEMENT: Record<string, string> = {
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
   if (!nom) return null;
   const cle = demoSlug(nom);
-  return DEMOS[cle] ?? DEMOS[MEME_MOUVEMENT[cle] ?? ''] ?? null;
+  const vraie = DEMOS[cle] ? cle : MEME_MOUVEMENT[cle] && DEMOS[MEME_MOUVEMENT[cle]] ? MEME_MOUVEMENT[cle] : null;
+  // animation refusee par le controle qualite : rien plutot qu'une animation fausse
+  if (!vraie || DEMOS_CACHEES.has(vraie)) return null;
+  return DEMOS[vraie];
 }
