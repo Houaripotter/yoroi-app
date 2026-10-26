@@ -14,6 +14,7 @@ import { ExoDemo, FOND_DEMO } from '@/components/yoroi/v2/seance/ExoDemo';
 import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique';
 import { P } from '@/components/yoroi/livePalette';
 import { demoDe } from '@/lib/v2/programmes/demos';
+import { useSourceDemos } from '@/lib/v2/programmes/demosTest';
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { preuveDe } from '@/lib/v2/programmes/preuves';
 import { libelleRepos } from '@/lib/v2/programmes/catalogue';
@@ -38,6 +39,7 @@ export function CarteExoZone({ exo, numero, total, zone, marge = 44 }: { exo: Ex
   const { width } = useWindowDimensions();
   const [ouvert, setOuvert] = useState(false);
   const largeur = Math.max(200, width - marge);
+  useSourceDemos();
   const animee = !!demoDe(exo.nom);
   const fiche = !!ficheDe(exo.nom);
   const preuve = preuveDe(exo.nom);

@@ -21,7 +21,7 @@ export const DEMOS_CHANGEES = 'YOROI_DEMOS_CHANGEES';
 export const RACINE_GV = 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/';
 
 let createur = false;
-let source: SourceDemos = 'aucune';
+let source: SourceDemos = 'gymvisual';
 
 /** La source vraiment utilisee : toujours « aucune » hors mode createur */
 export const sourceDemosActive = (): SourceDemos => (createur ? source : 'aucune');
@@ -39,7 +39,9 @@ export async function chargerSourceDemos(): Promise<SourceDemos> {
   try {
     const v = await AsyncStorage.getItem(CLE_SOURCE_DEMOS);
     // les anciennes sources supprimees reviennent a « aucune »
-    source = v === 'gymvisual' ? 'gymvisual' : 'aucune';
+    // 26 octobre 2026 (Houari : « les animations ne sont pas raccordées ») : en mode créateur, Gym visual est
+    // allumé par défaut ; « aucune » seulement si tu l'as coupé toi même dans le Studio
+    source = v === 'aucune' ? 'aucune' : 'gymvisual';
   } catch {
     // reste sur « aucune »
   }
