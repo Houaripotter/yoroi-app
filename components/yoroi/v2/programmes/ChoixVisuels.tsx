@@ -333,7 +333,7 @@ export function RangeeJours({ jours, onBasculer }: { jours: readonly number[]; o
             style={({ pressed }) => ({
               flex: 1,
               maxWidth: 52,
-              height: 50,
+              aspectRatio: 1,
               borderRadius: 999,
               alignItems: 'center',
               justifyContent: 'center',
@@ -343,7 +343,7 @@ export function RangeeJours({ jours, onBasculer }: { jours: readonly number[]; o
               transform: [{ scale: pressed ? 0.94 : 1 }],
             })}
           >
-            <Ink size={13} weight="black" color={on ? c.onDark : pal.texte} adjustsFontSizeToFit numberOfLines={1} minimumFontScale={0.8}>{traduire(j)}</Ink>
+            <Ink size={14} weight="black" color={on ? c.onDark : pal.texte} numberOfLines={1} style={{ textAlign: 'center' }}>{traduire(j)}</Ink>
           </Pressable>
         );
       })}
