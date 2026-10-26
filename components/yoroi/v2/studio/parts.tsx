@@ -1,7 +1,9 @@
 /**
- * Briques du Studio YOROI : contexte partage (rubriques ouvertes, recherche, demo chargee,
- * fenetres plein ecran), rubriques repliables, grandes tuiles claires, pastilles, notes.
- * Design v2 : papier de riz, cartes blanches, indigo du theme pour les actions.
+ * Briques du Studio YOROI : contexte partage (rubrique ouverte, recherche, demo chargee,
+ * fenetres plein ecran, effacement complet), pages de rubrique, tuiles, pastilles, notes.
+ * 26 octobre 2026 : habillage des pages Programmes et Coach (usePaletteProgramme) : fond bleu clair,
+ * cartes blanches tres arrondies, carres d'icone teintes (indigo, orange, vert), grands titres.
+ * Plus aucun accordeon : chaque rubrique est une tuile qui ouvre sa page d'un toucher.
  */
 import React, { createContext, useContext, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
@@ -14,6 +16,7 @@ import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
+import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { traduire } from '@/lib/i18n/tr';
 
 // ===== Contexte du Studio =====
@@ -38,6 +41,8 @@ export type StudioContextValue = {
   /** relit l'etat de la demo (apres chargement ou retour des vraies donnees) */
   refreshDemo: () => void;
   show: (o: StudioOverlay) => void;
+  /** « Tout effacer et repartir de zéro » : la premiere confirmation, puis le mot a ecrire */
+  repartirDeZero: () => void;
 };
 
 const NOOP: StudioContextValue = {
@@ -49,6 +54,7 @@ const NOOP: StudioContextValue = {
   demoActive: false,
   refreshDemo: () => undefined,
   show: () => undefined,
+  repartirDeZero: () => undefined,
 };
 
 export const StudioContext = createContext<StudioContextValue>(NOOP);
@@ -63,56 +69,17 @@ export function matches(query: string, ...texts: (string | undefined)[]): boolea
   return q.split(/\s+/).every((w) => fold(texts.filter(Boolean).join(' ')).includes(w));
 }
 
-// ===== Rubrique repliable =====
+// ===== Page de rubrique =====
 
 /**
- * Rubrique du Studio : un en-tete en carte claire (pictogramme, titre, sous-titre, fleche),
- * le contenu seulement une fois ouverte. Avec une recherche : visible si elle correspond,
- * ouverte d'office.
+ * Contenu d'une rubrique du Studio. Depuis le 26 octobre 2026 il n'y a plus d'accordeon : la rubrique
+ * s'ouvre en page entiere depuis sa tuile (app/creator-mode.tsx, qui affiche le titre et le retour).
+ * Titre, sous-titre et mots cles restent declares ici pour memoire, la tuile reprend les siens.
  */
-export function StudioSection({ id, title, sub, icon = 'grid', keywords, children }: { id: string; title: string; sub?: string; icon?: IconName; keywords?: string; children: React.ReactNode }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const { query, isOpen, toggle, onY } = useStudio();
-  const searching = query.trim().length > 0;
-  if (searching && !matches(query, title, sub, keywords)) return null;
-  const open = searching || isOpen(id);
+export function StudioSection({ children }: { id: string; title: string; sub?: string; icon?: IconName; keywords?: string; children: React.ReactNode }) {
   return (
-    <Animated.View entering={ENTREE} onLayout={(e) => onY(id, e.nativeEvent.layout.y)} style={{ gap: 12 }}>
-      <Pressable
-        onPress={() => {
-          selectionAsync().catch(() => {});
-          toggle(id);
-        }}
-        disabled={searching}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        accessibilityLabel={`${title}${sub ? `, ${sub}` : ''}, ${open ? 'replier' : 'ouvrir'}`}
-        style={({ pressed }) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-          minHeight: 68,
-          paddingHorizontal: 14,
-          paddingVertical: 12,
-          borderRadius: 22,
-          backgroundColor: pressed ? c.fillSubtle : c.surface,
-          borderWidth: 1,
-          borderColor: open ? c.accent : c.border,
-        })}
-      >
-        <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={icon} size={21} color={c.accent} />
-        </View>
-        <View style={{ flex: 1, gap: 1 }}>
-          <Ink size={17} weight="black" tight>{title}</Ink>
-          {sub ? <Ink size={12} color={c.textSecondary} numberOfLines={2}>{sub}</Ink> : null}
-        </View>
-        <View style={{ transform: [{ rotate: open ? '-90deg' : '90deg' }] }}>
-          <Icon name="chevron" size={18} color={c.textMuted} />
-        </View>
-      </Pressable>
-      {open ? <View style={{ gap: 12 }}>{children}</View> : null}
+    <Animated.View entering={ENTREE} style={{ gap: 12 }}>
+      {children}
     </Animated.View>
   );
 }
@@ -168,15 +135,30 @@ export function TileGrid({ children }: { children: React.ReactNode }) {
   return <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>{children}</View>;
 }
 
-/**
- * Bouton d'action du tableau de bord du Studio (19 octobre 2026), trois par ligne : pictogramme, libelle court
- * et l'etat actuel en dessous (« Halloween forcé », « Chargée »...). Allume, il prend la couleur d'action
- * (ou sa couleur propre : orange d'Halloween, vert de Noël).
- */
-export function ActionTile({ icon, label, state, onPress, on, color, busy, disabled }: { icon: IconName; label: string; state: string; onPress: () => void; on?: boolean; color?: string; busy?: boolean; disabled?: boolean }) {
+/** Les trois teintes des tuiles, prises a la palette des pages Programmes et Coach */
+export type TonTuile = 'indigo' | 'orange' | 'vert' | 'rouge';
+
+function useTeinte(ton: TonTuile) {
+  const pal = usePaletteProgramme();
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const fill = color ?? c.accent;
+  if (ton === 'orange') return { fond: pal.orangeTint, encre: pal.orange };
+  if (ton === 'vert') return { fond: pal.vertTint, encre: pal.vert };
+  if (ton === 'rouge') return { fond: c.dangerTint, encre: c.danger };
+  return { fond: pal.teinte, encre: pal.accent };
+}
+
+const ombre = (couleur: string): ViewStyle => ({ shadowColor: couleur, shadowOpacity: 0.07, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 2 });
+
+/**
+ * Petite tuile d'action du Studio, trois par ligne : carre d'icone teinte, libelle court et l'etat actuel
+ * en dessous (« Halloween forcé », « Chargée »...). Allumee, elle prend l'indigo (ou sa couleur propre :
+ * orange d'Halloween, vert de Noël).
+ */
+export function ActionTile({ icon, label, state, onPress, on, color, busy, disabled, ton = 'indigo' }: { icon: IconName; label: string; state: string; onPress: () => void; on?: boolean; color?: string; busy?: boolean; disabled?: boolean; ton?: TonTuile }) {
+  const pal = usePaletteProgramme();
+  const t = useTeinte(ton);
+  const fill = color ?? pal.indigo;
   const gridWidth = useContext(GridWidth);
   const w = gridWidth > 0 ? Math.floor((gridWidth - GRID_GAP * 2) / 3) : undefined;
   return (
@@ -189,26 +171,116 @@ export function ActionTile({ icon, label, state, onPress, on, color, busy, disab
       accessibilityRole="button"
       accessibilityState={{ selected: !!on, disabled: !!disabled, busy: !!busy }}
       accessibilityLabel={`${label}, ${state}`}
+      style={({ pressed }) => [
+        {
+          width: w ?? '31%',
+          minHeight: 122,
+          borderRadius: 22,
+          paddingHorizontal: 11,
+          paddingVertical: 13,
+          gap: 8,
+          opacity: disabled ? 0.5 : pressed ? 0.9 : 1,
+          backgroundColor: on ? fill : pal.carte,
+          transform: [{ scale: pressed ? 0.97 : 1 }],
+        },
+        ombre(pal.indigo),
+      ]}
+    >
+      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: on ? 'rgba(255,255,255,0.2)' : t.fond, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={busy ? 'sync' : icon} size={20} color={on ? '#FFFFFF' : color ?? t.encre} />
+      </View>
+      <Ink size={14} weight="black" tight color={on ? '#FFFFFF' : pal.texte} numberOfLines={2} style={{ lineHeight: 17 }}>{label}</Ink>
+      <Ink size={11.5} weight="bold" color={on ? 'rgba(255,255,255,0.9)' : pal.texte3} numberOfLines={2} style={{ lineHeight: 14 }}>{busy ? traduire('Un instant') : state}</Ink>
+    </Pressable>
+  );
+}
+
+/**
+ * Grande tuile coloree des raccourcis (deux par ligne), comme les choix de la page Coach : fond teinte,
+ * rond blanc pour l'icone, grand libelle et etat. Allumee, elle passe en indigo.
+ */
+export function TuileRaccourci({ icon, label, state, onPress, on, busy, ton = 'indigo' }: { icon: IconName; label: string; state: string; onPress: () => void; on?: boolean; busy?: boolean; ton?: TonTuile }) {
+  const pal = usePaletteProgramme();
+  const t = useTeinte(ton);
+  return (
+    <Pressable
+      onPress={() => {
+        selectionAsync().catch(() => {});
+        onPress();
+      }}
+      disabled={busy}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!on, busy: !!busy }}
+      accessibilityLabel={`${label}, ${state}`}
       style={({ pressed }) => ({
-        width: w ?? '31%',
-        minHeight: 112,
-        borderRadius: 20,
-        paddingHorizontal: 10,
-        paddingVertical: 12,
-        gap: 7,
-        opacity: disabled ? 0.5 : 1,
-        backgroundColor: on ? fill : pressed ? c.fillSubtle : c.surface,
-        borderWidth: 1,
-        borderColor: on ? fill : c.border,
-        transform: [{ scale: pressed ? 0.97 : 1 }],
+        width: '48.5%',
+        minHeight: 148,
+        padding: 16,
+        borderRadius: 26,
+        backgroundColor: on ? pal.indigo : t.fond,
+        gap: 10,
+        justifyContent: 'space-between',
+        overflow: 'hidden',
+        opacity: pressed ? 0.9 : 1,
+        transform: [{ scale: pressed ? 0.98 : 1 }],
       })}
     >
-      <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: on ? 'rgba(255,255,255,0.2)' : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={busy ? 'sync' : icon} size={20} color={on ? '#FFFFFF' : color ?? c.accent} />
+      {on ? <View pointerEvents="none" style={{ position: 'absolute', right: -40, top: -50, width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(255,255,255,0.08)' }} /> : null}
+      <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: on ? 'rgba(255,255,255,0.18)' : pal.carte, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={busy ? 'sync' : icon} size={23} color={on ? '#FFFFFF' : t.encre} />
       </View>
-      <Ink size={14} weight="extraBold" color={on ? '#FFFFFF' : c.ink} numberOfLines={2} style={{ lineHeight: 17 }}>{label}</Ink>
-      <Ink size={11.5} weight="bold" color={on ? 'rgba(255,255,255,0.9)' : c.textMuted} numberOfLines={2} style={{ lineHeight: 14 }}>{busy ? traduire('Un instant') : state}</Ink>
+      <View style={{ gap: 3 }}>
+        <Ink size={16} weight="black" tight color={on ? '#FFFFFF' : pal.texte} numberOfLines={2}>{label}</Ink>
+        <Ink size={12} weight="bold" color={on ? 'rgba(255,255,255,0.88)' : pal.texte2} numberOfLines={2}>{busy ? traduire('Un instant') : state}</Ink>
+      </View>
     </Pressable>
+  );
+}
+
+/** Tuile d'une rubrique (deux par ligne) : carte blanche, carre d'icone teinte, titre, ce qu'on y trouve, fleche */
+export function TuileRubrique({ icon, title, sub, onPress, ton = 'indigo' }: { icon: IconName; title: string; sub: string; onPress: () => void; ton?: TonTuile }) {
+  const pal = usePaletteProgramme();
+  const t = useTeinte(ton);
+  return (
+    <Pressable
+      onPress={() => {
+        selectionAsync().catch(() => {});
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${sub}`}
+      style={({ pressed }) => [
+        { width: '48.5%', minHeight: 140, padding: 15, borderRadius: 24, backgroundColor: pal.carte, gap: 10, justifyContent: 'space-between', opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+        ombre(pal.indigo),
+      ]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={22} color={t.encre} />
+        </View>
+        <Icon name="chevron" size={16} color={pal.texte3} />
+      </View>
+      <View style={{ gap: 2 }}>
+        <Ink size={15.5} weight="black" tight color={pal.texte} numberOfLines={2}>{title}</Ink>
+        <Ink size={11.5} weight="bold" color={pal.texte3} numberOfLines={3} style={{ lineHeight: 15 }}>{sub}</Ink>
+      </View>
+    </Pressable>
+  );
+}
+
+/** Grille de deux colonnes (raccourcis et rubriques) */
+export function GrilleDeux({ children }: { children: React.ReactNode }) {
+  return <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 }}>{children}</View>;
+}
+
+/** Titre d'un groupe du tableau de bord */
+export function TitreGroupe({ children, sous }: { children: string; sous?: string }) {
+  const pal = usePaletteProgramme();
+  return (
+    <View style={{ paddingHorizontal: 4, marginTop: 8, gap: 1 }}>
+      <Ink size={20} weight="black" tight color={pal.texte} accessibilityRole="header">{children}</Ink>
+      {sous ? <Ink size={12.5} weight="bold" color={pal.texte2}>{sous}</Ink> : null}
+    </View>
   );
 }
 
@@ -304,7 +376,7 @@ export function SearchField({ value, onChange, placeholder, label }: { value: st
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, borderRadius: 18, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, paddingHorizontal: 14 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, borderRadius: 20, borderWidth: 1, borderColor: c.divider, backgroundColor: c.surface, paddingHorizontal: 14 }}>
       <Icon name="search" size={18} color={c.textMuted} />
       <TextInput
         value={value}

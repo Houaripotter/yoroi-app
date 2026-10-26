@@ -2,22 +2,26 @@
  * Studio YOROI (outil cache de Houari). Route /creator-mode, hors barre d'onglets.
  * S'ouvre seulement en mode createur verifie (jeton signe Ed25519, voir lib/v2/creator) :
  * sans lui, un cadenas et rien d'autre. Le jeton est reverifie a chaque ouverture.
- * 19 octobre 2026, tableau de bord (maquette : _propositions/studio_2026-10-19/) : en haut l'etat (version, build,
- * telephone, jeton, ce qui est force) et « Tout remettre normal », qui coupe les forcages d'apercu sans toucher
- * a aucune donnee. Puis la recherche, puis une grille de gros boutons d'un toucher, chacun avec son etat :
- * Saison de l'accueil, Voir, Simuler et tester. En dessous, les rubriques detaillees repliables : Apercus,
- * Gamification, Ambiance, Tests de l'appareil, Donnees et sante, Abonnement, Demo et captures, Contenu et revue,
- * Aller a un ecran, Diagnostic, Liens. Ancienne version : _archive_ancien_design_2026-10-09/studio_2026-10-19/.
+ * 26 octobre 2026, refait dans l'habillage des pages Programmes et Coach. Houari : « c'est degueulasse, je dois
+ * appuyer pour ouvrir des pages ou derouler ». Plus aucun accordeon :
+ *  1. la grande carte indigo : mode createur, validite, ce qui est allume, « Tout remettre normal » ;
+ *  2. la recherche, puis la carte rouge « Tout effacer et repartir de zéro » (RepartirDeZero.tsx) ;
+ *  3. les raccourcis, grandes tuiles colorees de deux par ligne, un toucher et c'est lance ;
+ *  4. Saison de l'accueil, Voir, Simuler et tester : petites tuiles de trois par ligne, chacune avec son etat ;
+ *  5. Tout le Studio : une tuile par rubrique, qui ouvre sa page entiere d'un toucher (retour en haut a gauche) ;
+ *  6. Verrouiller le Studio.
+ * Ancienne version : _archive_ancien_design_2026-10-09/studio_2026-10-19/ et l'historique git.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DeviceEventEmitter, ScrollView, View } from 'react-native';
+import { BackHandler, DeviceEventEmitter, Pressable, ScrollView, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { useYoroiTheme } from '@/components/yoroi';
+import { notificationAsync, NotificationFeedbackType, selectionAsync } from 'expo-haptics';
+import Svg, { Path } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Button, EspaceHeader, GUTTER } from '@/components/yoroi/v2/espace/ui';
+import { Button, GUTTER } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
+import { Cercles, EnTeteRond, PuceClaire, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { usePremium } from '@/context/PremiumContext';
 import { useScreenshotMode } from '@/lib/ScreenshotModeContext';
 import { isDemoDataActive } from '@/lib/demoDataService';
@@ -27,6 +31,7 @@ import { DEV_CLOCK_CHANGED, devNow, isDevClockShifted } from '@/lib/v2/creator/d
 import { usePremiumFlags } from '@/lib/v2/creator/premiumFlags';
 import { PAYWALL_VARIANTS, usePaywallVariant } from '@/lib/v2/creator/paywallVariant';
 import { ONCE_WINDOWS, resetAllOnceWindows } from '@/lib/v2/creator/onceWindows';
+import { STUDIO_SCREENS } from '@/lib/v2/creator/screens';
 import { setApercuSaison, useApercuSaison } from '@/lib/v2/saisons/apercu';
 import { useDecorationsSaison } from '@/lib/v2/saisons/reglage';
 import { NOMS_SAISONS, saisonAffichee, type ChoixApercu } from '@/lib/v2/saisons/calendrier';
@@ -35,8 +40,8 @@ import { NOMBRE_GV, choisirSourceDemos, sourceSuivante, useSourceDemos } from '@
 import logger from '@/lib/security/logger';
 import { VISITE_TITRES } from '@/components/yoroi/v2/tour/VisiteGuidee';
 import { StudioGate } from '@/components/yoroi/v2/studio/StudioLock';
-import { ActionGrid, ActionTile, Note, SearchField, StatePill, StudioContext, matches } from '@/components/yoroi/v2/studio/parts';
-import type { StudioContextValue, StudioOverlay } from '@/components/yoroi/v2/studio/parts';
+import { ActionGrid, ActionTile, GrilleDeux, Note, SearchField, StudioContext, TitreGroupe, TuileRaccourci, TuileRubrique, matches } from '@/components/yoroi/v2/studio/parts';
+import type { StudioContextValue, StudioOverlay, TonTuile } from '@/components/yoroi/v2/studio/parts';
 import { StudioOverlays } from '@/components/yoroi/v2/studio/Overlays';
 import { ONBOARDING_SCREEN_LABELS } from '@/components/yoroi/v2/studio/PreviewBar';
 import { ApercuScenes } from '@/components/yoroi/v2/studio/ApercuScenes';
@@ -52,6 +57,7 @@ import { Contenu } from '@/components/yoroi/v2/studio/Contenu';
 import { Ecrans } from '@/components/yoroi/v2/studio/Ecrans';
 import { Diagnostic } from '@/components/yoroi/v2/studio/Diagnostic';
 import { Liens } from '@/components/yoroi/v2/studio/Liens';
+import { CarteRepartirDeZero, FenetreRepartirDeZero, demanderRepartirDeZero } from '@/components/yoroi/v2/studio/RepartirDeZero';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -64,7 +70,40 @@ export default function CreatorModeScreen() {
 }
 
 /** Un bouton du tableau de bord : libelle court, etat actuel, mots de la recherche */
-type Action = { id: string; label: string; state: string; icon: IconName; on?: boolean; color?: string; keywords?: string; run: () => void };
+type Action = { id: string; label: string; state: string; icon: IconName; on?: boolean; color?: string; keywords?: string; ton?: TonTuile; run: () => void };
+
+/** Une rubrique : sa tuile, et la page qu'elle ouvre */
+type Rubrique = { id: string; title: string; sub: string; icon: IconName; ton: TonTuile; keywords: string; Page: React.ComponentType };
+
+const RUBRIQUES: Rubrique[] = [
+  { id: 'apercus', icon: 'eye', ton: 'indigo', title: traduire('Aperçus'), sub: traduire('Onboarding, paywalls, présentation, chargement, fenêtres une fois'), keywords: 'onboarding paywall abonnement premium nouveautes visite guidee tour presentation bienvenue notification essai chargement splash fenetre rearmer gratuit limites', Page: Apercus },
+  { id: 'gamif', icon: 'crown', ton: 'orange', title: traduire('Gamification'), sub: traduire('XP, rang, dan, avatar et chaque animation'), keywords: 'xp rang dan avatar personnage celebration plaque sceau lune semaine tenue bienvenue reprise anciens', Page: Gamification },
+  { id: 'ambiance', icon: 'sun', ton: 'vert', title: traduire('Ambiance'), sub: traduire('Scène, personnage, horloge de test, taille du texte'), keywords: 'scene decor personnage avatar horloge heure date devnow demain taille texte police', Page: Ambiance },
+  { id: 'tests', icon: 'bell', ton: 'indigo', title: traduire('Tests de l’appareil'), sub: traduire('Notifications, avis, vibrations, autorisations'), keywords: 'notification rappel programmee avis note store vibration haptique autorisation permission reglages camera photos sante installation reinstallation onboarding paywall simuler scene scenes animees animation pluie neige saison saisons halloween noel decoration decorations', Page: Tests },
+  { id: 'donnees', icon: 'pulse', ton: 'vert', title: traduire('Données et santé'), sub: traduire('Apple Santé, imports, migrations'), keywords: 'sante apple health connect synchro import montre migration doublons dedupe reprise rangs v3 armure', Page: Donnees },
+  { id: 'abonnement', icon: 'crown', ton: 'orange', title: traduire('Abonnement'), sub: traduire('Lecture seule : RevenueCat, entitlement, offres'), keywords: 'abonnement premium revenuecat entitlement expiration client identifiant offering paquets prix store', Page: Abonnement },
+  { id: 'demo', icon: 'camera', ton: 'indigo', title: traduire('Démo et captures'), sub: traduire('Heny, retour à tes données, captures'), keywords: 'demo heny profil captures screenshot 09:41 barre etat marketing kit carnet vraies donnees sauvegarde restaurer', Page: Demo },
+  { id: 'contenu', icon: 'table', ton: 'orange', title: traduire('Contenu et revue'), sub: traduire('Compteurs, contrôles, galeries'), keywords: 'contenu compteurs sports exercices techniques citations personnages scenes ornements carnet sons controles coherence galerie images sons fenetres partage etats', Page: Contenu },
+  { id: 'ecrans', icon: 'grid', ton: 'vert', title: traduire('Aller à un écran'), sub: traduire('{0} écrans, ouverts d’un appui', STUDIO_SCREENS.length), keywords: 'ecran route aller ouvrir navigation page', Page: Ecrans },
+  { id: 'diag', icon: 'info', ton: 'indigo', title: traduire('Diagnostic'), sub: traduire('Appareil, stockage, compteurs, journal'), keywords: 'diagnostic appareil telephone version build stockage cle asyncstorage compteurs usage sentry journal log effacer installation neuve', Page: Diagnostic },
+  { id: 'liens', icon: 'globe', ton: 'vert', title: traduire('Liens'), sub: traduire('Consoles de publication et fiches des stores'), keywords: 'liens app store connect google play console revenuecat sentry expo fiche store', Page: Liens },
+];
+
+/** Les raccourcis du haut, en grandes tuiles : les outils les plus servis */
+const RACCOURCIS: { id: string; ton: TonTuile }[] = [
+  { id: 'onboarding', ton: 'indigo' },
+  { id: 'paywall', ton: 'orange' },
+  { id: 'animations', ton: 'vert' },
+  { id: 'bibliotheques', ton: 'indigo' },
+  { id: 'heny', ton: 'vert' },
+  { id: 'gratuit', ton: 'indigo' },
+  { id: 'capture', ton: 'orange' },
+  { id: 'notif', ton: 'vert' },
+];
+const ID_RACCOURCIS = new Set(RACCOURCIS.map((r) => r.id));
+
+/** Mots de la recherche qui trouvent la carte rouge */
+const MOTS_EFFACER = 'tout effacer repartir zero reinitialiser reset supprimer installation neuve donnees jeton';
 
 /** Couleurs propres des saisons (texte blanc dessus, contraste suffisant) */
 const ORANGE_HALLOWEEN = '#B9541F';
@@ -72,8 +111,7 @@ const VERT_NOEL = '#3E6B4A';
 const NB_PERSONNAGES = CATALOGUE_IMAGES.filter((e) => e.famille === 'personnages').length;
 
 function Studio() {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
+  const pal = usePaletteProgramme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { expiresAt, label, lock } = useCreatorMode();
@@ -87,9 +125,9 @@ function Studio() {
   const info = getAppInfo();
 
   const scroll = useRef<ScrollView>(null);
-  const offsets = useRef<Record<string, number>>({});
   const [query, setQuery] = useState('');
-  const [open, setOpen] = useState<Set<string>>(new Set());
+  /** La rubrique ouverte en page entiere (null : le tableau de bord) */
+  const [page, setPage] = useState<string | null>(null);
   const [demoActive, setDemoActive] = useState(false);
   const [clockShifted, setClockShifted] = useState(isDevClockShifted());
   const [overlay, setOverlay] = useState<StudioOverlay | null>(null);
@@ -97,6 +135,7 @@ function Studio() {
   const [scenes, setScenes] = useState(false);
   const [notifEnvoyee, setNotifEnvoyee] = useState(false);
   const [fenetresRearmees, setFenetresRearmees] = useState(false);
+  const [saisieEffacement, setSaisieEffacement] = useState(false);
 
   const refreshDemo = useCallback(() => {
     isDemoDataActive()
@@ -116,37 +155,35 @@ function Studio() {
     return () => sub.remove();
   }, []);
 
-  const scrollTo = useCallback((id: string) => {
-    setTimeout(() => {
-      const y = offsets.current[id];
-      if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
-    }, 120);
+  const ouvrirPage = useCallback((id: string | null) => {
+    setQuery('');
+    setPage(id);
+    setTimeout(() => scroll.current?.scrollTo({ y: 0, animated: false }), 0);
   }, []);
+
+  // Android : le bouton retour ferme d'abord la page de rubrique
+  useEffect(() => {
+    if (!page) return undefined;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      ouvrirPage(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [page, ouvrirPage]);
 
   const ctx = useMemo<StudioContextValue>(
     () => ({
-      query,
-      isOpen: (id) => open.has(id),
-      toggle: (id) =>
-        setOpen((prev) => {
-          const next = new Set(prev);
-          if (next.has(id)) next.delete(id);
-          else next.add(id);
-          return next;
-        }),
-      openSection: (id) => {
-        setQuery('');
-        setOpen((prev) => new Set(prev).add(id));
-        scrollTo(id);
-      },
-      onY: (id, y) => {
-        offsets.current[id] = y;
-      },
+      query: '',
+      isOpen: () => true,
+      toggle: () => undefined,
+      openSection: (id) => ouvrirPage(id),
+      onY: () => undefined,
       demoActive,
       refreshDemo,
       show: setOverlay,
+      repartirDeZero: () => demanderRepartirDeZero(demoActive, () => setSaisieEffacement(true)),
     }),
-    [query, open, demoActive, refreshDemo, scrollTo],
+    [demoActive, refreshDemo, ouvrirPage],
   );
 
   const run = async (id: string, fn: () => Promise<string>) => {
@@ -270,7 +307,7 @@ function Studio() {
     { id: 'bibliotheques', label: traduire('Gym visual, test privé'), icon: 'grid', state: traduire('Gym visual, 1 324 exercices, en ligne'), keywords: 'exercices animation github gym visual', run: () => router.push('/studio/exercices' as never) },
     { id: 'scenes', label: traduire('Scènes animées'), icon: 'image', state: traduire("{0} scènes, pluie, neige", SCENES_ANIMEES_CODE.length), keywords: 'scene animation effets', run: () => setScenes(true) },
     { id: 'personnages', label: traduire('Personnages'), icon: 'user', state: traduire("{0} images du monde", NB_PERSONNAGES), keywords: 'galerie avatar', run: () => router.push('/studio/images?famille=personnages' as never) },
-    { id: 'images', label: traduire('Toutes les images'), icon: 'grid', state: `${CATALOGUE_IMAGES.length} illustrations`, keywords: 'galerie illustrations', run: () => router.push('/studio/images' as never) },
+    { id: 'images', label: traduire('Toutes les images'), icon: 'grid', state: traduire('{0} illustrations', CATALOGUE_IMAGES.length), keywords: 'galerie illustrations', run: () => router.push('/studio/images' as never) },
     { id: 'chargement', label: traduire('Chargement'), icon: 'sync', state: traduire('Plein écran, rejouable'), keywords: 'splash', run: () => setOverlay({ kind: 'chargement' }) },
     { id: 'rang', label: traduire('Passage de rang'), icon: 'trophy', state: traduire('Samouraï, fictif'), keywords: 'celebration gamification', run: () => setOverlay({ kind: 'rang', rankIndex: 2 }) },
     { id: 'bienvenue', label: traduire('Bienvenue des anciens'), icon: 'user', state: traduire('Résumé de reprise'), keywords: 'reprise anciens', run: () => setOverlay({ kind: 'bienvenue' }) },
@@ -281,8 +318,8 @@ function Studio() {
   const tester: Action[] = [
     { id: 'installation', label: traduire('Première installation'), icon: 'restore', state: traduire('Rien n’est effacé'), keywords: 'simuler reinstallation onboarding paywall', run: () => simulerPremiereInstallation(router) },
     { id: 'heny', label: traduire('Heny'), icon: demoActive ? 'restore' : 'dumbbell', on: demoActive, state: demoActive ? traduire('Chargée, touche pour revenir') : traduire('Pas chargée, touche pour charger'), keywords: 'demo profil', run: toggleHeny },
-    { id: 'gratuit', label: traduire('Vue gratuite'), icon: 'eye', on: simulateFreeUser, state: simulateFreeUser ? 'Active, cadenas visibles' : traduire('Coupée'), keywords: 'premium gratuit cadenas', run: () => setSimulateFreeUser(!simulateFreeUser) },
-    { id: 'capture', label: traduire('Mode capture'), icon: 'camera', on: isScreenshotMode, state: isScreenshotMode ? 'Actif' : traduire('Coupé'), keywords: 'screenshot captures', run: () => void toggleScreenshotMode() },
+    { id: 'gratuit', label: traduire('Vue gratuite'), icon: 'eye', on: simulateFreeUser, state: simulateFreeUser ? traduire('Active, cadenas visibles') : traduire('Coupée'), keywords: 'premium gratuit cadenas', run: () => setSimulateFreeUser(!simulateFreeUser) },
+    { id: 'capture', label: traduire('Mode capture'), icon: 'camera', on: isScreenshotMode, state: isScreenshotMode ? traduire('Actif') : traduire('Coupé'), keywords: 'screenshot captures', run: () => void toggleScreenshotMode() },
     { id: 'notif', label: traduire('Notification test'), icon: 'bell', on: notifEnvoyee, state: notifEnvoyee ? traduire('Programmée, sors de l’app') : traduire('Arrive en 5 secondes'), keywords: 'notification rappel', run: () => void envoyerNotif() },
     { id: 'notifs', label: traduire('Chaque notification'), icon: 'doc', state: traduire('La liste, une par une'), keywords: 'notification rappel vibration autorisation', run: () => ctx.openSection('tests') },
     { id: 'chrono', label: traduire('Chrono test'), icon: 'timer', state: traduire('3 rounds de 15 s'), keywords: 'timer cloche', run: () => router.push('/timer?mode=combat&test=studio' as never) },
@@ -290,76 +327,161 @@ function Studio() {
     { id: 'sons', label: traduire('Sons'), icon: 'bell', state: traduire('Chaque son de l’app'), keywords: 'galerie son audio', run: () => router.push('/studio/sons' as never) },
   ];
 
+  const tous = [...saisons, ...voir, ...tester];
+  const parId = new Map(tous.map((a) => [a.id, a]));
+  const raccourcis: Action[] = RACCOURCIS.flatMap((r) => {
+    const a = parId.get(r.id);
+    return a ? [{ ...a, ton: r.ton }] : [];
+  });
+
+  const cherche = query.trim().length > 0;
   const filtre = (list: Action[]) => list.filter((a) => matches(query, a.label, a.state, a.keywords));
-  const groupes = [
-    { titre: 'Saison de l’accueil', actions: filtre(saisons) },
-    { titre: 'Voir', actions: filtre(voir) },
-    { titre: 'Simuler et tester', actions: filtre(tester) },
-  ].filter((g) => g.actions.length > 0);
+  const groupes: { titre: string; sous: string; ton: TonTuile; actions: Action[] }[] = [
+    { titre: traduire('Saison de l’accueil'), sous: traduire('Un toucher force la saison et ouvre l’accueil'), ton: 'orange', actions: saisons },
+    { titre: traduire('Voir'), sous: traduire('Écrans, fenêtres et galeries, sans rien enregistrer'), ton: 'indigo', actions: voir.filter((a) => !ID_RACCOURCIS.has(a.id)) },
+    { titre: traduire('Simuler et tester'), sous: traduire('Le téléphone comme chez un nouvel utilisateur'), ton: 'vert', actions: tester.filter((a) => !ID_RACCOURCIS.has(a.id)) },
+  ];
+  const outilsTrouves = cherche ? filtre(tous) : [];
+  const rubriquesVisibles = cherche ? RUBRIQUES.filter((r) => matches(query, r.title, r.sub, r.keywords)) : RUBRIQUES;
+  const effacerVisible = !cherche || matches(query, traduire('Tout effacer et repartir de zéro'), MOTS_EFFACER);
+  const rubrique = page ? RUBRIQUES.find((r) => r.id === page) ?? null : null;
+
+  const tuile = (a: Action) => (
+    <ActionTile key={a.id} icon={a.icon} label={a.label} state={a.state} on={a.on} color={a.color} ton={a.ton} busy={busy === a.id} onPress={a.run} />
+  );
 
   return (
     <StudioContext.Provider value={ctx}>
-      <View style={{ flex: 1, backgroundColor: c.background }}>
+      <View style={{ flex: 1, backgroundColor: pal.page }}>
         <ScrollView
           ref={scroll}
-          contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + 40, gap: 14 }}
+          contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: GUTTER, paddingBottom: insets.bottom + 40, gap: 16 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-          <EspaceHeader title={traduire("Studio YOROI")} subtitle={traduire("Tout voir, tout lancer, d’un toucher")} />
+          {rubrique ? (
+            <>
+              <EnTetePage titre={rubrique.title} sous={rubrique.sub} onRetour={() => ouvrirPage(null)} />
+              <rubrique.Page />
+            </>
+          ) : (
+            <>
+              <EnTeteRond titre={traduire('Studio YOROI')} salut={traduire('Tout voir, tout lancer, d’un toucher')} repli="/settings" />
 
-          <View style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 10 }}>
-            <View style={{ gap: 2 }}>
-              <Ink size={12} weight="bold" color={c.textMuted}>{`Version ${info.version}, build ${info.build}, ${info.model}, ${info.os}`}</Ink>
-              <Ink size={12} weight="bold" color={c.textMuted}>{expiresAt ? traduire("Mode créateur{0}, valable jusqu’au {1}", label ? `, ${label}` : '', formatDate(expiresAt)) : traduire('Mode créateur inactif')}</Ink>
-            </View>
-            {pills.length > 0 ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {pills.map((p) => (
-                  <StatePill key={p.label} label={traduire(p.label)} tone={p.tone} />
-                ))}
+              <View style={{ borderRadius: 26, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 12 }}>
+                <Cercles />
+                <View style={{ gap: 6 }}>
+                  <Ink size={12} weight="black" color="rgba(255,255,255,0.72)" style={{ letterSpacing: 0.6 }}>{traduire('MODE CRÉATEUR')}</Ink>
+                  <Ink size={24} weight="black" tight color="#FFFFFF">{label ? label : traduire('Studio YOROI')}</Ink>
+                  <Ink size={14} weight="bold" color="rgba(255,255,255,0.82)" style={{ lineHeight: 20 }}>
+                    {expiresAt ? traduire('Valable jusqu’au {0}', formatDate(expiresAt)) : traduire('Mode créateur inactif')}
+                  </Ink>
+                  <Ink size={12} weight="bold" color="rgba(255,255,255,0.6)">{`Version ${info.version}, build ${info.build}, ${info.model}, ${info.os}`}</Ink>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  {pills.length > 0 ? pills.map((p) => <PuceClaire key={p.label} texte={p.label} />) : <PuceClaire icone="check" texte={traduire('Rien d’allumé, l’app est normale')} />}
+                </View>
+                {forcage ? (
+                  <Pressable
+                    onPress={() => {
+                      selectionAsync().catch(() => {});
+                      resetEverything();
+                    }}
+                    disabled={busy !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={traduire('Tout remettre normal')}
+                    style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 46, paddingHorizontal: 18, borderRadius: 23, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed || busy === 'reset' ? 0.85 : 1 })}
+                  >
+                    <Ink size={14} weight="black" color={pal.indigo}>{busy === 'reset' ? traduire('Un instant') : traduire('Tout remettre normal')}</Ink>
+                  </Pressable>
+                ) : null}
               </View>
-            ) : (
-              <Ink size={13} color={c.textSecondary}>{traduire("Rien d’allumé : l’app se comporte normalement.")}</Ink>
-            )}
-            <Button tone="accent" icon="restore" label={traduire("Tout remettre normal")} onPress={resetEverything} loading={busy === 'reset'} disabled={busy !== null || !forcage} />
-          </View>
 
-          <SearchField value={query} onChange={setQuery} placeholder={traduire("Chercher un outil : paywall, Heny, sons...")} label={traduire("Chercher dans le Studio")} />
+              <SearchField value={query} onChange={setQuery} placeholder={traduire('Chercher un outil : paywall, Heny, sons...')} label={traduire('Chercher dans le Studio')} />
 
-          {groupes.map((g) => (
-            <View key={g.titre} style={{ gap: 10 }}>
-              <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4, marginTop: 4 }}>{traduire(g.titre)}</Ink>
-              <ActionGrid>
-                {g.actions.map((a) => (
-                  <ActionTile key={a.id} icon={a.icon} label={traduire(a.label)} state={a.state} on={a.on} color={a.color} busy={busy === a.id} onPress={a.run} />
-                ))}
-              </ActionGrid>
-            </View>
-          ))}
+              {effacerVisible ? <CarteRepartirDeZero onPress={ctx.repartirDeZero} /> : null}
 
-          {!query.trim() ? <Ink size={18} weight="black" tight style={{ paddingHorizontal: 4, marginTop: 8 }}>{traduire("Rubriques détaillées")}</Ink> : null}
-          <Apercus />
-          <Gamification />
-          <Ambiance />
-          <Tests />
-          <Donnees />
-          <Abonnement />
-          <Demo />
-          <Contenu />
-          <Ecrans />
-          <Diagnostic />
-          <Liens />
+              {cherche ? (
+                <>
+                  {outilsTrouves.length > 0 ? (
+                    <View style={{ gap: 10 }}>
+                      <TitreGroupe>{traduire('Outils')}</TitreGroupe>
+                      <ActionGrid>{outilsTrouves.map(tuile)}</ActionGrid>
+                    </View>
+                  ) : null}
+                  {outilsTrouves.length === 0 && rubriquesVisibles.length === 0 && !effacerVisible ? (
+                    <Note>{traduire('Rien ne correspond. Essaie un autre mot : paywall, Heny, notification, saison.')}</Note>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <View style={{ gap: 10 }}>
+                    <TitreGroupe sous={traduire('Un toucher et c’est lancé')}>{traduire('Raccourcis')}</TitreGroupe>
+                    <GrilleDeux>
+                      {raccourcis.map((a) => (
+                        <TuileRaccourci key={a.id} icon={a.icon} label={a.label} state={a.state} on={a.on} ton={a.ton} busy={busy === a.id} onPress={a.run} />
+                      ))}
+                    </GrilleDeux>
+                  </View>
+                  {groupes.map((g) => (
+                    <View key={g.titre} style={{ gap: 10 }}>
+                      <TitreGroupe sous={g.sous}>{g.titre}</TitreGroupe>
+                      <ActionGrid>{g.actions.map((a) => tuile({ ...a, ton: g.ton }))}</ActionGrid>
+                    </View>
+                  ))}
+                </>
+              )}
 
-          <View style={{ gap: 6, marginTop: 10 }}>
-            <Button tone="ghost" icon="lock" label={traduire("Verrouiller le Studio")} onPress={lockStudio} />
-            <Note>{traduire("Sans jeton valide, rien du Studio n’est visible ni ouvrable dans l’app. Le jeton n’est jamais affiché.")}</Note>
-          </View>
+              {rubriquesVisibles.length > 0 ? (
+                <View style={{ gap: 10 }}>
+                  <TitreGroupe sous={cherche ? undefined : traduire('Chaque rubrique s’ouvre en page entière')}>{traduire('Tout le Studio')}</TitreGroupe>
+                  <GrilleDeux>
+                    {rubriquesVisibles.map((r) => (
+                      <TuileRubrique key={r.id} icon={r.icon} title={r.title} sub={r.sub} ton={r.ton} onPress={() => ouvrirPage(r.id)} />
+                    ))}
+                  </GrilleDeux>
+                </View>
+              ) : null}
+
+              <View style={{ gap: 6, marginTop: 10 }}>
+                <Button tone="ghost" icon="lock" label={traduire('Verrouiller le Studio')} onPress={lockStudio} />
+                <Note>{traduire('Sans jeton valide, rien du Studio n’est visible ni ouvrable dans l’app. Le jeton n’est jamais affiché.')}</Note>
+              </View>
+            </>
+          )}
         </ScrollView>
         <StudioOverlays overlay={overlay} onClose={() => setOverlay(null)} />
         <ApercuScenes visible={scenes} onClose={() => setScenes(false)} />
+        <FenetreRepartirDeZero visible={saisieEffacement} onClose={() => setSaisieEffacement(false)} />
       </View>
     </StudioContext.Provider>
+  );
+}
+
+/** En-tete d'une page de rubrique : retour rond blanc vers le tableau de bord, titre et ce qu'on y trouve */
+function EnTetePage({ titre, sous, onRetour }: { titre: string; sous: string; onRetour: () => void }) {
+  const pal = usePaletteProgramme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 }}>
+      <Pressable
+        onPress={() => {
+          selectionAsync().catch(() => {});
+          onRetour();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={traduire('Retour au Studio')}
+        hitSlop={6}
+        style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }], shadowColor: pal.indigo, shadowOpacity: 0.07, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 2 })}
+      >
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path d="M15 5l-7 7 7 7" stroke={pal.texte} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      </Pressable>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Ink size={13} weight="bold" color={pal.texte2} numberOfLines={2}>{sous}</Ink>
+        <Ink size={22} weight="black" tight color={pal.texte} numberOfLines={2} accessibilityRole="header">{titre}</Ink>
+      </View>
+    </View>
   );
 }

@@ -2,12 +2,10 @@
  * Studio, rubrique Diagnostic : infos de l'appareil a copier, stockage local (recherche et
  * suppression cle par cle, avec confirmation), compteurs d'usage locaux, Sentry (desactive, explique),
  * les 50 derniers messages du journal local (en memoire, rien n'est envoye), et « tout effacer »
- * comme une installation neuve (deux confirmations, refuse pendant une demo pour proteger
- * la sauvegarde de tes vraies donnees).
+ * qui ouvre le meme effacement complet que la carte rouge du haut du Studio (RepartirDeZero.tsx).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
@@ -16,10 +14,9 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Button, Card, Row } from '@/components/yoroi/v2/espace/ui';
 import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { appInfoText, formatDate, getAppInfo } from '@/lib/v2/creator/deviceInfo';
-import { DemoActiveError, wipeEverything } from '@/lib/v2/creator/wipe';
 import { DEMO_PROTECTED_KEYS } from '@/lib/demoDataService';
 import { clearRecentLogs, getRecentLogs, type LocalLogEntry } from '@/lib/security/logger';
-import { KV, Note, SearchField, SmallAction, StudioSection, SubTitle, confirm, confirmTwice, useStudio } from './parts';
+import { KV, Note, SearchField, SmallAction, StudioSection, SubTitle, confirm, useStudio } from './parts';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
@@ -55,15 +52,13 @@ const isProtected = (k: string) => DEMO_PROTECTED_KEYS.includes(k);
 export function Diagnostic() {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const router = useRouter();
-  const { demoActive } = useStudio();
-  const { expiresAt, label, lock } = useCreatorMode();
+  const { demoActive, repartirDeZero } = useStudio();
+  const { expiresAt, label } = useCreatorMode();
   const [keys, setKeys] = useState<KeyRow[] | null>(null);
   const [counters, setCounters] = useState<Record<string, string | null>>({});
   const [logs, setLogs] = useState<LocalLogEntry[]>([]);
   const [q, setQ] = useState('');
   const [all, setAll] = useState(false);
-  const [wiping, setWiping] = useState(false);
   const info = getAppInfo();
 
   const load = useCallback(async () => {
@@ -127,29 +122,6 @@ export function Diagnostic() {
         .then(load)
         .catch(() => appAlert(traduire('Oups'), traduire('La clé n’a pas pu être effacée.')));
     }, true);
-  };
-
-  const wipe = () => {
-    if (demoActive) {
-      appAlert(traduire('Heny est chargée'), traduire('Reviens d’abord à tes données : sinon leur sauvegarde serait perdue avec le reste.'));
-      return;
-    }
-    confirmTwice(
-      { title: traduire('Tout effacer ?'), message: traduire('Séances, pesées, réglages, sauvegardes locales et jeton créateur : le téléphone revient comme une installation neuve. Fais une sauvegarde avant si tu veux garder tes données.'), ok: traduire('Continuer') },
-      { title: traduire('Vraiment tout ?'), message: traduire('Rien ne pourra être récupéré sur ce téléphone. Tu devras recoller ton jeton pour rouvrir le Studio.'), ok: traduire('Tout effacer') },
-      () => {
-        setWiping(true);
-        wipeEverything()
-          .then(async () => {
-            await lock().catch(() => undefined);
-            router.replace('/onboarding' as never);
-          })
-          .catch((e) => {
-            setWiping(false);
-            appAlert(traduire('Oups'), e instanceof DemoActiveError ? e.message : traduire('L’effacement s’est arrêté en route. Ferme et rouvre l’app, puis recommence.'));
-          });
-      },
-    );
   };
 
   return (
@@ -238,8 +210,8 @@ export function Diagnostic() {
       {!q.trim() && !all && filtered.length > FIRST ? <Button tone="ghost" label={traduire("Voir les {0} clés", filtered.length)} onPress={() => setAll(true)} small /> : null}
 
       <View style={{ gap: 6, marginTop: 6 }}>
-        <Button tone="danger" icon="trash" label={traduire("Tout effacer")} onPress={wipe} loading={wiping} disabled={wiping} />
-        <Note>{traduire("Comme une installation neuve : base de données, stockage local et clés sécurisées de YOROI, puis l’onboarding. Deux confirmations. Refusé tant que Heny est chargée, pour garder la sauvegarde de tes vraies données.")}</Note>
+        <Button tone="danger" icon="trash" label={traduire("Tout effacer et repartir de zéro")} onPress={repartirDeZero} />
+        <Note>{traduire("Comme une installation neuve : toutes les données, le jeton créateur compris, puis l’onboarding. Une fenêtre qui dit tout ce qui part, puis le mot à écrire.")}</Note>
       </View>
     </StudioSection>
   );
