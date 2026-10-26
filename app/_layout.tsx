@@ -466,6 +466,7 @@ function RootLayoutContent() {
 
         <Stack.Screen name="quick-nutrition" options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="import-workouts" options={{ presentation: 'card' }} />
+        <Stack.Screen name="importer-carnet" options={{ presentation: 'card' }} />
         <Stack.Screen name="import-csv" options={{ presentation: 'card' }} />
         <Stack.Screen name="customize-tabs" options={{ presentation: 'card' }} />
         <Stack.Screen name="frame-selection" options={{ presentation: 'card' }} />

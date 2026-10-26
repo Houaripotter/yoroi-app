@@ -309,6 +309,8 @@ export default function Ajouter() {
               onPress={() => open('/mes-seances')}
               icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z" {...accentStroke} /></Svg>}
             />
+            {/* 26 octobre 2026 : des annees de seances notees dans le telephone, ou Hevy */}
+            <QuickRow label={traduire("Tes notes du téléphone, ou Hevy")} title={traduire("Importer mes séances")} onPress={() => open('/importer-carnet')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...accentStroke} /></Svg>} />
             <QuickRow label={traduire("Séance passée")} title={traduire("Un autre jour, date au choix")} onPress={() => open('/seance/deja-faite')} icon={<Svg width={18} height={18} viewBox="0 0 24 24"><Rect x={4} y={5.5} width={16} height={15} rx={3} {...accentStroke} /><Path d="M4 10h16M9 3.5v4M15 3.5v4" {...accentStroke} /></Svg>} />
             {provider ? (
               <QuickRow

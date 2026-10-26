@@ -438,6 +438,7 @@ export default function Seances() {
         {importSante ? (
           <Row icon="download" title={traduire("Importer mes séances")} sub={traduire("Depuis {0}, sans doublon", nomSourceSante())} onPress={() => { setMenuOpen(false); setTimeout(() => setImportOpen(true), 350); }} />
         ) : null}
+        <Row icon="share" title={traduire("Importer mes séances")} sub={traduire("Tes notes du téléphone, ou Hevy")} onPress={() => { setMenuOpen(false); router.push('/importer-carnet' as any); }} />
         <Row icon="share" title={traduire("Importer un fichier")} sub={traduire("GPX ou TCX, depuis Strava ou Garmin")} onPress={() => { setMenuOpen(false); router.push('/import-workouts' as any); }} />
         <Row icon="calendar" title={traduire("Planning et calendrier")} onPress={() => { setMenuOpen(false); router.push('/planning' as any); }} />
       </Sheet>
