@@ -36,7 +36,8 @@ export function basculerJour(jours: number[], j: number): number[] {
   return jours.includes(j) ? jours.filter((x) => x !== j) : [...jours, j].sort((a, b) => a - b);
 }
 
-export function JoursPicker({ value, onToggle, label = traduire('Jour') }: { value: number[]; onToggle: (j: number) => void; label?: string }) {
+/** couleurs (26 octobre 2026, onboarding) : la couleur de chaque jour pris, du lundi au dimanche ; sans elle, l'accent */
+export function JoursPicker({ value, onToggle, label = traduire('Jour'), couleurs }: { value: number[]; onToggle: (j: number) => void; label?: string; couleurs?: readonly (string | null)[] }) {
   const c = useYoroiTheme().theme.colors;
   return (
     <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -55,7 +56,7 @@ export function JoursPicker({ value, onToggle, label = traduire('Jour') }: { val
             style={{ flex: 1 }}
           >
             {({ pressed }) => (
-              <View style={{ height: 64, borderRadius: 16, backgroundColor: on ? c.accent : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <View style={{ height: 64, borderRadius: 16, backgroundColor: on ? couleurs?.[j] ?? c.accent : pressed ? c.fillSoft : c.surface, borderWidth: on ? 0 : 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                 <Ink size={20} weight="black" color={on ? '#FFFFFF' : c.ink}>{l}</Ink>
                 <Ink size={10} weight="bold" color={on ? '#FFFFFF' : c.textMuted}>{JOURS_COURTS[j].slice(0, 3)}</Ink>
               </View>

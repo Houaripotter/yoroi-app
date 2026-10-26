@@ -385,8 +385,18 @@ function Clair({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante |
 
 const ANNEAU_CLES: CleSanteJour[] = [...ORDRE_ACTIVITE];
 
-function Anneaux({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante | null | undefined }) {
+/**
+ * Pistes claires de la vitrine (26 octobre 2026, Houari : « mets de la couleur, remplis les plus, du vert et du bleu ») :
+ * en clair, la piste prend une teinte douce de la couleur de l'anneau au lieu de la piste sombre ; en sombre, rien ne change.
+ */
+const PISTE_CLAIRE: Record<string, string> = { pas: '#FFE0EA', exercice: '#E9F9D2', 'energie-active': '#D6F8FA' };
+/** chaque apparition de la vitrine rejoue le remplissage (l'accueil, lui, ne le joue qu'une fois) */
+let vitrineVue = 0;
+
+function Anneaux({ mesures, o, vitrine = false }: { mesures: MesureSanteJour[]; o: ObjectifsSante | null | undefined; vitrine?: boolean }) {
   const router = useRouter();
+  const pistesClaires = vitrine && !paletteSombre();
+  const [cleAnneaux] = useState(() => (vitrine ? `vitrine:sante:${++vitrineVue}` : 'sante'));
   const anneaux = ANNEAU_CLES.map((k) => mesures.find((m) => m.cle === k)).filter(Boolean) as MesureSanteJour[];
   const autres = mesures.filter((m) => !ANNEAU_CLES.includes(m.cle));
   const centre = anneaux[0];
@@ -399,19 +409,20 @@ function Anneaux({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <Pressable onPress={() => router.push(`/sante/${centre.cle}` as any)} accessibilityRole="button" accessibilityLabel={a11yMesure(centre, o)}>
             <AnneauxConcentriques
-              cle="sante"
+              cle={cleAnneaux}
               taille={124}
               epaisseur={9}
               ecart={2}
               anneaux={anneaux.map((m) => {
                 const obj = objectifMesure(m.cle, o);
-                return { part: obj && obj.cible > 0 ? Math.min(2, m.valeur / obj.cible) : 0, couleurs: couleurActivite(m.cle) };
+                const couleurs = couleurActivite(m.cle);
+                return { part: obj && obj.cible > 0 ? Math.min(2, m.valeur / obj.cible) : 0, couleurs: pistesClaires ? { ...couleurs, piste: PISTE_CLAIRE[m.cle] ?? couleurs.piste } : couleurs };
               })}
             >
               <View style={{ alignItems: 'center', width: 124 - 2 * anneaux.length * 11 }}>
                 {centre.cle === 'pas' ? (
                   <>
-                    <ChiffreAnime valeur={centre.valeur} format={(x) => texteMesureSante({ ...centre, valeur: Math.round(x) }).valeur} cle="sante:centre" taille={anneaux.length > 2 ? 15 : 18} />
+                    <ChiffreAnime valeur={centre.valeur} format={(x) => texteMesureSante({ ...centre, valeur: Math.round(x) }).valeur} cle={`${cleAnneaux}:centre`} taille={anneaux.length > 2 ? 15 : 18} />
                     <Ink size={9.5} weight="bold" color={P.ink2}>
                       pas
                     </Ink>
@@ -483,9 +494,11 @@ function Anneaux({ mesures, o }: { mesures: MesureSanteJour[]; o: ObjectifsSante
   );
 }
 
-export function TuileSanteJour({ mesures, objectifs, rendu }: { mesures: MesureSanteJour[]; objectifs?: ObjectifsSante | null; rendu?: StyleSante }) {
+/** vitrine : l'apercu de l'onboarding (Vitrines.tsx), toujours en anneaux, pistes claires, animation a part de l'accueil */
+export function TuileSanteJour({ mesures, objectifs, rendu, vitrine = false }: { mesures: MesureSanteJour[]; objectifs?: ObjectifsSante | null; rendu?: StyleSante; vitrine?: boolean }) {
   const { style } = useStyleSante();
   const s = rendu ?? style;
+  if (vitrine) return <Anneaux mesures={mesures} o={objectifs} vitrine />;
   if (s === 'nuit') return <Nuit mesures={mesures} o={objectifs} />;
   if (s === 'mosaique') return <Mosaique mesures={mesures} o={objectifs} />;
   if (s === 'cadran') return <Cadran mesures={mesures} o={objectifs} />;

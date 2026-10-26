@@ -16,6 +16,10 @@
  * La decision d'afficher l'onboarding reste dans app/index.tsx (lib/v2/onboarding/etatOuverture.ts).
  * 18 octobre 2026 (INSTALLATION) : apres une reinstallation, ce qui existe deja (trousseau, base) preremplit les reponses ;
  *   l'enregistrement final fusionne sans rien effacer (lib/v2/onboarding/fusion.ts).
+ * 26 octobre 2026 (revue complete) : jours en couleurs avec tes sports (Rythme, Ton plan), « Tout au meme endroit »
+ *   environ 40 % plus rapide, la preparation dit ce qu'elle prepare vraiment (lignes ci dessous), Ton plan compare
+ *   sport, alimentation et les deux (sources.ts) et montre un apercu gamifie. Tes objectifs, tes jours et tes sports
+ *   sont repris par le coach juste apres (lib/v2/programmes/profilCoach.ts) : il ne les redemande pas.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
@@ -92,7 +96,8 @@ import { Resultat } from '@/components/yoroi/v2/onboarding/Resultat';
 import { Premium } from '@/components/yoroi/v2/onboarding/Premium';
 import type { Nav } from '@/components/yoroi/v2/onboarding/types';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { kg } from '@/components/yoroi/v2/onboarding/ui';
 
 const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
@@ -552,6 +557,22 @@ export default function OnboardingScreen() {
       });
   };
 
+  // ===== Preparation : ce qui est vraiment pret a la fin (26 octobre 2026) =====
+  const lignesPreparation = (): string[] => {
+    const cur = draftRef.current;
+    const stable = sensDe(goalsDe(cur)) === 'stable' || cur.target == null;
+    const n = cur.jours.length || cur.sessions || 0;
+    const r = cur.rappels;
+    const rappels = !!(r && (r.seance.actif || r.pesee.actif || r.eau.actif || r.bilan.actif));
+    return [
+      stable ? traduire('Ton suivi de poids') : traduire('Ton chemin vers {0} kg', kg(cur.target as number)),
+      n ? traduirePluriel(n, n > 1, 'Ta semaine : {0} séance', 'Ta semaine : {0} séances', n) : traduire('Ta semaine d’entraînement'),
+      ...(cur.univers !== 'aucun' ? [traduire('Ton personnage et ses rangs')] : []),
+      ...(rappels ? [traduire('Tes rappels')] : []),
+      traduire('Ton écran d’accueil'),
+    ];
+  };
+
   // ===== Rendu =====
   const render = () => {
     switch (page) {
@@ -710,6 +731,7 @@ export default function OnboardingScreen() {
             nav={nav()}
             goal={d.goal}
             days={d.jours}
+            sports={d.sports}
             onToggle={(j) => {
               const cur = draftRef.current.jours;
               const next = cur.includes(j) ? cur.filter((x) => x !== j) : [...cur, j].sort((a, b) => a - b);
@@ -752,7 +774,7 @@ export default function OnboardingScreen() {
       case COMPARAISON:
         return <Comparaison nav={nav()} genre={genre} univers={univers} onNext={() => goTo(forged ? RESULTAT : FORGE)} />;
       case FORGE:
-        return <Forge nav={{ progress: progressOf(page, true, PRENOM, RESULTAT), onClose: isPreview ? closePreview : undefined }} genre={genre} univers={univers} run={runFinal} onSound={playGong} onDone={() => goTo(RESULTAT)} />;
+        return <Forge nav={{ progress: progressOf(page, true, PRENOM, RESULTAT), onClose: isPreview ? closePreview : undefined }} genre={genre} univers={univers} lignes={lignesPreparation()} run={runFinal} onSound={playGong} onDone={() => goTo(RESULTAT)} />;
       case RESULTAT:
         return (
           <Resultat
@@ -761,6 +783,8 @@ export default function OnboardingScreen() {
             genre={genre}
             univers={univers}
             rankName={rangNom(armure.rankIndex, univers === 'japon' ? 'japon' : 'classique')}
+            rankIndex={armure.rankIndex}
+            pesees={d.peseeJours.length}
             start={d.weighIn?.weight ?? d.weight}
             target={sensDe(goalsDe(d)) === 'stable' ? null : d.target}
             goal={d.goal}

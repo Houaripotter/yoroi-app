@@ -27,7 +27,7 @@ import { TropheeRecord } from '@/components/yoroi/v2/charts/core';
 import { STYLES_CITATION } from '@/lib/v2/accueil/styleCitation';
 import { CITATIONS } from '@/lib/v2/accueil/citations';
 import type { StyleCitation } from '@/lib/v2/accueil/styleCitation';
-import type { MesureSanteJour } from '@/lib/v2/accueil/enPlus';
+import type { MesureSanteJour, ObjectifsSante } from '@/lib/v2/accueil/enPlus';
 import type { PhraseRiche } from '@/lib/v2/bilan/texte';
 import type { CarteData, FormatId, ModeleId, OptionsCarte } from '@/lib/v2/cartes/types';
 import { MACHINE_BY_ID } from '@/lib/v2/seance/machines';
@@ -73,15 +73,21 @@ const isoJour = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padS
 
 // ===== 1. L'accueil en grille de tuiles colorees, avec « Ta santé aujourd'hui » =====
 
-/** Exemple de mesures Sante du jour (les vraies viennent d'Apple Sante ou de Health Connect) */
+/**
+ * Exemple de mesures Sante du jour (les vraies viennent d'Apple Sante ou de Health Connect).
+ * 26 octobre 2026 (Houari : « ça ne ressemble pas aux vrais anneaux, mets de la couleur, remplis les plus ») : avec
+ * des objectifs d'exemple, les trois anneaux se remplissent bien (pas 92 %, exercice 80 %, calories 85 %), comme sur
+ * l'accueil un jour actif, au lieu de pistes sombres vides.
+ */
 const SANTE_EXEMPLE: MesureSanteJour[] = [
-  { cle: 'pas', valeur: 8420, hier: false },
+  { cle: 'pas', valeur: 7360, hier: false },
   { cle: 'energie-active', valeur: 512, hier: false },
   { cle: 'sommeil', valeur: 432, hier: false },
   { cle: 'fc-repos', valeur: 56, hier: false },
   { cle: 'exercice', valeur: 48, hier: false },
   { cle: 'distance', valeur: 6.1, hier: false },
 ];
+const OBJECTIFS_EXEMPLE: ObjectifsSante = { kcal: 600, exercice: 60 };
 
 export function VitrineAccueil() {
   const aujourdhui = isoJour(new Date());
@@ -92,7 +98,7 @@ export function VitrineAccueil() {
       </View>
       <GrilleAccueil
         tuiles={[
-          { cle: 'sante', taille: 'pleine', contenu: <TuileSanteJour mesures={SANTE_EXEMPLE} /> },
+          { cle: 'sante', taille: 'pleine', contenu: <TuileSanteJour mesures={SANTE_EXEMPLE} objectifs={OBJECTIFS_EXEMPLE} vitrine /> },
           { cle: 'serie', taille: 'demi', groupe: 'g', contenu: <TuileSerie semaines={6} goal={3} /> },
           { cle: 'record', taille: 'demi', groupe: 'g', contenu: <TuileRecord record={{ titre: traduire('Développé couché'), valeur: '100 kg', date: aujourdhui }} /> },
         ]}

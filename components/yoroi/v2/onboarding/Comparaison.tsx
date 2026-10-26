@@ -7,6 +7,8 @@
  * Reduire les animations ou VoiceOver : tout est affiche d'un coup, sans mouvement.
  * Les fonctions citees existent toutes. 17 octobre 2026 : les six tuiles sont les six domaines de l'accueil, dans leurs couleurs.
  * Ancienne version (ancien monde puis tuiles, environ 1,6 s) : _archive_ancien_design_2026-10-09/onb_retouches/.
+ * 26 octobre 2026 (Houari : « accélère un peu, c'est trop lent ») : environ 40 % plus rapide, un étage toutes les
+ * 0,9 s (au lieu de 1,5 s), fondus de 0,45 s ; tout est là en un peu plus de 3 s au lieu de 5,8 s.
  */
 import React, { useEffect, useState } from 'react';
 import { AccessibilityInfo, Image, Platform, View, useWindowDimensions } from 'react-native';
@@ -25,10 +27,12 @@ import { MainButton, Riche, Shell, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire } from '@/lib/i18n/tr';
 
-/** Rythme du recit : un etage toutes les 1,5 s (au moins 1,2 s demande), fondu de 0,7 s */
-export const ETAGE_MS = 1500;
-const DEBUT_MS = 350;
-const FONDU_MS = 700;
+/** Rythme du recit (26 octobre 2026) : un etage toutes les 0,9 s, fondu de 0,45 s */
+export const ETAGE_MS = 900;
+const DEBUT_MS = 220;
+const FONDU_MS = 450;
+/** les six tuiles arrivent ce temps apres l'etage YOROI */
+const TUILES_MS = 550;
 
 const KABUTO = require('@/assets/avatars/app/ornements/kabuto.webp');
 
@@ -119,7 +123,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
       return;
     }
     const timers = [0, 1, 2, 3].map((i) => setTimeout(() => setEtape((e) => Math.max(e, i + 1)), DEBUT_MS + i * ETAGE_MS));
-    timers.push(setTimeout(() => setEtape(5), DEBUT_MS + 3 * ETAGE_MS + 900));
+    timers.push(setTimeout(() => setEtape(5), DEBUT_MS + 3 * ETAGE_MS + TUILES_MS));
     return () => timers.forEach(clearTimeout);
   }, [calme]);
 
@@ -167,7 +171,7 @@ export function Comparaison({ nav, genre = 'h', univers = 'japon', onNext }: { n
         <View style={{ height: picto + 40 }} />
       )}
       {etape >= 5 ? (
-        <Animated.View entering={calme ? undefined : FadeIn.delay(300).duration(FONDU_MS)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 14 }}>
+        <Animated.View entering={calme ? undefined : FadeIn.delay(200).duration(FONDU_MS)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 14 }}>
           <Icon name="shield" size={16} color={c.accent} />
           <Riche text={traduire("**Hors ligne**, tout reste sur ton téléphone")} size={14} weight="bold" color={c.ink} />
         </Animated.View>

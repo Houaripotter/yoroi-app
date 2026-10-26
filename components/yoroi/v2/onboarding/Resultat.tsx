@@ -4,30 +4,37 @@
  * et en petit seulement ton personnage et ton rang. Uniquement tes reponses et ce que l'app calcule.
  * Vague 45 : le personnage suit l'univers choisi (Guerrier, Sportif, ou aucune figure) ; le nom du rang
  * arrive deja calcule par rangNom dans l'univers choisi.
+ * 26 octobre 2026 (revue de l'onboarding) : sous ton chemin, « Sport, alimentation, ou les deux ? » (PlanSport.tsx,
+ * seulement les etudes de sources.ts) quand ton poids doit baisser ; ta semaine en couleurs avec tes sports
+ * (SemaineCouleurs.tsx) ; « Ton accueil, des maintenant » devient un apercu qui donne envie (ApercuProgres.tsx :
+ * le chemin qui se remplit, ta premiere semaine en XP, le prochain rang) ; enfin, ton coach qui suit avec tes reponses.
+ * La carte Poids complete reste a l'ecran Demonstration (pas de doublon).
  */
 import React, { useState } from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { CartePoids } from '@/components/yoroi/v2/accueil/CartePoids';
+import { Icon } from '@/components/yoroi/v2/seances/Icon';
+import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { guerrierImage } from '@/components/yoroi/v2/espace/assets';
 import { CLASSIQUE_IMAGES } from '@/lib/v2/dojo/personnages';
+import { rangNom } from '@/lib/v2/dojo/univers';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
-import { getSportName } from '@/lib/sports';
 import type { Goal } from '@/lib/v2/onboarding/draft';
-import { isoOf } from '@/lib/v2/onboarding/plan';
 import { sensDe } from '@/lib/v2/onboarding/objectifs';
 import { PAS_UNE_PROMESSE, estimerArrivee, fourchetteDates, seancesTexte } from '@/lib/v2/pesee/estimation';
 import { PiedArrivee } from '@/components/yoroi/v2/premium/TonPlan';
 import { joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
-import { WeekDots } from './Rythme';
 import { arriveeVue, gapText } from './Cap';
 import { PlanCurve } from './PlanCurve';
-import { MainButton, OR_PROFOND, Riche, Shell, kg, marquer, useColors } from './ui';
+import { SemaineCouleurs } from './SemaineCouleurs';
+import { PlanSport } from './PlanSport';
+import { ApercuProgres } from './ApercuProgres';
+import { MainButton, Riche, Shell, kg, marquer, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-export function Resultat({ nav, name, genre, univers = 'japon', rankName, start, target, goal, goals, sessions, days = [], height = null, sports, onNext }: {
+export function Resultat({ nav, name, genre, univers = 'japon', rankName, rankIndex = 0, start, target, goal, goals, sessions, days = [], height = null, sports, pesees = 0, onNext }: {
   nav: Nav;
   name: string;
   genre: 'h' | 'f';
@@ -35,6 +42,8 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, start,
   univers?: ChoixUnivers;
   /** nom du rang, deja dans l'univers choisi (rangNom) */
   rankName: string;
+  /** 26 octobre 2026 : index du rang (0 a 4), pour l'apercu du Dojo */
+  rankIndex?: number;
   start: number | null;
   target: number | null;
   goal: Goal | null;
@@ -45,9 +54,12 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, start,
   days?: number[];
   height?: number | null;
   sports: string[];
+  /** pesees prevues par semaine (ecran Pesee) */
+  pesees?: number;
   onNext: () => void;
 }) {
   const c = useColors();
+  const pal = usePaletteProgramme();
   const [w, setW] = useState(0);
   const title = name.trim() ? traduire("{0}, voici **ton plan**", name.trim()) : traduire('Voici **ton plan**');
   const liste = goals && goals.length ? goals : goal ? [goal] : [];
@@ -57,10 +69,11 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, start,
   const e = start != null && !maintain ? estimerArrivee({ start, target: target as number, sessions, heightCm: height, recompo: recompo && (target as number) < start }) : null;
   const v = e && start != null ? arriveeVue(e, start, target as number) : null;
   const ok = e?.kind === 'ok';
-  const today = isoOf(new Date());
-  const sportNames = sports.map((s) => getSportName(s) ?? s).filter(Boolean).slice(0, 4);
-  const perso = univers === 'japon' ? guerrierImage(genre, 0) : univers === 'classique' ? CLASSIQUE_IMAGES[genre === 'f' ? 'f' : 'h'][0] : null;
-  const phraseRang = perso ? traduire("Ton personnage commence au rang {0}. Il évolue avec toi dans le Dojo.", rankName) : traduire("Tu commences au rang {0}. Ta progression se suit dans le Dojo.", rankName);
+  const baisse = start != null && target != null && !maintain && (target as number) < start;
+  const g = genre === 'f' ? 'f' : 'h';
+  const ri = Math.max(0, Math.min(4, rankIndex));
+  const persoDe = (i: number) => (univers === 'japon' ? guerrierImage(genre, i) : univers === 'classique' ? CLASSIQUE_IMAGES[g][i] : null);
+  const nextName = ri < 4 ? rangNom(ri + 1, univers === 'japon' ? 'japon' : 'classique') : null;
 
   return (
     <Shell {...nav} title={title} gap={14} footer={<MainButton label={traduire("Continuer")} onPress={onNext} />}>
@@ -95,28 +108,42 @@ export function Resultat({ nav, name, genre, univers = 'japon', rankName, start,
         </Animated.View>
       ) : null}
 
-      <Animated.View entering={FadeInDown.delay(150).duration(380)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 12 }}>
+      {baisse ? (
+        <Animated.View entering={FadeInDown.delay(120).duration(380)}>
+          <PlanSport sessions={sessions} sports={sports} />
+        </Animated.View>
+      ) : null}
+
+      <Animated.View entering={FadeInDown.delay(220).duration(380)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 12 }}>
         <View style={{ gap: 2 }}>
           <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ta semaine type")}</Ink>
           <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={sessions ? traduirePluriel(sessions, sessions > 1, "**{0} séance** par semaine", "**{0} séances** par semaine", sessions) : traduire('À ton rythme')} />
           {days.length ? <Ink size={13} weight="bold" color={c.textSecondary} numberOfLines={2}>{joursTexte(days).replace(/^./, (x) => x.toUpperCase())}</Ink> : null}
-          {sportNames.length ? <Ink size={13} color={c.textSecondary} numberOfLines={2}>{sportNames.join(', ')}</Ink> : null}
         </View>
-        <WeekDots count={sessions ?? 0} days={days} size={34} />
+        <SemaineCouleurs days={days} sports={sports} size={36} />
       </Animated.View>
 
-      {start != null ? (
-        <Animated.View entering={FadeInDown.delay(300).duration(380)} style={{ gap: 8 }}>
-          <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton accueil, dès maintenant")}</Ink>
-          <View pointerEvents="none">
-            <CartePoids demo series={[{ date: today, value: start, trend: start, hasComposition: false }]} targetWeight={maintain ? null : target} startWeight={start} />
-          </View>
-        </Animated.View>
-      ) : null}
+      <Animated.View entering={FadeInDown.delay(320).duration(380)} style={{ gap: 8 }}>
+        <Ink size={13} weight="bold" color={c.textMuted}>{traduire("Ton accueil, dès maintenant")}</Ink>
+        <ApercuProgres
+          start={start}
+          target={maintain ? null : target}
+          sessions={sessions}
+          recompo={recompo}
+          pesees={pesees}
+          rankIndex={ri}
+          rankName={rankName}
+          nextName={nextName}
+          image={persoDe(ri)}
+          imageSuivante={ri < 4 ? persoDe(ri + 1) : null}
+        />
+      </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(450).duration(380)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, backgroundColor: c.fillSoft, paddingHorizontal: 12, paddingVertical: 8 }}>
-        {perso ? <Image source={perso} style={{ width: 44, height: 52 }} resizeMode="contain" /> : null}
-        <Ink size={13} color={c.textSecondary} style={{ flex: 1, lineHeight: 18, paddingVertical: perso ? 0 : 6 }}>{phraseRang}</Ink>
+      <Animated.View entering={FadeInDown.delay(420).duration(380)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, backgroundColor: pal.teinte, padding: 14 }}>
+        <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: pal.indigo, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="list" size={22} color="#FFFFFF" />
+        </View>
+        <Riche size={13} lineHeight={18} color={c.ink} style={{ flex: 1 }} text={traduire('Ensuite, **ton coach** te propose un programme sur ces jours. Il reprend tes réponses, sans tout redemander.')} />
       </Animated.View>
     </Shell>
   );

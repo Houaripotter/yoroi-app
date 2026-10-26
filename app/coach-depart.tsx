@@ -15,6 +15,9 @@
  * Paramètres : depuis=onboarding (fin de l'onboarding : un premier écran « Ton coach te prépare ton programme ? »),
  * chemin=liste (ouvre directement la liste).
  * « Plus tard » note yoroi_coach_depart_v1 = 'plus_tard' (sauf si le départ a déjà été fait), « C'est parti » note 'fait'.
+ * 26 octobre 2026 (revue de l'onboarding, Houari : « ne pose pas deux fois la même question ») : tes réponses de
+ * l'onboarding (objectifs, jours, sports, lib/v2/programmes/profilCoach.ts) préremplissent le départ. Juste après
+ * l'onboarding, les jours et le sport déjà connus sont sautés, et le premier écran rappelle ce que tu as déjà dit.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -37,6 +40,9 @@ import { DEBUTANT, OBJECTIFS_CHOIX } from '@/lib/v2/programmes/choix';
 import type { ObjectifChoix } from '@/lib/v2/programmes/choix';
 import { conseilJours } from '@/lib/v2/programmes/coach';
 import { AUTRES_SPORTS, TEMPS_SEANCE, conseilDepart, ecrireDepart, lireDepart } from '@/lib/v2/programmes/depart';
+import { etapesConnues, lireProfilCoach } from '@/lib/v2/programmes/profilCoach';
+import type { ProfilCoach } from '@/lib/v2/programmes/profilCoach';
+import { joursTexte } from '@/components/yoroi/v2/espace/JoursPicker';
 import type { AutreSport, TempsSeance } from '@/lib/v2/programmes/depart';
 import { aDesJoursMarche, MINUTES_FIN } from '@/lib/v2/programmes/finSeance';
 import { GROUPES_PROGRAMMES, modulesPossibles, moduleUtile, normaliserModules } from '@/lib/v2/programmes/modules';
@@ -44,7 +50,7 @@ import type { ModuleId } from '@/lib/v2/programmes/modules';
 import { chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerMateriel, joursConseilles, materielDuLieu } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Materiel, Niveau } from '@/lib/v2/programmes/types';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 type Etape = 'intro' | 'objectifs' | 'niveau' | 'jours' | 'temps' | 'sport' | 'lieu' | 'liste' | 'resultat';
 
@@ -86,11 +92,21 @@ export default function CoachDepart() {
   const [guide, setGuide] = useState(false);
   const [femme, setFemme] = useState(false);
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
+  // ce que l'onboarding sait déjà (objectifs, jours, sport), repris ici sans reposer la question
+  const [profil, setProfil] = useState<ProfilCoach | null>(null);
 
   useEffect(() => {
     getProfile().then((pr) => setFemme(pr?.avatar_gender === 'femme')).catch(() => {});
     chargerProgrammeActif().then(setActif).catch(() => setActif(null));
+    void lireProfilCoach().then((p) => {
+      setProfil(p);
+      if (p.objectifs.length) setObjectifs((l) => (l.length ? l : p.objectifs));
+      if (p.jours.length) setJours((l) => (l.length ? l : p.jours));
+      if (p.sport) setSport(p.sport);
+    });
   }, []);
+  const connues = profil && depuisOnboarding ? etapesConnues(profil) : { jours: false, sport: false };
+  const prerempli = !!profil?.objectifs.length;
 
   const debuter = objectifs.includes('debuter');
   const courseSeule = objectifs.length === 1 && objectifs[0] === 'course';
@@ -103,7 +119,10 @@ export default function CoachDepart() {
   const img = sportImage(prog ? sportDuProgramme(prog) : 'musculation', femme, 1);
 
   // les étapes du questionnaire, pour la barre de progression
-  const suiteQuiz: Etape[] = debuter ? ['objectifs', 'jours', 'temps', 'sport', 'lieu', 'resultat'] : ['objectifs', 'niveau', 'jours', 'temps', 'sport', 'lieu', 'resultat'];
+  // juste après l'onboarding, les jours et le sport déjà donnés ne sont pas redemandés
+  const suiteQuiz: Etape[] = (['objectifs', 'niveau', 'jours', 'temps', 'sport', 'lieu', 'resultat'] as Etape[]).filter(
+    (e) => !(e === 'niveau' && debuter) && !(e === 'jours' && connues.jours) && !(e === 'sport' && connues.sport),
+  );
   const suiteListe: Etape[] = ['liste', 'resultat'];
   const suiteVue = chemin === 'liste' ? suiteListe : suiteQuiz;
   const rang = Math.max(0, suiteVue.indexOf(etape));
@@ -228,9 +247,37 @@ export default function CoachDepart() {
   let bas: React.ReactNode = null;
 
   if (etape === 'intro') {
+    // les questions qui restent après l'onboarding (sans compter le résultat)
+    const restantes = suiteQuiz.filter((e) => e !== 'resultat').length;
+    const sportLabel = sport !== 'non' ? AUTRES_SPORTS.find((s) => s.key === sport)?.label : null;
+    const deja: { icone: IconName; teinte: string; fond: string; t: string }[] = [];
+    if (profil?.objectifs.length) {
+      deja.push({ icone: ICONE_OBJECTIF[profil.objectifs[0]] ?? 'target', teinte: pal.indigo, fond: pal.teinte, t: profil.objectifs.map((o) => traduire(OBJECTIFS_CHOIX.find((x) => x.key === o)?.label ?? '')).filter(Boolean).join(', ') });
+    }
+    if (connues.jours) deja.push({ icone: 'calendar', teinte: pal.orange, fond: pal.orangeTint, t: joursTexte(jours).replace(/^./, (x) => x.toUpperCase()) });
+    if (connues.sport && sportLabel) deja.push({ icone: ICONE_SPORT[sport] ?? 'medal', teinte: pal.vert, fond: pal.vertTint, t: traduire(sportLabel) });
     corps = (
-      <View style={{ gap: 22 }}>
-        <Heros image={img} titre={traduire('Ton coach te prépare ton programme ?')} texte={traduire('Quelques questions, moins d’une minute')} />
+      <View style={{ gap: 16 }}>
+        <Heros
+          image={img}
+          titre={traduire('Ton coach te prépare ton programme ?')}
+          texte={deja.length ? traduirePluriel(restantes, restantes > 1, 'Il reprend tes réponses. Encore {0} question.', 'Il reprend tes réponses. Encore {0} questions.', restantes) : traduire('Quelques questions, moins d’une minute')}
+        />
+        {deja.length ? (
+          <View style={{ backgroundColor: pal.carte, borderRadius: 24, padding: 16, gap: 12 }}>
+            {titreSection(traduire('Tu nous l’as déjà dit'))}
+            {deja.map((x) => (
+              <View key={x.t} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: x.fond, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={x.icone} size={20} color={x.teinte} />
+                </View>
+                <Ink size={14} weight="extraBold" color={pal.texte} style={{ flex: 1 }} numberOfLines={2}>{x.t}</Ink>
+                <Icon name="check" size={18} color={pal.vert} />
+              </View>
+            ))}
+            {connues.jours ? <PointsSemaine jours={jours} plein={pal.indigo} vide={pal.anneau} taille={16} /> : null}
+          </View>
+        ) : null}
       </View>
     );
     bas = (
@@ -244,7 +291,7 @@ export default function CoachDepart() {
   if (etape === 'objectifs') {
     corps = (
       <View style={{ gap: 12 }}>
-        <Heros image={img} titre={traduire('Ton objectif ?')} texte={traduire('Plusieurs choix possibles')} />
+        <Heros image={img} titre={traduire('Ton objectif ?')} texte={prerempli ? traduire('Repris de tes réponses, ajuste si tu veux') : traduire('Plusieurs choix possibles')} />
         <CarteChoix grand role="checkbox" icone="book" teinte={0} label={traduire('Je n’y connais rien')} sous={traduire('YOROI te guide pas à pas')} on={debuter} onPress={() => basculerObjectif('debuter')} />
         <CarteChoix icone="list" teinte={1} label={traduire('Je sais déjà quel programme je veux')} on={false} fleche onPress={() => { tap(); setChemin('liste'); aller('liste'); }} />
         <View style={{ marginTop: 8 }}>{titreSection(traduire('Tes objectifs'))}</View>

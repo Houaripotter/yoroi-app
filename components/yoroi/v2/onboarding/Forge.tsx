@@ -9,6 +9,10 @@
  * Vague 45 : l'univers choisi a l'ecran 4 decide des scenes. Classique : la salle, le parc, la ville et la piste,
  * avec le Sportif ou la Sportive qui gagne sa tenue, titre « On prépare ta tenue ». Sans personnage : les memes
  * scenes seules, titre « On prépare ton plan ».
+ * 26 octobre 2026 (Houari : « je n'ai pas compris pourquoi tu dis on prépare ta tenue ») : en Classique le titre devient
+ * « On prépare ton plan », comme sans personnage (le Japon garde « On forge ton armure », le nom de son Dojo).
+ * La liste dit ce qui est vraiment prêt a la fin (lignes, calculees par app/onboarding.tsx : ton chemin de poids,
+ * ta semaine, ton personnage, tes rappels si tu en as choisi, ton accueil). Environ 2,6 s au lieu de 3,8.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StatusBar, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -32,10 +36,11 @@ import type { Nav } from './types';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
 import { traduire } from '@/lib/i18n/tr';
 
-const LINES = [traduire('Ta courbe de poids'), traduire('Ta semaine d’entraînement'), traduire('Ton Dojo'), traduire('Ton accueil')];
+/** liste par defaut, si l'appelant n'en donne pas */
+const LIGNES_DEFAUT = [traduire('Ton suivi de poids'), traduire('Ta semaine d’entraînement'), traduire('Ton écran d’accueil')];
 /** duree d'une scene ; la derniere reste a l'ecran jusqu'a la fin */
-const SCENE_MS = 900;
-const MIN_MS = 3800;
+const SCENE_MS = 600;
+const MIN_MS = 2600;
 
 type Scene = { fond: ImageSourcePropType; perso: ImageSourcePropType | null };
 
@@ -71,11 +76,12 @@ function Couche({ index, last, t, scene, heroW, heroH, bottom }: { index: number
 /** Titre de l'ecran selon l'univers : le debut, puis le mot en or */
 const TITRES: Record<ChoixUnivers, [string, string]> = {
   japon: ['On forge ', traduire('ton armure')],
-  classique: [traduire('On prépare '), 'ta tenue'],
+  classique: [traduire('On prépare '), traduire('ton plan')],
   aucun: [traduire('On prépare '), traduire('ton plan')],
 };
 
-export function Forge({ nav, genre, univers = 'japon', run, onDone, onSound }: { nav: Nav; genre: 'h' | 'f'; univers?: ChoixUnivers; run: () => Promise<void>; onDone: () => void; onSound: () => void }) {
+export function Forge({ nav, genre, univers = 'japon', lignes, run, onDone, onSound }: { nav: Nav; genre: 'h' | 'f'; univers?: ChoixUnivers; lignes?: string[]; run: () => Promise<void>; onDone: () => void; onSound: () => void }) {
+  const LINES = lignes && lignes.length ? lignes : LIGNES_DEFAUT;
   const c = useColors();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -128,7 +134,7 @@ export function Forge({ nav, genre, univers = 'japon', run, onDone, onSound }: {
         if (!alive) return;
         setChecked((n) => Math.max(n, i + 1));
         tap('light');
-      }, 700 + i * SCENE_MS),
+      }, 450 + i * Math.round((MIN_MS - 900) / Math.max(1, LINES.length - 1))),
     );
     run()
       .then(async () => {
