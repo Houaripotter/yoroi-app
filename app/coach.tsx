@@ -59,7 +59,7 @@ export default function CoachScreen() {
           .catch(() => { if (vivant) { setActif(null); setCharge(true); } });
       };
       charger();
-      getProfile().then((pr) => { if (vivant) setFemme(pr?.avatar_gender === 'femme'); setNom(pr?.name ?? null); }).catch(() => {});
+      getProfile().then((pr) => { if (vivant) { setFemme(pr?.avatar_gender === 'femme'); setNom(pr?.name ?? null); } }).catch(() => {});
       // première ouverture : ni programme ni départ, le coach pose ses questions
       if (!departOuvert.current) {
         departOuvert.current = true;
