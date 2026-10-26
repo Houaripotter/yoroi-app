@@ -18653,5 +18653,8 @@
 "La copie n’a pas pu partir. Ta séance reste bien sur ton téléphone, réessaie.": "Não foi possível enviar a cópia. O teu treino continua no telemóvel, tenta outra vez.",
 "Ta copie automatique ne passe plus. Relie de nouveau ton {0} pour ne rien perdre.": "A tua cópia automática deixou de funcionar. Liga de novo o teu {0} para não perder nada.",
 "Mets tes séances à l’abri : une copie dans ton {0}, chaque jour, sans rien faire.": "Põe os teus treinos a salvo: uma cópia no teu {0}, todos os dias, sem fazer nada.",
-"Relier mon {0}": "Ligar o meu {0}"
+"Relier mon {0}": "Ligar o meu {0}",
+"Reprendre ta saisie ?": "Retomar o teu registo?",
+"Tu avais commencé à noter une séance. Tu la reprends ?": "Tinhas começado a registar um treino. Retomas?",
+"Nouvelle saisie": "Novo registo"
 }

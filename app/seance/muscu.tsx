@@ -32,7 +32,7 @@ import type { ExerciseHistory, SetValue } from '@/lib/v2/seance/history';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { kgDepuisSaisie, saisieDepuisKg } from '@/lib/v2/unitePoids';
 import { useSauvegardeBrouillon } from '@/lib/v2/seance/useSauvegardeBrouillon';
-import { clearDraft, loadDraft, loadRestPref, saveRestPref, uid } from '@/lib/v2/seance/model';
+import { chargerSaisie, clearDraft, effacerSaisie, loadDraft, loadRestPref, saveRestPref, uid } from '@/lib/v2/seance/model';
 import type { LiveExercise, LiveSet, MuscuDraft, SessionDetails } from '@/lib/v2/seance/model';
 import { detailsFromTraining, loadTrainingForEdit, trainingFromDetails } from '@/lib/v2/seance/edit';
 import { initialDetails, readParams, timeOf, wantsForm } from '@/lib/v2/seance/params';
@@ -286,6 +286,15 @@ export default function SeanceMuscu() {
         const tidy = (d: MuscuDraft): MuscuDraft => ({ ...d, restEndsAt: d.restEndsAt && d.restEndsAt > Date.now() ? d.restEndsAt : null });
 
         if (form) {
+          // 26 octobre 2026 : une saisie laissee en plan (app fermee par le telephone) se reprend
+          const saisie = params.repeatId || raw.programme || raw.maSeance ? null : await chargerSaisie('muscu');
+          if (saisie && saisie.kind === 'muscu' && saisie.exercises.length > 0) {
+            appAlert(traduire('Reprendre ta saisie ?'), traduire('Tu avais commencé à noter une séance. Tu la reprends ?'), [
+              { text: traduire('Nouvelle saisie'), style: 'destructive', onPress: async () => { await effacerSaisie(); setDraft(await fresh()); } },
+              { text: traduire('Reprendre'), onPress: () => setDraft(saisie) },
+            ], { cancelable: false });
+            return;
+          }
           setDraft(await fresh());
           return;
         }
@@ -566,7 +575,7 @@ export default function SeanceMuscu() {
     if (draft?.form) {
       appAlert(draft.editId ? traduire('Quitter sans enregistrer ?') : traduire('Annuler cette saisie ?'), traduire('Tes changements ne seront pas gardés.'), [
         { text: 'Rester', style: 'cancel' },
-        { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); router.back(); } },
+        { text: 'Quitter', style: 'destructive', onPress: () => { finished.current = true; setFinishOpen(false); void effacerSaisie(); router.back(); } },
       ]);
       return;
     }
@@ -631,6 +640,10 @@ export default function SeanceMuscu() {
         { slotId: draft.slotId, title: draft.editId ? getSportName(draft.sport) : draftTitle(draft), records, editId: draft.editId, methode: 'live' },
       );
       setFinishOpen(false);
+      // 26 octobre 2026 : la seance est enregistree, le brouillon part tout de suite (sinon, app fermee juste
+      // apres, elle reapparaissait « en cours » et pouvait etre enregistree deux fois)
+      if (!draft.form) await clearDraft();
+      else void effacerSaisie();
       if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.maSeance && !draft.editId && exercises.length > 0) await marquerFaite(draft.maSeance, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
@@ -638,7 +651,6 @@ export default function SeanceMuscu() {
         router.back();
         return;
       }
-      if (!draft.form) await clearDraft();
       terminerActiviteSeance();
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id), ...(draft.maSeance ? { maSeance: draft.maSeance } : {}) } });
     } catch (err) {

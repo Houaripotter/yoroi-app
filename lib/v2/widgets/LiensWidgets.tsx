@@ -10,7 +10,7 @@ import { AppState } from 'react-native';
 import { useGlobalSearchParams, usePathname, useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { logger } from '@/lib/security/logger';
 import { decider, lienEnAttente, navigationPrete, prendreLien, recevoirUrl, surLien } from './liens';
-import { lienEnAttenteNatif } from './natif';
+import { lienEnAttenteNatif, proprioActivite } from './natif';
 import { delaiRestant } from '@/lib/v2/nav/direct';
 import { repriseSeance } from '@/lib/v2/seance/reprendre';
 
@@ -57,13 +57,21 @@ export function LiensWidgets() {
       const d = prendreLien();
       if (!d) return;
       // 26 octobre 2026 : l'ecran verrouille ou la Dynamic Island pendant une seance rouvre la seance, pas le chrono seul
+      // (seulement si c'est la seance qui a lance l'activite : le chrono seul garde son ecran)
       if (d.cible === 'chronoEnCours') {
-        repriseSeance(ici.current.pathname)
-          .then((r) => {
-            if (r) router.navigate(r as never);
-            else if (!ici.current.pathname.startsWith('/seance/')) router.navigate({ pathname: d.href, params: d.params } as never);
-          })
-          .catch(() => {});
+        (async () => {
+          const qui = await proprioActivite();
+          const r = qui === 'chrono' ? null : await repriseSeance(ici.current.pathname);
+          if (r) {
+            router.navigate(r as never);
+            return;
+          }
+          if (qui !== 'chrono' && ici.current.pathname.startsWith('/seance/')) return;
+          const a = decider(d, ici.current);
+          if (a.type === 'push') router.push({ pathname: a.href, params: a.params } as never);
+          else if (a.type === 'navigate') router.navigate({ pathname: a.href, params: a.params } as never);
+          else if (a.type === 'setParams') router.setParams(a.params as never);
+        })().catch((e) => logger.warn('[Widgets] lien non ouvert', e));
         return;
       }
       const a = decider(d, ici.current);

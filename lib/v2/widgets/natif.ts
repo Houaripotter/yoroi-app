@@ -153,8 +153,35 @@ function enFile(appel: () => Promise<unknown> | undefined): void {
   file = file.then(appel).catch(() => undefined);
 }
 
-export function demarrerActiviteNatif(json: string): void {
+/**
+ * 26 octobre 2026 : la seance de musculation et le chrono seul partagent la meme Live Activity et le meme lien
+ * (yoroi://w/chrono-en-cours). On retient qui l'a lancee, pour que le toucher ouvre le bon ecran.
+ */
+export type ProprioActivite = 'seance' | 'chrono';
+const CLE_PROPRIO = 'yoroi_activite_proprio_v1';
+let proprio: ProprioActivite | null = null;
+
+export function demarrerActiviteNatif(json: string, qui: ProprioActivite = 'chrono'): void {
+  proprio = qui;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('@react-native-async-storage/async-storage').default.setItem(CLE_PROPRIO, qui).catch(() => {});
+  } catch {
+    // stockage indisponible : la memoire suffit tant que l'app vit
+  }
   enFile(() => mod()?.startChrono?.(json));
+}
+
+/** Qui a lance la Live Activity en cours (null si inconnu) */
+export async function proprioActivite(): Promise<ProprioActivite | null> {
+  if (proprio) return proprio;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const v = await require('@react-native-async-storage/async-storage').default.getItem(CLE_PROPRIO);
+    return v === 'seance' || v === 'chrono' ? v : null;
+  } catch {
+    return null;
+  }
 }
 
 export function majActiviteNatif(json: string): void {

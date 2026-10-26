@@ -18653,5 +18653,8 @@
 "La copie n’a pas pu partir. Ta séance reste bien sur ton téléphone, réessaie.": "Die Kopie konnte nicht gesendet werden. Dein Training bleibt auf deinem Handy, versuch es noch einmal.",
 "Ta copie automatique ne passe plus. Relie de nouveau ton {0} pour ne rien perdre.": "Deine automatische Kopie funktioniert nicht mehr. Verbinde dein {0} erneut, damit nichts verloren geht.",
 "Mets tes séances à l’abri : une copie dans ton {0}, chaque jour, sans rien faire.": "Sichere deine Trainings: jeden Tag eine Kopie in deinem {0}, ganz automatisch.",
-"Relier mon {0}": "Mein {0} verbinden"
+"Relier mon {0}": "Mein {0} verbinden",
+"Reprendre ta saisie ?": "Eingabe fortsetzen?",
+"Tu avais commencé à noter une séance. Tu la reprends ?": "Du hattest angefangen, ein Training einzutragen. Weitermachen?",
+"Nouvelle saisie": "Neue Eingabe"
 }

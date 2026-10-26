@@ -163,7 +163,23 @@ export default function SeanceCardio() {
             traduire('Une séance est en cours'),
             traduire("{0}, commencée {1}. Tu la reprends ?", draftTitle(existing), draftAgo(existing)),
             [
-              { text: traduire('Nouvelle séance'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
+              {
+                text: traduire('Nouvelle séance'),
+                style: 'destructive',
+                // 26 octobre 2026 : on ne jette plus une seance en cours sur un seul toucher
+                onPress: () =>
+                  appAlert(traduire('Effacer la séance en cours ?'), traduire('Ses séries ne seront pas gardées. Pour les garder, reprends la et termine la.'), [
+                    {
+                      text: traduire('Reprendre'),
+                      style: 'cancel',
+                      onPress: () => {
+                        if (existing.kind === 'cardio') setDraft(existing);
+                        else router.replace({ pathname: draftRoute(existing) as any, params: { resume: '1' } });
+                      },
+                    },
+                    { text: traduire('Effacer'), style: 'destructive', onPress: async () => { await clearDraft(); setDraft(fresh()); } },
+                  ], { cancelable: false }),
+              },
               {
                 text: traduire('Reprendre'),
                 onPress: () => {
@@ -276,12 +292,14 @@ export default function SeanceCardio() {
         { slotId: draft.slotId, title: draft.label || sportName, editId: draft.editId, methode: 'live' },
       );
       setFinishOpen(false);
+      // 26 octobre 2026 : la seance est enregistree, le brouillon part tout de suite (sinon, app fermee juste
+      // apres, elle reapparaissait « en cours » et pouvait etre enregistree deux fois)
+      if (!draft.form) await clearDraft();
       if (draft.programme && !draft.editId) await marquerJourFait(draft.programme.id, draft.programme.jourId, result.id, draft.form && det ? det.date : undefined).catch(() => {});
       if (draft.editId) {
         router.back();
         return;
       }
-      if (!draft.form) await clearDraft();
       router.replace({ pathname: '/seance/fin' as any, params: { id: String(result.id) } });
     } catch (err) {
       finished.current = false;

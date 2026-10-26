@@ -18653,5 +18653,8 @@
 "La copie n’a pas pu partir. Ta séance reste bien sur ton téléphone, réessaie.": "No se pudo enviar la copia. Tu sesión sigue en tu teléfono, inténtalo de nuevo.",
 "Ta copie automatique ne passe plus. Relie de nouveau ton {0} pour ne rien perdre.": "Tu copia automática ya no funciona. Vuelve a vincular tu {0} para no perder nada.",
 "Mets tes séances à l’abri : une copie dans ton {0}, chaque jour, sans rien faire.": "Pon tus sesiones a salvo: una copia en tu {0}, cada día, sin hacer nada.",
-"Relier mon {0}": "Vincular mi {0}"
+"Relier mon {0}": "Vincular mi {0}",
+"Reprendre ta saisie ?": "¿Retomar tu registro?",
+"Tu avais commencé à noter une séance. Tu la reprends ?": "Habías empezado a anotar una sesión. ¿La retomas?",
+"Nouvelle saisie": "Nuevo registro"
 }

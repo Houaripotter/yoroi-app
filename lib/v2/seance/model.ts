@@ -207,20 +207,64 @@ export async function saveDraft(d: SeanceDraft): Promise<void> {
 }
 
 /**
+ * Saisie apres coup en cours (26 octobre 2026) : gardee a part, quelques heures, pour ne pas perdre ce que tu
+ * tapais si le telephone ferme l'app. Elle ne remplace jamais la seance en direct (cle differente).
+ */
+const SAISIE_KEY = 'yoroi_seance_saisie_v1';
+const SAISIE_MAX_MS = 12 * 3600 * 1000;
+
+export async function sauverSaisie(d: SeanceDraft): Promise<void> {
+  if (!d.form || d.editId) return;
+  try {
+    await AsyncStorage.setItem(SAISIE_KEY, JSON.stringify({ ...d, savedAt: Date.now() }));
+  } catch {
+    // rien : la saisie continue en memoire
+  }
+}
+
+export async function chargerSaisie(kind: SeanceDraft['kind']): Promise<SeanceDraft | null> {
+  try {
+    const raw = await AsyncStorage.getItem(SAISIE_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as SeanceDraft & { savedAt?: number };
+    if (!d || d.kind !== kind || !d.form || Date.now() - (d.savedAt ?? 0) > SAISIE_MAX_MS) return null;
+    return d;
+  } catch {
+    return null;
+  }
+}
+
+export async function effacerSaisie(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(SAISIE_KEY);
+  } catch {
+    // rien
+  }
+}
+
+/**
  * Ecriture du brouillon dans l'ordre (26 octobre 2026) : une seule ecriture a la fois, la derniere version gagne,
  * et rien ne peut etre ecrit apres clearDraft (sinon une seance finie reapparaitrait « en cours »).
  */
 let fileEcriture: Promise<void> = Promise.resolve();
-let aEcrire: SeanceDraft | null = null;
+let aEcrire: { d: SeanceDraft; gen: number } | null = null;
 let generation = 0;
 
-export function ecrireBrouillon(d: SeanceDraft): Promise<void> {
-  aEcrire = d;
-  const gen = generation;
+/** Numero de la seance en cours de stockage : change a chaque clearDraft */
+export function generationBrouillon(): number {
+  return generation;
+}
+
+/**
+ * `gen` : la generation vue par l'ecran qui ecrit. Une ecriture d'une generation passee (ecran reste dessous
+ * apres la fin de la seance sur un autre ecran) est ignoree : la seance finie ne revient jamais « en cours ».
+ */
+export function ecrireBrouillon(d: SeanceDraft, gen: number = generation): Promise<void> {
+  aEcrire = { d, gen };
   fileEcriture = fileEcriture.then(async () => {
     const a = aEcrire;
     aEcrire = null;
-    if (a && gen === generation) await saveDraft(a);
+    if (a && a.gen === generation) await saveDraft(a.d);
   });
   return fileEcriture;
 }

@@ -18653,5 +18653,8 @@
 "La copie n’a pas pu partir. Ta séance reste bien sur ton téléphone, réessaie.": "The copy couldn’t be sent. Your workout is still on your phone, try again.",
 "Ta copie automatique ne passe plus. Relie de nouveau ton {0} pour ne rien perdre.": "Your automatic copy has stopped working. Link your {0} again so you lose nothing.",
 "Mets tes séances à l’abri : une copie dans ton {0}, chaque jour, sans rien faire.": "Keep your workouts safe: a copy in your {0}, every day, with nothing to do.",
-"Relier mon {0}": "Link my {0}"
+"Relier mon {0}": "Link my {0}",
+"Reprendre ta saisie ?": "Resume your entry?",
+"Tu avais commencé à noter une séance. Tu la reprends ?": "You had started logging a workout. Pick it up again?",
+"Nouvelle saisie": "New entry"
 }

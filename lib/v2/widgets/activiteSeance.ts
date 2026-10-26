@@ -78,7 +78,7 @@ function envoyer(etat: EtatSeance): void {
   // demarrer remplace toute Live Activity du chrono (le natif termine les precedentes) : jamais d'etat perdu
   if (!seanceEnDirect) {
     seanceEnDirect = true;
-    demarrerActiviteNatif(json);
+    demarrerActiviteNatif(json, 'seance');
   } else {
     majActiviteNatif(json);
   }
