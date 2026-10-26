@@ -18691,5 +18691,11 @@
 "{0} ligne pas comprise, elle sera ignorée :": "{0} linha não percebida, será ignorada:",
 "{0} lignes pas comprises, elles seront ignorées :": "{0} linhas não percebidas, serão ignoradas:",
 "Importer {0} séance": "Importar {0} treino",
-"Importer {0} séances": "Importar {0} treinos"
+"Importer {0} séances": "Importar {0} treinos",
+"Tour d’avant-bras": "Perímetro do antebraço",
+"au plus large, poing serré, bras tendu": "na parte mais larga, punho cerrado, braço esticado",
+"Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "O perímetro do antebraço, na parte mais larga, com o punho cerrado e o braço esticado. Se medires os dois antebraços, o YOROI mostra a média.",
+"Avant-bras gauche entre 15 et 50 cm": "Antebraço esquerdo entre 15 e 50 cm",
+"Avant-bras droit entre 15 et 50 cm": "Antebraço direito entre 15 e 50 cm",
+"tour d’avant-bras": "perímetro do antebraço"
 }

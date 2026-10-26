@@ -20,6 +20,8 @@ const ZONES: Record<ViewKey, Zone> = {
   shoulders: { d: 'M14 62 Q55 55 96 62', left: [14, 62], right: [96, 62], side: 'left' },
   chest: { d: 'M24 84 Q55 92 86 84', left: [24, 84], right: [86, 84], side: 'left' },
   arm: { d: 'M89 98 Q95 100 101 98', left: [89, 98], right: [101, 98], side: 'right' },
+  // Avant-bras : sous le coude, au plus large, sur le meme bras que le tour de bras
+  forearm: { d: 'M95 130 Q99.5 132.5 104 130', left: [95, 130], right: [104, 130], side: 'right' },
   waist: { d: 'M29 124 Q55 131 81 124', left: [29, 124], right: [81, 124], side: 'left' },
   navel: { d: 'M28 142 Q55 149 83 142', left: [28, 142], right: [83, 142], side: 'right' },
   hips: { d: 'M24 164 Q55 172 86 164', left: [24, 164], right: [86, 164], side: 'left' },

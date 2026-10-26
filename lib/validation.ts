@@ -251,6 +251,20 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     required: false,
     errorMessage: traduire('Mollet droit entre 20 et 60 cm')
   },
+  left_forearm: {
+    type: 'number',
+    min: 15,
+    max: 50,
+    required: false,
+    errorMessage: traduire('Avant-bras gauche entre 15 et 50 cm')
+  },
+  right_forearm: {
+    type: 'number',
+    min: 15,
+    max: 50,
+    required: false,
+    errorMessage: traduire('Avant-bras droit entre 15 et 50 cm')
+  },
   navel: {
     type: 'number',
     min: 40,

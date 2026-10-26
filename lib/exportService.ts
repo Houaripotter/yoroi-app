@@ -1459,7 +1459,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
 
     // === MENSURATIONS (sans doublon) ===
     if (Array.isArray(importedData.measurements)) {
-      const MEAS_FIELDS = ['chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'shoulders', 'neck'];
+      const MEAS_FIELDS = ['chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'left_forearm', 'right_forearm', 'shoulders', 'neck'];
       const measKey = (m: any) => `${String(m?.date).slice(0, 10)}|${MEAS_FIELDS.map(f => (m?.[f] == null ? '' : Number(m[f]))).join('|')}`;
       const seenMeasurements = new Set((await getSqlMeasurements().catch(() => [])).map(measKey));
       // Ancienne liste (2.x) : elle reste aussi dans le coffre, reprise plus bas sans doublon
@@ -1475,6 +1475,7 @@ export const importDataFromBackupObject = async (importedData: any, opts?: { alr
             left_arm: m.left_arm, right_arm: m.right_arm,
             left_thigh: m.left_thigh, right_thigh: m.right_thigh,
             left_calf: m.left_calf, right_calf: m.right_calf,
+            left_forearm: m.left_forearm, right_forearm: m.right_forearm,
             shoulders: m.shoulders, neck: m.neck, date: m.date,
           });
           await keepCreatedAt('measurements', newId, raw?.created_at);
@@ -2189,12 +2190,13 @@ export const exportEditableCSV = async (): Promise<boolean> => {
     let measurementsCSV = '# YOROI - MENSURATIONS (éditable)\n';
     measurementsCSV += '# Toutes les valeurs en cm\n';
     measurementsCSV += '#\n';
-    measurementsCSV += 'date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou\n';
+    measurementsCSV += 'date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou;avant_bras_gauche;avant_bras_droit\n';
 
     (measurements || []).forEach((m: any) => {
       measurementsCSV += `${m.date};${m.chest || ''};${m.waist || ''};${m.hips || ''};`;
       measurementsCSV += `${m.left_arm || ''};${m.right_arm || ''};${m.left_thigh || ''};${m.right_thigh || ''};`;
-      measurementsCSV += `${m.left_calf || ''};${m.right_calf || ''};${m.shoulders || ''};${m.neck || ''}\n`;
+      measurementsCSV += `${m.left_calf || ''};${m.right_calf || ''};${m.shoulders || ''};${m.neck || ''};`;
+      measurementsCSV += `${m.left_forearm || ''};${m.right_forearm || ''}\n`;
     });
 
     // === 4. CSV CLUBS ===
@@ -2412,6 +2414,8 @@ export const importEditableCSV = async (): Promise<boolean> => {
               right_calf: row[9] ? parseFloat(row[9]) : undefined,
               shoulders: row[10] ? parseFloat(row[10]) : undefined,
               neck: row[11] ? parseFloat(row[11]) : undefined,
+              left_forearm: row[12] ? parseFloat(row[12]) : undefined,
+              right_forearm: row[13] ? parseFloat(row[13]) : undefined,
             });
             importedCount++;
           } catch (e) {

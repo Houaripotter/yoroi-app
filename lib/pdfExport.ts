@@ -125,6 +125,8 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
     ${generateMeasurementRow('Cou', firstMeasurement?.neck, lastMeasurement.neck)}
     ${generateMeasurementRow('Bras gauche', firstMeasurement?.left_arm, lastMeasurement.left_arm)}
     ${generateMeasurementRow('Bras droit', firstMeasurement?.right_arm, lastMeasurement.right_arm)}
+    ${generateMeasurementRow(traduire('Avant-bras gauche'), firstMeasurement?.left_forearm, lastMeasurement.left_forearm)}
+    ${generateMeasurementRow(traduire('Avant-bras droit'), firstMeasurement?.right_forearm, lastMeasurement.right_forearm)}
     ${generateMeasurementRow('Cuisse gauche', firstMeasurement?.left_thigh, lastMeasurement.left_thigh)}
     ${generateMeasurementRow('Cuisse droite', firstMeasurement?.right_thigh, lastMeasurement.right_thigh)}
     ${generateMeasurementRow('Mollet gauche', firstMeasurement?.left_calf, lastMeasurement.left_calf)}

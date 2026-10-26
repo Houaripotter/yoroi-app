@@ -18691,5 +18691,11 @@
 "{0} ligne pas comprise, elle sera ignorée :": "{0} line not understood, it will be skipped:",
 "{0} lignes pas comprises, elles seront ignorées :": "{0} lines not understood, they will be skipped:",
 "Importer {0} séance": "Import {0} workout",
-"Importer {0} séances": "Import {0} workouts"
+"Importer {0} séances": "Import {0} workouts",
+"Tour d’avant-bras": "Forearm circumference",
+"au plus large, poing serré, bras tendu": "at the widest point, fist clenched, arm straight",
+"Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "Forearm circumference, at the widest point, fist clenched and arm straight. If you measure both forearms, YOROI shows their average.",
+"Avant-bras gauche entre 15 et 50 cm": "Left forearm between 15 and 50 cm",
+"Avant-bras droit entre 15 et 50 cm": "Right forearm between 15 and 50 cm",
+"tour d’avant-bras": "forearm circumference"
 }

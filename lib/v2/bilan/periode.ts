@@ -165,7 +165,7 @@ export function bilanPeriode(o: {
 
   // mensurations : la dernière prise de la période comparée à la dernière d'avant (ou à la première de la période)
   const mensurations: BilanPeriode['mensurations'] = [];
-  const cles: ViewKey[] = ['waist', 'navel', 'hips', 'chest', 'shoulders', 'arm', 'thigh', 'calf', 'neck'];
+  const cles: ViewKey[] = ['waist', 'navel', 'hips', 'chest', 'shoulders', 'arm', 'forearm', 'thigh', 'calf', 'neck'];
   for (const cle of cles) {
     const pts = o.mesures
       .map((m) => ({ date: String(m.date).slice(0, 10), v: viewValue(m, cle) }))

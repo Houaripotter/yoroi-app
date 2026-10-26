@@ -71,7 +71,7 @@ const CSV_HEADERS = [
   'is_outdoor', 'pente', 'speed', 'resistance', 'watts', 'cadence', 'notes',
   // Mensurations
   'chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm',
-  'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'shoulders', 'neck',
+  'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'left_forearm', 'right_forearm', 'shoulders', 'neck',
   // Sommeil
   'bedTime', 'wakeTime', 'quality',
   // Hydratation
@@ -393,7 +393,7 @@ function validateEntrainementRow(data: Record<string, string>, errors: string[])
 function validateMensurationRow(data: Record<string, string>, errors: string[]): RowValidation {
   const measureFields = [
     'chest', 'waist', 'navel', 'hips', 'left_arm', 'right_arm',
-    'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'shoulders', 'neck',
+    'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'left_forearm', 'right_forearm', 'shoulders', 'neck',
   ];
 
   let hasAtLeastOne = false;
@@ -567,6 +567,8 @@ async function importMensurationRow(data: Record<string, string>): Promise<void>
     right_thigh: getOptionalFloat(data, 'right_thigh'),
     left_calf: getOptionalFloat(data, 'left_calf'),
     right_calf: getOptionalFloat(data, 'right_calf'),
+    left_forearm: getOptionalFloat(data, 'left_forearm'),
+    right_forearm: getOptionalFloat(data, 'right_forearm'),
     shoulders: getOptionalFloat(data, 'shoulders'),
     neck: getOptionalFloat(data, 'neck'),
   });

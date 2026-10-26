@@ -52,6 +52,7 @@ export const MEASURE_EXPLAIN: Record<ViewKey, Explain> = {
   shoulders: { text: traduire('Le tour d’épaules, mètre ruban passé sur la partie la plus large, bras le long du corps. Il grandit avec le dos et les épaules.') },
   chest: { text: traduire('Le tour de poitrine, à hauteur des pectoraux, en fin d’expiration normale. Il suit le travail du haut du corps.') },
   arm: { text: traduire('Le tour de bras, au plus large du biceps, bras détendu. Si tu mesures les deux bras, YOROI affiche leur moyenne.') },
+  forearm: { text: traduire('Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.') },
   waist: {
     text: traduire('Le tour de taille, au niveau le plus fin du ventre. C’est un bon repère de la graisse du ventre.'),
     tip: traduire('S’il baisse alors que ton poids reste stable, tu perds sans doute de la graisse au profit du muscle.'),

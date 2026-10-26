@@ -510,7 +510,7 @@ export function TuileMensurations({ tailleFixe }: { tailleFixe?: { value: number
 /* ============ Tes mensurations : une carte qui defile, une mini carte par mesure (17 octobre nuit) ============ */
 
 /** L'ordre le plus utile : le ventre d'abord, puis le haut et le bas du corps */
-const ORDRE_MENSURATIONS: ViewKey[] = ['waist', 'navel', 'hips', 'chest', 'arm', 'thigh', 'shoulders', 'calf', 'neck'];
+const ORDRE_MENSURATIONS: ViewKey[] = ['waist', 'navel', 'hips', 'chest', 'arm', 'forearm', 'thigh', 'shoulders', 'calf', 'neck'];
 /** Libelles de la carte (Houari : « Tour de nombril ») */
 const NOM_MENSURATION: Partial<Record<ViewKey, string>> = { navel: traduire('Tour de nombril') };
 

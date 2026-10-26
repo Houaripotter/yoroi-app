@@ -266,7 +266,7 @@ const BODY_SPEC: { key: BioKey; label: string; unit: string; digits: number; goo
 ];
 
 /** Ordre des mensurations : taille et hanches d'abord, comme on les prend */
-const MEASURE_ORDER: ViewKey[] = ['waist', 'hips', 'chest', 'arm', 'thigh', 'shoulders', 'navel', 'calf', 'neck'];
+const MEASURE_ORDER: ViewKey[] = ['waist', 'hips', 'chest', 'arm', 'forearm', 'thigh', 'shoulders', 'navel', 'calf', 'neck'];
 
 export function bodyGroup(weights: DayWeight[], compo: CompoPoint[], ctx: BodyContext, nav: Nav, _inkColor?: string): MiniGroup {
   const curves: MiniCurve[] = [];

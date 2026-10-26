@@ -10,10 +10,10 @@ import type { BodyMeasurement } from '@/lib/bodyComposition';
 import { logger } from '@/lib/security/logger';
 import { traduire } from '@/lib/i18n/tr';
 
-export type MeasureKey = 'chest' | 'waist' | 'navel' | 'hips' | 'shoulders' | 'neck' | 'armL' | 'armR' | 'thighL' | 'thighR' | 'calfL' | 'calfR';
+export type MeasureKey = 'chest' | 'waist' | 'navel' | 'hips' | 'shoulders' | 'neck' | 'armL' | 'armR' | 'thighL' | 'thighR' | 'calfL' | 'calfR' | 'forearmL' | 'forearmR';
 
 /** Mesures affichees : les cotes gauche et droite sont reunies */
-export type ViewKey = 'shoulders' | 'chest' | 'arm' | 'waist' | 'navel' | 'hips' | 'thigh' | 'calf' | 'neck';
+export type ViewKey = 'shoulders' | 'chest' | 'arm' | 'forearm' | 'waist' | 'navel' | 'hips' | 'thigh' | 'calf' | 'neck';
 
 export type MeasurePoint = { id?: number; date: string } & Partial<Record<MeasureKey, number>>;
 
@@ -26,6 +26,8 @@ export const MEASURE_FIELDS: { key: MeasureKey; label: string; group: 'haut' | '
   { key: 'hips', label: 'Hanches', group: 'tronc' },
   { key: 'armR', label: traduire('Bras droit'), group: 'bras' },
   { key: 'armL', label: traduire('Bras gauche'), group: 'bras' },
+  { key: 'forearmR', label: traduire('Avant-bras droit'), group: 'bras' },
+  { key: 'forearmL', label: traduire('Avant-bras gauche'), group: 'bras' },
   { key: 'thighR', label: traduire('Cuisse droite'), group: 'jambes' },
   { key: 'thighL', label: traduire('Cuisse gauche'), group: 'jambes' },
   { key: 'calfR', label: traduire('Mollet droit'), group: 'jambes' },
@@ -36,6 +38,7 @@ export const VIEW_FIELDS: { key: ViewKey; label: string; long: string; good: 'up
   { key: 'shoulders', label: 'Épaules', long: traduire('Tour d’épaules'), good: 'up' },
   { key: 'chest', label: 'Poitrine', long: traduire('Tour de poitrine'), good: 'up' },
   { key: 'arm', label: 'Bras', long: traduire('Tour de bras'), good: 'up' },
+  { key: 'forearm', label: traduire('Avant-bras'), long: traduire('Tour d’avant-bras'), good: 'up' },
   { key: 'waist', label: 'Taille', long: 'Tour de taille', good: 'down' },
   { key: 'navel', label: 'Nombril', long: traduire('Tour au nombril'), good: 'down' },
   { key: 'hips', label: 'Hanches', long: traduire('Tour de hanches'), good: 'none' },
@@ -62,6 +65,8 @@ function fromDb(m: Measurement): MeasurePoint {
     thighR: pos(m.right_thigh),
     calfL: pos(m.left_calf),
     calfR: pos(m.right_calf),
+    forearmL: pos(m.left_forearm),
+    forearmR: pos(m.right_forearm),
   };
 }
 
@@ -80,6 +85,8 @@ function fromLegacy(m: BodyMeasurement): MeasurePoint {
     thighR: pos(m.rightThigh),
     calfL: pos(m.leftCalf),
     calfR: pos(m.rightCalf),
+    forearmL: pos(m.leftForearm),
+    forearmR: pos(m.rightForearm),
   };
 }
 
@@ -123,6 +130,8 @@ export function viewValue(p: MeasurePoint, key: ViewKey): number | undefined {
       return avg(p.thighL, p.thighR);
     case 'calf':
       return avg(p.calfL, p.calfR);
+    case 'forearm':
+      return avg(p.forearmL, p.forearmR);
     default:
       return p[key];
   }
@@ -173,6 +182,8 @@ export async function saveMeasures(date: string, values: Partial<Record<MeasureK
     right_thigh: values.thighR,
     left_calf: values.calfL,
     right_calf: values.calfR,
+    left_forearm: values.forearmL,
+    right_forearm: values.forearmR,
   };
   // Une ligne par jour : on complete celle du meme jour local si elle existe (quelle que soit sa date)
   try {

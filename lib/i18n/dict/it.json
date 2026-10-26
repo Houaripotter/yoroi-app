@@ -18691,5 +18691,11 @@
 "{0} ligne pas comprise, elle sera ignorée :": "{0} riga non capita, sarà ignorata:",
 "{0} lignes pas comprises, elles seront ignorées :": "{0} righe non capite, saranno ignorate:",
 "Importer {0} séance": "Importa {0} allenamento",
-"Importer {0} séances": "Importa {0} allenamenti"
+"Importer {0} séances": "Importa {0} allenamenti",
+"Tour d’avant-bras": "Circonferenza dell’avambraccio",
+"au plus large, poing serré, bras tendu": "nel punto più largo, pugno chiuso, braccio teso",
+"Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "La circonferenza dell’avambraccio, nel punto più largo, pugno chiuso e braccio teso. Se misuri entrambi gli avambracci, YOROI mostra la loro media.",
+"Avant-bras gauche entre 15 et 50 cm": "Avambraccio sinistro tra 15 e 50 cm",
+"Avant-bras droit entre 15 et 50 cm": "Avambraccio destro tra 15 e 50 cm",
+"tour d’avant-bras": "circonferenza dell’avambraccio"
 }

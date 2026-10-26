@@ -130,6 +130,8 @@ export interface BodyMeasurement {
   // Bras
   rightArm?: number;     // Tour de bras droit cm
   leftArm?: number;      // Tour de bras gauche cm
+  rightForearm?: number; // Tour d'avant-bras droit cm
+  leftForearm?: number;  // Tour d'avant-bras gauche cm
   // Cuisses
   rightThigh?: number;   // Tour de cuisse droite cm
   leftThigh?: number;    // Tour de cuisse gauche cm

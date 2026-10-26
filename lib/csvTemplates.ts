@@ -96,6 +96,8 @@ const UNIFIED_HEADERS_V3 = [
   'Mollet droit (cm)',
   'Epaules (cm)',
   'Cou (cm)',
+  'Avant-bras gauche (cm)',
+  'Avant-bras droit (cm)',
   'Note',
 ];
 
@@ -238,6 +240,19 @@ const HEADER_MAP: Record<string, string> = {
   'right_calf': 'right_calf',
   'Right Calf (cm)': 'right_calf',
 
+  // Avant-bras
+  'Avant-bras gauche (cm)': 'left_forearm',
+  'Avant-bras G (cm)': 'left_forearm',
+  'Avant-bras G': 'left_forearm',
+  'left_forearm': 'left_forearm',
+  'Left Forearm (cm)': 'left_forearm',
+
+  'Avant-bras droit (cm)': 'right_forearm',
+  'Avant-bras D (cm)': 'right_forearm',
+  'Avant-bras D': 'right_forearm',
+  'right_forearm': 'right_forearm',
+  'Right Forearm (cm)': 'right_forearm',
+
   // Épaules
   'Epaules (cm)': 'shoulders',
   'Épaules (cm)': 'shoulders',
@@ -281,6 +296,7 @@ const MEASUREMENT_FIELDS = [
   'left_thigh', 'right_thigh',
   'left_calf', 'right_calf',
   'shoulders', 'neck',
+  'left_forearm', 'right_forearm',
 ];
 
 // ============================================
@@ -422,12 +438,12 @@ export function generateUnifiedTemplate(): string {
   const header = UNIFIED_HEADERS_V3.join(SEP);
 
   // Exemples, colonne Note indique clairement "SUPPRIMER CETTE LIGNE"
-  const ex1 = ['15/01/2025','82.5','18.2','42.1','55.3','3.2','8','35','1850','102','78','82','97','36','37','58','59','38','39','120','38','EXEMPLE - supprimer cette ligne'].join(SEP);
-  const ex2 = ['20/01/2025','81.8','','','','','','','','','','','','','','','','','','','','EXEMPLE - supprimer cette ligne'].join(SEP);
-  const ex3 = ['25/01/2025','80.0','17.5','44.0','56.0','3.3','7','34','1870','100','77','81','96','35','36','57','58','37','38','','','EXEMPLE - supprimer cette ligne'].join(SEP);
+  const ex1 = ['15/01/2025','82.5','18.2','42.1','55.3','3.2','8','35','1850','102','78','82','97','36','37','58','59','38','39','120','38','30','30.5','EXEMPLE - supprimer cette ligne'].join(SEP);
+  const ex2 = ['20/01/2025','81.8','','','','','','','','','','','','','','','','','','','','','','EXEMPLE - supprimer cette ligne'].join(SEP);
+  const ex3 = ['25/01/2025','80.0','17.5','44.0','56.0','3.3','7','34','1870','100','77','81','96','35','36','57','58','37','38','','','','','EXEMPLE - supprimer cette ligne'].join(SEP);
 
   // Ligne vide pour que l'utilisateur commence a saisir ici
-  const emptyRow = ['JJ/MM/AAAA','','','','','','','','','','','','','','','','','','','','',''].join(SEP);
+  const emptyRow = ['JJ/MM/AAAA','','','','','','','','','','','','','','','','','','','','','','',''].join(SEP);
 
   return [header, ex1, ex2, ex3, emptyRow].join('\n');
 }
@@ -689,11 +705,13 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
           getOptionalFloat(row.data, 'right_calf') ?? null,
           getOptionalFloat(row.data, 'shoulders') ?? null,
           getOptionalFloat(row.data, 'neck') ?? null,
+          getOptionalFloat(row.data, 'left_forearm') ?? null,
+          getOptionalFloat(row.data, 'right_forearm') ?? null,
         ];
         if (existingMId !== undefined) {
           await db.runAsync(
             `UPDATE measurements SET chest=?,waist=?,navel=?,hips=?,left_arm=?,right_arm=?,
-             left_thigh=?,right_thigh=?,left_calf=?,right_calf=?,shoulders=?,neck=? WHERE id=?`,
+             left_thigh=?,right_thigh=?,left_calf=?,right_calf=?,shoulders=?,neck=?,left_forearm=?,right_forearm=? WHERE id=?`,
             [...vals, existingMId]
           );
         } else {
@@ -705,6 +723,7 @@ export async function importUnifiedRows(rows: SimpleParsedRow[]): Promise<Simple
             left_thigh: vals[6] ?? undefined, right_thigh: vals[7] ?? undefined,
             left_calf: vals[8] ?? undefined, right_calf: vals[9] ?? undefined,
             shoulders: vals[10] ?? undefined, neck: vals[11] ?? undefined,
+            left_forearm: vals[12] ?? undefined, right_forearm: vals[13] ?? undefined,
           });
           measIdByDate.set(date, newMId);
         }
@@ -868,6 +887,8 @@ export async function exportUnifiedCSV(): Promise<string> {
       formatFloat(m?.right_calf),
       formatFloat(m?.shoulders),
       formatFloat(m?.neck),
+      formatFloat(m?.left_forearm),
+      formatFloat(m?.right_forearm),
       note ? escapeCSV(note) : '',
     ].join(SEP));
   }

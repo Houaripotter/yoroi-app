@@ -26,7 +26,7 @@ import { traduire, DECIMAL } from '@/lib/i18n/tr';
 export type BalanceKind = 'muscle' | 'graisse' | 'os' | 'eau' | null;
 export type BalanceGroup = 'principal' | 'avance' | 'segment' | 'mensuration';
 /** Les mensurations de l'app (table measurements, lib/v2/progres/measures.ts, MeasureKey) */
-export type MeasureTarget = 'chest' | 'waist' | 'navel' | 'hips' | 'shoulders' | 'neck' | 'armL' | 'armR' | 'thighL' | 'thighR' | 'calfL' | 'calfR';
+export type MeasureTarget = 'chest' | 'waist' | 'navel' | 'hips' | 'shoulders' | 'neck' | 'armL' | 'armR' | 'thighL' | 'thighR' | 'calfL' | 'calfR' | 'forearmL' | 'forearmR';
 export type SegmentKey = 'arm_right' | 'arm_left' | 'trunk' | 'leg_right' | 'leg_left';
 
 export type BalanceFieldSpec = {
@@ -69,9 +69,9 @@ const SEGMENTS: { seg: SegmentKey; key: string; label: string; de: string; names
 
 /**
  * IMPORT MULTI : les mensurations, rangees dans la table measurements (memes colonnes que l'ecran Mensurations :
- * chest, waist, navel, hips, shoulders, neck, left_arm, right_arm, left_thigh, right_thigh, left_calf, right_calf).
- * Le nom de la colonne est accepte comme cle. L'avant-bras n'a pas de colonne : il est garde avec la pesee du jour.
- * Bras, cuisse, mollet sans cote precise : range a gauche, comme l'ancien ecran (arms, thighs).
+ * chest, waist, navel, hips, shoulders, neck, left_arm, right_arm, left_forearm, right_forearm, left_thigh, right_thigh, left_calf, right_calf).
+ * Le nom de la colonne est accepte comme cle.
+ * Bras, avant-bras, cuisse, mollet sans cote precise : range a gauche, comme l'ancien ecran (arms, thighs).
  */
 const MEASURES: { key: string; label: string; measure?: MeasureTarget; min: number; max: number; ai: string; aliases: string[] }[] = [
   { key: 'tour_de_cou_cm', label: 'Cou', measure: 'neck', min: 20, max: 70, ai: traduire('tour de cou'), aliases: ['neck', 'cou', 'tour_cou', 'tour_du_cou', 'neck_circumference'] },
@@ -83,9 +83,9 @@ const MEASURES: { key: string; label: string; measure?: MeasureTarget; min: numb
   { key: 'tour_bras_droit_cm', label: traduire('Bras droit'), measure: 'armR', min: 15, max: 70, ai: traduire('tour du bras droit'), aliases: ['right_arm', 'tour_de_bras_droit', 'biceps_droit', 'bras_droit_cm'] },
   { key: 'tour_bras_gauche_cm', label: traduire('Bras gauche'), measure: 'armL', min: 15, max: 70, ai: traduire('tour du bras gauche'), aliases: ['left_arm', 'tour_de_bras_gauche', 'biceps_gauche', 'bras_gauche_cm'] },
   { key: 'tour_de_bras_cm', label: 'Bras', measure: 'armL', min: 15, max: 70, ai: traduire('tour de bras, si le côté n’est pas indiqué'), aliases: ['arms', 'arm', 'tour_bras', 'biceps', 'bras_cm'] },
-  { key: 'tour_avant_bras_droit_cm', label: traduire('Avant-bras droit'), min: 15, max: 50, ai: traduire('tour de l’avant-bras droit'), aliases: ['right_forearm', 'tour_d_avant_bras_droit', 'avant_bras_droit'] },
-  { key: 'tour_avant_bras_gauche_cm', label: traduire('Avant-bras gauche'), min: 15, max: 50, ai: traduire('tour de l’avant-bras gauche'), aliases: ['left_forearm', 'tour_d_avant_bras_gauche', 'avant_bras_gauche'] },
-  { key: 'tour_avant_bras_cm', label: 'Avant-bras', min: 15, max: 50, ai: traduire('tour d’avant-bras, si le côté n’est pas indiqué'), aliases: ['forearm', 'avant_bras', 'tour_d_avant_bras', 'tour_avant_bras'] },
+  { key: 'tour_avant_bras_droit_cm', label: traduire('Avant-bras droit'), measure: 'forearmR', min: 15, max: 50, ai: traduire('tour de l’avant-bras droit'), aliases: ['right_forearm', 'tour_d_avant_bras_droit', 'avant_bras_droit'] },
+  { key: 'tour_avant_bras_gauche_cm', label: traduire('Avant-bras gauche'), measure: 'forearmL', min: 15, max: 50, ai: traduire('tour de l’avant-bras gauche'), aliases: ['left_forearm', 'tour_d_avant_bras_gauche', 'avant_bras_gauche'] },
+  { key: 'tour_avant_bras_cm', label: 'Avant-bras', measure: 'forearmL', min: 15, max: 50, ai: traduire('tour d’avant-bras, si le côté n’est pas indiqué'), aliases: ['forearm', 'avant_bras', 'tour_d_avant_bras', 'tour_avant_bras'] },
   { key: 'tour_cuisse_droite_cm', label: traduire('Cuisse droite'), measure: 'thighR', min: 30, max: 110, ai: traduire('tour de la cuisse droite'), aliases: ['right_thigh', 'tour_de_cuisse_droite', 'cuisse_droite'] },
   { key: 'tour_cuisse_gauche_cm', label: traduire('Cuisse gauche'), measure: 'thighL', min: 30, max: 110, ai: traduire('tour de la cuisse gauche'), aliases: ['left_thigh', 'tour_de_cuisse_gauche', 'cuisse_gauche'] },
   { key: 'tour_de_cuisse_cm', label: 'Cuisse', measure: 'thighL', min: 30, max: 110, ai: traduire('tour de cuisse, si le côté n’est pas indiqué'), aliases: ['thighs', 'thigh', 'cuisse', 'cuisses', 'tour_cuisse'] },

@@ -200,6 +200,8 @@ const _runMigrations = async (database: SQLite.SQLiteDatabase) => {
       right_thigh REAL,
       left_calf REAL,
       right_calf REAL,
+      left_forearm REAL,
+      right_forearm REAL,
       shoulders REAL,
       neck REAL,
       date TEXT NOT NULL,
@@ -299,6 +301,9 @@ const _runMigrations = async (database: SQLite.SQLiteDatabase) => {
   // Migrations : weekly_plan + measurements
   await safeAddColumn(database, 'weekly_plan', 'session_type', 'TEXT');
   await safeAddColumn(database, 'measurements', 'navel', 'REAL');
+  // 26 octobre 2026 : tour d'avant-bras gauche et droit
+  await safeAddColumn(database, 'measurements', 'left_forearm', 'REAL');
+  await safeAddColumn(database, 'measurements', 'right_forearm', 'REAL');
 
   // Table Photos
   await database.execAsync(`
@@ -711,6 +716,8 @@ export interface Measurement {
   right_thigh?: number;
   left_calf?: number;
   right_calf?: number;
+  left_forearm?: number;
+  right_forearm?: number;
   shoulders?: number;
   neck?: number;
   date: string;
@@ -1437,11 +1444,12 @@ export const addMeasurementRecord = async (data: Measurement): Promise<number> =
   const database = await openDatabase();
   const result = await database.runAsync(
     `INSERT INTO measurements (chest, waist, navel, hips, left_arm, right_arm, left_thigh,
-     right_thigh, left_calf, right_calf, shoulders, neck, date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     right_thigh, left_calf, right_calf, left_forearm, right_forearm, shoulders, neck, date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.chest || null, data.waist || null, data.navel || null, data.hips || null,
      data.left_arm || null, data.right_arm || null, data.left_thigh || null,
      data.right_thigh || null, data.left_calf || null, data.right_calf || null,
+     data.left_forearm || null, data.right_forearm || null,
      data.shoulders || null, data.neck || null, data.date]
   );
   return result.lastInsertRowId;
@@ -2713,6 +2721,8 @@ export const updateMeasurementRecord = async (id: number, data: Partial<Measurem
       right_thigh = COALESCE(?, right_thigh),
       left_calf = COALESCE(?, left_calf),
       right_calf = COALESCE(?, right_calf),
+      left_forearm = COALESCE(?, left_forearm),
+      right_forearm = COALESCE(?, right_forearm),
       shoulders = COALESCE(?, shoulders),
       neck = COALESCE(?, neck),
       date = COALESCE(?, date)
@@ -2722,6 +2732,7 @@ export const updateMeasurementRecord = async (id: number, data: Partial<Measurem
       data.hips ?? null, data.left_arm ?? null, data.right_arm ?? null,
       data.left_thigh ?? null, data.right_thigh ?? null,
       data.left_calf ?? null, data.right_calf ?? null,
+      data.left_forearm ?? null, data.right_forearm ?? null,
       data.shoulders ?? null, data.neck ?? null,
       data.date ?? null, id,
     ]

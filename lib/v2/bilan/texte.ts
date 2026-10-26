@@ -173,7 +173,7 @@ function minutesTexte(m: number): string {
 
 export type PeseeJ = { date: string; value: number; trend?: number };
 export type CompoJ = { date: string; weight?: number; fat?: number; muscleKg?: number; muscle?: number; water?: number; bone?: number; visceral?: number };
-export type MesureCle = 'shoulders' | 'chest' | 'arm' | 'waist' | 'navel' | 'hips' | 'thigh' | 'calf' | 'neck';
+export type MesureCle = 'shoulders' | 'chest' | 'arm' | 'forearm' | 'waist' | 'navel' | 'hips' | 'thigh' | 'calf' | 'neck';
 export type MesureJ = { date: string; valeurs: Partial<Record<MesureCle, number>> };
 export type ModeObjectif = 'perte' | 'prise' | 'maintien' | 'recompo';
 export type OrigineCorps = 'pesee' | 'composition' | 'mensurations' | 'photo' | 'montre' | 'detail';
@@ -185,6 +185,7 @@ export const MESURES: { key: MesureCle; label: string; bon: 'up' | 'down' | 'non
   { key: 'chest', label: traduire('tour de poitrine'), bon: 'up' },
   { key: 'shoulders', label: traduire('tour d’épaules'), bon: 'up' },
   { key: 'arm', label: traduire('tour de bras'), bon: 'up' },
+  { key: 'forearm', label: traduire('tour d’avant-bras'), bon: 'up' },
   { key: 'thigh', label: traduire('tour de cuisse'), bon: 'none' },
   { key: 'calf', label: traduire('tour de mollet'), bon: 'none' },
   { key: 'neck', label: traduire('tour de cou'), bon: 'none' },

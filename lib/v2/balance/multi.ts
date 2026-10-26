@@ -165,7 +165,7 @@ export function weightPart(write: Record<string, number>): Record<string, number
   const out: Record<string, number> = {};
   for (const [k, v] of Object.entries(write)) {
     if (BALANCE_FIELD[k]?.measure) continue;
-    // avant-bras sans cote : garde comme avant-bras gauche (comme les autres mensurations sans cote)
+    // cle sans cote restante : rangee du cote gauche (comme les autres mensurations sans cote)
     out[UNSIDED_MEASURE[k] ?? k] = v;
   }
   return out;

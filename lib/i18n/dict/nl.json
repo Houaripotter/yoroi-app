@@ -18691,5 +18691,11 @@
 "{0} ligne pas comprise, elle sera ignorée :": "{0} regel niet begrepen, die wordt overgeslagen:",
 "{0} lignes pas comprises, elles seront ignorées :": "{0} regels niet begrepen, die worden overgeslagen:",
 "Importer {0} séance": "{0} training importeren",
-"Importer {0} séances": "{0} trainingen importeren"
+"Importer {0} séances": "{0} trainingen importeren",
+"Tour d’avant-bras": "Onderarmomtrek",
+"au plus large, poing serré, bras tendu": "op het breedste punt, vuist gebald, arm gestrekt",
+"Le tour d’avant-bras, au plus large, poing serré et bras tendu. Si tu mesures les deux avant-bras, YOROI affiche leur moyenne.": "De onderarmomtrek, op het breedste punt, vuist gebald en arm gestrekt. Als je beide onderarmen meet, toont YOROI het gemiddelde.",
+"Avant-bras gauche entre 15 et 50 cm": "Linkeronderarm tussen 15 en 50 cm",
+"Avant-bras droit entre 15 et 50 cm": "Rechteronderarm tussen 15 en 50 cm",
+"tour d’avant-bras": "onderarmomtrek"
 }

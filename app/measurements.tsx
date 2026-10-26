@@ -36,6 +36,7 @@ const ZONE_FIELDS: Record<ViewKey, MeasureKey[]> = {
   shoulders: ['shoulders'],
   chest: ['chest'],
   arm: ['armR', 'armL'],
+  forearm: ['forearmR', 'forearmL'],
   waist: ['waist'],
   navel: ['navel'],
   hips: ['hips'],
@@ -44,7 +45,7 @@ const ZONE_FIELDS: Record<ViewKey, MeasureKey[]> = {
 };
 
 const DEFAULTS: Record<MeasureKey, number> = {
-  neck: 38, shoulders: 115, chest: 100, waist: 84, navel: 86, hips: 98, armR: 34, armL: 34, thighR: 56, thighL: 56, calfR: 38, calfL: 38,
+  neck: 38, shoulders: 115, chest: 100, waist: 84, navel: 86, hips: 98, armR: 34, armL: 34, thighR: 56, thighL: 56, calfR: 38, calfL: 38, forearmR: 30, forearmL: 30,
 };
 
 const labelOf = (k: MeasureKey) => MEASURE_FIELDS.find((f) => f.key === k)?.label ?? k;
@@ -198,7 +199,7 @@ export default function MeasurementsScreen() {
         <View style={{ marginHorizontal: GUTTER, marginTop: 18, borderRadius: 24, backgroundColor: blancA(0.78), borderWidth: 1, borderColor: c.divider, padding: 16, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
             <Ink size={19} weight="black" tight>{zoneMeta.long}</Ink>
-            <Ink size={12} color={c.textSecondary} style={{ flexShrink: 1, textAlign: 'right' }}>{zone === 'waist' ? traduire('au plus fin, après une expiration') : zone === 'navel' ? traduire('à hauteur du nombril') : zone === 'arm' ? traduire('bras contracté, au plus large') : traduire('ruban à plat, sans serrer')}</Ink>
+            <Ink size={12} color={c.textSecondary} style={{ flexShrink: 1, textAlign: 'right' }}>{zone === 'waist' ? traduire('au plus fin, après une expiration') : zone === 'navel' ? traduire('à hauteur du nombril') : zone === 'arm' ? traduire('bras contracté, au plus large') : zone === 'forearm' ? traduire('au plus large, poing serré, bras tendu') : traduire('ruban à plat, sans serrer')}</Ink>
           </View>
           {zoneKeys.map((k) => {
             const v = valueOf(k);
