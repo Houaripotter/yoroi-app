@@ -34,6 +34,8 @@ export function MesureConfidentialite() {
         <Ink size={13} color={c.textSecondary}>
           {traduire("Ce qui part : des faits, sans valeur. Par exemple « une pesée a été saisie » ou « l’écran Progrès a été ouvert ».")}</Ink>
         <Ink size={13} color={c.textSecondary}>
+          {traduire("Et, si tu les as donnés à l’accueil : ton genre et ta tranche d’âge. Jamais ton âge exact ni ta date de naissance.")}</Ink>
+        <Ink size={13} color={c.textSecondary}>
           {traduire("Ce qui ne part jamais : ton poids, tes mensurations, tes calories, ta fréquence cardiaque, tes séances en détail, tes données Apple Santé ou Health Connect, ce que tu écris.")}</Ink>
         <Ink size={13} color={c.textSecondary}>
           {traduire("Couper arrête tout envoi tout de suite, rapports de plantage compris.")}</Ink>

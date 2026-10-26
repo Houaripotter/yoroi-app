@@ -144,7 +144,7 @@ export function marquer(t: string, fragments: (string | null | undefined)[], mar
  * Texte riche de l'onboarding (vague 30) : les mots cles (** **) en gras dans la couleur donnee,
  * les dates (^^ ^^) en gras dans l'or profond. Houari : « les mots importants d'une couleur differente ».
  */
-export function Riche({ text, size = 14, color, ink, dateInk = OR_PROFOND, weight = 'medium', lineHeight, style, numberOfLines }: {
+export function Riche({ text, size = 14, color, ink, dateInk = OR_PROFOND, weight = 'medium', lineHeight, style, numberOfLines, maxFontSizeMultiplier }: {
   text: string;
   size?: number;
   color?: string;
@@ -154,13 +154,15 @@ export function Riche({ text, size = 14, color, ink, dateInk = OR_PROFOND, weigh
   lineHeight?: number;
   style?: StyleProp<TextStyle>;
   numberOfLines?: number;
+  /** 26 octobre 2026 : plafond d'agrandissement du texte du systeme (1,4 par defaut, comme Ink) */
+  maxFontSizeMultiplier?: number;
 }) {
   const c = useColors();
   return (
-    <Ink size={size} weight={weight} color={color ?? c.textSecondary} style={[{ lineHeight: lineHeight ?? Math.round(size * 1.4) }, style]} numberOfLines={numberOfLines}>
+    <Ink size={size} weight={weight} color={color ?? c.textSecondary} style={[{ lineHeight: lineHeight ?? Math.round(size * 1.4) }, style]} numberOfLines={numberOfLines} {...(maxFontSizeMultiplier ? { maxFontSizeMultiplier } : {})}>
       {decouper(text).map((m, i) =>
         m.cle ? (
-          <Ink key={i} size={size} weight="black" color={m.cle === 'date' ? dateInk : ink ?? c.accent}>{m.txt}</Ink>
+          <Ink key={i} size={size} weight="black" color={m.cle === 'date' ? dateInk : ink ?? c.accent} {...(maxFontSizeMultiplier ? { maxFontSizeMultiplier } : {})}>{m.txt}</Ink>
         ) : (
           m.txt
         ),
@@ -169,16 +171,20 @@ export function Riche({ text, size = 14, color, ink, dateInk = OR_PROFOND, weigh
   );
 }
 
-/** Titre d'ecran : grand, serre, mot cle en couleur (vague 30) */
+/**
+ * Titre d'ecran : grand, serre, mot cle en couleur (vague 30).
+ * 26 octobre 2026 (Houari : « réduire la taille du texte ») : 29 (25 sur petit iPhone), agrandissement du systeme
+ * plafonne a 1,15 pour que l'ecran se lise en entier sans defiler.
+ */
 export function Titre({ text, sub, ink, petit }: { text: string; sub?: string; ink?: string; petit?: boolean }) {
   const c = useColors();
-  const fs = petit ? 28 : 31;
+  const fs = petit ? 25 : 29;
   return (
     <View style={{ gap: 8 }}>
-      <Ink size={fs} weight="black" tight style={{ lineHeight: Math.round(fs * 1.16) }} accessibilityRole="header" accessibilityLabel={text.replace(/\*\*|\^\^/g, '')}>
-        {decouper(text).map((m, i) => (m.cle ? <Ink key={i} size={fs} weight="black" tight color={ink ?? c.accent}>{m.txt}</Ink> : m.txt))}
+      <Ink size={fs} weight="black" tight maxFontSizeMultiplier={1.15} style={{ lineHeight: Math.round(fs * 1.18) }} accessibilityRole="header" accessibilityLabel={text.replace(/\*\*|\^\^/g, '')}>
+        {decouper(text).map((m, i) => (m.cle ? <Ink key={i} size={fs} weight="black" tight maxFontSizeMultiplier={1.15} color={ink ?? c.accent}>{m.txt}</Ink> : m.txt))}
       </Ink>
-      {sub ? <Riche text={sub} size={15} weight="medium" lineHeight={21} ink={ink ?? c.accent} /> : null}
+      {sub ? <Riche text={sub} size={15} weight="medium" lineHeight={21} ink={ink ?? c.accent} maxFontSizeMultiplier={1.2} /> : null}
     </View>
   );
 }

@@ -29,6 +29,7 @@ import type { HealthDay } from '@/lib/v2/pesee/health';
 import { markTourSeen } from '@/components/yoroi/v2/tour/keys';
 import { markWhatsNewSeen } from '@/components/WhatsNewModal';
 import type { Draft, Reward, WeighInDone } from './draft';
+import { genreDeCalcul } from './draft';
 import { objectifsDuBrouillon, weightGoalDe } from './objectifs';
 import { NOUVEAUTES_30_KEY } from './parcours';
 import { peseeAConserver, profilFusionne } from './fusion';
@@ -167,10 +168,12 @@ export async function saveOnboarding(d: Draft): Promise<void> {
   // sans objectif choisi, l'objectif deja enregistre reste
   const weightGoal = objectifs.length ? weightGoalDe(objectifs) : existing?.weight_goal ?? 'maintain';
   const startWeight = d.weighIn?.weight ?? d.weight ?? undefined;
+  // 26 octobre 2026 : « autre » garde son repere (homme ou femme) pour le profil, les calculs et le personnage
+  const genreCalcul = genreDeCalcul(d);
 
   // fusion : tes reponses remplacent, le reste (depart, photo, naissance, age, champs laisses vides) est garde
   await saveProfile(
-    profilFusionne(existing, { name, gender: d.gender, height: d.height, target: d.target, startWeight, weightGoal, today: todayIso() }),
+    profilFusionne(existing, { name, gender: genreCalcul, height: d.height, target: d.target, startWeight, weightGoal, today: todayIso() }),
   );
   // reglages du trousseau : fusionnes par saveUserSettings, et seulement s'ils sont lisibles
   // (sinon l'ecriture repartirait des valeurs par defaut et effacerait les autres reglages)
@@ -184,7 +187,10 @@ export async function saveOnboarding(d: Draft): Promise<void> {
   if (reglagesLisibles) {
     await saveUserSettings({
       ...(name ? { username: name } : {}),
-      ...(d.gender ? { gender: d.gender === 'femme' ? 'female' : 'male' } : {}),
+      ...(genreCalcul ? { gender: genreCalcul === 'femme' ? 'female' as const : 'male' as const } : {}),
+      // le genre declare n'est garde a part que s'il est « autre » (efface s'il redevient homme ou femme)
+      ...(d.gender ? { genreDeclare: d.gender === 'autre' ? ('autre' as const) : null } : {}),
+      ...(d.trancheAge ? { trancheAge: d.trancheAge } : {}),
       ...(d.height ? { height: d.height } : {}),
       ...(d.target ? { targetWeight: d.target } : {}),
       goal: weightGoal,
@@ -210,7 +216,7 @@ export async function saveOnboarding(d: Draft): Promise<void> {
     ...(d.jours.length ? { joursSemaine: d.jours } : {}),
   });
   // Vague 45 : l'univers choisi (Japon, Classique ou Sans personnage) pose le personnage et, si besoin, la scene
-  await choisirUnivers(d.univers ?? 'japon', d.gender === 'femme' ? 'f' : 'h');
+  await choisirUnivers(d.univers ?? 'japon', genreCalcul === 'femme' ? 'f' : 'h');
 
   // moment habituel de la pesee : le rappel doux ne sera programme que si les notifications sont autorisees
   if (d.peseeMoment) {

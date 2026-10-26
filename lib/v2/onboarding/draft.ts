@@ -5,10 +5,14 @@
  * son ecran est converti vers la nouvelle numerotation.
  * Vague 45 : version 5, un ecran « Ton univers » apres Toi (ecran 3) ; un brouillon v4 en cours est repris,
  * ses ecrans a partir de l'Objectif sont decales d'un cran.
+ * 26 octobre 2026 : version 6, un ecran « Ta tranche d'âge » apres Toi (ecran 4) ; un brouillon v5 en cours est repris,
+ * ses ecrans a partir de Ton univers sont decales d'un cran. Genre « autre » possible, avec genreRepere
+ * (homme ou femme) pour les seuls calculs et reperes qui dependent du sexe (masse grasse, metabolisme, personnage).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isChoixUnivers, type ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import { CHOIX_RAPPELS_VIDE, type ChoixRappels } from '@/lib/v2/notifications/discipline';
+import { isTrancheAge, type TrancheAge } from './trancheAge';
 
 export const DRAFT_KEY = '@yoroi_onboarding_draft_v3';
 
@@ -40,11 +44,18 @@ export type Reward = {
   rankName: string;
 };
 
+/** Genre declare a l'ecran Toi (26 octobre 2026 : « autre » ajoute) */
+export type GenreDeclare = 'homme' | 'femme' | 'autre';
+
 export type Draft = {
-  v: 5;
+  v: 6;
   page: number;
   name: string;
-  gender: 'homme' | 'femme' | null;
+  gender: GenreDeclare | null;
+  /** 26 octobre 2026 : si gender vaut 'autre', le repere choisi pour les calculs lies au sexe (sinon ignore) */
+  genreRepere: 'homme' | 'femme' | null;
+  /** 26 octobre 2026 : tranche d'age (ecran facultatif), jamais l'age exact */
+  trancheAge: TrancheAge | null;
   /** objectif principal, deduit de goals (lib/v2/onboarding/objectifs.ts) pour les appelants qui n'en lisent qu'un */
   goal: Goal | null;
   /** vague 29 : tous les objectifs choisis (choix multiples avec compatibilites) */
@@ -75,10 +86,12 @@ export type Draft = {
 };
 
 export const EMPTY_DRAFT: Draft = {
-  v: 5,
+  v: 6,
   page: 0,
   name: '',
   gender: null,
+  genreRepere: null,
+  trancheAge: null,
   goal: null,
   goals: [],
   sports: [],
@@ -104,6 +117,18 @@ export const EMPTY_DRAFT: Draft = {
 const PAGE_V3_TO_V4 = [0, 1, 2, 3, 6, 7, 9, 10, 10, 10, 10];
 /** Vague 45 : ecran de la version 4 vers la version 5 (Ton univers insere en 3) */
 const PAGE_V4_TO_V5 = (p: number) => (p >= 3 ? p + 1 : p);
+/** 26 octobre 2026 : ecran de la version 5 vers la version 6 (Ta tranche d'âge inseree en 3) */
+const PAGE_V5_TO_V6 = (p: number) => (p >= 3 ? p + 1 : p);
+
+/**
+ * Le genre a utiliser pour tout ce qui depend du sexe (masse grasse, metabolisme, categories, personnage) :
+ * homme ou femme tels quels, « autre » suit son repere. Null si rien n'est choisi (les appelants gardent leur defaut).
+ */
+export function genreDeCalcul(d: Pick<Draft, 'gender' | 'genreRepere'>): 'homme' | 'femme' | null {
+  if (d.gender === 'homme' || d.gender === 'femme') return d.gender;
+  if (d.gender === 'autre') return d.genreRepere === 'femme' || d.genreRepere === 'homme' ? d.genreRepere : null;
+  return null;
+}
 
 /** Brouillon d'avant le 14 octobre 2026, ou abime : aucun rappel */
 function rappelsValides(r: unknown): ChoixRappels {
@@ -122,14 +147,18 @@ export async function loadDraft(): Promise<Draft | null> {
     const raw = await AsyncStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const d = JSON.parse(raw) as Partial<Omit<Draft, 'v'>> & { v?: number };
-    if (!d || (d.v !== 3 && d.v !== 4 && d.v !== 5)) return null;
+    if (!d || (d.v !== 3 && d.v !== 4 && d.v !== 5 && d.v !== 6)) return null;
     const pageV4 = d.v === 3 ? PAGE_V3_TO_V4[Math.max(0, Math.min(10, Number(d.page) || 0))] : Number(d.page) || 0;
-    const page = d.v === 5 ? pageV4 : PAGE_V4_TO_V5(pageV4);
+    const pageV5 = d.v === 5 || d.v === 6 ? pageV4 : PAGE_V4_TO_V5(pageV4);
+    const page = d.v === 6 ? pageV5 : PAGE_V5_TO_V6(pageV5);
     return {
       ...EMPTY_DRAFT,
       ...d,
-      v: 5,
+      v: 6,
       page,
+      gender: d.gender === 'homme' || d.gender === 'femme' || d.gender === 'autre' ? d.gender : null,
+      genreRepere: d.genreRepere === 'homme' || d.genreRepere === 'femme' ? d.genreRepere : null,
+      trancheAge: isTrancheAge(d.trancheAge) ? d.trancheAge : null,
       univers: isChoixUnivers(d.univers) ? d.univers : 'japon',
       sports: Array.isArray(d.sports) ? d.sports : [],
       // vague 29 : un brouillon d'avant n'a qu'un objectif

@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { transport } from './telemetryTransport';
 import type { SourcePaywall, SourcePremium } from '@/lib/v2/premium/sources';
 import type { SourcePartage } from '@/lib/v2/partage/mesure';
+import type { TrancheAge } from '@/lib/v2/onboarding/trancheAge';
 
 /** Heure de debut d'execution du bundle JavaScript : sert a first_screen_rendered */
 const T0 = Date.now();
@@ -59,7 +60,7 @@ export type TypeObjectif = 'poids' | 'seance';
 export type EtapeVisite = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14';
 
 export type EtapeOnboarding =
-  | 'accroche' | 'prenom' | 'toi' | 'univers' | 'objectif' | 'frein' | 'affirmation' | 'sport' | 'poids'
+  | 'accroche' | 'prenom' | 'toi' | 'age' | 'univers' | 'objectif' | 'frein' | 'affirmation' | 'sport' | 'poids'
   | 'taille' | 'cap' | 'rythme' | 'moment' | 'demo' | 'comparaison' | 'forge' | 'resultat' | 'premium';
 
 /** Choix de l'onboarding. Le frein ne part qu'en renseigne ou passe : il peut contenir une blessure. */
@@ -146,7 +147,9 @@ export type NomEvenement = keyof Evenements;
 /** Proprietes utilisateur : listes fermees elles aussi */
 export interface Proprietes {
   objectif_principal?: 'perdre' | 'prendre' | 'combat' | 'maintenir' | 'aucun';
-  genre?: 'homme' | 'femme' | 'non_renseigne';
+  genre?: 'homme' | 'femme' | 'autre' | 'non_renseigne';
+  /** 26 octobre 2026 : tranche d'age (liste fermee), jamais l'age ni la date de naissance */
+  tranche_age?: TrancheAge | 'non_renseigne';
   famille_principale?: Famille;
   statut_premium?: Statut;
   univers?: 'japon' | 'classique' | 'aucun';

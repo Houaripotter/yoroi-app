@@ -307,6 +307,10 @@ export interface UserSettings {
   custom_club_logos?: { [key: string]: string };
   weekly_routine?: { [key: string]: { time: string; activity: string }[] };
   gender?: 'male' | 'female';
+  /** 26 octobre 2026 : « autre » declare a l'onboarding ; gender garde alors le repere des calculs (masse grasse, metabolisme) */
+  genreDeclare?: 'autre' | null;
+  /** 26 octobre 2026 : tranche d'age declaree (lib/v2/onboarding/trancheAge.ts), jamais l'age exact */
+  trancheAge?: string;
   userClan?: 'GB' | 'MFC' | 'Ronin';
   userClubs?: UserClub[];
   goal?: 'lose_weight' | 'gain_muscle' | 'maintain' | 'improve_health' | 'lose' | 'gain';

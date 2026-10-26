@@ -6,6 +6,9 @@
  *  . le genre, l'univers, l'objectif et la famille de sport partent en identifiant de liste fermee ;
  *  . le frein ne part qu'en renseigne ou passe (il peut contenir une blessure) ;
  *  . poids, taille, cap : jamais la valeur, seulement la methode ou renseigne et passe.
+ *  . 26 octobre 2026 : le genre peut valoir « autre » (le repere homme ou femme des calculs ne part pas) ;
+ *    la tranche d'age part en propriete utilisateur tranche_age (jamais l'age ni la date de naissance),
+ *    l'evenement de l'ecran ne dit que renseigne ou passe.
  */
 import { familleDeSport, setProprietes, track, trancheNombre, type ChoixOnboarding, type EtapeOnboarding, type Famille } from '@/utils/telemetry';
 import type { Draft } from './draft';
@@ -15,6 +18,7 @@ const ETAPES: Record<string, EtapeOnboarding> = {
   ouverture: 'accroche',
   prenom: 'prenom',
   toi: 'toi',
+  age: 'age',
   univers: 'univers',
   objectif: 'objectif',
   frein: 'frein',
@@ -77,6 +81,10 @@ export function choixOnboarding(nomEcran: string, d: Draft): void {
     case 'toi':
       choix(d.gender ?? 'passe');
       setProprietes({ genre: d.gender ?? 'non_renseigne' });
+      return;
+    case 'age':
+      choix(d.trancheAge ? 'renseigne' : 'passe');
+      setProprietes({ tranche_age: d.trancheAge ?? 'non_renseigne' });
       return;
     case 'univers':
       choix(d.univers);

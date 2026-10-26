@@ -9,6 +9,7 @@
  *  - peseeAConserver : une pesee existe deja aujourd'hui (et ce n'est pas celle de l'onboarding) : rien n'est ecrit.
  */
 import type { Draft, Goal, WeighInDone } from './draft';
+import { isTrancheAge, trancheDuProfil } from './trancheAge';
 
 type ReglagesExistants = {
   username?: string;
@@ -16,6 +17,9 @@ type ReglagesExistants = {
   height?: number;
   targetWeight?: number;
   goal?: string;
+  /** 26 octobre 2026 : « autre » declare a l'onboarding (gender garde le repere des calculs) */
+  genreDeclare?: string | null;
+  trancheAge?: string;
 } | null | undefined;
 
 export type ProfilExistant = {
@@ -46,14 +50,23 @@ export function brouillonPrerempli(d: Draft, src: { settings?: ReglagesExistants
   const s = src.settings ?? null;
   const p = src.profile ?? null;
   const nom = (p?.name ?? '').trim() || (s?.username ?? '').trim();
-  const genre: Draft['gender'] = p?.avatar_gender === 'femme' || p?.avatar_gender === 'homme'
+  // le repere des calculs (profil ou trousseau), homme ou femme
+  const repere: 'homme' | 'femme' | null = p?.avatar_gender === 'femme' || p?.avatar_gender === 'homme'
     ? p.avatar_gender
     : s?.gender === 'female' ? 'femme' : s?.gender === 'male' ? 'homme' : null;
+  // 26 octobre 2026 : « autre » declare reste « autre », son repere est repris
+  const autre = s?.genreDeclare === 'autre';
+  const genre: Draft['gender'] = autre ? 'autre' : repere;
+  // la tranche d'age : deduite de la date de naissance ou de l'age du profil, sinon celle deja declaree
+  const trancheDeclaree = s?.trancheAge;
+  const tranche = trancheDuProfil(p) ?? (isTrancheAge(trancheDeclaree) ? trancheDeclaree : null);
   const goal = goalDe(p?.weight_goal) ?? goalDe(s?.goal);
   return {
     ...d,
     name: d.name.trim() ? d.name : nom,
     gender: d.gender ?? genre,
+    genreRepere: d.genreRepere ?? (d.gender == null && autre ? repere : null),
+    trancheAge: d.trancheAge ?? tranche,
     height: d.height ?? positif(p?.height_cm) ?? positif(s?.height),
     target: d.target ?? positif(p?.target_weight) ?? positif(s?.targetWeight),
     ...(d.goals.length || d.goal || !goal ? {} : { goals: [goal], goal }),
@@ -63,7 +76,7 @@ export function brouillonPrerempli(d: Draft, src: { settings?: ReglagesExistants
 /** Le profil a enregistrer : tes reponses d'abord, l'existant pour tout le reste */
 export function profilFusionne(
   existing: ProfilExistant | null | undefined,
-  r: { name: string; gender: Draft['gender']; height: number | null; target: number | null; startWeight?: number; weightGoal?: 'lose' | 'gain' | 'maintain'; today: string },
+  r: { name: string; gender: 'homme' | 'femme' | null; height: number | null; target: number | null; startWeight?: number; weightGoal?: 'lose' | 'gain' | 'maintain'; today: string },
 ): ProfilExistant {
   const e = existing ?? null;
   return {

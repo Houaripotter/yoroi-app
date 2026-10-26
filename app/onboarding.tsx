@@ -9,7 +9,9 @@
  * preparation (enregistrement final, une seule fois), ton plan, Premium.
  * Barre de progression : 50 % des que le prenom est donne, puis de plus en plus douce jusqu'au plan.
  * Chaque reponse est gardee dans un brouillon (reprise au bon ecran si l'app est fermee).
- * Mode apercu : /onboarding?preview=true&page=N (N de 0 a 18, rien n'est enregistre, aucun achat possible).
+ * 26 octobre 2026 : 20 ecrans, « Ta tranche d'âge » (facultatif) juste apres Toi ; Toi propose aussi « Autre »
+ *   (avec un repere homme ou femme pour les seuls calculs lies au sexe, lib/v2/onboarding/draft.ts genreDeCalcul).
+ * Mode apercu : /onboarding?preview=true&page=N (N de 0 a 19, rien n'est enregistre, aucun achat possible).
  * En mode createur, une barre d'apercu permet de passer d'un ecran a l'autre (Studio YOROI).
  * La decision d'afficher l'onboarding reste dans app/index.tsx (lib/v2/onboarding/etatOuverture.ts).
  * 18 octobre 2026 (INSTALLATION) : apres une reinstallation, ce qui existe deja (trousseau, base) preremplit les reponses ;
@@ -41,6 +43,7 @@ import { useCreatorMode } from '@/lib/v2/creator/CreatorModeContext';
 import { holdPurchasePreview } from '@/lib/v2/creator/purchasePreview';
 import type { HealthDay } from '@/lib/v2/pesee/health';
 import { EMPTY_DRAFT, clearDraft, loadDraft, saveDraft } from '@/lib/v2/onboarding/draft';
+import { genreDeCalcul } from '@/lib/v2/onboarding/draft';
 import type { Draft, Goal } from '@/lib/v2/onboarding/draft';
 import { toggleFrein } from '@/lib/v2/onboarding/freins';
 import { objectifPrincipal, objectifsDuBrouillon, sensDe } from '@/lib/v2/onboarding/objectifs';
@@ -64,6 +67,7 @@ import {
 import { Accroche } from '@/components/yoroi/v2/onboarding/Accroche';
 import { Prenom } from '@/components/yoroi/v2/onboarding/Prenom';
 import { Toi } from '@/components/yoroi/v2/onboarding/Toi';
+import { Age } from '@/components/yoroi/v2/onboarding/Age';
 import { Univers } from '@/components/yoroi/v2/onboarding/Univers';
 import { rangNom } from '@/lib/v2/dojo/univers';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
@@ -96,26 +100,28 @@ const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev
 const OUVERTURE = 0;
 const PRENOM = 1;
 const TOI = 2;
+// 26 octobre 2026 : ta tranche d'age, juste apres le genre (les ecrans suivants sont decales d'un cran)
+const AGE = 3;
 // Vague 45 : Ton univers, juste apres le genre (les ecrans suivants sont decales d'un cran)
-const UNIVERS = 3;
-const OBJECTIF = 4;
-const FREIN = 5;
-const AFFIRMATION = 6;
-const SPORT = 7;
+const UNIVERS = 4;
+const OBJECTIF = 5;
+const FREIN = 6;
+const AFFIRMATION = 7;
+const SPORT = 8;
 // 14 octobre 2026 : Apple Sante ou Health Connect, l'explication avant la fenetre du systeme
-const SANTE = 8;
-const POIDS = 9;
-const TAILLE = 10;
-const CAP = 11;
-const RYTHME = 12;
-const MOMENT = 13;
-const DEMO = 14;
-const COMPARAISON = 15;
-const FORGE = 16;
-const RESULTAT = 17;
-const PREMIUM = 18;
+const SANTE = 9;
+const POIDS = 10;
+const TAILLE = 11;
+const CAP = 12;
+const RYTHME = 13;
+const MOMENT = 14;
+const DEMO = 15;
+const COMPARAISON = 16;
+const FORGE = 17;
+const RESULTAT = 18;
+const PREMIUM = 19;
 const LAST = PREMIUM;
-const NAMES = ['ouverture', 'prenom', 'toi', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium'];
+const NAMES = ['ouverture', 'prenom', 'toi', 'age', 'univers', 'objectif', 'frein', 'affirmation', 'sport', 'sante', 'poids', 'taille', 'cap', 'rythme', 'moment_pesee', 'demonstration', 'comparaison', 'preparation', 'plan', 'premium'];
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
@@ -133,7 +139,7 @@ export default function OnboardingScreen() {
   const [page, setPage] = useState(isPreview ? startPage : OUVERTURE);
   const [dir, setDir] = useState(1);
   const [d, setD] = useState<Draft>(
-    isPreview ? { ...EMPTY_DRAFT, name: 'Houari', gender: 'homme', goal: 'lose', goals: ['lose'], freins: [], sports: ['jjb', 'musculation'], weight: 82, height: 178, target: 77, sessions: 3, jours: [0, 2, 4], peseeMoment: 'reveil', peseeJours: [0, 2, 4], univers: 'japon' } : EMPTY_DRAFT,
+    isPreview ? { ...EMPTY_DRAFT, name: 'Houari', gender: 'homme', trancheAge: '25_34', goal: 'lose', goals: ['lose'], freins: [], sports: ['jjb', 'musculation'], weight: 82, height: 178, target: 77, sessions: 3, jours: [0, 2, 4], peseeMoment: 'reveil', peseeJours: [0, 2, 4], univers: 'japon' } : EMPTY_DRAFT,
   );
   const draftRef = useRef<Draft>(d);
   // vague 29 : pendant l'onboarding (et son paywall), les personnages gardent le dessin classique
@@ -302,10 +308,12 @@ export default function OnboardingScreen() {
     onClose: isPreview ? closePreview : undefined,
   });
 
-  const genre: 'h' | 'f' = d.gender === 'femme' ? 'f' : 'h';
+  // 26 octobre 2026 : « autre » suit son repere (homme ou femme) pour le personnage et les calculs
+  const genreCalcul = genreDeCalcul(d);
+  const genre: 'h' | 'f' = genreCalcul === 'femme' ? 'f' : 'h';
   // Vague 45 : univers choisi a l'ecran 4, suivi par les ecrans qui montrent le personnage
   const univers: ChoixUnivers = d.univers ?? 'japon';
-  const weight = d.weight ?? (d.gender === 'femme' ? 62 : 75);
+  const weight = d.weight ?? (genreCalcul === 'femme' ? 62 : 75);
 
   // ===== Ouverture =====
   const start = async () => {
@@ -360,7 +368,7 @@ export default function OnboardingScreen() {
     const w = draftRef.current.weight ?? weight;
     const sens = sensDe(goals);
     const cat = goals.includes('combat')
-      ? categoriesOf(categorySportOf(draftRef.current.sports), draftRef.current.gender).find((x) => x.id === draftRef.current.category)
+      ? categoriesOf(categorySportOf(draftRef.current.sports), genreDeCalcul(draftRef.current)).find((x) => x.id === draftRef.current.category)
       : undefined;
     const catMax = cat && cat.maxWeight < 999 ? cat.maxWeight : null;
     if (sens === 'baisse') return catMax != null && catMax < w ? catMax : Math.max(30, Math.round(w - 5));
@@ -563,7 +571,19 @@ export default function OnboardingScreen() {
       case PRENOM:
         return <Prenom nav={nav()} name={d.name} onChange={(v) => patch({ name: v })} onNext={() => { onboardingEvent('reponse', { ecran: 'prenom', question: 'prenom' }); goTo(TOI); }} />;
       case TOI:
-        return <Toi nav={nav({ skip: () => skip({ gender: null }, UNIVERS) })} name={d.name} gender={d.gender} onPick={(g) => answer('genre', { gender: g })} onNext={() => goTo(UNIVERS)} />;
+        return (
+          <Toi
+            nav={nav({ skip: () => skip({ gender: null, genreRepere: null }, AGE) })}
+            name={d.name}
+            gender={d.gender}
+            repere={d.genreRepere}
+            onPick={(g) => answer('genre', { gender: g, ...(g === 'autre' ? {} : { genreRepere: null }) })}
+            onRepere={(r) => answer('genre_repere', { genreRepere: r })}
+            onNext={() => goTo(AGE)}
+          />
+        );
+      case AGE:
+        return <Age nav={nav({ skip: () => skip({ trancheAge: null }, UNIVERS) })} value={d.trancheAge} onPick={(t) => answer('tranche_age', { trancheAge: t })} onNext={() => goTo(UNIVERS)} />;
       case UNIVERS:
         return <Univers nav={nav()} genre={genre} value={univers} onPick={(v) => answer('univers', { univers: v })} onNext={() => goTo(OBJECTIF)} />;
       case FREIN:

@@ -7,7 +7,8 @@
  * Vague 18 : ta scene en bandeau derriere ta photo, ton chemin vers un torii, ta ceinture dessinee,
  * ton sport illustre et des ornements discrets entre les sections. Barre du haut fixe sous l'heure.
  */
-import { track } from '@/utils/telemetry';
+import { setProprietes, track } from '@/utils/telemetry';
+import { trancheDuProfil } from '@/lib/v2/onboarding/trancheAge';
 import { bmiOf } from '@/lib/v2/progres/biomarkers';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DeviceEventEmitter, Keyboard, Linking, TextInput, View } from 'react-native';
@@ -242,6 +243,9 @@ export default function TonProfil() {
         age: age ?? undefined,
       });
       if (tw && fmt(tw) !== fmt(profile?.target_weight)) track('objectif_defini', { type: 'poids' });
+      // 26 octobre 2026 : seule la tranche d'age part (propriete utilisateur), jamais la date ni l'age
+      const tranche = trancheDuProfil({ birth_date: birthIso, age });
+      if (tranche && tranche !== trancheDuProfil(profile)) setProprietes({ tranche_age: tranche });
       if (belt !== savedBelt && belt) await setUserBelt(belt);
       const clubName = club.trim();
       if (clubName !== (clubs[0]?.name ?? '')) {
