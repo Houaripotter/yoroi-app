@@ -40,8 +40,10 @@ type Outil = { key: string; title: string; a11y: string; href: string | { pathna
 /** Tes outils, dans l'ordre demande par Houari, avec Partager en deuxieme */
 export function outilsAccueil(): Outil[] {
   return [
-    // 24 octobre 2026 : « je veux faire une seance mais je ne sais pas quoi faire » : tu touches tes zones (app/programmes/zones.tsx)
-    { key: 'zones', title: traduire('Quoi faire ?'), a11y: traduire('Je ne sais pas quoi faire : je touche mes zones, YOROI me donne ma séance'), href: '/programmes/zones', img: CORPS_ZONES, tint: P.tuileIndigo },
+    // 24 octobre 2026 : « je veux faire une seance mais je ne sais pas quoi faire ».
+    // 26 octobre 2026 (Houari : « il est où le coach ? ») : la pastille ouvre le Coach (app/coach.tsx), qui rassemble
+    // ton programme, ta seance du jour, les seances toutes faites (app/programmes/zones.tsx) et tes questions
+    { key: 'zones', title: traduire('Coach'), a11y: traduire('Ton coach : ton programme, ta séance du jour, tes réponses'), href: '/coach', img: CORPS_ZONES, tint: P.tuileIndigo },
     { key: 'chrono', title: traduire('Chrono'), a11y: traduire('Chrono : repos, rounds, Tabata'), href: '/timer', img: ORNEMENTS.chrono, tint: P.tuileOr },
     { key: 'partager', title: traduire('Partager'), a11y: traduire('Partager une carte : ta séance, ton record, ta semaine'), href: null, img: null, tint: P.tuileIndigo },
     { key: 'objectifs', title: traduire('Objectifs'), a11y: traduire('Objectifs à cocher, par sport'), href: '/training-goals', img: ORNEMENTS.cible, tint: P.tuileMousse },

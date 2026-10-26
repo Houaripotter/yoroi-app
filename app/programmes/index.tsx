@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, Image, Pressable, ScrollView, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
@@ -42,6 +42,11 @@ export default function ProgrammesScreen() {
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   const [femme, setFemme] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
+  // 26 octobre 2026 : ouvert depuis le Coach (app/coach.tsx) avec ?quiz=1, le questionnaire s'ouvre tout de suite
+  const { quiz } = useLocalSearchParams<{ quiz?: string }>();
+  useEffect(() => {
+    if (quiz === '1') setQuizOpen(true);
+  }, [quiz]);
   const [materiel, setMateriel] = useState<Equipement[] | null>(null);
   const [materielOpen, setMaterielOpen] = useState(false);
   // 26 octobre 2026 : Ma salle, les machines precises cochees (null : pas de detail)
