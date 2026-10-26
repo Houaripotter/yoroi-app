@@ -5,21 +5,19 @@
  * Carré par défaut (taille) ; avec largeur et hauteur, un bandeau large : le dessin reste carré, centré
  * sur le même fond papier que l'image, donc sans bord visible.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Image, View } from 'react-native';
 import { Image as ImageAnimee } from 'expo-image';
 import type { ImageSourcePropType } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { DUREE_IMAGE_FLOW, SEQUENCE_FLOW, useSourceDemos } from '@/lib/v2/programmes/demosTest';
+import { useSourceDemos } from '@/lib/v2/programmes/demosTest';
 import { traduire } from '@/lib/i18n/tr';
 
 const FONDU = 450;
 const POSE = 700;
 export const FOND_DEMO = '#F2F1EC';
-/** Les dessins Flow sont blancs : fond indigo des cartes YOROI */
-export const FOND_FLOW = '#2C4A84';
 
 export function ExoDemo({ nom, taille = 96, arrondi = 18, largeur, hauteur, bordure = true }: { nom: string; taille?: number; arrondi?: number; largeur?: number; hauteur?: number; bordure?: boolean }) {
   const source = useSourceDemos();
@@ -35,12 +33,11 @@ export function ExoDemo({ nom, taille = 96, arrondi = 18, largeur, hauteur, bord
       hauteur={hauteur}
       bordure={bordure}
       contenir
-      fond={source === 'flow' ? FOND_FLOW : FOND_DEMO}
     />
   );
 }
 
-/** Deux images (depart, arrivee) en fondu et en boucle ; trois images et plus en flipbook ; une seule image est deja animee */
+/** Deux images (depart, arrivee) en fondu et en boucle ; une seule image reste fixe */
 export function DemoPaire({ images, label, taille = 96, arrondi = 18, largeur, hauteur, bordure = true, contenir = false, fond = FOND_DEMO }: {
   images: readonly ImageSourcePropType[];
   label: string;
@@ -54,8 +51,7 @@ export function DemoPaire({ images, label, taille = 96, arrondi = 18, largeur, h
 }) {
   const { theme } = useYoroiTheme();
   const b = useSharedValue(0);
-  const deux = images.length === 2;
-  const flip = images.length >= 3;
+  const deux = images.length > 1;
 
   useEffect(() => {
     if (!deux) return;
@@ -86,9 +82,7 @@ export function DemoPaire({ images, label, taille = 96, arrondi = 18, largeur, h
       accessibilityLabel={label}
       style={{ width: w, height: h, borderRadius: arrondi, overflow: 'hidden', backgroundColor: fond, borderWidth: bordure ? 1 : 0, borderColor: theme.colors.divider }}
     >
-      {flip ? (
-        <Flipbook images={images} style={img} mode={mode} />
-      ) : deux ? (
+      {deux ? (
         <>
           <Image source={images[0]} style={img} resizeMode={mode} />
           <Animated.Image source={images[1]} style={[img, styleB]} resizeMode={mode} />
@@ -98,25 +92,5 @@ export function DemoPaire({ images, label, taille = 96, arrondi = 18, largeur, h
         <ImageAnimee source={images[0] as never} style={img} contentFit={mode} autoplay cachePolicy="disk" />
       )}
     </View>
-  );
-}
-
-/**
- * Plusieurs images enchainees (Flow : 0, 1, 2, 1, 180 ms chacune). Toutes restent montees et seule l'image
- * du moment est visible : pas de clignotement pendant le chargement.
- */
-function Flipbook({ images, style, mode }: { images: readonly ImageSourcePropType[]; style: object; mode: 'contain' | 'cover' }) {
-  const [pas, setPas] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setPas((p) => (p + 1) % SEQUENCE_FLOW.length), DUREE_IMAGE_FLOW);
-    return () => clearInterval(t);
-  }, []);
-  const visible = images.length === 3 ? SEQUENCE_FLOW[pas] : pas % images.length;
-  return (
-    <>
-      {images.map((src, i) => (
-        <ImageAnimee key={i} source={src as never} style={[style, { opacity: i === visible ? 1 : 0 }]} contentFit={mode} cachePolicy="disk" />
-      ))}
-    </>
   );
 }
