@@ -1,8 +1,8 @@
 /**
  * Paywall unique de YOROI Premium : fin de l'onboarding (source onboarding) et depuis l'app (source app).
  * Ordre des blocs, de haut en bas (13 octobre 2026, l'ordre compte plus que le graphisme) :
- *  1. bandeau illustre (scene, personnage), la croix et Restaurer, le titre avec l'essai et sa vraie duree
- *     du store (seulement si l'utilisateur y a droit) ;
+ *  1. le haut clair (26 octobre 2026) : la croix et Restaurer, le titre avec l'essai et sa vraie duree du store
+ *     (seulement si l'utilisateur y a droit), puis le carrousel de quatre cartes Premium (CarrouselPremium.tsx) ;
  *  2. la preuve sociale : la vraie note avec lauriers et DEUX avis reels, les plus courts (lib/v2/premium/avis.ts) ;
  *  3. le tableau Gratuit contre Premium, 6 lignes vraies (PREMIUM_ROWS, limits.ts), puis ta carte « Ton plan »
  *     seulement quand le paywall ne vient pas d'un mur (elle prolonge le tableau : ce que Premium fait de TES chiffres) ;
@@ -21,7 +21,7 @@
  * seulement dans l'apercu du Studio quand le store ne renvoie rien).
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, PanResponder, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -65,12 +65,13 @@ import { SANS_PERSONNAGE } from '@/lib/v2/dojo/univers';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import { estSceneClassique } from '@/lib/v2/espace/classique';
 import type { SceneId } from '@/lib/v2/espace';
-import { SCENE_FOCUS, SCENE_RATIO, personnageImage as personnageAccueil, sceneForNow } from '@/components/yoroi/v2/accueil/images';
+import { personnageImage as personnageAccueil, sceneForNow } from '@/components/yoroi/v2/accueil/images';
 import { CourbePoids, LegendeCourbe } from '@/components/yoroi/v2/charts/CourbePoids';
 import { LiensLegaux, LienLegalTexte } from '@/components/yoroi/v2/premium/LiensLegaux';
-import { VOILE_SUR, imageVitrine, libelleVitrine, listeVitrines, prochaineVitrine, rangBoucle, voileMax, type Vitrine } from '@/lib/v2/premium/vitrine';
+import { imageVitrine, libelleVitrine, listeVitrines, prochaineVitrine, rangBoucle, type Vitrine } from '@/lib/v2/premium/vitrine';
 import { CarteCourbe, ListeBenefices, PhrasePlan, phrasePlan } from '@/components/yoroi/v2/premium/Benefices';
-import { margePieds, solDeScene } from '@/lib/v2/espace/sol';
+import { CarrouselPremium } from '@/components/yoroi/v2/premium/CarrouselPremium';
+import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { basAtteint } from '@/lib/v2/premium/defilement';
 import { cadrageBuste } from '@/lib/v2/espace/cadrageBuste';
 import { ApercuDansBarre, useApercuVisible } from '@/components/yoroi/v2/studio/PreviewBar';
@@ -78,7 +79,6 @@ import { safeOpenURL } from '@/lib/security/validators';
 import { playLevelUpSound } from '@/lib/soundManager';
 import { ChargementPetit } from '@/components/yoroi/v2/chargement/Chargement';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
-import { P, blancA } from '@/components/yoroi/livePalette';
 import { traduire, LANG } from '@/lib/i18n/tr';
 
 const CASTLE = require('@/assets/avatars/app/monde/fonds/verticale_chateau.webp');
@@ -238,9 +238,6 @@ function SectionTitle({ children }: { children: string }) {
   );
 }
 
-/** 17 octobre 2026 : le texte du bandeau, lisible sur toutes les scenes (voile mesure, ombre legere, or clair dans les deux themes) */
-const OMBRE_TEXTE = { textShadowColor: 'rgba(8,10,18,0.55)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 };
-const OR_BANDEAU = '#E3C47B';
 
 const FREE_W = 76;
 const PREM_W = 86;
@@ -262,6 +259,8 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
 }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  // 26 octobre 2026 : les couleurs des pages Programmes et Coach (page #EDF1FA, carte indigo, teintes)
+  const pal = usePaletteProgramme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -279,7 +278,6 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const trialOf = (raw: unknown) => (variant === 'reel' ? trialFor(raw, trialEligibility) : forcedTrial);
   // en apercu, l'ecran se montre comme a un compte gratuit
   const isPremium = preview ? false : realPremium;
-  const { bgStyle, armorStyle } = useReveal();
 
   // vague 49 : ton rythme prevu sur la courbe de 6 mois (debut du plan du profil, sinon ta premiere pesee de la periode)
   // 17 octobre : aPlan (un plan existe, hors onboarding) et arrivee (« le 22 novembre », la date du torii)
@@ -619,7 +617,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const [rang, setRang] = useState(0);
   const [ancienRang, setAncienRang] = useState<number | null>(null);
   const rangRef = useRef(0);
-  const [pauseDoigt, setPauseDoigt] = useState(false);
+  const [pauseDoigt] = useState(false);
   const fondu = useSharedValue(1);
   useEffect(() => {
     if (!vitrine) return;
@@ -643,30 +641,12 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   );
   const allerRef = useRef(allerA);
   allerRef.current = allerA;
-  const glisse = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => setPauseDoigt(true),
-      onPanResponderRelease: (_e, g) => {
-        setPauseDoigt(false);
-        if (g.dx <= -40) allerRef.current(rangRef.current + 1);
-        else if (g.dx >= 40) allerRef.current(rangRef.current - 1);
-      },
-      onPanResponderTerminate: () => setPauseDoigt(false),
-    }),
-  ).current;
   const enVitrine = veutVitrine && vitrine !== null;
   useEffect(() => {
     if (!enVitrine || reduireCar || pauseDoigt || celebrate || listeDefile.length < 2) return;
     const t = setTimeout(() => allerRef.current(rangRef.current + 1), 3500);
     return () => clearTimeout(t);
   }, [enVitrine, reduireCar, pauseDoigt, celebrate, rang, listeDefile.length]);
-  const vitrineVue = enVitrine ? listeDefile[rang] ?? vitrine : null;
-  // pendant le court choix de la vitrine, ni scene ni personnage (jamais ta scene une fraction de seconde)
-  const bandeauPret = !veutVitrine || vitrine !== null;
-  const sceneBandeau: SceneId = vitrineVue?.scene ?? sceneHero;
-  const imgBandeau = vitrineVue ? imageVitrine(vitrineVue.cle) : heroImg;
   // les couches du bandeau qui defile : l'ancien couple dessous (pendant le fondu), le suivant invisible (prechargement),
   // le couple courant dessus ; une cle par rang, l'image suivante devient la courante sans etre rechargee
   const couches: { k: string; v: Vitrine; role: 'ancien' | 'suivant' | 'courant' }[] = enVitrine
@@ -676,8 +656,6 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
         { k: `v${rang}`, v: listeDefile[rang] ?? (vitrine as Vitrine), role: 'courant' as const },
       ].filter((x, i, l) => x.v && l.findIndex((y) => y.k === x.k) === i)
     : [];
-  const fonduStyle = useAnimatedStyle(() => ({ opacity: fondu.value }));
-  const fonduPerso = useAnimatedStyle(() => ({ opacity: fondu.value }));
   const fonduVignette = useAnimatedStyle(() => ({ opacity: fondu.value }));
   // 17 octobre 2026 (Houari : « le personnage aussi ici ») : la photo de ta carte « Ton plan » suit le bandeau, meme couple,
   // meme fondu, en buste (lib/v2/espace/cadrageBuste.ts, cadrage moyen si l'image n'est pas mesuree). Premium : ton personnage.
@@ -704,32 +682,29 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     return { scene: x.scene, personnage: imageVitrine(x.cle) };
   }, [kindHero, vitrine, sceneHero]);
   const curve = weeklyPoints(me.weights);
-  const small = height < 760;
-  // bandeau compact : le prix doit se voir sans defiler (390 x 844 comme 375 x 667)
-  // vague 32 : un peu moins d'armure sur les petits ecrans, la carte de ton plan est plus riche
-  // vague 49 (Houari : « on voit le personnage seul, on ne voit pas le décor ») : la scene entiere comme une illustration,
-  // cadree sur son haut (le decor), le voile sombre seulement sous le titre, le personnage plus grand pose sur le sol
-  const armorH = height < 720 ? 96 : height < 860 ? 150 : 190;
-  const [hdrH, setHdrH] = useState(0);
-  // vitrine : les pieds du personnage poses sur le sol mesure de la scene (lib/v2/espace/sol.ts), l'image agrandie juste
-  // assez pour que la ligne du sol tombe sous ses pieds, et la taille du personnage selon la profondeur de la scene
-  const geoCouple = (v: Vitrine | null) => {
-    const sol = v ? solDeScene(v.scene) : null;
-    const ch = Math.round(armorH * (sol ? sol.echelle : 1));
-    const pd = hdrH - margePieds(v?.cle ?? persoHero) * ch;
-    const ih = Math.max(hdrH * 1.1, width / SCENE_RATIO, sol ? pd / sol.sol : 0);
-    const iw = ih * SCENE_RATIO;
-    const sc = v ? v.scene : sceneHero;
-    return { charH: ch, imgH: ih, imgW: iw, imgTop: sol ? Math.min(0, pd - sol.sol * ih) : 0, shift: Math.max(0, Math.min(iw - width, (SCENE_FOCUS[sc] ?? 0.5) * iw - width * 0.5)) };
+  // le carrousel du haut : ta vraie courbe voilee au dela de la periode gratuite, sinon l'exemple marque comme tel
+  const dessinCourbe = (w: number, h: number) =>
+    curve.length >= 2 ? (
+      <WeightCurve points={curve} width={w} height={h} color={c.accent} surface={pal.carte} ligne={plan6.ligne} torii={plan6.torii} />
+    ) : (
+      <View style={{ width: w }}>
+        <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={h} compact label={traduire("Exemple de courbe de poids")} />
+        <View style={{ position: 'absolute', top: 0, left: 2, backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 }}>
+          <Ink size={9} weight="black" color={c.accent} style={{ letterSpacing: 0.8 }}>{traduire("EXEMPLE")}</Ink>
+        </View>
+      </View>
+    );
+  // la carte « Scènes et personnages » : le couple Premium de cette ouverture (Pack Basket, Pack Course...), en vignette claire
+  const vitrineMonde = vitrine ?? listeDefile[0] ?? null;
+  const mondeCarrousel = {
+    scene: sceneForNow(vitrineMonde?.scene ?? mondeVignette.scene),
+    personnage: kindHero === 'aucun' ? null : vitrineMonde ? imageVitrine(vitrineMonde.cle) : mondeVignette.personnage,
+    libelle: vitrineMonde ? libelleVitrine(vitrineMonde) : null,
   };
-  const { charH, imgH, imgW, imgTop, shift } = geoCouple(vitrineVue);
-  // lisibilite : voile sombre mesure sur la scene, plein jusqu'au bas du sous-titre, puis fondu en 56 points
-  const [texteBas, setTexteBas] = useState(0);
-  // le voile reste fixe pendant le defilement : le plus fort de la liste, lisible sur chaque couple
-  const voile = enVitrine ? voileMax(listeDefile) : VOILE_SUR;
-  const voileHaut = Math.min(0.9, voile + 0.12);
-  const fracTexte = hdrH > 0 && texteBas > 0 ? Math.min(0.9, texteBas / hdrH) : 0.5;
-  const fracFin = hdrH > 0 && texteBas > 0 ? Math.min(1, (texteBas + 56) / hdrH) : 0.68;
+  const small = height < 760;
+  // 26 octobre 2026 : le carrousel clair remplace le bandeau sombre ; compact sur les petits ecrans (375 x 667),
+  // pour que la carte de ton plan commence encore au dessus du bouton colle en bas
+  const carrouselH = height < 720 ? 146 : height < 860 ? 166 : 184;
   const apercuBarre = useApercuVisible();
   const innerW = width - GUTTER * 2 - 32;
 
@@ -783,7 +758,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     : '';
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.background }}>
+    <View style={{ flex: 1, backgroundColor: pal.page }}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingBottom: 28 }}
@@ -803,72 +778,12 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           verifierBas();
         }}
       >
-        {/* 1. Bandeau illustre : le chateau, l'armure Premium qui se revele, le titre */}
-        <View
-          style={{ borderBottomLeftRadius: 34, borderBottomRightRadius: 34, overflow: 'hidden', backgroundColor: '#141A2B' }}
-          onLayout={(e) => {
-            const h = Math.round(e.nativeEvent.layout.height);
-            if (Math.abs(h - hdrH) > 1) setHdrH(h);
-          }}
-          {...(enVitrine ? glisse.panHandlers : {})}
-          onTouchStart={enVitrine ? () => setPauseDoigt(true) : undefined}
-          onTouchEnd={enVitrine ? () => setPauseDoigt(false) : undefined}
-          onTouchCancel={enVitrine ? () => setPauseDoigt(false) : undefined}
-        >
-          {/* vague 48 : ta scene d'accueil, calee sur son sol (le bas de l'image), sous un voile sombre doux pour le titre */}
-          {hdrH > 0 && bandeauPret && enVitrine ? (
-            <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, bgStyle]}>
-              {couches.map(({ k, v, role }) => {
-                const g = geoCouple(v);
-                return (
-                  <Animated.Image
-                    key={k}
-                    source={sceneForNow(v.scene)}
-                    resizeMode="cover"
-                    accessibilityIgnoresInvertColors
-                    style={[{ position: 'absolute', top: g.imgTop, left: -g.shift, width: g.imgW, height: g.imgH }, role === 'courant' ? fonduStyle : { opacity: role === 'ancien' ? 1 : 0 }]}
-                  />
-                );
-              })}
-            </Animated.View>
-          ) : hdrH > 0 && bandeauPret ? (
-            <Animated.Image source={sceneForNow(sceneBandeau)} resizeMode="cover" style={[{ position: 'absolute', top: imgTop, left: -shift, width: imgW, height: imgH }, bgStyle]} accessibilityIgnoresInvertColors />
-          ) : null}
-          <LinearGradient
-            pointerEvents="none"
-            colors={[`rgba(14,17,28,${voileHaut})`, `rgba(14,17,28,${voile})`, 'rgba(14,17,28,0)']}
-            locations={[0, fracTexte, fracFin]}
-            style={StyleSheet.absoluteFill}
-          />
-          {hdrH > 0 && enVitrine ? (
-            <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, armorStyle]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              {couches.map(({ k, v, role }) => {
-                const g = geoCouple(v);
-                return (
-                  <Animated.Image
-                    key={k}
-                    source={imageVitrine(v.cle)}
-                    resizeMode="contain"
-                    style={[{ position: 'absolute', right: Math.round(width * 0.025), top: hdrH - g.charH, width: g.charH * 0.75, height: g.charH }, role === 'courant' ? fonduPerso : { opacity: role === 'ancien' ? 1 : 0 }]}
-                  />
-                );
-              })}
-            </Animated.View>
-          ) : null}
-          {hdrH > 0 && enVitrine && vitrineVue ? (
-            // ce que tu debloques, et ou tu en es dans le defilement (fine barre)
-            <View pointerEvents="none" style={{ position: 'absolute', left: GUTTER, bottom: 14, gap: 7, maxWidth: width * 0.55 }}>
-              <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(14,17,28,0.72)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
-                <Icon name="crown" size={11} color={OR_BANDEAU} />
-                <Ink size={11.5} weight="extraBold" color="#FFFFFF" numberOfLines={1} accessibilityLiveRegion="none">{libelleVitrine(vitrineVue)}</Ink>
-              </View>
-              <View style={{ width: 72, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.32)', overflow: 'hidden' }}>
-                <View style={{ width: `${Math.round(((rang + 1) / Math.max(1, listeDefile.length)) * 100)}%`, height: 3, borderRadius: 2, backgroundColor: '#FFFFFF' }} />
-              </View>
-            </View>
-          ) : null}
-          <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <RoundButton icon={source === 'onboarding' && onBack ? 'back' : 'close'} label={closeLabel} light onPress={onTopButton} />
+        {/* 1. Haut clair (26 octobre 2026, Houari : « le fond noir en haut, ça ne donne pas envie ») : page claire,
+            retour et Restaurer en haut, le titre lisible en encre, puis le carrousel des quatre cartes Premium
+            (components/yoroi/v2/premium/CarrouselPremium.tsx). Le prix, l'essai, le bouton et les mentions ne bougent pas. */}
+        <View style={{ backgroundColor: pal.page, paddingTop: insets.top + 8, gap: small ? 10 : 14 }}>
+          <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <RoundButton icon={source === 'onboarding' && onBack ? 'back' : 'close'} label={closeLabel} onPress={onTopButton} />
             <View style={{ flex: 1, alignItems: 'center' }}>
               {/* vague 49 : la pastille du Studio se loge dans la barre ; « Aperçu, sans achat » passe dessous */}
               {apercuBarre ? <ApercuDansBarre /> : preview ? (
@@ -885,66 +800,34 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                 accessibilityRole="button"
                 accessibilityLabel={traduire("Restaurer mes achats")}
                 hitSlop={6}
-                style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 999, justifyContent: 'center', backgroundColor: pressed ? P.white : blancA(0.88) })}
+                style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 14, borderRadius: 999, justifyContent: 'center', backgroundColor: pressed ? pal.teinte : pal.carte, borderWidth: 1, borderColor: pal.anneau })}
               >
-                <Ink size={13} weight="extraBold">{traduire("Restaurer")}</Ink>
+                <Ink size={13} weight="extraBold" color={pal.texte}>{traduire("Restaurer")}</Ink>
               </Pressable>
             ) : (
               <View style={{ width: 44 }} />
             )}
           </View>
           {preview && apercuBarre ? (
-            <View style={{ alignItems: 'center', marginTop: 6 }}>
+            <View style={{ alignItems: 'center' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(16,20,34,0.75)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}>
                 <Icon name="eye" size={13} color={c.goldLight} />
                 <Ink size={11.5} weight="extraBold" color="#FFFFFF" numberOfLines={1}>{exemple ? traduire('Aperçu, prix d’exemple') : traduire('Aperçu, sans achat')}</Ink>
               </View>
             </View>
           ) : null}
-          <Animated.View
-            entering={ENTREE}
-            style={{ paddingHorizontal: GUTTER, paddingTop: small ? 6 : 10, alignItems: 'center', gap: 5 }}
-            onLayout={(e) => {
-              const b = Math.round(e.nativeEvent.layout.y + e.nativeEvent.layout.height);
-              if (Math.abs(b - texteBas) > 1) setTexteBas(b);
-            }}
-          >
+          <Animated.View entering={ENTREE} style={{ paddingHorizontal: GUTTER, alignItems: 'center', gap: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Icon name="crown" size={14} color={OR_BANDEAU} />
-              <Ink size={11.5} weight="black" color={OR_BANDEAU} style={[{ letterSpacing: 1.6 }, OMBRE_TEXTE]}>{traduire("YOROI PREMIUM")}</Ink>
+              <Icon name="crown" size={14} color={pal.orange} />
+              <Ink size={11.5} weight="black" color={pal.orange} style={{ letterSpacing: 1.6 }}>{traduire("YOROI PREMIUM")}</Ink>
             </View>
-            <Ink size={small ? 24 : 28} weight="black" tight color="#FFFFFF" style={[{ textAlign: 'center', lineHeight: small ? 28 : 33 }, OMBRE_TEXTE]} accessibilityRole="header">
+            <Ink size={small ? 24 : 28} weight="black" tight color={pal.texte} style={{ textAlign: 'center', lineHeight: small ? 28 : 33 }} accessibilityRole="header">
               {heroTitle}
-              {titleBottom ? <Ink size={small ? 24 : 28} weight="black" tight color={OR_BANDEAU}>{`\n${titleBottom}`}</Ink> : null}
+              {titleBottom ? <Ink size={small ? 24 : 28} weight="black" tight color={pal.accent}>{`\n${titleBottom}`}</Ink> : null}
             </Ink>
-            {height >= 720 ? <Ink size={13.5} weight="medium" color="#FFFFFF" style={[{ textAlign: 'center', lineHeight: 18, maxWidth: 340 }, OMBRE_TEXTE]}>{subtitle}</Ink> : null}
+            {height >= 720 ? <Ink size={13.5} weight="medium" color={pal.texte2} style={{ textAlign: 'center', lineHeight: 18, maxWidth: 340 }}>{subtitle}</Ink> : null}
           </Animated.View>
-          {enVitrine ? (
-            // le personnage qui defile est dans sa couche, au dessus du voile : ici, sa place
-            <View style={{ height: armorH, marginTop: 10 }} />
-          ) : imgBandeau ? (
-            <View style={{ height: armorH, marginTop: 10 }}>
-              {/* vague 49 : le personnage plus grand, a droite, pose sur le sol de la scene, sans ombre ovale.
-                  Vague 50 (Houari : il cachait « reste gratuit ») : sa tete reste sous le sous-titre, il se pousse a droite */}
-              {bandeauPret ? (
-                <Animated.Image
-                  source={imgBandeau}
-                  resizeMode="contain"
-                  accessibilityLabel={vitrineVue ? traduire('Un personnage Premium') : traduire('Ton personnage')}
-                  style={[{ position: 'absolute', right: Math.round(width * 0.025), bottom: 0, width: charH * 0.75, height: charH }, armorStyle]}
-                />
-              ) : null}
-            </View>
-          ) : (
-            <Animated.View style={[{ marginTop: 8, marginHorizontal: GUTTER, marginBottom: 14, borderRadius: 18, backgroundColor: c.surface, paddingTop: 10, paddingBottom: 4, paddingHorizontal: 10, overflow: 'hidden' }, armorStyle]} accessible accessibilityLabel={traduire("Exemple de ta courbe de poids, jusqu’au torii de ton cap")}>
-              <View pointerEvents="none">
-                <CourbePoids points={COURBE_EXEMPLE.points} style={1} cap={COURBE_EXEMPLE.cap} torii={COURBE_EXEMPLE.torii} height={Math.max(64, armorH - 16)} compact label={traduire("Exemple de courbe de poids")} />
-              </View>
-              <View style={{ position: 'absolute', top: 7, left: 10, backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-                <Ink size={9.5} weight="black" color={c.accent} style={{ letterSpacing: 0.8 }}>{traduire("EXEMPLE")}</Ink>
-              </View>
-            </Animated.View>
-          )}
+          <CarrouselPremium hauteur={carrouselH} marge={GUTTER} titreCourbe={titreCourbe} courbe={dessinCourbe} monde={mondeCarrousel} goal={goalPlan} />
         </View>
 
         <View style={{ paddingHorizontal: GUTTER, gap: height < 720 ? 12 : height < 860 ? 14 : 20, paddingTop: height < 720 ? 10 : height < 860 ? 12 : 16 }}>
@@ -1149,7 +1032,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
       </ScrollView>
 
       {/* Colle en bas, toujours visible : 6. le bouton d'achat et le prix dessous, 8. Continuer gratuitement */}
-      <View style={{ paddingHorizontal: GUTTER, paddingTop: 10, paddingBottom: insets.bottom + 6, backgroundColor: c.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: theme.isDark ? 1 : 0, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>
+      <View style={{ paddingHorizontal: GUTTER, paddingTop: 10, paddingBottom: insets.bottom + 6, backgroundColor: pal.page, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: theme.isDark ? 1 : 0, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>
         {attenuer && !vuBas ? <IndicateurDefiler onPress={allerEnBas} reduire={!!reduireAnim} /> : null}
         {isPremium ? (
           <BottomButton label={traduire("Continuer")} onPress={() => onFinish('premium')} />

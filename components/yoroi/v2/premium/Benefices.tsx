@@ -45,7 +45,7 @@ export function PhrasePlan({ texte }: { texte: string }) {
 type Benefice = { id: string; titre: string; texte: string; visuel: React.ReactNode };
 
 /** Radar dessine (illustration, aucune valeur) */
-function RadarDessin({ couleur, trait }: { couleur: string; trait: string }) {
+export function RadarDessin({ couleur, trait }: { couleur: string; trait: string }) {
   const pts = (r: number[]) => r.map((v, i) => {
     const a = -Math.PI / 2 + (i * Math.PI) / 3;
     return `${28 + Math.cos(a) * 22 * v},${28 + Math.sin(a) * 22 * v}`;
