@@ -552,7 +552,7 @@ export default function SeanceMuscu() {
     const i = cur.sets.findIndex((x) => !x.done);
     const nom = traduire(nomFr(cur.name));
     const libelle = i >= 0 ? traduire('{0}, série {1} sur {2}', nom, i + 1, cur.sets.length) : traduire('{0}, bouclé', nom);
-    const suivant = i >= 0 ? null : draft.exercises.find((e) => e.id !== cur.id && e.sets.some((x) => !x.done));
+    const suivant = i >= 0 ? null : draft.exercises.find((e) => e.id !== cur.id && seriesRestantes(e) > 0);
     const ensuite = i >= 0 ? traduire('Ensuite : {0}, série {1}', nom, i + 1) : suivant ? traduire('Ensuite : {0}', traduire(nomFr(suivant.name))) : traduire('Dernier effort, bravo');
     // 25 octobre 2026 : boutons « Série faite » et « +15 s » dans la Dynamic Island (lib/v2/seance/actionsIle.ts)
     const textes: TextesIle = {
