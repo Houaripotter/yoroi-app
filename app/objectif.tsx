@@ -117,7 +117,7 @@ export default function ObjectifScreen() {
 
         {liste.length > 1 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: GUTTER, paddingTop: 12 }}>
-            <Pills scroll items={liste.slice(0, 20).map((l) => ({ value: l.cle, label: l.nom }))} value={exo?.cle ?? ''} onChange={(k) => setCle(k)} />
+            <Pills scroll items={liste.slice(0, 20).map((l) => ({ value: l.cle, label: traduire(l.nom) }))} value={exo?.cle ?? ''} onChange={(k) => setCle(k)} />
           </ScrollView>
         ) : null}
 
