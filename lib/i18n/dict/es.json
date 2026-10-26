@@ -18702,5 +18702,9 @@
 "nouvel exercice, gardé avec ton nom": "ejercicio nuevo, guardado con tu nombre",
 "{0} exercice pas reconnu, il sera créé avec ton nom : {1}": "{0} ejercicio no reconocido, se creará con tu nombre: {1}",
 "{0} exercices pas reconnus, ils seront créés avec ton nom : {1}": "{0} ejercicios no reconocidos, se crearán con tus nombres: {1}",
-"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Parecen tus notas de sesiones: las importaré sesión por sesión, con cada carga y cada serie."
+"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Parecen tus notas de sesiones: las importaré sesión por sesión, con cada carga y cada serie.",
+"Tous les exercices sont reconnus. Vérifie, puis importe.": "Todos los ejercicios están reconocidos. Revisa y luego importa.",
+"échauffement": "calentamiento",
+"note : {0}": "nota: {0}",
+"Voir les {0} séances plus anciennes": "Ver las {0} sesiones más antiguas"
 }

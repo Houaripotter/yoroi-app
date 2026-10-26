@@ -18702,5 +18702,9 @@
 "nouvel exercice, gardé avec ton nom": "new exercise, kept with your name",
 "{0} exercice pas reconnu, il sera créé avec ton nom : {1}": "{0} exercise not recognised, it will be created with your name: {1}",
 "{0} exercices pas reconnus, ils seront créés avec ton nom : {1}": "{0} exercises not recognised, they will be created with your names: {1}",
-"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Looks like your workout notes: I’ll import them workout by workout, with every load and every set."
+"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Looks like your workout notes: I’ll import them workout by workout, with every load and every set.",
+"Tous les exercices sont reconnus. Vérifie, puis importe.": "All exercises are recognised. Check, then import.",
+"échauffement": "warm-up",
+"note : {0}": "note: {0}",
+"Voir les {0} séances plus anciennes": "See the {0} older workouts"
 }

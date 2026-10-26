@@ -18702,5 +18702,9 @@
 "nouvel exercice, gardé avec ton nom": "nieuwe oefening, bewaard met jouw naam",
 "{0} exercice pas reconnu, il sera créé avec ton nom : {1}": "{0} oefening niet herkend, die wordt aangemaakt met jouw naam: {1}",
 "{0} exercices pas reconnus, ils seront créés avec ton nom : {1}": "{0} oefeningen niet herkend, die worden aangemaakt met jouw namen: {1}",
-"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Dit lijken je trainingsnotities: ik importeer ze training per training, met elk gewicht en elke set."
+"On dirait tes notes de séances : je vais les importer séance par séance, avec chaque charge et chaque série.": "Dit lijken je trainingsnotities: ik importeer ze training per training, met elk gewicht en elke set.",
+"Tous les exercices sont reconnus. Vérifie, puis importe.": "Alle oefeningen zijn herkend. Controleer en importeer dan.",
+"échauffement": "opwarming",
+"note : {0}": "notitie: {0}",
+"Voir les {0} séances plus anciennes": "De {0} oudere trainingen bekijken"
 }

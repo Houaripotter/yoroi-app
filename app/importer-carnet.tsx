@@ -26,7 +26,7 @@ import type { ResultatLecture } from '@/lib/v2/import/carnet';
 import { enregistrerCarnet } from '@/lib/v2/import/enregistrerCarnet';
 import type { BilanImport } from '@/lib/v2/import/enregistrerCarnet';
 import { logger } from '@/lib/security/logger';
-import { traduire, traduirePluriel } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel, DECIMAL, LOCALE } from '@/lib/i18n/tr';
 
 // la bibliotheque, une fois : nom exact (enregistre) et nom francais (cherche)
 let BIBLIO: ExoCherchable[] | null = null;
@@ -35,9 +35,25 @@ const biblio = (): ExoCherchable[] =>
 
 const EXEMPLE = '14/10\nHack squat 60kg 2x12 70kg 2x10\nPresse inclinée 160kg 2x12\n\n15/10\nTirage vertical 70kg 2x10';
 
-function dateLisible(iso: string): string {
-  const [a, m, j] = iso.split('-');
-  return `${j}/${m}/${a}`;
+/** « mardi 14 octobre 2025 » */
+function jourLong(iso: string): string {
+  const [a, m, j] = iso.split('-').map(Number);
+  const d = new Date(a, m - 1, j, 12);
+  const t = d.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+const fmtKg = (v: number): string => String(Math.round(v * 10) / 10).replace('.', DECIMAL);
+
+/** series identiques qui se suivent : « 2 × 12 a 60 kg », puis « 2 × 10 a 70 kg » */
+function grouper(series: { weight: number; reps: number; type?: string }[]): { n: number; reps: number; weight: number; type?: string }[] {
+  const out: { n: number; reps: number; weight: number; type?: string }[] = [];
+  for (const x of series) {
+    const d = out[out.length - 1];
+    if (d && d.reps === x.reps && Math.abs(d.weight - x.weight) < 0.01 && d.type === x.type) d.n++;
+    else out.push({ n: 1, reps: x.reps, weight: x.weight, type: x.type });
+  }
+  return out;
 }
 
 export default function ImporterCarnet() {
@@ -58,6 +74,7 @@ export default function ImporterCarnet() {
   const [etat, setEtat] = useState<'saisie' | 'enregistrement' | 'fini'>('saisie');
   const [progres, setProgres] = useState({ fait: 0, total: 0 });
   const [bilan, setBilan] = useState<BilanImport | null>(null);
+  const [combien, setCombien] = useState(10);
 
   const lu: ResultatLecture | null = useMemo(() => (texte.trim() ? nommerExos(lireCarnet(texte), (n) => reconnaitreExo(n, biblio())) : null), [texte]);
   const inconnus = lu ? [...new Set(lu.seances.flatMap((s) => s.exos.filter((e) => e.inconnu).map((e) => e.nom)))] : [];
@@ -140,37 +157,71 @@ export default function ImporterCarnet() {
             ) : null}
 
             {lu ? (
-              <Glass style={{ gap: 10, padding: 16 }}>
-                <Ink size={12} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{traduire('CE QUE YOROI A COMPRIS')}</Ink>
-                <Ink size={18} weight="black" tight>
-                  {traduirePluriel(lu.seances.length, lu.seances.length > 1, '{0} séance', '{0} séances', lu.seances.length)}
-                  {lu.seances.length ? `, ${traduirePluriel(nbSeries, nbSeries > 1, '{0} série', '{0} séries', nbSeries)}` : ''}
-                </Ink>
-                {lu.seances.slice(-4).reverse().map((s) => (
-                  <View key={s.cle} style={{ gap: 2, paddingTop: 6, borderTopWidth: 1, borderColor: c.divider }}>
-                    <Ink size={14} weight="extraBold">{s.titre ? `${dateLisible(s.date)}, ${s.titre}` : dateLisible(s.date)}</Ink>
-                    {s.exos.slice(0, 6).map((e, i) => (
-                      <View key={`${s.cle}-${i}`} style={{ gap: 0 }}>
-                        <Ink size={13} weight="bold" color={e.inconnu ? c.ink : c.textSecondary} numberOfLines={1}>
-                          {`${traduire(nomFr(e.nom))} : ${e.series.map((x) => (x.weight > 0 ? `${Math.round(x.weight * 10) / 10} kg × ${x.reps}` : `× ${x.reps}`)).join(', ')}`}
-                        </Ink>
-                        {e.saisi ? <Ink size={11} color={c.textMuted} numberOfLines={1}>{traduire('écrit « {0} »', e.saisi)}</Ink> : e.inconnu ? <Ink size={11} color={c.accent} numberOfLines={1}>{traduire('nouvel exercice, gardé avec ton nom')}</Ink> : null}
+              <>
+                {/* 26 octobre 2026 (Houari : « on ne comprend rien ») : chaque jour comme une vraie seance,
+                    chaque exercice avec ses series regroupees, lisibles d'un coup d'oeil */}
+                <Glass style={{ gap: 6, padding: 16 }}>
+                  <Ink size={12} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{traduire('CE QUE YOROI A COMPRIS')}</Ink>
+                  <Ink size={20} weight="black" tight>
+                    {traduirePluriel(lu.seances.length, lu.seances.length > 1, '{0} séance', '{0} séances', lu.seances.length)}
+                    {lu.seances.length ? `, ${traduirePluriel(nbSeries, nbSeries > 1, '{0} série', '{0} séries', nbSeries)}` : ''}
+                  </Ink>
+                  {inconnus.length ? (
+                    <Ink size={13} color={c.textSecondary}>{traduirePluriel(inconnus.length, inconnus.length > 1, '{0} exercice pas reconnu, il sera créé avec ton nom : {1}', '{0} exercices pas reconnus, ils seront créés avec ton nom : {1}', inconnus.length, inconnus.slice(0, 6).join(', '))}</Ink>
+                  ) : (
+                    <Ink size={13} color={c.textSecondary}>{traduire('Tous les exercices sont reconnus. Vérifie, puis importe.')}</Ink>
+                  )}
+                </Glass>
+
+                {lu.seances.slice().reverse().slice(0, combien).map((s) => (
+                  <View key={s.cle} style={{ borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 10 }}>
+                    <View style={{ gap: 2 }}>
+                      <Ink size={17} weight="black" tight>{jourLong(s.date)}{s.titre ? `, ${s.titre}` : ''}</Ink>
+                      <Ink size={12} weight="bold" color={c.textMuted}>
+                        {traduirePluriel(s.exos.length, s.exos.length > 1, '{0} exercice', '{0} exercices', s.exos.length)}
+                        {', '}
+                        {traduirePluriel(s.exos.reduce((n, e) => n + e.series.length, 0), s.exos.reduce((n, e) => n + e.series.length, 0) > 1, '{0} série', '{0} séries', s.exos.reduce((n, e) => n + e.series.length, 0))}
+                      </Ink>
+                    </View>
+                    {s.exos.map((e, i) => (
+                      <View key={`${s.cle}-${i}`} style={{ gap: 6, paddingTop: 10, borderTopWidth: 1, borderColor: c.divider }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: e.inconnu ? c.accentTint : c.fillSubtle, alignItems: 'center', justifyContent: 'center' }}>
+                            <Ink size={12} weight="black" color={e.inconnu ? c.accent : c.textSecondary}>{String(i + 1)}</Ink>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Ink size={15} weight="extraBold">{traduire(nomFr(e.nom))}</Ink>
+                            {e.saisi ? <Ink size={12} color={c.textMuted}>{traduire('écrit « {0} »', e.saisi)}</Ink> : e.inconnu ? <Ink size={12} weight="bold" color={c.accent}>{traduire('nouvel exercice, gardé avec ton nom')}</Ink> : null}
+                          </View>
+                        </View>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingLeft: 36 }}>
+                          {grouper(e.series).map((g, k) => (
+                            <View key={k} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: g.type === 'warmup' ? c.goldTint : g.type === 'dropset' ? c.accentTint : c.fillSubtle }}>
+                              <Ink size={15} weight="black">{`${g.n} × ${g.reps}`}</Ink>
+                              <Ink size={13} weight="bold" color={c.textSecondary}>{g.weight > 0 ? `${fmtKg(g.weight)} kg` : traduire('poids du corps')}</Ink>
+                              {g.type === 'warmup' ? <Ink size={11} weight="bold" color={c.textMuted}>{traduire('échauffement')}</Ink> : g.type === 'dropset' ? <Ink size={11} weight="bold" color={c.accent}>{traduire('Drop set')}</Ink> : null}
+                            </View>
+                          ))}
+                        </View>
+                        {e.notes ? <Ink size={12} color={c.textMuted} style={{ paddingLeft: 36 }}>{traduire('note : {0}', e.notes)}</Ink> : null}
                       </View>
                     ))}
-                    {s.exos.length > 6 ? <Ink size={12} color={c.textMuted}>{traduire('et {0} autres exercices', s.exos.length - 6)}</Ink> : null}
                   </View>
                 ))}
-                {lu.seances.length > 4 ? <Ink size={12} color={c.textMuted}>{traduire('Les 4 plus récentes sont affichées.')}</Ink> : null}
-                {inconnus.length ? (
-                  <Ink size={12} color={c.textSecondary}>{traduirePluriel(inconnus.length, inconnus.length > 1, '{0} exercice pas reconnu, il sera créé avec ton nom : {1}', '{0} exercices pas reconnus, ils seront créés avec ton nom : {1}', inconnus.length, inconnus.slice(0, 6).join(', '))}</Ink>
+
+                {lu.seances.length > combien ? (
+                  <Pressable onPress={() => setCombien((n) => n + 10)} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: c.border, backgroundColor: pressed ? c.fillSubtle : 'transparent' })}>
+                    <Ink size={14} weight="extraBold" color={c.textSecondary}>{traduire('Voir les {0} séances plus anciennes', lu.seances.length - combien)}</Ink>
+                  </Pressable>
                 ) : null}
+
                 {lu.incomprises.length ? (
-                  <View style={{ gap: 2, paddingTop: 6, borderTopWidth: 1, borderColor: c.divider }}>
+                  <View style={{ gap: 2, padding: 14, borderRadius: 18, backgroundColor: c.dangerTint }}>
                     <Ink size={13} weight="extraBold" color={c.danger}>{traduirePluriel(lu.incomprises.length, lu.incomprises.length > 1, '{0} ligne pas comprise, elle sera ignorée :', '{0} lignes pas comprises, elles seront ignorées :', lu.incomprises.length)}</Ink>
-                    {lu.incomprises.slice(0, 5).map((l, i) => <Ink key={i} size={12} color={c.textSecondary} numberOfLines={1}>{l}</Ink>)}
+                    {lu.incomprises.slice(0, 5).map((l, k) => <Ink key={k} size={12} color={c.textSecondary} numberOfLines={1}>{l}</Ink>)}
                   </View>
                 ) : null}
-              </Glass>
+              </>
             ) : null}
           </>
         )}
