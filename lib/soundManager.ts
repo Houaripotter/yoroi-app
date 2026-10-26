@@ -64,8 +64,19 @@ const loadSound = (soundName: string): AudioPlayer | null => {
 /**
  * Joue un son
  */
+// 26 octobre 2026 (retour d'un utilisateur : « quand ca sonne, ca arrete ma musique ») : le bip de fin de repos
+// partait sans que le mode audio soit regle. iOS gardait alors sa categorie par defaut (solo, qui coupe Spotify)
+// et Android prenait le focus audio (la musique se met en pause). Le mode « se melange a la musique » est
+// maintenant regle avant le premier son, partout.
+let modePret: Promise<void> | null = null;
+const assurerMode = (): Promise<void> => {
+  if (!modePret) modePret = initSoundManager().catch(() => { modePret = null; });
+  return modePret;
+};
+
 export const playSound = async (soundName: 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong' | 'clap' | 'bell', volume: number = 0.7) => {
   try {
+    await assurerMode();
     const player = loadSound(soundName);
     if (!player) {
       logger.warn(`Son ${soundName} non disponible`);

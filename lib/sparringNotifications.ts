@@ -5,7 +5,7 @@
 // ============================================
 
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 import { logger } from '@/lib/security/logger';
 import { contenuSansSante } from '@/lib/v2/notifications/texte';
 import { traduire } from '@/lib/i18n/tr';
@@ -28,13 +28,19 @@ export const NOTIFICATION_CHANNEL_ID = 'sparring-reminders';
 
 export const setupNotificationHandler = () => {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
+    handleNotification: async (n) => {
+    // 26 octobre 2026 : fin de repos avec l'app ouverte, l'ecran bippe deja (lib/v2/seance/rappelRepos.ts)
+    if (n?.request?.content?.data?.type === 'rest_finished' && AppState.currentState === 'active') {
+      return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false, shouldShowBanner: false, shouldShowList: false };
+    }
+    return {
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
       shouldShowBanner: true,
       shouldShowList: true,
-    }),
+    } as Notifications.NotificationBehavior;
+  },
   });
 };
 

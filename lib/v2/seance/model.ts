@@ -235,6 +235,13 @@ export async function clearDraft(): Promise<void> {
   } catch {
     // rien a faire
   }
+  // 26 octobre 2026 : plus de seance, plus de rappel de fin de repos
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    void require('./rappelRepos').retirerRappelsRepos();
+  } catch {
+    // sans module de notifications : rien a retirer
+  }
   // 24 octobre 2026 : plus de seance, plus de seance sur l'ecran verrouille (lib/v2/widgets/activiteSeance.ts)
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports

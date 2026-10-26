@@ -184,7 +184,7 @@ export function SonsGalerie() {
   const [stopAll, setStopAll] = useState(0);
 
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => undefined);
+    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => undefined);
   }, []);
 
   return (

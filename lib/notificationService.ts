@@ -6,7 +6,7 @@
 
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import { calculateStreak, getWeeklyPlan, getProfile, getTrainings, getSlotOccurrences } from '@/lib/database';
@@ -304,13 +304,19 @@ const isReminderSettingsNotification = (n: Notifications.NotificationRequest) =>
 // ============================================
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
+  handleNotification: async (n) => {
+    // 26 octobre 2026 : fin de repos avec l'app ouverte, l'ecran bippe deja (lib/v2/seance/rappelRepos.ts)
+    if (n?.request?.content?.data?.type === 'rest_finished' && AppState.currentState === 'active') {
+      return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false, shouldShowBanner: false, shouldShowList: false };
+    }
+    return {
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
-  }),
+  } as Notifications.NotificationBehavior;
+  },
 });
 
 // ============================================

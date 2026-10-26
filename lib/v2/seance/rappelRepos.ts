@@ -13,6 +13,7 @@ import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
 export const TYPE_FIN_REPOS = 'rest_finished';
+const CLE_DEMANDE = 'yoroi_rappel_repos_demande_v1';
 
 /** Délai en secondes jusqu'à la fin du repos, ou null s'il reste moins de 2 s (rien à programmer) */
 export function delaiFinRepos(finMs: number | null | undefined, maintenant: number): number | null {
@@ -30,11 +31,17 @@ export type DepsRappelRepos = {
   annuler: (id: string) => Promise<void>;
 };
 
+/**
+ * 26 octobre 2026 (retour d'un utilisateur : « en veille, ca ne sonne pas ») : la notification est programmee
+ * DES LE DEBUT du repos, app ouverte. Avant, elle l'etait au passage en arriere plan : le travail (lire les
+ * reglages, programmer) commencait au moment ou iOS endort l'app, et n'aboutissait pas toujours.
+ * App ouverte a la fin du repos, la notification ne s'affiche pas (estRappelReposMasque, gestionnaire des
+ * notifications) : le bip et la vibration de l'ecran suffisent.
+ */
 export function creerRappelRepos(deps: DepsRappelRepos) {
   let id: string | null = null;
   let fin: number | null = null;
-  let enArriere = false;
-  // chaque changement invalide une programmation encore en cours (retour au premier plan pendant l'attente)
+  // chaque changement invalide une programmation encore en cours
   let generation = 0;
 
   const annulerEnCours = async (): Promise<void> => {
@@ -48,7 +55,7 @@ export function creerRappelRepos(deps: DepsRappelRepos) {
     await annulerEnCours();
     const ma = generation;
     const secondes = delaiFinRepos(fin, deps.maintenant());
-    if (!enArriere || secondes === null) return;
+    if (secondes === null) return;
     let ok = false;
     try {
       ok = await deps.autorise();
@@ -66,22 +73,23 @@ export function creerRappelRepos(deps: DepsRappelRepos) {
   };
 
   return {
-    /** fin du repos (ms) ou null : repos sauté, terminé ou absent */
+    /** fin du repos (ms) ou null : repos saute, termine ou absent */
     changerFin(nouvelle: number | null | undefined): Promise<void> {
-      fin = typeof nouvelle === 'number' ? nouvelle : null;
-      return enArriere ? programmer() : annulerEnCours();
-    },
-    arrierePlan(): Promise<void> {
-      enArriere = true;
+      const f = typeof nouvelle === 'number' ? nouvelle : null;
+      if (f === fin && (id || f === null)) return Promise.resolve();
+      fin = f;
       return programmer();
     },
-    premierPlan(): Promise<void> {
-      enArriere = false;
-      return annulerEnCours();
+    /** filet de securite : si la programmation du debut du repos a echoue, on retente */
+    arrierePlan(): Promise<void> {
+      return id ? Promise.resolve() : programmer();
     },
-    /** écran de séance fermé */
+    /** app au premier plan : la notification reste programmee (masquee si l'app est ouverte a ce moment) */
+    premierPlan(): Promise<void> {
+      return Promise.resolve();
+    },
+    /** ecran de seance ferme */
     terminer(): Promise<void> {
-      enArriere = false;
       fin = null;
       return annulerEnCours();
     },
@@ -90,11 +98,25 @@ export function creerRappelRepos(deps: DepsRappelRepos) {
   };
 }
 
+/** App ouverte : la fin du repos se voit et s'entend a l'ecran, la notification ne s'affiche pas */
+export function estRappelReposMasque(type: unknown, etatApp: string): boolean {
+  return type === TYPE_FIN_REPOS && etatApp === 'active';
+}
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 /** Le rappel de fin de repos est permis : autorisation donnée, notifications et « Repos terminé » actifs */
 export async function rappelReposAutorise(): Promise<boolean> {
   const Notif = require('expo-notifications');
-  const perm = await Notif.getPermissionsAsync();
+  let perm = await Notif.getPermissionsAsync();
+  // 26 octobre 2026 : jamais demande ? on demande une fois, au premier repos (l'utilisateur comprend pourquoi)
+  if (perm?.status === 'undetermined' && perm?.canAskAgain !== false) {
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    const deja = await AsyncStorage.getItem(CLE_DEMANDE).catch(() => null);
+    if (!deja) {
+      await AsyncStorage.setItem(CLE_DEMANDE, '1').catch(() => {});
+      perm = await Notif.requestPermissionsAsync().catch(() => perm);
+    }
+  }
   if (perm?.status !== 'granted') return false;
   const { notificationService } = require('@/lib/notificationService');
   const reglages = await notificationService.loadSettings();
@@ -106,6 +128,19 @@ export async function rappelReposAutorise(): Promise<boolean> {
 
 /** 25 octobre 2026 : le rappel programmé par un appui dans la Dynamic Island (ios/YoroiWidgets/Partage/SeanceIle.swift) */
 export const ID_RAPPEL_ILE = 'yoroi.seance.ile.repos';
+/** 26 octobre 2026 : le rappel de fin de repos de l'ecran de seance */
+export const ID_RAPPEL_REPOS = 'yoroi.seance.repos';
+
+/** Seance terminee ou abandonnee : plus aucun rappel de repos */
+export async function retirerRappelsRepos(): Promise<void> {
+  try {
+    const Notif = require('expo-notifications');
+    await Notif.cancelScheduledNotificationAsync(ID_RAPPEL_REPOS).catch(() => {});
+    await Notif.cancelScheduledNotificationAsync(ID_RAPPEL_ILE).catch(() => {});
+  } catch {
+    // rien de programme
+  }
+}
 
 /** De retour dans l'app, le compte à rebours reprend à l'écran : le rappel de la Dynamic Island n'a plus lieu d'être */
 export async function retirerRappelIle(): Promise<void> {
@@ -124,6 +159,8 @@ function depsApp(titre: () => string): DepsRappelRepos {
     planifier: async (secondes) => {
       const Notif = require('expo-notifications');
       return Notif.scheduleNotificationAsync({
+        // identifiant fixe : un nouveau repos remplace l'ancien, et la fin de seance le retire
+        identifier: ID_RAPPEL_REPOS,
         content: { title: titre(), body: '', sound: 'default', data: { type: TYPE_FIN_REPOS } },
         trigger: { type: Notif.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: secondes },
       });
@@ -152,9 +189,10 @@ export function useRappelFinRepos(finMs: number | null | undefined, titre: strin
         void retirerRappelIle();
       }
     });
+    // 26 octobre 2026 : seance reduite (ecran ferme, seance toujours en cours) : le rappel reste programme.
+    // Il est retire quand la seance se termine ou est abandonnee (clearDraft, lib/v2/seance/model.ts).
     return () => {
       sub.remove();
-      void r.terminer();
     };
   }, []);
 

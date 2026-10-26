@@ -126,7 +126,7 @@ export function VisiteDojo({ visible, mesurer, onClose }: Props) {
     (k: number) => {
       stop();
       if (!voixRef.current || !VOIX[k]) return;
-      setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false }).catch(() => undefined);
+      setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false, interruptionMode: 'mixWithOthers' }).catch(() => undefined);
       try {
         const p = createAudioPlayer(VOIX[k]);
         p.volume = 1;
