@@ -30,8 +30,11 @@ import { readHealthWeighIns, sourceText } from '@/lib/v2/pesee/health';
 import type { HealthRead } from '@/lib/v2/pesee/health';
 import { HeartDot } from '@/components/yoroi/v2/pesee/CompositionSection';
 import { traduire, DECIMAL } from '@/lib/i18n/tr';
+import { BALANCE_FIELD, PHYSIQUE_LABELS } from '@/lib/v2/balance/format';
+import { computeBmi, EXTRA_BALANCE_KEY, EXTRA_KEYS, lastExtras, manualScale } from '@/lib/v2/progres/compoExtras';
+import type { ExtraKey } from '@/lib/v2/progres/compoExtras';
 
-type FieldKey = 'weight' | 'fat' | 'muscleKg' | 'water' | 'bone' | 'visceral' | 'metabolicAge' | 'bmr';
+type FieldKey = 'weight' | 'fat' | 'muscleKg' | 'water' | 'bone' | 'visceral' | 'metabolicAge' | 'bmr' | ExtraKey;
 type Field = { key: FieldKey; label: string; unit: string; hint?: string; step: number; min: number; max: number; int?: boolean };
 
 const MAIN: Field[] = [
@@ -45,7 +48,24 @@ const MORE: Field[] = [
   { key: 'visceral', label: 'Graisse viscérale', unit: 'niveau', hint: traduire('de 1 à 59, sain jusqu’à 12'), step: 1, min: 1, max: 59, int: true },
   { key: 'metabolicAge', label: traduire('Âge métabolique'), unit: 'ans', step: 1, min: 10, max: 100, int: true },
   { key: 'bmr', label: traduire('Métabolisme de base'), unit: 'kcal', hint: traduire('calories brûlées au repos'), step: 10, min: 600, max: 5000, int: true },
+  // Ce que montrent en plus les balances connectees (Withings, Zepp, Eufy, Renpho, Tanita, InBody) : memes bornes que l'import photo
+  ...extraFields(),
 ];
+
+function extraFields(): Field[] {
+  const hints: Record<ExtraKey, string> = {
+    leanKg: traduire('tout ton poids sauf la graisse'),
+    skeletalKg: traduire('les muscles qui bougent ton squelette'),
+    proteinPct: traduire('si ta balance le donne'),
+    subcutPct: traduire('la graisse juste sous la peau'),
+    bmi: traduire('si ta balance le donne'),
+    physique: traduire('de 1 à 9, sur les balances Tanita'),
+  };
+  return EXTRA_KEYS.map((k) => {
+    const spec = BALANCE_FIELD[EXTRA_BALANCE_KEY[k]];
+    return { key: k, label: spec.label, unit: spec.unit, hint: hints[k], step: spec.step, min: spec.min, max: spec.max, int: spec.step >= 1 };
+  });
+}
 
 export default function BodyCompositionScreen() {
   return (
@@ -135,6 +155,11 @@ function BodyComposition() {
     return w?.weight ?? last?.weight ?? body.startWeight ?? undefined;
   }, [weights, date, last, body.startWeight]);
 
+  // Dernieres mesures en plus connues (masse maigre, proteines, IMC, morphologie...)
+  const prevExtra = useMemo(() => lastExtras(points, rawWeights, date), [points, rawWeights, date]);
+  // IMC calcule avec ta taille du profil : affiche, pas a saisir
+  const bmiAuto = !!body.height;
+
   // Pre-remplissage : suit le jour choisi, sans toucher a ce que tu as deja modifie
   useEffect(() => {
     const fmt = (raw: number | undefined, int?: boolean) => {
@@ -152,6 +177,12 @@ function BodyComposition() {
       visceral: fmt(last?.visceral, true),
       metabolicAge: fmt(last?.metabolicAge, true),
       bmr: fmt(last?.bmr, true),
+      leanKg: fmt(prevExtra.leanKg),
+      skeletalKg: fmt(prevExtra.skeletalKg),
+      proteinPct: fmt(prevExtra.proteinPct),
+      subcutPct: fmt(prevExtra.subcutPct),
+      bmi: bmiAuto ? undefined : fmt(prevExtra.bmi),
+      physique: fmt(prevExtra.physique, true),
     };
     setText((cur) => {
       const next = { ...cur };
@@ -163,7 +194,7 @@ function BodyComposition() {
       });
       return next;
     });
-  }, [knownWeight, last, health, date, weights]);
+  }, [knownWeight, last, health, date, weights, prevExtra, bmiAuto]);
 
   // Metabolisme estime avec ta taille, ton age et ton poids (indication seulement)
   const bmrHint = useMemo<number | null>(() => {
@@ -195,6 +226,18 @@ function BodyComposition() {
         return body.age ?? 30;
       case 'bmr':
         return bmrHint ?? 1700;
+      case 'leanKg':
+        return Math.round((knownWeight ?? 75) * 0.8 * 10) / 10;
+      case 'skeletalKg':
+        return Math.round((knownWeight ?? 75) * 0.45 * 10) / 10;
+      case 'proteinPct':
+        return 18;
+      case 'subcutPct':
+        return 18;
+      case 'bmi':
+        return 23;
+      case 'physique':
+        return 5;
       default:
         return (f.min + f.max) / 2;
     }
@@ -207,6 +250,7 @@ function BodyComposition() {
   };
   const lastOf = (k: FieldKey): number | undefined => {
     if (k === 'weight') return knownWeight;
+    if ((EXTRA_KEYS as FieldKey[]).includes(k)) return prevExtra[k as ExtraKey];
     if (!last) return undefined;
     if (k === 'muscleKg') return last.muscleKg ?? (last.muscle && knownWeight ? Math.round(((last.muscle * knownWeight) / 100) * 10) / 10 : undefined);
     const v = Number(last[k as keyof CompoPoint]);
@@ -229,6 +273,7 @@ function BodyComposition() {
   const muscleKg = val('muscleKg');
   const water = val('water');
   const musclePct = weight && muscleKg ? (muscleKg / weight) * 100 : undefined;
+  const bmi = computeBmi(weight, body.height);
 
   const save = async () => {
     if (saving) return;
@@ -250,6 +295,12 @@ function BodyComposition() {
           compo: { fat, muscleKg, water, bone: val('bone'), visceral: val('visceral'), metabolicAge: val('metabolicAge'), bmr: val('bmr') },
           rowId: row?.id ?? null,
           health: healthDay,
+          scale: manualScale(
+            { leanKg: val('leanKg'), skeletalKg: val('skeletalKg'), proteinPct: val('proteinPct'), subcutPct: val('subcutPct'), bmi: val('bmi'), physique: val('physique') },
+            weight,
+            muscleKg,
+            bmiAuto,
+          ),
         },
         rawWeights,
       );
@@ -265,7 +316,20 @@ function BodyComposition() {
   };
 
   const renderField = (f: Field) => {
+    if (f.key === 'bmi' && bmiAuto) {
+      // IMC calcule avec ton poids et ta taille : rien a recopier
+      return (
+        <View key={f.key} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: c.divider, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Ink size={15} weight="extraBold">{traduire(f.label)}</Ink>
+            <Ink size={12} color={c.textSecondary} numberOfLines={2}>{traduire('calculé avec ton poids et ta taille')}</Ink>
+          </View>
+          <Ink size={bmi ? 26 : 13} weight="black">{bmi ? num(bmi, 1, false) : traduire('à remplir')}</Ink>
+        </View>
+      );
+    }
     const prev = lastOf(f.key);
+    const physiqueNow = f.key === 'physique' ? val('physique') : undefined;
     const shown = text[f.key] ?? '';
     const placeholder = f.key === 'bmr' && bmrHint ? String(bmrHint) : f.int ? '0' : '0,0';
     const sub = prev
@@ -273,11 +337,12 @@ function BodyComposition() {
       : f.key === 'bmr' && bmrHint
         ? traduire("estimé à {0} kcal", bmrHint)
         : f.hint ?? traduire('si ta balance le donne');
+    const subShown = physiqueNow && PHYSIQUE_LABELS[Math.round(physiqueNow)] ? `${Math.round(physiqueNow)} : ${PHYSIQUE_LABELS[Math.round(physiqueNow)]}` : sub;
     return (
       <View key={f.key} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: c.divider, gap: 8 }}>
         <View style={{ gap: 2 }}>
           <Ink size={15} weight="extraBold">{traduire(f.label)}</Ink>
-          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{sub}</Ink>
+          <Ink size={12} color={c.textSecondary} numberOfLines={2}>{subShown}</Ink>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Pressable onPress={() => bump(f, -1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, moins", f.label)} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
@@ -299,7 +364,7 @@ function BodyComposition() {
               accessibilityLabel={`${f.label} en ${f.unit}`}
               style={[fontStyle('black'), { flexShrink: 1, minWidth: 64, height: 52, fontSize: 30, lineHeight: Platform.OS === 'ios' ? undefined : 36, color: c.ink, textAlign: 'right', paddingVertical: 0, paddingHorizontal: 2, includeFontPadding: false }]}
             />
-            <Ink size={15} weight="bold" color={c.textSecondary} style={{ marginLeft: 6 }}>{f.unit}</Ink>
+            <Ink size={15} weight="bold" color={c.textSecondary} style={{ marginLeft: 6 }}>{traduire(f.unit)}</Ink>
           </View>
           <Pressable onPress={() => bump(f, 1)} accessibilityRole="button" accessibilityLabel={traduire("{0}, plus", f.label)} style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: pressed ? c.fillSoft : c.fillSubtle, alignItems: 'center', justifyContent: 'center' })}>
             <Ink size={22} weight="extraBold">+</Ink>
@@ -392,7 +457,7 @@ function BodyComposition() {
             style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderColor: c.divider }}
           >
             <Ink size={15} weight="extraBold">{traduire("Mesures avancées")}</Ink>
-            <Ink size={13} color={c.textSecondary}>{more ? 'masquer' : traduire('os, viscérale, âge, métabolisme')}</Ink>
+            <Ink size={13} color={c.textSecondary}>{more ? traduire('masquer') : traduire('os, masse maigre, protéines, IMC')}</Ink>
           </Pressable>
           {more ? MORE.map(renderField) : null}
         </View>

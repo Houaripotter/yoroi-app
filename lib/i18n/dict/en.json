@@ -18720,5 +18720,12 @@
 "Tu viens d’une autre app de muscu ? Exporte tes séances en fichier CSV depuis ses réglages, puis choisis le fichier ici.": "Coming from another gym app? Export your workouts as a CSV file from its settings, then pick the file here.",
 "taille, bras, cuisses, au ruban": "waist, arms, thighs, with a tape",
 "Mesurer": "Measure",
-"ton poids du jour, ta composition": "today’s weight, your composition"
+"ton poids du jour, ta composition": "today’s weight, your composition",
+"tout ton poids sauf la graisse": "all your weight except fat",
+"les muscles qui bougent ton squelette": "the muscles that move your skeleton",
+"la graisse juste sous la peau": "the fat just under the skin",
+"de 1 à 9, sur les balances Tanita": "from 1 to 9, on Tanita scales",
+"calculé avec ton poids et ta taille": "calculated from your weight and height",
+"masquer": "hide",
+"os, masse maigre, protéines, IMC": "bone, lean mass, protein, BMI"
 }

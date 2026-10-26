@@ -4,12 +4,14 @@
  * Une pesee saisie a la main est aussi recopiee dans Apple Sante (ou Health Connect) si YOROI
  * a deja le droit d'y ecrire. La lecture ignore ensuite ce que YOROI a ecrit : pas de doublon.
  */
-import { addWeight, getWeights, updateWeight, upsertWeight } from '@/lib/database';
+import { addWeight, getWeights, updateWeight, updateWeightScaleExtras, updateWeightScaleJson, upsertWeight } from '@/lib/database';
 import type { Weight } from '@/lib/database';
 import { addBodyComposition } from '@/lib/bodyComposition';
 import { healthConnect } from '@/lib/healthConnect';
 import { logger } from '@/lib/security/logger';
 import { getSanteSource } from '@/lib/v2/sante/data';
+import { mergeScaleJson, parseScaleJson } from '@/lib/v2/balance/format';
+import type { ScaleExtras, ScaleJson } from '@/lib/v2/balance/format';
 import type { CompoValues } from './fields';
 import type { HealthDay } from './health';
 
@@ -21,6 +23,8 @@ export type WeighInInput = {
   rowId?: number | null;
   /** pesee d'Apple Sante du meme jour, pour ranger la bonne source */
   health?: HealthDay | null;
+  /** mesures en plus de la balance (masse maigre, IMC...), rangees comme l'import photo */
+  scale?: { extras?: ScaleExtras; json?: ScaleJson };
 };
 
 function columns(weight: number, compo: CompoValues) {
@@ -73,6 +77,7 @@ export async function saveWeighIn(input: WeighInInput, history: Weight[]): Promi
   const fromScale = !!(input.health?.weight && Math.abs(input.health.weight - input.weight) < 0.05);
   const source = input.rowId ? row?.source ?? 'manual' : fromScale && input.health ? input.health.sourceKey : 'manual';
   let inserted = false;
+  let savedId: number | undefined = input.rowId ?? undefined;
   if (input.rowId) {
     // updateWeight remplace toutes les colonnes : on garde la note existante
     await updateWeight(input.rowId, { weight: input.weight, date: input.date, note: row?.note, ...cols });
@@ -84,6 +89,21 @@ export async function saveWeighIn(input: WeighInInput, history: Weight[]): Promi
       ...cols,
     });
     inserted = res?.action === 'inserted';
+    savedId = res?.id;
+  }
+
+  // Mesures en plus de la balance : colonnes et JSON scale_extras, completes sans rien perdre (comme l'import photo)
+  if (savedId && input.scale) {
+    try {
+      if (input.scale.extras) await updateWeightScaleExtras(savedId, input.scale.extras);
+      if (input.scale.json) {
+        const before = history.find((w) => w.id === savedId);
+        const merged = mergeScaleJson(parseScaleJson(before?.scale_extras), input.scale.json);
+        if (merged) await updateWeightScaleJson(savedId, JSON.stringify(merged));
+      }
+    } catch (err) {
+      logger.error('[Pesee v2] mesures en plus de la balance non enregistrees', err);
+    }
   }
 
   // Recopie vers Apple Sante : nouvelle pesee saisie a la main uniquement (jamais une pesee de la balance,
