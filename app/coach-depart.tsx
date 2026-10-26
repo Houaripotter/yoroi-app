@@ -28,6 +28,7 @@ import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { Cercles, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { GrilleModules } from '@/components/yoroi/v2/programmes/GrilleModules';
+import { BarresNiveau, CarteChoix, CarteProgramme, HerosProgramme, ICONE_OBJECTIF, ICONE_SPORT, PointsSemaine, PucesProgramme, RangeeJours, TuileChoix, TuilesTemps, TypesProgrammes } from '@/components/yoroi/v2/programmes/ChoixVisuels';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { getProfile } from '@/lib/database';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
@@ -57,8 +58,6 @@ const LIEUX: { key: Materiel; label: string; icone: IconName }[] = [
   { key: 'halteres', label: 'À la maison, avec des haltères', icone: 'dumbbell' },
   { key: 'maison', label: 'À la maison, sans matériel', icone: 'body' },
 ];
-const COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-const LONGS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
 export default function CoachDepart() {
   const { theme } = useYoroiTheme();
@@ -218,11 +217,12 @@ export default function CoachDepart() {
 
   /* ------------------------------------------------ rendu ------------------------------------------------ */
   const titreEcran = (titre: string, pourquoi?: string) => (
-    <View style={{ gap: 6 }}>
-      <Ink size={26} weight="black" tight color={pal.texte} accessibilityRole="header">{titre}</Ink>
-      {pourquoi ? <Ink size={13} weight="bold" color={pal.texte2}>{pourquoi}</Ink> : null}
+    <View style={{ gap: 6, marginBottom: 4 }}>
+      <Ink size={28} weight="black" tight color={pal.texte} accessibilityRole="header">{titre}</Ink>
+      {pourquoi ? <Ink size={14} weight="bold" color={pal.texte2}>{pourquoi}</Ink> : null}
     </View>
   );
+  const titreSection = (t: string) => <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header">{t}</Ink>;
 
   let corps: React.ReactNode = null;
   let bas: React.ReactNode = null;
@@ -243,13 +243,14 @@ export default function CoachDepart() {
 
   if (etape === 'objectifs') {
     corps = (
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: 12 }}>
         <Heros image={img} titre={traduire('Ton objectif ?')} texte={traduire('Plusieurs choix possibles')} />
-        <Carte grand icone="book" teinte={pal.teinte} label={traduire('Je n’y connais rien')} sous={traduire('YOROI te guide pas à pas')} on={debuter} onPress={() => basculerObjectif('debuter')} />
-        <Carte icone="list" teinte={pal.orangeTint} label={traduire('Je sais déjà quel programme je veux')} on={false} fleche onPress={() => { tap(); setChemin('liste'); aller('liste'); }} />
+        <CarteChoix grand role="checkbox" icone="book" teinte={0} label={traduire('Je n’y connais rien')} sous={traduire('YOROI te guide pas à pas')} on={debuter} onPress={() => basculerObjectif('debuter')} />
+        <CarteChoix icone="list" teinte={1} label={traduire('Je sais déjà quel programme je veux')} on={false} fleche onPress={() => { tap(); setChemin('liste'); aller('liste'); }} />
+        <View style={{ marginTop: 8 }}>{titreSection(traduire('Tes objectifs'))}</View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o) => (
-            <Case key={o.key} label={traduire(o.label)} on={objectifs.includes(o.key)} onPress={() => basculerObjectif(o.key)} />
+          {OBJECTIFS_CHOIX.filter((o) => o.key !== 'debuter').map((o, k) => (
+            <TuileChoix key={o.key} icone={ICONE_OBJECTIF[o.key] ?? 'target'} teinte={k} label={traduire(o.label)} on={objectifs.includes(o.key)} onPress={() => basculerObjectif(o.key)} />
           ))}
         </View>
       </View>
@@ -262,10 +263,20 @@ export default function CoachDepart() {
       ? [{ key: 'debutant' as Niveau, label: 'Non, pas encore' }, { key: 'intermediaire' as Niveau, label: 'Oui' }]
       : NIVEAUX;
     corps = (
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: 12 }}>
         {titreEcran(courseSeule ? traduire('Tu cours déjà 30 minutes sans t’arrêter ?') : traduire('Depuis quand tu fais de la muscu ?'), traduire('Pour choisir un programme à ton niveau'))}
-        {choix.map((n) => (
-          <Carte key={n.key} label={traduire(n.label)} on={niveau === n.key} onPress={() => { tap(); setNiveau(n.key); setTimeout(() => suivante('niveau'), 160); }} />
+        {choix.map((n, k) => (
+          <CarteChoix
+            key={n.key}
+            role="radio"
+            grand
+            teinte={courseSeule ? (k === 0 ? 1 : 2) : k}
+            icone={courseSeule ? (k === 0 ? 'close' : 'check') : undefined}
+            visuel={courseSeule ? undefined : (on, t) => <BarresNiveau n={k + 1} couleur={on ? '#FFFFFF' : t.encre} vide={on ? 'rgba(255,255,255,0.3)' : pal.carte} />}
+            label={traduire(n.label)}
+            on={niveau === n.key}
+            onPress={() => { tap(); setNiveau(n.key); setTimeout(() => suivante('niveau'), 160); }}
+          />
         ))}
       </View>
     );
@@ -275,10 +286,12 @@ export default function CoachDepart() {
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Tes jours disponibles'), traduire('Pour placer tes séances sur ta semaine'))}
-        <RangeeJours jours={jours} onBasculer={(d) => basculerJour(d, jours, setJours, false)} />
+        <View style={{ backgroundColor: pal.carte, borderRadius: 24, paddingHorizontal: 12, paddingVertical: 18 }}>
+          <RangeeJours jours={jours} onBasculer={(d) => basculerJour(d, jours, setJours, false)} />
+        </View>
         {jours.length === 1 ? <Ink size={13} weight="bold" color={pal.texte2}>{traduire(DEBUTANT)}</Ink> : null}
         {jours.length === 7 ? <Ink size={13} weight="bold" color={pal.texte2}>{traduire('Sept jours : garde au moins un jour de repos, le repos fait aussi le muscle.')}</Ink> : null}
-        <Carte icone="calendar" teinte={pal.vertTint} label={traduire('Je ne sais pas, choisis pour moi')} on={false} fleche onPress={() => { tap(); setJours([]); suivante('jours'); }} />
+        <CarteChoix icone="calendar" teinte={2} label={traduire('Je ne sais pas, choisis pour moi')} on={false} fleche onPress={() => { tap(); setJours([]); suivante('jours'); }} />
       </View>
     );
     bas = jours.length ? <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('jours'); }} /> : null;
@@ -288,9 +301,7 @@ export default function CoachDepart() {
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Combien de temps par séance ?'), traduire('Pour des séances qui rentrent dans ton temps'))}
-        {TEMPS_SEANCE.map((t) => (
-          <Carte key={t.key} icone="clock" label={t.key < 75 ? traduire('{0} min', t.key) : traduire(t.label)} on={temps === t.key} onPress={() => { tap(); setTemps(t.key); setTimeout(() => suivante('temps'), 160); }} />
-        ))}
+        <TuilesTemps options={TEMPS_SEANCE} valeur={temps} onChoisir={(t) => { tap(); setTemps(t); setTimeout(() => suivante('temps'), 160); }} />
       </View>
     );
     bas = <BoutonPlein label={traduire('Suivant')} onPress={() => { tap(); suivante('temps'); }} />;
@@ -298,10 +309,10 @@ export default function CoachDepart() {
 
   if (etape === 'sport') {
     corps = (
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: 12 }}>
         {titreEcran(traduire('Tu pratiques aussi un sport ?'), traduire('Pour que ta muscu aide ton sport, sans te fatiguer'))}
-        {AUTRES_SPORTS.map((s) => (
-          <Carte key={s.key} label={traduire(s.label)} on={sport === s.key} onPress={() => { tap(); setSport(s.key); setTimeout(() => suivante('sport'), 160); }} />
+        {AUTRES_SPORTS.map((s, k) => (
+          <CarteChoix key={s.key} role="radio" icone={ICONE_SPORT[s.key] ?? 'medal'} teinte={k} label={traduire(s.label)} on={sport === s.key} onPress={() => { tap(); setSport(s.key); setTimeout(() => suivante('sport'), 160); }} />
         ))}
       </View>
     );
@@ -310,10 +321,10 @@ export default function CoachDepart() {
 
   if (etape === 'lieu') {
     corps = (
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: 12 }}>
         {titreEcran(traduire('Où tu t’entraînes ?'), traduire('Pour des exercices que tu peux vraiment faire'))}
-        {LIEUX.map((l) => (
-          <Carte key={l.key} icone={l.icone} label={traduire(l.label)} on={lieu === l.key} onPress={() => { tap(); setLieu(l.key); }} />
+        {LIEUX.map((l, k) => (
+          <CarteChoix key={l.key} role="radio" grand icone={l.icone} teinte={k} label={traduire(l.label)} on={lieu === l.key} onPress={() => { tap(); setLieu(l.key); }} />
         ))}
       </View>
     );
@@ -321,18 +332,18 @@ export default function CoachDepart() {
   }
 
   if (etape === 'liste') {
+    const ids = (GROUPES_PROGRAMMES.find((g) => g.id === groupe)?.ids ?? []).filter((id) => !!programmeParId(id));
+    const premier = ids.length ? programmeParId(ids[0])! : null;
     corps = (
       <View style={{ gap: 14 }}>
         {titreEcran(traduire('Choisis ton programme'), traduire('Tu ajoutes tes modules juste après'))}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {GROUPES_PROGRAMMES.map((g) => (
-            <Puce key={g.id} label={traduire(g.label)} on={groupe === g.id} onPress={() => { tap(); setGroupe(g.id); }} />
-          ))}
-        </View>
-        {(GROUPES_PROGRAMMES.find((g) => g.id === groupe)?.ids ?? []).map((id) => {
-          const p = programmeParId(id);
-          if (!p) return null;
-          return <Carte key={id} label={traduire(p.titre)} sous={traduire('{0} j par semaine, {1} min', p.joursParSemaine, p.dureeMin)} on={false} fleche onPress={() => { tap(); ouvrirResultat('liste', id); }} />;
+        <TypesProgrammes groupes={GROUPES_PROGRAMMES} groupe={groupe} onChoisir={(id) => { tap(); setGroupe(id); }} />
+        {premier ? (
+          <HerosProgramme p={premier} image={sportImage(sportDuProgramme(premier), femme, 1)} onPress={() => { tap(); ouvrirResultat('liste', premier.id); }} />
+        ) : null}
+        {ids.slice(1).map((id, k) => {
+          const p = programmeParId(id)!;
+          return <CarteProgramme key={id} p={p} k={k} onPress={() => { tap(); ouvrirResultat('liste', id); }} />;
         })}
       </View>
     );
@@ -340,18 +351,24 @@ export default function CoachDepart() {
 
   if (etape === 'resultat' && prog) {
     const duConseil = chemin === 'quiz' && conseil && conseil.id === prog.id;
+    const autres = chemin === 'quiz' && conseil?.autres.length ? [conseil.id, ...conseil.autres].filter((id) => id !== prog.id).slice(0, 2).map((id) => programmeParId(id)).filter((a): a is NonNullable<typeof a> => !!a) : [];
     corps = (
       <View style={{ gap: 18 }}>
-        <View style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 8, minHeight: 190 }}>
+        <View style={{ borderRadius: 28, backgroundColor: pal.indigo, overflow: 'hidden', padding: 20, gap: 10, minHeight: 230 }}>
           <Cercles />
-          {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: 0, width: 128, height: 172 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
-          <View style={{ maxWidth: img ? '64%' : '100%', gap: 6 }}>
+          {img ? <Image source={img} style={{ position: 'absolute', right: -6, bottom: 0, width: 136, height: 184 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+          <View style={{ maxWidth: img ? '64%' : '100%', gap: 8 }}>
             <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
-              <Ink size={12} weight="extraBold" color={c.onDark}>{traduire('Ton programme')}</Ink>
+              <Ink size={12} weight="extraBold" color={c.onDark}>{duConseil ? traduire('Conseillé pour toi') : traduire('Ton programme')}</Ink>
             </View>
-            <Ink size={22} weight="black" tight color={c.onDark} numberOfLines={3}>{traduire(prog.titre)}</Ink>
-            <Ink size={13} weight="bold" color={c.onDarkSecondary}>{traduire('{0} j par semaine, {1} min', prog.joursParSemaine, prog.dureeMin)}</Ink>
-            <Ink size={13} weight="bold" color={c.onDark} numberOfLines={4} style={{ lineHeight: 18 }}>{traduire(duConseil ? conseil!.pourquoi : prog.accroche)}</Ink>
+            <Ink size={24} weight="black" tight color={c.onDark} numberOfLines={3} accessibilityRole="header">{traduire(prog.titre)}</Ink>
+            <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={4} style={{ lineHeight: 18 }}>{traduire(duConseil ? conseil!.pourquoi : prog.accroche)}</Ink>
+            <View style={{ marginTop: 2 }}>
+              <PointsSemaine jours={joursRes} plein="#FFFFFF" vide="rgba(255,255,255,0.2)" taille={20} />
+            </View>
+          </View>
+          <View style={{ maxWidth: img ? '68%' : '100%' }} accessible accessibilityLabel={traduire('{0} j par semaine, {1} min', prog.joursParSemaine, prog.dureeMin)}>
+            <PucesProgramme p={prog} />
           </View>
         </View>
 
@@ -359,28 +376,30 @@ export default function CoachDepart() {
           <Ink size={13} weight="bold" color={pal.texte2}>{traduire('Moins de temps un jour ? La page du programme propose une séance express.')}</Ink>
         ) : null}
         {duConseil && conseil!.principeSport ? (
-          <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 20, backgroundColor: pal.orangeTint }}>
-            <Icon name="target" size={18} color={pal.orange} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: pal.carte }}>
+            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: pal.orangeTint, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="target" size={22} color={pal.orange} />
+            </View>
             <Ink size={13} weight="bold" color={pal.texte} style={{ flex: 1, lineHeight: 18 }}>{traduire(conseil!.principeSport!)}</Ink>
           </View>
         ) : null}
 
-        <View style={{ gap: 10 }}>
-          <Ink size={16} weight="black" tight color={pal.texte}>{traduire('Tes jours')}</Ink>
+        <View style={{ gap: 12, backgroundColor: pal.carte, borderRadius: 24, padding: 16 }}>
+          {titreSection(traduire('Tes jours'))}
           <RangeeJours jours={joursRes} onBasculer={(d) => basculerJour(d, joursRes, setJoursRes, true)} />
           <Ink size={12} weight="bold" color={pal.texte2}>{conseilJours(prog.joursParSemaine, joursRes.length)}</Ink>
         </View>
 
         {possibles.length ? (
-          <View style={{ gap: 10 }}>
-            <Ink size={16} weight="black" tight color={pal.texte}>{traduire('Ajoute à ton programme')}</Ink>
+          <View style={{ gap: 12 }}>
+            {titreSection(traduire('Ajoute à ton programme'))}
             <GrilleModules possibles={possibles} modules={modules} onBasculer={basculerModule} />
           </View>
         ) : null}
 
         {modules.includes('cardio') ? (
           <View style={{ gap: 10 }}>
-            <Ink size={16} weight="black" tight color={pal.texte}>{traduire('Durée du cardio')}</Ink>
+            {titreSection(traduire('Durée du cardio'))}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {MINUTES_FIN.map((m) => <Puce key={m} label={traduire('{0} min', m)} on={minutes === m} onPress={() => { tap(); setMinutes(m); }} />)}
             </View>
@@ -389,7 +408,7 @@ export default function CoachDepart() {
 
         {aDesJoursMarche(prog) ? (
           <View style={{ gap: 10 }}>
-            <Ink size={16} weight="black" tight color={pal.texte}>{traduire('Les séances de marche du programme')}</Ink>
+            {titreSection(traduire('Les séances de marche du programme'))}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <Puce label={traduire('Je les garde')} on={!sansMarche} onPress={() => { tap(); setSansMarche(false); }} />
               <Puce label={traduire('Je les retire')} on={sansMarche} onPress={() => { tap(); setSansMarche(true); }} />
@@ -398,26 +417,22 @@ export default function CoachDepart() {
         ) : null}
 
         {duConseil && conseil!.guideDebutant ? (
-          <Carte icone="scale" label={traduire('Trouver ton poids de départ')} on={false} fleche onPress={() => { tap(); setGuide(true); }} />
+          <CarteChoix icone="scale" teinte={2} label={traduire('Trouver ton poids de départ')} on={false} fleche onPress={() => { tap(); setGuide(true); }} />
         ) : null}
 
-        {chemin === 'quiz' && conseil?.autres.length ? (
-          <View style={{ gap: 2 }}>
-            {[conseil.id, ...conseil.autres].filter((id) => id !== prog.id).slice(0, 2).map((id) => {
-              const a = programmeParId(id);
-              return a ? (
-                <Pressable key={id} onPress={() => prendreAutre(id)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
-                  <Ink size={14} weight="extraBold" color={pal.accent} numberOfLines={1}>{traduire('Te va aussi : {0}', traduire(a.titre))}</Ink>
-                </Pressable>
-              ) : null;
-            })}
+        {autres.length ? (
+          <View style={{ gap: 10 }}>
+            {titreSection(traduire('Te va aussi'))}
+            {autres.map((a, k) => (
+              <CarteProgramme key={a.id} p={a} k={k + 1} onPress={() => prendreAutre(a.id)} />
+            ))}
           </View>
         ) : null}
       </View>
     );
     bas = (
       <View style={{ gap: 10 }}>
-        <BoutonPlein label={traduire('C’est parti')} onPress={() => { tap(); void lancer(); }} />
+        <BoutonPlein grand icone="play" label={traduire('C’est parti')} onPress={() => { tap(); void lancer(); }} />
         <BoutonDoux label={traduire('Voir le programme')} onPress={voirProgramme} />
       </View>
     );
@@ -473,63 +488,6 @@ function Heros({ image, titre, texte }: { image: ReturnType<typeof sportImage>; 
   );
 }
 
-/** Grande carte de choix : blanche, bord indigo et coche quand elle est choisie */
-function Carte({ label, sous, on, onPress, icone, teinte, grand, fleche }: { label: string; sous?: string; on: boolean; onPress: () => void; icone?: IconName; teinte?: string; grand?: boolean; fleche?: boolean }) {
-  const pal = usePaletteProgramme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: on }}
-      accessibilityLabel={sous ? `${label}, ${sous}` : label}
-      style={({ pressed }) => ({
-        minHeight: grand ? 84 : 66,
-        borderRadius: 22,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 14,
-        backgroundColor: on ? pal.teinte : pressed ? pal.teinte : pal.carte,
-        borderWidth: 2,
-        borderColor: on ? pal.indigo : 'transparent',
-      })}
-    >
-      {icone ? (
-        <View style={{ width: grand ? 52 : 44, height: grand ? 52 : 44, borderRadius: 16, backgroundColor: teinte ?? pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={icone} size={grand ? 24 : 20} color={pal.indigo} />
-        </View>
-      ) : null}
-      <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={grand ? 18 : 16} weight="black" tight color={pal.texte} numberOfLines={2}>{label}</Ink>
-        {sous ? <Ink size={12} weight="bold" color={pal.texte2} numberOfLines={1}>{sous}</Ink> : null}
-      </View>
-      {on ? (
-        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: pal.indigo, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="check" size={15} color="#FFFFFF" strokeWidth={2.8} />
-        </View>
-      ) : fleche ? <Icon name="chevron" size={18} color={pal.texte3} /> : null}
-    </Pressable>
-  );
-}
-
-/** Case d'objectif, deux par ligne */
-function Case({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  const pal = usePaletteProgramme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: on }}
-      accessibilityLabel={label}
-      style={({ pressed }) => ({ width: '47%', flexGrow: 1, minHeight: 64, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: on || pressed ? pal.teinte : pal.carte, borderWidth: 2, borderColor: on ? pal.indigo : 'transparent' })}
-    >
-      <Ink size={15} weight="black" tight color={pal.texte} numberOfLines={2} style={{ flex: 1 }}>{label}</Ink>
-      {on ? <Icon name="check" size={16} color={pal.indigo} strokeWidth={2.8} /> : null}
-    </Pressable>
-  );
-}
-
 /** Puce de choix court (groupe de programmes, durée du cardio) */
 function Puce({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   const { theme } = useYoroiTheme();
@@ -547,39 +505,19 @@ function Puce({ label, on, onPress }: { label: string; on: boolean; onPress: () 
   );
 }
 
-/** Tes jours, du lundi au dimanche */
-function RangeeJours({ jours, onBasculer }: { jours: number[]; onBasculer: (d: number) => void }) {
+function BoutonPlein({ label, onPress, grand, icone }: { label: string; onPress: () => void; grand?: boolean; icone?: IconName }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const pal = usePaletteProgramme();
   return (
-    <View style={{ flexDirection: 'row', gap: 6 }}>
-      {COURTS.map((j, d) => {
-        const on = jours.includes(d);
-        return (
-          <Pressable
-            key={j}
-            onPress={() => onBasculer(d)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: on }}
-            accessibilityLabel={traduire(LONGS[d])}
-            style={({ pressed }) => ({ flex: 1, minHeight: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? pal.indigo : pressed ? pal.teinte : pal.carte })}
-          >
-            <Ink size={13} weight="black" color={on ? c.onDark : pal.texte2}>{traduire(j)}</Ink>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
-function BoutonPlein({ label, onPress }: { label: string; onPress: () => void }) {
-  const { theme } = useYoroiTheme();
-  const c = theme.colors;
-  const pal = usePaletteProgramme();
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 56, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: pal.indigo, opacity: pressed ? 0.88 : 1 })}>
-      <Ink size={16} weight="black" color={c.onDark}>{label}</Ink>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ minHeight: grand ? 62 : 56, borderRadius: 999, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: pal.indigo, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: pal.indigo, shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 })}
+    >
+      {icone ? <Icon name={icone} size={18} color={c.onDark} /> : null}
+      <Ink size={grand ? 18 : 16} weight="black" color={c.onDark}>{label}</Ink>
     </Pressable>
   );
 }
