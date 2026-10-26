@@ -21,9 +21,10 @@ import { Ink } from '@/components/yoroi/v2/Ink';
 import { Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { EnTeteRond, nomCourt, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { CarteIllustree, EnTeteRond, nomCourt, salutation, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { getProfile } from '@/lib/database';
+import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { PROGRESSION } from '@/lib/v2/programmes/catalogue';
 import { sourceParId } from '@/lib/v2/programmes/sources';
 import { safeOpenURL } from '@/lib/security/validators';
@@ -41,7 +42,8 @@ export default function CoachScreen() {
   const pal = usePaletteProgramme();
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   const [, setCharge] = useState(false);
-  const [, setFemme] = useState(false);
+  const [femme, setFemme] = useState(false);
+  const [nom, setNom] = useState<string | null>(null);
   const [poidsOuvert, setPoidsOuvert] = useState(false);
   const [seriesOuvert, setSeriesOuvert] = useState(false);
   const [monterOuvert, setMonterOuvert] = useState(false);
@@ -57,7 +59,7 @@ export default function CoachScreen() {
           .catch(() => { if (vivant) { setActif(null); setCharge(true); } });
       };
       charger();
-      getProfile().then((pr) => { if (vivant) setFemme(pr?.avatar_gender === 'femme'); }).catch(() => {});
+      getProfile().then((pr) => { if (vivant) setFemme(pr?.avatar_gender === 'femme'); setNom(pr?.name ?? null); }).catch(() => {});
       // première ouverture : ni programme ni départ, le coach pose ses questions
       if (!departOuvert.current) {
         departOuvert.current = true;
@@ -95,34 +97,50 @@ export default function CoachScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: pal.page }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: insets.bottom + 40, gap: 16 }} showsVerticalScrollIndicator={false}>
-        <EnTeteRond salut={traduire('Ton coach')} titre={traduire('On fait quoi ?')} repli="/(tabs)" />
+        <EnTeteRond salut={traduire('Ton coach')} titre={salutation(nom)} repli="/(tabs)" />
 
-        {/* 26 octobre 2026 (Houari : « c'est la première page, elle ne doit pas dire ça ») : d'abord les choix,
-            le programme en cours ensuite, en petit (sa séance du jour est sur la page du programme) */}
-        <GrandeLigne icone="list" fond={pal.teinte} encre={pal.indigo} titre={traduire('Je sais ce que je veux')} sous={traduire('PPL, Upper Lower, Push Pull...')} onPress={() => depart('liste')} />
-        <GrandeLigne icone="search" fond={pal.orangeTint} encre={pal.orange} titre={traduire('Trouve mon programme')} sous={traduire('Quelques questions, même débutant')} onPress={() => depart()} />
-        <GrandeLigne icone="bolt" fond={pal.vertTint} encre={pal.vert} titre={traduire('Juste une séance')} sous={traduire('Sans programme, tout de suite')} onPress={() => { tap(); router.push('/programmes/zones' as any); }} />
-
-        {p && jour ? (
-          <>
-            <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Ton programme en cours')}</Ink>
+        {/* 26 octobre 2026 (Houari : « la présentation, tu devrais mieux faire ») : la carte indigo illustrée en tête,
+            puis les trois choix en tuiles colorées, le programme en cours dans la carte */}
+        <CarteIllustree
+          surtitre={traduire('Ton coach')}
+          titre={traduire('On fait quoi aujourd’hui ?')}
+          texte={traduire('Choisis, je m’occupe du reste.')}
+          image={sportImage('musculation', femme, 1)}
+          style={{ minHeight: 200 }}
+        >
+          {p && jour ? (
             <Pressable
               onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
               accessibilityRole="button"
-              accessibilityLabel={`${traduire('Ton programme en cours')}, ${traduire(p.titre)}`}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 76, padding: 14, borderRadius: 24, backgroundColor: pressed ? pal.teinte : pal.carte })}
+              accessibilityLabel={`${traduire('Continuer')}, ${traduire(p.titre)}`}
+              style={({ pressed }) => ({ alignSelf: 'flex-start', maxWidth: '68%', minHeight: 48, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: BLANC, opacity: pressed ? 0.9 : 1, justifyContent: 'center' })}
             >
-              <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: pal.indigo, alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="calendar" size={22} color={BLANC} />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Ink size={16} weight="black" tight color={pal.texte} numberOfLines={1}>{nomCourt(traduire(p.titre))}</Ink>
-                <Ink size={13} weight="bold" color={pal.texte2} numberOfLines={1}>{traduire('Prochaine séance : {0}', nomCourt(traduire(jour.titre)))}</Ink>
-              </View>
-              <Icon name="chevron" size={18} color={pal.texte3} />
+              <Ink size={12} weight="bold" color={pal.texte2} numberOfLines={1}>{traduire('Continuer')}</Ink>
+              <Ink size={14} weight="black" color={pal.indigo} numberOfLines={1}>{nomCourt(traduire(p.titre))}</Ink>
             </Pressable>
-          </>
-        ) : null}
+          ) : null}
+        </CarteIllustree>
+
+        <Pressable
+          onPress={() => depart('liste')}
+          accessibilityRole="button"
+          accessibilityLabel={`${traduire('Je sais ce que je veux')}, ${traduire('PPL, Upper Lower, Push Pull...')}`}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 104, padding: 18, borderRadius: 26, backgroundColor: pal.teinte, opacity: pressed ? 0.9 : 1 })}
+        >
+          <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="list" size={28} color={pal.indigo} />
+          </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Ink size={19} weight="black" tight color={pal.texte}>{traduire('Je sais ce que je veux')}</Ink>
+            <Ink size={13} weight="bold" color={pal.texte2}>{traduire('PPL, Upper Lower, Push Pull...')}</Ink>
+          </View>
+          <Icon name="chevron" size={18} color={pal.indigo} />
+        </Pressable>
+
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TuileChoix icone="search" fond={pal.orangeTint} encre={pal.orange} titre={traduire('Trouve mon programme')} sous={traduire('Quelques questions')} onPress={() => depart()} />
+          <TuileChoix icone="bolt" fond={pal.vertTint} encre={pal.vert} titre={traduire('Juste une séance')} sous={traduire('Tout de suite')} onPress={() => { tap(); router.push('/programmes/zones' as any); }} />
+        </View>
 
         {/* 3. UNE QUESTION ? */}
         <Ink size={18} weight="black" tight color={pal.texte} accessibilityRole="header" style={{ marginTop: 4 }}>{traduire('Une question ?')}</Ink>
@@ -133,7 +151,7 @@ export default function CoachScreen() {
               onPress={t.action}
               accessibilityRole="button"
               accessibilityLabel={t.titre}
-              style={({ pressed }) => ({ width: '47%', flexGrow: 1, minHeight: 96, borderRadius: 20, padding: 14, gap: 8, backgroundColor: pressed ? pal.teinte : pal.carte })}
+              style={({ pressed }) => ({ width: '47%', flexGrow: 1, minHeight: 104, borderRadius: 22, padding: 16, gap: 10, backgroundColor: pal.carte, opacity: pressed ? 0.85 : 1 })}
             >
               {t.icone ? <Icon name={t.icone} size={26} color={t.couleur} /> : <Ink size={22} weight="black" color={t.couleur}>{t.chiffre}</Ink>}
               <Ink size={13} weight="extraBold" color={pal.texte}>{t.titre}</Ink>
@@ -186,24 +204,24 @@ export default function CoachScreen() {
   );
 }
 
-/** Une grande carte blanche de la maquette : pastille colorée, titre, une ligne, flèche */
-function GrandeLigne({ icone, fond, encre, titre, sous, onPress }: { icone: IconName; fond: string; encre: string; titre: string; sous: string; onPress: () => void }) {
+/** Une tuile de choix carrée, colorée */
+function TuileChoix({ icone, fond, encre, titre, sous, onPress }: { icone: IconName; fond: string; encre: string; titre: string; sous: string; onPress: () => void }) {
   const pal = usePaletteProgramme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${titre}, ${sous}`}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 88, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 24, backgroundColor: pressed ? pal.teinte : pal.carte })}
+      style={({ pressed }) => ({ flex: 1, minHeight: 150, padding: 16, borderRadius: 26, backgroundColor: fond, gap: 10, justifyContent: 'space-between', opacity: pressed ? 0.9 : 1 })}
     >
-      <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: fond, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={icone} size={26} color={encre} />
+      <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: pal.carte, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={icone} size={24} color={encre} />
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Ink size={17} weight="black" tight color={pal.texte}>{titre}</Ink>
-        <Ink size={13} weight="bold" color={pal.texte2} numberOfLines={1}>{sous}</Ink>
+      <View style={{ gap: 2 }}>
+        <Ink size={16} weight="black" tight color={pal.texte}>{titre}</Ink>
+        <Ink size={12} weight="bold" color={pal.texte2}>{sous}</Ink>
       </View>
-      <Icon name="chevron" size={18} color={pal.texte3} />
     </Pressable>
   );
 }
+
