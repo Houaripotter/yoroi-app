@@ -463,8 +463,16 @@ export function musclesDuJour(titre: string, exos: readonly { nom: string }[]): 
 }
 
 /** La grande carte indigo de la maquette D : la séance du jour en très grand, le personnage à droite */
-export function HeroJour({ pastille, nom, muscles, infos, texte, image, bouton, children, petitNom }: {
+export function HeroJour({ pastille, nom, muscles, infos, texte, image, bouton, children, petitNom, ligne, pourquoi, ensuite, ajouts }: {
   pastille: string;
+  /** 26 octobre 2026 : quel programme et où tu en es (lib/v2/programmes/heroJour.ts) */
+  ligne?: string;
+  /** pourquoi cette séance, une ligne */
+  pourquoi?: string;
+  /** « Puis ensuite : Push B, jeudi » */
+  ensuite?: string;
+  /** « + Abdos », « + 20 min de marche » */
+  ajouts?: string[];
   nom: string;
   muscles?: string;
   infos?: string;
@@ -483,14 +491,26 @@ export function HeroJour({ pastille, nom, muscles, infos, texte, image, bouton, 
     <View style={[{ borderRadius: 30, backgroundColor: pal.indigo, overflow: 'hidden', paddingVertical: 22, paddingHorizontal: 20, minHeight: 236, gap: 14 }, ombreDouce(pal.indigo)]}>
       <Cercles />
       {image ? <Image source={image} style={{ position: 'absolute', right: -6, bottom: 0, width: 150, height: 204 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
-      <View style={{ maxWidth: image ? '60%' : '100%', gap: 8 }} accessible accessibilityLabel={[pastille, nom, muscles, infos, texte].filter(Boolean).join('. ')}>
+      <View style={{ maxWidth: image ? '60%' : '100%', gap: 8 }} accessible accessibilityLabel={[pastille, ligne, nom, muscles, infos, pourquoi, ensuite, ...(ajouts ?? []), texte].filter(Boolean).join('. ')}>
         <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
           <Ink size={12} weight="extraBold" color={c.onDark} numberOfLines={1}>{pastille}</Ink>
         </View>
+        {ligne ? <Ink size={12} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>{ligne}</Ink> : null}
         <Ink size={petitNom ? 24 : 34} weight="black" tight color={c.onDark} numberOfLines={petitNom ? 3 : 2} adjustsFontSizeToFit minimumFontScale={0.7} style={{ lineHeight: petitNom ? 28 : 37 }}>{nom}</Ink>
         {muscles ? <Ink size={14} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>{muscles}</Ink> : null}
         {infos ? <Ink size={13} weight="bold" color={c.onDarkSecondary} numberOfLines={2}>{infos}</Ink> : null}
+        {pourquoi ? <Ink size={13} weight="bold" color={c.onDark} style={{ lineHeight: 18 }} numberOfLines={3}>{pourquoi}</Ink> : null}
+        {ajouts?.length ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {ajouts.map((a) => (
+              <View key={a} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.16)' }}>
+                <Ink size={12} weight="extraBold" color={c.onDark} numberOfLines={1}>{a}</Ink>
+              </View>
+            ))}
+          </View>
+        ) : null}
         {texte ? <Ink size={13} weight="bold" color={c.onDark} style={{ lineHeight: 18 }} numberOfLines={4}>{texte}</Ink> : null}
+        {ensuite ? <Ink size={12} weight="extraBold" color={c.onDarkSecondary} numberOfLines={2}>{ensuite}</Ink> : null}
       </View>
       {bouton ? (
         <Pressable

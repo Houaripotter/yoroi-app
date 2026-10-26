@@ -78,7 +78,7 @@ export type Conseil = {
   guideDebutant?: boolean;
 };
 
-const DEBUTANT = 'Au début, travailler tout le corps deux à trois fois par semaine est la recommandation de l’ACSM.';
+export const DEBUTANT = 'Au début, travailler tout le corps deux à trois fois par semaine est la recommandation de l’ACSM.';
 
 /** Plusieurs objectifs (26 octobre 2026) : l'ordre de la liste ne compte pas, PRIORITE_BASE decide */
 export type ReponsesMulti = Omit<Reponses, 'objectif'> & { objectifs: ObjectifChoix[] };

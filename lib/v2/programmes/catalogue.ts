@@ -14,7 +14,7 @@ const exo = (nom: string, muscle: string, series: number, repsMin: number, repsM
 });
 
 const RESERVE = 'Arrête chaque série quand il te reste 1 à 3 répétitions en réserve : aller à l’échec n’apporte pas plus de muscle.';
-const PROGRESSION = 'Quand tu atteins le haut de la fourchette sur toutes les séries deux séances de suite, YOROI monte la charge d’environ 5 %.';
+export const PROGRESSION = 'Quand tu atteins le haut de la fourchette sur toutes les séries deux séances de suite, YOROI monte la charge d’environ 5 %.';
 const LEGERE = 'Toutes les 4 à 8 semaines, ou si la fatigue s’accumule, fais une semaine plus légère : moitié moins de séries, même charge.';
 const ABDOS = 'Les abdos renforcent ton tronc mais ne font pas fondre le ventre : c’est l’alimentation et la dépense totale qui comptent.';
 

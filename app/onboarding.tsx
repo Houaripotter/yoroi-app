@@ -47,6 +47,7 @@ import { objectifPrincipal, objectifsDuBrouillon, sensDe } from '@/lib/v2/onboar
 import { ouvrirPresentation } from '@/lib/v2/silhouette';
 import { progressOf } from '@/lib/v2/onboarding/plan';
 import { planifierRappelPesee } from '@/lib/v2/pesee/rappelHabitude';
+import { lireDepart } from '@/lib/v2/programmes/depart';
 import { choixOnboarding, onboardingEvent, setApercuOnboarding } from '@/lib/v2/onboarding/events';
 import {
   LEGAL_ACCEPTED_KEY,
@@ -533,7 +534,14 @@ export default function OnboardingScreen() {
     }
     // rappel doux de la pesee : programme seulement si les notifications sont deja autorisees
     void planifierRappelPesee();
-    router.replace('/(tabs)');
+    // 26 octobre 2026 : apres l'onboarding et son Premium, le coach propose de preparer ton programme
+    // (app/coach-depart.tsx, un ecran « Oui, c'est parti » ou « Plus tard »). Deja fait ou remis a plus tard : l'accueil.
+    void lireDepart()
+      .catch(() => null)
+      .then((etat) => {
+        if (etat) router.replace('/(tabs)');
+        else router.replace({ pathname: '/coach-depart' as any, params: { depuis: 'onboarding' } });
+      });
   };
 
   // ===== Rendu =====

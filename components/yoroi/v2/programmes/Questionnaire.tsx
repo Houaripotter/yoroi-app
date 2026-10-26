@@ -29,6 +29,7 @@ import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
+import { GrilleModules } from '@/components/yoroi/v2/programmes/GrilleModules';
 import { programmeParId } from '@/lib/v2/programmes/catalogue';
 import { OBJECTIFS_CHOIX, conseillerProgramme } from '@/lib/v2/programmes/choix';
 import type { ConseilMulti, ObjectifChoix, Reponses } from '@/lib/v2/programmes/choix';
@@ -255,28 +256,7 @@ export function Questionnaire({ visible, onClose, onVoir, remplaces, depart = 'a
           {possibles.length ? (
             <View style={{ gap: 10 }}>
               <Ink size={16} weight="black" tight>{traduire('Ajoute à ton programme')}</Ink>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                {possibles.map((m) => {
-                  const on = modules.includes(m.id);
-                  return (
-                    <Pressable
-                      key={m.id}
-                      onPress={() => basculerModule(m.id)}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: on }}
-                      accessibilityLabel={traduire(m.label)}
-                      style={({ pressed }) => ({ width: '47%', flexGrow: 1, minHeight: 92, borderRadius: 20, padding: 14, gap: 6, backgroundColor: on ? c.accent : pressed ? c.fillSubtle : c.surface, borderWidth: 1.5, borderColor: on ? c.accent : c.divider })}
-                    >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Icon name={m.icone} size={20} color={on ? '#FFFFFF' : c.accent} />
-                        {on ? <Icon name="check" size={18} color="#FFFFFF" strokeWidth={2.6} /> : null}
-                      </View>
-                      <Ink size={15} weight="black" tight color={on ? '#FFFFFF' : c.ink}>{traduire(m.label)}</Ink>
-                      <Ink size={12} color={on ? 'rgba(255,255,255,0.85)' : c.textSecondary} numberOfLines={1}>{traduire(m.sous)}</Ink>
-                    </Pressable>
-                  );
-                })}
-              </View>
+              <GrilleModules possibles={possibles} modules={modules} onBasculer={basculerModule} />
             </View>
           ) : null}
 

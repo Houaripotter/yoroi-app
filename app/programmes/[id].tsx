@@ -41,6 +41,7 @@ import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes
 import { demoDe } from '@/lib/v2/programmes/demos';
 import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageCoach } from '@/lib/v2/programmes/coach';
+import { infosHero } from '@/lib/v2/programmes/heroJour';
 import { ChoixJours } from '@/components/yoroi/v2/programmes/ChoixJours';
 import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
@@ -187,6 +188,8 @@ export default function ProgrammeDetail() {
   const jProchain = jourPourToi(jBrutProchain, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
   const titreProchain = traduire(jProchain.titre);
   const message = enCours && actif ? messageCoach({ programme: p, actif, jours, prochaineSeance: titreProchain, femme }) : null;
+  // 26 octobre 2026 : la carte dit quel programme, pourquoi cette séance et la suite (lib/v2/programmes/heroJour.ts)
+  const hero = enCours && actif && message ? infosHero({ programme: p, actif, jour: jProchain, jours, message, semaine }) : null;
   const infosDuJour = (j: typeof jProchain) =>
     j.exos.length && !j.rounds && !j.cardio
       ? `${traduirePluriel(j.exos.length, j.exos.length > 1, '{0} exercice', '{0} exercices', j.exos.length)} · ${traduire('{0} min', p.dureeMin)}`
@@ -282,7 +285,7 @@ export default function ProgrammeDetail() {
             nom={nomCourt(titreProchain)}
             muscles={musclesDuJour(titreProchain, jProchain.exos)}
             infos={infosDuJour(jProchain)}
-            texte={message.seanceDuJour ? undefined : message.texte}
+            {...(hero ? { ligne: hero.ligne, pourquoi: hero.pourquoi, ensuite: hero.ensuite, ajouts: hero.ajouts } : {})}
             image={img}
             bouton={
               message.seanceDuJour
