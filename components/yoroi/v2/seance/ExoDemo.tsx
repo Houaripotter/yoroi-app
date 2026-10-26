@@ -10,6 +10,7 @@ import { Image, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { demoDe } from '@/lib/v2/programmes/demos';
+import { useSourceDemos } from '@/lib/v2/programmes/demosTest';
 import { traduire } from '@/lib/i18n/tr';
 
 const FONDU = 450;
@@ -18,7 +19,8 @@ export const FOND_DEMO = '#F2F1EC';
 
 export function ExoDemo({ nom, taille = 96, arrondi = 18, largeur, hauteur, bordure = true }: { nom: string; taille?: number; arrondi?: number; largeur?: number; hauteur?: number; bordure?: boolean }) {
   const { theme } = useYoroiTheme();
-  const images = demoDe(nom);
+  const source = useSourceDemos();
+  const images = React.useMemo(() => demoDe(nom), [nom, source]);
   const b = useSharedValue(0);
 
   useEffect(() => {
@@ -48,8 +50,8 @@ export function ExoDemo({ nom, taille = 96, arrondi = 18, largeur, hauteur, bord
       accessibilityLabel={traduire('Animation de l’exercice {0}', traduire(nom))}
       style={{ width: w, height: h, borderRadius: arrondi, overflow: 'hidden', backgroundColor: FOND_DEMO, borderWidth: bordure ? 1 : 0, borderColor: theme.colors.divider }}
     >
-      <Image source={images[0]} style={img} resizeMode="cover" />
-      <Animated.Image source={images[1]} style={[img, styleB]} resizeMode="cover" />
+      <Image source={images[0]} style={img} resizeMode={source === 'dessins' || source === 'repdb' ? 'contain' : 'cover'} />
+      <Animated.Image source={images[1]} style={[img, styleB]} resizeMode={source === 'dessins' || source === 'repdb' ? 'contain' : 'cover'} />
     </View>
   );
 }

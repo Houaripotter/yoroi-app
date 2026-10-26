@@ -4,6 +4,7 @@
 import type { ImageSourcePropType } from 'react-native';
 import { DEMOS } from './demosArt';
 import { DEMOS_CACHEES } from './demosCachees';
+import { demoEnLigne, estEnLigne, sourceDemosActive } from './demosTest';
 
 /** « Développé Couché (Barre) » -> « developpe_couche_barre » */
 export function demoSlug(nom: string): string {
@@ -42,7 +43,11 @@ export const MEME_MOUVEMENT: Record<string, string> = {
 
 export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
   if (!nom) return null;
+  // public : aucune animation (26 octobre 2026), seulement en mode createur, source choisie dans le Studio
+  const source = sourceDemosActive();
+  if (source === 'aucune') return null;
   const cle = demoSlug(nom);
+  if (estEnLigne(source)) return demoEnLigne(source, cle) ?? (MEME_MOUVEMENT[cle] ? demoEnLigne(source, MEME_MOUVEMENT[cle]) : null);
   const vraie = DEMOS[cle] ? cle : MEME_MOUVEMENT[cle] && DEMOS[MEME_MOUVEMENT[cle]] ? MEME_MOUVEMENT[cle] : null;
   // animation refusee par le controle qualite : rien plutot qu'une animation fausse
   if (!vraie || DEMOS_CACHEES.has(vraie)) return null;

@@ -12,6 +12,7 @@ import { tokenErrorMessage, verifyCreatorToken } from './creatorToken';
 import { clearToken, LEGACY_ASYNC_KEYS, MAX_FAILS, readAttempts, readToken, registerFailure, resetAttempts, writeToken } from './creatorStore';
 import { setDevClockEnabled } from './devClock';
 import { setCreatorPremium } from './premiumFlags';
+import { chargerSourceDemos, setDemosCreateur } from '@/lib/v2/programmes/demosTest';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 export const CREATOR_CHANGED_EVENT = 'YOROI_CREATOR_CHANGED';
@@ -52,12 +53,18 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
   const [label, setLabel] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    void chargerSourceDemos();
+  }, []);
+
   const apply = useCallback((exp: number | null, sub: string | null) => {
     setExpiresAt(exp);
     setLabel(sub);
     setDevClockEnabled(exp !== null);
     // Premium ouvert sans achat tant que le mode createur est actif
     setCreatorPremium(exp !== null);
+    // animations de test des exercices : jamais hors mode createur
+    setDemosCreateur(exp !== null);
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     if (exp !== null) {
