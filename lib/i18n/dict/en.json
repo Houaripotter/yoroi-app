@@ -18991,5 +18991,10 @@
 "Domaine public, aucune mention obligatoire, même dans une app payante": "Public domain, no credit required, even in a paid app",
 "Mannequins animés, RepDB, photos, dessins, en ligne": "Animated mannequins, RepDB, photos, drawings, online",
 "Anatomie, muscles en rouge, test privé": "Anatomy, muscles in red, private test",
-"Test privé seulement : pour le public, il faut acheter une licence Gym visual": "Private test only: for the public, a Gym visual licence must be bought"
+"Test privé seulement : pour le public, il faut acheter une licence Gym visual": "Private test only: for the public, a Gym visual licence must be bought",
+"Gym visual sur {0} exercices, touche pour couper": "Gym visual on {0} exercises, tap to turn off",
+"Coupées, comme le public. Touche pour voir Gym visual": "Off, like the public. Tap to see Gym visual",
+"Gym visual, 1 324 exercices, en ligne": "Gym visual, 1,324 exercises, online",
+"Gym visual, test privé": "Gym visual, private test",
+"1 324 exercices en ligne, visibles seulement en mode créateur": "1,324 exercises online, visible only in creator mode"
 }

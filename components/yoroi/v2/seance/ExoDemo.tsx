@@ -1,7 +1,7 @@
 /**
  * Animation legere d'un exercice (24 octobre 2026) : la position de depart et la position d'arrivee
  * s'enchainent en fondu, en boucle, comme dans les applis de musculation. Rien ne s'affiche tant que
- * l'exercice n'a pas ses deux images (lib/v2/programmes/demosArt.ts).
+ * l'exercice n'a pas ses deux images (GIF Gym visual de test, lib/v2/programmes/demosTest.ts).
  * Carré par défaut (taille) ; avec largeur et hauteur, un bandeau large : le dessin reste carré, centré
  * sur le même fond papier que l'image, donc sans bord visible.
  */
@@ -32,7 +32,7 @@ export function ExoDemo({ nom, taille = 96, arrondi = 18, largeur, hauteur, bord
       largeur={largeur}
       hauteur={hauteur}
       bordure={bordure}
-      contenir={source === 'dessins' || source === 'repdb' || source === 'figures' || source === 'gymvisual'}
+      contenir
     />
   );
 }

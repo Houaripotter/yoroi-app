@@ -31,7 +31,7 @@ import { setApercuSaison, useApercuSaison } from '@/lib/v2/saisons/apercu';
 import { useDecorationsSaison } from '@/lib/v2/saisons/reglage';
 import { NOMS_SAISONS, saisonAffichee, type ChoixApercu } from '@/lib/v2/saisons/calendrier';
 import { SCENES_ANIMEES_CODE } from '@/lib/v2/scenes/animations';
-import { NOMBRE_PAR_SOURCE, NOMS_SOURCES, choisirSourceDemos, estEnLigne, sourceSuivante, useSourceDemos } from '@/lib/v2/programmes/demosTest';
+import { NOMBRE_GV, choisirSourceDemos, sourceSuivante, useSourceDemos } from '@/lib/v2/programmes/demosTest';
 import logger from '@/lib/security/logger';
 import { VISITE_TITRES } from '@/components/yoroi/v2/tour/VisiteGuidee';
 import { StudioGate } from '@/components/yoroi/v2/studio/StudioLock';
@@ -259,16 +259,15 @@ function Studio() {
   ];
 
   const sourceDemos = useSourceDemos();
-  const etatDemos = estEnLigne(sourceDemos)
-    ? traduire('{0}, {1} exercices, touche pour changer', traduire(NOMS_SOURCES[sourceDemos]), NOMBRE_PAR_SOURCE[sourceDemos])
-    : traduire('{0}, touche pour changer', traduire(NOMS_SOURCES[sourceDemos]));
+  const etatDemos = sourceDemos === 'gymvisual' ? traduire('Gym visual sur {0} exercices, touche pour couper', NOMBRE_GV) : traduire('Coupées, comme le public. Touche pour voir Gym visual');
+
   const voir: Action[] = [
     { id: 'onboarding', label: traduire('Onboarding'), icon: 'eye', state: traduire("{0} écrans, rien n’est gardé", ONBOARDING_SCREEN_LABELS.length), run: () => openOnboardingPreview(router, 0) },
     { id: 'paywall', label: traduire('Paywall'), icon: 'crown', on: variant !== 'reel', state: variant !== 'reel' ? variantLabel : traduire('Aperçu, aucun achat'), keywords: 'abonnement premium', run: () => openPaywallPreview(router, variant) },
     { id: 'visite', label: traduire('Visite guidée'), icon: 'home', state: traduire("{0} étapes, avec la voix", VISITE_TITRES.length), keywords: 'tour presentation', run: () => openPresentation(router, 0) },
     { id: 'nouveautes', label: traduire('Nouveautés'), icon: 'spark', state: traduire('La présentation 3.0'), keywords: 'presentation revoir mise a jour', run: () => router.push('/nouveautes?revoir=1' as never) },
-    { id: 'animations', label: traduire('Animations de test'), icon: 'dumbbell', on: sourceDemos !== 'aucune', state: etatDemos, keywords: 'exercices demo animation github photos dessins repdb', run: () => void choisirSourceDemos(sourceSuivante(sourceDemos)) },
-    { id: 'bibliotheques', label: traduire('Bibliothèques d’exercices'), icon: 'grid', state: traduire('Mannequins animés, RepDB, photos, dessins, en ligne'), keywords: 'exercices animation github repdb photos dessins gratuit', run: () => router.push('/studio/exercices' as never) },
+    { id: 'animations', label: traduire('Animations de test'), icon: 'dumbbell', on: sourceDemos !== 'aucune', state: etatDemos, keywords: 'exercices demo animation github gym visual', run: () => void choisirSourceDemos(sourceSuivante(sourceDemos)) },
+    { id: 'bibliotheques', label: traduire('Gym visual, test privé'), icon: 'grid', state: traduire('Gym visual, 1 324 exercices, en ligne'), keywords: 'exercices animation github gym visual', run: () => router.push('/studio/exercices' as never) },
     { id: 'scenes', label: traduire('Scènes animées'), icon: 'image', state: traduire("{0} scènes, pluie, neige", SCENES_ANIMEES_CODE.length), keywords: 'scene animation effets', run: () => setScenes(true) },
     { id: 'personnages', label: traduire('Personnages'), icon: 'user', state: traduire("{0} images du monde", NB_PERSONNAGES), keywords: 'galerie avatar', run: () => router.push('/studio/images?famille=personnages' as never) },
     { id: 'images', label: traduire('Toutes les images'), icon: 'grid', state: `${CATALOGUE_IMAGES.length} illustrations`, keywords: 'galerie illustrations', run: () => router.push('/studio/images' as never) },

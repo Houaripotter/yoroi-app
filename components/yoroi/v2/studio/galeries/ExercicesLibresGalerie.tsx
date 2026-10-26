@@ -1,6 +1,5 @@
 /**
- * Studio, galerie des bibliotheques d'exercices libres (RepDB, Free Exercise DB, Everkinetic) :
- * tous les exercices, lus en ligne, avec leur animation, la recherche et le detail.
+ * Studio, galerie Gym visual : tous les exercices, lus en ligne, avec leur GIF, la recherche et le detail.
  * Reserve au mode createur : rien de cela n'est visible ni livre pour le public.
  */
 import React, { useEffect, useMemo, useState } from 'react';
@@ -12,11 +11,10 @@ import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { DemoPaire } from '@/components/yoroi/v2/seance/ExoDemo';
 import { SearchField } from '@/components/yoroi/v2/studio/parts';
 import { G, GalerieHeader, Pastille, PastilleRow } from './kit';
-import { INFOS, chargerBibliotheque, filtrer } from '@/lib/v2/studio/bibliothequesLibres';
-import type { Bibliotheque, ExoLibre } from '@/lib/v2/studio/bibliothequesLibres';
+import { INFO_GV, chargerGymvisual, filtrer } from '@/lib/v2/studio/bibliothequesLibres';
+import type { ExoLibre } from '@/lib/v2/studio/bibliothequesLibres';
 import { traduire } from '@/lib/i18n/tr';
 
-const ORDRE: Bibliotheque[] = ['gymvisual', 'figures', 'repdb', 'photos', 'dessins'];
 const BLANC = '#FFFFFF';
 
 export function ExercicesLibresGalerie() {
@@ -24,8 +22,7 @@ export function ExercicesLibresGalerie() {
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [biblio, setBiblio] = useState<Bibliotheque>('gymvisual');
-  const [listes, setListes] = useState<Partial<Record<Bibliotheque, ExoLibre[]>>>({});
+  const [tout, setTout] = useState<ExoLibre[] | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [seulementYoroi, setSeulementYoroi] = useState(false);
@@ -33,30 +30,22 @@ export function ExercicesLibresGalerie() {
 
   useEffect(() => {
     let vivant = true;
-    if (listes[biblio]) return;
-    setErreur(null);
-    chargerBibliotheque(biblio)
-      .then((l) => vivant && setListes((x) => ({ ...x, [biblio]: l })))
+    chargerGymvisual()
+      .then((l) => vivant && setTout(l))
       .catch(() => vivant && setErreur(traduire('Pas de connexion : la bibliothèque se lit en ligne.')));
     return () => {
       vivant = false;
     };
-  }, [biblio, listes]);
+  }, []);
 
-  const tout = listes[biblio];
   const visibles = useMemo(() => (tout ? filtrer(tout, q, seulementYoroi) : []), [tout, q, seulementYoroi]);
-  const info = INFOS[biblio];
+  const info = INFO_GV;
   const carte = Math.floor((width - G * 2 - 12) / 2);
-  const contenir = biblio !== 'photos';
+  const contenir = true;
 
   const entete = (
     <View style={{ gap: 12, marginBottom: 12 }}>
-      <GalerieHeader title={traduire('Bibliothèques d’exercices')} sub={traduire('Gratuites, en ligne, visibles seulement en mode créateur')} />
-      <PastilleRow>
-        {ORDRE.map((b) => (
-          <Pastille key={b} label={INFOS[b].nom} on={biblio === b} count={listes[b]?.length} onPress={() => setBiblio(b)} />
-        ))}
-      </PastilleRow>
+      <GalerieHeader title={traduire('Gym visual, test privé')} sub={traduire('1 324 exercices en ligne, visibles seulement en mode créateur')} />
       <View style={{ borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 4 }}>
         <Ink size={14} weight="extraBold">{traduire(info.licence)}</Ink>
         {info.mention ? <Ink size={13} color={c.textSecondary}>{info.mention}</Ink> : null}
