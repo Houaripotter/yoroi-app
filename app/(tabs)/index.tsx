@@ -91,6 +91,7 @@ import { Carrousel, TableauDuJour, TitreSection } from '@/components/yoroi/v2/ac
 import { FeuilleEau } from '@/components/yoroi/v2/accueil/EauFeuille';
 import type { BlocAccueil } from '@/lib/v2/accueil/disposition';
 import { BackupNotice } from '@/components/yoroi/v2/accueil/BackupNotice';
+import { PropositionCoach } from '@/components/yoroi/v2/onboarding/PropositionCoach';
 import { CarteSante } from '@/components/yoroi/v2/accueil/CarteSante';
 import { CarteImportSante, useCarteImportSante } from '@/components/yoroi/v2/accueil/CarteImportSante';
 import { BlocMange } from '@/components/yoroi/v2/accueil/Mange';
@@ -327,6 +328,9 @@ export default function Accueil() {
           </Enter>
 
           <BackupNotice />
+
+          {/* 26 octobre 2026 : apres la visite guidee, une seule fois, le coach propose ton programme (Oui ou Plus tard) */}
+          <PropositionCoach />
 
           {/* 14 octobre 2026 : relier Apple Sante ou Health Connect, au plus 3 relances (lib/v2/sante/demande.ts) */}
           {/* 18 octobre 2026 : sans donnees, la carte « Importe tes données » passe devant (une seule carte Sante a la fois) */}

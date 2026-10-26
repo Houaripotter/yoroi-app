@@ -206,7 +206,7 @@ function DojoApercu({ rankIndex, rankName, nextName, image, imageSuivante, sessi
   );
 }
 
-export function ApercuProgres({ start, target, sessions, recompo = false, pesees, rankIndex, rankName, nextName, image, imageSuivante }: {
+export function ApercuProgres({ start, target, sessions, recompo = false, pesees, rankIndex, rankName, nextName, image, imageSuivante, partie = 'tout' }: {
   start: number | null;
   /** null : poids stable ou sans cap, la carte du chemin n'est pas montree */
   target: number | null;
@@ -219,15 +219,22 @@ export function ApercuProgres({ start, target, sessions, recompo = false, pesees
   nextName: string | null;
   image: ImageSourcePropType | null;
   imageSuivante: ImageSourcePropType | null;
+  /** 26 octobre 2026 : le carrousel de Ton plan montre les deux cartes sur deux pages */
+  partie?: 'tout' | 'chemin' | 'dojo';
 }) {
   const calme = !!useReducedMotion();
   const chemin = start != null && target != null && Math.abs(start - target) >= 0.2;
   return (
     <View style={{ gap: 12 }}>
-      {chemin ? <CheminApercu start={start as number} target={target as number} sessions={sessions} recompo={recompo} calme={calme} /> : null}
-      <DojoApercu rankIndex={rankIndex} rankName={rankName} nextName={nextName} image={image} imageSuivante={imageSuivante} sessions={sessions} pesees={pesees} calme={calme} />
+      {chemin && partie !== 'dojo' ? <CheminApercu start={start as number} target={target as number} sessions={sessions} recompo={recompo} calme={calme} /> : null}
+      {partie === 'chemin' ? null : <DojoApercu rankIndex={rankIndex} rankName={rankName} nextName={nextName} image={image} imageSuivante={imageSuivante} sessions={sessions} pesees={pesees} calme={calme} />}
     </View>
   );
+}
+
+/** Vrai si la carte du chemin a quelque chose a montrer */
+export function apercuCheminVisible(start: number | null, target: number | null): boolean {
+  return start != null && target != null && Math.abs(start - target) >= 0.2;
 }
 
 export default ApercuProgres;

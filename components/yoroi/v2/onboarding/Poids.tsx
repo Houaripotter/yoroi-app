@@ -5,16 +5,20 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
-import { Kozane } from '@/components/yoroi/v2/dojo/Kozane';
+import Svg, { Circle } from 'react-native-svg';
+import { useYoroiTheme } from '@/components/yoroi';
+import { Icon as IconS } from '@/components/yoroi/v2/seances/Icon';
+import type { IconName } from '@/components/yoroi/v2/seances/Icon';
+import { Cercles, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { fontStyle } from '@/components/yoroi/fonts';
 import type { Reward } from '@/lib/v2/onboarding/draft';
 import type { ChoixUnivers } from '@/lib/v2/dojo/choisirUnivers';
 import { Ruler } from './Ruler';
 import { PAS_KG, Pas } from './Pas';
-import { MainButton, Shell, kg, useColors } from './ui';
+import { MainButton, Riche, Shell, kg, useColors } from './ui';
 import type { Nav } from './types';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -22,10 +26,14 @@ const MIN = 30;
 const MAX = 250;
 const clamp = (v: number) => Math.min(MAX, Math.max(MIN, Math.round(v * 10) / 10));
 
-/** Vague 45 : pastilles de séance (ex plaques kozane) qui se remplissent doucement de leur valeur de depart a leur valeur d'arrivee */
-function FillingPlates({ from, to }: { from: number; to: number }) {
-  const [v, setV] = useState(from);
+/** 26 octobre 2026 : la valeur qui se remplit doucement, de la valeur de depart a la valeur d'arrivee (Reduire les animations : tout de suite) */
+function useRemplissage(from: number, to: number, calme: boolean): number {
+  const [v, setV] = useState(calme ? to : from);
   useEffect(() => {
+    if (calme) {
+      setV(to);
+      return;
+    }
     let raf = 0;
     const start = Date.now() + 350;
     const step = () => {
@@ -36,41 +44,130 @@ function FillingPlates({ from, to }: { from: number; to: number }) {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [from, to]);
-  return <Kozane nombre={3} rempli={Math.max(v, 0.08)} taille={54} lumiere={Math.min(2, Math.floor(to))} accessibilityLabel={traduire("Ta première pastille commence à se remplir")} />;
+  }, [from, to, calme]);
+  return v;
 }
 
-/** Vague 45 : les phrases suivent l'univers choisi (l'armure au Japon, la tenue en Classique, ta progression sans personnage) */
-const TEXTES_RECOMPENSE: Record<ChoixUnivers, { haut: string; bas: string }> = {
-  japon: { haut: traduire('Ton armure se forme avec toi, tu la retrouves dans le Dojo.'), bas: traduire('Ta première plaque d’armure commence à se remplir. Chaque pesée et chaque séance la complètent.') },
-  classique: { haut: traduire('Ta tenue se construit avec toi, tu la retrouves dans le Dojo.'), bas: traduire('Ta première pastille commence à se remplir. Chaque pesée et chaque séance la complètent.') },
-  aucun: { haut: traduire('Ta progression commence, tu la suis dans le Dojo.'), bas: traduire('Ta première pastille commence à se remplir. Chaque pesée et chaque séance la complètent.') },
-};
+const OR = '#E3C47B';
+const TAILLE = 64;
+const TRAIT = 7;
+
+/** Une pastille : pleine (coche), en cours (anneau dore et pourcentage) ou a venir (icone, plus tard) */
+function PastilleProgres({ part, etat, icone, legende }: { part: number; etat: 'pleine' | 'en_cours' | 'a_venir'; icone: IconName; legende: string }) {
+  const { theme } = useYoroiTheme();
+  const tc = theme.colors;
+  const r = (TAILLE - TRAIT) / 2;
+  const tour = 2 * Math.PI * r;
+  const visible = etat === 'en_cours' ? Math.max(0.06, Math.min(1, part)) : 0;
+  const pct = Math.max(1, Math.round(Math.min(1, part) * 100));
+  return (
+    <View style={{ alignItems: 'center', gap: 6, width: TAILLE + 12 }}>
+      <View style={{ width: TAILLE, height: TAILLE, alignItems: 'center', justifyContent: 'center' }}>
+        {etat === 'pleine' ? (
+          <View style={{ width: TAILLE, height: TAILLE, borderRadius: TAILLE / 2, backgroundColor: OR, alignItems: 'center', justifyContent: 'center' }}>
+            <IconS name="check" size={28} color="#3A2A08" strokeWidth={3} />
+          </View>
+        ) : etat === 'en_cours' ? (
+          <>
+            <Svg width={TAILLE} height={TAILLE} style={{ position: 'absolute' }}>
+              <Circle cx={TAILLE / 2} cy={TAILLE / 2} r={r} stroke="rgba(255,255,255,0.18)" strokeWidth={TRAIT} fill="rgba(255,255,255,0.10)" />
+              <Circle
+                cx={TAILLE / 2}
+                cy={TAILLE / 2}
+                r={r}
+                stroke={OR}
+                strokeWidth={TRAIT}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={`${tour * visible} ${tour}`}
+                transform={`rotate(-90 ${TAILLE / 2} ${TAILLE / 2})`}
+              />
+            </Svg>
+            <Ink size={17} weight="black" tight color={tc.onDark}>{`${pct} %`}</Ink>
+          </>
+        ) : (
+          <View style={{ width: TAILLE - 8, height: TAILLE - 8, borderRadius: (TAILLE - 8) / 2, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+            <IconS name={icone} size={22} color={tc.onDarkSecondary} />
+          </View>
+        )}
+      </View>
+      <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 9, backgroundColor: etat === 'a_venir' ? 'rgba(255,255,255,0.12)' : OR }}>
+        <Ink size={10.5} weight="black" color={etat === 'a_venir' ? tc.onDarkSecondary : '#3A2A08'} numberOfLines={1}>{legende}</Ink>
+      </View>
+    </View>
+  );
+}
+
+/** Vague 45 : les phrases suivent l'univers choisi (les plaques d'armure au Japon, des pastilles en Classique et sans personnage).
+ * 26 octobre 2026 (Houari : « les pastilles sont vides, c'est normal ? », « ta tenue », on ne comprend pas) :
+ * on dit simplement ce que c'est, des recompenses a remplir dans l'onglet Dojo, et l'apercu montre la premiere
+ * en train de se remplir (pourcentage), les suivantes a venir avec leur icone. */
+function textesRecompense(u: ChoixUnivers, pct: number, premiere: boolean): { haut: string; bas: string; aVenir: string } {
+  if (!premiere) {
+    return {
+      haut: u === 'japon' ? traduire('Tes récompenses sont des plaques d’armure à remplir. Tu les retrouves dans l’onglet Dojo.') : traduire('Tes récompenses sont des pastilles à remplir. Tu les retrouves dans l’onglet Dojo.'),
+      bas: traduire('Celle en cours est remplie à **{0} %**. Chaque pesée et chaque séance la complètent, puis la suivante s’ouvre.', pct),
+      aVenir: u === 'japon' ? traduire('Tes prochaines plaques') : traduire('Tes prochaines pastilles'),
+    };
+  }
+  if (u === 'japon') {
+    return {
+      haut: traduire('Tes récompenses sont des plaques d’armure à remplir. Tu les retrouves dans l’onglet Dojo.'),
+      bas: traduire('Ta première plaque est déjà remplie à **{0} %**. Chaque pesée et chaque séance la complètent, puis la suivante s’ouvre.', pct),
+      aVenir: traduire('Tes prochaines plaques'),
+    };
+  }
+  return {
+    haut: traduire('Tes récompenses sont des pastilles à remplir. Tu les retrouves dans l’onglet Dojo.'),
+    bas: traduire('Ta première pastille est déjà remplie à **{0} %**. Chaque pesée et chaque séance la complètent, puis la suivante s’ouvre.', pct),
+    aVenir: traduire('Tes prochaines pastilles'),
+  };
+}
+
+const ICONES_A_VENIR: IconName[] = ['dumbbell', 'trophy'];
 
 export function RewardPanel({ reward, univers = 'japon' }: { reward: Reward; univers?: ChoixUnivers }) {
   const c = useColors();
-  const t = TEXTES_RECOMPENSE[univers] ?? TEXTES_RECOMPENSE.japon;
+  const pal = usePaletteProgramme();
+  const { theme } = useYoroiTheme();
+  const tc = theme.colors;
+  const calme = !!useReducedMotion();
+  const v = useRemplissage(Math.max(0, reward.platesBefore), Math.max(0, Math.min(3, reward.platesAfter)), calme);
+  // la pastille en cours : la premiere qui n'est pas pleine (au moins la premiere)
+  const enCours = Math.max(0, Math.min(2, Math.floor(v)));
+  const partEnCours = Math.max(0, Math.min(1, v - enCours));
+  const pctFinal = Math.max(1, Math.round(Math.min(1, Math.max(0, reward.platesAfter - Math.floor(Math.min(2, reward.platesAfter)))) * 100));
+  const t = textesRecompense(univers, pctFinal, reward.platesAfter < 1);
   return (
-    <Animated.View entering={FadeInDown.duration(380)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 18, gap: 14 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ flex: 1 }}>
+    <Animated.View entering={FadeInDown.duration(380)} style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 14 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: pal.vertTint, alignItems: 'center', justifyContent: 'center' }}>
+          <IconS name="medal" size={22} color={pal.vert} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
           <Ink size={18} weight="black">{traduire("Ton suivi commence")}</Ink>
-          <Ink size={13} color={c.textSecondary}>{t.haut}</Ink>
+          <Ink size={13} color={c.textSecondary} style={{ lineHeight: 18 }}>{t.haut}</Ink>
         </View>
       </View>
-      <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {reward.lines.map((l, i) => (
-          <Animated.View key={`${l.label}${i}`} entering={FadeInDown.delay(250 + i * 140).duration(300)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="check" size={12} color={c.accent} stroke={3} />
-            </View>
-            <Ink size={14} weight="bold" style={{ flex: 1 }}>{traduire(l.label)}</Ink>
+          <Animated.View key={`${l.label}${i}`} entering={FadeInDown.delay(250 + i * 140).duration(300)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, backgroundColor: pal.teinte }}>
+            <IconS name="check" size={13} color={pal.indigo} strokeWidth={3} />
+            <Ink size={13} weight="bold" color={pal.indigo}>{traduire(l.label)}</Ink>
           </Animated.View>
         ))}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <FillingPlates from={reward.platesBefore} to={reward.platesAfter} />
-        <Ink size={13} color={c.textSecondary} style={{ flex: 1, lineHeight: 18 }}>{t.bas}</Ink>
+      <View style={{ borderRadius: 22, backgroundColor: pal.indigo, overflow: 'hidden', padding: 16, gap: 14 }}>
+        <Cercles />
+        <Ink size={11} weight="black" color={tc.onDarkSecondary} style={{ letterSpacing: 0.6 }}>{traduire('APERÇU DE TA PROGRESSION')}</Ink>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start' }} accessible accessibilityLabel={`${traduire('Ta progression')} : ${pctFinal} %. ${t.aVenir}.`}>
+          {[0, 1, 2].map((i) => {
+            const etat = i < enCours ? 'pleine' : i === enCours ? 'en_cours' : 'a_venir';
+            const legende = etat === 'pleine' ? traduire('Pleine') : etat === 'en_cours' ? traduire('En cours') : traduire('À venir');
+            return <PastilleProgres key={i} part={etat === 'en_cours' ? partEnCours : 0} etat={etat} icone={ICONES_A_VENIR[(i + 1) % 2]} legende={legende} />;
+          })}
+        </View>
+        <Riche size={13} lineHeight={18} color={tc.onDark} ink={OR} text={t.bas} />
       </View>
     </Animated.View>
   );

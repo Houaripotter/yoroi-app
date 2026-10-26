@@ -55,7 +55,8 @@ function Ligne({ icone, couleur, fond, texte }: { icone: IconName; couleur: stri
   );
 }
 
-export function PlanSport({ sessions, sports }: { sessions: number | null; sports: string[] }) {
+/** partie : tout (une carte), barres (la comparaison seule) ou conseils (ton sport, ce qui compte), pour le carrousel de Ton plan */
+export function PlanSport({ sessions, sports, partie = 'tout' }: { sessions: number | null; sports: string[]; partie?: 'tout' | 'barres' | 'conseils' }) {
   const c = useColors();
   const pal = usePaletteProgramme();
   const calme = !!useReducedMotion();
@@ -104,8 +105,10 @@ export function PlanSport({ sessions, sports }: { sessions: number | null; sport
     { cle: 'deux', label: traduire('Alimentation et sport'), valeur: traduire('5 à 6 kg de plus que le sport seul'), part: 1, couleur: FAMILLES.muscu.couleur },
   ];
 
-  return (
-    <View style={{ borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 14 }}>
+  const carte = { borderRadius: 24, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 14 } as const;
+  const sourcesTexte = <Ink size={11} color={c.textMuted} style={{ lineHeight: 15 }}>{traduire('Études : {0}.', etudesCourtes(SOURCES_PLAN_SPORT).join(', '))}</Ink>;
+  const comparaison = (
+    <>
       <View style={{ gap: 2 }}>
         <Ink size={13} weight="bold" color={c.textMuted}>{traduire('Sport, alimentation, ou les deux ?')}</Ink>
         <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={traduire('Avec ton alimentation, ton sport **fait la différence**')} />
@@ -113,26 +116,55 @@ export function PlanSport({ sessions, sports }: { sessions: number | null; sport
       <View style={{ gap: 12 }} accessible accessibilityLabel={traduire('Sport seul : environ 2 kg en moyenne. Alimentation seule : le plus gros effet sur la balance. Alimentation et sport : 5 à 6 kg de plus que le sport seul.')}>
         {barres.map((b, k) => (
           <View key={b.cle} style={{ gap: 5 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-                <Ink size={14} weight="black" color={c.ink}>{b.label}</Ink>
-                {b.cle === 'deux' && n ? (
-                  <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: pal.indigo }}>
-                    <Ink size={11} weight="black" color="#FFFFFF">{traduire('Toi')}</Ink>
-                  </View>
-                ) : null}
+            {/* 26 octobre 2026 : le nom et la valeur sur deux lignes qui passent a la ligne, la pastille Toi apres la barre (plus rien de coupe) */}
+            <Ink size={14} weight="black" color={c.ink}>{b.label}</Ink>
+            <Ink size={12} weight="bold" color={c.textSecondary} style={{ lineHeight: 16 }}>{b.valeur}</Ink>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Barre part={b.part} couleur={b.couleur} delai={200 + k * 180} calme={calme} />
               </View>
-              <Ink size={12} weight="bold" color={c.textSecondary} numberOfLines={1} style={{ flexShrink: 1, textAlign: 'right' }}>{b.valeur}</Ink>
+              {b.cle === 'deux' && n ? (
+                <View style={{ flexShrink: 0, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: pal.indigo }}>
+                  <Ink size={11} weight="black" color="#FFFFFF">{traduire('Toi')}</Ink>
+                </View>
+              ) : null}
             </View>
-            <Barre part={b.part} couleur={b.couleur} delai={200 + k * 180} calme={calme} />
           </View>
         ))}
         <Ink size={11} weight="bold" color={c.textMuted}>{traduire('Longueurs indicatives, d’après les moyennes des études.')}</Ink>
       </View>
-      <View style={{ gap: 12 }}>
-        {lignes.map((l) => <Ligne key={l.cle} icone={l.icone} couleur={l.couleur} fond={l.fond} texte={l.texte} />)}
+    </>
+  );
+  const conseils = (
+    <View style={{ gap: 12 }}>
+      {lignes.map((l) => <Ligne key={l.cle} icone={l.icone} couleur={l.couleur} fond={l.fond} texte={l.texte} />)}
+    </View>
+  );
+  if (partie === 'barres') {
+    return (
+      <View style={carte}>
+        {comparaison}
+        {sourcesTexte}
       </View>
-      <Ink size={11} color={c.textMuted} style={{ lineHeight: 15 }}>{traduire('Études : {0}.', etudesCourtes(SOURCES_PLAN_SPORT).join(', '))}</Ink>
+    );
+  }
+  if (partie === 'conseils') {
+    return (
+      <View style={carte}>
+        <View style={{ gap: 2 }}>
+          <Ink size={13} weight="bold" color={c.textMuted}>{traduire('Ton sport, ce qui compte')}</Ink>
+          <Riche size={18} weight="black" color={c.ink} lineHeight={23} text={traduire('Ce que ton sport t’apporte **vraiment**')} />
+        </View>
+        {conseils}
+        {sourcesTexte}
+      </View>
+    );
+  }
+  return (
+    <View style={carte}>
+      {comparaison}
+      {conseils}
+      {sourcesTexte}
     </View>
   );
 }
