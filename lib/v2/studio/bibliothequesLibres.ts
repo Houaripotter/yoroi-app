@@ -2,12 +2,13 @@
  * Studio, bibliotheque d'exercices Gym visual (26 octobre 2026, Houari : « supprime tout sauf Gym visual »).
  * Le catalogue complet (1 324 exercices, GIF anatomiques, muscles en rouge, consignes en francais) est lu en ligne
  * a l'ouverture de la galerie, rien n'est livre dans l'app.
+ * Plus Flow (26 octobre 2026) : 1 257 dessins blancs en 3 images SVG, CC0 annonce, generes par intelligence artificielle.
  * ATTENTION : medias propriete de Gym visual, test prive seulement ; pour le public il faut une licence Gym visual.
  */
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { demoSlug } from '@/lib/v2/programmes/demos';
-import { GIFS_GV } from '@/lib/v2/programmes/demosTestCorrespondances';
-import { RACINE_GV } from '@/lib/v2/programmes/demosTest';
+import { DESSINS_FLOW, GIFS_GV } from '@/lib/v2/programmes/demosTestCorrespondances';
+import { RACINE_FLOW, RACINE_GV } from '@/lib/v2/programmes/demosTest';
 
 export type ExoLibre = {
   id: string;
@@ -25,6 +26,8 @@ export type ExoLibre = {
 };
 
 export const ADRESSE_GV = `${RACINE_GV}data/exercises.json`;
+export type Bibliotheque = 'gymvisual' | 'flow';
+export const INFO_FLOW = { nom: 'Flow', licence: 'Gratuit (CC0 annoncé). Dessins faits par intelligence artificielle, mouvements non vérifiés par un coach', mention: 'Flow Exercise Dataset' };
 export const INFO_GV = { nom: 'Gym visual', licence: 'Test privé seulement : pour le public, il faut acheter une licence Gym visual', mention: '© Gym visual, gymvisual.com' };
 
 /** id de la bibliotheque -> nom YOROI (premier exercice de la bibliotheque YOROI qui pointe dessus) */
@@ -69,6 +72,37 @@ export function lireGymvisual(json: unknown): ExoLibre[] {
       yoroi: yoroi.get(id),
     }];
   });
+}
+
+export function lireFlow(json: unknown): ExoLibre[] {
+  if (!Array.isArray(json)) return [];
+  const yoroi = inverse(DESSINS_FLOW);
+  return json.flatMap((raw) => {
+    const e = raw as Record<string, unknown>;
+    const id = texte(e.id);
+    const frames = liste((e.animation as Record<string, unknown> | undefined)?.frames);
+    if (!id || frames.length < 2) return [];
+    return [{
+      id,
+      nom: texte(e.name).replace(/^./, (c) => c.toUpperCase()) || id,
+      autres: [],
+      materiel: texte(e.equipment),
+      muscles: [texte(e.target), ...liste(e.secondaryMuscles)].filter(Boolean),
+      etapes: liste(e.instructions),
+      images: frames.map((f) => RACINE_FLOW + f),
+      yoroi: yoroi.get(id),
+    }];
+  });
+}
+
+let cacheFlow: ExoLibre[] | null = null;
+
+export async function chargerFlow(): Promise<ExoLibre[]> {
+  if (cacheFlow) return cacheFlow;
+  const r = await fetch(`${RACINE_FLOW}data/exercises.json`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  cacheFlow = lireFlow((await r.json()) as unknown);
+  return cacheFlow;
 }
 
 let cache: ExoLibre[] | null = null;

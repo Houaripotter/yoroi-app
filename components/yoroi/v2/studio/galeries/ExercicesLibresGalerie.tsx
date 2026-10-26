@@ -11,8 +11,9 @@ import { Icon } from '@/components/yoroi/v2/espace/ui';
 import { DemoPaire } from '@/components/yoroi/v2/seance/ExoDemo';
 import { SearchField } from '@/components/yoroi/v2/studio/parts';
 import { G, GalerieHeader, Pastille, PastilleRow } from './kit';
-import { INFO_GV, chargerGymvisual, filtrer } from '@/lib/v2/studio/bibliothequesLibres';
-import type { ExoLibre } from '@/lib/v2/studio/bibliothequesLibres';
+import { INFO_FLOW, INFO_GV, chargerFlow, chargerGymvisual, filtrer } from '@/lib/v2/studio/bibliothequesLibres';
+import type { Bibliotheque, ExoLibre } from '@/lib/v2/studio/bibliothequesLibres';
+import { FOND_FLOW } from '@/components/yoroi/v2/seance/ExoDemo';
 import { traduire } from '@/lib/i18n/tr';
 
 const BLANC = '#FFFFFF';
@@ -22,7 +23,9 @@ export function ExercicesLibresGalerie() {
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [tout, setTout] = useState<ExoLibre[] | null>(null);
+  const [biblio, setBiblio] = useState<Bibliotheque>('gymvisual');
+  const [listes, setListes] = useState<Partial<Record<Bibliotheque, ExoLibre[]>>>({});
+  const tout = listes[biblio] ?? null;
   const [erreur, setErreur] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [seulementYoroi, setSeulementYoroi] = useState(false);
@@ -30,22 +33,29 @@ export function ExercicesLibresGalerie() {
 
   useEffect(() => {
     let vivant = true;
-    chargerGymvisual()
-      .then((l) => vivant && setTout(l))
+    if (listes[biblio]) return;
+    setErreur(null);
+    (biblio === 'flow' ? chargerFlow() : chargerGymvisual())
+      .then((l) => vivant && setListes((x) => ({ ...x, [biblio]: l })))
       .catch(() => vivant && setErreur(traduire('Pas de connexion : la bibliothèque se lit en ligne.')));
     return () => {
       vivant = false;
     };
-  }, []);
+  }, [biblio, listes]);
 
   const visibles = useMemo(() => (tout ? filtrer(tout, q, seulementYoroi) : []), [tout, q, seulementYoroi]);
-  const info = INFO_GV;
+  const info = biblio === 'flow' ? INFO_FLOW : INFO_GV;
+  const fond = biblio === 'flow' ? FOND_FLOW : BLANC;
   const carte = Math.floor((width - G * 2 - 12) / 2);
   const contenir = true;
 
   const entete = (
     <View style={{ gap: 12, marginBottom: 12 }}>
-      <GalerieHeader title={traduire('Gym visual, test privé')} sub={traduire('1 324 exercices en ligne, visibles seulement en mode créateur')} />
+      <GalerieHeader title={traduire('Bibliothèques d’exercices')} sub={traduire('En ligne, visibles seulement en mode créateur')} />
+      <PastilleRow>
+        <Pastille label="Gym visual" on={biblio === 'gymvisual'} count={listes.gymvisual?.length} onPress={() => setBiblio('gymvisual')} />
+        <Pastille label="Flow" on={biblio === 'flow'} count={listes.flow?.length} onPress={() => setBiblio('flow')} />
+      </PastilleRow>
       <View style={{ borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 14, gap: 4 }}>
         <Ink size={14} weight="extraBold">{traduire(info.licence)}</Ink>
         {info.mention ? <Ink size={13} color={c.textSecondary}>{info.mention}</Ink> : null}
@@ -89,7 +99,7 @@ export function ExercicesLibresGalerie() {
             accessibilityLabel={item.nom}
             style={({ pressed }) => ({ width: carte, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden', opacity: pressed ? 0.85 : 1 })}
           >
-            <DemoPaire images={item.images.map((uri) => ({ uri }))} label={item.nom} largeur={carte} hauteur={carte} arrondi={0} bordure={false} contenir={contenir} fond={BLANC} />
+            <DemoPaire images={item.images.map((uri) => ({ uri }))} label={item.nom} largeur={carte} hauteur={carte} arrondi={0} bordure={false} contenir={contenir} fond={fond} />
             <View style={{ padding: 10, gap: 2 }}>
               <Ink size={13} weight="extraBold" numberOfLines={2}>{item.nom}</Ink>
               {item.yoroi ? (
@@ -110,7 +120,7 @@ export function ExercicesLibresGalerie() {
                   <Icon name="close" size={18} color={c.ink} />
                 </Pressable>
               </View>
-              <DemoPaire images={ouvert.images.map((uri) => ({ uri }))} label={ouvert.nom} largeur={width - G * 2} hauteur={Math.min(360, width - G * 2)} arrondi={24} contenir={contenir} fond={BLANC} />
+              <DemoPaire images={ouvert.images.map((uri) => ({ uri }))} label={ouvert.nom} largeur={width - G * 2} hauteur={Math.min(360, width - G * 2)} arrondi={24} contenir={contenir} fond={fond} />
               <View style={{ gap: 4 }}>
                 <Ink size={22} weight="black" tight>{ouvert.nom}</Ink>
                 {ouvert.autres.length ? <Ink size={13} color={c.textSecondary}>{ouvert.autres.join(' · ')}</Ink> : null}

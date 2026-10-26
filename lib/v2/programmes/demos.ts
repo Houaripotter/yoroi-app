@@ -40,11 +40,12 @@ export const MEME_MOUVEMENT: Record<string, string> = {
 };
 
 /** Une ou deux images : deux s'enchainent en fondu, une seule est deja animee */
-/** Le GIF Gym visual d'un exercice, seulement en mode createur avec la source choisie dans le Studio */
+/** Le GIF Gym visual ou les dessins Flow d'un exercice, seulement en mode createur avec la source choisie dans le Studio */
 export function demoDe(nom: string | undefined | null): ImageSourcePropType[] | null {
   if (!nom) return null;
   // public : aucune animation (26 octobre 2026)
-  if (sourceDemosActive() === 'aucune') return null;
+  const source = sourceDemosActive();
+  if (source === 'aucune') return null;
   const cle = demoSlug(nom);
-  return demoEnLigne(cle) ?? (MEME_MOUVEMENT[cle] ? demoEnLigne(MEME_MOUVEMENT[cle]) : null);
+  return demoEnLigne(cle, source) ?? (MEME_MOUVEMENT[cle] ? demoEnLigne(MEME_MOUVEMENT[cle], source) : null);
 }
