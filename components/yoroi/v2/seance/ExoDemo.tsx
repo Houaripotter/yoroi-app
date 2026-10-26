@@ -32,7 +32,7 @@ export function ExoDemo({ nom, taille = 96, arrondi = 18, largeur, hauteur, bord
       largeur={largeur}
       hauteur={hauteur}
       bordure={bordure}
-      contenir={source === 'dessins' || source === 'repdb' || source === 'figures'}
+      contenir={source === 'dessins' || source === 'repdb' || source === 'figures' || source === 'gymvisual'}
     />
   );
 }

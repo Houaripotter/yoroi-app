@@ -16,7 +16,7 @@ import { INFOS, chargerBibliotheque, filtrer } from '@/lib/v2/studio/bibliothequ
 import type { Bibliotheque, ExoLibre } from '@/lib/v2/studio/bibliothequesLibres';
 import { traduire } from '@/lib/i18n/tr';
 
-const ORDRE: Bibliotheque[] = ['figures', 'repdb', 'photos', 'dessins'];
+const ORDRE: Bibliotheque[] = ['gymvisual', 'figures', 'repdb', 'photos', 'dessins'];
 const BLANC = '#FFFFFF';
 
 export function ExercicesLibresGalerie() {
@@ -24,7 +24,7 @@ export function ExercicesLibresGalerie() {
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [biblio, setBiblio] = useState<Bibliotheque>('figures');
+  const [biblio, setBiblio] = useState<Bibliotheque>('gymvisual');
   const [listes, setListes] = useState<Partial<Record<Bibliotheque, ExoLibre[]>>>({});
   const [erreur, setErreur] = useState<string | null>(null);
   const [q, setQ] = useState('');

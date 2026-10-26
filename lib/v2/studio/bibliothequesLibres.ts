@@ -9,10 +9,10 @@
  */
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { demoSlug } from '@/lib/v2/programmes/demos';
-import { DESSINS_EK, DESSINS_REPDB, FIGURES_OEF, PHOTOS_FEDB } from '@/lib/v2/programmes/demosTestCorrespondances';
-import { RACINE_FIGURES } from '@/lib/v2/programmes/demosTest';
+import { DESSINS_EK, DESSINS_REPDB, FIGURES_OEF, GIFS_GV, PHOTOS_FEDB } from '@/lib/v2/programmes/demosTestCorrespondances';
+import { RACINE_FIGURES, RACINE_GV } from '@/lib/v2/programmes/demosTest';
 
-export type Bibliotheque = 'figures' | 'repdb' | 'photos' | 'dessins';
+export type Bibliotheque = 'gymvisual' | 'figures' | 'repdb' | 'photos' | 'dessins';
 
 export type ExoLibre = {
   id: string;
@@ -32,12 +32,14 @@ export type ExoLibre = {
 const GH = 'https://raw.githubusercontent.com/';
 export const ADRESSES: Record<Bibliotheque, string> = {
   figures: `${RACINE_FIGURES}exercises.json`,
+  gymvisual: `${RACINE_GV}data/exercises.json`,
   repdb: `${GH}RepDB/exercise-dataset/main/exercises.json`,
   photos: `${GH}yuhonas/free-exercise-db/main/dist/exercises.json`,
   dessins: `${GH}everkinetic/data/main/dist/exercises.json`,
 };
 
 export const INFOS: Record<Bibliotheque, { nom: string; licence: string; mention?: string }> = {
+  gymvisual: { nom: 'Gym visual', licence: 'Test privé seulement : pour le public, il faut acheter une licence Gym visual', mention: '© Gym visual, gymvisual.com' },
   figures: { nom: 'Open Exercise Figures', licence: 'Domaine public, aucune mention obligatoire, même dans une app payante' },
   repdb: { nom: 'RepDB', licence: 'Gratuit, même dans une app payante, avec la mention', mention: 'Exercise data by RepDB (repdb.co)' },
   photos: { nom: 'Free Exercise DB', licence: 'Domaine public, aucune mention obligatoire' },
@@ -153,6 +155,32 @@ export function lireFigures(json: unknown): ExoLibre[] {
   });
 }
 
+/** Les noms de fichiers GIF des exercices YOROI, ramenes a l'id Gym visual */
+const idDeFichier = (f: string): string => f.split('-')[0];
+
+export function lireGymvisual(json: unknown): ExoLibre[] {
+  if (!Array.isArray(json)) return [];
+  const yoroi = inverse(Object.fromEntries(Object.entries(GIFS_GV).map(([k, f]) => [k, idDeFichier(f)])));
+  return json.flatMap((raw) => {
+    const e = raw as Record<string, unknown>;
+    const id = texte(e.id);
+    const gif = texte(e.gif_url);
+    if (!id || !gif) return [];
+    const etapes = (e.instruction_steps ?? {}) as Record<string, unknown>;
+    const fr = liste(etapes.fr);
+    return [{
+      id,
+      nom: texte(e.name).replace(/^./, (c) => c.toUpperCase()) || id,
+      autres: [],
+      materiel: texte(e.equipment),
+      muscles: [texte(e.target), ...liste(e.secondary_muscles)].filter(Boolean),
+      etapes: fr.length ? fr : liste(etapes.en),
+      images: [RACINE_GV + gif],
+      yoroi: yoroi.get(id),
+    }];
+  });
+}
+
 const cache = new Map<Bibliotheque, ExoLibre[]>();
 
 export async function chargerBibliotheque(b: Bibliotheque): Promise<ExoLibre[]> {
@@ -161,7 +189,7 @@ export async function chargerBibliotheque(b: Bibliotheque): Promise<ExoLibre[]> 
   const r = await fetch(ADRESSES[b]);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const json: unknown = await r.json();
-  const l = b === 'figures' ? lireFigures(json) : b === 'repdb' ? lireRepdb(json) : b === 'photos' ? lirePhotos(json) : lireDessins(json);
+  const l = b === 'gymvisual' ? lireGymvisual(json) : b === 'figures' ? lireFigures(json) : b === 'repdb' ? lireRepdb(json) : b === 'photos' ? lirePhotos(json) : lireDessins(json);
   cache.set(b, l);
   return l;
 }

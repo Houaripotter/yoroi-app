@@ -11,22 +11,25 @@
  *   github.com/RepDB/exercise-dataset (jamais le dossier premium-samples, reserve a l'evaluation).
  * - figures : Open Exercise Figures, domaine public (CC0), mannequin anime, muscle cible en rouge,
  *   github.com/AbanoubAmir/open-exercise-figures (version figee par son commit).
+ * - gymvisual : GIF de Gym visual (corps anatomique, muscles en rouge), lus depuis github.com/hasaneyldrm/exercises-dataset.
+ *   ATTENTION : propriete de Gym visual, test prive seulement. Pour le public, il faut acheter une licence chez Gym visual.
  * Les images en ligne sont telechargees seulement quand un exercice s'affiche (rien dans l'app livree).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import { useEffect, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
-import { DESSINS_EK, DESSINS_REPDB, FIGURES_OEF, PHOTOS_FEDB } from './demosTestCorrespondances';
+import { DESSINS_EK, DESSINS_REPDB, FIGURES_OEF, GIFS_GV, PHOTOS_FEDB } from './demosTestCorrespondances';
 
-export type SourceDemos = 'aucune' | 'yoroi' | 'photos' | 'dessins' | 'repdb' | 'figures';
-export type SourceEnLigne = 'photos' | 'dessins' | 'repdb' | 'figures';
-export const SOURCES_DEMOS: SourceDemos[] = ['aucune', 'figures', 'repdb', 'photos', 'dessins', 'yoroi'];
+export type SourceDemos = 'aucune' | 'yoroi' | 'photos' | 'dessins' | 'repdb' | 'figures' | 'gymvisual';
+export type SourceEnLigne = 'photos' | 'dessins' | 'repdb' | 'figures' | 'gymvisual';
+export const SOURCES_DEMOS: SourceDemos[] = ['aucune', 'gymvisual', 'figures', 'repdb', 'photos', 'dessins', 'yoroi'];
 export const CLE_SOURCE_DEMOS = 'yoroi_studio_demos_v1';
 export const DEMOS_CHANGEES = 'YOROI_DEMOS_CHANGEES';
 
 const RACINE_PHOTOS = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 const RACINE_DESSINS = 'https://raw.githubusercontent.com/everkinetic/data/main/dist/png/';
+export const RACINE_GV = 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/';
 export const RACINE_FIGURES = 'https://raw.githubusercontent.com/AbanoubAmir/open-exercise-figures/a0574d54baaf23f5784dfdebd5c65f6a87fd5194/';
 const RACINE_REPDB = 'https://raw.githubusercontent.com/RepDB/exercise-dataset/main/images/flat/';
 
@@ -76,6 +79,7 @@ export const NOMS_SOURCES: Record<SourceDemos, string> = {
   dessins: 'Dessins, Everkinetic',
   repdb: 'Illustrations, RepDB',
   figures: 'Mannequin animé, muscles en rouge',
+  gymvisual: 'Anatomie, muscles en rouge, test privé',
 };
 
 export const NOMBRE_PAR_SOURCE: Record<SourceEnLigne, number> = {
@@ -83,11 +87,17 @@ export const NOMBRE_PAR_SOURCE: Record<SourceEnLigne, number> = {
   dessins: Object.keys(DESSINS_EK).length,
   repdb: Object.keys(DESSINS_REPDB).length,
   figures: Object.keys(FIGURES_OEF).length,
+  gymvisual: Object.keys(GIFS_GV).length,
 };
-export const estEnLigne = (s: SourceDemos): s is SourceEnLigne => s === 'photos' || s === 'dessins' || s === 'repdb' || s === 'figures';
+export const estEnLigne = (s: SourceDemos): s is SourceEnLigne => s === 'photos' || s === 'dessins' || s === 'repdb' || s === 'figures' || s === 'gymvisual';
 
 /** Les deux images en ligne d'un exercice (cle demoSlug), ou null */
 export function demoEnLigne(s: SourceEnLigne, cle: string): ImageSourcePropType[] | null {
+  if (s === 'gymvisual') {
+    // valeur : nom du fichier GIF sans extension (id-media)
+    const f = GIFS_GV[cle];
+    return f ? [{ uri: `${RACINE_GV}videos/${f}.gif` }] : null;
+  }
   if (s === 'figures') {
     // une seule image : un WebP deja anime
     const id = FIGURES_OEF[cle];
