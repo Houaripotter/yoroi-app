@@ -166,7 +166,7 @@ export function conseillerProgramme(r: Reponses): Conseil {
     return { id: 'ppl-3j', pourquoi: 'Trois jours : pousser, tirer, jambes. Chaque muscle a sa séance complète.', autres: ['debutant-fullbody-3j'] };
   }
   if (r.jours === 4) {
-    return { id: 'haut-bas-4j', pourquoi: 'Quatre jours : haut et bas du corps, chaque muscle travaillé deux fois par semaine.', autres: ['pp-ul-4j', 'bas-du-corps-4j', 'split-5j'] };
+    return { id: 'haut-bas-4j', pourquoi: 'Quatre jours : haut et bas du corps, chaque muscle travaillé deux fois par semaine.', autres: ['pp-ul-4j', 'pp-pp-4j', 'bas-du-corps-4j', 'split-5j'] };
   }
   if (r.jours === 6) {
     return { id: 'ppl-6j', pourquoi: 'Six jours : pousser, tirer, jambes deux fois, un cycle force et un cycle hypertrophie. Chaque muscle travaille deux fois par semaine.', autres: ['split-5j', 'ppl-3j'] };

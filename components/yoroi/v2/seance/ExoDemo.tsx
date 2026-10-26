@@ -7,6 +7,7 @@
  */
 import React, { useEffect } from 'react';
 import { Image, View } from 'react-native';
+import { Image as ImageAnimee } from 'expo-image';
 import type { ImageSourcePropType } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
@@ -31,7 +32,7 @@ export function ExoDemo({ nom, taille = 96, arrondi = 18, largeur, hauteur, bord
       largeur={largeur}
       hauteur={hauteur}
       bordure={bordure}
-      contenir={source === 'dessins' || source === 'repdb'}
+      contenir={source === 'dessins' || source === 'repdb' || source === 'figures'}
     />
   );
 }
@@ -81,8 +82,15 @@ export function DemoPaire({ images, label, taille = 96, arrondi = 18, largeur, h
       accessibilityLabel={label}
       style={{ width: w, height: h, borderRadius: arrondi, overflow: 'hidden', backgroundColor: fond, borderWidth: bordure ? 1 : 0, borderColor: theme.colors.divider }}
     >
-      <Image source={images[0]} style={img} resizeMode={mode} />
-      {deux ? <Animated.Image source={images[1]} style={[img, styleB]} resizeMode={mode} /> : null}
+      {deux ? (
+        <>
+          <Image source={images[0]} style={img} resizeMode={mode} />
+          <Animated.Image source={images[1]} style={[img, styleB]} resizeMode={mode} />
+        </>
+      ) : (
+        // une seule image : WebP ou GIF deja anime, lu par expo-image (iOS et Android)
+        <ImageAnimee source={images[0] as never} style={img} contentFit={mode} autoplay cachePolicy="disk" />
+      )}
     </View>
   );
 }

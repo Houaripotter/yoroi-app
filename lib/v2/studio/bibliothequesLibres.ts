@@ -4,13 +4,15 @@
  * - RepDB, edition gratuite (650 exercices) : usage commercial permis avec la mention
  *   « Exercise data by RepDB (repdb.co) », pas de redistribution comme base de donnees ;
  * - Free Exercise DB (873 exercices, domaine public) ;
- * - Everkinetic (CC BY-SA 4.0).
+ * - Everkinetic (CC BY-SA 4.0) ;
+ * - Open Exercise Figures (1 399 exercices, CC0) : mannequin anime, muscle cible en rouge.
  */
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { demoSlug } from '@/lib/v2/programmes/demos';
-import { DESSINS_EK, DESSINS_REPDB, PHOTOS_FEDB } from '@/lib/v2/programmes/demosTestCorrespondances';
+import { DESSINS_EK, DESSINS_REPDB, FIGURES_OEF, PHOTOS_FEDB } from '@/lib/v2/programmes/demosTestCorrespondances';
+import { RACINE_FIGURES } from '@/lib/v2/programmes/demosTest';
 
-export type Bibliotheque = 'repdb' | 'photos' | 'dessins';
+export type Bibliotheque = 'figures' | 'repdb' | 'photos' | 'dessins';
 
 export type ExoLibre = {
   id: string;
@@ -29,12 +31,14 @@ export type ExoLibre = {
 
 const GH = 'https://raw.githubusercontent.com/';
 export const ADRESSES: Record<Bibliotheque, string> = {
+  figures: `${RACINE_FIGURES}exercises.json`,
   repdb: `${GH}RepDB/exercise-dataset/main/exercises.json`,
   photos: `${GH}yuhonas/free-exercise-db/main/dist/exercises.json`,
   dessins: `${GH}everkinetic/data/main/dist/exercises.json`,
 };
 
 export const INFOS: Record<Bibliotheque, { nom: string; licence: string; mention?: string }> = {
+  figures: { nom: 'Open Exercise Figures', licence: 'Domaine public, aucune mention obligatoire, même dans une app payante' },
   repdb: { nom: 'RepDB', licence: 'Gratuit, même dans une app payante, avec la mention', mention: 'Exercise data by RepDB (repdb.co)' },
   photos: { nom: 'Free Exercise DB', licence: 'Domaine public, aucune mention obligatoire' },
   dessins: { nom: 'Everkinetic', licence: 'Licence CC BY-SA 4.0, mention obligatoire', mention: 'Everkinetic, CC BY-SA 4.0' },
@@ -127,6 +131,28 @@ export function lireDessins(json: unknown): ExoLibre[] {
   });
 }
 
+export function lireFigures(json: unknown): ExoLibre[] {
+  if (!Array.isArray(json)) return [];
+  const yoroi = inverse(FIGURES_OEF);
+  return json.flatMap((raw) => {
+    const e = raw as Record<string, unknown>;
+    const id = texte(e.id);
+    const anim = texte(e.animation);
+    if (!id || !anim) return [];
+    return [{
+      id,
+      nom: texte(e.name) || id,
+      autres: [],
+      materiel: texte(e.equipment),
+      muscles: [texte(e.target), ...liste(e.secondary_muscles)].filter(Boolean),
+      etapes: liste(e.instructions),
+      description: texte(e.description) || undefined,
+      images: [RACINE_FIGURES + anim],
+      yoroi: yoroi.get(id),
+    }];
+  });
+}
+
 const cache = new Map<Bibliotheque, ExoLibre[]>();
 
 export async function chargerBibliotheque(b: Bibliotheque): Promise<ExoLibre[]> {
@@ -135,7 +161,7 @@ export async function chargerBibliotheque(b: Bibliotheque): Promise<ExoLibre[]> 
   const r = await fetch(ADRESSES[b]);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const json: unknown = await r.json();
-  const l = b === 'repdb' ? lireRepdb(json) : b === 'photos' ? lirePhotos(json) : lireDessins(json);
+  const l = b === 'figures' ? lireFigures(json) : b === 'repdb' ? lireRepdb(json) : b === 'photos' ? lirePhotos(json) : lireDessins(json);
   cache.set(b, l);
   return l;
 }

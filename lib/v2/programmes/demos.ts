@@ -41,7 +41,8 @@ export const MEME_MOUVEMENT: Record<string, string> = {
   fentes_bulgares: 'squat_bulgare',
 };
 
-export function demoDe(nom: string | undefined | null): [ImageSourcePropType, ImageSourcePropType] | null {
+/** Une ou deux images : deux s'enchainent en fondu, une seule est deja animee */
+export function demoDe(nom: string | undefined | null): ImageSourcePropType[] | null {
   if (!nom) return null;
   // public : aucune animation (26 octobre 2026), seulement en mode createur, source choisie dans le Studio
   const source = sourceDemosActive();
