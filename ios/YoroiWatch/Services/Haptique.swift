@@ -1,13 +1,14 @@
+import AVFoundation
 import Foundation
 import WatchKit
 
 // Haptiques distincts pour le chrono, le minuteur et les validations. Reglage : haptique fort ou normal.
 //
-// Aucun son par AVAudioSession ni AVAudioPlayer sur la montre : une session audio de lecture
-// envoie le son vers les AirPods relies a la montre, watchOS les fait basculer de l'iPhone vers
-// la montre et la musique de l'iPhone se coupe. Le son vient seulement de WKInterfaceDevice.play :
-// chaque haptique joue son petit son systeme par le haut parleur de la montre (rien en mode
-// silence), sans session audio, donc sans toucher aux AirPods.
+// Son : les haptiques jouent leur petit son systeme par WKInterfaceDevice.play (rien en mode silence).
+// Seule exception, la fin d'un minuteur : le son wizz.mp3 (celui d'avant la refonte d'octobre 2026)
+// rejoue en boucle, volume au maximum, par AVAudioPlayer. Session audio en categorie ambiante,
+// melangee aux autres sons et sans politique long format : elle sort par le haut parleur de la
+// montre et ne reclame pas les AirPods (c'est la categorie lecture qui les faisait basculer).
 
 enum Haptique {
   static var fort: Bool { Partage.defaults.bool(forKey: Partage.Cle.hapticFort) }
@@ -30,8 +31,49 @@ enum Haptique {
     }
   }
 
-  /// Annule les haptiques encore programmes (fin de la sonnerie d'un minuteur).
-  static func couper() { generation &+= 1 }
+  /// Suite d'haptiques a des instants choisis (en secondes depuis maintenant).
+  private static func suiteAux(_ pas: [(WKHapticType, Double)]) {
+    let g = generation
+    for (t, instant) in pas {
+      DispatchQueue.main.asyncAfter(deadline: .now() + instant) {
+        guard g == generation else { return }
+        jouer(t)
+      }
+    }
+  }
+
+  /// Annule les haptiques encore programmes et coupe le son wizz (fin de la sonnerie d'un minuteur).
+  static func couper() {
+    generation &+= 1
+    arreterWizz()
+  }
+
+  // MARK: Son wizz de fin de minuteur
+
+  private static var lecteurWizz: AVAudioPlayer?
+
+  /// Lance le wizz en boucle, volume au maximum. Sans effet s'il tourne deja : un nouveau tour de
+  /// sonnerie ne le recoupe jamais en plein milieu.
+  static func demarrerWizz() {
+    if let l = lecteurWizz, l.isPlaying { return }
+    guard let url = Bundle.main.url(forResource: "wizz", withExtension: "mp3") else { return }
+    let session = AVAudioSession.sharedInstance()
+    try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+    try? session.setActive(true)
+    guard let l = try? AVAudioPlayer(contentsOf: url) else { return }
+    l.numberOfLoops = -1
+    l.volume = 1.0
+    l.prepareToPlay()
+    l.play()
+    lecteurWizz = l
+  }
+
+  static func arreterWizz() {
+    guard let l = lecteurWizz else { return }
+    l.stop()
+    lecteurWizz = nil
+    try? AVAudioSession.sharedInstance().setActive(false)
+  }
 
   /// Cran de la couronne a chaque kg entier.
   static func cran() { jouer(.click) }
@@ -63,13 +105,16 @@ enum Haptique {
   /// Minuteur : un cran a 3, 2 et 1 seconde de la fin.
   static func decompteMinuteur() { jouer(.click) }
 
-  /// Minuteur termine, app au premier plan : les vibrations les plus marquees de watchOS
-  /// (notification, echec, nouvel essai) avec leur son systeme, rejouees toutes les
-  /// 1,2 s pendant 5 min au plus (24 octobre 2026 : plus dense, sans blanc entre deux salves). Toujours fort, quel que soit le reglage : c'est une alarme.
+  /// Minuteur termine, app au premier plan : une salve forte, toujours forte quel que soit le
+  /// reglage (c'est une alarme). La notification d'abord, puis trois fleches montantes.
+  /// 26 octobre 2026 : avant, notification, echec et nouvel essai partaient toutes les 0,35 s et la
+  /// salve suivante repartait 1,2 s apres. Chaque WKInterfaceDevice.play coupe l'haptique et le son
+  /// en cours : on entendait un debut de sonnerie coupe net. Ici chaque haptique a le temps de finir
+  /// (0,55 s apres la notification, puis 0,35 s), la salve dure 1,6 s et la suivante part a 1,8 s.
   /// WKInterfaceDevice.play ne joue que app active : ecran eteint, c'est la session d'alarme
   /// (notifyUser) qui vibre.
   static func alarmeMinuteur() {
-    suite([.notification, .failure, .retry], ecart: 0.35)
+    suiteAux([(.notification, 0), (.directionUp, 0.55), (.directionUp, 0.9), (.directionUp, 1.25)])
   }
 
   static func pause() { jouer(.stop) }

@@ -469,9 +469,9 @@ export default function CarteEditeur() {
               })}
             </View>
             {/* 24 octobre 2026 : visibles des qu'une photo est chargee, meme si un autre fond est choisi */}
-            {k.photo || o.fond === 'photo' || k.style.fond === 'photo' ? (
+            {k.photo || k.photoEnCours || o.fond === 'photo' || k.style.fond === 'photo' ? (
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                <Pastille c={c} on={false} icon="image" label={k.photo ? traduire('Changer de photo') : traduire('Galerie')} onPress={() => void k.choisirPhoto('gallery')} />
+                <Pastille c={c} on={false} icon="image" label={k.photoEnCours ? traduire('Photo en préparation') : k.photo ? traduire('Changer de photo') : traduire('Galerie')} onPress={() => { if (!k.photoEnCours) void k.choisirPhoto('gallery'); }} />
                 <Pastille c={c} on={false} icon="camera" label={traduire("Prendre une photo")} onPress={() => void k.choisirPhoto('camera')} />
                 {k.photo ? <Pastille c={c} on={false} icon="close" label={traduire('Enlever ma photo')} onPress={k.enleverPhoto} /> : null}
               </View>

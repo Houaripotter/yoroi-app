@@ -14,7 +14,7 @@ import WidgetKit
 //   planifiee a chaque depart avec start(at:), pour le minuteur qui finit le plus tot (une seule
 //   session a la fois, replanifiee ensuite). watchOS relance l'app quelques secondes avant la fin,
 //   meme ecran eteint ou app fermee ; a l'heure, notifyUser fait vibrer fort et en boucle
-//   (notification, echec, nouvel essai, toutes les 1,5 s, avec leur son systeme), 2 min, puis une
+//   (notification, echec, nouvel essai, toutes les 1 s, avec leur son systeme), 5 min, puis une
 //   vibration par minute jusqu'a Arreter. App au premier plan : ecran Termine (Arreter, Repeter).
 //   App pas active (poignet baisse, autre app, ecran eteint) : watchOS affiche son alerte d'alarme
 //   plein ecran (Arreter, Ouvrir) ; Ouvrir ramene l'app sur l'ecran Termine ;
@@ -32,11 +32,12 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   /// 24 octobre 2026 (Houari : « trop timide » face au minuteur d'Apple) : 2 min devient 5 min.
   static let dureeSonnerieMax: TimeInterval = 300
   /// Ecart entre deux salves quand l'app sonne elle meme (premier plan).
-  /// 24 octobre 2026 : 2 s devient 1,2 s, la salve suivante repart presque sans blanc.
-  static let ecartSonnerie: TimeInterval = 1.2
+  /// 26 octobre 2026 : 1,2 s coupait la salve en cours (elle durait plus longtemps). 1,8 s laisse
+  /// finir la salve (1,6 s), et le wizz tourne en continu par dessus.
+  static let ecartSonnerie: TimeInterval = 1.8
   /// Ecart entre deux vibrations de la session d'alarme (watchOS demande plus de 0 et 60 s au plus).
-  /// 24 octobre 2026 : 1,5 s devient 0,8 s, les vibrations s'enchainent sans pause.
-  static let ecartVibrationAlarme: TimeInterval = 0.8
+  /// 26 octobre 2026 : 0,8 s coupait la vibration et le son precedents avant leur fin, 1 s les laisse finir.
+  static let ecartVibrationAlarme: TimeInterval = 1.0
   /// La notification de secours tombe 2 s apres la fin : l'alarme la retire avant si elle a sonne.
   static let retardFilet: TimeInterval = 2
 
@@ -366,7 +367,8 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
     sonneEnBoucle = true
     finBoucle = Date().addingTimeInterval(MinuteurMoteur.dureeSonnerieMax)
     repetition.jusqua = finBoucle
-    // Jamais de session audio ici (elle ferait basculer les AirPods et couperait la musique de l'iPhone).
+    // Le wizz tourne en boucle (session ambiante, haut parleur de la montre) jusqu'a Arreter.
+    Haptique.demarrerWizz()
     if alarmeEnMarche {
       vibrerParSession()
     } else {
@@ -403,7 +405,7 @@ final class MinuteurMoteur: NSObject, WKExtendedRuntimeSessionDelegate {
   // MARK: Session d'alarme
 
   /// Vibration repetee par watchOS lui meme, ecran eteint compris : notification, echec et nouvel
-  /// essai en alternance toutes les 0,8 s pendant 5 min, puis une par minute jusqu'a Arreter ou la fin
+  /// essai en alternance toutes les 1 s pendant 5 min, puis une par minute jusqu'a Arreter ou la fin
   /// de la session (watchOS n'accepte pas d'intervalle nul, et une session planifiee ne peut etre
   /// fermee par l'app qu'au premier plan). App pas active : watchOS affiche en plus son alerte d'alarme.
   private func vibrerParSession() {

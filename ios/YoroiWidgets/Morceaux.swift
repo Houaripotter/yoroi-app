@@ -254,10 +254,11 @@ struct BoutonsEauW: View {
 }
 
 struct BoutonSeanceW: View {
+  @Environment(\.widgetRenderingMode) private var rendu
   let pal: Palette
   var hauteur: CGFloat = 28
 
-  var body: some View {
+  private var libelle: some View {
     HStack(spacing: 5) {
       Image(systemName: "checkmark")
         .font(.system(size: 12, weight: .bold))
@@ -266,10 +267,23 @@ struct BoutonSeanceW: View {
         .lineLimit(1)
         .minimumScaleFactor(0.7)
     }
-    .foregroundStyle(pal.surBouton)
-    .frame(maxWidth: .infinity, minHeight: hauteur, maxHeight: hauteur)
-    .background(pal.bouton, in: Capsule())
-    .widgetAccentable()
+  }
+
+  var body: some View {
+    if rendu == .fullColor {
+      libelle
+        .foregroundStyle(pal.surBouton)
+        .frame(maxWidth: .infinity, minHeight: hauteur, maxHeight: hauteur)
+        .background(pal.bouton, in: Capsule())
+    } else {
+      // Ecran d'accueil teinte ou transparent (iOS 18 et plus) : la capsule doree pleine devenait un
+      // aplat de teinte translucide, texte compris (26 octobre 2026). Ici un simple contour, texte lisible.
+      libelle
+        .foregroundStyle(.primary)
+        .frame(maxWidth: .infinity, minHeight: hauteur, maxHeight: hauteur)
+        .overlay(Capsule().stroke(Color.primary.opacity(0.6), lineWidth: 1.2))
+        .widgetAccentable()
+    }
   }
 }
 

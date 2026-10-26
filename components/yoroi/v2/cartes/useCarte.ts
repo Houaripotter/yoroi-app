@@ -34,6 +34,8 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   // les scenes gagnees dans le Dojo (serie, essai du grand coffre) : lues une fois, puis la liste se recalcule
   const [gagneesLues, setGagneesLues] = useState(0);
   const [photo, setPhoto] = useState<string | null>(null);
+  /** Photo choisie, reduction en cours (26 octobre 2026) : l'ecran le dit au lieu de sembler fige */
+  const [photoEnCours, setPhotoEnCours] = useState(false);
   const [busy, setBusy] = useState<'save' | 'share' | null>(null);
   const [saved, setSaved] = useState(false);
   const styleLu = useRef(!!initial);
@@ -82,7 +84,7 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
   }, []);
 
   const choisirPhoto = useCallback(async (src: 'gallery' | 'camera') => {
-    const res = await pickCardPhoto(src);
+    const res = await pickCardPhoto(src, { onPreparation: setPhotoEnCours });
     if (res) {
       setPhoto(res.uri);
       // ta photo en plein fond : le personnage se retire, tu peux le remettre
@@ -162,5 +164,5 @@ export function useCarte(data: CarteData | null, initial?: Partial<OptionsCarte>
     else setStyle({ sansPersonne: false, epure: false, personnage: persoVoulu });
   }, [personne.visible, persoVoulu, setStyle]);
 
-  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, choisirPhoto, enleverPhoto, tesScenes, enregistrer, partager, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
+  return { ref, options, visuels, visuelsPour, style, setStyle, chiffres, setChiffres, photo, photoEnCours, choisirPhoto, enleverPhoto, tesScenes, enregistrer, partager, busy, saved, aPersonnage: !!personnage, personne, basculerPersonne };
 }

@@ -13,9 +13,10 @@ export function useStudio(opts?: { initialStyle?: CardVariant; initialPhoto?: st
   const [photo, setPhoto] = useState<string | null>(opts?.initialPhoto ?? null);
   const [landscape, setLandscape] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [photoEnCours, setPhotoEnCours] = useState(false);
 
   const pick = useCallback(async (src: 'gallery' | 'camera') => {
-    const res = await pickCardPhoto(src, { square: opts?.square });
+    const res = await pickCardPhoto(src, { square: opts?.square, onPreparation: setPhotoEnCours });
     if (res) {
       setPhoto(res.uri);
       setLandscape(res.landscape);
@@ -52,5 +53,5 @@ export function useStudio(opts?: { initialStyle?: CardVariant; initialPhoto?: st
   const legacyBg: 'photo' | 'black' | 'white' = style === 'photo' && photo ? 'photo' : style === 'papier' ? 'white' : 'black';
   const duelBg: 'photo' | 'dark' | 'light' = style === 'photo' && photo ? 'photo' : style === 'papier' ? 'light' : 'dark';
 
-  return { cardRef, style, setStyle, setStyleRaw: setStyleState, photo, setPhoto, landscape, busy, pick, share, save, legacyBg, duelBg, hasPhoto: !!photo };
+  return { cardRef, style, setStyle, setStyleRaw: setStyleState, photo, setPhoto, photoEnCours, landscape, busy, pick, share, save, legacyBg, duelBg, hasPhoto: !!photo };
 }
