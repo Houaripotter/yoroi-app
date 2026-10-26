@@ -90,3 +90,12 @@ export function corpsDepuis(debut: string, pesees: PeseeLue[], mesures: MesureLu
     tailleActuelle: tailleOk ? derniere!.waist : null,
   };
 }
+
+/**
+ * La tuile « Charge » (26 octobre 2026, maquette D) : la moyenne des gains des exercices qui ont au moins
+ * deux séances depuis le début du programme (progresDesCharges). null tant qu'aucun exercice n'a de données.
+ */
+export function gainMoyen(l: readonly Pick<ProgresExo, 'gainPct'>[]): number | null {
+  if (!l.length) return null;
+  return Math.round(l.reduce((s, x) => s + x.gainPct, 0) / l.length);
+}

@@ -17,7 +17,7 @@ import type { Measurement, Training, Weight } from '@/lib/database';
 import { useUnitePoids } from '@/components/yoroi/v2/espace/reglages/prefs';
 import { saisieDepuisKg } from '@/lib/v2/unitePoids';
 import { fmtNum } from '@/lib/v2/seance/format';
-import { corpsDepuis, progresDesCharges, regularite } from '@/lib/v2/programmes/progres';
+import { corpsDepuis, gainMoyen, progresDesCharges, regularite } from '@/lib/v2/programmes/progres';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import { nomFr } from '@/lib/v2/seance/rechercheExo';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
@@ -30,7 +30,7 @@ import { jourPourToi } from '@/lib/v2/programmes/perso';
 import type { ExoPerso } from '@/lib/v2/programmes/perso';
 import { ExercisePicker } from '@/components/yoroi/v2/seance/ExercisePicker';
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
-import { CarteEtudes, CarteIllustree, Pastille, TuilesPrincipes } from '@/components/yoroi/v2/programmes/Habillage';
+import { BoutonRond, CarteConseil, EnTeteRond, HeroJour, LigneEtudes, Pastille, SemaineRonds, TitreSection, TuilesStats, musclesDuJour, nomCourt, rondsDeLaSemaine, salutation, teinteExo, tuileCharge, usePaletteProgramme, type Tuile } from '@/components/yoroi/v2/programmes/Habillage';
 import { buildExerciseHistory } from '@/lib/v2/seance/history';
 import type { ExoProtege, Region } from '@/lib/v2/programmes/blessures';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
@@ -39,16 +39,16 @@ import { FicheTechnique } from '@/components/yoroi/v2/programmes/FicheTechnique'
 import { ficheDe } from '@/lib/v2/programmes/fiches';
 import { DUREES_EXPRESS, dureeEstimee, seanceExpress } from '@/lib/v2/programmes/express';
 import { demoDe } from '@/lib/v2/programmes/demos';
-import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, remplacerExercice, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, arreterProgramme, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, chargerProgrammeActif, demarrerProgramme, enregistrerFin, faitsCetteSemaine, prochainJour, remplacerExercice, enregistrerJours, joursConseilles, joursDuProgramme, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import { messageCoach } from '@/lib/v2/programmes/coach';
 import { ChoixJours } from '@/components/yoroi/v2/programmes/ChoixJours';
-import { CoachProgramme } from '@/components/yoroi/v2/programmes/CoachProgramme';
 import { RappelSeance } from '@/components/yoroi/v2/programmes/RappelSeance';
 import { ChoisirCharge } from '@/components/yoroi/v2/programmes/ChoisirCharge';
 import { CartePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { CarteFinDeSeance, FeuilleFinDeSeance } from '@/components/yoroi/v2/programmes/FinDeSeance';
 import { aDesJoursMarche, aDesJoursMuscu, joursRetires } from '@/lib/v2/programmes/finSeance';
-import type { ExoFin, FinSeance } from '@/lib/v2/programmes/finSeance';
+import type { FinSeance } from '@/lib/v2/programmes/finSeance';
+import type { ExoModule } from '@/lib/v2/programmes/modules';
 import { guideCharge } from '@/lib/v2/programmes/charge';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
@@ -62,6 +62,9 @@ export default function ProgrammeDetail() {
   const p = programmeParId(typeof id === 'string' ? id : undefined);
   const [actif, setActif] = useState<ProgrammeActif | null>(null);
   const [femme, setFemme] = useState(false);
+  const [nom, setNom] = useState('');
+  // 26 octobre 2026, maquette D aux couleurs de E (Habillage.tsx)
+  const pal = usePaletteProgramme();
   const [ouvert, setOuvert] = useState<string | null>(null);
   const [charge, setCharge] = useState(false);
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -85,6 +88,8 @@ export default function ProgrammeDetail() {
   const defilement = useRef<ScrollView>(null);
   const positions = useRef<Record<string, number>>({});
   const aMontrer = useRef<string | null>(null);
+  // la tuile « Charge » descend jusqu'à « Tes progrès »
+  const progresY = useRef<number | null>(null);
   const montrer = (jourId: string) => {
     const y = positions.current[jourId];
     if (y === undefined) return;
@@ -123,7 +128,7 @@ export default function ProgrammeDetail() {
     };
     lireMateriel();
     const subMateriel = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, lireMateriel);
-    getProfile().then((pr) => setFemme(pr?.avatar_gender === 'femme')).catch(() => {});
+    getProfile().then((pr) => { setFemme(pr?.avatar_gender === 'femme'); setNom(pr?.name ?? ''); }).catch(() => {});
     const lireSeances = () => {
       getTrainings().then((t) => setTrainings(t ?? [])).catch(() => {});
       // ton corps depuis le debut du programme : poids moyen et tour de taille
@@ -145,9 +150,10 @@ export default function ProgrammeDetail() {
     };
   }, []);
 
+  // 26 octobre 2026 : la prochaine séance est déjà affichée dans « Au programme », la liste des jours reste repliée
   useEffect(() => {
-    if (p && charge && ouvert === null) setOuvert(p.jours[actif?.id === p.id ? actif.prochain : 0]?.id ?? null);
-  }, [p, actif, ouvert, charge]);
+    if (p && charge && ouvert === null) setOuvert('');
+  }, [p, ouvert, charge]);
 
   if (!p) {
     return (
@@ -159,17 +165,14 @@ export default function ProgrammeDetail() {
 
   const enCours = actif?.id === p.id;
   const favori = favoris.includes(p.id);
+  // l'étoile ronde : pleine et indigo quand le programme est dans tes favoris
   const etoile = (
-    <Pressable
+    <BoutonRond
+      icone="star"
+      actif={favori}
       onPress={() => { tap(); setFavoris((l) => (l.includes(p.id) ? l.filter((x) => x !== p.id) : [p.id, ...l])); void basculerFavori(p.id); }}
-      accessibilityRole="button"
-      accessibilityState={{ selected: favori }}
-      accessibilityLabel={traduire(favori ? 'Retirer des favoris' : 'Ajouter aux favoris')}
-      hitSlop={8}
-      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Icon name="star" size={24} color={favori ? c.accent : c.textMuted} fill={favori ? c.accent : undefined} />
-    </Pressable>
+      label={traduire(favori ? 'Retirer des favoris' : 'Ajouter aux favoris')}
+    />
   );
   // semaine du plan (course) : celle du programme en cours, sinon la premiere
   const semaine = enCours && actif ? semaineDuProgramme(actif) : 1;
@@ -178,6 +181,39 @@ export default function ProgrammeDetail() {
   const retires = enCours && actif ? joursRetires(p, actif.fin) : [];
   const finPossible = aDesJoursMuscu(p) || aDesJoursMarche(p);
   const img = sportImage(sportDuProgramme(p), femme, 1);
+  // la prochaine séance (tes jours, ton matériel, tes douleurs et tes modules appliqués), ou le jour 1 avant de commencer
+  const iProchain = enCours && actif ? prochainJour(actif)?.index ?? 0 : 0;
+  const jBrutProchain = p.jours[iProchain];
+  const jProchain = jourPourToi(jBrutProchain, materiel, regions, machines, enCours ? actif?.remplacements : null, ctxFin);
+  const titreProchain = traduire(jProchain.titre);
+  const message = enCours && actif ? messageCoach({ programme: p, actif, jours, prochaineSeance: titreProchain, femme }) : null;
+  const infosDuJour = (j: typeof jProchain) =>
+    j.exos.length && !j.rounds && !j.cardio
+      ? `${traduirePluriel(j.exos.length, j.exos.length > 1, '{0} exercice', '{0} exercices', j.exos.length)} · ${traduire('{0} min', p.dureeMin)}`
+      : resumeDuJour(j, semaine);
+  const pastilleCoach = !message
+    ? ''
+    : message.etat === 'rattrape'
+      ? traduire('On rattrape aujourd’hui')
+      : message.etat === 'repos'
+        ? traduire('Jour de repos')
+        : message.etat === 'fait'
+          ? traduire('Séance faite')
+          : traduire('Aujourd’hui');
+  // les trois tuiles : en cours, tes chiffres ; avant de commencer, ceux du programme
+  const tuiles: Tuile[] = enCours && actif
+    ? [
+        { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: String(p.semaines) },
+        { label: traduire('Séances'), valeur: String(faitsCetteSemaine(actif)), sur: String(jours.length), accessibilityLabel: traduire('{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), jours.length) },
+        tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut)), pal, () => {
+          if (progresY.current !== null) defilement.current?.scrollTo({ y: Math.max(0, progresY.current - insets.top - 8), animated: true });
+        }),
+      ]
+    : [
+        { label: traduire('Semaines'), valeur: String(p.semaines) },
+        { label: traduire('Par semaine'), valeur: String(p.joursParSemaine), unite: traduire('j') },
+        { label: traduire('Séance'), valeur: String(p.dureeMin), unite: traduire('min') },
+      ];
 
   const lancerJour = (jourId: string, express?: number) => {
     const j = p.jours.find((x) => x.id === jourId);
@@ -234,30 +270,75 @@ export default function ProgrammeDetail() {
   const faireCeJour = (index: number) => lancerJour(p.jours[index].id);
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 120, gap: 16 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={traduire('Programme')} repli="/programmes" droite={etoile} style={{ marginHorizontal: -22, marginTop: -8 }} />
+    <View style={{ flex: 1, backgroundColor: pal.page }}>
+      <ScrollView ref={defilement} contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: insets.bottom + 40, gap: 18 }} showsVerticalScrollIndicator={false}>
+        {/* 26 octobre 2026 : maquette D aux couleurs de E (Houari : « je préfère D mais avec les couleurs de E ») */}
+        <EnTeteRond salut={salutation(nom)} titre={enCours ? traduire('Ton programme') : traduire('Programme')} droite={etoile} repli="/programmes" />
 
-        {/* 26 octobre 2026 (Houari : « je veux vraiment un beau design ») : la carte indigo de « Note ta séance » */}
-        <CarteIllustree
-          surtitre={traduire(libelleMateriel(p.materiel))}
-          titre={traduire(p.titre)}
-          texte={traduire(p.accroche)}
-          image={img}
-          puces={[
-            { icone: 'gauge', t: traduire(libelleNiveau(p.niveau)) },
-            { icone: 'calendar', t: traduire('{0} j par semaine', p.joursParSemaine) },
-            { icone: 'clock', t: traduire('{0} min', p.dureeMin) },
-            { icone: 'repeat', t: traduirePluriel(p.semaines, p.semaines > 1, '{0} semaine', '{0} semaines', p.semaines) },
-          ]}
-        />
-
-        {enCours && actif ? (
-          <CoachProgramme
-            message={messageCoach({ programme: p, actif, jours, prochaineSeance: traduire(p.jours[actif.prochain]?.titre ?? ''), femme })}
-            onCommencer={() => faireCeJour(actif.prochain)}
+        {/* 1. LA SÉANCE DU JOUR EN GRAND : le nom, les muscles, « Commencer » ; avant de commencer, le programme */}
+        {enCours && message ? (
+          <HeroJour
+            pastille={pastilleCoach}
+            nom={nomCourt(titreProchain)}
+            muscles={musclesDuJour(titreProchain, jProchain.exos)}
+            infos={infosDuJour(jProchain)}
+            texte={message.seanceDuJour ? undefined : message.texte}
+            image={img}
+            bouton={
+              message.seanceDuJour
+                ? { label: traduire('Commencer'), onPress: () => faireCeJour(iProchain), accessibilityLabel: `${traduire('Commencer')}, ${titreProchain}` }
+                : { label: traduire('Faire maintenant'), discret: true, onPress: () => faireCeJour(iProchain), accessibilityLabel: traduire('Faire la prochaine séance maintenant') }
+            }
           />
-        ) : null}
+        ) : (
+          <HeroJour
+            pastille={traduire(libelleNiveau(p.niveau))}
+            nom={traduire(p.titre)}
+            petitNom
+            muscles={traduire(p.accroche)}
+            infos={`${traduire(libelleMateriel(p.materiel))} · ${traduirePluriel(p.semaines, p.semaines > 1, '{0} semaine', '{0} semaines', p.semaines)}`}
+            image={img}
+            bouton={{ label: traduire('Commencer'), onPress: () => void commencerProgramme(), accessibilityLabel: traduire('Commencer ce programme') }}
+          />
+        )}
+
+        {/* 2. TES CHIFFRES : semaine, séances de la semaine, charge (moyenne réelle de tes gains) */}
+        <TuilesStats tuiles={tuiles} />
+
+        {/* 3. TA SEMAINE : fait, prochaine séance, repos */}
+        <SemaineRonds ronds={rondsDeLaSemaine(p, enCours ? actif : null, jours)} />
+
+        {/* 4. AU PROGRAMME : les exercices de la prochaine séance, détails d'un toucher */}
+        <TitreSection titre={traduire('Au programme')} action={traduire('Tout voir')} onAction={() => { if (ouvert !== jProchain.id) ouvrirJour(jProchain.id, false); else montrer(jProchain.id); }} />
+        {jProchain.exos.length ? (
+          <View style={{ gap: 10 }}>
+            {jProchain.exos.map((e, k) => (
+              <LigneExo
+                key={`prochain${e.nom}${k}`}
+                carte
+                k={k}
+                e={e}
+                premier={k === 0}
+                raison={e.remplace && materiel && !e.zone ? raisonRemplacement(e.remplace, materiel) : ''}
+                onChanger={enCours && k < jBrutProchain.exos.length ? () => { tap(); setAChanger({ jourId: jProchain.id, index: k, muscle: jBrutProchain.exos[k]?.muscle ?? e.muscle, original: jBrutProchain.exos[k]?.nom ?? e.nom }); } : undefined}
+                onRevenir={enCours && e.perso ? () => { tap(); void remplacerExercice(jProchain.id, k, null); } : undefined}
+              />
+            ))}
+          </View>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: pal.carte, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14 }}>
+            <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: teinteExo(pal, 0).fond, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={jProchain.rounds ? 'glove' : 'steps'} size={24} color={teinteExo(pal, 0).encre} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Ink size={15} weight="extraBold" color={pal.texte}>{titreProchain}</Ink>
+              <Ink size={12} weight="bold" color={pal.texte2}>{resumeDuJour(jProchain, semaine)}</Ink>
+            </View>
+          </View>
+        )}
+
+        {/* 5. LE CONSEIL DU COACH : la règle de progression, « Comment le suivre » en entier d'un toucher */}
+        <CarteConseil principes={p.principes} />
 
         <ChoixJours
           jours={jours}
@@ -280,8 +361,10 @@ export default function ProgrammeDetail() {
           const kg = (v: number) => (unite === 'lb' ? traduire('{0} lb', fmtNum(saisieDepuisKg(v, unite))) : traduire('{0} kg', fmtNum(v)));
           return (
             <>
-              <SectionTitle title={traduire('Tes progrès')} sub={traduire('depuis le début du programme, semaine {0}', sem)} />
-              <Glass style={{ gap: 12 }}>
+              <View onLayout={(ev) => { progresY.current = ev.nativeEvent.layout.y; }}>
+                <SectionTitle title={traduire('Tes progrès')} sub={traduire('depuis le début du programme, semaine {0}', sem)} />
+              </View>
+              <Glass style={{ gap: 12, backgroundColor: pal.carte, borderColor: 'transparent' }}>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   <Stat value={String(actif.faits.filter((f) => f.date >= actif.debut).length)} label={traduire('Séances faites')} />
                   {reg ? <Stat value={`${Math.round((reg.faites / reg.prevues) * 100)}`} unit="%" label={traduire('Régularité')} /> : null}
@@ -316,7 +399,7 @@ export default function ProgrammeDetail() {
                         <Ink size={14} weight="extraBold" numberOfLines={1}>{traduire(nomFr(x.nom))}</Ink>
                         <Ink size={12} color={c.textSecondary}>{`${kg(x.debutKg)} → ${kg(x.actuelKg)}`}</Ink>
                       </View>
-                      <Ink size={16} weight="black" color={x.gainPct > 0 ? c.accent : c.textSecondary}>{x.gainPct > 0 ? `+${x.gainPct} %` : `${x.gainPct} %`}</Ink>
+                      <Ink size={16} weight="black" color={x.gainPct > 0 ? pal.vert : c.textSecondary}>{x.gainPct > 0 ? `+${x.gainPct} %` : `${x.gainPct} %`}</Ink>
                     </View>
                   ))
                 ) : (
@@ -326,9 +409,6 @@ export default function ProgrammeDetail() {
             </>
           );
         })() : null}
-
-        <SectionTitle title={traduire('Comment le suivre')} />
-        <TuilesPrincipes principes={p.principes} />
 
         <SectionTitle title={traduire('Les séances')} sub={traduire('Touche une séance pour voir ses exercices')} action={traduire('Ma salle')} onAction={() => setSalleOpen(true)} />
         {enCours && p.jours.some((x) => x.exos.length) ? <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4, marginTop: -6 }}>{traduire('Un exercice ne te va pas ? Touche « Changer » pour en choisir un autre.')}</Ink> : null}
@@ -345,7 +425,7 @@ export default function ProgrammeDetail() {
           if (retires.includes(j.id)) {
             // seance de marche retiree par ta fin de seance : visible, mais sautee
             return (
-              <Glass key={j.id} onPress={() => setFinOuverte('page')} label={traduire(j.titre)} style={{ gap: 2, opacity: 0.6 }}>
+              <Glass key={j.id} onPress={() => setFinOuverte('page')} label={traduire(j.titre)} style={{ gap: 2, opacity: 0.6, backgroundColor: pal.carte, borderColor: 'transparent' }}>
                 <Ink size={17} weight="black" tight>{traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}</Ink>
                 <Ink size={13} color={c.textSecondary}>{traduire('Retirée de ton programme. Touche pour la remettre.')}</Ink>
               </Glass>
@@ -359,7 +439,7 @@ export default function ProgrammeDetail() {
                 if (aMontrer.current === j.id) montrer(j.id);
               }}
             >
-            <Glass style={{ gap: 12, borderColor: estProchain ? c.accent : c.divider, borderWidth: estProchain ? 1.5 : 1 }}>
+            <Glass style={{ gap: 12, backgroundColor: pal.carte, borderRadius: 22, borderColor: estProchain ? pal.indigo : 'transparent', borderWidth: estProchain ? 1.5 : 1 }}>
               <Pressable
                 onPress={() => ouvrirJour(j.id, deplie)}
                 accessibilityRole="button"
@@ -367,8 +447,8 @@ export default function ProgrammeDetail() {
                 accessibilityLabel={`${traduire('Jour {0}, {1}', index + 1, traduire(j.titre))}. ${resumeDuJour(j, semaine)}`}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 }}
               >
-                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: estProchain ? c.darkCard : c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ink size={17} weight="black" color={estProchain ? c.onDark : c.accent}>{String(index + 1)}</Ink>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: estProchain ? pal.indigo : pal.teinte, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ink size={17} weight="black" color={estProchain ? c.onDark : pal.accent}>{String(index + 1)}</Ink>
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>
                   {estProchain ? <Ink size={11} weight="extraBold" color={c.accent} style={{ letterSpacing: 0.4 }}>{traduire('PROCHAINE SÉANCE')}</Ink> : null}
@@ -433,8 +513,10 @@ export default function ProgrammeDetail() {
         })}
 
         {/* « Prouvé par N études » : en bas, replié (Houari : « mets ça en bas, ça marche ») */}
-        <SectionTitle title={traduire('Prouvé par les études')} />
-        <CarteEtudes sources={p.sources} />
+        {!enCours ? <BigButton label={traduire('Commencer ce programme')} icon="play" onPress={() => void commencerProgramme()} /> : null}
+
+        {/* « Prouvé par N études » : une ligne discrète tout en bas, « Voir » ouvre le détail */}
+        <LigneEtudes sources={p.sources} />
 
         <Ink size={12} color={c.textMuted} style={{ paddingHorizontal: 4 }}>
           {traduire('Si tu as un problème de santé, une douleur ou une blessure, demande l’avis d’un médecin avant de commencer. Le questionnaire PAR-Q+ t’aide à savoir si c’est nécessaire.')}
@@ -474,12 +556,6 @@ export default function ProgrammeDetail() {
           else void enregistrerFin(f);
         }}
       />
-
-      {!enCours ? (
-        <View style={{ position: 'absolute', left: 22, right: 22, bottom: insets.bottom + 16 }}>
-          <BigButton label={traduire('Commencer ce programme')} icon="play" onPress={() => void commencerProgramme()} />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -489,9 +565,10 @@ export default function ProgrammeDetail() {
  * le nom, « 3 × 8 à 12 », le repos et les muscles en petites puces. La réserve, la consigne,
  * le remplacement, « Changer » et la technique s'ouvrent d'un toucher sur la ligne.
  */
-function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege & ExoPerso & ExoFin; premier: boolean; raison: string; onChanger?: () => void; onRevenir?: () => void }) {
+function LigneExo({ e, premier, raison, onChanger, onRevenir, carte, k = 0 }: { e: ExoProtege & ExoPerso & ExoModule; premier: boolean; raison: string; onChanger?: () => void; onRevenir?: () => void; carte?: boolean; k?: number }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
+  const pal = usePaletteProgramme();
   const [deplie, setDeplie] = useState(false);
   const [technique, setTechnique] = useState(false);
   const aFiche = !!ficheDe(e.nom);
@@ -510,11 +587,69 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege 
     ? <Pastille texte={traduire('À passer')} danger />
     : e.perso
       ? <Pastille texte={traduire('Remplacé par toi')} accent />
-      : e.fin
+      : e.module
+        ? <Pastille texte={traduire('Ajouté')} accent />
+        : e.fin
         ? <Pastille texte={traduire('Ajouté en fin de séance')} accent />
         : e.remplace
           ? <Pastille texte={traduire('Adapté')} accent />
           : null;
+  const details = deplie ? (
+    <View style={{ gap: 8, padding: 14, borderRadius: 16, backgroundColor: carte ? pal.page : c.fillSoft }}>
+      {carte && demoDe(e.nom) ? <ExoDemo nom={e.nom} taille={88} arrondi={16} /> : null}
+      {g.niveau === 'tenu' ? null : (
+        <Ink size={13} weight="bold" style={{ lineHeight: 19 }}>
+          {g.libelle ? traduire('Charge : {0}. Garde {1} répétitions en réserve.', g.libelle, traduire(g.reserve)) : traduire('Garde {0} répétitions en réserve.', traduire(g.reserve))}
+        </Ink>
+      )}
+      {mu && (mu.principaux.length > 2 || mu.aussi.length) ? (
+        <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>
+          {traduire('Travaille : {0}', liste(mu.principaux))}
+          {mu.aussi.length ? `. ${traduire('Aussi : {0}', liste(mu.aussi))}` : ''}
+        </Ink>
+      ) : null}
+      {precision ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(precision)}</Ink> : null}
+      {e.conseil && !e.remplace ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(e.conseil)}</Ink> : null}
+      <NoteMateriel e={e} raison={raison} />
+      {onChanger || (onRevenir && e.perso) || aFiche ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+          {aFiche ? <ActionExo label={traduire(technique ? 'Masquer la technique' : 'Voir la technique')} onPress={() => { tap(); setTechnique((o) => !o); }} etat={technique} /> : null}
+          {onChanger ? <ActionExo label={traduire('Changer')} onPress={onChanger} accessibilityLabel={traduire('Changer {0}', traduire(nomFr(e.nom)))} /> : null}
+          {onRevenir && e.perso ? <ActionExo label={traduire('Revenir à {0}', traduire(nomFr(e.perso)))} onPress={onRevenir} /> : null}
+        </View>
+      ) : null}
+      {technique && aFiche ? <FicheTechnique nom={e.nom} /> : null}
+    </View>
+  ) : null;
+
+  // 26 octobre 2026, maquette D : « Au programme », une carte par exercice, carré d'icône coloré, séries en grand
+  if (carte) {
+    const t = teinteExo(pal, k);
+    const muscle = mu?.principaux[0] ? traduire(mu.principaux[0]) : traduire(e.muscle.charAt(0) + e.muscle.slice(1).toLocaleLowerCase());
+    return (
+      <View style={{ backgroundColor: pal.carte, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 14, gap: 10, shadowColor: pal.indigo, shadowOpacity: 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 1 }}>
+        <Pressable
+          onPress={() => { tap(); setDeplie((o) => !o); }}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: deplie }}
+          accessibilityLabel={`${traduire(nomFr(e.nom))}. ${phrase}`}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, opacity: pressed ? 0.75 : 1 })}
+        >
+          <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: t.fond, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={e.secondes ? 'timer' : 'dumbbell'} size={24} color={t.encre} />
+          </View>
+          <View style={{ flex: 1, gap: 3 }}>
+            <Ink size={15} weight="extraBold" color={pal.texte} numberOfLines={2}>{traduire(nomFr(e.nom))}</Ink>
+            <Ink size={12} weight="bold" color={pal.texte2} numberOfLines={1}>{`${muscle} · ${traduire('{0} de repos', libelleRepos(e.reposSec))}`}</Ink>
+            {signe ? <View style={{ flexDirection: 'row', marginTop: 2 }}>{signe}</View> : null}
+          </View>
+          <Ink size={17} weight="black" color={pal.accent} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ maxWidth: '34%' }}>{volume}</Ink>
+        </Pressable>
+        {details}
+      </View>
+    );
+  }
+
   return (
     <View style={{ paddingTop: premier ? 0 : 12, borderTopWidth: premier ? 0 : 1, borderColor: c.divider, gap: 10 }}>
       <Pressable
@@ -538,32 +673,7 @@ function LigneExo({ e, premier, raison, onChanger, onRevenir }: { e: ExoProtege 
         </View>
         <View style={{ transform: [{ rotate: deplie ? '-90deg' : '90deg' }] }}><Icon name="chevron" size={15} color={c.textMuted} /></View>
       </Pressable>
-      {deplie ? (
-        <View style={{ gap: 8, padding: 14, borderRadius: 16, backgroundColor: c.fillSoft }}>
-          {g.niveau === 'tenu' ? null : (
-            <Ink size={13} weight="bold" style={{ lineHeight: 19 }}>
-              {g.libelle ? traduire('Charge : {0}. Garde {1} répétitions en réserve.', g.libelle, traduire(g.reserve)) : traduire('Garde {0} répétitions en réserve.', traduire(g.reserve))}
-            </Ink>
-          )}
-          {mu && (mu.principaux.length > 2 || mu.aussi.length) ? (
-            <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>
-              {traduire('Travaille : {0}', liste(mu.principaux))}
-              {mu.aussi.length ? `. ${traduire('Aussi : {0}', liste(mu.aussi))}` : ''}
-            </Ink>
-          ) : null}
-          {precision ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(precision)}</Ink> : null}
-          {e.conseil && !e.remplace ? <Ink size={13} color={c.textSecondary} style={{ lineHeight: 19 }}>{traduire(e.conseil)}</Ink> : null}
-          <NoteMateriel e={e} raison={raison} />
-          {onChanger || (onRevenir && e.perso) || aFiche ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
-              {aFiche ? <ActionExo label={traduire(technique ? 'Masquer la technique' : 'Voir la technique')} onPress={() => { tap(); setTechnique((o) => !o); }} etat={technique} /> : null}
-              {onChanger ? <ActionExo label={traduire('Changer')} onPress={onChanger} accessibilityLabel={traduire('Changer {0}', traduire(nomFr(e.nom)))} /> : null}
-              {onRevenir && e.perso ? <ActionExo label={traduire('Revenir à {0}', traduire(nomFr(e.perso)))} onPress={onRevenir} /> : null}
-            </View>
-          ) : null}
-          {technique && aFiche ? <FicheTechnique nom={e.nom} /> : null}
-        </View>
-      ) : null}
+      {details}
     </View>
   );
 }

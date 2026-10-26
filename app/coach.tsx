@@ -17,14 +17,16 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { Sheet, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { BlocReglages, CarteIllustree, LigneReglage, PuceClaire } from '@/components/yoroi/v2/programmes/Habillage';
+import { BlocReglages, CarteIllustree, EnTeteRond, HeroJour, LigneReglage, SemaineRonds, TuilesStats, musclesDuJour, nomCourt, rondsDeLaSemaine, salutation, tuileCharge, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { FeuillePoidsDeDepart } from '@/components/yoroi/v2/programmes/PoidsDeDepart';
 import { FeuilleFinDeSeance, texteFin } from '@/components/yoroi/v2/programmes/FinDeSeance';
-import { getProfile } from '@/lib/database';
+import { getProfile, getTrainings } from '@/lib/database';
+import type { Training } from '@/lib/database';
+import { gainMoyen, progresDesCharges } from '@/lib/v2/programmes/progres';
+import { jourPourToi } from '@/lib/v2/programmes/perso';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { sourceParId } from '@/lib/v2/programmes/sources';
@@ -33,9 +35,9 @@ import { COMMENT_CHOISIR, SOURCES_COMMENT_CHOISIR } from '@/lib/v2/programmes/ch
 import { aDesJoursMarche, aDesJoursMuscu } from '@/lib/v2/programmes/finSeance';
 import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { messageCoach } from '@/lib/v2/programmes/coach';
-import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, enregistrerFin, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, chargerProgrammeActif, enregistrerFin, faitsCetteSemaine, joursDuProgramme, prochainJour, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
-import { traduire } from '@/lib/i18n/tr';
+import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 // 26 octobre 2026 : les couleurs viennent du thème (c.darkCard, c.onDark), comme « Note ta séance » (app/ajouter.tsx)
 // la même illustration que la pastille de l'accueil (corps, zones en rouge)
@@ -53,6 +55,10 @@ export default function CoachScreen() {
   const [poidsOuvert, setPoidsOuvert] = useState(false);
   const [seriesOuvert, setSeriesOuvert] = useState(false);
   const [finOuverte, setFinOuverte] = useState(false);
+  // 26 octobre 2026, maquette D aux couleurs de E : ton prénom, tes séances (tuile « Charge »)
+  const [nom, setNom] = useState('');
+  const [trainings, setTrainings] = useState<Training[]>([]);
+  const pal = usePaletteProgramme();
 
   // relu à chaque retour sur l'écran (après une séance, la carte du jour est à jour) et à chaque changement
   useFocusEffect(
@@ -64,7 +70,8 @@ export default function CoachScreen() {
           .catch(() => { if (vivant) setActif(null); });
       };
       charger();
-      getProfile().then((pr) => { if (vivant) setFemme(pr?.avatar_gender === 'femme'); }).catch(() => {});
+      getProfile().then((pr) => { if (vivant) { setFemme(pr?.avatar_gender === 'femme'); setNom(pr?.name ?? ''); } }).catch(() => {});
+      getTrainings().then((t) => { if (vivant) setTrainings(t ?? []); }).catch(() => {});
       const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, charger);
       return () => {
         vivant = false;
@@ -77,13 +84,14 @@ export default function CoachScreen() {
   const p = suite?.programme ?? null;
   const jour = suite?.jour ?? null;
   const semaine = actif ? semaineDuProgramme(actif) : 1;
+  const jours = actif && p ? joursDuProgramme(actif, p) : [];
   const message = actif && p && jour
-    ? messageCoach({ programme: p, actif, jours: joursDuProgramme(actif, p), prochaineSeance: traduire(jour.titre), femme })
+    ? messageCoach({ programme: p, actif, jours, prochaineSeance: traduire(jour.titre), femme })
     : null;
+  // la séance avec tes changements et tes modules (perso.ts), comme sur la page du programme
+  const jourVu = actif && jour ? jourPourToi(jour, null, [], null, actif.remplacements) : null;
   const finPossible = !!p && (aDesJoursMuscu(p) || aDesJoursMarche(p));
-  const indigo = c.darkCard;
   const BLANC = c.onDark;
-  const BLANC_DOUX = c.onDarkSecondary;
   const img = sportImage(p ? sportDuProgramme(p) : 'musculation', femme, 1);
 
   const ouvrirQuiz = () => {
@@ -97,16 +105,6 @@ export default function CoachScreen() {
     router.push({ pathname: r.pathname as any, params: r.params });
   };
 
-  // les puces de la séance : nombre d'exercices et minutes, ou le résumé (rounds, course)
-  const puces: { icone: IconName; t: string }[] = !p || !jour
-    ? []
-    : jour.exos.length && !jour.rounds && !jour.cardio
-      ? [
-          { icone: 'dumbbell', t: traduire('{0} exercices', jour.exos.length) },
-          { icone: 'clock', t: traduire('environ {0} min', p.dureeMin) },
-        ]
-      : [{ icone: 'clock', t: resumeDuJour(jour, semaine) }];
-
   const questions: Question[] = [
     { cle: 'poids', titre: traduire('Quel poids je prends ?'), sous: traduire('Tu débutes ? Quelle charge prendre, en quatre étapes.'), icone: 'scale', action: () => { tap(); setPoidsOuvert(true); } },
     { cle: 'series', titre: traduire('Combien de séries et de répétitions ?'), sous: traduire('Lourd, moyen ou léger : ce que ça veut dire pour toi.'), icone: 'dumbbell', action: () => { tap(); setSeriesOuvert(true); } },
@@ -117,9 +115,10 @@ export default function CoachScreen() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={traduire('Ton coach')} sousTitre={traduire('Ton programme, ta séance du jour, tes réponses')} repli="/(tabs)" style={{ marginHorizontal: -22, marginTop: -8 }} />
+    <View style={{ flex: 1, backgroundColor: pal.page }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 18, paddingBottom: insets.bottom + 40, gap: 18 }} showsVerticalScrollIndicator={false}>
+        {/* 26 octobre 2026 : maquette D aux couleurs de E (Habillage.tsx) */}
+        <EnTeteRond salut={salutation(nom)} titre={traduire('Ton coach')} repli="/(tabs)" />
 
         {/* 1. LA GRANDE CARTE : sans programme, le questionnaire ; avec, la séance du jour */}
         {!p || !jour || !message ? (
@@ -134,51 +133,66 @@ export default function CoachScreen() {
             style={{ minHeight: 190 }}
           />
         ) : (
-          <View style={{ borderRadius: 26, backgroundColor: indigo, overflow: 'hidden', padding: 20, gap: 14 }}>
-            {img ? <Image source={img} style={{ position: 'absolute', right: -8, top: 14, width: 112, height: 150 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
-            <View style={{ maxWidth: '64%', gap: 6 }} accessibilityRole="summary">
-              <Ink size={12} weight="black" color={BLANC_DOUX} style={{ letterSpacing: 0.6 }}>{traduire(p.titre).toLocaleUpperCase()}</Ink>
-              <Ink size={22} weight="black" tight color={BLANC}>{message.titre}</Ink>
-              <Ink size={14} weight="bold" color={BLANC_DOUX} style={{ lineHeight: 20 }}>{message.texte}</Ink>
-              {message.ensuite ? <Ink size={13} weight="extraBold" color={BLANC}>{message.ensuite}</Ink> : null}
-            </View>
-            {message.seanceDuJour ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, maxWidth: '64%' }}>
-                {puces.map((x) => <PuceClaire key={x.t} icone={x.icone} texte={x.t} />)}
-              </View>
-            ) : null}
-            <Pressable
-              onPress={commencer}
-              accessibilityRole="button"
-              accessibilityLabel={message.seanceDuJour ? `${traduire('Commencer')}, ${traduire(jour.titre)}` : traduire('Faire la prochaine séance maintenant')}
-              style={({ pressed }) => ({ minHeight: 58, borderRadius: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 16, marginTop: 4, backgroundColor: message.seanceDuJour ? (pressed ? BLANC_DOUX : BLANC) : pressed ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.16)' })}
+          <>
+            <HeroJour
+              pastille={
+                message.etat === 'rattrape'
+                  ? traduire('On rattrape aujourd’hui')
+                  : message.etat === 'repos'
+                    ? traduire('Jour de repos')
+                    : message.etat === 'fait'
+                      ? traduire('Séance faite')
+                      : traduire('Aujourd’hui')
+              }
+              nom={nomCourt(traduire(jour.titre))}
+              muscles={musclesDuJour(traduire(jour.titre), jourVu?.exos ?? jour.exos)}
+              infos={
+                jourVu && jourVu.exos.length && !jourVu.rounds && !jourVu.cardio
+                  ? `${traduirePluriel(jourVu.exos.length, jourVu.exos.length > 1, '{0} exercice', '{0} exercices', jourVu.exos.length)} · ${traduire('{0} min', p.dureeMin)}`
+                  : resumeDuJour(jour, semaine)
+              }
+              texte={message.texte}
+              image={img}
+              bouton={
+                message.seanceDuJour
+                  ? { label: traduire('Commencer'), onPress: commencer, accessibilityLabel: `${traduire('Commencer')}, ${traduire(jour.titre)}` }
+                  : { label: traduire('Faire maintenant'), discret: true, onPress: commencer, accessibilityLabel: traduire('Faire la prochaine séance maintenant') }
+              }
             >
-              <Icon name="play" size={20} color={message.seanceDuJour ? indigo : BLANC} />
-              <Ink size={message.seanceDuJour ? 17 : 15} weight="black" color={message.seanceDuJour ? indigo : BLANC}>
-                {message.seanceDuJour ? traduire('Commencer') : traduire('Faire la prochaine séance maintenant')}
-              </Ink>
-            </Pressable>
-            {finPossible ? (
+              {finPossible ? (
+                <Pressable
+                  onPress={() => { tap(); setFinOuverte(true); }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${traduire('Abdos et cardio en fin de séance : {0}', texteFin(actif?.fin))}. ${traduire('Choisir')}`}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)' })}
+                >
+                  <Icon name="flame" size={18} color={BLANC} />
+                  <Ink size={13} weight="bold" color={BLANC} style={{ flex: 1 }}>{traduire('Abdos et cardio en fin de séance : {0}', texteFin(actif?.fin))}</Ink>
+                  <Icon name="chevron" size={16} color={BLANC} />
+                </Pressable>
+              ) : null}
               <Pressable
-                onPress={() => { tap(); setFinOuverte(true); }}
-                accessibilityRole="button"
-                accessibilityLabel={`${traduire('Abdos et cardio en fin de séance : {0}', texteFin(actif?.fin))}. ${traduire('Choisir')}`}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 14, borderRadius: 16, backgroundColor: pressed ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)' })}
+                onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
+                accessibilityRole="link"
+                style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' }}
               >
-                <Icon name="flame" size={18} color={BLANC} />
-                <Ink size={13} weight="bold" color={BLANC} style={{ flex: 1 }}>{traduire('Abdos et cardio en fin de séance : {0}', texteFin(actif?.fin))}</Ink>
-                <Icon name="chevron" size={16} color={BLANC} />
+                <Ink size={14} weight="extraBold" color={BLANC}>{traduire('Voir mon programme')}</Ink>
+                <Icon name="chevron" size={15} color={BLANC} />
               </Pressable>
+            </HeroJour>
+
+            {actif ? (
+              <TuilesStats
+                tuiles={[
+                  { label: traduire('Semaine'), valeur: String(semaine), sur: String(p.semaines) },
+                  { label: traduire('Séances'), valeur: String(faitsCetteSemaine(actif)), sur: String(jours.length), accessibilityLabel: traduire('{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), jours.length) },
+                  tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut)), pal, () => router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } })),
+                ]}
+              />
             ) : null}
-            <Pressable
-              onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: p.id } }); }}
-              accessibilityRole="link"
-              style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-            >
-              <Ink size={14} weight="extraBold" color={BLANC}>{traduire('Voir mon programme')}</Ink>
-              <Icon name="chevron" size={15} color={BLANC} />
-            </Pressable>
-          </View>
+
+            {actif ? <SemaineRonds ronds={rondsDeLaSemaine(p, actif, jours)} /> : null}
+          </>
         )}
 
         {/* 2. PAS ENVIE DE PROGRAMME : les séances toutes faites, par zone du corps */}

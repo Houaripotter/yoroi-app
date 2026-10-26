@@ -15,19 +15,23 @@ import { EnTete } from '@/components/yoroi/v2/entete/EnTete';
 import { BigButton, Glass, SectionTitle, tap } from '@/components/yoroi/v2/seances/ui';
 import { Icon } from '@/components/yoroi/v2/seances/Icon';
 import type { IconName } from '@/components/yoroi/v2/seances/Icon';
-import { BlocReglages, BoutonIllustre, CarteIllustree, LigneReglage, Pastille, RondIcone } from '@/components/yoroi/v2/programmes/Habillage';
-import { getProfile } from '@/lib/database';
+import { BlocReglages, BoutonIllustre, CarteIllustree, HeroJour, LigneReglage, Pastille, RondIcone, TuilesStats, musclesDuJour, nomCourt, tuileCharge, usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { getProfile, getTrainings } from '@/lib/database';
+import type { Training } from '@/lib/database';
+import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
+import { gainMoyen, progresDesCharges } from '@/lib/v2/programmes/progres';
+import { jourPourToi } from '@/lib/v2/programmes/perso';
 import { sportImage } from '@/lib/v2/seance/sportVisuals';
 import { PROGRAMMES, programmeParId, libelleNiveau, libelleMateriel, sportDuProgramme } from '@/lib/v2/programmes/catalogue';
 import { GUIDES } from '@/lib/v2/programmes/conseils';
-import { routeDuJour } from '@/lib/v2/programmes/lancer';
+import { resumeDuJour, routeDuJour } from '@/lib/v2/programmes/lancer';
 import { EQUIPEMENTS, TOUT_LE_MATERIEL, remplacesParLaSalle } from '@/lib/v2/programmes/materiel';
 import { MaSalle } from '@/components/yoroi/v2/programmes/MaSalle';
 import type { Equipement } from '@/lib/v2/programmes/materiel';
 import { MessageDuJour } from '@/components/yoroi/v2/programmes/MessageDuJour';
 import { CorpsZones } from '@/components/yoroi/v2/programmes/CorpsZones';
 import { PlanningProgramme } from '@/components/yoroi/v2/programmes/PlanningProgramme';
-import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
+import { PROGRAMME_CHANGED_EVENT, basculerFavori, chargerFavoris, chargerMachines, chargerMateriel, enregistrerMateriel, materielDuLieu, activerSemaineLegere, arreterSemaineLegere, chargerProgrammeActif, estSemaineLegere, faitsCetteSemaine, joursDuProgramme, prochainJour, proposerSemaineLegere, semaineDuProgramme } from '@/lib/v2/programmes/suivi';
 import type { ProgrammeActif } from '@/lib/v2/programmes/suivi';
 import type { Programme } from '@/lib/v2/programmes/types';
 import { Questionnaire } from '@/components/yoroi/v2/programmes/Questionnaire';
@@ -52,6 +56,9 @@ export default function ProgrammesScreen() {
   const [machines, setMachines] = useState<string[] | null>(null);
   // 26 octobre 2026 : tes programmes favoris (étoile), en tête de page
   const [favoris, setFavoris] = useState<string[]>([]);
+  // 26 octobre 2026, maquette D aux couleurs de E : tes séances, pour la tuile « Charge »
+  const [trainings, setTrainings] = useState<Training[]>([]);
+  const pal = usePaletteProgramme();
 
   useEffect(() => {
     const charger = () => {
@@ -63,7 +70,13 @@ export default function ProgrammesScreen() {
     charger();
     getProfile().then((p) => setFemme(p?.avatar_gender === 'femme')).catch(() => {});
     const sub = DeviceEventEmitter.addListener(PROGRAMME_CHANGED_EVENT, charger);
-    return () => sub.remove();
+    const lireSeances = () => getTrainings().then((t) => setTrainings(t ?? [])).catch(() => {});
+    lireSeances();
+    const subSeances = DeviceEventEmitter.addListener(DATA_CHANGED_EVENT, lireSeances);
+    return () => {
+      sub.remove();
+      subSeances.remove();
+    };
   }, []);
 
   const suite = actif ? prochainJour(actif) : null;
@@ -84,9 +97,9 @@ export default function ProgrammesScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.background }}>
+    <View style={{ flex: 1, backgroundColor: pal.page }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 40, gap: 14 }} showsVerticalScrollIndicator={false}>
-        <EnTete titre={traduire('Programmes')} sousTitre={traduire('des séances prêtes à suivre, basées sur des études')} repli="/(tabs)/seances" style={{ marginHorizontal: -22, marginTop: -8 }} />
+        <EnTete titre={traduire('Programmes')} sousTitre={traduire('des séances prêtes à suivre, basées sur des études')} repli="/(tabs)/seances" fond={pal.page} style={{ marginHorizontal: -22, marginTop: -8 }} />
 
         {programmesFavoris.length ? (
           <>
@@ -107,26 +120,47 @@ export default function ProgrammesScreen() {
           <CorpsMini />
         </Pressable>
 
-        {actif && suite ? (
-          <CarteIllustree
-            surtitre={traduire('Ton programme, semaine {0}', semaineDuProgramme(actif))}
-            titre={traduire(suite.programme.titre)}
-            image={sportImage(sportDuProgramme(suite.programme), femme, 1)}
-            puces={[
-              { icone: 'check', t: traduirePluriel(faitsCetteSemaine(actif), faitsCetteSemaine(actif) > 1, '{0} séance sur {1} cette semaine', '{0} séances sur {1} cette semaine', faitsCetteSemaine(actif), suite.programme.joursParSemaine) },
-              ...(remplaces(suite.programme) > 0 ? [{ icone: 'dumbbell' as const, t: texteSalle(remplaces(suite.programme)) }] : []),
-            ]}
-          >
-            <View style={{ gap: 2, maxWidth: '66%' }}>
-              <Ink size={12} weight="bold" color={c.onDarkSecondary}>{traduire('Prochaine séance')}</Ink>
-              <Ink size={17} weight="extraBold" color={c.onDark} numberOfLines={2}>{traduire('Jour {0}, {1}', suite.index + 1, traduire(suite.jour.titre))}</Ink>
-            </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
-              <BoutonIllustre label={traduire('Commencer')} icone="play" onPress={commencer} />
-              <BoutonIllustre label={traduire('Voir le programme')} discret onPress={() => { tap(); router.push({ pathname: '/programmes/[id]' as any, params: { id: suite.programme.id } }); }} />
-            </View>
-          </CarteIllustree>
-        ) : null}
+        {/* 26 octobre 2026 : ton programme en cours, maquette D aux couleurs de E (Habillage.tsx) */}
+        {actif && suite ? (() => {
+          const p = suite.programme;
+          const j = jourPourToi(suite.jour, materiel, [], machines, actif.remplacements);
+          const titre = traduire(j.titre);
+          const jours = joursDuProgramme(actif, p);
+          const faits = faitsCetteSemaine(actif);
+          return (
+            <>
+              <HeroJour
+                pastille={traduire('Ton programme, semaine {0}', semaineDuProgramme(actif))}
+                nom={nomCourt(titre)}
+                muscles={musclesDuJour(titre, j.exos)}
+                infos={
+                  j.exos.length && !j.rounds && !j.cardio
+                    ? `${traduirePluriel(j.exos.length, j.exos.length > 1, '{0} exercice', '{0} exercices', j.exos.length)} · ${traduire('{0} min', p.dureeMin)}`
+                    : resumeDuJour(j, semaineDuProgramme(actif))
+                }
+                texte={remplaces(p) > 0 ? texteSalle(remplaces(p)) : undefined}
+                image={sportImage(sportDuProgramme(p), femme, 1)}
+                bouton={{ label: traduire('Commencer'), onPress: commencer, accessibilityLabel: `${traduire('Commencer')}, ${titre}` }}
+              >
+                <Pressable
+                  onPress={() => { tap(); ouvrirProgramme(p.id); }}
+                  accessibilityRole="link"
+                  style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' }}
+                >
+                  <Ink size={14} weight="extraBold" color={c.onDark}>{traduire('Voir le programme')}</Ink>
+                  <Icon name="chevron" size={15} color={c.onDark} />
+                </Pressable>
+              </HeroJour>
+              <TuilesStats
+                tuiles={[
+                  { label: traduire('Semaine'), valeur: String(semaineDuProgramme(actif)), sur: String(p.semaines) },
+                  { label: traduire('Séances'), valeur: String(faits), sur: String(jours.length), accessibilityLabel: traduire('{0} séances sur {1} cette semaine', faits, jours.length) },
+                  tuileCharge(gainMoyen(progresDesCharges(p, trainings, actif.debut)), pal, () => ouvrirProgramme(p.id)),
+                ]}
+              />
+            </>
+          );
+        })() : null}
 
         {actif && suite && estSemaineLegere(actif) ? (
           <Glass style={{ gap: 8, borderColor: c.accent }}>
