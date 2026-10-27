@@ -31,19 +31,23 @@
  * l'allure quittent la carte ; « Où tu en seras » passe dans le detail du poids (app/poids-detail.tsx).
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { Pressable, View, useWindowDimensions } from 'react-native';
+import { selectionAsync } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView as PagesScroll } from 'react-native-gesture-handler';
 import { useYoroiTheme } from '@/components/yoroi/YoroiThemeProvider';
 import { useRouter } from 'expo-router';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { CourbePoids, POIDS } from '@/components/yoroi/v2/charts/CourbePoids';
 import type { ScrubPoids } from '@/components/yoroi/v2/charts/CourbePoids';
 import type { ModeSentier as ModeChemin } from '@/components/yoroi/v2/charts/SentierTorii';
 import { SceneCourbe, sceneDuFond } from '@/components/yoroi/v2/charts/FondCourbe';
 import { ToriiImage } from '@/components/yoroi/v2/charts/ToriiImage';
-import { PeriodSwitch, PERIODE_PLAN, POIDS_PERIODS, POIDS_PERIODS_PLAN_COURT } from '@/components/yoroi/v2/charts/PeriodSwitch';
+import { FREE_CHART_FALLBACK_DAYS, isPremiumPeriod, PeriodSwitch, PERIODE_PLAN, POIDS_PERIODS, POIDS_PERIODS_PLAN_COURT } from '@/components/yoroi/v2/charts/PeriodSwitch';
+import type { PeriodOption } from '@/components/yoroi/v2/charts/PeriodSwitch';
+import { usePremium } from '@/context/PremiumContext';
+import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 import { useEspace } from '@/lib/v2/espace/useEspace';
 import { PlusHint } from '@/components/yoroi/v2/PlusHint';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
@@ -97,7 +101,20 @@ export function cleChiffre(cle: string): [string, string] | null {
 const BOUTON_STYLE_L = 54;
 
 /** Le petit bouton « Style » sous la courbe : il ouvre le choix du style de courbe, avec ses apercus */
-function BoutonStyle({ onPress }: { onPress: () => void }) {
+function BoutonStyle({ onPress, rond }: { onPress: () => void; rond?: boolean }) {
+  // 27 octobre 2026 nuit : sur la courbe de l'accueil, un bouton rond de 34 au bout des periodes (le pinceau seul) :
+  // les cinq segments gardent toute la place, rien n'est coupe a 375 de large, meme en portugais ou en italien
+  if (rond) {
+    return (
+      <Press onPress={onPress} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Changer le style de ta courbe")} hitSlop={6}>
+        <View style={{ width: HAUT_SEGMENT, height: HAUT_SEGMENT, borderRadius: HAUT_SEGMENT / 2, backgroundColor: paletteSombre() ? '#2C2A55' : '#E9E4FF', alignItems: 'center', justifyContent: 'center' }}>
+          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+            <Path d="M5 19L16 8M14 6l4 4M18 3v3M16.5 4.5h3" stroke={POIDS.softText} strokeWidth={2.6} strokeLinecap="round" />
+          </Svg>
+        </View>
+      </Press>
+    );
+  }
   return (
     <Press onPress={onPress} haptic="light" accessibilityRole="button" accessibilityLabel={traduire("Changer le style de ta courbe")} hitSlop={8}>
       <View style={{ width: BOUTON_STYLE_L, height: 28, borderRadius: 14, borderWidth: 1, borderColor: P.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
@@ -108,6 +125,66 @@ function BoutonStyle({ onPress }: { onPress: () => void }) {
           {traduire("Style")}</Ink>
       </View>
     </Press>
+  );
+}
+
+/** 27 octobre 2026 nuit (Houari : « la rangée est collée à droite ») : la hauteur des segments de periode de la courbe */
+const HAUT_SEGMENT = 34;
+
+/** Petit cadenas des periodes Premium, a la hauteur du texte */
+function CadenasSegment({ color }: { color: string }) {
+  return (
+    <Svg width={10} height={12} viewBox="0 0 20 24" fill="none">
+      <Path d="M5 10V7a5 5 0 0 1 10 0v3" stroke={color} strokeWidth={2.6} strokeLinecap="round" />
+      <Rect x={2} y={10} width={16} height={12} rx={3} fill={color} />
+    </Svg>
+  );
+}
+
+/**
+ * 27 octobre 2026 nuit : les periodes de la courbe en segments egaux sur toute la largeur (1 M, 3 M, 6 M, 1 A, Plan),
+ * le choisi en lilas pastel et texte violet. Memes regles que PeriodSwitch : 6 M et 1 A avec Premium (cadenas,
+ * le toucher ouvre le paywall), et une periode Premium choisie en version gratuite revient a 3 mois.
+ */
+function SegmentsPeriode({ value, onChange, options }: { value: number; onChange: (v: number) => void; options: PeriodOption[] }) {
+  const { isPremium, isLoading } = usePremium();
+  const lockOn = !isPremium && !isLoading;
+  const sombre = paletteSombre();
+  useEffect(() => {
+    if (lockOn && isPremiumPeriod(value)) {
+      const repli = options.find((o) => o.value === FREE_CHART_FALLBACK_DAYS) ?? options.find((o) => !isPremiumPeriod(o.value));
+      if (repli) onChange(repli.value);
+    }
+  }, [lockOn, value, options, onChange]);
+  return (
+    <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', padding: 2, gap: 2, borderRadius: HAUT_SEGMENT / 2, backgroundColor: sombre ? '#20223A' : '#F6F4FF' }} accessibilityRole="tablist">
+      {options.map((o) => {
+        const locked = lockOn && isPremiumPeriod(o.value);
+        const on = o.value === value && !locked;
+        return (
+          <Pressable
+            key={o.label}
+            onPress={() => {
+              selectionAsync().catch(() => {});
+              if (locked) ouvrirPaywall('periode_longue');
+              else onChange(o.value);
+            }}
+            hitSlop={{ top: 6, bottom: 6 }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={`${o.value === PERIODE_PLAN ? traduire('Mon plan, du début jusqu’au torii') : traduire("Période {0}", o.label.replace(/^(\d+) M$/, '$1 mois').replace(/^1 A$/, '1 an'))}${locked ? traduire(', avec Premium') : ''}`}
+            style={({ pressed }) => ({ flex: 1, minWidth: 0, opacity: pressed ? 0.7 : 1 })}
+          >
+            <View style={{ height: HAUT_SEGMENT - 4, borderRadius: (HAUT_SEGMENT - 4) / 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, backgroundColor: on ? (sombre ? '#2C2A55' : '#E9E4FF') : 'transparent' }}>
+              {locked ? <CadenasSegment color={P.muted} /> : null}
+              <Ink size={14} weight={on ? 'black' : 'bold'} color={on ? POIDS.softText : locked ? P.muted : P.ink2} numberOfLines={1} maxFontSizeMultiplier={1.15} style={{ flexShrink: 1, lineHeight: 18 }}>
+                {traduire(o.label)}
+              </Ink>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -872,12 +949,10 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
             label={traduire("Ta courbe de poids {0}. Touche pour {1} la légende", periode === PERIODE_PLAN ? traduire('sur ton plan, jusqu’au torii') : LANG === 'fr' ? periodeTxt.replace('en ', 'sur ') : periodeTxt, legende ? traduire('cacher') : traduire('voir'))}
           />
         </SceneCourbe>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, marginTop: 6 }}>
-          {largeur >= 400 ? <View style={{ width: BOUTON_STYLE_L }} /> : null}
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <PeriodSwitch value={periode} onChange={setPeriod} options={options} variant="onglets" />
-          </View>
-          <BoutonStyle onPress={() => router.push(ROUTES_PERSONNALISER.styleCourbe as any)} />
+        {/* 27 octobre 2026 nuit : les periodes en segments egaux sur toute la largeur, Style en bouton rond au bout */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 6, marginTop: 8 }}>
+          <SegmentsPeriode value={periode} onChange={setPeriod} options={options} />
+          <BoutonStyle rond onPress={() => router.push(ROUTES_PERSONNALISER.styleCourbe as any)} />
         </View>
       </View>
     </View>
