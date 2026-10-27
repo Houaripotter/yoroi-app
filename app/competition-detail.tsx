@@ -26,12 +26,13 @@ import type { Combat, Competition, CompetitionStatut } from '@/lib/fighterMode';
 import { capitalize, daysUntil, longDate, parseLocalDate, plural } from '@/lib/v2/competition/dates';
 import { useAthlete } from '@/lib/v2/competition/athlete';
 import { sportArt } from '@/lib/v2/seances/illustrations';
+import { useFondTaScene } from '@/components/yoroi/v2/espace/apercuScene';
+import { paperA } from '@/components/yoroi/livePalette';
 import { DATA_CHANGED_EVENT } from '@/lib/v2/useWeightData';
 import logger from '@/lib/security/logger';
 import { appAlert } from '@/components/yoroi/v2/fenetre/api';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
-const SCENE = require('@/assets/avatars/app/themes/theme_dojo.webp');
 
 const RESULT: Record<string, { label: string; color: string }> = {
   victoire: { label: traduire('Victoire'), color: P.accent },
@@ -51,6 +52,7 @@ export default function CompetitionDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const id = parseInt(params.id ?? '', 10);
   const { gender, lastWeight } = useAthlete();
+  const fond = useFondTaScene();
   const [comp, setComp] = useState<Competition | null>(null);
   const [combats, setCombats] = useState<Combat[]>([]);
   const [extra, setExtraState] = useState<CompetitionExtra>({});
@@ -192,7 +194,9 @@ export default function CompetitionDetailScreen() {
       }
     >
       <Enter i={0}>
-        <ImageBackground source={SCENE} style={{ borderRadius: 28, overflow: 'hidden', minHeight: 250 }} resizeMode="cover">
+        {/* 28 octobre 2026 : ta scene du jour (avant : toujours le Dojo), sous un voile pastel leger */}
+        <ImageBackground source={fond} style={{ borderRadius: 28, overflow: 'hidden', minHeight: 250 }} resizeMode="cover">
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: paperA(0.22) }} />
           <Image source={sportArt(comp.sport, gender, 3)} style={{ position: 'absolute', right: -24, bottom: -40, width: 210, height: 290 }} resizeMode="contain" />
           <View style={{ padding: 14, flex: 1, justifyContent: 'flex-end' }}>
             <Glass style={{ maxWidth: '66%', padding: 16, gap: 4 }}>

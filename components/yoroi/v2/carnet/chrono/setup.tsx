@@ -15,9 +15,9 @@ import { useAccent } from '@/components/yoroi/v2/accueil/kit';
 import { ChronoPicto } from './Picto';
 import { TimelineBand } from './parts';
 import type { TimerMode } from '@/lib/v2/carnet/chrono';
-import { blancA, paletteSombre } from '@/components/yoroi/livePalette';
+import { blancA, paletteSombre, paperA } from '@/components/yoroi/livePalette';
 import { ORNEMENTS } from '@/components/yoroi/v2/ornements/images';
-import { SCENES } from '@/components/yoroi/v2/accueil/images';
+import { useFondTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { pickSportArt } from '@/lib/v2/seance/sportArt';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -48,16 +48,17 @@ export function lookDuMode(mode: TimerMode | 'sparring'): ModeLook {
   }
 }
 
-/** Le bandeau illustre en haut des chronos : le dojo, le chrono de l'app, une phrase */
+/** Le bandeau illustre en haut des chronos : ta scene (28 octobre 2026, avant le Dojo) sous un voile pastel, le chrono de l'app, une phrase */
 export function ChronoBanner() {
+  const fond = useFondTaScene();
   return (
-    <View style={{ height: 148, borderRadius: 26, overflow: 'hidden', backgroundColor: P.ink }} accessible accessibilityLabel={traduire("Tes chronos : rounds, repos, intervalles")}>
-      <Image source={SCENES.dojo} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
-      <LinearGradient colors={['rgba(16,19,27,0.86)', 'rgba(16,19,27,0.55)', 'rgba(16,19,27,0.05)']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+    <View style={{ height: 148, borderRadius: 26, overflow: 'hidden', backgroundColor: P.paper }} accessible accessibilityLabel={traduire("Tes chronos : rounds, repos, intervalles")}>
+      <Image source={fond} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+      <LinearGradient colors={[paperA(0.94), paperA(0.72), paperA(0.08)]} locations={[0, 0.55, 1]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 8 }}>
         <View style={{ flex: 1, gap: 4 }}>
-          <Ink size={22} weight="black" tight color={P.pureWhite}>{traduire("Ton temps, découpé")}</Ink>
-          <Ink size={13} weight="bold" color="rgba(255,255,255,0.86)">{traduire("Le gong, les claquettes et la vibration te guident, même téléphone posé.")}</Ink>
+          <Ink size={22} weight="black" tight color={P.ink}>{traduire("Ton temps, découpé")}</Ink>
+          <Ink size={13} weight="bold" color={P.ink2}>{traduire("Le gong, les claquettes et la vibration te guident, même téléphone posé.")}</Ink>
         </View>
         <Image source={ORNEMENTS.chrono} style={{ width: 112, height: 112 }} resizeMode="contain" accessibilityIgnoresInvertColors />
       </View>

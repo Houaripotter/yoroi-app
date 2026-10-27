@@ -13,6 +13,10 @@ import { imageMiroir } from '@/lib/v2/espace/miroir';
 import { devNow } from '@/lib/v2/creator/devClock';
 import { sceneForNow } from '@/components/yoroi/v2/accueil/images';
 import { sceneMeta } from './assets';
+import { useEspace } from '@/lib/v2/espace/useEspace';
+
+/** La salle d'armes, quand ta scene n'est pas encore connue */
+const SALLE_ARMES: ImageSourcePropType = require('@/assets/avatars/app/monde/scenes/samourai_armurerie.webp');
 
 /** L'image de la scene telle que sur ton accueil a cet instant */
 export function imageDeTaScene(scene: SceneId, date: Date = devNow()): ImageSourcePropType {
@@ -45,4 +49,15 @@ export function useEspaceAuRetour(espace: Espace): Espace {
     }, []),
   );
   return frais;
+}
+
+/**
+ * 28 octobre 2026 : le fond illustre des ecrans (competition, Premium, chronos) : TA scene du jour, comme l'accueil,
+ * relue au retour sur l'ecran. Tant qu'elle n'est pas lue (ou absente), la salle d'armes samourai.
+ */
+export function useFondTaScene(): ImageSourcePropType {
+  const { espace, ready } = useEspace();
+  const vu = useEspaceAuRetour(espace);
+  if (!ready || !vu?.scene) return SALLE_ARMES;
+  return imageDeTaScene(vu.scene) ?? SALLE_ARMES;
 }

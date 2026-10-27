@@ -29,8 +29,8 @@ import { SOURCES, couleurA, couleursSource, noterMurPremium, ouvrirPaywall, type
 import { P, blancA, paperA } from '@/components/yoroi/livePalette';
 import { CheckMark, GoldVein, PerkIcon, PerkRow, PremiumBadge, PremiumButton, PremiumSeal, premiumTap } from './premiumKit';
 import { traduire } from '@/lib/i18n/tr';
+import { useFondTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 
-const SCENE = require('@/assets/avatars/app/themes/theme_dojo.webp');
 const WARRIOR = require('@/assets/avatars/app/guerrier/guerrier_h_5_shogun.webp');
 
 // Une seule liste d'avantages, partagee avec le paywall (lib/v2/premium/offer.ts)
@@ -198,6 +198,8 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const heroH = Math.round(Math.min(width * 0.95, 420)) + insets.top;
+  // 28 octobre 2026 : ta scene, comme l'accueil (avant : toujours le Dojo)
+  const fond = useFondTaScene();
 
   // sans historique (le web apres un rechargement, un ecran d'onglet) : retour aux onglets, jamais a l'ecran de demarrage
   const goBack = () => {
@@ -209,8 +211,8 @@ export function PremiumLockScreen({ featureTitle, source }: { featureTitle?: str
     <ScrollView style={[styles.scroll, { backgroundColor: c.background }]} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       {/* Scene illustree */}
       <View style={[styles.hero, { height: heroH }]}>
-        <Image source={SCENE} style={StyleSheet.absoluteFill} resizeMode="cover" />
-        <LinearGradient colors={[paperA(0), paperA(0.35), c.background]} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
+        <Image source={fond} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <LinearGradient colors={[paperA(0.12), paperA(0.42), c.background]} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
         <Animated.View entering={ENTREE} style={styles.warriorWrap} pointerEvents="none">
           <Image source={WARRIOR} style={{ width: heroH * 0.62, height: heroH * 0.83 }} resizeMode="contain" accessibilityIgnoresInvertColors />
         </Animated.View>
