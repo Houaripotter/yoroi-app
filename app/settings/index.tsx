@@ -54,6 +54,7 @@ import { ouvrirPaywall } from '@/lib/v2/premium/sources';
 import { usePremium } from '@/context/PremiumContext';
 import { isDemoDataActive } from '@/lib/demoDataService';
 import { ecrireBilanAuto, lireBilanAuto } from '@/lib/v2/bilan/reglage';
+import { ecrireSonsActifs, lireSonsActifs } from '@/lib/v2/sons/reglage';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 import { FeuilleLangue, langueEnCours } from '@/components/yoroi/v2/langue/ChoixLangue';
 
@@ -93,8 +94,11 @@ export default function Reglages() {
   const [demoActive, setDemoActive] = useState(false);
   // 16 octobre : la page de bilan apres chaque mesure et chaque seance (active par defaut)
   const [bilanAuto, setBilanAuto] = useState(true);
+  // 27 octobre 2026 : couper tous les sons de l'app (badges, rangs, records, chronos), les vibrations restent
+  const [sonsOn, setSonsOn] = useState(true);
   useEffect(() => {
     lireBilanAuto().then(setBilanAuto).catch(() => {});
+    lireSonsActifs().then(setSonsOn).catch(() => {});
   }, []);
 
   const loadValues = useCallback(async () => {
@@ -221,6 +225,7 @@ export default function Reglages() {
           <ValueRow first tint={TUILE.mousse} icon="heart" sticker="sante_appareils" label={traduire("Santé et appareils")} sub={Platform.OS === 'android' ? 'Health Connect, montre, balance' : traduire('Apple Santé, montre, balance')} value={santeValue} valueColor={sante?.mode === 'live' ? c.successText : undefined} onPress={() => go('/settings/appareils')} />
           <ValueRow tint={TUILE.ardoise} icon="save" sticker="donnees" label={traduire("Données et sauvegardes")} sub={backupSub} valueColor={backupLate ? c.accent : undefined} onPress={() => go('/settings/sauvegardes')} action={<MiniAction label={traduire("Sauvegarder")} onPress={backupNow} busy={backingUp} />} />
           <ValueRow tint={TUILE.bleu} icon="globe" sticker="langue" label={traduire('Langue')} value={langueEnCours()} onPress={() => setLangueOpen(true)} />
+          <ValueRow tint={TUILE.or} icon="bell" sticker="gong" label={traduire("Sons de l’app")} sub={traduire("Badges, rangs, records et chronos")} value={sonsOn ? traduire('Activés') : traduire('Coupés')} valueColor={sonsOn ? c.successText : undefined} onPress={() => { const n = !sonsOn; setSonsOn(n); ecrireSonsActifs(n).catch(() => {}); }} />
         </Card>
 
         <Groupe title="YOROI" />

@@ -91,7 +91,7 @@ export default function AvatarDisplay({
     }
 
     // ✅ FIX: Utiliser image par défaut si imagePath est null
-    const imageSource = imagePath || require('@/assets/avatars/samurai/samurai_neutral.png');
+    const imageSource = imagePath || require('@/assets/avatars/app/guerrier/guerrier_h_3_samourai.webp');
 
     return (
       <View style={containerStyle}>

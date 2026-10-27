@@ -1611,7 +1611,7 @@ export const getSessionTypeLabel = (sessionType?: string | null): string => {
 // Mappage des identifiants de logos vers les images locales
 // Les anciens logos des clubs partenaires ont ete retires : ces clubs tombent sur les initiales de getClubName.
 const CLUB_LOGOS: { [key: string]: any } = {
-  'gracie-barra': require('@/assets/images/gracie-barra.png'),
+  // 27 octobre 2026 : gracie-barra.png supprime par Houari, ce club tombe sur ses initiales
   'basic-fit': require('@/assets/images/basic-fit.png'),
 };
 

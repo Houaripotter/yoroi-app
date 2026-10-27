@@ -22,12 +22,12 @@ const SONS: Son[] = [
   { id: 'bell', nom: traduire('Cloche de fin de round'), fichier: 'bell_end.mp3', ou: traduire('Fin d’un round (chrono, combat)'), src: require('@/assets/sounds/bell_end.mp3') },
   { id: 'gong', nom: 'Gong', fichier: 'gong.mp3', ou: traduire('Chronos, séance de combat, premier lancement'), src: require('@/assets/sounds/gong.mp3') },
   { id: 'beep', nom: 'Bip', fichier: 'beep.mp3', ou: traduire('Décompte des chronos et fin du repos muscu'), src: require('@/assets/sounds/beep.mp3') },
-  { id: 'levelup', nom: traduire('Montée de niveau'), fichier: 'level-up.mp3', ou: traduire('Premier lancement et passage à Premium'), src: require('@/assets/sounds/level-up.mp3') },
-  { id: 'fanfare', nom: 'Fanfare', fichier: 'fanfare-badge.mp3', ou: traduire('Fin d’une séance enregistrée'), src: require('@/assets/sounds/fanfare-badge.mp3') },
+  { id: 'levelup', nom: traduire('Montée de niveau'), fichier: 'level-up.mp3', ou: traduire('Passage de rang ou de dan, premier lancement et passage à Premium'), src: require('@/assets/sounds/level-up.mp3') },
+  { id: 'fanfare', nom: 'Fanfare', fichier: 'fanfare-badge.mp3', ou: traduire('Fin d’une séance enregistrée et sceaux gagnés dans le Dojo'), src: require('@/assets/sounds/fanfare-badge.mp3') },
   { id: 'victory', nom: traduire('Victoire'), fichier: 'victory.mp3', ou: traduire('Fin d’un chrono'), src: require('@/assets/sounds/victory.mp3') },
   { id: 'wizz', nom: 'Wizz', fichier: 'wizz.mp3', ou: traduire('Chrono'), src: require('@/assets/sounds/wizz.mp3') },
-  { id: 'ring', nom: 'Sonnerie courte', fichier: 'ring.mp3', ou: traduire('Record, jeûne et récompenses'), src: require('@/assets/sounds/ring.mp3') },
-  { id: 'recovery', nom: traduire('Récupération'), fichier: 'recovery.mp3', ou: traduire('Chargé, mais joué nulle part pour l’instant'), src: require('@/assets/sounds/recovery.mp3') },
+  { id: 'ring', nom: 'Sonnerie courte', fichier: 'ring.mp3', ou: traduire('Record, jeûne et nouvelle plaque d’armure dans le Dojo'), src: require('@/assets/sounds/ring.mp3') },
+  { id: 'recovery', nom: traduire('Récupération'), fichier: 'recovery.mp3', ou: traduire('Début d’un repos de 15 s ou plus dans le chrono'), src: require('@/assets/sounds/recovery.mp3') },
 ];
 
 function secondes(s: number | null | undefined): string {

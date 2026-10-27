@@ -27,6 +27,7 @@ import type { ArmureRank, SealView } from '@/lib/v2/armure';
 import { familyOf } from '@/lib/v2/dojo/seals';
 import { FondEpoque } from '@/components/yoroi/v2/fonds/FondEpoque';
 import { traduire } from '@/lib/i18n/tr';
+import { playBadgeSound, playLevelUpSound, playPlaqueSound } from '@/lib/soundManager';
 
 type Props = {
   visible: boolean;
@@ -58,6 +59,13 @@ export function Celebration({ visible, rankUp, seals, recap, plate, xp = 0, imag
     rise.setValue(0);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     Animated.spring(rise, { toValue: 1, useNativeDriver: true, friction: 7, tension: 50 }).start();
+    // 27 octobre 2026 : un seul son par ecran de fete (rang, sinon plaque, sinon sceaux), coupe avec les sons de l'app,
+    // et qui attend la fin de la fanfare de fin de seance au lieu de se superposer (lib/soundManager.ts)
+    if (rankUp) void playLevelUpSound().catch(() => undefined);
+    else if (plate) void playPlaqueSound().catch(() => undefined);
+    else if (seals.length) void playBadgeSound().catch(() => undefined);
+    // seulement a l'ouverture : les props de la fete ne changent pas pendant qu'elle est affichee
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, rise]);
 
   const showRank = !!rankUp;

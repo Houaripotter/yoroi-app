@@ -37,6 +37,7 @@ import {
 } from './database';
 import type { Exercise, HealthDataRecord } from './database';
 import { addCombat } from './fighterModeService';
+import { LOGO_FIRST_JJA } from './v2/demo/logoFirstJJA';
 import { setGoal } from './trainingGoalsService';
 import { saveEspace } from './v2/espace';
 import { markCelebrationSeen, markWelcomeSeen, syncArmure } from './v2/armure';
@@ -1495,7 +1496,9 @@ async function injectHeny(opts: { logoMarque?: boolean } = {}): Promise<HenyStat
   // Club de JJB : nom generique, l'app affiche ses initiales. 27 octobre 2026 : la salle s'appelle Basic Fit Prado ;
   // son logo (assets/images/basic-fit.png, deja dans l'app) seulement pendant la visite guidee (vitrine), jamais
   // dans la demo des captures de l'App Store (un logo de marque sur une capture du store : risque de refus chez Apple)
-  const gbClubId = await addClub({ name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', logo_uri: null } as never);
+  // 27 octobre 2026 nuit (Houari) : le Club de JJB porte le logo fourni (lib/v2/demo/logoFirstJJA.ts), comme Basic Fit :
+  // enregistre sur le club pendant la visite guidee, retrouve par son nom dans la demo (Ton mois), jamais en captures du store
+  const gbClubId = await addClub({ name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', logo_uri: opts.logoMarque ? LOGO_FIRST_JJA : null } as never);
   const bfClubId = await addClub({ name: CLUB_MUSCU_DEMO, sport: 'musculation', color: '#2C4A84', logo_uri: opts.logoMarque ? 'basic-fit' : null } as never);
   await AsyncStorage.setItem('@yoroi_user_clubs', JSON.stringify([
     { id: gbClubId, name: CLUB_JJB_DEMO, sport: 'jjb', color: '#1D2029', sessions_per_week: 3 },

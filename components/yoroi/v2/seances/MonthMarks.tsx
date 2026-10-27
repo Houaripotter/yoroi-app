@@ -52,6 +52,8 @@ const LOGOS_PAR_NOM: { re: RegExp; src: () => unknown }[] = [
   { re: /basic[\s-]*fit/i, src: () => getClubLogoSource('basic-fit') },
   { re: /gracie[\s-]*barra/i, src: () => getClubLogoSource('gracie-barra') },
   { re: /first\s*jiu/i, src: () => getClubLogoSource(LOGO_FIRST_JJA) },
+  // 27 octobre 2026 nuit (Houari) : le club generique de la demo Heny (CLUB_JJB_DEMO) porte le logo fourni
+  { re: /^club de jjb$/i, src: () => getClubLogoSource(LOGO_FIRST_JJA) },
 ];
 
 /**

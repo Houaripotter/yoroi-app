@@ -7,8 +7,9 @@
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import logger from '@/lib/security/logger';
+import { sonsActifs } from '@/lib/v2/sons/reglage';
 
-type SoundType = 'gong' | 'beep' | 'tick' | 'victory' | 'levelup' | 'wizz' | 'sonicring' | 'mariowin' | 'badgefanfare' | 'clap' | 'bell';
+type SoundType = 'gong' | 'beep' | 'tick' | 'victory' | 'levelup' | 'wizz' | 'sonicring' | 'mariowin' | 'badgefanfare' | 'clap' | 'bell' | 'recovery';
 
 const SOUND_FILES: Record<string, number> = {
   gong: require('@/assets/sounds/gong.mp3'),
@@ -76,6 +77,8 @@ class SoundManager {
 
   // Lecture instantanée, fire-and-forget, ne bloque JAMAIS le thread
   play(type: SoundType, volume: number = 1.0): void {
+    // 27 octobre 2026 : rien ne joue quand les sons sont coupes dans les Reglages
+    if (!sonsActifs()) return;
     const key = TYPE_TO_KEY[type] || type;
     const player = this.players.get(key);
     if (!player) return;
@@ -101,6 +104,8 @@ class SoundManager {
   playClap(): void { this.play('clap'); }
   /** Ding ding ding : fin du round */
   playBell(): void { this.play('bell'); }
+  /** Debut d'un repos entre deux efforts (27 octobre 2026 : recovery.mp3, jusqu'ici jamais joue) */
+  playRecovery(): void { this.play('recovery', 0.7); }
 
   playCountdownTick(_secondsRemaining: number): void {
     this.play('beep', 0.4);

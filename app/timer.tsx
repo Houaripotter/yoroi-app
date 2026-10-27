@@ -187,7 +187,12 @@ export default function TimerScreen() {
           if (cue === 'gong') soundManager.playGong();
           else if (cue === 'bell') soundManager.playBell();
           else if (cue === 'go') soundManager.playWizz();
-          else if (cue === 'beep') soundManager.playBeep();
+          // 27 octobre 2026 : un repos d'au moins 15 s s'ouvre sur recovery.mp3 (4 s, fini avant le bip des 10 dernieres
+          // secondes) ; un repos plus court garde le bip
+          else if (cue === 'beep') {
+            if (e.phase.kind === 'repos' && e.phase.duration >= 15) soundManager.playRecovery();
+            else soundManager.playBeep();
+          }
         });
         if (e.first) haptic('medium');
         else {

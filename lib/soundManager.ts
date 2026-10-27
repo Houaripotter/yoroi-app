@@ -1,6 +1,7 @@
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import logger from '@/lib/security/logger';
+import { sonsActifs } from '@/lib/v2/sons/reglage';
 
 // ============================================
 // SOUND DESIGN - SoundManager
@@ -74,8 +75,12 @@ const assurerMode = (): Promise<void> => {
   return modePret;
 };
 
-export const playSound = async (soundName: 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong' | 'clap' | 'bell', volume: number = 0.7) => {
+type NomSon = 'fanfare_badge' | 'level_up' | 'recovery' | 'ring' | 'beep' | 'gong' | 'clap' | 'bell';
+
+export const playSound = async (soundName: NomSon, volume: number = 0.7) => {
   try {
+    // 27 octobre 2026 : rien ne joue quand les sons sont coupes dans les Reglages
+    if (!sonsActifs()) return;
     await assurerMode();
     const player = loadSound(soundName);
     if (!player) {
@@ -94,17 +99,52 @@ export const playSound = async (soundName: 'fanfare_badge' | 'level_up' | 'recov
 };
 
 /**
- * Joue le son de validation d'une séance
+ * 27 octobre 2026 : les sons de fete (badge, rang, plaque d'armure) ne se chevauchent jamais. Si une fete sonne
+ * encore, la suivante attend sa fin ; au dela de quelques secondes d'attente, elle ne joue pas (jamais d'empilement).
+ */
+const DUREE_MS: Partial<Record<NomSon, number>> = { fanfare_badge: 5760, level_up: 1368, ring: 888, recovery: 4248 };
+let feteJusqua = 0;
+export const playCelebrationSound = (soundName: NomSon, volume: number): Promise<void> => {
+  if (!sonsActifs()) return Promise.resolve();
+  const now = Date.now();
+  const attente = Math.max(0, feteJusqua - now);
+  if (attente > 7000) return Promise.resolve();
+  feteJusqua = now + attente + (DUREE_MS[soundName] ?? 1500);
+  if (attente === 0) return playSound(soundName, volume);
+  return new Promise((resolve) => {
+    setTimeout(() => { playSound(soundName, volume).finally(() => resolve()); }, attente + 150);
+  });
+};
+
+/** Pour les tests : oublie la fete en cours */
+export const _resetCelebrationSound = () => { feteJusqua = 0; };
+
+/**
+ * Joue le son de validation d'une séance (la fanfare du badge, a garder telle quelle)
  */
 export const playWorkoutCompleteSound = async () => {
-  await playSound('fanfare_badge', 0.8);
+  await playCelebrationSound('fanfare_badge', 0.8);
 };
 
 /**
- * Joue le son de passage de niveau
+ * Joue le son de passage de niveau (passage de rang ou de dan)
  */
 export const playLevelUpSound = async () => {
-  await playSound('level_up', 0.9);
+  await playCelebrationSound('level_up', 0.9);
+};
+
+/**
+ * Sceaux gagnes, recapitules dans le Dojo : le meme son de badge que la fin de seance
+ */
+export const playBadgeSound = async () => {
+  await playCelebrationSound('fanfare_badge', 0.8);
+};
+
+/**
+ * Nouvelle etape d'une piece d'armure (plaque) dans le Dojo : le petit son de succes
+ */
+export const playPlaqueSound = async () => {
+  await playCelebrationSound('ring', 0.6);
 };
 
 /**

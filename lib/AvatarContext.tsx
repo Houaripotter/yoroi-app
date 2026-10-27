@@ -67,7 +67,7 @@ export function AvatarProvider({ children }: AvatarProviderProps) {
       setVersion(v => v + 1);
     } catch (error) {
       logger.error('[AvatarContext] Erreur chargement avatar:', error);
-      setAvatarImage(require('@/assets/avatars/samurai/samurai_neutral.png'));
+      setAvatarImage(require('@/assets/avatars/app/guerrier/guerrier_h_3_samourai.webp'));
     } finally {
       setIsLoading(false);
     }
