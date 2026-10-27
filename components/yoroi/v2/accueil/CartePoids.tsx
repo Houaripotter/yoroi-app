@@ -832,7 +832,8 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
           colors={[sombre ? VOILE_CARTE_POIDS.sombre : VOILE_CARTE_POIDS.clair, P.white]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={{ position: 'absolute', left: 0, right: 0, top: 0, height: VOILE_CARTE_POIDS.hauteur }}
+          // un bord blanc de 5 tout autour du voile : la carte se detache nettement du fond de l'app
+          style={{ position: 'absolute', left: 5, right: 5, top: 5, height: VOILE_CARTE_POIDS.hauteur, borderTopLeftRadius: 23, borderTopRightRadius: 23 }}
         />
         <PagesScroll
           ref={pagesRef as any}
