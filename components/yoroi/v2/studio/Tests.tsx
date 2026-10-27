@@ -30,7 +30,7 @@ import { setApercuSaison, useApercuSaison } from '@/lib/v2/saisons/apercu';
 import { useDecorationsSaison } from '@/lib/v2/saisons/reglage';
 import { FENETRES_SAISONS, saisonAffichee, type ChoixApercu } from '@/lib/v2/saisons/calendrier';
 import { devNow } from '@/lib/v2/creator/devClock';
-import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { imageDeTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { useEspace } from '@/lib/v2/espace/useEspace';
 import { traduire } from '@/lib/i18n/tr';
 
@@ -53,7 +53,8 @@ function ApercuSaison() {
   const saison = saisonAffichee({ date: devNow(), active, apercu: choix });
   const L = Math.min(560, width) - 32;
   const H = 236;
-  const scene = sceneMeta(espace.sceneFixe ?? espace.scene);
+  // 27 octobre 2026 : ta vraie scene, comme sur l'accueil
+  const scene = { image: imageDeTaScene(espace.scene) };
   const { style: styleCitation } = useStyleCitation();
   return (
     <>

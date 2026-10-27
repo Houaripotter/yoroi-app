@@ -23,7 +23,8 @@ import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedba
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card, EspaceHeader, Icon } from '@/components/yoroi/v2/espace/ui';
-import { personnageImage, personnageNom, sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { personnageImage, personnageNom } from '@/components/yoroi/v2/espace/assets';
+import { imageDeTaScene, nomDeTaScene, useEspaceAuRetour } from '@/components/yoroi/v2/espace/apercuScene';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { MiniAction, ProfileHeader, ValueRow } from '@/components/yoroi/v2/espace/reglages/parts';
 import { ObjectifSheet } from '@/components/yoroi/v2/espace/ObjectifSheet';
@@ -161,7 +162,10 @@ export default function Reglages() {
   const rankIndex = armure?.rank.index ?? 0;
   const genre: 'h' | 'f' = espace.personnage === 'guerrier_f' ? 'f' : espace.personnage === 'guerrier_h' ? 'h' : profile?.avatar_gender === 'femme' ? 'f' : 'h';
   // avec la scene qui change, la ligne montre ton choix a toi
-  const scene = sceneMeta(espace.sceneFixe ?? espace.scene);
+  // 27 octobre 2026 : l'image est TA scene telle que sur l'accueil (avant : le Dojo pour les scenes recentes), relue
+  // au retour sur l'ecran, avec ton personnage
+  const vu = useEspaceAuRetour(espace);
+  const scene = { nom: nomDeTaScene(vu.sceneFixe ?? vu.scene), image: imageDeTaScene(vu.scene) };
   const nbSports = espace.sportsFavoris.length;
   const obj = objectifVise(espace);
   const modeMeta = MODES.find((m) => m.key === mode) ?? MODES[0];
@@ -191,9 +195,9 @@ export default function Reglages() {
         {/* 16 octobre : Personnaliser, tout en haut et bien visible */}
         <EntreePersonnaliser
           scene={scene.image}
-          personnage={aUnPersonnage(espace.personnage) ? personnageImage(espace.personnage, rankIndex, genre) : undefined}
+          personnage={aUnPersonnage(vu.personnage) ? personnageImage(vu.personnage, rankIndex, genre) : undefined}
           style={courbes.style}
-          resume={resumePersonnaliser({ theme: modeMeta.court, scene: espace.sceneRotation ? traduire('scène qui change') : scene.nom, personnage: personnageNom(espace.personnage), styleCourbe: courbes.style })}
+          resume={resumePersonnaliser({ theme: modeMeta.court, scene: vu.sceneRotation ? traduire('scène qui change') : scene.nom, personnage: personnageNom(vu.personnage), styleCourbe: courbes.style })}
           onPress={() => go(ROUTES_PERSONNALISER.personnaliser)}
         />
 

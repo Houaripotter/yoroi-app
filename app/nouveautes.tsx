@@ -20,6 +20,7 @@ import Animated, { FadeInLeft, FadeInRight, FadeOutLeft, FadeOutRight } from 're
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { personnageImage, sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { imageDeTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { MainButton, Shell, useColors } from '@/components/yoroi/v2/onboarding/ui';
 import { Univers } from '@/components/yoroi/v2/onboarding/Univers';
 import { Sante } from '@/components/yoroi/v2/onboarding/Sante';
@@ -288,7 +289,7 @@ export default function Nouveautes() {
             }
           >
             <View style={{ width: w, height: h, borderRadius: 22, overflow: 'hidden', backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
-              <Image source={meta.image} resizeMode="cover" style={StyleSheet.absoluteFill} accessibilityIgnoresInvertColors />
+              <Image source={id ? imageDeTaScene(id) : meta.image} resizeMode="cover" style={StyleSheet.absoluteFill} accessibilityIgnoresInvertColors />
               {perso ? <Image source={perso} resizeMode="contain" style={{ position: 'absolute', right: 8, bottom: 0, width: Math.round(h * 0.75), height: h - 10 }} accessibilityIgnoresInvertColors /> : null}
             </View>
             <Ink size={15} weight="extraBold">{traduire(meta.nom)}</Ink>

@@ -11,7 +11,8 @@ import type { Profile } from '@/lib/database';
 import type { ArmureState } from '@/lib/v2/armure';
 import type { Espace } from '@/lib/v2/espace';
 import { getSportName } from '@/lib/sports';
-import { personnageImage, sceneMeta } from './assets';
+import { personnageImage } from './assets';
+import { imageDeTaScene } from './apercuScene';
 import { Icon, Plaque } from './ui';
 import { P } from '@/components/yoroi/livePalette';
 import { RondInitiales } from './RondInitiales';
@@ -36,7 +37,8 @@ function shortSport(id: string): string {
 export function IdentityCard({ profile, armure, espace, onPress, height = 300 }: Props) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const scene = sceneMeta(espace.scene);
+  // 27 octobre 2026 : ta vraie scene, comme sur l'accueil
+  const scene = { image: imageDeTaScene(espace.scene) };
   const rankIndex = armure?.rank.index ?? 0;
   const fallback = profile?.avatar_gender === 'femme' ? 'f' : 'h';
   const perso = personnageImage(espace.personnage, rankIndex, fallback);

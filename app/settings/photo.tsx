@@ -16,7 +16,8 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Card, EspaceScreen, GUTTER, Icon } from '@/components/yoroi/v2/espace/ui';
 import type { IconName } from '@/components/yoroi/v2/espace/ui';
-import { personnageImage, sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { personnageImage } from '@/components/yoroi/v2/espace/assets';
+import { imageDeTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { markIdentiteChoisie } from '@/components/yoroi/v2/espace/identite';
 import { CONTOURS, RondCadre, contourDe, type ContourRond } from '@/components/yoroi/v2/reglages/contour';
 import { Groupe } from '@/components/yoroi/v2/reglages/kit';
@@ -83,7 +84,8 @@ export default function PhotoEtContour() {
   // meme regle que l'accueil : la photo si elle est choisie (ou sans personnage), sinon le personnage ou tes initiales
   const montrePhoto = !!photo && (espace.identite === 'photo' || !avecPerso);
   const contour = contourDe(espace);
-  const scene = sceneMeta(espace.sceneFixe ?? espace.scene);
+  // 27 octobre 2026 : ta vraie scene, comme sur l'accueil (avant : le Dojo pour les scenes recentes)
+  const scene = { image: imageDeTaScene(espace.scene) };
   const prenom = profile?.name?.trim() || traduire('Ton prénom');
 
   const contenu = (S: number) =>

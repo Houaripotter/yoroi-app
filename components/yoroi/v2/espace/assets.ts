@@ -7,7 +7,8 @@ import type { SceneId } from '@/lib/v2/espace';
 import { SCENES_LANTERNES } from '@/lib/v2/espace/lanternes';
 import { SCENES_SAMOURAI } from '@/lib/v2/espace/samourai';
 import { SCENES_CLASSIQUE } from '@/lib/v2/espace/classique';
-import { guerrierImage as dojoGuerrierImage, parsePersonnage, personnageImage as dojoPersonnageImage, personnageName as dojoPersonnageName } from '@/lib/v2/dojo/personnages';
+import { guerrierImage as dojoGuerrierImage, parsePersonnage, personnageImage as dojoPersonnageImage, personnageName as dojoPersonnageName, themeById } from '@/lib/v2/dojo/personnages';
+import { SCENES as IMAGES_ACCUEIL } from '@/components/yoroi/v2/accueil/images';
 import { traduire } from '@/lib/i18n/tr';
 
 export type SceneMeta = { id: SceneId; nom: string; phrase: string; premium: boolean; image: ImageSourcePropType; nouveau?: boolean; annuel?: boolean };
@@ -50,8 +51,19 @@ export const SCENES: SceneMeta[] = [
   { id: 'matcha', nom: 'Matcha', phrase: traduire('Le jardin de thé'), premium: true, image: require('@/assets/avatars/app/themes/theme_matcha.webp') },
 ];
 
+/**
+ * 27 octobre 2026 (Houari : « Personnaliser montre le Dojo alors que ma scène est Paris à moto ») : la liste SCENES
+ * ne connait que les premieres scenes ; pour les autres (Nature et ville, Vie reelle, Voyages...), le nom vient de la
+ * liste complete des scenes (THEMES) et l'image de celle de l'accueil, au lieu de retomber sur le Dojo.
+ */
 export function sceneMeta(id: SceneId | string | undefined): SceneMeta {
-  return SCENES.find((s) => s.id === id) ?? SCENES[0];
+  const connue = SCENES.find((s) => s.id === id);
+  if (connue) return connue;
+  const image = id ? (IMAGES_ACCUEIL as Record<string, ImageSourcePropType>)[id] : undefined;
+  if (!id || !image) return SCENES[0];
+  const t = themeById(id);
+  const fiche = t.id === id ? t : null;
+  return { id: id as SceneId, nom: fiche?.name ?? String(id), phrase: fiche?.description ?? '', premium: fiche?.premium ?? true, image };
 }
 export const RANK_NAMES = ['Ashigaru', 'Bushi', traduire('Samouraï'), 'Rōnin', 'Shōgun'];
 export type PackMeta = { id: string; nom: string; kanji: string; images: ImageSourcePropType[] };

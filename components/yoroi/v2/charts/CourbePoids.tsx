@@ -320,9 +320,18 @@ type Props = {
    * historique, pas seulement des pesees montrees). Sans elle, la tendance part des points montres.
    */
   serieTendance?: { date: string; value: number }[] | null;
+  /**
+   * 27 octobre 2026 (Houari : « le glisser entre les pages est difficile ») : dans le carrousel de la carte Ton poids,
+   * le doigt ne suit la courbe qu'apres un appui maintenu (APPUI_SUIVI ms sans bouger). Un glisse franc part tout de
+   * suite au carrousel, un toucher court garde la legende.
+   */
+  suiviApresAppui?: boolean;
 };
 
-export function CourbePoids({ points, style = 1, showCap = true, cap = null, ligne = null, torii = null, atteint = false, periode, today, height = 170, onScrub, onPress, onToriiPress, label = traduire('Ta courbe de poids'), surScene = false, compact = false, legende = false, debut: debutAxe = null, projection = null, tendance = false, serieTendance = null }: Props) {
+/** Duree de l'appui maintenu avant que le doigt suive la courbe (suiviApresAppui) */
+export const APPUI_SUIVI = 220;
+
+export function CourbePoids({ points, style = 1, showCap = true, cap = null, ligne = null, torii = null, atteint = false, periode, today, height = 170, onScrub, onPress, onToriiPress, label = traduire('Ta courbe de poids'), surScene = false, compact = false, legende = false, debut: debutAxe = null, projection = null, tendance = false, serieTendance = null, suiviApresAppui = false }: Props) {
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
   // vague 45 : redessine quand la couleur du trait change dans les reglages
@@ -699,10 +708,12 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
   }, [choisir]);
 
   const gesture = useMemo(() => {
-    const pan = Gesture.Pan()
-      .runOnJS(true)
-      .activeOffsetX([-8, 8])
-      .failOffsetY([-14, 14])
+    // suiviApresAppui : la courbe ne s'active qu'apres l'appui maintenu (un decalage horizontal impossible a atteindre
+    // empeche l'activation au mouvement) ; bouger de plus de 10 points avant fait echouer le suivi, le carrousel gagne
+    const pan = suiviApresAppui
+      ? Gesture.Pan().runOnJS(true).activateAfterLongPress(APPUI_SUIVI).activeOffsetX([-100000, 100000])
+      : Gesture.Pan().runOnJS(true).activeOffsetX([-8, 8]).failOffsetY([-14, 14]);
+    pan
       .onStart((e) => pick(e.x))
       .onUpdate((e) => pick(e.x))
       .onFinalize(() => relacher());
@@ -721,7 +732,7 @@ export function CourbePoids({ points, style = 1, showCap = true, cap = null, lig
         cbRef.current.onPress?.();
       });
     return Gesture.Exclusive(pan, tap);
-  }, [pick, relacher]);
+  }, [pick, relacher, suiviApresAppui]);
 
   const lastI = pts.length - 1;
   const act = sel !== null && sel <= lastI ? sel : null;

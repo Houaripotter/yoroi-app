@@ -9,7 +9,8 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import type { AccueilBloc, SceneId } from '@/lib/v2/espace';
 import { adjustableBlocs, blocMeta } from '@/lib/v2/espace/blocs';
-import { personnageImage, sceneMeta } from './assets';
+import { personnageImage } from './assets';
+import { imageDeTaScene } from './apercuScene';
 import { Icon } from './ui';
 import type { IconName } from './ui';
 import { P } from '@/components/yoroi/livePalette';
@@ -47,7 +48,7 @@ export function AccueilPreview({ blocs, scene, personnage, rankIndex, width = 17
       accessibilityLabel={`Aperçu de ton accueil : ta journée, ton prochain entraînement${shown.length ? `, puis ${shown.map((b) => blocMeta(b).label).join(', ')}` : ''}`}
     >
       {/* bandeau de scene, discret */}
-      <Image source={sceneMeta(scene).image} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: t(70), opacity: 0.3 }} resizeMode="cover" />
+      <Image source={imageDeTaScene(scene)} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: t(70), opacity: 0.3 }} resizeMode="cover" />
 
       <View style={{ paddingHorizontal: t(9), paddingTop: t(14), gap: t(5) }}>
         {/* en-tete compact */}

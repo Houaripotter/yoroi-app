@@ -22,6 +22,7 @@ import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { EspaceScreen, GUTTER, Icon } from '@/components/yoroi/v2/espace/ui';
 import { personnageImage, personnageNom, sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { imageDeTaScene, nomDeTaScene, useEspaceAuRetour } from '@/components/yoroi/v2/espace/apercuScene';
 import { aUnPersonnage } from '@/lib/v2/dojo/personnages';
 import { LanterneDessin } from '@/components/yoroi/v2/accueil/Lanterne';
 import { Groupe, Interrupteur } from '@/components/yoroi/v2/reglages/kit';
@@ -149,14 +150,16 @@ export default function Personnaliser() {
   const demi = Math.floor((W - 12) / 2);
   const rankIndex = armure?.rank.index ?? 0;
   const genre: 'h' | 'f' = espace.personnage === 'guerrier_f' ? 'f' : espace.personnage === 'guerrier_h' ? 'h' : profile?.avatar_gender === 'femme' ? 'f' : 'h';
-  const scene = sceneMeta(espace.sceneFixe ?? espace.scene);
-  const avecPerso = aUnPersonnage(espace.personnage);
+  // 27 octobre 2026 : l'apercu montre TA scene et TON personnage, comme l'accueil, relus au retour sur l'ecran
+  const vu = useEspaceAuRetour(espace);
+  const scene = { nom: nomDeTaScene(vu.sceneFixe ?? vu.scene), image: imageDeTaScene(vu.scene) };
+  const avecPerso = aUnPersonnage(vu.personnage);
   // 16 octobre 2026 : le rond de profil (meme regle que l'accueil) et son contour
   const montrePhoto = !!profile?.profile_photo && (espace.identite === 'photo' || !avecPerso);
   const contour = contourDe(espace);
   const styleCourbe = STYLES_COURBE.find((x) => x.id === courbes.style) ?? STYLES_COURBE[0];
   const couleur = COULEURS_COURBE.find((x) => x.id === courbes.couleur) ?? COULEURS_COURBE[0];
-  const fondScene = sceneDuFond(courbes.fond, espace.scene);
+  const fondScene = sceneDuFond(courbes.fond, vu.scene);
   const widget = STYLES_WIDGETS.find((x) => x.id === styleWidgets) ?? STYLES_WIDGETS[0];
   const logoMeta = LOGO_OPTIONS.find((o) => o.id === logo) ?? LOGO_OPTIONS[0];
   const blocs = blocsAffiches(disposition.ordre, disposition.caches, BLOCS_ACCUEIL);
@@ -285,7 +288,7 @@ export default function Personnaliser() {
           chevron={false}
           largeur={demi}
           titre={traduire("Ta scène")}
-          valeur={espace.sceneRotation ? traduire('Elle change') : scene.nom}
+          valeur={vu.sceneRotation ? traduire('Elle change') : scene.nom}
           onPress={() => go(ROUTES_PERSONNALISER.scene)}
           apercu={
             <View style={{ height: 128, borderRadius: 15, overflow: 'hidden', backgroundColor: c.fillSoft }}>
@@ -297,13 +300,13 @@ export default function Personnaliser() {
           chevron={false}
           largeur={demi}
           titre={traduire("Ton personnage")}
-          valeur={personnageNom(espace.personnage)}
+          valeur={personnageNom(vu.personnage)}
           onPress={() => go(ROUTES_PERSONNALISER.personnage)}
           apercu={
             <View style={{ height: 128, borderRadius: 15, overflow: 'hidden', backgroundColor: sombre ? '#222838' : '#E9E6DE', alignItems: 'center', justifyContent: 'flex-end' }}>
               <Image source={scene.image} style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0.28 }} resizeMode="cover" accessibilityIgnoresInvertColors />
               {avecPerso ? (
-                <Image source={personnageImage(espace.personnage, rankIndex, genre)} style={{ width: demi - 24, height: 124 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+                <Image source={personnageImage(vu.personnage, rankIndex, genre)} style={{ width: demi - 24, height: 124 }} resizeMode="contain" accessibilityIgnoresInvertColors />
               ) : (
                 <View style={{ flex: 1, justifyContent: 'center' }}>
                   <Icon name="user" size={38} color={c.textMuted} stroke={2} />
@@ -329,7 +332,7 @@ export default function Personnaliser() {
                   {montrePhoto ? (
                     <Image source={{ uri: profile!.profile_photo! }} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
                   ) : avecPerso ? (
-                    <BusteRond source={personnageImage(espace.personnage, rankIndex, genre)} />
+                    <BusteRond source={personnageImage(vu.personnage, rankIndex, genre)} />
                   ) : (
                     <RondInitiales size={58} nom={profile?.name} />
                   )}

@@ -20,6 +20,7 @@ import { P } from '@/components/yoroi/livePalette';
 import { STICKERS, useIllustrations, type NomSticker } from '@/components/yoroi/v2/stickers';
 import { useScreenshotMode } from '@/lib/ScreenshotModeContext';
 import { LOGO_FIRST_JJA } from '@/lib/v2/demo/logoFirstJJA';
+import { useModeDemo } from '@/lib/v2/demo/useModeDemo';
 import { traduire, traduirePluriel } from '@/lib/i18n/tr';
 
 const SMALL_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'l', 'd', 'et', 'club', 'team', 'the']);
@@ -53,6 +54,24 @@ const LOGOS_PAR_NOM: { re: RegExp; src: () => unknown }[] = [
   { re: /first\s*jiu/i, src: () => getClubLogoSource(LOGO_FIRST_JJA) },
 ];
 
+/**
+ * 27 octobre 2026 : les trois logos de marques integres a l'app (Basic Fit, Gracie Barra, First Jiu-Jitsu Academy).
+ * Ils ne s'affichent qu'en mode demo (Heny) ; chez un vrai utilisateur, seulement le logo qu'il a ajoute lui-meme
+ * a son club (une photo de son telephone), sinon le sticker du sport.
+ */
+export const LOGOS_DE_MARQUE: readonly string[] = ['basic-fit', 'gracie-barra', LOGO_FIRST_JJA];
+
+export function estLogoDeMarque(logo?: string | null): boolean {
+  return !!logo && LOGOS_DE_MARQUE.includes(logo);
+}
+
+/** Le logo a montrer pour une seance : celui de son club, ou celui retrouve par son nom, selon le mode demo */
+export function logoAffiche(o: { clubLogo?: string | null; clubNom?: string | null; demo: boolean; parNom: boolean }): unknown {
+  const propre = o.clubLogo && (o.demo || !estLogoDeMarque(o.clubLogo)) ? getClubLogoSource(o.clubLogo) : null;
+  if (propre) return propre;
+  return o.demo && o.parNom ? logoParNom(o.clubNom) : null;
+}
+
 export function logoParNom(nom?: string | null): unknown {
   if (!nom) return null;
   const l = LOGOS_PAR_NOM.find((x) => x.re.test(nom));
@@ -85,9 +104,10 @@ export function stickerDuSport(sport?: string | null, dehors?: boolean | null): 
 export function SessionMark({ t, size = 18, ring, sticker }: { t: Training; size?: number; ring?: string; sticker?: boolean }) {
   const illus = useIllustrations();
   const { isScreenshotMode } = useScreenshotMode();
+  const demo = useModeDemo();
   const enSticker = !!sticker && illus.stickers;
-  const enregistre = t.club_logo ? getClubLogoSource(t.club_logo) : null;
-  const src = enregistre ?? (enSticker && !isScreenshotMode ? logoParNom(t.club_name) : null);
+  // 27 octobre 2026 : les logos de marques seulement en mode demo, ton propre logo de club toujours
+  const src = logoAffiche({ clubLogo: t.club_logo, clubNom: t.club_name, demo, parNom: enSticker && !isScreenshotMode });
   const border = ring ? { borderWidth: Math.max(1.5, size * 0.08), borderColor: ring } : null;
   if (!src && enSticker) {
     return (

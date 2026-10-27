@@ -9,7 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { RoundButton } from '@/components/yoroi/v2/espace/ui';
-import { personnageImage, sceneMeta } from '@/components/yoroi/v2/espace/assets';
+import { personnageImage } from '@/components/yoroi/v2/espace/assets';
+import { imageDeTaScene } from '@/components/yoroi/v2/espace/apercuScene';
 import { EcranChargement } from '@/components/yoroi/v2/chargement/Chargement';
 import { Celebration } from '@/components/yoroi/v2/dojo/Celebration';
 import { Bienvenue } from '@/components/yoroi/v2/dojo/Bienvenue';
@@ -67,7 +68,7 @@ export function StudioOverlays({ overlay, onClose }: { overlay: StudioOverlay | 
         image={image(rankUp ? rankUp.index : 1)}
         onClose={onClose}
       />
-      <Bienvenue visible={kind === 'bienvenue'} summary={kind === 'bienvenue' ? FAKE_WELCOME : null} image={image(2)} scene={sceneMeta(espace.scene).image} onClose={onClose} />
+      <Bienvenue visible={kind === 'bienvenue'} summary={kind === 'bienvenue' ? FAKE_WELCOME : null} image={image(2)} scene={imageDeTaScene(espace.scene)} onClose={onClose} />
       <ChargementPlein visible={kind === 'chargement'} onClose={onClose} />
     </>
   );
