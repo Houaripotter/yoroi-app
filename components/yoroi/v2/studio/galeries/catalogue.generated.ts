@@ -519,7 +519,6 @@ export const CATALOGUE_IMAGES: ImageEntree[] = [
   { famille: 'tampons', groupe: traduire("R\u00e9serve"), nom: "toro.webp", chemin: "assets/avatars/app/tampons/toro.webp", src: require('@/assets/avatars/app/tampons/toro.webp') },
   { famille: 'tampons', groupe: traduire("R\u00e9serve"), nom: "vague.webp", chemin: "assets/avatars/app/tampons/vague.webp", src: require('@/assets/avatars/app/tampons/vague.webp') },
   { famille: 'tampons', groupe: traduire("Victoire"), nom: "victoire.webp", chemin: "assets/avatars/app/tampons/victoire.webp", src: require('@/assets/avatars/app/tampons/victoire.webp') },
-  { famille: 'logos', groupe: "", nom: "icon.png", chemin: "assets/images/icon.png", src: require('@/assets/images/icon.png') },
   { famille: 'logos', groupe: "", nom: "splash-yoroi.png", chemin: "assets/images/splash-yoroi.png", src: require('@/assets/images/splash-yoroi.png') },
   { famille: 'logos', groupe: "", nom: "yoroi-logo2.png", chemin: "assets/logo d'app/yoroi-logo2.png", src: require('@/assets/logo d\'app/yoroi-logo2.png') },
   { famille: 'logos', groupe: "couleurs", nom: "logo_default.png", chemin: "assets/images/logos_couleurs/logo_default.png", src: require('@/assets/images/logos_couleurs/logo_default.png') },
