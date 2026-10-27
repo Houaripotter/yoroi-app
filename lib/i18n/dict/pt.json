@@ -19366,5 +19366,12 @@
 "les pectoraux": "o peito",
 "{0} : quelle séance ?": "{0}: que sessão?",
 "{0} et {1} se suivent et travaillent tous les deux {2} : un jour entre les deux aide à récupérer.": "{0} e {1} são seguidas e trabalham ambas {2}: um dia entre as duas ajuda a recuperar.",
-"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} não tem dia: não a vais fazer esta semana."
+"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} não tem dia: não a vais fazer esta semana.",
+"Choisis d’où viennent tes séances": "Escolhe de onde vêm as tuas sessões",
+"Depuis ta montre, une autre app ou un fichier": "Do teu relógio, de outra app ou de um ficheiro",
+"Depuis une autre app de muscu": "De outra app de musculação",
+"Course ou vélo (GPX, TCX)": "Corrida ou bicicleta (GPX, TCX)",
+"Tes séances enregistrées par ta montre ou ton téléphone": "As tuas sessões registadas pelo relógio ou telemóvel",
+"Le fichier CSV exporté depuis ses réglages, ou tes notes copiées": "O ficheiro CSV exportado das definições, ou as tuas notas copiadas",
+"Un fichier de parcours depuis ta montre ou une app de course": "Um ficheiro de percurso do teu relógio ou de uma app de corrida"
 }

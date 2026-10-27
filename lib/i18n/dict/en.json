@@ -19366,5 +19366,12 @@
 "les pectoraux": "the chest",
 "{0} : quelle séance ?": "{0}: which session?",
 "{0} et {1} se suivent et travaillent tous les deux {2} : un jour entre les deux aide à récupérer.": "{0} and {1} are back to back and both work {2}: a day between them helps you recover.",
-"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} has no day: you will not do it this week."
+"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} has no day: you will not do it this week.",
+"Choisis d’où viennent tes séances": "Choose where your sessions come from",
+"Depuis ta montre, une autre app ou un fichier": "From your watch, another app or a file",
+"Depuis une autre app de muscu": "From another workout app",
+"Course ou vélo (GPX, TCX)": "Run or ride (GPX, TCX)",
+"Tes séances enregistrées par ta montre ou ton téléphone": "Sessions recorded by your watch or phone",
+"Le fichier CSV exporté depuis ses réglages, ou tes notes copiées": "The CSV file exported from its settings, or your copied notes",
+"Un fichier de parcours depuis ta montre ou une app de course": "A route file from your watch or a running app"
 }

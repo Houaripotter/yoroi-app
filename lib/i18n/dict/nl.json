@@ -19366,5 +19366,12 @@
 "les pectoraux": "de borst",
 "{0} : quelle séance ?": "{0}: welke training?",
 "{0} et {1} se suivent et travaillent tous les deux {2} : un jour entre les deux aide à récupérer.": "{0} en {1} volgen direct op elkaar en trainen allebei {2}: een dag ertussen helpt herstellen.",
-"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} heeft geen dag: je doet hem deze week niet."
+"{0} n’a pas de jour : tu ne la feras pas cette semaine.": "{0} heeft geen dag: je doet hem deze week niet.",
+"Choisis d’où viennent tes séances": "Kies waar je trainingen vandaan komen",
+"Depuis ta montre, une autre app ou un fichier": "Van je horloge, een andere app of een bestand",
+"Depuis une autre app de muscu": "Uit een andere krachttrainingsapp",
+"Course ou vélo (GPX, TCX)": "Hardlopen of fietsen (GPX, TCX)",
+"Tes séances enregistrées par ta montre ou ton téléphone": "Trainingen opgenomen door je horloge of telefoon",
+"Le fichier CSV exporté depuis ses réglages, ou tes notes copiées": "Het CSV bestand uit de instellingen, of je gekopieerde notities",
+"Un fichier de parcours depuis ta montre ou une app de course": "Een routebestand van je horloge of een hardloopapp"
 }

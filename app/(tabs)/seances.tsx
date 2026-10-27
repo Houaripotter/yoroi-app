@@ -15,6 +15,7 @@
  * 8. (24 octobre 2026) sous le prochain entrainement, la carte Programmes : ton programme en cours ou l'entree vers /programmes.
  * 7. (16 octobre, SEANCES AVATAR) « Importer mes seances » depuis Apple Sante ou Health Connect : carte en haut tant
  *    que rien n'est importe, bouton dans l'etat vide, et le menu de l'onglet (les trois points). Masque sur le web.
+ *    27 octobre : chaque bouton Importer ouvre un seul choix (Sante, autre app en CSV, GPX ou TCX).
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
@@ -110,6 +111,8 @@ export default function Seances() {
   const [refreshing, setRefreshing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  // 27 octobre : un seul choix « Importer mes séances » (Santé, autre app, GPX ou TCX)
+  const [choixImportOpen, setChoixImportOpen] = useState(false);
   const importSante = importSeancesDisponible();
   const scrollRef = useRef<ScrollView>(null);
   // 27 octobre 2026 : la visite guidee remonte l'onglet en haut avant de montrer ta semaine
@@ -201,19 +204,18 @@ export default function Seances() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <Ink size={30} weight="black" tight accessibilityRole="header">{traduire("Séances")}</Ink>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {/* Importer toujours a portee, meme quand des seances viennent deja de Sante */}
-          {importSante ? (
+          {/* Importer toujours a portee. 27 octobre : ouvre le choix d'import, sur toutes les plateformes */}
             <Pressable
-              onPress={() => { tap(); setImportOpen(true); }}
+              onPress={() => { tap(); setChoixImportOpen(true); }}
               accessibilityRole="button"
-              accessibilityLabel={traduire("Importer mes séances depuis {0}", nomSourceSante())}
+              accessibilityLabel={traduire("Importer mes séances")}
+              accessibilityHint={traduire("Choisis d’où viennent tes séances")}
               hitSlop={6}
               style={({ pressed }) => ({ height: 44, borderRadius: 22, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: pressed ? P.white : P.carte, borderWidth: 1, borderColor: c.divider })}
             >
               <Icon name="download" size={18} color={c.accent} strokeWidth={2.6} />
               <Ink size={14} weight="extraBold" color={c.accent}>{traduire("Importer")}</Ink>
             </Pressable>
-          ) : null}
           <Pressable
             onPress={() => { tap(); setMenuOpen(true); }}
             accessibilityRole="button"
@@ -397,7 +399,7 @@ export default function Seances() {
               title={traduire("Ta première séance t’attend")}
               text={traduire("Muscu, combat ou course : note ta séance, ou relie ta montre, et ton historique se remplit ici semaine après semaine.")}
             />
-            {importSante ? <BigButton label={traduire("Importer mes séances")} icon="download" tone="ink" onPress={() => setImportOpen(true)} /> : null}
+            <BigButton label={traduire("Importer mes séances")} icon="download" tone="ink" onPress={() => setChoixImportOpen(true)} />
             <PlusHint text={traduire("Touche + pour ta première séance")} align="center" />
             <ExampleFrame caption={traduire("Voilà à quoi ressemblera ton historique.")}>
               <View style={{ gap: 8 }}>
@@ -440,12 +442,16 @@ export default function Seances() {
       </ScrollView>
 
       <Sheet visible={menuOpen} onClose={() => setMenuOpen(false)} title={traduire("Séances")}>
-        {importSante ? (
-          <Row icon="download" title={traduire("Importer mes séances")} sub={traduire("Depuis {0}, sans doublon", nomSourceSante())} onPress={() => { setMenuOpen(false); setTimeout(() => setImportOpen(true), 350); }} />
-        ) : null}
-        <Row icon="share" title={traduire("Importer mes séances")} sub={traduire("Tes notes du téléphone, ou une autre app")} onPress={() => { setMenuOpen(false); router.push('/importer-carnet' as any); }} />
-        <Row icon="share" title={traduire("Importer un fichier")} sub={traduire("GPX ou TCX, depuis Strava ou Garmin")} onPress={() => { setMenuOpen(false); router.push('/import-workouts' as any); }} />
+        <Row icon="download" title={traduire("Importer mes séances")} sub={traduire("Depuis ta montre, une autre app ou un fichier")} onPress={() => { setMenuOpen(false); setTimeout(() => setChoixImportOpen(true), 350); }} />
         <Row icon="calendar" title={traduire("Planning et calendrier")} onPress={() => { setMenuOpen(false); router.push('/planning' as any); }} />
+      </Sheet>
+      {/* Le choix d'import : trois chemins clairs, chacun son icone */}
+      <Sheet visible={choixImportOpen} onClose={() => setChoixImportOpen(false)} title={traduire("Importer mes séances")}>
+        {importSante ? (
+          <Row icon="watch" title={traduire("Depuis {0}", nomSourceSante())} sub={traduire("Tes séances enregistrées par ta montre ou ton téléphone")} onPress={() => { setChoixImportOpen(false); setTimeout(() => setImportOpen(true), 350); }} />
+        ) : null}
+        <Row icon="dumbbell" title={traduire("Depuis une autre app de muscu")} sub={traduire("Le fichier CSV exporté depuis ses réglages, ou tes notes copiées")} onPress={() => { setChoixImportOpen(false); router.push('/importer-carnet' as any); }} />
+        <Row icon="map" title={traduire("Course ou vélo (GPX, TCX)")} sub={traduire("Un fichier de parcours depuis ta montre ou une app de course")} onPress={() => { setChoixImportOpen(false); router.push('/import-workouts' as any); }} />
       </Sheet>
       {importSante ? <ImportSeancesSheet visible={importOpen} onClose={() => setImportOpen(false)} onFini={() => { void reload(); }} /> : null}
     </View>
