@@ -29,6 +29,7 @@ import { ROUTES_PERSONNALISER } from '@/lib/v2/personnaliser/acces';
 import type { PaletteV2 } from '@/components/yoroi/livePalette';
 import { Card, Icon, P, Press, useAccent } from './kit';
 import { carteNeutre } from './domaines';
+import { ApercuAccueil } from './ApercuAccueil';
 import { traduire } from '@/lib/i18n/tr';
 
 /** Hauteur d'une ligne de la liste (maquette : 52) */
@@ -211,19 +212,7 @@ function Ligne({ id, rang, titre, aide, on, n, positions, actif, onToggle, onDeb
   );
 }
 
-/** La mini maquette de l'accueil : la scene, Ton poids, puis les blocs affiches dans l'ordre */
-function MiniAccueil({ ordre, caches, tire }: { ordre: BlocAccueil[]; caches: BlocAccueil[]; tire: BlocAccueil | null }) {
-  const vus = ordre.filter((id) => !caches.includes(id));
-  return (
-    <View style={{ width: 92, minHeight: 150, borderRadius: 16, backgroundColor: P.paper, borderWidth: 1.5, borderColor: P.line, padding: 6, gap: 4 }} accessible accessibilityLabel={traduire('Aperçu de ton accueil, dans cet ordre : {0}', vus.map((id) => traduire(BLOCS_ACCUEIL.find((b) => b.id === id)?.titre ?? '')).join(', '))}>
-      <View style={{ height: 22, borderRadius: 6, backgroundColor: P.pastelCiel }} />
-      <View style={{ height: 16, borderRadius: 5, backgroundColor: P.poidsFond }} />
-      {vus.map((id) => (
-        <View key={id} style={{ height: 9, borderRadius: 4, backgroundColor: couleurBloc(id), borderWidth: id === tire ? 2 : 0, borderColor: P.accent }} />
-      ))}
-    </View>
-  );
-}
+/* L'ancienne mini maquette en barres de couleur (MiniAccueil) : _archive_ancien_design_2026-10-09/accueil_2_2026-10-27/Personnaliser.tsx */
 
 /** La liste reglable, reutilisee par la feuille de l'accueil et par l'ecran Ton accueil des Reglages */
 export function DispositionEditor({ onGlisse }: { onGlisse?: (actif: boolean) => void } = {}) {
@@ -284,7 +273,8 @@ export function DispositionEditor({ onGlisse }: { onGlisse?: (actif: boolean) =>
     <View style={{ gap: 0 }}>
       {/* l'apercu vivant */}
       <View style={{ backgroundColor: P.white, borderRadius: 22, padding: 12, flexDirection: 'row', gap: 12, alignItems: 'center', shadowColor: '#1D2033', shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 1 }}>
-        <MiniAccueil ordre={vivant} caches={caches} tire={tire} />
+        {/* 27 octobre 2026 : la vraie miniature de ton accueil (ApercuAccueil.tsx), plus des barres de couleur */}
+        <ApercuAccueil ordre={vivant} caches={caches} tire={tire} />
         <View style={{ flex: 1, gap: 6 }}>
           <Ink size={11} weight="black" color={P.etiquettePrune} style={{ letterSpacing: 1.4 }}>
             {traduire('Aperçu').toLocaleUpperCase()}
@@ -293,7 +283,7 @@ export function DispositionEditor({ onGlisse }: { onGlisse?: (actif: boolean) =>
             {traduire('Ton accueil, dans cet ordre')}
           </Ink>
           <Ink size={12.5} weight="bold" color={P.ink2} style={{ lineHeight: 17.5 }}>
-            {traduire('Tes outils et Ton poids restent en haut. Glisse une ligne pour la ranger.')}
+            {traduire('Tes outils et Ton poids restent en haut. Glisse une ligne pour la ranger. Touche l’aperçu pour le voir en grand.')}
           </Ink>
         </View>
       </View>

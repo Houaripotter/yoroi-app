@@ -34,7 +34,7 @@ import { format } from 'date-fns';
 import { DATE_FNS_LOCALE as fr } from '@/lib/i18n/dateLocale';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
-import { Icon, RoundButton, type IconName } from '@/components/yoroi/v2/espace/ui';
+import { Icon, RoundButton } from '@/components/yoroi/v2/espace/ui';
 import { sceneMeta } from '@/components/yoroi/v2/espace/assets';
 import { ENTREE } from '@/components/yoroi/v2/accueil/kit';
 import { GOALS } from '@/components/yoroi/v2/onboarding/Objectif';
@@ -54,7 +54,7 @@ import { EXAMPLE_PACKAGES, previewTrial, usePaywallVariant } from '@/lib/v2/crea
 import * as Notifications from 'expo-notifications';
 import { FREE_FOREVER, PREMIUM_ROWS, savingsPercent, sortOffers, trialFor, type OfferInfo } from '@/lib/v2/premium/offer';
 import { offresEvent, paywallEvent } from '@/lib/v2/premium/events';
-import { SOURCES, couleurA, couleursSource, estSourcePremium, type SourcePaywall } from '@/lib/v2/premium/sources';
+import { SOURCES, estSourcePremium, type SourcePaywall, type SourcePremium } from '@/lib/v2/premium/sources';
 import { longDate, scheduleTrialReminder, storeName } from '@/lib/v2/onboarding/trial';
 import { getProfile, getWeights } from '@/lib/database';
 import { getEspace, objectifVise } from '@/lib/v2/espace';
@@ -70,6 +70,8 @@ import { cartesPremium, regleePersonnage, texteCarte, type ObjectifPour, type Pr
 import { getUserSettings } from '@/lib/storage';
 import { CarrouselPremium } from '@/components/yoroi/v2/premium/CarrouselPremium';
 import { apercuNutrition } from '@/lib/v2/premium/apercus';
+import type { ApercuNutrition as ApercuNutritionDonnees } from '@/lib/v2/premium/apercus';
+import { ApercuMur, StickerMur } from '@/components/yoroi/v2/premium/ApercuMur';
 import { ageDepuisNaissance } from '@/lib/v2/onboarding/trancheAge';
 import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
 import { basAtteint } from '@/lib/v2/premium/defilement';
@@ -148,18 +150,26 @@ const heroPremium = (personnage: string | null | undefined, g: 'h' | 'f') => {
 const dayMonth = (d: Date) => format(d, 'd MMMM', { locale: fr });
 
 /** vague 48 : sans personnage, l'en-tete montre le produit : une courbe d'exemple (style 1) qui descend vers le torii de son cap */
-const COURBE_EXEMPLE = (() => {
+/**
+ * 27 octobre 2026 (Houari : « objectif perdre du poids, et la courbe montre l'inverse ») : l'exemple suit le sens de
+ * ton objectif. Avec ton poids et ton cap : huit semaines de ton poids vers ton cap (60 % du chemin) ; sans eux,
+ * l'exemple d'avant, qui descend. Toujours marque « Exemple ».
+ */
+function courbeExemple(start: number | null, target: number | null): { points: { date: string; value: number }[]; cap: number; torii: string } {
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const now = new Date();
   const points: { date: string; value: number }[] = [];
+  const avecPlan = start != null && target != null && Math.abs(start - target) >= 0.5;
+  const debut = avecPlan ? (start as number) : 82.6;
+  const fin = avecPlan ? debut + ((target as number) - debut) * 0.6 : 79.6;
   for (let i = 56; i >= 0; i -= 4) {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 12);
-    const tendance = 79.6 + (i / 56) * 3;
+    const tendance = fin + (i / 56) * (debut - fin);
     points.push({ date: iso(d), value: Math.round((tendance + (i % 8 === 0 ? 0.35 : -0.2)) * 10) / 10 });
   }
   const torii = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30, 12);
-  return { points, cap: 78, torii: iso(torii) };
-})();
+  return { points, cap: avecPlan ? (target as number) : 78, torii: iso(torii) };
+}
 
 /** Une seule formule partout (vague 31) : « 7 jours gratuits », « 14 jours gratuits », « 1 jour gratuit ». La duree vient du store. */
 function essaiGratuit(days: number): string {
@@ -267,6 +277,8 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
   const c = theme.colors;
   // 26 octobre 2026 : les couleurs des pages Programmes et Coach (page #EDF1FA, carte indigo, teintes)
   const pal = usePaletteProgramme();
+  // 27 octobre 2026 (refonte Pastel) : le fond de page de l'app (#F5F6FB), plus le bleu des pages Programmes
+  const page = c.background;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -540,23 +552,26 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
 
   // vague 32 : ton plan en carte de membre, trois lignes et la date d'arrivee estimee (jamais inventee)
   // weight_goal vaut « maintain » par defaut en base : avec un poids vise loin du poids du jour, on ne l'affiche pas
-  const contradiction = me.goal === 'maintain' && me.target != null && me.start != null && Math.abs(me.start - me.target) >= 1;
+  // 27 octobre 2026 : un poids vise dans le mauvais sens (perdre avec un cap au dessus, prendre avec un cap en dessous) est ignore
+  const sensFaux = me.target != null && me.start != null && ((me.goal === 'lose' && me.target >= me.start) || (me.goal === 'gain' && me.target <= me.start));
+  const contradiction = sensFaux || (me.goal === 'maintain' && me.target != null && me.start != null && Math.abs(me.start - me.target) >= 1);
+  const cibleSure = sensFaux ? null : me.target;
   const goalEntry = me.goal && !contradiction ? GOALS.find((g) => g.id === me.goal) ?? null : null;
   const maintient = me.goal === 'maintain' && !contradiction;
   const planLines: LignePlan[] = [];
   if (goalEntry) {
     planLines.push({ icon: 'target', ink: INK_TEXTE[goalEntry.encre.ink] ?? goalEntry.encre.ink, fond: goalEntry.encre.fond, cle: goalEntry.label, a11y: traduire("objectif, {0}", goalEntry.label.toLowerCase()) });
   }
-  if (me.target && !maintient) {
-    const from = me.start != null && Math.abs(me.start - me.target) >= 0.2 ? me.start : null;
+  if (cibleSure && !maintient) {
+    const from = me.start != null && Math.abs(me.start - cibleSure) >= 0.2 ? me.start : null;
     planLines.push({
       icon: 'scale',
       ink: ENCRES.indigo.ink,
       fond: ENCRES.indigo.fond,
       depuis: from != null ? `${kg(from)} kg` : undefined,
-      cle: `${kg(me.target)} kg`,
+      cle: `${kg(cibleSure)} kg`,
       apres: from != null ? undefined : traduire('visés'),
-      a11y: from != null ? traduire("de {0} à {1} kilos", kg(from), kg(me.target)) : traduire("{0} kilos visés", kg(me.target)),
+      a11y: from != null ? traduire("de {0} à {1} kilos", kg(from), kg(cibleSure)) : traduire("{0} kilos visés", kg(cibleSure)),
     });
   } else if (maintient && me.start != null) {
     planLines.push({ icon: 'scale', ink: ENCRES.indigo.ink, fond: ENCRES.indigo.fond, cle: `${kg(me.start)} kg`, apres: traduire('à garder'), a11y: traduire("{0} kilos à garder", kg(me.start)) });
@@ -565,14 +580,15 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     const nbS = `${me.sessions} ${me.sessions > 1 ? traduire('séances') : traduire('séance')}`;
     planLines.push({ icon: 'calendar', ink: ENCRES.mousse.ink, fond: ENCRES.mousse.fond, cle: nbS, apres: 'par semaine', a11y: traduire("{0} par semaine", nbS) });
   }
-  const estimation = !maintient && me.start != null && me.target != null
-    ? estimerArrivee({ start: me.start, target: me.target, sessions: me.sessions, heightCm: me.height, recompo: me.recompo && me.target < me.start })
+  const estimation = !maintient && me.start != null && cibleSure != null
+    ? estimerArrivee({ start: me.start, target: cibleSure, sessions: me.sessions, heightCm: me.height, recompo: me.recompo && cibleSure < me.start })
     : null;
   // 17 octobre : avec un plan, la date du torii (la meme que la carte Poids et le bilan) ; a l'onboarding, avant
   // que le plan existe, la fourchette de l'estimation (le torii sera son milieu)
   const planArrivee = plan6.aPlan ? plan6.arrivee : estimation?.kind === 'ok' ? arriveeCourte(estimation.earliest, estimation.latest) : null;
   // 17 octobre 2026 : ce que Premium fait de ton plan. Sans aucune donnee, la carte generale : des libelles, aucun chiffre
-  const ciblePlan = me.target && !maintient ? kg(me.target) : null;
+  const ciblePlan = cibleSure && !maintient ? kg(cibleSure) : null;
+  const COURBE_EXEMPLE = courbeExemple(me.start, !maintient ? cibleSure : null);
   const lignesGenerales: LignePlan[] = [
     { icon: 'target', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton objectif', a11y: traduire('ton objectif') },
     { icon: 'scale', ink: c.textSecondary, fond: c.fillSubtle, cle: 'Ton poids visé', a11y: traduire('ton poids visé') },
@@ -681,7 +697,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
     : '';
 
   return (
-    <View style={{ flex: 1, backgroundColor: pal.page }}>
+    <View style={{ flex: 1, backgroundColor: page }}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingBottom: 28 }}
@@ -704,15 +720,15 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
         {/* 1. Haut clair (26 octobre 2026, Houari : « le fond noir en haut, ça ne donne pas envie ») : page claire,
             retour et Restaurer en haut, le titre lisible en encre, puis le carrousel des quatre cartes Premium
             (components/yoroi/v2/premium/CarrouselPremium.tsx). Le prix, l'essai, le bouton et les mentions ne bougent pas. */}
-        <View style={{ backgroundColor: pal.page, paddingTop: insets.top + 8, gap: small ? 10 : 14 }}>
+        <View style={{ backgroundColor: page, paddingTop: insets.top + 8, gap: small ? 10 : 14 }}>
           <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <RoundButton icon={source === 'onboarding' && onBack ? 'back' : 'close'} label={closeLabel} onPress={onTopButton} />
             <View style={{ flex: 1, alignItems: 'center' }}>
               {/* vague 49 : la pastille du Studio se loge dans la barre ; « Aperçu, sans achat » passe dessous */}
               {apercuBarre ? <ApercuDansBarre /> : preview ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(16,20,34,0.75)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
-                  <Icon name="eye" size={14} color={c.goldLight} />
-                  <Ink size={12} weight="extraBold" color="#FFFFFF" numberOfLines={1}>{exemple ? traduire('Aperçu, prix d’exemple') : traduire('Aperçu, sans achat')}</Ink>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.primary, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
+                  <Icon name="eye" size={14} color={c.onPrimary} />
+                  <Ink size={12} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{exemple ? traduire('Aperçu, prix d’exemple') : traduire('Aperçu, sans achat')}</Ink>
                 </View>
               ) : null}
             </View>
@@ -733,9 +749,9 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
           </View>
           {preview && apercuBarre ? (
             <View style={{ alignItems: 'center' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(16,20,34,0.75)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}>
-                <Icon name="eye" size={13} color={c.goldLight} />
-                <Ink size={11.5} weight="extraBold" color="#FFFFFF" numberOfLines={1}>{exemple ? traduire('Aperçu, prix d’exemple') : traduire('Aperçu, sans achat')}</Ink>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.primary, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 }}>
+                <Icon name="eye" size={13} color={c.onPrimary} />
+                <Ink size={11.5} weight="extraBold" color={c.onPrimary} numberOfLines={1}>{exemple ? traduire('Aperçu, prix d’exemple') : traduire('Aperçu, sans achat')}</Ink>
               </View>
             </View>
           ) : null}
@@ -766,7 +782,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
               Sans plan (onboarding pas fini), la meme carte en version generale, sans aucun chiffre. Venu d'un mur,
               l'apercu du contenu bloque prend cette place. */}
           {!isPremium && mur ? (
-            <ApercuSource libelle={mur.libelle} phrase={mur.phrase(compteur)} {...couleursSource(c, mur.accent)} icone={mur.icone}>
+            <ApercuSource source={origine as SourcePremium} largeur={innerW} rankIndex={me.rankIndex} genre={me.genre} nutrition={apercuNutri} libelle={mur.libelle} phrase={mur.phrase(compteur)}>
               {mur.courbe && curve.length >= 2 ? (
                 <View style={{ height: 110, overflow: 'hidden', borderRadius: 14 }} accessible accessibilityLabel={traduire("Aperçu de ta courbe de poids, la suite est avec Premium")}>
                   <WeightCurve points={curve} width={innerW} height={110} color={c.accent} surface={c.surface} ligne={plan6.ligne} torii={plan6.torii} />
@@ -860,7 +876,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
                   <PlanCard
                     on={selected?.pkg.identifier === monthly.pkg.identifier}
                     onPress={() => pick(monthly)}
-                    name="1 mois, sans engagement"
+                    name={traduire('1 mois, sans engagement')}
                     pill={trialOf(monthly.pkg.raw) ? essaiGratuit(trialOf(monthly.pkg.raw)!.days) : null}
                     price={monthly.info.priceString}
                     per={monthly.info.per}
@@ -937,7 +953,7 @@ export function Paywall({ source, origine, compteur, preview, recap, onFinish, o
       </ScrollView>
 
       {/* Colle en bas, toujours visible : 6. le bouton d'achat et le prix dessous, 8. Continuer gratuitement */}
-      <View style={{ paddingHorizontal: GUTTER, paddingTop: 10, paddingBottom: insets.bottom + 6, backgroundColor: pal.page, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: theme.isDark ? 1 : 0, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>
+      <View style={{ paddingHorizontal: GUTTER, paddingTop: 10, paddingBottom: insets.bottom + 6, backgroundColor: page, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: theme.isDark ? 1 : 0, borderColor: c.border, shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>
         {attenuer && !vuBas ? <IndicateurDefiler onPress={allerEnBas} reduire={!!reduireAnim} /> : null}
         {isPremium ? (
           <BottomButton label={traduire("Continuer")} onPress={() => onFinish('premium')} />
@@ -1069,39 +1085,25 @@ function PastillePremium() {
 }
 
 /**
- * Apercu du contenu bloque quand le paywall vient d'un mur (lib/v2/premium/sources.ts) : son icone, son libelle,
- * sa phrase, puis le contenu (ta courbe voilee) ou, a defaut, des lignes fantomes sans aucune vraie valeur,
- * effacees vers le bas par un degrade vers la surface de la carte (le mode sombre suit).
+ * Apercu du contenu bloque quand le paywall vient d'un mur (lib/v2/premium/sources.ts) : son sticker (reglage
+ * Illustrations), son libelle, sa phrase, puis le contenu (ta courbe voilee) ou, a defaut, un vrai apercu de l'app
+ * (ApercuMur.tsx : vraies scenes, vrais personnages, vrais logos, vraies tuiles). 27 octobre 2026 : plus de lignes
+ * fantomes (version d'avant : _archive_ancien_design_2026-10-09/accueil_2_2026-10-27/Paywall.tsx).
  */
-function ApercuSource({ libelle, phrase, encre, fond, icone, children }: { libelle: string; phrase: string; encre: string; fond: string; icone: IconName; children?: React.ReactNode }) {
+function ApercuSource({ source, largeur, rankIndex, genre, nutrition, libelle, phrase, children }: { source: SourcePremium; largeur: number; rankIndex: number; genre: 'h' | 'f'; nutrition: ApercuNutritionDonnees; libelle: string; phrase: string; children?: React.ReactNode }) {
   const { theme } = useYoroiTheme();
   const c = theme.colors;
-  const largeurs = [0.86, 0.64, 0.74];
   return (
     <View style={{ borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, padding: 16, gap: 10, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={icone} size={18} color={encre} />
-        </View>
+        <StickerMur source={source} taille={38} />
         <Ink size={16} weight="black" style={{ flex: 1 }} numberOfLines={2}>{libelle}</Ink>
         <PastillePremium />
       </View>
       <Ink size={14} weight="bold" color={c.textSecondary} style={{ lineHeight: 20 }}>{phrase}</Ink>
-      {children ?? (
-        <View style={{ gap: 10, paddingTop: 2 }} accessible accessibilityLabel={traduire("Aperçu de {0}, la suite est avec Premium", libelle)}>
-          {largeurs.map((w, k) => (
-            <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: fond }} />
-              <View style={{ flex: 1, gap: 6 }}>
-                <View style={{ height: 10, width: `${Math.round(w * 100)}%`, borderRadius: 5, backgroundColor: c.fillSubtle }} />
-                <View style={{ height: 8, width: `${Math.round(w * 60)}%`, borderRadius: 4, backgroundColor: c.fillSoft }} />
-              </View>
-              <View style={{ width: 44, height: 14, borderRadius: 7, backgroundColor: fond }} />
-            </View>
-          ))}
-          <LinearGradient pointerEvents="none" colors={[couleurA(c.surface, 0), couleurA(c.surface, 0.7), c.surface]} locations={[0, 0.55, 1]} style={StyleSheet.absoluteFill} />
-        </View>
-      )}
+      <View accessible accessibilityLabel={traduire("Aperçu de {0}, la suite est avec Premium", libelle)}>
+        {children ?? <ApercuMur source={source} largeur={largeur} rankIndex={rankIndex} genre={genre} nutrition={nutrition} />}
+      </View>
     </View>
   );
 }
@@ -1236,7 +1238,7 @@ function BottomButton({ label, onPress, loading, disabled, vif }: { label: strin
           ) : (
             <View>
               <Animated.View style={couleur}>
-                <Ink size={17} weight="extraBold" color={c.onAccent} style={{ textAlign: 'center' }}>{label}</Ink>
+                <Ink size={17} weight="extraBold" color={c.onPrimary} style={{ textAlign: 'center' }}>{label}</Ink>
               </Animated.View>
               <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }, gris]}>
                 <Ink size={17} weight="extraBold" color={c.textSecondary} style={{ textAlign: 'center' }}>{label}</Ink>

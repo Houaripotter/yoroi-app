@@ -6,7 +6,7 @@
  * L'enveloppe ne change rien au rendu : une View qui ne fait que s'enregistrer (elle prend le style
  * qu'on lui donne, pour remplacer une View existante sans rien deplacer). Rien n'est mesure hors visite.
  */
-import React, { useEffect, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { View, type ViewProps } from 'react-native';
 
 export type WindowRect = { x: number; y: number; width: number; height: number };
@@ -29,14 +29,25 @@ export function measureTourAnchor(id: string): Promise<WindowRect | null> {
   });
 }
 
+/**
+ * 27 octobre 2026 : un apercu qui redessine des morceaux de l'accueil (Ton accueil, ApercuAccueil.tsx) ne doit pas
+ * voler les ancres de la visite : sous SansAncresVisite, les TourAnchor ne s'enregistrent pas.
+ */
+const AncresInertes = createContext(false);
+export function SansAncresVisite({ children }: { children: React.ReactNode }) {
+  return <AncresInertes.Provider value>{children}</AncresInertes.Provider>;
+}
+
 export function TourAnchor({ id, children, ...rest }: { id: string } & ViewProps) {
   const ref = useRef<View>(null);
+  const inerte = useContext(AncresInertes);
   useEffect(() => {
+    if (inerte) return;
     anchors.set(id, ref);
     return () => {
       if (anchors.get(id) === ref) anchors.delete(id);
     };
-  }, [id]);
+  }, [id, inerte]);
   return (
     <View ref={ref} collapsable={false} {...rest}>
       {children}

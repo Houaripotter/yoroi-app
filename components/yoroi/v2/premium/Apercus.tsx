@@ -71,7 +71,8 @@ function Tete({ texte, exemple }: { texte: string; exemple?: boolean }) {
   const pal = usePaletteProgramme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <Ink size={10} weight="extraBold" color={pal.texte2} numberOfLines={1} style={{ flex: 1 }}>{texte}</Ink>
+      {/* 27 octobre 2026 (Houari : « Développ… ») : un nom long passe sur deux lignes, jamais coupe */}
+      <Ink size={10} weight="extraBold" color={pal.texte2} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85} style={{ flex: 1, lineHeight: 12 }}>{texte}</Ink>
       {exemple ? (
         <View style={{ backgroundColor: c.accentTint, borderRadius: 999, paddingHorizontal: 5, paddingVertical: 1 }}>
           <Ink size={8} weight="black" color={c.accent} style={{ letterSpacing: 0.6 }}>{traduire('EXEMPLE')}</Ink>
@@ -148,7 +149,8 @@ export function ApercuProgres({ w, h, actif }: { w: number; h: number; actif: bo
   const v = useRemplir(actif, 1100);
   const masque = useAnimatedStyle(() => ({ width: `${Math.round(8 + v.value * 92)}%` as const }));
   const largeur = w - PAD * 2;
-  const hc = Math.max(40, h - PAD * 2 - 62);
+  // un nom d'exercice long prend deux lignes : la courbe cede la place
+  const hc = Math.max(40, h - PAD * 2 - 62 - (ex.name.length > 12 ? 12 : 0));
   return (
     <Tuile w={w} h={h}>
       <Tete texte={ex.name} exemple />

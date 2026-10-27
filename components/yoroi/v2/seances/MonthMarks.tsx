@@ -58,6 +58,11 @@ const LOGOS_PAR_NOM: { re: RegExp; src: () => unknown }[] = [
  * 27 octobre 2026 : les trois logos de marques integres a l'app (Basic Fit, Gracie Barra, First Jiu-Jitsu Academy).
  * Ils ne s'affichent qu'en mode demo (Heny) ; chez un vrai utilisateur, seulement le logo qu'il a ajoute lui-meme
  * a son club (une photo de son telephone), sinon le sticker du sport.
+ * 27 octobre 2026 soir (Houari : « j'ai ajouté le logo de mon club et je ne le vois plus ») : la regle est faite
+ * ainsi. Le logo IMPORTE par l'utilisateur (un fichier de son telephone, jamais une de ces trois cles) s'affiche
+ * TOUJOURS, demo ou pas. Seuls les logos FOURNIS par l'app restent reserves a la demo. Si le fichier importe ne
+ * s'ouvre plus, la pastille retombe sur le sticker du sport au lieu d'un rond blanc vide (SessionMark, onError),
+ * et getClubLogoSource recale son chemin sur le dossier de l'app (lib/v2/clubs/cheminLogo.ts).
  */
 export const LOGOS_DE_MARQUE: readonly string[] = ['basic-fit', 'gracie-barra', LOGO_FIRST_JJA];
 
@@ -107,7 +112,11 @@ export function SessionMark({ t, size = 18, ring, sticker }: { t: Training; size
   const demo = useModeDemo();
   const enSticker = !!sticker && illus.stickers;
   // 27 octobre 2026 : les logos de marques seulement en mode demo, ton propre logo de club toujours
-  const src = logoAffiche({ clubLogo: t.club_logo, clubNom: t.club_name, demo, parNom: enSticker && !isScreenshotMode });
+  const src0 = logoAffiche({ clubLogo: t.club_logo, clubNom: t.club_name, demo, parNom: enSticker && !isScreenshotMode });
+  // un logo qui ne s'ouvre plus : le sticker du sport (ou les initiales), jamais un rond blanc vide
+  const [casse, setCasse] = React.useState(false);
+  React.useEffect(() => setCasse(false), [t.club_logo]);
+  const src = casse ? null : src0;
   const border = ring ? { borderWidth: Math.max(1.5, size * 0.08), borderColor: ring } : null;
   if (!src && enSticker) {
     return (
@@ -119,7 +128,7 @@ export function SessionMark({ t, size = 18, ring, sticker }: { t: Training; size
   if (src) {
     return (
       <View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: P.white, overflow: 'hidden' }, border]}>
-        <Image source={src as never} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        <Image source={src as never} style={{ width: '100%', height: '100%' }} resizeMode="cover" onError={() => setCasse(true)} />
       </View>
     );
   }

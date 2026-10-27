@@ -6,6 +6,7 @@
 // Les noms des icônes sont stockés comme strings
 // Exemple: 'karate', 'boxing-glove', 'arm-flex', etc.
 import { traduire } from '@/lib/i18n/tr';
+import { cheminLogoActuel, dossierDocuments } from '@/lib/v2/clubs/cheminLogo';
 
 export interface Sport {
   id: string;
@@ -1628,9 +1629,10 @@ export const getClubLogoSource = (logoUri?: string): any => {
   }
 
   // Si c'est une URI vers un fichier ou une ressource externe
+  // 27 octobre 2026 : un logo importe garde son fichier meme quand le dossier de l'app change (lib/v2/clubs/cheminLogo.ts)
+  if (logoUri.startsWith('file')) return { uri: cheminLogoActuel(logoUri, dossierDocuments()) };
   if (
     logoUri.startsWith('http') ||
-    logoUri.startsWith('file') ||
     logoUri.startsWith('content') || // Android content provider
     logoUri.startsWith('ph://')      // iOS Photos framework
   ) {

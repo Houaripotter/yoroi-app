@@ -18,7 +18,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { useYoroiTheme } from '@/components/yoroi';
 import { Ink } from '@/components/yoroi/v2/Ink';
 import { Icon } from '@/components/yoroi/v2/espace/ui';
-import { usePaletteProgramme } from '@/components/yoroi/v2/programmes/Habillage';
+import { famillePastel, usePaletteProgramme, usePastel } from '@/components/yoroi/v2/programmes/Habillage';
 import type { CartePremiumTexte } from '@/lib/v2/premium/pourToi';
 import type { ApercuNutrition as DonneesNutrition } from '@/lib/v2/premium/apercus';
 import { ApercuCombat, ApercuNutrition, ApercuProgres, ApercuRythme } from '@/components/yoroi/v2/premium/Apercus';
@@ -43,6 +43,7 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances, nutr
   const { theme } = useYoroiTheme();
   const c = theme.colors;
   const pal = usePaletteProgramme();
+  const pa = usePastel();
   const { width } = useWindowDimensions();
   const reduire = useReducedMotion();
   const cw = width - marge * 2;
@@ -55,9 +56,11 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances, nutr
 
   // 27 octobre 2026 (Houari : « les fonds verts et orange, ça ne donne pas envie ») : ton chemin en carte indigo,
   // toutes les autres en bleu doux ; les couleurs vives restent dans les petits apercus
-  const style = (id: CartePremiumTexte['id']): { fond: string; encre: string; encre2: string; sombre: boolean } => {
-    if (id === 'chemin') return { fond: pal.indigo, encre: c.onDark, encre2: c.onDarkSecondary, sombre: true };
-    return { fond: pal.teinte, encre: pal.texte, encre2: pal.texte2, sombre: false };
+  // 27 octobre 2026 (refonte Pastel, comme le Coach) : plus de carte bleu nuit pleine ; chaque carte prend une famille
+  // pastel (bleu, creme, menthe, lilas), texte encre, petites capitales dans la couleur de la famille
+  const style = (_id: CartePremiumTexte['id'], k: number): { fond: string; encre: string; encre2: string; titre: string; sombre: boolean } => {
+    const f = famillePastel(pa, k);
+    return { fond: f.fond, encre: pa.texte, encre2: pa.texte2, titre: f.titre, sombre: false };
   };
 
   // 27 octobre 2026 (Houari : « au lieu des icones, mets des choses de l'app qui lui donnent envie, comme une demo ») :
@@ -123,7 +126,7 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances, nutr
         onTouchCancel={() => setDoigt(false)}
       >
         {cartes.map((k, i) => {
-          const s = style(k.id);
+          const s = style(k.id, i);
           const visW = Math.round(cw * (k.id === 'chemin' ? 0.38 : 0.37));
           return (
             <View
@@ -137,8 +140,8 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances, nutr
               <View pointerEvents="none" style={{ position: 'absolute', right: -50, bottom: -90, width: 230, height: 230, borderRadius: 115, backgroundColor: s.sombre ? pal.cercle : 'rgba(255,255,255,0.35)' }} />
               <View style={{ flex: 1, gap: 6, justifyContent: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, minHeight: 22, borderRadius: 11, backgroundColor: s.sombre ? 'rgba(255,255,255,0.16)' : pal.carte }}>
-                  <Icon name="crown" size={11} color={s.sombre ? c.onDark : pal.accent} />
-                  <Ink size={10.5} weight="black" color={s.sombre ? c.onDark : pal.accent} style={{ letterSpacing: 0.6 }} numberOfLines={1}>
+                  <Icon name="crown" size={11} color={s.sombre ? c.onDark : s.titre} />
+                  <Ink size={10.5} weight="black" color={s.sombre ? c.onDark : s.titre} style={{ letterSpacing: 0.6 }} numberOfLines={1}>
                     {k.pastille ?? traduire('PREMIUM')}
                   </Ink>
                 </View>
@@ -161,7 +164,7 @@ export function CarrouselPremium({ hauteur, marge, cartes, courbe, seances, nutr
               accessibilityState={{ selected: i === rang }}
               accessibilityLabel={traduire('Carte {0} sur {1}, {2}', i + 1, n, k.titre)}
             >
-              <View style={{ width: i === rang ? 20 : 7, height: 7, borderRadius: 4, backgroundColor: i === rang ? pal.accent : pal.anneau }} />
+              <View style={{ width: i === rang ? 20 : 7, height: 7, borderRadius: 4, backgroundColor: i === rang ? c.detail : pal.anneau }} />
             </Pressable>
           ))}
         </View>
