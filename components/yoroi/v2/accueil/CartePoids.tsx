@@ -134,7 +134,7 @@ type Props = {
  * lettres juste dessous (« 86 % du chemin »), il n'est donc plus repete dans l'anneau.
  */
 function AnneauChemin({ part }: { part: number }) {
-  const T = 50;
+  const T = 44;
   const r = (14 / 36) * T;
   const ep = (4 / 36) * T;
   const tour = 2 * Math.PI * r;
@@ -146,7 +146,7 @@ function AnneauChemin({ part }: { part: number }) {
         <Circle cx={T / 2} cy={T / 2} r={r} stroke={piste} strokeWidth={ep} fill="none" />
         {p > 0 ? <Circle cx={T / 2} cy={T / 2} r={r} stroke="#8B7BE8" strokeWidth={ep} fill="none" strokeLinecap="round" strokeDasharray={`${tour * p} ${tour}`} transform={`rotate(-90 ${T / 2} ${T / 2})`} /> : null}
       </Svg>
-      <ToriiImage width={20} />
+      <ToriiImage width={18} />
     </View>
   );
 }
@@ -653,7 +653,7 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
   // Page 1 : ton poids en tete (l'ancienne page Ton poids), puis ton chemin en paliers et ton objectif
   const pageUne = (
     <View
-      style={{ width: W, alignSelf: 'flex-start', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2, gap: 10 }}
+      style={{ width: W, alignSelf: 'flex-start', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 0, gap: 8 }}
       onLayout={(e) => {
         const h = e.nativeEvent.layout.height;
         if (h > 0 && Math.abs(h - hautPage1) > 1) setHautPage1(h);
@@ -666,16 +666,23 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
               {(isToday ? traduire('Ton poids') : `${traduire('Ton poids')}, ${relativeDay(last.date)}`).toUpperCase()}
             </Ink>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 2 }}>
-              <Ink size={32} weight="black" tight numberOfLines={1} color={fg} style={{ fontVariant: ['tabular-nums'], letterSpacing: -1 }}>
+              <Ink size={28} weight="black" tight numberOfLines={1} color={fg} style={{ fontVariant: ['tabular-nums'], letterSpacing: -0.8 }}>
                 {formatKg(last.value)}
               </Ink>
-              <Ink size={13} weight="black" color={chiffreC}>
+              <Ink size={12} weight="black" color={chiffreC}>
                 {'kg'}
               </Ink>
             </View>
             <View style={{ marginTop: 2, flexDirection: 'row' }}>{ligneDebut}</View>
           </View>
-          {chemin ? <AnneauChemin part={chemin.part} /> : null}
+          {chemin ? (
+            <View style={{ alignItems: 'center', gap: 2 }}>
+              <AnneauChemin part={chemin.part} />
+              <Ink size={12} weight="black" color={chiffreC} numberOfLines={1} style={{ fontVariant: ['tabular-nums'] }}>
+                {`${Math.round(chemin.part * 100)} %`}
+              </Ink>
+            </View>
+          ) : null}
         </View>
         {phrase ? (
           <Ink size={12.5} weight="bold" color={fg2} style={{ marginTop: 4, lineHeight: 17 }}>
@@ -694,10 +701,10 @@ export function CartePoids({ series: seriesIn, targetWeight, startWeight, today:
       </Press>
       {chemin ? (
         <Press onPress={openDetail} haptic="none" accessibilityRole="button" accessibilityLabel={traduire("{0}{1}. Voir le détail de ton poids", atteint ? traduire('Torii atteint') : traduire("{0} % du chemin, encore {1} kilos", Math.round(chemin.part * 100), formatKg(chemin.reste)), arrivee ? traduire(", arrivée prévue {0}", arrivee) : '')}>
-          <View style={{ gap: 8, paddingTop: 10, borderTopWidth: 1, borderColor: P.line2 }}>
+          <View style={{ gap: 6, paddingTop: 8, borderTopWidth: 1, borderColor: P.line2 }}>
             {/* le titre sur sa ligne, la date sur la sienne : rien n'est jamais coupe */}
             <View style={{ gap: 2 }}>
-              <Ink size={atteint ? 18 : 20} weight="black" tight color={chiffreC}>
+              <Ink size={atteint ? 16 : 18} weight="black" tight color={chiffreC}>
                 {atteint ? traduire('Torii atteint') : traduire("{0} % du chemin", Math.round(chemin.part * 100))}
               </Ink>
               {arrivee ? (
